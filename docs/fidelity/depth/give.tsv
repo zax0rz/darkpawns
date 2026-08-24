@@ -1,0 +1,22 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_give	give	give.no-arg	D1	command	oracle-green	give-basic	act.item.c:774-775	Empty arg yields "Give what to who?".
+do_give	give	give.number-not-coins	D2	command	oracle-green	give-basic	act.item.c:789-793	"give N <noncoin>" (or bare "give N") yields "You can't give more than one item at a time.".
+do_give	give	give.fill-word-parse	D2	command	oracle-green	give-fillword	interpreter.c:1265	C do_give parses each token with one_argument (fill-skip + lowercase); Go doGive used strings.Fields. Give-local routing fix.
+give_find_vict	give	give.no-vict	D2	command	oracle-green	give-basic	act.item.c:748-752	Missing recipient yields "To who?".
+give_find_vict	give	give.vict-not-found	D2	command	oracle-green	give-basic	act.item.c:753-757	Recipient not in room yields the NOPERSON line.
+give_find_vict	give	give.self	D2	command	oracle-green	give-basic	act.item.c:758-762	Giving to yourself yields "What's the point of that?".
+do_give	give	give.indiv-not-carried	D2	command	oracle-green	give-basic	act.item.c:804-807	get_obj_in_list_vis miss yields "You don't seem to have a/an X.".
+do_give	give	give.alldot-empty	D1	command	oracle-green	give-basic	act.item.c:814-816	"give all. X" yields "All of what?".
+do_give	give	give.holding-nothing	D2	command	oracle-green	give-basic	act.item.c:818-819	"give all X" with empty inventory yields "You don't seem to be holding anything.".
+perform_give	give	give.indiv-success	D3	command	oracle-green	give-basic	act.item.c:700-706	Actor "You give $p to $N.", victim "$n gives you $p." (TO_VICT), bystander "$n gives $p to $N." (TO_NOTVICT).
+perform_give	give	give.alldot-success	D2	command	oracle-green	give-basic	act.item.c:820-826	"give all.X" gives each matching item to the recipient.
+perform_give	give	give.all-success	D2	command	oracle-green	give-basic	act.item.c:820-826	"give all" gives the whole inventory.
+perform_give	give	give.nodrop-yeech	D2	command	unit-green	TestPerformGiveNoDrop	act.item.c:688-691	NODROP object below immort yields "You can't let go of $p!!  Yeech!".
+perform_give	give	give.hands-full	D2	command	unit-green	TestPerformGiveHandsFullAndWeight	act.item.c:692-695	Recipient at carry cap yields "$N seems to have $S hands full.".
+perform_give	give	give.weight	D2	command	unit-green	TestPerformGiveHandsFullAndWeight	act.item.c:696-698	Recipient over weight yields "$E can't carry that much weight.".
+perform_give_gold	give	give.gold-zero	D2	command	oracle-green	give-gold	act.item.c:730-732	"give 0 coins X" yields "Heh heh heh ... we are jolly funny today, eh?".
+perform_give_gold	give	give.gold-insufficient	D2	command	oracle-green	give-gold	act.item.c:733-736	Giving more coins than held yields "You don't have that many coins!".
+perform_give_gold	give	give.gold-success	D3	command	unit-green	TestPerformGiveGoldSuccess	act.item.c:737-744	Actor "Ok.", victim "$n gives you N gold coins." (TO_VICT), bystander "$n gives <money_desc> to $N." (TO_NOTVICT).
+get_obj_in_list_vis	give	give.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get; proven under the get manifest.
+find_all_dots	give	give.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get; proven under the get manifest.
+perform_give	give	give.mob-ongive	D5	npc-call	excluded	-	act.item.c:707-709	Mob ongive/bribe behavior belongs to the mob/specproc depth surface.

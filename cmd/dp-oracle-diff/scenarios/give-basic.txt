@@ -1,0 +1,120 @@
+# depth-case: give.no-arg
+# depth-case: give.indiv-not-carried
+# depth-case: give.no-vict
+# depth-case: give.vict-not-found
+# depth-case: give.self
+# depth-case: give.number-not-coins
+# depth-case: give.alldot-success
+# depth-case: give.indiv-success
+# depth-case: give.all-success
+# depth-case: give.holding-nothing
+# depth-case: give.alldot-empty
+# Three clients: giver (Giver), recipient (Givevic), bystander (Giveobs), all
+# co-located. Proves the actor / TO_VICT / TO_NOTVICT audiences on a successful
+# give. Items come from the starting backpack.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Giver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Giver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:vic]
+Givevic
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:vic]
+Givevic
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Giveobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Giveobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+give
+give bread givevic
+open pack
+get bread pack
+get skin pack
+give bread
+give bread nobody
+give bread giver
+give 5 sword givevic
+give all.skin givevic
+give bread givevic
+give all givevic
+give all givevic
+give all. givevic
