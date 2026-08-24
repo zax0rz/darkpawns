@@ -9,7 +9,7 @@ do_put	put	put.closed	D2	command	oracle-green	put-basic	act.item.c:109-110	Close
 do_put	put	put.not-carrying	D2	command	oracle-green	put-basic	act.item.c:114-118	Object not in inventory yields "You aren't carrying a/an X.".
 do_put	put	put.self-fold	D2	command	oracle-green	put-basic	act.item.c:119-121	Putting a container into itself yields "You attempt to fold it into itself, but fail.".
 do_put	put	put.indiv-success	D3	command	oracle-green	put-basic	act.item.c:122-123	Actor "You put $p in $P." and room "$n puts $p in $P.".
-do_put	put	put.all-success	D2	command	blocked	-	act.item.c:126-135	"put all" over 2+ items exposes a shared inventory-order divergence: C obj_to_char prepends to ch->carrying (reverse-insertion), Go Inventory appends. Owner: inventory carrying-order PR (separate, shared). Affects drop/give/put all-loops + inventory display.
+do_put	put	put.all-success	D2	command	oracle-green	put-all-success	act.item.c:126-135	"put all" over multiple items. Go ranged the live inventory slice while performPut removed from it (skipping items); snapshot first, as C captures next_content.
 do_put	put	put.all-none	D2	command	oracle-green	put-basic	act.item.c:139-141	"put all <cont>" with nothing else yields "You don't seem to have anything to put in it.".
 do_put	put	put.alldot-success	D2	command	oracle-green	put-basic	act.item.c:126-135	"put all.X <cont>" puts each matching item.
 do_put	put	put.alldot-none	D2	command	oracle-green	put-basic	act.item.c:142-145	"put all.X <cont>" with no match yields "You don't seem to have any Xss.".

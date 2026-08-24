@@ -103,7 +103,12 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 	} else {
 		keyword := strings.TrimPrefix(arg1, "all.")
 		found := false
-		for _, obj := range ch.Inventory.Items {
+		// Snapshot the inventory first: performPut removes items from
+		// ch.Inventory.Items, and ranging the live slice would skip elements.
+		// C captures next_content before perform_put for the same reason.
+		items := make([]*ObjectInstance, len(ch.Inventory.Items))
+		copy(items, ch.Inventory.Items)
+		for _, obj := range items {
 			if obj == cont {
 				continue
 			}
