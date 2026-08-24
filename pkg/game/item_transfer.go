@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
-	"unsafe"
 )
 
 // canTakeObj checks if a player can take an object
@@ -511,66 +510,42 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 		return
 	}
 
-	// Consistent lock ordering by pointer address — prevents deadlock
-	// when two players exchange gold simultaneously.
-	first, second := ch, vict
-	if ch != vict && uintptr(unsafe.Pointer(&ch.mu)) > uintptr(unsafe.Pointer(&vict.mu)) {
-		first, second = vict, ch
-	}
-	first.mu.Lock()
-	if first != second {
-		second.mu.Lock()
-	}
-
-	// Always operate on ch/vict regardless of lock order
-	if ch.Gold < amount && ch.GetLevel() < lvlGod {
-		if first != second {
-			second.mu.Unlock()
-		}
-		first.mu.Unlock()
+	// The gold accessors (GetGold/SetGold/GetLevel) take the player mutex
+	// themselves, so this function must NOT hold it — an earlier manual
+	// lock-ordering guard deadlocked every gold give against those accessors.
+	if ch.GetGold() < amount && ch.GetLevel() < lvlGod {
 		ch.SendMessage("You don't have that many coins!\r\n")
 		return
 	}
 
 	ch.SendMessage("Ok.\r\n")
-	actToVictim(ch, vict, "$n gives you %d gold coins.", nil, nil)
-	w.actToRoomExclude(ch, vict, "$n gives %s to $N.", nil, vict)
+	// C sprintf()s the amount/money_desc into the string before act(); the act
+	// helpers only substitute $n/$N, so pre-format here.
+	actToVictim(ch, vict, fmt.Sprintf("$n gives you %d gold coins.", amount), nil, nil)
+	w.actToRoomExclude(ch, vict, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), nil, vict)
 
 	if ch.GetLevel() < lvlGod {
 		ch.SetGold(ch.GetGold() - amount)
 	}
 	vict.SetGold(vict.GetGold() + amount)
-
-	if first != second {
-		second.mu.Unlock()
-	}
-	first.mu.Unlock()
 }
 
 // doGive handles the give command
 func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
-	parts := strings.Fields(arg)
-	if len(parts) == 0 {
+	// C do_give parses each token with one_argument (interpreter.c): leading
+	// fill words dropped, tokens lowercased.
+	arg1, rest := oneArgument(arg)
+	if arg1 == "" {
 		ch.SendMessage("Give what to who?\r\n")
 		return true
 	}
 
-	arg1 := parts[0]
-
 	// Check if first arg is a number (gold)
 	if isNumber(arg1) {
 		amount := atoi(arg1)
-		if len(parts) < 2 {
-			ch.SendMessage("Give what to who?\r\n")
-			return true
-		}
-		// Check for "coins" or "coin" keyword
-		arg2 := parts[1]
-		if strings.EqualFold(arg2, "coins") || strings.EqualFold(arg2, "coin") {
-			victName := ""
-			if len(parts) > 2 {
-				victName = parts[2]
-			}
+		arg2, rest2 := oneArgument(rest)
+		if arg2 == "coins" || arg2 == "coin" {
+			victName, _ := oneArgument(rest2)
 			// Check mob before player — bribe path
 			mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
 			if mob != nil {
@@ -601,11 +576,8 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 		return true
 	}
 
-	// Give object
-	victName := ""
-	if len(parts) > 1 {
-		victName = parts[1]
-	}
+	// Give object — vict name is the next token after the object name.
+	victName, _ := oneArgument(rest)
 
 	// Check mob before player — ongive/item path
 	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
@@ -646,6 +618,13 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 		}
 		w.performGive(ch, vict, obj)
 	} else {
+		// C checks the empty-keyword ("give all.") case before the
+		// empty-inventory case (act.item.c:814-819).
+		keyword := strings.TrimPrefix(arg1, "all.")
+		if dotmode == findAlldot && keyword == "" {
+			ch.SendMessage("All of what?\r\n")
+			return true
+		}
 		if len(ch.Inventory.Items) == 0 {
 			ch.SendMessage("You don't seem to be holding anything.\r\n")
 			return true
@@ -658,7 +637,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if !canSeeObject(ch, obj) {
 				continue
 			}
-			if dotmode == findAll || isnameWithAbbrevs(arg1, obj.GetKeywords()) {
+			if dotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords()) {
 				w.performGive(ch, vict, obj)
 			}
 		}
