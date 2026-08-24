@@ -1,0 +1,34 @@
+# depth-case: drop.gold-zero
+# depth-case: drop.gold-insufficient
+[fixture]
+quiet-mobs
+[setup:oracle]
+Dropgold
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Dropgold
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+drop 0 coins
+drop 5 coins

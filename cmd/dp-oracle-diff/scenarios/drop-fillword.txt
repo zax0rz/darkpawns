@@ -1,0 +1,43 @@
+# depth-case: drop.fill-word-parse
+# C do_drop parses its argument with one_argument, which drops fill words and
+# lowercases. "drop the bread" -> "drop bread"; "drop ZZZ" echoes "zzz". Go
+# doDrop used strings.Fields (neither), so this must go red then green once
+# doDrop routes through the faithful parser.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Dropfill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dropfill
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+open pack
+get bread pack
+drop the bread
+drop ZZZ
