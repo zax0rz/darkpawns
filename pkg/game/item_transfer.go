@@ -78,16 +78,29 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 // run_script(ch, ch, obj, room, "onget", LT_ROOM) when the room carries the
 // RS_ONGET flag (1<<4).
 func (w *World) fireOnGet(ch *Player, obj *ObjectInstance) {
+	w.fireRoomObjTrigger(ch, obj, 1<<4, "onget") // RS_ONGET
+}
+
+// fireOnDrop runs the room's ondrop trigger after a successful drop, mirroring
+// C perform_drop (act.item.c:495): run_script(..., "ondrop", LT_ROOM) when the
+// room carries RS_ONDROP (1<<3).
+func (w *World) fireOnDrop(ch *Player, obj *ObjectInstance) {
+	w.fireRoomObjTrigger(ch, obj, 1<<3, "ondrop") // RS_ONDROP
+}
+
+// fireRoomObjTrigger runs a room script trigger keyed by an RS_* bit, passing
+// the acting player and object, mirroring C run_script(..., LT_ROOM).
+func (w *World) fireRoomObjTrigger(ch *Player, obj *ObjectInstance, bit int, trigger string) {
 	if ScriptEngine == nil {
 		return
 	}
 	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room == nil || room.ScriptName == "" || room.ScriptFunctions&(1<<4) == 0 {
+	if room == nil || room.ScriptName == "" || room.ScriptFunctions&bit == 0 {
 		return
 	}
 	ctx := &ScriptContext{Ch: ch, Obj: obj, RoomVNum: room.VNum, World: NewWorldScriptableAdapter(w)}
-	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, "onget"); err != nil {
-		slog.Warn("room onget script error", "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
+	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, trigger); err != nil {
+		slog.Warn("room object script error", "trigger", trigger, "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
 	}
 }
 
@@ -309,6 +322,7 @@ func (w *World) performDropNamed(ch *Player, obj *ObjectInstance, sname string) 
 	}
 	w.actToChar(ch, fmt.Sprintf("You %s $p.", sname), obj, nil)
 	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.", sname), obj, nil)
+	w.fireOnDrop(ch, obj)
 }
 
 func (w *World) performDrop(ch *Player, obj *ObjectInstance) {
@@ -339,16 +353,18 @@ func (w *World) performDropGold(ch *Player, amount int) {
 
 // doDrop handles the drop command
 func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
-	parts := strings.Fields(arg)
-	if len(parts) == 0 {
+	// C do_drop parses with one_argument (interpreter.c): leading fill words
+	// dropped, argument lowercased.
+	arg1, rest := oneArgument(arg)
+	if arg1 == "" {
 		ch.SendMessage("What do you want to drop?\r\n")
 		return true
 	}
-	arg1 := parts[0]
 	sname := "drop"
 
 	if amount, err := strconv.Atoi(arg1); err == nil {
-		if len(parts) > 1 && (strings.EqualFold(parts[1], "coin") || strings.EqualFold(parts[1], "coins")) {
+		arg2, _ := oneArgument(rest)
+		if arg2 == "coin" || arg2 == "coins" {
 			w.performDropGold(ch, amount)
 		} else {
 			ch.SendMessage("Sorry, you can't do that to more than one item at a time.\r\n")

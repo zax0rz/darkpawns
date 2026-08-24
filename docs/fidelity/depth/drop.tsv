@@ -1,0 +1,18 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_drop	drop	drop.no-arg	D1	command	oracle-green	drop-basic	act.item.c:558-560	Empty arg yields "What do you want to drop?".
+do_drop	drop	drop.indiv-not-carried	D2	command	oracle-green	drop-basic	act.item.c:625-627	get_obj_in_list_vis miss yields "You don't seem to have a/an X.".
+do_drop	drop	drop.indiv-success	D3	command	oracle-green	drop-basic	act.item.c:470-490	Actor "You drop $p." and room "$n drops $p.".
+do_drop	drop	drop.all-empty	D2	command	oracle-green	drop-basic	act.item.c:601-603	"drop all" with empty inventory yields "You don't seem to be carrying anything.".
+do_drop	drop	drop.all-success	D2	command	oracle-green	drop-basic	act.item.c:604-612	"drop all" drops the whole inventory in order.
+do_drop	drop	drop.alldot-empty	D1	command	oracle-green	drop-basic	act.item.c:615-617	"drop all." yields "What do you want to drop all of?".
+do_drop	drop	drop.alldot-none	D2	command	oracle-green	drop-basic	act.item.c:630-632	"drop all.X" with no match yields "You don't seem to have any Xss.".
+do_drop	drop	drop.alldot-success	D2	command	oracle-green	drop-basic	act.item.c:618-628	"drop all.X" drops each matching item.
+do_drop	drop	drop.number-not-coins	D2	command	oracle-green	drop-basic	act.item.c:566-570	"drop N <noncoin>" yields "Sorry, you can't do that to more than one item at a time.".
+do_drop	drop	drop.fill-word-parse	D2	command	oracle-green	drop-fillword	interpreter.c:1265	C do_drop parses with one_argument (fill-skip + lowercase); Go doDrop uses strings.Fields. Drop-local routing fix.
+perform_drop	drop	drop.nodrop-cursed	D2	command	unit-green	TestPerformDropNoDrop	act.item.c:475-480	NODROP object below immort yields "You can't drop $p, it must be CURSED!".
+perform_drop	drop	drop.ondrop-script	D5	hook	unit-green	TestDropFiresOnDropRoomScript	act.item.c:495-497	Room ondrop trigger (RS_ONDROP, 1<<3) fires after a successful drop.
+perform_drop_gold	drop	drop.gold-zero	D2	command	oracle-green	drop-gold	act.item.c:434-435	"drop 0 coins" yields "Heh heh heh.. we are jolly funny today, eh?".
+perform_drop_gold	drop	drop.gold-insufficient	D2	command	oracle-green	drop-gold	act.item.c:436-437	Dropping more coins than held yields "You don't have that many coins!".
+perform_drop_gold	drop	drop.gold-success	D3	command	unit-green	TestPerformDropGoldSuccess	act.item.c:456-463	Actor "You drop some gold." and room "$n drops <money_desc>."; WAIT_STATE.
+get_obj_in_list_vis	drop	drop.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get; proven under the get manifest.
+find_all_dots	drop	drop.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get; proven under the get manifest.
