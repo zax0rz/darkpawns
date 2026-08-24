@@ -313,21 +313,15 @@ func getObjInEquipVis(ch *Player, arg string) (*ObjectInstance, int) {
 
 // DoWear handles wear <item> [position], wear all, and wear all.<keyword>.
 func (w *World) DoWear(ch *Player, arg string) {
-	args := strings.Fields(arg)
-	if len(args) == 0 {
+	// C do_wear parses with two_arguments (interpreter.c): fill words dropped,
+	// tokens lowercased.
+	arg1, arg2 := twoArguments(arg)
+	if arg1 == "" {
 		ch.SendMessage("Wear what?\r\n")
 		return
 	}
-	arg1 := args[0]
-	arg2 := ""
-	if len(args) > 1 {
-		arg2 = args[1]
-	}
 
 	dotmode := findAllDots(arg1)
-	if arg1 == "all." {
-		dotmode = findAlldot
-	}
 	if arg2 != "" && dotmode != findIndiv {
 		ch.SendMessage("You can't specify the same body location for more than one item!\r\n")
 		return
@@ -391,14 +385,14 @@ func (w *World) DoWear(ch *Player, arg string) {
 
 // DoWield wields one visible carried object.
 func (w *World) DoWield(ch *Player, arg string) {
-	args := strings.Fields(arg)
-	if len(args) == 0 {
+	arg1, _ := oneArgument(arg) // C do_wield: one_argument (fill-skip, lowercase)
+	if arg1 == "" {
 		ch.SendMessage("Wield what?\r\n")
 		return
 	}
-	obj := getObjInInvVis(ch, args[0])
+	obj := getObjInInvVis(ch, arg1)
 	if obj == nil {
-		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(args[0]), args[0]))
+		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
 		return
 	}
 	if ch.IsAffected(affFleshAlter) {
@@ -410,14 +404,14 @@ func (w *World) DoWield(ch *Player, arg string) {
 
 // DoGrab holds one visible carried object.
 func (w *World) DoGrab(ch *Player, arg string) {
-	args := strings.Fields(arg)
-	if len(args) == 0 {
+	arg1, _ := oneArgument(arg) // C do_grab: one_argument (fill-skip, lowercase)
+	if arg1 == "" {
 		ch.SendMessage("Hold what?\r\n")
 		return
 	}
-	obj := getObjInInvVis(ch, args[0])
+	obj := getObjInInvVis(ch, arg1)
 	if obj == nil {
-		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(args[0]), args[0]))
+		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
 		return
 	}
 	itemType := obj.GetTypeFlag()
@@ -462,12 +456,11 @@ func (w *World) performRemove(ch *Player, pos int) {
 
 // DoRemove handles remove <item>, remove all, and remove all.<keyword>.
 func (w *World) DoRemove(ch *Player, arg string) {
-	args := strings.Fields(arg)
-	if len(args) == 0 {
+	arg1, _ := oneArgument(arg) // C do_remove: one_argument (fill-skip, lowercase)
+	if arg1 == "" {
 		ch.SendMessage("Remove what?\r\n")
 		return
 	}
-	arg1 := args[0]
 	dotmode := findAllDots(arg1)
 	if arg1 == "all." {
 		dotmode = findAlldot

@@ -1,0 +1,78 @@
+# depth-case: wear.no-arg
+# depth-case: wear.same-location
+# depth-case: wear.alldot-none
+# depth-case: wear.alldot-empty
+# depth-case: wear.indiv-not-carried
+# depth-case: wear.bad-bodypart
+# depth-case: wear.cant-wear-there
+# depth-case: wear.indiv-success
+# depth-case: wear.all-success
+# depth-case: wear.all-none
+[fixture]
+quiet-mobs
+[setup:oracle]
+Wearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Wearer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:obs]
+Wearobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:obs]
+Wearobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+wear
+wear all tunic
+wear all.xyzzy
+wear all.
+wear xyzzy
+wear tunic tunic
+wear tunic head
+wear tunic
+remove tunic
+wear all
+wear all

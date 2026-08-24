@@ -1,0 +1,15 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_wear	wear	wear.no-arg	D1	command	oracle-green	wear-basic	act.item.c:1592-1596	Empty arg yields "Wear what?".
+do_wear	wear	wear.same-location	D1	command	oracle-green	wear-basic	act.item.c:1600-1605	arg2 with a non-INDIV arg1 yields "You can't specify the same body location for more than one item!".
+do_wear	wear	wear.all-success	D2	command	oracle-green	wear-basic	act.item.c:1606-1619	"wear all" wears every item with a valid slot.
+do_wear	wear	wear.all-none	D2	command	oracle-green	wear-basic	act.item.c:1617-1618	"wear all" with nothing wearable yields "You don't seem to have anything wearable.".
+do_wear	wear	wear.alldot-empty	D1	command	oracle-green	wear-basic	act.item.c:1621-1625	"wear all." yields "Wear all of what?".
+do_wear	wear	wear.alldot-none	D2	command	oracle-green	wear-basic	act.item.c:1626-1630	"wear all.X" with no match yields "You don't seem to have any Xss.".
+do_wear	wear	wear.indiv-not-carried	D2	command	oracle-green	wear-basic	act.item.c:1646-1650	get_obj_in_list_vis miss yields "You don't seem to have a/an X.".
+do_wear	wear	wear.bad-bodypart	D2	command	oracle-green	wear-basic	act.item.c:find_eq_pos	A non-body-part arg2 yields "'X'?  What part of your body is THAT?".
+do_wear	wear	wear.cant-wear-there	D2	command	oracle-green	wear-basic	act.item.c:1636-1640	A valid body part the object can't use yields "You can't wear $p there.".
+do_wear	wear	wear.indiv-success	D3	command	oracle-green	wear-basic	act.item.c:1652-1655	Wearing an item emits its slot wear message to actor and room.
+perform_wear	wear	wear.slot-occupied	D2	command	unit-green	TestPerformWearGates	act.item.c:1655-1659	Wearing onto an occupied slot yields the already_wearing[] message.
+do_wear	wear	wear.fill-word-parse	D2	command	oracle-green	equipment-fillword	interpreter.c:1265	C do_wear parses with two_arguments; Go doWear used strings.Fields. Wear-local routing fix.
+get_obj_in_list_vis	wear	wear.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get.
+find_all_dots	wear	wear.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get.

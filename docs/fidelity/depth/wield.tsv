@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_wield	wield	wield.no-arg	D1	command	oracle-green	wield-basic	act.item.c:1666-1667	Empty arg yields "Wield what?".
+do_wield	wield	wield.not-carried	D2	command	oracle-green	wield-basic	act.item.c:1668-1672	get_obj_in_list_vis miss yields "You don't seem to have a/an X.".
+do_wield	wield	wield.cant-wield	D2	command	oracle-green	wield-basic	act.item.c:1636-1640	A non-weapon yields "You can't wear $p there." via perform_wear's slot check.
+do_wield	wield	wield.success	D3	command	oracle-green	wield-basic	act.item.c:1679	Wielding a weapon emits the wield message to actor and room.
+do_wield	wield	wield.flesh-alter	D2	command	unit-green	TestPerformWearGates	act.item.c:1673-1677	Wielding while flesh-altered yields "Your flesh is altered, you can't wield anything!".
+do_wield	wield	wield.fill-word-parse	D2	command	oracle-green	equipment-fillword	interpreter.c:1265	C do_wield parses with one_argument; Go doWield used strings.Fields. Wield-local routing fix.
+get_obj_in_list_vis	wield	wield.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get.

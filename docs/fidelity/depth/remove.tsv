@@ -1,0 +1,13 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_remove	remove	remove.no-arg	D1	command	oracle-green	remove-basic	act.item.c:1738-1742	Empty arg yields "Remove what?".
+do_remove	remove	remove.all-none	D2	command	oracle-green	remove-basic	act.item.c:1746-1755	"remove all" while wearing nothing yields "You're not using anything.".
+do_remove	remove	remove.all-success	D2	command	oracle-green	remove-basic	act.item.c:1746-1753	"remove all" removes every equipped item.
+do_remove	remove	remove.alldot-empty	D1	command	oracle-green	remove-basic	act.item.c:1758-1759	"remove all." yields "Remove all of what?".
+do_remove	remove	remove.alldot-none	D2	command	oracle-green	remove-basic	act.item.c:1770-1774	"remove all.X" with no match yields "You don't seem to be using any Xss.".
+do_remove	remove	remove.indiv-not-using	D2	command	oracle-green	remove-basic	act.item.c:1779-1783	get_object_in_equip_vis miss yields "You don't seem to be using a/an X.".
+do_remove	remove	remove.indiv-success	D3	command	oracle-green	remove-basic	act.item.c:1725-1727	Actor "You stop using $p." and room "$n stops using $p.".
+perform_remove	remove	remove.nodrop-cursed	D2	command	unit-green	TestPerformRemoveGates	act.item.c:1716-1717	NODROP equipment yields "You can't remove $p, it must be CURSED!".
+perform_remove	remove	remove.carry-full	D2	command	unit-green	TestPerformRemoveGates	act.item.c:1718-1719	A full inventory yields "$p: you can't carry that many items!".
+do_remove	remove	remove.fill-word-parse	D2	command	oracle-green	equipment-fillword	interpreter.c:1265	C do_remove parses with one_argument; Go doRemove used strings.Fields. Remove-local routing fix.
+get_object_in_equip_vis	remove	remove.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_object_in_equip_vis	Prefix keyword match shared with get.
+find_all_dots	remove	remove.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get.
