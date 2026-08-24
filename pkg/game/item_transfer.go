@@ -69,6 +69,25 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 		w.actToChar(ch, "You get $p from $P.", obj, cont)
 		w.actToRoom(ch, "$n gets $p from $P.", obj, cont)
 		w.getCheckMoney(ch, obj)
+		w.fireOnGet(ch, obj)
+	}
+}
+
+// fireOnGet runs the room's onget trigger after a successful get, mirroring C
+// perform_get_from_room/perform_get_from_container (act.item.c:211,283):
+// run_script(ch, ch, obj, room, "onget", LT_ROOM) when the room carries the
+// RS_ONGET flag (1<<4).
+func (w *World) fireOnGet(ch *Player, obj *ObjectInstance) {
+	if ScriptEngine == nil {
+		return
+	}
+	room := w.GetRoomInWorld(ch.GetRoomVNum())
+	if room == nil || room.ScriptName == "" || room.ScriptFunctions&(1<<4) == 0 {
+		return
+	}
+	ctx := &ScriptContext{Ch: ch, Obj: obj, RoomVNum: room.VNum, World: NewWorldScriptableAdapter(w)}
+	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, "onget"); err != nil {
+		slog.Warn("room onget script error", "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
 	}
 }
 
@@ -127,10 +146,17 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "You get $p.", obj, nil)
 		w.actToRoom(ch, "$n gets $p.", obj, nil)
 		w.getCheckMoney(ch, obj)
+		w.fireOnGet(ch, obj)
 	}
 }
 
 func (w *World) getFromRoom(ch *Player, arg string) {
+	// C get_from_room (act.item.c:297) rejects a mounted actor before any
+	// lookup: a rider cannot reach objects on the floor.
+	if ch.IsMounted() {
+		ch.SendMessage("You can't reach it from your mount.\r\n")
+		return
+	}
 	dotmode := findAllDots(arg)
 	items := append([]*ObjectInstance(nil), w.roomItems[ch.GetRoom()]...)
 	if dotmode == findIndiv {

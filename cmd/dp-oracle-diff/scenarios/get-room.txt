@@ -1,0 +1,83 @@
+# depth-case: get.no-arg
+# depth-case: get.room-not-found
+# depth-case: get.room-alldot-none
+# depth-case: get.alldot-non-container
+# depth-case: get.sweep-none-alldot
+# depth-case: get.room-single
+# depth-case: get.room-success
+# depth-case: get.room-all-empty
+# Floor-object matrix. A loaf of bread (8010) is spawned on the 8162 actor
+# floor; the "obs" peer shares the room and proves the TO_ROOM get broadcast.
+# Probes run before the successful get so the bread stays present, then the
+# final "get all" sees an empty floor.
+
+[fixture]
+quiet-mobs
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Getgrab
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Getgrab
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Getobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Getobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get
+get xyzzy
+get all.xyzzy
+get x all.bread
+get x all.xyzzy
+get bread
+get all

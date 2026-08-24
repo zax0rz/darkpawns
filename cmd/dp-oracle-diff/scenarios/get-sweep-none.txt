@@ -1,0 +1,40 @@
+# depth-case: get.sweep-none-all
+# With no container in inventory or room, "get <x> all" (FIND_ALL) reports
+# "You can't seem to find any containers." Junk the starting backpack first so
+# the sweep finds nothing to descend into.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Getswp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Getswp
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+junk backpack
+get x all
