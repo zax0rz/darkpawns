@@ -314,8 +314,12 @@ func canWearObject(obj *ObjectInstance, where int) bool {
 }
 
 // findAllDots returns the dot mode for an argument
+// findAllDots mirrors C find_all_dots (handler.c:1567): "all" is FIND_ALL,
+// anything beginning "all." (including a bare "all." with an empty keyword) is
+// FIND_ALLDOT, everything else is FIND_INDIV. C strips the "all." prefix in
+// place; callers here take the remainder with TrimPrefix.
 func findAllDots(arg string) int {
-	if arg == "all" || arg == "all." {
+	if arg == "all" {
 		return findAll
 	}
 	if strings.HasPrefix(arg, "all.") {
