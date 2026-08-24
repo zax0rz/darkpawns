@@ -88,18 +88,17 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 // gated on sname, not on any per-item mode flip (donate never grants exp,
 // even when the dice roll secretly junks an item).
 func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donationRoom int) {
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
+	// C do_drop (junk/donate) parses with one_argument: fill words dropped,
+	// argument lowercased. A fill-word-only argument reads as empty.
+	arg1, rest := oneArgument(arg)
+	if arg1 == "" {
 		ch.SendMessage(fmt.Sprintf("What do you want to %s?\r\n", sname))
 		return
 	}
 
-	parts := strings.Fields(arg)
-	arg1 := parts[0]
-
 	if amount, err := strconv.Atoi(arg1); err == nil {
-		rest := strings.Join(parts[1:], " ")
-		if rest == "coins" || rest == "coin" {
+		arg2, _ := oneArgument(rest)
+		if arg2 == "coins" || arg2 == "coin" {
 			w.performDisposeGold(ch, amount, mode, donationRoom)
 		} else {
 			ch.SendMessage("Sorry, you can't do that to more than one item at a time.\r\n")

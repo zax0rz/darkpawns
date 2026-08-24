@@ -1,0 +1,35 @@
+# depth-case: junk.fill-word-parse
+[fixture]
+quiet-mobs
+[setup:oracle]
+Junker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Junker
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open pack
+get bread pack
+junk the bread
+junk

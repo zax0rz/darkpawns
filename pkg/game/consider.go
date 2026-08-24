@@ -18,12 +18,11 @@ func (w *World) DoConsider(ch *Player, argument string) {
 		return
 	}
 
-	fields := strings.Fields(argument)
-	if len(fields) == 0 {
+	name, _ := oneArgument(argument) // C do_consider: one_argument (fill-skip, lowercase)
+	if name == "" {
 		ch.SendMessage(considerNotFound)
 		return
 	}
-	name := fields[0] // C: one_argument(argument, buf)
 	if strings.EqualFold(name, "self") || strings.EqualFold(name, "me") || isnameWithAbbrevs(name, ch.GetName()) {
 		ch.SendMessage(considerSelf)
 		return

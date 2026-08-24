@@ -1,0 +1,35 @@
+# depth-case: door.fill-word-parse
+[fixture]
+quiet-mobs
+replace-room-exits 8162 north 8161 1 gate
+[setup:oracle]
+Doorer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Doorer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open the gate
+close the gate
+open gate
