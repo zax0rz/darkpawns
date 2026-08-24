@@ -1,0 +1,45 @@
+# C do_get parses arguments with two_arguments, which drops fill words
+# (in/from/with/the/on/at/to) and lowercases each argument. Backpack 8038
+# keywords "backpack pack" holds a water skin 8063 (keywords "water skin").
+#   "get in pack"        -> "get pack" (from room) -> not on the floor.
+#   "get skin from pack" -> "get skin pack" -> pulled from the backpack.
+#   "get FOO"            -> lowercased to "foo" in the not-found message.
+# Exact keywords only, so this is independent of the object-matcher change.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Getfill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Getfill
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+open pack
+get in pack
+get skin from pack
+get FOO
