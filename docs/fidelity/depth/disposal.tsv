@@ -1,0 +1,29 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_drop	junk	junk.no-arg	D2	command	oracle-green	junk-basic	act.item.c:581-585	"What do you want to junk?" via the shared one_argument gate.
+do_drop	junk	junk.not-carried	D2	command	oracle-green	junk-basic	act.item.c:650-654	"You don't seem to have a bread." with AN() article.
+do_drop	junk	junk.success	D3	command	oracle-green	junk-basic	act.item.c:492-495	"You junk $p.  It vanishes in a puff of smoke!" pair (two spaces before It).
+do_drop	junk	junk.room-audience	D3	command	oracle-green	junk-basic	act.item.c:494-495	Peer transcript proves "$n junks $p.  It vanishes in a puff of smoke!"
+do_drop	junk	junk.reward	D4	command	oracle-green	junk-basic	act.item.c:660-665	"You have been rewarded by the gods!" pair fires after any junked item (value MAX(1,MIN(200,cost>>4)) > 0).
+do_drop	junk	junk.reward-arithmetic	D4	state	unit-green	TestDoJunk	act.item.c:664	gain_exp(MIN(10, amount)) is silent in the transcript; unit-proven.
+do_drop	junk	junk.all-gate	D2	command	oracle-green	junk-basic	act.item.c:606-611	"Go to the dump if you want to junk EVERYTHING!"
+do_drop	junk	junk.alldot-none	D2	command	oracle-green	junk-basic	act.item.c:628-640	"You don't seem to have any breads."
+do_drop	junk	junk.gold-zero	D2	command	oracle-green	junk-basic	act.item.c:434-435	"Heh heh heh.. we are jolly funny today, eh?"
+do_drop	junk	junk.gold-insufficient	D2	command	oracle-green	junk-basic	act.item.c:436-438	"You don't have that many coins!" — fresh characters hold no gold.
+do_drop	junk	junk.gold-success	D3	command	unit-green	TestPerformDisposeGold	act.item.c:464-471	Room "$n drops <money_desc> which disappears in a puff of smoke!" BEFORE the char line (C order quirk); no wait state for junked coins. Unit-proven per the drop.gold-success precedent (no mortal gold vehicle).
+do_drop	junk	junk.nodrop-gate	D2	command	unit-green	TestPerformDispose	act.item.c:486-491	"You can't junk $p, it must be CURSED!" for NODROP items below LVL_IMMORT.
+do_drop	donate	donate.no-arg	D2	command	oracle-green	donate-basic	act.item.c:581-585	Draw-independent reply; run GREEN across seeds 1-9.
+do_drop	donate	donate.not-carried	D2	command	oracle-green	donate-basic	act.item.c:650-654	"You don't seem to have a bread."
+do_drop	donate	donate.all-gate	D2	command	oracle-green	donate-basic	act.item.c:606-616	"Go do the donation room if you want to donate EVERYTHING!"
+do_drop	donate	donate.alldot-none	D2	command	oracle-green	donate-basic	act.item.c:628-640	"You don't seem to have any breads."
+do_drop	donate	donate.gold-zero	D2	command	oracle-green	donate-basic	act.item.c:434-435	"Heh heh heh.. we are jolly funny today, eh?"
+do_drop	donate	donate.gold-insufficient	D2	command	oracle-green	donate-gold	act.item.c:436-438	"You don't have that many coins!"
+do_drop	donate	donate.gold-success	D3	command	unit-green	TestPerformDisposeGold	act.item.c:441-455	Actor/room throw-into-the-air pair, WAIT_STATE coin-bomb guard, pile routed to the donation room; unit-proven (no mortal gold vehicle).
+do_drop	donate	donate.success	D3	command	oracle-green-multiseed	donate-routing	act.item.c:492-512	"You donate $p.  It vanishes in a puff of smoke!" pair; seeds 1-6.
+do_drop	donate	donate.routing-parity	D5	shared	oracle-green-multiseed	donate-routing	act.item.c:551-567	number(0,3) routes 25% junk-mode / 50% room 8053 / 25% room 18204; C and Go took the same branch on every seed (seed 4 routed room-1 on both, exposing the CAP divergence). Draw-0 leaves RDR=0 which is NOT NOWHERE (-1), so the Sorry gate never fires mid-draw — Go's mode-gated room check matches C exactly.
+do_drop	donate	donate.room-audience	D3	command	delegated	junk.room-audience	act.item.c:494-495	Shared perform_drop TO_ROOM line "$n donates $p.  It vanishes in a puff of smoke!"; the mechanism and vanish suffix are oracle-proven under junk, donate differs only by the sname substitution.
+do_drop	donate	donate.appear-at-destination	D3	command	oracle-green-multiseed	donate-routing	act.item.c:510-511	Peer standing in donation room 1 (via replace-room-exits fixture) receives "$p suddenly appears in a puff a smoke!" — C typo "a smoke" kept verbatim.
+do_drop	donate	donate.appear-capitalization	D3	shared	oracle-green-multiseed	donate-routing	act.item.c:511+comm.c:2477	C act() uppercases the assembled message (CAP(lbuf)), so a $p-initial line renders "A loaf of bread suddenly appears...". RED on pre-fix main at seed 4 ("a loaf" vs "A loaf"); GREEN on the branch for seeds 1-6.
+do_drop	donate	donate.gold-appear-capitalization	D3	shared	unit-green	TestDonateAppearLinesCapitalized	act.item.c:453-454	"A little pile of gold coins suddenly appears in a puff of orange smoke!" — same CAP rule; unit-proven (no mortal gold vehicle).
+do_drop	donate	donate.sorry-gate	D2	command	unit-green	TestDoDonate	act.item.c:568-572	"Sorry, you can't donate anything right now." fires only when real_room fails (world without donation rooms); unreachable in the live world.
+do_drop	donate	donate.nodonate-junking	D4	state	unit-green	TestDoDonate	act.item.c:498-499	A NODONATE donation is silently junk-routed after the donate messages; no exp.
+interpreter	sacrifice	sacrifice.unreachable	D1	command	excluded	-	interpreter.c:495-562	No sacrifice command exists in the C command table; the disposal surface is do_drop's SCMD_DROP/JUNK/DONATE subcommands (drop owned by drop.tsv).

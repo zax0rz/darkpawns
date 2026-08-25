@@ -1,0 +1,43 @@
+# depth-case: donate.gold-insufficient
+# depth-case: donate.gold-zero
+# Donating coins: perform_drop_gold's SCMD_DONATE arm — the actor/room
+# throw-into-the-air pair and the WAIT_STATE(PULSE_VIOLENCE) coin-bombing
+# guard (hence the trailing pulse pumps and the gold command placed last).
+# Draw 0 hits the "Sorry" rejection instead. Run multi-seed (R3).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+donate 5 coins
+~dpclock pulse 20
+~dpclock pulse 20
