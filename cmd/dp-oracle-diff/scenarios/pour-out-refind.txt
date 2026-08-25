@@ -1,0 +1,41 @@
+# depth-case: pour.pour-out-refind
+# After 'pour <cont> out', C name_from_drinkcon strips the container's first
+# keyword word (assuming a liquid prefix). The spawned cup (8005, keyword
+# "cup tin") has no liquid prefix, so it becomes "tin" and can no longer be
+# found by "cup": C reports "You can't find it!" on the follow-up pour-in.
+[fixture]
+quiet-mobs
+spawn-obj 8005 1 8162 80
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open pack
+get skin pack
+get cup
+pour cup out
+pour skin cup

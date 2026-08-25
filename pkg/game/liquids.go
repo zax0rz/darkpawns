@@ -91,3 +91,22 @@ func DrinkName(liq int) string {
 	}
 	return LiquidNames[liq]
 }
+
+// drinkKeywords mirrors C drinknames[] (constants.c) — the single-word liquid
+// name linked into a drink container's KEYWORD list (obj->name) by
+// name_to_drinkcon. It differs from the display name (drinks[]/LiquidNames) for
+// multi-word liquids: dark ale->ale, local speciality->local, slime mold
+// juice->juice, salt water->salt, clear water->water.
+var drinkKeywords = []string{
+	"water", "beer", "wine", "ale", "ale", "whiskey", "lemonade",
+	"firebreather", "local", "juice", "milk", "tea", "coffee", "blood",
+	"salt", "water",
+}
+
+// DrinkKeyword returns the keyword-form liquid name (C drinknames[type]).
+func DrinkKeyword(liq int) string {
+	if liq < 0 || liq >= len(drinkKeywords) {
+		return "water"
+	}
+	return drinkKeywords[liq]
+}
