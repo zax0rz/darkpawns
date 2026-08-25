@@ -1,4 +1,3 @@
-# depth-case: consider.fill-word-parse
 [fixture]
 quiet-mobs
 spawn-mob 8021 1 8162 80
