@@ -2,6 +2,7 @@ package web
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -70,15 +71,25 @@ func isDevMode(r *http.Request) bool {
 	if r == nil {
 		return true
 	}
-	host := r.Host
-	if strings.HasPrefix(host, "localhost") ||
-		strings.HasPrefix(host, "127.0.0.1") ||
-		strings.HasPrefix(host, "[::1]") ||
-		strings.HasPrefix(host, "0.0.0.0") {
+	if peerIsLocal(r.RemoteAddr) {
 		return true
 	}
-	log.Printf("[CORS] WARNING: dev mode CORS rejected for non-local origin %q", r.RemoteAddr)
+	log.Printf("[CORS] WARNING: dev mode CORS rejected for non-local peer %q (host header %q)", r.RemoteAddr, r.Host)
 	return false
+}
+
+// peerIsLocal reports whether the connection's remote peer is a loopback
+// address. The decision is based on the actual TCP peer (RemoteAddr), not the
+// client-controlled Host header.
+func peerIsLocal(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		return ip.IsLoopback()
+	}
+	return strings.EqualFold(host, "localhost")
 }
 
 func isOriginAllowed(origin string, allowed []string, r *http.Request) bool {
