@@ -268,6 +268,14 @@ func (w *World) UnequipItem(ch *Player, slot int) error {
 	return ch.Equipment.Unequip(goSlot, ch.Inventory)
 }
 
+// FindCarriedVis resolves an object in the player's inventory by keyword,
+// mirroring C get_obj_in_list_vis(ch, arg, ch->carrying): per-word prefix match
+// with "N.name" handling, never the short description. Exported entry point for
+// session command handlers that reproduce carrying-list lookups.
+func (w *World) FindCarriedVis(ch *Player, arg string) *ObjectInstance {
+	return getObjInInvVis(ch, arg)
+}
+
 func getObjInInvVis(ch *Player, arg string) *ObjectInstance {
 	if ch == nil || ch.Inventory == nil {
 		return nil

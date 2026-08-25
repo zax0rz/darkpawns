@@ -1,0 +1,38 @@
+# depth-case: quaff.no-arg
+# depth-case: quaff.not-carried
+# depth-case: quaff.inv-lookup-keyword
+[fixture]
+quiet-mobs
+spawn-obj 8051 1 8162 80
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+quaff
+quaff nonexistent
+get potion
+quaff invisible
