@@ -1,0 +1,34 @@
+# depth-case: recite.no-arg
+# depth-case: recite.not-carried
+[fixture]
+quiet-mobs
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+recite
+recite nonexistent

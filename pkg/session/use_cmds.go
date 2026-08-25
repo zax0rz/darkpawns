@@ -14,13 +14,15 @@ import (
 // Source: src/act.other.c (do_use SCMD_RECITE) + src/spell_parser.c (mag_objectmagic ITEM_SCROLL)
 func cmdRecite(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.Send("Recite what?")
+		s.Send("What do you want to recite?")
 		return nil
 	}
 
 	fullInput := strings.Join(args, " ")
 
-	// Parse item name and optional target
+	// C do_use (SCMD_RECITE) parses with half_chop: arg = first token (the
+	// scroll), buf = the rest (the target). Resolve via get_obj_in_list_vis
+	// (keyword prefix, carrying), not the short description.
 	var itemName, targetName string
 	parts := strings.SplitN(fullInput, " ", 2)
 	itemName = parts[0]
@@ -28,10 +30,9 @@ func cmdRecite(s *Session, args []string) error {
 		targetName = strings.TrimSpace(parts[1])
 	}
 
-	// Find scroll in inventory
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.Send("You don't have that item.")
+	item := s.manager.world.FindCarriedVis(s.player, itemName)
+	if item == nil {
+		s.Send(fmt.Sprintf("You don't seem to have %s %s.", articleFor(itemName), itemName))
 		return nil
 	}
 

@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_use	recite	recite.no-arg	D1	command	oracle-green	recite-lookup	act.other.c:901-905	Empty arg yields "What do you want to recite?".
+do_use	recite	recite.not-carried	D2	command	oracle-green	recite-lookup	act.other.c:914-917	get_obj_in_list_vis miss yields "You don't seem to have a/an X.".
+do_use	recite	recite.inv-lookup-keyword	D2	command	delegated	quaff.inv-lookup-keyword	act.other.c:914	Carrying lookup keyword-prefix via the shared FindCarriedVis (getObjInInvVis); proven under quaff.
+do_use	recite	recite.wrong-type	D2	command	blocked	-	act.other.c:961-963	C: a non-scroll yields "You can only recite scrolls."; Go's cmdRecite uses a flexible type check + "You can't recite that.". Follow-up.
+do_use	recite	recite.effect	D4	state	blocked	-	spell_parser.c:mag_objectmagic	Scroll spell casting; shares the mag_objectmagic subsystem with quaff/use. Separate follow-up.
