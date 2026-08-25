@@ -81,6 +81,29 @@ ssh root@192.168.1.121 "\
   journalctl -u dark-pawns.service --no-pager -n 30"
 ```
 
+> **The restart can block for up to ~90s.** If the outgoing binary does not exit
+> on SIGTERM, systemd waits out `TimeoutStopSec` (~90s) and then SIGKILLs the
+> process group (`Main process exited, code=killed, status=9/KILL`; the *stop*
+> records `Result=timeout`). The combined swap+restart `ssh` above will stay open
+> for that whole window, so a client-side timeout shorter than ~90s will cut the
+> connection **while the restart is still finishing** — this is expected, not a
+> failure, and the new process still comes up. Do **not** re-run the restart.
+> Instead re-`ssh` and inspect, distinguishing "still finishing" from
+> "crash-looping":
+>
+> ```bash
+> ssh root@192.168.1.121 "\
+>   systemctl show dark-pawns.service \
+>     -p ActiveState,SubState,MainPID,NRestarts,Result,ExecMainStartTimestamp"
+> ```
+>
+> A healthy result is `ActiveState=active`, `Result=success`, `NRestarts=0`, and a
+> `MainPID`/`ExecMainStartTimestamp` dated *after* you triggered the deploy. A
+> climbing `NRestarts` or a start timestamp that keeps moving means it is
+> crash-looping — roll back. A forced SIGKILL of the *outgoing* process is safe
+> only when no players are connected (world state is file-loaded and persistence
+> is in Postgres); with players online, prefer a graceful window.
+
 Confirm startup logs include a successful database connection. Healthy HTTP
 alone does not prove persistence is available.
 
