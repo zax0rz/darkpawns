@@ -66,6 +66,10 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = nil
 	case SpellArmor:
 		aff = engine.NewAffect(SpellArmor, engine.ApplyAC, 24, -15, "armor")
+		// C magic.c to_vict. The to_self "The magick protects $M." line for a
+		// cast-on-another (ch != victim) is a tracked follow-up (needs an
+		// objective-pronoun helper), shared with detect-invis above.
+		sendToVictim(victim, "You feel someone protecting you.\r\n")
 	case SpellBlindness, SpellSmokescreen:
 		if saved {
 			if spellNum == SpellBlindness {
