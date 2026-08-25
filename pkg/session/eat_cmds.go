@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
-	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // cmdEat implements the eat command.
@@ -71,64 +71,21 @@ func cmdQuaff(s *Session, args []string) error {
 		broadcastToRoom(s, fmt.Sprintf("%s quaffs %s.", s.player.Name, item.GetShortDesc()))
 	}
 
-	// Apply potion effects
-	// In C: for i=1; i<4; i++ call_magic(ch, ch, NULL, GET_OBJ_VAL(obj, i), GET_OBJ_VAL(obj, 0), CAST_POTION)
-	// Values[0] = spell level, Values[1-3] = spell numbers
-	// For now, apply object affects as stat modifiers
-	if item.Prototype != nil {
-		for _, aff := range item.Prototype.Affects {
-			applyAffect(s.player, aff.Location, aff.Modifier, item.GetShortDesc())
+	// Fire the potion's spells. C mag_objectmagic ITEM_POTION casts each of
+	// GET_OBJ_VAL(obj, 1..3) via call_magic(ch, ch, NULL, val, GET_OBJ_VAL(obj, 0),
+	// CAST_POTION), breaking as soon as one returns 0 (spell_parser.c:711-715).
+	// call_magic returns false for a zero/negative or unknown spellnum, so the
+	// break also handles the -1/0 sentinel spell slots on single-spell potions.
+	level := item.GetValue(0)
+	for i := 1; i < 4; i++ {
+		if !spells.CallMagic(s.player, s.player, nil, item.GetValue(i), level, spells.CastPotion, s.manager.world) {
+			break
 		}
 	}
 
-	// Remove potion from inventory
+	// Remove potion from inventory (C extract_obj after the cast loop).
 	s.player.Inventory.RemoveItem(item)
 	s.markDirty(VarInventory)
 
 	return nil
-}
-
-// applyAffect applies a stat/HP/mana/move modifier from a potion affect.
-// Location values from CircleMUD structs.h APPLY_* constants.
-func applyAffect(p *game.Player, location, modifier int, source string) {
-	switch location {
-	case 1: // APPLY_STR
-		p.Stats.Str += modifier
-	case 2: // APPLY_DEX
-		p.Stats.Dex += modifier
-	case 3: // APPLY_INT
-		p.Stats.Int += modifier
-	case 4: // APPLY_WIS
-		p.Stats.Wis += modifier
-	case 5: // APPLY_CON
-		p.Stats.Con += modifier
-	case 12: // APPLY_HIT (HP)
-		p.Health += modifier
-		if p.Health > p.MaxHealth {
-			p.Health = p.MaxHealth
-		}
-		if p.Health < 0 {
-			p.Health = 0
-		}
-	case 13: // APPLY_MANA
-		p.Mana += modifier
-		if p.Mana > p.MaxMana {
-			p.Mana = p.MaxMana
-		}
-		if p.Mana < 0 {
-			p.Mana = 0
-		}
-	case 14: // APPLY_MOVE
-		p.Move += modifier
-		if p.Move > p.MaxMove {
-			p.Move = p.MaxMove
-		}
-		if p.Move < 0 {
-			p.Move = 0
-		}
-	case 17: // APPLY_HITROLL
-		p.Hitroll += modifier
-	case 18: // APPLY_DAMROLL
-		p.Damroll += modifier
-	}
 }

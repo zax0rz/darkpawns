@@ -183,6 +183,9 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffectDirect(SpellDetectMagic, engine.ApplyNone, 12+level, 0, engine.AFFDetectMagic, "detect magic")
 	case SpellDetectInvis:
 		aff = engine.NewAffectDirect(SpellDetectInvis, engine.ApplyNone, 12+level, 0, engine.AFFDetectInvisible, "detect invis")
+		// C magic.c:1019 to_vict. The to_self streak-of-yellow-light message for
+		// a cast-on-another (ch != victim) is a tracked follow-up.
+		sendToVictim(victim, "Your eyes tingle.\r\n")
 	case SpellInfravision:
 		aff = engine.NewAffectDirect(SpellInfravision, engine.ApplyNone, 12+level, 0, engine.AFFInfrared, "infravision")
 		joinAffect(victim, aff, true, false)
