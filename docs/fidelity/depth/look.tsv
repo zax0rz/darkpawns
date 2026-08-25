@@ -1,0 +1,16 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_look	look	look.position-gate	D1	command	unit-green	TestLookGates	act.informative.c:1105-1108	Position below sleeping yields "You can't see anything but stars!".
+do_look	look	look.blind-gate	D1	command	unit-green	TestLookGates	act.informative.c:1109-1113	Blindness yields "You can't see a damned thing, you're blind!".
+do_look	look	look.room	D2	command	oracle-green	look-basic	act.informative.c:1122-1123	"look" alone observes the room.
+do_look	look	look.direction	D2	command	oracle-green	look-basic	act.informative.c:1127-1128	"look <dir>" looks through an exit.
+do_look	look	look.not-found	D2	command	oracle-green	look-basic	act.informative.c:1131-1132	"look <missing>" reports it is not here.
+do_look	look	look.at-target	D2	command	oracle-green	look-basic	act.informative.c:1129-1130	"look at <obj>" shows the object description.
+do_look	look	look.look-target	D2	command	oracle-green	look-basic	act.informative.c:1131-1132	"look <obj>" (no at) shows the object description.
+do_look	look	look.read-no-arg	D1	command	oracle-green	look-basic	act.informative.c:1116-1117	"read" alone yields "Read what?".
+do_look	look	look.read-target	D2	command	oracle-green	look-basic	act.informative.c:1118	"read <obj>" shows the object description / note text.
+look_in_obj	look	look.lookin-no-arg	D1	command	oracle-green	look-basic	act.informative.c:947-948	"look in" alone yields "Look in what?".
+look_in_obj	look	look.lookin-not-found	D2	command	oracle-green	look-basic	act.informative.c:949-953	"look in <missing>" yields "There doesn't seem to be a/an X here.".
+look_in_obj	look	look.lookin-not-container	D2	command	oracle-green	look-basic	act.informative.c:954-957	"look in <non-container>" yields "There's nothing inside that!".
+look_in_obj	look	look.lookin-closed	D2	command	oracle-green	look-basic	act.informative.c:959-960	"look in <closed>" yields "It is closed.".
+look_in_obj	look	look.lookin-container-contents	D3	command	blocked	-	act.informative.c:960	Open-container display (header fname-casing + mode-15 content table): container-contents ordering, a flag-annotation format, and a harness normalizer interaction, all shared with the inventory command (never oracle-tested with items). Owner: mode-15 list rendering fidelity (separate).
+get_obj_in_list_vis	look	look.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get.
