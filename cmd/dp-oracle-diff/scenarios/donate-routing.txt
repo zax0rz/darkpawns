@@ -1,0 +1,82 @@
+# depth-case: donate.success
+# depth-case: donate.room-audience
+# depth-case: donate.appear-at-destination
+# depth-case: donate.routing-parity
+# depth-case: donate.appear-capitalization
+# Donating an item with a peer standing in donation room 1 (8053, wired in
+# with a disposable exit fixture). The peer transcript proves the "$p
+# suddenly appears in a puff a smoke!" delivery (C typo kept) when the
+# number(0,3) draw routes to room 1; draw 0 shows C's "Sorry" rejection
+# instead. Run multi-seed (R3): the C and Go draws must take the same
+# branch for every seed.
+
+[fixture]
+quiet-mobs
+spawn-obj 8010 99 8162 80
+replace-room-exits 8162 north 8053 0
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[probe]
+get bread
+donate bread
+~dpclock pulse 20
+~dpclock pulse 20

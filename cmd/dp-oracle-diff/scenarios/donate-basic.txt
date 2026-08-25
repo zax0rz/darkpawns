@@ -1,0 +1,48 @@
+# depth-case: donate.no-arg
+# depth-case: donate.not-carried
+# depth-case: donate.all-gate
+# depth-case: donate.alldot-none
+# depth-case: donate.gold-zero
+# The SCMD_DONATE argument gates. NOTE: C rolls number(0,3) before parsing,
+# and the draw-0 arm leaves RDR==NOWHERE, so even `donate` with no argument
+# can hit "Sorry, you can't donate anything right now." — run multi-seed
+# (R3): every seed must agree on which side of the draw each command took.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+donate
+donate bread
+donate all
+donate all.bread
+donate 0 coins

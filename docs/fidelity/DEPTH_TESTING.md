@@ -123,6 +123,23 @@ durable evidence; prose percentages are only snapshots.
   probabilistic prototypes need the new `force-load <vnum>` fixture; boot-loaded
   vnums need spawn max headroom.
 
+## Dated Handoff: 2026-08-25 (disposal round)
+
+- The object-disposal family (`junk`, `donate` — both `do_drop` subcommands;
+  `sacrifice` does not exist in the C command table) is captured in
+  `docs/fidelity/depth/disposal.tsv`, 27/28 proven/delegated. Junk is fully
+  oracle-green; donate's `number(0,3)` routing draw was proven to take the same
+  branch on both servers across six seeds (R3), with a peer standing in
+  donation room 1 via a `replace-room-exits` fixture.
+- That peer exposed a real R1 divergence: C `act()` uppercases the assembled
+  message (`CAP(lbuf)`, comm.c:2477), so donation-room appear lines render
+  "A loaf of bread suddenly appears..." — Go emitted them lowercase. Fixed for
+  the item and gold appear lines; the gold line is unit-proven (newbie
+  characters hold no gold — the `drop.gold-success` unit-test precedent).
+- A near-miss worth recording: the donate draw-0 arm leaves `RDR = 0`, and
+  `NOWHERE` is -1, so C's "Sorry, you can't donate anything right now." gate
+  never fires mid-draw; Go's mode-gated room check matches C exactly. Read the
+  defines before "fixing" gates (R5e).
 ## Dated Handoff: 2026-08-25 (position round)
 
 - The position-command family (`stand`, `sit`, `rest`, `sleep`, `wake`) is a
