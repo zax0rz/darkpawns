@@ -1,0 +1,71 @@
+# depth-case: objmagic.fly.to-vict
+# depth-case: objmagic.fly.to-room
+# Potion 21210 casts a single fly (spell 53). C to_vict "Your feet rise off the ground!" and to_room "$n's feet rise off the ground!" (magic.c:1137-1138); the peer transcript proves the room line.
+
+[fixture]
+quiet-mobs
+spawn-obj 21210 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get elixir
+quaff elixir
+~dpclock pulse 20
+~dpclock pulse 20

@@ -1,0 +1,41 @@
+# depth-case: objmagic.detect-magic.to-vict
+# Potion 20020 casts a single detect magic (spell 20). C to_vict: "Your eyes tingle." (magic.c:1028). Spawn uses max 99 because zone 43 also loads this vnum at boot.
+
+[fixture]
+quiet-mobs
+spawn-obj 20020 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get champagne
+quaff champagne
+~dpclock pulse 20
+~dpclock pulse 20

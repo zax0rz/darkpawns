@@ -1,0 +1,41 @@
+# depth-case: objmagic.change-density.to-vict
+# Potion 21208 casts a single change density (spell 74). C to_vict: "Your molecular density shifts." (magic.c:1283).
+
+[fixture]
+quiet-mobs
+spawn-obj 21208 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get bright
+quaff bright
+~dpclock pulse 20
+~dpclock pulse 20

@@ -1,0 +1,76 @@
+# depth-case: objmagic.infravision.to-vict
+# depth-case: objmagic.infravision.to-room
+# Self-recited infravision scroll (2122, single affect spell, zero RNG).
+# C mag_affects emits to_vict "Your eyes glow red." and to_room "$n's
+# eyes glow red." (magic.c:1037-1038); to_self stays silent because the
+# reciter targets themself (magic.c:1414 gates to_self on ch != victim).
+# The peer transcript proves the room line.
+
+[fixture]
+quiet-mobs
+force-load 2122
+spawn-obj 2122 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get parchament
+recite parchament
+~dpclock pulse 20
+~dpclock pulse 20
