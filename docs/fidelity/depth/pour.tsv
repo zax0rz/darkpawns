@@ -5,6 +5,7 @@ do_pour	pour	pour.cant-find	D2	command	oracle-green	pour-basic	act.item.c:1174-1
 do_pour	pour	pour.cant-pour-from	D2	command	oracle-green	pour-basic	act.item.c:1178-1181	pour from a non-drinkcon yields "You can't pour from that!".
 do_pour	pour	pour.no-dest	D2	command	oracle-green	pour-basic	act.item.c:1229-1232	pour with no destination yields "Where do you want it?  Out or in what?".
 do_pour	pour	pour.pour-out	D3	command	oracle-green	pour-basic	act.item.c:1234-1240	"pour X out" empties the container: "You empty $p." and "$n empties $p.".
+do_pour	pour	pour.pour-out-refind	D4	state	oracle-green	pour-out-refind	act.item.c:name_from_drinkcon	After pour-out, C name_from_drinkcon strips the container's first keyword word (obj->name); a container with no liquid prefix loses its real keyword and can't be re-found. Go now mirrors this in clearDrinkconName (keywords, not short desc) and resolves pour targets via getObjInInvVis (keyword-only).
 do_pour	pour	pour.fill-from-not-fountain	D2	command	oracle-green	pour-basic	act.item.c:1210-1214	fill from a non-fountain yields "You can't fill something from $p.".
 do_pour	pour	pour.pour-in-success	D3	command	oracle-green	pour-multi	act.item.c:1290-1296	"You pour the <liquid> into the <cont>." Needs a second drinkcon fixture to oracle; multi-container staging follow-up.
 do_pour	pour	pour.fill-success	D3	command	oracle-green	pour-multi	act.item.c:1300-1302	"You gently fill $p from $P." Needs a fountain fixture to oracle; follow-up.

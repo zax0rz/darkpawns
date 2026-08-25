@@ -253,7 +253,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 			Act(nil, false, ch, nil, nil, nil, "From what do you want to pour?", "", ToChar)
 			return
 		}
-		fromObj, _ = ch.Inventory.FindItem(arg1)
+		fromObj = getObjInInvVis(ch, arg1)
 		if fromObj == nil {
 			Act(nil, false, ch, nil, nil, nil, "You can't find it!", "", ToChar)
 			return
@@ -267,7 +267,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 			ch.SendMessage("What do you want to fill?  And what are you filling it from?\r\n")
 			return
 		}
-		toObj, _ = ch.Inventory.FindItem(arg1)
+		toObj = getObjInInvVis(ch, arg1)
 		if toObj == nil {
 			ch.SendMessage("You can't find it!\r\n")
 			return
@@ -329,7 +329,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 			return
 		}
 
-		toObj, _ = ch.Inventory.FindItem(arg2)
+		toObj = getObjInInvVis(ch, arg2)
 		if toObj == nil {
 			Act(nil, false, ch, nil, nil, nil, "You can't find it!", "", ToChar)
 			return
@@ -415,32 +415,22 @@ func (w *World) findObjectInRoomByName(roomVNum int, name string) *ObjectInstanc
 	return nil
 }
 
-// setDrinkconName prefixes the object's short description with the liquid name,
-// reproducing C name_to_drinkcon().
+// setDrinkconName prepends the liquid's keyword name to the container's KEYWORD
+// list, reproducing C name_to_drinkcon() (which links drinknames[type] onto
+// obj->name). C does NOT touch the short description, and it does not dedupe.
 func setDrinkconName(obj *ObjectInstance, liq int) {
-	prefix := DrinkName(liq)
-	if prefix == "" || prefix == "unknown" {
-		return
-	}
-	base := obj.GetShortDesc()
-	// Avoid double-prefixing.
-	if strings.HasPrefix(strings.ToLower(base), strings.ToLower(prefix)+" ") {
-		return
-	}
-	obj.Runtime.ShortDescOverride = fmt.Sprintf("%s %s", prefix, base)
+	obj.Runtime.Keywords = DrinkKeyword(liq) + " " + obj.GetKeywords()
 }
 
-// clearDrinkconName strips the leading liquid-name prefix, reproducing C
-// name_from_drinkcon().
+// clearDrinkconName strips the first (liquid-name) word from the container's
+// KEYWORD list, reproducing C name_from_drinkcon(): it removes everything up to
+// and including the first space, unconditionally — so a container whose keyword
+// list has no liquid prefix loses its real first keyword. If there is no space,
+// the name is left unchanged.
 func clearDrinkconName(obj *ObjectInstance) {
-	if obj.Runtime.ShortDescOverride == "" {
-		return
-	}
-	fields := strings.Fields(obj.Runtime.ShortDescOverride)
-	if len(fields) > 1 {
-		obj.Runtime.ShortDescOverride = strings.Join(fields[1:], " ")
-	} else {
-		obj.Runtime.ShortDescOverride = ""
+	kw := obj.GetKeywords()
+	if i := strings.IndexByte(kw, ' '); i >= 0 {
+		obj.Runtime.Keywords = kw[i+1:]
 	}
 }
 
