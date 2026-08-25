@@ -1,0 +1,34 @@
+# depth-case: examine.no-arg
+# depth-case: examine.non-container
+[fixture]
+quiet-mobs
+[setup:oracle]
+Examiner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Examiner
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+examine
+examine sword
