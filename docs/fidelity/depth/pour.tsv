@@ -6,6 +6,6 @@ do_pour	pour	pour.cant-pour-from	D2	command	oracle-green	pour-basic	act.item.c:1
 do_pour	pour	pour.no-dest	D2	command	oracle-green	pour-basic	act.item.c:1229-1232	pour with no destination yields "Where do you want it?  Out or in what?".
 do_pour	pour	pour.pour-out	D3	command	oracle-green	pour-basic	act.item.c:1234-1240	"pour X out" empties the container: "You empty $p." and "$n empties $p.".
 do_pour	pour	pour.fill-from-not-fountain	D2	command	oracle-green	pour-basic	act.item.c:1210-1214	fill from a non-fountain yields "You can't fill something from $p.".
-do_pour	pour	pour.pour-in-success	D3	command	blocked	-	act.item.c:1290-1296	"You pour the <liquid> into the <cont>." Needs a second drinkcon fixture to oracle; multi-container staging follow-up.
-do_pour	pour	pour.fill-success	D3	command	blocked	-	act.item.c:1300-1302	"You gently fill $p from $P." Needs a fountain fixture to oracle; follow-up.
-find_all_dots	pour	pour.liquid-conflict	D2	command	blocked	-	act.item.c:1283-1286	"There is already another liquid in it!" / "There is no room for more." Needs two-drinkcon staging; follow-up.
+do_pour	pour	pour.pour-in-success	D3	command	oracle-green	pour-multi	act.item.c:1290-1296	"You pour the <liquid> into the <cont>." Needs a second drinkcon fixture to oracle; multi-container staging follow-up.
+do_pour	pour	pour.fill-success	D3	command	oracle-green	pour-multi	act.item.c:1300-1302	"You gently fill $p from $P." Needs a fountain fixture to oracle; follow-up.
+find_all_dots	pour	pour.liquid-conflict	D2	command	oracle-green	pour-multi	act.item.c:1283-1286	"There is already another liquid in it!" / "There is no room for more." Needs two-drinkcon staging; follow-up.
