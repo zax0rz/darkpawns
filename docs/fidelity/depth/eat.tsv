@@ -1,5 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_eat	eat	eat.no-arg	D1	command	oracle-green	eat-basic	act.item.c:1043-1047	Empty arg yields "Eat what?".
+do_eat	eat	eat.inv-lookup-keyword	D2	command	oracle-green	drink-eat-lookup	act.item.c:1043-1056	Inventory lookup uses C get_obj_in_list_vis (keyword prefix via getObjInInvVis), not Inventory.FindItem which also matched the short description / interior substring. A short-desc-only arg ("of", "water" on a stripped-keyword skin) must miss.
 do_eat	eat	eat.not-carried	D2	command	oracle-green	eat-basic	act.item.c:1049-1056	Not carried (non-werewolf) yields "You don't seem to have a/an X.".
 do_eat	eat	eat.not-food	D2	command	oracle-green	eat-basic	act.item.c:1099-1102	A non-food below god yields "You can't eat THAT!".
 do_eat	eat	eat.taste-drinkcon	D2	command	oracle-green	eat-basic	act.item.c:1092-1096	taste on a drinkcon/fountain delegates to do_drink SCMD_SIP.

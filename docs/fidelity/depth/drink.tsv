@@ -1,5 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_drink	drink	drink.no-arg	D1	command	oracle-green	drink-basic	act.item.c:903-907	Empty arg yields "Drink from what?".
+do_drink	drink	drink.inv-lookup-keyword	D2	command	oracle-green	drink-eat-lookup	act.item.c:908-916	Inventory lookup uses C get_obj_in_list_vis (keyword prefix via getObjInInvVis), not Inventory.FindItem which also matched the short description / interior substring. A short-desc-only arg ("of", "water" on a stripped-keyword skin) must miss.
 do_drink	drink	drink.cant-find	D2	command	oracle-green	drink-basic	act.item.c:908-916	Not in inventory or room yields "You can't find it!".
 do_drink	drink	drink.cant-drink-from	D2	command	oracle-green	drink-basic	act.item.c:917-921	A non-drinkcon/fountain yields "You can't drink from that!".
 do_drink	drink	drink.success	D3	command	oracle-green	drink-basic	act.item.c:958-963	"You drink the <liquid>." and condition gains.
