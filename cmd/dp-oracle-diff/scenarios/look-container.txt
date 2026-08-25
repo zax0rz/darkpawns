@@ -1,0 +1,35 @@
+# depth-case: look.lookin-container-contents
+# depth-case: examine.container-contents
+[fixture]
+quiet-mobs
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open pack
+look in pack
+examine pack

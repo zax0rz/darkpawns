@@ -23,6 +23,7 @@ type ObservationResult struct {
 type ObservationMessage struct {
 	Format        string
 	Literal       bool
+	Raw           bool
 	HideInvisible bool
 	Actor         Actor
 	Target        Actor
@@ -65,6 +66,17 @@ func (r *ObservationResult) literal(ch *Player, text string) {
 	})
 }
 
+// raw queues a block sent verbatim via SendMessage — bypassing act(), so it is
+// neither capitalized nor $-substituted. Mirrors C send_to_char for list output
+// (inventory / look-in container). Ordering is preserved with other messages.
+func (r *ObservationResult) raw(ch *Player, text string) {
+	r.Messages = append(r.Messages, ObservationMessage{
+		Format: text,
+		Raw:    true,
+		Actor:  ch,
+	})
+}
+
 func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, format string) {
 	r.Messages = append(r.Messages, ObservationMessage{
 		Format: format,
@@ -79,6 +91,12 @@ func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, f
 // canonical act() delivery path.
 func (w *World) RenderObservationMessages(result ObservationResult) {
 	for _, message := range result.Messages {
+		if message.Raw {
+			if p, ok := message.Actor.(*Player); ok && p != nil {
+				p.SendMessage(message.Format)
+			}
+			continue
+		}
 		format := message.Format
 		if message.Literal {
 			format = strings.ReplaceAll(format, "$", "$$")
@@ -526,15 +544,11 @@ func (w *World) DoLookIn(ch *Player, arg string) ObservationResult {
 			observationRoom:      "here",
 			observationEquipment: "used",
 		}[location]
-		result.literal(ch, fmt.Sprintf("%s (%s): ", fname(object.GetKeywords()), where))
-		contents := visibleObjectShortLines(ch, object.GetContents())
-		if len(contents) == 0 {
-			result.literal(ch, "Nothing.")
-		} else {
-			for _, line := range contents {
-				result.literal(ch, line)
-			}
-		}
+		// C look_in_obj sends the header (fname) and the mode-15 content list
+		// raw via send_to_char — NOT through act() — so neither is capitalized,
+		// and the contents use the same Num/Item/Encumbrance table as inventory.
+		result.raw(ch, fmt.Sprintf("%s (%s): \r\n", fname(object.GetKeywords()), where)+
+			w.renderObjectListMode15(ch, object.GetContents()))
 		return result
 	}
 
@@ -939,16 +953,6 @@ func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string,
 		}
 	}
 	return "", false
-}
-
-func visibleObjectShortLines(ch *Player, objects []*ObjectInstance) []string {
-	var lines []string
-	for _, object := range objects {
-		if object != nil && chCanSeeObj(ch, object) {
-			lines = append(lines, object.GetShortDesc()+objectVisibleFlags(ch, object))
-		}
-	}
-	return lines
 }
 
 func (w *World) playerPresenceLine(player, viewer *Player) string {

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_examine	examine	examine.no-arg	D1	command	oracle-green	examine-basic	act.informative.c:1143-1147	Empty arg yields "Examine what?".
 do_examine	examine	examine.non-container	D2	command	oracle-green	examine-basic	act.informative.c:1148	examine of a non-container shows the object description only (look_at_target).
-do_examine	examine	examine.container-contents	D3	command	blocked	-	act.informative.c:1160-1164	examine of a container appends "When you look inside, you see:" + look_in_obj; shares look.lookin-container-contents' mode-15 blocker.
+do_examine	examine	examine.container-contents	D3	command	oracle-green	look-container	act.informative.c:1160-1164	examine appends "When you look inside, you see:" + look_in_obj; shares look.lookin-container-contents' now-green mode-15 rendering.
 one_argument	examine	examine.fill-word-parse	D2	shared	delegated	get.fill-word-parse	interpreter.c:1265	examine parses with one_argument, already faithful.
