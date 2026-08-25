@@ -1,0 +1,70 @@
+# depth-case: objmagic.armor.to-self
+# Reciting the crystal scroll (11701, single armor spell) at the male peer proves the to_self dispatch gate: the caster — not the victim — receives "The magick protects $M." with $M substituted to "him" (magic.c:909, 1414-1415). The peer transcript carries to_vict "You feel someone protecting you."
+
+[fixture]
+quiet-mobs
+spawn-obj 11701 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get crystal
+recite crystal Barnaby
+~dpclock pulse 20
+~dpclock pulse 20

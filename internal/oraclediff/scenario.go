@@ -34,6 +34,7 @@ type Scenario struct {
 	QuietAllMobs     bool
 	EmptyPlayers     bool
 	ScriptlessMobIDs []int
+	ForceLoadVNums   []int
 	RoomExitFixtures []RoomExitFixture
 	RoomFlagFixtures []RoomFlagFixture
 	RoomSectors      []RoomSectorFixture
@@ -131,6 +132,7 @@ type AudienceProbeBlock struct {
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	strip-mob-script 18306    # force native special dispatch in both copies
+//	force-load 4903           # rewrite the prototype load percent to 500% in both copies
 //	replace-room-exits 8162 none
 //	replace-room-exits 8162 all 8161 0
 //	replace-room-exits 8162 north 8161 1 gate
@@ -311,6 +313,13 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				mobVNum, mobErr := strconv.Atoi(fields[1])
 				if mobErr == nil && mobVNum > 0 {
 					sc.ScriptlessMobIDs = append(sc.ScriptlessMobIDs, mobVNum)
+					continue
+				}
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "force-load") {
+				objVNum, objErr := strconv.Atoi(fields[1])
+				if objErr == nil && objVNum > 0 {
+					sc.ForceLoadVNums = append(sc.ForceLoadVNums, objVNum)
 					continue
 				}
 			}

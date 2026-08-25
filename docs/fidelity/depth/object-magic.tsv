@@ -1,0 +1,54 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+mag_affects	quaff	objmagic.bless.to-vict	D3	shared	oracle-green	quaff-bless	magic.c:912-926	Potion 7001 self-quaff emits to_vict "You feel righteous."; RED on pre-fix main.
+mag_affects	quaff	objmagic.bless.to-self	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:925	to_self "You bestow the blessing of your gods on $M."; no cross-target bless item exists, so bytes are unit-proven.
+mag_affects	quaff	objmagic.detect-magic.to-vict	D3	shared	oracle-green	quaff-detect-magic	magic.c:1024-1031	Potion 20020; to_vict "Your eyes tingle."; spawn uses max 99 (zone 43 also loads the vnum).
+mag_affects	quaff	objmagic.detect-magic.to-self	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1029-1030	to_self with verbatim C typo "A streak blue light courses from your fingertips".
+mag_affects	quaff	objmagic.change-density.to-vict	D3	shared	oracle-green	quaff-change-density	magic.c:1278-1290	Potion 21208; to_vict "Your molecular density shifts."; RED on pre-fix main.
+mag_affects	quaff	objmagic.change-density.to-self	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1284	to_self "You shift $S molecular density."
+mag_affects	quaff	objmagic.invulnerability.to-vict	D3	shared	oracle-green	quaff-invulnerability	magic.c:1316-1328	Potion 4904 (force-load fixture: boot load percent is 40); to_vict "A globe of protection appears around you!"
+mag_affects	quaff	objmagic.chameleon.to-vict	D3	shared	oracle-green	quaff-chameleon	magic.c:1292-1297	Potion 12126 (force-load fixture); to_vict "You blend into the surroundings."
+mag_affects	quaff	objmagic.sanctuary.to-vict	D3	shared	oracle-green	quaff-sanctuary	magic.c:1182-1197	Potion 19412; neutral quaffer gets the white-aura to_vict line.
+mag_affects	quaff	objmagic.sanctuary.to-room	D3	shared	oracle-green	quaff-sanctuary	magic.c:1195	Peer transcript proves "$n is surrounded by a white aura."; act TO_ROOM excludes only the victim.
+mag_affects	quaff	objmagic.sanctuary.evil-variant	D3	shared	unit-green	TestMagAffectsMessages_SanctuaryAlignment	magic.c:1187-1191	Black-aura pair needs an evil victim; no zero-RNG item vehicle, unit-proven instead.
+mag_affects	quaff	objmagic.fly.to-vict	D3	shared	oracle-green	quaff-fly	magic.c:1132-1140	Potion 21210; to_vict "Your feet rise off the ground!"
+mag_affects	quaff	objmagic.fly.to-room	D3	shared	oracle-green	quaff-fly	magic.c:1138	Peer transcript proves "$n's feet rise off the ground!"
+mag_affects	quaff	objmagic.fly.to-self	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1139	to_self "Like a falling feather, your magick floats toward $M."; self-only potion vehicle.
+mag_affects	quaff	objmagic.prot-evil.to-vict	D3	shared	oracle-green	quaff-prot-evil	magic.c:1142-1160	Potion 4903 (force-load fixture); neutral quaffer survives the alignment kill-gate.
+mag_affects	quaff	objmagic.prot-evil.to-room	D3	shared	oracle-green	quaff-prot-evil	magic.c:1157-1158	Room line exercises both $n and $m substitutions ("...from $n's fingertips, covering $m!").
+mag_affects	quaff	objmagic.prot-good.to-vict	D3	shared	oracle-green	quaff-prot-good	magic.c:1162-1180	Potion 3137 (force-load fixture).
+mag_affects	quaff	objmagic.prot-good.to-room	D3	shared	oracle-green	quaff-prot-good	magic.c:1177-1178	Same silver-light room pair as prot-evil.
+mag_affects	recite	objmagic.armor.to-self	D3	shared	oracle-green	recite-armor-target	magic.c:909	Scroll 11701 recited at a male peer; caster receives "The magick protects him." ($M objective pronoun); RED on pre-fix main.
+mag_affects	recite	objmagic.armor.to-vict	D3	shared	delegated	recite.effect	magic.c:908	Already proven by the recite.effect manifest row (scroll 11701 self-recite).
+mag_affects	recite	objmagic.infravision.to-vict	D3	shared	oracle-green	recite-infravision	magic.c:1037	Scroll 2122 (force-load fixture) self-recite control case; port was already faithful, kept as live proof.
+mag_affects	recite	objmagic.infravision.to-room	D3	shared	oracle-green	recite-infravision	magic.c:1038	Peer transcript proves "$n's eyes glow red."
+mag_affects	recite	objmagic.infravision.to-self	D3	shared	oracle-green	recite-infravision-target	magic.c:1039	Targeted recite proves the ch != victim gate and $S: "With a light touch, you bestow the magick into his eyes."
+mag_affects	recite	objmagic.detect-invis.to-vict	D3	shared	delegated	quaff.potion-effect	magic.c:1019	Proven via potion 8051 under the quaff manifest.
+mag_affects	recite	objmagic.detect-invis.to-self	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1020-1021	to_self "A streak of yellow light courses from your hand, washing over $M!"
+mag_affects	quaff	objmagic.chill-touch.messages	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:888-900	to_vict "You feel your strength wither!" + to_self icy-hand line; save-gated so unit-proven with fixed save outcome.
+mag_affects	quaff	objmagic.haste.to-self-quirk	D5	shared	unit-green	TestMagAffectsMessages_HasteToSelfQuirk	magic.c:1042-1047	C quirk: haste's only line is to_self, so the caster (not the victim) sees "You feel your movement quicken!" and self-cast sees nothing.
+mag_affects	quaff	objmagic.slow.messages	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1049-1055	to_vict "You feel the world speed up around you." + to_self $S line.
+mag_affects	quaff	objmagic.strength.messages	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1250-1264	Shared adrenaline/strength arm: to_vict "You feel stronger!" + to_self "Grabbing $M, ...".
+mag_affects	quaff	objmagic.waterwalk.to-self	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1288	to_self "Your magic makes $M light footed."
+mag_affects	quaff	objmagic.mind-bar.messages	D3	shared	unit-green	TestMagAffectsMessages_CastOnOther	magic.c:1369-1378	to_vict numb line + to_self "You place a mental bar across $S mind."
+mag_affects	quaff	objmagic.invisible.messages	D3	shared	unit-green	TestMagAffectsMessages_RoomAudience	magic.c:1071-1084	to_vict "You vanish." + to_room "$n slowly fades out of existence."; no zero-RNG invisibility item.
+mag_affects	quaff	objmagic.transparency.messages	D3	shared	unit-green	TestMagAffectsMessages_RoomAudience	magic.c:1071-1084	Shares C's INVISIBLE arm; Go previously had no case at all (silent no-op). to_vict "Your skin turns transparent."
+mag_affects	quaff	objmagic.know-align.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1004-1013	Know-align string differs from detect-align: "Like a physical blow, emotions of others wash over you."
+mag_affects	quaff	objmagic.detect-align.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1010	to_vict "Your eyes tingle."
+mag_affects	quaff	objmagic.dream-travel.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1057-1062	to_vict "You feel the power of the Dream Lords surround you."
+mag_affects	quaff	objmagic.water-breathe.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1064-1069	to_vict "You feel your breath become colder."
+mag_affects	quaff	objmagic.sense-life.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1266-1271	Verbatim C typo "Your feel your awareness improve."
+mag_affects	quaff	objmagic.metalskin.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1299-1314	to_vict "Your skin turns metallic!"
+mag_affects	quaff	objmagic.psyshield.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1330-1337	to_vict "You feel a shield of energy form around you."
+mag_affects	quaff	objmagic.intellect.to-vict	D3	shared	unit-green	TestMagAffectsMessages_SelfTarget	magic.c:1360-1367	to_vict "Your head clears and you realize some of the secrets of life!"
+mag_affects	quaff	objmagic.greatpercept.messages	D3	shared	unit-green	TestMagAffectsMessages_RoomAudience	magic.c:1339-1348	to_vict + to_room "Your eyes glow briefly." pair.
+mag_affects	quaff	objmagic.lesspercept.messages	D3	shared	unit-green	TestMagAffectsMessages_RoomAudience	magic.c:1349-1358	Same brief-glow pair with different affect bits.
+mag_affects	quaff	objmagic.blindness.messages	D3	shared	unit-green	TestMagAffectsMessages_SaveBranches	magic.c:928-965	Unsaved: to_vict/to_room/to_self trio (room+to_self were missing); saved: caster-only fade line. Invented-message sweep also removed the Go-only caster line.
+mag_affects	quaff	objmagic.curse.messages	D3	shared	unit-green	TestMagAffectsMessages_SaveBranches	magic.c:967-1002	Replaced invented "You feel very unlucky."/"They are now cursed!" with C's to_vict "You feel very uncomfortable." + room/self lines; saved path sends NOEFFECT to the caster (audience fixed from victim).
+mag_affects	quaff	objmagic.poison.messages	D3	shared	unit-green	TestMagAffectsMessages_SaveBranches	magic.c:1086-1107	Removed invented "$n turns green..." caster line; added room/self lines; saved path sends NOEFFECT to the caster.
+mag_affects	quaff	objmagic.sleep.messages	D3	shared	unit-green	TestMagAffectsMessages_SaveBranches	magic.c:1199-1249	Fixed sleepy text to "You feel very sleepy...  Zzzz......", added "$n goes to sleep." room line, replaced invented immune/resist lines with C's room-only shake-head line, added the POS_SLEEPING gate.
+mag_affects	quaff	objmagic.flamestrike.messages	D3	shared	unit-green	TestMagAffectsMessages_SaveBranches	magic.c:1109-1130	Added to_vict/to_room/to_self trio on the unsaved path; saved path NOEFFECT audience already correct.
+mag_affects	quaff	objmagic.save-gated.oracle-parity	D5	shared	blocked	-	magic.c:890-1441	Live oracle proofs of save-gated spell flows (chill touch, blindness, curse, poison, sleep, flamestrike) need call_magic RNG-stream parity verification; out of scope per BRIEF-2026-08-25 round 1.
+mag_affects	quaff	objmagic.reapply-noeffect-gate	D4	shared	blocked	-	magic.c:1387-1404	C's mob-affection gate and the affected_by_spell && !accum NOEFFECT gate are not ported; a second quaff of the same affect diverges in both bytes and state.
+mag_affects	quaff	objmagic.waterwalk-duration-quirk	D4	shared	blocked	-	magic.c:1279	C's "4+reag?20:0" parses as (4+reag)?20:0 = always 20; Go uses 4+level/5. Affect-state fix for a future round (messages unchanged).
+mag_affects	quaff	objmagic.slow-aff-bit	D4	shared	blocked	-	magic.c:1051	C sets bitvector AFF_HASTE for SPELL_SLOW (quirk); Go applies AFFSlow. State divergence, kept for an affects-state round.
+mag_affects	quaff	objmagic.sleep-entry-gates	D2	shared	blocked	-	magic.c:1199-1227	Sleep's reagent, outlaw and level-window gates are unported; unreachable from object magic (TAR_NOT_SELF), belongs to the cast surface.

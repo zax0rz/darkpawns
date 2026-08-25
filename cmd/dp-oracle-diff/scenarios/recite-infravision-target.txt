@@ -1,0 +1,71 @@
+# depth-case: objmagic.infravision.to-self
+# Reciting the aged parchament (2122, single infravision spell) at the male peer proves the $S possessive substitution in to_self: "With a light touch, you bestow the magick into $S eyes." → "his eyes" (magic.c:1039). The peer transcript carries to_vict "Your eyes glow red."
+
+[fixture]
+quiet-mobs
+force-load 2122
+spawn-obj 2122 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get parchament
+recite parchament Barnaby
+~dpclock pulse 20
+~dpclock pulse 20

@@ -1,0 +1,72 @@
+# depth-case: objmagic.prot-good.to-vict
+# depth-case: objmagic.prot-good.to-room
+# Potion 3137 casts a single protection from good (spell 95). A neutral quaffer survives the alignment kill-gate; to_vict/to_room silver-light lines (magic.c:1175-1178).
+
+[fixture]
+quiet-mobs
+force-load 3137
+spawn-obj 3137 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get potion
+quaff potion
+~dpclock pulse 20
+~dpclock pulse 20

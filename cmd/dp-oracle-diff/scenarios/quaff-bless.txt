@@ -1,0 +1,41 @@
+# depth-case: objmagic.bless.to-vict
+# Potion 7001 casts a single bless (spell 3). C mag_affects' to_vict line is "You feel righteous." (magic.c:924). Quaff is the final probe step because C WAIT_STATEs PULSE_VIOLENCE on quaff (spell_parser.c:711) and the frozen-clock harness drains later input only after the wait decays.
+
+[fixture]
+quiet-mobs
+spawn-obj 7001 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get juice
+quaff juice
+~dpclock pulse 20
+~dpclock pulse 20

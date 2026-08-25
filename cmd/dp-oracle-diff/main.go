@@ -132,7 +132,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -154,6 +154,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		if err := applyObjectSpawnFixtures(goWorld, scenario.ObjectSpawns); err != nil {
 			return fmt.Errorf("apply Go port object spawn fixtures: %w", err)
+		}
+		if err := applyForceLoadFixtures(filepath.Join(oracleData, "world"), scenario.ForceLoadVNums); err != nil {
+			return fmt.Errorf("apply C oracle force-load fixtures: %w", err)
+		}
+		if err := applyForceLoadFixtures(goWorld, scenario.ForceLoadVNums); err != nil {
+			return fmt.Errorf("apply Go port force-load fixtures: %w", err)
 		}
 		if err := applyQuietZoneFixtures(filepath.Join(oracleData, "world"), scenario.QuietZones); err != nil {
 			return fmt.Errorf("apply C oracle quiet-zone fixtures: %w", err)
@@ -604,6 +610,82 @@ func makeScrollFixtureInert(worldDir string, objectVNum int) error {
 	}
 	if !changed {
 		return fmt.Errorf("object %d is not a scroll fixture", objectVNum)
+	}
+	updated := append([]byte{}, data[:start]...)
+	updated = append(updated, strings.Join(lines, "\n")...)
+	updated = append(updated, data[end:]...)
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat object file for %d: %w", objectVNum, err)
+	}
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
+		return fmt.Errorf("write object file for %d: %w", objectVNum, err)
+	}
+	return nil
+}
+
+// applyForceLoadFixtures rewrites one object prototype's load percent to a
+// always-true 500% in each server's disposable world copy. Circle gates every
+// zone-reset object load on percent_load (GET_OBJ_LOAD > uniform()*100), so a
+// low-percent prototype would load — or not — on a seeded RNG draw and make
+// spawn-obj fixtures probabilistic. The source world trees are never modified.
+func applyForceLoadFixtures(worldDir string, objectVNums []int) error {
+	for _, objectVNum := range objectVNums {
+		if err := forceObjectLoad(worldDir, objectVNum); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func forceObjectLoad(worldDir string, objectVNum int) error {
+	path := filepath.Join(worldDir, "obj", fmt.Sprintf("%d.obj", objectVNum/100))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read object file for %d: %w", objectVNum, err)
+	}
+	startMarker := fmt.Sprintf("#%d\n", objectVNum)
+	start := bytes.Index(data, []byte(startMarker))
+	if start < 0 {
+		return fmt.Errorf("object %d not found in %s", objectVNum, path)
+	}
+	end := bytes.Index(data[start+len(startMarker):], []byte("\n#"))
+	if end < 0 {
+		end = len(data) - start - len(startMarker)
+	}
+	end += start + len(startMarker)
+	record := string(data[start:end])
+	lines := strings.Split(record, "\n")
+	changed := false
+	for i := 0; i+2 < len(lines); i++ {
+		fields := strings.Fields(lines[i])
+		if len(fields) < 9 {
+			continue
+		}
+		validFlags := true
+		for _, field := range fields[:9] {
+			if _, parseErr := strconv.Atoi(field); parseErr != nil {
+				validFlags = false
+				break
+			}
+		}
+		if !validFlags {
+			continue
+		}
+		wcl := strings.Fields(lines[i+2])
+		if len(wcl) < 3 {
+			return fmt.Errorf("object %d has invalid weight/cost/load line %q", objectVNum, lines[i+2])
+		}
+		if _, parseErr := strconv.ParseFloat(wcl[2], 64); parseErr != nil {
+			return fmt.Errorf("object %d has invalid load percent %q", objectVNum, wcl[2])
+		}
+		wcl[2] = "500.00"
+		lines[i+2] = strings.Join(wcl, " ")
+		changed = true
+		break
+	}
+	if !changed {
+		return fmt.Errorf("object %d is not a force-load fixture candidate", objectVNum)
 	}
 	updated := append([]byte{}, data[:start]...)
 	updated = append(updated, strings.Join(lines, "\n")...)

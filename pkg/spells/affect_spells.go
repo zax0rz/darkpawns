@@ -48,8 +48,13 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 // magAffectsApply is the deterministic core of MagAffects. It applies the spell
 // affects for a given spell number assuming the saving throw result and reagent
 // bonus are already known. This makes the C affect table testable without RNG.
+// Messages follow C magic.c: each case only selects its to_vict/to_room/to_self
+// strings; the send block at the bottom reproduces the C dispatch order
+// (magic.c:1414-1421): to_self fires only when ch != victim, then to_vict,
+// then to_room.
 func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool, reag int, world interface{}) {
 	var aff *engine.Affect
+	var toVictim, toRoom, toSelf string
 
 	switch spellNum {
 	case SpellChillTouch:
@@ -58,18 +63,17 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			dur = 1
 		}
 		aff = engine.NewAffect(SpellChillTouch, engine.ApplyStr, dur, -1, "chill touch")
+		toVictim = "You feel your strength wither!\r\n"
+		toSelf = "Summoning the forces of magick, you press your icy hand against $M.\r\n"
 	case SpellBless:
-		aff = engine.NewAffect(SpellBless, engine.ApplyHitroll, 6, 2, "bless")
-		applyAffect(victim, aff)
-		aff = engine.NewAffect(SpellBless, engine.ApplySavingSpell, 6, -2, "bless")
-		applyAffect(victim, aff)
-		aff = nil
+		applyAffect(victim, engine.NewAffect(SpellBless, engine.ApplyHitroll, 6, 2, "bless"))
+		applyAffect(victim, engine.NewAffect(SpellBless, engine.ApplySavingSpell, 6, -2, "bless"))
+		toVictim = "You feel righteous.\r\n"
+		toSelf = "You bestow the blessing of your gods on $M.\r\n"
 	case SpellArmor:
 		aff = engine.NewAffect(SpellArmor, engine.ApplyAC, 24, -15, "armor")
-		// C magic.c to_vict. The to_self "The magick protects $M." line for a
-		// cast-on-another (ch != victim) is a tracked follow-up (needs an
-		// objective-pronoun helper), shared with detect-invis above.
-		sendToVictim(victim, "You feel someone protecting you.\r\n")
+		toVictim = "You feel someone protecting you.\r\n"
+		toSelf = "The magick protects $M.\r\n"
 	case SpellBlindness, SpellSmokescreen:
 		if saved {
 			if spellNum == SpellBlindness {
@@ -78,61 +82,76 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4 + reag), "blindness")
-		applyAffect(victim, aff)
-		aff = engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness")
-		applyAffect(victim, aff)
-		sendToVictim(victim, "You have been blinded!\r\n")
-		aff = nil
+		applyAffect(victim, engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4+reag), "blindness"))
+		applyAffect(victim, engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness"))
+		toVictim = "You have been blinded!\r\n"
+		toRoom = "$n seems to be blinded!\r\n"
+		toSelf = "A streak of blackness courses from your hand!\r\n"
 	case SpellCurse:
 		if saved {
-			sendToVictim(victim, "The spell had no effect.\r\n")
+			sendToCaster(ch, "Nothing seems to happen.\r\n")
 			npcRetaliate(victim, ch)
 			return
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
 		// AFF_CURSE flag affect
-		aff = engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse")
-		applyAffect(victim, aff)
+		applyAffect(victim, engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse"))
 		// Damroll penalty — C source: magic.c curse APPLY_DAMROLL affect (was constructed but never applied)
-		aff = engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse")
-		applyAffect(victim, aff)
+		applyAffect(victim, engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse"))
 		// Hitroll penalty — C source: magic.c curse also applies APPLY_HITROLL
-		aff = engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse")
-		applyAffect(victim, aff)
-		sendToVictim(victim, "You feel very unlucky.\r\n")
-		sendToCaster(ch, "They are now cursed!\r\n")
-		aff = nil
-	case SpellInvisible:
-		aff = engine.NewAffectDirect(SpellInvisible, engine.ApplyNone, 12+getLevel(ch)/4, 0, engine.AFFInvisible, "invisibility")
+		applyAffect(victim, engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse"))
+		toVictim = "You feel very uncomfortable.\r\n"
+		toRoom = "$n briefly glows red!\r\n"
+		toSelf = "A streak of red light courses from your hand!\r\n"
+	case SpellInvisible, SpellTransparency:
+		name := "invisibility"
+		if spellNum == SpellTransparency {
+			name = "transparency"
+		}
+		aff = engine.NewAffectDirect(spellNum, engine.ApplyNone, 12+getLevel(ch)/4, 0, engine.AFFInvisible, name)
+		if spellNum == SpellInvisible {
+			toVictim = "You vanish.\r\n"
+		} else {
+			toVictim = "Your skin turns transparent.\r\n"
+		}
+		toRoom = "$n slowly fades out of existence.\r\n"
 	case SpellSanctuary:
 		aff = engine.NewAffectDirect(SpellSanctuary, engine.ApplyNone, 4, 0, engine.AFFSanctuary, "sanctuary")
+		if isEvil(victim) {
+			toVictim = "A black aura momentarily surrounds you.\r\n"
+			toRoom = "$n is surrounded by a black aura.\r\n"
+		} else {
+			toVictim = "A white aura momentarily surrounds you.\r\n"
+			toRoom = "$n is surrounded by a white aura.\r\n"
+		}
 	case SpellSleep:
-		// MOB_NOSLEEP check — C source: magic.c sleep case MOB_FLAGGED(victim, MOB_NOSLEEP)
-		// MobFlagNosleep = 15 (pkg/game/mob_flags_bits.go)
+		// C magic.c:1229 folds MOB_NOSLEEP into the save gate; both arms
+		// produce the same room-only "shakes his head" line and no
+		// caster/victim bytes.
 		type npcSleepChecker interface {
 			IsNPC() bool
 			HasMobFlag(flag uint64) bool
 		}
+		nosleep := false
 		if ns, ok := victim.(npcSleepChecker); ok && ns.IsNPC() && ns.HasMobFlag(1<<15) {
-			sendToCaster(ch, "Your victim is immune to sleep!\r\n")
-			return
+			nosleep = true
 		}
-		if saved {
-			sendToVictim(victim, "You resist the spell!\r\n")
+		if nosleep || saved {
+			sendAffectRoom(victim, nil, "$n shakes his head wearily, but then snaps out of it!\r\n", world)
 			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep")
-		// Apply affect first, then set position to sleeping — C source: magic.c after affect_to_char()
-		applyAffect(victim, aff)
-		// Set victim position to POS_SLEEPING (4) — combat.PosSleeping
-		type poserSleep interface{ SetPosition(int) }
-		if p, ok := victim.(poserSleep); ok {
-			p.SetPosition(int(PosSleeping)) // PosSleeping = 4
+		applyAffect(victim, engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep"))
+		// C magic.c:1241-1247 — the sleepy lines and the position drop only
+		// happen to a victim still above POS_SLEEPING.
+		if getPos(victim) > int(PosSleeping) {
+			toVictim = "You feel very sleepy...  Zzzz......\r\n"
+			toRoom = "$n goes to sleep.\r\n"
+			type poserSleep interface{ SetPosition(int) }
+			if p, ok := victim.(poserSleep); ok {
+				p.SetPosition(int(PosSleeping)) // PosSleeping = 4
+			}
 		}
-		sendToVictim(victim, "You feel very sleepy... zzzzzz\r\n")
-		return
 	case SpellFlameStrike:
 		// C source: magic.c:1109-1129 — outdoor-only DOT with saving throw
 		if saved {
@@ -157,8 +176,12 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			dur = 1
 		}
 		aff = engine.NewAffectDirect(SpellFlameStrike, engine.ApplyNone, dur, 0, engine.AFFFlaming, "flamestrike")
+		toVictim = "A bolt of flame shoots down from the heavens and engulfs you!\r\n"
+		toRoom = "A bolt of flame shoots down from the heavens and engulfs $n!\r\n"
+		toSelf = "You call down a bolt of flame on $M!\r\n"
 	case SpellPoison:
 		if saved {
+			sendToCaster(ch, "Nothing seems to happen.\r\n")
 			npcRetaliate(victim, ch)
 			return
 		}
@@ -167,47 +190,61 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			dur = 1
 		}
 		// AFF_POISON flag affect
-		aff = engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison")
-		applyAffect(victim, aff)
+		applyAffect(victim, engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison"))
 		// C source: magic.c poison — APPLY_STR -2 and APPLY_HITROLL -2
-		aff = engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison")
-		applyAffect(victim, aff)
-		aff = engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison")
-		applyAffect(victim, aff)
-		sendToVictim(victim, "You feel very sick.\r\n")
-		sendToCaster(ch, "$n turns green as your poison takes hold.\r\n")
-		return
+		applyAffect(victim, engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison"))
+		applyAffect(victim, engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison"))
+		toVictim = "You feel very sick.\r\n"
+		toRoom = "$n gets violently ill!\r\n"
+		toSelf = "Your tainted magick pulses towards $M.\r\n"
 	case SpellHaste:
 		aff = engine.NewAffectDirect(SpellHaste, engine.ApplyNone, level, 0, engine.AFFHaste, "haste")
+		// C quirk (magic.c:1046): "You feel your movement quicken!" is a
+		// to_self line, so the caster sees it when ch != victim and the victim
+		// never does. Kept verbatim.
+		toSelf = "You feel your movement quicken!\r\n"
 	case SpellSlow:
 		aff = engine.NewAffectDirect(SpellSlow, engine.ApplyNone, level, 0, engine.AFFSlow, "slow")
-	case SpellFly:
-		aff = engine.NewAffectDirect(SpellFly, engine.ApplyNone, getLevel(ch), 0, engine.AFFFlying, "fly")
+		toVictim = "You feel the world speed up around you.\r\n"
+		toSelf = "You send the forces of time against $S!\r\n"
+	case SpellFly, SpellLevitate:
+		name := "fly"
+		if spellNum == SpellLevitate {
+			name = "levitate"
+		}
+		aff = engine.NewAffectDirect(spellNum, engine.ApplyNone, getLevel(ch), 0, engine.AFFFlying, name)
+		toVictim = "Your feet rise off the ground!\r\n"
+		toRoom = "$n's feet rise off the ground!\r\n"
+		toSelf = "Like a falling feather, your magick floats toward $M.\r\n"
 	case SpellDetectMagic:
 		aff = engine.NewAffectDirect(SpellDetectMagic, engine.ApplyNone, 12+level, 0, engine.AFFDetectMagic, "detect magic")
+		toVictim = "Your eyes tingle.\r\n"
+		// Verbatim C typo: "A streak blue light" (magic.c:1029).
+		toSelf = "A streak blue light courses from your fingertips, washing over $M!\r\n"
 	case SpellDetectInvis:
 		aff = engine.NewAffectDirect(SpellDetectInvis, engine.ApplyNone, 12+level, 0, engine.AFFDetectInvisible, "detect invis")
-		// C magic.c:1019 to_vict. The to_self streak-of-yellow-light message for
-		// a cast-on-another (ch != victim) is a tracked follow-up.
-		sendToVictim(victim, "Your eyes tingle.\r\n")
+		toVictim = "Your eyes tingle.\r\n"
+		toSelf = "A streak of yellow light courses from your hand, washing over $M!\r\n"
 	case SpellInfravision:
 		aff = engine.NewAffectDirect(SpellInfravision, engine.ApplyNone, 12+level, 0, engine.AFFInfrared, "infravision")
 		joinAffect(victim, aff, true, false)
-		sendToVictim(victim, "Your eyes glow red.\r\n")
-		if ch != victim {
-			sendToCaster(ch, "With a light touch, you bestow the magick into "+possessivePronoun(victim)+" eyes.\r\n")
-		}
-		sendAffectRoom(victim, nil, "$n's eyes glow red.\r\n", world)
-		return
+		aff = nil
+		toVictim = "Your eyes glow red.\r\n"
+		toRoom = "$n's eyes glow red.\r\n"
+		toSelf = "With a light touch, you bestow the magick into $S eyes.\r\n"
 	case SpellWaterBreathe:
 		aff = engine.NewAffectDirect(SpellWaterBreathe, engine.ApplyNone, getLevel(ch), 0, engine.AFFWaterBreathing, "water breathe")
+		toVictim = "You feel your breath become colder.\r\n"
 	case SpellDetectAlign, SpellKnowAlign:
 		aff = engine.NewAffectDirect(SpellDetectAlign, engine.ApplyNone, 12+level, 0, engine.AFFDetectAlign, "detect align")
+		if spellNum == SpellDetectAlign {
+			toVictim = "Your eyes tingle.\r\n"
+		} else {
+			toVictim = "Like a physical blow, emotions of others wash over you.\r\n"
+		}
 	case SpellDreamTravel:
 		aff = engine.NewAffectDirect(SpellDreamTravel, engine.ApplyNone, 6, 0, engine.AFFDream, "dream travel")
-	case SpellLevitate:
-		// Levitate uses same AFF flag as Fly
-		aff = engine.NewAffectDirect(SpellLevitate, engine.ApplyNone, getLevel(ch), 0, engine.AFFFlying, "levitate")
+		toVictim = "You feel the power of the Dream Lords surround you.\r\n"
 	case SpellProtFromEvil:
 		if isEvil(victim) {
 			sendToCaster(ch, "You cannot protect yourself from the Evil inside you!\r\n")
@@ -219,7 +256,8 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		}
 		// Set flag only — no stat modifier
 		applyAffect(victim, engine.NewAffectDirect(SpellProtFromEvil, engine.ApplyNone, 24, 0, engine.AFFProtectionEvil, "prot from evil"))
-		return
+		toVictim = "A stream of silver light surges from your fingertips, covering you!\r\n"
+		toRoom = "A stream of silver light surges from $n's fingertips, covering $m!\r\n"
 	case SpellProtFromGood:
 		if isGood(victim) {
 			sendToCaster(ch, "The forces of Light destroy you for your betrayal!\r\n")
@@ -230,39 +268,59 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			return
 		}
 		applyAffect(victim, engine.NewAffectDirect(SpellProtFromGood, engine.ApplyNone, 24, 0, engine.AFFProtectionGood, "prot from good"))
-		return
+		toVictim = "A stream of silver light surges from your fingertips, covering you!\r\n"
+		toRoom = "A stream of silver light surges from $n's fingertips, covering $m!\r\n"
 	case SpellAdrenaline, SpellStrength:
 		mag := 1 + boolToInt(level > 18)
 		if ch == victim && spellNum == SpellAdrenaline {
 			mag++
 		}
 		aff = engine.NewAffect(SpellStrength, engine.ApplyStr, (getLevel(ch)>>1)+4, mag, "strength")
+		toVictim = "You feel stronger!\r\n"
+		toSelf = "Grabbing $M, you feel a strong flow of magick course between you.\r\n"
 	case SpellSenseLife:
 		aff = engine.NewAffectDirect(SpellSenseLife, engine.ApplyNone, getLevel(ch), 0, engine.AFFSenseLife, "sense life")
+		// Verbatim C typo: "Your feel your awareness improve." (magic.c:1267).
+		toVictim = "Your feel your awareness improve.\r\n"
 	case SpellWaterwalk:
 		aff = engine.NewAffectDirect(SpellWaterwalk, engine.ApplyNone, 4+getLevel(ch)/5, 0, engine.AFFWaterwalk, "waterwalk")
+		toVictim = "You feel webbing between your toes.\r\n"
+		toSelf = "Your magic makes $M light footed.\r\n"
 	case SpellChangeDensity:
 		aff = engine.NewAffectDirect(SpellChangeDensity, engine.ApplyNone, 4+getLevel(ch)/5, 0, engine.AFFWaterwalk, "change density")
+		toVictim = "Your molecular density shifts.\r\n"
+		toSelf = "You shift $S molecular density.\r\n"
 	case SpellChameleon:
 		aff = engine.NewAffectDirect(SpellChameleon, engine.ApplyNone, getLevel(ch), 0, engine.AFFHide, "chameleon")
+		toVictim = "You blend into the surroundings.\r\n"
 	case SpellMetalskin:
 		applyAffect(victim, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"))
 		applyAffect(victim, engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
+		toVictim = "Your skin turns metallic!\r\n"
 	case SpellInvulnerability:
 		applyAffect(victim, engine.NewAffectDirect(SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln, "invulnerability"))
-		aff = engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability")
+		applyAffect(victim, engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability"))
+		toVictim = "A globe of protection appears around you!\r\n"
 	case SpellPsyshield:
 		aff = engine.NewAffect(SpellPsyshield, engine.ApplyAC, getLevel(ch)/2, -15, "psyshield")
+		toVictim = "You feel a shield of energy form around you.\r\n"
 	case SpellGreatPercept:
 		applyAffect(victim, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"))
-		aff = engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept")
+		applyAffect(victim, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept"))
+		toVictim = "Your eyes glow briefly.\r\n"
+		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellLessPercept:
 		applyAffect(victim, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"))
-		aff = engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept")
+		applyAffect(victim, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept"))
+		toVictim = "Your eyes glow briefly.\r\n"
+		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellIntellect:
 		aff = engine.NewAffect(SpellIntellect, engine.ApplyInt, 8, 1, "intellect")
+		toVictim = "Your head clears and you realize some of the secrets of life!\r\n"
 	case SpellMindBar:
 		aff = engine.NewAffectDirect(SpellMindBar, engine.ApplyNone, (level/2)-2, -18, engine.AFFMindBar, "mind bar")
+		toVictim = "Suddenly, your mind numbs and you feel somewhat impaired.\r\n"
+		toSelf = "You place a mental bar across $S mind.\r\n"
 	default:
 		return
 	}
@@ -270,6 +328,28 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	if aff != nil {
 		applyAffect(victim, aff)
 	}
+
+	// C magic.c:1414-1421 — send block. to_self goes to the caster only when
+	// ch != victim, with $M/$S taken from the victim; to_vict always fires;
+	// to_room reaches everyone except the victim.
+	if toSelf != "" && ch != victim {
+		sendToCaster(ch, substituteToSelfPronouns(toSelf, victim))
+	}
+	if toVictim != "" {
+		sendToVictim(victim, toVictim)
+	}
+	if toRoom != "" {
+		sendAffectRoom(victim, nil, toRoom, world)
+	}
+}
+
+// getPos reads a character's position; unknown types report standing.
+func getPos(ch interface{}) int {
+	type poser interface{ GetPosition() int }
+	if p, ok := ch.(poser); ok {
+		return p.GetPosition()
+	}
+	return int(PosStanding)
 }
 
 // MagPoints handles HP/MV restoration spells.
@@ -966,6 +1046,9 @@ func sendAffectRoom(victim, exclude interface{}, format string, world interface{
 	msg := strings.ReplaceAll(format, "$n", vn.GetName())
 	msg = strings.ReplaceAll(msg, "$N", vn.GetName())
 	msg = strings.ReplaceAll(msg, "$s", possessivePronoun(victim))
+	// C act(to_room, ..., victim, ...) exposes $m as the victim's objective
+	// pronoun (prot-evil/prot-good room lines use it).
+	msg = strings.ReplaceAll(msg, "$m", objectivePronoun(victim))
 	w.ForEachPlayerInRoomInterface(vr.GetRoomVNum(), func(p interface{}) {
 		if selfTarget(victim, p) || (exclude != nil && selfTarget(exclude, p)) {
 			return

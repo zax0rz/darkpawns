@@ -340,3 +340,29 @@ func possessivePronoun(ch interface{}) string {
 	}
 	return "its"
 }
+
+// objectivePronoun mirrors C's HMHR macro (utils.h:507): male→"him",
+// female→"her", else→"it". Go sex encoding: 0=male, 1=female, 2=neutral.
+func objectivePronoun(ch interface{}) string {
+	type sexer interface{ GetSex() int }
+	if s, ok := ch.(sexer); ok {
+		switch s.GetSex() {
+		case 0:
+			return "him"
+		case 1:
+			return "her"
+		default:
+			return "it"
+		}
+	}
+	return "it"
+}
+
+// substituteToSelfPronouns performs the $M/$S act() substitutions C applies to
+// a mag_affects to_self line (magic.c:1414-1415: act(to_self, TRUE, ch, 0,
+// victim, TO_CHAR)), where the pronouns describe the victim.
+func substituteToSelfPronouns(msg string, victim interface{}) string {
+	msg = strings.ReplaceAll(msg, "$M", objectivePronoun(victim))
+	msg = strings.ReplaceAll(msg, "$S", possessivePronoun(victim))
+	return msg
+}
