@@ -36,10 +36,11 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 		return
 	}
 
-	// Resolve object: inventory first, then room.
-	item, found := ch.Inventory.FindItem(arg1)
+	// Resolve object: inventory first, then room. C get_obj_in_list_vis matches
+	// the keyword list (prefix), not the short description.
+	item := getObjInInvVis(ch, arg1)
 	onGround := false
-	if !found {
+	if item == nil {
 		item = w.findObjectInRoomByName(ch.GetRoomVNum(), arg1)
 		if item != nil {
 			onGround = true
@@ -158,7 +159,9 @@ func (w *World) DoEat(ch *Player, me *MobInstance, cmd, arg string, subcmd int) 
 		return
 	}
 
-	item, found := ch.Inventory.FindItem(arg1)
+	// C get_obj_in_list_vis matches the keyword list (prefix), not short desc.
+	item := getObjInInvVis(ch, arg1)
+	found := item != nil
 	if !found {
 		// Werewolves can eat corpses in the room (low-frequency branch).
 		if ch.IsAffected(affWerewolf) {

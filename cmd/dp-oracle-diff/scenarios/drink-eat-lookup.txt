@@ -1,0 +1,41 @@
+# depth-case: drink.inv-lookup-keyword
+# depth-case: eat.inv-lookup-keyword
+# C get_obj_in_list_vis matches the keyword list, not the short desc. "of"
+# is a substring of "a loaf of bread" but not a keyword; "water" matches the
+# skin's short desc but its keyword was stripped by pour-out.
+[fixture]
+quiet-mobs
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open pack
+get skin pack
+get bread pack
+eat of
+pour skin out
+drink water
