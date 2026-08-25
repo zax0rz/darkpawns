@@ -1,6 +1,7 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_use	use	use.no-arg	D1	command	blocked	-	act.other.c:901-905	C: "What do you want to use?"; Go cmdUse is a hybrid (item OR skill) and its no-arg path differs. Needs the hybrid decision below.
-do_use	use	use.item-must-be-equipped	D2	command	blocked	-	act.other.c:920-936	C do_use SCMD_USE resolves the wand/staff from WEAR_HOLD then equipped slots (isname), NOT inventory; Go cmdUse checks inventory (FindItem short-desc) + equipment substring. Behavior + lookup divergence.
-do_use	use	use.non-wand-staff	D2	command	blocked	-	act.other.c:963-969	C: a non-wand/staff yields "You can't seem to figure out how to use it.\nTry holding it.(?)"; Go routes potion/scroll to DoUse and other args to the skill system.
-do_use	use	use.skill-extension	D5	command	excluded	-	-	Go "use <skill>" (CmdUseSkill) is a Go extension with no C do_use analog; deciding item-fidelity vs keeping skill-use is a product call, not a straight port.
-do_use	use	use.effect	D4	state	blocked	-	spell_parser.c:mag_objectmagic	Wand/staff spell casting via mag_objectmagic. Separate follow-up.
+do_use	use	use.no-arg	D1	command	oracle-green	use-basic	act.other.c:901-905	Empty arg yields "What do you want to use?".
+do_use	use	use.item-lookup-equipped	D2	command	oracle-green	use-basic	act.other.c:908-936	Item resolution is WEAR_HOLD then worn slots by keyword (FindEquippedVis), never inventory — matching C do_use SCMD_USE.
+do_use	use	use.equipped-non-wand	D2	command	oracle-green	use-basic	act.other.c:963-968	An equipped non-wand/staff yields "You can't seem to figure out how to use it.\nTry holding it.(?)".
+do_use	use	use.effect	D4	state	blocked	-	spell_parser.c:mag_objectmagic	Wand/staff spell casting via mag_objectmagic (Go DoUse casts, but its fidelity to mag_objectmagic is unverified). Phase-2 follow-up shared with quaff/recite.
+do_use	use	use.skill-extension	D5	command	excluded	-	-	Go "use <skill>" (CmdUseSkill) is a Go extension with no C do_use analog; kept intentionally. When nothing equipped matches, use falls through to it, so use <non-equipped-item> diverges from C's "You don't seem to have..." by design.
+do_use	use	use.tattoo	D5	command	excluded	-	act.other.c:920-924	"use tattoo" routes to the tattoo path (use_tattoo); its own surface.

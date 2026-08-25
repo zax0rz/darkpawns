@@ -796,27 +796,24 @@ func cmdUse(s *Session, args []string) error {
 	}
 
 	itemArg := args[0]
-	var item *game.ObjectInstance
-	if s.player.Inventory != nil {
-		item, _ = s.player.Inventory.FindItem(itemArg)
-	}
-	if item == nil && s.player.Equipment != nil {
-		equipped := s.player.Equipment.GetEquippedItems()
-		for _, eqItem := range equipped {
-			if eqItem != nil && (strings.Contains(strings.ToLower(eqItem.GetKeywords()), strings.ToLower(itemArg)) || strings.Contains(strings.ToLower(eqItem.GetShortDesc()), strings.ToLower(itemArg))) {
-				item = eqItem
-				break
-			}
-		}
-	}
 
-	if item != nil {
+	// C do_use SCMD_USE (act.other.c:920): "tattoo" is a keyword special-case;
+	// otherwise the target must be EQUIPPED (WEAR_HOLD then any worn slot),
+	// matched by keyword — never inventory, and only wand/staff are usable.
+	// When nothing equipped matches, Go falls through to its skill-use extension
+	// (which has no C do_use analog).
+	if strings.EqualFold(itemArg, "tattoo") {
+		s.manager.world.DoUse(s.player, strings.Join(args, " "))
+		return nil
+	}
+	if item := s.manager.world.FindEquippedVis(s.player, itemArg); item != nil {
 		itemType := item.GetTypeFlag()
-		if itemType == game.ITEM_WAND || itemType == game.ITEM_STAFF || itemType == game.ITEM_POTION || itemType == game.ITEM_SCROLL {
-			argStr := strings.Join(args, " ")
-			s.manager.world.DoUse(s.player, argStr)
+		if itemType == game.ITEM_WAND || itemType == game.ITEM_STAFF {
+			s.manager.world.DoUse(s.player, strings.Join(args, " "))
 			return nil
 		}
+		s.sendText("You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n")
+		return nil
 	}
 
 	return command.CmdUseSkill(s, args)

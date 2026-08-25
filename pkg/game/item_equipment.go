@@ -268,6 +268,26 @@ func (w *World) UnequipItem(ch *Player, slot int) error {
 	return ch.Equipment.Unequip(goSlot, ch.Inventory)
 }
 
+// FindEquippedVis resolves an EQUIPPED object by keyword, mirroring C do_use's
+// SCMD_USE lookup (act.other.c:908-936): WEAR_HOLD is checked first, then every
+// worn slot (the last keyword match wins). It never touches inventory — a
+// wand/staff must be held or worn to be used.
+func (w *World) FindEquippedVis(ch *Player, arg string) *ObjectInstance {
+	if ch == nil || ch.Equipment == nil {
+		return nil
+	}
+	if held := w.GetEquipped(ch, eqWearHold); held != nil && canSeeObject(ch, held) && isnameWithAbbrevs(arg, held.GetKeywords()) {
+		return held
+	}
+	var match *ObjectInstance
+	for _, item := range ch.Equipment.GetEquippedItems() {
+		if item != nil && canSeeObject(ch, item) && isnameWithAbbrevs(arg, item.GetKeywords()) {
+			match = item // last match wins, per C's slot loop
+		}
+	}
+	return match
+}
+
 // FindCarriedVis resolves an object in the player's inventory by keyword,
 // mirroring C get_obj_in_list_vis(ch, arg, ch->carrying): per-word prefix match
 // with "N.name" handling, never the short description. Exported entry point for
