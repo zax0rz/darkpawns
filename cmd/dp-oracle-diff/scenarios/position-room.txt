@@ -1,0 +1,76 @@
+# depth-case: rest.room-audience
+# depth-case: sit.room-audience
+# depth-case: sleep.room-audience
+# depth-case: wake.room-audience
+# depth-case: stand.room-audience
+# Room-audience (TO_ROOM) bytes for every position transition. The male
+# peer proves $n/$s substitution ("clambers to his feet") and that
+# act(..., TO_ROOM) excludes the actor.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+rest
+sit
+sleep
+wake
+stand

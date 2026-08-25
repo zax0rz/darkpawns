@@ -1,0 +1,81 @@
+# depth-case: wake.target-success
+# depth-case: wake.target-vict-audience
+# depth-case: wake.target-already-awake
+# depth-case: wake.target-noperson
+# depth-case: wake.self-by-name-while-sleeping
+# Targeted do_wake (act.movement.c:841-880). The peer's setup ends with
+# a "sleep" command so the probe starts with a male sleeper in the room:
+# the waker gets "You wake him up." ($M), the sleeper receives the
+# TO_VICT|TO_SLEEP line "You are awakened by $n." and lands in
+# POS_SITTING. Also proves NOPERSON and the sleeping-waker gate.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[probe]
+wake Sleepero
+wake Sleepero
+wake Zzznotreal
+sleep
+wake Mordecai
+wake
