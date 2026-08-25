@@ -955,16 +955,6 @@ func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string,
 	return "", false
 }
 
-func visibleObjectShortLines(ch *Player, objects []*ObjectInstance) []string {
-	var lines []string
-	for _, object := range objects {
-		if object != nil && chCanSeeObj(ch, object) {
-			lines = append(lines, object.GetShortDesc()+objectVisibleFlags(ch, object))
-		}
-	}
-	return lines
-}
-
 func (w *World) playerPresenceLine(player, viewer *Player) string {
 	name := player.GetName()
 	title := strings.TrimSpace(player.GetTitle())
