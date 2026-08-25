@@ -1,0 +1,72 @@
+# depth-case: stand.already-standing
+# depth-case: rest.from-standing
+# depth-case: rest.already-resting
+# depth-case: sit.from-resting
+# depth-case: sleep.from-sitting
+# depth-case: sleep.already-sleeping
+# depth-case: sit.while-sleeping
+# depth-case: stand.while-sleeping
+# depth-case: rest.while-sleeping
+# depth-case: wake.self-awaken
+# depth-case: stand.from-sitting
+# depth-case: wake.already-awake
+# depth-case: sleep.from-standing
+# depth-case: sit.from-standing
+# depth-case: sit.already-sitting
+# depth-case: rest.from-sitting
+# depth-case: stand.from-resting
+# Actor-only walk through the do_stand/do_sit/do_rest/do_sleep/do_wake
+# state machine (src/act.movement.c:696-880). Position commands set no
+# wait state, so many probes run back to back. Room-audience bytes are
+# covered by position-room; here every case must match the TO_CHAR arm.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+stand
+rest
+rest
+sit
+sleep
+sleep
+sit
+stand
+rest
+wake
+stand
+wake
+sleep
+wake
+sit
+rest
+stand
