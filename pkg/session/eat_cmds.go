@@ -38,16 +38,16 @@ func cmdSip(s *Session, args []string) error {
 // Source: src/act.other.c (do_use SCMD_QUAFF) + src/spell_parser.c (mag_objectmagic ITEM_POTION)
 func cmdQuaff(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.Send("Quaff what?")
+		s.Send("What do you want to quaff?")
 		return nil
 	}
 
-	itemName := strings.Join(args, " ")
-
-	// Find potion in inventory
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.Send("You don't seem to have that.")
+	// C do_use parses with half_chop (first token) and resolves via
+	// get_obj_in_list_vis (keyword prefix, carrying) — not the short desc.
+	arg := args[0]
+	item := s.manager.world.FindCarriedVis(s.player, arg)
+	if item == nil {
+		s.Send(fmt.Sprintf("You don't seem to have %s %s.", articleFor(arg), arg))
 		return nil
 	}
 
