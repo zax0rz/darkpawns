@@ -1,4 +1,3 @@
-# depth-case: door.fill-word-parse
 [fixture]
 quiet-mobs
 replace-room-exits 8162 north 8161 1 gate

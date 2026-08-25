@@ -1,0 +1,12 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_eat	eat	eat.no-arg	D1	command	oracle-green	eat-basic	act.item.c:1043-1047	Empty arg yields "Eat what?".
+do_eat	eat	eat.not-carried	D2	command	oracle-green	eat-basic	act.item.c:1049-1056	Not carried (non-werewolf) yields "You don't seem to have a/an X.".
+do_eat	eat	eat.not-food	D2	command	oracle-green	eat-basic	act.item.c:1099-1102	A non-food below god yields "You can't eat THAT!".
+do_eat	eat	eat.taste-drinkcon	D2	command	oracle-green	eat-basic	act.item.c:1092-1096	taste on a drinkcon/fountain delegates to do_drink SCMD_SIP.
+do_eat	eat	eat.taste-success	D3	command	oracle-green	eat-basic	act.item.c:1117-1120	taste emits "You nibble a little bit of $p." and "$n tastes a little bit of $p.".
+do_eat	eat	eat.eat-success	D3	command	oracle-green	eat-basic	act.item.c:1111-1114	eat emits "You eat $p." and "$n eats $p." and gains FULL.
+do_eat	eat	eat.full-gate	D2	command	unit-green	TestEatGates	act.item.c:1103-1106	FULL>40 yields "You are too full to eat more!".
+do_eat	eat	eat.poison	D4	state	unit-green	TestEatGates	act.item.c:1130-1145	Poisoned food below immort yields "Oops, that tasted rather strange!" and applies poison.
+do_eat	eat	eat.vampire	D5	state	excluded	-	act.item.c:1124-1126	PLR_VAMPIRE night branch; belongs to the vampire/time surface.
+do_eat	eat	eat.werewolf-corpse	D5	npc-call	excluded	-	act.item.c:1058-1085	Werewolf savage-eat corpse branch (mangled-flesh spawn); Go TODO, belongs to the werewolf surface.
+get_obj_in_list_vis	eat	eat.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get.

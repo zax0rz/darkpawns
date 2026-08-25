@@ -1,0 +1,72 @@
+# depth-case: eat.no-arg
+# depth-case: eat.not-carried
+# depth-case: eat.not-food
+# depth-case: eat.taste-drinkcon
+# depth-case: eat.taste-success
+# depth-case: eat.eat-success
+[fixture]
+quiet-mobs
+[setup:oracle]
+Eater
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Eater
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:obs]
+Eatobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:obs]
+Eatobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+eat
+eat xyzzy
+open pack
+get skin pack
+get bread pack
+eat skin
+taste skin
+taste bread
+eat bread
