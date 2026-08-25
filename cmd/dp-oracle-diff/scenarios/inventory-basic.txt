@@ -1,0 +1,35 @@
+# depth-case: inventory.list-multi
+[fixture]
+quiet-mobs
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open pack
+get bread pack
+get skin pack
+inventory

@@ -115,12 +115,21 @@ func (w *World) DoInventory(ch *Player) {
 	var b strings.Builder
 	b.WriteString("You are carrying:\r\n")
 
-	if ch.Inventory == nil || ch.Inventory.GetItemCount() == 0 {
-		b.WriteString("Nothing.\r\n")
-		ch.SendMessage(b.String())
-		return
+	var items []*ObjectInstance
+	if ch.Inventory != nil {
+		items = ch.Inventory.Items
 	}
+	b.WriteString(w.renderObjectListMode15(ch, items))
+	ch.SendMessage(b.String())
+}
 
+// renderObjectListMode15 renders a slice of objects the way C list_obj_to_char
+// does for mode 15 (short desc, weights, wide list, indent, Num/Item/
+// Encumbrance header). An empty/all-invisible list renders "Nothing.". Grouping
+// and reverse discovery order mirror oc_add_front + oc_show_list. This block is
+// sent raw (like C send_to_char), so it is NOT routed through the capitalizing
+// act() path used for ordinary observation lines.
+func (w *World) renderObjectListMode15(ch *Player, items []*ObjectInstance) string {
 	type group struct {
 		line  string
 		count int
@@ -129,7 +138,7 @@ func (w *World) DoInventory(ch *Player) {
 	groups := make(map[string]*group)
 	order := make([]string, 0)
 
-	for _, item := range ch.Inventory.Items {
+	for _, item := range items {
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
@@ -146,11 +155,10 @@ func (w *World) DoInventory(ch *Player) {
 	}
 
 	if len(groups) == 0 {
-		b.WriteString("Nothing.\r\n")
-		ch.SendMessage(b.String())
-		return
+		return "Nothing.\r\n"
 	}
 
+	var b strings.Builder
 	// mode = 15 -> short descr, show weights, wide list, indent, header
 	b.WriteString("\r\n Num  Item   " + strings.Repeat(" ", 51) + "Encumbrance\r\n")
 	b.WriteString("-------------------------------------------------------------------------------\r\n")
@@ -162,7 +170,7 @@ func (w *World) DoInventory(ch *Player) {
 		b.WriteString(formatOCShowListLine(g.line, g.count, g.item.GetTotalWeight(), g.item, ch))
 	}
 
-	ch.SendMessage(b.String())
+	return b.String()
 }
 
 // formatOCShowListLine renders one entry the way C oc_show_list() does for
