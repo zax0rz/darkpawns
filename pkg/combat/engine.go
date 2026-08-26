@@ -252,26 +252,23 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// leave the defender's FIGHTING pointing at the new attacker while its
 	// original combat pair still exists — an inconsistent state.
 	attacker.SetFighting(defenderName)
-	// C set_fighting sets POS_FIGHTING at entry (fight.c:223), so a standing
-	// attacker is in POS_FIGHTING immediately — do_hit's swing-branch check
-	// (GET_POS(ch) == POS_STANDING) then refuses a second target with "You do
-	// the best you can!" even before any round ticks. C gates the stand on
-	// GET_POS > POS_STUNNED (fight.c:1405 attacker, fight.c:1443 defender): a
-	// stunned-or-lower combatant is NOT stood, so a mortally-wounded/incap
-	// victim keeps its prone position instead of popping up to POS_FIGHTING.
-	// NOTE: C set_fighting also strips AFF_SLEEP (fight.c:217-220) and gates
-	// the FIGHTING assignment itself on the same position check; both are
-	// deferred to the combat damage/retaliation round (unimplemented sleep
-	// strip is a pre-existing gap, not introduced here).
+	// The attacker is stood to POS_FIGHTING at entry: it is always standing when
+	// it initiates (do_hit gates on position), so this is observably equal to
+	// C's set_fighting(ch)-in-damage() and keeps do_hit's swing-branch check
+	// (GET_POS == POS_STANDING) refusing a second target once fighting.
 	if attacker.GetPosition() > PosStunned {
 		attacker.SetPosition(PosFighting)
 	}
 	ce.prependFighterLocked(attacker)
+	// The DEFENDER is NOT stood here. C's set_fighting(victim) runs inside
+	// damage() (fight.c:1443-1445), AFTER the opener's to-hit decision, so the
+	// to-hit reads the victim's pre-combat position — a sleeping victim is
+	// auto-hit (AWAKE(victim) is false), not stood into an awake miss. Go
+	// mirrors this by transitioning the victim to POS_FIGHTING at the damage
+	// point (performOneHit), gated on > POS_STUNNED like C. Only the fighting
+	// flag/target is set at entry so the round loop enrolls it.
 	if defender.GetFighting() == "" {
 		defender.SetFighting(attackerName)
-		if defender.GetPosition() > PosStunned {
-			defender.SetPosition(PosFighting)
-		}
 	}
 	// The defender must be in combatOrder (C's combat_list) whenever it is
 	// fighting this attacker — even when its FIGHTING field was set before
@@ -655,7 +652,19 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// (R3: damage math is unchanged).
 	msgAttackType := cbWeaponInfo(attacker.GetName())
 
-	if !CalculateHitChance(attacker, defender, HitModifiers{}) {
+	hit := CalculateHitChance(attacker, defender, HitModifiers{})
+
+	// C set_fighting(victim) runs inside damage(), which is called AFTER the
+	// to-hit decision and on BOTH hit and miss (fight.c: damage(ch,victim,0,...)
+	// on a miss, damage(ch,victim,dam,...) on a hit). Standing the victim HERE
+	// rather than at StartCombat is what lets the to-hit above read its
+	// pre-combat position, so a sleeping victim is auto-hit like C. Gate on
+	// > POS_STUNNED (fight.c:1443): a mortally-wounded/incap victim stays prone.
+	if defender.GetPosition() > PosStunned && defender.GetPosition() != PosFighting {
+		defender.SetPosition(PosFighting)
+	}
+
+	if !hit {
 		ce.sendMissMessage(attacker, defender, msgAttackType)
 		return false
 	}
