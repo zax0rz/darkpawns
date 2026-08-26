@@ -1,0 +1,50 @@
+# depth-case: melee.sleeping-victim-autohit
+# Opener against a SLEEPING victim. C evaluates the to-hit against the victim's
+# pre-combat position: AWAKE(victim) is false, so a sleeping victim cannot be
+# missed (fight.c to-hit), and the prone-victim damage multiplier reads that
+# same sleeping position (fight.c:1857 dam *= 1 + (POS_FIGHTING-pos)/3). Only
+# then does damage()'s set_fighting stand the victim. Go mirrors this by
+# deferring the victim's POS_FIGHTING to the damage point, AFTER the damage
+# multiplier. Proven byte-equal on all six seeds — and by the DP_DRAW_LOG /
+# DP_C_DRAW_LOG_FILE seams, the draw streams are identical (this was never an
+# RNG offset, refuting the round-11 "miss-variant draw parity" framing).
+[fixture]
+quiet-mobs
+spawn-mob 2109 1 8105 80
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+[probe]
+hit orc
