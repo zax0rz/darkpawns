@@ -507,8 +507,20 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 		return
 	}
 
-	hit := dice(formula.hitNum, formula.hitSides) + formula.hitFlat
-	move := dice(formula.moveNum, formula.moveSides) + formula.moveFlat
+	// C mag_points draws MOVE before HIT (magic.c: SPELL_VITALITY does
+	// move = dice(10,10); hit = dice(5,10);), and only calls dice() for the
+	// component a spell actually uses — it never rolls a dice(0,0) for the
+	// unused one. Match both: move first, then hit, each drawn only when it has
+	// dice. (Reversing this, or drawing a phantom dice(0,0), desynced the shared
+	// stream after any points spell — e.g. a quaffed vitality+poison potion.)
+	move := formula.moveFlat
+	if formula.moveNum > 0 {
+		move += dice(formula.moveNum, formula.moveSides)
+	}
+	hit := formula.hitFlat
+	if formula.hitNum > 0 {
+		hit += dice(formula.hitNum, formula.hitSides)
+	}
 
 	switch spellNum {
 	case SpellCureLight:
