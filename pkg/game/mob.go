@@ -670,7 +670,13 @@ func (m *MobInstance) DecrementWaitState() {
 func (m *MobInstance) SetFighting(target string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.Status = "fighting"
+	// C set_fighting sets FIGHTING(ch) here but POS_FIGHTING only inside
+	// damage() (fight.c), which runs AFTER the to-hit decision. Setting the
+	// position here would make a sleeping victim "awake" for the opener's
+	// to-hit and let it be missed, where C auto-hits a non-awake victim. So set
+	// only the fighting flag/target; the combat engine transitions the position
+	// to POS_FIGHTING at the damage point (performOneHit). GetFighting() reads
+	// the flag, so enrollment still works.
 	m.Fighting = true
 	m.FightingTarget = target
 }
