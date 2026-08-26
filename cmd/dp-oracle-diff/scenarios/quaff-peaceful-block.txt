@@ -1,0 +1,35 @@
+# depth-case: objmagic.peaceful-block
+[fixture]
+quiet-mobs
+force-load 4399
+spawn-obj 4399 20 8162 80
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+get powder
+quaff powder

@@ -6,6 +6,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// lvlImmort mirrors C LVL_IMMORT (31); duplicated here to avoid an import cycle
+// with pkg/game (same pattern as pkg/combat/fight_core.go).
+const lvlImmort = 31
+
 // CallMagic is the central spell dispatch function, ported from src/spell_parser.c call_magic().
 //
 // Parameters:
@@ -38,13 +42,23 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 		return false
 	}
 
-	// Check peaceful room for violent spells
-	if si.IsViolent() && roomIsPeaceful(caster, world) {
-		type sender interface{ SendMessage(string) }
-		if s, ok := caster.(sender); ok {
-			s.SendMessage("This room is peaceful; you cannot cast violent spells here.\r\n")
+	// Peaceful room blocks violent OR damaging spells for mortal casters —
+	// C spell_parser.c:436-450. The caster sees a "flash of white light"
+	// message (violent magic, or "power" for psionic/mystic), the room sees the
+	// light appear, and the spell is aborted. Immortals are exempt.
+	if roomIsPeaceful(caster, world) && (si.IsViolent() || si.HasRoutine(RoutineDamage)) {
+		if getLevel(caster) < lvlImmort {
+			type sender interface{ SendMessage(string) }
+			if s, ok := caster.(sender); ok {
+				if isClassPsionicOrMystic(getClass(caster)) {
+					s.SendMessage("A flash of white light fills the room, dispelling your violent power!\r\n")
+				} else {
+					s.SendMessage("A flash of white light fills the room, dispelling your violent magic!\r\n")
+				}
+			}
+			sendAffectRoom(caster, caster, "White light from no particular source suddenly fills the room, then vanishes.\r\n", world)
+			return false
 		}
-		return false
 	}
 
 	// Determine saving throw type based on cast type
