@@ -43,7 +43,7 @@ Zach will email these people individually when the project reaches production le
 - **DP Role:** Original creator and implementor. Founded Dark Pawns in September 1994.
 - **Username:** dkarnes (from lib/text/help/info.hlp)
 - **Known info:** Worked at Mystech (his employer, hosted DP on pawns.guru.org in 1997). Left DP in May 1998.
-- **Reach:** LinkedIn search "Derek Karnes" — no public profile found yet, but worth trying. May have moved on from tech entirely.
+- **Reach:** ✅ FOUND on LinkedIn (2026-08-26, Zach). Java engineer. **⚠️ Skeptical of AI-assisted development** — do NOT lead with the AI/agent angle in outreach. Lead with the resurrection story and the world itself; the Go port can be framed as craft if asked. He left in May 1998, so his connection is to the world he built, not the codebase tech.
 - **DP credits quote:** "Conceived, masterminded, and skillfully developed by Derek L. Karnes (Serapis)"
 
 ### S. Thompson (Orodreth)
