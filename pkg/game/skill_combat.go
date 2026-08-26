@@ -542,7 +542,8 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 
 	if attacker == nil {
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
-		return SkillResult{Success: false, MessageToCh: ActMessage("But nobody is fighting $N!", GetPronouns(ch.Name, ch.GetSex()), &victPronouns, "")}
+		// C uses $M here (objective pronoun): "But nobody is fighting him!"
+		return SkillResult{Success: false, MessageToCh: ActMessage("But nobody is fighting $M!", GetPronouns(ch.Name, ch.GetSex()), &victPronouns, "")}
 	}
 
 	// Roll for success

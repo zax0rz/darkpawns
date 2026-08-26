@@ -771,7 +771,9 @@ func CmdRescue(s SessionInterface, args []string) error {
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 	if !found {
-		return s.SendMessage("They don't seem to be here.\r\n")
+		// C do_rescue answers a resolution failure with the same prompt as the
+		// no-argument path (act.offensive.c:515-519), not NOPERSON.
+		return s.SendMessage("Whom do you want to rescue?\r\n")
 	}
 
 	if target.GetName() == ch.Name {

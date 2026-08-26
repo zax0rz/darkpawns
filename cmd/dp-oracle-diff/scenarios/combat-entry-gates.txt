@@ -1,0 +1,92 @@
+# depth-case: hit.no-arg
+# depth-case: murder.alias-equals-hit
+# depth-case: hit.not-found
+# depth-case: hit.self
+# depth-case: hit.self-room
+# depth-case: kill.mortal-routes-to-hit
+# depth-case: assist.no-arg
+# depth-case: assist.not-found
+# depth-case: assist.self
+# depth-case: assist.nobody-fighting
+# depth-case: rescue.no-skill
+# The D1-D2 entry gates of the combat-entry family in the (peaceful) start
+# room, so no combat actually starts and no RNG is drawn: do_hit's no-arg /
+# not-found / self pair (act.offensive.c:101-131), mortal kill routing to
+# do_hit, do_assist's gates (54-98) including C's $M pronoun in "But nobody
+# is fighting him!", and do_rescue's skill gate on a fresh L1 warrior
+# (rescue is a level-4 warrior skill, class.c:852).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+hit
+murder
+hit nobody
+hit mordecai
+kill
+kill nobody
+assist
+assist nobody
+assist mordecai
+assist barnaby
+rescue
+rescue barnaby

@@ -117,6 +117,13 @@ func cmdHit(s *Session, args []string) error {
 		s.manager.world.ExecDismount(s.player, "")
 	}
 
+	// C do_hit calls WAIT_STATE(ch, PULSE_VIOLENCE+2) after hit() returns,
+	// unconditionally on this branch — even when damage()'s peaceful/newbie/
+	// shopkeeper gates block the swing inside hit() (act.offensive.c:126-127).
+	// Set the wait before those gates so every blocked swing still costs the
+	// attacker the round, exactly like C.
+	s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
+
 	// --- Combat-entry gates (fight.c:1336-1357, DP-1045 partial) ---
 	// These mirror C's damage() pre-swing checks at the command layer — the
 	// faithful, non-spammy home for player-initiated melee in Go.
@@ -181,7 +188,6 @@ func cmdHit(s *Session, args []string) error {
 		if err := s.manager.combatEngine.PerformInitialAttack(s.player, mob); err != nil {
 			return err
 		}
-		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
 		return nil
 	}
 
@@ -196,7 +202,6 @@ func cmdHit(s *Session, args []string) error {
 		if err := s.manager.combatEngine.PerformInitialAttack(s.player, p); err != nil {
 			return err
 		}
-		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
 		return nil
 	}
 
