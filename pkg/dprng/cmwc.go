@@ -146,19 +146,25 @@ func Next() uint32 {
 func Uniform() float32 {
 	streamMu.Lock()
 	defer streamMu.Unlock()
-	return stream.Uniform()
+	v := stream.Uniform()
+	drawLog(1, "Uniform", 0, 0, int(v*1000000))
+	return v
 }
 
 // Number returns one value in [from, to] from the process-wide stream.
 func Number(from, to int) int {
 	streamMu.Lock()
 	defer streamMu.Unlock()
-	return stream.Number(from, to)
+	v := stream.Number(from, to)
+	drawLog(1, "Number", from, to, v)
+	return v
 }
 
 // Dice returns one C-compatible dice sum from the process-wide stream.
 func Dice(num, size int) int {
 	streamMu.Lock()
 	defer streamMu.Unlock()
-	return stream.Dice(num, size)
+	v := stream.Dice(num, size)
+	drawLog(num, "Dice", num, size, v)
+	return v
 }
