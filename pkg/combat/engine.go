@@ -654,17 +654,22 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 
 	hit := CalculateHitChance(attacker, defender, HitModifiers{})
 
-	// C set_fighting(victim) runs inside damage(), which is called AFTER the
-	// to-hit decision and on BOTH hit and miss (fight.c: damage(ch,victim,0,...)
-	// on a miss, damage(ch,victim,dam,...) on a hit). Standing the victim HERE
-	// rather than at StartCombat is what lets the to-hit above read its
-	// pre-combat position, so a sleeping victim is auto-hit like C. Gate on
-	// > POS_STUNNED (fight.c:1443): a mortally-wounded/incap victim stays prone.
-	if defender.GetPosition() > PosStunned && defender.GetPosition() != PosFighting {
-		defender.SetPosition(PosFighting)
+	// C set_fighting(victim) — which sets POS_FIGHTING — runs INSIDE damage(),
+	// after the to-hit decision AND after one_hit has finished computing damage
+	// (which itself reads the victim's pre-fight position for the prone-victim
+	// multiplier, fight.c:1857 dam *= 1 + (POS_FIGHTING - GET_POS(victim))/3).
+	// So the victim must keep its pre-combat position through BOTH the to-hit
+	// AWAKE check and the damage multiplier, and only stand at the damage point.
+	// Miss path: C still calls damage(ch,victim,0,...), so the victim stands on
+	// a miss too. Gate on > POS_STUNNED (fight.c:1443): a dying victim stays prone.
+	standVictim := func() {
+		if defender.GetPosition() > PosStunned && defender.GetPosition() != PosFighting {
+			defender.SetPosition(PosFighting)
+		}
 	}
 
 	if !hit {
+		standVictim()
 		ce.sendMissMessage(attacker, defender, msgAttackType)
 		return false
 	}
@@ -673,6 +678,10 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	pair.LastAttackType = int(AttackNormal)
 	damage := CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
 	damage = ApplyDamageModifiers(attacker, defender, damage)
+
+	// Stand the victim only now — after the prone-victim damage multiplier has
+	// been read against its pre-fight position (mirrors C set_fighting-in-damage).
+	standVictim()
 
 	defender.TakeDamage(damage)
 	if ce.DamageFunc != nil {
