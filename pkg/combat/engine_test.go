@@ -487,6 +487,12 @@ func TestMobRedirect_HighLevelSwitcheroo(t *testing.T) {
 }
 
 func TestHandleDeath_PassesAttackType(t *testing.T) {
+	// StartCombat now stands the defender at entry (C set_fighting,
+	// fight.c:223), so the defender is AWAKE: dex-based AC applies and a
+	// natural 1 always misses. A fixed stream makes the retry loop below
+	// deterministic instead of a ~0.5% flake.
+	dprng.ResetStream(1)
+
 	attacker := &mockCombatant{
 		name:     "Attacker",
 		npc:      false,

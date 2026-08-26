@@ -255,14 +255,15 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// C set_fighting sets POS_FIGHTING at entry (fight.c:223), so a standing
 	// attacker is in POS_FIGHTING immediately — do_hit's swing-branch check
 	// (GET_POS(ch) == POS_STANDING) then refuses a second target with "You do
-	// the best you can!" even before any round ticks. The defender's stand is
-	// left to the round-tick stand-up below; standing the defender at entry
-	// interlocks with the damage path's position model and belongs to the
-	// retaliation/damage-matrix round.
+	// the best you can!" even before any round ticks. The defender stands the
+	// same way: engaging a resting or sleeping victim stands it into
+	// POS_FIGHTING at once, which the AWAKE attack gate and
+	// CalculateHitChance's awake-defender AC both read.
 	attacker.SetPosition(PosFighting)
 	ce.prependFighterLocked(attacker)
 	if defender.GetFighting() == "" {
 		defender.SetFighting(attackerName)
+		defender.SetPosition(PosFighting)
 	}
 	// The defender must be in combatOrder (C's combat_list) whenever it is
 	// fighting this attacker — even when its FIGHTING field was set before
