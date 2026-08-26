@@ -180,5 +180,18 @@ durable evidence; prose percentages are only snapshots.
   NEVER pump pulses in a room with a live fight unless you want violence
   rounds in the transcript.
 
+## Dated Handoff: 2026-08-26 (info round)
+
+- The info-display family (`time`, `weather`, `where`, `score`, `who`) is
+  captured in `docs/fidelity/depth/info.tsv`, 11/15 proven. The family was
+  largely already faithful (the act-informative sweep stays GREEN); the round's
+  one real find was `where` listing players in Go's random sessions-map order —
+  intermittently RED — where C walks descriptor_list newest-connection-first.
+  `cmdWhere` now sorts by connectedAt descending, matching the existing
+  `cmdWho` pattern.
+- The immortal `where` proved comparable after all: under empty-players both
+  servers' Gods start at 1204, so the listing (peer + God) is a live oracle
+  case rather than blocked on the DP-1205 start-room note.
+
 Update this dated section when the frontier materially changes. Keep the rest
 of this document stable unless the methodology itself changes.

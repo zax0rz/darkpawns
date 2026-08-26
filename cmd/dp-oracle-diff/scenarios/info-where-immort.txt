@@ -1,0 +1,71 @@
+# depth-case: where.immort-listing
+# The immortal side of do_where (interpreter.c:820, LVL_IMMORT): the
+# empty-players God lists the connected mortal peer and their room. The
+# God's own start room may legitimately differ between servers (DP-1205),
+# so the listing must not include the God's location for this to compare
+# clean — if it does, the case drops to blocked.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wherogod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wherogod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+where

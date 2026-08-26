@@ -1,0 +1,70 @@
+# depth-case: who.pair-ordering
+# do_who with two connected players: the listing order and per-player
+# rendering (title/class/level flags) as seen by both the actor and the
+# peer (whose transcript carries the actor's own who output? no — each
+# client sees its own who; the peer block stays empty, proving who is a
+# TO_CHAR-only display).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+who

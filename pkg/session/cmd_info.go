@@ -783,6 +783,12 @@ func cmdWhere(s *Session) error {
 		sessions = append(sessions, sess)
 	}
 	s.manager.mu.RUnlock()
+	// C iterates descriptor_list, which prepends new connections — the most
+	// recently connected player is listed first (same order cmdWhere's who
+	// sibling uses).
+	sort.SliceStable(sessions, func(i, j int) bool {
+		return sessions[i].connectedAt.After(sessions[j].connectedAt)
+	})
 
 	out := "Players\n-------\n"
 	found := false
