@@ -141,16 +141,22 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	}
 
 	mob := &MobInstance{
-		Prototype:      proto,
-		VNum:           proto.VNum,
-		RoomVNum:       roomVNum,
-		CurrentHP:      hp,
-		MaxHP:          hp,
-		CurrentMana:    100,
-		MaxMana:        100,
-		CurrentMove:    50,
-		MaxMove:        50,
-		Status:         "standing",
+		Prototype:   proto,
+		VNum:        proto.VNum,
+		RoomVNum:    roomVNum,
+		CurrentHP:   hp,
+		MaxHP:       hp,
+		CurrentMana: 100,
+		MaxMana:     100,
+		CurrentMove: 50,
+		MaxMove:     50,
+		// C read_mobile copies the whole prototype struct (db.c:1757), so the
+		// mob file's loadpos (line-11 first field) is the spawn position — a
+		// sleeping loader like 2109 must spawn asleep or mobile_activity's
+		// position gate lets it wander on the very first settle pulses.
+		// 0 means unset (clear_char's POS_STANDING default; no real record
+		// carries POS_DEAD as a loadpos).
+		Status:         positionStatus(proto.Position),
 		Inventory:      make([]*ObjectInstance, 0),
 		Equipment:      make(map[int]*ObjectInstance),
 		Fighting:       false,
@@ -567,6 +573,34 @@ func (m *MobInstance) GetPosition() int {
 		return combat.PosStanding
 	default:
 		return combat.PosStanding // Default to standing
+	}
+}
+
+// positionStatus maps a C POS_* loadpos constant to the Status string
+// encoding. Unknown values default to standing like GetPosition does.
+func positionStatus(pos int) string {
+	if pos <= combat.PosDead || pos > combat.PosStanding {
+		pos = combat.PosStanding
+	}
+	switch pos {
+	case combat.PosDead:
+		return "dead"
+	case combat.PosMortally:
+		return "mortally_wounded"
+	case combat.PosIncap:
+		return "incapacitated"
+	case combat.PosStunned:
+		return "stunned"
+	case combat.PosSleeping:
+		return "sleeping"
+	case combat.PosResting:
+		return "resting"
+	case combat.PosSitting:
+		return "sitting"
+	case combat.PosFighting:
+		return "fighting"
+	default:
+		return "standing"
 	}
 }
 

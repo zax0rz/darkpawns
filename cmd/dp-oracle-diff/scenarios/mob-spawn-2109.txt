@@ -1,0 +1,58 @@
+# depth-case: mobloadpos.spawn-position
+# depth-case: mobaggro.no-entry-hook
+# Round-9's "2109 spawn failure" isolated — the mob spawned but never
+# STAYED: Go ignored the mob file's loadpos (sleeping), so the sleeping orc
+# spawned standing and the setup settle pulses' mobile_activity let it
+# wander away before the probe (C's sleeper never passes the wander gate).
+# The invented room-entry aggro hook then engaged it on arrival. This
+# scenario proves the orc spawns, stays, and does NOT engage the arriving
+# actor (score's standing line + look's static long-desc line).
+#
+# Out of scope here: the kill opener's miss-variant draw (lib/misc/messages
+# selection) diverges on some seeds — recorded as a blocked row owned by the
+# combat message round.
+
+[fixture]
+quiet-mobs
+spawn-mob 2109 1 8105 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe]
+score
+look

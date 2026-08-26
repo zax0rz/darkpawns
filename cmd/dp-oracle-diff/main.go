@@ -68,6 +68,7 @@ func run() int {
 		scenarioName = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
 		seed         = flag.String("seed", "1", "shared deterministic DP_SEED value")
 		showOracle   = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
+		showGoLog    = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
 		quiescence   = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout  = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
 	)
@@ -82,14 +83,14 @@ func run() int {
 		fmt.Println("SKIP: DP_ORACLE_BIN is unset; C oracle differential run not available")
 		return 0
 	}
-	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle); err != nil {
+	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *showGoLog); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		return 1
 	}
 	return 0
 }
 
-func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle bool) error {
+func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle, showGoLog bool) error {
 	if quiescence <= 0 {
 		return errors.New("quiescence must be positive")
 	}
@@ -363,6 +364,10 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		for _, diff := range diffs {
 			fmt.Printf("--- [%s]\n%s", diff.Command, diff.Oracle)
 		}
+	}
+	if showGoLog {
+		fmt.Println("go port server log:")
+		fmt.Print(goProc.log.String())
 	}
 	return nil
 }
