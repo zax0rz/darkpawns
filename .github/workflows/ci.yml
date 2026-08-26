@@ -194,16 +194,24 @@ jobs:
     # ENFORCING: the 2026-07-22 backlog (GO-2026-5856 crypto/tls ECH → Go 1.26.5; GO-2026-5970 x/text
     # → v0.40.0) was cleared in this change. A NEW reachable vuln now blocks the merge.
     - name: govulncheck
+      # Tool binary pinned (2026-08-26): the vulnerability DATABASE is still
+      # fetched live at scan time, so new CVEs keep blocking merges — only the
+      # scanner version is stable. Bump deliberately.
       run: |
-        go install golang.org/x/vuln/cmd/govulncheck@latest
+        go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
         "$(go env GOPATH)/bin/govulncheck" ./...
 
     # Static security scan (HIGH severity) — the same gosec lane reek's toolpass runs nightly.
     # ENFORCING: the 28 HIGH findings were triaged to zero in this change (all false positives, each
     # suppressed with a justified `#nosec`). A NEW unjustified HIGH now blocks the merge.
     - name: gosec
+      # Pinned (2026-08-26): gosec@latest shipped the G703 taint rule in
+      # v2.29.0 and turned every branch red repo-wide overnight. Rules are
+      # compiled into the binary, so pinning freezes the rule set; bump
+      # deliberately (expect new findings to need triage, like the 28 HIGH
+      # ones below).
       run: |
-        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        go install github.com/securego/gosec/v2/cmd/gosec@v2.29.0
         "$(go env GOPATH)/bin/gosec" -severity=high -quiet ./...
 
   build-and-push:
