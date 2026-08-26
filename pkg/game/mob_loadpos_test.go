@@ -22,9 +22,10 @@ func TestNewMobAppliesLoadpos(t *testing.T) {
 		{"resting", 5, combat.PosResting},
 		{"sitting", 6, combat.PosSitting},
 		{"standing", 8, combat.PosStanding},
-		// A literal 0 copies as POS_DEAD just like C's struct copy; every
-		// real mob record carries a valid loadpos, so this never occurs.
-		{"literal zero copies verbatim", 0, combat.PosDead},
+		// C clear_char defaults position to POS_STANDING before the file
+		// line overwrites it (utils.c:2997), so a record without the line
+		// never spawns at POS_DEAD.
+		{"unset defaults to standing", 0, combat.PosStanding},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -392,6 +392,11 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob position line")
 	}
+	// C clear_char defaults position and default_pos to POS_STANDING
+	// (utils.c:2997-2998) before the file line overwrites them; a record
+	// without the line keeps standing, never POS_DEAD.
+	mob.Position = 8
+	mob.DefaultPos = 8
 	pos := strings.Fields(lb.Text())
 	if len(pos) >= 3 {
 		mob.Position, _ = strconv.Atoi(pos[0])
