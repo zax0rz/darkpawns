@@ -1,0 +1,36 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_say	say	say.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:781-783	"Yes, but WHAT do you want to say?" (C uses \n\r; the normalizer settles it).
+do_say	say	say.says-variant	D2	command	oracle-green	comm-depth	act.comm.c:784-821	Default punctuation: "$n says, 'x'" / "You say 'x'".
+do_say	say	say.exclaims-variant	D2	command	oracle-green	comm-depth	act.comm.c:786-788	Trailing '!' → exclaims pair.
+do_say	say	say.asks-variant	D2	command	oracle-green	comm-depth	act.comm.c:789-791	Trailing '?' → asks pair.
+do_say	say	say.states-variant	D2	command	oracle-green	comm-depth	act.comm.c:792-794	Trailing '.' → states pair.
+do_say	say	say.drunk-speech	D2	command	blocked	-	act.comm.c:776-778, act.item.c:932-936	speak_drunk() needs GET_COND(DRUNK) > 10, but the drink fullness gate (FULL > 20 && THIRST > 0) blocks repeated drinking for fresh characters and 1800 pulses (~24 MUD hours) of thirst decay did not clear it. Needs a condition-control fixture. Guinness (18007) is NOT a vehicle: 180.obj is in neither tree's obj index, so the game never loads it — consumables.txt's guinness steps have been vacuously failing on both servers.
+do_say	say	say.stupid-gate	D1	command	blocked	-	act.comm.c:770-773	"You are too stupid to communicate..." needs WIS/INT 0; no vehicle.
+do_say	say	say.noshout	D1	command	blocked	-	act.comm.c:775-779	PLR_NOSHOUT flag vehicle needed.
+do_spec_comm	whisper	whisper.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:999-1001	"Whom do you want to whisper to.. and what??"
+do_spec_comm	whisper	whisper.success	D3	command	oracle-green	comm-depth	act.comm.c:1006-1016	Vict "$n whispers to you, 'x'" / self "You whisper to Barnaby, 'x'".
+do_spec_comm	whisper	whisper.not-found	D1	command	oracle-green	comm-depth	act.comm.c:1002-1003	NOPERSON "No-one by that name here."
+do_spec_comm	whisper	whisper.self	D1	command	oracle-green	comm-depth	act.comm.c:1004-1005	"You can't get your mouth close enough to your ear..."
+do_spec_comm	ask	ask.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:999-1001	"Whom do you want to ask.. and what??" (shared arm, ask wording).
+do_spec_comm	ask	ask.success	D3	command	oracle-green	comm-depth	act.comm.c:992-1016	Vict "$n asks you, 'x'" / self "You ask Barnaby, 'x'".
+do_spec_comm	ask	ask.not-found	D1	command	delegated	whisper.not-found	act.comm.c:1002-1003	Shared do_spec_comm resolution gate; proven under whisper.
+do_spec_comm	ask	ask.self	D1	command	delegated	whisper.self	act.comm.c:1004-1005	Shared self gate.
+do_spec_comm	whisper	whisper.noshout	D1	command	blocked	-	act.comm.c:981-985	"Sorry, you cannot do that." needs PLR_NOSHOUT.
+do_tell	tell	tell.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:907-908	"Who do you wish to tell what??"
+do_tell	tell	tell.not-found	D1	command	oracle-green	comm-depth	act.comm.c:909-910	NOPERSON; tell resolves world-wide via get_char_vis.
+do_tell	tell	tell.self	D1	command	oracle-green	comm-depth	act.comm.c:913-914	"You try to tell yourself something."
+do_tell	tell	tell.success	D3	command	oracle-green	comm-depth	act.comm.c:929-930	perform_tell pair: "You tell Barnaby, 'x'" / peer "Mordecai tells you, 'x'".
+do_tell	tell	tell.soundproof-room	D2	command	oracle-green	comm-soundproof	act.comm.c:919-920	"The walls seem to absorb your words." with the room flagged ROOM_SOUNDPROOF (bit 5); peer transcript stays empty.
+do_tell	tell	tell.linkless	D2	command	blocked	-	act.comm.c:921-922	"$E's linkless at the moment." needs a linkless victim.
+do_tell	tell	tell.writing	D2	command	blocked	-	act.comm.c:923-925	PLR_WRITING board state vehicle needed.
+do_tell	tell	tell.cant-hear	D2	command	blocked	-	act.comm.c:926-928	Victim NOTELL or soundproof room; PRF flag vehicle needed.
+do_tell	tell	tell.notell-self	D2	command	blocked	-	act.comm.c:915-916	Self NOTELL preference vehicle needed.
+do_tell	tell	tell.noshout	D1	command	blocked	-	act.comm.c:917-918	PLR_NOSHOUT vehicle needed.
+do_tell	tell	tell.npc-nodesc	D2	command	blocked	-	act.comm.c:911-912	"NPC without descriptor" arm; charmed-NPC vehicle needed.
+do_reply	reply	reply.no-target	D1	command	oracle-green	comm-depth	act.comm.c:940-941	"You have no-one to reply to!"
+do_reply	reply	reply.success	D3	command	oracle-green	comm-depth	act.comm.c:944-971	After a successful tell, `reply hi` routes back through perform_tell.
+do_reply	reply	reply.no-arg	D1	command	blocked	-	act.comm.c:942-943	"What is your reply?" needs LAST_TELL set plus an empty argument; not probed this round.
+do_echo	emote	emote.no-arg	D1	command	oracle-green	comm-depth	act.wizard.c:133-134	"Yes.. but what?"
+do_echo	emote	emote.success	D3	command	oracle-green	comm-depth	act.wizard.c:135-155	"$n waves happily." room + self pair.
+do_echo	emote	emote.noshout	D1	command	blocked	-	act.wizard.c:138-141	"You try to express yourself but cannot!" needs PLR_NOSHOUT.
+do_echo	echo	echo.immort	D2	command	blocked	-	interpreter.c:428	echo (LVL_IMMORT) renders the raw text without the "$n " prefix; god-harness vehicle not built this round.
