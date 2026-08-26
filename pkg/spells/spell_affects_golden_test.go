@@ -196,7 +196,7 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellSlow, false, 0, nil)
 		expectAffects(t, "slow", v, []affectExpectation{
-			{SpellSlow, engine.ApplyNone, 20, 0, engine.AFFSlow},
+			{SpellSlow, engine.ApplyNone, 20, 0, engine.AFFHaste},
 		})
 	})
 
@@ -390,7 +390,7 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellMindBar, false, 0, nil)
 		expectAffects(t, "mind bar", v, []affectExpectation{
-			{SpellMindBar, engine.ApplyNone, (20 / 2) - 2, -18, engine.AFFMindBar},
+			{SpellMindBar, engine.ApplyInt, (20 / 2) - 2, -18, 0},
 		})
 	})
 }

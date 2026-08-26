@@ -144,3 +144,24 @@ Prefer clean, deterministic, high-audience commands first:
 - Model manifests: `docs/fidelity/depth/drop.tsv`, `movement.tsv`, `quaff.tsv`.
 - Model scenarios: `cmd/dp-oracle-diff/scenarios/drop-basic.txt`,
   `quaff-effect.txt`, `recite-effect.txt`.
+
+---
+
+## Amendment 2026-08-27: self-merge policy and handoff files
+
+Agreed with the repo owner after seven reviewed rounds:
+
+- The loop agent may **merge its own `glm/depth-*` PRs** when ALL of: checks
+  green, the RED→GREEN (or pure-coverage GREEN) evidence is in the PR body,
+  and the branch is rebased on current main. A flaky-red check means stop and
+  report — never retry-into-green.
+- Scope limit: fidelity rounds only. CI, deploy, secrets, save-format, or
+  website changes still require the human.
+- Wave cap: at most two open `glm/depth-*` PRs at any time, chosen to touch
+  disjoint files where possible, so post-hoc review batches stay small.
+- Review is **post-hoc**: a different model reviews merged PRs later; every
+  round carries re-runnable falsifiable evidence (scenarios + manifests), and
+  a post-hoc finding becomes a new fix round.
+- `docs/fidelity/DEPTH_TESTING.md` dated handoffs now live in
+  `docs/fidelity/depth/handoff/` — one file per round, no shared insertion
+  point, so consecutive rounds cannot conflict on that document.

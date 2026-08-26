@@ -205,7 +205,12 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		// never does. Kept verbatim.
 		toSelf = "You feel your movement quicken!\r\n"
 	case SpellSlow:
-		aff = engine.NewAffectDirect(SpellSlow, engine.ApplyNone, level, 0, engine.AFFSlow, "slow")
+		// C sets bitvector AFF_HASTE for SPELL_SLOW (magic.c:1051 quirk), so a
+		// spell-slowed combatant carries the haste bit — fight.c's attacks++
+		// haste check then fires (and the AFF_SLOW attacks-- check never does,
+		// since the spell never sets it). Kept verbatim: slow makes you swing
+		// more in C.
+		aff = engine.NewAffectDirect(SpellSlow, engine.ApplyNone, level, 0, engine.AFFHaste, "slow")
 		toVictim = "You feel the world speed up around you.\r\n"
 		toSelf = "You send the forces of time against $S!\r\n"
 	case SpellFly, SpellLevitate:
@@ -318,7 +323,9 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffect(SpellIntellect, engine.ApplyInt, 8, 1, "intellect")
 		toVictim = "Your head clears and you realize some of the secrets of life!\r\n"
 	case SpellMindBar:
-		aff = engine.NewAffectDirect(SpellMindBar, engine.ApplyNone, (level/2)-2, -18, engine.AFFMindBar, "mind bar")
+		// C applies -18 INT with bitvector AFF_NOTHING and no status flag
+		// (magic.c:1369-1377) — a pure stat affect, no invented bit.
+		aff = engine.NewAffect(SpellMindBar, engine.ApplyInt, (level/2)-2, -18, "mind bar")
 		toVictim = "Suddenly, your mind numbs and you feel somewhat impaired.\r\n"
 		toSelf = "You place a mental bar across $S mind.\r\n"
 	default:
@@ -385,10 +392,9 @@ func affectGateFlags(spellNum int) (accumDuration, accumAffect bool, bit0, bit1 
 	case SpellHaste:
 		return false, false, engineBitIndex(engine.AFFHaste), 0
 	case SpellSlow:
-		// C sets bitvector AFF_HASTE for SPELL_SLOW (magic.c:1051 quirk); the
-		// Go apply path still writes AFFSlow — bit parity deferred with the
-		// slow-aff-bit follow-up.
-		return false, false, engineBitIndex(engine.AFFSlow), 0
+		// C sets bitvector AFF_HASTE for SPELL_SLOW (magic.c:1051 quirk),
+		// mirrored by the apply path.
+		return false, false, engineBitIndex(engine.AFFHaste), 0
 	case SpellDreamTravel:
 		return false, false, engineBitIndex(engine.AFFDream), 0
 	case SpellWaterBreathe:
@@ -432,9 +438,7 @@ func affectGateFlags(spellNum int) (accumDuration, accumAffect bool, bit0, bit1 
 	case SpellIntellect:
 		return false, true, affNothingBit, 0
 	case SpellMindBar:
-		// C sets no bitvector for MIND_BAR beyond AFF_NOTHING (magic.c:1373);
-		// the Go apply path additionally writes engine.AFFMindBar — parity
-		// deferred with the affect-bits follow-up.
+		// C sets no bitvector for MIND_BAR beyond AFF_NOTHING (magic.c:1373).
 		return false, false, affNothingBit, 0
 	}
 	return false, false, 0, 0
