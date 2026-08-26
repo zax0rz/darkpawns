@@ -1,7 +1,9 @@
 package spells
 
 import (
+	"math/bits"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -10,17 +12,18 @@ import (
 // affectMsgChar records messages and satisfies every interface magAffectsApply
 // and its message helpers require for PC-shaped actors.
 type affectMsgChar struct {
-	name      string
-	sex       int
-	level     int
-	class     int
-	room      int
-	alignment int
-	npc       bool
-	mobFlags  uint64
-	position  int
-	affects   []*engine.Affect
-	messages  []string
+	name         string
+	sex          int
+	level        int
+	class        int
+	room         int
+	alignment    int
+	npc          bool
+	mobFlags     uint64
+	position     int
+	affectedBits uint64
+	affects      []*engine.Affect
+	messages     []string
 }
 
 func (m *affectMsgChar) SendMessage(msg string)   { m.messages = append(m.messages, msg) }
@@ -42,6 +45,19 @@ func (m *affectMsgChar) AddAffect(a *engine.Affect) {
 
 func (m *affectMsgChar) JoinAffect(a *engine.Affect, addDuration, addMagnitude bool) {
 	m.AddAffect(a)
+}
+
+func (m *affectMsgChar) HasSpellAffect(spellID int) bool {
+	for _, af := range m.affects {
+		if af != nil && af.SpellID == spellID {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *affectMsgChar) IsAffected(bit int) bool {
+	return m.affectedBits&(1<<uint(bit)) != 0
 }
 
 // affectMsgWorld is a roomIterable world that captures room-audience sends.
@@ -371,4 +387,56 @@ func TestMagAffectsMessages_SaveBranches(t *testing.T) {
 			t.Errorf("flamestrike caster = %q", caster.messages)
 		}
 	})
+}
+
+// TestMagAffectsReapplyGate pins C magic.c:1400-1404: a victim already
+// affected by a non-accumulating spell refuses the recast with NOEFFECT to
+// the caster, while accumulating spells re-apply.
+func TestMagAffectsReapplyGate(t *testing.T) {
+	t.Run("armor refuses recast", func(t *testing.T) {
+		caster := newAffectMale("Castero", 8162)
+		victim := newAffectMale("Barnaby", 8162)
+		victim.AddAffect(engine.NewAffect(SpellArmor, engine.ApplyAC, 24, -15, "armor"))
+		magAffectsApply(20, caster, victim, SpellArmor, false, 0, nil)
+		if !reflect.DeepEqual(caster.messages, []string{"Nothing seems to happen.\r\n"}) {
+			t.Errorf("reapplied armor caster = %q, want NOEFFECT", caster.messages)
+		}
+		if len(victim.messages) != 0 {
+			t.Errorf("reapplied armor victim = %q, want silence", victim.messages)
+		}
+		if len(victim.affects) != 1 {
+			t.Errorf("reapplied armor should not stack affects; got %d", len(victim.affects))
+		}
+	})
+	t.Run("infravision accumulates", func(t *testing.T) {
+		caster := newAffectMale("Castero", 8162)
+		victim := newAffectMale("Barnaby", 8162)
+		victim.AddAffect(engine.NewAffectDirect(SpellInfravision, engine.ApplyNone, 12, 0, engine.AFFInfrared, "infravision"))
+		magAffectsApply(20, caster, victim, SpellInfravision, false, 0, nil)
+		for _, msg := range caster.messages {
+			if strings.Contains(msg, "Nothing seems to happen") {
+				t.Errorf("accumulating infravision recast must not NOEFFECT; caster = %q", caster.messages)
+			}
+		}
+		if !reflect.DeepEqual(victim.messages, []string{"Your eyes glow red.\r\n"}) {
+			t.Errorf("accumulating infrivision recast victim = %q", victim.messages)
+		}
+	})
+}
+
+// TestMagAffectsMobInnateGate pins C magic.c:1387-1394: an NPC that carries
+// the spell's affect flag innately (mob file, not the spell) refuses the
+// spell with NOEFFECT.
+func TestMagAffectsMobInnateGate(t *testing.T) {
+	caster := newAffectMale("Castero", 8162)
+	mob := newAffectMale("Sanctumob", 8162)
+	mob.npc = true
+	mob.affectedBits = 1 << uint(bits.TrailingZeros64(engine.AFFSanctuary))
+	magAffectsApply(20, caster, mob, SpellSanctuary, false, 0, nil)
+	if !reflect.DeepEqual(caster.messages, []string{"Nothing seems to happen.\r\n"}) {
+		t.Errorf("innate-sanctuary mob caster = %q, want NOEFFECT", caster.messages)
+	}
+	if len(mob.affects) != 0 {
+		t.Errorf("innate-sanctuary mob should gain no affects; got %d", len(mob.affects))
+	}
 }

@@ -307,16 +307,19 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 	t.Run("waterwalk", func(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellWaterwalk, false, 0, nil)
+		// C's duration expression "4+reag?20:0" parses as (4+reag)?20:0 —
+		// always 20 (magic.c:1279 quirk kept).
 		expectAffects(t, "waterwalk", v, []affectExpectation{
-			{SpellWaterwalk, engine.ApplyNone, 4 + 20/5, 0, engine.AFFWaterwalk},
+			{SpellWaterwalk, engine.ApplyNone, 20, 0, engine.AFFWaterwalk},
 		})
 	})
 
 	t.Run("change density", func(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellChangeDensity, false, 0, nil)
+		// Shares C's waterwalk arm, including the always-20 duration quirk.
 		expectAffects(t, "change density", v, []affectExpectation{
-			{SpellChangeDensity, engine.ApplyNone, 4 + 20/5, 0, engine.AFFWaterwalk},
+			{SpellChangeDensity, engine.ApplyNone, 20, 0, engine.AFFWaterwalk},
 		})
 	})
 
