@@ -828,7 +828,7 @@ func findOracleRoot(bin string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve DP_ORACLE_BIN: %w", err)
 	}
-	info, err := os.Stat(absBin)
+	info, err := os.Stat(absBin) // #nosec G703 -- dev oracle-diff harness; absBin derives from the developer-supplied DP_ORACLE_BIN, not request input
 	if err != nil {
 		return "", fmt.Errorf("DP_ORACLE_BIN %q: %w", absBin, err)
 	}
@@ -837,7 +837,7 @@ func findOracleRoot(bin string) (string, error) {
 	}
 	for dir := filepath.Dir(absBin); ; dir = filepath.Dir(dir) {
 		world := filepath.Join(dir, "lib", "world")
-		if stat, statErr := os.Stat(world); statErr == nil && stat.IsDir() {
+		if stat, statErr := os.Stat(world); statErr == nil && stat.IsDir() { // #nosec G703 -- dev harness walking up from the trusted oracle binary
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)

@@ -1,0 +1,90 @@
+# depth-case: hit.newbie-pc-gate
+# damage()'s low-level PC protection (fight.c:1344-1350): a standing L1
+# attacker swinging at another PC in a non-peaceful room gets "You are not
+# experienced enough to attack $N!" and still pays do_hit's
+# PULSE_VIOLENCE+2 wait — hence the single gate command as the last probe
+# step. The helper's live fight against the trainee never fires a round
+# (frozen clock, no pumps).
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:helper]
+Helpero
+Y
+helperpass
+helperpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[setup:port:helper]
+Helpero
+y
+helperpass
+helperpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[probe]
+hit Helpero

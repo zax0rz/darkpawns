@@ -1,0 +1,76 @@
+# depth-case: hit.peaceful-gate
+# depth-case: hit.peaceful-wait-state
+# A mortal swing in the peaceful start room is blocked inside hit()/damage()
+# with "This room just has such a peaceful, easy feeling..." — but C's do_hit
+# still runs WAIT_STATE(ch, PULSE_VIOLENCE+2) after hit() returns
+# (act.offensive.c:126-127), so the NEXT command stalls behind the frozen
+# clock. Go previously returned before setting the wait (the position round
+# observed it); the trailing bare `hit` and pulse pumps prove the stall is
+# now symmetric. No RNG is drawn on the blocked path.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+kill barnaby
+hit
+~dpclock pulse 20
+~dpclock pulse 20

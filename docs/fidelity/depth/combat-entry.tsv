@@ -1,0 +1,39 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_hit	hit	hit.no-arg	D1	command	oracle-green	combat-entry-gates	act.offensive.c:108-109	"Hit who?"
+do_hit	hit	hit.not-found	D1	command	oracle-green	combat-entry-gates	act.offensive.c:110-111	do_hit has its own "They don't seem to be here." — NOT NOPERSON (contrast assist/rescue).
+do_hit	hit	hit.self	D2	command	oracle-green	combat-entry-gates	act.offensive.c:112-116	"You hit yourself...OUCH!." self pair.
+do_hit	hit	hit.self-room	D3	command	oracle-green	combat-entry-gates	act.offensive.c:115	Peer proves "$n hits $mself, and says OUCH!" with $m substitution.
+do_hit	murder	murder.alias-equals-hit	D1	command	oracle-green	combat-entry-gates	interpreter.c:562+act.offensive.c:101	murder maps to do_hit which ignores subcmd; bare murder answers "Hit who?" like hit.
+do_hit	hit	hit.peaceful-gate	D2	command	oracle-green	combat-entry-peaceful-wait	act.offensive.c:126+fight.c:1336-1340	"This room just has such a peaceful, easy feeling..." blocks the swing inside damage().
+do_hit	hit	hit.peaceful-wait-state	D5	command	oracle-green	combat-entry-peaceful-wait	act.offensive.c:127	RED pre-fix: do_hit runs WAIT_STATE(PULSE_VIOLENCE+2) after hit() returns even when the swing was gate-blocked; Go returned before setting the wait and ran subsequent commands immediately (first observed in the position round).
+do_hit	hit	hit.newbie-pc-gate	D2	command	oracle-green	combat-entry-newbie-gate	fight.c:1344-1350	"You are not experienced enough to attack $N!" for a standing L1 attacker vs a PC in a non-peaceful room; control case — already faithful, kept as live proof (the gate-blocked wait is proven by hit.peaceful-wait-state, same branch).
+do_hit	hit	hit.best-you-can	D2	command	oracle-green	combat-entry-assist	act.offensive.c:122-129	A fighting attacker refuses a second target; RED pre-fix because Go never stood the attacker to POS_FIGHTING at entry.
+do_hit	hit	hit.charm-master	D2	command	blocked	-	act.offensive.c:117-119	"$N is just such a good friend..." needs a charmed attacker; no vehicle.
+do_hit	hit	hit.dismount-branch	D3	command	blocked	-	act.offensive.c:124-125	Mounted attackers dismount on the swing branch; mounted surface awaits a mount manifest.
+do_hit	hit	hit.shopkeeper-gate	D2	command	blocked	-	fight.c:1359-1366	"Ha ha... Don't think so." needs a shopkeeper victim; shop surface owns it.
+do_hit	hit	hit.opener-messages	D3	shared	delegated	combat-swing	fight.c:1400-1460	The opener swing's attack/damage verb matrix and RNG draws are the melee class, oracle-proven under combat-swing and the opener scenarios.
+do_kill	kill	kill.mortal-routes-to-hit	D1	command	oracle-green	combat-entry-gates	act.offensive.c:138-141	Below LVL_IMPL-1 kill delegates to do_hit before parsing: bare kill answers "Hit who?".
+do_kill	kill	kill.immortal-instinstakill	D1	command	blocked	-	act.offensive.c:145-164	The chop-to-pieces instakill trio needs an implementor actor; C and Go God start rooms differ (DP-1205), so no symmetric oracle vehicle.
+do_assist	assist	assist.no-arg	D1	command	oracle-green	combat-entry-gates	act.offensive.c:72-73	"Whom do you wish to assist?"
+do_assist	assist	assist.not-found	D1	command	oracle-green	combat-entry-gates	act.offensive.c:74-75	RED pre-fix: Go printed "They don't seem to be here." where C prints NOPERSON "No-one by that name here."
+do_assist	assist	assist.self	D1	command	oracle-green	combat-entry-gates	act.offensive.c:76-77	RED pre-fix: Go's resolver skipped self entirely; C answers "You can't help yourself any more than this!"
+do_assist	assist	assist.nobody-fighting	D2	command	oracle-green	combat-entry-gates	act.offensive.c:85-86	RED pre-fix: C uses $M — "But nobody is fighting him!" — where Go printed the helpee's name.
+do_assist	assist	assist.already-fighting	D1	command	oracle-green	combat-entry-assist	act.offensive.c:58-61	RED pre-fix: Go had one space where C has two after "fighting!".
+do_assist	assist	assist.success	D4	state	oracle-green	combat-entry-assist	act.offensive.c:91-95	Entry enrolls the fight and C sets no wait state (quirk kept).
+do_assist	assist	assist.join-trio	D3	command	oracle-green	combat-entry-assist	act.offensive.c:92-94	"You join the fight!" + helpee's "Mordecai assists you!" + the TO_NOTVICT room line.
+do_assist	assist	assist.room-exclusion	D3	command	oracle-green	combat-entry-assist	act.offensive.c:94	RED pre-fix: Go's room broadcast reached the helpee; C's TO_NOTVICT excludes both actor and helpee.
+do_assist	assist	assist.immediate-swing	D5	shared	oracle-green	combat-entry-assist	act.offensive.c:95	RED pre-fix: Go enrolled the fight without swinging; C calls hit() at once — and sets NO wait state (quirk kept). The swing's draw matched C's stream (melee parity).
+do_assist	assist	assist.mounted-gate	D1	command	blocked	-	act.offensive.c:64-68	"Dismount first!" needs the mounted surface.
+do_assist	assist	assist.cant-see	D2	command	blocked	-	act.offensive.c:87-89	"You can't see who is fighting $M!" needs an invisible opponent.
+do_assist	assist	assist.mob-helpee-pers	D3	command	blocked	-	act.offensive.c:93-94	Room lines for a mob helpee render PERS (mob name), Go uses the short desc; no vehicle this round.
+do_rescue	rescue	rescue.no-skill	D1	command	oracle-green	combat-entry-gates	act.offensive.c:508-513	Fresh L1 warriors lack rescue (level-4 skill, class.c:852): "But only true warriors can do this!" fires before argument parsing.
+do_rescue	rescue	rescue.no-arg	D1	command	oracle-green	combat-entry-rescue-gates	act.offensive.c:515-519	"Whom do you want to rescue?" with the skill granted via the God-skillset warmup pattern.
+do_rescue	rescue	rescue.not-found	D1	command	oracle-green	combat-entry-rescue-gates	act.offensive.c:515-519	RED pre-fix: C answers a resolution failure with the same prompt as no-arg; Go printed "They don't seem to be here."
+do_rescue	rescue	rescue.self	D1	command	oracle-green	combat-entry-rescue-gates	act.offensive.c:520-524	"What about fleeing instead?"
+do_rescue	rescue	rescue.nobody-fighting	D2	command	oracle-green	combat-entry-rescue-gates	act.offensive.c:547-551	RED pre-fix: C uses $M — "But nobody is fighting him!" — where Go printed the name.
+do_rescue	rescue	rescue.peaceful-gate	D2	command	oracle-green	combat-entry-rescue-peaceful	act.offensive.c:537-542	Control case — already faithful; the gate shadows the nobody-fighting scan in peaceful rooms.
+do_rescue	rescue	rescue.mounted-gate	D1	command	blocked	-	act.offensive.c:531-535	"Dismount first!" needs the mounted surface.
+do_rescue	rescue	rescue.fighting-victim	D2	command	blocked	-	act.offensive.c:525-530	"How can you rescue someone you are trying to kill?" needs the rescuer fighting the target.
+do_rescue	rescue	rescue.roll-success-fail	D4	shared	blocked	-	act.offensive.c:553-582	number(1,101) vs skill roll, the Banzai trio, fight redirection and WAIT_STATE(vict, 2*PULSE_VIOLENCE) need a live fight plus RNG parity; future combat-RNG round.
+set_fighting	combat	set_fighting.attacker-stand	D4	shared	oracle-green	combat-entry-assist	fight.c:223	StartCombat now stands the ATTACKER to POS_FIGHTING at entry like C's set_fighting; RED pre-fix via hit.best-you-can.
+set_fighting	combat	set_fighting.defender-stand	D4	shared	blocked	-	fight.c:223	C also stands the DEFENDER at entry; deferred to the retaliation/damage-matrix round (interlocks with the damage path's position model and wimpy/AWAKE gates).

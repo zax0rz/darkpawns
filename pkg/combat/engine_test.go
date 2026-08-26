@@ -798,6 +798,9 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
+	// StartCombat stands the attacker at entry (C set_fighting, fight.c:223);
+	// re-down the attacker to model a mid-fight bash.
+	attacker.SetPosition(PosSitting)
 
 	var broadcasts []string
 	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
@@ -837,6 +840,9 @@ func TestProcessCombatPair_MobStandsWhenDowned(t *testing.T) {
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
+	// StartCombat stands the attacker at entry (C set_fighting, fight.c:223);
+	// re-down the attacker to model a mid-fight bash.
+	attacker.SetPosition(PosSitting)
 
 	var broadcasts []string
 	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
@@ -950,6 +956,9 @@ func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T)
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
+		// StartCombat stands the attacker at entry (C set_fighting, fight.c:223);
+		// re-down the attacker to model a mid-fight bash.
+		attacker.SetPosition(PosSitting)
 		broadcasts = nil
 		ce.BroadcastFunc = func(_ int, msg, _ string) { broadcasts = append(broadcasts, msg) }
 	}

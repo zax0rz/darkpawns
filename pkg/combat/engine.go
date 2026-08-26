@@ -252,6 +252,14 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// leave the defender's FIGHTING pointing at the new attacker while its
 	// original combat pair still exists — an inconsistent state.
 	attacker.SetFighting(defenderName)
+	// C set_fighting sets POS_FIGHTING at entry (fight.c:223), so a standing
+	// attacker is in POS_FIGHTING immediately — do_hit's swing-branch check
+	// (GET_POS(ch) == POS_STANDING) then refuses a second target with "You do
+	// the best you can!" even before any round ticks. The defender's stand is
+	// left to the round-tick stand-up below; standing the defender at entry
+	// interlocks with the damage path's position model and belongs to the
+	// retaliation/damage-matrix round.
+	attacker.SetPosition(PosFighting)
 	ce.prependFighterLocked(attacker)
 	if defender.GetFighting() == "" {
 		defender.SetFighting(attackerName)
