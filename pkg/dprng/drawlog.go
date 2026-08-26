@@ -32,7 +32,7 @@ var (
 // is the only way to recover the port's draw sequence.
 func init() {
 	if path := os.Getenv("DP_DRAW_LOG_FILE"); drawLogOn && path != "" {
-		if f, err := os.Create(path); err == nil { // #nosec G304 -- dev draw-parity tool; path is operator-supplied
+		if f, err := os.Create(path); err == nil { // #nosec G304 G703 -- dev draw-parity tool; path is an operator-supplied env var, not request-derived
 			drawLogSink = f
 		}
 	}
