@@ -193,5 +193,23 @@ durable evidence; prose percentages are only snapshots.
   servers' Gods start at 1204, so the listing (peer + God) is a live oracle
   case rather than blocked on the DP-1205 start-room note.
 
+## Dated Handoff: 2026-08-26 (comm round)
+
+- The communication family (`say`, `tell`, `whisper`, `ask`, `reply`, `emote`)
+  is captured in `docs/fidelity/depth/comm.tsv`, 21/34 proven: pure coverage —
+  the port was already faithful across every reachable branch, including say's
+  four punctuation variants, the whisper/ask vict/self/others trios, tell's
+  gates plus the soundproof-room arm (ROOM_SOUNDPROOF bit 5 via set-room-flag),
+  reply's no-target and success arms, and emote's pair.
+- say.drunk-speech stays blocked: the drink fullness gate (FULL>20 && THIRST>0)
+  blocks repeated drinking for fresh characters and pulse-driven thirst decay
+  (1800 pulses ≈ 24 MUD hours) does not clear it — a condition-control fixture
+  is needed.
+- Harness discovery: Guinness (18007) lives in 180.obj, which is in NEITHER
+  tree's obj index — the game never loads that file, so consumables.txt's
+  guinness steps have been vacuously failing identically on both servers.
+  When a scenario's C transcript shows "You don't see X here", believe it and
+  check the obj index before trusting GREEN.
+
 Update this dated section when the frontier materially changes. Keep the rest
 of this document stable unless the methodology itself changes.

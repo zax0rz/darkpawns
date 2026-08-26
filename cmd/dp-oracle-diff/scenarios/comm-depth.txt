@@ -1,0 +1,107 @@
+# depth-case: say.no-arg
+# depth-case: say.says-variant
+# depth-case: say.exclaims-variant
+# depth-case: say.asks-variant
+# depth-case: say.states-variant
+# depth-case: whisper.no-arg
+# depth-case: whisper.success
+# depth-case: whisper.not-found
+# depth-case: whisper.self
+# depth-case: ask.no-arg
+# depth-case: ask.success
+# depth-case: reply.no-target
+# depth-case: tell.no-arg
+# depth-case: tell.not-found
+# depth-case: tell.self
+# depth-case: tell.success
+# depth-case: reply.success
+# depth-case: emote.no-arg
+# depth-case: emote.success
+# The communication family's player-visible branch matrix with a co-located
+# peer capturing every audience: do_say's punctuation variants and "\n\r"
+# empty gate (act.comm.c:759-822), do_spec_comm's whisper/ask arms with the
+# TO_VICT/TO_CHAR/TO_NOTVICT trio (976-1018), do_tell's gates plus
+# perform_tell (901-931), do_reply's no-target and success arms (934-973),
+# and do_echo's emote pair (act.wizard.c:130-156). No RNG, no wait states.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+say
+say Hello there
+say Wow!
+say Where?
+say Thus.
+whisper
+whisper barnaby hello friend
+whisper nobody hi
+whisper mordecai hi
+ask
+ask barnaby why
+reply
+tell
+tell nobody psst
+tell mordecai hi
+tell barnaby psst
+reply hi
+emote
+emote waves happily.
