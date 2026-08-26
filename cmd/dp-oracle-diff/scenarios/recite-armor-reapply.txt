@@ -1,0 +1,56 @@
+# depth-case: objmagic.reapply-noeffect
+# C magic.c:1400-1404: reciting armor (accum_duration FALSE) a second time
+# while still affected answers "Nothing seems to happen." to the reciter and
+# applies nothing. The first scroll is consumed in [warmup] (drained, not
+# diffed) with enough pulse padding to drain C's recite WAIT_STATE, so the
+# probe carries exactly one get+recite pair with the NOEFFECT.
+
+[fixture]
+quiet-mobs
+spawn-obj 11701 99 8162 80
+spawn-obj 11701 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+get crystal
+recite crystal
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+
+[probe]
+get crystal
+recite crystal
+~dpclock pulse 20
+~dpclock pulse 20

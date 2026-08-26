@@ -3,6 +3,7 @@ package spells
 import (
 	"fmt"
 	"log/slog"
+	"math/bits"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -55,6 +56,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool, reag int, world interface{}) {
 	var aff *engine.Affect
 	var toVictim, toRoom, toSelf string
+	var pending []*engine.Affect
 
 	switch spellNum {
 	case SpellChillTouch:
@@ -66,8 +68,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		toVictim = "You feel your strength wither!\r\n"
 		toSelf = "Summoning the forces of magick, you press your icy hand against $M.\r\n"
 	case SpellBless:
-		applyAffect(victim, engine.NewAffect(SpellBless, engine.ApplyHitroll, 6, 2, "bless"))
-		applyAffect(victim, engine.NewAffect(SpellBless, engine.ApplySavingSpell, 6, -2, "bless"))
+		pending = append(pending, engine.NewAffect(SpellBless, engine.ApplyHitroll, 6, 2, "bless"), engine.NewAffect(SpellBless, engine.ApplySavingSpell, 6, -2, "bless"))
 		toVictim = "You feel righteous.\r\n"
 		toSelf = "You bestow the blessing of your gods on $M.\r\n"
 	case SpellArmor:
@@ -82,8 +83,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			npcRetaliate(victim, ch)
 			return
 		}
-		applyAffect(victim, engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4+reag), "blindness"))
-		applyAffect(victim, engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness"))
+		pending = append(pending, engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4+reag), "blindness"), engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness"))
 		toVictim = "You have been blinded!\r\n"
 		toRoom = "$n seems to be blinded!\r\n"
 		toSelf = "A streak of blackness courses from your hand!\r\n"
@@ -94,12 +94,12 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			return
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
-		// AFF_CURSE flag affect
-		applyAffect(victim, engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse"))
-		// Damroll penalty — C source: magic.c curse APPLY_DAMROLL affect (was constructed but never applied)
-		applyAffect(victim, engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse"))
-		// Hitroll penalty — C source: magic.c curse also applies APPLY_HITROLL
-		applyAffect(victim, engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse"))
+		// AFF_CURSE flag affect, plus the damroll penalty (constructed but
+		// never applied in old C) and the hitroll penalty — magic.c curse.
+		pending = append(pending,
+			engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse"),
+			engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse"),
+			engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse"))
 		toVictim = "You feel very uncomfortable.\r\n"
 		toRoom = "$n briefly glows red!\r\n"
 		toSelf = "A streak of red light courses from your hand!\r\n"
@@ -141,7 +141,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			npcRetaliate(victim, ch)
 			return
 		}
-		applyAffect(victim, engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep"))
+		pending = append(pending, engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep"))
 		// C magic.c:1241-1247 — the sleepy lines and the position drop only
 		// happen to a victim still above POS_SLEEPING.
 		if getPos(victim) > int(PosSleeping) {
@@ -189,11 +189,12 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		if dur < 1 {
 			dur = 1
 		}
-		// AFF_POISON flag affect
-		applyAffect(victim, engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison"))
-		// C source: magic.c poison — APPLY_STR -2 and APPLY_HITROLL -2
-		applyAffect(victim, engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison"))
-		applyAffect(victim, engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison"))
+		// AFF_POISON flag affect, plus APPLY_STR -2 and APPLY_HITROLL -2
+		// (magic.c poison).
+		pending = append(pending,
+			engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison"),
+			engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison"),
+			engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison"))
 		toVictim = "You feel very sick.\r\n"
 		toRoom = "$n gets violently ill!\r\n"
 		toSelf = "Your tainted magick pulses towards $M.\r\n"
@@ -255,7 +256,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			return
 		}
 		// Set flag only — no stat modifier
-		applyAffect(victim, engine.NewAffectDirect(SpellProtFromEvil, engine.ApplyNone, 24, 0, engine.AFFProtectionEvil, "prot from evil"))
+		pending = append(pending, engine.NewAffectDirect(SpellProtFromEvil, engine.ApplyNone, 24, 0, engine.AFFProtectionEvil, "prot from evil"))
 		toVictim = "A stream of silver light surges from your fingertips, covering you!\r\n"
 		toRoom = "A stream of silver light surges from $n's fingertips, covering $m!\r\n"
 	case SpellProtFromGood:
@@ -267,7 +268,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			}
 			return
 		}
-		applyAffect(victim, engine.NewAffectDirect(SpellProtFromGood, engine.ApplyNone, 24, 0, engine.AFFProtectionGood, "prot from good"))
+		pending = append(pending, engine.NewAffectDirect(SpellProtFromGood, engine.ApplyNone, 24, 0, engine.AFFProtectionGood, "prot from good"))
 		toVictim = "A stream of silver light surges from your fingertips, covering you!\r\n"
 		toRoom = "A stream of silver light surges from $n's fingertips, covering $m!\r\n"
 	case SpellAdrenaline, SpellStrength:
@@ -283,35 +284,34 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		// Verbatim C typo: "Your feel your awareness improve." (magic.c:1267).
 		toVictim = "Your feel your awareness improve.\r\n"
 	case SpellWaterwalk:
-		aff = engine.NewAffectDirect(SpellWaterwalk, engine.ApplyNone, 4+getLevel(ch)/5, 0, engine.AFFWaterwalk, "waterwalk")
+		// C duration expression "4+reag?20:0" parses as (4+reag)?20:0 — always
+		// 20 for reag >= 0 (magic.c:1279 quirk kept).
+		aff = engine.NewAffectDirect(SpellWaterwalk, engine.ApplyNone, 20, 0, engine.AFFWaterwalk, "waterwalk")
 		toVictim = "You feel webbing between your toes.\r\n"
 		toSelf = "Your magic makes $M light footed.\r\n"
 	case SpellChangeDensity:
-		aff = engine.NewAffectDirect(SpellChangeDensity, engine.ApplyNone, 4+getLevel(ch)/5, 0, engine.AFFWaterwalk, "change density")
+		// Shares C's waterwalk arm, including the always-20 duration quirk.
+		aff = engine.NewAffectDirect(SpellChangeDensity, engine.ApplyNone, 20, 0, engine.AFFWaterwalk, "change density")
 		toVictim = "Your molecular density shifts.\r\n"
 		toSelf = "You shift $S molecular density.\r\n"
 	case SpellChameleon:
 		aff = engine.NewAffectDirect(SpellChameleon, engine.ApplyNone, getLevel(ch), 0, engine.AFFHide, "chameleon")
 		toVictim = "You blend into the surroundings.\r\n"
 	case SpellMetalskin:
-		applyAffect(victim, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"))
-		applyAffect(victim, engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
+		pending = append(pending, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"), engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
 		toVictim = "Your skin turns metallic!\r\n"
 	case SpellInvulnerability:
-		applyAffect(victim, engine.NewAffectDirect(SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln, "invulnerability"))
-		applyAffect(victim, engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability"))
+		pending = append(pending, engine.NewAffectDirect(SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln, "invulnerability"), engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability"))
 		toVictim = "A globe of protection appears around you!\r\n"
 	case SpellPsyshield:
 		aff = engine.NewAffect(SpellPsyshield, engine.ApplyAC, getLevel(ch)/2, -15, "psyshield")
 		toVictim = "You feel a shield of energy form around you.\r\n"
 	case SpellGreatPercept:
-		applyAffect(victim, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"))
-		applyAffect(victim, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept"))
+		pending = append(pending, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"), engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept"))
 		toVictim = "Your eyes glow briefly.\r\n"
 		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellLessPercept:
-		applyAffect(victim, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"))
-		applyAffect(victim, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept"))
+		pending = append(pending, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"), engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept"))
 		toVictim = "Your eyes glow briefly.\r\n"
 		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellIntellect:
@@ -325,6 +325,21 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		return
 	}
 
+	// C magic.c:1387-1404 — pre-apply gates. A mob that carries this affect's
+	// flag innately (mob file, not the spell) refuses the spell, and a victim
+	// already affected by a non-accumulating spell refuses it; both answer
+	// NOEFFECT to the caster. Runs after the save-gated case arms (C evaluates
+	// the switch first) but before anything is applied.
+	accumDur, accumAff, bit0, bit1 := affectGateFlags(spellNum)
+	if npcInnatelyAffected(victim, bit0, bit1, spellNum) ||
+		(hasSpellAffect(victim, spellNum) && !accumDur && !accumAff) {
+		sendToCaster(ch, "Nothing seems to happen.\r\n")
+		return
+	}
+
+	for _, a := range pending {
+		applyAffect(victim, a)
+	}
 	if aff != nil {
 		applyAffect(victim, aff)
 	}
@@ -343,7 +358,129 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	}
 }
 
+// affectGateFlags mirrors C mag_affects' per-spell accum_affect/accum_duration
+// switches and the first two affects' bitvectors (magic.c:888-1380), which the
+// magic.c:1387-1404 pre-apply gates test. bit0/bit1 are AFF_* bit indices; a
+// zero bit means the affect slot carries no flag (C's init loop).
+func affectGateFlags(spellNum int) (accumDuration, accumAffect bool, bit0, bit1 int) {
+	switch spellNum {
+	case SpellChillTouch:
+		return true, false, affNothingBit, 0
+	case SpellArmor:
+		return false, false, affNothingBit, 0
+	case SpellBless:
+		return true, false, affNothingBit, 0
+	case SpellBlindness, SpellSmokescreen:
+		return false, false, engineBitIndex(engine.AFFBlind), engineBitIndex(engine.AFFBlind)
+	case SpellCurse:
+		return true, true, engineBitIndex(engine.AFFCurse), engineBitIndex(engine.AFFCurse)
+	case SpellKnowAlign, SpellDetectAlign:
+		return false, false, engineBitIndex(engine.AFFDetectAlign), 0
+	case SpellDetectInvis:
+		return true, false, engineBitIndex(engine.AFFDetectInvisible), 0
+	case SpellDetectMagic:
+		return true, false, engineBitIndex(engine.AFFDetectMagic), 0
+	case SpellInfravision:
+		return true, false, engineBitIndex(engine.AFFInfrared), 0
+	case SpellHaste:
+		return false, false, engineBitIndex(engine.AFFHaste), 0
+	case SpellSlow:
+		// C sets bitvector AFF_HASTE for SPELL_SLOW (magic.c:1051 quirk); the
+		// Go apply path still writes AFFSlow — bit parity deferred with the
+		// slow-aff-bit follow-up.
+		return false, false, engineBitIndex(engine.AFFSlow), 0
+	case SpellDreamTravel:
+		return false, false, engineBitIndex(engine.AFFDream), 0
+	case SpellWaterBreathe:
+		return true, false, engineBitIndex(engine.AFFWaterBreathing), 0
+	case SpellTransparency, SpellInvisible:
+		return false, false, engineBitIndex(engine.AFFInvisible), 0
+	case SpellPoison:
+		return false, false, engineBitIndex(engine.AFFPoison), engineBitIndex(engine.AFFPoison)
+	case SpellFlameStrike:
+		return false, false, engineBitIndex(engine.AFFFlaming), 0
+	case SpellFly, SpellLevitate:
+		return true, false, engineBitIndex(engine.AFFFlying), 0
+	case SpellProtFromEvil:
+		return false, false, engineBitIndex(engine.AFFProtectionEvil), 0
+	case SpellProtFromGood:
+		return false, false, engineBitIndex(engine.AFFProtectionGood), 0
+	case SpellSanctuary:
+		return true, false, engineBitIndex(engine.AFFSanctuary), 0
+	case SpellSleep:
+		return false, false, engineBitIndex(engine.AFFSleep), 0
+	case SpellAdrenaline:
+		return true, false, affNothingBit, 0
+	case SpellStrength:
+		return false, true, affNothingBit, 0
+	case SpellSenseLife:
+		return true, false, engineBitIndex(engine.AFFSenseLife), 0
+	case SpellWaterwalk, SpellChangeDensity:
+		return true, false, engineBitIndex(engine.AFFWaterwalk), 0
+	case SpellChameleon:
+		return false, false, engineBitIndex(engine.AFFHide), 0
+	case SpellMetalskin:
+		return true, false, engineBitIndex(engine.AFFMetalskin), 0
+	case SpellInvulnerability:
+		return true, false, engineBitIndex(engine.AFFInvuln), 0
+	case SpellPsyshield:
+		return true, false, affNothingBit, 0
+	case SpellGreatPercept:
+		return false, false, engineBitIndex(engine.AFFSenseLife), engineBitIndex(engine.AFFDetectInvisible)
+	case SpellLessPercept:
+		return false, false, engineBitIndex(engine.AFFInfrared), engineBitIndex(engine.AFFDetectAlign)
+	case SpellIntellect:
+		return false, true, affNothingBit, 0
+	case SpellMindBar:
+		// C sets no bitvector for MIND_BAR beyond AFF_NOTHING (magic.c:1373);
+		// the Go apply path additionally writes engine.AFFMindBar — parity
+		// deferred with the affect-bits follow-up.
+		return false, false, affNothingBit, 0
+	}
+	return false, false, 0, 0
+}
+
+// affNothingBit is C's AFF_NOTHING (structs.h:342) — stat-only spells still
+// test this real bit index in the mob-affection gate.
+const affNothingBit = 32
+
+func engineBitIndex(mask uint64) int {
+	if mask == 0 {
+		return 0
+	}
+	return bits.TrailingZeros64(mask)
+}
+
+// npcInnatelyAffected mirrors the C mob-affection gate (magic.c:1387-1394):
+// an NPC that already carries the spell's affect flag — from its mob file,
+// not from this spell — refuses the spell.
+func npcInnatelyAffected(victim interface{}, bit0, bit1, spellNum int) bool {
+	type npcCheck interface{ IsNPC() bool }
+	nc, ok := victim.(npcCheck)
+	if !ok || !nc.IsNPC() {
+		return false
+	}
+	type afflicted interface{ IsAffected(int) bool }
+	af, ok := victim.(afflicted)
+	if !ok {
+		return false
+	}
+	if hasSpellAffect(victim, spellNum) {
+		return false
+	}
+	return (bit0 != 0 && af.IsAffected(bit0)) || (bit1 != 0 && af.IsAffected(bit1))
+}
+
+func hasSpellAffect(victim interface{}, spellNum int) bool {
+	type speller interface{ HasSpellAffect(int) bool }
+	if s, ok := victim.(speller); ok {
+		return s.HasSpellAffect(spellNum)
+	}
+	return false
+}
+
 // getPos reads a character's position; unknown types report standing.
+
 func getPos(ch interface{}) int {
 	type poser interface{ GetPosition() int }
 	if p, ok := ch.(poser); ok {
