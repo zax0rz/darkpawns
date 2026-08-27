@@ -70,7 +70,7 @@ const (
 	noBody         = -1
 	levelCanShout  = 2 // C: level_can_shout = 2 (src/config.c)
 	levelCanGossip = 5
-	hollerMoveCost = 10
+	hollerMoveCost = 20
 	maxNoteLength  = 1000
 )
 
