@@ -20,12 +20,16 @@ const pulseControl = "~dpclock pulse "
 // Scenario is a split differential script: per-server setup (not diffed) plus
 // a shared probe (diffed block-by-block).
 type Scenario struct {
-	Name             string
-	SetupOracle      []string
-	SetupPort        []string
-	Warmup           []string
-	Probe            []string
-	ProbeActor       string
+	Name        string
+	SetupOracle []string
+	SetupPort   []string
+	Warmup      []string
+	Probe       []string
+	ProbeActor  string
+	// PeerDrop names one passive peer whose TCP connection is closed after
+	// setup/warmup and before the compared probe. The character remains in the
+	// live-world lifecycle, which exposes C's linkless descriptor branches.
+	PeerDrop         string
 	Peers            map[string]*PeerSetup
 	Fixtures         []ObjectFixture
 	ObjectSpawns     []ObjectSpawnFixture
@@ -163,6 +167,8 @@ type AudienceProbeBlock struct {
 //	set-room-sector 8161 7   # SECT_WATER_NOSWIM
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
+//	[peer-drop]         # close one named passive peer before [probe]
+//	peer
 //	[probe]             # sent to BOTH; this is the only diffed section
 //	look
 //	look sign
@@ -176,6 +182,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	scanner := bufio.NewScanner(r)
 	var section *[]string
 	fixtureSection := false
+	peerDropSection := false
 	lineNo := 0
 	for scanner.Scan() {
 		lineNo++
@@ -185,6 +192,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			fixtureSection = false
+			peerDropSection = false
 			lower := strings.ToLower(line)
 			switch lower {
 			case "[setup:oracle]":
@@ -207,6 +215,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			case "[fixture]", "[fixtures]":
 				section = nil
 				fixtureSection = true
+			case "[peer-drop]":
+				section = nil
+				peerDropSection = true
 			default:
 				parts := strings.Split(strings.Trim(lower, "[]"), ":")
 				if len(parts) == 2 && parts[0] == "probe" && parts[1] != "" {
@@ -363,6 +374,16 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			}
 			return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fixture %q", name, lineNo, line)
 		}
+		if peerDropSection {
+			if sc.PeerDrop != "" {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: duplicate peer-drop", name, lineNo)
+			}
+			if len(strings.Fields(line)) != 1 {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid peer-drop %q", name, lineNo, line)
+			}
+			sc.PeerDrop = line
+			continue
+		}
 		if section == nil {
 			return Scenario{}, fmt.Errorf("scenario %q line %d: command %q before any [section]", name, lineNo, line)
 		}
@@ -380,6 +401,11 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	if sc.ProbeActor != "" {
 		if _, ok := sc.Peers[sc.ProbeActor]; !ok {
 			return Scenario{}, fmt.Errorf("scenario %q probe actor %q is not a configured peer", name, sc.ProbeActor)
+		}
+	}
+	if sc.PeerDrop != "" {
+		if _, ok := sc.Peers[sc.PeerDrop]; !ok {
+			return Scenario{}, fmt.Errorf("scenario %q peer-drop target %q is not a configured peer", name, sc.PeerDrop)
 		}
 	}
 	return sc, nil

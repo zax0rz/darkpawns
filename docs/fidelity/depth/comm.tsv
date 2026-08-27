@@ -21,7 +21,7 @@ do_tell	tell	tell.not-found	D1	command	oracle-green	comm-depth	act.comm.c:909-91
 do_tell	tell	tell.self	D1	command	oracle-green	comm-depth	act.comm.c:913-914	"You try to tell yourself something."
 do_tell	tell	tell.success	D3	command	oracle-green	comm-depth	act.comm.c:929-930	perform_tell pair: "You tell Barnaby, 'x'" / peer "Mordecai tells you, 'x'".
 do_tell	tell	tell.soundproof-room	D2	command	oracle-green	comm-soundproof	act.comm.c:919-920	"The walls seem to absorb your words." with the room flagged ROOM_SOUNDPROOF (bit 5); peer transcript stays empty.
-do_tell	tell	tell.linkless	D2	command	blocked	-	act.comm.c:921-922	"$E's linkless at the moment." needs a linkless victim.
+do_tell	tell	tell.linkless	D2	command	oracle-green	tell-linkless-depth	act.comm.c:921-922	Peer-drop fixture closes the named peer TCP connection after setup; the playing character remains linkless and matches "$E's linkless at the moment."
 do_tell	tell	tell.writing	D2	shared	oracle-green	boards-depth	act.comm.c:923-925	Board post enters PLR_WRITING, so a peer telling the active writer receives C's writing gate.
 do_tell	tell	tell.cant-hear	D2	command	oracle-green	comm-notell	act.comm.c:926-928	Victim NOTELL arm: peer toggles mortal `notell` in (drained) setup, actor tells them — act("$E can't hear you.", TO_CHAR|TO_SLEEP) for a mortal teller. GREEN pre-fix.
 do_tell	tell	tell.notell-self	D2	command	oracle-green	comm-notell	act.comm.c:915-916	Self NOTELL arm: actor toggles `notell` in the diffed probe (toggle bytes compared too) then tells — "You can't tell other people while you have notell on." GREEN pre-fix.

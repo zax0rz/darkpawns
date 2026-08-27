@@ -1,0 +1,52 @@
+# depth-case: score.state-variants.position
+# C-first do_score position vehicle (src/act.informative.c:1168-1405).
+# A God actor walks through sleep/rest/sit/stand and then uses the God-set
+# stats vehicle; the score probes compare each position-dependent score line
+# while the remaining affect/equipment/mount/pet branches stay tracked as
+# blocked in info.tsv.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scoregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scoregod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+score
+sleep
+score
+wake
+rest
+score
+sit
+score
+stand
+set Scoregod wis 0
+score
