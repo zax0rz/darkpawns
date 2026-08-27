@@ -29,7 +29,7 @@ do_tell	tell	tell.noshout	D1	command	oracle-green	comm-noshout	act.comm.c:917-91
 do_tell	tell	tell.npc-nodesc	D2	command	oracle-green	comm-tell-nodesc	act.comm.c:911-912	get_char_vis finds the spawned trainee world-wide, then the IS_NPC-without-descriptor gate answers NOPERSON. Go's visibleTellTarget resolves players only, so the same NOPERSON byte fires — pure coverage.
 do_reply	reply	reply.no-target	D1	command	oracle-green	comm-depth	act.comm.c:940-941	"You have no-one to reply to!"
 do_reply	reply	reply.success	D3	command	oracle-green	comm-depth	act.comm.c:944-971	After a successful tell, `reply hi` routes back through perform_tell.
-do_reply	reply	reply.no-arg	D1	command	blocked	-	act.comm.c:942-943	"What is your reply?" needs LAST_TELL set plus an empty argument; not probed this round.
+do_reply	reply	reply.no-arg	D1	command	oracle-green	reply-noarg	act.comm.c:942-943	Primary tells the peer in warmup, then the peer's bare reply reaches the valid-LAST_TELL empty-argument gate and matches "What is your reply?".
 do_echo	emote	emote.no-arg	D1	command	oracle-green	comm-depth	act.wizard.c:133-134	"Yes.. but what?"
 do_echo	emote	emote.success	D3	command	oracle-green	comm-depth	act.wizard.c:135-155	"$n waves happily." room + self pair.
 do_echo	emote	emote.noshout	D1	command	oracle-green	comm-noshout	act.wizard.c:138-141	PLR_NOSHOUT vehicle (same God-mute warmup). RED pre-fix: Go cmdEmote had NO mute/INT gate — the muted actor's "Muteon waves desperately" broadcast instead of C's "You try to express yourself but cannot!" (act.wizard.c:135-141, PLR_NOSHOUT || INT==0, checked after the empty-arg gate). Gate ported.

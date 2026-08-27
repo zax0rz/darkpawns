@@ -319,7 +319,7 @@ func TestCmdWhere(t *testing.T) {
 	m.sessions["alice"] = s
 	m.mu.Unlock()
 
-	err := cmdWhere(s)
+	err := cmdWhere(s, nil)
 	if err != nil {
 		t.Fatalf("cmdWhere failed: %v", err)
 	}

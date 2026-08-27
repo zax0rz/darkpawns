@@ -121,7 +121,7 @@ func init() {
 	// Info
 	registerCommand("score", wrapNoArgs(cmdScore), "Show your character stats.", "sc")
 	registerCommand("who", wrapArgs(cmdWho), "List all online players.")
-	registerCommand("where", wrapNoArgs(cmdWhere), "Show player locations.")
+	registerCommand("where", wrapArgs(cmdWhere), "Show player locations.")
 	registerCommand("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.")
 	registerCommand("gold", wrapNoArgs(cmdCoins), "Display your gold and bank balance (C alias of coins).")
 	// real C command name is "abilities" (src/interpreter.c); "abils" kept as alias.
