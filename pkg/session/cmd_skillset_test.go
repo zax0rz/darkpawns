@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -255,6 +256,20 @@ func TestCmdSkillset_Success_MultiwordSkill(t *testing.T) {
 	}
 	if lvl := target.player.GetSkill("cure light"); lvl != 80 {
 		t.Errorf("target cure light = %d, want 80", lvl)
+	}
+}
+
+func TestCmdSkillset_PickLockUsesDoorSkillKey(t *testing.T) {
+	wiz, target := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "'pick", "lock'", "100"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "You change Hero's pick lock to 100.\n\r"; got != want {
+		t.Fatalf("confirmation = %q, want %q", got, want)
+	}
+	if got := target.player.GetSkill(game.SkillPickLock); got != 100 {
+		t.Fatalf("pick-lock skill = %d, want 100", got)
 	}
 }
 

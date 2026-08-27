@@ -548,6 +548,12 @@ func cmdSkillset(s *Session, args []string) error {
 	// use the canonical spells[] display name (lowercased, matching how callers
 	// key GetSkill/SetSkill — see spec_procs.go practice).
 	canonicalName := strings.ToLower(game.SkillCatalogName(skillNum))
+	// C's spells[] display name is "pick lock", while the door command's
+	// gameplay lookup uses the Go storage key pick_lock. Keep other display
+	// names unchanged because skillset also accepts ordinary spell names.
+	if canonicalName == "pick lock" {
+		canonicalName = game.SkillPickLock
+	}
 	vict.SetSkill(canonicalName, value)
 
 	// Step 11: confirmation to the actor. spells[skill] is the display name.
