@@ -161,7 +161,13 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		// mob file's act flags ride along. Without this, HasMobFlag reads a
 		// zero mask for every world-loaded mob and C's MOB_AWARE backstab
 		// guard (act.offensive.c:212) never fires.
-		Flags:          actionFlagBits(proto.ActionFlags),
+		Flags: actionFlagBits(proto.ActionFlags),
+		// ...and the mob file's AFFECTED flags ride along the same way —
+		// nearly a thousand world mobs carry innate AFF bits (sanctuary,
+		// invisibility, ...), and mag_affects' mob-affection gate
+		// (magic.c:1387-1394) refuses spells whose bitvector the mob holds
+		// innately.
+		Affects:        affectFlagBits(proto.AffectFlags),
 		Inventory:      make([]*ObjectInstance, 0),
 		Equipment:      make(map[int]*ObjectInstance),
 		Fighting:       false,
@@ -593,6 +599,37 @@ var actionFlagBitNames = []string{
 func actionFlagBits(names []string) uint64 {
 	index := make(map[string]int, len(actionFlagBitNames))
 	for i, n := range actionFlagBitNames {
+		index[n] = i
+	}
+	var bits uint64
+	for _, n := range names {
+		if bit, ok := index[n]; ok {
+			bits |= 1 << uint(bit)
+		}
+	}
+	return bits
+}
+
+// affectFlagBitNames mirrors the parser's affect-flag name table
+// (parser/mob.go affectBitNames); index = C AFF_* bit (structs.h:310-348).
+// Kept in sync by TestAffectFlagBitsMatchParserTable.
+var affectFlagBitNames = []string{
+	"BLIND", "INVISIBLE", "DETECT_ALIGN", "DETECT_INVIS", "DETECT_MAGIC",
+	"SENSE_LIFE", "WATERWALK", "SANCTUARY", "GROUP", "CURSE",
+	"INFRAVISION", "POISON", "PROTECT_EVIL", "PROTECT_GOOD", "SLEEP",
+	"NOTRACK", "FLESH_ALTER", "DODGE", "SNEAK", "HIDE",
+	"BERSERK", "CHARM", "FOLLOW", "WIMPY", "KUJI_KIRI",
+	"CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNT",
+	"INVULN", "FLAMING", "NOTHING", "HASTE", "SLOW",
+	"DREAM", "WATERBREATHE", "METALSKIN", "ROBBED",
+}
+
+// affectFlagBits converts parsed affect-flag names to the C AFF_* bitmask.
+// The bits are C struct positions — the same positions MobInstance.Affects
+// and the spells package's mob-affection gate use.
+func affectFlagBits(names []string) uint64 {
+	index := make(map[string]int, len(affectFlagBitNames))
+	for i, n := range affectFlagBitNames {
 		index[n] = i
 	}
 	var bits uint64

@@ -30,6 +30,7 @@ type Scenario struct {
 	Fixtures         []ObjectFixture
 	ObjectSpawns     []ObjectSpawnFixture
 	MobFixtures      []MobFixture
+	MobAffFixtures   []MobAffFixture
 	QuietZones       []int
 	QuietAllMobs     bool
 	EmptyPlayers     bool
@@ -71,12 +72,22 @@ type ObjectSpawnFixture struct {
 
 // MobFixture adds one reset command to a disposable zone file. It is used to
 // place deterministic special-procedure actors in an oracle scenario without
-// modifying either source world tree.
+// modifying either source world trees.
 type MobFixture struct {
 	MobVNum     int
 	MaxExisting int
 	RoomVNum    int
 	ZoneNumber  int
+}
+
+// MobAffFixture patches a mob prototype's innate affected-by bitmask (the
+// flag line's second field) in each server's disposable world copy. C
+// read_mobile copies those bits onto every instance, and mag_affects'
+// mob-affection gate (magic.c:1387-1394) refuses spells whose bitvector the
+// mob carries innately — this fixture is the live vehicle for that gate.
+type MobAffFixture struct {
+	MobVNum int
+	AffMask int
 }
 
 // RoomExitFixture replaces every exit on a disposable room with either no
@@ -128,6 +139,7 @@ type AudienceProbeBlock struct {
 //	[fixture]
 //	inert-scroll 8038         # patch this prototype in disposable worlds only
 //	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
+//	set-mob-aff 18306 128     # mob, innate affected-by bitmask (AFF_* positions)
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
@@ -257,6 +269,14 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				}
 				sc.Fixtures = append(sc.Fixtures, ObjectFixture{ObjectVNum: objVNum})
 				continue
+			}
+			if len(fields) == 3 && strings.EqualFold(fields[0], "set-mob-aff") {
+				mobVNum, mobErr := strconv.Atoi(fields[1])
+				affMask, affErr := strconv.Atoi(fields[2])
+				if mobErr == nil && affErr == nil && mobVNum > 0 && affMask > 0 {
+					sc.MobAffFixtures = append(sc.MobAffFixtures, MobAffFixture{MobVNum: mobVNum, AffMask: affMask})
+					continue
+				}
 			}
 			if len(fields) == 5 && strings.EqualFold(fields[0], "spawn-mob") {
 				values := make([]int, 4)

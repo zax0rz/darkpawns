@@ -1,0 +1,61 @@
+# depth-case: objmagic.mob-innate-gate
+# mag_affects' mob-affection gate (magic.c:1387-1394) live: an NPC carrying
+# the spell's affect flag innately — from its mob file, not the spell —
+# refuses the spell with NOEFFECT to the caster. Vehicle: the new set-mob-aff
+# fixture patches the throwaway mob files' AFFECTED word (flag-line word 5,
+# AFF bits 0-31; trainee 16303 gets bit 7 AFF_SANCTUARY = mask 128), then the
+# crowned Implementor (empty-players) gotos to 8105 and casts sanctuary at the
+# trainee: "Okay." + "Nothing seems to happen." Immort casts never lose
+# concentration (weight_add -20), so the single number(0,81) draw is the only
+# RNG beyond say_spell; run several seeds. One cast only: do_cast's success
+# arm sets WAIT_STATE(PULSE_VIOLENCE), and C clears wait on main-loop passes
+# (wall clock) — the ~dpclock heartbeat pump cannot drain a queued second
+# command on the C side, so multi-cast probes would diverge on harness timing
+# rather than game bytes. The unset-slot quirk (af[1].bitvector == 0 tests the
+# AFF_BLIND bit) is unit-pinned in pkg/spells instead.
+# RED pre-fix on three counts: Go's parser read flag word 2 as the AFFECTED
+# word (word 5 is correct), NewMob never seeded the innate bits, and the gate
+# tested engine flag positions against the C-position mask.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-aff 16303 128
+
+# PRIMARY = first player ⇒ God (the caster; all skills 100, never loses
+# concentration).
+[setup:oracle]
+Sanctgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sanctgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+cast 'sanctuary' trainee

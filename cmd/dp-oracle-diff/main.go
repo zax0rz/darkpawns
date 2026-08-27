@@ -133,7 +133,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -181,6 +181,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		if err := applyMobFixtures(goWorld, scenario.MobFixtures); err != nil {
 			return fmt.Errorf("apply Go port mob fixtures: %w", err)
+		}
+		if err := applyMobAffFixtures(filepath.Join(oracleData, "world"), scenario.MobAffFixtures); err != nil {
+			return fmt.Errorf("apply C oracle mob aff fixtures: %w", err)
+		}
+		if err := applyMobAffFixtures(goWorld, scenario.MobAffFixtures); err != nil {
+			return fmt.Errorf("apply Go port mob aff fixtures: %w", err)
 		}
 		if err := applyScriptlessMobFixtures(filepath.Join(oracleData, "world"), scenario.ScriptlessMobIDs); err != nil {
 			return fmt.Errorf("apply C oracle mob script fixtures: %w", err)
@@ -485,6 +491,68 @@ func applyMobFixtures(worldDir string, fixtures []oraclediff.MobFixture) error {
 		}
 		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
+		}
+	}
+	return nil
+}
+
+// applyMobAffFixtures patches a mob prototype's innate affected-by bitmask in
+// a disposable world copy: the flag line after the vnum header's four
+// ~-terminated text blocks carries act, then affected, as its first two
+// fields. C's read_mobile copies those bits onto every instance, which is
+// what mag_affects' mob-affection gate tests.
+func applyMobAffFixtures(worldDir string, fixtures []oraclediff.MobAffFixture) error {
+	for _, fixture := range fixtures {
+		path := filepath.Join(worldDir, "mob", fmt.Sprintf("%d.mob", fixture.MobVNum/100))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		lines := strings.Split(string(data), "\n")
+		header := fmt.Sprintf("#%d", fixture.MobVNum)
+		inTarget := false
+		blocksClosed := 0
+		patched := false
+		for index, line := range lines {
+			if strings.HasPrefix(line, "#") {
+				inTarget = line == header
+				blocksClosed = 0
+				continue
+			}
+			if !inTarget || patched {
+				continue
+			}
+			// Four Diku text blocks (alias, short, long, detail) precede the
+			// flag line; each closes on a line ENDING with '~' — the marker may
+			// be inline ("trainee guard~") or standalone ("~").
+			trimmed := strings.TrimSpace(line)
+			if blocksClosed < 4 {
+				if strings.HasSuffix(trimmed, "~") {
+					blocksClosed++
+				}
+				continue
+			}
+			// Flag-line layout (db.c parse_mobile): eight flag words — act
+			// words 1-4, AFFECTED words 5-8 — then alignment, then the type
+			// letter. The first affected word (fields[4]) carries AFF bits
+			// 0-31, which is what the mob-affection gate tests.
+			fields := strings.Fields(line)
+			if len(fields) < 5 {
+				return fmt.Errorf("mob %d flag line %q has no affected word", fixture.MobVNum, line)
+			}
+			fields[4] = fmt.Sprintf("%d", fixture.AffMask)
+			lines[index] = strings.Join(fields, " ")
+			patched = true
+		}
+		if !patched {
+			return fmt.Errorf("mob %d not found or flag line not reached in %s", fixture.MobVNum, path)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G304 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer-derived file name
+			return fmt.Errorf("write mob file for vnum %d: %w", fixture.MobVNum, err)
 		}
 	}
 	return nil

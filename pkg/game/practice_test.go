@@ -80,7 +80,13 @@ func TestClassSkillMinLevel(t *testing.T) {
 	if got := ClassSkillMinLevel(ClassWarrior, 132); got != 3 { // bash
 		t.Errorf("warrior bash min level = %d, want 3", got)
 	}
-	if got := ClassSkillMinLevel(ClassWarrior, 32); got != 999 { // magic missile — warriors never
-		t.Errorf("warrior magic-missile min level = %d, want 999 (unlearnable)", got)
+	// C's spello() defaults an unassigned class's min_level to LVL_IMMORT
+	// (spell_parser.c:1154) — mortals can never reach it, but an immortal of
+	// any class passes the cast gate.
+	if got := ClassSkillMinLevel(ClassWarrior, 32); got != 31 { // magic missile — spello default
+		t.Errorf("warrior magic-missile min level = %d, want 31 (spello LVL_IMMORT default)", got)
+	}
+	if got := ClassSkillMinLevel(ClassWarrior, 9999); got != 999 { // not in the catalog
+		t.Errorf("unknown skill min level = %d, want 999", got)
 	}
 }

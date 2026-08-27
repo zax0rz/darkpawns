@@ -1,6 +1,7 @@
 package game
 
 import (
+	"os"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -58,5 +59,39 @@ func TestNewMobCarriesActFlags(t *testing.T) {
 	}
 	if mob.HasMobFlag(5) {
 		t.Error("HasMobFlag(AGGRESSIVE) = true, want false")
+	}
+}
+
+// TestNewMobSeedsInnateAffects pins the affected-by half of C read_mobile's
+// prototype copy (db.c:1757): the mob file's AFF words ride onto the instance
+// as innate bits in C struct positions, and mag_affects' mob-affection gate
+// (magic.c:1387-1394) refuses spells whose bitvector the mob holds innately.
+// The names round-trip through the REAL parser so the game and parser tables
+// cannot drift apart.
+func TestNewMobSeedsInnateAffects(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/163.mob"
+	record := "#16303\ntestmob\ta\ttest mob\nA test mob is here.\n~\nDetail.\n~\n" +
+		"10 0 0 0 128 0 0 0 0 E\n1 19 9 1d5+20 1d4+0\n3 100\n8 8 1\nE\n$\n"
+	if err := os.WriteFile(path, []byte(record), 0o600); err != nil {
+		t.Fatalf("write fixture mob file: %v", err)
+	}
+	mobs, err := parser.ParseMobFile(path)
+	if err != nil {
+		t.Fatalf("ParseMobFile: %v", err)
+	}
+	if len(mobs) != 1 {
+		t.Fatalf("parsed %d mobs, want 1", len(mobs))
+	}
+	proto := &mobs[0]
+	if len(proto.AffectFlags) != 1 || proto.AffectFlags[0] != "SANCTUARY" {
+		t.Fatalf("AffectFlags = %v, want [SANCTUARY] (word 5 carries AFF bits)", proto.AffectFlags)
+	}
+	mob := NewMob(proto, 8105)
+	if !mob.IsAffected(7) { // C AFF_SANCTUARY, structs.h
+		t.Errorf("mob.IsAffected(7) = false, want innate sanctuary from the mob file")
+	}
+	if mob.IsAffected(0) {
+		t.Errorf("mob.IsAffected(0) = true, want no innate blind bit")
 	}
 }

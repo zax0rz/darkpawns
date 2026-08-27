@@ -276,28 +276,41 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	flagsLine = strings.TrimSuffix(flagsLine, " S")
 	flagsLine = strings.TrimSuffix(flagsLine, "S")
 
-	// Parse action flags (bitmask as string), affect flags (bitmask), alignment
-	// Format: <action_flags> <affect_flags> <alignment> <race>
+	// db.c parse_mobile reads EIGHT flag words, then alignment (t[2]), then
+	// the type letter. Race is NOT on this line: it comes from the "Race:"
+	// extra line (db.c:1201, RANGE 0-99) and defaults to RACE_OTHER (7) in
+	// parse_simple_mob.
+	mob.Race = 7
 	fields := strings.Fields(flagsLine)
-	if len(fields) >= 3 {
-		mob.Alignment, _ = strconv.Atoi(fields[2])
-	}
-	if len(fields) >= 4 {
-		mob.Race, _ = strconv.Atoi(fields[3])
-	} else {
-		// C source: default race = RACE_OTHER (7)
-		mob.Race = 7
+	if len(fields) >= 9 {
+		mob.Alignment, _ = strconv.Atoi(fields[8])
 	}
 
-	// Convert action flags bitmask to string array.
-	// We duplicate the mapping here instead of importing game to avoid circular
-	// dependency (game imports parser). Bit positions match game.ActionBitNames.
+	// Convert flag words to name arrays.
+	// db.c parse_mobile reads EIGHT flag words off this line: act words 1-4
+	// into MOB_FLAGS[0..3], AFFECTED words 5-8 into AFF_FLAGS[0..3], then
+	// alignment and the type letter. The first word of each pair carries bits
+	// 0-31 and the second bits 32-63, so both are merged. We duplicate the
+	// mapping here instead of importing game to avoid circular dependency
+	// (game imports parser). Bit positions match src/structs.h.
 	if len(fields) >= 1 {
 		actionMask, _ := strconv.ParseInt(fields[0], 10, 64)
+		if len(fields) >= 4 {
+			for _, w := range fields[1:4] {
+				if hi, err := strconv.ParseInt(w, 10, 64); err == nil {
+					actionMask |= hi << 32
+				}
+			}
+		}
 		mob.ActionFlags = bitmaskToFlagNames(actionMask, actionBitNames)
 	}
-	if len(fields) >= 2 {
-		affectMask, _ := strconv.ParseInt(fields[1], 10, 64)
+	if len(fields) >= 5 {
+		affectMask, _ := strconv.ParseInt(fields[4], 10, 64)
+		if len(fields) >= 6 {
+			if hi, err := strconv.ParseInt(fields[5], 10, 64); err == nil {
+				affectMask |= hi << 32
+			}
+		}
 		mob.AffectFlags = bitmaskToFlagNames(affectMask, affectBitNames)
 	}
 

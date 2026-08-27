@@ -3,7 +3,6 @@ package spells
 import (
 	"fmt"
 	"log/slog"
-	"math/bits"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -365,10 +364,43 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	}
 }
 
+// cAffBit constants are C's AFF_* bit positions (structs.h:310-348) — the
+// layout the victim's innate affect mask uses (game's aff* constants). The
+// engine's own AFF_* flags are a DIFFERENT numbering (engine/affect.go) and
+// must not leak into the mob-affection gate: sanctuary is C bit 7 but engine
+// bit 4, so testing engine positions against the C-position mask silently
+// disabled the gate for every mismatched spell.
+const (
+	cAffBlind        = 0
+	cAffInvisible    = 1
+	cAffDetectAlign  = 2
+	cAffDetectInvis  = 3
+	cAffDetectMagic  = 4
+	cAffSenseLife    = 5
+	cAffWaterwalk    = 6
+	cAffSanctuary    = 7
+	cAffCurse        = 9
+	cAffInfravision  = 10
+	cAffPoison       = 11
+	cAffProtectEvil  = 12
+	cAffProtectGood  = 13
+	cAffSleep        = 14
+	cAffHide         = 19
+	cAffFly          = 26
+	cAffInvuln       = 30
+	cAffFlaming      = 31
+	cAffHaste        = 33
+	cAffDream        = 35
+	cAffWaterBreathe = 36
+	cAffMetalskin    = 37
+)
+
 // affectGateFlags mirrors C mag_affects' per-spell accum_affect/accum_duration
 // switches and the first two affects' bitvectors (magic.c:888-1380), which the
-// magic.c:1387-1404 pre-apply gates test. bit0/bit1 are AFF_* bit indices; a
-// zero bit means the affect slot carries no flag (C's init loop).
+// magic.c:1387-1404 pre-apply gates test. bit0/bit1 are raw C AFF_* bit
+// positions; an UNSET slot stays 0, and C's gate tests IS_AFFECTED(victim, 0)
+// — bit 0 is AFF_BLIND — so an innately blind mob refuses even a single-affect
+// spell. Do not "fix" that: it is C behavior.
 func affectGateFlags(spellNum int) (accumDuration, accumAffect bool, bit0, bit1 int) {
 	switch spellNum {
 	case SpellChillTouch:
@@ -378,63 +410,63 @@ func affectGateFlags(spellNum int) (accumDuration, accumAffect bool, bit0, bit1 
 	case SpellBless:
 		return true, false, affNothingBit, 0
 	case SpellBlindness, SpellSmokescreen:
-		return false, false, engineBitIndex(engine.AFFBlind), engineBitIndex(engine.AFFBlind)
+		return false, false, cAffBlind, cAffBlind
 	case SpellCurse:
-		return true, true, engineBitIndex(engine.AFFCurse), engineBitIndex(engine.AFFCurse)
+		return true, true, cAffCurse, cAffCurse
 	case SpellKnowAlign, SpellDetectAlign:
-		return false, false, engineBitIndex(engine.AFFDetectAlign), 0
+		return false, false, cAffDetectAlign, 0
 	case SpellDetectInvis:
-		return true, false, engineBitIndex(engine.AFFDetectInvisible), 0
+		return true, false, cAffDetectInvis, 0
 	case SpellDetectMagic:
-		return true, false, engineBitIndex(engine.AFFDetectMagic), 0
+		return true, false, cAffDetectMagic, 0
 	case SpellInfravision:
-		return true, false, engineBitIndex(engine.AFFInfrared), 0
+		return true, false, cAffInfravision, 0
 	case SpellHaste:
-		return false, false, engineBitIndex(engine.AFFHaste), 0
+		return false, false, cAffHaste, 0
 	case SpellSlow:
 		// C sets bitvector AFF_HASTE for SPELL_SLOW (magic.c:1051 quirk),
 		// mirrored by the apply path.
-		return false, false, engineBitIndex(engine.AFFHaste), 0
+		return false, false, cAffHaste, 0
 	case SpellDreamTravel:
-		return false, false, engineBitIndex(engine.AFFDream), 0
+		return false, false, cAffDream, 0
 	case SpellWaterBreathe:
-		return true, false, engineBitIndex(engine.AFFWaterBreathing), 0
+		return true, false, cAffWaterBreathe, 0
 	case SpellTransparency, SpellInvisible:
-		return false, false, engineBitIndex(engine.AFFInvisible), 0
+		return false, false, cAffInvisible, 0
 	case SpellPoison:
-		return false, false, engineBitIndex(engine.AFFPoison), engineBitIndex(engine.AFFPoison)
+		return false, false, cAffPoison, cAffPoison
 	case SpellFlameStrike:
-		return false, false, engineBitIndex(engine.AFFFlaming), 0
+		return false, false, cAffFlaming, 0
 	case SpellFly, SpellLevitate:
-		return true, false, engineBitIndex(engine.AFFFlying), 0
+		return true, false, cAffFly, 0
 	case SpellProtFromEvil:
-		return false, false, engineBitIndex(engine.AFFProtectionEvil), 0
+		return false, false, cAffProtectEvil, 0
 	case SpellProtFromGood:
-		return false, false, engineBitIndex(engine.AFFProtectionGood), 0
+		return false, false, cAffProtectGood, 0
 	case SpellSanctuary:
-		return true, false, engineBitIndex(engine.AFFSanctuary), 0
+		return true, false, cAffSanctuary, 0
 	case SpellSleep:
-		return false, false, engineBitIndex(engine.AFFSleep), 0
+		return false, false, cAffSleep, 0
 	case SpellAdrenaline:
 		return true, false, affNothingBit, 0
 	case SpellStrength:
 		return false, true, affNothingBit, 0
 	case SpellSenseLife:
-		return true, false, engineBitIndex(engine.AFFSenseLife), 0
+		return true, false, cAffSenseLife, 0
 	case SpellWaterwalk, SpellChangeDensity:
-		return true, false, engineBitIndex(engine.AFFWaterwalk), 0
+		return true, false, cAffWaterwalk, 0
 	case SpellChameleon:
-		return false, false, engineBitIndex(engine.AFFHide), 0
+		return false, false, cAffHide, 0
 	case SpellMetalskin:
-		return true, false, engineBitIndex(engine.AFFMetalskin), 0
+		return true, false, cAffMetalskin, 0
 	case SpellInvulnerability:
-		return true, false, engineBitIndex(engine.AFFInvuln), 0
+		return true, false, cAffInvuln, 0
 	case SpellPsyshield:
 		return true, false, affNothingBit, 0
 	case SpellGreatPercept:
-		return false, false, engineBitIndex(engine.AFFSenseLife), engineBitIndex(engine.AFFDetectInvisible)
+		return false, false, cAffSenseLife, cAffDetectInvis
 	case SpellLessPercept:
-		return false, false, engineBitIndex(engine.AFFInfrared), engineBitIndex(engine.AFFDetectAlign)
+		return false, false, cAffInfravision, cAffDetectAlign
 	case SpellIntellect:
 		return false, true, affNothingBit, 0
 	case SpellMindBar:
@@ -448,16 +480,13 @@ func affectGateFlags(spellNum int) (accumDuration, accumAffect bool, bit0, bit1 
 // test this real bit index in the mob-affection gate.
 const affNothingBit = 32
 
-func engineBitIndex(mask uint64) int {
-	if mask == 0 {
-		return 0
-	}
-	return bits.TrailingZeros64(mask)
-}
-
 // npcInnatelyAffected mirrors the C mob-affection gate (magic.c:1387-1394):
 // an NPC that already carries the spell's affect flag — from its mob file,
-// not from this spell — refuses the spell.
+// not from this spell — refuses the spell. bit0/bit1 are raw C positions and
+// are BOTH tested unconditionally, exactly as C tests IS_AFFECTED(victim,
+// af[0].bitvector) || IS_AFFECTED(victim, af[1].bitvector) — an unset slot is
+// 0, i.e. the AFF_BLIND bit, so an innately blind mob refuses single-affect
+// spells too (C quirk, kept).
 func npcInnatelyAffected(victim interface{}, bit0, bit1, spellNum int) bool {
 	type npcCheck interface{ IsNPC() bool }
 	nc, ok := victim.(npcCheck)
@@ -472,7 +501,7 @@ func npcInnatelyAffected(victim interface{}, bit0, bit1, spellNum int) bool {
 	if hasSpellAffect(victim, spellNum) {
 		return false
 	}
-	return (bit0 != 0 && af.IsAffected(bit0)) || (bit1 != 0 && af.IsAffected(bit1))
+	return af.IsAffected(bit0) || af.IsAffected(bit1)
 }
 
 func hasSpellAffect(victim interface{}, spellNum int) bool {
