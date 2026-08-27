@@ -163,7 +163,7 @@ func cmdScore(s *Session) error {
 	// 2. HP/Mana/Move (from C line 1196)
 	manaLabel := scoreManaLabel(p.Class)
 	fmt.Fprintf(&buf, "Hit points: %d(%d)  %s points: %d(%d)  Movement points: %d(%d)\r\n",
-		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana, p.Move, p.MaxMove)
+		p.GetHP(), p.GetMaxHP(), manaLabel, p.GetMana(), p.GetMaxMana(), p.GetMove(), p.GetMaxMove())
 
 	// 3. Alignment text (from C lines 1213-1238)
 	buf.WriteString(alignmentText(p.Alignment))
@@ -171,7 +171,7 @@ func cmdScore(s *Session) error {
 
 	// 4. AC text (from C lines 1240-1265). acText already returns "You are ..."
 	// sentences, so do not prepend another "You" — that produced "You You are well armored."
-	buf.WriteString(acText(p.AC))
+	buf.WriteString(acText(p.GetAC()))
 	buf.WriteString("\r\n")
 
 	// 5. Experience (from C line 1267)
@@ -255,8 +255,10 @@ func cmdScore(s *Session) error {
 		buf.WriteString(weightText + "\r\n")
 	}
 
-	// PLR_CHOSEN check (from C line 1316)
-	// Skip — PLR_CHOSEN is bit 19
+	// PLR_CHOSEN check (from C line 1316).
+	if p.HasPLRFlag(game.PlrChosen) {
+		buf.WriteString("You are a chosen of the gods.(BadMuthaFucker)\r\n")
+	}
 
 	// 16. Position (from C lines 1318-1340)
 	buf.WriteString(positionText(p.Position))
@@ -274,29 +276,29 @@ func cmdScore(s *Session) error {
 	}
 
 	// 18. Active affects (from C lines 1349-1369)
-	if p.Affects&(1<<0) != 0 { // AFF_BLIND = bit 0
+	if p.IsAffected(game.AffBlind) {
 		buf.WriteString("You have been blinded!\r\n")
 	}
 	// Check PRF_SUMMONABLE flag on Player.Flags (PRF bit 48)
 	if p.Flags&(1<<game.PrfSummonable) != 0 {
 		buf.WriteString("You are summonable by other players.\r\n")
 	}
-	// AFF_WEREWOLF = bit 32 (in C structs.h: AFF_WEREWOLF bit 32)
-	if p.Affects&(1<<32) != 0 {
+	// AFF_WEREWOLF = bit 27 (src/structs.h).
+	if p.IsAffected(game.AffWerewolf) {
 		buf.WriteString("You're a lycanthrope!\r\n")
 	}
-	// AFF_VAMPIRE = bit 33
-	if p.Affects&(1<<33) != 0 {
+	// AFF_VAMPIRE = bit 28 (src/structs.h).
+	if p.IsAffected(game.AffVampire) {
 		buf.WriteString("You're a vampire!\r\n")
 	}
 	// AFF_MOUNT — check via IsAffected or flags
 	// Source: structs.h AFF_MOUNT bit
-	if p.Affects&(1<<10) != 0 { // AFF_MOUNT is bit 10 in structs.h
+	if p.IsAffected(game.AffMount) {
 		buf.WriteString("You're mounted.\r\n")
 	}
 	// AFF_FLESH_ALTER = bit 16
-	if p.Affects&(1<<16) != 0 {
-		buf.WriteString("Your hand is a weapon!\r\n")
+	if p.IsAffected(game.AffFleshAlter) {
+		fmt.Fprintf(&buf, "Your hand is a %s!\r\n", fleshAlterWeapon(p.GetLevel()))
 	}
 
 	// 19. Spell affects list (from C lines 1371-1397)
@@ -347,8 +349,87 @@ func cmdScore(s *Session) error {
 		}
 	}
 
+	// C's second score affect pass (act.informative.c:1416-1448) reports
+	// active affect bits that are present without a matching ch->affected node.
+	// These are normally equipment/status bits; spell-backed nodes belong in
+	// the preceding list. The exclusion set is copied from the C condition.
+	var equipmentAffects []string
+	for bit, name := range scoreEquipmentAffectNames {
+		if bit == 8 || bit == 25 || bit == game.AffWerewolf || bit == game.AffMount || bit == 28 || bit == 32 {
+			continue
+		}
+		if !p.IsAffected(bit) || scoreAffectHasNode(p, bit) {
+			continue
+		}
+		equipmentAffects = append(equipmentAffects, name)
+	}
+	if len(equipmentAffects) > 0 {
+		buf.WriteString("\r\nEquipment spells affecting you:")
+		for _, name := range equipmentAffects {
+			buf.WriteString("\r\n" + name)
+		}
+		buf.WriteString("\r\n")
+	}
+
 	s.Send(buf.String())
 	return nil
+}
+
+// scoreEquipmentAffectNames mirrors C's affected_names[] table in
+// src/constants.c:646-686. The C score loop indexes this table by the C
+// affect bit, so keeping the exact order and lowercase spelling matters.
+var scoreEquipmentAffectNames = []string{
+	"blind", "invisibility", "detect alignment", "detect invisibility",
+	"detect magic", "sense life", "waterwalk", "sanctuary", "group", "curse",
+	"infravision", "poison", "protection from evil", "protection from good",
+	"sleep", "no track", "flesh alter", "dodge", "sneak", "hide", "berserk",
+	"charm", "follow", "wimpy", "kuji-kiri", "cutthroat", "fly", "werewolf",
+	"vampire", "mounted", "invulnerability", "flaming", "nothing", "haste",
+	"slow", "dream", "waterbreathe", "metalskin", "robbed",
+}
+
+func scoreAffectHasNode(p *game.Player, bit int) bool {
+	cMask := uint64(1) << uint(bit)
+	engineMask := game.AffBitToEngineFlag[bit]
+	for _, aff := range p.MasterAffects {
+		if aff != nil && (aff.Bitvector&cMask != 0 || engineMask != 0 && aff.Bitvector&engineMask != 0) {
+			return true
+		}
+	}
+	for _, aff := range p.ActiveAffects {
+		if aff != nil && (aff.Flags&cMask != 0 || engineMask != 0 && aff.Flags&engineMask != 0) {
+			return true
+		}
+	}
+	return false
+}
+
+// fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.
+func fleshAlterWeapon(level int) string {
+	switch {
+	case level <= 3:
+		return "studded wooden club"
+	case level <= 6:
+		return "razor-sharp dagger"
+	case level <= 9:
+		return "steel-shafted axe"
+	case level <= 12:
+		return "studded steel mace"
+	case level <= 15:
+		return "battle flail"
+	case level <= 18:
+		return "steel-shafted battle axe"
+	case level <= 21:
+		return "double-headed battle axe"
+	case level <= 24:
+		return "studded morning-star"
+	case level <= 27:
+		return "gleaming broad sword"
+	case level <= 29:
+		return "gleaming long sword"
+	default:
+		return "gleaming scythe"
+	}
 }
 
 func scoreManaLabel(class int) string {

@@ -1,6 +1,7 @@
 package session
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -109,6 +110,40 @@ func TestCmdSetCStatFieldsAndUnsupportedPosition(t *testing.T) {
 		}
 		if target.player.GetPosition() != combat.PosStanding {
 			t.Fatalf("position = %d, want unchanged standing", target.player.GetPosition())
+		}
+	})
+
+	t.Run("score state fields use C bounds and acknowledgements", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		cases := []struct {
+			args string
+			want string
+		}{
+			{"Hero ac 100", "Hero's ac set to 100.\r\n"},
+			{"Hero chosen on", "Chosen ON for Hero.\r\n"},
+			{"Hero nosummon on", "Nosummon OFF for Hero.\r\n"},
+			{"Hero tattoo 9", "Hero's tattoo set to 9.\r\n"},
+		}
+		for _, tc := range cases {
+			parts := strings.Fields(tc.args)
+			if err := cmdSet(wiz, parts); err != nil {
+				t.Fatalf("cmdSet(%q): %v", tc.args, err)
+			}
+			if got := readSessionText(t, wiz); got != tc.want {
+				t.Errorf("ack for %q = %q, want %q", tc.args, got, tc.want)
+			}
+		}
+		if target.player.AC != 100 {
+			t.Errorf("AC = %d, want 100", target.player.AC)
+		}
+		if !target.player.HasPLRFlag(game.PlrChosen) {
+			t.Error("chosen flag was not set")
+		}
+		if target.player.GetFlags()&(1<<uint(game.PrfSummonable)) == 0 {
+			t.Error("summonable flag was not set")
+		}
+		if target.player.Tattoo != TatHeart || target.player.MaxHealth != 120 || target.player.Health != 100 {
+			t.Errorf("tattoo state = tattoo %d maxhp %d hp %d, want 9/120/100", target.player.Tattoo, target.player.MaxHealth, target.player.Health)
 		}
 	})
 }

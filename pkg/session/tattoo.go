@@ -204,19 +204,10 @@ func applyModifier(p *game.Player, location int, modifier int, add bool) {
 		p.Stats.Wis += modifier
 	case 11: // APPLY_HIT
 		p.MaxHealth += modifier
-		if p.Health > 0 {
-			p.Health += modifier
-		}
 	case 12: // APPLY_MANA
 		p.MaxMana += modifier
-		if p.Mana > 0 {
-			p.Mana += modifier
-		}
 	case 13: // APPLY_MOVE
 		p.MaxMove += modifier
-		if p.Move > 0 {
-			p.Move += modifier
-		}
 	case 18: // APPLY_HITROLL
 		p.Hitroll += modifier
 	case 19: // APPLY_DAMROLL
