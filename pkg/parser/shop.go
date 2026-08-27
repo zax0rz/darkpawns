@@ -49,7 +49,7 @@ func ParseAllShopFiles(dir string) ([]ShopProto, error) {
 }
 
 func parseShopFile(path string) ([]ShopProto, error) {
-	data, err := os.ReadFile(path) // #nosec G304 -- filename comes from the shipped world index
+	data, err := os.ReadFile(path) // #nosec G703 -- filename comes from the shipped world index, resolved from the trusted -world dir
 	if err != nil {
 		return nil, err
 	}
