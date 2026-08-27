@@ -160,6 +160,32 @@ recite scroll
 	}
 }
 
+func TestParseScenarioPeerDrop(t *testing.T) {
+	input := `[setup:oracle:peer]
+peer
+[setup:port:peer]
+peer
+[peer-drop]
+peer
+[probe]
+tell peer hello
+`
+	sc, err := ParseScenario("peer-drop", strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sc.PeerDrop != "peer" {
+		t.Fatalf("PeerDrop = %q, want peer", sc.PeerDrop)
+	}
+}
+
+func TestParseScenarioRejectsUnknownPeerDrop(t *testing.T) {
+	_, err := ParseScenario("bad-peer-drop", strings.NewReader("[peer-drop]\nmissing\n[probe]\nlook\n"))
+	if err == nil || !strings.Contains(err.Error(), `peer-drop target "missing" is not a configured peer`) {
+		t.Fatalf("expected unknown peer-drop error, got %v", err)
+	}
+}
+
 func TestParseScenarioRejectsInvalidFixture(t *testing.T) {
 	_, err := ParseScenario("bad", strings.NewReader("[fixture]\ninert-scroll nope\n[probe]\nlook\n"))
 	if err == nil || !strings.Contains(err.Error(), "invalid fixture") {

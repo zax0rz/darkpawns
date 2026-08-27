@@ -555,9 +555,12 @@ func (s *Session) completeCharCreation() error {
 		return err
 	}
 
-	// Give starting items AFTER AddPlayer so the player is in w.players
-	// and attachObjectLocked can find them; items silently drop otherwise.
-	s.manager.world.GiveStartingItems(s.player)
+	// C skips do_start() for the first-player God because init_char already
+	// assigned a nonzero level (interpreter.c:2214). That means the God gets
+	// no mortal starter gear; only a newly created mortal receives it.
+	if !isGod {
+		s.manager.world.GiveStartingItems(s.player)
+	}
 
 	slog.InfoContext(s.sessionCtx, "completeCharCreation: player added to world", s.logAttrs()...)
 

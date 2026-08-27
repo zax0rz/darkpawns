@@ -78,6 +78,21 @@ func (p *Player) SetLastTeller(name string) {
 	p.lastTeller = name
 }
 
+// IsLinkless reports whether the player remains in the world without a live
+// client descriptor, matching C's playing character with desc == NULL.
+func (p *Player) IsLinkless() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Linkless
+}
+
+// SetLinkless records the descriptor state for a playing character.
+func (p *Player) SetLinkless(v bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Linkless = v
+}
+
 // GetAutoGold returns whether auto-gold is enabled.
 func (p *Player) GetAutoGold() bool {
 	p.mu.RLock()

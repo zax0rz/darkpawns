@@ -183,6 +183,15 @@ func TestDoTellEligibilityAndDelivery(t *testing.T) {
 		}
 	})
 
+	t.Run("target linkless", func(t *testing.T) {
+		w, actor, target, output := newDirectedSpeechWorld(t)
+		target.SetLinkless(true)
+		w.DoTell(actor, "Target hello")
+		if got := directedOutput(output, actor.Name); got != "She's linkless at the moment.\r\n" {
+			t.Fatalf("output = %q", got)
+		}
+	})
+
 	t.Run("delivery strips ansi and records reply", func(t *testing.T) {
 		w, actor, target, output := newDirectedSpeechWorld(t)
 		w.DoTell(actor, "Target &Rhello")

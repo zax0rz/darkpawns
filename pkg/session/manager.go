@@ -843,6 +843,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		wantsStructuredData: true,
 		sessionCtx:          ctx,
 		cancelFunc:          cancel,
+		transportDone:       make(chan struct{}),
 	}
 
 	// Start goroutines for reading and writing
@@ -1022,6 +1023,33 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	if s.cancelFunc != nil {
 		s.cancelFunc()
 	}
+}
+
+// HandleTelnetDisconnect preserves an authenticated playing character after
+// an unexpected TCP EOF. C close_socket() saves the character and clears its
+// descriptor, but leaves it in character_list so directed speech can report
+// that the target is linkless. The linkdead reaper later owns extraction.
+// It returns true when the session was retained as linkdead; orderly quits
+// and pre-auth disconnects return false and use normal cleanup.
+func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
+	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() {
+		return false
+	}
+
+	p := s.player
+	p.SetLinkless(true)
+	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
+
+	if m.hasDB && p.ID > 0 && !s.isGuest {
+		if rec, err := db.PlayerToRecord(p, nil); err == nil {
+			if err := m.db.SavePlayer(rec); err != nil {
+				slog.Error("linkdead save error", "player", s.playerName, "error", err)
+			}
+		}
+	}
+
+	s.DetachTransport()
+	return true
 }
 
 func (m *Manager) Unregister(playerName string) {
@@ -1406,6 +1434,12 @@ type Session struct {
 	// sessions use s.conn directly; telnet/other transports set this so that
 	// s.Close() can tear down the underlying connection (DP-928).
 	closeFunc func()
+
+	// transportDone is closed when a transport disappears while an
+	// authenticated player remains linkdead in the world. The send channel is
+	// deliberately left open until the linkdead session is reaped.
+	transportDone chan struct{}
+	transportOnce sync.Once
 }
 
 // LiveAgentSession is already defined in admin package.

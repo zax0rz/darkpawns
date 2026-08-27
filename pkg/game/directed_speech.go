@@ -233,6 +233,10 @@ func (w *World) DoTell(ch *Player, argument string) {
 		communicationSend(ch, "The walls seem to absorb your words.")
 		return
 	}
+	if target.IsLinkless() {
+		Act(nil, false, ch, target, nil, nil, "$E's linkless at the moment.", "", ToChar|ToSleep)
+		return
+	}
 	if state.targetWriting {
 		Act(nil, false, ch, target, nil, nil, "$E's writing a message right now; try again later.", "", ToChar|ToSleep)
 		return
@@ -289,6 +293,10 @@ func (w *World) DoReply(ch *Player, argument string) {
 	}
 	if state.senderSoundproof {
 		communicationSend(ch, "The walls seem to absorb your words.")
+		return
+	}
+	if target.IsLinkless() {
+		Act(nil, false, ch, target, nil, nil, "$E's linkless at the moment.", "", ToChar|ToSleep)
 		return
 	}
 	if state.targetSoundproof {

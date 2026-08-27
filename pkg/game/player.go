@@ -112,6 +112,10 @@ type Player struct {
 	// State
 	ConnectedAt time.Time
 	LastActive  time.Time
+	// Linkless marks a playing character whose transport has disconnected.
+	// C keeps such characters in character_list with desc == NULL until the
+	// linkdead lifecycle removes them.
+	Linkless bool `json:"-"`
 
 	// DP-943: atomic guard to make player death idempotent under concurrent kills.
 	dying atomic.Bool

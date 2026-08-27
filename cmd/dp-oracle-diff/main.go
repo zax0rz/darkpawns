@@ -323,6 +323,26 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err := oraclediff.RunWarmup(goConn, goPeers, scenario.Warmup, quiescence); err != nil {
 		return fmt.Errorf("run Go port warmup: %w", err)
 	}
+	if scenario.PeerDrop != "" {
+		name := scenario.PeerDrop
+		oraclePeer, ok := oraclePeers[name]
+		if !ok {
+			return fmt.Errorf("c oracle peer-drop target %q is not connected", name)
+		}
+		if err := oraclePeer.Close(); err != nil {
+			return fmt.Errorf("close C oracle peer %q: %w", name, err)
+		}
+		delete(oraclePeers, name)
+
+		goPeer, ok := goPeers[name]
+		if !ok {
+			return fmt.Errorf("go port peer-drop target %q is not connected", name)
+		}
+		if err := goPeer.Close(); err != nil {
+			return fmt.Errorf("close Go port peer %q: %w", name, err)
+		}
+		delete(goPeers, name)
+	}
 
 	oracleActor, oracleAudience := probeClients(oracleConn, oraclePeers, scenario.ProbeActor)
 	goActor, goAudience := probeClients(goConn, goPeers, scenario.ProbeActor)

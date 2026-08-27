@@ -461,11 +461,13 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	}
 
 	// Cleanup
-	s.Manager().Unregister(s.PlayerName())
-	s.CloseSend()
+	if !s.Manager().HandleTelnetDisconnect(s) {
+		s.Manager().Unregister(s.PlayerName())
+		s.CloseSend()
+	}
 	// A successful quit queues its goodbye immediately before Unregister closes
-	// the send channel. Let writeLoop drain that queue before handleConn's defer
-	// closes the TCP socket.
+	// the send channel. For an unexpected EOF, DetachTransport ends writeLoop
+	// while retaining the open send channel for the linkdead session.
 	_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	<-done
 	slog.Info("Telnet disconnect", "remote_addr", remoteAddr, "player", s.PlayerName())
@@ -492,7 +494,17 @@ func handlePulseControl(manager *session.Manager, line string) bool {
 // writeLoop reads from the session's send channel and writes formatted output to the telnet conn.
 func writeLoop(tc *telnetConn, s *session.Session) {
 	ch := s.SendChannel()
-	for msg := range ch {
+	for {
+		var msg []byte
+		var ok bool
+		select {
+		case msg, ok = <-ch:
+			if !ok {
+				return
+			}
+		case <-s.TransportDone():
+			return
+		}
 		var sm session.ServerMessage
 		if err := json.Unmarshal(msg, &sm); err != nil {
 			continue
