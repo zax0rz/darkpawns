@@ -150,6 +150,65 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 	return true
 }
 
+// ExecuteWordOfRecall ports spell_recall (spells.c:124-165) — the SPELL
+// surface, reached by reciting a word-of-recall scroll or casting the spell.
+// Its gate bytes differ from the recall COMMAND above ("Your magic ebbs..."
+// to the victim vs "You can't recall from this magickal place."), and the
+// BFR check covers the caster's room too. The spells package calls this
+// through a narrow interface so it cannot import game.
+func (w *World) ExecuteWordOfRecall(ch, victim interface{}) {
+	v, ok := victim.(*Player)
+	if !ok {
+		return
+	}
+	c, cok := ch.(*Player)
+	if !cok {
+		return
+	}
+
+	// ROOM_BFR on either the caster's or the victim's room dissolves the
+	// spell (message to the VICTIM).
+	for _, who := range []*Player{c, v} {
+		if room := w.GetRoomInWorld(who.GetRoomVNum()); room != nil && hasRoomFlag(room, "bfr") {
+			v.SendMessage("Your magic ebbs and dissolves as you lose your concentration.\r\n")
+			return
+		}
+	}
+	if c.IsFighting() {
+		c.SendMessage("Your concentration is broken by your fighting!\r\n")
+		return
+	}
+
+	Act(w, true, v, nil, nil, nil, "$n disappears.", "", ToRoom)
+
+	recallRoom := MortalStartRoom
+	switch v.GetHometown() {
+	case 2:
+		recallRoom = 18201
+	case 3:
+		recallRoom = 21258
+	}
+
+	// C unmounts in place and the mount stays behind; unmount before the
+	// transfer so CharTransfer's mount-follow does not bring it along.
+	if v.IsMounted() {
+		Unmount(v, w.GetMount(v))
+		v.SetAffect(affMounted, false)
+	}
+
+	if err := w.PlayerTransfer(v, recallRoom); err != nil {
+		slog.Error("word-of-recall transfer failed", "player", v.Name, "target", recallRoom, "error", err)
+		return
+	}
+
+	Act(w, true, v, nil, nil, nil, "$n appears in the middle of the room.", "", ToRoom)
+	if v.GetPosition() > combat.PosSleeping {
+		w.lookAtRoom(v, false)
+	} else {
+		v.SendMessage("You have a strange dream about falling..\r\n")
+	}
+}
+
 // ---------------------------------------------------------------------------
 // do_appraise — from act.other.c
 // ---------------------------------------------------------------------------

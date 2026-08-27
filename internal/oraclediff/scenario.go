@@ -31,6 +31,7 @@ type Scenario struct {
 	ObjectSpawns     []ObjectSpawnFixture
 	MobFixtures      []MobFixture
 	MobAffFixtures   []MobAffFixture
+	ObjIndexFixtures []ObjIndexFixture
 	QuietZones       []int
 	QuietAllMobs     bool
 	EmptyPlayers     bool
@@ -90,6 +91,15 @@ type MobAffFixture struct {
 	AffMask int
 }
 
+// ObjIndexFixture adds one filename to the disposable obj index so the boot
+// loader reads an otherwise-unindexed .obj file. Real world vehicles live in
+// files the shipped index omits entirely (131.obj's plaid potion casts
+// blindness, 58.obj's return scroll casts curse), which made every scenario
+// step touching them vacuously fail on BOTH servers.
+type ObjIndexFixture struct {
+	FileName string
+}
+
 // RoomExitFixture replaces every exit on a disposable room with either no
 // exits, one explicitly described exit, or all six directions to one room. Keeping this deliberately small
 // makes RNG-sensitive movement scenarios deterministic without creating a
@@ -140,6 +150,7 @@ type AudienceProbeBlock struct {
 //	inert-scroll 8038         # patch this prototype in disposable worlds only
 //	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
 //	set-mob-aff 18306 128     # mob, innate affected-by bitmask (AFF_* positions)
+//	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
@@ -269,6 +280,13 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				}
 				sc.Fixtures = append(sc.Fixtures, ObjectFixture{ObjectVNum: objVNum})
 				continue
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "add-obj-index") {
+				name := fields[1]
+				if strings.HasSuffix(name, ".obj") && !strings.ContainsRune(name, '/') {
+					sc.ObjIndexFixtures = append(sc.ObjIndexFixtures, ObjIndexFixture{FileName: name})
+					continue
+				}
 			}
 			if len(fields) == 3 && strings.EqualFold(fields[0], "set-mob-aff") {
 				mobVNum, mobErr := strconv.Atoi(fields[1])

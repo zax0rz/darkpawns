@@ -1,0 +1,50 @@
+# depth-case: objmagic.curse.messages
+# The curse arm of mag_affects (magic.c:967-1002) live, via the add-obj-index
+# fixture: scroll 5804 (vals 16/17/42 — curse then word of recall) lives in
+# 58.obj, which the shipped obj index omits on BOTH trees. With the file
+# indexed, zone 80 spawns the scroll in the start room; reciting it casts
+# curse on the reciter (save → NOEFFECT "Nothing seems to happen."; fail →
+# "You feel very uncomfortable." trio) followed by word of recall, whose
+# teleport bytes must also match. Multi-seed (R3).
+
+[fixture]
+quiet-mobs
+add-obj-index 58.obj
+set-room-flag 8162 4 off
+spawn-obj 5804 99 8162 80
+force-load 5804
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get return
+recite return
+~dpclock pulse 20
+~dpclock pulse 20

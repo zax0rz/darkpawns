@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -133,7 +134,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -143,6 +144,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		// must mirror lib/{world,text}.
 		if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
 			return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
+		}
+		if err := applyObjIndexFixtures(filepath.Join(oracleData, "world"), scenario.ObjIndexFixtures); err != nil {
+			return fmt.Errorf("apply C oracle obj index fixtures: %w", err)
+		}
+		if err := applyObjIndexFixtures(goWorld, scenario.ObjIndexFixtures); err != nil {
+			return fmt.Errorf("apply Go port obj index fixtures: %w", err)
 		}
 		if err := applyObjectFixtures(filepath.Join(oracleData, "world"), scenario.Fixtures); err != nil {
 			return fmt.Errorf("apply C oracle fixtures: %w", err)
@@ -554,6 +561,67 @@ func applyMobAffFixtures(worldDir string, fixtures []oraclediff.MobAffFixture) e
 		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer-derived file name
 			return fmt.Errorf("write mob file for vnum %d: %w", fixture.MobVNum, err)
 		}
+	}
+	return nil
+}
+
+// applyObjIndexFixtures appends filenames to the disposable obj index so
+// the boot loader parses otherwise-unindexed .obj prototypes. The index is a
+// whitespace-separated filename list terminated by "$" (db.c index_boot /
+// parser indexedDataFileNames read the same format on both servers).
+func applyObjIndexFixtures(worldDir string, fixtures []oraclediff.ObjIndexFixture) error {
+	if len(fixtures) == 0 {
+		return nil
+	}
+	path := filepath.Join(worldDir, "obj", "index")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read obj index: %w", err)
+	}
+	fileNumber := func(name string) int {
+		n, err := strconv.Atoi(strings.TrimSuffix(name, ".obj"))
+		if err != nil {
+			return -1
+		}
+		return n
+	}
+	existing := strings.Fields(string(data))
+	insertNum := fileNumber(fixtures[0].FileName)
+	insertAt := len(existing)
+	for i, name := range existing {
+		if name == "$" {
+			insertAt = i
+			break
+		}
+		if n := fileNumber(name); n > insertNum {
+			insertAt = i
+			break
+		}
+	}
+	// The index must stay ordered by vnum range: C's real_object() binary
+	// searches obj_index, which index_boot builds in index-file order.
+	added := make([]string, 0, len(fixtures))
+	for _, fixture := range fixtures {
+		if !slices.Contains(existing, fixture.FileName) {
+			added = append(added, fixture.FileName)
+		}
+	}
+	if len(added) == 0 {
+		return nil
+	}
+	slices.SortStableFunc(added, func(a, b string) int {
+		return fileNumber(a) - fileNumber(b)
+	})
+	names := append([]string{}, existing[:insertAt]...)
+	names = append(names, added...)
+	names = append(names, existing[insertAt:]...)
+	updated := []byte(strings.Join(names, "\n") + "\n")
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat obj index: %w", err)
+	}
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir
+		return fmt.Errorf("write obj index: %w", err)
 	}
 	return nil
 }
