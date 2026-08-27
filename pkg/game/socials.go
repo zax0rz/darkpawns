@@ -177,7 +177,7 @@ var Socials = map[string]*Social{
 		Name:     "embrace",
 		MinLevel: 0,
 		HideFlag: 0,
-		Messages: []string{"You reach but come away empty.  :(", "$n reaches out for an embrace, but no one is there.", "You embrace $M warmly.", "$n embraces $N warmly.", "$n embraces you warmly.", "Alas, your embracee is not here.", "You embrace yourself??", "$n wraps $s arms around $mself for a warm self-embrace."},
+		Messages: []string{"You reach but come away empty.  :(", "$n reaches out for an embrace, but no one is there.", "You embrace $M warmly.", "$n embraces $N warmly.  ", "$n embraces you warmly.  ", "Alas, your embracee is not here.  ", "You embrace yourself??  ", "$n wraps $s arms around $mself for a warm self-embrace."},
 	},
 	"fade": {
 		Name:     "fade",
@@ -201,7 +201,7 @@ var Socials = map[string]*Social{
 		Name:     "flip",
 		MinLevel: 0,
 		HideFlag: 0,
-		Messages: []string{"You flip head over heels.", "$n flips head over heels.", "You flip $M over your head.", "$n flips $M over $s head.", "$n flips you over $s head.", "Who?", "#"},
+		Messages: []string{"You flip head over heels.", "$n flips head over heels.", "You flip $M over your head.", "$n flips $M over $s head.", "$n flips you over $s head.", "Who?", "#", ""},
 	},
 	"flirt": {
 		Name:     "flirt",
@@ -585,7 +585,7 @@ var Socials = map[string]*Social{
 		Name:     "snicker",
 		MinLevel: 0,
 		HideFlag: 0,
-		Messages: []string{"You snicker softly.", "$n snickers softly.", "You snicker at $N.", "$n snickers at $N.", "$n snickers at you.", "Who?", "#"},
+		Messages: []string{"You snicker softly.", "$n snickers softly.", "You snicker at $N.", "$n snickers at $N.", "$n snickers at you.", "Who?", "#", ""},
 	},
 	"sniff": {
 		Name:     "sniff",
@@ -693,7 +693,7 @@ var Socials = map[string]*Social{
 		Name:     "taunt",
 		MinLevel: 0,
 		HideFlag: 0,
-		Messages: []string{"You taunt the nothing in front of you.", "$n taunts something that seems to be right in front of $m.", "You taunt $M, to your own delight.", "$n taunts $N rather insultingly.  $n seems to enjoy it tremendously.", "$n taunts you.  It really hurts your feelings.", "Hmmmmmmm.....nope, no one by that name here.", "You taunt yourself, almost making you cry...:(", "$n taunts $mself to tears."},
+		Messages: []string{"You taunt the nothing in front of you. ", "$n taunts something that seems to be right in front of $m.", "You taunt $M, to your own delight.", "$n taunts $N rather insultingly.  $n seems to enjoy it tremendously.", "$n taunts you.  It really hurts your feelings.", "Hmmmmmmm.....nope, no one by that name here.", "You taunt yourself, almost making you cry...:(", "$n taunts $mself to tears."},
 	},
 	"thank": {
 		Name:     "thank",
@@ -795,7 +795,7 @@ var Socials = map[string]*Social{
 		Name:     "nod",
 		MinLevel: 0,
 		HideFlag: 0,
-		Messages: []string{"You nod.", "$n nods.", "You nod at $M.", "$n nods at $N.", "$n nods at you.", "Who?", "#"},
+		Messages: []string{"You nod.", "$n nods.", "You nod at $M.", "$n nods at $N.", "$n nods at you.", "Who?", "#", ""},
 	},
 	"throttle": {
 		Name:     "throttle",
@@ -897,7 +897,7 @@ var Socials = map[string]*Social{
 		Name:     "beckon",
 		MinLevel: 0,
 		HideFlag: 5,
-		Messages: []string{"You beckon to all around you.", "$n beckons for everyone to join $m.", "You beckon $N to join you.", "$n beckons $N over to $m.", "$n beckons you.", "Sorry, but that person doesn't seem to be here.", "#"},
+		Messages: []string{"You beckon to all around you.", "$n beckons for everyone to join $m.", "You beckon $N to join you.", "$n beckons $N over to $m.", "$n beckons you.", "Sorry, but that person doesn't seem to be here.", "#", ""},
 	},
 	"pant": {
 		Name:     "pant",
@@ -927,7 +927,7 @@ var Socials = map[string]*Social{
 		Name:     "rofl",
 		MinLevel: 0,
 		HideFlag: 5,
-		Messages: []string{"You roll on the floor laughing.", "$n rolls on the floor laughing.", "$n rolls on the floor laughing at $N.", "$n rolls on the floor laughing at you.", "Laugh at who? They aren't here.", "You roll on the floor laughing at yourself.", "$n rolls on the floor laughing at $mself."},
+		Messages: []string{"You roll on the floor laughing.", "$n rolls on the floor laughing.", "$n rolls on the floor laughing at $N.", "$n rolls on the floor laughing at you.", "Laugh at who? They aren't here.", "You roll on the floor laughing at yourself.", "$n rolls on the floor laughing at $mself.", "#"},
 	},
 	"yuball": {
 		Name:     "yuball",
@@ -963,7 +963,7 @@ var Socials = map[string]*Social{
 		Name:     "bleed",
 		MinLevel: 0,
 		HideFlag: 5,
-		Messages: []string{"You bleed.", "$n bleeds.", "You bleed on $N.", "$n bleeds on $N.", "$n bleeds on you.", "Sorry, but that person doesn't seem to be here.", "You bleed yourself.", "$n bleeds $mself."},
+		Messages: []string{"You bleed.", "$n bleeds.", "You bleed on $N.", "$n bleeds on $N.", "$n bleeds on you.", "Sorry, but that person doesn't seem to be here.", "You bleed yourself. ", "$n bleeds $mself."},
 	},
 	"mosh": {
 		Name:     "mosh",
@@ -987,7 +987,7 @@ var Socials = map[string]*Social{
 		Name:     "threaten",
 		MinLevel: 0,
 		HideFlag: 5,
-		Messages: []string{"You threaten the room wildly.", "You watch as $n threatens everyone in the room.", "You threaten $N, that dirty rat!", "You see $n threaten $N, maybe you should step in and calm things down.", "$n threatens you, how mean!", "Threaten who?", "#"},
+		Messages: []string{"You threaten the room wildly.", "You watch as $n threatens everyone in the room.", "You threaten $N, that dirty rat!", "You see $n threaten $N, maybe you should step in and calm things down.", "$n threatens you, how mean!", "Threaten who?", "#", ""},
 	},
 	"blame": {
 		Name:     "blame",
