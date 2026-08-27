@@ -217,7 +217,24 @@ func TestCmdKillUsesActForChopTrio(t *testing.T) {
 	if got, want := readSendText(t, observer), "Killer brutally slays Victim!\r\n"; got != want {
 		t.Errorf("room chop message = %q, want %q", got, want)
 	}
-	if victim.player.GetRoom() == 1001 {
-		t.Error("victim should be extracted after all three Act messages")
+	// C raw_kill's death_cry (fight.c:558-577) reaches the room after the
+	// chop trio — the killer and every observer hear the freeze line.
+	if got, want := readSendText(t, killer), "Your blood freezes as you hear Victim's death cry.\r\n"; got != want {
+		t.Errorf("killer death cry = %q, want %q", got, want)
+	}
+	if got, want := readSendText(t, observer), "Your blood freezes as you hear Victim's death cry.\r\n"; got != want {
+		t.Errorf("observer death cry = %q, want %q", got, want)
+	}
+	// The chop line is the victim's ENTIRE death transcript: C defers the
+	// extraction (and the return to the menu) to the next heartbeat, so no
+	// invented resurrection bytes may reach them (R4), and nothing moves
+	// them out of the room synchronously.
+	select {
+	case msg := <-victim.send:
+		t.Errorf("victim received invented post-death bytes: %s", string(msg))
+	default:
+	}
+	if victim.player.GetRoom() != 1001 {
+		t.Errorf("victim moved to room %d; C defers extraction to the next heartbeat", victim.player.GetRoom())
 	}
 }

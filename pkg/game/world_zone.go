@@ -39,6 +39,17 @@ func (w *World) GetShopManager() common.ShopManager {
 	return w.shopManager
 }
 
+// ShopBitvectorForKeeper returns the shop behavior bitvector for a
+// shopkeeper mob vnum (shop.h: WILL_START_FIGHT=1, WILL_BANK_MONEY=2).
+// The keeper set comes from the .shp files at boot — C's equivalent of
+// is_shopkeeper's GET_MOB_SPEC == shop_keeper membership test.
+func (w *World) ShopBitvectorForKeeper(vnum int) (int, bool) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	bits, ok := w.shopKeepers[vnum]
+	return bits, ok
+}
+
 // SetShopManager sets the shop manager.
 func (w *World) SetShopManager(manager common.ShopManager) {
 	w.mu.Lock()

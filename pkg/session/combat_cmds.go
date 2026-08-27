@@ -169,8 +169,11 @@ func cmdHit(s *Session, args []string) error {
 	}
 
 	// C's damage() protects shopkeepers after peaceful/newbie gates and stops
-	// any existing combat involving either participant.
+	// any existing combat involving either participant. ok_damage_shopkeeper
+	// runs as the gate's first half (shop.c:1006): non-fighting keepers slap
+	// and warn the attacker first.
 	if tgt.Mob != nil && isShopkeeper(s.manager.world, tgt.Mob) {
+		shopkeeperDamagePrelude(s, tgt.Mob)
 		s.Send("Ha ha... Don't think so.\r\n")
 		s.manager.combatEngine.StopCombat(s.player.GetName())
 		s.manager.combatEngine.StopCombat(tgt.Mob.GetName())
@@ -223,12 +226,49 @@ func isShopkeeper(world *game.World, mob *game.MobInstance) bool {
 	if world == nil || mob == nil {
 		return false
 	}
+	// C is_shopkeeper (mobprog.c:473-507): the shop spec set (guild,
+	// guild_guard, butler, clerk — the shop spec itself is the .shp keeper
+	// membership below), plus the hardcoded protector vnums.
+	switch game.MobSpecAssign[mob.GetVNum()] {
+	case "guild", "guild_guard", "butler", "clerk":
+		return true
+	}
+	switch vnum := mob.GetVNum(); vnum {
+	case 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010, 8011, 8078:
+		return true
+	}
+	// Keepers of .shp shops — C's assign_the_shopkeepers gives them the
+	// shop spec at boot.
+	if _, ok := world.ShopBitvectorForKeeper(mob.GetVNum()); ok {
+		return true
+	}
 	manager := world.GetShopManager()
 	if manager == nil {
 		return false
 	}
 	_, ok := manager.GetShopByNPC(mob.GetVNum())
 	return ok
+}
+
+// shopkeeperDamagePrelude mirrors C ok_damage_shopkeeper (shop.c:1006-1023):
+// a shop's keeper that does not WILL_START_FIGHT slaps the attacker and
+// tells them off before damage()'s protection gate answers.
+func shopkeeperDamagePrelude(s *Session, mob *game.MobInstance) {
+	bits, ok := s.manager.world.ShopBitvectorForKeeper(mob.GetVNum())
+	if !ok || bits&1 != 0 { // not an .shp keeper, or WILL_START_FIGHT
+		return
+	}
+	keeper := game.Actor(mob)
+	// do_action(vict, GET_NAME(ch), cmd_slap, 0) — the slap social's
+	// vict/room lines (lib/misc/socials "slap").
+	game.Act(s.manager.world, false, keeper, s.player, nil, nil,
+		"$n slaps $N.", "", game.ToNotVict)
+	game.Act(nil, false, keeper, s.player, nil, nil,
+		"You are slapped by $n.", "", game.ToVict)
+	// do_tell(vict, "<name> Get out of here before I call the guards!") — the
+	// prepended name is the tell's target argument; the message is the rest.
+	game.Act(nil, false, keeper, s.player, nil, nil,
+		"$n tells you, 'Get out of here before I call the guards!'", "", game.ToVict)
 }
 
 // cmdFlee attempts to flee from combat.

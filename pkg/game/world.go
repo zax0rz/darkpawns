@@ -87,6 +87,9 @@ type World struct {
 
 	// Shop manager
 	shopManager common.ShopManager
+	// shopKeepers maps shopkeeper mob vnum -> shop behavior bitvector, loaded
+	// from the .shp files at boot (C: assign_the_shopkeepers).
+	shopKeepers map[int]int
 
 	// Event queue for timer-based scripted events
 	// Source: events.c event_init() — global event_q
@@ -199,6 +202,15 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	for i := range parsed.Zones {
 		zone := &parsed.Zones[i]
 		w.zones[zone.Number] = zone
+	}
+
+	// Index shops by keeper vnum — C's assign_the_shopkeepers (shop.c:1232-1243)
+	// gives every shop's keeper the shop_keeper spec, which is what
+	// is_shopkeeper (mobprog.c:473) and ok_damage_shopkeeper test.
+	w.shopKeepers = make(map[int]int, len(parsed.Shops))
+	for i := range parsed.Shops {
+		shop := &parsed.Shops[i]
+		w.shopKeepers[shop.KeeperVNum] = shop.Bitvector
 	}
 
 	// Initialize event queue

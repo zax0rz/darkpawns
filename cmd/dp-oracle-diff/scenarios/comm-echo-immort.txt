@@ -1,0 +1,75 @@
+# depth-case: echo.immort
+# do_echo's immortal arm (act.wizard.c:130-154, registered LVL_IMMORT at
+# interpreter.c): the raw argument is echoed to the room and back with NO
+# "$n " prefix (only SCMD_EMOTE prepends it), and the empty argument answers
+# "Yes.. but what?". The empty-players God gotos to the mortal start room in
+# drained warmup so the audience peer receives the unprefixed room line.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Echoimm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Echoimm
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Echopeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Echopeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+echo
+echo TheImmortalWordsFallFlat
