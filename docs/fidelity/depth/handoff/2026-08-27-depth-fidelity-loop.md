@@ -1,10 +1,13 @@
 # Dated Handoff: 2026-08-27 (depth-fidelity loop)
 
-This wave started from a clean, pulled `main` and confirmed the handoff
-frontier with `make fidelity-depth`: **476 total, 444 proven/delegated, 22
-blocked, 10 excluded** (95.3% actionable). Three planned rounds then ran in
-order, with one post-audit corrective proof before handoff. All four PRs were
-self-merged only after their GitHub checks were green.
+The initial 2026-08-27 wave started from a clean, pulled `main` and confirmed
+the handoff frontier with `make fidelity-depth`: **476 total, 444
+proven/delegated, 22 blocked, 10 excluded** (95.3% actionable). Its three
+planned rounds plus one post-audit corrective proof reached the prior
+checkpoint of **481 total, 460 proven/delegated, 11 blocked, 10 excluded**.
+This continuation started from that clean checkpoint and ran three more rounds
+in order. All seven PRs recorded here were self-merged only after their
+GitHub checks were green.
 
 ## Round 1 — god-set stat/position vehicle (PR #669)
 
@@ -68,13 +71,56 @@ position is unchanged. The Go behavior was already faithful; this PR adds the
 missing D2 state proof and changes the owning manifest row to `unit-green`
 (R1/R4/R5e).
 
+## Continuation Round 1 — equipment + glance (PR #673)
+
+Branch: `glm/depth-equipment`; merged as `5ad019e3a`.
+
+- `equipment-glance-depth` adds the first `do_equipment` family manifest in
+  `docs/fidelity/depth/equipment.tsv` and a paired audience vehicle for
+  `do_diagnose`/`glance`, following `src/act.informative.c` and the command
+  mapping in `src/interpreter.c`.
+- The vehicle covers empty/naked lines, covered equipment positions, short
+  descriptions and object flags, sleeping-position gates, and private glance
+  output. Confirmed Go rendering changes now preserve the C slot ordering,
+  display flags, and save/load state (R1/R2/R4/R5e).
+
+## Continuation Round 2 — boards read/write (PR #674)
+
+Branch: `glm/depth-boards`; merged as `bedfbc616`.
+
+- `boards-depth` opens the C `gen_board` read/list/write/revise/post/remove
+  paths and the `PLR_WRITING` session state, with explicit D1–D3 gates in
+  `docs/fidelity/depth/boards.tsv`.
+- The board vehicle proves empty/list/read, headline/body entry, revision,
+  active/own removal, and peer-facing output. The owning `comm.tsv` row
+  `tell.writing` is now oracle-green; Go board persistence, editor entry, and
+  prompt/output termination were corrected only where the C trace confirmed a
+  divergence (R1/R2/R4/R5e).
+
+## Continuation Round 3 — lock/unlock/pick (PR #675)
+
+Branch: `glm/depth-door`; merged as `0304b16dc`.
+
+- `door-lock-pick-depth` extends the existing `door.tsv` D5 row with a
+  keyed-gate, mortal-skill, lockpick-breakage, and pickproof-resistance
+  vehicle. Seeds 1, 2, 3, 5, and 8 all produce no normalized divergence.
+- The main RED proof found two confirmed Go divergences: C's skill catalog
+  displays `pick lock` while the door lookup uses the Go storage key
+  `pick_lock`, and Go's `sendToChar` wrapper added a second CRLF to pick
+  failure/resistance messages. Go now canonicalizes that one skill key and
+  passes bare message text to the wrapper; a focused skillset regression test
+  protects the mapping (R1/R2/R4/R5e).
+- The vehicle proves mortal/room audiences for keyed lock/unlock/pick, the
+  successful skill branch, and the pickproof chest's resistance and ruined
+  lockpick output. No `src/` or oracle file was changed.
+
 ## Final frontier
 
 Final `make fidelity-depth`:
 
 ```text
-Cases: 481 total, 460 proven/delegated, 11 blocked, 10 excluded
-Actionable completion: 460/471 = 97.7%
+Cases: 498 total, 479 proven/delegated, 9 blocked, 10 excluded
+Actionable completion: 479/488 = 98.2%
 ```
 
 The remaining blocked rows are deliberately left blocked with an explicit
@@ -82,18 +128,17 @@ owning manifest/next vehicle. The requested deep-engine backlog was not
 attempted:
 
 - `combat-entry.tsv`: `kill.immortal-postdeath-menu` — deferred extraction and
-  session menu return; `hit.charm-master` — charmed attacker/master vehicle.
-- `comm.tsv`: `tell.linkless`, `tell.writing` — linkless descriptor and board
-  writing-state vehicles.
-- `combat-entry.tsv`: `assist.cant-see`, `assist.mob-helpee-pers` — invisible
-  opponent and mob-helpee audience vehicles.
-- `door.tsv`: `door.lock-unlock-pick` — keyed, pickproof, and skill-gated door
-  vehicle.
-- `use.tsv`: `use.effect` — wand/staff `mag_objectmagic` vehicle.
+  session menu return.
+- `combat-entry.tsv`: `assist.cant-see`, `assist.mob-helpee-pers`, and
+  `hit.charm-master` — invisible-opponent, mob-helpee, and charmed
+  attacker/master vehicles.
+- `comm.tsv`: `tell.linkless` — linkless descriptor vehicle.
 - `info.tsv`: `score.state-variants` — affect, position, mount/pet, tattoo, and
   naked/armed state matrix.
+- `use.tsv`: `use.effect` — wand/staff `mag_objectmagic` vehicle.
+- `position.tsv`: `wake.cant-wake-aff-sleep` — save-gated magical-sleep
+  vehicle.
 - `object-magic.tsv`: `objmagic.sleep-entry-gates` — spell-entry gate vehicle.
-- `position.tsv`: `wake.cant-wake-aff-sleep` — save-gated magical-sleep vehicle.
 
 These owners are manifest/vehicle owners for the next depth round, not claims
 that those deep rows were completed here.
@@ -101,7 +146,7 @@ No `src/` or `darkpawns-c-oracle/` files were changed.
 
 ## Verification
 
-On the merged correction branch, all required local gates passed:
+On the merged door branch, all required local gates passed:
 
 - `make fidelity-depth`
 - `go build ./...`
@@ -110,7 +155,6 @@ On the merged correction branch, all required local gates passed:
 - `golangci-lint run ./...` — `0 issues.`
 - `gofumpt -l .` — no output
 
-GitHub checks for PR #672 also passed: test, lint, security (`govulncheck` and
-`gosec`). The first security attempt failed only on transient
-`sum.golang.org` HTTP/2 verification errors; the failed job was rerun and
-passed. Final repository state is clean `main` at `6f76a9efe`.
+GitHub checks for PRs #673, #674, and #675 passed: test, lint, and security
+(`govulncheck` and `gosec`). Final repository state is clean `main` at
+`0304b16dc`.
