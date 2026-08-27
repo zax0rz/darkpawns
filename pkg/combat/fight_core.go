@@ -396,8 +396,11 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	// stop_follower: if victim follows ch, break following (fight.c:1457)
-	// Handled via game-layer hooks.
+	// stop_follower: if victim follows ch, break following (fight.c:1457) —
+	// the charm branch makes the attacking master's pet denounce him.
+	if cbGetFollowing(victimName) == chName {
+		cbStopFollowerOfMaster(victimName, chName)
+	}
 
 	// AFF_HIDE: attacker becomes visible on offensive action (fight.c:1459)
 	if cbHasAffect(chName, AFF_HIDE) {

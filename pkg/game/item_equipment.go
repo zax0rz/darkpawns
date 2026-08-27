@@ -296,6 +296,28 @@ func (w *World) FindCarriedVis(ch *Player, arg string) *ObjectInstance {
 	return getObjInInvVis(ch, arg)
 }
 
+// HeldItemVis resolves the WEAR_HOLD item by keyword — C do_use
+// (act.other.c:897-910) checks the held item with isname BEFORE falling back
+// to the carrying list, so a held matching item wins the quaff/recite/use
+// target selection. Returns nil when nothing held or no keyword match.
+func (w *World) HeldItemVis(ch *Player, arg string) *ObjectInstance {
+	if ch == nil || ch.Equipment == nil {
+		return nil
+	}
+	name := strings.TrimSpace(arg)
+	if name == "" {
+		return nil
+	}
+	item, ok := ch.Equipment.GetItemInSlot(SlotHold)
+	if !ok || item == nil {
+		return nil
+	}
+	if !isnameWithAbbrevs(name, item.GetKeywords()) {
+		return nil
+	}
+	return item
+}
+
 func getObjInInvVis(ch *Player, arg string) *ObjectInstance {
 	if ch == nil || ch.Inventory == nil {
 		return nil

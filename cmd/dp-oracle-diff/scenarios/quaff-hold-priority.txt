@@ -1,0 +1,51 @@
+# depth-case: quaff.wear-hold-priority
+# C do_use resolves the quaff target from WEAR_HOLD before the carrying list
+# (act.other.c:897-910): a held item whose keyword list matches the argument
+# wins over a carried one. Holding see-invis potion 8051 (wear flags TAKE|HOLD)
+# while carrying sanctuary potion 19599 makes the priority visible in the
+# quaff block itself — C quaffs the held 8051 (see-invis), Go's cmdQuaff only
+# searches the inventory and quaffs the carried 19599 (sanctuary x3). The two
+# potions share the "potion" keyword; warmup acquires and holds them via their
+# unique aliases so room-list order never decides.
+
+[fixture]
+quiet-mobs
+spawn-obj 8051 1 8162 80
+spawn-obj 19599 1 8162 80
+
+[setup:oracle]
+Holdquirf
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Holdquirf
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+get seeinvis
+get sanctuary
+hold seeinvis
+
+[probe]
+quaff potion

@@ -42,10 +42,17 @@ func cmdQuaff(s *Session, args []string) error {
 		return nil
 	}
 
-	// C do_use parses with half_chop (first token) and resolves via
-	// get_obj_in_list_vis (keyword prefix, carrying) — not the short desc.
+	// C do_use resolves the target from WEAR_HOLD first (act.other.c:897-910):
+	// a held item whose keyword list matches the argument wins over anything
+	// carried; only then does the carrying-list lookup run.
 	arg := args[0]
-	item := s.manager.world.FindCarriedVis(s.player, arg)
+	item := s.manager.world.HeldItemVis(s.player, arg)
+	fromHold := item != nil
+	if item == nil {
+		// C do_use parses with half_chop (first token) and resolves via
+		// get_obj_in_list_vis (keyword prefix, carrying) — not the short desc.
+		item = s.manager.world.FindCarriedVis(s.player, arg)
+	}
 	if item == nil {
 		s.Send(fmt.Sprintf("You don't seem to have %s %s.", articleFor(arg), arg))
 		return nil
@@ -71,6 +78,10 @@ func cmdQuaff(s *Session, args []string) error {
 		broadcastToRoom(s, fmt.Sprintf("%s quaffs %s.", s.player.Name, item.GetShortDesc()))
 	}
 
+	// C mag_objectmagic stalls the drinker for one combat round before the
+	// spells resolve (spell_parser.c:710).
+	s.player.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
+
 	// Fire the potion's spells. C mag_objectmagic ITEM_POTION casts each of
 	// GET_OBJ_VAL(obj, 1..3) via call_magic(ch, ch, NULL, val, GET_OBJ_VAL(obj, 0),
 	// CAST_POTION), breaking as soon as one returns 0 (spell_parser.c:711-715).
@@ -83,7 +94,12 @@ func cmdQuaff(s *Session, args []string) error {
 		}
 	}
 
-	// Remove potion from inventory (C extract_obj after the cast loop).
+	// Remove the potion (C extract_obj after the cast loop — a held item
+	// leaves the equipment slot on the way out).
+	if fromHold {
+		s.player.Equipment.UnequipItem(item, s.player.Inventory)
+		s.markDirty(VarEquipment)
+	}
 	s.player.Inventory.RemoveItem(item)
 	s.markDirty(VarInventory)
 

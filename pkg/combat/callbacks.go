@@ -90,6 +90,11 @@ type GameCallbacks struct {
 	// Commands
 	PerformCommand func(chName, cmd string)
 
+	// Follower break: fight.c:1457 stop_follower(victim) when the attacker is
+	// the victim's own master — the charm branch renders the "jerk"/"hates
+	// your guts!" trio with proper act audiences.
+	StopFollowerOfMaster func(victimName, masterName string)
+
 	// Flee/Retreat
 	GetWimpyLev func(name string) int
 	DoFlee      func(name string)
@@ -548,6 +553,12 @@ func cbJunkInventoryItems(chName string) {
 func cbPerformCommand(chName, cmd string) {
 	if cb := callbacks; cb != nil && cb.PerformCommand != nil {
 		cb.PerformCommand(chName, cmd)
+	}
+}
+
+func cbStopFollowerOfMaster(victimName, masterName string) {
+	if cb := callbacks; cb != nil && cb.StopFollowerOfMaster != nil {
+		cb.StopFollowerOfMaster(victimName, masterName)
 	}
 }
 

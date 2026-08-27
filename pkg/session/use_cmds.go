@@ -30,7 +30,13 @@ func cmdRecite(s *Session, args []string) error {
 		targetName = strings.TrimSpace(parts[1])
 	}
 
-	item := s.manager.world.FindCarriedVis(s.player, itemName)
+	// C do_use (SCMD_RECITE) resolves WEAR_HOLD first (act.other.c:897-910),
+	// then the carrying list.
+	item := s.manager.world.HeldItemVis(s.player, itemName)
+	fromHold := item != nil
+	if item == nil {
+		item = s.manager.world.FindCarriedVis(s.player, itemName)
+	}
 	if item == nil {
 		s.Send(fmt.Sprintf("You don't seem to have %s %s.", articleFor(itemName), itemName))
 		return nil
@@ -87,7 +93,16 @@ func cmdRecite(s *Session, args []string) error {
 	game.Act(s.manager.world, false, s.player, nil, item, nil,
 		"$n recites $p.", "", game.ToRoom)
 
-	// Remove scroll from inventory
+	// C mag_objectmagic stalls the reader for one combat round before the
+	// spells resolve (spell_parser.c:683).
+	s.player.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
+
+	// Remove scroll (C extract_obj after the cast loop; a held item leaves
+	// the equipment slot on the way out).
+	if fromHold {
+		s.player.Equipment.UnequipItem(item, s.player.Inventory)
+		s.markDirty(VarEquipment)
+	}
 	s.player.Inventory.RemoveItem(item)
 	s.markDirty(VarInventory)
 

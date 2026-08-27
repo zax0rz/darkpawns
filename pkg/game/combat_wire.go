@@ -551,6 +551,21 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		}
 	}
 
+	// fight.c:1457 stop_follower(victim) when the attacker is the victim's
+	// master — the game layer owns the act audiences of the charm trio.
+	cb.StopFollowerOfMaster = func(victimName, masterName string) {
+		if p, ok := w.GetPlayer(victimName); ok {
+			StopFollower(w, p)
+			return
+		}
+		for _, m := range w.GetAllMobs() {
+			if m.GetName() == victimName {
+				StopFollowerMob(w, m)
+				return
+			}
+		}
+	}
+
 	// -------------------------------------------------------------------------
 	// Flee/Retreat — wired by the session layer via Manager.SetFleeHooks because
 	// they need access to player sessions. Leave nil here so SetFleeHooks can
