@@ -705,6 +705,23 @@ func TestPositionCommandsMountAndWake(t *testing.T) {
 			t.Fatalf("actor output = %q", got)
 		}
 	})
+
+	t.Run("stunned target is in bad shape", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		target := addMovementPlayer(t, w, "Sleeper", 1001)
+		target.Sex = 1
+		target.SetPosition(combat.PosStunned)
+		output := captureMovementOutput(w)
+
+		w.DoWake(actor, target.Name)
+
+		if target.GetPosition() != combat.PosStunned {
+			t.Fatalf("target position = %d, want stunned", target.GetPosition())
+		}
+		if got := output[actor.Name].String(); got != "She's in pretty bad shape!\r\n" {
+			t.Fatalf("actor output = %q, want %q", got, "She's in pretty bad shape!\r\n")
+		}
+	})
 }
 
 func TestPositionCommandsStunnedOrWorse(t *testing.T) {

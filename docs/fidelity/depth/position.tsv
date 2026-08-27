@@ -38,4 +38,4 @@ do_wake	wake	wake.target-vict-audience	D3	command	oracle-green	position-wake-tar
 do_wake	wake	wake.target-already-awake	D2	command	oracle-green	position-wake-target	act.movement.c:854-855	"$E is already awake." ($E subjective pronoun).
 do_wake	wake	wake.target-noperson	D2	command	oracle-green	position-wake-target	act.movement.c:850-851	NOPERSON "No-one by that name here."
 do_wake	wake	wake.cant-wake-aff-sleep	D2	command	blocked	-	act.movement.c:869-872	"You can't wake up!" + "$n tosses and turns uncomfortably." (and the targeted AFF_SLEEP arm): needs magical sleep, which is save-gated RNG; blocked with the object-magic save-gated class.
-do_wake	wake	wake.target-bad-shape	D2	command	blocked	-	act.movement.c:858-859	"$E's in pretty bad shape!" needs a stunned/incapacitated target; no deterministic vehicle.
+do_wake	wake	wake.target-bad-shape	D2	state	unit-green	TestPositionCommandsMountAndWake	act.movement.c:858-859	Focused "stunned target is in bad shape" subtest drives POS_STUNNED and proves exact "$E's in pretty bad shape!\r\n" output with no position change; C has no set position field and no deterministic live vehicle (R1/R4/R5e).
