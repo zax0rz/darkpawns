@@ -1,0 +1,92 @@
+# depth-case: door.lock-unlock-pick
+# Mortal skill vehicle: the primary God grants the peer C's `pick lock`
+# skill, then supplies the keyed exit, lockpicks, and a pickproof chest.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+DoorGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DoorGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Doorpick
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Doorpick
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Doorpick 8040
+goto 8040
+skillset Doorpick 'pick lock' 100
+load obj 8010
+give bread Doorpick
+load obj 8027
+give lockpicks Doorpick
+goto 8040
+close gate
+load obj 19121
+drop old
+
+[probe:mortal]
+look
+get old
+hold lockpicks
+lock gate
+pick gate
+unlock gate
+open gate
+close gate
+lock gate
+unlock gate
+pick gate
+pick old chest

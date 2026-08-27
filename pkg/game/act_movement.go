@@ -781,14 +781,14 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 	canBreak := 0
 	switch {
 	case keynum < 0:
-		sendToChar(ch, "Odd - you can't seem to find a keyhole.\r\n")
+		sendToChar(ch, "Odd - you can't seem to find a keyhole.")
 	case (picks == nil || picks.VNum != 8027) && ch.GetLevel() < lvlImmort:
-		sendToChar(ch, "You'll need to hold a set of lockpicks before you can pick a lock!\r\n")
+		sendToChar(ch, "You'll need to hold a set of lockpicks before you can pick a lock!")
 	case pickproof:
-		sendToChar(ch, "It resists your attempts to pick it.\r\n")
+		sendToChar(ch, "It resists your attempts to pick it.")
 		canBreak = 2
 	case percent > ch.GetSkill(SkillPickLock):
-		sendToChar(ch, "You failed to pick the lock.\r\n")
+		sendToChar(ch, "You failed to pick the lock.")
 		canBreak = 1
 	default:
 		return true
@@ -796,7 +796,7 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 
 	if picks != nil && canBreak != 0 && ch.GetLevel() < doorNumber(0, 30)+canBreak {
 		Act(w, false, ch, nil, nil, nil, "$n curses as $e bends some of $s lockpicks.", "", ToRoom)
-		sendToChar(ch, "You ruin your lockpicks in the process.\r\n")
+		sendToChar(ch, "You ruin your lockpicks in the process.")
 		if err := ch.Equipment.Unequip(SlotHold, ch.Inventory); err != nil {
 			slog.Error("unequip ruined lockpicks", "player", ch.GetName(), "error", err)
 			return false
