@@ -156,7 +156,12 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		// position gate lets it wander on the very first settle pulses.
 		// 0 means unset (clear_char's POS_STANDING default; no real record
 		// carries POS_DEAD as a loadpos).
-		Status:         positionStatus(proto.Position),
+		Status: positionStatus(proto.Position),
+		// C read_mobile copies the whole prototype struct (db.c:1757), so the
+		// mob file's act flags ride along. Without this, HasMobFlag reads a
+		// zero mask for every world-loaded mob and C's MOB_AWARE backstab
+		// guard (act.offensive.c:212) never fires.
+		Flags:          actionFlagBits(proto.ActionFlags),
 		Inventory:      make([]*ObjectInstance, 0),
 		Equipment:      make(map[int]*ObjectInstance),
 		Fighting:       false,
@@ -574,6 +579,29 @@ func (m *MobInstance) GetPosition() int {
 	default:
 		return combat.PosStanding // Default to standing
 	}
+}
+
+// actionFlagBitNames mirrors the parser's act-flag name table (parser/mob.go);
+// index = C MOB_* bit. Kept in sync by TestActionFlagBitsMatchParserTable.
+var actionFlagBitNames = []string{
+	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
+	"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY",
+	"HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH", "NOBLIND", "HUNTER",
+}
+
+// actionFlagBits converts parsed act-flag names to the C MOB_* bitmask.
+func actionFlagBits(names []string) uint64 {
+	index := make(map[string]int, len(actionFlagBitNames))
+	for i, n := range actionFlagBitNames {
+		index[n] = i
+	}
+	var bits uint64
+	for _, n := range names {
+		if bit, ok := index[n]; ok {
+			bits |= 1 << uint(bit)
+		}
+	}
+	return bits
 }
 
 // positionStatus maps a C POS_* loadpos constant to the Status string

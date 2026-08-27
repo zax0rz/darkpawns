@@ -59,17 +59,18 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
-	// 6. MOB_AWARE awake mobs notice the attempt and retaliate — act.offensive.c:212
+	// 6. MOB_AWARE awake mobs notice the attempt and retaliate — act.offensive.c:212.
+	// C emits the three notice lines then hit(vict, ch, TYPE_UNDEFINED): the guard
+	// swings back at once. RetaliateHit routes that synchronous target->actor hit
+	// through the caller (which enrolls and swings), so the actor sees the notice
+	// line followed by the guard's real hit message.
 	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) && target.GetPosition() > combat.PosSleeping {
-		if target.GetFighting() == "" {
-			target.SetFighting(ch.Name)
-		}
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
 			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
 			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
-			StartCombat:   true,
+			RetaliateHit:  true,
 		}
 	}
 

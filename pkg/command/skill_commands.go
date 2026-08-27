@@ -12,6 +12,7 @@ import (
 
 type rescueCombatEngine interface {
 	StartCombat(combat.Combatant, combat.Combatant) error
+	PerformInitialAttack(combat.Combatant, combat.Combatant) error
 	StopCombat(string)
 	// SkillMessage routes a combat message through the skill_message path
 	// (fight.c:1023-1092), drawing Dice(1,N) and emitting the set's text.
@@ -1574,7 +1575,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			eng.SkillMessage(result.Damage, ch.GetName(), target.GetName(), result.SkillMsgType, ch.GetRoom())
 		}
 	} else if result.MessageToCh != "" {
-		_ = s.SendMessage(result.MessageToCh + "\r\n")
+		// C act() CAPs the assembled string (comm.c:2477); lines that begin
+		// with $e/$n render lowercase and must be capitalized here.
+		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
 	}
 
 	// Apply damage
@@ -1610,6 +1613,17 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 	}
 
+	// C hit(vict, ch, TYPE_UNDEFINED): the MOB_AWARE guard swings back at once.
+	// Enroll target->ch and run one synchronous swing from the target, emitted
+	// after the notice lines above — exactly like C's aware-backstab branch.
+	if result.RetaliateHit && target != nil && target.GetPosition() != combat.PosDead {
+		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
+			if err := engine.StartCombat(target, ch); err == nil {
+				_ = engine.PerformInitialAttack(target, ch)
+			}
+		}
+	}
+
 	// Run deferred skill improvement AFTER the skill_message dice and the
 	// damage/enrollment step, matching C's order: damage()/hit() draws the
 	// skill_message dice first, then improve_skill() runs back in the command
@@ -1641,7 +1655,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// Send to victim
 	if result.MessageToVict != "" && target != nil {
 		if p, ok := target.(*game.Player); ok {
-			p.SendMessage(result.MessageToVict + "\r\n")
+			p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
 		}
 	}
 
@@ -1657,7 +1671,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			if target != nil && p.Name == target.GetName() {
 				continue
 			}
-			p.SendMessage(result.MessageToRoom + "\r\n")
+			p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
 		}
 	}
 

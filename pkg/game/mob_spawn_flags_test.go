@@ -36,3 +36,27 @@ func TestNewMobAppliesLoadpos(t *testing.T) {
 		})
 	}
 }
+
+// TestNewMobCarriesActFlags pins the round-14 fix: a mob whose record carries
+// MOB_AWARE (harbor guard 18223, act=6232 = bits 1,3,4,6,12) must expose it
+// through HasMobFlag — C's backstab aware-guard reads this bit.
+func TestNewMobCarriesActFlags(t *testing.T) {
+	proto := &parser.Mob{
+		VNum: 18223, Keywords: "harbor guard", Position: 8,
+		ActionFlags: []string{"SENTINEL", "ISNPC", "AWARE", "STAY_ZONE", "HELPER"},
+	}
+	mob := NewMob(proto, 8105)
+	for _, want := range []struct {
+		bit  int
+		name string
+	}{
+		{4, "AWARE"}, {1, "SENTINEL"}, {6, "STAY_ZONE"}, {12, "HELPER"},
+	} {
+		if !mob.HasMobFlag(want.bit) {
+			t.Errorf("HasMobFlag(%s) = false, want true", want.name)
+		}
+	}
+	if mob.HasMobFlag(5) {
+		t.Error("HasMobFlag(AGGRESSIVE) = true, want false")
+	}
+}
