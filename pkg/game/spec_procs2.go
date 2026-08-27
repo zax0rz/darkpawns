@@ -1095,7 +1095,8 @@ func specNoMoveEast(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return false
 	}
 	if cmd == "east" {
-		sendToChar(ch, "You try to go east but are blocked by a heavy object.\r\n")
+		Act(w, false, me, ch, nil, nil, "$n humiliates $N, and blocks $S way.", "", ToNotVict)
+		Act(w, false, me, ch, nil, nil, "$n humiliates you and blocks your way.", "", ToVict)
 		return true
 	}
 	return false
@@ -1258,7 +1259,8 @@ func specNoMoveWest(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return false
 	}
 	if cmd == "west" {
-		sendToChar(ch, "You try to go west but are blocked by a heavy object.\r\n")
+		Act(w, false, me, ch, nil, nil, "$n humiliates $N, and blocks $S way.", "", ToNotVict)
+		Act(w, false, me, ch, nil, nil, "$n humiliates you and blocks your way.", "", ToVict)
 		return true
 	}
 	return false

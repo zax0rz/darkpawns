@@ -1,0 +1,44 @@
+# depth-case: mob.spec-no-move-west
+# depth-case: mob.spec-no-move-east
+# Deterministic mob special-procedure command gates. C assigns no_move_west to
+# mob 2106 and no_move_east to mob 14410; both intercept a mortal direction
+# command before do_move and emit the assigned mobile's act bytes.
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 2106 1 8162 80
+spawn-mob 14410 1 8162 80
+
+[setup:oracle]
+Specactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Specactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+west
+east

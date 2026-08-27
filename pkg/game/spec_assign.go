@@ -96,7 +96,7 @@ var MobSpecAssign = map[int]string{
 	7970: "cleric", // unicorn
 
 	// Kir Drax'in
-	8014: "guild_guard",
+	8014: "guild", // C's later ASSIGNMOB overrides guild_guard.
 	8017: "guild_guard",
 	8016: "guild_guard",
 	8018: "guild_guard",
@@ -141,7 +141,7 @@ var MobSpecAssign = map[int]string{
 
 	// Desert
 	11023: "cleric",
-	11024: "magic_user",
+	11024: "cleric", // C's later Desert assignment overrides magic_user.
 	11029: "magic_user",
 	11030: "magic_user",
 	11000: "dragon_breath",
