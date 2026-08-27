@@ -1,0 +1,64 @@
+# depth-case: sit.while-fighting
+# depth-case: rest.while-fighting
+# depth-case: sleep.while-fighting
+# depth-case: stand.while-fighting
+# The POS_FIGHTING arms of do_sit/do_rest/do_sleep/do_stand
+# (act.movement.c:720-722, 758-760, 795-797, 827-829): each answers its MAD
+# variant and leaves the position untouched. Combat entry happens during
+# (drained) setup via `hit trainee` on the flee-combat vehicle; the warmup
+# pulse pad advances exactly PULSE_VIOLENCE+2 worth of pulses so the
+# attacker's wait state is spent on BOTH engines before the probe — C's wait
+# drains on wall-clock passes, Go's on pumped pulses. No RNG runs in the
+# probe itself (the frozen clock holds the fight mid-round).
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Madsitt
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port]
+Madsitt
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+~dpclock pulse 60
+
+[probe]
+sit
+rest
+sleep
+stand
