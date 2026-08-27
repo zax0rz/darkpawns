@@ -78,7 +78,7 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 	}
 
 	if si.HasRoutine(RoutineAffects) {
-		MagAffects(level, caster, cvict, spellNum, int(savetype), world)
+		magAffectsForCast(level, caster, cvict, spellNum, int(savetype), castType, world)
 	}
 
 	if si.HasRoutine(RoutineUnaffects) {

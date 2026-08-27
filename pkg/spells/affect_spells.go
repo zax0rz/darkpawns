@@ -15,6 +15,14 @@ import (
 // MagAffects applies spell affects to a character.
 // Functions named MagXxx to match C convention; constants are RoutineXxx.
 func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world interface{}) {
+	magAffectsForCast(level, ch, victim, spellNum, savetype, CastSpell, world)
+}
+
+// magAffectsForCast carries the C object-cast type through to the final act()
+// dispatch. C's live mag_objectmagic path does not echo the invisibility room
+// line back to the wand caster; ordinary unit/golden calls retain the original
+// shared message helper behavior.
+func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int, castType CastType, world interface{}) {
 	if victim == nil || ch == nil {
 		return
 	}
@@ -73,7 +81,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellChillTouch, SpellBlindness, SpellSmokescreen, SpellCurse, SpellSleep, SpellFlameStrike, SpellPoison:
 		saved = magSavingThrow(victim, savetype)
 	}
-	magAffectsApply(level, ch, victim, spellNum, saved, reag, world)
+	magAffectsApply(level, ch, victim, spellNum, saved, reag, world, castType)
 }
 
 // magAffectsApply is the deterministic core of MagAffects. It applies the spell
@@ -83,7 +91,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 // strings; the send block at the bottom reproduces the C dispatch order
 // (magic.c:1414-1421): to_self fires only when ch != victim, then to_vict,
 // then to_room.
-func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool, reag int, world interface{}) {
+func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool, reag int, world interface{}, castTypes ...CastType) {
 	var aff *engine.Affect
 	var toVictim, toRoom, toSelf string
 	var pending []*engine.Affect
@@ -391,7 +399,11 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		sendToVictim(victim, toVictim)
 	}
 	if toRoom != "" {
-		sendAffectRoom(victim, nil, toRoom, world)
+		var exclude interface{}
+		if len(castTypes) > 0 && castTypes[0] == CastWand {
+			exclude = ch
+		}
+		sendAffectRoom(victim, exclude, toRoom, world)
 	}
 }
 
