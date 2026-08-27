@@ -1,0 +1,39 @@
+# depth-case: recite.wrong-type
+# A non-scroll item reaches do_use's SCMD_RECITE type gate.
+
+[fixture]
+quiet-mobs
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get bread
+recite bread

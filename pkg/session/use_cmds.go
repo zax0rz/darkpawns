@@ -42,16 +42,11 @@ func cmdRecite(s *Session, args []string) error {
 		return nil
 	}
 
-	// Check it's a scroll — flexible check:
-	// CircleMUD ITEM_SCROLL = 12, but also accept 2 or 11 as fallback
-	// Also accept any item that has spell values in Values[0]
+	// C do_use accepts only ITEM_SCROLL here (act.other.c:961-963).
 	typeFlag := item.GetTypeFlag()
-	if typeFlag != 2 && typeFlag != 11 && typeFlag != 12 {
-		// Still allow if it has spell values that look valid
-		if item.Prototype == nil || item.Prototype.Values[0] <= 0 || len(item.Prototype.Values) < 2 {
-			s.Send("You can't recite that.")
-			return nil
-		}
+	if typeFlag != game.ITEM_SCROLL {
+		s.Send("You can only recite scrolls.")
+		return nil
 	}
 
 	if item.Prototype == nil || len(item.Prototype.Values) < 2 {

@@ -773,10 +773,9 @@ func cmdWho(s *Session, args []string) error {
 
 // cmdWhere lists all online players and their locations.
 // Source: act.informative.c do_where() lines 2244-2307
-// TODO(domain7b): the critical mortal vnum exposure is closed by the
-// LVL_IMMORT command gate; the optional immortal target-search and C visibility
-// residual still belongs here.
-func cmdWhere(s *Session) error {
+// The critical mortal vnum exposure is closed by the LVL_IMMORT command gate;
+// the optional immortal target-search branch mirrors C's one_argument path.
+func cmdWhere(s *Session, args []string) error {
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
@@ -789,6 +788,36 @@ func cmdWhere(s *Session) error {
 	sort.SliceStable(sessions, func(i, j int) bool {
 		return sessions[i].connectedAt.After(sessions[j].connectedAt)
 	})
+
+	// C's one_argument branch searches the visible character list by name
+	// (act.informative.c:2283-2301); it does not interpret the argument as a
+	// zone filter. Keep the optional argument's player-facing format separate
+	// from the no-argument Players page.
+	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
+		query := strings.ToLower(strings.TrimSpace(args[0]))
+		count := 0
+		var out strings.Builder
+		for _, sess := range sessions {
+			if sess.player == nil || !strings.HasPrefix(strings.ToLower(sess.player.Name), query) {
+				continue
+			}
+			room, ok := s.manager.world.GetRoom(sess.player.GetRoom())
+			if !ok || !game.CanSee(s.player, sess.player) {
+				continue
+			}
+			count++
+			fmt.Fprintf(&out, "M%3d. %-25s - [%5d]%s\r\n", count, sess.player.Name, room.VNum, room.Name)
+			if count >= 30 {
+				break
+			}
+		}
+		if count == 0 {
+			s.sendText("Couldn't find any such thing.\r\n")
+		} else {
+			s.sendText(out.String())
+		}
+		return nil
+	}
 
 	out := "Players\n-------\n"
 	found := false
