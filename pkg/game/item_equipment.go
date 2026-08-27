@@ -82,7 +82,7 @@ func (w *World) wearMessage(ch *Player, obj *ObjectInstance, where int) {
 }
 
 func canWearAtPosition(obj *ObjectInstance, where int) bool {
-	if where == eqWearHold || where == eqWearHold2 {
+	if where == eqWearHold {
 		if obj.CanPickUp {
 			return true
 		}

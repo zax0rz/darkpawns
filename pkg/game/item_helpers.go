@@ -167,7 +167,7 @@ const (
 	eqWearWristL
 	eqWearWield
 	eqWearHold
-	eqWearHold2
+	eqWearThrow
 	eqWearAblegs
 	eqWearFace
 	eqWearHover
@@ -284,8 +284,10 @@ func wearBitForPosition(where int) int {
 		return 1 << 12 // wrist
 	case eqWearWield:
 		return 1 << 13 // wield
-	case eqWearHold, eqWearHold2:
+	case eqWearHold:
 		return 1 << 14 // hold
+	case eqWearThrow:
+		return 1 << 15 // throw
 	case eqWearAblegs:
 		return 1 << 16 // ablegs
 	case eqWearFace:
