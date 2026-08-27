@@ -33,6 +33,37 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellMetalskin:
 		reag = checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
 			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
+	case SpellSleep:
+		// C magic.c:1203-1210 consumes the exact vnum-1226 sand component
+		// before the outlaw/level gates or save roll. Keep the two audience
+		// messages in that order and retain the reagent for the duration.
+		if consumeSpellReagentVNum(ch, 1226) {
+			reag = 1
+			sendToCaster(ch, "Pulling a bit of sand from a pocket, you cast it about the room...\r\n")
+			sendAffectRoom(ch, nil, "$n pulls a bit of sand out of a pocket and casts it about the room.\r\n", world)
+		} else {
+			sendToCaster(ch, "You attempt the spell without the components...\r\n")
+		}
+	}
+
+	// C magic.c:1212-1227 applies these cast-surface gates after the reagent
+	// narration and before mag_savingthrow. Object-magic sleep remains
+	// unreachable because the spell is TAR_NOT_SELF; this is the direct cast
+	// vehicle for the same shared mag_affects arms.
+	if spellNum == SpellSleep && !isNPC(victim) {
+		if !hasOutlawFlag(ch) {
+			sendToCaster(ch, "Your spell fails to affect them because you are not an Outlaw!\r\n")
+			casterName := "Someone"
+			if named, ok := ch.(interface{ GetName() string }); ok {
+				casterName = named.GetName()
+			}
+			sendToVictim(victim, fmt.Sprintf("%s tried to cast a spell on you but failed because %s is not an Outlaw!\r\n", casterName, casterName))
+			return
+		}
+		if getLevel(ch) < lvlImmort && absInt(getLevel(victim)-getLevel(ch)) > 3 {
+			sendAffectRoom(victim, nil, "$n shakes his head wearily, but then snaps out of it!\r\n", world)
+			return
+		}
 	}
 
 	// C only rolls a save inside the hostile cases that explicitly request it.
@@ -140,7 +171,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			npcRetaliate(victim, ch)
 			return
 		}
-		pending = append(pending, engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep"))
+		pending = append(pending, engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4+reag, 0, engine.AFFSleep, "sleep"))
 		// C magic.c:1241-1247 — the sleepy lines and the position drop only
 		// happen to a victim still above POS_SLEEPING.
 		if getPos(victim) > int(PosSleeping) {
@@ -362,6 +393,28 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	if toRoom != "" {
 		sendAffectRoom(victim, nil, toRoom, world)
 	}
+}
+
+func consumeSpellReagentVNum(ch interface{}, vnum int) bool {
+	if consumer, ok := ch.(interface{ ConsumeSpellReagentVNum(int) bool }); ok {
+		return consumer.ConsumeSpellReagentVNum(vnum)
+	}
+	return false
+}
+
+func hasOutlawFlag(ch interface{}) bool {
+	const plrOutlaw = 0 // structs.h: PLR_OUTLAW
+	if flags, ok := ch.(interface{ GetFlags() uint64 }); ok {
+		return flags.GetFlags()&(1<<plrOutlaw) != 0
+	}
+	return false
+}
+
+func absInt(value int) int {
+	if value < 0 {
+		return -value
+	}
+	return value
 }
 
 // cAffBit constants are C's AFF_* bit positions (structs.h:310-348) — the

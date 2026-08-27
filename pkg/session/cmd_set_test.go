@@ -112,3 +112,26 @@ func TestCmdSetCStatFieldsAndUnsupportedPosition(t *testing.T) {
 		}
 	})
 }
+
+func TestCmdSetOutlaw(t *testing.T) {
+	wiz, target := makeSetTestSession(t)
+	if err := cmdSet(wiz, []string{"Hero", "outlaw", "on"}); err != nil {
+		t.Fatalf("cmdSet: %v", err)
+	}
+	if got := readSessionText(t, wiz); got != "Okay.\r\n" {
+		t.Fatalf("ack = %q, want C binary-field ack", got)
+	}
+	if got := target.player.GetFlags() & (1 << uint(game.PlrOutlaw)); got == 0 {
+		t.Fatal("outlaw flag was not set")
+	}
+
+	if err := cmdSet(wiz, []string{"Hero", "outlaw", "off"}); err != nil {
+		t.Fatalf("cmdSet off: %v", err)
+	}
+	if got := readSessionText(t, wiz); got != "Okay.\r\n" {
+		t.Fatalf("off ack = %q, want C binary-field ack", got)
+	}
+	if got := target.player.GetFlags() & (1 << uint(game.PlrOutlaw)); got != 0 {
+		t.Fatal("outlaw flag was not cleared")
+	}
+}

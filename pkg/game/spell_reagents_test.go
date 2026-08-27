@@ -24,3 +24,23 @@ func TestConsumeSpellReagentUsesObjectLocationPipeline(t *testing.T) {
 		t.Errorf("consumed reagent location = %+v, want LocNowhere", obj.Location)
 	}
 }
+
+func TestConsumeSpellReagentVNumUsesExactPrototype(t *testing.T) {
+	w, player := newTestWorld(t)
+	obj, err := w.SpawnObject(3001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject: %v", err)
+	}
+	obj.Prototype.VNum = 1226
+	obj.VNum = 1226
+	if err := w.MoveObjectToPlayerInventory(obj, player); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory: %v", err)
+	}
+
+	if !player.ConsumeSpellReagentVNum(1226) {
+		t.Fatal("ConsumeSpellReagentVNum returned false for exact carried component")
+	}
+	if len(player.Inventory.Items) != 0 {
+		t.Errorf("inventory still contains consumed reagent: %+v", player.Inventory.Items)
+	}
+}

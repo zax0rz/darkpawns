@@ -1,0 +1,125 @@
+# depth-case: wake.cant-wake-aff-sleep
+# depth-case: objmagic.sleep-entry-gates.cast
+# C path: do_cast -> cast_spell -> call_magic -> mag_affects SPELL_SLEEP
+# (spell_parser.c:879-905; magic.c:1199-1249). The God primary grants a
+# level-8 magic-user peer the sleep skill, marks that mortal outlaw, and gives
+# the caster C's vnum-1226 sand reagent. The mortal casts sleep at a same-level
+# peer, then waits out the cast and tries `wake <peer>`. The victim save decides
+# between C's room-only shake-head arm and magical sleep; the latter reaches
+# both the victim's sleepy text and the targeted AFF_SLEEP wake gate.
+# Multi-seed is required because magic.c:1229 calls mag_savingthrow(victim,
+# SAVING_SPELL). The reagent/outlaw/level checks are on the cast surface here;
+# the original mag_affects/quaff row remains blocked because TAR_NOT_SELF makes
+# object-magic sleep unreachable.
+
+[fixture]
+empty-players
+quiet-mobs
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-obj 1226 1 8162 80
+force-load 1226
+
+[setup:oracle]
+Sleepgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleepgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Sleepcast]
+Sleepcast
+Y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:Sleepcast]
+Sleepcast
+y
+spellpass
+spellpass
+Y
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Sleeptarget]
+Sleeptarget
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Sleeptarget]
+Sleeptarget
+y
+victimpass
+victimpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sleepcast 8162
+teleport Sleeptarget 8162
+get sand
+give sand Sleepcast
+set Sleepcast level 8
+set Sleeptarget level 8
+skillset Sleepcast 'sleep' 100
+set Sleepcast outlaw on
+
+[probe:Sleepcast]
+inventory
+cast 'sleep' Sleeptarget
+~dpclock pulse 20
+wake Sleeptarget

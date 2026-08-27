@@ -102,6 +102,26 @@ func cmdSet(s *Session, args []string) error {
 		return nil
 	}
 
+	// C do_set field 32 (act.wizard.c:2577,2886) toggles PLR_OUTLAW for a
+	// player at LVL_GOD. The command itself remains behind Go's existing
+	// LVL_GRGOD dispatcher gate; this branch preserves C's binary parsing and
+	// acknowledgement for the God-skillset spell vehicle.
+	if field == "outlaw" {
+		normalized := strings.ToLower(strings.TrimSpace(value))
+		var enabled bool
+		switch normalized {
+		case "on", "yes":
+			enabled = true
+		case "off", "no":
+		default:
+			s.Send("Value must be on or off.\r\n")
+			return nil
+		}
+		targetSess.player.SetPlrFlag(game.PlrOutlaw, enabled)
+		s.Send("Okay.\r\n")
+		return nil
+	}
+
 	// C's do_set has no position field.  Its field-table walk reaches the
 	// sentinel and the switch's default arm returns this exact response; do
 	// not turn an unsupported field into a Go-only usage hint (R1/R2/R4).
