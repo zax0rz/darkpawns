@@ -476,6 +476,30 @@ func (m *Manager) SetPulsePump(pump func(int) error) {
 	m.pulsePump = pump
 }
 
+// ExtractPendingChars drains the world's C-style deferred extraction pass and
+// returns connected victims to the main menu. C does this from heartbeat(),
+// after raw_kill() has finished its synchronous death bytes; a linkless
+// descriptor receives no menu because extract_char_final() has nothing to
+// write to.
+func (m *Manager) ExtractPendingChars() {
+	extracted := m.world.ExtractPendingPlayers()
+	for _, player := range extracted {
+		m.mu.RLock()
+		var victim *Session
+		for _, s := range m.sessions {
+			if s.player == player {
+				victim = s
+				break
+			}
+		}
+		m.mu.RUnlock()
+		if victim == nil || !victim.hasTransport() {
+			continue
+		}
+		victim.showMainMenu()
+	}
+}
+
 // PumpPulses advances the deterministic heartbeat without routing through the
 // player command interpreter.
 func (m *Manager) PumpPulses(n int) error {

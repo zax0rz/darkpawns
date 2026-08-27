@@ -190,9 +190,11 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		}
 	}
 
-	// C extract_char clears every fight involving the victim and leaves the
-	// connection dark until the next heartbeat returns them to the menu —
-	// no invented resurrection bytes reach the victim here (R4).
+	// C extract_char only queues the victim; extract_pending_chars drains it on
+	// the next heartbeat, where extract_char_final returns a live descriptor to
+	// CON_MENU. No invented resurrection bytes reach the victim synchronously
+	// (R4).
+	w.QueuePlayerExtraction(player)
 	player.SetPosition(combat.PosDead)
 }
 

@@ -1,4 +1,5 @@
 # depth-case: kill.immortal-instinstakill
+# depth-case: kill.immortal-postdeath-menu
 # do_kill's implementor instakill trio (act.offensive.c:145-164) plus
 # raw_kill's death sequence. The old blocker ("God start rooms differ") is
 # stale: under empty-players both engines' Implementor starts at the immort
@@ -73,3 +74,4 @@ goto 8162
 
 [probe]
 kill chopvict
+~dpclock pulse 1

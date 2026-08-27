@@ -238,3 +238,28 @@ func TestCmdKillUsesActForChopTrio(t *testing.T) {
 		t.Errorf("victim moved to room %d; C defers extraction to the next heartbeat", victim.player.GetRoom())
 	}
 }
+
+func TestCmdKillReturnsConnectedVictimToMenuOnHeartbeat(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	killer := makeGateSession(t, m, 1, "Killer", 40)
+	victim := makeGateSession(t, m, 2, "Victim", 10)
+
+	if err := cmdKill(killer, []string{"victim"}); err != nil {
+		t.Fatalf("cmdKill returned error: %v", err)
+	}
+	_ = drainMsg(t, killer)
+	_ = drainMsg(t, victim)
+
+	if _, ok := m.world.GetPlayer("Victim"); !ok {
+		t.Fatal("victim was extracted synchronously; C defers extraction to heartbeat")
+	}
+	m.ExtractPendingChars()
+
+	if _, ok := m.world.GetPlayer("Victim"); ok {
+		t.Fatal("victim remains in world after deferred extraction")
+	}
+	_, prompt := unmarshalCharCreate(t, drainMsg(t, victim))
+	if prompt.Stage != "menu" || prompt.Prompt != menuText {
+		t.Fatalf("post-death prompt = (%q, %q), want menu text", prompt.Stage, prompt.Prompt)
+	}
+}

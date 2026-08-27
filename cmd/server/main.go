@@ -292,6 +292,9 @@ func main() {
 		OnEventProcess: func() {
 			gameWorld.EventQueue.Process(context.Background())
 		},
+		OnExtractPending: func() {
+			manager.ExtractPendingChars()
+		},
 		OnPerformViolence: func() {
 			// Production combat keeps its standalone ticker until the Phase 2
 			// unification. Pumped DP_CLOCK heartbeats must dispatch C's
