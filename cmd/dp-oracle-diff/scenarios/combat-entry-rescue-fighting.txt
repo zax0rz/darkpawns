@@ -1,0 +1,89 @@
+# depth-case: rescue.fighting-victim
+# do_rescue's "How can you rescue someone you are trying to kill?" gate
+# (act.offensive.c:525-530): the rescuer must already be FIGHTING the very
+# target of the rescue. The rescuer opens combat on the spawned trainee
+# during (drained) setup, the empty-players God grants `skillset 'rescue'
+# 75` via warmup so the gate order (skill -> find -> self -> fighting-victim
+# -> mounted) is passable, and the warmup pulse pad spends the hit's
+# PULSE_VIOLENCE+2 wait on both engines. The probe then fires the gate with
+# the trainee as both opponent and rescue target.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Rescuford
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rescuford
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rescuer]
+Rescfite
+Y
+rescuepass
+rescuepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:rescuer]
+Rescfite
+y
+rescuepass
+rescuepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+skillset Rescfite 'rescue' 75
+~dpclock pulse 60
+
+[probe:rescuer]
+rescue trainee
