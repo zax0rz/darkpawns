@@ -707,6 +707,65 @@ func TestPositionCommandsMountAndWake(t *testing.T) {
 	})
 }
 
+func TestPositionCommandsStunnedOrWorse(t *testing.T) {
+	cases := []struct {
+		name     string
+		run      func(*World, *Player)
+		wantText string
+		wantRoom string
+		wantPos  int
+	}{
+		{
+			name:     "stand",
+			run:      func(w *World, p *Player) { w.DoStand(p) },
+			wantText: "You stop floating around, and put your feet on the ground.",
+			wantRoom: "TestPlayer stops floating around, and puts his feet on the ground.",
+			wantPos:  combat.PosStanding,
+		},
+		{
+			name:     "sit",
+			run:      func(w *World, p *Player) { w.DoSit(p) },
+			wantText: "You stop floating around, and sit down.",
+			wantRoom: "TestPlayer stops floating around, and sits down.",
+			wantPos:  combat.PosSitting,
+		},
+		{
+			name:     "rest",
+			run:      func(w *World, p *Player) { w.DoRest(p) },
+			wantText: "You stop floating around, and stop to rest your tired bones.",
+			wantRoom: "TestPlayer stops floating around, and rests.",
+			wantPos:  combat.PosSitting,
+		},
+		{
+			name:     "sleep",
+			run:      func(w *World, p *Player) { w.DoSleep(p) },
+			wantText: "You stop floating around, and lie down to sleep.",
+			wantRoom: "TestPlayer stops floating around, and lie down to sleep.",
+			wantPos:  combat.PosSleeping,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w, actor := newMovementTestWorld(t)
+			observer := addMovementPlayer(t, w, "Observer", 1001)
+			actor.SetPosition(combat.PosStunned)
+			output := captureMovementOutput(w)
+
+			tc.run(w, actor)
+
+			if actor.GetPosition() != tc.wantPos {
+				t.Fatalf("position = %d, want %d", actor.GetPosition(), tc.wantPos)
+			}
+			if got := output[actor.Name].String(); !strings.Contains(got, tc.wantText) {
+				t.Fatalf("actor output = %q, want %q", got, tc.wantText)
+			}
+			if got := output[observer.Name].String(); !strings.Contains(got, tc.wantRoom) {
+				t.Fatalf("room output = %q, want %q", got, tc.wantRoom)
+			}
+		})
+	}
+}
+
 func TestDoEnterAndLeave(t *testing.T) {
 	newWorld := func(t *testing.T) (*World, *Player) {
 		t.Helper()

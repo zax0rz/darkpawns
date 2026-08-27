@@ -3,6 +3,7 @@ package session
 import (
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -67,6 +68,47 @@ func TestCmdSetConditions(t *testing.T) {
 		}
 		if got := target.player.GetCondition(game.CondDrunk); got != 0 {
 			t.Errorf("condition = %d, want unchanged 0", got)
+		}
+	})
+}
+
+func TestCmdSetCStatFieldsAndUnsupportedPosition(t *testing.T) {
+	t.Run("wis zero enables stupid gate vehicle", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		if err := cmdSet(wiz, []string{"Hero", "wis", "0"}); err != nil {
+			t.Fatalf("cmdSet: %v", err)
+		}
+		if got := readSessionText(t, wiz); got != "Hero's wis set to 0.\r\n" {
+			t.Fatalf("ack = %q, want C stat ack", got)
+		}
+		if target.player.Stats.Wis != 0 {
+			t.Fatalf("wis = %d, want 0", target.player.Stats.Wis)
+		}
+	})
+
+	t.Run("mortal stat range is zero through eighteen", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		if err := cmdSet(wiz, []string{"Hero", "wis", "99"}); err != nil {
+			t.Fatalf("cmdSet: %v", err)
+		}
+		if got := readSessionText(t, wiz); got != "Hero's wis set to 18.\r\n" {
+			t.Fatalf("ack = %q, want clamped C stat ack", got)
+		}
+		if target.player.Stats.Wis != 18 {
+			t.Fatalf("wis = %d, want 18", target.player.Stats.Wis)
+		}
+	})
+
+	t.Run("position is not a C field", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		if err := cmdSet(wiz, []string{"Hero", "position", "3"}); err != nil {
+			t.Fatalf("cmdSet: %v", err)
+		}
+		if got := readSessionText(t, wiz); got != "Can't set that!\r\n" {
+			t.Fatalf("ack = %q, want unsupported-field response", got)
+		}
+		if target.player.GetPosition() != combat.PosStanding {
+			t.Fatalf("position = %d, want unchanged standing", target.player.GetPosition())
 		}
 	})
 }
