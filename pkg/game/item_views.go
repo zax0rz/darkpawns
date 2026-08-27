@@ -10,7 +10,7 @@ import (
 // ---------------------------------------------------------------------------
 
 // cWearToGoSlot maps each C WEAR_ index to the Go EquipmentSlot that stores
-// that item. A negative value means the C position has no Go equivalent.
+// that item, including C's extended throw/ablegs/face/hover positions.
 var cWearToGoSlot = []EquipmentSlot{
 	0:  SlotLight,
 	1:  SlotFingerR,
@@ -30,22 +30,18 @@ var cWearToGoSlot = []EquipmentSlot{
 	15: SlotWristL,
 	16: SlotWield,
 	17: SlotHold,
-	18: -1, // THROW — no Go slot
-	19: -1, // ABLEGS — no Go slot
-	20: -1, // FACE — no Go slot
-	21: -1, // HOVER — no Go slot
+	18: SlotThrow,
+	19: SlotAblegs,
+	20: SlotFace,
+	21: SlotHover,
 }
 
 // cWearSlot maps a C WEAR_ position to the Go EquipmentSlot used for storage.
-// THROW, ABLEGS, FACE, and HOVER do not yet have Go storage slots.
 func cWearSlot(where int) (EquipmentSlot, bool) {
 	if where < 0 || where >= len(cWearToGoSlot) {
 		return 0, false
 	}
 	slot := cWearToGoSlot[where]
-	if slot < 0 {
-		return 0, false
-	}
 	return slot, true
 }
 
@@ -85,9 +81,6 @@ func (w *World) DoEquipment(ch *Player) {
 	found := false
 	for i := 0; i < len(cWearToGoSlot); i++ {
 		slot := cWearToGoSlot[i]
-		if slot < 0 {
-			continue
-		}
 		item, ok := ch.Equipment.GetItemInSlot(slot)
 		if !ok || item == nil {
 			continue
@@ -96,7 +89,7 @@ func (w *World) DoEquipment(ch *Player) {
 		b.WriteString(cWearWhere[i])
 		if chCanSeeObj(ch, item) {
 			b.WriteString(item.GetShortDesc())
-			b.WriteString(coloredObjectVisibleFlags(ch, item))
+			b.WriteString(coloredEquipmentObjectFlags(ch, item, i))
 			b.WriteString("\r\n")
 		} else {
 			b.WriteString("Something.\r\n")
@@ -107,6 +100,39 @@ func (w *World) DoEquipment(ch *Player) {
 		b.WriteString(" Nothing.\r\n")
 	}
 	ch.SendMessage(b.String())
+}
+
+// coloredEquipmentObjectFlags adds the equipment-only covered annotation.
+// C's show_obj_to_char receives the wearer's worn_on position and marks an
+// item covered when another equipped item hides that position.
+func coloredEquipmentObjectFlags(ch *Player, object *ObjectInstance, cPos int) string {
+	flags := coloredObjectVisibleFlags(ch, object)
+	if !equipmentPositionCovered(ch, cPos) {
+		return flags
+	}
+	if flags == "" {
+		return " (covered)"
+	}
+	return flags + " (covered)"
+}
+
+func equipmentPositionCovered(ch *Player, cPos int) bool {
+	if ch == nil || ch.Equipment == nil {
+		return false
+	}
+	var coverSlot EquipmentSlot
+	switch cPos {
+	case eqWearFingerR, eqWearFingerL:
+		coverSlot = SlotHands
+	case eqWearBody:
+		coverSlot = SlotAbout
+	case eqWearLegs:
+		coverSlot = SlotAblegs
+	default:
+		return false
+	}
+	item, ok := ch.Equipment.GetItemInSlot(coverSlot)
+	return ok && item != nil
 }
 
 // DoInventory prints the player's inventory with C's object-clumping format.

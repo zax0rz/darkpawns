@@ -1,0 +1,96 @@
+# Equipment + glance depth vehicle.  4301 is the C oracle's takeable
+# WEAR_HOVER object, which exercises the final equipment slot that the Go
+# display currently skips.
+# depth-case: equipment.empty
+# depth-case: equipment.extended-slot
+# depth-case: equipment.sleeping
+# depth-case: glance.no-arg
+# depth-case: glance.position-gate
+# depth-case: glance.target-condition
+# depth-case: glance.private-output
+
+[fixture]
+quiet-mobs
+spawn-obj 4301 1 8004 43
+force-load 4301
+
+[setup:oracle]
+Equipdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Equipdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:oracle:peer]
+Equippeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port:peer]
+Equippeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[warmup]
+remove tunic
+remove sword
+junk tunic
+junk sword
+get stars
+wear stars
+
+[probe]
+equipment
+remove stars
+equipment
+glance
+sleep
+glance
+equipment
+wake
+glance Equippeer
