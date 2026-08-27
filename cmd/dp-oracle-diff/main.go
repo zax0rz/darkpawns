@@ -551,7 +551,7 @@ func applyMobAffFixtures(worldDir string, fixtures []oraclediff.MobAffFixture) e
 		if err != nil {
 			return fmt.Errorf("stat mob file for vnum %d: %w", fixture.MobVNum, err)
 		}
-		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G304 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer-derived file name
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer-derived file name
 			return fmt.Errorf("write mob file for vnum %d: %w", fixture.MobVNum, err)
 		}
 	}
