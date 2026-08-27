@@ -1305,7 +1305,9 @@ func specNoMoveSouth(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return false
 	}
 	if cmd == "south" {
-		sendToChar(ch, "You try to go south but are blocked by a heavy object.\r\n")
+		Act(w, false, me, ch, nil, nil, "$n blocks $N's way.", "", ToNotVict)
+		Act(w, false, me, ch, nil, nil, "$n blocks your way.", "", ToVict)
+		Act(w, false, me, nil, nil, nil, "$n says 'Thou shalt not pass.'", "", ToRoom)
 		return true
 	}
 	return false

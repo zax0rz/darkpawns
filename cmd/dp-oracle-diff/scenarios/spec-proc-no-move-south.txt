@@ -1,0 +1,71 @@
+# depth-case: mob.spec-no-move-south
+# Deterministic command interception for the C no_move_south procedure.
+# C assigns mob 16308 to no_move_south (src/spec_assign.c:399); the mob
+# intercepts a mortal south command before do_move and emits a victim line plus
+# two room-audience lines.
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 16308 1 8162 80
+
+[setup:oracle]
+Specactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Specactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Specpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Specpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+south
