@@ -57,23 +57,39 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 		return true
 	}
 
+	// C treats a missing char_found message as a self-only social: typed
+	// arguments are ignored and the no-argument pair is emitted.
+	if _, ok := socialMessage(social, socCharFound); !ok {
+		if message, ok := socialMessage(social, socCharNoArg); ok {
+			Act(nil, false, ch, nil, nil, nil, message, "", ToChar)
+		}
+		if message, ok := socialMessage(social, socOthersNoArg); ok {
+			Act(w, social.hidesInvisibleActor(), ch, nil, nil, nil, message, "", ToRoom)
+		}
+		return true
+	}
+
 	// Extract target name from argument
 	targetName := extractArg(argument)
 
 	// No argument supplied — use no_arg messages
 	if targetName == "" {
-		Act(nil, false, ch, nil, nil, nil, social.Messages[socCharNoArg], "", ToChar)
-		Act(w, social.hidesInvisibleActor(), ch, nil, nil, nil, social.Messages[socOthersNoArg], "", ToRoom)
+		if message, ok := socialMessage(social, socCharNoArg); ok {
+			Act(nil, false, ch, nil, nil, nil, message, "", ToChar)
+		}
+		if message, ok := socialMessage(social, socOthersNoArg); ok {
+			Act(w, social.hidesInvisibleActor(), ch, nil, nil, nil, message, "", ToRoom)
+		}
 		return true
 	}
 
 	// Try to find the target in the room
-	target := w.findSocialTarget(ch.GetRoomVNum(), targetName)
+	target := w.findSocialTarget(ch, targetName)
 
 	if target == nil {
 		// Target not found
-		if socNotFound < len(social.Messages) {
-			Act(nil, false, ch, nil, nil, nil, social.Messages[socNotFound], "", ToChar)
+		if message, ok := socialMessage(social, socNotFound); ok {
+			Act(nil, false, ch, nil, nil, nil, message, "", ToChar)
 		}
 		return true
 	}
@@ -81,11 +97,11 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 	// Check if target is self
 	targetActor := target.(Actor)
 	if target.GetName() == ch.Name {
-		if socCharAuto < len(social.Messages) {
-			Act(nil, false, ch, nil, nil, nil, social.Messages[socCharAuto], "", ToChar)
+		if message, ok := socialMessage(social, socCharAuto); ok {
+			Act(nil, false, ch, nil, nil, nil, message, "", ToChar)
 		}
-		if socOthersAuto < len(social.Messages) {
-			Act(w, social.hidesInvisibleActor(), ch, nil, nil, nil, social.Messages[socOthersAuto], "", ToRoom)
+		if message, ok := socialMessage(social, socOthersAuto); ok {
+			Act(w, social.hidesInvisibleActor(), ch, nil, nil, nil, message, "", ToRoom)
 		}
 		return true
 	}
@@ -98,19 +114,26 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 
 	// Target is another character — send messages to actor, room, and target
 	// using the new Act() engine which handles $-codes, capitalization, \r\n
-	if socCharFound < len(social.Messages) {
-		Act(nil, false, ch, targetActor, nil, nil, social.Messages[socCharFound], "", ToChar|ToSleep)
+	if message, ok := socialMessage(social, socCharFound); ok {
+		Act(nil, false, ch, targetActor, nil, nil, message, "", ToChar|ToSleep)
 	}
 
-	if socOthersFound < len(social.Messages) {
-		Act(w, social.hidesInvisibleActor(), ch, targetActor, nil, nil, social.Messages[socOthersFound], "", ToNotVict)
+	if message, ok := socialMessage(social, socOthersFound); ok {
+		Act(w, social.hidesInvisibleActor(), ch, targetActor, nil, nil, message, "", ToNotVict)
 	}
 
-	if socVictFound < len(social.Messages) {
-		Act(nil, social.hidesInvisibleActor(), ch, targetActor, nil, nil, social.Messages[socVictFound], "", ToVict)
+	if message, ok := socialMessage(social, socVictFound); ok {
+		Act(nil, social.hidesInvisibleActor(), ch, targetActor, nil, nil, message, "", ToVict)
 	}
 
 	return true
+}
+
+func socialMessage(social *Social, index int) (string, bool) {
+	if social == nil || index < 0 || index >= len(social.Messages) || social.Messages[index] == "#" {
+		return "", false
+	}
+	return social.Messages[index], true
 }
 
 // DoInsult implements do_insult() from act.social.c.
@@ -122,7 +145,7 @@ func DoInsult(w *World, ch *Player, argument string) {
 		return
 	}
 
-	target := w.findSocialTarget(ch.GetRoomVNum(), targetName)
+	target := w.findSocialTarget(ch, targetName)
 
 	if target == nil {
 		ch.SendMessage("Can't hear you!\r\n")
@@ -194,15 +217,17 @@ func extractArg(argument string) string {
 	return arg1
 }
 
-// findSocialTarget finds a character in the room by name, checking mobs first then players.
-func (w *World) findSocialTarget(vnum int, name string) socialTarget {
+// findSocialTarget finds a visible character in the room by name, checking
+// mobs first then players, matching C get_char_room_vis().
+func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
+	vnum := observer.GetRoomVNum()
 	nameLower := strings.ToLower(name)
 
 	// Check mobs in the room
 	mobs := w.GetMobsInRoom(vnum)
 	for _, m := range mobs {
 		mobNameLower := strings.ToLower(m.GetName())
-		if mobNameLower == nameLower || strings.HasPrefix(mobNameLower, nameLower) {
+		if (mobNameLower == nameLower || strings.HasPrefix(mobNameLower, nameLower)) && canSeeSocialTarget(observer, m) {
 			return m
 		}
 	}
@@ -211,12 +236,40 @@ func (w *World) findSocialTarget(vnum int, name string) socialTarget {
 	players := w.GetPlayersInRoom(vnum)
 	for _, p := range players {
 		pNameLower := strings.ToLower(p.GetName())
-		if pNameLower == nameLower || strings.HasPrefix(pNameLower, nameLower) {
+		if (pNameLower == nameLower || strings.HasPrefix(pNameLower, nameLower)) && canSeeSocialTarget(observer, p) {
 			return p
 		}
 	}
 
 	return nil
+}
+
+// canSeeSocialTarget matches get_char_room_vis's CAN_SEE checks. Unlike Act's
+// delivery gate, C target lookup does not reject an otherwise visible target
+// merely because the actor is sleeping; the command's POS_RESTING gate is
+// enforced by the interpreter before do_action runs.
+func canSeeSocialTarget(observer, subject Actor) bool {
+	if observer == nil || subject == nil {
+		return true
+	}
+	obs, obsOK := observer.(visibilitySubject)
+	sbj, sbjOK := subject.(visibilitySubject)
+	if !obsOK || !sbjOK || obs.GetLevel() >= LVL_IMMORT {
+		return true
+	}
+	if holyLight, ok := obs.(holyLightSubject); ok && holyLight.GetHolyLight() {
+		return true
+	}
+	if obs.IsAffected(affBlind) {
+		return false
+	}
+	if sbj.IsAffected(affInvisible) && !obs.IsAffected(affDetectInvisible) {
+		return false
+	}
+	if sbj.IsAffected(affHide) && !obs.IsAffected(affSenseLife) {
+		return false
+	}
+	return true
 }
 
 // roomMessageExcludeTwo sends a message to all players in a room except two named ones.
