@@ -921,7 +921,7 @@ func createMoneyDesc(amount int) string {
 
 // capitalize capitalizes the first letter of a string.
 func capitalize(s string) string {
-	if len(s) == 0 {
+	if s == "" {
 		return s
 	}
 	r := []rune(s)
@@ -929,6 +929,12 @@ func capitalize(s string) string {
 		r[0] = r[0] - 32
 	}
 	return string(r)
+}
+
+// CapitalizeSentence uppercases the first rune, mirroring C act()'s CAP(lbuf)
+// (comm.c:2477) for messages assembled from lowercase $e/$n substitutions.
+func CapitalizeSentence(s string) string {
+	return capitalize(s)
 }
 
 // genderPronoun returns the possessive pronoun for the given sex value.

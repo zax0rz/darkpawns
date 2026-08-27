@@ -555,14 +555,15 @@ func TestDoBackstab_MobAware_NoticesAndStartsCombat(t *testing.T) {
 	if result.Success {
 		t.Error("expected aware mob to block backstab")
 	}
-	if mob.GetFighting() != ch.Name {
-		t.Errorf("expected aware mob to start fighting %q, got %q", ch.Name, mob.GetFighting())
-	}
 	if !strings.Contains(result.MessageToCh, "notices you") {
 		t.Errorf("expected noticed message, got %q", result.MessageToCh)
 	}
-	if !result.StartCombat {
-		t.Error("DP-906: MOB_AWARE notice should set StartCombat so the caller enrolls the player")
+	// C act.offensive.c:216 hit(vict, ch): the aware mob swings back at once.
+	// RetaliateHit makes the caller (sendSkillResult) enroll target->ch and run
+	// one synchronous swing from the target; the game layer no longer sets the
+	// mob fighting directly (that belongs to the combat engine at the caller).
+	if !result.RetaliateHit {
+		t.Error("MOB_AWARE notice should set RetaliateHit so the caller runs the guard's hit(vict, ch)")
 	}
 }
 

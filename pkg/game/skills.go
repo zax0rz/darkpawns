@@ -397,6 +397,12 @@ type SkillResult struct {
 	// The caller (sendSkillResult) routes this through the combat engine.
 	StartCombat bool
 
+	// RetaliateHit signals that the TARGET immediately hits the actor, mirroring
+	// C's hit(vict, ch, TYPE_UNDEFINED) — used by the MOB_AWARE backstab guard
+	// (act.offensive.c:216), which notices the lunge and swings back at once.
+	// The caller enrolls target->ch and runs one synchronous swing from target.
+	RetaliateHit bool
+
 	// SkillMsgType, when non-zero, routes the combat message through the
 	// skill_message path (fight.c:1023-1092) instead of emitting MessageToCh/
 	// Vict/Room directly. It holds the lib/misc/messages attack-type key (e.g.
