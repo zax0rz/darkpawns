@@ -48,9 +48,14 @@ const (
 
 // Exported constants for compatibility with outside packages (e.g. command)
 const (
-	AffSleep   = affSleep
-	AffHide    = affHide
-	affMounted = affMount
+	AffBlind      = affBlind
+	AffSleep      = affSleep
+	AffHide       = affHide
+	AffWerewolf   = affWerewolf
+	AffVampire    = affVampire
+	AffMount      = affMount
+	AffFleshAlter = affFleshAlter
+	affMounted    = affMount
 )
 
 // AffBitToEngineFlag maps C bit positions to engine flag uint64 values.

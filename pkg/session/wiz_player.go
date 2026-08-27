@@ -122,6 +122,39 @@ func cmdSet(s *Session, args []string) error {
 		return nil
 	}
 
+	// C do_set binary fields (act.wizard.c:2577-2580, 3025-3031): the
+	// acknowledgement names the field and target, with only its first byte
+	// capitalized.  Keep the two flag stores distinct: nosummon is a PRF bit,
+	// while chosen is a PLR bit in the original C structure.
+	if field == "nosummon" || field == "chosen" {
+		normalized := strings.ToLower(strings.TrimSpace(value))
+		var enabled bool
+		switch normalized {
+		case "on", "yes":
+			enabled = true
+		case "off", "no":
+		default:
+			s.Send("Value must be on or off.\r\n")
+			return nil
+		}
+		if field == "nosummon" {
+			targetSess.player.SetPlrFlag(game.PrfSummonable, enabled)
+		} else if enabled {
+			targetSess.player.SetPLRFlag(game.PlrChosen)
+		} else {
+			targetSess.player.ClearPLRFlag(game.PlrChosen)
+		}
+		label := strings.ToUpper(field[:1]) + field[1:]
+		ackState := enabled
+		if field == "nosummon" {
+			// C reports the inverse because the field name is the negative
+			// command while PRF_SUMMONABLE is the positive stored bit.
+			ackState = !enabled
+		}
+		s.Send(fmt.Sprintf("%s %s for %s.\r\n", label, onOff(ackState), targetSess.player.Name))
+		return nil
+	}
+
 	// C's do_set has no position field.  Its field-table walk reaches the
 	// sentinel and the switch's default arm returns this exact response; do
 	// not turn an unsupported field into a Go-only usage hint (R1/R2/R4).
@@ -147,6 +180,12 @@ func cmdSet(s *Session, args []string) error {
 		val = clamp(val, 0, maxStat)
 	case "level":
 		val = clamp(val, 0, 61)
+	case "ac":
+		// C do_set case 18: RANGE(-200, 100), followed by affect_total.
+		val = clamp(val, -200, 100)
+	case "tattoo":
+		// C do_set case 54: the tattoo table has NUM_TATTOOS entries.
+		val = clamp(val, 0, TatOwl)
 	case "hp", "mana", "move":
 		if val > 10000 && targetSess.player.Level < 60 {
 			return fmt.Errorf("cannot set %s above 10000 for non-immortals", field)
@@ -209,6 +248,14 @@ func cmdSet(s *Session, args []string) error {
 		targetSess.player.MaxMove = val
 		targetSess.player.Move = val
 		s.Send(fmt.Sprintf("Move points set to %d.", val))
+	case "ac":
+		targetSess.player.SetAC(val)
+		s.Send(fmt.Sprintf("%s's ac set to %d.\r\n", targetSess.player.Name, val))
+	case "tattoo":
+		tattooAf(targetSess, false)
+		targetSess.player.Tattoo = val
+		tattooAf(targetSess, true)
+		s.Send(fmt.Sprintf("%s's tattoo set to %d.\r\n", targetSess.player.Name, val))
 	}
 	slog.Warn("wizard set", "by", s.player.Name, "target", targetName, "field", field, "value", value)
 	return nil
@@ -216,7 +263,7 @@ func cmdSet(s *Session, args []string) error {
 
 func isSetNumericField(field string) bool {
 	switch field {
-	case "level", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "mana", "move":
+	case "level", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "mana", "move", "ac", "tattoo":
 		return true
 	default:
 		return false

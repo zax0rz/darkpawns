@@ -261,6 +261,61 @@ func TestCmdScoreFixedFixtureGolden(t *testing.T) {
 	}
 }
 
+func TestCmdScoreStateVariants(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scorestate", 1001, true)
+	p := s.player
+	p.Level = 40
+	p.SetPLRFlag(game.PlrChosen)
+	p.SetPlrFlag(game.PrfSummonable, true)
+	p.SetAffect(game.AffBlind, true)
+	p.SetAffect(game.AffWerewolf, true)
+	p.SetAffect(game.AffVampire, true)
+	p.SetAffect(game.AffMount, true)
+	p.SetAffect(game.AffFleshAlter, true)
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	got := readSessionText(t, s)
+	for _, want := range []string{
+		"You are a chosen of the gods.(BadMuthaFucker)\r\n",
+		"You are summonable by other players.\r\n",
+		"You have been blinded!\r\n",
+		"You're a lycanthrope!\r\n",
+		"You're a vampire!\r\n",
+		"You're mounted.\r\n",
+		"Your hand is a gleaming scythe!\r\n",
+		"\r\nEquipment spells affecting you:\r\nblind\r\nflesh alter\r\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("score output missing %q:\n%q", want, got)
+		}
+	}
+}
+
+func TestFleshAlterWeaponMatchesCLevelBands(t *testing.T) {
+	for _, tc := range []struct {
+		level int
+		want  string
+	}{
+		{1, "studded wooden club"},
+		{3, "studded wooden club"},
+		{4, "razor-sharp dagger"},
+		{18, "steel-shafted battle axe"},
+		{19, "double-headed battle axe"},
+		{27, "gleaming broad sword"},
+		{28, "gleaming long sword"},
+		{29, "gleaming long sword"},
+		{30, "gleaming scythe"},
+		{40, "gleaming scythe"},
+	} {
+		if got := fleshAlterWeapon(tc.level); got != tc.want {
+			t.Errorf("fleshAlterWeapon(%d) = %q, want %q", tc.level, got, tc.want)
+		}
+	}
+}
+
 func TestCmdSaySelfEcho(t *testing.T) {
 	// DP-913: self-echo must conjugate in the second person ("You say"),
 	// not third ("You says"). The room echo keeps third person.
