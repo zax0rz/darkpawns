@@ -88,89 +88,146 @@ func (p *Player) UpdateCharObjectsAR() {
 // The character is saved and then removed from the world on the next tick
 // by ExtractPendingChars.
 func ExtractChar(p *Player) {
+	if p == nil {
+		return
+	}
+	p.mu.Lock()
 	p.Flags |= 1 << uint(plrExtractBit)
+	p.mu.Unlock()
+}
+
+// QueuePlayerExtraction records a player for the next heartbeat. This is the
+// World-aware form used by death paths; the flag remains in place because it
+// is the same observable lifecycle marker as C's PLR_EXTRACT bit.
+func (w *World) QueuePlayerExtraction(p *Player) {
+	if w == nil || p == nil {
+		return
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.pendingPlayerExtractions == nil {
+		w.pendingPlayerExtractions = make(map[*Player]struct{})
+	}
+	w.pendingPlayerExtractions[p] = struct{}{}
+	p.mu.Lock()
+	p.Flags |= 1 << uint(plrExtractBit)
+	p.mu.Unlock()
 }
 
 // ExtractPendingChars processes all characters marked for extraction.
 // Source: src/handler.c extract_pending_chars() lines 1221-1265.
 // Must be called each heartbeat tick after event processing.
 func (w *World) ExtractPendingChars() {
+	_ = w.ExtractPendingPlayers()
+}
+
+// ExtractPendingPlayers drains the C-style extraction pass and returns the
+// players removed in this heartbeat. The session layer uses that result to
+// reproduce extract_char_final()'s descriptor-to-CON_MENU transition.
+func (w *World) ExtractPendingPlayers() []*Player {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
 	extractMask := uint64(1 << uint(plrExtractBit))
-	for name, p := range w.players {
-		if p.Flags&extractMask != 0 {
-			slog.Debug("extracting player", "name", name)
-
-			roomVNum := p.RoomVNum
-
-			// Unequip ALL equipment, dropping each item to the room floor.
-			// Source: handler.c extract_pending_chars — obj_to_room for every item.
-			if p.Equipment != nil {
-				p.Equipment.mu.Lock()
-				for slot, item := range p.Equipment.Slots {
-					if isLitLightSource(item) {
-						w.adjustRoomLight(roomVNum, -1)
-					}
-					delete(p.Equipment.Slots, slot)
-					if roomVNum >= 0 {
-						w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
-						item.Location = LocRoom(roomVNum)
-						item.RoomVNum = roomVNum
-						if isLitLightSource(item) {
-							w.adjustRoomLight(roomVNum, 1)
-						}
-					} else {
-						item.Location = LocNowhere()
-						item.RoomVNum = -1
-					}
-				}
-				p.Equipment.mu.Unlock()
-			}
-
-			// Drop all carried inventory items to the room floor.
-			if p.Inventory != nil {
-				p.Inventory.mu.Lock()
-				for _, item := range p.Inventory.Items {
-					if roomVNum >= 0 {
-						w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
-						item.Location = LocRoom(roomVNum)
-						item.RoomVNum = roomVNum
-					} else {
-						item.Location = LocNowhere()
-						item.RoomVNum = -1
-					}
-				}
-				p.Inventory.Items = p.Inventory.Items[:0]
-				p.Inventory.mu.Unlock()
-			}
-
-			// Stop fighting
-			p.Fighting = ""
-
-			// Move to nowhere
-			p.RoomVNum = roomNowhere
-
-			// Remove from world
-			delete(w.players, name)
-
-			// Save to disk. The player has already been removed from the world
-			// and can't be messaged, so a failure here is logged with character
-			// context rather than swallowed — DP-911.
-			if err := SavePlayer(p); err != nil {
-				slog.Error(
-					"failed to save player on extract",
-					"name", name,
-					"error", err,
-				)
-			}
-
-			// Clear flag
-			p.Flags &^= extractMask
-
-			slog.Debug("player extracted", "name", name)
+	extracted := make([]*Player, 0)
+	pending := make([]*Player, 0, len(w.pendingPlayerExtractions))
+	seen := make(map[*Player]struct{}, len(w.pendingPlayerExtractions))
+	for p := range w.pendingPlayerExtractions {
+		if current, ok := w.players[p.Name]; ok && current == p {
+			pending = append(pending, p)
+			seen[p] = struct{}{}
+		} else {
+			delete(w.pendingPlayerExtractions, p)
 		}
+	}
+	// ExtractChar is also used by non-death lifecycle paths that do not have a
+	// World to enqueue on. Keep the legacy flag scan as a compatibility arm.
+	for _, p := range w.players {
+		if p.Flags&extractMask != 0 {
+			if _, alreadyQueued := seen[p]; alreadyQueued {
+				continue
+			}
+			pending = append(pending, p)
+			seen[p] = struct{}{}
+		}
+	}
+
+	for _, p := range pending {
+		name := p.Name
+		if p.Flags&extractMask == 0 {
+			continue
+		}
+		slog.Debug("extracting player", "name", name)
+
+		roomVNum := p.RoomVNum
+
+		// Unequip ALL equipment, dropping each item to the room floor.
+		// Source: handler.c extract_pending_chars — obj_to_room for every item.
+		if p.Equipment != nil {
+			p.Equipment.mu.Lock()
+			for slot, item := range p.Equipment.Slots {
+				if isLitLightSource(item) {
+					w.adjustRoomLight(roomVNum, -1)
+				}
+				delete(p.Equipment.Slots, slot)
+				if roomVNum >= 0 {
+					w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+					item.Location = LocRoom(roomVNum)
+					item.RoomVNum = roomVNum
+					if isLitLightSource(item) {
+						w.adjustRoomLight(roomVNum, 1)
+					}
+				} else {
+					item.Location = LocNowhere()
+					item.RoomVNum = -1
+				}
+			}
+			p.Equipment.mu.Unlock()
+		}
+
+		// Drop all carried inventory items to the room floor.
+		if p.Inventory != nil {
+			p.Inventory.mu.Lock()
+			for _, item := range p.Inventory.Items {
+				if roomVNum >= 0 {
+					w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+					item.Location = LocRoom(roomVNum)
+					item.RoomVNum = roomVNum
+				} else {
+					item.Location = LocNowhere()
+					item.RoomVNum = -1
+				}
+			}
+			p.Inventory.Items = p.Inventory.Items[:0]
+			p.Inventory.mu.Unlock()
+		}
+
+		// Stop fighting
+		p.Fighting = ""
+
+		// Move to nowhere
+		p.RoomVNum = roomNowhere
+
+		// Remove from world
+		delete(w.players, name)
+
+		// Save to disk. The player has already been removed from the world
+		// and can't be messaged, so a failure here is logged with character
+		// context rather than swallowed — DP-911.
+		if err := SavePlayer(p); err != nil {
+			slog.Error(
+				"failed to save player on extract",
+				"name", name,
+				"error", err,
+			)
+		}
+
+		// Clear flag
+		p.Flags &^= extractMask
+		delete(w.pendingPlayerExtractions, p)
+		extracted = append(extracted, p)
+
+		slog.Debug("player extracted", "name", name)
 	}
 
 	// Extract mobs flagged for deferred removal (MOB_EXTRACT / bit 25).
@@ -219,6 +276,7 @@ func (w *World) ExtractPendingChars() {
 		slog.Debug("mob extracted", "id", id)
 		delete(w.activeMobs, id)
 	}
+	return extracted
 }
 
 // ---------------------------------------------------------------------------

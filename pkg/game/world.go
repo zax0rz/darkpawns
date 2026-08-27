@@ -62,6 +62,9 @@ type World struct {
 	players    map[string]*Player   // keyed by player name
 	activeMobs map[int]*MobInstance // keyed by instance ID
 	nextMobID  int
+	// pendingPlayerExtractions is the explicit queue used by death paths that
+	// mirror C's extract_char() to next-heartbeat extract_pending_chars() flow.
+	pendingPlayerExtractions map[*Player]struct{}
 
 	// Room items: room VNum -> list of object instances
 	roomItems map[int][]*ObjectInstance
@@ -159,22 +162,23 @@ func (w *World) SetCombatEngine(ce CombatEngine) {
 // NewWorld creates a new game world from parsed data.
 func NewWorld(parsed *parser.World) (*World, error) {
 	w := &World{
-		rooms:           make(map[int]*parser.Room),
-		roomOrder:       make([]int, 0, len(parsed.Rooms)),
-		mobs:            make(map[int]*parser.Mob),
-		objs:            make(map[int]*parser.Obj),
-		zones:           make(map[int]*parser.Zone),
-		players:         make(map[string]*Player),
-		activeMobs:      make(map[int]*MobInstance),
-		nextMobID:       1,
-		roomItems:       make(map[int][]*ObjectInstance),
-		nextObjID:       1,
-		objectInstances: make(map[int]*ObjectInstance),
-		specRooms:       make(map[int]bool),
-		done:            make(chan bool),
-		shopManager:     nil,    // Will be set via SetShopManager
-		parsedData:      parsed, // Keep reference for door loading etc.
-		WorldPath:       "",     // Set externally for reload support
+		rooms:                    make(map[int]*parser.Room),
+		roomOrder:                make([]int, 0, len(parsed.Rooms)),
+		mobs:                     make(map[int]*parser.Mob),
+		objs:                     make(map[int]*parser.Obj),
+		zones:                    make(map[int]*parser.Zone),
+		players:                  make(map[string]*Player),
+		activeMobs:               make(map[int]*MobInstance),
+		nextMobID:                1,
+		pendingPlayerExtractions: make(map[*Player]struct{}),
+		roomItems:                make(map[int][]*ObjectInstance),
+		nextObjID:                1,
+		objectInstances:          make(map[int]*ObjectInstance),
+		specRooms:                make(map[int]bool),
+		done:                     make(chan bool),
+		shopManager:              nil,    // Will be set via SetShopManager
+		parsedData:               parsed, // Keep reference for door loading etc.
+		WorldPath:                "",     // Set externally for reload support
 	}
 
 	// Index rooms by VNum

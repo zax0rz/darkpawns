@@ -170,6 +170,18 @@ func (s *Session) TransportDone() <-chan struct{} {
 	return s.transportDone
 }
 
+func (s *Session) hasTransport() bool {
+	if s.transportDone == nil {
+		return true
+	}
+	select {
+	case <-s.transportDone:
+		return false
+	default:
+		return true
+	}
+}
+
 // IsCharCreating returns whether the session is currently in character creation.
 func (s *Session) IsCharCreating() bool {
 	return s.charCreating
