@@ -74,6 +74,34 @@ func cmdSet(s *Session, args []string) error {
 	}
 	field = strings.ToLower(field)
 
+	// C do_set cases 29-31 (act.wizard.c:2977-2993): drunk/hunger/thirst accept
+	// "off" (condition → -1) or a number clamped to [0,48], with C's ack bytes.
+	// These are MISC-type fields, so they bypass the numeric gate below. Field
+	// names map to conditions: drunk→CondDrunk, hunger→CondFull, thirst→
+	// CondThirst (GET_COND(vict, l-29); DRUNK=0, FULL=1, THIRST=2).
+	switch field {
+	case "drunk", "hunger", "thirst":
+		cond := map[string]int{
+			"drunk":  game.CondDrunk,
+			"hunger": game.CondFull,
+			"thirst": game.CondThirst,
+		}[field]
+		if value == "off" {
+			targetSess.player.SetCondition(cond, -1)
+			s.Send(fmt.Sprintf("%s's %s now off.\r\n", targetSess.player.Name, field))
+			return nil
+		}
+		condVal, convErr := strconv.Atoi(value)
+		if convErr != nil {
+			s.Send("Must be 'off' or a value from 0 to 48.\r\n")
+			return nil
+		}
+		condVal = clamp(condVal, 0, 48)
+		targetSess.player.SetCondition(cond, condVal)
+		s.Send(fmt.Sprintf("%s's %s set to %d.\r\n", targetSess.player.Name, field, condVal))
+		return nil
+	}
+
 	// Validate numeric value before assignment
 	val, err := strconv.Atoi(value)
 	if err != nil {

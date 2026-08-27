@@ -85,45 +85,38 @@ type syllable struct {
 	new string
 }
 
+// applySyllableSubstitution ports the C speak_* loop (act.comm.c speak_drunk /
+// speak_elven / speak_dwarven, all the same shape). Two quirks are load-bearing:
+// the inner table scan has NO break — a match appends and advances the cursor,
+// then the scan CONTINUES from the next entry at the NEW position, so an
+// earlier entry can never match text revealed by a later match in the same
+// pass ("the killer" renders "th' killer": after "the " matches, "kill" is
+// already passed and 'k' falls to the identity entry) — and each pass appends
+// at most ONE unmatched byte. Longest-match-per-position substitution is NOT
+// equivalent (it would emit "th' murderizeer ish here"). Byte-oriented like
+// the C strcat/strncat calls.
 func applySyllableSubstitution(input string, syls []syllable) string {
 	if input == "" {
 		return ""
 	}
-	runes := []rune(input)
-	var out strings.Builder
-	out.Grow(len(runes) * 2)
+	out := make([]byte, 0, len(input)*2)
 	pos := 0
-	for pos < len(runes) {
-		matched := false
-		bestLen := 0
-		bestNew := ""
+	for pos < len(input) {
 		for _, s := range syls {
-			sr := []rune(s.org)
-			if len(sr) == 0 || pos+len(sr) > len(runes) {
+			if s.org == "" {
 				continue
 			}
-			match := true
-			for i := 0; i < len(sr); i++ {
-				if runes[pos+i] != sr[i] {
-					match = false
-					break
-				}
-			}
-			if match && len(sr) > bestLen {
-				bestLen = len(sr)
-				bestNew = s.new
-				matched = true
+			if strings.HasPrefix(input[pos:], s.org) {
+				out = append(out, s.new...)
+				pos += len(s.org)
 			}
 		}
-		if matched {
-			out.WriteString(bestNew)
-			pos += bestLen
-		} else {
-			out.WriteRune(runes[pos])
+		if pos < len(input) {
+			out = append(out, input[pos])
 			pos++
 		}
 	}
-	return out.String()
+	return string(out)
 }
 
 // ---------------------------------------------------------------------------
