@@ -121,9 +121,14 @@ func LoginStartRoom(p *Player) int {
 	return MortalStartRoom
 }
 
-// Instakill performs an immortal instakill extraction without XP, counters, or penalties.
-// Source: src/act.offensive.c do_kill() calls raw_kill(ch, victim) for implementor-level
-// instakills; raw_kill stops fighting, extracts the character, and respawns them.
+// Instakill performs an immortal instakill extraction without XP, counters,
+// or penalties.
+// Source: src/act.offensive.c do_kill() calls raw_kill(vict, TYPE_SLASH)
+// (fight.c:534-577) directly — no die()/die_with_killer bookkeeping. raw_kill
+// sends the death cry, makes the corpse, and extracts the victim; C defers
+// the actual extraction (and the victim's return to the main menu) to the
+// next heartbeat's extract_pending_chars, so nothing further reaches the
+// victim's connection synchronously.
 func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	if victim.IsNPC() {
 		w.handleMobDeath(victim, killer, attackType)
@@ -135,19 +140,60 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		return
 	}
 
-	// Notify victim before extraction, matching C's act() to victim.
-	player.SendMessage("You have been killed!\r\n")
-
-	// Stop fighting and respawn at the appropriate start room with no penalties.
 	player.StopFighting()
-	player.SetRoom(LoginStartRoom(player))
-	player.SetPosition(combat.PosStanding)
-	player.Heal(9999)
+	w.DieFollower(player)
 	if player.IsAffected(affWerewolf) {
 		player.SetAffect(affWerewolf, false)
 	}
-	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
-	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
+	if player.IsMounted() {
+		player.Unmount()
+	}
+
+	// death_cry (fight.c:558-577): the room hears $n's cry (TO_ROOM — the
+	// victim does not), adjacent open rooms hear "someone's".
+	Act(w, false, player, nil, nil, nil,
+		"Your blood freezes as you hear $n's death cry.", "", ToRoom)
+	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
+		for _, dir := range dirs {
+			if exit, exists := room.Exits[dir]; exists && exit.ToRoom > 0 {
+				w.roomMessage(exit.ToRoom,
+					"Your blood freezes as you hear someone's death cry.")
+			}
+		}
+	}
+
+	// make_corpse: everything carried, worn, and the gold go into the corpse.
+	var inventoryItems []*ObjectInstance
+	player.mu.Lock()
+	if player.Inventory != nil {
+		inventoryItems = player.Inventory.FindItems("")
+		player.Inventory.clear()
+	}
+	var equipmentItems []*ObjectInstance
+	if player.Equipment != nil {
+		for _, item := range player.Equipment.GetEquippedItems() {
+			equipmentItems = append(equipmentItems, item)
+		}
+		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+	}
+	player.mu.Unlock()
+	playerGold := player.GetGold()
+	player.SetGold(0)
+
+	roomVNum := player.GetRoom()
+	if attackType == 93 { // SPELL_DISINTEGRATE
+		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
+	} else {
+		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
+		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
+			slog.Warn("MoveObjectToRoom failed in instakill", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
+		}
+	}
+
+	// C extract_char clears every fight involving the victim and leaves the
+	// connection dark until the next heartbeat returns them to the menu —
+	// no invented resurrection bytes reach the victim here (R4).
+	player.SetPosition(combat.PosDead)
 }
 
 // changeAlignment shifts a player's alignment based on the victim's alignment.

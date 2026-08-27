@@ -1211,6 +1211,19 @@ func (m *Manager) SessionCount() int {
 
 // BroadcastToRoom sends a message to all players in a room.
 func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer string) {
+	// Some callers hand over a raw text line instead of a marshaled
+	// ServerMessage envelope. Every transport renders only envelope frames
+	// (the telnet writeLoop json.Unmarshals each send), so raw payloads were
+	// silently dropped for every client — wrap them at the sink.
+	if !json.Valid(message) {
+		if envelope, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{Type: "text", Text: string(message)},
+		}); err == nil {
+			message = envelope
+		}
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 

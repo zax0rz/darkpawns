@@ -50,7 +50,9 @@ func cmdEcho(s *Session, args []string) error {
 		s.Send("Maximum echo length is 500 characters.")
 		return nil
 	}
-	broadcastToRoomText(s, s.player.RoomVNum, msg)
+	// C act(buf, ..., TO_ROOM) excludes the echoer; the TO_CHAR copy below
+	// delivers their own view (or OK under norepeat).
+	s.manager.BroadcastToRoom(s.player.RoomVNum, []byte(msg), s.player.Name)
 	slog.Warn("wizard echo", "by", s.player.Name, "room", s.player.RoomVNum, "message", msg)
 	s.Send(msg)
 	return nil

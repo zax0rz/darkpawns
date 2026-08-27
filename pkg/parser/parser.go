@@ -25,6 +25,7 @@ type World struct {
 	Mobs  []Mob
 	Objs  []Obj
 	Zones []Zone
+	Shops []ShopProto
 	// SourceDir is the directory ParseWorld read from (the -world flag).
 	// Consumers derive sibling lib paths from it (e.g. ../text/help) instead
 	// of relying on the process CWD, which differs under the oracle harness.
@@ -74,6 +75,13 @@ func ParseWorld(libDir string) (*World, error) {
 		return nil, fmt.Errorf("parse zones: %w", err)
 	}
 	world.Zones = zones
+
+	// Parse shops
+	shops, err := ParseAllShopFiles(libDir + "/shp")
+	if err != nil {
+		return nil, fmt.Errorf("parse shops: %w", err)
+	}
+	world.Shops = shops
 
 	world.ValidateCrossReferences()
 	return world, nil

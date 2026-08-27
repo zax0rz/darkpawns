@@ -1,0 +1,44 @@
+# depth-case: hit.shopkeeper-gate
+# damage()'s shopkeeper protection (fight.c:1359-1366) plus shop.c's
+# ok_damage_shopkeeper prelude (slap + tell, shop.c:1006-1023): attacking the
+# fat merchant 12100 (keeper of the 121.shp fish shop, indexed mob file) in a
+# non-peaceful start room answers "Ha ha... Don't think so." and stops both
+# sides' combat. ROOM_PEACEFUL (bit 4) must be off or the earlier peaceful
+# gate shadows the keeper gate.
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 12100 1 8162 80
+
+[setup:oracle]
+Hitskeep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hitskeep
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+hit merchant
