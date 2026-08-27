@@ -77,6 +77,17 @@ func cmdAssist(s *Session, args []string) error {
 		}
 		return nil
 	}
+	// C's do_assist refuses to join when the opponent fighting the helpee is
+	// invisible to the assisting player (act.offensive.c:87-89). The helpee is
+	// the $M target of the message; no combat state or audience output changes
+	// on this rejection.
+	if helpeeActor, ok := helpee.(game.Actor); ok {
+		if opponentActor, ok := opponent.(game.Actor); ok && !game.CanSee(s.player, opponentActor) {
+			game.Act(nil, false, s.player, helpeeActor, nil, nil,
+				"You can't see who is fighting $M!", "", game.ToChar)
+			return nil
+		}
+	}
 
 	// 4. Player joins the fight. C's do_assist swings immediately via hit()
 	// (act.offensive.c:95) and — unlike do_hit — sets NO wait state.

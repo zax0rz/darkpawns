@@ -1,0 +1,125 @@
+# depth-case: assist.cant-see
+# C-first vehicle for the visibility-gated do_assist branch.  The primary
+# immortal casts invisibility on the trainee after a peer has started fighting
+# it.  A separate mortal helper then assists the mortal helpee; C finds the
+# fighting opponent but rejects the assist because CAN_SEE(helper, trainee) is
+# false (src/act.offensive.c:81-89).  The cast is in warmup, so its audience
+# output is drained before the probe and only the assist branch is compared.
+# The primary's god sight is intentionally not the probe actor.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Invisgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Invisgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:helper]
+Invishelp
+Y
+helperpass
+helperpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:helper]
+Invishelp
+y
+helperpass
+helperpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:helpee]
+Invishelpee
+Y
+helpeepass
+helpeepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[setup:port:helpee]
+Invishelpee
+y
+helpeepass
+helpeepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[warmup]
+goto 8105
+cast 'invisibility' trainee
+
+[probe:helper]
+assist Invishelpee
