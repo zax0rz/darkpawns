@@ -634,25 +634,51 @@ func magPointsFormula(level, spellNum int, isPsionicOrMystic bool) (pointsFormul
 	}
 }
 
-// MagUnaffects removes spell affects from a target.
+// MagUnaffects is the faithful port of mag_unaffects (magic.c:1828-1876):
+// the cure arms are guarded — a victim who does not carry the removable
+// affect gets NOEFFECT to the CASTER (silent for heal/mass-heal, which ride
+// along other routines) — and the cured pair for the vision arm is
+// BLINDNESS *and* SMOKESCREEN, with the to_vict/to_room act lines.
 func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interface{}) {
 	if victim == nil {
 		return
 	}
 	_ = level
-	_ = ch
-	_ = world
 
+	var spell, spell2 int
+	var toVictim, toRoom string
 	switch spellNum {
 	case SpellCureBlind, SpellHeal, SpellMassHeal:
-		removeAffect(victim, SpellBlindness)
-		sendToVictim(victim, "Your vision clears!\r\n")
+		spell, spell2 = SpellBlindness, SpellSmokescreen
+		toVictim = "Your vision returns!\r\n"
+		toRoom = "There's a momentary gleam in $n's eyes."
 	case SpellRemovePoison:
-		removeAffect(victim, SpellPoison)
-		sendToVictim(victim, "A warm feeling runs through your body!\r\n")
+		spell = SpellPoison
+		toVictim = "A warm feeling runs through your body!\r\n"
+		toRoom = "$n looks better."
 	case SpellRemoveCurse:
-		removeAffect(victim, SpellCurse)
-		sendToVictim(victim, "You don't feel so unlucky.\r\n")
+		spell = SpellCurse
+		toVictim = "You don't feel so unlucky.\r\n"
+	default:
+		return
+	}
+
+	if !hasSpellAffect(victim, spell) && !hasSpellAffect(victim, spell2) {
+		if spellNum != SpellHeal && spellNum != SpellMassHeal {
+			sendToCaster(ch, "Nothing seems to happen.\r\n")
+		}
+		return
+	}
+
+	removeAffect(victim, spell)
+	if spell2 != 0 {
+		removeAffect(victim, spell2)
+	}
+	if toVictim != "" {
+		sendToVictim(victim, toVictim)
+	}
+	if toRoom != "" {
+		sendAffectRoom(victim, nil, toRoom, world)
 	}
 }
 
@@ -2221,8 +2247,6 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 // Interfaces for room transfer spells.
 type (
 	roomGetter2 interface{ GetRoomVNum() int }
-	fighter2    interface{ IsFighting() bool }
-	hometowner  interface{ GetHometown() int }
 
 	worldTransfer interface {
 		PlayerTransfer(ch interface{}, toRoomVNum int) error
@@ -2311,64 +2335,22 @@ func areGrouped(ch, victim interface{}) bool {
 func castWordOfRecall(level int, ch, cvict, world interface{}) {
 	_ = level
 
-	// Only works on player victims
+	// C spell_recall (spells.c:124-165): NPC or missing victims return
+	// silently; every gate byte, the hometown transfer, and the room-look
+	// landing live in the world adapter (game.ExecuteWordOfRecall) — the
+	// spells package cannot import game. No invented failure text here.
 	type npcChecker interface{ IsNPC() bool }
-	if v, ok := cvict.(npcChecker); ok && v.IsNPC() {
-		return
-	}
 	if cvict == nil {
 		return
 	}
-
-	w, ok := world.(worldTransfer)
-	if !ok {
-		sendToCaster(ch, "Recall failed: world interface not available.\r\n")
+	if v, ok := cvict.(npcChecker); ok && v.IsNPC() {
 		return
 	}
-
-	// Check BFR flag on caster's room and victim's room
-	chRoom := ch.(roomGetter2).GetRoomVNum()
-	chRoomData := w.GetRoomInWorld(chRoom)
-	if chRoomData != nil && chRoomData.HasFlag(RoomBFR) {
-		sendToCaster(ch, "Your magic ebbs and dissolves as you lose your concentration.\r\n")
-		return
+	if w, ok := world.(interface {
+		ExecuteWordOfRecall(ch, victim interface{})
+	}); ok {
+		w.ExecuteWordOfRecall(ch, cvict)
 	}
-	victRoom := cvict.(roomGetter2).GetRoomVNum()
-	victRoomData := w.GetRoomInWorld(victRoom)
-	if victRoomData != nil && victRoomData.HasFlag(RoomBFR) {
-		sendToVictim(cvict, "Your magic ebbs and dissolves as you lose your concentration.\r\n")
-		return
-	}
-
-	// Can't recall while fighting
-	if f, ok := ch.(fighter2); ok && f.IsFighting() {
-		sendToCaster(ch, "Your concentration is broken by your fighting!\r\n")
-		return
-	}
-
-	// Determine hometown room
-	var destRoom int
-	if ht, ok := cvict.(hometowner); ok {
-		switch ht.GetHometown() {
-		case 1:
-			destRoom = KiroshiStartRoom
-		case 3:
-			destRoom = AlaozarStartRoom
-		default:
-			destRoom = MortalStartRoom
-		}
-	} else {
-		destRoom = MortalStartRoom
-	}
-
-	// Transfer the victim
-	sendToVictim(cvict, "You feel a brief tingling sensation...\r\n")
-	if err := w.PlayerTransfer(cvict, destRoom); err != nil {
-		sendToCaster(ch, fmt.Sprintf("Recall failed: %s\r\n", err))
-		return
-	}
-
-	sendToVictim(cvict, "You have a strange dream about falling..\r\n")
 }
 
 // spell_teleport ports src/spells.c spell_teleport (lines 168–217).
