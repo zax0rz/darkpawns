@@ -1,3 +1,4 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 getMobVNumSpec	west	mob.spec-no-move-west	D3	command	oracle-green	spec-proc-movement	spec_procs2.c:2032-2050	Mob 2106's no_move_west special blocks a mortal west command with the C act pair; live vehicle also verifies the registered VNum dispatch.
 getMobVNumSpec	east	mob.spec-no-move-east	D3	command	oracle-green	spec-proc-movement	spec_procs2.c:1822-1840	Mob 14410's no_move_east special blocks a mortal east command with the C act pair; live vehicle also verifies the registered VNum dispatch.
+getMobVNumSpec	south	mob.spec-no-move-south	D3	command	oracle-green	spec-proc-no-move-south	spec_procs2.c:2092-2110	Mob 16308's no_move_south special blocks a mortal south command with the victim and room act lines; a peer proves the TO_NOTVICT and TO_ROOM audience split.
