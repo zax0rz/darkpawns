@@ -576,9 +576,12 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	_ = combatEngine.StartCombat(ch, attacker)
 
 	return SkillResult{
-		Success:       true,
-		MessageToCh:   "Banzai!  To the rescue...",
-		MessageToVict: ActMessage("You are rescued by $N, you are confused!", chPronouns, &victPronouns, ""),
+		Success:     true,
+		MessageToCh: "Banzai!  To the rescue...",
+		// C act("You are rescued by $N...", FALSE, vict, 0, ch, TO_CHAR) —
+		// the victim is the message's "ch" and the RESCUER is $N, so the
+		// pronoun roles swap relative to the room line.
+		MessageToVict: ActMessage("You are rescued by $N, you are confused!", victPronouns, &chPronouns, ""),
 		MessageToRoom: ActMessage("$n heroically rescues $N!", chPronouns, &victPronouns, ""),
 		WaitTarget:    2, // WAIT_STATE(vict, 2*PULSE_VIOLENCE) — act.offensive.c:579; no WaitCh in C
 	}
