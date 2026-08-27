@@ -110,4 +110,5 @@ as a standalone extraction/menu-return session.
 - Socials matrix seeds 1, 2, 3, 5, and 8 — no normalized divergence.
 - PRs #680, #681, and #682 — hosted test, lint, and security checks passed;
   all three were self-merged.
-- Final repository state: clean `main` at `ca56488f4`.
+- Final repository state: clean `main` at `e205a4d65` (handoff docs commit;
+  code state is `ca56488f4`).
