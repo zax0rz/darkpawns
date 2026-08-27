@@ -155,6 +155,91 @@ func TestDoChannelFanoutMatchesC(t *testing.T) {
 	})
 }
 
+func TestDoChannelFamilyGatesAndHoller(t *testing.T) {
+	t.Run("shout deafness is recipient-only", func(t *testing.T) {
+		w, actor, local, _, output := newChannelWorld(t)
+		actor.SetPlrFlag(PrfDeaf, true)
+		w.DoChannel(actor, "hello", "shout")
+		if got := channelOutput(output, actor.Name); got != "You shout, 'hello'\r\n" {
+			t.Fatalf("actor output = %q", got)
+		}
+		if got := channelOutput(output, local.Name); got != "Actor shouts, 'hello'\r\n" {
+			t.Fatalf("local output = %q", got)
+		}
+	})
+
+	t.Run("recipient channel flags are per-channel", func(t *testing.T) {
+		for _, test := range []struct {
+			name string
+			flag int
+			cmd  string
+			verb string
+		}{
+			{name: "gossip", flag: PrfNoGossip, cmd: "gossip", verb: "gossip"},
+			{name: "auction", flag: PrfNoAuctions, cmd: "auction", verb: "auction"},
+			{name: "grats", flag: PrfNoGratz, cmd: "grats", verb: "congrat"},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				w, actor, recipient, _, output := newChannelWorld(t)
+				recipient.SetPlrFlag(test.flag, true)
+				w.DoChannel(actor, "hello", test.cmd)
+				if got := channelOutput(output, actor.Name); got != "You "+test.verb+", 'hello'\r\n" {
+					t.Fatalf("actor output = %q", got)
+				}
+				if got := channelOutput(output, recipient.Name); got != "" {
+					t.Fatalf("recipient output = %q", got)
+				}
+			})
+		}
+	})
+
+	t.Run("holler is global and costs twenty move", func(t *testing.T) {
+		w, actor, local, remote, output := newChannelWorld(t)
+		actor.SetMove(50)
+		w.DoChannel(actor, "hello", "holler")
+		if got := channelOutput(output, actor.Name); got != "You holler, 'hello'\r\n" {
+			t.Fatalf("actor output = %q", got)
+		}
+		for _, target := range []*Player{local, remote} {
+			if got := channelOutput(output, target.Name); got != "Actor hollers, 'hello'\r\n" {
+				t.Fatalf("%s output = %q", target.Name, got)
+			}
+		}
+		if got := actor.GetMove(); got != 30 {
+			t.Fatalf("move = %d, want 30", got)
+		}
+	})
+
+	t.Run("holler exhaustion is a sender gate", func(t *testing.T) {
+		w, actor, local, _, output := newChannelWorld(t)
+		actor.SetMove(hollerMoveCost - 1)
+		w.DoChannel(actor, "hello", "holler")
+		if got := channelOutput(output, actor.Name); got != "You're too exhausted to holler.\r\n" {
+			t.Fatalf("actor output = %q", got)
+		}
+		if got := channelOutput(output, local.Name); got != "" {
+			t.Fatalf("recipient output = %q", got)
+		}
+	})
+
+	t.Run("minimum level applies to every requested channel", func(t *testing.T) {
+		for _, channel := range []string{"gossip", "shout", "auction", "grats", "holler"} {
+			t.Run(channel, func(t *testing.T) {
+				w, actor, local, _, output := newChannelWorld(t)
+				actor.Level = levelCanShout - 1
+				w.DoChannel(actor, "hello", channel)
+				want := "You must be at least level 2 before you can " + communicationChannels[channel].verb + ".\r\n"
+				if got := channelOutput(output, actor.Name); got != want {
+					t.Fatalf("actor output = %q, want %q", got, want)
+				}
+				if got := channelOutput(output, local.Name); got != "" {
+					t.Fatalf("recipient output = %q", got)
+				}
+			})
+		}
+	})
+}
+
 func TestSocialTableMapsCHideAndVictimPositionFields(t *testing.T) {
 	dance := Socials["dance"]
 	if dance == nil {

@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_comm	gossip/shout/auction/grats/holler	channels.vocabulary	D3	command	oracle-green	channels-depth	act.comm.c:1146-1310	Shared actor wording, sender echo, recipient fanout, and all five requested command names match the C channel table.
+do_gen_comm	gossip/shout/auction/grats/holler	channels.recipient-gates	D4	state	unit-green	TestDoChannelFamilyGatesAndHoller	act.comm.c:1215-1300	Per-channel recipient flags, shout deafness, and holler movement/exhaustion are checked against the C channels[] and holler branches.
+do_gen_comm	shout	channels.zone-gate	D3	command	oracle-green	channels-depth	act.comm.c:1278-1282	Shout reaches same-zone standing peers while the moved peer in another zone receives no bytes.
+do_gen_comm	gossip/shout/auction/grats/holler	channels.level-gate	D2	state	unit-green	TestDoChannelFamilyGatesAndHoller	act.comm.c:1204-1212	The shared level_can_shout gate and exact per-channel verbs are covered for every requested subcommand.
+do_gen_comm	gossip/shout/auction/grats/holler	channels.sender-noshout	D1	command	oracle-green	comm-noshout	act.comm.c:1200-1203; act.wizard.c:2131	The existing God-mute vehicle probes every requested channel from a PLR_NOSHOUT mortal before recipient resolution.
+do_gen_comm	gossip/shout/auction/grats/holler	channels.soundproof	D2	command	oracle-green	comm-soundproof	act.comm.c:1204-1207	ROOM_SOUNDPROOF bit 5 blocks the channel at the sender before any peer bytes.

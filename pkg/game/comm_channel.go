@@ -24,51 +24,65 @@ func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
 }
 
 type channelSpec struct {
-	verb          string
-	blocked       string
-	offMessage    string
-	offFlag       int
-	minimumLevel  int
-	zoneLimited   bool
-	minimumHearer int
+	verb             string
+	blocked          string
+	offMessage       string
+	senderOffFlag    int
+	recipientOffFlag int
+	minimumLevel     int
+	zoneLimited      bool
+	minimumHearer    int
+	moveCost         int
 }
 
 var communicationChannels = map[string]channelSpec{
 	"shout": {
-		verb:          "shout",
-		blocked:       "You cannot shout!!",
-		offMessage:    "Turn off your noshout flag first!",
-		offFlag:       PrfDeaf,
-		minimumLevel:  levelCanShout,
-		zoneLimited:   true,
-		minimumHearer: combat.PosResting,
+		verb:             "shout",
+		blocked:          "You cannot shout!!",
+		offMessage:       "Turn off your noshout flag first!",
+		senderOffFlag:    -1,
+		recipientOffFlag: PrfDeaf,
+		minimumLevel:     levelCanShout,
+		zoneLimited:      true,
+		minimumHearer:    combat.PosResting,
 	},
 	"gossip": {
-		verb:         "gossip",
-		blocked:      "You cannot gossip!!",
-		offMessage:   "You aren't even on the channel!",
-		offFlag:      PrfNoGossip,
-		minimumLevel: levelCanShout,
+		verb:             "gossip",
+		blocked:          "You cannot gossip!!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoGossip,
+		recipientOffFlag: PrfNoGossip,
+		minimumLevel:     levelCanShout,
 	},
 	"auction": {
-		verb:         "auction",
-		blocked:      "You cannot auction!!",
-		offMessage:   "You aren't even on the channel!",
-		offFlag:      PrfNoAuctions,
-		minimumLevel: levelCanShout,
+		verb:             "auction",
+		blocked:          "You cannot auction!!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoAuctions,
+		recipientOffFlag: PrfNoAuctions,
+		minimumLevel:     levelCanShout,
 	},
-	"gratz": {
-		verb:         "congrat",
-		blocked:      "You cannot congratulate!",
-		offMessage:   "You aren't even on the channel!",
-		offFlag:      PrfNoGratz,
-		minimumLevel: levelCanShout,
+	"grats": {
+		verb:             "congrat",
+		blocked:          "You cannot congratulate!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoGratz,
+		recipientOffFlag: PrfNoGratz,
+		minimumLevel:     levelCanShout,
+	},
+	"holler": {
+		verb:          "holler",
+		blocked:       "You cannot holler!!",
+		senderOffFlag: -1,
+		minimumLevel:  levelCanShout,
+		moveCost:      hollerMoveCost,
 	},
 	"newbie": {
-		verb:       "newbie",
-		blocked:    "You cannot newbie!",
-		offMessage: "You aren't even on the channel!",
-		offFlag:    PrfNoNewbie,
+		verb:             "newbie",
+		blocked:          "You cannot newbie!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoNewbie,
+		recipientOffFlag: PrfNoNewbie,
 	},
 }
 
@@ -99,17 +113,21 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 		communicationSend(ch, "You are too stupid to communicate with language!")
 		return
 	}
-	if ch.GetFlags()&(1<<uint(spec.offFlag)) != 0 {
+	if spec.senderOffFlag >= 0 && ch.GetFlags()&(1<<uint(spec.senderOffFlag)) != 0 {
 		communicationSend(ch, spec.offMessage)
 		return
 	}
 
-	argument = strings.TrimSpace(argument)
+	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
 	if argument == "" {
 		communicationSend(ch, fmt.Sprintf("Yes, %s, fine, %s we must, but WHAT???", spec.verb, spec.verb))
 		return
 	}
 	argument = deleteANSIControls(argument)
+	if spec.moveCost > 0 && !ch.SpendMove(spec.moveCost) {
+		communicationSend(ch, "You're too exhausted to holler.")
+		return
+	}
 
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		communicationSend(ch, "Okay.")
@@ -123,7 +141,7 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 			continue
 		}
 		targetState := w.communicationEligibility(ch, target)
-		if target.GetFlags()&(1<<uint(spec.offFlag)) != 0 || targetState.targetWriting || targetState.targetSoundproof {
+		if (spec.recipientOffFlag >= 0 && target.GetFlags()&(1<<uint(spec.recipientOffFlag)) != 0) || targetState.targetWriting || targetState.targetSoundproof {
 			continue
 		}
 		if spec.zoneLimited {

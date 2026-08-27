@@ -2,6 +2,7 @@
 # depth-case: tell.noshout
 # depth-case: whisper.noshout
 # depth-case: emote.noshout
+# depth-case: channels.sender-noshout
 # The PLR_NOSHOUT (squelch) gate arm of the comm family. Pattern per the
 # God-skillset warmup (combat-bash-opener #451): empty-players crowns the
 # PRIMARY as Implementor, and [warmup] — drained, not diffed — runs `mute
@@ -89,3 +90,8 @@ say can anybody hear me
 tell Squelchgod let me talk
 whisper squelchgod psst
 emote waves desperately
+gossip blocked by squelch
+shout blocked by squelch
+auction blocked by squelch
+grats blocked by squelch
+holler blocked by squelch

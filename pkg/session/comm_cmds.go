@@ -329,6 +329,22 @@ func cmdAuction(s *Session, args []string) error {
 	return nil
 }
 
+// cmdHoller sends a message on the global holler channel.
+// Source: act.comm.c do_gen_comm() SCMD_HOLLER
+func cmdHoller(s *Session, args []string) error {
+	message := sanitizeMessage(strings.Join(args, " "))
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
+	}
+	s.manager.world.DoChannel(s.player, message, "holler")
+	return nil
+}
+
 // cmdGratz sends a message on the gratz channel.
 // Source: act.comm.c do_gen_comm() SCMD_GRATZ
 func cmdGratz(s *Session, args []string) error {
@@ -341,7 +357,7 @@ func cmdGratz(s *Session, args []string) error {
 		}
 		message = filtered
 	}
-	s.manager.world.DoChannel(s.player, message, "gratz")
+	s.manager.world.DoChannel(s.player, message, "grats")
 	return nil
 }
 

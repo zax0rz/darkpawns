@@ -77,6 +77,7 @@ func init() {
 	registerCommand("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", "me")
 	registerCommand(":", wrapArgs(cmdEmote), "Perform a roleplay action.")
 	registerCommand("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.")
+	registerCommand("holler", wrapArgs(cmdHoller), "Holler to everyone in the world.")
 	registerCommand("gtell", wrapArgs(cmdGtell), "Send a message to your group.", "gsay")
 	registerCommand("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.")
 	registerCommand("insult", wrapArgs(cmdInsult), "Insult a target in the room.")
