@@ -1,0 +1,92 @@
+# depth-case: use.effect
+# C-first mag_objectmagic vehicle (src/spell_parser.c:558-707, 754-817).
+# 8053 is a two-charge invisibility wand, spawned into 8162 and force-loaded
+# in the disposable worlds. The God holds it, casts at a mortal peer, and pads
+# the cast with twenty frozen pulses. The vehicle exercises charge decrement,
+# the item level, and CAST_WAND dispatch; the paired staff vehicle proves the
+# CAST_STAFF room fan-out.
+# The primary is an immortal only to make the item vehicle deterministic; the
+# peer remains a mortal room audience and target for the wand/staff effects.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-obj 8053 1 8162 80
+force-load 8053
+
+[setup:oracle]
+Wandstaffgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wandstaffgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:audience]
+Wandvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:audience]
+Wandvictim
+y
+victimpass
+victimpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8162
+teleport Wandvictim 8162
+get wand
+hold wand
+
+[probe]
+use wand Wandvictim
+~dpclock pulse 20
