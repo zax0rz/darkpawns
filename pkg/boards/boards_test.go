@@ -101,8 +101,8 @@ func TestBoardSystem_InitAndWrite(t *testing.T) {
 
 	bs.FinalizeBoardWrite(magic, ch)
 
-	if !strings.Contains(ch.lastMessage(), "Message written.") {
-		t.Fatalf("expected 'Message written.' message, got %q", ch.lastMessage())
+	if strings.Contains(ch.allMessages(), "Message written.") {
+		t.Fatalf("C board save has no completion acknowledgement, got %q", ch.allMessages())
 	}
 
 	// Verify the message is readable.
@@ -194,6 +194,9 @@ func TestBoardSystem_RemoveMsg_RoomEcho(t *testing.T) {
 	magic := bs.WriteMessage(0, poster, "removable")
 	bs.AppendBoardLine(magic, "body")
 	bs.FinalizeBoardWrite(magic, poster)
+	world.mu.Lock()
+	world.echoes = nil
+	world.mu.Unlock()
 
 	if !bs.RemoveMsg(0, remover, "1") {
 		t.Fatal("RemoveMsg = false, want true")
@@ -204,8 +207,28 @@ func TestBoardSystem_RemoveMsg_RoomEcho(t *testing.T) {
 	if len(world.echoes) != 1 {
 		t.Fatalf("expected 1 room echo, got %d", len(world.echoes))
 	}
-	if !strings.Contains(world.echoes[0], "removed a message") {
+	if !strings.Contains(world.echoes[0], "just removed message 1.") {
 		t.Fatalf("expected room echo about removed message, got %q", world.echoes[0])
+	}
+}
+
+func TestBoardSystem_RemoveMsg_ActivePost(t *testing.T) {
+	bs := InitBoards(t.TempDir())
+	poster := newMockBoardPlayer("Frank", 1, 7001)
+	remover := newMockBoardPlayer("Frank", 1, 7001)
+
+	magic := bs.WriteMessage(0, poster, "in progress")
+	if bs.RemoveMsg(0, remover, "1") == false {
+		t.Fatal("RemoveMsg(active) = false, want true")
+	}
+	if !strings.Contains(remover.lastMessage(), "author is finished") {
+		t.Fatalf("expected active-post rejection, got %q", remover.lastMessage())
+	}
+
+	bs.AppendBoardLine(magic, "body")
+	bs.FinalizeBoardWrite(magic, poster)
+	if !bs.RemoveMsg(0, remover, "1") {
+		t.Fatal("RemoveMsg(after finalize) = false, want true")
 	}
 }
 

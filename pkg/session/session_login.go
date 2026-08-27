@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -296,6 +297,49 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return err
 	}
 
+	// WriteMagic intercept: a board post uses the same PLR_WRITING flag as
+	// notes/mail, but has its own C string target (mail_to = board + magic).
+	// This must precede the generic PLR_WRITING branch or board lines would be
+	// misrouted into the note writer.
+	if s.player != nil && s.player.WriteMagic != 0 && s.manager.world.Boards != nil {
+		line := cmd.Command
+		if len(cmd.Args) > 0 {
+			if strings.HasPrefix(line, "/") {
+				line += strings.Join(cmd.Args, " ")
+			} else {
+				line += " " + strings.Join(cmd.Args, " ")
+			}
+		}
+		switch line {
+		case "@", "/s":
+			s.manager.world.Boards.FinalizeBoardWrite(s.player.WriteMagic, s.player)
+			s.player.WriteMagic = 0
+			s.player.SetPlrFlag(game.PlrWriting, false)
+		case "/a":
+			// C's playing_string_cleanup deliberately keeps the post and
+			// tells the author to remove it from the board.
+			s.manager.world.Boards.AbortBoardWrite(s.player.WriteMagic)
+			s.player.WriteMagic = 0
+			s.player.SetPlrFlag(game.PlrWriting, false)
+			s.player.SendMessage("Post not aborted, use REMOVE <post #>.\r\n")
+		default:
+			if strings.HasPrefix(line, "/e") {
+				rest := strings.TrimSpace(line[2:])
+				fields := strings.Fields(rest)
+				if len(fields) >= 2 {
+					lineNumber, err := strconv.Atoi(fields[0])
+					text := strings.TrimSpace(rest[len(fields[0]):])
+					if err == nil && s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, lineNumber, text) {
+						s.player.SendMessage("Line changed.\r\n")
+					}
+					return nil
+				}
+			}
+			s.manager.world.Boards.AppendBoardLine(s.player.WriteMagic, line)
+		}
+		return nil
+	}
+
 	// PLR_WRITING intercept: if the player is composing mail or a note,
 	// buffer the input instead of parsing commands.
 	// C equivalent: nanny() checks PLR_WRITING → calls string_add().
@@ -310,26 +354,6 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 			game.HandleMailInput(s.player, line) // returns true when mail complete; PLR_WRITING cleared inside
 		} else {
 			game.HandleNoteInput(s.player, line) // returns true when note complete; PLR_WRITING cleared inside
-		}
-		return nil
-	}
-
-	// WriteMagic intercept: player is composing a board message (DP-423)
-	// C equivalent: nanny() / write_message() editor input accumulation.
-	if s.player != nil && s.player.WriteMagic != 0 && s.manager.world.Boards != nil {
-		line := cmd.Command
-		if len(cmd.Args) > 0 {
-			line += " " + strings.Join(cmd.Args, " ")
-		}
-		switch line {
-		case "~":
-			s.manager.world.Boards.FinalizeBoardWrite(s.player.WriteMagic, s.player)
-			s.player.WriteMagic = 0
-		case "@":
-			s.player.WriteMagic = 0
-			s.player.SendMessage("Message aborted.\r\n")
-		default:
-			s.manager.world.Boards.AppendBoardLine(s.player.WriteMagic, line)
 		}
 		return nil
 	}

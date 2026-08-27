@@ -197,6 +197,12 @@ func (s *Session) promptText() string {
 		return "> "
 	}
 	flags := s.player.GetFlags()
+	// C make_prompt() emits a bare "] " while d->str is active. The board,
+	// note, and mail editors all set PLR_WRITING, so preserve that framing
+	// before the normal AFK/inactive prompt prefixes.
+	if flags&(1<<uint(game.PlrWriting)) != 0 {
+		return "\r\n] "
+	}
 	if flags&(1<<uint(game.PrfInactive)) != 0 {
 		return "INACTIVE > "
 	}
