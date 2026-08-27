@@ -91,10 +91,6 @@ func cmdAssist(s *Session, args []string) error {
 
 	// 4. Player joins the fight. C's do_assist swings immediately via hit()
 	// (act.offensive.c:95) and — unlike do_hit — sets NO wait state.
-	if err := s.manager.combatEngine.StartCombat(s.player, opponent); err != nil {
-		s.Send(err.Error())
-		return nil
-	}
 	s.Send("You join the fight!\r\n")
 	// Notify the helpee
 	if !helpee.IsNPC() {
@@ -107,6 +103,32 @@ func cmdAssist(s *Session, args []string) error {
 	if helpeeActor, ok := helpee.(game.Actor); ok {
 		game.Act(s.manager.world, false, s.player, helpeeActor, nil, nil,
 			"$n assists $N.", "", game.ToNotVict)
+	}
+
+	// do_assist calls hit() after its own audience messages. Preserve hit()'s
+	// PC-vs-PC protection gates here before enrolling the helper, so the
+	// immediate assist swing cannot bypass fight.c:1336-1357 when the opponent
+	// is a low-level player. The mob-helpee path is observable when its opponent
+	// is a player, even though the helpee itself receives no direct message.
+	if !opponent.IsNPC() {
+		if s.player.GetLevel() <= 10 {
+			game.Act(nil, false, s.player, opponent.(game.Actor), nil, nil,
+				"You are not experienced enough to attack $N!", "", game.ToChar)
+			return nil
+		}
+		victimOutlaw := false
+		if victim, ok := opponent.(*game.Player); ok {
+			victimOutlaw = victim.GetFlags()&(1<<uint(game.PlrOutlaw)) != 0
+		}
+		if opponent.GetLevel() <= 10 && !victimOutlaw {
+			game.Act(nil, false, s.player, opponent.(game.Actor), nil, nil,
+				"Ancient forces protect $N from your wrath!", "", game.ToChar)
+			return nil
+		}
+	}
+	if err := s.manager.combatEngine.StartCombat(s.player, opponent); err != nil {
+		s.Send(err.Error())
+		return nil
 	}
 	if err := s.manager.combatEngine.PerformInitialAttack(s.player, opponent); err != nil {
 		return err

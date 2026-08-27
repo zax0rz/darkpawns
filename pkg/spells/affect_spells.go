@@ -2697,8 +2697,10 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	// Saving throw
-	if victIsNPC && magSavingThrow(cvict, int(SaveParalysis)) {
+	// C spell_charm checks the victim's saving throw for both NPCs and PCs
+	// (spells.c:430-444). A PC victim is only gated by the caster's outlaw flag;
+	// an outlaw can establish the same master relation that do_hit later tests.
+	if magSavingThrow(cvict, int(SaveParalysis)) {
 		sendToCaster(ch, "Your victim resists!\r\n")
 		return
 	}
@@ -2715,9 +2717,12 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	// No charming PCs
-	if !victIsNPC {
-		sendToCaster(ch, "You can't charm other players!\r\n")
+	if !victIsNPC && !hasOutlawFlag(ch) {
+		// C's text contains the original typo: "in not an Outlaw".
+		sendToCaster(ch, "Your power fails to effect them because you are not an Outlaw!\r\n")
+		if caster, ok := ch.(namer); ok {
+			sendToVictim(cvict, fmt.Sprintf("%s tried to control you but failed because %s in not an Outlaw!\r\n", caster.GetName(), caster.GetName()))
+		}
 		return
 	}
 
@@ -2750,7 +2755,7 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	sendToCaster(ch, "They are now your loyal servant.\r\n")
+	sendToVictim(cvict, fmt.Sprintf("Isn't %s just such a nice fellow?\r\n", chName))
 }
 
 // castSummon ports src/spells.c spell_summon (lines 220-355).

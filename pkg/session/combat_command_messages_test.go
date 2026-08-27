@@ -263,3 +263,34 @@ func TestCmdKillReturnsConnectedVictimToMenuOnHeartbeat(t *testing.T) {
 		t.Fatalf("post-death prompt = (%q, %q), want menu text", prompt.Stage, prompt.Prompt)
 	}
 }
+
+func TestCmdAssistMobHelpeeUsesPersAndHitGates(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	helper := makeGateSession(t, m, 1, "Helper", 1)
+	helpee := makeGateSession(t, m, 2, "Helpee", 20)
+	observer := makeGateSession(t, m, 3, "Observer", 20)
+	if err := m.combatEngine.StartCombat(helpee.player, mob); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+	if err := cmdAssist(helper, []string{"target"}); err != nil {
+		t.Fatalf("cmdAssist returned error: %v", err)
+	}
+	if got, want := readSendText(t, helper), "You join the fight!\r\n"; got != want {
+		t.Errorf("helper join output = %q, want %q", got, want)
+	}
+	if got, want := readSendText(t, helper), "You are not experienced enough to attack Helpee!\r\n"; got != want {
+		t.Errorf("helper hit-gate output = %q, want %q", got, want)
+	}
+	for _, session := range []*Session{helpee, observer} {
+		if got, want := readSendText(t, session), "Helper assists a test target.\r\n"; got != want {
+			t.Errorf("room output = %q, want %q", got, want)
+		}
+	}
+	if m.combatEngine.IsFighting(helper.player.Name) {
+		t.Error("low-level helper should not be enrolled after hit() gate")
+	}
+}
