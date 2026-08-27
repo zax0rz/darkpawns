@@ -106,7 +106,7 @@ func StopFollower(w *World, ch *Player) {
 		Act(w, true, ch, leader, nil, nil,
 			"$n realizes that $N is a jerk!", "", ToNotVict)
 		if leader != nil {
-			Act(w, true, ch, nil, nil, nil,
+			Act(w, true, ch, leader, nil, nil,
 				"$n hates your guts!", "", ToVict)
 		}
 		// Remove SPELL_CHARM from active affects if present.
@@ -134,20 +134,52 @@ func StopFollower(w *World, ch *Player) {
 }
 
 // StopFollowerMob removes a mob from its master's follower list.
-// C: src/utils.c:397-440
+// C: src/utils.c:397-440 — a charmed mob (mount, pet) denounces its master
+// with the "jerk"/"hates your guts!" act trio before the relation drops; the
+// plain branch still tells the room and master that following stopped.
 func StopFollowerMob(w *World, mob *MobInstance) {
 	if mob.GetFollowing() == "" {
 		return
 	}
 
-	mob.SetFollowing("")
-	mob.RemoveAffected(affCharm)
-	mob.RemoveAffected(affGroup)
+	leader := w.followingActor(mob.GetFollowing())
 
-	// Unmount if this mob is a mount.
-	if mob.IsMountedMob() {
-		mob.SetMountRider("")
+	if mob.IsAffected(affCharm) {
+		Act(w, false, mob, leader, nil, nil,
+			"You realize that $N is a jerk!", "", ToChar)
+		Act(w, true, mob, leader, nil, nil,
+			"$n realizes that $N is a jerk!", "", ToNotVict)
+		if leader != nil {
+			Act(w, true, mob, leader, nil, nil,
+				"$n hates your guts!", "", ToVict)
+		}
+	} else {
+		Act(w, false, mob, leader, nil, nil,
+			"You stop following $N.", "", ToChar)
+		Act(w, true, mob, leader, nil, nil,
+			"$n stops following $N.", "", ToNotVict)
+		if leader != nil && canSee(leader, mob) && leader.GetPosition() > combat.PosSleeping {
+			Act(w, true, mob, leader, nil, nil,
+				"$n stops following you.", "", ToVict)
+		}
 	}
+
+	// Unmount if this mob is a mount (C: IS_NPC && IS_MOUNTED).
+	if mob.IsMountedMob() {
+		if rider := w.GetRider(mob); rider != nil {
+			Unmount(rider, mob)
+		} else {
+			mob.SetMountRider("")
+		}
+	}
+
+	// C clears only the master relation. The AFF_CHARM bit survives
+	// stop_follower for ride-charm (C's affect_from_char(SPELL_CHARM) is a
+	// no-op there — the bit was set directly by do_ride), which is what keeps
+	// an attacked mount unrideable afterwards ("$S master would not like
+	// that!"). Go's mob bitmask cannot separate spell-charm from ride-charm,
+	// so the bit stays, matching the mounted surface.
+	mob.SetFollowing("")
 }
 
 // --------------------------------------------------------------------------

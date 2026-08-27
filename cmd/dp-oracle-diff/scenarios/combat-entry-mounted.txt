@@ -1,0 +1,48 @@
+# depth-case: assist.mounted-gate
+# depth-case: hit.dismount-branch
+# Mounted combat-entry arms: do_assist's IS_MOUNTED gate fires before argument
+# parsing (act.offensive.c:64-68, "Dismount first!"), and do_hit's swing branch
+# dismounts the standing attacker before hit() (act.offensive.c:124-125), so
+# `hit horse` renders the dismount trio plus the opening swing. The start room
+# needs INDOORS (bit 3) off for the ride and PEACEFUL (bit 4) off for the
+# swing; the swing's RNG draws are shared-seed (combat-swing proven class).
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Hitrider
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hitrider
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+ride horse
+assist
+hit horse
