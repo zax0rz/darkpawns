@@ -1,7 +1,6 @@
 package spells
 
 import (
-	"math/bits"
 	"reflect"
 	"strings"
 	"testing"
@@ -431,12 +430,33 @@ func TestMagAffectsMobInnateGate(t *testing.T) {
 	caster := newAffectMale("Castero", 8162)
 	mob := newAffectMale("Sanctumob", 8162)
 	mob.npc = true
-	mob.affectedBits = 1 << uint(bits.TrailingZeros64(engine.AFFSanctuary))
+	// C AFF_SANCTUARY is bit 7 in the innate-affect mask (structs.h) — the
+	// engine's AFFSanctuary flag (1<<4) is a different numbering and must not
+	// be used here.
+	mob.affectedBits = 1 << 7
 	magAffectsApply(20, caster, mob, SpellSanctuary, false, 0, nil)
 	if !reflect.DeepEqual(caster.messages, []string{"Nothing seems to happen.\r\n"}) {
 		t.Errorf("innate-sanctuary mob caster = %q, want NOEFFECT", caster.messages)
 	}
 	if len(mob.affects) != 0 {
 		t.Errorf("innate-sanctuary mob should gain no affects; got %d", len(mob.affects))
+	}
+}
+
+// TestMagAffectsMobInnateGateUnsetSlot pins C's unset-slot quirk
+// (magic.c:1388-1391): the gate tests IS_AFFECTED(victim, af[1].bitvector)
+// even when the spell never set af[1] — zero is AFF_BLIND's bit — so an
+// innately blind mob refuses a single-affect spell like sanctuary too.
+func TestMagAffectsMobInnateGateUnsetSlot(t *testing.T) {
+	caster := newAffectMale("Castero", 8162)
+	mob := newAffectMale("Blindob", 8162)
+	mob.npc = true
+	mob.affectedBits = 1 << 0 // C AFF_BLIND
+	magAffectsApply(20, caster, mob, SpellSanctuary, false, 0, nil)
+	if !reflect.DeepEqual(caster.messages, []string{"Nothing seems to happen.\r\n"}) {
+		t.Errorf("innate-blind mob caster = %q, want NOEFFECT via the unset af[1] slot", caster.messages)
+	}
+	if len(mob.affects) != 0 {
+		t.Errorf("innate-blind mob should gain no affects; got %d", len(mob.affects))
 	}
 }

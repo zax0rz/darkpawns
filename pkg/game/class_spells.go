@@ -1,5 +1,7 @@
 package game
 
+import "github.com/zax0rz/darkpawns/pkg/spells"
+
 // SpellLearnEntry maps a spell/skill number to the level at which a class learns
 // it. Spell and skill numbers match src/spells.h exactly.
 type SpellLearnEntry struct {
@@ -342,9 +344,12 @@ var ClassSpells = [12][]SpellLearnEntry{
 }
 
 // ClassSkillMinLevel returns the level at which class learns skill/spell number
-// num, or a large sentinel (unlearnable) if the class never learns it — mirroring
-// C's spell_info[num].min_level[class] (which defaults to LVL_IMPL+1). This is the
-// gate used by the guild practice proc and the practice catalog.
+// num, mirroring C's spell_info[num].min_level[class]. spell_parser.c's spello()
+// first defaults EVERY class's min_level to LVL_IMMORT — so a spell a class is
+// never assigned (sanctuary for warriors) is still castable by LVL_IMMORT+
+// characters of that class — and unused_spell() raises reserved ('!'-prefixed)
+// catalog slots to LVL_IMPL+1 (spell_parser.c:1154,1170). This is the gate used
+// by the cast command, the guild practice proc, and the practice catalog.
 func ClassSkillMinLevel(class, num int) int {
 	if class < 0 || class >= len(ClassSpells) {
 		return 999
@@ -353,6 +358,13 @@ func ClassSkillMinLevel(class, num int) int {
 		if e.Num == num {
 			return e.Level
 		}
+	}
+	if num > 0 && num < spells.SkillCatalogSize() {
+		raw := spells.SpellRawName(num)
+		if raw == "" || raw[0] == '!' {
+			return LVL_IMPL + 1
+		}
+		return LVL_IMMORT
 	}
 	return 999
 }
