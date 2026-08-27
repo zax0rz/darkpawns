@@ -59,6 +59,8 @@ func (m *affectMsgChar) IsAffected(bit int) bool {
 	return m.affectedBits&(1<<uint(bit)) != 0
 }
 
+func (m *affectMsgChar) GetFlags() uint64 { return m.affectedBits }
+
 // affectMsgWorld is a roomIterable world that captures room-audience sends.
 type affectMsgWorld struct {
 	rooms map[int][]interface{}

@@ -31,8 +31,9 @@ type mockSpellsChar struct {
 	inventory     *mockInventory
 }
 
-func (m *mockSpellsChar) GetName() string { return m.name }
-func (m *mockSpellsChar) IsNPC() bool     { return m.npc }
+func (m *mockSpellsChar) GetName() string  { return m.name }
+func (m *mockSpellsChar) IsNPC() bool      { return m.npc }
+func (m *mockSpellsChar) GetFlags() uint64 { return m.flags }
 func (m *mockSpellsChar) HasSpellAffect(n int) bool {
 	for _, aff := range m.activeAffects {
 		if aff.SpellID == n {
@@ -138,8 +139,8 @@ func TestMagAffects_Armor(t *testing.T) {
 }
 
 func TestMagAffects_Sleep(t *testing.T) {
-	ch := &mockSpellsChar{level: 30}
-	victim := &mockSpellsChar{level: 10, position: 8} // standing = 8
+	ch := &mockSpellsChar{level: 30, flags: 1}        // PLR_OUTLAW
+	victim := &mockSpellsChar{level: 30, position: 8} // standing = 8
 
 	// Sleep has a saving throw. Loop up to 50 times until the save fails and spell succeeds.
 	succeeded := false
