@@ -152,7 +152,7 @@ func TestPerformMoveFollowerPositionAndHide(t *testing.T) {
 		if follower.GetRoom() != 3001 {
 			t.Fatalf("follower room = %d, want 3001", follower.GetRoom())
 		}
-		if got := output[follower.Name].String(); !strings.Contains(got, "blocked by a heavy object") {
+		if got := output[follower.Name].String(); !strings.Contains(got, "A blocker humiliates you and blocks your way") {
 			t.Fatalf("follower output = %q", got)
 		}
 	})

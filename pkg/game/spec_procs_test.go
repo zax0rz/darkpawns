@@ -125,6 +125,20 @@ func isRoomSpecName(name string) bool {
 	return false
 }
 
+func TestGetMobVNumSpecUsesCFinalAssignments(t *testing.T) {
+	for vnum, want := range map[int]string{
+		8014:  "guild",  // later C ASSIGNMOB overrides guild_guard
+		11024: "cleric", // later C ASSIGNMOB overrides magic_user
+	} {
+		if got := MobSpecAssign[vnum]; got != want {
+			t.Errorf("MobSpecAssign[%d] = %q, want C's final %q", vnum, got, want)
+		}
+		if GetMobSpec(vnum) == nil {
+			t.Errorf("GetMobSpec(%d) = nil for registered %q", vnum, want)
+		}
+	}
+}
+
 // TestSpecProc_SmokeAll invokes every registered spec proc with benign input
 // and asserts no panic. This catches nil-pointer crashes across the entire
 // spec proc registry (DP-965).
