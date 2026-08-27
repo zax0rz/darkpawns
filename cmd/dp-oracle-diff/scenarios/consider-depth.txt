@@ -1,0 +1,76 @@
+# depth-case: consider.no-arg
+# depth-case: consider.not-found
+# depth-case: consider.self
+# depth-case: consider.target-level-description
+# depth-case: consider.private-output
+# A spawned horse is the deterministic room target. The peer captures the
+# room audience to prove do_consider's TO_CHAR-only output; the target
+# comparison itself consumes C's damage draws and is run multi-seed.
+
+[fixture]
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+consider
+consider nobody
+consider me
+consider horse
