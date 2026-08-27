@@ -102,6 +102,14 @@ func cmdSet(s *Session, args []string) error {
 		return nil
 	}
 
+	// C's do_set has no position field.  Its field-table walk reaches the
+	// sentinel and the switch's default arm returns this exact response; do
+	// not turn an unsupported field into a Go-only usage hint (R1/R2/R4).
+	if !isSetNumericField(field) {
+		s.Send("Can't set that!\r\n")
+		return nil
+	}
+
 	// Validate numeric value before assignment
 	val, err := strconv.Atoi(value)
 	if err != nil {
@@ -111,8 +119,12 @@ func cmdSet(s *Session, args []string) error {
 
 	// Validate field bounds
 	switch field {
-	case "str", "sta", "dex", "int", "wil", "cha":
-		val = clamp(val, 3, 25)
+	case "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha":
+		maxStat := 25
+		if targetSess.player.Level < LVL_GRGOD {
+			maxStat = 18
+		}
+		val = clamp(val, 0, maxStat)
 	case "level":
 		val = clamp(val, 0, 61)
 	case "hp", "mana", "move":
@@ -131,25 +143,40 @@ func cmdSet(s *Session, args []string) error {
 	case "alignment":
 		targetSess.player.Alignment = val
 		s.Send(fmt.Sprintf("Alignment set to %d.", val))
+	case "align":
+		targetSess.player.Alignment = val
+		s.Send(fmt.Sprintf("%s's align set to %d.\r\n", targetSess.player.Name, val))
 	case "str":
 		targetSess.player.Stats.Str = val
 		targetSess.player.Strength = val
 		s.Send(fmt.Sprintf("Strength set to %d.", val))
+	case "stradd":
+		if val > 0 {
+			targetSess.player.Stats.Str = 18
+			targetSess.player.Strength = 18
+		}
+		s.Send(fmt.Sprintf("%s's stradd set to %d.\r\n", targetSess.player.Name, val))
+	case "con":
+		targetSess.player.Stats.Con = val
+		s.Send(fmt.Sprintf("%s's con set to %d.\r\n", targetSess.player.Name, val))
 	case "sta":
 		targetSess.player.Stats.Con = val
 		s.Send(fmt.Sprintf("Constitution set to %d.", val))
 	case "dex":
 		targetSess.player.Stats.Dex = val
-		s.Send(fmt.Sprintf("Dexterity set to %d.", val))
+		s.Send(fmt.Sprintf("%s's dex set to %d.\r\n", targetSess.player.Name, val))
 	case "int":
 		targetSess.player.Stats.Int = val
-		s.Send(fmt.Sprintf("Intelligence set to %d.", val))
+		s.Send(fmt.Sprintf("%s's int set to %d.\r\n", targetSess.player.Name, val))
+	case "wis":
+		targetSess.player.Stats.Wis = val
+		s.Send(fmt.Sprintf("%s's wis set to %d.\r\n", targetSess.player.Name, val))
 	case "wil":
 		targetSess.player.Stats.Wis = val
 		s.Send(fmt.Sprintf("Wisdom set to %d.", val))
 	case "cha":
 		targetSess.player.Stats.Cha = val
-		s.Send(fmt.Sprintf("Charisma set to %d.", val))
+		s.Send(fmt.Sprintf("%s's cha set to %d.\r\n", targetSess.player.Name, val))
 	case "hp":
 		targetSess.player.MaxHealth = val
 		targetSess.player.Health = val
@@ -162,11 +189,18 @@ func cmdSet(s *Session, args []string) error {
 		targetSess.player.MaxMove = val
 		targetSess.player.Move = val
 		s.Send(fmt.Sprintf("Move points set to %d.", val))
-	default:
-		s.Send("Unknown field. Try: level, gold, alignment, str, sta, dex, int, wil, cha, hp, mana, move.")
 	}
 	slog.Warn("wizard set", "by", s.player.Name, "target", targetName, "field", field, "value", value)
 	return nil
+}
+
+func isSetNumericField(field string) bool {
+	switch field {
+	case "level", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "mana", "move":
+		return true
+	default:
+		return false
+	}
 }
 
 // clamp restricts v to the [min, max] range.
