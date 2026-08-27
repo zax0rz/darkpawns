@@ -62,6 +62,7 @@ type BoardSystem struct {
 	numOfMsgs       [NumBoards]int
 	msgStorage      [NumBoards*MaxBoardMessages + 5]string
 	msgStorageTaken [NumBoards*MaxBoardMessages + 5]bool
+	writingSlots    map[int]bool
 	loaded          bool
 	BasePath        string // directory for board save files
 
@@ -106,8 +107,9 @@ var defaultBoardInfo = []BoardInfo{
 // InitBoards creates and initializes the board system.
 func InitBoards(basePath string) *BoardSystem {
 	bs := &BoardSystem{
-		boards:   make([]BoardInfo, NumBoards),
-		BasePath: basePath,
+		boards:       make([]BoardInfo, NumBoards),
+		BasePath:     basePath,
+		writingSlots: make(map[int]bool),
 	}
 	copy(bs.boards, defaultBoardInfo)
 	bs.load()
@@ -351,7 +353,8 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 		return -1
 	}
 
-	arg = strings.TrimSpace(arg)
+	arg = strings.TrimLeft(arg, " \t\r\n")
+	arg = strings.ReplaceAll(arg, "$$", "$")
 	if len(arg) > 81 {
 		arg = arg[:81]
 	}
@@ -372,6 +375,17 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 	}
 	bs.msgStorage[slot] = ""
 	bs.numOfMsgs[boardType]++
+	bs.writingSlots[slot] = true
+
+	ch.SendMessage("Write your message.\r\n")
+	ch.SendMessage("Instructions: /s or @ to save, /h for more options.\r\n")
+	if bs.world != nil {
+		bs.world.RoomEcho(
+			ch.GetRoomVNum(),
+			fmt.Sprintf("%s starts to write a message.", ch.GetName()),
+			ch.GetName(),
+		)
+	}
 
 	return boardType + BoardMagic
 }
@@ -387,6 +401,13 @@ func (bs *BoardSystem) ShowBoard(boardType int, ch BoardPlayer) bool {
 	if ch.GetLevel() < bs.boards[boardType].ReadLvl {
 		ch.SendMessage("You try but fail to understand the holy words.\r\n")
 		return true
+	}
+	if bs.world != nil {
+		bs.world.RoomEcho(
+			ch.GetRoomVNum(),
+			fmt.Sprintf("%s studies the board.", ch.GetName()),
+			ch.GetName(),
+		)
 	}
 
 	var buf strings.Builder
@@ -528,6 +549,10 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 		ch.SendMessage("That message is majorly screwed up.\r\n")
 		return true
 	}
+	if bs.writingSlots[slot] {
+		ch.SendMessage("At least wait until the author is finished before removing it!\r\n")
+		return true
+	}
 
 	// Free storage
 	bs.msgStorage[slot] = ""
@@ -543,9 +568,11 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 	ch.SendMessage("Message removed.\r\n")
 	// Room echo when a message is removed
 	if bs.world != nil {
-		bs.world.RoomEcho(ch.GetRoomVNum(),
-			fmt.Sprintf("%s removed a message from the board.\r\n", ch.GetName()),
-			ch.GetName())
+		bs.world.RoomEcho(
+			ch.GetRoomVNum(),
+			fmt.Sprintf("%s just removed message %d.", ch.GetName(), msg),
+			ch.GetName(),
+		)
 	}
 
 	// Save while still holding the write lock
@@ -576,6 +603,54 @@ func (bs *BoardSystem) AppendBoardLine(magic int, line string) {
 	}
 }
 
+// ReviseBoardLine replaces one line in the in-progress post. This is the
+// improved-editor /e action used by C's parse_action(PARSE_EDIT).
+func (bs *BoardSystem) ReviseBoardLine(magic, lineNumber int, line string) bool {
+	boardType := magic - BoardMagic
+	if boardType < 0 || boardType >= NumBoards || lineNumber < 1 {
+		return false
+	}
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+	if bs.numOfMsgs[boardType] == 0 {
+		return false
+	}
+	msg := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1]
+	if !bs.writingSlots[msg.SlotNum] {
+		return false
+	}
+	lines := strings.Split(bs.msgStorage[msg.SlotNum], "\r\n")
+	if lineNumber > len(lines) || (len(lines) == 1 && lines[0] == "") {
+		return false
+	}
+	lines[lineNumber-1] = line
+	updated := strings.Join(lines, "\r\n")
+	if len(updated) > MaxMessageLength {
+		return false
+	}
+	bs.msgStorage[msg.SlotNum] = updated
+	return true
+}
+
+// AbortBoardWrite ends an improved-editor session without deleting the post.
+// C saves the still-visible post and asks the author to remove it manually.
+func (bs *BoardSystem) AbortBoardWrite(magic int) {
+	boardType := magic - BoardMagic
+	if boardType < 0 || boardType >= NumBoards {
+		return
+	}
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+	if bs.numOfMsgs[boardType] == 0 {
+		return
+	}
+	slot := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1].SlotNum
+	delete(bs.writingSlots, slot)
+	if err := bs.saveBoard(boardType); err != nil {
+		slog.Error("board save failed after abort", "board", boardType, "error", err)
+	}
+}
+
 // FinalizeBoardWrite saves the in-progress board message.
 // The caller is responsible for clearing ch.WriteMagic.
 func (bs *BoardSystem) FinalizeBoardWrite(magic int, ch BoardPlayer) {
@@ -585,10 +660,13 @@ func (bs *BoardSystem) FinalizeBoardWrite(magic int, ch BoardPlayer) {
 	}
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
+	if bs.numOfMsgs[boardType] > 0 {
+		slot := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1].SlotNum
+		delete(bs.writingSlots, slot)
+	}
 	if err := bs.saveBoard(boardType); err != nil {
 		slog.Error("board save failed", "board", boardType, "error", err)
 		ch.SendMessage("The board could not be saved.\r\n")
 		return
 	}
-	ch.SendMessage("Message written.\r\n")
 }
