@@ -1,0 +1,73 @@
+# depth-case: mob.spec-recruiter-hit-kill
+# depth-case: mob.spec-recruiter-cast-will
+# Deterministic recruiter command interception. C assigns mob 16300 to
+# recruiter (src/spec_assign.c:398); its special turns hit/kill and cast/will
+# into direct mob tells before the ordinary command handlers run.
+
+[fixture]
+quiet-mobs
+spawn-mob 16300 1 8162 80
+
+[setup:oracle]
+Specactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Specactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Specpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Specpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+hit recruiter
+kill recruiter
+cast fireball recruiter
+will fireball recruiter

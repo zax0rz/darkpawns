@@ -1067,11 +1067,16 @@ func specRecruiter(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	if cmd == "kill" || cmd == "hit" {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s Why don't you sign up for training? Just head south through those doors!'", mobName(me), ch.GetName()))
+		// C calls do_tell(mobile, "<player> Why ...") and the target parser
+		// strips the player's name before perform_tell sends the direct
+		// $n-tells-you line (spec_procs3.c:913-918, act.comm.c:905-930).
+		Act(nil, false, me, ch, nil, nil, "$n tells you, 'Why don't you sign up for training?  Just head south through those doors!'", "", ToVict|ToSleep)
 		return true
 	}
 	if cmd == "cast" || cmd == "will" {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s Hey now! None of that voodoo mumbo jumbo in my office!'", mobName(me), ch.GetName()))
+		// Same direct do_tell path; only the C message body changes
+		// (spec_procs3.c:921-926).
+		Act(nil, false, me, ch, nil, nil, "$n tells you, 'Hey now! None of that voodoo mumbo jumbo in my office!'", "", ToVict|ToSleep)
 		return true
 	}
 	return false
