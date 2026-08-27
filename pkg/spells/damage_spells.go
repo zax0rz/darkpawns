@@ -272,14 +272,6 @@ type spellDeathPipeline interface {
 // double-handled death alongside HandleSpellDeath. Routing straight to
 // HandleDeath keeps a single death authority across melee, skills, and spells.
 func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{}) {
-	// Send spell flavor text to victim
-	singular, _ := MagAttackModifier(attackType)
-	victimMsg := "$n " + singular + " you!"
-	type sender interface{ SendMessage(string) }
-	if s, ok := victim.(sender); ok {
-		s.SendMessage(victimMsg)
-	}
-
 	// Type-assert to combat.Combatant to run the shared damage tail.
 	chCombat, chOk := ch.(combat.Combatant)
 	victCombat, victOk := victim.(combat.Combatant)
@@ -292,6 +284,13 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 			// no damage, no death — matches World.DoSpellDamage.
 			return
 		}
+
+		// C damage(): a spell attacktype (!IS_WEAPON) routes through
+		// skill_message(dam, ch, victim, attacktype) — it draws Dice(1,N) from
+		// the shared roller and emits the char/vict/room spell-damage message
+		// (e.g. "The lightning bolt hits $N with full impact!"). Go previously
+		// sent an invented "$n <verb> you!" line and skipped this draw.
+		combat.EmitSkillMessage(dam, chCombat.GetName(), victCombat.GetName(), attackType, chCombat.GetRoom())
 
 		victCombat.TakeDamage(dam)
 		victCombat.SetFighting(chCombat.GetName())

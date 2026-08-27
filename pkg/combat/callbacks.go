@@ -141,6 +141,15 @@ func cbSkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool
 	return false
 }
 
+// EmitSkillMessage is the exported entry point the spells package uses to route
+// a spell's damage message through the same skill_message path C's damage()
+// uses (fight.c: !IS_WEAPON(attacktype) → skill_message). It draws Dice(1,N)
+// from the shared roller and emits the char/vict/room text for the attack type,
+// or returns false when no message set exists.
+func EmitSkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool {
+	return cbSkillMessage(dam, ch, vict, attackType, roomVNum)
+}
+
 // cbWeaponInfo returns the wielded weapon's message attack-type OFFSET for the
 // named attacker (fight.c:1792-1806 one_hit w_type derivation). The value is
 // C's val3 (e.g. 11 for pierce, 3 for slash) — the 0-based offset that

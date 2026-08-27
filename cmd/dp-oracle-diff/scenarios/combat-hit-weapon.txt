@@ -1,0 +1,43 @@
+# depth-case: melee.weapon-hit
+[fixture]
+quiet-mobs
+spawn-mob 2109 1 8105 80
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+wield sword
+north
+east
+south
+east
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+wield sword
+north
+east
+south
+east
+[probe]
+hit orc
