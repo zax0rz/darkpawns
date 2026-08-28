@@ -1,0 +1,85 @@
+# depth-case: alter.concentration-failure
+# C's failed roll (src/new_cmds.c:1905-1910) emits the concentration line,
+# applies WAIT_STATE(ch, PULSE_VIOLENCE*2), and then calls improve_skill(). A
+# level-1 thief with flesh alter forced to 1 makes the failure branch reachable
+# while the initial hit keeps FIGHTING(ch) true, exercising the 0..111 roll.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Failgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Failgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fleshfail]
+Fleshfail
+Y
+failpass
+failpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:fleshfail]
+Fleshfail
+y
+failpass
+failpass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+skillset Fleshfail 'flesh alter' 75
+~dpclock pulse 60
+
+[probe:fleshfail]
+alter

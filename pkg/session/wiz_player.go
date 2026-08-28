@@ -747,6 +747,8 @@ func cmdSkillset(s *Session, args []string) error {
 		canonicalName = game.SkillPickLock
 	case "aid":
 		canonicalName = game.SkillFirstAid
+	case "flesh alter":
+		canonicalName = game.SkillFleshAlter
 	}
 	vict.SetSkill(canonicalName, value)
 
