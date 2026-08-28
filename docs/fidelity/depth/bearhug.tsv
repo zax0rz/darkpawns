@@ -1,0 +1,19 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_bearhug	bearhug	bearhug.no-skill	D1	command	oracle-green	combat-skill-noskill	interpreter.c:348; new_cmds.c:481-486	C checks GET_SKILL before mounted and target lookup and emits the exact martial-arts refusal.
+do_bearhug	bearhug	bearhug.no-arg	D1	command	oracle-green	bearhug-depth	new_cmds.c:477-501	An awake skilled caller with no argument and no fighting target receives Bear hug who?.
+do_bearhug	bearhug	bearhug.target-missing	D1	command	oracle-green	bearhug-depth	new_cmds.c:493-501	A missing named target falls through to the fighting fallback and otherwise receives Bear hug who?.
+do_bearhug	bearhug	bearhug.one-argument	D1	command	oracle-green	bearhug-depth	new_cmds.c:477;493-501	C one_argument skips fill words, lowercases the first target token, and ignores trailing words.
+do_bearhug	bearhug	bearhug.fighting-target-fallback	D1	command	unit-green	TestCmdBearhug_FightingTargetFallback	new_cmds.c:493-501	An empty argument while fighting resolves FIGHTING(ch) before the no-target refusal.
+do_bearhug	bearhug	bearhug.mounted-gate	D2	command	oracle-green	bearhug-mounted-depth	new_cmds.c:487-491	The mounted gate is checked after skill knowledge and before target lookup; the legal ride setup reaches Dismount first!.
+do_bearhug	bearhug	bearhug.self	D1	command	oracle-green	bearhug-depth	new_cmds.c:511-515	A resolved self target reaches C's exact funny-today refusal.
+do_bearhug	bearhug	bearhug.immortal-target	D2	state	unit-green	TestDoBearhug_CGateOrderAndEquipment	new_cmds.c:503-508	A mortal cannot bearhug a non-NPC target at LVL_IMMORT; this gate precedes self and wielded checks.
+do_bearhug	bearhug	bearhug.wielded	D2	state	unit-green	TestDoBearhug_CGateOrderAndEquipment	new_cmds.c:517-521	The WEAR_WIELD slot blocks the attack with the exact bare-hand requirement.
+do_bearhug	bearhug	bearhug.no-movement-gate	D2	state	unit-green	TestDoBearhug_NoMovementGate	new_cmds.c:523-536	C bearhug neither checks nor spends movement points before its roll.
+do_bearhug	bearhug	bearhug.sleeping-target	D2	state	unit-green	TestDoBearhug_CForcedFailureBranches	new_cmds.c:528-531	A target at or below POS_SLEEPING forces percent 101 even for a skill-100 mortal.
+do_bearhug	bearhug	bearhug.immortal-caster	D2	state	unit-green	TestDoBearhug_CForcedFailureBranches	new_cmds.c:528-531	A caster above LVL_IMMORT forces percent 101, matching C's strict greater-than test.
+do_bearhug	bearhug	bearhug.nobash-mortal	D2	state	unit-green	TestDoBearhug_CForcedFailureBranches	new_cmds.c:531-533	MOB_NOBASH forces percent 101 for an NPC target.
+do_bearhug	bearhug	bearhug.roll-and-damage-formula	D4	state	unit-green	TestDoBearhug_ResultContract	new_cmds.c:523-543	The percent roll, truncated GET_LEVEL*1.5 damage, set-142 routing, combat start, improve, and two-pulse wait are pinned.
+do_bearhug	bearhug	bearhug.failure-message-and-state	D3	state	oracle-green-multiseed	bearhug-failure-depth@1,2,3,5,8	new_cmds.c:535-543; fight.c:1023-1092; lib/misc/messages:302-314	The guaranteed skill-1 miss proves set-142 output, zero-damage combat enrollment, and the final player wait across five seeds.
+do_bearhug	bearhug	bearhug.success-message-and-state	D3	state	oracle-green-multiseed	bearhug-outcome-depth@1,2,3,5,8	new_cmds.c:537-543; fight.c:1023-1092; lib/misc/messages:302-314	A legal skill-75 opener and two combat pulses match the C set-142 success path across five seeds.
+do_bearhug	bearhug	bearhug.skill-message	D5	state	unit-green	TestDoBearhug_ResultContract	fight.c:1023-1092; lib/misc/messages:302-314	Both result arms carry set 142 and no invented MessageToCh/Vict/Room strings.
+do_bearhug	damage	bearhug.shared-damage-gates	D5	shared	delegated	combat-entry	fight.c:1336-1459	The damage call delegates common peaceful/newbie/shopkeeper/follower/death behavior to the verified combat-entry matrix.

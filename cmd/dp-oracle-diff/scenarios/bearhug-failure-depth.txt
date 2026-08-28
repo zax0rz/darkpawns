@@ -1,0 +1,84 @@
+# depth-case: bearhug.failure-message-and-state
+#
+# Skill 1 makes the mortal bearhug failure deterministic: do_bearhug still
+# consumes number(1,150), then damage(...,0,SKILL_BEARHUG) routes through
+# skill-message set 142 and starts combat before the two-pulse wait.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bearhugfailuregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bearhugfailuregod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Bearhugfailuremortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Bearhugfailuremortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Bearhugfailuremortal 'bearhug' 1
+
+[probe:mortal]
+bearhug trainee
+~dpclock pulse 20
+~dpclock pulse 20

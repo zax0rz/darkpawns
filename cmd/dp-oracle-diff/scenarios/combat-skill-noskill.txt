@@ -1,4 +1,5 @@
 # Combat-skill no-skill rejection paths — bash / kick / trip / headbutt / backstab.
+# depth-case: bearhug.no-skill
 # depth-case: backstab.no-skill
 # depth-case: bash.no-skill
 #
