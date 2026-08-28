@@ -494,47 +494,58 @@ func paladinDispelSpell(me *MobInstance) int {
 func specGuildGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "flee" || cmd == "escape" || cmd == "retreat" {
 		sendToChar(ch, "You try to flee inside the guild but the guard stops you!")
-		w.roomMessage(ch.GetRoomVNum(), ch.GetName()+" tries to flee inside the guild but the guard blocks the way!")
+		Act(w, false, ch, nil, nil, nil,
+			"$n tries to flee inside the guild but the guard block $s way!", "", ToRoom)
 		return true
 	}
-	if !isMoveCmd(cmd) {
+	direction, moving := guildGuardDirection(cmd)
+	if !moving || me.IsAffected(affBlind) {
 		if me.IsFighting() {
-			return specFighter(w, ch, me, cmd, arg)
+			return specFighter(w, nil, me, "", "")
 		}
 		return false
 	}
-	if ch.GetLevel() >= 50 || ch.IsNPC() {
+	if ch.GetLevel() >= LVL_IMMORT || isRemortOnlyClass(ch.GetClass()) || w.IsHunting(ch.GetName(), false) {
 		return false
 	}
-
-	type guildEntry struct {
-		class     int
-		room      int
-		direction string
-	}
-	entries := []guildEntry{
-		{ClassThief, 4813, "south"},
-		{ClassMagus, 4821, "south"},
-		{ClassMystic, 4825, "south"},
-		{ClassNinja, 8012, "south"},
-		{ClassAssassin, 8013, "south"},
-		{ClassPaladin, 8015, "south"},
-		{ClassMageUser, 21214, "south"},
-		{ClassCleric, 21215, "south"},
-		{ClassWarrior, 21216, "south"},
-		{ClassRanger, 21217, "south"},
-		{ClassPsionic, 8024, "south"},
-		{ClassMagus, 8026, "south"},
-	}
 	roomVNum := ch.GetRoomVNum()
-	for _, e := range entries {
-		if ch.GetClass() != e.class && roomVNum == e.room && cmd == e.direction {
+	for _, e := range GuildInfo {
+		if ch.GetClass() != e.Class && roomVNum == e.Room && direction == e.Direction {
 			sendToChar(ch, "The guard humiliates you, and blocks your way.")
-			w.roomMessage(roomVNum, "The guard humiliates "+ch.GetName()+", and blocks their way.")
+			Act(w, false, ch, nil, nil, nil,
+				"The guard humiliates $n, and blocks $s way.", "", ToRoom)
 			return true
 		}
 	}
 	return false
+}
+
+func guildGuardDirection(cmd string) (int, bool) {
+	switch cmd {
+	case "north", "n":
+		return 0, true
+	case "east", "e":
+		return 1, true
+	case "south", "s":
+		return 2, true
+	case "west", "w":
+		return 3, true
+	case "up", "u":
+		return 4, true
+	case "down", "d":
+		return 5, true
+	default:
+		return -1, false
+	}
+}
+
+func isRemortOnlyClass(class int) bool {
+	switch class {
+	case ClassMagus, ClassAvatar, ClassAssassin, ClassPaladin, ClassRanger, ClassMystic:
+		return true
+	default:
+		return false
+	}
 }
 
 // puff — mob spec: random says on pulse
