@@ -291,7 +291,7 @@ func specThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return false
 	}
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if !p.IsNPC() && p.GetLevel() < 50 && number(0, 5) == 0 {
+		if !p.IsNPC() && p.GetLevel() < LVL_IMMORT && number(0, 4) == 0 {
 			npcSteal(w, me, p)
 			return true
 		}
@@ -304,15 +304,16 @@ func npcSteal(w *World, me *MobInstance, victim *Player) {
 		return
 	}
 	if victim.GetPosition() > combat.PosSleeping && number(0, me.GetLevel()) == 0 {
-		w.roomMessage(me.RoomVNum, me.GetName()+" tries to steal gold from "+victim.GetName()+".")
-		sendToChar(victim, "You discover that "+me.GetName()+" has its hands in your wallet.")
+		Act(w, false, me, victim, nil, nil,
+			"You discover that $n has $s hands in your wallet.", "", ToVict)
+		Act(w, true, me, victim, nil, nil,
+			"$n tries to steal gold from $N.", "", ToNotVict)
 	} else {
-		victim.mu.Lock()
-		gold := (victim.Gold * randRange(1, 10)) / 100
+		gold := (victim.GetGold() * randRange(1, 10)) / 100
 		if gold > 0 {
-			victim.Gold -= gold
+			victim.SetGold(victim.GetGold() - gold)
+			me.SetGold(me.GetGold() + gold)
 		}
-		victim.mu.Unlock()
 	}
 }
 
