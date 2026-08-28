@@ -494,29 +494,87 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	}
 }
 
+// fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.
+func fleshAlterWeapon(level int) string {
+	switch {
+	case level <= 3:
+		return "studded wooden club"
+	case level <= 6:
+		return "razor-sharp dagger"
+	case level <= 9:
+		return "steel-shafted axe"
+	case level <= 12:
+		return "studded steel mace"
+	case level <= 15:
+		return "battle flail"
+	case level <= 18:
+		return "steel-shafted battle axe"
+	case level <= 21:
+		return "double-headed battle axe"
+	case level <= 24:
+		return "studded morning-star"
+	case level <= 27:
+		return "gleaming broad sword"
+	case level <= 29:
+		return "gleaming long sword"
+	default:
+		return "gleaming scythe"
+	}
+}
+
 // DoFleshAlter implements do_flesh_alter() — transform your hand into a weapon.
 func DoFleshAlter(ch *Player) SkillResult {
 	if ch.GetSkill(SkillFleshAlter) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You know nothing of altering your flesh!\r\n"}
+		return SkillResult{Success: false, MessageToCh: "You know nothing of altering your flesh!\n\r"}
 	}
 
+	// C: number(0, 101 + (FIGHTING(ch) ? 10 : 0)).
+	rollMax := 101
+	if ch.GetFighting() != "" {
+		rollMax += 10
+	}
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	percent := dprng.Number(1, 101)
+	percent := dprng.Number(0, rollMax)
 	prob := ch.GetSkill(SkillFleshAlter)
 
 	if percent > prob {
 		return SkillResult{
-			Success:     true,
-			MessageToCh: "You lose your concentration!\r\n",
+			Success:         false,
+			MessageToCh:     "You lose your concentration!",
+			WaitCh:          2,
+			DeferredImprove: []string{SkillFleshAlter},
 		}
 	}
 
-	// Toggle flesh alter state
+	weapon := fleshAlterWeapon(ch.GetLevel())
+	if ch.IsAffected(affFleshAlter) {
+		ch.SetAffect(affFleshAlter, false)
+		ch.AdjustHitroll(-((ch.GetLevel() / 3) + 1))
+		ch.AdjustDamroll(-((ch.GetLevel() / 2) + 1))
+		return SkillResult{
+			Success:       true,
+			MessageToCh:   "You shift your molecules back to normal.\r\n" + fmt.Sprintf("Your hand reverts from a %s.", weapon),
+			MessageToRoom: fmt.Sprintf("%s's hand reverts from a %s!", ch.Name, weapon),
+		}
+	}
+
+	ch.SetAffect(affFleshAlter, true)
+	ch.AdjustHitroll((ch.GetLevel() / 3) + 1)
+	ch.AdjustDamroll((ch.GetLevel() / 2) + 1)
+	message := fmt.Sprintf("Your hand turns into a %s!", weapon)
+	roomMessage := fmt.Sprintf("%s's hand turns into a %s!", ch.Name, weapon)
+	if wielded, ok := ch.Equipment.GetItemInSlot(SlotWield); ok && wielded != nil {
+		if err := ch.Equipment.Unequip(SlotWield, ch.Inventory); err != nil {
+			slog.Error("flesh alter could not unequip wielded item", "player", ch.Name, "item", wielded.GetShortDesc(), "error", err)
+		} else {
+			message = fmt.Sprintf("You stop using %s.\r\n%s", wielded.GetShortDesc(), message)
+			roomMessage = fmt.Sprintf("%s stops using %s.\r\n%s", ch.Name, wielded.GetShortDesc(), roomMessage)
+		}
+	}
 	return SkillResult{
 		Success:       true,
-		MessageToCh:   "Your hand turns into a weapon!\r\n",
-		MessageToRoom: fmt.Sprintf("%s's hand turns into a weapon!\r\n", ch.Name),
+		MessageToCh:   message,
+		MessageToRoom: roomMessage,
 	}
 }
 

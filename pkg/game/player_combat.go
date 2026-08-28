@@ -72,6 +72,14 @@ func (p *Player) SetHitroll(v int) {
 	p.Hitroll = v
 }
 
+// AdjustHitroll changes the player's base hitroll, matching C's direct
+// points.hitroll mutation used by flesh_alter_from/to().
+func (p *Player) AdjustHitroll(delta int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Hitroll += delta
+}
+
 // GetDamroll returns the player's damroll bonus (Phase 2c addition)
 // Source: fight.c uses GET_DAMROLL(ch) macro
 // Sums APPLY_DAMROLL from all equipped items PLUS affect-modified damroll.
@@ -87,6 +95,14 @@ func (p *Player) SetDamroll(v int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Damroll = v
+}
+
+// AdjustDamroll changes the player's base damroll, matching C's direct
+// points.damroll mutation used by flesh_alter_from/to().
+func (p *Player) AdjustDamroll(delta int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Damroll += delta
 }
 
 // GetStrAdd returns the player's strength add (exceptional strength)

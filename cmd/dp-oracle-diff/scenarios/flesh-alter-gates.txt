@@ -1,0 +1,86 @@
+# depth-case: alter.no-skill
+# depth-case: flesh.no-skill
+# do_flesh_alter's skill-known gate is after the command-table
+# POS_FIGHTING gate. The peer is already fighting when the probe runs, but
+# never receives a skillset value, so both registered spellings reach the
+# C handler's exact no-skill line.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Fleshhgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleshhgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fleshbare]
+Fleshbare
+Y
+barepass
+barepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:fleshbare]
+Fleshbare
+y
+barepass
+barepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+~dpclock pulse 60
+
+[probe:fleshbare]
+alter
+flesh

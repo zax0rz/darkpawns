@@ -1,0 +1,134 @@
+# depth-case: alter.success-unequips-wielded
+# depth-case: alter.toggle-off
+# depth-case: flesh.success-bare-handed
+# C-first vehicle for do_flesh_alter (src/new_cmds.c:1886-1938). The God
+# grants the mortal the skill, the mortal opens combat on the trainee so the
+# command's POS_FIGHTING gate and fighting-dependent roll are live, and the
+# observer records room audience bytes. The two names share one C handler.
+# The peer starts with a dagger, so the first command proves the success
+# path's unequip + stop-using bytes; the second toggles back off; the third
+# proves the alias spelling on a bare-handed success.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Fleshgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleshgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fleshpeer]
+Fleshpeer
+Y
+fleshpass
+fleshpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+hit trainee
+
+[setup:port:fleshpeer]
+Fleshpeer
+y
+fleshpass
+fleshpass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+hit trainee
+
+[setup:oracle:fleshobserver]
+Fleshover
+Y
+observerpass
+observerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:fleshobserver]
+Fleshover
+y
+observerpass
+observerpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+teleport Fleshover 8105
+skillset Fleshpeer 'flesh alter' 100
+~dpclock pulse 60
+
+[probe:fleshpeer]
+alter
+alter
+
+[probe:fleshpeer]
+flesh

@@ -163,19 +163,20 @@ var SkillClassReq = map[string]map[int]int{
 // SkillPosReq maps skill name → minimum position required.
 // Source: interpreter.c cmd_info[] entries.
 var SkillPosReq = map[string]int{
-	SkillBackstab: combat.PosStanding,
-	SkillFlee:     combat.PosFighting,
-	SkillBash:     combat.PosFighting,
-	SkillKick:     combat.PosFighting,
-	SkillTrip:     combat.PosFighting,
-	SkillHeadbutt: combat.PosFighting,
-	SkillRescue:   combat.PosStanding,
-	SkillSneak:    combat.PosStanding,
-	SkillHide:     combat.PosResting,
-	SkillSteal:    combat.PosStanding,
-	SkillPickLock: combat.PosStanding,
-	SkillCircle:   combat.PosFighting,
-	SkillCharge:   combat.PosFighting,
+	SkillBackstab:   combat.PosStanding,
+	SkillFlee:       combat.PosFighting,
+	SkillBash:       combat.PosFighting,
+	SkillKick:       combat.PosFighting,
+	SkillTrip:       combat.PosFighting,
+	SkillHeadbutt:   combat.PosFighting,
+	SkillRescue:     combat.PosStanding,
+	SkillSneak:      combat.PosStanding,
+	SkillHide:       combat.PosResting,
+	SkillSteal:      combat.PosStanding,
+	SkillPickLock:   combat.PosStanding,
+	SkillCircle:     combat.PosFighting,
+	SkillCharge:     combat.PosFighting,
+	SkillFleshAlter: combat.PosFighting,
 }
 
 // ---------------------------------------------------------------------------
