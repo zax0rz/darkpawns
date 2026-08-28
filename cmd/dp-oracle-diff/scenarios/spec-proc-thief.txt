@@ -1,0 +1,106 @@
+# depth-case: mob.thief-awake-audience
+# depth-case: mob.thief-periodic-steal
+# The source-ordered thief special is assigned to mob 18218 (src/spec_assign.c:405).
+# It is an autonomous mobile special: mobile_activity() skips fighting mobs, then
+# invokes SPECIAL(thief) with cmd==0. Its target room has exits removed so the
+# wander-capable prototype remains in place until a God and a mortal walk there;
+# the probe therefore exercises the native special rather than a player command
+# hook. The pulse commands cross the 40-heartbeat PULSE_MOBILE cadence and
+# provide repeated 1-in-5
+# outer attempts; an awake victim can take the detection-message branch, whose
+# TO_VICT and TO_NOTVICT audiences are both captured.
+#
+# C path: src/mobact.c:68-93 -> src/interpreter.c:1407-1456 ->
+# src/spec_procs.c:300-327,389-406. The inner npc_steal gate is
+# AWAKE(victim) && number(0, GET_LEVEL(thief)) == 0; otherwise it transfers
+# (GET_GOLD(victim)*number(1,10))/100 to the thief. No script is attached to
+# this prototype, so the scenario stays on the native C special path.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18218 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Thiefgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thiefgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Thiefpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Thiefpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+set Thiefpeer gold 1000
+
+[probe:peer]
+score
+~dpclock pulse 40
+~dpclock pulse 40
+score
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+score

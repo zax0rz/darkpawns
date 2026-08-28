@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -369,6 +370,87 @@ func TestSpecThief_Golden(t *testing.T) {
 	player.Gold = 1000
 	assertNotPanic(t, func() {
 		_ = specThief(w, nil, mob, "", "")
+	})
+}
+
+// TestSpecThief_StateAndAudience proves the C thief's draw ranges, gold
+// transfer, and act() recipient split. C's outer number(0,4) gate must be
+// followed by npc_steal's awake-victim number(0,level) or sleeping-victim
+// number(1,10) branch (spec_procs.c:300-327,389-406).
+func TestSpecThief_StateAndAudience(t *testing.T) {
+	t.Run("sleeping victim transfers gold to thief", func(t *testing.T) {
+		w, player, _ := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 10)
+		player.SetLevel(10)
+		player.SetPosition(combat.PosSleeping)
+		player.SetGold(1000)
+		mob.SetGold(100)
+
+		var seed uint32
+		var wantPercent int
+		for seed = 1; seed < 10000; seed++ {
+			dprng.ResetStream(seed)
+			if dprng.Number(0, 4) != 0 {
+				continue
+			}
+			wantPercent = dprng.Number(1, 10)
+			if wantPercent > 0 {
+				break
+			}
+		}
+		if seed == 10000 {
+			t.Fatal("failed to find deterministic thief steal seed")
+		}
+
+		dprng.ResetStream(seed)
+		if !specThief(w, nil, mob, "", "") {
+			t.Fatal("specThief should handle the successful outer gate")
+		}
+		wantGold := 1000 * wantPercent / 100
+		if got := player.GetGold(); got != 1000-wantGold {
+			t.Errorf("victim gold = %d, want %d", got, 1000-wantGold)
+		}
+		if got := mob.GetGold(); got != 100+wantGold {
+			t.Errorf("thief gold = %d, want %d", got, 100+wantGold)
+		}
+	})
+
+	t.Run("awake victim uses C audiences and pronouns", func(t *testing.T) {
+		w, player, _ := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 10)
+		observer := NewPlayer(2, "Observer", 1001)
+		observer.SetLevel(60)
+		if err := w.AddPlayer(observer); err != nil {
+			t.Fatalf("AddPlayer observer: %v", err)
+		}
+		player.SetLevel(10)
+		player.SetPosition(combat.PosStanding)
+		mob.Prototype.Sex = 0 // C SEX_NEUTRAL renders its in this fixture.
+
+		var msgs syncMap
+		w.MessageSink = func(name string, msg []byte) { msgs.Store(name, string(msg)) }
+
+		var seed uint32
+		for seed = 1; seed < 10000; seed++ {
+			dprng.ResetStream(seed)
+			if dprng.Number(0, 4) == 0 && dprng.Number(0, mob.GetLevel()) == 0 {
+				break
+			}
+		}
+		if seed == 10000 {
+			t.Fatal("failed to find deterministic thief detection seed")
+		}
+
+		dprng.ResetStream(seed)
+		if !specThief(w, nil, mob, "", "") {
+			t.Fatal("specThief should handle the successful outer gate")
+		}
+		if got := msgs.Load(player.Name); got != "You discover that a test mob has its hands in your wallet.\r\n" {
+			t.Errorf("victim message = %q", got)
+		}
+		if got := msgs.Load(observer.Name); got != "A test mob tries to steal gold from Tester.\r\n" {
+			t.Errorf("bystander message = %q", got)
+		}
 	})
 }
 
