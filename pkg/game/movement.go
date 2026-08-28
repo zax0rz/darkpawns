@@ -164,17 +164,8 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 	return nil
 }
 
-// MoveObject moves an object from its current location to a new one.
-// This is the centralized movement function. All object location changes
-// should go through this to maintain invariant consistency.
-func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
-	if err := dst.Validate(); err != nil {
-		return fmt.Errorf("invalid destination: %w", err)
-	}
-
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
+// moveObjectLocked moves an object while the world lock is held.
+func (w *World) moveObjectLocked(obj *ObjectInstance, dst ObjectLocation) error {
 	// Detach from current location
 	if _, err := w.detachObjectLocked(obj); err != nil {
 		return fmt.Errorf("detach failed: %w", err)
@@ -199,6 +190,45 @@ func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
 
 	obj.Location = dst
 	return nil
+}
+
+// MoveObject moves an object from its current location to a new one.
+// This is the centralized movement function. All object location changes
+// should go through this to maintain invariant consistency.
+func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
+	if err := dst.Validate(); err != nil {
+		return fmt.Errorf("invalid destination: %w", err)
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.moveObjectLocked(obj, dst)
+}
+
+// MoveObjectToRoomFront mirrors C obj_to_room, which prepends to the room's
+// object list. It is used by C paths whose output can expose room list order.
+func (w *World) MoveObjectToRoomFront(obj *ObjectInstance, roomVNum int) error {
+	dst := LocRoom(roomVNum)
+	if err := dst.Validate(); err != nil {
+		return fmt.Errorf("invalid destination: %w", err)
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if err := w.moveObjectLocked(obj, dst); err != nil {
+		return err
+	}
+
+	items := w.roomItems[roomVNum]
+	for i, item := range items {
+		if item != obj {
+			continue
+		}
+		copy(items[1:i+1], items[:i])
+		items[0] = obj
+		return nil
+	}
+	return fmt.Errorf("moved object %d missing from room %d", obj.ID, roomVNum)
 }
 
 // --- Ergonomic helpers ---

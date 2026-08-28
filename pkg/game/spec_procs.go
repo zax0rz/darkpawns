@@ -639,20 +639,25 @@ func puffEmote(w *World, me *MobInstance, emote string) {
 
 // fido — mob spec: dog scavenges corpses
 func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || number(0, 3) != 0 {
+	if me.IsFighting() || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.RoomVNum)
 	for _, obj := range items {
-		if strings.Contains(obj.GetKeywords(), "corpse") {
-			w.roomMessage(me.RoomVNum, me.GetName()+" savagely devours "+obj.GetShortDesc()+".")
-			// Spill corpse contents to room floor before destroying corpse.
-			// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room for each child.
-			for _, content := range obj.GetContents() {
-				w.AddItemToRoom(content, me.RoomVNum)
+		if obj.GetTypeFlag() == ITEM_CONTAINER && obj.GetValue(3) != 0 {
+			Act(w, false, me, nil, nil, nil, "$n savagely devours a corpse.", "", ToRoom)
+			// Spill corpse contents to the room before extracting the corpse.
+			// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room.
+			for len(obj.GetContents()) > 0 {
+				content := obj.GetContents()[0]
+				if err := w.MoveObjectToRoomFront(content, me.RoomVNum); err != nil {
+					slog.Error("MoveObjectToRoom failed in fido spec", "obj_vnum", content.GetVNum(), "room", me.RoomVNum, "error", err)
+					return false
+				}
 			}
 			if err := w.MoveObjectToNowhere(obj); err != nil {
-				slog.Warn("MoveObjectToNowhere failed in fido spec", "obj_vnum", obj.GetVNum(), "error", err)
+				slog.Error("MoveObjectToNowhere failed in fido spec", "obj_vnum", obj.GetVNum(), "error", err)
+				return false
 			}
 			return true
 		}
