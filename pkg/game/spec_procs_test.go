@@ -218,6 +218,53 @@ func TestSpecGuild_Golden(t *testing.T) {
 	}
 }
 
+// TestSpecGuild_Gates covers the remaining player-visible guild branches from
+// src/spec_procs.c:208-249: no practices, already learned, and learning to the
+// class cap. The unknown-skill and non-practice gates are covered above in the
+// same source call path.
+func TestSpecGuild_Gates(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	player.Class = ClassThief
+	player.SetLevel(5)
+	player.Stats.Int = 13
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	_ = lastMsg() // discard the mob's spawn announcement
+
+	player.SetPractices(0)
+	if !specGuild(w, player, mob, "practice", "backstab") {
+		t.Fatal("zero-practice branch should be handled")
+	}
+	if got := lastMsg(); got != "You do not seem to be able to practice now.\r\n" {
+		t.Errorf("zero-practice message = %q", got)
+	}
+
+	player.SetPractices(1)
+	player.SetSkill("backstab", pracLearned(ClassThief))
+	if !specGuild(w, player, mob, "practice", "backstab") {
+		t.Fatal("already-learned branch should be handled")
+	}
+	if got := lastMsg(); got != "You are already learned in that area.\r\n" {
+		t.Errorf("already-learned message = %q", got)
+	}
+	if player.GetPractices() != 1 {
+		t.Errorf("already-learned practices = %d, want 1", player.GetPractices())
+	}
+
+	player.SetSkill("backstab", pracLearned(ClassThief)-10)
+	if !specGuild(w, player, mob, "practice", "backstab") {
+		t.Fatal("learn-to-cap branch should be handled")
+	}
+	if got := lastMsg(); got != "You practice for a while...\r\nYou are now learned in that area.\r\n" {
+		t.Errorf("learn-to-cap message = %q", got)
+	}
+	if player.GetPractices() != 0 {
+		t.Errorf("learn-to-cap practices = %d, want 0", player.GetPractices())
+	}
+	if player.GetSkill("backstab") != pracLearned(ClassThief) {
+		t.Errorf("backstab = %d, want learned cap %d", player.GetSkill("backstab"), pracLearned(ClassThief))
+	}
+}
+
 // TestSpecDump_Golden verifies C-fidelity dump value awards.
 func TestSpecDump_Golden(t *testing.T) {
 	w, player, _ := newSpecProcTestWorld(t)

@@ -140,28 +140,30 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	arg = strings.TrimSpace(arg)
 
 	if arg == "" {
-		sendToChar(ch, RenderSkillList(ch))
+		// RenderSkillList already contains the terminal CRLF because the
+		// standalone practice command sends it directly.
+		ch.SendMessage(RenderSkillList(ch))
 		return true
 	}
 	if ch.GetPractices() <= 0 {
-		sendToChar(ch, "You do not seem to be able to practice now.\r\n")
+		sendToChar(ch, "You do not seem to be able to practice now.")
 		return true
 	}
 
 	skillNum := FindSkillNum(arg)
 	if skillNum < 1 || ch.GetLevel() < ClassSkillMinLevel(class, skillNum) {
-		sendToChar(ch, fmt.Sprintf("You do not know of that %s.\r\n", SplSkl(class)))
+		sendToChar(ch, fmt.Sprintf("You do not know of that %s.", SplSkl(class)))
 		return true
 	}
 
 	name := strings.ToLower(SkillCatalogName(skillNum))
 	learned := pracLearned(class)
 	if ch.GetSkill(name) >= learned {
-		sendToChar(ch, "You are already learned in that area.\r\n")
+		sendToChar(ch, "You are already learned in that area.")
 		return true
 	}
 
-	sendToChar(ch, "You practice for a while...\r\n")
+	sendToChar(ch, "You practice for a while...")
 	ch.SetPractices(ch.GetPractices() - 1)
 
 	// percent += MIN(MAXGAIN, MAX(MINGAIN, int_app[GET_INT].learn)) (spec_procs.c:242)
@@ -179,7 +181,7 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	ch.SetSkill(name, percent)
 
 	if ch.GetSkill(name) >= learned {
-		sendToChar(ch, "You are now learned in that area.\r\n")
+		sendToChar(ch, "You are now learned in that area.")
 	}
 	return true
 }
