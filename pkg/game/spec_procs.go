@@ -122,6 +122,31 @@ func mobMeleeTarget(me *MobInstance) *MobInstance {
 	return nil
 }
 
+// mobFightingTarget resolves the name-based FIGHTING reference used by the
+// combat engine. C's fighter special receives the actual FIGHTING pointer;
+// Go's mob instance retains that pointer only for mob-to-mob scripting, so
+// the combat pair is the authoritative source for player opponents.
+func mobFightingTarget(w *World, me *MobInstance) combat.Combatant {
+	if w != nil && w.combatEngine != nil {
+		if target, ok := w.combatEngine.GetCombatTarget(me.GetName()); ok && target != nil {
+			return target
+		}
+	}
+
+	if target := me.GetTarget(); target != nil {
+		return target
+	}
+	if targetName := me.GetFightingTarget(); targetName != "" {
+		if player, ok := w.GetPlayer(targetName); ok {
+			return player
+		}
+		if mob := w.GetMobByName(targetName); mob != nil {
+			return mob
+		}
+	}
+	return nil
+}
+
 // ================================================================
 // MOB SPECIALS
 // ================================================================
@@ -406,22 +431,25 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 // fighter — mob spec: uses martial skills in combat
 func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
+	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFighting() == "" {
 		return false
 	}
-	melee := mobMeleeTarget(me)
+	if me.GetWaitState() > 0 {
+		return false
+	}
+	melee := mobFightingTarget(w, me)
 	if melee == nil {
 		return false
 	}
-	switch randN(11) {
+	switch number(0, 10) {
 	case 1:
-		w.roomMessage(me.RoomVNum, me.GetName()+" headbutts "+melee.GetName()+"!")
+		mobHeadbutt(w, me, melee)
 	case 2:
-		w.roomMessage(me.RoomVNum, me.GetName()+" parries an attack!")
+		mobParry(w, me, melee)
 	case 3:
-		w.roomMessage(me.RoomVNum, me.GetName()+" bashes "+melee.GetName()+"!")
+		mobBash(w, me, melee)
 	case 4:
-		w.roomMessage(me.RoomVNum, me.GetName()+" goes berserk!")
+		mobBerserk(me)
 	default:
 		return false
 	}

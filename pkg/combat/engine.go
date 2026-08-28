@@ -640,6 +640,13 @@ func (ce *CombatEngine) setParried(name, defenseAction string) {
 	ce.parried[name] = defenseAction
 }
 
+// MarkParried records a C IS_PARRIED result for the named fighter. Native
+// mob specials use this same one-round defense state as perform_violence's
+// built-in parry/dodge path.
+func (ce *CombatEngine) MarkParried(name, defenseAction string) {
+	ce.setParried(name, defenseAction)
+}
+
 func (ce *CombatEngine) consumeParried(name string) string {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
