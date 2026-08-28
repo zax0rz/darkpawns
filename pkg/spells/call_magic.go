@@ -18,7 +18,7 @@ const lvlImmort = 31
 //   - ovict: the object target (can be nil)
 //   - spellNum: the spell number
 //   - level: effective level of the spell (usually caster level, from item for scrolls/potions)
-//   - castType: CAST_SPELL, CAST_WAND, CAST_STAFF, CAST_POTION, CAST_SCROLL
+//   - castType: CAST_SPELL, CAST_WAND, CAST_STAFF, CAST_POTION, CAST_SCROLL, CAST_BREATH
 //   - world: game world reference (interface{} to avoid circular imports)
 //
 // Returns true if the spell was executed.

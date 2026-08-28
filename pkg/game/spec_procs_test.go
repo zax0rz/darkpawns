@@ -820,8 +820,9 @@ func TestSpecDragonBreath_Golden(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosStanding)
+	player.SetPlrFlag(PrfNohassle, true)
 	if got := specDragonBreath(w, nil, mob, "", ""); got {
-		t.Error("specDragonBreath should return false when not fighting")
+		t.Error("specDragonBreath should return false with no eligible room victim")
 	}
 
 	mob.SetPosition(combat.PosFighting)

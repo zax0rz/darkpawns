@@ -11,9 +11,10 @@ import "testing"
 // blindness affect, respectively) handled elsewhere. Petrify is a
 // look-triggered instant-kill in the Medusa special mob procedure, Drowning
 // is a flat environmental HP tick, and the five breath spells plus the
-// fabricated "DragonBreath" have no C mag_damage/mag_areas case at all — they
-// deal zero damage in the original game. None of the 13 should route through
-// MagDamage's dice-table fallback.
+// fabricated "DragonBreath" have no C mag_damage formula. The breath spells
+// still pass through the generic mag_areas → mag_damage(0) path, so they deal
+// zero damage while retaining C's save/state/message side effects. None of the
+// 13 should route through MagDamage's dice-table fallback.
 // ---------------------------------------------------------------------------
 
 func TestMagDamage_DoesNotFabricateRemovedSpells(t *testing.T) {
