@@ -548,57 +548,93 @@ func isRemortOnlyClass(class int) bool {
 	}
 }
 
-// puff — mob spec: random says on pulse
+// puff — mob spec: ambient random speech/emotes on pulse
 func specPuff(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" {
 		return false
 	}
 	if me.GetHP() < 0 {
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Shit, I'm dead.'")
+		puffSay(w, me, "Shit, I'm dead.")
 		return true
 	}
-	puffSayings := []string{
-		"My god!  It's full of stars!",
-		"How'd all those fish get up here?",
-		"I'm a very female dragon.",
-		"Boo!  Hiss!  I say!",
-		"'The voices!  The voices!'",
-		"Why are there so many songs about rainbows?",
-		"'Help!  I'm being repressed!'",
-		"What is the capital of Assyria?",
-		"Our Lady of Blessed Acceleration, don't fail me now.",
-		"Hi, do you have any Grey Poupon?",
-		"Are we there yet?",
-		"'We're not worthy!  We're not worthy!'",
-		"What's the color of the wind?",
-		"I see dead people.",
-		"Is that a flame thrower in your pocket...",
-		"'I have a nice, heavy club for you.'",
-		"'She turned me into a newt!'",
-		"'...I got better...'",
-		"There is no magic, only rearranged physics.",
-		"Filthy, Precious!  It stole us, Precious!",
-		"I have no legs, and I must scream.",
-		"Reach out and touch faith.",
-		"Life?  Don't talk to me about life.",
-		"He's not the Messiah, he's a very naughty boy!",
-		"Nobody expects the Spanish Inquisition!",
-		"Help, I'm a bug!",
-		"I'm melting!  What a world!  What a world!",
-		"Follow the yellow brick road.",
-		"Praise Helix!",
-		"If I only had a brain.",
-		"More tea, vicar?",
-		"I'll get you, my pretty!",
-		"I'll be back.",
-		"Negative.  I am a meat popsicle.",
-	}
-	if number(0, 91) == 0 {
-		saying := puffSayings[randN(len(puffSayings))]
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
+	switch number(0, 90) {
+	case 0:
+		puffSay(w, me, "My god!  It's full of stars!")
+	case 1:
+		puffSay(w, me, "How'd all those fish get up here?")
+	case 2:
+		puffSay(w, me, "I'm a very female dragon.")
+	case 3:
+		puffSay(w, me, "I've got this peaceful, easy feeling.")
+	case 4, 5, 6:
 		return true
+	case 7:
+		puffSay(w, me, "Goddamn, what a trip! Listen to those colors!")
+	case 8:
+		puffSay(w, me, "Bring out your dead!")
+	case 9:
+		puffSay(w, me, "Rule number 6...there is NO rule number 6.")
+	case 10:
+		puffSay(w, me, "To be rich is no longer a sin...its a MIRACLE!")
+	case 11, 12:
+		return true
+	case 13:
+		puffEmote(w, me, "$n looks at you and then breaks out in a fit of laughter!")
+	case 14:
+		return true
+	case 15:
+		puffSay(w, me, "What is the sound of down?")
+	case 16:
+		return true
+	case 17:
+		puffEmote(w, me, "$n wonders where she left that darn wand.")
+	case 18, 19:
+		return true
+	case 20, 21:
+		puffSay(w, me, "Do you want to stroke my tail?")
+	case 22:
+		return true
+	case 23, 24:
+		puffEmote(w, me, "$n does female stuff.")
+	case 25:
+		return true
+	case 26:
+		puffEmote(w, me, "$n contemplates the meaning of life.")
+	case 27:
+		puffSay(w, me, "NIH!")
+	case 28, 29, 30:
+		return true
+	case 31, 32:
+		puffEmote(w, me, "$n rocks out to some funky beats.")
+	case 33, 34, 35, 36:
+		return true
+	case 37, 38, 39:
+		puffSay(w, me, "I'm gonna kick your ASS!")
+	case 40, 41, 42:
+		return true
+	default:
+		return false
 	}
-	return false
+	return true
+}
+
+func puffSay(w *World, me *MobInstance, saying string) {
+	verb := "says"
+	if saying != "" {
+		switch saying[len(saying)-1] {
+		case '!':
+			verb = "exclaims"
+		case '?':
+			verb = "asks"
+		case '.':
+			verb = "states"
+		}
+	}
+	Act(w, false, me, nil, nil, nil, "$n "+verb+", '$T'", saying, ToRoom)
+}
+
+func puffEmote(w *World, me *MobInstance, emote string) {
+	Act(w, true, me, nil, nil, nil, emote, "", ToRoom)
 }
 
 // fido — mob spec: dog scavenges corpses
