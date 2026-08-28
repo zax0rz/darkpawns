@@ -1,0 +1,85 @@
+# depth-case: mob.fido-entry-gates
+# depth-case: mob.fido-corpse-predicate
+# depth-case: mob.fido-corpse-devour
+# depth-case: mob.fido-content-transfer
+# depth-case: mob.fido-pulse-dispatch
+# C-first vehicle for SPECIAL(fido).  Mob vnums 8063, 12115, 15108, and 18203
+# are active fido registrations; 8063 is used here as the fixed-room vehicle.
+# The God kills a disposable trainee to create a native corpse, then one
+# padded mobile pulse lets fido emit its room Act and spill/extract the corpse.
+# C path: src/mobact.c:68-93 -> src/interpreter.c:1407-1456 ->
+# src/spec_procs.c:724-748; corpse creation is src/fight.c:534-633.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8063 1 8105 80
+spawn-mob 16303 1 8105 80
+strip-mob-script 8063
+replace-room-exits 8105 none
+
+[setup:oracle]
+Fidogod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fidogod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Fidopeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Fidopeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Fidopeer 8105
+kill trainee
+
+[probe]
+~dpclock pulse 40
