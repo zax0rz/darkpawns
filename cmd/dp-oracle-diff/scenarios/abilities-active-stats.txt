@@ -1,0 +1,75 @@
+# depth-case: abilities.effective-stats
+# C do_abils uses GET_* (handler.c:127-158), so an active strength affect must
+# appear in the rendered ability names. The first-player God has every spell
+# skill; the warmup cast reaches SPELL_STRENGTH without changing the oracle.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Abilitycast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Abilitycast
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Abilitypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Abilitypeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+teleport Abilitypeer 1204
+cast 'strength' Abilitypeer
+~dpclock pulse 20
+
+[probe:peer]
+abilities

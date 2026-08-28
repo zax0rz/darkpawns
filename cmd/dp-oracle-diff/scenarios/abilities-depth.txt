@@ -1,0 +1,48 @@
+# depth-case: abilities.output
+# depth-case: abilities.argument-ignored
+# depth-case: abilities.sleeping-entry
+# depth-case: abilities.non-c-alias
+# C-first vehicle for the first un-manifested interpreter command family.
+# The command is registered at src/interpreter.c:322 with POS_SLEEPING and
+# dispatches act.informative.c:1077-1095.  The handler ignores its argument
+# and renders the six effective GET_* ability values through abil_names[].
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Abilitytest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Abilitytest
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+abilities
+abilities extra-arguments-are-ignored
+abils
+sleep
+abilities
