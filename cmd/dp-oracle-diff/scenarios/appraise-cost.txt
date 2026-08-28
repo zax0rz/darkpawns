@@ -1,0 +1,46 @@
+# depth-case: appraise.success-cost
+# depth-case: appraise.improve-sequence
+# Bread costs 3. C uses number(0,20) for a successful appraisal when cost is
+# below 20; the previous Go path incorrectly used number(-20,20).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Appraisecost
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Appraisecost
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get bread
+skillset Appraisecost 'appraise' 100
+
+[probe]
+appraise bread

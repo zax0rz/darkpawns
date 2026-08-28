@@ -223,51 +223,39 @@ func (w *World) doAppraise(ch *Player, me *MobInstance, cmd string, arg string) 
 	// it here for draw parity (R3a); randRange is the shared dprng stream.
 	percent := randRange(1, 101)
 
-	arg = strings.TrimSpace(arg)
+	arg, _ = halfChop(arg)
 	if arg == "" {
 		ch.SendMessage("What do you want to appraise?\r\n")
 		return true
 	}
 
-	// Find object in inventory
-	obj := w.findObjNear(ch, arg)
+	// C passes ch->carrying to get_obj_in_list_vis, so equipped and room
+	// objects are intentionally outside this command's lookup scope.
+	obj := getObjInInvVis(ch, arg)
 	if obj == nil {
 		ch.SendMessage("You don't seem to have one of those...\r\n")
 		return true
 	}
 
-	cost := obj.Prototype.Cost
-	skill := ch.GetSkill("appraise")
+	cost := obj.GetCost()
+	skill := ch.GetSkill(SkillAppraise)
 
 	if percent > skill {
-		// Failed appraise — random value
-		badCost := cost + randRange(-cost, cost*2)
-		if badCost < 0 {
-			badCost = 0
-		}
-		ch.SendMessage(fmt.Sprintf("You estimate it's worth %d gold coins.\r\n", badCost))
+		// Failed appraise — random value. C's number() helper is inclusive;
+		// for the success arm below, costs under 20 use a zero lower bound.
+		cost += randRange(-cost, cost*2)
+		ch.SendMessage(fmt.Sprintf("You estimate it's worth %d gold coins.\r\n", cost))
 		return true
 	}
 
-	// Successful appraise
-	actual := cost + randRange(-20, 20)
-	if actual < 0 {
-		actual = 0
+	// Successful appraise.
+	low := -20
+	if cost <= 20 {
+		low = 0
 	}
-	ch.SendMessage(fmt.Sprintf("You estimate it's worth %d gold coins.\r\n", actual))
-
-	// Improve skill
-	skillVal := ch.GetSkill("appraise")
-	if skillVal > 0 && skillVal < 97 && randRange(1, 200) <= ch.Stats.Wis+ch.Stats.Int {
-		skillVal += randRange(1, 3)
-		if skillVal > 97 {
-			skillVal = 97
-		}
-		ch.SetSkill("appraise", skillVal)
-		if randRange(1, 3) == 3 {
-			ch.SendMessage("Your skill in appraise improves.\r\n")
-		}
-	}
+	cost += randRange(low, 20)
+	ch.SendMessage(fmt.Sprintf("You estimate it's worth %d gold coins.\r\n", cost))
+	ImproveSkill(ch, SkillAppraise)
 
 	return true
 }
