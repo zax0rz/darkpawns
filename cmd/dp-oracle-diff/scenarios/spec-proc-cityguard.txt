@@ -1,0 +1,88 @@
+# depth-case: mob.cityguard-entry-gates
+# depth-case: mob.cityguard-outlaw-warning
+# depth-case: mob.cityguard-hit-boundary
+# depth-case: mob.cityguard-protection-intervention
+# depth-case: mob.cityguard-pulse-dispatch
+# C-first vehicle for SPECIAL(cityguard). Registration 2747 is first but its
+# prototype lacks MOB_SPEC, so the native autonomous loop cannot call it. This
+# vehicle uses the next registration, mob 18215, whose Lua script is stripped;
+# room exits are removed and a mortal peer is marked PLR_OUTLAW so the native
+# pulse reaches the first intervention branch. The same vehicle is retained
+# for the non-executing protection and shared breed_killer branches, which
+# require a separate target topology.
+# C path: src/mobact.c:68-93 -> src/spec_procs.c:771-821; command dispatch is
+# src/interpreter.c:1407-1456. The C cityguard calls fighter() and
+# breed_killer(), whose shared branches must not be duplicated here.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18215 1 8105 80
+strip-mob-script 18215
+replace-room-exits 8105 none
+
+[setup:oracle]
+CityguardGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CityguardGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+CityguardPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+CityguardPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CityguardPeer 8105
+set CityguardPeer outlaw on
+
+[probe]
+~dpclock pulse 40
