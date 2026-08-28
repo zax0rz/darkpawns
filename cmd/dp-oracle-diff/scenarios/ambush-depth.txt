@@ -1,0 +1,58 @@
+# depth-case: ambush.no-arg
+# depth-case: ambush.target-missing
+# depth-case: ambush.self
+# depth-case: ambush.busy
+# depth-case: ambush.plan-and-delayed-resolution
+# depth-case: ambush.skill-message-and-death
+# C-first vehicle for do_ambush (src/act.offensive.c:1379-1506). The actor
+# receives ambush through the God skillset command, moves to a city room, and
+# targets the inert guard trainee. The immediate command block proves the
+# lookup/self/action gates and planning line; the two padded pulse blocks let
+# the native ambush event resolve at PULSE_VIOLENCE*2.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Ambushgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ambushgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Ambushgod ambush 100
+
+[probe]
+ambush
+ambush nobody
+ambush Ambushgod
+ambush trainee
+ambush trainee
+~dpclock pulse 20
+~dpclock pulse 20

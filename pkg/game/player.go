@@ -208,7 +208,11 @@ type Player struct {
 	// ticks). SetWaitState stores rounds*PULSE_VIOLENCE here; the per-pulse
 	// drain in the heartbeat decrements it (port of comm.c:603).
 	WaitState int
-	RoomFlags bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
+
+	// ambushAction is the pending delayed ambush event, mirroring C's
+	// GET_ACTION(ch). It is runtime-only and intentionally not persisted.
+	ambushAction uint64
+	RoomFlags    bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
 	// AutoGold indicates the player auto-loots gold from killed victims (PRF_AUTOGOLD = 24).
 	// Source: structs.h:#define PRF_AUTOGOLD 24

@@ -448,10 +448,15 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 		}
 	}
 
-	// Notify players in room
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
+	// The legacy C raw_kill path does not announce corpse creation. Keep the
+	// general Go notification for existing callers, but suppress it for the
+	// skill_message-backed ambush damage path (fight.c:1407-1450), whose room
+	// transcript is already proven byte-for-byte.
+	if attackType != 191 {
+		players := w.GetPlayersInRoom(roomVNum)
+		for _, p := range players {
+			p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
+		}
 	}
 
 	// Decrement spawner instance count so the mob can respawn on next zone reset.

@@ -1,0 +1,46 @@
+# depth-case: ambush.sector-gate
+# C do_ambush (act.offensive.c:1480-1488) permits only forest, hills,
+# mountain, and city rooms. This disposable inside-room fixture isolates the
+# exact refusal line after target and skill lookup.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 0
+spawn-mob 16306 1 8105 80
+
+[setup:oracle]
+Ambushgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ambushgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Ambushgate ambush 100
+
+[probe]
+ambush green

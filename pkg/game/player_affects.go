@@ -122,6 +122,27 @@ func (p *Player) DecrementWaitState() {
 	}
 }
 
+// GetAmbushAction returns the event ID held in C's GET_ACTION(ch) slot.
+func (p *Player) GetAmbushAction() uint64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.ambushAction
+}
+
+// SetAmbushAction records the pending delayed ambush event.
+func (p *Player) SetAmbushAction(eventID uint64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.ambushAction = eventID
+}
+
+// ClearAmbushAction clears the pending delayed ambush event.
+func (p *Player) ClearAmbushAction() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.ambushAction = 0
+}
+
 // TakeDamage applies damage to the player.
 //
 // HP is allowed to go negative into the wounded band; POS_DEAD is HP <= -11

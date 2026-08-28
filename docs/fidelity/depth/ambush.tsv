@@ -1,0 +1,13 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_ambush	ambush	ambush.no-arg	D1	command	oracle-green	ambush-depth	act.offensive.c:1464-1469	Target lookup with an empty argument emits C's exact Ambush who? line.
+do_ambush	ambush	ambush.target-missing	D1	command	oracle-green	ambush-depth	act.offensive.c:1464-1469	A missing room target uses the same C refusal as the empty argument.
+do_ambush	ambush	ambush.self	D1	command	oracle-green	ambush-depth	act.offensive.c:1473-1477	Self-target reaches C's idiot line after skill and action gates.
+do_ambush	ambush	ambush.busy	D1	command	oracle-green	ambush-depth	act.offensive.c:1470-1472	A second command while GET_ACTION is occupied emits the exact busy line.
+do_ambush	ambush	ambush.sector-gate	D1	command	oracle-green	ambush-entry-gates	act.offensive.c:1480-1488	Inside-room fixture proves the four allowed sector values and exact impossible line.
+do_ambush	ambush	ambush.victim-fighting	D1	command	unit-green	TestAmbushEventStopsWhenActorIsFighting	act.offensive.c:1490-1493	The event's FIGHTING(ch) early return is silent and leaves no wait state; the command gate is shared with this C check.
+do_ambush	ambush	ambush.plan-and-delayed-resolution	D3	command	oracle-green-multiseed	ambush-depth	act.offensive.c:1403-1408;1500-1506	Plan text is immediate, damage and skill_message resolution wait for PULSE_VIOLENCE*2, and seeds 1,2,3,5,8 agree.
+do_ambush	ambush	ambush.lost-prey	D3	command	oracle-green	ambush-lost-prey	act.offensive.c:1412-1417	Moving before the callback emits only the lost-prey line and consumes no event roll.
+do_ambush	ambush	ambush.aware-failure	D2	state	unit-green	TestAmbushAwareForcesFailureAndStartsCombat	act.offensive.c:1420-1426	MOB_AWARE forces percent 200 after the shared event roll; damage zero still starts mutual combat and only the actor receives the final wait.
+do_ambush	ambush	ambush.damage-formula-hidden	D4	state	unit-green	TestAmbushDamageFormulaAndHiddenClear	act.offensive.c:1428-1446	Focused state test pins strength damage, damroll, wielded dice, truncated level*2.6, hidden 10%, target wait, actor wait, and AFF_HIDE removal.
+do_ambush	ambush	ambush.skill-message-and-death	D5	command	oracle-green-multiseed	ambush-depth	act.offensive.c:1424-1450;fight.c:1486-1490;1651-1660	The live mob vehicle proves attacktype 191 message selection, lethal room bytes, XP-before-death-cry ordering, and seeds 1,2,3,5,8.
+do_ambush	damage	ambush.shared-damage-gates	D5	shared	delegated	combat-entry	fight.c:1336-1459	Common damage peaceful/newbie/shopkeeper/follower gates remain owned by the combat-entry damage matrix; ambush delegates to that verified C damage path.
