@@ -667,19 +667,24 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 // janitor — mob spec: cleans up items
 func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || number(0, 5) != 0 {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.RoomVNum)
 	for _, obj := range items {
-		if !strings.Contains(obj.GetKeywords(), "corpse") && number(0, 2) == 0 {
-			w.roomMessage(me.GetRoom(), me.GetName()+" picks up "+obj.GetShortDesc()+".")
-			// Move to janitor's inventory (matches C obj_to_char) — players can kill
-			// janitor to retrieve items, unlike RemoveItemFromRoom which destroys them.
-			w.RemoveItemFromRoom(obj, me.GetRoom())
-			me.AddToInventory(obj)
-			return true
+		// C uses CAN_WEAR(i, ITEM_WEAR_TAKE) and the reversed isname(i->name,
+		// "corpse") call at src/spec_procs.c:759.
+		if !obj.IsTakeable() || isName(obj.GetKeywords(), "corpse") {
+			continue
 		}
+		Act(w, false, me, nil, nil, nil, "$n picks up some trash.", "", ToRoom)
+		// Move to janitor's inventory through the canonical path. C obj_to_char
+		// prepends, so preserve that order for later player-visible inspection.
+		if err := w.MoveObjectToMobInventoryFront(obj, me); err != nil {
+			slog.Error("MoveObjectToMobInventoryFront failed in janitor spec", "obj_vnum", obj.GetVNum(), "mob", me.GetVNum(), "error", err)
+			return false
+		}
+		return true
 	}
 	return false
 }
