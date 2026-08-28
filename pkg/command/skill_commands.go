@@ -1054,10 +1054,23 @@ func CmdAmbush(s SessionInterface, args []string) error {
 	if canUse, msg := game.CanUseSkill(ch, game.SkillAmbush); !canUse {
 		return s.SendMessage(msg)
 	}
+	if ch.GetAmbushAction() != 0 {
+		return s.SendMessage("You are a little busy for that right now!\r\n")
+	}
 	if target.GetName() == ch.Name {
 		return s.SendMessage("Ambush yourself? You idiot!\r\n")
 	}
-	return sendSkillResult(s, ch, target, game.DoAmbush(ch, target))
+	room := world.GetRoomInWorld(ch.GetRoom())
+	if room == nil || (room.Sector != game.SECT_FOREST && room.Sector != game.SECT_HILLS &&
+		room.Sector != game.SECT_MOUNTAIN && room.Sector != game.SECT_CITY) {
+		return s.SendMessage("Ambush someone here? Impossible!\r\n")
+	}
+	if target.GetFighting() != "" {
+		return s.SendMessage("They're too alert for that, currently.\r\n")
+	}
+	gameWorld := s.GetWorld()
+	gameWorld.PlanAmbush(ch, target)
+	return nil
 }
 
 // CmdBerserk handles the berserk command (C-10/C-12).

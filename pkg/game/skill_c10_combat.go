@@ -267,46 +267,6 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 	}
 }
 
-// DoAmbush implements do_ambush() from act.offensive.c lines 1454-1550.
-// Cannot ambush target already fighting. Damage: damroll + weapon + level*2.6 + 10% if hidden.
-func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
-	if ch.GetSkill(SkillAmbush) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You'd better not."}
-	}
-	if target.GetFighting() != "" {
-		return SkillResult{Success: false, MessageToCh: "They're too alert for that, currently."}
-	}
-	ch.SendMessage("You crouch in the shadows and plan your ambush...\r\n")
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-	// #nosec G404
-	percent := dprng.Number(1, 131)
-	prob := ch.GetSkill(SkillAmbush)
-	if percent > prob {
-		return SkillResult{
-			Success: false, WaitCh: 1,
-			MessageToCh:   ActMessage("You spring from the shadows but $N avoids your ambush!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n springs from the shadows but you dodge the ambush!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n springs from the shadows but fails to ambush $N!", chPronouns, &victPronouns, ""),
-		}
-	}
-	dam := ch.GetDamroll()
-	if weaponNum, weaponSides := ch.Equipment.GetWeaponDamage(); weaponNum > 0 && weaponSides > 0 {
-		dam += combat.RollDice(weaponNum, weaponSides)
-	}
-	dam += int(float64(ch.GetLevel()) * 2.6)
-	if ch.IsAffected(affHide) {
-		dam += int(float64(dam) * 0.10)
-	}
-	improveSkill(ch, SkillAmbush)
-	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 1, WaitTarget: 1,
-		MessageToCh:   ActMessage("You spring from the shadows and ambush $N!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n leaps from the shadows and ambushes you!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n leaps from the shadows to ambush $N!", chPronouns, &victPronouns, ""),
-	}
-}
-
 // CheckNPCDodge checks if an NPC mob dodges an attack.
 // Source: fight.c:1970-1975 — number(0,100) < GET_LEVEL(ch)
 func CheckNPCDodge(mob interface {

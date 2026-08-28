@@ -177,6 +177,7 @@ var SkillPosReq = map[string]int{
 	SkillCircle:     combat.PosFighting,
 	SkillCharge:     combat.PosFighting,
 	SkillFleshAlter: combat.PosFighting,
+	SkillAmbush:     combat.PosStanding,
 }
 
 // ---------------------------------------------------------------------------
