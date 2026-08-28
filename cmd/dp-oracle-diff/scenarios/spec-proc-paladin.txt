@@ -1,0 +1,57 @@
+# depth-case: mob.paladin-combat-action
+# C-first vehicle for SPECIAL(paladin).  mobile_activity() skips fighting mobs,
+# so the registered paladin special is reached from perform_violence() after
+# the NPC's ordinary attack loop.  Mob 71 is the source-order paladin
+# assignment without a script and is placed in the controlled room.  The God
+# opens combat explicitly and the padded violence pulse
+# captures the selected native action's player-facing bytes and state.
+#
+# SPECIAL(paladin) gates cmd==0, POS_FIGHTING, GET_HIT >= 0, FIGHTING(ch), and
+# GET_MOB_WAIT==0, then consumes number(0,8).  Cases 0, 1, 2, 3, and 5 call
+# do_parry, do_bash, do_charge, alignment-selected dispel, and do_disarm with
+# subcmd=1; the other cases return TRUE without an action.  C path:
+# src/spec_procs.c:537-568; src/mobact.c:68-93; src/fight.c:1898-2032.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 71 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+hit death
+score
+~dpclock pulse 20
+score
