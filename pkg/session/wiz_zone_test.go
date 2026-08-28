@@ -6,6 +6,19 @@ import (
 	"time"
 )
 
+func TestCmdAdmobsLevelGate(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Admobslevel", 1001, true)
+	s.player.Level = LVL_GRGOD
+
+	if err := ExecuteCommand(s, "admobs", []string{"ignored"}); err != nil {
+		t.Fatalf("ExecuteCommand admobs: %v", err)
+	}
+	if got, want := readSessionOutput(t, s), "Huh?!?\r\n"; got != want {
+		t.Fatalf("level-gate output = %q, want %q", got, want)
+	}
+}
+
 func readSessionOutput(t *testing.T, s *Session) string {
 	t.Helper()
 	select {

@@ -9,6 +9,15 @@ import (
 	"strings"
 )
 
+// cmdAdmobs mirrors C adjust_mobs() (src/olc.c:279-307). The C handler
+// ignores its argument, updates every mob prototype, marks the corresponding
+// zones for OLC mobile saves, and sends only OK.
+func cmdAdmobs(s *Session) error {
+	s.manager.world.AdjustMobPrototypes()
+	s.Send("Okay.\r\n")
+	return nil
+}
+
 func cmdZreset(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")

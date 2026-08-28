@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+adjust_mobs	admobs	admobs.output	D1	command	oracle-green	admobs-depth	interpreter.c:325; olc.c:279-307	C ignores the argument, adjusts prototypes, marks mobile zones, and emits only Okay.
+adjust_mobs	admobs	admobs.repeat-is-idempotent	D4	state	oracle-green	admobs-depth	olc.c:282-302	A second run recomputes the same level-derived damroll and add-hp values without additional player-facing output.
+adjust_mobs	admobs	admobs.level-gate	D1	command	unit-green	TestCmdAdmobsLevelGate	interpreter.c:325; interpreter.c:1407-1456	A level-38 player is below C's LVL_IMPL-1 gate and receives the unmatched-command bytes.
+adjust_mobs	admobs	admobs.scaling-formula	D4	state	unit-green	TestAdjustMobPrototypesMatchesCFormula	olc.c:282-302	Focused test covers levels 0,10,11,22,23,30,31,40, integer truncation, thresholds, and dice-shape preservation.
