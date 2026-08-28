@@ -24,6 +24,8 @@ func seedForCastRoll(t *testing.T, accept func(int) bool) uint32 {
 
 func prepareCaster(s *Session, class int, spellName string, proficiency int) {
 	s.player.Class = class
+	s.player.Stats.Int = 10
+	s.player.Stats.Wis = 10
 	s.player.SetLevel(1)
 	s.player.SetMana(100)
 	s.player.SetSkill(spellName, proficiency)
@@ -59,9 +61,12 @@ func TestCastEarlyGatesAreExactAndDrawFree(t *testing.T) {
 			want: "Spell names must be enclosed in the magick symbols: '\r\n",
 		},
 		{
-			name: "missing closing quote",
+			name: "missing closing quote is accepted by C tokenizer",
 			args: []string{"'flame", "arrow"},
-			want: "Spell names must be enclosed in the magick symbols: '\r\n",
+			prepare: func(s *Session) {
+				prepareCaster(s, game.ClassMageUser, "flame arrow", 95)
+			},
+			want: "Upon who should the spell be cast?\r\n",
 		},
 		{
 			name: "unknown spell",
@@ -295,6 +300,189 @@ func TestCastMissingTargetPreservesOkayIncantationEdge(t *testing.T) {
 	}
 	if got := session.player.GetWaitState(); got != 0 {
 		t.Errorf("wait = %d, want 0", got)
+	}
+}
+
+func TestCastArgumentParsingMatchesCQuoteAndWordRules(t *testing.T) {
+	spell, target, errMessage := parseCastArguments([]string{"'strength'", "Casttarget", "extra"})
+	if errMessage != "" {
+		t.Fatalf("parse error = %q, want none", errMessage)
+	}
+	if spell != "strength" || target != "casttarget" {
+		t.Fatalf("parsed spell/target = %q/%q, want strength/casttarget", spell, target)
+	}
+
+	spell, target, errMessage = parseCastArguments([]string{"'flame", "arrow"})
+	if errMessage != "" || spell != "flame arrow" || target != "" {
+		t.Fatalf("unclosed quote parse = %q/%q/%q, want flame arrow/empty/no error", spell, target, errMessage)
+	}
+}
+
+func TestWillEntryUsesPowerSurface(t *testing.T) {
+	if _, ok := cmdRegistry.Lookup("will"); !ok {
+		t.Fatal("will command is not registered")
+	}
+
+	for _, class := range []int{game.ClassPsionic, game.ClassMystic} {
+		t.Run(game.ClassNames[class], func(t *testing.T) {
+			s := makeTestSession(t, makeTestManager(t), "Caster", 1001, true)
+			s.player.Class = class
+
+			if err := cmdWill(s, nil); err != nil {
+				t.Fatalf("cmdWill empty: %v", err)
+			}
+			if got := readSessionText(t, s); got != "Will what?\r\n" {
+				t.Fatalf("empty output = %q", got)
+			}
+
+			if err := cmdWill(s, []string{"flame", "arrow"}); err != nil {
+				t.Fatalf("cmdWill unquoted: %v", err)
+			}
+			if got := readSessionText(t, s); got != "Psionic powers must be enclosed in the symbols: '\r\n" {
+				t.Fatalf("unquoted output = %q", got)
+			}
+
+			if err := cmdWill(s, []string{"'frobnicate'"}); err != nil {
+				t.Fatalf("cmdWill unknown: %v", err)
+			}
+			if got := readSessionText(t, s); got != "Will what?!?\r\n" {
+				t.Fatalf("unknown output = %q", got)
+			}
+
+			prepareCaster(s, class, "mind poke", 95)
+			if err := cmdWill(s, []string{"'mind", "poke'"}); err != nil {
+				t.Fatalf("cmdWill known power: %v", err)
+			}
+			if got := readSessionText(t, s); got != "Upon who should the power be willed?\r\n" {
+				t.Fatalf("known power output = %q", got)
+			}
+		})
+	}
+}
+
+func TestPsionicCastRejectsLiteralCast(t *testing.T) {
+	s := makeTestSession(t, makeTestManager(t), "Psion", 1001, true)
+	s.player.Class = game.ClassPsionic
+	if err := cmdCast(s, nil); err != nil {
+		t.Fatalf("cmdCast: %v", err)
+	}
+	if got := readSessionText(t, s); got != "Psionics 'will' things, not 'cast' them!\r\n" {
+		t.Fatalf("output = %q", got)
+	}
+}
+
+func TestCastSpellContractSmartnessGate(t *testing.T) {
+	s := makeTestSession(t, makeTestManager(t), "Caster", 1001, true)
+	prepareCaster(s, game.ClassCleric, "cure light", 100)
+	s.player.Stats.Int = 0
+
+	original := castNumber
+	castNumber = func(minVal, maxVal int) int { return minVal }
+	t.Cleanup(func() { castNumber = original })
+
+	if err := cmdCast(s, []string{"'cure", "light'"}); err != nil {
+		t.Fatalf("cmdCast: %v", err)
+	}
+	if got := readSessionText(t, s); got != "You're not smart enough to cast!\r\n" {
+		t.Fatalf("output = %q", got)
+	}
+	if got := s.player.GetMana(); got != 100 {
+		t.Errorf("mana = %d, want unchanged 100", got)
+	}
+	if got := s.player.GetWaitState(); got != 0 {
+		t.Errorf("wait = %d, want unchanged 0", got)
+	}
+}
+
+func TestCastSpellContractUsesPowerGates(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Caster", 1001, true)
+	prepareCaster(s, game.ClassMystic, "mindpoke", 100)
+	master := game.NewPlayer(2, "Master", 1001)
+
+	tests := []struct {
+		name   string
+		info   *spells.SpellInfo
+		setup  func()
+		target castTarget
+		want   string
+	}{
+		{
+			name:   "self only",
+			info:   &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: spells.TarSelfOnly}},
+			target: castTarget{character: master, found: true},
+			want:   "You can only will this power upon yourself!\r\n",
+		},
+		{
+			name:   "not self",
+			info:   &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: spells.TarNotSelf}},
+			target: castTarget{character: s.player, found: true},
+			want:   "You cannot will this power upon yourself!\r\n",
+		},
+		{
+			name:   "not grouped",
+			info:   &spells.SpellInfo{Routines: spells.SpellRoutines{Routines: spells.RoutineGroups}},
+			target: castTarget{character: s.player, found: true},
+			want:   "You cannot use this power if you are not in a group!\r\n",
+		},
+		{
+			name: "charmed master",
+			setup: func() {
+				s.player.SetAffect(game.AffCharm, true)
+				s.player.SetFollowing(master.Name)
+			},
+			info:   &spells.SpellInfo{},
+			target: castTarget{character: master, found: true},
+			want:   "You are afraid you might hurt your master!\r\n",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s.player.SetAffect(game.AffCharm, false)
+			s.player.SetFollowing("")
+			if tc.setup != nil {
+				tc.setup()
+			}
+			if ok := checkCastSpellContract(s, tc.info, tc.target); ok {
+				t.Fatal("checkCastSpellContract returned true, want false")
+			}
+			if got := readSessionText(t, s); got != tc.want {
+				t.Fatalf("output = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestCastWeightPenaltyMatchesCThresholds(t *testing.T) {
+	tests := []struct {
+		name   string
+		weight int
+		want   int
+	}{
+		{name: "empty", want: 0},
+		{name: "ratio at least four", weight: 70, want: 0},
+		{name: "ratio three", weight: 93, want: 5},
+		{name: "ratio two", weight: 140, want: 7},
+		{name: "ratio one", weight: 280, want: 10},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := game.NewPlayer(1, "Caster", 1001)
+			p.Stats.Str = 18
+			p.Stats.StrAdd = 50
+			p.Inventory.SetCapacity(p.GetStr(), p.GetStrAdd(), p.GetDex(), p.GetLevel())
+			if tc.weight > 0 {
+				weight := tc.weight
+				if err := p.Inventory.AddItem(&game.ObjectInstance{WeightOverride: &weight}); err != nil {
+					t.Fatalf("AddItem: %v", err)
+				}
+			}
+			if got := castWeightPenalty(p); got != tc.want {
+				t.Errorf("castWeightPenalty(%d) = %d, want %d", tc.weight, got, tc.want)
+			}
+		})
 	}
 }
 

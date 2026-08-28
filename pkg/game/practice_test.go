@@ -59,8 +59,9 @@ func TestSplSkl(t *testing.T) {
 // FindSkillNum resolves display names to numbers (find_skill_num).
 func TestFindSkillNum(t *testing.T) {
 	cases := map[string]int{
-		"kick": 134,
-		"bash": 132,
+		"kick":  134,
+		"bash":  132,
+		"cu li": 16,
 	}
 	for name, want := range cases {
 		if got := FindSkillNum(name); got != want {

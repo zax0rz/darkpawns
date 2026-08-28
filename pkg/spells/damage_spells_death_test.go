@@ -23,6 +23,7 @@ type spellCombatant struct {
 	name     string
 	npc      bool
 	level    int
+	flags    uint64
 	hp       int
 	maxHP    int
 	room     int
@@ -33,6 +34,7 @@ type spellCombatant struct {
 
 func (c *spellCombatant) GetName() string                { return c.name }
 func (c *spellCombatant) IsNPC() bool                    { return c.npc }
+func (c *spellCombatant) GetFlags() uint64               { return c.flags }
 func (c *spellCombatant) GetRoom() int                   { return c.room }
 func (c *spellCombatant) GetLevel() int                  { return c.level }
 func (c *spellCombatant) GetHP() int                     { return c.hp }
@@ -138,6 +140,58 @@ func TestInflictDamage_NonLethalDoesNotDie(t *testing.T) {
 	}
 	if victim.GetFighting() != caster.GetName() {
 		t.Errorf("victim fighting = %q, want caster (spell engages combat even when non-lethal)", victim.GetFighting())
+	}
+}
+
+func TestInflictDamageHonorsLowLevelPlayerProtection(t *testing.T) {
+	tests := []struct {
+		name       string
+		casterLvl  int
+		victimLvl  int
+		victimFlag uint64
+		wantHP     int
+		wantMsg    string
+	}{
+		{
+			name:      "experienced caster cannot hit protected newbie",
+			casterLvl: 30,
+			victimLvl: 1,
+			wantHP:    100,
+			wantMsg:   "Ancient forces protect Victim from your wrath!\r\n",
+		},
+		{
+			name:      "newbie caster cannot attack player",
+			casterLvl: 1,
+			victimLvl: 30,
+			wantHP:    100,
+			wantMsg:   "You are not experienced enough to attack Victim!\r\n",
+		},
+		{
+			name:       "outlaw newbie remains attackable",
+			casterLvl:  30,
+			victimLvl:  1,
+			victimFlag: 1,
+			wantHP:     50,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &spellCombatant{name: "Caster", level: tc.casterLvl, hp: 100, maxHP: 100, pos: combat.PosStanding}
+			victim := &spellCombatant{name: "Victim", level: tc.victimLvl, flags: tc.victimFlag, hp: 100, maxHP: 100, pos: combat.PosStanding}
+			world := &spellDeathWorld{}
+
+			inflictDamage(caster, victim, 50, testSpellNum, world)
+
+			if victim.hp != tc.wantHP {
+				t.Errorf("victim HP = %d, want %d", victim.hp, tc.wantHP)
+			}
+			if tc.wantMsg != "" {
+				if len(caster.messages) != 1 || caster.messages[0] != tc.wantMsg {
+					t.Errorf("caster messages = %q, want %q", caster.messages, tc.wantMsg)
+				}
+			}
+		})
 	}
 }
 
