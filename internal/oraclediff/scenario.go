@@ -44,6 +44,7 @@ type Scenario struct {
 	RoomExitFixtures []RoomExitFixture
 	RoomFlagFixtures []RoomFlagFixture
 	RoomSectors      []RoomSectorFixture
+	HouseControls    []HouseControlFixture
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
@@ -129,6 +130,18 @@ type RoomSectorFixture struct {
 	Sector   int
 }
 
+// HouseControlFixture adds one valid player-house record to both disposable
+// engines. The C oracle consumes its native binary house-control record while
+// the Go port consumes the equivalent JSON record.
+type HouseControlFixture struct {
+	VNum      int
+	Atrium    int
+	ExitNum   int
+	Owner     int64
+	PortOwner int64
+	Key       int
+}
+
 // ProbeBlock is one probe command and the raw output it produced.
 type ProbeBlock struct {
 	Command string
@@ -165,6 +178,8 @@ type AudienceProbeBlock struct {
 //	replace-room-exits 8162 north 8161 1 gate
 //	set-room-flag 8161 1 on  # ROOM_DEATH
 //	set-room-sector 8161 7   # SECT_WATER_NOSWIM
+//	house-control 19676 19674 south 1 19604
+//	house-control 19676 19674 south 1 0 19604 # optional Go-port owner
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
 //	[peer-drop]         # close one named passive peer before [probe]
@@ -281,6 +296,26 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sector, sectorErr := strconv.Atoi(fields[2])
 				if roomErr == nil && sectorErr == nil && roomVNum > 0 && sector >= 0 && sector <= 15 {
 					sc.RoomSectors = append(sc.RoomSectors, RoomSectorFixture{RoomVNum: roomVNum, Sector: sector})
+					continue
+				}
+			}
+			if (len(fields) == 6 || len(fields) == 7) && strings.EqualFold(fields[0], "house-control") {
+				vnum, vnumErr := strconv.Atoi(fields[1])
+				atrium, atriumErr := strconv.Atoi(fields[2])
+				direction := strings.ToLower(fields[3])
+				owner, ownerErr := strconv.ParseInt(fields[4], 10, 64)
+				portOwner := owner
+				var portOwnerErr error
+				keyField := 5
+				if len(fields) == 7 {
+					portOwner, portOwnerErr = strconv.ParseInt(fields[5], 10, 64)
+					keyField = 6
+				}
+				key, keyErr := strconv.Atoi(fields[keyField])
+				if vnumErr == nil && atriumErr == nil && ownerErr == nil && portOwnerErr == nil && keyErr == nil && vnum > 0 && atrium > 0 && owner > 0 && portOwner >= 0 && key > 0 && validFixtureDirection(direction) && fixtureDirectionIndex(direction) >= 0 {
+					sc.HouseControls = append(sc.HouseControls, HouseControlFixture{
+						VNum: vnum, Atrium: atrium, ExitNum: fixtureDirectionIndex(direction), Owner: owner, PortOwner: portOwner, Key: key,
+					})
 					continue
 				}
 			}
@@ -409,6 +444,25 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 	}
 	return sc, nil
+}
+
+func fixtureDirectionIndex(direction string) int {
+	switch direction {
+	case "north":
+		return 0
+	case "east":
+		return 1
+	case "south":
+		return 2
+	case "west":
+		return 3
+	case "up":
+		return 4
+	case "down":
+		return 5
+	default:
+		return -1
+	}
 }
 
 func validFixtureDirection(direction string) bool {

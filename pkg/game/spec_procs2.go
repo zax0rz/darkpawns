@@ -126,7 +126,7 @@ func isOwnerGrouped(w *World, ch *Player, roomVNum int) bool {
 
 // tellFromMob sends a tell-style message from a mob to a player.
 func tellFromMob(me *MobInstance, target *Player, msg string) {
-	target.SendMessage(fmt.Sprintf("%s tells you, '%s'\r\n", me.GetShortDesc(), msg))
+	target.SendMessage(fmt.Sprintf("%s tells you, '%s'\r\n", cap(me.GetShortDesc()), msg))
 }
 
 // mobName returns the display name for a mob — use ShortDesc for display.
@@ -1103,40 +1103,54 @@ func specNoMoveEast(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 }
 
 // ================================================================
-// specKeySeller — Sells an old rusty key for 50 gold
+// specKeySeller — Sells the configured house key to its owner.
+// C: spec_procs2.c:key_seller (1870-1932)
 // ================================================================
 func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if w == nil || ch == nil || me == nil || ch.IsNPC() {
 		return false
 	}
-	if cmd == "list" {
-		sendToChar(ch, "You can buy an 'old rusty key' for 50 gold.\r\n")
+	if cmd != "buy" && cmd != "list" {
+		return false
+	}
+
+	i := findHouse(w.HouseControl, me.GetRoomVNum())
+	if i < 0 {
+		return false
+	}
+	house := w.HouseControl[i]
+	if int64(ch.GetID()) != house.Owner {
+		tellFromMob(me, ch, "Sorry, I only serve the house owner.")
 		return true
 	}
+
+	a := strings.TrimSpace(arg)
 	if cmd == "buy" {
-		a := strings.TrimSpace(arg)
-		if a == "" {
-			return false
-		}
-		if strings.Contains(arg, "key") {
-			if ch.GetGold() < 50 {
-				sendToChar(ch, "You don't have enough gold!\r\n")
-				return true
-			}
-			ch.SetGold(ch.GetGold() - 50)
-			if obj, err := w.SpawnObject(5181, ch.GetRoom()); err == nil {
-				if ch.Inventory != nil {
-					if err := ch.Inventory.addItem(obj); err != nil {
-						slog.Warn("spec proc item grant failed", "vnum", 5181, "player", ch.Name, "error", err)
-					}
-				}
-			}
-			sendToChar(ch, "You buy an old rusty key.\r\n")
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s buys an old rusty key.", ch.GetName()))
+		if a != "key" {
+			tellFromMob(me, ch, "I only sell keys, currently.")
 			return true
 		}
+		if ch.GetGold() < 10000 {
+			tellFromMob(me, ch, "You can't afford a key.")
+			return true
+		}
+		obj, err := w.SpawnObject(house.Key, -1)
+		if err != nil {
+			return false
+		}
+		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
+			slog.Warn("key seller item grant failed", "vnum", house.Key, "player", ch.Name, "error", err)
+			w.ExtractObject(obj, -1)
+			return false
+		}
+		Act(w, true, me, ch, obj, nil, "$n produces $p from the folds of $s long robe and hands it to $N.", "", ToNotVict)
+		Act(nil, false, me, ch, obj, nil, "$n produces $p from the folds of $s long robe and hands it to you.", "", ToVict)
+		ch.SetGold(ch.GetGold() - 10000)
+		return true
 	}
-	return false
+
+	tellFromMob(me, ch, "You can buy a key for 10,000 gold coins.")
+	return true
 }
 
 // ================================================================

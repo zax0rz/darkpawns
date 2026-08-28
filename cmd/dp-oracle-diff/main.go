@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -134,7 +136,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -208,10 +210,16 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			return fmt.Errorf("apply Go port room fixtures: %w", err)
 		}
 	}
+	if err := applyOracleHouseControlFixtures(oracleData, scenario.HouseControls); err != nil {
+		return fmt.Errorf("apply C oracle house-control fixtures: %w", err)
+	}
 
 	goWork := filepath.Join(tmp, "go-work")
 	if err := os.MkdirAll(filepath.Join(goWork, "data"), 0o750); err != nil {
 		return fmt.Errorf("create Go runtime directory: %w", err)
+	}
+	if err := applyGoHouseControlFixtures(filepath.Dir(goWorld), scenario.HouseControls); err != nil {
+		return fmt.Errorf("apply Go port house-control fixtures: %w", err)
 	}
 	oraclePort, goTelnetPort, goHTTPPort, err := allocatePorts()
 	if err != nil {
@@ -415,6 +423,79 @@ func prepareOracleData(source, destination string, emptyPlayers bool) error {
 	playersPath := filepath.Join(destination, "etc", "players")
 	if err := os.WriteFile(playersPath, nil, 0o600); err != nil {
 		return fmt.Errorf("empty disposable C oracle player file: %w", err)
+	}
+	return nil
+}
+
+const cHouseControlRecordSize = 520
+
+// applyOracleHouseControlFixtures writes the native 64-bit Linux C record
+// consumed by House_boot (src/house.h:31-47). The oracle and the Go fixture
+// deliberately share only the semantic fields used by key_seller; all other
+// record bytes remain zero, just as a newly built C house record does.
+func applyOracleHouseControlFixtures(oracleData string, fixtures []oraclediff.HouseControlFixture) error {
+	if len(fixtures) == 0 {
+		return nil
+	}
+	data := make([]byte, 0, len(fixtures)*cHouseControlRecordSize)
+	for _, fixture := range fixtures {
+		record := make([]byte, cHouseControlRecordSize)
+		binary.LittleEndian.PutUint32(record[0:], uint32(fixture.VNum))
+		binary.LittleEndian.PutUint32(record[4:], uint32(fixture.Atrium))
+		binary.LittleEndian.PutUint32(record[8:], uint32(fixture.ExitNum))
+		binary.LittleEndian.PutUint32(record[24:], 0) // HOUSE_PRIVATE
+		binary.LittleEndian.PutUint64(record[32:], uint64(fixture.Owner))
+		binary.LittleEndian.PutUint32(record[40:], 0) // no guests
+		binary.LittleEndian.PutUint32(record[456:], uint32(fixture.Key))
+		data = append(data, record...)
+	}
+	path := filepath.Join(oracleData, "etc", "hcontrol")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
+}
+
+func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseControlFixture) error {
+	if len(fixtures) == 0 {
+		return nil
+	}
+	type houseControl struct {
+		VNum        int       `json:"vnum"`
+		Atrium      int       `json:"atrium"`
+		ExitNum     int       `json:"exit_num"`
+		BuiltOn     int64     `json:"built_on"`
+		Mode        int       `json:"mode"`
+		Owner       int64     `json:"owner"`
+		NumOfGuests int       `json:"num_of_guests"`
+		Guests      [50]int64 `json:"guests"`
+		LastPayment int64     `json:"last_payment"`
+		Key         int       `json:"key"`
+		Spare1      int64     `json:"spare1"`
+		Spare2      int64     `json:"spare2"`
+		Spare3      int64     `json:"spare3"`
+		Spare4      int64     `json:"spare4"`
+		Spare5      int64     `json:"spare5"`
+		Spare6      int64     `json:"spare6"`
+		Spare7      int64     `json:"spare7"`
+	}
+	records := make([]houseControl, 0, len(fixtures))
+	for _, fixture := range fixtures {
+		records = append(records, houseControl{
+			VNum: fixture.VNum, Atrium: fixture.Atrium, ExitNum: fixture.ExitNum, Owner: fixture.PortOwner, Key: fixture.Key,
+		})
+	}
+	data, err := json.MarshalIndent(records, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal house controls: %w", err)
+	}
+	houseDir := filepath.Join(goWork, "house")
+	if err := os.MkdirAll(houseDir, 0o750); err != nil {
+		return fmt.Errorf("create %s: %w", houseDir, err)
+	}
+	path := filepath.Join(houseDir, "house_control.json")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
 }

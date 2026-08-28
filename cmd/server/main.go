@@ -184,6 +184,7 @@ func main() {
 		os.Exit(1)
 	}
 	gameWorld.WorldPath = *worldDir
+	gameWorld.PostInit()
 
 	// Connect to database
 	slog.Info("Connecting to database...")
