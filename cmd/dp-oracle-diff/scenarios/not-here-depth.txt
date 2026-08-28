@@ -1,0 +1,55 @@
+# depth-case: not_here.balance
+# depth-case: not_here.generic-family
+# C-first vehicle for the generic do_not_here handler (act.other.c:206-211).
+# The hometown room has no special procedure, so the first-player God reaches
+# the registered fallback for every command below. Arguments must be ignored.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Notheregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Notheregod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+balance anything
+check anything
+collect anything
+deposit anything
+hire anything
+mail anything
+offer anything
+recharge anything
+receive anything
+remort anything
+rent anything
+retrieve anything
+stable anything
+value anything
+withdraw anything

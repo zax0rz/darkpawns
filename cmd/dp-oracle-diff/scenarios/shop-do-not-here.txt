@@ -5,6 +5,7 @@
 # shopkeeper is present. With no shop in the room, do_not_here fires and prints
 # "Sorry, but you cannot do that here!\r\n" — regardless of arguments, because
 # do_not_here is the registered handler and never parses args.
+# depth-case: not_here.shop-fallback
 #
 # The Go port (shop_cmds.go) formerly checked shop presence but emitted an
 # invented "There is no shop here." and, for buy/sell, checked args BEFORE the

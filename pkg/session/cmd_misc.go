@@ -147,6 +147,13 @@ func cmdAFK(s *Session, args []string) error {
 	return nil
 }
 
+// cmdNotHere is C's do_not_here fallback for commands whose real behavior is
+// supplied by a room special procedure (act.other.c:206-211).
+func cmdNotHere(s *Session, _ []string) error {
+	s.sendText("Sorry, but you cannot do that here!\r\n")
+	return nil
+}
+
 // cmdClan — player-facing clan management (ported from clan.c)
 func cmdClan(s *Session, args []string) error {
 	s.manager.world.ExecClanCommand(s.player, strings.Join(args, " "))

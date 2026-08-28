@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_not_here	balance	not_here.balance	D1	command	oracle-green-multiseed	not-here-depth@1,2,3,5,8	interpreter.c:346; act.other.c:206-211	The first un-manifested table family reaches C's generic fallback with arguments ignored.
+do_not_here	balance/check/collect/deposit/hire/mail/offer/recharge/receive/remort/rent/retrieve/stable/value/withdraw	not_here.generic-family	D1	command	oracle-green-multiseed	not-here-depth@1,2,3,5,8	interpreter.c:346-829; act.other.c:206-211	All fifteen previously unregistered do_not_here names now resolve through the same exact fallback while retaining their C-derived gates.
+do_not_here	list/buy/sell	not_here.shop-fallback	D3	command	oracle-green	shop-do-not-here	interpreter.c:369,539,680; act.other.c:206-211	Existing shop handlers preserve the same generic fallback when no room shop special procedure intercepts the command.
