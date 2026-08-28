@@ -396,6 +396,8 @@ func init() {
 	registerCommand("nonewbie", wrapToggle("nonewbie"), "Toggle newbie channel.")
 	registerCommand("noctell", wrapToggle("noctell"), "Toggle deafness to clan tells.")
 	registerCommand("nobroadcast", wrapToggle("nobroadcast"), "Toggle deafness to broadcasts.")
+	registerCommand("ident", wrapToggle("ident"), "Toggle ident lookups.")
+	registerCommand("slowns", wrapToggle("slowns"), "Toggle nameserver resolution.")
 	registerCommand("bug", wrapArgs(cmdBug), "Report a bug.")
 	registerCommand("typo", wrapArgs(cmdTypo), "Report a typo.")
 	registerCommand("idea", wrapArgs(cmdIdea), "Submit an idea.")

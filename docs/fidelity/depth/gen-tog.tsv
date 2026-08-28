@@ -1,0 +1,31 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_tog	brief/compact/notell/noauction/noshout/nogossip/nograts/quest/nonewbie/nobroadcast	gen-tog.toggle-matrix	D3	command	oracle-green	gen-tog-depth	interpreter.c:366-666; act.other.c:1142-1273	All player-visible preference toggles are exercised in both directions with exact C messages.
+do_gen_tog	brief	gen-tog.brief	D2	command	oracle-green	gen-tog-depth	interpreter.c:366; act.other.c:1215-1217	Brief mode on/off messages and PRF_BRIEF toggling match C.
+do_gen_tog	brief	gen-tog.argument-ignored	D1	command	oracle-green	gen-tog-depth	The C handler ignores argument; trailing words do not alter the toggle path.
+do_gen_tog	compact	gen-tog.compact	D2	command	oracle-green	gen-tog-depth	Compact mode on/off messages and PRF_COMPACT toggling match C.
+do_gen_tog	notell	gen-tog.notell	D2	command	oracle-green	gen-tog-depth	Tell deafness on/off messages and PRF_NOTELL toggling match C.
+do_gen_tog	noauction	gen-tog.noauction	D2	command	oracle-green	gen-tog-depth	Auction deafness on/off messages and PRF_NOAUCT toggling match C.
+do_gen_tog	noshout	gen-tog.noshout	D2	command	oracle-green	gen-tog-depth	Shout deafness on/off messages and PRF_DEAF toggling match C.
+do_gen_tog	nogossip	gen-tog.nogossip	D2	command	oracle-green	gen-tog-depth	Gossip deafness on/off messages and PRF_NOGOSS toggling match C.
+do_gen_tog	nograts	gen-tog.nograts	D2	command	oracle-green	gen-tog-depth	Congratulation-message deafness on/off messages and PRF_NOGRATZ toggling match C.
+do_gen_tog	nowiz	gen-tog.nowiz	D2	command	oracle-green	gen-tog-depth	The Implementor vehicle reaches the privileged toggle and proves both exact messages.
+do_gen_tog	quest	gen-tog.quest	D2	command	oracle-green	gen-tog-depth	Quest participation on/off messages and PRF_QUEST toggling match C.
+do_gen_tog	roomflags	gen-tog.roomflags	D2	command	oracle-green	gen-tog-depth	Room-flag display on/off messages and PRF_ROOMFLAGS toggling match C.
+do_gen_tog	norepeat	gen-tog.norepeat	D2	command	oracle-green	gen-tog-depth	Communication-repeat on/off messages and PRF_NOREPEAT toggling match C.
+do_gen_tog	holylight	gen-tog.holylight	D2	command	oracle-green	gen-tog-depth	HolyLight mode on/off messages and PRF_HOLYLIGHT toggling match C.
+do_gen_tog	nonewbie	gen-tog.nonewbie	D2	command	oracle-green	gen-tog-depth	Newbie-channel on/off messages and PRF_NONEWBIE toggling match C.
+do_gen_tog	nobroadcast	gen-tog.nobroadcast	D2	command	oracle-green	gen-tog-depth	Broadcast-channel on/off messages and PRF_NOBROAD toggling match C.
+do_gen_tog	roomflags/holylight	gen-tog.immortal-preferences	D2	command	oracle-green	gen-tog-depth	The Implementor vehicle reaches the two immortal preference toggles and proves both directions.
+do_gen_tog	noctell	gen-tog.noctell	D2	command	oracle-green	gen-tog-depth	The Implementor vehicle reaches the clan gate and preserves C's no-membership refusal.
+do_gen_tog	noctell	gen-tog.clan-gate	D1	command	oracle-green	gen-tog-depth	A clanless Implementor still receives C's clan-membership refusal before the flag switch.
+do_gen_tog	nosummon	gen-tog.nosummon	D4	state	oracle-green	gen-tog-depth	The summon-protection toggle emits the C line and the vehicle drains its two-round wait with pulse padding.
+do_gen_tog	nosummon	gen-tog.nosummon-wait	D4	state	unit-green	TestDoGenTogNoSummonWaitState	act.other.c:1208-1210	SCMD_NOSUMMON applies PULSE_VIOLENCE*2 after the preference flip.
+do_gen_tog	ident	gen-tog.ident	D4	state	oracle-green	gen-tog-depth	The previously unregistered LVL_IMPL-1 command now emits C's exact global ident messages in both directions.
+do_gen_tog	slowns	gen-tog.slowns	D4	state	oracle-green	gen-tog-depth	The previously unregistered LVL_IMPL-1 command now emits C's exact nameserver messages in both directions.
+do_gen_tog	ident/slowns	gen-tog.global-state	D4	state	unit-green	TestDoGenTogGlobalAdminToggles	act.other.c:1251-1258; config.c:202,282	Direct tests pin the process-wide ident and nameserver state transitions and exact output without inventing reverse-DNS behavior.
+do_gen_tog	noctell/nowiz	gen-tog.internal-gates	D2	state	unit-green	TestDoGenTogNoCTellClanGate	act.other.c:1194-1204	The handler-level clan and chosen/immortal gates are covered by focused tests; dispatcher gates remain owned by command registration.
+do_gen_tog	brief/compact/notell/noauction/noshout/nogossip/nograts/quest/roomflags/norepeat/holylight/nonewbie/noctell/nobroadcast	gen-tog.preference-state	D4	state	unit-green	TestDoGenTogRealCommandNames	act.other.c:1208-1268	The PRF_TOG_CHK state transitions and C on-message selection are covered for each mapped preference.
+do_gen_tog	ident	gen-tog.ident-state	D4	state	unit-green	TestDoGenTogGlobalAdminToggles	act.other.c:1257-1258; config.c:282	The ident process-global switch is toggled in both directions with C's exact messages.
+do_gen_tog	slowns	gen-tog.slowns-state	D4	state	unit-green	TestDoGenTogGlobalAdminToggles	act.other.c:1251-1252; config.c:202	The nameserver process-global switch is toggled in both directions with C's exact messages.
+do_gen_tog	noctell	gen-tog.clan-gate-state	D2	state	unit-green	TestDoGenTogNoCTellClanGate	act.other.c:1194-1198	The clanless early return leaves PRF_NOCTELL unchanged.
+do_gen_tog	nowiz	gen-tog.nowiz-internal-gate	D2	state	unit-green	TestDoGenTogImmortalGated	act.other.c:1200-1204	The direct handler defense rejects an unchosen mortal with Huh?!? before toggling.

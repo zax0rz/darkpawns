@@ -180,6 +180,16 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 // is its own top-level command rather than a "toggle <name>" dispatcher.
 // ---------------------------------------------------------------------------
 
+// These are process-wide C configuration toggles (config.c:202,282), rather
+// than player preference bits. They are kept here because do_gen_tog is the
+// only C command that mutates them. The Go server currently has no ident or
+// reverse-DNS worker, but the command state and player-facing bytes remain
+// part of the command surface.
+var (
+	nameserverIsSlow = true
+	identEnabled     bool
+)
+
 func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if isPlayerNPC(ch, me) {
 		return true
@@ -191,23 +201,25 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 	// switched ON (PRF_TOG_CHK returned the new state = on), index 1 when it
 	// is being switched OFF. SCMD_* constants are from interpreter.h:117-136.
 	toggleMessages := map[string][2]string{
-		"nosummon":    {"You may now be summoned by other players.\r\n", "You are now safe from summoning by other players.\r\n"},         // SCMD_NOSUMMON
-		"nohassle":    {"Nohassle enabled.\r\n", "Nohassle disabled.\r\n"},                                                                // SCMD_NOHASSLE
-		"brief":       {"Brief mode on.\r\n", "Brief mode off.\r\n"},                                                                      // SCMD_BRIEF
-		"compact":     {"Compact mode on.\r\n", "Compact mode off.\r\n"},                                                                  // SCMD_COMPACT
-		"notell":      {"You are now deaf to tells.\r\n", "You can now hear tells.\r\n"},                                                  // SCMD_NOTELL
-		"noauction":   {"You are now deaf to auctions.\r\n", "You can now hear auctions.\r\n"},                                            // SCMD_NOAUCTION
-		"noshout":     {"You are now deaf to shouts.\r\n", "You can now hear shouts.\r\n"},                                                // SCMD_DEAF
-		"nogossip":    {"You are now deaf to gossip.\r\n", "You can now hear gossip.\r\n"},                                                // SCMD_NOGOSSIP
-		"nograts":     {"You are now deaf to the congratulation messages.\r\n", "You can now hear the congratulation messages.\r\n"},      // SCMD_NOGRATZ
-		"nowiz":       {"You are now deaf to the Wiz-channel.\r\n", "You can now hear the Wiz-channel.\r\n"},                              // SCMD_NOWIZ
-		"quest":       {"Okay, you are part of the Quest!\r\n", "You are no longer part of the Quest.\r\n"},                               // SCMD_QUEST
-		"roomflags":   {"You will now see the room flags.\r\n", "You will no longer see the room flags.\r\n"},                             // SCMD_ROOMFLAGS
-		"norepeat":    {"You will no longer have your communication repeated.\r\n", "You will now have your communication repeated.\r\n"}, // SCMD_NOREPEAT
-		"holylight":   {"HolyLight mode on.\r\n", "HolyLight mode off.\r\n"},                                                              // SCMD_HOLYLIGHT
-		"nonewbie":    {"Newbie channel off.\r\n", "Newbie channel on.\r\n"},                                                              // SCMD_NONEWBIE
-		"noctell":     {"Clan tells are now off.\r\n", "Clan tells are now on.\r\n"},                                                      // SCMD_NOCTELL
-		"nobroadcast": {"Broadcast channel is now off.\r\n", "Broadcast channel is now on.\r\n"},                                          // SCMD_NOBROAD
+		"nosummon":    {"You may now be summoned by other players.\r\n", "You are now safe from summoning by other players.\r\n"},                                                   // SCMD_NOSUMMON
+		"nohassle":    {"Nohassle enabled.\r\n", "Nohassle disabled.\r\n"},                                                                                                          // SCMD_NOHASSLE
+		"brief":       {"Brief mode on.\r\n", "Brief mode off.\r\n"},                                                                                                                // SCMD_BRIEF
+		"compact":     {"Compact mode on.\r\n", "Compact mode off.\r\n"},                                                                                                            // SCMD_COMPACT
+		"notell":      {"You are now deaf to tells.\r\n", "You can now hear tells.\r\n"},                                                                                            // SCMD_NOTELL
+		"noauction":   {"You are now deaf to auctions.\r\n", "You can now hear auctions.\r\n"},                                                                                      // SCMD_NOAUCTION
+		"noshout":     {"You are now deaf to shouts.\r\n", "You can now hear shouts.\r\n"},                                                                                          // SCMD_DEAF
+		"nogossip":    {"You are now deaf to gossip.\r\n", "You can now hear gossip.\r\n"},                                                                                          // SCMD_NOGOSSIP
+		"nograts":     {"You are now deaf to the congratulation messages.\r\n", "You can now hear the congratulation messages.\r\n"},                                                // SCMD_NOGRATZ
+		"nowiz":       {"You are now deaf to the Wiz-channel.\r\n", "You can now hear the Wiz-channel.\r\n"},                                                                        // SCMD_NOWIZ
+		"quest":       {"Okay, you are part of the Quest!\r\n", "You are no longer part of the Quest.\r\n"},                                                                         // SCMD_QUEST
+		"roomflags":   {"You will now see the room flags.\r\n", "You will no longer see the room flags.\r\n"},                                                                       // SCMD_ROOMFLAGS
+		"norepeat":    {"You will no longer have your communication repeated.\r\n", "You will now have your communication repeated.\r\n"},                                           // SCMD_NOREPEAT
+		"holylight":   {"HolyLight mode on.\r\n", "HolyLight mode off.\r\n"},                                                                                                        // SCMD_HOLYLIGHT
+		"nonewbie":    {"Newbie channel off.\r\n", "Newbie channel on.\r\n"},                                                                                                        // SCMD_NONEWBIE
+		"noctell":     {"Clan tells are now off.\r\n", "Clan tells are now on.\r\n"},                                                                                                // SCMD_NOCTELL
+		"nobroadcast": {"Broadcast channel is now off.\r\n", "Broadcast channel is now on.\r\n"},                                                                                    // SCMD_NOBROAD
+		"slowns":      {"Nameserver_is_slow changed to YES; sitenames will no longer be resolved.\r\n", "Nameserver_is_slow changed to NO; IP addresses will now be resolved.\r\n"}, // SCMD_SLOWNS
+		"ident":       {"Ident changed to YES;  remote usernames lookups will be attempted.\r\n", "Ident changed to NO;  remote username lookups will not be attempted.\r\n"},       // SCMD_IDENT
 	}
 
 	toggleFlags := map[string]int{
@@ -230,11 +242,6 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		"nobroadcast": PrfNoBroad,
 	}
 
-	flag, ok := toggleFlags[cmd]
-	if !ok {
-		ch.SendMessage("Unknown toggle.\r\n")
-		return true
-	}
 	msgs, ok := toggleMessages[cmd]
 	if !ok {
 		ch.SendMessage("Unknown toggle.\r\n")
@@ -256,15 +263,31 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	// PRF_TOG_CHK: toggle the bit and capture the NEW state. result==1 means the
-	// flag is now ON → print TOG_ON (msgs[0]); result==0 → print TOG_OFF (msgs[1]).
 	var result bool
-	if ch.GetFlags()&(1<<flag) != 0 {
-		ch.SetPlrFlag(flag, false)
-		result = false
-	} else {
-		ch.SetPlrFlag(flag, true)
-		result = true
+	switch cmd {
+	case "ident":
+		identEnabled = !identEnabled
+		result = identEnabled
+	case "slowns":
+		nameserverIsSlow = !nameserverIsSlow
+		result = nameserverIsSlow
+	default:
+		flag, ok := toggleFlags[cmd]
+		if !ok {
+			ch.SendMessage("Unknown toggle.\r\n")
+			return true
+		}
+
+		// PRF_TOG_CHK: toggle the bit and capture the NEW state. result==1 means
+		// the flag is now ON → print TOG_ON (msgs[0]); result==0 → print TOG_OFF
+		// (msgs[1]).
+		if ch.GetFlags()&(1<<flag) != 0 {
+			ch.SetPlrFlag(flag, false)
+			result = false
+		} else {
+			ch.SetPlrFlag(flag, true)
+			result = true
+		}
 	}
 
 	// SCMD_NOSUMMON sets a WAIT_STATE of PULSE_VIOLENCE*2 — act.other.c:1210.
