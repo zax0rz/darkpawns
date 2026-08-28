@@ -1,0 +1,64 @@
+# depth-case: alias.list-empty
+# depth-case: alias.delete-missing
+# depth-case: alias.add-simple
+# depth-case: alias.list-format
+# depth-case: alias.simple-args-discarded
+# depth-case: alias.redefine
+# depth-case: alias.delete-existing
+# depth-case: alias.protect-self
+# depth-case: alias.complex-semicolon
+# depth-case: alias.complex-positional
+# depth-case: alias.complex-glob
+# C-first vehicle for src/interpreter.c:981-1038 and 1102-1141. It proves the
+# player-facing alias manager and the normal command-interpreter expansion
+# path without editing either oracle tree.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aliasdeep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aliasdeep
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+alias
+alias ghost
+alias l score
+alias
+l nowhere
+alias l look
+alias
+alias l
+alias alias look
+alias c alias;alias
+c
+alias p say $1
+p hello world
+alias g say $*
+g hello world

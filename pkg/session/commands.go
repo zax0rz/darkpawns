@@ -505,14 +505,14 @@ func SplitCommandInput(input string) (string, []string) {
 
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
-	// C command_interpreter draws number(0,3) at the top of every playing
-	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890).
-	// This must precede moderation, alias expansion, and command lookup.
-	// #nosec G404 — game RNG, not cryptographic
-	if s.player != nil && commandNumber(0, 3) == 0 {
-		s.player.SetAffect(game.AffHide, false)
-	}
+	return executeCommand(s, cmdStr, args, true)
+}
 
+// executeCommand mirrors comm.c's aliased flag. A normal input line may
+// expand one player alias; commands placed at the front of the queue by a
+// complex alias are executed with alias expansion disabled to prevent
+// recursive aliases.
+func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) error {
 	// Moderation pre-check: mute, ban
 	if s.manager.modChecker != nil && s.player != nil {
 		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
@@ -530,19 +530,54 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	}
 	cmd := strings.ToLower(cmdStr)
 
-	// Expand player aliases before command dispatch (DP-415)
-	if s.player != nil && len(s.player.Aliases) > 0 {
+	// C performs alias expansion before command_interpreter, so the command
+	// interpreter's leading RNG draw belongs to the resolved command, not to
+	// the alias trigger itself.
+	if allowAlias && s.player != nil && len(s.player.Aliases) > 0 {
 		fullInput := cmd
 		if len(args) > 0 {
 			fullInput = cmd + " " + strings.Join(args, " ")
 		}
-		if expanded, ok := game.PerformAlias(s.player.Aliases, fullInput); ok {
-			cmdStr, args = splitCommandInput(expanded)
+		if expanded, ok := game.ExpandAlias(s.player.Aliases, fullInput); ok {
+			if len(expanded) == 0 {
+				return nil
+			}
+			if len(expanded) > 1 {
+				for i, command := range expanded {
+					if i > 0 && s.player.GetWaitState() > 0 {
+						s.inputMu.Lock()
+						s.prependAliasedInputs(expanded[i:])
+						s.inputMu.Unlock()
+						return nil
+					}
+					if i > 0 {
+						// C's game loop emits the command-cycle separation
+						// between entries pulled from the alias queue. Prompt
+						// normalization removes the prompt itself but retains
+						// these two blank lines.
+						s.Send("\r\n\r\n")
+					}
+					nextCmd, nextArgs := splitCommandInput(command)
+					if err := executeCommand(s, nextCmd, nextArgs, false); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+			cmdStr, args = splitCommandInput(expanded[0])
 			if cmdStr == "" {
 				return nil
 			}
 			cmd = strings.ToLower(cmdStr)
 		}
+	}
+
+	// C command_interpreter draws number(0,3) at the top of every playing
+	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890).
+	// This must follow alias expansion and precede command lookup.
+	// #nosec G404 — game RNG, not cryptographic
+	if s.player != nil && commandNumber(0, 3) == 0 {
+		s.player.SetAffect(game.AffHide, false)
 	}
 
 	if s.isGuest {

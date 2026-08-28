@@ -184,31 +184,97 @@ func FindAlias(aliases []Alias, trigger string) (Alias, bool) {
 	return Alias{}, false
 }
 
-// PerformAlias expands an alias if one exists for the given command.
-// Returns the expanded command string and true, or the original and false.
-// Source: interpreter.c perform_complex_alias() — simple: direct replacement,
-//
-//	complex: multi-command expansion (semicolons become newlines).
-//
-// NOTE: full complex alias expansion (semicolons → multi-commands) is deferred
-// to Phase 3 when the command pipeline can handle multi-command input.
-// NOTE: complex alias expansion (semicolons → multi-commands) requires command pipeline changes — deferred
-func PerformAlias(aliases []Alias, command string) (string, bool) {
-	parts := strings.SplitN(command, " ", 2)
-	trigger := strings.ToLower(parts[0])
+// ExpandAlias expands an alias according to interpreter.c's perform_alias and
+// perform_complex_alias paths. The returned commands are ordered as the C
+// input queue receives them. Simple aliases return one direct replacement and
+// deliberately discard the original arguments; complex aliases may return one
+// command per semicolon and substitute the original arguments into $1..$9/$*.
+func ExpandAlias(aliases []Alias, command string) ([]string, bool) {
+	trimmed := strings.TrimLeft(command, " \t\n\v\f\r")
+	if trimmed == "" {
+		return nil, false
+	}
 
+	triggerEnd := strings.IndexAny(trimmed, " \t\n\v\f\r")
+	if triggerEnd < 0 {
+		triggerEnd = len(trimmed)
+	}
+	trigger := strings.ToLower(trimmed[:triggerEnd])
 	a, found := FindAlias(aliases, trigger)
+	if !found {
+		return []string{command}, false
+	}
+
+	if a.Type == AliasSimple {
+		// C strcpy(orig, a->replacement): the command's original arguments
+		// are not retained for simple aliases.
+		return []string{a.Replacement}, true
+	}
+
+	rest := ""
+	if triggerEnd < len(trimmed) {
+		rest = trimmed[triggerEnd:]
+	}
+	return expandComplexAlias(a.Replacement, rest), true
+}
+
+// PerformAlias preserves the original single-string API for callers that only
+// need the first expanded command. Session dispatch uses ExpandAlias so it can
+// put the remaining complex commands at the front of the input queue.
+func PerformAlias(aliases []Alias, command string) (string, bool) {
+	expanded, found := ExpandAlias(aliases, command)
 	if !found {
 		return command, false
 	}
-
-	// Simple substitution: replace trigger with replacement
-	// Source: alias.c / interpreter.c — replacement already has leading space stripped/added
-	expanded := strings.TrimSpace(a.Replacement)
-	if len(parts) > 1 {
-		expanded = expanded + " " + parts[1]
+	if len(expanded) == 0 {
+		return "", true
 	}
-	return expanded, true
+	return expanded[0], true
+}
+
+// expandComplexAlias is the direct Go equivalent of C's
+// perform_complex_alias. C tokenizes the text after the trigger into at most
+// nine space-delimited tokens, uses $1..$9 for those tokens, and uses $* for
+// the entire original text after the trigger.
+func expandComplexAlias(replacement, original string) []string {
+	tokens := strings.Fields(original)
+	if len(tokens) > 9 {
+		tokens = tokens[:9]
+	}
+
+	commands := make([]string, 0, 1)
+	var current strings.Builder
+	for i := 0; i < len(replacement); i++ {
+		switch replacement[i] {
+		case ';':
+			commands = append(commands, current.String())
+			current.Reset()
+		case '$':
+			if i+1 >= len(replacement) {
+				continue
+			}
+			i++
+			next := replacement[i]
+			switch {
+			case next >= '1' && next <= '9' && int(next-'1') < len(tokens):
+				current.WriteString(tokens[int(next-'1')])
+			case next == '*':
+				current.WriteString(original)
+			default:
+				// This mirrors the C fallback: after consuming '$', it
+				// writes the following byte, redoubling it only when that
+				// byte is itself '$'.
+				current.WriteByte(next)
+				if next == '$' {
+					current.WriteByte('$')
+				}
+			}
+		default:
+			current.WriteByte(replacement[i])
+		}
+	}
+	commands = append(commands, current.String())
+	return commands
 }
 
 // Go Improvements Over C
