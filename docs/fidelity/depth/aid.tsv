@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_first_aid	aid	aid.no-arg	D1	command	oracle-green	aid-depth	new_cmds2.c:146-151	Skill gate passes on a known skill, then the no-argument Aid who? branch matches.
+do_first_aid	aid	aid.target-missing	D2	command	oracle-green	aid-depth	new_cmds2.c:151-153	Room-visible target miss emits They don't seem to be here.
+do_first_aid	aid	aid.self	D1	command	oracle-green	aid-depth	new_cmds2.c:153-155	Self target reaches the exact You wish you could. branch.
+do_first_aid	aid	aid.target-alive	D2	command	oracle-green	aid-depth	new_cmds2.c:157-163	Positive-HP target is rejected before RNG with the first-aid need message.
+do_first_aid	aid	aid.immortal-success	D4	state	oracle-green	aid-depth	new_cmds2.c:166-181	Immortal auto-success, actor/victim/observer act audiences, and target recovery vehicle match.
+do_first_aid	aid	aid.failure-audience	D3	command	oracle-green	aid-failure-depth	new_cmds2.c:182-184	Failure actor text and TO_ROOM text to both target and observer match.
+do_first_aid	aid	aid.failure-wait	D4	state	oracle-green	aid-failure-depth	new_cmds2.c:187	Two 20-pulse pads leave the second failure command symmetric under the frozen-clock vehicle; unit proof asserts the source-exact 23-pulse result.
+do_first_aid	aid	aid.skill-gate-order	D1	command	unit-green	TestCmdFirstAid_NoArgs	new_cmds2.c:146-151	Existing command test proves the no-skill gate fires before the no-argument branch.
+do_first_aid	aid	aid.success-state	D4	state	unit-green	TestDoFirstAidDepthSuccessState	new_cmds2.c:166-181	Focused state test covers HP=1, update_pos, target wait, and deferred improvement.
+do_first_aid	aid	aid.failure-state	D4	state	unit-green	TestDoFirstAidDepthFailureState	new_cmds2.c:166-187	Focused state test covers guaranteed failure, unchanged HP, exact wait, and TO_ROOM audience.

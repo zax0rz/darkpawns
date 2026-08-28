@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/dprng"
-
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // ---------------------------------------------------------------------------
@@ -116,34 +116,40 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := dprng.Number(1, 101) + target.GetLevel()
+	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillFirstAid)
 
-	if percent < prob {
+	if percent < prob || ch.GetLevel() > LVL_IMMORT {
 		// Success
 		if p, ok := target.(*Player); ok {
 			p.SetHP(1)
+			updatePosFromHP(p, 1)
 		} else if mob, ok := target.(*MobInstance); ok {
 			mob.SetHealth(1)
+			updateMobPosFromHP(mob, 1)
 		}
 
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 		return SkillResult{
-			Success:       true,
-			MessageToCh:   ActMessage("You apply some makeshift bandages to $N's wounds.", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n applies some bandaging to your wounds.", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n applies some bandaging to $N's wounds.", chPronouns, &victPronouns, ""),
+			Success:         true,
+			MessageToCh:     ActMessage("You apply some makeshift bandages to $N's wounds.", chPronouns, &victPronouns, ""),
+			MessageToVict:   ActMessage("$n applies some bandaging to your wounds.", chPronouns, &victPronouns, ""),
+			MessageToRoom:   ActMessage("$n applies some bandaging to $N's wounds.", chPronouns, &victPronouns, ""),
+			WaitTarget:      1,
+			DeferredImprove: []string{SkillFirstAid},
 		}
 	}
 
 	// Failure
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	return SkillResult{
-		Success:       false,
-		MessageToCh:   "You fumble and ruin the bandages.\r\n",
-		MessageToRoom: ActMessage("$n fumbles with some bandaging and drops it all over the place!", chPronouns, nil, ""),
+		Success:            false,
+		MessageToCh:        "You fumble and ruin the bandages.\r\n",
+		MessageToRoom:      ActMessage("$n fumbles with some bandaging and drops it all over the place!", chPronouns, nil, ""),
+		WaitChPulses:       engine.PULSE_VIOLENCE + 3,
+		RoomIncludesTarget: true,
 	}
 }
 
