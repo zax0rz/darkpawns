@@ -1,0 +1,43 @@
+# depth-case: admobs.output
+# depth-case: admobs.repeat-is-idempotent
+# C-first vehicle for adjust_mobs. The command is registered at
+# src/interpreter.c:325 with LVL_IMPL-1 and implemented in src/olc.c:279-307.
+# It ignores its argument, adjusts every mob prototype, marks each mob zone
+# for OLC mobile save, and sends only OK.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Admobdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Admobdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+admobs ignored-argument
+admobs

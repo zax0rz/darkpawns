@@ -226,6 +226,7 @@ func init() {
 	registerCommand("force", wrapArgs(cmdForce), "Force a command on another character.")
 	registerCommand("shutdown", wrapArgs(cmdShutdown), "Shutdown the server.")
 	registerCommand("snoop", wrapArgs(cmdSnoop), "Spy on a player's input.")
+	registerCommand("admobs", wrapNoArgs(cmdAdmobs), "Adjust all mob prototypes.")
 	registerCommand("advance", wrapArgs(cmdAdvance), "Advance a player's level.")
 	registerCommand("skillset", wrapArgs(cmdSkillset), "Set a player's skill value.")
 	registerCommand("reload", wrapArgs(cmdReload), "Reload world data.")

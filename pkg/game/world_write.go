@@ -393,6 +393,36 @@ func (w *World) SetMobDamage(vnum int, numDice, sizeDice, addHP int) bool {
 	return true
 }
 
+// AdjustMobPrototypes mirrors C adjust_mobs() (src/olc.c:279-307). It
+// recalculates each prototype's damroll and hit-point addend from its level.
+// The C command also marks each prototype's zone for a later OLC save; Go's
+// world persistence currently has no equivalent dirty-zone queue, so this
+// operation intentionally changes only the in-memory prototypes.
+func (w *World) AdjustMobPrototypes() int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	for _, mob := range w.mobs {
+		if mob.Level > 10 {
+			// C's / 1.50 expression is converted back to int on assignment.
+			mob.Damage.Plus = int(float64(mob.Level) / 1.50)
+		} else {
+			mob.Damage.Plus = mob.Level / 2
+		}
+
+		addHP := 10*mob.Level + 10
+		if mob.Level > 22 {
+			addHP += 13 * (mob.Level - 22)
+		}
+		if mob.Level > 30 {
+			addHP += 560 * (mob.Level - 30)
+		}
+		mob.HP.Plus = addHP
+	}
+
+	return len(w.mobs)
+}
+
 // SetMobPosition updates a mob's position. Returns false if the mob doesn't exist.
 func (w *World) SetMobPosition(vnum int, pos int) bool {
 	w.mu.Lock()
