@@ -462,18 +462,6 @@ func max(a, b int) int {
 // DoPoint, DoGroinrip, DoReview, DoWhois, DoPalm, DoFleshAlter
 // ---------------------------------------------------------------------------
 
-// DoMold implements do_mold() — rename and redescribe a clay item.
-func heShe(sex int) string {
-	switch sex {
-	case 1:
-		return "he"
-	case 2:
-		return "she"
-	default:
-		return "it"
-	}
-}
-
 // himHer returns "himself" / "herself" / "itself" based on sex.
 func himHer(sex int) string {
 	switch sex {

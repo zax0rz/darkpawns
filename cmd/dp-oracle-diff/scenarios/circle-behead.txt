@@ -1,4 +1,5 @@
 # Combat-skill target-gated rejection paths — circle / behead.
+# depth-case: behead.no-arg
 #
 # Two combat skills with NO skill gate in C — both go straight to target lookup.
 # Probed from a fresh Human Warrior (POS_STANDING, not fighting):
