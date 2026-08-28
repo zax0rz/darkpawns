@@ -1,0 +1,44 @@
+# depth-case: appraise.failure-cost
+# Skill zero forces the C bad-value arm after the carried-object lookup.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Appraisefail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Appraisefail
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get bread
+skillset Appraisefail 'appraise' 0
+
+[probe]
+appraise bread

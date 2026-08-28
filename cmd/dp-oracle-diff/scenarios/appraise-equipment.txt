@@ -1,0 +1,43 @@
+# depth-case: appraise.equipment-not-carried
+# C get_obj_in_list_vis is given ch->carrying only; a worn object must not be
+# found by do_appraise. Go's old nearby-object helper searched equipment too.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Appraiseequip
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Appraiseequip
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+wear sword
+
+[probe]
+inventory
+equipment
+appraise sword

@@ -100,31 +100,6 @@ func (w *World) findCharInRoom(ch *Player, roomVNum int, name string) (*Player, 
 	return nil, nil
 }
 
-// findObjNear finds an object near the player (inventory, equipment, room).
-func (w *World) findObjNear(ch *Player, name string) *ObjectInstance {
-	argLower := strings.ToLower(name)
-	// Check inventory
-	for _, item := range ch.Inventory.Items {
-		if item != nil && strings.Contains(strings.ToLower(item.Prototype.ShortDesc), argLower) {
-			return item
-		}
-	}
-	// Check equipment
-	for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
-		item, ok := ch.Equipment.GetItemInSlot(slot)
-		if ok && strings.Contains(strings.ToLower(item.Prototype.ShortDesc), argLower) {
-			return item
-		}
-	}
-	// Check room items
-	for _, item := range w.roomItems[ch.RoomVNum] {
-		if strings.Contains(strings.ToLower(item.Prototype.ShortDesc), argLower) {
-			return item
-		}
-	}
-	return nil
-}
-
 // ---------------------------------------------------------------------------
 // Under-ported helpers (from act.informative.c / act.wizard.c / spec_procs2.c)
 // ---------------------------------------------------------------------------
