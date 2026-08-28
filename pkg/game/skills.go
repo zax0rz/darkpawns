@@ -415,9 +415,20 @@ type SkillResult struct {
 	// 131 for the Backstab set) — NOT the Go-internal SKILL_* enum. When set,
 	// the caller (sendSkillResult) draws Dice(1,N) and emits the selected set's
 	// char/vict/room text via the combat engine, mirroring C's damage() path,
-	// and MessageToCh/Vict/Room are ignored. R4 (no invented strings) + R3
-	// (the Dice draw must happen in order).
+	// and MessageToCh/Vict/Room are ignored. SkillMsgAfterDamage is the explicit
+	// exception for C paths whose literal act() preamble precedes damage(). R4
+	// (no invented strings) + R3 (the Dice draw must happen in order).
 	SkillMsgType int
+	// SkillMsgAfterDamage preserves C paths that emit literal act() messages
+	// first and call skill_message() only from a subsequent damage() call.
+	// When set, MessageToCh/Vict/Room are emitted before damage and SkillMsgType
+	// is emitted after it. R1/R3 — preserve both byte order and draw order.
+	SkillMsgAfterDamage bool
+
+	// DamageSkill selects the C skill/attack type used by the damage pipeline.
+	// Empty retains the legacy generic path; callers that pass a numbered skill
+	// through damage() should set its canonical name (for example, "bite").
+	DamageSkill string
 
 	// DeferredImprove lists the skills to run improveSkill() on AFTER the
 	// skill_message/damage step, matching C's order (skill_message draws its

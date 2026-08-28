@@ -1585,6 +1585,40 @@ func genderPronoun(sex int) string {
 // ---------------------------------------------------------------------------
 
 func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatant, result game.SkillResult) error {
+	sendSkillMessage := func() {
+		if result.SkillMsgType != 0 && target != nil {
+			if eng, ok := s.GetCombatEngine().(rescueCombatEngine); ok && eng != nil {
+				eng.SkillMessage(result.Damage, ch.GetName(), target.GetName(), result.SkillMsgType, ch.GetRoom())
+			}
+		}
+	}
+	sendLiteralMessages := func() {
+		if result.MessageToCh != "" {
+			// C act() CAPs the assembled string (comm.c:2477); lines that begin
+			// with $e/$n render lowercase and must be capitalized here.
+			_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+		}
+		if result.MessageToVict != "" && target != nil {
+			if p, ok := target.(*game.Player); ok {
+				p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
+			}
+		}
+		if result.MessageToRoom != "" {
+			roomVNum := ch.GetRoom()
+			world := s.GetWorld()
+			players := world.GetPlayersInRoom(roomVNum)
+			for _, p := range players {
+				if p.Name == ch.Name {
+					continue
+				}
+				if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
+					continue
+				}
+				p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
+			}
+		}
+	}
+
 	// Emit the combat message. When SkillMsgType is set, the message comes from
 	// lib/misc/messages via the skill_message path (fight.c:1023-1092): the
 	// engine draws Dice(1,N) and emits the selected set's char/vict/room text
@@ -1593,10 +1627,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// number(1,101) in DoBackstab, so it must run before any combat-initiation
 	// side effects that could draw). Otherwise emit the literal MessageTo*
 	// fields as before.
-	if result.SkillMsgType != 0 && target != nil {
-		if eng, ok := s.GetCombatEngine().(rescueCombatEngine); ok && eng != nil {
-			eng.SkillMessage(result.Damage, ch.GetName(), target.GetName(), result.SkillMsgType, ch.GetRoom())
-		}
+	if result.SkillMsgAfterDamage {
+		sendLiteralMessages()
+	} else if result.SkillMsgType != 0 && target != nil {
+		sendSkillMessage()
 	} else if result.MessageToCh != "" {
 		// C act() CAPs the assembled string (comm.c:2477); lines that begin
 		// with $e/$n render lowercase and must be capitalized here.
@@ -1610,7 +1644,13 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		// event bus publish, removal from world, and combat initiation for both
 		// parties. Previously this only called TakeDamage + printed "is dead!".
 		// See DP-942 / pkg/game/damage_stubs.go.
-		s.GetWorld().DoSpellDamage(ch, target, result.Damage, "")
+		s.GetWorld().DoSpellDamage(ch, target, result.Damage, result.DamageSkill)
+	}
+
+	// Bite emits its literal act() messages before damage(), then the C damage
+	// call emits skill_message() after applying the damage and setting combat.
+	if result.SkillMsgAfterDamage {
+		sendSkillMessage()
 	}
 
 	// Initiate engine combat whenever the skill signals it and the target
@@ -1675,14 +1715,14 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	}
 
 	// Send to victim
-	if result.MessageToVict != "" && target != nil {
+	if !result.SkillMsgAfterDamage && result.MessageToVict != "" && target != nil {
 		if p, ok := target.(*game.Player); ok {
 			p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
 		}
 	}
 
 	// Send to room (excluding ch and target)
-	if result.MessageToRoom != "" {
+	if !result.SkillMsgAfterDamage && result.MessageToRoom != "" {
 		roomVNum := ch.GetRoom()
 		world := s.GetWorld()
 		players := world.GetPlayersInRoom(roomVNum)
@@ -1875,17 +1915,16 @@ func CmdBite(s SessionInterface, args []string) error {
 	if len(args) == 0 {
 		fighting := ch.GetFighting()
 		if fighting == "" {
-			return s.SendMessage("Bite who?\r\n")
+			return s.SendMessage("Bite who?!\r\n")
 		}
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
-		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
-		}
+		// C assigns FIGHTING(ch) and returns immediately for an empty argument;
+		// it neither validates the target's visibility nor emits a byte.
+		return nil
 	} else {
-		targetName := strings.Join(args, " ")
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
 		if !found {
-			return s.SendMessage("Bite who?\r\n")
+			return s.SendMessage("Bite who?!\r\n")
 		}
 	}
 

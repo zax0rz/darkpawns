@@ -1322,6 +1322,29 @@ func TestCmdBite_NoFightingNoArgs(t *testing.T) {
 	}
 }
 
+func TestCmdBite_FightingNoArgsIsSilent(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosFighting)
+	session.player.SetFighting("target")
+	if err := CmdBite(session, nil); err != nil {
+		t.Fatalf("CmdBite: %v", err)
+	}
+	if len(session.messages) != 0 {
+		t.Fatalf("fighting no-arg bite emitted %q, want silent C return", session.messages)
+	}
+}
+
+func TestCmdBite_MissingTargetUsesCPunctuation(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdBite(session, []string{"nobody", "trailing"}); err != nil {
+		t.Fatalf("CmdBite: %v", err)
+	}
+	if got := joinMessages(session.messages); !strings.Contains(got, "Bite who?!\r\n") {
+		t.Errorf("missing-target message = %q, want C punctuation", got)
+	}
+}
+
 func TestCmdBearhug_NoPlayer(t *testing.T) {
 	session := &skillCommandSession{}
 	if err := CmdBearhug(session, nil); err == nil {

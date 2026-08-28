@@ -49,7 +49,7 @@ func skillToAttackType(skill string) int {
 		"smackheads", "slug", "serpent_kick":
 		return TypeBludgeon // 305
 	case "bite":
-		return TypeBite // 304
+		return SkillBiteNum // SKILL_BITE (150)
 	case "disembowel":
 		return SkillDisembowelNum // 184
 	case "neckbreak":

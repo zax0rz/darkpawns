@@ -314,20 +314,113 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski
 	}
 }
 
-// DoBite implements do_bite() — vampire/werewolf bite attack.
+// DoBite implements do_bite() from src/new_cmds.c:1199-1300.
 func DoBite(ch *Player, target combat.Combatant) SkillResult {
-	// Non-supernatural bite (love bite)
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Bite who?!"}
+	}
+	if target.GetName() == ch.GetName() {
+		return SkillResult{Success: false, MessageToCh: "You bite your tongue and say nothing."}
+	}
+
+	chPronouns := GetPronouns(ch.GetName(), ch.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
+	actResult := func(chMessage, victMessage, roomMessage string) SkillResult {
+		return SkillResult{
+			Success:       true,
+			MessageToCh:   ActMessage(chMessage, chPronouns, &victPronouns, ""),
+			MessageToVict: ActMessage(victMessage, chPronouns, &victPronouns, ""),
+			MessageToRoom: ActMessage(roomMessage, chPronouns, &victPronouns, ""),
+		}
+	}
+
+	// Players without a supernatural PLR flag (and NPC callers in C) only
+	// produce the ordinary love-bite act trio; they do not deal damage.
+	flags := ch.GetFlags()
+	werewolf := flags&(1<<PlrWerewolf) != 0
+	vampire := flags&(1<<PlrVampire) != 0
+	if (!werewolf && !vampire) || ch.IsNPC() {
+		return actResult(
+			"You give $N a love bite.",
+			"$n tries to give you a little love bite.",
+			"$n gives $N a love bite.",
+		)
+	}
+
+	// A flagged player must currently be transformed before bite can reach its
+	// supernatural branch. C checks werewolf first when both flags are present.
+	if !ch.IsAffected(affWerewolf) && !ch.IsAffected(affVampire) {
+		return SkillResult{Success: false, MessageToCh: "You must be transformed to bite!"}
+	}
+
+	if target.GetLevel() >= LVL_IMMORT && target.GetLevel() > ch.GetLevel() {
+		return SkillResult{Success: false, MessageToCh: "Yeah, right."}
+	}
+
+	if victim, ok := target.(*Player); ok {
+		victimFlags := victim.GetFlags()
+		if victimFlags&(1<<PlrWerewolf) != 0 || victimFlags&(1<<PlrVampire) != 0 {
+			return SkillResult{Success: false, MessageToCh: "Your victim is already a creature of the night!"}
+		}
+	}
+
 	dam := ch.GetLevel()
 	if dam > 15 {
 		dam = 15
 	}
 
-	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   "You bite your victim!\r\n",
-		MessageToVict: "$n bites you!\r\n",
-		MessageToRoom: fmt.Sprintf("%s bites %s!\r\n", ch.Name, target.GetName()),
+	if ch.IsAffected(affWerewolf) {
+		result := actResult(
+			"You rip the flesh of $N, and blood pours over your lips!",
+			"$n rips your flesh, leaving you bleeding and dazed!",
+			"$n rips the flesh of $N, growling with bloodlust!",
+		)
+		result.Damage = dam
+		result.DamageSkill = SkillBite
+		result.SkillMsgType = SkillBiteNum
+		result.SkillMsgAfterDamage = true
+		result.StartCombat = true
+		result.WaitCh = 2
+		return result
+	}
+
+	// Vampire bites draw once to decide whether the bite is sloppy or fighting.
+	// C's number(0, GET_LEVEL(ch)/2) is evaluated only on this branch.
+	// #nosec G404 — game RNG, not cryptographic
+	if dprng.Number(0, ch.GetLevel()/2) == 0 {
+		result := actResult(
+			"Your fangs sink into the soft flesh of $N, and $S blood pours over your lips.",
+			"$n's fangs sink into your flesh, leaving you bleeding and dazed!",
+			"$n sinks $s fangs into the flesh of $N, feeding off $S blood!",
+		)
+		result.MessageToRoom += "\r\n" + ActMessage("$N screams in agony!", chPronouns, &victPronouns, "")
+		result.Damage = dam
+		result.DamageSkill = SkillBite
+		result.SkillMsgType = SkillBiteNum
+		result.SkillMsgAfterDamage = true
+		result.StartCombat = true
+		result.WaitCh = 2
+		feedFromBite(ch, target.GetLevel())
+		return result
+	}
+
+	feedFromBite(ch, target.GetLevel())
+	return actResult(
+		"Your fangs sink into the soft flesh of $N, and $S blood pours over your lips.",
+		"$n's fangs sink into your flesh, leaving you bleeding and dazed!",
+		"$n sinks $s fangs into the flesh of $N, feeding off $S blood!",
+	)
+}
+
+// feedFromBite ports the direct GET_COND updates in do_bite's vampire branch.
+// These writes intentionally do not clamp: the C code adds the victim's level
+// directly after testing the pre-update value against 40.
+func feedFromBite(ch *Player, victimLevel int) {
+	if full := ch.GetCondition(CondFull); full < 40 && full >= 0 {
+		ch.SetCondition(CondFull, full+victimLevel)
+	}
+	if thirst := ch.GetCondition(CondThirst); thirst < 40 && thirst >= 0 {
+		ch.SetCondition(CondThirst, thirst+victimLevel)
 	}
 }
 

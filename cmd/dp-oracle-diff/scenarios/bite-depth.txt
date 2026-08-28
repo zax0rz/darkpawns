@@ -1,0 +1,86 @@
+# depth-case: bite.love-bite
+# depth-case: bite.one-argument
+# depth-case: bite.no-arg
+# depth-case: bite.target-missing
+# depth-case: bite.self
+# C-first player vehicle for do_bite's ordinary player path. The primary walks
+# to the fresh non-peaceful room containing the inert trainee mob. Because the
+# primary has no werewolf/vampire PLR flag, C emits the love-bite act trio and
+# never enters damage(). The trailing words prove one_argument parsing.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bitedepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bitedepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:biter]
+Biterxo
+Y
+biterpass
+biterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:biter]
+Biterxo
+y
+biterpass
+biterpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe:biter]
+bite
+bite nobody
+bite biterxo
+bite trainee ignored trailing words
