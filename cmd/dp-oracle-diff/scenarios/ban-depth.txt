@@ -1,0 +1,63 @@
+# depth-case: ban.no-bans
+# depth-case: ban.add
+# depth-case: ban.list-format
+# depth-case: ban.fill-and-trailing-parse
+# depth-case: ban.list-order
+# depth-case: ban.site-truncate
+# depth-case: ban.duplicate
+# depth-case: ban.invalid-flag
+# depth-case: ban.missing-site
+# C-first vehicle for ban.c:132-210. The first-player God satisfies the
+# LVL_GRGOD command gate; all writes use the harness's disposable Go runtime
+# and copied C lib tree.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Bandeep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bandeep
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+# The shipped C oracle data contains a historical whitehouse.gov ban while the
+# fresh Go runtime starts empty. Remove it on both sides before comparing the
+# do_ban surface; warmup output is intentionally not diffed.
+unban whitehouse.gov
+
+[probe]
+ban
+ban all Example.COM
+ban
+ban select on Other.Example ignored
+ban
+ban all Example.COM
+ban nonsense site.example
+ban all
+ban new 012345678901234567890123456789012345678901234567890123456789
+ban all 01234567890123456789012345678901234567890123456789

@@ -4,23 +4,22 @@ import (
 	"testing"
 )
 
-func TestIsBannedWildcard(t *testing.T) {
+func TestIsBannedLiteralAsterisk(t *testing.T) {
 	bm := NewBanManager()
 
-	// Add a wildcard ban
+	// C isbanned uses strstr, so an asterisk in a stored site is literal.
 	err := bm.AddBan("192.168.1.*", BanAll, "Admin")
 	if err != nil {
 		t.Fatalf("Failed to add ban: %v", err)
 	}
 
-	// Test a matching IP
-	if got := bm.IsBanned("192.168.1.100"); got != BanAll {
-		t.Errorf("IsBanned(192.168.1.100) = %d, want %d", got, BanAll)
+	// A wildcard interpretation would match this address; C does not.
+	if got := bm.IsBanned("192.168.1.100"); got != BanNot {
+		t.Errorf("IsBanned(192.168.1.100) = %d, want %d", got, BanNot)
 	}
 
-	// Test a non-matching IP
-	if got := bm.IsBanned("10.0.0.1"); got != BanNot {
-		t.Errorf("IsBanned(10.0.0.1) = %d, want %d", got, BanNot)
+	if got := bm.IsBanned("192.168.1.*"); got != BanAll {
+		t.Errorf("IsBanned(192.168.1.*) = %d, want %d", got, BanAll)
 	}
 }
 
