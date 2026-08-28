@@ -1,0 +1,84 @@
+# depth-case: mob.guild-guard-move-block
+# depth-case: mob.guild-guard-flee
+# C-first vehicle for SPECIAL(guild_guard).  Mob 8017 is an active registered
+# guild guard and is placed in the controlled room 8015.  A mortal thief is
+# unauthorized for the warrior guild row, so north must be intercepted before
+# do_move; flee is intercepted independently even outside combat.  The God
+# moves both clients to the room during warmup so the room audience is visible.
+# C path: src/spec_procs.c:569-608; src/interpreter.c:889-940,1380-1456;
+# src/class.c:275-290.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8017 1 8015 80
+replace-room-exits 8015 none
+
+[setup:oracle]
+Guardgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Guardgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Guardpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Guardpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8015
+teleport Guardpeer 8015
+set Guardgod level 1
+
+[probe]
+north
+flee
+escape
+retreat
