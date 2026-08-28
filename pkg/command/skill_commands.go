@@ -605,12 +605,21 @@ func CmdBash(s SessionInterface, args []string) error {
 		return s.SendMessage(msg)
 	}
 
+	// C do_bash checks ROOM_PEACEFUL before looking up the target
+	// (act.offensive.c:435-439), so this early return must stay at the command
+	// layer rather than relying only on DoBash after target resolution.
+	world := s.GetWorld()
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return s.SendMessage("This room just has such a peaceful, easy feeling...\r\n")
+	}
+
 	// Find target — if in combat, default to fighting target
 	var target combat.Combatant
 	var found bool
-	world := s.GetWorld()
 	if len(args) > 0 {
-		targetName := strings.Join(args, " ")
+		// C do_bash uses one_argument: skip fill words and ignore the remainder
+		// after the first target token (act.offensive.c:425).
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 		if !found {
 			return s.SendMessage("Bash who?\r\n")
@@ -1654,7 +1663,6 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// Apply position changes
 	if result.SelfStumble {
 		ch.SetPosition(combat.PosSitting)
-		_ = s.SendMessage("You fall to the ground!\r\n")
 	}
 	if result.TargetFalls && target != nil {
 		target.SetPosition(combat.PosSitting)

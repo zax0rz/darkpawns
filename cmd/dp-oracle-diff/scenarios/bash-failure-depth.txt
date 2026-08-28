@@ -1,0 +1,86 @@
+# depth-case: bash.failure-message-and-state
+#
+# C-first vehicle for the guaranteed mortal bash miss.  The level-1 mortal is
+# granted bash at 1, so do_bash's percent roll cannot pass the skill check;
+# the target is still standing and reachable, forcing damage(..., 0,
+# SKILL_BASH), the set-132 skill message, caster POS_SITTING, and the final
+# two-pulse wait state.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bashfailuregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bashfailuregod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Bashfailuremortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Bashfailuremortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Bashfailuremortal 'bash' 1
+
+[probe:mortal]
+bash trainee
+~dpclock pulse 20
+~dpclock pulse 20
