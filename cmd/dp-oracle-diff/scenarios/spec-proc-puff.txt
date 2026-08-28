@@ -1,0 +1,94 @@
+# depth-case: mob.puff-speech
+# depth-case: mob.puff-emotes
+# depth-case: mob.puff-silent-and-fallthrough
+# depth-case: mob.puff-command-gate
+# depth-case: mob.puff-dead-speech
+# depth-case: mob.puff-rng-draw-parity
+# C-first vehicle for SPECIAL(puff).  Mob vnum 1 is the active registration
+# in src/spec_assign.c:182 and the procedure is src/spec_procs.c:611-718.
+# mobile_activity() invokes it only for an awake, non-fighting mob with cmd==0;
+# the player-command path therefore exercises the nonzero-cmd fallthrough only
+# as an entry-gate unit case.  The frozen pulse pads cross C's 40-heartbeat
+# mobile cadence and keep the native special on the same controlled room.
+# C path: src/mobact.c:68-93 -> src/interpreter.c:1407-1456 ->
+# src/spec_procs.c:611-718; do_say is src/act.comm.c:759-820 and the emotes
+# use src/comm.c:2392-2555.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 1 1 8105 80
+strip-mob-script 1
+replace-room-exits 8105 none
+
+[setup:oracle]
+Puffgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Puffgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Puffpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Puffpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Puffpeer 8105
+
+[probe]
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
