@@ -267,6 +267,31 @@ func (w *World) MoveObjectToMobInventory(obj *ObjectInstance, m *MobInstance) er
 	return w.MoveObject(obj, LocInventoryMob(m.GetID()))
 }
 
+// MoveObjectToMobInventoryFront mirrors C obj_to_char, which prepends to the
+// mob's carrying list. It is used by C paths whose inventory order is visible.
+func (w *World) MoveObjectToMobInventoryFront(obj *ObjectInstance, m *MobInstance) error {
+	dst := LocInventoryMob(m.GetID())
+	if err := dst.Validate(); err != nil {
+		return fmt.Errorf("invalid destination: %w", err)
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if err := w.moveObjectLocked(obj, dst); err != nil {
+		return err
+	}
+
+	for i, item := range m.Inventory {
+		if item != obj {
+			continue
+		}
+		copy(m.Inventory[1:i+1], m.Inventory[:i])
+		m.Inventory[0] = obj
+		return nil
+	}
+	return fmt.Errorf("moved object %d missing from mob %d inventory", obj.ID, m.GetID())
+}
+
 func (w *World) MoveObjectToContainer(obj, container *ObjectInstance) error {
 	return w.MoveObject(obj, LocContainer(container.ID))
 }
