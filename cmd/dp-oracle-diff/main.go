@@ -429,6 +429,20 @@ func prepareOracleData(source, destination string, emptyPlayers bool) error {
 
 const cHouseControlRecordSize = 520
 
+func houseFixtureUint32(field string, value int) (uint32, error) {
+	if value < 0 || int64(value) > int64(^uint32(0)) {
+		return 0, fmt.Errorf("house fixture %s %d does not fit uint32", field, value)
+	}
+	return uint32(value), nil
+}
+
+func houseFixtureUint64(field string, value int64) (uint64, error) {
+	if value < 0 {
+		return 0, fmt.Errorf("house fixture %s %d does not fit uint64", field, value)
+	}
+	return uint64(value), nil
+}
+
 // applyOracleHouseControlFixtures writes the native 64-bit Linux C record
 // consumed by House_boot (src/house.h:31-47). The oracle and the Go fixture
 // deliberately share only the semantic fields used by key_seller; all other
@@ -439,14 +453,34 @@ func applyOracleHouseControlFixtures(oracleData string, fixtures []oraclediff.Ho
 	}
 	data := make([]byte, 0, len(fixtures)*cHouseControlRecordSize)
 	for _, fixture := range fixtures {
+		vnum, err := houseFixtureUint32("vnum", fixture.VNum)
+		if err != nil {
+			return err
+		}
+		atrium, err := houseFixtureUint32("atrium", fixture.Atrium)
+		if err != nil {
+			return err
+		}
+		exitNum, err := houseFixtureUint32("exit number", fixture.ExitNum)
+		if err != nil {
+			return err
+		}
+		owner, err := houseFixtureUint64("owner", fixture.Owner)
+		if err != nil {
+			return err
+		}
+		key, err := houseFixtureUint32("key", fixture.Key)
+		if err != nil {
+			return err
+		}
 		record := make([]byte, cHouseControlRecordSize)
-		binary.LittleEndian.PutUint32(record[0:], uint32(fixture.VNum))
-		binary.LittleEndian.PutUint32(record[4:], uint32(fixture.Atrium))
-		binary.LittleEndian.PutUint32(record[8:], uint32(fixture.ExitNum))
+		binary.LittleEndian.PutUint32(record[0:], vnum)
+		binary.LittleEndian.PutUint32(record[4:], atrium)
+		binary.LittleEndian.PutUint32(record[8:], exitNum)
 		binary.LittleEndian.PutUint32(record[24:], 0) // HOUSE_PRIVATE
-		binary.LittleEndian.PutUint64(record[32:], uint64(fixture.Owner))
+		binary.LittleEndian.PutUint64(record[32:], owner)
 		binary.LittleEndian.PutUint32(record[40:], 0) // no guests
-		binary.LittleEndian.PutUint32(record[456:], uint32(fixture.Key))
+		binary.LittleEndian.PutUint32(record[456:], key)
 		data = append(data, record...)
 	}
 	path := filepath.Join(oracleData, "etc", "hcontrol")
