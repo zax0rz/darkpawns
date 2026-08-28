@@ -391,6 +391,10 @@ type SkillResult struct {
 	TargetFalls   bool // target position changes to sitting
 	WaitCh        int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
 	WaitTarget    int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
+	WaitChPulses  int  // exact WAIT_STATE pulses for non-round C cooldowns
+	// RoomIncludesTarget preserves C's TO_ROOM audience when MessageToRoom
+	// intentionally includes the target instead of using TO_NOTVICT.
+	RoomIncludesTarget bool
 	// StartCombat signals the caller to initiate combat even when the skill
 	// deals no damage (miss / zero-damage hit). C: skills like backstab call
 	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.

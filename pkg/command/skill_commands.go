@@ -1668,7 +1668,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			if p.Name == ch.Name {
 				continue
 			}
-			if target != nil && p.Name == target.GetName() {
+			if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
 				continue
 			}
 			p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
@@ -1676,7 +1676,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	}
 
 	// Apply WAIT_STATE (C-10: cooldown in PULSE_VIOLENCE ticks)
-	if result.WaitCh > 0 {
+	if result.WaitChPulses > 0 {
+		ch.SetWaitStatePulses(result.WaitChPulses)
+	} else if result.WaitCh > 0 {
 		ch.SetWaitState(result.WaitCh)
 	}
 	if result.WaitTarget > 0 && target != nil {

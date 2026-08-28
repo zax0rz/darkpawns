@@ -1,0 +1,112 @@
+# depth-case: aid.failure-audience
+# depth-case: aid.failure-wait
+# C-first failure vehicle for do_first_aid (src/new_cmds2.c:166-184). The
+# Implementor grants aid=1, lowers the target to level 40 with hit=0, then
+# lowers himself to level 1. The target and observer remain co-located so the
+# failed act() audience and the exact PULSE_VIOLENCE+3 wait are both visible.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aidfail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aidfail
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Failvict
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Failvict
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Failobserv
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Failobserv
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Failvict 8004
+teleport Failobserv 8004
+skillset Aidfail 'aid' 1
+set Failvict level 40
+set Failvict hit 0
+set Aidfail level 1
+
+[probe]
+aid Failvict
+~dpclock pulse 20
+~dpclock pulse 20
+aid Failvict

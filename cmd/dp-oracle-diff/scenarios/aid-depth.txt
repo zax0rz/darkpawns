@@ -1,0 +1,115 @@
+# depth-case: aid.no-arg
+# depth-case: aid.target-missing
+# depth-case: aid.self
+# depth-case: aid.target-alive
+# depth-case: aid.immortal-success
+# C-first vehicle for do_first_aid (src/new_cmds2.c:139-187). The primary is
+# the Implementor, with a target and an observer in the same room. The God
+# sets the primary's aid skill and prepares a level-1 downed target for the
+# immortal auto-success branch.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aiddepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aiddepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Aidobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Aidobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Barnaby 8004
+teleport Aidobserver 8004
+skillset Aiddepth 'aid' 100
+set Barnaby level 1
+set Barnaby hit 0
+
+[probe]
+aid
+aid nobody
+aid Aiddepth
+aid Aidobserver
+aid Barnaby

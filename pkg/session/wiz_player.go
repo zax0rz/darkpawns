@@ -186,9 +186,12 @@ func cmdSet(s *Session, args []string) error {
 	case "tattoo":
 		// C do_set case 54: the tattoo table has NUM_TATTOOS entries.
 		val = clamp(val, 0, TatOwl)
-	case "hp", "mana", "move":
+	case "hp", "hit", "mana", "move":
 		if val > 10000 && targetSess.player.Level < 60 {
 			return fmt.Errorf("cannot set %s above 10000 for non-immortals", field)
+		}
+		if field == "hit" {
+			val = clamp(val, -9, targetSess.player.MaxHealth)
 		}
 	}
 
@@ -240,6 +243,9 @@ func cmdSet(s *Session, args []string) error {
 		targetSess.player.MaxHealth = val
 		targetSess.player.Health = val
 		s.Send(fmt.Sprintf("Hit points set to %d.", val))
+	case "hit":
+		targetSess.player.Health = val
+		s.Send(fmt.Sprintf("%s's hit set to %d.\r\n", targetSess.player.Name, val))
 	case "mana":
 		targetSess.player.MaxMana = val
 		targetSess.player.Mana = val
@@ -263,7 +269,7 @@ func cmdSet(s *Session, args []string) error {
 
 func isSetNumericField(field string) bool {
 	switch field {
-	case "level", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "mana", "move", "ac", "tattoo":
+	case "level", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "hit", "mana", "move", "ac", "tattoo":
 		return true
 	default:
 		return false
@@ -734,10 +740,13 @@ func cmdSkillset(s *Session, args []string) error {
 	// key GetSkill/SetSkill — see spec_procs.go practice).
 	canonicalName := strings.ToLower(game.SkillCatalogName(skillNum))
 	// C's spells[] display name is "pick lock", while the door command's
-	// gameplay lookup uses the Go storage key pick_lock. Keep other display
-	// names unchanged because skillset also accepts ordinary spell names.
-	if canonicalName == "pick lock" {
+	// gameplay lookup uses the Go storage key pick_lock. First aid is likewise
+	// displayed as C's "aid" but stored under the Go key first_aid.
+	switch canonicalName {
+	case "pick lock":
 		canonicalName = game.SkillPickLock
+	case "aid":
+		canonicalName = game.SkillFirstAid
 	}
 	vict.SetSkill(canonicalName, value)
 
