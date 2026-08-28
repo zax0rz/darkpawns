@@ -419,7 +419,11 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, corpseGold)
 	} else {
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true)
+		corpseKeywords := deadMob.GetName()
+		if deadMob.Prototype != nil && deadMob.Prototype.Keywords != "" {
+			corpseKeywords = deadMob.Prototype.Keywords
+		}
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true, corpseKeywords)
 		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoom failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		} else {
@@ -1005,7 +1009,7 @@ func genderPronoun(sex int) string {
 	}
 }
 
-func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool) *ObjectInstance {
+func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool, keywordLists ...string) *ObjectInstance {
 	// src/fight.c make_corpse(): GET_OBJ_TYPE(corpse) = ITEM_CONTAINER
 	containerType := ITEM_CONTAINER
 	// src/utils.h IS_CORPSE(): GET_OBJ_TYPE == ITEM_CONTAINER && GET_OBJ_VAL(obj,3) == 1
@@ -1035,9 +1039,16 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	}
 
 	// Name and descriptions — from make_corpse() in fight.c
-	// Keywords: "corpse <name>" matches how players target corpses and mortician searches
-	corpse.Runtime.Keywords = strings.ToLower(fmt.Sprintf("corpse %s", name))
-	corpse.Runtime.Name = fmt.Sprintf("%s corpse", name)
+	// C uses ch->player.name (the mob keyword list, not GET_NAME()) and appends
+	// " corpse".  Player callers have no separate keyword list, so their name
+	// remains the fallback.  This matters to commands such as carve, whose C
+	// path tests the generated corpse's original keywords.
+	corpseKeywords := name
+	if len(keywordLists) > 0 && keywordLists[0] != "" {
+		corpseKeywords = keywordLists[0]
+	}
+	corpse.Runtime.Keywords = strings.ToLower(fmt.Sprintf("%s corpse", corpseKeywords))
+	corpse.Runtime.Name = fmt.Sprintf("%s corpse", corpseKeywords)
 	corpse.Runtime.ShortDesc = fmt.Sprintf("the corpse of %s", name)
 	// Convert attack type to corpse description
 	corpseAttackType := attackTypeToCorpseAttack(attackType)

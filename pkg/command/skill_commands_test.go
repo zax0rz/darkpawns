@@ -843,8 +843,19 @@ func TestCmdCarve_FightingPosition(t *testing.T) {
 	if err := CmdCarve(session, []string{"corpse"}); err != nil {
 		t.Fatalf("CmdCarve: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "How can you think of food") {
-		t.Errorf("expected food message, got: %v", session.messages)
+	if got := joinMessages(session.messages); got != "How can you think of food at a time like this?!?\r\n" {
+		t.Errorf("fighting message = %q", got)
+	}
+}
+
+func TestCmdCarve_FightingNoArgsExact(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosFighting)
+	if err := CmdCarve(session, nil); err != nil {
+		t.Fatalf("CmdCarve: %v", err)
+	}
+	if got := joinMessages(session.messages); got != "How can you think of food at a time like this?!?\r\n" {
+		t.Errorf("fighting no-arg message = %q", got)
 	}
 }
 

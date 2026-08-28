@@ -1,0 +1,113 @@
+# depth-case: carve.fighting-no-arg
+# depth-case: carve.no-arg
+# depth-case: carve.target-missing
+# depth-case: carve.non-corpse
+# depth-case: carve.non-carvable-corpse
+# depth-case: carve.living-target
+# depth-case: carve.self
+# depth-case: carve.no-wield
+# depth-case: carve.success
+# depth-case: carve.trailing-target-words
+# C-first vehicle for do_carve at src/interpreter.c:374 and
+# src/new_cmds.c:115-213. Two disposable low-HP fish mobs create a real
+# carve_meat corpse through the C death path; object 17 supplies a corpse
+# without carve_ and bread supplies a non-corpse room object.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 2 8162 80
+spawn-obj 17 1 8162 80
+spawn-obj 8010 1 8162 80
+spawn-obj 8037 1 8162 80
+
+[setup:oracle]
+Carvegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Carvegod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Carveobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Carveobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Carveobs 8162
+get sword
+wield sword
+kill fish
+hit fish
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+
+[probe]
+carve
+~dpclock pulse 20
+carve xyzzy
+carve xyzzy trailing words
+carve bread
+carve headless
+carve Carveobs
+carve Carvegod
+remove sword
+carve fish
+wield sword
+carve fish
+inventory

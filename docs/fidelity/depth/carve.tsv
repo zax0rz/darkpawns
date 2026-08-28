@@ -1,0 +1,16 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_carve	carve	carve.fighting-no-arg	D1	command	unit-green	TestCmdCarve_FightingNoArgsExact	interpreter.c:374; new_cmds.c:115-123	The fighting-position branch wins before the empty-argument response and preserves C punctuation.
+do_carve	carve	carve.no-arg	D1	command	unit-green	TestCmdCarve_NoArgs	new_cmds.c:115-123	Carve has no skill gate; a standing caller with no target receives C's exact prompt even when untrained.
+do_carve	carve	carve.target-missing	D1	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:123-139	An absent room object reaches the exact target-not-found branch.
+do_carve	carve	carve.non-corpse	D2	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:140-144	A visible non-corpse object reaches the initials message.
+do_carve	carve	carve.non-carvable-corpse	D2	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:145-149	A corpse lacking the carve_ keyword reaches the exact impossible-food branch.
+do_carve	carve	carve.living-target	D1	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:123-136	A living room target is rejected before room-object lookup.
+do_carve	carve	carve.self	D1	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:130-133	Self-targeting reaches the dedicated self-mutilation refusal.
+do_carve	carve	carve.no-wield	D2	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:156-191	A valid generated corpse without a wielded tool reaches C's no-tool branch.
+do_carve	carve	carve.success	D3	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:156-213	The generated corpse is carved with a slash weapon, including actor, observer, and inventory bytes.
+do_carve	carve	carve.trailing-target-words	D1	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	interpreter.c:1265-1283; new_cmds.c:115	one_argument consumes only the first non-fill target token.
+do_carve	carve	carve.wrong-weapon	D2	state	unit-green	TestDoCarveCEntryBranches	new_cmds.c:156-178	A wielded weapon whose value[3] is neither slash nor pierce reaches C's exact rejection and extracts the temporary food.
+do_carve	carve	carve.full-arms	D2	state	unit-green	TestDoCarveCEntryBranches	new_cmds.c:151-154; utils.h:449	The count-only CAN_CARRY_N gate runs before weapon validation.
+do_carve	carve	carve.food-mappings	D4	state	unit-green	TestDoCarveFoodMappings	new_cmds.c:156-169	Exact isname mapping yields meat, fish, bird, rabbit, and meat fallback prototype vnums.
+do_carve	carve	carve.contents-dump	D3	state	unit-green	TestDoCarveSuccessUsesCFoodAndRoomContract	new_cmds.c:193-213	Corpse contents are moved to the room in C prepend order before corpse extraction.
+do_carve	carve	carve.corpse-keyword-list	D4	shared	unit-green	TestHandleMobDeathPreservesMobKeywordListOnCorpse	fight.c:277-281; new_cmds.c:145-169	Generated NPC corpse keywords preserve the source mob keyword list plus corpse, so downstream corpse predicates see the same C name.
