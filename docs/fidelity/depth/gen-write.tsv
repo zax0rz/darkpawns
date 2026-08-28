@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_write	bug/typo/idea/todo	gen-write.no-arg	D1	command	oracle-green	gen-write-depth	interpreter.c:370,510,780,789; act.other.c:1079-1127	All four table rows reach the common no-argument branch and emit the C message.
+do_gen_write	bug	gen-write.bug-no-arg	D2	command	oracle-green	gen-write-depth	interpreter.c:370; act.other.c:1086-1117	BUG_FILE row reaches the shared no-argument outcome.
+do_gen_write	typo	gen-write.typo-no-arg	D2	command	oracle-green	gen-write-depth	interpreter.c:789; act.other.c:1086-1117	TYPO_FILE row reaches the shared no-argument outcome.
+do_gen_write	idea	gen-write.idea-no-arg	D2	command	oracle-green	gen-write-depth	interpreter.c:510; act.other.c:1086-1117	IDEA_FILE row reaches the shared no-argument outcome.
+do_gen_write	todo	gen-write.todo-no-arg	D2	command	oracle-green	gen-write-depth	interpreter.c:780; act.other.c:1086-1117	LVL_GOD-1 TODO row reaches the shared handler under the Implementor vehicle.
+do_gen_write	bug/typo/idea/todo	gen-write.npc-gate	D1	command	unit-green	TestDoGenWriteNPCGate	act.other.c:1103-1106	NPC callers receive the exact common rejection before argument handling.
+do_gen_write	bug/typo/idea/todo	gen-write.success	D2	command	unit-green	TestDoGenWritePlayerRecordAndResponse	act.other.c:1118-1127	All four successful subcommands emit the one shared C response.
+do_gen_write	bug/typo/idea/todo	gen-write.record-format	D4	state	unit-green	TestDoGenWritePlayerRecordAndResponse	act.other.c:1108-1121; db.h:63-66	Focused file proof covers the C report record shape, room field, month/day slice, and doubled-dollar deletion.
+do_gen_write	bug	gen-write.entry-gates	D1	command	unit-green	TestDoGenWriteEntryGates	act.other.c:1086-1117	Unknown subcommands return silently and whitespace-only input reaches the common mistake message.
+do_gen_write	bug	gen-write.open-failure	D2	command	unit-green	TestDoGenWriteEntryGates	act.other.c:1123-1127	A report-file open failure emits C's exact apology and does not claim success.

@@ -115,21 +115,9 @@ func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) b
 // ---------------------------------------------------------------------------
 // do_gen_write — from act.other.c subcmd=SCMD_BUG/SCMD_TYPO/SCMD_IDEA/SCMD_TODO
 // These are player-submitted bug/typo/idea reports stored in files.
-// The original writes to ~lib/%s.ideas, ~lib/%s.bugs, etc.
 // ---------------------------------------------------------------------------
 
 func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if isPlayerNPC(ch, me) {
-		return true
-	}
-
-	if arg == "" {
-		// C do_gen_write (act.other.c:1114): all subcmds share the same
-		// no-arg message — "That must be a mistake..."
-		ch.SendMessage("That must be a mistake...\r\n")
-		return true
-	}
-
 	// Map command to file — from src/db.h BUG_FILE, TYPO_FILE, IDEA_FILE, TODO_FILE
 	var filename string
 	switch cmd {
@@ -142,33 +130,47 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 	case "todo":
 		filename = "misc/todo"
 	default:
-		ch.SendMessage("Reported. Thanks!")
+		// C returns from the subcommand switch before checking the caller or
+		// argument (act.other.c:1086-1100).
 		return true
 	}
 
-	// Append report to file
-	if err := os.MkdirAll("misc", 0o755); err == nil {
-		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-		if err == nil {
-			defer f.Close()
-			if _, err := fmt.Fprintf(f, "%s [%s]: %s\n", ch.Name, time.Now().Format("2006-01-02 15:04"), arg); err != nil {
-				slog.Error("failed to write report", "type", cmd, "error", err)
-			}
-		}
+	if isPlayerNPC(ch, me) {
+		ch.SendMessage("Monsters can't have ideas - Go away.\r\n")
+		return true
 	}
 
-	switch cmd {
-	case "bug":
-		ch.SendMessage("Bug reported. Thanks!\r\n")
-	case "typo":
-		ch.SendMessage("Typo reported. Thanks!\r\n")
-	case "idea":
-		ch.SendMessage("Idea noted. Thanks!\r\n")
-	case "todo":
-		ch.SendMessage("Todo noted. Thanks!\r\n")
-	default:
-		ch.SendMessage("Reported. Thanks!\r\n")
+	// C's skip_spaces() removes only leading whitespace. Its
+	// delete_doubledollar() turns each $$ pair into a single $ before the
+	// report is logged and written (act.other.c:1108-1117).
+	arg = strings.TrimLeft(arg, " \t\r\n\v\f")
+	arg = strings.ReplaceAll(arg, "$$", "$")
+	if arg == "" {
+		ch.SendMessage("That must be a mistake...\r\n")
+		return true
 	}
+
+	if err := os.MkdirAll("misc", 0o755); err != nil {
+		slog.Error("failed to create report directory", "type", cmd, "error", err)
+		ch.SendMessage("Could not open the file.  Sorry.\r\n")
+		return true
+	}
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		slog.Error("failed to open report file", "type", cmd, "file", filename, "error", err)
+		ch.SendMessage("Could not open the file.  Sorry.\r\n")
+		return true
+	}
+	defer func() { _ = f.Close() }()
+
+	// C formats asctime()'s month/day slice with %-8s, (%6.6s), and a
+	// five-column room VNUM (act.other.c:1120-1121).
+	if _, err := fmt.Fprintf(f, "%-8s (%6.6s) [%5d] %s\n", ch.Name, time.Now().Format("Jan _2"), ch.GetRoomVNum(), arg); err != nil {
+		slog.Error("failed to write report", "type", cmd, "error", err)
+	}
+
+	// All four successful subcommands share C's single response.
+	ch.SendMessage("Okay.  Thanks!\r\n")
 	return true
 }
 
