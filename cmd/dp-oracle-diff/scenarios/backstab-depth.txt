@@ -1,0 +1,51 @@
+# depth-case: backstab.no-arg
+# depth-case: backstab.target-missing
+# depth-case: backstab.self
+# depth-case: backstab.one-argument
+# The final command also proves one_argument's fill-word skipping and
+# first-token semantics: C resolves "the Backstabdepth" as the player.
+# C-first vehicle for the command gates in do_backstab
+# (src/act.offensive.c:165-231). The first-player God grants the skill so the
+# skill-first ordering does not mask target lookup and self-target branches.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Backstabdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Backstabdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Backstabdepth 'backstab' 100
+
+[probe]
+backstab
+backstab nobody
+backstab nobody extra
+backstab the Backstabdepth

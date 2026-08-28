@@ -1,4 +1,5 @@
 # Combat skill OPENER — first oracle-gated combat skill (post-DP-1201).
+# depth-case: backstab.opener-success
 #
 # Strategy (DP-1202): a skill issued as the OPENING move runs at wait==0, so it
 # drains live and deterministically — exactly like the green `hit` — sidestepping

@@ -1,0 +1,17 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_backstab	backstab	backstab.no-skill	D1	command	oracle-green	combat-skill-noskill	act.offensive.c:170-177	C checks GET_SKILL before target lookup and emits You have no idea how.
+do_backstab	backstab	backstab.no-arg	D1	command	oracle-green	backstab-depth	act.offensive.c:170-182	A skilled caller with no target reaches C's Backstab who? line.
+do_backstab	backstab	backstab.target-missing	D1	command	oracle-green	backstab-depth	act.offensive.c:170-182	Missing targets, including trailing words after the first token, use the same C refusal.
+do_backstab	backstab	backstab.one-argument	D1	command	oracle-green	backstab-depth	interpreter.c:1265-1279; act.offensive.c:170-181	C one_argument skips fill words, lowercases the target token, and ignores the remainder.
+do_backstab	backstab	backstab.self	D1	command	oracle-green	backstab-depth	act.offensive.c:184-187	Self-target reaches C's exact refusal after target resolution.
+do_backstab	backstab	backstab.no-weapon	D2	command	unit-green	TestDoBackstab_NoWeapon	act.offensive.c:189-193	A valid target without WEAR_WIELD reaches the wield requirement gate.
+do_backstab	backstab	backstab.wrong-weapon	D2	command	unit-green	TestDoBackstab_WrongWeaponType	act.offensive.c:194-199	A wielded non-piercing weapon reaches the exact weapon-type refusal.
+do_backstab	backstab	backstab.mounted	D2	command	unit-green	TestDoBackstab_WhileMounted	act.offensive.c:200-204	A mounted caller is refused before the victim fighting and roll branches.
+do_backstab	backstab	backstab.target-fighting	D2	command	unit-green	TestDoBackstab_TargetFighting_Gate	act.offensive.c:205-209	A victim already fighting another character is rejected as too alert.
+do_backstab	backstab	backstab.aware	D3	command	unit-green	TestDoBackstab_MobAware_NoticesAndStartsCombat	act.offensive.c:212-218	An awake MOB_AWARE victim notices the lunge, retaliates through hit(vict,ch), and bypasses the skill roll.
+do_backstab	backstab	backstab.roll-miss	D4	state	unit-green	TestDoBackstab_MissSetsStartCombat	act.offensive.c:221-225; fight.c:1023-1035	An awake miss uses the skill damage path, starts combat, and carries attacktype SKILL_BACKSTAB.
+do_backstab	backstab	backstab.hit-formula	D4	state	unit-green	TestDoBackstab_HitIncludesStrToDam	act.offensive.c:227-229; fight.c:1839-1852	A successful backstab retains the C strength-to-damage contribution in the hit formula.
+do_backstab	backstab	backstab.skill-message	D5	state	unit-green	TestBackstab_MissMessageFromSkillMessages	fight.c:1023-1035; lib/misc/messages:131	Miss output is selected from the C skill-message set rather than an invented Go string.
+do_backstab	backstab	backstab.draw-order-miss	D5	state	unit-green	TestBackstab_MissDrawCountAndOrder	act.offensive.c:221-225; fight.c:1023-1035	The miss consumes the C percent draw followed by the skill-message variant draw.
+do_backstab	backstab	backstab.draw-order-hit	D5	state	unit-green	TestSendSkillResult_BackstabSuccess_DrawOrderMatchesC	act.offensive.c:221-231; fight.c:1815-1852	The hit path preserves skill roll, to-hit, weapon dice, skill-message, and improve draw order.
+do_backstab	backstab	backstab.opener-success	D5	command	oracle-green-multiseed	combat-backstab-opener@1,2,3,5,8	act.offensive.c:221-231	The legal dagger opener and subsequent combat pulses have no normalized divergence across five seeds.
