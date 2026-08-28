@@ -575,12 +575,13 @@ func CmdBackstab(s SessionInterface, args []string) error {
 		return s.SendMessage("Backstab who?\r\n")
 	}
 
-	// Find target in room
-	targetName := strings.Join(args, " ")
+	// C do_backstab uses one_argument: skip fill words, lowercase the first
+	// target token, and ignore the remainder (act.offensive.c:174).
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 	if !found {
-		return s.SendMessage("They don't seem to be here.\r\n")
+		return s.SendMessage("Backstab who?\r\n")
 	}
 
 	// Can't backstab self

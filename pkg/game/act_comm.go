@@ -419,6 +419,12 @@ func oneArgument(input string) (string, string) {
 	}
 }
 
+// OneArgument exposes C one_argument parsing to command packages. It returns
+// the first non-fill-word token lowercased, matching interpreter.c:1265.
+func OneArgument(input string) (string, string) {
+	return oneArgument(input)
+}
+
 // halfChop splits the first whitespace-delimited word from the rest, mirroring
 // C half_chop (interpreter.c:1372). It calls any_one_arg, which lowercases the
 // first token but does NOT skip fill words; the remainder keeps its original
