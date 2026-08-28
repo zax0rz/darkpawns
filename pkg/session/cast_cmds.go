@@ -159,23 +159,48 @@ type castTarget struct {
 }
 
 func parseCastArguments(args []string) (spellName, targetName, errorMessage string) {
+	return parseCastArgumentsForPower(args, false)
+}
+
+func parseCastArgumentsForPower(args []string, power bool) (spellName, targetName, errorMessage string) {
 	input := strings.Join(args, " ")
 	if strings.TrimSpace(input) == "" {
+		if power {
+			return "", "", "Will what?\r\n"
+		}
 		return "", "", "Cast what where?\r\n"
 	}
 	opening := strings.IndexByte(input, '\'')
 	if opening < 0 {
+		if power {
+			return "", "", "Psionic powers must be enclosed in the symbols: '\r\n"
+		}
 		return "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
 	}
 	remaining := input[opening+1:]
 	closing := strings.IndexByte(remaining, '\'')
 	if closing < 0 {
+		// C's do_cast receives the command interpreter's remainder, which
+		// retains the separating space before the opening quote. strtok() sees
+		// that space as its first token and accepts the rest of the input as
+		// the spell name when there is no closing quote. The target is empty.
+		if spellName := strings.TrimSpace(remaining); spellName != "" {
+			return spellName, "", ""
+		}
+		if power {
+			return "", "", "Psionic powers must be enclosed in the symbols: '\r\n"
+		}
 		return "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
 	}
-	return strings.TrimSpace(remaining[:closing]), strings.TrimSpace(remaining[closing+1:]), ""
+	targetName, _ = game.OneArgument(remaining[closing+1:])
+	return strings.TrimSpace(remaining[:closing]), targetName, ""
 }
 
 func resolveCastTarget(s *Session, info *spells.SpellInfo, targetName string) (castTarget, string) {
+	return resolveCastTargetForCommand(s, info, targetName, false)
+}
+
+func resolveCastTargetForCommand(s *Session, info *spells.SpellInfo, targetName string, power bool) (castTarget, string) {
 	if info.HasTarget(spells.TarIgnore) {
 		return castTarget{found: true}, ""
 	}
@@ -231,36 +256,84 @@ func resolveCastTarget(s *Session, info *spells.SpellInfo, targetName string) (c
 	if info.Routines.Targets&(spells.TarObjRoom|spells.TarObjInv|spells.TarObjWorld) != 0 {
 		targetWord = "what"
 	}
+	if power {
+		return castTarget{}, fmt.Sprintf("Upon %s should the power be willed?\r\n", targetWord)
+	}
 	return castTarget{}, fmt.Sprintf("Upon %s should the spell be cast?\r\n", targetWord)
 }
 
 func checkCastSpellContract(s *Session, info *spells.SpellInfo, target castTarget) bool {
+	power := castUsesPower(s.player)
+	if s.player.GetWis() == 0 || s.player.GetInt() == 0 {
+		s.Send("You're not smart enough to cast!\r\n")
+		return false
+	}
 	if !checkCastPosition(s, info) {
 		return false
 	}
+	if s.player.IsAffected(game.AffCharm) && s.player.GetFollowing() != "" && castTargetName(target) != "" && strings.EqualFold(s.player.GetFollowing(), castTargetName(target)) {
+		s.Send("You are afraid you might hurt your master!\r\n")
+		return false
+	}
 	if target.character != s.player && info.HasTarget(spells.TarSelfOnly) {
-		s.Send("You can only cast this spell upon yourself!\r\n")
+		s.Send(castMessage(power, "You can only cast this spell upon yourself!\r\n", "You can only will this power upon yourself!\r\n"))
 		return false
 	}
 	if target.character == s.player && info.HasTarget(spells.TarNotSelf) {
-		s.Send("You cannot cast this spell upon yourself!\r\n")
+		s.Send(castMessage(power, "You cannot cast this spell upon yourself!\r\n", "You cannot will this power upon yourself!\r\n"))
 		return false
 	}
 	if info.HasRoutine(spells.RoutineGroups) && !s.player.InGroup {
-		s.Send("You can't cast this spell if you're not in a group!\r\n")
+		s.Send(castMessage(power, "You can't cast this spell if you're not in a group!\r\n", "You cannot use this power if you are not in a group!\r\n"))
 		return false
 	}
 	return true
 }
 
+func castTargetName(target castTarget) string {
+	if named, ok := target.character.(interface{ GetName() string }); ok {
+		return named.GetName()
+	}
+	return ""
+}
+
+func castUsesPower(player *game.Player) bool {
+	if player == nil {
+		return false
+	}
+	class := player.GetClass()
+	return class == game.ClassPsionic || class == game.ClassMystic
+}
+
+func castMessage(power bool, normal, powered string) string {
+	if power {
+		return powered
+	}
+	return normal
+}
+
 // cmdCast handles the "cast <spell> [target]" command.
 // Implements do_cast from cast.c / spell_parser.c.
 func cmdCast(s *Session, args []string) error {
+	return cmdCastCommand(s, args, "cast")
+}
+
+func cmdWill(s *Session, args []string) error {
+	return cmdCastCommand(s, args, "will")
+}
+
+func cmdCastCommand(s *Session, args []string, commandName string) error {
 	if s.player == nil || s.player.IsNPC() {
 		return nil
 	}
 
-	spellName, targetName, parseError := parseCastArguments(args)
+	power := castUsesPower(s.player)
+	if commandName == "cast" && s.player.GetClass() == game.ClassPsionic && s.player.GetLevel() < LVL_IMMORT {
+		s.Send("Psionics 'will' things, not 'cast' them!\r\n")
+		return nil
+	}
+
+	spellName, targetName, parseError := parseCastArgumentsForPower(args, power)
 	if parseError != "" {
 		s.Send(parseError)
 		return nil
@@ -268,25 +341,25 @@ func cmdCast(s *Session, args []string) error {
 
 	spellNum := game.FindSkillNum(spellName)
 	if spellNum < 1 || spellNum > maxCastSpell {
-		s.Send("Cast what?!?\r\n")
+		s.Send(castMessage(power, "Cast what?!?\r\n", "Will what?!?\r\n"))
 		return nil
 	}
 	sd := spellDB[spellNum]
 	info := spells.GetSpellInfo(spellNum)
 	if sd == nil || info == nil {
-		s.Send("Cast what?!?\r\n")
+		s.Send(castMessage(power, "Cast what?!?\r\n", "Will what?!?\r\n"))
 		return nil
 	}
 
 	minLevel := game.ClassSkillMinLevel(s.player.GetClass(), spellNum)
 	if s.player.GetLevel() < minLevel {
-		s.Send("You do not know that spell!\r\n")
+		s.Send(castMessage(power, "You do not know that spell!\r\n", "You are not learned in that power!\r\n"))
 		return nil
 	}
 	canonicalName := strings.ToLower(game.SkillCatalogName(spellNum))
 	proficiency := s.player.GetSkill(canonicalName)
 	if proficiency == 0 {
-		s.Send("You are unfamiliar with that spell.\r\n")
+		s.Send(castMessage(power, "You are unfamiliar with that spell.\r\n", "You are unfamiliar with that power.\r\n"))
 		return nil
 	}
 
@@ -298,19 +371,19 @@ func cmdCast(s *Session, args []string) error {
 		}
 	}
 
-	target, prompt := resolveCastTarget(s, info, targetName)
+	target, prompt := resolveCastTargetForCommand(s, info, targetName, power)
 	if prompt != "" {
 		s.Send(prompt)
 		return nil
 	}
 	if target.found && target.character == s.player && info.IsViolent() {
-		s.Send("You shouldn't cast that on yourself -- could be bad for your health!\r\n")
+		s.Send(castMessage(power, "You shouldn't cast that on yourself -- could be bad for your health!\r\n", "Exerting that power on yourself could be harmful!\r\n"))
 		return nil
 	}
 	if !target.found {
 		s.Send("Okay.\r\n")
 		spells.SaySpell(s.player, spellNum, nil, nil, s.manager.world)
-		s.Send("Cannot find the target of your spell!\r\n")
+		s.Send(castMessage(power, "Cannot find the target of your spell!\r\n", "Cannot find the target of your will!\r\n"))
 		return nil
 	}
 
@@ -318,7 +391,7 @@ func cmdCast(s *Session, args []string) error {
 	cost := manaCost(sd, casterLevel, s.player.GetClass())
 
 	if cost > 0 && s.player.GetMana() < cost && s.player.GetLevel() < LVL_IMMORT {
-		s.Send("You haven't the energy to cast that spell!\r\n")
+		s.Send(castMessage(power, "You haven't the energy to cast that spell!\r\n", "You haven't the energy to will that power!\r\n"))
 		return nil
 	}
 
@@ -399,4 +472,5 @@ func castWeightPenalty(ch *game.Player) int {
 func init() {
 	// Register the cast command with aliases
 	registerCommand("cast", wrapArgs(cmdCast), "Cast a spell.")
+	registerCommand("will", wrapArgs(cmdWill), "Will a psionic or mystic power.")
 }

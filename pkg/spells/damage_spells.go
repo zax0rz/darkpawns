@@ -1,6 +1,8 @@
 package spells
 
 import (
+	"fmt"
+
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -293,6 +295,25 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 	chCombat, chOk := ch.(combat.Combatant)
 	victCombat, victOk := victim.(combat.Combatant)
 	if chOk && victOk {
+		// C's damage() protects low-level player characters before it emits a
+		// damage/skill message (fight.c:1344-1357). Spoken spells reach that
+		// same damage() path through mag_damage(); keep the gate here rather
+		// than allowing the spell-only damage seam to bypass it.
+		if chCombat.GetName() != victCombat.GetName() && !chCombat.IsNPC() && !victCombat.IsNPC() {
+			if chCombat.GetLevel() <= 10 {
+				sendToCaster(ch, fmt.Sprintf("You are not experienced enough to attack %s!\r\n", victCombat.GetName()))
+				return
+			}
+			victimOutlaw := false
+			if flags, ok := victim.(interface{ GetFlags() uint64 }); ok {
+				victimOutlaw = flags.GetFlags()&(1<<0) != 0
+			}
+			if victCombat.GetLevel() <= 10 && !victimOutlaw {
+				sendToCaster(ch, fmt.Sprintf("Ancient forces protect %s from your wrath!\r\n", victCombat.GetName()))
+				return
+			}
+		}
+
 		// The breath path reaches C damage(0), which enrolls both awake
 		// participants before applying the zero amount (fight.c:1367-1395).
 		// Keep this scoped to breath attack types: the existing spell damage

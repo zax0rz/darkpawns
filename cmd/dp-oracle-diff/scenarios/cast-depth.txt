@@ -1,0 +1,91 @@
+# depth-case: cast.no-arg
+# depth-case: cast.will-entry
+# depth-case: cast.unquoted
+# depth-case: cast.unknown
+# depth-case: cast.missing-closing-quote
+# depth-case: cast.missing-target
+# depth-case: cast.trailing-target-words
+# depth-case: cast.no-target-violent
+# depth-case: cast.violent-self
+# depth-case: cast.low-level-pc-protection
+# C-first vehicle for do_cast at interpreter.c:373 and :825, with the
+# spell_parser.c:916-1110 entry path. The Implementor primary has the complete
+# spell catalog; the peer supplies an in-room character target. Pulses are
+# padded after successful casts because do_cast applies WAIT_STATE.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Casttarget]
+Casttarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Casttarget]
+Casttarget
+y
+targetpass
+targetpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Casttarget 8105
+
+[probe]
+cast
+will
+cast flame arrow
+cast 'frobnicate'
+cast 'flame arrow
+cast 'flame arrow'
+cast 'flame arrow' missing
+cast 'flame arrow' Casttarget
+~dpclock pulse 20
