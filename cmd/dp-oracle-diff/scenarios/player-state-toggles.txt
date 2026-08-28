@@ -1,3 +1,10 @@
+# depth-case: auto.exit-toggle
+# depth-case: auto.loot-toggle
+# depth-case: auto.gold-toggle
+# depth-case: auto.split-toggle
+# depth-case: auto.argument-case
+# depth-case: auto.unknown
+# depth-case: auto.no-arg-listing-undefined
 # Player state toggle fidelity: act.other.c::do_afk, do_auto, do_inactive.
 #
 # All three commands are mortal-accessible and deterministic. AFK broadcasts to
@@ -80,6 +87,7 @@ auto exits
 auto loot
 auto gold
 auto split
+auto EXIT
 auto nonsense
 inactive
 inactive

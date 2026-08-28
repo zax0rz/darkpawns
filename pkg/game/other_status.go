@@ -40,7 +40,10 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
+	// C only skips leading spaces here. The command table has already removed
+	// the command word, but do_auto compares the remaining argument literally:
+	// case and any trailing text are significant.
+	arg = strings.TrimLeft(arg, " \t")
 
 	if arg == "" {
 		var result strings.Builder
@@ -65,7 +68,7 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	switch strings.ToLower(arg) {
+	switch arg {
 	case "exit", "exits":
 		if ch.GetAutoExit() {
 			ch.SetAutoExit(false)
