@@ -2,37 +2,44 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
-// specNoGet is the special procedure for warded/no-get items.
-// Intercepts GET/TAKE.
+// specNoGet is the special procedure for the Grey Keep's no-get guards.
+// C: new_cmds2.c:552-574. It intercepts one- or zero-argument GET, PALM, and
+// TAKE before their ordinary command handlers and starts combat with the
+// player after emitting the two hand-strike messages.
 func specNoGet(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch == nil {
+	if ch == nil || me == nil {
 		return false
 	}
-	if cmd != "get" && cmd != "take" {
+	if me.GetPosition() <= combat.PosSleeping || me.GetHP() <= 0 {
 		return false
 	}
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
+	if cmd != "get" && cmd != "palm" && cmd != "take" {
+		return false
+	}
+	// C's two_arguments() leaves the procedure active for zero or one token,
+	// but returns FALSE when a second token is present.
+	if len(strings.Fields(arg)) > 1 {
 		return false
 	}
 
-	roomVNum := ch.GetRoomVNum()
-	items := w.GetItemsInRoom(roomVNum)
-	for _, item := range items {
-		if item != nil && GetObjSpec(item.VNum) != nil {
-			if strings.Contains(strings.ToLower(item.GetKeywords()), strings.ToLower(arg)) || strings.Contains(strings.ToLower(item.GetShortDesc()), strings.ToLower(arg)) {
-				ch.SendMessage("A strange protective ward prevents you from taking " + item.GetShortDesc() + "!\r\n")
-				return true
-			}
+	Act(w, true, me, ch, nil, nil, "$n strikes at $N's hand!", "", ToNotVict)
+	Act(nil, false, me, ch, nil, nil, "$n strikes at your hand!", "", ToVict)
+	if w != nil && w.combatEngine != nil {
+		// C calls hit(me, ch, TYPE_UNDEFINED) here. The shared combat engine
+		// owns the combat-entry state; TYPE_UNDEFINED has no loaded C skill
+		// message, so this special must not invent a swing transcript.
+		if err := w.combatEngine.StartCombat(me, ch); err != nil {
+			slog.Debug("no_get combat entry already active", "mob", me.GetName(), "player", ch.GetName(), "error", err)
 		}
 	}
-	return false
+	return true
 }
 
 // specRecharger charges wands/staves for gold.
