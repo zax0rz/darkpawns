@@ -425,10 +425,17 @@ func (p *Player) AdvanceLevel() {
 
 	// Immortal perks
 	if p.Level >= LVL_IMMORT {
-		for i := 0; i < 3; i++ {
-			p.SetCondition(i, -1)
-		}
-		p.SetHolyLight(true)
+		// AdvanceLevel already owns p.mu. Update the condition mirrors and
+		// holy-light bit directly; calling the locking setters here would
+		// self-deadlock on the first level-up into LVL_IMMORT.
+		p.Conditions[CondDrunk] = -1
+		p.Conditions[CondFull] = -1
+		p.Conditions[CondThirst] = -1
+		p.Drunk = -1
+		p.Hunger = -1
+		p.Thirst = -1
+		p.HolyLight = true
+		p.Flags |= 1 << uint(PrfHolyLight)
 	}
 
 	// Release lock before I/O — SavePlayer acquires RLock via playerToSaveData.

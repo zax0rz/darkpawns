@@ -1,0 +1,97 @@
+# depth-case: advance.no-arg
+# depth-case: advance.target-missing
+# depth-case: advance.target-not-level
+# depth-case: advance.target-level-zero
+# depth-case: advance.highest-level
+# depth-case: advance.npc-target
+# depth-case: advance.promote
+# depth-case: advance.promote-to-impl
+# depth-case: advance.already-at-level
+# depth-case: advance.demote
+# C-first vehicle for do_advance. Registration is src/interpreter.c:324;
+# dispatch gating is src/interpreter.c:1407-1456; the handler is
+# src/act.wizard.c:1480-1580. The first player is the Implementor and the
+# second player is a same-room mortal target. A quiet rat is spawned in the
+# same room to exercise get_char_vis -> IS_NPC without autonomous movement.
+# C promotion uses gain_exp_regardless()/advance_level(); demotion resets with
+# do_start(), then restores real abilities. The peer captures TO_VICT text.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 1 8105 80
+
+[setup:oracle]
+Advancedepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Advancedepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Advancepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Advancepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Advancepeer 8105
+
+[probe]
+advance
+advance nobody
+advance Advancepeer
+advance Advancepeer not-a-level
+advance Advancepeer 0
+advance Advancepeer 41
+advance 1.orc 2
+advance Advancepeer 2
+advance Advancepeer 2
+advance Advancepeer 1
+advance Advancepeer 40

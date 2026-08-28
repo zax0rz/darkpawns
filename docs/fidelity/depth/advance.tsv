@@ -1,0 +1,13 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_advance	advance	advance.no-arg	D1	command	oracle-green	advance-depth	act.wizard.c:1487-1498	No target reaches C's exact Advance who? branch.
+do_advance	advance	advance.target-missing	D2	command	oracle-green	advance-depth	act.wizard.c:1490-1496; handler.c:1263-1379	get_char_vis failure emits That player is not here.
+do_advance	advance	advance.target-not-level	D1	command	oracle-green	advance-depth	act.wizard.c:1510-1514	A resolved target with no level argument emits That's not a level!.
+do_advance	advance	advance.target-level-zero	D1	command	oracle-green	advance-depth	act.wizard.c:1510-1514	C atoi zero is rejected by the <=0 level gate.
+do_advance	advance	advance.highest-level	D1	command	oracle-green	advance-depth	act.wizard.c:1516-1520	Level 41 is rejected with the LVL_IMPL ceiling and exact byte text.
+do_advance	advance	advance.npc-target	D2	command	oracle-green	advance-depth	act.wizard.c:1507-1509; handler.c:1276-1323	The 1.orc vehicle resolves a visible NPC and reaches the C NPC rejection.
+do_advance	advance	advance.promote	D4	state	oracle-green	advance-depth	act.wizard.c:1532-1551; limits.c:327-363; class.c:600-720	Promotion emits C's TO_VICT transformation and one rise message while advancing state through gain_exp_regardless.
+do_advance	advance	advance.promote-to-impl	D4	state	oracle-green-multiseed	advance-depth	act.wizard.c:1532-1551; limits.c:327-363; class.c:600-720	The level-1 to level-40 boundary exercises repeated gain_exp_regardless, advance_level, immortal perks, and contiguous rise-message bytes on seeds 1,2,3,5,8.
+do_advance	advance	advance.already-at-level	D1	command	oracle-green	advance-depth	act.wizard.c:1526-1530	Equal target level emits the exact already-at-level acknowledgement without mutation.
+do_advance	advance	advance.demote	D4	state	oracle-green	advance-depth	act.wizard.c:1539-1551	Demotion sends C's darkness text, resets via do_start, and acknowledges only the actor.
+do_advance	advance	advance.actor-authority-gate	D1	command	unit-green	TestCmdAdvanceAuthorityBranches	act.wizard.c:1499-1505	Non-Implementor actor at or below the target is rejected before level parsing.
+do_advance	advance	advance.actor-newlevel-gate	D1	command	unit-green	TestCmdAdvanceAuthorityBranches	act.wizard.c:1516-1524	A non-Implementor actor cannot advance a lower target above the actor level.

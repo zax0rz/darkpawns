@@ -475,31 +475,149 @@ func cmdAdvance(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
+	if len(args) == 0 {
 		s.Send("Advance who?\r\n")
 		return nil
 	}
-	targetName := args[0]
-	newLevel, err := strconv.Atoi(args[1])
-	if err != nil {
-		s.Send("Invalid level.")
+	target, ok := s.manager.world.ResolveCharWorld(s.player, args[0])
+	if !ok {
+		s.Send("That player is not here.\r\n")
 		return nil
 	}
-	if newLevel < 0 || newLevel > 60 {
-		s.Send("Level must be between 0 and 60.")
+
+	actorLevel := s.player.GetLevel()
+	victimLevel := target.Combatant.GetLevel()
+	if actorLevel != LVL_IMPL && actorLevel <= victimLevel {
+		s.Send("Maybe that's not such a great idea.\r\n")
 		return nil
 	}
-	target := findSessionByName(s.manager, targetName)
-	if target == nil || target.player == nil {
-		s.Send("There is no such player.")
+	if target.Combatant.IsNPC() {
+		s.Send("NO!  Not on NPC's.\r\n")
 		return nil
 	}
-	oldLevel := target.player.Level
-	target.player.Level = newLevel
-	slog.Warn("player advanced", "target", target.player.Name, "old", oldLevel, "new", newLevel, "by", s.player.Name)
-	s.Send(fmt.Sprintf("%s advanced from level %d to %d.", target.player.Name, oldLevel, newLevel))
-	target.Send(fmt.Sprintf("You have been advanced from level %d to %d!", oldLevel, newLevel))
+	newLevel, ok := parseAdvanceLevel(args[1:])
+	if !ok || newLevel <= 0 {
+		s.Send("That's not a level!\r\n")
+		return nil
+	}
+	if newLevel > LVL_IMPL {
+		s.Send(fmt.Sprintf("%d is the highest possible level.\r\n", LVL_IMPL))
+		return nil
+	}
+	if newLevel > actorLevel {
+		s.Send("Yeah, right.\r\n")
+		return nil
+	}
+	victim, ok := target.Combatant.(*game.Player)
+	if !ok || victim == nil {
+		// The NPC branch above is exhaustive for the current CharTarget
+		// implementations. Keep the C target failure text if a future target
+		// type reaches this command instead of inventing a success path.
+		s.Send("That player is not here.\r\n")
+		return nil
+	}
+	if newLevel == victimLevel {
+		s.Send("They are already at that level.\r\n")
+		return nil
+	}
+
+	oldLevel := victimLevel
+	if newLevel < victimLevel {
+		// C do_advance demotes by running do_start(), which resets level/exp and
+		// base hit/mana, gives another starting kit, advances once, then leaves
+		// the real abilities intact. Go stores real abilities directly in Stats;
+		// no separate roll is performed here, so there is nothing to restore.
+		victim.SendMessage("You are momentarily enveloped by darkness!\r\n" +
+			"You can feel all your power and knowledge being\r\n" +
+			"drained away from you!\r\n")
+		s.manager.world.GiveStartingItems(victim)
+		victim.SetLevel(1)
+		victim.SetExp(1)
+		victim.SetMaxHP(10)
+		victim.SetMaxMana(100)
+		game.GiveStartingSkills(victim)
+		victim.AdvanceLevel()
+		victim.SetHP(victim.GetMaxHP())
+		victim.SetMana(victim.GetMaxMana())
+		victim.SetMove(victim.GetMaxMove())
+		victim.SetCondition(game.CondThirst, 36)
+		victim.SetCondition(game.CondFull, 36)
+		victim.SetCondition(game.CondDrunk, 0)
+		victim.WimpLevel = 5
+		victim.SetPractices(victim.GetPractices() + 2)
+
+		if newLevel != 1 {
+			// This mirrors do_advance's recursive promotion after do_start().
+			_ = cmdAdvance(s, args)
+		}
+	} else {
+		promotionText := "$n makes some strange gestures.\n" +
+			"A strange feeling comes upon you,\n" +
+			"Like a giant hand, light comes down\n" +
+			"from above, grabbing your body, that\n" +
+			"begins to pulse with colored lights\n" +
+			"from inside.\n\n" +
+			"Your head seems to be filled with demons\n" +
+			"from another plane as your body dissolves\n" +
+			"to the elements of time and space itself.\n" +
+			"Suddenly a silent explosion of light\n" +
+			"snaps you back to reality.\n\n" +
+			"You feel slightly different."
+		game.Act(s.manager.world, false, s.player, victim, nil, nil,
+			promotionText, "", game.ToVict)
+		var levelMessages strings.Builder
+		for level := victim.GetLevel(); level < newLevel; level++ {
+			gain := game.ExpNeededForLevel(victim) - victim.GetExp()
+			levelsGained := s.manager.world.GainExpRegardlessSilent(victim, gain)
+			if levelsGained == 1 {
+				levelMessages.WriteString("You rise a level!\r\n")
+			} else if levelsGained > 1 {
+				_, _ = fmt.Fprintf(&levelMessages, "You rise %d levels!\r\n", levelsGained)
+			}
+		}
+		if levelMessages.Len() > 0 {
+			victim.SendMessage(levelMessages.String())
+		}
+	}
+
+	s.Send("Okay.\r\n")
+	slog.Info("(GC) player advanced", "by", s.player.Name, "target", victim.Name, "old", oldLevel, "new", newLevel)
+	if err := game.SavePlayer(victim); err != nil {
+		slog.Error("advance: save player failed", "player", victim.Name, "error", err)
+	}
 	return nil
+}
+
+// parseAdvanceLevel mirrors C atoi() for do_advance: it accepts an optional
+// sign and consumes the leading decimal digits, ignoring a trailing suffix.
+func parseAdvanceLevel(args []string) (int, bool) {
+	if len(args) == 0 {
+		return 0, false
+	}
+	value := strings.TrimSpace(args[0])
+	if value == "" {
+		return 0, false
+	}
+	index := 0
+	sign := 1
+	if value[0] == '+' || value[0] == '-' {
+		if value[0] == '-' {
+			sign = -1
+		}
+		index++
+	}
+	start := index
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	if index == start {
+		return 0, false
+	}
+	parsed, err := strconv.Atoi(value[start:index])
+	if err != nil {
+		return 0, false
+	}
+	return sign * parsed, true
 }
 
 // ---------------------------------------------------------------------------
