@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_at	at	at.no-arg	D1	command	oracle-green	at-depth	act.wizard.c:242-250	No argument reaches find_target_room's exact room/name usage line.
+do_at	at	at.no-command	D1	command	oracle-green	at-depth	act.wizard.c:251-255	A resolved room without a nested command emits C's distinct question.
+do_at	at	at.named-character-target	D2	command	oracle-green	at-depth	act.wizard.c:204-205; handler.c:1277-1323	Visible character names resolve through get_char_vis before dispatch.
+do_at	at	at.named-object-target	D2	command	oracle-green	at-depth	act.wizard.c:206-212; handler.c:1328-1379	Visible room objects resolve through get_obj_vis before dispatch.
+do_at	at	at.named-target-missing	D1	command	oracle-green	at-depth	act.wizard.c:213-215	Unknown nonnumeric targets emit the exact creature/object failure.
+do_at	at	at.numeric-target-missing	D1	command	oracle-green	at-depth	act.wizard.c:196-202	Unknown numeric vnums emit the exact no-room failure.
+do_at	at	at.execute-and-restore	D4	state	oracle-green	at-depth	act.wizard.c:257-265	Nested command runs at the target and the actor returns when still there.
+do_at	at	at.level-gate	D1	command	oracle-green	mortal-batch19	interpreter.c:323; interpreter.c:1407-1456	LVL_GRGOD dispatcher gate hides the command from mortals.
+do_at	at	at.nested-movement-not-restored	D4	state	unit-green	TestCmdAtPreservesNestedMovementLocation	act.wizard.c:260-264	A nested movement command that leaves the target room prevents restoration.

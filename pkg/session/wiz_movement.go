@@ -28,50 +28,90 @@ func cmdGoto(s *Session, args []string) error {
 	return nil
 }
 
-// ---------------------------------------------------------------------------
-// at — run a command at another location (LVL_IMMORT)
-// ---------------------------------------------------------------------------
-// Recursion is capped at 3 levels to prevent stack overflow from chained
-// "at" commands (e.g. "at 100 at 200 at 300 shutdown").
-const maxAtDepth = 3
-
 func cmdAt(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
+	if len(args) == 0 {
 		s.Send("You must supply a room number or a name.\r\n")
 		return nil
 	}
-	dest, err := strconv.Atoi(args[0])
-	if err != nil {
-		s.Send("That's not a valid room number.")
+	dest, ok := findAtRoom(s, args[0])
+	if !ok {
 		return nil
 	}
-
-	// Check and increment recursion depth.
-	// Stored on Session so it survives the ExecuteCommand dispatch back to cmdAt.
-	depth := 0
-	if v := s.GetTempData("atDepth"); v != nil {
-		depth = v.(int)
-	}
-	if depth >= maxAtDepth {
-		s.Send("Nope, not going deeper.")
+	if len(args) == 1 {
+		s.Send("What do you want to do there?\r\n")
 		return nil
 	}
-	s.SetTempData("atDepth", depth+1)
-	defer s.SetTempData("atDepth", depth) // restore on return
 
 	orig := s.player.GetRoom()
 	s.player.SetRoom(dest)
-	defer s.player.SetRoom(orig)
-	rest := strings.Join(args[1:], " ")
-	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", rest, "depth", depth+1)
-	if err := ExecuteCommand(s, strings.Fields(rest)[0], strings.Fields(rest)[1:]); err != nil {
-		slog.Error("wizard at command failed", "command", rest, "error", err)
+	command, commandArgs := args[1], args[2:]
+	slog.Warn("wizard at", "by", s.player.Name, "room", dest, "command", strings.Join(args[1:], " "))
+	if err := ExecuteCommand(s, command, commandArgs); err != nil {
+		slog.Error("wizard at command failed", "command", strings.Join(args[1:], " "), "error", err)
+	}
+	// C only restores the actor when the nested command left them in the
+	// temporary room (act.wizard.c:260-264). A nested movement command that
+	// leaves that room intentionally keeps its resulting location.
+	if s.player.GetRoom() == dest {
+		s.player.SetRoom(orig)
 	}
 	return nil
+}
+
+// findAtRoom mirrors find_target_room (act.wizard.c:184-239). Numeric room
+// vnums take the real_room path; otherwise C resolves a visible character and
+// then a visible object, using the resolved entity's current room.
+func findAtRoom(s *Session, raw string) (int, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		s.Send("You must supply a room number or a name.\r\n")
+		return 0, false
+	}
+
+	if isLeadingDigit(raw) && !strings.ContainsRune(raw, '.') {
+		vnum, ok := parseLeadingInt(raw)
+		if !ok || s.manager.world.GetRoomInWorld(vnum) == nil {
+			s.Send("No room exists with that number.\r\n")
+			return 0, false
+		}
+		return vnum, true
+	}
+
+	if target, ok := s.manager.world.ResolveCharWorld(s.player, raw); ok {
+		if target.Player != nil {
+			return target.Player.GetRoom(), true
+		}
+		if target.Mob != nil {
+			return target.Mob.GetRoom(), true
+		}
+	}
+	if object, ok := s.manager.world.ResolveObjectWorld(s.player, raw); ok {
+		if room := object.GetRoomVNum(); room > 0 {
+			return room, true
+		}
+		s.Send("That object is not available.\r\n")
+		return 0, false
+	}
+
+	s.Send("No such creature or object around.\r\n")
+	return 0, false
+}
+
+func isLeadingDigit(value string) bool {
+	return value[0] >= '0' && value[0] <= '9'
+}
+
+func parseLeadingInt(value string) (int, bool) {
+	end := 0
+	for end < len(value) && value[end] >= '0' && value[end] <= '9' {
+		end++
+	}
+	vnum, err := strconv.Atoi(value[:end])
+	return vnum, err == nil
 }
 
 // ---------------------------------------------------------------------------
