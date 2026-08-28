@@ -8,9 +8,8 @@ import (
 
 func (w *World) HouseBoot() {
 	w.mu.Lock()
-	defer w.mu.Unlock()
-
 	w.HouseControl = nil
+	w.mu.Unlock()
 
 	data, err := os.ReadFile(houseControlFilename)
 	if err != nil {
