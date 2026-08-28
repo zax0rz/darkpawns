@@ -1,0 +1,76 @@
+# depth-case: afk.enable
+# depth-case: afk.disable
+# depth-case: afk.argument-ignored
+# C-first vehicle for do_afk: src/act.other.c:1283-1300. The primary and a
+# named peer share a room so the actor and TO_ROOM audiences are compared.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Afkdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Afkdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Afkpeer
+Y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Afkpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Afkpeer 8004
+
+[probe]
+afk
+afk ignored-argument
+afk

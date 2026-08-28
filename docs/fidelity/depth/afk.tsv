@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_afk	afk	afk.enable	D3	command	oracle-green	afk-depth	act.other.c:1283-1300	Enable branch matches actor text, room audience, state transition, and prompt framing.
+do_afk	afk	afk.disable	D3	command	oracle-green	afk-depth	act.other.c:1283-1300	Disable branch matches actor text and room audience while clearing AFK state.
+do_afk	afk	afk.argument-ignored	D1	command	oracle-green	afk-depth	act.other.c:1283-1300	C ignores command arguments; the argument-bearing toggle remains byte-identical.
+do_afk	afk	afk.state-mirror	D4	state	unit-green	TestDoAFKToggleState	act.other.c:1285-1296	Focused test verifies typed AFK state, PRF_AFK bit, and empty AFK message across both transitions.
