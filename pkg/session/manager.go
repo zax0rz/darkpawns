@@ -605,6 +605,24 @@ func (m *Manager) SetScriptFightFunc() {
 	}
 }
 
+// SetMobSpecialFunc wires native MOB_SPEC procedures into the combat engine.
+// C perform_violence() invokes an assigned mob special after the mob's
+// ordinary attack loop; mobile_activity() deliberately skips fighters, so the
+// combat seam is the only correct call path for combat-time specials.
+func (m *Manager) SetMobSpecialFunc() {
+	m.combatEngine.MobSpecialFunc = func(mob combat.Combatant) bool {
+		instance, ok := mob.(*game.MobInstance)
+		if !ok || instance == nil || !instance.HasFlag("spec") {
+			return false
+		}
+		spec := game.GetMobSpec(instance.GetVNum())
+		if spec == nil {
+			return false
+		}
+		return spec(m.world, nil, instance, "", "")
+	}
+}
+
 // SetScriptDeathFunc wires the death trigger into the combat engine.
 // When a mob dies, if it has a death script, it fires.
 func (m *Manager) SetScriptDeathFunc() {

@@ -1,0 +1,62 @@
+# depth-case: mob.magic-user-combat-cast
+# C-first vehicle for SPECIAL(magic_user).  The special is not reached by
+# mobile_activity(): mobact.c skips fighting mobs.  In combat, perform_violence
+# calls the mob special after that combatant's ordinary hit loop
+# (fight.c:1898-2032).  The spawned orc witch is assigned magic_user, carries
+# MOB_SPEC, and is scriptless in this disposable world so the native procedure
+# is the only combat-time special.  The God walks into its non-peaceful room;
+# the player opens the fight explicitly, then the pulse pump reaches
+# perform_violence and the probe captures the spell's state/output. Raven is
+# level 10, non-aggressive, and carries MOB_SPEC, so no unrelated aggression
+# arm is involved.
+#
+# SPECIAL(magic_user) gates cmd==0, POS_FIGHTING, and GET_HIT >= 0; it chooses
+# a room opponent with number(0,4), falls back to FIGHTING(ch), then selects
+# number(0,GET_LEVEL(ch)/2)+GET_LEVEL(ch)/2.  The scenario intentionally keeps
+# the spell choice and ordinary combat draw order live rather than invoking the
+# Go helper directly.  C path: src/spec_procs.c:409-500;
+# src/mobact.c:68-93; src/fight.c:1898-2032.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 20014 1 8105 80
+strip-mob-script 20014
+
+[setup:oracle]
+Magicgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Magicgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+hit raven
+
+[probe]
+score
+~dpclock pulse 20
+score
