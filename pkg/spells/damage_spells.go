@@ -279,18 +279,16 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
 		dam = combat.ApplyDamageModifiers(chCombat, victCombat, dam)
+		// C damage() still calls skill_message() when the adjusted damage is
+		// zero.  Immortal victims receive the god_msg branch, and ordinary
+		// zero-damage spells receive the miss branch; both consume the message
+		// selector draw and remain player-visible (fight.c:1480, 296-327).
+		combat.EmitSkillMessage(dam, chCombat.GetName(), victCombat.GetName(), attackType, chCombat.GetRoom())
 		if dam <= 0 {
-			// Fully absorbed (immortal victim, or sanctuary on a tiny hit):
-			// no damage, no death — matches World.DoSpellDamage.
+			// Fully absorbed (immortal victim, or a clamped protection result):
+			// no state damage/death — matches damage() after the message path.
 			return
 		}
-
-		// C damage(): a spell attacktype (!IS_WEAPON) routes through
-		// skill_message(dam, ch, victim, attacktype) — it draws Dice(1,N) from
-		// the shared roller and emits the char/vict/room spell-damage message
-		// (e.g. "The lightning bolt hits $N with full impact!"). Go previously
-		// sent an invented "$n <verb> you!" line and skipped this draw.
-		combat.EmitSkillMessage(dam, chCombat.GetName(), victCombat.GetName(), attackType, chCombat.GetRoom())
 
 		victCombat.TakeDamage(dam)
 		victCombat.SetFighting(chCombat.GetName())

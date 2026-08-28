@@ -81,7 +81,7 @@ func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interfa
 			}
 			targetMsg = "$n stares at you and utters the words, '" + spellForTarget + "'."
 		}
-		sendAct(targetMsg+"\r\n", ch, nil, tch, world)
+		sendAct(capitalizeActMessage(targetMsg)+"\r\n", ch, nil, tch, world)
 	}
 }
 
@@ -301,7 +301,7 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 		} else {
 			msg = strings.ReplaceAll(msg, "$p", "something")
 		}
-		rp.SendMessage(msg + "\r\n")
+		rp.SendMessage(capitalizeActMessage(msg) + "\r\n")
 	})
 }
 
@@ -322,8 +322,21 @@ func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
 		}
 		msg := strings.ReplaceAll(format, "$n", name)
 		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
+		if _, named := ch.(namer); named {
+			msg = capitalizeActMessage(msg)
+		}
 		s.SendMessage(msg)
 	}
+}
+
+// capitalizeActMessage mirrors C act()'s CAP(lbuf), which uppercases the
+// first byte after token substitution. Mob short descriptions are commonly
+// lowercase, making this visible on NPC verbal-component messages.
+func capitalizeActMessage(msg string) string {
+	if len(msg) == 0 || msg[0] < 'a' || msg[0] > 'z' {
+		return msg
+	}
+	return string(msg[0]-('a'-'A')) + msg[1:]
 }
 
 func possessivePronoun(ch interface{}) string {

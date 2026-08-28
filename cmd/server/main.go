@@ -232,6 +232,7 @@ func main() {
 		}
 	}
 	manager.SetScriptFightFunc()                         // Enable mob fight scripts after each combat round
+	manager.SetMobSpecialFunc()                          // Enable combat-time native mob specials
 	manager.SetScriptDeathFunc()                         // Enable mob death scripts on kill
 	manager.SetOnRoundEnd()                              // Decrement wait states each combat round
 	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers

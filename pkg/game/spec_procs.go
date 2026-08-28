@@ -317,6 +317,19 @@ func npcSteal(w *World, me *MobInstance, victim *Player) {
 	}
 }
 
+// castMobSpell is the native NPC cast_spell() path.  Unlike a player command,
+// a mob special enters cast_spell() directly, so the procedure must emit the
+// verbal component before dispatching call_magic (spell_parser.c:827-909).
+func castMobSpell(w *World, me *MobInstance, victim combat.Combatant, spellNum int) bool {
+	// C's GET_WIS/GET_INT and GET_MOB_WAIT gates send only to the mob, whose
+	// descriptor is absent; retaining the gate avoids inventing player bytes.
+	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+		return false
+	}
+	spells.SaySpell(me, spellNum, victim, nil, w)
+	return spells.Cast(me, victim, spellNum, me.GetLevel(), w)
+}
+
 // magic_user — mob spec: casts combat spells while fighting
 func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
@@ -325,7 +338,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 	var vict *Player
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if p.IsFighting() && p.GetName() == me.GetName() && number(0, 5) == 0 {
+		if p.GetFighting() == me.GetName() && number(0, 4) == 0 {
 			vict = p
 			break
 		}
@@ -341,44 +354,52 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 
-	spellRoll := randN(me.GetLevel()/2+1) + me.GetLevel()/2
+	spellRoll := number(0, me.GetLevel()/2) + me.GetLevel()/2
 	switch {
 	case spellRoll <= 5:
-		spells.Cast(me, vict, spells.SpellMagicMissile, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellMagicMissile)
 	case spellRoll <= 7:
-		spells.Cast(me, vict, spells.SpellChillTouch, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellChillTouch)
 	case spellRoll <= 9:
-		spells.Cast(me, vict, spells.SpellBurningHands, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellBurningHands)
 	case spellRoll <= 11:
-		spells.Cast(me, vict, spells.SpellShockingGrasp, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellShockingGrasp)
 	case spellRoll == 12:
-		spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), w)
+		if !mobIsEvil(me) && vict.GetAlignment() <= -350 {
+			castMobSpell(w, me, vict, spells.SpellDispelEvil)
+		} else if mobIsEvil(me) && vict.GetAlignment() >= 350 {
+			castMobSpell(w, me, vict, spells.SpellDispelGood)
+		}
 	case spellRoll == 13:
-		spells.Cast(me, vict, spells.SpellLightningBolt, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellLightningBolt)
 	case spellRoll == 14:
-		if number(0, 11) == 0 {
-			spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
+		if number(0, 10) == 0 {
+			castMobSpell(w, me, vict, spells.SpellTeleport)
 		}
 	case spellRoll >= 15 && spellRoll <= 17:
-		spells.Cast(me, vict, spells.SpellColorSpray, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellColorSpray)
 	case spellRoll == 20:
-		spells.Cast(me, vict, spells.SpellHellfire, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellHellfire)
 	case spellRoll == 25:
-		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellFlamestrike)
 	case spellRoll == 30:
-		spells.Cast(me, vict, spells.SpellDisintegrate, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellDisintegrate)
 	case spellRoll >= 31 && spellRoll <= 33:
-		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellDisrupt)
 	case spellRoll == 34:
-		spells.Cast(me, vict, spells.SpellInvulnerability, me.GetLevel(), w)
+		castMobSpell(w, me, me, spells.SpellInvulnerability)
 	case spellRoll >= 35 && spellRoll <= 36:
-		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), w)
+		if w.IsOutside(me.GetRoom()) {
+			castMobSpell(w, me, vict, spells.SpellFlamestrike)
+		}
 	case spellRoll == 37:
-		spells.Cast(me, vict, spells.SpellMeteorSwarm, me.GetLevel(), w)
+		if w.IsOutside(me.GetRoom()) {
+			castMobSpell(w, me, vict, spells.SpellMeteorSwarm)
+		}
 	case spellRoll == 38:
-		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellDisrupt)
 	default:
-		spells.Cast(me, vict, spells.SpellFireball, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellFireball)
 	}
 	return true
 }

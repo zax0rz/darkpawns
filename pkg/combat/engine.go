@@ -57,6 +57,11 @@ type CombatEngine struct {
 	// Source: mobact.c — mobs use scripts during combat
 	ScriptFightFunc func(mobName string, targetName string, roomVNum int)
 
+	// MobSpecialFunc fires a MOB_SPEC procedure after an NPC's combat turn.
+	// Set by the game layer. Source: fight.c:2030-2031 — perform_violence()
+	// invokes the assigned special after the ordinary attack loop.
+	MobSpecialFunc func(mob Combatant) bool
+
 	// ScriptDeathFunc fires the "death" trigger on a mob when it dies.
 	// Set by the game layer. Called with (victimName, killerName, roomVNum).
 	// Source: fight.c — raw_kill() calls Lua death trigger.
@@ -548,6 +553,12 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		if ce.performOneHit(pair) {
 			break
 		}
+	}
+
+	// C perform_violence() invokes MOB_SPEC after the mob's ordinary attack
+	// loop and before the combat-round script trigger.
+	if attacker.IsNPC() && ce.MobSpecialFunc != nil {
+		ce.MobSpecialFunc(attacker)
 	}
 
 	// Fire fight trigger on mob attacker after combat round

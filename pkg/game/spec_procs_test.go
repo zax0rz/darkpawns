@@ -12,6 +12,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // newSpecProcTestWorld creates a minimal world for spec proc tests.
@@ -473,6 +474,103 @@ func TestSpecMagicUser_Golden(t *testing.T) {
 	player.SetFighting(mob.GetName())
 	if got := specMagicUser(w, nil, mob, "", ""); !got {
 		t.Error("specMagicUser should return true when fighting with a target")
+	}
+}
+
+// magicUserSeed returns a seed whose first draw is the room-opponent probe and
+// whose second draw selects targetRoll.  The helper mirrors the two C draws
+// before SPECIAL(magic_user)'s switch so focused proofs do not depend on a
+// guessed seed.
+func magicUserSeed(t *testing.T, level, targetRoll int) uint32 {
+	t.Helper()
+	base := level / 2
+	for seed := uint32(1); seed < 10000; seed++ {
+		dprng.ResetStream(seed)
+		_ = dprng.Number(0, 4)
+		if dprng.Number(0, base) == targetRoll-base {
+			return seed
+		}
+	}
+	t.Fatalf("failed to find magic_user seed for level %d roll %d", level, targetRoll)
+	return 0
+}
+
+// TestSpecMagicUser_SelfTargetAndDispelGate proves the two branches whose
+// target/conditional behavior was previously divergent from C: invulnerability
+// lands on the caster, and neutral targets do not receive unconditional dispel.
+func TestSpecMagicUser_SelfTargetAndDispelGate(t *testing.T) {
+	t.Run("invulnerability targets the mob", func(t *testing.T) {
+		w, player, _ := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 34)
+		mob.Intel, mob.Wis = 10, 10
+		mob.SetPosition(combat.PosFighting)
+		mob.SetFighting(player.Name)
+		player.SetFighting(mob.GetName())
+
+		seed := magicUserSeed(t, 34, 34)
+		dprng.ResetStream(seed)
+		if !specMagicUser(w, nil, mob, "", "") {
+			t.Fatal("specMagicUser should handle the forced invulnerability branch")
+		}
+		if !mob.HasAffect(affInvuln) {
+			t.Error("invulnerability should affect the magic-user mob")
+		}
+		if player.HasSpellAffect(spells.SpellInvulnerability) {
+			t.Error("invulnerability should not target the fighting player")
+		}
+	})
+
+	t.Run("neutral target blocks dispel", func(t *testing.T) {
+		w, player, lastMsg := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 24)
+		mob.Intel, mob.Wis = 10, 10
+		mob.SetPosition(combat.PosFighting)
+		mob.SetFighting(player.Name)
+		player.SetFighting(mob.GetName())
+		player.SetAlignment(0)
+		_ = lastMsg() // discard setup output before the direct special call
+
+		seed := magicUserSeed(t, 24, 12)
+		dprng.ResetStream(seed)
+		if !specMagicUser(w, nil, mob, "", "") {
+			t.Fatal("specMagicUser should handle the forced dispel switch arm")
+		}
+		if got := lastMsg(); got != "" {
+			t.Errorf("neutral target should not receive a dispel cast, got %q", got)
+		}
+	})
+}
+
+// TestSpecMagicUser_OutsideGate proves C's OUTSIDE guard for the high-level
+// flamestrike/meteor-swarm arms while keeping the spell draw identical.
+func TestSpecMagicUser_OutsideGate(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 38)
+	mob.Intel, mob.Wis = 10, 10
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+
+	room := w.GetRoomInWorld(1001)
+	room.Flags = []string{"8"}
+	room.Sector = SECT_INSIDE
+	_ = lastMsg() // discard spawn output before the direct special call
+	seed := magicUserSeed(t, 38, 37)
+	dprng.ResetStream(seed)
+	if !specMagicUser(w, nil, mob, "", "") {
+		t.Fatal("specMagicUser should handle the forced meteor-swarm switch arm")
+	}
+	if got := lastMsg(); got != "" {
+		t.Errorf("indoor room should suppress the outdoor spell, got %q", got)
+	}
+
+	room.Flags = nil
+	dprng.ResetStream(seed)
+	if !specMagicUser(w, nil, mob, "", "") {
+		t.Fatal("specMagicUser should handle the outdoor meteor-swarm switch arm")
+	}
+	if got := lastMsg(); got == "" {
+		t.Error("outdoor room should permit the meteor-swarm cast")
 	}
 }
 
