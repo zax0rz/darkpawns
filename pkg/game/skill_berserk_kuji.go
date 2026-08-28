@@ -79,12 +79,15 @@ func DoBerserk(ch *Player) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You're about as berserk as you're gonna get."}
 	}
 
+	// C draws percent before checking whether the caster is already berserk.
+	// Preserve that draw even when the affect gate rejects the command.
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101) // 1-101, 101 = guaranteed failure
+
 	if ch.IsAffected(affBerserk) {
 		return SkillResult{Success: false, MessageToCh: "You're unable to summon your battle rage right now."}
 	}
 
-	// #nosec G404 — game RNG, not cryptographic
-	percent := dprng.Number(1, 101) // 1-101, 101 = guaranteed failure
 	if ch.GetLevel() > LVL_IMMORT {
 		percent = 0 // immortals always succeed
 	}

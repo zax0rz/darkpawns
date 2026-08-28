@@ -1,0 +1,13 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_berserk	berserk	berserk.no-skill	D1	command	oracle-green	mortal-batch6	src/interpreter.c:353; src/new_cmds.c:2142-2146	The player command refuses before any RNG draw when GET_SKILL is zero.
+do_berserk	berserk	berserk.one-argument	D1	command	oracle-green	berserk-depth	src/interpreter.c:353; src/new_cmds.c:2134-2187	The self-buff does not inspect the command argument; trailing words are ignored by the command surface.
+do_berserk	berserk	berserk.success	D2	command	oracle-green	berserk-depth	src/new_cmds.c:2157-2173	A mortal skill-100 player reaches the success message and affect path with no normalized divergence.
+do_berserk	berserk	berserk.failure	D2	command	oracle-green	berserk-failure-depth	src/new_cmds.c:2157-2173	A mortal skill-1 player reaches the exact failure message with seed 1.
+do_berserk	berserk	berserk.already-affected	D1	state	unit-green	TestDoBerserk_AlreadyAffected	src/new_cmds.c:2149-2154	The already-berserk gate rejects the use after C has consumed the percent draw.
+do_berserk	berserk	berserk.draw-before-affected	D5	state	unit-green	TestDoBerserk_AffectedGateConsumesPercentDraw	src/new_cmds.c:2147-2154	C's number(1,101) draw precedes the AFF_BERSERK gate; the focused test pins the next-stream position.
+do_berserk	berserk	berserk.immortal-bypass	D2	state	unit-green	TestDoBerserk_GuaranteedSuccessFoldsIntoStats	src/new_cmds.c:2156-2161	A level above LEVEL_IMMORT overwrites percent with zero and guarantees success.
+do_berserk	berserk	berserk.success-affects	D4	state	unit-green	TestDoBerserk_GuaranteedSuccessFoldsIntoStats	src/new_cmds.c:2171-2187	Success installs hitroll +2, damroll +2, and AC +25 affect records for duration 1 with AFF_BERSERK.
+do_berserk	berserk	berserk.failure-affects	D4	state	unit-green	TestDoBerserk_FailureStillInstallsInertAffectsAndWait	src/new_cmds.c:2164-2187	Failure still installs all three duration-1 AFF_BERSERK records with zero modifiers.
+do_berserk	berserk	berserk.wait-state	D4	state	unit-green	TestDoBerserk_FailureStillInstallsInertAffectsAndWait	src/new_cmds.c:2187	Every completed attempt applies the two-pulse player wait.
+do_berserk	berserk	berserk.unconditional-improve	D4	state	unit-green	TestDoBerserk_ImproveSkillAlwaysCalled	src/new_cmds.c:2164-2173	The dangling-else layout leaves improve_skill outside the success branch, so it runs on both result arms.
+do_berserk	berserk	berserk.fighter-special	D5	shared	delegated	mob.fighter-berserk	src/spec_procs.c:509-535; src/new_cmds.c:2134-2187	The fighter SPECIAL already proves the native subcmd=1 caller and remains owned by the special-procedure manifest.
