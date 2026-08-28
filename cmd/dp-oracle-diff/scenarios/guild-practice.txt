@@ -1,9 +1,15 @@
-# Phase 1 guild learning: `practice <skill>` at a guildmaster actually learns it.
+# depth-case: mob.guild-list
+# depth-case: mob.guild-learn
+# depth-case: mob.guild-list-after-learn
+# Guild special: `practice <skill>` at a guildmaster actually learns it.
 # C SPECIAL(guild) (spec_procs.c:201) intercepts `practice` when a guildmaster mob
 # shares the room. We spawn guildmaster #8012 (Belar, warrior GM, 80.mob, assigned `guild`
 # on both servers) into the newbie's start room 8162 rather than solving guild
-# navigation. Gain = MIN(MAXGAIN, MAX(MINGAIN, int_app[INT].learn)) — deterministic
-# under DP_SEED (same rolled INT both servers). quiet-mobs keeps the world still.
+# navigation. The C list_skills() practice-count prelude is overwritten by its
+# overlapping sprintf call on the live oracle, so the catalog starts directly at
+# "You know...". Gain = MIN(MAXGAIN, MAX(MINGAIN, int_app[INT].learn)) —
+# deterministic under DP_SEED (same rolled INT both servers). quiet-mobs keeps
+# the world still.
 
 [fixture]
 spawn-mob 8012 1 8162 80
