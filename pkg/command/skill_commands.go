@@ -1750,7 +1750,7 @@ func CmdBehead(s SessionInterface, args []string) error {
 		return s.SendMessage("Behead who?\r\n")
 	}
 
-	targetName := strings.Join(args, " ")
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
 	result := game.DoBehead(ch, targetName, world)
 	return sendSkillResult(s, ch, nil, result)

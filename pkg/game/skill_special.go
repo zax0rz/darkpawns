@@ -35,118 +35,131 @@ func DoMold(ch *Player, objName, newName, newDesc string) SkillResult {
 	}
 }
 
-// DoBehead implements do_behead() — behead a corpse.
+// DoBehead implements do_behead() from new_cmds.c.
 func DoBehead(ch *Player, targetName string, world *World) SkillResult {
-	// Check if target is a living character
-	target, _, found := FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
-	if found && target != nil {
-		return SkillResult{Success: false, MessageToCh: "You kill it first and THEN you behead it!\r\n"}
+	// C's one_argument() runs before both the character lookup and the
+	// position/no-argument gates.  The command wrapper also passes the first
+	// token, but keeping the parser here preserves the do_behead call path for
+	// direct callers and tests.
+	targetName, _ = OneArgument(targetName)
+	target, found := world.ResolveCharInRoom(ch, targetName)
+
+	if ch.GetPosition() == combat.PosFighting {
+		return SkillResult{Success: false, MessageToCh: "You're a little busy for that!"}
+	}
+	if targetName == "" {
+		return SkillResult{Success: false, MessageToCh: "Behead who?"}
+	}
+	if found && target.Combatant == ch {
+		return SkillResult{Success: false, MessageToCh: "This MUD doesn't support self-mutilation!"}
+	}
+	if found {
+		return SkillResult{Success: false, MessageToCh: "You kill it first and THEN you behead it!"}
 	}
 
-	// Look for corpse object in room
+	// C resolves any visible room object by the argument, then accepts only
+	// ITEM_CONTAINER objects whose value[3] marks them as corpses.  Keywords do
+	// not participate in this predicate (new_cmds.c:251-262).
 	room := world.GetRoomInWorld(ch.GetRoomVNum())
 	if room == nil {
 		return SkillResult{MessageToCh: "You are in a void.\r\n"}
 	}
 
-	items := world.GetItemsInRoom(ch.GetRoomVNum())
-	var corpse *ObjectInstance
-	targetLower := strings.ToLower(targetName)
-	for _, item := range items {
-		iname := strings.ToLower(item.GetKeywords())
-		if strings.Contains(iname, "corpse") && strings.Contains(iname, targetLower) {
-			corpse = item
-			break
-		}
+	obj, found := world.ResolveObjectInRoom(ch, targetName)
+	if !found {
+		return SkillResult{Success: false, MessageToCh: fmt.Sprintf("You can't seem to find a %s to behead!", targetName)}
 	}
 
-	if corpse == nil {
-		// Fallback: find any corpse matching name
-		for _, item := range items {
-			iname := strings.ToLower(item.GetKeywords())
-			if strings.Contains(iname, "corpse") {
-				corpse = item
-				break
-			}
-		}
+	if strings.Contains(obj.GetKeywords(), "headless") {
+		return SkillResult{Success: false, MessageToCh: "You can't behead something without a head!"}
 	}
 
-	if corpse == nil {
-		return SkillResult{Success: false, MessageToCh: fmt.Sprintf("You can't seem to find a %s to behead!\r\n", targetName)}
+	if obj.GetTypeFlag() != ITEM_CONTAINER || obj.GetValue(3) == 0 {
+		return SkillResult{Success: false, MessageToCh: "You can't behead that!"}
 	}
 
-	if strings.Contains(strings.ToLower(corpse.GetKeywords()), "headless") {
-		return SkillResult{Success: false, MessageToCh: "You can't behead something without a head!\r\n"}
-	}
-
-	// Check if it's a container (c-style: ITEM_CONTAINER with val[3] == 1 = corpse)
-	// For now, just check it's a corpse object
-	if !strings.Contains(strings.ToLower(corpse.GetKeywords()), "corpse") {
-		return SkillResult{Success: false, MessageToCh: "You can't behead that!\r\n"}
-	}
-
-	// Determine weapon type for messaging
+	// Determine weapon type for messaging.  C only examines WEAR_WIELD and
+	// treats value[3] == 3 as a slash weapon.
 	wielded := false
 	slashWeapon := false
-	if ch.Equipment != nil && len(ch.Equipment.Slots) > 0 {
-		weapon := ch.Equipment.Slots[0] // WEAR_WIELD = slot 0
-		if weapon != nil {
+	if ch.Equipment != nil {
+		if weapon, ok := ch.Equipment.GetItemInSlot(SlotWield); ok {
 			wielded = true
-			// Check if weapon type is slash (value[3] == 3, TYPE_SLASH - TYPE_HIT)
-			if weapon.Prototype != nil {
-				slashWeapon = weapon.Prototype.Values[3] == 3
-			}
+			slashWeapon = weapon.GetValue(3) == 3
 		}
 	}
 
 	var msgToCh, msgToRoom string
 	if wielded && slashWeapon {
-		msgToCh = fmt.Sprintf("You behead %s!", corpse.GetShortDesc())
-		msgToRoom = fmt.Sprintf("%s beheads %s!", ch.Name, corpse.GetShortDesc())
+		msgToCh = fmt.Sprintf("You behead %s!", obj.GetShortDesc())
+		msgToRoom = fmt.Sprintf("%s beheads %s!", ch.Name, obj.GetShortDesc())
 	} else {
-		msgToCh = fmt.Sprintf("You rip the head off %s with your bare hands!", corpse.GetShortDesc())
-		msgToRoom = fmt.Sprintf("%s rips the head off %s with %s bare hands!", ch.Name, corpse.GetShortDesc(), heShe(ch.GetSex()))
-	}
-
-	// Create head object (proto vnum 16)
-	_ = world.GetItemsInRoom(ch.GetRoomVNum()) // room items ref
-
-	// Since we can't easily create objects from proto, store modified name on corpse
-	// and use the corpse's short desc for the room message
-
-	// Dump corpse contents and remove it
-	// In a full port we'd create head + headless_corpse objects
-	// For now, mark the corpse as beheaded and dump its contents
-	if err := world.MoveObjectToNowhere(corpse); err != nil {
-		slog.Warn("MoveObjectToNowhere failed in behead", "obj_vnum", corpse.GetVNum(), "error", err)
-	}
-
-	// Create head (vnum 16) and headless corpse (vnum 17) objects
-	headObj, err := world.SpawnObject(16, ch.GetRoomVNum())
-	// Parse victim name from corpse keywords (first word after "corpse")
-	corpseKeywords := strings.Fields(corpse.GetKeywords())
-	victimName := "someone"
-	for i, kw := range corpseKeywords {
-		if kw == "corpse" && i+1 < len(corpseKeywords) {
-			victimName = strings.Join(corpseKeywords[i+1:], " ")
-			break
+		msgToCh = fmt.Sprintf("You rip the head off %s with your bare hands!", obj.GetShortDesc())
+		if ch.IsNPC() {
+			msgToRoom = fmt.Sprintf("%s rips the head off %s!", ch.Name, obj.GetShortDesc())
+		} else {
+			msgToRoom = fmt.Sprintf("%s rips the head off %s with %s bare hands!", ch.Name, obj.GetShortDesc(), genderPronoun(ch.GetSex()))
 		}
 	}
 
-	if err == nil && headObj != nil {
-		headObj.Runtime.ShortDesc = fmt.Sprintf("the severed head of %s", victimName)
-		headObj.Runtime.Name = fmt.Sprintf("head %s", victimName)
+	originalName := obj.GetKeywords()
+	originalShortDesc := obj.GetShortDesc()
+
+	// C reads proto 16, rewrites its name/short/long descriptions, and then
+	// uses the ordinary can_take_obj gate before placing the head.
+	headObj, err := world.SpawnObject(16, -1)
+	if err != nil {
+		slog.Error("behead head prototype missing", "error", err)
+		return SkillResult{Success: false, MessageToCh: "You can't behead that!"}
 	}
-	headlessCorpseObj, err := world.SpawnObject(17, ch.GetRoomVNum())
-	if err == nil && headlessCorpseObj != nil {
-		headlessCorpseObj.Runtime.ShortDesc = fmt.Sprintf("the headless corpse of %s", victimName)
-		headlessCorpseObj.Runtime.Name = fmt.Sprintf("corpse headless %s", victimName)
+	headVerb := "ripped"
+	if slashWeapon {
+		headVerb = "hacked"
 	}
+	headShortDesc := fmt.Sprintf("a bloody head %s from %s", headVerb, originalShortDesc)
+	headObj.Runtime.Keywords = "head"
+	headObj.Runtime.ShortDesc = headShortDesc
+	headObj.Runtime.LongDesc = CapitalizeSentence(headShortDesc) + " has been left here."
+	if world.canTakeObj(ch, headObj) {
+		if err := world.MoveObjectToPlayerInventory(headObj, ch); err != nil {
+			slog.Error("behead head inventory placement failed", "error", err)
+			if moveErr := world.MoveObjectToRoomFront(headObj, ch.GetRoomVNum()); moveErr != nil {
+				slog.Error("behead head room placement failed", "error", moveErr)
+			}
+		}
+	} else if err := world.MoveObjectToRoomFront(headObj, ch.GetRoomVNum()); err != nil {
+		slog.Error("behead head room placement failed", "error", err)
+	}
+
+	// C reads proto 17, sets the corpse marker values/timer, appends the
+	// original object's keywords with "headless beheaded", transfers contents,
+	// then extracts the original object.
+	headlessCorpseObj, err := world.SpawnObject(17, -1)
+	if err != nil {
+		slog.Error("behead corpse prototype missing", "error", err)
+		return SkillResult{Success: false, MessageToCh: "You can't behead that!"}
+	}
+	headlessCorpseObj.SetValue(0, 0)
+	headlessCorpseObj.SetValue(3, 1)
+	headlessCorpseObj.Timer = MaxNPCCorpseTime
+	headlessCorpseObj.IsCorpse = true
+	headlessCorpseObj.Runtime.Keywords = originalName + " headless beheaded"
+	if err := world.MoveObjectToRoomFront(headlessCorpseObj, ch.GetRoomVNum()); err != nil {
+		slog.Error("behead corpse room placement failed", "error", err)
+	}
+	for len(obj.Contains) > 0 {
+		content := obj.Contains[0]
+		if err := world.MoveObjectToContainer(content, headlessCorpseObj); err != nil {
+			slog.Error("behead content transfer failed", "obj_vnum", content.GetVNum(), "error", err)
+			break
+		}
+	}
+	world.ExtractObject(obj, ch.GetRoomVNum())
 
 	return SkillResult{
 		Success:       true,
-		MessageToCh:   msgToCh + "\r\n",
-		MessageToRoom: msgToRoom + "\r\n",
+		MessageToCh:   msgToCh,
+		MessageToRoom: msgToRoom,
 	}
 }
 

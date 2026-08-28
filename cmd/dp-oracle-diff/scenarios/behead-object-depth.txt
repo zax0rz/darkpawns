@@ -1,0 +1,84 @@
+# depth-case: behead.container-value-predicate
+# depth-case: behead.one-argument
+# depth-case: behead.bare-message
+# depth-case: behead.object-state
+# depth-case: behead.room-audience
+#
+# Object-level C vehicle.  Object 1210 is an ITEM_CONTAINER with value[3]=1
+# but its keywords do not contain corpse.  C's do_behead accepts it by type
+# and value; the pre-depth Go port incorrectly required a corpse keyword.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 1210 1 8162 80
+
+[setup:oracle]
+Beheadobjgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Beheadobjgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Beheadobjpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Beheadobjpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Beheadobjpeer 8162
+
+[probe]
+behead fractal trailing words
+inventory
+look
+
+[probe:peer]
+look
