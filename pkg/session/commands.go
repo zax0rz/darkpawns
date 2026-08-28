@@ -125,8 +125,7 @@ func init() {
 	registerCommand("where", wrapArgs(cmdWhere), "Show player locations.")
 	registerCommand("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.")
 	registerCommand("gold", wrapNoArgs(cmdCoins), "Display your gold and bank balance (C alias of coins).")
-	// real C command name is "abilities" (src/interpreter.c); "abils" kept as alias.
-	registerCommand("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.", "abils")
+	registerCommand("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.")
 	registerCommand("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.")
 	registerCommand("review", wrapNoArgs(cmdReview), "Show recent gossip history.")
 	registerCommand("whois", wrapArgs(cmdWhois), "Look up a player's info.")

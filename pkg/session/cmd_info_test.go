@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -140,16 +141,68 @@ func TestCmdLevels(t *testing.T) {
 func TestCmdAbils(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.player.Stats.Str = 15
+	s.player.Stats.Str = 10
+	s.player.Stats.Dex = 10
+	s.player.Stats.Int = 10
+	s.player.Stats.Wis = 10
+	s.player.Stats.Con = 10
+	s.player.Stats.Cha = 10
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyStr, 6, 2, 0, "strength"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyDex, 6, -1, 0, "clumsy"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyInt, 6, 1, 0, "intellect"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyWis, 6, 1, 0, "wisdom"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCon, 6, 3, 0, "constitution"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCha, 6, -2, 0, "charisma"))
 
 	err := cmdAbils(s)
 	if err != nil {
 		t.Fatalf("cmdAbils failed: %v", err)
 	}
 
-	got := readSessionText(t, s)
-	if !strings.Contains(strings.ToLower(got), "ability scores") {
-		t.Errorf("expected abils output, got %q", got)
+	var got strings.Builder
+	for range 7 {
+		got.WriteString(readSessionText(t, s))
+	}
+	want := "Your current ability scores:\r\n" +
+		"Strength:      (decent)\r\n" +
+		"Dexterity:     (average)\r\n" +
+		"Intelligence:  (decent)\r\n" +
+		"Wisdom:        (decent)\r\n" +
+		"Constitution:  (good)\r\n" +
+		"Charisma:      (below average)\r\n"
+	if got.String() != want {
+		t.Errorf("unexpected abils output:\n got %q\nwant %q", got.String(), want)
+	}
+}
+
+func TestCmdAbilsClampsCEffectiveStatCeilings(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	s.player.Stats = game.CharStats{Str: 18, Dex: 18, Int: 18, Wis: 18, Con: 18, Cha: 18}
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyStr, 6, 2, 0, "strength"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyDex, 6, 2, 0, "dexterity"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyInt, 6, 2, 0, "intelligence"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyWis, 6, 2, 0, "wisdom"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCon, 6, 2, 0, "constitution"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCha, 6, 2, 0, "charisma"))
+
+	if err := cmdAbils(s); err != nil {
+		t.Fatalf("cmdAbils failed: %v", err)
+	}
+
+	var got strings.Builder
+	for range 7 {
+		got.WriteString(readSessionText(t, s))
+	}
+	want := "Your current ability scores:\r\n" +
+		"Strength:      (excellent)\r\n" +
+		"Dexterity:     (excellent)\r\n" +
+		"Intelligence:  (excellent)\r\n" +
+		"Wisdom:        (excellent)\r\n" +
+		"Constitution:  (excellent)\r\n" +
+		"Charisma:      (godlike)\r\n"
+	if got.String() != want {
+		t.Errorf("unexpected capped abils output:\n got %q\nwant %q", got.String(), want)
 	}
 }
 

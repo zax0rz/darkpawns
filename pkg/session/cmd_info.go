@@ -33,13 +33,27 @@ func cmdAbils(s *Session) error {
 		return nil
 	}
 	s.Send("Your current ability scores:\r\n")
-	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(p.Stats.Str)))
-	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(p.Stats.Dex)))
-	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(p.Stats.Int)))
-	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(p.Stats.Wis)))
-	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(p.Stats.Con)))
-	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(p.Stats.Cha)))
+	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(cDisplayAbility(p.GetStr()))))
+	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(cDisplayAbility(p.GetDex()))))
+	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetInt()))))
+	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(cDisplayAbility(p.GetWis()))))
+	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetCon()))))
+	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(p.GetCha())))
 	return nil
+}
+
+// cDisplayAbility mirrors affect_total's player-stat normalization
+// (handler.c:352-366). C keeps these five displayed ability values in [0,18]
+// after applying equipment and spell affects; exceptional strength is carried
+// separately in GET_ADD and does not change do_abils' GET_STR output.
+func cDisplayAbility(score int) int {
+	if score < 0 {
+		return 0
+	}
+	if score > 18 {
+		return 18
+	}
+	return score
 }
 
 func cmdCoins(s *Session) error {

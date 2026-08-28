@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_abils	abilities	abilities.output	D2	command	oracle-green	abilities-depth	act.informative.c:1077-1095; constants.c:61-91	Exact six-line display backed by C's abil_names table.
+do_abils	abilities	abilities.argument-ignored	D1	command	oracle-green	abilities-depth	interpreter.c:322; act.informative.c:1077-1095	The handler never reads argument, so an extra argument renders the same display.
+do_abils	abilities	abilities.non-c-alias	D1	command	oracle-green	abilities-depth	interpreter.c:322	C has no abils registration and returns Huh?!?; the confirmed Go alias was removed to preserve R2.
+do_abils	abilities	abilities.sleeping-entry	D1	command	oracle-green	abilities-depth	interpreter.c:322	POS_SLEEPING permits the display while the actor is asleep; the live scenario proves the unchanged six-line output.
+do_abils	abilities	abilities.effective-stats	D4	command	oracle-green-multiseed	abilities-active-stats	handler.c:127-158; magic.c:1251-1264	C GET_* includes active spell modifiers. God-to-peer SPELL_STRENGTH vehicle matches across seeds 1,2,3,5,8 after Go switched from raw Stats to effective getters.
+do_abils	abilities	abilities.no-descriptor	D5	command	excluded	-	act.informative.c:1079	Descriptorless direct calls are outside the registered player-command surface; command dispatch always supplies a descriptor, and the branch emits no player-visible bytes.
