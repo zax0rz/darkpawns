@@ -3,6 +3,7 @@ package spells
 import (
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -167,5 +168,58 @@ func TestMagAreas_SkipsCharmedNPC(t *testing.T) {
 	}
 	if enemy.hp >= 200 {
 		t.Errorf("non-charmed enemy should be damaged by area spell, hp still %d", enemy.hp)
+	}
+}
+
+// breathCombatant supplies the combat tail that C's mag_areas → mag_damage →
+// damage(0) still reaches for a breath weapon. The fighting state is the
+// observable assertion here: C skips a mortal player at LVL_IMMORT (31), but
+// enrolls an ordinary awake target even though the damage amount is zero.
+type breathCombatant struct {
+	mockSpellsChar
+	fighting string
+}
+
+func (m *breathCombatant) GetRoom() int                   { return m.roomVNum }
+func (m *breathCombatant) GetAC() int                     { return 0 }
+func (m *breathCombatant) GetTHAC0() int                  { return 20 }
+func (m *breathCombatant) GetDamageRoll() combat.DiceRoll { return combat.DiceRoll{} }
+func (m *breathCombatant) GetStr() int                    { return 18 }
+func (m *breathCombatant) GetStrAdd() int                 { return 0 }
+func (m *breathCombatant) GetInt() int                    { return 10 }
+func (m *breathCombatant) GetWis() int                    { return 10 }
+func (m *breathCombatant) GetHitroll() int                { return 0 }
+func (m *breathCombatant) GetDamroll() int                { return 0 }
+func (m *breathCombatant) TakeDamage(amount int)          { m.hp -= amount }
+func (m *breathCombatant) Heal(amount int)                { m.hp += amount }
+func (m *breathCombatant) SetFighting(name string)        { m.fighting = name }
+func (m *breathCombatant) StopFighting()                  { m.fighting = "" }
+func (m *breathCombatant) GetFighting() string            { return m.fighting }
+
+func TestMagAreas_BreathUsesCImmortalGateAndZeroDamageTail(t *testing.T) {
+	caster := &breathCombatant{mockSpellsChar: mockSpellsChar{
+		name: "Dragon", npc: true, level: 40, class: 0, roomVNum: 100,
+		position: int(PosStanding), hp: 100, maxHP: 100,
+	}}
+	immortal := &breathCombatant{mockSpellsChar: mockSpellsChar{
+		name: "God", level: lvlImmort, class: 0, roomVNum: 100,
+		position: int(PosStanding), hp: 100, maxHP: 100,
+	}}
+	mortal := &breathCombatant{mockSpellsChar: mockSpellsChar{
+		name: "Mortal", level: lvlImmort - 1, class: 0, roomVNum: 100,
+		position: int(PosStanding), hp: 100, maxHP: 100,
+	}}
+	world := &mockAreaWorld{chars: []interface{}{caster, immortal, mortal}}
+
+	MagAreas(caster.level, caster, SpellFrostBreath, int(SaveSpell), world)
+
+	if immortal.GetFighting() != "" {
+		t.Fatalf("breath area spell enrolled immortal target %q; C skips level >= %d", immortal.GetFighting(), lvlImmort)
+	}
+	if got, want := mortal.GetFighting(), caster.GetName(); got != want {
+		t.Fatalf("breath zero-damage tail fighting = %q, want %q", got, want)
+	}
+	if mortal.GetHP() != 100 {
+		t.Fatalf("breath must deal zero damage, HP = %d", mortal.GetHP())
 	}
 }

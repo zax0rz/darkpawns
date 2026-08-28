@@ -889,9 +889,6 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		sendToCaster(ch, "You gesture and the earth begins to shake all around you!\r\n")
 	case SpellAcidBlast:
 		sendToCaster(ch, "A spray of acid flows from your fingertips!\r\n")
-	case SpellFireBreath:
-		// Fire breath is handled by the manual cast function
-		return
 	}
 
 	chars := w.GetAllCharsInRoom(roomVNum)
@@ -901,7 +898,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		}
 		// Skip immortals
 		if nc, ok := c.(npcChecker); ok && !nc.IsNPC() {
-			if l, ok := c.(lever); ok && l.GetLevel() >= 100 {
+			if l, ok := c.(lever); ok && l.GetLevel() >= lvlImmort {
 				continue
 			}
 		}
@@ -918,7 +915,9 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		if areGrouped(ch, c) {
 			continue
 		}
-		// Deal damage
+		// C mag_areas deliberately passes SAVING_SPELL (literal 1) to
+		// mag_damage, even when call_magic was entered as CAST_BREATH
+		// (magic.c:1611). Preserve that call-path quirk.
 		MagDamage(level, ch, c, spellNum, 1, world)
 	}
 }

@@ -50,6 +50,14 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 	// Compute base damage dice/flat from the C mag_damage() formula table.
 	num, sides, flat, ok := magDamageFormula(level, getLevel(victim), spellNum, isMage, hasReag)
 	if !ok {
+		// C still calls mag_savingthrow() and damage(0, spellnum) for the
+		// five breath weapons. They have no mag_damage formula, but damage()
+		// consumes the save draw, enrolls the combatants, and emits the loaded
+		// skill-message record (magic.c:823-827; fight.c:1455-1480).
+		if isBreathSpell(spellNum) {
+			CheckSavingThrow(victim, SavingThrowType(savetype))
+			inflictDamage(ch, victim, 0, spellNum, world)
+		}
 		return
 	}
 
@@ -134,6 +142,15 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		if randBool(11) {
 			sendToZone("Thunder rumbles through the air.", ch, world)
 		}
+	}
+}
+
+func isBreathSpell(spellNum int) bool {
+	switch spellNum {
+	case SpellFireBreath, SpellGasBreath, SpellFrostBreath, SpellAcidBreath, SpellLightningBreath:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -276,6 +293,19 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 	chCombat, chOk := ch.(combat.Combatant)
 	victCombat, victOk := victim.(combat.Combatant)
 	if chOk && victOk {
+		// The breath path reaches C damage(0), which enrolls both awake
+		// participants before applying the zero amount (fight.c:1367-1395).
+		// Keep this scoped to breath attack types: the existing spell damage
+		// seam intentionally preserves its established immortal-absorption
+		// behavior for non-breath spells.
+		if isBreathSpell(attackType) && chCombat.GetName() != victCombat.GetName() && chCombat.GetPosition() > combat.PosStunned {
+			if chCombat.GetFighting() == "" {
+				chCombat.SetFighting(victCombat.GetName())
+			}
+			if victCombat.GetPosition() > combat.PosStunned && victCombat.GetFighting() == "" {
+				victCombat.SetFighting(chCombat.GetName())
+			}
+		}
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
 		dam = combat.ApplyDamageModifiers(chCombat, victCombat, dam)

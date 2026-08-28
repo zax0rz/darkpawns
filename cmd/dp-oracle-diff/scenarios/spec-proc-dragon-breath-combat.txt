@@ -1,0 +1,82 @@
+# depth-case: mob.dragon-breath-combat-transcript
+# C-first diagnostic vehicle for the fighting/zero-damage breath path.  The
+# primary is crowned immortal and toggled NOHASSLE so the dragon's noncombat
+# scan selects the later-teleported mortal peer; the peer is outlaw so C's
+# low-level player protection does not reject damage(0).  This reaches the
+# real CAST_BREATH -> MAG_AREAS -> MAG_DAMAGE path before the normal combat
+# loop.  The row is intentionally blocked at the downstream shared combat
+# transcript; the exact breath call is pinned by the focused spell test.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4209 1 8105 80
+strip-mob-script 4209
+replace-room-exits 8105 none
+
+[setup:oracle]
+Dragongod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dragongod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Dragonpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Dragonpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Dragonpeer 8105
+nohassle
+set Dragonpeer outlaw on
+
+[probe:peer]
+~dpclock pulse 40

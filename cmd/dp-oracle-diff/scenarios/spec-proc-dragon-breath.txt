@@ -1,0 +1,56 @@
+# depth-case: mob.dragon-breath-noncombat-threat
+# depth-case: mob.dragon-breath-pulse-dispatch
+# C-first vehicle for SPECIAL(dragon_breath).  Mob 4209 is the first active
+# registration in src/spec_assign.c and is scriptless in this fixture after
+# stripping its world script.  Its C special must handle the room before the
+# mob's ordinary aggressive path can run.  The first padded pulse exercises the
+# commandless, non-fighting target scan and the autonomous dispatch seam.
+#
+# C path: src/mobact.c:68-93 -> src/spec_procs.c:926-983.  The dragon's
+# direct call_magic uses CAST_BREATH; its fighting branch is separately
+# covered by focused tests and the shared combat path remains delegated.  The
+# empty-players primary is an immortal, so C's mag_areas immortal skip keeps
+# this live vehicle focused on the dragon's own threat bytes; the zero-damage
+# breath tail is pinned by the focused spell test.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4209 1 8105 80
+strip-mob-script 4209
+replace-room-exits 8105 none
+
+[setup:oracle]
+Dragongod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dragongod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+~dpclock pulse 40

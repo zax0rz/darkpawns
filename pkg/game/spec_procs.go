@@ -953,27 +953,66 @@ func mayorMobCloseDoor(w *World, me *MobInstance, dir int, keyword string) {
 	w.roomMessage(me.GetRoom(), me.GetName()+" closes and locks the gate.")
 }
 
-// dragon_breath — mob spec: breath weapon in combat
+// dragonBreathSpell returns the spell selected by SPECIAL(dragon_breath)'s
+// exact VNUM switch (src/spec_procs.c:937-954). The default is intentional:
+// an assigned future dragon still uses C's fire-breath fallback.
+func dragonBreathSpell(vnum int) int {
+	switch vnum {
+	case 4209, 4705:
+		return spells.SpellFrostBreath
+	case 11000:
+		return spells.SpellAcidBreath
+	case 11001, 20027:
+		return spells.SpellLightningBreath
+	case 11002:
+		return spells.SpellFireBreath
+	default:
+		return spells.SpellFireBreath
+	}
+}
+
+// specDragonBreath — mob spec: lair threat and breath weapon.
+// Ported from src/spec_procs.c:926-983. The autonomous caller reaches the
+// non-fighting branch; the combat engine reaches the fighting branch after
+// the ordinary NPC attack loop, matching fight.c:1898-2032.
 func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
+	if me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	melee := mobMeleeTarget(me)
-	if melee == nil || number(0, 4) != 0 {
-		return false
+
+	spell := dragonBreathSpell(me.GetVNum())
+	fighting := mobFightingTarget(w, me)
+	if fighting != nil {
+		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
+			// C calls do_stand() here. An NPC has no descriptor, so only its
+			// state transition and the room Act are player-visible.
+			switch me.GetPosition() {
+			case combat.PosSitting:
+				Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
+			case combat.PosResting:
+				Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
+			default:
+				Act(w, true, me, nil, nil, nil, "$n stops floating around, and puts $s feet on the ground.", "", ToRoom)
+			}
+			me.SetPosition(combat.PosStanding)
+		} else if number(0, 3) == 0 {
+			spells.CallMagic(me, fighting, nil, spell, me.GetLevel(), spells.CastBreath, w)
+			return specMagicUser(w, nil, me, "", "")
+		}
+		return true
 	}
-	breathSpells := []int{
-		spells.SpellFireBreath,
-		spells.SpellGasBreath,
-		spells.SpellFrostBreath,
-		spells.SpellAcidBreath,
-		spells.SpellLightningBreath,
+
+	for _, victim := range w.GetPlayersInRoom(me.GetRoom()) {
+		if !canSee(me, victim) || victim.GetFlags()&(1<<PrfNohassle) != 0 {
+			continue
+		}
+		Act(w, true, me, nil, nil, nil, "$n looks at you.", "", ToRoom)
+		Act(w, true, me, nil, nil, nil, "$n growls, 'So, you have found my lair...'", "", ToRoom)
+		Act(w, true, me, nil, nil, nil, "$n exclaims, 'For that you must die!'", "", ToRoom)
+		spells.CallMagic(me, victim, nil, spell, me.GetLevel(), spells.CastBreath, w)
+		return true
 	}
-	breathNames := []string{"fire", "gas", "frost", "acid", "lightning"}
-	n := randN(len(breathSpells))
-	w.roomMessage(me.RoomVNum, me.GetName()+" breathes "+breathNames[n]+" at "+melee.GetName()+"!")
-	spells.Cast(me, melee, breathSpells[n], me.GetLevel(), w)
-	return true
+	return false
 }
 
 // citizen — mob spec: random greetings
