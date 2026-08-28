@@ -178,6 +178,22 @@ func TestCmdBash_NoFightingNoArgs(t *testing.T) {
 	}
 }
 
+func TestCmdBearhug_FightingTargetFallback(t *testing.T) {
+	session := newBashCommandSession(t)
+	session.player.SetSkill(game.SkillBearhug, 100)
+	session.player.SetFighting("Target")
+
+	if err := CmdBearhug(session, nil); err != nil {
+		t.Fatalf("CmdBearhug returned error: %v", err)
+	}
+
+	for _, msg := range session.messages {
+		if strings.Contains(msg, "Bear hug who?") {
+			t.Errorf("expected bearhug to target fighting opponent, got: %q", msg)
+		}
+	}
+}
+
 func TestCmdBash_AppliesWaitStateToMobTarget(t *testing.T) {
 	world, err := game.NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},

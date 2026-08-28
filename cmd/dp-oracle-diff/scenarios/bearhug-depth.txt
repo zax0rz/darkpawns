@@ -1,0 +1,88 @@
+# depth-case: bearhug.no-arg
+# depth-case: bearhug.target-missing
+# depth-case: bearhug.one-argument
+# depth-case: bearhug.self
+#
+# C-first command-layer vehicle for do_bearhug.  A normal mortal peer receives
+# the skill through the God warmup, while the trainee mob provides a visible
+# room target.  The first three probes stop before RNG; the final probe proves
+# one_argument's fill-word/first-token behavior at the self-target gate.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bearhugdepthgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bearhugdepthgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Bearhugdepthmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Bearhugdepthmortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Bearhugdepthmortal 'bearhug' 75
+
+[probe:mortal]
+bearhug
+bearhug nobody extra
+bearhug the Bearhugdepthmortal

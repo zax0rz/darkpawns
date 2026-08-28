@@ -156,20 +156,37 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You'd better leave all the martial arts to fighters.\r\n"}
 	}
 
-	if ch.GetMove() <= 0 {
-		return SkillResult{Success: false, MessageToCh: "You are too exhausted!\r\n"}
+	// C has no movement-point gate or expenditure in do_bearhug.
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Bear hug who?\r\n"}
 	}
 
-	if ch.Equipment != nil && len(ch.Equipment.Slots) > 0 && ch.Equipment.Slots[0] != nil {
-		return SkillResult{Success: false, MessageToCh: "You need to be bare handed to get a good grip.\r\n"}
+	// C rejects a mortal attempt against a non-NPC immortal before the
+	// self-target and wielded-weapon checks (new_cmds.c:504-508).
+	if !target.IsNPC() && target.GetLevel() >= LVL_IMMORT {
+		return SkillResult{Success: false, MessageToCh: "The gods reject your impunity.\r\n"}
+	}
+
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
+	}
+
+	if ch.Equipment != nil {
+		if _, wielded := ch.Equipment.GetItemInSlot(SlotWield); wielded {
+			return SkillResult{Success: false, MessageToCh: "You need to be bare handed to get a good grip.\r\n"}
+		}
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
 	percent := dprng.Number(1, 150) // 1-150; 101+ is complete failure
 
-	// Immortals always fail bearhug (intentional)
-	if ch.GetLevel() > 60 {
+	// Sleeping targets and immortal casters force the C failure percent. The
+	// later MOB_NOBASH assignment intentionally has the same order as C.
+	if target.GetPosition() <= combat.PosSleeping || ch.GetLevel() > LVL_IMMORT {
+		percent = 101
+	}
+	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagNobash) {
 		percent = 101
 	}
 
@@ -177,22 +194,23 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	if percent > prob {
 		return SkillResult{
-			Success:       true,
-			Damage:        0,
-			MessageToCh:   "You try to bear hug but miss!\r\n",
-			MessageToVict: "$n tries to bear hug you!\r\n",
-			MessageToRoom: fmt.Sprintf("%s tries to bear hug %s!\r\n", ch.Name, target.GetName()),
+			Success:      false,
+			Damage:       0,
+			SkillMsgType: SkillBearhugNum,
+			StartCombat:  true,
+			WaitCh:       2,
 		}
 	}
 
 	dam := ch.GetLevel() + (ch.GetLevel() / 2) // level * 1.5
 
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   "You squeeze your victim in a crushing bear hug!\r\n",
-		MessageToVict: "You are crushed in a powerful bear hug!\r\n",
-		MessageToRoom: fmt.Sprintf("%s crushes %s in a powerful bear hug!\r\n", ch.Name, target.GetName()),
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillBearhugNum,
+		StartCombat:     true,
+		WaitCh:          2,
+		DeferredImprove: []string{SkillBearhug},
 	}
 }
 

@@ -1768,25 +1768,27 @@ func CmdBearhug(s SessionInterface, args []string) error {
 		return s.SendMessage(msg)
 	}
 
+	// C do_bearhug checks IS_MOUNTED before resolving its argument
+	// (new_cmds.c:487-491).
+	if ch.IsMounted() {
+		return s.SendMessage("Dismount first!\r\n")
+	}
+
 	var target combat.Combatant
 	var found bool
 	world := s.GetWorld()
 
-	if len(args) == 0 {
-		fighting := ch.GetFighting()
-		if fighting == "" {
-			return s.SendMessage("Bear hug who?\r\n")
-		}
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
-		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
-		}
-	} else {
-		targetName := strings.Join(args, " ")
+	// C uses one_argument and falls back to FIGHTING(ch) whenever the named
+	// lookup fails, even if an argument was supplied (new_cmds.c:477,493-501).
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName != "" {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
-		if !found {
-			return s.SendMessage("Bear hug who?\r\n")
-		}
+	}
+	if !found && ch.GetFighting() != "" {
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
+	}
+	if !found {
+		return s.SendMessage("Bear hug who?\r\n")
 	}
 
 	result := game.DoBearhug(ch, target, world)
