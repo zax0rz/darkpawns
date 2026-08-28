@@ -1180,32 +1180,17 @@ func CmdCarve(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
-	if len(args) == 0 {
-		return s.SendMessage("You want to carve what?!?\r\n")
-	}
 
 	ch := s.GetPlayer()
 	if ch.GetPosition() == combat.PosFighting {
-		return s.SendMessage("How can you think of food at a time like this?!?!\r\n")
+		return s.SendMessage("How can you think of food at a time like this?!?\r\n")
 	}
 
-	canUse, msg := game.CanUseSkill(ch, game.SkillCarve)
-	if !canUse {
-		return s.SendMessage(msg)
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
+		return s.SendMessage("You want to carve what?!?\r\n")
 	}
-
-	targetName := strings.ToLower(strings.Join(args, " "))
 	world := s.GetWorld()
-
-	// Check if target is a character
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
-	if found {
-		if target.GetName() == ch.Name {
-			return s.SendMessage("This game doesn't support self-mutilation!\r\n")
-		}
-		return s.SendMessage("You kill it first and THEN you can eat it!\r\n")
-	}
-
 	result := game.DoCarve(ch, targetName, world)
 	return sendSkillResult(s, ch, nil, result)
 }

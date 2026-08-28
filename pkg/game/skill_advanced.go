@@ -11,45 +11,95 @@ import (
 )
 
 func DoCarve(ch *Player, targetName string, world *World) SkillResult {
-	// Find target corpse in room
-	objects := world.GetItemsInRoom(ch.GetRoomVNum())
-	var corpse *ObjectInstance
-	for _, obj := range objects {
-		if obj.Prototype.TypeFlag == 9 && strings.Contains(strings.ToLower(obj.GetShortDesc()), strings.ToLower(targetName)) {
-			corpse = obj
-			break
+	// C: new_cmds.c:115 — one_argument() runs before every branch in do_carve.
+	targetName, _ = OneArgument(targetName)
+
+	// C checks room characters before it checks room objects.  There is no
+	// skill gate: do_carve is registered as a plain command at interpreter.c:374.
+	if target, found := world.ResolveCharInRoom(ch, targetName); found {
+		if target.Combatant == ch {
+			return SkillResult{MessageToCh: "This game doesn't support self-mutilation!"}
+		}
+		return SkillResult{MessageToCh: "You kill it first and THEN you can eat it!"}
+	}
+
+	corpse, found := world.ResolveObjectInRoom(ch, targetName)
+	if !found {
+		return SkillResult{
+			MessageToCh: fmt.Sprintf("You can't seem to find a %s to carve!", targetName),
 		}
 	}
 
-	if corpse == nil {
-		return SkillResult{Success: false, MessageToCh: "There is nothing like that here."}
+	// C uses literal strstr() predicates on the object's keyword list; it does
+	// not require ITEM_CONTAINER or the corpse value flag here.
+	if !strings.Contains(corpse.GetKeywords(), "corpse") {
+		return SkillResult{MessageToCh: "Your initials are about all you can carve in that!"}
+	}
+	if !strings.Contains(corpse.GetKeywords(), "carve_") {
+		return SkillResult{MessageToCh: "There's no way you could ever eat THAT!!!"}
+	}
+	if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
+		return SkillResult{MessageToCh: "Your arms are already full!"}
 	}
 
-	if ch.GetSkill(SkillCarve) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
+	// C reads one of four fixed food prototypes based on exact isname() token
+	// matching, with meat as the fallback for any other carve_ keyword.
+	foodVNum := 8015
+	switch {
+	case isCompleteName("carve_meat", corpse.GetKeywords()):
+		foodVNum = 8015
+	case isCompleteName("carve_fish", corpse.GetKeywords()):
+		foodVNum = 12
+	case isCompleteName("carve_bird", corpse.GetKeywords()):
+		foodVNum = 13
+	case isCompleteName("carve_rabbit", corpse.GetKeywords()):
+		foodVNum = 14
 	}
 
-	// Create food item
-	food := &ObjectInstance{
-		VNum:     corpse.VNum,
-		RoomVNum: ch.GetRoomVNum(),
+	food, err := world.SpawnObject(foodVNum, -1)
+	if err != nil {
+		slog.Error("carve food prototype missing", "obj_vnum", foodVNum, "error", err)
+		return SkillResult{}
 	}
-	food.Runtime.ShortDescOverride = "some carved meat from " + corpse.GetShortDesc()
 
+	// C creates the food before checking the wielded weapon and extracts it on
+	// either weapon failure.  Keep that lifecycle even though the failed object
+	// is not player-visible.
+	wielded, hasWeapon := (*ObjectInstance)(nil), false
+	if ch.Equipment != nil {
+		wielded, hasWeapon = ch.Equipment.GetItemInSlot(SlotWield)
+	}
+	if !hasWeapon || wielded == nil {
+		world.ExtractObject(food, -1)
+		return SkillResult{MessageToCh: "You don't have anything to carve with!"}
+	}
+	if wielded.GetValue(3) != 3 && wielded.GetValue(3) != 11 {
+		world.ExtractObject(food, -1)
+		return SkillResult{MessageToCh: "You can't carve with that!"}
+	}
 	if err := world.MoveObjectToPlayerInventory(food, ch); err != nil {
-		if err2 := world.MoveObjectToRoom(food, ch.GetRoomVNum()); err2 != nil {
-			slog.Warn("MoveObjectToRoom failed in carve fallback", "obj_vnum", food.GetVNum(), "error", err2)
-		}
+		slog.Error("carve food inventory placement failed", "obj_vnum", foodVNum, "error", err)
+		world.ExtractObject(food, -1)
+		return SkillResult{}
 	}
 
-	// Remove corpse from room
-	if err := world.MoveObjectToNowhere(corpse); err != nil {
-		slog.Warn("MoveObjectToNowhere failed in carve", "obj_vnum", corpse.GetVNum(), "error", err)
+	// C obj_to_room() prepends each extracted child.  Iterating the original
+	// slice and using MoveObjectToRoomFront preserves that linked-list order.
+	contents := append([]*ObjectInstance(nil), corpse.Contains...)
+	for _, item := range contents {
+		if item == nil {
+			continue
+		}
+		if err := world.MoveObjectToRoomFront(item, ch.GetRoomVNum()); err != nil {
+			slog.Error("carve corpse contents placement failed", "obj_vnum", item.GetVNum(), "error", err)
+		}
 	}
+	world.ExtractObject(corpse, -1)
 
 	return SkillResult{
-		Success:     true,
-		MessageToCh: fmt.Sprintf("You carve some meat from %s.", corpse.GetShortDesc()),
+		Success:       true,
+		MessageToCh:   fmt.Sprintf("You carve up some meat from the %s.", corpse.GetShortDesc()),
+		MessageToRoom: fmt.Sprintf("%s carves up some meat from the %s.", ch.Name, corpse.GetShortDesc()),
 	}
 }
 
