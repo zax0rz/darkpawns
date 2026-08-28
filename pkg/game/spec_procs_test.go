@@ -794,13 +794,9 @@ func TestSpecCityguard_Golden(t *testing.T) {
 	if err := w.AddPlayer(evildoer); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
-	victim := NewPlayer(4, "Victim", 1001)
-	victim.SetLevel(5)
-	victim.SetAlignment(100)
-	if err := w.AddPlayer(victim); err != nil {
-		t.Fatalf("AddPlayer failed: %v", err)
-	}
-	evildoer.SetFighting(victim.Name)
+	victim := newSpecProcTestMob(t, w, 1001, 5)
+	victim.Prototype.Alignment = 100
+	evildoer.SetFighting(victim.GetName())
 	victim.SetFighting(evildoer.Name)
 	beforeHP = evildoer.GetHP()
 	_ = lastMsg()
@@ -808,7 +804,7 @@ func TestSpecCityguard_Golden(t *testing.T) {
 	if evildoer.GetHP() >= beforeHP {
 		t.Error("specCityguard should damage an evil attacker")
 	}
-	if msg := lastMsg(); !strings.Contains(msg, "PROTECT THE INNOCENT") {
+	if msg := lastMsg(); !strings.Contains(msg, "You just pissed me off") {
 		t.Errorf("expected protect message, got %q", msg)
 	}
 }

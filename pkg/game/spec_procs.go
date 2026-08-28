@@ -690,64 +690,130 @@ func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 }
 
 // cityguard — mob spec: guards patrol, arrest outlaws, and protect citizens.
-// Ported from src/spec_procs.c:771-821. Handles four behaviors:
-// 1. If fighting, delegate to fighter skill routine.
-// 2. Scan room for outlaws and attack them.
-// 3. Scan for evil combatants attacking good-aligned targets and intervene.
+// Ported from src/spec_procs.c:771-821. Handles the reachable autonomous
+// branches; fighter() is a shared callee owned by mob.fighter.
 func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" || me.GetPosition() <= 0 {
 		return false
 	}
 
-	// If already fighting, use fighter combat skills (bash/parry/headbutt)
+	// C's mobile_activity() skips fighting mobs before calling a special, so
+	// this branch is only relevant to the command path, where cityguard's
+	// cmd gate has already returned FALSE. Keep the direct C call path explicit
+	// for callers that invoke the proc synchronously in focused tests.
 	if me.IsFighting() {
 		return specFighter(w, ch, me, cmd, arg)
 	}
 
 	players := w.GetPlayersInRoom(me.RoomVNum)
 
-	// Scan for outlaws — attack on sight (src/spec_procs.c:785-796)
+	// Scan for outlaws — attack on sight (src/spec_procs.c:785-796). C gates
+	// this branch with CAN_SEE and emits an act() template, not a pre-rendered
+	// room string.
 	for _, tch := range players {
-		if tch.IsNPC() {
+		if !canSee(me, tch) || tch.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
 			continue
 		}
-		if (tch.GetFlags() & (1 << uint(PlrOutlaw))) != 0 {
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'We don't like OUTLAWS like you in this city!'")
-			if err := me.Attack(tch, w); err != nil {
-				slog.Warn("cityguard outlaw attack failed", "guard", me.GetName(), "target", tch.GetName(), "error", err)
-			}
-			return specFighter(w, ch, me, cmd, arg)
+		Act(w, false, me, nil, nil, nil,
+			"$n says, 'We don't like OUTLAWS like you in this city!'", "", ToRoom)
+		if err := w.cityguardHit(me, tch); err != nil {
+			slog.Warn("cityguard outlaw attack failed", "guard", me.GetName(), "target", tch.GetName(), "error", err)
 		}
+		return specFighter(w, ch, me, cmd, arg)
 	}
 
-	// Find the most evil combatant attacking a good-aligned target (src/spec_procs.c:799-821)
-	var evil *Player
+	// Find the lowest-aligned visible combatant attacking a good-aligned target
+	// (src/spec_procs.c:799-821). The C condition intentionally allows either
+	// side of the fight to be an NPC; preserve that topology here.
+	var evil cityguardAlignedCombatant
+	var evilTarget cityguardAlignedCombatant
 	maxEvil := 1000
-	for _, tch := range players {
-		if !tch.IsFighting() {
+	for _, candidate := range cityguardRoomCombatants(w, me.RoomVNum) {
+		tch, ok := candidate.(cityguardAlignedCombatant)
+		if !ok {
+			continue
+		}
+		if !canSee(me, tch) || tch.GetFighting() == "" {
 			continue
 		}
 		align := tch.GetAlignment()
-		if align < maxEvil {
-			// Check their target is good-aligned (a player being attacked by an evil)
-			targetName := tch.GetFighting()
-			if tp, ok := w.GetPlayer(targetName); ok && tp.GetAlignment() >= 0 {
-				maxEvil = align
-				evil = tch
-			}
+		target := cityguardCombatantByName(w, me.RoomVNum, tch.GetFighting())
+		targetAligned, ok := target.(cityguardAlignedCombatant)
+		if targetAligned == nil || !ok || align >= maxEvil || (!tch.IsNPC() && !target.IsNPC()) {
+			continue
 		}
+		maxEvil = align
+		evil = tch
+		evilTarget = targetAligned
 	}
-	if evil != nil && evil.GetAlignment() < 0 {
-		targetName := evil.GetFighting()
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'PROTECT THE INNOCENT!  Surrender, "+evil.GetName()+"!'")
-		if err := me.Attack(evil, w); err != nil {
+	if evil != nil && evilTarget.GetAlignment() >= 0 {
+		Act(w, false, me, evil, nil, nil,
+			"$n says, 'You just pissed me off, $N!'", "", ToRoom)
+		if err := w.cityguardHit(me, evil); err != nil {
 			slog.Warn("cityguard protect attack failed", "guard", me.GetName(), "target", evil.GetName(), "error", err)
 		}
-		_ = targetName
 		return specFighter(w, ch, me, cmd, arg)
 	}
 
 	return false
+}
+
+type cityguardAlignedCombatant interface {
+	combat.Combatant
+	GetAlignment() int
+}
+
+// cityguardRoomCombatants mirrors the C world[].people walk closely enough
+// for the cityguard's visible protection scan. The Go world stores players and
+// mobs separately, so retain both sets at this boundary.
+func cityguardRoomCombatants(w *World, roomVNum int) []combat.Combatant {
+	players := w.GetPlayersInRoom(roomVNum)
+	mobs := w.GetMobsInRoom(roomVNum)
+	actors := make([]combat.Combatant, 0, len(players)+len(mobs))
+	for _, player := range players {
+		actors = append(actors, player)
+	}
+	for _, mob := range mobs {
+		actors = append(actors, mob)
+	}
+	return actors
+}
+
+func cityguardCombatantByName(w *World, roomVNum int, name string) combat.Combatant {
+	for _, player := range w.GetPlayersInRoom(roomVNum) {
+		if player.GetName() == name {
+			return player
+		}
+	}
+	for _, mob := range w.GetMobsInRoom(roomVNum) {
+		if mob.GetName() == name {
+			return mob
+		}
+	}
+	return nil
+}
+
+// cityguardHit mirrors C hit(): cityguard's special calls the synchronous
+// combat entry, not the placeholder damage helper used by older mob paths.
+// The fallback keeps focused spec tests useful when they intentionally omit a
+// combat engine; production worlds provide the canonical initial-attack seam.
+func (w *World) cityguardHit(attacker *MobInstance, defender combat.Combatant) error {
+	if w.combatEngine == nil {
+		player, ok := defender.(*Player)
+		if !ok {
+			return fmt.Errorf("cityguard fallback cannot attack non-player %q", defender.GetName())
+		}
+		return attacker.Attack(player, w)
+	}
+	if err := w.combatEngine.StartCombat(attacker, defender); err != nil {
+		return err
+	}
+	if initial, ok := w.combatEngine.(interface {
+		PerformInitialAttack(combat.Combatant, combat.Combatant) error
+	}); ok {
+		return initial.PerformInitialAttack(attacker, defender)
+	}
+	return nil
 }
 
 // mayorState holds per-mob state for the mayor path-walking system.
