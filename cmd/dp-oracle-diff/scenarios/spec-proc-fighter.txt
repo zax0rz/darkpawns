@@ -1,0 +1,59 @@
+# depth-case: mob.fighter-combat-action
+# C-first vehicle for SPECIAL(fighter).  mobile_activity() skips fighting
+# mobs, so the registered fighter special is reached only from
+# perform_violence() after the NPC's ordinary attack loop.  Mob 20020 is an
+# active fighter assignment; its Lua fight script is stripped so this vehicle
+# observes the native special alone.  The God opens combat explicitly and the
+# padded violence pulse captures the selected subcommand's player-visible
+# skill/parry bytes and state.
+#
+# SPECIAL(fighter) gates cmd==0, POS_FIGHTING, GET_HIT >= 0, FIGHTING(ch), and
+# GET_MOB_WAIT==0, then consumes number(0,10).  Cases 1-4 call the native
+# do_headbutt, do_parry, do_bash, and do_berserk procedures with subcmd=1;
+# these calls use the C 50..100 skill-procedure probability arms.  C path:
+# src/spec_procs.c:509-535; src/mobact.c:68-93; src/fight.c:1898-2032.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 20020 1 8105 80
+strip-mob-script 20020
+replace-room-exits 8105 none
+
+[setup:oracle]
+Fightergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fightergod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+hit troll
+
+[probe]
+score
+~dpclock pulse 20
+score

@@ -578,7 +578,6 @@ func TestSpecMagicUser_OutsideGate(t *testing.T) {
 func TestSpecFighter_Golden(t *testing.T) {
 	w, player, _ := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, 1001, 10)
-	victim := newSpecProcTestMob(t, w, 1001, 10)
 
 	if got := specFighter(w, player, mob, "look", ""); got {
 		t.Error("specFighter should return false for non-empty cmd")
@@ -590,10 +589,155 @@ func TestSpecFighter_Golden(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosFighting)
-	mob.SetTarget(victim)
+	if got := specFighter(w, nil, mob, "", ""); got {
+		t.Error("specFighter should return false without a FIGHTING target")
+	}
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+	mob.SetWaitState(1)
+	if got := specFighter(w, nil, mob, "", ""); got {
+		t.Error("specFighter should return false while GET_MOB_WAIT is set")
+	}
+	mob.SetWaitState(0)
+	mob.TakeDamage(mob.GetHP() + 1)
+	if got := specFighter(w, nil, mob, "", ""); got {
+		t.Error("specFighter should return false below zero HP")
+	}
 	assertNotPanic(t, func() {
+		mob.Heal(51)
+		mob.SetPosition(combat.PosFighting)
 		_ = specFighter(w, nil, mob, "", "")
 	})
+}
+
+type specParryCombatEngine struct {
+	markedName   string
+	markedAction string
+}
+
+func (e *specParryCombatEngine) StartCombat(combat.Combatant, combat.Combatant) error {
+	return nil
+}
+
+func (e *specParryCombatEngine) IsFighting(string) bool { return true }
+
+func (e *specParryCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+	return nil, false
+}
+
+func (e *specParryCombatEngine) MarkParried(name, action string) {
+	e.markedName = name
+	e.markedAction = action
+}
+
+func fighterSeed(t *testing.T, firstFrom, firstTo, secondFrom, secondTo int, success bool) uint32 {
+	t.Helper()
+	for seed := uint32(1); seed < 10000; seed++ {
+		rng := dprng.New(seed)
+		first := rng.Number(firstFrom, firstTo)
+		second := rng.Number(secondFrom, secondTo)
+		if (first <= second) == success {
+			return seed
+		}
+	}
+	t.Fatal("could not find a deterministic fighter seed")
+	return 0
+}
+
+// TestSpecFighter_NativeSkills proves the four subcommand paths that the C
+// special dispatches with subcmd=1: headbutt, bash, parry, and berserk.
+func TestSpecFighter_NativeSkills(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+	player.SetPosition(combat.PosFighting)
+	player.SetHP(100)
+
+	// do_headbutt: a successful subcmd roll applies the mob's level to the
+	// victim, takes the level/4 recoil, and sits the awake victim down.
+	seed := fighterSeed(t, 1, 121, 50, 100, true)
+	dprng.ResetStream(seed)
+	startMobHP, startPlayerHP := mob.GetHP(), player.GetHP()
+	mobHeadbutt(w, mob, player)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("headbutt changed GET_MOB_WAIT to %d", got)
+	}
+	if got, want := mob.GetHP(), startMobHP-mob.GetLevel()/4; got != want {
+		t.Errorf("headbutt recoil HP = %d, want %d", got, want)
+	}
+	if got, want := player.GetHP(), startPlayerHP-mob.GetLevel(); got != want {
+		t.Errorf("headbutt victim HP = %d, want %d", got, want)
+	}
+	if player.GetPosition() != combat.PosSitting {
+		t.Errorf("headbutt victim position = %d, want sitting", player.GetPosition())
+	}
+
+	// do_bash: subcmd probability is fixed at 131, so a normal-AC awake
+	// victim succeeds after movement is spent and receives a two-round wait.
+	player.SetHP(100)
+	player.SetPosition(combat.PosFighting)
+	player.SetFighting(mob.GetName())
+	mob.SetFighting(player.Name)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetMove(20)
+	dprng.ResetStream(1)
+	mobBash(w, mob, player)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("bash changed GET_MOB_WAIT to %d", got)
+	}
+	if got, want := mob.GetMove(), 10; got != want {
+		t.Errorf("bash movement = %d, want %d", got, want)
+	}
+	if got, want := player.GetHP(), 100-(mob.GetLevel()/2+1); got != want {
+		t.Errorf("bash victim HP = %d, want %d", got, want)
+	}
+	if player.GetPosition() != combat.PosSitting {
+		t.Errorf("bash victim position = %d, want sitting", player.GetPosition())
+	}
+	if got, want := player.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
+		t.Errorf("bash victim wait = %d, want %d", got, want)
+	}
+
+	// do_parry: equip a wielded object, force a successful probability roll,
+	// and verify both C audience messages plus the next-turn marker.
+	weapon, err := w.SpawnObject(3001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject failed: %v", err)
+	}
+	mob.Equipment[int(SlotWield)] = weapon
+	parryEngine := &specParryCombatEngine{}
+	w.SetCombatEngine(parryEngine)
+	seed = fighterSeed(t, 1, 101, 50, 100, true)
+	dprng.ResetStream(seed)
+	_ = lastMsg()
+	mobParry(w, mob, player)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("parry changed GET_MOB_WAIT to %d", got)
+	}
+	if parryEngine.markedName != player.Name || parryEngine.markedAction != "parry" {
+		t.Errorf("parry marker = (%q, %q), want (%q, parry)", parryEngine.markedName, parryEngine.markedAction, player.Name)
+	}
+	if got := lastMsg(); strings.Count(got, "dazzling show of swordplay") != 2 {
+		t.Errorf("parry audience output = %q, want two C messages", got)
+	}
+
+	// do_berserk: even a failed subcmd attempt installs the three inert C
+	// affects and sets AFF_BERSERK; the NPC has no descriptor for the text.
+	mob.SetAffectFlags(0)
+	mob.CustomData = nil
+	dprng.ResetStream(1)
+	mobBerserk(mob)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("berserk changed GET_MOB_WAIT to %d", got)
+	}
+	if !mob.HasAffect(affBerserk) {
+		t.Error("berserk did not set AFF_BERSERK")
+	}
+	if _, ok := mob.CustomData["affect_171"]; !ok {
+		t.Error("berserk did not retain the native affect record")
+	}
 }
 
 // TestSpecCleric_Golden verifies cleric guard conditions and cast path.
