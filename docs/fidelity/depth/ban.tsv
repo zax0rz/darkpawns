@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_ban	ban	ban.no-bans	D1	command	oracle-green	ban-depth	ban.c:141-145	An empty ban list emits C's exact no-sites message.
+do_ban	ban	ban.add	D2	command	oracle-green	ban-depth	ban.c:173-180;189-209	A valid ALL/SELECT/NEW request stores the site and emits Site banned.
+do_ban	ban	ban.list-format	D3	command	oracle-green-multiseed	ban-depth@1,2,3,5,8	ban.c:141-171	Listing uses C's fixed columns, local date format, and banned-by field across seeds.
+do_ban	ban	ban.fill-and-trailing-parse	D1	command	oracle-green-multiseed	ban-depth@1,2,3,5,8	interpreter.c:1265-1308; ban.c:173-176	C two_arguments skips fill words for the site and ignores words after the second token.
+do_ban	ban	ban.list-order	D3	state	oracle-green-multiseed	ban-depth@1,2,3,5,8	ban.c:182-203	Head insertion makes the newest ban appear first while persistence writes the reverse traversal order.
+do_ban	ban	ban.duplicate	D2	command	oracle-green	ban-depth	ban.c:182-187	A duplicate site emits C's fixed refusal rather than an implementation error string.
+do_ban	ban	ban.invalid-flag	D1	command	oracle-green	ban-depth	ban.c:173-180	An unsupported flag emits C's ALL/SELECT/NEW message.
+do_ban	ban	ban.missing-site	D1	command	oracle-green	ban-depth	ban.c:173-176	A missing second token emits C's usage line.
+do_ban	ban	ban.site-truncate	D4	state	oracle-green	ban-depth	ban.c:189-193	The stored site is truncated to BANNED_SITE_LENGTH (50) before later duplicate comparison.
+isbanned	ban	ban.literal-asterisk	D5	state	unit-green	TestIsBannedLiteralAsterisk	ban.c:86-104	The login/site-check callee uses strstr; an asterisk in a site pattern is literal, not a wildcard.

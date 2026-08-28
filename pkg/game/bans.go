@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -112,7 +111,9 @@ func (bm *BanManager) LoadBanned(path string) {
 			Date:     time.Unix(dateUnix, 0),
 			BannedBy: name,
 		}
-		bm.bans = append(bm.bans, entry)
+		// C prepends each record while reading the file, so the newest
+		// record is listed first (ban.c:66-79).
+		bm.bans = append([]BanEntry{entry}, bm.bans...)
 	}
 }
 
@@ -161,18 +162,9 @@ func (bm *BanManager) IsBanned(hostname string) int {
 	maxLevel := BanNot
 	for _, entry := range bm.bans {
 		matched := false
-		if strings.Contains(entry.Site, "*") {
-			// Wildcard matching — matches C's match() function
-			// Use path.Match (not filepath.Match) for OS-independent behavior
-			var err error
-			matched, err = path.Match(entry.Site, lower)
-			if err != nil {
-				slog.Warn("malformed ban wildcard pattern", "pattern", entry.Site, "error", err)
-			}
-		} else {
-			// Substring matching — existing behavior
-			matched = strings.Contains(lower, entry.Site)
-		}
+		// C uses strstr(hostname, ban_node->site), so '*' is literal rather
+		// than a wildcard (ban.c:99-101).
+		matched = strings.Contains(lower, entry.Site)
 		if matched && entry.BanType > maxLevel {
 			maxLevel = entry.BanType
 		}
@@ -190,12 +182,12 @@ func (bm *BanManager) AddBan(site string, banType int, bannedBy string) error {
 			return fmt.Errorf("site %q is already banned; unban it first to change the type", site)
 		}
 	}
-	bm.bans = append(bm.bans, BanEntry{
+	bm.bans = append([]BanEntry{{
 		Site:     site,
 		BanType:  banType,
 		Date:     time.Now(),
 		BannedBy: bannedBy,
-	})
+	}}, bm.bans...)
 	return nil
 }
 
@@ -229,7 +221,7 @@ func (bm *BanManager) ListBans() string {
 	for _, entry := range bm.bans {
 		dateStr := "Unknown"
 		if !entry.Date.IsZero() {
-			dateStr = entry.Date.Format("2006-01-02")
+			dateStr = entry.Date.Format("Mon Jan 02")
 		}
 		fmt.Fprintf(&sb, "%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
 			entry.Site, banTypeName(entry.BanType), dateStr, entry.BannedBy)
@@ -297,12 +289,16 @@ func (bm *BanManager) DoBan(banFilePath, playerName, argument string) string {
 		return bm.ListBans()
 	}
 
-	parts := strings.Fields(argument)
-	if len(parts) < 2 {
+	flag, rest := oneArgument(argument)
+	site, _ := oneArgument(rest)
+	if flag == "" || site == "" {
 		return "Usage: ban {all | select | new} site_name\r\n"
 	}
-	flag := strings.ToLower(parts[0])
-	site := strings.ToLower(parts[1])
+	if len(site) > 50 {
+		// C stores only BANNED_SITE_LENGTH bytes after accepting the
+		// two_arguments result (ban.c:189-193).
+		site = site[:50]
+	}
 
 	if flag != "select" && flag != "all" && flag != "new" {
 		return "Flag must be ALL, SELECT, or NEW.\r\n"
@@ -310,7 +306,7 @@ func (bm *BanManager) DoBan(banFilePath, playerName, argument string) string {
 
 	banType := banTypeFromString(flag)
 	if err := bm.AddBan(site, banType, playerName); err != nil {
-		return err.Error() + "\r\n"
+		return "That site has already been banned -- unban it to change the ban type.\r\n"
 	}
 
 	if err := bm.WriteBanList(banFilePath); err != nil {
