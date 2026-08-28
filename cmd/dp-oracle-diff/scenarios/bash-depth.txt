@@ -1,0 +1,49 @@
+# depth-case: bash.no-arg
+# depth-case: bash.target-missing
+# depth-case: bash.one-argument
+# depth-case: bash.self
+# C-first vehicle for do_bash's command target parsing and direct gates
+# (src/act.offensive.c:419-498). The first-player God grants the skill to
+# itself; no combat state is changed by the self-target and missing-target
+# branches, so all probes remain independently comparable.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Bashdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bashdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Bashdepth 'bash' 100
+
+[probe]
+bash
+bash nobody extra
+bash the Bashdepth

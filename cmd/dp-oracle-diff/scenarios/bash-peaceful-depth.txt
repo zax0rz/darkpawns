@@ -1,0 +1,46 @@
+# depth-case: bash.peaceful-order
+# C-first vehicle for do_bash's skill -> peaceful-room ordering
+# (src/act.offensive.c:427-439). The missing target is intentional: C rejects
+# on the peaceful gate before get_char_room_vis, while the old Go command
+# looked up the target before entering DoBash.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 on
+set-room-flag 1204 4 on
+
+[setup:oracle]
+Bashpeace
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bashpeace
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Bashpeace 'bash' 100
+
+[probe]
+bash nobody

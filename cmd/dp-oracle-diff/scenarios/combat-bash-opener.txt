@@ -1,4 +1,5 @@
 # Combat skill OPENER (R5c sweep) — BASH, granted via the God/skillset fixture.
+# depth-case: bash.opener-success
 #
 # First scenario to use the full skill-gate stack (skillset #450 + first-player-God
 # #451 + empty-players/probe-on-peer harness #452). Pattern:
