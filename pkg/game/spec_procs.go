@@ -458,26 +458,36 @@ func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 // paladin — mob spec: paladin combat
 func specPaladin(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
+	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFighting() == "" {
 		return false
 	}
-	melee := mobMeleeTarget(me)
+	if me.GetWaitState() > 0 {
+		return false
+	}
+	melee := mobFightingTarget(w, me)
 	if melee == nil {
 		return false
 	}
-	switch randN(9) {
+	switch number(0, 8) {
 	case 0:
-		w.roomMessage(me.RoomVNum, me.GetName()+" parries an attack!")
+		mobParry(w, me, melee)
 	case 1:
-		w.roomMessage(me.RoomVNum, me.GetName()+" bashes "+melee.GetName()+"!")
+		mobBash(w, me, melee)
 	case 2:
-		w.roomMessage(me.RoomVNum, me.GetName()+" charges "+melee.GetName()+"!")
+		mobCharge(w, me, melee)
 	case 3:
-		spells.Cast(me, melee, spells.SpellDispelEvil, me.GetLevel(), w)
+		castMobSpell(w, me, melee, paladinDispelSpell(me))
 	case 5:
-		w.roomMessage(me.RoomVNum, me.GetName()+" disarms "+melee.GetName()+"!")
+		mobDisarm(w, me, melee)
 	}
 	return true
+}
+
+func paladinDispelSpell(me *MobInstance) int {
+	if mobIsEvil(me) {
+		return spells.SpellDispelGood
+	}
+	return spells.SpellDispelEvil
 }
 
 // guild_guard — mob spec: blocks unauthorized entry
