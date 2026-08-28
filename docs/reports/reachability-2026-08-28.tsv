@@ -1,0 +1,509 @@
+command	c_handler	c_min_position	c_min_level	c_subcmd	status	go_evidence
+'	do_say	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("'", ...)
+.	do_reply	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand(".", ...)
+:	do_echo	POS_RESTING	1	SCMD_EMOTE	registered	pkg/session/commands.go:registerCommand(":", ...)
+;	do_wiznet	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand(";", ...)
+?	do_help	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("?", ...)
+abilities	do_abils	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("abilities", ...)
+accuse	do_action	POS_SITTING	0	0	social	pkg/game/socials.txt
+admobs	adjust_mobs	POS_DEAD	LVL_IMPL-1	0	registered	pkg/session/commands.go:registerCommand("admobs", ...)
+advance	do_advance	POS_DEAD	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("advance", ...)
+afk	do_afk	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("afk", ...)
+agree	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+aid	do_first_aid	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("aid", ...)
+alias	do_alias	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("alias", ...)
+alter	do_flesh_alter	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("alter", ...)
+ambush	do_ambush	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("ambush", ...)
+anguish	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+apologize	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+applaud	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+appraise	do_appraise	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("appraise", ...)
+ask	do_spec_comm	POS_RESTING	0	SCMD_ASK	registered	pkg/session/commands.go:registerCommand("ask", ...)
+assist	do_assist	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("assist", ...)
+at	do_at	POS_DEAD	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("at", ...)
+auction	do_gen_comm	POS_SLEEPING	0	SCMD_AUCTION	registered	pkg/session/commands.go:registerCommand("auction", ...)
+auto	do_auto	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("auto", ...)
+backstab	do_backstab	POS_STANDING	1	0	registered	pkg/session/commands.go:registerCommand("backstab", ...)
+bah	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+balance	do_not_here	POS_STANDING	1	0	specproc	pkg/game/spec_procs4.go
+ban	do_ban	POS_DEAD	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("ban", ...)
+bash	do_bash	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("bash", ...)
+bearhug	do_bearhug	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("bearhug", ...)
+beckon	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+beg	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+behead	do_behead	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("behead", ...)
+bellow	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+berserk	do_berserk	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("berserk", ...)
+bird	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+bitch	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+bite	do_bite	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("bite", ...)
+blame	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+bleed	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+bless	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+blink	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+blush	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+boggle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+boink	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+bonk	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+bounce	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+bow	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+brb	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+brief	do_gen_tog	POS_DEAD	0	SCMD_BRIEF	registered	pkg/session/commands.go:registerCommand("brief", ...)
+bug	do_gen_write	POS_DEAD	0	SCMD_BUG	registered	pkg/session/commands.go:registerCommand("bug", ...)
+burp	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+buy	do_not_here	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("buy", ...)
+cackle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+carve	do_carve	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("carve", ...)
+cast	do_cast	POS_SITTING	1	0	registered	pkg/session/commands.go:registerCommand("cast", ...)
+charge	do_charge	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("charge", ...)
+check	do_not_here	POS_STANDING	1	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+checkload	do_checkload	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("checkload", ...)
+cheer	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+chide	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+chuckle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+circle	do_circle	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("circle", ...)
+clan	do_clan	POS_SLEEPING	1	0	registered	pkg/session/commands.go:registerCommand("clan", ...)
+clap	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+clear	do_gen_ps	POS_DEAD	0	SCMD_CLEAR	registered	pkg/session/commands.go:registerCommand("clear", ...)
+close	do_gen_door	POS_SITTING	0	SCMD_CLOSE	registered	pkg/session/commands.go:registerCommand("close", ...)
+cls	do_gen_ps	POS_DEAD	0	SCMD_CLEAR	registered	pkg/session/commands.go:registerCommand("cls", ...)
+collect	do_not_here	POS_RESTING	0	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+color	do_color	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("color", ...)
+comb	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+comfort	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+commands	do_commands	POS_DEAD	0	SCMD_COMMANDS	registered	pkg/session/commands.go:registerCommand("commands", ...)
+compact	do_gen_tog	POS_DEAD	0	SCMD_COMPACT	registered	pkg/session/commands.go:registerCommand("compact", ...)
+compare	do_compare	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("compare", ...)
+consider	do_consider	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("consider", ...)
+cough	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+credits	do_gen_ps	POS_DEAD	0	SCMD_CREDITS	registered	pkg/session/commands.go:registerCommand("credits", ...)
+cringe	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+cry	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+ctell	do_ctell	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("ctell", ...)
+cuddle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+curse	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+curtsey	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+cutthroat	do_cutthroat	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("cutthroat", ...)
+dance	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+dark	do_dark	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("dark", ...)
+date	do_date	POS_DEAD	LVL_IMMORT	SCMD_DATE	registered	pkg/session/commands.go:registerCommand("date", ...)
+daydream	do_action	POS_SLEEPING	0	0	social	pkg/game/socials.txt
+dc	do_dc	POS_DEAD	LVL_IMMORT+1	0	registered	pkg/session/commands.go:registerCommand("dc", ...)
+deposit	do_not_here	POS_STANDING	1	0	specproc	pkg/game/spec_procs4.go
+diagnose	do_diagnose	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("diagnose", ...)
+dig	do_dig	POS_RESTING	LVL_BUILDER	0	implemented-unwired	pkg/command/skill_commands.go:cmddig
+disarm	do_disarm	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("disarm", ...)
+disembowel	do_disembowel	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("disembowel", ...)
+dismount	do_dismount	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("dismount", ...)
+display	do_display	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("display", ...)
+dns	do_dns	POS_DEAD	LVL_IMPL-1	0	missing	no implementation found
+doh	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+donate	do_drop	POS_RESTING	0	SCMD_DONATE	registered	pkg/session/commands.go:registerCommand("donate", ...)
+down	do_move	POS_STANDING	0	SCMD_DOWN	registered	pkg/session/commands.go:registerCommand("down", ...)
+dragon	do_dragon_kick	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("dragon", ...)
+dream	do_dream	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("dream", ...)
+drink	do_drink	POS_RESTING	0	SCMD_DRINK	registered	pkg/session/commands.go:registerCommand("drink", ...)
+drool	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+drop	do_drop	POS_RESTING	0	SCMD_DROP	registered	pkg/session/commands.go:registerCommand("drop", ...)
+east	do_move	POS_STANDING	0	SCMD_EAST	registered	pkg/session/commands.go:registerCommand("east", ...)
+eat	do_eat	POS_RESTING	0	SCMD_EAT	registered	pkg/session/commands.go:registerCommand("eat", ...)
+echo	do_echo	POS_SLEEPING	LVL_IMMORT	SCMD_ECHO	registered	pkg/session/commands.go:registerCommand("echo", ...)
+embrace	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+emote	do_echo	POS_RESTING	1	SCMD_EMOTE	registered	pkg/session/commands.go:registerCommand("emote", ...)
+enter	do_enter	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("enter", ...)
+equipment	do_equipment	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("equipment", ...)
+escape	do_retreat	POS_FIGHTING	0	0	specproc	pkg/game/spec_procs.go
+examine	do_examine	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("examine", ...)
+exits	do_exits	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("exits", ...)
+fade	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+faint	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+farewell	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+fart	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+fill	do_pour	POS_STANDING	0	SCMD_FILL	registered	pkg/session/commands.go:registerCommand("fill", ...)
+finger	do_whois	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("finger", ...)
+flee	do_flee	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("flee", ...)
+flesh	do_flesh_alter	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("flesh", ...)
+flex	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+flip	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+flirt	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+follow	do_follow	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("follow", ...)
+fondle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+force	do_force	POS_SLEEPING	LVL_GOD	0	registered	pkg/session/commands.go:registerCommand("force", ...)
+freeze	do_wizutil	POS_DEAD	LVL_FREEZE	SCMD_FREEZE	registered	pkg/session/commands.go:registerCommand("freeze", ...)
+french	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+frown	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+fume	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+future	do_gen_ps	POS_DEAD	0	SCMD_FUTURE	registered	pkg/session/commands.go:registerCommand("future", ...)
+fwap	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+gag	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+gasp	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+gecho	do_gecho	POS_DEAD	LVL_GOD	0	registered	pkg/session/commands.go:registerCommand("gecho", ...)
+get	do_get	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("get", ...)
+giggle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+give	do_give	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("give", ...)
+glance	do_diagnose	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("glance", ...)
+glare	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+gold	do_coins	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("gold", ...)
+goose	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+gossip	do_gen_comm	POS_SLEEPING	0	SCMD_GOSSIP	registered	pkg/session/commands.go:registerCommand("gossip", ...)
+goto	do_goto	POS_SLEEPING	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("goto", ...)
+grab	do_grab	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("grab", ...)
+grats	do_gen_comm	POS_SLEEPING	0	SCMD_GRATZ	registered	pkg/session/commands.go:registerCommand("grats", ...)
+greet	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+grimace	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+grin	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+groan	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+groinrip	do_groinrip	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("groinrip", ...)
+grope	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+group	do_group	POS_SLEEPING	1	0	registered	pkg/session/commands.go:registerCommand("group", ...)
+grovel	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+growl	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+grumble	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+gsay	do_gsay	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("gsay", ...)
+gtell	do_gsay	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("gtell", ...)
+handbook	do_gen_ps	POS_DEAD	LVL_IMMORT	SCMD_HANDBOOK	registered	pkg/session/commands.go:registerCommand("handbook", ...)
+hcontrol	do_hcontrol	POS_DEAD	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("hcontrol", ...)
+headbutt	do_headbutt	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("headbutt", ...)
+heh	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+help	do_help	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("help", ...)
+hiccup	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+hide	do_hide	POS_RESTING	1	0	registered	pkg/session/commands.go:registerCommand("hide", ...)
+highfive	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+hire	do_not_here	POS_STANDING	0	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+hit	do_hit	POS_FIGHTING	0	SCMD_HIT	registered	pkg/session/commands.go:registerCommand("hit", ...)
+hold	do_grab	POS_RESTING	1	0	registered	pkg/session/commands.go:registerCommand("hold", ...)
+holler	do_gen_comm	POS_RESTING	1	SCMD_HOLLER	registered	pkg/session/commands.go:registerCommand("holler", ...)
+holylight	do_gen_tog	POS_DEAD	LVL_IMMORT	SCMD_HOLYLIGHT	registered	pkg/session/commands.go:registerCommand("holylight", ...)
+home	do_home	POS_RESTING	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("home", ...)
+hop	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+house	do_house	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("house", ...)
+howl	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+hug	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+hum	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+hump	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+hush	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+idea	do_gen_write	POS_DEAD	0	SCMD_IDEA	registered	pkg/session/commands.go:registerCommand("idea", ...)
+ident	do_gen_tog	POS_DEAD	LVL_IMPL-1	SCMD_IDENT	registered	pkg/session/commands.go:registerCommand("ident", ...)
+idlist	do_idlist	POS_DEAD	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("idlist", ...)
+immlist	do_gen_ps	POS_DEAD	0	SCMD_IMMLIST	registered	pkg/session/commands.go:registerCommand("immlist", ...)
+imotd	do_gen_ps	POS_DEAD	LVL_IMMORT	SCMD_IMOTD	registered	pkg/session/commands.go:registerCommand("imotd", ...)
+inactive	do_inactive	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("inactive", ...)
+info	do_gen_ps	POS_SLEEPING	0	SCMD_INFO	registered	pkg/session/commands.go:registerCommand("info", ...)
+infobar	do_infobar	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("infobar", ...)
+insult	do_insult	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("insult", ...)
+inventory	do_inventory	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("inventory", ...)
+invis	do_invis	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("invis", ...)
+jeer	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+jin	do_kuji_kiri	POS_STANDING	0	SKILL_KK_JIN	registered	pkg/session/commands.go:registerCommand("jin", ...)
+junk	do_drop	POS_RESTING	0	SCMD_JUNK	registered	pkg/session/commands.go:registerCommand("junk", ...)
+kabuki	do_hide	POS_RESTING	1	SCMD_KABUKI	registered	pkg/session/commands.go:registerCommand("kabuki", ...)
+kai	do_kuji_kiri	POS_STANDING	0	SKILL_KK_KAI	registered	pkg/session/commands.go:registerCommand("kai", ...)
+kick	do_kick	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("kick", ...)
+kill	do_kill	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("kill", ...)
+kiss	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+kyo	do_kuji_kiri	POS_STANDING	0	SKILL_KK_KYO	registered	pkg/session/commands.go:registerCommand("kyo", ...)
+lambada	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+last	do_last	POS_DEAD	LVL_GOD-1	0	registered	pkg/session/commands.go:registerCommand("last", ...)
+laugh	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+leave	do_leave	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("leave", ...)
+leer	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+levels	do_levels	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("levels", ...)
+lick	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+lines	do_lines	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("lines", ...)
+list	do_not_here	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("list", ...)
+listen	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+load	do_load	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("load", ...)
+lock	do_gen_door	POS_SITTING	0	SCMD_LOCK	registered	pkg/session/commands.go:registerCommand("lock", ...)
+look	do_look	POS_RESTING	0	SCMD_LOOK	registered	pkg/session/commands.go:registerCommand("look", ...)
+love	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+luaedit	do_luaedit	POS_DEAD	LVL_BUILDER	LVL_HIGOD	missing	no implementation found
+mail	do_not_here	POS_STANDING	1	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+map	do_map	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("map", ...)
+massage	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+medit	do_olc	POS_DEAD	LVL_BUILDER	SCMD_OLC_MEDIT	missing	no implementation found
+mindlink	do_mindlink	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("mindlink", ...)
+mlist	do_mlist	POS_DEAD	LVL_BUILDER	0	registered	pkg/session/commands.go:registerCommand("mlist", ...)
+moan	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+mold	do_mold	POS_RESTING	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("mold", ...)
+mosh	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+motd	do_gen_ps	POS_DEAD	0	SCMD_MOTD	registered	pkg/session/commands.go:registerCommand("motd", ...)
+mount	do_ride	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("mount", ...)
+muhaha	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+mumble	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+murder	do_hit	POS_FIGHTING	0	SCMD_MURDER	registered	pkg/session/commands.go:registerCommand("murder", ...)
+mute	do_wizutil	POS_DEAD	1	SCMD_SQUELCH	registered	pkg/session/commands.go:registerCommand("mute", ...)
+neckbreak	do_neckbreak	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("neckbreak", ...)
+newbie	do_gen_comm	POS_SLEEPING	0	SCMD_NEWBIE	registered	pkg/session/commands.go:registerCommand("newbie", ...)
+news	do_gen_ps	POS_SLEEPING	0	SCMD_NEWS	registered	pkg/session/commands.go:registerCommand("news", ...)
+nibble	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+noauction	do_gen_tog	POS_DEAD	0	SCMD_NOAUCTION	registered	pkg/session/commands.go:registerCommand("noauction", ...)
+nobroadcast	do_gen_tog	POS_DEAD	0	SCMD_NOBROAD	registered	pkg/session/commands.go:registerCommand("nobroadcast", ...)
+noctell	do_gen_tog	POS_DEAD	0	SCMD_NOCTELL	registered	pkg/session/commands.go:registerCommand("noctell", ...)
+nod	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+nogossip	do_gen_tog	POS_DEAD	0	SCMD_NOGOSSIP	registered	pkg/session/commands.go:registerCommand("nogossip", ...)
+nograts	do_gen_tog	POS_DEAD	0	SCMD_NOGRATZ	registered	pkg/session/commands.go:registerCommand("nograts", ...)
+nohassle	do_gen_tog	POS_DEAD	LVL_IMMORT	SCMD_NOHASSLE	registered	pkg/session/commands.go:registerCommand("nohassle", ...)
+nonewbie	do_gen_tog	POS_DEAD	0	SCMD_NONEWBIE	registered	pkg/session/commands.go:registerCommand("nonewbie", ...)
+noogie	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+norepeat	do_gen_tog	POS_DEAD	0	SCMD_NOREPEAT	registered	pkg/session/commands.go:registerCommand("norepeat", ...)
+north	do_move	POS_STANDING	0	SCMD_NORTH	registered	pkg/session/commands.go:registerCommand("north", ...)
+noshout	do_gen_tog	POS_SLEEPING	1	SCMD_DEAF	registered	pkg/session/commands.go:registerCommand("noshout", ...)
+nosummon	do_gen_tog	POS_DEAD	1	SCMD_NOSUMMON	registered	pkg/session/commands.go:registerCommand("nosummon", ...)
+notell	do_gen_tog	POS_DEAD	1	SCMD_NOTELL	registered	pkg/session/commands.go:registerCommand("notell", ...)
+notitle	do_wizutil	POS_DEAD	LVL_GOD	SCMD_NOTITLE	registered	pkg/session/commands.go:registerCommand("notitle", ...)
+nowiz	do_gen_tog	POS_DEAD	LVL_IMMORT	SCMD_NOWIZ	registered	pkg/session/commands.go:registerCommand("nowiz", ...)
+nudge	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+nuzzle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+oedit	do_olc	POS_DEAD	LVL_BUILDER	SCMD_OLC_OEDIT	missing	no implementation found
+offer	do_not_here	POS_STANDING	1	0	specproc	pkg/game/spec_procs2.go
+olc	do_olc	POS_DEAD	LVL_BUILDER	SCMD_OLC_SAVEINFO	missing	no implementation found
+olist	do_olist	POS_DEAD	LVL_BUILDER	0	registered	pkg/session/commands.go:registerCommand("olist", ...)
+open	do_gen_door	POS_SITTING	0	SCMD_OPEN	registered	pkg/session/commands.go:registerCommand("open", ...)
+order	do_order	POS_RESTING	1	0	registered	pkg/session/commands.go:registerCommand("order", ...)
+orgasm	do_otouch	POS_RESTING	LVL_IMMORT	0	missing	no implementation found
+pace	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+page	do_page	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("page", ...)
+palm	do_palm	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("palm", ...)
+pant	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+pardon	do_wizutil	POS_DEAD	1	SCMD_PARDON	registered	pkg/session/commands.go:registerCommand("pardon", ...)
+parry	do_parry	POS_DEAD	0	0	missing	no implementation found
+pat	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+peek	do_peek	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("peek", ...)
+peer	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+pick	do_gen_door	POS_STANDING	1	SCMD_PICK	registered	pkg/session/commands.go:registerCommand("pick", ...)
+pinch	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+piss	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+players	do_gen_ps	POS_DEAD	LVL_GRGOD	SCMD_PLAYER_LIST	registered	pkg/session/commands.go:registerCommand("players", ...)
+plot	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+point	do_point	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("point", ...)
+poke	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+policy	do_gen_ps	POS_DEAD	0	SCMD_POLICIES	registered	pkg/session/commands.go:registerCommand("policy", ...)
+ponder	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+poofin	do_poofset	POS_DEAD	LVL_IMMORT	SCMD_POOFIN	registered	pkg/session/commands.go:registerCommand("poofin", ...)
+poofout	do_poofset	POS_DEAD	LVL_IMMORT	SCMD_POOFOUT	registered	pkg/session/commands.go:registerCommand("poofout", ...)
+pose	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+pour	do_pour	POS_STANDING	0	SCMD_POUR	registered	pkg/session/commands.go:registerCommand("pour", ...)
+pout	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+practice	do_practice	POS_RESTING	1	0	registered	pkg/session/commands.go:registerCommand("practice", ...)
+pray	do_action	POS_SITTING	0	0	social	pkg/game/socials.txt
+prompt	do_display	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("prompt", ...)
+puke	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+punch	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+purge	do_purge	POS_DEAD	LVL_IMMORT+1	0	registered	pkg/session/commands.go:registerCommand("purge", ...)
+purr	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+put	do_put	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("put", ...)
+qecho	do_qcomm	POS_DEAD	LVL_IMMORT	SCMD_QECHO	registered	pkg/session/commands.go:registerCommand("qecho", ...)
+qsay	do_qcomm	POS_SLEEPING	0	SCMD_QSAY	registered	pkg/session/commands.go:registerCommand("qsay", ...)
+quaff	do_use	POS_SITTING	0	SCMD_QUAFF	registered	pkg/session/commands.go:registerCommand("quaff", ...)
+quest	do_gen_tog	POS_DEAD	0	SCMD_QUEST	registered	pkg/session/commands.go:registerCommand("quest", ...)
+qui	do_quit	POS_DEAD	0	0	abbrev-stub	abbreviation-only entry in interpreter.c
+quit	do_quit	POS_DEAD	0	SCMD_QUIT	registered	pkg/session/commands.go:registerCommand("quit", ...)
+raise	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+read	do_look	POS_RESTING	0	SCMD_READ	registered	pkg/session/commands.go:registerCommand("read", ...)
+reallyquit	do_quit	POS_DEAD	0	SCMD_REALLY_QUIT	registered	pkg/session/commands.go:registerCommand("reallyquit", ...)
+recall	do_recall	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("recall", ...)
+receive	do_not_here	POS_STANDING	1	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+recharge	do_not_here	POS_STANDING	0	0	specproc	pkg/game/spec_procs_missing.go
+recite	do_use	POS_RESTING	0	SCMD_RECITE	registered	pkg/session/commands.go:registerCommand("recite", ...)
+redit	do_olc	POS_DEAD	LVL_BUILDER	SCMD_OLC_REDIT	missing	no implementation found
+reel	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+reload	do_reboot	POS_DEAD	LVL_IMPL-1	0	registered	pkg/session/commands.go:registerCommand("reload", ...)
+remort	do_not_here	POS_STANDING	0	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+remove	do_remove	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("remove", ...)
+ren	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+rent	do_not_here	POS_STANDING	1	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+reply	do_reply	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("reply", ...)
+report	do_report	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("report", ...)
+reroll	do_wizutil	POS_DEAD	LVL_GRGOD	SCMD_REROLL	registered	pkg/session/commands.go:registerCommand("reroll", ...)
+rescue	do_rescue	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("rescue", ...)
+rest	do_rest	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("rest", ...)
+restore	do_restore	POS_DEAD	LVL_GOD-1	0	registered	pkg/session/commands.go:registerCommand("restore", ...)
+retreat	do_retreat	POS_FIGHTING	0	0	specproc	pkg/game/spec_procs.go
+retrieve	do_not_here	POS_STANDING	1	0	specproc	pkg/game/spec_procs3.go
+retsu	do_kuji_kiri	POS_STANDING	0	SKILL_KK_RETSU	registered	pkg/session/commands.go:registerCommand("retsu", ...)
+return	do_return	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("return", ...)
+review	do_review	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("review", ...)
+ride	do_ride	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("ride", ...)
+rin	do_kuji_kiri	POS_STANDING	0	SKILL_KK_RIN	registered	pkg/session/commands.go:registerCommand("rin", ...)
+rlist	do_rlist	POS_DEAD	LVL_BUILDER	0	registered	pkg/session/commands.go:registerCommand("rlist", ...)
+roar	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+rofl	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+roll	do_roll	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("roll", ...)
+roomflags	do_gen_tog	POS_DEAD	LVL_IMMORT	SCMD_ROOMFLAGS	registered	pkg/session/commands.go:registerCommand("roomflags", ...)
+rsay	do_race_say	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("rsay", ...)
+ruffle	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+salute	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+save	do_save	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("save", ...)
+say	do_say	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("say", ...)
+scoff	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+score	do_score	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("score", ...)
+scout	do_scout	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("scout", ...)
+scratch	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+scream	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+scrounge	do_scrounge	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("scrounge", ...)
+search	do_detect	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("search", ...)
+sedit	do_olc	POS_DEAD	LVL_BUILDER	SCMD_OLC_SEDIT	missing	no implementation found
+sell	do_not_here	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("sell", ...)
+send	do_send	POS_SLEEPING	LVL_GOD	0	registered	pkg/session/commands.go:registerCommand("send", ...)
+serpent	do_serpent_kick	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("serpent", ...)
+set	do_set	POS_DEAD	LVL_GOD	0	registered	pkg/session/commands.go:registerCommand("set", ...)
+sethunt	do_sethunt	POS_DEAD	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("sethunt", ...)
+sha	do_kuji_kiri	POS_STANDING	0	SKILL_KK_SHA	registered	pkg/session/commands.go:registerCommand("sha", ...)
+shadow	do_follow	POS_STANDING	0	TRUE	registered	pkg/session/commands.go:registerCommand("shadow", ...)
+shake	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+shame	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sharpen	do_sharpen	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("sharpen", ...)
+shishkabob	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+shiver	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+shoot	do_shoot	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("shoot", ...)
+shout	do_gen_comm	POS_RESTING	0	SCMD_SHOUT	registered	pkg/session/commands.go:registerCommand("shout", ...)
+show	do_show	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("show", ...)
+shrug	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+shudder	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+shutdow	do_shutdown	POS_DEAD	LVL_IMPL-1	0	abbrev-stub	abbreviation-only entry in interpreter.c
+shutdown	do_shutdown	POS_DEAD	LVL_IMPL-1	SCMD_SHUTDOWN	registered	pkg/session/commands.go:registerCommand("shutdown", ...)
+sigh	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sing	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sip	do_drink	POS_RESTING	0	SCMD_SIP	registered	pkg/session/commands.go:registerCommand("sip", ...)
+sit	do_sit	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("sit", ...)
+skillset	do_skillset	POS_SLEEPING	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("skillset", ...)
+slap	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sleep	do_sleep	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("sleep", ...)
+sleeper	do_sleeper	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("sleeper", ...)
+slowns	do_gen_tog	POS_DEAD	LVL_IMPL-1	SCMD_SLOWNS	registered	pkg/session/commands.go:registerCommand("slowns", ...)
+slug	do_slug	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("slug", ...)
+smackheads	do_smackheads	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("smackheads", ...)
+smell	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+smile	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+smirk	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+snap	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+snarl	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sneak	do_sneak	POS_STANDING	1	0	registered	pkg/session/commands.go:registerCommand("sneak", ...)
+sneer	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sneeze	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+snicker	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sniff	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+snoop	do_snoop	POS_DEAD	LVL_GOD	0	registered	pkg/session/commands.go:registerCommand("snoop", ...)
+snore	do_action	POS_SLEEPING	0	0	social	pkg/game/socials.txt
+snowball	do_action	POS_STANDING	LVL_IMMORT	0	social	pkg/game/socials.txt
+snuggle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+socials	do_commands	POS_DEAD	0	SCMD_SOCIALS	registered	pkg/session/commands.go:registerCommand("socials", ...)
+south	do_move	POS_STANDING	0	SCMD_SOUTH	registered	pkg/session/commands.go:registerCommand("south", ...)
+spackle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+spank	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+spew	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+spike	do_spike	POS_STANDING	0	SCMD_SPIKE	registered	pkg/session/commands.go:registerCommand("spike", ...)
+spit	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+split	do_split	POS_SITTING	1	0	registered	pkg/session/commands.go:registerCommand("split", ...)
+squeeze	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+stable	do_not_here	POS_RESTING	0	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+stake	do_spike	POS_STANDING	0	SCMD_STAKE	registered	pkg/session/commands.go:registerCommand("stake", ...)
+stand	do_stand	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("stand", ...)
+stare	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+startle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+stat	do_stat	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("stat", ...)
+steal	do_steal	POS_STANDING	1	0	registered	pkg/session/commands.go:registerCommand("steal", ...)
+stealth	do_stealth	POS_STANDING	1	0	registered	pkg/session/commands.go:registerCommand("stealth", ...)
+steam	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+stimpy	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+stretch	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+strike	do_strike	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("strike", ...)
+string	do_string	POS_RESTING	LVL_IMMORT+1	0	missing	no implementation found
+stroke	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+strut	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+subdue	do_subdue	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("subdue", ...)
+sulk	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+sweat	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+switch	do_switch	POS_DEAD	LVL_IMMORT+1	0	registered	pkg/session/commands.go:registerCommand("switch", ...)
+sysfile	do_sysfile	POS_DEAD	LVL_GOD	0	registered	pkg/session/commands.go:registerCommand("sysfile", ...)
+syslog	do_syslog	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("syslog", ...)
+tackle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+tag	do_tag	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("tag", ...)
+take	do_get	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("take", ...)
+tango	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+tap	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+taste	do_eat	POS_RESTING	0	SCMD_TASTE	registered	pkg/session/commands.go:registerCommand("taste", ...)
+taunt	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+tedit	do_tedit	POS_DEAD	LVL_GRGOD	0	missing	no implementation found
+teleport	do_teleport	POS_DEAD	LVL_GOD	0	registered	pkg/session/commands.go:registerCommand("teleport", ...)
+tell	do_tell	POS_MORTALLYW	0	0	registered	pkg/session/commands.go:registerCommand("tell", ...)
+thank	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+thaw	do_wizutil	POS_DEAD	LVL_FREEZE	SCMD_THAW	registered	pkg/session/commands.go:registerCommand("thaw", ...)
+think	do_think	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("think", ...)
+thpbt	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+threaten	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+throttle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+thumbsup	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+thunk	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+tick	do_tick	POS_DEAD	LVL_IMPL-1	0	registered	pkg/session/commands.go:registerCommand("tick", ...)
+tickle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+tiger	do_tiger_punch	POS_FIGHTING	0	0	registered	pkg/session/commands.go:registerCommand("tiger", ...)
+tilt	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+time	do_time	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("time", ...)
+title	do_title	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("title", ...)
+todo	do_gen_write	POS_DEAD	LVL_GOD-1	SCMD_TODO	registered	pkg/session/commands.go:registerCommand("todo", ...)
+toggle	do_toggle	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("toggle", ...)
+toh	do_kuji_kiri	POS_STANDING	0	SKILL_KK_TOH	registered	pkg/session/commands.go:registerCommand("toh", ...)
+track	do_track	POS_STANDING	0	0	missing	no implementation found
+transfer	do_trans	POS_SLEEPING	LVL_IMMORT+1	0	missing	no implementation found
+transform	do_transform	POS_RESTING	1	0	registered	pkg/session/commands.go:registerCommand("transform", ...)
+trip	do_trip	POS_FIGHTING	1	0	registered	pkg/session/commands.go:registerCommand("trip", ...)
+tug	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+turn	do_turn	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("turn", ...)
+twiddle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+typo	do_gen_write	POS_DEAD	0	SCMD_TYPO	registered	pkg/session/commands.go:registerCommand("typo", ...)
+unaffect	do_wizutil	POS_DEAD	LVL_GOD	SCMD_UNAFFECT	registered	pkg/session/commands.go:registerCommand("unaffect", ...)
+unban	do_unban	POS_DEAD	LVL_GRGOD	0	registered	pkg/session/commands.go:registerCommand("unban", ...)
+ungroup	do_ungroup	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("ungroup", ...)
+unlock	do_gen_door	POS_SITTING	0	SCMD_UNLOCK	registered	pkg/session/commands.go:registerCommand("unlock", ...)
+up	do_move	POS_STANDING	0	SCMD_UP	registered	pkg/session/commands.go:registerCommand("up", ...)
+uptime	do_date	POS_DEAD	LVL_IMMORT	SCMD_UPTIME	registered	pkg/session/commands.go:registerCommand("uptime", ...)
+use	do_use	POS_SITTING	1	SCMD_USE	registered	pkg/session/commands.go:registerCommand("use", ...)
+users	do_users	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("users", ...)
+value	do_not_here	POS_STANDING	0	0	implemented-unwired	pkg/session/cmd_misc.go:cmdnothere
+version	do_gen_ps	POS_DEAD	0	SCMD_VERSION	registered	pkg/session/commands.go:registerCommand("version", ...)
+violate	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+visible	do_visible	POS_RESTING	1	0	registered	pkg/session/commands.go:registerCommand("visible", ...)
+vnum	do_vnum	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("vnum", ...)
+vstat	do_vstat	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("vstat", ...)
+wake	do_wake	POS_SLEEPING	0	0	registered	pkg/session/commands.go:registerCommand("wake", ...)
+waltz	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+wave	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+wear	do_wear	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("wear", ...)
+weather	do_weather	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("weather", ...)
+wedgie	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+wee	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+weep	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+west	do_move	POS_STANDING	0	SCMD_WEST	registered	pkg/session/commands.go:registerCommand("west", ...)
+whap	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+where	do_where	POS_RESTING	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("where", ...)
+whimper	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+whine	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+whisper	do_spec_comm	POS_RESTING	0	SCMD_WHISPER	registered	pkg/session/commands.go:registerCommand("whisper", ...)
+whistle	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+who	do_who	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("who", ...)
+whoami	do_gen_ps	POS_DEAD	0	SCMD_WHOAMI	registered	pkg/session/commands.go:registerCommand("whoami", ...)
+whod	do_whod	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("whod", ...)
+whois	do_whois	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("whois", ...)
+wield	do_wield	POS_RESTING	0	0	registered	pkg/session/commands.go:registerCommand("wield", ...)
+wiggle	do_action	POS_STANDING	0	0	social	pkg/game/socials.txt
+will	do_cast	POS_SITTING	1	0	registered	pkg/session/commands.go:registerCommand("will", ...)
+wimpy	do_wimpy	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("wimpy", ...)
+wink	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+withdraw	do_not_here	POS_STANDING	1	0	specproc	pkg/game/spec_procs4.go
+wizhelp	do_commands	POS_SLEEPING	LVL_IMMORT	SCMD_WIZHELP	registered	pkg/session/commands.go:registerCommand("wizhelp", ...)
+wizlist	do_gen_ps	POS_DEAD	0	SCMD_WIZLIST	registered	pkg/session/commands.go:registerCommand("wizlist", ...)
+wizlock	do_wizlock	POS_DEAD	LVL_IMPL-1	0	registered	pkg/session/commands.go:registerCommand("wizlock", ...)
+wiznet	do_wiznet	POS_DEAD	0	0	registered	pkg/session/commands.go:registerCommand("wiznet", ...)
+wnewbie	do_newbie	POS_DEAD	LVL_IMMORT	0	registered	pkg/session/commands.go:registerCommand("wnewbie", ...)
+worship	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+write	do_write	POS_STANDING	1	0	registered	pkg/session/commands.go:registerCommand("write", ...)
+yank	do_yank	POS_STANDING	0	0	registered	pkg/session/commands.go:registerCommand("yank", ...)
+yawn	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+yodel	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+yuball	do_action	POS_RESTING	0	0	social	pkg/game/socials.txt
+zai	do_kuji_kiri	POS_STANDING	0	SKILL_KK_ZAI	registered	pkg/session/commands.go:registerCommand("zai", ...)
+zedit	do_olc	POS_DEAD	LVL_BUILDER	SCMD_OLC_ZEDIT	missing	no implementation found
+zhen	do_kuji_kiri	POS_STANDING	0	SKILL_KK_ZHEN	registered	pkg/session/commands.go:registerCommand("zhen", ...)
+zlist	do_zlist	POS_DEAD	LVL_BUILDER	0	registered	pkg/session/commands.go:registerCommand("zlist", ...)
+zreset	do_zreset	POS_DEAD	LVL_BUILDER	0	registered	pkg/session/commands.go:registerCommand("zreset", ...)
