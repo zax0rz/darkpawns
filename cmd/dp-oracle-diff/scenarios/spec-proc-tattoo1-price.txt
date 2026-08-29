@@ -1,0 +1,47 @@
+# depth-case: mob.tattoo1-price-gate
+# C-first vehicle for SPECIAL(tattoo1)'s insufficient-gold gate. Gold is set
+# during drained warmup so the compared transcript contains only the native
+# tattooist tell.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8086 1 8052 80
+strip-mob-script 8086
+replace-room-exits 8052 none
+
+[setup:oracle]
+TattooPrice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooPrice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8052
+set TattooPrice gold 0
+
+[probe]
+buy 0
