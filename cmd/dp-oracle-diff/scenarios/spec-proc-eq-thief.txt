@@ -1,0 +1,69 @@
+# depth-case: mob.eq-thief-commandless-entry
+# depth-case: mob.eq-thief-mortal-target-gate
+# depth-case: mob.eq-thief-steal-transfer
+# depth-case: mob.eq-thief-pulse-dispatch
+# depth-case: mob.eq-thief-container-black-junk
+# depth-case: mob.eq-thief-junk-audience
+# depth-case: mob.eq-thief-rng-order
+# C-first vehicle for SPECIAL(eq_thief). Mob 7979 is the first registration
+# (src/spec_assign.c:266), but db.c:2113-2135 hard-codes every 79xx reset mob
+# into a random non-city room. The fixed-room vehicle therefore uses the next
+# registration, kender mob 12118 (src/spec_assign.c:350), while focused tests
+# cover the shared procedure body and all three registrations resolve to it.
+# The registered kender is scriptless so only the native mobile_activity path
+# runs.
+# C path: src/mobact.c:68-93 -> src/interpreter.c:1407-1456 ->
+# src/spec_procs2.c:1613-1646, with npc_kender_steal() at lines 1583-1611.
+# The immortal setup player loads one bread, becomes mortal, sleeps, and then
+# the probe crosses repeated PULSE_MOBILE intervals before checking inventory.
+# This exercises the commandless standing gate, mortal target gate, outer
+# 1-in-5 draw, and the exact per-item kender-steal draw sequence.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12118 1 8105 121
+strip-mob-script 12118
+replace-room-exits 8105 none
+
+[setup:oracle]
+Eqthiefprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Eqthiefprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+remove all
+junk all
+load obj 8010
+set Eqthiefprobe level 1
+sleep
+~dpclock pulse 2000
+wake
+
+[probe]
+inventory
