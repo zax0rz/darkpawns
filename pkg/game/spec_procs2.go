@@ -929,26 +929,161 @@ func setRemortSkills(ch *Player, class int) {
 }
 
 // ================================================================
-// assassin — Bodyguard-ish: attacks whoever's fighting master
+// assassin — Room-based assassin shop
 // ================================================================
+// C: src/spec_procs2.c:845-928, assigned by ASSIGNROOM(8114, assassin).
+// The C procedure uses the next internal room index as its hidden roster;
+// room vnums are contiguous in the authoritative world here, so room 8115
+// is the corresponding Go room. It is a room special, not a mob special.
 func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if !ch.IsNPC() {
+	if w == nil || ch == nil || me != nil {
 		return false
 	}
-	// Check if master is fighting; if so, attack master's opponent
-	if me.GetFollowing() != "" {
-		if master, ok := w.GetPlayer(me.GetFollowing()); ok {
-			if target := master.GetFighting(); target != "" {
-				if vict, ok2 := w.GetPlayer(target); ok2 {
-					if err := me.Attack(vict, w); err != nil {
-						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-					}
-					return true
-				}
-			}
+
+	rosterRoom := ch.GetRoomVNum() + 1
+	switch cmd {
+	case "list":
+		sendToChar(ch, "To hire an assassin: hire <assassin> <victim>")
+		sendToChar(ch, "Available assassins are:")
+		for _, member := range assassinRoster(w, rosterRoom) {
+			sendToChar(ch, fmt.Sprintf("%8d - %s", memberLevel(member)*1000, memberName(member)))
+		}
+		return true
+	case "hire":
+		first, second := twoAssassinArguments(arg)
+		if first == "" {
+			sendToChar(ch, "Hire who?")
+			return true
+		}
+
+		assassin := findAssassinRosterMember(w, rosterRoom, first)
+		if assassin == nil {
+			sendToChar(ch, "There is nobody called that!")
+			return true
+		}
+		if player, ok := assassin.(*Player); ok {
+			sendToChar(player, "GET THE HELL OUT OF THAT ROOM, NOW !!!")
+			slog.Info("player found in assassin store room", "player", player.GetName())
+			sendToChar(ch, "You can't hire players.")
+			return true
+		}
+		assassinMob, ok := assassin.(*MobInstance)
+		if !ok {
+			return true
+		}
+		if second == "" {
+			sendToChar(ch, "Whom do you want to assassinate?")
+			return true
+		}
+
+		price := memberLevel(assassin) * 1000
+		if ch.GetGold() < price {
+			sendToChar(ch, "You don't have enough gold!")
+			return true
+		}
+
+		victim := findVisibleAssassinVictim(w, assassinMob, second)
+		if victim == nil {
+			sendToChar(ch, "Our underground doesn't know the whereabouts of the victim!")
+			return true
+		}
+		if victim.GetLevel() < 5 {
+			sendToChar(ch, "We cannot lower ourselves to such easy prey.")
+			return true
+		}
+
+		ch.SetGold(ch.GetGold() - price)
+		hired, err := w.spawnMobQuiet(assassinMob.GetVNum(), ch.GetRoom())
+		if err != nil {
+			slog.Error("assassin hire failed to spawn mob", "vnum", assassinMob.GetVNum(), "error", err)
+			return true
+		}
+		hired.SetMobFlag(MobFlagHunter)
+		hired.SetHunting(victim.GetName())
+		sendToChar(ch, "We cannot contact you if the job succeeds or not...security, you know.")
+		Act(w, false, ch, hired, nil, nil, "$n hires $N for a job.", "", ToRoom)
+		return true
+	default:
+		return false
+	}
+}
+
+func twoAssassinArguments(arg string) (string, string) {
+	fields := strings.Fields(arg)
+	if len(fields) == 0 {
+		return "", ""
+	}
+	if len(fields) == 1 {
+		return fields[0], ""
+	}
+	return fields[0], fields[1]
+}
+
+func assassinRoster(w *World, roomVNum int) []Actor {
+	members := make([]Actor, 0)
+	for _, player := range w.GetPlayersInRoom(roomVNum) {
+		members = append(members, player)
+	}
+	for _, mob := range w.GetMobsInRoom(roomVNum) {
+		members = append(members, mob)
+	}
+	return members
+}
+
+func findAssassinRosterMember(w *World, roomVNum int, name string) Actor {
+	ordinal := GetNumber(&name)
+	if ordinal == 0 {
+		return nil
+	}
+	matches := 0
+	for _, member := range assassinRoster(w, roomVNum) {
+		if !isnameWithAbbrevs(name, assassinMemberKeywords(member)) {
+			continue
+		}
+		matches++
+		if matches == ordinal {
+			return member
 		}
 	}
-	return false
+	return nil
+}
+
+func assassinMemberKeywords(member Actor) string {
+	switch value := member.(type) {
+	case *Player:
+		return value.GetName()
+	case *MobInstance:
+		return charKeywords(value)
+	default:
+		return ""
+	}
+}
+
+func memberLevel(member Actor) int {
+	switch value := member.(type) {
+	case *Player:
+		return value.GetLevel()
+	case *MobInstance:
+		return value.GetLevel()
+	default:
+		return 0
+	}
+}
+
+func memberName(member Actor) string {
+	if member == nil {
+		return ""
+	}
+	return member.GetName()
+}
+
+func findVisibleAssassinVictim(w *World, assassin *MobInstance, name string) *Player {
+	for _, player := range w.GetAllPlayers() {
+		if strings.EqualFold(player.GetName(), name) && canSee(assassin, player) {
+			return player
+		}
+	}
+	return nil
 }
 
 // ================================================================
