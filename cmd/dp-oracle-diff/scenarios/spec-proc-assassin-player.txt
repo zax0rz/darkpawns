@@ -1,0 +1,78 @@
+# depth-case: room.assassin-player-roster
+# depth-case: room.assassin-player-rejection
+# C-first vehicle for get_char_room selecting a player in the hidden roster.
+# The player is moved to room 8115 after setup; C sends the roster occupant a
+# direct expulsion line and tells the hiring actor that players cannot be
+# hired. The fixed NPC roster entry remains available for list ordering.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8070 1 8115 80
+replace-room-exits 8115 none
+
+[setup:oracle]
+AssassinPlayer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AssassinPlayer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+AssassinRosterPlayer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+AssassinRosterPlayer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8114
+teleport AssassinRosterPlayer 8115
+
+[probe]
+list
+hire AssassinRosterPlayer

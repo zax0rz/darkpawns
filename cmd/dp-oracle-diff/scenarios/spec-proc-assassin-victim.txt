@@ -1,0 +1,76 @@
+# depth-case: room.assassin-victim-not-found
+# C-first vehicle for the selected-assassin/global-victim miss branch of
+# SPECIAL(assassin). The price is funded so get_player_vis is reached after
+# the gold gate; the requested victim is absent from the online player list.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8070 1 8115 80
+replace-room-exits 8115 none
+
+[setup:oracle]
+VictimActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+VictimActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+VictimPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+VictimPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8114
+teleport VictimPeer 8114
+set VictimActor gold 1000
+
+[probe]
+hire street NobodyOnline
