@@ -514,8 +514,8 @@ func specNewbieZoneEntrance(w *World, ch *Player, me *MobInstance, cmd string, a
 		return false
 	}
 
-	if ch.GetLevel() >= newbieLevel {
-		sendToChar(ch, "Nah, you're too much of a badass to go in there!\r\n")
+	if ch.GetLevel() >= newbieLevel && ch.GetLevel() < lvlImmort {
+		sendToChar(ch, "Nah, you're too much of a badass to go in there!")
 		return true
 	}
 
