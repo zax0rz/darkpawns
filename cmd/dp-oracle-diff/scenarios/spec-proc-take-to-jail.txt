@@ -1,0 +1,91 @@
+# depth-case: mob.take-to-jail-autonomous-entry
+# depth-case: mob.take-to-jail-outlaw-warning
+# depth-case: mob.take-to-jail-subdue-audience
+# depth-case: mob.take-to-jail-subdue-state
+# depth-case: mob.take-to-jail-return-contract
+# C-first vehicle for SPECIAL(take_to_jail), defined at
+# src/spec_procs2.c:1427-1468 and registered for mob vnum 8001 at
+# src/spec_assign.c:289. The 8001 prototype is scriptless for this disposable
+# run after strip-mob-script; its authored action flags retain MOB_SPEC.
+# mobile_activity() calls the special as (ch, ch, 0, "") only for an awake,
+# non-fighting MOB_SPEC mob (src/mobact.c:68-93). The special scans room people
+# for a visible PLR_OUTLAW, emits its room warning, calls hit(), and returns
+# fighter(). hit() owns the jail redirect at src/fight.c:1370-1400: it checks
+# visibility/health/vampire-werewolf gates, emits the actor/victim bytes, sets
+# victim HP to one, clears combat/mount state, relocates to room 8118, renders
+# the destination, and sets MAX(2, level/2) jail time. The shared fighter call
+# is covered by the existing mob.fighter delegated matrix.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8001 1 8105 80
+strip-mob-script 8001
+replace-room-exits 8105 none
+
+[setup:oracle]
+JailGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+JailGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+JailVictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+JailVictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport JailVictim 8105
+set JailVictim outlaw on
+
+[probe:victim]
+~dpclock pulse 40
+score
