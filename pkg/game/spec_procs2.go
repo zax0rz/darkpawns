@@ -1841,33 +1841,39 @@ func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 }
 
 // ================================================================
-// carrion — While fighting, 20% chance to attack a bystander
+// carrion — disturbance of corpses in the food-storage room
 // ================================================================
+// C: src/spec_procs2.c:1726-1754, assigned by ASSIGNROOM(14305, carrion).
+// This is a room special, so me is nil on the command-dispatch path.  The
+// spawned stalker's combat opener belongs to the shared mob-hit seam; this
+// handler owns only the C room gate, spawn, room Act, and TRUE return.
 func specCarrion(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetHP() < 0 {
+	if w == nil || ch == nil || me != nil {
 		return false
 	}
-	if ch.GetPosition() <= combat.PosSleeping {
+	if ch.GetPosition() <= combat.PosSleeping && ch.GetHP() > 0 {
 		return false
 	}
-	if ch.GetFighting() == "" {
+	if cmd == "" {
 		return false
 	}
-	if number(0, 5) != 0 {
+	arg = strings.TrimLeft(arg, " \t\r\n\v\f")
+	if arg == "" || (!strings.Contains(arg, "corpse") && !strings.Contains(arg, "corpses") && !strings.Contains(arg, "pile")) {
 		return false
 	}
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tears into its victim with renewed fury!", mobName(me)))
-	for _, vict := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !vict.IsNPC() && vict.GetName() != ch.GetName() {
-			if randRange(1, vict.GetLevel()) <= me.GetLevel() {
-				if err := me.Attack(vict, w); err != nil {
-					slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-				}
-				return true
-			}
-		}
+
+	stalker, err := w.spawnMobQuiet(14308, ch.GetRoomVNum())
+	if err != nil {
+		return false
 	}
-	return false
+	stalker.SetLevel(ch.GetLevel())
+	stalker.SetDamroll(ch.GetLevel())
+	Act(w, true, stalker, nil, nil, nil,
+		"Suddenly $n skitters from out of a corpse!", "", ToRoom)
+	if err := w.mobHit(stalker, ch); err != nil {
+		slog.Warn("carrion stalker attack failed", "mob", stalker.GetName(), "error", err)
+	}
+	return true
 }
 
 // ================================================================

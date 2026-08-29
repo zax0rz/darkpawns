@@ -40,7 +40,11 @@ type ObjectRuntimeState struct {
 
 // MobRuntimeState replaces CustomData for known mob state keys.
 type MobRuntimeState struct {
-	DamrollBonus int            `json:"damroll_bonus,omitempty"`
-	Horse        *HorseState    `json:"horse,omitempty"`
-	Script       map[string]any `json:"script,omitempty"`
+	// DamrollOverride is the instance-local GET_DAMROLL value used by C
+	// specials that assign points.damroll directly (for example carrion's
+	// read_mobile result). A pointer preserves zero as a meaningful override.
+	DamrollOverride *int           `json:"damroll_override,omitempty"`
+	DamrollBonus    int            `json:"damroll_bonus,omitempty"`
+	Horse           *HorseState    `json:"horse,omitempty"`
+	Script          map[string]any `json:"script,omitempty"`
 }

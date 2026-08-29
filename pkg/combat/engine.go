@@ -20,6 +20,10 @@ type CombatPair struct {
 	Defender       Combatant
 	Started        time.Time
 	LastAttackType int // Track what type of attack killed the victim (spell number, skill number, or TYPE_ constant)
+	// DeferDefenderEnrollment preserves hit()'s NPC-special ordering.  C's
+	// damage() sets the victim's FIGHTING field after the NPC switcheroo scan;
+	// ordinary command entry keeps the historical eager enrollment.
+	DeferDefenderEnrollment bool
 }
 
 // CombatEngine manages all active combat in the game
@@ -226,6 +230,18 @@ func (ce *CombatEngine) Stop() {
 
 // StartCombat initiates combat between two combatants
 func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
+	return ce.startCombat(attacker, defender, false)
+}
+
+// StartCombatFromMob starts the synchronous combat opener used by a C mobile
+// special that calls hit().  The defender is enrolled inside performOneHit,
+// after hit() has consumed its to-hit and damage draws and after the C
+// high-level switcheroo scan, rather than at the StartCombat boundary.
+func (ce *CombatEngine) StartCombatFromMob(attacker, defender Combatant) error {
+	return ce.startCombat(attacker, defender, true)
+}
+
+func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment bool) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -255,7 +271,8 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// combat: in DikuMUD a character FIGHTs one opponent at a time and only
 	// retargets when that opponent dies or flees. Overwriting it here would
 	// leave the defender's FIGHTING pointing at the new attacker while its
-	// original combat pair still exists — an inconsistent state.
+	// original combat pair still exists — an inconsistent state. Mobile
+	// specials defer this write until the damage-side C path.
 	attacker.SetFighting(defenderName)
 	// The attacker is stood to POS_FIGHTING at entry: it is always standing when
 	// it initiates (do_hit gates on position), so this is observably equal to
@@ -271,8 +288,9 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// auto-hit (AWAKE(victim) is false), not stood into an awake miss. Go
 	// mirrors this by transitioning the victim to POS_FIGHTING at the damage
 	// point (performOneHit), gated on > POS_STUNNED like C. Only the fighting
-	// flag/target is set at entry so the round loop enrolls it.
-	if defender.GetFighting() == "" {
+	// flag/target is set at entry so the round loop enrolls it. Mobile-special
+	// entry defers both operations until the damage-side path below.
+	if !deferDefenderEnrollment && defender.GetFighting() == "" {
 		defender.SetFighting(attackerName)
 	}
 	// The defender must be in combatOrder (C's combat_list) whenever it is
@@ -281,15 +299,16 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// (damage_stubs.go) without enrolling it, so gating the prepend on an
 	// empty field left positive-damage skill victims out of combatOrder and
 	// they never got a turn (DP-1213). prependFighterLocked is idempotent.
-	if defender.GetFighting() == attackerName {
+	if !deferDefenderEnrollment && defender.GetFighting() == attackerName {
 		ce.prependFighterLocked(defender)
 	}
 
 	// Start combat
 	ce.combatPairs[key] = &CombatPair{
-		Attacker: attacker,
-		Defender: defender,
-		Started:  time.Now(),
+		Attacker:                attacker,
+		Defender:                defender,
+		Started:                 time.Now(),
+		DeferDefenderEnrollment: deferDefenderEnrollment,
 	}
 
 	return nil
@@ -675,6 +694,17 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// its to-hit and damage-roll draws but before damage messages/state land.
 	if ce.applyMobCombatRedirects(attacker, defender) {
 		return true
+	}
+
+	// C damage() enrolls the victim after the NPC switcheroo scan.  Do this
+	// before the remaining damage-side effects, including stop_follower and
+	// the hit/miss message path.
+	if pair.DeferDefenderEnrollment && defender.GetFighting() == "" && defender.GetPosition() > PosStunned {
+		defender.SetFighting(attacker.GetName())
+		ce.mu.Lock()
+		ce.prependFighterLocked(defender)
+		ce.mu.Unlock()
+		pair.DeferDefenderEnrollment = false
 	}
 
 	// C set_fighting(victim) — which sets POS_FIGHTING — runs INSIDE damage(),
