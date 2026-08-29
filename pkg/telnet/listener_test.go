@@ -9,6 +9,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -943,5 +945,116 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 	}
 	if !strings.Contains(visible, response+"> ") {
 		t.Fatalf("prompt did not follow command response (prompt/response race): %q", visible)
+	}
+}
+
+// TestEffectiveBanLevelShortCircuitsBanAllBeforeDNS verifies that an IP already
+// banned at BanAll level is rejected from the in-memory check alone, without
+// ever spawning the reverse-DNS lookup (banned IPs must not pay for a slow PTR).
+func TestEffectiveBanLevelShortCircuitsBanAllBeforeDNS(t *testing.T) {
+	bm := game.NewBanManager()
+	if err := bm.AddBan("203.0.113.99", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
+	}
+
+	origLookup := lookupAddr
+	defer func() { lookupAddr = origLookup }()
+	var lookupCalled atomic.Bool
+	lookupAddr = func(addr string) ([]string, error) {
+		lookupCalled.Store(true)
+		return nil, nil
+	}
+
+	if got := effectiveBanLevel("203.0.113.99", bm); got != game.BanAll {
+		t.Fatalf("effectiveBanLevel = %d, want BanAll (%d)", got, game.BanAll)
+	}
+	if lookupCalled.Load() {
+		t.Fatal("lookupAddr was invoked for an IP already banned at BanAll level")
+	}
+}
+
+// TestListenAcceptNotBlockedBySlowReverseDNS verifies the accept loop only
+// performs the fast in-memory IP ban check; hostname reverse-DNS resolution runs
+// in the per-connection goroutine, so a connection whose PTR lookup blocks does
+// not stall subsequent accepts.
+func TestListenAcceptNotBlockedBySlowReverseDNS(t *testing.T) {
+	manager, world := newTestManager(t)
+	defer world.StopAITicker()
+
+	origLookup := lookupAddr
+	origTimeout := dnsLookupTimeout
+	defer func() {
+		lookupAddr = origLookup
+		dnsLookupTimeout = origTimeout
+	}()
+	// Keep the DNS timeout longer than the test deadline so the blocked
+	// connection stays pending on its resolver for the whole test.
+	dnsLookupTimeout = 5 * time.Second
+
+	var mu sync.Mutex
+	callCount := 0
+	release := make(chan struct{})
+	defer close(release)
+	lookupAddr = func(addr string) ([]string, error) {
+		mu.Lock()
+		callCount++
+		block := callCount == 1
+		mu.Unlock()
+		if block {
+			<-release
+		}
+		return nil, nil
+	}
+
+	if err := Listen(0, manager); err != nil {
+		t.Fatal(err)
+	}
+
+	connMu.Lock()
+	addr := listener.Addr().String()
+	connMu.Unlock()
+
+	dial := func() net.Conn {
+		t.Helper()
+		c, err := net.Dial("tcp", addr)
+		if err != nil {
+			t.Fatalf("dial %s: %v", addr, err)
+		}
+		return c
+	}
+	c1 := dial()
+	defer c1.Close()
+	c2 := dial()
+	defer c2.Close()
+
+	// The first reverse-DNS lookup blocks; whichever connection it belongs to,
+	// the peer connection must still be served promptly (proving the accept loop
+	// did not stall on the PTR wait).
+	served := make(chan string, 1)
+	for name, c := range map[string]net.Conn{"first": c1, "second": c2} {
+		name, c := name, c
+		go func() {
+			buf := make([]byte, 4096)
+			for {
+				_ = c.SetReadDeadline(time.Now().Add(2 * time.Second))
+				var chunk [512]byte
+				n, err := c.Read(chunk[:])
+				if err != nil {
+					return
+				}
+				buf = append(buf, chunk[:n]...)
+				if bytes.Contains(buf, []byte("By what name do you wish to be known?")) {
+					served <- name
+					return
+				}
+			}
+		}()
+	}
+
+	select {
+	case name := <-served:
+		t.Logf("connection %q served while its peer blocked on reverse-DNS", name)
+	case <-time.After(2 * time.Second):
+		t.Fatal("no connection served within deadline: accept loop stalled on reverse-DNS")
 	}
 }

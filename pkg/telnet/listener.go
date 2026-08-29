@@ -166,10 +166,12 @@ func Listen(port int, manager *session.Manager) error {
 
 			// Check site bans (DP-419 / DP-557): BanAll disconnects immediately;
 			// BanNew/BanSelect allow connection but restrict at login.
-			// Hostnames resolved from the IP are also checked, with a timeout to
-			// avoid blocking the accept loop on slow DNS.
-			banLevel := effectiveBanLevel(remoteIP, manager.GetBanManager())
-			if banLevel == game.BanAll {
+			// The accept loop only runs the fast in-memory IP check. Hostname
+			// reverse-DNS resolution (which can block up to dnsLookupTimeout)
+			// happens inside the per-connection goroutine so a slow or
+			// unresponsive resolver cannot stall the accept queue.
+			banManager := manager.GetBanManager()
+			if banManager.IsBanned(remoteIP) == game.BanAll {
 				_ = conn.Close() //nolint:errcheck // best-effort cleanup
 				slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
 				connMu.Lock()
@@ -182,8 +184,21 @@ func Listen(port int, manager *session.Manager) error {
 				continue
 			}
 
-			go func(ip string, bl int) {
-				handleConn(conn, manager, bl)
+			go func(ip string) {
+				banLevel := effectiveBanLevel(ip, banManager)
+				if banLevel == game.BanAll {
+					_ = conn.Close() //nolint:errcheck // best-effort cleanup
+					slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
+					connMu.Lock()
+					connCount--
+					connPerIP[ip]--
+					if connPerIP[ip] <= 0 {
+						delete(connPerIP, ip)
+					}
+					connMu.Unlock()
+					return
+				}
+				handleConn(conn, manager, banLevel)
 				connMu.Lock()
 				connCount--
 				connPerIP[ip]--
@@ -191,7 +206,7 @@ func Listen(port int, manager *session.Manager) error {
 					delete(connPerIP, ip)
 				}
 				connMu.Unlock()
-			}(remoteIP, banLevel)
+			}(remoteIP)
 		}
 	}()
 	return nil
@@ -213,6 +228,12 @@ func ipFromAddr(addr string) string {
 // block the connection accept loop.
 func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
 	level := banManager.IsBanned(remoteIP)
+	// BanAll is the most restrictive level. If the in-memory IP check already
+	// matches, no hostname ban can be stricter, so skip the reverse-DNS wait
+	// entirely (banned IPs must be dropped without paying for a slow PTR).
+	if level == game.BanAll {
+		return level
+	}
 
 	type result struct {
 		hostnames []string
