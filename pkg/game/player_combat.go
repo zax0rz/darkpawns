@@ -23,6 +23,13 @@ func (p *Player) GetClass() int {
 	return p.Class
 }
 
+// SetClass sets the player's class.
+func (p *Player) SetClass(v int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Class = v
+}
+
 // GetStr returns the player's strength (Phase 2c addition)
 // Source: fight.c uses GET_STR(ch) macro
 func (p *Player) GetStr() int {

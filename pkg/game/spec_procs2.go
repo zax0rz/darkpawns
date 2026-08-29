@@ -626,38 +626,306 @@ func specPissedalchemist(w *World, ch *Player, me *MobInstance, cmd string, arg 
 // remorter — Remort info NPC, random tips on pulse, can buy remort
 // ================================================================
 func specRemorter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" {
-		a := strings.TrimSpace(arg)
-		if cmd == "buy" && strings.Contains(a, "remort") {
-			sendToChar(ch, "HA!  You must be insane!\r\n")
-			return true
-		}
-		if cmd == "offer" || cmd == "donate" || cmd == "give" {
-			sendToChar(ch, "The remorter tells you 'There is a collection box inside the temple'\r\n")
-			return true
-		}
-		if cmd == "list" {
-			sendToChar(ch, "The remorter tells you 'If you want to remort, ask me to BUY REMORT.'\r\n")
-			return true
-		}
+	// C's SPECIAL(remorter) is a player-command procedure. Its autonomous
+	// invocation exits at IS_NPC(ch), so a nil actor must not draw RNG either.
+	if ch == nil || ch.IsNPC() {
 		return false
 	}
-	// ch is nil during autonomous AI ticks — no player to speak the tip to.
-	if ch == nil || number(0, 6) != 0 {
+
+	switch cmd {
+	case "buy", "list":
+		remorterTell(me, ch, "Type REMORT to remort!")
+		return true
+	case "remort":
+		if ch.GetLevel() < LVL_IMMORT-1 {
+			remorterTell(me, ch, fmt.Sprintf("You can't remort until level %d!\r\n", LVL_IMMORT-1))
+			return true
+		}
+		if ch.GetLevel() >= LVL_IMMORT {
+			remorterTell(me, ch, "Immortals cannot remort!\r\n")
+			return true
+		}
+		if ch.GetGold() < 60000 {
+			remorterTell(me, ch, fmt.Sprintf("It costs %d gold to work my magicks.", 60000))
+			return true
+		}
+		if ch.Equipment != nil && len(ch.Equipment.GetEquippedItems()) > 0 {
+			SendToChar(ch, "You must come unto me naked, wearing only thy old body.")
+			return true
+		}
+
+		remortPlayer(ch)
+		remorterTell(me, ch, "Enjoy your new life...")
+		SendToChar(ch, "The remorter moves his hands over your eyes, closing them with a touch.\r\nColors spiral in your sight... You open your eyes, feeling refreshed.")
+		return true
+	default:
 		return false
 	}
-	msgs := []string{
-		"So you wish to remort?",
-		"Remorting allows you to keep your skills.",
-		"Remorting grants an additional 2 hitpoints per level!",
-		"Remorting costs 10 levels and much experience.",
-		"You can only remort once per 10 levels.",
-		"To remort, just BUY REMORT off me.",
-		"Remorting is not for the faint of heart!",
+}
+
+// remorterTell is the C do_tell(mobile, ...) path used by SPECIAL(remorter).
+// Keeping the mob as the act() actor preserves the player-facing name and
+// punctuation of a native NPC tell while sending only to the command actor.
+func remorterTell(me *MobInstance, ch *Player, msg string) {
+	Act(nil, false, me, ch, nil, nil, "$n tells you, '$T'", msg, ToVict)
+}
+
+// remortPlayer is the successful body of SPECIAL(remorter), following
+// src/spec_procs2.c:728-840.  Keep the state transition here, after all entry
+// gates, so failed remort commands cannot consume RNG or mutate the player.
+func remortPlayer(ch *Player) {
+	oldClass := ch.GetClass()
+	newClass := remorterClass(oldClass, ch.GetRace())
+
+	ch.SetPlrFlag(PlrIt, false)
+	ch.SetPlrFlag(PlrVampire, false)
+	ch.SetPlrFlag(PlrWerewolf, false)
+	ch.SetAffect(affVampire, false)
+	ch.SetAffect(affWerewolf, false)
+
+	// The live Go path stores spell effects in ActiveAffects. MasterAffects is
+	// the compatibility path for older affect callers; unwind its direct
+	// modifiers before dropping the records, matching C affect_remove().
+	clearRemortAffects(ch)
+
+	ch.SetGold(ch.GetGold() - 60000)
+	ch.SetClass(newClass)
+	ch.SetLevel(1)
+	ch.SetExp(1)
+
+	ch.SetMaxHP(number(30, 40))
+	ch.SetMaxMana(100 + number(20, 30))
+	ch.SetHP(ch.GetMaxHP())
+	ch.SetMana(ch.GetMaxMana())
+	ch.SetMove(ch.GetMaxMove())
+
+	// C removes tattoo modifiers before its two remort stat adjustments.
+	TattooAf(ch, false)
+	stat := firstRemortAdjust(ch)
+	secondRemortAdjust(ch, stat)
+
+	ch.SetPlrFlag(PlrRemort, true)
+	if ch.SkillManager != nil {
+		for _, skill := range ch.SkillManager.GetAllSkills() {
+			ch.SkillManager.ForgetSkill(skill.Name)
+		}
 	}
-	n := randN(len(msgs))
-	sendToChar(ch, fmt.Sprintf("The remorter says '%s'\r\n", msgs[n]))
-	return false
+	setRemortSkills(ch, newClass)
+	if ch.GetRace() == RaceKender {
+		ch.SetSkill(SkillSteal, 45)
+	}
+	if ch.GetRace() == RaceMinotaur {
+		ch.SetSkill(SkillHeadbutt, 45)
+	}
+	ch.SetPractices(10)
+
+	TattooAf(ch, true)
+	// Active affects are represented by getters in the current path, while
+	// legacy MasterAffects were removed above; this is the resulting
+	// affect_total state for a naked remort.
+	health, mana, move := ch.GetHP(), ch.GetMana(), ch.GetMove()
+	ch.AdvanceLevel()
+	// C advance_level() raises maxima but does not heal the current pools. The
+	// remorter set them immediately before advance_level(), so restore those
+	// pre-level-up values after the shared Go helper returns.
+	ch.SetHP(health)
+	ch.SetMana(mana)
+	ch.SetMove(move)
+}
+
+func clearRemortAffects(ch *Player) {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	for _, affect := range ch.MasterAffects {
+		if affect == nil {
+			continue
+		}
+		switch affect.Location {
+		case engine.ApplyStr:
+			ch.Stats.Str -= affect.Modifier
+		case engine.ApplyDex:
+			ch.Stats.Dex -= affect.Modifier
+		case engine.ApplyInt:
+			ch.Stats.Int -= affect.Modifier
+		case engine.ApplyWis:
+			ch.Stats.Wis -= affect.Modifier
+		case engine.ApplyCon:
+			ch.Stats.Con -= affect.Modifier
+		case engine.ApplyCha:
+			ch.Stats.Cha -= affect.Modifier
+		case engine.ApplyMana:
+			ch.MaxMana -= affect.Modifier
+		case engine.ApplyHit:
+			ch.MaxHealth -= affect.Modifier
+		case engine.ApplyMove:
+			ch.MaxMove -= affect.Modifier
+		case engine.ApplyAC:
+			ch.AC += affect.Modifier
+		case engine.ApplyHitroll:
+			ch.Hitroll -= affect.Modifier
+		case engine.ApplyDamroll:
+			ch.Damroll -= affect.Modifier
+		case engine.ApplySavingPara, engine.ApplySavingRod, engine.ApplySavingPetri, engine.ApplySavingBreath, engine.ApplySavingSpell:
+			index := affect.Location - engine.ApplySavingPara
+			if index >= 0 && index < len(ch.SavingThrows) {
+				ch.SavingThrows[index] -= affect.Modifier
+			}
+		}
+		ch.Affects &^= affect.Bitvector
+	}
+	ch.ActiveAffects = nil
+	ch.MasterAffects = nil
+	ch.Affects = 0
+}
+
+func remorterClass(class, race int) int {
+	switch class {
+	case ClassWarrior, ClassPaladin, ClassRanger:
+		if race == RaceHuman || race == RaceElf || race == RaceDwarf {
+			return ClassPaladin
+		}
+		return ClassRanger
+	case ClassCleric:
+		return ClassAvatar
+	case ClassThief:
+		return ClassAssassin
+	case ClassMageUser:
+		return ClassMagus
+	case ClassPsionic:
+		return ClassMystic
+	default:
+		return class
+	}
+}
+
+const (
+	remortStatDefault = iota
+	remortStatCon
+	remortStatStr
+	remortStatWis
+	remortStatInt
+	remortStatDex
+	remortStatCha
+)
+
+func firstRemortAdjust(ch *Player) int {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.Stats.Con < 17 {
+		ch.Stats.Con += 2
+		return remortStatCon
+	}
+	if ch.Stats.Str < 17 {
+		ch.Stats.Str += 2
+		return remortStatStr
+	}
+	if ch.Stats.Wis < 17 {
+		ch.Stats.Wis += 2
+		return remortStatWis
+	}
+	if ch.Stats.Int < 17 {
+		ch.Stats.Int += 2
+		return remortStatInt
+	}
+	if ch.Stats.Dex < 17 {
+		ch.Stats.Dex += 2
+		return remortStatDex
+	}
+	if ch.Stats.Cha < 17 {
+		ch.Stats.Cha += 2
+		return remortStatCha
+	}
+	return remortStatDefault
+}
+
+func secondRemortAdjust(ch *Player, adjusted int) {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.Stats.Str == 18 && adjusted != remortStatStr && ch.Stats.StrAdd < 100 {
+		if ch.Stats.StrAdd != 0 {
+			ch.Stats.StrAdd += 20
+		} else {
+			ch.Stats.StrAdd = 20
+		}
+	}
+
+	// GET_ORIG_CON is not separately persisted by the Go Player model. On a
+	// fresh character it equals real CON; the visible real-stat adjustment is
+	// therefore only made by firstRemortAdjust, just as in C.
+	if ch.Stats.Con < 18 && adjusted != remortStatCon {
+		return
+	}
+	if ch.Stats.Str < 18 && adjusted != remortStatStr {
+		ch.Stats.Str++
+		return
+	}
+	if ch.Stats.Wis < 18 && adjusted != remortStatWis {
+		ch.Stats.Wis++
+		return
+	}
+	if ch.Stats.Int < 18 && adjusted != remortStatInt {
+		ch.Stats.Int++
+		return
+	}
+	if ch.Stats.Dex < 18 && adjusted != remortStatDex {
+		ch.Stats.Dex++
+		return
+	}
+	if ch.Stats.Cha < 18 && adjusted != remortStatCha {
+		ch.Stats.Cha++
+		return
+	}
+
+	// If every stat path is exhausted, C uses the bonus adjustment to turn
+	// off thirst first, then hunger. Keep both the named fields and the
+	// persisted condition array synchronized.
+	if ch.Conditions[CondThirst] != -1 {
+		ch.Conditions[CondThirst] = -1
+		ch.Thirst = -1
+		return
+	}
+	if ch.Conditions[CondFull] != -1 {
+		ch.Conditions[CondFull] = -1
+		ch.Hunger = -1
+		return
+	}
+}
+
+func setRemortSkills(ch *Player, class int) {
+	setSkill := func(num, level int) {
+		name := strings.ToLower(SkillCatalogName(num))
+		if name != "" {
+			ch.SetSkill(name, level)
+		}
+	}
+
+	switch class {
+	case ClassMageUser:
+		setSkill(spells.SpellMagicMissile, 20)
+		setSkill(spells.SpellAcidBlast, 20)
+	case ClassMagus:
+		setSkill(spells.SpellMagicMissile, 40)
+		setSkill(spells.SpellAcidBlast, 40)
+	case ClassCleric:
+		setSkill(spells.SpellCureLight, 20)
+		setSkill(spells.SpellArmor, 20)
+	case ClassAvatar:
+		setSkill(spells.SpellCureLight, 40)
+		setSkill(spells.SpellArmor, 40)
+	case ClassWarrior:
+		ch.SetSkill(SkillKick, 20)
+	case ClassPaladin, ClassRanger:
+		ch.SetSkill(SkillKick, 40)
+	case ClassPsionic, ClassMystic:
+		setSkill(spells.SpellMindPoke, 20)
+	case ClassThief, ClassAssassin:
+		ch.SetSkill(SkillSneak, 20)
+		ch.SetSkill(SkillHide, 10)
+		ch.SetSkill(SkillSteal, 30)
+		ch.SetSkill(SkillBackstab, 20)
+		ch.SetSkill(SkillPickLock, 20)
+		ch.SetSkill("track", 20)
+	}
 }
 
 // ================================================================

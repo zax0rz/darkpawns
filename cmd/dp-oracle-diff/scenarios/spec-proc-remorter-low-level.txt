@@ -1,0 +1,46 @@
+# depth-case: mob.remorter-low-level-gate
+# C-first vehicle for the level gate in SPECIAL(remorter). The fixture clears
+# only MOB_RANDZON from the real registered vnum so both engines place it in
+# the deterministic source room 8044.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4 999 8044 80
+clear-mob-flag 4 RANDZON
+
+[setup:oracle]
+RemortLow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RemortLow
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8044
+set RemortLow level 29
+
+[probe]
+remort
