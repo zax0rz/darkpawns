@@ -62,6 +62,91 @@ func TestSpecNormalChecker_NilChDoesNotPanic_AttacksNonImmortalPlayer(t *testing
 	}
 }
 
+func TestSpecNormalChecker_EntryGates(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func(*Player, *MobInstance)
+	}{
+		{
+			name:  "non-empty command",
+			setup: func(_ *Player, _ *MobInstance) {},
+		},
+		{
+			name:  "sleeping mob",
+			setup: func(_ *Player, mob *MobInstance) { mob.SetStatus("sleeping") },
+		},
+		{
+			name:  "negative hit points",
+			setup: func(_ *Player, mob *MobInstance) { mob.TakeDamage(mob.GetHP() + 1) },
+		},
+		{
+			name:  "already fighting",
+			setup: func(player *Player, mob *MobInstance) { mob.SetFighting(player.Name) },
+		},
+		{
+			name:  "immortal target",
+			setup: func(player *Player, _ *MobInstance) { player.SetLevel(LVL_IMMORT) },
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w, player := newCombatTestWorld(t)
+			mob := spawnTargetMob(t, w)
+			mob.SetPosition(combat.PosStanding)
+			test.setup(player, mob)
+
+			cmd := ""
+			if test.name == "non-empty command" {
+				cmd = "look"
+			}
+			if specNormalChecker(w, player, mob, cmd, "") {
+				t.Fatal("normal_checker should reject this entry-gate case")
+			}
+		})
+	}
+}
+
+type normalCheckerCombatEngine struct {
+	starts         [][2]string
+	initialAttacks [][2]string
+}
+
+func (e *normalCheckerCombatEngine) StartCombat(attacker, defender combat.Combatant) error {
+	e.starts = append(e.starts, [2]string{attacker.GetName(), defender.GetName()})
+	return nil
+}
+
+func (e *normalCheckerCombatEngine) PerformInitialAttack(attacker, defender combat.Combatant) error {
+	e.initialAttacks = append(e.initialAttacks, [2]string{attacker.GetName(), defender.GetName()})
+	return nil
+}
+
+func (e *normalCheckerCombatEngine) IsFighting(string) bool { return false }
+
+func (e *normalCheckerCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+	return nil, false
+}
+
+func TestSpecNormalChecker_UsesCanonicalSynchronousHit(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	player.SetLevel(LVL_IMMORT - 1)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+	engine := &normalCheckerCombatEngine{}
+	w.SetCombatEngine(engine)
+
+	if !specNormalChecker(w, nil, mob, "", "") {
+		t.Fatal("normal_checker should handle the first mortal target")
+	}
+	if len(engine.starts) != 1 || engine.starts[0] != [2]string{mob.GetName(), player.GetName()} {
+		t.Fatalf("StartCombat calls = %#v, want one mob-to-player opener", engine.starts)
+	}
+	if len(engine.initialAttacks) != 1 || engine.initialAttacks[0] != [2]string{mob.GetName(), player.GetName()} {
+		t.Fatalf("PerformInitialAttack calls = %#v, want one mob-to-player opener", engine.initialAttacks)
+	}
+}
+
 func TestSpecNormalChecker_SkipsWhenMobAlreadyFighting(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 	player.Level = 10
