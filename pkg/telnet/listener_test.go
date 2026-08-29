@@ -983,18 +983,47 @@ func TestListenAcceptNotBlockedBySlowReverseDNS(t *testing.T) {
 
 	origLookup := lookupAddr
 	origTimeout := dnsLookupTimeout
-	defer func() {
-		lookupAddr = origLookup
-		dnsLookupTimeout = origTimeout
-	}()
-	// Keep the DNS timeout longer than the test deadline so the blocked
-	// connection stays pending on its resolver for the whole test.
-	dnsLookupTimeout = 5 * time.Second
 
 	var mu sync.Mutex
 	callCount := 0
 	release := make(chan struct{})
-	defer close(release)
+	var releaseOnce sync.Once
+	unblock := func() { releaseOnce.Do(func() { close(release) }) }
+
+	var c1, c2 net.Conn
+	// Tear down in an order that guarantees no per-connection goroutine is
+	// still reading the lookupAddr / dnsLookupTimeout package vars when we
+	// restore them (those vars are read once per connection at accept time,
+	// inside effectiveBanLevel). Stop accepting, unblock the stalled lookup,
+	// close the client conns, then wait for the handler goroutines to drain
+	// before restoring the vars — otherwise the restore races the readers.
+	defer func() {
+		Stop()
+		unblock()
+		if c1 != nil {
+			_ = c1.Close()
+		}
+		if c2 != nil {
+			_ = c2.Close()
+		}
+		deadline := time.Now().Add(2 * time.Second)
+		for {
+			connMu.Lock()
+			n := connCount
+			connMu.Unlock()
+			if n == 0 || time.Now().After(deadline) {
+				break
+			}
+			time.Sleep(time.Millisecond)
+		}
+		lookupAddr = origLookup
+		dnsLookupTimeout = origTimeout
+	}()
+
+	// Keep the DNS timeout longer than the test deadline so the blocked
+	// connection stays pending on its resolver for the whole test.
+	dnsLookupTimeout = 5 * time.Second
+
 	lookupAddr = func(addr string) ([]string, error) {
 		mu.Lock()
 		callCount++
@@ -1022,10 +1051,8 @@ func TestListenAcceptNotBlockedBySlowReverseDNS(t *testing.T) {
 		}
 		return c
 	}
-	c1 := dial()
-	defer c1.Close()
-	c2 := dial()
-	defer c2.Close()
+	c1 = dial()
+	c2 = dial()
 
 	// The first reverse-DNS lookup blocks; whichever connection it belongs to,
 	// the peer connection must still be served promptly (proving the accept loop
