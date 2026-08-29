@@ -36,6 +36,7 @@ type Scenario struct {
 	MobFixtures      []MobFixture
 	MobAffFixtures   []MobAffFixture
 	ObjIndexFixtures []ObjIndexFixture
+	WldIndexFixtures []WldIndexFixture
 	QuietZones       []int
 	QuietAllMobs     bool
 	EmptyPlayers     bool
@@ -105,6 +106,13 @@ type ObjIndexFixture struct {
 	FileName string
 }
 
+// WldIndexFixture adds a world-file filename to the disposable wld/index so
+// an otherwise-unindexed authoritative room file can be loaded by both
+// engines for a focused oracle vehicle.
+type WldIndexFixture struct {
+	FileName string
+}
+
 // RoomExitFixture replaces every exit on a disposable room with either no
 // exits, one explicitly described exit, or all six directions to one room. Keeping this deliberately small
 // makes RNG-sensitive movement scenarios deterministic without creating a
@@ -168,6 +176,7 @@ type AudienceProbeBlock struct {
 //	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
 //	set-mob-aff 18306 128     # mob, innate affected-by bitmask (AFF_* positions)
 //	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
+//	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
@@ -331,6 +340,13 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				name := fields[1]
 				if strings.HasSuffix(name, ".obj") && !strings.ContainsRune(name, '/') {
 					sc.ObjIndexFixtures = append(sc.ObjIndexFixtures, ObjIndexFixture{FileName: name})
+					continue
+				}
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "add-wld-index") {
+				name := fields[1]
+				if strings.HasSuffix(name, ".wld") && !strings.ContainsRune(name, '/') {
+					sc.WldIndexFixtures = append(sc.WldIndexFixtures, WldIndexFixture{FileName: name})
 					continue
 				}
 			}
