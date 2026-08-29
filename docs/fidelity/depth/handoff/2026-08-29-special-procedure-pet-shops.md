@@ -4,7 +4,7 @@
 
 - Session boundary returned to `main`; the required pull could not contact GitHub because DNS could not resolve `github.com`, but local `main` was already at `origin/main`.
 - The pre-slice `make fidelity-depth` frontier on `main` was 904 total, 882 proven/delegated, 6 blocked, and 16 excluded (99.3% actionable).
-- The next source-order special-procedure item after Dracula was `pet_shops`; it is now proven locally and must not be repicked as an implementation slice. Its publication remains pending on the retained local branch because the external Git transport was unavailable.
+- The next source-order special-procedure item after Dracula was `pet_shops`; it is now proven locally and must not be repicked as an implementation slice. Its implementation remains on the retained local branch because no PR was created for that branch, but this handoff was published to `main` through PR #741 while publishing the following `enter_circle` reachability slice.
 - Next source-order item after this slice: `enter_circle`.
 
 ## C path and reachable cases

@@ -3,8 +3,8 @@
 ## Frontier and queue
 
 - This session started on `main`; the required local pull was already current
-  at the recorded `origin/main` tip, with the prior pet-shop handoff still
-  pending external publication because GitHub DNS was unavailable.
+  at the recorded `origin/main` tip, with the prior pet-shop implementation
+  still retained locally and its handoff pending publication at slice start.
 - Before this slice, `make fidelity-depth` reported 904 total cases, 882
   proven/delegated, 6 blocked, and 16 excluded: 882/888 actionable (99.3%).
 - The next source-order special after the already-claimed `pet_shops` slice
@@ -48,7 +48,10 @@ as reachable evidence. No `src/` or `darkpawns-c-oracle/` file was edited.
 
 `make fidelity-depth` passes with the frontier above. This is a
 documentation-only reachability slice; no Go behavior changed, so no RED/GREEN
-oracle scenario is legitimate and no C-visible divergence was fixed.
+oracle scenario is legitimate and no C-visible divergence was fixed. PR #741
+was opened for this slice after the one permitted CI retry, all lint/security/
+test checks finished green, and it merged as `7790fd857`; its diff also
+published the prior pet-shop handoff, not the retained pet-shop implementation.
 
 The next source-order special definition is `elevator` in
 `src/spec_procs.c:1981` and must undergo the same assignment census before any
