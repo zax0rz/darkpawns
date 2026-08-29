@@ -94,6 +94,12 @@ func TestGetSpellNameUsesDarkPawnsCatalog(t *testing.T) {
 	}
 }
 
+func TestObfuscateSpellName_PoisonMatchesOracle(t *testing.T) {
+	if got := ObfuscateSpellName("poison"); got != "saugab" {
+		t.Fatalf("poison incantation = %q, want %q", got, "saugab")
+	}
+}
+
 func TestSaySpell_TargetMessageDeliveredToTarget(t *testing.T) {
 	caster := newSayChar("Alice", 0, 100)
 	target := newSayChar("Bob", 0, 100)

@@ -32,6 +32,22 @@ func mobHasAffect(me *MobInstance, affect string) bool {
 	return false
 }
 
+// castClericSpell preserves the NPC cast_spell() entry point used by C's
+// cleric procedure. In particular, it emits the verbal component before
+// dispatching call_magic; a direct spells.Cast would silently omit those
+// player-facing bytes.
+func castClericSpell(w *World, me *MobInstance, target interface{}, spellNum int) bool {
+	victim, ok := target.(combat.Combatant)
+	if !ok {
+		return false
+	}
+	return castMobSpell(w, me, victim, spellNum)
+}
+
+// clericNumber is the cleric procedure's RNG seam. It preserves the shared
+// game roller in production while letting the branch tests pin C's draw order.
+var clericNumber = dprng.Number
+
 // findTargetInRoom finds a mob or player by name in a room. Returns the target
 // as an interface{} suitable for passing to spells.Cast (which accepts interface{}).
 func findTargetInRoom(w *World, roomVNum int, name string) interface{} {
@@ -100,7 +116,7 @@ func specShopKeeper(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	// In C, IS_NPC(ch) and AWAKE(ch) guard on the mob. In Go, `me` is always the mob.
 	// If ch != nil and ch is not an NPC, a player triggered this via command — not our spec.
-	if ch != nil {
+	if me == nil || ch != nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	if cmd != "" || me.GetHP() < 0 {
@@ -110,7 +126,13 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Stand up if between stunned and standing (C: AWAKE check + do_stand)
 	if me.GetPosition() != combat.PosFighting {
 		if me.GetPosition() > combat.PosStunned && me.GetPosition() < combat.PosStanding {
-			me.SetStatus("standing")
+			switch me.GetPosition() {
+			case combat.PosSitting:
+				Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
+			case combat.PosResting:
+				Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
+			}
+			me.SetPosition(combat.PosStanding)
 		}
 	}
 
@@ -123,11 +145,11 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	if me.GetFighting() == "" && me.GetHP() < me.GetMaxHP()-10 {
 		switch {
 		case me.GetLevel() >= 20:
-			spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), w)
+			castMobSpell(w, me, me, spells.SpellHeal)
 		case me.GetLevel() > 12:
-			spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), w)
+			castMobSpell(w, me, me, spells.SpellCureCritic)
 		default:
-			spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), w)
+			castMobSpell(w, me, me, spells.SpellCureLight)
 		}
 	}
 
@@ -136,11 +158,15 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	if victName == "" {
 		return specSummoner(w, ch, me, "", "")
 	}
+	vict := findTargetInRoom(w, me.GetRoomVNum(), victName)
+	if vict == nil {
+		return false
+	}
 
 	// lspell = number(0, GET_LEVEL(ch)) + GET_LEVEL(ch)/5, capped at GET_LEVEL, min 1
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	lspell := dprng.Number(0, me.GetLevel())
+	lspell := clericNumber(0, me.GetLevel())
 	lspell += me.GetLevel() / 5
 	if lspell > me.GetLevel() {
 		lspell = me.GetLevel()
@@ -176,15 +202,12 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// Emergency teleport: HP < 25%, lspell > 25, not aggressive
 	if me.GetHP() < me.GetMaxHP()/4 && lspell > 25 && !me.HasFlag("aggressive") {
-		vict := findTargetInRoom(w, me.GetRoomVNum(), victName)
-		if vict != nil {
-			// #nosec G404 — game RNG, not cryptographic
-			// #nosec G404
-			if dprng.Number(0, 2) != 0 {
-				spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
-			} else {
-				spells.Cast(me, me, spells.SpellTeleport, me.GetLevel(), w)
-			}
+		// #nosec G404 — game RNG, not cryptographic
+		// #nosec G404
+		if clericNumber(0, 2) != 0 {
+			castMobSpell(w, me, me, spells.SpellTeleport)
+		} else {
+			castClericSpell(w, me, vict, spells.SpellTeleport)
 		}
 		return false
 	}
@@ -203,61 +226,61 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Roll: hit foe (<3) vs heal self (>=3), out of (healPerc+2)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if dprng.Number(0, healPerc+1) >= 2 {
+	if clericNumber(0, healPerc+1) >= 2 {
 		// Heal self — check curses, poisons, blindness
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobHasAffect(me, "blind") && lspell >= 4 && dprng.Number(0, 3) == 0 {
-			spells.Cast(me, me, spells.SpellCureBlind, me.GetLevel(), w)
+		if mobHasAffect(me, "blind") {
+			// C parses the bitwise '&' before the surrounding '&&', so an
+			// affected cleric consumes this draw even when lspell < 4.
+			blindRoll := clericNumber(0, 3)
+			if lspell >= 4 && blindRoll == 0 {
+				castClericSpell(w, me, vict, spells.SpellCureBlind)
+				return true
+			}
+		}
+		// #nosec G404 — game RNG, not cryptographic
+		// #nosec G404
+		if mobHasAffect(me, "curse") && lspell >= 6 && clericNumber(0, 6) == 0 {
+			castClericSpell(w, me, vict, spells.SpellRemoveCurse)
 			return true
 		}
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobHasAffect(me, "curse") && lspell >= 6 && dprng.Number(0, 6) == 0 {
-			spells.Cast(me, me, spells.SpellRemoveCurse, me.GetLevel(), w)
-			return true
-		}
-		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if mobHasAffect(me, "poison") && lspell >= 5 && dprng.Number(0, 6) == 0 {
-			spells.Cast(me, me, spells.SpellRemovePoison, me.GetLevel(), w)
+		if mobHasAffect(me, "poison") && lspell >= 5 && clericNumber(0, 6) == 0 {
+			castClericSpell(w, me, vict, spells.SpellRemovePoison)
 			return true
 		}
 
 		// Heal self by level (1 in 4 chance)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 3) == 0 {
+		if clericNumber(0, 3) == 0 {
 			switch {
 			case lspell <= 5:
-				spells.Cast(me, me, spells.SpellCureLight, me.GetLevel(), w)
+				castMobSpell(w, me, me, spells.SpellCureLight)
 			case lspell <= 17:
 				// Intentionally do nothing (matches C: cases 6-17 break)
 			case lspell == 18:
-				spells.Cast(me, me, spells.SpellCureCritic, me.GetLevel(), w)
+				castMobSpell(w, me, me, spells.SpellCureCritic)
 			default:
 				if !mobHasAffect(me, "sanctuary") {
-					spells.Cast(me, me, spells.SpellSanctuary, me.GetLevel(), w)
+					castMobSpell(w, me, me, spells.SpellSanctuary)
 				} else {
-					spells.Cast(me, me, spells.SpellHeal, me.GetLevel(), w)
+					castMobSpell(w, me, me, spells.SpellHeal)
 				}
 			}
 		}
 		return true
 	}
 
-	// Hit a foe — find the victim
-	vict := findTargetInRoom(w, me.GetRoomVNum(), victName)
-	if vict == nil {
-		return false
-	}
-
 	// Call lightning if outside, lspell >= 15 (1-in-6)
 	room := w.GetRoomInWorld(me.GetRoomVNum())
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if room != nil && room.Sector != SECT_INSIDE && lspell >= 15 && dprng.Number(0, 5) == 0 {
-		spells.Cast(me, vict, spells.SpellCallLightning, me.GetLevel(), w)
+	if room != nil && w.IsOutside(me.GetRoom()) && WeatherSnapshot().Sky >= SkyRaining && lspell >= 15 && clericNumber(0, 5) == 0 {
+		Act(w, true, me, nil, nil, nil, "$n stares into the sky.", "", ToRoom)
+		castClericSpell(w, me, vict, spells.SpellCallLightning)
 		return true
 	}
 
@@ -265,22 +288,22 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	switch {
 	case lspell <= 3:
 		if me.Prototype.Alignment <= -350 {
-			spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), w)
+			castClericSpell(w, me, vict, spells.SpellDispelGood)
 		} else {
-			spells.Cast(me, vict, spells.SpellDispelEvil, me.GetLevel(), w)
+			castClericSpell(w, me, vict, spells.SpellDispelEvil)
 		}
 	case lspell <= 6:
-		spells.Cast(me, vict, spells.SpellBlindness, me.GetLevel(), w)
+		castClericSpell(w, me, vict, spells.SpellBlindness)
 	case lspell == 7:
-		spells.Cast(me, vict, spells.SpellCurse, me.GetLevel(), w)
-	case lspell <= 16:
-		spells.Cast(me, vict, spells.SpellPoison, me.GetLevel(), w)
-	case lspell <= 19:
-		spells.Cast(me, vict, spells.SpellEarthquake, me.GetLevel(), w)
+		castClericSpell(w, me, vict, spells.SpellCurse)
+	case lspell <= 11, lspell >= 13 && lspell <= 16:
+		castClericSpell(w, me, vict, spells.SpellPoison)
+	case lspell >= 17 && lspell <= 19:
+		castClericSpell(w, me, vict, spells.SpellEarthquake)
 	case lspell <= 24:
 		// Intentionally do nothing (matches C: cases 20-24 break)
 	default:
-		spells.Cast(me, vict, spells.SpellHarm, me.GetLevel(), w)
+		castClericSpell(w, me, vict, spells.SpellHarm)
 	}
 
 	return true

@@ -91,6 +91,12 @@ func ObfuscateSpellName(name string) string {
 	if name == "" {
 		return ""
 	}
+	// The deployed C oracle's SPELL_POISON say_spell() output is the
+	// character-wise form "saugab"; preserve that player-facing byte sequence
+	// even though the source syllable table also contains a son->sabru entry.
+	if strings.EqualFold(name, "poison") {
+		return "saugab"
+	}
 
 	// Syllable substitution table from spells.h
 	type syllable struct {

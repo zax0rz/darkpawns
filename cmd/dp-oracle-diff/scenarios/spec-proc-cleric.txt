@@ -1,0 +1,52 @@
+# depth-case: mob.cleric-combat-cast
+# depth-case: mob.cleric-entry-gates
+# C-first vehicle for SPECIAL(cleric).  The cleric is scriptless and is
+# explicitly attacked so fight.c reaches the combat-time special call path.
+# The fixture room is non-peaceful and has no exits, keeping unrelated room
+# movement out of the probe.  C path: src/spec_procs.c:1425-1610;
+# src/mobact.c:54-93; src/fight.c:1898-2032.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 11023 1 8105 80
+strip-mob-script 11023
+replace-room-exits 8105 none
+
+[setup:oracle]
+Clericgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clericgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+hit rajah
+
+[probe]
+score
+~dpclock pulse 20
+score
