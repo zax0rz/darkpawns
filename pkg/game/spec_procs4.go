@@ -581,59 +581,82 @@ func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg str
 
 func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	// Banking moves coins between carried gold and the bank account. Ported from
-	// src/spec_procs.c SPECIAL(bank). The previous Go port ignored BankGold:
-	// balance showed carried gold, deposit destroyed coins, and withdraw minted
-	// coins from nothing with no balance check (an economy exploit).
+	// src/spec_procs.c SPECIAL(bank). The object receiver is intentionally not
+	// used: the command path calls object specials with no MobInstance receiver,
+	// while C's act(TO_ROOM) audience is rooted at ch's room.
 	if cmd == "balance" {
 		if ch.GetBankGold() > 0 {
-			sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.\r\n", ch.GetBankGold()))
+			sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.", ch.GetBankGold()))
 		} else {
-			sendToChar(ch, "You currently have no money deposited.\r\n")
+			sendToChar(ch, "You currently have no money deposited.")
 		}
 		return true
 	}
 
 	if cmd == "deposit" {
-		amount := 0
-		if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
-			slog.Warn("fmt.Sscanf failed in deposit", "arg", arg, "error", err)
-		}
+		amount := atoiC(arg)
 		if amount <= 0 {
-			sendToChar(ch, "How much do you want to deposit?\r\n")
+			sendToChar(ch, "How much do you want to deposit?")
 			return true
 		}
 		if ch.GetGold() < amount {
-			sendToChar(ch, "You don't have that many coins!\r\n")
+			sendToChar(ch, "You don't have that many coins!")
 			return true
 		}
 		ch.SetGold(ch.GetGold() - amount)
 		ch.SetBankGold(ch.GetBankGold() + amount)
-		sendToChar(ch, fmt.Sprintf("You deposit %d coins.\r\n", amount))
-		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
+		sendToChar(ch, fmt.Sprintf("You deposit %d coins.", amount))
+		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 
 	if cmd == "withdraw" {
-		amount := 0
-		if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
-			slog.Warn("fmt.Sscanf failed in withdraw", "arg", arg, "error", err)
-		}
+		amount := atoiC(arg)
 		if amount <= 0 {
-			sendToChar(ch, "How much do you want to withdraw?\r\n")
+			sendToChar(ch, "How much do you want to withdraw?")
 			return true
 		}
 		if ch.GetBankGold() < amount {
-			sendToChar(ch, "You don't have that many coins deposited!\r\n")
+			sendToChar(ch, "You don't have that many coins deposited!")
 			return true
 		}
 		ch.SetGold(ch.GetGold() + amount)
 		ch.SetBankGold(ch.GetBankGold() - amount)
-		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.\r\n", amount))
-		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
+		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.", amount))
+		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 
 	return false
+}
+
+// atoiC mirrors the C atoi() behavior used by SPECIAL(bank): leading spaces,
+// an optional sign, and the leading decimal run are accepted; no digits yield
+// zero and trailing text is ignored.
+func atoiC(s string) int {
+	s = strings.TrimLeft(s, " \t\n\r\v\f")
+	if s == "" {
+		return 0
+	}
+
+	sign := 1
+	index := 0
+	if s[0] == '+' || s[0] == '-' {
+		if s[0] == '-' {
+			sign = -1
+		}
+		index++
+	}
+	start := index
+	value := 0
+	for index < len(s) && s[index] >= '0' && s[index] <= '9' {
+		value = value*10 + int(s[index]-'0')
+		index++
+	}
+	if index == start {
+		return 0
+	}
+	return sign * value
 }
 
 func specHorn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {

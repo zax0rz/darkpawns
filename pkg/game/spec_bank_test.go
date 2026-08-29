@@ -83,3 +83,55 @@ func TestSpecBank(t *testing.T) {
 		t.Errorf("money not conserved: gold+bank=%d, want 100", ch.GetGold()+ch.GetBankGold())
 	}
 }
+
+func TestSpecBankObjectCallContract(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Bank", Zone: 1}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	defer w.StopAITicker()
+
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+
+	actor := NewPlayer(1, "Actor", 1001)
+	peer := NewPlayer(2, "Peer", 1001)
+	if err := w.AddPlayer(actor); err != nil {
+		t.Fatalf("AddPlayer actor: %v", err)
+	}
+	if err := w.AddPlayer(peer); err != nil {
+		t.Fatalf("AddPlayer peer: %v", err)
+	}
+	actor.SetGold(100)
+
+	if !specBank(w, actor, nil, "deposit", "  +10coins") {
+		t.Fatal("bank object special did not handle deposit")
+	}
+	if got, want := messages[actor.Name], "You deposit 10 coins.\r\n"; got != want {
+		t.Errorf("actor message = %q, want %q", got, want)
+	}
+	if got, want := messages[peer.Name], "Actor makes a bank transaction.\r\n"; got != want {
+		t.Errorf("peer message = %q, want %q", got, want)
+	}
+	if actor.GetGold() != 90 || actor.GetBankGold() != 10 {
+		t.Errorf("balances = %d/%d, want 90/10", actor.GetGold(), actor.GetBankGold())
+	}
+}
+
+func TestAtoiC(t *testing.T) {
+	tests := []struct {
+		input string
+		want  int
+	}{
+		{input: "", want: 0},
+		{input: "garbage", want: 0},
+		{input: "  +50coins", want: 50},
+		{input: "-5", want: -5},
+		{input: "\t42", want: 42},
+	}
+	for _, tt := range tests {
+		if got := atoiC(tt.input); got != tt.want {
+			t.Errorf("atoiC(%q) = %d, want %d", tt.input, got, tt.want)
+		}
+	}
+}
