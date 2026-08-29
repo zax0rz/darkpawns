@@ -103,13 +103,24 @@ func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 }
 
 func specOutOfJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || !isMoveCmd(cmd) {
+	if w == nil || ch == nil || me == nil || cmd == "" || !isMoveCmd(cmd) {
 		return false
 	}
 
-	if me.GetRoom() == 8117 && cmd == "south" {
-		w.roomMessage(me.GetRoom(), "The guard grabs $n by the collar and blocks $s way.")
-		sendToChar(ch, "The guard stops you from entering with one quick jerk of your collar.\r\n")
+	// C: spec_procs.c:1765-1767 — only mortal, non-hunting movers reach the
+	// room-specific guard. Players have no hunting state in this port, so the
+	// world query is the faithful false result for the player case.
+	if ch.GetLevel() >= lvlImmort || w.IsHunting(ch.GetName(), false) {
+		return false
+	}
+
+	// C: ch->in_room, not the special mob's room. CMD_IS("south") is already
+	// canonicalized by command dispatch; the move-command gate above rejects
+	// all non-direction commands before this exact comparison.
+	if ch.GetRoomVNum() == 8117 && cmd == "south" {
+		Act(w, false, ch, nil, nil, nil,
+			"The guard grabs $n by the collar and blocks $s way.", "", ToRoom)
+		sendToChar(ch, "The guard stops you from entering with one quick jerk of your collar.")
 		return true
 	}
 

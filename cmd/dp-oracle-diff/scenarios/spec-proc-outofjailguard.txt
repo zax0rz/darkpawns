@@ -1,0 +1,82 @@
+# depth-case: mob.outofjailguard-entry-gates
+# depth-case: mob.outofjailguard-audience
+# depth-case: mob.outofjailguard-block
+# depth-case: mob.outofjailguard-return-intercept
+# C-first vehicle for SPECIAL(outofjailguard), registered at vnum 8089 in
+# src/spec_assign.c:299 and implemented at src/spec_procs.c:1763-1780.
+# The guard is placed in Kir Drax'in Jail (room 8117), where south is the
+# blocked movement.  C path: src/interpreter.c command dispatch ->
+# src/spec_procs.c:1763-1780 -> src/comm.c act(); a TRUE return prevents the
+# movement command from reaching do_move().
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8089 1 8117 80
+strip-mob-script 8089
+
+[setup:oracle]
+Outguardgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Outguardgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Outguardwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Outguardwitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8117
+teleport Outguardwitness 8117
+set Outguardgod level 1
+
+[probe]
+south
