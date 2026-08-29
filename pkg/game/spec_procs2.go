@@ -1697,40 +1697,91 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 }
 
 // ================================================================
-// eq_thief — Steals non-rent items when you give/offer something (20% chance)
+// eq_thief — commandless kender equipment thief
 // ================================================================
-func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" {
-		return false
-	}
-	if cmd != "give" && cmd != "offer" {
-		return false
-	}
-	if ch.IsNPC() {
-		return false
-	}
-	if number(0, 101) > 20 {
-		return false
-	}
-	a := strings.TrimSpace(arg)
-	if a == "" {
-		return false
-	}
-	count := 0
-	items := ch.GetInventory()
-	for i := len(items) - 1; i >= 0; i-- {
-		obj := items[i]
-		// Steal items with zero cost (junk/free items)
-		if obj.GetCost() == 0 {
-			ch.Inventory.removeItem(obj)
-			count++
+
+// specEqThiefKenderSteal mirrors npc_kender_steal() in
+// src/spec_procs2.c:1583-1611. The strict order of the visibility, item, and
+// outcome draws is part of the shared CMWC stream (R3); in particular, the
+// percent draw is consumed before the sleeping/peaceful/immortal overrides.
+func specEqThiefKenderSteal(w *World, thief *MobInstance, victim *Player) {
+	for _, obj := range victim.GetInventory() {
+		if !canSeeObject(thief, obj) || dprng.Number(0, 60) >= thief.GetLevel() {
+			continue
+		}
+
+		percent := dprng.Number(1, 101)
+		if victim.GetPosition() < combat.PosSleeping {
+			percent = -1
+		}
+		if victim.GetLevel() >= LVL_IMMORT || w.roomHasFlag(thief.GetRoomVNum(), "peaceful") {
+			percent = 101
+		}
+		if thief.GetLevel() > LVL_IMMORT && victim.GetLevel() < thief.GetLevel() {
+			percent = -1
+		}
+
+		if percent < dprng.Number(50, 100) {
+			if err := w.MoveObjectToMobInventoryFront(obj, thief); err != nil {
+				slog.Error("eq thief steal failed", "thief", thief.GetName(), "victim", victim.GetName(), "obj_vnum", obj.GetVNum(), "error", err)
+			}
+			return
 		}
 	}
-	sendToChar(ch, fmt.Sprintf("The eq thief steals %d items!\r\n", count))
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets stripped of equipment by the eq thief!", ch.GetName()))
-	ch.SetMove(0)
-	ch.SetHP(1)
-	return true
+}
+
+// specEqThiefGetBlack mirrors the commandless do_get(ch, "all.black ...")
+// call in SPECIAL(eq_thief). A mob has no descriptor, so its TO_CHAR text is
+// intentionally unobservable; the room Act is retained because players can
+// see the kender retrieving a black item from its container.
+func specEqThiefGetBlack(w *World, thief *MobInstance, container *ObjectInstance) {
+	if container == nil || contIsClosed(container) || len(thief.Inventory) >= mobMaxCarryCount(thief) {
+		return
+	}
+
+	contents := append([]*ObjectInstance(nil), container.GetContents()...)
+	for _, obj := range contents {
+		if !canSeeObject(thief, obj) || !isnameWithAbbrevs("black", obj.GetKeywords()) {
+			continue
+		}
+		if err := w.MoveObjectToMobInventoryFront(obj, thief); err != nil {
+			slog.Error("eq thief container retrieval failed", "thief", thief.GetName(), "container_vnum", container.GetVNum(), "obj_vnum", obj.GetVNum(), "error", err)
+			continue
+		}
+		Act(w, true, thief, nil, obj, container, "$n gets $p from $P.", "", ToRoom)
+	}
+}
+
+func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// C receives the mobile as both ch and mob on mobile_activity(). The Go
+	// adapter leaves ch nil for that autonomous call, so me is the authoritative
+	// actor. Any player command reaches this special with cmd != "" and falls
+	// through without consuming RNG (src/interpreter.c:1407-1456).
+	if cmd != "" || me == nil || me.GetPosition() != combat.PosStanding {
+		return false
+	}
+
+	for _, victim := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+		if victim.GetLevel() >= LVL_IMMORT || dprng.Number(0, 4) != 0 {
+			continue
+		}
+
+		specEqThiefKenderSteal(w, me, victim)
+		if len(me.Inventory) > 0 && me.Inventory[0].GetTypeFlag() == ITEM_CONTAINER {
+			specEqThiefGetBlack(w, me, me.Inventory[0])
+		}
+		for _, obj := range me.Inventory {
+			if !canSeeObject(me, obj) || !isnameWithAbbrevs("black", obj.GetKeywords()) {
+				continue
+			}
+			Act(nil, false, me, nil, obj, nil, "You junk $p. It vanishes in a puff of smoke!", "", ToChar)
+			Act(w, true, me, nil, obj, nil, "$n junks $p. It vanishes in a puff of smoke!", "", ToRoom)
+			w.ExtractObject(obj, me.GetRoomVNum())
+			break
+		}
+		return true
+	}
+	return false
 }
 
 // ================================================================
