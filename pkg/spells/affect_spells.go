@@ -887,8 +887,10 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 	switch spellNum {
 	case SpellEarthquake:
 		sendToCaster(ch, "You gesture and the earth begins to shake all around you!\r\n")
+		sendAffectRoom(ch, nil, "$n gracefully gestures and the earth begins to shake violently!\r\n", world)
 	case SpellAcidBlast:
 		sendToCaster(ch, "A spray of acid flows from your fingertips!\r\n")
+		sendAffectRoom(ch, nil, "$n raises a hand and acid sprays from $s fingers!\r\n", world)
 	}
 
 	chars := w.GetAllCharsInRoom(roomVNum)
@@ -1326,7 +1328,7 @@ func sendAffectRoom(victim, exclude interface{}, format string, world interface{
 			return
 		}
 		if s, ok := p.(sender); ok {
-			s.SendMessage(msg)
+			s.SendMessage(capitalizeActMessage(msg))
 		}
 	})
 }
