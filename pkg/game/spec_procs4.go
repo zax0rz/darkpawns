@@ -372,21 +372,83 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 		return false
 	}
 
-	arg = strings.TrimSpace(arg)
-	parts := strings.Fields(arg)
-	what := ""
-	if len(parts) > 0 {
-		what = parts[0]
-	}
+	what, _ := oneArgument(arg)
 
 	if what == "immortality" {
-		sendToChar(ch, "You feel the power pulse through your veins again!\r\n")
+		level := 0
+		switch ch.GetName() {
+		case "Serapis", "Orodreth":
+			level = 40
+		case "Frontline":
+			level = 39
+		case "this is not here":
+			// C evaluates these independent if statements in order; the
+			// later level-31 assignment is the final value for this name.
+			level = 31
+		case "neither is this":
+			level = 36
+		case "no entry here", "neither here":
+			level = 31
+		}
+		if level > 0 {
+			ch.SetLevel(level)
+			sendToChar(ch, "Welcome back "+ch.GetName()+".")
+			sendToChar(ch, "You feel the power pulse through your veins again!")
+		}
+		// C's immortality branch returns TRUE even when the player's name
+		// matches none of its hard-coded resurrection entries.
 		return true
 	}
 
-	w.roomMessage(me.GetRoom(), "$n kneels at the altar and chants a prayer to Odin.")
-	sendToChar(ch, "You notice a faint light in Odin's eye.\r\n")
-	return true
+	key := "item_for_" + ch.GetName()
+	gold := 0
+	found := false
+	for _, tmpObj := range w.GetItemsInRoom(ch.GetRoomVNum()) {
+		for _, extra := range tmpObj.GetExtraDescs() {
+			if !strings.EqualFold(key, extra.Keywords) {
+				continue
+			}
+			if gold == 0 {
+				gold = 1
+				w.actMessage(
+					ch.GetRoomVNum(), ch, nil,
+					"", "", ch.GetName()+" kneels and at the altar and chants a prayer to Odin.",
+				)
+				sendToChar(ch, "You notice a faint light in Odin's eye.")
+			}
+
+			obj, err := w.SpawnObject(tmpObj.GetVNum(), -1)
+			if err != nil {
+				slog.Error("pray_for_items failed to read object", "obj_vnum", tmpObj.GetVNum(), "error", err)
+				continue
+			}
+			if err := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err != nil {
+				slog.Error("pray_for_items failed to place object", "obj_vnum", tmpObj.GetVNum(), "room", ch.GetRoomVNum(), "error", err)
+				w.ExtractObject(obj, ch.GetRoomVNum())
+				continue
+			}
+			w.actMessage(
+				ch.GetRoomVNum(), ch, nil,
+				"", "", obj.GetShortDesc()+" slowly fades into existence.",
+			)
+			sendToChar(ch, obj.GetShortDesc()+" slowly fades into existence.")
+			gold += obj.GetCost()
+			found = true
+		}
+	}
+
+	if found {
+		if remaining := ch.GetGold() - gold; remaining > 0 {
+			ch.SetGold(remaining)
+		} else {
+			ch.SetGold(0)
+		}
+		return true
+	}
+
+	// The C special returns FALSE here, allowing interpreter.c to dispatch
+	// the ordinary pray social. In particular, me is nil for room specials.
+	return false
 }
 
 func specFearface(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {

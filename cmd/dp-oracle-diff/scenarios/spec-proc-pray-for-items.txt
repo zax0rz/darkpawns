@@ -1,0 +1,82 @@
+# C-first vehicle for the assigned room SPECIAL(pray_for_items), registered
+# at room 8008 in src/spec_assign.c:605 and defined in src/spec_procs.c:2071.
+# With the authoritative world data, room 8009 (the special's key_room) has
+# no object extra description matching item_for_Prayergod.  C therefore returns
+# FALSE from the special and interpreter.c falls through to do_action("pray").
+# The peer proves the normal social audience; the second probe proves the same
+# return contract for an unknown target argument.
+# C path: src/interpreter.c:1407-1415,947-948 -> src/spec_procs.c:2071-2145
+# -> src/act.social.c do_action; src/comm.c:2392-2555.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Prayergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Prayergod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Prayerpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Prayerpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8008
+teleport Prayerpeer 8008
+
+[probe]
+pray
+pray nobody
+
+# depth-case: room.pray-fallback-social
+# depth-case: room.pray-return-false
