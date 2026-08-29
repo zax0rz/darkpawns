@@ -1150,16 +1150,16 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			return true
 		}
 
-		giveTattoo1(w, ch, me, offer)
+		giveTattoo(w, ch, me, offer)
 		return true
 	}
 	return false
 }
 
-// giveTattoo1 is the give_tat() helper shared by the C tattoo procedures.
+// giveTattoo is the give_tat() helper shared by the C tattoo procedures.
 // The position assignment followed by update_pos is intentional: a healthy
 // player ends standing even though give_tat briefly assigns POS_STUNNED.
-func giveTattoo1(w *World, ch *Player, me *MobInstance, offer tattooOffer) {
+func giveTattoo(w *World, ch *Player, me *MobInstance, offer tattooOffer) {
 	ch.SetGold(ch.GetGold() - offer.price)
 	ch.Tattoo = offer.number
 	Act(w, true, me, ch, nil, nil, "$n starts to work on $N's tattoo...", "", ToNotVict)
@@ -1174,34 +1174,64 @@ func giveTattoo1(w *World, ch *Player, me *MobInstance, offer tattooOffer) {
 }
 
 // ================================================================
-// tattoo2 — Remove snake tattoo, automatically passes to another player
+// tattoo2 — Buy one of the monk tattooist's four tattoos.
+// C: src/spec_procs2.c:1010-1072, src/constants.c:1416-1433
 // ================================================================
+
+var tattoo2Offers = [...]tattooOffer{
+	{number: TattooTiger, price: 14000, name: "of a leaping tiger", description: "the nimbleness and stamina of the tiger"},
+	{number: TattooHeart, price: 17000, name: "of a heart", description: "live longer through trust in your heart"},
+	{number: TattooStar, price: 17000, name: "of a star", description: "gain the magic of the stars"},
+	{number: TattooJyhadi, price: 19000, name: "of the symbol of the Jyhad", description: "the power of fighting a holy war"},
+}
+
 func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil {
 		return false
 	}
-	if cmd == "remove" && strings.Contains(arg, "tattoo") {
-		if ch.GetFighting() != "" {
-			sendToChar(ch, "You can't do that while fighting!\r\n")
-		} else {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing a tattoo...", ch.GetName()))
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing %s tattoo...", ch.GetName(), hisHer(ch.GetSex())))
-			ch.SetHP(ch.GetMaxHP())
-			ch.SetMove(ch.GetMaxMove())
-			if obj, err := w.SpawnObject(7104, ch.GetRoom()); err == nil {
-				// Give to another player in the room
-				for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-					if !pl.IsNPC() && pl != ch {
-						if pl.Inventory != nil {
-							if err := pl.Inventory.addItem(obj); err != nil {
-								slog.Warn("spec proc item grant failed", "vnum", 7107, "player", pl.Name, "error", err)
-							}
-						}
-						break
-					}
-				}
-			}
+
+	switch strings.ToLower(cmd) {
+	case "list":
+		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
+		ch.SendMessage("Available tattoos are:\r\n")
+		for i, offer := range tattoo2Offers {
+			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
 		}
+		return true
+	case "buy":
+		arg = skipSpaces(arg)
+		if ch.IsNPC() {
+			return false
+		}
+		if arg == "" {
+			sendToChar(ch, "Buy what number?")
+			return true
+		}
+		if arg[0] < '0' || arg[0] > '9' {
+			sendToChar(ch, "Buy by number!")
+			return true
+		}
+
+		choice := atoi(arg)
+		if choice >= len(tattoo2Offers) {
+			sendToChar(ch, "Buy by number!")
+			return true
+		}
+		if me == nil {
+			return false
+		}
+		if ch.Tattoo != TattooNone {
+			tellFromMob(me, ch, "Your magickal center is already tattooed. Your tattoo... is enough magick for such as yourself.")
+			return true
+		}
+
+		offer := tattoo2Offers[choice]
+		if ch.GetGold() < offer.price {
+			tellFromMob(me, ch, "Without more coins, I can give no wisdom.")
+			return true
+		}
+
+		giveTattoo(w, ch, me, offer)
 		return true
 	}
 	return false

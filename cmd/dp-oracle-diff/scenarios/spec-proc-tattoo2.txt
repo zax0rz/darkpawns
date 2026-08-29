@@ -1,0 +1,54 @@
+# depth-case: mob.tattoo2-list
+# depth-case: mob.tattoo2-entry-gates
+# depth-case: mob.tattoo2-price-gate
+# depth-case: mob.tattoo2-fallthrough
+# C-first vehicle for SPECIAL(tattoo2), src/spec_procs2.c:1010-1072. The real
+# registered Confucius tattooist is mob vnum 18213 in room 18252; its
+# tattoo.lua script is stripped from disposable copies. The default actor
+# balance reaches the price tell for choice 0 without a probe-time setup write.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18213 1 18252 182
+strip-mob-script 18213
+replace-room-exits 18252 none
+
+[setup:oracle]
+TattooTwo
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooTwo
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 18252
+
+[probe]
+list
+buy
+buy x
+buy 0
+xyzzy
