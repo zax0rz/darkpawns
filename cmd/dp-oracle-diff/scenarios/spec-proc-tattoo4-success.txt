@@ -1,0 +1,79 @@
+# depth-case: mob.tattoo4-success-audience
+# depth-case: mob.tattoo4-success-state
+# C-first vehicle for tattoo4's shared give_tat() success path. The peer
+# captures room/shout audiences and score captures the tattoo state.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2766 1 2809 27
+strip-mob-script 2766
+replace-room-exits 2809 none
+
+[setup:oracle]
+TattooFourSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooFourSuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+TattooFourWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+TattooFourWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 2809
+teleport TattooFourWitness 2809
+set TattooFourSuccess gold 25000
+
+[probe]
+buy 0
+gold
+score

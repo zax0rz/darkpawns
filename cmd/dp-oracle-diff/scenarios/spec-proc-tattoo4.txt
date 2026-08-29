@@ -1,0 +1,54 @@
+# depth-case: mob.tattoo4-list
+# depth-case: mob.tattoo4-entry-gates
+# depth-case: mob.tattoo4-price-gate
+# depth-case: mob.tattoo4-fallthrough
+# C-first vehicle for SPECIAL(tattoo4), src/spec_procs2.c:1282-1340. The
+# registered sleazy tattoo artist is mob vnum 2766 in room 2809; its
+# tattoo.lua script is stripped from disposable copies.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2766 1 2809 27
+strip-mob-script 2766
+replace-room-exits 2809 none
+
+[setup:oracle]
+TattooFourActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooFourActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 2809
+
+[probe]
+list
+buy
+buy x
+buy 3
+buy 0
+xyzzy
