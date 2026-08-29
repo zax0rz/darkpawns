@@ -1,0 +1,48 @@
+# depth-case: mob.rescuer-7909-no-ally-fallthrough
+# C-first vehicle for SPECIAL(rescuer)'s commandless scan with no eligible
+# ally. The real assigned random-load vnum is kept in the fixed-seed landing
+# room, with exits removed only after that source-derived destination is known.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 7909 1 21210 79
+strip-mob-script 7909
+replace-room-exits 21210 none
+
+[setup:oracle]
+RescueActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RescueActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21210
+nohassle
+~dpclock pulse 20
+
+[probe]
+~dpclock pulse 20

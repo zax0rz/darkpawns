@@ -1,0 +1,89 @@
+# depth-case: mob.rescuer-7909-autonomous-entry
+# depth-case: mob.rescuer-7909-rescue-transition
+# depth-case: mob.rescuer-7909-audience
+# depth-case: mob.rescuer-7909-combat-swing
+# C-first vehicle for SPECIAL(rescuer), assigned first to mob vnum 7909 in
+# src/spec_assign.c:263 and defined at src/spec_procs2.c:523-544. The
+# random-load mob's fixed-seed landing room (21210) is made no-exit only after
+# the source-derived destination is known; the primary starts the indexed
+# aggressive Aatxe fight during warmup and a peer observes native do_rescue.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 7909 1 21210 79
+strip-mob-script 7909
+spawn-mob 4610 1 21210 46
+spawn-obj 8037 1 21210 80
+replace-room-exits 21210 none
+
+[setup:oracle]
+RescueActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RescueActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+RescueWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+RescueWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21210
+teleport RescueWitness 21210
+nohassle
+get sword
+wield sword
+skillset RescueActor bash 100
+bash Aatxe
+~dpclock pulse 20
+
+[probe]
+~dpclock pulse 20

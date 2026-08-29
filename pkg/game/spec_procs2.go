@@ -3,12 +3,14 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -133,6 +135,10 @@ func tellFromMob(me *MobInstance, target *Player, msg string) {
 func mobName(me *MobInstance) string {
 	return me.GetShortDesc()
 }
+
+// rescuerNumber is the C number(1, 101) seam for focused rescuer tests. The
+// production value remains the process-wide deterministic game stream.
+var rescuerNumber = dprng.Number
 
 // ================================================================
 // normal_checker — Sees non-immortals, jumps and attacks them
@@ -437,29 +443,164 @@ func specTipster(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 // during autonomous ticks.
 // ================================================================
 func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+	if me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	if me.GetFighting() != "" {
+	if mobRescuerIsReciprocallyFighting(w, me) {
 		return false
 	}
-	for _, ally := range w.GetMobsInRoom(me.GetRoomVNum()) {
-		if ally.GetID() == me.GetID() || ally.GetFighting() == "" {
+
+	allies := w.GetMobsInRoom(me.GetRoomVNum())
+	sort.Slice(allies, func(i, j int) bool { return allies[i].GetID() < allies[j].GetID() })
+	for _, ally := range allies {
+		if ally == nil || ally.GetID() == me.GetID() || ally.GetFighting() == "" {
 			continue
 		}
-		attackerName := ally.GetFighting()
-		for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			if pl.GetName() != attackerName {
-				continue
-			}
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says 'Fear not! I shall rescue you!'", mobName(me)))
-			if err := me.Attack(pl, w); err != nil {
-				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-			}
+		// C's GET_MOB_SPEC(i) != rescuer gate is on the ally, not on the
+		// rescuer. A second rescuer may therefore be selected only when it is
+		// assigned some other procedure (or no procedure at all).
+		if MobSpecAssign[ally.GetVNum()] == "rescuer" {
+			continue
+		}
+		if mobRescuerPlayer(w, ally.GetFighting(), me.GetRoomVNum()) == nil {
+			continue
+		}
+		// SPECIAL(rescuer) unconditionally returns TRUE after calling
+		// do_rescue(), including when do_rescue rejects its short-description
+		// argument or its 1-in-101 success roll.
+		mobDoRescue(w, me, ally)
+		return true
+	}
+	return false
+}
+
+// mobRescuerIsReciprocallyFighting implements the exact early return in
+// src/spec_procs2.c:528-529. C rejects the special only when the rescuer's
+// current opponent points back at it; a one-way/stale FIGHTING pointer still
+// reaches do_rescue and is then cleared by that procedure.
+func mobRescuerIsReciprocallyFighting(w *World, me *MobInstance) bool {
+	targetName := me.GetFighting()
+	if targetName == "" {
+		return false
+	}
+	for _, player := range w.GetAllPlayers() {
+		if player.GetName() == targetName && player.GetFighting() == me.GetName() {
+			return true
+		}
+	}
+	for _, mob := range w.GetAllMobs() {
+		if mob.GetName() == targetName && mob.GetFighting() == me.GetName() {
 			return true
 		}
 	}
 	return false
+}
+
+func mobRescuerPlayer(w *World, name string, roomVNum int) *Player {
+	for _, player := range w.GetPlayersInRoom(roomVNum) {
+		if player.GetName() == name {
+			return player
+		}
+	}
+	return nil
+}
+
+// mobRescueVictim resolves the first word of an NPC's short description with
+// get_char_room_vis semantics. SPECIAL(rescuer) passes GET_NAME(ally), and
+// one_argument() inside do_rescue therefore makes an article-leading short
+// description such as "a guard trainee" fail to resolve.
+func mobRescueVictim(w *World, me *MobInstance, shortDesc string) combat.Combatant {
+	fields := strings.Fields(shortDesc)
+	if len(fields) == 0 {
+		return nil
+	}
+	arg := fields[0]
+	for _, player := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+		if canSee(me, player) && isnameWithAbbrevs(arg, charKeywords(player)) {
+			return player
+		}
+	}
+	mobs := w.GetMobsInRoom(me.GetRoomVNum())
+	sort.Slice(mobs, func(i, j int) bool { return mobs[i].GetID() < mobs[j].GetID() })
+	for _, mob := range mobs {
+		if canSee(me, mob) && isnameWithAbbrevs(arg, charKeywords(mob)) {
+			return mob
+		}
+	}
+	return nil
+}
+
+// mobDoRescue is the subcmd=1 do_rescue() path used by SPECIAL(rescuer).
+// It deliberately does not reuse DoRescue: that API models a player command,
+// while C invokes the command handler with an NPC ch and then immediately
+// calls hit(vict, tmp_ch) after interposing the combat state.
+func mobDoRescue(w *World, me, ally *MobInstance) {
+	victim := mobRescueVictim(w, me, ally.GetName())
+	if victim == nil || victim.GetName() == me.GetName() || me.GetFighting() == victim.GetName() {
+		return
+	}
+
+	var tmp combat.Combatant
+	for _, player := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+		if player.GetFighting() == victim.GetName() {
+			tmp = player
+			break
+		}
+	}
+	if tmp == nil {
+		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+			if mob.GetFighting() == victim.GetName() {
+				tmp = mob
+				break
+			}
+		}
+	}
+	if tmp == nil {
+		return
+	}
+
+	// C always uses prob=100 for this special, but still consumes the
+	// number(1, 101) draw, where 101 is the complete-failure edge.
+	// #nosec G404 — game RNG, not cryptographic
+	if rescuerNumber(1, 101) > 100 {
+		return
+	}
+
+	// The only player-visible act() in the successful native branch is
+	// TO_NOTVICT. The TO_CHAR/TO_VICT recipients are both NPCs here.
+	Act(w, false, me, victim, nil, nil, "$n heroically rescues $N!", "", ToNotVict)
+
+	// stop_fighting() mutates the three characters even if a combat pair was
+	// not registered (the C list is pointer-based, while Go's engine is pair-
+	// based). Stop the engine's pairs first, then clear each pointer directly.
+	if stopper, ok := w.combatEngine.(interface{ StopCombat(string) }); ok {
+		stopper.StopCombat(victim.GetName())
+		stopper.StopCombat(tmp.GetName())
+		stopper.StopCombat(me.GetName())
+	}
+	victim.StopFighting()
+	tmp.StopFighting()
+	me.StopFighting()
+
+	me.SetFighting(tmp.GetName())
+	tmp.SetFighting(me.GetName())
+	// hit(vict, tmp_ch) calls damage(), which starts the NPC victim's side
+	// because stop_fighting(vict) just cleared it; the player already faces me.
+	victim.SetFighting(tmp.GetName())
+
+	if w.combatEngine != nil {
+		if err := w.combatEngine.StartCombat(me, tmp); err != nil {
+			slog.Warn("rescuer combat entry failed", "mob", me.GetName(), "target", tmp.GetName(), "error", err)
+		}
+	}
+	if allyVictim, ok := victim.(*MobInstance); ok {
+		if err := w.mobHit(allyVictim, tmp); err != nil {
+			slog.Warn("rescuer ally hit failed", "mob", allyVictim.GetName(), "target", tmp.GetName(), "error", err)
+		}
+	}
+	if waiter, ok := victim.(interface{ SetWaitState(int) }); ok {
+		waiter.SetWaitState(2 * engine.PULSE_VIOLENCE)
+	}
 }
 
 // ================================================================
