@@ -409,31 +409,42 @@ func specFearface(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 }
 
 func specStartRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" {
+	_ = me
+	_ = cmd
+	_ = arg
+	if ch == nil {
 		return false
 	}
 
-	mobs := w.GetMobsInRoom(me.GetRoom())
-	for _, m := range mobs {
-		if !m.IsNPC() {
-			continue
-		}
-		if m.GetLevel() >= lvlImmort {
+	players := w.GetPlayersInRoom(ch.GetRoomVNum())
+	for _, player := range players {
+		if player.GetLevel() >= lvlImmort {
 			return false
 		}
+	}
 
-		msg := "   Suddenly the hairs on the back of your neck stand up as if lightning had\r\nstruck nearby. A keen wailing fills the air, and an ethereal image appears\r\nbefore you.\r\n"
-		msg += fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", m.GetName())
-		msg += "   'Prove your worth and I may well grant you eternal life.'\r\n"
-		msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
-		msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"
-		msg += "   'Your life begins now...' it says, then fades -- just as the world around\r\nyou does the same.\r\n\r\n"
-		sendToChar(ch, msg)
-
-		m.SetRoom(8004) // temple altar
+	for _, player := range players {
+		player.SendMessage(startRoomBirthMessage(player.GetName()))
+		player.SetRoom(NewbieHometownRoom(player.GetHometown()))
+		// The C start_room path calls do_look with the new mortal's default
+		// PRF_AUTOEXIT state, which is off in the oracle vehicle.
+		player.SetAutoExit(false)
+		w.lookAtRoom(player, false)
 	}
 
 	return true
+}
+
+func startRoomBirthMessage(name string) string {
+	// The C body builds the first three lines, then passes the same buffer as
+	// both sprintf source and destination. The oracle's libc result drops
+	// those lines; preserve the player-facing bytes observed on that path.
+	msg := fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", name)
+	msg += "   'Prove your worth and I may well grant you eternal life.'\r\n"
+	msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
+	msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"
+	msg += "   'Your life begins now...' it says, then fades -- just as the world around\r\nyou does the same.\r\n\r\n"
+	return msg
 }
 
 func specNewbieZoneEntrance(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
