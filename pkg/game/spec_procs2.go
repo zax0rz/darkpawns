@@ -1655,46 +1655,45 @@ func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 }
 
 // ================================================================
-// medusa — Snake-hair gorgon: look at her and risk petrification
+// medusa — look at the medusa and risk petrification
 // ================================================================
 func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" && cmd != "look" && cmd != "examine" {
+	// SPECIAL(medusa), src/spec_procs2.c:1552-1590. The commandless arm is
+	// the same re-entrant magic_user() call used by other spellcaster mobs.
+	if cmd == "" {
+		if me != nil && me.IsFighting() {
+			return specMagicUser(w, nil, me, "", "")
+		}
 		return false
 	}
-	if cmd != "" {
-		a := strings.TrimSpace(arg)
-		if a == "" {
-			return false
-		}
-		if !strings.Contains(a, "medusa") && !strings.Contains(a, "gorgon") {
-			return false
-		}
-		if !ch.IsNPC() {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s sees you looking and snaps out with snake-like speed!", mobName(me)))
-			// Petrify all players in room
-			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if !pl.IsNPC() {
-					w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's gaze catches %s, who starts to turn to stone!", mobName(me), pl.GetName()))
-				}
-			}
-			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if !pl.IsNPC() {
-					// Save vs petrify: level-based saving throw
-					if number(0, 100) >= pl.GetLevel()*2 {
-						if err := me.Attack(pl, w); err != nil {
-							slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-						}
-					}
-				}
-			}
-		}
-		return true
-	}
-	if number(0, 6) != 0 {
+	if ch == nil || me == nil || (cmd != "look" && cmd != "examine") {
 		return false
 	}
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's snake-hair writhes around and it snaps at the air!", mobName(me)))
-	return false
+
+	// C uses isname(argument, mobile->player.name), so match the complete
+	// character keyword list rather than searching the display description.
+	if !isnameWithAbbrevs(strings.TrimSpace(arg), charKeywords(me)) {
+		return false
+	}
+
+	// mag_savingthrow() returns TRUE when the actor saves. A save falls through
+	// to ordinary look/examine; only the actor who looked can be petrified.
+	if spells.CheckSavingThrow(ch, spells.SavePetrify) {
+		return false
+	}
+
+	Act(w, false, ch, ch, nil, nil,
+		"With a sound like that of a crashing wave, $N slowly turns to stone!", "", ToNotVict)
+	Act(nil, false, ch, nil, nil, nil,
+		"With growing horror and increasing agony, your body slowly turns to stone!", "", ToChar)
+
+	// SPECIAL(medusa) explicitly accounts the death and applies a level-cubed
+	// loss before raw_kill(); this is not die_with_killer()'s combat penalty.
+	ch.Deaths++
+	level := ch.GetLevel()
+	w.GainExp(ch, -(level * level * level))
+	w.Instakill(ch, nil, spells.SpellPetrify)
+	return true
 }
 
 // ================================================================
