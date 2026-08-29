@@ -1046,6 +1046,13 @@ func (w *World) StopAITicker() {
 
 // SpawnMob spawns a mob in the world.
 func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
+	return w.spawnMob(vnum, roomVNum, true)
+}
+
+// spawnMob creates a mob, optionally emitting the ordinary world-spawn
+// message. C read_mobile + char_to_room callers (such as stableboy) do not
+// emit that message, while regular world spawns do.
+func (w *World) spawnMob(vnum int, roomVNum int, announce bool) (*MobInstance, error) {
 	// H-11: Split into two phases to avoid blocking SendMessage while holding the write lock.
 
 	// Phase 1: Create mob under write lock.
@@ -1078,11 +1085,18 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	w.mu.Unlock()
 
 	// Phase 2: Notify outside the lock (SendMessage may block on channel buffer).
-	for _, player := range targets {
-		player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+	if announce {
+		for _, player := range targets {
+			player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+		}
 	}
 
 	return mob, nil
+}
+
+// spawnMobQuiet matches C read_mobile followed by char_to_room.
+func (w *World) spawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
+	return w.spawnMob(vnum, roomVNum, false)
 }
 
 // SpawnMobInstance is an alias for SpawnMob for compatibility.

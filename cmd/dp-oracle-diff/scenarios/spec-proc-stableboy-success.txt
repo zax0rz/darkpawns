@@ -1,0 +1,82 @@
+# depth-case: mob.stableboy-buy-success-output
+# depth-case: mob.stableboy-stable-success-output
+# depth-case: mob.stableboy-collect-success-output
+# depth-case: mob.stableboy-audience
+# C-first success vehicle for the registered stableboy vnum 8022. The actor is
+# given enough gold through the existing wizard warmup to exercise purchase,
+# stable, and collect output/state; the peer proves the room-act audience.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+strip-mob-script 8022
+replace-room-exits 8105 none
+
+[setup:oracle]
+StableSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+StableSuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+StableWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+StableWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport StableWitness 8105
+set StableSuccess gold 1000
+
+[probe]
+buy horse
+stable
+collect

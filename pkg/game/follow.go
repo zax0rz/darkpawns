@@ -67,6 +67,15 @@ func AddFollowerQuietMob(mob *MobInstance, leader *Player) {
 	mob.SetFollowing(leader.Name)
 }
 
+// AddFollowerMob adds a mob as a follower with C's visible follower notices.
+// C add_follower sends TO_VICT and TO_NOTVICT act() messages; its TO_CHAR
+// message targets the NPC itself and is not player-visible.
+func AddFollowerMob(w *World, mob *MobInstance, leader *Player) {
+	mob.SetFollowing(leader.Name)
+	Act(w, true, mob, leader, nil, nil, "$n starts following you.", "", ToVict)
+	Act(w, true, mob, leader, nil, nil, "$n starts to follow $N.", "", ToNotVict)
+}
+
 // AddFollower adds ch as a follower of leader with notifications.
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:480-498

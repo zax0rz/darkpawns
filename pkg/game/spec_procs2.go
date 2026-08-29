@@ -287,7 +287,7 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 const horseVnum = 8021
 
 func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil || ch.IsNPC() {
 		return false
 	}
 	a := strings.TrimSpace(arg)
@@ -298,24 +298,28 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 
 	case "buy":
-		if a == "" || !strings.Contains(a, "horse") {
+		if a != "horse" {
 			tellFromMob(me, ch, "Buy what, fine adventurer?")
+			return true
+		}
+		if w.NumFollowers(ch.Name) >= ch.GetCha()/2 {
+			sendToChar(ch, "You can't have any more followers!")
 			return true
 		}
 		if ch.GetGold() < 300 {
 			tellFromMob(me, ch, "You can't afford a mount!")
 			return true
 		}
-		ch.SetGold(ch.GetGold() - 300)
-		horse, err := w.SpawnMob(horseVnum, ch.GetRoom())
+		horse, err := w.spawnMobQuiet(horseVnum, ch.GetRoom())
 		if err != nil {
 			tellFromMob(me, ch, "Sorry we are all out of mounts at the moment, try again later.")
 			return true
 		}
 		horse.SetAffected(affCharm)
-		horse.SetFollowing(ch.Name)
+		Act(w, false, horse, me, nil, nil, "$N brings $n up from the stables out back.", "", ToRoom)
+		AddFollowerMob(w, horse, ch)
 		horse.Runtime.Horse = &HorseState{CarryWeight: 1000, CarryNumber: 100, Move: 230, MaxMove: 230}
-		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s brings %s up from the stables out back.", mobName(me), mobName(horse)))
+		ch.SetGold(ch.GetGold() - 300)
 		tellFromMob(me, ch, "That'll be 300 coins, treat'er well")
 		return true
 
@@ -327,13 +331,15 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				if m.GetMountRider() == ch.Name {
 					horse = m
 					Unmount(ch, horse)
+					horse.RemoveAffected(affMounted)
+					ch.SetAffect(affMounted, false)
 					break
 				}
 			}
 		} else {
-			// Find a mountable follower (charmed mob in room following player)
+			// Find an unmounted mountable follower in the room.
 			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
-				if m.GetFollowing() == ch.Name && m.IsAffected(affCharm) {
+				if m.GetFollowing() == ch.Name && m.HasFlag("mountable") && !m.IsMountedMob() {
 					horse = m
 					break
 				}
@@ -344,11 +350,11 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			return true
 		}
 		horse.RemoveAffected(affCharm)
-		horse.SetFollowing("")
+		StopFollowerMob(w, horse)
 		ch.MountRentTime = time.Now().Unix()
 		ch.MountVNum = horse.VNum
 		ch.MountCostDay = 5
-		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s takes %s out back to the stables.", mobName(me), mobName(horse)))
+		Act(w, false, horse, me, nil, nil, "$N takes $n out back to the stables.", "", ToRoom)
 		w.ExtractMob(horse)
 		tellFromMob(me, ch, fmt.Sprintf("I will take good care of 'em, for %d coins a day.", ch.MountCostDay))
 		return true
@@ -368,7 +374,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			tellFromMob(me, ch, fmt.Sprintf("Hey man, you can't afford the %d gold you need to get your mount outa' hock.", cost))
 			return true
 		}
-		horse, err := w.SpawnMob(ch.MountVNum, ch.GetRoom())
+		horse, err := w.spawnMobQuiet(ch.MountVNum, ch.GetRoom())
 		if err != nil {
 			tellFromMob(me, ch, "Sorry, we are unable to gather your mount, try back later.")
 			return true
@@ -377,10 +383,10 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		ch.MountCostDay = 0
 		ch.MountRentTime = 0
 		horse.SetAffected(affCharm)
-		horse.SetFollowing(ch.Name)
+		Act(w, false, horse, me, nil, nil, "$N brings $n up from the stables out back.", "", ToRoom)
+		AddFollowerMob(w, horse, ch)
 		horse.Runtime.Horse = &HorseState{CarryWeight: 1000, CarryNumber: 100, Move: 230, MaxMove: 230}
 		ch.SetGold(ch.GetGold() - cost)
-		w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s brings %s up from the stables out back.", mobName(me), mobName(horse)))
 		tellFromMob(me, ch, fmt.Sprintf("Here ya go pal, all patted down and ready to go... cost ya %d to keep 'em here.", cost))
 		return true
 	}
