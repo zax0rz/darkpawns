@@ -1,0 +1,46 @@
+# depth-case: mob.tattoo2-price-gate
+# C-first vehicle for tattoo2's insufficient-gold gate. Gold is configured in
+# drained warmup so the compared transcript contains only the Confucius tell.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18213 1 18252 182
+strip-mob-script 18213
+replace-room-exits 18252 none
+
+[setup:oracle]
+TattooTwoPrice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooTwoPrice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 18252
+set TattooTwoPrice gold 0
+
+[probe]
+buy 0
