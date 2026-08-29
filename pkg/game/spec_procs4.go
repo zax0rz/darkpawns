@@ -527,14 +527,19 @@ func specSuckIn(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		return false
 	}
 
-	arg = strings.TrimSpace(arg)
-	if strings.ToLower(arg) != "painting" {
+	what, _ := oneArgument(arg)
+	if what != "painting" {
 		return false
 	}
 
-	sendToChar(ch, "\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n")
-	w.roomMessage(me.GetRoom(), "$n suddenly vanishes!")
+	// C calls do_look with the first one_argument token before emitting the
+	// transition bytes. Room specials receive no mob receiver, so use ch as
+	// the act() actor and let TO_ROOM exclude the actor and substitute $n.
+	w.doLook(ch, me, "look", what)
+	ch.SendMessage("\r\n\r\n\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n")
+	Act(w, false, ch, nil, nil, nil, "$n suddenly vanishes!", "", ToRoom)
 	ch.SetRoom(paintingRoom)
+	w.lookAtRoom(ch, true)
 	return true
 }
 

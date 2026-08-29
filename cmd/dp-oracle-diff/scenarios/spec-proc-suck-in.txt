@@ -1,0 +1,58 @@
+# C-first vehicle for SPECIAL(suck_in), assigned to room 20073 in
+# src/spec_assign.c:616 and defined in src/spec_procs.c:2279-2303. The room
+# special runs before ordinary command dispatch. The first look exercises the
+# exact-argument fallthrough; the second exercises do_look, the dizzy message,
+# TO_ROOM audience, relocation to room 18101, and destination look.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2279-2303 ->
+# act.informative.c do_look / comm.c act / char_from_room / char_to_room /
+# look_at_room.
+
+[fixture]
+empty-players
+quiet-mobs
+add-wld-index 181.wld
+
+[setup:oracle]
+Hallprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hallprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+autoexit
+
+[warmup]
+goto 20073
+
+[probe]
+look picture
+look painting
+
+# depth-case: room.suck-in-command-gate
+# depth-case: room.suck-in-argument-gate
+# depth-case: room.suck-in-look-output
+# depth-case: room.suck-in-dizzy-message
+# depth-case: room.suck-in-audience
+# depth-case: room.suck-in-relocation
+# depth-case: room.suck-in-return-intercept
