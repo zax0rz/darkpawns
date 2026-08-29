@@ -1,0 +1,85 @@
+# depth-case: mob.medusa-entry-gates
+# depth-case: mob.medusa-look-target-gate
+# depth-case: mob.medusa-save-fallthrough
+# depth-case: mob.medusa-petrify-audience
+# C-first vehicle for SPECIAL(medusa), registered for mobs 14101 and 14102 in
+# src/spec_assign.c:355-356 and implemented in src/spec_procs2.c:1552-1590.
+# The active 14101 vehicle is scriptless in room 14112. C only intercepts
+# look/examine when the argument names the mobile; it tests the actor's
+# SAVING_PETRI result, sends the stone message to bystanders and the horror
+# message to the actor, then raw_kill()s only that actor on a failed save.
+# Its commandless fighting arm delegates to magic_user(), whose combat path
+# is already owned by the magic-user depth slice.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14101 1 14112 80
+strip-mob-script 14101
+
+[setup:oracle]
+Gazeprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gazeprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gazepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gazepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14112
+teleport Gazepeer 14112
+set Gazeprobe level 1
+
+[probe]
+look troll
+look medusa
