@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -262,21 +261,37 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			return false
 		}
 
+		// C stops the victim's combat before the jail messages. If the victim's
+		// opponent reciprocates the target, stop that side as well; the combat
+		// engine also removes its pair after this callback returns.
+		if victim.IsFighting() {
+			fightingName := victim.GetFighting()
+			if opponent := cityguardCombatantByName(w, victim.GetRoom(), fightingName); opponent != nil && opponent.GetFighting() == victimName {
+				switch opponent := opponent.(type) {
+				case *Player:
+					opponent.StopFighting()
+				case *MobInstance:
+					opponent.StopFighting()
+				}
+			}
+			victim.StopFighting()
+		}
 		victim.SetHP(1)
 		if victim.IsMounted() {
 			victim.Unmount()
 		}
-		if guard.HasFlag("MOB_MEMORY") {
+		if guard.HasMobFlag(MobFlagMemory) || guard.HasFlag("MOB_MEMORY") {
 			guard.Forget(victimName)
 		}
 		if guard.GetHunting() == victimName {
 			guard.ClearHunting()
 		}
 
-		roomVNum := victim.GetRoom()
-		actToRoom(w, roomVNum, fmt.Sprintf("%s grabs %s by the collar, and quickly beats them into submission.\r\nJerking them to their feet, %s carts %s off to jail.\r\n", guard.GetName(), victim.GetName(), guard.GetName(), victim.GetName()), victimName)
-		sendToChar(victim, fmt.Sprintf("%s grabs you by the collar and quickly beats you into submission.\r\n", guard.GetName()))
-		sendToChar(victim, "Jerking you to your feet, he carts you off to jail...\r\n")
+		Act(w, true, guard, victim, nil, nil,
+			"$n grabs $N by the collar, and quickly beats $M into submission.\r\nJerking $M to $S feet, $n carts $N off to jail.", "", ToNotVict)
+		Act(w, true, guard, victim, nil, nil,
+			"$n grabs you by the collar and quickly beats you into submission.", "", ToVict)
+		sendToChar(victim, "Jerking you to your feet, he carts you off to jail...")
 		victim.SetRoom(8118)
 		w.lookAtRoom(victim, false)
 		jailTimer := victim.GetLevel() / 2

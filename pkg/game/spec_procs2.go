@@ -1566,42 +1566,73 @@ func specIra(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 }
 
 // ================================================================
-// take_to_jail — Grabs non-immortal players and drags them to jail
+// take_to_jail — city guard special; hit() owns the jail redirect
 // ================================================================
-const jailRoomVnum = 2014
-
 func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" {
+	if w == nil || me == nil || cmd != "" {
 		return false
 	}
-	// ch is nil during autonomous mob activity (mobileActivityForMob)
-	if ch != nil && (ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0) {
-		return false
-	}
+	// mobile_activity() passes the mob as both ch and me, while the Go special
+	// adapter uses ch=nil for that same autonomous path. C's AWAKE(ch) gate is
+	// therefore the mob's position here.
 	if me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if pl.IsNPC() || pl == ch || pl.GetFighting() != "" {
-			continue
-		}
-		if pl.GetLevel() >= 50 {
-			continue
-		}
-		if number(0, 6) != 0 {
-			continue
-		}
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s grabs %s and drags them off to jail!", mobName(me), pl.GetName()))
-		pl.SetRoom(jailRoomVnum)
-		pl.JailTimer = 300 // ~5 minutes at 1 tick/second
-		w.roomMessage(jailRoomVnum, fmt.Sprintf("%s drags %s into the room and throws them in a cell!", mobName(me), pl.GetName()))
-		sendToChar(pl, fmt.Sprintf("A guard snarls 'You'll serve %d seconds in here!'\r\n", pl.JailTimer))
-		// Taunt goes to the jailed victim (pl). This spec only runs autonomously
-		// (cmd == "" above), so ch is always nil here — sending to ch panicked in
-		// sendToChar whenever a player was actually jailed.
-		sendToChar(pl, fmt.Sprintf("%s says 'You'll rot in there!'\r\n", mobName(me)))
-		return true
+	if me.IsFighting() {
+		// C delegates an already-fighting guard to fighter(). The autonomous
+		// mobile_activity() filter normally makes this unreachable, but retain
+		// the real special call path for direct callers and combat handoffs.
+		return specFighter(w, nil, me, "", "")
 	}
+
+	// C scans world[].people in order and gives an outlaw the first matching
+	// intervention. hit() then recognizes this special and performs the jail
+	// redirect before ordinary melee damage (src/fight.c:1370-1400).
+	for _, candidate := range cityguardRoomCombatants(w, me.GetRoomVNum()) {
+		pl, ok := candidate.(*Player)
+		if !ok || !canSee(me, pl) || pl.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
+			continue
+		}
+		Act(w, false, me, nil, nil, nil,
+			"$n says 'We don't like OUTLAWS like you in this city!'", "", ToRoom)
+		if err := w.mobHit(me, pl); err != nil {
+			slog.Warn("take_to_jail outlaw attack failed", "guard", me.GetName(), "target", pl.GetName(), "error", err)
+		}
+		return specFighter(w, nil, me, "", "")
+	}
+
+	// The C body calls breed_killer() while walking this same room list. That
+	// shared procedure is separately owned by the queued breed_killer slice;
+	// do not duplicate or invent its currently-unproven nightbreed branches
+	// here (R5b/R5c). With no eligible nightbreed, it is a no-op and the scan
+	// continues to the shared protection selection below.
+	var evil cityguardAlignedCombatant
+	var evilTarget cityguardAlignedCombatant
+	maxEvil := 1000
+	for _, candidate := range cityguardRoomCombatants(w, me.GetRoomVNum()) {
+		tch, ok := candidate.(cityguardAlignedCombatant)
+		if !ok || !canSee(me, tch) || tch.GetFighting() == "" {
+			continue
+		}
+		target := cityguardCombatantByName(w, me.GetRoomVNum(), tch.GetFighting())
+		targetAligned, ok := target.(cityguardAlignedCombatant)
+		if !ok || targetAligned == nil || tch.GetAlignment() >= maxEvil ||
+			(!tch.IsNPC() && !target.IsNPC()) {
+			continue
+		}
+		maxEvil = tch.GetAlignment()
+		evil = tch
+		evilTarget = targetAligned
+	}
+	if evil != nil && evilTarget.GetAlignment() >= 0 {
+		Act(w, false, me, evil, nil, nil,
+			"$n says, 'You just pissed me off, $N!'", "", ToRoom)
+		if err := w.mobHit(me, evil); err != nil {
+			slog.Warn("take_to_jail protection attack failed", "guard", me.GetName(), "target", evil.GetName(), "error", err)
+		}
+		return specFighter(w, nil, me, "", "")
+	}
+
 	return false
 }
 
