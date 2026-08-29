@@ -46,8 +46,10 @@ destination look as reachable C behavior. No `src/` or
 
 The manifest validator and full repository gates pass on this documentation-only
 slice; no Go behavior changed, so no RED/GREEN oracle vehicle is legitimate.
-The prior `enter_circle` PR #741 was green and merged; its handoff and the
-pet-shop handoff are published on `main`.
+The prior `enter_circle` PR #741 was green and merged; this slice's PR #742
+also passed lint, security, and test after the normal queued checks and merged
+as `81e204ea3`. Its handoff, the `enter_circle` handoff, and the pet-shop
+handoff are published on `main`.
 
 The next source-order special definition is `elemental_room` in
 `src/spec_procs.c:2021`. Repeat the complete assignment census before building
