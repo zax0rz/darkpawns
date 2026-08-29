@@ -1,0 +1,80 @@
+# depth-case: mob.tattoo3-success-audience
+# depth-case: mob.tattoo3-success-state
+# C-first vehicle for tattoo3's shared give_tat() path. A same-room peer
+# captures the two room acts and same-zone shout; warmup configures enough gold
+# for the first (open eye) offer without polluting the compared transcript.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21244 1 21281 212
+strip-mob-script 21244
+replace-room-exits 21281 none
+
+[setup:oracle]
+TattooThreeSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooThreeSuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+TattooThreeWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+TattooThreeWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21281
+teleport TattooThreeWitness 21281
+set TattooThreeSuccess gold 30000
+
+[probe]
+buy 0
+gold
+score

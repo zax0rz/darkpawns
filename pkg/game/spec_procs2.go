@@ -1238,26 +1238,64 @@ func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 }
 
 // ================================================================
-// tattoo3 — Buy a cheap 'tramp stamp' tattoo
+// tattoo3 — Buy one of the tattoo artist's four tattoos.
+// C: src/spec_procs2.c:1075-1137, src/constants.c:1416-1433
 // ================================================================
+
+var tattoo3Offers = [...]tattooOffer{
+	{number: TattooEye, price: 18000, name: "of an open eye", description: "see that which is normally unseen"},
+	{number: TattooSwords, price: 20000, name: "of crossed swords", description: "miss less and hit harder"},
+	{number: TattooShip, price: 11000, name: "of a ship", description: "gain the ability of movement over water"},
+	{number: TattooMom, price: 15000, name: "of the word 'MOM'", description: "the wisdom of your elders"},
+}
+
 func specTattoo3(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil {
 		return false
 	}
-	if cmd == "buy" && strings.Contains(arg, "tattoo") {
-		if ch.GetGold() < 500 {
-			sendToChar(ch, "You don't have enough gold!\r\n")
+
+	switch strings.ToLower(cmd) {
+	case "list":
+		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
+		ch.SendMessage("Available tattoos are:\r\n")
+		for i, offer := range tattoo3Offers {
+			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
+		}
+		return true
+	case "buy":
+		arg = skipSpaces(arg)
+		if ch.IsNPC() {
+			return false
+		}
+		if arg == "" {
+			sendToChar(ch, "Buy what number?")
 			return true
 		}
-		ch.SetGold(ch.GetGold() - 500)
-		if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
-			if ch.Inventory != nil {
-				if err := ch.Inventory.addItem(obj); err != nil {
-					slog.Warn("spec proc item grant failed", "vnum", 7103, "player", ch.Name, "error", err)
-				}
-			}
+		if arg[0] < '0' || arg[0] > '9' {
+			sendToChar(ch, "Buy by number!")
+			return true
 		}
-		sendToChar(ch, "You buy a cheap 'tramp stamp' tattoo.\r\n")
+
+		choice := atoi(arg)
+		if choice >= len(tattoo3Offers) {
+			sendToChar(ch, "Buy by number!")
+			return true
+		}
+		if me == nil {
+			return false
+		}
+		if ch.Tattoo != TattooNone {
+			tellFromMob(me, ch, "Your mathickal thenter is awready tattooed. Your tattoo... ith enough mathick for such as yoursewf.")
+			return true
+		}
+
+		offer := tattoo3Offers[choice]
+		if ch.GetGold() < offer.price {
+			tellFromMob(me, ch, "You don't have enough cash, hot stuff.")
+			return true
+		}
+
+		giveTattoo(w, ch, me, offer)
 		return true
 	}
 	return false
