@@ -1,0 +1,90 @@
+# depth-case: mob.whirlpool-autonomous-entry
+# depth-case: mob.whirlpool-nohassle-gate
+# depth-case: mob.whirlpool-random-destination
+# depth-case: mob.whirlpool-victim-output
+# depth-case: mob.whirlpool-destination-look
+# depth-case: mob.whirlpool-state-transition
+# C-first vehicle for SPECIAL(whirlpool), assigned to mob vnum 12200 in
+# src/spec_assign.c:342 and defined at src/spec_procs2.c:244-275.
+# The registered mob is scriptless and injected into a no-exit room.  The
+# passive peer walks there through the ordinary start-room path, so the padded
+# mobile pulse exercises the autonomous mobile_activity() call (ch=mob,
+# me=mob) without relying on a wizard teleport or command-time vehicle.
+# C iterates world[ch->in_room].people, skips PRF_NOHASSLE and NPCs, chooses
+# number(real_room(4600), real_room(4699)), relocates each victim, sends the two
+# victim-only lines, calls look_at_room, and returns whether any victim moved.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12200 999 8105 183
+
+[setup:oracle]
+Whirlpoolactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whirlpoolactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Whirlpoolpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Whirlpoolpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe:peer]
+~dpclock pulse 40
+look
