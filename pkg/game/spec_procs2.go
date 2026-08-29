@@ -1087,32 +1087,90 @@ func findVisibleAssassinVictim(w *World, assassin *MobInstance, name string) *Pl
 }
 
 // ================================================================
-// tattoo1 — Remove scarab tattoo to fully heal
+// tattoo1 — Buy one of the tattooist's five tattoos.
+// C: src/spec_procs2.c:927-1008, src/constants.c:1416-1433
 // ================================================================
+
+type tattooOffer struct {
+	number      int
+	price       int
+	name        string
+	description string
+}
+
+var tattoo1Offers = [...]tattooOffer{
+	{number: TattooDragon, price: 30666, name: "of a green dragon", description: "grow stronger and hit harder"},
+	{number: TattooTribal, price: 3000, name: "in a tribal design", description: "increase your dexterity"},
+	{number: TattooEagle, price: 10000, name: "of a screaming eagle", description: "move like the wind"},
+	{number: TattooFox, price: 3000, name: "of a fox", description: "gain the intelligence of the fox"},
+	{number: TattooOwl, price: 3000, name: "of an owl", description: "gain the wisdom of the owl"},
+}
+
 func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil || ch.IsNPC() {
 		return false
 	}
-	if cmd == "remove" && strings.Contains(arg, "tattoo") {
-		if ch.GetFighting() != "" {
-			sendToChar(ch, "You can't do that while fighting!\r\n")
-		} else {
-			// Message for other players in room
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing a scarab tattoo...", ch.GetName()))
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s focuses on removing %s scarab tattoo...", ch.GetName(), hisHer(ch.GetSex())))
-			ch.SetHP(ch.GetMaxHP())
-			ch.SetMove(ch.GetMaxMove())
-			if obj, err := w.SpawnObject(7103, ch.GetRoom()); err == nil {
-				if ch.Inventory != nil {
-					if err := ch.Inventory.addItem(obj); err != nil {
-						slog.Warn("spec proc item grant failed", "vnum", 7103, "player", ch.Name, "error", err)
-					}
-				}
-			}
+
+	switch strings.ToLower(cmd) {
+	case "list":
+		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
+		ch.SendMessage("Available tattoos are:\r\n")
+		for i, offer := range tattoo1Offers {
+			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
 		}
+		return true
+	case "buy":
+		if me == nil {
+			return false
+		}
+		if ch.Tattoo != TattooNone {
+			tellFromMob(me, ch, "Your magickal center is already tattooed. Get a new arm or get rid of that tattoo then come back.")
+			return true
+		}
+
+		arg = skipSpaces(arg)
+		if arg == "" {
+			sendToChar(ch, "Buy what number?")
+			return true
+		}
+		if arg[0] < '0' || arg[0] > '9' {
+			sendToChar(ch, "Buy by number!")
+			return true
+		}
+
+		choice := atoi(arg)
+		if choice >= len(tattoo1Offers) {
+			sendToChar(ch, "Buy by number!")
+			return true
+		}
+
+		offer := tattoo1Offers[choice]
+		if ch.GetGold() < offer.price {
+			tellFromMob(me, ch, "You look a little short on the price there, kid.")
+			return true
+		}
+
+		giveTattoo1(w, ch, me, offer)
 		return true
 	}
 	return false
+}
+
+// giveTattoo1 is the give_tat() helper shared by the C tattoo procedures.
+// The position assignment followed by update_pos is intentional: a healthy
+// player ends standing even though give_tat briefly assigns POS_STUNNED.
+func giveTattoo1(w *World, ch *Player, me *MobInstance, offer tattooOffer) {
+	ch.SetGold(ch.GetGold() - offer.price)
+	ch.Tattoo = offer.number
+	Act(w, true, me, ch, nil, nil, "$n starts to work on $N's tattoo...", "", ToNotVict)
+	Act(w, true, me, ch, nil, nil, "A ghastly scream is ripped from $N's lips just before $E blacks out.", "", ToNotVict)
+	Act(nil, true, me, ch, nil, nil, "$n starts to work on your tattoo...", "", ToVict)
+	ch.SendMessage("The pain is incredible; it seems to eat into your soul.\r\nA scream is ripped from your lips...\r\n")
+	w.doGenComm(ch, me, "shout", "Arrrrrrrrrgggggggghhhh!")
+	ch.SendMessage("You black out.\r\n")
+	ch.SetPosition(combat.PosStunned)
+	updatePosFromHP(ch, ch.GetHP())
+	TattooAf(ch, true)
 }
 
 // ================================================================

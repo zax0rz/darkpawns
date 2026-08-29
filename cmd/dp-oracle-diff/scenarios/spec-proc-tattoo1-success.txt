@@ -1,0 +1,80 @@
+# depth-case: mob.tattoo1-success-audience
+# depth-case: mob.tattoo1-success-state
+# C-first vehicle for give_tat() through SPECIAL(tattoo1). The peer shares the
+# tattooist room and therefore proves TO_NOTVICT work/scream acts plus the
+# shout audience. Gold is configured in drained warmup.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8086 1 8052 80
+strip-mob-script 8086
+replace-room-exits 8052 none
+
+[setup:oracle]
+TattooSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooSuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+TattooWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+TattooWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8052
+teleport TattooWitness 8052
+set TattooSuccess gold 40000
+
+[probe]
+buy 0
+gold
+score
