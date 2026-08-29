@@ -1,0 +1,88 @@
+# C-first vehicle for SPECIAL(carrion), registered as a room special on room
+# 14305 by src/spec_assign.c:612 and defined in src/spec_procs2.c:1726-1754.
+# The room dispatch runs before ordinary command handling.  The first probes
+# cover the empty/nonmatching argument fallthrough and the sleeping gate; the
+# matching probes exercise read_mobile(14308), the exact room Act, and the
+# command intercept.  C path: src/interpreter.c:1407-1416 ->
+# src/spec_procs2.c:1726-1754 -> db.c read_mobile / utils.c char_to_room /
+# comm.c act / fight.c hit.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Carrionactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Carrionactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Carrionwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Carrionwitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14305
+teleport Carrionwitness 14305
+
+[probe]
+say
+say stone
+sleep
+say corpse
+wake
+say stone
+
+# depth-case: room.carrion-commandless-gate
+# depth-case: room.carrion-argument-gate
+# depth-case: room.carrion-sleeping-gate
+# depth-case: room.carrion-keyword-gate
+# depth-case: room.carrion-return-fallthrough

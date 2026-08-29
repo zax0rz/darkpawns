@@ -810,7 +810,16 @@ func (w *World) mobHit(attacker *MobInstance, defender combat.Combatant) error {
 		}
 		return attacker.Attack(player, w)
 	}
-	if err := w.combatEngine.StartCombat(attacker, defender); err != nil {
+	starter, hasDeferredStarter := w.combatEngine.(interface {
+		StartCombatFromMob(combat.Combatant, combat.Combatant) error
+	})
+	var err error
+	if hasDeferredStarter {
+		err = starter.StartCombatFromMob(attacker, defender)
+	} else {
+		err = w.combatEngine.StartCombat(attacker, defender)
+	}
+	if err != nil {
 		return err
 	}
 	if initial, ok := w.combatEngine.(interface {

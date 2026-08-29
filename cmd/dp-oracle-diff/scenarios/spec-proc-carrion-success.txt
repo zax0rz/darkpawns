@@ -1,0 +1,80 @@
+# C-first vehicle for the successful SPECIAL(carrion) branch.  One matching
+# command keeps the spawned mob's duplicate-name combat key unambiguous in the
+# Go engine while the peer proves the room audience.  The corpse/corpses/pile
+# aliases are the same C substring branch and are pinned by focused tests.
+# C path: src/interpreter.c:1407-1416 -> src/spec_procs2.c:1726-1754 ->
+# db.c read_mobile / comm.c act / fight.c hit.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Carrionsuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Carrionsuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Carrionobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Carrionobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14305
+teleport Carrionobserver 14305
+
+[probe]
+say corpse
+
+# depth-case: room.carrion-spawn-audience
+# depth-case: room.carrion-spawn-state
+# depth-case: room.carrion-hit-delegation
+# depth-case: room.carrion-return-intercept

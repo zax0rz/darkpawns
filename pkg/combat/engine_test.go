@@ -631,6 +631,36 @@ func TestPerformRound_DefenderRetaliates(t *testing.T) {
 	}
 }
 
+func TestStartCombatFromMobDefersDefenderEnrollment(t *testing.T) {
+	original := GetCallbacks()
+	t.Cleanup(func() { SetCallbacks(original) })
+	SetCallbacks(defaultCombatCallbacks())
+
+	attacker := &mockCombatant{
+		name: "stalker", npc: true, room: 1, level: 40, hp: 100, maxHP: 100,
+		position: PosStanding,
+	}
+	defender := &mockCombatant{
+		name: "victim", room: 1, level: 40, hp: 100, maxHP: 100,
+		position: PosStanding,
+	}
+
+	ce := NewCombatEngine()
+	ce.MessageFunc = func(Combatant, Combatant, int, int) bool { return true }
+	if err := ce.StartCombatFromMob(attacker, defender); err != nil {
+		t.Fatalf("StartCombatFromMob failed: %v", err)
+	}
+	if got := defender.GetFighting(); got != "" {
+		t.Fatalf("defender fighting before damage = %q, want empty", got)
+	}
+	if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+		t.Fatalf("PerformInitialAttack failed: %v", err)
+	}
+	if got := defender.GetFighting(); got != attacker.GetName() {
+		t.Fatalf("defender fighting after damage = %q, want %q", got, attacker.GetName())
+	}
+}
+
 func TestPerformRoundUsesReverseEngagementOrder(t *testing.T) {
 	attacker := dp900Fighter("Attacker")
 	defender := dp900Fighter("Defender")

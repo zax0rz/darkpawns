@@ -492,15 +492,31 @@ func (m *MobInstance) SetLevel(level int) {
 	m.Level = level
 }
 
+// SetDamroll overrides the mob's instance-local GET_DAMROLL value. C specials
+// may assign points.damroll on a spawned mobile without changing its shared
+// prototype (src/spec_procs2.c:1743).
+func (m *MobInstance) SetDamroll(damroll int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.DamrollOverride = &damroll
+}
+
 // GetDamageRoll returns the damage dice for the mob's attacks.
 func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.Prototype != nil {
+		plus := m.Prototype.Damage.Plus
+		if m.Runtime.DamrollOverride != nil {
+			// The mob-file damage plus is the normal Go representation of the
+			// C damroll value. Once C overwrites points.damroll, it must not be
+			// counted again as the dice roll's plus component.
+			plus = 0
+		}
 		return combat.DiceRoll{
 			Num:   m.Prototype.Damage.Num,
 			Sides: m.Prototype.Damage.Sides,
-			Plus:  m.Prototype.Damage.Plus,
+			Plus:  plus,
 		}
 	}
 	return combat.DiceRoll{Num: 0, Sides: 0, Plus: 0} // bare hands
@@ -862,6 +878,9 @@ func (m *MobInstance) GetDamroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	total := 0
+	if m.Runtime.DamrollOverride != nil {
+		total = *m.Runtime.DamrollOverride
+	}
 	for _, item := range m.Equipment {
 		if item == nil || item.Prototype == nil {
 			continue
