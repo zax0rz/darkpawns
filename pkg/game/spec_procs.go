@@ -1073,38 +1073,31 @@ func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 // cuchi — mob spec: Easter egg + random speech.
 // Matches src/spec_procs.c:1034-1071.
 func specCuchi(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// "pat" command: Orodreth gets promoted; everyone else gets 10 gold (Easter egg)
-	if cmd == "pat" {
-		w.roomMessage(me.RoomVNum, ch.GetName()+" pats "+me.GetName()+" on the head and rubs around her ears.")
-		sendToChar(ch, "You pat "+me.GetName()+" on the head and rub around her ears.\r\n")
-		if ch.GetName() == "Orodreth" {
-			ch.SetLevel(LVL_IMPL)
-			sendToChar(ch, "Cuchi purrs at you contently.\r\n")
-			w.roomMessage(me.RoomVNum, me.GetName()+" purrs contently at "+ch.GetName()+".")
-		} else {
-			ch.mu.Lock()
-			ch.Gold += 10
-			ch.mu.Unlock()
-			sendToChar(ch, "Cuchi purrs at you and bestows a gift from the gods.\r\n")
-			w.roomMessage(me.RoomVNum, me.GetName()+" purrs at "+ch.GetName()+" and bestows a gift from the gods.")
-		}
-		return true
-	}
-
-	if cmd != "" || number(0, 4) != 0 {
+	// C's CMD_IS("pat") gate is command-table based, so autonomous dispatch
+	// (cmd == "") and every other command fall through without side effects.
+	if cmd != "pat" || ch == nil || me == nil {
 		return false
 	}
-	cuchiSayings := []string{
-		"I am not amused.",
-		"You're all just jealous.",
-		"*sigh* Nobody understands me.",
-		"Minions of the universe, unite!",
-		"I am the master of all I survey.",
-		"Bow before me, mortals!",
-		"Your insolence will be your undoing.",
+
+	// The C act() calls use ch as the actor and TO_ROOM, so the command actor
+	// receives only the two stc() messages and everyone else receives the two
+	// room messages. The literal Cuchi is intentional; it is not me's runtime
+	// short description.
+	sendToChar(ch, "You pat Cuchi on the head and rub around her ears.")
+	Act(w, false, ch, nil, nil, nil, "$n pats Cuchi on the head and rubs around her ears.", "", ToRoom)
+
+	if ch.GetName() == "Orodreth" {
+		ch.SetLevel(LVL_IMPL)
+		sendToChar(ch, "Cuchi purrs at you contently.")
+		Act(w, false, ch, nil, nil, nil, "Cuchi purrs contently at $n.", "", ToRoom)
+	} else {
+		ch.mu.Lock()
+		ch.Gold += 10
+		ch.mu.Unlock()
+		sendToChar(ch, "Cuchi purrs at you and bestows a gift from the gods.")
+		Act(w, false, ch, nil, nil, nil, "Cuchi purrs at $n and bestows a gift from the gods.", "", ToRoom)
 	}
-	saying := cuchiSayings[randN(len(cuchiSayings))]
-	w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
+
 	return true
 }
 
