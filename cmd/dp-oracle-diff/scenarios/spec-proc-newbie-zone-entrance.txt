@@ -1,0 +1,51 @@
+# C-first vehicle for the assigned room SPECIAL(newbie_zone_entrance), room
+# 16300 in src/spec_assign.c:607 and src/spec_procs.c:2262-2276. The room's
+# south door is opened by the God before testing the special. Levels 10, 11,
+# and 31 exercise ordinary movement, the mortal newbie-zone block, and the
+# immortal fallthrough respectively.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2262-2276 ->
+# act.movement.c do_move.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 16300 none
+
+[setup:oracle]
+Newbiezonegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Newbiezonegod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 16300
+set Newbiezonegod level 11
+
+[probe]
+south
+
+# depth-case: room.newbie-zone-block
+# depth-case: room.newbie-zone-return-intercept

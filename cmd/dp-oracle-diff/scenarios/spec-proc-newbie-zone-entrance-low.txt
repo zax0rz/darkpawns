@@ -1,0 +1,49 @@
+# C-first vehicle for the low-level fallthrough of the assigned room
+# SPECIAL(newbie_zone_entrance). A God lowers itself to level 10 while in room
+# 16300; C's level gate is false below NEWBIE_LEVEL, so opened south reaches
+# ordinary movement.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2262-2276 ->
+# act.movement.c do_move.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 16300 none
+
+[setup:oracle]
+Newbiezonelow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Newbiezonelow
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 16300
+set Newbiezonelow level 10
+
+[probe]
+south
+
+# depth-case: room.newbie-zone-low-level-fallthrough
