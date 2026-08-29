@@ -153,26 +153,38 @@ func specJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 func specDracula(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if w == nil || me == nil {
+		return false
+	}
 	if cmd != "look" && cmd != "" {
 		return false
 	}
 
-	if cmd == "" && me.IsFighting() {
-		return specMagicUser(w, ch, me, cmd, arg)
-	}
-
-	arg = strings.TrimSpace(arg)
-	if !strings.Contains(strings.ToLower(arg), strings.ToLower(me.GetName())) {
+	if cmd == "" {
+		if me.IsFighting() {
+			return specMagicUser(w, ch, me, cmd, arg)
+		}
 		return false
 	}
 
-	sendToChar(ch, "You feel mesmerized... your will weakens.\r\n")
-	sendToChar(ch, fmt.Sprintf("%s sinks his fangs into your neck!\r\n", me.GetName()))
-	w.roomMessage(me.GetRoom(), fmt.Sprintf("$n looks at %s.\r\n", me.GetName()))
-	w.roomMessage(me.GetRoom(), fmt.Sprintf("%s gazes intently at $n.\r\n", me.GetName()))
-	w.roomMessage(me.GetRoom(), fmt.Sprintf("%s sinks his fangs into $n!\r\n", me.GetName()))
+	if ch == nil || ch.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
+		return false
+	}
+	arg = strings.TrimSpace(arg)
+	if !isnameWithAbbrevs(arg, charKeywords(me)) {
+		return false
+	}
 
-	sendToChar(ch, "Your blood boils with a stinging fire...\r\n")
+	sendToChar(ch, "You feel mesmerized... your will weakens.")
+	sendToChar(ch, fmt.Sprintf("%s sinks his fangs into your neck!", me.GetName()))
+	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("$n looks at %s.\r\n", me.GetName()), "", ToRoom)
+	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("%s gazes intently at $n.\r\n", me.GetName()), "", ToRoom)
+	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("%s sinks his fangs into $n!\r\n", me.GetName()), "", ToRoom)
+	w.DoSay(ch, "Now I know... The blood is the life!")
+	if ch.GetFlags()&(1<<uint(PlrVampire)) == 0 && ch.GetFlags()&(1<<uint(PlrWerewolf)) == 0 {
+		ch.SetPlrFlag(PlrVampire, true)
+		sendToChar(ch, "Your blood boils with a stinging fire...")
+	}
 
 	return true
 }

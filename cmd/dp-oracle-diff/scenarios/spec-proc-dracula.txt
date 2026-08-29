@@ -1,0 +1,86 @@
+# depth-case: mob.dracula-entry-gates
+# depth-case: mob.dracula-look-bite
+# depth-case: mob.dracula-audience
+# depth-case: mob.dracula-vampire-state
+# depth-case: mob.dracula-return-intercept
+# C-first vehicle for SPECIAL(dracula), registered at vnums 7903 and 14110 in
+# src/spec_assign.c:262,432 and implemented at src/spec_procs.c:1799-1840.
+# The active 14110 vehicle is placed in room 8105;
+# `look lothar` reaches the command branch while the immortal-only warmup is
+# lowered to a mortal before the probe. C also has a commandless fighting arm
+# delegating to magic_user; that re-entrant call path is covered separately by
+# the native magic_user combat vehicle and is not duplicated here.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14110 1 8105 80
+strip-mob-script 14110
+replace-room-exits 8105 none
+
+[setup:oracle]
+Vampgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Vampgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Vampwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Vampwitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Vampwitness level 1
+teleport Vampwitness 8105
+set Vampgod level 1
+
+[probe]
+look lothar
