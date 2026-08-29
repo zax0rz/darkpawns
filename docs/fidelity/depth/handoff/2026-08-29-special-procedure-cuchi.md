@@ -29,7 +29,7 @@
 
 All required local gates passed: `go build ./...`, `go vet ./...`, `go test ./...`, `golangci-lint run ./...`, `gofumpt -l .` clean, and `make fidelity-depth` exit 0. The post-slice frontier is 890 total cases; 868 proven/delegated; 6 blocked; 16 excluded; actionable completion 868/874 (99.3%).
 
-The cuchi slice is on branch `glm/spec-cuchi`; its PR is to be opened after this handoff is committed. The pre-existing untracked `docs/briefs/BRIEF-2026-08-28-economy-specproc-cluster.md` remains preserved and uncommitted.
+The cuchi slice was merged from `glm/spec-cuchi` in PR #736 at `bdbea4d4d` after green lint, security, and test checks; build/deploy were skipped by workflow policy. The pre-existing untracked `docs/briefs/BRIEF-2026-08-28-economy-specproc-cluster.md` remains preserved and uncommitted.
 
 ## Next queue item
 
