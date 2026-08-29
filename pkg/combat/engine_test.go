@@ -312,6 +312,19 @@ func (r fixedRoller) Number(_, _ int) int { return r.number }
 func (r fixedRoller) Dice(_, _ int) int   { return 1 }
 func (r fixedRoller) IntN(int) int        { return 0 }
 
+type zeroTwiceThenOneRoller struct{ calls int }
+
+func (r *zeroTwiceThenOneRoller) Number(_, _ int) int {
+	r.calls++
+	if r.calls <= 3 {
+		return 0
+	}
+	return 1
+}
+
+func (r *zeroTwiceThenOneRoller) Dice(_, _ int) int { return 1 }
+func (r *zeroTwiceThenOneRoller) IntN(int) int      { return 0 }
+
 func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)
@@ -464,19 +477,23 @@ func TestMobRedirect_HighLevelSwitcheroo(t *testing.T) {
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
 		GetRoomCombatants: func(roomVNum int) []Combatant {
-			return []Combatant{dragon, tank, rogue}
+			// C scans the complete room list, including the current
+			// defender. Keep the alternate fighter first so the fixed
+			// switcheroo draw selects Rogue, as the source call path does.
+			return []Combatant{dragon, rogue, tank}
 		},
 	})
 	if err := ce.StartCombat(dragon, tank); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
 
-	WithRoller(fixedRoller{number: 0}, func() {
+	roller := &zeroTwiceThenOneRoller{}
+	WithRoller(roller, func() {
 		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Tank"}])
 	})
 
 	if dragon.GetFighting() != "Rogue" {
-		t.Fatalf("expected high-level mob retargeted to Rogue, got %q", dragon.GetFighting())
+		t.Fatalf("expected high-level mob retargeted to Rogue, got %q (roller calls=%d)", dragon.GetFighting(), roller.calls)
 	}
 	if _, ok := ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Rogue"}]; !ok {
 		t.Fatal("expected combat pair redirected to Rogue")
