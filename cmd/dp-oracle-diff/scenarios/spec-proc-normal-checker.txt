@@ -1,0 +1,91 @@
+# depth-case: mob.normal-checker-entry-gates
+# depth-case: mob.normal-checker-target-gate
+# depth-case: mob.normal-checker-not-victim-audience
+# depth-case: mob.normal-checker-victim-warning
+# depth-case: mob.normal-checker-hit-boundary
+# depth-case: mob.normal-checker-pulse-dispatch
+# depth-case: mob.normal-checker-return-intercept
+# C-first vehicle for SPECIAL(normal_checker), assigned to 18301-18304 in
+# src/spec_assign.c:411-414 and defined at src/spec_procs2.c:162-187.
+# This is an autonomous mobile_activity() path: src/mobact.c:68-93 calls the
+# procedure as (ch, ch, 0, "") only for an awake, non-fighting MOB_SPEC mob.
+# The special itself scans world[ch->in_room].people in C list order, selects
+# the first non-NPC below LVL_IMMORT, sends act(... TO_NOTVICT), sends the
+# victim-specific warning, calls hit(TYPE_UNDEFINED), and returns TRUE.
+# The checker is spawned in a room with no exits so the probe isolates this
+# special from wandering.  The primary and passive peer are both mortals;
+# the primary's audience view distinguishes TO_NOTVICT from the victim's
+# warning and native hit output.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18301 1 8105 183
+strip-mob-script 18301
+replace-room-exits 8105 none
+
+[setup:oracle]
+Normalactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Normalactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Normalpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Normalpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Normalpeer 8105
+
+[probe]
+~dpclock pulse 40
+score

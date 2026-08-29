@@ -148,10 +148,10 @@ func specNormalChecker(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() && pl.GetLevel() < 50 {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s sees %s and jumps quite high!", mobName(me), pl.GetName()))
-			sendToChar(pl, fmt.Sprintf("%s sees you and jumps high, right at you!\r\n", mobName(me)))
-			if err := me.Attack(pl, w); err != nil {
+		if !pl.IsNPC() && pl.GetLevel() < LVL_IMMORT {
+			Act(w, true, me, pl, nil, nil, "$n sees $N and jumps quite high!", "", ToNotVict)
+			Act(nil, false, me, pl, nil, nil, "$n sees you and jumps high, right at you!", "", ToVict)
+			if err := w.mobHit(me, pl); err != nil {
 				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 			}
 			return true

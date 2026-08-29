@@ -721,7 +721,7 @@ func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 		Act(w, false, me, nil, nil, nil,
 			"$n says, 'We don't like OUTLAWS like you in this city!'", "", ToRoom)
-		if err := w.cityguardHit(me, tch); err != nil {
+		if err := w.mobHit(me, tch); err != nil {
 			slog.Warn("cityguard outlaw attack failed", "guard", me.GetName(), "target", tch.GetName(), "error", err)
 		}
 		return specFighter(w, ch, me, cmd, arg)
@@ -754,7 +754,7 @@ func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	if evil != nil && evilTarget.GetAlignment() >= 0 {
 		Act(w, false, me, evil, nil, nil,
 			"$n says, 'You just pissed me off, $N!'", "", ToRoom)
-		if err := w.cityguardHit(me, evil); err != nil {
+		if err := w.mobHit(me, evil); err != nil {
 			slog.Warn("cityguard protect attack failed", "guard", me.GetName(), "target", evil.GetName(), "error", err)
 		}
 		return specFighter(w, ch, me, cmd, arg)
@@ -798,15 +798,15 @@ func cityguardCombatantByName(w *World, roomVNum int, name string) combat.Combat
 	return nil
 }
 
-// cityguardHit mirrors C hit(): cityguard's special calls the synchronous
-// combat entry, not the placeholder damage helper used by older mob paths.
-// The fallback keeps focused spec tests useful when they intentionally omit a
-// combat engine; production worlds provide the canonical initial-attack seam.
-func (w *World) cityguardHit(attacker *MobInstance, defender combat.Combatant) error {
+// mobHit mirrors C hit(): a mob special calls the synchronous combat entry,
+// not the placeholder damage helper used by older mob paths. The fallback
+// keeps focused spec tests useful when they intentionally omit a combat
+// engine; production worlds provide the canonical initial-attack seam.
+func (w *World) mobHit(attacker *MobInstance, defender combat.Combatant) error {
 	if w.combatEngine == nil {
 		player, ok := defender.(*Player)
 		if !ok {
-			return fmt.Errorf("cityguard fallback cannot attack non-player %q", defender.GetName())
+			return fmt.Errorf("mob special fallback cannot attack non-player %q", defender.GetName())
 		}
 		return attacker.Attack(player, w)
 	}
