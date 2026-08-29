@@ -561,16 +561,18 @@ func specOroQuartersRoom(w *World, ch *Player, me *MobInstance, cmd string, arg 
 }
 
 func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me.IsNPC() || cmd != "north" {
+	// Room specials receive no mob receiver; C's IS_MOB(ch) gate is already
+	// represented by the player-only handler boundary. A non-nil receiver is
+	// retained as the equivalent NPC guard for focused direct-call tests.
+	if (me != nil && me.IsNPC()) || cmd != "north" {
 		return false
 	}
 
 	if ch.Name != "Orodreth" {
-		w.roomMessage(me.GetRoom(), "A strong force jolts $n in $s attempt to leave north.")
-		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
-		ch.mu.Lock()
+		Act(w, false, ch, nil, nil, nil,
+			"A strong force jolts $n in $s attempt to leave north.", "", ToRoom)
+		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.")
 		ch.SetHP(ch.GetHP() / 2)
-		ch.mu.Unlock()
 		return true
 	}
 

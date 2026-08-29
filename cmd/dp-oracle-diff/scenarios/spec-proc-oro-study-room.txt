@@ -1,0 +1,86 @@
+# C-first vehicle for SPECIAL(oro_study_room), assigned to room 18399 in
+# src/spec_assign.c:613 and defined in src/spec_procs.c:2321-2337. A player
+# whose name is not Orodreth attempts north, so the special blocks the command,
+# emits an actor warning plus a TO_ROOM jolt, halves HP, and returns TRUE.
+# The exact Orodreth-name fallthrough is covered separately by the focused unit
+# test; room 18399 has no north exit, so its live vehicle proves the FALSE
+# return reaches ordinary do_move without inventing a movement destination.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2321-2337 ->
+# comm.c act / act.movement.c do_move.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Studyactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Studyactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Studypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Studypeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 18399
+teleport Studypeer 18399
+set Studyactor hit 101
+
+[probe]
+north
+
+# depth-case: room.oro-study-command-gate
+# depth-case: room.oro-study-block
+# depth-case: room.oro-study-audience
+# depth-case: room.oro-study-hp-state
+# depth-case: room.oro-study-owner-fallthrough
+# depth-case: room.oro-study-return-intercept
