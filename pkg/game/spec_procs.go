@@ -33,6 +33,11 @@ func randRange(min, max int) int {
 	return dprng.Number(min, max)
 }
 
+// citizenNumber is the C citizen special's RNG seam. It is kept separate from
+// the general helper so focused tests can pin both conditional draws without
+// changing the process-wide stream used by other specials.
+var citizenNumber = dprng.Number
+
 // randN returns a uniform random integer in [0, n). It is exclusive, so it
 // is safe for array indexing and switch selection. For C-style inclusive
 // probability gates use number(from, to) instead.
@@ -1015,25 +1020,54 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	return false
 }
 
-// citizen — mob spec: random greetings
+// citizen — mob spec: random greetings.
+// Ported from src/spec_procs.c:986-1032. C calls this with ch==the mob on
+// autonomous/combat paths, while command dispatch supplies the player as ch;
+// the nil/non-nil distinction preserves that NPC gate in this signature.
 func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || number(0, 8) != 0 {
+	if me == nil || ch != nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	citizenSayings := []string{
-		"Don't speak to me.",
-		"Piss off.",
-		"Get out of my face.",
-		"Nice day.",
-		"Good weather we're having.",
-		"Huh?  What?  I'm busy.",
-		"I've got an axe to grind.",
-		"Who are you?",
-		"Get away from me!",
+
+	if me.GetFighting() != "" {
+		switch me.GetPosition() {
+		case combat.PosSitting:
+			Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
+			me.SetPosition(combat.PosStanding)
+		case combat.PosResting:
+			Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
+			me.SetPosition(combat.PosStanding)
+		}
+		return false
 	}
-	saying := citizenSayings[randN(len(citizenSayings))]
-	w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
-	return true
+
+	if citizenNumber(0, 19) != 0 {
+		return false
+	}
+
+	switch citizenNumber(1, 10) {
+	case 1:
+		Act(w, true, me, nil, nil, nil, "$n jingles some change in $s pocket.", "", ToRoom)
+	case 2:
+		Act(w, true, me, nil, nil, nil, "$n stares into the sky.", "", ToRoom)
+		Act(w, true, me, nil, nil, nil, "$n says, 'Looks like rain. *sigh*'", "", ToRoom)
+	case 3:
+		Act(w, true, me, nil, nil, nil, "$n glances at you out of the corner of $s eye.", "", ToRoom)
+	case 4:
+		Act(w, true, me, nil, nil, nil, "$n mumbles something about the price of a crappy loaf of bread.", "", ToRoom)
+	case 5:
+		Act(w, true, me, nil, nil, nil, "$n kicks a pebble out of the road.", "", ToRoom)
+	case 6:
+		Act(w, true, me, nil, nil, nil, "$n looks at you and shouts 'Repent! The end is near!'", "", ToRoom)
+	case 7:
+		Act(w, true, me, nil, nil, nil, "$n eyes your coin purse.", "", ToRoom)
+	case 8:
+		Act(w, true, me, nil, nil, nil, "$n looks around for the cityguards just before giving you the bird.", "", ToRoom)
+	}
+
+	// C returns FALSE even when it emits a room message, allowing the rest of
+	// mobile_activity() to continue with its normal AI work.
+	return false
 }
 
 // cuchi — mob spec: Easter egg + random speech.

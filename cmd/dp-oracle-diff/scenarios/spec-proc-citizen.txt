@@ -1,0 +1,98 @@
+# depth-case: mob.citizen-entry-gates
+# depth-case: mob.citizen-standing-recovery
+# depth-case: mob.citizen-sayings
+# depth-case: mob.citizen-silent-partition
+# depth-case: mob.citizen-pulse-dispatch
+# depth-case: mob.citizen-audience
+# depth-case: mob.citizen-rng-draw-parity
+# C-first vehicle for SPECIAL(citizen). Mob vnums 8062 and 18202 are active
+# registrations; 8062 is the first source-table vehicle.
+# mobile_activity() invokes the special only for an awake, non-fighting NPC;
+# perform_violence() invokes it after an NPC's ordinary attack loop, where the
+# fighting branch can stand a downed-but-awake citizen. The special's own gate
+# is src/spec_procs.c:986-989 and its random room-only switch is :995-1032.
+# The fixed pulses cross the 40-heartbeat mobile cadence while the God and
+# passive peer prove C's room audience and random draw branch.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8062 1 8105 80
+strip-mob-script 8062
+replace-room-exits 8105 none
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Watcher
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Watcher
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Watcher 8105
+
+[probe]
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
