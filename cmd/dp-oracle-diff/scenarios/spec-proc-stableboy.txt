@@ -1,0 +1,110 @@
+# depth-case: mob.stableboy-command-gates
+# depth-case: mob.stableboy-list-tell
+# depth-case: mob.stableboy-buy-argument-gate
+# depth-case: mob.stableboy-buy-affordability-gate
+# depth-case: mob.stableboy-stable-empty-gate
+# depth-case: mob.stableboy-collect-empty-gate
+# depth-case: mob.stableboy-fallthrough
+# depth-case: mob.stableboy-audience
+# C-first vehicle for SPECIAL(stableboy), assigned to mob vnum 8022 in
+# src/spec_assign.c:282 and defined at src/spec_procs2.c:315-461.
+# The real stablehand prototype is scriptless in the disposable copy and
+# placed in a no-exit room. Both players use the ordinary start-room route to
+# reach it; the probe then exercises direct tells, empty-state gates, and the
+# FALSE fallthrough without inventing a mount-success vehicle.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+strip-mob-script 8022
+replace-room-exits 8105 none
+
+[setup:oracle]
+Stableactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Stableactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:peer]
+Stablepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Stablepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Stablepeer 8105
+
+[probe]
+list
+buy
+buy horseman
+buy horse extra
+buy Horse
+buy horse
+stable
+collect
+xyzzy
