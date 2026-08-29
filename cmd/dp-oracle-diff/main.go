@@ -136,7 +136,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -196,6 +196,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		if err := applyMobFixtures(goWorld, scenario.MobFixtures); err != nil {
 			return fmt.Errorf("apply Go port mob fixtures: %w", err)
+		}
+		if err := applyMobFlagFixtures(filepath.Join(oracleData, "world"), scenario.MobFlagFixtures); err != nil {
+			return fmt.Errorf("apply C oracle mob flag fixtures: %w", err)
+		}
+		if err := applyMobFlagFixtures(goWorld, scenario.MobFlagFixtures); err != nil {
+			return fmt.Errorf("apply Go port mob flag fixtures: %w", err)
 		}
 		if err := applyMobAffFixtures(filepath.Join(oracleData, "world"), scenario.MobAffFixtures); err != nil {
 			return fmt.Errorf("apply C oracle mob aff fixtures: %w", err)
@@ -639,6 +645,68 @@ func applyMobFixtures(worldDir string, fixtures []oraclediff.MobFixture) error {
 		}
 		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
+		}
+	}
+	return nil
+}
+
+// applyMobFlagFixtures clears action flags on authoritative mob prototypes in
+// disposable worlds. RANDZON is currently the only supported flag: the C
+// remorter carries it, but a source-derived fixed-room vehicle needs that
+// placement behavior removed identically from both copies.
+func applyMobFlagFixtures(worldDir string, fixtures []oraclediff.MobFlagFixture) error {
+	for _, fixture := range fixtures {
+		if !strings.EqualFold(fixture.Flag, "RANDZON") {
+			return fmt.Errorf("unsupported mob flag %q", fixture.Flag)
+		}
+		path := filepath.Join(worldDir, "mob", fmt.Sprintf("%d.mob", fixture.MobVNum/100))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		lines := strings.Split(string(data), "\n")
+		header := fmt.Sprintf("#%d", fixture.MobVNum)
+		inTarget := false
+		blocksClosed := 0
+		patched := false
+		for index, line := range lines {
+			if strings.HasPrefix(line, "#") {
+				inTarget = line == header
+				blocksClosed = 0
+				continue
+			}
+			if !inTarget || patched {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
+			if blocksClosed < 4 {
+				if strings.HasSuffix(trimmed, "~") {
+					blocksClosed++
+				}
+				continue
+			}
+			fields := strings.Fields(line)
+			if len(fields) < 1 {
+				return fmt.Errorf("mob %d action flag line %q is empty", fixture.MobVNum, line)
+			}
+			mask, parseErr := strconv.ParseUint(fields[0], 10, 64)
+			if parseErr != nil {
+				return fmt.Errorf("mob %d action flag line %q is invalid: %w", fixture.MobVNum, line, parseErr)
+			}
+			mask &^= 1 << 20 // MOB_RANDZON, src/structs.h:267
+			fields[0] = strconv.FormatUint(mask, 10)
+			lines[index] = strings.Join(fields, " ")
+			patched = true
+		}
+		if !patched {
+			return fmt.Errorf("mob %d not found or flag line not reached in %s", fixture.MobVNum, path)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer-derived vnum
+			return fmt.Errorf("write mob file for vnum %d: %w", fixture.MobVNum, err)
 		}
 	}
 	return nil

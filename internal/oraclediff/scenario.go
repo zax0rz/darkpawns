@@ -35,6 +35,7 @@ type Scenario struct {
 	ObjectSpawns     []ObjectSpawnFixture
 	MobFixtures      []MobFixture
 	MobAffFixtures   []MobAffFixture
+	MobFlagFixtures  []MobFlagFixture
 	ObjIndexFixtures []ObjIndexFixture
 	WldIndexFixtures []WldIndexFixture
 	QuietZones       []int
@@ -95,6 +96,14 @@ type MobFixture struct {
 type MobAffFixture struct {
 	MobVNum int
 	AffMask int
+}
+
+// MobFlagFixture clears one action flag on a mob prototype in disposable
+// worlds. This is used only when an authoritative procedure's placement flag
+// (such as RANDZON) would otherwise make a two-engine room vehicle impossible.
+type MobFlagFixture struct {
+	MobVNum int
+	Flag    string
 }
 
 // ObjIndexFixture adds one filename to the disposable obj index so the boot
@@ -175,6 +184,7 @@ type AudienceProbeBlock struct {
 //	inert-scroll 8038         # patch this prototype in disposable worlds only
 //	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
 //	set-mob-aff 18306 128     # mob, innate affected-by bitmask (AFF_* positions)
+//	clear-mob-flag 4 RANDZON # clear one action flag in the disposable copy
 //	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
 //	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
@@ -355,6 +365,14 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				affMask, affErr := strconv.Atoi(fields[2])
 				if mobErr == nil && affErr == nil && mobVNum > 0 && affMask > 0 {
 					sc.MobAffFixtures = append(sc.MobAffFixtures, MobAffFixture{MobVNum: mobVNum, AffMask: affMask})
+					continue
+				}
+			}
+			if len(fields) == 3 && strings.EqualFold(fields[0], "clear-mob-flag") {
+				mobVNum, mobErr := strconv.Atoi(fields[1])
+				flag := strings.ToUpper(fields[2])
+				if mobErr == nil && mobVNum > 0 && flag == "RANDZON" {
+					sc.MobFlagFixtures = append(sc.MobFlagFixtures, MobFlagFixture{MobVNum: mobVNum, Flag: flag})
 					continue
 				}
 			}

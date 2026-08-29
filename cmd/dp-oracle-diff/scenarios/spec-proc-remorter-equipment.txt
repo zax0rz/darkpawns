@@ -1,0 +1,49 @@
+# depth-case: mob.remorter-equipment-gate
+# C-first vehicle for the naked-body gate. Gold is set before demoting the
+# first-player God, then the real starter sword is wielded.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4 999 8044 80
+clear-mob-flag 4 RANDZON
+
+[setup:oracle]
+GearGate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GearGate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8044
+set GearGate gold 60000
+remove all
+load obj 8037
+wield sword
+set GearGate level 30
+
+[probe]
+remort
