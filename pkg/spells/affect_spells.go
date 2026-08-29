@@ -2146,80 +2146,190 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 	type valuer interface{ GetValue(int) int }
 	type affecter interface{ GetAffects() []parser.ObjAffect }
 	type namer interface{ GetName() string }
+	type shortDescer interface{ GetShortDesc() string }
 	type weighter interface{ GetWeight() int }
 	type coster interface{ GetCost() int }
+	type extraFlagger interface{ GetExtraFlags() [4]int }
 
 	sendToCaster(ch, "You feel informed:\r\n")
 
-	if n, ok := ovict.(namer); ok {
-		sendToCaster(ch, "Object: "+n.GetName()+"\r\n")
+	objectName := ""
+	if d, ok := ovict.(shortDescer); ok {
+		objectName = d.GetShortDesc()
 	}
-
-	// Item type
+	if objectName == "" {
+		if n, ok := ovict.(namer); ok {
+			objectName = n.GetName()
+		}
+	}
+	itemType := -1
 	if tf, ok := ovict.(typeFlagger); ok {
-		typeNames := map[int]string{
-			1: "container", 2: "liquid container", 3: "key",
-			4: "staff", 5: "weapon", 6: "scroll", 7: "ward",
-			8: "misc", 9: "armor", 10: "potion", 11: "worn",
-			12: "other", 13: "trash", 14: "trap",
-			15: "npc corpse", 16: "pc corpse", 17: "drink container",
-			18: "fountain", 19: "food", 20: "money",
-			22: "boat", 23: "fountain",
-		}
-		if name, ok := typeNames[tf.GetTypeFlag()]; ok {
-			sendToCaster(ch, "Item type: "+name+"\r\n")
-		} else {
-			sendToCaster(ch, "Item type: unknown\r\n")
-		}
+		itemType = tf.GetTypeFlag()
 	}
+	typeName := identifyItemTypeName(itemType)
+	sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
 
-	// Weight and cost
+	// C's object bitvector is not exposed by the Go object interface yet; the
+	// parsed object format has no corresponding field, so this is NOBITS for
+	// current instances and preserves the live C output for ordinary objects.
+	sendToCaster(ch, "Item will give you following abilities:  "+identifyBits([4]int{}, identifyAffectedBitNames)+"\r\n")
+	extra := [4]int{}
+	if ef, ok := ovict.(extraFlagger); ok {
+		extra = ef.GetExtraFlags()
+	}
+	sendToCaster(ch, "Item is: "+identifyBits(extra, identifyExtraBitNames)+"\r\n")
+
+	weight := 0
 	if w, ok := ovict.(weighter); ok {
-		sendToCaster(ch, fmt.Sprintf("Weight: %d\r\n", w.GetWeight()))
+		weight = w.GetWeight()
 	}
+	cost := 0
 	if c, ok := ovict.(coster); ok {
-		sendToCaster(ch, fmt.Sprintf("Value: %d\r\n", c.GetCost()))
+		cost = c.GetCost()
 	}
+	sendToCaster(ch, fmt.Sprintf("Encumbrance: %d, Value: %d\r\n", weight, cost))
 
-	// Type-specific info
-	tf, _ := ovict.(typeFlagger)
 	v, _ := ovict.(valuer)
-	if tf != nil && v != nil {
-		switch tf.GetTypeFlag() {
-		case 5: // ITEM_WEAPON
-			sendToCaster(ch, fmt.Sprintf("Damage: %dD%d\r\n", v.GetValue(1), v.GetValue(2)))
-			avg := float64((v.GetValue(2)+1)/2) * float64(v.GetValue(1))
-			sendToCaster(ch, fmt.Sprintf("Average damage: %.1f\r\n", avg))
-		case 9: // ITEM_ARMOR
-			sendToCaster(ch, fmt.Sprintf("AC-apply: %d\r\n", v.GetValue(0)))
-		case 4, 6, 10: // ITEM_STAFF, ITEM_SCROLL, ITEM_POTION
-			// Spell contents
+	if v != nil {
+		switch itemType {
+		case 2, 10: // ITEM_SCROLL, ITEM_POTION
+			var spells string
 			for i := 1; i <= 3; i++ {
-				if v.GetValue(i) >= 1 {
-					sendToCaster(ch, fmt.Sprintf("Spell slot %d: %d\r\n", i, v.GetValue(i)))
+				if value := v.GetValue(i); value >= 1 {
+					spells += " " + identifySpellName(value)
 				}
 			}
+			sendToCaster(ch, fmt.Sprintf("This %s casts:%s\r\n", typeName, spells))
+		case 3, 4: // ITEM_WAND, ITEM_STAFF
+			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\nIt has %d maximum charge%s and %d remaining.\r\n",
+				typeName, identifySpellName(v.GetValue(3)), v.GetValue(1), pluralS(v.GetValue(1)), v.GetValue(2)))
+		case 5: // ITEM_WEAPON
+			sendToCaster(ch, fmt.Sprintf("Damage Dice is '%dD%d' for an average per-round damage of %.1f.\r\n",
+				v.GetValue(1), v.GetValue(2), ((float64(v.GetValue(2)+1)/2.0)*float64(v.GetValue(1)))))
+		case 9: // ITEM_ARMOR
+			sendToCaster(ch, fmt.Sprintf("AC-apply is %d\r\n", v.GetValue(0)))
 		}
 	}
 
-	// Affects
 	if a, ok := ovict.(affecter); ok {
-		affects := a.GetAffects()
-		applyNames := map[int]string{
-			17: "AC", 18: "hitroll", 19: "damroll", 1: "strength",
-			2: "dexterity", 3: "intelligence", 4: "wisdom",
-			5: "constitution", 6: "charisma",
-		}
-		for _, aff := range affects {
-			if aff.Location != 0 && aff.Modifier != 0 {
-				name := applyNames[aff.Location]
-				if name == "" {
-					name = fmt.Sprintf("apply(%d)", aff.Location)
-				}
-				sendToCaster(ch, fmt.Sprintf("Affects: %s by %d\r\n", name, aff.Modifier))
+		found := false
+		for _, aff := range a.GetAffects() {
+			if aff.Location == 0 || aff.Modifier == 0 {
+				continue
+			}
+			if !found {
+				sendToCaster(ch, "Can affect you as :\r\n")
+				found = true
+			}
+			switch aff.Location {
+			case 29: // APPLY_SPELL
+				sendToCaster(ch, fmt.Sprintf("   Permanent %s when equipped.\r\n", identifyAffectedBitName(aff.Modifier)))
+			case 25: // APPLY_RACE_HATE
+				sendToCaster(ch, fmt.Sprintf("   Extra damage to: %ss.\r\n", identifyMobRaceName(aff.Modifier)))
+			default:
+				sendToCaster(ch, fmt.Sprintf("   Affects: %s By %d\r\n", identifyApplyTypeName(aff.Location), aff.Modifier))
 			}
 		}
 	}
+}
+
+var identifyItemTypes = []string{
+	"UNDEFINED", "LIGHT", "SCROLL", "WAND", "STAFF", "WEAPON", "FIRE WEAPON", "MISSILE",
+	"TREASURE", "ARMOR", "POTION", "WORN", "OTHER", "TRASH", "TRAP", "CONTAINER",
+	"NOTE", "LIQ CONTAINER", "KEY", "FOOD", "MONEY", "PEN", "BOAT", "FOUNTAIN",
+}
+
+var identifyExtraBitNames = []string{
+	"GLOW", "HUM", "!RENT", "!DONATE", "!INVIS", "INVIS", "MAGIC", "!DROP", "BLESS", "!GOOD",
+	"!EVIL", "!NEU", "!MAGE", "!CLE", "!THI", "!WAR", "!SELL", "NAMED", "!PSI", "!NIN",
+	"!PAL", "!MAGUS", "!ASS", "!AVA", "RARE", "!LOCATE", "!RAN", "!MYS", "TWOHANDS",
+}
+
+var identifyAffectedBitNames = []string{
+	"BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC", "SENSE-LIFE", "WATERWALK", "SANCT",
+	"GROUP", "CURSE", "INFRA", "POISON", "PROT-EVIL", "PROT-GOOD", "SLEEP", "!TRACK", "FLESH-ALTER",
+	"DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM", "FOLLOW", "WIMPY", "KUJI-KIRI", "CUTTHROAT", "FLY",
+	"WEREWOLF", "VAMPIRE", "MOUNTED", "INVULN", "FLAMING", "NOTHING", "HASTE", "SLOW", "DREAM",
+	"WATERBREATHE", "METALSKIN", "ROBBED",
+}
+
+var identifyApplyTypes = []string{
+	"NONE", "STR", "DEX", "INT", "WIS", "CON", "CHA", "CLASS", "LEVEL", "AGE", "CHAR_WEIGHT",
+	"CHAR_HEIGHT", "MAXMANA", "MAXHIT", "MAXMOVE", "GOLD", "EXP", "ARMOR", "HITROLL", "DAMROLL",
+	"SAVING_PARA", "SAVING_ROD", "SAVING_PETRI", "SAVING_BREATH", "SAVING_SPELL", "RACE_HATE", "HIT_REGEN",
+	"MANA_REGEN", "MOVE_REGEN", "PERM_SPELL",
+}
+
+var identifyMobRaces = []string{
+	"Human", "Elf", "Dwarf", "Kender", "Centaur", "Rakshasa", "Troll", "Lycanthrope", "Vampire",
+	"Undead", "Dragon", "Demon", "Horse", "Reptile", "Arachnid", "Rodent", "Other", "Vegetable",
+	"Giant", "Demi-god", "Ogre", "Insect", "Mammal", "Fish", "Avian", "Magical Construct", "Amphibian",
+	"Humanoid", "Faery", "Ssaur", "Minotaur",
+}
+
+func identifyBits(flags [4]int, names []string) string {
+	result := ""
+	for word, flag := range flags {
+		bits := uint32(flag)
+		for bit := 0; bits != 0; bit++ {
+			if bits&1 != 0 {
+				index := word*32 + bit
+				if index < len(names) && names[index] != "" {
+					result += names[index] + " "
+				} else {
+					result += "UNDEFINED "
+				}
+			}
+			bits >>= 1
+		}
+	}
+	if result == "" {
+		return "NOBITS "
+	}
+	return result
+}
+
+func identifyItemTypeName(itemType int) string {
+	if itemType >= 0 && itemType < len(identifyItemTypes) {
+		return identifyItemTypes[itemType]
+	}
+	return "UNDEFINED"
+}
+
+func identifySpellName(spellNum int) string {
+	name := SpellRawName(spellNum)
+	if name == "" {
+		return "UNDEFINED"
+	}
+	return name
+}
+
+func identifyAffectedBitName(bit int) string {
+	if bit >= 0 && bit < len(identifyAffectedBitNames) {
+		return identifyAffectedBitNames[bit]
+	}
+	return "UNDEFINED"
+}
+
+func identifyApplyTypeName(location int) string {
+	if location >= 0 && location < len(identifyApplyTypes) {
+		return identifyApplyTypes[location]
+	}
+	return "UNDEFINED"
+}
+
+func identifyMobRaceName(race int) string {
+	if race >= 0 && race < len(identifyMobRaces) {
+		return identifyMobRaces[race]
+	}
+	return "UNDEFINED"
+}
+
+func pluralS(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }
 
 func castIdentifyCharacter(level int, ch, cvict interface{}) {

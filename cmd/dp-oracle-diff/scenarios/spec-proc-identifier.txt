@@ -1,0 +1,61 @@
+# depth-case: mob.identifier-list
+# depth-case: mob.identifier-value-entry-gates
+# depth-case: mob.identifier-value-success-tell
+# depth-case: mob.identifier-give-entry-gates
+# depth-case: mob.identifier-give-fallthrough
+# depth-case: mob.identifier-fallthrough
+# C-first vehicle for SPECIAL(identifier), src/spec_procs2.c:1193-1280. The
+# real registered Ferrenx identifier is mob vnum 8087 in room 8116; its
+# identifier.lua script is stripped from disposable copies. Bread is moved to
+# the actor during drained warmup so value lookup sees ch->carrying.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8087 1 8116 80
+strip-mob-script 8087
+replace-room-exits 8116 none
+spawn-obj 8010 1 8116 80
+
+[setup:oracle]
+IdentifierActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+IdentifierActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8116
+get bread
+
+[probe]
+list
+value
+value bread
+value sword
+give
+give bread
+give bread nobody
+xyzzy

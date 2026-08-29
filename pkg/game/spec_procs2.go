@@ -1301,6 +1301,92 @@ func specTattoo3(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	return false
 }
 
+// identifierValCost reproduces val_cost() from src/spec_procs2.c:1179-1191.
+// The magic surcharge is part of the C helper even though the first proof
+// vehicle uses an ordinary loaf of bread.
+func identifierValCost(obj *ObjectInstance) int {
+	if obj == nil {
+		return 1
+	}
+	cost := obj.GetCost()
+	price := cost / 10
+	if cost >= 5000 {
+		price = int(float64(cost) * 0.14)
+	}
+	if obj.HasExtraFlag(0, itemExtraMagic) {
+		price += cost / 20
+	}
+	if price < 1 {
+		return 1
+	}
+	return price
+}
+
+// specIdentifier is the identifier mob special.
+// C: src/spec_procs2.c:1193-1280. The unusual give syntax is intentional:
+// the procedure only consumes "give <object> <identifier-keyword>" and lets
+// normal do_give handle every other form.
+func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if ch == nil || me == nil {
+		return false
+	}
+
+	switch strings.ToLower(cmd) {
+	case "list":
+		tellFromMob(me, ch, "Just read the sign!")
+		return true
+	case "value":
+		arg = skipSpaces(arg)
+		if arg == "" {
+			tellFromMob(me, ch, "Value what?")
+			return true
+		}
+		obj, ok := w.ResolveObjectInInventory(ch, arg)
+		if !ok {
+			tellFromMob(me, ch, "You don't seem to have that.")
+			return true
+		}
+		tellFromMob(me, ch, fmt.Sprintf("I'll identify that fully for about %d coins.", identifierValCost(obj)))
+		return true
+	case "give":
+		if skipSpaces(arg) == "" {
+			return false
+		}
+		objName, rest := oneArgument(arg)
+		targetName, _ := oneArgument(rest)
+		if objName == "" || targetName == "" || !isnameWithAbbrevs(targetName, charKeywords(me)) {
+			return false
+		}
+		obj, ok := w.ResolveObjectInInventory(ch, objName)
+		if !ok {
+			return false
+		}
+
+		price := identifierValCost(obj)
+		if ch.GetGold() < price {
+			tellFromMob(me, ch, fmt.Sprintf("That's a fine item, but I'll need %d coins from you to id it.. and you're a little short..", price))
+			tellFromMob(me, ch, "Keep it until you get the gold.")
+			return true
+		}
+
+		ch.SetGold(ch.GetGold() - price)
+		Act(nil, false, ch, me, obj, nil, "You give $p to $N.", "", ToChar)
+		Act(nil, false, ch, me, obj, nil, "$n gives you $p.", "", ToVict)
+		Act(w, true, ch, me, obj, nil, "$n gives $p to $N.", "", ToNotVict)
+		Act(w, true, me, nil, nil, nil, "$n studies it carefully, comparing it to ancient texts,\r\nweighing it on scales, and chanting a number of odd spells over its surface.", "", ToRoom)
+		Act(nil, false, me, ch, obj, nil, "Finally looking up, you give $p back to $N.", "", ToChar)
+		Act(nil, false, me, ch, obj, nil, "Finally looking up, $n gives you back $p.", "", ToVict)
+		Act(w, true, me, ch, obj, nil, "Finally looking up, $n gives back $p to $N.", "", ToNotVict)
+		Act(nil, false, ch, me, obj, nil, "$N touches your forehead, and knowledge fills your mind.", "", ToChar)
+		Act(nil, false, ch, me, obj, nil, "You touch $n gently on the forehead.", "", ToVict)
+		Act(w, true, ch, me, obj, nil, "$N touches $n gently on the forehead.", "", ToNotVict)
+		ch.SendMessage("\r\n")
+		spells.CallMagic(ch, nil, obj, spells.SpellIdentify, ch.GetLevel(), spells.CastSpell, w)
+		return true
+	}
+	return false
+}
+
 // ================================================================
 // eviltrade — Trade keys for experience points
 // ================================================================
@@ -1334,42 +1420,6 @@ func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 	}
 	return false
-}
-
-// ================================================================
-// identifier — Identify items/characters for a level-based fee
-// ================================================================
-func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "identify" {
-		return false
-	}
-	if ch.IsNPC() {
-		return false
-	}
-	a := strings.TrimSpace(arg)
-	if a == "" {
-		sendToChar(ch, "Identify what?\r\n")
-		return true
-	}
-	cost := ch.GetLevel() * 50
-	if ch.GetGold() < cost {
-		sendToChar(ch, "You can't afford it!\r\n")
-		return true
-	}
-	ch.SetGold(ch.GetGold() - cost)
-	// Look up item in inventory by name
-	if ch.Inventory != nil {
-		items := ch.Inventory.FindItems(a)
-		if len(items) > 0 {
-			obj := items[0]
-			sendToChar(ch, fmt.Sprintf("%s studies %s carefully...\r\n", mobName(me), obj.GetShortDesc()))
-			// Cast identify on the object
-			spells.Cast(ch, obj, spells.SpellIdentify, ch.GetLevel(), w)
-			return true
-		}
-	}
-	sendToChar(ch, "No such thing around.\r\n")
-	return true
 }
 
 // ================================================================

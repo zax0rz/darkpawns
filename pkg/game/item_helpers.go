@@ -353,6 +353,9 @@ func (w *World) FindPlayerInRoom(vnum int, name string) *Player {
 
 // FindMobInRoom finds a mob by name in a specific room
 func (w *World) FindMobInRoom(vnum int, name string) *MobInstance {
+	if strings.TrimSpace(name) == "" {
+		return nil
+	}
 	for _, m := range w.GetMobsInRoom(vnum) {
 		if strings.HasPrefix(strings.ToLower(m.GetName()), strings.ToLower(name)) {
 			return m
