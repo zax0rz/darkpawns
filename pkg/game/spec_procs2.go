@@ -1637,29 +1637,20 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 }
 
 // ================================================================
-// jail — Say "release" to be set free (costs 25% gold + 25% move)
+// jail — registered room special whose commandless body is unreachable
 // ================================================================
 func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
-		return false
-	}
-	if cmd == "say" && strings.Contains(arg, "release") {
-		gold := int(ch.GetGold() * 25 / 100)
-		move := int(ch.GetMove() * 25 / 100)
-		if gold < 1 {
-			gold = 1
-		}
-		if move < 1 {
-			move = 1
-		}
-		ch.SetGold(ch.GetGold() - gold)
-		ch.SpendMove(move)
-		sendToChar(ch, "A guard opens the cell door and lets you out.\r\n")
-		ch.SetRoom(8117) // release room per C source
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s is released from jail.", ch.GetName()))
-		ch.SetPosition(combat.PosStanding)
-		return true
-	}
+	// C's room special receives a nonzero command index from both interpreter.c
+	// and the movement path, so its first `if (cmd || mini_mud)` gate always
+	// returns FALSE on the real player-facing call path. In particular, the C
+	// body does not implement a `say release` command; retaining that invented
+	// Go branch would violate R1/R2/R5e. The commandless timer body is not
+	// reachable from either C dispatcher and remains an explicit fallthrough.
+	_ = w
+	_ = ch
+	_ = me
+	_ = arg
+	_ = cmd
 	return false
 }
 
