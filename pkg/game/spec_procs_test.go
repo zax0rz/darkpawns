@@ -896,32 +896,31 @@ func TestSpecDumpNonDropPassThrough(t *testing.T) {
 	}
 }
 
-// TestSpecHorn_UseHornDoesNotPanic verifies that specHorn handles object-spec
-// dispatch where me is nil (DP-QA#3). It must not panic and must emit correct
-// actor/room messages using the player's name instead of un-interpolated $n/$P.
+// TestSpecHorn_UseHornDoesNotPanic verifies the object-aware horn dispatch
+// receives the concrete held object and emits the exact actor bytes.
 func TestSpecHorn_UseHornDoesNotPanic(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
+	horn := NewObjectInstance(&parser.Obj{
+		VNum:      14415,
+		Keywords:  "silver horn",
+		ShortDesc: "a silver horn",
+		WearFlags: [4]int{16385},
+	}, -1)
+	if err := player.Inventory.AddItem(horn); err != nil {
+		t.Fatalf("add horn to inventory: %v", err)
+	}
+	if err := player.Equipment.Equip(horn, player.Inventory); err != nil {
+		t.Fatalf("hold horn: %v", err)
+	}
 
-	// Object specs are dispatched with me = nil; arg carries the use target.
-	if got := specHorn(w, player, nil, "use", "horn"); !got {
+	if got := specHornObject(w, player, horn, "use", "horn"); !got {
 		t.Fatal("specHorn should handle 'use horn'")
 	}
 
 	output := lastMsg()
-	if !strings.Contains(output, "You inhale deeply then blow hard!") {
-		t.Errorf("output missing blow text: %q", output)
-	}
-	if !strings.Contains(output, "A blaring note resounds through the air.") {
-		t.Errorf("output missing blare text: %q", output)
-	}
-	if strings.Contains(output, "$n") || strings.Contains(output, "$P") {
-		t.Errorf("output contains un-interpolated tokens: %q", output)
-	}
-	if !strings.Contains(output, "Tester blows into a horn.") {
-		t.Errorf("output missing horn use text: %q", output)
-	}
-	if !strings.Contains(output, "A horn lets out a blaring note...") {
-		t.Errorf("output missing second blare text: %q", output)
+	want := "You inhale deeply then blow hard!\r\nA blaring note resounds through the air.\r\n"
+	if output != want {
+		t.Errorf("actor output = %q, want %q", output, want)
 	}
 }
 
