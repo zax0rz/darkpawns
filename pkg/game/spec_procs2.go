@@ -1423,21 +1423,55 @@ func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 // ================================================================
-// tattoo4 — Remove shadowy tattoo to fully heal
+// tattoo4 — Buy one of the sleazy tattoo artist's three tattoos.
+// C: src/spec_procs2.c:1282-1340, src/constants.c:174-193,1416-1433
 // ================================================================
+
+var tattoo4Offers = [...]tattooOffer{
+	{number: TattooWorm, price: 25000, name: "of an ice worm", description: "hit with the fierceness of the remorhaz"},
+	{number: TattooDragon, price: 30666, name: "of a green dragon", description: "grow stronger and hit harder"},
+	{number: TattooSkull, price: 18000, name: "of a flaming skull", description: "summon a flaming skull to aid against thy enemies."},
+}
+
 func specTattoo4(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil || ch.IsNPC() || me == nil {
 		return false
 	}
-	if cmd == "remove" && strings.Contains(arg, "tattoo") {
-		if ch.GetFighting() != "" {
-			sendToChar(ch, "You can't do that while fighting!\r\n")
-		} else {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s concentrates and the tattoo disappears...", ch.GetName()))
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's tattoo glows brightly and then fades away...", ch.GetName()))
-			ch.SetHP(ch.GetMaxHP())
-			ch.SetMove(ch.GetMaxMove())
+
+	switch strings.ToLower(cmd) {
+	case "list":
+		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
+		ch.SendMessage("Available tattoos are:\r\n")
+		for i, offer := range tattoo4Offers {
+			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
 		}
+		return true
+	case "buy":
+		arg = skipSpaces(arg)
+		if arg == "" {
+			sendToChar(ch, "Buy what number?")
+			return true
+		}
+		if arg[0] < '0' || arg[0] > '9' {
+			sendToChar(ch, "Buy by number!")
+			return true
+		}
+		choice := atoi(arg)
+		if choice >= len(tattoo4Offers) {
+			sendToChar(ch, "Buy by number!")
+			return true
+		}
+		if ch.Tattoo != TattooNone {
+			tellFromMob(me, ch, "Get outta here, punk, you already have one. ")
+			return true
+		}
+
+		offer := tattoo4Offers[choice]
+		if ch.GetGold() < offer.price {
+			tellFromMob(me, ch, "You don't have enough gold, get outta here!")
+			return true
+		}
+		giveTattoo(w, ch, me, offer)
 		return true
 	}
 	return false
