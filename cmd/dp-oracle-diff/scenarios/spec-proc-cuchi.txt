@@ -1,0 +1,87 @@
+# depth-case: mob.cuchi-ordinary-pat
+# depth-case: mob.cuchi-audience
+# depth-case: mob.cuchi-argument-ignored
+# depth-case: mob.cuchi-return-intercept
+# C-first vehicle for SPECIAL(cuchi), registered at vnum 18306 in
+# src/spec_assign.c:415 and implemented at src/spec_procs.c:1034-1071.
+# Cuchi is command-only: CMD_IS("pat") is the first and only entry gate, and
+# the argument is ignored. The ordinary actor receives two stc() lines and the
+# passive peer receives the two TO_ROOM act() lines; the handler returns TRUE,
+# so do_action never emits a second social transcript.
+#
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs.c:1034-1071 ->
+# src/comm.c:2392-2555. The Orodreth promotion arm and +10-gold state arm are
+# both pinned by focused unit tests because the live harness exposes only one
+# command actor per scenario.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18306 1 8105 80
+strip-mob-script 18306
+replace-room-exits 8105 none
+
+[setup:oracle]
+Cuchipater
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cuchipater
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Cuchiwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Cuchiwitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Cuchiwitness 8105
+
+[probe]
+pat nowhere
