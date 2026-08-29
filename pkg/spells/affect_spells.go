@@ -2270,7 +2270,7 @@ var identifyMobRaces = []string{
 func identifyBits(flags [4]int, names []string) string {
 	result := ""
 	for word, flag := range flags {
-		bits := uint32(flag)
+		bits := identifyFlagWord(flag)
 		for bit := 0; bits != 0; bit++ {
 			if bits&1 != 0 {
 				index := word*32 + bit
@@ -2287,6 +2287,13 @@ func identifyBits(flags [4]int, names []string) string {
 		return "NOBITS "
 	}
 	return result
+}
+
+func identifyFlagWord(flag int) uint32 {
+	if flag < 0 || uint64(flag) > uint64(^uint32(0)) {
+		return 0
+	}
+	return uint32(flag)
 }
 
 func identifyItemTypeName(itemType int) string {
