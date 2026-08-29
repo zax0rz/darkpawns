@@ -167,7 +167,12 @@ func init() {
 	// special procedures intercept them first; these handlers preserve C's
 	// generic fallback when no matching special procedure is present.
 	for _, name := range []string{
-		"balance", "check", "collect", "deposit", "hire", "mail", "offer",
+		"balance", "check", "collect", "deposit", "hire", "mail",
+	} {
+		registerCommand(name, wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
+	}
+	registerCommand("offer", wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
+	for _, name := range []string{
 		"recharge", "receive", "remort", "rent", "retrieve", "stable", "value",
 		"withdraw",
 	} {
