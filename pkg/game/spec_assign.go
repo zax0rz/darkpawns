@@ -9,6 +9,11 @@ package game
 // Real implementations live in spec_procs.go; this defines the interface.
 type SpecFunc func(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 
+// ObjSpecFunc is the object-special signature used by the C command path.
+// Unlike SpecFunc, it preserves the actual object instance receiving the
+// command, which matters for object identity and equipment-slot gates.
+type ObjSpecFunc func(w *World, ch *Player, obj *ObjectInstance, cmd string, arg string) bool
+
 // MobSpecAssign maps mob virtual number (VNum) to spec procedure name.
 // Source: assign_mobiles() in spec_assign.c
 var MobSpecAssign = map[int]string{
@@ -397,9 +402,20 @@ var RoomSpecAssign = map[int]string{
 // registrations early.
 var SpecRegistry = map[string]SpecFunc{}
 
+// ObjSpecRegistry contains object specials that need the concrete object
+// receiver. Object specials that do not need it continue to use SpecRegistry
+// through GetObjSpecForObject's compatibility adapter.
+var ObjSpecRegistry = map[string]ObjSpecFunc{}
+
 // RegisterSpec registers a special procedure handler by name.
 func RegisterSpec(name string, fn SpecFunc) {
 	SpecRegistry[name] = fn
+}
+
+// RegisterObjSpec registers an object-special handler that receives the
+// concrete object instance dispatched by the command path.
+func RegisterObjSpec(name string, fn ObjSpecFunc) {
+	ObjSpecRegistry[name] = fn
 }
 
 // GetMobSpec returns the spec function for a mob VNum, or nil.
@@ -414,6 +430,25 @@ func GetMobSpec(vnum int) SpecFunc {
 func GetObjSpec(vnum int) SpecFunc {
 	if name, ok := ObjSpecAssign[vnum]; ok {
 		return SpecRegistry[name]
+	}
+	return nil
+}
+
+// GetObjSpecForObject returns the object-aware handler for vnum. Existing
+// object specials retain their historical SpecFunc behavior through a nil-mob
+// adapter until they are individually proven to need the concrete receiver.
+func GetObjSpecForObject(vnum int) ObjSpecFunc {
+	name, ok := ObjSpecAssign[vnum]
+	if !ok {
+		return nil
+	}
+	if fn := ObjSpecRegistry[name]; fn != nil {
+		return fn
+	}
+	if fn := SpecRegistry[name]; fn != nil {
+		return func(w *World, ch *Player, _ *ObjectInstance, cmd string, arg string) bool {
+			return fn(w, ch, nil, cmd, arg)
+		}
 	}
 	return nil
 }

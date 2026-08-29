@@ -480,7 +480,7 @@ func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
 		if item == nil {
 			continue
 		}
-		if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+		if spec := GetObjSpecForObject(item.VNum); spec != nil && spec(w, ch, item, direction, "") {
 			return true
 		}
 	}
@@ -489,7 +489,7 @@ func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
 			if item == nil {
 				continue
 			}
-			if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+			if spec := GetObjSpecForObject(item.VNum); spec != nil && spec(w, ch, item, direction, "") {
 				return true
 			}
 		}
@@ -499,7 +499,7 @@ func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
 			if item == nil {
 				continue
 			}
-			if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+			if spec := GetObjSpecForObject(item.VNum); spec != nil && spec(w, ch, item, direction, "") {
 				return true
 			}
 		}

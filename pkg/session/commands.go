@@ -686,8 +686,8 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 			roomItems := s.manager.world.GetItemsInRoom(roomVNum)
 			for _, item := range roomItems {
 				if item != nil {
-					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
 							return nil
 						}
 					}
@@ -700,8 +700,8 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 			equipped := s.player.Equipment.GetEquippedItems()
 			for _, item := range equipped {
 				if item != nil {
-					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
 							return nil
 						}
 					}
@@ -714,8 +714,8 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 			invItems := s.player.Inventory.FindItems("")
 			for _, item := range invItems {
 				if item != nil {
-					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
 							return nil
 						}
 					}
@@ -833,7 +833,8 @@ func doorBroadcast(s *Session, message string) {
 	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
 }
 
-// cmdUse handles using an item (wand/staff/potion/scroll) or falls back to using a skill.
+// cmdUse handles using an item through C's do_use path. The original command
+// has no skill-use fallback: an unmatched target is reported by do_use.
 func cmdUse(s *Session, args []string) error {
 	if s.player == nil {
 		return fmt.Errorf("not logged in")
@@ -848,8 +849,8 @@ func cmdUse(s *Session, args []string) error {
 	// C do_use SCMD_USE (act.other.c:920): "tattoo" is a keyword special-case;
 	// otherwise the target must be EQUIPPED (WEAR_HOLD then any worn slot),
 	// matched by keyword — never inventory, and only wand/staff are usable.
-	// When nothing equipped matches, Go falls through to its skill-use extension
-	// (which has no C do_use analog).
+	// When nothing equipped matches, continue through C do_use so object-special
+	// fallthrough preserves the original command surface and bytes.
 	if strings.EqualFold(itemArg, "tattoo") {
 		s.manager.world.DoUse(s.player, strings.Join(args, " "))
 		return nil
@@ -864,7 +865,8 @@ func cmdUse(s *Session, args []string) error {
 		return nil
 	}
 
-	return command.CmdUseSkill(s, args)
+	s.manager.world.DoUse(s.player, strings.Join(args, " "))
+	return nil
 }
 
 // cmdSave saves the player's character.

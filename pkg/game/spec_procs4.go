@@ -36,6 +36,7 @@ func init() {
 	RegisterSpec("oro_study_room", specOroStudyRoom)
 	RegisterSpec("bank", specBank)
 	RegisterSpec("horn", specHorn)
+	RegisterObjSpec("horn", specHornObject)
 }
 
 func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
@@ -661,19 +662,54 @@ func atoiC(s string) int {
 	return sign * value
 }
 
-func specHorn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "use" {
+// specHorn is retained in the common registry for compatibility with direct
+// SpecFunc callers. The C object dispatch supplies the concrete object, so the
+// faithful command path uses specHornObject below.
+func specHorn(_ *World, _ *Player, _ *MobInstance, _ string, _ string) bool {
+	return false
+}
+
+// sendToZoneExceptRoom mirrors comm.c send_to_zone for SPECIAL(horn): awake
+// players in the same zone receive the message, except everyone in the
+// actor's room (which also excludes the actor).
+func (w *World) sendToZoneExceptRoom(roomVNum int, msg string) {
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return
+	}
+	zone := room.Zone
+
+	w.mu.RLock()
+	players := make([]*Player, 0, len(w.players))
+	for _, p := range w.players {
+		players = append(players, p)
+	}
+	w.mu.RUnlock()
+
+	for _, p := range players {
+		if p == nil || p.GetPosition() <= combat.PosSleeping || p.GetRoomVNum() == roomVNum {
+			continue
+		}
+		if playerRoom := w.GetRoomInWorld(p.GetRoomVNum()); playerRoom != nil && playerRoom.Zone == zone {
+			p.SendMessage(msg)
+		}
+	}
+}
+
+func specHornObject(w *World, ch *Player, obj *ObjectInstance, cmd string, arg string) bool {
+	if cmd != "use" || ch == nil || obj == nil || ch.Equipment == nil {
 		return false
 	}
 
-	arg = strings.TrimSpace(arg)
-	if !strings.Contains(strings.ToLower(arg), "horn") {
+	held, ok := ch.Equipment.GetItemInSlot(SlotHold)
+	if !ok || held != obj || !isName(strings.TrimSpace(arg), obj.GetKeywords()) {
 		return false
 	}
 
-	sendToChar(ch, "You inhale deeply then blow hard!\r\n")
-	sendToChar(ch, "A blaring note resounds through the air.\r\n")
-	w.roomMessage(ch.GetRoomVNum(), ch.GetName()+" blows into a horn.")
-	w.roomMessage(ch.GetRoomVNum(), "A horn lets out a blaring note...")
+	w.sendToZoneExceptRoom(ch.GetRoomVNum(), "You hear the blaring of a loud horn.\r\n")
+	sendToChar(ch, "You inhale deeply then blow hard!")
+	sendToChar(ch, "A blaring note resounds through the air.")
+	Act(w, true, ch, nil, nil, obj, "$n blows into $P.", "", ToRoom)
+	Act(w, false, ch, nil, nil, obj, "$P lets out a blaring note...", "", ToRoom)
 	return true
 }

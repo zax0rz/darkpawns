@@ -1,0 +1,120 @@
+# depth-case: obj.horn-command-gate
+# depth-case: obj.horn-held-object-gate
+# depth-case: obj.horn-keyword-gate
+# depth-case: obj.horn-zone-audience
+# depth-case: obj.horn-actor-output
+# depth-case: obj.horn-room-audience
+# depth-case: obj.horn-fallthrough
+# The registered horn is object #14415 (src/spec_assign.c:558), whose native
+# SPECIAL(horn) body is in src/spec_procs.c. The object is spawned in room
+# 8056, the actor holds it, and a same-zone peer is kept in room 8057 so the
+# C send_to_zone audience is distinct from the TO_ROOM act audience.
+# C path: src/interpreter.c:1407-1475 -> src/spec_procs.c SPECIAL(horn) ->
+# comm.c send_to_zone / act().
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 14415 99 8056 144
+force-load 14415
+
+[setup:oracle]
+Hornactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hornactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:roompeer]
+Hornroompeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:roompeer]
+Hornroompeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:zonepeer]
+Hornzonepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:zonepeer]
+Hornzonepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8056
+teleport Hornroompeer 8056
+teleport Hornzonepeer 8057
+get horn
+hold horn
+
+[probe]
+use horn
+use silver
+use horn extra
+remove horn
+use horn
