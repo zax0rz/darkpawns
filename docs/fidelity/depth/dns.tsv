@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_dns	dns	dns.no-argument-warning	D1	command	oracle-green	dns-depth	interpreter.c:418; act.wizard.c:3106-3120	Empty subcommand reaches the C warning instead of the generic unknown-command response.
+do_dns	dns	dns.delete-missing-argument	D1	command	oracle-green	dns-depth	act.wizard.c:3122-3125	The delete arm with no address emits the exact Delete what? line.
+do_dns	dns	dns.delete-malformed-address	D1	command	oracle-green	dns-depth	act.wizard.c:3126-3130	The three-octet sscanf gate rejects malformed input with the same line.
+do_dns	dns	dns.add-missing-arguments	D1	command	oracle-green	dns-depth	act.wizard.c:3145-3148	The add arm requires both IP and host name and emits Add what? when absent.
+do_dns	dns	dns.add-missing-name	D1	command	oracle-green	dns-depth	act.wizard.c:3145-3148	A valid address without a second token remains an add-argument failure.
+do_dns	dns	dns.add-four-octet-entry	D3	state	oracle-green	dns-depth	act.wizard.c:3149-3161	Four parsed octets are prepended into the authoritative hash bucket and acknowledge with OK!.
+do_dns	dns	dns.add-three-octet-entry	D4	state	unit-green	TestExecDNSAddDeletePrefixAndPersistence	act.wizard.c:3149-3161	The optional fourth octet remains -1, matching C's add initialization and persisted cache state.
+do_dns	dns	dns.delete-prefix-matches	D4	state	oracle-green	dns-depth	act.wizard.c:3122-3143	The abbreviated del path marks every entry sharing the first three octets and emits each deletion in bucket-list order.
+do_dns	dns	dns.unknown-subcommand-silent	D1	command	oracle-green	dns-depth	act.wizard.c:3163-3208	An unrecognized non-empty subcommand falls through do_dns without player-facing output.
+do_dns	dns	dns.list-overlapping-sprintf-undefined	D4	command	excluded	-	act.wizard.c:3163-3208; db.c:1781-1810	C's list buffer uses overlapping sprintf input/output, and the empty etc/dns fixture also reaches boot_dns's uninitialized EOF-buffer path; the shipped Linux oracle emits unstable garbage, so this reachable branch is excluded under R1/R5e (precedent: auto.no-arg-listing-undefined).

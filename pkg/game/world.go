@@ -145,6 +145,12 @@ type World struct {
 	gossipMu      sync.RWMutex
 	gossipHistory []gossipEntry
 
+	// DNS cache — loaded from etc/dns on first use and kept in the same
+	// 257-bucket/prepend shape as C's dns_cache[] (db.h:194-201).
+	dnsMu     sync.Mutex
+	dnsCache  [dnsHashBuckets][]dnsEntry
+	dnsLoaded bool
+
 	// CommandExecFunc dispatches player commands through the session layer.
 	// Set by the session manager. If nil, executeCommand is a no-op.
 	CommandExecFunc CommandExecFunc

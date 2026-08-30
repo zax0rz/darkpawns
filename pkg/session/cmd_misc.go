@@ -33,6 +33,15 @@ func cmdDisplay(s *Session, args []string) error {
 	return nil
 }
 
+// cmdDns manages the C DNS cache and pages the list branch through the
+// session descriptor, matching C page_string(ch->desc, ...).
+func cmdDns(s *Session, args []string) error {
+	if page := s.manager.world.ExecDns(s.player, strings.Join(args, " ")); page != "" {
+		PageString(s, page)
+	}
+	return nil
+}
+
 // cmdTransform transforms the player's appearance.
 func cmdTransform(s *Session, args []string) error {
 	s.manager.world.ExecTransform(s.player, strings.Join(args, " "))

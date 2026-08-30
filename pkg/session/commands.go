@@ -268,6 +268,7 @@ func init() {
 	registerCommand("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).")
 	registerCommand("dark", wrapArgs(cmdDark), "Stop combat in the current room.")
 	registerCommand("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.")
+	registerCommand("dns", wrapArgs(cmdDns), "Manage the DNS cache.")
 	registerCommand("idlist", wrapArgs(cmdIdlist), "Dump object ID list to file.")
 	registerCommand("checkload", wrapArgs(cmdCheckload), "Check zone load info for a mob/obj.")
 	registerCommand("poofset", wrapArgs(cmdPoofset), "Set poof in/out messages.")
