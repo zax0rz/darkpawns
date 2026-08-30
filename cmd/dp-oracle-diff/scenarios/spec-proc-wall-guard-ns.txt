@@ -1,0 +1,84 @@
+# C-first vehicle for SPECIAL(wall_guard_ns), registered for mob vnum 8060 by
+# src/spec_assign.c:287 and defined at src/spec_procs2.c:2260-2300. The
+# authored southwest corner has north but no south, so the first autonomous
+# call walks north to room 8124. A disposable church guard there exposes the
+# four post-move TO_ROOM Acts.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8060 1 8060 80
+spawn-mob 8020 1 8124 80
+strip-mob-script 8020
+replace-room-exits 8124 none
+
+[setup:oracle]
+WallWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WallWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+WallPatrolPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+WallPatrolPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8060
+teleport WallPatrolPeer 8124
+
+[probe:peer]
+~dpclock pulse 40
+
+# depth-case: mob.wall-guard-commandless-patrol
+# depth-case: mob.wall-guard-post-move-greeting
+# depth-case: mob.wall-guard-greeting-audience
+# depth-case: mob.wall-guard-state-transition
+# depth-case: mob.wall-guard-entry-gates

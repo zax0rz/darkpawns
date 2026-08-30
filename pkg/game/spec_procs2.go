@@ -2429,21 +2429,25 @@ func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	_, hasSouth := room.Exits["south"]
 
 	if hasSouth && !hasNorth {
-		wallGuardDirToMove = DIR_NORTH
+		wallGuardDirToMove = DIR_SOUTH
 	}
 	if hasNorth && !hasSouth {
-		wallGuardDirToMove = DIR_SOUTH
+		wallGuardDirToMove = DIR_NORTH
 	}
 
 	// Walk the wall: move the mob
 	switch wallGuardDirToMove {
 	case DIR_NORTH:
 		if exit, ok := room.Exits["north"]; ok {
-			me.SetRoom(exit.ToRoom)
+			if err := w.MobTransfer(me, exit.ToRoom); err != nil {
+				return false
+			}
 		}
 	case DIR_SOUTH:
 		if exit, ok := room.Exits["south"]; ok {
-			me.SetRoom(exit.ToRoom)
+			if err := w.MobTransfer(me, exit.ToRoom); err != nil {
+				return false
+			}
 		}
 	}
 
@@ -2453,10 +2457,10 @@ func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 			continue
 		}
 		if mob.IsNPC() && mob.GetVNum() == 8020 && wallGuardTalk {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s snaps to attention and salutes %s!", me.GetShortDesc(), mob.GetShortDesc()))
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'Hello gents!'", me.GetShortDesc()))
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s nods at %s.", mob.GetShortDesc(), me.GetShortDesc()))
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'On your way, soldier!'", mob.GetShortDesc()))
+			Act(w, true, me, mob, nil, nil, "$n snaps to attention and salutes $N!", "", ToRoom)
+			Act(w, true, me, mob, nil, nil, "$n says, 'Hello gents!'", "", ToRoom)
+			Act(w, true, me, mob, nil, nil, "$N nods at $n.", "", ToRoom)
+			Act(w, true, me, mob, nil, nil, "$N says, 'On your way, soldier!'", "", ToRoom)
 			wallGuardTalk = false
 		}
 	}
