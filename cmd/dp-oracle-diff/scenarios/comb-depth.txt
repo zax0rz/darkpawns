@@ -1,0 +1,114 @@
+# comb command vehicle (src/interpreter.c:391; src/act.social.c:102-151;
+# lib/misc/socials:111-119). This record has a complete target matrix and no
+# minimum victim-position gate, including a sleeping target.
+
+# depth-case: comb.no-argument
+# depth-case: comb.target-success
+# depth-case: comb.target-not-found
+# depth-case: comb.self-target
+# depth-case: comb.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Comber
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Comber
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Sleepero 8162
+
+[probe]
+comb
+comb barnaby
+comb nobody
+comb comber
+comb sleepero
