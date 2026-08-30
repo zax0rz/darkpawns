@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -104,36 +105,108 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 }
 
 // DoCutthroat implements do_cutthroat() — attempt throat slit from behind.
-func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
+// Source: src/new_cmds.c:552-655. The command wrapper owns visible target
+// lookup; this function preserves the remaining C gate order and the separate
+// success (damage with set 143) and failure (ordinary hit) paths.
+func DoCutthroat(ch *Player, target combat.Combatant, world *World) SkillResult {
+	if target == nil {
+		return SkillResult{MessageToCh: "Cut what throat where?"}
+	}
+
 	if ch.GetSkill(SkillCutthroat) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You don't know how!"}
+		return SkillResult{MessageToCh: "You're not trained in slitting throats!"}
 	}
 
-	if target.GetPosition() == combat.PosDead {
-		return SkillResult{Success: false, MessageToCh: "They're already dead!"}
+	var (
+		weapon *ObjectInstance
+		ok     bool
+	)
+	if ch.Equipment != nil {
+		weapon, ok = ch.Equipment.GetItemInSlot(SlotWield)
+	}
+	if !ok || weapon == nil {
+		return SkillResult{MessageToCh: "You need to wield a weapon to make it a success."}
+	}
+	if weapon.GetValue(3) != 11 {
+		return SkillResult{MessageToCh: "Only daggers and such can be used for cutting a throat."}
 	}
 
-	// Skill check: D100 vs skill
+	if ch.IsMounted() {
+		return SkillResult{MessageToCh: "Dismount first!"}
+	}
+
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{MessageToCh: "You feel too peaceful to slit a throat!"}
+	}
+
+	if !target.IsNPC() && target.GetLevel() <= 10 {
+		return SkillResult{MessageToCh: fmt.Sprintf("Ancient forces protect %s from your wrath!", target.GetName())}
+	}
+
+	if combatantIsAffected(target, affCutthroat) {
+		return SkillResult{MessageToCh: "Their throat is already slit!"}
+	}
+
+	if ch.GetFighting() != "" || target.GetFighting() != "" {
+		return SkillResult{MessageToCh: "You can't get close enough!"}
+	}
+
+	// C's number(1,101) makes 101 an automatic failure.
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	roll := dprng.Number(1, 100)
-	if roll > ch.GetSkill(SkillCutthroat) {
+	percent := dprng.Number(1, 101)
+	prob := ch.GetSkill(SkillCutthroat)
+	if ch.GetLevel() > LVL_IMMORT {
+		prob = 102
+	}
+	if target.GetLevel() > LVL_IMMORT {
+		prob = -1
+	}
+
+	if percent < prob {
+		// C affect_join(): duration = level*2, APPLY_HITROLL -2, and
+		// AFF_CUTTHROAT. Keep both the runtime affect and the C-compatible bit
+		// because limits.c reads the latter for the ongoing bleed/silence.
+		applyCutthroatAffect(target, ch.GetLevel()*2)
 		return SkillResult{
-			Success:     false,
-			MessageToCh: "Your attempt fails!",
+			Success:             true,
+			Damage:              ch.GetLevel() / 2,
+			MessageToCh:         "You slit their throat from ear to ear!",
+			MessageToVict:       fmt.Sprintf("Suddenly %s slits your throat!", ch.GetName()),
+			SkillMsgType:        SkillCutthroatNum,
+			SkillMsgAfterDamage: true,
+			SkillMsgInDamage:    true,
+			DamageSkill:         SkillCutthroat,
+			PreDamageImprove:    []string{SkillCutthroat},
+			StartCombat:         true,
+			WaitCh:              2,
 		}
 	}
 
-	// C: GET_LEVEL(ch)/2 damage + silence affect
-	damage := ch.GetLevel() / 2
-	target.TakeDamage(damage)
-
 	return SkillResult{
-		Success:       true,
-		Damage:        damage,
-		MessageToCh:   "You slash their throat!",
-		MessageToVict: "Your throat is slashed!",
-		MessageToRoom: fmt.Sprintf("%s slashes %s's throat!", ch.Name, target.GetName()),
+		Success:             false,
+		MessageToCh:         "Your slash at their throat barely misses!",
+		MessageToVict:       fmt.Sprintf("%s makes a vicious lunge at your throat!", ch.GetName()),
+		InitialAttack:       true,
+		SkillMsgAfterDamage: true,
+		StartCombat:         true,
+		WaitCh:              2,
+	}
+}
+
+func applyCutthroatAffect(target combat.Combatant, duration int) {
+	switch victim := target.(type) {
+	case *Player:
+		victim.SetAffect(affCutthroat, true)
+		victim.AddAffect(engine.NewAffectDirect(
+			SkillCutthroatNum,
+			engine.ApplyHitroll,
+			duration,
+			-2,
+			engine.AFFCutthroat,
+			SkillCutthroat,
+		))
+	case *MobInstance:
+		victim.SetAffected(affCutthroat)
 	}
 }
 

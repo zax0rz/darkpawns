@@ -1,0 +1,86 @@
+# C-first low-level-PC protection vehicle for do_cutthroat
+# (src/new_cmds.c:594-599). The God and the level-1 peer share 8105; the
+# piercing weapon and learned skill ensure the ancient-forces gate is reached.
+#
+# depth-case: cutthroat.low-level-player
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Cutthroatlowgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cutthroatlowgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Cutthroatlowpeer]
+Cutthroatlowpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Cutthroatlowpeer]
+Cutthroatlowpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Cutthroatlowpeer 8105
+skillset Cutthroatlowgod 'cutthroat' 100
+load obj 8036
+wield dagger
+
+[probe]
+cutthroat Cutthroatlowpeer
+~dpclock pulse 20

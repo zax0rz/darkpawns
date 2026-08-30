@@ -402,6 +402,11 @@ type SkillResult struct {
 	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.
 	// The caller (sendSkillResult) routes this through the combat engine.
 	StartCombat bool
+	// InitialAttack requests the synchronous ordinary hit() path used by C
+	// skills whose failure arm calls hit(ch, victim, skill). The caller starts
+	// the pair and resolves exactly one weapon attack before applying the
+	// result's wait state.
+	InitialAttack bool
 
 	// RetaliateHit signals that the TARGET immediately hits the actor, mirroring
 	// C's hit(vict, ch, TYPE_UNDEFINED) — used by the MOB_AWARE backstab guard
@@ -428,6 +433,16 @@ type SkillResult struct {
 	// When set, MessageToCh/Vict/Room are emitted before damage and SkillMsgType
 	// is emitted after it. R1/R3 — preserve both byte order and draw order.
 	SkillMsgAfterDamage bool
+	// PreDamageImprove lists improve_skill calls that C makes after its literal
+	// preamble but before damage()/hit(). It is ordered and intentionally
+	// separate from DeferredImprove, whose calls happen after the combat message
+	// and damage path return.
+	PreDamageImprove []string
+	// SkillMsgInDamage says the damage implementation emits SkillMsgType at the
+	// C damage() boundary, before a lethal target enters HandleDeath. This is
+	// needed when the death path removes the target before the command wrapper
+	// can emit the message (R1/R3; cutthroat's damage() call).
+	SkillMsgInDamage bool
 
 	// DamageSkill selects the C skill/attack type used by the damage pipeline.
 	// Empty retains the legacy generic path; callers that pass a numbered skill

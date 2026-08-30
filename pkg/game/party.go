@@ -119,10 +119,6 @@ func calcKillXPShare(chLevel, victimLevel, base int, inGroup bool) int {
 // according to the autosplit preference.
 // Source: fight.c group_gain() lines 708–745, called at die_with_killer() line 1638
 func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGold int, victimLevel int, victimAlign int) {
-	if victimExp <= 0 && victimGold <= 0 {
-		return
-	}
-
 	killerName := killer.GetName()
 	killerRoom := killer.GetRoom()
 
@@ -207,10 +203,6 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 	}
 
 	// --- Experience handling ---
-	if victimExp <= 0 {
-		return
-	}
-
 	members := w.GetGroupMembers(killerName)
 
 	// Solo kill (not in any group) — fight.c group_gain() totMembers==1 path
