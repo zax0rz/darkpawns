@@ -812,19 +812,21 @@ func CmdDisembowel(s SessionInterface, args []string) error {
 		return s.SendMessage(msg)
 	}
 	var target combat.Combatant
-	var found bool
 	world := s.GetWorld()
-	if len(args) > 0 {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
-		if !found {
-			return s.SendMessage("Disembowel who?\r\n")
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName != "" {
+		resolved, found := world.ResolveCharInRoom(ch, targetName)
+		if found {
+			target = resolved.Combatant
 		}
-	} else if ch.GetFighting() != "" {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
-		if !found {
-			return s.SendMessage("Disembowel who?\r\n")
+	}
+	if target == nil && ch.GetFighting() != "" {
+		resolved, found := world.ResolveFightingTarget(ch)
+		if found {
+			target = resolved.Combatant
 		}
-	} else {
+	}
+	if target == nil {
 		return s.SendMessage("Disembowel who?\r\n")
 	}
 	if target.GetName() == ch.Name {
@@ -1658,6 +1660,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				slog.Error("cutthroat initial attack failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
 			}
 		}
+	} else if result.SkillMsgInDamage && result.DamageSkill == game.SkillDisembowel && target != nil {
+		// do_disembowel calls damage(), which owns the post-position skill_message
+		// and the death_cry/raw_kill ordering. Keep that complete path together so
+		// lethal and zero-damage hit() outcomes both select the right C variant.
+		s.GetWorld().DoDisembowelDamage(ch, target, result.Damage)
 	} else if result.Damage > 0 && target != nil {
 		// Route through DoSpellDamage so skill damage uses the same death
 		// pipeline as combat and spells: corpse creation, XP award, kill counter,

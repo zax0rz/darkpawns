@@ -131,6 +131,19 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 	}
 }
 
+// DoDisembowelDamage preserves do_disembowel's damage() call path: damage
+// updates the victim position, emits skill_message after that update, and
+// runs death_cry/raw_kill only after the numbered message and death bytes.
+func (w *World) DoDisembowelDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillDisembowelNum, func() {
+		w.HandleDeath(victim, attacker, SkillDisembowelNum)
+		combat.DeathCry(victim)
+	})
+}
+
 // DoCutthroatDamage completes do_cutthroat's damage() call with the shared C
 // ordering: apply damage, update position, emit message set 143, emit the
 // death-position bytes, then run the game-layer death bookkeeping. The
