@@ -10,13 +10,30 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		return
 	}
 
-	clanNum, c := w.Clans.FindClanByID(ch.ClanID)
-	if c == nil {
-		ch.SendMessage("You don't belong to any clan!\r\n")
-		return
+	var c *Clan
+	var immcom bool
+	if ch.GetLevel() < LVL_IMMORT {
+		_, c = w.Clans.FindClanByID(ch.ClanID)
+		if c == nil || ch.ClanRank == 0 {
+			ch.SendMessage("You don't belong to any clan!\r\n")
+			return
+		}
+	} else {
+		if ch.GetLevel() < LVL_GOD {
+			ch.SendMessage("You do not have clan privileges.\r\n")
+			return
+		}
+		immcom = true
+		amountArg, clanArg := halfChop(arg)
+		arg = amountArg
+		_, c = w.Clans.FindClan(clanArg)
+		if c == nil {
+			ch.SendMessage("Unknown clan.\r\n")
+			return
+		}
 	}
 
-	if action == CBWithdraw && !c.CanWithdraw(ch) {
+	if action == CBWithdraw && !immcom && !c.CanWithdraw(ch) {
 		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
 		return
 	}
@@ -33,7 +50,7 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		return
 	}
 
-	if !isNumber(arg) {
+	if !isClanNumber(arg) {
 		switch action {
 		case CBDeposit:
 			ch.SendMessage("Deposit what?\r\n")
@@ -46,12 +63,7 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 	}
 
 	amount, _ := strconv.Atoi(arg)
-	if amount <= 0 {
-		ch.SendMessage("Amount must be positive.\r\n")
-		return
-	}
 
-	_ = clanNum
 	switch action {
 	case CBWithdraw:
 		if c.Treasure < int64(amount) {
@@ -62,11 +74,13 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		c.Treasure -= int64(amount)
 		ch.SendMessage("You withdraw from the clan's treasure.\r\n")
 	case CBDeposit:
-		if ch.GetGold() < amount {
+		if !immcom && ch.GetGold() < amount {
 			ch.SendMessage("You do not have that kind of money!\r\n")
 			return
 		}
-		ch.SetGold(ch.GetGold() - amount)
+		if !immcom {
+			ch.SetGold(ch.GetGold() - amount)
+		}
 		c.Treasure += int64(amount)
 		ch.SendMessage("You add to the clan's treasure.\r\n")
 	}

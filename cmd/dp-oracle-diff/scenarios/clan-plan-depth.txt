@@ -1,0 +1,88 @@
+# Clan plan editor vehicle (src/clan.c:1391-1438). C enters string_write after
+# the prompt; the following ordinary input lines are editor text until @.
+
+# depth-case: clan.plan-editor-prompt
+# depth-case: clan.plan-editor-completion
+# depth-case: clan.plan-editor-info-state
+# depth-case: clan.plan-editor-replace
+# depth-case: clan.plan-editor-at-prefix
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Clanmate Wolves
+clan enroll Clanmate Wolves
+
+[probe]
+clan set plan Wolves
+This is the first plan.
+It has two lines.
+@
+clan info Wolves
+clan set plan Wolves
+The replacement plan.
+@
+clan info Wolves
+clan set plan Wolves
+@ trailing
+clan info Wolves

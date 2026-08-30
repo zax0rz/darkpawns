@@ -1,0 +1,117 @@
+# Mortal clan-applicant vehicle for clan / do_clan (src/interpreter.c:383,
+# src/clan.c). The primary creates a public clan and lowers its application
+# level so the fresh mortal peer can exercise both application states.
+
+# depth-case: clan.applicant-format
+# depth-case: clan.applicant-status
+# depth-case: clan.applicant-info
+# depth-case: clan.applicant-apply
+# depth-case: clan.applicant-apply-again
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Clanmate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:applicant]
+Clanapply
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:applicant]
+Clanapply
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Clanmate Wolves
+clan enroll Clanmate Wolves
+clan set applev 1 Wolves
+
+[probe:applicant]
+clan
+clan status
+clan info
+clan info Wolves
+clan apply Missing
+clan apply Wolves
+clan status
+clan apply Wolves
+clan status
+clan

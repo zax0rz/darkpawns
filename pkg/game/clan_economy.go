@@ -45,7 +45,7 @@ func (w *World) doClanMoney(ch *Player, arg string, action int) {
 		return
 	}
 
-	if !isNumber(arg) {
+	if !isClanNumber(arg) {
 		ch.SendMessage("Set it to what?\r\n")
 		return
 	}
@@ -116,7 +116,7 @@ func (w *World) doClanAppLevel(ch *Player, arg string) {
 		return
 	}
 
-	if !isNumber(arg) {
+	if !isClanNumber(arg) {
 		ch.SendMessage("Set the application level to what?\r\n")
 		return
 	}

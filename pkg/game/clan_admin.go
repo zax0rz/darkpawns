@@ -5,15 +5,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 func (w *World) doClanRename(ch *Player, arg string) {
 	arg1, arg2 := halfChop(arg)
 
-	if !isNumber(arg1) {
+	if !isClanNumber(arg1) {
 		ch.SendMessage("You need to specify a clan number.\r\n")
 		return
 	}
@@ -36,7 +33,7 @@ func (w *World) doClanRename(ch *Player, arg string) {
 	if len(arg2) > 32 {
 		arg2 = arg2[:32]
 	}
-	c.Name = cases.Title(language.English).String(strings.ToLower(arg2))
+	c.Name = capClanName(arg2)
 	w.SaveClans()
 	ch.SendMessage("Clan renamed.\r\n")
 }
@@ -50,7 +47,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 		w.sendClanFormat(ch)
 		return
 	}
-	if ch.GetLevel() < LVL_IMMORT {
+	if ch.GetLevel() < LVL_GOD {
 		ch.SendMessage("You are not mighty enough to create new clans!\r\n")
 		return
 	}
@@ -61,8 +58,9 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 
 	arg1, arg2 := halfChop(arg)
 
-	leader, hasLeader := w.GetPlayer(arg1)
-	if !hasLeader {
+	target, hasLeader := w.ResolveCharWorld(ch, arg1)
+	leader := target.Player
+	if !hasLeader || leader == nil {
 		ch.SendMessage("The leader of the new clan must be present.\r\n")
 		return
 	}
@@ -86,7 +84,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 	}
 
 	newClan := &Clan{
-		Name:      cases.Title(language.English).String(strings.ToLower(arg2)),
+		Name:      capClanName(arg2),
 		Ranks:     2,
 		Members:   1,
 		Power:     leader.GetLevel(),
@@ -120,7 +118,7 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 		w.sendClanFormat(ch)
 		return
 	}
-	if ch.GetLevel() < LVL_IMMORT {
+	if ch.GetLevel() < LVL_GOD {
 		ch.SendMessage("Your not mighty enough to destroy clans!\r\n")
 		return
 	}

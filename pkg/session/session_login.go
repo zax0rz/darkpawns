@@ -297,6 +297,18 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return err
 	}
 
+	// Clan plan writes use the same PLR_WRITING flag as
+	// notes/mail and are completed by the generic string editor equivalent.
+	if s.player != nil && s.player.ClanPlanWriting {
+		line := cmd.Command
+		if len(cmd.Args) > 0 {
+			line += " " + strings.Join(cmd.Args, " ")
+		}
+		if s.manager.world.HandleClanPlanInput(s.player, line) {
+			return nil
+		}
+	}
+
 	// WriteMagic intercept: a board post uses the same PLR_WRITING flag as
 	// notes/mail, but has its own C string target (mail_to = board + magic).
 	// This must precede the generic PLR_WRITING branch or board lines would be

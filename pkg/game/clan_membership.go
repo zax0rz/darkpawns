@@ -46,7 +46,7 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 					continue
 				}
 				if p.ClanID == c.ID && p.ClanRank == 0 {
-					ch.SendMessage(fmt.Sprintf("%s (offline)\r\n", p.Name))
+					ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
 				}
 			}
 		}
@@ -58,8 +58,9 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 		return
 	}
 
-	victim, hasVictim := w.GetPlayer(targetArg)
-	if !hasVictim {
+	target, hasVictim := w.ResolveCharInRoom(ch, targetArg)
+	victim := target.Player
+	if !hasVictim || victim == nil {
 		ch.SendMessage("Er, Who ??\r\n")
 		return
 	}
@@ -119,8 +120,9 @@ func (w *World) doClanExpel(ch *Player, arg string) {
 		return
 	}
 
-	victim, hasVictim := w.GetPlayer(targetArg)
-	if !hasVictim {
+	target, hasVictim := w.ResolveCharInRoom(ch, targetArg)
+	victim := target.Player
+	if !hasVictim || victim == nil {
 		ch.SendMessage("Er, Who ??\r\n")
 		return
 	}
@@ -171,8 +173,9 @@ func (w *World) doClanPromote(ch *Player, arg string) {
 		return
 	}
 
-	victim, hasVictim := w.GetPlayer(targetArg)
-	if !hasVictim {
+	target, hasVictim := w.ResolveCharInRoom(ch, targetArg)
+	victim := target.Player
+	if !hasVictim || victim == nil {
 		ch.SendMessage("Er, Who ??\r\n")
 		return
 	}
@@ -227,8 +230,9 @@ func (w *World) doClanDemote(ch *Player, arg string) {
 		return
 	}
 
-	victim, hasVictim := w.GetPlayer(targetArg)
-	if !hasVictim {
+	target, hasVictim := w.ResolveCharInRoom(ch, targetArg)
+	victim := target.Player
+	if !hasVictim || victim == nil {
 		ch.SendMessage("Er, Who ??\r\n")
 		return
 	}
@@ -327,7 +331,7 @@ func (w *World) doClanMembers(ch *Player) {
 				if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {
 					rankName = c.RankName[p.ClanRank-1]
 				}
-				ch.SendMessage(fmt.Sprintf("%s %s (offline)\r\n", rankName, p.Name))
+				ch.SendMessage(fmt.Sprintf("%s %s \r\n", rankName, p.Name))
 			}
 		}
 	}
