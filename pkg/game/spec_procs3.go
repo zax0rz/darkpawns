@@ -567,18 +567,31 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // (mobile_activity.c / fight.c call func(ch, ch, 0, "")); ch is nil in the
 // Go autonomous path, so the mob's own state and identity come from me.
 func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetFighting() == "" || me.GetPosition() <= combat.PosSleeping {
+	if w == nil || me == nil || cmd != "" || me.GetFighting() == "" || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s scoffs at you.", mobName(me)))
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'You can't harm me, mortal. Begone.'", mobName(me)))
-	fightingName := me.GetFighting()
-	if fightingName != "" {
-		fighting, _ := w.GetPlayer(fightingName)
-		if fighting != nil {
-			spells.Cast(me, fighting, spells.SpellTeleport, me.GetLevel(), w)
-		}
+
+	// mobile_activity() and perform_violence() pass the actual FIGHTING(ch)
+	// pointer to SPECIAL(), not merely a player-name lookup. Resolve that
+	// combatant before emitting any branch output so mob victims take the same
+	// call path as players (src/mobact.c:68-93; src/fight.c:2030-2031).
+	fighting := mobFightingTarget(w, me)
+	if fighting == nil {
+		return false
 	}
+
+	// C do_action("scoff", GET_NAME(FIGHTING(ch))) reaches the no-arg social
+	// arm because scoff has no char_found message. Its room message is exactly
+	// the social's others_no_arg string; the typed target is ignored.
+	Act(w, false, me, nil, nil, nil, "$n scoffs at the idea.", "", ToRoom)
+	if me.CanSpeak() {
+		Act(w, true, me, nil, nil, nil,
+			"$n says, 'You can't harm me, mortal. Begone.'", "", ToRoom)
+	}
+
+	// SPECIAL calls call_magic() directly. Preserve that native entry point's
+	// position gate rather than routing through command casting.
+	spells.CastFromSpecial(me, fighting, spells.SpellTeleport, me.GetLevel(), w)
 	return true
 }
 

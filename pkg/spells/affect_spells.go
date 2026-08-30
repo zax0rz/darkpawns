@@ -2629,6 +2629,12 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 				slog.Error("CharTransfer failed", "error", err)
 			}
 			sendAffectRoom(cvict, nil, "$n slowly fades into existence.", world)
+			// C calls look_at_room(victim, 0) after the destination act. The
+			// game adapter owns the player-facing room renderer because spells
+			// cannot import pkg/game without creating a cycle.
+			if looker, ok := world.(interface{ LookAtRoomForSpell(victim interface{}) }); ok {
+				looker.LookAtRoomForSpell(cvict)
+			}
 			return
 		}
 	}
