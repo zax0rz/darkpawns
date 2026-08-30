@@ -1,0 +1,92 @@
+# C-first vehicle for SPECIAL(con_seller), defined at src/spec_procs3.c:239-312
+# and registered for mob vnum 21246 at src/spec_assign.c:508. The authored
+# shadowmage carries a native script, so the disposable fixture strips it and
+# isolates the con-seller dispatch in the unlit shop (room 21234).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21246 1 21234 212
+strip-mob-script 21246
+replace-room-exits 21234 none
+
+[setup:oracle]
+ConSellerActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ConSellerActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ConSellerPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ConSellerPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport ConSellerPeer 21234
+goto 21234
+set ConSellerActor gold 0
+set ConSellerActor con 1
+set ConSellerActor gold 400
+set ConSellerActor level 1
+
+[probe]
+list
+buy junk
+buy con
+buy con
+gold
+
+# depth-case: mob.con-seller-entry-gates
+# depth-case: mob.con-seller-list-direct-tell
+# depth-case: mob.con-seller-buy-argument-gate
+# depth-case: mob.con-seller-buy-insufficient-gold
+# depth-case: mob.con-seller-buy-success-direct-tell
+# depth-case: mob.con-seller-buy-success-room-audience
+# depth-case: mob.con-seller-buy-success-state

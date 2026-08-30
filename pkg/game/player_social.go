@@ -22,6 +22,26 @@ func (p *Player) GetCon() int {
 	return p.Stats.Con + p.sumAffectModsLocked(ApplyCon) + p.sumEquipAffectModsLocked(ApplyCon)
 }
 
+// GetOrigCon returns the base constitution recorded before constitution loss.
+// C's login sanity check initializes a missing GET_ORIG_CON from real_abils.con;
+// mirror that fallback for players created by older saves and focused tests.
+func (p *Player) GetOrigCon() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.OrigCon > 0 {
+		return p.OrigCon
+	}
+	return p.Stats.Con
+}
+
+// SetOrigCon sets the constitution baseline used by constitution-selling
+// specials and death/con-loss restoration paths.
+func (p *Player) SetOrigCon(value int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.OrigCon = value
+}
+
 // IsInGroup returns whether the player is in a group.
 func (p *Player) IsInGroup() bool {
 	p.mu.RLock()

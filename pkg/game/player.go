@@ -86,6 +86,12 @@ type Player struct {
 
 	Stats CharStats
 
+	// OrigCon is the character's constitution before constitution loss, from
+	// GET_ORIG_CON in structs.h. It is runtime-only because the existing Go
+	// player save format must remain unchanged; old/load-created players fall
+	// back to their current base constitution.
+	OrigCon int `json:"-"`
+
 	// SavingThrows — array of 5 saving throw values: para, rod, petri, breath, spell
 	// Source: structs.h saving_throws[5]
 	SavingThrows [5]int
@@ -342,6 +348,7 @@ func newCharacter(id int, name string, class, race, sex int, stats CharStats) *P
 		SetTitle(p, "the Adventurer")
 	}
 	p.Stats = stats
+	p.OrigCon = stats.Con
 	p.Strength = stats.Str
 
 	// do_start(): level 1, 1 exp, 10 base HP, 100 mana — from class.c line 538

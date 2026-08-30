@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
@@ -597,79 +598,133 @@ func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg s
 
 // specConSeller sells constitution points.
 func specConSeller(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+	if w == nil || ch == nil || me == nil || cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
 		return false
-	}
-	arg = strings.TrimSpace(arg)
-	if !mobCanSee(me) {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s exclaims, 'Who's there? I can't see you!'", mobName(me)))
-		return true
 	}
 
 	if cmd != "list" && cmd != "buy" {
 		return false
+	}
+	// C's skip_spaces() removes only leading whitespace. The subsequent
+	// strcasecmp() is exact, so a trailing space is not accepted as "con".
+	arg = strings.TrimLeftFunc(arg, unicode.IsSpace)
+	if !conSellerCanSee(w, me, ch) {
+		conSellerRoomAct(w, me, nil, true, func(to Actor) string {
+			return fmt.Sprintf("%s exclaims, 'Who's there? I can't see you!'", cap(conSellerPersName(w, me, to)))
+		})
+		return true
 	}
 
 	// Cost per con point: GET_LEVEL(ch) * 400
 	cost := ch.GetLevel() * 400
 
 	// Available con points the player can buy.
-	// C: GET_ORIG_CON(ch) - ch->real_abils.con — origCon is the initial rolled stat.
-	// Go codebase doesn't have OrigCon field yet; available = 18 - current (cap at 18 per C).
-	availCon := 18 - ch.Stats.Con
+	// C: GET_ORIG_CON(ch) - ch->real_abils.con.
+	availCon := ch.GetOrigCon() - ch.Stats.Con
 	if availCon < 0 {
 		availCon = 0
 	}
 
 	if cmd == "list" {
 		if availCon < 1 {
-			msg := fmt.Sprintf("%s You seem perfectly healthy!", ch.GetName())
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+			msg := "You seem perfectly healthy!"
+			conSellerTell(w, me, ch, msg)
 			return true
 		}
 		suf := "s"
 		if availCon == 1 {
 			suf = ""
 		}
-		msg := fmt.Sprintf("%s You can buy up to %d point%s, at %d per point.", ch.GetName(), availCon, suf, cost)
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+		msg := fmt.Sprintf("You can buy up to %d point%s, at %d per point.", availCon, suf, cost)
+		conSellerTell(w, me, ch, msg)
 		return true
 	}
 
 	// cmd == "buy"
 	if !strings.EqualFold(arg, "con") {
-		msg := fmt.Sprintf("%s BUY CON, if you really want to do it.", ch.GetName())
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+		msg := "BUY CON, if you really want to do it."
+		conSellerTell(w, me, ch, msg)
 		return true
 	}
 	if ch.GetGold() < cost {
-		msg := fmt.Sprintf("%s You can't afford it!", ch.GetName())
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+		msg := "You can't afford it!"
+		conSellerTell(w, me, ch, msg)
 		return true
 	}
 	if availCon < 1 {
-		msg := fmt.Sprintf("%s You seem perfectly healthy!", ch.GetName())
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
+		msg := "You seem perfectly healthy!"
+		conSellerTell(w, me, ch, msg)
 		return true
 	}
 
-	// Deduct gold
+	// C deducts gold, tells the buyer, then sends two TO_NOTVICT room acts.
 	ch.SetGold(ch.GetGold() - cost)
 
-	// Apply con +1 (capped at 18 like C code)
+	msg := fmt.Sprintf("That'll be %d coins, you should feel much better.. if you wake up.", cost)
+	conSellerTell(w, me, ch, msg)
+	conSellerRoomAct(w, me, ch, false, func(to Actor) string {
+		return cap(fmt.Sprintf("%s stares at %s and mutters some arcane words.",
+			conSellerPersName(w, me, to), conSellerPersName(w, ch, to)))
+	})
+	conSellerRoomAct(w, me, ch, false, func(to Actor) string {
+		return cap(fmt.Sprintf("%s falls, stunned.", conSellerPersName(w, ch, to)))
+	})
+
 	if ch.Stats.Con < 18 {
 		ch.Stats.Con++
 	}
-
-	// Stun the player
 	ch.SetPosition(combat.PosStunned)
 
-	msg := fmt.Sprintf("%s That'll be %d coins, you should feel much better.. if you wake up.", ch.GetName(), cost)
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s'", mobName(me), msg))
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stares at %s and mutters some arcane words.", mobName(me), ch.GetName()))
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s falls, stunned.", ch.GetName()))
-
 	return true
+}
+
+// conSellerCanSee mirrors CAN_SEE for this procedure's world-aware path. The
+// shared act() engine has no room argument in its PERS substitution, while C's
+// CAN_SEE also includes LIGHT_OK; the seller is deliberately in a dark shop.
+func conSellerCanSee(w *World, observer, subject Actor) bool {
+	if observer == nil || subject == nil {
+		return false
+	}
+	if !canSeeForPers(observer, subject) {
+		return false
+	}
+	if w == nil || !w.IsRoomDark(observer.GetRoom()) {
+		return true
+	}
+	switch observer := observer.(type) {
+	case *Player:
+		return chCanSeeInDark(observer)
+	case *MobInstance:
+		return observer.IsAffected(affInfravision)
+	default:
+		return false
+	}
+}
+
+// conSellerPersName is PERS with the seller's room-aware LIGHT_OK gate.
+func conSellerPersName(w *World, subject, observer Actor) string {
+	if !conSellerCanSee(w, observer, subject) {
+		return "someone"
+	}
+	return subject.GetName()
+}
+
+func conSellerTell(w *World, me *MobInstance, target *Player, msg string) {
+	target.SendMessage(fmt.Sprintf("%s tells you, '%s'\r\n", cap(conSellerPersName(w, me, target)), msg))
+}
+
+// conSellerRoomAct emits the two fixed TO_NOTVICT/TO_ROOM acts without using
+// roomMessage, preserving C's actor/victim exclusion and PERS substitutions.
+func conSellerRoomAct(w *World, me *MobInstance, victim *Player, hideInvisible bool, render func(Actor) string) {
+	for _, to := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+		if victim != nil && to == victim {
+			continue
+		}
+		if hideInvisible && !conSellerCanSee(w, to, me) {
+			continue
+		}
+		to.SendMessage(render(to) + "\r\n")
+	}
 }
 
 // specTroll regenerates health over time.
