@@ -19,6 +19,7 @@ func newGaleruColumnTestWorld(t *testing.T) (*World, *Player, *Player, *MobInsta
 		{VNum: 1384, Name: "Water Corner"},
 		{VNum: 1372, Name: "Galeru Column", Description: "The four corners surround the column."},
 		{VNum: 1389, Name: "Temple of Elements", Description: "The altar of elements stands here."},
+		{VNum: 1395, Name: "Tropical Island", Description: "A tropical island surrounds you."},
 	}
 	objs := make([]parser.Obj, 0, 4)
 	for vnum := 1300; vnum <= 1303; vnum++ {
@@ -37,6 +38,7 @@ func newGaleruColumnTestWorld(t *testing.T) (*World, *Player, *Player, *MobInsta
 
 	messages := make(map[string]string)
 	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+	npc := newSpecProcTestMob(t, w, 1372, 10)
 	actor := NewPlayer(1, "GaleruCarrier", 1372)
 	peer := NewPlayer(2, "GaleruPeer", 1372)
 	actor.SetAutoExit(false)
@@ -46,7 +48,6 @@ func newGaleruColumnTestWorld(t *testing.T) (*World, *Player, *Player, *MobInsta
 			t.Fatalf("AddPlayer(%s): %v", player.GetName(), err)
 		}
 	}
-	npc := newSpecProcTestMob(t, w, 1372, 10)
 	for name := range messages {
 		messages[name] = ""
 	}

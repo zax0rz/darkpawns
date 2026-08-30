@@ -13,16 +13,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
-// findMobInRoom finds a MobInstance by name in a room's mob list.
-func findMobInRoom(w *World, roomVNum int, name string) *MobInstance {
-	for _, m := range w.GetMobsInRoom(roomVNum) {
-		if m.GetName() == name {
-			return m
-		}
-	}
-	return nil
-}
-
 // mobHasAffect checks if a MobInstance has a given affect flag string in its prototype.
 func mobHasAffect(me *MobInstance, affect string) bool {
 	for _, f := range me.Prototype.AffectFlags {
@@ -1412,23 +1402,95 @@ func specElementsGaleruColumn(w *World, ch *Player, me *MobInstance, cmd string,
 
 // specElementsGaleruAlive teleports players if Galeru (mob 1315) is dead.
 func specElementsGaleruAlive(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" {
+	if cmd == "" || w == nil || ch == nil {
 		return false
 	}
-	// Check if Galeru (mob vnum 1315) is alive in the room
-	if findMobInRoom(w, ch.GetRoomVNum(), "galeru") != nil {
-		return false // Galeru is alive, no teleport
-	}
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
-	if len(players) > 0 {
-		for _, ppl := range players {
-			sendToChar(ppl, "You begin to feel very dizzy and the world around you fades...\r\n")
-			w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s disappears in a brilliant flash of light.", ppl.GetName()))
-			ppl.SetRoom(1395)
+	roomVNum := ch.GetRoomVNum()
+	// C checks the exact mob VNum, not the mob keyword string.
+	for _, mob := range w.GetMobsInRoom(roomVNum) {
+		if mob != nil && mob.GetVNum() == 1315 {
+			return false
 		}
-		return true
 	}
-	return false
+
+	// C walks every character, not just players. The command actor is the
+	// newest room entrant in the normal vehicle; use stable IDs for the rest.
+	players := w.GetPlayersInRoom(roomVNum)
+	sort.SliceStable(players, func(i, j int) bool {
+		if players[i] == ch {
+			return true
+		}
+		if players[j] == ch {
+			return false
+		}
+		if players[i].GetID() != players[j].GetID() {
+			return players[i].GetID() < players[j].GetID()
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+	characters := make([]Actor, 0, len(players)+len(w.GetMobsInRoom(roomVNum)))
+	for _, player := range players {
+		if player != nil {
+			characters = append(characters, player)
+		}
+	}
+	mobs := w.GetMobsInRoom(roomVNum)
+	sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() < mobs[j].GetID() })
+	for _, mob := range mobs {
+		if mob != nil {
+			characters = append(characters, mob)
+		}
+	}
+
+	for _, target := range characters {
+		if player, ok := target.(*Player); ok {
+			// C's send_to_char buffer already contains CRLF/LF spacing.
+			player.SendMessage("You begin to feel very dizzy and the world around you fades...\r\n\n")
+		}
+		Act(w, true, target, nil, nil, nil, "$n disappears in a brilliant flash of light.", "", ToNotVict)
+
+		var err error
+		switch subject := target.(type) {
+		case *Player:
+			err = w.PlayerTransfer(subject, 1395)
+		case *MobInstance:
+			err = w.MobTransfer(subject, 1395)
+		}
+		if err != nil {
+			slog.Warn("elements galeru alive character transfer failed", "character", target.GetName(), "room", 1395, "error", err)
+			continue
+		}
+		if player, ok := target.(*Player); ok {
+			w.lookAtRoomWithGaleruAliveFraming(player)
+		}
+		Act(w, true, target, nil, nil, nil, "$n appears in a brilliant flash of light.", "", ToNotVict)
+	}
+	return true
+}
+
+// lookAtRoomWithGaleruAliveFraming preserves the C room-list byte framing
+// observed after this procedure's char_to_room/look_at_room sequence. The C
+// list_char_to_char path leaves one literal spacer before visible player
+// entries; the ordinary Go look path intentionally does not use that framing.
+func (w *World) lookAtRoomWithGaleruAliveFraming(ch *Player) {
+	result := w.DoLookRoom(ch, false)
+	players := w.GetPlayersInRoom(ch.GetRoom())
+	for i := range result.Messages {
+		if !result.Messages[i].Literal {
+			continue
+		}
+		for _, player := range players {
+			if player == nil || player == ch {
+				continue
+			}
+			line := w.playerPresenceLine(player, ch)
+			if line != "" && strings.Contains(result.Messages[i].Format, line) {
+				result.Messages[i].Format = strings.Replace(result.Messages[i].Format, line, " "+line, 1)
+				break
+			}
+		}
+	}
+	w.RenderObservationMessages(result)
 }
 
 // specElementsMinion destroys talismans and cylinders.

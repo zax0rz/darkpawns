@@ -1,0 +1,78 @@
+# C-first vehicle for SPECIAL(elements_galeru_alive)'s no-Galeru branch.
+# The direct teleports place both players in room 1394 without invoking the
+# room movement hook, so the probe exercises the room command dispatcher.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+GaleruDeadCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GaleruDeadCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+GaleruDeadPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+GaleruDeadPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport GaleruDeadPeer 1395
+goto 1394
+
+[probe]
+say hello
+
+# depth-case: room.elements-galeru-alive-entry
+# depth-case: room.elements-galeru-alive-dead-branch
+# depth-case: room.elements-galeru-alive-audience
+# depth-case: room.elements-galeru-alive-relocation
+# depth-case: room.elements-galeru-alive-destination-look
