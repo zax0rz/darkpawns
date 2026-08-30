@@ -2,9 +2,9 @@
 
 Date: 2026-08-29  
 Slice: special procedure `teleporter`  
-Branch/commit: `glm/spec-teleporter`, `4b662f7ec`  
-PR: not created — `git push` failed because `github.com` did not resolve in the
-available network environment.
+Branch/commit: `glm/spec-teleporter`, `4b662f7ec` (handoff commit
+`225771b4e`)
+PR: #773, merged as `64c9b085d` after the initial transient DNS failure cleared.
 
 ## Queue position
 
@@ -111,7 +111,5 @@ spell and combat seams; this slice claims only the self-NPC branch reached by
 
 ## Next action
 
-The branch is locally complete but cannot be pushed or checked while the
-current GitHub hostname-resolution failure persists. Do not merge this commit
-without green hosted checks. The next queue item is `chosen_guard`; do not
-repick `teleporter` because this handoff claims it.
+PR #773 is merged with green hosted checks. The next queue item is
+`chosen_guard`; do not repick `teleporter` because this handoff claims it.
