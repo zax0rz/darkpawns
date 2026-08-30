@@ -47,6 +47,10 @@ type Scenario struct {
 	RoomFlagFixtures []RoomFlagFixture
 	RoomSectors      []RoomSectorFixture
 	HouseControls    []HouseControlFixture
+	// SkipSetupSettle leaves the frozen clock untouched after character
+	// creation. Focused vehicles use this when a spawned autonomous mob must
+	// survive until a later warmup command places the actor beside it.
+	SkipSetupSettle bool
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
@@ -428,6 +432,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "empty-players") {
 				sc.EmptyPlayers = true
+				continue
+			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "no-settle") {
+				sc.SkipSetupSettle = true
 				continue
 			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "strip-mob-script") {

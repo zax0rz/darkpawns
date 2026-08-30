@@ -1098,25 +1098,29 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if me == nil {
 		return false
 	}
-	// Only trigger when the mob is no longer charmed
-	if mobHasAffect(me, "charm") {
+	// C checks the live AFF_CHARM bit, not the prototype's innate flags.
+	if me.IsAffected(affCharm) {
 		return false
 	}
 	switch me.GetVNum() {
 	case 81, 82, 83, 84:
-		// Notify master: MobInstance lacks a Master/Following field, so notify
-		// all players in the room. A charmer would be present in the same room.
-		for _, p := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			p.SendMessage(fmt.Sprintf("You lose control and %s fizzles away!\r\n", mobName(me)))
+		// C's send_to_char() reaches only a live player master. Mob masters
+		// have no descriptor in the C path, so followingActor() is intentionally
+		// narrowed to *Player here.
+		if leaderName := me.GetFollowing(); leaderName != "" {
+			if leader, ok := w.followingActor(leaderName).(*Player); ok {
+				leader.SendMessage(fmt.Sprintf("You lose control and %s fizzles away!\r\n", me.GetName()))
+			}
 		}
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s returns to its own plane of existence.", mobName(me)))
+		Act(w, true, me, nil, nil, nil, "$n returns to its own plane of existence.", "", ToRoom)
 	default:
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'My work here is done.'", mobName(me)))
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s disappears in a flash of white light!", mobName(me)))
+		// do_say() selects "states" for a period-terminated utterance.
+		Act(w, false, me, nil, nil, nil, "$n states, 'My work here is done.'", "", ToRoom)
+		Act(w, false, me, nil, nil, nil, fmt.Sprintf("%s disappears in a flash of white light!", me.GetName()), "", ToRoom)
 	}
-	// Remove mob from world via death pipeline (corpse, event, etc.)
-	me.SetHealth(0)
-	w.HandleDeath(me, nil, -1)
+	// extract_char() marks/removes the mob without running the player death
+	// pipeline: conjured creatures do not leave corpses or death announcements.
+	w.ExtractMob(me)
 	return true
 }
 

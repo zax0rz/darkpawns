@@ -288,11 +288,18 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	goConn := oraclediff.NewTCPConn(goNetConn)
 	defer func() { _ = goConn.Close() }()
 
-	oracleSetup, err := oraclediff.RunSetupAndSettle(oracleConn, scenario.SetupOracle, settlePulses, quiescence)
+	runSetup := func(conn oraclediff.Conn, setup []string) (string, error) {
+		if scenario.SkipSetupSettle {
+			return oraclediff.RunSetup(conn, setup, quiescence)
+		}
+		return oraclediff.RunSetupAndSettle(conn, setup, settlePulses, quiescence)
+	}
+
+	oracleSetup, err := runSetup(oracleConn, scenario.SetupOracle)
 	if err != nil {
 		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
-	goSetup, err := oraclediff.RunSetupAndSettle(goConn, scenario.SetupPort, settlePulses, quiescence)
+	goSetup, err := runSetup(goConn, scenario.SetupPort)
 	if err != nil {
 		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
 	}
@@ -312,7 +319,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
 		defer func() { _ = oraclePeer.Close() }()
-		if _, setupErr := oraclediff.RunSetupAndSettle(oraclePeer, peer.SetupOracle, settlePulses, quiescence); setupErr != nil {
+		if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
 			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleProc.log.String())
 		}
 		oraclePeers[name] = oraclePeer
@@ -323,7 +330,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		goPeer := oraclediff.NewTCPConn(goPeerNet)
 		defer func() { _ = goPeer.Close() }()
-		if _, setupErr := oraclediff.RunSetupAndSettle(goPeer, peer.SetupPort, settlePulses, quiescence); setupErr != nil {
+		if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
 			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goProc.log.String())
 		}
 		goPeers[name] = goPeer

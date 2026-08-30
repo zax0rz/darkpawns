@@ -1,0 +1,56 @@
+# depth-case: mob.conjured-entry-gates
+# depth-case: mob.conjured-fizzle-masterless
+# depth-case: mob.conjured-fizzle-audience
+# depth-case: mob.conjured-fizzle-extraction
+# C-first vehicle for SPECIAL(conjured), registered for mob vnums 81-84 at
+# src/spec_assign.c:186-189 and defined in src/spec_procs3.c:859-892.
+# The first probe is uncharmed and exercises the masterless 81 branch: C still
+# sends the TO_ROOM plane message, but emits no direct fizzle notice without a
+# mob->master. The separate charmed vehicle proves the early return leaves the
+# registered mob in the room.
+# C path: src/mobact.c:54-93 -> src/spec_procs3.c:859-892 ->
+# src/act.comm.c:901-930 -> src/handler.c:1194-1248.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 81 1 8106 80
+set-mob-flag 81 SPEC
+strip-mob-script 81
+
+[setup:oracle]
+ConjuredFizzle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ConjuredFizzle
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8106
+
+[probe]
+say hello
+say hello
