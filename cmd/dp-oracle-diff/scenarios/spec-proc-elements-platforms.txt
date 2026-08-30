@@ -1,0 +1,79 @@
+# C-first vehicle for SPECIAL(elements_platforms), assigned to rooms 1326,
+# 1337, 1348, and 1359 by src/spec_assign.c:623-626 and defined at
+# src/spec_procs3.c:1004-1024. The room special runs from the current-room
+# command dispatcher, so the peer is placed first and the actor enters last;
+# the probe then processes both occupants in C's front-insert room order.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+PlatformCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PlatformCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+PlatformPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+PlatformPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport PlatformPeer 1326
+goto 1326
+
+[probe]
+say hello
+
+# depth-case: room.elements-platforms-entry
+# depth-case: room.elements-platforms-direct-message
+# depth-case: room.elements-platforms-audience
+# depth-case: room.elements-platforms-relocation
