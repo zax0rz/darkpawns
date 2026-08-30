@@ -154,9 +154,9 @@ func cmdWizlock(s *Session, args []string) error {
 	return nil
 }
 
-// cmdDc — disconnect a player (LVL_GOD)
+// cmdDc — disconnect a player (LVL_IMMORT+1)
 func cmdDc(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
+	if !checkLevel(s, LVL_IMMORT+1) {
 		s.Send("Huh?!?")
 		return nil
 	}
@@ -164,32 +164,61 @@ func cmdDc(s *Session, args []string) error {
 		s.Send("Usage: DC <connection number> (type USERS for a list)\r\n")
 		return nil
 	}
-	target := strings.ToLower(args[0])
-	if target == "all" {
-		disconnected := 0
-		s.manager.mu.RLock()
-		toClose := make([]*Session, 0)
-		for name, sess := range s.manager.sessions {
-			if sess.player != nil && sess.player.Level < LVL_IMMORT && name != strings.ToLower(s.player.Name) {
-				toClose = append(toClose, sess)
-			}
-		}
-		s.manager.mu.RUnlock()
-		for _, sess := range toClose {
-			sess.Close()
-			disconnected++
-		}
-		s.Send(fmt.Sprintf("Disconnected %d players.", disconnected))
+	numToDC, ok := parseDCNumber(args[0])
+	if !ok || numToDC == 0 {
+		s.Send("Usage: DC <connection number> (type USERS for a list)\r\n")
 		return nil
 	}
-	if sess := findSessionByName(s.manager, target); sess != nil {
-		name := sess.player.Name
-		sess.Close()
-		s.Send(fmt.Sprintf("Disconnected %s.", name))
-	} else {
-		s.Send("No such player.")
+
+	var target *Session
+	s.manager.mu.RLock()
+	for _, candidate := range s.manager.sessions {
+		if candidate.connectionNumber == numToDC {
+			target = candidate
+			break
+		}
 	}
+	s.manager.mu.RUnlock()
+	if target == nil {
+		s.Send("No such connection.\r\n")
+		return nil
+	}
+	if target.player != nil && target.player.GetLevel() >= s.player.GetLevel() {
+		s.Send("Umm.. maybe that's not such a good idea...\r\n")
+		return nil
+	}
+	target.Close()
+	s.Send(fmt.Sprintf("Connection #%d closed.\r\n", numToDC))
 	return nil
+}
+
+// parseDCNumber mirrors the decimal-prefix and optional-sign behavior of C's
+// atoi used by do_dc. A zero result is handled by cmdDc as the usage branch.
+func parseDCNumber(value string) (int, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, false
+	}
+	index := 0
+	sign := 1
+	if value[0] == '+' || value[0] == '-' {
+		if value[0] == '-' {
+			sign = -1
+		}
+		index++
+	}
+	start := index
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	if index == start {
+		return 0, false
+	}
+	parsed, err := strconv.Atoi(value[start:index])
+	if err != nil {
+		return 0, false
+	}
+	return sign * parsed, true
 }
 
 // cmdHome — teleport to home room (LVL_IMMORT)

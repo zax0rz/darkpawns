@@ -1,0 +1,83 @@
+# depth-case: dc.no-argument
+# depth-case: dc.invalid-argument
+# depth-case: dc.missing-connection
+# depth-case: dc.immortal-plus-one-gate
+# depth-case: dc.equal-level
+# depth-case: dc.lower-level-close
+# C-first vehicle for do_dc (src/act.wizard.c:1736-1766). The primary is the
+# first empty-players God, and a mortal peer supplies a lower-level connection.
+# Connection numbers are allocated in transport creation order, so the actor
+# is #1 and the peer is #2, matching C's last_desc counter.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dcactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dcactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Dcpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Dcpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Dcactor level 32
+
+[probe]
+dc
+dc all
+dc nonsense
+dc 999
+dc 1
+dc 2

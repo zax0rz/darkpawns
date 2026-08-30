@@ -79,15 +79,16 @@ func (s *Session) GetPlayerLevel() int {
 func (m *Manager) NewSession() *Session {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Session{
-		manager:        m,
-		send:           make(chan []byte, 256),
-		limiter:        rate.NewLimiter(rate.Limit(10), 10),
-		subscribedVars: make(map[string]bool),
-		dirtyVars:      make(map[string]bool),
-		connectedAt:    time.Now(),
-		sessionCtx:     ctx,
-		cancelFunc:     cancel,
-		transportDone:  make(chan struct{}),
+		manager:          m,
+		send:             make(chan []byte, 256),
+		limiter:          rate.NewLimiter(rate.Limit(10), 10),
+		subscribedVars:   make(map[string]bool),
+		dirtyVars:        make(map[string]bool),
+		connectedAt:      time.Now(),
+		sessionCtx:       ctx,
+		cancelFunc:       cancel,
+		transportDone:    make(chan struct{}),
+		connectionNumber: m.allocateConnectionNumber(),
 	}
 }
 

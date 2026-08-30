@@ -1,6 +1,7 @@
 package oraclediff
 
 import (
+	"io"
 	"net"
 	"strings"
 	"testing"
@@ -234,9 +235,25 @@ func TestRunAudienceProbeCapturesEachRecipientInStableOrder(t *testing.T) {
 	}
 }
 
+func TestRunAudienceProbeAllowsFinalAudienceEOF(t *testing.T) {
+	actor := &scriptedConn{outputs: []string{"actor"}}
+	closedPeer := &scriptedConn{readErr: io.EOF}
+
+	blocks, err := RunAudienceProbe(actor, map[string]Conn{
+		"closed": closedPeer,
+	}, []string{"dc 2"}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(blocks) != 2 || blocks[1].Audience != "closed" {
+		t.Fatalf("blocks = %#v, want final closed audience block", blocks)
+	}
+}
+
 type scriptedConn struct {
 	outputs []string
 	sent    []string
+	readErr error
 }
 
 func (c *scriptedConn) Send(line string) error {
@@ -246,7 +263,7 @@ func (c *scriptedConn) Send(line string) error {
 
 func (c *scriptedConn) ReadUntilQuiescent(time.Duration) (string, error) {
 	if len(c.outputs) == 0 {
-		return "", nil
+		return "", c.readErr
 	}
 	out := c.outputs[0]
 	c.outputs = c.outputs[1:]

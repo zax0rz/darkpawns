@@ -113,6 +113,10 @@ type Manager struct {
 	// mortals, matching C's "first player ever" semantics within a single boot.
 	// Production uses the persisted CountPlayers()==0 check instead.
 	godCrowned atomic.Bool
+
+	// nextConnectionNumber mirrors C's last_desc counter for the dc command.
+	// It is protected by m.mu and wraps from 999 back to 1.
+	nextConnectionNumber int
 }
 
 // isLoopback reports whether remoteAddr resolves to the loopback interface
@@ -351,6 +355,18 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	})
 
 	return m
+}
+
+// allocateConnectionNumber mirrors C's last_desc counter. The value is
+// assigned when the transport session is created, before character login.
+func (m *Manager) allocateConnectionNumber() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.nextConnectionNumber++
+	if m.nextConnectionNumber == 1000 {
+		m.nextConnectionNumber = 1
+	}
+	return m.nextConnectionNumber
 }
 
 // SetCombatBroadcastFunc sets the broadcast function for combat messages.
@@ -905,6 +921,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		sessionCtx:          ctx,
 		cancelFunc:          cancel,
 		transportDone:       make(chan struct{}),
+		connectionNumber:    m.allocateConnectionNumber(),
 	}
 
 	// Start goroutines for reading and writing
@@ -1351,12 +1368,13 @@ type Session struct {
 
 	// Agent identity — set on login when is_agent=true.
 	// Harness+Model is the agent identity. Same combo = same agent across sessions.
-	isAgent      bool
-	agentHarness string    // e.g. "openclaw", "claude-code"
-	agentModel   string    // e.g. "mimo-v2.5-base"
-	agentVersion string    // harness version
-	agentKeyID   int64     // legacy: kept for backward compat, deprecated
-	connectedAt  time.Time // set on session creation, used for sessionID()
+	isAgent          bool
+	agentHarness     string    // e.g. "openclaw", "claude-code"
+	agentModel       string    // e.g. "mimo-v2.5-base"
+	agentVersion     string    // harness version
+	agentKeyID       int64     // legacy: kept for backward compat, deprecated
+	connectedAt      time.Time // set on session creation, used for sessionID()
+	connectionNumber int       // C descriptor number, used by do_dc
 
 	// H-25: JWT token rotation state
 	tokenIssuedAt time.Time // when the current JWT was issued
