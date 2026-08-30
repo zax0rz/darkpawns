@@ -2076,15 +2076,28 @@ func specMindflayer(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // specBackstabber — Backstabs unsuspecting players
 // ================================================================
 func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+	if cmd != "" || me.GetFighting() != "" || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() && pl.GetFighting() == "" && number(0, 3) == 0 {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("From the shadows, %s backstabs %s!", mobName(me), pl.GetName()))
-			if err := me.Attack(pl, w); err != nil {
-				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+		// C scans world[ch->in_room].people and selects the first player that
+		// is not PRF_NOHASSLE and is visible to the mob. It does not skip a
+		// player who is already fighting; do_backstab() owns that later gate
+		// and returns TRUE without consuming the skill rolls.
+		if pl.GetFlags()&(1<<uint(PrfNohassle)) == 0 && canSee(me, pl) {
+			weapon, wielded := me.Equipment[int(SlotWield)]
+			if !wielded || weapon == nil || weapon.Prototype == nil || weapon.Prototype.Values[3] != 11 {
+				// do_backstab(..., subcmd=1) emits only to the NPC descriptor,
+				// so this failed weapon gate is player-silent and draw-free.
+				return true
 			}
+			if me.IsAffected(affMounted) || pl.GetFighting() != "" {
+				return true
+			}
+			w.mobBackstab(me, pl)
+			// do_backstab() applies WAIT_STATE after both the percent-miss and
+			// hit paths, including a damage(0) attempt.
+			me.SetWaitState(engine.PULSE_VIOLENCE)
 			return true
 		}
 	}

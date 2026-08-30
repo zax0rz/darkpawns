@@ -1,0 +1,64 @@
+# C-first vehicle for SPECIAL(backstabber), assigned to mob 9151 by
+# src/spec_assign.c:309 and defined in src/spec_procs2.c:2003-2016.
+# mobile_activity() invokes the procedure only for an awake, non-fighting mob
+# with cmd==0.  The special scans the room in linked-list order for the first
+# visible, non-NOHASSLE player, then calls do_backstab with subcmd=1.
+# C path: src/mobact.c:68-93 -> src/spec_procs2.c:2003-2016 ->
+# src/act.offensive.c:165-235 -> src/fight.c:1023-1092,1763-1935.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 9151 1 8105 91
+strip-mob-script 9151
+replace-room-exits 8105 none
+
+[setup:oracle]
+Backstabberprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Backstabberprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+score
+
+# depth-case: mob.backstabber-command-gate
+# depth-case: mob.backstabber-autonomous-dispatch
+# depth-case: mob.backstabber-target-and-weapon-gates
