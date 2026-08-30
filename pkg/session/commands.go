@@ -195,10 +195,10 @@ func init() {
 	registerCommand("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.")
 	registerCommand("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.")
 	registerCommand("kabuki", wrapSkill(command.CmdKabuki), "Practice the art of kabuki (hide variant).")
-	// NOTE: the dig command is deliberately NOT registered here. C do_dig (src/new_cmds2.c:818)
-	// is a LVL_BUILDER OLC exit-creator; the Go CmdDig is an unrelated mortal foraging skill.
-	// Wiring the foraging handler under the C name plus the C builder gate would serve neither
-	// audience (builders get foraging; mortals cannot reach it). The C OLC dig is unported — DP-1225.
+	// C do_dig (src/new_cmds2.c:818) is the LVL_BUILDER OLC exit-creator. The
+	// unrelated mortal foraging skill remains available only through its game
+	// layer API; the command name belongs to the C OLC surface.
+	registerCommand("dig", wrapArgs(cmdDig), "Create a room exit.")
 	registerCommand("steal", wrapSkill(command.CmdSteal), "Steal from a target.")
 	registerCommand("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.")
 	registerCommand("rin", wrapSkill(command.CmdKujiKiri(game.SkillKkRin)), "Kuji-kiri seal: harden body for an AC bonus and metalskin.")

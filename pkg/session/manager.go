@@ -1375,6 +1375,7 @@ type Session struct {
 	agentKeyID       int64     // legacy: kept for backward compat, deprecated
 	connectedAt      time.Time // set on session creation, used for sessionID()
 	connectionNumber int       // C descriptor number, used by do_dc
+	olcZone          int       // C GET_OLC_ZONE; zero until an OLC zone is assigned
 
 	// H-25: JWT token rotation state
 	tokenIssuedAt time.Time // when the current JWT was issued

@@ -243,6 +243,22 @@ func (w *World) SetRoomExit(vnum int, direction string, toRoom int, key int) boo
 	return true
 }
 
+// CreateRoomExit replaces an exit with the bare runtime record created by C's
+// do_dig. It intentionally clears any prior door metadata and descriptions.
+func (w *World) CreateRoomExit(vnum int, direction string, toRoom int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	room, ok := w.rooms[vnum]
+	if !ok {
+		return false
+	}
+	if room.Exits == nil {
+		room.Exits = make(map[string]parser.Exit)
+	}
+	room.Exits[direction] = parser.Exit{Direction: direction, ToRoom: toRoom}
+	return true
+}
+
 // SetRoomExtraDescs sets a room's extra descriptions. Returns false if the room doesn't exist.
 func (w *World) SetRoomExtraDescs(vnum int, descs []parser.ExtraDesc) bool {
 	w.mu.Lock()

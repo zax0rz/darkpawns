@@ -1,0 +1,42 @@
+# depth-case: dig.permission-current-zone
+# C-first vehicle for do_dig's saved-OLC-zone gate. A fresh player has the C
+# default OLC zone of zero while standing in room 1204's zone 12.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Digcurrent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Digcurrent
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Digcurrent level 31
+
+[probe]
+dig north 1205
