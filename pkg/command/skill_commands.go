@@ -1603,6 +1603,20 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			}
 		}
 	}
+	performRetaliateHit := func() {
+		if !result.RetaliateHit || target == nil || target.GetPosition() == combat.PosDead {
+			return
+		}
+		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
+			if err := engine.StartCombat(target, ch); err == nil {
+				_ = engine.PerformInitialAttack(target, ch)
+			}
+		}
+	}
+
+	if result.RetaliateHitBeforeSkillMessage {
+		performRetaliateHit()
+	}
 
 	// Emit the combat message. When SkillMsgType is set, the message comes from
 	// lib/misc/messages via the skill_message path (fight.c:1023-1092): the
@@ -1664,12 +1678,8 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// C hit(vict, ch, TYPE_UNDEFINED): the MOB_AWARE guard swings back at once.
 	// Enroll target->ch and run one synchronous swing from the target, emitted
 	// after the notice lines above — exactly like C's aware-backstab branch.
-	if result.RetaliateHit && target != nil && target.GetPosition() != combat.PosDead {
-		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
-			if err := engine.StartCombat(target, ch); err == nil {
-				_ = engine.PerformInitialAttack(target, ch)
-			}
-		}
+	if result.RetaliateHit && !result.RetaliateHitBeforeSkillMessage {
+		performRetaliateHit()
 	}
 
 	// Run deferred skill improvement AFTER the skill_message dice and the
@@ -2124,7 +2134,9 @@ func CmdCircle(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	var found bool
 	if len(args) > 0 {
-		targetName := strings.Join(args, " ")
+		// C do_circle uses one_argument: skip fill words, lowercase the first
+		// target token, and ignore the remainder (new_cmds.c:2396).
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 		if !found {
 			return s.SendMessage("Circle who?\r\n")

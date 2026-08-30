@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 
@@ -161,6 +162,23 @@ func TestDoSpellDamageAwardsXP(t *testing.T) {
 	if player.Kills != startKills+1 {
 		t.Errorf("player Kills = %d, want %d", player.Kills, startKills+1)
 	}
+}
+
+func TestDoSpellDamageCircleUsesCircleCorpseType(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	hp := mob.GetHP()
+
+	if !w.DoSpellDamage(player, mob, hp+11, SkillCircle) {
+		t.Fatal("DoSpellDamage(circle) returned false")
+	}
+
+	for _, obj := range w.GetItemsInRoom(player.GetRoom()) {
+		if obj.IsCorpse && strings.Contains(obj.GetLongDesc(), "hacked up, bloody corpse") {
+			return
+		}
+	}
+	t.Fatalf("circle killing blow did not create the C hacked-up bloody corpse: %#v", w.GetItemsInRoom(player.GetRoom()))
 }
 
 func TestDoSpellDamageChargePainDraw(t *testing.T) {

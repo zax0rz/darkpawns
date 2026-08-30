@@ -1,0 +1,96 @@
+# Combat skill depth vehicle for do_circle (src/new_cmds.c:2391-2467).
+# The thief's dagger makes the opener legal; skill 75 exercises both the
+# numbered circle-message failure arm and hit()-backed success arm across the
+# shared seed matrix while the quiet trainee keeps later combat deterministic.
+#
+# depth-case: circle.no-arg
+# depth-case: circle.target-missing
+# depth-case: circle.self
+# depth-case: circle.one-argument
+# depth-case: circle.roll-miss
+# depth-case: circle.success
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Circlelord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Circlelord
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Circlethief]
+Circlethief
+Y
+circlepass
+circlepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:Circlethief]
+Circlethief
+y
+circlepass
+circlepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[warmup]
+skillset Circlethief 'circle' 75
+
+[probe:Circlethief]
+circle
+circle nobody
+circle the Circlethief
+circle trainee
+~dpclock pulse 20

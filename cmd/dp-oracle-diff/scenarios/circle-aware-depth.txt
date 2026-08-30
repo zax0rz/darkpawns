@@ -1,0 +1,91 @@
+# MOB_AWARE branch vehicle for do_circle (src/new_cmds.c:2427-2441).
+# Undead seagull 19104 is authored AWARE and awake. C emits the three notice
+# acts, then hit(vict, ch, TYPE_UNDEFINED) immediately when the guard is idle;
+# no circle skill roll or WAIT_STATE follows this early return.
+#
+# depth-case: circle.aware
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19104 1 8105 80
+spawn-obj 8036 1 8105 80
+
+[setup:oracle]
+Circlelord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Circlelord
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Circleaware]
+Circleaware
+Y
+circlepass
+circlepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+get dagger
+wield dagger
+
+[setup:port:Circleaware]
+Circleaware
+y
+circlepass
+circlepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+get dagger
+wield dagger
+
+[warmup]
+skillset Circleaware 'circle' 75
+
+[probe:Circleaware]
+circle seagull
+~dpclock pulse 20

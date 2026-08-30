@@ -724,21 +724,19 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!\r\n"}
 	}
 
-	// MOB_AWARE mobs that are awake notice the attempt and retaliate.
-	// C: new_cmds.c:2427 — hit(vict, ch) if the mob isn't already fighting.
-	// Go has no instant-hit primitive here, so we redirect the mob onto the
-	// circler and set StartCombat; the combat engine's next PerformRound
-	// (bidirectional since DP-900) delivers the mob's retaliatory swing.
+	// MOB_AWARE mobs that are awake notice the attempt. C emits the three
+	// notice acts and, only when the mob was not already fighting, immediately
+	// calls hit(vict, ch, TYPE_UNDEFINED). The command's caller performs that
+	// synchronous opener; no circle cooldown is applied on this early return.
 	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) && target.GetPosition() > combat.PosSleeping {
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
-		target.SetFighting(ch.Name)
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
 			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
 			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
-			StartCombat:   true,
+			RetaliateHit:  target.GetFighting() == "",
 		}
 	}
 
@@ -751,50 +749,61 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	percent := dprng.Number(1, 101) // 1-101; 101% is automatic failure
 	prob := ch.GetSkill(SkillCircle)
 
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		// Miss. C: new_cmds.c:2457 — if the target is fighting, stop_fighting
-		// + hit(vict, ch): the botched circle pulls the mob's aggro onto the
-		// circler. Then damage(ch, vict, 0, SKILL_CIRCLE) starts combat for the
-		// circler too. We retarget the mob onto the circler and set StartCombat
-		// so the caller enrolls the circler; the engine delivers the mob's
-		// swing next round. (C also deals the mob's hit instantly; the engine's
-		// tick delivers it within one PULSE_VIOLENCE — acceptable fidelity
-		// trade consistent with the rest of the Go combat engine.)
-		target.SetFighting(ch.Name)
+		// + hit(vict, ch) runs first. Then damage(ch, vict, 0, SKILL_CIRCLE)
+		// emits set 173 and starts combat for the circler.
+		retaliate := target.GetFighting() != ""
+		if retaliate {
+			target.StopFighting()
+		}
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to circle $N, but $E notices you!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to circle you, but you notice $m in time!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to circle $N, but fails.", chPronouns, &victPronouns, ""),
-			StartCombat:   true,
-			WaitCh:        3, // PULSE_VIOLENCE + 2
+			Success:                        false,
+			SkillMsgType:                   SkillCircleNum,
+			StartCombat:                    true,
+			WaitCh:                         3, // PULSE_VIOLENCE + 2
+			RetaliateHit:                   retaliate,
+			RetaliateHitBeforeSkillMessage: retaliate,
 		}
 	}
 
-	// Hit — weapon damage + damroll + str-to-dam, multiplied by
-	// backstab_mult(level)/3. C: hit() → damage() includes str_app.todam;
-	// this was missing before (DP-906 added GetStrToDam for backstab).
+	// Passed circle roll — C now calls hit(ch, vict, SKILL_CIRCLE), which runs
+	// the ordinary THAC0 d20 before calculating damage. A to-hit miss still
+	// calls damage(..., 0, SKILL_CIRCLE), while a hit uses the weapon dice,
+	// strength-to-damage, damroll, the exact integer position multiplier, and
+	// backstab_mult(level)/3. Both paths then use skill_message set 173.
+	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+		return SkillResult{
+			Success:             false,
+			SkillMsgType:        SkillCircleNum,
+			SkillMsgAfterDamage: true,
+			StartCombat:         true,
+			WaitCh:              3,
+			DeferredImprove:     []string{SkillCircle},
+		}
+	}
+
 	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
 	dam := weaponDam + ch.GetDamroll() + ch.GetStrToDam()
-	mult := int(combat.BackstabMult(ch.GetLevel())) / 3
-	if mult < 1 {
-		mult = 1
+	if target.GetPosition() < combat.PosFighting {
+		dam *= 1 + (combat.PosFighting-target.GetPosition())/3
 	}
+	if dam < 1 {
+		dam = 1
+	}
+	mult := int(combat.BackstabMult(ch.GetLevel())) / 3
 	dam *= mult
 
-	improveSkill(ch, SkillCircle)
-
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   ActMessage("You circle around $N and plunge your weapon into $S back!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n circles around you and plunges $s weapon into your back!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n circles around $N and plunges $s weapon into $S back!", chPronouns, &victPronouns, ""),
-		WaitCh:        3, // PULSE_VIOLENCE + 2
+		Success:             true,
+		Damage:              dam,
+		SkillMsgType:        SkillCircleNum,
+		SkillMsgAfterDamage: true,
+		DamageSkill:         SkillCircle,
+		StartCombat:         true,
+		WaitCh:              3, // PULSE_VIOLENCE + 2
+		DeferredImprove:     []string{SkillCircle},
 	}
 }
 

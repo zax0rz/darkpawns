@@ -43,8 +43,10 @@ import (
 // fall back to TYPE_SLASH (303) to preserve legacy behavior.
 func skillToAttackType(skill string) int {
 	switch skill {
-	case "backstab", "circle":
-		return TypeSting // 301
+	case "backstab":
+		return SkillBackstabNum
+	case "circle":
+		return SkillCircleNum
 	case "bash", "kick", "punch", "dragon_kick", "tiger_punch", "headbutt",
 		"smackheads", "slug", "serpent_kick":
 		return TypeBludgeon // 305

@@ -348,6 +348,47 @@ func TestSendSkillResult_BackstabSuccess_DrawOrderMatchesC(t *testing.T) {
 	)
 }
 
+// TestSendSkillResult_CircleSuccess_DrawOrderMatchesC — circle success on a
+// sleeping victim: number(1,101) [circle roll] → number(1,20) [hit()] →
+// weapon dice → dice(1,N) [skill_message set 173] → number(1,200) →
+// number(1,3) [improve].
+func TestSendSkillResult_CircleSuccess_DrawOrderMatchesC(t *testing.T) {
+	ktw := newKillTestWorld(t, 500, 0, 0, 1, "rat")
+	ktw.world.StopAITicker()
+	p := ktw.addPlayer(t, 1, "Circler", 20, game.ClassThief, false)
+	p.SetSkill(game.SkillCircle, 50)
+	p.Stats.Int = 100
+	p.Stats.Wis = 100
+	equipPiercingWeapon(t, p)
+
+	rig := newDrawOrderRig(t, p.Name)
+	defer rig.teardown()
+	sess := &killPayoutSession{player: p, world: ktw.world, combatEngine: rig.engine}
+
+	assertPipelineDrawOrder(
+		t, rig, sess, p, ktw.mob, game.SkillCircleNum, game.SkillCircle, 1,
+		func(seed uint32) (game.SkillResult, bool) {
+			ktw.mob.SetPosition(combat.PosSleeping) // skill roll and hit() both pass
+			dprng.ResetStream(seed)
+			res := game.DoCircle(p, ktw.mob)
+			return res, res.Success && res.Damage > 0
+		},
+		func() {
+			dprng.Number(1, 101) // circle roll (new_cmds.c:2450)
+			dprng.Number(1, 20)  // THAC0 to-hit inside hit() (fight.c:1825)
+			weaponNum, weaponSides := p.Equipment.GetWeaponDamage()
+			dprng.Dice(weaponNum, weaponSides) // weapon damage dice
+		},
+		func(t *testing.T) {
+			t.Helper()
+			if ktw.mob.GetFighting() != p.Name {
+				t.Errorf("circle success should enroll the victim on the attacker: fighting=%q want %q",
+					ktw.mob.GetFighting(), p.Name)
+			}
+		},
+	)
+}
+
 // TestSendSkillResult_BashSuccess_DrawOrderMatchesC — bash success: number(1,101)
 // [percent roll] → dice(1,N) [skill_message] → number(1,200) → number(1,3)
 // [deferred improve]. Positive damage ((level/2)+1) enrolls via DoSpellDamage.
