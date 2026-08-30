@@ -1,0 +1,88 @@
+# C-first vehicle for SPECIAL(prostitute), src/spec_procs3.c:670-705,
+# registered as mob vnum 8023 in src/spec_assign.c:283. The authored
+# elven_prostitute.lua script is stripped so this vehicle isolates the native
+# special. The visible vehicle keeps setup and movement warmup-only so the
+# compared probe contains only native-procedure output.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8023 1 8021 80
+clear-mob-flag 8023 RANDZON
+strip-mob-script 8023
+replace-room-exits 8021 none
+
+[setup:oracle]
+Velvet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Velvet
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Witness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Witness 8021
+goto 8021
+list
+buy
+
+[probe]
+list
+buy
+say hello
+
+# depth-case: mob.prostitute-entry-gates
+# depth-case: mob.prostitute-list-direct-tell
+# depth-case: mob.prostitute-buy-direct-tell
+# depth-case: mob.prostitute-fallthrough
+# depth-case: mob.prostitute-live-dispatch
