@@ -1,0 +1,86 @@
+# Mortal failure vehicle for do_cutthroat (src/new_cmds.c:619-655).
+# A thief peer receives skill 1 from the first-player God and wields the
+# authored dagger, forcing the normal C failure arm: literal lunge preamble,
+# then hit(ch,victim,SKILL_CUTTHROAT), followed by WAIT_STATE.
+#
+# depth-case: cutthroat.failure
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Cutthroatfailgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cutthroatfailgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Cutthroatfailthief]
+Cutthroatfailthief
+Y
+cutthroatpass
+cutthroatpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:Cutthroatfailthief]
+Cutthroatfailthief
+y
+cutthroatpass
+cutthroatpass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[warmup]
+skillset Cutthroatfailthief 'cutthroat' 1
+
+[probe:Cutthroatfailthief]
+cutthroat trainee
+~dpclock pulse 20

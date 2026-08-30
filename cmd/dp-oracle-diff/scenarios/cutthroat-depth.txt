@@ -1,0 +1,79 @@
+# Combat skill depth vehicle for do_cutthroat (src/new_cmds.c:552-655).
+#
+# The first player is the Implementor and moves to the disposable room.  The
+# skill is granted explicitly so this vehicle reaches the post-skill C gates;
+# the disposable level-0 mob dies in the direct success hit, which keeps the
+# required wait-state padding from entering a second combat round.
+# The probe deliberately walks the C gate order before loading a wrong weapon,
+# replacing it with the piercing dagger, and reaching the immortal-attacker
+# success arm. The final pulse is padding for the success WAIT_STATE.
+#
+# R5e: interpreter.c:403 registers cutthroat at POS_FIGHTING/level 1; the
+# handler's actual call path is new_cmds.c:552-655.  C uses messages set 143
+# from lib/misc/messages for the damage() success path, while its failure path
+# calls ordinary hit() with the wielded weapon type.
+
+# depth-case: cutthroat.no-argument
+# depth-case: cutthroat.target-missing
+# depth-case: cutthroat.self-target
+# depth-case: cutthroat.no-wield
+# depth-case: cutthroat.non-piercing
+# depth-case: cutthroat.first-token-target
+# depth-case: cutthroat.success
+# depth-case: cutthroat.immortal-caster
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4300 1 8105 80
+
+[setup:oracle]
+Cutthroatgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[setup:port]
+Cutthroatgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[warmup]
+skillset Cutthroatgod 'cutthroat' 100
+load obj 8037
+load obj 8036
+wield sword
+
+[probe]
+cutthroat
+cutthroat nobody extra
+cutthroat Cutthroatgod
+cutthroat rick extra
+remove sword
+cutthroat rick
+wield sword
+cutthroat rick
+remove sword
+wield dagger
+cutthroat rick
+~dpclock pulse 20

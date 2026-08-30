@@ -1,0 +1,53 @@
+# C-first mounted vehicle for do_cutthroat (src/new_cmds.c:584-588).
+# A rideable horse and a pierced-weapon wield are prepared before the command;
+# the command therefore reaches its exact Dismount first! refusal.
+#
+# depth-case: cutthroat.mounted
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+spawn-mob 8021 1 8162 80
+spawn-mob 4300 1 8162 80
+
+[setup:oracle]
+Cutthroatmountgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+
+[setup:port]
+Cutthroatmountgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+
+[warmup]
+skillset Cutthroatmountgod 'cutthroat' 100
+load obj 8036
+wield dagger
+ride horse
+
+[probe]
+cutthroat rick
+~dpclock pulse 20

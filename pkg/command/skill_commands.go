@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 
@@ -1214,8 +1215,9 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 		return s.SendMessage("Cut what throat where?\n\r")
 	}
 
-	// Find target
-	targetName := strings.Join(args, " ")
+	// C one_argument() runs before get_char_room_vis(), so only the first
+	// whitespace-delimited target token participates in lookup.
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 	if !found {
@@ -1226,7 +1228,7 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 		return s.SendMessage("That would be bad.\n\r")
 	}
 
-	result := game.DoCutthroat(ch, target)
+	result := game.DoCutthroat(ch, target, world)
 	return sendSkillResult(s, ch, target, result)
 }
 
@@ -1628,6 +1630,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// fields as before.
 	if result.SkillMsgAfterDamage {
 		sendLiteralMessages()
+		for _, skill := range result.PreDamageImprove {
+			game.ImproveSkill(ch, skill)
+		}
 	} else if result.SkillMsgType != 0 && target != nil {
 		sendSkillMessage()
 	} else if result.MessageToCh != "" {
@@ -1636,19 +1641,34 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
 	}
 
-	// Apply damage
-	if result.Damage > 0 && target != nil {
+	// C's failed cutthroat arm calls hit(ch, victim, SKILL_CUTTHROAT), which
+	// resolves one ordinary weapon attack synchronously after the literal
+	// lunge messages. PerformInitialAttack is the shared hit() path used by
+	// do_hit and preserves its to-hit, damage, audience, and combat state.
+	if result.InitialAttack && target != nil {
+		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
+			if err := engine.StartCombat(ch, target); err != nil {
+				slog.Error("cutthroat initial attack combat start failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
+			} else if err := engine.PerformInitialAttack(ch, target); err != nil {
+				slog.Error("cutthroat initial attack failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
+			}
+		}
+	} else if result.Damage > 0 && target != nil {
 		// Route through DoSpellDamage so skill damage uses the same death
 		// pipeline as combat and spells: corpse creation, XP award, kill counter,
 		// event bus publish, removal from world, and combat initiation for both
 		// parties. Previously this only called TakeDamage + printed "is dead!".
 		// See DP-942 / pkg/game/damage_stubs.go.
-		s.GetWorld().DoSpellDamage(ch, target, result.Damage, result.DamageSkill)
+		if result.DamageSkill == game.SkillCutthroat {
+			s.GetWorld().DoCutthroatDamage(ch, target, result.Damage)
+		} else {
+			s.GetWorld().DoSpellDamage(ch, target, result.Damage, result.DamageSkill)
+		}
 	}
 
 	// Bite emits its literal act() messages before damage(), then the C damage
 	// call emits skill_message() after applying the damage and setting combat.
-	if result.SkillMsgAfterDamage {
+	if result.SkillMsgAfterDamage && !result.InitialAttack && !result.SkillMsgInDamage {
 		sendSkillMessage()
 	}
 
@@ -1667,9 +1687,12 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// engine.StartCombat consumes ZERO dprng draws (pure combat_list
 	// manipulation, like C's set_fighting) — inserting it between the
 	// message dice and the improvement does not perturb the stream (R3a).
-	if result.StartCombat && target != nil && target.GetPosition() != combat.PosDead {
+	if !result.InitialAttack && result.StartCombat && target != nil && target.GetPosition() != combat.PosDead {
 		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
-			if ch.GetFighting() == "" {
+			// DoCutthroatDamage uses the complete C damage() seam, which sets
+			// FIGHTING before returning but does not own the command engine's
+			// combat-pair enrollment. The C command's damage() call does both.
+			if ch.GetFighting() == "" || result.SkillMsgInDamage {
 				_ = engine.StartCombat(ch, target)
 			}
 		}

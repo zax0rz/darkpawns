@@ -54,6 +54,8 @@ func skillToAttackType(skill string) int {
 		return SkillBiteNum // SKILL_BITE (150)
 	case "charge":
 		return SkillChargeNum // SKILL_CHARGE (147), default corpse wording
+	case "cutthroat":
+		return SkillCutthroatNum // SKILL_CUTTHROAT (143)
 	case "disembowel":
 		return SkillDisembowelNum // 184
 	case "neckbreak":
@@ -127,6 +129,21 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 	default:
 		return false
 	}
+}
+
+// DoCutthroatDamage completes do_cutthroat's damage() call with the shared C
+// ordering: apply damage, update position, emit message set 143, emit the
+// death-position bytes, then run the game-layer death bookkeeping. The
+// callback is necessary because a lethal mob is removed by HandleDeath before
+// a command wrapper can look it up for skill_message (fight.c:1534-1718).
+func (w *World) DoCutthroatDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillCutthroatNum, func() {
+		w.HandleDeath(victim, attacker, SkillCutthroatNum)
+		combat.DeathCry(victim)
+	})
 }
 
 // doDamage applies skill/offensive damage to a player or mob and handles death.
