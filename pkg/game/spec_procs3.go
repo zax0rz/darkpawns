@@ -728,6 +728,8 @@ func conSellerRoomAct(w *World, me *MobInstance, victim *Player, hideInvisible b
 }
 
 // specTroll regenerates health over time.
+var trollNumber = dprng.Number
+
 func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() <= 0 {
 		return false
@@ -735,7 +737,7 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if me.GetFighting() == "" && me.GetHP() != me.GetMaxHP() {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 20) == 0 {
+		if trollNumber(0, 20) == 0 {
 			regenRate := 2
 			newHP := me.GetHP() + me.GetLevel()*regenRate
 			if newHP > me.GetMaxHP() {
@@ -747,7 +749,7 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	} else if me.GetFighting() != "" {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 10) == 0 {
+		if trollNumber(0, 10) == 0 {
 			regenRate := 2
 			newHP := me.GetHP() + me.GetLevel()*regenRate
 			if newHP > me.GetMaxHP() {

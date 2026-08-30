@@ -1,0 +1,89 @@
+# C-first vehicle for SPECIAL(troll)'s combat arm.  The registration is the
+# same first source-order entry, mob 10029 from src/spec_assign.c:318.  Both
+# disposable players are made evil so Targ's authored AGGR_NEUTRAL flag does
+# not open an unrelated autonomous fight; the probe then explicitly starts
+# Targ's fight and lets perform_violence call the special after its ordinary
+# combat loop.
+# C path: src/fight.c:1898-2032 -> src/spec_procs3.c:347-370.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 10029 1 10049 100
+strip-mob-script 10029
+set-mob-flag 10029 SPEC
+replace-room-exits 10049 none
+
+[setup:oracle]
+TrollCombatActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TrollCombatActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+TrollCombatPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+TrollCombatPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set TrollCombatActor alignment -1000
+set TrollCombatPeer alignment -1000
+teleport TrollCombatPeer 10049
+goto 10049
+set targ maxhit 5000
+set targ hp 5000
+set targ hit 5000
+
+[probe]
+hit targ
+~dpclock pulse 200
+
+# depth-case: mob.troll-fighting-glow
+# depth-case: mob.troll-combat-dispatch
