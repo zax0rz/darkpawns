@@ -817,34 +817,65 @@ func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg st
 	return false
 }
 
+// werewolfNumber is the werewolf special's RNG seam. Production keeps the
+// shared deterministic game stream; focused tests pin C's two conditional
+// draws without perturbing unrelated combat cases.
+var werewolfNumber = dprng.Number
+
+// mobSendToZone sends a native NPC message through C send_to_zone's exact
+// audience: awake players in the mob's zone, excluding the mob's own room.
+// Keep this separate from the broader World.SendToZone helper because the C
+// special's exclusion and awake gate are player-visible behavior.
+func (w *World) mobSendToZone(me *MobInstance, message string) {
+	if me == nil {
+		return
+	}
+	room := w.GetRoomInWorld(me.GetRoomVNum())
+	if room == nil {
+		return
+	}
+	for _, player := range w.GetAllPlayers() {
+		if player.GetPosition() <= combat.PosSleeping || player.GetRoom() == me.GetRoomVNum() {
+			continue
+		}
+		playerRoom := w.GetRoomInWorld(player.GetRoom())
+		if playerRoom != nil && playerRoom.Zone == room.Zone {
+			player.SendMessage(message)
+		}
+	}
+}
+
 // specWerewolf howls and bites when fighting.
-// C source: SPECIAL(werewolf) ~line 407
+// C source: SPECIAL(werewolf) src/spec_procs3.c:427-448
 func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetFighting() == "" || me.GetHP() <= 0 {
+	if me == nil || cmd != "" || me.GetFighting() == "" || me.GetHP() <= 0 {
 		return false
+	}
+	vict := mobFightingTarget(w, me)
+	if vict == nil {
+		return true
 	}
 	// Howl (10% chance)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if dprng.Number(0, 9) == 0 {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s looks up and lets out a long, fierce howl.", mobName(me)))
-		w.SendToZone(me.GetRoomVNum(), "You hear a loud howling in the distance.")
+	if werewolfNumber(0, 9) == 0 {
+		Act(w, true, me, nil, nil, nil, "$n looks up and lets out a long, fierce howl.", "", ToRoom)
+		w.mobSendToZone(me, "You hear a loud howling in the distance.")
 	}
 	// Bite attack (25% chance)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if dprng.Number(0, 3) == 0 {
-		victName := me.GetFighting()
-		vict, ok := w.GetPlayer(victName)
-		if ok && vict != nil && vict.GetRoom() == me.GetRoomVNum() {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tears into your leg with %s huge fangs!", mobName(me), mobName(me)))
-			combat.TakeDamage(me, vict, combat.RollDice(me.GetLevel(), 2), combat.TYPE_BITE)
+	if werewolfNumber(0, 3) == 0 && vict.GetRoom() == me.GetRoomVNum() && me.GetHP() > 0 {
+		Act(w, true, me, vict, nil, nil, "$n tears into your leg with $s huge fangs!", "", ToVict)
+		Act(w, true, me, vict, nil, nil, "$n rips apart $N's leg with $s fangs!", "", ToNotVict)
+		combat.TakeDamage(me, vict, combat.RollDice(me.GetLevel(), 2), combat.TYPE_BITE)
+		if player, ok := vict.(*Player); ok {
 			moveReduction := me.GetLevel() * 3 / 2
-			newMove := vict.GetMove() - moveReduction
+			newMove := player.GetMove() - moveReduction
 			if newMove < 0 {
 				newMove = 0
 			}
-			vict.SetMove(newMove)
+			player.SetMove(newMove)
 		}
 	}
 	return true
