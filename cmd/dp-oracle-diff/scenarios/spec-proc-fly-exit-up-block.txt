@@ -1,0 +1,75 @@
+# C-first vehicle for the mortal blocked arm of SPECIAL(fly_exit_up).
+# The origin peer proves TO_NOTVICT while the actor proves the direct refusal.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+UpMortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+UpMortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:origin]
+UpBlockOrigin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:origin]
+UpBlockOrigin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1389
+teleport UpBlockOrigin 1389
+set UpMortal level 1
+
+[probe]
+up
+
+# depth-case: room.fly-exit-up-blocked-audience
+# depth-case: room.fly-exit-up-blocked-message

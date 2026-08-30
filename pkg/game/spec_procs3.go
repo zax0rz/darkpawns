@@ -1639,14 +1639,17 @@ func specElementsGuardian(w *World, ch *Player, me *MobInstance, cmd string, arg
 
 // specFlyExitUp blocks going up unless the player can fly.
 func specFlyExitUp(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "up" {
+	// C: spec_procs3.c SPECIAL(fly_exit_up). The Go room-special interface
+	// receives players only, so C's IS_NPC arm is enforced by that boundary.
+	if w == nil || ch == nil || ch.GetLevel() > LVL_IMMORT || cmd != "up" {
 		return false
 	}
 	if ch.IsAffected(affFly) {
 		return false // player can fly, allow passage
 	}
-	sendToChar(ch, "You try and jump up there but it's just too high.\r\n")
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s jumps up and down in a vain attempt to travel upwards.", ch.GetName()))
+	sendToChar(ch, "You try and jump up there but it's just too high.")
+	Act(w, true, ch, nil, nil, nil,
+		"$n jumps up and down in a vain attempt to travel upwards.", "", ToNotVict)
 	return true
 }
 
