@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_dismount	dismount	dismount.no-mounted	D1	command	oracle-green-multiseed	dismount-depth@1,2,3,5,8	act.other.c:1601-1604	An unmounted player receives the exact refusal and the ignored argument is not parsed.
+do_dismount	dismount	dismount.mounted-actor	D2	command	oracle-green-multiseed	dismount-depth@1,2,3,5,8	act.other.c:1604-1608	A mounted player receives the exact hop-off line before the room act.
+do_dismount	dismount	dismount.room-audience	D3	command	oracle-green-multiseed	dismount-depth@1,2,3,5,8	act.other.c:1607-1608	The TO_ROOM act reaches the mounted player's peer with the native horse substitution.
+do_dismount	dismount	dismount.argument-ignored	D2	command	unit-green	TestDismountDepthMatchesCOrderAndPairCleanup	act.other.c:1601-1615	An arbitrary argument does not alter either mounted or unmounted command behavior.
+do_dismount	dismount	dismount.pair-state	D4	state	unit-green	TestDismountDepthMatchesCOrderAndPairCleanup	utils.c:401-414; act.other.c:1609-1613	The rider and mount mounted flags and the modeled rider name clear, while an ordinary follower relation survives C's unmount helper.

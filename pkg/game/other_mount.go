@@ -89,6 +89,7 @@ func (w *World) doDismount(ch *Player, me *MobInstance, cmd string, arg string) 
 		return true
 	}
 
+	ch.SendMessage("You hop off your mount.\r\n")
 	mount := w.riddenMount(ch)
 	if mount != nil {
 		Act(w, true, ch, mount, nil, nil, "$n dismounts from the back of $N.", "", ToRoom)
@@ -97,7 +98,6 @@ func (w *World) doDismount(ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 	ch.SetAffect(affMounted, false)
 	ch.MountName = ""
-	ch.SendMessage("You hop off your mount.\r\n")
 	return true
 }
 
