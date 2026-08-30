@@ -1,6 +1,8 @@
 package game
 
 import (
+	"log/slog"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -45,6 +47,83 @@ func (w *World) mobSkillDamage(ch *MobInstance, vict combat.Combatant, dam, skil
 		w.HandleDeath(vict, ch, skillNum)
 	}
 	return dam > 0
+}
+
+// mobBackstabDamage completes the C damage() entry that follows hit() from a
+// mobile special. Unlike the ordinary fighter helpers, backstabber starts from
+// a non-fighting mob, so damage() must put the attacker on combat_list before
+// applying the skill damage (fight.c:1400-1408). The victim's position is left
+// for mobSkillDamage's update_pos-equivalent after the damage amount has been
+// computed; C's set_fighting(victim) is likewise immediately followed by
+// update_pos(victim) (fight.c:1443-1445, 1484-1490).
+func (w *World) mobBackstabDamage(me *MobInstance, vict combat.Combatant, dam int) bool {
+	if me == nil || vict == nil {
+		return false
+	}
+
+	// damage() refuses non-outlaws in peaceful rooms unless the victim is
+	// already fighting the attacker. Backstabber's target gate selects a
+	// non-fighting player, so this is the only reachable peaceful-room branch.
+	if player, ok := vict.(*Player); ok &&
+		w.roomHasFlag(me.GetRoom(), "peaceful") &&
+		player.GetFlags()&(1<<uint(PlrOutlaw)) == 0 &&
+		vict.GetFighting() != me.GetName() {
+		return false
+	}
+
+	if me.GetFighting() == "" && me.GetPosition() > combat.PosStunned {
+		if w.combatEngine != nil {
+			if err := w.combatEngine.StartCombat(me, vict); err != nil {
+				// C has no fallible combat-engine boundary. Preserve the native
+				// damage path after recording an unexpected Go-side failure.
+				slog.Warn("StartCombat failed in backstabber", "mob", me.GetName(), "victim", vict.GetName(), "error", err)
+			}
+		}
+		// Focused spec vehicles may intentionally omit a full combat engine;
+		// retain C's observable fighting state in that test seam as well.
+		if me.GetFighting() == "" {
+			me.SetFighting(vict.GetName())
+			me.SetPosition(combat.PosFighting)
+		}
+	}
+	if vict.GetFighting() == "" && vict.GetPosition() > combat.PosStunned {
+		vict.SetFighting(me.GetName())
+	}
+
+	return w.mobSkillDamage(me, vict, dam, SkillBackstabNum)
+}
+
+// mobBackstab ports hit(ch, vict, SKILL_BACKSTAB) as called by
+// do_backstab(..., subcmd=1). The caller has already passed the command,
+// target, weapon, mount, and target-fighting gates, so this helper starts with
+// the native percent/probability draws and preserves their order
+// (act.offensive.c:220-229; fight.c:1825-1881).
+func (w *World) mobBackstab(me *MobInstance, vict combat.Combatant) {
+	percent := dprng.Number(1, 101)
+	prob := dprng.Number(50, 100)
+	if vict.GetPosition() > combat.PosSleeping && percent > prob {
+		w.mobBackstabDamage(me, vict, 0)
+		return
+	}
+
+	if !combat.CalculateHitChance(me, vict, combat.HitModifiers{}) {
+		w.mobBackstabDamage(me, vict, 0)
+		return
+	}
+
+	// C's NPC hit() uses the mob damage dice, not the wielded weapon dice.
+	// Unlike a normal weapon hit, SKILL_BACKSTAB bypasses get_minusdam().
+	damRoll := me.GetDamageRoll()
+	dam := combat.StrAppToDam(me) + me.GetDamroll()
+	dam += dprng.Dice(damRoll.Num, damRoll.Sides) + damRoll.Plus
+	if vict.GetPosition() < combat.PosFighting {
+		dam = int(float64(dam) * (1.0 + float64(combat.PosFighting-vict.GetPosition())/3.0))
+	}
+	if dam < 1 {
+		dam = 1
+	}
+	dam *= int(combat.BackstabMult(me.GetLevel()))
+	w.mobBackstabDamage(me, vict, dam)
 }
 
 // emitMobSkillSurvival contains the player-visible post-message position
