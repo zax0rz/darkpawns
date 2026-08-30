@@ -89,16 +89,31 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 		}
 	}
 
+	return performBehead(world, ch, obj, wielded, slashWeapon,
+		func(headObj *ObjectInstance) bool { return world.canTakeObj(ch, headObj) },
+		func(headObj *ObjectInstance) error { return world.MoveObjectToPlayerInventory(headObj, ch) },
+	)
+}
+
+// performBehead contains the shared object transformation used by do_behead
+// and SPECIAL(brain_eater)'s NPC call to do_behead.  C's command accepts both
+// players and mobiles; keeping the mutation path shared prevents the NPC
+// special from silently skipping the head/corpse/content lifecycle.
+func performBehead(world *World, ch Actor, obj *ObjectInstance, wielded, slashWeapon bool, canTake func(*ObjectInstance) bool, moveHead func(*ObjectInstance) error) SkillResult {
+	if world == nil || ch == nil || obj == nil {
+		return SkillResult{Success: false}
+	}
+
 	var msgToCh, msgToRoom string
 	if wielded && slashWeapon {
 		msgToCh = fmt.Sprintf("You behead %s!", obj.GetShortDesc())
-		msgToRoom = fmt.Sprintf("%s beheads %s!", ch.Name, obj.GetShortDesc())
+		msgToRoom = fmt.Sprintf("%s beheads %s!", ch.GetName(), obj.GetShortDesc())
 	} else {
 		msgToCh = fmt.Sprintf("You rip the head off %s with your bare hands!", obj.GetShortDesc())
 		if ch.IsNPC() {
-			msgToRoom = fmt.Sprintf("%s rips the head off %s!", ch.Name, obj.GetShortDesc())
+			msgToRoom = fmt.Sprintf("%s rips the head off %s!", ch.GetName(), obj.GetShortDesc())
 		} else {
-			msgToRoom = fmt.Sprintf("%s rips the head off %s with %s bare hands!", ch.Name, obj.GetShortDesc(), genderPronoun(ch.GetSex()))
+			msgToRoom = fmt.Sprintf("%s rips the head off %s with %s bare hands!", ch.GetName(), obj.GetShortDesc(), genderPronoun(ch.GetSex()))
 		}
 	}
 
@@ -120,14 +135,14 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	headObj.Runtime.Keywords = "head"
 	headObj.Runtime.ShortDesc = headShortDesc
 	headObj.Runtime.LongDesc = CapitalizeSentence(headShortDesc) + " has been left here."
-	if world.canTakeObj(ch, headObj) {
-		if err := world.MoveObjectToPlayerInventory(headObj, ch); err != nil {
+	if canTake(headObj) {
+		if err := moveHead(headObj); err != nil {
 			slog.Error("behead head inventory placement failed", "error", err)
-			if moveErr := world.MoveObjectToRoomFront(headObj, ch.GetRoomVNum()); moveErr != nil {
+			if moveErr := world.MoveObjectToRoomFront(headObj, ch.GetRoom()); moveErr != nil {
 				slog.Error("behead head room placement failed", "error", moveErr)
 			}
 		}
-	} else if err := world.MoveObjectToRoomFront(headObj, ch.GetRoomVNum()); err != nil {
+	} else if err := world.MoveObjectToRoomFront(headObj, ch.GetRoom()); err != nil {
 		slog.Error("behead head room placement failed", "error", err)
 	}
 
@@ -144,7 +159,7 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 	headlessCorpseObj.Timer = MaxNPCCorpseTime
 	headlessCorpseObj.IsCorpse = true
 	headlessCorpseObj.Runtime.Keywords = originalName + " headless beheaded"
-	if err := world.MoveObjectToRoomFront(headlessCorpseObj, ch.GetRoomVNum()); err != nil {
+	if err := world.MoveObjectToRoomFront(headlessCorpseObj, ch.GetRoom()); err != nil {
 		slog.Error("behead corpse room placement failed", "error", err)
 	}
 	for len(obj.Contains) > 0 {
@@ -154,7 +169,7 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 			break
 		}
 	}
-	world.ExtractObject(obj, ch.GetRoomVNum())
+	world.ExtractObject(obj, ch.GetRoom())
 
 	return SkillResult{
 		Success:       true,

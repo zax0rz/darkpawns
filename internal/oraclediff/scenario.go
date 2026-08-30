@@ -378,7 +378,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			if len(fields) == 3 && (strings.EqualFold(fields[0], "clear-mob-flag") || strings.EqualFold(fields[0], "set-mob-flag")) {
 				mobVNum, mobErr := strconv.Atoi(fields[1])
 				flag := strings.ToUpper(fields[2])
-				if mobErr == nil && mobVNum > 0 && (flag == "RANDZON" || flag == "SPEC") {
+				if mobErr == nil && mobVNum > 0 && (flag == "AGGRESSIVE" || flag == "RANDZON" || flag == "SPEC") {
 					sc.MobFlagFixtures = append(sc.MobFlagFixtures, MobFlagFixture{MobVNum: mobVNum, Flag: flag, Enabled: strings.EqualFold(fields[0], "set-mob-flag")})
 					continue
 				}
