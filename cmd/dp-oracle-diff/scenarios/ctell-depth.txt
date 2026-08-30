@@ -1,0 +1,123 @@
+# ctell command vehicle (src/interpreter.c:399; src/act.comm.c:1451-1565;
+# src/clan.c). The primary is an empty-players clan god. Warmup creates a
+# two-rank clans, makes Clanmate and Clanother rank-two leaders, and uses the
+# second clan to reach the source's rank-count lookup. This isolates the remaining ctell path after the prior
+# group-clan-channels vehicle's clanless-mortal rejection.
+
+# depth-case: ctell.immortal-no-argument
+# depth-case: ctell.immortal-invalid-clan
+# depth-case: ctell.immortal-missing-message
+# depth-case: ctell.immortal-rank-not-number
+# depth-case: ctell.immortal-rank-too-high
+# depth-case: ctell.immortal-rank-filter
+# depth-case: ctell.immortal-broadcast
+# depth-case: ctell.norepeat
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:other-clan]
+Clanother
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:other-clan]
+Clanother
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Clanmate Wolves
+clan set applev 1 Wolves
+clan create Clanother Tigers
+
+[probe]
+ctell
+ctell 0 invalid clan
+ctell 99 invalid clan
+ctell 1
+ctell 1 hello clan
+ctell 1 #bad hello
+ctell 1 #9 too high
+ctell 1 #2 leader only
+ctell 1 #1 everyone
+norepeat
+ctell 1 silent clan
