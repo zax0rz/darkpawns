@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	comb	comb.no-argument	D2	command	oracle-green	comb-depth	interpreter.c:391; act.social.c:102-151; lib/misc/socials:111-119	No argument emits the C hair-combing actor and room pair.
+do_action	comb	comb.target-success	D3	audience	oracle-green	comb-depth	act.social.c:145-151; lib/misc/socials:111-119	A standing peer receives the actor, room, and victim messages.
+do_action	comb	comb.target-not-found	D1	command	oracle-green	comb-depth	act.social.c:128-132; lib/misc/socials:111-119	Missing target uses the C not-found message.
+do_action	comb	comb.self-target	D2	command	oracle-green	comb-depth	act.social.c:134-140; lib/misc/socials:111-119	Self-target uses the C pull-your-own-hair message.
+do_action	comb	comb.sleeping-target	D3	audience	oracle-green	comb-depth	act.social.c:145-151; lib/misc/socials:111-119	With minimum victim position zero, a sleeping peer still receives the target trio.
