@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_ps	clear	clear.no-argument	D2	command	oracle-green	clear-depth	interpreter.c:385; act.informative.c:2120-2170	SCMD_CLEAR emits exactly the C terminal clear sequence with no argument.
+do_gen_ps	clear	clear.argument-ignored	D2	command	oracle-green	clear-depth	act.informative.c:2120-2170	Arguments are ignored and do not add player-facing bytes.
+do_gen_ps	cls	cls.no-argument	D2	command	oracle-green	clear-depth	interpreter.c:386; act.informative.c:2120-2170	The cls alias reaches the same C SCMD_CLEAR branch.
+do_gen_ps	cls	cls.argument-ignored	D2	command	oracle-green	clear-depth	interpreter.c:386; act.informative.c:2120-2170	The cls alias also ignores arguments and emits only the escape sequence.
