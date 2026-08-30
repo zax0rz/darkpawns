@@ -2333,38 +2333,61 @@ func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg st
 
 // ================================================================
 // specCastleGuardNorth — Blocks movement north into the castle.
-// C equivalent: castle_guard_north in spec_procs2.c:2078-2122
+// C equivalent: castle_guard_north in spec_procs2.c:2218-2258
 // ================================================================
 func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() || !guardCanAct(ch, me) {
+	if me == nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 
-	if cmd == "north" && !isOwner(w, ch, me.GetRoomVNum()+2) {
-		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s moves aside and allows %s to pass.", me.GetShortDesc(), ch.GetName()))
-		} else {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s states, 'Thou shalt not pass.'", me.GetShortDesc()))
-			if err := me.Attack(ch, w); err != nil {
+	// C's command path receives a player, while the commandless mobile path
+	// passes the guard as both ch and me. The Go autonomous dispatcher uses a
+	// nil ch to represent that same commandless call.
+	if cmd != "" {
+		if ch == nil || ch.GetLevel() >= LVL_IMMORT {
+			return false
+		}
+
+		if cmd == "north" && !isOwner(w, ch, me.GetRoomVNum()+2) {
+			if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
+				Act(w, false, me, ch, nil, nil, "$n moves aside and allows you to pass.", "", ToVict)
+				Act(w, false, me, ch, nil, nil, "$n moves aside and allows $N to pass.", "", ToNotVict)
+			} else {
+				Act(w, false, me, ch, nil, nil, "$n blocks your way.", "", ToVict)
+				Act(w, false, me, ch, nil, nil, "$n blocks $N's path.", "", ToNotVict)
+				Act(w, false, me, nil, nil, nil, "$n states, 'Thou shalt not pass.'", "", ToRoom)
+				return true
+			}
+		}
+		return false
+	}
+
+	// C's !cmd arm scans world[mobile->in_room].people, not just players. A
+	// second assigned castle-north guard that is fighting another character is
+	// handed to the canonical hit() seam, even when that target is a mob.
+	if me.GetFighting() == "" {
+		for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
+			if MobSpecAssign[other.GetVNum()] != "castle_guard_north" || !other.IsFighting() {
+				continue
+			}
+			targetName := other.GetFightingTarget()
+			if targetName == "" || targetName == me.GetName() {
+				continue
+			}
+
+			var target combat.Combatant
+			if player, ok := w.GetPlayer(targetName); ok {
+				target = player
+			} else if mob := w.GetMobByName(targetName); mob != nil {
+				target = mob
+			}
+			if target == nil {
+				continue
+			}
+			if err := w.mobHit(me, target); err != nil {
 				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 			}
 			return true
-		}
-	}
-
-	if cmd == "" && me.GetFighting() == "" {
-		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob == me || !mob.IsFighting() || mob.GetFightingTarget() == "" {
-				continue
-			}
-			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
-					if err := me.Attack(pl, w); err != nil {
-						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-					}
-					return true
-				}
-			}
 		}
 	}
 

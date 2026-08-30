@@ -1,0 +1,80 @@
+# C-first vehicle for SPECIAL(castle_guard_north), registered for mob vnums
+# 19510, 19601, 19602, 19675, 19676, 19690, and 19691 by src/spec_assign.c
+# 447-462 and defined at src/spec_procs2.c:2218-2258. The guard runs before
+# do_move; an awake mortal attempting north receives the C audience split.
+# The disposable exit is open so a fall-through would be observable as a move.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19510 1 19510 80
+replace-room-exits 19510 north 19511 0
+
+[setup:oracle]
+CastleNorthGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CastleNorthGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+CastleNorthMortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+CastleNorthMortal
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19510
+teleport CastleNorthMortal 19510
+
+[probe:peer]
+north
+
+# depth-case: mob.castle-guard-north-entry-gates
+# depth-case: mob.castle-guard-north-block-audience
+# depth-case: mob.castle-guard-north-return-intercept

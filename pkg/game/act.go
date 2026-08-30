@@ -113,7 +113,10 @@ func persName(ch, observer Actor) string {
 	if observer == nil {
 		return ch.GetName()
 	}
-	if !canSee(observer, ch) {
+	// C's PERS() delegates to CAN_SEE(), whose macro checks blindness, light,
+	// and invisibility but deliberately does not treat AFF_HIDE as invisible.
+	// Room listing has a separate AFF_HIDE branch; keep that distinction here.
+	if !canSeeForPers(observer, ch) {
 		return "someone"
 	}
 	return ch.GetName()
@@ -122,6 +125,17 @@ func persName(ch, observer Actor) string {
 // canSee returns true if observer can see subject.
 // Faithful port of CAN_SEE macro.
 func canSee(observer, subject Actor) bool {
+	return canSeeWithHide(observer, subject, true)
+}
+
+// canSeeForPers mirrors the narrower C CAN_SEE path used by PERS(). C's
+// CAN_SEE macro does not inspect AFF_HIDE; callers that need room-listing hide
+// semantics use canSee instead.
+func canSeeForPers(observer, subject Actor) bool {
+	return canSeeWithHide(observer, subject, false)
+}
+
+func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	if observer == nil || subject == nil {
 		return true
 	}
@@ -163,8 +177,9 @@ func canSee(observer, subject Actor) bool {
 		}
 	}
 
-	// 3. Hiding check
-	if sbjSub.IsAffected(affHide) {
+	// 3. Hiding check — this is a Go room-visibility extension and is not part
+	// of C's CAN_SEE macro, so PERS() opts out via canSeeForPers.
+	if hide && sbjSub.IsAffected(affHide) {
 		if !obsSub.IsAffected(affSenseLife) {
 			return false
 		}
