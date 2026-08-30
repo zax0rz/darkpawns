@@ -15,6 +15,15 @@ func (w *World) mobSkillDamage(ch *MobInstance, vict combat.Combatant, dam, skil
 		return false
 	}
 
+	// Native damage() performs jail/charm/switcheroo redirects before applying
+	// the supplied amount. CombatEngine already owns that shared C seam for
+	// one_hit(); use it here too for direct mob-special damage (R3/R5b/R5c).
+	if redirector, ok := w.combatEngine.(interface {
+		ApplyMobDamageRedirects(combat.Combatant, combat.Combatant) bool
+	}); ok && redirector.ApplyMobDamageRedirects(ch, vict) {
+		return false
+	}
+
 	// damage() enrolls both sides before applying its modifier block. The
 	// victim's position is only raised from a downed state at this point when
 	// the C position gate allows it; fighter's live target is already fighting.

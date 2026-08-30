@@ -241,6 +241,15 @@ func (ce *CombatEngine) StartCombatFromMob(attacker, defender Combatant) error {
 	return ce.startCombat(attacker, defender, true)
 }
 
+// ApplyMobDamageRedirects exposes the damage() redirect seam to native mob
+// specials that call damage() directly rather than entering through a
+// one_hit() combat pair. C performs these redirects before applying the
+// caller-supplied damage amount (fight.c:1370-1440), so the game layer must
+// use this same seam for direct fighter-special damage as well.
+func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bool {
+	return ce.applyMobCombatRedirects(attacker, defender)
+}
+
 func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment bool) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
