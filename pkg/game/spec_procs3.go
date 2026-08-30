@@ -1074,24 +1074,51 @@ func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	return false
 }
 
-// specProstitute offers services for gold.
-func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+// prostituteCanSee mirrors CAN_SEE(mobile, ch) for SPECIAL(prostitute).
+// C's LIGHT_OK gate is part of this procedure's visibility test; the generic
+// Go canSee helper has no World argument and therefore cannot inspect room
+// darkness here. Source: src/utils.h:515-530.
+func prostituteCanSee(w *World, mobile *MobInstance, ch *Player) bool {
+	if w == nil || mobile == nil || ch == nil {
 		return false
 	}
-	if !mobCanSee(me) {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'Who's there? I can't see you!'", mobName(me)))
+	if mobile.IsAffected(affBlind) {
+		return false
+	}
+	if w.isRoomDark(mobile.GetRoomVNum()) && !mobile.IsAffected(affInfravision) {
+		return false
+	}
+	if ch.IsAffected(affInvisible) && !mobile.IsAffected(affDetectInvisible) {
+		return false
+	}
+	return true
+}
+
+// specProstitute offers services for gold.
+// C source: src/spec_procs3.c:670-705. The native procedure only handles
+// exact BUY/LIST commands after its entry gates; unrelated commands fall
+// through to the ordinary interpreter.
+func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if ch == nil || me == nil || cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+		return false
+	}
+
+	if (cmd == "buy" || cmd == "list") && !prostituteCanSee(w, me, ch) {
+		Act(w, true, me, nil, nil, nil, "$n says, 'If I could see you, we could do business..'", "", ToRoom)
+		Act(w, true, me, nil, nil, nil, "$n winks coyly.", "", ToRoom)
 		return true
 	}
-	if cmd == "buy" {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s I ain't for sale, just rent. Give me 5 gold for a good time.'", mobName(me), ch.GetName()))
+
+	switch cmd {
+	case "buy":
+		tellFromMob(me, ch, "I ain't for sale, just rent. Give me 5 gold for a good time.")
 		return true
-	}
-	if cmd == "list" {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s For five coins, I'll show you a good time.'", mobName(me), ch.GetName()))
+	case "list":
+		tellFromMob(me, ch, "For five coins, I'll show you a good time.")
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 // specRoach — a living cockroach that eats, grows, and reproduces.
