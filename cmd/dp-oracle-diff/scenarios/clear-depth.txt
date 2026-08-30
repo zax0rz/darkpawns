@@ -1,0 +1,47 @@
+# clear/cls command family vehicle (src/interpreter.c:385-386;
+# src/act.informative.c:2120-2170). Both table rows dispatch to
+# do_gen_ps(SCMD_CLEAR), which ignores arguments and sends only the terminal
+# clear escape sequence.
+
+# depth-case: clear.no-argument
+# depth-case: clear.argument-ignored
+# depth-case: cls.no-argument
+# depth-case: cls.argument-ignored
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cleargod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cleargod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+clear
+clear ignored
+cls
+cls ignored
