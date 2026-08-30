@@ -1121,8 +1121,13 @@ func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	}
 }
 
+// roachNumber is the C number() seam for the roach's pulse-local draws.
+var roachNumber = dprng.Number
+
 // specRoach — a living cockroach that eats, grows, and reproduces.
-// C source: SPECIAL(roach) ~line 707. Pulse-only (ch is nil, me is the roach).
+// C source: SPECIAL(roach) ~line 707. Autonomous C dispatch passes the mob as
+// both ch and me; the Go adapter has no player for that call, so this proc uses
+// me for the mob state and room acts.
 func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" || me == nil || me.GetPosition() <= combat.PosSleeping {
 		return false
@@ -1132,46 +1137,63 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	// Starvation death (extremely rare: 1/10001 * 1/10001 probability)
 	// #nosec G404 — game RNG, not cryptographic
 	//nolint:gocritic,staticcheck // badCond/SA4000: two independent RNG rolls are intentional, not a copy-paste error
-	if dprng.Number(0, 10000) == 0 && dprng.Number(0, 10000) == 0 && me.GetMaxHealth() < 11 {
-		w.roomMessage(roomVNum, fmt.Sprintf("%s seems to starve to death and simply fades out of existence.", mobName(me)))
-		me.SetHealth(0)
-		w.HandleDeath(me, nil, -1)
+	if roachNumber(0, 10000) == 0 && roachNumber(0, 10000) == 0 && me.GetMaxHealth() < 11 {
+		Act(w, false, me, nil, nil, nil, "$n seems to starve to death and simply fades out of existence.", "", ToRoom)
+		me.SetAlive(false)
+		if w.spawner != nil {
+			w.spawner.RemoveMobInstance(me.VNum, me)
+		}
+		w.ExtractMob(me)
 		return true
 	}
 
 	// Look for food on the ground
 	items := w.GetItemsInRoom(roomVNum)
 	for _, obj := range items {
-		if !obj.CanPickUp {
+		if obj == nil || !obj.IsTakeable() {
 			continue
 		}
-		w.roomMessage(roomVNum, fmt.Sprintf("%s feeds on %s.", mobName(me), obj.GetShortDesc()))
+		Act(w, false, me, nil, obj, nil, "$n feeds on $p.", "", ToRoom)
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 2) == 0 {
+		if roachNumber(0, 2) == 0 {
 			newMaxHP := me.GetMaxHealth() + obj.GetCost()/2
+			roll := me.GetDamageRoll()
+			// #nosec G404 — game RNG, not cryptographic
+			if roachNumber(0, 2) == 0 {
+				roll.Num++
+			}
+			// #nosec G404 — game RNG, not cryptographic
+			if roachNumber(0, 2) == 0 {
+				roll.Sides++
+			}
+			me.SetDamageDice(roll.Num, roll.Sides)
 			if newMaxHP > 400 {
-				// Split into new roach
+				// C resets the original roach's max/current HP and damage dice,
+				// then creates a fresh prototype roach. The final C assignments
+				// repeat ch rather than mob, so the new roach keeps its defaults.
+				me.SetMaxHP(10)
 				me.SetHealth(10)
-				w.roomMessage(roomVNum, fmt.Sprintf("%s splits in half forming a new roach!", mobName(me)))
-				newRoach, err := w.SpawnMobInstance(23, roomVNum)
+				me.SetDamageDice(2, 4)
+				newRoach, err := w.spawnMobQuiet(23, roomVNum)
 				if err == nil && newRoach != nil {
+					// read_mobile + char_to_room is silent in this C path.
 					newRoach.SetHealth(10)
-				} else {
-					me.SetMaxHP(10)
+					newRoach.SetMaxHP(10)
 				}
+				Act(w, false, me, nil, nil, nil, "$n splits in half forming a new roach!", "", ToRoom)
 			} else {
 				me.SetMaxHP(newMaxHP)
 				// #nosec G404 — game RNG, not cryptographic
 				// #nosec G404
-				if dprng.Number(0, 1) == 0 {
-					w.roomMessage(roomVNum, "You hear some stretching noises.")
+				if roachNumber(0, 1) == 0 {
+					Act(w, false, me, nil, nil, nil, "You hear some stretching noises.", "", ToRoom)
 				} else {
-					w.roomMessage(roomVNum, fmt.Sprintf("You hear a strange rumbling from %s's stonach.", mobName(me)))
+					Act(w, false, me, nil, nil, nil, "You hear a strange rumbling from $n's stonach.", "", ToRoom)
 				}
 			}
 		} else {
-			w.roomMessage(roomVNum, fmt.Sprintf("You hear %s burp.", mobName(me)))
+			Act(w, false, me, nil, nil, nil, "You hear $n burp.", "", ToRoom)
 		}
 		if err := w.MoveObjectToNowhere(obj); err != nil {
 			slog.Warn("MoveObjectToNowhere failed in burp spec", "obj", obj.GetVNum(), "error", err)
@@ -1182,31 +1204,35 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	// Random idle behaviors
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	switch dprng.Number(0, 10) {
+	switch roachNumber(0, 10) {
 	case 0:
-		w.roomMessage(roomVNum, fmt.Sprintf("%s chirps gleefully.", mobName(me)))
+		Act(w, false, me, nil, nil, nil, "$n chirps gleefully.", "", ToRoom)
 	case 1:
-		w.roomMessage(roomVNum, fmt.Sprintf("%s changes colors and clicks happily.", mobName(me)))
+		Act(w, false, me, nil, nil, nil, "$n changes colors and clicks happily.", "", ToRoom)
 	case 2:
-		w.roomMessage(roomVNum, fmt.Sprintf("%s skitters around in tight circles.", mobName(me)))
+		Act(w, false, me, nil, nil, nil, "$n skitters around in tight circles.", "", ToRoom)
 	case 3:
-		w.roomMessage(roomVNum, fmt.Sprintf("Strange purple dots appear on %s's back.", mobName(me)))
+		Act(w, false, me, nil, nil, nil, "Strange purple dots appear on $n's back.", "", ToRoom)
 	case 4:
+		// C only attempts the teleport one time in six after choosing case 4.
+		if roachNumber(0, 5) != 0 {
+			return false
+		}
 		// Teleport to a random room
 		rooms := w.Rooms()
 		if len(rooms) > 0 {
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			randRoom := rooms[dprng.Number(0, len(rooms)-1)].VNum
+			randRoom := rooms[roachNumber(0, len(rooms)-1)].VNum
 			// Check for unwanted room flags (private/godroom/nomagic/death)
 			if w.roomHasFlag(randRoom, "private") || w.roomHasFlag(randRoom, "godroom") ||
 				w.roomHasFlag(randRoom, "nomagic") || w.roomHasFlag(randRoom, "death") {
-				w.roomMessage(roomVNum, fmt.Sprintf("%s fades out and back in again.", mobName(me)))
+				Act(w, false, me, nil, nil, nil, "$n fades out and back in again.", "", ToRoom)
 				return false
 			}
-			w.roomMessage(roomVNum, fmt.Sprintf("%s fades out slowly with a soft swoosh.", mobName(me)))
+			Act(w, true, me, nil, nil, nil, "$n fades out slowly with a soft swoosh.", "", ToRoom)
 			me.SetRoom(randRoom)
-			w.roomMessage(randRoom, fmt.Sprintf("%s fades in slowly, looking a bit disoriented.", mobName(me)))
+			Act(w, true, me, nil, nil, nil, "$n fades in slowly, looking a bit disoriented.", "", ToRoom)
 			return true
 		}
 		return false

@@ -43,8 +43,13 @@ type MobRuntimeState struct {
 	// DamrollOverride is the instance-local GET_DAMROLL value used by C
 	// specials that assign points.damroll directly (for example carrion's
 	// read_mobile result). A pointer preserves zero as a meaningful override.
-	DamrollOverride *int           `json:"damroll_override,omitempty"`
-	DamrollBonus    int            `json:"damroll_bonus,omitempty"`
-	Horse           *HorseState    `json:"horse,omitempty"`
-	Script          map[string]any `json:"script,omitempty"`
+	DamrollOverride *int `json:"damroll_override,omitempty"`
+	DamrollBonus    int  `json:"damroll_bonus,omitempty"`
+	// DamageNumOverride and DamageSidesOverride preserve per-instance
+	// mob_specials.damnodice/damsizedice mutations made by native specials.
+	// A pointer distinguishes an override of zero from the prototype value.
+	DamageNumOverride   *int           `json:"damage_num_override,omitempty"`
+	DamageSidesOverride *int           `json:"damage_sides_override,omitempty"`
+	Horse               *HorseState    `json:"horse,omitempty"`
+	Script              map[string]any `json:"script,omitempty"`
 }

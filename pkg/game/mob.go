@@ -501,6 +501,15 @@ func (m *MobInstance) SetDamroll(damroll int) {
 	m.Runtime.DamrollOverride = &damroll
 }
 
+// SetDamageDice overrides the instance-local mob_specials damage dice.
+// Native specials can mutate these without changing the shared prototype.
+func (m *MobInstance) SetDamageDice(num, sides int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.DamageNumOverride = &num
+	m.Runtime.DamageSidesOverride = &sides
+}
+
 // AddDamrollBonus adds to the instance-local GET_DAMROLL value without
 // mutating the shared mob prototype. C specials use this for permanent
 // per-instance growth such as brain_eater at level 30.
@@ -515,7 +524,15 @@ func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.Prototype != nil {
+		num := m.Prototype.Damage.Num
+		sides := m.Prototype.Damage.Sides
 		plus := m.Prototype.Damage.Plus
+		if m.Runtime.DamageNumOverride != nil {
+			num = *m.Runtime.DamageNumOverride
+		}
+		if m.Runtime.DamageSidesOverride != nil {
+			sides = *m.Runtime.DamageSidesOverride
+		}
 		if m.Runtime.DamrollOverride != nil {
 			// The mob-file damage plus is the normal Go representation of the
 			// C damroll value. Once C overwrites points.damroll, it must not be
@@ -523,8 +540,8 @@ func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 			plus = 0
 		}
 		return combat.DiceRoll{
-			Num:   m.Prototype.Damage.Num,
-			Sides: m.Prototype.Damage.Sides,
+			Num:   num,
+			Sides: sides,
 			Plus:  plus,
 		}
 	}
