@@ -1,0 +1,116 @@
+# cuddle command vehicle (src/interpreter.c:400; src/act.social.c:102-151;
+# lib/misc/socials:156-164). The record has hide=1 and minimum victim
+# position POS_RESTING, so this vehicle covers the no-argument, target
+# position, missing-target, self-target, and actor/room/victim success arms.
+
+# depth-case: cuddle.no-argument
+# depth-case: cuddle.target-position-gate
+# depth-case: cuddle.target-not-found
+# depth-case: cuddle.self-target
+# depth-case: cuddle.target-success
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CuddleGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CuddleGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:oracle:roommate]
+Roommate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:roommate]
+Roommate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sleepero 8162
+teleport Roommate 8162
+
+[probe]
+cuddle
+cuddle Sleepero
+cuddle nobody
+cuddle CuddleGod
+wake Sleepero
+cuddle Sleepero

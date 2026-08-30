@@ -1,0 +1,74 @@
+# do_action PLR_NOSHOUT gate vehicle (src/interpreter.c:400;
+# src/act.social.c:102-118). The primary Implementor mutes the named mortal in
+# warmup; the mortal then invokes cuddle, proving the emote refusal occurs
+# before target lookup or audience output.
+
+# depth-case: cuddle.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CuddleGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CuddleGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Muteon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Muteon
+
+[probe:muteon]
+cuddle CuddleGod
