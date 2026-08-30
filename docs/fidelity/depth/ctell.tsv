@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_ctell	ctell	ctell.immortal-no-argument	D1	command	oracle-green	ctell-depth	act.comm.c:1464-1471; interpreter.c:399	An immortal with no clan-number argument receives C's invalid-clan response.
+do_ctell	ctell	ctell.immortal-invalid-clan	D1	command	oracle-green	ctell-depth	act.comm.c:1464-1471	Zero and out-of-range immortal clan numbers use the exact C invalid-clan response.
+do_ctell	ctell	ctell.immortal-missing-message	D1	command	oracle-green	ctell-depth	act.comm.c:1494-1499	A valid immortal clan number with no message receives the C clan-message prompt.
+do_ctell	ctell	ctell.immortal-rank-not-number	D1	command	oracle-green	ctell-depth	act.comm.c:1501-1509	A rank prefix containing non-digits receives the C numeric-rank refusal.
+do_ctell	ctell	ctell.immortal-rank-too-high	D1	command	oracle-green	ctell-depth	act.comm.c:1511-1517	A rank threshold above the clan rank count receives the C no-hearer refusal.
+do_ctell	ctell	ctell.immortal-rank-filter	D3	audience	oracle-green	ctell-depth	act.comm.c:1540-1559	A rank-two threshold reaches the same-clan rank-two member; the second clan makes the C rank-count lookup reachable.
+do_ctell	ctell	ctell.immortal-broadcast	D3	audience	oracle-green	ctell-depth	act.comm.c:1528-1559	A normal immortal clan tell emits the C sender line and same-clan recipient line.
+do_ctell	ctell	ctell.norepeat	D2	audience	oracle-green	ctell-depth	act.comm.c:1528-1537	PRF_NOREPEAT replaces the sender echo with C's Okay. while recipients still receive the tell.

@@ -381,23 +381,18 @@ func cmdNewbieChannel(s *Session, args []string) error {
 // cmdCTell sends a message on the clan tell channel.
 // Source: act.comm.c do_ctell()
 func cmdCTell(s *Session, args []string) error {
-	// C do_ctell (act.comm.c:1451) rejects a clanless mortal BEFORE anything
-	// else — "You're not part of a clan." — ahead of argument/broadcast logic.
-	if s.player.ClanID == 0 || s.player.ClanRank == 0 {
-		s.sendText("You're not part of a clan.\r\n")
-		return nil
-	}
-	if len(args) == 0 {
-		s.Send("What do you want to tell your clan?")
-		return nil
-	}
 	message := sanitizeMessage(strings.Join(args, " "))
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
 	}
-	message = filtered
+	// C do_ctell handles the immortal clan-number syntax and all sender/channel
+	// gates inside the command path (act.comm.c:1451-1565). Keep those gates in
+	// the game layer so direct ExecCTell callers and player dispatch agree.
 	s.manager.world.ExecCTell(s.player, message)
 	return nil
 }

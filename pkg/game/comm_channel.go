@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -224,28 +225,89 @@ func (w *World) doThink(ch *Player, me *MobInstance, cmd string, arg string) boo
 // doCTell -- port of do_ctell() (clan tell).
 func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = skipSpaces(arg)
+	minLevel := 1
+	clanNumber := 0
+	levelString := ""
+
+	// C uses a separate clan-number syntax for immortals. Its validation is
+	// intentionally before the empty-message gate, and its rank lookup uses
+	// clan[c] (the source's one-based command number against a zero-based array).
+	if ch.GetLevel() >= LVLImmort {
+		first, remainder := halfChop(arg)
+		clanNumber, _ = strconv.Atoi(first)
+		if clanNumber <= 0 || w.Clans == nil || clanNumber > w.Clans.ClanCount() {
+			sendToChar(ch, "There is no clan with that number.\r\n")
+			return true
+		}
+		arg = remainder
+	} else {
+		if ch.ClanID == 0 || ch.ClanRank == 0 {
+			sendToChar(ch, "You're not part of a clan.\r\n")
+			return true
+		}
+		clanNumber = ch.ClanID
+	}
+
+	if ch.GetFlags()&(1<<uint(PrfNoCTell)) != 0 {
+		sendToChar(ch, "You aren't currently on your clan channel.\r\n")
+		return true
+	}
+	if ch.GetFlags()&(1<<uint(PlrNoshout)) != 0 {
+		sendToChar(ch, "You cannot clan-tell anything!\r\n")
+		return true
+	}
+
+	arg = skipSpaces(arg)
 	if arg == "" {
 		sendToChar(ch, "What do you want to tell your clan?\r\n")
 		return true
 	}
 
-	// Broadcast to clan members only.
-	msg := fmt.Sprintf("[Clan] %s tells the clan, '%s'\r\n", ch.Name, arg)
-	for _, p := range w.AllPlayers() {
-		if p.Name == ch.Name {
-			continue
+	if strings.HasPrefix(arg, "#") {
+		rankText, remainder := halfChop(arg[1:])
+		if !isClanNumber(rankText) {
+			sendToChar(ch, "Try entering in a number.\r\n")
+			return true
 		}
-		if p.Flags&(1<<PrfDeaf) != 0 || p.Flags&(1<<PrfNoCTell) != 0 {
-			continue
+		minLevel, _ = strconv.Atoi(rankText)
+		clanForRank := (*Clan)(nil)
+		if w.Clans != nil {
+			// Match C's clan[c] access. A missing slot is treated as a zero-rank
+			// record instead of permitting an out-of-bounds access.
+			clanForRank = w.Clans.GetClanByIndex(clanNumber)
 		}
-		// Filter: only clan members with the same ClanID
-		if ch.ClanID == 0 || p.ClanID != ch.ClanID {
-			continue
+		if clanForRank == nil || minLevel > clanForRank.Ranks {
+			sendToChar(ch, "No one has a clan rank high enough to hear you!\r\n")
+			return true
 		}
-		p.SendMessage(msg)
+		arg = skipSpaces(remainder)
+		if arg == "" {
+			sendToChar(ch, "What do you want to tell them?\r\n")
+			return true
+		}
+		levelString = fmt.Sprintf(" (%d) ", minLevel)
 	}
 
-	sendToChar(ch, fmt.Sprintf("You tell your clan, '%s'\r\n", arg))
+	arg = deleteANSIControls(arg)
+	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
+		sendToChar(ch, "Okay.\r\n")
+	} else {
+		sendToChar(ch, fmt.Sprintf("You tell your clan%s, '%s'\r\n", levelString, arg))
+	}
+
+	for _, p := range w.AllPlayers() {
+		if p == ch || p.ClanID != clanNumber || p.ClanRank < minLevel {
+			continue
+		}
+		if p.GetFlags()&(1<<uint(PrfNoCTell)) != 0 {
+			continue
+		}
+		senderName := ch.Name
+		if !canSeeSocialTarget(p, ch) {
+			senderName = "Someone"
+		}
+		p.SendMessage(fmt.Sprintf("%s tells your clan%s, '%s'\r\n", senderName, levelString, arg))
+	}
 	return true
 }
 
