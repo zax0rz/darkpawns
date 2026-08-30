@@ -3,10 +3,9 @@
 # compare (do_compare, src/new_cmds.c:1952) had two fidelity bugs the oracle
 # surfaced: the Go wrapper invented a CanUseSkill gate (C uses APPRAISE only
 # for the success prob, never to gate), and Go's DoCompare was a stub
-# ("You don't have that item." / "X vs Y: comparing..."). Both fixed to C's
-# verbatim flow. This scenario probes the deterministic rejection paths (the
-# RNG comparison path needs two comparable items, which the fresh-mortal
-# fixture can't supply — left TODO(port) in DoCompare).
+# ("You don't have that item." / "X vs Y: comparing..."). Both are fixed to
+# C's verbatim flow. The fixture supplies a second weapon and same-slot armor
+# so the RNG comparison paths are live, not merely transcribed.
 #
 # Fresh Warrior inventory (C do_start obj_to_char, all in carrying — none
 # auto-wielded): a small sword (8037, weapon), a frayed tunic (8019, armor),
@@ -14,9 +13,26 @@
 # - compare            → empty arg → "Looks like you don't have those objects.."
 # - compare sword sword→ same object → "They're the same thing!"
 # - compare sword tunic→ weapon vs armor (type mismatch) → "You can't compare those things!"
+# - compare sword dagger→ weapon comparison result and C random-draw path
+# - compare breast chain→ same-slot armor comparison result and C random-draw path
+# - compare breast helmet→ different-slot armor gate
+# - compare pack bag→ same-type non-comparable-item gate
+
+# depth-case: compare.missing-objects
+# depth-case: compare.same-object
+# depth-case: compare.type-mismatch
+# depth-case: compare.weapon-result
+# depth-case: compare.armor-result
+# depth-case: compare.armor-slot-mismatch
+# depth-case: compare.non-comparable-type
 
 [fixture]
 quiet-mobs
+spawn-obj 8036 1 8162 80
+spawn-obj 8040 1 8162 80
+spawn-obj 8041 1 8162 80
+spawn-obj 8075 1 8162 80
+spawn-obj 8032 1 8162 80
 
 [setup:oracle]
 Cmpactor
@@ -47,7 +63,19 @@ Y
 <ENTER>
 1
 
+[warmup]
+goto 8162
+get dagger
+get breast
+get chain
+get helmet
+get bag
+
 [probe]
 compare
 compare sword sword
 compare sword tunic
+compare sword dagger
+compare breast chain
+compare breast helmet
+compare pack bag

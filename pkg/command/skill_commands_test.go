@@ -927,6 +927,17 @@ func TestCmdCompare_NoArgs(t *testing.T) {
 	}
 }
 
+func TestCmdCompare_Blind(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetAffect(game.AffBlind, true)
+	if err := CmdCompare(session, []string{"sword", "sword"}); err != nil {
+		t.Fatalf("CmdCompare: %v", err)
+	}
+	if got := joinMessages(session.messages); got != "You can't see a damned thing!\r\n\r\n" {
+		t.Fatalf("blind compare message = %q", got)
+	}
+}
+
 func TestCmdSharpen_NoPlayer(t *testing.T) {
 	session := &skillCommandSession{}
 	if err := CmdSharpen(session, nil); err == nil {
