@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_dark	dark	dark.fighter-peace	D3	audience	oracle-green	dark-depth	interpreter.c:408; act.wizard.c:3214-3236	Every fighting room character receives C's peace line before the immortal actor command output.
+do_dark	dark	dark.room-audience	D3	audience	oracle-green	dark-depth	act.wizard.c:3224-3236	The actor receives the exact stop message and every other room recipient receives C's exact act line.
+do_dark	dark	dark.argument-ignored	D1	command	oracle-green	dark-depth	act.wizard.c:3214-3236	C does not parse the argument; dark nonsense follows the same path as dark.
+do_dark	dark	dark.no-fighters	D4	state	oracle-green	dark-depth	act.wizard.c:3218-3224	After the first invocation stops combat, the second invocation emits no extra peace line and leaves the room calm.

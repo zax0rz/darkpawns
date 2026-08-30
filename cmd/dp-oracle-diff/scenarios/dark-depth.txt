@@ -1,0 +1,88 @@
+# depth-case: dark.fighter-peace
+# depth-case: dark.room-audience
+# depth-case: dark.argument-ignored
+# depth-case: dark.no-fighters
+# C-first vehicle for do_dark. A mortal peer enters combat with the spawned
+# trainee before the immortal actor issues dark; the handler stops the fighter,
+# emits its peace line, then emits the exact actor and room messages. The
+# argument is ignored by C.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+goto 8105
+
+[probe]
+dark nonsense
+dark
