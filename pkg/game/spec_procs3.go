@@ -945,17 +945,21 @@ func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 
 // specPortalToTemple teleports the player to the temple (room 8008).
 func specPortalToTemple(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "say" && cmd != "'" {
+	if ch == nil || (cmd != "say" && cmd != "'") {
 		return false
 	}
-	arg = strings.TrimSpace(arg)
+	// C calls skip_spaces(), which removes leading whitespace but leaves
+	// trailing bytes for the exact strcasecmp gate.
+	arg = skipSpaces(arg)
 	if !strings.EqualFold(arg, "setchswayno") {
 		return false
 	}
-	sendToChar(ch, "With a blinding flash of light and a crack of thunder, you are teleported...\r\n")
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("With a blinding flash of light and a crack of thunder, %s disappears!", ch.GetName()))
+	w.DoSay(ch, arg)
+	sendToChar(ch, "With a blinding flash of light and a crack of thunder, you are teleported...")
+	Act(w, true, ch, nil, nil, nil, "With a blinding flash of light and a crack of thunder, $n disappears!", "", ToRoom)
 	ch.SetRoom(8008)
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("With a blinding flash of light and a crack of thunder, %s appears!", ch.GetName()))
+	Act(w, true, ch, nil, nil, nil, "With a blinding flash of light and a crack of thunder, $n appears!", "", ToRoom)
+	w.lookAtRoom(ch, false)
 	return true
 }
 
