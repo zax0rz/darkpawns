@@ -2184,25 +2184,22 @@ func specNoMoveSouth(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 }
 
 // ================================================================
-// specChosenGuard — Guards the chosen, attacks players who fight near it
+// specChosenGuard — Blocks south movement for non-chosen mortals
 // ================================================================
 func specChosenGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch == nil || ch.GetPosition() <= combat.PosSleeping || me.GetPosition() <= combat.PosSleeping {
+	if ch == nil || cmd == "" || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	if cmd != "" {
+	if ch.GetLevel() >= LVL_IMMORT || ch.HasPLRFlag(PlrChosen) {
 		return false
 	}
-	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() && pl.GetFighting() != "" {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says 'None shall harm the chosen!'", mobName(me)))
-			if err := me.Attack(pl, w); err != nil {
-				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-			}
-			return true
-		}
+	if cmd != "south" {
+		return false
 	}
-	return false
+	Act(w, false, me, ch, nil, nil, "$n blocks $N's way.", "", ToNotVict)
+	Act(w, false, me, ch, nil, nil, "$n blocks your way.", "", ToVict)
+	Act(w, false, me, nil, nil, nil, "$n says 'Thou shalt not pass.'", "", ToRoom)
+	return true
 }
 
 // ================================================================
