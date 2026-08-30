@@ -323,12 +323,8 @@ func specNoMoveDown(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 
 // specClerk sells citizenship.
 func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+	if me == nil || ch == nil || cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
 		return false
-	}
-	if !mobCanSee(me) {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s exclaims, 'Who's there? I can't see you!'", mobName(me)))
-		return true
 	}
 
 	// Zone-based hometown: map zone number to hometown index per C source.
@@ -344,6 +340,8 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				homet = 2
 			case 212:
 				homet = 3
+			default:
+				sendToChar(ch, "default case reached in clerk special - tell a god")
 			}
 		}
 	}
@@ -351,28 +349,32 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if cmd != "list" && cmd != "buy" {
 		return false
 	}
+	if !canSeeForPers(me, ch) {
+		Act(w, true, me, nil, nil, nil, "$n exclaims, 'Who's there? I can't see you!'", "", ToRoom)
+		return true
+	}
 	arg = strings.TrimSpace(arg)
 	if cmd == "buy" {
 		if !strings.EqualFold(arg, "citizenship") {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s BUY CITIZENSHIP, if you're interested.'", mobName(me), ch.GetName()))
+			tellFromMob(me, ch, "BUY CITIZENSHIP, if you're interested.")
 			return true
 		}
 		if ch.GetGold() < 2000 {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s You cannot afford it!'", mobName(me), ch.GetName()))
+			tellFromMob(me, ch, "You cannot afford it!")
 			return true
 		}
 		if ch.Hometown == homet {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s You are already a citizen here!'", mobName(me), ch.GetName()))
+			tellFromMob(me, ch, "You are already a citizen here!")
 			return true
 		}
 		ch.Hometown = homet
 		ch.SetGold(ch.GetGold() - 2000)
 		hName := HometownName(homet)
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s You are now a citizen of %s.'", mobName(me), ch.GetName(), hName))
+		tellFromMob(me, ch, fmt.Sprintf("You are now a citizen of %s.", hName))
 		return true
 	}
 	if cmd == "list" {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s tells you, '%s Citizenship costs 2,000 coins.'", mobName(me), ch.GetName()))
+		tellFromMob(me, ch, "Citizenship costs 2,000 coins.")
 		return true
 	}
 	return false
