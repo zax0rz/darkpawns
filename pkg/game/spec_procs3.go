@@ -1275,9 +1275,12 @@ func specElementsPlatforms(w *World, ch *Player, me *MobInstance, cmd string, ar
 
 // specElementsLoadCylinders manages cylinder objects for the talisman puzzle.
 func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if ch == nil {
+		return false
+	}
 	if cmd == "get" {
 		w.doGet(ch, me, cmd, arg)
-		elementsRemoveCylinders(w)
+		elementsRemoveCylinders(w, ch.GetRoomVNum())
 		return true
 	}
 	if cmd != "drop" {
@@ -1298,35 +1301,46 @@ func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string
 		1384: {1384, 1303, 1307, "blue"},
 	}
 
-	entry, ok := entries[ch.GetRoomVNum()]
-	if !ok {
-		// Not a talisman pillar room
-		w.doDrop(ch, me, cmd, arg)
-		return true
-	}
-
-	// Check if a cylinder already exists in this room
+	// C checks for any cylinder before running do_drop. Returning false lets
+	// the ordinary command path handle the drop when one is already present.
 	for _, item := range w.GetItemsInRoom(ch.GetRoomVNum()) {
-		if item.GetVNum() == entry.cylVNum {
-			return true // cylinder already present, do nothing
+		if item == nil {
+			continue
+		}
+		if item.GetVNum() == 1304 || item.GetVNum() == 1305 || item.GetVNum() == 1306 || item.GetVNum() == 1307 {
+			return false
 		}
 	}
 
 	// Perform the actual drop
 	w.doDrop(ch, me, cmd, arg)
 
-	// Check what was actually dropped — locate the talisman in the room
+	arg1, _ := oneArgument(arg)
+	if arg1 == "" {
+		return true
+	}
+	var dropped *ObjectInstance
 	for _, item := range w.GetItemsInRoom(ch.GetRoomVNum()) {
-		if item.GetVNum() == entry.talVNum {
-			msg := fmt.Sprintf("A %s cylinder of light extends upwards from the pillar.\r\n", entry.color)
-			sendToChar(ch, msg)
-			obj, err := w.SpawnObject(entry.cylVNum, ch.GetRoomVNum())
-			if err == nil {
-				if err2 := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err2 != nil {
-					slog.Warn("MoveObjectToRoom failed in talisman spec", "obj", obj.GetVNum(), "room", ch.GetRoomVNum(), "error", err2)
-				}
-			}
+		if item != nil && canSeeObject(ch, item) && isnameWithAbbrevs(arg1, item.GetKeywords()) {
+			dropped = item
 			break
+		}
+	}
+	if dropped == nil {
+		return true
+	}
+
+	entry, ok := entries[ch.GetRoomVNum()]
+	if !ok || dropped.GetVNum() != entry.talVNum {
+		return true
+	}
+
+	msg := fmt.Sprintf("A %s cylinder of light extends upwards from the pillar.", entry.color)
+	w.roomMessage(ch.GetRoomVNum(), msg)
+	obj, err := w.SpawnObject(entry.cylVNum, ch.GetRoomVNum())
+	if err == nil {
+		if err2 := w.MoveObjectToRoomFront(obj, ch.GetRoomVNum()); err2 != nil {
+			slog.Warn("MoveObjectToRoomFront failed in talisman spec", "obj", obj.GetVNum(), "room", ch.GetRoomVNum(), "error", err2)
 		}
 	}
 
@@ -1404,7 +1418,7 @@ func specElementsMinion(w *World, ch *Player, me *MobInstance, cmd string, arg s
 		me.RemoveFromInventory(obj)
 	}
 
-	elementsRemoveCylinders(w)
+	elementsRemoveCylinders(w, me.GetRoomVNum())
 	return false
 }
 
@@ -1468,35 +1482,31 @@ func specFlyExitUp(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	return true
 }
 
-// cylinderToTalisman maps cylinder vnums to their corresponding talisman vnums.
-var cylinderToTalisman = map[int]int{
-	1310: 1300,
-	1311: 1301,
-	1312: 1302,
-	1313: 1303,
-}
+// elementsRemoveCylinders checks the current room and removes cylinders when
+// their corresponding talisman leaves. C returns immediately if it sees the
+// first talisman in its four-pass scan, so preserve that odd early exit.
+func elementsRemoveCylinders(w *World, roomVNum int) {
+	talismanVnums := []int{1300, 1301, 1302, 1303}
+	cylinderVnums := []int{1304, 1305, 1306, 1307}
+	colors := []string{"green", "yellow", "red", "blue"}
 
-// elementsRemoveCylinders checks room contents and removes cylinders when talismans leave.
-func elementsRemoveCylinders(w *World) {
-	// Check rooms that can have cylinders for missing talismans
-	for cylVNum, talVNum := range cylinderToTalisman {
-		// Find all rooms containing this cylinder
-		cylRooms := w.Rooms()
-		for ri := range cylRooms {
-			items := w.GetItemsInRoom(cylRooms[ri].VNum)
-			hasCylinder := false
-			hasTalisman := false
-			for _, item := range items {
-				if item.GetVNum() == cylVNum {
-					hasCylinder = true
-				}
-				if item.GetVNum() == talVNum {
-					hasTalisman = true
-				}
+	for i := range talismanVnums {
+		var cylinder *ObjectInstance
+		for _, item := range w.GetItemsInRoom(roomVNum) {
+			if item == nil {
+				continue
 			}
-			if hasCylinder && !hasTalisman {
-				w.RemoveItemFromRoomByVNum(cylVNum, cylRooms[ri].VNum)
+			switch item.GetVNum() {
+			case talismanVnums[i]:
+				return
+			case cylinderVnums[i]:
+				cylinder = item
 			}
 		}
+		if cylinder == nil {
+			continue
+		}
+		w.roomMessage(roomVNum, fmt.Sprintf("The %s cylinder of light slowly sinks back into the pillar.", colors[i]))
+		w.ExtractObject(cylinder, roomVNum)
 	}
 }
