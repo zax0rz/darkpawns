@@ -1,0 +1,121 @@
+# C-first vehicle for SPECIAL(werewolf), defined at src/spec_procs3.c:427-448
+# and registered as mob vnum 5510 at src/spec_assign.c:251. The fixture strips
+# werewolf.lua, retains the native SPEC assignment, and uses a same-room victim,
+# same-room observer, and remote same-zone observer to expose the C act(),
+# TO_VICT/TO_NOTVICT, and send_to_zone audiences.
+# C path: src/fight.c:1898-2032 -> src/spec_procs3.c:427-448.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5510 999 5510 55
+clear-mob-flag 5510 AGGRESSIVE
+clear-mob-flag 5510 RANDZON
+strip-mob-script 5510
+set-mob-flag 5510 SPEC
+replace-room-exits 5510 none
+
+[setup:oracle]
+WolfVictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WolfVictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+WolfWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+WolfWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:third]
+WolfDistant
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:third]
+WolfDistant
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 5510
+teleport WolfWitness 5510
+teleport WolfDistant 5500
+set WolfVictim hp 5000
+set werewolf hit 5000
+
+[probe]
+hit werewolf
+~dpclock pulse 20
+
+# depth-case: mob.werewolf-entry-gates
+# depth-case: mob.werewolf-howling-zone-audience
+# depth-case: mob.werewolf-bite-victim-audience
+# depth-case: mob.werewolf-bite-room-audience
+# depth-case: mob.werewolf-bite-state
+# depth-case: mob.werewolf-combat-dispatch
