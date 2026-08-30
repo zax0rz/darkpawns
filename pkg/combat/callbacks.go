@@ -50,6 +50,9 @@ type GameCallbacks struct {
 	Dismount      func(name string)
 	Unmount       func(name string)
 	GetWeaponInfo func(chName string) (wType, damDice, damSize int, isBlessed bool)
+	// GetWeaponDescription returns the wielded object's short description for
+	// C act()'s $p substitution in skill/fight messages.
+	GetWeaponDescription func(chName string) string
 
 	// Room navigation
 	GetAdjacentRoom func(roomVNum, door int) int
@@ -167,6 +170,13 @@ func cbWeaponInfo(chName string) int {
 		return wType
 	}
 	return 0
+}
+
+func cbWeaponDescription(chName string) string {
+	if cb := callbacks; cb != nil && cb.GetWeaponDescription != nil {
+		return cb.GetWeaponDescription(chName)
+	}
+	return ""
 }
 
 func cbBroadChat(chName string, msg string) {

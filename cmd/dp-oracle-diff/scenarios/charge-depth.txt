@@ -1,0 +1,93 @@
+# Combat skill depth vehicle for do_charge (src/new_cmds.c:880-955).
+# The first-player God grants the peer the C charge skill. The peer's authored
+# warrior sword makes the legal opener reach damage()/skill_message; the probe
+# also pins one_argument fill-word/first-token behavior and the early gates.
+#
+# depth-case: charge.no-arg
+# depth-case: charge.target-missing
+# depth-case: charge.self
+# depth-case: charge.one-argument
+# depth-case: charge.success
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Chargegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chargegod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Chargewarrior]
+Chargewarrior
+Y
+chargepass
+chargepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:Chargewarrior]
+Chargewarrior
+y
+chargepass
+chargepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[warmup]
+skillset Chargewarrior 'charge' 100
+
+[probe:Chargewarrior]
+charge
+charge nobody
+charge the Chargewarrior
+charge trainee
+~dpclock pulse 20

@@ -50,6 +50,8 @@ func skillToAttackType(skill string) int {
 		return TypeBludgeon // 305
 	case "bite":
 		return SkillBiteNum // SKILL_BITE (150)
+	case "charge":
+		return SkillChargeNum // SKILL_CHARGE (147), default corpse wording
 	case "disembowel":
 		return SkillDisembowelNum // 184
 	case "neckbreak":
@@ -94,7 +96,14 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 		v.SetFighting(attackerName)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
+		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
+		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
+			// C damage() burns the pain/scream number(0,2) draw even when the
+			// victim is an NPC with no descriptor (fight.c:1580-1585). The
+			// charge vehicle reaches this branch and relies on its draw order.
+			_ = dprng.Number(0, 2)
+		}
+		if newPos == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -103,7 +112,13 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 		v.SetFighting(attackerName)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
+		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
+		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
+			// C evaluates this random scream branch for mobs too; act() simply
+			// has no descriptor to deliver the victim-directed output to.
+			_ = dprng.Number(0, 2)
+		}
+		if newPos == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true

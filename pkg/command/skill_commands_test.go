@@ -159,6 +159,24 @@ func TestCmdBash_FightingTargetFallback(t *testing.T) {
 	}
 }
 
+func TestCmdCharge_FightingTargetFallback(t *testing.T) {
+	session := newBashCommandSession(t)
+	session.player.SetSkill(game.SkillCharge, 100)
+	session.player.SetFighting("Target")
+
+	if err := CmdCharge(session, nil); err != nil {
+		t.Fatalf("CmdCharge returned error: %v", err)
+	}
+
+	joined := strings.Join(session.messages, "")
+	if strings.Contains(joined, "Great! Fine! Charge who?") {
+		t.Fatalf("expected charge to target fighting opponent, got: %q", joined)
+	}
+	if !strings.Contains(joined, "barehanded") {
+		t.Fatalf("expected fighting-target fallback to reach the weapon gate, got: %q", joined)
+	}
+}
+
 func TestCmdBash_NoFightingNoArgs(t *testing.T) {
 	session := newBashCommandSession(t)
 

@@ -772,16 +772,20 @@ func TestDoCharge_MobNobashPenalty(t *testing.T) {
 	w, ch := newChargeTestWorld(t)
 	mob := spawnTargetMob(t, w)
 	mob.SetMobFlag(MobFlagNobash)
+	ch.SetSkill(SkillCharge, 35)
 
 	weapon := makeChargeWeapon(3) // sword
 	equipWeapon(t, ch, weapon)
 
-	result := DoCharge(ch, mob)
-	// With a +25 penalty and skill 100 it may still succeed, but the path
-	// should at least run without panic and produce a valid result.
-	if result.MessageToCh == "" {
-		t.Error("expected a message from charge")
-	}
+	combat.WithRoller(combat.NewScriptedRoller([]int{1}), func() {
+		result := DoCharge(ch, mob)
+		if result.Success {
+			t.Error("expected MOB_NOBASH penalty to force this skill-35 charge to fail")
+		}
+		if result.SkillMsgType != SkillChargeNum || !result.StartCombat || !result.SelfStumble {
+			t.Errorf("charge result = success %v, skill message %d, start combat %v, stumble %v; want false, %d, true, true", result.Success, result.SkillMsgType, result.StartCombat, result.SelfStumble, SkillChargeNum)
+		}
+	})
 }
 
 func TestDoCharge_Success(t *testing.T) {
@@ -800,6 +804,15 @@ func TestDoCharge_Success(t *testing.T) {
 		}
 		if result.Damage <= 0 {
 			t.Errorf("expected positive damage, got %d", result.Damage)
+		}
+		if result.SkillMsgType != SkillChargeNum || !result.StartCombat {
+			t.Errorf("charge result = skill message %d, start combat %v; want %d, true", result.SkillMsgType, result.StartCombat, SkillChargeNum)
+		}
+		if result.DamageSkill != SkillCharge {
+			t.Errorf("damage skill = %q, want %q", result.DamageSkill, SkillCharge)
+		}
+		if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillCharge {
+			t.Errorf("deferred improvement = %v, want [%q]", result.DeferredImprove, SkillCharge)
 		}
 		if result.WaitCh != 2 {
 			t.Errorf("expected wait 2, got %d", result.WaitCh)

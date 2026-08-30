@@ -799,7 +799,9 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 }
 
 // DoCharge implements do_charge() from src/new_cmds.c lines 880-955.
-// Warrior/paladin/ranger charge attack requiring a sword or lance.
+// Warrior/paladin/ranger charge attack requiring a sword or lance. Both C
+// outcomes call damage(), so the result routes through the numbered charge
+// skill-message set and enrolls the pair in combat even for zero damage.
 func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 	if target == nil {
 		return SkillResult{Success: false, MessageToCh: "Great! Fine! Charge who?!?!\r\n"}
@@ -834,17 +836,14 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 
 	prob := ch.GetSkill(SkillCharge)
 
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-
 	if percent > prob {
+		// C damage(ch, victim, 0, SKILL_CHARGE) emits skill_message before
+		// sitting the unmounted attacker and then waits two violence pulses.
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You charge at $N, but lose your balance and fall!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n charges at you, but loses $s balance and falls!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n charges at $N, but loses $s balance and falls!", chPronouns, &victPronouns, ""),
-			SelfStumble:   !ch.IsMounted(),
-			WaitCh:        2, // PULSE_VIOLENCE * 2
+			SkillMsgType: SkillChargeNum,
+			StartCombat:  true,
+			SelfStumble:  !ch.IsMounted(),
+			WaitCh:       2, // PULSE_VIOLENCE * 2
 		}
 	}
 
@@ -854,14 +853,13 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 		dam += 50
 	}
 
-	improveSkill(ch, SkillCharge)
-
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   ActMessage("You charge at $N and run $M through with your weapon!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n charges at you and runs you through with $s weapon!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n charges at $N and runs $M through with $s weapon!", chPronouns, &victPronouns, ""),
-		WaitCh:        2, // PULSE_VIOLENCE * 2
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillChargeNum,
+		DamageSkill:     SkillCharge,
+		StartCombat:     true,
+		WaitCh:          2, // PULSE_VIOLENCE * 2
+		DeferredImprove: []string{SkillCharge},
 	}
 }

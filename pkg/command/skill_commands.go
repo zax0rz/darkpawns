@@ -2163,7 +2163,9 @@ func CmdCharge(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	var found bool
 	if len(args) > 0 {
-		targetName := strings.Join(args, " ")
+		// C do_charge uses one_argument: skip fill words, lowercase the first
+		// target token, and ignore the remainder (new_cmds.c:887).
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 		if !found {
 			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")

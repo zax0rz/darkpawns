@@ -773,6 +773,7 @@ const (
 	SkillTripNum        = 144
 	SkillSmackheadsNum  = 145
 	SkillSlugNum        = 146
+	SkillChargeNum      = 147
 	SkillSerpentKickNum = 156
 	SkillCircleNum      = 173
 	SkillDisembowelNum  = 184
