@@ -501,6 +501,15 @@ func (m *MobInstance) SetDamroll(damroll int) {
 	m.Runtime.DamrollOverride = &damroll
 }
 
+// AddDamrollBonus adds to the instance-local GET_DAMROLL value without
+// mutating the shared mob prototype. C specials use this for permanent
+// per-instance growth such as brain_eater at level 30.
+func (m *MobInstance) AddDamrollBonus(bonus int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.DamrollBonus += bonus
+}
+
 // GetDamageRoll returns the damage dice for the mob's attacks.
 func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 	m.mu.RLock()
@@ -881,6 +890,7 @@ func (m *MobInstance) GetDamroll() int {
 	if m.Runtime.DamrollOverride != nil {
 		total = *m.Runtime.DamrollOverride
 	}
+	total += m.Runtime.DamrollBonus
 	for _, item := range m.Equipment {
 		if item == nil || item.Prototype == nil {
 			continue

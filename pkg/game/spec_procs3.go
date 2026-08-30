@@ -498,39 +498,68 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 // (mobile_activity.c calls func(ch, ch, 0, "")); ch is nil in the Go
 // autonomous path, so the mob's own state must be read via me.
 func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me.GetFighting() != "" || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+	if w == nil || me == nil || me.GetFighting() != "" || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.GetRoomVNum())
+	eligible := false
 	for _, obj := range items {
-		if !obj.IsContainer() {
+		if obj == nil || !obj.IsContainer() || obj.GetValue(3) == 0 {
 			continue
 		}
-		// Check container flag: Values[3] must be non-zero (corpse/locked flag)
-		if obj.Prototype == nil || obj.Prototype.Values[3] == 0 {
-			continue
+		// C's outer loop uses literal strstr() checks before it invokes
+		// do_behead(mobile, "corpse", 0, 0).
+		kw := obj.GetKeywords()
+		if strings.Contains(kw, "corpse") && !strings.Contains(kw, "headless") {
+			eligible = true
+			break
 		}
-		kw := strings.ToLower(obj.GetKeywords())
-		if !strings.Contains(kw, "corpse") || strings.Contains(kw, "headless") {
-			continue
-		}
-		// "Behead" the corpse: extract it from the room entirely
-		if err := w.MoveObjectToNowhere(obj); err != nil {
-			slog.Warn("MoveObjectToNowhere failed in brain eater", "obj", obj.GetVNum(), "error", err)
-		}
-
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s pulls the brain out of the head and eats it with a noisy\r\nslurp, blood and drool flying everywhere.", mobName(me)))
-
-		// Level up or increase damroll (C: level < 30 → level++, else damroll += 2)
-		if me.Prototype != nil && me.Prototype.Level < 30 {
-			me.Prototype.Level++
-		} else {
-			// Increment mob's internal damroll
-			me.Runtime.DamrollBonus += 2
-		}
-		return true
 	}
-	return false
+	if !eligible {
+		return false
+	}
+
+	// do_behead() resolves the first visible room object matching the literal
+	// argument "corpse", which can differ from the qualifying outer-loop
+	// object. Its direct messages target the NPC and are not player-visible;
+	// brain_eater nevertheless continues with its own room Act on failure.
+	var target *ObjectInstance
+	for _, obj := range items {
+		if obj != nil && isnameWithAbbrevs("corpse", obj.GetKeywords()) && canSeeObject(me, obj) {
+			target = obj
+			break
+		}
+	}
+	if target != nil && target.GetTypeFlag() == ITEM_CONTAINER && target.GetValue(3) != 0 && !strings.Contains(target.GetKeywords(), "headless") {
+		wielded := me.Equipment[int(SlotWield)]
+		slashWeapon := wielded != nil && wielded.GetValue(3) == 3
+		result := performBehead(w, me, target, wielded != nil, slashWeapon,
+			func(headObj *ObjectInstance) bool {
+				return headObj.IsTakeable() && mobCarriedWeight(me)+headObj.GetWeight() <= mobMaxCarryWeight(me) && len(me.Inventory)+1 <= mobMaxCarryCount(me)
+			},
+			func(headObj *ObjectInstance) error { return w.MoveObjectToMobInventoryFront(headObj, me) },
+		)
+		if result.Success {
+			if slashWeapon {
+				Act(w, true, me, nil, target, nil, "$n beheads $p!", "", ToRoom)
+			} else {
+				Act(w, true, me, nil, target, nil, "$n rips the head off $p!", "", ToRoom)
+			}
+		}
+	}
+
+	// C ignores do_behead's void result and always continues here.
+	Act(w, true, me, nil, nil, nil,
+		"$n pulls the brain out of the head and eats it with a noisy\r\nslurp, blood and drool flying everywhere.", "", ToRoom)
+
+	// GET_LEVEL(mobile) and GET_DAMROLL(mobile) are per-instance fields in
+	// read_mobile's copied character, never shared prototype state.
+	if me.GetLevel() < 30 {
+		me.SetLevel(me.GetLevel() + 1)
+	} else {
+		me.AddDamrollBonus(2)
+	}
+	return true
 }
 
 // specTeleportVictim teleports an attacker away.
