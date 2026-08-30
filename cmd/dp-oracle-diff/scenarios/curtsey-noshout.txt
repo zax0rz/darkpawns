@@ -1,0 +1,74 @@
+# curtsey PLR_NOSHOUT gate vehicle (src/interpreter.c:402;
+# src/act.social.c:102-118). The primary Implementor mutes the named mortal
+# in warmup; the mortal then invokes curtsey, proving the emote refusal occurs
+# before the social's no-argument messages.
+
+# depth-case: curtsey.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CurtseyGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CurtseyGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Muteon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Muteon
+
+[probe:muteon]
+curtsey nobody

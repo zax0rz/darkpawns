@@ -1,0 +1,76 @@
+# curtsey command vehicle (src/interpreter.c:402; src/act.social.c:102-127;
+# lib/misc/socials:171-174). The record has no char_found message, so C ignores
+# typed arguments and always emits the no-argument actor/room pair.
+
+# depth-case: curtsey.no-argument
+# depth-case: curtsey.argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Curtser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Curtser
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:roommate]
+Roommate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:roommate]
+Roommate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Roommate 8162
+
+[probe]
+curtsey
+curtsey nobody
