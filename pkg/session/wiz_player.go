@@ -227,7 +227,7 @@ func cmdSet(s *Session, args []string) error {
 		s.Send(fmt.Sprintf("Level set to %d.", val))
 	case "gold":
 		targetSess.player.Gold = val
-		s.Send(fmt.Sprintf("Gold set to %d.", val))
+		s.Send(fmt.Sprintf("%s's gold set to %d.\r\n", targetSess.player.Name, val))
 	case "alignment":
 		targetSess.player.Alignment = val
 		s.Send(fmt.Sprintf("Alignment set to %d.", val))
