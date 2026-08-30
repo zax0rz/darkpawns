@@ -62,40 +62,32 @@ func cmdCommands(s *Session, args []string) error {
 		}
 	}
 
-	entries := cmdRegistry.GetAll()
-
-	// Filter by player level and sort alphabetically
-	level := 0
-	if target != nil {
-		level = target.GetLevel()
-	}
-
-	var names []string
-	for _, e := range entries {
-		if level >= e.MinLevel {
-			names = append(names, e.Name)
-		}
-	}
-	sort.Strings(names)
+	level := target.GetLevel()
+	names := cCommandsForLevel(level)
 
 	if len(names) == 0 {
-		s.Send("No commands available.")
+		s.Send("No commands available.\r\n")
 		return nil
 	}
 
-	// Print in columns of 5
+	// C do_commands: seven 11-column entries per line, followed by one final
+	// CRLF before page_string hands the buffer to the pager.
 	var buf strings.Builder
-	buf.WriteString("Commands available:\r\n")
+	buf.WriteString("The following commands are available to ")
+	if target == s.player {
+		buf.WriteString("you")
+	} else {
+		buf.WriteString(target.GetName())
+	}
+	buf.WriteString(":\r\n")
 	for i, name := range names {
-		fmt.Fprintf(&buf, "%-16s", name)
-		if (i+1)%5 == 0 {
+		fmt.Fprintf(&buf, "%-11s", name)
+		if (i+1)%7 == 0 {
 			buf.WriteString("\r\n")
 		}
 	}
-	if len(names)%5 != 0 {
-		buf.WriteString("\r\n")
-	}
-	s.Send(buf.String())
+	buf.WriteString("\r\n")
+	PageString(s, buf.String())
 	return nil
 }
 

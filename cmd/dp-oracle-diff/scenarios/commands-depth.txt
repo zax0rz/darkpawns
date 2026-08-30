@@ -1,0 +1,84 @@
+# commands command vehicle (src/interpreter.c:392; src/act.informative.c:2633-2675).
+# The no-argument path builds the C command-table listing in sort order and
+# sends it through page_string; the target-gate vehicle remains in
+# commands-targeting.txt.
+
+# depth-case: commands.no-argument
+# depth-case: commands.target-self
+# depth-case: commands.target-peer
+# depth-case: commands.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Cmddepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cmddepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+
+[probe]
+commands
+<ENTER>
+commands Cmddepth
+<ENTER>
+commands Barnaby
+<ENTER>
+commands Nobody
