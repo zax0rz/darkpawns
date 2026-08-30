@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_disarm	disarm	disarm.fighting-argument-ignored	D2	command	oracle-green	disarm-depth	new_cmds2.c:204-211	When already fighting, C ignores the typed target and uses FIGHTING(ch); the wrong-argument vehicle reaches the opponent's success arm.
+do_disarm	disarm	disarm.success-actor	D3	command	oracle-green	disarm-depth	new_cmds2.c:231-234	C's actor act names the target and the actual wielded object's short description.
+do_disarm	disarm	disarm.success-victim	D3	command	oracle-green	disarm-depth	new_cmds2.c:235	C's victim act names the actual wielded object's short description.
+do_disarm	disarm	disarm.success-room	D3	command	oracle-green	disarm-depth	new_cmds2.c:234	C's TO_NOTVICT act names the actual wielded object and excludes the victim.
+do_disarm	disarm	disarm.no-weapon	D2	command	oracle-green	disarm-no-weapon-depth	new_cmds2.c:218-221	After target resolution, C checks GET_EQ(vict, WEAR_WIELD) before combat-state validation and emits the exact target-pronoun act.
+do_disarm	disarm	disarm.failure-actor	D3	command	oracle-green	disarm-failure-depth	new_cmds2.c:259-265	Failed roll emits the actor's exact stumble message and leaves the actor sitting.
+do_disarm	disarm	disarm.failure-victim	D3	command	oracle-green	disarm-failure-depth	new_cmds2.c:260	Failed roll emits the exact victim-facing stumble message.
+do_disarm	disarm	disarm.failure-room	D3	command	oracle-green	disarm-failure-depth	new_cmds2.c:261	Failed roll emits the exact TO_NOTVICT stumble message.

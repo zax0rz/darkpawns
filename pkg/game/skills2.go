@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -155,10 +156,15 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 
 // ---------------------------------------------------------------------------
 // DoDisarm — do_disarm() from new_cmds2.c
-// Disarm opponent's weapon. SKILL_DISARM check. Weapon drops to ground.
+// Disarm opponent's weapon. SKILL_DISARM check. The weapon moves to the
+// victim's inventory, matching obj_to_char(unequip_char(...), vict).
 // Target must be fighting ch.
 // ---------------------------------------------------------------------------
 func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Disarm who?\r\n"}
+	}
+
 	if ch.GetSkill(SkillDisarm) == 0 {
 		return SkillResult{
 			Success:     false,
@@ -170,16 +176,34 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Just try removing your weapon instead.\r\n"}
 	}
 
-	// Check if the target has a wielded weapon (we can only check via interface)
-	// In C: GET_EQ(vict, WEAR_WIELD) — we'll check if there's a fighting target
+	var weapon *ObjectInstance
+	switch victim := target.(type) {
+	case *MobInstance:
+		weapon = victim.Equipment[int(SlotWield)]
+	case *Player:
+		weapon, _ = victim.Equipment.GetItemInSlot(SlotWield)
+	}
+	if weapon == nil {
+		chPronouns := GetPronouns(ch.Name, ch.GetSex())
+		victPronouns := GetPronouns(target.GetName(), target.GetSex())
+		return SkillResult{
+			Success:     false,
+			MessageToCh: ActMessage("$E doesn't have anything to disarm.", chPronouns, &victPronouns, ""),
+		}
+	}
+
+	// C's command is POS_FIGHTING, and do_disarm also insists the target is
+	// the actor's current opponent. Keep the handler-level check here for
+	// direct callers and for the shared special-procedure seam.
 	if ch.GetFighting() == "" || ch.GetFighting() != target.GetName() {
 		return SkillResult{Success: false, MessageToCh: "You can't disarm them if you aren't fighting them!\r\n"}
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := dprng.Number(1, 101) + target.GetLevel()
+	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillDisarm)
+	retaliate := target.GetFighting() == ""
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
@@ -187,27 +211,36 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if percent < prob {
 		// Unequip the target's wielded weapon (C: obj_to_char(unequip_char(vict, WEAR_WIELD), vict))
 		if targetMob, ok := target.(*MobInstance); ok {
-			weapon := targetMob.UnequipItem(16) // eqWearWield = 16 (C: WEAR_WIELD+1 = 2, but UnequipItem uses 0-indexed)
-			if weapon != nil {
-				targetMob.Inventory = append(targetMob.Inventory, weapon)
+			targetMob.UnequipItem(int(SlotWield))
+		} else if targetPlayer, ok := target.(*Player); ok {
+			if err := targetPlayer.Equipment.Unequip(SlotWield, targetPlayer.Inventory); err != nil {
+				slog.Error("disarm failed to move weapon to player inventory", "actor", ch.GetName(), "target", target.GetName(), "error", err)
+				return SkillResult{Success: false}
 			}
 		}
 
 		return SkillResult{
-			Success:       true,
-			Damage:        0, // disarm doesn't directly damage
-			MessageToCh:   ActMessage("You disarm $N and $S weapon goes flying!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n deftly disarms you, knocking $S weapon from your hand!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n knocks $p from $N's hand!", chPronouns, &victPronouns, "weapon"),
+			Success:                   true,
+			Damage:                    0, // disarm doesn't directly damage
+			MessageToCh:               ActMessage("You disarm $N and $p goes flying!", chPronouns, &victPronouns, weapon.GetShortDesc()),
+			MessageToVict:             ActMessage("$n deftly disarms you, knocking $p from your hand!", chPronouns, &victPronouns, weapon.GetShortDesc()),
+			MessageToRoom:             ActMessage("$n knocks $p from $N's hand!", chPronouns, &victPronouns, weapon.GetShortDesc()),
+			RetaliateHit:              retaliate,
+			RetaliateHitAfterMessages: true,
+			WaitCh:                    2,
+			DeferredImprove:           []string{SkillDisarm},
 		}
 	}
 
 	return SkillResult{
-		Success:       false,
-		MessageToCh:   ActMessage("You try to disarm $N but fail, tumbling to the ground in the process!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n tries to disarm you but fails and falls flat on $s face instead!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n tries to disarm $N, but fails and falls flat on $s face!", chPronouns, &victPronouns, ""),
-		SelfStumble:   true,
+		Success:                   false,
+		MessageToCh:               ActMessage("You try to disarm $N but fail, tumbling to the ground in the process!", chPronouns, &victPronouns, ""),
+		MessageToVict:             ActMessage("$n tries to disarm you but fails and falls flat on $s face instead!", chPronouns, &victPronouns, ""),
+		MessageToRoom:             ActMessage("$n tries to disarm $N, but fails and falls flat on $s face!", chPronouns, &victPronouns, ""),
+		RetaliateHit:              retaliate,
+		RetaliateHitAfterMessages: true,
+		SelfStumble:               true,
+		WaitCh:                    2,
 	}
 }
 

@@ -417,6 +417,9 @@ type SkillResult struct {
 	// when the victim was already fighting, C calls hit(victim, ch) before the
 	// subsequent damage(ch, victim, 0, SKILL_CIRCLE) skill message.
 	RetaliateHitBeforeSkillMessage bool
+	// RetaliateHitAfterMessages preserves commands whose C act() audience
+	// messages all precede hit(vict, ch), such as do_disarm.
+	RetaliateHitAfterMessages bool
 
 	// SkillMsgType, when non-zero, routes the combat message through the
 	// skill_message path (fight.c:1023-1092) instead of emitting MessageToCh/
