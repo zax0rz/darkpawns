@@ -225,6 +225,9 @@ func cmdSet(s *Session, args []string) error {
 	case "level":
 		targetSess.player.Level = val
 		s.Send(fmt.Sprintf("Level set to %d.", val))
+	case "olc":
+		targetSess.olcZone = val
+		s.Send(fmt.Sprintf("%s's olc set to %d.\r\n", targetSess.player.Name, val))
 	case "gold":
 		targetSess.player.Gold = val
 		s.Send(fmt.Sprintf("%s's gold set to %d.\r\n", targetSess.player.Name, val))
@@ -295,7 +298,7 @@ func cmdSet(s *Session, args []string) error {
 
 func isSetNumericField(field string) bool {
 	switch field {
-	case "level", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "hit", "mana", "move", "ac", "tattoo":
+	case "level", "olc", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "hit", "mana", "move", "ac", "tattoo":
 		return true
 	default:
 		return false

@@ -1,0 +1,12 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_dig	dig	dig.no-argument	D1	command	oracle-green	dig-depth	new_cmds2.c:830-840	Missing direction or room emits C's exact format line.
+do_dig	dig	dig.invalid-direction	D2	state	oracle-green	dig-depth	new_cmds2.c:854-860	An invalid first direction emits the valid-direction line but C continues with the default north exit and success confirmation.
+do_dig	dig	dig.missing-room	D1	command	oracle-green	dig-depth	new_cmds2.c:834-842	Unknown room vnums emit the exact missing-room line.
+do_dig	dig	dig.success	D3	state	oracle-green	dig-depth	new_cmds2.c:862-881	An immortal creates paired bare exits and receives the exact confirmation.
+do_dig	dig	dig.trailing-arguments	D2	command	oracle-green	dig-depth	new_cmds2.c:830-831	The two-argument parser ignores text after the room number.
+do_dig	dig	dig.uppercase-direction	D2	command	oracle-green	dig-depth	interpreter.c:1267-1285; new_cmds2.c:854-881	C one_argument lowercases uppercase direction input before the exact confirmation.
+do_dig	dig	dig.fill-word-arguments	D2	command	oracle-green	dig-depth	interpreter.c:1267-1285,1341-1343; new_cmds2.c:826-831	C two_arguments skips fill words before each argument.
+do_dig	dig	dig.bare-exit-state	D4	state	unit-green	TestCreateRoomExitReplacesWithBareExit	new_cmds2.c:862-876	The runtime helper leaves only the reciprocal bare destination and clears prior door metadata, matching C CREATE records.
+do_dig	dig	dig.permission-target-zone	D1	command	oracle-green	dig-permission-depth	new_cmds2.c:844-851	A builder may not create an exit to a different zone and receives the target-zone refusal.
+do_dig	dig	dig.builder-success	D3	state	oracle-green	dig-permission-depth	new_cmds2.c:844-881	A builder with the current zone selected can create the paired exit.
+do_dig	dig	dig.permission-current-zone	D1	command	oracle-green	dig-current-zone-depth	new_cmds2.c:844-849	A builder whose saved OLC zone differs from the current zone receives the current-zone refusal.

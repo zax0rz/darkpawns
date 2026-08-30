@@ -1,0 +1,52 @@
+# depth-case: dig.no-argument
+# depth-case: dig.invalid-direction
+# depth-case: dig.missing-room
+# depth-case: dig.success
+# depth-case: dig.trailing-arguments
+# depth-case: dig.uppercase-direction
+# depth-case: dig.fill-word-arguments
+# C-first vehicle for do_dig (src/new_cmds2.c:818-881), the LVL_BUILDER OLC
+# exit creator. The immortal actor starts in room 1204 and targets existing
+# room 1205, avoiding synthetic world edits.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Digactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Digactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+dig
+dig x 1205
+dig north 99999
+dig east 1205
+dig east 1205 trailing-argument
+dig N 1205
+dig the east the 1205

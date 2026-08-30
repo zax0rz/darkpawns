@@ -62,6 +62,120 @@ func cmdAt(s *Session, args []string) error {
 	return nil
 }
 
+// cmdDig mirrors do_dig (src/new_cmds2.c:818-881). It creates a bare exit in
+// both directions and leaves the runtime world mutation in game.World.
+func cmdDig(s *Session, args []string) error {
+	directionArg, roomArg := parseDigArguments(args)
+	if directionArg == "" || roomArg == "" {
+		s.Send("Format: dig <dir> <room number>\r\n")
+		return nil
+	}
+
+	targetVNum, ok := parseDigRoomNumber(roomArg)
+	if !ok {
+		targetVNum = 0
+	}
+	targetRoom := s.manager.world.GetRoomInWorld(targetVNum)
+	if targetVNum == 0 || targetRoom == nil {
+		s.Send(fmt.Sprintf("There is no room with the number %d.\r\n", targetVNum))
+		return nil
+	}
+	currentRoom := s.manager.world.GetRoomInWorld(s.player.GetRoomVNum())
+	if currentRoom == nil {
+		return nil
+	}
+
+	// C lets LVL_SET_BUILD (LVL_GOD+1) edit across zones. Lower builders must
+	// have their saved OLC zone set to the current zone and may only target the
+	// current zone. Session.olcZone mirrors GET_OLC_ZONE's saved field.
+	if s.player.GetLevel() < LVL_GOD+1 {
+		if currentRoom.Zone != s.olcZone {
+			s.Send("You don't have permission to edit this zone.\r\n")
+			return nil
+		}
+		if targetRoom.Zone != currentRoom.Zone {
+			s.Send("You don't have permission to edit that zone.\r\n")
+			return nil
+		}
+	}
+
+	direction, reverse := digDirections(directionArg)
+	if direction == "" {
+		s.Send("Valid dirs are n,s,e,w,u and d.\r\n")
+		direction, reverse = "north", "south"
+	}
+	s.manager.world.CreateRoomExit(currentRoom.VNum, direction, targetVNum)
+	s.manager.world.CreateRoomExit(targetRoom.VNum, reverse, currentRoom.VNum)
+	s.Send(fmt.Sprintf("You make an exit %s to room %d.\r\n", directionArg, targetVNum))
+	return nil
+}
+
+func parseDigArguments(args []string) (string, string) {
+	next := func() string {
+		for len(args) > 0 {
+			value := strings.ToLower(args[0])
+			args = args[1:]
+			switch value {
+			case "in", "from", "with", "the", "on", "at", "to":
+				continue
+			default:
+				return value
+			}
+		}
+		return ""
+	}
+	return next(), next()
+}
+
+func parseDigRoomNumber(value string) (int, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, false
+	}
+	index := 0
+	sign := 1
+	if value[0] == '+' || value[0] == '-' {
+		if value[0] == '-' {
+			sign = -1
+		}
+		index++
+	}
+	start := index
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	if index == start {
+		return 0, false
+	}
+	number, err := strconv.Atoi(value[start:index])
+	if err != nil {
+		return 0, false
+	}
+	return sign * number, true
+}
+
+func digDirections(value string) (string, string) {
+	if value == "" {
+		return "", ""
+	}
+	switch strings.ToLower(value[:1]) {
+	case "n":
+		return "north", "south"
+	case "e":
+		return "east", "west"
+	case "s":
+		return "south", "north"
+	case "w":
+		return "west", "east"
+	case "u":
+		return "up", "down"
+	case "d":
+		return "down", "up"
+	default:
+		return "", ""
+	}
+}
+
 // findAtRoom mirrors find_target_room (act.wizard.c:184-239). Numeric room
 // vnums take the real_room path; otherwise C resolves a visible character and
 // then a visible object, using the resolved entity's current room.
