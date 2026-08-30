@@ -1,0 +1,79 @@
+# C CAP() preserves every byte except the first one (src/utils.h:166), so
+# this vehicle protects clan rename/create state from Go title-casing input.
+
+# depth-case: clan.rename-capitalization
+# depth-case: clan.rename-state
+# depth-case: clan.rename-empty-name
+# depth-case: clan.rename-invalid-number
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Clanmate wOLVES
+
+[probe]
+clan info wOLVES
+clan rename 0 nEW Name
+clan info nEW Name
+clan rename 0
+clan rename -1 Foo

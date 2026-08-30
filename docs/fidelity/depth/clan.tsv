@@ -1,0 +1,51 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_clan	clan	clan.immortal-format	D1	command	oracle-green	clan-depth	interpreter.c:383; clan.c:63-121	Immortal no-argument format and command surface.
+do_clan	clan	clan.immortal-info-list	D3	state	oracle-green	clan-depth	clan.c:723-750	Immortal list exposes the authored clan row and exact C page bytes.
+do_clan	clan	clan.immortal-info-detail	D3	state	oracle-green	clan-depth	clan.c:752-785	Detail output follows C's actual overlapping-buffer bytes, including the null plan.
+do_clan	clan	clan.immortal-status-gate	D1	command	oracle-green	clan-depth	clan.c:651-683	Immortals receive the cannot-join status refusal.
+do_clan	clan	clan.immortal-apply-gate	D1	command	oracle-green	clan-depth	clan.c:685-720	Immortals cannot apply.
+do_clan	clan	clan.create-missing-leader	D2	command	oracle-green	clan-depth	clan.c:156-236	Create refuses a leader absent from the character list.
+do_clan	clan	clan.rename-entry-gates	D1	command	oracle-green	clan-depth	clan.c:127-153	Rename covers empty, nonnumeric, out-of-range, and missing-name gates.
+do_clan	clan	clan.bank-immortal-path	D4	state	oracle-green	clan-depth	clan.c:880-985	Immortal amount-plus-clan parsing and treasury deposit/withdraw state match.
+do_clan	clan	clan.set-money	D2	state	oracle-green	clan-depth	clan.c:988-1057	Application-fee and dues validation and updates match.
+do_clan	clan	clan.set-applev	D2	state	oracle-green	clan-depth	clan.c:1272-1329	Application-level validation and update path match.
+do_clan	clan	clan.set-ranks	D4	state	oracle-green	clan-depth	clan.c:1060-1162	Immortal clan/rank parsing and hierarchy update path match.
+do_clan	clan	clan.set-title	D4	state	oracle-green	clan-depth	clan.c:1164-1220	Index/rank/title validation and exact Done path match.
+do_clan	clan	clan.set-privilege	D2	state	oracle-green	clan-depth	clan.c:1442-1495	Privilege subcommand dispatch and C's failed-clan lookup/list behavior match.
+do_clan	clan	clan.create-success	D4	state	oracle-green	clan-depth	clan.c:156-236	Live creation assigns the leader, defaults ranks/privileges, and emits C bytes.
+do_clan	clan	clan.create-leader-gate	D1	command	oracle-green	clan-depth	clan.c:180-184	Missing leader remains the first reachable creation refusal.
+do_clan	clan	clan.destroy-success	D4	state	oracle-green	clan-depth	clan.c:240-283	Positive destroy clears members, removes the clan, and preserves deletion bytes.
+do_clan	clan	clan.admin-private	D3	state	oracle-green	clan-depth	clan.c:1222-1269	God privacy toggles use the named-clan path.
+do_clan	clan	clan.privilege-list	D1	command	oracle-green	clan-depth	clan.c:1442-1495	Unknown privilege argument emits C's ordered privilege list.
+do_clan	clan	clan.unknown-subcommand	D1	command	oracle-green	clan-depth	clan.c:1541-1573	Unknown top-level subcommand falls through to the C format.
+do_clan	clan	clan.mortal-format	D1	command	oracle-green	clan-member-depth	clan.c:63-121	Member format exposes privilege-dependent mortal commands.
+do_clan	clan	clan.mortal-status	D1	command	oracle-green	clan-member-depth	clan.c:651-683	Enrolled mortal status reports rank and clan.
+do_clan	clan	clan.mortal-info	D3	state	oracle-green	clan-member-depth	clan.c:723-750	Public mortal list and visibility bytes match.
+do_clan	clan	clan.mortal-info-detail	D3	state	oracle-green	clan-member-depth	clan.c:752-785	Mortal detail retains C's actual sparse detail output.
+do_clan	clan	clan.mortal-who	D3	audience	oracle-green	clan-member-depth	clan.c:545-576	Online clan-member audience and rank labels match.
+do_clan	clan	clan.mortal-members	D3	audience	oracle-green	clan-member-depth	clan.c:578-609	Clan member header and member bytes match.
+do_clan	clan	clan.mortal-private	D3	state	oracle-green	clan-member-depth	clan.c:1222-1269	Mortal top-rank privacy toggle and private-list pager edge match.
+do_clan	clan	clan.mortal-bank	D4	state	oracle-green	clan-member-depth	clan.c:880-985	Zero-value and insufficient-treasure bank outcomes match C.
+do_clan	clan	clan.mortal-money-gates	D2	command	oracle-green	clan-member-depth	clan.c:988-1057	Mortal fee validation and range gates match.
+do_clan	clan	clan.mortal-ranks	D4	state	oracle-green	clan-member-depth	clan.c:1060-1162	Mortal top-rank hierarchy update matches.
+do_clan	clan	clan.mortal-title	D4	state	oracle-green	clan-member-depth	clan.c:1164-1220	Mortal title validation and update match.
+do_clan	clan	clan.mortal-privilege	D2	state	oracle-green	clan-member-depth	clan.c:1442-1495	Mortal privilege rank update path matches.
+do_clan	clan	clan.mortal-membership-success	D4	state	oracle-green	clan-member-depth	clan.c:287-543	Enroll, expel, promote, and demote success states match.
+do_clan	clan	clan.mortal-membership-gates	D2	command	oracle-green	clan-member-depth	clan.c:287-543	Already-enrolled, top-rank, and cannot-kick gates match.
+do_clan	clan	clan.applicant-format	D1	command	oracle-green	clan-applicant-depth	clan.c:63-121	Clanless/applicant format surfaces match.
+do_clan	clan	clan.applicant-status	D1	command	oracle-green	clan-applicant-depth	clan.c:651-683	Clan application status output matches.
+do_clan	clan	clan.applicant-info	D3	state	oracle-green	clan-applicant-depth	clan.c:723-785	Applicant sees public list/detail bytes.
+do_clan	clan	clan.applicant-apply	D4	state	oracle-green	clan-applicant-depth	clan.c:685-720	Application fee/level state and success bytes match.
+do_clan	clan	clan.applicant-apply-again	D4	state	oracle-green	clan-applicant-depth	clan.c:685-720	Rank-zero repeat application preserves C's repeat success path.
+do_clan	clan	clan.plan-editor-prompt	D5	command	oracle-green	clan-plan-depth	clan.c:1391-1438	Immortal plan entry, old-plan branch, and writing prompt match.
+do_clan	clan	clan.plan-editor-completion	D5	state	oracle-green	clan-plan-depth	clan.c:1432-1438; modify.c:97-216	C string editor accepts lines, emits the writing prompt, and commits at @.
+do_clan	clan	clan.plan-editor-at-prefix	D5	state	oracle-green	clan-plan-depth	clan.c:1432-1438; modify.c:97-216	C string editor terminates on any line whose first byte is @, including trailing input.
+do_clan	clan	clan.plan-editor-info-state	D4	state	oracle-green	clan-plan-depth	clan.c:723-785	Committed multiline plan is rendered by the C detail path.
+do_clan	clan	clan.plan-editor-replace	D5	state	oracle-green	clan-plan-depth	clan.c:1421-1438	Existing plan replacement prompt and committed replacement match.
+do_clan	clan	clan.mortal-plan-editor-prompt	D5	command	oracle-green	clan-plan-mortal-depth	clan.c:1391-1438	Mortal top-rank plan entry reaches the same C editor prompt.
+do_clan	clan	clan.mortal-plan-editor-completion	D5	state	oracle-green	clan-plan-mortal-depth	clan.c:1432-1438; modify.c:97-216	Mortal editor lines and @ completion match.
+do_clan	clan	clan.mortal-plan-editor-info-state	D4	state	oracle-green	clan-plan-mortal-depth	clan.c:723-785	Mortal committed plan appears in the detail bytes.
+do_clan	clan	clan.rename-capitalization	D4	state	oracle-green	clan-rename-depth	clan.c:127-153; utils.h:166	CAP uppercases only the first byte and preserves the rest.
+do_clan	clan	clan.rename-state	D4	state	oracle-green	clan-rename-depth	clan.c:127-153	Renamed clan is resolved and rendered under its exact C name.
+do_clan	clan	clan.rename-empty-name	D1	command	oracle-green	clan-rename-depth	clan.c:127-153	Existing index with no replacement name emits the C prompt.
+do_clan	clan	clan.rename-invalid-number	D1	command	oracle-green	clan-rename-depth	clan.c:127-153	Signed/non-digit number is rejected by C is_number semantics.

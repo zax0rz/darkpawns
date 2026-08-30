@@ -55,6 +55,12 @@ type Player struct {
 	// should start for board writing. Value is board_type + BOARD_MAGIC.
 	WriteMagic int
 
+	// ClanPlanWriting tracks the descriptor-level string editor started by
+	// clan.c's do_clan_plan/string_write path.
+	ClanPlanWriting bool   `json:"-"`
+	ClanPlanClanID  int    `json:"-"`
+	ClanPlanBuffer  string `json:"-"`
+
 	// Hunger/thirst/drunk conditions — limits.c:366, structs.h:566-568
 	// Index: CondDrunk=0, CondFull=1, CondThirst=2
 	// Value: -1 = immortal (no change), 0 = depleted, 1-48 = current level

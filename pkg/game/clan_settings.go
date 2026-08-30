@@ -75,16 +75,6 @@ func (w *World) doClanPlan(ch *Player, arg string) {
 			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
 			return
 		}
-		// Mortal path: arg is the plan text
-		if arg == "" {
-			if c.Plan == "" {
-				ch.SendMessage("Your clan has no plan set.\r\n")
-			} else {
-				ch.SendMessage(fmt.Sprintf("Clan plan:\r\n%s\r\n", c.Plan))
-			}
-			return
-		}
-		c.Plan = arg
 	} else {
 		if ch.GetLevel() < LVL_GOD {
 			ch.SendMessage("You do not have clan privileges.\r\n")
@@ -94,27 +84,22 @@ func (w *World) doClanPlan(ch *Player, arg string) {
 			w.sendClanFormat(ch)
 			return
 		}
-		// Immortal path: arg is "clan_name [plan_text]"
-		a1, a2 := halfChop(arg)
-		clanNum, c = w.Clans.FindClan(a1)
+		clanNum, c = w.Clans.FindClan(arg)
 		if c == nil {
 			ch.SendMessage("Unknown clan.\r\n")
 			return
 		}
-		if a2 == "" {
-			if c.Plan == "" {
-				ch.SendMessage(fmt.Sprintf("Clan %s has no plan set.\r\n", c.Name))
-			} else {
-				ch.SendMessage(fmt.Sprintf("Clan plan for %s:\r\n%s\r\n", c.Name, c.Plan))
-			}
-			return
-		}
-		c.Plan = a2
 	}
 
 	_ = clanNum
-	w.SaveClans()
-	ch.SendMessage("Clan plan updated.\r\n")
+	if c.Plan == "" {
+		ch.SendMessage(fmt.Sprintf("Enter the description, or plan for clan <<%s>>.\r\n", c.Name))
+	} else {
+		ch.SendMessage(fmt.Sprintf("Old plan for clan <<%s>>:\r\n%s\r\n", c.Name, c.Plan))
+		ch.SendMessage("Enter new plan:\r\n")
+	}
+	ch.SendMessage("End with @ on a line by itself.\r\n")
+	w.BeginClanPlanWrite(ch, c)
 }
 
 // doClanRanks manages clan rank names and adjusts existing members' ranks.
@@ -141,9 +126,9 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 			return
 		}
 		immcom = true
-		a1, _ := halfChop(arg)
+		a1, a2 := halfChop(arg)
 		arg = a1
-		clanNum, c = w.Clans.FindClan(a1)
+		clanNum, c = w.Clans.FindClan(a2)
 		if c == nil {
 			ch.SendMessage("Unknown clan.\r\n")
 			return
@@ -160,7 +145,7 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 		return
 	}
 
-	if !isNumber(arg) {
+	if !isClanNumber(arg) {
 		ch.SendMessage("Set the ranks to what?\r\n")
 		return
 	}
@@ -240,7 +225,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 		}
 		a1, a2 := halfChop(arg)
 		arg = a2
-		if !isNumber(a1) {
+		if !isClanNumber(a1) {
 			ch.SendMessage("You need to specify a clan number.\r\n")
 			return
 		}
@@ -255,7 +240,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 
 	a1, a2 := halfChop(arg)
 
-	if !isNumber(a1) {
+	if !isClanNumber(a1) {
 		ch.SendMessage("You need to specify a rank number.\r\n")
 		return
 	}
@@ -367,7 +352,7 @@ func (w *World) doClanSP(ch *Player, arg string, priv int) {
 		return
 	}
 
-	if !isNumber(arg) {
+	if !isClanNumber(arg) {
 		ch.SendMessage("Set the privilege to what?\r\n")
 		return
 	}

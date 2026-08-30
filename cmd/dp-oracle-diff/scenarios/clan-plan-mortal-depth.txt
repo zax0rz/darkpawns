@@ -1,0 +1,78 @@
+# Mortal clan plan editor vehicle for do_clan_plan's member path
+# (src/clan.c:1392-1438).
+
+# depth-case: clan.mortal-plan-editor-prompt
+# depth-case: clan.mortal-plan-editor-completion
+# depth-case: clan.mortal-plan-editor-info-state
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Clanmate Wolves
+clan enroll Clanmate Wolves
+
+[probe:member]
+clan set plan
+Mortal member plan.
+@
+clan info Wolves

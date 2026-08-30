@@ -251,6 +251,28 @@ func (m *ClanManager) GetClanByIndex(idx int) *Clan {
 // ---------------------------------------------------------------------------
 // halfChop in act_comm.go, atoi in act_item.go, isNumber in spec_procs4.go
 
+// isClanNumber mirrors C's is_number in src/interpreter.c:1175. Unlike the
+// permissive fmt.Sscanf helper used by older Go command code, C accepts only
+// decimal digit bytes (and, historically, also treats the empty string as a
+// number; callers in clan.c guard empty arguments where needed).
+func isClanNumber(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// capClanName mirrors C's CAP macro (src/utils.h:166): uppercase only the
+// first byte and preserve the remainder exactly.
+func capClanName(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
 // ClanFilePath returns the default path for the clan data file.
 func ClanFilePath() string {
 	return "./data/clans.json"
@@ -263,6 +285,39 @@ func (w *World) SaveClans() {
 	if err := w.Clans.SaveClans(ClanFilePath()); err != nil {
 		BasicMudLogf("SYSERR: Failed to save clans: %v", err)
 	}
+}
+
+// BeginClanPlanWrite starts the C string_write equivalent for do_clan_plan.
+func (w *World) BeginClanPlanWrite(ch *Player, c *Clan) {
+	ch.ClanPlanWriting = true
+	ch.ClanPlanClanID = c.ID
+	ch.ClanPlanBuffer = ""
+	ch.SetPlrFlag(PlrWriting, true)
+}
+
+// HandleClanPlanInput consumes one line while the clan plan editor is active.
+// It returns true when the line belonged to the editor, including the final @.
+func (w *World) HandleClanPlanInput(ch *Player, line string) bool {
+	if !ch.ClanPlanWriting {
+		return false
+	}
+	if strings.HasPrefix(line, "@") {
+		if _, c := w.Clans.FindClanByID(ch.ClanPlanClanID); c != nil {
+			c.Plan = ch.ClanPlanBuffer
+			w.SaveClans()
+		}
+		ch.ClanPlanWriting = false
+		ch.ClanPlanClanID = 0
+		ch.ClanPlanBuffer = ""
+		ch.SetPlrFlag(PlrWriting, false)
+		return true
+	}
+	if ch.ClanPlanBuffer == "" {
+		ch.ClanPlanBuffer = line + "\r\n"
+	} else {
+		ch.ClanPlanBuffer += line + "\r\n"
+	}
+	return true
 }
 
 // ---------------------------------------------------------------------------
