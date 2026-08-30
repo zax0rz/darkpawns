@@ -359,6 +359,15 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return 0, 0, 0, false // mob / unknown → "hit"
 	}
 
+	cb.GetWeaponDescription = func(name string) string {
+		if p, ok := w.GetPlayer(name); ok && p.Equipment != nil {
+			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil {
+				return weapon.GetShortDesc()
+			}
+		}
+		return ""
+	}
+
 	// -------------------------------------------------------------------------
 	// Room navigation
 	// -------------------------------------------------------------------------
