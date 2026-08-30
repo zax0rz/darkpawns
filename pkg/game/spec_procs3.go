@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
@@ -1523,49 +1524,115 @@ func specElementsMinion(w *World, ch *Player, me *MobInstance, cmd string, arg s
 	return false
 }
 
+// elementsGuardianRoomPeople reconstructs the C room->people walk for this
+// special. C char_to_room() front-inserts occupants; Go stores players and
+// mobs in maps, so newest connection/spawn order provides the corresponding
+// newest-first order used by the depth vehicle.
+func elementsGuardianRoomPeople(w *World, roomVNum int) []Actor {
+	players := w.GetPlayersInRoom(roomVNum)
+	sort.SliceStable(players, func(i, j int) bool {
+		connectedI := elementsGuardianConnectedAt(players[i])
+		connectedJ := elementsGuardianConnectedAt(players[j])
+		if !connectedI.Equal(connectedJ) {
+			return connectedI.After(connectedJ)
+		}
+		if players[i].GetID() != players[j].GetID() {
+			return players[i].GetID() > players[j].GetID()
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+
+	mobs := w.GetMobsInRoom(roomVNum)
+	sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() > mobs[j].GetID() })
+
+	people := make([]Actor, 0, len(players)+len(mobs))
+	for _, player := range players {
+		if player != nil {
+			people = append(people, player)
+		}
+	}
+	for _, mob := range mobs {
+		if mob != nil {
+			people = append(people, mob)
+		}
+	}
+	return people
+}
+
+func elementsGuardianConnectedAt(player *Player) time.Time {
+	player.mu.RLock()
+	defer player.mu.RUnlock()
+	return player.ConnectedAt
+}
+
+// elementsGuardianSelfDamage preserves damage(ppl, ppl, dam, TYPE_UNDEFINED):
+// in particular, the player is the killer/source and self-damage does not
+// enroll a fighting target. The shared damage path owns state/death bytes.
+func elementsGuardianSelfDamage(w *World, target *Player, dam int) {
+	combat.TakeDamageWithDeath(target, target, dam, combat.TYPE_UNDEFINED, func() {
+		w.HandleDeath(target, target, combat.TYPE_UNDEFINED)
+	})
+}
+
+// elementsGuardianPlayerHit preserves the C hit(ppl, next, TYPE_UNDEFINED)
+// call after its three Act writes. Unlike a mobile-special hit, both
+// combatants here are players, so use the ordinary player combat opener.
+func elementsGuardianPlayerHit(w *World, attacker, defender *Player) {
+	if w.combatEngine == nil {
+		return
+	}
+	if err := w.combatEngine.StartCombat(attacker, defender); err != nil {
+		slog.Warn("elements guardian combat start failed", "attacker", attacker.GetName(), "defender", defender.GetName(), "error", err)
+		return
+	}
+	initial, ok := w.combatEngine.(interface {
+		PerformInitialAttack(combat.Combatant, combat.Combatant) error
+	})
+	if !ok {
+		return
+	}
+	if err := initial.PerformInitialAttack(attacker, defender); err != nil {
+		slog.Warn("elements guardian initial attack failed", "attacker", attacker.GetName(), "defender", defender.GetName(), "error", err)
+	}
+}
+
 // specElementsGuardian charms players into fighting each other.
 func specElementsGuardian(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" {
+	if w == nil || ch == nil || me == nil || cmd == "" {
 		return false
 	}
 
-	// Get all players in the room who are non-NPC, non-immortal, and not already fighting
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
-	var targets []*Player
-	for _, ppl := range players {
-		if ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFighting() != "" {
+	people := elementsGuardianRoomPeople(w, ch.GetRoomVNum())
+	for i, person := range people {
+		ppl, ok := person.(*Player)
+		if !ok || ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFighting() != "" {
 			continue
 		}
-		targets = append(targets, ppl)
-	}
 
-	if len(targets) == 0 {
+		var next Actor
+		if i+1 < len(people) {
+			next = people[i+1]
+		}
+		nextPlayer, nextIsPlayer := next.(*Player)
+		if !nextIsPlayer || nextPlayer.GetLevel() > LVL_IMMORT || nextPlayer.GetFighting() != "" {
+			dam := randRange(10, 50)
+			elementsGuardianSelfDamage(w, ppl, dam)
+			Act(w, true, me, ppl, nil, nil,
+				"$n mumbles softly and $N begins screaming loudly, hitting $Mself.", "", ToNotVict)
+			Act(nil, true, me, ppl, nil, nil,
+				"$n mumbles softly and you begin to scream, involuntarily hitting yourself.", "", ToVict)
+			return false
+		}
+
+		Act(w, true, ppl, nextPlayer, nil, nil,
+			fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking %s!", me.GetName(), ppl.GetName(), nextPlayer.GetName()), "", ToNotVict)
+		Act(nil, true, nextPlayer, nil, nil, nil,
+			fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking you!", me.GetName(), ppl.GetName()), "", ToChar)
+		Act(nil, true, ppl, nil, nil, nil,
+			fmt.Sprintf("%s mumbles softly and you scream loudly, attacking %s!", me.GetName(), nextPlayer.GetName()), "", ToChar)
+		elementsGuardianPlayerHit(w, ppl, nextPlayer)
 		return false
 	}
-
-	if len(targets) < 2 {
-		// Single player — goes mad and injures themself
-		dam := randRange(10, 50)
-		w.doDamage(me, targets[0], dam, "hit")
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s mumbles softly and %s begins screaming loudly, hitting %sself.", me.GetName(), targets[0].Name, targets[0].Name))
-		sendToChar(targets[0], fmt.Sprintf("%s mumbles softly and you begin to scream, involuntarily hitting yourself.\r\n", me.GetName()))
-		return false
-	}
-
-	// Pair the first two non-fighting players
-	a := targets[0]
-	b := targets[1]
-	a.SetFighting(b.Name)
-	b.SetFighting(a.Name)
-	a.SetAffect(affCharm, true)
-	b.SetAffect(affCharm, true)
-
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking %s!", me.GetName(), a.Name, b.Name))
-	sendToChar(b, fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking you!\r\n", me.GetName(), a.Name))
-	sendToChar(a, fmt.Sprintf("%s mumbles softly and you scream loudly, attacking %s!\r\n", me.GetName(), b.Name))
-
-	// Apply a bit of initial damage to make it real
-	w.doDamage(a, b, 1, "hit")
 
 	return false
 }

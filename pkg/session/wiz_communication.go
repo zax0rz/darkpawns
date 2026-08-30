@@ -106,12 +106,12 @@ func cmdForce(s *Session, args []string) error {
 		return nil
 	}
 
-	forceCmd := args[1]
+	forceCmd := strings.Join(args[1:], " ")
 	targetName := strings.ToLower(args[0])
 
 	// --- Safety 3: Command denylist ---
 	denyList := []string{"force", "shutdown", "purge", "set", "advance", "switch", "wiznet"}
-	cmdLower := strings.ToLower(forceCmd)
+	cmdLower := strings.ToLower(strings.Fields(forceCmd)[0])
 	for _, denied := range denyList {
 		if cmdLower == denied {
 			s.Send(fmt.Sprintf("You cannot force '%s'.", forceCmd))

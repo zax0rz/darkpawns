@@ -1,0 +1,121 @@
+# C-first vehicle for SPECIAL(elements_guardian), registered for mob 1314 by
+# src/spec_assign.c:196 and defined at src/spec_procs3.c:1242-1295.
+# The say command reaches the player-command special path; two eligible
+# mortals expose the paired song branch, its three audience writes, and hit().
+
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 162.obj
+spawn-mob 1314 999 8105 80
+strip-mob-script 1314
+set-mob-flag 1314 SPEC
+replace-room-exits 8105 none
+
+[setup:oracle]
+GuardianCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GuardianCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+GuardianWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+GuardianWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:third]
+GuardianThird
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:third]
+GuardianThird
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport GuardianWitness 1204
+teleport GuardianThird 1204
+load obj 16212
+give bone GuardianThird
+set GuardianThird level 31
+force GuardianThird wield bone
+goto 8099
+set GuardianWitness level 31
+teleport GuardianWitness 8105
+teleport GuardianThird 8105
+goto 8105
+
+[probe]
+say hello
+
+# depth-case: mob.elements-guardian-entry
+# depth-case: mob.elements-guardian-pair-branch
+# depth-case: mob.elements-guardian-pair-audience
+# depth-case: mob.elements-guardian-hit-boundary
