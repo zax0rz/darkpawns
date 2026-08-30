@@ -2431,13 +2431,6 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 type (
 	roomGetter2 interface{ GetRoomVNum() int }
 
-	worldTransfer interface {
-		PlayerTransfer(ch interface{}, toRoomVNum int) error
-		MobTransfer(m interface{}, toRoomVNum int) error
-		GetRoomInWorld(vnum int) interface{ HasFlag(bit int) bool }
-		GetRoomCount() int
-	}
-
 	// grouper for are_grouped checks
 	grouper interface {
 		IsInGroup() bool
@@ -2537,12 +2530,25 @@ func castWordOfRecall(level int, ch, cvict, world interface{}) {
 }
 
 // spell_teleport ports src/spells.c spell_teleport (lines 168–217).
-// Random room teleport. Self-only for PCs. NPCs get saving throw.
+// Random room teleport. Self-only for PCs. Different NPC victims get a saving
+// throw; C's self-NPC teleporter vehicle does not.
 // Can't use in peaceful rooms. Avoids PRIVATE rooms.
 func castTeleport(level int, ch, cvict, world interface{}) {
 	_ = level
 
-	w, ok := world.(worldTransfer)
+	type teleportWorld interface {
+		GetRoomInWorld(vnum int) *parser.Room
+		GetRoomCount() int
+	}
+	w, ok := world.(teleportWorld)
+	if !ok {
+		sendToCaster(ch, "Teleport failed: world interface not available.\r\n")
+		return
+	}
+	type characterTransferer interface {
+		CharTransfer(charName string, isMob bool, toRoomVNum int) error
+	}
+	transferer, ok := world.(characterTransferer)
 	if !ok {
 		sendToCaster(ch, "Teleport failed: world interface not available.\r\n")
 		return
@@ -2573,8 +2579,10 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	// NPCs get a saving throw
-	if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
+	// NPC victims other than the caster get a saving throw. C's teleporter
+	// special passes the same NPC as caster and victim, so that path skips this
+	// branch (src/spells.c:191-198).
+	if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() && !selfTarget(ch, cvict) {
 		if magSavingThrow(cvict, int(SaveSpell)) {
 			sendToCaster(ch, "The magic words fail to form properly.\r\n")
 			return
@@ -2583,30 +2591,47 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 
 	// Pick a random room, avoiding PRIVATE
 	roomCount := w.GetRoomCount()
-	for attempts := 0; attempts < 100; attempts++ {
+	if roomCount <= 0 {
+		return
+	}
+	type roomIndexer interface {
+		GetRoomVNumAtIndex(index int) (int, bool)
+	}
+	indexedWorld, hasRoomIndex := w.(roomIndexer)
+	for {
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		toRoom := dprng.Number(0, roomCount-1)
+		roomIndex := dprng.Number(0, roomCount-1)
+		toRoom := roomIndex
+		if hasRoomIndex {
+			var found bool
+			toRoom, found = indexedWorld.GetRoomVNumAtIndex(roomIndex)
+			if !found {
+				continue
+			}
+		}
 		roomData := w.GetRoomInWorld(toRoom)
 		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
-			sendToCaster(ch, "The world around you turns black and you suddenly find yourself..\r\n")
 			sendToVictim(cvict, "The world around you turns black and you suddenly find yourself..\r\n")
+			sendAffectRoom(cvict, nil, "$n slowly fades out of existence and is gone.", world)
 
-			// Transfer — use CharTransfer via appropriate path
-			if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
-				if err := w.MobTransfer(cvict, toRoom); err != nil {
-					slog.Error("MobTransfer failed", "error", err)
-				}
-			} else {
-				if err := w.PlayerTransfer(cvict, toRoom); err != nil {
-					slog.Error("PlayerTransfer failed", "error", err)
-				}
+			// The game World exposes typed PlayerTransfer/MobTransfer methods.
+			// CharTransfer is the common interface bridge needed here because
+			// spells cannot import pkg/game without creating an import cycle.
+			victName, ok := cvict.(interface{ GetName() string })
+			if !ok {
+				return
 			}
+			isMob := false
+			if vNPC, ok := cvict.(npcChecker); ok {
+				isMob = vNPC.IsNPC()
+			}
+			if err := transferer.CharTransfer(victName.GetName(), isMob, toRoom); err != nil {
+				slog.Error("CharTransfer failed", "error", err)
+			}
+			sendAffectRoom(cvict, nil, "$n slowly fades into existence.", world)
 			return
 		}
 	}
-
-	sendToCaster(ch, "The magic fails to find a destination.\r\n")
 }
 
 // castMeteorSwarm ports src/spells.c spell_meteor_swarm (lines 1088-1133).

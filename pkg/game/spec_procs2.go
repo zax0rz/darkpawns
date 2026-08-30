@@ -2105,35 +2105,17 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 }
 
 // ================================================================
-// specTeleporter — Picks random room and teleports players there
+// specTeleporter — Teleports the wounded procedure mob
 // ================================================================
 func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch == nil || ch.GetPosition() <= combat.PosSleeping {
+	if cmd != "" || me.GetFighting() == "" || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	if ch.GetFighting() != "" {
-		return false
-	}
-	if !ch.IsNPC() && number(0, 4) == 0 {
-		// Pick random room, ensure not private/godroom/death/nomob
-		rooms := w.Rooms()
-		var toRoom int
-		for i := 0; i < 200; i++ {
-			// #nosec G404 — game RNG, not cryptographic
-			// #nosec G404
-			candidate := rooms[dprng.Number(0, len(rooms)-1)]
-			if w.roomHasFlag(candidate.VNum, "private") || w.roomHasFlag(candidate.VNum, "godroom") ||
-				w.roomHasFlag(candidate.VNum, "death") || w.roomHasFlag(candidate.VNum, "nomob") {
-				continue
-			}
-			toRoom = candidate.VNum
-			break
-		}
-		if toRoom != 0 {
-			ch.SetRoom(toRoom)
-		}
-		sendToChar(ch, "You are suddenly yanked through the fabric of reality!\r\n")
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s suddenly vanishes!", ch.GetName()))
+	if me.GetHP() < me.GetMaxHP()/2 {
+		// C: act("$n says, 'My work here is done.'", TRUE, ch, 0, 0,
+		// TO_ROOM), then call_magic(ch, ch, 0, SPELL_TELEPORT, ...).
+		Act(w, true, me, nil, nil, nil, "$n says, 'My work here is done.'", "", ToRoom)
+		spells.CastFromSpecial(me, me, spells.SpellTeleport, me.GetLevel(), w)
 		return true
 	}
 	return false

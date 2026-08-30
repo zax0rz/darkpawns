@@ -1,0 +1,56 @@
+# C-first vehicle for SPECIAL(teleporter), assigned to mob 14411 by
+# src/spec_assign.c:381 and defined in src/spec_procs2.c:2019-2030.
+# mobile_activity() skips fighting mobs, so the registered special is reached
+# from perform_violence() after the mob's ordinary combat turn.  The procedure
+# receives the mob as ch, requires an awake fighting mob below half health,
+# says one room line, then calls call_magic(ch, ch, SPELL_TELEPORT).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14411 1 8105 144
+strip-mob-script 14411
+set-mob-flag 14411 SPEC
+replace-room-exits 8105 none
+
+[setup:oracle]
+TeleporterGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TeleporterGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+set master hit 100
+hit master
+~dpclock pulse 20
+score
+
+# depth-case: mob.teleporter-entry-gates
+# depth-case: mob.teleporter-low-health-dispatch
+# depth-case: mob.teleporter-self-teleport-audience
