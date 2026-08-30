@@ -1,0 +1,115 @@
+# comfort command vehicle (src/interpreter.c:390; src/act.social.c:102-151;
+# lib/misc/socials:121-129). The record has a resting minimum victim
+# position, so this vehicle covers no-arg, found, missing, self, and sleeping
+# target branches with actor/room/victim audiences.
+
+# depth-case: comfort.no-argument
+# depth-case: comfort.target-success
+# depth-case: comfort.target-not-found
+# depth-case: comfort.self-target
+# depth-case: comfort.target-position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Comforter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Comforter
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Sleepero 8162
+
+[probe]
+comfort
+comfort barnaby
+comfort nobody
+comfort comforter
+comfort sleepero
