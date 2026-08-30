@@ -2032,21 +2032,44 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 }
 
 // ================================================================
-// specMindflayer — Drains intelligence from players
+// specMindflayer — Soul leech / psiblast combat special
 // ================================================================
 func specMindflayer(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+	// C SPECIAL(mindflayer) (spec_procs2.c:1972-2000) is a combat-time
+	// procedure. mobile_activity() skips fighting mobs, so the combat engine
+	// invokes this after the mob's ordinary turn with ch=nil and me as the
+	// registered mob. The native entry gates are exactly commandless, awake,
+	// and currently fighting; there is no extra hit-point gate here.
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFighting() == "" {
 		return false
 	}
-	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() && pl.GetLevel() < 50 && number(0, 5) == 0 {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stares at %s with hollow, empty eyes!", mobName(me), pl.GetName()))
-			pl.Stats.Int = max(3, pl.Stats.Int-1)
-			sendToChar(pl, "You feel your intelligence draining away...\r\n")
-			return true
-		}
+	vict := mobFightingTarget(w, me)
+	if vict == nil {
+		return false
 	}
-	return false
+
+	switch dprng.Number(0, 15) {
+	case 0, 5:
+		// C uses damage() with the victim's level as a direct amount, not
+		// call_magic()/mag_damage(). damage() then routes attack type 83
+		// through skill_message before the soul-leech healing side effect.
+		Act(w, false, me, vict, nil, nil,
+			"The tentacles on $n's face surge forward, wrapping around $N's head!", "", ToNotVict)
+		Act(nil, false, me, vict, nil, nil,
+			"The tentacles on $n's face surge forward, wrapping around your head!", "", ToVict)
+		victimLevel := vict.GetLevel()
+		w.mobSkillDamage(me, vict, victimLevel, spells.SpellSoulLeech)
+		me.SetHealth(me.GetHP() + victimLevel)
+	case 15:
+		Act(w, false, me, vict, nil, nil,
+			"Blood runs from $N's nose and ears as $n stares intently at $M.", "", ToNotVict)
+		Act(nil, false, me, vict, nil, nil,
+			"$n stares intently at you.. you feel $m battering your mind!", "", ToVict)
+		w.mobSkillDamage(me, vict, me.GetLevel(), spells.SpellPsiblast)
+	default:
+		return false
+	}
+	return true
 }
 
 // ================================================================

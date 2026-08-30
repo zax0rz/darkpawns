@@ -1,0 +1,108 @@
+# depth-case: mob.mindflayer-entry-gates
+# depth-case: mob.mindflayer-combat-dispatch
+# depth-case: mob.mindflayer-rng-arms
+# depth-case: mob.mindflayer-soul-leech-audience
+# depth-case: mob.mindflayer-soul-leech-state
+# depth-case: mob.mindflayer-psiblast-audience
+# depth-case: mob.mindflayer-psiblast-state
+# C-first vehicle for SPECIAL(mindflayer), assigned to mob 14414 by
+# src/spec_assign.c:383 and defined in src/spec_procs2.c:1972-2000.
+# The mob is stripped of its separate Lua fight trigger so the vehicle reaches
+# only the native procedure. The mortal peer opens combat; the combat engine
+# then calls the native MOB_SPEC after the mob's ordinary combat turn, matching
+# fight.c:2030-2031 (mobile_activity() skips fighting mobs).
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs2.c:1972-2000 for the
+# command gate, then src/fight.c:1898-2032 for the combat-time call. Cases 0/5
+# emit the two soul-leech act messages, direct damage(GET_LEVEL(vict), 83),
+# and GET_HIT(ch)+=GET_LEVEL(vict); case 15 emits psiblast and direct
+# damage(GET_LEVEL(ch), 100); all other rolls fall through FALSE.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14414 1 8105 144
+strip-mob-script 14414
+replace-room-exits 8105 none
+
+[setup:oracle]
+Mindactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mindvictim
+Y
+mindpass
+mindpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Mindvictim
+y
+mindpass
+mindpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Mindvictim 8105
+set Mindactor maxhit 5000
+set Mindactor hp 5000
+set Mindactor hit 5000
+set Mindactor level 1
+set Mindactor maxhit 5000
+set Mindactor hp 5000
+set Mindactor hit 5000
+set Mindactor level 1
+
+[probe]
+kill Alhazred
+~dpclock pulse 20
+score
