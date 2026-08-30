@@ -26,7 +26,7 @@ func cmdColor(s *Session, args []string) error {
 	}
 	tp := -1
 	for i, lvl := range levels {
-		if lvl == arg {
+		if strings.HasPrefix(lvl, arg) {
 			tp = i
 			break
 		}

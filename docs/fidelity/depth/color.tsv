@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_color	color	color.no-argument	D1	command	oracle-green	color-depth	interpreter.c:388; act.informative.c:2462-2481	No argument reports the current C color level.
+do_color	color	color.prefix-sparse	D2	state	oracle-green	color-depth	act.informative.c:2482-2492; interpreter.c:1150-1173	C search_block accepts the sparse prefix and updates PRF_COLOR_1.
+do_color	color	color.prefix-normal	D2	state	oracle-green	color-depth	act.informative.c:2482-2492; interpreter.c:1150-1173	C search_block accepts the normal prefix and updates PRF_COLOR_2.
+do_color	color	color.prefix-complete	D2	state	oracle-green	color-depth	act.informative.c:2482-2492; interpreter.c:1150-1173	C search_block accepts the complete prefix and enables both color bits.
+do_color	color	color.prefix-off	D2	state	oracle-green	color-depth	act.informative.c:2482-2492; interpreter.c:1150-1173	C search_block accepts the off prefix and clears both color bits.
+do_color	color	color.on-alias	D2	state	oracle-green	color-depth	act.informative.c:2471-2477	The on alias recursively selects the complete level.
+do_color	color	color.state-report	D4	state	oracle-green	color-depth	act.informative.c:2478-2481; structs.h:288-289	Reports after each transition reflect the exact C bit-level state.
+do_color	color	color.invalid	D1	command	oracle-green	color-depth	act.informative.c:2482-2485	Unknown levels emit the exact C usage line without changing state.
+do_color	color	color.extra-argument	D2	command	oracle-green	color-depth	act.informative.c:2469-2498	any_one_arg consumes only the first token, so trailing input is ignored.
