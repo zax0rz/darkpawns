@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	cough	cough.no-argument	D2	audience	oracle-green	cough-depth	interpreter.c:395; act.social.c:102-151; lib/misc/socials:131-134	The self-only C record emits the cough actor line and room audience with no target.
+do_action	cough	cough.typed-target-ignored	D2	audience	oracle-green	cough-depth	act.social.c:114-121; lib/misc/socials:131-134	Because char_found is NULL, a visible target is ignored and the no-argument actor/room pair remains the C path.
+do_action	cough	cough.missing-target-ignored	D2	audience	oracle-green	cough-depth	act.social.c:114-121; lib/misc/socials:131-134	A missing target is also ignored for a self-only social; no not-found byte is emitted.
+do_action	cough	cough.self-target-ignored	D2	audience	oracle-green	cough-depth	act.social.c:114-121; lib/misc/socials:131-134	A self-named target is ignored rather than entering a self-target record that does not exist.
