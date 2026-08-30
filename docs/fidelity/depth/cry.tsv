@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	cry	cry.no-argument	D2	audience	oracle-green	cry-depth	interpreter.c:398; act.social.c:102-151; lib/misc/socials:146-155	No argument emits the C actor and room lines.
+do_action	cry	cry.target-success	D3	audience	oracle-green	cry-depth	act.social.c:145-151; lib/misc/socials:146-155	A standing visible peer meets the C minimum position and receives the actor, room, and victim trio.
+do_action	cry	cry.target-not-found	D1	command	oracle-green	cry-depth	act.social.c:128-132; lib/misc/socials:146-155	Missing target uses the exact C not-found string.
+do_action	cry	cry.self-target	D2	command	oracle-green	cry-depth	act.social.c:134-140; lib/misc/socials:146-155	Self-target uses the C self-target message and room audience.
+do_action	cry	cry.target-position-gate	D2	command	oracle-green	cry-depth	act.social.c:145-147; lib/misc/socials:146-155	A sleeping target below POS_STANDING receives only the C proper-position refusal.
