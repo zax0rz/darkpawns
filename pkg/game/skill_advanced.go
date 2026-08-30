@@ -161,9 +161,9 @@ func DoStrike(ch *Player, target combat.Combatant) SkillResult {
 // gates compare on a skill (it only uses APPRAISE for the success probability);
 // the prior Go wrapper invented a CanUseSkill gate and this was a stub that
 // printed "X vs Y: comparing...". The deterministic rejection paths below are
-// oracle-verified; the comparison path (RNG) is transcribed verbatim but marked
-// TODO(port) as oracle-unverified — the fresh-mortal fixture carries only one
-// weapon/armor, so two comparable items can't be constructed to exercise it.
+// oracle-verified; the comparison path is covered by the compare oracle
+// vehicle, including weapon and same-slot armor RNG draws. The C vehicle also
+// covers the non-comparable same-type and armor-slot mismatch gates.
 func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 	// prob = APPRAISE if learned, else 20 + level. C sets prob only.
 	prob := ch.GetSkill(SkillAppraise)
@@ -205,7 +205,7 @@ func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 		return SkillResult{MessageToCh: "Compare is only for weapons and armor.\r\n"}
 	}
 
-	// --- Comparison path: RNG-gated, oracle-unverified (see TODO above). ---
+	// --- Comparison path: C's RNG-gated comparison and skill-improvement path. ---
 	if t1 == ITEM_ARMOR {
 		if armorWearSlot(obj1) != armorWearSlot(obj2) {
 			return SkillResult{MessageToCh: "You can only compare the same types of armor!\r\n"}
