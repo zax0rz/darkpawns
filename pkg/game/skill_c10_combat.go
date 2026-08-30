@@ -9,8 +9,14 @@ import (
 )
 
 func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Disembowel who?"}
+	}
 	if ch.GetSkill(SkillDisembowel) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
+	}
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Nah. Hari Kari is for wimps."}
 	}
 	wielded, _ := ch.Equipment.GetItemInSlot(SlotWield)
 	if wielded == nil || wielded.Prototype == nil {
@@ -19,26 +25,56 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	if wielded.Prototype.Values[3] != 11 { // TYPE_PIERCE
 		return SkillResult{Success: false, MessageToCh: "Only piercing weapons can be used for disemboweling."}
 	}
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+	// C draws both the percentage and the normal-player probability even when
+	// the target is asleep. The command's subcmd is zero, so prob is
+	// number(50,100), not GET_SKILL(ch, SKILL_DISEMBOWEL).
 	// #nosec G404 — game RNG
 	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillDisembowel)
+	// #nosec G404 — game RNG
+	prob := dprng.Number(50, 100)
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 2,
-			MessageToCh:   ActMessage("You try to disembowel $N, but $E dodges!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to disembowel you, but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to disembowel $N, but fails!", chPronouns, &victPronouns, ""),
+			Success:             false,
+			SkillMsgType:        SkillDisembowelNum,
+			SkillMsgAfterDamage: true,
+			SkillMsgInDamage:    true,
+			DamageSkill:         SkillDisembowel,
+			StartCombat:         true,
+			WaitCh:              2,
 		}
 	}
+
+	// The passed skill roll calls hit(ch, vict, SKILL_DISEMBOWEL). That path
+	// consumes the ordinary d20, then consumes the wielded weapon's dice even
+	// though disembowel replaces the rolled damage with level*2+damroll.
+	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+		return SkillResult{
+			Success:             false,
+			SkillMsgType:        SkillDisembowelNum,
+			SkillMsgAfterDamage: true,
+			SkillMsgInDamage:    true,
+			DamageSkill:         SkillDisembowel,
+			StartCombat:         true,
+			WaitCh:              2,
+			DeferredImprove:     []string{SkillDisembowel},
+		}
+	}
+	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
+	_ = combat.RollDice(weaponNum, weaponSides)
 	dam := ch.GetLevel()*2 + ch.GetDamroll()
-	improveSkill(ch, SkillDisembowel)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 2,
-		MessageToCh:   ActMessage("You drive your blade deep into $N's gut!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n drives $s blade deep into your gut!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n disembowels $N in a shower of gore!", chPronouns, &victPronouns, ""),
+		Success:             true,
+		Damage:              dam,
+		SkillMsgType:        SkillDisembowelNum,
+		SkillMsgAfterDamage: true,
+		SkillMsgInDamage:    true,
+		DamageSkill:         SkillDisembowel,
+		StartCombat:         true,
+		WaitCh:              2,
+		DeferredImprove:     []string{SkillDisembowel},
 	}
 }
 

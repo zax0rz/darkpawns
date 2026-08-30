@@ -1,0 +1,63 @@
+# C-first vehicle for do_disembowel (src/act.offensive.c:234-293).
+# A controller creates the thief actor, who wields a piercing dagger and targets
+# a disposable sleeping brass dragon. C first accepts a found explicit target, rejects
+# self, falls back to FIGHTING(ch) for an absent one-token target, then routes
+# the roll through hit() and the native Disembowel skill-message set. The
+# single actor keeps the procedure vehicle focused on its own player-facing
+# bytes; audience substitution is pinned by the shared skill-message tests.
+#
+# depth-case: disembowel.self-target
+# depth-case: disembowel.fighting-fallback
+# depth-case: disembowel.skill-message
+# depth-case: disembowel.no-skill
+# depth-case: disembowel.no-target
+# depth-case: disembowel.no-wield
+# depth-case: disembowel.non-piercing
+# depth-case: disembowel.mounted
+# depth-case: disembowel.skill-roll-failure
+# depth-case: disembowel.hit-state
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5005 1 8105 50
+
+[setup:oracle]
+Dactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Dactor 'disembowel' 1
+load obj 8036
+wield dagger
+set Dactor level 10
+
+[probe]
+disembowel Dactor
+disembowel dragon
