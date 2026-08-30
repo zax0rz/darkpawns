@@ -323,6 +323,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Flags:         data.Flags,
 		AutoExit:      data.AutoExit,
 		Stats:         data.Stats,
+		OrigCon:       data.Stats.Con,
 		ActiveAffects: restoreAffects(data.Affects),
 		SpellMap:      data.SpellMap,
 		ConnectedAt:   time.Now(),
