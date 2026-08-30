@@ -1,0 +1,78 @@
+# C-first vehicle for SPECIAL(elements_master_column), assigned to room 1315
+# by src/spec_assign.c:622 and defined at src/spec_procs3.c:936-1002.
+# The room special runs from the current-room command dispatcher, so both
+# clients are placed in 1315 during warmup and the probe command triggers it.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+ColumnCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ColumnCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ColumnPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ColumnPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport ColumnPeer 1315
+goto 1315
+
+[probe]
+say hello
+
+# depth-case: room.elements-master-column-entry
+# depth-case: room.elements-master-column-no-talisman
+# depth-case: room.elements-master-column-audience
+# depth-case: room.elements-master-column-relocation

@@ -1,0 +1,84 @@
+# C-first vehicle for the per-player has_object carry-state behavior in
+# SPECIAL(elements_master_column). The primary carries only air; the peer
+# carries only earth. C's has_object array is reset only through the processed
+# prefix, so the peer's result exposes the actual source-order quirk.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+ColumnCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ColumnCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ColumnPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ColumnPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 1301
+load obj 1300
+teleport ColumnPeer 8105
+give earth ColumnPeer
+teleport ColumnPeer 1315
+goto 1315
+
+[probe]
+say hello
+
+# depth-case: room.elements-master-column-entry
+# depth-case: room.elements-master-column-inventory-vnums
+# depth-case: room.elements-master-column-stale-state
+# depth-case: room.elements-master-column-audience
+# depth-case: room.elements-master-column-relocation

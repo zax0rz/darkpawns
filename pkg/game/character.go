@@ -341,6 +341,9 @@ func BootstrapFirstPlayerGod(p *Player) {
 	// db.c:3016-3024 — the God stat block.
 	p.SetExp(7000000)
 	p.SetLevel(LVL_IMPL)
+	// db.c:3014-3074: init_char() does not set PRF_AUTOEXIT for the first
+	// player; only the later do_start() path does that for mortals.
+	p.SetAutoExit(false)
 	p.SetMaxHP(500)
 	p.SetHP(500)
 	p.SetMaxMana(100)

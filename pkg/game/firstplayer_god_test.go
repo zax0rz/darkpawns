@@ -15,6 +15,9 @@ func TestBootstrapFirstPlayerGod_StatsAndSkillsAndConditions(t *testing.T) {
 	p.Class = ClassThief // class doesn't matter — God gets all skills at 100
 
 	BootstrapFirstPlayerGod(p)
+	if p.GetAutoExit() {
+		t.Error("first-player God should retain C init_char's autoexit-off default")
+	}
 
 	if got := p.GetLevel(); got != LVL_IMPL {
 		t.Errorf("God level = %d, want %d (LVL_IMPL)", got, LVL_IMPL)
