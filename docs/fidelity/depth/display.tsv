@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_display	display	display.no-argument	D1	command	oracle-green	display-cluster	interpreter.c:417; act.other.c:1024-1039	An empty argument reaches the exact prompt-usage line.
+do_display	display	display.all	D2	command	oracle-green	display-cluster	act.other.c:1040-1047	The all branch enables all five display flags and replies with C's Okay line.
+do_display	display	display.on-alias	D2	command	oracle-green	display-cluster	act.other.c:1040-1047	The on spelling shares C's all-flags branch and exact reply.
+do_display	display	display.off-silent	D2	command	oracle-green	display-cluster	act.other.c:1047-1055	The off branch clears all five flags and returns without an Okay line.
+do_display	display	display.letter-mask	D4	state	unit-green	TestDoDisplay	act.other.c:1047-1079	The letter loop clears first, then enables only h/m/v/t/f bits; the focused test checks the resulting mask and reply.
+do_display	display	display.none-clears	D2	command	oracle-green	display-cluster	act.other.c:1047-1082	The none input is not a special alias: it clears all flags, recognizes no letters, and still sends Okay.

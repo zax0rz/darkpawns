@@ -18,6 +18,13 @@
 #   is a deliberate-looking design divergence, not a mechanical mis-port — it
 #   needs a rules call, not a silent revert. Its own DP issue.
 
+# depth-case: display.no-argument
+# depth-case: display.all
+# depth-case: display.on-alias
+# depth-case: display.off-silent
+# depth-case: display.letter-mask
+# depth-case: display.none-clears
+
 [fixture]
 quiet-mobs
 
@@ -53,6 +60,7 @@ Y
 [probe]
 display
 display all
+display on
 display off
 display hmv
 display none
