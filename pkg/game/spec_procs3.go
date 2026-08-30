@@ -1155,30 +1155,83 @@ func specRecruiter(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 // specElementsMasterColumn teleports players based on which talismans they carry.
 func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
+	if w == nil || ch == nil {
+		return false
+	}
+
+	roomVNum := ch.GetRoomVNum()
+	players := w.GetPlayersInRoom(roomVNum)
+	// C walks world[room].people, a front-inserted linked list. Player IDs are
+	// the stable connection-order surrogate used by the Go world. The command
+	// actor is the most recent room entrant in the C vehicle, so keep it first;
+	// use IDs (then names) only to break ties among the remaining players.
+	sort.SliceStable(players, func(i, j int) bool {
+		if players[i] == ch {
+			return true
+		}
+		if players[j] == ch {
+			return false
+		}
+		if players[i].GetID() != players[j].GetID() {
+			return players[i].GetID() < players[j].GetID()
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+
 	newLocs := []int{1320, 1331, 1342, 1353, 1372}
+	objNames := []string{"earth", "air", "fire", "water"}
+	hasObject := [4]bool{}
 
 	for _, ppl := range players {
-		found := -1
-		// Check player inventory for talismans (vnum 1300-1303)
+		if ppl == nil {
+			continue
+		}
 		for _, obj := range ppl.GetInventory() {
-			vnum := obj.GetVNum()
-			if vnum >= 1300 && vnum <= 1303 {
-				found = vnum - 1300
-				break
+			if obj == nil {
+				continue
+			}
+			switch obj.GetVNum() {
+			case 1300:
+				hasObject[0] = true
+			case 1301:
+				hasObject[1] = true
+			case 1302:
+				hasObject[2] = true
+			case 1303:
+				hasObject[3] = true
 			}
 		}
-		if found >= 0 && found < len(newLocs) {
-			sendToChar(ppl, "The talisman glows softly and your vision fades.\r\n")
-		} else {
-			sendToChar(ppl, "You feel a tingling sensation and your vision fades.\r\n")
+
+		found := 0
+		for i := range hasObject {
+			if !hasObject[i] {
+				break
+			}
+			found++
+			hasObject[i] = false
 		}
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s vanishes in a brilliant flash of light.", ppl.GetName()))
-		if found >= 0 && found < len(newLocs) {
-			ppl.SetRoom(newLocs[found])
-		} else {
-			ppl.SetRoom(newLocs[0])
+
+		var message string
+		switch found {
+		case 0:
+			message = "You feel a tingling sensation and your vision fades. When you wake...\r\n"
+		case len(objNames):
+			message = "The four talismans glow softly and your vision fades. When you wake...\r\n"
+		default:
+			message = fmt.Sprintf("The talisman of %s glows softly and your vision fades. When you wake...\r\n", objNames[found-1])
 		}
+		Act(w, false, ppl, nil, nil, nil, message, "", ToChar)
+		Act(w, true, ppl, nil, nil, nil, "$n vanishes in a brilliant flash of light.", "", ToNotVict)
+
+		if err := w.PlayerTransfer(ppl, newLocs[found]); err != nil {
+			slog.Warn("elements master column player transfer failed", "player", ppl.GetName(), "room", newLocs[found], "error", err)
+			continue
+		}
+		w.lookAtRoom(ppl, false)
+		// The C room-look path leaves one literal spacer when the destination
+		// has no visible occupants; the following act() therefore begins with
+		// that byte for the next observer (spec_procs3.c:998-1002).
+		Act(w, true, ppl, nil, nil, nil, " $n appears in a brilliant flash of light.", "", ToNotVict)
 	}
 	return true
 }
