@@ -23,6 +23,18 @@ const lvlImmort = 31
 //
 // Returns true if the spell was executed.
 func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}) bool {
+	return callMagic(caster, cvict, ovict, spellNum, level, castType, world, false)
+}
+
+// CastFromSpecial dispatches a spell from a native special-procedure call.
+// C call_magic() does not apply the command parser's per-spell minimum
+// position; it only rejects POS_SITTING (spell_parser.c:434-439). The normal
+// CallMagic path retains the parser-facing position check used by commands.
+func CastFromSpecial(caster, cvict interface{}, spellNum, level int, world interface{}) bool {
+	return callMagic(caster, cvict, nil, spellNum, level, CastSpell, world, true)
+}
+
+func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, fromSpecial bool) bool {
 	si := GetSpellInfo(spellNum)
 	if si == nil {
 		return false
@@ -37,8 +49,15 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 		return false
 	}
 
-	// Check position
-	if !checkPosition(caster, si) {
+	// Command dispatch checks each spell's minimum position. Native special
+	// procedures enter call_magic() directly, whose only position gate is the
+	// C sitting check; resting/fighting/standing casters are accepted there.
+	if fromSpecial {
+		type poser interface{ GetPosition() int }
+		if p, ok := caster.(poser); ok && p.GetPosition() == int(PosSitting) {
+			return false
+		}
+	} else if !checkPosition(caster, si) {
 		return false
 	}
 

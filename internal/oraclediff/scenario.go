@@ -98,12 +98,14 @@ type MobAffFixture struct {
 	AffMask int
 }
 
-// MobFlagFixture clears one action flag on a mob prototype in disposable
-// worlds. This is used only when an authoritative procedure's placement flag
-// (such as RANDZON) would otherwise make a two-engine room vehicle impossible.
+// MobFlagFixture sets or clears one action flag on a mob prototype in
+// disposable worlds. This is used when an authoritative procedure's authored
+// placement flags need a focused two-engine vehicle (for example, enabling a
+// registered but dormant MOB_SPEC procedure).
 type MobFlagFixture struct {
 	MobVNum int
 	Flag    string
+	Enabled bool
 }
 
 // ObjIndexFixture adds one filename to the disposable obj index so the boot
@@ -185,6 +187,7 @@ type AudienceProbeBlock struct {
 //	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
 //	set-mob-aff 18306 128     # mob, innate affected-by bitmask (AFF_* positions)
 //	clear-mob-flag 4 RANDZON # clear one action flag in the disposable copy
+//	set-mob-flag 14411 SPEC # set one action flag in the disposable copy
 //	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
 //	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
@@ -368,11 +371,11 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					continue
 				}
 			}
-			if len(fields) == 3 && strings.EqualFold(fields[0], "clear-mob-flag") {
+			if len(fields) == 3 && (strings.EqualFold(fields[0], "clear-mob-flag") || strings.EqualFold(fields[0], "set-mob-flag")) {
 				mobVNum, mobErr := strconv.Atoi(fields[1])
 				flag := strings.ToUpper(fields[2])
-				if mobErr == nil && mobVNum > 0 && flag == "RANDZON" {
-					sc.MobFlagFixtures = append(sc.MobFlagFixtures, MobFlagFixture{MobVNum: mobVNum, Flag: flag})
+				if mobErr == nil && mobVNum > 0 && (flag == "RANDZON" || flag == "SPEC") {
+					sc.MobFlagFixtures = append(sc.MobFlagFixtures, MobFlagFixture{MobVNum: mobVNum, Flag: flag, Enabled: strings.EqualFold(fields[0], "set-mob-flag")})
 					continue
 				}
 			}

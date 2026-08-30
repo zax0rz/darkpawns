@@ -650,13 +650,14 @@ func applyMobFixtures(worldDir string, fixtures []oraclediff.MobFixture) error {
 	return nil
 }
 
-// applyMobFlagFixtures clears action flags on authoritative mob prototypes in
-// disposable worlds. RANDZON is currently the only supported flag: the C
-// remorter carries it, but a source-derived fixed-room vehicle needs that
-// placement behavior removed identically from both copies.
+// applyMobFlagFixtures sets or clears action flags on authoritative mob
+// prototypes in disposable worlds. The fixture is intentionally restricted to
+// the flags needed by focused vehicles: RANDZON for fixed-room placement and
+// SPEC for a registered native procedure whose authored mob is dormant.
 func applyMobFlagFixtures(worldDir string, fixtures []oraclediff.MobFlagFixture) error {
 	for _, fixture := range fixtures {
-		if !strings.EqualFold(fixture.Flag, "RANDZON") {
+		bit, ok := map[string]uint{"SPEC": 0, "RANDZON": 20}[strings.ToUpper(fixture.Flag)]
+		if !ok {
 			return fmt.Errorf("unsupported mob flag %q", fixture.Flag)
 		}
 		path := filepath.Join(worldDir, "mob", fmt.Sprintf("%d.mob", fixture.MobVNum/100))
@@ -693,7 +694,11 @@ func applyMobFlagFixtures(worldDir string, fixtures []oraclediff.MobFlagFixture)
 			if parseErr != nil {
 				return fmt.Errorf("mob %d action flag line %q is invalid: %w", fixture.MobVNum, line, parseErr)
 			}
-			mask &^= 1 << 20 // MOB_RANDZON, src/structs.h:267
+			if fixture.Enabled {
+				mask |= 1 << bit
+			} else {
+				mask &^= 1 << bit
+			}
 			fields[0] = strconv.FormatUint(mask, 10)
 			lines[index] = strings.Join(fields, " ")
 			patched = true

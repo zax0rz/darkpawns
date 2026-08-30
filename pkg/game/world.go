@@ -510,6 +510,18 @@ func (w *World) GetRoomCount() int {
 	return len(w.rooms)
 }
 
+// GetRoomVNumAtIndex returns the room VNUM at the C world's stable RNUM
+// position. C spell_teleport draws a room index, while Go gameplay addresses
+// rooms by VNUM; this keeps the shared spell path's draw range and destination
+// selection faithful.
+func (w *World) GetRoomVNumAtIndex(index int) (int, bool) {
+	rooms := w.Rooms()
+	if index < 0 || index >= len(rooms) {
+		return 0, false
+	}
+	return rooms[index].VNum, true
+}
+
 // GetPlayerCount returns the number of online players.
 func (w *World) GetPlayerCount() int {
 	w.mu.RLock()

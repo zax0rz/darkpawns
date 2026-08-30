@@ -6,6 +6,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // makeSetTestSession creates a wizard-actor session registered in the manager
@@ -168,5 +169,40 @@ func TestCmdSetOutlaw(t *testing.T) {
 	}
 	if got := target.player.GetFlags() & (1 << uint(game.PlrOutlaw)); got != 0 {
 		t.Fatal("outlaw flag was not cleared")
+	}
+}
+
+func TestCmdSetMobHit(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room A", Zone: 1}},
+		Mobs: []parser.Mob{{
+			VNum:      9001,
+			Keywords:  "testmob",
+			ShortDesc: "a test mob",
+			LongDesc:  "A test mob stands here.",
+			Level:     10,
+			HP:        parser.DiceRoll{Num: 1, Sides: 1, Plus: 100},
+		}},
+	}
+	w, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	m := newTestManager(t, w, nil)
+	wiz := makeTestSession(t, m, "God", 1001, true)
+	wiz.player.Level = LVL_GRGOD
+	mob, err := w.SpawnMob(9001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+
+	if err := cmdSet(wiz, []string{"test", "hit", "7"}); err != nil {
+		t.Fatalf("cmdSet: %v", err)
+	}
+	if got := readSessionText(t, wiz); got != "a test mob's hit set to 7.\r\n" {
+		t.Fatalf("ack = %q, want mob hit acknowledgement", got)
+	}
+	if got := mob.GetHP(); got != 7 {
+		t.Fatalf("mob HP = %d, want 7", got)
 	}
 }

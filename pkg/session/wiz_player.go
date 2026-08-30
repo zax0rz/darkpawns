@@ -68,11 +68,37 @@ func cmdSet(s *Session, args []string) error {
 	field := args[1]
 	value := strings.Join(args[2:], " ")
 	targetSess := findSessionByName(s.manager, targetName)
-	if targetSess == nil || targetSess.player == nil {
+	targetMob := s.manager.world.GetMobByName(targetName)
+	if targetSess == nil && targetMob == nil {
 		s.Send("No one by that name online.")
 		return nil
 	}
 	field = strings.ToLower(field)
+
+	// C do_set resolves get_char_vis(), which includes active NPCs. Keep the
+	// mob path deliberately scoped to the confirmed shared field used by the
+	// depth vehicles; player fields continue through the session-backed path
+	// below. (src/act.wizard.c:2577-2580, 2748-2751)
+	if targetMob != nil && targetSess == nil {
+		if field != "hit" {
+			s.Send("Can't set that!\r\n")
+			return nil
+		}
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			s.Send("Invalid numeric value.")
+			return nil
+		}
+		val = clamp(val, -9, targetMob.GetMaxHP())
+		targetMob.SetHealth(val)
+		s.Send(fmt.Sprintf("%s's hit set to %d.\r\n", targetMob.GetName(), val))
+		slog.Warn("wizard set mob", "by", s.player.Name, "target", targetName, "field", field, "value", value)
+		return nil
+	}
+	if targetSess == nil || targetSess.player == nil {
+		s.Send("No one by that name online.")
+		return nil
+	}
 
 	// C do_set cases 29-31 (act.wizard.c:2977-2993): drunk/hunger/thirst accept
 	// "off" (condition → -1) or a number clamped to [0,48], with C's ack bytes.
