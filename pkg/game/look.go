@@ -328,13 +328,46 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 	lines := make([]string, 0, len(order))
 	for i := len(order) - 1; i >= 0; i-- {
 		entry := groups[order[i]]
-		line := entry.line + objectVisibleFlags(ch, entry.item)
+		line := entry.line
 		if entry.count > 1 {
 			line += fmt.Sprintf("[%d]", entry.count)
 		}
 		lines = append(lines, line)
+		if flags := roomObjectVisibleFlags(ch, entry.item); flags != "" {
+			lines = append(lines, flags)
+		}
 	}
 	return lines
+}
+
+// roomObjectVisibleFlags renders the second line emitted by C's oc_show_list
+// for room contents. It deliberately differs from show_obj_to_char: room
+// lists use the plain "...it glows" vocabulary, not parenthesized flags.
+func roomObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
+	if object == nil {
+		return ""
+	}
+	extras := object.GetExtraFlags()[0]
+	var flags []string
+	if extras&(1<<itemExtraInvisible) != 0 {
+		flags = append(flags, "...it is invisible ")
+	}
+	if extras&(1<<itemExtraBless) != 0 && ch.IsAffected(affDetectAlign) {
+		flags = append(flags, "...it glows blue")
+	}
+	if extras&(1<<itemExtraMagic) != 0 && ch.IsAffected(affDetectMagic) {
+		flags = append(flags, "...it glows gold")
+	}
+	if extras&(1<<itemExtraGlow) != 0 {
+		flags = append(flags, "...it glows white")
+	}
+	if extras&(1<<itemExtraHum) != 0 {
+		flags = append(flags, "...it is humming")
+	}
+	if len(flags) == 0 {
+		return ""
+	}
+	return "          " + strings.Join(flags, "")
 }
 
 func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {

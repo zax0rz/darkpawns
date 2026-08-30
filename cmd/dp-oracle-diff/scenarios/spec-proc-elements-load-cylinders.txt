@@ -1,0 +1,81 @@
+# C-first vehicle for SPECIAL(elements_load_cylinders), registered on rooms
+# 1360/1364/1380/1384 in src/spec_assign.c:627-630. The earth branch drops
+# its matching talisman while a passive peer observes the room-wide output.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CylinderCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CylinderCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+CylinderPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+CylinderPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 1300
+get talisman
+teleport CylinderPeer 1360
+goto 1360
+
+[probe]
+drop talisman
+get talisman
+
+# depth-case: room.elements-load-cylinders-entry
+# depth-case: room.elements-load-cylinders-matching
+# depth-case: room.elements-load-cylinders-audience
+# depth-case: room.elements-load-cylinders-cleanup
