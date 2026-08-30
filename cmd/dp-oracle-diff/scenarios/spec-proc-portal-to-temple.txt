@@ -1,0 +1,82 @@
+# C-first vehicle for SPECIAL(portal_to_temple), defined at
+# src/spec_procs3.c:515-540 and assigned to room 19658 at
+# src/spec_assign.c:615. The primary and peer expose the say echo, origin
+# disappearance, destination appearance, direct teleport text, and landing
+# look. The wrong-argument command proves the special falls through.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+PortalHero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PortalHero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+PortalWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+PortalWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19658
+teleport PortalWitness 19658
+
+[probe]
+say nope
+say setchswayno
+
+# depth-case: room.portal-to-temple-entry-gates
+# depth-case: room.portal-to-temple-fallthrough
+# depth-case: room.portal-to-temple-say-audience
+# depth-case: room.portal-to-temple-teleport-audience
+# depth-case: room.portal-to-temple-destination-look
+# depth-case: room.portal-to-temple-state
