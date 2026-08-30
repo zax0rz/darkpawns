@@ -1,0 +1,78 @@
+# depth-case: daydream.no-argument
+# depth-case: daydream.typed-target-ignored
+# depth-case: daydream.missing-target-ignored
+# depth-case: daydream.self-target-ignored
+# C-first vehicle for the self-only daydream social. Its char_found slot is
+# NULL, so do_action ignores every argument and emits only the actor/room pair.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+
+[probe]
+daydream
+daydream barnaby
+daydream nobody
+daydream mordecai
