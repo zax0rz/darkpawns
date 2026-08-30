@@ -1,0 +1,86 @@
+# C-first vehicle for SPECIAL(elements_minion), registered for mob 1313 by
+# src/spec_assign.c:195 and defined at src/spec_procs3.c:1217-1240.
+# The give command reaches the player-command special path before ordinary
+# give transfers the object; the frozen pulse then reaches mobile_activity's
+# commandless (ch, me, 0, "") path and exposes the destruction Act.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 1313 999 8105 80
+strip-mob-script 1313
+set-mob-flag 1313 SPEC
+replace-room-exits 8105 none
+
+[setup:oracle]
+MinionCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MinionCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+MinionWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+MinionWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport MinionWitness 8105
+load obj 1300
+
+[probe]
+give talisman elemental
+~dpclock pulse 40
+
+# depth-case: mob.elements-minion-entry
+# depth-case: mob.elements-minion-command-fallthrough
+# depth-case: mob.elements-minion-pulse-dispatch
+# depth-case: mob.elements-minion-destroy-audience
+# depth-case: mob.elements-minion-extraction

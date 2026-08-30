@@ -357,7 +357,10 @@ func (w *World) FindMobInRoom(vnum int, name string) *MobInstance {
 		return nil
 	}
 	for _, m := range w.GetMobsInRoom(vnum) {
-		if strings.HasPrefix(strings.ToLower(m.GetName()), strings.ToLower(name)) {
+		// C get_char_room_vis() matches the mob's keyword namelist, not the
+		// rendered short description (handler.c:1276-1300). The distinction
+		// matters for authored aliases such as "elemental" and "servant".
+		if isnameWithAbbrevs(name, charKeywords(m)) {
 			return m
 		}
 	}
