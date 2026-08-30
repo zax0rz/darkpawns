@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	curse	curse.no-argument	D3	audience	oracle-green	curse-depth	interpreter.c:401; act.social.c:102-127; lib/misc/socials:166-170	No argument emits the exact C actor and room lines, including the literal social text.
+do_action	curse	curse.argument-ignored	D2	audience	oracle-green	curse-depth	act.social.c:116-127; lib/misc/socials:166-170	With no char_found record, C ignores the typed argument and repeats the no-argument actor/room pair.
+do_action	curse	curse.noshout	D1	command	oracle-green	curse-noshout	act.social.c:113-118	PLR_NOSHOUT blocks the social before its no-argument message pair with C's emote refusal.
