@@ -1408,25 +1408,28 @@ func CmdDisarm(s SessionInterface, args []string) error {
 		return s.SendMessage(msg)
 	}
 
-	// Determine target: either specified or current fighting target
+	// C resolves FIGHTING(ch) before looking at the typed argument. The
+	// argument is therefore ignored whenever combat is already engaged.
 	var target combat.Combatant
-	var found bool
 	world := s.GetWorld()
 
-	if len(args) == 0 {
-		fighting := ch.GetFighting()
-		if fighting == "" {
+	if ch.GetFighting() != "" {
+		resolved, found := world.ResolveFightingTarget(ch)
+		if !found {
+			// A live C FIGHTING pointer cannot be absent from the room. Keep the
+			// command's only C target failure text if the Go state is stale.
 			return s.SendMessage("Disarm who?\r\n")
 		}
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
-		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
-		}
+		target = resolved.Combatant
 	} else {
-		targetName := strings.Join(args, " ")
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
+		if targetName == "" {
+			return s.SendMessage("Disarm who?\r\n")
+		}
+		var found bool
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
 		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
+			return s.SendMessage("Disarm who?\r\n")
 		}
 	}
 
@@ -1635,6 +1638,8 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 	} else if result.SkillMsgType != 0 && target != nil {
 		sendSkillMessage()
+	} else if result.RetaliateHitAfterMessages {
+		sendLiteralMessages()
 	} else if result.MessageToCh != "" {
 		// C act() CAPs the assembled string (comm.c:2477); lines that begin
 		// with $e/$n render lowercase and must be capitalized here.
@@ -1701,7 +1706,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// C hit(vict, ch, TYPE_UNDEFINED): the MOB_AWARE guard swings back at once.
 	// Enroll target->ch and run one synchronous swing from the target, emitted
 	// after the notice lines above — exactly like C's aware-backstab branch.
-	if result.RetaliateHit && !result.RetaliateHitBeforeSkillMessage {
+	if result.RetaliateHit && !result.RetaliateHitBeforeSkillMessage && !result.RetaliateHitAfterMessages {
 		performRetaliateHit()
 	}
 
@@ -1733,14 +1738,14 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	}
 
 	// Send to victim
-	if !result.SkillMsgAfterDamage && result.MessageToVict != "" && target != nil {
+	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && result.MessageToVict != "" && target != nil {
 		if p, ok := target.(*game.Player); ok {
 			p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
 		}
 	}
 
 	// Send to room (excluding ch and target)
-	if !result.SkillMsgAfterDamage && result.MessageToRoom != "" {
+	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && result.MessageToRoom != "" {
 		roomVNum := ch.GetRoom()
 		world := s.GetWorld()
 		players := world.GetPlayersInRoom(roomVNum)
@@ -1753,6 +1758,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			}
 			p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
 		}
+	}
+
+	if result.RetaliateHit && result.RetaliateHitAfterMessages {
+		performRetaliateHit()
 	}
 
 	// Apply WAIT_STATE (C-10: cooldown in PULSE_VIOLENCE ticks)

@@ -1,0 +1,135 @@
+# C-first vehicle for do_disarm's failed roll arm
+# (src/new_cmds2.c:259-265). The target is fighting the actor and still
+# wields the authored sword; skill 1 makes seed 1 enter the failure branch.
+#
+# depth-case: disarm.failure-actor
+# depth-case: disarm.failure-victim
+# depth-case: disarm.failure-room
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dfailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Dfailactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Dfailvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:victim]
+Dfailvictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:oracle:observer]
+Dfailobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Dfailobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Dfailvictim 8105
+teleport Dfailobs 8105
+set Dfailvictim level 11
+skillset Dfailactor 'disarm' 1
+force Dfailvictim hit Dfailactor
+
+[probe]
+disarm nobody

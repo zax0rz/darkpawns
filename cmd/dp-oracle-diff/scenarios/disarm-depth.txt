@@ -1,0 +1,139 @@
+# C-first vehicle for the player command path of do_disarm
+# (src/new_cmds2.c:191-276). The target player starts with the authored sword,
+# is raised above the newbie combat threshold, and opens combat against the
+# God actor. The actor then supplies a deliberately wrong argument: C uses
+# FIGHTING(ch) and disarms the current opponent anyway. The observer captures
+# the TO_NOTVICT room act.
+#
+# depth-case: disarm.fighting-argument-ignored
+# depth-case: disarm.success-actor
+# depth-case: disarm.success-victim
+# depth-case: disarm.success-room
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Disarmactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Disarmactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Disarmvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:victim]
+Disarmvictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:oracle:observer]
+Disarmobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Disarmobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Disarmvictim 8105
+teleport Disarmobserver 8105
+set Disarmvictim level 11
+skillset Disarmactor 'disarm' 100
+force Disarmvictim hit Disarmactor
+
+[probe]
+disarm nobody
