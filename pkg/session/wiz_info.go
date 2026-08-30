@@ -5,9 +5,10 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdShow(s *Session, args []string) error {
@@ -160,78 +161,195 @@ func cmdCheckload(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
-		s.Send("Usage: checkload { obj | mob } <number>\r\n")
+	const usage = "Usage: checkload { obj | mob } <number>\r\n"
+	if len(args) < 2 || args[1] == "" || args[1][0] < '0' || args[1][0] > '9' {
+		s.Send(usage)
 		return nil
 	}
 
-	cat := strings.ToLower(args[0])
-	vnum, err := strconv.Atoi(args[1])
-	if err != nil {
-		s.Send("Invalid VNum.")
-		return nil
-	}
-
+	vnum := checkloadAtoi(args[1])
 	w := s.manager.world
-	count := 0
-	maxLoad := -1
-
-	switch cat {
-	case "mob":
-		if _, ok := w.GetMobPrototype(vnum); !ok {
-			s.Send(fmt.Sprintf("No mob prototype with VNum %d.", vnum))
+	switch strings.ToLower(args[0][:1]) {
+	case "m":
+		mob, ok := w.GetMobPrototype(vnum)
+		if !ok {
+			s.Send("That mob does not exist.\r\n")
 			return nil
 		}
-		// Count active mob instances with this VNum
-		for _, m := range w.GetAllMobs() {
-			if m.GetVNum() == vnum {
-				count++
-			}
-		}
-		// Scan zone reset commands for max load
-		for _, z := range w.GetAllZones() {
-			for _, cmd := range z.Commands {
-				if cmd.Command == "M" && cmd.Arg1 == vnum {
-					if maxLoad < 0 || cmd.Arg2 > maxLoad {
-						maxLoad = cmd.Arg2
-					}
-				}
-			}
-		}
-
-	case "obj":
-		if _, ok := w.GetObjPrototype(vnum); !ok {
-			s.Send(fmt.Sprintf("No object prototype with VNum %d.", vnum))
+		s.Send(checkloadMobReport(w, vnum, mob.ShortDesc))
+	case "o":
+		obj, ok := w.GetObjPrototype(vnum)
+		if !ok {
+			s.Send("That object does not exist.\r\n")
 			return nil
 		}
-		// Count active object instances with this VNum
-		for _, o := range w.GetAllObjects() {
-			if o.GetVNum() == vnum {
-				count++
-			}
-		}
-		// Scan zone reset commands for max load
-		for _, z := range w.GetAllZones() {
-			for _, cmd := range z.Commands {
-				if cmd.Command == "O" && cmd.Arg1 == vnum {
-					if maxLoad < 0 || cmd.Arg2 > maxLoad {
-						maxLoad = cmd.Arg2
-					}
-				}
-			}
-		}
-
+		s.Send(checkloadObjectReport(w, vnum, obj.ShortDesc))
 	default:
 		s.Send("Usage: checkload { obj | mob } <number>\r\n")
-		return nil
 	}
-
-	maxStr := "unknown"
-	if maxLoad >= 0 {
-		maxStr = fmt.Sprintf("%d", maxLoad)
-	}
-	s.Send(fmt.Sprintf("%s %d: %d of %s loaded.", cat, vnum, count, maxStr))
 	return nil
+}
+
+// checkloadAtoi mirrors the decimal-prefix behavior of C's atoi after
+// do_checkload's first-byte isdigit gate.
+func checkloadAtoi(value string) int {
+	n := 0
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			break
+		}
+		n = n*10 + int(r-'0')
+	}
+	return n
+}
+
+func checkloadRoomName(w *game.World, vnum int) (string, bool) {
+	room := w.GetRoomInWorld(vnum)
+	if room == nil {
+		return "", false
+	}
+	return room.Name, true
+}
+
+func checkloadMobReport(w *game.World, vnum int, name string) string {
+	var report strings.Builder
+	_, _ = fmt.Fprintf(&report, "Checking load info for %s...\r\n", name)
+	found := false
+	for _, zone := range w.GetAllZones() {
+		for _, cmd := range zone.Commands {
+			switch cmd.Command {
+			case "M":
+				if cmd.Arg1 != vnum {
+					continue
+				}
+				roomName, ok := checkloadRoomName(w, cmd.Arg3)
+				if !ok {
+					continue
+				}
+				found = true
+				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         %d Max\r\n", cmd.Arg3, roomName, cmd.Arg2)
+			case "R":
+				if cmd.Arg3 == -1 {
+					if cmd.Arg2 != vnum {
+						continue
+					}
+				} else if cmd.Arg3 != 0 || cmd.Arg2 != vnum {
+					continue
+				}
+				roomName, ok := checkloadRoomName(w, cmd.Arg1)
+				if !ok {
+					continue
+				}
+				found = true
+				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         Removed from room\r\n", cmd.Arg1, roomName)
+			}
+		}
+	}
+	if !found {
+		report.WriteString(" Doesn't load anywhere.\r\n")
+	}
+	return report.String()
+}
+
+func checkloadObjectReport(w *game.World, vnum int, name string) string {
+	var report strings.Builder
+	_, _ = fmt.Fprintf(&report, "Checking load info for %s...\r\n", name)
+	found := false
+	lastRoomVNum := 0
+	lastObjectVNum := 0
+	lastObjectName := ""
+	lastMobVNum := 0
+	lastMobName := ""
+	for _, zone := range w.GetAllZones() {
+		for _, cmd := range zone.Commands {
+			if cmd.Command == "O" || cmd.Command == "E" || cmd.Command == "G" {
+				obj, ok := w.GetObjPrototype(cmd.Arg1)
+				if !ok {
+					continue
+				}
+				lastObjectVNum = obj.VNum
+				lastObjectName = obj.ShortDesc
+			}
+			if cmd.Command == "M" || cmd.Command == "O" {
+				lastRoomVNum = cmd.Arg3
+			}
+
+			switch cmd.Command {
+			case "M":
+				mob, ok := w.GetMobPrototype(cmd.Arg1)
+				if ok {
+					lastMobVNum = mob.VNum
+					lastMobName = mob.ShortDesc
+				}
+			case "O":
+				if cmd.Arg1 != vnum {
+					continue
+				}
+				roomName, ok := checkloadRoomName(w, lastRoomVNum)
+				if !ok {
+					continue
+				}
+				found = true
+				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         Loaded to room\r\n         %.2f%% Load, %d Max\r\n", lastRoomVNum, roomName, mustCheckloadObjectPercent(w, lastObjectVNum), cmd.Arg2)
+			case "P":
+				if cmd.Arg1 != vnum {
+					continue
+				}
+				roomName, ok := checkloadRoomName(w, lastRoomVNum)
+				if !ok {
+					continue
+				}
+				found = true
+				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         Put in %s [%d]\r\n         %.2f%% Load, %d Max\r\n", lastRoomVNum, roomName, lastObjectName, lastObjectVNum, mustCheckloadObjectPercent(w, lastObjectVNum), cmd.Arg2)
+			case "E":
+				if cmd.Arg1 != vnum {
+					continue
+				}
+				roomName, ok := checkloadRoomName(w, lastRoomVNum)
+				if !ok {
+					continue
+				}
+				found = true
+				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         Equipped to %s [%d]\r\n         %.2f%% Load, %d Max\r\n", lastRoomVNum, roomName, lastMobName, lastMobVNum, mustCheckloadObjectPercent(w, lastObjectVNum), cmd.Arg2)
+			case "G":
+				if cmd.Arg1 != vnum {
+					continue
+				}
+				roomName, ok := checkloadRoomName(w, lastRoomVNum)
+				if !ok {
+					continue
+				}
+				found = true
+				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         Given to %s [%d]\r\n         %.2f%% Load, %d Max\r\n", lastRoomVNum, roomName, lastMobName, lastMobVNum, mustCheckloadObjectPercent(w, lastObjectVNum), cmd.Arg2)
+			case "R":
+				if cmd.Arg3 == -1 {
+					if cmd.Arg2 != vnum {
+						continue
+					}
+				} else if cmd.Arg3 != 1 || cmd.Arg2 != vnum {
+					continue
+				}
+				roomName, ok := checkloadRoomName(w, cmd.Arg1)
+				if !ok {
+					continue
+				}
+				found = true
+				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         Removed from room\r\n", cmd.Arg1, roomName)
+			}
+		}
+	}
+	if !found {
+		report.WriteString(" Doesn't load anywhere.\r\n")
+	}
+	return report.String()
+}
+
+func mustCheckloadObjectPercent(w *game.World, vnum int) float64 {
+	obj, ok := w.GetObjPrototype(vnum)
+	if !ok {
+		return 0
+	}
+	return obj.LoadPercent
 }
 
 // cmdPoofset — set poof in/out messages (LVL_IMMORT)
