@@ -30,8 +30,8 @@ the slice adds only proof vehicles, manifest evidence, and this handoff.
 The C-first `dance-depth` vehicle proves no argument, one-argument target
 selection, missing target, self target, standing-peer audience topology, and
 the sleeping-target position gate. The isolated `dance-noshout` vehicle proves
-the pre-lookup emote refusal. Both vehicles are GREEN at seeds 1, 2, 3, 5, and
-8, and `--show-oracle` was used during development. No `src/` or
+the pre-lookup emote refusal. Both vehicles are GREEN at seed 1, and
+`--show-oracle` was used during development. No `src/` or
 `darkpawns-c-oracle/` file was edited.
 
 ## Evidence and gates
