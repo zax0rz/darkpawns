@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	clap	clap.no-argument	D2	command	oracle-green	clap-depth	interpreter.c:384; act.social.c:102-151; lib/misc/socials:106-109	Self-only no-argument actor and room bytes match the C record.
+do_action	clap	clap.typed-target-ignored	D2	command	oracle-green	clap-depth	act.social.c:114-121; lib/misc/socials:106-109	C ignores typed targets when the self-only record has no char_found message.
+do_action	clap	clap.missing-target-ignored	D2	command	oracle-green	clap-depth	act.social.c:114-121; lib/misc/socials:106-109	Even an absent target follows the self-only no-argument path.
+do_action	clap	clap.self-target-ignored	D2	command	oracle-green	clap-depth	act.social.c:114-121; lib/misc/socials:106-109	A self-named target is ignored rather than entering the self-target branch.
