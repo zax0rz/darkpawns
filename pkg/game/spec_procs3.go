@@ -380,53 +380,95 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	return false
 }
 
-// specButler tidies up the room, picking up loose items and storing them.
-func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFighting() != "" {
-		return false
+// butlerVisibleRoomObject mirrors get_obj_in_list_vis(mobile, name, room
+// contents), including numbered names, prefix matching, and object visibility.
+func butlerVisibleRoomObject(me *MobInstance, name string, items []*ObjectInstance) *ObjectInstance {
+	query := strings.TrimSpace(name)
+	number := GetNumber(&query)
+	if number <= 0 || query == "" {
+		return nil
 	}
-	items := w.GetItemsInRoom(me.GetRoomVNum())
-
-	// Find case, cabinet, and chest containers in the room
-	var cas, cabinet, chest *ObjectInstance
+	found := 0
 	for _, obj := range items {
-		if !obj.IsContainer() {
+		if obj == nil || !isnameWithAbbrevs(query, obj.GetKeywords()) {
 			continue
 		}
-		kw := strings.ToLower(obj.GetKeywords())
-		if strings.Contains(kw, "case") && cas == nil {
-			cas = obj
+		if !canSeeObject(me, obj) && obj.GetTypeFlag() != ITEM_LIGHT {
+			continue
 		}
-		if strings.Contains(kw, "cabinet") && cabinet == nil {
-			cabinet = obj
-		}
-		if strings.Contains(kw, "chest") && chest == nil {
-			chest = obj
+		found++
+		if found == number {
+			return obj
 		}
 	}
+	return nil
+}
+
+// butlerDoorToggle mirrors do_gen_door/do_doorcmd for the object targets used
+// by SPECIAL(butler). C's mob has no descriptor, but the room act is still
+// visible to players in the room.
+func butlerDoorToggle(w *World, me *MobInstance, container *ObjectInstance, open bool) {
+	if container == nil || container.GetTypeFlag() != ITEM_CONTAINER {
+		return
+	}
+	flags := container.GetValue(contFlags)
+	if flags&contCloseable == 0 {
+		return
+	}
+	if open {
+		if flags&contClosed != 0 {
+			container.SetValue(contFlags, flags&^contClosed)
+			Act(w, false, me, nil, container, nil, "$n opens $p.", "", ToRoom)
+		}
+		return
+	}
+	if flags&contClosed == 0 {
+		container.SetValue(contFlags, flags|contClosed)
+		Act(w, false, me, nil, container, nil, "$n closes $p.", "", ToRoom)
+	}
+}
+
+// butlerPerformPut mirrors perform_put's base-weight capacity check. C uses
+// GET_OBJ_WEIGHT(cont), not the container's recursive contents weight.
+func (w *World) butlerPerformPut(me *MobInstance, obj, container *ObjectInstance) bool {
+	if container.GetWeight()+obj.GetWeight() > container.GetValue(contCapacity) {
+		return false
+	}
+	if err := w.MoveObjectToContainer(obj, container); err != nil {
+		slog.Warn("MoveObjectToContainer failed in butler spec", "obj", obj.GetVNum(), "container", container.GetVNum(), "error", err)
+		return false
+	}
+	Act(w, true, me, nil, obj, container, "$n puts $p in $P.", "", ToRoom)
+	return true
+}
+
+// specButler tidies up the room, picking up loose items and storing them.
+func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFighting() != "" {
+		return false
+	}
+	items := append([]*ObjectInstance(nil), w.GetItemsInRoom(me.GetRoomVNum())...)
+
+	// C resolves the three targets with get_obj_in_list_vis before its entry
+	// gate. Keep the same room-list order and visibility semantics.
+	cas := butlerVisibleRoomObject(me, "case", items)
+	cabinet := butlerVisibleRoomObject(me, "cabinet", items)
+	chest := butlerVisibleRoomObject(me, "chest", items)
 	if cas == nil || cabinet == nil || chest == nil {
 		return false
 	}
 
-	// Helper to check if butler can get an object
 	canGet := func(obj *ObjectInstance) bool {
-		if obj == cas || obj == cabinet || obj == chest {
-			return false // don't grab the containers themselves
-		}
-		if obj.Prototype == nil {
+		if obj == nil || !obj.IsTakeable() || !canSeeObject(me, obj) {
 			return false
 		}
-		// Check ITEM_WEAR_TAKE flag (wear flag bit 0 = take)
-		for _, wf := range obj.Prototype.WearFlags {
-			if wf == 1 {
-				return true
-			}
-		}
-		return false
+		return mobCarriedWeight(me)+obj.GetWeight() <= mobMaxCarryWeight(me) &&
+			len(me.Inventory)+1 <= mobMaxCarryCount(me)
 	}
 
 	got := 0
-	for _, obj := range items {
+	for i := len(items) - 1; i >= 0; i-- {
+		obj := items[i]
 		if got >= 4 {
 			break
 		}
@@ -434,26 +476,26 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 			continue
 		}
 		got++
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gets %s.", mobName(me), obj.GetShortDesc()))
-		if err := w.MoveObjectToMobInventory(obj, me); err != nil {
+		Act(w, true, me, nil, nil, obj, "$n gets $P.", "", ToRoom)
+		if err := w.MoveObjectToMobInventoryFront(obj, me); err != nil {
 			slog.Warn("MoveObjectToMobInventory failed in butler spec", "obj", obj.GetVNum(), "mob", me.GetName(), "error", err)
+			continue
 		}
 
-		// Sort into case/cabinet/chest by item type
-		container := chest                            // default for misc items
-		if obj.IsArmor() || obj.GetTypeFlag() == 11 { // ITEM_ARMOR(9) or ITEM_WORN(11)
+		// Sort into case/cabinet/chest by item type, matching the C branches.
+		container := chest
+		if obj.GetTypeFlag() == ITEM_ARMOR || obj.GetTypeFlag() == ITEM_WORN {
 			container = cas
-		} else if obj.IsWeapon() || obj.GetTypeFlag() == 12 { // ITEM_WEAPON(5) or ITEM_FIREWEAPON(12)
+		} else if obj.GetTypeFlag() == ITEM_WEAPON || obj.GetTypeFlag() == ITEM_FIRE_WEAPON {
 			container = cabinet
 		}
-		// Remove from butler's inventory into the container
-		if err := w.MoveObjectToContainer(obj, container); err != nil {
-			slog.Warn("MoveObjectToContainer failed in butler spec", "obj", obj.GetVNum(), "container", container.GetVNum(), "error", err)
-		}
+		butlerDoorToggle(w, me, container, true)
+		w.butlerPerformPut(me, obj, container)
 	}
 	if got > 0 {
-		// Containers are left open after putting items in; closing handled by container
-		// state — the butler closes them after sorting
+		butlerDoorToggle(w, me, cas, false)
+		butlerDoorToggle(w, me, cabinet, false)
+		butlerDoorToggle(w, me, chest, false)
 		return true
 	}
 	return false
