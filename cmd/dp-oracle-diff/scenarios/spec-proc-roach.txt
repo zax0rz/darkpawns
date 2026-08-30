@@ -1,0 +1,92 @@
+# depth-case: mob.roach-entry-gates
+# depth-case: mob.roach-food-predicate
+# depth-case: mob.roach-food-success
+# depth-case: mob.roach-food-failure
+# depth-case: mob.roach-growth-state
+# depth-case: mob.roach-food-failure
+# depth-case: mob.roach-idle-output
+# depth-case: mob.roach-teleport-subgate
+# depth-case: mob.roach-pulse-dispatch
+# C-first vehicle for SPECIAL(roach), registered for mob vnum 23 at
+# src/spec_assign.c:185 and defined in src/spec_procs3.c:707-804. The fixture
+# appends one native roach to disposable zone 80; all authored mobile resets
+# are suppressed so only this procedure is active. The probe moves the
+# warrior's authored bread out of the starter pack after setup.
+# C path: src/mobact.c:68-93 -> src/spec_procs3.c:707-804;
+# extract_char is src/handler.c:1194-1205 and extract_obj is
+# src/handler.c:1000-1030.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 23 1 8105 80
+clear-mob-flag 23 RANDZON
+replace-room-exits 8105 none
+
+[setup:oracle]
+RoachGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RoachGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+RoachPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+RoachPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport RoachPeer 8105
+
+[probe]
+open pack
+get bread pack
+drop bread
+~dpclock pulse 40
