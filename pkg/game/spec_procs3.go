@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -1049,44 +1050,43 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 // specMortician retrieves corpses for a fee.
 // C source: SPECIAL(mortician) ~line 807.
 func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" {
+	if ch == nil || me == nil || cmd == "" {
 		return false
 	}
 	cost := ch.GetLevel() * 116
 	if cmd == "list" {
-		ch.SendMessage(fmt.Sprintf("%s tells you, 'It will cost %d coins to retrieve your corpse.'\r\n", mobName(me), cost))
+		tellFromMob(me, ch, fmt.Sprintf("It will cost %d coins to retrieve your corpse.", cost))
 		return true
 	}
 	if cmd == "retrieve" {
 		if ch.GetGold() < cost {
-			ch.SendMessage(fmt.Sprintf("%s tells you, 'I'm sorry, you can't afford the cost.'\r\n", mobName(me)))
+			tellFromMob(me, ch, "I'm sorry, you can't afford the cost.")
 			return true
 		}
 		// Search all rooms for a corpse matching this player
-		found := false
-		allRooms := w.Rooms()
-		for i := range allRooms {
-			items := w.GetItemsInRoom(allRooms[i].VNum)
-			for _, obj := range items {
-				if obj.IsCorpse && strings.Contains(strings.ToLower(obj.GetKeywords()), strings.ToLower(ch.GetName())) && obj.GetValue(3) > 0 {
-					// Move corpse from its current room to the mortician's room
-					if err := w.MoveObjectToRoom(obj, me.GetRoomVNum()); err != nil {
-						slog.Warn("MoveObjectToRoom failed in mortician", "corpse", obj.GetVNum(), "room", me.GetRoomVNum(), "error", err)
-					}
-					ch.SendMessage("The Mortician dumps your corpse on the ground.\r\n")
-					w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("The Mortician dumps %s's corpse on the ground.", ch.GetName()))
-					ch.SetGold(ch.GetGold() - cost)
-					found = true
-					break
-				}
+		objects := w.GetAllObjects()
+		// C walks object_list, which is newest-first because create_obj and
+		// read_object prepend. World object IDs are monotonic, so descending
+		// IDs preserve that order in the Go object registry.
+		sort.SliceStable(objects, func(i, j int) bool {
+			return objects[i].ID > objects[j].ID
+		})
+		for _, obj := range objects {
+			if !isnameWithAbbrevs(ch.GetName(), obj.GetKeywords()) ||
+				obj.GetValue(3) == 0 || obj.GetTypeFlag() != ITEM_CONTAINER {
+				continue
 			}
-			if found {
-				break
+			// C obj_from_room + obj_to_room moves the matching object to the
+			// player's room and prepends it to that room's contents.
+			if err := w.MoveObjectToRoomFront(obj, ch.GetRoomVNum()); err != nil {
+				slog.Warn("MoveObjectToRoomFront failed in mortician", "corpse", obj.GetVNum(), "room", ch.GetRoomVNum(), "error", err)
 			}
+			Act(w, false, ch, nil, nil, nil, "The Mortician dumps your corpse on the ground.", "", ToChar)
+			Act(w, true, ch, nil, nil, nil, "The Mortician dumps $n's corpse on the ground.", "", ToRoom)
+			ch.SetGold(ch.GetGold() - cost)
+			return true
 		}
-		if !found {
-			ch.SendMessage(fmt.Sprintf("%s tells you, 'I'm sorry, I can't find your corpse anywhere!'\r\n", mobName(me)))
-		}
+		tellFromMob(me, ch, "I'm sorry, I can't find your corpse anywhere!")
 		return true
 	}
 	return false
