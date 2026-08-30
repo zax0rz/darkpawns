@@ -1,0 +1,80 @@
+# C-first vehicle for SPECIAL(castle_guard_up), registered for mob vnums 19650
+# and 19651 by src/spec_assign.c:457-458 and defined at
+# src/spec_procs2.c:2176-2216. The guard runs before do_move; an awake mortal
+# attempting up receives the C TO_VICT/TO_NOTVICT/TO_ROOM audience split.
+# The disposable exit is open so a fall-through would be observable as a move.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 19650 80
+replace-room-exits 19650 up 19651 0
+
+[setup:oracle]
+CastleUpGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CastleUpGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+CastleUpMortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+CastleUpMortal
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19650
+teleport CastleUpMortal 19650
+
+[probe:peer]
+up
+
+# depth-case: mob.castle-guard-up-entry-gates
+# depth-case: mob.castle-guard-up-block-audience
+# depth-case: mob.castle-guard-up-return-intercept
