@@ -563,8 +563,14 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 
 		for _, name := range peerNames {
 			peerOutput, peerErr := peers[name].ReadUntilQuiescent(quiescence)
+			// A final command may intentionally close an audience connection
+			// (for example, the C do_dc lower-level target). Preserve the
+			// output captured before EOF instead of turning that expected
+			// terminal state into a harness failure.
 			if peerErr != nil {
-				return blocks, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", i+1, name, step, peerErr, peerOutput)
+				if i != len(probe)-1 || !errors.Is(peerErr, io.EOF) {
+					return blocks, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", i+1, name, step, peerErr, peerOutput)
+				}
 			}
 			blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: name, Output: peerOutput})
 		}
