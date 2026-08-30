@@ -1238,11 +1238,37 @@ func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string,
 
 // specElementsPlatforms sends all players in the room back to the master column (1314).
 func specElementsPlatforms(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if w == nil || ch == nil {
+		return false
+	}
 	players := w.GetPlayersInRoom(ch.GetRoomVNum())
+	// C walks world[room].people, a front-inserted linked list. The command
+	// actor is the most recent entrant in the vehicle; IDs and names keep the
+	// remaining snapshot deterministic when the harness IDs tie.
+	sort.SliceStable(players, func(i, j int) bool {
+		if players[i] == ch {
+			return true
+		}
+		if players[j] == ch {
+			return false
+		}
+		if players[i].GetID() != players[j].GetID() {
+			return players[i].GetID() < players[j].GetID()
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+
 	for _, ppl := range players {
-		sendToChar(ppl, "A wave of power surges through you and you feel dizzy.\r\n")
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s disappears in a brilliant flash of light.", ppl.GetName()))
-		ppl.SetRoom(1314)
+		if ppl == nil {
+			continue
+		}
+		Act(w, false, ppl, nil, nil, nil, "A wave of power surges through you and you feel dizzy.", "", ToChar)
+		Act(w, true, ppl, nil, nil, nil, "$n disappears in a brilliant flash of light.", "", ToNotVict)
+		if err := w.PlayerTransfer(ppl, 1314); err != nil {
+			slog.Warn("elements platforms player transfer failed", "player", ppl.GetName(), "room", 1314, "error", err)
+			continue
+		}
+		Act(w, true, ppl, nil, nil, nil, "$n appears in a brilliant flash of light.", "", ToNotVict)
 	}
 	return true
 }
