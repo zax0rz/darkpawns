@@ -1,0 +1,3 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_date	date	date.machine-time	D2	command	oracle-green	date-depth	interpreter.c:406; act.wizard.c:1802-1830	Immortal date emits C's Current machine time line; the volatile timestamp is normalized by the Tier-1 harness.
+do_date	date	date.argument-ignored	D2	command	unit-green	TestCmdDateIgnoresArguments	interpreter.c:406; act.wizard.c:1802-1830	SCMD_DATE ignores date arguments; the separate uptime table row owns SCMD_UPTIME, so date boot must not alias uptime.

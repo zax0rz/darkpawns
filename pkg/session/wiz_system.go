@@ -199,12 +199,9 @@ func cmdDate(s *Session, args []string) error {
 		return nil
 	}
 	now := time.Now()
-	isUptime := len(args) > 0 && strings.ToLower(args[0]) == "boot"
-	if isUptime {
-		sendUptime(s, now)
-	} else {
-		s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
-	}
+	// C dispatches date with SCMD_DATE, so do_date ignores its argument;
+	// uptime is a separate command-table entry using SCMD_UPTIME.
+	s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
 	return nil
 }
 
