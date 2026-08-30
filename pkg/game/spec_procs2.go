@@ -2267,7 +2267,7 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 
 // ================================================================
 // specCastleGuardUp — Blocks movement up into the castle.
-	// C equivalent: castle_guard_up in spec_procs2.c:2176-2216
+// C equivalent: castle_guard_up in spec_procs2.c:2176-2216
 // Uses +1 for the house check (vs +2 for other guards).
 // ================================================================
 func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
