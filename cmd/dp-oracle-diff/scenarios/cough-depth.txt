@@ -1,0 +1,80 @@
+# cough command vehicle (src/interpreter.c:395; src/act.social.c:102-151;
+# lib/misc/socials:131-134). The C record is self-only: char_found is NULL,
+# so all arguments are ignored and only the actor/room pair is emitted.
+
+# depth-case: cough.no-argument
+# depth-case: cough.typed-target-ignored
+# depth-case: cough.missing-target-ignored
+# depth-case: cough.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+
+[probe]
+cough
+cough barnaby
+cough nobody
+cough mordecai
