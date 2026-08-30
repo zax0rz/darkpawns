@@ -768,11 +768,26 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 func specQuanLo(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" && me.GetPosition() > combat.PosSleeping {
 		if cmd == "flee" || cmd == "retreat" || cmd == "escape" {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gossips, 'What was that, %s? This is not a shawade. Try it again. This time with fewing.'", mobName(me), ch.GetName()))
+			w.mobGlobalGossip(me, fmt.Sprintf("What was that, %s? This is not a shawade. Try it again. This time with fewing.", ch.GetName()))
 		}
 		arg = strings.TrimSpace(arg)
-		if (cmd == "look" || cmd == "examine") && arg != "" && strings.Contains(me.GetName(), arg) {
+		if (cmd == "look" || cmd == "examine") && arg != "" && isCName(arg, charKeywords(me)) {
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'What is it you seek, %s? Tell me and be gone.'", mobName(me), ch.GetName()))
+		}
+	}
+	return false
+}
+
+// isCName matches the exact case-insensitive token semantics of C isname(),
+// used by quan_lo rather than the prefix semantics of isname_with_abbrevs().
+func isCName(name, namelist string) bool {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return false
+	}
+	for _, keyword := range strings.Fields(namelist) {
+		if strings.EqualFold(name, keyword) {
+			return true
 		}
 	}
 	return false

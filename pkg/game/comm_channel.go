@@ -167,6 +167,30 @@ func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) b
 	return true
 }
 
+// mobGlobalGossip implements the NPC-authored do_gen_comm(SCMD_GOSSIP) call used by
+// quan_lo. C sends this through the global descriptor list, not the room act
+// path, and the NPC has no descriptor to receive a self echo.
+func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
+	if me == nil || w.communicationRoomSoundproof(me.GetRoomVNum()) {
+		return
+	}
+	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
+	if argument == "" {
+		return
+	}
+	argument = deleteANSIControls(argument)
+	message := fmt.Sprintf("%s gossips, '%s'\r\n", mobName(me), argument)
+	for _, player := range w.GetAllPlayers() {
+		if player.GetFlags()&(1<<uint(PrfNoGossip)) != 0 ||
+			player.GetFlags()&(1<<uint(PlrWriting)) != 0 ||
+			w.communicationRoomSoundproof(player.GetRoom()) {
+			continue
+		}
+		player.SendMessage(message)
+	}
+	w.updateGossipHistory(mobName(me), argument, 0)
+}
+
 // doQcomm -- port of do_qcomm() (team/quiz communication).
 func (w *World) doQcomm(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = skipSpaces(arg)
