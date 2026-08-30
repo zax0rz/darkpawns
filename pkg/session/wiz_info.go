@@ -66,22 +66,38 @@ func cmdDark(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	// Stop combat for everyone in the room
 	roomVNum := s.player.GetRoom()
+	// C walks the room list and stops every fighting character. A fighter is
+	// told about the peace before the command's actor/room messages; fighting
+	// mobs also forget their combat memory.
+	players := s.manager.world.GetPlayersInRoom(roomVNum)
+	mobs := s.manager.world.GetMobsInRoom(roomVNum)
+	fightingMobs := make([]*game.MobInstance, 0, len(mobs))
+	for _, mob := range mobs {
+		if mob.IsFighting() {
+			fightingMobs = append(fightingMobs, mob)
+		}
+	}
+	for _, p := range players {
+		if !p.IsFighting() {
+			continue
+		}
+		s.manager.combatEngine.StopCombat(p.GetName())
+		// C uses the mixed \n\r terminator here. Send a lone LF so the
+		// telnet transport's canonicalizer produces one line terminator rather
+		// than appending a second CRLF to C's already-terminated text.
+		p.SendMessage("The peace of the ancients fills your soul.\n")
+	}
+	for _, mob := range fightingMobs {
+		s.manager.combatEngine.StopCombat(mob.GetName())
+		if len(mob.GetMemory()) > 0 {
+			mob.ClearMemory()
+		}
+	}
+
 	s.Send("You stop the senseless violence in the room with a wave of your hand.\r\n")
-	s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s raises a hand and combat freezes!\r\n", s.player.Name)), s.playerName)
-	// Stop fighting for all mobs in the room
-	for _, mob := range s.manager.world.GetMobsInRoom(roomVNum) {
-		if stopper, ok := interface{}(mob).(interface{ StopFighting() }); ok {
-			stopper.StopFighting()
-		}
-	}
-	// Stop fighting for all players in the room
-	for _, p := range s.manager.world.GetPlayersInRoom(roomVNum) {
-		if p != s.player {
-			p.StopFighting()
-		}
-	}
+	game.Act(s.manager.world, true, s.player, nil, nil, nil,
+		"$n stops the senseless violence in the room with a wave of $s hand.", "", game.ToRoom)
 	return nil
 }
 
