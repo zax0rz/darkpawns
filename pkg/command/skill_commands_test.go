@@ -177,6 +177,24 @@ func TestCmdCharge_FightingTargetFallback(t *testing.T) {
 	}
 }
 
+func TestCmdCircle_FightingTargetFallback(t *testing.T) {
+	session := newBashCommandSession(t)
+	session.player.SetSkill(game.SkillCircle, 100)
+	session.player.SetFighting("Target")
+
+	if err := CmdCircle(session, nil); err != nil {
+		t.Fatalf("CmdCircle returned error: %v", err)
+	}
+
+	joined := strings.Join(session.messages, "")
+	if strings.Contains(joined, "Circle who?") {
+		t.Fatalf("expected circle to target fighting opponent, got: %q", joined)
+	}
+	if !strings.Contains(joined, "wield a weapon") {
+		t.Fatalf("expected fighting-target fallback to reach the weapon gate, got: %q", joined)
+	}
+}
+
 func TestCmdBash_NoFightingNoArgs(t *testing.T) {
 	session := newBashCommandSession(t)
 

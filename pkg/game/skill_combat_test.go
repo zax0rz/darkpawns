@@ -326,16 +326,21 @@ func TestDoCircle_MobAware(t *testing.T) {
 	if result.Success {
 		t.Error("expected aware mob to block circle")
 	}
-	if mob.GetFighting() != ch.Name {
-		t.Errorf("expected aware mob to start fighting %q, got %q", ch.Name, mob.GetFighting())
-	}
 	if !strings.Contains(result.MessageToCh, "notices you") {
 		t.Errorf("expected noticed message, got %q", result.MessageToCh)
 	}
-	// DP-circle-fidelity: MOB_AWARE notice must signal combat start so the
-	// caller enrolls the circler (C: hit(vict, ch) retaliates immediately).
-	if !result.StartCombat {
-		t.Error("MOB_AWARE notice should set StartCombat")
+	// C leaves the game-layer branch via hit(vict, ch); the command caller
+	// performs that synchronous opener and enrolls both fighters.
+	if !result.RetaliateHit || result.StartCombat {
+		t.Errorf("MOB_AWARE result = retaliate %v, start %v; want true, false", result.RetaliateHit, result.StartCombat)
+	}
+
+	// The same early branch still emits the notice when the mob is already
+	// fighting, but C skips hit(vict, ch) in that case.
+	mob.SetFighting("TheTank")
+	busyResult := DoCircle(ch, mob)
+	if busyResult.RetaliateHit || busyResult.StartCombat {
+		t.Errorf("already-fighting aware result = retaliate %v, start %v; want false, false", busyResult.RetaliateHit, busyResult.StartCombat)
 	}
 }
 
@@ -346,12 +351,16 @@ func TestDoCircle_Success(t *testing.T) {
 	weapon := makeCircleWeapon()
 	equipWeapon(t, ch, weapon)
 
+	// A passed circle roll still runs hit()'s ordinary THAC0 d20. Sleeping
+	// makes that C path deterministic while retaining the circle probability
+	// draw and the exact skill-message result contract.
+	mob.SetPosition(combat.PosSleeping)
 	result := DoCircle(ch, mob)
 	if !result.Success {
-		t.Errorf("expected circle success, got %q", result.MessageToCh)
+		t.Errorf("expected circle success, got %#v", result)
 	}
-	if result.Damage <= 0 {
-		t.Errorf("expected positive damage, got %d", result.Damage)
+	if result.Damage <= 0 || result.SkillMsgType != SkillCircleNum || !result.SkillMsgAfterDamage {
+		t.Errorf("circle hit result = %#v; want positive set-173 after-damage result", result)
 	}
 	if result.WaitCh != 3 {
 		t.Errorf("expected wait 3, got %d", result.WaitCh)
@@ -361,8 +370,8 @@ func TestDoCircle_Success(t *testing.T) {
 // TestDoCircle_MissPullsAggro — C: new_cmds.c:2457. A botched circle against
 // a target that's fighting someone else pulls the mob's aggro onto the circler
 // (stop_fighting + hit(vict, ch)), and the circler enters combat too
-// (damage(ch, vict, 0, SKILL_CIRCLE)). The Go port retargets the mob and sets
-// StartCombat so the caller enrolls the circler.
+// (damage(ch, vict, 0, SKILL_CIRCLE)). The result carries both the ordering
+// and caller-side combat work; the game layer does not invent output.
 func TestDoCircle_MissPullsAggro(t *testing.T) {
 	w, ch := newCircleTestWorld(t)
 	mob := spawnTargetMob(t, w)
@@ -381,15 +390,16 @@ func TestDoCircle_MissPullsAggro(t *testing.T) {
 		mob.SetFighting("TheTank") // reset each attempt
 		result := DoCircle(ch, mob)
 		if !result.Success && result.Damage == 0 {
-			// Miss: mob should turn onto the circler, and combat should start.
-			if mob.GetFighting() != ch.Name {
-				t.Errorf("missed circle should pull aggro onto circler %q, mob fighting %q", ch.Name, mob.GetFighting())
+			// Miss: C stops the old engagement before the synchronous retaliation;
+			// sendSkillResult then emits set 173 and starts the circle fight.
+			if mob.GetFighting() != "" {
+				t.Errorf("missed circle should stop the old target engagement, got %q", mob.GetFighting())
 			}
-			if !result.StartCombat {
-				t.Error("missed circle should set StartCombat so the circler enters combat")
+			if !result.RetaliateHit || !result.RetaliateHitBeforeSkillMessage || !result.StartCombat {
+				t.Errorf("missed circle result = %#v; want retaliation-before-message plus start", result)
 			}
-			if !strings.Contains(result.MessageToCh, "notices you") {
-				t.Errorf("expected miss message, got %q", result.MessageToCh)
+			if result.SkillMsgType != SkillCircleNum || result.MessageToCh != "" {
+				t.Errorf("missed circle message contract = set %d, ch %q; want set %d and no literal", result.SkillMsgType, result.MessageToCh, SkillCircleNum)
 			}
 			missed = true
 			break

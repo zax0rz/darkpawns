@@ -408,6 +408,10 @@ type SkillResult struct {
 	// (act.offensive.c:216), which notices the lunge and swings back at once.
 	// The caller enrolls target->ch and runs one synchronous swing from target.
 	RetaliateHit bool
+	// RetaliateHitBeforeSkillMessage preserves do_circle's failed-circle order:
+	// when the victim was already fighting, C calls hit(victim, ch) before the
+	// subsequent damage(ch, victim, 0, SKILL_CIRCLE) skill message.
+	RetaliateHitBeforeSkillMessage bool
 
 	// SkillMsgType, when non-zero, routes the combat message through the
 	// skill_message path (fight.c:1023-1092) instead of emitting MessageToCh/

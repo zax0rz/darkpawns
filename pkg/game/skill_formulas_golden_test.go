@@ -258,7 +258,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 			}
 		}
 		rate := float64(successes) / float64(iterations)
-		expected := 50.0 / 101.0 // 49.50%
+		expected := (50.0 / 101.0) * (19.0 / 20.0) // circle roll plus hit() d20
 		if math.Abs(rate-expected) > 0.03 {
 			t.Errorf("Circle success rate = %f; expected ~%f (+/- 3%%)", rate, expected)
 		}
