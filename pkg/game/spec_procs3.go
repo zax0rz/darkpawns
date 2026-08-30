@@ -1349,7 +1349,11 @@ func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string
 
 // specElementsGaleruColumn checks if all four talismans are in their rooms.
 func specElementsGaleruColumn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// Check rooms 1360,1364,1380,1384 for talismans 1300-1303
+	if w == nil || ch == nil {
+		return false
+	}
+
+	// Check rooms 1360, 1364, 1380, and 1384 for talismans 1300-1303.
 	roomVnums := []int{1360, 1364, 1380, 1384}
 	talVnums := []int{1300, 1301, 1302, 1303}
 	found := 0
@@ -1357,6 +1361,9 @@ func specElementsGaleruColumn(w *World, ch *Player, me *MobInstance, cmd string,
 	for i := 0; i < 4; i++ {
 		items := w.GetItemsInRoom(roomVnums[i])
 		for _, item := range items {
+			if item == nil {
+				continue
+			}
 			if item.GetVNum() == talVnums[i] {
 				found++
 				break
@@ -1368,12 +1375,37 @@ func specElementsGaleruColumn(w *World, ch *Player, me *MobInstance, cmd string,
 		return false
 	}
 
-	// All four talismans are placed — teleport players in room 1372 to 1389
+	// C walks the front-inserted world[room].people list. The command actor is
+	// the most recent entrant in the vehicle; use ID/name for the remaining
+	// players to keep the Go order deterministic.
 	players := w.GetPlayersInRoom(ch.GetRoomVNum())
+	sort.SliceStable(players, func(i, j int) bool {
+		if players[i] == ch {
+			return true
+		}
+		if players[j] == ch {
+			return false
+		}
+		if players[i].GetID() != players[j].GetID() {
+			return players[i].GetID() < players[j].GetID()
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+
 	for _, ppl := range players {
-		sendToChar(ppl, "Four beams of colored light from the corners of the chamber converge around you.\r\n\n")
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s is struck by four beams of colored light and slowly vanishes!", ppl.GetName()))
-		ppl.SetRoom(1389)
+		if ppl == nil {
+			continue
+		}
+		// C's send_to_char buffer already contains its unusual CRLF/LF spacing;
+		// send the bytes directly instead of letting Act append another line end.
+		ppl.SendMessage("Four beams of colored light from the corners of the chamber converge around you.\r\n\n")
+		Act(w, true, ppl, nil, nil, nil, "$n is struck by four beams of colored light and slowly vanishes!", "", ToNotVict)
+		if err := w.PlayerTransfer(ppl, 1389); err != nil {
+			slog.Warn("elements galeru column player transfer failed", "player", ppl.GetName(), "room", 1389, "error", err)
+			continue
+		}
+		w.lookAtRoom(ppl, false)
+		Act(w, true, ppl, nil, nil, nil, " $n materialises from nowhere in a swirl of colors.", "", ToNotVict)
 	}
 	return true
 }

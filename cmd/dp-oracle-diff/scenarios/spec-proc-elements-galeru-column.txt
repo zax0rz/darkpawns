@@ -1,0 +1,93 @@
+# C-first vehicle for SPECIAL(elements_galeru_column), assigned to room 1372
+# by src/spec_assign.c:631 and defined at src/spec_procs3.c:1137-1182.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+GaleruCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GaleruCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+GaleruPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+GaleruPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 1300
+goto 1360
+drop talisman
+goto 8105
+load obj 1301
+goto 1364
+drop talisman
+goto 8105
+load obj 1302
+goto 1380
+drop talisman
+goto 8105
+load obj 1303
+goto 1384
+drop talisman
+teleport GaleruPeer 1372
+goto 1372
+
+[probe]
+say hello
+
+# depth-case: room.elements-galeru-column-entry
+# depth-case: room.elements-galeru-column-complete
+# depth-case: room.elements-galeru-column-audience
+# depth-case: room.elements-galeru-column-relocation
+# depth-case: room.elements-galeru-column-destination-look
