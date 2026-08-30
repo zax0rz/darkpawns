@@ -1493,26 +1493,33 @@ func (w *World) lookAtRoomWithGaleruAliveFraming(ch *Player) {
 	w.RenderObservationMessages(result)
 }
 
-// specElementsMinion destroys talismans and cylinders.
+// specElementsMinion mirrors SPECIAL(elements_minion) in
+// src/spec_procs3.c:1217-1240. C scans the mob's visible carrying list once
+// for each keyword, in this order, and extracts the first match from each
+// pass. It is command-independent and returns FALSE on both the player-command
+// and autonomous mobile_activity paths.
 func specElementsMinion(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// Iterate mob inventory for talismans/cylinders and destroy them
-	talismanVnums := map[int]bool{1300: true, 1301: true, 1302: true, 1303: true}
-	cylinderVnums := map[int]bool{1304: true, 1305: true, 1306: true, 1307: true}
+	if w == nil || me == nil {
+		return false
+	}
 
-	toDestroy := make([]*ObjectInstance, 0)
-	for _, obj := range me.Inventory {
-		vnum := obj.GetVNum()
-		if talismanVnums[vnum] || cylinderVnums[vnum] {
-			toDestroy = append(toDestroy, obj)
+	for _, keyword := range []string{"talisman", "element", "earth", "fire", "water", "air"} {
+		var match *ObjectInstance
+		for _, obj := range me.Inventory {
+			if obj != nil && canSeeObject(me, obj) && isnameWithAbbrevs(keyword, obj.GetKeywords()) {
+				match = obj
+				break
+			}
 		}
-	}
+		if match == nil {
+			continue
+		}
 
-	for _, obj := range toDestroy {
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s utters the words 'eradico paratus' and %s disintegrates.", me.GetName(), obj.GetShortDesc()))
-		me.RemoveFromInventory(obj)
+		Act(w, true, me, nil, match, nil,
+			"$n utters the words 'eradico paratus' and $p disintegrates.", "", ToRoom)
+		w.ExtractObject(match, me.GetRoomVNum())
+		elementsRemoveCylinders(w, me.GetRoomVNum())
 	}
-
-	elementsRemoveCylinders(w, me.GetRoomVNum())
 	return false
 }
 
