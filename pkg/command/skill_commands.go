@@ -739,7 +739,8 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	var found bool
 	if len(args) > 0 {
-		targetName := strings.Join(args, " ")
+		// C one_argument consumes only the first word and ignores the remainder.
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 		if !found {
 			return s.SendMessage("Headbutt who?\r\n")
@@ -751,10 +752,6 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 		}
 	} else {
 		return s.SendMessage("Headbutt who?\r\n")
-	}
-
-	if target.GetName() == ch.Name {
-		return s.SendMessage("You contemplate headbutting yourself... maybe later.\r\n")
 	}
 
 	result := game.DoHeadbutt(ch, target, world)

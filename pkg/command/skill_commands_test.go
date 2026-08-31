@@ -113,6 +113,46 @@ func TestCmdRescueUnavailableCombatEngineDoesNotPanic(t *testing.T) {
 	}
 }
 
+func TestCmdHeadbuttSelfTargetUsesCWallMessage(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosFighting)
+	session.player.SetSkill(game.SkillHeadbutt, 75)
+
+	if err := CmdHeadbutt(session, []string{"Tester"}); err != nil {
+		t.Fatalf("CmdHeadbutt: %v", err)
+	}
+	output := strings.Join(session.messages, "")
+	if !strings.Contains(output, "You bang your head into the nearest wall...") {
+		t.Fatalf("self-target output = %q, want C wall-impact line", output)
+	}
+	if strings.Contains(output, "contemplate headbutting yourself") {
+		t.Fatalf("self-target output retained invented Go line: %q", output)
+	}
+}
+
+func TestCmdHeadbuttFallsBackToFightingTarget(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosFighting)
+	session.player.SetSkill(game.SkillHeadbutt, 75)
+	session.player.SetFighting("Target")
+
+	target := game.NewPlayer(2, "Target", 1001)
+	target.SetPosition(combat.PosSleeping)
+	if err := session.world.AddPlayer(target); err != nil {
+		t.Fatalf("AddPlayer target: %v", err)
+	}
+	hpBefore := target.GetHP()
+	if err := CmdHeadbutt(session, nil); err != nil {
+		t.Fatalf("CmdHeadbutt: %v", err)
+	}
+	if target.GetHP() >= hpBefore {
+		t.Fatalf("headbutt without an argument did not use the fighting target: hp %d -> %d", hpBefore, target.GetHP())
+	}
+	if strings.Contains(strings.Join(session.messages, ""), "Headbutt who?") {
+		t.Fatal("headbutt without an argument rejected an available fighting target")
+	}
+}
+
 func newBashCommandSession(t *testing.T) *rescueCommandSession {
 	t.Helper()
 

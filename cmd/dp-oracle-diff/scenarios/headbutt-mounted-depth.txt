@@ -1,0 +1,76 @@
+# C-first mounted gate for do_headbutt. The rider reaches a rideable horse in
+# outdoor room 8162, then the headbutt command must stop before target lookup.
+
+# depth-case: headbutt.mounted-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+HbMntgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HbMntgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rider]
+HbMntrider
+Y
+riderpass
+riderpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:rider]
+HbMntrider
+y
+riderpass
+riderpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset HbMntrider 'headbutt' 75
+
+[probe:rider]
+ride horse
+headbutt horse
