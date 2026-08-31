@@ -1,0 +1,14 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_pour	fill	fill.entry-gate	D1	command	unit-green	TestFillRegistrationUsesCEntryGate	interpreter.c:443; act.item.c:1186-1190	The registered C row is POS_STANDING with no minimum level.
+do_pour	fill	fill.position-gate	D1	command	unit-green	TestFillRestingActorHitsCPositionGate	interpreter.c:443; interpreter.c:910-947	A resting actor is rejected before do_pour with C's exact POS_STANDING gate bytes.
+do_pour	fill	fill.no-arguments	D1	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1186-1190	Empty fill args yield the exact two-part usage response.
+do_pour	fill	fill.target-missing	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1191-1194	A missing inventory target yields C's "You can't find it!" response.
+do_pour	fill	fill.no-source	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1203-1206	A drink container without a source yields the target-specific prompt.
+do_pour	fill	fill.source-missing	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1207-1214	A missing room source yields the exact article/name response.
+do_pour	fill	fill.source-not-fountain	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1210-1218	A room object that is not a fountain reaches the source-type rejection.
+do_pour	fill	fill.target-not-drinkcon	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1195-1202	An inventory belt pouch uses the target-object $p message.
+do_pour	fill	fill.liquid-conflict	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1283-1286	A partially/full target containing another liquid reaches C's liquid-conflict rejection before capacity.
+do_pour	fill	fill.success-audience	D3	audience	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1299-1302; comm.c:2392-2555	A successful fill emits the actor and room messages with both object substitutions.
+do_pour	fill	fill.full-target	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1287-1290	A filled target reaches the C capacity rejection.
+do_pour	fill	fill.success-state	D4	state	unit-green	TestDoPour_FillFromFountain	act.item.c:1304-1335	The existing state test proves liquid, poison, amount, alias, and weight transfer for the fill path.
+do_pour	fill	fill.noshout	D1	shared	delegated	dance-noshout	interpreter.c:910-947	The shared frozen/communication gate class is covered by existing command and social matrices.
