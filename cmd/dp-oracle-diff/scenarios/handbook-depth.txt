@@ -1,0 +1,40 @@
+# C-first mortal gate vehicle for interpreter.c:490 `handbook` and
+# act.informative.c:2117-2147 do_gen_ps(SCMD_HANDBOOK). The command is
+# LVL_IMMORT-gated before the static handbook page can be entered.
+
+# depth-case: handbook.mortal-gate
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Handbookmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Handbookmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+handbook
