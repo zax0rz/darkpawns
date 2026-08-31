@@ -780,7 +780,7 @@ const (
 	SkillDisembowelNum  = 184
 	SkillSleeperNum     = 187
 	SkillNeckbreakNum   = 190
-	SkillDragonKickNum  = 222
+	SkillDragonKickNum  = 188
 	SkillTigerPunchNum  = 223
 )
 

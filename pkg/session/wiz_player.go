@@ -212,6 +212,8 @@ func cmdSet(s *Session, args []string) error {
 	case "tattoo":
 		// C do_set case 54: the tattoo table has NUM_TATTOOS entries.
 		val = clamp(val, 0, TatOwl)
+	case "maxhit":
+		val = clamp(val, 1, 5000)
 	case "hp", "hit", "mana", "move":
 		if val > 10000 && targetSess.player.Level < 60 {
 			return fmt.Errorf("cannot set %s above 10000 for non-immortals", field)
@@ -222,6 +224,9 @@ func cmdSet(s *Session, args []string) error {
 	}
 
 	switch field {
+	case "maxhit":
+		targetSess.player.MaxHealth = val
+		s.Send(fmt.Sprintf("Max hit points set to %d.", val))
 	case "level":
 		targetSess.player.Level = val
 		s.Send(fmt.Sprintf("Level set to %d.", val))
@@ -298,7 +303,7 @@ func cmdSet(s *Session, args []string) error {
 
 func isSetNumericField(field string) bool {
 	switch field {
-	case "level", "olc", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "hit", "mana", "move", "ac", "tattoo":
+	case "maxhit", "level", "olc", "gold", "alignment", "align", "str", "stradd", "sta", "int", "wil", "wis", "dex", "con", "cha", "hp", "hit", "mana", "move", "ac", "tattoo":
 		return true
 	default:
 		return false
@@ -778,6 +783,8 @@ func cmdSkillset(s *Session, args []string) error {
 		canonicalName = game.SkillFirstAid
 	case "flesh alter":
 		canonicalName = game.SkillFleshAlter
+	case "dragon kick":
+		canonicalName = game.SkillDragonKick
 	}
 	vict.SetSkill(canonicalName, value)
 

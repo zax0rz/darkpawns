@@ -15,6 +15,7 @@
 #   guard (fell through to the werewolf branch). Guard added.
 #
 # All three fire before any RNG draw. Self-only output; no observer peer.
+# depth-case: dragon.no-skill
 
 [fixture]
 quiet-mobs

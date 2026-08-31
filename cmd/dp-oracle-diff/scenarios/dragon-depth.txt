@@ -1,0 +1,133 @@
+# C-first vehicle for do_dragon_kick (src/act.offensive.c:636-690).
+# The first-player God grants the warrior the skill; skill 1 makes the
+# damage()/skill_message failure arm deterministic while the peer captures
+# the room audience. The target is a disposable trainee mob.
+#
+# depth-case: dragon.no-argument
+# depth-case: dragon.target-missing
+# depth-case: dragon.self
+# depth-case: dragon.one-argument
+# depth-case: dragon.failure
+# depth-case: dragon.wait
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Dragonlord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dragonlord
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Dragonwarrior]
+Dragonwarrior
+Y
+dragonpass
+dragonpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Dragonwarrior]
+Dragonwarrior
+y
+dragonpass
+dragonpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:Dragonobserver]
+Dragonobserver
+Y
+observerpass
+observerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Dragonobserver]
+Dragonobserver
+y
+observerpass
+observerpass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Dragonwarrior 8105
+teleport Dragonobserver 8105
+set Dragonwarrior level 20
+skillset Dragonwarrior 'dragon kick' 1
+
+[probe:Dragonwarrior]
+dragon
+dragon nobody
+dragon the Dragonwarrior
+dragon trainee
+~dpclock pulse 20

@@ -47,9 +47,11 @@ func skillToAttackType(skill string) int {
 		return SkillBackstabNum
 	case "circle":
 		return SkillCircleNum
-	case "bash", "kick", "punch", "dragon_kick", "tiger_punch", "headbutt",
+	case "bash", "kick", "punch", "tiger_punch", "headbutt",
 		"smackheads", "slug", "serpent_kick":
 		return TypeBludgeon // 305
+	case "dragon_kick":
+		return SkillDragonKickNum
 	case "bite":
 		return SkillBiteNum // SKILL_BITE (150)
 	case "charge":
