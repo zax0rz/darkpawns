@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	flirt	flirt.entry-gate	D1	command	unit-green	TestFlirtRegistrationUsesCEntryGate	interpreter.c:449; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level; the social's first field is the hide-invisible flag, not command authorization.
+do_action	flirt	flirt.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:449; interpreter.c:910-947	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
+do_action	flirt	flirt.no-argument	D3	audience	oracle-green-multiseed	flirt-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:240-248	The no-argument record emits the actor line and hidden-aware room audience.
+do_action	flirt	flirt.target-success	D3	audience	oracle-green-multiseed	flirt-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:240-248	A visible standing target receives the actor, non-victim room, and victim messages.
+do_action	flirt	flirt.self-target	D2	audience	oracle-green-multiseed	flirt-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:240-248	A self target takes the flirt char_auto and others_auto branches.
+do_action	flirt	flirt.target-not-found	D1	command	oracle-green-multiseed	flirt-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:240-248	An unresolved room target emits the exact dearly-beloved not-found line.
+do_action	flirt	flirt.target-position-gate	D2	command	unit-green	TestDoActionFlirtSleepingTargetHitsPositionGate	act.social.c:137-143; lib/misc/socials:240-248	A sleeping target is rejected by the social record's minimum victim position before any audience act.
+do_action	flirt	flirt.one-argument	D2	command	oracle-green-multiseed	flirt-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121	C one_argument skips the leading fill word and discards trailing words before target lookup.
+do_action	flirt	flirt.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT do_action gate is proven by the dance social matrix.
+do_action	flirt	flirt.visibility	D3	shared	delegated	socials-depth	act.social.c:114-151; comm.c:2392-2555	The record's hide-invisible audience behavior and shared Act visibility are covered by the social table/matrix.
