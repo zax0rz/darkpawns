@@ -1,0 +1,81 @@
+# C-first howl self-only social vehicle (src/interpreter.c:503;
+# act.social.c:102-121; lib/misc/socials:1083-1086). Because char_found is
+# absent, do_action ignores every typed argument and emits only the actor/room
+# pair.
+
+# depth-case: howl.no-argument
+# depth-case: howl.argument-ignored
+# depth-case: howl.missing-target-ignored
+# depth-case: howl.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Howlactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Howlactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Howlobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Howlobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Howlobserver 8162
+
+[probe]
+howl
+howl Howlobserver trailing words are ignored
+howl Nobody
+howl Howlactor
