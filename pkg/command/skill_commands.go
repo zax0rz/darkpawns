@@ -1601,7 +1601,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			world := s.GetWorld()
 			players := world.GetPlayersInRoom(roomVNum)
 			for _, p := range players {
-				if p.Name == ch.Name {
+				if p.Name == ch.Name && !result.RoomIncludesActor {
 					continue
 				}
 				if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
@@ -1639,7 +1639,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		for _, skill := range result.PreDamageImprove {
 			game.ImproveSkill(ch, skill)
 		}
-	} else if result.SkillMsgType != 0 && target != nil {
+	} else if result.SkillMsgType != 0 && target != nil && !result.SkillMsgInDamage {
 		sendSkillMessage()
 	} else if result.RetaliateHitAfterMessages {
 		sendLiteralMessages()
@@ -1661,11 +1661,16 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				slog.Error("cutthroat initial attack failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
 			}
 		}
-	} else if result.SkillMsgInDamage && result.DamageSkill == game.SkillDisembowel && target != nil {
+	} else if result.SkillMsgInDamage && target != nil {
 		// do_disembowel calls damage(), which owns the post-position skill_message
 		// and the death_cry/raw_kill ordering. Keep that complete path together so
 		// lethal and zero-damage hit() outcomes both select the right C variant.
-		s.GetWorld().DoDisembowelDamage(ch, target, result.Damage)
+		switch result.DamageSkill {
+		case game.SkillDisembowel:
+			s.GetWorld().DoDisembowelDamage(ch, target, result.Damage)
+		case game.SkillGroinrip:
+			s.GetWorld().DoGroinripDamage(ch, target, result.Damage)
+		}
 	} else if result.Damage > 0 && target != nil {
 		// Route through DoSpellDamage so skill damage uses the same death
 		// pipeline as combat and spells: corpse creation, XP award, kill counter,
@@ -1727,8 +1732,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// no stubbing or dummy draws). DoSpellDamage draws no RNG for these
 	// skills (fixed damage formula; ApplyDamageModifiers is draw-free), so
 	// message-dice → improve-draw is the exact C sequence. DP-1212.
-	for _, skill := range result.DeferredImprove {
-		game.ImproveSkill(ch, skill)
+	if !result.DeferredImproveAfterRoom {
+		for _, skill := range result.DeferredImprove {
+			game.ImproveSkill(ch, skill)
+		}
 	}
 
 	// Apply position changes
@@ -1758,13 +1765,22 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		world := s.GetWorld()
 		players := world.GetPlayersInRoom(roomVNum)
 		for _, p := range players {
-			if p.Name == ch.Name {
+			if p.Name == ch.Name && !result.RoomIncludesActor {
 				continue
 			}
 			if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
 				continue
 			}
 			p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
+		}
+	}
+
+	if result.SpawnPuke {
+		s.GetWorld().MaybeSpawnPuke(ch.GetRoom())
+	}
+	if result.DeferredImproveAfterRoom {
+		for _, skill := range result.DeferredImprove {
+			game.ImproveSkill(ch, skill)
 		}
 	}
 
@@ -2018,6 +2034,9 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 	if !canUse {
 		return s.SendMessage(msg)
 	}
+	if ch.IsMounted() {
+		return s.SendMessage("Dismount first!\r\n")
+	}
 
 	var target combat.Combatant
 	var found bool
@@ -2028,12 +2047,21 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 		if fighting == "" {
 			return s.SendMessage("Groinrip who?\r\n")
 		}
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		// C falls back to the FIGHTING(ch) pointer when no argument is
+		// supplied. Go stores that state by display name, so resolve it
+		// through the pointer-preserving helper rather than get_char_room_vis
+		// keyword matching (R1/R5e).
+		resolved, ok := world.ResolveFightingTarget(ch)
+		if ok {
+			target = resolved.Combatant
+			found = true
+		}
 		if !found {
 			return s.SendMessage("They don't seem to be here.\r\n")
 		}
 	} else {
-		targetName := strings.Join(args, " ")
+		// C one_argument() consumes only the first word and discards the rest.
+		targetName := args[0]
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
 		if !found {
 			return s.SendMessage("Groinrip who?\r\n")

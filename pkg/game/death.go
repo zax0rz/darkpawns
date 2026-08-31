@@ -777,6 +777,7 @@ const (
 	SkillChargeNum      = 147
 	SkillSerpentKickNum = 156
 	SkillCircleNum      = 173
+	SkillGroinripNum    = 174
 	SkillDisembowelNum  = 184
 	SkillSleeperNum     = 187
 	SkillNeckbreakNum   = 190

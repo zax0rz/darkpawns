@@ -1,0 +1,86 @@
+# With no argument, do_groinrip falls back to FIGHTING(ch) after target lookup
+# fails. The ordinary hit starts combat; the pulse drains its wait state before
+# the no-argument groinrip command is issued.
+
+# depth-case: groinrip.fighting-fallback
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Grifbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grifbgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Grifbact
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Grifbact
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Grifbact 'groinrip' 75
+
+[probe:actor]
+hit trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+groinrip

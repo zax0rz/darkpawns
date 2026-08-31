@@ -1,0 +1,75 @@
+# A visible female player reaches the sex gate after self, shopkeeper, and
+# immortal-victim checks, without consuming the outcome roll.
+
+# depth-case: groinrip.nonmale-target
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Groinripfemalegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groinripfemalegod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:female]
+Groinripgirl
+Y
+femalepass
+femalepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:female]
+Groinripgirl
+y
+femalepass
+femalepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Groinripgirl 8105
+skillset Groinripfemalegod 'groinrip' 75
+
+[probe]
+groinrip Groinripgirl
