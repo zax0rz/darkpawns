@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	heh	heh.entry-gate	D1	command	unit-green	TestHehRegistrationUsesCEntryGate	interpreter.c:489; act.social.c:102-121	The registered C row is POS_RESTING with no command minimum level; the focused test pins the social's zero hide/victim-position metadata and its authored messages.
+do_action	heh	heh.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:489; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	heh	heh.no-argument	D2	audience	oracle-green-multiseed	heh-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1381-1383	No argument emits the exact actor You heh. line and the authored $n hehs. room line.
+do_action	heh	heh.argument-ignored	D2	command	oracle-green-multiseed	heh-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1381-1383	Because char_found is NULL, a visible target plus trailing words is ignored and the no-argument actor/room pair remains the C path.
+do_action	heh	heh.missing-target-ignored	D2	command	oracle-green-multiseed	heh-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1381-1383	A missing target is also ignored because this self-only record has no target lookup or not-found branch.
+do_action	heh	heh.self-target-ignored	D2	audience	oracle-green-multiseed	heh-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1381-1383	A self-named target remains on the no-argument actor/room pair rather than entering a self-target branch.
+do_action	heh	heh.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance social matrix.
+do_action	heh	heh.visibility	D3	shared	delegated	socials-depth	act.social.c:102-121; comm.c:2392-2555	The no-target room audience uses the shared Act visibility behavior.
