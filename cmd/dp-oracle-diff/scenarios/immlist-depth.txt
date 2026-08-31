@@ -1,0 +1,44 @@
+# C-first depth vehicle for do_gen_ps(SCMD_IMMLIST) at
+# src/interpreter.c:514 and src/act.informative.c:2117-2144. The command
+# serves the boot-cached lib/text/immlist string through page_string; this
+# authored file fits one page, and do_gen_ps ignores trailing arguments.
+#
+# depth-case: immlist.static-page
+# depth-case: immlist.arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Immlistdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Immlistdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+immlist
+immlist trailing words are ignored
