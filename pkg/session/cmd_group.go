@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdFollow(s *Session, args []string) error {
@@ -23,83 +25,165 @@ func cmdShadow(s *Session, args []string) error {
 // cmdGroup adds/removes players from a group, or prints group status.
 // Source: act.other.c do_group() lines 685–740 and perform_group() lines 624–635
 func cmdGroup(s *Session, args []string) error {
-	// No args: print group — act.other.c do_group() line 693
-	if len(args) == 0 {
+	// do_group begins with one_argument(), which skips leading fill words and
+	// discards the remainder. Reconstruct the raw argument text lost by the
+	// command wrapper before applying that C parser.
+	argument, _ := game.OneArgument(strings.Join(args, " "))
+	if argument == "" {
 		return printGroup(s)
 	}
 
 	// Must have no master to enroll others — act.other.c line 699
 	if s.player.GetFollowing() != "" {
-		s.sendText("You cannot enroll group members without being head of a group.")
+		game.Act(nil, false, s.player, nil, nil, nil,
+			"You can not enroll group members without being head of a group.", "", game.ToChar)
 		return nil
 	}
 
-	targetName := strings.Join(args, " ")
-
 	// "group all" — act.other.c lines 706–717
-	if strings.EqualFold(targetName, "all") {
-		s.player.InGroup = true
+	if strings.EqualFold(argument, "all") {
+		performGroup(s, s.player)
 		found := 0
-		for _, f := range s.manager.world.GetFollowersInRoom(s.player.Name, s.player.GetRoom()) {
-			if !f.InGroup {
-				f.InGroup = true
-				s.sendText(fmt.Sprintf("%s is now a member of your group.", f.Name))
-				f.SendMessage(fmt.Sprintf("You are now a member of %s's group.\r\n", s.player.Name))
-				found++
+		for _, follower := range s.manager.world.GetFollowerActorsInRoom(s.player.Name, s.player.GetRoom()) {
+			if isShadowing(follower) {
+				continue
 			}
+			found += performGroup(s, follower)
 		}
 		if found == 0 {
-			s.sendText("Everyone following you here is already in your group.")
+			s.player.SendMessage("Everyone following you here is already in your group.\r\n")
 		}
 		return nil
 	}
 
 	// Single target — act.other.c lines 719–738
-	target, ok := s.manager.world.GetPlayer(targetName)
+	target, ok := s.manager.world.ResolveCharInRoom(s.player, argument)
 	if !ok {
-		s.sendText("There is no one by that name here.")
+		s.player.SendMessage("No-one by that name here.\r\n")
+		return nil
+	}
+	victim := groupActor(target)
+	if victim == nil {
 		return nil
 	}
 
 	// Target must be following us — act.other.c line 721: vict->master != ch
 	// Agent exception: agents auto-follow and auto-accept the invite.
-	if target.GetFollowing() != s.player.Name {
-		targetSess, hasSess := s.manager.GetSession(target.Name)
-		if hasSess && targetSess.isAgent {
+	if !follows(victim, s.player) && victim != s.player {
+		targetPlayer, isPlayer := victim.(*game.Player)
+		targetSess, hasSess := s.manager.GetSession(victim.GetName())
+		if isPlayer && hasSess && targetSess.isAgent {
 			// Agent auto-follow — mirrors BRENDA accepting an invite
-			target.SetFollowing(s.player.Name)
-			target.InGroup = false
-			target.SendMessage(fmt.Sprintf("You start following %s.\r\n", s.player.Name))
-			s.sendText(fmt.Sprintf("%s starts following you.", target.Name))
+			targetPlayer.SetFollowing(s.player.Name)
+			setGrouped(targetPlayer, false)
+			targetPlayer.SendMessage(fmt.Sprintf("You start following %s.\r\n", s.player.Name))
+			s.player.SendMessage(fmt.Sprintf("%s starts following you.\r\n", targetPlayer.Name))
 		} else {
-			s.sendText(fmt.Sprintf("%s must follow you to enter your group.", target.Name))
+			game.Act(nil, false, s.player, victim, nil, nil,
+				"$N must follow you to enter your group.", "", game.ToChar)
 			return nil
 		}
 	}
 
 	// Toggle membership — perform_group() / kick-out path (act.other.c lines 726–738)
-	if !target.InGroup {
-		// perform_group(): SET_BIT AFF_GROUP
-		target.InGroup = true
-		s.player.InGroup = true // leader is also in the group
-		if target.Name != s.player.Name {
-			s.sendText(fmt.Sprintf("%s is now a member of your group.", target.Name))
-		}
-		target.SendMessage(fmt.Sprintf("You are now a member of %s's group.\r\n", s.player.Name))
+	if !isGrouped(victim) {
+		performGroup(s, victim)
 	} else {
 		// Kick out — REMOVE_BIT AFF_GROUP (act.other.c line 737)
-		target.InGroup = false
-		s.sendText(fmt.Sprintf("%s is no longer a member of your group.", target.Name))
-		target.SendMessage(fmt.Sprintf("You have been kicked out of %s's group!\r\n", s.player.Name))
+		if victim != s.player {
+			game.Act(nil, false, s.player, victim, nil, nil,
+				"$N is no longer a member of your group.", "", game.ToChar)
+		}
+		game.Act(nil, false, s.player, victim, nil, nil,
+			"You have been kicked out of $n's group!", "", game.ToVict)
+		game.Act(s.manager.world, false, s.player, victim, nil, nil,
+			"$N has been kicked out of $n's group!", "", game.ToNotVict)
+		setGrouped(victim, false)
 	}
 	return nil
+}
+
+// groupActor extracts the concrete Actor needed by the canonical act() and
+// visibility paths from ResolveCharInRoom's typed result.
+func groupActor(target game.CharTarget) game.Actor {
+	if target.Player != nil {
+		return target.Player
+	}
+	if target.Mob != nil {
+		return target.Mob
+	}
+	return nil
+}
+
+func follows(victim game.Actor, leader game.Actor) bool {
+	if victim == nil || leader == nil {
+		return false
+	}
+	var following string
+	switch ch := victim.(type) {
+	case *game.Player:
+		following = ch.GetFollowing()
+	case *game.MobInstance:
+		following = ch.GetFollowing()
+	default:
+		return false
+	}
+	return strings.EqualFold(following, leader.GetName())
+}
+
+func isGrouped(victim game.Actor) bool {
+	switch ch := victim.(type) {
+	case *game.Player:
+		return ch.IsAffected(game.AffGroup) || ch.IsInGroup()
+	case *game.MobInstance:
+		return ch.IsAffected(game.AffGroup)
+	default:
+		return false
+	}
+}
+
+func setGrouped(victim game.Actor, grouped bool) {
+	switch ch := victim.(type) {
+	case *game.Player:
+		ch.SetInGroup(grouped)
+		ch.SetAffect(game.AffGroup, grouped)
+	case *game.MobInstance:
+		if grouped {
+			ch.SetAffected(game.AffGroup)
+		} else {
+			ch.RemoveAffected(game.AffGroup)
+		}
+	}
+}
+
+func isShadowing(victim game.Actor) bool {
+	player, ok := victim.(*game.Player)
+	return ok && player.IsAffected(game.AffDodge)
+}
+
+// performGroup ports act.other.c:624-635. It returns one only when the
+// victim newly receives AFF_GROUP, which is the C do_group "found" count.
+func performGroup(s *Session, victim game.Actor) int {
+	if victim == nil || isGrouped(victim) || !game.CanSee(s.player, victim) {
+		return 0
+	}
+	setGrouped(victim, true)
+	if victim != s.player {
+		game.Act(nil, false, s.player, victim, nil, nil,
+			"$N is now a member of your group.", "", game.ToChar)
+	}
+	game.Act(nil, false, s.player, victim, nil, nil,
+		"You are now a member of $n's group.", "", game.ToVict)
+	game.Act(s.manager.world, false, s.player, victim, nil, nil,
+		"$N is now a member of $n's group.", "", game.ToNotVict)
+	return 1
 }
 
 // printGroup displays the current group composition.
 // Source: act.other.c print_group() lines 638–681
 func printGroup(s *Session) error {
-	if !s.player.InGroup {
-		s.sendText("But you are not the member of a group!")
+	if !isGrouped(s.player) {
+		s.player.SendMessage("But you are not the member of a group!\r\n")
 		return nil
 	}
 
@@ -110,25 +194,42 @@ func printGroup(s *Session) error {
 
 	leader, ok := s.manager.world.GetPlayer(leaderName)
 	if !ok {
-		s.sendText("Your group leader is not online.")
+		s.player.SendMessage("Your group leader is not online.\r\n")
 		return nil
 	}
 
-	var sb strings.Builder
-	sb.WriteString("Your group consists of:\r\n")
-	if leader.InGroup {
-		fmt.Fprintf(&sb, "     [%3dH %3dM] [%2d] %s (Head of group)\r\n",
-			leader.Health, leader.Mana, leader.Level, leader.Name)
+	s.player.SendMessage("Your group consists of:\r\n")
+	if isGrouped(leader) {
+		sendGroupMemberLine(s, leader, true)
 	}
-	for _, m := range s.manager.world.GetGroupMembers(leaderName) {
-		if m.Name == leaderName {
-			continue // already printed above
+	for _, follower := range s.manager.world.GetFollowerActors(leaderName) {
+		if isGrouped(follower) {
+			sendGroupMemberLine(s, follower, false)
 		}
-		fmt.Fprintf(&sb, "     [%3dH %3dM] [%2d] %s\r\n",
-			m.Health, m.Mana, m.Level, m.Name)
 	}
-	s.sendText(sb.String())
 	return nil
+}
+
+func sendGroupMemberLine(s *Session, member game.Actor, head bool) {
+	if mob, ok := member.(*game.MobInstance); ok {
+		game.Act(s.manager.world, false, s.player, mob, nil, nil,
+			"     [---H ---M ---V] [-- --] $N", "", game.ToChar)
+		return
+	}
+	player, ok := member.(*game.Player)
+	if !ok {
+		return
+	}
+	class := "??"
+	if n := player.GetClass(); n >= 0 && n < len(game.ClassAbbrevs) {
+		class = game.ClassAbbrevs[n]
+	}
+	format := fmt.Sprintf("     [%3dH %3dM %3dV] [%2d %s] $N",
+		player.GetHealth(), player.GetMana(), player.GetMove(), player.GetLevel(), class)
+	if head {
+		format += " (Head of group)"
+	}
+	game.Act(s.manager.world, false, s.player, player, nil, nil, format, "", game.ToChar)
 }
 
 // cmdUngroup removes a player from the group or disbands the entire group.

@@ -49,6 +49,8 @@ const (
 // Exported constants for compatibility with outside packages (e.g. command)
 const (
 	AffBlind      = affBlind
+	AffDodge      = affDodge
+	AffGroup      = affGroup
 	AffSleep      = affSleep
 	AffCharm      = affCharm
 	AffHide       = affHide

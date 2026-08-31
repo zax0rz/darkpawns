@@ -1,0 +1,20 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_group	group	group.entry-gate	D1	command	unit-green	TestGroupRegistrationUsesCEntryGate	interpreter.c:471; comm.c:910-947	The C registration admits level 1 characters at POS_SLEEPING.
+do_group	group	group.position-gate	D1	command	unit-green	TestGroupRegistrationUsesCEntryGate	interpreter.c:471; comm.c:910-947	The shared command gate preserves the C POS_SLEEPING entry position.
+do_group	group	group.no-argument	D1	command	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:685-698	No argument dispatches to print_group and preserves the exact not-in-group text.
+do_group	group	group.no-argument-gate	D1	command	oracle-green-multiseed	group-gates-depth@1,2,3,5,8	act.other.c:685-698	A fresh character with no group receives print_group's exact refusal.
+do_group	group	group.fill-word-no-argument	D2	command	oracle-green-multiseed	group-gates-depth@1,2,3,5,8	interpreter.c:1265-1283; act.other.c:687-698	Leading fill words are skipped, so a fill-only argument reaches the no-argument branch.
+do_group	group	group.one-argument	D2	command	oracle-green-multiseed	group-depth@1,2,3,5,8	interpreter.c:1265-1283; act.other.c:687-727	C one_argument skips leading fill words and ignores trailing words before target lookup.
+do_group	group	group.missing-target	D1	command	oracle-green-multiseed	group-gates-depth@1,2,3,5,8	act.other.c:719-725; config.c:93	An unresolved room target emits NOPERSON exactly.
+do_group	group	group.target-must-follow	D1	command	oracle-green-multiseed	group-gates-depth@1,2,3,5,8	act.other.c:719-725	A visible room character who is not the actor's follower receives the C follower refusal.
+do_group	group	group.master-refusal	D1	command	oracle-green-multiseed	group-gates-depth@1,2,3,5,8	act.other.c:697-703	A character with a master cannot enroll group members.
+do_group	group	group.target-out-of-room	D1	command	oracle-green-multiseed	group-room-depth@1,2,3,5,8	handler.c:1276-1300; act.other.c:719-725	get_char_room_vis does not resolve an otherwise-online player in another room.
+do_group	group	group.visible-mob-target	D2	command	oracle-green-multiseed	group-mob-depth@1,2,3,5,8	handler.c:1276-1300; act.other.c:719-725	Room lookup reaches a visible NPC before applying the follower gate.
+do_group	group	group.accept-audience	D3	audience	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:624-635; comm.c:2392-2555	A newly accepted follower receives victim text while the actor and room peers receive their respective Act audiences.
+do_group	group	group.accept-does-not-self-enroll	D2	state	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:624-635; act.other.c:685-717	Single-target perform_group changes only the selected victim; group all is the separate self-enrollment path.
+do_group	group	group.all-audience	D3	audience	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:685-717	The all path groups the actor and eligible followers and preserves actor, victim, and non-victim broadcasts.
+do_group	group	group.print-members	D3	command	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:638-681	print_group renders head and grouped followers with HP, mana, move, level, and class fields.
+do_group	group	group.kick-audience	D3	audience	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:726-738; comm.c:2392-2555	Kicking clears only AFF_GROUP and emits the exact actor, victim, and room-peer messages.
+do_group	group	group.reaccept	D3	audience	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:719-738	A kicked follower can be accepted again without changing the follow relation.
+do_group	group	group.all-already-grouped	D1	command	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:706-717	When perform_group finds no newly eligible follower, the C already-grouped line is emitted.
+do_group	group	group.self-kick	D3	audience	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:719-738	A grouped self-target follows the C kick path: victim text goes to the actor and the room receives the non-victim broadcast.
