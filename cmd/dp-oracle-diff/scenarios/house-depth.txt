@@ -1,0 +1,90 @@
+# C-first house/do_house vehicle (src/interpreter.c:502; src/house.c:603-718).
+# The fixture creates a private house at 8162 with atrium 8161 and maps the
+# seeded C owner ID 1 to the no-DB Go Testor ID 0. The online guest makes
+# get_id_by_name reachable in both engines.
+
+# depth-case: house.usage
+# depth-case: house.guest-list-empty
+# depth-case: house.guest-add
+# depth-case: house.guest-list
+# depth-case: house.guest-delete
+# depth-case: house.guest-not-found
+# depth-case: house.fill-word-boundary
+# depth-case: house.transfer-usage
+# depth-case: house.transfer-not-found
+# depth-case: house.transfer-success
+# depth-case: house.owner-gate-after-transfer
+# depth-case: house.unknown-subcommand
+
+[fixture]
+quiet-mobs
+house-control 8162 8161 north 1 0 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:guest]
+Houseguest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:guest]
+Houseguest
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Houseguest 8162
+~dpclock pulse 20
+
+[probe]
+house
+house guest
+house guest Nobody
+house guest Houseguest
+house guest
+house guest Houseguest trailing words are ignored
+house guest
+house guest the Houseguest
+house transfer
+house transfer Nobody
+house nonsense
+house transfer Houseguest trailing words are ignored

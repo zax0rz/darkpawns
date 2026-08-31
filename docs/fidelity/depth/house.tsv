@@ -1,0 +1,21 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_house	house	house.entry-gate	D1	command	oracle-green	house-entry-gates-depth	interpreter.c:502; house.c:603-616	Outside ROOM_HOUSE, C returns the exact must-be-in-your-house line before control lookup or argument parsing.
+do_house	house	house.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:502; comm.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle.
+do_house	house	house.usage	D1	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:620-632	A bare house command emits the two-line C usage text.
+do_house	house	house.guest-list-empty	D2	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:635-648	An owner with no guests receives the exact header and None line.
+do_house	house	house.guest-not-found	D2	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:654-656	An unknown guest name reaches the exact No such player branch.
+do_house	house	house.guest-add	D2	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:654-676	The online guest is added and C's success byte matches.
+do_house	house	house.guest-list	D3	audience	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:635-651	The post-add listing returns the title-cased online guest name.
+do_house	house	house.guest-delete	D2	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:658-666	Repeating the guest name toggles the record entry out and emits Guest deleted.
+do_house	house	house.fill-word-boundary	D2	command	unit-green	TestDoHouseMatchesCArgumentAndStateBoundaries	house.c:626; interpreter.c:1341-1343	C two_arguments skips the fill word before Guest and discards trailing words; the focused test pins the resulting add.
+do_house	house	house.transfer-usage	D2	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:682-686	A transfer without a target emits the exact C prompt.
+do_house	house	house.transfer-not-found	D2	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:687-691	An unknown transfer target emits No such player.
+do_house	house	house.transfer-success	D2	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:692-700	A valid target changes the in-memory owner and preserves C's intentional transfered spelling.
+do_house	house	house.owner-gate-after-transfer	D4	state	unit-green	TestDoHouseMatchesCArgumentAndStateBoundaries	house.c:616-619; 692-700	The former owner is rejected after the successful in-memory transfer.
+do_house	house	house.unknown-subcommand	D1	command	oracle-green-multiseed	house-depth@1,2,3,5,8	house.c:688-718	An unrecognized first token falls through the handler silently; Go no longer invents a usage fallback.
+do_house	house	house.malformed-control	D1	command	unit-green	TestDoHouseHandlesMalformedAndFullGuestControls	house.c:613-616	A ROOM_HOUSE room without a matching control record emits the screwed-up-house diagnostic.
+do_house	house	house.guest-cleanup	D4	state	unit-green	TestDoHouseHandlesMalformedAndFullGuestControls	house.c:635-644	Missing guest IDs are removed from the list before the visible guest listing and control save.
+do_house	house	house.guest-cap	D2	command	unit-green	TestDoHouseHandlesMalformedAndFullGuestControls	house.c:668-673	A full MAX_GUESTS record takes the exact capacity refusal before mutation.
+do_house	house	house.transfer-state	D4	state	unit-green	TestDoHouseMatchesCArgumentAndStateBoundaries	house.c:692-700	The successful transfer updates the control owner without changing unrelated guest state.
+do_house	house	house.transfer-save-boundary	D4	state	unit-green	TestDoHouseMatchesCArgumentAndStateBoundaries	house.c:692-700	C do_house does not call House_save_control after transfer; the focused test pins the existing file owner.
+do_house	house	house.runtime-id-lookup	D4	state	unit-green	TestAddPlayerAssignsUniqueRuntimeIDsForHouseLookups	world.go:421-455; house.c:654-676	No-DB runtime players receive distinct IDs after the first zero-ID player so the C-style guest ID/name lookup cannot alias the owner.

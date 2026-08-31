@@ -426,6 +426,35 @@ func (w *World) AddPlayer(p *Player) error {
 		return fmt.Errorf("player %s already online", p.Name)
 	}
 
+	// Database-backed players already have persistent IDs. In a no-DB
+	// differential/runtime session, new characters start at ID 0; retain that
+	// first ID for fixture ownership, but give later zero-ID players distinct
+	// runtime IDs so ID↔name lookups (notably house guests) cannot alias them.
+	if p.ID == 0 {
+		zeroIDInUse := false
+		for _, existing := range w.players {
+			if existing.ID == 0 {
+				zeroIDInUse = true
+				break
+			}
+		}
+		if zeroIDInUse {
+			for candidate := 1; ; candidate++ {
+				used := false
+				for _, existing := range w.players {
+					if existing.ID == candidate {
+						used = true
+						break
+					}
+				}
+				if !used {
+					p.ID = candidate
+					break
+				}
+			}
+		}
+	}
+
 	p.mu.Lock()
 	p.worldRef = w
 	p.mu.Unlock()
