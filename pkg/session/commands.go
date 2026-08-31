@@ -788,6 +788,9 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if commandGateRejected(s, commandGate{MinLevel: entry.MinLevel, MinPosition: entry.MinPosition}) {
 		return nil
 	}
+	if (cmd == "help" || cmd == "?") && rawArgs != "" {
+		return cmdHelpText(s, rawArgs)
+	}
 	if (cmd == "gtell" || cmd == "gsay") && rawArgs != "" {
 		return cmdGtellText(s, rawArgs)
 	}

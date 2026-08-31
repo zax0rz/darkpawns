@@ -1,0 +1,49 @@
+# C-first immortal branch for the same do_help path. empty-players crowns the
+# primary as the Implementor, so the wizonly marker is visible rather than
+# being hidden as a miss. The remaining probes repeat the shared entry, alias,
+# prefix, and pager branches from help-depth with an immortal actor.
+
+# depth-case: help.wizonly-visible
+# depth-case: help.alias-entry-gate
+# depth-case: help.alias-immortal
+# depth-case: help.no-argument-pager-immortal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Helpimm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Helpimm
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+help advance
+? cure light
+help s
+help
+q
