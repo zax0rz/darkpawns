@@ -1,0 +1,113 @@
+# C-first flirt/do_action vehicle (src/interpreter.c:449;
+# src/act.social.c:102-151; lib/misc/socials:240-248). The standing peer and
+# room observer expose the complete target audience; the focused unit vehicle
+# covers the sleeping-target minimum-position branch.
+
+# depth-case: flirt.no-argument
+# depth-case: flirt.target-success
+# depth-case: flirt.self-target
+# depth-case: flirt.target-not-found
+# depth-case: flirt.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Flirtactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Flirtactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Flirtpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Flirtpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:roompeer]
+Flirtroom
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:roompeer]
+Flirtroom
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Flirtpeer 8004
+teleport Flirtroom 8004
+
+[probe]
+flirt
+flirt Flirtpeer
+flirt Flirtactor
+flirt Nobody
+flirt the Flirtpeer trailing words are ignored
