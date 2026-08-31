@@ -1,0 +1,131 @@
+# C-first group-say vehicle for both interpreter rows (src/interpreter.c:483-484;
+# src/act.comm.c:824-870). The first player is the temporary bootstrap God so
+# the probe can form a disposable group, put a member to sleep, and toggle
+# norepeat without editing world data.
+
+# depth-case: gsay.entry-gate
+# depth-case: gtell.entry-gate
+# depth-case: gsay.not-in-group
+# depth-case: gtell.not-in-group
+# depth-case: gsay.no-argument
+# depth-case: gtell.no-argument
+# depth-case: gsay.group-audience
+# depth-case: gtell.alias-audience
+# depth-case: gsay.norepeat
+# depth-case: gsay.sleeping-recipient
+# depth-case: gtell.spacing
+# depth-case: gsay.ansi-controls
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Gsayleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gsayleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gsaypeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gsaypeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Gsayobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Gsayobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Gsaypeer 8162
+teleport Gsayobserver 8162
+
+[probe]
+gsay hello-before-group
+gtell hello-before-group
+gsay
+gtell
+force Gsaypeer follow Gsayleader
+force Gsayobserver follow Gsayleader
+group all
+gsay hello group
+gtell hello alias
+norepeat
+gsay hidden echo
+norepeat
+force Gsaypeer sleep
+gsay sleeping peer
+gtell multiple    spaces
+gsay &Rred&n
