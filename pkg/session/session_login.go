@@ -411,11 +411,11 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	// game-loop routing in C) and does not touch sendCharInput/sendPagerInput.
 	// Internal ExecuteCommand callers (order/force) bypass handleCommand and
 	// stay immediate.
-	if s.player != nil && s.tryExecuteNow(cmd.Command, cmd.Args) {
+	if s.player != nil && s.tryExecuteNow(cmd.Command, cmd.Args, cmd.RawArgs) {
 		return nil
 	}
 
-	err := ExecuteCommand(s, cmd.Command, cmd.Args)
+	err := executeCommandRaw(s, cmd.Command, cmd.Args, true, cmd.RawArgs)
 
 	// Emit dynamic execution telemetry warning for slow commands (>500ms)
 	elapsed := time.Since(startTime)

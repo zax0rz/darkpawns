@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gecho	gecho	gecho.entry-gate	D1	command	unit-green	TestGechoRegistrationUsesCEntryGate	interpreter.c:462; interpreter.c:883-947	The registered C row is POS_DEAD with LVL_GOD minimum authority.
+do_gecho	gecho	gecho.empty	D1	command	oracle-green-multiseed	gecho-depth@1,2,3,5,8	act.wizard.c:1690-1698	Leading spaces are skipped and empty argument emits the exact That must be a mistake... refusal without a peer broadcast.
+do_gecho	gecho	gecho.broadcast	D3	audience	oracle-green-multiseed	gecho-depth@1,2,3,5,8	act.wizard.c:1699-1702; comm.c:2392-2555	A non-empty message is delivered to every other playing descriptor and retains the actor's own copy.
+do_gecho	gecho	gecho.spacing	D2	command	oracle-green-multiseed	gecho-depth@1,2,3,5,8	act.wizard.c:1694-1699; interpreter.c:883-915	C removes only leading command whitespace; internal message spacing is preserved in the exact broadcast and actor copy.
+do_gecho	gecho	gecho.norepeat	D3	audience	oracle-green-multiseed	gecho-norepeat-depth@1,2,3,5,8	act.wizard.c:1699-1707; comm.c:2392-2555	PRF_NOREPEAT suppresses the actor's echoed message in favor of C's Okay.\r\n while the other descriptor still receives the global message.
+do_gecho	gecho	gecho.wait-queue-spacing	D5	state	unit-green	TestGechoQueuedInputPreservesRawArgs	comm.c:603; act.wizard.c:1694-1707	A gecho queued behind C wait-state preserves the original internal and trailing argument spacing when the heartbeat drains it.

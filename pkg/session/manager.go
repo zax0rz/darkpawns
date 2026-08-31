@@ -715,6 +715,7 @@ func (m *Manager) shouldCrownFirstPlayer() bool {
 type queuedInput struct {
 	cmd     string
 	args    []string
+	rawArgs string
 	aliased bool
 }
 
@@ -732,11 +733,15 @@ type queuedInput struct {
 // A drains without setting a new wait, then a freshly-typed C arrives while
 // wait==0 — C must still go behind B). The fast path is taken only when BOTH
 // wait==0 AND the queue is empty.
-func (s *Session) tryExecuteNow(cmd string, args []string) bool {
+func (s *Session) tryExecuteNow(cmd string, args []string, rawArgText ...string) bool {
 	s.inputMu.Lock()
 	defer s.inputMu.Unlock()
 	if (s.player != nil && s.player.GetWaitState() > 0) || len(s.inputQueue) > 0 {
-		s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args})
+		rawArgs := ""
+		if len(rawArgText) > 0 {
+			rawArgs = rawArgText[0]
+		}
+		s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args, rawArgs: rawArgs})
 		return true
 	}
 	return false
@@ -805,6 +810,7 @@ func (m *Manager) DrainInputQueues() {
 		s       *Session
 		cmd     string
 		args    []string
+		rawArgs string
 		aliased bool
 	}
 
@@ -819,14 +825,14 @@ func (m *Manager) DrainInputQueues() {
 		// Fact 3: one command drains per pulse (if, not while).
 		if s.player.GetWaitState() <= 0 {
 			if input, ok := s.dequeueInput(); ok {
-				jobs = append(jobs, drainJob{s: s, cmd: input.cmd, args: input.args, aliased: input.aliased})
+				jobs = append(jobs, drainJob{s: s, cmd: input.cmd, args: input.args, rawArgs: input.rawArgs, aliased: input.aliased})
 			}
 		}
 	}
 	m.mu.RUnlock()
 
 	for _, job := range jobs {
-		if err := executeCommand(job.s, job.cmd, job.args, !job.aliased); err != nil {
+		if err := executeCommandRaw(job.s, job.cmd, job.args, !job.aliased, job.rawArgs); err != nil {
 			slog.Error("drained command failed",
 				"player", job.s.playerName, "command", job.cmd, "error", err)
 		}

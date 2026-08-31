@@ -1,0 +1,78 @@
+# C-first global echo vehicle (src/interpreter.c:462; src/act.wizard.c:1690-1707).
+# The first player is crowned by empty-players and acts as the LVL_IMPL gecho
+# issuer; a second playing descriptor proves the global audience.
+
+# depth-case: gecho.empty
+# depth-case: gecho.broadcast
+# depth-case: gecho.spacing
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Godgecho
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godgecho
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gechoviewer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gechoviewer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Gechoviewer 8162
+
+[probe]
+gecho
+gecho Global signal.
+gecho Alpha  beta  gamma
