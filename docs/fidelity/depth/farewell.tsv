@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	farewell	farewell.entry-gate	D1	command	unit-green	TestFarewellRegistrationUsesCEntryGate	interpreter.c:441; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
+do_action	farewell	farewell.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:441; interpreter.c:910-947	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
+do_action	farewell	farewell.no-argument	D2	audience	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:1476-1484	The no-argument record emits the actor and room farewell messages.
+do_action	farewell	farewell.target-success	D3	audience	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:1476-1484	A visible target receives the actor, non-victim room, and victim messages.
+do_action	farewell	farewell.target-audience	D3	audience	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555	Named peers prove all three C Act audiences and pronoun substitutions.
+do_action	farewell	farewell.argument-first-token	D2	command	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:114-121; one_argument; lib/misc/socials:1476-1484	Only the first argument token selects the target; trailing words do not change the record branch.
+do_action	farewell	farewell.not-found	D1	command	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:1476-1484	An unresolved visible-room target emits Farewell to whom?.
+do_action	farewell	farewell.self-target	D2	audience	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:1476-1484	A self target takes the char_auto and others_auto branches.
+do_action	farewell	farewell.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT do_action gate is proven by the dance social matrix.
+do_action	farewell	farewell.visibility	D3	shared	delegated	socials-depth	act.social.c:128-151; handler.c:1276-1300	Visible target lookup and CAN_SEE audience gating are shared with the social matrix.
