@@ -1,0 +1,81 @@
+# C-first grumble self-only social vehicle (src/interpreter.c:482;
+# act.social.c:102-130; lib/misc/socials:370-373). Because char_found is #,
+# do_action ignores every typed argument and always emits the no-argument actor
+# and room pair.
+
+# depth-case: grumble.no-argument
+# depth-case: grumble.argument-ignored
+# depth-case: grumble.missing-target-ignored
+# depth-case: grumble.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Grumbleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grumbleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Grumbleobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Grumbleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Grumbleobserver 8162
+
+[probe]
+grumble
+grumble Grumbleobserver trailing words are ignored
+grumble Nobody
+grumble Grumbleactor
