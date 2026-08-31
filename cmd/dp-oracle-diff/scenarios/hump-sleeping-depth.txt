@@ -1,0 +1,106 @@
+# C-first hump/do_action sleeping-victim vehicle (src/interpreter.c:506;
+# act.social.c:102-151; lib/misc/socials:1232-1240). The social requires a
+# standing victim, so the wizard warmup forces the named target to sleep before
+# the compared probe.
+
+# depth-case: hump.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Humpsleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Humpsleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Humpsleepobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Humpsleepobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Humpsleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Humpsleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Humpsleepobserver 8162
+teleport Humpsleeptarget 8162
+force Humpsleeptarget sleep
+
+[probe]
+hump Humpsleeptarget
