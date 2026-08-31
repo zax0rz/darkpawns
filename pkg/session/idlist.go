@@ -77,9 +77,8 @@ func idlistMobRaceName(value int) string {
 func idlistBitArray(words [4]int, names []string) string {
 	var out strings.Builder
 	for word := range words {
-		bits := uint32(words[word])
-		for bit := 0; bits != 0; bit++ {
-			if bits&1 != 0 {
+		for bit := 0; bit < 32; bit++ {
+			if words[word]&(1<<uint(bit)) != 0 {
 				index := word*32 + bit
 				name := "UNDEFINED"
 				if index < len(names) {
@@ -88,7 +87,6 @@ func idlistBitArray(words [4]int, names []string) string {
 				out.WriteString(name)
 				out.WriteByte(' ')
 			}
-			bits >>= 1
 		}
 	}
 	if out.Len() == 0 {
