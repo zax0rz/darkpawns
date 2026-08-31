@@ -1,0 +1,53 @@
+# C-first home vehicle (src/interpreter.c:500; src/act.wizard.c:3238-3297).
+# The crowned Implementor reaches do_home's load-room setter, usage/error
+# branches, and the no-argument teleport path after setting a valid home.
+
+# depth-case: home.numeric-set
+# depth-case: home.nonnumeric-usage
+# depth-case: home.invalid-room
+# depth-case: home.no-argument-teleport
+# depth-case: home.one-argument-boundary
+# depth-case: home.look-after-transfer
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Azorath
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Azorath
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+~dpclock pulse 20
+
+[probe]
+home 8105
+home nonsense
+home 999999
+home 8105 trailing words are ignored
+home

@@ -341,20 +341,60 @@ func cmdHome(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	homeVNum := 3001
-	if len(args) > 0 {
-		if v, err := strconv.Atoi(args[0]); err == nil && v > 0 {
-			homeVNum = v
+	raw := strings.Join(args, " ")
+	first, _ := game.OneArgument(raw)
+	if first != "" && isLeadingDigit(first) {
+		// C sets PLR_LOADROOM before find_target_room, including when the
+		// destination is rejected. Keep that mutation on the same path.
+		s.player.SetPlrFlag(game.PlrLoadroom, true)
+		destination, ok := findGotoRoom(s, raw)
+		if !ok {
+			s.Send("That room does not exist.\n")
+			return nil
 		}
+		s.player.SetLoadRoom(destination)
+		s.Send(fmt.Sprintf("Home room set to %d.\n", destination))
+		return nil
 	}
-	oldRoom := s.player.GetRoom()
-	s.player.SetRoom(homeVNum)
-	leaveMsg := []byte(fmt.Sprintf("%s disappears into thin air.\r\n", s.player.Name))
-	s.manager.BroadcastToRoom(oldRoom, leaveMsg, s.player.Name)
-	s.Send(fmt.Sprintf("You arrive at room %d.", homeVNum))
-	s.manager.BroadcastToRoom(homeVNum,
-		[]byte(fmt.Sprintf("%s appears from out of thin air.\r\n", s.player.Name)),
-		s.player.Name)
+	if first != "" {
+		s.Send("Home or Home <room-number>\n")
+		return nil
+	}
+
+	location := s.player.GetLoadRoom()
+	if location <= 0 || s.manager.world.GetRoomInWorld(location) == nil {
+		s.Send("That room does not exist.\n")
+		s.player.SetLoadRoom(1)
+		location = 1
+		s.Send("Error in your home room. Now set to Limbo.\n")
+	}
+
+	// The C source builds this line with overlapping sprintf(buf, "%s ...",
+	// buf); the oracle's actual libc result is the suffix only.
+	s.Send(" pulled into a different reality.\r\n")
+	// The telnet transport canonicalizes a message ending in LF to one CRLF;
+	// using LF here preserves C's single blank line without triggering the
+	// transport's implicit terminator for a message ending in CR.
+	s.Send("\n")
+	poofOut := s.player.PoofOut
+	if poofOut == "" {
+		poofOut = "$n disappears in a blaze of hellfire!"
+	} else {
+		// C's stored poof text is passed through act() as data and the
+		// original command path preserves literal $-codes in this field.
+		// Escape them before the shared act formatter processes the message.
+		poofOut = strings.ReplaceAll(poofOut, "$", "$$")
+	}
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, poofOut, "", game.ToRoom)
+	if err := s.manager.world.PlayerTransfer(s.player, location); err != nil {
+		slog.Error("wizard home transfer failed", "by", s.player.Name, "to", location, "error", err)
+		return err
+	}
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, poofOut, "", game.ToRoom)
+	if err := cmdLook(s, nil); err != nil {
+		slog.Error("wizard home room look failed", "by", s.player.Name, "room", location, "error", err)
+		return err
+	}
 	return nil
 }
 

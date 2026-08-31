@@ -19,11 +19,16 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 		return nil, fmt.Errorf("serialize equipment: %w", err)
 	}
 
+	roomVNum := p.GetRoom()
+	if p.GetFlags()&(1<<uint(game.PlrLoadroom)) != 0 {
+		roomVNum = p.GetLoadRoom()
+	}
+
 	return &PlayerRecord{
 		ID:          p.ID,
 		Name:        p.Name,
 		Description: p.Description,
-		RoomVNum:    p.GetRoom(),
+		RoomVNum:    roomVNum,
 		Level:       p.Level,
 		Exp:         p.Exp,
 		Health:      p.Health,
@@ -79,6 +84,9 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	p.Drunk = r.Drunk
 	p.Hometown = r.Hometown
 	p.SetRoom(r.RoomVNum)
+	// The DB schema's existing room_vnum column is the compatible persistence
+	// seam for C's selected load room; no new save-format field is introduced.
+	p.SetLoadRoom(r.RoomVNum)
 	p.ID = r.ID
 	p.Description = r.Description
 	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
