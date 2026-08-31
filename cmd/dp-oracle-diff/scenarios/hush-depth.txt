@@ -1,0 +1,114 @@
+# C-first hush/do_action target-social vehicle (src/interpreter.c:507;
+# act.social.c:102-151; lib/misc/socials:1506-1514). The record has no
+# invisible-actor suppression and no victim-position minimum, so the vehicle
+# keeps a room observer and an awake target for the full authored tree.
+
+# depth-case: hush.no-argument
+# depth-case: hush.argument-first-token
+# depth-case: hush.target-success
+# depth-case: hush.target-audience
+# depth-case: hush.self-target
+# depth-case: hush.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hushactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hushactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hushobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hushobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Hushtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Hushtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hushobserver 8162
+teleport Hushtarget 8162
+
+[probe]
+hush
+hush the Hushtarget trailing words are ignored
+hush Hushtarget
+hush Hushactor
+hush Nobody

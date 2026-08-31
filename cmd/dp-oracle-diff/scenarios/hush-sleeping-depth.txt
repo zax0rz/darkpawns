@@ -1,0 +1,105 @@
+# C-first hush/do_action sleeping-victim vehicle (src/interpreter.c:507;
+# act.social.c:102-151; lib/misc/socials:1506-1514). The social's zero victim
+# minimum admits a sleeping target; the force warmup makes that branch explicit.
+
+# depth-case: hush.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hushsleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hushsleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hushsleepobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hushsleepobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Hushleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Hushleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hushsleepobserver 8162
+teleport Hushleeptarget 8162
+force Hushleeptarget sleep
+
+[probe]
+hush Hushleeptarget
