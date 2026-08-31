@@ -1,0 +1,87 @@
+# C-first depth vehicle for do_infobar (src/act.display.c:112-155),
+# registered at src/interpreter.c:517. The command is available at POS_DEAD;
+# its visible state is the VT100 frame emitted by InfoBarOn/InfoBarOff.
+# The command consumes only the first argument token.
+#
+# depth-case: infobar.off-status
+# depth-case: infobar.on-frame
+# depth-case: infobar.already-on
+# depth-case: infobar.argument-first-token
+# depth-case: infobar.on-status
+# depth-case: infobar.off-frame
+# depth-case: infobar.already-off
+# depth-case: infobar.mortal-frame
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Infobardepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Infobardepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Infobarmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Infobarmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+infobar
+infobar on
+infobar on
+infobar invalid trailing words
+infobar
+infobar off
+infobar off
+
+[probe:mortal]
+infobar on

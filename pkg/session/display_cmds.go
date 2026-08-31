@@ -23,31 +23,33 @@ const (
 
 // Info update bitmask constants — INFO_* from act.display.c
 const (
-	InfoMana = 1 << iota
+	InfoHit = 1 << iota
+	InfoMana
 	InfoMove
-	InfoHit
 	InfoExp
 	InfoGold
 )
 
 // VT100 escape sequences — from vt100.h
 const (
-	vtHomeClr = "\033[H\033[J" // VT_HOMECLR
-	vtMarSet  = "\033[%d;%dr"  // VT_MARGSET
-	vtCurSp   = "\033[%d;%dH"  // VT_CURSPOS
-	vtCurSave = "\033[s"       // VT_CURSAVE
-	vtCurRest = "\033[u"       // VT_CURREST
-	vtNorm    = "\033[0m"      // CCNRM — reset
-	vtGreen   = "\033[32m"     // CCGRN
-	vtYellow  = "\033[33m"     // CCYEL
-	vtRed     = "\033[31m"     // CCRED
-	vtBlue    = "\033[34m"     // CCBLU
-	vtMagenta = "\033[35m"     // CCMAG
+	vtHomeClr = "\033[2J\033[0;0H" // VT_HOMECLR
+	vtMarSet  = "\033[%d;%dr"      // VT_MARGSET
+	vtCurSp   = "\033[%d;%dH"      // VT_CURSPOS
+	vtCurSave = "\0337"            // VT_CURSAVE
+	vtCurRest = "\0338"            // VT_CURREST
+	vtNorm    = "\033[0m"          // CCNRM — reset
+	vtGreen   = "\033[32m"         // CCGRN
+	vtYellow  = "\033[33m"         // CCYEL
+	vtRed     = "\033[31m"         // CCRED
+	vtBlue    = "\033[34m"         // CCBLU
+	vtMagenta = "\033[35m"         // CCMAG
 )
 
 // infobarSeparator draws the separator line in the infobar.
 func infobarSeparator(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+", ch.screenSize-4, 1)
+	// C's overlapping sprintf in IB_Seperator produces this five-cell
+	// string on the oracle's libc; preserve the observed player-facing bytes.
+	return fmt.Sprintf(vtCurSp+"+-----+-----+-----+-----+-----+", ch.screenSize-4, 1)
 }
 
 // infobarHitPointsStr draws the "Hit Pts:" label.
@@ -101,7 +103,7 @@ func infobarManaPoints(ch *infobarState) string {
 
 // infobarMovePointsStr draws the "Move Pts:" label.
 func infobarMovePointsStr(ch *infobarState) string {
-	return fmt.Sprintf(vtCurSp+"Move Pts: ", ch.screenSize-3, 48)
+	return fmt.Sprintf(vtCurSp+"Move Pts: ", ch.screenSize-3, 53)
 }
 
 // infobarMovePoints draws the move points value with color.
@@ -119,7 +121,7 @@ func infobarMovePoints(ch *infobarState) string {
 		colorOpen = vtRed
 	}
 
-	return fmt.Sprintf(vtCurSp+"%s%d%s(%s%d%s)", ch.screenSize-3, 60,
+	return fmt.Sprintf(vtCurSp+"%s%d%s(%s%d%s)", ch.screenSize-3, 63,
 		colorOpen, count, vtNorm, vtGreen, maxcount, vtNorm)
 }
 
@@ -247,8 +249,8 @@ func findExp(class, level int) int {
 
 func newInfobarState(s *Session) *infobarState {
 	p := s.player
-	// Use class-specific exp table matching C source (class.c:find_exp)
-	expNeeded := findExp(p.Class, p.Level+1)
+	// C's exp_needed_for_level(ch) passes the current level to find_exp.
+	expNeeded := findExp(p.Class, p.Level)
 	nextLvl := p.Level + 1
 
 	return &infobarState{
@@ -265,6 +267,104 @@ func newInfobarState(s *Session) *infobarState {
 		nextLevel:         nextLvl,
 		level:             p.Level,
 	}
+}
+
+func (s *Session) rememberInfobarValues() {
+	if s.player == nil {
+		return
+	}
+	s.infobarLastHit = s.player.Health
+	s.infobarLastMaxHit = s.player.MaxHealth
+	s.infobarLastMana = s.player.Mana
+	s.infobarLastMaxMana = s.player.MaxMana
+	s.infobarLastMove = s.player.Move
+	s.infobarLastMaxMove = s.player.MaxMove
+	s.infobarLastExp = s.player.Exp
+	s.infobarLastGold = s.player.Gold
+}
+
+func infobarClearHitPoints(ch *infobarState) string {
+	return fmt.Sprintf(vtCurSp+"          ", ch.screenSize-3, 10)
+}
+
+func infobarClearManaPoints(ch *infobarState) string {
+	return fmt.Sprintf(vtCurSp+"          ", ch.screenSize-3, 36)
+}
+
+func infobarClearMovePoints(ch *infobarState) string {
+	return fmt.Sprintf(vtCurSp+"          ", ch.screenSize-3, 63)
+}
+
+func infobarClearExpPoints(ch *infobarState) string {
+	return fmt.Sprintf(vtCurSp+"        ", ch.screenSize-2, 6)
+}
+
+func infobarClearNeededExpPoints(ch *infobarState) string {
+	return fmt.Sprintf(vtCurSp+"        ", ch.screenSize-2, 47)
+}
+
+func infobarClearLevel(ch *infobarState) string {
+	return fmt.Sprintf(vtCurSp+"  ", ch.screenSize-2, 43)
+}
+
+func infobarClearGold(ch *infobarState) string {
+	return fmt.Sprintf(vtCurSp+"        ", ch.screenSize-1, 7)
+}
+
+// cmdInfoBarUpdate mirrors comm.c:1158-1193 and act.display.c:226-285.
+// The prompt cycle detects changed values, repaints each changed field in C's
+// bit order, then records the current values for the next cycle.
+func cmdInfoBarUpdate(s *Session) {
+	if s.player == nil || s.screenSize <= 0 || s.infobarMode != InfobarOn {
+		return
+	}
+
+	p := s.player
+	update := 0
+	if p.Move != s.infobarLastMove || p.MaxMove != s.infobarLastMaxMove {
+		update |= InfoMove
+	}
+	if p.Mana != s.infobarLastMana || p.MaxMana != s.infobarLastMaxMana {
+		update |= InfoMana
+	}
+	if p.Health != s.infobarLastHit || p.MaxHealth != s.infobarLastMaxHit {
+		update |= InfoHit
+	}
+	if p.Gold != s.infobarLastGold {
+		update |= InfoGold
+	}
+	if p.Exp != s.infobarLastExp {
+		update |= InfoExp
+	}
+	if update == 0 {
+		return
+	}
+
+	is := newInfobarState(s)
+	output := ""
+	if update&InfoMana != 0 {
+		output += vtCurSave + infobarClearManaPoints(is) + infobarManaPoints(is) + vtCurRest
+	}
+	if update&InfoMove != 0 {
+		output += vtCurSave + infobarClearMovePoints(is) + infobarMovePoints(is) + vtCurRest
+	}
+	if update&InfoHit != 0 {
+		output += vtCurSave + infobarClearHitPoints(is) + infobarHitPoints(is) + vtCurRest
+	}
+	if update&InfoExp != 0 {
+		output += vtCurSave + infobarClearExpPoints(is) + infobarExpPoints(is)
+		if is.level < game.LVL_IMMORT {
+			output += infobarClearLevel(is) + infobarLevel(is)
+			output += infobarClearNeededExpPoints(is) + infobarNeededExpPoints(is)
+		}
+		output += vtCurRest
+	}
+	if update&InfoGold != 0 {
+		output += vtCurSave + infobarClearGold(is) + infobarGold(is) + vtCurRest
+	}
+
+	s.sendRawEvent(output)
+	s.rememberInfobarValues()
 }
 
 // ---------------------------------------------------------------------------
@@ -377,7 +477,7 @@ func cmdInfoBarOn(s *Session) {
 	output += infobarMovePointsStr(is)
 	output += infobarExpPointsStr(is)
 
-	if is.level < 50 { // LVL_IMMORT
+	if is.level < game.LVL_IMMORT {
 		output += infobarLevelStr(is)
 		output += infobarNeededExpPointsStr(is)
 	}
@@ -386,21 +486,22 @@ func cmdInfoBarOn(s *Session) {
 
 	// Draw values
 	output += infobarHitPoints(is)
-	output += infobarManaPoints(is)
 	output += infobarMovePoints(is)
+	output += infobarManaPoints(is)
 	output += infobarExpPoints(is)
 
-	if is.level < 50 { // LVL_IMMORT
+	if is.level < game.LVL_IMMORT {
 		output += infobarNeededExpPoints(is)
 		output += infobarLevel(is)
 	}
 
 	output += infobarGold(is)
+	s.rememberInfobarValues()
 
 	// Cursor to top-left
 	output += fmt.Sprintf(vtCurSp, 0, 0)
 
-	s.Send(output)
+	s.sendRawEvent(output)
 }
 
 // cmdInfoBarOff — InfoBarOff from act.display.c
@@ -411,5 +512,5 @@ func cmdInfoBarOff(s *Session) {
 	// Clear screen
 	output += vtHomeClr
 
-	s.Send(output)
+	s.sendRawEvent(output)
 }
