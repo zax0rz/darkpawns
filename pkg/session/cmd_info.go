@@ -1060,7 +1060,9 @@ func cmdWhois(s *Session, args []string) error {
 		s.sendText("For whom do you wish to search?\r\n")
 		return nil
 	}
-	targetName := strings.Join(args, " ")
+	// C do_whois uses one_argument: skip leading fill words, select the first
+	// non-fill token, and ignore the remainder (new_cmds.c:1407).
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 
 	// Check online players first
 	for _, p := range s.manager.world.AllPlayers() {
