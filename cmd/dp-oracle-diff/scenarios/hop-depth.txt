@@ -1,0 +1,118 @@
+# C-first hop/do_action social vehicle (src/interpreter.c:501;
+# src/act.social.c:102-151; lib/misc/socials:400-408). The record has no
+# invisible-actor suppression and no minimum victim position, so the vehicle
+# covers the authored no-argument, target, self, and missing-target branches
+# with a room observer.
+
+# depth-case: hop.no-argument
+# depth-case: hop.one-argument
+# depth-case: hop.target-success
+# depth-case: hop.target-audience
+# depth-case: hop.self-target
+# depth-case: hop.target-not-found
+# depth-case: hop.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hopactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hopactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hopobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hopobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Hoptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:target]
+Hoptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Hopobserver 8162
+teleport Hoptarget 8162
+
+[probe]
+hop
+hop the Hoptarget trailing words are ignored
+hop Hoptarget
+hop Hopactor
+hop Nobody
