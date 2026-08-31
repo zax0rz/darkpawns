@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_ps	immlist	immlist.entry-gate	D1	command	unit-green	TestImmlistRegistrationUsesCEntryGate	interpreter.c:514; act.informative.c:2117-2144	The C row permits every level at POS_DEAD; the focused test pins both the authoritative gate and the registered Go entry.
+do_gen_ps	immlist	immlist.static-page	D3	audience	oracle-green-multiseed	immlist-depth@1,2,3,5,8	act.informative.c:2117-2144; db.c:323; db.h:57; lib/text/immlist	An actor reaches SCMD_IMMLIST, which passes the boot-cached fixed text through page_string; the authored file fits one page and emits exact bytes without a pager prompt.
+do_gen_ps	immlist	immlist.arguments-ignored	D2	command	oracle-green-multiseed	immlist-depth@1,2,3,5,8	act.informative.c:2142-2144	The SCMD_IMMLIST branch does not inspect its command argument, so trailing words produce the same static page.
