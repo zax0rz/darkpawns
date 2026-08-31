@@ -520,40 +520,81 @@ func DoPoint(ch *Player, targetName string, world *World) SkillResult {
 
 // DoGroinrip implements do_groinrip() — low blow.
 func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Groinrip who?"}
+	}
+
 	if ch.GetSkill(SkillGroinrip) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You're not trained in martial arts!\r\n"}
+		return SkillResult{Success: false, MessageToCh: "You're not trained in martial arts!"}
+	}
+
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "No masochism allowed!"}
+	}
+
+	if mob, ok := target.(*MobInstance); ok {
+		keeper := false
+		if world != nil {
+			_, keeper = world.ShopBitvectorForKeeper(mob.GetVNum())
+		}
+		if keeper || MobSpecAssign[mob.GetVNum()] == "shop_keeper" {
+			return SkillResult{Success: false, MessageToCh: "Ha Ha. Don't think so."}
+		}
+	}
+
+	if !target.IsNPC() && target.GetLevel() >= LVL_IMMORT {
+		ch.SetPosition(combat.PosSitting)
+		return SkillResult{
+			Success:     false,
+			MessageToCh: "How dare you try to touch a god!\r\nYou are thrown across the room...",
+		}
+	}
+
+	if target.GetSex() != SexMale {
+		return SkillResult{Success: false, MessageToCh: "Umm, they have nothing there to tug on!"}
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
 	percent := dprng.Number(1, 121) // 0-120; 101+ is complete failure
 
-	// Immortals always succeed
-	if ch.GetLevel() > 60 {
+	if target.GetPosition() <= combat.PosSleeping || ch.GetLevel() > LVL_IMMORT {
 		percent = 0
 	}
 
 	prob := ch.GetSkill(SkillGroinrip)
 
 	if percent < prob {
-		// Success
-		dam := ch.GetLevel()
+		victimPronouns := GetPronouns(target.GetName(), target.GetSex())
 		return SkillResult{
-			Success:       true,
-			Damage:        dam,
-			MessageToCh:   "You grab your victim's groin and twist!\r\n",
-			MessageToVict: "You are grabbed in the groin and twisted! The pain is unbearable!\r\n",
-			MessageToRoom: fmt.Sprintf("%s falls to %s knees, clutching %s groin and throwing up everywhere!\r\n", target.GetName(), hisHer(ch.GetSex()), hisHer(ch.GetSex())),
+			Success:                  true,
+			Damage:                   ch.GetLevel(),
+			MessageToRoom:            fmt.Sprintf("%s falls to %s knees, clutching %s groin and throwing up\r\neverywhere!", victimPronouns.Name, victimPronouns.His, victimPronouns.His),
+			RoomIncludesActor:        true,
+			SkillMsgType:             SkillGroinripNum,
+			SkillMsgInDamage:         true,
+			DamageSkill:              SkillGroinrip,
+			StartCombat:              true,
+			WaitCh:                   2,
+			DeferredImprove:          []string{SkillGroinrip},
+			DeferredImproveAfterRoom: true,
+			SpawnPuke:                true,
 		}
 	}
 
 	// Miss
 	return SkillResult{
-		Success:       true,
-		Damage:        0,
-		MessageToCh:   "You try to grab your victim's groin but miss!\r\n",
-		MessageToVict: "$n tries to grab your groin!\r\n",
-		MessageToRoom: fmt.Sprintf("%s tries to grab %s's groin!\r\n", ch.Name, target.GetName()),
+		Success:          false,
+		Damage:           0,
+		SkillMsgType:     SkillGroinripNum,
+		SkillMsgInDamage: true,
+		DamageSkill:      SkillGroinrip,
+		StartCombat:      true,
+		WaitCh:           2,
 	}
 }
 

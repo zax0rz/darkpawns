@@ -1,0 +1,82 @@
+# A mortal attacker targets the immortal primary. C refuses before the
+# outcome roll, emits two actor lines, and sets the attacker POS_SITTING.
+
+# depth-case: groinrip.immortal-victim
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Grigod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grigod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Griattacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Griattacker
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+skillset Griattacker 'groinrip' 75
+
+[probe:actor]
+groinrip Grigod

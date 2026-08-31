@@ -1,0 +1,51 @@
+# C resolves the shopkeeper gate before the groinrip roll. Room 8162 is
+# explicitly made non-peaceful so the earlier violence gate cannot shadow the
+# fat merchant (mob 12100, keeper of the 121.shp shop).
+
+# depth-case: groinrip.shopkeeper-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 12100 1 8162 80
+
+[setup:oracle]
+Groinripshopgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groinripshopgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Groinripshopgod 'groinrip' 75
+
+[probe]
+look
+groinrip fat
+groinrip plump
+groinrip jovial
+groinrip merchant

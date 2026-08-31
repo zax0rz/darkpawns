@@ -397,6 +397,9 @@ type SkillResult struct {
 	// RoomIncludesTarget preserves C's TO_ROOM audience when MessageToRoom
 	// intentionally includes the target instead of using TO_NOTVICT.
 	RoomIncludesTarget bool
+	// RoomIncludesActor preserves C's TO_ROOM audience when the skill's
+	// message actor is the target rather than the command issuer.
+	RoomIncludesActor bool
 	// StartCombat signals the caller to initiate combat even when the skill
 	// deals no damage (miss / zero-damage hit). C: skills like backstab call
 	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.
@@ -457,6 +460,12 @@ type SkillResult struct {
 	// dice inside damage()/hit(), THEN improve_skill runs). Ordered; repeat an
 	// entry for a skill C improves twice (headbutt). DP-1212 / R3b.
 	DeferredImprove []string
+	// DeferredImproveAfterRoom preserves a C call path where improve_skill()
+	// follows a later room act() rather than the command's damage return.
+	DeferredImproveAfterRoom bool
+	// SpawnPuke requests do_groinrip's post-room number(0,10) check and its
+	// vnum-21 room object. The command wrapper performs it after room delivery.
+	SpawnPuke bool
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.

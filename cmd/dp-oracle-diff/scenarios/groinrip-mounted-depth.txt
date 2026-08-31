@@ -1,0 +1,76 @@
+# C do_groinrip checks IS_MOUNTED after the skill gate and before target lookup.
+# The horse is the only room target, so this reaches the exact early refusal.
+
+# depth-case: groinrip.mounted-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Groinripmountgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groinripmountgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rider]
+Groinriprider
+Y
+riderpass
+riderpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:rider]
+Groinriprider
+y
+riderpass
+riderpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Groinriprider 'groinrip' 75
+
+[probe:rider]
+ride horse
+groinrip nobody

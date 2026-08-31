@@ -1,0 +1,85 @@
+# A sleeping male victim forces percent=0 after the skill gate and receives the
+# numbered victim message through C's TO_VICT | TO_SLEEP path.
+
+# depth-case: groinrip.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Groinripsleepgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groinripsleepgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+GripSleeper
+Y
+sleeperpass
+sleeperpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:sleeper]
+GripSleeper
+y
+sleeperpass
+sleeperpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport GripSleeper 8105
+skillset Groinripsleepgod 'groinrip' 75
+force GripSleeper sleep
+
+[probe]
+look
+groinrip GripSleeper

@@ -27,6 +27,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
@@ -54,6 +55,8 @@ func skillToAttackType(skill string) int {
 		return SkillDragonKickNum
 	case "bite":
 		return SkillBiteNum // SKILL_BITE (150)
+	case "groinrip":
+		return SkillGroinripNum // SKILL_GROINRIP (174)
 	case "charge":
 		return SkillChargeNum // SKILL_CHARGE (147), default corpse wording
 	case "cutthroat":
@@ -144,6 +147,38 @@ func (w *World) DoDisembowelDamage(attacker, victim combat.Combatant, dam int) b
 		w.HandleDeath(victim, attacker, SkillDisembowelNum)
 		combat.DeathCry(victim)
 	})
+}
+
+// DoGroinripDamage preserves do_groinrip's damage() boundary: damage applies
+// HP and position changes, emits numbered skill_message set 174, then returns
+// to the command for its victim-room act() and skill improvement.
+func (w *World) DoGroinripDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillGroinripNum, func() {
+		w.HandleDeath(victim, attacker, SkillGroinripNum)
+		combat.DeathCry(victim)
+	})
+}
+
+// MaybeSpawnPuke preserves do_groinrip's post-room 1-in-11 vnum-21 object
+// branch, including its shared RNG draw and two-tick timer.
+func (w *World) MaybeSpawnPuke(roomVNum int) {
+	// #nosec G404 — game RNG, not cryptographic
+	if dprng.Number(0, 10) != 0 {
+		return
+	}
+	obj, err := w.SpawnObject(21, -1)
+	if err != nil {
+		slog.Error("groinrip puke prototype missing", "error", err)
+		return
+	}
+	if err := w.MoveObjectToRoomFront(obj, roomVNum); err != nil {
+		slog.Error("groinrip puke room placement failed", "room", roomVNum, "error", err)
+		return
+	}
+	obj.SetTimer(2)
 }
 
 // DoCutthroatDamage completes do_cutthroat's damage() call with the shared C

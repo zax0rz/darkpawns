@@ -1,0 +1,83 @@
+# C-first legal groinrip outcome vehicle (src/interpreter.c:478;
+# src/new_cmds.c:2636-2658; fight.c:1023-1092). Skill 75 reaches both the
+# numbered hit/miss message set and the damage/combat/wait path across seeds.
+
+# depth-case: groinrip.success-message-and-state
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Groinripoutgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groinripoutgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Groinripoutactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Groinripoutactor
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Groinripoutactor 'groinrip' 75
+
+[probe:actor]
+groinrip trainee
+~dpclock pulse 20
