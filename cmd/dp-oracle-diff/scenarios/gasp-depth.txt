@@ -1,0 +1,80 @@
+# C-first self-only social vehicle (src/interpreter.c:461; src/act.social.c:102-151;
+# lib/misc/socials:295-298). The gasp record has no char_found message, so
+# do_action ignores every typed argument and emits only its no-argument pair.
+
+# depth-case: gasp.no-argument
+# depth-case: gasp.argument-ignored
+# depth-case: gasp.missing-target-ignored
+# depth-case: gasp.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Gaspactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gaspactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gaspobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gaspobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Gaspobserver 8162
+
+[probe]
+gasp
+gasp Gaspobserver
+gasp Nobody
+gasp Gaspactor trailing words are ignored
