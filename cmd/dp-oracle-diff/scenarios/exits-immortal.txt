@@ -1,0 +1,45 @@
+# C-first exits vehicle (src/interpreter.c:435; src/act.informative.c:683-725).
+# The first player is the Implementor; vnum/name rendering is selected before
+# the mortal dark-room masking branch.
+
+# depth-case: exits.immortal-vnums
+
+[fixture]
+quiet-mobs
+replace-room-exits 8105 all 8161 0
+set-room-flag 8161 0 on
+
+[setup:oracle]
+Exitsimmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Exitsimmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+exits
