@@ -198,11 +198,11 @@ func DoDream(w *World, ch *Player) {
 		return
 	}
 
-	// Send to self
+	// C emits the room act before the actor's private line.  TO_ROOM keeps
+	// sleeping recipients out through SENDOK, and hide_invisible=TRUE keeps
+	// the source actor hidden from observers who cannot see them.
+	Act(w, true, ch, nil, nil, nil, "$n dreams of running naked through a field of tulips.", "", ToRoom)
 	ch.SendMessage("You dream of running naked through a field of tulips.\r\n")
-
-	// Send to room (excluding ch), with ToSleep bit so sleeping chars still see it
-	Act(w, false, ch, nil, nil, nil, "$n dreams of running naked through a field of tulips.", "", ToRoom|ToSleep)
 }
 
 // extractArg returns the first word of argument, or "" if empty.
