@@ -1,0 +1,81 @@
+# C-first hiccup self-only social vehicle (src/interpreter.c:492;
+# act.social.c:102-121; lib/misc/socials:375-379). Because char_found is
+# absent, do_action ignores every typed argument and emits only the actor/room
+# pair.
+
+# depth-case: hiccup.no-argument
+# depth-case: hiccup.argument-ignored
+# depth-case: hiccup.missing-target-ignored
+# depth-case: hiccup.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hiccupactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hiccupactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hiccupobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hiccupobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hiccupobserver 8162
+
+[probe]
+hiccup
+hiccup Hiccupobserver trailing words are ignored
+hiccup Nobody
+hiccup Hiccupactor
