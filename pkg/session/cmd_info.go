@@ -985,8 +985,15 @@ const helpSeparator = helpRed +
 // "did you mean" surface are all removed — a command with no help entry is, per
 // C, "There is no help on:".
 func cmdHelp(s *Session, args []string) error {
+	return cmdHelpText(s, strings.Join(args, " "))
+}
+
+// cmdHelpText is the transport-aware do_help path. C's handler receives the
+// original argument remainder after skip_spaces, so the lookup and miss line
+// retain internal whitespace instead of rebuilding it from tokenized words.
+func cmdHelpText(s *Session, argument string) error {
 	// no argument → page_string the help screen (C: page_string(ch->desc, help, 0)).
-	if len(args) == 0 {
+	if argument == "" {
 		PageString(s, s.manager.world.HelpScreen)
 		return nil
 	}
@@ -998,7 +1005,6 @@ func cmdHelp(s *Session, args []string) error {
 		return nil
 	}
 
-	argument := strings.Join(args, " ")
 	entry := game.SearchHelp(table, argument)
 	if entry == nil {
 		// C: "There is no help on: %s\r\n" + mudlog + append to misc/help file.

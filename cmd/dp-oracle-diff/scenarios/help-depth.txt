@@ -1,0 +1,55 @@
+# C-first depth vehicle for interpreter.c:486 `help` and its adjacent `?`
+# alias at interpreter.c:488. The handler path is act.informative.c:1566-1674
+# over the booted lib/text/help table and screen. The two spaces in the
+# miss/alias probes are intentional: do_help receives the raw argument tail
+# after skip_spaces and preserves internal whitespace.
+
+# depth-case: help.entry-gate
+# depth-case: help.miss-raw-spacing
+# depth-case: help.prefix-first-match
+# depth-case: help.wizonly-hidden
+# depth-case: help.alias-raw-spacing
+# depth-case: help.no-argument-pager
+# depth-case: help.pager-quit
+# depth-case: help.post-pager-command
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Helpdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Helpdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+help zzqx  tail
+help s
+help advance
+? cure  light
+help
+q
+score
