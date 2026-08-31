@@ -2,6 +2,7 @@
 # depth-case: bearhug.no-skill
 # depth-case: backstab.no-skill
 # depth-case: bash.no-skill
+# depth-case: headbutt.no-skill
 #
 # Five registered combat skills probed via their deterministic no-skill gates
 # (no target, no RNG) from a fresh Human Warrior, who starts with NONE of these

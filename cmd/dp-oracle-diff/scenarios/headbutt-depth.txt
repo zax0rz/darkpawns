@@ -1,0 +1,90 @@
+# C-first command vehicle for do_headbutt (src/new_cmds.c:368-460). The mortal
+# peer is granted the skill by the immortal primary and walks to a deterministic
+# room mob. The final probe intentionally has trailing words: C's one_argument
+# consumes only `trainee`, while the pre-fix Go wrapper searched the whole joined
+# argument string.
+
+# depth-case: headbutt.no-argument
+# depth-case: headbutt.prefix-resolution
+# depth-case: headbutt.missing-target
+# depth-case: headbutt.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+HbDgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HbDgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+HbDatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+HbDatt
+y
+attpass
+attpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset HbDatt 'headbutt' 75
+
+[probe:attacker]
+head
+headbutt
+headbutt nobody
+headbutt trainee trailing

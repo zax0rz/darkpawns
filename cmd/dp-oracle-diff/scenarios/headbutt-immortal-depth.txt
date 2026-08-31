@@ -1,0 +1,83 @@
+# C-first mortal-to-immortal target branch for do_headbutt. The immortal
+# primary is moved beside the mortal attacker, and the command must emit the
+# two direct actor lines and sit the attacker without entering damage().
+
+# depth-case: headbutt.immortal-target
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+HbImgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HbImgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+HbImatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+HbImatt
+y
+attpass
+attpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+skillset HbImatt 'headbutt' 75
+
+[probe:attacker]
+headbutt HbImgod
