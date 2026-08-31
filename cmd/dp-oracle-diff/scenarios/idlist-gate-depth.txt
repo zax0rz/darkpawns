@@ -1,0 +1,44 @@
+# C-first registration-gate vehicle for do_idlist (src/interpreter.c:512;
+# src/act.wizard.c:3575). The first player is the Implementor, then is lowered
+# to LVL_GRGOD. C's command row admits level 38; the Go handler must preserve
+# that same gate and not add an LVL_IMPL-only rejection.
+#
+# depth-case: idlist.registration-gate
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Idlistgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Idlistgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Idlistgate level 38
+
+[probe]
+idlist
