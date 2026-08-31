@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	glare	glare.entry-gate	D1	command	unit-green	TestGlareRegistrationUsesCEntryGate	interpreter.c:465; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level.
+do_action	glare	glare.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:465; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	glare	glare.no-argument	D3	audience	oracle-green-multiseed	glare-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:305-314	No argument emits the exact actor and room glare messages.
+do_action	glare	glare.target-success	D3	audience	oracle-green-multiseed	glare-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:305-314	A visible standing peer receives the actor, non-victim room, and victim glare messages.
+do_action	glare	glare.self-target	D2	audience	oracle-green-multiseed	glare-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:305-314	A self target takes the record's exact auto actor and room messages.
+do_action	glare	glare.target-not-found	D1	command	oracle-green-multiseed	glare-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:305-314	An unresolved room target emits the record-specific not-found message.
+do_action	glare	glare.target-position-gate	D2	command	oracle-green-multiseed	glare-sleeping-depth@1,2,3,5,8	act.social.c:137-143; lib/misc/socials:305-314	A sleeping visible target is rejected because glare requires minimum victim position 5.
+do_action	glare	glare.one-argument	D2	command	oracle-green-multiseed	glare-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121; lib/misc/socials:305-314	C one_argument skips the leading fill word and ignores trailing words after the target token.
+do_action	glare	glare.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal runs before target lookup.
+do_action	glare	glare.visibility	D3	shared	delegated	socials-depth	act.social.c:114-151; comm.c:2392-2555	Visible target lookup and Act audience filtering are shared with the social matrix.
