@@ -125,6 +125,10 @@ func StopFollower(w *World, ch *Player) {
 			"You stop following $N.", "", ToChar)
 		Act(w, true, ch, leader, nil, nil,
 			"$n stops following $N.", "", ToNotVict)
+		if leader != nil && canSee(leader, ch) && leader.GetPosition() > combat.PosSleeping {
+			Act(w, true, ch, leader, nil, nil,
+				"$n stops following you.", "", ToVict)
+		}
 	}
 
 	// Unmount if this is a mount.

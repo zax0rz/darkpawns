@@ -1,0 +1,124 @@
+# C-first follow/do_follow vehicle (src/interpreter.c:450;
+# src/act.movement.c:883-951; src/handler.c:1276-1300; src/utils.c:365-498).
+# The primary actor exercises the direct follow state machine while two room
+# peers expose stop/start audience bytes. The spawned generic mob covers the
+# NPC leader branch.
+
+# depth-case: follow.no-argument
+# depth-case: follow.target-not-found
+# depth-case: follow.fill-word-target
+# depth-case: follow.already-following
+# depth-case: follow.stop-self
+# depth-case: follow.already-following-self
+# depth-case: follow.target-success
+# depth-case: follow.switch-leader
+# depth-case: follow.mob-leader
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8004 80
+
+[setup:oracle]
+Followactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Followactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Followpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Followpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Followobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Followobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Followpeer 8004
+teleport Followobserver 8004
+
+[probe]
+follow
+follow Nobody
+follow the Followpeer
+follow Followpeer
+follow self
+follow self
+follow the Followpeer trailing words are ignored
+follow Followobserver
+follow generic
+follow self

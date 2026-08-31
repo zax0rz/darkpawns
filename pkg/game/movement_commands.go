@@ -208,7 +208,7 @@ func setActorPosition(actor Actor, position int) {
 // DoFollow implements C do_follow. quiet preserves the structural shadow path;
 // applying SKILL_SHADOW/AFF_DODGE remains a skill-system TODO.
 func (w *World) DoFollow(ch *Player, argument string, quiet bool) {
-	argument = firstWord(strings.TrimSpace(argument))
+	argument, _ = oneArgument(argument)
 	if argument == "" {
 		movementSendToChar(ch, "Whom do you wish to follow?\r\n")
 		return

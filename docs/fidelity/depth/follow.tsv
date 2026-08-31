@@ -1,0 +1,15 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_follow	follow	follow.entry-gate	D1	command	unit-green	TestFollowRegistrationUsesCEntryGate	interpreter.c:450; comm.c:910-947	The registered C row is POS_RESTING with no minimum level.
+do_follow	follow	follow.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:450; comm.c:910-947	The shared command-interpreter POS_RESTING rejection is proven by the fade position-gate vehicle.
+do_follow	follow	follow.no-argument	D1	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:892-901	Bare follow emits the exact prompt.
+do_follow	follow	follow.target-not-found	D1	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:894-898; config.c:93	An unresolved visible room target emits C's NOPERSON bytes.
+do_follow	follow	follow.fill-word-target	D1	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	interpreter.c:853-867,1265-1280; act.movement.c:892-898	C one_argument skips leading fill words and lowercases the selected target token.
+do_follow	follow	follow.target-success	D3	audience	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:944-948; utils.c:480-498	A visible player leader receives the actor and victim notices, and the room observer receives the non-victim notice.
+do_follow	follow	follow.already-following	D2	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:904-907	Repeating the same target uses the pronoun-aware already-following branch without changing state.
+do_follow	follow	follow.stop-self	D3	state	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:912-918; utils.c:397-440	Self-target while following invokes stop_follower and exposes actor, leader, and room stop notices.
+do_follow	follow	follow.already-following-self	D2	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:912-916	Self-target without a master emits the exact already-following-yourself line.
+do_follow	follow	follow.switch-leader	D3	state	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:924-948; utils.c:397-498	Changing leaders stops the old relation before adding the new one, preserving both audience orderings.
+do_follow	follow	follow.mob-leader	D3	audience	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:918-948; utils.c:480-498	The NPC leader path keeps the actor and room notices while the non-player leader receives no player-visible victim byte.
+do_follow	follow	follow.charm-master-guard	D1	state	unit-green	TestDoFollowGuardsAndMessages	act.movement.c:904-911	A charmed follower with an existing master cannot select a different leader.
+do_follow	follow	follow.circle-rejection	D2	state	unit-green	TestDoFollowGuardsAndMessages	act.movement.c:918-923; utils.c:365-374	A candidate whose master chain reaches the actor is rejected before changing the relation.
+do_follow	follow	follow.player-relation-state	D4	state	unit-green	TestDoFollowGuardsAndMessages	act.movement.c:924-948; utils.c:397-498	Focused movement tests pin existing-following replacement, relation clearing, and player audience messages.
