@@ -1,0 +1,39 @@
+# depth-case: hold.no-argument
+# The level-1 `hold` registration enters the shared C do_grab handler;
+# one_argument sees no object and emits the handler's exact prompt
+# (src/interpreter.c:497; src/act.item.c:1685-1689).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Holdparse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Holdparse
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+hold
