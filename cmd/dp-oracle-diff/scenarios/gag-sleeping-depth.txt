@@ -1,0 +1,106 @@
+# C-first gag/do_action sleeping-victim vehicle (src/interpreter.c:460;
+# src/act.social.c:102-151; lib/misc/socials:1188-1196). The authored
+# min_victim_position is POS_RESTING, so a sleeping target is rejected before
+# any actor, room, or victim audience is emitted.
+
+# depth-case: gag.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sootgagsleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sootgagsleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sootgagsleeptarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sootgagsleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Sootgagsleepobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Sootgagsleepobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sootgagsleeptarget 8162
+teleport Sootgagsleepobserver 8162
+force Sootgagsleeptarget sleep
+
+[probe]
+gag Sootgagsleeptarget
