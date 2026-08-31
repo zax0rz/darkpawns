@@ -1,0 +1,78 @@
+# C-first faint social vehicle (src/interpreter.c:440; act.social.c:102-151;
+# lib/misc/socials:221-224). The faint record has no char_found message, so
+# do_action must ignore every typed argument and emit only its no-argument pair.
+
+# depth-case: faint.no-argument
+# depth-case: faint.argument-ignored
+# depth-case: faint.self-argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Faintactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Faintactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Faintobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Faintobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Faintobserver 8162
+
+[probe]
+faint
+faint Nobody
+faint Faintactor trailing words are ignored
