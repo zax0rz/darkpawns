@@ -1,0 +1,47 @@
+# C-first group mob-resolution vehicle (src/interpreter.c:471;
+# src/act.other.c:719-725; src/handler.c:1276-1300).
+# A spawned generic NPC proves get_char_room_vis reaches mobs before the
+# follower gate, rather than falling through to NOPERSON.
+
+# depth-case: group.visible-mob-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8162 80
+
+[setup:oracle]
+Groupmobleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groupmobleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+group generic
+

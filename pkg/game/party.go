@@ -9,6 +9,8 @@ package game
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -41,6 +43,41 @@ func (w *World) GetFollowersInRoom(leaderName string, roomVNum int) []*Player {
 		}
 	}
 	return followers
+}
+
+// GetFollowerActors returns every character following leaderName, including
+// charmed mobs. The C do_group path walks ch->followers, not just the player
+// table; keep that distinction at the world boundary for group commands.
+func (w *World) GetFollowerActors(leaderName string) []Actor {
+	var followers []Actor
+	for _, player := range w.GetAllPlayers() {
+		if strings.EqualFold(player.GetFollowing(), leaderName) {
+			followers = append(followers, player)
+		}
+	}
+	for _, mob := range w.GetAllMobs() {
+		if strings.EqualFold(mob.GetFollowing(), leaderName) {
+			followers = append(followers, mob)
+		}
+	}
+	// The Go runtime does not retain C's linked-list insertion order. Use a
+	// stable order so group messages and listings remain deterministic.
+	sort.SliceStable(followers, func(i, j int) bool {
+		return strings.ToLower(followers[i].GetName()) < strings.ToLower(followers[j].GetName())
+	})
+	return followers
+}
+
+// GetFollowerActorsInRoom is the room-scoped form used by do_group "all".
+func (w *World) GetFollowerActorsInRoom(leaderName string, roomVNum int) []Actor {
+	followers := w.GetFollowerActors(leaderName)
+	filtered := followers[:0]
+	for _, follower := range followers {
+		if follower.GetRoom() == roomVNum {
+			filtered = append(filtered, follower)
+		}
+	}
+	return filtered
 }
 
 // GetGroupMembers returns all players in the same group as playerName (InGroup==true),

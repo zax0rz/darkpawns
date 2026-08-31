@@ -1,0 +1,130 @@
+# C-first group/do_group vehicle (src/interpreter.c:471; src/act.other.c:624-740).
+# The primary is the bootstrap implementor so it can position peers and force
+# the follower relation during warmup. The probe then exercises C's first-word
+# parsing, room-scoped lookup, follower gate, accept/kick audiences, `all`, and
+# the formatted group listing.
+
+# depth-case: group.no-argument
+# depth-case: group.one-argument
+# depth-case: group.missing-target
+# depth-case: group.target-must-follow
+# depth-case: group.accept-audience
+# depth-case: group.accept-does-not-self-enroll
+# depth-case: group.all-audience
+# depth-case: group.print-members
+# depth-case: group.kick-audience
+# depth-case: group.reaccept
+# depth-case: group.all-already-grouped
+# depth-case: group.self-kick
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Groupleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groupleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Grouppeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Grouppeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Groupobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Groupobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Grouppeer 8162
+teleport Groupobserver 8162
+force Grouppeer follow Groupleader
+force Groupobserver follow Groupleader
+
+[probe]
+group
+group Grouppeer trailing words are ignored
+group Nobody
+group Groupobserver
+group Grouppeer trailing words are ignored
+group
+group all
+group
+group Grouppeer
+group Grouppeer
+group all
+group Groupleader
