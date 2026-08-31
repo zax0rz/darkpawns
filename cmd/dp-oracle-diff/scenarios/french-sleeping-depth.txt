@@ -1,0 +1,107 @@
+# C-first french/do_action sleeping-victim vehicle (src/interpreter.c:453;
+# src/act.social.c:102-151; lib/misc/socials:260-265). This companion
+# scenario uses the same authored record with a peer forced asleep in warmup,
+# proving that its zero minimum victim position admits the target while C's
+# plain TO_VICT path suppresses the sleeping peer's private line.
+
+# depth-case: french.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Frenchsleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Frenchsleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Frenchsleeptarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Frenchsleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Frenchsleepobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Frenchsleepobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Frenchsleeptarget 8162
+teleport Frenchsleepobserver 8162
+force Frenchsleeptarget sleep
+
+[probe]
+french Frenchsleeptarget

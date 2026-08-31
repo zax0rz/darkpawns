@@ -1,0 +1,112 @@
+# C-first french/do_action vehicle (src/interpreter.c:453;
+# src/act.social.c:102-151; lib/misc/socials:260-265). The record has no
+# hidden-actor filter and admits a sleeping victim. The sleeping peer exposes
+# C's plain TO_VICT suppression while the awake observer exposes room bytes.
+
+# depth-case: french.no-argument
+# depth-case: french.target-success
+# depth-case: french.target-not-found
+# depth-case: french.self-target
+# depth-case: french.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Frenchactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Frenchactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Frenchpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Frenchpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Frenchobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Frenchobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Frenchpeer 8162
+teleport Frenchobserver 8162
+
+[probe]
+french
+french the Frenchpeer trailing words are ignored
+french Nobody
+french Frenchactor
