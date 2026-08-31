@@ -1,0 +1,74 @@
+# C-first PLR_NOSHOUT gate vehicle for drool (src/interpreter.c:425;
+# src/act.social.c:102-118). The primary Implementor mutes the named mortal
+# before the mortal invokes drool, isolating the refusal before target lookup
+# or audience emission.
+
+# depth-case: drool.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+DroolGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DroolGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Muteon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Muteon
+
+[probe:muteon]
+drool nobody
