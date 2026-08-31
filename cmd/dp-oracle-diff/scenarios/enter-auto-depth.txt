@@ -1,0 +1,109 @@
+# C-first automatic enter vehicle (src/interpreter.c:432;
+# src/act.movement.c:642-674). The disposable outdoor 8162 room has an open
+# exit into indoor 8161, so a bare enter must take the first qualifying exit
+# through perform_move and preserve origin/destination audiences.
+
+# depth-case: enter.auto-indoor
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0 fountain
+replace-room-exits 8161 south 8162 0
+set-room-flag 8162 3 off
+set-room-flag 8161 3 on
+
+[setup:oracle]
+Enterauto
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Enterauto
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:origin]
+Enterorigin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:origin]
+Enterorigin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:inside]
+Enterinside
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:inside]
+Enterinside
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Enterorigin 8162
+teleport Enterinside 8161
+
+[probe]
+enter

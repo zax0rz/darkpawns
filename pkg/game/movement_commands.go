@@ -297,7 +297,7 @@ func (w *World) followingActor(name string) Actor {
 
 // DoEnter implements named-door and automatic indoor entry.
 func (w *World) DoEnter(ch *Player, argument string) MoveResult {
-	argument = firstWord(strings.TrimSpace(argument))
+	argument, _ = oneArgument(argument)
 	room := w.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return MoveResult{}

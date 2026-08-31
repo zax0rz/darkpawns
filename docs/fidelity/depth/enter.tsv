@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_enter	enter	enter.named-door	D3	audience	oracle-green	enter-depth	interpreter.c:432; act.movement.c:645-660	A named open exit is resolved through the C one_argument path and canonical movement emits the destination look plus origin/destination audience bytes.
+do_enter	enter	enter.one-argument	D1	command	oracle-green	enter-depth	interpreter.c:1265; act.movement.c:646-660	Leading C fill words are skipped, so “enter the fountain extra” resolves the fountain keyword and ignores the remainder exactly as one_argument does.
+do_enter	enter	enter.already-indoors	D2	command	oracle-green	enter-depth	act.movement.c:661-663	A bare enter from a ROOM_INDOORS room emits the exact already-indoors refusal before scanning exits.
+do_enter	enter	enter.auto-indoor	D3	audience	oracle-green	enter-auto-depth	act.movement.c:664-673	A bare enter from outdoors selects the first open exit whose destination is indoors and preserves canonical movement audiences.
+do_enter	enter	enter.no-entrance	D2	command	oracle-green	enter-empty-depth	act.movement.c:664-674	An outdoor room with no qualifying open indoor exit emits the exact no-entrance refusal.
+do_enter	enter	enter.position-gate	D1	command	oracle-green	enter-empty-depth	interpreter.c:432; act.movement.c:642-674	After sleep, the registered POS_STANDING dispatcher gate rejects enter with the C sleeping response before do_enter executes.
