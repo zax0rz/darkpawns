@@ -1,0 +1,49 @@
+# depth-case: hit.first-token-trailing-words
+# C do_hit calls one_argument(), so only the first non-fill token is passed to
+# get_char_room_vis; trailing words are ignored (src/act.offensive.c:108-111).
+# This vehicle proves the command-side boundary; the synchronous melee output
+# itself is owned by combat-swing.
+
+[fixture]
+spawn-mob 16303 1 8105 80
+quiet-mobs
+
+[setup:oracle]
+Hittrail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Hittrail
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe]
+hit trainee extra words

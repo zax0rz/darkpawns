@@ -65,7 +65,12 @@ func cmdKill(s *Session, args []string) error {
 }
 
 func cmdHit(s *Session, args []string) error {
-	if len(args) == 0 {
+	// C do_hit calls one_argument(), not a whole-argument lookup: leading fill
+	// words are discarded and only the first non-fill token is passed to
+	// get_char_room_vis. This also makes `hit target trailing words` address
+	// target, exactly as the C command does (R1/R2/R5e).
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
 		s.Send("Hit who?\r\n")
 		return nil
 	}
@@ -77,7 +82,7 @@ func cmdHit(s *Session, args []string) error {
 	// Resolve target via the canonical in-room resolver (DP-907): keyword-list
 	// abbreviation matching, ordinals, self/me, visibility — identical to
 	// consider/kick/backstab/...
-	tgt, found := s.manager.world.ResolveCharInRoom(s.player, strings.Join(args, " "))
+	tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName)
 	if !found {
 		s.Send("They don't seem to be here.\r\n")
 		return nil
