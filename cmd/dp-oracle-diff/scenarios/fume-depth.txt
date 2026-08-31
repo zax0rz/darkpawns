@@ -1,0 +1,112 @@
+# C-first fume/do_action vehicle (src/interpreter.c:455;
+# src/act.social.c:102-151; lib/misc/socials:275-282). The record hides an
+# invisible actor from room audiences and requires a resting victim. The
+# awake peer and observer expose the successful target trio.
+
+# depth-case: fume.no-argument
+# depth-case: fume.target-success
+# depth-case: fume.target-not-found
+# depth-case: fume.self-target
+# depth-case: fume.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sootactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sootactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sootpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sootpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Sootobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Sootobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sootpeer 8162
+teleport Sootobserver 8162
+
+[probe]
+fume
+fume the Sootpeer trailing words are ignored
+fume Nobody
+fume Sootactor

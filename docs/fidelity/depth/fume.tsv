@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	fume	fume.entry-gate	D1	command	unit-green	TestFumeRegistrationUsesCEntryGate	interpreter.c:455; act.social.c:102-112	The C row is POS_RESTING with no command minimum level; the social record independently carries hide=1 and victim minimum POS_RESTING.
+do_action	fume	fume.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:455; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	fume	fume.no-argument	D3	audience	oracle-green-multiseed	fume-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:275-282	The no-target record emits its exact actor and room fume lines.
+do_action	fume	fume.target-success	D3	audience	oracle-green-multiseed	fume-depth@1,2,3,5,8	act.social.c:128-151; lib/misc/socials:275-282	A standing peer receives the actor, non-victim room, and victim branches with C's passionate fume text.
+do_action	fume	fume.target-not-found	D1	command	oracle-green-multiseed	fume-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:275-282	An unresolved target emits the exact record-specific not-found line.
+do_action	fume	fume.self-target	D2	audience	oracle-green-multiseed	fume-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:275-282	The self-target branch emits the actor and room auto messages.
+do_action	fume	fume.one-argument	D2	command	oracle-green-multiseed	fume-depth@1,2,3,5,8	interpreter.c:853-867,1265-1283; act.social.c:114-121	C one_argument skips the leading fill word and ignores trailing words after target selection.
+do_action	fume	fume.sleeping-target	D2	command	oracle-green-multiseed	fume-sleeping-depth@1,2,3,5,8	act.social.c:145-147; lib/misc/socials:275-282	A sleeping victim is rejected by the record's POS_RESTING minimum before audience emission.
+do_action	fume	fume.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance noshout vehicle.
+do_action	fume	fume.visibility	D3	shared	delegated	socials-depth	act.social.c:102-151; comm.c:2392-2555	The record's hide-invisible audience behavior and shared Act visibility are owned by the social matrix.
