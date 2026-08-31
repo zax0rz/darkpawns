@@ -167,15 +167,6 @@ func (w *World) doHouseTransfer(ch *Player, houseIdx int, args []string) {
 // Utility helpers
 // ---------------------------------------------------------------------------
 
-// parseInt parses an integer from a string.
-func parseInt(s string) (int, error) {
-	var n int
-	if _, err := fmt.Sscanf(s, "%d", &n); err != nil {
-		return 0, err
-	}
-	return n, nil
-}
-
 // isAbbrev checks if arg is a case-insensitive abbreviation of name.
 // In C: is_abbrev() — prefix match of length >= 1.
 func isAbbrev(arg, name string) bool {

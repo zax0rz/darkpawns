@@ -1,0 +1,92 @@
+# C-first hcontrol vehicle for interpreter.c:491 and house.c:323-598. The
+# Implementor is allowed to exercise all five subcommands in an isolated world
+# fixture; the lifecycle is built and destroyed within this scenario.
+
+# depth-case: hcontrol.entry-gate
+# depth-case: hcontrol.usage
+# depth-case: hcontrol.unknown-subcommand
+# depth-case: hcontrol.show-empty
+# depth-case: hcontrol.build-usage
+# depth-case: hcontrol.build-invalid-vnum
+# depth-case: hcontrol.build-invalid-direction
+# depth-case: hcontrol.build-unknown-owner
+# depth-case: hcontrol.build-success
+# depth-case: hcontrol.build-duplicate
+# depth-case: hcontrol.show-defined
+# depth-case: hcontrol.show-paid
+# depth-case: hcontrol.key-usage
+# depth-case: hcontrol.key-unknown-house
+# depth-case: hcontrol.key-invalid-vnum
+# depth-case: hcontrol.key-success
+# depth-case: hcontrol.pay-usage
+# depth-case: hcontrol.pay-unknown-house
+# depth-case: hcontrol.pay-invalid-vnum
+# depth-case: hcontrol.pay-success
+# depth-case: hcontrol.destroy-usage
+# depth-case: hcontrol.destroy-unknown-house
+# depth-case: hcontrol.destroy-invalid-vnum
+# depth-case: hcontrol.destroy-success
+# depth-case: hcontrol.show-after-destroy
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hcontrolactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hcontrolactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+~dpclock pulse 20
+
+[probe]
+hcontrol
+hcontrol unknown
+hcontrol show
+hcontrol build
+hcontrol build nope east Hcontrolactor
+hcontrol build 1204 BOGUS Hcontrolactor
+hcontrol build 8004 east Nobody
+hcontrol build 8004 east Hcontrolactor
+hcontrol build 8004 east Hcontrolactor
+hcontrol show
+hcontrol key
+hcontrol key 99999 8004
+hcontrol key 8004 nope
+hcontrol key 8004 8004
+hcontrol pay
+hcontrol pay 99999
+hcontrol pay nope
+hcontrol pay 8004
+hcontrol show
+hcontrol destroy
+hcontrol destroy 99999
+hcontrol destroy nope
+hcontrol destroy 8004
+hcontrol show

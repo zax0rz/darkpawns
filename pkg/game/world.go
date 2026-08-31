@@ -325,6 +325,17 @@ func (w *World) GetPlayer(name string) (*Player, bool) {
 	return p, ok
 }
 
+// GetPlayers returns a snapshot of the currently online players.
+func (w *World) GetPlayers() []*Player {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	players := make([]*Player, 0, len(w.players))
+	for _, player := range w.players {
+		players = append(players, player)
+	}
+	return players
+}
+
 // GetPlayerByID finds a player by their instance ID.
 func (w *World) GetPlayerByID(id int) *Player {
 	w.mu.RLock()
