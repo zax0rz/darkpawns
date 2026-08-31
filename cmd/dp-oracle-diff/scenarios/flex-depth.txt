@@ -1,0 +1,117 @@
+# C-first flex/do_action vehicle (src/interpreter.c:447;
+# src/act.social.c:102-151; lib/misc/socials:1198-1206). Peers make the
+# no-argument room, target success, self, and target-position audiences
+# observable; the sleeping peer reaches the C min_victim_position branch.
+
+# depth-case: flex.no-argument
+# depth-case: flex.target-success
+# depth-case: flex.self-target
+# depth-case: flex.target-not-found
+# depth-case: flex.target-position-gate
+# depth-case: flex.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Flexactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Flexactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Flexpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Flexpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeppeer]
+Flexsleep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeppeer]
+Flexsleep
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8004
+teleport Flexpeer 8004
+teleport Flexsleep 8004
+
+[probe]
+flex
+flex Flexpeer
+flex Flexactor
+flex Nobody
+flex Flexsleep
+flex the Flexpeer trailing words are ignored

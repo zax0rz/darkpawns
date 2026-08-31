@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	flex	flex.entry-gate	D1	command	unit-green	TestFlexRegistrationUsesCEntryGate	interpreter.c:447; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
+do_action	flex	flex.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:447; interpreter.c:910-947	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
+do_action	flex	flex.no-argument	D3	audience	oracle-green-multiseed	flex-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:1198-1206	The no-argument record emits the actor line and the room audience.
+do_action	flex	flex.target-success	D3	audience	oracle-green-multiseed	flex-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:1198-1206	A visible standing target receives the actor, non-victim room, and victim messages.
+do_action	flex	flex.self-target	D2	audience	oracle-green-multiseed	flex-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:1198-1206	A self target takes the flex char_auto and others_auto branches.
+do_action	flex	flex.target-not-found	D1	command	oracle-green-multiseed	flex-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:1198-1206	An unresolved room target emits Flex at who?.
+do_action	flex	flex.target-position-gate	D2	command	oracle-green-multiseed	flex-depth@1,2,3,5,8	act.social.c:137-143; lib/misc/socials:1198-1201	A sleeping target is rejected by the social record's minimum victim position.
+do_action	flex	flex.one-argument	D2	command	oracle-green-multiseed	flex-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121	C one_argument skips the leading fill word and discards trailing words before target lookup.
+do_action	flex	flex.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT do_action gate is proven by the dance social matrix.
+do_action	flex	flex.visibility	D3	shared	delegated	socials-depth	act.social.c:114-151; comm.c:2392-2555	Target visibility and Act audience filtering are owned by the social matrix.
