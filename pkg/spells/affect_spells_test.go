@@ -138,25 +138,22 @@ func TestMagAffects_Armor(t *testing.T) {
 	}
 }
 
+// forceMagAffectsSave makes the mag_affects saving throw deterministic for the
+// duration of a test: saved=true means the victim resists, saved=false means the
+// spell lands. Restores the real (RNG-backed) roll via t.Cleanup.
+func forceMagAffectsSave(t *testing.T, saved bool) {
+	t.Helper()
+	prev := magAffectsSaveRoll
+	magAffectsSaveRoll = func(interface{}, int) bool { return saved }
+	t.Cleanup(func() { magAffectsSaveRoll = prev })
+}
+
 func TestMagAffects_Sleep(t *testing.T) {
+	forceMagAffectsSave(t, false)                     // save fails -> Sleep lands
 	ch := &mockSpellsChar{level: 30, flags: 1}        // PLR_OUTLAW
 	victim := &mockSpellsChar{level: 30, position: 8} // standing = 8
 
-	// Sleep has a saving throw. Loop up to 50 times until the save fails and spell succeeds.
-	succeeded := false
-	for i := 0; i < 50; i++ {
-		victim.activeAffects = nil
-		victim.position = 8
-		MagAffects(30, ch, victim, SpellSleep, int(SaveSpell), nil)
-		if len(victim.activeAffects) > 0 {
-			succeeded = true
-			break
-		}
-	}
-
-	if !succeeded {
-		t.Fatal("failed to land Sleep spell after 50 retries")
-	}
+	MagAffects(30, ch, victim, SpellSleep, int(SaveSpell), nil)
 
 	if len(victim.activeAffects) != 1 {
 		t.Fatalf("expected 1 affect on victim, got %d", len(victim.activeAffects))
@@ -170,24 +167,27 @@ func TestMagAffects_Sleep(t *testing.T) {
 	}
 }
 
+func TestMagAffects_Sleep_SavedResists(t *testing.T) {
+	forceMagAffectsSave(t, true)                      // save succeeds -> Sleep is resisted
+	ch := &mockSpellsChar{level: 30, flags: 1}        // PLR_OUTLAW
+	victim := &mockSpellsChar{level: 30, position: 8} // standing = 8
+
+	MagAffects(30, ch, victim, SpellSleep, int(SaveSpell), nil)
+
+	if len(victim.activeAffects) != 0 {
+		t.Fatalf("expected no affect on a successful save, got %d", len(victim.activeAffects))
+	}
+	if victim.position != 8 { // unchanged: still standing
+		t.Errorf("victim position = %d, want 8 (standing, unaffected)", victim.position)
+	}
+}
+
 func TestMagAffects_Poison(t *testing.T) {
+	forceMagAffectsSave(t, false) // save fails -> Poison lands
 	ch := &mockSpellsChar{level: 20}
 	victim := &mockSpellsChar{level: 10}
 
-	// Poison has a saving throw. Loop up to 50 times until the save fails and spell succeeds.
-	succeeded := false
-	for i := 0; i < 50; i++ {
-		victim.activeAffects = nil
-		MagAffects(20, ch, victim, SpellPoison, int(SaveSpell), nil)
-		if len(victim.activeAffects) > 0 {
-			succeeded = true
-			break
-		}
-	}
-
-	if !succeeded {
-		t.Fatal("failed to land Poison spell after 50 retries")
-	}
+	MagAffects(20, ch, victim, SpellPoison, int(SaveSpell), nil)
 
 	if len(victim.activeAffects) != 3 {
 		t.Fatalf("expected 3 affects on victim for Poison, got %d", len(victim.activeAffects))

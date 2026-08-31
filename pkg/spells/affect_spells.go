@@ -14,6 +14,14 @@ import (
 
 // MagAffects applies spell affects to a character.
 // Functions named MagXxx to match C convention; constants are RoutineXxx.
+// magAffectsSaveRoll performs the saving throw for the hostile mag_affects arms.
+// It is a package var so tests can force the save result deterministically:
+// CheckSavingThrow is RNG-backed (math/rand/v2's global generator has no Seed),
+// so asserting a specific outcome through a raw call flakes — e.g. a level-30
+// victim vs a level-30 caster saves often enough that a bounded retry loop can
+// lose every attempt.
+var magAffectsSaveRoll = magSavingThrow
+
 func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world interface{}) {
 	magAffectsForCast(level, ch, victim, spellNum, savetype, CastSpell, world)
 }
@@ -79,7 +87,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 	saved := false
 	switch spellNum {
 	case SpellChillTouch, SpellBlindness, SpellSmokescreen, SpellCurse, SpellSleep, SpellFlameStrike, SpellPoison:
-		saved = magSavingThrow(victim, savetype)
+		saved = magAffectsSaveRoll(victim, savetype)
 	}
 	magAffectsApply(level, ch, victim, spellNum, saved, reag, world, castType)
 }
