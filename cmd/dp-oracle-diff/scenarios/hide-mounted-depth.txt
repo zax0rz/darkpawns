@@ -1,0 +1,46 @@
+# C-first do_hide mounted gate (src/act.other.c:247-255). The rideable horse
+# uses the shared movement fixture; hide and kabuki must both stop at Dismount
+# first, before weather, attempt text, or RNG.
+
+# depth-case: hide.mounted-gate
+# depth-case: kabuki.mounted-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Hidemounted
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hidemounted
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+ride horse
+hide
+kabuki

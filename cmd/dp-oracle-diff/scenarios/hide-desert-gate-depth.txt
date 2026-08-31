@@ -1,0 +1,49 @@
+# C-first do_hide daytime DESERT gate (src/act.other.c:257-282). The fixed
+# harness clock is daytime, so the sector refusal precedes both hide variants'
+# attempt messages and RNG rolls.
+
+# depth-case: hide.desert-daytime-gate
+# depth-case: kabuki.desert-daytime-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 10
+
+[setup:oracle]
+Hidedesert
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hidedesert
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Hidedesert 'hide' 100
+skillset Hidedesert 'kabuki' 100
+
+[probe]
+hide
+kabuki

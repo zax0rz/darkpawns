@@ -1136,7 +1136,7 @@ func CmdHide(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	result := game.DoHide(ch)
+	result := game.DoHideInWorld(ch, s.GetWorld())
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 
@@ -1148,7 +1148,7 @@ func CmdKabuki(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	result := game.DoKabuki(ch)
+	result := game.DoKabukiInWorld(ch, s.GetWorld())
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 

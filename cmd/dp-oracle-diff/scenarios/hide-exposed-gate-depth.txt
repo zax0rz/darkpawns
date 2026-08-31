@@ -1,0 +1,49 @@
+# C-first do_hide daytime exposed-sector gate (src/act.other.c:257-282).
+# Sector 9 is the representative flying value for the shared C switch arm
+# covering flying, fire, earth, and wind.
+
+# depth-case: hide.exposed-daytime-gate
+# depth-case: kabuki.exposed-daytime-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 9
+
+[setup:oracle]
+Hideexposed
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hideexposed
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Hideexposed 'hide' 100
+skillset Hideexposed 'kabuki' 100
+
+[probe]
+hide
+kabuki
