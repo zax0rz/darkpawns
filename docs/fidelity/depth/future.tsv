@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_ps	future	future.entry-gate	D1	command	unit-green	TestFutureRegistrationUsesCEntryGate	interpreter.c:456; act.informative.c:2117-2155	The C row permits POS_DEAD and has no level restriction; do_gen_ps has no additional future-specific gate.
+do_gen_ps	future	future.static-page	D2	audience	oracle-green-multiseed	future-depth@1,2,3,5,8	act.informative.c:2131-2153; db.c:198; db.h:61; lib/text/future	SCMD_FUTURE passes the boot-cached future string to page_string; this eight-line file fits one page and emits the exact bytes without a pager prompt.
+do_gen_ps	future	future.arguments-ignored	D2	command	oracle-green-multiseed	future-depth@1,2,3,5,8	interpreter.c:853-867; act.informative.c:2131-2153	The do_gen_ps SCMD_FUTURE branch does not inspect arguments, so trailing words produce the same single-page output.
