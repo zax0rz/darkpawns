@@ -1,0 +1,111 @@
+# C-first fwap/do_action vehicle (src/interpreter.c:457;
+# src/act.social.c:102-151; lib/misc/socials:285-293). The record has no
+# hidden-actor filter and a zero minimum victim position.
+
+# depth-case: fwap.no-argument
+# depth-case: fwap.target-success
+# depth-case: fwap.target-not-found
+# depth-case: fwap.self-target
+# depth-case: fwap.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sootactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sootactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sootpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sootpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Sootobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Sootobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sootpeer 8162
+teleport Sootobserver 8162
+
+[probe]
+fwap
+fwap the Sootpeer trailing words are ignored
+fwap Nobody
+fwap Sootactor

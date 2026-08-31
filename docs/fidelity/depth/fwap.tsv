@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	fwap	fwap.entry-gate	D1	command	unit-green	TestFwapRegistrationUsesCEntryGate	interpreter.c:457; act.social.c:102-112	The C row is POS_RESTING with no minimum level; the fwap social record also has zero hide and victim-position metadata.
+do_action	fwap	fwap.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:457; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	fwap	fwap.noshout	D1	command	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the dance social matrix.
+do_action	fwap	fwap.no-argument	D3	audience	oracle-green-multiseed	fwap-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:285-293	The no-target record emits the exact actor and non-victim room lines.
+do_action	fwap	fwap.target-success	D3	audience	oracle-green-multiseed	fwap-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:285-293	An awake visible peer receives the actor, room, and victim fwap messages with C substitutions.
+do_action	fwap	fwap.sleeping-target	D3	audience	oracle-green-multiseed	fwap-sleeping-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2480-2555; lib/misc/socials:285-293	The zero minimum victim position admits a sleeping target; the awake actor and observer retain their C audience bytes while plain TO_VICT suppresses the sleeping peer's private line.
+do_action	fwap	fwap.target-not-found	D1	command	oracle-green-multiseed	fwap-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:285-293	An unresolved room target emits the exact right-cheek miss text.
+do_action	fwap	fwap.self-target	D2	audience	oracle-green-multiseed	fwap-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:285-293	A self target uses the record's auto actor and room messages.
+do_action	fwap	fwap.one-argument	D2	command	oracle-green-multiseed	fwap-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121; lib/misc/socials:285-293	C one_argument skips the leading fill word and discards trailing words before visible target lookup.
+do_action	fwap	fwap.visibility	D3	shared	delegated	socials-depth	act.social.c:102-151; comm.c:2392-2555	Visible target lookup and Act audience filtering are shared with the social matrix.
