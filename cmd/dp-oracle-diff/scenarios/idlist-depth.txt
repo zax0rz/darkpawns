@@ -1,0 +1,55 @@
+# C-first depth vehicle for do_idlist (src/interpreter.c:512;
+# src/act.wizard.c:3575-3693). The command is registered at LVL_GRGOD,
+# writes the fixed object_idlist report, ignores all arguments, and emits only
+# the final completion line. The level-38 probe makes the registration gate
+# explicit; the level-40 probes reach the report path and argument-ignored
+# branch. The generated files stay in each disposable server runtime.
+#
+# depth-case: idlist.registration-gate
+# depth-case: idlist.success
+# depth-case: idlist.arguments-ignored
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Idlistdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Idlistdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Idlistdepth level 38
+
+[probe]
+idlist
+
+[warmup]
+set Idlistdepth level 40
+
+[probe]
+idlist
+idlist ignored trailing words

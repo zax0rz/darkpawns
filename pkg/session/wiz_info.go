@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -122,52 +121,32 @@ func cmdSyslog(s *Session, args []string) error {
 	return nil
 }
 
-// cmdIdlist — dump object ID list to file (LVL_IMPL)
-// Security: filename is always sanitized via filepath.Base() to prevent path traversal,
-// and output is restricted to the data/ directory. Even though the filename is currently
-// hardcoded, this defense-in-depth guard prevents regression if user args are re-enabled.
+// cmdIdlist — dump object ID list to the fixed C report file (LVL_GRGOD).
 func cmdIdlist(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMPL) {
+	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if s.manager == nil || s.manager.world == nil {
-		s.Send("World not available.")
+	// C ignores command arguments and always opens "object_idlist" relative to
+	// the server process directory (src/act.wizard.c:3582-3589).
+	f, err := os.Create("object_idlist")
+	if err != nil {
+		s.Send("Could not open id list file, cannot complete operation!\r\n")
 		return nil
 	}
 	pw := s.manager.world.GetParsedWorld()
-	if pw == nil {
-		s.Send("World data not loaded.")
-		return nil
+	count, writeErr := writeObjectIDList(f, pw.Objs)
+	closeErr := f.Close()
+	if writeErr != nil {
+		slog.Error("idlist report write failed", "error", writeErr)
+		return writeErr
 	}
-
-	// Sanitize filename — strip any path components to prevent directory traversal
-	filename := "idlist.txt"
-	if len(args) > 0 {
-		filename = filepath.Base(args[0])
+	if closeErr != nil {
+		slog.Error("idlist report close failed", "error", closeErr)
+		return closeErr
 	}
-
-	// Force output into data/ directory
-	const safeDir = "data"
-	if err := os.MkdirAll(safeDir, 0o755); err != nil {
-		s.Send(fmt.Sprintf("Could not create %s directory: %v\r\n", safeDir, err))
-		return nil
-	}
-	safePath := filepath.Join(safeDir, filename)
-
-	f, err := os.Create(safePath)
-	if err != nil {
-		s.Send(fmt.Sprintf("Could not create %s: %v\r\n", safePath, err))
-		return nil
-	}
-	defer func() { _ = f.Close() }()
-	for i := range pw.Objs {
-		_, _ = fmt.Fprintf(f, "[%d] %s\n", pw.Objs[i].VNum, pw.Objs[i].ShortDesc)
-		_, _ = fmt.Fprintf(f, "  Keywords: %s  Type: %d  Cost: %d\n", pw.Objs[i].Keywords, pw.Objs[i].TypeFlag, pw.Objs[i].Cost)
-		_, _ = fmt.Fprintf(f, "  Values: [%d] [%d] [%d] [%d]\n", pw.Objs[i].Values[0], pw.Objs[i].Values[1], pw.Objs[i].Values[2], pw.Objs[i].Values[3])
-	}
-	s.Send(fmt.Sprintf("Wrote %d objects to %s\r\n", len(pw.Objs), safePath))
-	slog.Info("(GC) idlist", "who", s.player.Name, "file", safePath, "count", len(pw.Objs))
+	s.Send("Ok. Id list complete.\r\n")
+	slog.Info("(GC) idlist", "who", s.player.Name, "file", "object_idlist", "count", count)
 	return nil
 }
 
