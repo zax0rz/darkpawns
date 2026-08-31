@@ -1,0 +1,119 @@
+# C-first grope social vehicle (src/interpreter.c:479; act.social.c:102-148;
+# lib/misc/socials:345-353). The record has hide=5 and minimum victim position
+# POS_RESTING, so the target matrix includes an awake mob, a peer observer, a
+# self target, a missing target, and a sleeping player.
+
+# depth-case: grope.no-argument
+# depth-case: grope.target-success
+# depth-case: grope.target-audience
+# depth-case: grope.one-argument
+# depth-case: grope.self-target
+# depth-case: grope.target-not-found
+# depth-case: grope.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+
+[setup:oracle]
+Gropeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gropeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Gropeobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Gropeobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Gropesleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Gropesleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Gropeobserver 8162
+teleport Gropesleeper 8162
+
+[probe]
+grope
+grope the cleaner trailing words are ignored
+grope Gropeobserver
+grope Gropeactor
+grope Nobody
+grope Gropesleeper
