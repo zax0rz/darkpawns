@@ -1,0 +1,127 @@
+# C-first goto/do_goto vehicle (src/interpreter.c:467; src/act.wizard.c:184-305).
+# The primary is reduced to LVL_IMMORT after using teleport for setup. Peers in
+# the target room expose C's poof audiences and post-move look; a spawned mob
+# and loaf cover visible-character and visible-object room resolution.
+
+# depth-case: goto.no-argument
+# depth-case: goto.numeric-invalid
+# depth-case: goto.target-not-found
+# depth-case: goto.numeric-success
+# depth-case: goto.mob-target
+# depth-case: goto.object-target
+# depth-case: goto.object-unavailable
+# depth-case: goto.player-target
+# depth-case: goto.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8162 80
+spawn-obj 8010 1 8161 80
+
+[setup:oracle]
+Gotowizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gotowizard
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gototarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gototarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Gotoobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Gotoobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Gototarget 8161
+teleport Gotoobserver 8161
+set Gotowizard level 31
+
+[probe]
+goto
+goto 999999
+goto Nobody
+goto 8161
+goto bread
+get bread
+goto bread
+goto 8162
+goto generic
+goto 8162
+goto Gototarget
+goto the 8162 trailing words are ignored

@@ -1,0 +1,14 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_goto	goto	goto.entry-gate	D1	command	unit-green	TestGotoRegistrationUsesCEntryGate	interpreter.c:467; interpreter.c:883-947	The registered C row requires LVL_IMMORT and admits POS_SLEEPING.
+do_goto	goto	goto.position-gate	D1	command	unit-green	TestGotoRegistrationUsesCEntryGate	interpreter.c:467; comm.c:910-947	The command registry preserves the C sleeping-position entry gate.
+do_goto	goto	goto.no-argument	D1	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:184-196	Empty C one_argument input emits the exact room-supply refusal.
+do_goto	goto	goto.numeric-invalid	D1	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:195-202	A numeric target is validated through real_room before movement.
+do_goto	goto	goto.target-not-found	D1	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:202-216	Unresolved visible character/object lookup emits C's creature-or-object refusal.
+do_goto	goto	goto.numeric-success	D3	audience	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:275-305	A valid numeric room performs poof-out, transfer, poof-in, and look_at_room in order.
+do_goto	goto	goto.mob-target	D3	audience	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:202-204; handler.c:1276-1300	A visible mob name resolves to its current room before the shared success path.
+do_goto	goto	goto.object-target	D3	audience	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:204-211; handler.c:1353-1393	A visible room object resolves to its current room before the shared success path.
+do_goto	goto	goto.object-unavailable	D1	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:205-211	A carried object selected by get_obj_vis is unavailable as a destination.
+do_goto	goto	goto.player-target	D3	audience	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:202-204; handler.c:1276-1300	A visible player name resolves to the player's current room.
+do_goto	goto	goto.one-argument	D2	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	interpreter.c:1265-1283; act.wizard.c:184-196	C one_argument skips leading fill words and ignores trailing words.
+do_goto	goto	goto.private-room-gate	D1	command	oracle-green-multiseed	goto-private-depth@1,2,3,5,8	act.wizard.c:218-239	A sub-GRGOD wizard is barred from an occupied ROOM_PRIVATE destination.
+do_goto	goto	goto.god-room-gate	D1	command	oracle-green-multiseed	goto-godroom-depth@1,2,3,5,8	act.wizard.c:218-239	A sub-GRGOD wizard is barred from a ROOM_GODROOM destination.

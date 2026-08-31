@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdGoto(s *Session, args []string) error {
@@ -12,20 +14,90 @@ func cmdGoto(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) == 0 {
-		s.Send("You must supply a room number or name.\r\n")
+	dest, ok := findGotoRoom(s, strings.Join(args, " "))
+	if !ok {
 		return nil
 	}
-	dest, err := strconv.Atoi(args[0])
-	if err != nil {
-		s.Send("That's not a valid room number.")
-		return nil
+
+	oldRoom := s.player.GetRoom()
+	poofOut := s.player.PoofOut
+	if poofOut == "" {
+		poofOut = "$n disappears in a puff of smoke."
 	}
-	s.player.SetRoom(dest)
-	slog.Warn("wizard goto", "by", s.player.Name, "room", dest)
-	s.Send(fmt.Sprintf("You go to room %d.", dest))
-	_ = cmdLook(s, nil)
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, poofOut, "", game.ToRoom)
+
+	if err := s.manager.world.PlayerTransfer(s.player, dest); err != nil {
+		slog.Error("wizard goto transfer failed", "by", s.player.Name, "from", oldRoom, "to", dest, "error", err)
+		return err
+	}
+
+	poofIn := s.player.PoofIn
+	if poofIn == "" {
+		poofIn = "$n appears with an ear-splitting bang."
+	}
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, poofIn, "", game.ToRoom)
+	if err := cmdMovementLook(s); err != nil {
+		slog.Error("wizard goto room look failed", "by", s.player.Name, "room", dest, "error", err)
+		return err
+	}
 	return nil
+}
+
+// findGotoRoom mirrors find_target_room (src/act.wizard.c:184-239). The
+// handler receives C's one_argument result, so fill words are discarded before
+// numeric-room, visible-character, and visible-object resolution.
+func findGotoRoom(s *Session, raw string) (int, bool) {
+	roomName, _ := game.OneArgument(raw)
+	if roomName == "" {
+		s.Send("You must supply a room number or name.\r\n")
+		return 0, false
+	}
+
+	if isLeadingDigit(roomName) && !strings.ContainsRune(roomName, '.') {
+		vnum, ok := parseLeadingInt(roomName)
+		if !ok || s.manager.world.GetRoomInWorld(vnum) == nil {
+			s.Send("No room exists with that number.\r\n")
+			return 0, false
+		}
+		return gotoRoomAllowed(s, vnum)
+	}
+
+	if target, ok := s.manager.world.ResolveCharWorld(s.player, roomName); ok {
+		if target.Player != nil {
+			return gotoRoomAllowed(s, target.Player.GetRoom())
+		}
+		if target.Mob != nil {
+			return gotoRoomAllowed(s, target.Mob.GetRoom())
+		}
+	}
+	if object, ok := s.manager.world.ResolveObjectWorld(s.player, roomName); ok {
+		if room := object.GetRoomVNum(); room > 0 {
+			return gotoRoomAllowed(s, room)
+		}
+		s.Send("That object is not available.\r\n")
+		return 0, false
+	}
+
+	s.Send("No such creature or object around.\r\n")
+	return 0, false
+}
+
+func gotoRoomAllowed(s *Session, roomVNum int) (int, bool) {
+	if s.player.GetLevel() < LVL_GRGOD {
+		room := s.manager.world.GetRoomInWorld(roomVNum)
+		if game.HasRoomFlag(room, "GODROOM") {
+			s.Send("You are not godly enough to use that room!\r\n")
+			return 0, false
+		}
+		if game.HasRoomFlag(room, "PRIVATE") {
+			occupants := len(s.manager.world.GetPlayersInRoom(roomVNum)) + len(s.manager.world.GetMobsInRoom(roomVNum))
+			if occupants > 1 {
+				s.Send("There's a private conversation going on in that room.\r\n")
+				return 0, false
+			}
+		}
+	}
+	return roomVNum, true
 }
 
 func cmdAt(s *Session, args []string) error {

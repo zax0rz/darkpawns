@@ -123,6 +123,13 @@ func roomHasNamedFlag(room *parser.Room, flag string) bool {
 	return false
 }
 
+// HasRoomFlag reports whether a room carries the named C room flag. It is the
+// read-only boundary for command packages that must apply the same parsed
+// room-flag semantics as game logic.
+func HasRoomFlag(room *parser.Room, flag string) bool {
+	return roomHasNamedFlag(room, flag)
+}
+
 // hasWearFlag checks if a [4]int wear flags array has a specific bit set.
 func hasWearFlag(wf [4]int, bit int) bool {
 	word := bit / 32

@@ -1,6 +1,57 @@
 package session
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
+)
+
+func TestGotoRegistrationUsesCEntryGate(t *testing.T) {
+	entry, ok := commandGates["goto"]
+	if !ok {
+		t.Fatal("goto command has no C gate")
+	}
+	if entry.MinLevel != LVL_IMMORT || entry.MinPosition != combat.PosSleeping {
+		t.Fatalf("goto gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_IMMORT, combat.PosSleeping)
+	}
+}
+
+func TestFindGotoRoomSkipsCFillWords(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "GotoWizard", 1001, true)
+	s.player.Level = LVL_IMMORT
+
+	room, ok := findGotoRoom(s, "the 1002 trailing words are ignored")
+	if !ok || room != 1002 {
+		t.Fatalf("findGotoRoom() = (%d, %t), want (1002, true)", room, ok)
+	}
+}
+
+func TestGotoRoomAllowedHonorsCPrivateAndGodroomGates(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "GotoWizard", 1001, true)
+	s.player.Level = LVL_IMMORT
+
+	private := m.world.GetRoomInWorld(1002)
+	private.Flags = []string{"512"}
+	peer := game.NewPlayer(2, "PrivatePeer", 1002)
+	peer2 := game.NewPlayer(3, "PrivatePeerTwo", 1002)
+	if err := m.world.AddPlayer(peer); err != nil {
+		t.Fatalf("add private peer: %v", err)
+	}
+	if err := m.world.AddPlayer(peer2); err != nil {
+		t.Fatalf("add second private peer: %v", err)
+	}
+	if _, ok := gotoRoomAllowed(s, 1002); ok {
+		t.Fatal("private room with an occupant should be rejected")
+	}
+
+	private.Flags = []string{"1024"}
+	if _, ok := gotoRoomAllowed(s, 1002); ok {
+		t.Fatal("god room should be rejected")
+	}
+}
 
 func TestCmdAtPreservesNestedMovementLocation(t *testing.T) {
 	m := makeTestManager(t)
