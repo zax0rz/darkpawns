@@ -4,8 +4,6 @@ package game
 // Source: class.c, structs.h
 
 import (
-	"strings"
-
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -354,7 +352,7 @@ func BootstrapFirstPlayerGod(p *Player) {
 	// db.c:3059-3065 — SET_SKILL(ch, i, 100) for every skill when level == LVL_IMPL.
 	size := spells.SkillCatalogSize()
 	for num := 1; num < size; num++ {
-		name := strings.ToLower(SkillCatalogName(num))
+		name := SkillStorageName(num)
 		if name == "" {
 			continue
 		}

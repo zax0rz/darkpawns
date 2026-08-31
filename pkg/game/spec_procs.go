@@ -186,7 +186,7 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	name := strings.ToLower(SkillCatalogName(skillNum))
+	name := SkillStorageName(skillNum)
 	learned := pracLearned(class)
 	if ch.GetSkill(name) >= learned {
 		sendToChar(ch, "You are already learned in that area.")
