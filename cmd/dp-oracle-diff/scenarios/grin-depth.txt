@@ -1,0 +1,118 @@
+# C-first grin social vehicle (src/interpreter.c:475; act.social.c:102-151;
+# lib/misc/socials:330-338). The record has hide=0 and minimum victim position
+# zero, so the target-bearing matrix includes an asleep target.
+
+# depth-case: grin.no-argument
+# depth-case: grin.target-success
+# depth-case: grin.target-audience
+# depth-case: grin.one-argument
+# depth-case: grin.self-target
+# depth-case: grin.target-not-found
+# depth-case: grin.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+
+[setup:oracle]
+Grinactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grinactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Grinobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Grinobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Grinsleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Grinsleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Grinobserver 8162
+teleport Grinsleeper 8162
+
+[probe]
+grin
+grin the cleaner trailing words are ignored
+grin Grinobserver
+grin Grinactor
+grin Nobody
+grin Grinsleeper
