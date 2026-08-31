@@ -222,12 +222,14 @@ func extractArg(argument string) string {
 func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 	vnum := observer.GetRoomVNum()
 	nameLower := strings.ToLower(name)
+	if nameLower == "self" || nameLower == "me" {
+		return observer
+	}
 
 	// Check mobs in the room
 	mobs := w.GetMobsInRoom(vnum)
 	for _, m := range mobs {
-		mobNameLower := strings.ToLower(m.GetName())
-		if (mobNameLower == nameLower || strings.HasPrefix(mobNameLower, nameLower)) && canSeeSocialTarget(observer, m) {
+		if isnameWithAbbrevs(name, charKeywords(m)) && canSeeSocialTarget(observer, m) {
 			return m
 		}
 	}
@@ -235,8 +237,7 @@ func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 	// Check players
 	players := w.GetPlayersInRoom(vnum)
 	for _, p := range players {
-		pNameLower := strings.ToLower(p.GetName())
-		if (pNameLower == nameLower || strings.HasPrefix(pNameLower, nameLower)) && canSeeSocialTarget(observer, p) {
+		if isnameWithAbbrevs(name, charKeywords(p)) && canSeeSocialTarget(observer, p) {
 			return p
 		}
 	}
