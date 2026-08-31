@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	flip	flip.entry-gate	D1	command	unit-green	TestFlipRegistrationUsesCEntryGate	interpreter.c:448; act.social.c:102-112	The registered C row is POS_STANDING with no minimum level.
+do_action	flip	flip.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:448; interpreter.c:910-947	The shared POS_STANDING command rejection is proven by the fade position-gate vehicle's common gate class.
+do_action	flip	flip.no-argument	D3	audience	oracle-green-multiseed	flip-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:231-239	The no-argument record emits the actor line and non-victim room audience.
+do_action	flip	flip.target-success	D3	audience	oracle-green-multiseed	flip-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:231-239	A visible standing target receives the actor and victim messages; the companion sleeping-target probe supplies the non-victim room audience.
+do_action	flip	flip.self-target	D2	audience	oracle-green-multiseed	flip-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:231-239	The self target takes C char_auto and others_auto; both records are #, so the branch is silent.
+do_action	flip	flip.target-not-found	D1	command	oracle-green-multiseed	flip-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:231-239	An unresolved room target emits the exact Who? line.
+do_action	flip	flip.sleeping-target-allowed	D2	command	oracle-green-multiseed	flip-depth@1,2,3,5,8	act.social.c:137-143; lib/misc/socials:231-239	The record's zero minimum victim position allows a sleeping target to reach success.
+do_action	flip	flip.one-argument	D2	command	oracle-green-multiseed	flip-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121	C one_argument skips the leading fill word and discards trailing words before target lookup.
+do_action	flip	flip.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT do_action gate is proven by the dance social matrix.
+do_action	flip	flip.visibility	D3	shared	delegated	socials-depth	act.social.c:114-151; comm.c:2392-2555	Target visibility and Act audience filtering are owned by the social matrix.
