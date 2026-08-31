@@ -1,0 +1,116 @@
+# C-first greet social vehicle (src/interpreter.c:474; act.social.c:102-151;
+# lib/misc/socials:315-323). The record has hide=0 and minimum victim position
+# zero, so the target-bearing matrix includes an asleep target.
+
+# depth-case: greet.no-argument
+# depth-case: greet.target-success
+# depth-case: greet.target-audience
+# depth-case: greet.one-argument
+# depth-case: greet.self-target
+# depth-case: greet.target-not-found
+# depth-case: greet.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Greetactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Greetactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Greettarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Greettarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Greetsleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Greetsleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Greettarget 8162
+teleport Greetsleeper 8162
+
+[probe]
+greet
+greet the Greettarget trailing words are ignored
+greet Greetactor
+greet Nobody
+greet Greetsleeper

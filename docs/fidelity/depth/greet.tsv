@@ -1,0 +1,12 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	greet	greet.entry-gate	D1	command	unit-green	TestGreetRegistrationUsesCEntryGate	interpreter.c:474; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level, and the greet social metadata is hide 0 with no victim-position minimum.
+do_action	greet	greet.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:474; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	greet	greet.no-argument	D2	command	oracle-green-multiseed	greet-depth@1,2,3,5,8	act.social.c:114-121; lib/misc/socials:315-323	No argument emits the exact actor Greet Who? line and the record's empty room branch.
+do_action	greet	greet.target-success	D3	audience	oracle-green-multiseed	greet-depth@1,2,3,5,8	act.social.c:134-151; lib/misc/socials:315-323	A visible awake target receives the exact actor and victim greeting messages.
+do_action	greet	greet.target-audience	D3	audience	oracle-green-multiseed	greet-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555	The visible non-victim room peer receives the exact $n greets $N line while the actor is excluded.
+do_action	greet	greet.one-argument	D2	command	oracle-green-multiseed	greet-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121	Leading fill words are skipped and trailing input is ignored before visible target lookup.
+do_action	greet	greet.self-target	D2	audience	oracle-green-multiseed	greet-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:315-323	A self target takes the authored auto actor and room branches.
+do_action	greet	greet.target-not-found	D1	command	oracle-green-multiseed	greet-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:315-323	A missing visible-room target receives the exact greet-specific not-found line.
+do_action	greet	greet.sleeping-target	D3	audience	oracle-green-multiseed	greet-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555	With minimum victim position zero, a sleeping target passes the social gate; C's TO_VICT delivery remains suppressed while the room audience is preserved.
+do_action	greet	greet.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance social matrix.
+do_action	greet	greet.visibility	D3	shared	delegated	socials-depth	act.social.c:102-151; comm.c:2392-2555	The target lookup and three social audiences use the shared visibility and Act behavior.
