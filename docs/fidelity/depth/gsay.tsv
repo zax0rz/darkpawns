@@ -1,0 +1,15 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gsay	gsay	gsay.entry-gate	D1	command	unit-green	TestGsayRegistrationUsesCEntryGates	interpreter.c:483; act.comm.c:824-836	The C gsay row is POS_SLEEPING with no command minimum level.
+do_gsay	gtell	gtell.entry-gate	D1	command	unit-green	TestGsayRegistrationUsesCEntryGates	interpreter.c:484; act.comm.c:824-836	The C gtell row shares do_gsay with gsay and preserves the same POS_SLEEPING, level-zero gate.
+do_gsay	gsay	gsay.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:483; comm.c:910-947	The shared POS_SLEEPING command rejection is owned by the existing group position-gate vehicle.
+do_gsay	gtell	gtell.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:484; comm.c:910-947	The gtell alias uses the same shared POS_SLEEPING command rejection.
+do_gsay	gsay	gsay.not-in-group	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-834	A caller without AFF_GROUP receives the exact group-membership refusal before argument handling.
+do_gsay	gtell	gtell.not-in-group	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-834	The gtell row reaches the same do_gsay group-membership refusal.
+do_gsay	gsay	gsay.no-argument	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-836	An in-group caller with no argument receives the exact empty group-say prompt.
+do_gsay	gtell	gtell.no-argument	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-836	The gtell alias preserves the same empty-argument prompt.
+do_gsay	gsay	gsay.group-audience	D3	audience	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:838-858	A grouped leader reaches all grouped followers and receives the exact self confirmation.
+do_gsay	gtell	gtell.alias-audience	D3	audience	oracle-green-multiseed	gsay-depth@1,2,3,5,8	interpreter.c:483-484; act.comm.c:838-858	The adjacent gtell row shares the handler and emits identical leader/follower audience bytes.
+do_gsay	gsay	gsay.norepeat	D2	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:860-866	Grouped recipients still receive the message while PRF_NOREPEAT changes only the actor confirmation to C's Okay. text.
+do_gsay	gsay	gsay.sleeping-recipient	D3	audience	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:846-858	The TO_VICT|TO_SLEEP delivery reaches a grouped sleeping follower.
+do_gsay	gtell	gtell.spacing	D2	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:842-864	C preserves internal argument whitespace through the group broadcast and self confirmation.
+do_gsay	gsay	gsay.ansi-controls	D2	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:842-864; interpreter.c:1228-1250	C delete_ansi_controls strips every ampersand from the formatted sender and recipient messages.

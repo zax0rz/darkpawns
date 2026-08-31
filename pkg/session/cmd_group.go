@@ -281,16 +281,21 @@ func cmdUngroup(s *Session, args []string) error {
 // cmdGtell sends a message to all group members.
 // Source: act.comm.c do_gsay() lines 824–870 (registered as "gtell" in interpreter.c line 484)
 func cmdGtell(s *Session, args []string) error {
+	return cmdGtellText(s, strings.Join(args, " "))
+}
+
+// cmdGtellText is the raw-argument form of do_gsay. C's skip_spaces preserves
+// internal and trailing whitespace, and delete_ansi_controls runs over the
+// complete formatted message before it is sent to any audience.
+func cmdGtellText(s *Session, text string) error {
 	if !s.player.InGroup {
 		s.sendText("But you are not the member of a group!")
 		return nil
 	}
-	if len(args) == 0 {
+	if text == "" {
 		s.sendText("Yes, but WHAT do you want to group-say?")
 		return nil
 	}
-
-	text := strings.Join(args, " ")
 
 	// Word filter + spam check
 	filtered, block := filterCommMessage(s, text)
@@ -298,7 +303,7 @@ func cmdGtell(s *Session, args []string) error {
 		s.sendText("Your message was blocked.")
 		return nil
 	}
-	text = filtered
+	text = game.DeleteANSIControls(filtered)
 
 	broadcastMsg := fmt.Sprintf("%s tells the group, '%s'\r\n", s.player.Name, text)
 
@@ -322,8 +327,13 @@ func cmdGtell(s *Session, args []string) error {
 		}
 	}
 
-	// Confirm to sender — act.comm.c line 862–865
-	s.sendText(fmt.Sprintf("You tell the group, '%s'", text))
+	// Confirm to sender — act.comm.c lines 862–865. The C OK macro is
+	// "Okay.", not the shorter command-layer "Ok." used by other paths.
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.sendText("Okay.")
+	} else {
+		s.sendText(fmt.Sprintf("You tell the group, '%s'", text))
+	}
 	return nil
 }
 
