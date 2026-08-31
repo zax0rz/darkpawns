@@ -1,0 +1,44 @@
+# C-first entry-gate vehicle for the do_gen_ps(SCMD_IMOTD) row at
+# src/interpreter.c:513. A level-30 player is below LVL_IMMORT, so the
+# interpreter emits Huh?!? before the static-page handler can run.
+#
+# depth-case: imotd.mortal-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Imotdgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Imotdgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Imotdgate level 30
+
+[probe]
+imotd

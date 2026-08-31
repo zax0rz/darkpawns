@@ -1,0 +1,45 @@
+# C-first depth vehicle for do_gen_ps(SCMD_IMOTD) at
+# src/interpreter.c:513 and src/act.informative.c:2117-2158. The immortal
+# command serves the boot-cached lib/text/imotd string through page_string;
+# this authored file is shorter than one pager page, and do_gen_ps ignores
+# trailing command arguments.
+#
+# depth-case: imotd.static-page
+# depth-case: imotd.arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Imotddepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Imotddepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+imotd
+imotd trailing words are ignored
