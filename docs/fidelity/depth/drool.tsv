@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	drool	drool.no-argument	D3	audience	oracle-green	drool-depth	interpreter.c:425; act.social.c:102-127; lib/misc/socials:191-199	The complete drool record emits its actor and room lines with exact C capitalization and CRLF bytes.
+do_action	drool	drool.one-argument	D3	audience	oracle-green	drool-depth	act.social.c:114-151; interpreter.c:1265; lib/misc/socials:191-199	Leading fill words are skipped and the visible Barnaby target receives the C actor, victim, and room branches.
+do_action	drool	drool.target-not-found	D1	command	oracle-green	drool-depth	act.social.c:128-132; lib/misc/socials:191-199	Unknown target uses the exact record-specific Pardon?? refusal.
+do_action	drool	drool.self-target	D2	command	oracle-green	drool-depth	act.social.c:134-140; lib/misc/socials:191-199	Self-target uses the exact yuk auto message and room audience.
+do_action	drool	drool.target-success	D3	audience	oracle-green	drool-depth	act.social.c:145-151; comm.c:2480-2555; lib/misc/socials:191-199	The standing target branch preserves actor, non-victim room, and victim output, with the record's hide flag.
+do_action	drool	drool.sleeping-target	D3	audience	oracle-green	drool-depth	act.social.c:145-151; comm.c:2480-2555; lib/misc/socials:191-199	Minimum victim position zero admits a sleeping target; plain TO_VICT suppresses the sleeping target's private victim line while the actor and awake room peer receive their bytes.
+do_action	drool	drool.position-gate	D1	command	oracle-green	drool-depth	interpreter.c:425; comm.c:910-947	The POS_RESTING table gate rejects a sleeping actor before do_action with the canonical position text.
+do_action	drool	drool.noshout	D1	command	oracle-green	drool-noshout	act.social.c:102-118; interpreter.c:425	The registered social checks PLR_NOSHOUT before argument lookup and emits only the exact emote refusal.
