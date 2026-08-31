@@ -1,0 +1,123 @@
+# C-first depth vehicle for do_insult (src/act.social.c:153-201), registered
+# at src/interpreter.c:518. The primary actor, target, and observer expose actor,
+# victim, and TO_NOTVICT observer output; repeated target insults expose the
+# C number(0, 2) outcomes and the male-actor/female-target case-0 branch.
+#
+# depth-case: insult.no-argument
+# depth-case: insult.target-not-found
+# depth-case: insult.self-target
+# depth-case: insult.first-token
+# depth-case: insult.target-audiences
+# depth-case: insult.female-target-case-zero
+# depth-case: insult.mother-branch
+# depth-case: insult.lost-branch
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Iactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Iactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:female]
+Ifemale
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:female]
+Ifemale
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Iobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Iobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Ifemale 8162
+teleport Iobs 8162
+
+[probe]
+insult
+insult Nobody
+insult Iactor
+insult Ifemale trailing words are ignored
+insult Ifemale
+insult Ifemale
+insult Ifemale
+insult Ifemale
+insult Ifemale
+insult Ifemale
+insult Ifemale
+insult Ifemale

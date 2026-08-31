@@ -1,0 +1,109 @@
+# C-first depth vehicle for do_insult's female-actor/female-target branch
+# (src/act.social.c:168-179). The observer proves the TO_NOTVICT audience
+# while repeated insults expose the C number(0, 2) outcomes.
+#
+# depth-case: insult.female-actor-female-target-case-zero
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Iffactor
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Iffactor
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:female]
+Iffemale
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:female]
+Iffemale
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Iffobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Iffobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Iffemale 8162
+teleport Iffobs 8162
+
+[probe]
+insult Iffemale
+insult Iffemale
+insult Iffemale
+insult Iffemale
+insult Iffemale
+insult Iffemale

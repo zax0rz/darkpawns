@@ -167,14 +167,14 @@ func DoInsult(w *World, ch *Player, argument string) {
 	// #nosec G404
 	switch dprng.Number(0, 2) {
 	case 0:
-		if ch.GetSex() == 1 { // male
-			if target.GetSex() == 1 {
+		if ch.GetSex() == SexMale {
+			if target.GetSex() == SexMale {
 				insultFormat = "$n accuses you of fighting like a woman!"
 			} else {
 				insultFormat = "$n says that women can't fight."
 			}
 		} else { // female or neutral
-			if target.GetSex() == 1 {
+			if target.GetSex() == SexMale {
 				insultFormat = "$n accuses you of having the smallest... (brain?)"
 			} else {
 				insultFormat = "$n tells you that you'd lose a beauty contest against a troll."
