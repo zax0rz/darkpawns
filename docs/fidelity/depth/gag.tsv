@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	gag	gag.entry-gate	D1	command	unit-green	TestGagRegistrationUsesCEntryGate	interpreter.c:460; act.social.c:102-112	The C row is POS_RESTING with no minimum level; its social record is gag 0 5 (no hide-invisible flag, POS_RESTING victim minimum), represented in Go as MinLevel=0 and legacy HideFlag=5.
+do_action	gag	gag.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:460; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	gag	gag.noshout	D1	command	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the dance social matrix.
+do_action	gag	gag.no-argument	D3	audience	oracle-green-multiseed	gag-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:1188-1196	The no-target record emits the exact actor and non-hidden non-victim room lines.
+do_action	gag	gag.target-success	D3	audience	oracle-green-multiseed	gag-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:1188-1196	An awake visible peer at POS_RESTING receives the actor, room, and victim gag messages with C substitutions.
+do_action	gag	gag.sleeping-target	D2	command	oracle-green-multiseed	gag-sleeping-depth@1,2,3,5,8	act.social.c:145-147; lib/misc/socials:1188-1196	The target at POS_SLEEPING is below the record's POS_RESTING minimum and receives only C's proper-position refusal.
+do_action	gag	gag.target-not-found	D1	command	oracle-green-multiseed	gag-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:1188-1196	An unresolved room target emits the exact gag-specific not-found text.
+do_action	gag	gag.self-target	D2	audience	oracle-green-multiseed	gag-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:1188-1196	A self target uses the record's auto actor and room messages.
+do_action	gag	gag.one-argument	D2	command	oracle-green-multiseed	gag-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121; lib/misc/socials:1188-1196	C one_argument skips the leading fill word and discards trailing words before visible target lookup.
+do_action	gag	gag.visibility	D3	shared	delegated	socials-depth	act.social.c:102-151; comm.c:2392-2555	The record's non-hidden room behavior and visible target lookup are shared with the social matrix.

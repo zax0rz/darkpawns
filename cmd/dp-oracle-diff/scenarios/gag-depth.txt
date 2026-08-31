@@ -1,0 +1,111 @@
+# C-first gag/do_action vehicle (src/interpreter.c:460;
+# src/act.social.c:102-151; lib/misc/socials:1188-1196). The record does not
+# hide invisible actors and requires a resting victim.
+
+# depth-case: gag.no-argument
+# depth-case: gag.target-success
+# depth-case: gag.target-not-found
+# depth-case: gag.self-target
+# depth-case: gag.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sootgagactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sootgagactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sootgagpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sootgagpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Sootgagobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Sootgagobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sootgagpeer 8162
+teleport Sootgagobserver 8162
+
+[probe]
+gag
+gag the Sootgagpeer trailing words are ignored
+gag Nobody
+gag Sootgagactor
