@@ -5,29 +5,35 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdGecho(s *Session, args []string) error {
+	return cmdGechoText(s, strings.Join(args, " "))
+}
+
+func cmdGechoText(s *Session, msg string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) == 0 {
+	if msg == "" {
 		s.Send("That must be a mistake...\r\n")
-		return nil
-	}
-	msg := strings.Join(args, " ")
-	if len(msg) > 500 {
-		s.Send("Maximum gecho length is 500 characters.")
 		return nil
 	}
 	s.manager.mu.RLock()
 	for _, sess := range s.manager.sessions {
-		if sess.player != nil {
+		if sess.player != nil && sess.player != s.player {
 			sess.Send(msg)
 		}
 	}
 	s.manager.mu.RUnlock()
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.Send("Okay.\r\n")
+	} else {
+		s.Send(msg)
+	}
 	slog.Warn("wizard gecho", "message", msg, "by", s.player.Name)
 	return nil
 }

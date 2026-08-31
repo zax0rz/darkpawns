@@ -522,9 +522,28 @@ func SplitCommandInput(input string) (string, []string) {
 	return splitCommandInput(input)
 }
 
+// CommandArgumentText returns the argument remainder after C's command-word
+// scan. It skips leading command whitespace but preserves internal and
+// trailing whitespace, matching command_interpreter's pointer passed to a
+// handler after any_one_arg.
+func CommandArgumentText(input string) string {
+	input = strings.TrimLeft(input, cCommandWhitespace)
+	if input == "" {
+		return ""
+	}
+	if first := input[0]; (first < 'A' || first > 'Z') && (first < 'a' || first > 'z') {
+		return strings.TrimLeft(input[1:], cCommandWhitespace)
+	}
+	idx := strings.IndexAny(input, cCommandWhitespace)
+	if idx < 0 {
+		return ""
+	}
+	return strings.TrimLeft(input[idx+1:], cCommandWhitespace)
+}
+
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
-	return executeCommand(s, cmdStr, args, true)
+	return executeCommandRaw(s, cmdStr, args, true, "")
 }
 
 // executeCommand mirrors comm.c's aliased flag. A normal input line may
@@ -532,6 +551,13 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 // complex alias are executed with alias expansion disabled to prevent
 // recursive aliases.
 func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) error {
+	return executeCommandRaw(s, cmdStr, args, allowAlias, "")
+}
+
+// executeCommandRaw is the transport-aware command path. rawArgs is retained
+// only for command handlers whose C implementation consumes the original
+// argument remainder instead of tokenized words.
+func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool, rawArgs string) error {
 	// Moderation pre-check: mute, ban
 	if s.manager.modChecker != nil && s.player != nil {
 		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
@@ -577,13 +603,14 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 						s.Send("\r\n\r\n")
 					}
 					nextCmd, nextArgs := splitCommandInput(command)
-					if err := executeCommand(s, nextCmd, nextArgs, false); err != nil {
+					if err := executeCommandRaw(s, nextCmd, nextArgs, false, ""); err != nil {
 						return err
 					}
 				}
 				return nil
 			}
 			cmdStr, args = splitCommandInput(expanded[0])
+			rawArgs = ""
 			if cmdStr == "" {
 				return nil
 			}
@@ -760,6 +787,9 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 
 	if commandGateRejected(s, commandGate{MinLevel: entry.MinLevel, MinPosition: entry.MinPosition}) {
 		return nil
+	}
+	if cmd == "gecho" && rawArgs != "" {
+		return cmdGechoText(s, rawArgs)
 	}
 
 	// NOTE: C's WAIT_STATE no longer gates commands here. comm.c:603's game-loop
