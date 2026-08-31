@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_exits	exits	exits.open-mortal	D2	command	oracle-green-multiseed	exits-depth@1,2,3,5,8	interpreter.c:435; act.informative.c:683-725	A mortal receives the six open destination-name lines in C direction order.
+do_exits	exits	exits.argument-ignored	D1	command	oracle-green-multiseed	exits-depth@1,2,3,5,8	act.informative.c:683-725	do_exits does not parse or reject trailing command arguments; the exits list is unchanged.
+do_exits	exits	exits.no-open	D2	command	oracle-green-multiseed	exits-no-open@1,2,3,5,8	act.informative.c:693-724	Missing and closed exits leave the list empty and emit the exact None line.
+do_exits	exits	exits.sleeping-entry	D1	command	oracle-green-multiseed	exits-no-open@1,2,3,5,8	interpreter.c:435; act.informative.c:683-725	The POS_RESTING command remains callable after sleep and reaches do_exits.
+do_exits	exits	exits.closed-filter	D2	command	oracle-green-multiseed	exits-filtering@1,2,3,5,8	act.informative.c:696-703	An open north exit is rendered while an east exit marked EX_CLOSED is omitted.
+do_exits	exits	exits.dark-mortal	D2	command	oracle-green-multiseed	exits-dark@1,2,3,5,8	act.informative.c:703-706; utils.h:451-453	A mortal without infravision sees Too dark to tell for dark destinations.
+do_exits	exits	exits.immortal-vnums	D2	command	oracle-green-multiseed	exits-immortal@1,2,3,5,8	act.informative.c:696-703	An Implementor receives destination vnums and names even when the destination is dark.
+do_exits	exits	exits.blind-gate	D1	command	unit-green	TestDoExitsBlindnessGate	act.informative.c:688-692	AFF_BLIND short-circuits before exit iteration with the exact blindness response.
+do_exits	exits	exits.infravision	D2	state	unit-green	TestDoExitsInfravisionSeesDarkDestination	act.informative.c:703-706; utils.h:451-453	AFF_INFRAVISION lets a mortal render the dark destination name instead of the concealment line.

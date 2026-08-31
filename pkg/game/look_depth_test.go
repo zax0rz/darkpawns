@@ -25,3 +25,28 @@ func TestLookGates(t *testing.T) {
 		}
 	})
 }
+
+func TestDoExitsBlindnessGate(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	ch.SetAffect(affBlind, true)
+
+	result := w.DoExits(ch)
+	if len(result.Messages) != 1 || result.Messages[0].Format != "You can't see a damned thing, you're blind!" {
+		t.Fatalf("blind exits gate: got %+v", result.Messages)
+	}
+}
+
+func TestDoExitsInfravisionSeesDarkDestination(t *testing.T) {
+	w, ch := newMovementTestWorld(t)
+	destination, ok := w.GetRoom(1002)
+	if !ok {
+		t.Fatal("destination room missing")
+	}
+	destination.Flags = []string{"1"} // C ROOM_DARK
+	ch.SetAffect(affInfravision, true)
+
+	result := w.DoExits(ch)
+	if len(result.Messages) != 2 || result.Messages[0].Format != "Obvious exits:" || result.Messages[1].Format != "North - Room South" {
+		t.Fatalf("infravision exits rendering: got %+v", result.Messages)
+	}
+}
