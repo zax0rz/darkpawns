@@ -1,0 +1,81 @@
+# C-first growl self-only social vehicle (src/interpreter.c:481;
+# act.social.c:102-130; lib/misc/socials:365-368). Because char_found is #,
+# do_action ignores every typed argument and always emits the no-argument actor
+# and room pair.
+
+# depth-case: growl.no-argument
+# depth-case: growl.argument-ignored
+# depth-case: growl.missing-target-ignored
+# depth-case: growl.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Growlactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Growlactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Growlobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Growlobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Growlobserver 8162
+
+[probe]
+growl
+growl Growlobserver trailing words are ignored
+growl Nobody
+growl Growlactor
