@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func cmdGecho(s *Session, args []string) error {
@@ -87,112 +86,115 @@ func cmdSend(s *Session, args []string) error {
 }
 
 // ---------------------------------------------------------------------------
-// force — force command on another character (LVL_GRGOD)
+// force — force command on another character (LVL_GOD)
 //
-// Safety measures implemented:
-//  1. ForcedPrivilegeLevel wired into getEffectiveLevel (checkLevel path)
-//  2. IsForced flag prevents transitive force chains
-//  3. Command denylist blocks dangerous commands
-//  4. 3-second cooldown between force commands on the same target
-//
+// Source: src/act.wizard.c:1856-1906. The C handler deliberately has no
+// command denylist or cooldown; its command surface is part of the game (R2).
 // ---------------------------------------------------------------------------
 func cmdForce(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
+	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
-		s.Send("Whom do you wish to force do what?")
+	if len(args) < 2 || strings.TrimSpace(strings.Join(args[1:], " ")) == "" {
+		s.Send("Whom do you wish to force do what?\r\n")
 		return nil
 	}
 
 	forceCmd := strings.Join(args[1:], " ")
-	targetName := strings.ToLower(args[0])
+	targetName := args[0]
 
-	// --- Safety 3: Command denylist ---
-	denyList := []string{"force", "shutdown", "purge", "set", "advance", "switch", "wiznet"}
-	cmdLower := strings.ToLower(strings.Fields(forceCmd)[0])
-	for _, denied := range denyList {
-		if cmdLower == denied {
-			s.Send(fmt.Sprintf("You cannot force '%s'.", forceCmd))
-			slog.Warn("force denied: blocked command", "command", forceCmd, "by", s.player.Name)
-			return nil
+	// C treats "room" and "all" specially only for LVL_GRGOD and above.
+	// Below that level they fall through to ordinary get_char_vis lookup.
+	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "room") {
+		s.Send("Okay.\r\n")
+		for _, target := range forceTargets(s, true) {
+			forceSessionCommand(s, target, forceCmd, true)
 		}
+		return nil
 	}
-
-	if targetName == "all" {
-		// Force-all: collect sessions under RLock, then release and execute
-		// to avoid deadlock when a forced command acquires a write lock.
-		s.Send("OK.")
-		s.manager.mu.RLock()
-		var targets []*Session
-		for _, sess := range s.manager.sessions {
-			if sess.player == nil || sess.IsForced {
-				continue
-			}
-			targets = append(targets, sess)
-		}
-		s.manager.mu.RUnlock()
-
-		for _, sess := range targets {
-			sess.IsForced = true
-			sess.ForcedPrivilegeLevel = sess.player.Level
-			sess.LastForceTime = time.Now()
-			slog.Info("force all", "target", sess.player.Name, "command", forceCmd, "by", s.player.Name)
-			// Execute the forced command
-			forceArgs := strings.Fields(forceCmd)
-			if len(forceArgs) > 0 {
-				_ = ExecuteCommand(sess, forceArgs[0], forceArgs[1:])
-			}
-			sess.IsForced = false
-			sess.ForcedPrivilegeLevel = 0
+	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "all") {
+		s.Send("Okay.\r\n")
+		for _, target := range forceTargets(s, false) {
+			forceSessionCommand(s, target, forceCmd, true)
 		}
 		return nil
 	}
 
-	target := findSessionByName(s.manager, targetName)
+	// C get_char_vis checks the room first and then the global character list.
+	// ResolveCharWorld carries those visibility, self/me, abbreviation, and
+	// ordinal rules; the session lookup then selects the connected PC that C's
+	// descriptor-backed force path can command.
+	target := findForceSession(s, targetName)
 	if target == nil || target.player == nil {
 		s.Send(noPersonHere)
 		return nil
 	}
 
 	if target.player.Level >= s.player.Level {
-		s.Send("You cannot force that player.")
+		s.Send("No, no, no!\r\n")
 		return nil
 	}
 
-	// --- Safety 2: No transitive force chains ---
-	if target.IsForced {
-		s.Send("That player is already executing a forced command.")
-		slog.Warn("force denied: transitive chain blocked", "target", target.player.Name, "by", s.player.Name)
-		return nil
-	}
-
-	// --- Safety 4: Rate limiting (3-second cooldown per target) ---
-	if !target.LastForceTime.IsZero() && time.Since(target.LastForceTime) < 3*time.Second {
-		s.Send(fmt.Sprintf("You must wait before forcing %s again.", target.player.Name))
-		return nil
-	}
-
-	// --- Safety 1: Set privilege level to target's level ---
-	target.ForcedPrivilegeLevel = target.player.Level
-	target.IsForced = true
-	target.LastForceTime = time.Now()
-
-	// Execute the forced command on the target
-	forceArgs := strings.Fields(forceCmd)
-	var execErr error
-	if len(forceArgs) > 0 {
-		execErr = ExecuteCommand(target, forceArgs[0], forceArgs[1:])
-	}
-
-	// Clear force state
-	target.IsForced = false
-	target.ForcedPrivilegeLevel = 0
-
-	slog.Info("forced", "target", target.player.Name, "command", forceCmd, "by", s.player.Name)
 	s.Send("Okay.\r\n")
-	return execErr
+	forceSessionCommand(s, target, forceCmd, s.player.GetLevel() < LVL_IMPL)
+	return nil
+}
+
+func findForceSession(s *Session, name string) *Session {
+	if s == nil || s.player == nil || s.manager == nil || s.manager.world == nil {
+		return nil
+	}
+	target, ok := s.manager.world.ResolveCharWorld(s.player, name)
+	if !ok || target.Player == nil {
+		return nil
+	}
+
+	s.manager.mu.RLock()
+	defer s.manager.mu.RUnlock()
+	for _, sess := range s.manager.sessions {
+		if sess.player == target.Player {
+			return sess
+		}
+	}
+	return nil
+}
+
+// forceTargets returns the connected player sessions that C's room/all loops
+// would visit. C skips any victim whose level is not below the caster's.
+func forceTargets(s *Session, sameRoom bool) []*Session {
+	s.manager.mu.RLock()
+	defer s.manager.mu.RUnlock()
+
+	targets := make([]*Session, 0, len(s.manager.sessions))
+	for _, target := range s.manager.sessions {
+		if target.player == nil || target.player.Level >= s.player.Level {
+			continue
+		}
+		if sameRoom && target.player.GetRoom() != s.player.GetRoom() {
+			continue
+		}
+		targets = append(targets, target)
+	}
+	return targets
+}
+
+// forceSessionCommand mirrors command_interpreter(vict, to_force). The C
+// helper is called directly, so the victim's aliases are not expanded.
+func forceSessionCommand(caster, target *Session, command string, notifyVictim bool) {
+	if notifyVictim {
+		target.Send(fmt.Sprintf("%s has forced you to '%s'.\r\n", caster.player.Name, command))
+	}
+	cmd, args := splitCommandInput(command)
+	if cmd == "" {
+		return
+	}
+	if err := executeCommand(target, cmd, args, false); err != nil {
+		// command_interpreter is void in C; errors are diagnostic only and must
+		// not create a second player-facing error response.
+		slog.Error("forced command failed", "target", target.player.Name, "command", command, "error", err)
+	}
+	slog.Info("forced", "target", target.player.Name, "command", command, "by", caster.player.Name)
 }
 
 // ---------------------------------------------------------------------------
