@@ -1481,8 +1481,12 @@ type Session struct {
 	tempData map[string]interface{}
 
 	// Infobar / display state (from act.display.c)
-	screenSize  int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
-	infobarMode int //nolint:unused // InfobarOff (0) or InfobarOn (1)
+	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
+	infobarMode                         int //nolint:unused // InfobarOff (0) or InfobarOn (1)
+	infobarLastHit, infobarLastMaxHit   int
+	infobarLastMana, infobarLastMaxMana int
+	infobarLastMove, infobarLastMaxMove int
+	infobarLastExp, infobarLastGold     int
 	// leaveBroadcastHandled is set by an orderly quit after it applies C's
 	// invisibility gate, preventing generic disconnect cleanup from announcing
 	// the same departure a second time.

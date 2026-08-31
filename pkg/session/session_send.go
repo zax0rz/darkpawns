@@ -162,6 +162,30 @@ func (s *Session) Send(message string) {
 	_ = s.SendMessage(message)
 }
 
+// sendRawEvent sends a transport event without the telnet adapter appending a
+// line ending. C's infobar writes VT100 control bytes directly to the
+// descriptor and the following command text begins immediately afterward.
+func (s *Session) sendRawEvent(message string) {
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{Type: "raw", Text: message},
+	})
+	if err != nil {
+		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	if s.sendClosed {
+		return
+	}
+	select {
+	case s.send <- msg:
+	default:
+		slog.Warn("session sendRawEvent channel full — dropping message", "player", s.playerName)
+	}
+}
+
 // SendPrompt enqueues a prompt marker on the session's outgoing channel so the
 // transport writes the prompt only after all earlier output (FIFO ordering).
 // Telnet renders it as the "> " command prompt; WebSocket clients may ignore
@@ -169,6 +193,7 @@ func (s *Session) Send(message string) {
 // (comm.c:643-648): output is flushed first, the prompt is written after.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
+	cmdInfoBarUpdate(s)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgPrompt,
 		Data: map[string]interface{}{"text": s.promptText()},

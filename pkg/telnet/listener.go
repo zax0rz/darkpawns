@@ -542,6 +542,10 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		case "event":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				if text, ok := ed["text"].(string); ok {
+					if eventType, _ := ed["type"].(string); eventType == "raw" {
+						tc.write([]byte(text))
+						continue
+					}
 					if strings.HasSuffix(text, "\n") {
 						tc.writeLine(text)
 					} else {
