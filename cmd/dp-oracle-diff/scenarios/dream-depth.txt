@@ -1,0 +1,115 @@
+# depth-case: dream.awake-branch
+# depth-case: dream.sleeping-branch
+# depth-case: dream.room-awake-audience
+# depth-case: dream.room-sleeping-suppressed
+# depth-case: dream.arguments-ignored
+# C-first vehicle for do_dream: exercise the awake daydream branch, then
+# sleeping room delivery with one awake and one sleeping peer.  The typed
+# arguments are intentionally present because C do_dream has no argument
+# parameter and ignores the command tail.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dreamactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dreamactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Dreamawake
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Dreamawake
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Dreamsleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Dreamsleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Dreamawake 8162
+teleport Dreamsleeper 8162
+
+[probe]
+dream
+sleep
+dream
+dream Dreamawake
+dream nobody
+dream Dreamactor
