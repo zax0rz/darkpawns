@@ -1,0 +1,80 @@
+# C-first frown/do_action vehicle (src/interpreter.c:454;
+# src/act.social.c:102-127; lib/misc/socials:270-273). The record has no
+# char_found branch, so every argument is ignored and only the no-argument
+# actor line is emitted; the room observer proves its paired audience line.
+
+# depth-case: frown.no-argument
+# depth-case: frown.argument-ignored
+# depth-case: frown.self-argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Frownactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Frownactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Frownobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Frownobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Frownobserver 8162
+
+[probe]
+frown
+frown Nobody
+frown self
+frown the Frownobserver trailing words are ignored

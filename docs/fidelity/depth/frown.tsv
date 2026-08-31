@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	frown	frown.entry-gate	D1	command	unit-green	TestFrownRegistrationUsesCEntryGate	interpreter.c:454; act.social.c:102-112	The C row is POS_RESTING with no minimum level, and the record has no char_found branch.
+do_action	frown	frown.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:454; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	frown	frown.no-argument	D2	audience	oracle-green-multiseed	frown-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:270-273	The self-only record emits its exact actor and room lines with no target.
+do_action	frown	frown.argument-ignored	D2	audience	oracle-green-multiseed	frown-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:270-273	Because char_found is absent, a missing named target is ignored and repeats the no-argument pair.
+do_action	frown	frown.self-argument-ignored	D2	audience	oracle-green-multiseed	frown-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:270-273	A self-looking argument also remains on the no-argument path rather than entering char_auto.
+do_action	frown	frown.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance noshout vehicle.
+do_action	frown	frown.visibility	D3	shared	delegated	socials-depth	act.social.c:102-127; comm.c:2392-2555	The no-target room audience uses the shared Act visibility behavior.
