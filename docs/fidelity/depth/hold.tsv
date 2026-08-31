@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_grab	hold	hold.entry-gate	D1	command	unit-green	TestGrabAndHoldKeepDistinctCGates	interpreter.c:497	The C hold row is POS_RESTING with minimum level 1; the focused registration test keeps it distinct from grab's level-0 row despite the shared handler.
+do_grab	hold	hold.no-argument	D1	command	oracle-green	hold-depth	interpreter.c:497; act.item.c:1685-1689	A level-1 player reaches shared do_grab and receives the exact "Hold what?" prompt.
+do_grab	hold	hold.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:497; comm.c:910-947	The shared POS_RESTING command gate is already owned by the position-command vehicle.
+do_grab	hold	hold.object-gates-and-equipment	D3	shared	delegated	grab-depth	act.item.c:1685-1707; act.item.c:1416-1516	Hold and grab execute identical do_grab object resolution, holdability, perform_wear, slot, conflict, and audience branches; the grab matrix owns them.
