@@ -1,0 +1,71 @@
+# C-first depth vehicle for the mortal-only InfoBarOn fields
+# (src/act.display.c:158-216). The first client is the immortal audience; the
+# ordinary peer is selected as the probe actor so the level and needed-exp
+# branch is reached by the command that is actually diffed.
+#
+# depth-case: infobar.mortal-frame
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Infobarimmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Infobarimmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Infobarmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Infobarmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe:peer]
+infobar on
