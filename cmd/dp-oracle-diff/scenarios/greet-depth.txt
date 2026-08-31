@@ -13,6 +13,7 @@
 [fixture]
 empty-players
 quiet-mobs
+spawn-mob 18305 1 8162 183
 
 [setup:oracle]
 Greetactor
@@ -43,8 +44,8 @@ Y
 <ENTER>
 1
 
-[setup:oracle:target]
-Greettarget
+[setup:oracle:observer]
+Greetobserver
 Y
 oraclepass
 oraclepass
@@ -57,8 +58,8 @@ Y
 <ENTER>
 1
 
-[setup:port:target]
-Greettarget
+[setup:port:observer]
+Greetobserver
 y
 oraclepass
 oraclepass
@@ -105,12 +106,13 @@ sleep
 
 [warmup]
 goto 8162
-teleport Greettarget 8162
+teleport Greetobserver 8162
 teleport Greetsleeper 8162
 
 [probe]
 greet
-greet the Greettarget trailing words are ignored
+greet the cleaner trailing words are ignored
+greet Greetobserver
 greet Greetactor
 greet Nobody
 greet Greetsleeper
