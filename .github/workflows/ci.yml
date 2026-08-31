@@ -184,6 +184,21 @@ jobs:
       with:
         go-version: '1.26.6'
 
+    # Cache the pinned scanner BINARIES (not the project's module cache, which
+    # setup-go already handles). The scanners pull their own transitive deps
+    # (x/crypto, s2a-go, openai-go, …) that are absent from this repo's go.sum,
+    # so every `go install` re-fetches and re-verifies them against
+    # sum.golang.org — a live network hit that intermittently fails with a 403
+    # or an INTERNAL_ERROR stream reset and reddens unrelated PRs. On a cache
+    # hit the install is skipped entirely (see the guards below), so the flaky
+    # fetch never happens. Key is the exact tool + Go versions: bump either and
+    # the cache misses and rebuilds.
+    - name: Cache security tool binaries
+      uses: actions/cache@v4
+      with:
+        path: ~/go/bin
+        key: sec-tools-go1.26.6-govulncheck1.7.0-gosec2.29.0
+
     # Supply-chain integrity: every dependency's content matches its go.sum hash. Deterministic and
     # fast; a failure means a tampered or corrupted module — always worth blocking. (Same check reek's
     # nightly govulncheck lane runs.)
@@ -197,8 +212,14 @@ jobs:
       # Tool binary pinned (2026-08-26): the vulnerability DATABASE is still
       # fetched live at scan time, so new CVEs keep blocking merges — only the
       # scanner version is stable. Bump deliberately.
+      #
+      # The install is skipped when the cache already restored the binary, and
+      # otherwise retried up to 3× so a transient sum.golang.org blip self-heals.
+      # ONLY the install is retried — the scan runs exactly once so a real
+      # reachable-vuln finding is never masked by a retry.
       run: |
-        go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+        retry() { for i in 1 2 3; do "$@" && return 0; echo "install attempt $i failed; retrying in $((i*5))s"; sleep $((i*5)); done; return 1; }
+        [ -x "$(go env GOPATH)/bin/govulncheck" ] || retry go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
         "$(go env GOPATH)/bin/govulncheck" ./...
 
     # Static security scan (HIGH severity) — the same gosec lane reek's toolpass runs nightly.
@@ -210,8 +231,14 @@ jobs:
       # compiled into the binary, so pinning freezes the rule set; bump
       # deliberately (expect new findings to need triage, like the 28 HIGH
       # ones below).
+      #
+      # Same pattern as govulncheck: install skipped on a cache hit, retried on
+      # a miss (this is the step that has been failing on sum.golang.org stream
+      # resets); the scan itself runs once so a real HIGH finding is never
+      # retried away.
       run: |
-        go install github.com/securego/gosec/v2/cmd/gosec@v2.29.0
+        retry() { for i in 1 2 3; do "$@" && return 0; echo "install attempt $i failed; retrying in $((i*5))s"; sleep $((i*5)); done; return 1; }
+        [ -x "$(go env GOPATH)/bin/gosec" ] || retry go install github.com/securego/gosec/v2/cmd/gosec@v2.29.0
         "$(go env GOPATH)/bin/gosec" -severity=high -quiet ./...
 
   build-and-push:
