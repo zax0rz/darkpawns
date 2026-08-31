@@ -1,0 +1,74 @@
+# C-first PLR_NOSHOUT gate vehicle for embrace (src/interpreter.c:431;
+# src/act.social.c:102-118). The primary Implementor mutes the named mortal
+# before the mortal invokes embrace, isolating the refusal before target lookup
+# or audience emission.
+
+# depth-case: embrace.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+EmbraceGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+EmbraceGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Muteon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Muteon
+
+[probe:muteon]
+embrace nobody
