@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_wizutil	freeze	freeze.entry-gate	D1	command	unit-green	TestFreezeRegistrationUsesCEntryGate	interpreter.c:452; act.wizard.c:2077-2085	The standalone freeze row preserves C's LVL_FREEZE (=LVL_GRGOD) and POS_DEAD registration gate.
+do_wizutil	freeze	freeze.no-argument	D1	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	act.wizard.c:2088-2090	A gated implementor with no target receives the exact C prompt.
+do_wizutil	freeze	freeze.missing-target	D1	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	act.wizard.c:2092-2095	An unresolved visible target receives C's NOPERSON response.
+do_wizutil	freeze	freeze.self-alias	D2	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	handler.c:1284-1285; act.wizard.c:2105-2108	C's self alias resolves the actor before the freeze self-protection branch.
+do_wizutil	freeze	freeze.visible-npc-target	D2	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	handler.c:1276-1300; act.wizard.c:2101-2103	A visible trainee NPC reaches C's explicit mob rejection.
+do_wizutil	freeze	freeze.success-victim	D3	audience	oracle-green-multiseed	freeze-depth@1,2,3,5,8	act.wizard.c:2139-2155	The first freeze sends the exact victim and actor bytes and the room audience line.
+do_wizutil	freeze	freeze.already-frozen	D2	state	oracle-green-multiseed	freeze-depth@1,2,3,5,8	act.wizard.c:2141-2144	Repeating freeze reaches the pre-state PLR_FROZEN guard without new mutation or audience output.
+do_wizutil	freeze	freeze.fill-word	D2	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	interpreter.c:853-867,1265-1283; act.wizard.c:2088-2095	C one_argument skips the leading fill word and ignores trailing arguments after the selected target.
+do_wizutil	freeze	freeze.state	D4	state	unit-green	TestCmdFreezeResolvesCCharacterTargets	act.wizard.c:2145-2148	The focused session test pins PLR_FROZEN and GET_FREEZE_LEV(vict) mutation to the caster level.
