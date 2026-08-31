@@ -1655,6 +1655,21 @@ func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
 	if result.WaitCh != 3 {
 		t.Errorf("expected WaitCh 3 on hit, got %d", result.WaitCh)
 	}
+	if result.SkillMsgType != SkillDragonKickNum {
+		t.Errorf("hit SkillMsgType = %d, want C dragon-kick set %d", result.SkillMsgType, SkillDragonKickNum)
+	}
+	if result.DamageSkill != SkillDragonKick || !result.StartCombat {
+		t.Errorf("hit damage contract = skill %q, StartCombat %v; want %q, true", result.DamageSkill, result.StartCombat, SkillDragonKick)
+	}
+	if wantDamage := ch.GetLevel() * 3 / 2; result.Damage != wantDamage {
+		t.Errorf("hit damage = %d, want C integer conversion of level*1.5 = %d", result.Damage, wantDamage)
+	}
+	if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillDragonKick {
+		t.Errorf("hit DeferredImprove = %v, want [%q] after damage/message path", result.DeferredImprove, SkillDragonKick)
+	}
+	if result.MessageToCh != "" || result.MessageToVict != "" || result.MessageToRoom != "" {
+		t.Errorf("hit should use C skill_message, got literal messages ch=%q vict=%q room=%q", result.MessageToCh, result.MessageToVict, result.MessageToRoom)
+	}
 
 	ch.SetSkill(SkillDragonKick, 1)
 	var missResult SkillResult
@@ -1672,5 +1687,64 @@ func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
 	}
 	if missResult.WaitCh != 3 {
 		t.Errorf("expected WaitCh 3 on miss, got %d", missResult.WaitCh)
+	}
+	if missResult.SkillMsgType != SkillDragonKickNum || !missResult.StartCombat {
+		t.Errorf("miss damage contract = set %d, StartCombat %v; want set %d, true", missResult.SkillMsgType, missResult.StartCombat, SkillDragonKickNum)
+	}
+	if missResult.MessageToCh != "" || missResult.MessageToVict != "" || missResult.MessageToRoom != "" {
+		t.Errorf("miss should use C skill_message, got literal messages ch=%q vict=%q room=%q", missResult.MessageToCh, missResult.MessageToVict, missResult.MessageToRoom)
+	}
+}
+
+func TestDoDragonKick_BlocksInsufficientMove(t *testing.T) {
+	w, ch := newDragonKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.Move = 9
+
+	result := DoDragonKick(ch, mob)
+	if result.Success {
+		t.Fatal("dragon kick should fail below the ten-move gate")
+	}
+	if result.MessageToCh != "You're too exhausted!" {
+		t.Errorf("insufficient move message = %q, want exact C text", result.MessageToCh)
+	}
+	if ch.Move != 9 {
+		t.Errorf("insufficient move changed move from 9 to %d", ch.Move)
+	}
+}
+
+func TestDoDragonKick_MissDrawOrder(t *testing.T) {
+	w, ch := newDragonKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.SetSkill(SkillDragonKick, 1)
+
+	cb, _, _, teardown := wireKickMessages(t, ch.Name)
+	defer teardown()
+	messages := loadMessagesFile(t)
+	variants, ok := messages.Variants(SkillDragonKickNum)
+	if !ok {
+		t.Fatalf("set %d (Dragon Kick) not in messages file", SkillDragonKickNum)
+	}
+
+	const seed = 7
+	dprng.ResetStream(seed)
+	result := DoDragonKick(ch, mob)
+	if result.Success || result.SkillMsgType != SkillDragonKickNum {
+		t.Fatalf("seed %d did not produce the expected dragon-kick miss: %+v", seed, result)
+	}
+	if !cb.SkillMessage(0, ch.Name, mob.GetName(), SkillDragonKickNum, ch.GetRoom()) {
+		t.Fatal("SkillMessage did not handle the Dragon Kick set")
+	}
+
+	dprng.ResetStream(seed)
+	dprng.Number(1, 101)
+	dprng.Dice(1, len(variants))
+	wantNext := dprng.Number(0, 999)
+
+	dprng.ResetStream(seed)
+	DoDragonKick(ch, mob)
+	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillDragonKickNum, ch.GetRoom())
+	if got := dprng.Number(0, 999); got != wantNext {
+		t.Fatalf("dragon-kick miss draw order wrong: next=%d want=%d; expected percent then set-%d dice", got, wantNext, SkillDragonKickNum)
 	}
 }

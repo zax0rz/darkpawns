@@ -848,17 +848,18 @@ func CmdDragonKick(s SessionInterface, args []string) error {
 	var found bool
 	world := s.GetWorld()
 	if len(args) > 0 {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
+		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 		if !found {
-			return s.SendMessage("Dragon kick whom?\r\n")
+			return s.SendMessage("Kick who?\r\n")
 		}
 	} else if ch.GetFighting() != "" {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
-			return s.SendMessage("Dragon kick whom?\r\n")
+			return s.SendMessage("Kick who?\r\n")
 		}
 	} else {
-		return s.SendMessage("Dragon kick whom?\r\n")
+		return s.SendMessage("Kick who?\r\n")
 	}
 	if target.GetName() == ch.Name {
 		return s.SendMessage("Aren't we funny today...\r\n")

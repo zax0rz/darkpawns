@@ -98,8 +98,6 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	if !ch.SpendMove(10) {
 		return SkillResult{Success: false, MessageToCh: "You're too exhausted!"}
 	}
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := ((5 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillDragonKick)
@@ -107,19 +105,21 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	// branches get WaitCh=3 — act.offensive.c:689.
 	if percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 3,
-			MessageToCh:   ActMessage("You attempt a dragon kick on $N but miss!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n attempts a dragon kick on you but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n attempts a dragon kick on $N but misses!", chPronouns, &victPronouns, ""),
+			Success:      false,
+			SkillMsgType: SkillDragonKickNum,
+			StartCombat:  true,
+			WaitCh:       3,
 		}
 	}
 	dam := int(float64(ch.GetLevel()) * 1.5)
-	improveSkill(ch, SkillDragonKick)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 3,
-		MessageToCh:   ActMessage("You unleash a devastating dragon kick against $N!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n unleashes a devastating dragon kick against you!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n dragon kicks $N!", chPronouns, &victPronouns, ""),
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillDragonKickNum,
+		DamageSkill:     SkillDragonKick,
+		StartCombat:     true,
+		WaitCh:          3,
+		DeferredImprove: []string{SkillDragonKick},
 	}
 }
 

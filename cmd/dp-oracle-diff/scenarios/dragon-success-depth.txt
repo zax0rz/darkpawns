@@ -1,0 +1,131 @@
+# C-first success vehicle for do_dragon_kick's damage arm. A level-20
+# warrior with skill 100 reaches damage(ch, vict, GET_LEVEL(ch)*1.5,
+# SKILL_DRAGON_KICK), shared skill_message selection, combat enrollment, and
+# the post-damage improve_skill call. The observer captures the room output.
+#
+# depth-case: dragon.success
+# depth-case: dragon.damage-formula
+# depth-case: dragon.draw-order
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 10029 1 8105 100
+strip-mob-script 10029
+
+[setup:oracle]
+Draklord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Draklord
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Drakblade]
+Drakblade
+Y
+dragonpass
+dragonpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Drakblade]
+Drakblade
+y
+dragonpass
+dragonpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:Drakseer]
+Drakseer
+Y
+observerpass
+observerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Drakseer]
+Drakseer
+y
+observerpass
+observerpass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Drakblade 8105
+teleport Drakseer 8105
+set Drakblade level 20
+skillset Drakblade 'dragon kick' 100
+set Drakblade maxhit 5000
+set Drakblade hit 5000
+set targ hit 200
+
+[probe:Drakblade]
+dragon targ
+~dpclock pulse 20

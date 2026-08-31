@@ -192,8 +192,8 @@ var skillMessageTable = map[int]skillMessageEntry{
 		Die: nil,
 	},
 
-	// --- DRAGON KICK (222) ---
-	222: {
+	// --- DRAGON KICK (188) ---
+	188: {
 		Hit: []skillMsgTriplet{
 			{
 				"$n unleashes a devastating dragon kick on $N!",
