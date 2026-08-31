@@ -1,0 +1,122 @@
+# C-first embrace command vehicle (src/interpreter.c:431;
+# src/act.social.c:102-151; lib/misc/socials:201-209). The record has hide=0
+# and minimum victim position zero, so the probe covers its complete target
+# matrix, including a sleeping target; the command itself requires standing.
+
+# depth-case: embrace.no-argument
+# depth-case: embrace.one-argument
+# depth-case: embrace.target-not-found
+# depth-case: embrace.self-target
+# depth-case: embrace.target-success
+# depth-case: embrace.sleeping-target
+# depth-case: embrace.position-gate
+# depth-case: embrace.wake-recovery
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Embracer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Embracer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Sleepero 8162
+
+[probe]
+embrace
+embrace the barnaby extra
+embrace nobody
+embrace embracer
+embrace sleepero
+sit
+embrace
+stand
+embrace
