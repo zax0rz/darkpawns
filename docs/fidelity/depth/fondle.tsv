@@ -1,0 +1,13 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	fondle	fondle.entry-gate	D1	command	unit-green	TestFondleRegistrationUsesCEntryGate	interpreter.c:451; comm.c:910-947	The registered C row is POS_RESTING with no minimum level; the standard social entry gate is shared with the already-proven social class.
+do_action	fondle	fondle.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:451; comm.c:910-947	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
+do_action	fondle	fondle.noshout	D1	command	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target lookup.
+do_action	fondle	fondle.no-argument	D2	audience	oracle-green-multiseed	fondle-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:250-258	The no-argument record emits the exact actor prompt and its room audience.
+do_action	fondle	fondle.target-success	D3	audience	oracle-green-multiseed	fondle-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:250-258	A visible player target receives the actor and victim messages; the mob target exposes the non-victim room message.
+do_action	fondle	fondle.self-target	D2	audience	oracle-green-multiseed	fondle-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:250-258	The named self target uses the exact char_auto and others_auto lines.
+do_action	fondle	fondle.self-alias	D2	audience	oracle-green-multiseed	fondle-depth@1,2,3,5,8	handler.c:1284-1285; lib/misc/socials:250-258	The C get_char_room_vis self alias reaches the same self-target branch.
+do_action	fondle	fondle.target-not-found	D1	command	oracle-green-multiseed	fondle-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:250-258	An unresolved target emits the record-specific fondle refusal.
+do_action	fondle	fondle.one-argument	D2	command	oracle-green-multiseed	fondle-depth@1,2,3,5,8	interpreter.c:853-867,1265-1280; act.social.c:114-121	Leading fill words are skipped and trailing input is ignored by C one_argument.
+do_action	fondle	fondle.mob-keyword-target	D3	audience	oracle-green-multiseed	fondle-depth@1,2,3,5,8	handler.c:1276-1300; lib/world/mob/0.mob:54-66	The generic mob is resolved through its authored keyword namelist rather than its rendered short description.
+do_action	fondle	fondle.sleeping-target	D2	command	unit-green	TestDoActionFondleSleepingTargetHitsPositionGate	act.social.c:137-143; lib/misc/socials:250-258	A sleeping target is rejected by fondle's min_victim_position 5 before any audience act.
+do_action	fondle	fondle.visibility	D3	shared	delegated	socials-depth	act.social.c:102-151; comm.c:2392-2555	The shared CAN_SEE and Act audience behavior is owned by socials-depth.

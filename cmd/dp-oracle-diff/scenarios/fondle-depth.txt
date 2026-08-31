@@ -1,0 +1,89 @@
+# C-first fondle/do_action vehicle (src/interpreter.c:451;
+# src/act.social.c:102-151; lib/misc/socials:250-258). A standing player
+# target and a spawned generic mob expose the direct fondle audiences; the
+# sleeping-target minimum-position gate is proved by a focused unit test.
+
+# depth-case: fondle.no-argument
+# depth-case: fondle.target-success
+# depth-case: fondle.self-target
+# depth-case: fondle.target-not-found
+# depth-case: fondle.one-argument
+# depth-case: fondle.self-alias
+# depth-case: fondle.mob-keyword-target
+# depth-case: fondle.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8004 80
+
+[setup:oracle]
+Fondleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fondleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Fondlepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Fondlepeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Fondlepeer 8004
+
+[probe]
+fondle
+fondle Fondlepeer
+fondle Fondleactor
+fondle self
+fondle Nobody
+fondle the Fondlepeer trailing words are ignored
+fondle generic
