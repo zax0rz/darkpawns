@@ -1,0 +1,76 @@
+# C-first highfive sleeping-victim gate (src/interpreter.c:494;
+# act.social.c:140-143; lib/misc/socials:380-388). The highfive record's
+# minimum victim position is POS_STANDING, so a sleeping visible target must
+# receive only the canonical proper-position refusal.
+
+# depth-case: highfive.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Highfivesleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Highfivesleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Highfivesleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Highfivesleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Highfivesleeptarget 8162
+force Highfivesleeptarget sleep
+
+[probe]
+highfive Highfivesleeptarget

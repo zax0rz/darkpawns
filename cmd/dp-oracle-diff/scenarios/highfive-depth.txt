@@ -1,0 +1,114 @@
+# C-first highfive/do_action target-social vehicle (src/interpreter.c:494;
+# act.social.c:102-151; lib/misc/socials:380-388). The record hides an
+# invisible actor and requires a standing victim, so the vehicle keeps a room
+# observer, an awake target, and a sleeping target.
+
+# depth-case: highfive.no-argument
+# depth-case: highfive.argument-first-token
+# depth-case: highfive.target-success
+# depth-case: highfive.target-audience
+# depth-case: highfive.self-target
+# depth-case: highfive.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Highfiveactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Highfiveactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Highfiveobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Highfiveobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Highfivetarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Highfivetarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Highfiveobserver 8162
+teleport Highfivetarget 8162
+
+[probe]
+highfive
+highfive Highfivetarget trailing words are ignored
+highfive Highfivetarget
+highfive Highfiveactor
+highfive Nobody
