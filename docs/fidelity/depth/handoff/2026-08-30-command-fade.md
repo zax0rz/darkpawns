@@ -9,8 +9,8 @@
 - The frontier before this slice was 1,675 total, with 1,618
   proven/delegated, 16 blocked, and 41 excluded. The fade manifest adds 10
   cases: 8 proven and 2 delegated. The post-slice frontier is 1,685 total,
-  1,626 proven/delegated, 16 blocked, and 41 excluded; actionable completion
-  is 1,626/1,644 (98.9%).
+  1,628 proven/delegated, 16 blocked, and 41 excluded; actionable completion
+  is 1,628/1,644 (99.0%).
 - The source-order command gap was `fade`, registered at
   `src/interpreter.c:439`. The next command-table gap is `faint` at line 440;
   the next session must rescan from clean `main` before taking it.
@@ -53,7 +53,7 @@ class was corrected only after a focused oracle comparison.
 
 Local gates passed:
 
-- `make fidelity-depth` — 1,685 total / 1,626 proven-or-delegated /
+- `make fidelity-depth` — 1,685 total / 1,628 proven-or-delegated /
   16 blocked / 41 excluded;
 - `go build ./...`;
 - `go vet ./...`;
