@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	growl	growl.entry-gate	D1	command	unit-green	TestGrowlRegistrationUsesCEntryGate	interpreter.c:481; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level, and the self-only growl record has hide 0 with no victim-position minimum.
+do_action	growl	growl.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:481; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	growl	growl.no-argument	D2	audience	oracle-green-multiseed	growl-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:365-368	No argument emits the exact actor Grrrrrrrrrr... line and the authored $n growls. room line.
+do_action	growl	growl.argument-ignored	D2	command	oracle-green-multiseed	growl-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:365-368	Because char_found is NULL, a visible target plus trailing words is ignored and the no-argument actor/room pair remains the C path.
+do_action	growl	growl.missing-target-ignored	D2	command	oracle-green-multiseed	growl-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:365-368	A missing target is also ignored because this self-only record has no target lookup or not-found branch.
+do_action	growl	growl.self-target-ignored	D2	audience	oracle-green-multiseed	growl-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:365-368	A self-named target remains on the no-argument actor/room pair rather than entering char_auto.
+do_action	growl	growl.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance social matrix.
+do_action	growl	growl.visibility	D3	shared	delegated	socials-depth	act.social.c:108-121; comm.c:2392-2555	The no-target room audience uses the shared Act visibility behavior.
