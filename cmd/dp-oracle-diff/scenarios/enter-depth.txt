@@ -1,0 +1,117 @@
+# C-first enter command vehicle (src/interpreter.c:432;
+# src/act.movement.c:642-674; act.movement.c:305-310). The disposable exits
+# make 8162 an outdoor origin with a named open fountain exit to indoor 8161;
+# the second room has the reverse exit for the leave/re-entry cycle, while
+# 8105 is an outdoor no-entrance control room.
+
+# depth-case: enter.named-door
+# depth-case: enter.one-argument
+# depth-case: enter.already-indoors
+# depth-case: enter.auto-indoor
+# depth-case: enter.no-entrance
+# depth-case: enter.position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0 fountain
+replace-room-exits 8161 south 8162 0
+replace-room-exits 8105 none
+set-room-flag 8162 3 off
+set-room-flag 8161 3 on
+
+[setup:oracle]
+Enterer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Enterer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:origin]
+Enterorigin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:origin]
+Enterorigin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:inside]
+Enterinside
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:inside]
+Enterinside
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Enterorigin 8162
+teleport Enterinside 8161
+
+[probe]
+enter the fountain extra
+enter

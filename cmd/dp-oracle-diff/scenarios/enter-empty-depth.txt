@@ -1,0 +1,49 @@
+# C-first enter gate vehicle (src/interpreter.c:432;
+# src/act.movement.c:642-674). Outdoor 8105 has no exits in the disposable
+# copy; the second command proves the registered POS_STANDING gate after the
+# no-entrance return leaves the actor standing.
+
+# depth-case: enter.no-entrance
+# depth-case: enter.position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+
+[setup:oracle]
+Enterempty
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Enterempty
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+enter
+sleep
+enter
