@@ -1,0 +1,73 @@
+# C-first Ninja escape vehicle (src/interpreter.c:434;
+# src/act.offensive.c:1001-1033). Ninja uses the Escape skill and spelling in
+# the shared do_retreat handler; this no-fight branch proves that class-local
+# message selection after the skill gate is preserved.
+
+# depth-case: escape.ninja-class
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ninjagod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ninjagod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:ninja]
+Escapeninja
+Y
+oraclepass
+oraclepass
+N
+M
+H
+N
+K
+Y
+<ENTER>
+1
+
+[setup:port:ninja]
+Escapeninja
+y
+oraclepass
+oraclepass
+Y
+M
+H
+N
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Escapeninja 'escape' 75
+
+[probe:ninja]
+escape

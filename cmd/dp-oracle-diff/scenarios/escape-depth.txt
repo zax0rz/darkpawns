@@ -1,0 +1,43 @@
+# C-first escape vehicle (src/interpreter.c:434; src/act.offensive.c:1001-1075).
+# This probe reaches do_retreat's position gate before skill, combat, or RNG.
+
+# depth-case: escape.position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Escapepos
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Escapepos
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+sleep
+
+[probe]
+escape

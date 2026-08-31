@@ -26,4 +26,7 @@ func TestSkillCatalogName(t *testing.T) {
 	if got := SkillCatalogName(9999); got != "" {
 		t.Errorf("SkillCatalogName(out-of-range) = %q, want \"\"", got)
 	}
+	if got := SkillStorageName(157); got != SkillEscape {
+		t.Errorf("SkillStorageName(157) = %q, want %q", got, SkillEscape)
+	}
 }

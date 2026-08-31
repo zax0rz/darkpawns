@@ -1,0 +1,121 @@
+# C-first retreat-success vehicle (src/interpreter.c:434;
+# src/act.offensive.c:1001-1075). Every open direction from the fighting
+# mortal leads to the same safe room, so the six independent direction draws
+# preserve success while origin/destination peers expose the room audiences.
+
+# depth-case: escape.success-actor
+# depth-case: escape.success-origin-audience
+# depth-case: escape.success-destination-audience
+# depth-case: escape.direction-draw-parity
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+replace-room-exits 8105 all 8161 0
+
+[setup:oracle]
+Escapesuccessconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Escapesuccessconfig
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Escapesuccessactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:actor]
+Escapesuccessactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:oracle:destination]
+Escdest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:destination]
+Escdest
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Escapesuccessactor 'retreat' 100
+goto 8105
+teleport Escdest 8161
+~dpclock pulse 60
+
+[probe:actor]
+escape

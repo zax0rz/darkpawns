@@ -362,3 +362,75 @@ func cmdFlee(s *Session) error {
 	s.Send("You flee head over heels.")
 	return nil
 }
+
+// cmdRetreat implements do_retreat from src/act.offensive.c:1001-1075.
+// `escape` is the Ninja spelling; every other class uses the same handler but
+// the retreat skill and messages. Its movement leg deliberately uses the
+// canonical do_simple_move path without stopping combat, matching C.
+func cmdRetreat(s *Session) error {
+	capmsg, lowmsg := "Retreat", "retreat"
+	skill := game.SkillRetreat
+	if s.player.GetClass() == game.ClassNinja {
+		capmsg, lowmsg, skill = "Escape", "escape", game.SkillEscape
+	}
+
+	if s.player.GetPosition() < combat.PosFighting {
+		s.Send("Get on your feet first!\r\n")
+		return nil
+	}
+	if s.player.GetSkill(game.SkillEscape) == 0 && s.player.GetSkill(game.SkillRetreat) == 0 {
+		s.Send("Huh?\r\n")
+		return nil
+	}
+	if s.player.GetFighting() == "" {
+		s.Send(fmt.Sprintf("%s from what? You aren't fighting!\n\r", capmsg))
+		return nil
+	}
+
+	// C draws number(1, 101) before selecting the class-specific probability.
+	// #nosec G404 — game RNG, not cryptographic
+	if dprng.Number(1, 101) > s.player.GetSkill(skill) {
+		game.ImproveSkill(s.player, skill)
+		s.Send(fmt.Sprintf("You try to %s but get cornered in the process!\r\n", lowmsg))
+		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
+		return nil
+	}
+
+	for range 6 {
+		// C uses six independent number(0, NUM_OF_DIRS-1) draws, including
+		// repeats; do not replace this with a shuffled direction list.
+		// #nosec G404 — game RNG, not cryptographic
+		attempt := dprng.Number(0, len(retreatDirections)-1)
+		direction := retreatDirections[attempt]
+		room, ok := s.manager.world.GetRoom(s.player.GetRoom())
+		if !ok {
+			return fmt.Errorf("invalid room")
+		}
+		exit, ok := room.Exits[direction]
+		if !ok || exit.ToRoom == -1 {
+			continue
+		}
+		destination, ok := s.manager.world.GetRoom(exit.ToRoom)
+		if !ok || destination.HasFlag(1) { // C: ROOM_DEATH
+			continue
+		}
+
+		game.Act(s.manager.world, true, s.player, nil, nil, nil,
+			fmt.Sprintf("$n realizes it's a losing cause and gracefully attempts to %s.", lowmsg),
+			"", game.ToRoom)
+		if s.manager.world.DoFleeMove(s.player, direction) {
+			s.Send(fmt.Sprintf("You make a hasty %s.\r\n", lowmsg))
+		} else {
+			game.Act(s.manager.world, true, s.player, nil, nil, nil,
+				fmt.Sprintf("$n is cornered and fails to %s!", lowmsg), "", game.ToRoom)
+		}
+		return nil
+	}
+
+	s.Send(fmt.Sprintf("You are cornered and fail to %s!\r\n", lowmsg))
+	game.Act(s.manager.world, true, s.player, nil, nil, nil,
+		fmt.Sprintf("$n is cornered and fails to %s!", lowmsg), "", game.ToRoom)
+	return nil
+}
+
+var retreatDirections = []string{"north", "east", "south", "west", "up", "down"}

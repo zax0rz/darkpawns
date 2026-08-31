@@ -1,0 +1,86 @@
+# C-first retreat-failure vehicle (src/interpreter.c:434;
+# src/act.offensive.c:1001-1050). The mortal opens combat on a quiet trainee;
+# the God then grants retreat skill 1 so the percent roll reaches C's
+# cornered/failure arm without entering movement.
+
+# depth-case: escape.failure
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Escapefailconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Escapefailconfig
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Escapefailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:actor]
+Escapefailactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+skillset Escapefailactor 'retreat' 1
+~dpclock pulse 60
+
+[probe:actor]
+escape

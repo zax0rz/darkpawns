@@ -855,7 +855,7 @@ func (m *Manager) SetFleeHooks() {
 		if !ok || s == nil {
 			return
 		}
-		if err := cmdFlee(s); err != nil {
+		if err := cmdRetreat(s); err != nil {
 			slog.Error("DoRetreat failed", "player", name, "error", err)
 		}
 	}

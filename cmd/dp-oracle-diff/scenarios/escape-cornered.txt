@@ -1,0 +1,87 @@
+# C-first escape vehicle (src/interpreter.c:434; src/act.offensive.c:1001-1075).
+# A successful skill roll with no usable exits reaches do_retreat's terminal
+# cornered branch after all six direction attempts.
+
+# depth-case: escape.cornered-terminal
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Escapecornerconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Escapecornerconfig
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Escapecorneractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:actor]
+Escapecorneractor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+skillset Escapecorneractor 'retreat' 100
+goto 8105
+~dpclock pulse 60
+
+[probe:actor]
+escape

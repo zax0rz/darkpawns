@@ -893,7 +893,7 @@ func secondRemortAdjust(ch *Player, adjusted int) {
 
 func setRemortSkills(ch *Player, class int) {
 	setSkill := func(num, level int) {
-		name := strings.ToLower(SkillCatalogName(num))
+		name := SkillStorageName(num)
 		if name != "" {
 			ch.SetSkill(name, level)
 		}
