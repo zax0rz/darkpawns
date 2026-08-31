@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	hiccup	hiccup.entry-gate	D1	command	unit-green	TestHiccupRegistrationUsesCEntryGate	interpreter.c:492; act.social.c:102-121; lib/misc/socials:375-379	The registered C row is POS_RESTING with no command minimum level; the focused test pins the self-only social's zero metadata and authored *HIC*/room messages.
+do_action	hiccup	hiccup.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:492; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	hiccup	hiccup.no-argument	D2	audience	oracle-green-multiseed	hiccup-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:375-379	No argument emits the exact actor *HIC* line and the authored $n hiccups. room line.
+do_action	hiccup	hiccup.argument-ignored	D2	command	oracle-green-multiseed	hiccup-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:375-379	Because char_found is NULL, a visible target plus trailing words is ignored and the no-argument actor/room pair remains the C path.
+do_action	hiccup	hiccup.missing-target-ignored	D2	command	oracle-green-multiseed	hiccup-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:375-379	A missing target is also ignored because this self-only record has no target lookup or not-found branch.
+do_action	hiccup	hiccup.self-target-ignored	D2	audience	oracle-green-multiseed	hiccup-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:375-379	A self-named target remains on the no-argument actor/room pair rather than entering a self-target branch.
+do_action	hiccup	hiccup.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance social matrix.
+do_action	hiccup	hiccup.visibility	D3	shared	delegated	socials-depth	act.social.c:102-121; comm.c:2392-2555	The no-target room audience uses the shared Act visibility behavior.
