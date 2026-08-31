@@ -1,0 +1,81 @@
+# C-first groan self-only social vehicle (src/interpreter.c:477;
+# act.social.c:102-121; lib/misc/socials:340-343). Because char_found is
+# absent, do_action ignores every typed argument and stays on the no-argument
+# actor/room pair.
+
+# depth-case: groan.no-argument
+# depth-case: groan.argument-ignored
+# depth-case: groan.missing-target-ignored
+# depth-case: groan.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Groanactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groanactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Groanobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Groanobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Groanobserver 8162
+
+[probe]
+groan
+groan Groanobserver trailing words are ignored
+groan Nobody
+groan Groanactor
