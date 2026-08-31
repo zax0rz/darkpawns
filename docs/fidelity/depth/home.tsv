@@ -1,0 +1,14 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_home	home	home.entry-gate	D1	command	oracle-green	home-entry-gate-depth@1	interpreter.c:500; command_gates.tsv:home	A mortal is refused by the LVL_IMMORT command entry before do_home, matching the C dispatcher bytes.
+do_home	home	home.numeric-set	D1	command	oracle-green-multiseed	home-depth@1,2,3,5,8	act.wizard.c:3270-3293	A numeric destination sets the load-room flag and emits Home room set without moving the live character.
+do_home	home	home.one-argument-boundary	D1	command	oracle-green	home-depth@1	act.wizard.c:3244-3275	C one_argument consumes the first non-fill token and ignores trailing words on the numeric path.
+do_home	home	home.nonnumeric-usage	D1	command	oracle-green	home-depth@1,2,3,5,8	act.wizard.c:3294-3297	A nonnumeric first token reaches the exact Home or Home <room-number> usage branch.
+do_home	home	home.invalid-room	D2	command	oracle-green	home-depth@1,2,3,5,8	act.wizard.c:3270-3278; act.wizard.c:184-239	The failed find_target_room diagnostic and do_home's additional That room does not exist line both remain visible.
+do_home	home	home.invalid-default	D2	command	oracle-green	home-default-depth@1,2,3,5,8	act.wizard.c:3247-3256	An unset or invalid load room is reset to Limbo room 1 with both C error lines before transfer.
+do_home	home	home.saved-home-transfer	D3	state	oracle-green	home-audience-depth@1,2,3,5,8	act.wizard.c:3257-3271	A configured load room is used for the no-argument transfer and the destination room look follows it.
+do_home	home	home.no-argument-teleport	D3	state	oracle-green	home-depth@1,2,3,5,8	act.wizard.c:3257-3271	After the setter vehicle selects a valid load room, a bare home transfers there and emits the actor-facing soul-wrench line.
+do_home	home	home.poof-audiences	D3	shared	oracle-green	home-audience-depth@1,2,3,5,8	act.wizard.c:3261-3267; comm.c:2480-2558	The configured poof text is emitted to the destination observer with C visibility and literal-token behavior.
+do_home	home	home.look-after-transfer	D3	shared	oracle-green	home-depth@1,2,3,5,8	act.wizard.c:3268; act.informative.c:1098-1132	The no-argument path performs the full do_look room render after char_to_room.
+do_home	home	home.numeric-load-state	D4	state	unit-green	TestCmdHomeNumericSetsLoadRoomWithoutMoving	structs.h:232; act.wizard.c:3270-3293	Focused state proof pins PLR_LOADROOM, the selected load room, and the unchanged current room without changing the save schema.
+do_home	home	home.save-boundary	D4	state	unit-green	TestHomeLoadRoomUsesExistingSaveRoomField	db.c:2386-2409; save.go:28-67	The selected load room reuses the existing room_vnum save field; no new serialized field is invented.
+do_home	home	home.room-resolution-and-restrictions	D2	shared	delegated	goto-depth	act.wizard.c:184-239	Numeric room existence and god/private restriction logic are shared with find_target_room/goto and remain owned by the goto depth matrix.

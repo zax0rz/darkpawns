@@ -173,6 +173,10 @@ func PlayerSaveExists(name string) bool {
 func playerToSaveData(p *Player) savePlayerData {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	roomVNum := p.RoomVNum
+	if p.Flags&(1<<uint(PlrLoadroom)) != 0 {
+		roomVNum = p.LoadRoomVNum
+	}
 
 	data := savePlayerData{
 		SaveVersion: CurrentSaveVersion,
@@ -196,7 +200,7 @@ func playerToSaveData(p *Player) savePlayerData {
 		ClanRank:    p.ClanRank,
 		Exp:         p.GetExp(),
 		Alignment:   p.GetAlignment(),
-		RoomVNum:    p.GetRoom(),
+		RoomVNum:    roomVNum,
 		Position:    p.GetPosition(),
 		Title:       p.Title,
 		Description: p.Description,
@@ -309,6 +313,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Exp:           data.Exp,
 		Alignment:     data.Alignment,
 		RoomVNum:      data.RoomVNum,
+		LoadRoomVNum:  -1,
 		Position:      data.Position,
 		Title:         data.Title,
 		Description:   data.Description,
@@ -330,6 +335,9 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		LastActive:    time.Now(),
 		Inventory:     NewInventory(),
 		Equipment:     NewEquipment(),
+	}
+	if data.Flags&(1<<uint(PlrLoadroom)) != 0 {
+		p.LoadRoomVNum = data.RoomVNum
 	}
 	// Initialize race-hate slots to empty (-1); old saves do not contain this field.
 	for i := range p.RaceHates {

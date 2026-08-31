@@ -1,0 +1,42 @@
+# C-first home fallback vehicle for a fresh immortal (src/act.wizard.c:3247).
+
+# depth-case: home.invalid-default
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Baryon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Baryon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+~dpclock pulse 20
+
+[probe]
+home

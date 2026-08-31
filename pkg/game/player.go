@@ -119,7 +119,8 @@ type Player struct {
 	Equipment *Equipment
 
 	// Position
-	RoomVNum int // Current room
+	RoomVNum     int // Current room
+	LoadRoomVNum int `json:"-"` // C GET_LOADROOM; persisted through the existing room_vnum field when selected
 
 	// State
 	ConnectedAt time.Time
@@ -278,6 +279,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		ID:           id,
 		Name:         name,
 		RoomVNum:     roomVNum,
+		LoadRoomVNum: -1,
 		Health:       100,
 		MaxHealth:    100,
 		Mana:         100,

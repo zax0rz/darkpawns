@@ -27,6 +27,21 @@ func (p *Player) GetRoom() int {
 	return p.RoomVNum
 }
 
+// GetLoadRoom returns the player's configured home/load room.
+// Source: C GET_LOADROOM (structs.h/utils.h); it is distinct from the current room.
+func (p *Player) GetLoadRoom() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.LoadRoomVNum
+}
+
+// SetLoadRoom changes the player's configured home/load room.
+func (p *Player) SetLoadRoom(vnum int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.LoadRoomVNum = vnum
+}
+
 // GetWasInRoom returns the room the player was in before being pulled into the
 // void (limits.c GET_WAS_IN()).
 func (p *Player) GetWasInRoom() int {

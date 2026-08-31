@@ -1,0 +1,39 @@
+# C-first dispatcher gate vehicle for home (src/interpreter.c:500).
+
+# depth-case: home.entry-gate
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cobalt
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cobalt
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+home
+home 8105
