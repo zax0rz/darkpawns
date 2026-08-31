@@ -1,0 +1,119 @@
+# C-first grovel social vehicle (src/interpreter.c:480; act.social.c:102-148;
+# lib/misc/socials:355-363). The record has hide=1 and no minimum victim
+# position, so the target matrix includes an awake mob, a peer observer, a
+# self target, a missing target, and a sleeping player.
+
+# depth-case: grovel.no-argument
+# depth-case: grovel.target-success
+# depth-case: grovel.target-audience
+# depth-case: grovel.one-argument
+# depth-case: grovel.self-target
+# depth-case: grovel.target-not-found
+# depth-case: grovel.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+
+[setup:oracle]
+Grovelactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grovelactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Grovelobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Grovelobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Grovelsleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Grovelsleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Grovelobserver 8162
+teleport Grovelsleeper 8162
+
+[probe]
+grovel
+grovel the cleaner trailing words are ignored
+grovel Grovelobserver
+grovel Grovelactor
+grovel Nobody
+grovel Grovelsleeper
