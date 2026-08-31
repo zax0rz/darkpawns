@@ -95,6 +95,60 @@ func TestDoHideDexBonusToggleAndImprove(t *testing.T) {
 	}
 }
 
+func TestDoHideDaytimeSectorGates(t *testing.T) {
+	originalWeather := weatherInfo
+	t.Cleanup(func() {
+		weatherMu.Lock()
+		weatherInfo = originalWeather
+		weatherMu.Unlock()
+	})
+	weatherMu.Lock()
+	weatherInfo.Sunlight = SunLight
+	weatherMu.Unlock()
+
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Hide Test Room", Zone: 1}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	defer w.StopAITicker()
+	ch := NewPlayer(1, "Hider", 1001)
+
+	tests := []struct {
+		name    string
+		sector  int
+		message string
+	}{
+		{name: "field", sector: SECT_FIELD, message: "Hide out here during the day? Yeah right."},
+		{name: "desert", sector: SECT_DESERT, message: "You can't hide very well with all the sun and sand out here!"},
+		{name: "water swim", sector: SECT_WATER_SWIM, message: "Hide in the water? Don't think so."},
+		{name: "water no-swim", sector: SECT_WATER_NOSWIM, message: "Hide in the water? Don't think so."},
+		{name: "underwater", sector: SECT_UNDERWATER, message: "Hide in the water? Don't think so."},
+		{name: "water", sector: SECT_WATER, message: "Hide in the water? Don't think so."},
+		{name: "flying", sector: SECT_FLYING, message: "You are completely exposed here, nowhere to hide!"},
+		{name: "fire", sector: SECT_FIRE, message: "You are completely exposed here, nowhere to hide!"},
+		{name: "earth", sector: SECT_EARTH, message: "You are completely exposed here, nowhere to hide!"},
+		{name: "wind", sector: SECT_WIND, message: "You are completely exposed here, nowhere to hide!"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w.GetRoomInWorld(1001).Sector = test.sector
+			result := DoHideInWorld(ch, w)
+			if result.Success || result.MessageToCh != test.message {
+				t.Fatalf("hide sector %d = success %t message %q, want failure %q", test.sector, result.Success, result.MessageToCh, test.message)
+			}
+		})
+	}
+
+	weatherMu.Lock()
+	weatherInfo.Sunlight = SunDark
+	weatherMu.Unlock()
+	w.GetRoomInWorld(1001).Sector = SECT_FIELD
+	result := DoHideInWorld(ch, w)
+	if result.MessageToCh != "You attempt to hide yourself." {
+		t.Fatalf("nighttime field message = %q, want ordinary attempt message", result.MessageToCh)
+	}
+}
+
 func TestDoSneakTimedAffectAndReroll(t *testing.T) {
 	ch := NewPlayer(1, "Thief", 1001)
 	ch.SetLevel(7)

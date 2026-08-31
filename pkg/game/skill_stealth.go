@@ -89,16 +89,37 @@ func DoStealth(ch *Player) SkillResult {
 }
 
 // DoHide implements the newbie path through do_hide() from
-// src/act.other.c:247-306 (subcmd == 0).
+// src/act.other.c:247-306 (subcmd == 0). The world-aware command entry point
+// is DoHideInWorld; this compatibility wrapper keeps direct game-layer tests
+// independent of a world fixture.
 func DoHide(ch *Player) SkillResult {
+	return doHide(ch, nil, false)
+}
+
+// DoHideInWorld applies the live command's room/weather gates before running
+// the ordinary hide roll. C's do_hide reads the global sunlight and the
+// actor's current room sector, so this must be called by the session command
+// path with its authoritative world.
+func DoHideInWorld(ch *Player, world *World) SkillResult {
+	return doHide(ch, world, false)
+}
+
+func doHide(ch *Player, world *World, kabuki bool) SkillResult {
 	// IS_MOUNTED gate — act.other.c:251-255, before the sector/weather gate and
-	// any roll. (The daytime sector/weather guard, act.other.c:257-282, is still
-	// unported — tracked separately; it needs the weather model.)
+	// any roll.
 	if isMounted(ch) {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
+	if message := hideDaytimeSectorMessage(world, ch.GetRoom()); message != "" {
+		return SkillResult{Success: false, MessageToCh: message}
+	}
 
 	message := "You attempt to hide yourself."
+	skill := SkillHide
+	if kabuki {
+		message = "You attempt to practice the art of kabuki."
+		skill = SkillKabuki
+	}
 
 	// C clears AFF_HIDE and immediately rerolls; it does not toggle out with a
 	// separate message or return early.
@@ -108,39 +129,53 @@ func DoHide(ch *Player) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillHide) + dexAppSkill(ch.GetDex()).Hide
+	prob := ch.GetSkill(skill) + dexAppSkill(ch.GetDex()).Hide
 	if percent > prob {
 		return SkillResult{Success: false, MessageToCh: message}
 	}
 
 	ch.SetAffect(affHide, true)
-	return SkillResult{Success: true, MessageToCh: appendImprovementMessage(message, improveSkillMessage(ch, SkillHide))}
+	return SkillResult{Success: true, MessageToCh: appendImprovementMessage(message, improveSkillMessage(ch, skill))}
 }
 
-// DoKabuki implements the SCMD_KABUKI path through do_hide() from src/act.other.c:247-306.
-// It is the same roll/flow as DoHide but uses the kabuki skill (SkillKabuki) and message.
-// TODO(DP-kabuki): the C daytime sector/weather guard (act.other.c:257-282) is shared with
-// DoHide and still unported — it needs the weather model. Affect application matches DoHide.
+// hideDaytimeSectorMessage ports the sector switch in do_hide() from
+// src/act.other.c:257-282. C checks sunlight before the switch and does not
+// consult ROOM_INDOORS; the room's sector value is the complete gate input.
+func hideDaytimeSectorMessage(world *World, roomVNum int) string {
+	if world == nil || WeatherSnapshot().Sunlight == SunDark {
+		return ""
+	}
+	room := world.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return ""
+	}
+	switch room.Sector {
+	case SECT_FIELD:
+		return "Hide out here during the day? Yeah right."
+	case SECT_DESERT:
+		return "You can't hide very well with all the sun and sand out here!"
+	case SECT_WATER_SWIM, SECT_WATER_NOSWIM, SECT_UNDERWATER, SECT_WATER:
+		return "Hide in the water? Don't think so."
+	case SECT_FLYING, SECT_FIRE, SECT_EARTH, SECT_WIND:
+		return "You are completely exposed here, nowhere to hide!"
+	default:
+		return ""
+	}
+}
+
+// DoKabuki implements the SCMD_KABUKI path through do_hide() from
+// src/act.other.c:247-306. It is the same roll/flow as DoHide but uses the
+// kabuki skill (SkillKabuki) and message. The live command entry point is
+// DoKabukiInWorld, which supplies the room needed by the shared daytime
+// sector/weather gate.
 func DoKabuki(ch *Player) SkillResult {
-	if isMounted(ch) {
-		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
-	}
+	return doHide(ch, nil, true)
+}
 
-	message := "You attempt to practice the art of kabuki."
-
-	if ch.IsAffected(affHide) {
-		ch.SetAffect(affHide, false)
-	}
-
-	// #nosec G404 — game RNG, not cryptographic
-	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillKabuki) + dexAppSkill(ch.GetDex()).Hide
-	if percent > prob {
-		return SkillResult{Success: false, MessageToCh: message}
-	}
-
-	ch.SetAffect(affHide, true)
-	return SkillResult{Success: true, MessageToCh: appendImprovementMessage(message, improveSkillMessage(ch, SkillKabuki))}
+// DoKabukiInWorld applies the shared do_hide room/weather gates for the
+// SCMD_KABUKI command variant.
+func DoKabukiInWorld(ch *Player, world *World) SkillResult {
+	return doHide(ch, world, true)
 }
 
 // DoSteal implements the ordinary (subcmd == 0) path through do_steal() from
