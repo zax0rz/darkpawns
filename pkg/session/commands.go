@@ -22,21 +22,21 @@ var commandNumber = dprng.Number
 func positionFailMessage(pos int) string {
 	switch pos {
 	case combat.PosDead:
-		return "Lie still; you are DEAD!!! :-("
+		return "Lie still; you are DEAD!!! :-(\r\n"
 	case combat.PosMortally, combat.PosIncap:
-		return "You are in a pretty bad shape, unable to do anything!"
+		return "You are in a pretty bad shape, unable to do anything!\r\n"
 	case combat.PosStunned:
-		return "All you can do right now is think about the stars!"
+		return "All you can do right now is think about the stars!\r\n"
 	case combat.PosSleeping:
-		return "In your dreams, or what?"
+		return "In your dreams, or what?\r\n"
 	case combat.PosResting:
-		return "Nah... You feel too relaxed to do that.."
+		return "Nah... You feel too relaxed to do that..\r\n"
 	case combat.PosSitting:
-		return "Maybe you should get on your feet first?"
+		return "Maybe you should get on your feet first?\r\n"
 	case combat.PosFighting:
-		return "No way!  You're fighting for your life!"
+		return "No way!  You're fighting for your life!\r\n"
 	default:
-		return "You are in no position to do that!"
+		return "You are in no position to do that!\r\n"
 	}
 }
 
@@ -786,11 +786,11 @@ func commandGateRejected(s *Session, gate commandGate) bool {
 		return false
 	}
 	if s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && effectiveLevel < LVL_IMPL-1 {
-		s.sendText("You try, but the mind-numbing cold prevents you...")
+		s.sendText("You try, but the mind-numbing cold prevents you...\r\n")
 		return true
 	}
 	if s.isSwitched && s.switchedMob != nil && gate.MinLevel >= LVL_IMMORT {
-		s.sendText("You can't use immortal commands while switched.")
+		s.sendText("You can't use immortal commands while switched.\r\n")
 		return true
 	}
 	playerPos := s.player.GetPosition()

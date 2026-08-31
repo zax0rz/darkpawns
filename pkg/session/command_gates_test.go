@@ -91,14 +91,14 @@ func TestPositionFailMessageMatchesC(t *testing.T) {
 		position int
 		want     string
 	}{
-		{combat.PosDead, "Lie still; you are DEAD!!! :-("},
-		{combat.PosMortally, "You are in a pretty bad shape, unable to do anything!"},
-		{combat.PosIncap, "You are in a pretty bad shape, unable to do anything!"},
-		{combat.PosStunned, "All you can do right now is think about the stars!"},
-		{combat.PosSleeping, "In your dreams, or what?"},
-		{combat.PosResting, "Nah... You feel too relaxed to do that.."},
-		{combat.PosSitting, "Maybe you should get on your feet first?"},
-		{combat.PosFighting, "No way!  You're fighting for your life!"},
+		{combat.PosDead, "Lie still; you are DEAD!!! :-(\r\n"},
+		{combat.PosMortally, "You are in a pretty bad shape, unable to do anything!\r\n"},
+		{combat.PosIncap, "You are in a pretty bad shape, unable to do anything!\r\n"},
+		{combat.PosStunned, "All you can do right now is think about the stars!\r\n"},
+		{combat.PosSleeping, "In your dreams, or what?\r\n"},
+		{combat.PosResting, "Nah... You feel too relaxed to do that..\r\n"},
+		{combat.PosSitting, "Maybe you should get on your feet first?\r\n"},
+		{combat.PosFighting, "No way!  You're fighting for your life!\r\n"},
 	}
 	for _, tt := range tests {
 		if got := positionFailMessage(tt.position); got != tt.want {
@@ -142,7 +142,7 @@ func TestCommandGateCascadeFrozenAndSwitchedBeforePosition(t *testing.T) {
 		if err := ExecuteCommand(s, name, nil); err != nil {
 			t.Fatal(err)
 		}
-		if got := readMsgText(t, s); got != "You try, but the mind-numbing cold prevents you..." {
+		if got := readMsgText(t, s); got != "You try, but the mind-numbing cold prevents you...\r\n" {
 			t.Errorf("frozen reply = %q", got)
 		}
 	})
@@ -163,7 +163,7 @@ func TestCommandGateCascadeFrozenAndSwitchedBeforePosition(t *testing.T) {
 		if err := ExecuteCommand(s, name, nil); err != nil {
 			t.Fatal(err)
 		}
-		if got := readMsgText(t, s); got != "You can't use immortal commands while switched." {
+		if got := readMsgText(t, s); got != "You can't use immortal commands while switched.\r\n" {
 			t.Errorf("switched reply = %q", got)
 		}
 	})

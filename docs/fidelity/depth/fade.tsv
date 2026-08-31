@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	fade	fade.entry-gate	D1	command	unit-green	TestFadeRegistrationUsesCEntryGate	interpreter.c:439; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
+do_action	fade	fade.position-gate	D1	command	unit-green	TestFadeSleepingActorHitsCPositionGate	interpreter.c:439; interpreter.c:910-947	A sleeping actor is rejected before do_action with C's exact position-gate bytes, including CRLF.
+do_action	fade	fade.no-argument	D2	audience	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:211-219	The no-argument record emits the actor line and the room fade audience.
+do_action	fade	fade.target-success	D3	audience	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:211-219	A visible target receives the actor, non-victim room, and victim record messages.
+do_action	fade	fade.target-audience	D3	audience	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555	Named peers prove all three C Act audiences and capitalization.
+do_action	fade	fade.argument-ignored	D2	command	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:114-121	one_argument consumes only the target token; trailing words do not alter the record branch.
+do_action	fade	fade.self-target	D2	audience	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:211-219	A self target reaches char_auto and others_auto rather than the victim trio.
+do_action	fade	fade.not-found	D1	command	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:211-219	An unresolved visible-room target emits the exact Already gone. Good Job. line.
+do_action	fade	fade.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT do_action gate is proven by the dance social matrix.
+do_action	fade	fade.visibility	D3	shared	delegated	socials-depth	act.social.c:128-151; handler.c:1276-1300	Visible target lookup and CAN_SEE audience gating are shared with the social matrix.
