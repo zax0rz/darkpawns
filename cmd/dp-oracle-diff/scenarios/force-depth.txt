@@ -1,0 +1,78 @@
+# C-first force vehicle (src/interpreter.c:438; src/act.wizard.c:1856-1926).
+# The crowned primary and a mortal peer share the hometown start room. The
+# forced say is harmless but reaches both the victim and the room observer,
+# exposing the C acknowledgement/command ordering and target audiences.
+
+# depth-case: force.single-target-order
+# depth-case: force.player-only-ordinal
+# depth-case: force.player-name-abbreviation
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Forceboss
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Forceboss
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Forcevictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Forcevictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+force Forcevictim say forced-depth
+force 0.Forcevictim whoami
+force Forcev whoami

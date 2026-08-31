@@ -1,0 +1,107 @@
+# C-first force victim-notification path (src/act.wizard.c:1873-1880).
+# The implementor promotes a peer to LVL_GOD, relocates it to the mortal
+# room, and has that peer force a lower-level player. Since the caster is below
+# LVL_IMPL, C emits the TO_VICT "$n has forced you..." line before the forced
+# command.
+
+# depth-case: force.god-caster
+# depth-case: force.victim-notification
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Forcelow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Forcelow
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:god]
+Forcegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:god]
+Forcegod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Forcemortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Forcemortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Forcegod 34
+goto 8162
+force Forcegod goto 8162
+
+[probe:god]
+force Forcemortal say low-god-depth

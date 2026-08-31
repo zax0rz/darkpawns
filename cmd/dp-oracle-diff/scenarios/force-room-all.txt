@@ -1,0 +1,107 @@
+# C-first force room/all loops (src/act.wizard.c:1882-1906).
+# The implementor moves into the mortal start room; two mortal peers make the
+# two population filters observable without any state-changing command.
+
+# depth-case: force.room-filter
+# depth-case: force.all-filter
+# depth-case: force.room-all-notification
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Forceloops
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Forceloops
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:first]
+Forceroom
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:first]
+Forceroom
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:second]
+Forceall
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[setup:port:second]
+Forceall
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[warmup]
+goto 8162
+
+[probe]
+force room whoami
+force all whoami
