@@ -15,7 +15,7 @@ func TestSocialFallbackUsesCommandGateTable(t *testing.T) {
 		if err := ExecuteCommand(s, "dance", nil); err != nil {
 			t.Fatal(err)
 		}
-		if got := readMsgText(t, s); got != "Nah... You feel too relaxed to do that.." {
+		if got := readMsgText(t, s); got != "Nah... You feel too relaxed to do that..\r\n" {
 			t.Fatalf("output = %q", got)
 		}
 	})
