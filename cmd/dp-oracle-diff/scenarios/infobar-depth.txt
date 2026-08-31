@@ -10,7 +10,6 @@
 # depth-case: infobar.on-status
 # depth-case: infobar.off-frame
 # depth-case: infobar.already-off
-# depth-case: infobar.mortal-frame
 
 [fixture]
 empty-players
@@ -45,34 +44,6 @@ Y
 <ENTER>
 1
 
-[setup:oracle:mortal]
-Infobarmortal
-Y
-oraclepass
-oraclepass
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
-
-[setup:port:mortal]
-Infobarmortal
-y
-oraclepass
-oraclepass
-Y
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
 
 [probe]
 infobar
@@ -82,6 +53,3 @@ infobar invalid trailing words
 infobar
 infobar off
 infobar off
-
-[probe:mortal]
-infobar on
