@@ -346,7 +346,23 @@ func cmdWizutil(s *Session, args []string) error {
 // (TO_ROOM) messages, and the "(GC) ... by <god>." acknowledgements. The
 // mudlog() calls are not player-facing and are intentionally not reproduced.
 func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error {
-	target := findSessionByName(s.manager, targetName)
+	targetName, _ = game.OneArgument(targetName)
+	resolved, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if ok && resolved.Mob != nil {
+		// do_wizutil resolves visible NPCs before the sub-command switch and
+		// rejects them with this shared branch (act.wizard.c:2101-2103).
+		s.Send("You can't do that to a mob!\r\n")
+		return nil
+	}
+
+	// Keep the session fallback for test fixtures and link-state cases where a
+	// player session exists without a corresponding World registration. Live
+	// commands normally take the C-faithful world-resolved path above.
+	targetNameForSession := targetName
+	if ok && resolved.Player != nil {
+		targetNameForSession = resolved.Player.Name
+	}
+	target := findSessionByName(s.manager, targetNameForSession)
 	if target == nil || target.player == nil {
 		s.Send("There is no such player.\r\n")
 		return nil
@@ -501,7 +517,8 @@ func cmdFreeze(s *Session, args []string) error {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilFreeze, args[0])
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	return wizutilDispatch(s, wizutilFreeze, targetName)
 }
 
 // cmdThaw — standalone "thaw <player>" command.
