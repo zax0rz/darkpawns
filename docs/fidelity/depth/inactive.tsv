@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_inactive	inactive	inactive.entry-gate	D1	command	unit-green	TestInactiveRegistrationUsesCEntryGate	interpreter.c:515; act.other.c:1818-1824	The C row permits every level at POS_SLEEPING; the focused test pins both the authoritative gate and the registered Go entry.
+do_inactive	inactive	inactive.enable	D3	state	oracle-green-multiseed	inactive-depth@1,2,3,5,8	act.other.c:1818-1824; comm.c:1028-1157	The silent C toggle sets PRF_INACTIVE, and the following prompt changes to the exact INACTIVE > framing.
+do_inactive	inactive	inactive.disable	D3	state	oracle-green-multiseed	inactive-depth@1,2,3,5,8	act.other.c:1820-1823; comm.c:1028-1157	The second toggle clears PRF_INACTIVE without command text, and the following prompt returns to the ordinary > framing.
+do_inactive	inactive	inactive.argument-ignored	D2	command	oracle-green-multiseed	inactive-depth@1,2,3,5,8	act.other.c:1818-1824	The do_inactive body never reads its argument; the argument-bearing disable probe follows the same state and prompt path.
+do_inactive	inactive	inactive.state-mirror	D4	state	unit-green	TestDoInactiveToggleState	act.other.c:1820-1823; structs.h:304	Focused state proof verifies both transitions and C's PRF_INACTIVE bit with ignored arguments.
