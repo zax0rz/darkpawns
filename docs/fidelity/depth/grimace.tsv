@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	grimace	grimace.entry-gate	D1	command	unit-green	TestGrimaceRegistrationUsesCEntryGate	interpreter.c:476; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level, and the self-only grimace record has hide 0 with no victim-position minimum.
+do_action	grimace	grimace.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:476; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	grimace	grimace.no-argument	D2	audience	oracle-green-multiseed	grimace-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:325-328	No argument emits the exact actor You grimace. line and the authored $n grimaces. room line.
+do_action	grimace	grimace.argument-ignored	D2	command	oracle-green-multiseed	grimace-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:325-328	Because char_found is NULL, a visible target plus trailing words is ignored and the no-argument actor/room pair remains the C path.
+do_action	grimace	grimace.missing-target-ignored	D2	command	oracle-green-multiseed	grimace-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:325-328	A missing target is also ignored because this self-only record has no target lookup or not-found branch.
+do_action	grimace	grimace.self-target-ignored	D2	audience	oracle-green-multiseed	grimace-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:325-328	A self-named target remains on the no-argument actor/room pair rather than entering char_auto.
+do_action	grimace	grimace.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance social matrix.
+do_action	grimace	grimace.visibility	D3	shared	delegated	socials-depth	act.social.c:108-121; comm.c:2392-2555	The no-target room audience uses the shared Act visibility behavior.
