@@ -7,8 +7,8 @@
   `docs/fidelity/DEPTH_TESTING.md` plus the newest prior handoff,
   `2026-08-30-command-exits.md`.
 - The frontier before this slice was 1,657 total, with 1,602
-  proven/delegated, 14 blocked, and 41 excluded. The force manifest adds 17
-  cases: 15 proven and 2 blocked. The post-slice frontier is 1,675 total,
+  proven/delegated, 14 blocked, and 41 excluded. The force manifest adds 18
+  cases: 16 proven/delegated and 2 blocked. The post-slice frontier is 1,675 total,
   1,618 proven/delegated, 16 blocked, and 41 excluded; actionable completion
   is 1,618/1,634 (99.0%).
 - The source-order command gap was `force`, registered at
