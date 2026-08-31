@@ -1,0 +1,12 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_grab	grab	grab.entry-gate	D1	command	unit-green	TestGrabRegistrationUsesCEntryGate	interpreter.c:472; act.item.c:1685-1709	The registered C row is POS_RESTING with no command minimum level; the shared hold alias remains level 1.
+do_grab	grab	grab.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:472; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_grab	grab	grab.no-argument	D1	command	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1685-1689	Empty one_argument input emits the exact Hold what? prompt.
+get_obj_in_list_vis	grab	grab.missing-visible-inventory-object	D2	command	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1690-1694; handler.c:1328-1352	A numbered miss in the carried list emits C's AN(arg) not-found wording.
+get_obj_in_list_vis	grab	grab.numbered-inventory-object	D2	command	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1690-1694; handler.c:1328-1352	The second matching carried gong is selected, while trailing words are discarded by one_argument.
+do_grab	grab	grab.non-holdable-object	D2	command	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1695-1703	A carried bread or tunic has no HOLD bit and reaches the exact You can't hold that. refusal.
+perform_wear	grab	grab.occupied-hold-slot	D2	command	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1459-1472	The shared perform_wear slot check emits the exact already_wearing[WEAR_HOLD] line; this is the grab-specific hold-slot audience.
+perform_wear	grab	grab.room-and-actor-success-audience	D3	audience	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1513-1516; act.item.c:1339-1411; comm.c:2392-2555	A consumable-exception staff reaches the hold slot and emits C's You grab and room $n grabs lines.
+perform_wear	grab	grab.two-handed-conflict	D2	shared	delegated	TestPerformWearTwoHanded	act.item.c:1476-1505	The shared WEAR_HOLD two-handed wield conflict is owned by the existing perform_wear unit vehicle.
+get_obj_in_list_vis	grab	grab.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix-visible inventory matching is owned by get's canonical resolver vehicle.
+one_argument	grab	grab.one-argument	D2	shared	delegated	get.fill-word-parse	interpreter.c:1265	Leading fill words and trailing input use the shared C one_argument contract.

@@ -1,0 +1,94 @@
+# depth-case: grab.no-argument
+# depth-case: grab.missing-visible-inventory-object
+# depth-case: grab.numbered-inventory-object
+# depth-case: grab.occupied-hold-slot
+# depth-case: grab.non-holdable-object
+# depth-case: grab.room-and-actor-success-audience
+# C-first vehicle for interpreter.c:472 / act.item.c:1685-1709.  The staff
+# exercises do_grab's explicit consumable exception and reaches perform_wear's
+# TAKE slot gate; bread and the tunic reach do_grab's non-holdable rejection.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 2 8162 80
+spawn-obj 8019 1 8162 80
+spawn-obj 20302 99 8162 80
+spawn-obj 20302 99 8162 80
+force-load 20302
+
+[setup:oracle]
+Grabdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grabdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Grabviewer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Grabviewer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Grabviewer 8162
+get bread
+get tunic
+get gong
+get gong
+
+[probe]
+grab
+grab 9.gong
+grab 2.gong trailing words are ignored
+grab gong
+grab bread
+grab tunic
+remove gong
+grab gong
