@@ -6,6 +6,7 @@
 
 # depth-case: help.entry-gate
 # depth-case: help.miss-raw-spacing
+# depth-case: help.topic-display
 # depth-case: help.prefix-first-match
 # depth-case: help.wizonly-hidden
 # depth-case: help.alias-raw-spacing
