@@ -1,0 +1,26 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_hcontrol	hcontrol	hcontrol.entry-gate	D1	command	unit-green	TestHcontrolRegistrationUsesCEntryGate	interpreter.c:491; house.c:579-598	The C row is LVL_GRGOD and POS_DEAD; the focused test pins both the authoritative gate and registered Go entry.
+do_hcontrol	hcontrol	hcontrol.usage	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	interpreter.c:491; house.c:579-598; house.c:323-330	A bare command emits the exact five-line C usage string.
+do_hcontrol	hcontrol	hcontrol.unknown-subcommand	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:591-598	An unknown subcommand falls through the C usage path.
+do_hcontrol	show	hcontrol.show-empty	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:334-337	The empty control table emits No houses have been defined.
+do_hcontrol	build	hcontrol.build-usage	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:386-394	Missing build arguments use the shared C usage string.
+do_hcontrol	build	hcontrol.build-invalid-vnum	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:398-404	C atoi maps a nonnumeric vnum to room zero, preserving the no-exit branch rather than inventing an invalid-vnum response.
+do_hcontrol	build	hcontrol.build-invalid-direction	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:414-420	An invalid direction is reported with the C-normalized argument spelling.
+do_hcontrol	build	hcontrol.build-unknown-owner	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:449-455	The owner lookup miss emits the exact C unknown-player line.
+do_hcontrol	build	hcontrol.build-success	D3	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:457-469	A valid two-way exit builds the house and emits the C success bytes.
+do_hcontrol	build	hcontrol.build-duplicate	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:405-409	A second build of the same vnum reaches House already exists.
+do_hcontrol	show	hcontrol.show-defined	D3	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:339-377	The defined-house listing matches the C row bytes, including the asctime day prefix and the compiled C header overwrite behavior.
+do_hcontrol	key	hcontrol.key-usage	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:473-478	Missing key arguments use the shared C usage string.
+do_hcontrol	key	hcontrol.key-unknown-house	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:481-486	An absent house emits the exact C key-control miss.
+do_hcontrol	key	hcontrol.key-invalid-vnum	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:488-501	C atoi maps a nonnumeric key vnum to object zero, which is accepted by this loaded world and reaches House key set.
+do_hcontrol	key	hcontrol.key-success	D3	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:488-507	A valid object vnum updates the control record and emits the C success bytes.
+do_hcontrol	pay	hcontrol.pay-usage	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:560-565	Missing payment arguments use the shared C usage string.
+do_hcontrol	pay	hcontrol.pay-unknown-house	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:567-570	An absent house emits Unknown house.
+do_hcontrol	pay	hcontrol.pay-invalid-vnum	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:567-570	C atoi maps a nonnumeric vnum to zero and preserves the unknown-house branch.
+do_hcontrol	pay	hcontrol.pay-success	D3	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:567-575	A payment updates last_payment and emits the exact C confirmation.
+do_hcontrol	show	hcontrol.show-paid	D3	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:339-377	The post-payment listing matches the C timestamp and key fields.
+do_hcontrol	destroy	hcontrol.destroy-usage	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:515-520	Missing destroy arguments use the shared C usage string.
+do_hcontrol	destroy	hcontrol.destroy-unknown-house	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:522-526	An absent house emits Unknown house.
+do_hcontrol	destroy	hcontrol.destroy-invalid-vnum	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:522-526	C atoi maps a nonnumeric vnum to zero and preserves the unknown-house branch.
+do_hcontrol	destroy	hcontrol.destroy-success	D3	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:528-557	Destroy clears the house record and room flags, then emits House deleted.
+do_hcontrol	show	hcontrol.show-after-destroy	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:334-337	The final empty listing matches the C table state after deletion.

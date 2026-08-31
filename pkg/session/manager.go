@@ -233,6 +233,28 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	ce := combat.NewCombatEngine()
 	ce.Start()
 
+	// House-control uses the C get_name_by_id()/get_id_by_name() seam. Keep it
+	// backed by the live world for both the admin command and ordinary house
+	// commands; leaving the injected callbacks nil makes every build/list path
+	// diverge even when the player is online.
+	game.RegisterHousePlayerLookup(
+		func(id int64) string {
+			player := world.GetPlayerByID(int(id))
+			if player == nil {
+				return ""
+			}
+			return player.GetName()
+		},
+		func(name string) int64 {
+			for _, player := range world.GetPlayers() {
+				if strings.EqualFold(player.GetName(), name) {
+					return int64(player.GetID())
+				}
+			}
+			return -1
+		},
+	)
+
 	m := &Manager{
 		sessions:     make(map[string]*Session),
 		world:        world,
