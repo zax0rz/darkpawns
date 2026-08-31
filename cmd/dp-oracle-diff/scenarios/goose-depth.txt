@@ -1,0 +1,111 @@
+# C-first goose/do_action vehicle (src/interpreter.c:470;
+# src/act.social.c:102-151; lib/misc/socials:1456-1461). The record has no
+# hidden-actor flag and admits every victim position.
+
+# depth-case: goose.no-argument
+# depth-case: goose.target-success
+# depth-case: goose.target-not-found
+# depth-case: goose.self-target
+# depth-case: goose.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Gooseactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gooseactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Goosepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Goosepeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Gooseobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Gooseobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Goosepeer 8162
+teleport Gooseobserver 8162
+
+[probe]
+goose
+goose the Goosepeer trailing words are ignored
+goose Nobody
+goose Gooseactor
