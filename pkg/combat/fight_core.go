@@ -488,6 +488,15 @@ func takeDamage(ch, victim Combatant, dam int, attackType int, onDeath func()) b
 	default:
 		if dam > victim.GetMaxHP()/4 {
 			victim.SendMessage("That really did HURT!\r\n")
+			// C burns number(0,2) for the optional room scream even when the
+			// victim is an NPC; TO_NOTVICT excludes both combatants
+			// (fight.c:1580-1585). Keep the draw before the caller's
+			// post-damage improve_skill (R3/R5e).
+			if GetRoller().Number(0, 2) == 0 {
+				cbBroadcast(roomVNum,
+					capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", victimName)),
+					chName+" "+victimName)
+			}
 		}
 		if victim.GetHP() < victim.GetMaxHP()/4 {
 			victim.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")

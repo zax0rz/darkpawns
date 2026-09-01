@@ -1,0 +1,118 @@
+# C-first do_neckbreak vehicle (src/interpreter.c:564;
+# src/act.offensive.c:1295-1376). A God prepares a mortal actor with the
+# skillset command; the actor and target are co-located with a quiet trainee
+# NPC. The target and observer expose the C skill-message audiences.
+
+# depth-case: neckbreak.no-argument
+# depth-case: neckbreak.target-not-found
+# depth-case: neckbreak.visible-mob-target
+# depth-case: neckbreak.self-target
+# depth-case: neckbreak.player-target
+# depth-case: neckbreak.one-argument
+# depth-case: neckbreak.peaceful-room
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Neckbreakgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Neckbreakgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Neckbreakactor
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Neckbreakactor
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Neckbreaktarget
+Y
+mortalpass
+mortalpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Neckbreaktarget
+y
+mortalpass
+mortalpass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Neckbreakactor 'neckbreak' 100
+teleport Neckbreakactor 8162
+teleport Neckbreaktarget 8162
+
+[probe:actor]
+neckbreak
+neckbreak nobody
+neckbreak Neckbreakactor
+neckbreak Neckbreaktarget
+neckbreak the Neckbreaktarget trailing words are ignored
+neckbreak trainee
