@@ -262,9 +262,11 @@ func sendUptime(s *Session, now time.Time) {
 	s.Send(fmt.Sprintf("Up since %s: %d %s, %d:%02d", boot.Format("Mon Jan 2 15:04:05 2006"), days, dayWord, hours, minutes))
 }
 
-// cmdLast — show last login info for a player (LVL_IMMORT)
+// cmdLast — show last login info for a player (LVL_GOD-1).
+// Source: act.wizard.c:1834-1854; the command-table gate is
+// LVL_GOD-1/POS_DEAD (interpreter.c:535).
 func cmdLast(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !checkLevel(s, LVL_GOD-1) {
 		s.Send("Huh?!?")
 		return nil
 	}
@@ -272,9 +274,9 @@ func cmdLast(s *Session, args []string) error {
 		s.Send("For whom do you wish to search?\r\n")
 		return nil
 	}
-	target := strings.Join(args, " ")
+	target, _ := game.OneArgument(strings.Join(args, " "))
 	if s.manager == nil || !s.manager.hasDB {
-		s.Send("No database available.\r\n")
+		s.Send("There is no such player.\r\n")
 		return nil
 	}
 	rec, err := s.manager.db.GetPlayer(target)
