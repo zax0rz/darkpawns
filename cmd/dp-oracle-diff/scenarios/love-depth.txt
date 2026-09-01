@@ -1,0 +1,115 @@
+# C-first love/do_action vehicle (src/interpreter.c:545; src/act.social.c:102-151;
+# lib/misc/socials:470-478). The vehicle covers no-argument, target success and
+# all three audiences, first-token parsing, self-target, and target-not-found.
+# The social data is already shared with the C-derived social table; this is a
+# pure-coverage proof on main, not a new behavior claim.
+
+# depth-case: love.no-argument
+# depth-case: love.target-success
+# depth-case: love.target-audience
+# depth-case: love.argument-first-token
+# depth-case: love.self-target
+# depth-case: love.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Luvactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luvactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Luvobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Luvobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Luvtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Luvtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Luvobserver 8162
+teleport Luvtarget 8162
+
+[probe]
+love
+love Luvtarget
+love the Luvtarget trailing words are ignored
+love Luvactor
+love Nobody

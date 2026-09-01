@@ -1,0 +1,77 @@
+# C-first love/do_action sleeping-victim vehicle (src/interpreter.c:545;
+# src/act.social.c:102-151; lib/misc/socials:470-478). The zero
+# min_victim_position admits a sleeping visible target; TO_SLEEP keeps the
+# actor line while ordinary TO_VICT does not wake the sleeper.
+
+# depth-case: love.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Luvactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luvactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Luvsleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Luvsleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Luvsleeper 8162
+
+[probe]
+love Luvsleeper
