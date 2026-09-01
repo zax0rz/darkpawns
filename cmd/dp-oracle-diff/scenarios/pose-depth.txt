@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:615;
+# src/act.social.c:102-127; lib/misc/socials:585-588). The authored pose
+# record has no char_found branch, so named targets, self, and missing targets
+# all remain on the no-argument pair after C's early record check.
+
+# depth-case: pose.no-argument
+# depth-case: pose.argument-ignored
+# depth-case: pose.self-argument-ignored
+# depth-case: pose.missing-argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Poseslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Poseslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Posepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Posepeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Posepeer 8004
+
+[probe]
+pose
+pose Posepeer
+pose self
+pose Nobody trailing words are ignored
