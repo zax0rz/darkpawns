@@ -1,0 +1,115 @@
+# C-first do_action vehicle for nibble (src/interpreter.c:567;
+# src/act.social.c:102-151; lib/misc/socials:520-529). The actor and two
+# peers expose the authored no-argument, target, self, and missing-target
+# branches. The fill-word probe proves C one_argument consumes only the first
+# non-fill token and ignores trailing words.
+
+# depth-case: nibble.no-argument
+# depth-case: nibble.target-success
+# depth-case: nibble.target-audience
+# depth-case: nibble.argument-first-token
+# depth-case: nibble.self-target
+# depth-case: nibble.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Nibactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nibactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Nibtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Nibtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Nibobserve
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Nibobserve
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nibtarget 8162
+teleport Nibobserve 8162
+
+[probe]
+nibble
+nibble Nibtarget
+nibble the Nibtarget trailing words are ignored
+nibble Nibactor
+nibble Nobody
