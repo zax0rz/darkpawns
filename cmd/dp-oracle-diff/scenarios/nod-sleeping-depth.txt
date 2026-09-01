@@ -1,0 +1,107 @@
+# C-first do_action sleeping-victim vehicle for nod (src/interpreter.c:568;
+# src/act.social.c:140-151; lib/misc/socials:1044-1051). The authored social
+# record has min_victim_position=0, so the sleeping target reaches success;
+# TO_SLEEP keeps the actor message while ordinary TO_VICT does not wake the
+# target.
+
+# depth-case: nod.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Nodawake
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nodawake
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Nodsleep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Nodsleep
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Nodlisten
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Nodlisten
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nodsleep 8162
+teleport Nodlisten 8162
+force Nodsleep sleep
+
+[probe]
+nod Nodsleep
