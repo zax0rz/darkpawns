@@ -1,0 +1,41 @@
+# depth-case: map.underlap-mode
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mapunderlap
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mapunderlap
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Mapunderlap level 31
+goto 8105
+
+[probe]
+map c

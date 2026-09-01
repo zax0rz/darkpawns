@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_map	map	map.mortal-gate	D1	command	oracle-green	map-gate	interpreter.c:548; mapcode.c:147-151	A level-1 actor receives C's HELP MAP fallback; the immortal setup is lowered before the probe so the command gate, not the first-character God bootstrap, owns the bytes (R1/R2/R5e).
+do_map	map	map.default-zone-map	D3	command	oracle-green	map-depth	mapcode.c:153-191	Bare map selects C's default dontleavezone=1 path and renders the authored 76x25 grid plus exact legend (R1/R3/R5e).
+do_map	map	map.all-zones-mode	D3	command	oracle-green	map-all-depth	mapcode.c:153-191	The first argument character is tested through do_map's delimiter-preserving call path: map a selects dontleavezone=0 and matches C's all-zones traversal (R1/R2/R5e).
+do_map	map	map.overlap-mode	D3	command	oracle-green	map-overlap-depth	mapcode.c:153-191	map b selects collision mode 2, preserving the C overlap replacement and overlap-link rendering on the live world (R1/R3/R5e).
+do_map	map	map.underlap-mode	D3	command	oracle-green	map-underlap-depth	mapcode.c:153-191	map c selects collision mode 3, preserving the C underlap/no-op collision branch and rendered topology (R1/R3/R5e).
+do_map	map	map.unknown-mode-defaults	D2	command	oracle-green	map-unknown-depth	mapcode.c:153-191	An unrecognized first argument character falls through to C's default dontleavezone=1 mode rather than inventing an error (R1/R2/R5e).
