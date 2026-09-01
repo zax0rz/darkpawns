@@ -1,0 +1,43 @@
+# C-first levels argument vehicle (src/interpreter.c:538;
+# src/act.informative.c:2311-2328). do_levels does not inspect its argument;
+# using a fresh session keeps the command out of the pager after the first
+# table so the argument-ignored branch is directly compared.
+
+# depth-case: levels.arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Levelsargs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Levelsargs
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+levels extra arguments are ignored
+<ENTER>

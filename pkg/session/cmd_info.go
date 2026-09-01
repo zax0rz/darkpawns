@@ -11,6 +11,10 @@ import (
 )
 
 func cmdLevels(s *Session) error {
+	if s.isSwitched && s.switchedMob != nil {
+		s.Send("You ain't nothin' but a hound-dog.\r\n")
+		return nil
+	}
 	p := s.player
 	if p == nil {
 		return nil
