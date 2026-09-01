@@ -65,6 +65,7 @@ func (w *World) doReport(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
+	w.actToRoom(ch, "$n reports:\r\n", nil, nil)
 	ch.SendMessage("You report:\r\n")
 
 	players := w.GetPlayersInRoom(ch.GetRoomVNum())

@@ -1,0 +1,115 @@
+# C-first report vehicle (src/interpreter.c:634; src/act.other.c:799-825).
+# An immortal primary and two peer players share a room. Color is enabled for
+# each descriptor so the per-recipient C color wrappers and room audience are
+# visible; a sleeping tail probe exposes the POS_RESTING entry gate.
+
+# depth-case: report.entry-gate
+# depth-case: report.position-gate
+# depth-case: report.output
+# depth-case: report.argument-ignored
+# depth-case: report.room-audience
+# depth-case: report.color-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Qreportactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qreportactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Qreportpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Qreportpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Qreportobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Qreportobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Qreportpeer 8162
+teleport Qreportobserver 8162
+force Qreportpeer color on
+force Qreportobserver color on
+
+[probe]
+report
+report trailing words
+sleep
+report
