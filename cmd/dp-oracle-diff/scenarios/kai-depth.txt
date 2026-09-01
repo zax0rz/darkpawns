@@ -1,0 +1,79 @@
+# C-first vehicle for the kai command (src/interpreter.c:527;
+# src/new_cmds.c:1500-1739). The empty-player Implementor is assigned the
+# exact C catalog name through skillset; the peer exposes the meditation room
+# act and the second use exposes the successful lockout.
+#
+# depth-case: kai.success-actor-and-room
+# depth-case: kai.success-lockout
+# depth-case: kai.skill-slot
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Kaiactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kaiactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Kaipeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Kaipeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Kaipeer 8162
+skillset Kaiactor 'kuji-kiri kai' 100
+
+[probe]
+kai
+kai
