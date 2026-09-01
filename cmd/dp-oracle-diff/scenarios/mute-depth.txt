@@ -1,0 +1,90 @@
+# C-first mute/do_wizutil vehicle (src/interpreter.c:559;
+# src/act.wizard.c:2077-2140). The primary is the implementor, so the direct
+# do_wizutil authorization guard is open. A visible NPC and mortal peer expose
+# the shared target gates; toggles are actor-only acknowledgements.
+
+# depth-case: mute.no-argument
+# depth-case: mute.target-not-found
+# depth-case: mute.visible-npc-target
+# depth-case: mute.toggle-on
+# depth-case: mute.toggle-off
+# depth-case: mute.one-argument
+# depth-case: mute.actor-acknowledgement
+# depth-case: mute.command-prefix
+# depth-case: mute.low-level-authorization
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Freezeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Freezeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Muteon
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Muteon 8162
+
+[probe]
+mute
+mute Nobody
+mute trainee
+mute Muteon
+mute Muteon
+mute Muteon trailing words are ignored
+mut Muteon
