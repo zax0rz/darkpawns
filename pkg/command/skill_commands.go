@@ -658,13 +658,21 @@ func CmdKick(s SessionInterface, args []string) error {
 	var found bool
 	world := s.GetWorld()
 	if len(args) > 0 {
-		targetName := strings.Join(args, " ")
+		// C do_kick uses one_argument: skip fill words, lowercase the first
+		// target token, and ignore the remainder (act.offensive.c:600).
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
 		}
 	} else if ch.GetFighting() != "" {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		if !found {
+			// C uses FIGHTING(ch) as a direct pointer after an empty
+			// argument; a mob's multi-word short description is not reparsed
+			// through get_char_room_vis (act.offensive.c:601-605).
+			target, found = game.FindFightingTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		}
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
 		}

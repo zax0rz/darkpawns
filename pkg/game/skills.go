@@ -315,6 +315,28 @@ func FindTargetInRoom(world *World, roomVNum int, targetName string, exclude *Pl
 	return tgt.Combatant, charDisplayName(tgt), true
 }
 
+// FindFightingTargetInRoom resolves the exact combatant named by a player's
+// FIGHTING pointer. C command handlers use that pointer directly when no
+// argument is supplied; they do not pass its multi-word display name back
+// through get_char_room_vis. The Go port stores the pointer as a name string,
+// so this exact in-room lookup preserves that fallback semantics.
+func FindFightingTargetInRoom(world *World, roomVNum int, targetName string, exclude *Player) (combat.Combatant, bool) {
+	if world == nil || targetName == "" {
+		return nil, false
+	}
+	for _, p := range world.GetPlayersInRoom(roomVNum) {
+		if p != exclude && p.GetName() == targetName {
+			return p, true
+		}
+	}
+	for _, m := range world.GetMobsInRoom(roomVNum) {
+		if m.GetName() == targetName {
+			return m, true
+		}
+	}
+	return nil, false
+}
+
 // charDisplayName returns the player name or mob ShortDesc for a resolved
 // target — the second return value FindTargetInRoom historically carried.
 func charDisplayName(t CharTarget) string {
