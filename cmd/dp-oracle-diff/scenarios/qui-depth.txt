@@ -1,0 +1,43 @@
+# C-first qui mortal vehicle (src/interpreter.c:629; src/act.other.c:72-181).
+# A normal mortal may not use the abbreviated qui spelling; C rejects before
+# room safety, combat, or extraction and tells the player to type quit in full.
+
+# depth-case: qui.entry-gate
+# depth-case: qui.mortal-shortcut
+# depth-case: qui.argument-ignored
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Quiactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quiactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+qui
+qui trailing words
