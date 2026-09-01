@@ -102,9 +102,13 @@ hosted checks were green.
 
 ## Next queue item
 
-The next source-order row after the completed social slice is
-`noauction` at `src/interpreter.c:569`. Before working it, sweep the command
-table against the manifests to confirm it is still unclaimed and map its C
-`do_gen_tog` call path. Use branch `glm/depth-noauction`, one family PR, and
-one dated handoff. Do not re-pick `newbie`, `nibble`, or `nod`; preserve the
-existing claims for `mail`, `social`, and `murder`.
+The fresh source-order sweep confirms `noauction` at
+`src/interpreter.c:569` is already owned by `gen-tog.tsv`; the intervening
+`nobroadcast`, `noctell`, `nogossip`, `nograts`, `nohassle`, `nonewbie`,
+`norepeat`, `noshout`, `nosummon`, and `notell` rows are likewise already
+claimed by the generic-toggle family, while `noogie`, `nudge`, and `nuzzle`
+belong to the existing social-family claim. The next genuinely unclaimed row
+is `notitle` at `src/interpreter.c:580`. Map its `do_wizutil` path and use
+branch `glm/depth-notitle`, one family PR, and one dated handoff. Do not
+re-pick `newbie`, `nibble`, or `nod`; preserve the existing claims for `mail`,
+`social`, and `murder`.
