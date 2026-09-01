@@ -1,0 +1,97 @@
+# C-first depth vehicle for do_invis (src/interpreter.c:519;
+# src/act.wizard.c:1621-1688). The first disposable player is the
+# Implementor, and two room peers are lowered to levels 30 and 31 so the
+# perform_immort_invis lower-than-level threshold crossing branch is
+# observable.
+#
+# depth-case: invis.toggle-on
+# depth-case: invis.toggle-off
+# depth-case: invis.numeric-level
+# depth-case: invis.above-own-level
+# depth-case: invis.zero-level-visible
+# depth-case: invis.negative-level-visible
+# depth-case: invis.invalid-number-atoi
+# depth-case: invis.peer-below-level-crossing
+# depth-case: invis.appear-audience
+# depth-case: invis.level-prompt
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Invisactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Invisactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:low]
+Invlow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:low]
+Invlow
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Invlow 8162
+set Invlow level 30
+~dpclock pulse 20
+
+[probe]
+invis
+invis
+invis 30
+invis 31
+invis 30
+invis 41
+invis 0
+invis -1
+invis nonsense
+invis 40
+invis

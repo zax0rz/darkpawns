@@ -467,14 +467,7 @@ func cmdInvis(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	// Toggle invisibility
-	if s.player.Flags&game.PLR_INVISIBLE != 0 {
-		s.player.Flags &^= game.PLR_INVISIBLE
-		s.Send("You are now visible.")
-	} else {
-		s.player.Flags |= game.PLR_INVISIBLE
-		s.Send("You are now invisible.")
-	}
+	s.manager.world.DoInvis(s.player, strings.Join(args, " "))
 	return nil
 }
 

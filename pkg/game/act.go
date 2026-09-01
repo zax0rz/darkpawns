@@ -155,11 +155,6 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 		return true
 	}
 
-	// IMMORT levels always see everything
-	if obsSub.GetLevel() >= LVL_IMMORT {
-		return true
-	}
-
 	// Check PRF_HOLYLIGHT
 	if hl, ok := obsSub.(holyLightSubject); ok && hl.GetHolyLight() {
 		return true
@@ -168,6 +163,18 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	// 1. Blindness check
 	if obsSub.IsAffected(affBlind) {
 		return false
+	}
+
+	// C's CAN_SEE compares the observer's real level with a wizinvis
+	// character's GET_INVIS_LEV before applying immortal visibility rules.
+	if invis, ok := subject.(invisLevelSubject); ok && obsSub.GetLevel() < invis.GetInvisLevel() {
+		return false
+	}
+
+	// IMMORT levels see ordinary hidden/invisible subjects after the explicit
+	// wizinvis threshold check above.
+	if obsSub.GetLevel() >= LVL_IMMORT {
+		return true
 	}
 
 	// 2. Invisibility check
@@ -246,6 +253,10 @@ type visibilitySubject interface {
 	GetRoom() int
 	IsAffected(bit int) bool
 	IsNPC() bool
+}
+
+type invisLevelSubject interface {
+	GetInvisLevel() int
 }
 
 var (

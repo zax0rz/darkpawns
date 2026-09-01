@@ -1,0 +1,84 @@
+# C-first threshold boundary vehicle for do_invis
+# (src/interpreter.c:519; src/act.wizard.c:1641-1654). The first disposable
+# player is the Implementor and the room peer is raised exactly to level 31,
+# proving that GET_LEVEL(tch) == level does not receive a crossing message.
+#
+# depth-case: invis.peer-at-level-no-crossing
+# depth-case: invis.peer-above-level-no-crossing
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Invthactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Invthactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:at]
+Invthat
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:at]
+Invthat
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Invthat 8162
+set Invthat level 31
+~dpclock pulse 20
+
+[probe]
+invis
+invis
+invis 30
+invis 31
+invis 30
+invis 40
+invis

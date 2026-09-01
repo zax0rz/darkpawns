@@ -80,6 +80,20 @@ func (p *Player) GetLevel() int {
 	return p.Level
 }
 
+// GetInvisLevel returns C's GET_INVIS_LEV value for immortal wizinvis.
+func (p *Player) GetInvisLevel() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.InvisLevel
+}
+
+// SetInvisLevel updates C's GET_INVIS_LEV value for immortal wizinvis.
+func (p *Player) SetInvisLevel(level int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.InvisLevel = level
+}
+
 // SetLevel sets the player's level.
 func (p *Player) SetLevel(v int) {
 	p.mu.Lock()

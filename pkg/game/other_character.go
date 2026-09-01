@@ -35,7 +35,7 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// Immort visibility
 	if ch.GetLevel() >= LVL_IMMORT {
-		ch.SendMessage("You are visible.\r\n")
+		w.performImmortVis(ch)
 		return true
 	}
 
