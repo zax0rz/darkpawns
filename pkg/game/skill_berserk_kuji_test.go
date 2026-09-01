@@ -339,7 +339,9 @@ func TestDoKujiKiri_ShaSuccessHeals(t *testing.T) {
 // TestDoKujiKiri_FailurePreventsNumericEffect verifies the failure-path
 // zeroing (new_cmds.c:1713-1721): on failure, Rin's AC modifier and the
 // metalskin flag must both be absent — the only observable effect should be
-// the kuji-kiri lockout. We can't force a deterministic failure roll, so we
+// the kuji-kiri lockout. Rin's af[0] uses APPLY_AC, so its lockout remains
+// separate from the failed default af[1] APPLY_SPELL record. We can't force a
+// deterministic failure roll, so we
 // approximate by using skill 1 (near-certain failure) and just assert that
 // IF the roll happened to fail, no AC change leaked through.
 func TestDoKujiKiri_FailurePreventsNumericEffect(t *testing.T) {

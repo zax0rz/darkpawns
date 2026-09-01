@@ -1,0 +1,80 @@
+# C-first vehicle for the jin command (src/interpreter.c:523;
+# src/new_cmds.c:1500-1739).  The empty-player fixture makes Jinactor the
+# first-player Implementor, so C grants every skill at 100% while the Go
+# bootstrap must address the same C spells[] slot.  The room peer exposes the
+# exact actor/room audience and the second use exposes the five-tick lockout.
+#
+# depth-case: jin.success-actor-and-room
+# depth-case: jin.success-double-lockout
+# depth-case: jin.skill-slot
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Jinactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Jinactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Jinpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Jinpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Jinpeer 8162
+skillset Jinactor 'kuji-kiri jin' 100
+
+[probe]
+jin
+jin

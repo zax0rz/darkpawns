@@ -14,15 +14,19 @@ func SkillCatalogName(num int) string {
 }
 
 // SkillStorageName returns the Go skill key for a C spells[] entry. Most
-// entries use their lower-cased catalog name directly. The Ninja escape skill
-// is the one C catalog entry whose display name differs from the command's
-// gameplay key: spells[157] is "escape of the mongoose", while do_retreat
-// reads SKILL_ESCAPE. Keep that translation at the catalog boundary so
-// skillset, practice, and character bootstrap all address the same skill.
+// entries use their lower-cased catalog name directly. These C catalog entries
+// differ from their command gameplay keys: the Ninja escape skill is displayed
+// as "escape of the mongoose", while do_retreat reads SkillEscape; kuji-kiri
+// Jin is displayed as "kuji-kiri jin", while do_kuji_kiri reads SkillKkJin.
+// Keep those translations at the catalog boundary so skillset, practice, and
+// character bootstrap all address the same C skill slot (R1/R5e).
 func SkillStorageName(num int) string {
 	name := strings.ToLower(SkillCatalogName(num))
-	if name == "escape of the mongoose" {
+	switch name {
+	case "escape of the mongoose":
 		return SkillEscape
+	case "kuji-kiri jin":
+		return SkillKkJin
 	}
 	return name
 }
