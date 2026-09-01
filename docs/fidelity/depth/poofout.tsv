@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_poofset	poofout	poofout.entry-gate	D1	command	unit-green	TestPoofoutRegistrationUsesCEntryGate	interpreter.c:614; act.wizard.c:1711-1721	The standalone poofout row is LVL_IMMORT at POS_DEAD and reaches SCMD_POOFOUT in the shared setter (R1/R2/R5e).
+do_poofset	poofout	poofout.clear-message	D4	state	unit-green	TestCmdPoofoutClearsAndPreservesCRawArgument	act.wizard.c:1721-1737	An empty post-skip-spaces remainder frees the old POOFOUT value, stores NULL, and still emits global OK (R1/R4/R5e).
+do_poofset	poofout	poofout.raw-message	D4	state	unit-green	TestCmdPoofoutClearsAndPreservesCRawArgument	act.wizard.c:1721-1737	A non-empty remainder is stored verbatim after C skip_spaces; internal spacing is not token-normalized (R1/R3/R5e).
+do_poofset	poofout	poofout.custom-message	D2	command	oracle-green-multiseed	poofout-depth@1,2,3,5,8	act.wizard.c:1721-1737	A custom message with internal spacing receives the exact OK acknowledgement.
+do_poofset	poofout	poofout.consumer-audience	D3	shared	delegated	home.poof-audiences	act.wizard.c:284-289; act.wizard.c:1711-1737	The existing home audience matrix owns the shared configured poof-out consumer; this slice owns the standalone setter state (R5b/R5c).
