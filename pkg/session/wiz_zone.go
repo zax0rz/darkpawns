@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // cmdAdmobs mirrors C adjust_mobs() (src/olc.c:279-307). The C handler
@@ -200,7 +202,10 @@ func cmdOlist(s *Session, args []string) error {
 	return nil
 }
 
-// cmdMlist — list mobiles matching keyword (LVL_IMMORT)
+// cmdMlist mirrors C do_mlist (src/act.wizard.c:3376-3402): the first
+// argument is a zone number, not a keyword, and output is paged through the
+// descriptor. C atoi accepts a signed decimal prefix, including an empty
+// string as zero.
 func cmdMlist(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -211,30 +216,43 @@ func cmdMlist(s *Session, args []string) error {
 		s.Send("No parsed world available.")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Usage: mlist <keyword>")
-		return nil
-	}
-	keyword := strings.ToLower(args[0])
+	argument, _ := game.OneArgument(strings.Join(args, " "))
+	zoneNumber := mlistAtoi(argument)
+	start := zoneNumber * 100
+	end := start + 99
 	var result strings.Builder
 	count := 0
 	for i := range pw.Mobs {
-		if strings.Contains(strings.ToLower(pw.Mobs[i].ShortDesc), keyword) ||
-			strings.Contains(strings.ToLower(pw.Mobs[i].Keywords), keyword) {
+		if pw.Mobs[i].VNum >= start && pw.Mobs[i].VNum <= end {
 			count++
-			fmt.Fprintf(&result, "  [%5d] %s\r\n", pw.Mobs[i].VNum, pw.Mobs[i].ShortDesc)
-			if count >= 50 {
-				result.WriteString("... (truncated at 50)")
-				break
-			}
 		}
 	}
 	if count == 0 {
-		s.Send("No mobiles found.")
-		return nil
+		result.WriteString("Sorry, there are no mobs in that zone.\r\n")
+	} else {
+		// The C loop builds each row with sprintf(buf, "%s...", buf, ...),
+		// overlapping the destination and source (src/act.wizard.c:3396-3401).
+		// The oracle's compiled behavior retains only this final footer; the
+		// port must reproduce those player-facing bytes (R1/R5e).
+		fmt.Fprintf(&result, " %d Mobiles found in Zone %d\r\n", count, zoneNumber)
 	}
-	s.Send(result.String())
+	PageString(s, result.String())
 	return nil
+}
+
+func mlistAtoi(value string) int {
+	if value == "" {
+		return 0
+	}
+	sign := 1
+	switch value[0] {
+	case '-':
+		sign = -1
+		value = value[1:]
+	case '+':
+		value = value[1:]
+	}
+	return sign * loadAtoi(value)
 }
 
 // cmdSysfile — show system file (bugs/ideas/todo/typos) (LVL_IMMORT)
