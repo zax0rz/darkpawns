@@ -1,0 +1,76 @@
+# C-first quit safe-room vehicle (src/interpreter.c:630;
+# src/act.other.c:72-181). An immortal force-casts a normal mortal peer to
+# temple 8004 before QUIT; the peer goodbye and immortal leave act expose the
+# successful safe-room extraction audiences without editing world state.
+
+# depth-case: quit.safe-logout
+# depth-case: quit.safe-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Quitadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quitadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Quitpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Quitpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Quitpeer 8004
+
+[probe]
+force Quitpeer quit
