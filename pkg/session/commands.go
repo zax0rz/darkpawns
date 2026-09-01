@@ -799,6 +799,9 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if cmd == "gecho" && rawArgs != "" {
 		return cmdGechoText(s, rawArgs)
 	}
+	if cmd == "qsay" && rawArgs != "" {
+		return cmdQsayText(s, rawArgs)
+	}
 	if cmd == "page" && rawArgs != "" {
 		return cmdPageText(s, rawArgs)
 	}
