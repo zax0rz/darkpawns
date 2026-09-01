@@ -1,0 +1,127 @@
+# C-first load/do_load vehicle (src/interpreter.c:544; src/act.wizard.c:1224-1380).
+# The probe covers the command parser, keyword lookup, kind abbreviations,
+# numeric errors, quiet placement, and actor/room creation narration. The
+# first empty player is crowned Implementor so the
+# command remains reachable without an unrelated privilege vehicle.
+
+# depth-case: load.no-arguments
+# depth-case: load.missing-argument
+# depth-case: load.invalid-kind
+# depth-case: load.kind-abbreviations
+# depth-case: load.invalid-mob-vnum
+# depth-case: load.invalid-object-vnum
+# depth-case: load.mob-name-not-found
+# depth-case: load.object-name-lookup
+# depth-case: load.object-name-not-found
+# depth-case: load.object-success-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sable
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sable
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Iris
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Iris
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sable 8162
+teleport Iris 8162
+
+[probe]
+load
+load mob
+load bad 1
+load m 999999
+load mob 999999
+load o 999999
+load obj 999999
+load mob nobody
+load obj nobody
+load object 8010
+load object bread
+load obj 8010
+load obj bread

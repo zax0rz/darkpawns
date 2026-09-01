@@ -1,0 +1,49 @@
+# C-first do_load privilege gates (src/act.wizard.c:1322-1364).
+# The first-player Implementor is lowered through C do_set to level 34 so the
+# object-cost cap and the three LEVEL_GRGOD object limits are reachable.
+
+# depth-case: load.object-cost-gate
+# depth-case: load.object-limit-gates
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set Mordecai level 34
+
+[probe]
+load obj 8096
+load obj 81
+load obj 82
+load obj 8095
