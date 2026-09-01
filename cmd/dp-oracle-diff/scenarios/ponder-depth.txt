@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:612;
+# src/act.social.c:102-127; lib/misc/socials:580-583). The authored ponder
+# record has no char_found branch, so named targets, self, and missing targets
+# all remain on the no-argument pair after C's early record check.
+
+# depth-case: ponder.no-argument
+# depth-case: ponder.argument-ignored
+# depth-case: ponder.self-argument-ignored
+# depth-case: ponder.missing-argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ponderslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ponderslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Ponderpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Ponderpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Ponderpeer 8004
+
+[probe]
+ponder
+ponder Ponderpeer
+ponder self
+ponder Nobody trailing words are ignored
