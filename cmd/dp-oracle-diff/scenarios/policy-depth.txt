@@ -1,0 +1,56 @@
+# C-first depth vehicle for do_gen_ps(SCMD_POLICIES) at src/interpreter.c:611
+# and src/act.informative.c:2117-2155. The unrestricted POS_DEAD command
+# serves the boot-cached lib/text/policies string through page_string; the
+# authored 122-line file is driven through the complete pager once, then
+# exercised again with ignored trailing arguments and a pager quit before a
+# normal command.
+
+# depth-case: policy.static-page
+# depth-case: policy.arguments-ignored
+# depth-case: policy.pager-navigation
+# depth-case: policy.pager-quit
+# depth-case: policy.post-pager-command
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Policyslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Policyslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+policy
+<ENTER>
+<ENTER>
+<ENTER>
+<ENTER>
+<ENTER>
+policy trailing words are ignored
+q
+score
