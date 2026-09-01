@@ -241,19 +241,44 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob long desc")
 	}
-	mob.LongDesc = strings.TrimSuffix(lb.Text(), "~")
+	longDesc := lb.Text()
+	mob.LongDesc = strings.TrimSuffix(longDesc, "~")
+
+	// The shipped world uses the canonical Diku form where a one-line long
+	// description is followed by a standalone '~'. Older fixture snippets in
+	// this parser's tests omit that delimiter and put the detailed description
+	// on the next line. Probe the next logical line so both forms remain
+	// readable, while an empty detailed description does not consume the flags
+	// line as prose.
+	detailedPending := true
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob detailed description or flags")
+	}
+	next := lb.Text()
+	if next == "~" {
+		if !lb.Scan() {
+			return mob, "", fmt.Errorf("expected mob detailed description or flags")
+		}
+		next = lb.Text()
+	}
+	if isMobFlagsLine(next) {
+		detailedPending = false
+	}
+	lb.Unread(next)
 
 	// Detailed description (ends with ~)
-	var descLines []string
-	for lb.Scan() {
-		line := lb.Text()
-		if strings.HasSuffix(line, "~") {
-			descLines = append(descLines, strings.TrimSuffix(line, "~"))
-			break
+	if detailedPending {
+		var descLines []string
+		for lb.Scan() {
+			line := lb.Text()
+			if strings.HasSuffix(line, "~") {
+				descLines = append(descLines, strings.TrimSuffix(line, "~"))
+				break
+			}
+			descLines = append(descLines, line)
 		}
-		descLines = append(descLines, line)
+		mob.DetailedDesc = strings.Join(descLines, "\n")
 	}
-	mob.DetailedDesc = strings.Join(descLines, "\n")
 
 	// Action flags, affect flags, alignment, race (ends with E or S)
 	if !lb.Scan() {
@@ -580,6 +605,18 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	}
 
 	return mob, nextLine, nil
+}
+
+func isMobFlagsLine(line string) bool {
+	fields := strings.Fields(line)
+	if len(fields) < 2 {
+		return false
+	}
+	if fields[len(fields)-1] != "E" && fields[len(fields)-1] != "S" {
+		return false
+	}
+	_, err := strconv.Atoi(fields[0])
+	return err == nil
 }
 
 // ParseAllMobFiles parses all .mob files in a directory.

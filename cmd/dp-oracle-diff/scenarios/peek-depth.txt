@@ -1,0 +1,90 @@
+# C-first do_peek success vehicle (src/interpreter.c:602; act.other.c:1665-1697;
+# act.informative.c:388-490). The immortal thief actor reaches the C
+# look_at_char path without a skill roll, while a local mob and player expose
+# self, missing, fill-word, equipment, and inventory-peek behavior.
+
+# depth-case: peek.no-argument
+# depth-case: peek.target-not-found
+# depth-case: peek.mob-target
+# depth-case: peek.player-target
+# depth-case: peek.self-target
+# depth-case: peek.fill-word-target
+# depth-case: peek.equipment-and-inventory
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 1204 163
+
+[setup:oracle]
+Peekgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Peekgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Peekvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Peekvictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+teleport Peekvictim 1204
+load obj 8037
+give sword Peekvictim
+force Peekvictim wield sword
+
+[probe]
+peek
+peek Nobody
+peek trainee
+peek Peekvictim
+peek self
+peek the Peekvictim trailing words are ignored

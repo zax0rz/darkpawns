@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 // ---------------------------------------------------------------------------
@@ -25,62 +26,82 @@ func (w *World) doPeek(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
+	first, _ := oneArgument(arg)
+	if first == "" {
 		ch.SendMessage("Whom do you wish to peek at?\r\n")
 		return true
 	}
 
-	victimPl, _ := w.findCharInRoom(ch, ch.GetRoomVNum(), arg)
-	if victimPl == nil {
-		ch.SendMessage("They aren't here.\r\n")
+	victim, ok := w.ResolveCharInRoom(ch, first)
+	if !ok {
+		ch.SendMessage("No-one by that name here.\r\n")
+		return true
+	}
+	if victim.Player == ch {
+		ch.SendMessage("Try the 'inventory' command!\r\n")
 		return true
 	}
 
-	percent := randRange(1, 101)
-	skill := ch.GetSkill("peek")
-	if percent > skill {
-		ch.SendMessage(fmt.Sprintf("You try to peek at %s but fail.\r\n", victimPl.Name))
-		return true
-	}
-
-	ch.SendMessage(fmt.Sprintf("You peek at %s's belongings:\r\n", victimPl.Name))
-
-	// List equipment
-	ch.SendMessage("[Equipment]\r\n")
-	for slotID := 0; slotID < int(SlotMax); slotID++ {
-		slot := EquipmentSlot(slotID)
-		item, ok := victimPl.Equipment.GetItemInSlot(slot)
-		if ok && item != nil && item.Prototype != nil {
-			ch.SendMessage(fmt.Sprintf("  %s\r\n", item.Prototype.ShortDesc))
+	// C skips the skill roll entirely for immortals. Mortals burn exactly one
+	// number(1,101) draw before comparing their peek skill.
+	if ch.GetLevel() < LVL_IMMORT && dprng.Number(1, 101) > ch.GetSkill(SkillPeek) {
+		// The failure path calls do_look with the original, unparsed argument;
+		// retain its ordinary look parser and player-facing bytes.
+		w.doLook(ch, nil, "look", arg)
+		lookedAt, ok := w.lookCharacterTarget(ch, arg)
+		if ok && sameCharTarget(lookedAt, victim) && victim.Mob != nil {
+			w.KenderSteal(ch, victim.Mob)
 		}
-	}
-
-	// List inventory
-	ch.SendMessage("[Inventory]\r\n")
-	for _, item := range victimPl.Inventory.Items {
-		if item != nil {
-			name := "a generic object"
-			if item.Prototype != nil {
-				name = item.Prototype.ShortDesc
+		// C look_at_target emits the observer notifications after look_at_char.
+		// Peek's successful path calls look_at_char directly and does not emit
+		// these notifications; only the failed do_look vehicle reaches them.
+		var target Actor
+		if victim.Player != nil {
+			target = victim.Player
+		} else {
+			target = victim.Mob
+		}
+		if ok && sameCharTarget(lookedAt, victim) && target != nil {
+			if canSee(target, ch) {
+				Act(w, true, ch, target, nil, nil, "$n looks at you.", "", ToVict)
 			}
-			ch.SendMessage(fmt.Sprintf("  %s\r\n", name))
+			Act(w, true, ch, target, nil, nil, "$n looks at $N.", "", ToNotVict)
 		}
+		return true
 	}
-	// Improve skill
-	skillVal := ch.GetSkill("peek")
-	if skillVal > 0 && skillVal < 97 && randRange(1, 200) <= ch.Stats.Wis+ch.Stats.Int {
-		skillVal += randRange(1, 3)
-		if skillVal > 97 {
-			skillVal = 97
-		}
-		ch.SetSkill("peek", skillVal)
-		if randRange(1, 3) == 3 {
-			ch.SendMessage("Your skill in peek improves.\r\n")
-		}
+
+	// C look_at_char emits the ordinary character description, condition,
+	// equipment, and class-authorized inventory probe in that order. Render it
+	// before improve_skill, which is the final call in the C handler.
+	var result ObservationResult
+	w.appendCharacterLook(&result, ch, victim)
+	w.RenderObservationMessages(result)
+	if victim.Mob != nil {
+		w.KenderSteal(ch, victim.Mob)
 	}
+	ImproveSkill(ch, SkillPeek)
 
 	return true
+}
+
+// lookCharacterTarget mirrors do_look's half_chop dispatch for the character
+// notification that follows look_at_target. In particular, a failed peek
+// passes the original argument to do_look: "peek the name" therefore looks
+// at the literal target "the", not at the already-resolved peek victim.
+func (w *World) lookCharacterTarget(ch *Player, arg string) (CharTarget, bool) {
+	first, rest := splitArg(strings.ToLower(arg))
+	switch {
+	case first == "", isAbbrev(first, "in"), directionIndex(first) >= 0:
+		return CharTarget{}, false
+	case isAbbrev(first, "at"):
+		return w.ResolveCharInRoom(ch, rest)
+	default:
+		return w.ResolveCharInRoom(ch, first)
+	}
+}
+
+func sameCharTarget(left, right CharTarget) bool {
+	return left.Player != nil && left.Player == right.Player || left.Mob != nil && left.Mob == right.Mob
 }
 
 // ---------------------------------------------------------------------------

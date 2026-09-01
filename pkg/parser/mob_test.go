@@ -78,6 +78,27 @@ func TestParseMobFile_SingleBasic(t *testing.T) {
 	}
 }
 
+func TestParseMobFile_CanonicalDetailedDescriptionDelimiter(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	content := "#100\nkeyword~\na small test mob~\nA small test mob stands here.\n~\nA detailed\ndescription survives the long-description delimiter.\n~\n0 0 0 0 0 0 0 0 0 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n$\n"
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	if len(mobs) != 1 {
+		t.Fatalf("expected 1 mob, got %d", len(mobs))
+	}
+	if got, want := mobs[0].DetailedDesc, "A detailed\ndescription survives the long-description delimiter.\n"; got != want {
+		t.Fatalf("detailed description = %q, want %q", got, want)
+	}
+}
+
 func TestParseMobFile_ShortDescArticleLowercasing(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")

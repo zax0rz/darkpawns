@@ -1,0 +1,78 @@
+# C-first mortal do_peek failure vehicle (act.other.c:1688-1690). The
+# empty-players Implementor is created as a thief, then lowered after setting
+# peek to 0. A failed roll must call do_look with the original argument rather
+# than emit a Go-only failure sentence.
+
+# depth-case: peek.mortal-failure
+# depth-case: peek.failure-original-look-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Peekfail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Peekfail
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Peektarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Peektarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+teleport Peektarget 1204
+skillset Peekfail 'peek' 0
+set Peekfail level 11
+
+[probe]
+peek the Peektarget trailing words are ignored
