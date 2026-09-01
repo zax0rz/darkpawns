@@ -1,0 +1,48 @@
+# C-first mlist/do_mlist vehicle (src/interpreter.c:554;
+# src/act.wizard.c:3376-3402). C treats the first token as a numeric zone
+# selector, ignores trailing tokens, scans mob_index order, and pages either a
+# zone list with a count footer or the exact empty-zone response.
+
+# depth-case: mlist.empty-zone
+# depth-case: mlist.populated-zone
+# depth-case: mlist.trailing-argument-ignored
+# depth-case: mlist.atoi-decimal-prefix
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+mlist 999
+mlist 183 extra tokens are ignored
+mlist 183
+mlist 183abc
