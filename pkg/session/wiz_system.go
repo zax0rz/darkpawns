@@ -549,7 +549,11 @@ func cmdPardon(s *Session, args []string) error {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilPardon, args[0])
+	// C do_wizutil receives the complete argument remainder and applies
+	// one_argument, which skips leading fill words before resolving the target
+	// (interpreter.c:1265-1283; act.wizard.c:2088). Preserve that boundary
+	// instead of selecting args[0] in the command wrapper.
+	return wizutilDispatch(s, wizutilPardon, strings.Join(args, " "))
 }
 
 // cmdNotitle — standalone "notitle <player>" command.
