@@ -1,0 +1,76 @@
+# C-first qui immortal vehicle (src/interpreter.c:629; src/act.other.c:72-181).
+# The first empty-players character is an immortal. For immortals C's qui
+# guard falls through to the real do_quit path, so a safe-room peer exposes
+# the leave audience and the actor's goodbye before extraction.
+
+# depth-case: qui.immortal-fallthrough
+# depth-case: qui.immortal-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Quiimmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quiimmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Quibystander
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Quibystander
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Quibystander 8004
+
+[probe]
+qui
