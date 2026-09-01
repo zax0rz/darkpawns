@@ -1,0 +1,56 @@
+# C-first do_lines vehicle (src/interpreter.c:542; src/act.display.c:112-141).
+# The probes cover C's default screen-size query, atoi/non-numeric and
+# decimal-prefix parsing, lower/upper bounds, valid state changes, and the
+# first-token rule.
+
+# depth-case: lines.current-default
+# depth-case: lines.non-numeric-atoi-zero
+# depth-case: lines.minimum-rejection
+# depth-case: lines.valid-minimum
+# depth-case: lines.maximum-rejection
+# depth-case: lines.decimal-prefix-atoi
+# depth-case: lines.valid-with-trailing-input
+# depth-case: lines.current-after-update
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+lines
+lines foo
+lines 6
+lines 7
+lines 51
+lines 25abc
+lines 25 trailing words are ignored
+lines

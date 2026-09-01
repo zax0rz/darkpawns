@@ -1,0 +1,45 @@
+# C-first do_lines/InfoBarOn vehicle (src/interpreter.c:542;
+# src/act.display.c:112-141,158-216). Enabling the existing infobar matrix,
+# changing the line count, and disabling it proves that do_lines redraws the
+# active infobar before its confirmation; the frame bytes are owned by the
+# infobar manifest.
+
+# depth-case: lines.infobar-redraw
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+infobar on
+lines 30
+infobar off

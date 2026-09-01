@@ -379,11 +379,7 @@ func cmdLines(s *Session, args []string) error {
 		return nil
 	}
 
-	size, err := strconv.Atoi(args[0])
-	if err != nil {
-		s.Send("Usage: lines <number>\r\n")
-		return nil
-	}
+	size := parseLinesSize(args[0])
 
 	if size > 50 {
 		s.Send("Screen size is limited to 50 lines.\r\n")
@@ -403,6 +399,34 @@ func cmdLines(s *Session, args []string) error {
 
 	s.Send(fmt.Sprintf("Your new lines count is %d.\r\n", size))
 	return nil
+}
+
+// parseLinesSize mirrors the C atoi call in do_lines. C accepts an optional
+// sign and leading decimal digits, returns zero when no digits are present,
+// and ignores a trailing suffix.
+func parseLinesSize(value string) int {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0
+	}
+
+	index := 0
+	if value[index] == '+' || value[index] == '-' {
+		index++
+	}
+	start := index
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	if index == start {
+		return 0
+	}
+
+	parsed, err := strconv.Atoi(value[:index])
+	if err != nil {
+		return 0
+	}
+	return parsed
 }
 
 // cmdInfoBar implements do_infobar from act.display.c
