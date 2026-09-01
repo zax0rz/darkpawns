@@ -1,0 +1,81 @@
+# C-first listen/do_action self-only vehicle (src/interpreter.c:540;
+# src/act.social.c:102-121; lib/misc/socials:1386-1388). The record has no
+# char_found message, so typed, missing, and self-looking targets all repeat
+# the actor/room no-argument pair. A peer exposes the room audience.
+
+# depth-case: listen.no-argument
+# depth-case: listen.typed-target-ignored
+# depth-case: listen.missing-target-ignored
+# depth-case: listen.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Listenactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Listenactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Listenobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Listenobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Listenobserver 8162
+
+[probe]
+listen
+listen Listenobserver
+listen nobody
+listen Listenactor
