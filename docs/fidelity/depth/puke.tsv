@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	puke	puke.entry-gate	D1	command	unit-green	TestPukeRegistrationUsesCEntryGate	interpreter.c:621; act.social.c:102-118; lib/misc/socials:605-612	The registered C row is POS_RESTING with no command minimum level; the focused test pins the gate and complete social record metadata (R1/R2/R5e).
+do_action	puke	puke.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:621; comm.c:910-947	The shared POS_RESTING command rejection is already proven by the social position-gate vehicle (R5b/R5c).
+do_action	puke	puke.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target resolution and is owned by the social boundary (R5b/R5c).
+do_action	puke	puke.social-record	D4	state	unit-green	TestPukeRegistrationUsesCEntryGate	lib/misc/socials:605-612	The focused test pins all eight C actor/room/victim/self/missing message slots and the zero metadata fields (R1/R4/R5e).
+do_action	puke	puke.no-argument	D3	audience	oracle-green-multiseed	puke-depth@1,2,3,5,8	act.social.c:119-127; lib/misc/socials:605-612	The no-argument branch emits exact actor and visible room puke lines (R1/R3/R5e).
+do_action	puke	puke.target-trio	D3	audience	oracle-green-multiseed	puke-depth@1,2,3,5,8	act.social.c:128-151; lib/misc/socials:605-612	A visible peer receives the exact actor, room-not-victim, and victim messages with C substitutions (R1/R3/R5e).
+do_action	puke	puke.self-target	D2	audience	oracle-green-multiseed	puke-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:605-612	The self target reaches the char_auto/others_auto pair (R1/R2/R3/R5e).
+do_action	puke	puke.missing-target	D2	command	oracle-green-multiseed	puke-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:605-612	An unresolved target reaches the social-specific Once again? response (R1/R3/R5e).
