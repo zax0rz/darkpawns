@@ -1,0 +1,85 @@
+# C-first lick/do_action vehicle (src/interpreter.c:541; src/act.social.c:102-151;
+# lib/misc/socials:460-468). Lick has a visible target branch, self-target
+# branch, not-found branch, and a zero-position victim gate. The actor and peer
+# expose actor, victim, room, self, and missing-target bytes; the fill-word
+# probe proves one_argument behavior.
+
+# depth-case: lick.no-argument
+# depth-case: lick.target-success
+# depth-case: lick.target-audience
+# depth-case: lick.argument-first-token
+# depth-case: lick.self-target
+# depth-case: lick.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sable
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sable
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sable 8162
+
+[probe]
+lick
+lick Sable
+lick the Sable trailing words are ignored
+lick Mordecai
+lick Nobody
