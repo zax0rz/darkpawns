@@ -349,21 +349,11 @@ func mustCheckloadObjectPercent(w *game.World, vnum int) float64 {
 
 // cmdPoofset — set poof in/out messages (LVL_IMMORT)
 // Original: act.wizard.c do_poofset() (1711).
-func cmdPoofset(s *Session, args []string) error {
+func cmdPoofsetText(s *Session, direction, message string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Usage: poofset <in|out> [message]")
-		return nil
-	}
-	direction := strings.ToLower(args[0])
-	if direction != "in" && direction != "out" {
-		s.Send("Usage: poofset <in|out> [message]")
-		return nil
-	}
-
 	// C do_poofset: with an argument, str_dup it into the poof slot; with no
 	// argument, clear the slot. Either way it replies with the global OK
 	// ("Okay.\r\n", config.c:92) — never an invented set/cleared message.
@@ -374,12 +364,25 @@ func cmdPoofset(s *Session, args []string) error {
 	}
 
 	if direction == "in" {
-		player.PoofIn = strings.Join(args[1:], " ")
+		player.PoofIn = message
 	} else {
-		player.PoofOut = strings.Join(args[1:], " ")
+		player.PoofOut = message
 	}
 	s.Send("Okay.\r\n")
 	return nil
+}
+
+func cmdPoofset(s *Session, args []string) error {
+	if len(args) < 1 {
+		s.Send("Usage: poofset <in|out> [message]")
+		return nil
+	}
+	direction := strings.ToLower(args[0])
+	if direction != "in" && direction != "out" {
+		s.Send("Usage: poofset <in|out> [message]")
+		return nil
+	}
+	return cmdPoofsetText(s, direction, strings.Join(args[1:], " "))
 }
 
 // cmdPoofin — standalone "poofin [message]" command.

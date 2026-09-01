@@ -1,0 +1,77 @@
+# C-first do_poofset/SCMD_POOFIN vehicle (src/interpreter.c:613;
+# src/act.wizard.c:1711-1737). The immortal primary sets a message containing
+# internal spacing. A later bare poofin clears the slot; the focused test pins
+# the hidden stored state, while goto's existing manifest owns its consumer
+# audience and room-rendering behavior.
+
+# depth-case: poofin.custom-message
+# depth-case: poofin.clear-message
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Poofinwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Poofinwizard
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Poofinpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Poofinpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Poofinpeer 8004
+
+[probe]
+poofin a  swirl of arrival
+poofin
