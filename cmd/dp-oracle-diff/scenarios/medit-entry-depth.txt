@@ -1,0 +1,46 @@
+# C-first medit/do_olc entry vehicle (src/interpreter.c:553; src/olc.c:80-144).
+# The first fixture player is the immortal command actor. These probes stay in
+# normal command mode while covering missing input, nonnumeric input, and a
+# numeric VNUM whose zone does not exist.
+
+# depth-case: medit.no-argument
+# depth-case: medit.nonnumeric-argument
+# depth-case: medit.unknown-zone
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+medit
+medit abc
+medit 999999
