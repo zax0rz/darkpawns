@@ -1,0 +1,74 @@
+# do_action PLR_NOSHOUT gate vehicle (src/interpreter.c:550;
+# src/act.social.c:102-118). The primary Implementor mutes the named mortal in
+# warmup; the mortal then invokes moan, proving the emote refusal occurs before
+# the self-only social messages.
+
+# depth-case: moan.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+MoanGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MoanGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Moanmute
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Moanmute
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Moanmute
+
+[probe:muteon]
+moan

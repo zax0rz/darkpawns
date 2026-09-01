@@ -1,0 +1,81 @@
+# C-first moan self-only social vehicle (src/interpreter.c:550;
+# act.social.c:102-121; lib/misc/socials:490-493). Because char_found is
+# absent, do_action ignores every typed argument and emits only the
+# actor/room pair.
+
+# depth-case: moan.no-argument
+# depth-case: moan.argument-ignored
+# depth-case: moan.missing-target-ignored
+# depth-case: moan.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Moanactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moanactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Moanobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Moanobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Moanobserver 8162
+
+[probe]
+moan
+moan Moanobserver trailing words are ignored
+moan Nobody
+moan Moanactor
