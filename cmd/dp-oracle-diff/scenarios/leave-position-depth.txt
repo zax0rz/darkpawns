@@ -1,0 +1,48 @@
+# C-first do_leave position-gate vehicle (src/interpreter.c:536;
+# comm.c:910-947). The actor is put to sleep before the probe, so the
+# registered POS_STANDING gate rejects leave before do_leave runs.
+
+# depth-case: leave.position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8161 south 8162 0
+set-room-flag 8161 3 on
+set-room-flag 8162 3 off
+
+[setup:oracle]
+Leaveposition
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Leaveposition
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8161
+sleep
+
+[probe]
+leave

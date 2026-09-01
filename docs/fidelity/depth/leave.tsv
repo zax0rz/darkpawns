@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_leave	leave	leave.entry-gate	D1	command	unit-green	TestLeaveRegistrationUsesCEntryGate	interpreter.c:536; comm.c:910-947	The Go registry preserves C's POS_STANDING/level-0 entry gate (R2/R5e).
+do_leave	leave	leave.outside	D1	command	oracle-green	leave-outside-depth	act.movement.c:676-680	An outdoor actor receives C's exact outside refusal before any exit scan (R1/R5e).
+do_leave	leave	leave.arguments-ignored	D1	command	oracle-green	leave-outside-depth	act.movement.c:676-680	C do_leave does not parse its argument; the Go no-argument wrapper likewise ignores trailing text (R1/R2/R5e).
+do_leave	leave	leave.no-outside-exit	D2	command	oracle-green	leave-no-exit-depth	act.movement.c:681-694	An indoor room without an open exit to an outdoor destination receives C's exact terminal refusal (R1/R5e).
+do_leave	leave	leave.success-actor	D3	command	oracle-green	leave-success-depth	act.movement.c:681-689; act.movement.c:189-283	The first qualifying indoor-to-outdoor exit invokes canonical perform_move and gives the actor the destination observation; shared movement branches remain owned by movement.tsv (R1/R2/R5e).
+do_leave	leave	leave.success-origin-audience	D3	audience	oracle-green	leave-success-depth	act.movement.c:681-689; act.movement.c:201-219	The origin peer receives the direction-specific C leave act from the selected south exit (R1/R4/R5e).
+do_leave	leave	leave.success-destination-audience	D3	audience	oracle-green	leave-success-depth	act.movement.c:681-689; act.movement.c:230-278	The destination peer receives canonical arrival bytes; full perform_move audience topology is delegated to movement.tsv (R1/R4/R5e).
+do_leave	leave	leave.position-gate	D1	command	oracle-green	leave-position-depth	interpreter.c:536; comm.c:910-947	Sleeping input is rejected at the registered POS_STANDING gate before do_leave's indoor/outdoor logic (R1/R2/R5e).

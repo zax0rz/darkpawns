@@ -1,0 +1,110 @@
+# C-first do_leave success/audience vehicle (src/interpreter.c:536;
+# src/act.movement.c:681-689; act.movement.c:189-283). Indoor 8161 has one
+# open south exit to outdoor 8162. The peers expose the origin leave and
+# destination arrival audience split from canonical perform_move.
+
+# depth-case: leave.success-actor
+# depth-case: leave.success-origin-audience
+# depth-case: leave.success-destination-audience
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8161 south 8162 0
+set-room-flag 8161 3 on
+set-room-flag 8162 3 off
+
+[setup:oracle]
+Leavesuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Leavesuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:origin]
+Leaveorigin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:origin]
+Leaveorigin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Leavedestination
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:destination]
+Leavedestination
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8161
+teleport Leaveorigin 8161
+teleport Leavedestination 8162
+
+[probe]
+leave
