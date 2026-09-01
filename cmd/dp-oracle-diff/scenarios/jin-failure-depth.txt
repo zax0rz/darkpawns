@@ -1,0 +1,80 @@
+# C-first Jin failure vehicle (src/interpreter.c:523;
+# src/new_cmds.c:1500-1739).  The first-player Implementor is deliberately
+# reduced to 1% Jin skill so seed 1 reaches check_kk_success()'s failure arm;
+# the peer captures the unchanged meditation room act and the second use
+# captures the lockout installed even after failure.
+#
+# depth-case: jin.failure-actor-and-room
+# depth-case: jin.failure-lockout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Jinfailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Jinfailactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Jinfailpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Jinfailpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Jinfailpeer 8162
+skillset Jinfailactor 'kuji-kiri jin' 1
+
+[probe]
+jin
+skillset Jinfailactor 'kuji-kiri jin' 100
+jin
