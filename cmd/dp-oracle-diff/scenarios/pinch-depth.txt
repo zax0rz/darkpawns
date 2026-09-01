@@ -1,0 +1,88 @@
+# C-first do_action social vehicle (src/interpreter.c:605;
+# src/act.social.c:102-151; lib/misc/socials:1466-1474). The authored pinch
+# record is exercised through no-argument, visible player/NPC target, named
+# self, self alias, missing target, and one_argument/fill-word branches.
+
+# depth-case: pinch.no-argument
+# depth-case: pinch.target-success
+# depth-case: pinch.mob-target
+# depth-case: pinch.self-target
+# depth-case: pinch.self-alias
+# depth-case: pinch.target-not-found
+# depth-case: pinch.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8004 80
+
+[setup:oracle]
+Pinchactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pinchactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Pinchpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Pinchpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Pinchpeer 8004
+
+[probe]
+pinch
+pinch Pinchpeer
+pinch generic
+pinch Pinchactor
+pinch self
+pinch Nobody
+pinch the Pinchpeer trailing words are ignored
