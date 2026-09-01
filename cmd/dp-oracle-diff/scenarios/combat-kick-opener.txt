@@ -100,6 +100,17 @@ east
 skillset Kickmortal 'kick' 75
 
 [probe:mortal]
+# depth-case: kick.miss-opener
+# depth-case: kick.combat-followup
+# depth-case: kick.target-trailing-arguments
+# depth-case: kick.no-argument-fighting-fallback
 kick trainee
 ~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+kick trainee trailing words
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+kick
 ~dpclock pulse 20
