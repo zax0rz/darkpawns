@@ -52,7 +52,7 @@ func execQuit(s *Session, reallyQuit bool) error {
 	room := s.player.GetRoom()
 	// C: act("$n has left the game.", TRUE, ch, 0, 0, TO_ROOM) iff !GET_INVIS_LEV(ch).
 	s.leaveBroadcastHandled = true
-	if s.player.GetFlags()&game.PLR_INVISIBLE == 0 {
+	if s.player.GetInvisLevel() == 0 {
 		msg, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
 			Data: EventData{

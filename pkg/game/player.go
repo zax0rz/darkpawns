@@ -75,6 +75,11 @@ type Player struct {
 	// Source: structs.h:221-244
 	PlayerFlags uint64
 
+	// InvisLevel is C's player_specials.saved.invis_level for immortal
+	// wizinvis. It is runtime-only until the player save format has a faithful
+	// representation for this field.
+	InvisLevel int `json:"-"`
+
 	// ActiveAffects is a list of active spell/status effects on this player.
 	// This is separate from the Affects bitmask — bitmask tracks AFF_* flags,
 	// while ActiveAffects tracks spell effects with duration/stacking.

@@ -222,19 +222,25 @@ func (s *Session) promptText() string {
 		return "> "
 	}
 	flags := s.player.GetFlags()
+	prefix := ""
+	if level := s.player.GetInvisLevel(); level > 0 {
+		// C's wizinvis prompt is preceded by a carriage-return/line-feed
+		// boundary after command output (comm.c:1062-1065).
+		prefix = fmt.Sprintf("\r\ni%d ", level)
+	}
 	// C make_prompt() emits a bare "] " while d->str is active. The board,
 	// note, and mail editors all set PLR_WRITING, so preserve that framing
 	// before the normal AFK/inactive prompt prefixes.
 	if flags&(1<<uint(game.PlrWriting)) != 0 {
-		return "\r\n] "
+		return prefix + "\r\n] "
 	}
 	if flags&(1<<uint(game.PrfInactive)) != 0 {
-		return "INACTIVE > "
+		return prefix + "INACTIVE > "
 	}
 	if flags&(1<<uint(game.PrfAFK)) != 0 {
-		return "AFK > "
+		return prefix + "AFK > "
 	}
-	return "> "
+	return prefix + "> "
 }
 
 // MarkDirty marks a variable as dirty for agent subscriptions.
