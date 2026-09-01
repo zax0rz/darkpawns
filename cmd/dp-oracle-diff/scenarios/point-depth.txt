@@ -1,0 +1,103 @@
+# C-first do_point vehicle (src/interpreter.c:609; src/new_cmds.c:2470-2560).
+# The player and room peer expose character/object audiences, directions,
+# self-targeting, first-token parsing, and the wielded-weapon branch.
+
+# depth-case: point.no-argument
+# depth-case: point.direction
+# depth-case: point.character-no-weapon
+# depth-case: point.character-wielded-weapon
+# depth-case: point.mob-target
+# depth-case: point.self-target
+# depth-case: point.self-alias
+# depth-case: point.object-no-weapon
+# depth-case: point.object-wielded-weapon
+# depth-case: point.target-not-found
+# depth-case: point.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8004 80
+
+[setup:oracle]
+Pointactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pointactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Pointpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Pointpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Pointpeer 8004
+load obj 2117
+drop gem
+load obj 8037
+wield sword
+remove sword
+
+[probe]
+point
+point north
+point n
+point Pointpeer
+point self
+point generic
+point Nobody
+point the Pointpeer trailing words are ignored
+point gem
+wield sword
+point Pointpeer
+point gem
+remove sword
+point Pointpeer

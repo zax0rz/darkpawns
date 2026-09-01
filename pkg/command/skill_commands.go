@@ -2023,14 +2023,18 @@ func CmdPoint(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 
-	targetName := ""
-	if len(args) > 0 {
-		targetName = strings.Join(args, " ")
-	}
-
+	argument := strings.Join(args, " ")
+	targetName, _ := game.OneArgument(argument)
 	world := s.GetWorld()
 	result := game.DoPoint(ch, targetName, world)
-	return sendSkillResult(s, ch, nil, result)
+
+	var target combat.Combatant
+	if targetName != "" {
+		if resolved, found := world.ResolveCharInRoom(ch, targetName); found {
+			target = resolved.Combatant
+		}
+	}
+	return sendSkillResult(s, ch, target, result)
 }
 
 // CmdGroinrip handles the groinrip command.
