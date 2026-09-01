@@ -1,0 +1,120 @@
+# C-first do_order vehicle (src/interpreter.c:586; src/act.offensive.c:294-357).
+# The implementor positions two mortal peers and forces one to follow without
+# charm. The probe then reaches the C half_chop argument boundary, self-target,
+# visible-NPC, non-charmed follower, and the followers pseudo-target branches;
+# the named peers expose TO_CHAR, TO_ROOM, and indifferent-look ordering.
+
+# depth-case: order.no-argument
+# depth-case: order.target-not-found
+# depth-case: order.self-target
+# depth-case: order.visible-npc
+# depth-case: order.noncharmed-player
+# depth-case: order.followers-no-charmed-subject
+# depth-case: order.half-chop-fill-word-is-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Orderleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Orderleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Orderpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Orderpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Orderobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Orderobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Orderpeer 8162
+teleport Orderobserver 8162
+force Orderpeer follow Orderleader
+
+[probe]
+order
+order Nobody say hello
+order Orderleader say hello
+order trainee say hello
+order followers say hello
+order Orderpeer say hello
+order the Orderpeer say hello
