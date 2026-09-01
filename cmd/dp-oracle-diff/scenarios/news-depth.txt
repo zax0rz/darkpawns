@@ -1,0 +1,44 @@
+# C-first depth vehicle for do_gen_ps(SCMD_NEWS) at
+# src/interpreter.c:565 and src/act.informative.c:2117-2158. The unrestricted
+# command serves the boot-cached lib/text/news string through page_string and
+# ignores trailing command arguments.
+
+# depth-case: news.static-page
+# depth-case: news.arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Newsdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Newsdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+news
+news trailing words are ignored
