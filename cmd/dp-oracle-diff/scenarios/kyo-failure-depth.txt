@@ -1,0 +1,79 @@
+# C-first Kyo failure vehicle (src/interpreter.c:530;
+# src/new_cmds.c:1500-1739). Skill 1 reaches the failure arm; after changing
+# the skill to 100, the failed Kyo's APPLY_HITROLL AFF_KUJI_KIRI record still
+# blocks the retry because Kyo's second default record is inert AFF_NOTHING.
+#
+# depth-case: kyo.failure-actor-and-room
+# depth-case: kyo.failure-lockout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Kyofailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kyofailactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Kyofailpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Kyofailpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Kyofailpeer 8162
+skillset Kyofailactor 'kuji-kiri kyo' 1
+
+[probe]
+kyo
+skillset Kyofailactor 'kuji-kiri kyo' 100
+kyo
