@@ -1,0 +1,51 @@
+# C-first do_display/prompt alias vehicle (src/interpreter.c:619;
+# src/act.other.c:1024-1082). C routes prompt to the display-flag handler:
+# no-argument usage, all/on five-flag enable, off silent clear, and the
+# letter-mask/none clear-and-ack path are all directly observable here.
+
+# depth-case: prompt.no-argument
+# depth-case: prompt.all-ack
+# depth-case: prompt.on-ack
+# depth-case: prompt.off-silent
+# depth-case: prompt.letter-mask-ack
+# depth-case: prompt.none-ack
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Promptslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Promptslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+prompt
+prompt all
+prompt off
+prompt hmv
+prompt none
+prompt on

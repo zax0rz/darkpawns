@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_display	prompt	prompt.entry-gate	D1	command	unit-green	TestPromptRegistrationUsesCEntryGate	interpreter.c:619; act.other.c:1024-1028	The prompt alias is POS_DEAD with no minimum level and reaches the shared do_display handler (R1/R2/R5e).
+do_display	prompt	prompt.no-argument	D1	command	oracle-green-multiseed	prompt-depth@1,2,3,5,8	act.other.c:1031-1039	An empty argument reaches C's exact usage response after skip_spaces (R1/R3/R5e).
+do_display	prompt	prompt.all-ack	D2	command	oracle-green-multiseed	prompt-depth@1,2,3,5,8	act.other.c:1040-1047	The all branch emits the exact Okay acknowledgement after enabling all five display flags (R1/R3/R5e).
+do_display	prompt	prompt.on-ack	D2	command	oracle-green-multiseed	prompt-depth@1,2,3,5,8	act.other.c:1040-1047	The on spelling is C's all-flags alias and emits Okay (R1/R2/R3/R5e).
+do_display	prompt	prompt.off-silent	D2	command	oracle-green-multiseed	prompt-depth@1,2,3,5,8	act.other.c:1047-1055	The off branch clears all five display flags and returns without an acknowledgement (R1/R3/R5e).
+do_display	prompt	prompt.letter-mask-ack	D4	state	unit-green	TestCmdPromptMatchesCDoDisplay	act.other.c:1047-1079	The general loop clears first and enables only recognized h/m/v bits in the focused state test (R1/R3/R5e).
+do_display	prompt	prompt.none-ack	D2	command	oracle-green-multiseed	prompt-depth@1,2,3,5,8	act.other.c:1047-1082	The none input clears all five flags, recognizes no letters, and still emits Okay (R1/R3/R5e).
+do_display	prompt	prompt.display-flag-state	D4	state	unit-green	TestCmdPromptMatchesCDoDisplay	act.other.c:1040-1082	Focused state assertions pin the all/off/hmv/none transitions and prevent the former custom-prompt reimplementation from returning (R1/R4/R5e).
