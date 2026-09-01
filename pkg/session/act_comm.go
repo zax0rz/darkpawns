@@ -63,16 +63,27 @@ func cmdQcomm(s *Session, args []string) error {
 // cmdQsay — "qsay <message>" quest-say (act.comm.c do_qcomm/SCMD_QSAY, level 0).
 // Broadcasts "<name> quest-says, '<msg>'" to PRF_QUEST participants. C colors it &W...&n.
 func cmdQsay(s *Session, args []string) error {
+	return cmdQsayText(s, strings.Join(args, " "))
+}
+
+func cmdQsayText(s *Session, msg string) error {
 	if blocked := qcommGuard(s); blocked {
 		return nil
 	}
-	if len(args) == 0 {
+	msg = strings.TrimLeft(msg, cCommandWhitespace)
+	if msg == "" {
 		s.Send(qcommEmptyMsg("qsay"))
 		return nil
 	}
-	msg := sanitizeMessage(strings.Join(args, " "))
-	self := fmt.Sprintf("You quest-say, '%s'", msg)
-	other := fmt.Sprintf("%s quest-says, '%s'", s.player.Name, msg)
+	// C delete_ansi_controls runs on the argument before the SCMD_QSAY
+	// templates are built. The &W/&n wrappers are part of those templates and
+	// must remain in the player-facing act bytes (act.comm.c:1325-1341).
+	msg = game.DeleteANSIControls(sanitizeMessage(msg))
+	self := fmt.Sprintf("&WYou quest-say, '%s'&n", msg)
+	other := fmt.Sprintf("&W%s quest-says, '%s'&n", s.player.Name, msg)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		self = "Okay."
+	}
 	broadcastQuest(s, self, other)
 	return nil
 }
@@ -129,7 +140,8 @@ func broadcastQuest(s *Session, selfMsg, otherMsg string) {
 		if sess.player == nil || sess == s {
 			continue
 		}
-		if sess.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+		flags := sess.player.GetFlags()
+		if flags&(1<<uint(game.PrfQuest)) == 0 || flags&(1<<uint(game.PlrWriting)) != 0 {
 			continue
 		}
 		sess.Send(otherMsg)
