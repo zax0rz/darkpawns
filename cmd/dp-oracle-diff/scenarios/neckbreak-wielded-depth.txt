@@ -1,0 +1,78 @@
+# C-first do_neckbreak wield gate (src/act.offensive.c:1304-1308). The
+# invalid target keeps the command before any target-dependent branch, proving
+# that C checks WEAR_WIELD before one_argument/get_char_room_vis.
+
+# depth-case: neckbreak.wielded-weapon
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Nbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nbgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Nbwield
+Y
+wieldpass
+wieldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Nbwield
+y
+wieldpass
+wieldpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Nbwield 'neckbreak' 100
+teleport Nbwield 8162
+
+[probe:actor]
+wield sword
+neckbreak nobody

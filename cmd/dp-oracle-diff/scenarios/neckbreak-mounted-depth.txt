@@ -1,0 +1,80 @@
+# C-first do_neckbreak mounted gate (src/act.offensive.c:1336-1340). The
+# shared vnum-8021 fixture is the authored rideable horse; a valid target
+# reaches the mounted check after target resolution.
+
+# depth-case: neckbreak.mounted
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 8021 1 8162 80
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Nbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nbgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Nbmount
+Y
+mountpass
+mountpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Nbmount
+y
+mountpass
+mountpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Nbmount 'neckbreak' 100
+teleport Nbmount 8162
+
+[probe:actor]
+ride horse
+neckbreak trainee

@@ -1039,18 +1039,23 @@ func CmdNeckbreak(s SessionInterface, args []string) error {
 	if canUse, msg := game.CanUseSkill(ch, game.SkillNeckbreak); !canUse {
 		return s.SendMessage(msg)
 	}
-	if len(args) == 0 {
-		return s.SendMessage("Neckbreak whom?\r\n")
+	// C checks WEAR_WIELD before one_argument() and target lookup
+	// (act.offensive.c:1304-1308). Keep this gate in the command wrapper so
+	// an invalid target cannot move it after the parser-visible boundary.
+	if ch.Equipment != nil {
+		if _, wielded := ch.Equipment.GetItemInSlot(game.SlotWield); wielded {
+			return s.SendMessage("You can't do this and wield a weapon at the same time!\r\n")
+		}
 	}
+	// C one_argument() discards fill words and keeps only the first token
+	// (interpreter.c:1265-1285), so "the victim trailing" targets victim.
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 	if !found {
-		return s.SendMessage("They aren't here.\r\n")
+		return s.SendMessage("I don't see them here.\r\n")
 	}
-	if target.GetName() == ch.Name {
-		return s.SendMessage("Aren't we funny today...\r\n")
-	}
-	return sendSkillResult(s, ch, target, game.DoNeckbreak(ch, target))
+	return sendSkillResult(s, ch, target, game.DoNeckbreak(ch, target, world))
 }
 
 // CmdAmbush handles the ambush command (C-10).
@@ -1675,6 +1680,8 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			s.GetWorld().DoDisembowelDamage(ch, target, result.Damage)
 		case game.SkillGroinrip:
 			s.GetWorld().DoGroinripDamage(ch, target, result.Damage)
+		case game.SkillNeckbreak:
+			s.GetWorld().DoNeckbreakDamage(ch, target, result.Damage)
 		}
 	} else if result.Damage > 0 && target != nil {
 		// Route through DoSpellDamage so skill damage uses the same death

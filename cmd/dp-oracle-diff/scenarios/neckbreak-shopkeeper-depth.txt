@@ -1,0 +1,78 @@
+# C-first do_neckbreak shopkeeper gate (src/act.offensive.c:1320-1325).
+# Darek is the registered vnum-8003 weaponsmith from lib/world/shp/80.shp;
+# the command must refuse him before peaceful, movement, or RNG branches.
+
+# depth-case: neckbreak.shopkeeper-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 8003 1 8162 80
+
+[setup:oracle]
+Nbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nbgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Nbshop
+Y
+shoppass
+shoppass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Nbshop
+y
+shoppass
+shoppass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Nbshop 'neckbreak' 100
+teleport Nbshop 8162
+
+[probe:actor]
+neckbreak Darek

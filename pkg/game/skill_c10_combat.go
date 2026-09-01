@@ -268,18 +268,34 @@ func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
 	}
 }
 
-// DoNeckbreak implements do_neckbreak() from act.offensive.c lines 1295-1360.
+// DoNeckbreak implements do_neckbreak() from act.offensive.c lines 1295-1376.
 // Requires bare hands + 51 move. Damage: 18d(level).
-func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
+func DoNeckbreak(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillNeckbreak) == 0 {
 		return SkillResult{Success: false, MessageToCh: "What's that, idiot-san?"}
 	}
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
 		return SkillResult{Success: false, MessageToCh: "You can't do this and wield a weapon at the same time!"}
 	}
+
+	// C resolves shopkeeper protection before self, peaceful, mounted, move,
+	// and RNG branches (act.offensive.c:1320-1325).
+	if isShopKeeperInWorld(world, target) {
+		return SkillResult{Success: false, MessageToCh: "Haha.. Don't think so."}
+	}
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Aren't we funny today..."}
+	}
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "You can't contemplate violence in such a place!"}
+	}
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
 	if !ch.SpendMove(51) {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy to do this!"}
 	}
+
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
@@ -291,15 +307,22 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 			MessageToCh:   ActMessage("You try to break $S neck, but $E is too strong!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to break your neck, but can't!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to break $N's neck, but $N slips free!", chPronouns, &victPronouns, ""),
+			RetaliateHit:  true,
+			// C emits all three failure act() lines before hit(vict,ch).
+			RetaliateHitAfterMessages: true,
 		}
 	}
 	dam := combat.RollDice(18, ch.GetLevel())
-	improveSkill(ch, SkillNeckbreak)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 3,
-		MessageToCh:   ActMessage("You snap $N's neck with a sickening crack!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n snaps your neck with a sickening crack!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n breaks $N's neck!", chPronouns, &victPronouns, ""),
+		Success:          true,
+		Damage:           dam,
+		SkillMsgType:     SkillNeckbreakNum,
+		SkillMsgInDamage: true,
+		DamageSkill:      SkillNeckbreak,
+		StartCombat:      true,
+		WaitCh:           3,
+		// C improves only after damage() returns, after set-190's dice draw.
+		DeferredImprove: []string{SkillNeckbreak},
 	}
 }
 

@@ -506,6 +506,22 @@ func isShopKeeper(target combat.Combatant) bool {
 	return ok && mob.Prototype != nil && MobSpecAssign[mob.Prototype.VNum] == "shop_keeper"
 }
 
+// isShopKeeperInWorld includes the boot-time shop assignment. C's
+// assign_the_shopkeepers() writes the shop_keeper mob spec from .shp data;
+// Go keeps that source-of-truth membership on World rather than mutating the
+// static special-procedure table (shop.c:1232-1243).
+func isShopKeeperInWorld(world *World, target combat.Combatant) bool {
+	if isShopKeeper(target) {
+		return true
+	}
+	mob, ok := target.(*MobInstance)
+	if !ok || mob == nil || mob.Prototype == nil || world == nil {
+		return false
+	}
+	_, ok = world.ShopBitvectorForKeeper(mob.Prototype.VNum)
+	return ok
+}
+
 // C act() applies CAP() after token substitution. SkillResult messages bypass
 // the shared Act broadcaster, so preserve that final transformation here.
 func stealthActMessage(message string, chPronouns Pronouns, victPronouns *Pronouns, itemName string) string {

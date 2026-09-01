@@ -162,6 +162,19 @@ func (w *World) DoGroinripDamage(attacker, victim combat.Combatant, dam int) boo
 	})
 }
 
+// DoNeckbreakDamage preserves do_neckbreak's damage() boundary: apply damage,
+// update position, emit numbered skill_message set 190, then return for the
+// command's deferred improve_skill and WAIT_STATE (fight.c:1023-1092).
+func (w *World) DoNeckbreakDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillNeckbreakNum, func() {
+		w.HandleDeath(victim, attacker, SkillNeckbreakNum)
+		combat.DeathCry(victim)
+	})
+}
+
 // MaybeSpawnPuke preserves do_groinrip's post-room 1-in-11 vnum-21 object
 // branch, including its shared RNG draw and two-tick timer.
 func (w *World) MaybeSpawnPuke(roomVNum int) {
