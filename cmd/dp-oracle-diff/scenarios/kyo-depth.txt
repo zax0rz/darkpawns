@@ -1,0 +1,79 @@
+# C-first Kyo vehicle (src/interpreter.c:530;
+# src/new_cmds.c:1500-1739). The first-player Implementor is assigned the
+# exact C catalog name through skillset; the peer exposes the meditation room
+# act and the second use exposes the successful lockout.
+#
+# depth-case: kyo.success-actor-and-room
+# depth-case: kyo.success-lockout
+# depth-case: kyo.skill-slot
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Kyoactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kyoactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Kyopeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Kyopeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Kyopeer 8162
+skillset Kyoactor 'kuji-kiri kyo' 100
+
+[probe]
+kyo
+kyo
