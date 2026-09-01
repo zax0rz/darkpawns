@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_levels	levels	levels.entry-gate	D1	command	unit-green	TestLevelsRegistrationUsesCEntryGate	interpreter.c:538; comm.c:910-947	The registered C row is POS_DEAD with no command minimum, so position does not reject the command (R2/R5e).
+do_levels	levels	levels.output	D2	command	oracle-green	levels-depth@1	act.informative.c:2311-2328; class.c:1089-1166	A non-NPC player receives all 30 exact class XP rows through the pager boundary (R1/R3/R5e).
+do_levels	levels	levels.arguments-ignored	D1	command	oracle-green	levels-arguments-depth@1	act.informative.c:2311-2328	C do_levels never parses its argument; a fresh vehicle proves the table is unchanged with trailing input (R1/R2/R5e).
+do_levels	levels	levels.npc-branch	D2	command	oracle-green	levels-npc-depth@1	act.informative.c:2311-2318; act.wizard.c:1175-1208	Switching into a mob reaches IS_NPC(ch) and emits only C's hound-dog line, without entering the pager (R1/R2/R5e).
+do_levels	levels	levels.experience-formula	D4	state	delegated	TestFindExp_GoldenFixedLevels;TestFindExp_GoldenFormulaLevel13Plus;TestFindExp_GoldenClassModifiers	class.c:1089-1166	The class-independent fixed rows and all class modifiers/formula ranges are owned by the existing FindExp golden tests (R3/R5b/R5c).
+do_levels	levels	levels.pager	D3	shared	delegated	TestLevelsEntersPagerForLongOutput	act.informative.c:2324-2328; modify.c:347-527	The 30-row output enters the shared C-compatible pager; its navigation and page boundary matrix is owned by pager tests (R1/R5b/R5c).

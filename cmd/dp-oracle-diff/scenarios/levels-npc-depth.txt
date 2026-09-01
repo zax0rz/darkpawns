@@ -1,0 +1,47 @@
+# C-first levels/do_levels NPC vehicle (src/interpreter.c:538;
+# src/act.informative.c:2311-2318; act.wizard.c:1175-1208). The first empty
+# player is an Implementor, so it can switch into the disposable cleaner mob;
+# C then reaches do_levels with IS_NPC(ch) true and returns the hound-dog line.
+
+# depth-case: levels.npc-branch
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+
+[setup:oracle]
+Levelsnpc
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Levelsnpc
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch cleaner
+
+[probe]
+levels
