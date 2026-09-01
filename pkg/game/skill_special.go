@@ -478,59 +478,86 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 	}
 }
 
-// DoPoint implements do_point() — point at someone or something.
+// DoPoint implements do_point() from new_cmds.c: point at a visible character,
+// visible room object, direction, or the room itself. targetName has already
+// passed through C's one_argument at the session boundary.
 func DoPoint(ch *Player, targetName string, world *World) SkillResult {
 	if targetName == "" {
-		return SkillResult{
-			Success:       true,
-			MessageToCh:   "You point around the room.\r\n",
-			MessageToRoom: fmt.Sprintf("%s points around the room.\r\n", ch.Name),
-		}
+		return pointResult("You point around the room.", fmt.Sprintf("%s points around the room.", ch.Name))
 	}
 
-	target, _, found := FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
-	if !found {
-		// Point at self
-		if strings.EqualFold(targetName, "self") || strings.EqualFold(targetName, "me") || strings.EqualFold(targetName, ch.Name) {
-			return SkillResult{
-				Success:       true,
-				MessageToCh:   "You point at yourself.\r\n",
-				MessageToRoom: fmt.Sprintf("%s points at %s.\r\n", ch.Name, himHer(ch.GetSex())),
-			}
+	if target, found := world.ResolveCharInRoom(ch, targetName); found {
+		if target.Combatant == ch {
+			return pointResult("You point at yourself.", fmt.Sprintf("%s points at %s.", ch.Name, himHer(ch.GetSex())))
 		}
-		// Point at nothing specific
-		return SkillResult{
-			Success:       true,
-			MessageToCh:   "You point around the room.\r\n",
-			MessageToRoom: fmt.Sprintf("%s points around the room.\r\n", ch.Name),
-		}
+		return pointCharacterResult(ch, target.Combatant)
 	}
 
-	if target.GetName() == ch.Name {
-		return SkillResult{
-			Success:       true,
-			MessageToCh:   "You point at yourself.\r\n",
-			MessageToRoom: fmt.Sprintf("%s points at %s.\r\n", ch.Name, himHer(ch.GetSex())),
-		}
+	if object, found := world.ResolveObjectInRoom(ch, targetName); found {
+		return pointObjectResult(ch, object)
 	}
 
-	// Check if wielding a weapon
-	if ch.Equipment != nil && len(ch.Equipment.Slots) > 0 && ch.Equipment.Slots[0] != nil {
-		weapon := ch.Equipment.Slots[0]
-		return SkillResult{
-			Success:       true,
-			MessageToCh:   fmt.Sprintf("You point %s at %s.\r\n", weapon.GetShortDesc(), target.GetName()),
-			MessageToVict: fmt.Sprintf("%s points %s at you.\r\n", ch.Name, weapon.GetShortDesc()),
-			MessageToRoom: fmt.Sprintf("%s points %s at %s.\r\n", ch.Name, weapon.GetShortDesc(), target.GetName()),
-		}
+	if direction := pointDirection(targetName); direction != "" {
+		return pointResult("You point "+direction+".", fmt.Sprintf("%s points %s.", ch.Name, direction))
 	}
 
+	return pointResult("You point around the room.", fmt.Sprintf("%s points around the room.", ch.Name))
+}
+
+func pointResult(toCh, toRoom string) SkillResult {
+	return SkillResult{Success: true, MessageToCh: toCh, MessageToRoom: toRoom}
+}
+
+func pointCharacterResult(ch *Player, target combat.Combatant) SkillResult {
+	targetName := target.GetName()
+	weapon := pointWeapon(ch)
+	if weapon == nil {
+		return SkillResult{
+			Success:       true,
+			MessageToCh:   fmt.Sprintf("You point at %s.", targetName),
+			MessageToVict: fmt.Sprintf("%s points at you.", ch.Name),
+			MessageToRoom: fmt.Sprintf("%s points at %s.", ch.Name, targetName),
+		}
+	}
+	weaponName := weapon.GetShortDesc()
 	return SkillResult{
 		Success:       true,
-		MessageToCh:   fmt.Sprintf("You point at %s.\r\n", target.GetName()),
-		MessageToVict: fmt.Sprintf("%s points at you.\r\n", ch.Name),
-		MessageToRoom: fmt.Sprintf("%s points at %s.\r\n", ch.Name, target.GetName()),
+		MessageToCh:   fmt.Sprintf("You point %s at %s.", weaponName, targetName),
+		MessageToVict: fmt.Sprintf("%s points %s at you.", ch.Name, weaponName),
+		MessageToRoom: fmt.Sprintf("%s points %s at %s.", ch.Name, weaponName, targetName),
 	}
+}
+
+func pointObjectResult(ch *Player, target *ObjectInstance) SkillResult {
+	targetName := target.GetShortDesc()
+	if weapon := pointWeapon(ch); weapon != nil {
+		weaponName := weapon.GetShortDesc()
+		return pointResult(
+			fmt.Sprintf("You point %s at %s.", weaponName, targetName),
+			fmt.Sprintf("%s points %s at %s.", ch.Name, weaponName, targetName),
+		)
+	}
+	return pointResult(
+		fmt.Sprintf("You point at %s.", targetName),
+		fmt.Sprintf("%s points at %s.", ch.Name, targetName),
+	)
+}
+
+func pointWeapon(ch *Player) *ObjectInstance {
+	if ch == nil || ch.Equipment == nil {
+		return nil
+	}
+	weapon, _ := ch.Equipment.GetItemInSlot(SlotWield)
+	return weapon
+}
+
+func pointDirection(argument string) string {
+	for _, direction := range []string{"east", "west", "up", "down", "north", "south"} {
+		if isAbbrev(argument, direction) {
+			return direction
+		}
+	}
+	return ""
 }
 
 // DoGroinrip implements do_groinrip() — low blow.

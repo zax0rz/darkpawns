@@ -532,12 +532,13 @@ func max(a, b int) int {
 // DoPoint, DoGroinrip, DoReview, DoWhois, DoPalm, DoFleshAlter
 // ---------------------------------------------------------------------------
 
-// himHer returns "himself" / "herself" / "itself" based on sex.
+// himHer returns "himself" / "herself" / "itself" based on Go's actor sex
+// encoding (SexMale=0, SexFemale=1, SexNeutral=2).
 func himHer(sex int) string {
 	switch sex {
-	case 1:
+	case SexMale:
 		return "himself"
-	case 2:
+	case SexFemale:
 		return "herself"
 	default:
 		return "itself"
