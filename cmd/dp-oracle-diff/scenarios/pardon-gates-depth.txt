@@ -1,0 +1,40 @@
+# C-first low-level do_wizutil authority vehicle (src/act.wizard.c:2083-2085).
+# The table row is level 1, but the handler's inner LVL_IMMORT/PLR_CHOSEN gate
+# rejects an ordinary mortal before argument parsing.
+
+# depth-case: pardon.low-level-authorization
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Pardongates
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pardongates
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+pardon Pardontarget
