@@ -802,6 +802,12 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if cmd == "page" && rawArgs != "" {
 		return cmdPageText(s, rawArgs)
 	}
+	if cmd == "poofin" && rawArgs != "" {
+		// C do_poofset receives the complete post-command remainder after
+		// skip_spaces; preserve internal spacing instead of rebuilding it from
+		// tokenized Args (act.wizard.c:1721-1729).
+		return cmdPoofsetText(s, "in", rawArgs)
+	}
 
 	// NOTE: C's WAIT_STATE no longer gates commands here. comm.c:603's game-loop
 	// drain short-circuits get_from_q while wait>0 — the command STAYS QUEUED
