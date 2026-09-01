@@ -1,0 +1,88 @@
+# C-first do_action social vehicle (src/interpreter.c:608;
+# src/act.social.c:102-151; lib/misc/socials:1073-1081). The authored piss
+# record is exercised through no-argument, visible player/NPC target, named
+# self, self alias, missing target, and one_argument/fill-word branches.
+
+# depth-case: piss.no-argument
+# depth-case: piss.target-success
+# depth-case: piss.mob-target
+# depth-case: piss.self-target
+# depth-case: piss.self-alias
+# depth-case: piss.target-not-found
+# depth-case: piss.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8004 80
+
+[setup:oracle]
+Pawactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pawactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Pawpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Pawpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Pawpeer 8004
+
+[probe]
+piss
+piss Pawpeer
+piss generic
+piss Pawactor
+piss self
+piss Nobody
+piss the Pawpeer trailing words are ignored
