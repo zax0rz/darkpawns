@@ -798,6 +798,9 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if cmd == "gecho" && rawArgs != "" {
 		return cmdGechoText(s, rawArgs)
 	}
+	if cmd == "page" && rawArgs != "" {
+		return cmdPageText(s, rawArgs)
+	}
 
 	// NOTE: C's WAIT_STATE no longer gates commands here. comm.c:603's game-loop
 	// drain short-circuits get_from_q while wait>0 — the command STAYS QUEUED

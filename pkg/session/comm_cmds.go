@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -267,17 +268,26 @@ func cmdWrite(s *Session, args []string) error {
 // cmdPage sends an urgent message to one or more remote players.
 // Source: act.comm.c do_page() lines 1056-1084
 func cmdPage(s *Session, args []string) error {
-	if len(args) == 0 {
+	return cmdPageText(s, strings.Join(args, " "))
+}
+
+// cmdPageText keeps the raw remainder passed by C's half_chop. Unlike the
+// usual tokenized command arguments, this preserves internal and trailing
+// whitespace in the page body (act.comm.c:1112-1114).
+func cmdPageText(s *Session, argument string) error {
+	targetName, message := splitPageArguments(argument)
+	if targetName == "" {
 		s.Send("Whom do you wish to page?")
 		return nil
 	}
 
-	targetName := args[0]
-	message := strings.Join(args[1:], " ")
-
 	// Page message with bell chars for urgency — act.comm.c line 1068
 	// \007 is the bell character
 	pageText := fmt.Sprintf("\x07\x07*%s* %s", s.player.Name, message)
+	// C stores its CRLF in buf and act() appends another CRLF. Keep both
+	// endings; the extra blank line is observable when two act() calls target
+	// the same descriptor (notably page self).
+	cActText := pageText + "\r\n\r\n"
 
 	if strings.EqualFold(targetName, "all") {
 		if s.player.GetLevel() <= LVL_GOD {
@@ -287,26 +297,44 @@ func cmdPage(s *Session, args []string) error {
 		s.manager.mu.RLock()
 		defer s.manager.mu.RUnlock()
 		for _, target := range s.manager.sessions {
-			if target.player != nil && target.authenticated {
-				target.Send(pageText)
+			if target.player != nil && target.authenticated && target.player.GetPosition() > combat.PosSleeping {
+				target.Send(cActText)
 			}
 		}
 		return nil
 	}
 
-	target, ok := s.manager.GetSession(targetName)
-	if !ok || target.player == nil || !target.authenticated {
+	target := s
+	if !strings.EqualFold(targetName, "self") && !strings.EqualFold(targetName, "me") {
+		target = findSessionByName(s.manager, targetName)
+	}
+	if target == nil || target.player == nil || !target.authenticated {
 		s.Send("There is no such person in the game!")
 		return nil
 	}
-	target.Send(pageText)
+	if target.player.GetPosition() > combat.PosSleeping {
+		target.Send(cActText)
+	}
 	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
 		s.Send("Okay.")
 	} else {
-		s.Send(pageText)
+		s.Send(cActText)
 	}
 
 	return nil
+}
+
+// splitPageArguments mirrors C any_one_arg + skip_spaces: the target is the
+// first case-folded token, while the message keeps all remaining spacing.
+func splitPageArguments(argument string) (target, message string) {
+	argument = strings.TrimLeft(argument, cCommandWhitespace)
+	if argument == "" {
+		return "", ""
+	}
+	if idx := strings.IndexAny(argument, cCommandWhitespace); idx >= 0 {
+		return strings.ToLower(argument[:idx]), strings.TrimLeft(argument[idx+1:], cCommandWhitespace)
+	}
+	return strings.ToLower(argument), ""
 }
 
 // ---------------------------------------------------------------------------

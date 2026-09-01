@@ -1,0 +1,127 @@
+# C-first do_page vehicle (src/interpreter.c:598; src/act.comm.c:1107-1136).
+# The first player is an implementor under empty-players. A co-located mortal,
+# a sleeping mortal, and a trainee NPC expose named target, global all-target,
+# self-target, NPC rejection, missing-target, norepeat, and half_chop spacing.
+
+# depth-case: page.no-argument
+# depth-case: page.target-not-found
+# depth-case: page.visible-npc-rejected
+# depth-case: page.named-target-audience
+# depth-case: page.named-target-spacing
+# depth-case: page.named-target-case-insensitive
+# depth-case: page.sleeping-target-suppressed
+# depth-case: page.self-target
+# depth-case: page.self-alias
+# depth-case: page.norepeat-acknowledgement
+# depth-case: page.all-global-audience
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Pgactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pgactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Pgtarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Pgtarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeping]
+Pgsleep
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:sleeping]
+Pgsleep
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Pgtarget 8162
+teleport Pgsleep 8163
+force Pgsleep sleep
+
+[probe]
+page
+page Nobody urgent message
+page trainee npc message
+page Pgtarget Alpha  beta  gamma  
+page pgtarget Case-insensitive  message  
+page Pgsleep sleeping  message  
+page Pgactor self message
+page me self alias message
+norepeat
+page Pgtarget quiet  message  
+page all global  message  
