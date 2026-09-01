@@ -1,0 +1,44 @@
+# C-first depth vehicle for do_gen_ps(SCMD_MOTD) at
+# src/interpreter.c:555 and src/act.informative.c:2117-2158. The unrestricted
+# command serves the boot-cached lib/text/motd string through page_string and
+# ignores trailing command arguments.
+
+# depth-case: motd.static-page
+# depth-case: motd.arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Motddepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Motddepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+motd
+motd trailing words are ignored
