@@ -1,0 +1,88 @@
+# C-first do_action social vehicle (src/interpreter.c:607;
+# src/act.social.c:102-151; lib/misc/socials:1098-1106). The complete plot
+# record is exercised through no-argument, visible player, visible NPC, self,
+# missing, and one_argument/fill-word paths with room audiences captured.
+
+# depth-case: plot.no-argument
+# depth-case: plot.target-success
+# depth-case: plot.mob-target
+# depth-case: plot.self-target
+# depth-case: plot.self-alias
+# depth-case: plot.target-not-found
+# depth-case: plot.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8004 80
+
+[setup:oracle]
+Plotactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Plotactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Plotpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Plotpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Plotpeer 8004
+
+[probe]
+plot
+plot Plotpeer
+plot generic
+plot Plotactor
+plot self
+plot Nobody
+plot the Plotpeer trailing words are ignored
