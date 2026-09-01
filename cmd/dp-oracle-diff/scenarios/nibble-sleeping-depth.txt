@@ -1,0 +1,107 @@
+# C-first do_action sleeping-victim vehicle for nibble (src/interpreter.c:567;
+# src/act.social.c:140-151; lib/misc/socials:520-529). The authored social
+# record has min_victim_position=0, so the sleeping target reaches the success
+# branch; TO_SLEEP keeps the actor message while ordinary TO_VICT does not wake
+# the target.
+
+# depth-case: nibble.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Nibawake
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nibawake
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Nibsleep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Nibsleep
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Nibwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Nibwatch
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nibsleep 8162
+teleport Nibwatch 8162
+force Nibsleep sleep
+
+[probe]
+nibble Nibsleep
