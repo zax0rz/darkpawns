@@ -1157,6 +1157,13 @@ func (w *World) spawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.spawnMob(vnum, roomVNum, false)
 }
 
+// SpawnMobQuiet creates a mob without the ordinary world-spawn announcement.
+// C do_load uses read_mobile followed by char_to_room, so its caller supplies
+// the command-specific narration instead (act.wizard.c:1315-1321).
+func (w *World) SpawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
+	return w.spawnMobQuiet(vnum, roomVNum)
+}
+
 // SpawnMobInstance is an alias for SpawnMob for compatibility.
 func (w *World) SpawnMobInstance(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.SpawnMob(vnum, roomVNum)
