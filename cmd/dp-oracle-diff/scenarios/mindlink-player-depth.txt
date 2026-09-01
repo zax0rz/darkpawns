@@ -1,0 +1,76 @@
+# depth-case: mindlink.player-target
+# depth-case: mindlink.one-argument
+# C-first vehicle for do_mindlink's non-NPC target branch
+# (src/new_cmds2.c:274-283). The peer is a visible player in the same room so
+# actor, target, and room audiences are all observed.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mindlinkplayer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindlinkplayer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mindlinkpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mindlinkpeer
+y
+peerpass
+peerpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mindlinkpeer 8105
+skillset Mindlinkplayer 'mindlink' 100
+
+[probe]
+mindlink Mindlinkpeer
+mindlink Mindlinkpeer extra

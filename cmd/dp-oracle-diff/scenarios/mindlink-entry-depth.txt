@@ -1,0 +1,50 @@
+# depth-case: mindlink.no-arg
+# depth-case: mindlink.target-missing
+# depth-case: mindlink.self
+# depth-case: mindlink.skill-missing
+# C-first vehicle for do_mindlink entry gates (src/new_cmds2.c:254-325).
+# The first empty-players character is the Implementor, but this vehicle does
+# not grant the skill, so the visible NPC path stops at the skill gate.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Mindlinkentry
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindlinkentry
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+mindlink
+mindlink missing
+mindlink Mindlinkentry
+mindlink trainee

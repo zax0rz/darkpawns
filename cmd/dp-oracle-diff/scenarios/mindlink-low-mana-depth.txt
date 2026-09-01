@@ -1,0 +1,46 @@
+# depth-case: mindlink.low-mana-target
+# C-first vehicle for do_mindlink's target resource gate
+# (src/new_cmds2.c:286-289). A normally loaded C mob has max/current mana 10
+# (src/db.c:1069-1072,1757), while the Go mob constructor currently starts at
+# 100; the target is otherwise valid and the actor has the skill.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Mindlinklow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindlinklow
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Mindlinklow 'mindlink' 100
+
+[probe]
+mindlink trainee
