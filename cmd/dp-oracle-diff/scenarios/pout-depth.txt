@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:617;
+# src/act.social.c:102-127; lib/misc/socials:590-593). The authored pout
+# record has no char_found branch, so named targets, self, and missing targets
+# all remain on the no-argument pair after C's early record check.
+
+# depth-case: pout.no-argument
+# depth-case: pout.argument-ignored
+# depth-case: pout.self-argument-ignored
+# depth-case: pout.missing-argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Poutslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Poutslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Poutpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Poutpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Poutpeer 8004
+
+[probe]
+pout
+pout Poutpeer
+pout self
+pout Nobody trailing words are ignored
