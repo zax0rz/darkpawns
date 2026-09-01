@@ -1,0 +1,100 @@
+# C-first player-command vehicle for do_parry (src/interpreter.c:600;
+# src/new_cmds.c:2340-2389). The first player is temporarily lowered after
+# granting itself the skill, so the authored sword and a durable horse provide
+# a live mutual fight without an immortal damage shortcut. The observer proves
+# the TO_ROOM audience while the actor receives the direct and target-side
+# bytes.
+
+# depth-case: parry.no-wield
+# depth-case: parry.success-actor
+# depth-case: parry.success-victim
+# depth-case: parry.success-observer
+# depth-case: parry.argument-ignored
+# depth-case: parry.wait-state
+# depth-case: parry.marker-consumption
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8105 80
+
+[setup:oracle]
+Parryactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parryactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Parryobserver
+Y
+observerpass
+observerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Parryobserver
+y
+observerpass
+observerpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Parryactor 'parry' 100
+goto 8105
+teleport Parryobserver 8105
+load obj 8037
+set Parryactor level 11
+hit horse
+~dpclock pulse 60
+
+[probe]
+parry ignored argument
+wield sword
+parry ignored argument
+~dpclock pulse 40

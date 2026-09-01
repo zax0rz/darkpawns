@@ -1,0 +1,40 @@
+# C-first do_parry skill gate (src/new_cmds.c:2340-2348). A fresh mortal
+# warrior has no parry skill, so the handler must stop before combat lookup or
+# RNG and retain its exact swordplay refusal.
+
+# depth-case: parry.no-skill
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Parrygates
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parrygates
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+parry ignored argument
