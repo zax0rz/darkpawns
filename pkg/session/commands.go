@@ -350,6 +350,7 @@ func init() {
 	registerCommand("scan", wrapSkill(command.CmdScan), "Scan adjacent rooms for creatures.")
 
 	registerCommand("order", wrapArgs(cmdOrder), "Order a pet or follower.")
+	registerCommand("orgasm", wrapArgs(cmdOrgasm), "Touch someone into orgasm.")
 
 	// Informative commands (act_informative.go)
 	registerCommand("color", wrapArgs(cmdColor), "Toggle ANSI color.")

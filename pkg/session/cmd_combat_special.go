@@ -115,3 +115,73 @@ func executeOrder(world *game.World, follower game.Actor, command string) {
 		world.ExecMobCommand(value.GetVNum(), command)
 	}
 }
+
+// cmdOrgasm implements do_otouch (src/new_cmds.c:666-724). The command is
+// intentionally kept beside the other combat-special session commands even
+// though C registers it as a top-level immortal utility.
+func cmdOrgasm(s *Session, args []string) error {
+	// C has this handler-level guard in addition to the interpreter row's
+	// LVL_IMMORT gate. It remains reachable for NPC command re-entry.
+	if s.player.GetLevel() < game.LVL_IMMORT {
+		s.Send("Come again?\n\r")
+		return nil
+	}
+
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
+		s.Send("Yeah, ok, but who?\n\r")
+		return nil
+	}
+
+	target, found := s.manager.world.ResolveCharInRoom(s.player, targetName)
+	if !found {
+		s.Send("Humm...seems that person doesn't need your help.\n\r")
+		return nil
+	}
+	victim := targetActor(target)
+	if victim == nil {
+		return fmt.Errorf("orgasm target is not an actor")
+	}
+
+	if victim == s.player {
+		s.Send("Yes, it WILL fall off if you don't stop that.\n\r")
+		game.Act(s.manager.world, false, s.player, victim, nil, nil,
+			"$n just can't stop playing with $Mself!\n\r", "", game.ToNotVict)
+		return nil
+	}
+
+	world := s.manager.world
+	game.Act(world, false, s.player, victim, nil, nil,
+		"You touch $N, who slumps over in orgasm!", "", game.ToChar)
+	game.Act(world, false, victim, s.player, nil, nil,
+		"A wonderful feeling spreads throughout your entire body as $N touches you in all the right places...", "", game.ToChar)
+	victim.SendMessage("You explode with a breath-taking orgasm!!\r\n")
+	game.Act(world, false, s.player, victim, nil, nil,
+		"$N collapses in a quivering, moaning heap as $n touches them..", "", game.ToNotVict)
+	addOrgasmHealth(victim)
+
+	if victim.GetSex() == game.SexMale {
+		victim.SendMessage("God, you need some beer and some food.\n\r")
+		game.Act(world, false, s.player, victim, nil, nil,
+			"A dark stain appears under $N's armor and slowly spreads down his leg.", "", game.ToNotVict)
+		if player, ok := victim.(*game.Player); ok && player.GetCondition(game.CondFull) >= 0 {
+			player.SetCondition(game.CondFull, 0)
+		}
+	}
+
+	if victim.GetSex() == game.SexFemale && s.player.GetSex() == game.SexMale {
+		victim.SendMessage("Once is never enough, you beg for more!\n\r")
+		game.Act(world, false, s.player, victim, nil, nil,
+			"$N pleads for more and $n deftly glides a hand beneath her panties!", "", game.ToNotVict)
+	}
+	return nil
+}
+
+func addOrgasmHealth(victim game.Actor) {
+	switch value := victim.(type) {
+	case *game.Player:
+		value.SetHealth(value.GetHealth() + 2)
+	case *game.MobInstance:
+		value.SetHealth(value.GetHealth() + 2)
+	}
+}
