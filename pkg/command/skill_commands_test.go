@@ -1230,14 +1230,14 @@ func TestCmdMold_NoPlayer(t *testing.T) {
 	}
 }
 
-func TestCmdMold_NotEnoughArgs(t *testing.T) {
+func TestCmdMold_NotEnoughArgsUsesCObjectGate(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosStanding)
 	if err := CmdMold(session, []string{"clay"}); err != nil {
 		t.Fatalf("CmdMold: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "mold <object>") {
-		t.Errorf("expected usage message, got: %v", session.messages)
+	if got := joinMessages(session.messages); got != "You don't have one of those.\r\n" {
+		t.Errorf("expected C object gate, got: %q", got)
 	}
 }
 

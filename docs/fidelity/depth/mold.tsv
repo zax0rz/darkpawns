@@ -1,0 +1,13 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_mold	mold	mold.entry-gate	D1	command	unit-green	TestMoldRegistrationUsesCEntryGate	interpreter.c:551; new_cmds.c:55-69	The registered C row is POS_RESTING at LVL_IMMORT; the Go command registry preserves both entry gates (R1/R2/R5e).
+do_mold	mold	mold.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:551; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle (R1/R5b/R5c).
+do_mold	mold	mold.no-argument	D1	command	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:62-73	Empty input reaches C object lookup and returns the exact missing-object bytes before name or description gates (R1/R2/R5e).
+do_mold	mold	mold.missing-object	D1	command	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:69-73; handler.c:1328-1347	Object lookup scans carrying only and returns C's exact missing-object response (R1/R5e).
+do_mold	mold	mold.object-type-gate	D2	command	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:69-80	A visible non-clay/non-playdough/non-halo object reaches C's material gate (R1/R5e).
+do_mold	mold	mold.missing-name	D1	command	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:80-85	A valid material with no new name returns C's name-and-description prompt (R1/R5e).
+do_mold	mold	mold.missing-description	D1	command	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:80-85	A valid material with a name but no description returns the same C prompt (R1/R5e).
+do_mold	mold	mold.success-output	D3	command	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:88-103	Success emits the exact hardening sentence with the raw description (R1/R3/R5e).
+do_mold	mold	mold.quoted-name	D4	command	oracle-green-multiseed	mold-depth@1,2,3,5,8	interpreter.c:1288-1317; new_cmds.c:64-67,88-99	C one_word accepts the quoted multi-word name; the vehicle proves the resulting output and state path (R1/R2/R5e).
+do_mold	mold	mold.success-inventory	D3	audience	oracle-green-multiseed	mold-depth@1,2,3,5,8	act.informative.c:1460-1465; new_cmds.c:88-92	The live short description and C inventory ordering are visible after mutation (R1/R3/R5e).
+do_mold	mold	mold.success-room-description	D3	audience	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:96-103; act.informative.c:241-285	The live long description is visible in room look output after dropping the molded object (R1/R5e).
+do_mold	mold	mold.success-renamed-keyword	D4	state	oracle-green-multiseed	mold-depth@1,2,3,5,8	new_cmds.c:88-92; handler.c:115-134,1328-1347	The rewritten keyword list is used by subsequent drop and get lookup, matching C's live object mutation (R1/R4/R5e).

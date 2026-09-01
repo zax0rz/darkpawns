@@ -1,0 +1,68 @@
+# C-first do_mold vehicle (src/interpreter.c:551; src/new_cmds.c:55-105).
+# The God actor loads the authoritative clay and sword prototypes into
+# inventory, then proves the lookup/type/argument gates and the live rename,
+# short-description, long-description, and post-mold keyword mutations.
+
+# depth-case: mold.no-argument
+# depth-case: mold.missing-object
+# depth-case: mold.object-type-gate
+# depth-case: mold.missing-name
+# depth-case: mold.missing-description
+# depth-case: mold.success-output
+# depth-case: mold.quoted-name
+# depth-case: mold.success-inventory
+# depth-case: mold.success-room-description
+# depth-case: mold.success-renamed-keyword
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Moldactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moldactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 1003
+load obj 1005
+load obj 1004
+
+[probe]
+mold
+mold nobody
+mold gae statue description
+mold clay
+mold clay statue
+mold playdough "idol figure" A shining idol
+inventory
+mold clay statue A fine statue
+inventory
+drop statue
+look
+get statue

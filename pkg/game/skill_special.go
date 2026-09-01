@@ -11,27 +11,42 @@ import (
 )
 
 func DoMold(ch *Player, objName, newName, newDesc string) SkillResult {
-	obj, found := findItemByName(ch, objName)
+	var obj *ObjectInstance
+	var found bool
+	if ch != nil && ch.Inventory != nil {
+		// C get_obj_in_list_vis scans only ch->carrying and matches the
+		// object's keyword list, not its display description or equipment
+		// (handler.c:1328-1347; new_cmds.c:69).
+		obj, found = resolveVisibleObject(ch, objName, ch.Inventory.FindItems(""), true)
+	}
 	if !found {
-		return SkillResult{Success: false, MessageToCh: "You don't have one of those.\r\n"}
+		return SkillResult{Success: false, MessageToCh: "You don't have one of those."}
 	}
 
 	name := strings.ToLower(obj.GetKeywords())
 	if !strings.Contains(name, "clay") && !strings.Contains(name, "playdough") && !strings.Contains(name, "halo") {
-		return SkillResult{Success: false, MessageToCh: "You do not have anything to mold!\r\n"}
+		return SkillResult{Success: false, MessageToCh: "You do not have anything to mold!"}
 	}
 
 	if newName == "" || newDesc == "" {
-		return SkillResult{Success: false, MessageToCh: "You must specify a name and a description.\r\n"}
+		return SkillResult{Success: false, MessageToCh: "You must specify a name and a description."}
 	}
 
-	// Store custom mold data
+	// C rewrites the live object's keyword list, short description, and room
+	// description (new_cmds.c:88-99). Keep the typed mold fields as well for
+	// existing save-state compatibility, but make all player-facing object
+	// accessors observe the C mutations immediately.
+	moldedName := fmt.Sprintf("%s _%s_ mold_item", newName, ch.GetName())
+	obj.Runtime.Name = moldedName
+	obj.Runtime.Keywords = moldedName
+	obj.Runtime.ShortDesc = newDesc
+	obj.Runtime.LongDesc = CapitalizeSentence(newDesc) + " has been left here."
 	obj.Runtime.MoldName = newName
 	obj.Runtime.MoldDesc = newDesc
 
 	return SkillResult{
 		Success:     true,
-		MessageToCh: fmt.Sprintf("The material magically hardens when you create %s.\r\n", newDesc),
+		MessageToCh: fmt.Sprintf("The material magically hardens when you create %s.", newDesc),
 	}
 }
 
