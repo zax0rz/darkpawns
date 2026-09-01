@@ -1,0 +1,55 @@
+# C-first do_parry failed probability branch (src/new_cmds.c:2365-2380).
+# The temporary level-11 actor opens a barehanded fight against a durable horse,
+# waits out do_hit's three-round cooldown, then wields the loaded sword and
+# executes a skill-1 parry so the failure arm and improve_skill draw are live.
+
+# depth-case: parry.failure-message
+# depth-case: parry.failure-wait-state
+# depth-case: parry.failure-improve-skill
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8105 80
+
+[setup:oracle]
+Parryfailure
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parryfailure
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Parryfailure 'parry' 1
+goto 8105
+load obj 8037
+set Parryfailure level 11
+hit horse
+~dpclock pulse 60
+
+[probe]
+wield sword
+parry ignored argument
+~dpclock pulse 60

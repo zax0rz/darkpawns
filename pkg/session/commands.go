@@ -86,6 +86,7 @@ func init() {
 	// Combat
 	registerCommand("hit", wrapArgs(cmdHit), "Attack a target.", "attack")
 	registerCommand("murder", wrapArgs(cmdHit), "Attack a target (C alias of hit).")
+	registerCommand("parry", wrapArgs(cmdParry), "Enter a defensive parry position.")
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
 	registerCommand("escape", wrapNoArgs(cmdRetreat), "Attempt to escape from combat.")

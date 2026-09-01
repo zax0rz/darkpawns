@@ -217,6 +217,59 @@ func cmdHit(s *Session, args []string) error {
 	return nil
 }
 
+// cmdParry implements do_parry from src/new_cmds.c:2340-2389. The command
+// argument is intentionally ignored: C checks the caller's current FIGHTING
+// pointer, not the text supplied after "parry".
+func cmdParry(s *Session, _ []string) error {
+	if s.player.GetSkill(game.SkillParry) == 0 {
+		s.Send("You're not good enough at swordplay to parry!\r\n")
+		return nil
+	}
+
+	if s.player.GetFighting() == "" {
+		s.Send("But you aren't fighting anyone!\r\n")
+		return nil
+	}
+
+	target, ok := s.manager.world.ResolveFightingTarget(s.player)
+	if !ok || target.Combatant == nil {
+		s.Send("But you aren't fighting anyone!\r\n")
+		return nil
+	}
+	victim := combatTargetActor(target)
+	if victim == nil || target.Combatant.GetFighting() != s.player.GetName() {
+		s.Send("But noone's attacking you!\r\n")
+		return nil
+	}
+
+	if s.player.Equipment == nil {
+		s.Send("Parry with what? You're unarmed!\r\n")
+		return nil
+	}
+	if weapon, wielded := s.player.Equipment.GetItemInSlot(game.SlotWield); !wielded || weapon == nil {
+		s.Send("Parry with what? You're unarmed!\r\n")
+		return nil
+	}
+
+	// C draws number(1, 101) before choosing the manual skill probability.
+	percent := dprng.Number(1, 101)
+	if percent > s.player.GetSkill(game.SkillParry) {
+		s.Send("With a dazzling show of swordplay, you attempt to parry...but are outmaneuvered!\r\n")
+		game.ImproveSkill(s.player, game.SkillParry)
+		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE * 3)
+		return nil
+	}
+
+	s.Send("With a dazzling show of swordplay, you move into defensive position...\r\n")
+	game.Act(s.manager.world, true, s.player, victim, nil, nil,
+		"$n displays a dazzling show of swordplay, fending off $N's every blow!", "", game.ToRoom)
+	game.Act(nil, true, s.player, victim, nil, nil,
+		"$n displays a dazzling show of swordplay, fending off your every blow!", "", game.ToVict)
+	s.manager.combatEngine.MarkParried(victim.GetName(), "parry")
+	s.player.SetWaitState(2) // C: WAIT_STATE(ch, PULSE_VIOLENCE * 2)
+	return nil
+}
+
 func combatTargetActor(target game.CharTarget) game.Actor {
 	if target.Player != nil {
 		return target.Player
