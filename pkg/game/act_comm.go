@@ -425,6 +425,48 @@ func OneArgument(input string) (string, string) {
 	return oneArgument(input)
 }
 
+// oneWordArg copies the first non-fill-word token, accepting a double-quoted
+// span as one token, and returns the remainder. This mirrors C one_word
+// (interpreter.c:1291), which do_mold uses for the new object's name.
+func oneWordArg(input string) (string, string) {
+	for {
+		input = skipSpaces(input)
+		if input == "" {
+			return "", ""
+		}
+
+		var word, rest string
+		if input[0] == '"' {
+			quoted := input[1:]
+			if close := strings.IndexByte(quoted, '"'); close >= 0 {
+				word = quoted[:close]
+				rest = quoted[close+1:]
+			} else {
+				word = quoted
+				rest = ""
+			}
+		} else if split := strings.IndexByte(input, ' '); split >= 0 {
+			word = input[:split]
+			rest = input[split:]
+		} else {
+			word = input
+		}
+
+		word = strings.ToLower(word)
+		rest = skipSpaces(rest)
+		if !fillWord(word) {
+			return word, rest
+		}
+		input = rest
+	}
+}
+
+// OneWord exposes C one_word parsing to command packages. It lowercases the
+// returned token and preserves the remainder's original case.
+func OneWord(input string) (string, string) {
+	return oneWordArg(input)
+}
+
 // halfChop splits the first whitespace-delimited word from the rest, mirroring
 // C half_chop (interpreter.c:1372). It calls any_one_arg, which lowercases the
 // first token but does NOT skip fill words; the remainder keeps its original

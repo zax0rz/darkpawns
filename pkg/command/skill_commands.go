@@ -1824,14 +1824,12 @@ func CmdMold(s SessionInterface, args []string) error {
 	}
 	ch := s.GetPlayer()
 
-	// Need 3 args: <object> <new_name> <new_description>
-	if len(args) < 3 {
-		return s.SendMessage("Usage: mold <object> <new name> <new description>\r\n")
-	}
-
-	objName := args[0]
-	newName := args[1]
-	newDesc := strings.Join(args[2:], " ")
+	// C do_mold parses the object with one_argument, the new name with
+	// one_word (including quoted names), then treats the entire remainder as
+	// the description before it checks object/name/description gates.
+	argument := strings.Join(args, " ")
+	objName, argument := game.OneArgument(argument)
+	newName, newDesc := game.OneWord(argument)
 
 	result := game.DoMold(ch, objName, newName, newDesc)
 	return sendSkillResult(s, ch, nil, result)

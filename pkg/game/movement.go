@@ -242,7 +242,8 @@ func (w *World) MoveObjectToPlayerInventory(obj *ObjectInstance, p *Player) erro
 }
 
 // PlaceWizardLoadedObjectInInventory mirrors C obj_to_char() for the immortal
-// load command, which deliberately bypasses mortal carry limits.
+// load command, which deliberately bypasses mortal carry limits. C prepends
+// each loaded object to ch->carrying, so preserve that visible list order.
 func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Player) error {
 	if obj == nil || p == nil || p.Inventory == nil {
 		return fmt.Errorf("object and player inventory are required")
@@ -256,7 +257,9 @@ func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Playe
 		return fmt.Errorf("detach loaded object: %w", err)
 	}
 	p.Inventory.mu.Lock()
-	p.Inventory.Items = append(p.Inventory.Items, obj)
+	p.Inventory.Items = append(p.Inventory.Items, nil)
+	copy(p.Inventory.Items[1:], p.Inventory.Items[:len(p.Inventory.Items)-1])
+	p.Inventory.Items[0] = obj
 	p.Inventory.mu.Unlock()
 	obj.RoomVNum = -1
 	obj.Location = LocInventoryPlayer(p.Name)
