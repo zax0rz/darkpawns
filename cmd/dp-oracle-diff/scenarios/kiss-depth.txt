@@ -1,0 +1,86 @@
+# C-first kiss/do_action vehicle (src/interpreter.c:529;
+# src/act.social.c:102-151; lib/misc/socials:697-706). The record has no
+# hide-invisible flag and no victim-position minimum. Two clients plus a
+# registered cleaner mob expose the actor, victim, room, self, and not-found
+# audiences, while trailing words prove one_argument parsing.
+
+# depth-case: kiss.no-argument
+# depth-case: kiss.target-mob-room-audience
+# depth-case: kiss.target-player-audience
+# depth-case: kiss.argument-first-token
+# depth-case: kiss.self-target
+# depth-case: kiss.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+
+[setup:oracle]
+Kissactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kissactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Kisspeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Kisspeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Kisspeer 8162
+
+[probe]
+kiss
+kiss the cleaner trailing words
+kiss Kisspeer trailing words
+kiss Kissactor
+kiss nobody
