@@ -1,0 +1,46 @@
+# C-first indoor mount gate (src/interpreter.c:558; src/act.other.c:1552-1556).
+# The room flag is set before the command so the indoor refusal wins before
+# argument lookup and target resolution.
+
+# depth-case: mount.indoors
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 on
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Mountindoors
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mountindoors
+Y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+mount horse

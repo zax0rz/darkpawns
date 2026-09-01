@@ -26,16 +26,24 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
+	arg, _ = OneArgument(arg)
 	if arg == "" {
 		ch.SendMessage("What do you wish to ride?\r\n")
 		return true
 	}
 
 	// Find mount
-	_, mountMob := w.findCharInRoom(ch, ch.GetRoomVNum(), arg)
-	if mountMob == nil {
+	mountPlayer, mountMob := w.findCharInRoom(ch, ch.GetRoomVNum(), arg)
+	if mountPlayer == nil && mountMob == nil {
 		ch.SendMessage("No-one by that name here.\r\n")
+		return true
+	}
+	if mountPlayer != nil {
+		if mountPlayer == ch {
+			ch.SendMessage("That's disgusting!\r\n")
+		} else {
+			Act(w, true, ch, mountPlayer, nil, nil, "You can't ride $N!", "", ToChar)
+		}
 		return true
 	}
 
