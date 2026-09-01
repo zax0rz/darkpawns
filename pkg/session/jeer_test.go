@@ -1,0 +1,44 @@
+package session
+
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
+)
+
+func TestJeerRegistrationUsesCEntryGate(t *testing.T) {
+	entry, ok := commandGates["jeer"]
+	if !ok {
+		t.Fatal("jeer command has no C gate")
+	}
+	if entry.MinLevel != 0 || entry.MinPosition != combat.PosResting {
+		t.Fatalf("jeer gate = level %d position %d, want level 0 position %d", entry.MinLevel, entry.MinPosition, combat.PosResting)
+	}
+
+	social, ok := game.Socials["jeer"]
+	if !ok {
+		t.Fatal("jeer social is not registered")
+	}
+	if social.MinLevel != 0 || social.HideFlag != 0 || social.MinVictimPosition != 0 {
+		t.Fatalf("jeer social metadata = hide %d, victim-position %d, override %d; want all zero", social.MinLevel, social.HideFlag, social.MinVictimPosition)
+	}
+	wantMessages := []string{
+		"Smirk all you like.  Just don't come whining when you lose all your friends.",
+		"$n jeers.",
+		"You start jeering at $N.",
+		"$n starts jeering at $N.",
+		"$n jeers at you -- how rude!",
+		"Smirk all you like.",
+		"Eh?  Why would you want to do that?",
+		"#",
+	}
+	if len(social.Messages) != len(wantMessages) {
+		t.Fatalf("jeer social has %d messages, want %d", len(social.Messages), len(wantMessages))
+	}
+	for i, want := range wantMessages {
+		if social.Messages[i] != want {
+			t.Errorf("jeer social message %d = %q, want %q", i, social.Messages[i], want)
+		}
+	}
+}

@@ -1,0 +1,78 @@
+# C-first jeer/do_action sleeping-victim vehicle (src/interpreter.c:522;
+# src/act.social.c:102-151; lib/misc/socials:420-428). Jeer has a zero
+# minimum victim position, so a sleeping visible target enters the success
+# branch; TO_SLEEP keeps the actor message while ordinary TO_VICT does not
+# wake the target.
+
+# depth-case: jeer.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Jeersleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Jeersleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Jeersleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Jeersleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Jeersleeper 8162
+
+[probe]
+jeer Jeersleeper
