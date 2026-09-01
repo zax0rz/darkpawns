@@ -1,0 +1,117 @@
+# C-first depth vehicle for do_gen_comm(SCMD_NEWBIE) at
+# src/interpreter.c:566 and src/act.comm.c:1146-1305. The Implementor
+# prepares two mortal peers in the same room, then the ordinary level-one
+# actor probes the newbie-channel exception, sender/recipient channel flags,
+# empty argument, and exact fanout wording.
+
+# depth-case: newbie.low-level-allowed
+# depth-case: newbie.normal-audience
+# depth-case: newbie.no-argument
+# depth-case: newbie.recipient-nonewbie
+# depth-case: newbie.sender-nonewbie
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Nwbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nwbgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Nwbactor
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Nwbactor
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:silent]
+Nwbsilent
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:silent]
+Nwbsilent
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Nwbgod 34
+goto 8162
+force Nwbactor goto 8162
+force Nwbsilent goto 8162
+force Nwbsilent nonewbie
+
+[probe:actor]
+newbie hello from a level one player
+newbie
+newbie recipient flag is active
+nonewbie
+newbie sender flag is active
+nonewbie
