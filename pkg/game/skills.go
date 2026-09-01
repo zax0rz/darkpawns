@@ -422,6 +422,12 @@ type SkillResult struct {
 	// RoomIncludesActor preserves C's TO_ROOM audience when the skill's
 	// message actor is the target rather than the command issuer.
 	RoomIncludesActor bool
+	// MessageToChAfterRoom preserves C paths whose room act() precedes the
+	// command issuer's final direct message (new_cmds2.c:322-324).
+	MessageToChAfterRoom bool
+	// SelfStunnedAfterMessage preserves a C position assignment that follows
+	// the final direct message (new_cmds2.c:324-325).
+	SelfStunnedAfterMessage bool
 	// StartCombat signals the caller to initiate combat even when the skill
 	// deals no damage (miss / zero-damage hit). C: skills like backstab call
 	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.

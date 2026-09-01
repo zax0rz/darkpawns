@@ -141,13 +141,16 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	}
 
 	mob := &MobInstance{
-		Prototype:   proto,
-		VNum:        proto.VNum,
-		RoomVNum:    roomVNum,
-		CurrentHP:   hp,
-		MaxHP:       hp,
-		CurrentMana: 100,
-		MaxMana:     100,
+		Prototype: proto,
+		VNum:      proto.VNum,
+		RoomVNum:  roomVNum,
+		CurrentHP: hp,
+		MaxHP:     hp,
+		// C read_mobile initializes every ordinary mob's mana fields to 10
+		// (src/db.c:1069-1072), then copies that prototype state into the
+		// instance (src/db.c:1757).
+		CurrentMana: 10,
+		MaxMana:     10,
 		CurrentMove: 50,
 		MaxMove:     50,
 		// C read_mobile copies the whole prototype struct (db.c:1757), so the

@@ -250,12 +250,12 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 // Check target is in room, check skill, drain HP, share mana.
 // ---------------------------------------------------------------------------
 func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
-	if ch.GetSkill(SkillMindlink) == 0 {
-		return SkillResult{Success: false, MessageToCh: "Yeah, right.\r\n"}
-	}
-
 	if target.GetName() == ch.Name {
 		return SkillResult{Success: false, MessageToCh: "You wish you could.\r\n"}
+	}
+
+	if ch.GetSkill(SkillMindlink) == 0 {
+		return SkillResult{Success: false, MessageToCh: "Yeah, right.\r\n"}
 	}
 
 	// Target must be an NPC (not a player)
@@ -263,9 +263,10 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("$N stares at you blankly.", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n stares at $N for a while and then falls flat on $s face.", chPronouns, &victPronouns, ""),
+			Success:            false,
+			MessageToCh:        ActMessage("$N stares at you blankly.", chPronouns, &victPronouns, "") + "\r\nYou fail.",
+			MessageToRoom:      ActMessage("$n stares at $N for a while and then falls flat on $s face.", chPronouns, &victPronouns, ""),
+			RoomIncludesTarget: true,
 		}
 	}
 
@@ -276,16 +277,23 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetHP() < 100 {
 		return SkillResult{Success: false, MessageToCh: "You don't have enough life to spare!\r\n"}
 	}
+	if mob, ok := target.(*MobInstance); ok && mob.GetMana() < 100 {
+		return SkillResult{Success: false, MessageToCh: "They don't have enough energy to spare!\r\n"}
+	}
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := dprng.Number(1, 100)
+	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillMindlink)
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
-	if percent < prob {
+	// C's IS_PSIONIC/IS_MYSTIC macros both include !IS_NPC. Since the
+	// non-NPC target arm returned above, this success arm is unreachable from
+	// the command surface; retain the source-shaped test for clarity while
+	// keeping the valid NPC path on C's failure arm.
+	if _, ok := target.(*Player); ok && percent < prob {
 		// Success
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
@@ -310,11 +318,15 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
+	ch.SetHP(ch.GetHP() - 100)
 	return SkillResult{
-		Success:       false,
-		MessageToCh:   "You feel a little drained...\r\n",
-		MessageToRoom: ActMessage("$n stares at $N for a while and then falls flat on $s face.", chPronouns, &victPronouns, ""),
-		SelfStumble:   true,
+		Success:                  false,
+		MessageToCh:              "You feel a little drained...\r\n",
+		MessageToRoom:            ActMessage("$n stares at $N for a while and then falls flat on $s face.", chPronouns, &victPronouns, ""),
+		DeferredImprove:          []string{SkillMindlink},
+		DeferredImproveAfterRoom: true,
+		MessageToChAfterRoom:     true,
+		SelfStunnedAfterMessage:  true,
 	}
 }
 

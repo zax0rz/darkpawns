@@ -1455,7 +1455,7 @@ func CmdMindlink(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	targetName := strings.Join(args, " ")
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
 	if !found {
@@ -1648,7 +1648,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		sendSkillMessage()
 	} else if result.RetaliateHitAfterMessages {
 		sendLiteralMessages()
-	} else if result.MessageToCh != "" {
+	} else if result.MessageToCh != "" && !result.MessageToChAfterRoom {
 		// C act() CAPs the assembled string (comm.c:2477); lines that begin
 		// with $e/$n render lowercase and must be capitalized here.
 		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
@@ -1787,6 +1787,12 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		for _, skill := range result.DeferredImprove {
 			game.ImproveSkill(ch, skill)
 		}
+	}
+	if result.MessageToChAfterRoom && result.MessageToCh != "" {
+		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+	}
+	if result.SelfStunnedAfterMessage {
+		ch.SetPosition(combat.PosStunned)
 	}
 
 	if result.RetaliateHit && result.RetaliateHitAfterMessages {

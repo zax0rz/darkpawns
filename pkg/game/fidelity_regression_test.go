@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -165,11 +166,12 @@ func TestFidelityStealMobRestrictions(t *testing.T) {
 	}
 }
 
-// TestFidelityMindlinkMobAssertion verifies that DoMindlink successfully transfers mana
-// to mob targets.
-func TestFidelityMindlinkMobAssertion(t *testing.T) {
+// TestFidelityMindlinkMobManaGate verifies do_mindlink's C target-resource
+// gate. Normal C-loaded mobs begin with only ten mana, so the command returns
+// before its percent roll and does not drain the actor.
+func TestFidelityMindlinkMobManaGate(t *testing.T) {
 	ch := NewPlayer(1, "Psionic", 1001)
-	ch.SetSkill(SkillMindlink, 1000) // guarantee success
+	ch.SetSkill(SkillMindlink, 1000)
 	ch.SetHP(200)
 
 	// Construct a mob target
@@ -181,7 +183,7 @@ func TestFidelityMindlinkMobAssertion(t *testing.T) {
 	mob := NewMob(mobProto, 1001)
 	mob.CurrentHP = 100
 	mob.MaxHP = 100
-	mob.SetMana(10) // start with 10 mana
+	mob.SetMana(10) // C db.c initializes ordinary mobs to 10 mana.
 
 	// Set status to standing (combat blocks mindlink)
 	ch.SetPosition(combat.PosStanding)
@@ -189,13 +191,60 @@ func TestFidelityMindlinkMobAssertion(t *testing.T) {
 
 	// Trigger mindlink
 	result := DoMindlink(ch, mob)
-	if !result.Success {
-		t.Fatalf("DoMindlink failed: %s", result.MessageToCh)
+	if result.Success {
+		t.Fatal("DoMindlink should stop at the target mana gate")
+	}
+	if result.MessageToCh != "They don't have enough energy to spare!\r\n" {
+		t.Fatalf("message = %q, want target mana gate", result.MessageToCh)
+	}
+	if ch.GetHP() != 200 {
+		t.Fatalf("actor HP = %d, want unchanged 200", ch.GetHP())
 	}
 
-	// Verify mana was transferred
-	if mob.GetMana() <= 10 {
-		t.Errorf("Mob mana should be greater than 10, got %d", mob.GetMana())
+	// C checks self before the skill gate (new_cmds2.c:263-268).
+	ch.SetSkill(SkillMindlink, 0)
+	if got := DoMindlink(ch, ch).MessageToCh; got != "You wish you could.\r\n" {
+		t.Fatalf("self/no-skill message = %q, want self gate", got)
+	}
+}
+
+// TestFidelityMindlinkMobFailureContract pins the post-gate NPC branch. The
+// ordinary command vehicle cannot raise a mob above C's ten-mana load, so use
+// a focused state fixture to reach the source branch after the mana gate.
+func TestFidelityMindlinkMobFailureContract(t *testing.T) {
+	ch := NewPlayer(1, "Psionic", 1001)
+	ch.SetSkill(SkillMindlink, 100)
+	ch.SetHP(200)
+	ch.SetPosition(combat.PosStanding)
+	mob := NewMob(&parser.Mob{VNum: 2002, ShortDesc: "a full-mana dummy"}, 1001)
+	mob.SetMana(100)
+	mob.SetStatus("standing")
+
+	dprng.ResetStream(23)
+	result := DoMindlink(ch, mob)
+	if result.Success {
+		t.Fatal("NPC mindlink success is unreachable after C's IS_NPC macros")
+	}
+	if result.MessageToCh != "You feel a little drained...\r\n" {
+		t.Fatalf("actor message = %q, want final drain line", result.MessageToCh)
+	}
+	if result.MessageToRoom == "" || len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillMindlink || !result.DeferredImproveAfterRoom {
+		t.Fatalf("failure contract = room %q improve %#v after-room %v", result.MessageToRoom, result.DeferredImprove, result.DeferredImproveAfterRoom)
+	}
+	if !result.MessageToChAfterRoom || !result.SelfStunnedAfterMessage {
+		t.Fatal("failure contract must deliver the actor line and stun after the room act")
+	}
+	if got := ch.GetHP(); got != 100 {
+		t.Fatalf("actor HP = %d, want 100 after the fixed 100-point drain", got)
+	}
+
+	// C draws number(1,101) before taking the unconditional NPC failure arm.
+	gotNext := dprng.Number(0, 999)
+	dprng.ResetStream(23)
+	dprng.Number(1, 101)
+	wantNext := dprng.Number(0, 999)
+	if gotNext != wantNext {
+		t.Fatalf("mindlink draw sequence next=%d, want %d", gotNext, wantNext)
 	}
 }
 
