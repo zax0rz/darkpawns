@@ -1,0 +1,117 @@
+# C-first mosh/do_action vehicle (src/interpreter.c:552;
+# src/act.social.c:102-151; lib/misc/socials:1302-1310). The record has
+# hide=0 and minimum victim position POS_RESTING, so this probes the complete
+# target matrix with a room observer and a sleeping target.
+
+# depth-case: mosh.no-argument
+# depth-case: mosh.one-argument
+# depth-case: mosh.target-success
+# depth-case: mosh.target-victim-audience
+# depth-case: mosh.target-not-found
+# depth-case: mosh.self-target
+# depth-case: mosh.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Moshactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moshactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Moshtarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Moshtarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Moshsleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Moshsleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Moshtarget 8162
+teleport Moshsleeper 8162
+
+[probe]
+mosh
+mosh the Moshtarget trailing words are ignored
+mosh Nobody
+mosh Moshactor
+mosh Moshsleeper
