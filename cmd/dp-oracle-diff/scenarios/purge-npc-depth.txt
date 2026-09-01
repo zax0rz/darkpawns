@@ -1,0 +1,80 @@
+# C-first do_purge single-NPC vehicle (src/interpreter.c:624;
+# src/act.wizard.c:1423-1478). A visible NPC target is resolved before object
+# lookup, disintegrated for the room audience, and then acknowledged to the
+# immortal actor.
+
+# depth-case: purge.npc-target
+# depth-case: purge.npc-cleanup
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+strip-mob-script 18305
+
+[setup:oracle]
+Purgegodnpc
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Purgegodnpc
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Purgewitnessnpc
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Purgewitnessnpc
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Purgewitnessnpc 8162
+
+[probe]
+purge cleaner
+~dpclock pulse 20
+purge cleaner

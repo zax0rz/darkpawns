@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -208,42 +209,72 @@ func cmdPurge(s *Session, args []string) error {
 	}
 	roomVNum := s.player.GetRoom()
 	if len(args) >= 1 && args[0] != "" {
-		// Purge a specific target by name
-		targetName := strings.ToLower(strings.Join(args, " "))
-		mobs := s.manager.world.GetMobsInRoom(roomVNum)
-		for _, mob := range mobs {
-			if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-				s.manager.world.ExtractMob(mob)
-				s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s disintegrates %s.\r\n", s.player.Name, mob.GetShortDesc())), s.playerName)
-				s.Send("Ok.\r\n")
-				slog.Info("(GC) purge", "who", s.player.Name, "target", mob.GetShortDesc())
-				return nil
+		// C's one_argument() supplies only the first token to both character
+		// and object lookup. ResolveCharInRoom mirrors get_char_room_vis(),
+		// including keyword abbreviation and visibility semantics.
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
+		if target, found := s.manager.world.ResolveCharInRoom(s.player, targetName); found {
+			if target.Player != nil {
+				victim := target.Player
+				if s.player.GetLevel() <= victim.GetLevel() {
+					s.Send("Fuuuuuuuuu!\r\n")
+					return nil
+				}
+
+				// close_socket() announces the lost link before do_purge()
+				// extracts the lower-level player. Suppress the generic Go
+				// "has left" cleanup broadcast so only C's line is visible.
+				if victimSession, ok := s.manager.GetSession(victim.GetName()); ok {
+					game.Act(s.manager.world, true, victim, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
+					victimSession.leaveBroadcastHandled = true
+					s.manager.UnregisterAndClose(victim.GetName())
+				} else {
+					game.ExtractChar(victim)
+				}
+			} else if target.Mob != nil {
+				game.Act(s.manager.world, false, s.player, target.Mob, nil, nil, "$n disintegrates $N.", "", game.ToNotVict)
+				s.manager.world.ExtractMob(target.Mob)
 			}
+			s.Send("Okay.\r\n")
+			return nil
 		}
-		items := s.manager.world.GetItemsInRoom(roomVNum)
-		for _, item := range items {
-			if strings.Contains(strings.ToLower(item.GetShortDesc()), targetName) {
-				s.manager.world.ExtractObject(item, roomVNum)
-				s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s destroys %s.\r\n", s.player.Name, item.GetShortDesc())), s.playerName)
-				s.Send("Ok.\r\n")
-				slog.Info("(GC) purge obj", "who", s.player.Name, "target", item.GetShortDesc())
-				return nil
-			}
+
+		if item, found := s.manager.world.ResolveObjectInRoom(s.player, targetName); found {
+			game.Act(s.manager.world, false, s.player, nil, item, nil, "$n destroys $p.", "", game.ToRoom)
+			s.manager.world.ExtractObject(item, roomVNum)
+			s.Send("Okay.\r\n")
+			return nil
 		}
 		s.Send("Nothing here by that name.\r\n")
 		return nil
 	}
 	// No argument — purge entire room
-	s.manager.BroadcastToRoom(roomVNum, []byte(fmt.Sprintf("%s gestures... You are surrounded by scorching flames!\r\n", s.player.Name)), s.playerName)
+	game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n gestures... You are surrounded by scorching flames!", "", game.ToRoom)
+	sendPurgeRoomLine(s, roomVNum, "The world seems a little cleaner.\r\n")
 	for _, mob := range s.manager.world.GetMobsInRoom(roomVNum) {
 		s.manager.world.ExtractMob(mob)
 	}
 	for _, item := range s.manager.world.GetItemsInRoom(roomVNum) {
 		s.manager.world.ExtractObject(item, roomVNum)
 	}
-	s.manager.BroadcastToRoom(roomVNum, []byte("The world seems a little cleaner.\r\n"), s.playerName)
-	s.Send("Ok.\r\n")
 	return nil
+}
+
+// sendPurgeRoomLine mirrors send_to_room(): deliver to every connected player
+// in the room who is awake, including the issuing immortal.
+func sendPurgeRoomLine(s *Session, roomVNum int, message string) {
+	for _, player := range s.manager.world.GetPlayersInRoom(roomVNum) {
+		if player.GetPosition() <= combat.PosSleeping {
+			continue
+		}
+		if player == s.player {
+			s.Send(message)
+			continue
+		}
+		if peer, ok := s.manager.GetSession(player.GetName()); ok {
+			peer.Send(message)
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------

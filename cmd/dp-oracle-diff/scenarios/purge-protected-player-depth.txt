@@ -1,0 +1,75 @@
+# C-first do_purge equal-level-player vehicle (src/interpreter.c:624;
+# src/act.wizard.c:1423-1478). The actor may not purge a non-NPC at an equal or
+# higher level, so the handler returns the exact Fuuuuuuuuu! line.
+
+# depth-case: purge.protected-player
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Purgeprot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Purgeprot
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ProtVictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ProtVictim
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport ProtVictim 8004
+advance ProtVictim 40
+
+[probe]
+purge ProtVictim
