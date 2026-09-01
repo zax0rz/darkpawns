@@ -563,7 +563,11 @@ func cmdNotitle(s *Session, args []string) error {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilNotitle, args[0])
+	// C do_wizutil receives the whole argument string and applies
+	// one_argument, which skips leading fill words and ignores the remainder
+	// (interpreter.c:1265; act.wizard.c:2082). Rejoin the tokenized command so
+	// wizutilDispatch can preserve that boundary.
+	return wizutilDispatch(s, wizutilNotitle, strings.Join(args, " "))
 }
 
 // cmdMute — standalone "mute <player>" command.

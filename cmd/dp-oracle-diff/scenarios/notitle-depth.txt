@@ -1,0 +1,87 @@
+# C-first do_wizutil/SCMD_NOTITLE vehicle (src/interpreter.c:580;
+# src/act.wizard.c:2077-2140). The Implementor actor exercises the exact
+# no-argument, missing-player, visible-NPC, and mortal target toggle branches;
+# C one_argument parsing is exercised with a fill word and trailing input.
+
+# depth-case: notitle.no-argument
+# depth-case: notitle.target-not-found
+# depth-case: notitle.visible-npc-target
+# depth-case: notitle.toggle-on
+# depth-case: notitle.toggle-off
+# depth-case: notitle.one-argument
+# depth-case: notitle.actor-acknowledgement
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Godprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Godmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Godmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Godmortal 8162
+
+[probe]
+notitle
+notitle Nobody
+notitle trainee
+notitle Godmortal
+notitle Godmortal
+notitle the Godmortal trailing words are ignored
