@@ -1,20 +1,8 @@
 {
-  "generatedAt": "2026-08-15T17:42:19-04:00",
+  "generatedAt": "2026-09-01T14:56:40-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
-    {
-      "week": "2026-05-25",
-      "commits": 42
-    },
-    {
-      "week": "2026-06-01",
-      "commits": 7
-    },
-    {
-      "week": "2026-06-08",
-      "commits": 11
-    },
     {
       "week": "2026-06-15",
       "commits": 15
@@ -50,9 +38,33 @@
     {
       "week": "2026-08-10",
       "commits": 109
+    },
+    {
+      "week": "2026-08-17",
+      "commits": 1
+    },
+    {
+      "week": "2026-08-24",
+      "commits": 0
+    },
+    {
+      "week": "2026-08-31",
+      "commits": 1
     }
   ],
   "recentCommits": [
+    {
+      "sha": "465f2332bc100f18cc0218fcf6e8218e8dcca22c",
+      "date": "2026-09-01",
+      "title": "docs: record point depth handoff (R1/R2/R3/R5e)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/465f2332bc100f18cc0218fcf6e8218e8dcca22c"
+    },
+    {
+      "sha": "852bc99dba67b1b7e472f6951b548296d4e0da96",
+      "date": "2026-08-19",
+      "title": "chore: checkpoint before switching to main",
+      "url": "https://github.com/zax0rz/darkpawns/commit/852bc99dba67b1b7e472f6951b548296d4e0da96"
+    },
     {
       "sha": "10ae37a3862b8e153f0acdcd2c54ab69adbde475",
       "date": "2026-08-15",
@@ -70,18 +82,6 @@
       "date": "2026-08-15",
       "title": "docs(blog): clarify OUTLAW system provenance from faq.html",
       "url": "https://github.com/zax0rz/darkpawns/commit/bac9056eef01f8f1e8e238e6102910f606c05004"
-    },
-    {
-      "sha": "d973eb85764e713f417155ae7fcb041fd76cbfa9",
-      "date": "2026-08-15",
-      "title": "style(web): simplify og-image card to title, caption, and est date",
-      "url": "https://github.com/zax0rz/darkpawns/commit/d973eb85764e713f417155ae7fcb041fd76cbfa9"
-    },
-    {
-      "sha": "b62d37580b939d7ca6a143cecd9e1c05a4304ea9",
-      "date": "2026-08-15",
-      "title": "fix(schema): allow transcription textKind in blog collection schema",
-      "url": "https://github.com/zax0rz/darkpawns/commit/b62d37580b939d7ca6a143cecd9e1c05a4304ea9"
     }
   ],
   "pullRequests": [

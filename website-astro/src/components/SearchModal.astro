@@ -1,0 +1,443 @@
+---
+// SearchModal.astro: Dark Pawns Global Omnisearch and Command Palette
+---
+
+<div id="dp-search-modal" class="search-overlay" role="dialog" aria-modal="true" aria-labelledby="search-modal-label" hidden>
+  <div class="search-backdrop" id="dp-search-backdrop"></div>
+  
+  <div class="search-card">
+    <div class="search-header">
+      <div class="search-input-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          id="dp-search-input"
+          type="search"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="Search commands, spells, items, mobs, zones, docs (#vnum)..."
+          aria-label="Search all of Dark Pawns"
+          aria-controls="dp-search-results"
+          aria-activedescendant=""
+        />
+        <button id="dp-search-clear" class="btn-clear" type="button" aria-label="Clear search input" hidden>&times;</button>
+      </div>
+      <button id="dp-search-close" class="btn-close" type="button" aria-label="Close search">ESC</button>
+    </div>
+
+    <!-- Category filter pills -->
+    <div class="search-filters" role="tablist" aria-label="Search filter categories">
+      <button type="button" class="filter-pill active" role="tab" aria-selected="true" data-category="all">All</button>
+      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="help">Help and Spells</button>
+      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="items">Items</button>
+      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="mobs">Mobs</button>
+      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="world">World and Map</button>
+      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="docs">Docs and Archive</button>
+    </div>
+
+    <!-- Results scroll area -->
+    <div id="dp-search-results" class="search-results" role="listbox" aria-label="Search Results">
+      <div id="dp-search-empty" class="search-state-msg">
+        <p class="empty-title">Type to search the entire world</p>
+        <p class="empty-sub">Spells, commands, monsters, equipment, zones, lore, and documentation.</p>
+        <div class="search-quick-queries">
+          <span>Popular:</span>
+          <button type="button" class="quick-link" data-query="backstab">backstab</button>
+          <button type="button" class="quick-link" data-query="cure light">cure light</button>
+          <button type="button" class="quick-link" data-query="dragon">dragon</button>
+          <button type="button" class="quick-link" data-query="blade">blade</button>
+          <button type="button" class="quick-link" data-query="midgaard">midgaard</button>
+          <button type="button" class="quick-link" data-query="agent">agent</button>
+        </div>
+      </div>
+      <div id="dp-search-list" class="search-list"></div>
+    </div>
+
+    <!-- Footer keyboard navigation hints -->
+    <div class="search-footer">
+      <div class="search-hints">
+        <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate</span>
+        <span><kbd>&crarr;</kbd> select</span>
+        <span><kbd>ESC</kbd> close</span>
+      </div>
+      <div id="dp-search-count" class="search-count mono">Ready</div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: var(--space-xl) var(--space-md) var(--space-md);
+  }
+
+  .search-overlay[hidden] {
+    display: none;
+  }
+
+  .search-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 22, 20, 0.72);
+  }
+
+  .search-card {
+    position: relative;
+    width: 100%;
+    max-width: 44rem;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: 82vh;
+  }
+
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--paper-deep);
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .search-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    position: relative;
+  }
+
+  .search-icon {
+    color: var(--ink-muted);
+    flex-shrink: 0;
+  }
+
+  #dp-search-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 1.15rem;
+    color: var(--ink);
+    padding: 0.4rem 0;
+  }
+
+  #dp-search-input::placeholder {
+    color: var(--ink-muted);
+    font-family: var(--font-body);
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  .btn-clear {
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 0.25rem;
+  }
+  .btn-clear:hover { color: var(--accent); }
+
+  .btn-close {
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--ink-muted);
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .btn-close:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .search-filters {
+    display: flex;
+    gap: 0.35rem;
+    padding: 0.5rem var(--space-md);
+    background: var(--paper);
+    border-bottom: 1px solid rgba(26, 22, 20, 0.15);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .search-filters::-webkit-scrollbar { display: none; }
+
+  .filter-pill {
+    background: var(--paper-deep);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .filter-pill:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .filter-pill.active {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+  }
+
+  .search-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-sm) 0;
+    max-height: 52vh;
+  }
+  .search-results::-webkit-scrollbar { width: 5px; }
+  .search-results::-webkit-scrollbar-thumb { background: var(--ink-muted); border-radius: 2px; }
+
+  .search-state-msg {
+    padding: var(--space-xl) var(--space-lg);
+    text-align: center;
+  }
+  .empty-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--ink);
+    margin-bottom: var(--space-xs);
+  }
+  .empty-sub {
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+    margin-bottom: var(--space-md);
+  }
+  .search-quick-queries {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+  }
+  .quick-link {
+    background: var(--paper-deep);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+    cursor: pointer;
+  }
+  .quick-link:hover {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+  }
+
+  /* Grouped result styling */
+  :global(.search-group-header) {
+    padding: 0.4rem var(--space-md);
+    background: var(--paper-deep);
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid rgba(26, 22, 20, 0.15);
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  :global(.search-group-header:first-child) {
+    border-top: none;
+  }
+
+  :global(.search-item) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: 0.6rem var(--space-md);
+    border-bottom: 1px solid rgba(26, 22, 20, 0.08);
+    color: var(--ink);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.08s ease;
+  }
+
+  :global(.search-item:hover),
+  :global(.search-item.active) {
+    background: var(--paper-deep);
+    border-left: 3px solid var(--accent);
+    padding-left: calc(var(--space-md) - 3px);
+    text-decoration: none;
+  }
+
+  :global(.search-item-main) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    overflow: hidden;
+  }
+
+  :global(.search-item-title-row) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  :global(.search-item-title) {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  :global(.search-item:hover .search-item-title),
+  :global(.search-item.active .search-item-title) {
+    color: var(--accent);
+  }
+
+  :global(.search-item-desc) {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    line-height: 1.35;
+    margin: 0;
+    max-width: 36rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(.search-item-meta) {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  :global(.search-badge) {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.35rem;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  :global(.search-badge.help) { background: #EAE3CF; }
+  :global(.search-badge.items) { background: #E5DAC1; }
+  :global(.search-badge.mobs) { background: #EAD0CF; color: var(--accent-deep); border-color: var(--accent); }
+  :global(.search-badge.world) { background: #D9E4D9; color: #2B662B; border-color: #2B662B; }
+  :global(.search-badge.docs) { background: #E0DBCE; }
+
+  :global(.search-vnum) {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+  }
+
+  :global(.search-handoff-link) {
+    display: block;
+    padding: 0.45rem var(--space-md);
+    background: var(--paper);
+    border-bottom: 1px solid rgba(26, 22, 20, 0.12);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-decoration: none;
+    text-align: right;
+  }
+  :global(.search-handoff-link:hover) {
+    background: var(--paper-deep);
+    text-decoration: underline;
+  }
+
+  :global(mark) {
+    background: #E8D39E;
+    color: var(--ink);
+    font-weight: 600;
+    padding: 0 1px;
+    border-radius: 1px;
+  }
+
+  .search-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem var(--space-md);
+    background: var(--paper-deep);
+    border-top: 1px solid var(--ink);
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+  }
+
+  .search-hints {
+    display: flex;
+    gap: var(--space-md);
+  }
+
+  .search-hints kbd {
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    padding: 0.1rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--ink);
+  }
+
+  .search-count {
+    font-size: 0.72rem;
+    color: var(--ink-muted);
+  }
+
+  @media (max-width: 640px) {
+    .search-overlay {
+      padding: 0;
+    }
+    .search-card {
+      max-height: 100vh;
+      height: 100vh;
+      border: none;
+      border-radius: 0;
+    }
+    .search-results {
+      max-height: calc(100vh - 170px);
+    }
+    .search-hints span:not(:last-child) {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import '../scripts/search.ts';
+</script>
