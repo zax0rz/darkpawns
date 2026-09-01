@@ -1,0 +1,79 @@
+# C-first higher-immortal inventory gate (act.informative.c:455-466). The
+# mortal thief observes a higher-level immortal player, so C emits the soul
+# warning instead of consuming per-object inventory visibility rolls.
+
+# depth-case: peek.higher-immortal-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Peekhigher
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Peekhigher
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Peektarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Peektarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+teleport Peektarget 1204
+load obj 8037
+give sword Peektarget
+set Peektarget level 39
+set Peekhigher level 30
+skillset Peekhigher 'peek' 100
+
+[probe]
+peek Peektarget

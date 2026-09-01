@@ -1,0 +1,42 @@
+# C-first do_peek entry and argument gates (src/interpreter.c:602;
+# src/act.other.c:1665-1697). A fresh mortal mage must be refused before the
+# no-argument and target-resolution branches, preserving C's gate ordering.
+
+# depth-case: peek.non-thief-gate
+# depth-case: peek.non-thief-no-argument
+# depth-case: peek.non-thief-target
+
+[setup:oracle]
+Peekgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Peekgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+
+[probe]
+peek
+peek Nobody

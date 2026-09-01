@@ -1,0 +1,80 @@
+# C-first mortal do_peek success vehicle (act.other.c:1688-1697). The thief
+# actor is lowered below LVL_IMMORT after a 100% skill warmup, proving that a
+# mortal success still executes look_at_char and then the shared C
+# improve_skill draw/message contract.
+
+# depth-case: peek.mortal-success
+# depth-case: peek.mortal-success-inventory
+# depth-case: peek.improve-skill-order
+# depth-case: peek.failure-look-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Peeksuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Peeksuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Peektarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Peektarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+teleport Peektarget 1204
+skillset Peeksuccess 'peek' 100
+set Peeksuccess level 30
+
+[probe]
+peek Peektarget

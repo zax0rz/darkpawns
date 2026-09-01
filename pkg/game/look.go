@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -480,10 +481,15 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 		} else {
 			result.act(ch, player, nil, "You see nothing special about $M.")
 		}
-		race := strings.ToLower(RaceNames[player.GetRace()])
-		result.literal(ch, fmt.Sprintf("%s is %s.", player.GetName(), race))
+		if player.IsAffected(affFleshAlter) {
+			result.literal(ch, fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), RaceNames[player.GetRace()], hshr(player), fleshAlterWeapon(player.GetLevel())))
+		} else {
+			result.literal(ch, fmt.Sprintf("%s is %s.", persName(player, ch), RaceNames[player.GetRace()]))
+		}
+		appendCharacterAffectLook(result, ch, player)
 		result.act(ch, player, nil, "$N "+diagCondition(player.GetHP(), player.GetMaxHP()))
 		appendPlayerEquipment(result, ch, player)
+		appendPeekInventory(result, ch, player)
 		return
 	}
 	if target.Mob != nil {
@@ -495,7 +501,101 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 		}
 		result.act(ch, mob, nil, "$N "+diagCondition(mob.GetHP(), mob.GetMaxHP()))
 		appendMobEquipment(result, ch, mob)
+		appendPeekInventory(result, ch, mob)
 	}
+}
+
+// appendCharacterAffectLook ports the direct player-visible status lines in
+// C look_at_char (act.informative.c:408-438). They are deliberately separate
+// from the generic room-listing status rendering: look_at_char always exposes
+// these lines to its viewer.
+func appendCharacterAffectLook(result *ObservationResult, ch *Player, target *Player) {
+	if target.Tattoo != TattooNone {
+		tattoo := tattooDescription(target.Tattoo)
+		if tattoo != "" {
+			glow := ""
+			if completeObservationColor(ch) {
+				glow = "\x1b[37m"
+			}
+			reset := ""
+			if glow != "" {
+				reset = "\x1b[0m"
+			}
+			result.literal(ch, fmt.Sprintf("On %s right arm is a tattoo %s... it %sglows%s softly.", hshr(target), tattoo, glow, reset))
+		}
+	}
+	if target.IsAffected(affVampire) {
+		result.literal(ch, fmt.Sprintf("Looking at %s closely, you see two white fangs --  %s is a vampire!", hmhr(target), hssh(target)))
+	}
+	if target.IsAffected(affWerewolf) {
+		result.literal(ch, fmt.Sprintf("May the gods have mercy --  %s is a werewolf!", hssh(target)))
+	}
+	if target.IsAffected(affMetalskin) {
+		result.literal(ch, fmt.Sprintf("You notice %s skin has a metallic hue!", hshr(target)))
+	}
+	if target.IsAffected(affCutthroat) {
+		result.literal(ch, fmt.Sprintf("%s's throat has been slit from ear to ear!", persName(target, ch)))
+	}
+}
+
+func tattooDescription(tattoo int) string {
+	if tattoo < TattooNone || tattoo > TattooOwl {
+		return ""
+	}
+	return []string{
+		"None", "of a green dragon", "in a tribal design", "of a flaming skull",
+		"of a leaping tiger", "of an ice worm", "of an open eye", "of crossed swords",
+		"of a screaming eagle", "of a heart", "of a star", "of a ship", "of a spider",
+		"of the symbol of the Jyhad", "of the word 'MOM'", "of an angel", "of a fox", "of an owl",
+	}[tattoo]
+}
+
+// appendPeekInventory is the inventory half of C look_at_char. It is part of
+// the ordinary look_at_char path, so both look-at-character and peek preserve
+// the same class, higher-immortal, visibility, and per-object RNG gates.
+func appendPeekInventory(result *ObservationResult, ch *Player, target Actor) {
+	if ch == nil || target == nil || ch == target {
+		return
+	}
+	if ch.GetClass() != ClassThief && ch.GetClass() != ClassAssassin && ch.GetLevel() < LVL_IMMORT {
+		return
+	}
+
+	// C passes the observed character as act()'s actor and the viewer as its
+	// victim object, so $s is the observed character's possessive pronoun.
+	result.literal(ch, "\r\nYou attempt to peek at "+hshr(target)+" inventory:")
+	if player, ok := target.(*Player); ok && player.GetLevel() > LVL_IMMORT && ch.GetLevel() < player.GetLevel() {
+		result.literal(ch, "Your soul (burning)")
+		return
+	}
+
+	items := characterInventory(target)
+	found := false
+	for _, item := range items {
+		if item == nil || !chCanSeeObj(ch, item) {
+			continue
+		}
+		// C number(0,20) is evaluated only after CAN_SEE_OBJ succeeds.
+		if dprng.Number(0, 20) < ch.GetLevel() {
+			result.raw(ch, item.GetShortDesc()+coloredObjectVisibleFlags(ch, item)+"\r\n")
+			found = true
+		}
+	}
+	if !found {
+		result.literal(ch, "You can't see anything.")
+	}
+}
+
+func characterInventory(target Actor) []*ObjectInstance {
+	switch typed := target.(type) {
+	case *Player:
+		if typed.Inventory != nil {
+			return typed.Inventory.Items
+		}
+	case *MobInstance:
+		return typed.Inventory
+	}
+	return nil
 }
 
 // DoLookDirection renders C's direction preface, exit state, and—when open—the
@@ -886,7 +986,7 @@ func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
-		result.literal(ch, fmt.Sprintf("%-20s%s%s", equipmentWhere(slot), item.GetShortDesc(), coloredObjectVisibleFlags(ch, item)))
+		result.literal(ch, equipmentWhere(slot)+item.GetShortDesc()+coloredObjectVisibleFlags(ch, item))
 	}
 }
 
@@ -905,9 +1005,9 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
-		where := "<used>             "
-		if position >= 0 && position < len(WhereNames) {
-			where = WhereNames[position]
+		where := "<used>               "
+		if position >= 0 && position < len(cWearWhere) {
+			where = cWearWhere[position]
 		}
 		result.literal(ch, where+item.GetShortDesc()+coloredObjectVisibleFlags(ch, item))
 	}
@@ -916,39 +1016,45 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 func equipmentWhere(slot EquipmentSlot) string {
 	switch slot {
 	case SlotLight:
-		return "<used as light>"
+		return cWearWhere[0]
 	case SlotFinger, SlotFingerR, SlotFingerL:
-		return "<worn on finger>"
+		return cWearWhere[1]
 	case SlotNeck, SlotNeck1, SlotNeck2:
-		return "<worn around neck>"
+		return cWearWhere[3]
 	case SlotBody:
-		return "<worn on body>"
+		return cWearWhere[5]
 	case SlotHead:
-		return "<worn on head>"
+		return cWearWhere[6]
 	case SlotLegs:
-		return "<worn on legs>"
+		return cWearWhere[7]
 	case SlotFeet:
-		return "<worn on feet>"
+		return cWearWhere[8]
 	case SlotHands:
-		return "<worn on hands>"
+		return cWearWhere[9]
 	case SlotArms:
-		return "<worn on arms>"
+		return cWearWhere[10]
 	case SlotShield:
-		return "<worn as shield>"
+		return cWearWhere[11]
 	case SlotAbout:
-		return "<worn about body>"
+		return cWearWhere[12]
 	case SlotWaist:
-		return "<worn about waist>"
+		return cWearWhere[13]
 	case SlotWrist, SlotWristR, SlotWristL:
-		return "<worn around wrist>"
+		return cWearWhere[14]
 	case SlotWield:
-		return "<wielded>"
+		return cWearWhere[16]
 	case SlotHold:
-		return "<held>"
-	case SlotEar:
-		return "<worn on ear>"
+		return cWearWhere[17]
+	case SlotThrow:
+		return cWearWhere[18]
+	case SlotAblegs:
+		return cWearWhere[19]
+	case SlotFace:
+		return cWearWhere[20]
+	case SlotHover:
+		return cWearWhere[21]
 	default:
-		return "<used>"
+		return "<used>               "
 	}
 }
 
