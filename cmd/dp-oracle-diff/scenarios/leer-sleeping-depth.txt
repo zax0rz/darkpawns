@@ -1,0 +1,78 @@
+# C-first leer/do_action sleeping-victim vehicle (src/interpreter.c:537;
+# src/act.social.c:102-151; lib/misc/socials:450-458). Leer has a zero
+# minimum victim position, so a sleeping visible target enters the success
+# branch; TO_SLEEP keeps the actor message while ordinary TO_VICT does not
+# wake the target.
+
+# depth-case: leer.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Leersleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Leersleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Leersleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Leersleeper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Leersleeper 8162
+
+[probe]
+leer Leersleeper
