@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -39,17 +40,70 @@ func cmdHeal(s *Session, args []string) error {
 // restore — fully restore target (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdRestore(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !checkLevel(s, LVL_GOD-1) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	// C do_restore (act.wizard.c) no-arg → "Whom do you wish to restore?";
-	// cmdRestore otherwise delegates the with-target path to cmdHeal.
-	if len(args) == 0 {
+	// C do_restore uses one_argument: fill words are skipped and trailing input
+	// is ignored. Its visible lookup includes both players and NPCs.
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
 		s.Send("Whom do you wish to restore?\r\n")
 		return nil
 	}
-	return cmdHeal(s, args)
+
+	targetSess := findSessionByName(s.manager, targetName)
+	var targetMob *game.MobInstance
+	if targetSess == nil && s.manager != nil && s.manager.world != nil {
+		targetMob = s.manager.world.GetMobByName(targetName)
+	}
+	if targetSess == nil && targetMob == nil {
+		s.Send("No-one by that name here.\r\n")
+		return nil
+	}
+
+	if targetSess != nil && targetSess.player != nil {
+		target := targetSess.player
+		target.SetHealth(target.GetMaxHP())
+		target.SetMana(target.GetMaxMana())
+		target.SetMove(target.GetMaxMove())
+		if target.GetHP() > 0 && target.GetPosition() <= combat.PosStunned {
+			target.SetPosition(combat.PosStanding)
+		}
+
+		if getEffectiveLevel(s) >= LVL_GRGOD && target.GetLevel() >= LVL_IMMORT {
+			if target.SkillManager != nil {
+				for _, skill := range target.SkillManager.GetAllSkills() {
+					target.SetSkill(skill.Name, 100)
+				}
+			}
+			if target.GetLevel() >= LVL_GRGOD {
+				target.Lock()
+				target.Stats.StrAdd = 100
+				target.Stats.Int = 25
+				target.Stats.Wis = 25
+				target.Stats.Dex = 25
+				target.Stats.Str = 25
+				target.Stats.Con = 25
+				target.Stats.Cha = 25
+				target.Strength = 25
+				target.Unlock()
+			}
+		}
+	} else if targetMob != nil {
+		targetMob.SetHealth(targetMob.GetMaxHP())
+		targetMob.SetMana(targetMob.GetMaxMana())
+		targetMob.SetMove(targetMob.GetMaxMove())
+		if targetMob.GetHP() > 0 && targetMob.GetPosition() <= combat.PosStunned {
+			targetMob.SetPosition(combat.PosStanding)
+		}
+	}
+
+	s.Send("Okay.\r\n")
+	if targetSess != nil && targetSess.player != nil {
+		targetSess.Send(fmt.Sprintf("The hand of %s touches you, healing your wounds and leaving you refreshed!\r\n", s.player.Name))
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------------
