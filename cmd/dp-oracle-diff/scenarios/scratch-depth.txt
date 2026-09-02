@@ -1,0 +1,81 @@
+# C-first scratch/do_action self-only vehicle (src/interpreter.c:678;
+# src/act.social.c:102-127; lib/misc/socials:1436-1439). The record has no
+# char_found message, so typed, missing, and self-looking targets all repeat
+# the actor/room no-argument pair. A peer exposes the room audience.
+
+# depth-case: scratch.no-argument
+# depth-case: scratch.typed-target-ignored
+# depth-case: scratch.missing-target-ignored
+# depth-case: scratch.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scratchactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scratchactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scratchpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scratchpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Scratchpeer 8162
+
+[probe]
+scratch
+scratch Scratchpeer
+scratch nobody
+scratch Scratchactor
