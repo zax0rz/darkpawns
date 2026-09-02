@@ -269,6 +269,13 @@ func (m *MobInstance) SetMove(move int) {
 	m.CurrentMove = move
 }
 
+// GetMaxMove returns the mob's maximum movement points.
+func (m *MobInstance) GetMaxMove() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.MaxMove
+}
+
 // SpendMove deducts movement points after all movement gates pass.
 func (m *MobInstance) SpendMove(cost int) bool {
 	m.mu.Lock()
