@@ -1,0 +1,114 @@
+# C-first rofl/do_action target-social vehicle (src/interpreter.c:663;
+# src/act.social.c:102-151; lib/misc/socials:1247-1255). The record hides an
+# invisible actor and requires a resting victim, so a room observer exposes
+# the no-argument, target, self, and missing-target paths.
+
+# depth-case: rofl.no-argument
+# depth-case: rofl.argument-first-token
+# depth-case: rofl.target-success
+# depth-case: rofl.target-audience
+# depth-case: rofl.self-target
+# depth-case: rofl.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Roflactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Roflactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Roflobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Roflobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Rofltarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Rofltarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Roflobserver 8162
+teleport Rofltarget 8162
+
+[probe]
+rofl
+rofl Rofltarget trailing words are ignored
+rofl Rofltarget
+rofl Roflactor
+rofl Nobody
