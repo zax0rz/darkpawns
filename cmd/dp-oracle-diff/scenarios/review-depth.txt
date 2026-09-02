@@ -1,0 +1,46 @@
+# depth-case: review.empty-history
+# depth-case: review.history-order
+# depth-case: review.argument-ignored
+# depth-case: review.actor-only
+# C-first do_review vehicle (src/new_cmds.c:1369-1391) after two gossip
+# updates. The first review proves the empty header, and the final review
+# proves the fixed-buffer traversal order while carrying ignored arguments.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Reviewadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reviewadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+review
+gossip review oldest
+gossip review newest
+review ignored trailing words

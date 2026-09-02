@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_review	review	review.entry-gate	D1	command	delegated	quit.entry-gate	interpreter.c:658; comm.c:910-947	The level-0/POS_DEAD descriptor gate is shared with quit and is proven by the existing command-gate fixture (R2/R5b/R5c).
+do_review	review	review.empty-history	D2	command	oracle-green-multiseed	review-depth@1,2,3,5,8	new_cmds.c:1369-1391	An empty fixed review buffer emits only the exact header and separator; the same vehicle also proves the command's pager-facing result (R1/R3/R5e).
+do_review	review	review.history-order	D3	state	oracle-green-multiseed	review-depth@1,2,3,5,8	new_cmds.c:1373-1391; new_cmds.c:1341-1358	Two updates are rendered oldest-first because C inserts at slot 0 and traverses slot 24 down to slot 0 (R1/R3/R5e).
+do_review	review	review.argument-ignored	D1	command	oracle-green-multiseed	review-depth@1,2,3,5,8	new_cmds.c:1369-1391	Trailing words are ignored by do_review and do not alter the rendered history (R1/R2/R5e).
+do_review	review	review.invisible-speaker	D4	state	unit-green	TestReviewGossipHidesHigherInvisibility	new_cmds.c:1377-1382	Review replaces a speaker name with Someone invisible only when the stored invisibility level exceeds the viewer level (R1/R3/R5e).
+do_review	review	review.capacity-25	D4	state	unit-green	TestReviewGossipRetainsTheCappedHistoryWindow	new_cmds.c:1341-1358	The fixed 25-slot review array drops the oldest entry after overflow, preserving the C window (R3/R5e).
+do_review	review	review.actor-only	D3	audience	oracle-green-multiseed	review-depth@1,2,3,5,8	new_cmds.c:1391; comm.c:126-144	The actor receives the review output through the descriptor pager; no peer is present in the vehicle, matching C's actor-only page path (R1/R3/R5e).

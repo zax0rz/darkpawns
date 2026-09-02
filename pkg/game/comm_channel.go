@@ -334,7 +334,11 @@ func (w *World) ReviewGossip(ch *Player) string {
 	var buf strings.Builder
 	buf.WriteString("Last Gossips:\r\n-------------\r\n")
 
-	for _, entry := range w.gossipHistory {
+	// gossipHistory is stored newest-first, while C's do_review() walks its
+	// fixed array from slot 24 down to slot 0 (newest entries are inserted at
+	// slot 0). Preserve the player-visible oldest-first order.
+	for index := len(w.gossipHistory) - 1; index >= 0; index-- {
+		entry := w.gossipHistory[index]
 		// Hide invisible players below viewer's level
 		if entry.Invis > ch.GetLevel() {
 			buf.WriteString("Someone invisible: ")
