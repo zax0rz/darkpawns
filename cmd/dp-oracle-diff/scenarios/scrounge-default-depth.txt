@@ -1,0 +1,79 @@
+# C-first do_scrounge default-sector vehicle (src/new_cmds2.c:84-135). A
+# skilled actor in a city consumes the roll, receives the wilderness refusal,
+# and still emits the unconditional room search act.
+
+# depth-case: scrounge.default-sector
+# depth-case: scrounge.default-roll
+# depth-case: scrounge.default-room-audience
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 1
+
+[setup:oracle]
+Scroungedefault
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungedefault
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungedefaultpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungedefaultpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungedefaultpeer 8105
+skillset Scroungedefault 'scrounge' 100
+
+[probe]
+scrounge
+roll 100

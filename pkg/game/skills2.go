@@ -14,86 +14,103 @@ import (
 // ---------------------------------------------------------------------------
 // DoScrounge — do_scrounge() from new_cmds2.c
 // Search room for edible items based on sector type.
-// Uses D100 vs SKILL_SCROUNGE. WAIT_STATE on any outcome.
-// SECT_FOREST/desert/hills: kill food (capture)
-// SECT_MOUNTAIN: find food
-// SECT_WATER_*: food 27 (fish)
+// Port of new_cmds2.c:64-135. The C path draws number(1,101), waits two
+// violence rounds after a skill attempt, and always emits the room search act
+// once it reaches the sector switch.
 // ---------------------------------------------------------------------------
 func DoScrounge(ch *Player, world *World) SkillResult {
 	if ch.GetSkill(SkillScrounge) == 0 {
 		return SkillResult{
 			Success:     false,
 			MessageToCh: "You can't seem to find anything edible.\r\n",
+			WaitCh:      2,
+		}
+	}
+
+	// IS_MOUNTED is checked before the random draw in new_cmds2.c:77-80.
+	if isMounted(ch) {
+		return SkillResult{
+			Success:     false,
+			MessageToCh: "Dismount first!\r\n",
 		}
 	}
 
 	room := world.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
-		return SkillResult{MessageToCh: "You are lost in the void.\r\n"}
+		return SkillResult{}
 	}
 
 	sector := room.Sector
 
-	// Map sector type to a food object vnum and whether it's "find" or "kill"
-	// Values adapted from Dark Pawns object vnums:
-	//   27 = fish (water), 28 = berries/plants (forest),
-	//   29 = roots/tubers (field/hills), 30 = small desert creature,
-	//   31 = mountain herbs
-	var foodVNum int
+	// C consumes the roll before selecting the sector branch. number() is
+	// inclusive, so the upper bound is 101 rather than 100.
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101)
+	prob := ch.GetSkill(SkillScrounge)
+
+	// find is TRUE only for the mountain branch. All other wilderness branches
+	// use the capture-and-kill wording from new_cmds2.c:88-114.
+	var (
+		foodVNum int
+		find     bool
+	)
 
 	switch sector {
-	case 3: // SECT_FOREST
+	case SECT_FOREST:
 		foodVNum = 28
-	case 4, 5: // SECT_FIELD, SECT_HILLS
+	case SECT_FIELD, SECT_HILLS:
 		foodVNum = 29
-	case 7: // SECT_DESERT
+	case SECT_DESERT:
 		foodVNum = 30
-	case 10: // SECT_MOUNTAIN
+	case SECT_MOUNTAIN:
 		foodVNum = 31
-	case 14, 15, 16: // SECT_WATER_SWIM, SECT_WATER_NOSWIM, SECT_UNDERWATER
+		find = true
+	case SECT_WATER_SWIM, SECT_WATER_NOSWIM, SECT_UNDERWATER:
 		foodVNum = 27
 	default:
 		return SkillResult{
-			Success:     false,
-			MessageToCh: "You need to be in the wilderness to scrounge!\r\n",
+			Success:       false,
+			MessageToCh:   "You need to be in the wilderness to scrounge!\r\n",
+			MessageToRoom: fmt.Sprintf("%s searches for something to eat.", ch.Name),
 		}
 	}
 
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	percent := dprng.Number(1, 100)
-	prob := ch.GetSkill(SkillScrounge)
+	roomMessage := fmt.Sprintf("%s searches for something to eat.", ch.Name)
 
 	if percent < prob {
-		// Success — create the food object and give it to the player
+		// C only emits the find/capture act after read_object and obj_to_char
+		// succeed. A missing prototype therefore still reaches the unconditional
+		// room act but must not receive an invented player-facing fallback.
 		proto, ok := world.objs[foodVNum]
 		if !ok {
-			// Fallback: just give generic food
-			return SkillResult{
-				Success:       true,
-				MessageToCh:   "You find some edible scraps.\r\n",
-				MessageToRoom: fmt.Sprintf("%s searches and finds something to eat.\r\n", ch.Name),
-			}
+			return SkillResult{MessageToRoom: roomMessage}
 		}
 		obj := NewObjectInstance(proto, ch.GetRoom())
-		if obj != nil {
-			if err := ch.Inventory.AddItem(obj); err != nil {
-				return SkillResult{
-					Success:     false,
-					MessageToCh: "You can't carry any more items.\r\n",
-				}
-			}
-			return SkillResult{
-				Success:       true,
-				MessageToCh:   fmt.Sprintf("You find %s.\r\n", proto.ShortDesc),
-				MessageToRoom: fmt.Sprintf("%s finds %s.\r\n", ch.Name, proto.ShortDesc),
-			}
+		if obj == nil {
+			return SkillResult{MessageToRoom: roomMessage}
+		}
+		if err := ch.Inventory.AddItem(obj); err != nil {
+			return SkillResult{MessageToRoom: roomMessage}
+		}
+
+		message := "You capture and kill %s.\r\n"
+		if find {
+			message = "You find %s.\r\n"
+		}
+		return SkillResult{
+			Success:         true,
+			MessageToCh:     fmt.Sprintf(message, proto.ShortDesc),
+			MessageToRoom:   roomMessage,
+			WaitCh:          2,
+			DeferredImprove: []string{SkillScrounge},
 		}
 	}
 
 	return SkillResult{
-		Success:     false,
-		MessageToCh: "You can't seem to find anything edible.\r\n",
+		Success:       false,
+		MessageToCh:   "You can't seem to find anything edible.\r\n",
+		MessageToRoom: roomMessage,
+		WaitCh:        2,
 	}
 }
 

@@ -1,0 +1,84 @@
+# C-first do_scrounge forest success vehicle (src/interpreter.c:679;
+# src/new_cmds2.c:64-135). Forest captures object vnum 28, emits the C
+# capture-and-kill actor line plus the unconditional room search act, improves
+# the skill after the output, and waits two violence rounds. The trailing roll
+# exposes the improve_skill draw order.
+
+# depth-case: scrounge.entry-gate
+# depth-case: scrounge.forest-capture-success
+# depth-case: scrounge.success-object-and-audience
+# depth-case: scrounge.success-improve-draw
+# depth-case: scrounge.success-wait
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 3
+
+[setup:oracle]
+Scroungeforest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungeforest
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungeobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungeobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungeobserver 8105
+skillset Scroungeforest 'scrounge' 100
+
+[probe]
+scrounge
+~dpclock pulse 20
+roll 100

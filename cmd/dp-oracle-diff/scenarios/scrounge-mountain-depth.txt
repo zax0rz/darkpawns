@@ -1,0 +1,76 @@
+# C-first do_scrounge mountain mapping (src/new_cmds2.c:102-104). Mountain
+# finds object vnum 31 and uses the find wording, then emits the room search
+# act.
+
+# depth-case: scrounge.mountain-find
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 5
+
+[setup:oracle]
+Scroungemountain
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungemountain
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungemountainpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungemountainpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungemountainpeer 8105
+skillset Scroungemountain 'scrounge' 100
+
+[probe]
+scrounge

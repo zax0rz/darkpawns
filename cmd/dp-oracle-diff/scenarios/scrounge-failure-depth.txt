@@ -1,0 +1,111 @@
+# C-first do_scrounge food failure vehicle (src/new_cmds2.c:115-135). Forest
+# supplies small game, but skill 1 and seed 1 take the failed food arm; the
+# actor refusal, two-round wait, room search act, and unchanged one-roll stream
+# are all observable.
+
+# depth-case: scrounge.food-failure
+# depth-case: scrounge.food-failure-wait
+# depth-case: scrounge.food-failure-room-audience
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 3
+
+[setup:oracle]
+Scroungefailuregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungefailuregod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Scroungefailmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Scroungefailmortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungefailurepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungefailurepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungefailmortal 8105
+skillset Scroungefailmortal 'scrounge' 1
+
+[probe:mortal]
+scrounge
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20

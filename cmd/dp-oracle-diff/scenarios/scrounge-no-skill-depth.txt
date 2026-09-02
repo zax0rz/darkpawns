@@ -1,0 +1,50 @@
+# C-first do_scrounge skill gate (src/new_cmds2.c:71-75). An unlearned
+# caller receives the private refusal, waits two violence rounds, and does not
+# roll or emit the room search act.
+
+# depth-case: scrounge.no-skill
+# depth-case: scrounge.no-skill-wait
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 3
+
+[setup:oracle]
+Scroungenoskill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungenoskill
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Scroungenoskill 'scrounge' 0
+
+[probe]
+scrounge
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
