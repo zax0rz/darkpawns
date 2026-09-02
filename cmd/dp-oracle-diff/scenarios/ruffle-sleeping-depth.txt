@@ -1,0 +1,77 @@
+# C-first ruffle sleeping-target vehicle (src/interpreter.c:668;
+# src/act.social.c:102-151; lib/misc/socials:650-658). The ruffle social has a
+# zero minimum victim position, so its target-success arm remains reachable
+# when the victim is asleep.
+
+# depth-case: ruffle.sleeping-target-allowed
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rufflesleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rufflesleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Rufflesleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:target]
+Rufflesleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Rufflesleeptarget 8162
+
+[probe]
+ruffle Rufflesleeptarget
