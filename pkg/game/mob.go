@@ -219,6 +219,9 @@ func NewMobInstance(proto *parser.Mob, roomVNum int) *MobInstance {
 // (0=male, 1=female, 2=neutral). Mob files retain C's encoding
 // (0=neutral, 1=male, 2=female), so translate at the Actor boundary.
 func (m *MobInstance) GetSex() int {
+	if m.Runtime.SexOverride != nil {
+		return *m.Runtime.SexOverride
+	}
 	if m.Prototype != nil {
 		switch m.Prototype.Sex {
 		case 1:
@@ -476,6 +479,9 @@ func (m *MobInstance) UnequipItem(position int) *ObjectInstance {
 func (m *MobInstance) GetAC() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+	if m.Runtime.ACOverride != nil {
+		return *m.Runtime.ACOverride
+	}
 	if m.Prototype != nil {
 		return m.Prototype.AC
 	}
@@ -840,6 +846,9 @@ func (m *MobInstance) GetFighting() string {
 
 // GetClass returns the mob's class
 func (m *MobInstance) GetClass() int {
+	if m.Runtime.ClassOverride != nil {
+		return *m.Runtime.ClassOverride
+	}
 	return 0 // CLASS_MAGE
 }
 
@@ -891,6 +900,9 @@ func (m *MobInstance) GetCha() int {
 func (m *MobInstance) GetHitroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+	if m.Runtime.HitrollOverride != nil {
+		return *m.Runtime.HitrollOverride
+	}
 	total := 0
 	if m.Prototype != nil {
 		total = 20 - m.Prototype.THAC0
@@ -933,6 +945,9 @@ func (m *MobInstance) GetDamroll() int {
 
 // GetStrAdd returns the mob's strength add
 func (m *MobInstance) GetStrAdd() int {
+	if m.Runtime.StrAddOverride != nil {
+		return *m.Runtime.StrAddOverride
+	}
 	return 0
 }
 
@@ -1171,6 +1186,9 @@ func (m *MobInstance) GetFightingTarget() string {
 
 // GetAlignment returns the mob's alignment from its prototype.
 func (m *MobInstance) GetAlignment() int {
+	if m.Runtime.AlignmentOverride != nil {
+		return *m.Runtime.AlignmentOverride
+	}
 	if m.Prototype != nil {
 		return m.Prototype.Alignment
 	}
