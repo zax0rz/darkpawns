@@ -1,0 +1,117 @@
+# C-first bless/do_action vehicle (src/interpreter.c:359;
+# src/act.social.c:102-151; lib/misc/socials:1526-1534). The registered
+# command requires POS_RESTING; the record has hide=0, no victim-position
+# minimum, and all eight message slots. Three players expose actor, target,
+# observer, self, not-found, and one_argument branches.
+
+# depth-case: bless.no-argument
+# depth-case: bless.target-success
+# depth-case: bless.target-audience
+# depth-case: bless.one-argument
+# depth-case: bless.self-target
+# depth-case: bless.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+bless
+bless the Ragnar trailing words are ignored
+bless Ragnar
+bless Mordecai
+bless self
+bless Nobody
+
