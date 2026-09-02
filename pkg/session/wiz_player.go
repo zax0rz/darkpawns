@@ -553,6 +553,8 @@ func cmdSkillset(s *Session, args []string) error {
 		canonicalName = game.SkillFleshAlter
 	case "dragon kick":
 		canonicalName = game.SkillDragonKick
+	case "serpent kick":
+		canonicalName = game.SkillSerpentKick
 	}
 	vict.SetSkill(canonicalName, value)
 

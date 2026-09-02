@@ -494,6 +494,13 @@ type SkillResult struct {
 	// SpawnPuke requests do_groinrip's post-room number(0,10) check and its
 	// vnum-21 room object. The command wrapper performs it after room delivery.
 	SpawnPuke bool
+	// SpawnMobVNum/Level/Room describe a C create_mobile call that must occur
+	// after the damage/message boundary. SpawnMobHunting preserves the TRUE
+	// hunting argument used by create_mobile (new_cmds2.c:588-618).
+	SpawnMobVNum    int
+	SpawnMobLevel   int
+	SpawnMobRoom    int
+	SpawnMobHunting bool
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.

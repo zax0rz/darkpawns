@@ -53,7 +53,10 @@ type MobRuntimeState struct {
 	// specials that assign points.damroll directly (for example carrion's
 	// read_mobile result). A pointer preserves zero as a meaningful override.
 	DamrollOverride *int `json:"damroll_override,omitempty"`
-	DamrollBonus    int  `json:"damroll_bonus,omitempty"`
+	// ExpOverride preserves create_mobile's per-instance GET_EXP assignment;
+	// a pointer distinguishes an explicit zero from the prototype value.
+	ExpOverride  *int `json:"exp_override,omitempty"`
+	DamrollBonus int  `json:"damroll_bonus,omitempty"`
 	// DamageNumOverride and DamageSidesOverride preserve per-instance
 	// mob_specials.damnodice/damsizedice mutations made by native specials.
 	// A pointer distinguishes an override of zero from the prototype value.

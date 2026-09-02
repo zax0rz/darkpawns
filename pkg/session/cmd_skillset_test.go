@@ -273,6 +273,20 @@ func TestCmdSkillset_PickLockUsesDoorSkillKey(t *testing.T) {
 	}
 }
 
+func TestCmdSkillset_SerpentKickUsesCommandSkillKey(t *testing.T) {
+	wiz, target := makeSkillsetTestSession(t)
+
+	if err := cmdSkillset(wiz, []string{"hero", "'serpent", "kick'", "75"}); err != nil {
+		t.Fatalf("cmdSkillset: %v", err)
+	}
+	if got, want := readOneText(t, wiz), "You change Hero's serpent kick to 75.\n\r"; got != want {
+		t.Fatalf("confirmation = %q, want %q", got, want)
+	}
+	if got := target.player.GetSkill(game.SkillSerpentKick); got != 75 {
+		t.Fatalf("serpent-kick skill = %d, want 75", got)
+	}
+}
+
 // --- Level gate: a mortal (< LVL_GRGOD) is rejected ---
 
 func TestCmdSkillset_MortalRejected(t *testing.T) {
