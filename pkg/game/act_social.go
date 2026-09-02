@@ -98,7 +98,9 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 	targetActor := target.(Actor)
 	if target.GetName() == ch.Name {
 		if message, ok := socialMessage(social, socCharAuto); ok {
-			Act(nil, false, ch, nil, nil, nil, message, "", ToChar)
+			// C sends char_auto with send_to_char(), not act(). Preserve the
+			// authored bytes and any literal $-codes in this actor-only path.
+			ch.SendMessage(message + "\r\n")
 		}
 		if message, ok := socialMessage(social, socOthersAuto); ok {
 			Act(w, social.hidesInvisibleActor(), ch, nil, nil, nil, message, "", ToRoom)

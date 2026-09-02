@@ -1,0 +1,105 @@
+# C-first rofl/do_action sleeping-victim vehicle (src/interpreter.c:663;
+# src/act.social.c:102-151; lib/misc/socials:1247-1255). The wizard warmup
+# forces the named target below the social's POS_RESTING minimum.
+
+# depth-case: rofl.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Roflsleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Roflsleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Roflsleepobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Roflsleepobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Roflsleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Roflsleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Roflsleepobserver 8162
+teleport Roflsleeptarget 8162
+force Roflsleeptarget sleep
+
+[probe]
+rofl Roflsleeptarget
