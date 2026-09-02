@@ -1,0 +1,111 @@
+# C-first player-target diagnose vehicle. do_diagnose uses diag_char_to_char's
+# TO_CHAR-only send_to_char path, so the named observer must receive no target
+# bytes. The player target also proves the same one_argument/alias surface
+# without relying on a combat-generated health change.
+
+# depth-case: diagnose.player-target
+# depth-case: diagnose.private-output
+# depth-case: diagnose.player-trailing-arguments
+# depth-case: diagnose.player-aliases
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+diagnose Ragnar
+diagnose ragnar trailing words are ignored
+diag Ragnar
+glance Ragnar
