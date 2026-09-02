@@ -459,12 +459,9 @@ func cmdSwitch(s *Session, args []string) error {
 // - Detach the wizard's session from the switched character
 // - Re-attach to the wizard's original character
 func cmdReturn(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
+	// C do_return has no handler-level authorization gate and is silent unless
+	// the descriptor is attached to a switched body. Its arguments are ignored.
 	if !s.isSwitched || s.switchedOriginal == nil {
-		s.Send("You aren't switched.\r\n")
 		return nil
 	}
 
@@ -485,31 +482,13 @@ func cmdReturn(s *Session, args []string) error {
 		)
 	}
 
-	// Save target character state to persist any changes made while switched
-	if s.switchedPlayer != nil {
-		if err := game.SavePlayer(s.switchedPlayer); err != nil {
-			slog.Error("cmdReturn: failed to save switched player state",
-				"player", s.switchedPlayer.Name, "error", err)
-		} else {
-			slog.Info("return: saved switched player state", "player", s.switchedPlayer.Name)
-		}
-	}
-
-	// Save wizard state before restoring
-	if err := game.SavePlayer(s.switchedOriginal); err != nil {
-		slog.Error("cmdReturn: failed to save wizard state before restore",
-			"wizard", s.switchedOriginal.Name, "error", err)
-	} else {
-		slog.Info("return: saved wizard state before restore", "wizard", s.switchedOriginal.Name)
-	}
-
 	s.player = s.switchedOriginal
 	s.isSwitched = false
 	s.switchedOriginal = nil
 	s.switchedOriginalLevel = 0
 	s.switchedMob = nil
 	s.switchedPlayer = nil
-	s.Send("You return to your own body.\r\n")
+	s.Send("You return to your original body.\r\n")
 	return nil
 }
 

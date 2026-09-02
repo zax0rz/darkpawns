@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_return	return	return.entry-gate	D1	command	unit-green	TestReturnRegistrationUsesCEntryGate	interpreter.c:655; act.wizard.c:1205	The registered row is POS_DEAD at level 0; a mortal descriptor can enter the handler (R2/R5e).
+do_return	return	return.no-original-silent	D1	command	oracle-green-multiseed	return-depth@1,2,3,5,8	act.wizard.c:1205-1221	With no descriptor original body, C emits no bytes and does not invent a not-switched response.
+do_return	return	return.argument-ignored	D1	command	oracle-green-multiseed	return-depth@1,2,3,5,8	act.wizard.c:1205-1221	C has no argument parsing; trailing input remains behaviorally irrelevant.
+do_return	return	return.switched-body-message	D2	command	unit-green	TestCmdReturnMatchesCSwitchedBodyMessage	act.wizard.c:1207-1219	A switched descriptor receives exactly C's original-body message before descriptor reattachment.
+do_return	return	return.reconnect-state	D4	state	unit-green	TestCmdReturnMatchesCSwitchedBodyState	act.wizard.c:1212-1219	The original player regains the descriptor relationship and the switched state is cleared; no save or extra player bytes are invented.
