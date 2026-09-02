@@ -129,7 +129,9 @@ func cmdZlist(s *Session, args []string) error {
 	return nil
 }
 
-// cmdRlist — list rooms matching keyword (LVL_IMMORT)
+// cmdRlist mirrors C do_rlist (src/act.wizard.c:3336-3366): the first
+// argument is a numeric zone selector, not a room-name keyword. C atoi accepts
+// a signed decimal prefix, and the final list is paged through the descriptor.
 func cmdRlist(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -140,28 +142,33 @@ func cmdRlist(s *Session, args []string) error {
 		s.Send("No parsed world available.")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Usage: rlist <keyword>")
-		return nil
-	}
-	keyword := strings.ToLower(args[0])
+	argument, _ := game.OneArgument(strings.Join(args, " "))
+	zoneNumber := mlistAtoi(argument)
 	var result strings.Builder
-	count := 0
+	count := 1
+	found := false
+	overflow := false
 	for i := range pw.Rooms {
-		if strings.Contains(strings.ToLower(pw.Rooms[i].Name), keyword) {
-			count++
-			fmt.Fprintf(&result, "  [%5d] %s\r\n", pw.Rooms[i].VNum, pw.Rooms[i].Name)
-			if count >= 50 {
-				result.WriteString("... (truncated at 50)")
-				break
-			}
+		if pw.Rooms[i].Zone != zoneNumber {
+			continue
 		}
+		line := fmt.Sprintf("%3d. [%5d] %s\r\n", count, pw.Rooms[i].VNum, pw.Rooms[i].Name)
+		if result.Len()+len(line) >= 8192 {
+			overflow = true
+			break
+		}
+		result.WriteString(line)
+		count++
+		found = true
 	}
-	if count == 0 {
-		s.Send("No rooms found.")
+	if !found {
+		s.Send("The desired zone does not exist.\r\n")
 		return nil
 	}
-	s.Send(result.String())
+	if overflow {
+		s.Send("Truncating room list due to size.\r\n")
+	}
+	PageString(s, result.String())
 	return nil
 }
 
