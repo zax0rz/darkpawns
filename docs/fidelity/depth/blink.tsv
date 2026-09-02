@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	blink	blink.entry-gate	D1	command	unit-green	TestBlinkRegistrationUsesCEntryGate	interpreter.c:360; act.social.c:102-112; lib/misc/socials:1401-1405	The registered row is POS_RESTING with no command minimum; the social record has hide=0, no victim-position minimum, and only the two no-argument messages before # (R1/R2/R5e).
+do_action	blink	blink.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:360; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing position-gate vehicle (R2/R5b/R5c).
+do_action	blink	blink.no-argument	D2	audience	oracle-green-multiseed	blink-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:1401-1405	No argument emits the exact actor and ordinary room blink messages (R1/R3/R5e).
+do_action	blink	blink.typed-target-ignored	D2	audience	oracle-green-multiseed	blink-depth@1,2,3,5,8	act.social.c:114-121; lib/misc/socials:1401-1405	A typed target is ignored because char_found is NULL; C follows the no-argument pair without target lookup (R1/R2/R3/R5e).
+do_action	blink	blink.missing-target-ignored	D2	audience	oracle-green-multiseed	blink-depth@1,2,3,5,8	act.social.c:114-121; lib/misc/socials:1401-1405	An absent target is likewise ignored, so the authored target slots are unreachable (R1/R2/R3/R5e).
+do_action	blink	blink.self-target-ignored	D2	audience	oracle-green-multiseed	blink-depth@1,2,3,5,8	act.social.c:114-121; lib/misc/socials:1401-1405	A self-named target is ignored rather than entering a self-target branch (R1/R2/R3/R5e).
+do_action	blink	blink.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the existing social boundary (R1/R5b/R5c).
+do_action	blink	blink.visibility	D3	shared	delegated	socials-depth	act.social.c:102-151; comm.c:2392-2555	Visible-room lookup and Act audience visibility are owned by the shared social matrix (R1/R5b/R5c).
+
