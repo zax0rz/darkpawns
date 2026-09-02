@@ -1,0 +1,107 @@
+# C-first do_quit/SCMD_REALLY_QUIT vehicle (src/interpreter.c:657;
+# src/act.other.c:72-181). An immortal primary forces a mortal peer to use
+# REALLYQUIT from an unsafe room, while a same-room observer captures the
+# canonical leave audience. Trailing input exercises C's argument-ignored path.
+
+# depth-case: reallyquit.unsafe-logout
+# depth-case: reallyquit.argument-ignored
+# depth-case: reallyquit.actor-and-room-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Reallyadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reallyadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Reallypeer]
+Reallypeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Reallypeer]
+Reallypeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Reallyobserver]
+Reallyobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Reallyobserver]
+Reallyobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Reallypeer 8162
+teleport Reallyobserver 8162
+
+[probe]
+force Reallypeer reallyquit trailing words are ignored

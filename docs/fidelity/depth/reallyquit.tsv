@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_quit	reallyquit	reallyquit.entry-gate	D1	command	delegated	quit.entry-gate	interpreter.c:657; comm.c:910-947	The distinct SCMD_REALLY_QUIT row shares the POS_DEAD/level-0 dispatcher gate already proven for quit (R2/R5b/R5c).
+do_quit	reallyquit	reallyquit.subcommand-split	D1	command	unit-green	TestReallyQuitIsNotABareAlias	interpreter.c:630,657; act.other.c:114-132	Go keeps separate quit and reallyquit registry entries, preserving C's subcommand distinction.
+do_quit	reallyquit	reallyquit.unsafe-logout	D2	command	oracle-green-multiseed	reallyquit-depth@1,2,3,5,8	act.other.c:123-181	Unlike quit, reallyquit bypasses the unsafe-room refusal and reaches exact goodbye/extraction bytes.
+do_quit	reallyquit	reallyquit.argument-ignored	D1	command	oracle-green-multiseed	reallyquit-depth@1,2,3,5,8	act.other.c:72-181	C do_quit does not parse its argument; trailing words do not alter the destructive logout path.
+do_quit	reallyquit	reallyquit.actor-and-room-audience	D3	audience	oracle-green-multiseed	reallyquit-depth@1,2,3,5,8	act.other.c:133-143; comm.c:2392-2555	The quitting peer receives only C's goodbye while the visible observer receives one has-left room act.
+do_quit	reallyquit	reallyquit.unsafe-equipment-loss	D4	state	unit-green	TestReallyQuitFromUnsafeRoomLosesEquipment	act.other.c:155-174	Unsafe REALLYQUIT skips Crash_rentsave, so the final saved record has no equipment or inventory.
+do_quit	reallyquit	reallyquit.safe-equipment-retained	D4	state	unit-green	TestReallyQuitFromSafeRoomKeepsEquipment	act.other.c:87-112,155-168	Safe-room detection is independent of subcommand; reallyquit still rent-saves and retains equipment.
+do_quit	reallyquit	reallyquit.fighting-gate	D1	shared	delegated	quit.fighting-gate	act.other.c:117-122	The POS_FIGHTING and incapacitated branches are shared do_quit gates already proven by quit, including the reallyquit invocation (R5b/R5c).
