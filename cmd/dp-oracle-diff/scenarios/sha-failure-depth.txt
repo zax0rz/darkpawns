@@ -1,0 +1,80 @@
+# C-first SHA failure vehicle (src/interpreter.c:686;
+# src/new_cmds.c:1500-1739). Skill 1 makes seed 1 reach check_kk_success()'s
+# failure arm; the peer captures the unchanged meditation room act. The
+# follow-up skillset and retry show that failure does not retain the aggregate
+# AFF_KUJI_KIRI lockout for SHA.
+
+# depth-case: sha.failure-actor-and-room
+# depth-case: sha.failure-no-lockout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shafailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shafailactor
+y
+attpass
+attpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shafailpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shafailpeer
+y
+obspass
+obspass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shafailpeer 8162
+skillset Shafailactor 'kuji-kiri sha' 1
+
+[probe]
+sha
+skillset Shafailactor 'kuji-kiri sha' 100
+sha
