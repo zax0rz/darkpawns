@@ -1,0 +1,113 @@
+# C-first anguish/do_action vehicle (src/interpreter.c:335;
+# src/act.social.c:102-151; lib/misc/socials:1287-1290). The registered
+# command requires POS_RESTING. Its social record has C hide=0 and
+# min_victim_position=5, but char_found is NULL, so every supplied argument
+# follows the self-only no-argument path and the victim-position field is
+# unreachable.
+
+# depth-case: anguish.no-argument
+# depth-case: anguish.typed-target-ignored
+# depth-case: anguish.missing-target-ignored
+# depth-case: anguish.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+anguish
+anguish Ragnar
+anguish Nobody
+anguish Mordecai
