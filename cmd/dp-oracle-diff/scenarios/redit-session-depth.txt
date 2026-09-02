@@ -1,0 +1,43 @@
+# Second honest C-first redit/do_olc vehicle
+# (src/interpreter.c:656; src/olc.c:102-115,228-275; src/redit.c:65-73,
+# 78-664). A no-argument redit selects the actor's current room and enters the
+# descriptor-driven room editor; Go has no OLC session surface.
+
+# depth-case: redit.no-argument-current-room
+# depth-case: redit.interactive-olc
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+redit
