@@ -416,22 +416,60 @@ func (w *World) doRoll(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
-	maxRoll := 100
-	if arg != "" {
-		if _, err := fmt.Sscanf(arg, "%d", &maxRoll); err != nil {
-			ch.SendMessage("That doesn't look like a number.\r\n")
-			slog.Warn("roll parse failed", "player", ch.Name, "arg", arg, "error", err)
-			return true
-		}
-		if maxRoll < 1 {
-			maxRoll = 1
-		}
-	}
+	maxRoll := rollMaximum(arg)
 
-	result := randRange(1, maxRoll)
+	result := rollNumber(maxRoll, dprng.Number)
 	// C do_roll (act.other.c:1942): "You roll %u (1-%u)." + act TO_ROOM.
 	ch.SendMessage(fmt.Sprintf("You roll %d (1-%d).\r\n", result, maxRoll))
 	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("With a toss of the dice, %s rolls %d (1-%d).\r\n", ch.Name, result, maxRoll), ch.Name)
 	return true
+}
+
+// rollMaximum mirrors do_roll's one_argument()/atoi()/zero-default path. The
+// C storage type is unsigned int, so a signed atoi result is converted to the
+// same 32-bit representation before it reaches number(int, int).
+func rollMaximum(arg string) uint32 {
+	first, _ := oneArgument(arg)
+	maxRoll := cIntToUint32(atoiC(first))
+	if maxRoll == 0 {
+		return 100
+	}
+	return maxRoll
+}
+
+// rollNumber preserves C's implicit unsigned-int-to-int conversion at the
+// number(1, max_roll) call and returns the unsigned result stored by do_roll.
+func rollNumber(maxRoll uint32, number func(int, int) int) uint32 {
+	return cIntToUint32(number(1, cUnsignedToInt(maxRoll)))
+}
+
+// cIntToUint32 performs the modulo conversion C applies when an int is stored
+// in an unsigned int, without relying on an unchecked Go narrowing cast.
+func cIntToUint32(value int) uint32 {
+	const modulus = int64(1 << 32)
+	normalized := int64(value) % modulus
+	if normalized < 0 {
+		normalized += modulus
+	}
+	if normalized < 0 || normalized > int64(^uint32(0)) {
+		return 0
+	}
+	return uint32(normalized)
+}
+
+// cUnsignedToInt performs the implementation-defined C conversion used when
+// do_roll passes unsigned max_roll to number(int, int). C int is 32 bits here.
+func cUnsignedToInt(value uint32) int {
+	const (
+		cIntMax = int64(1<<31 - 1)
+		cIntMin = -1 << 31
+	)
+	signed := int64(value)
+	if signed > cIntMax {
+		signed -= 1 << 32
+	}
+	if signed < cIntMin || signed > cIntMax {
+		return 0
+	}
+	return int(signed)
 }
