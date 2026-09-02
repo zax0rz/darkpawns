@@ -1,0 +1,114 @@
+# C-first accuse/do_action target vehicle (src/interpreter.c:330;
+# src/act.social.c:102-151; lib/misc/socials:58-66). The registered command
+# requires POS_SITTING and the social record requires a POS_RESTING victim.
+# Three players expose actor, target, and distinct observer audiences without
+# exceeding the differential harness's reliable live-player envelope.
+
+# depth-case: accuse.target-success
+# depth-case: accuse.target-audience
+# depth-case: accuse.one-argument
+# depth-case: accuse.self-target
+# depth-case: accuse.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+accuse the Ragnar trailing words are ignored
+accuse Ragnar
+accuse Mordecai
+accuse self
+accuse Nobody
