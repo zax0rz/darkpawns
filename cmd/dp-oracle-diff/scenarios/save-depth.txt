@@ -1,0 +1,50 @@
+# C-first save vehicle (src/interpreter.c:672; src/act.other.c:186-203).
+# The session-facing command has no room audience: it ignores arguments,
+# acknowledges a player save with the exact C line, and remains legal while
+# the actor is sleeping.
+
+# depth-case: save.acknowledgement
+# depth-case: save.argument-ignored
+# depth-case: save.sleeping-entry
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Saveactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Saveactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+save
+save ignored trailing words
+sleep
+save while sleeping
