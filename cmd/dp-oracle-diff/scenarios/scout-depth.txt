@@ -1,0 +1,51 @@
+# C-first scout rejection vehicle (src/interpreter.c:676;
+# src/act.other.c:1826-1854). The probes isolate one_argument parsing,
+# direction validation, the late skill gate, and the no-argument response.
+
+# depth-case: scout.no-argument
+# depth-case: scout.invalid-direction
+# depth-case: scout.fill-word-direction
+# depth-case: scout.outdoors-gate-default-room
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 none
+
+[setup:oracle]
+Scoutgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scoutgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+scout
+scout sideways
+scout in north
+scout north

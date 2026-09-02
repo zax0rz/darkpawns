@@ -313,13 +313,13 @@ func (w *World) doScout(ch *Player, me *MobInstance, cmd string, arg string) boo
 	// but it IS a hard reject — a no-skill scouter gets "You have no idea how!"
 	// before the outside/exit checks, regardless of location — so it must be
 	// repositioned to match C, never removed.
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
+	directionArg := extractArg(arg)
+	if directionArg == "" {
 		ch.SendMessage("Scout where?\r\n")
 		return true
 	}
 
-	dir := directionIndex(arg)
+	dir := directionIndex(directionArg)
 	if dir < 0 {
 		ch.SendMessage("Scout in which direction?\r\n")
 		return true
@@ -331,7 +331,7 @@ func (w *World) doScout(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 
 	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room == nil || !isOutdoors(room) {
+	if room == nil || (hasRoomFlag(room, "indoors") && room.Sector == 0) {
 		ch.SendMessage("You can only do this outdoors.\r\n")
 		return true
 	}
@@ -348,63 +348,78 @@ func (w *World) doScout(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	// Sector description
-	sectorNames := map[int]string{
-		0:  "the cobblestones of a city",
-		1:  "a wide swath of field",
-		2:  "the dense forest",
-		3:  "high hills",
-		4:  "jagged mountains",
-		5:  "a large stretch of water",
-		6:  "thin air",
-		7:  "a murky swamp",
-		8:  "the inside of a structure",
-		9:  "a vast wasteland",
-		10: "the watery depths",
-		11: "the endless elemental plane",
-	}
-
-	sectorDesc, ok := sectorNames[toRoom.Sector]
-	if !ok {
-		sectorDesc = "the endless elemental plane"
-	}
-
-	ch.SendMessage(fmt.Sprintf("There is %s to the %s.\r\n", sectorDesc, arg))
+	// C's do_scout switch uses the raw sector constants from structs.h.
+	sectorDesc := scoutTerrain(toRoom.Sector)
+	ch.SendMessage(fmt.Sprintf("You see %s to the %s.\r\n", sectorDesc, dirList[dir]))
 
 	// Room flags
-	if isDark(toRoom) {
-		ch.SendMessage("It is dark in that direction.\r\n")
+	if w.IsRoomDark(toRoom.VNum) {
+		ch.SendMessage("It looks pretty dark there.\r\n")
 	}
 	if hasRoomFlag(toRoom, "death") {
-		ch.SendMessage("You sense certain death in that direction.\r\n")
+		ch.SendMessage("You sense that it is not safe to travel there.\r\n")
 	}
 	if hasRoomFlag(toRoom, "tunnel") {
-		ch.SendMessage("It looks narrow in that direction.\r\n")
+		ch.SendMessage("It looks like a very narrow passage.\r\n")
 	}
 
-	// Count people
-	players := w.GetPlayersInRoom(toRoom.VNum)
-	mobs := w.GetMobsInRoom(toRoom.VNum)
-
-	playerCount := 0
-	for _, p := range players {
-		if !p.IsNPC() {
-			playerCount++
-		}
+	if len(w.GetItemsInRoom(toRoom.VNum)) > 0 {
+		ch.SendMessage("It looks like there is something on the ground there.\r\n")
 	}
-
-	totalCount := playerCount + len(mobs)
-	if totalCount == 0 {
-		ch.SendMessage("You see no one there.\r\n")
-	} else if totalCount == 1 {
-		ch.SendMessage("You see one being there.\r\n")
-	} else if totalCount < 10 {
-		ch.SendMessage(fmt.Sprintf("You see a group of %d beings there.\r\n", totalCount))
-	} else {
-		ch.SendMessage("You see a huge crowd there!\r\n")
+	peopleCount := len(w.GetPlayersInRoom(toRoom.VNum)) + len(w.GetMobsInRoom(toRoom.VNum))
+	if peopleCount > 0 {
+		ch.SendMessage(fmt.Sprintf("It looks like there is %s over there.\r\n", scoutCrowdSize(peopleCount)))
 	}
 
 	return true
+}
+
+func scoutTerrain(sector int) string {
+	switch sector {
+	case 0:
+		return "the inside of a structure"
+	case 1:
+		return "the cobblestones of a city"
+	case 2:
+		return "a wide swath of field"
+	case 3:
+		return "the dense forest"
+	case 4:
+		return "high hills"
+	case 5:
+		return "jagged mountains"
+	case 6, 7:
+		return "a large stretch of water"
+	case 8:
+		return "the watery depths"
+	case 9:
+		return "thin air"
+	case 10:
+		return "a vast wasteland"
+	case 15:
+		return "a murky swamp"
+	default:
+		return "the endless elemental plane"
+	}
+}
+
+func scoutCrowdSize(count int) string {
+	switch {
+	case count == 1:
+		return "someone"
+	case count <= 3:
+		return "a few people"
+	case count <= 5:
+		return "a group of people"
+	case count <= 9:
+		return "a large group of people"
+	case count <= 12:
+		return "a crowd of people"
+	case count <= 14:
+		return "a large crowd of people"
+	default:
+		return "a large mob"
+	}
 }
 
 // ---------------------------------------------------------------------------
