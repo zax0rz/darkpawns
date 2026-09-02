@@ -1,0 +1,75 @@
+# C-first scout skill-gate vehicle (src/interpreter.c:676;
+# src/act.other.c:1839-1846). The secondary mortal is the probe actor, so
+# the first player's elevated skill state cannot bypass the C GET_SKILL gate.
+
+# depth-case: scout.no-skill
+# depth-case: scout.no-skill-fill-word
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scoutskillhost
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scoutskillhost
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rookie]
+Scoutrookie
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:rookie]
+Scoutrookie
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe:rookie]
+scout north
+scout in north
