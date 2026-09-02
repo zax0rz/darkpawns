@@ -207,7 +207,7 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 		af0Modifier = -(15 + ch.GetLevel()/2)
 		af1Bitvector = engine.AFFMetalskin
 		toVict = "Interlacing your fingers, you harden your mind and body."
-		toRoom = "$n interlaces $s fingers, and $s skin becomes metal!"
+		toRoom = ActMessage("$n interlaces $s fingers, and $s skin becomes metal!", GetPronouns(ch.Name, ch.GetSex()), nil, "")
 	case SkillKkKyo:
 		af0Location = ApplyHitroll
 		af0Modifier = 1
