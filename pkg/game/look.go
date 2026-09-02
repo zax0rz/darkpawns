@@ -773,14 +773,20 @@ func (w *World) DoExamine(ch *Player, arg string) ObservationResult {
 func (w *World) DoDiagnose(ch *Player, arg string) ObservationResult {
 	var result ObservationResult
 	first, _ := splitArg(arg)
+	var target CharTarget
+	var ok bool
 	if first == "" {
-		first = ch.GetFighting()
-		if first == "" {
+		// C passes FIGHTING(ch) directly to diag_char_to_char. Go stores
+		// that pointer as a name, and a mob's name is its multi-word short
+		// description, so do not send it back through keyword lookup.
+		target, ok = w.ResolveFightingTarget(ch)
+		if !ok {
 			result.literal(ch, "Diagnose who?")
 			return result
 		}
+	} else {
+		target, ok = w.ResolveCharInRoom(ch, first)
 	}
-	target, ok := w.ResolveCharInRoom(ch, first)
 	if !ok {
 		result.literal(ch, "No-one by that name here.")
 		return result
