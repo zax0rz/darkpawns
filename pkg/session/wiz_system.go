@@ -365,10 +365,18 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 
 	switch subcmd {
 	case wizutilReroll:
-		s.Send("Rerolled!")
-		s.Send(fmt.Sprintf("New stats: Str %d, Int %d, Wis %d, Dex %d, Con %d, Cha %d",
-			target.player.Stats.Str, target.player.Stats.Int, target.player.Stats.Wis,
-			target.player.Stats.Dex, target.player.Stats.Con, target.player.Stats.Cha))
+		// C roll_real_abils() replaces both real_abils and aff_abils with a
+		// fresh class/race-dependent roll before copying the new constitution
+		// into GET_ORIG_CON (class.c:380-497; act.wizard.c:2101-2111).
+		stats := game.RollRealAbils(target.player.Class, target.player.Race)
+		target.player.Lock()
+		target.player.Stats = stats
+		target.player.Strength = stats.Str
+		target.player.OrigCon = stats.Con
+		target.player.Unlock()
+		s.Send("Rerolled...\r\n")
+		s.Send(fmt.Sprintf("New stats: Str %d/%d, Int %d, Wis %d, Dex %d, Con %d, Cha %d\r\n",
+			stats.Str, stats.StrAdd, stats.Int, stats.Wis, stats.Dex, stats.Con, stats.Cha))
 	case wizutilPardon:
 		// act.wizard.c:2113 — a non-outlaw victim is rejected.
 		if target.player.GetFlags()&(1<<game.PlrOutlaw) == 0 {
@@ -477,10 +485,11 @@ func cmdReroll(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: reroll <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilReroll, args[0])
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	return wizutilDispatch(s, wizutilReroll, targetName)
 }
 
 // cmdUnaffect — standalone "unaffect <player>" command.
