@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_save	save	save.entry-gate	D1	command	unit-green	TestSaveRegistrationUsesCEntryGate	interpreter.c:672; comm.c:910-947	The registered C row permits every level at POS_SLEEPING; the focused test pins the command-surface gate (R1/R2/R5e).
+do_save	save	save.position-gate	D1	command	delegated	group.position-gate	interpreter.c:672; comm.c:910-947	The shared POS_SLEEPING dispatcher rejection is already proven by the group gate boundary (R5b/R5c).
+do_save	save	save.acknowledgement	D1	command	oracle-green-multiseed	save-depth@1,2,3,5,8	act.other.c:186-194	A descriptor-backed player save emits exactly Saving <name>. with C CRLF bytes and no invented audience output (R1/R3/R5e).
+do_save	save	save.argument-ignored	D2	command	oracle-green-multiseed	save-depth@1,2,3,5,8	act.other.c:191-198	The C do_save body ignores trailing command arguments while still saving and acknowledging the player (R1/R2/R5e).
+do_save	save	save.sleeping-entry	D1	command	oracle-green-multiseed	save-depth@1,2,3,5,8	interpreter.c:672; act.other.c:186-194	POS_SLEEPING permits the save command and preserves the same acknowledgement while the actor sleeps (R1/R2/R3/R5e).
+do_save	save	save.npc-no-descriptor	D5	command	excluded	-	act.other.c:188-189	NPC and no-descriptor early returns are unreachable from a player descriptor command; no synthetic player-facing vehicle is valid (R2/R4/R5e).
+do_save	save	save.persistence-seams	D4	state	delegated	quit.safe-equipment-retained	act.other.c:195-202; save.c	The shared player-record and crash-inventory save seam is owned by the existing quit persistence proof; this command adds no separate state semantics (R5b/R5c).
