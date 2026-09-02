@@ -1,0 +1,115 @@
+# C-first chide/do_action vehicle (src/interpreter.c:376;
+# src/act.social.c:102-151; lib/misc/socials:1406-1414). The registered
+# command requires POS_RESTING. The record has hide=0, no victim-position
+# minimum, an actor-only no-argument branch (# others_no_arg), and authored
+# target, observer, victim, self, and not-found branches.
+
+# depth-case: chide.no-argument
+# depth-case: chide.target-success
+# depth-case: chide.target-audience
+# depth-case: chide.one-argument
+# depth-case: chide.self-target
+# depth-case: chide.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+chide
+chide Ragnar
+chide the Ragnar trailing words are ignored
+chide Mordecai
+chide Nobody
