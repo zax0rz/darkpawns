@@ -1,0 +1,75 @@
+# C-first entry/skill-gate vehicle for search/do_detect.
+# C registration: src/interpreter.c:411; the zero-skill ordinary-player return
+# is the first branch in src/new_cmds2.c:504-507.
+#
+# depth-case: search.entry-gate
+# depth-case: search.no-skill
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+
+[setup:oracle]
+Sgategod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sgategod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Sgate
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Sgate
+y
+targetpass
+targetpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Sgate 8105
+
+[probe:target]
+search

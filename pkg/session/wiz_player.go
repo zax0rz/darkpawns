@@ -545,6 +545,10 @@ func cmdSkillset(s *Session, args []string) error {
 	// gameplay lookup uses the Go storage key pick_lock. First aid is likewise
 	// displayed as C's "aid" but stored under the Go key first_aid.
 	switch canonicalName {
+	case "search":
+		// C's spells[SKILL_DETECT] display name is "search", while
+		// do_detect's gameplay lookup uses the command-facing SkillDetect key.
+		canonicalName = game.SkillDetect
 	case "pick lock":
 		canonicalName = game.SkillPickLock
 	case "aid":

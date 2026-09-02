@@ -1,0 +1,80 @@
+# C-first failed-roll vehicle for search/do_detect.
+# A skill-1 peer reaches C's initial room-check line, failed result, and exact
+# WAIT_STATE(PULSE_VIOLENCE + 1). Frozen-clock padding drains the wait before
+# score proves ordinary command dispatch resumes.
+#
+# depth-case: search.failed-roll
+# depth-case: search.wait-state
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+
+[setup:oracle]
+Searchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Searchgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Searchtarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Searchtarget
+y
+targetpass
+targetpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Searchtarget 8105
+skillset Searchtarget 'search' 1
+
+[probe:target]
+search
+~dpclock pulse 20
+~dpclock pulse 20
+score
