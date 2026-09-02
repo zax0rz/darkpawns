@@ -430,7 +430,7 @@ func (w *World) doRoll(ch *Player, me *MobInstance, cmd string, arg string) bool
 // same 32-bit representation before it reaches number(int, int).
 func rollMaximum(arg string) uint32 {
 	first, _ := oneArgument(arg)
-	maxRoll := uint32(atoiC(first))
+	maxRoll := cIntToUint32(atoiC(first))
 	if maxRoll == 0 {
 		return 100
 	}
@@ -440,5 +440,36 @@ func rollMaximum(arg string) uint32 {
 // rollNumber preserves C's implicit unsigned-int-to-int conversion at the
 // number(1, max_roll) call and returns the unsigned result stored by do_roll.
 func rollNumber(maxRoll uint32, number func(int, int) int) uint32 {
-	return uint32(number(1, int(int32(maxRoll))))
+	return cIntToUint32(number(1, cUnsignedToInt(maxRoll)))
+}
+
+// cIntToUint32 performs the modulo conversion C applies when an int is stored
+// in an unsigned int, without relying on an unchecked Go narrowing cast.
+func cIntToUint32(value int) uint32 {
+	const modulus = int64(1 << 32)
+	normalized := int64(value) % modulus
+	if normalized < 0 {
+		normalized += modulus
+	}
+	if normalized < 0 || normalized > int64(^uint32(0)) {
+		return 0
+	}
+	return uint32(normalized)
+}
+
+// cUnsignedToInt performs the implementation-defined C conversion used when
+// do_roll passes unsigned max_roll to number(int, int). C int is 32 bits here.
+func cUnsignedToInt(value uint32) int {
+	const (
+		cIntMax = int64(1<<31 - 1)
+		cIntMin = -1 << 31
+	)
+	signed := int64(value)
+	if signed > cIntMax {
+		signed -= 1 << 32
+	}
+	if signed < cIntMin || signed > cIntMax {
+		return 0
+	}
+	return int(signed)
 }
