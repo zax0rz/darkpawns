@@ -13,7 +13,6 @@
 # depth-case: show.errors
 # depth-case: show.death
 # depth-case: show.godrooms
-# depth-case: show.houses
 # depth-case: show.tattoos
 # depth-case: show.aggr
 # depth-case: show.reagents
@@ -66,7 +65,6 @@ show stats
 show errors
 show death
 show godrooms
-show houses
 show tattoos
 show aggr
 show reagents
