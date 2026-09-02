@@ -67,28 +67,63 @@ func cmdEcho(s *Session, args []string) error {
 // send — send message to another character (LVL_GOD)
 // ---------------------------------------------------------------------------
 func cmdSend(s *Session, args []string) error {
+	return cmdSendText(s, args, "")
+}
+
+// cmdSendText preserves the un-tokenized argument remainder used by C's
+// half_chop (src/interpreter.c:1372-1379). The target is the first token, and
+// the message is the remaining text after skip_spaces, including internal and
+// trailing whitespace.
+func cmdSendText(s *Session, args []string, rawArgs string) error {
 	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
+		s.Send("Huh?!?\r\n")
 		return nil
 	}
-	if len(args) < 2 {
-		s.Send("Send what to who?")
-		return nil
-	}
-
-	targetName := args[0]
-	msg := strings.Join(args[1:], " ")
-
-	target := findSessionByName(s.manager, targetName)
-	if target == nil || target.player == nil {
-		s.Send("No one by that name online.")
+	targetName, msg, hasTarget := splitSendArgs(args, rawArgs)
+	if !hasTarget {
+		s.Send("Send what to who?\r\n")
 		return nil
 	}
 
-	target.Send(msg)
-	slog.Warn("wizard send", "by", s.player.Name, "target", target.player.Name, "message", msg)
-	s.Send(fmt.Sprintf("You send '%s' to %s.", msg, target.player.Name))
+	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if !ok {
+		s.Send("No-one by that name here.\r\n")
+		return nil
+	}
+
+	// C's send_to_char is a no-op for NPCs. Player.SendMessage routes through
+	// the manager's descriptor sink, so linkless players likewise receive no
+	// bytes while the actor still gets the confirmation below.
+	if target.Player != nil {
+		target.Player.SendMessage(msg + "\r\n")
+	}
+
+	targetDisplayName := target.Combatant.GetName()
+	slog.Warn("wizard send", "by", s.player.Name, "target", targetDisplayName, "message", msg)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.Send("Sent.\r\n")
+	} else {
+		s.Send(fmt.Sprintf("You send '%s' to %s.\r\n", msg, targetDisplayName))
+	}
 	return nil
+}
+
+func splitSendArgs(args []string, rawArgs string) (target, msg string, ok bool) {
+	if rawArgs != "" {
+		remainder := strings.TrimLeft(rawArgs, cCommandWhitespace)
+		if remainder == "" {
+			return "", "", false
+		}
+		idx := strings.IndexAny(remainder, cCommandWhitespace)
+		if idx < 0 {
+			return remainder, "", true
+		}
+		return remainder[:idx], strings.TrimLeft(remainder[idx+1:], cCommandWhitespace), true
+	}
+	if len(args) == 0 {
+		return "", "", false
+	}
+	return args[0], strings.Join(args[1:], " "), true
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,91 @@
+# C-first send vehicle (src/interpreter.c:681; src/act.wizard.c:157-177).
+# The crowned primary exercises half_chop, room/global visibility, self and
+# abbreviation resolution, empty messages, raw spacing, and PRF_NOREPEAT.
+
+# depth-case: send.no-argument
+# depth-case: send.missing-target
+# depth-case: send.same-room
+# depth-case: send.empty-message
+# depth-case: send.target-abbreviation
+# depth-case: send.self-target
+# depth-case: send.spacing
+# depth-case: send.normal-confirmation
+# depth-case: send.norepeat
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sendactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sendactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Sendtarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Sendtarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sendtarget 8162
+
+[probe]
+send
+send nobody hello
+send Sendtarget hello  world  
+send Sendtarget
+send Sendt abbreviated
+send self self-message
+norepeat
+send Sendtarget normal message
+norepeat
+send Sendtarget quiet  message

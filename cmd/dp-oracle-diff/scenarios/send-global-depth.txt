@@ -1,0 +1,74 @@
+# C-first send global-visibility vehicle (src/handler.c:1303-1327).
+# The target is outside the actor's room: get_char_vis must fall through from
+# get_char_room_vis to the global character list and send to that descriptor.
+
+# depth-case: send.global-player
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sendglobal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sendglobal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Sendremote
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Sendremote
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sendremote 8105
+
+[probe]
+send Sendremote remote message

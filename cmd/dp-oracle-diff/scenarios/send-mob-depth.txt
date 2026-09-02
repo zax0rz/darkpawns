@@ -1,0 +1,46 @@
+# C-first send NPC vehicle (src/handler.c:1303-1327; src/act.wizard.c:157-177).
+# send_to_char on a mob is silent, but do_send still confirms to the actor
+# using the mob's player.name keyword list.
+
+# depth-case: send.npc-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+strip-mob-script 8021
+
+[setup:oracle]
+Sendmob
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sendmob
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+send horse stable-message
