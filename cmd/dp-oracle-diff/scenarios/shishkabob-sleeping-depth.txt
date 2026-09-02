@@ -1,0 +1,106 @@
+# C-first shishkabob/do_action sleeping-victim vehicle (src/interpreter.c:689;
+# src/act.social.c:102-151; lib/misc/socials:675-685). The social's
+# POS_RESTING victim minimum rejects a sleeping visible target before any
+# success audience act; an awake observer confirms the refusal is actor-only.
+
+# depth-case: shishkabob.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Roflsleepact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Roflsleepact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Roflsleepobs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Roflsleepobs
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Roflsleeptgt
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Roflsleeptgt
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Roflsleepobs 8162
+teleport Roflsleeptgt 8162
+force Roflsleeptgt sleep
+
+[probe]
+shishkabob Roflsleeptgt
