@@ -793,6 +793,9 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if cmd == "send" {
 		return cmdSendText(s, args, rawArgs)
 	}
+	if cmd == "set" {
+		return cmdSetText(s, args, rawArgs)
+	}
 	if (cmd == "help" || cmd == "?") && rawArgs != "" {
 		return cmdHelpText(s, rawArgs)
 	}

@@ -1,0 +1,128 @@
+# C-first do_set field-table vehicle (src/act.wizard.c:2537-3069).
+# This exercises the optional target prefixes, first-prefix field resolution,
+# binary/numeric/misc families, the remaining player state fields, and a live
+# NPC target. The fixture is disposable and changes neither oracle tree.
+
+# depth-case: set.optional-player-prefix
+# depth-case: set.optional-mob-prefix
+# depth-case: set.binary-field
+# depth-case: set.misc-field
+# depth-case: set.numeric-clamp
+# depth-case: set.special-errors
+# depth-case: set.npc-fields
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+strip-mob-script 18305
+
+[setup:oracle]
+Setallgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setallgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Setalltarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Setalltarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Setalltarget 8162
+
+[probe]
+set player Setalltarget br on
+set Setalltarget title the  Depth Target
+set Setalltarget nosummon off
+set Setalltarget maxmana 6000
+set Setalltarget maxmove 0
+set Setalltarget mana 9999
+set Setalltarget move -5
+set Setalltarget int 99
+set Setalltarget dex 99
+set Setalltarget con 99
+set Setalltarget ac -999
+set Setalltarget gold -1
+set Setalltarget exp 99999999
+set Setalltarget hitroll -99
+set Setalltarget damroll 999
+set Setalltarget invis 99
+set Setalltarget nohassle on
+set Setalltarget frozen off
+set Setalltarget practices 999
+set Setalltarget lessons -1
+set Setalltarget hunger off
+set Setalltarget thirst 49
+set Setalltarget outlaw yes
+set Setalltarget sex neutral
+set Setalltarget cla c
+set Setalltarget race elf
+set Setalltarget loadroom 8162
+set Setalltarget loadroom off
+set Setalltarget color on
+set Setalltarget idnum 77
+set Setalltarget passwd secret
+set Setalltarget nodelete on
+set Setalltarget cha 99
+set Setalltarget olc 123
+set Setalltarget kills -999
+set Setalltarget pks 999999
+set Setalltarget deaths -999
+set Setalltarget home 7
+set Setalltarget tattoo 999
+set Setalltarget origcon 0
+set Setalltarget chosen on
+set Setalltarget clan 0
+set Setalltarget played 77
+set mob cleaner hit 7
+set mob cleaner gold 7
+set Setalltarget level 5

@@ -42,7 +42,9 @@ func TestCmdSetConditions(t *testing.T) {
 		{"hunger set", []string{"Hero", "hunger", "36"}, "Hero's hunger set to 36.\r\n", game.CondFull, 36},
 		{"thirst set", []string{"Hero", "thirst", "48"}, "Hero's thirst set to 48.\r\n", game.CondThirst, 48},
 		{"drunk clamps high", []string{"Hero", "drunk", "49"}, "Hero's drunk set to 48.\r\n", game.CondDrunk, 48},
-		{"drunk clamps low", []string{"Hero", "drunk", "-5"}, "Hero's drunk set to 0.\r\n", game.CondDrunk, 0},
+		// C is_number() accepts digits only (src/interpreter.c:1175-1181),
+		// so a signed condition value is rejected rather than clamped.
+		{"drunk rejects signed value", []string{"Hero", "drunk", "-5"}, "Must be 'off' or a value from 0 to 48.\r\n", game.CondDrunk, 0},
 		{"drunk off", []string{"Hero", "drunk", "off"}, "Hero's drunk now off.\r\n", game.CondDrunk, -1},
 	}
 	for _, tc := range cases {
@@ -154,7 +156,7 @@ func TestCmdSetOutlaw(t *testing.T) {
 	if err := cmdSet(wiz, []string{"Hero", "outlaw", "on"}); err != nil {
 		t.Fatalf("cmdSet: %v", err)
 	}
-	if got := readSessionText(t, wiz); got != "Okay.\r\n" {
+	if got := readSessionText(t, wiz); got != "Outlaw ON for Hero.\r\n" {
 		t.Fatalf("ack = %q, want C binary-field ack", got)
 	}
 	if got := target.player.GetFlags() & (1 << uint(game.PlrOutlaw)); got == 0 {
@@ -164,7 +166,7 @@ func TestCmdSetOutlaw(t *testing.T) {
 	if err := cmdSet(wiz, []string{"Hero", "outlaw", "off"}); err != nil {
 		t.Fatalf("cmdSet off: %v", err)
 	}
-	if got := readSessionText(t, wiz); got != "Okay.\r\n" {
+	if got := readSessionText(t, wiz); got != "Outlaw OFF for Hero.\r\n" {
 		t.Fatalf("off ack = %q, want C binary-field ack", got)
 	}
 	if got := target.player.GetFlags() & (1 << uint(game.PlrOutlaw)); got != 0 {
@@ -199,7 +201,8 @@ func TestCmdSetMobHit(t *testing.T) {
 	if err := cmdSet(wiz, []string{"test", "hit", "7"}); err != nil {
 		t.Fatalf("cmdSet: %v", err)
 	}
-	if got := readSessionText(t, wiz); got != "a test mob's hit set to 7.\r\n" {
+	// C's final CAP(buf) capitalizes the lower-case mob short description.
+	if got := readSessionText(t, wiz); got != "A test mob's hit set to 7.\r\n" {
 		t.Fatalf("ack = %q, want mob hit acknowledgement", got)
 	}
 	if got := mob.GetHP(); got != 7 {

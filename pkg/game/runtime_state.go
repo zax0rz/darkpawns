@@ -40,6 +40,15 @@ type ObjectRuntimeState struct {
 
 // MobRuntimeState replaces CustomData for known mob state keys.
 type MobRuntimeState struct {
+	// These overrides preserve do_set() mutations on one live NPC instance;
+	// C copies prototype data into char_data, so changing a runtime instance
+	// must not rewrite the shared mob prototype.
+	AlignmentOverride *int `json:"alignment_override,omitempty"`
+	ACOverride        *int `json:"ac_override,omitempty"`
+	ClassOverride     *int `json:"class_override,omitempty"`
+	SexOverride       *int `json:"sex_override,omitempty"`
+	HitrollOverride   *int `json:"hitroll_override,omitempty"`
+	StrAddOverride    *int `json:"stradd_override,omitempty"`
 	// DamrollOverride is the instance-local GET_DAMROLL value used by C
 	// specials that assign points.damroll directly (for example carrion's
 	// read_mobile result). A pointer preserves zero as a meaningful override.
