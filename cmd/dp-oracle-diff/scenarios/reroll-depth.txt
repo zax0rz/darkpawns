@@ -1,0 +1,118 @@
+# C-first do_wizutil/SCMD_REROLL vehicle (src/interpreter.c:649;
+# src/act.wizard.c:2077-2111). The fresh-MUD first player is the God actor;
+# a visible trainee mob, a higher Implementor target, and a mortal target
+# exercise the target gates and the reroll branch. Passive peers expose that
+# C sends reroll output only to the actor.
+
+# depth-case: reroll.no-argument
+# depth-case: reroll.target-not-found
+# depth-case: reroll.visible-npc-target
+# depth-case: reroll.higher-immortal-target
+# depth-case: reroll.success
+# depth-case: reroll.one-argument
+# depth-case: reroll.actor-only
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Rerolladmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rerolladmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rerollcaster]
+Rerollcaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:rerollcaster]
+Rerollcaster
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Rerollmortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Rerollmortal
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Rerollcaster 38
+goto 8162
+teleport Rerollcaster 8162
+teleport Rerollmortal 8162
+
+[probe:Rerollcaster]
+reroll
+reroll Nobody
+reroll trainee
+reroll Rerolladmin
+reroll the Rerollmortal trailing words are ignored
