@@ -40,7 +40,7 @@ func readSessionOutput(t *testing.T, s *Session) string {
 func TestCmdSethunt_NoArg(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Wizard", 1001, true)
-	s.player.Level = 31 // LVL_IMMORT
+	s.player.Level = LVL_GRGOD
 	registerInWorld(t, s)
 
 	if err := cmdSethunt(s, nil); err != nil {
@@ -55,10 +55,10 @@ func TestCmdSethunt_NoArg(t *testing.T) {
 func TestCmdSethunt_HunterEqualsVictim(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Wizard", 1001, true)
-	s.player.Level = 31 // LVL_IMMORT
+	s.player.Level = LVL_GRGOD
 	registerInWorld(t, s)
 
-	if err := cmdSethunt(s, []string{"Victim", "Victim"}); err != nil {
+	if err := cmdSethunt(s, []string{"Wizard", "Wizard"}); err != nil {
 		t.Fatalf("cmdSethunt same name: %v", err)
 	}
 	// C: "Yeah right.\n\r"
@@ -70,7 +70,7 @@ func TestCmdSethunt_HunterEqualsVictim(t *testing.T) {
 func TestCmdSethunt_MissingVictim(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Wizard", 1001, true)
-	s.player.Level = 31 // LVL_IMMORT
+	s.player.Level = LVL_GRGOD
 	registerInWorld(t, s)
 
 	if err := cmdSethunt(s, []string{"Nobody", "HunterMob"}); err != nil {
@@ -85,7 +85,7 @@ func TestCmdSethunt_MissingVictim(t *testing.T) {
 func TestCmdSethunt_MissingHunter(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Wizard", 1001, true)
-	s.player.Level = 31 // LVL_IMMORT
+	s.player.Level = LVL_GRGOD
 	registerInWorld(t, s)
 	victim := makeTestSession(t, m, "Target", 1001, true)
 	victim.player.Level = 1
