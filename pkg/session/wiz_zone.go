@@ -310,10 +310,10 @@ func cmdSysfile(s *Session, args []string) error {
 	return nil
 }
 
-// cmdSethunt — set hunt target for a mob (LVL_IMMORT)
-// Original: act.wizard.c do_sethunt() — sets a mob to hunt a player
+// cmdSethunt — set hunt target for a mob (LVL_GRGOD)
+// Original: act.wizard.c do_sethunt() — sets a mob to hunt a visible character
 func cmdSethunt(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
@@ -324,36 +324,43 @@ func cmdSethunt(s *Session, args []string) error {
 	victimName := args[0]
 	hunterName := ""
 	if len(args) > 1 {
-		hunterName = args[1]
+		hunterName = strings.TrimSpace(strings.Join(args[1:], " "))
 	}
 
-	if strings.EqualFold(victimName, hunterName) {
-		s.Send("Yeah right.\n\r")
-		return nil
-	}
-
-	// Find victim (can be any character visible to the wizard)
-	victimSess := findSessionByName(s.manager, victimName)
-	if victimSess == nil || victimSess.player == nil {
+	// C resolves both names through get_char_vis before comparing pointers.
+	// This ordering matters: "sethunt Nobody Nobody" is a victim miss, not
+	// the same-character branch (src/act.wizard.c:3452-3460).
+	victim, ok := s.manager.world.ResolveCharWorld(s.player, victimName)
+	if !ok {
 		s.Send("No-one by that name around.\n\r")
 		return nil
 	}
-
-	// Find hunter — must be a mob in the same room system
-	hunterSess := findSessionByName(s.manager, hunterName)
-	if hunterSess == nil || hunterSess.player == nil {
+	hunter, ok := s.manager.world.ResolveCharWorld(s.player, hunterName)
+	if !ok {
 		s.Send("Who shall be the hunter?\n\r")
 		return nil
 	}
 
-	// Check level restriction
-	if s.player.Level < victimSess.player.Level {
-		s.Send("Can't hunt higher than your level.")
+	if hunter.Combatant == victim.Combatant {
+		s.Send("Yeah right.\n\r")
+		return nil
+	}
+	if hunter.Mob == nil {
+		s.Send("PCs can't be made to hunt.\n\r")
 		return nil
 	}
 
-	slog.Warn("wizard sethunt", "by", s.playerName, "hunter", hunterName, "victim", victimName)
-	s.Send("Ok, they're fucked.")
+	// C compares the wizard's level to the resolved victim, not the raw name,
+	// then mutates the live mob's hunter flag and hunting pointer.
+	if s.player.Level < victim.Combatant.GetLevel() {
+		s.Send("Cant hunt higher than your level.\n\r")
+		return nil
+	}
+	hunter.Mob.SetMobFlag(game.MobFlagHunter)
+	hunter.Mob.SetHunting(victim.Combatant.GetName())
+
+	slog.Warn("wizard sethunt", "by", s.playerName, "hunter", hunter.Combatant.GetName(), "victim", victim.Combatant.GetName())
+	s.Send("Ok, they're fucked.\n\r")
 	return nil
 }
 

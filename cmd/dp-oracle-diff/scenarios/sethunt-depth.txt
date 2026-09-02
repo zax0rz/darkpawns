@@ -1,0 +1,125 @@
+# C-first do_sethunt vehicle (src/interpreter.c:683; src/act.wizard.c:3444-3473).
+# The primary is the crowned wizard, two visible players provide mortal and
+# higher-level victims, and a disposable cleaner mob is the hunter. The probe
+# covers half_chop ordering, get_char_vis target classes, pointer identity,
+# the PC-hunter gate, level comparison, hunter MOB_HUNTER state, and the final
+# acknowledgement bytes.
+
+# depth-case: sethunt.no-argument
+# depth-case: sethunt.victim-missing
+# depth-case: sethunt.hunter-missing
+# depth-case: sethunt.same-character
+# depth-case: sethunt.pc-hunter
+# depth-case: sethunt.high-victim
+# depth-case: sethunt.success
+# depth-case: sethunt.hunter-state
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+strip-mob-script 18305
+
+[setup:oracle]
+Sethuntadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sethuntadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Sethuntvictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Sethuntvictim
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:high]
+Sethunthigh
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:high]
+Sethunthigh
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sethuntvictim 8162
+teleport Sethunthigh 8162
+set Sethunthigh level 39
+set Sethuntadmin level 38
+
+[probe]
+sethunt
+sethunt Nobody Nobody
+sethunt Sethuntvictim Nobody
+sethunt Sethuntvictim Sethuntvictim
+sethunt Sethuntvictim Sethuntadmin
+sethunt Sethuntvictim cleaner
+sethunt Sethuntvictim cleaner
+sethunt Sethunthigh cleaner
