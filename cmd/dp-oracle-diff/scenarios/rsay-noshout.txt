@@ -1,0 +1,76 @@
+# C-first vehicle for do_race_say's PLR_NOSHOUT entry gate
+# (src/act.comm.c:647-653). The first player is a God who mutes the Human
+# actor peer through do_wizutil SCMD_SQUELCH, then the peer's command proves
+# the actor-only refusal and absence of every room audience.
+#
+# depth-case: rsay.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Squelchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Squelchgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Muteon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Muteon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Muteon 8162
+mute Muteon
+
+[probe:actor]
+rsay blocked by the mute flag

@@ -17,13 +17,17 @@ import (
 // phonetically-translated version.
 // Source: act.comm.c do_race_say() — wired to ExecRaceSay bridge in comm_say.go
 func cmdRaceSay(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Yes, but WHAT do you want to say?\n\r")
-		return nil
-	}
-
 	msg := sanitizeMessage(strings.Join(args, " "))
 	s.manager.world.ExecRaceSay(s.player, msg)
+	return nil
+}
+
+// cmdRaceSayText preserves the raw argument remainder delivered by the
+// telnet transport. C's do_race_say keeps internal spacing and only strips
+// leading spaces before dispatch, so the transport-aware path must not rebuild
+// the message from tokenized words (act.comm.c:641-676).
+func cmdRaceSayText(s *Session, msg string) error {
+	s.manager.world.ExecRaceSay(s.player, sanitizeMessage(msg))
 	return nil
 }
 
