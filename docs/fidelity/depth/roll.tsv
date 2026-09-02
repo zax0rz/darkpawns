@@ -1,0 +1,12 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_roll	roll	roll.entry-gate	D1	command	unit-green	TestRollRegistrationUsesCEntryGate	interpreter.c:664; act.other.c:1927-1938	The registered C row permits every level at POS_DEAD; the focused test pins the authoritative entry gate (R1/R2/R5e).
+do_roll	roll	roll.no-argument	D5	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1931-1946; utils.c:53-64	An empty argument defaults to 100, consumes one C-compatible number draw, and emits actor plus room bytes (R1/R3/R5e).
+do_roll	roll	roll.explicit-max	D5	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1931-1946	A positive decimal max is used inclusively for the single draw and in both output ranges (R1/R3/R5e).
+do_roll	roll	roll.trailing-argument-ignored	D2	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	interpreter.c:1265-1280; act.other.c:1931-1937	one_argument consumes only the first non-fill token; trailing words do not alter the max (R1/R2/R5e).
+do_roll	roll	roll.zero-defaults-to-100	D2	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1933-1937	atoi zero selects the C default 100 rather than a clamped range of 1 (R1/R3/R5e).
+do_roll	roll	roll.malformed-defaults-to-100	D2	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1934-1937	A token with no leading digits follows atoi's zero result and still draws/emits both C lines (R1/R3/R5e).
+do_roll	roll	roll.atoi-decimal-prefix	D2	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1934-1937	atoi stops at the first non-digit, so 6junk selects max 6 and preserves draw order (R1/R3/R5e).
+do_roll	roll	roll.fill-word-parser	D2	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	interpreter.c:1265-1280; act.other.c:1931	C one_argument skips the fill word the before consuming 6 (R1/R2/R3/R5e).
+do_roll	roll	roll.leading-plus	D2	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1934-1937	C atoi accepts an optional leading plus sign and selects max 6 (R1/R3/R5e).
+do_roll	roll	roll.negative-unsigned-range	D5	command	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1929-1945; utils.c:53-64	The reachable -5 edge converts max_roll to unsigned 4294967291, then to int -5 for number; the unsigned result/output bytes are preserved (R1/R3/R5e).
+do_roll	roll	roll.actor-room-audience	D3	audience	oracle-green-multiseed	roll-depth@1,2,3,5,8	act.other.c:1942-1946; comm.c:2392-2555	Each draw emits the actor line and the distinct room line to the observer (R1/R3/R5e).

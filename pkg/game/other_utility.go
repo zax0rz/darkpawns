@@ -416,22 +416,29 @@ func (w *World) doRoll(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
-	maxRoll := 100
-	if arg != "" {
-		if _, err := fmt.Sscanf(arg, "%d", &maxRoll); err != nil {
-			ch.SendMessage("That doesn't look like a number.\r\n")
-			slog.Warn("roll parse failed", "player", ch.Name, "arg", arg, "error", err)
-			return true
-		}
-		if maxRoll < 1 {
-			maxRoll = 1
-		}
-	}
+	maxRoll := rollMaximum(arg)
 
-	result := randRange(1, maxRoll)
+	result := rollNumber(maxRoll, dprng.Number)
 	// C do_roll (act.other.c:1942): "You roll %u (1-%u)." + act TO_ROOM.
 	ch.SendMessage(fmt.Sprintf("You roll %d (1-%d).\r\n", result, maxRoll))
 	actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("With a toss of the dice, %s rolls %d (1-%d).\r\n", ch.Name, result, maxRoll), ch.Name)
 	return true
+}
+
+// rollMaximum mirrors do_roll's one_argument()/atoi()/zero-default path. The
+// C storage type is unsigned int, so a signed atoi result is converted to the
+// same 32-bit representation before it reaches number(int, int).
+func rollMaximum(arg string) uint32 {
+	first, _ := oneArgument(arg)
+	maxRoll := uint32(atoiC(first))
+	if maxRoll == 0 {
+		return 100
+	}
+	return maxRoll
+}
+
+// rollNumber preserves C's implicit unsigned-int-to-int conversion at the
+// number(1, max_roll) call and returns the unsigned result stored by do_roll.
+func rollNumber(maxRoll uint32, number func(int, int) int) uint32 {
+	return uint32(number(1, int(int32(maxRoll))))
 }
