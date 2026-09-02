@@ -1,0 +1,114 @@
+# C-first cheer/do_action vehicle (src/interpreter.c:379;
+# src/act.social.c:102-151; lib/misc/socials:1158-1166). The registered
+# command requires POS_RESTING. The record has hide=0, a POS_STANDING victim
+# position minimum, and all eight authored target/audience branches.
+
+# depth-case: cheer.no-argument
+# depth-case: cheer.target-success
+# depth-case: cheer.target-audience
+# depth-case: cheer.one-argument
+# depth-case: cheer.self-target
+# depth-case: cheer.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+cheer
+cheer Ragnar
+cheer the Ragnar trailing words are ignored
+cheer Mordecai
+cheer Nobody
