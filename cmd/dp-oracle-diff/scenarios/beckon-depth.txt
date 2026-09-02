@@ -1,0 +1,116 @@
+# C-first beckon/do_action vehicle (src/interpreter.c:349;
+# src/act.social.c:102-151; lib/misc/socials:1208-1215). The registered
+# command requires POS_RESTING; the record has hide=0 and a standing target
+# position minimum. Three players expose actor, target, observer, self,
+# not-found, and one_argument branches.
+
+# depth-case: beckon.no-argument
+# depth-case: beckon.target-success
+# depth-case: beckon.target-audience
+# depth-case: beckon.one-argument
+# depth-case: beckon.self-target
+# depth-case: beckon.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+beckon
+beckon the Ragnar trailing words are ignored
+beckon Ragnar
+beckon Mordecai
+beckon self
+beckon Nobody
