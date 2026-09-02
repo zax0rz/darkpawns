@@ -1,0 +1,112 @@
+# C-first recall command vehicle (src/interpreter.c:641; src/act.other.c:1727-1748;
+# src/spells.c:124-163). The immortal primary places a level-one peer in the
+# default start room and leaves one origin observer there while moving another
+# observer to the destination temple. The peer is the probe actor so both
+# actor bytes and the disappearance/appearance room audiences are captured.
+
+# depth-case: recall.argument-ignored
+# depth-case: recall.transfer
+# depth-case: recall.origin-audience
+# depth-case: recall.destination-audience
+# depth-case: recall.sleeping-position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Recalladmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Recalladmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Recallactor]
+Recallactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Recallactor]
+Recallactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Recalldest]
+Recalldest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Recalldest]
+Recalldest
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Recallactor 8162
+teleport Recalldest 8004
+
+[probe:Recallactor]
+recall trailing words
+sleep
+recall ignored while sleeping
