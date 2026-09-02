@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_olc	redit	redit.nonnumeric-argument	D1	command	blocked	redit-entry-depth@1	interpreter.c:656; olc.c:80-145	C emits Yikes! Stop that, someone will get hurt! for nonnumeric input; Go has no redit/OLC handler and emits Huh?!? (R1/R2/R4/R5e). First honest attempt.
+do_olc	redit	redit.unknown-zone	D1	command	blocked	redit-entry-depth@1	olc.c:148-175	C allocates OLC state, rejects an unknown zone with Sorry, there is no zone for that number!, and frees state; Go emits Huh?!? (R1/R2/R4/R5e). First honest attempt.
+do_olc	redit	redit.no-argument-current-room	D2	command	blocked	redit-session-depth@1	olc.c:102-115,228-239	Unlike other OLC subcommands, C's empty input selects world[IN_ROOM(ch)].number and enters room setup; Go has no handler. Second honest attempt.
+do_olc	redit	redit.interactive-olc	D3	command	blocked	redit-session-depth@1	redit.c:65-73,78-92,648-664; interpreter.c:1723-1731	C sends the descriptor-driven REDIT_MAIN_MENU and changes connection state; Go cannot reach the session state machine without inventing an OLC surface. Second honest attempt.

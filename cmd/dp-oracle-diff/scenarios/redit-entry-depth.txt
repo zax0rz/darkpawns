@@ -1,0 +1,44 @@
+# First honest C-first redit/do_olc entry vehicle
+# (src/interpreter.c:656; src/olc.c:80-175). The first player is the default
+# builder-capable command actor. These probes stay in normal command mode and
+# cover the nonnumeric and unknown-zone early returns.
+
+# depth-case: redit.nonnumeric-argument
+# depth-case: redit.unknown-zone
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+redit abc
+redit 999999
