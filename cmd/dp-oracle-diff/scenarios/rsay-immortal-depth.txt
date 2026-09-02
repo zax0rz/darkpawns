@@ -1,0 +1,75 @@
+# C-first rsay immortal-recipient vehicle (src/interpreter.c:667;
+# src/act.comm.c:635-755). The Elf peer is promoted during warmup so the
+# differing-race branch takes C's immortal/original arm.
+
+# depth-case: rsay.immortal-original
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rsayimmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rsayimmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Rinpeer
+Y
+oraclepass
+oraclepass
+N
+M
+E
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Rinpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+E
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Rinpeer 8162
+set Rinpeer level 34
+
+[probe]
+rsay immortal original.
