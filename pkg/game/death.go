@@ -249,10 +249,10 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		mobVNum := 0
 		mobLevel := 0
 		if mob, ok := victim.(*MobInstance); ok && mob.Prototype != nil {
-			mobExp = mob.Prototype.Exp
+			mobExp = mob.GetExp()
 			mobGold = mob.Prototype.Gold
 			mobVNum = mob.Prototype.VNum
-			mobLevel = mob.Prototype.Level
+			mobLevel = mob.GetLevel()
 		}
 		roomName := ""
 		if room, ok := w.GetRoom(victim.GetRoom()); ok {

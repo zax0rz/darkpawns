@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -1507,15 +1508,26 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 		if fighting == "" {
 			return s.SendMessage("Kick who?\r\n")
 		}
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
 		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
+			return s.SendMessage("Kick who?\r\n")
 		}
 	} else {
-		targetName := strings.Join(args, " ")
+		// C's one_argument consumes only the first token; trailing words are
+		// ignored before get_char_room_vis (new_cmds2.c:703-705).
+		targetName := args[0]
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
 		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
+			// C falls back to FIGHTING(ch) after an unsuccessful named lookup,
+			// not only when the command has no argument (new_cmds2.c:705-713).
+			fighting := ch.GetFighting()
+			if fighting == "" {
+				return s.SendMessage("Kick who?\r\n")
+			}
+			target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+			if !found {
+				return s.SendMessage("Kick who?\r\n")
+			}
 		}
 	}
 
@@ -1733,6 +1745,26 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// after the notice lines above — exactly like C's aware-backstab branch.
 	if result.RetaliateHit && !result.RetaliateHitBeforeSkillMessage && !result.RetaliateHitAfterMessages {
 		performRetaliateHit()
+	}
+
+	// C's serpent-kick training branch creates the hunting mob after damage()
+	// returns and before improve_skill() (new_cmds2.c:734-740). The C expression
+	// evaluates number(0,80) before the level check, so every successful hit
+	// consumes this draw even below level 19. Keep creation quiet: create_mobile
+	// followed by char_to_room does not announce a normal world spawn.
+	if result.SpawnMobVNum != 0 {
+		// #nosec G404 — game RNG, not cryptographic
+		if dprng.Number(0, 80) == 0 && ch.GetLevel() > 18 {
+			mob, err := s.GetWorld().SpawnMobQuiet(result.SpawnMobVNum, result.SpawnMobRoom)
+			if err != nil {
+				slog.Error("skill training mob spawn failed", "vnum", result.SpawnMobVNum, "room", result.SpawnMobRoom, "error", err)
+			} else {
+				mob.ConfigureCreatedMobile(result.SpawnMobLevel)
+				if result.SpawnMobHunting {
+					s.GetWorld().SetHunting(mob.GetName(), ch.GetName(), true)
+				}
+			}
+		}
 	}
 
 	// Run deferred skill improvement AFTER the skill_message dice and the

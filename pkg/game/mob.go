@@ -508,6 +508,44 @@ func (m *MobInstance) SetLevel(level int) {
 	m.Level = level
 }
 
+// ConfigureCreatedMobile applies create_mobile()'s per-instance level stats.
+// C new_cmds2.c:588-618 writes these fields after read_mobile(), so they must
+// remain instance-local and never mutate the shared mob prototype.
+func (m *MobInstance) ConfigureCreatedMobile(level int) {
+	damroll := 0
+	ndd := 0
+	if level > 10 {
+		damroll = int(float64(level+1) / 1.50)
+		ndd = int(float64(level) / 1.50)
+	} else {
+		damroll = (level + 1) / 2
+		ndd = (level + 1) / 2
+	}
+	sdd := 4
+	ac := 100 - (10 * level)
+	hitroll := level
+	maxHP := 10*level + 10
+	if level > 22 {
+		maxHP += 13 * (level - 22)
+	}
+	if level > 30 {
+		maxHP += 560 * (level - 30)
+	}
+	zeroExp := 0
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Level = level
+	m.Runtime.DamrollOverride = &damroll
+	m.Runtime.DamageNumOverride = &ndd
+	m.Runtime.DamageSidesOverride = &sdd
+	m.Runtime.HitrollOverride = &hitroll
+	m.Runtime.ACOverride = &ac
+	m.Runtime.ExpOverride = &zeroExp
+	m.MaxHP = maxHP
+	m.CurrentHP = maxHP
+}
+
 // SetDamroll overrides the mob's instance-local GET_DAMROLL value. C specials
 // may assign points.damroll on a spawned mobile without changing its shared
 // prototype (src/spec_procs2.c:1743).
@@ -963,6 +1001,20 @@ func (m *MobInstance) GetHealth() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.CurrentHP
+}
+
+// GetExp returns the instance experience value, including create_mobile's
+// explicit zero override, falling back to the prototype for ordinary mobs.
+func (m *MobInstance) GetExp() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.Runtime.ExpOverride != nil {
+		return *m.Runtime.ExpOverride
+	}
+	if m.Prototype != nil {
+		return m.Prototype.Exp
+	}
+	return 0
 }
 
 func (m *MobInstance) SetHealth(health int) {
