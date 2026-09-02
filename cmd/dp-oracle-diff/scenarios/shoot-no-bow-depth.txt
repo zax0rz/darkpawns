@@ -1,0 +1,46 @@
+# C-first do_shoot wield gate (src/act.offensive.c:844-851). The north exit
+# is disposable and open; the actor carries a real missile but no fireweapon.
+
+# depth-case: shoot.no-bow
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+replace-room-exits 8162 north 8161 0
+
+[setup:oracle]
+Shootbow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootbow
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+get arrow
+shoot arrow north nobody

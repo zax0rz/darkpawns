@@ -1,0 +1,54 @@
+# C-first do_shoot owned item/direction gates (src/act.offensive.c:809-850).
+# The object fixtures are disposable; the source world and C oracle tree stay
+# read-only. Room 8162 has no exits so the valid-direction branch reaches C's
+# capitalized Interesting Direction response after projectile resolution.
+
+# depth-case: shoot.non-projectile
+# depth-case: shoot.invalid-direction
+# depth-case: shoot.valid-direction-no-exit
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+replace-room-exits 8162 none
+
+[setup:oracle]
+Shootgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+get hoopak
+shoot hoopak north nobody
+get arrow
+shoot arrow diagonal nobody
+shoot arrow north nobody

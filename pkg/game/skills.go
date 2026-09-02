@@ -178,6 +178,7 @@ var SkillPosReq = map[string]int{
 	SkillCharge:     combat.PosFighting,
 	SkillFleshAlter: combat.PosFighting,
 	SkillAmbush:     combat.PosStanding,
+	SkillShoot:      combat.PosStanding,
 }
 
 // ---------------------------------------------------------------------------
@@ -224,6 +225,7 @@ var SkillUnknownMsg = map[string]string{
 	SkillTigerPunch:  "What's that, idiot-san?\r\n",                                  // C: \r\n (act.offensive.c:700)
 	SkillDragonKick:  "What's that, idiot-san?\r\n",                                  // C: \r\n (do_dragon_kick) — shared with neckbreak/tiger_punch
 	SkillGroinrip:    "You're not trained in martial arts!\n\r",                      // C: \n\r (new_cmds.c:2582)
+	SkillShoot:       "You have no idea how.\r\n",                                    // C: \r\n (act.offensive.c:764)
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills

@@ -1,0 +1,81 @@
+# C-first do_shoot entry-gate vehicle (src/interpreter.c:695;
+# src/act.offensive.c:746-808). A God grants a mortal peer SKILL_SHOOT so the
+# handler's own argument gates, rather than the learned-skill gate, run.
+
+# depth-case: shoot.no-argument
+# depth-case: shoot.projectile-only
+# depth-case: shoot.projectile-and-direction
+# depth-case: shoot.projectile-missing
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shootentry
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootentry
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Shootactor]
+Shootactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Shootactor]
+Shootactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shootactor 8162
+skillset Shootactor 'shoot' 100
+
+[probe:Shootactor]
+shoot
+shoot arrow
+shoot arrow north
+shoot arrow north nobody
