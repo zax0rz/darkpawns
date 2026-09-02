@@ -1,0 +1,53 @@
+# C-first do_shoot sentinel target gate (src/act.offensive.c:929-933).
+
+# depth-case: shoot.sentinel-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+spawn-mob 16303 1 8163 163
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootsentinel
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootsentinel
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Shootsentinel 'shoot' 100
+
+[probe]
+get hoopak
+get arrow
+wield hoopak
+shoot arrow north trainee

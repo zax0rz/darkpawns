@@ -10,6 +10,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 type rescueCombatEngine interface {
@@ -913,62 +914,92 @@ func CmdShoot(s SessionInterface, args []string) error {
 	if canUse, msg := game.CanUseSkill(ch, game.SkillShoot); !canUse {
 		return s.SendMessage(msg)
 	}
+	// C half_chop() consumes three fields before any object or direction
+	// lookup (act.offensive.c:782-799). Keep those parser gates ahead of every
+	// later branch; the old Go handler invented a same-room target form.
 	if len(args) == 0 {
-		return s.SendMessage("Shoot whom?\r\n")
+		return s.SendMessage("Shoot what where?\r\n")
+	}
+	if len(args) == 1 {
+		return s.SendMessage("Where would you like to shoot it?\r\n")
+	}
+	if len(args) == 2 {
+		return s.SendMessage("Who would you like to shoot it at in that direction?\r\n")
 	}
 
 	world := s.GetWorld()
-	argStr := strings.Join(args, " ")
-
-	// Parse direction from args (C: act.offensive.c do_shoot)
-	directions := []string{"north", "south", "east", "west", "up", "down", "n", "s", "e", "w", "u", "d"}
-	dirMap := map[string]string{
-		"n": "north", "s": "south", "e": "east", "w": "west", "u": "up", "d": "down",
+	projectileName := args[0]
+	directionName := strings.ToLower(args[1])
+	targetName := strings.Join(args[2:], " ")
+	directions := map[string]string{
+		"north": "north", "n": "north",
+		"east": "east", "e": "east",
+		"south": "south", "s": "south",
+		"west": "west", "w": "west",
+		"up": "up", "u": "up",
+		"down": "down", "d": "down",
 	}
-	var direction, targetName string
-	for _, part := range args {
-		lowerPart := strings.ToLower(part)
-		for _, dir := range directions {
-			if lowerPart == dir {
-				direction = dir
-				if fullDir, ok := dirMap[dir]; ok {
-					direction = fullDir
-				}
-				targetName = strings.TrimSpace(strings.Replace(argStr, part, "", 1))
-				break
-			}
-		}
-		if direction != "" {
-			break
-		}
+	direction, validDirection := directions[directionName]
+	if !validDirection {
+		return s.SendMessage("Interesting direction.\r\n")
 	}
 
-	// Same-room shoot (no direction specified)
-	if direction == "" {
-		target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), argStr, ch)
-		if !found {
-			return s.SendMessage("They aren't here.\r\n")
-		}
-		return sendSkillResult(s, ch, target, game.DoShoot(ch, target))
+	projectile, found := world.ResolveObjectInInventory(ch, projectileName)
+	if !found {
+		return s.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", projectileName))
+	}
+	if projectile.GetTypeFlag() != int(game.ItemMissile) {
+		return s.SendMessage(game.CapitalizeSentence(projectile.GetShortDesc()+" is not a projectile!") + "\r\n")
 	}
 
-	// Ranged shoot into adjacent room
 	room := world.GetRoomInWorld(ch.GetRoom())
 	if room == nil {
 		return s.SendMessage("You are nowhere.\r\n")
 	}
 	exit, ok := room.Exits[direction]
 	if !ok {
-		return s.SendMessage("There is no exit in that direction.\r\n")
+		return s.SendMessage("Interesting Direction.\r\n")
+	}
+	if ch.Equipment == nil {
+		return s.SendMessage("You must wield a bow or sling to fire a projectile.\r\n")
+	}
+	bow, wielded := ch.Equipment.GetItemInSlot(game.SlotWield)
+	if !wielded || bow == nil || bow.GetTypeFlag() != int(game.ItemFireWeapon) {
+		return s.SendMessage("You must wield a bow or sling to fire a projectile.\r\n")
 	}
 
-	// Find target in adjacent room
-	target, _, found := game.FindTargetInRoom(world, exit.ToRoom, targetName, ch)
+	if exit.ToRoom < 0 {
+		return s.SendMessage("Alas, you cannot shoot that way...\r\n")
+	}
+	if exit.ExitInfo&parser.ExitClosed != 0 {
+		if keyword := strings.Fields(exit.Keywords); len(keyword) > 0 {
+			return s.SendMessage(fmt.Sprintf("The %s seems to be closed.\r\n", keyword[0]))
+		}
+		return s.SendMessage("It seems to be closed.\r\n")
+	}
+	targetRoom := world.GetRoomInWorld(exit.ToRoom)
+	if targetRoom == nil {
+		return s.SendMessage("Alas, you cannot shoot that way...\r\n")
+	}
+	if targetRoom.HasFlag(4) || room.HasFlag(4) {
+		return s.SendMessage("You feel too peaceful to contemplate violence.\r\n")
+	}
+
+	// C falls back to the first person in the destination room when the named
+	// lookup misses. Preserve the explicit no-target branch for now; the
+	// hit/miss state machine remains a separate depth case.
+	targetInfo, found := world.ResolveCharInRoomAt(ch, exit.ToRoom, targetName)
 	if !found {
-		return s.SendMessage(fmt.Sprintf("You don't see anyone to shoot %s!\r\n", direction))
+		if err := world.MoveObjectToRoom(projectile, exit.ToRoom); err != nil {
+			return fmt.Errorf("drop projectile in destination room: %w", err)
+		}
+		return s.SendMessage("Twang...\r\n")
+	}
+	target := targetInfo.Combatant
+	if mob, ok := target.(*game.MobInstance); ok && mob.HasFlag(game.MobSentinel) {
+		return s.SendMessage("You cannot see well enough to aim...\r\n")
 	}
 
-	// Perform ranged shot
 	result := game.DoShoot(ch, target)
 	err := sendSkillResult(s, ch, target, result)
 	if err != nil {

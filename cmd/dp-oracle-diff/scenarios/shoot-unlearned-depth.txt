@@ -1,0 +1,42 @@
+# C-first do_shoot skill gate (src/act.offensive.c:764).
+
+# depth-case: shoot.unlearned
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shootnoskill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootnoskill
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Shootnoskill 'shoot' 0
+
+[probe]
+shoot

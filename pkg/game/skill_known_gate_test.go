@@ -40,6 +40,7 @@ func TestCanUseSkill_Audited_UnknownSkill_ExactMessages(t *testing.T) {
 		// groinrip's no-skill message terminates "\n\r" (new_cmds.c:2582); the
 		// oracle normalizes terminators, so this is its only byte-guard.
 		{SkillGroinrip, "You're not trained in martial arts!\n\r"},
+		{SkillShoot, "You have no idea how.\r\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.skill, func(t *testing.T) {
@@ -76,6 +77,7 @@ func TestCanUseSkill_Audited_KnownSkill_Passes(t *testing.T) {
 		{SkillTrip, combat.PosFighting},
 		{SkillHeadbutt, combat.PosFighting},
 		{SkillRescue, combat.PosStanding},
+		{SkillShoot, combat.PosStanding},
 	}
 	for _, tc := range cases {
 		t.Run(tc.skill, func(t *testing.T) {
