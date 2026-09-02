@@ -1,0 +1,114 @@
+# C-first roar/do_action target-social vehicle (src/interpreter.c:662;
+# src/act.social.c:102-151; lib/misc/socials:1546-1554). The record has no
+# victim-position gate and does not hide the actor, so a room observer exposes
+# the no-argument, target, and self audience paths.
+
+# depth-case: roar.no-argument
+# depth-case: roar.argument-first-token
+# depth-case: roar.target-success
+# depth-case: roar.target-audience
+# depth-case: roar.self-target
+# depth-case: roar.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Roaractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Roaractor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Roarobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Roarobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Roartarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Roartarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Roarobserver 8162
+teleport Roartarget 8162
+
+[probe]
+roar
+roar Roartarget trailing words are ignored
+roar Roartarget
+roar Roaractor
+roar Nobody
