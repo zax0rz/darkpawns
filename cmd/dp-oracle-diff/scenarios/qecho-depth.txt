@@ -1,0 +1,127 @@
+# C-first qecho vehicle (src/interpreter.c:627; src/act.comm.c:1301-1360).
+# The first player is an immortal under empty-players. The actor starts outside
+# the quest, then joins it; a questing peer and non-questing peer expose the
+# guard, global audience, raw spacing, and sleep-safe recipient behavior. The
+# actor's norepeat toggle exposes the self-echo branch.
+
+# depth-case: qecho.entry-gate
+# depth-case: qecho.quest-gate
+# depth-case: qecho.noshout-gate
+# depth-case: qecho.empty
+# depth-case: qecho.broadcast
+# depth-case: qecho.spacing
+# depth-case: qecho.ansi-controls
+# depth-case: qecho.norepeat
+# depth-case: qecho.sleeping-recipient
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Qechoactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qechoactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Qechopart
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Qechopart
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Qechonon
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Qechonon
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Qechopart 8162
+teleport Qechonon 8162
+force Qechopart quest
+
+[probe]
+qecho before-quest
+quest
+qecho
+qecho Alpha  beta  gamma  
+qecho &Rred&n
+noshout
+qecho muted channel
+noshout
+norepeat
+qecho norepeat  spacing
+norepeat
+force Qechopart sleep
+qecho Qechopart  receives  while  sleeping

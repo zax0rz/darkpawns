@@ -93,8 +93,12 @@ func cmdQsayText(s *Session, msg string) error {
 }
 
 // cmdQecho — "qecho <text>" immortal quest-echo (act.comm.c do_qcomm/SCMD_QECHO, LVL_IMMORT).
-// Echoes the raw text verbatim to PRF_QUEST participants (no prefix, no color).
+// Echoes the raw text to PRF_QUEST participants (no prefix, no color).
 func cmdQecho(s *Session, args []string) error {
+	return cmdQechoText(s, strings.Join(args, " "))
+}
+
+func cmdQechoText(s *Session, msg string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
@@ -102,12 +106,16 @@ func cmdQecho(s *Session, args []string) error {
 	if blocked := qcommGuard(s); blocked {
 		return nil
 	}
-	if len(args) == 0 {
+	if msg == "" {
 		s.Send(qcommEmptyMsg("qecho"))
 		return nil
 	}
-	msg := sanitizeMessage(strings.Join(args, " "))
-	broadcastQuest(s, msg, msg)
+	msg = game.CapitalizeSentence(game.DeleteANSIControls(sanitizeMessage(msg)))
+	self := msg
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		self = "Okay."
+	}
+	broadcastQuest(s, self, msg)
 	return nil
 }
 
