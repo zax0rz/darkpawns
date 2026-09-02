@@ -1,0 +1,50 @@
+# C-first do_rlist vehicle (src/interpreter.c:661; src/act.wizard.c:3336-3366).
+# C consumes one_argument with atoi, searches by numeric zone number, emits a
+# fixed error for an absent zone, and ignores trailing words. This first pass
+# isolates the no-match and decimal-prefix branches without entering the pager
+# for a populated room list.
+#
+# depth-case: rlist.empty-zone
+# depth-case: rlist.atoi-decimal-prefix
+# depth-case: rlist.trailing-argument-ignored
+# depth-case: rlist.populated-zone
+# depth-case: rlist.no-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rlistadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rlistadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+rlist 999
+rlist 999abc ignored words
+rlist 10 extra tokens
+rlist
