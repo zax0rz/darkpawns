@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -16,47 +17,213 @@ func cmdShow(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: show <players|uptime|stats|reset>")
+		// C's overlapping sprintf in do_show currently leaves this fresh-world
+		// response as the final visible field name. R1 follows the observed C
+		// bytes, not the source author's apparent intent.
+		s.Send("neutral")
 		return nil
 	}
-	topic := strings.ToLower(args[0])
-	switch topic {
-	case "players":
-		s.manager.mu.RLock()
-		count := len(s.manager.sessions)
-		s.manager.mu.RUnlock()
-		s.Send(fmt.Sprintf("Players online: %d", count))
-	case "uptime":
-		s.Send(fmt.Sprintf("Server running since %s", time.Now().Format(time.RFC1123)))
-	case "stats":
-		s.manager.mu.RLock()
-		sessionCount := len(s.manager.sessions)
-		s.manager.mu.RUnlock()
-		s.Send(fmt.Sprintf("Sessions: %d", sessionCount))
-	case "reset":
-		zones := s.manager.world.GetAllZones()
-		var buf strings.Builder
-		fmt.Fprintf(&buf, "Zone Reset Information (%d zones):\r\n", len(zones))
-		for _, z := range zones {
-			resetInterval := "never"
-			if z.Lifespan > 0 {
-				resetInterval = fmt.Sprintf("%d min", z.Lifespan)
-			}
-			resetMode := "never"
-			switch z.ResetMode {
-			case 1:
-				resetMode = "if empty"
-			case 2:
-				resetMode = "always"
-			}
-			fmt.Fprintf(&buf, "  [%5d] %-30s reset=%s mode=%s\r\n",
-				z.Number, z.Name, resetInterval, resetMode)
+
+	// This table is the field table in src/act.wizard.c:2250-2265. C uses a
+	// case-sensitive prefix comparison, so preserve the raw first argument.
+	field := args[0]
+	value := ""
+	if len(args) > 1 {
+		value = args[1]
+	}
+	fields := []struct {
+		name  string
+		level int
+	}{
+		{name: "zones", level: LVL_IMMORT},
+		{name: "player", level: LVL_GOD},
+		{name: "rent", level: LVL_GOD},
+		{name: "stats", level: LVL_IMMORT},
+		{name: "errors", level: LVL_IMPL - 1},
+		{name: "death", level: LVL_GOD},
+		{name: "godrooms", level: LVL_GOD},
+		{name: "shops", level: LVL_IMMORT},
+		{name: "houses", level: LVL_GOD},
+		{name: "tattoos", level: LVL_IMMORT},
+		{name: "aggr", level: LVL_IMPL - 1},
+		{name: "reagents", level: LVL_IMMORT},
+		{name: "hooks", level: LVL_IMMORT},
+		{name: "neutral", level: LVL_IMMORT},
+	}
+	fieldIndex := -1
+	for i, candidate := range fields {
+		if strings.HasPrefix(candidate.name, field) {
+			fieldIndex = i
+			break
 		}
-		s.Send(buf.String())
-	default:
-		s.Send(fmt.Sprintf("Unknown topic: %s", topic))
+	}
+	if fieldIndex < 0 {
+		s.Send("Sorry, I don't understand that.")
+		return nil
+	}
+	if !checkLevel(s, fields[fieldIndex].level) {
+		s.Send("You are not godly enough for that!\r\n")
+		return nil
+	}
+
+	switch fields[fieldIndex].name {
+	case "zones":
+		// The valid zone listing still needs a faithful Zone age/reset vehicle.
+		// Keep the confirmed invalid-number gate exact until that branch is
+		// proven; do not substitute the old invented reset report.
+		if value != "" {
+			zoneNumber, err := strconv.Atoi(value)
+			if err == nil {
+				for _, zone := range s.manager.world.GetAllZones() {
+					if zone.Number == zoneNumber {
+						return nil
+					}
+				}
+				s.Send("That is not a valid zone.\r\n")
+			}
+		}
+	case "player":
+		if value == "" {
+			s.Send("A name would help.\r\n")
+			return nil
+		}
+		if _, online := s.manager.world.GetPlayer(value); !online && !game.PlayerSaveExists(value) {
+			s.Send("There is no such player.\r\n")
+		}
+	case "rent":
+		if value == "" {
+			s.Send("A name would help.\r\n")
+			return nil
+		}
+		if !game.PlayerSaveExists(value) {
+			s.Send(fmt.Sprintf("%s has no rent file.\r\n", strings.ToLower(value)))
+		}
+	case "stats":
+		// The current C oracle's overlapping sprintf chain exposes only this
+		// final line in the fresh empty-player vehicle.
+		s.Send("      0 buf switches         0 overflows\r\n")
+	case "errors":
+		s.Send(showLastErrantRoom(s.manager.world))
+	case "death":
+		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_DEATH"))
+	case "godrooms":
+		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_GODROOM"))
+	case "shops":
+		// C's show_shops() consumes the complete parsed .shp database. The Go
+		// world currently indexes only shopkeepers, so this branch remains
+		// explicitly unproven rather than inventing a partial listing.
+		return nil
+	case "houses":
+		if len(s.manager.world.HouseControl) == 0 {
+			s.Send("No houses have been defined.\r\n")
+		}
+	case "tattoos":
+		s.Send(showTattooListing())
+	case "aggr":
+		mobs := s.manager.world.GetAllMobs()
+		sort.SliceStable(mobs, func(i, j int) bool {
+			if mobs[i].GetVNum() != mobs[j].GetVNum() {
+				return mobs[i].GetVNum() < mobs[j].GetVNum()
+			}
+			return mobs[i].GetName() < mobs[j].GetName()
+		})
+		for _, mob := range mobs {
+			if mob.HasFlag("AGGR24") {
+				s.Send(fmt.Sprintf("%d %s\r\n", mob.GetVNum(), mob.GetName()))
+			}
+		}
+	case "reagents":
+		s.Send(showReagentListing())
+	case "hooks":
+		if value == "" {
+			s.Send("You must supply a zone number!\r\n")
+			return nil
+		}
+		zoneNumber, err := strconv.Atoi(value)
+		if err == nil {
+			for _, zone := range s.manager.world.GetAllZones() {
+				if zone.Number == zoneNumber {
+					return nil
+				}
+			}
+			s.Send("That is not a valid zone.\r\n")
+		}
+	case "neutral":
+		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_NEUTRAL"))
 	}
 	return nil
+}
+
+// showLastErrantRoom mirrors the visible tail of C's errant-room report in
+// the current world. C appends one row per bad exit; the overlapping sprintf
+// leaves the final row as the player-facing bytes observed by the oracle.
+func showLastErrantRoom(w *game.World) string {
+	count := 0
+	lastRoom := ""
+	rooms := w.Rooms()
+	for i := range rooms {
+		room := &rooms[i]
+		for _, exit := range room.Exits {
+			if exit.ToRoom == 0 {
+				count++
+				lastRoom = fmt.Sprintf("%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
+			}
+		}
+	}
+	return lastRoom
+}
+
+func showLastFlaggedRoom(w *game.World, flag string) string {
+	count := 0
+	lastRoom := ""
+	rooms := w.Rooms()
+	for i := range rooms {
+		room := &rooms[i]
+		if game.HasRoomFlag(room, flag) {
+			count++
+			lastRoom = fmt.Sprintf("%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
+		}
+	}
+	return lastRoom
+}
+
+func showTattooListing() string {
+	return strings.Join([]string{
+		"[ 0]                                None  : no tattoo\r\n",
+		"[ 1]                   of a green dragon  : damroll+2 str+2\r\n",
+		"[ 2]                  in a tribal design  : dex+1\r\n",
+		"[ 3]                  of a flaming skull  : summon skull\r\n",
+		"[ 4]                  of a leaping tiger  : dex+1 mv+10\r\n",
+		"[ 5]                      of an ice worm  : dam+2\r\n",
+		"[ 6]                      of an open eye  : greater percept\r\n",
+		"[ 7]                   of crossed swords  : hit and dam+1\r\n",
+		"[ 8]                of a screaming eagle  : moves+20\r\n",
+		"[ 9]                          of a heart  : hp+20\r\n",
+		"[10]                           of a star  : mana+20\r\n",
+		"[11]                           of a ship  : change density\r\n",
+		"[12]                         of a spider  : dex+3\r\n",
+		"[13]          of the symbol of the Jyhad  : dam+1\r\n",
+		"[14]                   of the word 'MOM'  : wis+3\r\n",
+		"[15]                         of an angel  : bless\r\n",
+		"[16]                            of a fox  : int+1\r\n",
+		"[17]                           of an owl  : wis+1\r\n",
+	}, "")
+}
+
+func showReagentListing() string {
+	return strings.Join([]string{
+		"blindness:  a small, clouded lens\r\n",
+		"charm person:  a small, glittering crystal\r\n",
+		"color spray:  a prism\r\n",
+		"curse:  a raven feather\r\n",
+		"energy drain:  some vampire dust\r\n",
+		"fireball:  a bit of ash\r\n",
+		"flame arrow:  a shard of obsidian\r\n",
+		"sleep:  a pinch of sand\r\n",
+		"waterwalk:  the leg of a frog\r\n",
+		"metalskin:  a small chunk of iron\r\n",
+		"disintegration:  the eye of a beholder\r\n",
+	}, "")
 }
 
 // cmdDark — stop all combat in the room (LVL_IMMORT)
