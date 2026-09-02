@@ -1,0 +1,77 @@
+# C-first do_scrounge water mapping (src/new_cmds2.c:105-110). Water uses
+# object vnum 27 and capture-and-kill wording; the focused game test covers
+# all three C water sectors, while this live vehicle covers the swim sector's
+# actor/room transcript.
+
+# depth-case: scrounge.water-capture
+# depth-case: scrounge.water-sector-family
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 6
+
+[setup:oracle]
+Scroungewater
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungewater
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungewaterpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungewaterpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungewaterpeer 8105
+skillset Scroungewater 'scrounge' 100
+
+[probe]
+scrounge
