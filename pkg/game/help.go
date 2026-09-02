@@ -281,6 +281,21 @@ func LoadHelpScreen(dir string) (string, error) {
 	return string(data), nil
 }
 
+// ReloadHelpTable replaces the disk-backed help index and preserves the
+// hardcoded race entries appended during world initialization. It is the Go
+// equivalent of C's index_boot(DB_BOOT_HLP) used by do_reboot's xhelp arm.
+func (w *World) ReloadHelpTable() error {
+	helpDir := filepath.Join(w.LibTextDir, "help")
+	loaded, err := LoadHelpFiles(helpDir)
+	if err != nil {
+		return err
+	}
+	loaded = append(loaded, RaceHelpEntries()...)
+	sortHelpTable(loaded)
+	w.HelpTable = loaded
+	return nil
+}
+
 // RaceHelpEntries returns hardcoded race help text from src/constants.c:205-350.
 // These are appended to the help table at boot so `help <race>` works.
 func RaceHelpEntries() []HelpEntry {

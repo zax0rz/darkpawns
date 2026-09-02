@@ -10,7 +10,6 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 func cmdShutdown(s *Session, args []string) error {
@@ -67,48 +66,38 @@ func cmdSnoop(s *Session, args []string) error {
 }
 
 // ---------------------------------------------------------------------------
-// advance — advance a player's level (LVL_GRGOD)
+// reload — refresh cached text/help data (LVL_IMPL-1)
 // ---------------------------------------------------------------------------
 func cmdReload(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	option := ""
 	if len(args) > 0 {
 		option = strings.ToLower(args[0])
 	}
-	valid := option == "all" || strings.HasPrefix(option, "*")
-	if !valid {
-		for _, candidate := range []string{"wizlist", "immlist", "news", "credits", "motd", "imotd", "help", "info", "policy", "handbook", "background", "future", "xhelp"} {
-			if option == candidate {
-				valid = true
-				break
-			}
-		}
-	}
-	if !valid {
+	if option == "" {
 		s.Send("Unknown reload option.\r\n")
 		return nil
 	}
-	slog.Info("(GC) reload initiated", "by", s.player.Name)
-	s.Send("Reloading world data...\r\n")
-
-	// Notify all online players
-	s.manager.SendToAll(fmt.Sprintf("\\r\\n*** World data reload initiated by %s. ***\\r\\n", s.player.Name))
-
-	pw, err := parser.ParseWorld("world/")
-	if err != nil {
-		slog.Error("world reload failed", "error", err)
-		s.Send(fmt.Sprintf("Reload failed: %v\r\n", err))
-		s.manager.SendToAll("\\r\\n*** World reload FAILED. ***\\r\\n")
-		return nil
+	if option == "all" || strings.HasPrefix(option, "*") {
+		reloadCachedText(s, "wizlist", "immlist", "news", "credits", "motd", "imotd", "info", "policies", "handbook", "future")
+		reloadHelpScreen(s)
+	} else {
+		switch option {
+		case "wizlist", "immlist", "news", "credits", "motd", "imotd", "info", "handbook", "future":
+			reloadCachedText(s, option)
+		case "policy":
+			reloadCachedText(s, "policies")
+		case "help":
+			reloadHelpScreen(s)
+		case "background":
+			// Background text is read on demand by the Go port.
+		case "xhelp":
+			reloadHelpTable(s)
+		default:
+			s.Send("Unknown reload option.\r\n")
+			return nil
+		}
 	}
-	s.manager.world.ReplaceParsedWorld(pw)
-	slog.Info("(GC) reload complete", "by", s.player.Name, "rooms", len(pw.Rooms))
-	s.Send(fmt.Sprintf("World reloaded: %d rooms, %d mobs, %d objects.\r\n",
-		len(pw.Rooms), len(pw.Mobs), len(pw.Objs)))
-	s.manager.SendToAll("\\r\\n*** World reload complete. ***\\r\\n")
+	s.Send("Okay.\r\n")
 	return nil
 }
 
