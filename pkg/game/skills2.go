@@ -353,8 +353,11 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 // Find secret exits. WAIT_STATE.
 // ---------------------------------------------------------------------------
 func DoDetect(ch *Player, world *World) SkillResult {
-	if ch.GetSkill(SkillDetect) == 0 && ch.GetClass() != RaceElf {
+	if ch.GetSkill(SkillDetect) == 0 && ch.GetRace() != RaceElf {
 		return SkillResult{Success: false, MessageToCh: "Yeah, right.\r\n"}
+	}
+	if ch.IsAffected(affBlind) {
+		return SkillResult{Success: false, MessageToCh: "You're fucking blind, you can't find anything!!\r\n"}
 	}
 
 	room := world.GetRoomInWorld(ch.GetRoom())
@@ -362,45 +365,37 @@ func DoDetect(ch *Player, world *World) SkillResult {
 		return SkillResult{MessageToCh: "You are lost in the void.\r\n"}
 	}
 
-	prob := ch.GetSkill(SkillDetect)
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	if prob <= dprng.Number(1, 100) {
-		return SkillResult{Success: false, MessageToCh: "You can't seem to find anything.\r\n"}
-	}
-
-	// Check exits for "secret" keyword
-	var found bool
 	results := "You carefully check the room...\r\n"
-	for dir, exit := range room.Exits {
-		if strings.Contains(strings.ToLower(exit.Keywords), "secret") {
-			dirNames := map[string]string{
-				"north": "the north wall",
-				"south": "the south wall",
-				"east":  "the east wall",
-				"west":  "the west wall",
-				"up":    "the ceiling",
-				"down":  "the floor",
-				"n":     "the north wall",
-				"s":     "the south wall",
-				"e":     "the east wall",
-				"w":     "the west wall",
-				"u":     "the ceiling",
-				"d":     "the floor",
-			}
-			where := dirNames[dir]
-			if where == "" {
-				where = fmt.Sprintf("the %s wall", dir)
-			}
-			results += fmt.Sprintf("You notice something funny about %s.\r\n", where)
-			found = true
+	prob := ch.GetSkill(SkillDetect)
+	// C's number(1, 101) is inclusive; the roll follows the blind gate and
+	// the initial room-check line is emitted before this branch.
+	// #nosec G404 — game RNG, not cryptographic
+	if prob <= dprng.Number(1, 101) {
+		return SkillResult{
+			Success:      false,
+			MessageToCh:  results + "You can't seem to find anything.\r\n",
+			WaitChPulses: engine.PULSE_VIOLENCE + 1,
 		}
 	}
 
-	if !found {
-		results += "You can't seem to find anything.\r\n"
+	// C scans the six exits in dirs[] order and uses case-sensitive strstr.
+	var found bool
+	for _, direction := range dirs {
+		if exit, ok := room.Exits[direction]; ok && strings.Contains(exit.Keywords, "secret") {
+			where := "the " + direction + " wall"
+			switch direction {
+			case "up":
+				where = "the ceiling"
+			case "down":
+				where = "the floor"
+			}
+			results += fmt.Sprintf("You notice something funny about %s.\r\n", where)
+			found = true
+			if !movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark") {
+				setRoomFlagBit(room, roomFlagSecretMark)
+			}
+		}
 	}
-
 	return SkillResult{Success: found, MessageToCh: results}
 }
 

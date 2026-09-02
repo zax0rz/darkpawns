@@ -1,0 +1,79 @@
+# C-first depth vehicle for search/do_detect.
+# C registration: src/interpreter.c:411; handler: src/new_cmds2.c:500-541.
+# The God primary grants the ordinary peer C skill slot "search" through
+# skillset; the Go mapping must store it under SkillDetect because the gameplay
+# handler uses that command-facing key.
+#
+# depth-case: search.no-secret-success
+# depth-case: search.arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+
+[setup:oracle]
+Searchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Searchgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Searchtarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Searchtarget
+y
+targetpass
+targetpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Searchtarget 8105
+skillset Searchtarget 'search' 100
+
+[probe:target]
+search
+search trailing words are ignored
