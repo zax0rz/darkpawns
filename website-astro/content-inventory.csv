@@ -26,12 +26,10 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /archive/topic-737.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,906,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/topic-737/,src/content/archive/topic-737.md,archive,preserved community artifact,2,verify against capture,906,verbatim,frontline,Wayback capture identified by captureUrl
 /blog/,src/pages/blog/index.astro,hub,authored collection framing,1,full editorial review,,,,
-/blog/historical-posts.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,104,summary,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
-/blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,104,summary,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
-/blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,241,original,mythic-admin,Dark Pawns repository and Zach
-/blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,241,original,mythic-admin,Dark Pawns repository and Zach
-/blog/website-launch.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,215,original,mythic-admin,Dark Pawns repository and recovered Wayback captures
-/blog/website-launch/,src/content/blog/website-launch.md,blog,authored editorial,1,rewrite and source review,215,original,mythic-admin,Dark Pawns repository and recovered Wayback captures
+/blog/historical-posts.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
+/blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
+/blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,389,original,mythic-admin,Dark Pawns repository and Zach
+/blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,389,original,mythic-admin,Dark Pawns repository and Zach
 /contact/,src/pages/contact.astro,core,authored static page,1,full editorial review,,,,
 /credits/,src/pages/credits.astro,core,authored static page,1,full editorial review,,,,
 /database/,src/pages/database.astro,core,authored static page,1,full editorial review,,,,
@@ -26298,6 +26296,7 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /about/archive-index,astro.config.mjs,redirect,redirect to /archive/,5,no copy review,,,,
 /about/features,astro.config.mjs,redirect,redirect to /world/,5,no copy review,,,,
 /about/site-history,astro.config.mjs,redirect,redirect to /archive/,5,no copy review,,,,
+/blog/website-launch,astro.config.mjs,redirect,redirect to /blog/resurrection/,5,no copy review,,,,
 /categories,astro.config.mjs,redirect,redirect to /blog/,5,no copy review,,,,
 /categories/game,astro.config.mjs,redirect,redirect to /blog/,5,no copy review,,,,
 /changelog,astro.config.mjs,redirect,redirect to /,5,no copy review,,,,
@@ -26770,7 +26769,7 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /news,astro.config.mjs,redirect,redirect to /blog/,5,no copy review,,,,
 /news/historical-posts,astro.config.mjs,redirect,redirect to /blog/historical-posts/,5,no copy review,,,,
 /news/resurrection,astro.config.mjs,redirect,redirect to /blog/resurrection/,5,no copy review,,,,
-/news/website-launch,astro.config.mjs,redirect,redirect to /blog/website-launch/,5,no copy review,,,,
+/news/website-launch,astro.config.mjs,redirect,redirect to /blog/resurrection/,5,no copy review,,,,
 /pawn-lab.html,astro.config.mjs,redirect,redirect to /docs/research/,5,no copy review,,,,
 /research,astro.config.mjs,redirect,redirect to /docs/research,5,no copy review,,,,
 /research/agent-protocols,astro.config.mjs,redirect,redirect to /docs/agents/protocol/,5,no copy review,,,,

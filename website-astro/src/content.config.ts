@@ -11,7 +11,7 @@ const blog = defineCollection({
     date: z.coerce.date(),
     description: z.string(),
     draft: z.boolean().default(false),
-    textKind: z.enum(['original', 'summary', 'reconstruction']),
+    textKind: z.enum(['original', 'summary', 'reconstruction', 'transcription', 'verbatim', 'edited-excerpt']),
     source: z.string(),
     voiceLayer: z.enum(['engine', 'mythic-admin', 'frontline']),
   }),

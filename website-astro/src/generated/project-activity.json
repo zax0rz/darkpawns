@@ -1,20 +1,8 @@
 {
-  "generatedAt": "2026-08-15T14:02:28-04:00",
+  "generatedAt": "2026-09-01T14:56:40-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
-    {
-      "week": "2026-05-25",
-      "commits": 48
-    },
-    {
-      "week": "2026-06-01",
-      "commits": 7
-    },
-    {
-      "week": "2026-06-08",
-      "commits": 11
-    },
     {
       "week": "2026-06-15",
       "commits": 15
@@ -49,39 +37,51 @@
     },
     {
       "week": "2026-08-10",
-      "commits": 98
+      "commits": 109
+    },
+    {
+      "week": "2026-08-17",
+      "commits": 1
+    },
+    {
+      "week": "2026-08-24",
+      "commits": 0
+    },
+    {
+      "week": "2026-08-31",
+      "commits": 1
     }
   ],
   "recentCommits": [
     {
-      "sha": "4a10ab743481bd1a481922a20df0b238ee2788d2",
-      "date": "2026-08-15",
-      "title": "feat(web): room records \u2014 permanent pages for all 9,590 rooms",
-      "url": "https://github.com/zax0rz/darkpawns/commit/4a10ab743481bd1a481922a20df0b238ee2788d2"
+      "sha": "465f2332bc100f18cc0218fcf6e8218e8dcca22c",
+      "date": "2026-09-01",
+      "title": "docs: record point depth handoff (R1/R2/R3/R5e)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/465f2332bc100f18cc0218fcf6e8218e8dcca22c"
     },
     {
-      "sha": "1d32f4c60ad69a2ce78a65d43c6c42b3575b8d2e",
-      "date": "2026-08-15",
-      "title": "feat(web): breadcrumb JSON-LD on zone records; zones spec audit",
-      "url": "https://github.com/zax0rz/darkpawns/commit/1d32f4c60ad69a2ce78a65d43c6c42b3575b8d2e"
+      "sha": "852bc99dba67b1b7e472f6951b548296d4e0da96",
+      "date": "2026-08-19",
+      "title": "chore: checkpoint before switching to main",
+      "url": "https://github.com/zax0rz/darkpawns/commit/852bc99dba67b1b7e472f6951b548296d4e0da96"
     },
     {
-      "sha": "bdc13bcc3736226b2f275e3a12369c23cb8c1484",
+      "sha": "10ae37a3862b8e153f0acdcd2c54ab69adbde475",
       "date": "2026-08-15",
-      "title": "feat(web): zone records \u2014 browsable, crawlable views of world-file zones",
-      "url": "https://github.com/zax0rz/darkpawns/commit/bdc13bcc3736226b2f275e3a12369c23cb8c1484"
+      "title": "docs(blog): update exact primary-source timestamps for historical news posts",
+      "url": "https://github.com/zax0rz/darkpawns/commit/10ae37a3862b8e153f0acdcd2c54ab69adbde475"
     },
     {
-      "sha": "19acb079c9194bbf4076975ee553f71a92a73049",
+      "sha": "b39749a7dc2dbdff302fc40c7f64771a3c6f49f1",
       "date": "2026-08-15",
-      "title": "fix(web): guest entry renders room once; /play constrained to content width",
-      "url": "https://github.com/zax0rz/darkpawns/commit/19acb079c9194bbf4076975ee553f71a92a73049"
+      "title": "docs(blog): update historical posts with exact verbatim primary sources from darkpawns.com",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b39749a7dc2dbdff302fc40c7f64771a3c6f49f1"
     },
     {
-      "sha": "c56a47014df0ed594445cd9fd16e5309d38f6058",
+      "sha": "bac9056eef01f8f1e8e238e6102910f606c05004",
       "date": "2026-08-15",
-      "title": "docs(web): record Astro production deployment",
-      "url": "https://github.com/zax0rz/darkpawns/commit/c56a47014df0ed594445cd9fd16e5309d38f6058"
+      "title": "docs(blog): clarify OUTLAW system provenance from faq.html",
+      "url": "https://github.com/zax0rz/darkpawns/commit/bac9056eef01f8f1e8e238e6102910f606c05004"
     }
   ],
   "pullRequests": [

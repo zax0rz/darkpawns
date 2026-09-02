@@ -8,20 +8,29 @@
 
 ## News Posts
 
-### OUTLAW System
+### OUTLAW System (02/09/2002 07:28:29 PM EST)
 
-[Post by Frontline introducing the OUTLAW system — a mechanic for handling player killing with consequences rather than free-for-all PvP.]
+The OUTLAW system has undergone a minor revision.
+All the details can be found by reading the NEWS in the game.
+Thanks to everyone who contributed ideas to make the system better.
 
-### The Aiko Story
+### The Aiko Story (01/21/2002 07:28:29 PM EST)
 
-A player mudding during a lecture had their speakers on and got paged roughly 20 times by in-game notifications, disrupting the entire class.
+Aiko tells you, 'what's up?'
+You tell Aiko, 'not much, you?'
+Aiko tells you, 'at school... listing to an NT lecture on user policies and file permissions and such'
+You tell Aiko, 'heh mudding during lecture'
+*Frontline* (page Aiko x 20)
+You tell Aiko, 'muhahaha'
+[ Closing link to: Aiko. ]
 
 Moral of the story: Turn your speakers down if you are going to mud during lecture. :)
 
-### Dark Pawns 3.0
+### Dark Pawns 3.0 (10/1/2005)
 
-Dark Pawns 3.0 is (finally!) out in beta.
+Dark Pawns 3.0 is (finally!) out in beta. To try it out, telnet to darkpawns.com 4355 with your favorite mud client or with Windows telnet if you are a masochist.
 
-### Forums
+### Forums (10/13/2005)
 
 Oh my god forums! Please please please register with your correct account name!
+

@@ -47,6 +47,16 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
         ))}
       </ul>
       <ul class="nav-secondary">
+        <li>
+          <button type="button" class="nav-search-btn" data-search-trigger aria-label="Search website (Cmd+K)">
+            <svg class="search-nav-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search</span>
+            <kbd class="search-key-badge">⌘K</kbd>
+          </button>
+        </li>
         {secondary.map((s) => (
           <li>
             <a href={s.href} class={isActive(s.href) ? 'active' : ''} aria-current={isActive(s.href) ? 'page' : undefined}>{s.name}</a>
@@ -120,6 +130,41 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   /* Utility cluster reads a touch quieter than the player spine. */
   .nav-secondary a { color: var(--ink-muted); }
   .nav-secondary a:hover, .nav-secondary a.active { color: var(--accent); }
+
+  .nav-search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--paper-deep);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  .nav-search-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .search-key-badge {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    padding: 0 0.25rem;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .nav-search-btn:hover .search-key-badge {
+    background: var(--paper-deep);
+    color: var(--ink);
+  }
 
   @media (max-width: 640px) {
     .masthead-row { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }

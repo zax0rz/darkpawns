@@ -45,4 +45,34 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month:
   .prose :global(hr) { border: none; border-top: 1px solid var(--rule); margin: var(--space-lg) 0; }
   .prose :global(code) { font-family: var(--font-mono); font-size: 0.9em; }
   .prose :global(em) { color: var(--ink-muted); }
+
+  .prose :global(.archive-dispatch) {
+    background: var(--paper-deep);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    padding: var(--space-md) var(--space-lg);
+    margin-block: var(--space-lg);
+  }
+  .prose :global(.dispatch-header) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    margin-bottom: var(--space-sm);
+  }
+  .prose :global(.dispatch-tag) {
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .prose :global(.dispatch-header time) {
+    color: var(--ink-muted);
+  }
+  .prose :global(.archive-dispatch h3) {
+    margin-top: 0;
+    margin-bottom: var(--space-xs);
+    font-size: 1.25rem;
+  }
 </style>

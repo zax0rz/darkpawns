@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "astro dev",
     "generate:project": "python3 scripts/project_activity.py",
-    "build": "npm run generate:project && astro build",
+    "generate:search": "python3 scripts/gen_search_index.py",
+    "build": "npm run generate:project && npm run generate:search && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "voice-lint": "python3 scripts/voice_lint.py",
-    "test:voice-lint": "python3 -m unittest scripts/test_voice_lint.py"
+    "test:voice-lint": "python3 -m unittest scripts/test_voice_lint.py",
+    "test:search": "python3 -m unittest scripts/test_gen_search_index.py"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",
