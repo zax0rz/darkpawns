@@ -107,6 +107,14 @@ func StopFollower(w *World, ch *Player) {
 	leaderName := ch.GetFollowing()
 	leader := w.followingActor(leaderName)
 
+	// C computes IS_SHADOWING from AFF_DODGE, removes the SKILL_SHADOW
+	// affect/bit before choosing the stop message, and suppresses leader/room
+	// notices for this branch (utils.c:400-420; R1/R5e).
+	shadowing := ch.IsAffected(affDodge)
+	if shadowing {
+		ch.RemoveAffectBySpell(skillNumShadow)
+		ch.RemoveAffectBit(affDodge)
+	}
 	charmAffected := ch.IsAffected(affCharm)
 
 	if charmAffected {
@@ -120,6 +128,9 @@ func StopFollower(w *World, ch *Player) {
 		}
 		// Remove SPELL_CHARM from active affects if present.
 		removeCharmAffect(ch)
+	} else if shadowing {
+		Act(w, false, ch, leader, nil, nil,
+			"You stop shadowing $N.", "", ToChar)
 	} else {
 		Act(w, false, ch, leader, nil, nil,
 			"You stop following $N.", "", ToChar)

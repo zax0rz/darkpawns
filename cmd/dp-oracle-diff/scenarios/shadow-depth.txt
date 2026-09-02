@@ -1,0 +1,111 @@
+# C-first shadow vehicle (src/interpreter.c:687; src/act.movement.c:883-951;
+# src/utils.c:397-498). The first shadow succeeds and proves the quiet actor-only
+# audience plus the SKILL_SHADOW/AFF_DODGE affect. Self-target stops shadowing
+# with the special actor-only stop byte. A zero skill then takes C's normal
+# with the special actor-only stop byte.
+
+# depth-case: shadow.success-quiet-audience
+# depth-case: shadow.success-affect
+# depth-case: shadow.stop-shadowing
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shadowactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shadowactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Shadowleader
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Shadowleader
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Shadowobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Shadowobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Shadowleader 8004
+teleport Shadowobserver 8004
+skillset Shadowactor 'shadow' 100
+set Shadowactor level 1
+
+[probe]
+shadow Shadowleader
+shadow self

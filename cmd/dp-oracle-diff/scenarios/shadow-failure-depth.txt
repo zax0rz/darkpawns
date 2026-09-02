@@ -1,0 +1,107 @@
+# C-first shadow failure vehicle (src/interpreter.c:687;
+# src/act.movement.c:923-951; src/utils.c:480-498). A level-one actor with a
+# zero shadow skill must take the failed quiet-roll arm, which delegates to
+# ordinary add_follower and therefore exposes the leader and room notices.
+
+# depth-case: shadow.failure-normal-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shadowfailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shadowfailactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Shadowfailleader
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Shadowfailleader
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Shadowfailobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Shadowfailobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Shadowfailleader 8004
+teleport Shadowfailobserver 8004
+skillset Shadowfailactor 'shadow' 0
+set Shadowfailactor level 1
+
+[probe]
+shadow Shadowfailleader

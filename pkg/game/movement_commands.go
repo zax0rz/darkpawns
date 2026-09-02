@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -205,8 +207,11 @@ func setActorPosition(actor Actor, position int) {
 	}
 }
 
-// DoFollow implements C do_follow. quiet preserves the structural shadow path;
-// applying SKILL_SHADOW/AFF_DODGE remains a skill-system TODO.
+const skillNumShadow = 181
+
+// DoFollow implements C do_follow. The quiet path is the registered shadow
+// subcommand (act.movement.c:923-951); its skill draw and affect are kept here
+// so the shared follow state machine remains in C order (R1/R3/R5e).
 func (w *World) DoFollow(ch *Player, argument string, quiet bool) {
 	argument, _ = oneArgument(argument)
 	if argument == "" {
@@ -258,11 +263,31 @@ func (w *World) DoFollow(ch *Player, argument string, quiet bool) {
 	ch.SetAffect(affGroup, false)
 
 	if quiet {
-		// TODO(DP-shadow): apply SKILL_SHADOW/AFF_DODGE when the skill domain
-		// exposes the C success roll here.
-		Act(nil, false, ch, leader, nil, nil, "You now follow $N.", "", ToChar)
-		ch.SetFollowing(leader.GetName())
-		return
+		// C evaluates the skill draw before the immortal shortcut, so immortals
+		// consume the same number(0,101) draw even though they always succeed.
+		// #nosec G404 — game RNG, not cryptographic
+		if ch.GetSkill(SkillShadow) > dprng.Number(0, 101) || ch.GetLevel() >= LVL_IMMORT {
+			// C IS_SHADOWING is AFF_DODGE, and a successful re-shadow first
+			// removes the prior SKILL_SHADOW affect and its bit.
+			if ch.IsAffected(affDodge) {
+				ch.RemoveAffectBySpell(skillNumShadow)
+				ch.RemoveAffectBit(affDodge)
+			}
+			ch.AddAffect(engine.NewAffectDirect(
+				skillNumShadow,
+				engine.ApplyNone,
+				ch.GetLevel(),
+				0,
+				engine.AFFDodge,
+				SkillShadow,
+			))
+			ch.SetAffect(affDodge, true)
+			Act(nil, false, ch, leader, nil, nil, "You now follow $N.", "", ToChar)
+			ch.SetFollowing(leader.GetName())
+			return
+		}
+		// C's failed quiet roll falls through to add_follower, including its
+		// leader and room audience messages.
 	}
 	if leaderPlayer != nil {
 		AddFollower(w, ch, leaderPlayer)
