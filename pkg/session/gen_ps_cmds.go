@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 
@@ -168,11 +169,32 @@ func cmdWhoami(s *Session, args []string) error {
 
 // cmdPlayers lists all registered players. Source: do_gen_ps SCMD_PLAYER_LIST (LVL_GRGOD)
 func cmdPlayers(s *Session, args []string) error {
-	names, err := s.manager.db.ListPlayerNames()
-	if err != nil {
-		s.Send("That information is not available right now.")
-		return nil
+	var names []string
+	if s.manager.hasDB {
+		var err error
+		names, err = s.manager.db.ListPlayerNames()
+		if err != nil {
+			// C's player table is an in-memory boot index and has no player-facing
+			// database-error branch. Preserve its list shape when the Go backing
+			// store is unavailable by using the names currently in the world.
+			names = make([]string, 0)
+			for _, player := range s.manager.world.GetAllPlayers() {
+				names = append(names, player.GetName())
+			}
+		}
+	} else {
+		// The no-DB oracle/runtime path still has C's create_entry equivalent:
+		// newly created characters are registered in the in-memory player list.
+		for _, player := range s.manager.world.GetAllPlayers() {
+			names = append(names, player.GetName())
+		}
 	}
+	for i := range names {
+		// C's player_table stores every name in lowercase, both when the boot
+		// index is built and when create_entry adds a new character.
+		names[i] = strings.ToLower(names[i])
+	}
+	sort.Strings(names)
 	var buf strings.Builder
 	buf.WriteString("A list of registered players:\r\n")
 	count := 0
