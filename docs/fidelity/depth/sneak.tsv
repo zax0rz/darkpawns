@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_sneak	sneak	sneak.entry-gate	D1	command	unit-green	TestSneakRegistrationUsesCEntryGate	interpreter.c:719;comm.c:910-947	The registered C row requires level 1 at POS_STANDING, and the Go registry preserves the authoritative entry gate (R1/R2/R5e).
+do_sneak	sneak	sneak.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:719;comm.c:910-947	The shared POS_STANDING dispatcher rejection is owned by the existing flip position-gate vehicle (R2/R5b/R5c).
+do_sneak	sneak	sneak.mounted-gate	D1	command	oracle-green-multiseed	sneak-mounted-depth@1,2,3,5,8	act.other.c:214-223;utils.c:378-385	IS_MOUNTED returns Dismount first! before the normal attempt text or number(1,101) roll (R1/R3/R5e).
+do_sneak	sneak	sneak.attempt-message	D2	command	oracle-green-multiseed	thief-sneak@1,2,3,5,8	act.other.c:225-244	Every reachable roll outcome emits C's unconditional Okay line, with no invented toggle or failure text (R1/R3/R4/R5e).
+do_sneak	sneak	sneak.argument-ignored	D2	command	oracle-green-multiseed	thief-sneak@1,2,3,5,8	act.other.c:225-244	The handler never parses the command remainder; trailing words do not alter its message or roll path (R1/R2/R3/R5e).
+do_sneak	sneak	sneak.affect-success	D4	state	unit-green	TestDoSneakTimedAffectAndReroll	act.other.c:226-244	A successful roll installs one SKILL_SNEAK/AFF_SNEAK affect with GET_LEVEL duration after replacing prior sneak/stealth affects (R3/R5e).
+do_sneak	sneak	sneak.affect-failure-clears	D4	state	unit-green	TestDoSneakFailedRerollClearsSneakAndStealthAffects	act.other.c:226-244	A failed reroll still clears both prior affects and leaves no AFF_SNEAK state; C does not toggle off with a separate line (R1/R3/R4/R5e).
+do_sneak	sneak	sneak.mounted-no-roll	D5	state	unit-green	TestDoSneakMountedGatePrecedesRoll	act.other.c:219-223	The mounted early return consumes no random draw, preserving C's RNG stream boundary (R3/R5e).

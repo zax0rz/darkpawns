@@ -174,6 +174,45 @@ func TestDoSneakTimedAffectAndReroll(t *testing.T) {
 	}
 }
 
+func TestDoSneakMountedGatePrecedesRoll(t *testing.T) {
+	ch := NewPlayer(1, "Mounted", 1001)
+	ch.SetAffect(affMount, true)
+
+	dprng.ResetStream(1)
+	result := DoSneak(ch)
+	if result.Success || result.MessageToCh != "Dismount first!" {
+		t.Fatalf("mounted sneak result = %+v, want the C early return", result)
+	}
+	gotNext := dprng.Number(1, 101)
+	dprng.ResetStream(1)
+	wantNext := dprng.Number(1, 101)
+	if gotNext != wantNext {
+		t.Fatalf("mounted sneak consumed a roll: next=%d want=%d", gotNext, wantNext)
+	}
+}
+
+func TestDoSneakFailedRerollClearsSneakAndStealthAffects(t *testing.T) {
+	ch := NewPlayer(1, "Failing", 1001)
+	ch.SetLevel(9)
+	ch.Stats.Dex = 1
+	ch.SetSkill(SkillSneak, 0)
+	ch.SetAffect(affSneak, true)
+	ch.AddAffect(engine.NewAffectDirect(skillNumSneak, engine.ApplyNone, 3, 0, engine.AFFSneak, SkillSneak))
+	ch.AddAffect(engine.NewAffectDirect(skillNumStealth, engine.ApplyNone, 4, 0, engine.AFFSneak, SkillStealth))
+
+	dprng.ResetStream(1)
+	result := DoSneak(ch)
+	if result.Success || result.MessageToCh != "Okay, you'll try to move silently for a while." {
+		t.Fatalf("failed sneak result = %+v", result)
+	}
+	if ch.IsAffected(affSneak) {
+		t.Fatal("failed sneak left AFF_SNEAK set")
+	}
+	if len(ch.ActiveAffects) != 0 {
+		t.Fatalf("failed sneak left active affects = %d, want 0", len(ch.ActiveAffects))
+	}
+}
+
 func TestDoStealCoinsDrawOrderGoldAndImprove(t *testing.T) {
 	thief := newStealTestThief(50)
 	thief.Stats.Int = 100
