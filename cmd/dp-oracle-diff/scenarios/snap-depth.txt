@@ -1,0 +1,77 @@
+# C-first snap/do_action self-only vehicle (src/interpreter.c:717;
+# src/act.social.c:102-151; lib/misc/socials:740-744). The authored record
+# has no char_found message, so typed targets are ignored and follow the
+# no-argument actor/room pair.
+
+# depth-case: snap.no-argument
+# depth-case: snap.typed-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aldor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aldor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Borin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Borin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Borin 8162
+
+[probe]
+snap
+snap Borin trailing words are ignored
