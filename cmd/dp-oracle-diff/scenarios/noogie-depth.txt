@@ -1,0 +1,120 @@
+# C-first noogie/do_action target-social vehicle (src/interpreter.c:580;
+# src/act.social.c:102-151; lib/misc/socials:1441-1449). The authored record
+# has hide 0 and the default zero victim-position minimum, so player, NPC,
+# self, missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: noogie.no-argument
+# depth-case: noogie.target-success
+# depth-case: noogie.target-audience
+# depth-case: noogie.argument-first-token
+# depth-case: noogie.mob-target
+# depth-case: noogie.self-target
+# depth-case: noogie.target-not-found
+# depth-case: noogie.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Noogieactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Noogieactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Noogieobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Noogieobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Noogietarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Noogietarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Noogieobserver 8162
+teleport Noogietarget 8162
+
+[probe]
+noogie
+noogie Noogietarget trailing words are ignored
+noogie Noogietarget
+noogie trainee
+noogie Noogieactor
+noogie Nobody
+force Noogietarget sleep
+noogie Noogietarget
