@@ -932,13 +932,17 @@ func (tc *telnetConn) writeLine(s string) {
 	tc.write([]byte(normalizeCRLF(s)))
 }
 
-// normalizeCRLF converts any mix of "\r\n", lone "\r", and lone "\n" line
-// endings into canonical "\r\n". Applied to all text written to telnet clients.
+// normalizeCRLF converts any mix of "\r\n", C's historical "\n\r", lone
+// "\r", and lone "\n" line endings into canonical "\r\n". Applied to all
+// text written to telnet clients. LFCR is a single C line ending, not two
+// lines; preserving that pair matters for handlers such as do_skillset that
+// build output from mixed-order strings.
 func normalizeCRLF(s string) string {
 	if !strings.ContainsAny(s, "\r\n") {
 		return s
 	}
 	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\n\r", "\n")
 	s = strings.ReplaceAll(s, "\r", "\n")
 	return strings.ReplaceAll(s, "\n", "\r\n")
 }

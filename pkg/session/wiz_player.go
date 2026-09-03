@@ -457,20 +457,27 @@ func cmdSkillset(s *Session, args []string) error {
 		return nil
 	}
 
-	// Step 2: target lookup (get_char_vis scope: player sessions, then mobs).
+	// Step 2: target lookup. C's get_char_vis checks visible in-room players and
+	// mobs with keyword abbreviations, then exact global character names. Keep
+	// that scope in the shared resolver so self/me, ordinals, NPCs, and room
+	// visibility follow the same call path as other C-targeted commands.
 	name := args[0]
-	targetSess := findSessionByName(s.manager, name)
-	if targetSess == nil || targetSess.player == nil {
-		// Could be a mob — C's get_char_vis resolves mobs too. If it is a mob,
-		// fall through to the NPC rejection below; otherwise NOPERSON.
-		if mob := s.manager.world.GetMobByName(name); mob == nil {
-			s.Send(noPersonHere)
-			return nil
-		}
+	target, found := s.manager.world.ResolveCharWorld(s.player, name)
+	if !found {
+		s.Send(noPersonHere)
+		return nil
+	}
+	if target.Mob != nil {
 		s.Send("You can't set NPC skills.\n\r")
 		return nil
 	}
-	vict := targetSess.player
+	vict := target.Player
+	if vict == nil {
+		// ResolveCharWorld only returns a player or mob, but preserve the C
+		// failure bytes if a future combatant type reaches this command.
+		s.Send(noPersonHere)
+		return nil
+	}
 
 	// The remainder after the target name: '<skill>' <value>.
 	rest := strings.Join(args[1:], " ")
@@ -503,22 +510,17 @@ func cmdSkillset(s *Session, args []string) error {
 		return nil
 	}
 
-	// Step 7: next arg = value (whatever follows the closing quote).
+	// Step 7: next arg = value. C calls one_argument, so only the first token
+	// is passed to atoi; atoi consumes an optional sign and leading digits and
+	// returns zero when no digits are present.
 	valueStr := strings.TrimSpace(rest[1+closeIdx+1:])
 	if valueStr == "" {
 		s.Send("Learned value expected.\n\r")
 		return nil
 	}
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		// C's atoi returns 0 on non-numeric input (e.g. atoi("garbage")==0),
-		// which passes the >=0 check and sets the skill to 0. strconv.Atoi
-		// rejects the whole string, so mirror C by treating a parse failure as
-		// value 0. Known divergence: C atoi("75abc")==75 (leading digits), but
-		// strconv.Atoi("75abc") fails → 0 here. Edge case; left as-is (note).
-		value = 0
-	} else if value < 0 {
-		// atoi of a negative like "-5" yields -5 → min error.
+	valueToken := strings.Fields(valueStr)[0]
+	value := cAtoi(valueToken)
+	if value < 0 {
 		s.Send("Minimum value for learned is 0.\n\r")
 		return nil
 	}
