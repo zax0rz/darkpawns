@@ -620,7 +620,9 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 	}
 
 	weapon, ok := ch.Equipment.GetItemInSlot(SlotWield)
-	if !ok || weapon == nil || !strings.Contains(strings.ToLower(weapon.GetShortDesc()), weaponName) {
+	// C's OBJN() check searches the wielded object's keywords, not its
+	// player-facing short description (new_cmds.c:1124-1128).
+	if !ok || weapon == nil || !strings.Contains(strings.ToLower(weapon.GetKeywords()), weaponName) {
 		return SkillResult{
 			Success:     false,
 			MessageToCh: fmt.Sprintf("You need to wield a %s to succeed!\r\n", weaponName),
@@ -635,16 +637,25 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 		return SkillResult{Success: false, MessageToCh: "The monster in you won't let you suicide!\r\n"}
 	}
 
-	// Targets must expose the Player interface to check affects/PLR flags.
-	tp, ok := target.(*Player)
-	if !ok {
+	// C's get_char_room_vis returns both players and NPCs. Only the player
+	// branch has PLR nightbreed flags; the AFF requirement and level check apply
+	// to either concrete target type (new_cmds.c:1135-1153).
+	var targetIsAffected func(int) bool
+	var targetFlags uint64
+	switch victim := target.(type) {
+	case *Player:
+		targetIsAffected = victim.IsAffected
+		targetFlags = victim.GetFlags()
+	case *MobInstance:
+		targetIsAffected = victim.IsAffected
+	default:
 		return SkillResult{Success: false, MessageToCh: fmt.Sprintf("You can't %s that!\r\n", weaponName)}
 	}
 
-	if subcmd == 0 && !tp.IsAffected(affWerewolf) {
+	if subcmd == 0 && !targetIsAffected(affWerewolf) {
 		return SkillResult{Success: false, MessageToCh: "Spiking is only for werewolves..\r\n"}
 	}
-	if subcmd == 1 && !tp.IsAffected(affVampire) {
+	if subcmd == 1 && !targetIsAffected(affVampire) {
 		return SkillResult{Success: false, MessageToCh: "Staking is only for vampires..\r\n"}
 	}
 
@@ -655,35 +666,35 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 		return SkillResult{Success: false, MessageToCh: "You can't destroy your own kind!\r\n"}
 	}
 
-	if tp.GetLevel() >= LVL_IMMORT && ch.GetLevel() < LVL_IMMORT {
+	if target.GetLevel() >= LVL_IMMORT && ch.GetLevel() < LVL_IMMORT {
 		return SkillResult{Success: false, MessageToCh: "Yeah, right.\r\n"}
 	}
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(tp.GetName(), tp.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	// Success if attacker level > victim, level gap < random(0, LVL_IMMORT), or victim asleep.
 	// #nosec G404 — game RNG, not cryptographic
-	if ch.GetLevel() > tp.GetLevel() ||
-		tp.GetLevel()-ch.GetLevel() < dprng.Number(0, LVL_IMMORT-1) ||
-		tp.GetPosition() <= combat.PosSleeping {
-		// Remove vampire/werewolf PLR flag from the victim so raw_kill can proceed.
-		if tp.GetFlags()&(1<<PlrVampire) != 0 {
-			tp.SetPlrFlag(PlrVampire, false)
+	if ch.GetLevel() > target.GetLevel() ||
+		target.GetLevel()-ch.GetLevel() < dprng.Number(0, LVL_IMMORT) ||
+		target.GetPosition() <= combat.PosSleeping {
+		// C clears PLR flags only when the victim is a player; an NPC has no
+		// player-flag storage and proceeds directly to raw_kill.
+		if targetPlayer, ok := target.(*Player); ok {
+			if targetFlags&(1<<PlrVampire) != 0 {
+				targetPlayer.SetPlrFlag(PlrVampire, false)
+			}
+			if targetFlags&(1<<PlrWerewolf) != 0 {
+				targetPlayer.SetPlrFlag(PlrWerewolf, false)
+			}
 		}
-		if tp.GetFlags()&(1<<PlrWerewolf) != 0 {
-			tp.SetPlrFlag(PlrWerewolf, false)
-		}
-		// Note: C increments GET_PKS/GET_DEATHS and calls raw_kill. We rely on
-		// RawKill and the existing kill-tracking callbacks.
-		combat.RawKill(target, combat.TYPE_UNDEFINED)
-
 		return SkillResult{
 			Success:       true,
 			MessageToCh:   ActMessage("You drive $p into $S chest!", chPronouns, &victPronouns, weapon.GetShortDesc()),
 			MessageToVict: ActMessage("$n drives $p into your chest with a solid blow!", chPronouns, &victPronouns, weapon.GetShortDesc()),
 			MessageToRoom: ActMessage("$n drives $p into the chest of $N!", chPronouns, &victPronouns, weapon.GetShortDesc()),
 			WaitCh:        2,
+			RawKill:       true,
 		}
 	}
 
