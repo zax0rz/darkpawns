@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	sniff	sniff.entry-gate	D1	command	unit-green	TestSniffRegistrationUsesCEntryGateAndRecord	interpreter.c:720;comm.c:910-947	The registered C row is POS_RESTING with no minimum level, and the Go registry preserves that gate (R1/R2/R5e).
+do_action	sniff	sniff.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:720;comm.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
+do_action	sniff	sniff.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The common PLR_NOSHOUT social refusal is owned by the shared dance vehicle (R1/R5b/R5c).
+do_action	sniff	sniff.no-argument	D2	audience	oracle-green-multiseed	sniff-depth@1,2,3,5,8	act.social.c:119-123;lib/misc/socials:774-778	The no-argument branch sends the exact actor sniff line and the room audience line (R1/R3/R5e).
+do_action	sniff	sniff.argument-ignored	D2	command	oracle-green-multiseed	sniff-depth@1,2,3,5,8	act.social.c:119-123;lib/misc/socials:774-778	With char_found unset, C ignores the complete command remainder and still executes the no-argument branch (R1/R2/R3/R5e).
+do_action	sniff	sniff.room-audience	D3	audience	oracle-green-multiseed	sniff-depth@1,2,3,5,8	act.social.c:121-123;comm.c:2392-2555	A named observer receives $n sniffs sadly. while the actor receives the private line; the # sentinels remain silent (R1/R3/R4/R5e).
+do_action	sniff	sniff.target-branches-unreachable	D5	command	excluded	-	lib/misc/socials:774-778	The record has no char_found/others_found/vict_found/self/missing-target messages, so do_action cannot reach target lookup, self, victim, or not-found branches for sniff (R4/R5e).
