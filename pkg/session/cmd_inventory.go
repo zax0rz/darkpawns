@@ -34,7 +34,7 @@ func cmdQuiStub(s *Session) error {
 // at LVL_IMPL-1+ via command_gates.tsv; below that, resolution skips it (law 3)
 // and exact typing is gate-rejected, matching C's scan behavior.
 func cmdShutdowStub(s *Session) error {
-	s.Send("If you want to shut something down, say so!")
+	s.Send("If you want to shut something down, say so!\r\n")
 	return nil
 }
 

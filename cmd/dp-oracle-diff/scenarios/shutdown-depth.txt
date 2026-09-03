@@ -1,0 +1,48 @@
+# depth-case: shutdown.shutdow-guard
+# depth-case: shutdown.shutdow-arguments-ignored
+# depth-case: shutdown.unknown-option
+# depth-case: shutdown.unknown-option-case
+#
+# C-first safe vehicle for do_shutdown (src/act.wizard.c:1074-1118).  The
+# valid shutdown/reboot/die/pause arms terminate the isolated C process, so
+# their exact global messages and shutdown request state are pinned by the
+# focused Go tests; this live vehicle exercises both non-terminating branches.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shutdownactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shutdownactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+shutdow
+shutdow reboot
+shutdown nonsense
+shutdown ReBoOt
