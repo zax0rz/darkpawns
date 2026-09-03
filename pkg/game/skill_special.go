@@ -260,11 +260,24 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 // DoSlug implements do_slug() — punch attack.
 func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillSlug) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You couldn't slug your way out of a wet paper bag.\r\n"}
+		return SkillResult{Success: false, MessageToCh: SkillUnknownMsg[SkillSlug]}
 	}
 
-	if ch.Equipment != nil && len(ch.Equipment.Slots) > 0 && ch.Equipment.Slots[0] != nil {
-		return SkillResult{Success: false, MessageToCh: "You can't make a fist while wielding a weapon!\r\n"}
+	// C resolves the target before checking the self, weapon, and mounted
+	// gates (new_cmds.c:837-848). Keep those checks here as a second boundary
+	// for direct callers; CmdSlug owns the visible-room lookup and fallback.
+	if target != nil && target.GetName() == ch.GetName() {
+		return SkillResult{Success: false, MessageToCh: "You curl up your fist and slug yourself in the nose! Ouch!"}
+	}
+
+	if ch.Equipment != nil {
+		if _, wielded := ch.Equipment.GetItemInSlot(SlotWield); wielded {
+			return SkillResult{Success: false, MessageToCh: "You can't make a fist while wielding a weapon!"}
+		}
+	}
+
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
@@ -274,11 +287,13 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 
 	if percent > prob {
 		return SkillResult{
-			Success:       true,
-			Damage:        0,
-			MessageToCh:   "You swing wildly and miss!\r\n",
-			MessageToVict: "$n swings a fist at you and misses!\r\n",
-			MessageToRoom: fmt.Sprintf("%s swings a fist at %s and misses!\r\n", ch.Name, target.GetName()),
+			Success:         false,
+			Damage:          0,
+			SkillMsgType:    SkillSlugNum,
+			DamageSkill:     SkillSlug,
+			StartCombat:     true,
+			WaitCh:          2,
+			DeferredImprove: []string{SkillSlug},
 		}
 	}
 
@@ -286,11 +301,12 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 	// #nosec G404
 	dam := (ch.GetLevel() * dprng.Number(1, 4)) / 2
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   "You slug your victim with a solid punch!\r\n",
-		MessageToVict: "You are slugged hard!\r\n",
-		MessageToRoom: fmt.Sprintf("%s slugs %s!\r\n", ch.Name, target.GetName()),
+		Success:      true,
+		Damage:       dam,
+		SkillMsgType: SkillSlugNum,
+		DamageSkill:  SkillSlug,
+		StartCombat:  true,
+		WaitCh:       2,
 	}
 }
 

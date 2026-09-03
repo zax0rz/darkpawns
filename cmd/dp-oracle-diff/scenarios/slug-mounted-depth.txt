@@ -1,0 +1,76 @@
+# C-first mounted gate for do_slug (src/new_cmds.c:844-848). Target lookup
+# succeeds on the authored rideable horse before IS_MOUNTED emits the refusal.
+
+# depth-case: slug.mounted-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Slugmountgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Slugmountgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rider]
+Slugrider
+Y
+riderpass
+riderpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:rider]
+Slugrider
+y
+riderpass
+riderpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Slugrider 'slug' 75
+
+[probe:rider]
+ride horse
+slug horse
