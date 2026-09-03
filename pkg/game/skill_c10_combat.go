@@ -227,44 +227,74 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 
 // DoSleeper implements do_sleeper() from act.offensive.c lines 1184-1280.
 // Requires bare hands. Non-lethal sleep.
-func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
+func DoSleeper(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillSleeper) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
 	}
 	if ch.GetFighting() != "" {
 		return SkillResult{Success: false, MessageToCh: "You can't do this while fighting!"}
 	}
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "This room just has such a peaceful, easy feeling..."}
+	}
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
-		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while holding that weapon!"}
+		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while you are holding that weapon!"}
+	}
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Sleeper who?"}
+	}
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Can't get to sleep fast enough, huh?"}
+	}
+	if !target.IsNPC() && ch.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
+		return SkillResult{
+			Success:       false,
+			MessageToCh:   "You can not sleeper them because you are not an Outlaw!",
+			MessageToVict: fmt.Sprintf("%s failed to sleeper you because %s is not an Outlaw.", ch.GetName(), ch.GetName()),
+		}
 	}
 	if target.GetFighting() != "" {
 		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while they're fighting!"}
+	}
+	if isShopKeeperInWorld(world, target) {
+		return SkillResult{Success: false, MessageToCh: "Ha Ha. Don't think so."}
+	}
+	if target.GetPosition() <= combat.PosSleeping {
+		return SkillResult{Success: false, MessageToCh: "What's the point of doing that now?"}
 	}
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillSleeper)
+	if mob, ok := target.(*MobInstance); ok && (mob.HasMobFlag(MobFlagAware) || mob.HasMobFlag(MobFlagNosleep)) {
+		prob = 0
+	}
 	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
 	}
 	if !target.IsNPC() && (target.GetLevel() > ch.GetLevel()+3 || target.GetLevel() < ch.GetLevel()-3) {
-		percent = prob + 1
+		prob = 0
 	}
 	if percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 2,
+			Success: false, WaitCh: 2, RetaliateHit: true, RetaliateHitAfterMessages: true,
 			MessageToCh:   ActMessage("You try to grab $N in a sleeper hold but fail!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to put a sleeper hold on you, but you break free!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to put $N in a sleeper hold...", chPronouns, &victPronouns, ""),
 		}
 	}
-	improveSkill(ch, SkillSleeper)
 	return SkillResult{
 		Success: true, Damage: 0, SleepTarget: true, WaitCh: 2,
-		MessageToCh:   ActMessage("You put $N in a sleeper hold.", chPronouns, &victPronouns, ""),
-		MessageToVict: "You feel very sleepy... Zzzzz..",
-		MessageToRoom: ActMessage("$n puts $N in a sleeper hold. $N goes to sleep.", chPronouns, &victPronouns, ""),
+		MessageToCh:         ActMessage("You put $N in a sleeper hold.", chPronouns, &victPronouns, ""),
+		MessageToVict:       "You feel very sleepy... Zzzzz..",
+		MessageToRoom:       ActMessage("$n puts $N in a sleeper hold.", chPronouns, &victPronouns, ""),
+		MessageToRoomSecond: ActMessage("$N goes to sleep.", chPronouns, &victPronouns, ""),
+		RoomIncludesTarget:  true,
+		DeferredImprove:     []string{SkillSleeper}, DeferredImproveAfterRoom: true,
 	}
 }
 

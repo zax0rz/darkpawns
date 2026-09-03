@@ -1,0 +1,119 @@
+# C-first legal do_sleeper outcome vehicle (src/act.offensive.c:1228-1280).
+# The outlaw actor and same-level player victim reach the inclusive sleeper
+# roll; the observer exposes both separate C TO_ROOM acts and the victim's
+# ordinary descriptor output. A skill of 100 keeps the legal success arm
+# deterministic for the selected seed matrix while preserving the C draw.
+
+# depth-case: sleeper.success-message-order
+# depth-case: sleeper.success-victim-state
+# depth-case: sleeper.success-room-audience
+# depth-case: sleeper.success-wait
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sleeperoutgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleeperoutgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Sleeperoutactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Sleeperoutactor
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:target]
+Sleeperouttarget
+Y
+targetpass
+targetpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Sleeperouttarget
+y
+targetpass
+targetpass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Sleeperoutactor 'sleeper' 100
+set Sleeperoutactor outlaw on
+teleport Sleeperoutactor 8105
+teleport Sleeperouttarget 8105
+
+[probe:actor]
+sleeper Sleeperouttarget
