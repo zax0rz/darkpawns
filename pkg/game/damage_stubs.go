@@ -175,6 +175,20 @@ func (w *World) DoNeckbreakDamage(attacker, victim combat.Combatant, dam int) bo
 	})
 }
 
+// DoSmackheadsDamage preserves do_smackheads' damage() boundary: the two
+// ordered damage calls must use the C skill attack type and complete death
+// path, including the authored death bytes and death cry before game-layer
+// removal/XP bookkeeping (new_cmds.c:1090-1102; R1/R5e).
+func (w *World) DoSmackheadsDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillSmackheadsNum, func() {
+		w.HandleDeath(victim, attacker, SkillSmackheadsNum)
+		combat.DeathCry(victim)
+	})
+}
+
 // MaybeSpawnPuke preserves do_groinrip's post-room 1-in-11 vnum-21 object
 // branch, including its shared RNG draw and two-tick timer.
 func (w *World) MaybeSpawnPuke(roomVNum int) {

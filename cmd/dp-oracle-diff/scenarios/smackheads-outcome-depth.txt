@@ -1,0 +1,82 @@
+# C-first outcome vehicle for do_smackheads (src/new_cmds.c:1039-1102).
+# The command consumes number(1,101), emits its authored pre-damage acts,
+# damages both victims, and waits three violence pulses. The scenario is run
+# across seeds to prove the draw and branch parity.
+
+# depth-case: smackheads.failure
+# depth-case: smackheads.success
+# depth-case: smackheads.failure-audience
+# depth-case: smackheads.success-audience
+# depth-case: smackheads.damage-death-pipeline
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 5 8105 80
+spawn-mob 16302 5 8105 80
+
+[setup:oracle]
+Smackrollgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Smackrollgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Smackwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Smackwitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Smackrollgod 'smackheads' 75
+teleport Smackwitness 8105
+
+[probe]
+smackheads generic recruit

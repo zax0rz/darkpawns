@@ -313,50 +313,75 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 // DoSmackheads implements do_smackheads() — grab two NPCs and smack them together.
 func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) SkillResult {
 	if ch.GetSkill(SkillSmackheads) == 0 {
-		return SkillResult{Success: false, MessageToCh: "The only heads you're gonna smack are yours and Rosie's.\r\n"}
-	}
-
-	if victim1Name == victim2Name {
-		return SkillResult{Success: false, MessageToCh: "Looks like the gang's not all here...\r\n"}
+		return SkillResult{Success: false, MessageToCh: "The only heads you're gonna smack are yours and Rosie's."}
 	}
 
 	vill, _, found1 := FindTargetInRoom(world, ch.GetRoomVNum(), victim1Name, ch)
 	vil2, _, found2 := FindTargetInRoom(world, ch.GetRoomVNum(), victim2Name, ch)
-	if !found1 || !found2 {
-		return SkillResult{Success: false, MessageToCh: "Looks like the gang's not all here...\r\n"}
+	if !found1 || !found2 || vill == vil2 {
+		return SkillResult{Success: false, MessageToCh: "Looks like the gangs not all here..."}
 	}
 
-	// Check we're not targeting ourselves
-	if vill.GetName() == ch.Name || vil2.GetName() == ch.Name {
-		return SkillResult{Success: false, MessageToCh: "We call that 'headbutt' around here, son...\r\n"}
+	if vill == ch || vil2 == ch {
+		return SkillResult{Success: false, MessageToCh: "We call that 'headbutt' around here, son..."}
 	}
 
-	if ch.Equipment != nil && len(ch.Equipment.Slots) > 0 && ch.Equipment.Slots[0] != nil {
-		return SkillResult{Success: false, MessageToCh: "You need your hands free to smack some heads!\r\n"}
+	if ch.Equipment != nil {
+		if _, wielded := ch.Equipment.GetItemInSlot(SlotWield); wielded {
+			return SkillResult{Success: false, MessageToCh: "You need your hands free to smack some heads!"}
+		}
 	}
 
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+	if ch.GetFighting() != "" {
+		return SkillResult{Success: false, MessageToCh: "You're a little busy right now!"}
+	}
+	if vill.GetFighting() != "" || vil2.GetFighting() != "" {
+		return SkillResult{Success: false, MessageToCh: "They are too busy fighting at the moment!"}
+	}
+	if world != nil && world.roomHasFlag(ch.GetRoomVNum(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "You can't commit acts of violence here!"}
+	}
+
+	averageAC := (vill.GetAC() + vil2.GetAC()) / 2
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	percent := dprng.Number(1, 101)
+	percent := ((5 - (averageAC / 10)) << 1) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillSmackheads)
+	targets := []combat.Combatant{vill, vil2}
 
 	if percent > prob {
 		// Failure — victims duck
 		msgToCh := fmt.Sprintf("%s and %s slip out of your hands!", vill.GetName(), vil2.GetName())
 		return SkillResult{
-			Success:       true,
-			MessageToCh:   msgToCh + "\r\n",
-			MessageToRoom: fmt.Sprintf("%s and %s duck as %s lunges at them!\r\n", vill.GetName(), vil2.GetName(), ch.Name),
+			Success:             false,
+			MessageToCh:         msgToCh,
+			MessageToRoom:       fmt.Sprintf("%s and %s duck as %s lunges at them!", vill.GetName(), vil2.GetName(), ch.Name),
+			Targets:             targets,
+			StartCombat:         true,
+			WaitCh:              3,
+			SkillMsgAfterDamage: true,
+			PreDamageImprove:    []string{SkillSmackheads},
 		}
 	}
 
 	// Success — smack them together
+	vill.SetPosition(combat.PosStunned)
+	vil2.SetPosition(combat.PosStunned)
 	dam := 3 * ch.GetLevel()
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   fmt.Sprintf("You grab the heads of %s and %s and bang them together with a sickening *SMACK*.\r\n", vill.GetName(), vil2.GetName()),
-		MessageToRoom: fmt.Sprintf("%s grabs the heads of %s and %s and bangs them together with a sickening *SMACK*.\r\n", ch.Name, vill.GetName(), vil2.GetName()),
+		Success:             true,
+		Damage:              dam,
+		MessageToCh:         fmt.Sprintf("You grab the heads of %s and %s and bang them together with a sickening *SMACK*.", vill.GetName(), vil2.GetName()),
+		MessageToRoom:       fmt.Sprintf("%s grabs the heads of %s and %s and bangs them together with a sickening *SMACK*.", ch.Name, vill.GetName(), vil2.GetName()),
+		Targets:             targets,
+		DamageSkill:         SkillSmackheads,
+		StartCombat:         true,
+		WaitCh:              3,
+		WaitTarget:          3,
+		SkillMsgAfterDamage: true,
+		DeferredImprove:     []string{SkillSmackheads},
 	}
 }
 
