@@ -999,6 +999,14 @@ func TestCmdSharpen_NoArgs(t *testing.T) {
 func TestCmdSharpen_Fighting(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosFighting)
+	session.player.SetFighting("opponent")
+	session.player.Inventory.Items = append(session.player.Inventory.Items, game.NewObjectInstance(&parser.Obj{
+		VNum:      9001,
+		Keywords:  "sword",
+		ShortDesc: "a test sword",
+		TypeFlag:  game.ITEM_WEAPON,
+		Values:    [4]int{0, 0, 0, 3},
+	}, -1))
 	if err := CmdSharpen(session, []string{"sword"}); err != nil {
 		t.Fatalf("CmdSharpen: %v", err)
 	}

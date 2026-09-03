@@ -1,0 +1,117 @@
+# depth-case: sharpen.fighting-missing-object
+# depth-case: sharpen.fighting-valid-object
+#
+# C-first fighting-order vehicle for do_sharpen (src/new_cmds.c:2759-2771).
+# The first player is a disposable God used only to prepare two mortal peers:
+# one is forced to pick up the test weapon and attack the other, then becomes
+# the selected probe actor. The pulse padding drains the hit wait state while
+# keeping the durable victim alive.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8022 9999 8162 80
+force-load 8022
+
+[setup:oracle]
+Sharpenadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sharpenadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sharpenactor]
+Sharpenactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:sharpenactor]
+Sharpenactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sharpenvictim]
+Sharpenvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:sharpenvictim]
+Sharpenvictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sharpenactor 8162
+teleport Sharpenvictim 8162
+set Sharpenvictim maxhit 50000
+set Sharpenvictim hit 50000
+force Sharpenactor get long
+force Sharpenactor hit Sharpenvictim
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+
+[probe:sharpenactor]
+sharpen missing
+sharpen long

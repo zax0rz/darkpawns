@@ -1,0 +1,96 @@
+# depth-case: sharpen.no-argument
+# depth-case: sharpen.missing-object
+# depth-case: sharpen.half-chop
+# depth-case: sharpen.non-weapon-gate
+# depth-case: sharpen.magic-gate
+# depth-case: sharpen.success-actor
+# depth-case: sharpen.success-room
+#
+# C-first vehicle for do_sharpen (src/new_cmds.c:2743-2791).  The long sword
+# is an ordinary slash weapon; the pure sword is an authored magical slash
+# weapon and the bread is a non-weapon predicate control.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8022 9999 8162 80
+spawn-obj 3105 9999 8162 80
+spawn-obj 8010 9999 8162 80
+force-load 3105
+force-load 8022
+force-load 8010
+force-load 3105
+
+[setup:oracle]
+Sharpenactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sharpenactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sharpenpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sharpenpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sharpenpeer 8162
+skillset Sharpenactor 'sharpen' 100
+
+[probe]
+get long
+get pure
+get bread
+inventory
+sharpen
+sharpen missing
+sharpen long trailing words
+sharpen pure
+sharpen bread
