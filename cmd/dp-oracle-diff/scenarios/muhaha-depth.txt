@@ -1,0 +1,81 @@
+# C-first muhaha/do_action self-only social vehicle (src/interpreter.c:560;
+# src/act.social.c:102-151; lib/misc/socials:495-498). The authored record has
+# hide 0, min-victim-position 0, and no char_found message, so every typed
+# argument is ignored and only the actor/room pair is observable.
+
+# depth-case: muhaha.no-argument
+# depth-case: muhaha.argument-ignored
+# depth-case: muhaha.missing-target-ignored
+# depth-case: muhaha.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Muhahaactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Muhahaactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Muhahaobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Muhahaobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Muhahaobserver 8162
+
+[probe]
+muhaha
+muhaha Muhahaobserver trailing words are ignored
+muhaha Nobody
+muhaha Muhahaactor
