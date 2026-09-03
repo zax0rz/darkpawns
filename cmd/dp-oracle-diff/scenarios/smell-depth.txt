@@ -1,0 +1,114 @@
+# C-first smell/do_action target-social vehicle (src/interpreter.c:712;
+# src/act.social.c:102-151; lib/misc/socials:1128-1136). The authored record
+# has zero hide and zero victim-position minimum, so the actor, observer,
+# victim, self, missing-target, and first-token branches are reachable.
+
+# depth-case: smell.no-argument
+# depth-case: smell.target-success
+# depth-case: smell.target-audience
+# depth-case: smell.argument-first-token
+# depth-case: smell.self-target
+# depth-case: smell.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aldor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aldor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Borin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Borin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Calia
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Calia
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Borin 8162
+teleport Calia 8162
+
+[probe]
+smell
+smell the Calia trailing words are ignored
+smell Calia
+smell Aldor
+smell Nobody
