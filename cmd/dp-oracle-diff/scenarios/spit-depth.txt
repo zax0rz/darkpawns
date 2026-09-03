@@ -1,0 +1,120 @@
+# C-first spit/do_action target-social vehicle (src/interpreter.c:731;
+# src/act.social.c:102-151; lib/misc/socials:824-832). The authored record
+# has hide 0 and the default zero victim-position minimum, so player, NPC,
+# self, missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: spit.no-argument
+# depth-case: spit.target-success
+# depth-case: spit.target-audience
+# depth-case: spit.argument-first-token
+# depth-case: spit.mob-target
+# depth-case: spit.self-target
+# depth-case: spit.target-not-found
+# depth-case: spit.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Spitactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spitactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Spitobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Spitobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Spittarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Spittarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Spitobserver 8162
+teleport Spittarget 8162
+
+[probe]
+spit
+spit Spittarget trailing words are ignored
+spit Spittarget
+spit trainee
+spit Spitactor
+spit Nobody
+force Spittarget sleep
+spit Spittarget
