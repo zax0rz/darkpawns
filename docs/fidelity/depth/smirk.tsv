@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	smirk	smirk.entry-gate	D1	command	unit-green	TestSmirkRegistrationUsesCEntryGate	interpreter.c:713;act.social.c:102-118	The registered C row is available at level 0 and POS_RESTING; the focused test pins the authoritative command gate under R1/R2/R5e.
+do_action	smirk	smirk.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:713;comm.c:910-947	The common POS_RESTING dispatcher rejection is owned by the existing fade position-gate proof under R2/R5b/R5c.
+do_action	smirk	smirk.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal is owned by the dance social matrix under R1/R5b/R5c.
+do_action	smirk	smirk.record-contract	D2	command	unit-green	TestSmirkRegistrationUsesCEntryGate	lib/misc/socials:735-739;act.social.c:102-151	The focused test pins the self-only three-record social, including the # char_found sentinel and zero hide/position metadata, under R1/R4/R5e.
+do_action	smirk	smirk.no-argument	D2	audience	oracle-green-multiseed	smirk-depth@1,2,3,5,8	act.social.c:102-113;lib/misc/socials:735-739	Empty one_argument emits the authored smirk actor line and room act under R1/R3/R5e.
+do_action	smirk	smirk.typed-target-ignored	D2	audience	oracle-green-multiseed	smirk-depth@1,2,3,5,8	act.social.c:120-126;lib/misc/socials:735-739	Because char_found is #, a typed target is ignored and follows the no-argument actor/room pair under R1/R2/R3/R5e.

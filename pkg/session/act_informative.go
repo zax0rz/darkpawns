@@ -95,27 +95,44 @@ func cmdCommands(s *Session, args []string) error {
 // Source: act.informative.c do_commands/SCMD_SOCIALS — lists commands whose handler is
 // do_action (the social handler). The Go equivalent is the game.Socials map.
 func cmdSocials(s *Session, args []string) error {
-	names := make([]string, 0, len(game.Socials))
-	for name := range game.Socials {
-		names = append(names, name)
+	target := s.player
+	if len(args) > 0 {
+		resolved, ok := s.manager.world.ResolveCharWorld(s.player, args[0])
+		if !ok || resolved.Mob != nil || resolved.Player == nil {
+			s.Send("Who is that?\r\n")
+			return nil
+		}
+		target = resolved.Player
+		if s.player.GetLevel() < target.GetLevel() {
+			s.Send("You can't see the commands of people above your level.\r\n")
+			return nil
+		}
 	}
-	sort.Strings(names)
+
+	names := cSocialsForLevel(target.GetLevel())
 	if len(names) == 0 {
-		s.Send("No socials available.")
+		s.Send("\r\n")
 		return nil
 	}
 	var buf strings.Builder
-	buf.WriteString("The following socials are available to you:\r\n")
+	buf.WriteString("The following socials are available to ")
+	if target == s.player {
+		buf.WriteString("you")
+	} else {
+		buf.WriteString(target.GetName())
+	}
+	buf.WriteString(":\r\n")
 	for i, name := range names {
-		fmt.Fprintf(&buf, "%-16s", name)
+		fmt.Fprintf(&buf, "%-11s", name)
 		if (i+1)%7 == 0 {
 			buf.WriteString("\r\n")
 		}
 	}
-	if len(names)%7 != 0 {
-		buf.WriteString("\r\n")
-	}
-	s.Send(buf.String())
+	// C always appends one final CRLF after the listing, even when the last
+	// row already ended a seven-column line, then hands the complete buffer to
+	// page_string().
+	buf.WriteString("\r\n")
+	PageString(s, buf.String())
 	return nil
 }
 

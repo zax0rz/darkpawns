@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -18,27 +19,29 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
-		// C do_split (act.other.c): is_number("") is true, so amount = atoi("")
-		// = 0, which hits the amount<=0 branch → "Sorry, you can't do that."
-		ch.SendMessage("Sorry, you can't do that.\r\n")
-		return true
-	}
-
+	arg, _ = OneArgument(arg)
 	amount := 0
-	if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
-		ch.SendMessage("That doesn't look like a number.\r\n")
-		slog.Warn("split parse failed", "player", ch.Name, "arg", arg, "error", err)
-		return true
+	if arg != "" {
+		for _, digit := range arg {
+			if digit < '0' || digit > '9' {
+				ch.SendMessage("How many coins do you wish to split with your group?\r\n")
+				return true
+			}
+		}
+		var err error
+		amount, err = strconv.Atoi(arg)
+		if err != nil {
+			slog.Warn("split amount parse failed", "player", ch.Name, "arg", arg, "error", err)
+			ch.SendMessage("How many coins do you wish to split with your group?\r\n")
+			return true
+		}
 	}
 	if amount <= 0 {
 		ch.SendMessage("Sorry, you can't do that.\r\n")
 		return true
 	}
-	ch.mu.Lock()
+	grouped := ch.IsAffected(affGroup)
 	if amount > ch.GetGold() {
-		ch.mu.Unlock()
 		ch.SendMessage("You don't seem to have that much gold to split.\r\n")
 		return true
 	}
@@ -63,14 +66,19 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		}
 	}
 
-	if num <= 1 || !ch.IsAffected(affGroup) {
-		ch.mu.Unlock()
+	if num == 0 || !grouped {
 		ch.SendMessage("With whom do you wish to share your gold?\r\n")
 		return true
 	}
 
 	share := amount / num
-	ch.SetGold(ch.GetGold() - share*(num-1))
+	ch.mu.Lock()
+	if amount > ch.Gold {
+		ch.mu.Unlock()
+		ch.SendMessage("You don't seem to have that much gold to split.\r\n")
+		return true
+	}
+	ch.Gold -= share * (num - 1)
 	ch.mu.Unlock()
 
 	for _, p := range players {
@@ -84,7 +92,7 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 			continue
 		}
 		p.mu.Lock()
-		p.SetGold(p.GetGold() + share)
+		p.Gold += share
 		p.mu.Unlock()
 		p.SendMessage(fmt.Sprintf("%s splits %d coins; you receive %d.\r\n", ch.Name, amount, share))
 	}

@@ -1,0 +1,115 @@
+# C-first spank/do_action target-social vehicle (src/interpreter.c:728;
+# src/act.social.c:102-151; lib/misc/socials:804-812). The authored record
+# has hide 0 and minimum victim position POS_STANDING, so the actor, observer,
+# victim, self, missing-target, first-token, and sleeping-target branches are
+# reachable.
+
+# depth-case: spank.no-argument
+# depth-case: spank.target-success
+# depth-case: spank.target-audience
+# depth-case: spank.argument-first-token
+# depth-case: spank.self-target
+# depth-case: spank.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Spankactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spankactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Spankobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Spankobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Spanktarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Spanktarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Spankobserver 8162
+teleport Spanktarget 8162
+
+[probe]
+spank
+spank the Spanktarget trailing words are ignored
+spank Spanktarget
+spank Spankactor
+spank Nobody

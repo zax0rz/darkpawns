@@ -1,0 +1,114 @@
+# C-first sneeze/do_action target-social vehicle (src/interpreter.c:714;
+# src/act.social.c:102-151; lib/misc/socials:755-763). The authored record
+# has zero hide and zero victim-position minimum, so the actor, observer,
+# victim, self, missing-target, and first-token branches are reachable.
+
+# depth-case: sneeze.no-argument
+# depth-case: sneeze.target-success
+# depth-case: sneeze.target-audience
+# depth-case: sneeze.argument-first-token
+# depth-case: sneeze.self-target
+# depth-case: sneeze.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aldor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aldor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Borin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Borin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Calia
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Calia
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Borin 8162
+teleport Calia 8162
+
+[probe]
+sneeze
+sneeze the Calia trailing words are ignored
+sneeze Calia
+sneeze Aldor
+sneeze Nobody

@@ -1,0 +1,120 @@
+# C-first startle/do_action target-social vehicle (src/interpreter.c:737;
+# src/act.social.c:102-151; lib/misc/socials:1496-1504). The authored record
+# has hide 0 and the default zero victim-position minimum, so player, NPC,
+# self, missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: startle.no-argument
+# depth-case: startle.target-success
+# depth-case: startle.target-audience
+# depth-case: startle.argument-first-token
+# depth-case: startle.mob-target
+# depth-case: startle.self-target
+# depth-case: startle.target-not-found
+# depth-case: startle.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Startleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Startleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Startleobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Startleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Startletarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Startletarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Startleobserver 8162
+teleport Startletarget 8162
+
+[probe]
+startle
+startle Startletarget trailing words are ignored
+startle Startletarget
+startle trainee
+startle Startleactor
+startle Nobody
+force Startletarget sleep
+startle Startletarget

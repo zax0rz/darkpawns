@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	snap	snap.entry-gate	D1	command	unit-green	TestSnapRegistrationUsesCEntryGate	interpreter.c:717;act.social.c:102-118	The registered C row is available at level 0 and POS_RESTING; the focused test pins the authoritative command gate under R1/R2/R5e.
+do_action	snap	snap.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:717;comm.c:910-947	The common POS_RESTING dispatcher rejection is owned by the existing fade position-gate proof under R2/R5b/R5c.
+do_action	snap	snap.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal is owned by the dance social matrix under R1/R5b/R5c.
+do_action	snap	snap.record-contract	D2	command	unit-green	TestSnapRegistrationUsesCEntryGate	lib/misc/socials:740-744;act.social.c:102-151	The focused test pins the self-only three-record snap social, including the # char_found sentinel and zero hide/position metadata, under R1/R4/R5e.
+do_action	snap	snap.no-argument	D2	audience	oracle-green-multiseed	snap-depth@1,2,3,5,8	act.social.c:102-113;lib/misc/socials:740-744	Empty one_argument emits the authored PRONTO actor line and room snap act under R1/R3/R5e.
+do_action	snap	snap.typed-target-ignored	D2	audience	oracle-green-multiseed	snap-depth@1,2,3,5,8	act.social.c:120-126;lib/misc/socials:740-744	Because char_found is #, a typed target is ignored and follows the no-argument actor/room pair under R1/R2/R3/R5e.

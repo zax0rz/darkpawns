@@ -347,9 +347,16 @@ func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
 	}
 }
 
-// handleMobDeath implements raw_kill() for NPCs.
+// handleMobDeath implements the normal NPC death path.
 // Original: make_corpse (transfers inventory+equipment+gold), extract_char.
 func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant, attackType int) {
+	w.handleMobDeathWithAnnouncement(victim, killer, attackType, true)
+}
+
+// handleMobDeathWithAnnouncement is the shared NPC extraction/corpse path.
+// C raw_kill does not announce corpse creation; ordinary combat death keeps
+// the existing Go notification for its already-audited callers.
+func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer combat.Combatant, attackType int, announceCorpse bool) {
 	roomVNum := victim.GetRoom()
 
 	// Find the MobInstance
@@ -456,7 +463,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	// general Go notification for existing callers, but suppress it for the
 	// skill_message-backed ambush damage path (fight.c:1407-1450), whose room
 	// transcript is already proven byte-for-byte.
-	if attackType != 191 && attackType != SkillCutthroatNum && attackType != SkillDisembowelNum && attackType != SkillSmackheadsNum {
+	if announceCorpse && attackType != 191 && attackType != SkillCutthroatNum && attackType != SkillDisembowelNum && attackType != SkillSmackheadsNum {
 		players := w.GetPlayersInRoom(roomVNum)
 		for _, p := range players {
 			p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
@@ -480,6 +487,23 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 			mob.Forget(deadMob.GetShortDesc())
 		}
 	}
+}
+
+// RawKillCombatant implements the C raw_kill tail for a command that owns its
+// authored act ordering. Player extraction stays on combat.RawKill's callback
+// bridge; NPCs use the game death path so their corpse and active-mob removal
+// are performed without combat XP/kills bookkeeping (R1/R3/R5e).
+func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
+	if victim == nil {
+		return
+	}
+	if victim.IsNPC() {
+		victim.StopFighting()
+		combat.DeathCry(victim)
+		w.handleMobDeathWithAnnouncement(victim, nil, attackType, false)
+		return
+	}
+	combat.RawKill(victim, attackType)
 }
 
 // handlePlayerDeath implements die()/die_with_killer() + raw_kill() for players.

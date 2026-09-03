@@ -1,0 +1,107 @@
+# C-first spank/do_action sleeping-victim vehicle (src/interpreter.c:728;
+# src/act.social.c:102-151; lib/misc/socials:804-812). The authored record
+# requires POS_STANDING for the victim, so a sleeping visible target reaches
+# C's proper-position refusal and no target-success audience bytes.
+
+# depth-case: spank.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Spanksleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spanksleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Spanksleepobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Spanksleepobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Spanksleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:sleeper]
+Spanksleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Spanksleepobserver 8162
+teleport Spanksleeptarget 8162
+force Spanksleeptarget sleep
+~dpclock pulse 20
+
+[probe]
+spank Spanksleeptarget

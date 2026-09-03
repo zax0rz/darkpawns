@@ -1922,6 +1922,17 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		performRetaliateHit()
 	}
 
+	// do_spike/do_stake emit their authored acts first, then update the PK/death
+	// counters and call raw_kill (new_cmds.c:1155-1175). Keep that tail after
+	// all three audiences so NPC death-cry bytes follow the success act exactly.
+	if result.RawKill && target != nil {
+		if victim, ok := target.(*game.Player); ok {
+			ch.PKs++
+			victim.Deaths++
+		}
+		s.GetWorld().RawKillCombatant(target, combat.TYPE_UNDEFINED)
+	}
+
 	// Apply WAIT_STATE (C-10: cooldown in PULSE_VIOLENCE ticks)
 	if result.WaitChPulses > 0 {
 		ch.SetWaitStatePulses(result.WaitChPulses)
@@ -2284,16 +2295,11 @@ func CmdSpike(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillSpike)
-	if !canUse {
-		return s.SendMessage(msg)
-	}
-
 	targetName := strings.Join(args, " ")
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 	if !found {
-		return s.SendMessage("They don't seem to be here.\r\n")
+		return s.SendMessage("No-one by that name here.\r\n")
 	}
 
 	result := game.DoSpike(ch, target, 0, world)
@@ -2310,16 +2316,11 @@ func CmdStake(s SessionInterface, args []string) error {
 	}
 
 	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillStake)
-	if !canUse {
-		return s.SendMessage(msg)
-	}
-
 	targetName := strings.Join(args, " ")
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 	if !found {
-		return s.SendMessage("They don't seem to be here.\r\n")
+		return s.SendMessage("No-one by that name here.\r\n")
 	}
 
 	result := game.DoSpike(ch, target, 1, world)

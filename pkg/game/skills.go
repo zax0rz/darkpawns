@@ -428,6 +428,10 @@ type SkillResult struct {
 	WaitCh              int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
 	WaitTarget          int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
 	WaitChPulses        int  // exact WAIT_STATE pulses for non-round C cooldowns
+	// RawKill requests the C raw_kill tail after the command's authored acts
+	// have been delivered. do_spike/do_stake increment their PK/death counters
+	// and then raw_kill; the command wrapper owns that ordering (R1/R3/R5e).
+	RawKill bool
 	// RoomIncludesTarget preserves C's TO_ROOM audience when MessageToRoom
 	// intentionally includes the target instead of using TO_NOTVICT.
 	RoomIncludesTarget bool
