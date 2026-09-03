@@ -1,0 +1,120 @@
+# C-first snuggle social vehicle (src/interpreter.c:724; src/act.social.c:102-151;
+# lib/misc/socials:794-802). Named actor, target, observer, and a disposable
+# NPC expose every authored target/audience branch before the final position
+# refusal for a sleeping target.
+
+# depth-case: snuggle.no-argument
+# depth-case: snuggle.target-success
+# depth-case: snuggle.target-audience
+# depth-case: snuggle.argument-first-token
+# depth-case: snuggle.mob-target
+# depth-case: snuggle.self-target
+# depth-case: snuggle.target-not-found
+# depth-case: snuggle.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Snuggleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Snuggleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Snuggleobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Snuggleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Snuggletarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Snuggletarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Snuggleobserver 8162
+teleport Snuggletarget 8162
+
+[probe]
+snuggle
+snuggle Snuggletarget
+snuggle Snuggletarget trailing words are ignored
+snuggle trainee
+snuggle Snuggleactor
+snuggle Nobody
+force Snuggletarget sleep
+snuggle Snuggletarget
