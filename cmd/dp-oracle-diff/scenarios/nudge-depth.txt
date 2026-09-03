@@ -1,0 +1,120 @@
+# C-first nudge/do_action target-social vehicle (src/interpreter.c:582;
+# src/act.social.c:102-151; lib/misc/socials:530-539). The authored record
+# has hide 0 and the default zero victim-position minimum, so player, NPC,
+# self, missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: nudge.no-argument
+# depth-case: nudge.target-success
+# depth-case: nudge.target-audience
+# depth-case: nudge.argument-first-token
+# depth-case: nudge.mob-target
+# depth-case: nudge.self-target
+# depth-case: nudge.target-not-found
+# depth-case: nudge.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Nudgeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nudgeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Nudgeobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Nudgeobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Nudgetarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Nudgetarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nudgeobserver 8162
+teleport Nudgetarget 8162
+
+[probe]
+nudge
+nudge Nudgetarget trailing words are ignored
+nudge Nudgetarget
+nudge trainee
+nudge Nudgeactor
+nudge Nobody
+force Nudgetarget sleep
+nudge Nudgetarget
