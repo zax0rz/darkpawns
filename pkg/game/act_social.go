@@ -89,7 +89,9 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 	if target == nil {
 		// Target not found
 		if message, ok := socialMessage(social, socNotFound); ok {
-			Act(nil, false, ch, nil, nil, nil, message, "", ToChar)
+			// C sends action->not_found directly with send_to_char(), so
+			// literal $-codes remain literal when no victim exists.
+			ch.SendMessage(message + "\r\n")
 		}
 		return true
 	}

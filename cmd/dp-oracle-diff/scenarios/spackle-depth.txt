@@ -1,0 +1,115 @@
+# C-first spackle/do_action target-social vehicle (src/interpreter.c:727;
+# src/act.social.c:102-151; lib/misc/socials:1118-1126). The authored record
+# has hide 0 and the default zero victim-position minimum, so the actor,
+# observer, victim, self, missing-target, and first-token branches are
+# reachable.
+
+# depth-case: spackle.no-argument
+# depth-case: spackle.target-success
+# depth-case: spackle.target-audience
+# depth-case: spackle.argument-first-token
+# depth-case: spackle.self-target
+# depth-case: spackle.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Spackleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spackleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Spackleobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Spackleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Spackletarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Spackletarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Spackleobserver 8162
+teleport Spackletarget 8162
+
+[probe]
+spackle
+spackle the Spackletarget trailing words are ignored
+spackle Spackletarget
+spackle Spackleactor
+spackle Nobody
