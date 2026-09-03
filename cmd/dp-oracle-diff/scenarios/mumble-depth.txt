@@ -1,0 +1,120 @@
+# C-first mumble/do_action target-social vehicle (src/interpreter.c:561;
+# src/act.social.c:102-151; lib/misc/socials:500-510). The authored record
+# has hide 0 and the default zero victim-position minimum, so player, NPC,
+# self, missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: mumble.no-argument
+# depth-case: mumble.target-success
+# depth-case: mumble.target-audience
+# depth-case: mumble.argument-first-token
+# depth-case: mumble.mob-target
+# depth-case: mumble.self-target
+# depth-case: mumble.target-not-found
+# depth-case: mumble.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Mumbleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mumbleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Mumbleobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Mumbleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Mumbletarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Mumbletarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Mumbleobserver 8162
+teleport Mumbletarget 8162
+
+[probe]
+mumble
+mumble Mumbletarget trailing words are ignored
+mumble Mumbletarget
+mumble trainee
+mumble Mumbleactor
+mumble Nobody
+force Mumbletarget sleep
+mumble Mumbletarget
