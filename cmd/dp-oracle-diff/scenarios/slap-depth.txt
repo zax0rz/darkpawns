@@ -1,0 +1,114 @@
+# C-first slap/do_action target-social vehicle (src/interpreter.c:707;
+# src/act.social.c:102-151; lib/misc/socials:715-723). The authored record
+# has zero hide and zero victim-position minimum, so the actor, observer,
+# victim, self, missing-target, and first-token branches are reachable.
+
+# depth-case: slap.no-argument
+# depth-case: slap.target-success
+# depth-case: slap.target-audience
+# depth-case: slap.argument-first-token
+# depth-case: slap.self-target
+# depth-case: slap.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Smackactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Smackactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Smackobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Smackobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Smacktarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Smacktarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Smackobserver 8162
+teleport Smacktarget 8162
+
+[probe]
+slap
+slap the Smacktarget trailing words are ignored
+slap Smacktarget
+slap Smackactor
+slap Nobody
