@@ -1,0 +1,81 @@
+# C-first vehicle for the retsu command (src/interpreter.c:654;
+# src/new_cmds.c:1500-1739). The origin peer proves the teleport fade-out;
+# the actor proves the spell's black-screen and destination look. The second
+# invocation proves the aggregate kuji lockout after a successful teleport.
+#
+# depth-case: retsu.success-actor-destination
+# depth-case: retsu.success-origin-audience
+# depth-case: retsu.success-lockout
+# depth-case: retsu.argument-ignored
+# depth-case: retsu.skill-slot
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Retsured
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retsured
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Retsupeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Retsupeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Retsupeer 8105
+skillset Retsured 'kuji-kiri retsu' 100
+
+[probe]
+retsu ignored trailing words
+retsu
