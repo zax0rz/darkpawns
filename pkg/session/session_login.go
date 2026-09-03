@@ -297,6 +297,10 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return err
 	}
 
+	// C's process_input exposes the raw line to an active snooper before any
+	// editor, wait-state, alias, or command routing consumes it.
+	s.forwardSnoopInput(cmd.Command, cmd.RawArgs, cmd.Args)
+
 	// Clan plan writes use the same PLR_WRITING flag as
 	// notes/mail and are completed by the generic string editor equivalent.
 	if s.player != nil && s.player.ClanPlanWriting {

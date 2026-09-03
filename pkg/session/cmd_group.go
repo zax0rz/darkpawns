@@ -339,6 +339,7 @@ func cmdGtellText(s *Session, text string) error {
 
 // sendText sends a simple text message to the player.
 func (s *Session) sendText(text string) {
+	s.forwardSnoopOutput(text)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgText,
 		Data: TextData{Text: text},

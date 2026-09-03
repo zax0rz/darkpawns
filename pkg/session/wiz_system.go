@@ -95,34 +95,80 @@ func (m *Manager) forceAllSave(caster *Session) {
 // snoop — spy on player input (LVL_GOD)
 // ---------------------------------------------------------------------------
 func cmdSnoop(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
+	// The LVL_GOD and POS_DEAD gates live in the authoritative command table;
+	// C's do_snoop itself starts at the descriptor check and emits no second
+	// authorization branch.
+	if s == nil || s.manager == nil || s.player == nil || s.manager.world == nil {
 		return nil
 	}
+
 	if len(args) == 0 {
-		s.Send("You aren't snooping anyone.\r\n")
+		if stopSnooping(s) {
+			s.Send("You stop snooping.\r\n")
+		} else {
+			s.Send("You aren't snooping anyone.\r\n")
+		}
 		return nil
 	}
-	targetName := args[0]
-	target := findSessionByName(s.manager, targetName)
-	if target == nil || target.player == nil {
-		s.Send("They aren't here.")
+
+	target, ok := s.manager.world.ResolveCharWorld(s.player, args[0])
+	if !ok {
+		s.Send("No such person around.\r\n")
 		return nil
 	}
-	// Toggle snoop
-	if s.snooping == target {
-		s.snooping = nil
-		target.snoopBy = nil
-		s.Send(fmt.Sprintf("Snoop on %s removed.", target.player.Name))
-	} else {
+	if target.Player == nil {
+		s.Send("There's no link.. nothing to snoop.\r\n")
+		return nil
+	}
+	targetSession := findSessionForPlayer(s.manager, target.Player)
+	if targetSession == nil {
+		s.Send("There's no link.. nothing to snoop.\r\n")
+		return nil
+	}
+
+	s.manager.snoopMu.Lock()
+	switch {
+	case targetSession == s:
+		if s.snooping != nil {
+			s.snooping.snoopBy = nil
+			s.snooping = nil
+		}
+		s.manager.snoopMu.Unlock()
+		s.Send("You stop snooping.\r\n")
+		return nil
+	case targetSession.snoopBy != nil:
+		s.manager.snoopMu.Unlock()
+		s.Send("Busy already. \r\n")
+		return nil
+	case targetSession.snooping == s:
+		s.manager.snoopMu.Unlock()
+		s.Send("Don't be stupid.\r\n")
+		return nil
+	case getEffectiveLevel(targetSession) >= getEffectiveLevel(s):
+		s.manager.snoopMu.Unlock()
+		s.Send("You can't.\r\n")
+		return nil
+	default:
 		if s.snooping != nil {
 			s.snooping.snoopBy = nil
 		}
-		s.snooping = target
-		target.snoopBy = s
-		s.Send(fmt.Sprintf("Now snooping on %s.", target.player.Name))
+		s.snooping = targetSession
+		targetSession.snoopBy = s
 	}
+	s.manager.snoopMu.Unlock()
+	s.Send("Okay.\r\n")
 	return nil
+}
+
+func stopSnooping(s *Session) bool {
+	s.manager.snoopMu.Lock()
+	defer s.manager.snoopMu.Unlock()
+	if s.snooping == nil {
+		return false
+	}
+	s.snooping.snoopBy = nil
+	s.snooping = nil
+	return true
 }
 
 // ---------------------------------------------------------------------------
