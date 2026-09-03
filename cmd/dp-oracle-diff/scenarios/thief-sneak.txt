@@ -4,8 +4,10 @@
 # percent=number(1,101) vs GET_SKILL(SNEAK)+dex_app_skill[DEX].sneak, silent on
 # fail, on success applies a timed SKILL_SNEAK affect (duration=GET_LEVEL). NO
 # improve_skill. Fresh L1 thief (SNEAK=10) sneaks repeatedly in 8162. Shared
-# DP_SEED → identical DEX/dex-bonus and every number(1,101). RED on main (invented
-# toggle/fail text, raw skill only); GREEN on this branch.
+# DP_SEED → identical DEX/dex-bonus and every number(1,101). The historical
+# implementation was RED (invented toggle/fail text, raw skill only), but the
+# current clean main is already GREEN; this slice is therefore pure coverage
+# and adds no behavior change.
 
 # depth-case: sneak.attempt-message
 # depth-case: sneak.argument-ignored
