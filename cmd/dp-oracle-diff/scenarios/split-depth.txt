@@ -1,0 +1,119 @@
+# C-first split vehicle (src/interpreter.c:726; src/act.other.c:823-890).
+# The actor starts with three grouped same-room players and 100 gold, then
+# shares once so the grouped actor/follower audiences remain in one
+# deterministic probe. The no-group refusal is covered by a focused unit test.
+
+# depth-case: split.empty-argument
+# depth-case: split.nonnumeric-argument
+# depth-case: split.zero-amount
+# depth-case: split.over-gold
+# depth-case: split.first-token-success
+# depth-case: split.group-audiences
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Splitactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Splitactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Splitpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Splitpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Splitobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Splitobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Splitpeer 8162
+teleport Splitobserver 8162
+set Splitactor gold 100
+force Splitpeer follow Splitactor
+force Splitobserver follow Splitactor
+group all
+set Splitactor level 1
+
+[probe]
+split
+split bananas
+split 0
+split 1000
+split 100 trailing words are ignored
