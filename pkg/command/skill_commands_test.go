@@ -1350,25 +1350,25 @@ func TestCmdFleshAlter_NoSkill(t *testing.T) {
 	}
 }
 
-func TestCmdSpike_NoSkill(t *testing.T) {
+func TestCmdSpike_NoSkillKnowledgeGate(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosStanding)
 	if err := CmdSpike(session, []string{"rat"}); err != nil {
 		t.Fatalf("CmdSpike: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	if !strings.Contains(joinMessages(session.messages), "No-one by that name here.") {
+		t.Errorf("expected C target-missing response without a skill gate, got: %v", session.messages)
 	}
 }
 
-func TestCmdStake_NoSkill(t *testing.T) {
+func TestCmdStake_NoSkillKnowledgeGate(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosStanding)
 	if err := CmdStake(session, []string{"rat"}); err != nil {
 		t.Fatalf("CmdStake: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "You have no idea how") {
-		t.Errorf("expected 'You have no idea how', got: %v", session.messages)
+	if !strings.Contains(joinMessages(session.messages), "No-one by that name here.") {
+		t.Errorf("expected C target-missing response without a skill gate, got: %v", session.messages)
 	}
 }
 
