@@ -485,6 +485,12 @@ func createChar(t *testing.T, conn net.Conn, r *bufio.Reader, name, password, cl
 // (8162 →north→ 8161 →east→ 8004 →south→ 8008 →south→ 8021).
 func walkToTempleSquare(t *testing.T, conn net.Conn, r *bufio.Reader) {
 	t.Helper()
+	// The newbie birth transition is pulse-driven (start_room via
+	// room_activity on the first PULSE_MOBILE), so wait for the hometown
+	// relocation before walking out of the infirmary.
+	if readUntil(t, conn, r, "Temple Infirmary", 15*time.Second) == "" {
+		t.Fatal("birth transition never relocated the newbie to the Temple Infirmary")
+	}
 	mustWrite(t, conn, "north\r\n")
 	if readUntil(t, conn, r, "Western Vestibule", 10*time.Second) == "" {
 		t.Fatal("did not reach Western Vestibule [8161]")
