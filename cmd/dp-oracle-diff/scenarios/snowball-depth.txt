@@ -1,0 +1,113 @@
+# C-first snowball social vehicle (src/interpreter.c:722; src/act.social.c:102-151;
+# lib/misc/socials:784-794). The command row is immortal-only, while the social
+# record itself has all target branches and no victim-position restriction.
+
+# depth-case: snowball.no-argument
+# depth-case: snowball.target-success
+# depth-case: snowball.target-audience
+# depth-case: snowball.argument-ignored
+# depth-case: snowball.self-target
+# depth-case: snowball.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Snowballactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Snowballactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Snowballtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Snowballtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Snowballobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Snowballobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Snowballtarget 8162
+teleport Snowballobserver 8162
+
+[probe]
+snowball
+snowball Snowballtarget
+snowball Snowballtarget trailing words are ignored
+snowball Snowballactor
+snowball Nobody
