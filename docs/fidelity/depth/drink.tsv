@@ -11,5 +11,5 @@ do_drink	drink	drink.full-gate	D2	command	unit-green	TestDrinkConditionGates	act
 do_drink	drink	drink.explode	D2	command	unit-green	TestDrinkConditionGates	act.item.c:945-948	THIRST>40 yields "If you drink any more, you'll explode!".
 do_drink	drink	drink.empty	D2	command	unit-green	TestDrinkConditionGates	act.item.c:950-953	Empty container yields "It's empty.".
 do_drink	drink	drink.poison	D4	state	unit-green	TestDrinkConditionGates	act.item.c:1010-1015	A poisoned drink yields "Oops, it tasted rather strange!" and applies poison.
-do_drink	drink	drink.vampire	D5	state	excluded	-	act.item.c:988-995	PLR_VAMPIRE night branch; belongs to the vampire/time surface.
+do_drink	drink	drink.vampire	D5	state	blocked	-	act.item.c:988-995	Reachable, mis-filed as excluded: PLR_VAMPIRE night branch fires for a vampire PC (PLR_VAMPIRE set via Dracula bite spec_procs.c:1829 / spell spells.c:784) drinking a non-blood liquid at SUN_SET/SUN_DARK. Blocked on staging the vampire transform + weather in a disposable oracle scenario; prove via a Dracula-bite/vampire-spell + night vehicle. Reclassified excluded->blocked 2026-09-03 (Section 5.2 audit).
 get_obj_in_list_vis	drink	drink.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get.
