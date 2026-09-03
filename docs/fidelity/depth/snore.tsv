@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	snore	snore.entry-gate	D1	command	unit-green	TestSnoreRegistrationUsesCEntryGateAndRecord	interpreter.c:721;comm.c:910-947	The registered C row is POS_SLEEPING with no minimum level, and the authoritative Go gate preserves it (R1/R2/R5e).
+do_action	snore	snore.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:721;comm.c:910-947	The shared POS_SLEEPING dispatcher rejection is owned by the existing group position-gate vehicle (R2/R5b/R5c).
+do_action	snore	snore.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The common PLR_NOSHOUT social refusal is owned by the shared dance vehicle (R1/R5b/R5c).
+do_action	snore	snore.no-argument	D2	audience	oracle-green-multiseed	snore-depth@1,2,3,5,8	act.social.c:119-123;lib/misc/socials:779-783	The no-argument branch sends the exact actor sleep text and room snore audience (R1/R3/R5e).
+do_action	snore	snore.argument-ignored	D2	command	oracle-green-multiseed	snore-depth@1,2,3,5,8	act.social.c:119-123;lib/misc/socials:779-783	With char_found unset, C ignores all typed remainder and still executes the no-argument branch (R1/R2/R3/R5e).
+do_action	snore	snore.room-audience	D3	audience	oracle-green-multiseed	snore-depth@1,2,3,5,8	act.social.c:121-123;comm.c:2392-2555	A named observer receives the transformed $n room line while # remains silent; the actor receives only the private line (R1/R3/R4/R5e).
+do_action	snore	snore.target-branches-unreachable	D5	command	excluded	-	lib/misc/socials:779-783	The record has no char_found/others_found/vict_found/self/missing-target messages, so do_action cannot reach target lookup or target branches (R4/R5e).
