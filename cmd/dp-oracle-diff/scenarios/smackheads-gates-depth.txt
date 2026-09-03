@@ -1,0 +1,52 @@
+# C-first early-gate vehicle for do_smackheads (src/new_cmds.c:975-1037).
+# The two quiet trainee mobs make ordinal target resolution deterministic.
+
+# depth-case: smackheads.no-argument
+# depth-case: smackheads.missing-target
+# depth-case: smackheads.same-target
+# depth-case: smackheads.self-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-mob 16302 1 8105 80
+
+[setup:oracle]
+Smackgates
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Smackgates
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Smackgates 'smackheads' 75
+
+[probe]
+smackheads
+smackheads nobody trainee
+smackheads 1.trainee 1.trainee
+smackheads Smackgates trainee

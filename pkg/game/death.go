@@ -456,7 +456,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	// general Go notification for existing callers, but suppress it for the
 	// skill_message-backed ambush damage path (fight.c:1407-1450), whose room
 	// transcript is already proven byte-for-byte.
-	if attackType != 191 && attackType != SkillCutthroatNum && attackType != SkillDisembowelNum {
+	if attackType != 191 && attackType != SkillCutthroatNum && attackType != SkillDisembowelNum && attackType != SkillSmackheadsNum {
 		players := w.GetPlayersInRoom(roomVNum)
 		for _, p := range players {
 			p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))

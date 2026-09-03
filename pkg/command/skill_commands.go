@@ -1620,10 +1620,22 @@ func genderPronoun(sex int) string {
 // ---------------------------------------------------------------------------
 
 func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatant, result game.SkillResult) error {
+	if target == nil && len(result.Targets) > 0 {
+		target = result.Targets[0]
+	}
+	targets := result.Targets
+	if len(targets) == 0 && target != nil {
+		targets = []combat.Combatant{target}
+	}
+
 	sendSkillMessage := func() {
-		if result.SkillMsgType != 0 && target != nil {
+		if result.SkillMsgType != 0 {
 			if eng, ok := s.GetCombatEngine().(rescueCombatEngine); ok && eng != nil {
-				eng.SkillMessage(result.Damage, ch.GetName(), target.GetName(), result.SkillMsgType, ch.GetRoom())
+				for _, skillTarget := range targets {
+					if skillTarget != nil {
+						eng.SkillMessage(result.Damage, ch.GetName(), skillTarget.GetName(), result.SkillMsgType, ch.GetRoom())
+					}
+				}
 			}
 		}
 	}
@@ -1728,17 +1740,31 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			s.GetWorld().DoGroinripDamage(ch, target, result.Damage)
 		case game.SkillNeckbreak:
 			s.GetWorld().DoNeckbreakDamage(ch, target, result.Damage)
+		case game.SkillSmackheads:
+			for _, damageTarget := range targets {
+				if damageTarget != nil {
+					s.GetWorld().DoSmackheadsDamage(ch, damageTarget, result.Damage)
+				}
+			}
 		}
-	} else if result.Damage > 0 && target != nil {
+	} else if result.Damage > 0 && len(targets) > 0 {
 		// Route through DoSpellDamage so skill damage uses the same death
 		// pipeline as combat and spells: corpse creation, XP award, kill counter,
 		// event bus publish, removal from world, and combat initiation for both
 		// parties. Previously this only called TakeDamage + printed "is dead!".
 		// See DP-942 / pkg/game/damage_stubs.go.
-		if result.DamageSkill == game.SkillCutthroat {
-			s.GetWorld().DoCutthroatDamage(ch, target, result.Damage)
-		} else {
-			s.GetWorld().DoSpellDamage(ch, target, result.Damage, result.DamageSkill)
+		for _, damageTarget := range targets {
+			if damageTarget == nil {
+				continue
+			}
+			switch result.DamageSkill {
+			case game.SkillCutthroat:
+				s.GetWorld().DoCutthroatDamage(ch, damageTarget, result.Damage)
+			case game.SkillSmackheads:
+				s.GetWorld().DoSmackheadsDamage(ch, damageTarget, result.Damage)
+			default:
+				s.GetWorld().DoSpellDamage(ch, damageTarget, result.Damage, result.DamageSkill)
+			}
 		}
 	}
 
@@ -1768,8 +1794,20 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			// DoCutthroatDamage uses the complete C damage() seam, which sets
 			// FIGHTING before returning but does not own the command engine's
 			// combat-pair enrollment. The C command's damage() call does both.
-			if ch.GetFighting() == "" || result.SkillMsgInDamage {
-				_ = engine.StartCombat(ch, target)
+			if err := engine.StartCombat(ch, target); err != nil && ch.GetFighting() != target.GetName() {
+				slog.Error("skill combat start failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
+			}
+		}
+	}
+	if !result.InitialAttack && result.StartCombat && len(targets) > 1 {
+		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
+			for _, secondary := range targets[1:] {
+				if secondary == nil || secondary.GetPosition() == combat.PosDead {
+					continue
+				}
+				if err := engine.StartCombat(secondary, ch); err != nil {
+					slog.Error("secondary skill combat start failed", "attacker", secondary.GetName(), "target", ch.GetName(), "error", err)
+				}
 			}
 		}
 	}
@@ -1890,12 +1928,14 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	} else if result.WaitCh > 0 {
 		ch.SetWaitState(result.WaitCh)
 	}
-	if result.WaitTarget > 0 && target != nil {
-		switch t := target.(type) {
-		case *game.Player:
-			t.SetWaitState(result.WaitTarget)
-		case *game.MobInstance:
-			t.SetWaitState(result.WaitTarget)
+	if result.WaitTarget > 0 {
+		for _, waitTarget := range targets {
+			switch t := waitTarget.(type) {
+			case *game.Player:
+				t.SetWaitState(result.WaitTarget)
+			case *game.MobInstance:
+				t.SetWaitState(result.WaitTarget)
+			}
 		}
 	}
 
@@ -2026,12 +2066,15 @@ func CmdSmackheads(s SessionInterface, args []string) error {
 		return s.SendMessage(msg)
 	}
 
-	if len(args) < 2 {
-		return s.SendMessage("Smack whose heads together?\r\n")
+	victim1Name := ""
+	victim2Name := ""
+	if len(args) > 0 {
+		victim1Name = args[0]
 	}
-
-	victim1Name := args[0]
-	victim2Name := args[1]
+	if len(args) > 1 {
+		// C half_chop passes the entire remainder to the second lookup.
+		victim2Name = strings.Join(args[1:], " ")
+	}
 	world := s.GetWorld()
 	result := game.DoSmackheads(ch, victim1Name, victim2Name, world)
 	return sendSkillResult(s, ch, nil, result)

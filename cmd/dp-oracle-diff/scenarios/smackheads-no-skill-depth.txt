@@ -1,0 +1,42 @@
+# C-first no-skill gate for do_smackheads (src/new_cmds.c:975-982).
+
+# depth-case: smackheads.no-skill
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Smacknoskill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Smacknoskill
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Smacknoskill 'smackheads' 0
+
+[probe]
+smackheads

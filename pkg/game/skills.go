@@ -169,6 +169,7 @@ var SkillPosReq = map[string]int{
 	SkillKick:       combat.PosFighting,
 	SkillTrip:       combat.PosFighting,
 	SkillHeadbutt:   combat.PosFighting,
+	SkillSmackheads: combat.PosFighting,
 	SkillRescue:     combat.PosStanding,
 	SkillSneak:      combat.PosStanding,
 	SkillHide:       combat.PosResting,
@@ -413,6 +414,10 @@ type SkillResult struct {
 	MessageToCh   string
 	MessageToVict string
 	MessageToRoom string
+	// Targets carries the ordered target list for a multi-target skill. The
+	// ordinary result path uses the first target; additional targets receive
+	// the same damage and combat enrollment in C call order.
+	Targets []combat.Combatant
 	// MessageToRoomSecond preserves C commands that issue two consecutive
 	// TO_ROOM acts for one skill use.
 	MessageToRoomSecond string
