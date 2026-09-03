@@ -1,0 +1,115 @@
+# C-first spew/do_action target-social vehicle (src/interpreter.c:729;
+# src/act.social.c:102-151; lib/misc/socials:814-822). The authored record
+# has hide 0 and the default zero victim-position minimum, so the actor,
+# observer, victim, self, missing-target, and first-token branches are
+# reachable.
+
+# depth-case: spew.no-argument
+# depth-case: spew.target-success
+# depth-case: spew.target-audience
+# depth-case: spew.argument-first-token
+# depth-case: spew.self-target
+# depth-case: spew.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Spewactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spewactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Spewobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Spewobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Spewtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Spewtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Spewobserver 8162
+teleport Spewtarget 8162
+
+[probe]
+spew
+spew the Spewtarget trailing words are ignored
+spew Spewtarget
+spew Spewactor
+spew Nobody
