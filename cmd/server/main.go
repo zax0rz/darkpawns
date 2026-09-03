@@ -308,9 +308,13 @@ func main() {
 		OnMobileActivity: func() {
 			gameWorld.MobileActivity()
 		},
-		// start_room birth already occurs synchronously in Go; retain C's
-		// room_activity/object_activity positions as explicit no-op seams.
-		OnRoomActivity:   func() {},
+		// comm.c:690 room_activity — FLAMING/UNDERWATER/WATER_NOSWIM fixed
+		// self-damage, pulse-time room specs, and FLYING-sector falls, in C's
+		// heartbeat position right after mobile_activity.
+		OnRoomActivity: func() {
+			gameWorld.RoomActivity()
+		},
+		// object_activity remains an explicit no-op seam.
 		OnObjectActivity: func() {},
 		OnWeatherAndTime: func() {
 			game.WeatherAndTime(true, manager.SendToOutdoor)

@@ -4,20 +4,34 @@
 # depth-case: mob.whirlpool-victim-output
 # depth-case: mob.whirlpool-destination-look
 # depth-case: mob.whirlpool-state-transition
-# C-first vehicle for SPECIAL(whirlpool), assigned to mob vnum 12200 in
-# src/spec_assign.c:342 and defined at src/spec_procs2.c:244-275.
-# The registered mob is scriptless and injected into a no-exit room.  The
-# passive peer walks there through the ordinary start-room path, so the padded
-# mobile pulse exercises the autonomous mobile_activity() call (ch=mob,
-# me=mob) without relying on a wizard teleport or command-time vehicle.
-# C iterates world[ch->in_room].people, skips PRF_NOHASSLE and NPCs, chooses
-# number(real_room(4600), real_room(4699)), relocates each victim, sends the two
-# victim-only lines, calls look_at_room, and returns whether any victim moved.
+# SPECIAL(whirlpool) vehicle — src/spec_procs2.c:244-275, ASSIGNMOB(12200,
+# whirlpool) at spec_assign.c:342. The mob is injected into the Western
+# Vestibule (8161, one room north of the mortal hometown infirmary 8162) with
+# its RANDZON scatter flag cleared, and all of 8161's exits removed so the
+# wander draw can never relocate it (no SENTINEL flag on this prototype).
+#
+# Pulse ledger (settle = 40 pulses per enter-game step, PULSE_MOBILE = 40):
+#   actor settle -> pulse 40: 8161 still empty (the God ports in afterwards).
+#   peer settle  -> pulse 80: only the PRF_NOHASSLE God stands with the mob —
+#                            C skips him (spec_procs2.c:256); a port that
+#                            lacks the gate pulls him and desyncs the draw
+#                            stream (the nohassle-gate proof).
+#   peer walk    -> `north` from 8162 into 8161, past the command-time
+#                   special() check in the empty hometown.
+#   probe pump   -> pulse 120: mobact pulls the mortal peer; room_activity
+#                   then applies the destination's water-sector damage
+#                   (comm.c:714-720) through the SPELL_DROWNING machinery.
+#
+# The destination draw is number(real_room(4600), real_room(4699)) over the
+# vnum-sorted rnum space with an unbounded PRIVATE/GODROOM/DEATH/NOMOB
+# rejection loop — the multi-seed runs expose the draw parity.
 
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 12200 999 8105 183
+spawn-mob 12200 999 8161 80
+clear-mob-flag 12200 RANDZON
+replace-room-exits 8161 none
 
 [setup:oracle]
 Whirlpoolactor
@@ -32,6 +46,8 @@ K
 Y
 <ENTER>
 1
+nohassle
+goto 8161
 
 [setup:port]
 Whirlpoolactor
@@ -47,6 +63,8 @@ K
 Y
 <ENTER>
 1
+nohassle
+goto 8161
 
 [setup:oracle:peer]
 Whirlpoolpeer
@@ -62,9 +80,6 @@ Y
 <ENTER>
 1
 north
-east
-south
-east
 
 [setup:port:peer]
 Whirlpoolpeer
@@ -81,9 +96,6 @@ Y
 <ENTER>
 1
 north
-east
-south
-east
 
 [probe:peer]
 ~dpclock pulse 40

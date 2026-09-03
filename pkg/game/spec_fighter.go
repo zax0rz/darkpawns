@@ -129,7 +129,9 @@ func (w *World) mobBackstab(me *MobInstance, vict combat.Combatant) {
 // emitMobSkillSurvival contains the player-visible post-message position
 // bytes from damage(). The high-damage pain/bleeding paths are kept here too
 // so a successful native fighter action does not silently drop those C arms.
-func (w *World) emitMobSkillSurvival(ch *MobInstance, vict combat.Combatant, dam, pos int) {
+// ch is damage()'s ch (the attacker); self-damage callers pass the victim
+// itself, matching C's ch == victim calls (comm.c room_activity).
+func (w *World) emitMobSkillSurvival(ch combat.Combatant, vict combat.Combatant, dam, pos int) {
 	switch pos {
 	case combat.PosMortally:
 		Act(w, true, vict, nil, nil, nil,

@@ -48,12 +48,16 @@ type World struct {
 	snapshots *SnapshotManager
 
 	// Static world data (from parsed files)
-	rooms      map[int]*parser.Room
-	roomOrder  []int // room VNums in C world[] RNUM/load order
-	mobs       map[int]*parser.Mob
-	objs       map[int]*parser.Obj
-	zones      map[int]*parser.Zone
-	parsedData *parser.World // original parsed data, nil after boot
+	rooms     map[int]*parser.Room
+	roomOrder []int // room VNums in C world[] RNUM/load order
+	// sortedRoomVNums is the vnum-ascending copy of the room set; an index
+	// into it is exactly C's room rnum (see NewWorld). Read-only after boot:
+	// fixtures never add or remove rooms.
+	sortedRoomVNums []int
+	mobs            map[int]*parser.Mob
+	objs            map[int]*parser.Obj
+	zones           map[int]*parser.Zone
+	parsedData      *parser.World // original parsed data, nil after boot
 
 	// World path for reload support
 	WorldPath string
@@ -195,6 +199,14 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		}
 		w.rooms[room.VNum] = room
 	}
+
+	// Build the rnum-equivalent index: C's world[] is strictly vnum-ascending
+	// (rooms load inside their zone's vnum range over an ascending zone table,
+	// and real_room() binary-searches it — db.c:3083), so the sorted vnum
+	// slice's indexes are exactly C room rnums.
+	w.sortedRoomVNums = make([]int, len(w.roomOrder))
+	copy(w.sortedRoomVNums, w.roomOrder)
+	sort.Ints(w.sortedRoomVNums)
 
 	// Index mobs by VNum
 	for i := range parsed.Mobs {
@@ -525,6 +537,33 @@ func (w *World) GetRoomInWorld(vnum int) *parser.Room {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.rooms[vnum]
+}
+
+// RealRoomIndex returns the vnum-sorted room index (C's rnum) for vnum,
+// mirroring C real_room()'s binary search over the ascending world[] array
+// (db.c:3083). ok is false when the vnum has no room — C returns NOWHERE.
+func (w *World) RealRoomIndex(vnum int) (index int, ok bool) {
+	w.mu.RLock()
+	sorted := w.sortedRoomVNums
+	w.mu.RUnlock()
+	i := sort.SearchInts(sorted, vnum)
+	if i < len(sorted) && sorted[i] == vnum {
+		return i, true
+	}
+	return 0, false
+}
+
+// RoomVNumByIndex converts a vnum-sorted room index (C rnum) back to its
+// vnum. ok is false for an out-of-range index; callers on a valid rnum range
+// never hit that branch.
+func (w *World) RoomVNumByIndex(index int) (vnum int, ok bool) {
+	w.mu.RLock()
+	sorted := w.sortedRoomVNums
+	w.mu.RUnlock()
+	if index < 0 || index >= len(sorted) {
+		return 0, false
+	}
+	return sorted[index], true
 }
 
 // isLitLightSource returns true if the object is a working light source.

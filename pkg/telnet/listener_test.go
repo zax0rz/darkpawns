@@ -940,10 +940,14 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 
 	visible := string(stripTelnetCommands(<-transcript))
 	const response = "You say 'hello'\r\n"
-	if !strings.Contains(visible, response) {
+	respIdx := strings.LastIndex(visible, response)
+	if respIdx < 0 {
 		t.Fatalf("transcript missing command response: %q", visible)
 	}
-	if !strings.Contains(visible, response+"> ") {
+	// C's process_output flush frame is output + "\r\n" + make_prompt
+	// (comm.c:1624-1640), so the prompt follows the response after a line
+	// break (plus any vitals fields), never before it.
+	if !strings.Contains(visible[respIdx+len(response):], "> ") {
 		t.Fatalf("prompt did not follow command response (prompt/response race): %q", visible)
 	}
 }

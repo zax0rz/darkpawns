@@ -142,6 +142,7 @@ func (s *Session) SendMessage(message string) error {
 	if err != nil {
 		return fmt.Errorf("marshal error: %w", err)
 	}
+	s.notePlayerOutput()
 	// RLock lets concurrent sends proceed but blocks the exclusive close, so we
 	// never send on a closed channel (which panics even inside a select). If the
 	// channel is already closed, drop silently — the client is gone.
@@ -227,17 +228,32 @@ func (s *Session) sendRawEvent(message string) {
 	}
 }
 
+// notePlayerOutput records player-bound output since the last prompt. C's
+// process_output appends "\r\n" plus the prompt to every output flush
+// (comm.c:1624-1640), so the session needs to know whether a flush happened
+// to reproduce that trailing framing.
+func (s *Session) notePlayerOutput() {
+	s.outputSincePrompt.Add(1)
+}
+
 // SendPrompt enqueues a prompt marker on the session's outgoing channel so the
 // transport writes the prompt only after all earlier output (FIFO ordering).
 // Telnet renders it as the "> " command prompt; WebSocket clients may ignore
 // it. Sharing the channel with command output guarantees C's game-loop order
 // (comm.c:643-648): output is flushed first, the prompt is written after.
+// When player output was flushed since the previous prompt, C's flush frame
+// is "\r\n" + prompt (non-compact process_output); without pending output the
+// bare game-loop prompt pass writes the prompt alone.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
 	cmdInfoBarUpdate(s)
+	text := s.promptText()
+	if s.outputSincePrompt.Swap(0) > 0 {
+		text = "\r\n" + text
+	}
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgPrompt,
-		Data: map[string]interface{}{"text": s.promptText()},
+		Data: map[string]interface{}{"text": text},
 	})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
@@ -269,7 +285,22 @@ func (s *Session) promptText() string {
 		// boundary after command output (comm.c:1062-1065).
 		prefix = fmt.Sprintf("\r\ni%d ", level)
 	}
-	// C make_prompt() emits a bare "] " while d->str is active. The board,
+	// C's make_prompt playing branch renders the vitals fields (HP/mana/move)
+	// only when the infobar is off (comm.c:1064-1105); the VT100 infobar owns
+	// that data otherwise. Colors are transport presentation stripped by the
+	// differential normalizer, so only the numeric fields are emitted.
+	if s.infobarMode != InfobarOn {
+		if flags&(1<<uint(game.PrfDisphp)) != 0 {
+			prefix += fmt.Sprintf("%dH ", s.player.Health)
+		}
+		if flags&(1<<uint(game.PrfDispmmana)) != 0 {
+			prefix += fmt.Sprintf("%dM ", s.player.Mana)
+		}
+		if flags&(1<<uint(game.PrfDispmove)) != 0 {
+			prefix += fmt.Sprintf("%dV ", s.player.Move)
+		}
+	}
+	// C's make_prompt emits a bare "] " while d->str is active. The board,
 	// note, and mail editors all set PLR_WRITING, so preserve that framing
 	// before the normal AFK/inactive prompt prefixes.
 	if flags&(1<<uint(game.PlrWriting)) != 0 {
