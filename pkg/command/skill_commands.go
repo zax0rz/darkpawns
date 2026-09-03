@@ -1996,21 +1996,18 @@ func CmdSlug(s SessionInterface, args []string) error {
 	var found bool
 	world := s.GetWorld()
 
-	if len(args) == 0 {
-		fighting := ch.GetFighting()
-		if fighting == "" {
-			return s.SendMessage("Slug who?\r\n")
-		}
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
-		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
-		}
-	} else {
-		targetName := strings.Join(args, " ")
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
-		if !found {
-			return s.SendMessage("Slug who?\r\n")
-		}
+	// C runs one_argument before lookup, then falls back to FIGHTING(ch) when
+	// the parsed name is absent or misses, even when an argument was supplied
+	// (new_cmds.c:826, 833-840). The stored Go fighting name needs the exact
+	// pointer-style helper because a mob's short description is not its keyword
+	// list.
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+	if !found && ch.GetFighting() != "" {
+		target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
+	}
+	if !found {
+		return s.SendMessage("Slug who?\r\n")
 	}
 
 	result := game.DoSlug(ch, target)

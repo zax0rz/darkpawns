@@ -1,0 +1,88 @@
+# C-first opener for do_slug's two damage() arms. C draws number(1,101),
+# routes both zero and positive damage through skill_message set 146, and
+# waits two violence pulses after either arm (src/new_cmds.c:850-875;
+# src/fight.c:1023-1092).
+
+# depth-case: slug.failure
+# depth-case: slug.success
+# depth-case: slug.hit-result-contract
+# depth-case: slug.miss-result-contract
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Slugrollgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Slugrollgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Slugroller
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Slugroller
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Slugroller 'slug' 75
+
+[probe:actor]
+slug trainee
+~dpclock pulse 20
+~dpclock pulse 20

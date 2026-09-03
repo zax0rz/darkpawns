@@ -1,0 +1,94 @@
+# C-first command vehicle for do_slug (src/new_cmds.c:820-877).
+# The skilled peer covers the no-target, self-target, and one_argument arms.
+# The FIGHTING fallback, no-skill gate, and audience topology are pinned in
+# focused tests because the live God harness is intentionally single-peer.
+
+# depth-case: slug.no-argument
+# depth-case: slug.target-missing
+# depth-case: slug.self-target
+# depth-case: slug.one-argument
+# depth-case: slug.fighting-fallback
+# depth-case: slug.skill-message
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Slugdepthgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Slugdepthgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Slugactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Slugactor
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Slugactor 'slug' 75
+
+[probe:actor]
+slug
+slug nobody
+slug Slugactor
+slug trainee trailing words
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
