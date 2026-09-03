@@ -1,0 +1,109 @@
+# C-first do_skillset vehicle (src/interpreter.c:704; src/modify.c:255-341).
+# The crowned actor is the LVL_GRGOD implementor and the named peer is a
+# same-room player. The quiet mob exercises the NPC rejection after all value
+# gates. Quoted multiword input is intentionally sent as telnet text so the
+# Go adapter must preserve C's quote parser and one-token atoi behavior.
+
+# depth-case: skillset.no-argument
+# depth-case: skillset.target-not-found
+# depth-case: skillset.skill-name-expected
+# depth-case: skillset.skill-not-quoted
+# depth-case: skillset.unterminated-quote
+# depth-case: skillset.unrecognized-skill
+# depth-case: skillset.value-expected
+# depth-case: skillset.value-negative
+# depth-case: skillset.value-too-high
+# depth-case: skillset.npc-target
+# depth-case: skillset.success
+# depth-case: skillset.multiword-success
+# depth-case: skillset.self-alias
+# depth-case: skillset.room-name-abbreviation
+# depth-case: skillset.player-only-ordinal
+# depth-case: skillset.atoi-leading-digits
+# depth-case: skillset.atoi-first-token
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 1 8105 80
+
+[setup:oracle]
+Skillsetactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Skillsetactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Skillsettarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Skillsettarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Skillsettarget 8105
+
+[probe]
+skillset
+skillset Nobody
+skillset Skillsettarget
+skillset Skillsettarget backstab 75
+skillset Skillsettarget 'backstab
+skillset Skillsettarget 'zzznotaskill' 75
+skillset Skillsettarget 'backstab'
+skillset Skillsettarget 'backstab' -1
+skillset Skillsettarget 'backstab' 101
+skillset 1.orc 'backstab' 75
+skillset Skillsettarget 'backstab' 75
+skillset Skillsettarget 'cure light' 80
+skillset me 'backstab' 50
+skillset Skillsett 'backstab' 51
+skillset 0.Skillsettarget 'backstab' 52
+skillset Skillsettarget 'backstab' 75abc
+skillset Skillsettarget 'backstab' 80 trailing words ignored

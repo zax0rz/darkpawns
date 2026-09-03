@@ -19,10 +19,8 @@ func makeSkillsetTestSession(t *testing.T) (*Session, *Session) {
 	wiz.player.Level = LVL_GRGOD
 
 	target := makeTestSession(t, m, "Hero", 1001, true)
-	m.mu.Lock()
-	m.sessions["god"] = wiz
-	m.sessions["hero"] = target
-	m.mu.Unlock()
+	registerInWorld(t, wiz)
+	registerInWorld(t, target)
 	return wiz, target
 }
 
