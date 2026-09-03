@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -130,6 +131,7 @@ func (s *Session) sendCurrentRoomState() {
 }
 
 func (s *Session) SendMessage(message string) error {
+	s.forwardSnoopOutput(message)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
@@ -154,6 +156,45 @@ func (s *Session) SendMessage(message string) error {
 		slog.Warn("session send channel full — dropping message", "player", s.playerName)
 	}
 	return nil
+}
+
+// forwardSnoopOutput mirrors comm.c:1646-1651. C forwards the target's
+// flushed descriptor output to its snooper with a percent delimiter; the
+// session transport has no shared descriptor buffer, so each player-facing
+// message is the smallest faithful flush unit available here.
+func (s *Session) forwardSnoopOutput(message string) {
+	if s == nil || s.manager == nil || message == "" {
+		return
+	}
+	s.manager.snoopMu.RLock()
+	snooper := s.snoopBy
+	s.manager.snoopMu.RUnlock()
+	if snooper != nil && snooper != s {
+		snooper.Send("% " + message + "%%")
+	}
+}
+
+// forwardSnoopInput mirrors comm.c:1992-1998 for descriptor-backed player
+// input. It is called before command/editor routing so snooping observes the
+// original line rather than a rewritten command.
+func (s *Session) forwardSnoopInput(command, rawArgs string, args []string) {
+	if s == nil || s.manager == nil || s.player == nil || command == "" {
+		return
+	}
+	s.manager.snoopMu.RLock()
+	snooper := s.snoopBy
+	s.manager.snoopMu.RUnlock()
+	if snooper == nil || snooper == s {
+		return
+	}
+	if rawArgs == "" && len(args) > 0 {
+		rawArgs = strings.Join(args, " ")
+	}
+	line := command
+	if rawArgs != "" {
+		line += " " + rawArgs
+	}
+	snooper.Send("% " + line + "\r\n")
 }
 
 // Send sends a text message to the client (alternative method name).

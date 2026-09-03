@@ -70,6 +70,7 @@ func init() {
 // Manager handles all active sessions.
 type Manager struct {
 	mu           sync.RWMutex
+	snoopMu      sync.RWMutex        // protects the bidirectional snoop links
 	sessions     map[string]*Session // keyed by player name
 	world        *game.World
 	combatEngine *combat.CombatEngine
@@ -316,6 +317,7 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		if !ok || s == nil {
 			return
 		}
+		s.forwardSnoopOutput(string(msg))
 		// Wrap in JSON event envelope for WebSocket clients
 		wrapped, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
@@ -1106,12 +1108,16 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 
 	// 3. Clean snoop references
+	m.snoopMu.Lock()
 	if s.snoopBy != nil {
 		s.snoopBy.snooping = nil
 	}
 	if s.snooping != nil {
 		s.snooping.snoopBy = nil
 	}
+	s.snoopBy = nil
+	s.snooping = nil
+	m.snoopMu.Unlock()
 
 	// 3b. M-16: Auto-return from switched body on disconnect
 	if s.isSwitched {

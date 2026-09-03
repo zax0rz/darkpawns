@@ -1,0 +1,133 @@
+# C-first snoop vehicle (src/interpreter.c:723; src/act.wizard.c:1120-1170;
+# src/comm.c:1646-1651, 1992-1998).
+# The implementor primary shares a room with a mortal target, a lower-level
+# God peer, and a visible NPC. The probe covers exact terminal bytes, the
+# descriptor/state gates, strict target-level checking, and snooped output
+# produced by a forced command on the victim.
+
+# depth-case: snoop.no-argument
+# depth-case: snoop.missing-target
+# depth-case: snoop.no-descriptor-target
+# depth-case: snoop.success
+# depth-case: snoop.snooped-output
+# depth-case: snoop.busy-self
+# depth-case: snoop.retarget
+# depth-case: snoop.self-stop
+# depth-case: snoop.level-boundary
+# depth-case: snoop.busy-other-snooper
+# depth-case: snoop.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Snoopboss
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Snoopboss
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Snooptarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Snooptarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Snooppeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Snooppeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Snooptarget 8162
+teleport Snooppeer 8162
+advance Snooppeer 34
+
+[probe]
+snoop
+snoop Nobody
+snoop trainee
+snoop Snooptarget trailing words are ignored
+force Snooptarget say snooped-depth
+snoop Snooptarget
+snoop Snooppeer
+snoop Snooppeer
+snoop Snoopboss
+snoop
+advance Snooppeer 40
+snoop Snooppeer
+advance Snooppeer 34
+force Snooppeer snoop Snooptarget
+snoop Snooptarget
