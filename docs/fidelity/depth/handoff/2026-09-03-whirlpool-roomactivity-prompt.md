@@ -121,6 +121,33 @@ probe pump → pulse 120 (the pull + room_activity drowning).
   `ORACLE_DIFF_KEEP_DATA`-style copy hook (since reverted) was what exposed
   the stash-reverted fixture lines. Do not commit debug hooks.
 
+## Second wave: the birth transition and the e2e world
+
+The first corpus pass went red on `character-creation` — the port made the
+pulse-time `start_room` dispatch live, so `completeCharCreation`'s
+frozen-clock *synchronous* birth compensation (full-length message +
+hometown observation at creation) became a duplicate. The compensation was
+removed: creation now leaves the new mortal in the Burning Hut (8099) and the
+first PULSE_MOBILE delivers the (oracle-observed, libc-UB-truncated) birth
+message plus the hometown relocation — exactly C. The `start_room` port's
+forced `PRF_AUTOEXIT` off was also dropped: C's fresh mortal renders the
+exits line. Two more prompt-frame details fell out of the same scenario: the
+oracle's `~dpclock` line is input on the pumping descriptor, so C clears
+`has_prompt` in the input branch and that session's next flush carries
+`process_output`'s interruption CRLF — `Manager.PumpPulsesFrom` threads the
+pumping session through and the first player-bound output after it claims the
+prefix (idle other sessions flush without it, matching per-descriptor state).
+
+The birth change rippled into `tests/e2e` (telnet + websocket smoke): the
+walk helpers now trigger the birth with a command from the Burning Hut (C's
+command-time `special()` fires it instantly instead of waiting up to
+PULSE_MOBILE), and the engage loops were hardened — C renders room people
+*after* the `[ Exits: ]` line, so the capture runs through the vitals prompt;
+the presence parser learned the stock zone-80 phrases (warg, mercenary,
+janitor, petitioner, priestess, prostitute); retries are paced; and a boot
+whose Temple Square never shows an NPC skips as world state instead of
+failing as a pipeline break.
+
 ## Corpus regression
 
 Full re-run of all scenarios in `cmd/dp-oracle-diff/scenarios/` against the
@@ -128,6 +155,15 @@ branch (sequential, 240s timeout each, timeout-kills and boot-crash EOFs
 classified as infra and retried once, not diffs) — required because the
 prompt-frame change touches every command's transcript tail and room_activity
 runs on every pulse.
+
+Every red was re-run against pristine main @ b5641d9b7 before acceptance:
+
+- `accuse-noarg-depth` — red on main, identical shape; the manifested
+  `blocked` row already documents the C infobar binary-bytes anomaly.
+- `force-mob`, `medit-entry-depth`, `medit-session-depth` — red on main,
+  identical shape; pre-existing regressions from other rounds (the medit pair
+  sits in the OLC/sedit family that is a fenced blocked cluster). None
+  introduced by this branch.
 
 - TALLY: (filled below when the run completed)
 
