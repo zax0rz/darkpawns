@@ -1,0 +1,90 @@
+# C-first do_sleeper failure vehicle (src/act.offensive.c:1247-1278).
+# MOB_AWARE forces the probability to zero after the inclusive percentage
+# draw. The quiet trainee then exercises the three failure audience acts and
+# C's immediate hit(vict, ch, TYPE_UNDEFINED) retaliation.
+
+# depth-case: sleeper.failure-message-order
+# depth-case: sleeper.failure-aware-mob
+# depth-case: sleeper.failure-retaliation
+# depth-case: sleeper.failure-wait
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12105 1 8105 121
+
+[setup:oracle]
+Sleeperfailgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleeperfailgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Sleeperfailactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Sleeperfailactor
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+skillset Sleeperfailactor 'sleeper' 100
+set Sleeperfailactor maxhit 5000
+set Sleeperfailactor hit 5000
+teleport Sleeperfailactor 8105
+
+[probe:actor]
+sleeper Talis

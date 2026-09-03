@@ -1,0 +1,86 @@
+# C-first do_sleeper wielded-weapon gate vehicle
+# (src/act.offensive.c:1216-1221). The authored starting sword is wielded
+# during setup; a valid awake NPC target proves this check precedes lookup.
+
+# depth-case: sleeper.wielded-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Sleeperwieldgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleeperwieldgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Sleeperwieldactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:actor]
+Sleeperwieldactor
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[warmup]
+goto 8105
+skillset Sleeperwieldactor 'sleeper' 100
+teleport Sleeperwieldactor 8105
+
+[probe:actor]
+sleeper trainee

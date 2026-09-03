@@ -179,6 +179,7 @@ var SkillPosReq = map[string]int{
 	SkillFleshAlter: combat.PosFighting,
 	SkillAmbush:     combat.PosStanding,
 	SkillShoot:      combat.PosStanding,
+	SkillSleeper:    combat.PosStanding,
 }
 
 // ---------------------------------------------------------------------------
@@ -226,6 +227,7 @@ var SkillUnknownMsg = map[string]string{
 	SkillDragonKick:  "What's that, idiot-san?\r\n",                                  // C: \r\n (do_dragon_kick) — shared with neckbreak/tiger_punch
 	SkillGroinrip:    "You're not trained in martial arts!\n\r",                      // C: \n\r (new_cmds.c:2582)
 	SkillShoot:       "You have no idea how.\r\n",                                    // C: \r\n (act.offensive.c:764)
+	SkillSleeper:     "You have no idea how.\r\n",
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
@@ -411,13 +413,16 @@ type SkillResult struct {
 	MessageToCh   string
 	MessageToVict string
 	MessageToRoom string
-	StunTarget    bool // target loses a round
-	SleepTarget   bool // target is put to sleep (PosSleeping + AFF_SLEEP)
-	SelfStumble   bool // user falls (bash fail)
-	TargetFalls   bool // target position changes to sitting
-	WaitCh        int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
-	WaitTarget    int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
-	WaitChPulses  int  // exact WAIT_STATE pulses for non-round C cooldowns
+	// MessageToRoomSecond preserves C commands that issue two consecutive
+	// TO_ROOM acts for one skill use.
+	MessageToRoomSecond string
+	StunTarget          bool // target loses a round
+	SleepTarget         bool // target is put to sleep (PosSleeping + AFF_SLEEP)
+	SelfStumble         bool // user falls (bash fail)
+	TargetFalls         bool // target position changes to sitting
+	WaitCh              int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
+	WaitTarget          int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
+	WaitChPulses        int  // exact WAIT_STATE pulses for non-round C cooldowns
 	// RoomIncludesTarget preserves C's TO_ROOM audience when MessageToRoom
 	// intentionally includes the target instead of using TO_NOTVICT.
 	RoomIncludesTarget bool

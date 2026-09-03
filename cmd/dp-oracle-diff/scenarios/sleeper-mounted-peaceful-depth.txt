@@ -1,0 +1,91 @@
+# C-first do_sleeper mounted and peaceful gate vehicle
+# (src/act.offensive.c:1200-1214). The actor mounts the authored horse before
+# the probe; after dismounting, the same legal target reaches ROOM_PEACEFUL.
+
+# depth-case: sleeper.mounted-gate
+# depth-case: sleeper.peaceful-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 on
+spawn-mob 8021 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Sleepermountgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleepermountgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Sleepermountactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+ride horse
+
+[setup:port:actor]
+Sleepermountactor
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+ride horse
+
+[warmup]
+goto 8105
+skillset Sleepermountactor 'sleeper' 100
+teleport Sleepermountactor 8105
+
+[probe:actor]
+sleeper trainee
+dismount
+sleeper trainee

@@ -1049,17 +1049,16 @@ func CmdSleeper(s SessionInterface, args []string) error {
 		return s.SendMessage(msg)
 	}
 	if len(args) == 0 {
-		return s.SendMessage("Use a sleeper hold on who?\r\n")
+		return s.SendMessage("Sleeper who?\r\n")
 	}
 	world := s.GetWorld()
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
+	// C one_argument() keeps only the first target token and discards the rest.
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 	if !found {
-		return s.SendMessage("They aren't here.\r\n")
+		return s.SendMessage("Sleeper who?\r\n")
 	}
-	if target.GetName() == ch.Name {
-		return s.SendMessage("Can't get to sleep fast enough, huh?\r\n")
-	}
-	return sendSkillResult(s, ch, target, game.DoSleeper(ch, target))
+	return sendSkillResult(s, ch, target, game.DoSleeper(ch, target, world))
 }
 
 // CmdNeckbreak handles the neck break command (C-10).
@@ -1653,6 +1652,20 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
 			}
 		}
+		if result.MessageToRoomSecond != "" {
+			roomVNum := ch.GetRoom()
+			world := s.GetWorld()
+			players := world.GetPlayersInRoom(roomVNum)
+			for _, p := range players {
+				if p.Name == ch.Name && !result.RoomIncludesActor {
+					continue
+				}
+				if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
+					continue
+				}
+				p.SendMessage(game.CapitalizeSentence(result.MessageToRoomSecond) + "\r\n")
+			}
+		}
 	}
 	performRetaliateHit := func() {
 		if !result.RetaliateHit || target == nil || target.GetPosition() == combat.PosDead {
@@ -1825,19 +1838,26 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	}
 
 	// Send to room (excluding ch and target)
-	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && result.MessageToRoom != "" {
+	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && (result.MessageToRoom != "" || result.MessageToRoomSecond != "") {
 		roomVNum := ch.GetRoom()
 		world := s.GetWorld()
 		players := world.GetPlayersInRoom(roomVNum)
-		for _, p := range players {
-			if p.Name == ch.Name && !result.RoomIncludesActor {
-				continue
+		sendRoom := func(message string) {
+			if message == "" {
+				return
 			}
-			if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
-				continue
+			for _, p := range players {
+				if p.Name == ch.Name && !result.RoomIncludesActor {
+					continue
+				}
+				if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
+					continue
+				}
+				p.SendMessage(game.CapitalizeSentence(message) + "\r\n")
 			}
-			p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
 		}
+		sendRoom(result.MessageToRoom)
+		sendRoom(result.MessageToRoomSecond)
 	}
 
 	if result.SpawnPuke {

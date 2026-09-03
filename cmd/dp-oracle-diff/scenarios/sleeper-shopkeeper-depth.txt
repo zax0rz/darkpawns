@@ -1,0 +1,47 @@
+# C-first do_sleeper shopkeeper gate vehicle (src/act.offensive.c:1238-1242).
+# The fat merchant is registered as the keeper of the 121 shop; an NPC target
+# bypasses the Outlaw player gate and reaches the shopkeeper refusal.
+
+# depth-case: sleeper.shopkeeper-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 12100 1 8105 80
+
+[setup:oracle]
+Sleepershopgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleepershopgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Sleepershopgod 'sleeper' 100
+
+[probe]
+sleeper merchant
