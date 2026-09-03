@@ -493,6 +493,9 @@ type SkillResult struct {
 	// DeferredImproveAfterRoom preserves a C call path where improve_skill()
 	// follows a later room act() rather than the command's damage return.
 	DeferredImproveAfterRoom bool
+	// DeferredImproveAfterActor preserves a C call path where improve_skill()
+	// follows both the room act() and the actor's direct message.
+	DeferredImproveAfterActor bool
 	// SpawnPuke requests do_groinrip's post-room number(0,10) check and its
 	// vnum-21 room object. The command wrapper performs it after room delivery.
 	SpawnPuke bool

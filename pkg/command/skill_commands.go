@@ -1380,21 +1380,11 @@ func CmdSharpen(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
-	if len(args) == 0 {
-		return s.SendMessage("Sharpen what?\r\n")
-	}
-
 	ch := s.GetPlayer()
-	if ch.GetPosition() == combat.PosFighting {
-		return s.SendMessage("You're too busy to be sharpening anything!\n\r")
+	objName := ""
+	if len(args) > 0 {
+		objName = args[0]
 	}
-
-	canUse, msg := game.CanUseSkill(ch, game.SkillSharpen)
-	if !canUse {
-		return s.SendMessage(msg)
-	}
-
-	objName := strings.Join(args, " ")
 	result := game.DoSharpen(ch, objName)
 	return sendSkillResult(s, ch, nil, result)
 }
@@ -1807,7 +1797,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// no stubbing or dummy draws). DoSpellDamage draws no RNG for these
 	// skills (fixed damage formula; ApplyDamageModifiers is draw-free), so
 	// message-dice → improve-draw is the exact C sequence. DP-1212.
-	if !result.DeferredImproveAfterRoom {
+	if !result.DeferredImproveAfterRoom && !result.DeferredImproveAfterActor {
 		for _, skill := range result.DeferredImprove {
 			game.ImproveSkill(ch, skill)
 		}
@@ -1860,6 +1850,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	}
 	if result.MessageToChAfterRoom && result.MessageToCh != "" {
 		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+	}
+	if result.DeferredImproveAfterActor {
+		for _, skill := range result.DeferredImprove {
+			game.ImproveSkill(ch, skill)
+		}
 	}
 	if result.SelfStunnedAfterMessage {
 		ch.SetPosition(combat.PosStunned)

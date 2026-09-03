@@ -7,6 +7,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -421,34 +422,68 @@ func DoScan(ch *Player, world *World) SkillResult {
 
 // DoSharpen implements do_sharpen() — sharpen a weapon.
 func DoSharpen(ch *Player, objName string) SkillResult {
-	if ch.GetSkill(SkillSharpen) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
+	// C half_chop() supplies only the first word to get_obj_in_list_vis(), and
+	// that lookup is restricted to carrying.  In particular, equipped objects
+	// are not eligible here (new_cmds.c:2744).
+	if ch.Inventory == nil || objName == "" {
+		return SkillResult{MessageToCh: "Sharpen what?"}
 	}
-
-	obj, found := findItemByName(ch, objName)
+	obj, found := resolveVisibleObject(ch, objName, ch.Inventory.FindItems(""), true)
 	if !found {
-		return SkillResult{Success: false, MessageToCh: "You don't have that item."}
+		return SkillResult{MessageToCh: "Sharpen what?"}
 	}
 
-	// Check it's a weapon
-	if obj.Prototype.TypeFlag != 0 {
-		return SkillResult{Success: false, MessageToCh: "You can only sharpen weapons."}
+	// C accepts only ITEM_WEAPON objects whose attack type is TYPE_SLASH.  The
+	// values check is intentionally separate from the general weapon helper:
+	// fire weapons and missiles are not accepted by this command.
+	if obj.GetTypeFlag() != ITEM_WEAPON || obj.GetValue(3) != 3 {
+		return SkillResult{MessageToCh: "This weapon can not be sharpened."}
 	}
 
-	// Simple sharpen: success based on skill level
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	roll := dprng.Number(1, 100)
-	if roll <= ch.GetSkill(SkillSharpen) {
-		return SkillResult{
-			Success:     true,
-			MessageToCh: fmt.Sprintf("You sharpen %s. It looks more deadly!", obj.GetShortDesc()),
+	// C scans all MAX_OBJ_AFFECT slots and also refuses ITEM_MAGIC weapons.
+	if obj.HasExtraFlag(0, itemExtraMagic) {
+		return SkillResult{MessageToCh: "This weapon can not be sharpened any further."}
+	}
+	for _, affect := range obj.GetAffects() {
+		if affect.Location != 0 {
+			return SkillResult{MessageToCh: "This weapon can not be sharpened any further."}
 		}
 	}
 
+	// do_sharpen checks FIGHTING(ch) after resolving and validating the object,
+	// rather than using the command table position gate as a substitute.
+	if ch.GetFighting() != "" {
+		return SkillResult{MessageToCh: "You're too busy to be sharpening anything!"}
+	}
+
+	// C draws number(1,101) and succeeds only when the draw is strictly below
+	// GET_SKILL(ch, SKILL_SHARPEN).  A zero skill is not an early return: a
+	// valid carried slash weapon reaches the failure mutation below.
+	// #nosec G404 — game RNG, not cryptographic
+	roll := dprng.Number(1, 101)
+	if roll < ch.GetSkill(SkillSharpen) {
+		modifier := 1
+		if ch.GetLevel() == 30 {
+			modifier++
+		}
+		if ch.GetLevel() > 25 {
+			modifier++
+		}
+		obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: modifier}})
+		return SkillResult{
+			Success:       true,
+			MessageToCh:   "You sharpen it to perfection!",
+			MessageToRoom: fmt.Sprintf("%s sharpens %s to perfection.", ch.GetName(), obj.GetShortDesc()),
+		}
+	}
+
+	obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: -1}})
 	return SkillResult{
-		Success:     false,
-		MessageToCh: "You fail to sharpen it properly.",
+		MessageToCh:               "You damage it trying to sharpen it!",
+		MessageToRoom:             fmt.Sprintf("%s damages %s trying to sharpen it!", ch.GetName(), obj.GetShortDesc()),
+		DeferredImprove:           []string{SkillSharpen},
+		MessageToChAfterRoom:      true,
+		DeferredImproveAfterActor: true,
 	}
 }
 
