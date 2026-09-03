@@ -1,4 +1,4 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
+//lint:file-ignore U1000 Wizard command handlers share generated command-table wiring.
 package session
 
 import (
@@ -12,6 +12,35 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
+type shutdownPlan struct {
+	broadcast string
+	marker    string
+}
+
+func shutdownPlanFor(option string) (shutdownPlan, bool) {
+	switch strings.ToLower(option) {
+	case "":
+		return shutdownPlan{broadcast: "Shutting down.\r\n"}, true
+	case "reboot":
+		return shutdownPlan{
+			broadcast: "Rebooting.. come back in a minute or two.\r\n",
+			marker:    ".fastboot",
+		}, true
+	case "die":
+		return shutdownPlan{
+			broadcast: "Shutting down for maintenance.\r\n",
+			marker:    ".killscript",
+		}, true
+	case "pause":
+		return shutdownPlan{
+			broadcast: "Shutting down for maintenance.\r\n",
+			marker:    "pause",
+		}, true
+	default:
+		return shutdownPlan{}, false
+	}
+}
+
 func cmdShutdown(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
@@ -21,14 +50,45 @@ func cmdShutdown(s *Session, args []string) error {
 	if len(args) > 0 {
 		option = strings.ToLower(args[0])
 	}
-	if option != "" && option != "reboot" && option != "die" && option != "pause" {
+	plan, ok := shutdownPlanFor(option)
+	if !ok {
 		s.Send("Unknown shutdown option.\r\n")
 		return nil
 	}
-	slog.Warn("server shutdown initiated", "by", s.player.Name)
-	s.Send("World shudders and begins to fade...")
-	s.Send("Shutting down...")
+
+	s.manager.SendToAll(plan.broadcast)
+	s.manager.forceAllSave(s)
+	s.manager.RequestShutdown(plan.marker)
 	return nil
+}
+
+// forceAllSave mirrors do_shutdown's do_force(ch, "all save") continuation.
+// The command itself sends the C force notice and invokes the existing Go save
+// path for lower-level playing sessions; the process shutdown is then handed
+// to main through Manager.RequestShutdown.
+func (m *Manager) forceAllSave(caster *Session) {
+	if caster == nil || caster.player == nil {
+		return
+	}
+	caster.Send("Okay.\r\n")
+
+	m.mu.RLock()
+	targets := make([]*Session, 0, len(m.sessions))
+	for _, target := range m.sessions {
+		if target == nil || target.player == nil || !target.authenticated || target == caster {
+			continue
+		}
+		if target.player.Level >= caster.player.Level {
+			continue
+		}
+		targets = append(targets, target)
+	}
+	m.mu.RUnlock()
+
+	for _, target := range targets {
+		target.Send(fmt.Sprintf("%s has forced you to 'all save'.\r\n", caster.player.Name))
+		m.world.ExecSave(target.player)
+	}
 }
 
 // ---------------------------------------------------------------------------

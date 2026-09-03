@@ -504,9 +504,23 @@ func main() {
 		}
 	}()
 
+	shutdownFromCommand := false
 	select {
 	case <-sigChan:
 		slog.Info("Received shutdown signal")
+	case request := <-manager.ShutdownRequests():
+		if request.Marker != "" {
+			markerPath := filepath.Join("..", request.Marker)
+			file, markerErr := os.OpenFile(filepath.Clean(markerPath), os.O_CREATE|os.O_WRONLY, 0o640)
+			if markerErr != nil {
+				slog.Error("failed to write shutdown marker", "path", markerPath, "error", markerErr)
+			} else if closeErr := file.Close(); closeErr != nil {
+				slog.Error("failed to close shutdown marker", "path", markerPath, "error", closeErr)
+			}
+		}
+		slog.Info("Shutdown requested by command", "marker", request.Marker)
+		// The command already sent C's global text and all-save output.
+		shutdownFromCommand = true
 	case err := <-errChan:
 		slog.Error("Server error, shutting down gracefully", "error", err)
 	}
@@ -540,7 +554,11 @@ func main() {
 	}
 
 	// 4. Drain active player sessions (stops combat, broadcasts leave, saves profiles, closes connections)
-	manager.ShutdownGracefully(5 * time.Second)
+	if shutdownFromCommand {
+		manager.ShutdownGracefullyWithoutNotice(5 * time.Second)
+	} else {
+		manager.ShutdownGracefully(5 * time.Second)
+	}
 
 	// 5. Flush buffered decision/combat records before closing the database.
 	if decisionLogWriter != nil {

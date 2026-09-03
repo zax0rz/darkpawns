@@ -117,6 +117,16 @@ type Manager struct {
 	// nextConnectionNumber mirrors C's last_desc counter for the dc command.
 	// It is protected by m.mu and wraps from 999 back to 1.
 	nextConnectionNumber int
+
+	// shutdownRequests carries C do_shutdown's process-level request to the
+	// server entrypoint after the command has emitted its player-facing bytes.
+	shutdownRequests chan ShutdownRequest
+}
+
+// ShutdownRequest describes a C do_shutdown option. Marker is written beside
+// the server working directory by cmd/server for reboot/die/pause semantics.
+type ShutdownRequest struct {
+	Marker string
 }
 
 // isLoopback reports whether remoteAddr resolves to the loopback interface
@@ -256,11 +266,12 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	)
 
 	m := &Manager{
-		sessions:     make(map[string]*Session),
-		world:        world,
-		combatEngine: ce,
-		shopManager:  systems.NewShopManager(),
-		loginLimiter: auth.NewIPRateLimiter(),
+		sessions:         make(map[string]*Session),
+		world:            world,
+		combatEngine:     ce,
+		shopManager:      systems.NewShopManager(),
+		shutdownRequests: make(chan ShutdownRequest, 1),
+		loginLimiter:     auth.NewIPRateLimiter(),
 		loginAttempts: auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{
 			Threshold: 10,
 			Lockout:   15 * time.Minute,
@@ -555,6 +566,21 @@ func (m *Manager) PumpPulses(n int) error {
 // cannot outlive their manager and race later package-global callback wiring.
 func (m *Manager) Stop() {
 	m.combatEngine.Stop()
+}
+
+// RequestShutdown hands an accepted do_shutdown option to the process
+// lifecycle owner. A second request cannot replace the first C shutdown arm.
+func (m *Manager) RequestShutdown(marker string) {
+	select {
+	case m.shutdownRequests <- ShutdownRequest{Marker: marker}:
+	default:
+		slog.Warn("shutdown request already pending")
+	}
+}
+
+// ShutdownRequests returns the process-level shutdown request stream.
+func (m *Manager) ShutdownRequests() <-chan ShutdownRequest {
+	return m.shutdownRequests
 }
 
 // GetBanManager returns the ban manager for checking host bans.
@@ -1612,6 +1638,16 @@ func (s *Session) WantsStructuredData() bool {
 
 // ShutdownGracefully drains and shuts down all active sessions gracefully.
 func (m *Manager) ShutdownGracefully(timeout time.Duration) {
+	m.shutdownGracefully(timeout, true)
+}
+
+// ShutdownGracefullyWithoutNotice is used after C do_shutdown has already
+// broadcast its exact shutdown text and forced the all-save continuation.
+func (m *Manager) ShutdownGracefullyWithoutNotice(timeout time.Duration) {
+	m.shutdownGracefully(timeout, false)
+}
+
+func (m *Manager) shutdownGracefully(timeout time.Duration, notify bool) {
 	m.Stop()
 
 	m.mu.Lock()
@@ -1628,13 +1664,15 @@ func (m *Manager) ShutdownGracefully(timeout time.Duration) {
 
 	slog.Info("session manager: shutting down active sessions", "count", len(sessions))
 
-	// 1. Notify players of the shutdown
-	for _, s := range sessions {
-		s.sendText("\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n")
+	// 1. Notify players of an external shutdown. A command-triggered C
+	// shutdown already emitted its own global bytes and save notices.
+	if notify {
+		for _, s := range sessions {
+			s.sendText("\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n")
+		}
+		// 2. Wait a brief moment for messages to flush
+		time.Sleep(1 * time.Second)
 	}
-
-	// 2. Wait a brief moment for messages to flush
-	time.Sleep(1 * time.Second)
 
 	// 3. Unregister and cleanup each session sequentially with safety timeouts
 	for name, s := range sessions {
