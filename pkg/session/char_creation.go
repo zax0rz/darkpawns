@@ -9,7 +9,6 @@ import (
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -594,20 +593,12 @@ func (s *Session) completeCharCreation() error {
 	// Send welcome with token
 	s.sendWelcome(token)
 
-	// C's start_room special emits this birth transition on the first
-	// PULSE_MOBILE after entry. Go completes it synchronously; under the frozen
-	// oracle clock, expose the equivalent output at that existing transition.
-	// Immortals skip the Burning Hut intro entirely (C never routes them
-	// through 8099 — interpreter.c:2191-2243).
-	if s.player.GetLevel() < game.LVL_IMMORT {
-		if dpclock.Frozen() {
-			s.sendText(newbieBirthMessage(s.player.Name))
-		}
-		s.player.SetRoom(newbieRoom)
-		if dpclock.Frozen() {
-			s.sendRoomObservation(newbieRoom, false, "")
-		}
-	}
+	// C's start_room special emits the newbie birth transition on the first
+	// PULSE_MOBILE after entry (spec_procs.c:2204-2263 via comm.c:690
+	// room_activity); the ported World.RoomActivity dispatches it the same
+	// way, so creation leaves the new mortal in the Burning Hut (8099) and
+	// the pulse delivers the message and the hometown relocation. Immortals
+	// never route through 8099 at all (interpreter.c:2191-2243).
 
 	// Mirror the agent initialization that handleLogin sends for returning players.
 	if s.isAgent || s.wantsStructuredData {
@@ -633,19 +624,6 @@ func (s *Session) completeCharCreation() error {
 	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
 	return nil
-}
-
-func newbieBirthMessage(name string) string {
-	return "\r\n   Suddenly the hairs on the back of your neck stand up as if lightning had\r\n" +
-		"struck nearby. A keen wailing fills the air, and an ethereal image appears\r\n" +
-		"before you.\r\n" +
-		fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", name) +
-		"   'Prove your worth and I may well grant you eternal life.'\r\n" +
-		"   'Trust no one, for all here are but dark pawns above which you must\r\n" +
-		"struggle to prove yourself.  All here strive to be a king... at any cost.'\r\n" +
-		"   The figure glows a moment, then disappears, but his voice remains.\r\n" +
-		"   'Your life begins now...' it says, then fades -- just as the world around\r\n" +
-		"you does the same.\r\n"
 }
 
 // hashCharPassword bcrypt-hashes the plaintext password currently in

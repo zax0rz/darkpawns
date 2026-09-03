@@ -131,6 +131,9 @@ func (s *Session) sendCurrentRoomState() {
 }
 
 func (s *Session) SendMessage(message string) error {
+	if s.claimInterruptionPrefix() {
+		message = "\r\n" + message
+	}
 	s.forwardSnoopOutput(message)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
@@ -234,6 +237,14 @@ func (s *Session) sendRawEvent(message string) {
 // to reproduce that trailing framing.
 func (s *Session) notePlayerOutput() {
 	s.outputSincePrompt.Add(1)
+}
+
+// claimInterruptionPrefix consumes the pending prompt invalidation, if any.
+// It returns true for the first player-bound output after the session's own
+// input invalidated its prompt — that flush carries process_output's leading
+// interruption CRLF (comm.c:1620-1643).
+func (s *Session) claimInterruptionPrefix() bool {
+	return s.promptInvalidated.Swap(false)
 }
 
 // SendPrompt enqueues a prompt marker on the session's outgoing channel so the

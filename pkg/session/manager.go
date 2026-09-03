@@ -318,6 +318,9 @@ func NewManager(world *game.World, database db.Database) *Manager {
 			return
 		}
 		s.notePlayerOutput()
+		if s.claimInterruptionPrefix() {
+			msg = append([]byte("\r\n"), msg...)
+		}
 		s.forwardSnoopOutput(string(msg))
 		// Wrap in JSON event envelope for WebSocket clients
 		wrapped, err := json.Marshal(ServerMessage{
@@ -558,6 +561,17 @@ func (m *Manager) ExtractPendingChars() {
 // process_output flushes every player every game-loop pass and each flush
 // carries the prompt at its tail (comm.c:632-648, 1624-1640).
 func (m *Manager) PumpPulses(n int) error {
+	return m.PumpPulsesFrom(nil, n)
+}
+
+// PumpPulsesFrom is PumpPulses with the session whose input line drove the
+// pump. C's input processing clears that descriptor's has_prompt
+// (comm.c:607), so its next output flush carries process_output's
+// interruption CRLF prefix.
+func (m *Manager) PumpPulsesFrom(s *Session, n int) error {
+	if s != nil {
+		s.promptInvalidated.Store(true)
+	}
 	m.pulsePumpMu.RLock()
 	pump := m.pulsePump
 	m.pulsePumpMu.RUnlock()
@@ -1457,6 +1471,15 @@ type Session struct {
 	// trailing framing and lets the post-pulse sweep find sessions that owe an
 	// async prompt after pumped heartbeat output.
 	outputSincePrompt atomic.Int64
+
+	// promptInvalidated mirrors C's d->has_prompt = 0 on input: the next
+	// output flush for the descriptor that sent the input is prefixed with
+	// the interruption CRLF (comm.c:1620-1643 — process_output sends i,
+	// which begins with "\r\n", instead of i+2 when the player had no
+	// outstanding prompt). The oracle's ~dpclock pump line is input too, so
+	// pumped output for the pumping session carries the prefix; idle other
+	// sessions keep their prompt and flush without it.
+	promptInvalidated atomic.Bool
 
 	// Agent identity — set on login when is_agent=true.
 	// Harness+Model is the agent identity. Same combo = same agent across sessions.

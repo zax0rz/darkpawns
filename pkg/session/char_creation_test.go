@@ -447,8 +447,10 @@ func TestCompleteCharCreation_WithNilDB(t *testing.T) {
 	if s.player.AC != 100 {
 		t.Errorf("player AC = %d, want C newbie base 100", s.player.AC)
 	}
-	if got, want := s.player.GetRoom(), game.NewbieHometownRoom(2); got != want {
-		t.Errorf("player room = %d, want hometown room %d", got, want)
+	// C leaves the new mortal in the Burning Hut; the hometown relocation
+	// belongs to the first PULSE_MOBILE's start_room dispatch.
+	if got, want := s.player.GetRoom(), game.NewbieStartRoom; got != want {
+		t.Errorf("player room = %d, want newbie start room %d", got, want)
 	}
 
 	if _, ok := m.GetSession("Tester"); !ok {
@@ -490,8 +492,10 @@ func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
 	if record.RoomVNum != want {
 		t.Errorf("persisted room = %d, want hometown room %d", record.RoomVNum, want)
 	}
-	if got := s.player.GetRoom(); got != want {
-		t.Errorf("live player room = %d, want hometown room %d", got, want)
+	// The live room stays in the Burning Hut until the pulse-time birth
+	// transition; only the persisted record carries the hometown room.
+	if got := s.player.GetRoom(); got != game.NewbieStartRoom {
+		t.Errorf("live player room = %d, want newbie start room %d", got, game.NewbieStartRoom)
 	}
 }
 
@@ -510,10 +514,13 @@ func TestCompleteCharCreationEmitsBirthTransitionAndNoDuplicateMOTD(t *testing.T
 		t.Fatal(err)
 	}
 
+	// C leaves the new mortal in the Burning Hut at creation; the birth
+	// transition belongs to the first PULSE_MOBILE's start_room dispatch
+	// (spec_procs.c via comm.c room_activity). Creation itself must emit
+	// only the intro-room observation — no birth text, no hometown state.
 	states := 0
 	motds := 0
 	welcome := ""
-	birth := ""
 	for {
 		select {
 		case raw := <-s.send:
@@ -521,18 +528,17 @@ func TestCompleteCharCreationEmitsBirthTransitionAndNoDuplicateMOTD(t *testing.T
 			if err := json.Unmarshal(raw, &msg); err != nil {
 				t.Fatal(err)
 			}
-			if msg.Type == MsgState {
+			switch msg.Type {
+			case MsgState:
 				states++
-			}
-			if msg.Type == MsgText {
+			case MsgText:
 				data, _ := json.Marshal(msg.Data)
 				var text TextData
 				_ = json.Unmarshal(data, &text)
 				if strings.Contains(text.Text, "Your life begins now") {
-					birth = text.Text
+					t.Fatal("birth transition emitted at creation instead of the pulse")
 				}
-			}
-			if msg.Type == MsgEvent {
+			case MsgEvent:
 				data, _ := json.Marshal(msg.Data)
 				var event EventData
 				_ = json.Unmarshal(data, &event)
@@ -544,8 +550,8 @@ func TestCompleteCharCreationEmitsBirthTransitionAndNoDuplicateMOTD(t *testing.T
 				}
 			}
 		default:
-			if states != 2 {
-				t.Fatalf("entry state messages = %d, want intro and hometown rooms", states)
+			if states != 1 {
+				t.Fatalf("entry state messages = %d, want only the intro room", states)
 			}
 			if motds != 0 {
 				t.Fatalf("post-menu MOTD messages = %d, want 0", motds)
@@ -553,10 +559,41 @@ func TestCompleteCharCreationEmitsBirthTransitionAndNoDuplicateMOTD(t *testing.T
 			if welcome != "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n" {
 				t.Fatalf("welcome = %q", welcome)
 			}
-			if birth != newbieBirthMessage("Oneentry") {
-				t.Fatalf("birth transition = %q", birth)
+			if s.player.GetRoom() != game.NewbieStartRoom {
+				t.Fatalf("post-creation room = %d, want the Burning Hut %d", s.player.GetRoom(), game.NewbieStartRoom)
 			}
-			return
+
+			// The pulse-time start_room dispatch delivers the birth message
+			// and relocates the mortal to the hometown room.
+			s.manager.world.RoomActivity()
+			birth := ""
+			for {
+				select {
+				case raw := <-s.send:
+					var msg ServerMessage
+					if err := json.Unmarshal(raw, &msg); err != nil {
+						t.Fatal(err)
+					}
+					// The pulse-time spec delivers through the world
+					// MessageSink, which wraps player text as MsgEvent.
+					if msg.Type == MsgEvent {
+						data, _ := json.Marshal(msg.Data)
+						var event EventData
+						_ = json.Unmarshal(data, &event)
+						if strings.Contains(event.Text, "Your life begins now") {
+							birth = event.Text
+						}
+					}
+				default:
+					if birth == "" {
+						t.Fatal("room_activity did not deliver the birth transition")
+					}
+					if s.player.GetRoom() != 8162 {
+						t.Fatalf("post-birth room = %d, want hometown 8162", s.player.GetRoom())
+					}
+					return
+				}
+			}
 		}
 	}
 }

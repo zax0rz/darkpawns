@@ -433,7 +433,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		// The oracle harness control is intercepted before player/session
 		// command handling so the trigger itself consumes no command RNG, wait
 		// state, or activity state. Only the pumped heartbeats may draw.
-		if handlePulseControl(manager, line) {
+		if handlePulseControl(s, manager, line) {
 			continue
 		}
 
@@ -495,7 +495,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	slog.Info("Telnet disconnect", "remote_addr", remoteAddr, "player", s.PlayerName())
 }
 
-func handlePulseControl(manager *session.Manager, line string) bool {
+func handlePulseControl(s *session.Session, manager *session.Manager, line string) bool {
 	if !dpclock.Frozen() {
 		return false
 	}
@@ -507,7 +507,10 @@ func handlePulseControl(manager *session.Manager, line string) bool {
 	if err != nil || n <= 0 || n > maxControlPumpPulses {
 		return false
 	}
-	if err := manager.PumpPulses(n); err != nil {
+	// The control line is input on this session's descriptor: C's input
+	// processing clears has_prompt, so this session's next output flush
+	// carries process_output's interruption CRLF (comm.c:607, 1620-1643).
+	if err := manager.PumpPulsesFrom(s, n); err != nil {
 		slog.Error("DP_CLOCK pulse pump failed", "pulses", n, "error", err)
 	}
 	return true

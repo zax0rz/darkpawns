@@ -64,7 +64,7 @@ func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
 		return nil
 	})
 
-	if handlePulseControl(manager, "~dpclock pulse 40") {
+	if handlePulseControl(nil, manager, "~dpclock pulse 40") {
 		t.Fatal("control intercepted with DP_CLOCK unset")
 	}
 	if pumped != 0 {
@@ -72,13 +72,13 @@ func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
 	}
 
 	t.Setenv("DP_CLOCK", "1")
-	if !handlePulseControl(manager, "~dpclock pulse 40") {
+	if !handlePulseControl(nil, manager, "~dpclock pulse 40") {
 		t.Fatal("valid control was not intercepted")
 	}
 	if pumped != 40 {
 		t.Fatalf("pumped %d pulses, want 40", pumped)
 	}
-	if handlePulseControl(manager, "~dpclock pulse 0") {
+	if handlePulseControl(nil, manager, "~dpclock pulse 0") {
 		t.Fatal("invalid pulse count was intercepted")
 	}
 }
