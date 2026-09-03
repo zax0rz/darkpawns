@@ -50,3 +50,19 @@ func TestDoExitsInfravisionSeesDarkDestination(t *testing.T) {
 		t.Fatalf("infravision exits rendering: got %+v", result.Messages)
 	}
 }
+
+func TestImmortalWithoutHolyLightCannotSeeDarkRoom(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	ch.SetLevel(LVL_IMMORT)
+	ch.SetHolyLight(false)
+	dark := w.GetRoomInWorld(ch.GetRoom())
+	if dark == nil {
+		t.Fatal("current room missing")
+	}
+	dark.Flags = []string{"1", "0", "0", "0"} // C ROOM_DARK
+
+	result := w.DoLook(ch, "look", "")
+	if len(result.Messages) == 0 || !strings.Contains(result.Messages[0].Format, "Darkness") || !strings.Contains(result.Messages[0].Format, "too dark") {
+		t.Fatalf("immortal without holy light should not see dark room: got %+v", result.Messages)
+	}
+}

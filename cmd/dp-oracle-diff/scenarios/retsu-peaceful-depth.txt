@@ -1,0 +1,48 @@
+# C-first peaceful-room vehicle for retsu (src/interpreter.c:654;
+# src/new_cmds.c:1552-1739; src/spells.c:168-217). A learned retsu succeeds
+# its kuji roll, reaches call_magic, and is refused by the peaceful source-room
+# gate before teleporting; do_kuji_kiri still installs its five-tick lockout.
+#
+# depth-case: retsu.peaceful-spell-gate
+# depth-case: retsu.peaceful-lockout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Retsupeaceful
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retsupeaceful
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Retsupeaceful 'kuji-kiri retsu' 100
+
+[probe]
+retsu
+retsu
