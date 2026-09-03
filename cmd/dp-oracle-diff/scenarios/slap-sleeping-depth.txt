@@ -1,0 +1,107 @@
+# C-first slap/do_action sleeping-victim vehicle (src/interpreter.c:707;
+# src/act.social.c:102-151; lib/misc/socials:715-723). The slap record has a
+# zero victim-position minimum, so a sleeping target reaches the actor, room,
+# and target delivery path; the sleeping target's private TO_VICT line is
+# filtered by the shared SENDOK audience rule.
+
+# depth-case: slap.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Smacksleepact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Smacksleepact
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Smacksleepobs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Smacksleepobs
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Smacksleeptgt
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Smacksleeptgt
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Smacksleepobs 8162
+teleport Smacksleeptgt 8162
+force Smacksleeptgt sleep
+
+[probe]
+slap Smacksleeptgt
