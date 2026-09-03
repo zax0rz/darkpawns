@@ -1,0 +1,114 @@
+# C-first snicker/do_action target-social vehicle (src/interpreter.c:716;
+# src/act.social.c:102-151; lib/misc/socials:765-773). The authored record
+# has zero hide and zero victim-position minimum; its #/blank self messages
+# make the self-target branch intentionally silent.
+
+# depth-case: snicker.no-argument
+# depth-case: snicker.target-success
+# depth-case: snicker.target-audience
+# depth-case: snicker.argument-first-token
+# depth-case: snicker.self-target
+# depth-case: snicker.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aldor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aldor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Borin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Borin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Calia
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Calia
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Borin 8162
+teleport Calia 8162
+
+[probe]
+snicker
+snicker the Calia trailing words are ignored
+snicker Calia
+snicker Aldor
+snicker Nobody
