@@ -6,9 +6,12 @@ import re
 import sys
 from pathlib import Path
 
-WORLD_DIR = Path.home() / "darkpawns/lib/world"
+# Prefer this checkout's own world files. Reaching into ~/darkpawns first made
+# the build depend on whichever branch that checkout happened to be on, which
+# is not something a build should be able to notice.
+WORLD_DIR = Path(__file__).parent.parent.parent / "lib/world"
 if not WORLD_DIR.exists():
-    WORLD_DIR = Path(__file__).parent.parent.parent / "lib/world"
+    WORLD_DIR = Path.home() / "darkpawns/lib/world"
 OUTPUT = Path(__file__).parent.parent / "static/map/world.json"
 
 DIRECTIONS = {0: "n", 1: "e", 2: "s", 3: "w", 4: "u", 5: "d"}

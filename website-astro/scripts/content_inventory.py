@@ -249,7 +249,7 @@ Immediate decisions:
 
 ### Tier 2: world and archive ({tiers[2]} routes)
 
-Review the ten World pages for invented mechanics, generic fantasy prose, changing statistics, and unsourced claims. Compare each of the nine Archive bodies with its cited capture and review descriptions, date labels, warnings, and attribution as original copy.
+Review the ten World pages for invented mechanics, generic fantasy prose, changing statistics, and unsourced claims. Compare each of the {surfaces['archive']} Archive bodies with its cited capture and review descriptions, date labels, warnings, and attribution as original copy.
 
 ### Tier 3: documentation and templates ({tiers[3]} routes)
 

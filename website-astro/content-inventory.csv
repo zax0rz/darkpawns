@@ -7,29 +7,87 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /about/dpreturns/,src/pages/about/dpreturns.astro,core,authored static page,1,full editorial review,,,,
 /about/project/,src/pages/about/project.astro,core,authored static page,1,full editorial review,,,,
 /archive/,src/pages/archive/index.astro,hub,authored collection framing,1,full editorial review,,,,
+/archive/background.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,225,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/background/,src/content/archive/background.md,archive,preserved community artifact,2,verify against capture,225,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/board-index-general.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,117,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/board-index-general/,src/content/archive/board-index-general.md,archive,preserved community artifact,2,verify against capture,117,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/classes.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,890,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/classes/,src/content/archive/classes.md,archive,preserved community artifact,2,verify against capture,890,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/darkpawns-faq.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,5745,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/darkpawns-faq/,src/content/archive/darkpawns-faq.md,archive,preserved community artifact,2,verify against capture,5745,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/darkpawns-news-2002.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,161,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/darkpawns-news-2002/,src/content/archive/darkpawns-news-2002.md,archive,preserved community artifact,2,verify against capture,161,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/darkpawns-news-2005.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,68,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/darkpawns-news-2005/,src/content/archive/darkpawns-news-2005.md,archive,preserved community artifact,2,verify against capture,68,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/features.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,274,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/features/,src/content/archive/features.md,archive,preserved community artifact,2,verify against capture,274,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /archive/history.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,549,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/history/,src/content/archive/history.md,archive,preserved community artifact,2,verify against capture,549,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/map-kir-draxin.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,125,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/map-kir-draxin/,src/content/archive/map-kir-draxin.md,archive,preserved community artifact,2,verify against capture,125,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /archive/p492.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,2244,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p492/,src/content/archive/p492.md,archive,preserved community artifact,2,verify against capture,2244,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p501.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1049,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p501/,src/content/archive/p501.md,archive,preserved community artifact,2,verify against capture,1049,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p513.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,347,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/p513/,src/content/archive/p513.md,archive,preserved community artifact,2,verify against capture,347,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-about.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,181,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-about/,src/content/archive/player-page-about.md,archive,preserved community artifact,2,verify against capture,181,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-archives.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,223,edited-excerpt,frontline,Wayback capture identified by captureUrl
+/archive/player-page-archives/,src/content/archive/player-page-archives.md,archive,preserved community artifact,2,verify against capture,223,edited-excerpt,frontline,Wayback capture identified by captureUrl
+/archive/player-page-articles.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,38,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-articles/,src/content/archive/player-page-articles.md,archive,preserved community artifact,2,verify against capture,38,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-directions.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,704,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-directions/,src/content/archive/player-page-directions.md,archive,preserved community artifact,2,verify against capture,704,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-equipment.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,111,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-equipment/,src/content/archive/player-page-equipment.md,archive,preserved community artifact,2,verify against capture,111,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-logs.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,55,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-logs/,src/content/archive/player-page-logs.md,archive,preserved community artifact,2,verify against capture,55,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-news.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,314,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/player-page-news/,src/content/archive/player-page-news.md,archive,preserved community artifact,2,verify against capture,314,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/player-quotes.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,145,edited-excerpt,frontline,Wayback capture identified by captureUrl
 /archive/player-quotes/,src/content/archive/player-quotes.md,archive,preserved community artifact,2,verify against capture,145,edited-excerpt,frontline,Wayback capture identified by captureUrl
 /archive/topic-705.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,652,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/topic-705/,src/content/archive/topic-705.md,archive,preserved community artifact,2,verify against capture,652,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/topic-724.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,150,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/topic-724/,src/content/archive/topic-724.md,archive,preserved community artifact,2,verify against capture,150,verbatim,frontline,Wayback capture identified by captureUrl
-/archive/topic-731.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,2935,verbatim,frontline,Wayback capture identified by captureUrl
-/archive/topic-731/,src/content/archive/topic-731.md,archive,preserved community artifact,2,verify against capture,2935,verbatim,frontline,Wayback capture identified by captureUrl
-/archive/topic-737.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,906,verbatim,frontline,Wayback capture identified by captureUrl
-/archive/topic-737/,src/content/archive/topic-737.md,archive,preserved community artifact,2,verify against capture,906,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-731.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,3150,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-731/,src/content/archive/topic-731.md,archive,preserved community artifact,2,verify against capture,3150,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-737.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,942,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-737/,src/content/archive/topic-737.md,archive,preserved community artifact,2,verify against capture,942,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t10.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,461,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t10/,src/content/archive/topic-t10.md,archive,preserved community artifact,2,verify against capture,461,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t20.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,500,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t20/,src/content/archive/topic-t20.md,archive,preserved community artifact,2,verify against capture,500,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t32.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,2940,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t32/,src/content/archive/topic-t32.md,archive,preserved community artifact,2,verify against capture,2940,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t38.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,834,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t38/,src/content/archive/topic-t38.md,archive,preserved community artifact,2,verify against capture,834,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t39.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,239,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t39/,src/content/archive/topic-t39.md,archive,preserved community artifact,2,verify against capture,239,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t51.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,165,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t51/,src/content/archive/topic-t51.md,archive,preserved community artifact,2,verify against capture,165,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t60.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,701,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t60/,src/content/archive/topic-t60.md,archive,preserved community artifact,2,verify against capture,701,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t67.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,147,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t67/,src/content/archive/topic-t67.md,archive,preserved community artifact,2,verify against capture,147,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t79.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,568,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t79/,src/content/archive/topic-t79.md,archive,preserved community artifact,2,verify against capture,568,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t82.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,219,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t82/,src/content/archive/topic-t82.md,archive,preserved community artifact,2,verify against capture,219,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t83.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1423,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t83/,src/content/archive/topic-t83.md,archive,preserved community artifact,2,verify against capture,1423,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t88.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,980,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/topic-t88/,src/content/archive/topic-t88.md,archive,preserved community artifact,2,verify against capture,980,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/wizlist.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,78,verbatim,mythic-admin,Wayback capture identified by captureUrl
+/archive/wizlist/,src/content/archive/wizlist.md,archive,preserved community artifact,2,verify against capture,78,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /blog/,src/pages/blog/index.astro,hub,authored collection framing,1,full editorial review,,,,
 /blog/historical-posts.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,389,original,mythic-admin,Dark Pawns repository and Zach
 /blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,389,original,mythic-admin,Dark Pawns repository and Zach
+/blog/the-oracle.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1597,original,mythic-admin,"Dark Pawns repository (src/, PR #469, docs/fidelity/RULEBOOK.md) and Zach"
+/blog/the-oracle/,src/content/blog/the-oracle.md,blog,authored editorial,1,rewrite and source review,1597,original,mythic-admin,"Dark Pawns repository (src/, PR #469, docs/fidelity/RULEBOOK.md) and Zach"
 /contact/,src/pages/contact.astro,core,authored static page,1,full editorial review,,,,
 /credits/,src/pages/credits.astro,core,authored static page,1,full editorial review,,,,
 /database/,src/pages/database.astro,core,authored static page,1,full editorial review,,,,

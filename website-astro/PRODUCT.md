@@ -49,7 +49,7 @@ A neighboring product cannot truthfully copy this: a specific, faithfully-ported
 ## Evidence on Hand
 
 - Real, sourced game history: `content/community/history/timeline.md` (Frontline's Wayback-preserved chronicle); `docs/wayback/` captures; credits with the real staff.
-- 494 content files, 431 help topics, mob/item database, a ~9,590-room interactive map, the GitHub repo, and the dp-players.com (2004) Wayback archive.
+- 494 content files, 431 help topics, mob/item database, a ~9,590-room interactive map, the GitHub repo, and a 37-record Wayback archive of dp-players.com (2004) and darkpawns.com (2002-2005).
 - A living community revival at darkpawns.net ("DPReturns") that is still online.
 - **Absences future work must NOT fabricate:** no current player counts, testimonials, or benchmarks exist — do not invent them. Founding history is now sourced and must not be re-embellished (the prior "First Age" prose was hallucinated). The darkpawns.net revival year (~2019) is unverified and must render hedged.
 

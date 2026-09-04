@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T17:30:36-04:00",
+  "generatedAt": "2026-09-04T17:34:40-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 4
+      "commits": 5
     }
   ],
   "recentCommits": [
+    {
+      "sha": "a7c313fc6eb7f8528de1685aaddb0024b3d357a3",
+      "date": "2026-09-04",
+      "title": "feat(archive): add the news log, directions, the FAQ and the board index",
+      "url": "https://github.com/zax0rz/darkpawns/commit/a7c313fc6eb7f8528de1685aaddb0024b3d357a3"
+    },
     {
       "sha": "816c3b1192004736d4ab562f6bc9c1a7b3a7d258",
       "date": "2026-09-04",
@@ -76,12 +82,6 @@
       "date": "2026-09-02",
       "title": "Merge pull request #1075 from zax0rz/feat/astro-search",
       "url": "https://github.com/zax0rz/darkpawns/commit/325c3b23b61d976ff938f2e764f245ed74c9fa6f"
-    },
-    {
-      "sha": "ee6d42dc5b9de5ea3328934e47a05988ba1382fa",
-      "date": "2026-08-15",
-      "title": "chore(web): GSC HTML verification file",
-      "url": "https://github.com/zax0rz/darkpawns/commit/ee6d42dc5b9de5ea3328934e47a05988ba1382fa"
     }
   ],
   "pullRequests": [
