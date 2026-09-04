@@ -1,0 +1,57 @@
+# C-first do_wimpy vehicle (src/act.other.c:978-1019). The probe covers the
+# no-argument/current value, positive accepted and bounded values, zero,
+# decimal-prefix atoi, fill-word parsing, and C's isdigit rejection of signs
+# and malformed input.
+
+# depth-case: wimpy.current
+# depth-case: wimpy.accepted
+# depth-case: wimpy.zero
+# depth-case: wimpy.max-gate
+# depth-case: wimpy.third-gate
+# depth-case: wimpy.atoi-prefix
+# depth-case: wimpy.isdigit-gate
+# depth-case: wimpy.fill-word
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Wimpyactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wimpyactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+wimpy
+wimpy 5
+wimpy the 6 trailing words
+wimpy 6junk
+wimpy 0
+wimpy 101
+wimpy 34
+wimpy -5
+wimpy +5
+wimpy nope

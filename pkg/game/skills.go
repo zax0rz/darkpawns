@@ -571,18 +571,6 @@ func himHer(sex int) string {
 	}
 }
 
-// hisHer returns "his" / "her" / "its" based on sex.
-func hisHer(sex int) string {
-	switch sex {
-	case 1:
-		return "his"
-	case 2:
-		return "her"
-	default:
-		return "its"
-	}
-}
-
 // ---------------------------------------------------------------------------
 // C-10: Missing combat skill Do* functions — ported from act.offensive.c
 // ---------------------------------------------------------------------------

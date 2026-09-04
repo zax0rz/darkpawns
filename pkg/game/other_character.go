@@ -47,6 +47,10 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 	if ch.IsAffected(affSneak) {
 		ch.SendMessage("You stop sneaking.\r\n")
+		// C affect_from_char() removes both the ordinary sneak and ninja
+		// stealth records, not just the aggregate AFF_SNEAK bit.
+		ch.RemoveAffectBySpell(skillNumSneak)
+		ch.RemoveAffectBySpell(skillNumStealth)
 		ch.SetAffect(affSneak, false)
 		altered = true
 	}

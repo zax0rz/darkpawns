@@ -33,14 +33,14 @@ func TestCmdTitlePreservesFullArgument(t *testing.T) {
 	}
 }
 
-func TestCmdTitleStripsDoubledDollarAndANSIMarkers(t *testing.T) {
+func TestCmdTitlePreservesDoubledDollarAndStripsANSIMarkers(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Hero", 1001, true)
 
 	if err := cmdTitle(s, []string{"&rthe", "Re$$d", "Knight"}); err != nil {
 		t.Fatalf("cmdTitle: %v", err)
 	}
-	want := "rthe Re$d Knight"
+	want := "rthe Re$$d Knight"
 	if s.player.Title != want {
 		t.Errorf("title = %q, want %q", s.player.Title, want)
 	}

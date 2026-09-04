@@ -17,7 +17,7 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
+	arg, _ = oneArgument(arg)
 
 	if arg == "" {
 		if ch.WimpLevel > 0 {
@@ -28,17 +28,17 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	wimpLevel := 0
-	if _, err := fmt.Sscanf(arg, "%d", &wimpLevel); err != nil {
-		ch.SendMessage("That doesn't look like a number.\r\n")
-		slog.Warn("wimpy parse failed", "player", ch.Name, "arg", arg, "error", err)
+	// C tests isdigit(*arg) before atoi(). A sign, a nonnumeric token, or a
+	// leading fill word therefore reaches the exact specification prompt;
+	// atoi() itself is only reached once the first byte is a decimal digit.
+	if arg[0] < '0' || arg[0] > '9' {
+		ch.SendMessage("Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n")
 		return true
 	}
+	wimpLevel := atoiC(arg)
 
 	if wimpLevel > 0 {
-		if wimpLevel < 0 {
-			ch.SendMessage("Heh, heh, heh.. we are jolly funny today, eh?\r\n")
-		} else if wimpLevel > ch.GetMaxHP() {
+		if wimpLevel > ch.GetMaxHP() {
 			ch.SendMessage("That doesn't make much sense, now does it?\r\n")
 		} else if wimpLevel > (ch.GetMaxHP() / 3) {
 			ch.SendMessage("You can't set your wimp level above one third your hit points.\r\n")

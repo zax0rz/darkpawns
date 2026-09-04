@@ -1,0 +1,114 @@
+# C-first do_ungroup vehicle (src/act.other.c:744-794). The leader and two
+# visible peers expose target lookup, follower/group gates, one_argument
+# parsing, the three specific-member audiences, and no-argument disbanding.
+
+# depth-case: ungroup.target-not-found
+# depth-case: ungroup.target-not-following
+# depth-case: ungroup.one-argument
+# depth-case: ungroup.member-audience
+# depth-case: ungroup.disband-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ungroupleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ungroupleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Ungrouppeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Ungrouppeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Ungroupobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Ungroupobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Ungrouppeer 8162
+teleport Ungroupobserver 8162
+force Ungrouppeer follow Ungroupleader
+group all
+
+[probe]
+ungroup Nobody
+ungroup Ungroupobserver
+ungroup Ungrouppeer trailing words
+group Ungrouppeer trailing words
+ungroup

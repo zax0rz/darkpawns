@@ -4,6 +4,9 @@
 # Go invented skills/spells/learn/forget + a SkillManager (points/slots/levels) — retire.
 # A fresh L1 K warrior at 8162 runs the readouts. No RNG on display paths.
 
+# depth-case: practice.no-argument
+# depth-case: practice.guild-redirect
+
 [fixture]
 quiet-mobs
 
