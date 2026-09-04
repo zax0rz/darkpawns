@@ -447,8 +447,8 @@ def main():
     # Parse Go registry (all session/*.go files)
     go_registry = parse_go_registry(ROOT / "pkg" / "session")
 
-    # Parse Go socials from the authoritative C-format data shared by the Go
-    # loader, not from the retired generated metadata artifact.
+    # Parse Go socials from the runtime's Socials map in pkg/game/socials.go —
+    # the Go source of truth the server actually serves.
     go_socials = parse_go_socials(ROOT / "pkg" / "game" / "socials.go")
 
     # Parse specproc intercepts
