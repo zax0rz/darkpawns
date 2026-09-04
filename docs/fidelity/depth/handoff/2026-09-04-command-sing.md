@@ -54,20 +54,46 @@ missing-target, first-token/trailing-argument, mob-target, and sleeping-target
 variants. Shared command position, `PLR_NOSHOUT`, and common audience/lookup
 mechanics are not duplicated beyond the slice's differential probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add `cmd/dp-oracle-diff/scenarios/sing-depth.txt` with the standard actor,
+Added `cmd/dp-oracle-diff/scenarios/sing-depth.txt` with the standard actor,
 observer, target, and generic-mob fixture; `pkg/session/sing_depth_test.go` to
 pin the C command gate and all eight parsed message slots; and
-`docs/fidelity/depth/sing.tsv` with durable unit, delegated, and oracle rows.
-The existing Go handler and data are expected to be faithful; any mismatch
-must be resolved from the C call path under R5e.
+`docs/fidelity/depth/sing.tsv` with twelve durable unit, delegated, and oracle
+rows. The existing Go handler and data are faithful; this was a pure-coverage
+slice and no player-visible Go behavior changed.
+
+The final `sing-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the intended no-argument,
+player-target, generic-mob, self-target, not-found, and sleeping-target
+audiences. Every seed exited 0 with `result: no normalized divergence`.
+The sleeping-target result confirms C's zero victim-position minimum admits
+the branch while `TO_VICT`/SENDOK suppresses the sleeping recipient's private
+line.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,365 total, 4,260 proven/delegated, 54 blocked,
+  and 51 excluded; 98.7% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The initial handoff and evidence are in commits `016f83c54` and
+`f22041903` at the time of this note. No file under `src/` or
+`darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `sigh` handoff reported 4,353 total cases: 4,248
-proven/delegated, 54 blocked, and 51 excluded. Continue the remaining Phase 1
-social sweep before the later red/blocked and off-command-table phases in the
-objective. This is the tenth slice since the last required worktree prune;
-prune after this slice is complete. The next fresh social after this slice is
-`smile` at `src/interpreter.c:710`.
+proven/delegated, 54 blocked, and 51 excluded. This slice adds twelve
+proven/delegated rows, bringing main's frontier to 4,365 total, 4,260
+proven/delegated, 54 blocked, and 51 excluded. This is the tenth slice since
+the last required worktree prune; prune after this slice is complete. Continue
+the remaining Phase 1 social sweep before the later red/blocked and
+off-command-table phases in the objective. The next fresh social after this
+slice is `smile` at `src/interpreter.c:710`.
