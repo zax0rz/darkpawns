@@ -1,0 +1,96 @@
+# C-first vehicle for do_wiznet. The Implementor primary and immortal peer
+# expose actor/audience output while the probe walks usage, ordinary and emote
+# broadcasts, level prefixes, invalid prefixes, escaped @, empty payloads,
+# and the gods-online listing.
+
+# depth-case: wiznet.usage
+# depth-case: wiznet.no-argument
+# depth-case: wiznet.broadcast
+# depth-case: wiznet.emote
+# depth-case: wiznet.level-prefix
+# depth-case: wiznet.level-above-owner
+# depth-case: wiznet.level-empty
+# depth-case: wiznet.nonnumeric-prefix
+# depth-case: wiznet.escaped-at
+# depth-case: wiznet.emote-empty
+# depth-case: wiznet.norepeat
+# depth-case: wiznet.chosen-recipient
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wiznetdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wiznetdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wiznetpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wiznetpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Wiznetpeer chosen on
+
+[probe]
+wiznet
+wiznet hello gods
+wiznet *waves
+wiznet #32 directed hello
+wiznet #999 too high
+wiznet #32
+wiznet #not-a-level literal prefix
+wiznet \@ literal at
+wiznet *
+norepeat
+wiznet norepeat confirmation
+norepeat
