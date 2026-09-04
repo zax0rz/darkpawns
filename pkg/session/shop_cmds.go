@@ -64,7 +64,9 @@ func cmdList(s *Session, args []string) error {
 	}
 
 	if len(shop.SellTypes) == 0 {
-		s.Send(fmt.Sprintf("%s has nothing for sale right now.", keeperName))
+		// src/shop.c:918 emits this exact line when the keeper has no
+		// sellable inventory. The shopkeeper name is not included.
+		s.Send("Currently, there is nothing for sale.\r\n")
 		return nil
 	}
 

@@ -56,6 +56,18 @@ func TestParseAllShopFiles_FieldOrder(t *testing.T) {
 	if shop.Bitvector != 0 {
 		t.Errorf("bitvector = %d, want 0", shop.Bitvector)
 	}
+	if len(shop.Products) != 3 || shop.Products[0] != 99001 || shop.Products[1] != 99002 || shop.Products[2] != 99003 {
+		t.Errorf("products = %v, want [99001 99002 99003]", shop.Products)
+	}
+	if shop.BuyProfit != 1.4 || shop.SellProfit != 0.6 {
+		t.Errorf("profits = (%v, %v), want (1.4, 0.6)", shop.BuyProfit, shop.SellProfit)
+	}
+	if len(shop.BuyTypes) != 1 || shop.BuyTypes[0] != 10 {
+		t.Errorf("buy types = %v, want [10]", shop.BuyTypes)
+	}
+	if len(shop.Rooms) != 1 || shop.Rooms[0] != 99105 {
+		t.Errorf("rooms = %v, want [99105]", shop.Rooms)
+	}
 }
 
 // TestParseAllShopFiles_MissingIndex — a world tree without a shop index has

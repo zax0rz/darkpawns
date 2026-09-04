@@ -8,17 +8,28 @@ import (
 	"strings"
 )
 
-// ShopProto is the damage-gate-relevant subset of a CircleMUD shop record.
-// The field order mirrors C boot_the_shops (src/shop.c:1145-1219): product
+// ShopProto mirrors the boot-relevant fields of a CircleMUD shop record.
+// The field order follows C boot_the_shops (src/shop.c:1145-1219): product
 // list, buy/sell profits, trade-type list, seven message strings, temper,
-// bitvector, keeper, trade-with, room list, open/close hours. Only the
-// keeper vnum and the behavior bitvector (shop.h: WILL_START_FIGHT=1,
-// WILL_BANK_MONEY=2) are kept — they decide mobprot is_shopkeeper membership
-// and ok_damage_shopkeeper's slap-and-warn prelude (shop.c:1006-1023).
+// bitvector, keeper, trade-with, room list, and open/close hours. Keeping the
+// complete command-facing fields here lets the world build its live shop
+// index from the same .shp records that assign shopkeeper combat behavior.
 type ShopProto struct {
 	VNum       int
-	KeeperVNum int
+	Products   []int
+	BuyProfit  float64
+	SellProfit float64
+	BuyTypes   []int
+	Messages   [7]string
+	Temper     int
 	Bitvector  int
+	KeeperVNum int
+	WithWho    int
+	Rooms      []int
+	OpenHour1  int
+	CloseHour1 int
+	OpenHour2  int
+	CloseHour2 int
 }
 
 // ParseAllShopFiles reads the shop index and every .shp file it lists, the
@@ -112,15 +123,17 @@ func parseShopRecord(lines []string, i *int, vnum int, path string) (ShopProto, 
 		}
 		return value, nil
 	}
-	nextIntList := func() error {
+	nextIntList := func() ([]int, error) {
+		values := make([]int, 0)
 		for {
 			value, err := nextInt()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if value < 0 {
-				return nil
+				return values, nil
 			}
+			values = append(values, value)
 		}
 	}
 	nextString := func() (string, error) {
@@ -139,46 +152,72 @@ func parseShopRecord(lines []string, i *int, vnum int, path string) (ShopProto, 
 	}
 
 	shop := ShopProto{VNum: vnum}
-	if err := nextIntList(); err != nil { // producing list
+	products, err := nextIntList()
+	if err != nil { // producing list
 		return shop, err
 	}
-	if _, err := nextLine(); err != nil { // buy profit
+	shop.Products = products
+	buyProfit, err := nextLine()
+	if err != nil { // buy profit
 		return shop, err
 	}
-	if _, err := nextLine(); err != nil { // sell profit
+	shop.BuyProfit, err = strconv.ParseFloat(buyProfit, 64)
+	if err != nil {
+		return shop, fmt.Errorf("%s: shop #%d invalid buy profit %q: %w", path, vnum, buyProfit, err)
+	}
+	sellProfit, err := nextLine()
+	if err != nil { // sell profit
 		return shop, err
 	}
-	if err := nextIntList(); err != nil { // trade types
-		return shop, err
+	shop.SellProfit, err = strconv.ParseFloat(sellProfit, 64)
+	if err != nil {
+		return shop, fmt.Errorf("%s: shop #%d invalid sell profit %q: %w", path, vnum, sellProfit, err)
 	}
-	for range 7 { // no_such_item1/2, do_not_buy, missing_cash1/2, message_buy, message_sell
-		if _, err := nextString(); err != nil {
-			return shop, err
-		}
-	}
-	if _, err := nextInt(); err != nil { // temper
-		return shop, err
-	}
-	bitvector, err := nextInt()
+	shop.BuyTypes, err = nextIntList() // trade types
 	if err != nil {
 		return shop, err
 	}
-	keeper, err := nextInt()
+	for index := range shop.Messages { // no_such_item1/2, do_not_buy, missing_cash1/2, message_buy, message_sell
+		shop.Messages[index], err = nextString()
+		if err != nil {
+			return shop, err
+		}
+	}
+	shop.Temper, err = nextInt() // temper
 	if err != nil {
 		return shop, err
 	}
-	shop.KeeperVNum = keeper
-	shop.Bitvector = bitvector
-	if _, err := nextInt(); err != nil { // trade with
+	shop.Bitvector, err = nextInt()
+	if err != nil {
 		return shop, err
 	}
-	if err := nextIntList(); err != nil { // in-room list
+	shop.KeeperVNum, err = nextInt()
+	if err != nil {
 		return shop, err
 	}
-	for range 4 { // open1, close1, open2, close2
-		if _, err := nextInt(); err != nil {
-			return shop, err
-		}
+	shop.WithWho, err = nextInt() // trade with
+	if err != nil {
+		return shop, err
+	}
+	shop.Rooms, err = nextIntList() // in-room list
+	if err != nil {
+		return shop, err
+	}
+	shop.OpenHour1, err = nextInt()
+	if err != nil {
+		return shop, err
+	}
+	shop.CloseHour1, err = nextInt()
+	if err != nil {
+		return shop, err
+	}
+	shop.OpenHour2, err = nextInt()
+	if err != nil {
+		return shop, err
+	}
+	shop.CloseHour2, err = nextInt()
+	if err != nil {
+		return shop, err
 	}
 	return shop, nil
 }
