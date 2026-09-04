@@ -49,12 +49,26 @@ table gates `zlist` at `LVL_BUILDER` and `POS_DEAD` (R1/R2/R5e).
 
 ## Pre-fix result
 
-To be filled after the handoff commit and the C-first vehicle run, before any
-Go implementation changes.
+The C-first vehicle was run on the fresh `origin/main`-derived port at
+`DP_SEED=1` and `DP_SEED=2` before implementation changes. Missing-file,
+decimal-prefix, explicit numeric, nonnumeric-`atoi` zero, trailing-argument,
+and current-zone default blocks were green at both seeds. The long `zlist 27`
+probe was red only at the shared pager prompt:
+
+```text
+zlist 27: C page 1/15; Go page 1/23
+```
+
+The first page bytes and `q` pager exit were otherwise equal. The disposable
+`quiet-mobs` fixture prefixes reachable reset lines and expands the selected
+file beyond C's fixed `MAX_STRING_LENGTH` buffer. C's `fread` therefore exposes
+only its bounded prefix, while Go passed the complete file to `PageString` and
+counted eight additional pages. This is a confirmed command read-boundary
+divergence, not a pager navigation inference (R1/R3/R5e).
 
 ## Implementation and proof
 
-To be filled after confirmed divergences are implemented and the focused
+To be filled after the confirmed C read bound is implemented and the focused
 vehicle is green at both seeds.
 
 ## Verification
