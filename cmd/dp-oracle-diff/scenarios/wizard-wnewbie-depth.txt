@@ -1,0 +1,118 @@
+# C-first vehicle for do_newbie. The empty-argument refusal is already covered
+# by wizard-residual-depth; this vehicle covers missing targets, a global
+# exact player target, an in-room player target, case folding, abbreviation,
+# trailing-word parsing, and self targeting. The second peer stays in its
+# creation room so get_char_vis must take its global-player fallback.
+
+# depth-case: wnewbie.target-not-found
+# depth-case: wnewbie.global-player
+# depth-case: wnewbie.local-player
+# depth-case: wnewbie.abbrev-target
+# depth-case: wnewbie.case-insensitive
+# depth-case: wnewbie.trailing-words
+# depth-case: wnewbie.self-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wnewbiewizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wnewbiewizard
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wnewbiepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wnewbiepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:global]
+Wnewbieglobal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:global]
+Wnewbieglobal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21226
+teleport Wnewbiepeer 21226
+
+[probe]
+wnewbie
+wnewbie Nobody
+wnewbie Wnewbieglobal
+wnewbie Wnewbiepeer
+wnewbie wnewbiepe
+wnewbie WNEWBIEPE
+wnewbie Wnewbiepeer trailing words are ignored
+wnewbie self

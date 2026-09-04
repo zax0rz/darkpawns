@@ -73,12 +73,47 @@ target and target-only audience are direct handler divergences. Object state
 and list order were not inferred from the transcript and remain a focused
 state proof item (R1/R2/R3/R5e).
 
-## Implementation and proof
+## Implementation and proof — 2026-09-04
 
-To be filled after the confirmed target, object, audience, and parser changes
-are implemented and the focused vehicle is green at both seeds.
+`cmdNewbie` now consumes the first C-compatible argument, resolves the target
+through the shared `get_char_vis`-equivalent world resolver, creates object
+prototypes 8019, 8062, 8063, and 8023 in C's source order, and places them
+through the canonical world object movement paths. Player placement uses the
+C-compatible prepend behavior, so the resulting order is club, skin, bread,
+tunic. Mob placement uses the corresponding front insertion path. The
+handler emits the exact actor acknowledgement and routes the target-only
+gesture through the canonical `Act` substitution path; missing and empty
+target responses now preserve C's NOPERSON and CRLF bytes.
+
+The focused unit tests prove registration, player state/order and audience
+separation, mob state/order, and empty/missing target bytes. The C-first
+vehicle is green with `--show-oracle` at both `DP_SEED=1` and `DP_SEED=2`:
+
+```text
+wizard-wnewbie-depth: result: no normalized divergence
+```
+
+It covers the existing empty-argument context, missing target, global exact
+player lookup, in-room player lookup, abbreviation, case folding, trailing
+words, and self targeting. The live world has no mob at the selected vehicle
+location, so the mob target is recorded with focused state proof rather than a
+misclassified missing-target transcript (R1/R2/R3/R5e).
 
 ## Verification
 
-To be filled after the full fidelity, build, vet, test, lint, formatting, and
-security gates complete.
+The required verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4280 total, 4175 proven/delegated, 54 blocked, 51
+  excluded; 98.7% actionable completion.
+- `go test ./pkg/session -run 'Test(Wnewbie|CmdNewbie)' -count=1` — passed.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The focused `wizard-wnewbie-depth` oracle matrix also produced no normalized
+divergence at `DP_SEED=1` and `DP_SEED=2`. No files under `src/` or
+`darkpawns-c-oracle/` were changed.
