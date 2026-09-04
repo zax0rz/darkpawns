@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:771;
+# src/act.social.c:102-151; lib/misc/socials:939-947). The authored
+# thumbsup record is target-capable and is exercised through no-argument,
+# visible player/NPC target, named self, missing target, one_argument/fill-word,
+# and sleeping-target branches.
+
+# depth-case: thumbsup.no-argument
+# depth-case: thumbsup.target-success
+# depth-case: thumbsup.target-audience
+# depth-case: thumbsup.argument-first-token
+# depth-case: thumbsup.mob-target
+# depth-case: thumbsup.self-target
+# depth-case: thumbsup.target-not-found
+# depth-case: thumbsup.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Thumbsupactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thumbsupactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Thumbsupobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Thumbsupobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Thumbsuptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Thumbsuptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Thumbsupobserver 8162
+teleport Thumbsuptarget 8162
+
+[probe]
+thumbsup
+thumbsup Thumbsuptarget trailing words are ignored
+thumbsup Thumbsuptarget
+thumbsup trainee
+thumbsup Thumbsupactor
+thumbsup self
+thumbsup Nobody
+force Thumbsuptarget sleep
+thumbsup Thumbsuptarget
