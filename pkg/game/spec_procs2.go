@@ -1658,15 +1658,13 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 }
 
 // ================================================================
-// jail — registered room special whose commandless body is unreachable
+// jail — registered room special; its commandless pulse body is not yet ported
 // ================================================================
 func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// C's room special receives a nonzero command index from both interpreter.c
-	// and the movement path, so its first `if (cmd || mini_mud)` gate always
-	// returns FALSE on the real player-facing call path. In particular, the C
-	// body does not implement a `say release` command; retaining that invented
-	// Go branch would violate R1/R2/R5e. The commandless timer body is not
-	// reachable from either C dispatcher and remains an explicit fallthrough.
+	// C's commandless timer body is reached by room_activity (comm.c:690-756),
+	// while the command path still returns FALSE at the `cmd || mini_mud` gate.
+	// The timer body is intentionally left unimplemented until it has a depth
+	// vehicle; inventing a command substitute would violate R1/R2/R5e.
 	_ = w
 	_ = ch
 	_ = me
