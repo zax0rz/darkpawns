@@ -48,10 +48,30 @@ each object. The issuing wizard receives `Newbied.\r\n`; the target alone
 receives `The wizard makes a magickal gesture, creating a bunch of equipment,
 and hands it to you!\r\n` after C `act()` substitution/capitalization.
 
-## Pre-fix result
+## Pre-fix result — 2026-09-04
 
-To be filled after the C-first vehicle is run on the fresh implementation at
-`DP_SEED=1` and `DP_SEED=2`, before code changes.
+The C-first vehicle was red on the fresh `origin/main`-derived port at
+`DP_SEED=1` and `DP_SEED=2`. The no-argument path normalized green, but the
+missing-target text differed and every valid C target lacked the target-only
+gesture line in Go:
+
+```text
+wnewbie Nobody [actor]       C: No-one by that name here.
+                             Go: No one by that name online.
+wnewbie Wnewbieglobal        C: Newbied. + target gesture
+                             Go: Newbied. only
+wnewbie Wnewbiepeer / prefix C: Newbied. + target gesture
+                             Go: No one by that name online.
+wnewbie self                 C: Newbied. + self gesture
+                             Go: No one by that name online.
+```
+
+The C global-player case proves that `get_char_vis` falls back from the room
+scan to an exact visible player lookup; the in-room abbreviation and
+case-folding cases prove the `isname_with_abbrevs` room path. The missing
+target and target-only audience are direct handler divergences. Object state
+and list order were not inferred from the transcript and remain a focused
+state proof item (R1/R2/R3/R5e).
 
 ## Implementation and proof
 
@@ -62,4 +82,3 @@ are implemented and the focused vehicle is green at both seeds.
 
 To be filled after the full fidelity, build, vet, test, lint, formatting, and
 security gates complete.
-
