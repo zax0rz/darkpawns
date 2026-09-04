@@ -165,7 +165,14 @@ Every red was re-run against pristine main @ b5641d9b7 before acceptance:
   sits in the OLC/sedit family that is a fenced blocked cluster). None
   introduced by this branch.
 
-- TALLY: (filled below when the run completed)
+- FINAL TALLY (2026-09-03 20:53 EDT): **855/866 pass, 11 red, 0 infra**
+  (all four infra rows — equipment-glance, pant, recall, review — passed
+  their single retry). All 11 reds reproduce identically on pristine main:
+  accuse-noarg-depth, force-mob, medit-entry/session, redit-entry/session,
+  sedit-entry/session, spec-proc-cityguard, spec-proc-cityguard-breed,
+  spec-proc-dragon-breath-combat. Zero reds introduced by this branch;
+  855 green includes every scenario the prompt-frame and room_activity
+  changes could touch.
 
 ## Gates
 
