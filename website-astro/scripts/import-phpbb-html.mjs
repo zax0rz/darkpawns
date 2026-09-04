@@ -26,7 +26,7 @@ const RECORDS = {
     slug: 'topic-731',
     title: 'random observation',
     description: 'Aidan wonders aloud whether Dark Pawns should be saved or put down, and the regulars argue about whose job it is.',
-    dateLabel: 'July 1–17, 2004',
+    dateLabel: 'July 1-17, 2004',
     sourceUrl: 'http://www.dp-players.com/forum/viewtopic.php?p=731#731',
     captureTimestamp: '20040724090156',
     captureOriginal: 'http://www.dp-players.com:80/forum/viewtopic.php?p=731&amp',
@@ -37,7 +37,7 @@ const RECORDS = {
     slug: 'topic-737',
     title: 'The Unforeseen Occultesque Following',
     description: 'A jargon-file definition of "mudhead" sets off a thread about how much of their lives players had given to the game.',
-    dateLabel: 'July 14–18, 2004',
+    dateLabel: 'July 14-18, 2004',
     sourceUrl: 'http://www.dp-players.com/forum/viewtopic.php?p=737#737',
     captureTimestamp: '20040724090847',
     captureOriginal: 'http://www.dp-players.com:80/forum/viewtopic.php?p=737&amp',
@@ -181,6 +181,21 @@ const RECORDS = {
 
 /* -------------------------------------------------------------------- parsing */
 
+/**
+ * Some 2004 captures are Windows-1252, not UTF-8: their curly quotes and dashes
+ * are single high bytes. Reading those as UTF-8 turns an apostrophe into a
+ * replacement character, so the file is decoded strictly first and only falls
+ * back when that proves it is not UTF-8.
+ */
+function readCapture(path) {
+  const bytes = readFileSync(path);
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes);
+  }
+}
+
 const collapse = (html) => html.replace(/\s+/g, ' ');
 
 /** Find the matching close for a tag that can nest, starting after `from`. */
@@ -290,7 +305,7 @@ function escapeMarkdown(text) {
       line
         .replace(/([\\`*_[\]<])/g, '\\$1')
         .replace(/^(\s*)([#>+-])/, '$1\\$2')
-        .replace(/^(\s*\d+)\./, '$1\\.'),
+        .replace(/^(\s*\d+)\.(\s)/, '$1\\.$2'),
     )
     .join('\n');
 }
@@ -496,7 +511,7 @@ function main() {
   // them. Each page is parsed on its own and then read in page order, so the
   // gaps stay visible instead of being silently closed up.
   const pages = inputArgs
-    .map((input) => ({ file: basename(input), ...parseTopic(readFileSync(resolve(input), 'utf8')) }))
+    .map((input) => ({ file: basename(input), ...parseTopic(readCapture(resolve(input))) }))
     .sort((a, b) => a.page - b.page);
   if (!pages.length || !pages[0].posts.length) {
     throw new Error('no posts found; is this a phpBB topic capture?');

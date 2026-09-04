@@ -19,6 +19,51 @@ const D = 'dp-players.com';
 const F = 'darkpawns.com';
 
 const RECORDS = {
+  'player-page-directions': {
+    title: 'Directions',
+    description: 'Speedwalks from Market Square to the newbie, midbie and high-level zones, plus the gates and the dark mage tower.',
+    kind: 'guide', mode: 'dp-html', site: D, shape: 'plain',
+    dateLabel: 'Published 2004', sortDate: '2004-08-03',
+    sourceUrl: 'http://www.dp-players.com/go.php?dp=directions.mud',
+    captureUrl: 'https://web.archive.org/web/20040803063652/http://www.dp-players.com/go.php?dp=directions.mud',
+    recoveredAt: '2026-08-15', voiceLayer: 'frontline',
+  },
+  'darkpawns-faq': {
+    title: 'Dark Pawns FAQ',
+    description: 'The official answers on races, classes, character creation, remorts, policy and etiquette.',
+    kind: 'site-page', mode: 'dpcom-html', site: F, startAt: 'zMUD mud client',
+    dateLabel: 'Captured August 2004', sortDate: '2004-08-03',
+    sourceUrl: 'http://darkpawns.com/faq.html',
+    captureUrl: 'https://web.archive.org/web/20040803042109/http://darkpawns.com/faq.html',
+    recoveredAt: '2026-08-15', voiceLayer: 'mythic-admin',
+  },
+  'player-page-news': {
+    title: 'Site News',
+    description: "Aidan's running log of what he changed on the player page, from the front page as it stood in July 2004.",
+    kind: 'site-page', mode: 'dp-html', site: D, shape: 'player-news',
+    dateLabel: 'March to May 2004', sortDate: '2004-05-14',
+    sourceUrl: 'http://www.dp-players.com/',
+    captureUrl: 'https://web.archive.org/web/20040728202301/http://www.dp-players.com/',
+    recoveredAt: '2026-08-15', voiceLayer: 'frontline',
+  },
+  'player-page-archives': {
+    title: 'News Archive',
+    description: 'The older half of the news log, back to the launch of the third version of the site in April 2004.',
+    kind: 'site-page', mode: 'dp-html', site: D, shape: 'player-news',
+    dateLabel: 'April 2004', sortDate: '2004-04-21',
+    sourceUrl: 'http://www.dp-players.com/archives.php',
+    captureUrl: 'https://web.archive.org/web/20040610043934/http://www.dp-players.com/archives.php',
+    recoveredAt: '2026-08-15', voiceLayer: 'frontline',
+  },
+  'board-index-general': {
+    title: 'General Discussion, July 2004',
+    description: 'The board index as it stood, with the reply count on every topic. It is the clearest measure of how much of the forum is gone.',
+    kind: 'board-index', mode: 'raw', site: D, shape: 'board-index',
+    dateLabel: 'July 23, 2004', sortDate: '2004-07-23',
+    sourceUrl: 'http://www.dp-players.com/forum/viewforum.php?f=1',
+    captureUrl: 'https://web.archive.org/web/20040723032431/http://www.dp-players.com:80/forum/viewforum.php?f=1&amp',
+    recoveredAt: '2026-08-23', voiceLayer: 'frontline',
+  },
   'map-kir-draxin': {
     title: "ASCII Map of Kir Drax'in",
     description: "Frontline's text map of the starting city, with the legend that names every building on it.",
@@ -132,6 +177,21 @@ const RECORDS = {
 
 /* ------------------------------------------------------------------ stripping */
 
+/**
+ * Some 2004 captures are Windows-1252, not UTF-8: their curly quotes and dashes
+ * are single high bytes. Reading those as UTF-8 turns an apostrophe into a
+ * replacement character, so the file is decoded strictly first and only falls
+ * back when that proves it is not UTF-8.
+ */
+function readCapture(path) {
+  const bytes = readFileSync(path);
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes);
+  }
+}
+
 const ENTITIES = {
   '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'",
   '&apos;': "'", '&nbsp;': ' ', '&hellip;': '…',
@@ -163,7 +223,7 @@ function escapeMarkdown(text) {
   return text
     .replace(/([\\`*_[\]<])/g, '\\$1')
     .replace(/^(\s*)([#>+-])/, '$1\\$2')
-    .replace(/^(\s*\d+)\./, '$1\\.');
+    .replace(/^(\s*\d+)\.(\s)/, '$1\\.$2');
 }
 
 /* ------------------------------------------------------------------ rendering */
@@ -194,6 +254,32 @@ function reflow(lines) {
 
 /** Per-page shaping. Reorders nothing; only marks up structure already there. */
 const SHAPERS = {
+  'player-news': (lines) => {
+    const out = [];
+    for (let i = 0; i < lines.length; i += 1) {
+      if (lines[i] === 'Posted by' && lines[i + 2]?.startsWith('on ')) {
+        const title = out.pop() ?? 'Untitled';
+        out.push(`### ${title.replace(/^\\?/, '')}`);
+        out.push(`*${escapeMarkdown(lines[i + 1])} — ${escapeMarkdown(lines[i + 2].replace(/^on /, ''))}*`);
+        i += 2;
+        continue;
+      }
+      if (/^\(\d+\)$/.test(lines[i]) && lines[i + 1] === 'Comments') { i += 1; continue; }
+      out.push(escapeMarkdown(lines[i]));
+    }
+    return out.join('\n\n');
+  },
+  'board-index': (lines, raw) => {
+    const flat = raw.replace(/\s+/g, ' ');
+    const rows = [...flat.matchAll(/topictitle">(.*?)<\/a>[\s\S]*?<td[^>]*class="row2"[^>]*>\s*<span class="postdetails">(\d+)<\/span>[\s\S]*?<span class="name"><a[^>]*>(.*?)<\/a>/g)];
+    const strip = (value) => value.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
+    return [
+      '| Topic | Started by | Replies |',
+      '| --- | --- | --- |',
+      ...rows.map((row) => `| ${escapeMarkdown(strip(row[1]))} | ${escapeMarkdown(strip(row[3]))} | ${row[2]} |`),
+    ].join('\n');
+  },
+  plain: (lines) => lines.map(escapeMarkdown).join('\n\n'),
   'player-page-articles': (lines) => {
     const rows = [];
     for (let i = 1; i < lines.length; i += 2) {
@@ -279,6 +365,7 @@ function bodyFor(record, raw) {
   if (record.mode === 'dp-text') text = stripPlayerPageChrome(raw);
   else if (record.mode === 'dp-html') text = stripPlayerPageChrome(htmlToText(raw));
   else if (record.mode === 'dpcom-text') text = raw.split('\n').slice(1).join('\n');
+  else if (record.mode === 'raw') text = raw;
   else text = htmlToText(raw);
 
   let lines = clean(text).split('\n');
@@ -290,12 +377,27 @@ function bodyFor(record, raw) {
   lines = lines.filter((line, index) => !(index === 0 && /^Dark Pawns$/.test(line)));
 
   const shaper = SHAPERS[record.shape ?? ''];
-  if (shaper) return shaper(lines.filter(Boolean));
+  if (shaper) return shaper(lines.filter(Boolean), raw);
 
   return reflow(lines)
     .map((paragraph) => paragraph.map(escapeMarkdown).join('\n'))
     .filter((paragraph) => paragraph.trim())
     .join('\n\n');
+}
+
+/**
+ * The policy keeps contact details out of the archive. A capture can still
+ * carry one in the middle of an otherwise publishable page, so addresses are
+ * removed here and the entry is downgraded from verbatim to edited-excerpt.
+ * Silently publishing the address would be worse; silently dropping the page
+ * would lose the history. Marking the edit keeps both honest.
+ */
+const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+
+function redactContacts(body) {
+  const found = body.match(EMAIL);
+  if (!found) return { body, redacted: 0 };
+  return { body: body.replace(EMAIL, '\\[address removed\\]'), redacted: found.length };
 }
 
 function main() {
@@ -309,8 +411,9 @@ function main() {
   const record = RECORDS[recordId];
   if (!record) throw new Error(`no reviewed metadata for record ${recordId}`);
 
-  const body = bodyFor(record, readFileSync(resolve(input), 'utf8'));
-  if (!body.trim()) throw new Error('no content extracted; check the chrome-stripping mode');
+  const raw = bodyFor(record, readCapture(resolve(input)));
+  if (!raw.trim()) throw new Error('no content extracted; check the chrome-stripping mode');
+  const { body, redacted } = redactContacts(raw);
 
   const frontmatter = [
     '---',
@@ -323,7 +426,7 @@ function main() {
     `sourceUrl: ${JSON.stringify(record.sourceUrl)}`,
     `captureUrl: ${JSON.stringify(record.captureUrl)}`,
     `recoveredAt: ${record.recoveredAt}`,
-    'textKind: "verbatim"',
+    redacted ? 'textKind: "edited-excerpt"' : 'textKind: "verbatim"',
     'source: "Wayback capture identified by captureUrl"',
     `voiceLayer: ${JSON.stringify(record.voiceLayer)}`,
     'completeness: "complete"',
@@ -335,10 +438,15 @@ function main() {
   ].filter((line) => line !== null).join('\n');
 
   const note = `*Transcript note: generated from the capture \`${basename(input)}\`. ` +
-    'Site navigation, the recent-topics sidebar and advertising are omitted.*';
+    'Site navigation, the recent-topics sidebar and advertising are omitted.' +
+    (redacted
+      ? ` ${redacted === 1 ? 'One e-mail address was' : `${redacted} e-mail addresses were`} removed from the text, ` +
+        'as the archive does not publish contact details.'
+      : '') +
+    '*';
 
   writeFileSync(resolve(output), `${frontmatter}\n\n${note}\n\n${body}\n`, 'utf8');
-  console.log(`${recordId}: ${body.split('\n').length} lines`);
+  console.log(`${recordId}: ${body.split('\n').length} lines${redacted ? `, ${redacted} contact detail(s) removed` : ''}`);
 }
 
 main();
