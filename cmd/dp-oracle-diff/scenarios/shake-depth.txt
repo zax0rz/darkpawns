@@ -1,0 +1,121 @@
+# C-first do_action social vehicle (src/interpreter.c:691;
+# src/act.social.c:102-151; lib/misc/socials:665-673). The authored shake
+# record is exercised through no-argument, visible player/NPC target, named
+# self, missing target, one_argument/fill-word, and sleeping-target branches.
+
+# depth-case: shake.no-argument
+# depth-case: shake.target-success
+# depth-case: shake.target-audience
+# depth-case: shake.argument-first-token
+# depth-case: shake.mob-target
+# depth-case: shake.self-target
+# depth-case: shake.target-not-found
+# depth-case: shake.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Shakeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shakeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Shakeobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Shakeobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Shaketarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Shaketarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shakeobserver 8162
+teleport Shaketarget 8162
+
+[probe]
+shake
+shake Shaketarget trailing words are ignored
+shake Shaketarget
+shake trainee
+shake Shakeactor
+shake self
+shake Nobody
+force Shaketarget sleep
+shake Shaketarget
