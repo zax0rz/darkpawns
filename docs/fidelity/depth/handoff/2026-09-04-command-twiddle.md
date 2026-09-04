@@ -48,19 +48,39 @@ after the `#` room slot, so its parsed self-target actor slot is the exact
 empty string. Shared command position, `PLR_NOSHOUT`, and room visibility
 mechanics are not duplicated beyond the slice's differential probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add the focused registration test, a durable TSV manifest, and a
-`twiddle-depth` oracle scenario using the standard actor and observer fixture.
-Exercise no argument, a typed visible target, a missing target, and a named
-self target to prove they remain ignored; retain the standard delegated rows
-for command position, `PLR_NOSHOUT`, and visibility. Run the five-seed oracle
-matrix and all repository gates before the final handoff.
+Added `cmd/dp-oracle-diff/scenarios/twiddle-depth.txt` with the standard actor
+and peer fixture; `pkg/session/twiddle_depth_test.go` to pin the C command
+gate, social metadata, and all three parsed message slots; and
+`docs/fidelity/depth/twiddle.tsv` with eight durable unit, delegated, and
+oracle rows. The existing Go handler and data are faithful; this was a
+pure-coverage slice and no player-visible Go behavior changed.
+
+The final `twiddle-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact self-only actor/room
+messages for no argument, typed target, missing target, and named self. Every
+seed exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,602 total, 4,497 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `6e7105665` and `aeaa7bc5f` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `tug` handoff reported 4,594 total cases: 4,489
-proven/delegated, 54 blocked, and 51 excluded. This slice is expected to add
-eight proven/delegated rows, bringing the frontier to 4,602 total, 4,497
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eight
+proven/delegated rows, bringing the frontier to 4,602 total, 4,497
 proven/delegated, 54 blocked, and 51 excluded. The next fresh social after
 this slice is `violate` at `src/interpreter.c:801`.
