@@ -1,0 +1,70 @@
+surface_class	family	units	status	proof_or_attempt	c_source_scope	notes
+activity-call-sites	src/act.comm.c act-send family	99	unproven	-	src/act.comm.c:all	99 act()/send_to_char() call sites counted mechanically; command manifests cover selected handlers, but the residual call-site family needs per-function audience and state proof.
+activity-call-sites	src/act.display.c act-send family	48	unproven	-	src/act.display.c:all	48 act()/send_to_char() call sites; rendered display variants remain broader than the existing command rows.
+activity-call-sites	src/act.informative.c act-send family	134	unproven	-	src/act.informative.c:all	134 act()/send_to_char() call sites; existing info proofs cover selected commands, not the complete rendered surface.
+activity-call-sites	src/act.item.c act-send family	169	unproven	-	src/act.item.c:all	169 act()/send_to_char() call sites; item transfer, disposal, containers, and audience branches require residual bucketing.
+activity-call-sites	src/act.movement.c act-send family	110	unproven	-	src/act.movement.c:all	110 act()/send_to_char() call sites; movement manifests cover selected gates and specials, not every exit and landing branch.
+activity-call-sites	src/act.offensive.c act-send family	138	unproven	-	src/act.offensive.c:all	138 act()/send_to_char() call sites; combat-entry and skill rows cover selected seams, not the full offensive corpus.
+activity-call-sites	src/act.other.c act-send family	162	unproven	-	src/act.other.c:all	162 act()/send_to_char() call sites; position, use, save, and utility handlers have residual variants.
+activity-call-sites	src/act.social.c act-send family	27	proven-already	socials.tsv; socials-command.tsv	src/act.social.c:all	27 act()/send_to_char() call sites are owned by the exhausted socials inventory and its command-dispatch proofs.
+activity-call-sites	src/act.wizard.c act-send family	352	unproven	-	src/act.wizard.c:all	352 act()/send_to_char() call sites; wizard commands, OLC bridges, reload/admin output, and player-visible utilities remain a broad residual family.
+activity-call-sites	src/ban.c act-send family	11	unproven	-	src/ban.c:all	11 act()/send_to_char() call sites; ban and unban audience/state paths lack a complete surface proof.
+activity-call-sites	src/boards.c act-send family	25	unproven	-	src/boards.c:all	25 act()/send_to_char() call sites; board listing, reading, writing, and moderation variants remain residual.
+activity-call-sites	src/clan.c act-send family	165	unproven	-	src/clan.c:all	165 act()/send_to_char() call sites; clan administration and player-facing channel/state output remain residual.
+activity-call-sites	src/comm.c act-send family	11	unproven	-	src/comm.c:all	11 act()/send_to_char() call sites; link, pulse, room-activity, and death-adjacent output need complete lifecycle bucketing.
+activity-call-sites	src/db.c act-send family	4	unproven	-	src/db.c:all	4 act()/send_to_char() call sites include reload and load-time/player-facing paths; no blanket exclusion is justified.
+activity-call-sites	src/dream.c act-send family	29	unproven	-	src/dream.c:all	29 act()/send_to_char() call sites; dream entry, progression, and wake output remain residual.
+activity-call-sites	src/file-edit.c act-send family	9	unproven	-	src/file-edit.c:all	9 act()/send_to_char() call sites; descriptor-driven editor output is an immortal-visible surface, not an exclusion.
+activity-call-sites	src/gate.c act-send family	7	unproven	-	src/gate.c:all	7 act()/send_to_char() call sites; gate interaction and error branches remain residual.
+activity-call-sites	src/graph.c act-send family	9	unproven	-	src/graph.c:all	9 act()/send_to_char() call sites; tracking success/failure audience and state branches remain residual.
+activity-call-sites	src/handler.c act-send family	13	unproven	-	src/handler.c:all	13 act()/send_to_char() call sites; shared transfer and lookup diagnostics need owner-level proof.
+activity-call-sites	src/house.c act-send family	34	unproven	-	src/house.c:all	34 act()/send_to_char() call sites; house entry, rent, and storage lifecycle output remains residual.
+activity-call-sites	src/interpreter.c act-send family	27	unproven	-	src/interpreter.c:all	27 act()/send_to_char() call sites; dispatch, prompt, descriptor, and lifecycle messages are not one command family.
+activity-call-sites	src/limits.c act-send family	22	unproven	-	src/limits.c:all	22 act()/send_to_char() call sites; regeneration, hunger, thirst, and timed affect output remains residual.
+activity-call-sites	src/luaedit.c act-send family	2	unproven	-	src/luaedit.c:all	2 act()/send_to_char() call sites; web/admin replacement history does not prove the legacy descriptor path.
+activity-call-sites	src/magic.c act-send family	61	unproven	-	src/magic.c:all	61 act()/send_to_char() call sites; routine-specific spell messages and state branches remain residual beyond sampled object effects.
+activity-call-sites	src/mail.c act-send family	11	unproven	-	src/mail.c:all	11 act()/send_to_char() call sites; mail entry, reading, composition, and delivery output remains residual.
+activity-call-sites	src/mapcode.c act-send family	2	unproven	-	src/mapcode.c:all	2 act()/send_to_char() call sites; map rendering output needs an independent surface proof.
+activity-call-sites	src/medit.c act-send family	33	unproven	-	src/medit.c:all	33 act()/send_to_char() call sites; interactive MEDIT is a reachable immortal command surface and remains blocked by the OLC state-machine gap.
+activity-call-sites	src/mobact.c act-send family	9	unproven	-	src/mobact.c:all	9 act()/send_to_char() call sites; autonomous pulse ordering and shared output require deeper topology proof.
+activity-call-sites	src/mobprog.c act-send family	46	unproven	-	src/mobprog.c:all	46 act() call sites; script-triggered output and trigger ordering remain residual.
+activity-call-sites	src/modify.c act-send family	40	unproven	-	src/modify.c:all	40 send_to_char() call sites; descriptor editor prompts and abort/save branches remain residual.
+activity-call-sites	src/new_cmds.c act-send family	204	unproven	-	src/new_cmds.c:all	204 act()/send_to_char() call sites; skill and utility command families are only partially represented by focused rows.
+activity-call-sites	src/new_cmds2.c act-send family	80	unproven	-	src/new_cmds2.c:all	80 act()/send_to_char() call sites; secondary skills and state/audience branches remain residual.
+activity-call-sites	src/objsave.c act-send family	19	unproven	-	src/objsave.c:all	19 act()/send_to_char() call sites; rent serialization and recovery output require round-trip proof.
+activity-call-sites	src/oc.c act-send family	2	unproven	-	src/oc.c:all	2 send_to_char() call sites; object control output remains residual.
+activity-call-sites	src/oedit.c act-send family	73	unproven	-	src/oedit.c:all	73 send_to_char() call sites; interactive OEDIT is an immortal-visible descriptor surface, not excluded.
+activity-call-sites	src/olc.c act-send family	21	unproven	-	src/olc.c:all	21 act()/send_to_char() call sites; shared OLC setup and descriptor transitions remain residual.
+activity-call-sites	src/redit.c act-send family	35	unproven	-	src/redit.c:all	35 send_to_char() call sites; interactive REDIT remains blocked by the missing Go OLC state machine.
+activity-call-sites	src/scripts.c act-send family	2	unproven	-	src/scripts.c:all	2 act() call sites; DG script-triggered output and room/object topology remain residual.
+activity-call-sites	src/sedit.c act-send family	40	unproven	-	src/sedit.c:all	40 send_to_char() call sites; interactive SEDIT remains blocked by the missing Go OLC state machine.
+activity-call-sites	src/shop.c act-send family	22	unproven	-	src/shop.c:all	22 act()/send_to_char() call sites; core shop listing, buy, sell, value, and transaction branches remain residual.
+activity-call-sites	src/spec_procs.c act-send family	179	unproven	-	src/spec_procs.c:all	179 act()/send_to_char() call sites; many procedures are proven, but this file-level residual includes shared and blocked branches.
+activity-call-sites	src/spec_procs2.c act-send family	129	unproven	-	src/spec_procs2.c:all	129 act()/send_to_char() call sites; many procedures are proven, but pulse, shop, and shared residuals remain.
+activity-call-sites	src/spec_procs3.c act-send family	73	unproven	-	src/spec_procs3.c:all	73 act()/send_to_char() call sites; many procedures are proven, but remaining special and combat branches are not a blanket green.
+activity-call-sites	src/spell_parser.c act-send family	79	unproven	-	src/spell_parser.c:all	79 act()/send_to_char() call sites; parser gates are proven in places, while the full cast-vector matrix remains residual.
+activity-call-sites	src/spells.c act-send family	102	unproven	-	src/spells.c:all	102 act()/send_to_char() call sites; manual spell implementations and audience/state variants remain residual.
+activity-call-sites	src/tattoo.c act-send family	5	unproven	-	src/tattoo.c:all	5 act()/send_to_char() call sites; tattoo-shop procedures are proven in parts, but player use-tattoo is not independently depth-proven.
+activity-call-sites	src/tedit.c act-send family	7	unproven	-	src/tedit.c:all	7 send_to_char() call sites; descriptor-driven text editing remains residual.
+activity-call-sites	src/utils.c act-send family	13	unproven	-	src/utils.c:all	13 act()/send_to_char() call sites; shared helper diagnostics need owner-level call-path proof.
+activity-call-sites	src/whod.c act-send family	10	unproven	-	src/whod.c:all	10 send_to_char() call sites; WHOD mode and listing output remain residual.
+activity-call-sites	src/zedit.c act-send family	50	unproven	-	src/zedit.c:all	50 send_to_char() call sites; interactive ZEDIT remains an immortal-visible descriptor surface.
+spell-matrix	CAST_SPELL player cast vector	299	unproven	-	src/spell_parser.c:407-557,921-1120	Full TOP_SPELL_DEFINE 1..299 cast matrix; parser/gate samples are proven, but spell routine, message, state, and draw parity is not complete for every spell.
+spell-matrix	CAST_POTION quaff vector	299	unproven	-	src/spell_parser.c:544-817; act.other.c:897-924	Full 1..299 potion matrix; single-effect samples and selected affect messages are proven, while multi-spell, RNG, and unsupported-entry behavior remain residual.
+spell-matrix	CAST_SCROLL recite vector	299	unproven	-	src/spell_parser.c:544-817; act.other.c:897-924	Full 1..299 scroll matrix; armor and targeted samples are proven, while multi-spell, RNG, and remaining routine/message branches remain residual.
+spell-matrix	CAST_WAND use vector	299	unproven	-	src/spell_parser.c:544-817; act.other.c:908-968	Full 1..299 wand matrix; invisibility-wand behavior is proven, while the remaining spell/item combinations remain residual.
+spell-matrix	CAST_STAFF use vector	299	unproven	-	src/spell_parser.c:544-817; act.other.c:908-968	Full 1..299 staff matrix; sleep-staff behavior is proven, while the remaining spell/item combinations remain residual.
+fight-skill	lib/misc/messages skill-message corpus	82	unproven	-	src/fight.c:1314-1480; lib/misc/messages	82 loaded message blocks are enumerated; focused combat/special proofs own samples, not the complete damage, save, posture, and audience matrix.
+fight-skill	fight.c combat-round and death output	97	unproven	-	src/fight.c:all	97 activity call sites plus round/death branches; shared combat and death transcript reds are explicitly retained as blocked owners.
+fight-skill	new_cmds skill/action output	204	unproven	-	src/new_cmds.c:all	204 activity call sites; existing skill rows are focused proofs, not a complete skill-message corpus.
+fight-skill	new_cmds2 skill/action output	80	unproven	-	src/new_cmds2.c:all	80 activity call sites; secondary skill and audience variants remain residual.
+lifecycle	death cycle and corpse teardown	1	unproven	-	src/fight.c:1898-2032; src/handler.c; src/objsave.c	Perform-violence death, raw-kill extraction, corpse loot, prompt/menu, and combat teardown require an end-to-end state proof.
+lifecycle	rent and house lifecycle	1	unproven	-	src/house.c; src/objsave.c; src/interpreter.c:646,2226-2227	Rent entry, charge/loss branches, house storage, and reconnect behavior require round-trip evidence.
+lifecycle	player save/load round-trip	2	unproven	-	src/db.c; src/objsave.c; src/interpreter.c	Save and load bytes/state must be tested through the durable format and reconnect path; this inventory does not authorize changing that format.
+lifecycle	regeneration hunger thirst pulses	1	unproven	-	src/limits.c	Timed resource decay and recovery output/state remain outside command-table proofs.
+lifecycle	weather and time pulses	1	unproven	-	src/weather.c; src/act.wizard.c:3490-3510	Weather/time progression, rendered output, and clock/draw dependencies require a dedicated frozen-time vehicle.
+lifecycle	mobile room object pulse order	3	unproven	-	src/mobact.c; src/comm.c:690-756; src/objects.c	Pulse order and early-return topology are only partially ported; the jail commandless path is blocked rather than excluded.
+lifecycle	descriptor link prompt lifecycle	1	unproven	-	src/comm.c; src/interpreter.c	Connect, disconnect, prompt, and reconnect output/state remain residual lifecycle surface.
+shops	core shop transaction surface	1	unproven	-	src/shop.c; src/act.comm.c; src/interpreter.c	List, buy, sell, value, keeper gates, gold/object state, and room audiences need complete shop proof.
+shops	special-procedure shop surface	1	unproven	-	src/spec_procs.c; src/spec_procs2.c; src/spec_assign.c	Tattoo, pet, banker, and other registered shop procedures are only partially covered by focused special manifests.
+shops	rent and storage shop-adjacent surface	1	unproven	-	src/house.c; src/objsave.c	Rent/storage prices, object persistence, and failure messages are lifecycle-owned and remain unproven here.
