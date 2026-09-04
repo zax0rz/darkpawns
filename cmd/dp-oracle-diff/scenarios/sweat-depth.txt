@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:750;
+# src/act.social.c:102-127; lib/misc/socials:1272-1275). The authored sweat
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: sweat.no-argument
+# depth-case: sweat.typed-target-ignored
+# depth-case: sweat.missing-target-ignored
+# depth-case: sweat.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sweatactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sweatactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sweatpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sweatpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sweatpeer 8162
+
+[probe]
+sweat
+sweat Sweatpeer
+sweat Nobody
+sweat Sweatactor
