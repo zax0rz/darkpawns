@@ -229,6 +229,7 @@ func init() {
 	registerCommand("at", wrapArgs(cmdAt), "Execute a command at another room.")
 	registerCommand("load", wrapArgs(cmdLoad), "Load a mob or object by VNum.")
 	registerCommand("purge", wrapArgs(cmdPurge), "Remove all mobs/items from a room.")
+	registerCommand("transfer", wrapArgs(cmdTransfer), "Transfer another character to your room.")
 	registerCommand("teleport", wrapArgs(cmdTeleport), "Teleport another player to a room.")
 	registerCommand("heal", wrapArgs(cmdHeal), "Fully heal a target.")
 	registerCommand("restore", wrapArgs(cmdRestore), "Restore all stats of a target.")

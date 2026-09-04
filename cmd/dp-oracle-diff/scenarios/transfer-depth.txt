@@ -1,0 +1,108 @@
+# C-first vehicle for do_trans / transfer. The primary is an Implementor;
+# the target and observer are mortal peers in the same room, exposing the
+# target lookup, one_argument boundary, room Acts, victim-only notification,
+# and post-transfer look without invoking the all-target loop.
+
+# depth-case: transfer.target-not-found
+# depth-case: transfer.success-audience
+# depth-case: transfer.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Transferwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Transferwizard
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Transferpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Transferpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Transferobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Transferobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Transferpeer 8162
+teleport Transferobserver 8162
+
+[probe]
+transfer Nobody
+transfer Transferpeer trailing words are ignored

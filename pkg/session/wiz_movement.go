@@ -308,29 +308,141 @@ func cmdTeleport(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
+	raw := strings.Join(args, " ")
+	targetName, remainder := game.OneArgument(raw)
+	if targetName == "" {
 		s.Send("Whom do you wish to teleport?\r\n")
 		return nil
 	}
-	targetName := args[0]
-	dest, err := strconv.Atoi(args[1])
-	if err != nil {
-		s.Send("That's not a valid room number.")
+	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if !ok || target.Combatant == nil {
+		s.Send("No-one by that name here.\r\n")
 		return nil
 	}
-	targetSess := findSessionByName(s.manager, targetName)
-	if targetSess == nil || targetSess.player == nil {
-		s.Send("No one by that name online.")
+	if target.Combatant == s.player {
+		s.Send("Use 'goto' to teleport yourself.\r\n")
 		return nil
 	}
-	s.Send("OK.")
-	broadcastToRoomText(s, targetSess.player.RoomVNum, fmt.Sprintf("%s disappears in a puff of smoke.", targetSess.player.Name))
-	targetSess.player.RoomVNum = dest
-	slog.Warn("wizard teleport", "by", s.player.Name, "target", targetSess.player.Name, "room", dest)
-	broadcastToRoomText(s, dest, fmt.Sprintf("%s arrives from a puff of smoke.", targetSess.player.Name))
-	targetSess.Send(fmt.Sprintf("%s has teleported you!", s.player.Name))
-	_ = cmdLook(targetSess, nil)
+	if target.Combatant.GetLevel() >= s.player.GetLevel() {
+		s.Send("Maybe you shouldn't do that.\r\n")
+		return nil
+	}
+	destination, _ := game.OneArgument(remainder)
+	if destination == "" {
+		s.Send("Where do you wish to send this person?\r\n")
+		return nil
+	}
+	dest, ok := findGotoRoom(s, destination)
+	if !ok {
+		return nil
+	}
+
+	s.Send("Okay.\r\n")
+	game.Act(s.manager.world, false, target.Combatant, nil, nil, nil,
+		"$n disappears in a puff of smoke.", "", game.ToRoom)
+	if target.Combatant.IsNPC() {
+		target.Combatant.(*game.MobInstance).SetRoom(dest)
+	} else {
+		target.Combatant.(*game.Player).SetRoom(dest)
+	}
+	slog.Warn("wizard teleport", "by", s.player.Name, "target", target.Combatant.GetName(), "room", dest)
+	game.Act(s.manager.world, false, target.Combatant, nil, nil, nil,
+		"$n arrives from a puff of smoke.", "", game.ToRoom)
+	game.Act(s.manager.world, false, s.player, target.Combatant, nil, nil,
+		"$n has teleported you!", "", game.ToVict)
+	if !target.Combatant.IsNPC() {
+		if targetSession := findSessionForPlayer(s.manager, target.Combatant.(*game.Player)); targetSession != nil {
+			if err := cmdLook(targetSession, nil); err != nil {
+				slog.Error("wizard teleport look failed", "target", target.Combatant.GetName(), "error", err)
+			}
+		}
+	}
 	return nil
+}
+
+// cmdTransfer mirrors do_trans (src/act.wizard.c:309-364). Unlike teleport,
+// transfer has only a one_argument target and always lands the target in the
+// actor's current room. The C "all" branch is available only to GRGOD and
+// iterates connected characters below the actor's level.
+func cmdTransfer(s *Session, args []string) error {
+	if !checkLevel(s, LVL_IMMORT+1) {
+		s.Send("Huh?!?")
+		return nil
+	}
+
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
+		s.Send("Whom do you wish to transfer?\r\n")
+		return nil
+	}
+
+	if strings.EqualFold(targetName, "all") && s.player.GetLevel() >= LVL_GRGOD {
+		s.manager.mu.RLock()
+		targets := make([]*Session, 0, len(s.manager.sessions))
+		for _, target := range s.manager.sessions {
+			if target == nil || target.player == nil || target == s || !target.authenticated {
+				continue
+			}
+			if target.player.GetLevel() >= s.player.GetLevel() {
+				continue
+			}
+			targets = append(targets, target)
+		}
+		s.manager.mu.RUnlock()
+
+		for _, target := range targets {
+			transferCharacter(s, target.player)
+		}
+		s.Send("Okay.\r\n")
+		return nil
+	}
+
+	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if !ok || target.Combatant == nil {
+		s.Send("No-one by that name here.\r\n")
+		return nil
+	}
+	if target.Combatant == s.player {
+		s.Send("That doesn't make much sense, does it?\r\n")
+		return nil
+	}
+	if !target.Combatant.IsNPC() && s.player.GetLevel() < target.Combatant.GetLevel() {
+		s.Send("Go transfer someone your own size.\r\n")
+		return nil
+	}
+
+	transferCharacter(s, target.Combatant)
+	return nil
+}
+
+func transferCharacter(s *Session, target game.Actor) {
+	if s == nil || s.manager == nil || s.manager.world == nil || target == nil {
+		return
+	}
+
+	game.Act(s.manager.world, false, target, nil, nil, nil,
+		"$n disappears in a blaze of hellfire!", "", game.ToRoom)
+	var err error
+	if target.IsNPC() {
+		err = s.manager.world.MobTransfer(target.(*game.MobInstance), s.player.GetRoom())
+	} else {
+		err = s.manager.world.PlayerTransfer(target.(*game.Player), s.player.GetRoom())
+	}
+	if err != nil {
+		slog.Error("wizard transfer failed", "by", s.player.Name, "target", target.GetName(), "error", err)
+		return
+	}
+	game.Act(s.manager.world, false, target, nil, nil, nil,
+		"$n arrives from a puff of smoke.", "", game.ToRoom)
+	game.Act(s.manager.world, false, s.player, target, nil, nil,
+		"$n has transferred you!", "", game.ToVict)
+	if !target.IsNPC() {
+		if targetSession := findSessionForPlayer(s.manager, target.(*game.Player)); targetSession != nil {
+			if err := cmdLook(targetSession, nil); err != nil {
+				slog.Error("wizard transfer look failed", "target", target.GetName(), "error", err)
+			}
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------

@@ -4,6 +4,9 @@
 # Reload and shutdown use unknown-option branches so neither live process is
 # restarted or stopped. The empty wizlock command is a read-only status query.
 
+# depth-case: wizlock.no-argument
+# depth-case: tick.no-output
+
 [fixture]
 empty-players
 quiet-mobs

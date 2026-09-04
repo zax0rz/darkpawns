@@ -247,7 +247,7 @@ func cmdWiznet(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 1 {
-		s.Send("Usage: wiznet <text> | #<level> <text> | *<emote> | @")
+		s.Send("Usage: wiznet <text> | #<level> <text> | *<emotetext> |\r\n        wiznet @\r\n")
 		return nil
 	}
 	fullArg := strings.Join(args, " ")
