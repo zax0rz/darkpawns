@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:811;
+# src/act.social.c:102-149; lib/misc/socials:1312-1320). The authored wedgie
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: wedgie.no-argument
+# depth-case: wedgie.target-success
+# depth-case: wedgie.target-audience
+# depth-case: wedgie.argument-first-token
+# depth-case: wedgie.mob-target
+# depth-case: wedgie.self-target
+# depth-case: wedgie.target-not-found
+# depth-case: wedgie.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Wedgieactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wedgieactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Wedgieobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Wedgieobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Wedgietarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Wedgietarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Wedgieobserver 8162
+teleport Wedgietarget 8162
+
+[probe]
+wedgie
+wedgie Wedgietarget trailing words are ignored
+wedgie Wedgietarget
+wedgie trainee
+wedgie Wedgieactor
+wedgie self
+wedgie Nobody
+force Wedgietarget sleep
+wedgie Wedgietarget
