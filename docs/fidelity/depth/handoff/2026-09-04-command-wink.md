@@ -56,7 +56,40 @@ trailing-argument, and sleeping-target branches. Shared command position,
 `PLR_NOSHOUT`, target lookup, visibility, and Act audience behavior are not
 duplicated beyond this slice.
 
-No Go source behavior is expected to change unless the differential run
-confirms a divergence. No file under `src/` or `darkpawns-c-oracle/` may be
-edited.
+## Result and proof
 
+Added `cmd/dp-oracle-diff/scenarios/wink-depth.txt` with the standard
+actor/observer/target/mob fixture and the full target-capable probe matrix;
+`pkg/session/wink_depth_test.go` to pin the C command gate, social metadata,
+and all eight parsed message slots; and `docs/fidelity/depth/wink.tsv` with
+twelve durable D1-D3 rows. This was a pure-coverage slice: the existing Go
+handler and data were already faithful, so no player-visible Go source behavior
+changed.
+
+The `wink-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8. Seed 1
+used `--show-oracle` and displayed the exact actor, observer, target, mob,
+self-target, not-found, and sleeping-target outputs. Every seed exited 0 with
+`result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,722 total, 4,617 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `8be67f67e` and `d3d9e5917`. No file
+under `src/` or `darkpawns-c-oracle/` was edited.
+
+## Starting frontier
+
+The merged `wiggle` handoff reported 4,710 total cases: 4,605
+proven/delegated, 54 blocked, and 51 excluded. This slice adds twelve
+proven/delegated rows, bringing the frontier to 4,722 total, 4,617
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social is
+`worship` at `src/interpreter.c:836`.
