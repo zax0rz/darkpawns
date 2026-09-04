@@ -1,0 +1,121 @@
+# C-first do_action social vehicle (src/interpreter.c:645;
+# src/act.social.c:102-151; lib/misc/socials:630-638). The authored ren
+# record is exercised through no-argument, visible player/NPC target, named
+# self, missing target, one_argument/fill-word, and sleeping-target branches.
+
+# depth-case: ren.no-argument
+# depth-case: ren.target-success
+# depth-case: ren.target-audience
+# depth-case: ren.argument-first-token
+# depth-case: ren.mob-target
+# depth-case: ren.self-target
+# depth-case: ren.target-not-found
+# depth-case: ren.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Renactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Renactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Renobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Renobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Rentarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Rentarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Renobserver 8162
+teleport Rentarget 8162
+
+[probe]
+ren
+ren Rentarget trailing words are ignored
+ren Rentarget
+ren trainee
+ren Renactor
+ren self
+ren Nobody
+force Rentarget sleep
+ren Rentarget
