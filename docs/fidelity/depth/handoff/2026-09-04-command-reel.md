@@ -56,20 +56,43 @@ visible NPC target, self target, missing target, and sleeping target. Because
 the victim minimum is zero, a sleeping target reaches the success dispatch;
 shared delivery filtering is not reimplemented here.
 
-## Planned proof vehicle
+## Result and proof vehicle
 
-Add `cmd/dp-oracle-diff/scenarios/reel-depth.txt` with `# depth-case:` tags
+Added `cmd/dp-oracle-diff/scenarios/reel-depth.txt` with `# depth-case:` tags
 for each branch and the standard actor/observer/target plus trainee-mob
-fixture. Add `pkg/session/reel_depth_test.go` to pin the C command gate and
-all eight parsed social messages. Run the scenario with the oracle at seeds
-1, 2, 3, 5, and 8, using `--show-oracle` for seed 1. If the existing Go
-handler and data are faithful, this is a pure-coverage slice; only confirmed
-player-visible divergence may change Go behavior.
+fixture. Added `pkg/session/reel_depth_test.go` to pin the C command gate and
+all eight parsed social messages, and added `docs/fidelity/depth/reel.tsv`
+with eleven durable rows. The existing Go handler and data are faithful; this
+was a pure-coverage slice and no player-visible Go behavior changed.
+
+The final `reel-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the intended no-argument, player
+target, NPC target, self, missing-target, and sleeping-target blocks. Every
+seed exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,299 total, 4,194 proven/delegated, 54 blocked,
+  and 51 excluded; 98.7% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff, evidence, and tests are in commits `a87ea4aff` and
+`30e6d1ec8` at the time of this note. No file under `src/` or
+`darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
-The merged `zlist` handoff reports 4,288 total cases: 4,183
-proven/delegated, 54 blocked, and 51 excluded. The `reel` slice will add its
-durable branch rows and update this note with pre-fix/final evidence, local
-and hosted gates, merge identity, and the next social queue position.
-
+The merged `zlist` handoff reported 4,288 total cases: 4,183
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eleven
+proven/delegated rows, bringing main's frontier to 4,299 total, 4,194
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social audit is
+`ren` at `src/interpreter.c:645`; `pray` is already owned by the
+`spec-procs.tsv` room-special family and must not be repicked. Keep the
+remaining Phase 1 social sweep ahead of the later red/blocked and
+off-command-table phases in the objective.
