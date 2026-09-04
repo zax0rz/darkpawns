@@ -17,7 +17,8 @@ Which statuses count as "unreachable" here:
 
 This matches ``reachability_weekly.py``'s ``UNREACHABLE`` set. Socials in the
 C table are player-facing surface (RULEBOOK R1/R2), so a social dropping out
-of ``socials.txt`` is as much a ratchet regression as an unwired command.
+of the authoritative ``lib/misc/socials`` records is as much a ratchet regression
+as an unwired command.
 ``missing-social`` is 0 as of 2026-07-22, so the committed floor
 (61 = 25 unwired + 36 missing) is unchanged by including it. The floor number
 and the set must stay in lockstep — don't change one without re-deriving the
