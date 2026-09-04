@@ -76,7 +76,7 @@ Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K l
 
 The codebase has ~600 `#nosec` annotations. Most are:
 - **G404 (weak random)** — ~394 intentional `math/rand` for dice rolls, combat, MUD mechanics. Leave these alone.
-- **G104 (errcheck)** — ~135 remaining. These are the cleanup targets. Handle the error or log it.
+- **G104 (errcheck)** — 8 remaining, all in benchmark/test/example code; these are the cleanup targets. Handle the error or log it.
 - **G115 (integer overflow)** — ~26. Add explicit casts or range checks.
 - **G304/G306 (file path/perms)** — ~24. Use `filepath.Clean()` and explicit permissions.
 - Other G-codes — small counts, mostly intentional.
