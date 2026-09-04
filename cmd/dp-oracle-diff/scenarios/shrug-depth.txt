@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:696;
+# src/act.social.c:102-127; lib/misc/socials:690-693). The authored shrug
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: shrug.no-argument
+# depth-case: shrug.typed-target-ignored
+# depth-case: shrug.missing-target-ignored
+# depth-case: shrug.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shrugactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shrugactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shrugpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shrugpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shrugpeer 8162
+
+[probe]
+shrug
+shrug Shrugpeer
+shrug Nobody
+shrug Shrugactor
