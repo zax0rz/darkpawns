@@ -26,6 +26,10 @@ const world = defineCollection({
     description: z.string(),
     date: z.coerce.date().optional(),
     draft: z.boolean().default(false),
+    // Set when this page still reproduces an archive entry verbatim. The archive
+    // entry is the canonical copy until this page is rewritten as handbook text,
+    // so the two do not compete as duplicates.
+    canonicalPath: z.string().optional(),
   }),
 });
 
@@ -51,7 +55,7 @@ const archive = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    kind: z.enum(['forum-thread', 'history', 'guide', 'quote', 'roster']),
+    kind: z.enum(['forum-thread', 'history', 'guide', 'quote', 'roster', 'site-page', 'map', 'board-index']),
     sortDate: z.coerce.date(),
     dateLabel: z.string(),
     publishedAt: z.coerce.date().optional(),
@@ -61,6 +65,22 @@ const archive = defineCollection({
     recoveredAt: z.coerce.date(),
     contentWarning: z.string().optional(),
     draft: z.boolean().default(false),
+    // What survived. A capture is often one page of a longer thread, and the
+    // archive says so rather than presenting a fragment as the whole record.
+    completeness: z.enum(['complete', 'partial']).default('complete'),
+    completenessNote: z.string().optional(),
+    // Forum threads only: which board the conversation lived on, how many posts
+    // the capture holds, and who spoke. Ranks are the public forum ranks.
+    board: z.string().optional(),
+    postCount: z.number().int().positive().optional(),
+    participants: z.array(z.object({
+      name: z.string(),
+      role: z.string().default('unknown'),
+      posts: z.number().int().positive(),
+    })).optional(),
+    // Where this primary source is used elsewhere on the site, so an edited
+    // page and the record behind it stay visibly connected.
+    usedIn: z.array(z.object({ label: z.string(), href: z.string() })).optional(),
     textKind: z.enum(['verbatim', 'transcription', 'edited-excerpt']),
     source: z.string(),
     voiceLayer: z.enum(['engine', 'edgelord-dm', 'mythic-admin', 'frontline']),

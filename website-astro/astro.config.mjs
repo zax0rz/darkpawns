@@ -91,6 +91,15 @@ const redirects = {
 // Dark Pawns — Astro migration (replaces the Hugo site in ../website).
 export default defineConfig({
   site: 'https://darkpawns.labz0rz.com',
+  markdown: {
+    // Smart punctuation is off site-wide. Almost every Markdown file here is
+    // verbatim text somebody else wrote: 430 help entries copied out of the
+    // game, the recovered archive captures, the world handbook pages. Curling
+    // an apostrophe that a player typed straight in 2004, or turning their
+    // "..." into an ellipsis, edits the record. The three original blog posts
+    // lose typographic quotes, which is the cheaper loss.
+    smartypants: false,
+  },
   integrations: [
     sitemap({
       filter: (page) => {

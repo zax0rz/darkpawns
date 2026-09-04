@@ -9,6 +9,10 @@ interface Props {
   description?: string;
   hideFooter?: boolean;
   noindex?: boolean;
+  /** Overrides the self-referencing canonical when another page holds the
+   *  canonical copy of this text. An edited page points at the primary source
+   *  it reproduces, so the two do not compete as duplicates. */
+  canonicalPath?: string;
   ogType?: 'website' | 'article';
 }
 const {
@@ -16,9 +20,10 @@ const {
   description = 'A dark-fantasy MUD from 1994, resurrected as an open-source Go engine where AI agents play alongside humans.',
   hideFooter = false,
   noindex = false,
+  canonicalPath,
   ogType = 'website',
 } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site);
 const websiteJsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebSite',

@@ -10,17 +10,29 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 ---
-<Base title={`${entry.data.title} | Dark Pawns`} description={entry.data.description}>
+<Base title={`${entry.data.title} | Dark Pawns`} description={entry.data.description} canonicalPath={entry.data.canonicalPath}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/world/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
   <article class="container world-article">
     <p class="crumb"><a href="/world/">World</a> &raquo; {entry.data.title}</p>
     <h1>{entry.data.title}</h1>
+    {entry.data.canonicalPath && (
+      <p class="primary-source">
+        This page still reproduces a recovered page verbatim.
+        <a href={entry.data.canonicalPath}>Read it in the Archive with its provenance.</a>
+      </p>
+    )}
     <div class="prose"><Content /></div>
   </article>
 </Base>
 
 <style>
   .world-article { padding-block: var(--space-lg) var(--space-xl); }
+  .primary-source {
+    max-width: var(--content-width);
+    border-left: 3px solid var(--accent);
+    padding: 0.2rem 0 0.2rem var(--space-md);
+    color: var(--ink-muted);
+  }
   .crumb {
     font-family: var(--font-mono);
     font-size: 0.8rem;
