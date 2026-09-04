@@ -98,6 +98,7 @@ type Manager struct {
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
+	wizlockLevel int
 
 	// dreamingDir is the path to the dreaming layer's output directory.
 	// Agent memory summaries are read from {dreamingDir}/{agent_id}/memory-summary.txt.

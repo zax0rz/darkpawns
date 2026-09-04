@@ -209,10 +209,6 @@ func cmdReload(s *Session, args []string) error {
 
 // cmdStat — inspect a character, room, or object (LVL_IMMORT)
 func cmdWizlock(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMPL) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if s.manager == nil {
 		s.Send("Cannot access manager state.")
 		return nil
@@ -221,30 +217,26 @@ func cmdWizlock(s *Session, args []string) error {
 	s.manager.wizlockMutex.Lock()
 	defer s.manager.wizlockMutex.Unlock()
 
+	when := "currently"
 	if len(args) > 0 {
-		val, err := strconv.Atoi(args[0])
-		if err != nil || val < 0 {
-			s.Send("Invalid wizlock value.")
+		val := cAtoi(args[0])
+		if val < 0 || val > s.player.Level {
+			s.Send("Invalid wizlock value.\r\n")
 			return nil
 		}
-		if val > s.player.Level {
-			s.Send("You cannot set wizlock above your own level.")
-			return nil
-		}
-		s.manager.wizlocked = (val != 0)
-	} else {
-		if s.manager.wizlocked {
-			s.Send("The game is currently closed to new players.\r\n")
-		} else {
-			s.Send("The game is currently completely open.\r\n")
-		}
-		return nil
+		s.manager.wizlockLevel = val
+		s.manager.wizlocked = val != 0
+		when = "now"
 	}
 
-	if s.manager.wizlocked {
-		s.Send("Wizlock enabled — only immortals may enter.")
-	} else {
-		s.Send("Wizlock disabled — normal login restored.")
+	level := s.manager.wizlockLevel
+	switch level {
+	case 0:
+		s.Send(fmt.Sprintf("The game is %s completely open.\r\n", when))
+	case 1:
+		s.Send(fmt.Sprintf("The game is %s closed to new players.\r\n", when))
+	default:
+		s.Send(fmt.Sprintf("Only level %d and above may enter the game %s.\r\n", level, when))
 	}
 	return nil
 }
