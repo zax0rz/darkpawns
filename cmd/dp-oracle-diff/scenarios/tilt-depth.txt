@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:777;
+# src/act.social.c:102-151; lib/misc/socials:1516-1524). The authored tilt
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: tilt.no-argument
+# depth-case: tilt.target-success
+# depth-case: tilt.target-audience
+# depth-case: tilt.argument-first-token
+# depth-case: tilt.mob-target
+# depth-case: tilt.self-target
+# depth-case: tilt.target-not-found
+# depth-case: tilt.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Tiltactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tiltactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Tiltobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Tiltobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Tilttarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Tilttarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Tiltobserver 8162
+teleport Tilttarget 8162
+
+[probe]
+tilt
+tilt Tilttarget trailing words are ignored
+tilt Tilttarget
+tilt trainee
+tilt Tiltactor
+tilt self
+tilt Nobody
+force Tilttarget sleep
+tilt Tilttarget
