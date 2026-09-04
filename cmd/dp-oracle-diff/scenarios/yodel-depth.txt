@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:841;
+# src/act.social.c:102-127; lib/misc/socials:1029-1032). The authored yodel
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: yodel.no-argument
+# depth-case: yodel.typed-target-ignored
+# depth-case: yodel.missing-target-ignored
+# depth-case: yodel.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Yodelactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Yodelactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Yodelpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Yodelpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Yodelpeer 8162
+
+[probe]
+yodel
+yodel Yodelpeer
+yodel Nobody
+yodel Yodelactor
