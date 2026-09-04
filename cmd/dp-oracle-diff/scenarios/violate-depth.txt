@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:801;
+# src/act.social.c:102-151; lib/misc/socials:1138-1146). The authored violate
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: violate.no-argument
+# depth-case: violate.target-success
+# depth-case: violate.target-audience
+# depth-case: violate.argument-first-token
+# depth-case: violate.mob-target
+# depth-case: violate.self-target
+# depth-case: violate.target-not-found
+# depth-case: violate.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Violateactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Violateactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Violateobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Violateobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Violatetarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Violatetarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Violateobserver 8162
+teleport Violatetarget 8162
+
+[probe]
+violate
+violate Violatetarget trailing words are ignored
+violate Violatetarget
+violate trainee
+violate Violateactor
+violate self
+violate Nobody
+force Violatetarget sleep
+violate Violatetarget
