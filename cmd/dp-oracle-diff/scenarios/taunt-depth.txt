@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:761;
+# src/act.social.c:102-151; lib/misc/socials:919-927). The authored taunt
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: taunt.no-argument
+# depth-case: taunt.target-success
+# depth-case: taunt.target-audience
+# depth-case: taunt.argument-first-token
+# depth-case: taunt.mob-target
+# depth-case: taunt.self-target
+# depth-case: taunt.target-not-found
+# depth-case: taunt.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Tauntactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tauntactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Tauntobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Tauntobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Taunttarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Taunttarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Tauntobserver 8162
+teleport Taunttarget 8162
+
+[probe]
+taunt
+taunt Taunttarget trailing words are ignored
+taunt Taunttarget
+taunt trainee
+taunt Tauntactor
+taunt self
+taunt Nobody
+force Taunttarget sleep
+taunt Taunttarget
