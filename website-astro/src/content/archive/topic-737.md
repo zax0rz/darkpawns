@@ -3,7 +3,7 @@ title: "The Unforeseen Occultesque Following"
 description: "A jargon-file definition of \"mudhead\" sets off a thread about how much of their lives players had given to the game."
 kind: "forum-thread"
 sortDate: 2004-07-14
-dateLabel: "July 14–18, 2004"
+dateLabel: "July 14-18, 2004"
 publishedAt: 2004-07-14
 sourceSite: "dp-players.com"
 sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=737#737"

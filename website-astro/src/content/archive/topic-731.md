@@ -3,7 +3,7 @@ title: "random observation"
 description: "Aidan wonders aloud whether Dark Pawns should be saved or put down, and the regulars argue about whose job it is."
 kind: "forum-thread"
 sortDate: 2004-07-01
-dateLabel: "July 1–17, 2004"
+dateLabel: "July 1-17, 2004"
 publishedAt: 2004-07-01
 sourceSite: "dp-players.com"
 sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=731#731"

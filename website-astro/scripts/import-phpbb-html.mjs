@@ -44,6 +44,139 @@ const RECORDS = {
     recoveredAt: '2026-09-04',
     voiceLayer: 'frontline',
   },
+  t10: {
+    slug: "topic-t10",
+    title: "those were the days...",
+    description: "Aidan posts an old log of a crowded game and the regulars count how many of those names are still around.",
+    dateLabel: "April 12-18, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=10",
+    captureTimestamp: "20040724091202",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?t=10&amp",
+    recoveredAt: "2026-09-02",
+    voiceLayer: "frontline",
+  },
+  t20: {
+    slug: "topic-t20",
+    title: "The BG",
+    description: "Morpheus posts the log of a group death, and the thread turns into gallows humour about being flattened.",
+    dateLabel: "April 19-22, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=20",
+    captureTimestamp: "20040724091848",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?t=20&amp",
+    recoveredAt: "2026-09-04",
+    voiceLayer: "frontline",
+    contentWarning: "Contains crude locker-room joking of the kind common on 2004 game forums.",
+  },
+  t38: {
+    slug: "topic-t38",
+    title: "little known DP facts",
+    description: "Players trade the secrets, dead portals and cut features they know about, and Orodreth explains where some of the world came from.",
+    dateLabel: "April 25-May 30, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=38",
+    captureTimestamp: "20040724092630",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?t=38&amp",
+    recoveredAt: "2026-09-02",
+    voiceLayer: "frontline",
+  },
+  t39: {
+    slug: "topic-t39",
+    title: "forum updates",
+    description: "Aidan announces new smilies, rank images and a quick-reply hack, and Vargus finds the statistics module broken.",
+    dateLabel: "April 26-29, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=39",
+    captureTimestamp: "20040509170227",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?t=39&amp",
+    recoveredAt: "2026-09-04",
+    voiceLayer: "frontline",
+  },
+  t51: {
+    slug: "topic-t51",
+    title: "more forum updates",
+    description: "A new statistics module, more emoticons, and a broken link caught within minutes of the announcement.",
+    dateLabel: "April 30, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=51",
+    captureTimestamp: "20040803054421",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?t=51&amp",
+    recoveredAt: "2026-09-02",
+    voiceLayer: "frontline",
+  },
+  t60: {
+    slug: "topic-t60",
+    title: "Frontline and Paying for the Mud Humor(?)",
+    description: "A log of an exasperated administrator, posted at three in the morning, about paying fifteen dollars a month for the game he keeps getting killed in.",
+    dateLabel: "May 4-10, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=60",
+    captureTimestamp: "20040724093747",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?t=60&amp",
+    recoveredAt: "2026-09-02",
+    voiceLayer: "frontline",
+  },
+  t67: {
+    slug: "topic-t67",
+    title: "more logs",
+    description: "Two new game logs go up on the site and the regulars argue about which section they belong in.",
+    dateLabel: "May 9-13, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=67",
+    captureTimestamp: "20040803060042",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?t=67&amp",
+    recoveredAt: "2026-08-24",
+    voiceLayer: "frontline",
+  },
+  t79: {
+    slug: "topic-t79",
+    title: "how old are your charcters?",
+    description: "A thread about character age that turns into a roll call of the oldest players in the game, and how the ageing penalties drove people to reroll.",
+    dateLabel: "May 21-24, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=625",
+    captureTimestamp: "20040724082830",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?p=625&amp",
+    recoveredAt: "2026-08-25",
+    voiceLayer: "frontline",
+  },
+  t82: {
+    slug: "topic-t82",
+    title: "Fun with funeraries....",
+    description: "A failed steal, an accidental kill, and four posts of unsympathetic commentary.",
+    dateLabel: "May 22-23, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=612",
+    captureTimestamp: "20040724082150",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?p=612&amp",
+    recoveredAt: "2026-08-25",
+    voiceLayer: "frontline",
+  },
+  t83: {
+    slug: "topic-t83",
+    title: "To pk or not topk!?",
+    description: "The long-running argument about player killing: whether the restrictions ruined it, and why the staff say they cannot police it.",
+    dateLabel: "May 24-25, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=627",
+    captureTimestamp: "20040724083546",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?p=627&amp",
+    recoveredAt: "2026-09-01",
+    voiceLayer: "frontline",
+  },
+  t88: {
+    slug: "topic-t88",
+    title: "Infobar, ZMud, GMud and others...",
+    description: "Doragar asks whether anyone uses the in-game infobar, and the answers turn into a survey of which clients people played with.",
+    dateLabel: "May 30-31, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=654",
+    captureTimestamp: "20040724084550",
+    captureOriginal: "http://www.dp-players.com:80/forum/viewtopic.php?p=654&amp",
+    recoveredAt: "2026-09-02",
+    voiceLayer: "frontline",
+  },
+  t32: {
+    slug: "topic-t32",
+    title: "Greatest players",
+    description: "The final page of a six-page argument about who the best players in the game ever were.",
+    dateLabel: "May 6-8, 2004",
+    sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?t=32",
+    captureTimestamp: "20040803020622",
+    captureOriginal: "http://www.dp-players.com/forum/viewtopic.php?p=514",
+    recoveredAt: "2026-08-14",
+    voiceLayer: "frontline",
+  },
 };
 
 /* -------------------------------------------------------------------- parsing */
@@ -299,6 +432,14 @@ function renderSegments(post, priorPosts) {
 const isoDay = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
+/** "1", "1 and 2", "1 to 5", "1, 2 and 4" - readable, and honest about gaps. */
+function listNumbers(numbers) {
+  if (numbers.length === 1) return `${numbers[0]}`;
+  const contiguous = numbers.every((value, index) => index === 0 || value === numbers[index - 1] + 1);
+  if (contiguous && numbers.length > 2) return `${numbers[0]} to ${numbers.at(-1)}`;
+  return `${numbers.slice(0, -1).join(', ')} and ${numbers.at(-1)}`;
+}
+
 function frontmatter(record, topic, participants, completeness, note) {
   const captureUrl =
     `https://web.archive.org/web/${record.captureTimestamp}/${record.captureOriginal}`;
@@ -326,6 +467,7 @@ function frontmatter(record, topic, participants, completeness, note) {
     `postCount: ${topic.posts.length}`,
     `completeness: ${JSON.stringify(completeness)}`,
     note ? `completenessNote: ${JSON.stringify(note)}` : null,
+    record.contentWarning ? `contentWarning: ${JSON.stringify(record.contentWarning)}` : null,
     'participants:',
     ...participants.map((person) =>
       `  - name: ${JSON.stringify(person.name)}\n    role: ${JSON.stringify(person.role ?? 'unknown')}\n    posts: ${person.posts}`),
@@ -341,47 +483,81 @@ function main() {
   const args = process.argv.slice(2);
   const recordFlag = args.indexOf('--record');
   const recordId = recordFlag === -1 ? null : args[recordFlag + 1];
-  const [inputArg, outputArg] = args.filter((value, index) =>
-    index !== recordFlag && index !== recordFlag + 1);
-  if (!inputArg || !outputArg || !recordId) {
-    throw new Error('usage: node scripts/import-phpbb-html.mjs <capture.html> <output.md> --record <id>');
+  const positional = args.filter((_, index) => index !== recordFlag && index !== recordFlag + 1);
+  const outputArg = positional.pop();
+  const inputArgs = positional;
+  if (!inputArgs.length || !outputArg || !recordId) {
+    throw new Error('usage: node scripts/import-phpbb-html.mjs <capture.html>... <output.md> --record <id>');
   }
   const record = RECORDS[recordId];
   if (!record) throw new Error(`no reviewed metadata for record ${recordId}`);
 
-  const topic = parseTopic(readFileSync(resolve(inputArg), 'utf8'));
-  if (!topic.posts.length) throw new Error('no posts found; is this a phpBB topic capture?');
+  // A long thread can survive as separate captured pages with gaps between
+  // them. Each page is parsed on its own and then read in page order, so the
+  // gaps stay visible instead of being silently closed up.
+  const pages = inputArgs
+    .map((input) => ({ file: basename(input), ...parseTopic(readFileSync(resolve(input), 'utf8')) }))
+    .sort((a, b) => a.page - b.page);
+  if (!pages.length || !pages[0].posts.length) {
+    throw new Error('no posts found; is this a phpBB topic capture?');
+  }
+
+  const topic = pages[0];
+  const posts = pages.flatMap((entry) => entry.posts);
+  const havePages = pages.map((entry) => entry.page);
+  const totalPages = Math.max(...pages.map((entry) => entry.pages));
+  const complete = totalPages === 1 && havePages.length === 1;
+  const missingPages = Array.from({ length: totalPages }, (_, index) => index + 1)
+    .filter((number) => !havePages.includes(number));
+  const note = complete
+    ? null
+    : missingPages.length === 0
+      ? null
+      : `${havePages.length === 1 ? 'Page' : 'Pages'} ${listNumbers(havePages)} of ${totalPages}. ` +
+        `${missingPages.length === 1 ? 'Page' : 'Pages'} ${listNumbers(missingPages)} ` +
+        `${missingPages.length === 1 ? 'was' : 'were'} never captured.`;
 
   const participants = [];
-  for (const post of topic.posts) {
+  for (const post of posts) {
     const existing = participants.find((person) => person.name === post.author);
     if (existing) existing.posts += 1;
     else participants.push({ name: post.author, role: post.role, posts: 1 });
   }
 
-  const complete = topic.pages === 1;
-  const note = complete
-    ? null
-    : `Page ${topic.page} of ${topic.pages}. The other pages were never captured.`;
-
   const blocks = [];
-  topic.posts.forEach((post, index) => {
-    const { body, signature } = renderSegments(post, topic.posts.slice(0, index));
-    blocks.push(`### ${post.author} — ${post.posted}`);
-    if (post.subject && post.subject !== topic.title) {
-      blocks.push(`*Post subject: ${escapeMarkdown(post.subject)}*`);
+  let cursor = 0;
+  pages.forEach((entry, pageIndex) => {
+    if (pageIndex > 0) {
+      const previous = pages[pageIndex - 1].page;
+      const gap = entry.page - previous - 1;
+      blocks.push(
+        gap > 0
+          ? `*${gap === 1 ? 'Page' : 'Pages'} ${listNumbers(Array.from({ length: gap }, (_, i) => previous + 1 + i))} ` +
+            `of this thread ${gap === 1 ? 'was' : 'were'} never captured. The thread continues on page ${entry.page}.*`
+          : `*Page ${entry.page}.*`,
+      );
     }
-    if (body) blocks.push(body);
-    if (signature) blocks.push(renderSignature(signature));
+    entry.posts.forEach((post) => {
+      const { body, signature } = renderSegments(post, posts.slice(0, cursor));
+      cursor += 1;
+      blocks.push(`### ${post.author} — ${post.posted}`);
+      if (post.subject && post.subject !== topic.title) {
+        blocks.push(`*Post subject: ${escapeMarkdown(post.subject)}*`);
+      }
+      if (body) blocks.push(body);
+      if (signature) blocks.push(renderSignature(signature));
+    });
   });
 
+  const sources = pages.map((entry) => `\`${entry.file}\``).join(', ');
   const transcriptNote =
-    `*Transcript note: generated from the raw phpBB capture \`${basename(inputArg)}\`` +
-    `${complete ? '' : `, page ${topic.page} of ${topic.pages}`}. ` +
+    `*Transcript note: generated from the raw phpBB capture${pages.length > 1 ? 's' : ''} ${sources}` +
+    `${complete ? '' : ` (page${havePages.length > 1 ? 's' : ''} ${listNumbers(havePages)} of ${totalPages})`}. ` +
     'Author sidebars, profile links and private-message links are omitted.*';
 
   const output = [
-    frontmatter(record, topic, participants, complete ? 'complete' : 'partial', note),
+    frontmatter(record, { ...topic, posts, board: topic.board }, participants,
+      complete ? 'complete' : 'partial', note),
     '',
     transcriptNote,
     '',
@@ -391,8 +567,8 @@ function main() {
 
   writeFileSync(resolve(outputArg), output, 'utf8');
   console.log(
-    `${record.slug}: ${topic.posts.length} posts, ${participants.length} participants, ` +
-    `board ${topic.board ?? 'unknown'}, page ${topic.page}/${topic.pages}`);
+    `${record.slug}: ${posts.length} posts, ${participants.length} participants, ` +
+    `board ${topic.board ?? 'unknown'}, page${havePages.length > 1 ? 's' : ''} ${havePages.join('+')}/${totalPages}`);
 }
 
 main();

@@ -2,7 +2,7 @@
 title: "What the H-E-double hockey sticks?!?"
 publishedAt: 2004-06-16
 sortDate: 2004-06-16
-dateLabel: "June 16–29, 2004"
+dateLabel: "June 16-29, 2004"
 draft: false
 description: "Forum discussion thread: What the H-E-double hockey sticks?!?"
 kind: "forum-thread"

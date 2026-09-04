@@ -2,7 +2,7 @@
 title: "QUEST!  -  The Battle of Lost Souls"
 publishedAt: 2004-07-14
 sortDate: 2004-07-14
-dateLabel: "July 14–August 2, 2004"
+dateLabel: "July 14-August 2, 2004"
 draft: false
 description: "Forum discussion thread: QUEST!  -  The Battle of Lost Souls"
 kind: "forum-thread"
