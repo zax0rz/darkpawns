@@ -50,20 +50,43 @@ the no-argument actor/room pair and the typed-target, self-target, and
 missing-target variants that all remain on that same pair. Shared command
 position, `PLR_NOSHOUT`, and room visibility mechanics are not duplicated.
 
-## Planned proof vehicle
+## Result and proof vehicle
 
-Add `cmd/dp-oracle-diff/scenarios/scream-depth.txt` with `# depth-case:` tags
-for the no-argument and ignored-argument branches, plus the standard actor
-and peer fixture. Add `pkg/session/scream_depth_test.go` to pin the C command
-gate and all three parsed message slots. Run the scenario with the oracle at
-seeds 1, 2, 3, 5, and 8, using `--show-oracle` for seed 1. If the existing Go
-handler and data are faithful, this is a pure-coverage slice; only confirmed
-player-visible divergence may change Go behavior.
+Added `cmd/dp-oracle-diff/scenarios/scream-depth.txt` with `# depth-case:`
+tags for the no-argument and ignored-argument branches, plus the standard
+actor and peer fixture. Added `pkg/session/scream_depth_test.go` to pin the C
+command gate and all three parsed message slots, and added
+`docs/fidelity/depth/scream.tsv` with eight durable rows. The existing Go
+handler and data are faithful; this was a pure-coverage slice and no
+player-visible Go behavior changed.
+
+The final `scream-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the intended actor/peer blocks for
+no argument, typed player target, missing target, and self target. Every seed
+exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,318 total, 4,213 proven/delegated, 54 blocked,
+  and 51 excluded; 98.7% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff, evidence, and tests are in commits `3b823560f` and
+`f3aa40d3b` at the time of this note. No file under `src/` or
+`darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
-The merged `ren` handoff reports 4,310 total cases: 4,205
-proven/delegated, 54 blocked, and 51 excluded. The `scream` slice will add
-its durable branch rows and update this note with final oracle evidence,
-local and hosted gates, merge identity, and the next social queue position.
-
+The merged `ren` handoff reported 4,310 total cases: 4,205 proven/delegated,
+54 blocked, and 51 excluded. This slice adds eight proven/delegated rows,
+bringing main's frontier to 4,318 total, 4,213 proven/delegated, 54 blocked,
+and 51 excluded. The next fresh social audit is `shake` at
+`src/interpreter.c:691`; `scratch` and the intervening non-social commands
+are already owned. Continue the remaining Phase 1 social sweep before the
+later red/blocked and off-command-table phases in the objective.
