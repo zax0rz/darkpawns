@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // cmdAdmobs mirrors C adjust_mobs() (src/olc.c:279-307). The C handler
@@ -22,64 +22,65 @@ func cmdAdmobs(s *Session) error {
 }
 
 func cmdZreset(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
+	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("You must specify a zone.")
+	arg, _ := game.OneArgument(strings.Join(args, " "))
+	if arg == "" {
+		s.Send("You must specify a zone.\r\n")
 		return nil
 	}
 
-	arg := args[0]
 	w := s.GetWorld()
-	pw := w.GetParsedWorld()
-	if pw == nil {
-		s.Send("No parsed world available.")
-		return nil
+	zones := w.GetAllZones()
+	resetZone := func(index int) {
+		zone := zones[index]
+		if err := w.ResetZone(zone.Number); err != nil {
+			slog.Error("wizard zreset failed", "by", s.playerName, "zone", zone.Number, "error", err)
+		}
 	}
 
-	// * = reset all zones
 	if arg == "*" {
-		for _, z := range pw.Zones {
-			slog.Warn("wizard zreset all", "by", s.playerName, "zone", z.Number)
+		for i := range zones {
+			resetZone(i)
 		}
-		s.Send("Reset world (async).")
+		s.Send("Reset world.\r\n")
+		slog.Warn("wizard zreset all", "by", s.playerName)
 		return nil
 	}
 
-	// . = current zone
+	zoneIndex := -1
 	if arg == "." {
-		curRoom := w.GetRoomInWorld(s.player.RoomVNum)
-		if curRoom == nil {
-			s.Send("Can't determine current zone.")
-			return nil
+		if curRoom := w.GetRoomInWorld(s.player.RoomVNum); curRoom != nil {
+			zoneIndex = zresetZoneIndex(zones, curRoom.Zone)
 		}
-		zoneNum := curRoom.Zone
-		z, ok := w.GetZone(zoneNum)
-		if !ok || z == nil {
-			s.Send("Invalid zone number.")
-			return nil
-		}
-		slog.Warn("wizard zreset", "by", s.playerName, "zone", z.Number, "name", z.Name)
-		s.Send(fmt.Sprintf("Reset zone %d (#%d): %s (async).", zoneNum, z.Number, z.Name))
+	} else {
+		zoneIndex = zresetZoneIndex(zones, cAtoi(arg))
+	}
+
+	if zoneIndex < 0 {
+		s.Send("Invalid zone number.\r\n")
 		return nil
 	}
 
-	// Numeric zone number
-	zoneNum, err := strconv.Atoi(arg)
-	if err != nil {
-		s.Send("Invalid zone number.")
-		return nil
-	}
-	z, ok := w.GetZone(zoneNum)
-	if !ok || z == nil {
-		s.Send("Invalid zone number.")
-		return nil
-	}
-	slog.Warn("wizard zreset", "by", s.playerName, "zone", z.Number, "name", z.Name)
-	s.Send(fmt.Sprintf("Reset zone %d (#%d): %s (async).", zoneNum, z.Number, z.Name))
+	zone := zones[zoneIndex]
+	resetZone(zoneIndex)
+	slog.Warn("wizard zreset", "by", s.playerName, "zone", zone.Number, "name", zone.Name)
+	s.Send(fmt.Sprintf("Reset zone %d (#%d): %s.\r\n", zoneIndex, zone.Number, zone.Name))
 	return nil
+}
+
+// zresetZoneIndex returns the C zone-table position for a zone number. The
+// player-facing acknowledgement reports both values: C's first number is the
+// table index, while its parenthesized number is the zone number.
+func zresetZoneIndex(zones []*parser.Zone, zoneNumber int) int {
+	for i, zone := range zones {
+		if zone != nil && zone.Number == zoneNumber {
+			return i
+		}
+	}
+	return -1
 }
 
 // cmdZlist — list zones (LVL_IMMORT)

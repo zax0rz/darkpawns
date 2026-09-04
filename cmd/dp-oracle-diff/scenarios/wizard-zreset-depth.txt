@@ -1,0 +1,52 @@
+# C-first vehicle for do_zreset. The Implementor actor starts in room 1204,
+# whose C room-zone index differs from its zone number (#12), so the current
+# zone output exposes the table-index contract. The final world reset is last
+# because reset_zone can mutate shared world state and consume RNG draws.
+
+# depth-case: zreset.invalid
+# depth-case: zreset.numeric-zone
+# depth-case: zreset.numeric-prefix
+# depth-case: zreset.current-zone
+# depth-case: zreset.trailing-words
+# depth-case: zreset.world
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zresetdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zresetdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+zreset 999999
+zreset 12
+zreset 12abc
+zreset .
+zreset 12 trailing words are ignored
+zreset *
