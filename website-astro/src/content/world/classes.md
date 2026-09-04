@@ -1,6 +1,7 @@
 ---
 title: "Classes"
 description: "The adventuring classes of Dark Pawns — warriors, mages, thieves, and the paths they walk through the dark."
+canonicalPath: "/archive/classes/"
 aliases:
   - /world/classes/classes/
   - /world/classes/classes

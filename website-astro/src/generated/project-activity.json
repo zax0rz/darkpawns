@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T16:55:24-04:00",
+  "generatedAt": "2026-09-04T17:05:39-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 2
+      "commits": 3
     }
   ],
   "recentCommits": [
+    {
+      "sha": "39ed62b8ff406348a8c4aea2b5f75d5ef74bbf01",
+      "date": "2026-09-04",
+      "title": "feat(archive): publish twelve more recovered forum threads",
+      "url": "https://github.com/zax0rz/darkpawns/commit/39ed62b8ff406348a8c4aea2b5f75d5ef74bbf01"
+    },
     {
       "sha": "87ef7e954b9595fa3ec09058f5abe4f41b004dee",
       "date": "2026-09-04",
@@ -76,12 +82,6 @@
       "date": "2026-08-15",
       "title": "feat(web): map links into zone and room records",
       "url": "https://github.com/zax0rz/darkpawns/commit/31f15abb1dd1d1a58efa4f8438c82c0222ce20a7"
-    },
-    {
-      "sha": "4a10ab743481bd1a481922a20df0b238ee2788d2",
-      "date": "2026-08-15",
-      "title": "feat(web): room records \u2014 permanent pages for all 9,590 rooms",
-      "url": "https://github.com/zax0rz/darkpawns/commit/4a10ab743481bd1a481922a20df0b238ee2788d2"
     }
   ],
   "pullRequests": [

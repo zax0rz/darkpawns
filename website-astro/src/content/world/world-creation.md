@@ -7,6 +7,7 @@ aliases:
   - /lore/world-creation/
   - /lore/world-creation
 description: "Friar Drake's letter describing the creation myth of the Dark Pawns world"
+canonicalPath: "/archive/background/"
 ---
 
 > Source: darkpawns.com/background.html  
