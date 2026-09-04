@@ -1,0 +1,122 @@
+# C-first do_action target-capable social vehicle (src/interpreter.c:828;
+# src/act.social.c:102-149; lib/misc/socials:1004-1012). The authored wink
+# record exercises no-argument, visible player/NPC target, named self, missing
+# target, first-token parsing, target visibility, and sleeping-target position
+# branches.
+
+# depth-case: wink.no-argument
+# depth-case: wink.target-success
+# depth-case: wink.target-audience
+# depth-case: wink.argument-first-token
+# depth-case: wink.mob-target
+# depth-case: wink.self-target
+# depth-case: wink.target-not-found
+# depth-case: wink.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Winkactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Winkactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Winkobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Winkobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Winktarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Winktarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Winkobserver 8162
+teleport Winktarget 8162
+
+[probe]
+wink
+wink Winktarget trailing words are ignored
+wink Winktarget
+wink trainee
+wink Winkactor
+wink self
+wink Nobody
+force Winktarget sleep
+wink Winktarget
