@@ -50,7 +50,40 @@ its minimum victim position is 5 (represented by the legacy Go `HideFlag`
 field), while the explicit Go override remains 0. Position, `PLR_NOSHOUT`, and
 shared Act visibility are delegated rather than duplicated.
 
-No Go source behavior is expected to change unless the differential run
-confirms a divergence. No file under `src/` or `darkpawns-c-oracle/` may be
-edited.
+## Result and proof
 
+Added `cmd/dp-oracle-diff/scenarios/yuball-depth.txt` with the standard
+actor/peer fixture and four self-only probes; `pkg/session/yuball_depth_test.go`
+to pin the C command gate, social metadata, and all three parsed message slots;
+and `docs/fidelity/depth/yuball.tsv` with eight durable D1-D3 rows. This was a
+pure-coverage slice: the existing Go handler and data were already faithful,
+so no player-visible Go source behavior changed.
+
+The `yuball-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8. Seed 1
+used `--show-oracle` and displayed the exact actor/room output for no argument,
+typed peer, missing target, and named self. Every seed exited 0 with
+`result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,758 total, 4,653 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `7704a0970` and `b9dbb28b5`. No file
+under `src/` or `darkpawns-c-oracle/` was edited.
+
+## Starting frontier
+
+The merged `yodel` handoff reported 4,750 total cases: 4,645
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eight
+proven/delegated rows, bringing the frontier to 4,758 total, 4,653
+proven/delegated, 54 blocked, and 51 excluded. Phase 1's remaining social
+queue is now exhausted; the next work is the terminal Phase 2/exclusion,
+blocked-clinic, and off-command-table audit.
