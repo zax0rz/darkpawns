@@ -86,6 +86,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,389,original,mythic-admin,Dark Pawns repository and Zach
 /blog/resurrection/,src/content/blog/resurrection.md,blog,authored editorial,1,rewrite and source review,389,original,mythic-admin,Dark Pawns repository and Zach
+/blog/the-long-middle.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1032,original,mythic-admin,"Dark Pawns repository: git history (2,238 commits from 2026-04-17), docs/fidelity/ (RULEBOOK.md, depth/*.tsv), docs/reports/scenario-coverage-*.tsv, and PRs #243 / #601."
+/blog/the-long-middle/,src/content/blog/the-long-middle.md,blog,authored editorial,1,rewrite and source review,1032,original,mythic-admin,"Dark Pawns repository: git history (2,238 commits from 2026-04-17), docs/fidelity/ (RULEBOOK.md, depth/*.tsv), docs/reports/scenario-coverage-*.tsv, and PRs #243 / #601."
 /blog/the-oracle.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1597,original,mythic-admin,"Dark Pawns repository (src/, PR #469, docs/fidelity/RULEBOOK.md) and Zach"
 /blog/the-oracle/,src/content/blog/the-oracle.md,blog,authored editorial,1,rewrite and source review,1597,original,mythic-admin,"Dark Pawns repository (src/, PR #469, docs/fidelity/RULEBOOK.md) and Zach"
 /contact/,src/pages/contact.astro,core,authored static page,1,full editorial review,,,,

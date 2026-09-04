@@ -3,7 +3,9 @@ import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
+  // Drafts must not build a page either. The index, the feed and the Markdown
+  // twin all filter, so without this a draft is unlisted but still reachable.
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
 

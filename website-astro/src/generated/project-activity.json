@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T17:34:40-04:00",
+  "generatedAt": "2026-09-04T17:59:59-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 5
+      "commits": 6
     }
   ],
   "recentCommits": [
+    {
+      "sha": "4a0b6f56b490194a9a9f7c2ba76ea2f254ba7423",
+      "date": "2026-09-04",
+      "title": "chore(web): refresh the inventory for 37 archive records, unpin the world path",
+      "url": "https://github.com/zax0rz/darkpawns/commit/4a0b6f56b490194a9a9f7c2ba76ea2f254ba7423"
+    },
     {
       "sha": "a7c313fc6eb7f8528de1685aaddb0024b3d357a3",
       "date": "2026-09-04",
@@ -76,12 +82,6 @@
       "date": "2026-09-04",
       "title": "feat(archive): recover forum quote structure and reorganize the archive",
       "url": "https://github.com/zax0rz/darkpawns/commit/87ef7e954b9595fa3ec09058f5abe4f41b004dee"
-    },
-    {
-      "sha": "325c3b23b61d976ff938f2e764f245ed74c9fa6f",
-      "date": "2026-09-02",
-      "title": "Merge pull request #1075 from zax0rz/feat/astro-search",
-      "url": "https://github.com/zax0rz/darkpawns/commit/325c3b23b61d976ff938f2e764f245ed74c9fa6f"
     }
   ],
   "pullRequests": [
