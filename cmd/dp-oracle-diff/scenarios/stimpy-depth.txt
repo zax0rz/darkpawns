@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:742;
+# src/act.social.c:102-151; lib/misc/socials:859-867). The authored stimpy
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: stimpy.no-argument
+# depth-case: stimpy.target-success
+# depth-case: stimpy.target-audience
+# depth-case: stimpy.argument-first-token
+# depth-case: stimpy.mob-target
+# depth-case: stimpy.self-target
+# depth-case: stimpy.target-not-found
+# depth-case: stimpy.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Stimpyactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stimpyactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Stimpyobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Stimpyobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Stimpytarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Stimpytarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Stimpyobserver 8162
+teleport Stimpytarget 8162
+
+[probe]
+stimpy
+stimpy Stimpytarget trailing words are ignored
+stimpy Stimpytarget
+stimpy trainee
+stimpy Stimpyactor
+stimpy self
+stimpy Nobody
+force Stimpytarget sleep
+stimpy Stimpytarget
