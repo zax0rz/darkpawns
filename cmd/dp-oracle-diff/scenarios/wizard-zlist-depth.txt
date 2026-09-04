@@ -1,0 +1,57 @@
+# C-first vehicle for do_zlist. The actor starts in room 1204, so bare zlist
+# selects the current room's zone-table file (#12). Zone 0 is a short,
+# different file that keeps explicit numeric and atoi-prefix cases out of the
+# pager. Zone 27 is long enough to enter page_string; the final q exercises
+# the shared pager exit without adding a second command after it.
+
+# depth-case: zlist.missing-file
+# depth-case: zlist.atoi-prefix-missing
+# depth-case: zlist.explicit-numeric-file
+# depth-case: zlist.nonnumeric-atoi-zero
+# depth-case: zlist.trailing-argument-ignored
+# depth-case: zlist.current-zone-default
+# depth-case: zlist.pager-entry
+# depth-case: zlist.pager-quit
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zlistslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zlistslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+zlist 999
+zlist 999abc ignored words
+zlist +0 trailing words
+zlist abc
+zlist 0 trailing words
+zlist
+zlist 27
+q
