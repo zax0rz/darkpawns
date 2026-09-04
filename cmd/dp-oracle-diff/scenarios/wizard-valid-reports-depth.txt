@@ -1,0 +1,95 @@
+# C-first valid-report vehicle for the registered vnum/stat/vstat handlers.
+# The primary is the crowned Implementor; a peer supplies a live player save
+# and the disposable mob/object fixtures make the local stat selectors reach
+# their valid report bodies.
+
+# depth-case: vnum.mob-success
+# depth-case: vnum.obj-success
+# depth-case: stat.room-success
+# depth-case: stat.mob-success
+# depth-case: stat.player-success
+# depth-case: stat.file-success
+# depth-case: stat.object-success
+# depth-case: stat.object-fallback-success
+# depth-case: vstat.mob-success
+# depth-case: vstat.obj-success
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 1 8162 80
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Wizardvalid
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardvalid
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wizardvalidpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wizardvalidpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Wizardvalidpeer 8162
+
+[probe]
+vnum mob orc
+vnum obj bread
+stat room
+stat mob orc
+stat player Wizardvalidpeer
+stat file Wizardvalidpeer
+stat object bread
+stat bread
+vstat mob 2109
+vstat obj 8010

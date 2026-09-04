@@ -29,3 +29,22 @@ be promoted to body coverage (R1/R4).
 
 No C or oracle-tree files are to be changed. The pre-existing untracked
 `website/static/images/` directory remains outside this slice.
+
+## Result — 2026-09-04
+
+The new `wizard-valid-reports-depth` vehicle is green with `--show-oracle` at
+`DP_SEED=1` and `DP_SEED=2`. It executes all ten annotated cases: both VNUM
+lists, the room report, live mob/player/file reports, typed and fallback object
+reports, and both valid prototype reports. The C blocks are non-empty and the
+normalized transcripts match byte-for-byte on both seeds (R1/R2/R3/R5e).
+
+The Go changes replace the previous abbreviated stat output with the shared C
+character/object report shapes, add C-specific flag/race/position renderers,
+load the `stat file` player record, and route `vstat mob` through the same
+character report path. Shared `do_stat_character` and `do_stat_object` ownership
+is recorded as delegated for the corresponding `vstat` rows (R5b/R5c).
+
+The required repository checks for this slice passed before the implementation
+commit: `make fidelity-depth`, `go build ./...`, `go vet ./...`, `go test ./...`,
+`golangci-lint run ./...`, and `gofumpt -l .`. The pre-existing untracked
+`website/static/images/` directory remains outside the slice.
