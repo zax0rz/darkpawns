@@ -108,9 +108,13 @@ directory name is historical and does not mean the deployed site uses Hugo.
 # the Caddy redirect table.
 make build-site
 
-# Review the destructive sync before deployment.
+# Review the destructive sync before deployment. Read the *deleting lines:
+# --delete makes the docroot match dist/ exactly, so anything production
+# serves that this branch does not build is removed. Only stale build
+# artifacts are expected. Real content in that list means stop.
 rsync -azn --delete --itemize-changes \
-  website-astro/dist/ root@192.168.1.121:/srv/hugo/
+  website-astro/dist/ root@192.168.1.121:/srv/hugo/ | tee /tmp/dryrun.txt
+grep '^\*deleting' /tmp/dryrun.txt
 
 # Deploy static files. DEPLOY_PATH defaults to /srv/hugo/.
 make deploy-site DEPLOY_USER=root DEPLOY_HOST=192.168.1.121
@@ -130,6 +134,11 @@ install -m 644 /tmp/redirects.caddy /etc/caddy/redirects.caddy
 caddy validate --config /etc/caddy/Caddyfile
 systemctl reload caddy
 ```
+
+Deploying more than one branch to this single docroot is what makes the dry
+run load-bearing: production can hold pages whose source is not in the branch
+you are shipping. See `website/deploy/README.md` for the failure this caught
+and what to do about it.
 
 Before a major cutover, archive `/srv/hugo/` under
 `/opt/darkpawns/site-backups/`. A static-site rollback restores that archive

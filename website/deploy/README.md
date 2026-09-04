@@ -23,8 +23,35 @@ make deploy-site DEPLOY_USER=root DEPLOY_HOST=192.168.1.121
 ```
 
 `make build-site` regenerates world and database data, runs the content and
-voice checks, builds Astro, and generates `redirects.caddy`. The dry run is
-required before a destructive sync.
+voice checks, builds Astro, and generates `redirects.caddy`.
+
+### Read the dry run before you sync
+
+The dry run is required, and reading it is the point. `--delete` makes the
+docroot match your `dist/` exactly, so anything on production that your branch
+does not build is removed. Scan the output for `*deleting` lines and account
+for every one:
+
+```bash
+rsync -azn --delete --itemize-changes \
+  website-astro/dist/ root@192.168.1.121:/srv/hugo/ | grep '^\*deleting'
+```
+
+Expect only stale build artifacts: superseded `_astro/*.css` hashes, `.md`
+twins for routes that no longer emit them, old `.bak` files. Anything that
+looks like real content is a stop.
+
+This is not hypothetical. On 2026-09-04 a deploy from `website-deslop` was
+about to delete `/blog/the-long-middle/` and all of `/images/blog/`. The post
+was live and published; its source existed only as untracked files in the
+`darkpawns-astro-search` worktree, which is where production had last been
+deployed from. Nothing in git protected it.
+
+If a `*deleting` line names real content, do not deploy and do not reach for
+`--delete`-less rsync as a habit. Find the source, commit it to the branch you
+are deploying, rebuild, and dry run again until the only deletions are
+artifacts. Deploying different branches to one docroot is what creates this,
+so the fix is to make the branch complete, not to make the sync gentler.
 
 ## Caddy configuration
 
