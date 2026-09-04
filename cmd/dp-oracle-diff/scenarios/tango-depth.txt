@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:759;
+# src/act.social.c:102-151; lib/misc/socials:899-907). The authored tango
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: tango.no-argument
+# depth-case: tango.target-success
+# depth-case: tango.target-audience
+# depth-case: tango.argument-first-token
+# depth-case: tango.mob-target
+# depth-case: tango.self-target
+# depth-case: tango.target-not-found
+# depth-case: tango.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Tangoactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tangoactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Tangoobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Tangoobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Tangotarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Tangotarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Tangoobserver 8162
+teleport Tangotarget 8162
+
+[probe]
+tango
+tango Tangotarget trailing words are ignored
+tango Tangotarget
+tango trainee
+tango Tangoactor
+tango self
+tango Nobody
+force Tangotarget sleep
+tango Tangotarget
