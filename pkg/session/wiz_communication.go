@@ -3,7 +3,7 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
+	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -242,88 +242,183 @@ func forceSessionCommand(caster, target *Session, command string, notifyVictim b
 // shutdown — shut down the server (LVL_GRGOD)
 // ---------------------------------------------------------------------------
 func cmdWiznet(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	return cmdWiznetText(s, strings.Join(args, " "))
+}
+
+// cmdWiznetText ports do_wiznet() (src/act.wizard.c:1912-2034). The C
+// handler consumes the original argument remainder, so the transport path
+// supplies rawArgs to preserve internal and trailing spaces.
+func cmdWiznetText(s *Session, rawArgs string) error {
+	if s.player.GetLevel() < LVL_IMMORT && !s.player.HasPLRFlag(game.PlrChosen) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Usage: wiznet <text> | #<level> <text> | *<emotetext> |\r\n        wiznet @\r\n")
-		return nil
-	}
-	fullArg := strings.Join(args, " ")
 
-	// wiznet @ — list gods online
-	if fullArg == "@" {
-		var online, offline strings.Builder
-		online.WriteString("Gods online:\r\n")
-		offline.WriteString("Gods offline:\r\n")
-		anyOnline := false
-		anyOffline := false
-		s.manager.mu.RLock()
-		for _, sess := range s.manager.sessions {
-			if sess.player == nil || sess.player.Level < LVL_IMMORT {
-				continue
-			}
-			// Simple distinction: all immortals in session are "online"
-			fmt.Fprintf(&online, "  %s\r\n", sess.player.Name)
-			anyOnline = true
-		}
-		s.manager.mu.RUnlock()
-		if anyOnline {
-			s.Send(online.String())
-		}
-		if anyOffline {
-			s.Send(offline.String())
-		}
+	argument := strings.TrimLeft(rawArgs, cCommandWhitespace)
+	argument = collapseDoubledDollar(argument)
+	if argument == "" {
+		s.Send("Usage: wiznet <text> | #<level> <text> | *<emotetext> |\r\n " +
+			"       wiznet @\r\n")
 		return nil
 	}
 
-	// Check for level prefix: #<level> <text>
+	emote := false
+	noChosen := false
 	level := LVL_IMMORT
-	text := fullArg
-	if len(args[0]) > 0 && args[0][0] == '#' {
-		lvlStr := args[0][1:]
-		lvl, err := strconv.Atoi(lvlStr)
-		if err == nil && lvl >= LVL_IMMORT {
-			level = lvl
-			if level > s.player.Level {
-				s.Send("You can't wizline above your own level.")
+	switch argument[0] {
+	case '*':
+		emote = true
+		fallthrough
+	case '#':
+		// C uses one_argument to decide whether the prefix is numeric, then
+		// half_chop to consume the actual first token. Those parsers differ
+		// when fill words occur, so preserve both call sites here.
+		prefix, _ := game.OneArgument(argument[1:])
+		if cIsNumber(prefix) {
+			first, remainder := wiznetHalfChop(argument[1:])
+			level = cAtoi(first)
+			if level < LVL_IMMORT {
+				level = LVL_IMMORT
+			}
+			noChosen = true
+			if level > s.player.GetLevel() {
+				s.Send("You can't wizline above your own level.\r\n")
 				return nil
 			}
-			text = strings.Join(args[1:], " ")
+			argument = remainder
+		} else if emote {
+			argument = argument[1:]
 		}
+	case '@':
+		return wiznetList(s)
+	case '\\':
+		argument = argument[1:]
 	}
 
-	// Check for emote prefix: *<text>
-	isEmote := false
-	if len(args[0]) > 0 && args[0][0] == '*' {
-		isEmote = true
-		text = strings.Join(args, " ")[1:]
-	}
-
-	if len(text) == 0 {
-		s.Send("Don't bother the gods like that!")
+	if s.player.GetFlags()&(1<<uint(game.PrfNowiz)) != 0 {
+		s.Send("You are offline!\r\n")
 		return nil
 	}
 
-	fromName := s.playerName
-	msg := fmt.Sprintf("%s: %s%s\r\n", fromName, map[bool]string{true: "<--- ", false: ""}[isEmote], text)
-	shadowMsg := fmt.Sprintf("Someone: %s%s\r\n", map[bool]string{true: "<--- ", false: ""}[isEmote], text)
+	argument = strings.TrimLeft(argument, cCommandWhitespace)
+	if argument == "" {
+		s.Send("Don't bother the gods like that!\r\n")
+		return nil
+	}
 
-	s.manager.mu.RLock()
-	for _, sess := range s.manager.sessions {
-		if sess.player == nil || sess.player.Level < level {
+	levelPrefix := ""
+	if noChosen {
+		levelPrefix = fmt.Sprintf("<%d> ", level)
+	}
+	message := fmt.Sprintf("%s: %s%s%s\r\n", s.player.GetName(), levelPrefix, wiznetEmotePrefix(emote), argument)
+	shadow := fmt.Sprintf("Someone: %s%s%s\r\n", levelPrefix, wiznetEmotePrefix(emote), argument)
+	norepeat := s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0
+
+	sessions := wiznetSessions(s.manager)
+	for _, sess := range sessions {
+		if !wiznetRecipientEligible(sess, level, noChosen) || (sess == s && norepeat) {
 			continue
 		}
-		if sess.player.Level >= level {
-			toSend := msg
-			if sess.player.Level < s.player.Level {
-				toSend = shadowMsg
+		toSend := message
+		if sess != s && s.player.GetLevel() != LVL_IMPL && !game.CanSee(sess.player, s.player) {
+			toSend = shadow
+		}
+		sess.Send(toSend)
+	}
+
+	if norepeat {
+		s.Send("Okay.\r\n")
+	}
+	return nil
+}
+
+func wiznetEmotePrefix(emote bool) string {
+	if emote {
+		return "<--- "
+	}
+	return ""
+}
+
+func wiznetHalfChop(input string) (first, remainder string) {
+	input = strings.TrimLeft(input, cCommandWhitespace)
+	if input == "" {
+		return "", ""
+	}
+	end := strings.IndexAny(input, cCommandWhitespace)
+	if end < 0 {
+		return strings.ToLower(input), ""
+	}
+	return strings.ToLower(input[:end]), strings.TrimLeft(input[end:], cCommandWhitespace)
+}
+
+func wiznetSessions(m *Manager) []*Session {
+	m.mu.RLock()
+	sessions := make([]*Session, 0, len(m.sessions))
+	for _, sess := range m.sessions {
+		sessions = append(sessions, sess)
+	}
+	m.mu.RUnlock()
+	sort.SliceStable(sessions, func(i, j int) bool {
+		return sessions[i].connectedAt.After(sessions[j].connectedAt)
+	})
+	return sessions
+}
+
+func wiznetRecipientEligible(sess *Session, level int, noChosen bool) bool {
+	if sess == nil || !sess.authenticated || sess.player == nil || !sess.hasTransport() {
+		return false
+	}
+	if sess.player.GetLevel() < level && (noChosen || !sess.player.HasPLRFlag(game.PlrChosen)) {
+		return false
+	}
+	flags := sess.player.GetFlags()
+	if flags&(1<<uint(game.PrfNowiz)) != 0 {
+		return false
+	}
+	return !sess.player.HasPLRFlag(game.PlrMailing) || !sess.player.HasPLRFlag(game.PlrWriting)
+}
+
+func wiznetList(s *Session) error {
+	var online, offline strings.Builder
+	anyOnline := false
+	anyOffline := false
+	for _, sess := range wiznetSessions(s.manager) {
+		if sess == nil || !sess.authenticated || sess.player == nil || sess.player.GetLevel() < LVL_IMMORT {
+			continue
+		}
+		if sess.player.GetFlags()&(1<<uint(game.PrfNowiz)) != 0 {
+			continue
+		}
+		if s.player.GetLevel() != LVL_IMPL && !game.CanSee(s.player, sess.player) {
+			continue
+		}
+		if sess.hasTransport() {
+			if !anyOnline {
+				online.WriteString("Gods online:\r\n")
+				anyOnline = true
 			}
-			sess.Send(toSend)
+			fmt.Fprintf(&online, "  %s", sess.player.GetName())
+			if sess.player.HasPLRFlag(game.PlrWriting) {
+				online.WriteString(" (Writing)\r\n")
+			} else if sess.player.HasPLRFlag(game.PlrMailing) {
+				online.WriteString(" (Writing mail)\r\n")
+			} else {
+				online.WriteString("\r\n")
+			}
+		} else {
+			if !anyOffline {
+				offline.WriteString("Gods offline:\r\n")
+				anyOffline = true
+			}
+			fmt.Fprintf(&offline, "  %s\r\n", sess.player.GetName())
 		}
 	}
-	s.manager.mu.RUnlock()
+	if anyOnline {
+		s.Send(online.String())
+	}
+	if anyOffline {
+		s.Send(offline.String())
+	}
 	return nil
 }
 
