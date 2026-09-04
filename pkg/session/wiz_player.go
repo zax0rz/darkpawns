@@ -108,14 +108,13 @@ func cmdRestore(s *Session, args []string) error {
 
 // clamp restricts v to the [min, max] range.
 func cmdSwitch(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
-
-	// M-16 toggle: if already switched, return to original body
+	// The command-table level gate is authoritative. If the descriptor is
+	// already attached to a switched body, do_switch reports this before any
+	// target parsing; the interpreter's switched-NPC gate normally intercepts
+	// that case first.
 	if s.isSwitched {
-		return cmdReturn(s, args)
+		s.Send("You're already switched.\r\n")
+		return nil
 	}
 
 	if len(args) == 0 {
@@ -129,14 +128,6 @@ func cmdSwitch(s *Session, args []string) error {
 	origLevel := s.player.Level
 	origPlayer := s.player
 
-	// Save wizard state before switching
-	if err := game.SavePlayer(origPlayer); err != nil {
-		slog.Error("cmdSwitch: failed to save wizard state checkpoint",
-			"wizard", origPlayer.Name, "error", err)
-	} else {
-		slog.Info("switch: saved wizard state checkpoint", "wizard", origPlayer.Name)
-	}
-
 	// Look for a mob in the room
 	mobs := s.manager.world.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
@@ -146,13 +137,7 @@ func cmdSwitch(s *Session, args []string) error {
 			s.switchedMob = mob
 			s.isSwitched = true
 			s.switchedStartTime = time.Now()
-			slog.Info(
-				"switch: wizard switched into mob",
-				"wizard", origPlayer.Name,
-				"wizard_level", origLevel,
-				"target_mob", mob.GetShortDesc(),
-			)
-			s.Send(fmt.Sprintf("You switch into %s.\r\n", mob.GetShortDesc()))
+			s.Send("Okay.\r\n")
 			return nil
 		}
 	}
@@ -161,16 +146,17 @@ func cmdSwitch(s *Session, args []string) error {
 	players := s.manager.world.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
 		if strings.ToLower(p.GetName()) == targetName {
-			if p.Level >= s.player.Level {
-				s.Send("Fuuuuuuuuu!\r\n")
+			if p == s.player {
+				s.Send("Hee hee... we are jolly funny today, eh?\r\n")
 				return nil
 			}
-			// Save target player state before switching
-			if err := game.SavePlayer(p); err != nil {
-				slog.Error("cmdSwitch: failed to save target player checkpoint",
-					"target", p.Name, "error", err)
-			} else {
-				slog.Info("switch: saved target player state checkpoint", "target", p.Name)
+			if findSessionByName(s.manager, p.GetName()) != nil {
+				s.Send("You can't do that, the body is already in use!\r\n")
+				return nil
+			}
+			if s.player.Level < LVL_IMPL {
+				s.Send("You aren't holy enough to use a mortal's body.\r\n")
+				return nil
 			}
 
 			s.switchedOriginal = origPlayer
@@ -178,18 +164,11 @@ func cmdSwitch(s *Session, args []string) error {
 			s.switchedPlayer = p
 			s.isSwitched = true
 			s.switchedStartTime = time.Now()
-			slog.Info(
-				"switch: wizard switched into player",
-				"wizard", origPlayer.Name,
-				"wizard_level", origLevel,
-				"target_player", p.GetName(),
-				"target_level", p.Level,
-			)
-			s.Send(fmt.Sprintf("You switch into %s.\r\n", p.GetName()))
+			s.Send("Okay.\r\n")
 			return nil
 		}
 	}
-	s.Send("No one here by that name.\r\n")
+	s.Send("No such character.\r\n")
 	return nil
 }
 
