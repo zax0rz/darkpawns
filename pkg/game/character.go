@@ -342,6 +342,13 @@ func BootstrapFirstPlayerGod(p *Player) {
 	// db.c:3014-3074: init_char() does not set PRF_AUTOEXIT for the first
 	// player; only the later do_start() path does that for mortals.
 	p.SetAutoExit(false)
+	// The first player enters through init_char(), not do_start(). Keep the
+	// constructor's mortal preference defaults out of the God record: C leaves
+	// these display flags and the wimp threshold at their zeroed values.
+	p.SetPlrFlag(PrfDisphp, false)
+	p.SetPlrFlag(PrfDispmmana, false)
+	p.SetPlrFlag(PrfDispmove, false)
+	p.WimpLevel = 0
 	p.SetMaxHP(500)
 	p.SetHP(500)
 	p.SetMaxMana(100)

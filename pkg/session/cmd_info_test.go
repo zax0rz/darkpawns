@@ -456,6 +456,31 @@ func TestCmdWho(t *testing.T) {
 	}
 }
 
+func TestCmdUsersCFormat(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "InformativeResidual", 1001, true)
+	s.player.SetLevel(game.LVL_IMPL)
+	s.player.Class = game.ClassWarrior
+	s.connectionNumber = 1
+	s.connectedAt = time.Date(2026, time.September, 4, 22, 58, 48, 0, time.UTC)
+	s.request = nil
+	s.SetRemoteIP("127.0.0.1")
+	m.mu.Lock()
+	m.sessions[s.player.Name] = s
+	m.mu.Unlock()
+
+	if err := cmdUsers(s, nil); err != nil {
+		t.Fatalf("cmdUsers: %v", err)
+	}
+	want := "Num Class   Name         State          Idl Login@   Site\r\n" +
+		"--- ------- ------------ -------------- --- -------- ------------------------\r\n" +
+		"  1 [40 Wa] InformativeResidual Playing          0 22:58:48 [127.000.000.001]\r\n" +
+		"\r\n1 visible sockets connected.\r\n"
+	if got := readSessionText(t, s); got != want {
+		t.Fatalf("users output = %q, want %q", got, want)
+	}
+}
+
 func TestCmdSummon(t *testing.T) {
 	m := makeTestManager(t)
 	s1 := makeTestSession(t, m, "Alice", 1001, true)

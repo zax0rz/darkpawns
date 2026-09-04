@@ -363,7 +363,7 @@ func init() {
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")
 	registerCommand("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).")
 	registerCommand("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.")
-	registerCommand("users", wrapArgs(cmdUsersSafe), "Show connected players.")
+	registerCommand("users", wrapArgs(cmdUsers), "Show connected players.")
 
 	// Other commands (act_other.go)
 	registerCommand("save", wrapArgs(cmdSave), "Save your character.")
