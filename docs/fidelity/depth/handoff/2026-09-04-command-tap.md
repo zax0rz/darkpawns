@@ -53,19 +53,42 @@ and first-token/trailing-argument branches. Shared command position,
 `PLR_NOSHOUT`, target lookup, and room visibility mechanics are not duplicated
 beyond the slice's differential probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add `cmd/dp-oracle-diff/scenarios/tap-depth.txt` with the standard actor,
-observer, target, and generic-mob fixture, `pkg/session/tap_depth_test.go`
+Added `cmd/dp-oracle-diff/scenarios/tap-depth.txt` with the standard actor,
+observer, target, and generic-mob fixture; `pkg/session/tap_depth_test.go`
 to pin the C command gate, social metadata, and all eight parsed message
-slots, and `docs/fidelity/depth/tap.tsv` with the durable unit, delegated,
-and oracle rows. The existing Go handler and data are expected to be faithful;
-any mismatch must be resolved from the C call path under R5e.
+slots; and `docs/fidelity/depth/tap.tsv` with twelve durable unit, delegated,
+and oracle rows. The existing Go handler and data are faithful; this was a
+pure-coverage slice and no player-visible Go behavior changed.
+
+The final `tap-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact no-argument, visible
+player/NPC target, named self, missing-target, first-token/trailing-argument,
+and sleeping-target outputs. Every seed exited 0 with
+`result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,478 total, 4,373 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `660e83088` and `85acdcee3` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `tango` handoff reported 4,466 total cases: 4,361
 proven/delegated, 54 blocked, and 51 excluded. Continue the remaining Phase 1
 social sweep before the later red/blocked and off-command-table phases in the
-objective. The next fresh social after this slice is `taunt` at
+objective. This slice adds twelve proven/delegated rows, bringing main's
+frontier to 4,478 total, 4,373 proven/delegated, 54 blocked, and 51 excluded.
+The next fresh social after this slice is `taunt` at
 `src/interpreter.c:761`.
