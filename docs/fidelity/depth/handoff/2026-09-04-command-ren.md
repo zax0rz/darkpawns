@@ -56,20 +56,43 @@ visible NPC target, self target, missing target, and sleeping target. The
 zero victim-position minimum admits a sleeping target; shared delivery
 filtering remains owned by the social matrix.
 
-## Planned proof vehicle
+## Result and proof vehicle
 
-Add `cmd/dp-oracle-diff/scenarios/ren-depth.txt` with `# depth-case:` tags
+Added `cmd/dp-oracle-diff/scenarios/ren-depth.txt` with `# depth-case:` tags
 for each branch and the standard actor/observer/target plus trainee-mob
-fixture. Add `pkg/session/ren_depth_test.go` to pin the C command gate and
-all eight parsed social messages. Run the scenario with the oracle at seeds
-1, 2, 3, 5, and 8, using `--show-oracle` for seed 1. If the existing Go
-handler and data are faithful, this is a pure-coverage slice; only confirmed
-player-visible divergence may change Go behavior.
+fixture. Added `pkg/session/ren_depth_test.go` to pin the C command gate and
+all eight parsed social messages, and added `docs/fidelity/depth/ren.tsv`
+with eleven durable rows. The existing Go handler and data are faithful; this
+was a pure-coverage slice and no player-visible Go behavior changed.
+
+The final `ren-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the intended no-argument, player
+target, NPC target, self, missing-target, and sleeping-target blocks. Every
+seed exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,310 total, 4,205 proven/delegated, 54 blocked,
+  and 51 excluded; 98.7% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff, evidence, and tests are in commits `f06239ca7` and
+`d5eb751c7` at the time of this note. No file under `src/` or
+`darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
-The merged `reel` handoff reports 4,299 total cases: 4,194
-proven/delegated, 54 blocked, and 51 excluded. The `ren` slice will add its
-durable branch rows and update this note with final oracle evidence, local
-and hosted gates, merge identity, and the next social queue position.
-
+The merged `reel` handoff reported 4,299 total cases: 4,194
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eleven
+proven/delegated rows, bringing main's frontier to 4,310 total, 4,205
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social audit is
+`scream` at `src/interpreter.c:677`; the nearby `rolleyes` row is commented
+out in the C command table and is not a reachable command. Continue the
+remaining Phase 1 social sweep before the later red/blocked and
+off-command-table phases in the objective.
