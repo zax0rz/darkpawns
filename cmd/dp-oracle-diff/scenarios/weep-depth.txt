@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:813;
+# src/act.social.c:102-127; lib/misc/socials:979-982). The authored weep
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: weep.no-argument
+# depth-case: weep.typed-target-ignored
+# depth-case: weep.missing-target-ignored
+# depth-case: weep.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Weepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Weepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Weeppeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Weeppeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Weeppeer 8162
+
+[probe]
+weep
+weep Weeppeer
+weep Nobody
+weep Weepactor
