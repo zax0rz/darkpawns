@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -240,52 +239,50 @@ func mlistAtoi(value string) int {
 	return sign * loadAtoi(value)
 }
 
-// cmdSysfile — show system file (bugs/ideas/todo/typos) (LVL_IMMORT)
+// cmdSysfile — show system file (bugs/ideas/todo/typos) (LVL_GOD)
 // Original: act.wizard.c do_sysfile() — reads file content and pages it
 func cmdSysfile(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 1 {
+	arg, _ := game.OneArgument(strings.Join(args, " "))
+	if arg == "" {
 		s.Send("That isn't a file!\r\n")
 		return nil
 	}
-	section := strings.ToLower(args[0])
 
-	// Map section names to data directory paths relative to server working dir
-	var filePath string
-	switch section {
-	case "bugs":
-		filePath = "data/bugs.txt"
-	case "ideas":
-		filePath = "data/ideas.txt"
-	case "todo":
-		filePath = "data/todo.txt"
-	case "typos":
-		filePath = "data/typos.txt"
-	default:
-		s.Send("That isn't a file!")
+	fileName, ok := sysfileName(arg)
+	if !ok {
+		s.Send("That isn't a file!\r\n")
 		return nil
 	}
 
-	if filePath == "" {
-		s.Send("That isn't a file!")
-		return nil
-	}
-	f, err := os.Open(filePath)
+	// C resolves these names relative to lib/, while WorldPath points at its
+	// lib/world directory in both the server and the differential harness.
+	filePath := filepath.Join(filepath.Dir(s.GetWorld().WorldPath), "misc", fileName)
+	data, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
-		s.Send("File does not exist.")
+		s.Send("File does not exist.\r\n")
 		return nil
 	}
-	defer func() { _ = f.Close() }()
-	data, err := io.ReadAll(io.LimitReader(f, 64*1024))
-	if err != nil {
-		s.Send("Error reading file.")
-		return nil
-	}
-	s.Send(string(data))
+	PageString(s, string(data))
 	return nil
+}
+
+// sysfileName mirrors C is_abbrev(arg, name), in the order used by
+// do_sysfile (src/act.wizard.c:3421-3424). arg has already passed through
+// game.OneArgument, which lowercases the first token like C one_argument.
+func sysfileName(arg string) (string, bool) {
+	if arg == "" {
+		return "", false
+	}
+	for _, name := range []string{"bugs", "ideas", "todo", "typos"} {
+		if strings.HasPrefix(name, strings.ToLower(arg)) {
+			return name, true
+		}
+	}
+	return "", false
 }
 
 // cmdSethunt — set hunt target for a mob (LVL_GRGOD)

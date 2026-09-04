@@ -69,12 +69,41 @@ vehicle. The confirmed pre-fix differences are selector matching and the
 associated C missing-file branch; no pager behavior is inferred from the
 absence of a fixture (R1/R2/R4/R5e).
 
-## Implementation and proof
+## Implementation and proof — 2026-09-04
 
-To be filled after the confirmed selector, path, error-byte, and pager-call
-changes are implemented and the focused vehicle is green at both seeds.
+`cmdSysfile` now consumes the first argument with the shared C-compatible
+`game.OneArgument` path, matches the four selectors in C's ordered
+case-insensitive prefix order, derives `misc/*` from the configured lib
+directory, emits the exact CRLF refusal bytes, and sends successful reads
+through `PageString`. Its defense-in-depth handler gate now matches the
+command-table `LVL_GOD` requirement. The helper unit test pins empty,
+abbreviated, ordered, case-insensitive, and unknown selector behavior.
+
+The C-first vehicle is green with `--show-oracle` at both `DP_SEED=1` and
+`DP_SEED=2`:
+
+```text
+wizard-sysfile-depth: result: no normalized divergence
+```
+
+All reachable selector, missing-file, invalid-input, case-folding, and
+trailing-word cases are proven. The successful read/pager branch remains
+blocked because the authoritative C path files are absent from both checked-
+in trees; adding a synthetic static file would violate R4 and would not prove
+the live C call path (R1/R2/R4/R5b/R5c/R5e).
 
 ## Verification
 
-To be filled after the full fidelity, build, vet, test, lint, formatting, and
-security gates complete.
+Completed on 2026-09-04:
+
+- `make fidelity-depth`: 4,272 total, 4,167 proven/delegated, 54 blocked,
+  51 excluded.
+- `go build ./...`: pass.
+- `go vet ./...`: pass.
+- `go test ./...`: pass.
+- `golangci-lint run ./...`: pass with 0 issues.
+- `gofumpt -l .`: clean.
+- high-severity/high-confidence `gosec`: pass with 0 issues.
+
+No C or oracle-tree files were changed. The untracked
+`website/static/images/` directory remains outside this slice.
