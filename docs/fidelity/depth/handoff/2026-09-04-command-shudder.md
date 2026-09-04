@@ -48,19 +48,40 @@ the no-argument actor/room pair and typed-target, self-target, and
 missing-target variants that all remain on that same pair. Shared command
 position, `PLR_NOSHOUT`, and room visibility mechanics are not duplicated.
 
-## Planned proof vehicle
+## Result and proof
 
-Add `cmd/dp-oracle-diff/scenarios/shudder-depth.txt` with depth-case tags for
-the no-argument and ignored-argument branches, the standard actor and peer
-fixture, `pkg/session/shudder_depth_test.go` to pin the C command gate and all
-three parsed message slots, and `docs/fidelity/depth/shudder.tsv` with the
-durable unit, delegated, and oracle rows. The existing Go handler and data
-are expected to be faithful; any mismatch must be resolved from the C call
-path under R5e.
+Added `cmd/dp-oracle-diff/scenarios/shudder-depth.txt` with depth-case tags
+for the no-argument and ignored-argument branches, the standard actor and
+peer fixture, `pkg/session/shudder_depth_test.go` to pin the C command gate
+and all three parsed message slots, and `docs/fidelity/depth/shudder.tsv`
+with eight durable rows. The existing Go handler and data are faithful; this
+was a pure-coverage slice and no player-visible Go behavior changed.
+
+The final `shudder-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and
+8. Seed 1 used `--show-oracle` and displayed the intended actor/peer blocks
+for no argument, typed player target, missing target, and self target. Every
+seed exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,345 total, 4,240 proven/delegated, 54 blocked,
+  and 51 excluded; 98.7% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `746fbce60` and `34aacb595` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `shrug` handoff reported 4,337 total cases: 4,232
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eight
+proven/delegated rows, bringing main's frontier to 4,345 total, 4,240
 proven/delegated, 54 blocked, and 51 excluded. Continue the remaining Phase 1
 social sweep before the later red/blocked and off-command-table phases in the
 objective. The next fresh social after this slice is `sigh` at
