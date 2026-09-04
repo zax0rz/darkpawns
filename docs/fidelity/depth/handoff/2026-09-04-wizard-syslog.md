@@ -45,3 +45,47 @@ prefix `search_block` matching. Unknown selectors receive
 both bits, set bit 0 for Brief, bit 1 for Normal, both for Complete, and report
 `Your syslog is now <level>.\r\n`.
 
+## Pre-fix result — 2026-09-04
+
+The C-first vehicle `cmd/dp-oracle-diff/scenarios/wizard-syslog-depth.txt`
+was red on the fresh `origin/main`-derived port at `DP_SEED=1` and
+`DP_SEED=2`. The no-argument path, full-word
+mutations, invalid usage, and trailing-word handling matched, but C's
+case-insensitive prefix selectors `b`, `c`, and `o` were rejected by Go. After
+the vehicle set the Go player to Brief with the full word and then selected
+Normal, Go retained both log bits and reported Complete while C reported
+Normal. These are confirmed selector/state divergences in the handler, not
+evidence about the downstream internal log consumer (R1/R2/R3/R5e).
+
+## Implementation and proof — 2026-09-04
+
+The handler now mirrors C's case-insensitive prefix `search_block` behavior,
+consumes only the first `one_argument`, clears both log preference bits before
+applying the selected Off/Brief/Normal/Complete state, and preserves the exact
+usage/status/mutation bytes. Focused unit tests pin the prefix parser and the
+Brief-to-Normal bit transition.
+
+The C-first vehicle is green with `--show-oracle` at both `DP_SEED=1` and
+`DP_SEED=2`:
+
+```text
+wizard-syslog-depth: result: no normalized divergence
+```
+
+It covers all four states, abbreviated and case-insensitive selectors, state
+queries, invalid input, and trailing-word parsing. The manifest records the
+handler cases as `oracle-green-multiseed`; the downstream `mudlog` audience and
+log-type consumer matrix remains explicitly blocked as a shared surface.
+
+Verification completed on this slice:
+
+- `make fidelity-depth`: 4264 total, 4160 proven/delegated, 53 blocked, 51 excluded.
+- `go build ./...`: pass.
+- `go vet ./...`: pass.
+- `go test ./...`: pass.
+- `golangci-lint run ./...`: pass with 0 issues.
+- `gofumpt -l .`: clean.
+- high-severity `gosec`: pass.
+
+No C or oracle-tree files were changed. The untracked
+`website/static/images/` directory remains outside this slice.
