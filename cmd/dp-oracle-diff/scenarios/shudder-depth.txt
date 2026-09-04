@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:697;
+# src/act.social.c:102-127; lib/misc/socials:695-698). The authored shudder
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: shudder.no-argument
+# depth-case: shudder.typed-target-ignored
+# depth-case: shudder.missing-target-ignored
+# depth-case: shudder.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shudderactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shudderactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shudderpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shudderpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shudderpeer 8162
+
+[probe]
+shudder
+shudder Shudderpeer
+shudder Nobody
+shudder Shudderactor
