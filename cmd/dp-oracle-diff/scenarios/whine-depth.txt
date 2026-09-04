@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:822;
+# src/act.social.c:102-127; lib/misc/socials:989-992). The authored whine
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: whine.no-argument
+# depth-case: whine.typed-target-ignored
+# depth-case: whine.missing-target-ignored
+# depth-case: whine.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Whineactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whineactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Whinepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Whinepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Whinepeer 8162
+
+[probe]
+whine
+whine Whinepeer
+whine Nobody
+whine Whineactor
