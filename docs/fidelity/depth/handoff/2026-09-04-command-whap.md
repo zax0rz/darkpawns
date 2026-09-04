@@ -55,20 +55,40 @@ trailing-argument, and sleeping-target branches. Shared command position,
 `PLR_NOSHOUT`, target lookup, and room visibility mechanics are not duplicated
 beyond the slice's differential probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add a focused registration test pinning the C command gate, social metadata,
-and all eight authored message slots. Add a full-target oracle scenario with
-named actor, observer, target, and generic-mob fixtures. Annotate no-argument,
-target success/audiences, first-token parsing, mob target, self target,
-not-found, visibility, and sleeping-target position-gate cases. Run the
-standard deterministic seed matrix (1, 2, 3, 5, and 8), with seed 1 using
-`--show-oracle`, then run the repository build, vet, test, lint, formatting,
-security, and diff gates.
+Added `cmd/dp-oracle-diff/scenarios/whap-depth.txt` with the standard actor,
+observer, target, and generic-mob fixture; `pkg/session/whap_depth_test.go` to
+pin the C command gate, social metadata, and all eight parsed message slots;
+and `docs/fidelity/depth/whap.tsv` with twelve durable unit, delegated, and
+oracle rows. The existing Go handler and data are faithful; this was a pure-
+coverage slice and no player-visible Go behavior changed.
+
+The final `whap-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact no-argument,
+visible-player/NPC target, named self, missing target, first-token/trailing-
+argument, mob target, and sleeping-target position-gate outputs. Every seed
+exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,678 total, 4,573 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `e3cd98d78` and `d92f52dce` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `weep` handoff reported 4,666 total cases: 4,561
-proven/delegated, 54 blocked, and 51 excluded. This slice is expected to add
-twelve proven/delegated rows. The next fresh social after this slice is
-`whimper` at `src/interpreter.c:816`.
+proven/delegated, 54 blocked, and 51 excluded. This slice adds twelve
+proven/delegated rows, bringing the frontier to 4,678 total, 4,573
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social after
+this slice is `whimper` at `src/interpreter.c:816`.
