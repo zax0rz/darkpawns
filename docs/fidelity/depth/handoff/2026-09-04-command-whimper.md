@@ -48,17 +48,39 @@ target all remain on the same no-argument actor/room path because there is no
 (represented by the legacy Go `MinLevel` and `HideFlag` fields). Position,
 `PLR_NOSHOUT`, and shared Act visibility are delegated rather than duplicated.
 
-## Planned proof
+## Result and proof
 
-Add a focused unit test for the C command gate, social metadata, and all three
-parsed message slots. Add a deterministic oracle scenario with an actor and a
-named peer, probing no argument, typed peer, missing target, and named self;
-the scenario will carry D1-D3 annotations and run at seeds 1, 2, 3, 5, and 8,
-with `--show-oracle` at seed 1. The manifest will record the self-only branch
-as oracle-green-multiseed and the shared position, `PLR_NOSHOUT`, and
-visibility vehicles as delegated.
+Added `cmd/dp-oracle-diff/scenarios/whimper-depth.txt` with the standard
+actor/peer fixture and four self-only probes; `pkg/session/whimper_depth_test.go`
+to pin the C command gate, social metadata, and all three parsed message slots;
+and `docs/fidelity/depth/whimper.tsv` with eight durable D1-D3 rows. This was a
+pure-coverage slice: the existing Go handler and data were already faithful,
+so no player-visible Go source behavior changed.
 
-No Go source behavior is expected to change unless the pre-fix differential
-run confirms a divergence. No file under `src/` or `darkpawns-c-oracle/` may
-be edited.
+The `whimper-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact actor/room output for no
+argument, typed peer, missing target, and named self. Every seed exited 0 with
+`result: no normalized divergence`.
 
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,686 total, 4,581 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `85847629e` and `65d82e5d9`. No file
+under `src/` or `darkpawns-c-oracle/` was edited.
+
+## Starting frontier
+
+The merged `whap` handoff reported 4,678 total cases: 4,573
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eight
+proven/delegated rows, bringing the frontier to 4,686 total, 4,581
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social is
+`whine` at `src/interpreter.c:822`.
