@@ -1,0 +1,48 @@
+# C-first do_title vehicle (src/act.other.c:595-620). The ordinary mortal
+# path exercises clearing, full-argument preservation, doubled-dollar and
+# parenthesis sanitization, and the maximum-length rejection.
+
+# depth-case: title.clear
+# depth-case: title.success
+# depth-case: title.doubled-dollar
+# depth-case: title.parentheses
+# depth-case: title.too-long
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Solamnia
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Solamnia
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+title
+title the Brave Knight of Solamnia
+title the Re$$d Knight
+title the (bad) title
+title xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

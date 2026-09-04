@@ -235,8 +235,10 @@ func sendGroupMemberLine(s *Session, member game.Actor, head bool) {
 // cmdUngroup removes a player from the group or disbands the entire group.
 // Source: act.other.c do_ungroup() lines 744–794
 func cmdUngroup(s *Session, args []string) error {
+	argument, _ := game.OneArgument(strings.Join(args, " "))
+
 	// No args: disband if leader — act.other.c lines 752–770
-	if len(args) == 0 {
+	if argument == "" {
 		if s.player.GetFollowing() != "" || !s.player.InGroup {
 			s.sendText("But you lead no group!")
 			return nil
@@ -255,26 +257,40 @@ func cmdUngroup(s *Session, args []string) error {
 		return nil
 	}
 
-	// Remove specific member — act.other.c lines 772–793
-	targetName := strings.Join(args, " ")
-	target, ok := s.manager.world.GetPlayer(targetName)
+	// Remove specific member — act.other.c lines 772–793. C's one_argument
+	// selects one visible room token and ignores the remainder.
+	targetName := argument
+	target, ok := s.manager.world.ResolveCharInRoom(s.player, targetName)
 	if !ok {
 		s.sendText("There is no such person!")
 		return nil
 	}
-	if target.GetFollowing() != s.player.Name {
+	victim := groupActor(target)
+	if victim == nil {
+		s.sendText("There is no such person!")
+		return nil
+	}
+	if !follows(victim, s.player) {
 		s.sendText("That person is not following you!")
 		return nil
 	}
-	if !target.InGroup {
+	if !isGrouped(victim) {
 		s.sendText("That person isn't in your group.")
 		return nil
 	}
 
-	target.InGroup = false
-	target.SetFollowing("") // stop_follower — act.other.c line 793
-	s.sendText(fmt.Sprintf("%s is no longer a member of your group.", target.Name))
-	target.SendMessage(fmt.Sprintf("You have been kicked out of %s's group!\r\n", s.player.Name))
+	setGrouped(victim, false)
+	game.Act(nil, false, s.player, victim, nil, nil,
+		"$N is no longer a member of your group.", "", game.ToChar)
+	game.Act(nil, false, s.player, victim, nil, nil,
+		"You have been kicked out of $n's group!", "", game.ToVict)
+	game.Act(s.manager.world, false, s.player, victim, nil, nil,
+		"$N has been kicked out of $n's group!", "", game.ToNotVict)
+	if mob, ok := victim.(*game.MobInstance); ok {
+		game.StopFollowerMob(s.manager.world, mob)
+	} else if player, ok := victim.(*game.Player); ok {
+		game.StopFollower(s.manager.world, player)
+	}
 	return nil
 }
 

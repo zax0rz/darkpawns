@@ -245,3 +245,25 @@ func TestDoDisplay(t *testing.T) {
 		}
 	})
 }
+
+func TestDoWimpyUsesCIsdigitAndOneArgument(t *testing.T) {
+	w := &World{}
+	var out strings.Builder
+	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
+	player := NewPlayer(1, "Wimpy", 8162)
+	player.worldRef = w
+
+	w.doWimpy(player, nil, "wimpy", "-5")
+	w.doWimpy(player, nil, "wimpy", "+5")
+	w.doWimpy(player, nil, "wimpy", "the 5 trailing words")
+
+	want := "Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n" +
+		"Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n" +
+		"Okay, you'll wimp out if you drop below 5 hit points.\r\n"
+	if got := out.String(); got != want {
+		t.Fatalf("wimpy output = %q, want %q", got, want)
+	}
+	if player.WimpLevel != 5 {
+		t.Fatalf("wimp level = %d, want 5", player.WimpLevel)
+	}
+}

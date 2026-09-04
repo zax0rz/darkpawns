@@ -1,0 +1,60 @@
+# C-first do_steal vehicle (src/act.other.c:309-531). A thief steals a
+# carried object from a visible trainee, then exercises the missing-target,
+# missing-item, and coin branches. The target operand includes fill words and
+# trailing input so the two one_argument() calls are observable.
+
+# depth-case: steal.no-argument
+# depth-case: steal.target-not-found
+# depth-case: steal.inventory-success
+# depth-case: steal.missing-item
+# depth-case: steal.coins-zero-gold
+# depth-case: steal.two-one-argument-parser
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Stealactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 8010
+give bread trainee
+skillset Stealactor 'steal' 100
+
+[probe]
+steal
+steal bread
+steal bread nobody
+steal bread the trainee trailing words
+steal bread trainee
+steal bread trainee
+steal coins trainee

@@ -1201,14 +1201,17 @@ func CmdSteal(s SessionInterface, args []string) error {
 	if s.GetPlayer() == nil {
 		return fmt.Errorf("not logged in")
 	}
-	if len(args) < 2 {
+
+	// C runs one_argument() twice: the first token is the object and the
+	// second token is the room target. This also skips leading fill words and
+	// discards trailing input after the target.
+	itemName, rest := game.OneArgument(strings.Join(args, " "))
+	targetName, _ := game.OneArgument(rest)
+	if itemName == "" || targetName == "" {
 		return s.SendMessage("Steal what from who?\r\n")
 	}
 
 	ch := s.GetPlayer()
-	// Parse: "steal <item> <target>" or "steal coins <target>"
-	itemName := args[0]
-	targetName := strings.Join(args[1:], " ")
 	world := s.GetWorld()
 
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)

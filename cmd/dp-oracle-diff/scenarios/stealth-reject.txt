@@ -5,6 +5,8 @@
 # gate C does not have); replaced with a faithful DoStealth (one number(1,101)
 # draw, SKILL_STEALTH affect). Self-only.
 
+# depth-case: stealth.entry-and-output
+
 [fixture]
 quiet-mobs
 
