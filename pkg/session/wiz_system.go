@@ -746,26 +746,62 @@ func cmdBroadcast(s *Session, args []string) error {
 	return nil
 }
 
-// cmdNewbie — give newbie equipment to a player (LVL_IMMORT)
+// cmdNewbie — give newbie equipment to a character (LVL_IMMORT)
 // Original: act.wizard.c do_newbie() — gives starter items: tunic, bread, skin, club
 func cmdNewbie(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Whom do you wish to newbie?")
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
+		s.Send("Whom do you wish to newbie?\r\n")
 		return nil
 	}
-	targetName := args[0]
-	targetSess := findSessionByName(s.manager, targetName)
-	if targetSess == nil || targetSess.player == nil {
-		s.Send("No one by that name online.")
+
+	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if !ok {
+		s.Send("No-one by that name here.\r\n")
 		return nil
 	}
+
+	var targetActor game.Actor
+	switch {
+	case target.Player != nil:
+		targetActor = target.Player
+	case target.Mob != nil:
+		targetActor = target.Mob
+	default:
+		slog.Error("wizard newbie resolved unsupported target", "by", s.playerName, "target", targetName)
+		return nil
+	}
+
+	// C's give_obj array is passed to obj_to_char in this order. obj_to_char
+	// prepends each object, so the visible carrying order is club, skin, bread,
+	// tunic. Use the canonical world-owned movement helpers so the object
+	// location registry and inventory list stay consistent.
+	for _, vnum := range []int{8019, 8062, 8063, 8023} {
+		obj, spawnErr := s.manager.world.SpawnObject(vnum, -1)
+		if spawnErr != nil {
+			slog.Error("wizard newbie object spawn failed", "by", s.playerName, "target", targetName, "vnum", vnum, "error", spawnErr)
+			return nil
+		}
+
+		var moveErr error
+		if target.Player != nil {
+			moveErr = s.manager.world.PlaceWizardLoadedObjectInInventory(obj, target.Player)
+		} else {
+			moveErr = s.manager.world.MoveObjectToMobInventoryFront(obj, target.Mob)
+		}
+		if moveErr != nil {
+			slog.Error("wizard newbie object placement failed", "by", s.playerName, "target", targetName, "vnum", vnum, "error", moveErr)
+			return nil
+		}
+	}
+
 	slog.Warn("wizard newbie", "by", s.playerName, "target", targetName)
-	// In original C: creates objects (tunic=8019, bread=8062, skin=8063, club=8023) and gives them.
-	// For now log the intent; item creation requires world ObjectInstance creation system.
-	s.Send("Newbied.")
+	s.Send("Newbied.\r\n")
+	game.Act(nil, true, targetActor, s.player, nil, nil,
+		"$N makes a magickal gesture, creating a bunch of equipment, and hands it to you!", "", game.ToChar)
 	return nil
 }
