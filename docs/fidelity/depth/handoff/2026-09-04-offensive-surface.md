@@ -20,17 +20,26 @@ and other C-reason exclusions.
 
 ## Protocol and decision
 
-The slice uses the standard two-seed protocol with a 300-second per-scenario
-timeout. The file-level decision remains open until every assigned branch is
-green or has a sharply bounded C-reason exclusion. No C or oracle source is
-modified, and no offensive branch is silently absorbed into a broad green
-claim.
+The slice used the standard two-seed protocol with a 300-second per-scenario
+timeout. No C or oracle source was modified, and no offensive branch was
+silently absorbed into a broad green claim.
 
 Initial coverage is green for `combat-entry-gates`,
 `combat-backstab-opener`, `combat-bash-opener`, `disembowel-depth`,
 `order-depth`, `flee-audience-success`, `rescue-roll`, `dragon-depth`, and
 `shoot-entry-depth` at seeds 1 and 2. Direct checks of `ambush-depth` at seeds
-1 and 2 are red: the Go lethal path inserts one blank line between the room
-death line and the XP message. The existing `ambush.tsv` green claim is stale
-on this tip and must be fixed or replaced with a sharp blocked note before
-this family can be promoted.
+1 and 2 initially exposed a real transport-ordering red: the Go lethal path
+inserted one blank line between the room death line and the XP message. C's
+`process_output` owns one descriptor buffer for combat and ordinary text, but
+the Go combat callbacks bypassed the prompt-invalidation boundary. The fix in
+`pkg/session/manager.go` routes combat frames through the same per-session
+enqueue boundary as `World.MessageSink`, consuming the DP_CLOCK interruption
+CRLF on the first combat frame and retaining output accounting for the trailing
+prompt. `TestCombatMessageConsumesPulseInterruptionPrefix` locks the seam.
+
+After the fix, `ambush-depth`, `sleeper-outcome-depth`, and `neckbreak-depth`
+all report `no normalized divergence` at seeds 1 and 2. The existing
+`ambush.tsv` multi-seed claim is therefore current again. The 138-callsite
+inventory classification is promoted to `proven-already`; its remaining
+shoot/flee entries are explicit C-reason exclusions already recorded in their
+focused manifests.

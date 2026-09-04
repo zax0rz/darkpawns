@@ -454,12 +454,32 @@ func (m *Manager) SetCombatMessageFunc() {
 		}
 		return msg
 	}
-
-	broadcast := func(roomVNum int, message string, exclude string) {
+	// enqueueCombatMessage shares the player-output framing used by the world
+	// MessageSink. Combat callbacks historically wrote directly to s.send, so
+	// the DP_CLOCK interruption prefix could land on the next ordinary text
+	// message instead of the first combat message in the pulse. C's descriptor
+	// output buffer has one ordering boundary for both sources (comm.c:1620-
+	// 1643); consume it here at the same boundary (R1/R3/R5e).
+	enqueueCombatMessage := func(s *Session, message string) {
+		if s == nil {
+			return
+		}
+		s.notePlayerOutput()
+		if s.claimInterruptionPrefix() {
+			message = "\r\n" + message
+		}
 		msg := wrap(message)
 		if msg == nil {
 			return
 		}
+		select {
+		case s.send <- msg:
+		default:
+			slog.Warn("dropping combat message: channel full", "player", s.playerName)
+		}
+	}
+
+	broadcast := func(roomVNum int, message string, exclude string) {
 		excluded := make(map[string]bool)
 		for _, name := range strings.Fields(exclude) {
 			excluded[name] = true
@@ -471,26 +491,14 @@ func (m *Manager) SetCombatMessageFunc() {
 				continue
 			}
 			if s.player != nil && s.player.GetRoom() == roomVNum {
-				select {
-				case s.send <- msg:
-				default:
-					slog.Warn("dropping combat broadcast: channel full", "player", name, "room", roomVNum)
-				}
+				enqueueCombatMessage(s, message)
 			}
 		}
 	}
 
 	sendToChar := func(name string, message string) {
-		msg := wrap(message)
-		if msg == nil {
-			return
-		}
 		if s, ok := m.GetSession(name); ok {
-			select {
-			case s.send <- msg:
-			default:
-				slog.Warn("dropping combat message: channel full", "player", name)
-			}
+			enqueueCombatMessage(s, message)
 		}
 	}
 
