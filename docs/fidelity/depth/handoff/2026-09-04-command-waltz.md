@@ -54,19 +54,41 @@ and first-token/trailing-argument branches. Shared command position,
 `PLR_NOSHOUT`, target lookup, and room visibility mechanics are not duplicated
 beyond the slice's differential probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add a focused registration test pinning the C command gate, social metadata,
-and all eight authored message slots. Add a full-target oracle scenario with
-named actor, observer, target, and generic-mob fixtures. Annotate no-argument,
-target success/audiences, first-token parsing, mob target, self target,
-not-found, visibility, and sleeping-target cases. Run the standard deterministic
-seed matrix (1, 2, 3, 5, and 8), with seed 1 using `--show-oracle`, then run
-the repository build, vet, test, lint, formatting, security, and diff gates.
+Added `cmd/dp-oracle-diff/scenarios/waltz-depth.txt` with the standard actor,
+observer, target, and generic-mob fixture;
+`pkg/session/waltz_depth_test.go` to pin the C command gate, social metadata,
+and all eight parsed message slots; and `docs/fidelity/depth/waltz.tsv` with
+twelve durable unit, delegated, and oracle rows. The existing Go handler and
+data are faithful; this was a pure-coverage slice and no player-visible Go
+behavior changed.
+
+The final `waltz-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact no-argument,
+visible-player/NPC target, named self, missing target, first-token/trailing-
+argument, and sleeping-target outputs. Every seed exited 0 with
+`result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,626 total, 4,521 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `ba074b646` and `5bd4d084d` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `violate` handoff reported 4,614 total cases: 4,509
-proven/delegated, 54 blocked, and 51 excluded. This slice is expected to add
-twelve proven/delegated rows. The next fresh social after this slice is
-`wave` at `src/interpreter.c:808`.
+proven/delegated, 54 blocked, and 51 excluded. This slice adds twelve
+proven/delegated rows, bringing the frontier to 4,626 total, 4,521
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social after
+this slice is `wave` at `src/interpreter.c:808`.
