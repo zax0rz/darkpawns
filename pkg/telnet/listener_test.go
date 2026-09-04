@@ -64,7 +64,7 @@ func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
 		return nil
 	})
 
-	if handlePulseControl(manager, "~dpclock pulse 40") {
+	if handlePulseControl(nil, manager, "~dpclock pulse 40") {
 		t.Fatal("control intercepted with DP_CLOCK unset")
 	}
 	if pumped != 0 {
@@ -72,13 +72,13 @@ func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
 	}
 
 	t.Setenv("DP_CLOCK", "1")
-	if !handlePulseControl(manager, "~dpclock pulse 40") {
+	if !handlePulseControl(nil, manager, "~dpclock pulse 40") {
 		t.Fatal("valid control was not intercepted")
 	}
 	if pumped != 40 {
 		t.Fatalf("pumped %d pulses, want 40", pumped)
 	}
-	if handlePulseControl(manager, "~dpclock pulse 0") {
+	if handlePulseControl(nil, manager, "~dpclock pulse 0") {
 		t.Fatal("invalid pulse count was intercepted")
 	}
 }
@@ -940,10 +940,14 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 
 	visible := string(stripTelnetCommands(<-transcript))
 	const response = "You say 'hello'\r\n"
-	if !strings.Contains(visible, response) {
+	respIdx := strings.LastIndex(visible, response)
+	if respIdx < 0 {
 		t.Fatalf("transcript missing command response: %q", visible)
 	}
-	if !strings.Contains(visible, response+"> ") {
+	// C's process_output flush frame is output + "\r\n" + make_prompt
+	// (comm.c:1624-1640), so the prompt follows the response after a line
+	// break (plus any vitals fields), never before it.
+	if !strings.Contains(visible[respIdx+len(response):], "> ") {
 		t.Fatalf("prompt did not follow command response (prompt/response race): %q", visible)
 	}
 }

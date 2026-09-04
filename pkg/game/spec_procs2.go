@@ -212,39 +212,60 @@ func specNinelives(w *World, ch *Player, me *MobInstance, cmd string, arg string
 // ================================================================
 // whirlpool — Sucks players in and teleports them to random rooms 4600-4699
 // ================================================================
+// specWhirlpool ports SPECIAL(whirlpool) (src/spec_procs2.c:244-275), assigned
+// to mob vnum 12200 (spec_assign.c:342). C iterates the mob's room people and
+// pulls every victim that is not PRF_NOHASSLE, not the mobile itself, and not
+// an NPC; the destination draw is number(real_room(4600), real_room(4699)) —
+// an integer over the vnum-sorted room-index (rnum) space, NOT over vnums —
+// rejecting PRIVATE/GODROOM/DEATH/NOMOB rooms with an unbounded redraw loop.
 func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	// C: if (mini_mud || !ch) return FALSE. The Go pulse adapter passes a nil
+	// Player instead of the mob itself (callMobSpecSafely); the pull itself
+	// only depends on the room's victims, so ch is not dereferenced here.
+	if me == nil {
 		return false
 	}
 	specOccurred := false
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if !pl.IsNPC() {
-			// Pick random room 4600-4699 that isn't private/godroom/death/nomob
-			var toRoom int
-			for i := 0; i < 100; i++ {
-				// #nosec G404 — game RNG, not cryptographic
-				// #nosec G404
-				candidate := dprng.Number(4600, 4699)
-				r := w.GetRoomInWorld(candidate)
-				if r == nil {
-					continue
-				}
-				if w.roomHasFlag(candidate, "private") || w.roomHasFlag(candidate, "godroom") ||
-					w.roomHasFlag(candidate, "death") || w.roomHasFlag(candidate, "nomob") {
-					continue
-				}
-				toRoom = candidate
-				break
-			}
-			if toRoom == 0 {
+		// C: if (!PRF_FLAGGED(vict,PRF_NOHASSLE) && vict != mobile && !IS_NPC(vict))
+		if pl.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
+			continue
+		}
+		// C: do { to_room = number(real_room(4600), real_room(4699)); }
+		//     while (PRIVATE || GODROOM || DEATH || NOMOB);
+		// One draw per rejection iteration, over the same absolute rnum
+		// bounds C uses, so the shared stream stays aligned (R3a).
+		lo, loOK := w.RealRoomIndex(4600)
+		hi, hiOK := w.RealRoomIndex(4699)
+		if !loOK || !hiOK {
+			// C's real_room would yield NOWHERE here; the stock world always
+			// has both endpoint rooms, so this is unreachable in practice.
+			continue
+		}
+		var toRoom int
+		for {
+			// #nosec G404 — game RNG, not cryptographic
+			idx := dprng.Number(lo, hi)
+			candidate, ok := w.RoomVNumByIndex(idx)
+			if !ok {
 				continue
 			}
-			pl.SetRoom(toRoom)
-			sendToChar(pl, "A ravaging whirlpool sucks you under!\r\n")
-			sendToChar(pl, "You finally surface, sputtering...\r\n\r\n")
-			w.LookAtRoom(pl, false)
-			specOccurred = true
+			if w.roomHasFlag(candidate, "private") || w.roomHasFlag(candidate, "godroom") ||
+				w.roomHasFlag(candidate, "death") || w.roomHasFlag(candidate, "nomob") {
+				continue
+			}
+			toRoom = candidate
+			break
 		}
+		pl.SetRoom(toRoom)
+		// C's strings (spec_procs2.c:267-268) carry LFCR framing; the telnet
+		// transport canonicalizes line endings for both engines, so the CRLF
+		// spelling rides the standard pipeline without sendToChar's extra
+		// appended terminator (which doubled the blank lines).
+		pl.SendMessage("A ravaging whirlpool sucks you under!\r\n")
+		pl.SendMessage("You finally surface, sputtering...\r\n\r\n")
+		w.LookAtRoom(pl, false)
+		specOccurred = true
 	}
 	return specOccurred
 }

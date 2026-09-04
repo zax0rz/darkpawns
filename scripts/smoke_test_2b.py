@@ -216,7 +216,15 @@ async def run_test(ws_url):
             # Base HP is 10, but AdvanceLevel adds a class/CON bonus at level 1.
             check("Starting HP >= 10", player.get("max_health", 0) >= 10, str(player.get("max_health")))
 
-        # Look around to confirm the world is reachable.
+        # The newbie birth transition is pulse-driven (start_room via
+        # room_activity); a command issued from the Burning Hut fires it at
+        # command time instead. Wait for the relocation to the hometown,
+        # then look.
+        birth_msgs = await cmd(ws, "look", wait=6.0)
+        for _ in range(8):
+            if "Your life begins now" in find_text(birth_msgs):
+                break
+            birth_msgs += await recv_until(ws, 1.5)
         look_msgs = await cmd(ws, "look", wait=1.0)
         look_text = find_text(look_msgs)
         room_state = find_state(look_msgs)

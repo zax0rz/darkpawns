@@ -317,6 +317,10 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		if !ok || s == nil {
 			return
 		}
+		s.notePlayerOutput()
+		if s.claimInterruptionPrefix() {
+			msg = append([]byte("\r\n"), msg...)
+		}
 		s.forwardSnoopOutput(string(msg))
 		// Wrap in JSON event envelope for WebSocket clients
 		wrapped, err := json.Marshal(ServerMessage{
@@ -552,15 +556,50 @@ func (m *Manager) ExtractPendingChars() {
 }
 
 // PumpPulses advances the deterministic heartbeat without routing through the
-// player command interpreter.
+// command interpreter. After the heartbeats return, every session that
+// received player-bound output during the pump gets its prompt — C's
+// process_output flushes every player every game-loop pass and each flush
+// carries the prompt at its tail (comm.c:632-648, 1624-1640).
 func (m *Manager) PumpPulses(n int) error {
+	return m.PumpPulsesFrom(nil, n)
+}
+
+// PumpPulsesFrom is PumpPulses with the session whose input line drove the
+// pump. C's input processing clears that descriptor's has_prompt
+// (comm.c:607), so its next output flush carries process_output's
+// interruption CRLF prefix.
+func (m *Manager) PumpPulsesFrom(s *Session, n int) error {
+	if s != nil {
+		s.promptInvalidated.Store(true)
+	}
 	m.pulsePumpMu.RLock()
 	pump := m.pulsePump
 	m.pulsePumpMu.RUnlock()
 	if pump == nil {
 		return fmt.Errorf("pulse pump is not configured")
 	}
-	return pump(n)
+	if err := pump(n); err != nil {
+		return err
+	}
+	m.flushAsyncPrompts()
+	return nil
+}
+
+// flushAsyncPrompts emits the trailing prompt for sessions that received
+// game output outside their own command path (pumped pulse output delivered
+// to idle players).
+func (m *Manager) flushAsyncPrompts() {
+	m.mu.RLock()
+	sessions := make([]*Session, 0, len(m.sessions))
+	for _, s := range m.sessions {
+		sessions = append(sessions, s)
+	}
+	m.mu.RUnlock()
+	for _, s := range sessions {
+		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() && !s.IsPaging() {
+			s.SendPrompt()
+		}
+	}
 }
 
 // Stop halts the manager's background workers and waits for them to exit.
@@ -1416,7 +1455,7 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 type Session struct {
 	conn                 *websocket.Conn
 	request              *http.Request // Store the original HTTP request for IP extraction
-	remoteIP             string        // Store IP directly for non-HTTP (Telnet) sessions
+	remoteIP             string        // Store remote IP directly for non-HTTP (Telnet) sessions
 	manager              *Manager
 	send                 chan []byte
 	player               *game.Player
@@ -1425,6 +1464,22 @@ type Session struct {
 	isGuest              bool
 	connCountDecremented bool // C5: prevents double-decrement of IP connection count
 	banLevel             int  // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
+
+	// outputSincePrompt counts player-bound messages enqueued since the last
+	// prompt. C's process_output appends "\r\n" + make_prompt to every output
+	// flush (comm.c:1624-1640); this counter lets SendPrompt reproduce that
+	// trailing framing and lets the post-pulse sweep find sessions that owe an
+	// async prompt after pumped heartbeat output.
+	outputSincePrompt atomic.Int64
+
+	// promptInvalidated mirrors C's d->has_prompt = 0 on input: the next
+	// output flush for the descriptor that sent the input is prefixed with
+	// the interruption CRLF (comm.c:1620-1643 — process_output sends i,
+	// which begins with "\r\n", instead of i+2 when the player had no
+	// outstanding prompt). The oracle's ~dpclock pump line is input too, so
+	// pumped output for the pumping session carries the prefix; idle other
+	// sessions keep their prompt and flush without it.
+	promptInvalidated atomic.Bool
 
 	// Agent identity — set on login when is_agent=true.
 	// Harness+Model is the agent identity. Same combo = same agent across sessions.

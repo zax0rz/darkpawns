@@ -489,9 +489,8 @@ func specStartRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	for _, player := range players {
 		player.SendMessage(startRoomBirthMessage(player.GetName()))
 		player.SetRoom(NewbieHometownRoom(player.GetHometown()))
-		// The C start_room path calls do_look with the new mortal's default
-		// PRF_AUTOEXIT state, which is off in the oracle vehicle.
-		player.SetAutoExit(false)
+		// C's do_look renders the fresh mortal's default PRF_AUTOEXIT state,
+		// which is on — the oracle's hometown look carries "[ Exits: … ]".
 		w.lookAtRoom(player, false)
 	}
 
