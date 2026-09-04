@@ -54,20 +54,43 @@ and first-token/trailing-argument branches. Shared command position,
 `PLR_NOSHOUT`, target lookup, and room visibility mechanics are not duplicated
 beyond the slice's differential probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add the focused registration test, a durable TSV manifest, and a
-`throttle-depth` oracle scenario using the standard actor, observer, target,
-and generic-mob fixture. Exercise no argument, a visible player target with
-trailing words, a generic mob target, a named self target, a missing target,
-and a sleeping target; retain the standard delegated rows for the shared
-social boundary. Run the five-seed oracle matrix and all repository gates
-before the final handoff.
+Added `cmd/dp-oracle-diff/scenarios/throttle-depth.txt` with the standard
+actor, observer, target, and generic-mob fixture;
+`pkg/session/throttle_depth_test.go` to pin the C command gate, social
+metadata, and all eight parsed message slots; and
+`docs/fidelity/depth/throttle.tsv` with twelve durable unit, delegated, and
+oracle rows. The existing Go handler and data are faithful; this was a
+pure-coverage slice and no player-visible Go behavior changed.
+
+The final `throttle-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and
+8. Seed 1 used `--show-oracle` and displayed the exact no-argument,
+visible-player/NPC target, named self, missing target, first-token/trailing-
+argument, and sleeping-target outputs. A concurrent seed-5 attempt encountered
+an infrastructure telnet-port collision before setup; the isolated rerun
+completed normally. Every completed seed exited 0 with
+`result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,534 total, 4,429 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `3c440d3cf` and `9af675cdb` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `threaten` handoff reported 4,522 total cases: 4,417
-proven/delegated, 54 blocked, and 51 excluded. This slice is expected to add
-twelve proven/delegated rows, bringing the frontier to 4,534 total, 4,429
+proven/delegated, 54 blocked, and 51 excluded. This slice adds twelve
+proven/delegated rows, bringing the frontier to 4,534 total, 4,429
 proven/delegated, 54 blocked, and 51 excluded. The next fresh social after
 this slice is `thumbsup` at `src/interpreter.c:771`.
