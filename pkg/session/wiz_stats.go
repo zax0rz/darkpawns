@@ -35,7 +35,44 @@ func cmdStat(s *Session, args []string) error {
 		}
 		return nil
 	}
-	if strings.ToLower(args[0]) == "obj" && len(args) > 1 {
+	selector := strings.ToLower(args[0])
+	switch selector {
+	case "mob":
+		if len(args) == 1 {
+			s.Send("Stats on which mobile?\r\n")
+			return nil
+		}
+		if target, ok := s.manager.world.ResolveCharWorld(s.player, args[1]); ok && target.Combatant != nil && target.Combatant.IsNPC() {
+			s.sendStatMob(target.Combatant.(*game.MobInstance))
+			return nil
+		}
+		s.Send("No such mobile around.\r\n")
+		return nil
+	case "player":
+		if len(args) == 1 {
+			s.Send("Stats on which player?\r\n")
+			return nil
+		}
+		if sess := findSessionByName(s.manager, args[1]); sess != nil && sess.player != nil {
+			s.sendStatPlayer(sess.player)
+			return nil
+		}
+		s.Send("No such player around.\r\n")
+		return nil
+	case "file":
+		if len(args) == 1 {
+			s.Send("Stats on which player?\r\n")
+			return nil
+		}
+		if !game.PlayerSaveExists(args[1]) {
+			s.Send("There is no such player.\r\n")
+			return nil
+		}
+	case "obj", "object":
+		if len(args) == 1 {
+			s.Send("Stats on which object?\r\n")
+			return nil
+		}
 		s.sendStatObject(args[1])
 		return nil
 	}
@@ -43,8 +80,15 @@ func cmdStat(s *Session, args []string) error {
 		s.sendStatPlayer(sess.player)
 		return nil
 	}
-	s.Send("Nothing found by that name.")
+	s.Send("Nothing around by that name.\r\n")
 	return nil
+}
+
+func (s *Session) sendStatMob(mob *game.MobInstance) {
+	if mob == nil || mob.Prototype == nil {
+		return
+	}
+	s.Send(fmt.Sprintf("Name: %s  Level: %d", mob.GetName(), mob.GetLevel()))
 }
 
 func (s *Session) sendStatPlayer(p *game.Player) {
@@ -109,7 +153,7 @@ func (s *Session) sendStatObject(name string) {
 			return
 		}
 	}
-	s.Send("No object found by that name.\r\n")
+	s.Send("No such object around.\r\n")
 }
 
 func (s *Session) sendObjProto(o *parser.Obj) {
@@ -142,6 +186,10 @@ func cmdVnum(s *Session, args []string) error {
 
 	category := strings.ToLower(args[0])
 	keyword := strings.ToLower(strings.Join(args[1:], " "))
+	if category != "mob" && category != "obj" && category != "object" {
+		s.Send("Usage: vnum { obj | mob } <name>\r\n")
+		return nil
+	}
 
 	if s.manager == nil || s.manager.world == nil {
 		s.Send("World not available.")
@@ -178,24 +226,14 @@ func cmdVnum(s *Session, args []string) error {
 				}
 			}
 		}
-	case "room":
-		for i := range parsed.Rooms {
-			r := &parsed.Rooms[i]
-			if strings.Contains(strings.ToLower(r.Name), keyword) {
-				results = append(results, fmt.Sprintf("[%5d] %s", r.VNum, r.Name))
-				if len(results) >= 30 {
-					results = append(results, fmt.Sprintf("... %d more matching rooms", len(parsed.Rooms)-i))
-					break
-				}
-			}
-		}
-	default:
-		s.Send("Category must be mob, obj, or room.")
-		return nil
 	}
 
 	if len(results) == 0 {
-		s.Send(fmt.Sprintf("No %s found matching %q.", category, keyword))
+		if category == "mob" {
+			s.Send("No mobiles by that name.\r\n")
+		} else {
+			s.Send("No objects by that name.\r\n")
+		}
 		return nil
 	}
 	s.Send(fmt.Sprintf("%s matching %q (%d found):", category, keyword, len(results)))
@@ -219,7 +257,7 @@ func cmdVstat(s *Session, args []string) error {
 	cat := strings.ToLower(args[0])
 	vnum, err := strconv.Atoi(args[1])
 	if err != nil {
-		s.Send("Invalid VNum.")
+		s.Send("Usage: vstat { obj | mob } <number>\r\n")
 		return nil
 	}
 
@@ -229,7 +267,7 @@ func cmdVstat(s *Session, args []string) error {
 	case "mob":
 		proto, ok := w.GetMobPrototype(vnum)
 		if !ok {
-			s.Send(fmt.Sprintf("No mob with VNum %d.", vnum))
+			s.Send("There is no monster with that number.\r\n")
 			return nil
 		}
 		s.Send(fmt.Sprintf("Mob: [%5d] %-30s\r\n", proto.VNum, proto.ShortDesc))
@@ -247,7 +285,7 @@ func cmdVstat(s *Session, args []string) error {
 	case "obj":
 		proto, ok := w.GetObjPrototype(vnum)
 		if !ok {
-			s.Send(fmt.Sprintf("No object with VNum %d.", vnum))
+			s.Send("There is no object with that number.\r\n")
 			return nil
 		}
 		s.Send(fmt.Sprintf("Object: [%5d] %s\r\n", proto.VNum, proto.ShortDesc))
@@ -262,24 +300,8 @@ func cmdVstat(s *Session, args []string) error {
 			}
 		}
 
-	case "room":
-		room := w.GetRoomInWorld(vnum)
-		if room == nil {
-			s.Send(fmt.Sprintf("No room with VNum %d.", vnum))
-			return nil
-		}
-		s.Send(fmt.Sprintf("Room: [%5d] %s\r\n", room.VNum, room.Name))
-		s.Send(fmt.Sprintf("Zone: %d  Sector: %d\r\n", room.Zone, room.Sector))
-		s.Send(fmt.Sprintf("Description: %s\r\n", room.Description))
-		if len(room.ExtraDescs) > 0 {
-			s.Send("Extra Descriptions:")
-			for _, ed := range room.ExtraDescs {
-				s.Send(fmt.Sprintf("  %s: %s\r\n", ed.Keywords, ed.Description))
-			}
-		}
-
 	default:
-		s.Send("Usage: vstat { obj | mob } <number>\r\n")
+		s.Send("That'll have to be either 'obj' or 'mob'.\r\n")
 	}
 	return nil
 }

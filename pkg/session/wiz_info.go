@@ -274,18 +274,42 @@ func cmdSyslog(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Your syslog is currently normal.")
-		s.Send("Usage: syslog { Off | Brief | Normal | Complete }")
+		s.Send(fmt.Sprintf("Your syslog is currently %s.\r\n", syslogLevel(s.player.GetFlags())))
 		return nil
 	}
 	level := strings.ToLower(args[0])
 	switch level {
 	case "off", "brief", "normal", "complete":
-		s.Send(fmt.Sprintf("Your syslog is now %s.", level))
+		if level == "brief" || level == "complete" {
+			s.player.SetPlrFlag(game.PrfLog1, true)
+		}
+		if level == "normal" || level == "complete" {
+			s.player.SetPlrFlag(game.PrfLog2, true)
+		}
+		if level == "off" {
+			s.player.SetPlrFlag(game.PrfLog1, false)
+			s.player.SetPlrFlag(game.PrfLog2, false)
+		}
+		s.Send(fmt.Sprintf("Your syslog is now %s.\r\n", level))
 	default:
-		s.Send("Usage: syslog { Off | Brief | Normal | Complete }")
+		s.Send("Usage: syslog { Off | Brief | Normal | Complete }\r\n")
 	}
 	return nil
+}
+
+func syslogLevel(flags uint64) string {
+	level := (flags & (1 << uint(game.PrfLog1))) >> uint(game.PrfLog1)
+	level |= ((flags & (1 << uint(game.PrfLog2))) >> uint(game.PrfLog2)) << 1
+	switch level {
+	case 1:
+		return "brief"
+	case 2:
+		return "normal"
+	case 3:
+		return "complete"
+	default:
+		return "off"
+	}
 }
 
 // cmdIdlist — dump object ID list to the fixed C report file (LVL_GRGOD).

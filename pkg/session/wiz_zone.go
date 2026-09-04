@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -88,44 +89,20 @@ func cmdZlist(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	pw := s.GetWorld().GetParsedWorld()
-	if pw == nil {
-		s.Send("No parsed world available.")
+	arg, _ := game.OneArgument(strings.Join(args, " "))
+	zoneNum := mlistAtoi(arg)
+	if arg == "" {
+		if room := s.GetWorld().GetRoomInWorld(s.player.RoomVNum); room != nil {
+			zoneNum = room.Zone
+		}
+	}
+	path := filepath.Join(s.GetWorld().WorldPath, "zon", fmt.Sprintf("%d.zon", zoneNum))
+	data, err := os.ReadFile(filepath.Clean(path))
+	if err != nil {
+		s.Send("No zone file for that number.\r\n")
 		return nil
 	}
-
-	zoneNum := 0
-	if len(args) > 0 {
-		n, err := strconv.Atoi(args[0])
-		if err == nil {
-			zoneNum = n
-		}
-	}
-	if zoneNum == 0 {
-		// Default to current room's zone
-		curRoom := s.GetWorld().GetRoomInWorld(s.player.RoomVNum)
-		if curRoom != nil {
-			zoneNum = curRoom.Zone
-		}
-	}
-
-	var result strings.Builder
-	result.WriteString("Zones:\r\n")
-	for _, z := range pw.Zones {
-		if zoneNum > 0 && z.Number != zoneNum {
-			// If filtering by keyword, still allow name match
-			if len(args) > 0 {
-				keyword := strings.ToLower(args[0])
-				if !strings.Contains(strings.ToLower(z.Name), keyword) {
-					continue
-				}
-			} else {
-				continue
-			}
-		}
-		fmt.Fprintf(&result, "  [%5d] %s (top: %d)\r\n", z.Number, z.Name, z.TopRoom)
-	}
-	s.Send(result.String())
+	PageString(s, string(data))
 	return nil
 }
 
@@ -270,7 +247,7 @@ func cmdSysfile(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) < 1 {
-		s.Send("Usage: sysfile <bugs|ideas|todo|typos>")
+		s.Send("That isn't a file!\r\n")
 		return nil
 	}
 	section := strings.ToLower(args[0])
