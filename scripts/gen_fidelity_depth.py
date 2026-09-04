@@ -30,6 +30,11 @@ PROVEN = {"oracle-green", "oracle-green-multiseed", "unit-green", "delegated"}
 def load_rows() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for path in sorted(MANIFEST_DIR.glob("*.tsv")):
+        # The surface inventory is a separate weighted denominator, not a
+        # depth-case manifest. Its schema and status vocabulary intentionally
+        # differ from the per-case files consumed below.
+        if path.name == "surface-inventory.tsv":
+            continue
         with path.open(encoding="utf-8", newline="") as stream:
             reader = csv.DictReader(stream, delimiter="\t")
             if tuple(reader.fieldnames or ()) != FIELDS:
