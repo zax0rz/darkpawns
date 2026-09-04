@@ -25,10 +25,19 @@ reachability decisions.
 
 ## Protocol and decision
 
-The slice will use the standard two-attempt depth protocol with per-scenario
-timeouts of at least 240 seconds, and will promote the surface inventory only
-when every call-site family has an existing proof or an explicit, sharpened
-blocked row. No C or oracle source is modified. Any newly discovered
+The slice used the standard two-seed depth protocol with a 300-second
+per-scenario timeout. `put-basic`, `get-room`, `get-container`, `drop-basic`,
+`give-basic`, `drink-basic`, `eat-basic`, `pour-basic`, `fill-depth`,
+`wear-basic`, `wield-basic`, `grab-depth`, `hold-depth`, `remove-basic`, and
+`donate-routing` all reported `no normalized divergence` for seeds 1 and 2.
+One parallel `donate-routing` seed-2 process failed before readiness because
+the local harness ports collided; the isolated rerun was green and is the
+usable result.
+
+The inventory row is promoted to `proven-already` as a call-site ownership
+result: all 169 literals map to existing focused rows, and the reachable
+non-green vampire/werewolf paths remain explicit blocked cases rather than
+hidden exclusions. No C or oracle source is modified. Any newly discovered
 reachable path will be classified as proven, blocked, or a separately
 justified exclusion; it will not be silently absorbed into a broad green
 claim.
