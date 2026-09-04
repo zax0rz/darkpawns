@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -471,60 +472,159 @@ func articleFor(word string) string {
 	}
 }
 
-// cmdUsersSafe replaces cmdUsers to gate IP display behind LVL_GOD+.
-// Regular immortals see name/level only; gods and above see IPs.
-func cmdUsersSafe(s *Session, args []string) error {
+const usersFormat = "format: users [-l minlevel[-maxlevel]] [-n name] [-h host] [-c classlist] [-o] [-p]\r\n"
+
+type usersOptions struct {
+	low        int
+	high       int
+	name       string
+	host       string
+	classMask  int64
+	playing    bool
+	deadweight bool
+}
+
+func parseUsersArgs(args []string) (usersOptions, bool) {
+	opts := usersOptions{high: game.LVL_IMPL}
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if len(arg) < 2 || arg[0] != '-' {
+			return usersOptions{}, false
+		}
+		switch arg[1] {
+		case 'o', 'k':
+			// C sets outlaws here, but never consumes that local in the
+			// descriptor loop; its observable effect is the same as -p.
+			opts.playing = true
+		case 'p':
+			opts.playing = true
+		case 'd':
+			opts.deadweight = true
+		case 'l', 'n', 'h', 'c':
+			if i+1 >= len(args) {
+				return usersOptions{}, false
+			}
+			i++
+			value := args[i]
+			switch arg[1] {
+			case 'l':
+				parts := strings.SplitN(value, "-", 2)
+				low, err := strconv.Atoi(parts[0])
+				if err != nil {
+					return usersOptions{}, false
+				}
+				opts.low = low
+				if len(parts) == 2 {
+					high, err := strconv.Atoi(parts[1])
+					if err != nil {
+						return usersOptions{}, false
+					}
+					opts.high = high
+				}
+			case 'n':
+				opts.name = value
+			case 'h':
+				opts.host = value
+			case 'c':
+				for _, classLetter := range strings.ToLower(value) {
+					opts.classMask |= game.FindClassBitvector(byte(classLetter))
+				}
+			}
+		default:
+			return usersOptions{}, false
+		}
+	}
+	return opts, true
+}
+
+func usersHost(s *Session) string {
+	host := s.RemoteIP()
+	if ip := net.ParseIP(host).To4(); ip != nil {
+		return fmt.Sprintf("%03d.%03d.%03d.%03d", ip[0], ip[1], ip[2], ip[3])
+	}
+	if host != "" {
+		return host
+	}
+	return "Hostname unknown"
+}
+
+// cmdUsers ports act.informative.c do_users. The Go session map contains only
+// authenticated playing descriptors, so the menu/deadweight branches have no
+// rows to emit; the descriptor number, C host spelling, wall-clock login time,
+// and table layout remain visible exactly as they are in C.
+func cmdUsers(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.sendText("Huh?!?")
 		return nil
 	}
 
-	showIPs := s.player.Level >= LVL_GOD
-
-	filter := ""
-	if len(args) > 0 {
-		filter = strings.ToLower(args[0])
+	opts, ok := parseUsersArgs(args)
+	if !ok {
+		s.sendText(usersFormat)
+		return nil
 	}
 
 	var buf strings.Builder
-	if showIPs {
-		fmt.Fprintf(&buf, "%-15s %-6s %-20s\n", "Name", "Level", "Remote Addr")
-		buf.WriteString(strings.Repeat("-", 45) + "\n")
-	} else {
-		fmt.Fprintf(&buf, "%-15s %-6s\n", "Name", "Level")
-		buf.WriteString(strings.Repeat("-", 25) + "\n")
-	}
+	buf.WriteString("Num Class   Name         State          Idl Login@   Site\r\n")
+	buf.WriteString("--- ------- ------------ -------------- --- -------- ------------------------\r\n")
 
 	count := 0
 	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
+		sessions = append(sessions, sess)
+	}
+	sort.SliceStable(sessions, func(i, j int) bool {
+		if sessions[i].connectionNumber != sessions[j].connectionNumber {
+			return sessions[i].connectionNumber > sessions[j].connectionNumber
+		}
+		return sessions[i].playerName > sessions[j].playerName
+	})
+	for _, sess := range sessions {
 		if sess.player == nil {
 			continue
 		}
-		name := sess.player.Name
-		level := sess.player.GetLevel()
-
-		if filter != "" && !strings.Contains(strings.ToLower(name), filter) {
+		player := sess.player
+		level := player.GetLevel()
+		if opts.name != "" && !strings.EqualFold(player.Name, opts.name) {
 			continue
 		}
-
-		if showIPs {
-			ip := "unknown"
-			if sess.request != nil {
-				ip = sess.request.RemoteAddr
-				if fwd := sess.request.Header.Get("X-Forwarded-For"); fwd != "" {
-					ip = fwd
-				}
-			}
-			fmt.Fprintf(&buf, "%-15s %-6d %-20s\n", name, level, ip)
-		} else {
-			fmt.Fprintf(&buf, "%-15s %-6d\n", name, level)
+		if opts.host != "" && !strings.Contains(usersHost(sess), opts.host) {
+			continue
 		}
+		if level < opts.low || level > opts.high {
+			continue
+		}
+		if opts.classMask != 0 && opts.classMask&(1<<uint(player.GetClass())) == 0 {
+			continue
+		}
+		if !game.CanSee(s.player, player) || s.player.GetInvisLevel() > s.player.GetLevel() {
+			continue
+		}
+		if opts.deadweight {
+			// There are no non-playing descriptors in Manager.sessions.
+			continue
+		}
+		classAbbr := "--"
+		if class := player.GetClass(); class >= 0 && class < len(game.ClassAbbrevs) {
+			classAbbr = game.ClassAbbrevs[class]
+		}
+		idle := ""
+		if player.GetLevel() < s.player.GetLevel() || s.player.GetLevel() == game.LVL_IMPL {
+			idle = fmt.Sprintf("%3d", player.GetIdleTimer()*game.SECS_PER_MUD_HOUR/60)
+		}
+		loginAt := sess.connectedAt.Format("15:04:05")
+		state := "Playing"
+		if sess.isSwitched {
+			state = "Switched"
+		}
+		fmt.Fprintf(&buf, "%3d [%-2d %s] %-12s %-14s %-3s %-8s [%s]\r\n",
+			sess.connectionNumber, level, classAbbr, player.Name, state, idle, loginAt, usersHost(sess))
 		count++
 	}
 	s.manager.mu.RUnlock()
 
-	fmt.Fprintf(&buf, "\n%d player(s) connected.\n", count)
+	fmt.Fprintf(&buf, "\r\n%d visible sockets connected.\r\n", count)
 	s.sendText(buf.String())
 	return nil
 }

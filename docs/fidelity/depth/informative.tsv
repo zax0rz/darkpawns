@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_coins	gold	coins.output	D2	command	oracle-green-multiseed	informative-residual-depth@1,2	interpreter.c:469; act.informative.c:2743-2754	Carried, banked, and net coin totals match byte-for-byte on both deterministic seeds (R1/R3/R5e).
+do_users	users	users.output	D3	command	oracle-green-multiseed	informative-residual-depth@1,2	interpreter.c:797; act.informative.c:1948-2115	Immortal descriptor table matches C's number/class/name/state/idle/login/site columns and visible-socket footer (R1/R2/R3/R5e).
+do_toggle	toggle	toggle.output	D2	command	oracle-green-multiseed	informative-residual-depth@1,2	interpreter.c:779; act.informative.c:2500-2579	The aggregate preference grid matches C for the crowned first player, including init_char's zeroed display flags and wimp level (R1/R3/R5e).
+do_toggle	toggle	toggle.god-init-defaults	D4	state	unit-green	TestBootstrapFirstPlayerGod_StatsAndSkillsAndConditions	class.c:585-589; db.c:3014-3074	Focused bootstrap proof pins C's first-player path: autoexit, display flags, and wimp remain off before the God reaches do_toggle (R3/R5e).

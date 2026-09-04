@@ -1,0 +1,44 @@
+# depth-case: coins.output
+# depth-case: users.output
+# depth-case: toggle.output
+# C-first vehicle for the remaining reachable act.informative.c handlers:
+# do_coins:2743-2754, do_users:1948-2115, and do_toggle:2500-2579.
+# empty-players crowns the actor so the LVL_IMMORT users surface is reachable.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+InformativeResidual
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+InformativeResidual
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+gold
+users
+toggle
