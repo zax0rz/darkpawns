@@ -48,7 +48,39 @@ target all remain on the same no-argument actor/room path because there is no
 (represented by the legacy Go `MinLevel` and `HideFlag` fields). Position,
 `PLR_NOSHOUT`, and shared Act visibility are delegated rather than duplicated.
 
-No Go source behavior is expected to change unless the differential run
-confirms a divergence. No file under `src/` or `darkpawns-c-oracle/` may be
-edited.
+## Result and proof
 
+Added `cmd/dp-oracle-diff/scenarios/whistle-depth.txt` with the standard
+actor/peer fixture and four self-only probes; `pkg/session/whistle_depth_test.go`
+to pin the C command gate, social metadata, and all three parsed message slots;
+and `docs/fidelity/depth/whistle.tsv` with eight durable D1-D3 rows. This was a
+pure-coverage slice: the existing Go handler and data were already faithful,
+so no player-visible Go source behavior changed.
+
+The `whistle-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact actor/room output for no
+argument, typed peer, missing target, and named self. Every seed exited 0 with
+`result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,702 total, 4,597 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `a24a602c8` and `5092653eb`. No file
+under `src/` or `darkpawns-c-oracle/` was edited.
+
+## Starting frontier
+
+The merged `whine` handoff reported 4,694 total cases: 4,589
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eight
+proven/delegated rows, bringing the frontier to 4,702 total, 4,597
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social is
+`wiggle` at `src/interpreter.c:826`.
