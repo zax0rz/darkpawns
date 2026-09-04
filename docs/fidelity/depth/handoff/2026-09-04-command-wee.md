@@ -49,19 +49,39 @@ exact empty string. Shared command position, `PLR_NOSHOUT`, and room
 visibility mechanics are not duplicated beyond the slice's differential
 probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add a focused registration test pinning the C command gate, social metadata,
-and all three parsed message slots. Add a self-only oracle scenario with a
-named actor and peer fixture. Annotate no-argument, typed-target ignored,
-missing-target ignored, and named-self ignored cases. Run the standard
-deterministic seed matrix (1, 2, 3, 5, and 8), with seed 1 using
-`--show-oracle`, then run the repository build, vet, test, lint, formatting,
-security, and diff gates.
+Added `cmd/dp-oracle-diff/scenarios/wee-depth.txt` with the standard actor and
+peer fixture; `pkg/session/wee_depth_test.go` to pin the C command gate, social
+metadata, and all three parsed message slots; and `docs/fidelity/depth/wee.tsv`
+with eight durable unit, delegated, and oracle rows. The existing Go handler
+and data are faithful; this was a pure-coverage slice and no player-visible Go
+behavior changed.
+
+The final `wee-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact self-only actor/room
+messages for no argument, typed target, missing target, and named self. Every
+seed exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,658 total, 4,553 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `966195622` and `b391fdc00` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `wedgie` handoff reported 4,650 total cases: 4,545
-proven/delegated, 54 blocked, and 51 excluded. This slice is expected to add
-eight proven/delegated rows. The next fresh social after this slice is
-`weep` at `src/interpreter.c:813`.
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eight
+proven/delegated rows, bringing the frontier to 4,658 total, 4,553
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social after
+this slice is `weep` at `src/interpreter.c:813`.
