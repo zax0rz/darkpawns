@@ -49,19 +49,40 @@ actor/room pair and typed-target, self-target, and missing-target variants
 that all remain on that same path. Shared command position, `PLR_NOSHOUT`,
 and room visibility mechanics are not duplicated.
 
-## Planned proof vehicle
+## Result and proof
 
-Add `cmd/dp-oracle-diff/scenarios/strut-depth.txt` with depth-case tags for
-the no-argument and ignored-argument branches, the standard actor and peer
-fixture, `pkg/session/strut_depth_test.go` to pin the C command gate and all
-three parsed message slots, and `docs/fidelity/depth/strut.tsv` with the
-durable unit, delegated, and oracle rows. The existing Go handler and data
-are expected to be faithful; any mismatch must be resolved from the C call
-path under R5e.
+Added `cmd/dp-oracle-diff/scenarios/strut-depth.txt` with the standard actor
+and peer fixture; `pkg/session/strut_depth_test.go` to pin the C command gate
+and all three parsed message slots; and `docs/fidelity/depth/strut.tsv` with
+eight durable unit, delegated, and oracle rows. The existing Go handler and
+data are faithful; this was a pure-coverage slice and no player-visible Go
+behavior changed.
+
+The final `strut-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact actor and ordinary room
+messages for no argument, visible peer, missing target, and named self. Every
+seed exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,426 total, 4,321 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `5dce28170` and `8f109cda7` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `stroke` handoff reported 4,418 total cases: 4,313
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eight
+proven/delegated rows, bringing main's frontier to 4,426 total, 4,321
 proven/delegated, 54 blocked, and 51 excluded. Continue the remaining Phase 1
 social sweep before the later red/blocked and off-command-table phases in the
 objective. The next fresh social after this slice is `sulk` at
