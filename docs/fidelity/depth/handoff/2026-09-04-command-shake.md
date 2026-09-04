@@ -54,20 +54,43 @@ three audiences, first-token parsing, visible NPC target, self target,
 missing target, and sleeping-target rejection. The shared position failure,
 lookup, and audience mechanisms are not duplicated here.
 
-## Planned proof vehicle
+## Result and proof vehicle
 
-Add `cmd/dp-oracle-diff/scenarios/shake-depth.txt` with `# depth-case:` tags
+Added `cmd/dp-oracle-diff/scenarios/shake-depth.txt` with `# depth-case:` tags
 for each branch and the standard actor/observer/target plus trainee-mob
-fixture. Add `pkg/session/shake_depth_test.go` to pin the C command gate and
-all eight parsed social messages. Run the scenario with the oracle at seeds
-1, 2, 3, 5, and 8, using `--show-oracle` for seed 1. If the existing Go
-handler and data are faithful, this is a pure-coverage slice; only confirmed
-player-visible divergence may change Go behavior.
+fixture. Added `pkg/session/shake_depth_test.go` to pin the C command gate and
+all eight parsed social messages, and added `docs/fidelity/depth/shake.tsv`
+with eleven durable rows. The existing Go handler and data are faithful; this
+was a pure-coverage slice and no player-visible Go behavior changed.
+
+The final `shake-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the intended no-argument, player
+target, NPC target, self, missing-target, and sleeping-target blocks. Every
+seed exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,329 total, 4,224 proven/delegated, 54 blocked,
+  and 51 excluded; 98.7% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff, evidence, and tests are in commits `dec6bc92c` and
+`bedb22076` at the time of this note. No file under `src/` or
+`darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
-The merged `scream` handoff reports 4,318 total cases: 4,213
-proven/delegated, 54 blocked, and 51 excluded. The `shake` slice will add its
-durable branch rows and update this note with final oracle evidence, local
-and hosted gates, merge identity, and the next social queue position.
-
+The merged `scream` handoff reported 4,318 total cases: 4,213
+proven/delegated, 54 blocked, and 51 excluded. This slice adds eleven
+proven/delegated rows, bringing main's frontier to 4,329 total, 4,224
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social audit is
+`shrug` at `src/interpreter.c:696`; `sharpen` and `shiver` are already owned
+by their existing non-overlapping/manifested families. Continue the remaining
+Phase 1 social sweep before the later red/blocked and off-command-table
+phases in the objective.
