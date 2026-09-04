@@ -586,8 +586,8 @@ func (w *World) SetShopBuyTypes(keeperVNum int, buyTypes []int) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	sm, ok := w.shopManager.(*ShopManager)
-	if !ok {
+	sm := w.legacyShopManagerLocked()
+	if sm == nil {
 		return false
 	}
 	shop := sm.GetShopByKeeper(keeperVNum)
@@ -604,8 +604,8 @@ func (w *World) SetShopSellTypes(keeperVNum int, sellTypes []int) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	sm, ok := w.shopManager.(*ShopManager)
-	if !ok {
+	sm := w.legacyShopManagerLocked()
+	if sm == nil {
 		return false
 	}
 	shop := sm.GetShopByKeeper(keeperVNum)
@@ -622,8 +622,8 @@ func (w *World) SetShopProfit(keeperVNum int, buyProfit, sellProfit float64) boo
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	sm, ok := w.shopManager.(*ShopManager)
-	if !ok {
+	sm := w.legacyShopManagerLocked()
+	if sm == nil {
 		return false
 	}
 	shop := sm.GetShopByKeeper(keeperVNum)

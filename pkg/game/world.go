@@ -94,6 +94,12 @@ type World struct {
 
 	// Shop manager
 	shopManager common.ShopManager
+	// cShopManager is the authoritative boot-time shop index built from the
+	// parsed .shp records. The session command path still consumes the legacy
+	// game.Shop shape, while the runtime manager is the newer systems stack.
+	// Keep the parsed index as a compatibility bridge until that stack is
+	// consolidated without dropping the live C shop surface.
+	cShopManager *ShopManager
 	// shopKeepers maps shopkeeper mob vnum -> shop behavior bitvector, loaded
 	// from the .shp files at boot (C: assign_the_shopkeepers).
 	shopKeepers map[int]int
@@ -186,7 +192,8 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		objectInstances:          make(map[int]*ObjectInstance),
 		specRooms:                make(map[int]bool),
 		done:                     make(chan bool),
-		shopManager:              nil,    // Will be set via SetShopManager
+		shopManager:              nil, // Will be set via SetShopManager
+		cShopManager:             NewShopManager(),
 		parsedData:               parsed, // Keep reference for door loading etc.
 		WorldPath:                "",     // Set externally for reload support
 	}
@@ -233,6 +240,20 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	for i := range parsed.Shops {
 		shop := &parsed.Shops[i]
 		w.shopKeepers[shop.KeeperVNum] = shop.Bitvector
+		legacyShop := &Shop{
+			KeeperVNum: shop.KeeperVNum,
+			BuyTypes:   append([]int(nil), shop.BuyTypes...),
+			ProfitBuy:  shop.BuyProfit,
+			ProfitSell: shop.SellProfit,
+			Flags:      shop.Bitvector,
+		}
+		if len(shop.Rooms) > 0 {
+			legacyShop.RoomVNum = shop.Rooms[0]
+		}
+		if keeper, ok := w.mobs[shop.KeeperVNum]; ok {
+			legacyShop.KeeperName = keeper.ShortDesc
+		}
+		w.cShopManager.AddShop(legacyShop)
 	}
 
 	// Initialize event queue

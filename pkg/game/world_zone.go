@@ -57,13 +57,24 @@ func (w *World) SetShopManager(manager common.ShopManager) {
 	w.shopManager = manager
 }
 
+// legacyShopManagerLocked returns the C-record-backed shop view used by the
+// session and admin compatibility paths. Tests and older callers may install
+// the legacy manager directly; production installs systems.ShopManager, so
+// fall back to the parsed .shp index in that case.
+func (w *World) legacyShopManagerLocked() *ShopManager {
+	if sm, ok := w.shopManager.(*ShopManager); ok {
+		return sm
+	}
+	return w.cShopManager
+}
+
 // GetShopByKeeper returns a shop by keeper NPC VNum.
 // Uses the concrete ShopManager if available.
 func (w *World) GetShopByKeeper(vnum int) (*Shop, bool) {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 
-	if sm, ok := w.shopManager.(*ShopManager); ok {
+	if sm := w.legacyShopManagerLocked(); sm != nil {
 		shop := sm.GetShopByKeeper(vnum)
 		return shop, shop != nil
 	}
@@ -76,7 +87,7 @@ func (w *World) GetAllShops() []*Shop {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 
-	if sm, ok := w.shopManager.(*ShopManager); ok {
+	if sm := w.legacyShopManagerLocked(); sm != nil {
 		return sm.GetAllShops()
 	}
 	return nil
@@ -89,7 +100,7 @@ func (w *World) ShopBuysType(mobVNum int, itemType int) bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 
-	if sm, ok := w.shopManager.(*ShopManager); ok {
+	if sm := w.legacyShopManagerLocked(); sm != nil {
 		shop := sm.GetShopByKeeper(mobVNum)
 		if shop == nil {
 			return false

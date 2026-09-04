@@ -1,0 +1,48 @@
+# C-first live shop-stack vehicle.
+#
+# Mob 12100 is the keeper in lib/world/shp/121.shp.  The setup places the
+# keeper in the player's room so interpreter.c dispatches `list` to the
+# shop_keeper special procedure.  The Go process currently recognizes the
+# parsed combat shopkeeper but cannot resolve it through World.GetShopByKeeper
+# after main wires systems.ShopManager; this vehicle records that live gap.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 12100 1 12133 80
+
+[setup:oracle]
+Shopstack
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopstack
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12133
+
+[probe]
+look
+list
