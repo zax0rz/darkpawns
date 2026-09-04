@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:701;
+# src/act.social.c:102-151; lib/misc/socials:705-713). The authored sing
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: sing.no-argument
+# depth-case: sing.target-success
+# depth-case: sing.target-audience
+# depth-case: sing.argument-first-token
+# depth-case: sing.mob-target
+# depth-case: sing.self-target
+# depth-case: sing.target-not-found
+# depth-case: sing.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Singactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Singactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Singobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Singobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Singtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Singtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Singobserver 8162
+teleport Singtarget 8162
+
+[probe]
+sing
+sing Singtarget trailing words are ignored
+sing Singtarget
+sing trainee
+sing Singactor
+sing self
+sing Nobody
+force Singtarget sleep
+sing Singtarget
