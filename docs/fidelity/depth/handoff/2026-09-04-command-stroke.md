@@ -56,18 +56,43 @@ authored messages. Shared command position, `PLR_NOSHOUT`, and common
 audience/lookup mechanics are not duplicated beyond the slice's differential
 probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add `cmd/dp-oracle-diff/scenarios/stroke-depth.txt` with the standard actor,
+Added `cmd/dp-oracle-diff/scenarios/stroke-depth.txt` with the standard actor,
 observer, target, and generic-mob fixture; `pkg/session/stroke_depth_test.go`
 to pin the C command gate and all eight parsed message slots; and
-`docs/fidelity/depth/stroke.tsv` with durable unit, delegated, and oracle rows.
-The existing Go handler and data are expected to be faithful; any mismatch
-must be resolved from the C call path under R5e.
+`docs/fidelity/depth/stroke.tsv` with twelve durable unit, delegated, and
+oracle rows. The existing Go handler and data are faithful; this was a
+pure-coverage slice and no player-visible Go behavior changed.
+
+The final `stroke-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the intentional silent no-argument
+room slot, visible-target, generic-mob, self-target, not-found, and
+sleeping-target audiences. Every seed exited 0 with
+`result: no normalized divergence`. The sleeping-target result confirms C's
+zero victim-position minimum admits the branch while `TO_VICT`/SENDOK
+suppresses the sleeping recipient's private line.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,418 total, 4,313 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `11196cf7f` and `73331a49a` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `stretch` handoff reported 4,406 total cases: 4,301
+proven/delegated, 54 blocked, and 51 excluded. This slice adds twelve
+proven/delegated rows, bringing main's frontier to 4,418 total, 4,313
 proven/delegated, 54 blocked, and 51 excluded. Continue the remaining Phase 1
 social sweep before the later red/blocked and off-command-table phases in the
 objective. The next fresh social after this slice is `strut` at
