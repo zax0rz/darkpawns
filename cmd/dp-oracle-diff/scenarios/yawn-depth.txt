@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:840;
+# src/act.social.c:102-127; lib/misc/socials:1024-1027). The authored yawn
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: yawn.no-argument
+# depth-case: yawn.typed-target-ignored
+# depth-case: yawn.missing-target-ignored
+# depth-case: yawn.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Yawnactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Yawnactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Yawnpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Yawnpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Yawnpeer 8162
+
+[probe]
+yawn
+yawn Yawnpeer
+yawn Nobody
+yawn Yawnactor
