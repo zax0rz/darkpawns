@@ -84,6 +84,8 @@ func zresetZoneIndex(zones []*parser.Zone, zoneNumber int) int {
 
 // cmdZlist — list zones (LVL_IMMORT)
 // Original: act.wizard.c do_zlist() — shows zone file contents, defaults to current room's zone
+const zlistReadLimit = 8192 - 5 // C fread bound: MAX_STRING_LENGTH - 5 (src/structs.h:643)
+
 func cmdZlist(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -101,6 +103,9 @@ func cmdZlist(s *Session, args []string) error {
 	if err != nil {
 		s.Send("No zone file for that number.\r\n")
 		return nil
+	}
+	if len(data) > zlistReadLimit {
+		data = data[:zlistReadLimit]
 	}
 	PageString(s, string(data))
 	return nil

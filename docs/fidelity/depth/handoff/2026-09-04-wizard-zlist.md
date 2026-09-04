@@ -68,10 +68,40 @@ divergence, not a pager navigation inference (R1/R3/R5e).
 
 ## Implementation and proof
 
-To be filled after the confirmed C read bound is implemented and the focused
-vehicle is green at both seeds.
+`cmdZlist` now preserves C's `fread` bound of `MAX_STRING_LENGTH - 5` (8187
+bytes) before handing the selected file to the canonical `PageString` path.
+This keeps the existing C-compatible first-token `atoi`, current-zone
+default, missing-file refusal, and pager ownership unchanged while preventing
+bytes beyond the C buffer from changing the page count.
+
+The focused test proves the exact bounded prefix and command-table gate. The
+C-first vehicle is green with `--show-oracle` at both `DP_SEED=1` and
+`DP_SEED=2`:
+
+```text
+wizard-zlist-depth: result: no normalized divergence
+```
+
+It covers missing files, signed numeric selection, decimal-prefix and
+nonnumeric `atoi` behavior, ignored trailing words, current-zone defaulting,
+long-file pager entry, and pager quit. Shared pager navigation remains owned
+by the existing pager proof rather than duplicated here (R1/R2/R3/R5b/R5c/R5e).
 
 ## Verification
 
-To be filled after the full fidelity, build, vet, test, lint, formatting, and
-security gates complete.
+The required verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4288 total, 4183 proven/delegated, 54 blocked, 51
+  excluded; 98.7% actionable completion.
+- `go test ./pkg/session -run 'Test(Zlist|CmdZlist)' -count=1` — passed.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The focused `wizard-zlist-depth` oracle matrix also produced no normalized
+divergence at `DP_SEED=1` and `DP_SEED=2`. No files under `src/` or
+`darkpawns-c-oracle/` were changed.
