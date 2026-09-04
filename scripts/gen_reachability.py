@@ -205,9 +205,11 @@ def parse_go_registry(session_dir: Path) -> set[str]:
 
 
 def parse_go_socials(path: Path) -> set[str]:
-    """Parse pkg/game/socials.txt for social names.
+    """Parse the authoritative lib/misc/socials records for social names.
 
-    Format: name min_pos min_level (tab or space separated)
+    The first line of each record is ``name min_pos min_level``; message lines
+    are intentionally ignored. This keeps the audit independent of generated
+    metadata artifacts that are not consumed by the Go runtime.
     """
     socials = set()
     text = path.read_text(encoding="utf-8", errors="replace")
@@ -394,9 +396,9 @@ def classify_command(
     # Socials (do_action handler)
     if handler == "do_action":
         if cmd in go_socials:
-            return ("social", "pkg/game/socials.txt")
+            return ("social", "lib/misc/socials")
         else:
-            return ("missing-social", "not found in pkg/game/socials.txt")
+            return ("missing-social", "not found in lib/misc/socials")
 
     # Check Go registry (exact match)
     if cmd in go_registry:
@@ -444,8 +446,9 @@ def main():
     # Parse Go registry (all session/*.go files)
     go_registry = parse_go_registry(ROOT / "pkg" / "session")
 
-    # Parse Go socials
-    go_socials = parse_go_socials(ROOT / "pkg" / "game" / "socials.txt")
+    # Parse Go socials from the authoritative C-format data shared by the Go
+    # loader, not from the retired generated metadata artifact.
+    go_socials = parse_go_socials(ROOT / "lib" / "misc" / "socials")
 
     # Parse specproc intercepts
     specproc_intercepts = parse_specproc_intercepts("pkg/game/spec_proc*.go")
