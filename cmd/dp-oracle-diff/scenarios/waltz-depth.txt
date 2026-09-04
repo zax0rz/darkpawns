@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:807;
+# src/act.social.c:102-149; lib/misc/socials:1356-1364). The authored waltz
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: waltz.no-argument
+# depth-case: waltz.target-success
+# depth-case: waltz.target-audience
+# depth-case: waltz.argument-first-token
+# depth-case: waltz.mob-target
+# depth-case: waltz.self-target
+# depth-case: waltz.target-not-found
+# depth-case: waltz.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Waltzactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Waltzactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Waltzobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Waltzobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Waltztarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Waltztarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Waltzobserver 8162
+teleport Waltztarget 8162
+
+[probe]
+waltz
+waltz Waltztarget trailing words are ignored
+waltz Waltztarget
+waltz trainee
+waltz Waltzactor
+waltz self
+waltz Nobody
+force Waltztarget sleep
+waltz Waltztarget
