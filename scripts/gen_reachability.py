@@ -205,21 +205,22 @@ def parse_go_registry(session_dir: Path) -> set[str]:
 
 
 def parse_go_socials(path: Path) -> set[str]:
-    """Parse the authoritative lib/misc/socials records for social names.
+    """Parse social names straight from the Go runtime's source of truth.
 
-    The first line of each record is ``name min_pos min_level``; message lines
-    are intentionally ignored. This keeps the audit independent of generated
-    metadata artifacts that are not consumed by the Go runtime.
+    pkg/game/socials.go's Socials map is what the server actually serves, so
+    the ratchet reads its keys (``\t"name": {`` records). A C-vs-Go gap must
+    compare against the Go map, not against lib/misc/socials — a C data file —
+    or a social missing from the map becomes structurally undetectable.
     """
     socials = set()
     text = path.read_text(encoding="utf-8", errors="replace")
     for line in text.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
+        stripped = line.strip()
+        if not stripped.startswith('"'):
             continue
-        parts = line.split()
-        if parts:
-            socials.add(parts[0].lower())
+        name = stripped.split('"')[1] if '"' in stripped else ""
+        if name and ":" in stripped:
+            socials.add(name.lower())
     return socials
 
 
@@ -448,7 +449,7 @@ def main():
 
     # Parse Go socials from the authoritative C-format data shared by the Go
     # loader, not from the retired generated metadata artifact.
-    go_socials = parse_go_socials(ROOT / "lib" / "misc" / "socials")
+    go_socials = parse_go_socials(ROOT / "pkg" / "game" / "socials.go")
 
     # Parse specproc intercepts
     specproc_intercepts = parse_specproc_intercepts("pkg/game/spec_proc*.go")
