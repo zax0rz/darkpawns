@@ -526,8 +526,9 @@ func parseUsersArgs(args []string) (usersOptions, bool) {
 			case 'h':
 				opts.host = value
 			case 'c':
-				for _, classLetter := range strings.ToLower(value) {
-					opts.classMask |= game.FindClassBitvector(byte(classLetter))
+				value = strings.ToLower(value)
+				for i := 0; i < len(value); i++ {
+					opts.classMask |= game.FindClassBitvector(value[i])
 				}
 			}
 		default:
