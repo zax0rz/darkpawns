@@ -40,6 +40,8 @@ def load_rows() -> list[dict[str, str]]:
             if tuple(reader.fieldnames or ()) != FIELDS:
                 raise ValueError(f"{path}: fields {reader.fieldnames!r}, want {FIELDS!r}")
             for line_no, row in enumerate(reader, 2):
+                if None in row or any(row.get(field) is None for field in FIELDS):
+                    raise ValueError(f"{path}:{line_no}: wrong number of tab-separated fields")
                 row = {key: (value or "").strip() for key, value in row.items()}
                 if not row["case_id"]:
                     raise ValueError(f"{path}:{line_no}: empty case_id")
