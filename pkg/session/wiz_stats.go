@@ -291,11 +291,18 @@ var wizardPreferenceFlagNames = []string{
 }
 
 func wizardMobFlags(flags uint64) string {
-	return strings.TrimSpace(game.SprintbitArray([]uint32{uint32(flags)}, wizardMobFlagNames, 1))
+	return strings.TrimSpace(game.SprintbitArray([]uint32{wizardFlagWord(flags)}, wizardMobFlagNames, 1))
 }
 
 func wizardAffectFlags(flags uint64) string {
-	return strings.TrimSpace(game.SprintbitArray([]uint32{uint32(flags)}, wizardCaffectNames, 1))
+	return strings.TrimSpace(game.SprintbitArray([]uint32{wizardFlagWord(flags)}, wizardCaffectNames, 1))
+}
+
+func wizardFlagWord(flags uint64) uint32 {
+	if flags > uint64(^uint32(0)) {
+		flags &= uint64(^uint32(0))
+	}
+	return uint32(flags)
 }
 
 func wizardPlayerFlags(p *game.Player, flags uint64) string {
@@ -433,8 +440,15 @@ func wizardRoomFlags(flags []string) string {
 
 func wizardExitFlags(flags int) string {
 	const exitFlagNames = "DOOR CLOSED LOCKED PICKPROOF"
-	words := []uint32{uint32(flags), 0, 0, 0}
+	words := []uint32{wizardIntFlagWord(flags), 0, 0, 0}
 	return strings.TrimSpace(game.SprintbitArray(words, strings.Fields(exitFlagNames), len(words)))
+}
+
+func wizardIntFlagWord(flags int) uint32 {
+	if flags < 0 || uint64(flags) > uint64(^uint32(0)) {
+		return 0
+	}
+	return uint32(flags)
 }
 
 func wizardExitKeyword(keyword string) string {
@@ -539,7 +553,7 @@ func (s *Session) sendStatObjectInstance(object *game.ObjectInstance) {
 func objectFlagWords(flags [4]int) []uint32 {
 	words := make([]uint32, len(flags))
 	for i, flag := range flags {
-		words[i] = uint32(flag)
+		words[i] = wizardIntFlagWord(flag)
 	}
 	return words
 }
