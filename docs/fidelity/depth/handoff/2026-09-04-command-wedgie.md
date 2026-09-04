@@ -47,26 +47,49 @@ You give yourself a wedgie.
 You watch $n pull $s underwear nearly over $s head.
 ```
 
-The command row requires `POS_RESTING`; the C social level is 0, hide flag is
-5, and the victim-position minimum is the default 0. This target-capable
-record reaches no-argument, visible player/NPC, named self, missing-target,
-and first-token/trailing-argument branches. Shared command position,
+The command row requires `POS_RESTING`; the C social hide field is 0 and its
+minimum victim position is 5 (represented by the legacy Go `HideFlag` field),
+while the explicit Go override remains 0. This target-capable record reaches
+no-argument, visible player/NPC, named self, missing-target, first-token/
+trailing-argument, and sleeping-target branches. Shared command position,
 `PLR_NOSHOUT`, target lookup, and room visibility mechanics are not duplicated
 beyond the slice's differential probes.
 
-## Planned proof vehicle
+## Result and proof
 
-Add a focused registration test pinning the C command gate, social metadata,
-and all eight authored message slots. Add a full-target oracle scenario with
-named actor, observer, target, and generic-mob fixtures. Annotate no-argument,
-target success/audiences, first-token parsing, mob target, self target,
-not-found, visibility, and sleeping-target cases. Run the standard deterministic
-seed matrix (1, 2, 3, 5, and 8), with seed 1 using `--show-oracle`, then run
-the repository build, vet, test, lint, formatting, security, and diff gates.
+Added `cmd/dp-oracle-diff/scenarios/wedgie-depth.txt` with the standard actor,
+observer, target, and generic-mob fixture;
+`pkg/session/wedgie_depth_test.go` to pin the C command gate, social metadata,
+and all eight parsed message slots; and `docs/fidelity/depth/wedgie.tsv` with
+twelve durable unit, delegated, and oracle rows. The existing Go handler and
+data are faithful; this was a pure-coverage slice and no player-visible Go
+behavior changed.
+
+The final `wedgie-depth` matrix used the C oracle at seeds 1, 2, 3, 5, and 8.
+Seed 1 used `--show-oracle` and displayed the exact no-argument,
+visible-player/NPC target, named self, missing target, first-token/trailing-
+argument, mob target, and sleeping-target position-gate outputs. Every seed
+exited 0 with `result: no normalized divergence`.
+
+The required local verification completed on 2026-09-04:
+
+- `make fidelity-depth` — 4,650 total, 4,545 proven/delegated, 54 blocked,
+  and 51 excluded; 98.8% actionable completion.
+- `go build ./...` — passed.
+- `go vet ./...` — passed.
+- `go test ./...` — passed.
+- `golangci-lint run ./...` — 0 issues.
+- `gofumpt -l .` — no output.
+- `gosec -severity high -confidence high ./...` — 0 issues.
+- `git diff --check` — passed.
+
+The handoff and evidence are in commits `2f61ee67e` and `10a3c99a7` at the
+time of this note. No file under `src/` or `darkpawns-c-oracle/` was edited.
 
 ## Starting frontier
 
 The merged `wave` handoff reported 4,638 total cases: 4,533
-proven/delegated, 54 blocked, and 51 excluded. This slice is expected to add
-twelve proven/delegated rows. The next fresh social after this slice is
-`wee` at `src/interpreter.c:812`.
+proven/delegated, 54 blocked, and 51 excluded. This slice adds twelve
+proven/delegated rows, bringing the frontier to 4,650 total, 4,545
+proven/delegated, 54 blocked, and 51 excluded. The next fresh social after
+this slice is `wee` at `src/interpreter.c:812`.
