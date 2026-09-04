@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:747;
+# src/act.social.c:102-127; lib/misc/socials:879-882). The authored strut
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: strut.no-argument
+# depth-case: strut.typed-target-ignored
+# depth-case: strut.missing-target-ignored
+# depth-case: strut.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Strutactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Strutactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Strutpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Strutpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Strutpeer 8162
+
+[probe]
+strut
+strut Strutpeer
+strut Nobody
+strut Strutactor
