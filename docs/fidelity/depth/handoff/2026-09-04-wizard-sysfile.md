@@ -48,10 +48,26 @@ file by case-insensitive prefix in the order `bugs`, `ideas`, `todo`,
 negative read result sends `File does not exist.\r\n`; a successful non-null
 buffer enters `page_string(ch->desc, readfile, 1)`.
 
-## Pre-fix result
+## Pre-fix result — 2026-09-04
 
-To be filled after the C-first vehicle is run on the fresh implementation at
-`DP_SEED=1` and `DP_SEED=2`, before code changes.
+The C-first vehicle was red on the fresh `origin/main`-derived port at
+`DP_SEED=1` and `DP_SEED=2`. The empty argument, full-word `BUGS`, invalid
+selector, and trailing-word cases normalized green, while the C prefix forms
+`b`, `i`, `t`, and `ty` reached the missing-file branch and the Go handler
+rejected them as non-files:
+
+```text
+sysfile b   C: File does not exist.   Go: That isn't a file!
+sysfile i   C: File does not exist.   Go: That isn't a file!
+sysfile t   C: File does not exist.   Go: That isn't a file!
+sysfile ty  C: File does not exist.   Go: That isn't a file!
+```
+
+The C and Go trees contain no `misc/bugs`, `misc/ideas`, `misc/todo`, or
+`misc/typos` file, so the successful read/pager path was not reachable by this
+vehicle. The confirmed pre-fix differences are selector matching and the
+associated C missing-file branch; no pager behavior is inferred from the
+absence of a fixture (R1/R2/R4/R5e).
 
 ## Implementation and proof
 
@@ -62,4 +78,3 @@ changes are implemented and the focused vehicle is green at both seeds.
 
 To be filled after the full fidelity, build, vet, test, lint, formatting, and
 security gates complete.
-
