@@ -3,7 +3,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"time"
 
@@ -381,30 +380,7 @@ func parseAdvanceLevel(args []string) (int, bool) {
 	if len(args) == 0 {
 		return 0, false
 	}
-	value := strings.TrimSpace(args[0])
-	if value == "" {
-		return 0, false
-	}
-	index := 0
-	sign := 1
-	if value[0] == '+' || value[0] == '-' {
-		if value[0] == '-' {
-			sign = -1
-		}
-		index++
-	}
-	start := index
-	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
-		index++
-	}
-	if index == start {
-		return 0, false
-	}
-	parsed, err := strconv.Atoi(value[start:index])
-	if err != nil {
-		return 0, false
-	}
-	return sign * parsed, true
+	return parseSignedIntPrefix(args[0])
 }
 
 // ---------------------------------------------------------------------------

@@ -132,6 +132,47 @@ checks and self-merged on 2026-09-05 as
 `30e17f0f1dc3ac403882164fa6097de28026318e`. The next serial branch is
 `glm/modernize-phase-4-3`, based on that merge.
 
+## Item 4.3 coverage boundary
+
+Item 4.3 shares only the named small pairs: directed tell/reply message
+filtering, sneak/stealth execution, SendToAll/SendToOutdoor delivery, room-mob
+and room-item target disambiguation, the three signed-prefix parsers, spike/
+stake dispatch, mail block read/write positioning, and Sprintbit/sprintnbit.
+The changed-file list is:
+
+`pkg/command/skill_commands.go`, `pkg/game/logging.go`, `pkg/game/mail.go`,
+`pkg/game/mail_test.go`, `pkg/game/skill_stealth.go`,
+`pkg/session/agent_vars.go`, `pkg/session/comm_cmds.go`,
+`pkg/session/parse_helpers.go`, `pkg/session/session_manager.go`,
+`pkg/session/session_test.go`, `pkg/session/wiz_movement.go`,
+`pkg/session/wiz_player.go`, and `pkg/session/wiz_system.go`.
+
+The named verifying coverage is:
+
+- tell/reply: `comm-depth`, `reply-noarg`, `tell-linkless-depth`,
+  `comm-soundproof`, `comm-notell`, `comm-tell-nodesc`, and `comm-noshout`;
+- sneak/stealth: `sneak-mounted-depth`, `stealth-reject`, `thief-sneak`,
+  `TestDoSneakTimedAffectAndReroll`, `TestDoSneakMountedGatePrecedesRoll`,
+  and `TestDoSneakFailedRerollClearsSneakAndStealthAffects`;
+- SendToAll/Outdoor: `TestManager_SendToAll` and
+  `TestManager_SendToOutdoor`;
+- buildRoomMobs/Items: `TestBuildRoomMobs`,
+  `TestBuildRoomMobs_KeywordDisambiguation`, `TestBuildRoomItems`, and
+  `TestBuildRoomItems_KeywordDisambiguation`;
+- parse×3: `dc-depth`, `advance-depth`, `dig-depth`,
+  `TestParseDCNumberMirrorsCAtoi`, and
+  `TestParseDigRoomNumberMatchesAtoiPrefix`;
+- spike/stake: `spike-depth`, `TestDoSpike_KillsWerewolf`,
+  `TestDoStake_KillsVampire`, and the existing spike gate/state tests;
+- mail read/write: `TestMailReadWriteSharedFilePositioning`;
+- Sprintbit/sprintnbit: `idlist-depth`, `idlist-gate-depth`, and
+  `TestIDListBitArrayUsesUndefinedForOutOfTableBits`.
+
+The focused item-4.3 regression passed 22/22 scenarios with 0 failed, 0 infra,
+and 0 timed out (149.769s). `tell-linkless-depth` retried once as an
+infrastructure-shaped failure and passed on retry. The full corpus remains
+required before PR merge.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and

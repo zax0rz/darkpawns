@@ -19,6 +19,13 @@ const (
 
 // DoSneak implements do_sneak() from src/act.other.c:214-244.
 func DoSneak(ch *Player) SkillResult {
+	return doSneak(ch, SkillSneak, skillNumSneak)
+}
+
+// doSneak is the shared do_sneak/do_stealth flow. The C handlers differ only
+// in the skill used for the probability check and the spell used for the
+// installed affect; gate order, draw count, and messages are identical.
+func doSneak(ch *Player, skill string, spell int) SkillResult {
 	// IS_MOUNTED gate — act.other.c:219-223, before any roll.
 	if isMounted(ch) {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
@@ -37,18 +44,18 @@ func DoSneak(ch *Player) SkillResult {
 	// percent = number(1,101); 101 is a complete failure.
 	// #nosec G404 — game RNG, not cryptographic
 	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillSneak) + dexAppSkill(ch.GetDex()).Sneak
+	prob := ch.GetSkill(skill) + dexAppSkill(ch.GetDex()).Sneak
 	if percent > prob {
 		return SkillResult{Success: false, MessageToCh: message}
 	}
 
 	ch.AddAffect(engine.NewAffectDirect(
-		skillNumSneak,
+		spell,
 		engine.ApplyNone,
 		ch.GetLevel(),
 		0,
 		engine.AFFSneak,
-		SkillSneak,
+		skill,
 	))
 	return SkillResult{Success: true, MessageToCh: message}
 }
@@ -58,34 +65,7 @@ func DoSneak(ch *Player) SkillResult {
 // same AFF_SNEAK bit, same single number(1,101) draw). The former Go stealth
 // handler was invented ("become one with the shadows" + a skill gate C has not).
 func DoStealth(ch *Player) SkillResult {
-	if isMounted(ch) {
-		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
-	}
-
-	message := "Okay, you'll try to move silently for a while."
-
-	if ch.IsAffected(affSneak) {
-		ch.RemoveAffectBySpell(skillNumSneak)
-		ch.RemoveAffectBySpell(skillNumStealth)
-		ch.SetAffect(affSneak, false)
-	}
-
-	// #nosec G404 — game RNG, not cryptographic
-	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillStealth) + dexAppSkill(ch.GetDex()).Sneak
-	if percent > prob {
-		return SkillResult{Success: false, MessageToCh: message}
-	}
-
-	ch.AddAffect(engine.NewAffectDirect(
-		skillNumStealth,
-		engine.ApplyNone,
-		ch.GetLevel(),
-		0,
-		engine.AFFSneak,
-		SkillStealth,
-	))
-	return SkillResult{Success: true, MessageToCh: message}
+	return doSneak(ch, SkillStealth, skillNumStealth)
 }
 
 // DoHide implements the newbie path through do_hide() from
