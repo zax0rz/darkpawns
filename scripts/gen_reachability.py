@@ -205,19 +205,22 @@ def parse_go_registry(session_dir: Path) -> set[str]:
 
 
 def parse_go_socials(path: Path) -> set[str]:
-    """Parse pkg/game/socials.txt for social names.
+    """Parse social names straight from the Go runtime's source of truth.
 
-    Format: name min_pos min_level (tab or space separated)
+    pkg/game/socials.go's Socials map is what the server actually serves, so
+    the ratchet reads its keys (``\t"name": {`` records). A C-vs-Go gap must
+    compare against the Go map, not against lib/misc/socials — a C data file —
+    or a social missing from the map becomes structurally undetectable.
     """
     socials = set()
     text = path.read_text(encoding="utf-8", errors="replace")
     for line in text.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
+        stripped = line.strip()
+        if not stripped.startswith('"'):
             continue
-        parts = line.split()
-        if parts:
-            socials.add(parts[0].lower())
+        name = stripped.split('"')[1] if '"' in stripped else ""
+        if name and ":" in stripped:
+            socials.add(name.lower())
     return socials
 
 
@@ -394,9 +397,9 @@ def classify_command(
     # Socials (do_action handler)
     if handler == "do_action":
         if cmd in go_socials:
-            return ("social", "pkg/game/socials.txt")
+            return ("social", "lib/misc/socials")
         else:
-            return ("missing-social", "not found in pkg/game/socials.txt")
+            return ("missing-social", "not found in lib/misc/socials")
 
     # Check Go registry (exact match)
     if cmd in go_registry:
@@ -444,8 +447,9 @@ def main():
     # Parse Go registry (all session/*.go files)
     go_registry = parse_go_registry(ROOT / "pkg" / "session")
 
-    # Parse Go socials
-    go_socials = parse_go_socials(ROOT / "pkg" / "game" / "socials.txt")
+    # Parse Go socials from the runtime's Socials map in pkg/game/socials.go —
+    # the Go source of truth the server actually serves.
+    go_socials = parse_go_socials(ROOT / "pkg" / "game" / "socials.go")
 
     # Parse specproc intercepts
     specproc_intercepts = parse_specproc_intercepts("pkg/game/spec_proc*.go")

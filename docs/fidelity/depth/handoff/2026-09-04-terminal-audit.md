@@ -75,15 +75,18 @@ verified against the actual call paths:
 ## Surface-inventory terminal classification
 
 `surface-inventory.tsv` is a separate weighted enumeration, not a per-case
-manifest. Its 70 rows cover 4,926 weighted units in C source order. The
-initial 61 `unproven` rows have now been processed: each is explicitly
-`blocked` with the terminal-audit owner token and a note naming its residual
-source family/evidence boundary. This includes the full 1..299 cast vectors,
-the skill-message and combat/death corpora, lifecycle rows, shop rows, and
-every residual `act()`/`send_to_char()` file bucket. The eight already-proven
-rows remain `proven-already` (887 units), and the one off-command handler
-remains `excluded-with-C-reason` (1 unit). There are no `unproven` inventory
-rows and no newly asserted exclusions:
+manifest. Its 70 rows cover 4,926 weighted units in C source order. At the
+opening audit boundary, the initial 61 `unproven` rows were processed as
+explicit `blocked` rows with the terminal-audit owner token and notes naming
+their residual source family/evidence boundary. The follow-on Lane B clinic in
+`2026-09-04-modernization-surface-inventory.md` replaced those blanket tokens
+with family-specific attempt tokens while preserving the same dispositions.
+This includes the full 1..299 cast vectors, the skill-message and combat/death
+corpora, lifecycle rows, shop rows, and every residual
+`act()`/`send_to_char()` file bucket. The eight already-proven rows remain
+`proven-already` (887 units), and the one off-command handler remains
+`excluded-with-C-reason` (1 unit). There are no `unproven` inventory rows and
+no newly asserted exclusions:
 
 ```text
 surface rows: 70
