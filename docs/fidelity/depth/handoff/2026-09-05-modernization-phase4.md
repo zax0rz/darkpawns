@@ -187,6 +187,11 @@ The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
 `go test ./...`, `golangci-lint run ./...`, `gofumpt -l .`, and
 `git diff --check`.
 
+PR #1392 (`glm/modernize-phase-4-3`) passed hosted lint, security, and test
+checks and self-merged on 2026-09-05 as
+`6f43267dfeac97684866e3169b1949df4ef4c9ef`. The next serial branch is
+`glm/modernize-phase-4-4`, based on that merge.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and
