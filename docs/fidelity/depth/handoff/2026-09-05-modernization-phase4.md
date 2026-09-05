@@ -107,7 +107,25 @@ The named verifying scenario subset is:
 `combat-kick-opener`, and `combat-trip-opener`.
 
 The focused item-4.2 regression passed 40/40 scenarios with 0 failed, 0 infra,
-and 0 timed out (328.824s). The full corpus remains required before PR merge.
+and 0 timed out (328.824s).
+
+The required full corpus passed on this branch:
+
+```text
+oracle-regression: scenarios=934 passed=934 failed=0 infra=0 timed_out=0 elapsed=7087.597s started=2026-09-05T10:16:24-0400 finished=2026-09-05T12:14:32-0400
+```
+
+Six infrastructure-shaped retries recovered on the runner's single retry
+(`escape-no-skill`, `mortal-batch21`, `pour-multi`, `rsay-noshout`,
+`spec-proc-bank-kir-oshi`, and `spec-proc-castle-guard-up`); all six finished
+`PASS` on retry, so the final authoritative tally is `infra=0` and
+`timed_out=0`.
+
+The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
+`go test ./...`, `golangci-lint run ./...`, `gofumpt -l .`, `git diff --check`,
+and the command/session package tests. The changed-file list is limited to
+`pkg/command/skill_commands.go` and this handoff; the focused scenario mapping
+above is the condition-three coverage citation for the item.
 
 ## Standing fidelity constraints
 
