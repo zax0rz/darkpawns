@@ -118,10 +118,28 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	defer func() { _ = os.RemoveAll(tmp) }()
 
 	goBin := filepath.Join(tmp, "dp-server")
-	build := exec.Command("go", "build", "-o", goBin, "./cmd/server")
-	build.Dir = repoRoot
-	if output, buildErr := build.CombinedOutput(); buildErr != nil {
-		return fmt.Errorf("build Go server: %w\n%s", buildErr, output)
+	// ORACLE_REGRESSION_SERVER lets scripts/oracle_regression.sh build the
+	// server once per corpus run instead of once per scenario (934 compiles
+	// per run otherwise — half the wall time and a memory-pressure storm).
+	// The driver builds it from the same checkout this harness runs in, so
+	// the tree under test is identical; a stale manually-supplied binary
+	// would silently test old code, so this stays script-internal.
+	if prebuilt := os.Getenv("ORACLE_REGRESSION_SERVER"); prebuilt != "" {
+		abs, absErr := filepath.Abs(prebuilt)
+		if absErr != nil {
+			return fmt.Errorf("resolve ORACLE_REGRESSION_SERVER: %w", absErr)
+		}
+		// #nosec G703 -- dev oracle-diff harness; the path derives from the trusted local regression driver's env, not request input (same class as findOracleRoot's DP_ORACLE_BIN walk).
+		if _, statErr := os.Stat(abs); statErr != nil {
+			return fmt.Errorf("ORACLE_REGRESSION_SERVER %q: %w", abs, statErr)
+		}
+		goBin = abs
+	} else {
+		build := exec.Command("go", "build", "-o", goBin, "./cmd/server")
+		build.Dir = repoRoot
+		if output, buildErr := build.CombinedOutput(); buildErr != nil {
+			return fmt.Errorf("build Go server: %w\n%s", buildErr, output)
+		}
 	}
 
 	oracleRoot, err := findOracleRoot(oracleBin)
