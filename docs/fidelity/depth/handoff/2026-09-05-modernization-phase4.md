@@ -187,6 +187,58 @@ The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
 `go test ./...`, `golangci-lint run ./...`, `gofumpt -l .`, and
 `git diff --check`.
 
+PR #1392 (`glm/modernize-phase-4-3`) passed hosted lint, security, and test
+checks and self-merged on 2026-09-05 as
+`6f43267dfeac97684866e3169b1949df4ef4c9ef`. The next serial branch is
+`glm/modernize-phase-4-4`, based on that merge.
+
+## Item 4.4 coverage boundary
+
+Item 4.4 replaces the six identical session-side generic-channel prologues
+with the parameterized `cmdChannel` helper. The wrappers retain their command
+names and the world layer retains all channel-specific C gates, wording, and
+fanout. The changed-file list is:
+
+`pkg/session/comm_cmds.go` and this handoff.
+
+The named verifying coverage is:
+
+- generic channel vocabulary, recipient gates, zone fanout, and level gates:
+  `channels-depth` plus `TestDoChannelFamilyGatesAndHoller`;
+- sender mute and soundproof gates: `comm-noshout` and `comm-soundproof`;
+- registered gossip/shout channel happy paths: `communication-channels`;
+- newbie channel exception, fanout, empty argument, and channel flags:
+  `newbie-channel-depth`;
+- auction registration and generic-channel echo: `auction-group-clan`.
+
+The focused item-4.4 regression passed 6/6 scenarios with 0 failed, 0 infra,
+and 0 timed out (83.367s): `channels-depth`, `comm-noshout`,
+`comm-soundproof`, `communication-channels`, `newbie-channel-depth`, and
+`auction-group-clan`.
+
+Measured source delta for the refactor is −55 lines (15 added, 70 removed),
+against the roadmap estimate of −58.
+
+The required full corpus passed on this branch:
+
+```text
+oracle-regression: scenarios=934 passed=934 failed=0 infra=0 timed_out=0 elapsed=7088.275s started=2026-09-05T14:43:08-0400 finished=2026-09-05T16:41:17-0400
+```
+
+Eight infrastructure-shaped retries recovered on the runner's single retry:
+`bounce-depth`, `combat-kick-opener`, `jeer-depth`, `lick-sleeping-depth`,
+`love-depth`, `page-depth`, `spec-proc-janitor`, and `wand-staff-use-depth`.
+For triage, the first runner line for each was respectively:
+`RETRY <scenario> once (infrastructure-shaped failure)`; all eight finished
+`PASS` on retry, so the final authoritative tally is `infra=0` and
+`timed_out=0`.
+
+The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
+`go test ./...`, `golangci-lint run ./...`, `gofumpt -l .`,
+`git diff --check`, and the affected `pkg/session` and `pkg/game` package
+tests. Hosted CI is required to report lint, security, and test green before
+merge; build/deploy remain skipped by policy.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and

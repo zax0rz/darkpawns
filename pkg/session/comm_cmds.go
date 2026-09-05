@@ -68,10 +68,10 @@ func cmdReply(s *Session, args []string) error {
 // Shout / Gossip
 // ---------------------------------------------------------------------------
 
-// cmdShout broadcasts a message to all players in the same zone.
-// Source: act.comm.c do_gen_comm() SCMD_SHOUT lines 1286-1289
-// Original: zone-scoped; receivers must be POS_RESTING or higher.
-func cmdShout(s *Session, args []string) error {
+// cmdChannel sends a message through one of the generic communication
+// channels. The world layer owns each channel's C-specific gates and fanout;
+// this command seam only preserves the shared sanitize/filter path.
+func cmdChannel(s *Session, args []string, channel string) error {
 	message := sanitizeMessage(strings.Join(args, " "))
 	if len(args) > 0 {
 		filtered, block := filterCommMessage(s, message)
@@ -81,25 +81,18 @@ func cmdShout(s *Session, args []string) error {
 		}
 		message = filtered
 	}
-	s.manager.world.DoChannel(s.player, message, "shout")
+	s.manager.world.DoChannel(s.player, message, channel)
 	return nil
 }
 
+// cmdShout broadcasts a message to all players in the same zone.
+// Source: act.comm.c do_gen_comm() SCMD_SHOUT lines 1286-1289
+// Original: zone-scoped; receivers must be POS_RESTING or higher.
+func cmdShout(s *Session, args []string) error { return cmdChannel(s, args, "shout") }
+
 // cmdGossip broadcasts a message to everyone online.
 // Source: act.comm.c do_gen_comm() SCMD_GOSSIP lines 1286+
-func cmdGossip(s *Session, args []string) error {
-	message := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		message = filtered
-	}
-	s.manager.world.DoChannel(s.player, message, "gossip")
-	return nil
-}
+func cmdGossip(s *Session, args []string) error { return cmdChannel(s, args, "gossip") }
 
 // ---------------------------------------------------------------------------
 // Emote / Say
@@ -346,68 +339,20 @@ func splitPageArguments(argument string) (target, message string) {
 
 // cmdAuction sends a message on the auction channel.
 // Source: act.comm.c do_gen_comm() SCMD_AUCTION
-func cmdAuction(s *Session, args []string) error {
-	message := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		message = filtered
-	}
-	s.manager.world.DoChannel(s.player, message, "auction")
-	return nil
-}
+func cmdAuction(s *Session, args []string) error { return cmdChannel(s, args, "auction") }
 
 // cmdHoller sends a message on the global holler channel.
 // Source: act.comm.c do_gen_comm() SCMD_HOLLER
-func cmdHoller(s *Session, args []string) error {
-	message := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		message = filtered
-	}
-	s.manager.world.DoChannel(s.player, message, "holler")
-	return nil
-}
+func cmdHoller(s *Session, args []string) error { return cmdChannel(s, args, "holler") }
 
 // cmdGratz sends a message on the gratz channel.
 // Source: act.comm.c do_gen_comm() SCMD_GRATZ
-func cmdGratz(s *Session, args []string) error {
-	message := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		message = filtered
-	}
-	s.manager.world.DoChannel(s.player, message, "grats")
-	return nil
-}
+func cmdGratz(s *Session, args []string) error { return cmdChannel(s, args, "grats") }
 
 // cmdNewbieChannel sends a message on the newbie channel.
 // Source: act.comm.c do_gen_comm() SCMD_NEWBIE
 // Named cmdNewbieChannel to avoid conflict with cmdNewbie (wizard command).
-func cmdNewbieChannel(s *Session, args []string) error {
-	message := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		message = filtered
-	}
-	s.manager.world.DoChannel(s.player, message, "newbie")
-	return nil
-}
+func cmdNewbieChannel(s *Session, args []string) error { return cmdChannel(s, args, "newbie") }
 
 // cmdCTell sends a message on the clan tell channel.
 // Source: act.comm.c do_ctell()
