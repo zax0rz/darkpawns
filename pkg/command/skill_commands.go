@@ -22,13 +22,47 @@ type rescueCombatEngine interface {
 	SkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool
 }
 
-// cmdSkills displays all learned skills
-func CmdSkills(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+func skillPlayer(s SessionInterface) (*game.Player, error) {
+	player := s.GetPlayer()
+	if player == nil {
+		return nil, fmt.Errorf("not logged in")
+	}
+	return player, nil
+}
+
+func skillContext(s SessionInterface, skill string) (*game.Player, error) {
+	player, err := skillPlayer(s)
+	if err != nil {
+		return nil, err
 	}
 
-	player := s.GetPlayer()
+	canUse, msg := game.CanUseSkill(player, skill)
+	if !canUse {
+		return nil, s.SendMessage(msg)
+	}
+	return player, nil
+}
+
+func skillGate(s SessionInterface, ch *game.Player, skill string) (bool, error) {
+	canUse, msg := game.CanUseSkill(ch, skill)
+	if !canUse {
+		return false, s.SendMessage(msg)
+	}
+	return true, nil
+}
+
+func oneArgumentSkillTarget(world *game.World, ch *game.Player, args []string, roomVNum int) (combat.Combatant, bool) {
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	target, _, found := game.FindTargetInRoom(world, roomVNum, targetName, ch)
+	return target, found
+}
+
+// cmdSkills displays all learned skills
+func CmdSkills(s SessionInterface, args []string) error {
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
+	}
 	skillManager := player.SkillManager
 	if skillManager == nil {
 		return s.SendMessage("You have no skills.\r\n")
@@ -85,8 +119,9 @@ func CmdSkills(s SessionInterface, args []string) error {
 
 // cmdPractice practices a skill
 func CmdPractice(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 
 	if len(args) == 0 {
@@ -94,7 +129,6 @@ func CmdPractice(s SessionInterface, args []string) error {
 	}
 
 	skillName := strings.ToLower(strings.Join(args, " "))
-	player := s.GetPlayer()
 	skillManager := player.SkillManager
 
 	if skillManager == nil {
@@ -158,8 +192,9 @@ func CmdPractice(s SessionInterface, args []string) error {
 
 // cmdLearn attempts to learn a new skill
 func CmdLearn(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 
 	if len(args) == 0 {
@@ -168,7 +203,6 @@ func CmdLearn(s SessionInterface, args []string) error {
 	}
 
 	skillName := strings.ToLower(strings.Join(args, " "))
-	player := s.GetPlayer()
 	skillManager := player.SkillManager
 
 	if skillManager == nil {
@@ -225,11 +259,10 @@ func CmdLearn(s SessionInterface, args []string) error {
 
 // CmdListSkills shows all available skills
 func CmdListSkills(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	player := s.GetPlayer()
 	skillManager := player.SkillManager
 
 	if skillManager == nil {
@@ -339,8 +372,9 @@ func CmdListSkills(s SessionInterface, args []string) error {
 
 // cmdForget forgets a skill
 func CmdForget(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 
 	if len(args) == 0 {
@@ -348,7 +382,6 @@ func CmdForget(s SessionInterface, args []string) error {
 	}
 
 	skillName := strings.ToLower(strings.Join(args, " "))
-	player := s.GetPlayer()
 	skillManager := player.SkillManager
 
 	if skillManager == nil {
@@ -376,8 +409,9 @@ func CmdForget(s SessionInterface, args []string) error {
 
 // cmdConfirmForget confirms forgetting a skill
 func CmdConfirmForget(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 
 	skillName, ok := s.GetTempData("skill_to_forget").(string)
@@ -385,7 +419,6 @@ func CmdConfirmForget(s SessionInterface, args []string) error {
 		return s.SendMessage("No skill pending to forget.\r\n")
 	}
 
-	player := s.GetPlayer()
 	skillManager := player.SkillManager
 
 	if skillManager == nil {
@@ -405,8 +438,9 @@ func CmdConfirmForget(s SessionInterface, args []string) error {
 
 // cmdUseSkill uses a skill (generic skill check)
 func CmdUseSkill(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 
 	if len(args) == 0 {
@@ -414,7 +448,6 @@ func CmdUseSkill(s SessionInterface, args []string) error {
 	}
 
 	skillName := strings.ToLower(args[0])
-	player := s.GetPlayer()
 	skillManager := player.SkillManager
 
 	if skillManager == nil {
@@ -478,8 +511,9 @@ func CmdUseSkill(s SessionInterface, args []string) error {
 
 // cmdSkillInfo shows detailed information about a skill
 func CmdSkillInfo(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	player, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 
 	if len(args) == 0 {
@@ -487,7 +521,6 @@ func CmdSkillInfo(s SessionInterface, args []string) error {
 	}
 
 	skillName := strings.ToLower(strings.Join(args, " "))
-	player := s.GetPlayer()
 	skillManager := player.SkillManager
 
 	if skillManager == nil {
@@ -562,17 +595,16 @@ func CmdSkillInfo(s SessionInterface, args []string) error {
 
 // CmdBackstab handles the backstab command.
 func CmdBackstab(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillBackstab)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 	// C do_backstab (act.offensive.c:166) checks GET_SKILL(BACKSTAB) BEFORE the
 	// target lookup — a no-skill caller gets "You have no idea how." regardless
 	// of args (subcmd==0 returns). CanUseSkill carries that exact message
 	// (SkillUnknownMsg, DP-1206).
-	canUse, msg := game.CanUseSkill(ch, game.SkillBackstab)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Backstab who?\r\n")
@@ -580,9 +612,8 @@ func CmdBackstab(s SessionInterface, args []string) error {
 
 	// C do_backstab uses one_argument: skip fill words, lowercase the first
 	// target token, and ignore the remainder (act.offensive.c:174).
-	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	target, found := oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 	if !found {
 		return s.SendMessage("Backstab who?\r\n")
 	}
@@ -598,14 +629,12 @@ func CmdBackstab(s SessionInterface, args []string) error {
 
 // CmdBash handles the bash command.
 func CmdBash(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillBash)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillBash)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	// C do_bash checks ROOM_PEACEFUL before looking up the target
@@ -622,8 +651,7 @@ func CmdBash(s SessionInterface, args []string) error {
 	if len(args) > 0 {
 		// C do_bash uses one_argument: skip fill words and ignore the remainder
 		// after the first target token (act.offensive.c:425).
-		targetName, _ := game.OneArgument(strings.Join(args, " "))
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 		if !found {
 			return s.SendMessage("Bash who?\r\n")
 		}
@@ -646,14 +674,12 @@ func CmdBash(s SessionInterface, args []string) error {
 
 // CmdKick handles the kick command.
 func CmdKick(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillKick)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillKick)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	var target combat.Combatant
@@ -662,8 +688,7 @@ func CmdKick(s SessionInterface, args []string) error {
 	if len(args) > 0 {
 		// C do_kick uses one_argument: skip fill words, lowercase the first
 		// target token, and ignore the remainder (act.offensive.c:600).
-		targetName, _ := game.OneArgument(strings.Join(args, " "))
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
 		}
@@ -692,14 +717,12 @@ func CmdKick(s SessionInterface, args []string) error {
 
 // CmdTrip handles the trip command.
 func CmdTrip(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillTrip)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillTrip)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	var target combat.Combatant
@@ -730,28 +753,25 @@ func CmdTrip(s SessionInterface, args []string) error {
 
 // CmdHeadbutt handles the headbutt command.
 func CmdHeadbutt(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	world := s.GetWorld()
 	// C do_headbutt (new_cmds.c:378): ROOM_PEACEFUL is checked BEFORE the skill
 	// gate (unlike bash/kick), so a peaceful room rejects even a no-skill caller.
 	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
 		return s.SendMessage("The Gods prevent thy violent act.\r\n")
 	}
-	canUse, msg := game.CanUseSkill(ch, game.SkillHeadbutt)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ok, gateErr := skillGate(s, ch, game.SkillHeadbutt); !ok {
+		return gateErr
 	}
 
 	var target combat.Combatant
 	var found bool
 	if len(args) > 0 {
 		// C one_argument consumes only the first word and ignores the remainder.
-		targetName, _ := game.OneArgument(strings.Join(args, " "))
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 		if !found {
 			return s.SendMessage("Headbutt who?\r\n")
 		}
@@ -770,17 +790,16 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 
 // CmdRescue handles the rescue command.
 func CmdRescue(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillRescue)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 	// C do_rescue (act.offensive.c:501) checks GET_SKILL(RESCUE) BEFORE the
 	// no-argument path — a no-skill caller gets "But only true warriors can do
 	// this!" regardless of args. CanUseSkill carries that exact message
 	// (SkillUnknownMsg, DP-1206).
-	canUse, msg := game.CanUseSkill(ch, game.SkillRescue)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Whom do you want to rescue?\r\n")
@@ -811,12 +830,12 @@ func CmdRescue(s SessionInterface, args []string) error {
 
 // CmdDisembowel handles the disembowel command (C-10).
 func CmdDisembowel(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillDisembowel)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillDisembowel); !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	var target combat.Combatant
 	world := s.GetWorld()
@@ -844,19 +863,18 @@ func CmdDisembowel(s SessionInterface, args []string) error {
 
 // CmdDragonKick handles the dragon kick command (C-10).
 func CmdDragonKick(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillDragonKick)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillDragonKick); !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	var target combat.Combatant
 	var found bool
 	world := s.GetWorld()
 	if len(args) > 0 {
-		targetName, _ := game.OneArgument(strings.Join(args, " "))
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
 		}
@@ -876,12 +894,12 @@ func CmdDragonKick(s SessionInterface, args []string) error {
 
 // CmdTigerPunch handles the tiger punch command (C-10).
 func CmdTigerPunch(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillTigerPunch)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillTigerPunch); !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	var target combat.Combatant
 	var found bool
@@ -907,12 +925,12 @@ func CmdTigerPunch(s SessionInterface, args []string) error {
 
 // CmdShoot handles the shoot command (C-10).
 func CmdShoot(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillShoot)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillShoot); !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	// C half_chop() consumes three fields before any object or direction
 	// lookup (act.offensive.c:782-799). Keep those parser gates ahead of every
@@ -1001,7 +1019,7 @@ func CmdShoot(s SessionInterface, args []string) error {
 	}
 
 	result := game.DoShoot(ch, target)
-	err := sendSkillResult(s, ch, target, result)
+	err = sendSkillResult(s, ch, target, result)
 	if err != nil {
 		return err
 	}
@@ -1018,12 +1036,12 @@ func CmdShoot(s SessionInterface, args []string) error {
 
 // CmdSubdue handles the subdue command (C-10).
 func CmdSubdue(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillSubdue)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillSubdue); !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Subdue who?\r\n")
@@ -1041,20 +1059,19 @@ func CmdSubdue(s SessionInterface, args []string) error {
 
 // CmdSleeper handles the sleeper hold command (C-10).
 func CmdSleeper(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillSleeper)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillSleeper); !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Sleeper who?\r\n")
 	}
 	world := s.GetWorld()
 	// C one_argument() keeps only the first target token and discards the rest.
-	targetName, _ := game.OneArgument(strings.Join(args, " "))
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	target, found := oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 	if !found {
 		return s.SendMessage("Sleeper who?\r\n")
 	}
@@ -1063,12 +1080,12 @@ func CmdSleeper(s SessionInterface, args []string) error {
 
 // CmdNeckbreak handles the neck break command (C-10).
 func CmdNeckbreak(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillNeckbreak)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-	if canUse, msg := game.CanUseSkill(ch, game.SkillNeckbreak); !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 	// C checks WEAR_WIELD before one_argument() and target lookup
 	// (act.offensive.c:1304-1308). Keep this gate in the command wrapper so
@@ -1080,9 +1097,8 @@ func CmdNeckbreak(s SessionInterface, args []string) error {
 	}
 	// C one_argument() discards fill words and keeps only the first token
 	// (interpreter.c:1265-1285), so "the victim trailing" targets victim.
-	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+	target, found := oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 	if !found {
 		return s.SendMessage("I don't see them here.\r\n")
 	}
@@ -1091,10 +1107,10 @@ func CmdNeckbreak(s SessionInterface, args []string) error {
 
 // CmdAmbush handles the ambush command (C-10).
 func CmdAmbush(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 	// C do_ambush (act.offensive.c:1459): target lookup runs FIRST — no-arg →
 	// "Ambush who?". The GET_SKILL gate (line 1467) is AFTER target, so
 	// reposition it here (never delete — per the scout #541 lesson).
@@ -1106,8 +1122,8 @@ func CmdAmbush(s SessionInterface, args []string) error {
 	if !found {
 		return s.SendMessage("Ambush who?\r\n")
 	}
-	if canUse, msg := game.CanUseSkill(ch, game.SkillAmbush); !canUse {
-		return s.SendMessage(msg)
+	if ok, gateErr := skillGate(s, ch, game.SkillAmbush); !ok {
+		return gateErr
 	}
 	if ch.GetAmbushAction() != 0 {
 		return s.SendMessage("You are a little busy for that right now!\r\n")
@@ -1130,10 +1146,10 @@ func CmdAmbush(s SessionInterface, args []string) error {
 
 // CmdBerserk handles the berserk command (C-10/C-12).
 func CmdBerserk(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 	return sendSkillResult(s, ch, nil, game.DoBerserk(ch))
 }
 
@@ -1142,21 +1158,20 @@ func CmdBerserk(s SessionInterface, args []string) error {
 // (rin, kyo, toh, kai, jin, retsu, zai, zhen, sha).
 func CmdKujiKiri(seal string) func(SessionInterface, []string) error {
 	return func(s SessionInterface, args []string) error {
-		if s.GetPlayer() == nil {
-			return fmt.Errorf("not logged in")
+		ch, err := skillPlayer(s)
+		if err != nil {
+			return err
 		}
-		ch := s.GetPlayer()
 		return sendSkillResult(s, ch, nil, game.DoKujiKiri(ch, seal, s.GetWorld()))
 	}
 }
 
 // CmdSneak handles the sneak command.
 func CmdSneak(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	result := game.DoSneak(ch)
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
@@ -1164,22 +1179,20 @@ func CmdSneak(s SessionInterface, args []string) error {
 // CmdStealth handles the stealth command. C do_stealth == do_sneak with the
 // stealth skill/affect; routes through game.DoStealth (self-only, no target).
 func CmdStealth(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	result := game.DoStealth(ch)
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 
 // CmdHide handles the hide command.
 func CmdHide(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	result := game.DoHideInWorld(ch, s.GetWorld())
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
@@ -1187,19 +1200,19 @@ func CmdHide(s SessionInterface, args []string) error {
 // CmdKabuki handles the kabuki command (do_hide SCMD_KABUKI, src/act.other.c:247-306).
 // Same flow as hide but rolls against SkillKabuki and uses the kabuki message.
 func CmdKabuki(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	result := game.DoKabukiInWorld(ch, s.GetWorld())
 	return s.SendMessage(result.MessageToCh + "\r\n")
 }
 
 // CmdSteal handles the steal command.
 func CmdSteal(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 
 	// C runs one_argument() twice: the first token is the object and the
@@ -1211,7 +1224,6 @@ func CmdSteal(s SessionInterface, args []string) error {
 		return s.SendMessage("Steal what from who?\r\n")
 	}
 
-	ch := s.GetPlayer()
 	world := s.GetWorld()
 
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
@@ -1225,11 +1237,10 @@ func CmdSteal(s SessionInterface, args []string) error {
 
 // CmdCarve handles the carve command.
 func CmdCarve(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	if ch.GetPosition() == combat.PosFighting {
 		return s.SendMessage("How can you think of food at a time like this?!?\r\n")
 	}
@@ -1245,19 +1256,16 @@ func CmdCarve(s SessionInterface, args []string) error {
 
 // CmdCutthroat handles the cutthroat command.
 func CmdCutthroat(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillCutthroat)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
+	if ch == nil {
+		return nil
+	}
 	// C do_cutthroat (new_cmds.c:559): GET_SKILL(CUTTHROAT) checked BEFORE the
 	// no-arg path — a no-skill caller gets "You're not trained in slitting
 	// throats!" regardless of args.
-	canUse, msg := game.CanUseSkill(ch, game.SkillCutthroat)
-	if !canUse {
-		// msg carries its own C-exact terminator (cutthroat's is "\n\r",
-		// new_cmds.c:561; see SkillUnknownMsg). Send as-is — no append.
-		return s.SendMessage(msg)
-	}
 	if len(args) == 0 {
 		return s.SendMessage("Cut what throat where?\n\r")
 	}
@@ -1281,14 +1289,12 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 
 // CmdStrike handles the strike command.
 func CmdStrike(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillStrike)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillStrike)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	// Determine target
@@ -1342,10 +1348,10 @@ func CmdStrike(s SessionInterface, args []string) error {
 // invented a CanUseSkill gate, a "compare to equipped" path, and an unreachable
 // "Compare what and what?" — all removed here.
 func CmdCompare(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	// half_chop: first word → arg, the rest → arg2.
 	arg, arg2 := "", ""
@@ -1362,14 +1368,12 @@ func CmdCompare(s SessionInterface, args []string) error {
 
 // CmdScan handles the scan command.
 func CmdScan(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillScan)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillScan)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	world := s.GetWorld()
@@ -1379,10 +1383,10 @@ func CmdScan(s SessionInterface, args []string) error {
 
 // CmdSharpen handles the sharpen command.
 func CmdSharpen(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 	objName := ""
 	if len(args) > 0 {
 		objName = args[0]
@@ -1393,11 +1397,10 @@ func CmdSharpen(s SessionInterface, args []string) error {
 
 // CmdScrounge handles the scrounge command.
 func CmdScrounge(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	world := s.GetWorld()
 	result := game.DoScrounge(ch, world)
 	return sendSkillResult(s, ch, nil, result)
@@ -1405,16 +1408,15 @@ func CmdScrounge(s SessionInterface, args []string) error {
 
 // CmdFirstAid handles the first aid command.
 func CmdFirstAid(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillFirstAid)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
+	if ch == nil {
+		return nil
+	}
 	// C do_first_aid (new_cmds2.c:146): GET_SKILL checked BEFORE the no-arg
 	// path — a no-skill caller gets "You have no idea how!" regardless of args.
-	canUse, msg := game.CanUseSkill(ch, game.SkillFirstAid)
-	if !canUse {
-		return s.SendMessage(msg)
-	}
 	if len(args) == 0 {
 		return s.SendMessage("Aid who?\r\n")
 	}
@@ -1432,18 +1434,16 @@ func CmdFirstAid(s SessionInterface, args []string) error {
 
 // CmdDisarm handles the disarm command.
 func CmdDisarm(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillDisarm)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
+	if ch == nil {
+		return nil
+	}
 	// C do_disarm (new_cmds2.c): GET_SKILL(DISARM) is checked BEFORE the target
 	// lookup — a no-skill caller is rejected regardless of args. CanUseSkill
 	// carries the exact C message (SkillUnknownMsg, DP-1206).
-	canUse, msg := game.CanUseSkill(ch, game.SkillDisarm)
-	if !canUse {
-		return s.SendMessage(msg)
-	}
 
 	// C resolves FIGHTING(ch) before looking at the typed argument. The
 	// argument is therefore ignored whenever combat is already engaged.
@@ -1476,17 +1476,16 @@ func CmdDisarm(s SessionInterface, args []string) error {
 
 // CmdMindlink handles the mindlink command.
 func CmdMindlink(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Link your mind to whose?\r\n")
 	}
 
-	ch := s.GetPlayer()
-	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+	target, found := oneArgumentSkillTarget(world, ch, args, ch.GetRoomVNum())
 	if !found {
 		return s.SendMessage("They don't seem to be here.\r\n")
 	}
@@ -1497,11 +1496,10 @@ func CmdMindlink(s SessionInterface, args []string) error {
 
 // CmdDetect handles the detect command.
 func CmdDetect(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	world := s.GetWorld()
 	result := game.DoDetect(ch, world)
 	return sendSkillResult(s, ch, nil, result)
@@ -1509,17 +1507,15 @@ func CmdDetect(s SessionInterface, args []string) error {
 
 // CmdSerpentKick handles the serpent kick command.
 func CmdSerpentKick(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillSerpentKick)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
+	if ch == nil {
+		return nil
+	}
 	// C do_serpent_kick (new_cmds2.c:698): GET_SKILL checked BEFORE target
 	// lookup — a no-skill caller is rejected regardless of args.
-	canUse, msg := game.CanUseSkill(ch, game.SkillSerpentKick)
-	if !canUse {
-		return s.SendMessage(msg)
-	}
 
 	var target combat.Combatant
 	var found bool
@@ -1560,11 +1556,10 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 
 // CmdDig handles the dig command.
 func CmdDig(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	world := s.GetWorld()
 	result := game.DoDig(ch, world)
 	return sendSkillResult(s, ch, nil, result)
@@ -1572,11 +1567,10 @@ func CmdDig(s SessionInterface, args []string) error {
 
 // CmdTurn handles the turn command.
 func CmdTurn(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	world := s.GetWorld()
 
 	// Turn affects ALL undead in the room, but for simplicity we
@@ -1958,10 +1952,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 
 // CmdMold handles the mold command — rename/redescribe clay items.
 func CmdMold(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	// C do_mold parses the object with one_argument, the new name with
 	// one_word (including quoted names), then treats the entire remainder as
@@ -1976,10 +1970,10 @@ func CmdMold(s SessionInterface, args []string) error {
 
 // CmdBehead handles the behead command.
 func CmdBehead(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	if ch.GetPosition() == combat.PosFighting {
 		return s.SendMessage("You're a little busy for that!\r\n")
@@ -1997,14 +1991,12 @@ func CmdBehead(s SessionInterface, args []string) error {
 
 // CmdBearhug handles the bearhug command.
 func CmdBearhug(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillBearhug)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-
-	canUse, msg := game.CanUseSkill(ch, game.SkillBearhug)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	// C do_bearhug checks IS_MOUNTED before resolving its argument
@@ -2021,7 +2013,7 @@ func CmdBearhug(s SessionInterface, args []string) error {
 	// lookup fails, even if an argument was supplied (new_cmds.c:477,493-501).
 	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	if targetName != "" {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoomVNum())
 	}
 	if !found && ch.GetFighting() != "" {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
@@ -2036,14 +2028,12 @@ func CmdBearhug(s SessionInterface, args []string) error {
 
 // CmdSlug handles the slug command.
 func CmdSlug(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillSlug)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-
-	canUse, msg := game.CanUseSkill(ch, game.SkillSlug)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	var target combat.Combatant
@@ -2055,8 +2045,7 @@ func CmdSlug(s SessionInterface, args []string) error {
 	// (new_cmds.c:826, 833-840). The stored Go fighting name needs the exact
 	// pointer-style helper because a mob's short description is not its keyword
 	// list.
-	targetName, _ := game.OneArgument(strings.Join(args, " "))
-	target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
+	target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoomVNum())
 	if !found && ch.GetFighting() != "" {
 		target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
 	}
@@ -2070,14 +2059,12 @@ func CmdSlug(s SessionInterface, args []string) error {
 
 // CmdSmackheads handles the smackheads command.
 func CmdSmackheads(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillSmackheads)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-
-	canUse, msg := game.CanUseSkill(ch, game.SkillSmackheads)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	victim1Name := ""
@@ -2096,10 +2083,10 @@ func CmdSmackheads(s SessionInterface, args []string) error {
 
 // CmdBite handles the bite command.
 func CmdBite(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	var target combat.Combatant
 	var found bool
@@ -2133,10 +2120,10 @@ func CmdBite(s SessionInterface, args []string) error {
 
 // CmdTag handles the tag command.
 func CmdTag(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	if len(args) == 0 {
 		return s.SendMessage("Tag who?\r\n")
@@ -2150,10 +2137,10 @@ func CmdTag(s SessionInterface, args []string) error {
 
 // CmdPoint handles the point command.
 func CmdPoint(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	argument := strings.Join(args, " ")
 	targetName, _ := game.OneArgument(argument)
@@ -2171,10 +2158,10 @@ func CmdPoint(s SessionInterface, args []string) error {
 
 // CmdGroinrip handles the groinrip command.
 func CmdGroinrip(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	// C do_groinrip (new_cmds.c): the peaceful-room rejection runs BEFORE the
 	// skill gate — anyone in a peaceful room is stopped here regardless of skill.
@@ -2182,9 +2169,8 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 		return s.SendMessage("You cannot commit acts of violence here!\r\n")
 	}
 
-	canUse, msg := game.CanUseSkill(ch, game.SkillGroinrip)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ok, gateErr := skillGate(s, ch, game.SkillGroinrip); !ok {
+		return gateErr
 	}
 	if ch.IsMounted() {
 		return s.SendMessage("Dismount first!\r\n")
@@ -2226,10 +2212,10 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 
 // CmdReview handles the review command — show recent gossip history.
 func CmdReview(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 	world := s.GetWorld()
 	if world == nil {
 		return fmt.Errorf("world not available")
@@ -2241,10 +2227,10 @@ func CmdReview(s SessionInterface, args []string) error {
 
 // CmdWhois handles the whois command — check player info.
 func CmdWhois(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	if len(args) == 0 {
 		return s.SendMessage("For whom do you wish to search?\r\n")
@@ -2257,10 +2243,10 @@ func CmdWhois(s SessionInterface, args []string) error {
 
 // CmdPalm handles the palm command — hide a small item up your sleeve.
 func CmdPalm(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
 
 	if len(args) == 0 {
 		return s.SendMessage("Palm what?\r\n")
@@ -2274,14 +2260,12 @@ func CmdPalm(s SessionInterface, args []string) error {
 
 // CmdFleshAlter handles the flesh_alter command — transform your hand into a weapon.
 func CmdFleshAlter(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillFleshAlter)
+	if err != nil {
+		return err
 	}
-	ch := s.GetPlayer()
-
-	canUse, msg := game.CanUseSkill(ch, game.SkillFleshAlter)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	result := game.DoFleshAlter(ch)
@@ -2290,14 +2274,14 @@ func CmdFleshAlter(s SessionInterface, args []string) error {
 
 // CmdSpike handles the spike command (werewolf destruction).
 func CmdSpike(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Whom do you wish to spike?\r\n")
 	}
 
-	ch := s.GetPlayer()
 	targetName := strings.Join(args, " ")
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
@@ -2311,14 +2295,14 @@ func CmdSpike(s SessionInterface, args []string) error {
 
 // CmdStake handles the stake command (vampire destruction).
 func CmdStake(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Whom do you wish to stake?\r\n")
 	}
 
-	ch := s.GetPlayer()
 	targetName := strings.Join(args, " ")
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
@@ -2332,11 +2316,10 @@ func CmdStake(s SessionInterface, args []string) error {
 
 // CmdCircle handles the circle command.
 func CmdCircle(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
 	// C do_circle (new_cmds.c): NO skill gate — goes straight to the target
 	// lookup. A no-target / no-fight caller gets "Circle who?" regardless of
 	// skill. The former CanUseSkill gate was invented (R4).
@@ -2346,8 +2329,7 @@ func CmdCircle(s SessionInterface, args []string) error {
 	if len(args) > 0 {
 		// C do_circle uses one_argument: skip fill words, lowercase the first
 		// target token, and ignore the remainder (new_cmds.c:2396).
-		targetName, _ := game.OneArgument(strings.Join(args, " "))
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 		if !found {
 			return s.SendMessage("Circle who?\r\n")
 		}
@@ -2371,14 +2353,12 @@ func CmdCircle(s SessionInterface, args []string) error {
 
 // CmdCharge handles the charge command.
 func CmdCharge(s SessionInterface, args []string) error {
-	if s.GetPlayer() == nil {
-		return fmt.Errorf("not logged in")
+	ch, err := skillContext(s, game.SkillCharge)
+	if err != nil {
+		return err
 	}
-
-	ch := s.GetPlayer()
-	canUse, msg := game.CanUseSkill(ch, game.SkillCharge)
-	if !canUse {
-		return s.SendMessage(msg)
+	if ch == nil {
+		return nil
 	}
 
 	world := s.GetWorld()
@@ -2387,8 +2367,7 @@ func CmdCharge(s SessionInterface, args []string) error {
 	if len(args) > 0 {
 		// C do_charge uses one_argument: skip fill words, lowercase the first
 		// target token, and ignore the remainder (new_cmds.c:887).
-		targetName, _ := game.OneArgument(strings.Join(args, " "))
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
+		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
 		if !found {
 			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
 		}

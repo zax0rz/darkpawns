@@ -85,6 +85,30 @@ PR #1390 (`glm/modernize-phase-4-1`) passed hosted lint, security, and test
 checks and self-merged on 2026-09-05 as `f2aa2caccf3133f6216dc7660488a38335afd244`.
 The next serial branch is `glm/modernize-phase-4-2`, based on that merge.
 
+## Item 4.2 coverage boundary
+
+Item 4.2 changes only `pkg/command/skill_commands.go` and introduces shared
+nil-player, `CanUseSkill`, and `OneArgument` + `FindTargetInRoom` helpers. The
+helper is applied only where the original C ordering and parser path are the
+same; `headbutt`, `ambush`, and `groinrip` retain their special gate order.
+
+The named verifying scenario subset is:
+
+`ambush-depth`, `backstab-depth`, `bash-depth`, `bearhug-depth`,
+`behead-object-depth`, `berserk-depth`, `bite-depth`, `carve-depth`,
+`charge-depth`, `circle-depth`, `cutthroat-depth`, `dig-depth`,
+`disarm-depth`, `disembowel-depth`, `dragon-depth`, `flesh-alter-depth`,
+`groinrip-depth`, `headbutt-depth`, `hide-depth`, `mindlink-entry-depth`,
+`mold-depth`, `neckbreak-depth`, `point-depth`, `rescue-roll`,
+`review-depth`, `scrounge-default-depth`, `serpent-depth`,
+`sharpen-depth`, `shoot-entry-depth`, `sleeper-depth`, `slug-depth`,
+`smackheads-outcome-depth`, `spike-depth`, `steal-depth`, `stealth-reject`,
+`thief-sneak`, `combat-bash-opener`, `combat-headbutt-opener`,
+`combat-kick-opener`, and `combat-trip-opener`.
+
+The focused item-4.2 regression passed 40/40 scenarios with 0 failed, 0 infra,
+and 0 timed out (328.824s). The full corpus remains required before PR merge.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and
