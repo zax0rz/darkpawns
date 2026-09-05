@@ -1,9 +1,0 @@
-{{ define "main" }}
-<div class="container">
-  <header class="section-header">
-    <h1>{{ .Title }}</h1>
-    {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
-  </header>
-  {{ partial "section-cards.html" (dict "pages" .Pages "context" . "counts" true) }}
-</div>
-{{ end }}

@@ -72,7 +72,7 @@ Partial:
 - Breadcrumbs are visible on hierarchical pages but do not yet have `BreadcrumbList` JSON-LD.
 - Editorial structured data can be typed as `Article` after the content pass is complete.
 - A raster social image exists, but a purpose-built 1200 by 630 share image would produce better previews.
-- Every HTML route in the generated Hugo site has an Astro page or redirect. `make route-parity` enforces this against both build directories.
+- Every HTML route the Hugo site published has an Astro page or a redirect. This was enforced by `make route-parity` against both build directories until the migration completed; Hugo has since been removed, and the redirect table in `astro.config.mjs` is the surviving record of the mapping.
 - Static redirect documents are mirrored into Caddy permanent redirects by `website-astro/scripts/caddy_redirects.py`, preserving direct browser fallbacks and HTTP migration signals.
 
 ### Accessibility

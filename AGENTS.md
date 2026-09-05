@@ -108,12 +108,13 @@ The game package has object movement tests that validate the ObjectLocation syst
 The Dark Pawns website is a static site built using **Astro** and served via Caddy.
 
 ### Core Codebase Location
-* Authored website source lives in **`website-astro/`**. Generated map, database, and public discovery assets remain in **`website/static/`** and are shared through Astro's public directory configuration.
-* **NEVER** edit or build website source on the production server. `/srv/hugo/` is only the deployed document root; its name is historical.
+* Authored website source lives in **`website-astro/`**, including page scripts under `website-astro/src/scripts/`.
+* **`website/` is not a second site.** Hugo was removed once the migration completed; what remains there is shared, non-Astro material: `static/` (Astro's public directory: generated map and database assets, `llms.txt`, `.well-known/`), `scripts/` (the world and database parsers the build runs), `deploy/` (the Caddy configuration), and `data/history.toml`. Do not add pages, layouts or templates there.
+* **NEVER** edit or build website source on the production server. `/srv/hugo/` is only the deployed document root; its name is historical, as is the `website/` directory name.
 
 ### Design Aesthetics & Philosophy
 * **"Haunted Paperback" style** (see `website-astro/DESIGN.md`): worn cream paper backgrounds, charcoal ink text, one oxblood accent, flat ink, serif typography.
-* **Asset Pipeline**: Authored JavaScript must be imported by Astro so Vite fingerprints it. Shared generated assets under `website/static/` keep stable public URLs.
+* **Asset Pipeline**: Authored JavaScript lives in `website-astro/src/scripts/` and must be imported by Astro so Vite fingerprints it. Generated assets under `website/static/` keep stable public URLs and are served as-is.
 
 ### Automated Deployment Pipeline
 To prevent compiling from the wrong directory or syncing outdated files, **always use the Makefile target** in the root of the repository:

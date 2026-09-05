@@ -139,7 +139,7 @@ test-parse:
 DEPLOY_PATH ?= /srv/hugo/
 
 # Website commands
-.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory route-parity generate-caddy-redirects site-check
+.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory generate-caddy-redirects site-check
 
 voice-lint:
 	python3 website-astro/scripts/voice_lint.py
@@ -152,9 +152,6 @@ content-inventory:
 
 check-content-inventory:
 	python3 website-astro/scripts/content_inventory.py --check
-
-route-parity:
-	python3 website-astro/scripts/route_parity.py
 
 generate-caddy-redirects:
 	python3 website-astro/scripts/caddy_redirects.py
@@ -170,11 +167,16 @@ parse-world-json:
 
 build-site: parse-world-json site-check generate-caddy-redirects
 
-# Create a dated news post from archetypes/news.md:
+# Create a dated blog post:
 #   make new-post TITLE=my-headline
-# Creates website/content/news/YYYY-MM-DD-my-headline.md (draft: true).
+# Writes website-astro/src/content/blog/my-headline.md as a draft. Fill in the
+# description and the source line before setting draft to false; the collection
+# schema fails the build if either is missing.
 new-post:
-	cd website && hugo new news/$$(date +%Y-%m-%d)-$(TITLE).md
+	@test -n "$(TITLE)" || { echo "usage: make new-post TITLE=my-headline"; exit 1; }
+	@printf -- '---\ntitle: ""\ndate: %s\ndescription: ""\ndraft: true\ntextKind: "original"\nsource: ""\nvoiceLayer: "mythic-admin"\n---\n\n' \
+	  "$$(date +%Y-%m-%dT%H:%M:%S)" > website-astro/src/content/blog/$(TITLE).md
+	@echo "created website-astro/src/content/blog/$(TITLE).md"
 
 deploy-site: build-site
 ifndef DEPLOY_USER

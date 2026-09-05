@@ -9,8 +9,6 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent.parent.parent
 WORLD_DIR = ROOT_DIR / "lib/world"
 STATIC_DATA_DIR = ROOT_DIR / "website/static/data"
-CONTENT_MOBS_DIR = ROOT_DIR / "website/content/mobs"
-CONTENT_ITEMS_DIR = ROOT_DIR / "website/content/items"
 
 # Constants
 DIRECTIONS = {0: "north", 1: "east", 2: "south", 3: "west", 4: "up", 5: "down"}
@@ -712,150 +710,7 @@ def parse_shops_and_relate(mobs, objs):
         except Exception as e:
             print(f"Error parsing shop resets {f.name}: {e}", file=sys.stderr)
 
-def generate_seo_mobs(mobs):
-    CONTENT_MOBS_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Clean previous files to prevent orphaned pages
-    for f in CONTENT_MOBS_DIR.glob("*.md"):
-        try: f.unlink()
-        except OSError: pass
-        
-    for vnum, m in mobs.items():
-        try:
-            filename = CONTENT_MOBS_DIR / f"{vnum}.md"
-            
-            # Map sex code
-            sex_str = "Neutral"
-            if m["sex"] == 1: sex_str = "Male"
-            elif m["sex"] == 2: sex_str = "Female"
-            
-            # Escape strings for YAML compatibility
-            title = clean_generated_text(m["short_desc"])
-            long_desc = clean_generated_text(m["long_desc"])
-            
-            # Build list of spawns and drops for content
-            spawn_list = "\n".join([f"- [Room {s['room']}: {s['name']}](/map?room={s['room']})" for s in m["spawns"]])
-            drop_list = "\n".join([f"- [{d['name']}](/items/{d['obj_vnum']}) ({d['slot']})" for d in m["drops"]])
-            
-            shop_text = ""
-            if m["shop"]:
-                items_text = "\n".join([f"  - [{itm['name']}](/items/{itm['vnum']})" for itm in m["shop"]["items_sold"]])
-                shop_text = f"""
-## Shopkeeper Inventory
-This mob runs a shop (VNUM {m['shop']['shop_vnum']}) open {m['shop']['open_hours']}.
-Items Sold:
-{items_text}
-"""
 
-            content = f"""---
-title: {yaml_string(title)}
-vnum: {vnum}
-level: {m["level"]}
-race: {m["race"]}
-alignment: {m["alignment"]}
-sex: "{sex_str}"
-hp_dice: "{m["hp_dice"]}"
-damage_dice: "{m["damage_dice"]}"
-gold: {m["gold"]}
-exp: {m["exp"]}
-ac: {m["ac"]}
-long_desc: {yaml_string(long_desc)}
-layout: "single"
-type: "mobs"
----
-
-# {title} (Mob VNUM {vnum})
-
-> {long_desc}
-
-## Stats
-- **Level**: {m["level"]}
-- **Race**: {m["race"]}
-- **Sex**: {sex_str}
-- **Alignment**: {m["alignment"]}
-- **HP**: {m["hp_dice"]}
-- **Base Armor (AC)**: {m["ac"]}
-- **Base Damage**: {m["damage_dice"]}
-- **Gold**: {m["gold"]}
-- **Exp**: {m["exp"]}
-
-{"## Description" if m["detailed_desc"] else ""}
-{m["detailed_desc"]}
-
-## Spawn Locations
-{spawn_list if spawn_list else "This mobile does not spawn naturally in the world."}
-
-## Equipment & Inventory
-{drop_list if drop_list else "This mobile carries no items."}
-{shop_text}
-"""
-            filename.write_text(content, encoding='utf-8')
-        except Exception as e:
-            print(f"Error writing SEO mob {vnum}: {e}", file=sys.stderr)
-
-def generate_seo_items(objs):
-    CONTENT_ITEMS_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Clean previous files to prevent orphaned pages
-    for f in CONTENT_ITEMS_DIR.glob("*.md"):
-        try: f.unlink()
-        except OSError: pass
-        
-    for vnum, o in objs.items():
-        try:
-            filename = CONTENT_ITEMS_DIR / f"{vnum}.md"
-            
-            # Escape strings for YAML
-            title = clean_generated_text(o["short_desc"])
-            long_desc = clean_generated_text(o["long_desc"])
-            
-            # Relationships
-            mob_list = "\n".join([f"- Loaded by [{l['name']}](/mobs/{l['mob_vnum']}) ({l['slot']})" for l in o["loaded_by"]])
-            room_list = "\n".join([f"- Placed in [Room {p['room']}: {p['name']}](/map?room={p['room']})" if 'room' in p else f"- In container [{p['name']}](/items/{p['container_vnum']})" for p in o["placed_in"]])
-            shop_list = "\n".join([f"- Sold by [{s['keeper_name']}](/mobs/{s['keeper_vnum']}) for {s['price']} gold" for s in o["sold_by"]])
-            
-            affects_list = "\n".join([f"- Affects **{a['location']}** by **{a['modifier']}**" for a in o["affects"]])
-            
-            content = f"""---
-title: {yaml_string(title)}
-vnum: {vnum}
-item_type: "{o["type"]}"
-wear_flags: {o["wear_flags"]}
-extra_flags: {o["extra_flags"]}
-weight: {o["weight"]}
-cost: {o["cost"]}
-long_desc: {yaml_string(long_desc)}
-layout: "single"
-type: "items"
----
-
-# {title} (Item VNUM {vnum})
-
-> {long_desc}
-
-## Stats
-- **Item Type**: {o["type"]}
-- **Wear Location**: {", ".join(o["wear_flags"]) if o["wear_flags"] else "None"}
-- **Active Flags**: {", ".join(o["extra_flags"]) if o["extra_flags"] else "None"}
-- **Weight**: {o["weight"]} lbs
-- **Cost**: {o["cost"]} gold coins
-- **Base Load Percent**: {o["load_percent"]}%
-
-{"## Magical Affects" if o["affects"] else ""}
-{affects_list}
-
-{"## Detailed Descriptions" if o["extra_descs"] else ""}
-{"".join([f"### {ed['keywords']}\\n{ed['desc']}\\n\\n" for ed in o["extra_descs"]])}
-
-## Drop and Spawns
-{mob_list if mob_list else ""}
-{room_list if room_list else ""}
-{shop_list if shop_list else ""}
-{"" if mob_list or room_list or shop_list else "This item cannot be found spawning naturally in the world."}
-"""
-            filename.write_text(content, encoding='utf-8')
-        except Exception as e:
-            print(f"Error writing SEO item {vnum}: {e}", file=sys.stderr)
 
 def main():
     print("Compiling Dark Pawns Interactive MUD Database...", file=sys.stderr)
@@ -936,8 +791,6 @@ def main():
     print(f"     Compiled database.json: {size_kb:.1f} KB", file=sys.stderr)
     
     print("  7. Generating pre-rendered SEO static pages...", file=sys.stderr)
-    generate_seo_mobs(mobs)
-    generate_seo_items(objs)
     print("     SEO compilation complete.", file=sys.stderr)
     print("Database build successfully finalized!", file=sys.stderr)
 

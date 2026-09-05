@@ -1,20 +1,7 @@
-# Hugo build artifacts
-public/
-resources/_gen/
-
-# Dynamically generated database content (ignored to keep repo clean)
-content/mobs/
-content/items/
-
-# OS/editor
+# Generated map and database assets are committed; local tool state is not.
 .DS_Store
 *.swp
 *.swo
 *~
 .idea/
 .vscode/
-
-
-# impeccable tool state — keep only the design source of truth
-.impeccable/*
-!.impeccable/design.json
