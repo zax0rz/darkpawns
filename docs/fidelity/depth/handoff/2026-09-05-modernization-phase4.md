@@ -266,6 +266,25 @@ Measured source delta is +6 lines (102 added, 96 removed), against the
 roadmap estimate of −50; this is recorded as net-positive churn rather than
 claimed as a deletion.
 
+The required full corpus passed on this branch:
+
+```text
+oracle-regression: scenarios=934 passed=934 failed=0 infra=0 timed_out=0 elapsed=7092.456s started=2026-09-05T16:56:14-0400 finished=2026-09-05T18:54:26-0400
+```
+
+Seven infrastructure-shaped retries recovered on the runner's single retry:
+`beg-depth`, `donate-basic`, `hug-depth`, `inactive-depth`, `jeer-depth`,
+`spec-proc-roach`, and `toggle-cluster`. Their first runner lines were,
+respectively, `RETRY <scenario> once (infrastructure-shaped failure)`; all
+seven finished `PASS` on retry, so the final authoritative tally is `infra=0`
+and `timed_out=0`.
+
+The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
+`go test ./...`, `golangci-lint run ./...`, `gofumpt -l .`,
+`git diff --check`, and the affected `pkg/game` and `pkg/session` package
+tests. Hosted CI is required to report lint, security, and test green before
+merge; build/deploy remain skipped by policy.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and
