@@ -1,0 +1,3 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+shop_bridge	list/buy	shops.bridge.stocked-definition	D2	command	oracle-green	shop-stack-list-live	src/shop.c:426-457; src/shop.c:877-925	Zone 121's authored M/G reset loads keeper 12100 and four stocked spice objects before the player arrives; list keyword miss and buy no-such output match C (R1/R4/R5e).
+shop_bridge	list	shops.live-inventory-gate	D4	command	blocked	shop-live-inventory-lane-b	src/shop.c:877-925	C gates list output on the keeper's carried inventory via is_ok/CAN_SEE_OBJ and cost, not only the static shop definition; a YELLOW vehicle must prove the live-inventory mismatch and is deferred to Lane B (R1/R4/R5e).

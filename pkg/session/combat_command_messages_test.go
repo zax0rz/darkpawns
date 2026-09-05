@@ -5,6 +5,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func TestCmdHitNoArgumentMessage(t *testing.T) {
@@ -118,7 +119,7 @@ func TestCmdHitCurrentOpponentDoesBestItCan(t *testing.T) {
 func TestCmdHitShopkeeperGate(t *testing.T) {
 	m := makeGateTestManager(t, false)
 	m.world.SetShopManager(m.shopManager)
-	m.shopManager.CreateShopConcrete(5000, "Test Shop", 1001)
+	m.shopManager.AddShop(&game.Shop{KeeperVNum: 5000, KeeperName: "Test Shop", RoomVNum: 1001})
 	if _, err := m.world.SpawnMob(5000, 1001); err != nil {
 		t.Fatalf("SpawnMob failed: %v", err)
 	}
