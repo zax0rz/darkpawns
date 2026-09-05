@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "General Discussion"
+topicId: 20
 postCount: 5
 completeness: "complete"
 contentWarning: "Contains crude locker-room joking of the kind common on 2004 game forums."

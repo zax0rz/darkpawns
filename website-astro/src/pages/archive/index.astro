@@ -4,72 +4,64 @@ import { getCollection } from 'astro:content';
 
 const entries = (await getCollection('archive', ({ data }) => !data.draft))
   .sort((a, b) => a.data.sortDate.getTime() - b.data.sortDate.getTime());
+const byId = new Map(entries.map((entry) => [entry.id, entry]));
 
-const isForum = (entry) => entry.data.kind === 'forum-thread' || entry.data.kind === 'board-index';
-const threads = entries.filter((entry) => entry.data.kind === 'forum-thread');
-const boardIndexes = entries.filter((entry) => entry.data.kind === 'board-index');
+const isThread = (entry) => entry.data.kind === 'forum-thread';
+const threads = entries.filter(isThread);
 
-// Threads are grouped by the board they lived on, read from the breadcrumb of
-// the capture itself. Some captures do not carry one; those are grouped last
-// and labelled rather than guessed at.
-const boards = [...new Set(threads.map((entry) => entry.data.board).filter(Boolean))].sort();
-const threadGroups = [
-  ...boards.map((board) => ({ board, entries: threads.filter((entry) => entry.data.board === board) })),
-  { board: 'Board not recorded', entries: threads.filter((entry) => !entry.data.board) },
-].filter((group) => group.entries.length > 0);
-
-// Eras, in the order the sites existed. A record belongs to the site it was
-// published on, which is also the story the archive tells.
-const eras = [
+// One axis: the site a record was published on. The forum was part of
+// dp-players.com, so it is a subsection there rather than a third peer.
+const sections = [
   {
     id: 'darkpawns',
-    title: 'darkpawns.com',
-    years: '2002 to 2005',
-    note: "Frontline's own site: the news page, the map of Kir Drax'in, and the handbooks that described the world.",
-    entries: entries.filter((entry) => entry.data.sourceSite === 'darkpawns.com' && !isForum(entry)),
+    site: 'darkpawns.com',
+    note: "Frontline's own site: the news page, the text map of Kir Drax'in, and the handbooks that described the world.",
+    entries: entries.filter((entry) => entry.data.sourceSite === 'darkpawns.com'),
   },
   {
     id: 'player-page',
-    title: 'dp-players.com',
-    years: '2004',
-    note: 'The player page: the history of the game, directions and equipment guides, and the pages players kept for each other.',
-    entries: entries.filter((entry) => entry.data.sourceSite === 'dp-players.com' && !isForum(entry)),
+    site: 'dp-players.com',
+    note: 'The player page Aidan ran in 2004, and the phpBB board attached to it.',
+    entries: entries.filter((entry) => entry.data.sourceSite === 'dp-players.com' && !isThread(entry)),
+    threads,
   },
 ];
 
-const totals = {
-  entries: entries.length,
+// A shortlist, because thirty-seven equal rows is a directory, not an archive.
+// Each one says why it is worth the click.
+const shortlist = [
+  { id: 'topic-t38', why: 'Orodreth, who holds player number two, explains where parts of the world came from.' },
+  { id: 'board-index-general', why: 'Every topic the board held in July 2004, with the reply count on each. Most of them are gone.' },
+  { id: 'map-kir-draxin', why: 'The starting city drawn in characters, the way you would have kept it beside the keyboard.' },
+  { id: 'topic-t83', why: 'The player-killing argument, which is really an argument about what the game was for.' },
+  { id: 'darkpawns-news-2005', why: 'The 3.0 beta announcement, answering a year of speculation on the board above.' },
+].map((pick) => ({ ...pick, entry: byId.get(pick.id) })).filter((pick) => pick.entry);
+
+const tally = {
+  records: entries.length,
   threads: threads.length,
   posts: threads.reduce((sum, entry) => sum + (entry.data.postCount ?? 0), 0),
-  voices: new Set(
-    threads.flatMap((entry) => (entry.data.participants ?? []).map((person) => person.name)),
-  ).size,
+  people: new Set(threads.flatMap((entry) => (entry.data.participants ?? []).map((p) => p.name))).size,
+};
+// The tally is a provenance claim. If any thread cannot contribute a count, the
+// posts figure would understate the corpus, so it is withheld rather than shown
+// wrong. Same rule as the rest of the archive: sourced or silent.
+const postsComplete = threads.every((entry) => typeof entry.data.postCount === 'number');
+
+const KIND_LABEL = {
+  'forum-thread': 'thread', 'board-index': 'board index', 'site-page': 'page',
+  map: 'map', guide: 'guide', history: 'history', quote: 'quotes', roster: 'staff',
 };
 
-// Named absences. Every one of these is a URL the recovery checked and closed,
-// not a page nobody looked for.
 const missing = [
-  {
-    what: 'The drawn world map',
-    detail: "darkpawns.com published a drawing of Kir Drax'in beside the text map. The text map is here. The drawing was never captured.",
-  },
-  {
-    what: 'Two strategy guides',
-    detail: "The surviving index names them: Whistler's Determining Your Natural Abilities from November 2002, and Aidan's Definative Newbie Guide from March 2003. Neither article was archived.",
-  },
-  {
-    what: '201 game logs',
-    detail: 'Players uploaded transcripts of hunts, duels and deaths across ten categories. The index survived with every count intact. Not one of the logs did.',
-  },
-  {
-    what: 'Most of the forum',
-    detail: 'The board index lists topics whose pages have no capture at any timestamp, and long threads survive only as their final page.',
-  },
+  { what: 'The drawn world map', detail: "darkpawns.com published a drawing of Kir Drax'in beside the text map. The text map is here. The drawing was never captured." },
+  { what: 'Two strategy guides', detail: "The surviving index names them: Whistler's Determining Your Natural Abilities from November 2002, and Aidan's Definative Newbie Guide from March 2003. Neither article was archived." },
+  { what: '201 game logs', detail: 'Players uploaded transcripts of hunts, duels and deaths across ten categories. The index survived with every count intact. Not one of the logs did.' },
+  { what: 'Most of the board', detail: 'The July 2004 board index lists topics whose pages have no capture at any timestamp, and several long threads survive only as their final page.' },
 ];
 ---
 <Base title="Archive | Dark Pawns" description="Recovered conversations and records from the original Dark Pawns community.">
   <div class="container archive-hub">
-    <p class="eyebrow">Recovered from the old web</p>
     <h1>The Archive</h1>
     <p class="lede">
       Dark Pawns was more than a codebase. It was arguments, jokes, quests, grudges, and people
@@ -78,114 +70,91 @@ const missing = [
     </p>
 
     <dl class="tally">
-      <div><dt>Records</dt><dd>{totals.entries}</dd></div>
-      <div><dt>Conversations</dt><dd>{totals.threads}</dd></div>
-      <div><dt>Posts</dt><dd>{totals.posts}</dd></div>
-      <div><dt>People</dt><dd>{totals.voices}</dd></div>
+      <div><dt>Records</dt><dd>{tally.records}</dd></div>
+      <div><dt>Conversations</dt><dd>{tally.threads}</dd></div>
+      {postsComplete && <div><dt>Posts</dt><dd>{tally.posts}</dd></div>}
+      <div><dt>People</dt><dd>{tally.people}</dd></div>
     </dl>
 
-    <aside class="archive-note">
-      <strong>A living collection.</strong> Some pages survived whole; others vanished between
-      captures. We publish only material we can trace to an archived source, and we do not publish
-      private contact information.
-      If you recognize something or remember what is missing, <a href="/contact/">send a private message</a>.
-    </aside>
+    <section class="start" aria-labelledby="start-here">
+      <h2 id="start-here">Start here</h2>
+      <ol class="start-list">
+        {shortlist.map((pick) => (
+          <li>
+            <a href={`/archive/${pick.entry.id}/`}>
+              <span class="start-title">{pick.entry.data.title}</span>
+              <span class="start-why">{pick.why}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
 
-    {eras.map((era) => era.entries.length > 0 && (
-      <section class="era" id={era.id}>
-        <header class="era-head">
-          <p class="era-years">{era.years}</p>
-          <div>
-            <h2>{era.title}</h2>
-            <p>{era.note}</p>
-          </div>
-        </header>
-        <ol class="archive-list">
-          {era.entries.map((entry) => (
+    {sections.map((section) => (
+      <section class="site" id={section.id} aria-labelledby={`h-${section.id}`}>
+        <h2 id={`h-${section.id}`}>{section.site}</h2>
+        <p class="site-note">{section.note}</p>
+
+        <ol class="records">
+          {section.entries.map((entry) => (
             <li>
               <a href={`/archive/${entry.id}/`}>
-                <span class="archive-date">{entry.data.dateLabel}</span>
-                <span class="archive-title">{entry.data.title}</span>
-                <span class="archive-desc">{entry.data.description}</span>
+                <span class="r-date">{entry.data.dateLabel}</span>
+                <span class="r-title">{entry.data.title}</span>
+                <span class="r-desc">{entry.data.description}</span>
+                <span class="r-meta">
+                  {KIND_LABEL[entry.data.kind] ?? entry.data.kind}
+                  {entry.data.kind === 'board-index' && entry.data.topics &&
+                    ` · ${entry.data.topics.length} topics listed`}
+                  {entry.data.completeness === 'partial' && ' · partial record'}
+                </span>
               </a>
             </li>
           ))}
         </ol>
+
+        {section.threads && (
+          <div class="threads">
+            <h3 id="forum">The board</h3>
+            <p class="site-note">
+              Nineteen conversations survived out of the thirty-six the board was carrying when it
+              was captured. Newest last, the way you would have read them.
+            </p>
+            <ol class="records">
+              {section.threads.map((entry) => (
+                <li>
+                  <a href={`/archive/${entry.id}/`}>
+                    <span class="r-date">{entry.data.dateLabel}</span>
+                    <span class="r-title">{entry.data.title}</span>
+                    <span class="r-desc">{entry.data.description}</span>
+                    <span class="r-meta">
+                      {entry.data.postCount} posts
+                      {entry.data.participants && ` · ${entry.data.participants.length} people`}
+                      {entry.data.board && ` · ${entry.data.board}`}
+                      {entry.data.completeness === 'partial' && ' · partial record'}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
       </section>
     ))}
 
-    <section class="era" id="forum">
-      <header class="era-head">
-        <p class="era-years">2004</p>
-        <div>
-          <h2>The forum</h2>
-          <p>
-            dp-players.com ran a phpBB board. These are the conversations that survived, grouped by
-            the board they were posted on.
-          </p>
-        </div>
-      </header>
-      {boardIndexes.length > 0 && (
-        <ol class="archive-list board-index-list">
-          {boardIndexes.map((entry) => (
-            <li>
-              <a href={`/archive/${entry.id}/`}>
-                <span class="archive-date">{entry.data.dateLabel}</span>
-                <span class="archive-title">{entry.data.title}</span>
-                <span class="archive-desc">{entry.data.description}</span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      )}
-      {threadGroups.map((group) => (
-        <div class="board">
-          <h3>{group.board}</h3>
-          <ol class="archive-list">
-            {group.entries.map((entry) => (
-              <li>
-                <a href={`/archive/${entry.id}/`}>
-                  <span class="archive-date">{entry.data.dateLabel}</span>
-                  <span class="archive-title">
-                    {entry.data.title}
-                    {entry.data.completeness === 'partial' && <span class="chip partial">partial</span>}
-                  </span>
-                  <span class="archive-desc">{entry.data.description}</span>
-                  {entry.data.postCount && (
-                    <span class="archive-meta">
-                      {entry.data.postCount} posts
-                      {entry.data.participants && ` · ${entry.data.participants.length} people`}
-                    </span>
-                  )}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </div>
-      ))}
-    </section>
-
-    <section class="era gap" id="missing">
-      <header class="era-head">
-        <p class="era-years">Gaps</p>
-        <div>
-          <h2>What is missing</h2>
-          <p>
-            The recovery checked every URL the surviving pages pointed at, and closed each one with a
-            result. These are the ones that came back empty. They are listed because an archive that
-            hides its gaps is not a record.
-          </p>
-        </div>
-      </header>
+    <section class="gaps" id="missing" aria-labelledby="h-missing">
+      <h2 id="h-missing">What is missing</h2>
+      <p class="site-note">
+        The recovery checked every URL the surviving pages pointed at and closed each one with a
+        result. These came back empty. They are listed because an archive that hides its gaps is
+        not a record.
+      </p>
       <dl class="missing">
         {missing.map((item) => (
-          <div>
-            <dt>{item.what}</dt>
-            <dd>{item.detail}</dd>
-          </div>
+          <div><dt>{item.what}</dt><dd>{item.detail}</dd></div>
         ))}
       </dl>
-      <p class="gap-ask">
+      <p class="ask">
         If you kept backups from the dp-players.com era, those files are the only remaining source
         for any of this. <a href="/contact/">Get in touch.</a>
       </p>
@@ -194,102 +163,76 @@ const missing = [
 </Base>
 
 <style>
-  .archive-hub { padding-block: var(--space-xl) var(--space-lg); }
-  .eyebrow {
-    margin-bottom: var(--space-xs);
-    color: var(--accent);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .lede { max-width: 58ch; color: var(--ink-muted); font-size: 1.15rem; }
+  /* The archive reads at broadsheet width, wider than an article column because
+     every row is a date rail plus a title, but never the full 72rem shell. */
+  .archive-hub { --archive-width: 58rem;
+  /* The archive's type ramp, declared once. DESIGN.md documents six global
+     steps; an index of dated records needs a label and a row title between
+     them, so the extra steps are named here rather than scattered as literals. */
+  --t-label: 0.8rem;   /* mono labels, meta, provenance */
+  --t-quote: 0.95rem;  /* a quoted passage, quieter than the reply */
+  --t-body: 1rem;
+  --t-lede: 1.15rem;   /* opening paragraph, post bylines */
+  --t-row: 1.25rem;    /* a record title in a list */
+  --t-section: 1.375rem;
+  --t-figure: 1.75rem; /* the tally numerals */
+ padding-block: var(--space-xl) var(--space-lg); }
+  .archive-hub > * { max-width: var(--archive-width); }
+  .lede { max-width: 58ch; color: var(--ink-muted); font-size: var(--t-lede); }
 
-  .tally {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-lg);
-    max-width: 58rem;
-    margin: var(--space-lg) 0 0;
-  }
+  .tally { display: flex; flex-wrap: wrap; gap: var(--space-lg); margin: var(--space-lg) 0 0; }
   .tally div { display: flex; flex-direction: column-reverse; gap: 0.1rem; }
-  .tally dt { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
-  .tally dd { margin: 0; font-family: var(--font-display); font-size: 1.75rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .tally dt { color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.06em; text-transform: uppercase; }
+  .tally dd { margin: 0; font-family: var(--font-display); font-size: var(--t-figure); line-height: 1; font-variant-numeric: tabular-nums; }
 
-  .archive-note {
-    max-width: 58rem;
-    margin: var(--space-lg) 0;
-    border-block: 1px solid var(--rule);
-    padding: var(--space-md) 0;
-  }
+  h2 { margin: var(--space-xl) 0 var(--space-xs); }
+  .site-note { max-width: 58ch; margin: 0 0 var(--space-md); color: var(--ink-muted); }
 
-  .era { max-width: 58rem; margin-top: var(--space-xl); }
-  .era-head { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-lg); align-items: baseline; }
-  .era-head h2 { margin: 0; }
-  .era-head p { margin: 0 0 var(--space-sm); color: var(--ink-muted); }
-  .era-years { margin: 0; color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.06em; }
+  /* Start here: the only place a record is allowed to argue for itself. */
+  .start { border-top: 2px solid var(--ink); }
+  .start-list { margin: 0; padding: 0; list-style: none; }
+  .start-list li { border-bottom: 1px solid var(--rule); }
+  .start-list a { display: block; padding: var(--space-md) 0; color: var(--ink); }
+  .start-title { display: block; font-family: var(--font-display); font-size: var(--t-section); line-height: 1.2; text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 1px; text-decoration-color: var(--rule); }
+  .start-why { display: block; margin-top: 0.15rem; color: var(--ink-muted); }
+  .start-list a:hover .start-title,
+  .start-list a:focus-visible .start-title { text-decoration-color: var(--accent); color: var(--accent); }
 
-  .board { margin-top: var(--space-lg); }
-  .board h3 {
-    margin: 0 0 var(--space-xs);
-    margin-left: 12rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-  }
+  .site { border-top: 2px solid var(--ink); }
+  .threads { margin-top: var(--space-lg); }
+  .threads h3 { margin: 0 0 var(--space-xs); font-size: var(--t-row); }
 
-  .archive-list { margin: 0; padding: 0; list-style: none; }
-  .archive-list li { border-top: 1px solid var(--rule); }
-  .archive-list li:last-child { border-bottom: 1px solid var(--rule); }
-  .archive-list a {
+  .records { margin: 0; padding: 0; list-style: none; }
+  .records li { border-top: 1px solid var(--rule); }
+  .records li:last-child { border-bottom: 1px solid var(--rule); }
+  /* Explicit placement. A row span to -1 collapses to the first line when the
+     grid has no explicit rows, which drops the description into the date rail. */
+  .records a {
     display: grid;
     grid-template-columns: 10rem 1fr;
-    gap: var(--space-xs) var(--space-lg);
+    column-gap: var(--space-lg);
+    row-gap: 0.15rem;
     padding: var(--space-md) 0;
     color: var(--ink);
   }
-  .archive-list a:hover { color: var(--accent); text-decoration: none; }
-  .archive-date { grid-row: 1 / -1; color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.75rem; }
-  .archive-title { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.2; }
-  .archive-desc { color: var(--ink-muted); }
-  .archive-meta { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; }
-  .board-index-list { margin-bottom: var(--space-md); }
+  .r-date { grid-column: 1; grid-row: 1 / span 3; color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); line-height: 1.5; }
+  .r-title { grid-column: 2; grid-row: 1; font-family: var(--font-display); font-size: var(--t-row); line-height: 1.2; text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 1px; text-decoration-color: var(--rule); }
+  .r-desc { grid-column: 2; grid-row: 2; color: var(--ink-muted); }
+  .r-meta { grid-column: 2; grid-row: 3; color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.04em; }
+  .records a:hover .r-title,
+  .records a:focus-visible .r-title { color: var(--accent); text-decoration-color: var(--accent); }
 
-  .chip {
-    display: inline-block;
-    margin-left: 0.5rem;
-    border: 1px solid var(--rule);
-    border-radius: 2px;
-    padding: 0 0.35rem;
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    vertical-align: middle;
-    color: var(--ink-muted);
-  }
-
-  .gap .missing { margin: 0; }
-  .gap .missing div {
-    display: grid;
-    grid-template-columns: 10rem 1fr;
-    gap: var(--space-lg);
-    border-top: 1px solid var(--rule);
-    padding: var(--space-md) 0;
-  }
-  .gap .missing div:last-child { border-bottom: 1px solid var(--rule); }
-  .gap .missing dt { font-family: var(--font-display); font-size: 1.05rem; }
-  .gap .missing dd { margin: 0; color: var(--ink-muted); }
-  .gap-ask { margin-top: var(--space-md); margin-left: 12rem; color: var(--ink-muted); }
+  .gaps { border-top: 2px solid var(--ink); }
+  .missing { margin: 0; }
+  .missing div { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-lg); border-top: 1px solid var(--rule); padding: var(--space-md) 0; }
+  .missing div:last-child { border-bottom: 1px solid var(--rule); }
+  .missing dt { font-family: var(--font-display); font-size: var(--t-lede); }
+  .missing dd { margin: 0; color: var(--ink-muted); }
+  .ask { margin-top: var(--space-md); margin-left: calc(10rem + var(--space-lg)); color: var(--ink-muted); }
 
   @media (max-width: 640px) {
-    .era-head { grid-template-columns: 1fr; gap: var(--space-xs); }
-    .archive-list a { grid-template-columns: 1fr; gap: var(--space-xs); }
-    .archive-date { grid-row: auto; }
-    .board h3, .gap-ask { margin-left: 0; }
-    .gap .missing div { grid-template-columns: 1fr; gap: var(--space-xs); }
+    .records a, .missing div { grid-template-columns: 1fr; gap: var(--space-xs); }
+    .r-date, .r-title, .r-desc, .r-meta { grid-column: 1; grid-row: auto; }
+    .ask { margin-left: 0; }
   }
 </style>

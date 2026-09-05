@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "General Discussion"
+topicId: 10
 postCount: 5
 completeness: "complete"
 participants:

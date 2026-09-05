@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "General Discussion"
+topicId: 38
 postCount: 16
 completeness: "partial"
 completenessNote: "Pages 1 and 4 of 4. Pages 2 and 3 were never captured."
@@ -139,7 +140,7 @@ back to the topic at hand: little known DP facts...
 
  everyone has seen mobs gossip "evil will always triumph, because good is dumb"
 
- correct me if I'm wrong, but I believe this was "borrowed" from a mud serapis and (I think) frontline used to frequent, \[thunderdome\](http://www.mudconnect.com/mud-bin/adv\_search.cgi?Mode=MUD&mud=ThunderDome)
+ correct me if I'm wrong, but I believe this was "borrowed" from a mud serapis and (I think) frontline used to frequent, [thunderdome](http://www.mudconnect.com/mud-bin/adv_search.cgi?Mode=MUD&mud=ThunderDome)
 
  and the original quote, believe it or not, is from dark helmet in the movie space balls \[OOO\]
 

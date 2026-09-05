@@ -270,14 +270,9 @@ const SHAPERS = {
     return out.join('\n\n');
   },
   'board-index': (lines, raw) => {
-    const flat = raw.replace(/\s+/g, ' ');
-    const rows = [...flat.matchAll(/topictitle">(.*?)<\/a>[\s\S]*?<td[^>]*class="row2"[^>]*>\s*<span class="postdetails">(\d+)<\/span>[\s\S]*?<span class="name"><a[^>]*>(.*?)<\/a>/g)];
-    const strip = (value) => value.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
-    return [
-      '| Topic | Started by | Replies |',
-      '| --- | --- | --- |',
-      ...rows.map((row) => `| ${escapeMarkdown(strip(row[1]))} | ${escapeMarkdown(strip(row[3]))} | ${row[2]} |`),
-    ].join('\n');
+    // Rendered by the entry template as a ledger, not as prose, so the shaper
+    // emits nothing here and the rows travel in frontmatter instead.
+    return '';
   },
   plain: (lines) => lines.map(escapeMarkdown).join('\n\n'),
   'player-page-articles': (lines) => {
@@ -400,6 +395,23 @@ function redactContacts(body) {
   return { body: body.replace(EMAIL, '\\[address removed\\]'), redacted: found.length };
 }
 
+/**
+ * Every topic row the captured board index listed, in its original order, with
+ * the reply count phpBB printed beside it. Most of those topics were never
+ * archived, so these rows are the measure of what is gone.
+ */
+function boardTopics(raw) {
+  const flat = raw.replace(/\s+/g, ' ');
+  const strip = (value) => value.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim();
+  return [...flat.matchAll(/viewtopic\.php\?t=(\d+)[^"]*" class="topictitle">(.*?)<\/a>[\s\S]*?<td[^>]*class="row2"[^>]*>\s*<span class="postdetails">(\d+)<\/span>[\s\S]*?<span class="name"><a[^>]*>(.*?)<\/a>/g)]
+    .map((row) => ({
+      id: Number(row[1]),
+      title: strip(row[2]),
+      author: strip(row[4]),
+      replies: Number(row[3]),
+    }));
+}
+
 function main() {
   const args = process.argv.slice(2);
   const flag = args.indexOf('--record');
@@ -411,8 +423,14 @@ function main() {
   const record = RECORDS[recordId];
   if (!record) throw new Error(`no reviewed metadata for record ${recordId}`);
 
-  const raw = bodyFor(record, readCapture(resolve(input)));
-  if (!raw.trim()) throw new Error('no content extracted; check the chrome-stripping mode');
+  const capture = readCapture(resolve(input));
+  const topics = record.shape === 'board-index' ? boardTopics(capture) : [];
+  const raw = bodyFor(record, capture);
+  // The board index carries no prose: its rows travel in frontmatter and the
+  // entry template renders them as a ledger.
+  if (!raw.trim() && !topics.length) {
+    throw new Error('no content extracted; check the chrome-stripping mode');
+  }
   const { body, redacted } = redactContacts(raw);
 
   const frontmatter = [
@@ -432,6 +450,10 @@ function main() {
     'completeness: "complete"',
     record.usedIn
       ? ['usedIn:', ...record.usedIn.map((u) => `  - label: ${JSON.stringify(u.label)}\n    href: ${JSON.stringify(u.href)}`)].join('\n')
+      : null,
+    topics.length
+      ? ['topics:', ...topics.map((t) =>
+          `  - id: ${t.id}\n    title: ${JSON.stringify(t.title)}\n    author: ${JSON.stringify(t.author)}\n    replies: ${t.replies}`)].join('\n')
       : null,
     'draft: false',
     '---',

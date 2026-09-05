@@ -283,7 +283,10 @@ function toText(html) {
   text = text.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, (_, href, label) => {
     const inner = label.replace(/<[^>]+>/g, '').trim();
     if (!href || PRIVATE_LINK.test(href) || !/^https?:/i.test(href)) return inner;
-    return inner && inner !== href ? `[${inner}](${href})` : href;
+    // The href is a URL, not prose: escaping it would corrupt the link, and an
+    // underscore inside one must survive both the label and the target.
+    const safe = href.replace(/[()]/g, (c) => (c === '(' ? '%28' : '%29'));
+    return inner && inner !== href ? `[${inner}](${safe})` : `<${safe}>`;
   });
   text = text.replace(/<[^>]+>/g, '');
   text = text.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
@@ -298,8 +301,21 @@ function toText(html) {
  * into Markdown formatting. Policy is to preserve the words as typed, so an
  * asterisk the author typed has to survive as an asterisk.
  */
+const MD_LINK = /\[[^\]]*\]\([^)]*\)|<https?:[^>]*>/g;
+
+/**
+ * Escape the punctuation that would otherwise turn an author's own typing into
+ * Markdown formatting, while stepping over links this importer already built.
+ * Escaping inside a URL breaks the link; escaping outside one preserves the
+ * asterisk the author actually pressed.
+ */
 function escapeMarkdown(text) {
-  return text
+  const links = [];
+  const guarded = text.replace(MD_LINK, (match) => {
+    links.push(match);
+    return `\u0000${links.length - 1}\u0000`;
+  });
+  return guarded
     .split('\n')
     .map((line) =>
       line
@@ -307,7 +323,8 @@ function escapeMarkdown(text) {
         .replace(/^(\s*)([#>+-])/, '$1\\$2')
         .replace(/^(\s*\d+)\.(\s)/, '$1\\.$2'),
     )
-    .join('\n');
+    .join('\n')
+    .replace(/\u0000(\d+)\u0000/g, (_, index) => links[Number(index)]);
 }
 
 /** Markdown paragraphs, with hard breaks for the single newlines inside one. */
@@ -479,6 +496,7 @@ function frontmatter(record, topic, participants, completeness, note) {
     'source: "Wayback capture identified by captureUrl"',
     `voiceLayer: ${JSON.stringify(record.voiceLayer)}`,
     topic.board ? `board: ${JSON.stringify(topic.board)}` : null,
+    topic.topicId ? `topicId: ${topic.topicId}` : null,
     `postCount: ${topic.posts.length}`,
     `completeness: ${JSON.stringify(completeness)}`,
     note ? `completenessNote: ${JSON.stringify(note)}` : null,

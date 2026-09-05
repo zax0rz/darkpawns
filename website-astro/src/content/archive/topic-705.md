@@ -4,7 +4,7 @@ publishedAt: 2004-06-16
 sortDate: 2004-06-16
 dateLabel: "June 16-29, 2004"
 draft: false
-description: "Forum discussion thread: What the H-E-double hockey sticks?!?"
+description: "Orodreth opens with the 2004 NBA finals and the thread becomes the off-topic room the board did not have."
 kind: "forum-thread"
 sourceSite: "dp-players.com"
 sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=705#705"
@@ -13,6 +13,26 @@ recoveredAt: 2026-08-14
 textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
+postCount: 9
+participants:
+  - name: "Orodreth"
+    role: "unknown"
+    posts: 1
+  - name: "Aidan"
+    role: "unknown"
+    posts: 2
+  - name: "Morpheus"
+    role: "unknown"
+    posts: 1
+  - name: "Fred Sanford"
+    role: "unknown"
+    posts: 2
+  - name: "Sinko"
+    role: "unknown"
+    posts: 2
+  - name: "Vargus"
+    role: "unknown"
+    posts: 1
 ---
 
 ### Orodreth — Wed Jun 16, 2004 10:27 am

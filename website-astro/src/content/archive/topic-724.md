@@ -4,7 +4,7 @@ publishedAt: 2004-07-14
 sortDate: 2004-07-14
 dateLabel: "July 14-August 2, 2004"
 draft: false
-description: "Forum discussion thread: QUEST!  -  The Battle of Lost Souls"
+description: "Orodreth apologises for not yet naming a winner of the quest, twice, seven weeks apart."
 kind: "forum-thread"
 sourceSite: "dp-players.com"
 sourceUrl: "http://www.dp-players.com/forum/viewtopic.php?p=724#724"
@@ -13,6 +13,11 @@ recoveredAt: 2026-08-14
 textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
+postCount: 2
+participants:
+  - name: "Orodreth"
+    role: "unknown"
+    posts: 2
 ---
 
 ### Orodreth — Wed Jul 14, 2004 11:33 am

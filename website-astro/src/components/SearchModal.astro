@@ -144,6 +144,9 @@
   }
 
   .btn-clear {
+    /* Without this the UA button default resolves to a system sans, the one
+       sans-serif face in a system whose type rule forbids them entirely. */
+    font-family: var(--font-mono);
     background: none;
     border: none;
     color: var(--ink-muted);

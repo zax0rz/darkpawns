@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "General Discussion"
+topicId: 98
 postCount: 11
 completeness: "complete"
 participants:
@@ -58,7 +59,7 @@ mudhead
  is writing or going to write because his/her design ideas are\
  so much better than in any existing MUD.
 
- Source: \[dictionary.reference.com\](http://dictionary.reference.com)
+ Source: [dictionary.reference.com](http://dictionary.reference.com)
 
  There is no doubt about it: MUDs are an anachronism in this visual-intensive world of virtual reality and HDTV. And yet, Michael Potter, the owner of Zugg Software and creator of zMUD, is able to make a living off his interest in MUDs: Currently, over 34,000 people have shelled out $25 for a registered copy of zMUD. Upon releasing zMUD to the public (Potter originally wrote zMUD for personal use, when a friend suggested converting it to shareware), Potter estimated maybe 1,000 people might buy it.
 

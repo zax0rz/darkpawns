@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "News"
+topicId: 67
 postCount: 4
 completeness: "complete"
 participants:
@@ -35,7 +36,7 @@ draft: false
 
 ### Aidan — Sun May 09, 2004 6:31 pm
 
-added two new logs today. \[xedent hunting tanis\](http://www.dp-players.com/logs/humor/xedent\_hunts\_tanis.txt) and \[a few people vs. dracula\](http://www.dp-players.com/logs/wandering/dracula04.txt)
+added two new logs today. [xedent hunting tanis](http://www.dp-players.com/logs/humor/xedent_hunts_tanis.txt) and [a few people vs. dracula](http://www.dp-players.com/logs/wandering/dracula04.txt)
 
  enjoy.
 

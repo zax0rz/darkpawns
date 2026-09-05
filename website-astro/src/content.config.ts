@@ -72,6 +72,9 @@ const archive = defineCollection({
     // Forum threads only: which board the conversation lived on, how many posts
     // the capture holds, and who spoke. Ranks are the public forum ranks.
     board: z.string().optional(),
+    // phpBB topic number. It is what links a recovered thread back to the row
+    // for it on the board index, so the index can show what survived.
+    topicId: z.number().int().positive().optional(),
     postCount: z.number().int().positive().optional(),
     participants: z.array(z.object({
       name: z.string(),
@@ -81,6 +84,15 @@ const archive = defineCollection({
     // Where this primary source is used elsewhere on the site, so an edited
     // page and the record behind it stay visibly connected.
     usedIn: z.array(z.object({ label: z.string(), href: z.string() })).optional(),
+    // A board index lists every topic the board held on the day it was
+    // captured, with the reply count for each. Most of those topics were never
+    // archived, so this is the measure of what is gone.
+    topics: z.array(z.object({
+      id: z.number().int().positive(),
+      title: z.string(),
+      author: z.string(),
+      replies: z.number().int().nonnegative(),
+    })).optional(),
     textKind: z.enum(['verbatim', 'transcription', 'edited-excerpt']),
     source: z.string(),
     voiceLayer: z.enum(['engine', 'edgelord-dm', 'mythic-admin', 'frontline']),

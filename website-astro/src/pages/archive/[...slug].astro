@@ -10,9 +10,23 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 
-// The capture timestamp is the date the Wayback Machine took its copy, which is
-// never the date the page was written. The policy requires the two to be shown
-// as separate facts, so it is read back out of the capture URL and labelled.
+const all = (await getCollection('archive', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.sortDate.getTime() - b.data.sortDate.getTime());
+
+// A thread is one turn in a four-month conversation, so it offers the turns on
+// either side of it rather than sending the reader back through the hub.
+const siblings = entry.data.kind === 'forum-thread'
+  ? all.filter((item) => item.data.kind === 'forum-thread' && item.data.board === entry.data.board)
+  : [];
+const index = siblings.findIndex((item) => item.id === entry.id);
+const previous = index > 0 ? siblings[index - 1] : null;
+const next = index >= 0 && index < siblings.length - 1 ? siblings[index + 1] : null;
+
+// Which topics on a captured board index we actually hold.
+const recovered = new Map(
+  all.filter((item) => item.data.topicId).map((item) => [item.data.topicId, item]),
+);
+
 const captureStamp = entry.data.captureUrl.match(/\/web\/(\d{4})(\d{2})(\d{2})/);
 const archivedOn = captureStamp
   ? new Date(`${captureStamp[1]}-${captureStamp[2]}-${captureStamp[3]}T00:00:00Z`)
@@ -22,57 +36,40 @@ const recoveredOn = entry.data.recoveredAt.toLocaleDateString('en-US', {
   year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
 });
 const participants = entry.data.participants ?? [];
+const topics = entry.data.topics ?? [];
+const held = topics.filter((topic) => recovered.has(topic.id)).length;
+const KIND_LABEL = {
+  'forum-thread': 'Forum thread', 'board-index': 'Board index', 'site-page': 'Site page',
+  map: 'Map', guide: 'Guide', history: 'History', quote: 'Quotes', roster: 'Staff list',
+};
 ---
 <Base title={`${entry.data.title} | Dark Pawns Archive`} description={entry.data.description}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/archive/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
-  <article class="container archive-article">
-    <p class="crumb"><a href="/archive/">Archive</a> &raquo; {entry.data.title}</p>
+  <article class="entry">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="/archive/">The Archive</a></nav>
     <h1>{entry.data.title}</h1>
 
+    <p class="dateline">
+      {entry.data.dateLabel}
+      {entry.data.board && (
+        <> on <a href="/archive/#forum">{entry.data.board}</a></>
+      )}
+      <span class="dateline-site"> · {entry.data.sourceSite}</span>
+    </p>
+
     {entry.data.completeness === 'partial' && (
-      <p class="completeness">
+      <p class="note-partial">
         <strong>Incomplete record.</strong> {entry.data.completenessNote ??
           'Only part of this record was ever captured.'}
       </p>
     )}
-
-    <dl class="provenance">
-      <div><dt>Written</dt><dd>{entry.data.dateLabel}</dd></div>
-      {entry.data.board && <div><dt>Board</dt><dd>{entry.data.board}</dd></div>}
-      {entry.data.postCount && (
-        <div>
-          <dt>Length</dt>
-          <dd>
-            {entry.data.postCount} posts
-            {participants.length > 0 && ` from ${participants.length} people`}
-          </dd>
-        </div>
-      )}
-      <div><dt>Record type</dt><dd>{entry.data.kind.replaceAll('-', ' ')}</dd></div>
-      <div><dt>Published on</dt><dd>{entry.data.sourceSite}</dd></div>
-      {archivedOn && <div><dt>Archived</dt><dd>{archivedOn}</dd></div>}
-      <div><dt>Recovered</dt><dd>{recoveredOn}</dd></div>
-      {entry.data.usedIn && entry.data.usedIn.length > 0 && (
-        <div>
-          <dt>Used in</dt>
-          <dd>{entry.data.usedIn.map((use, index) => (
-            <>{index > 0 && ', '}<a href={use.href}>{use.label}</a></>
-          ))}</dd>
-        </div>
-      )}
-      <div>
-        <dt>Source</dt>
-        <dd>
-          <a href={entry.data.captureUrl}>View the Wayback capture</a>
-          {' · '}
-          <a href={`/archive/${entry.id}.md`}>Markdown</a>
-        </dd>
-      </div>
-    </dl>
+    {entry.data.contentWarning && (
+      <p class="note-partial"><strong>Content note.</strong> {entry.data.contentWarning}</p>
+    )}
 
     {participants.length > 0 && (
-      <section class="participants" aria-label="People in this conversation">
-        <h2>In this conversation</h2>
+      <section class="people" aria-labelledby="people-h">
+        <h2 id="people-h">In this conversation</h2>
         <ul>
           {participants.map((person) => (
             <li>
@@ -85,81 +82,152 @@ const participants = entry.data.participants ?? [];
       </section>
     )}
 
-    {entry.data.contentWarning && <p class="content-warning"><strong>Content note:</strong> {entry.data.contentWarning}</p>}
+    {topics.length > 0 && (
+      <section class="ledger" aria-labelledby="ledger-h">
+        <h2 id="ledger-h">The board, as captured</h2>
+        <p class="ledger-note">
+          Every topic the board was carrying on the day it was archived, with the reply count
+          phpBB printed beside it. {held} of these {topics.length} have a recovered page. The rest
+          are struck through: the board proves they existed and how big they were, and that is all
+          that is left of them.
+        </p>
+        <ol class="ledger-rows">
+          {topics.map((topic) => {
+            const record = recovered.get(topic.id);
+            return (
+              <li class={record ? 'held' : 'lost'}>
+                <span class="l-title">
+                  {record
+                    ? <a href={`/archive/${record.id}/`}>{topic.title}</a>
+                    : <s>{topic.title}</s>}
+                </span>
+                <span class="l-author">{topic.author}</span>
+                <span class="l-replies">{topic.replies === 1 ? '1 reply' : `${topic.replies} replies`}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+    )}
+
     <div class="prose archive-copy"><Content /></div>
+
+    {(previous || next) && (
+      <nav class="around" aria-label="More from this board">
+        {previous && (
+          <a class="prev" href={`/archive/${previous.id}/`}>
+            <span class="around-label">Earlier on {previous.data.board}</span>
+            <span class="around-title">{previous.data.title}</span>
+          </a>
+        )}
+        {next && (
+          <a class="next" href={`/archive/${next.id}/`}>
+            <span class="around-label">Later on {next.data.board}</span>
+            <span class="around-title">{next.data.title}</span>
+          </a>
+        )}
+      </nav>
+    )}
+
+    <footer class="provenance" aria-labelledby="prov-h">
+      <h2 id="prov-h">Provenance</h2>
+      <dl>
+        <div><dt>Written</dt><dd>{entry.data.dateLabel}</dd></div>
+        {archivedOn && <div><dt>Archived</dt><dd>{archivedOn}</dd></div>}
+        <div><dt>Recovered</dt><dd>{recoveredOn}</dd></div>
+        <div><dt>Record type</dt><dd>{KIND_LABEL[entry.data.kind] ?? entry.data.kind}</dd></div>
+        {entry.data.postCount && (
+          <div>
+            <dt>Length</dt>
+            <dd>{entry.data.postCount} posts{participants.length > 0 && ` from ${participants.length} people`}</dd>
+          </div>
+        )}
+        {entry.data.usedIn && entry.data.usedIn.length > 0 && (
+          <div>
+            <dt>Used in</dt>
+            <dd>{entry.data.usedIn.map((use, i) => (<>{i > 0 && ', '}<a href={use.href}>{use.label}</a></>))}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Source</dt>
+          <dd>
+            <a href={entry.data.captureUrl}>Wayback capture</a>
+            {' · '}<a href={`/archive/${entry.id}.md`}>Markdown</a>
+          </dd>
+        </div>
+      </dl>
+    </footer>
   </article>
 </Base>
 
 <style>
-  .archive-article { padding-block: var(--space-lg) var(--space-xl); }
-  .crumb {
-    margin-bottom: var(--space-sm);
-    color: var(--ink-muted);
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  .completeness {
-    max-width: var(--content-width);
-    border-left: 3px solid var(--accent);
-    padding: 0.2rem 0 0.2rem var(--space-md);
-    color: var(--ink-muted);
-  }
-  .provenance {
-    max-width: var(--content-width);
-    margin: 0 0 var(--space-lg);
-    border-block: 1px solid var(--rule);
-    padding: var(--space-sm) 0;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-  }
-  .provenance div { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-md); padding: 0.15rem 0; }
+  .entry { --entry-width: 46rem;
+  /* The archive's type ramp, declared once. DESIGN.md documents six global
+     steps; an index of dated records needs a label and a row title between
+     them, so the extra steps are named here rather than scattered as literals. */
+  --t-label: 0.8rem;   /* mono labels, meta, provenance */
+  --t-quote: 0.95rem;  /* a quoted passage, quieter than the reply */
+  --t-body: 1rem;
+  --t-lede: 1.15rem;   /* opening paragraph, post bylines */
+  --t-row: 1.25rem;    /* a record title in a list */
+  --t-section: 1.375rem;
+  --t-figure: 1.75rem; /* the tally numerals */
+ max-width: var(--entry-width); margin-inline: auto; padding-inline: var(--space-md); padding-block: var(--space-lg) var(--space-xl); }
+  .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: var(--t-label); }
+  .crumb a { color: var(--ink-muted); }
+  .crumb a:hover { color: var(--accent); }
+
+  /* The date the thing was written reads at reading size. Everything else about
+     the capture is verifiable in the footer, where it does not gate the words. */
+  .dateline { margin: 0 0 var(--space-md); color: var(--ink-muted); }
+  .dateline-site { font-family: var(--font-mono); font-size: var(--t-label); }
+
+  .note-partial { border-left: 1px solid var(--accent); padding: 0.1rem 0 0.1rem var(--space-md); color: var(--ink-muted); }
+
+  .people { margin-bottom: var(--space-lg); border-block: 1px solid var(--rule); padding-block: var(--space-sm); }
+  .people h2 { margin: 0 0 var(--space-xs); font-family: var(--font-mono); font-size: var(--t-label); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+  .people ul { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); margin: 0; padding: 0; list-style: none; }
+  .people li { display: flex; align-items: baseline; gap: 0.4rem; }
+  .people .who { font-family: var(--font-display); font-size: var(--t-lede); }
+  .people .rank, .people .count { color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); }
+  .people .rank::before { content: '·'; margin-right: 0.4rem; }
+
+  .ledger h2 { margin: 0 0 var(--space-xs); font-size: var(--t-section); }
+  .ledger-note { max-width: 58ch; color: var(--ink-muted); }
+  .ledger-rows { margin: var(--space-md) 0 0; padding: 0; list-style: none; }
+  .ledger-rows li { display: grid; grid-template-columns: 1fr 8rem 6rem; gap: var(--space-md); align-items: baseline; border-top: 1px solid var(--rule); padding: 0.55rem 0; }
+  .ledger-rows li:last-child { border-bottom: 1px solid var(--rule); }
+  .l-title { font-family: var(--font-display); font-size: var(--t-lede); }
+  .lost .l-title { color: var(--ink-muted); }
+  .lost s { text-decoration-thickness: 1px; text-decoration-color: var(--ink-muted); }
+  .l-author, .l-replies { color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); font-variant-numeric: tabular-nums; }
+  .l-replies { text-align: right; }
+
+  .archive-copy :global(h3) { border-top: 1px solid var(--rule); padding-top: var(--space-md); font-size: var(--t-lede); }
+  .archive-copy :global(blockquote) { margin: 0 0 var(--space-md); border-left: 1px solid var(--rule); padding: 0.1rem 0 0.1rem var(--space-md); color: var(--ink-muted); font-size: var(--t-quote); }
+  .archive-copy :global(blockquote p) { margin: 0 0 var(--space-xs); }
+  .archive-copy :global(blockquote p:last-child) { margin-bottom: 0; }
+  .archive-copy :global(blockquote strong) { display: block; font-family: var(--font-mono); font-size: var(--t-label); font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .around { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-top: var(--space-xl); border-top: 2px solid var(--ink); padding-top: var(--space-md); }
+  .around a { color: var(--ink); }
+  .around .next { grid-column: 2; text-align: right; }
+  .around-label { display: block; font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.04em; color: var(--ink-muted); }
+  .around-title { display: block; font-family: var(--font-display); font-size: var(--t-lede); line-height: 1.2; }
+  .around a:hover .around-title { color: var(--accent); }
+
+  .provenance { margin-top: var(--space-xl); border-top: 1px solid var(--rule); padding-top: var(--space-md); }
+  .provenance h2 { margin: 0 0 var(--space-sm); font-family: var(--font-mono); font-size: var(--t-label); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+  .provenance dl { margin: 0; font-family: var(--font-mono); font-size: var(--t-label); }
+  .provenance div { display: grid; grid-template-columns: 9rem 1fr; gap: var(--space-md); padding: 0.15rem 0; }
   .provenance dt { color: var(--ink-muted); }
   .provenance dd { margin: 0; }
 
-  .participants { max-width: var(--content-width); margin-bottom: var(--space-lg); }
-  .participants h2 {
-    margin: 0 0 var(--space-xs);
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
+  @media (max-width: 640px) {
+    .ledger-rows li { grid-template-columns: 1fr; gap: 0.15rem; }
+    .l-replies { text-align: left; }
+    .around { grid-template-columns: 1fr; }
+    .around .next { grid-column: 1; text-align: left; }
+    .provenance div { grid-template-columns: 1fr; gap: 0; }
   }
-  .participants ul { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); margin: 0; padding: 0; list-style: none; }
-  .participants li { display: flex; align-items: baseline; gap: 0.4rem; }
-  .participants .who { font-family: var(--font-display); font-size: 1rem; }
-  .participants .rank,
-  .participants .count { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; }
-  .participants .rank::before { content: '·'; margin-right: 0.4rem; }
-
-  .archive-copy :global(h3) {
-    border-top: 1px solid var(--rule);
-    padding-top: var(--space-md);
-    font-size: 1.05rem;
-    letter-spacing: 0.01em;
-  }
-  /* A quoted passage is the thing being answered, not a post of its own. It is
-     set quieter and tighter than the reply that follows it. */
-  .archive-copy :global(blockquote) {
-    margin: 0 0 var(--space-md);
-    border-left: 2px solid var(--rule);
-    padding: 0.1rem 0 0.1rem var(--space-md);
-    color: var(--ink-muted);
-    font-size: 0.95rem;
-  }
-  .archive-copy :global(blockquote p) { margin: 0 0 var(--space-xs); }
-  .archive-copy :global(blockquote p:last-child) { margin-bottom: 0; }
-  .archive-copy :global(blockquote strong) {
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-  }
-  .content-warning { max-width: var(--content-width); border-left: 3px solid var(--accent); padding-left: var(--space-md); color: var(--ink-muted); }
-  @media (max-width: 520px) { .provenance div { grid-template-columns: 1fr; gap: 0; } }
 </style>

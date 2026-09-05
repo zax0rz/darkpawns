@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "News"
+topicId: 51
 postCount: 3
 completeness: "complete"
 participants:
@@ -29,7 +30,7 @@ draft: false
 
 ### Aidan — Fri Apr 30, 2004 11:16 pm
 
-I have updated to the newest version of the \[statistics\](http://www.dp-players.com/forum/statistics.php) module for the forum. lots of new stats to see and this time they all work.
+I have updated to the newest version of the [statistics](http://www.dp-players.com/forum/statistics.php) module for the forum. lots of new stats to see and this time they all work.
 
  also added a ton of new emoticons
 

@@ -9,8 +9,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /archive/,src/pages/archive/index.astro,hub,authored collection framing,1,full editorial review,,,,
 /archive/background.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,225,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /archive/background/,src/content/archive/background.md,archive,preserved community artifact,2,verify against capture,225,verbatim,mythic-admin,Wayback capture identified by captureUrl
-/archive/board-index-general.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,117,verbatim,frontline,Wayback capture identified by captureUrl
-/archive/board-index-general/,src/content/archive/board-index-general.md,archive,preserved community artifact,2,verify against capture,117,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/board-index-general.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,17,verbatim,frontline,Wayback capture identified by captureUrl
+/archive/board-index-general/,src/content/archive/board-index-general.md,archive,preserved community artifact,2,verify against capture,17,verbatim,frontline,Wayback capture identified by captureUrl
 /archive/classes.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,890,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /archive/classes/,src/content/archive/classes.md,archive,preserved community artifact,2,verify against capture,890,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /archive/darkpawns-faq.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,5745,verbatim,mythic-admin,Wayback capture identified by captureUrl

@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "News"
+topicId: 39
 postCount: 6
 completeness: "complete"
 participants:
@@ -29,7 +30,7 @@ draft: false
 
 ### aidan — Mon Apr 26, 2004 2:00 pm
 
-added new smilies from http://www.3dvalley.com and a quick reply hack from http://smartor.is-root.com
+added new smilies from  and a quick reply hack from
 
  also added ranks and rank images, which are broken down like this:
 
@@ -44,7 +45,7 @@ added new smilies from http://www.3dvalley.com and a quick reply hack from http:
 
 there are also administrator, moderator, and immortal special ranks. \[thumright\]
 
- edit (04.27.04) - added a \[statistics\](http://www.dp-players.com/forum/statistics.php) link in the forum. this shows most viewed topics, top posters, and other stuff.
+ edit (04.27.04) - added a [statistics](http://www.dp-players.com/forum/statistics.php) link in the forum. this shows most viewed topics, top posters, and other stuff.
 
 ### Vargus — Wed Apr 28, 2004 1:18 am
 

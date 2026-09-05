@@ -12,28 +12,82 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 completeness: "complete"
+topics:
+  - id: 98
+    title: "The Unforeseen Occultesque Following"
+    author: "stupidface"
+    replies: 10
+  - id: 97
+    title: "random observation"
+    author: "Aidan"
+    replies: 14
+  - id: 78
+    title: "load rates"
+    author: "Doragar"
+    replies: 36
+  - id: 88
+    title: "Infobar, ZMud, GMud and others..."
+    author: "Doragar"
+    replies: 7
+  - id: 38
+    title: "little known DP facts"
+    author: "Vargus"
+    replies: 45
+  - id: 83
+    title: "To pk or not topk!?"
+    author: "Morpheus"
+    replies: 8
+  - id: 79
+    title: "how old are your charcters?"
+    author: "Aidan"
+    replies: 13
+  - id: 82
+    title: "Fun with funeraries...."
+    author: "Sinko"
+    replies: 3
+  - id: 81
+    title: "lots of death"
+    author: "Morpheus"
+    replies: 0
+  - id: 80
+    title: "Rolling New Characters"
+    author: "Sinko"
+    replies: 0
+  - id: 63
+    title: "Ninjas"
+    author: "Morpheus"
+    replies: 9
+  - id: 75
+    title: "luck"
+    author: "Morpheus"
+    replies: 0
+  - id: 60
+    title: "Frontline and Paying for the Mud Humor(?)"
+    author: "Sinko"
+    replies: 3
+  - id: 68
+    title: "Damned KO"
+    author: "Sinko"
+    replies: 0
+  - id: 55
+    title: "advertising dark pawns"
+    author: "Aidan"
+    replies: 13
+  - id: 59
+    title: "n00b"
+    author: "Bannor"
+    replies: 1
+  - id: 20
+    title: "The BG"
+    author: "Morpheus"
+    replies: 4
+  - id: 10
+    title: "those were the days..."
+    author: "Aidan"
+    replies: 4
 draft: false
 ---
 
 *Transcript note: generated from the capture `dp-players-forum-f1-20040723032431.html`. Site navigation, the recent-topics sidebar and advertising are omitted.*
 
-| Topic | Started by | Replies |
-| --- | --- | --- |
-| The Unforeseen Occultesque Following | stupidface | 10 |
-| random observation | Aidan | 14 |
-| load rates | Doragar | 36 |
-| \[ Poll \] Infobar, ZMud, GMud and others... | Doragar | 7 |
-| little known DP facts | Vargus | 45 |
-| \[ Poll \] To pk or not topk!? | Morpheus | 8 |
-| \[ Poll \] how old are your charcters? | Aidan | 13 |
-| Fun with funeraries.... | Sinko | 3 |
-| lots of death | Morpheus | 0 |
-| Rolling New Characters | Sinko | 0 |
-| Ninjas | Morpheus | 9 |
-| luck | Morpheus | 0 |
-| Frontline and Paying for the Mud Humor(?) | Sinko | 3 |
-| Damned KO | Sinko | 0 |
-| advertising dark pawns | Aidan | 13 |
-| n00b | Bannor | 1 |
-| The BG | Morpheus | 4 |
-| those were the days... | Aidan | 4 |
+

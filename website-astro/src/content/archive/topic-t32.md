@@ -13,6 +13,7 @@ textKind: "verbatim"
 source: "Wayback capture identified by captureUrl"
 voiceLayer: "frontline"
 board: "General Discussion"
+topicId: 32
 postCount: 14
 completeness: "partial"
 completenessNote: "Page 6 of 6. Pages 1 to 5 were never captured."
