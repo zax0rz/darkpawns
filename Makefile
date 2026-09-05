@@ -1,4 +1,4 @@
-.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly
+.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -113,6 +113,17 @@ check-fmt:
 
 fidelity-depth:
 	python3 scripts/gen_fidelity_depth.py
+
+# Full C-vs-Go scenario regression. The per-scenario timeout is deliberately
+# generous for loaded boxes; timeout-kills are reported separately from
+# content failures so infrastructure cannot masquerade as a fidelity diff.
+oracle-regression:
+	ORACLE_REGRESSION_GO=$${ORACLE_REGRESSION_GO:-/usr/local/go/bin/go} \
+	DP_ORACLE_BIN=$${DP_ORACLE_BIN:-/home/zach/darkpawns-c-oracle/bin/circle} \
+	ORACLE_REGRESSION_TIMEOUT=$${ORACLE_REGRESSION_TIMEOUT:-240s} \
+	ORACLE_REGRESSION_SEED=$${ORACLE_REGRESSION_SEED:-1} \
+	ORACLE_REGRESSION_JOBS=$${ORACLE_REGRESSION_JOBS:-4} \
+		scripts/oracle_regression.sh
 
 vet:
 	go vet ./...

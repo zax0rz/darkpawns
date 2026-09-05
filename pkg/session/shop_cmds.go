@@ -45,6 +45,21 @@ func findShopKeeperInRoom(s *Session) (*game.Shop, string) {
 	return nil, ""
 }
 
+// shopKeeperTell formats the direct do_tell path used by shop.c. The C shop
+// strings begin with the buyer's name so do_tell can consume it as the target
+// argument; the player sees only the message body from the keeper.
+func shopKeeperTell(keeperName, message, playerName string) string {
+	formatted := fmt.Sprintf(message, playerName)
+	formatted = strings.TrimPrefix(formatted, playerName)
+	formatted = strings.TrimSpace(formatted)
+	if keeperName == "" {
+		keeperName = "The shopkeeper"
+	} else {
+		keeperName = strings.ToUpper(keeperName[:1]) + keeperName[1:]
+	}
+	return fmt.Sprintf("%s tells you, '%s'\r\n", keeperName, formatted)
+}
+
 // cmdList lists items for sale at the shop.
 // Usage: list [keyword]
 func cmdList(s *Session, args []string) error {
@@ -64,7 +79,9 @@ func cmdList(s *Session, args []string) error {
 	}
 
 	if len(shop.SellTypes) == 0 {
-		s.Send(fmt.Sprintf("%s has nothing for sale right now.", keeperName))
+		// src/shop.c:918. The live-inventory gate is a separate depth item;
+		// this preserves the C bytes for the existing empty branch.
+		s.Send("Currently, there is nothing for sale.\r\n")
 		return nil
 	}
 
@@ -98,9 +115,11 @@ func cmdList(s *Session, args []string) error {
 
 	if !found {
 		if keyword != "" {
-			s.Send("The shop has nothing like that.")
+			// src/shop.c:920 — this is a fixed C string, not a keeper-name
+			// interpolation.
+			s.Send("Presently, none of those are for sale.\r\n")
 		} else {
-			s.Send(fmt.Sprintf("%s has nothing for sale.", keeperName))
+			s.Send("Currently, there is nothing for sale.\r\n")
 		}
 		return nil
 	}
@@ -151,7 +170,7 @@ func cmdBuy(s *Session, args []string) error {
 	}
 
 	if matchedProto == nil {
-		s.Send(fmt.Sprintf("%s says, 'I don't have that item.'", keeperName))
+		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageNoSuchItem1], s.player.GetName()))
 		return nil
 	}
 

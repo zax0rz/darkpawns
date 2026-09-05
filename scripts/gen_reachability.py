@@ -13,6 +13,8 @@ Usage:
 import argparse
 import datetime
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from collections import OrderedDict
@@ -204,20 +206,33 @@ def parse_go_registry(session_dir: Path) -> set[str]:
     return registered
 
 
-def parse_go_socials(path: Path) -> set[str]:
-    """Parse pkg/game/socials.txt for social names.
+def parse_go_socials(root: Path) -> set[str]:
+    """Read social names from the compiled Go loader's runtime map.
 
-    Format: name min_pos min_level (tab or space separated)
+    The loader now embeds lib/misc/socials, so parsing pkg/game/socials.go
+    cannot observe the runtime set. Run the tiny probe command instead. This
+    keeps the C command-table comparison meaningful: a loader that drops or
+    rejects a record changes this set or fails the generator outright.
     """
-    socials = set()
-    text = path.read_text(encoding="utf-8", errors="replace")
-    for line in text.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        parts = line.split()
-        if parts:
-            socials.add(parts[0].lower())
+    go_binary = shutil.which("go") or "/usr/local/go/bin/go"
+    try:
+        result = subprocess.run(
+            [go_binary, "run", "./cmd/dp-socials"],
+            cwd=root,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError(f"could not run the Go social loader probe: {exc}") from exc
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"Go social loader probe failed: {detail}")
+
+    socials = {line.strip().lower() for line in result.stdout.splitlines() if line.strip()}
+    if not socials:
+        raise ValueError("Go social loader probe returned no social names")
     return socials
 
 
@@ -394,9 +409,9 @@ def classify_command(
     # Socials (do_action handler)
     if handler == "do_action":
         if cmd in go_socials:
-            return ("social", "pkg/game/socials.txt")
+            return ("social", "lib/misc/socials")
         else:
-            return ("missing-social", "not found in pkg/game/socials.txt")
+            return ("missing-social", "not found in lib/misc/socials")
 
     # Check Go registry (exact match)
     if cmd in go_registry:
@@ -444,8 +459,8 @@ def main():
     # Parse Go registry (all session/*.go files)
     go_registry = parse_go_registry(ROOT / "pkg" / "session")
 
-    # Parse Go socials
-    go_socials = parse_go_socials(ROOT / "pkg" / "game" / "socials.txt")
+    # Parse Go socials from the runtime loader, not from its source text.
+    go_socials = parse_go_socials(ROOT)
 
     # Parse specproc intercepts
     specproc_intercepts = parse_specproc_intercepts("pkg/game/spec_proc*.go")

@@ -50,11 +50,32 @@ func TestParseAllShopFiles_FieldOrder(t *testing.T) {
 	if shop.VNum != 99001 {
 		t.Errorf("shop vnum = %d, want 99001", shop.VNum)
 	}
+	if len(shop.Products) != 3 || shop.Products[0] != 99001 || shop.Products[2] != 99003 {
+		t.Errorf("products = %v, want [99001 99002 99003]", shop.Products)
+	}
+	if shop.BuyProfit != 1.40 || shop.SellProfit != 0.60 {
+		t.Errorf("profits = %.2f/%.2f, want 1.40/0.60", shop.BuyProfit, shop.SellProfit)
+	}
+	if len(shop.BuyTypes) != 1 || shop.BuyTypes[0] != 10 {
+		t.Errorf("buy types = %v, want [10]", shop.BuyTypes)
+	}
+	if shop.Messages[0] != "%s No such item one" || shop.Messages[6] != "%s Sell message" {
+		t.Errorf("messages = %#v, want parsed seven shop messages", shop.Messages)
+	}
+	if shop.Temper != 0 {
+		t.Errorf("temper = %d, want 0", shop.Temper)
+	}
 	if shop.KeeperVNum != 99100 {
 		t.Errorf("keeper vnum = %d, want 99100", shop.KeeperVNum)
 	}
 	if shop.Bitvector != 0 {
 		t.Errorf("bitvector = %d, want 0", shop.Bitvector)
+	}
+	if shop.WithWho != 0 || len(shop.Rooms) != 1 || shop.Rooms[0] != 99105 {
+		t.Errorf("with-who/rooms = %d/%v, want 0/[99105]", shop.WithWho, shop.Rooms)
+	}
+	if shop.OpenHour1 != 0 || shop.CloseHour1 != 24 || shop.OpenHour2 != -1 || shop.CloseHour2 != -1 {
+		t.Errorf("hours = %d %d %d %d, want 0 24 -1 -1", shop.OpenHour1, shop.CloseHour1, shop.OpenHour2, shop.CloseHour2)
 	}
 }
 
