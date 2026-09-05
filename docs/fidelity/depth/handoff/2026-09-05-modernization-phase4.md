@@ -55,6 +55,32 @@ intentionally changed.
 Focused item-4.1 regression before the full corpus: 6/6 scenarios passed,
 with 0 failed, 0 infra, and 0 timed out (107.402s).
 
+## Item 4.1 verification
+
+Standard gates passed on the branch:
+
+- `/usr/local/go/bin/go build ./...`
+- `/usr/local/go/bin/go vet ./...`
+- `/usr/local/go/bin/go test ./...`
+- `golangci-lint run ./...` — 0 issues
+- `gofumpt -l .` — clean
+- `git diff --check` — clean
+- `/usr/local/go/bin/go test ./pkg/game/...` — pass
+- `make fidelity-depth` — 4,760 cases; 4,654 proven/delegated, 55 blocked,
+  51 excluded
+
+The required full corpus then passed:
+
+```text
+oracle-regression: scenarios=934 passed=934 failed=0 infra=0 timed_out=0 elapsed=7306.563s started=2026-09-05T07:49:23-0400 finished=2026-09-05T09:51:10-0400
+```
+
+Eight infrastructure-shaped startup retries recovered on the runner's single
+retry (`applaud-depth`, `bash-peaceful-depth`, `berserk-failure-depth`,
+`bounce-depth`, `clan-depth`, `force-mob`, `love-depth`, and
+`wizard-residual-depth`); all eight finished `PASS` on retry, so the final
+authoritative tally is `infra=0` and `timed_out=0`.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and
