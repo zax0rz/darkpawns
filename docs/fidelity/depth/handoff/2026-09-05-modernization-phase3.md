@@ -3,6 +3,7 @@
 Date: 2026-09-05
 Branch: `codex/modernize-phase3-shops`
 Base: `origin/main` after PR #1387 merge (`340d129f4c875e53d5158093c27ba9b3fd952c98`)
+PR: #1388 (draft, HUMAN-MERGE-ONLY)
 
 ## Scope and ruling
 
