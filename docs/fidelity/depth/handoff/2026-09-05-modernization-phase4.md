@@ -239,6 +239,33 @@ The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
 tests. Hosted CI is required to report lint, security, and test green before
 merge; build/deploy remain skipped by policy.
 
+## Item 4.5 coverage boundary
+
+Item 4.5 table-drives the four `DoStand`, `DoSit`, `DoRest`, and `DoSleep`
+position state machines. The table retains the C-specific mounted gate and
+dismount path, exact self and room strings, per-arm hide flags, and the
+stunned/default transitions (including `rest` ending at POS_SITTING). `DoWake`
+and the session dispatch wrappers are outside this item.
+
+The changed-file list is:
+
+`pkg/game/movement_commands.go` and this handoff.
+
+The named verifying coverage is `position-basic`, `position-fighting`,
+`position-mounted-gates`, `position-room`, and the focused
+`TestPositionCommandsMountAndWake` and `TestPositionCommandsStunnedOrWorse`
+tests. The adjacent `position-gates`, `position-wake-target`, and
+`sleep-spell-depth` scenarios were also re-run as regression controls.
+
+The focused item-4.5 regression passed 7/7 scenarios with 0 failed, 0 infra,
+and 0 timed out (79.503s): `position-basic`, `position-fighting`,
+`position-gates`, `position-mounted-gates`, `position-room`,
+`position-wake-target`, and `sleep-spell-depth`.
+
+Measured source delta is +6 lines (102 added, 96 removed), against the
+roadmap estimate of −50; this is recorded as net-positive churn rather than
+claimed as a deletion.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and
