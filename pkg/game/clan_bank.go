@@ -10,27 +10,16 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		return
 	}
 
-	var c *Clan
-	var immcom bool
-	if ch.GetLevel() < LVL_IMMORT {
-		_, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil || ch.ClanRank == 0 {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return
-		}
-	} else {
-		if ch.GetLevel() < LVL_GOD {
-			ch.SendMessage("You do not have clan privileges.\r\n")
-			return
-		}
-		immcom = true
-		amountArg, clanArg := halfChop(arg)
-		arg = amountArg
-		_, c = w.Clans.FindClan(clanArg)
-		if c == nil {
-			ch.SendMessage("Unknown clan.\r\n")
-			return
-		}
+	_, c, immcom, ok := w.resolveClanForImmortal(ch, arg)
+	if !ok {
+		return
+	}
+	if !immcom && ch.ClanRank == 0 {
+		ch.SendMessage("You don't belong to any clan!\r\n")
+		return
+	}
+	if immcom {
+		arg, _ = halfChop(arg)
 	}
 
 	if action == CBWithdraw && !immcom && !c.CanWithdraw(ch) {

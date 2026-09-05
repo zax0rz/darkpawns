@@ -5,34 +5,17 @@ import (
 )
 
 func (w *World) doClanMoney(ch *Player, arg string, action int) {
-	var clanNum int
-	var c *Clan
-	var immcom bool
-
 	if arg == "" {
 		w.sendClanFormat(ch)
 		return
 	}
 
-	if ch.GetLevel() < LVL_IMMORT {
-		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return
-		}
-	} else {
-		if ch.GetLevel() < LVL_GOD {
-			ch.SendMessage("You do not have clan privileges.\r\n")
-			return
-		}
-		immcom = true
-		arg1, arg2 := halfChop(arg)
-		arg = arg1
-		clanNum, c = w.Clans.FindClan(arg2)
-		if c == nil {
-			ch.SendMessage("Unknown clan.\r\n")
-			return
-		}
+	_, c, immcom, ok := w.resolveClanForImmortal(ch, arg)
+	if !ok {
+		return
+	}
+	if immcom {
+		arg, _ = halfChop(arg)
 	}
 
 	if ch.ClanRank < c.Privilege[CPSetFees] && !immcom {
@@ -57,8 +40,6 @@ func (w *World) doClanMoney(ch *Player, arg string, action int) {
 		return
 	}
 
-	_ = clanNum
-
 	switch action {
 	case CMAppFee:
 		c.AppFee = amount
@@ -76,34 +57,17 @@ func (w *World) doClanMoney(ch *Player, arg string, action int) {
 // doClanAppLevel manages clan application level requirements.
 // In C: do_clan_application()
 func (w *World) doClanAppLevel(ch *Player, arg string) {
-	var clanNum int
-	var c *Clan
-	var immcom bool
-
 	if arg == "" {
 		w.sendClanFormat(ch)
 		return
 	}
 
-	if ch.GetLevel() < LVL_IMMORT {
-		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return
-		}
-	} else {
-		if ch.GetLevel() < LVL_GOD {
-			ch.SendMessage("You do not have clan privileges.\r\n")
-			return
-		}
-		immcom = true
-		arg1, arg2 := halfChop(arg)
-		arg = arg1
-		clanNum, c = w.Clans.FindClan(arg2)
-		if c == nil {
-			ch.SendMessage("Unknown clan.\r\n")
-			return
-		}
+	_, c, immcom, ok := w.resolveClanForImmortal(ch, arg)
+	if !ok {
+		return
+	}
+	if immcom {
+		arg, _ = halfChop(arg)
 	}
 
 	if ch.ClanRank < c.Privilege[CPSetAppLev] && !immcom {
@@ -127,8 +91,6 @@ func (w *World) doClanAppLevel(ch *Player, arg string) {
 		ch.SendMessage("The application level can go from 1 to 30.\r\n")
 		return
 	}
-
-	_ = clanNum
 
 	c.ApplLevel = appLevel
 	w.SaveClans()

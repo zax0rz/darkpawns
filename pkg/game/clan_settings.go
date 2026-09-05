@@ -6,32 +6,18 @@ import (
 )
 
 func (w *World) doClanPrivate(ch *Player, arg string) {
-	var clanNum int
-	var c *Clan
-
-	if ch.GetLevel() < LVL_IMMORT {
-		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return
-		}
-		if ch.ClanRank != c.Ranks {
-			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
-			return
-		}
-	} else {
-		if ch.GetLevel() < LVL_GOD {
-			ch.SendMessage("You do not have clan privileges.\r\n")
-			return
-		}
-		clanNum, c = w.Clans.FindClan(arg)
-		if c == nil {
-			ch.SendMessage("Unknown clan.\r\n")
-			return
-		}
+	resolveArg := arg
+	if ch.GetLevel() >= LVL_IMMORT {
+		resolveArg = "clan " + arg
 	}
-
-	_ = clanNum
+	_, c, _, ok := w.resolveClanForImmortal(ch, resolveArg)
+	if !ok {
+		return
+	}
+	if ch.GetLevel() < LVL_IMMORT && ch.ClanRank != c.Ranks {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
 
 	if c.Private == ClanPublic {
 		c.Private = ClanPrivate
@@ -62,36 +48,27 @@ func (w *World) doClanPrivate(ch *Player, arg string) {
 // ch.WriteMagic = magicToken and register a callback that writes the
 // accumulated text into c.Plan.
 func (w *World) doClanPlan(ch *Player, arg string) {
-	var clanNum int
-	var c *Clan
-
 	if ch.GetLevel() < LVL_IMMORT {
-		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return
-		}
-		if ch.ClanRank < c.Privilege[CPSetPlan] {
-			ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
-			return
-		}
-	} else {
-		if ch.GetLevel() < LVL_GOD {
-			ch.SendMessage("You do not have clan privileges.\r\n")
-			return
-		}
-		if arg == "" {
-			w.sendClanFormat(ch)
-			return
-		}
-		clanNum, c = w.Clans.FindClan(arg)
-		if c == nil {
-			ch.SendMessage("Unknown clan.\r\n")
-			return
-		}
+		// Mortal plan editing resolves the player's clan; the helper also
+		// preserves the C message for a clanless player.
+	} else if arg == "" {
+		w.sendClanFormat(ch)
+		return
 	}
 
-	_ = clanNum
+	resolveArg := arg
+	if ch.GetLevel() >= LVL_IMMORT {
+		resolveArg = "clan " + arg
+	}
+	_, c, _, ok := w.resolveClanForImmortal(ch, resolveArg)
+	if !ok {
+		return
+	}
+	if ch.GetLevel() < LVL_IMMORT && ch.ClanRank < c.Privilege[CPSetPlan] {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
+
 	if c.Plan == "" {
 		ch.SendMessage(fmt.Sprintf("Enter the description, or plan for clan <<%s>>.\r\n", c.Name))
 	} else {
@@ -105,34 +82,17 @@ func (w *World) doClanPlan(ch *Player, arg string) {
 // doClanRanks manages clan rank names and adjusts existing members' ranks.
 // In C: do_clan_ranks()
 func (w *World) doClanRanks(ch *Player, arg string) {
-	var clanNum int
-	var c *Clan
-	var immcom bool
-
 	if arg == "" {
 		w.sendClanFormat(ch)
 		return
 	}
 
-	if ch.GetLevel() < LVL_IMMORT {
-		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return
-		}
-	} else {
-		if ch.GetLevel() < LVL_GOD {
-			ch.SendMessage("You do not have clan privileges.\r\n")
-			return
-		}
-		immcom = true
-		a1, a2 := halfChop(arg)
-		arg = a1
-		clanNum, c = w.Clans.FindClan(a2)
-		if c == nil {
-			ch.SendMessage("Unknown clan.\r\n")
-			return
-		}
+	_, c, immcom, ok := w.resolveClanForImmortal(ch, arg)
+	if !ok {
+		return
+	}
+	if immcom {
+		arg, _ = halfChop(arg)
 	}
 
 	if ch.ClanRank != c.Ranks && !immcom {
@@ -182,8 +142,6 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 			}
 		}
 	}
-
-	_ = clanNum
 
 	c.Ranks = newRanks
 	for i := 0; i < c.Ranks-1; i++ {
@@ -311,35 +269,24 @@ func (w *World) doClanPrivilege(ch *Player, arg string) {
 // doClanSP manages a single clan privilege for a rank.
 // In C: do_clan_sp()
 func (w *World) doClanSP(ch *Player, arg string, priv int) {
-	var clanNum int
-	var c *Clan
-	var immcom bool
-
 	if arg == "" {
 		w.sendClanFormat(ch)
 		return
 	}
 
-	if ch.GetLevel() < LVL_IMMORT {
-		clanNum, c = w.Clans.FindClanByID(ch.ClanID)
-		if c == nil {
-			ch.SendMessage("You don't belong to any clan!\r\n")
-			return
-		}
-	} else {
-		if ch.GetLevel() < LVL_GOD {
-			ch.SendMessage("You do not have clan privileges.\r\n")
-			return
-		}
-		immcom = true
-		arg1, _ := halfChop(arg)
-		arg = arg1
-		// In C: uses arg1 (the clan name) for find_clan, same arg updated
-		clanNum, c = w.Clans.FindClan(arg1)
-		if c == nil {
-			ch.SendMessage("Unknown clan.\r\n")
-			return
-		}
+	resolveArg := arg
+	if ch.GetLevel() >= LVL_IMMORT {
+		// C's do_clan_sp resolves the first token as the clan name, even
+		// though the ordinary clan handlers resolve the second token.
+		clanArg, _ := halfChop(arg)
+		resolveArg = "clan " + clanArg
+	}
+	_, c, immcom, ok := w.resolveClanForImmortal(ch, resolveArg)
+	if !ok {
+		return
+	}
+	if immcom {
+		arg, _ = halfChop(arg)
 	}
 
 	if ch.ClanRank != c.Ranks && !immcom {
@@ -363,8 +310,6 @@ func (w *World) doClanSP(ch *Player, arg string, priv int) {
 		ch.SendMessage("There is no such rank in the clan.\r\n")
 		return
 	}
-
-	_ = clanNum
 
 	c.Privilege[priv] = rank
 	w.SaveClans()
