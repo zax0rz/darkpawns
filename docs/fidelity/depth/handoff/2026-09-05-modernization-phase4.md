@@ -1,7 +1,7 @@
 # Modernization Phase 4 — mechanical handler dedup handoff
 
 Date: 2026-09-05
-Branch: `glm/modernize-phase-4-1` (item 4.1 is first)
+Branch: `glm/modernize-phase-4-1` (item 4.1 is first; merged before item 4.2)
 Base: `origin/main` after PR #1388 merge (`9588f759567dc3b0e526aa2d1ddf43413071b85a`)
 
 ## Queue and process
@@ -80,6 +80,10 @@ retry (`applaud-depth`, `bash-peaceful-depth`, `berserk-failure-depth`,
 `bounce-depth`, `clan-depth`, `force-mob`, `love-depth`, and
 `wizard-residual-depth`); all eight finished `PASS` on retry, so the final
 authoritative tally is `infra=0` and `timed_out=0`.
+
+PR #1390 (`glm/modernize-phase-4-1`) passed hosted lint, security, and test
+checks and self-merged on 2026-09-05 as `f2aa2caccf3133f6216dc7660488a38335afd244`.
+The next serial branch is `glm/modernize-phase-4-2`, based on that merge.
 
 ## Standing fidelity constraints
 
