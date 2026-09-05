@@ -170,8 +170,22 @@ The named verifying coverage is:
 
 The focused item-4.3 regression passed 22/22 scenarios with 0 failed, 0 infra,
 and 0 timed out (149.769s). `tell-linkless-depth` retried once as an
-infrastructure-shaped failure and passed on retry. The full corpus remains
-required before PR merge.
+infrastructure-shaped failure and passed on retry.
+
+The required full corpus passed on this branch:
+
+```text
+oracle-regression: scenarios=934 passed=934 failed=0 infra=0 timed_out=0 elapsed=7091.014s started=2026-09-05T12:34:21-0400 finished=2026-09-05T14:32:32-0400
+```
+
+Six infrastructure-shaped retries recovered on the runner's single retry
+(`abilities-depth`, `combat-trip-opener`, `communication`, `disembowel-depth`,
+`imotd-depth`, and `yuball-depth`); all six finished `PASS` on retry, so the
+final authoritative tally is `infra=0` and `timed_out=0`.
+
+The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
+`go test ./...`, `golangci-lint run ./...`, `gofumpt -l .`, and
+`git diff --check`.
 
 ## Standing fidelity constraints
 
