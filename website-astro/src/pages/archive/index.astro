@@ -48,6 +48,8 @@ const tally = {
 // wrong. Same rule as the rest of the archive: sourced or silent.
 const postsComplete = threads.every((entry) => typeof entry.data.postCount === 'number');
 
+const contentsDate = (label) => (label === 'Date not recorded' ? '' : label);
+
 const KIND_LABEL = {
   'forum-thread': 'thread', 'board-index': 'board index', 'site-page': 'page',
   map: 'map', guide: 'guide', history: 'history', quote: 'quotes', roster: 'staff',
@@ -123,14 +125,14 @@ const missing = [
           {section.entries.map((entry) => (
             <li>
               <a href={`/archive/${entry.id}/`}>
-                <span class="r-date">{entry.data.dateLabel}</span>
+                <span class="r-date">{contentsDate(entry.data.dateLabel)}</span>
                 <span class="r-title">{entry.data.title}</span>
-                <span class="r-desc">{entry.data.description}</span>
+                <span class="r-lead" aria-hidden="true"></span>
                 <span class="r-meta">
                   {KIND_LABEL[entry.data.kind] ?? entry.data.kind}
                   {entry.data.kind === 'board-index' && entry.data.topics &&
-                    ` · ${entry.data.topics.length} topics listed`}
-                  {entry.data.completeness === 'partial' && ' · partial record'}
+                    `, ${entry.data.topics.length} topics`}
+                  {entry.data.completeness === 'partial' && ', partial'}
                 </span>
               </a>
             </li>
@@ -148,14 +150,13 @@ const missing = [
               {section.threads.map((entry) => (
                 <li>
                   <a href={`/archive/${entry.id}/`}>
-                    <span class="r-date">{entry.data.dateLabel}</span>
+                    <span class="r-date">{contentsDate(entry.data.dateLabel)}</span>
                     <span class="r-title">{entry.data.title}</span>
-                    <span class="r-desc">{entry.data.description}</span>
+                    <span class="r-lead" aria-hidden="true"></span>
                     <span class="r-meta">
                       {entry.data.postCount} posts
-                      {entry.data.participants && ` · ${entry.data.participants.length} people`}
-                      {entry.data.board && ` · ${entry.data.board}`}
-                      {entry.data.completeness === 'partial' && ' · partial record'}
+                      {entry.data.participants && `, ${entry.data.participants.length} people`}
+                      {entry.data.completeness === 'partial' && ', partial'}
                     </span>
                   </a>
                 </li>
@@ -226,25 +227,48 @@ const missing = [
   .threads { margin-top: var(--space-lg); }
   .threads h3 { margin: 0 0 var(--space-xs); font-size: var(--t-row); }
 
+  /* A contents page, not a stack of summaries: date, title, extent, one line
+     each, with the dot leader a printed table of contents would use. What each
+     record is belongs on the record. */
   .records { margin: 0; padding: 0; list-style: none; }
-  .records li { border-top: 1px solid var(--rule); }
-  .records li:last-child { border-bottom: 1px solid var(--rule); }
-  /* Explicit placement. A row span to -1 collapses to the first line when the
-     grid has no explicit rows, which drops the description into the date rail. */
+  .records li + li { border-top: 1px solid var(--rule); }
   .records a {
-    display: grid;
-    grid-template-columns: 10rem 1fr;
-    column-gap: var(--space-lg);
-    row-gap: 0.15rem;
-    padding: var(--space-md) 0;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    padding: 0.45rem 0;
     color: var(--ink);
   }
-  .r-date { grid-column: 1; grid-row: 1 / span 3; color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); line-height: 1.5; }
-  .r-title { grid-column: 2; grid-row: 1; font-family: var(--font-display); font-size: var(--t-row); line-height: 1.2; text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 1px; text-decoration-color: var(--rule); }
-  .r-desc { grid-column: 2; grid-row: 2; color: var(--ink-muted); }
-  .r-meta { grid-column: 2; grid-row: 3; color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.04em; }
+  .r-date {
+    flex: 0 0 11rem;
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    /* One line per entry, the way a contents page sets its page numbers. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .r-title { font-family: var(--font-display); font-size: var(--t-lede); line-height: 1.3; }
+  .r-title::after {
+    content: '';
+    display: inline-block;
+    width: 0;
+  }
+  .r-meta {
+    flex: 0 0 auto;
+    margin-left: auto;
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .r-lead { flex: 1 1 auto; border-bottom: 1px dotted var(--rule); transform: translateY(-0.3em); min-width: var(--space-md); }
   .records a:hover .r-title,
-  .records a:focus-visible .r-title { color: var(--accent); text-decoration-color: var(--accent); }
+  .records a:focus-visible .r-title { color: var(--accent); }
+  .records a:hover .r-lead,
+  .records a:focus-visible .r-lead { border-bottom-color: var(--accent); }
 
   .gaps { border-top: 2px solid var(--ink); }
   .missing { margin: 0; }
@@ -256,7 +280,11 @@ const missing = [
 
   @media (max-width: 640px) {
     .records a, .missing div { grid-template-columns: 1fr; gap: var(--space-xs); }
-    .r-date, .r-title, .r-desc, .r-meta { grid-column: 1; grid-row: auto; }
+    .records a { flex-wrap: wrap; gap: 0.1rem var(--space-sm); padding: var(--space-sm) 0; }
+    .r-date { flex: 0 0 100%; order: 2; }
+    .r-title { flex: 0 0 100%; order: 1; }
+    .r-lead { display: none; }
+    .r-meta { margin-left: 0; order: 3; }
     .ask { margin-left: 0; }
   }
 </style>

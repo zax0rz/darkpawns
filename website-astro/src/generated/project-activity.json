@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T20:32:15-04:00",
+  "generatedAt": "2026-09-04T20:52:39-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 13
+      "commits": 14
     }
   ],
   "recentCommits": [
+    {
+      "sha": "a9687c08d46d9c7668217418933efc64b896c88b",
+      "date": "2026-09-04",
+      "title": "feat(search): index every word, not just slugs",
+      "url": "https://github.com/zax0rz/darkpawns/commit/a9687c08d46d9c7668217418933efc64b896c88b"
+    },
     {
       "sha": "5c0a69a2513a5424dac3c24b8c6cbc2a86b5003b",
       "date": "2026-09-04",
@@ -76,12 +82,6 @@
       "date": "2026-09-04",
       "title": "feat(archive): make the archive legible to machines, not only to readers",
       "url": "https://github.com/zax0rz/darkpawns/commit/f8a2d0ecd1bdd9e9ff729d9552d38560c7f09160"
-    },
-    {
-      "sha": "b4dd628c40d4fb8faf5bba928f4425b30ae29ec2",
-      "date": "2026-09-04",
-      "title": "feat(archive): rebuild the hub and entry pages around one axis",
-      "url": "https://github.com/zax0rz/darkpawns/commit/b4dd628c40d4fb8faf5bba928f4425b30ae29ec2"
     }
   ],
   "pullRequests": [
