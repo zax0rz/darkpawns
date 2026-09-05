@@ -15,13 +15,13 @@ const sections = [
   {
     id: 'darkpawns',
     site: 'darkpawns.com',
-    note: "Frontline's own site: the news page, the text map of Kir Drax'in, and the handbooks that described the world.",
+    note: "The official site, run by Frontline: the news page, the text map of Kir Drax'in, and the handbooks.",
     entries: entries.filter((entry) => entry.data.sourceSite === 'darkpawns.com'),
   },
   {
     id: 'player-page',
     site: 'dp-players.com',
-    note: 'The player page Aidan ran in 2004, and the phpBB board attached to it.',
+    note: 'The player page I ran in 2004, and the board attached to it.',
     entries: entries.filter((entry) => entry.data.sourceSite === 'dp-players.com' && !isThread(entry)),
     threads,
   },
@@ -79,10 +79,10 @@ const collectionLd = JSON.stringify({
 });
 
 const missing = [
-  { what: 'The drawn world map', detail: "darkpawns.com published a drawing of Kir Drax'in beside the text map. The text map is here. The drawing was never captured." },
-  { what: 'Two strategy guides', detail: "The surviving index names them: Whistler's Determining Your Natural Abilities from November 2002, and Aidan's Definative Newbie Guide from March 2003. Neither article was archived." },
-  { what: '201 game logs', detail: 'Players uploaded transcripts of hunts, duels and deaths across ten categories. The index survived with every count intact. Not one of the logs did.' },
-  { what: 'Most of the board', detail: 'The July 2004 board index lists topics whose pages have no capture at any timestamp, and several long threads survive only as their final page.' },
+  { what: 'The drawing of the city', detail: "darkpawns.com printed a picture of Kir Drax'in next to the text map. The text map is here. The picture was never captured." },
+  { what: 'Two guides', detail: "The index names them: Whistler's Determining Your Natural Abilities, November 2002, and my Definative Newbie Guide, March 2003. Neither was archived." },
+  { what: '201 game logs', detail: 'Players uploaded transcripts of hunts and duels across ten categories. The index survived with every count on it. None of the logs did.' },
+  { what: 'Most of the board', detail: 'The July 2004 index lists topics with no capture at any timestamp. Several long threads survive only as their last page.' },
 ];
 ---
 <Base title="Archive | Dark Pawns" description="Recovered conversations and records from the original Dark Pawns community.">
@@ -90,27 +90,28 @@ const missing = [
   <div class="container archive-hub">
     <h1>The Archive</h1>
     <p class="lede">
-      Dark Pawns was more than a codebase. It was arguments, jokes, quests, grudges, and people
-      trying to keep a world alive. These records were recovered from archived copies of
-      dp-players.com and darkpawns.com, then checked and preserved with their provenance intact.
+      These records were recovered from archived copies of my old player page, dp-players.com, and
+      the official Dark Pawns site, darkpawns.com. Every one of them names where it came from and
+      which archived copy it was taken from.
     </p>
 
     <dl class="tally">
-      <div><dt>Records</dt><dd>{tally.records}</dd></div>
-      <div><dt>Conversations</dt><dd>{tally.threads}</dd></div>
-      {postsComplete && <div><dt>Posts</dt><dd>{tally.posts}</dd></div>}
-      <div><dt>People</dt><dd>{tally.people}</dd></div>
+      <div><dd>{tally.records}</dd><dt>Records</dt></div>
+      <div><dd>{tally.threads}</dd><dt>Conversations</dt></div>
+      {postsComplete && <div><dd>{tally.posts}</dd><dt>Posts</dt></div>}
+      <div><dd>{tally.people}</dd><dt>People</dt></div>
     </dl>
 
     <section class="start" aria-labelledby="start-here">
-      <h2 id="start-here">Start here</h2>
+      <header class="band">
+        <h2 id="start-here">Start here</h2>
+        <p class="band-count">{shortlist.length} of {tally.records}</p>
+      </header>
       <ol class="start-list">
         {shortlist.map((pick) => (
           <li>
-            <a href={`/archive/${pick.entry.id}/`}>
-              <span class="start-title">{pick.entry.data.title}</span>
-              <span class="start-why">{pick.why}</span>
-            </a>
+            <a class="start-title" href={`/archive/${pick.entry.id}/`}>{pick.entry.data.title}</a>
+            <p class="start-why">{pick.why}</p>
           </li>
         ))}
       </ol>
@@ -118,7 +119,12 @@ const missing = [
 
     {sections.map((section) => (
       <section class="site" id={section.id} aria-labelledby={`h-${section.id}`}>
-        <h2 id={`h-${section.id}`}>{section.site}</h2>
+        <header class="band">
+          <h2 id={`h-${section.id}`}>{section.site}</h2>
+          <p class="band-count">
+            {section.entries.length + (section.threads?.length ?? 0)} records
+          </p>
+        </header>
         <p class="site-note">{section.note}</p>
 
         <ol class="records">
@@ -141,10 +147,12 @@ const missing = [
 
         {section.threads && (
           <div class="threads">
-            <h3 id="forum">The board</h3>
+            <header class="band band-sub">
+              <h3 id="forum">The board</h3>
+              <p class="band-count">{section.threads.length} threads</p>
+            </header>
             <p class="site-note">
-              Nineteen conversations survived out of the thirty-six the board was carrying when it
-              was captured. Newest last, the way you would have read them.
+              Nineteen of the thirty-six threads the board was carrying survived. Oldest first.
             </p>
             <ol class="records">
               {section.threads.map((entry) => (
@@ -168,11 +176,13 @@ const missing = [
     ))}
 
     <section class="gaps" id="missing" aria-labelledby="h-missing">
-      <h2 id="h-missing">What is missing</h2>
+      <header class="band">
+        <h2 id="h-missing">What is missing</h2>
+        <p class="band-count">{missing.length} things</p>
+      </header>
       <p class="site-note">
-        The recovery checked every URL the surviving pages pointed at and closed each one with a
-        result. These came back empty. They are listed because an archive that hides its gaps is
-        not a record.
+        The recovery followed every link the surviving pages pointed at. These four are what it
+        looked for and did not find.
       </p>
       <dl class="missing">
         {missing.map((item) => (
@@ -180,8 +190,8 @@ const missing = [
         ))}
       </dl>
       <p class="ask">
-        If you kept backups from the dp-players.com era, those files are the only remaining source
-        for any of this. <a href="/contact/">Get in touch.</a>
+        If you kept backups from that era, they are the only remaining source for any of it.{' '}
+        <a href="/contact/">Get in touch.</a>
       </p>
     </section>
   </div>
@@ -205,27 +215,58 @@ const missing = [
   .archive-hub > * { max-width: var(--archive-width); }
   .lede { max-width: 58ch; color: var(--ink-muted); font-size: var(--t-lede); }
 
-  .tally { display: flex; flex-wrap: wrap; gap: var(--space-lg); margin: var(--space-lg) 0 0; }
-  .tally div { display: flex; flex-direction: column-reverse; gap: 0.1rem; }
-  .tally dt { color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.06em; text-transform: uppercase; }
+  /* An accession block off a library card: four ruled cells, figures in the
+     display face, labels in the machine face. The rules are the only structure
+     and the tonal cream is the only fill, which is all the depth this system
+     has. */
+  .tally {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    margin: var(--space-lg) 0 0;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+  }
+  .tally div { padding: var(--space-sm) var(--space-md); background: var(--paper-deep); }
   .tally dd { margin: 0; font-family: var(--font-display); font-size: var(--t-figure); line-height: 1; font-variant-numeric: tabular-nums; }
+  .tally dt { margin-top: 0.15rem; color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.06em; text-transform: uppercase; }
 
-  h2 { margin: var(--space-xl) 0 var(--space-xs); }
-  .site-note { max-width: 58ch; margin: 0 0 var(--space-md); color: var(--ink-muted); }
+  /* Each section opens on a ruled band with its name and its extent, the way a
+     printed catalogue announces a new run of entries. */
+  .band {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+    border-block: 1px solid var(--ink);
+    background: var(--paper-deep);
+    padding: var(--space-sm) var(--space-md);
+  }
+  .band h2, .band h3 { margin: 0; }
+  .band h3 { font-size: var(--t-row); }
+  .band-sub { margin-top: var(--space-lg); border-block-width: 1px 0; background: none; padding-inline: 0; }
+  .band-count { margin: 0; color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.04em; white-space: nowrap; }
+  .site-note { max-width: 58ch; margin: var(--space-sm) 0 var(--space-md); color: var(--ink-muted); }
 
   /* Start here: the only place a record is allowed to argue for itself. */
-  .start { border-top: 2px solid var(--ink); }
   .start-list { margin: 0; padding: 0; list-style: none; }
-  .start-list li { border-bottom: 1px solid var(--rule); }
-  .start-list a { display: block; padding: var(--space-md) 0; color: var(--ink); }
-  .start-title { display: block; font-family: var(--font-display); font-size: var(--t-section); line-height: 1.2; text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 1px; text-decoration-color: var(--rule); }
-  .start-why { display: block; margin-top: 0.15rem; color: var(--ink-muted); }
-  .start-list a:hover .start-title,
-  .start-list a:focus-visible .start-title { text-decoration-color: var(--accent); color: var(--accent); }
+  .start-list li { border-bottom: 1px solid var(--rule); padding: var(--space-md) 0; }
+  .start-title {
+    display: inline-block;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--t-section);
+    line-height: 1.2;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--rule);
+  }
+  .start-title:hover, .start-title:focus-visible { color: var(--accent); text-decoration-color: var(--accent); }
+  .start-why { margin: 0.15rem 0 0; max-width: 62ch; color: var(--ink-muted); }
 
-  .site { border-top: 2px solid var(--ink); }
   .threads { margin-top: var(--space-lg); }
-  .threads h3 { margin: 0 0 var(--space-xs); font-size: var(--t-row); }
 
   /* A contents page, not a stack of summaries: date, title, extent, one line
      each, with the dot leader a printed table of contents would use. What each
@@ -265,13 +306,19 @@ const missing = [
     white-space: nowrap;
   }
   .r-lead { flex: 1 1 auto; border-bottom: 1px dotted var(--rule); transform: translateY(-0.3em); min-width: var(--space-md); }
+  .r-title, .r-date { transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 120ms linear; }
   .records a:hover .r-title,
-  .records a:focus-visible .r-title { color: var(--accent); }
+  .records a:focus-visible .r-title { color: var(--accent); transform: translateX(3px); }
+  .records a:hover .r-date,
+  .records a:focus-visible .r-date { color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) {
+    .r-title, .r-date { transition: color 120ms linear; }
+    .records a:hover .r-title, .records a:focus-visible .r-title { transform: none; }
+  }
   .records a:hover .r-lead,
   .records a:focus-visible .r-lead { border-bottom-color: var(--accent); }
 
-  .gaps { border-top: 2px solid var(--ink); }
-  .missing { margin: 0; }
+  .missing { margin: var(--space-md) 0 0; }
   .missing div { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-lg); border-top: 1px solid var(--rule); padding: var(--space-md) 0; }
   .missing div:last-child { border-bottom: 1px solid var(--rule); }
   .missing dt { font-family: var(--font-display); font-size: var(--t-lede); }
@@ -279,6 +326,8 @@ const missing = [
   .ask { margin-top: var(--space-md); margin-left: calc(10rem + var(--space-lg)); color: var(--ink-muted); }
 
   @media (max-width: 640px) {
+    .tally { grid-template-columns: repeat(2, 1fr); }
+    .band { flex-wrap: wrap; gap: 0.1rem var(--space-sm); }
     .records a, .missing div { grid-template-columns: 1fr; gap: var(--space-xs); }
     .records a { flex-wrap: wrap; gap: 0.1rem var(--space-sm); padding: var(--space-sm) 0; }
     .r-date { flex: 0 0 100%; order: 2; }

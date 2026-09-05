@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T20:52:39-04:00",
+  "generatedAt": "2026-09-05T08:12:00-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,22 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 14
+      "commits": 16
     }
   ],
   "recentCommits": [
+    {
+      "sha": "1e5af3bf8cfa65f24f8892de711bc94106534214",
+      "date": "2026-09-05",
+      "title": "Merge remote-tracking branch 'origin/main' into website-deslop",
+      "url": "https://github.com/zax0rz/darkpawns/commit/1e5af3bf8cfa65f24f8892de711bc94106534214"
+    },
+    {
+      "sha": "3712e4bdffcfaff7235e2ff1dbfe3776a36b4088",
+      "date": "2026-09-05",
+      "title": "feat(archive): make the hub a contents page instead of a stack of summaries",
+      "url": "https://github.com/zax0rz/darkpawns/commit/3712e4bdffcfaff7235e2ff1dbfe3776a36b4088"
+    },
     {
       "sha": "a9687c08d46d9c7668217418933efc64b896c88b",
       "date": "2026-09-04",
@@ -70,18 +82,6 @@
       "date": "2026-09-04",
       "title": "Merge remote-tracking branch 'origin/main' into website-deslop",
       "url": "https://github.com/zax0rz/darkpawns/commit/310c28d3f473fc75f28930cb42301723fcfe7a69"
-    },
-    {
-      "sha": "193fc05486ee27a1262d03e9f464bdce2f8e0c77",
-      "date": "2026-09-04",
-      "title": "chore(web): keep only the illustration the blog post uses",
-      "url": "https://github.com/zax0rz/darkpawns/commit/193fc05486ee27a1262d03e9f464bdce2f8e0c77"
-    },
-    {
-      "sha": "f8a2d0ecd1bdd9e9ff729d9552d38560c7f09160",
-      "date": "2026-09-04",
-      "title": "feat(archive): make the archive legible to machines, not only to readers",
-      "url": "https://github.com/zax0rz/darkpawns/commit/f8a2d0ecd1bdd9e9ff729d9552d38560c7f09160"
     }
   ],
   "pullRequests": [
