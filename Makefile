@@ -1,4 +1,4 @@
-.PHONY: build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression
+.PHONY: expected-divergences build test run clean install monitoring-up monitoring-down monitoring-logs monitoring-restart privacy-up privacy-down privacy-logs privacy-build privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -117,6 +117,16 @@ fidelity-depth:
 # Full C-vs-Go scenario regression. The per-scenario timeout is deliberately
 # generous for loaded boxes; timeout-kills are reported separately from
 # content failures so infrastructure cannot masquerade as a fidelity diff.
+expected-divergences:
+	python3 scripts/gen_expected_divergences.py
+
+expected-divergence-pins:
+	DP_ORACLE_BIN=$${DP_ORACLE_BIN:-/home/zach/darkpawns-c-oracle/bin/circle} python3 scripts/pin_expected_divergences.py
+
+expected-divergences-check: expected-divergences
+	@git diff --exit-code -- cmd/dp-oracle-diff/expected_divergences.tsv \
+		|| (echo "expected_divergences.tsv is stale; run make expected-divergences and commit" && exit 1)
+
 oracle-regression:
 	ORACLE_REGRESSION_GO=$${ORACLE_REGRESSION_GO:-/usr/local/go/bin/go} \
 	DP_ORACLE_BIN=$${DP_ORACLE_BIN:-/home/zach/darkpawns-c-oracle/bin/circle} \

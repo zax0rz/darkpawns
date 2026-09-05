@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"embed"
 	"encoding/binary"
 	"encoding/json"
@@ -88,10 +89,18 @@ func run() int {
 	}
 	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *showGoLog); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
+		if errors.Is(err, errDivergence) {
+			return 3
+		}
 		return 1
 	}
 	return 0
 }
+
+// errDivergence is the sentinel for "the run completed and the normalized
+// transcripts differ." main maps it to exit code 3 so drivers can grade
+// content divergence separately from crashes (exit 1).
+var errDivergence = errors.New("normalized divergence detected")
 
 func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle, showGoLog bool) error {
 	if quiescence <= 0 {
@@ -431,6 +440,16 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		})
 	}
 
+	// Per-block divergence fingerprints: the regression driver pins the SHAPE of
+	// ledger-expected divergences so a scenario-level baseline can never bless an
+	// UNRELATED new divergence inside the same scenario.
+	for _, d := range diffs {
+		if d.Diff != "" {
+			sum := sha256.Sum256([]byte(d.Diff))
+			fmt.Printf("divergence-fingerprint\t%s\t%x\n", d.Command, sum)
+		}
+	}
+
 	fmt.Print(oraclediff.Report(oraclediff.ReportMeta{
 		Scenario:   scenario.Name,
 		OracleAddr: oracleAddr,
@@ -446,6 +465,11 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if showGoLog {
 		fmt.Println("go port server log:")
 		fmt.Print(goProc.log.String())
+	}
+	for _, d := range diffs {
+		if d.Diff != "" {
+			return errDivergence
+		}
 	}
 	return nil
 }
