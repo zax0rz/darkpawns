@@ -127,6 +127,11 @@ and the command/session package tests. The changed-file list is limited to
 `pkg/command/skill_commands.go` and this handoff; the focused scenario mapping
 above is the condition-three coverage citation for the item.
 
+PR #1391 (`glm/modernize-phase-4-2`) passed hosted lint, security, and test
+checks and self-merged on 2026-09-05 as
+`30e17f0f1dc3ac403882164fa6097de28026318e`. The next serial branch is
+`glm/modernize-phase-4-3`, based on that merge.
+
 ## Standing fidelity constraints
 
 Apply R1 (player-facing bytes), R3 (draw/order parity), R4 (no invention), and
