@@ -19,7 +19,7 @@
           autocorrect="off"
           autocapitalize="off"
           spellcheck="false"
-          placeholder="Search commands, spells, items, mobs, zones, docs (#vnum)..."
+          placeholder="Search commands, spells, items, mobs, zones, the archive, or a player's name"
           aria-label="Search all of Dark Pawns"
           aria-controls="dp-search-results"
           aria-activedescendant=""
@@ -36,14 +36,15 @@
       <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="items">Items</button>
       <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="mobs">Mobs</button>
       <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="world">World and Map</button>
-      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="docs">Docs and Archive</button>
+      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="archive">Archive</button>
+      <button type="button" class="filter-pill" role="tab" aria-selected="false" data-category="docs">Docs and Blog</button>
     </div>
 
     <!-- Results scroll area -->
     <div id="dp-search-results" class="search-results" role="listbox" aria-label="Search Results">
       <div id="dp-search-empty" class="search-state-msg">
         <p class="empty-title">Type to search the entire world</p>
-        <p class="empty-sub">Spells, commands, monsters, equipment, zones, lore, and documentation.</p>
+        <p class="empty-sub">Spells, commands, monsters, equipment, zones, lore, documentation, and every word of the recovered 2004 archive.</p>
         <div class="search-quick-queries">
           <span>Popular:</span>
           <button type="button" class="quick-link" data-query="backstab">backstab</button>

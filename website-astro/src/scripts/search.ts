@@ -2,11 +2,12 @@
 
 export interface SearchEntry {
   t: string; // Title
-  c: string; // Category: help | items | mobs | world | docs | pages
+  c: string; // Category: help | items | mobs | world | docs | archive | pages
   s: string; // Subtype badge
   u: string; // URL
   k: string; // Keywords
   d: string; // Description
+  b?: string; // Full document text, lowercase, search only and never displayed
   v: number; // VNUM
 }
 
@@ -227,6 +228,7 @@ export class OmnisearchClient {
       const descLower = item.d.toLowerCase();
       const keyLower = item.k.toLowerCase();
       const subtypeLower = item.s.toLowerCase();
+      const bodyText = item.b ?? '';
 
       // Exact title match
       if (titleLower === query) score += 150;
@@ -237,6 +239,8 @@ export class OmnisearchClient {
         score += 200;
       }
 
+      if (bodyText && tokens.length > 1 && bodyText.includes(query)) score += 25;
+
       // Token matching
       let matchesAllTokens = true;
       for (const token of tokens) {
@@ -244,6 +248,7 @@ export class OmnisearchClient {
         else if (keyLower.includes(token)) score += 20;
         else if (subtypeLower.includes(token)) score += 15;
         else if (descLower.includes(token)) score += 5;
+        else if (bodyText.includes(token)) score += 2;
         else {
           matchesAllTokens = false;
         }
@@ -287,13 +292,14 @@ export class OmnisearchClient {
 
     // Grouping logic when category == 'all'
     if (this.activeCategory === 'all') {
-      const groups: Record<string, { label: string; icon: string; items: SearchEntry[] }> = {
-        help: { label: 'Help & Spells', icon: '📜', items: [] },
-        items: { label: 'Items & Equipment', icon: '⚔️', items: [] },
-        mobs: { label: 'Monsters & NPCs', icon: '👹', items: [] },
-        world: { label: 'World & Map', icon: '🗺️', items: [] },
-        docs: { label: 'Docs & Lore', icon: '📖', items: [] },
-        pages: { label: 'Core Pages', icon: '🏛️', items: [] },
+      const groups: Record<string, { label: string; items: SearchEntry[] }> = {
+        help: { label: 'Help and Spells', items: [] },
+        items: { label: 'Items and Equipment', items: [] },
+        mobs: { label: 'Monsters and NPCs', items: [] },
+        world: { label: 'World and Map', items: [] },
+        archive: { label: 'The Archive', items: [] },
+        docs: { label: 'Docs and Blog', items: [] },
+        pages: { label: 'Core Pages', items: [] },
       };
 
       for (const item of results) {
@@ -307,7 +313,7 @@ export class OmnisearchClient {
 
       for (const [key, group] of Object.entries(groups)) {
         if (group.items.length === 0) continue;
-        html += `<div class="search-group-header"><span>${group.icon} ${group.label}</span><span>${group.items.length}</span></div>`;
+        html += `<div class="search-group-header"><span>${group.label}</span><span>${group.items.length}</span></div>`;
         
         for (const item of group.items) {
           html += this.renderItemHtml(item, query, globalIndex++);

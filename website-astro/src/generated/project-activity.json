@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T20:25:06-04:00",
+  "generatedAt": "2026-09-04T20:32:15-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 12
+      "commits": 13
     }
   ],
   "recentCommits": [
+    {
+      "sha": "5c0a69a2513a5424dac3c24b8c6cbc2a86b5003b",
+      "date": "2026-09-04",
+      "title": "chore(web): remove Hugo now that the Astro migration is complete",
+      "url": "https://github.com/zax0rz/darkpawns/commit/5c0a69a2513a5424dac3c24b8c6cbc2a86b5003b"
+    },
     {
       "sha": "310c28d3f473fc75f28930cb42301723fcfe7a69",
       "date": "2026-09-04",
@@ -76,12 +82,6 @@
       "date": "2026-09-04",
       "title": "feat(archive): rebuild the hub and entry pages around one axis",
       "url": "https://github.com/zax0rz/darkpawns/commit/b4dd628c40d4fb8faf5bba928f4425b30ae29ec2"
-    },
-    {
-      "sha": "6250f36a63e9eea55cffd9b7ec2fa1cc20f0a5ce",
-      "date": "2026-09-04",
-      "title": "docs(deploy): say what to look for in the rsync dry run, and why",
-      "url": "https://github.com/zax0rz/darkpawns/commit/6250f36a63e9eea55cffd9b7ec2fa1cc20f0a5ce"
     }
   ],
   "pullRequests": [

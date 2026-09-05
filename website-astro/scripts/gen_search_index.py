@@ -36,6 +36,22 @@ DATA_DIR = STATIC_DIR / "data"
 MAP_DIR = STATIC_DIR / "map"
 OUTPUT_FILE = DATA_DIR / "search-index.json"
 
+def searchable_body(text: str) -> str:
+    """The whole document as one lowercase line of words.
+
+    Search previously matched titles, descriptions and slug-derived keywords
+    only, so a phrase from inside a 2004 forum post, a help file or a blog post
+    was unfindable. This is the text those queries need. It is never displayed;
+    the description is still what a result shows.
+    """
+    text = re.sub(r'^---.*?^---', ' ', text, flags=re.S | re.M)
+    text = re.sub(r'`{1,3}[^`]*`{1,3}', ' ', text)
+    text = re.sub(r'!?\[([^\]]*)\]\([^)]*\)', r'\1', text)
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = re.sub(r'[#>*_|\\]', ' ', text)
+    return re.sub(r'\s+', ' ', text).strip().lower()
+
+
 def clean_text(text: str, max_len: int = 200) -> str:
     """Strip markdown, html, newlines, and truncate."""
     if not text:
@@ -62,20 +78,30 @@ def parse_frontmatter(content: str):
     body = parts[2]
     
     meta = {}
-    for line in fm_raw.splitlines():
-        line = line.strip()
-        if not line or line.startswith('#'):
+    nested = []
+    for raw_line in fm_raw.splitlines():
+        if not raw_line.strip() or raw_line.lstrip().startswith('#'):
             continue
+        indented = raw_line[:1].isspace() or raw_line.lstrip().startswith('- ')
+        line = raw_line.strip()
         if ':' in line:
             key, val = line.split(':', 1)
-            key = key.strip()
+            key = key.strip().lstrip('- ')
             val = val.strip().strip('"\'')
+            if indented:
+                # A list item under participants/topics. Collected for search
+                # keywords, never allowed to shadow a top-level field.
+                if key in ('name', 'title', 'author') and val:
+                    nested.append(val)
+                continue
             if val.lower() == 'true':
                 val = True
             elif val.lower() == 'false':
                 val = False
             meta[key] = val
-            
+    if nested:
+        meta['_nested'] = nested
+
     return meta, body
 
 def index_markdown_content():
@@ -126,6 +152,7 @@ def index_markdown_content():
                     "u": f"/help/{cat}/{slug}/",
                     "k": " ".join(set(keywords)),
                     "d": desc,
+                    "b": searchable_body(body),
                     "v": 0
                 })
             except Exception as e:
@@ -158,6 +185,7 @@ def index_markdown_content():
                     "u": url,
                     "k": f"documentation {section} {slug.replace('-', ' ')}",
                     "d": desc,
+                    "b": searchable_body(body),
                     "v": 0
                 })
             except Exception as e:
@@ -185,6 +213,7 @@ def index_markdown_content():
                     "u": f"/world/{slug}/",
                     "k": f"world lore {slug.replace('-', ' ')}",
                     "d": desc,
+                    "b": searchable_body(body),
                     "v": 0
                 })
             except Exception as e:
@@ -212,6 +241,7 @@ def index_markdown_content():
                     "u": f"/blog/{slug}/",
                     "k": f"blog dispatch article {slug.replace('-', ' ')}",
                     "d": desc,
+                    "b": searchable_body(body),
                     "v": 0
                 })
             except Exception as e:
@@ -232,13 +262,23 @@ def index_markdown_content():
                 title = meta.get("title", slug.replace("-", " ").title())
                 desc = meta.get("description", clean_text(body, 160))
                 
+                # Who spoke, and which board. These are the keys a returning
+                # player actually types, and they exist nowhere in the prose.
+                people = " ".join(meta.get("_nested", []))
+                board = meta.get("board", "")
+                kind = meta.get("kind", "").replace("-", " ")
+                section_map = {
+                    "dp-players.com": "dp-players.com, 2004",
+                    "darkpawns.com": "darkpawns.com, 2002-2005",
+                }
                 entries.append({
                     "t": title,
-                    "c": "docs",
-                    "s": "Community Archive",
+                    "c": "archive",
+                    "s": section_map.get(meta.get("sourceSite", ""), "Community Archive"),
                     "u": f"/archive/{slug}/",
-                    "k": f"archive history forum {slug.replace('-', ' ')}",
+                    "k": f"archive {kind} {board} {people}".strip(),
                     "d": desc,
+                    "b": searchable_body(body),
                     "v": 0
                 })
             except Exception as e:
