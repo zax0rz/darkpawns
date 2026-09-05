@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -127,6 +128,37 @@ func TestManager_SendToAll(t *testing.T) {
 		t.Error("unauthenticated session should not receive broadcast")
 	default:
 		// expected — no message
+	}
+}
+
+func TestManager_SendToOutdoor(t *testing.T) {
+	m := makeTestManager(t)
+	m.world.GetRoomInWorld(1001).Sector = 1
+
+	outdoor := makeTestSession(t, m, "Outdoor", 1001, true)
+	sleeping := makeTestSession(t, m, "Sleeping", 1001, true)
+	sleeping.player.SetPosition(combat.PosSleeping)
+	indoor := makeTestSession(t, m, "Indoor", 1002, true)
+
+	m.mu.Lock()
+	m.sessions["outdoor"] = outdoor
+	m.sessions["sleeping"] = sleeping
+	m.sessions["indoor"] = indoor
+	m.mu.Unlock()
+
+	m.SendToOutdoor("Weather changes.")
+
+	select {
+	case <-outdoor.send:
+	default:
+		t.Error("awake outdoor session did not receive message")
+	}
+	for _, name := range []string{"sleeping", "indoor"} {
+		select {
+		case <-m.sessions[name].send:
+			t.Errorf("%s session should not receive outdoor message", name)
+		default:
+		}
 	}
 }
 

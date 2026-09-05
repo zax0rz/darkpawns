@@ -246,10 +246,14 @@ func LogDeathTrap(playerName string, roomVNum int, roomName string) {
 // If a names entry is empty, the bit is skipped.
 // If no bits are set, returns "NOBITS ".
 func Sprintbit(bitvector uint64, names []string) string {
+	return sprintnbitWithOffset(bitvector, names, 0)
+}
+
+func sprintnbitWithOffset(bitvector uint64, names []string, bitOffset int) string {
 	var b strings.Builder
 
 	// In C: for (nr = 0; bitvector; bitvector >>= 1, nr++) { if (IS_SET(bitvector,1)) ... }
-	nr := 0
+	nr := bitOffset
 	for bv := bitvector; bv != 0; bv >>= 1 {
 		if bv&1 != 0 {
 			if nr < len(names) && names[nr] != "" {
@@ -318,27 +322,7 @@ func SprintbitArray(bitvector []uint32, names []string, maxar int) string {
 // sprintnbit is a helper that processes one 32-bit word of sprintbitarray.
 // It mirrors the C sprintnbit() defined in utils.c for one word.
 func sprintnbit(bitvector uint64, names []string, bitOffset int) string {
-	var b strings.Builder
-
-	nr := bitOffset
-	for bv := bitvector; bv != 0; bv >>= 1 {
-		if bv&1 != 0 {
-			if nr < len(names) && names[nr] != "" {
-				b.WriteString(names[nr])
-				b.WriteByte(' ')
-			} else {
-				b.WriteString("UNDEFINED ")
-			}
-		}
-		if nr < len(names) && names[nr] != "" {
-			nr++
-		}
-	}
-
-	if b.Len() == 0 {
-		return "NOBITS "
-	}
-	return b.String()
+	return sprintnbitWithOffset(bitvector, names, bitOffset)
 }
 
 // ---------------------------------------------------------------------------

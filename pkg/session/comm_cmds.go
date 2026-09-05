@@ -28,13 +28,16 @@ func filterCommMessage(s *Session, message string) (string, bool) {
 	return message, false
 }
 
+func filteredCommMessage(s *Session, message string) (string, bool) {
+	return filterCommMessage(s, sanitizeMessage(message))
+}
+
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
 func cmdTell(s *Session, args []string) error {
 	argument := strings.Join(args, " ")
 	if len(args) >= 2 {
-		message := sanitizeMessage(strings.Join(args[1:], " "))
-		filtered, block := filterCommMessage(s, message)
+		filtered, block := filteredCommMessage(s, strings.Join(args[1:], " "))
 		if block {
 			s.sendText("Your message was blocked.")
 			return nil
@@ -48,16 +51,16 @@ func cmdTell(s *Session, args []string) error {
 // cmdReply replies to the last person who told you.
 // Source: act.comm.c do_reply() lines 934-975
 func cmdReply(s *Session, args []string) error {
-	message := sanitizeMessage(strings.Join(args, " "))
 	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
+		message, block := filteredCommMessage(s, strings.Join(args, " "))
 		if block {
 			s.sendText("Your message was blocked.")
 			return nil
 		}
-		message = filtered
+		s.manager.world.DoReply(s.player, message)
+		return nil
 	}
-	s.manager.world.DoReply(s.player, message)
+	s.manager.world.DoReply(s.player, "")
 	return nil
 }
 

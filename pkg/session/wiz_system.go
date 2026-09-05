@@ -4,7 +4,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"time"
 
@@ -282,30 +281,7 @@ func cmdDc(s *Session, args []string) error {
 // parseDCNumber mirrors the decimal-prefix and optional-sign behavior of C's
 // atoi used by do_dc. A zero result is handled by cmdDc as the usage branch.
 func parseDCNumber(value string) (int, bool) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return 0, false
-	}
-	index := 0
-	sign := 1
-	if value[0] == '+' || value[0] == '-' {
-		if value[0] == '-' {
-			sign = -1
-		}
-		index++
-	}
-	start := index
-	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
-		index++
-	}
-	if index == start {
-		return 0, false
-	}
-	parsed, err := strconv.Atoi(value[start:index])
-	if err != nil {
-		return 0, false
-	}
-	return sign * parsed, true
+	return parseSignedIntPrefix(value)
 }
 
 // cmdHome — teleport to home room (LVL_IMMORT)

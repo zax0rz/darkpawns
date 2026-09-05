@@ -143,21 +143,32 @@ func findCharInIndex(recipient int) *MailIndex {
 	return nil
 }
 
-func writeToFile(buf []byte, size int, filepos int) {
+func openMailFile(filepos int, invalidMessage, seekMessage string) (*os.File, bool) {
 	if filepos%MailBlockSize != 0 {
-		log.Printf("SYSERR: Mail system -- fatal error #2!!! (invalid file position %d)", filepos)
-		return
+		log.Printf(invalidMessage, filepos)
+		return nil, false
 	}
 	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
+		return nil, false
+	}
+	if _, err := f.Seek(int64(filepos), 0); err != nil {
+		log.Printf("%s: %v", seekMessage, err)
+		_ = f.Close()
+		return nil, false
+	}
+	return f, true
+}
+
+func writeToFile(buf []byte, size int, filepos int) {
+	f, ok := openMailFile(filepos,
+		"SYSERR: Mail system -- fatal error #2!!! (invalid file position %d)",
+		"SYSERR: Seek error in mail file")
+	if !ok {
 		return
 	}
 	defer func() { _ = f.Close() }()
-	if _, err := f.Seek(int64(filepos), 0); err != nil {
-		log.Printf("SYSERR: Seek error in mail file: %v", err)
-		return
-	}
 	if _, err := f.Write(buf[:size]); err != nil {
 		log.Printf("SYSERR: Write error in mail file: %v", err)
 		return
@@ -170,20 +181,13 @@ func writeToFile(buf []byte, size int, filepos int) {
 }
 
 func readFromFile(buf []byte, size int, filepos int) {
-	if filepos%MailBlockSize != 0 {
-		log.Printf("SYSERR: Mail system -- fatal error #3!!! (invalid filepos read %d)", filepos)
-		return
-	}
-	f, err := os.OpenFile(MailFile, os.O_RDWR|os.O_CREATE, 0o600)
-	if err != nil {
-		log.Printf("SYSERR: Unable to open mail file '%s'.", MailFile)
+	f, ok := openMailFile(filepos,
+		"SYSERR: Mail system -- fatal error #3!!! (invalid filepos read %d)",
+		"SYSERR: Seek error in mail file read")
+	if !ok {
 		return
 	}
 	defer func() { _ = f.Close() }()
-	if _, err := f.Seek(int64(filepos), 0); err != nil {
-		log.Printf("SYSERR: Seek error in mail file read: %v", err)
-		return
-	}
 	if _, err := f.Read(buf[:size]); err != nil {
 		log.Printf("SYSERR: Read error in mail file: %v", err)
 		return

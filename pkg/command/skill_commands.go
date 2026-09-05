@@ -2274,33 +2274,21 @@ func CmdFleshAlter(s SessionInterface, args []string) error {
 
 // CmdSpike handles the spike command (werewolf destruction).
 func CmdSpike(s SessionInterface, args []string) error {
-	ch, err := skillPlayer(s)
-	if err != nil {
-		return err
-	}
-	if len(args) == 0 {
-		return s.SendMessage("Whom do you wish to spike?\r\n")
-	}
-
-	targetName := strings.Join(args, " ")
-	world := s.GetWorld()
-	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
-	if !found {
-		return s.SendMessage("No-one by that name here.\r\n")
-	}
-
-	result := game.DoSpike(ch, target, 0, world)
-	return sendSkillResult(s, ch, target, result)
+	return cmdSpikeOrStake(s, args, "spike", 0)
 }
 
 // CmdStake handles the stake command (vampire destruction).
 func CmdStake(s SessionInterface, args []string) error {
+	return cmdSpikeOrStake(s, args, "stake", 1)
+}
+
+func cmdSpikeOrStake(s SessionInterface, args []string, verb string, subcmd int) error {
 	ch, err := skillPlayer(s)
 	if err != nil {
 		return err
 	}
 	if len(args) == 0 {
-		return s.SendMessage("Whom do you wish to stake?\r\n")
+		return s.SendMessage(fmt.Sprintf("Whom do you wish to %s?\r\n", verb))
 	}
 
 	targetName := strings.Join(args, " ")
@@ -2310,7 +2298,7 @@ func CmdStake(s SessionInterface, args []string) error {
 		return s.SendMessage("No-one by that name here.\r\n")
 	}
 
-	result := game.DoSpike(ch, target, 1, world)
+	result := game.DoSpike(ch, target, subcmd, world)
 	return sendSkillResult(s, ch, target, result)
 }
 

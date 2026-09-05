@@ -251,6 +251,26 @@ func firstMeaningfulKeyword(keywords string) string {
 	return "unknown"
 }
 
+func disambiguatedTargetStrings(keywords []string) []string {
+	keywordCount := make(map[string]int, len(keywords))
+	for _, keyword := range keywords {
+		keywordCount[keyword]++
+	}
+
+	keywordSeen := make(map[string]int, len(keywordCount))
+	result := make([]string, len(keywords))
+	for i, keyword := range keywords {
+		keywordSeen[keyword]++
+		n := keywordSeen[keyword]
+		if keywordCount[keyword] == 1 || n == 1 {
+			result[i] = keyword
+		} else {
+			result[i] = fmt.Sprintf("%d.%s", n, keyword)
+		}
+	}
+	return result
+}
+
 // buildRoomMobs returns a []RoomMobVar for every mob in the player's room,
 // with TargetStrings disambiguated when multiple mobs share a keyword.
 func (s *Session) buildRoomMobs() []RoomMobVar {
@@ -261,7 +281,6 @@ func (s *Session) buildRoomMobs() []RoomMobVar {
 
 	// First pass: collect first keyword per mob, count occurrences
 	keywords := make([]string, len(mobs))
-	keywordCount := make(map[string]int)
 	for i, mob := range mobs {
 		kw := ""
 		if mob.Prototype != nil {
@@ -271,29 +290,15 @@ func (s *Session) buildRoomMobs() []RoomMobVar {
 			kw = fmt.Sprintf("mob%d", mob.VNum)
 		}
 		keywords[i] = kw
-		keywordCount[kw]++
 	}
 
-	// Second pass: assign TargetStrings — first occurrence uses bare keyword,
-	// subsequent occurrences get a numeric prefix ("2.goblin", "3.goblin", ...).
-	keywordSeen := make(map[string]int)
+	targetStrings := disambiguatedTargetStrings(keywords)
 	result := make([]RoomMobVar, len(mobs))
 	for i, mob := range mobs {
-		kw := keywords[i]
-		keywordSeen[kw]++
-		n := keywordSeen[kw]
-
-		var targetString string
-		if keywordCount[kw] == 1 || n == 1 {
-			targetString = kw
-		} else {
-			targetString = fmt.Sprintf("%d.%s", n, kw)
-		}
-
 		result[i] = RoomMobVar{
 			Name:         mob.GetShortDesc(),
 			InstanceID:   fmt.Sprintf("mob_%d_%d", mob.VNum, i),
-			TargetString: targetString,
+			TargetString: targetStrings[i],
 			VNum:         mob.VNum,
 			Fighting:     mob.Fighting,
 		}
@@ -310,7 +315,6 @@ func (s *Session) buildRoomItems() []RoomItemVar {
 	}
 
 	keywords := make([]string, len(items))
-	keywordCount := make(map[string]int)
 	for i, item := range items {
 		kw := ""
 		if item.Prototype != nil {
@@ -320,27 +324,15 @@ func (s *Session) buildRoomItems() []RoomItemVar {
 			kw = fmt.Sprintf("obj%d", item.VNum)
 		}
 		keywords[i] = kw
-		keywordCount[kw]++
 	}
 
-	keywordSeen := make(map[string]int)
+	targetStrings := disambiguatedTargetStrings(keywords)
 	result := make([]RoomItemVar, len(items))
 	for i, item := range items {
-		kw := keywords[i]
-		keywordSeen[kw]++
-		n := keywordSeen[kw]
-
-		var targetString string
-		if keywordCount[kw] == 1 || n == 1 {
-			targetString = kw
-		} else {
-			targetString = fmt.Sprintf("%d.%s", n, kw)
-		}
-
 		result[i] = RoomItemVar{
 			Name:         item.GetShortDesc(),
 			InstanceID:   fmt.Sprintf("obj_%d_%d", item.VNum, i),
-			TargetString: targetString,
+			TargetString: targetStrings[i],
 			VNum:         item.VNum,
 		}
 	}

@@ -101,41 +101,28 @@ func (s *Session) FlushQueues() {
 // SendToAll sends a text message to all connected, playing sessions.
 // Ported from comm.c:send_to_all().
 func (m *Manager) SendToAll(message string) {
-	if message == "" {
-		return
-	}
-
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "broadcast",
-			Text: message,
-		},
-	})
-	if err != nil {
-		slog.Error("SendToAll marshal error", "error", err)
-		return
-	}
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	for _, s := range m.sessions {
-		if s.player == nil || !s.authenticated {
-			continue
-		}
-		select {
-		case s.send <- msg:
-		default:
-			slog.Debug("SendToAll: dropping message to full channel", "player", s.playerName)
-		}
-	}
+	m.sendToPlaying(message, "broadcast", "SendToAll", nil)
 }
 
 // SendToOutdoor sends a message to all playing sessions whose characters are
 // awake and in an outdoor room (Sector > 0, i.e. not SECT_INSIDE).
 // Ported from comm.c:send_to_outdoor().
 func (m *Manager) SendToOutdoor(message string) {
+	m.sendToPlaying(message, "outdoor", "SendToOutdoor", func(s *Session) bool {
+		// AWAKE check: position >= PosStanding
+		if s.player.GetPosition() < combat.PosStanding {
+			return false
+		}
+		// OUTSIDE check: sector type != INSIDE (0)
+		roomVNum := s.player.GetRoom()
+		if room, ok := m.world.GetRoom(roomVNum); ok && room.Sector == 0 {
+			return false // SECT_INSIDE
+		}
+		return true
+	})
+}
+
+func (m *Manager) sendToPlaying(message, eventType, label string, eligible func(*Session) bool) {
 	if message == "" {
 		return
 	}
@@ -143,12 +130,12 @@ func (m *Manager) SendToOutdoor(message string) {
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
-			Type: "outdoor",
+			Type: eventType,
 			Text: message,
 		},
 	})
 	if err != nil {
-		slog.Error("SendToOutdoor marshal error", "error", err)
+		slog.Error(label+" marshal error", "error", err)
 		return
 	}
 
@@ -159,19 +146,13 @@ func (m *Manager) SendToOutdoor(message string) {
 		if s.player == nil || !s.authenticated {
 			continue
 		}
-		// AWAKE check: position >= PosStanding
-		if s.player.GetPosition() < combat.PosStanding {
+		if eligible != nil && !eligible(s) {
 			continue
-		}
-		// OUTSIDE check: sector type != INSIDE (0)
-		roomVNum := s.player.GetRoom()
-		if room, ok := m.world.GetRoom(roomVNum); ok && room.Sector == 0 {
-			continue // SECT_INSIDE
 		}
 		select {
 		case s.send <- msg:
 		default:
-			slog.Debug("SendToOutdoor: dropping message to full channel", "player", s.playerName)
+			slog.Debug(label+": dropping message to full channel", "player", s.playerName)
 		}
 	}
 }
