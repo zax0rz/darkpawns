@@ -26,7 +26,7 @@ The canonical site is https://darkpawns.labz0rz.com/. Source code is maintained 
 
 - [About Dark Pawns](https://darkpawns.labz0rz.com/about/): Project history and links to the active DarkPawns Returns community.
 - [Project activity](https://darkpawns.labz0rz.com/about/project/): Repository activity and contribution information.
-- [Community archive](https://darkpawns.labz0rz.com/archive/): Curated material recovered from Dark Pawns community sites.
+- [Community archive](https://darkpawns.labz0rz.com/archive/): 37 records recovered from dp-players.com (2004) and darkpawns.com (2002-2005): 19 forum threads, site pages, guides, a text map, and a board index listing topics whose pages were never archived. Every record cites its original URL and its Wayback capture, states whether it is complete or partial, and is marked verbatim or edited-excerpt.
 - [Blog](https://darkpawns.labz0rz.com/blog/): Current project writing and clearly labelled historical reconstructions.
 - [Credits](https://darkpawns.labz0rz.com/credits/): Contributors and the archived staff list.
 - [Contact](https://darkpawns.labz0rz.com/contact/): Private contact form for former players and contributors.
@@ -44,5 +44,6 @@ Most documentation, help, world, blog, and archive entries have a Markdown repre
 ## Notes
 
 - Player-facing game text may be historical, terse, or deliberately stylized. Preserve it when quoting game behavior.
-- Community archive pages identify their original source and Wayback Machine capture.
+- Community archive pages identify their original source and Wayback Machine capture, in the page text and in schema.org JSON-LD (isBasedOn is the original URL, citation is the archived copy). Records whose capture carries no timestamp are labelled "Date not recorded" and deliberately assert no publication date.
+- Archive transcripts are verbatim: their spelling, punctuation and formatting are the 2004 authors' own and should not be corrected when quoted.
 - The C source under `src/` is the behavioral oracle for the Go port. See the repository fidelity rulebook before proposing gameplay changes.

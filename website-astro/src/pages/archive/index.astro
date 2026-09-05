@@ -53,6 +53,29 @@ const KIND_LABEL = {
   map: 'map', guide: 'guide', history: 'history', quote: 'quotes', roster: 'staff',
 };
 
+// The hub is a collection page; naming its parts lets a crawler or an agent
+// enumerate the archive without scraping the list markup.
+const site = 'https://darkpawns.labz0rz.com';
+const collectionLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'The Dark Pawns Archive',
+  description: 'Records recovered from archived copies of dp-players.com and darkpawns.com.',
+  url: `${site}/archive/`,
+  inLanguage: 'en',
+  isPartOf: { '@type': 'WebSite', name: 'Dark Pawns', url: site },
+  hasPart: entries.map((entry) => ({
+    '@type': entry.data.kind === 'forum-thread' ? 'DiscussionForumPosting' : 'Article',
+    name: entry.data.title,
+    url: `${site}/archive/${entry.id}/`,
+    ...(entry.data.dateLabel === 'Date not recorded'
+      ? {}
+      : { datePublished: entry.data.sortDate.toISOString().slice(0, 10) }),
+    isBasedOn: entry.data.sourceUrl,
+    citation: entry.data.captureUrl,
+  })),
+});
+
 const missing = [
   { what: 'The drawn world map', detail: "darkpawns.com published a drawing of Kir Drax'in beside the text map. The text map is here. The drawing was never captured." },
   { what: 'Two strategy guides', detail: "The surviving index names them: Whistler's Determining Your Natural Abilities from November 2002, and Aidan's Definative Newbie Guide from March 2003. Neither article was archived." },
@@ -61,6 +84,7 @@ const missing = [
 ];
 ---
 <Base title="Archive | Dark Pawns" description="Recovered conversations and records from the original Dark Pawns community.">
+  <script slot="head" type="application/ld+json" set:html={collectionLd} />
   <div class="container archive-hub">
     <h1>The Archive</h1>
     <p class="lede">

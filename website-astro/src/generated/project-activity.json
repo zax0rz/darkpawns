@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T18:35:56-04:00",
+  "generatedAt": "2026-09-04T20:00:08-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 8
+      "commits": 9
     }
   ],
   "recentCommits": [
+    {
+      "sha": "b4dd628c40d4fb8faf5bba928f4425b30ae29ec2",
+      "date": "2026-09-04",
+      "title": "feat(archive): rebuild the hub and entry pages around one axis",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b4dd628c40d4fb8faf5bba928f4425b30ae29ec2"
+    },
     {
       "sha": "6250f36a63e9eea55cffd9b7ec2fa1cc20f0a5ce",
       "date": "2026-09-04",
@@ -76,12 +82,6 @@
       "date": "2026-09-04",
       "title": "feat(archive): add the news log, directions, the FAQ and the board index",
       "url": "https://github.com/zax0rz/darkpawns/commit/a7c313fc6eb7f8528de1685aaddb0024b3d357a3"
-    },
-    {
-      "sha": "816c3b1192004736d4ab562f6bc9c1a7b3a7d258",
-      "date": "2026-09-04",
-      "title": "feat(archive): publish the site pages, the map and Frontline's news",
-      "url": "https://github.com/zax0rz/darkpawns/commit/816c3b1192004736d4ab562f6bc9c1a7b3a7d258"
     }
   ],
   "pullRequests": [

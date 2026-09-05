@@ -38,6 +38,34 @@ const recoveredOn = entry.data.recoveredAt.toLocaleDateString('en-US', {
 const participants = entry.data.participants ?? [];
 const topics = entry.data.topics ?? [];
 const held = topics.filter((topic) => recovered.has(topic.id)).length;
+// Structured data. Every record here is a document with a known original
+// location and a known archived copy, which is exactly what isBasedOn and
+// citation are for, so the provenance the page states in words is also stated
+// in a form a machine can check.
+const site = 'https://darkpawns.labz0rz.com';
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': entry.data.kind === 'forum-thread' ? 'DiscussionForumPosting' : 'Article',
+  headline: entry.data.title,
+  description: entry.data.description,
+  // sortDate exists to order the list. For records whose capture carries no
+  // timestamp the label says "Date not recorded", so asserting a datePublished
+  // here would publish a date the page itself disclaims.
+  ...(entry.data.dateLabel === 'Date not recorded'
+    ? {}
+    : { datePublished: entry.data.sortDate.toISOString().slice(0, 10) }),
+  inLanguage: 'en',
+  url: `${site}/archive/${entry.id}/`,
+  isBasedOn: entry.data.sourceUrl,
+  citation: entry.data.captureUrl,
+  isPartOf: { '@type': 'CollectionPage', name: 'The Dark Pawns Archive', url: `${site}/archive/` },
+  ...(participants.length
+    ? { author: participants.map((person) => ({ '@type': 'Person', name: person.name })) }
+    : {}),
+  ...(entry.data.postCount ? { commentCount: entry.data.postCount } : {}),
+  publisher: { '@type': 'Organization', name: 'Dark Pawns', url: site },
+});
+
 const KIND_LABEL = {
   'forum-thread': 'Forum thread', 'board-index': 'Board index', 'site-page': 'Site page',
   map: 'Map', guide: 'Guide', history: 'History', quote: 'Quotes', roster: 'Staff list',
@@ -45,6 +73,7 @@ const KIND_LABEL = {
 ---
 <Base title={`${entry.data.title} | Dark Pawns Archive`} description={entry.data.description}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/archive/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
+  <script slot="head" type="application/ld+json" set:html={jsonLd} />
   <article class="entry">
     <nav class="crumb" aria-label="Breadcrumb"><a href="/archive/">The Archive</a></nav>
     <h1>{entry.data.title}</h1>
