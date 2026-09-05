@@ -129,7 +129,8 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if absErr != nil {
 			return fmt.Errorf("resolve ORACLE_REGRESSION_SERVER: %w", absErr)
 		}
-		if _, statErr := os.Stat(abs); statErr != nil { // #nosec G304 -- dev harness; path comes from the trusted local regression driver, not request input
+		// #nosec G703 -- dev oracle-diff harness; the path derives from the trusted local regression driver's env, not request input (same class as findOracleRoot's DP_ORACLE_BIN walk).
+		if _, statErr := os.Stat(abs); statErr != nil {
 			return fmt.Errorf("ORACLE_REGRESSION_SERVER %q: %w", abs, statErr)
 		}
 		goBin = abs
