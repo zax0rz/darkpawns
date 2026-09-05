@@ -89,10 +89,18 @@ Focused post-consolidation regression:
 oracle-regression: scenarios=1 passed=1 failed=0 infra=0 timed_out=0 elapsed=15.867s started=2026-09-05T02:43:42-0400 finished=2026-09-05T02:43:58-0400
 ```
 
-Full `make oracle-regression` tally: pending final gate run.
+Full `make oracle-regression` tally:
 
-The standard Go build, vet, test, lint, and formatting gates are also pending
-the final branch verification.
+```text
+oracle-regression: scenarios=934 passed=934 failed=0 infra=0 timed_out=0 elapsed=7316.966s started=2026-09-05T02:49:39-0400 finished=2026-09-05T04:51:36-0400
+```
+
+The runner recovered eight transient infrastructure-shaped retries; the final
+authoritative tally is `infra=0` and `timed_out=0`.
+
+Standard gates passed before the corpus run: `go build ./...`, `go vet ./...`,
+`go test ./...`, `golangci-lint run ./...` (`0 issues`), gofumpt, and
+`git diff --check`.
 
 Rules applied: R1 player-facing bytes, R4 no invention, and R5e actual call
 path/source verification.
