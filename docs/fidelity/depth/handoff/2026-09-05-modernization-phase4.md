@@ -1,7 +1,7 @@
 # Modernization Phase 4 — mechanical handler dedup handoff
 
 Date: 2026-09-05
-Branch: `glm/modernize-phase-4-1` (item 4.1 is first)
+Branch: `glm/modernize-phase-4-1` (item 4.1 is first; merged before item 4.2)
 Base: `origin/main` after PR #1388 merge (`9588f759567dc3b0e526aa2d1ddf43413071b85a`)
 
 ## Queue and process
@@ -80,6 +80,52 @@ retry (`applaud-depth`, `bash-peaceful-depth`, `berserk-failure-depth`,
 `bounce-depth`, `clan-depth`, `force-mob`, `love-depth`, and
 `wizard-residual-depth`); all eight finished `PASS` on retry, so the final
 authoritative tally is `infra=0` and `timed_out=0`.
+
+PR #1390 (`glm/modernize-phase-4-1`) passed hosted lint, security, and test
+checks and self-merged on 2026-09-05 as `f2aa2caccf3133f6216dc7660488a38335afd244`.
+The next serial branch is `glm/modernize-phase-4-2`, based on that merge.
+
+## Item 4.2 coverage boundary
+
+Item 4.2 changes only `pkg/command/skill_commands.go` and introduces shared
+nil-player, `CanUseSkill`, and `OneArgument` + `FindTargetInRoom` helpers. The
+helper is applied only where the original C ordering and parser path are the
+same; `headbutt`, `ambush`, and `groinrip` retain their special gate order.
+
+The named verifying scenario subset is:
+
+`ambush-depth`, `backstab-depth`, `bash-depth`, `bearhug-depth`,
+`behead-object-depth`, `berserk-depth`, `bite-depth`, `carve-depth`,
+`charge-depth`, `circle-depth`, `cutthroat-depth`, `dig-depth`,
+`disarm-depth`, `disembowel-depth`, `dragon-depth`, `flesh-alter-depth`,
+`groinrip-depth`, `headbutt-depth`, `hide-depth`, `mindlink-entry-depth`,
+`mold-depth`, `neckbreak-depth`, `point-depth`, `rescue-roll`,
+`review-depth`, `scrounge-default-depth`, `serpent-depth`,
+`sharpen-depth`, `shoot-entry-depth`, `sleeper-depth`, `slug-depth`,
+`smackheads-outcome-depth`, `spike-depth`, `steal-depth`, `stealth-reject`,
+`thief-sneak`, `combat-bash-opener`, `combat-headbutt-opener`,
+`combat-kick-opener`, and `combat-trip-opener`.
+
+The focused item-4.2 regression passed 40/40 scenarios with 0 failed, 0 infra,
+and 0 timed out (328.824s).
+
+The required full corpus passed on this branch:
+
+```text
+oracle-regression: scenarios=934 passed=934 failed=0 infra=0 timed_out=0 elapsed=7087.597s started=2026-09-05T10:16:24-0400 finished=2026-09-05T12:14:32-0400
+```
+
+Six infrastructure-shaped retries recovered on the runner's single retry
+(`escape-no-skill`, `mortal-batch21`, `pour-multi`, `rsay-noshout`,
+`spec-proc-bank-kir-oshi`, and `spec-proc-castle-guard-up`); all six finished
+`PASS` on retry, so the final authoritative tally is `infra=0` and
+`timed_out=0`.
+
+The standard gates also pass on this branch: `go build ./...`, `go vet ./...`,
+`go test ./...`, `golangci-lint run ./...`, `gofumpt -l .`, `git diff --check`,
+and the command/session package tests. The changed-file list is limited to
+`pkg/command/skill_commands.go` and this handoff; the focused scenario mapping
+above is the condition-three coverage citation for the item.
 
 ## Standing fidelity constraints
 
