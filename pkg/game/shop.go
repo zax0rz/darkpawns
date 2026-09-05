@@ -12,7 +12,26 @@ type Shop struct {
 	Flags      int     // shop behavior flags (optional)
 	KeeperName string  // name of keeper for message formatting
 	RoomVNum   int     // room where the shop is located
+	Messages   [7]string
+	Temper     int
+	WithWho    int
+	OpenHour1  int
+	CloseHour1 int
+	OpenHour2  int
+	CloseHour2 int
 }
+
+// Shop message indexes follow the seven strings read by C boot_the_shops:
+// no_such_item1/2, do_not_buy, missing_cash1/2, message_buy, message_sell.
+const (
+	ShopMessageNoSuchItem1 = iota
+	ShopMessageNoSuchItem2
+	ShopMessageDoNotBuy
+	ShopMessageMissingCash1
+	ShopMessageMissingCash2
+	ShopMessageBuy
+	ShopMessageSell
+)
 
 // ShopManager holds all shops and provides lookup methods.
 type ShopManager struct {

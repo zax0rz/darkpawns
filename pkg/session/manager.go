@@ -22,7 +22,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/game/systems"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"golang.org/x/time/rate"
 )
@@ -74,7 +73,7 @@ type Manager struct {
 	sessions     map[string]*Session // keyed by player name
 	world        *game.World
 	combatEngine *combat.CombatEngine
-	shopManager  *systems.ShopManager
+	shopManager  *game.ShopManager
 	pulsePumpMu  sync.RWMutex
 	pulsePump    func(int) error
 	db           db.Database
@@ -267,11 +266,15 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		},
 	)
 
+	shopManager := game.NewShopManager()
+	if existing, ok := world.GetShopManager().(*game.ShopManager); ok && existing != nil {
+		shopManager = existing
+	}
 	m := &Manager{
 		sessions:         make(map[string]*Session),
 		world:            world,
 		combatEngine:     ce,
-		shopManager:      systems.NewShopManager(),
+		shopManager:      shopManager,
 		shutdownRequests: make(chan ShutdownRequest, 1),
 		loginLimiter:     auth.NewIPRateLimiter(),
 		loginAttempts: auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{
@@ -525,7 +528,7 @@ func (m *Manager) SetCombatMessageFunc() {
 
 // GetCombatEngine returns the combat engine for AI integration.
 // GetShopManager returns the session manager's shop manager.
-func (m *Manager) GetShopManager() *systems.ShopManager {
+func (m *Manager) GetShopManager() *game.ShopManager {
 	return m.shopManager
 }
 

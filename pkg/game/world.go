@@ -171,6 +171,7 @@ func (w *World) SetCombatEngine(ce CombatEngine) {
 
 // NewWorld creates a new game world from parsed data.
 func NewWorld(parsed *parser.World) (*World, error) {
+	shopManager := NewShopManager()
 	w := &World{
 		rooms:                    make(map[int]*parser.Room),
 		roomOrder:                make([]int, 0, len(parsed.Rooms)),
@@ -186,7 +187,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		objectInstances:          make(map[int]*ObjectInstance),
 		specRooms:                make(map[int]bool),
 		done:                     make(chan bool),
-		shopManager:              nil,    // Will be set via SetShopManager
+		shopManager:              shopManager,
 		parsedData:               parsed, // Keep reference for door loading etc.
 		WorldPath:                "",     // Set externally for reload support
 	}
@@ -233,6 +234,28 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	for i := range parsed.Shops {
 		shop := &parsed.Shops[i]
 		w.shopKeepers[shop.KeeperVNum] = shop.Bitvector
+		legacyShop := &Shop{
+			KeeperVNum: shop.KeeperVNum,
+			SellTypes:  append([]int(nil), shop.Products...),
+			BuyTypes:   append([]int(nil), shop.BuyTypes...),
+			ProfitBuy:  shop.BuyProfit,
+			ProfitSell: shop.SellProfit,
+			Flags:      shop.Bitvector,
+			Messages:   shop.Messages,
+			Temper:     shop.Temper,
+			WithWho:    shop.WithWho,
+			OpenHour1:  shop.OpenHour1,
+			CloseHour1: shop.CloseHour1,
+			OpenHour2:  shop.OpenHour2,
+			CloseHour2: shop.CloseHour2,
+		}
+		if len(shop.Rooms) > 0 {
+			legacyShop.RoomVNum = shop.Rooms[0]
+		}
+		if keeper, ok := w.mobs[shop.KeeperVNum]; ok {
+			legacyShop.KeeperName = keeper.ShortDesc
+		}
+		shopManager.AddShop(legacyShop)
 	}
 
 	// Initialize event queue
