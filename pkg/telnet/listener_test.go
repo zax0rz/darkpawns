@@ -9,6 +9,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -62,7 +64,7 @@ func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
 		return nil
 	})
 
-	if handlePulseControl(manager, "~dpclock pulse 40") {
+	if handlePulseControl(nil, manager, "~dpclock pulse 40") {
 		t.Fatal("control intercepted with DP_CLOCK unset")
 	}
 	if pumped != 0 {
@@ -70,13 +72,13 @@ func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
 	}
 
 	t.Setenv("DP_CLOCK", "1")
-	if !handlePulseControl(manager, "~dpclock pulse 40") {
+	if !handlePulseControl(nil, manager, "~dpclock pulse 40") {
 		t.Fatal("valid control was not intercepted")
 	}
 	if pumped != 40 {
 		t.Fatalf("pumped %d pulses, want 40", pumped)
 	}
-	if handlePulseControl(manager, "~dpclock pulse 0") {
+	if handlePulseControl(nil, manager, "~dpclock pulse 0") {
 		t.Fatal("invalid pulse count was intercepted")
 	}
 }
@@ -877,4 +879,213 @@ func observationFormats(result game.ObservationResult) string {
 		out.WriteByte('\n')
 	}
 	return out.String()
+}
+
+// TestPromptAfterCommandOutput verifies the "> " prompt is written after the
+// command's response, never before it. The prompt now travels through the
+// session's send channel, so writeLoop drains the command output first and
+// prints the prompt after (C: comm.c:643-648 flush output, then prompt).
+func TestPromptAfterCommandOutput(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
+		VNum: game.MortalStartRoom,
+		Name: "The Temple",
+		Zone: 80,
+	}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager := session.NewManager(world, nil)
+	t.Cleanup(manager.Stop)
+
+	client, server := net.Pipe()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		handleConn(server, manager, game.BanNot)
+	}()
+
+	transcript := make(chan []byte, 1)
+	go func() {
+		output, _ := io.ReadAll(client)
+		transcript <- output
+	}()
+
+	const playerName = "guest_prompt_order"
+	if _, err := client.Write([]byte(playerName + "\r\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, ok := manager.GetSession(playerName); ok {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("guest session was not registered")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	if _, err := client.Write([]byte("say hello\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Write([]byte("quit\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handleConn did not return after quit")
+	}
+
+	visible := string(stripTelnetCommands(<-transcript))
+	const response = "You say 'hello'\r\n"
+	respIdx := strings.LastIndex(visible, response)
+	if respIdx < 0 {
+		t.Fatalf("transcript missing command response: %q", visible)
+	}
+	// C's process_output flush frame is output + "\r\n" + make_prompt
+	// (comm.c:1624-1640), so the prompt follows the response after a line
+	// break (plus any vitals fields), never before it.
+	if !strings.Contains(visible[respIdx+len(response):], "> ") {
+		t.Fatalf("prompt did not follow command response (prompt/response race): %q", visible)
+	}
+}
+
+// TestEffectiveBanLevelShortCircuitsBanAllBeforeDNS verifies that an IP already
+// banned at BanAll level is rejected from the in-memory check alone, without
+// ever spawning the reverse-DNS lookup (banned IPs must not pay for a slow PTR).
+func TestEffectiveBanLevelShortCircuitsBanAllBeforeDNS(t *testing.T) {
+	bm := game.NewBanManager()
+	if err := bm.AddBan("203.0.113.99", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
+	}
+
+	origLookup := lookupAddr
+	defer func() { lookupAddr = origLookup }()
+	var lookupCalled atomic.Bool
+	lookupAddr = func(addr string) ([]string, error) {
+		lookupCalled.Store(true)
+		return nil, nil
+	}
+
+	if got := effectiveBanLevel("203.0.113.99", bm); got != game.BanAll {
+		t.Fatalf("effectiveBanLevel = %d, want BanAll (%d)", got, game.BanAll)
+	}
+	if lookupCalled.Load() {
+		t.Fatal("lookupAddr was invoked for an IP already banned at BanAll level")
+	}
+}
+
+// TestListenAcceptNotBlockedBySlowReverseDNS verifies the accept loop only
+// performs the fast in-memory IP ban check; hostname reverse-DNS resolution runs
+// in the per-connection goroutine, so a connection whose PTR lookup blocks does
+// not stall subsequent accepts.
+func TestListenAcceptNotBlockedBySlowReverseDNS(t *testing.T) {
+	manager, world := newTestManager(t)
+	defer world.StopAITicker()
+
+	origLookup := lookupAddr
+	origTimeout := dnsLookupTimeout
+
+	var mu sync.Mutex
+	callCount := 0
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	unblock := func() { releaseOnce.Do(func() { close(release) }) }
+
+	var c1, c2 net.Conn
+	// Tear down in an order that guarantees no per-connection goroutine is
+	// still reading the lookupAddr / dnsLookupTimeout package vars when we
+	// restore them (those vars are read once per connection at accept time,
+	// inside effectiveBanLevel). Stop accepting, unblock the stalled lookup,
+	// close the client conns, then wait for the handler goroutines to drain
+	// before restoring the vars — otherwise the restore races the readers.
+	defer func() {
+		Stop()
+		unblock()
+		if c1 != nil {
+			_ = c1.Close()
+		}
+		if c2 != nil {
+			_ = c2.Close()
+		}
+		deadline := time.Now().Add(2 * time.Second)
+		for {
+			connMu.Lock()
+			n := connCount
+			connMu.Unlock()
+			if n == 0 || time.Now().After(deadline) {
+				break
+			}
+			time.Sleep(time.Millisecond)
+		}
+		lookupAddr = origLookup
+		dnsLookupTimeout = origTimeout
+	}()
+
+	// Keep the DNS timeout longer than the test deadline so the blocked
+	// connection stays pending on its resolver for the whole test.
+	dnsLookupTimeout = 5 * time.Second
+
+	lookupAddr = func(addr string) ([]string, error) {
+		mu.Lock()
+		callCount++
+		block := callCount == 1
+		mu.Unlock()
+		if block {
+			<-release
+		}
+		return nil, nil
+	}
+
+	if err := Listen(0, manager); err != nil {
+		t.Fatal(err)
+	}
+
+	connMu.Lock()
+	addr := listener.Addr().String()
+	connMu.Unlock()
+
+	dial := func() net.Conn {
+		t.Helper()
+		c, err := net.Dial("tcp", addr)
+		if err != nil {
+			t.Fatalf("dial %s: %v", addr, err)
+		}
+		return c
+	}
+	c1 = dial()
+	c2 = dial()
+
+	// The first reverse-DNS lookup blocks; whichever connection it belongs to,
+	// the peer connection must still be served promptly (proving the accept loop
+	// did not stall on the PTR wait).
+	served := make(chan string, 1)
+	for name, c := range map[string]net.Conn{"first": c1, "second": c2} {
+		name, c := name, c
+		go func() {
+			buf := make([]byte, 4096)
+			for {
+				_ = c.SetReadDeadline(time.Now().Add(2 * time.Second))
+				var chunk [512]byte
+				n, err := c.Read(chunk[:])
+				if err != nil {
+					return
+				}
+				buf = append(buf, chunk[:n]...)
+				if bytes.Contains(buf, []byte("By what name do you wish to be known?")) {
+					served <- name
+					return
+				}
+			}
+		}()
+	}
+
+	select {
+	case name := <-served:
+		t.Logf("connection %q served while its peer blocked on reverse-DNS", name)
+	case <-time.After(2 * time.Second):
+		t.Fatal("no connection served within deadline: accept loop stalled on reverse-DNS")
+	}
 }

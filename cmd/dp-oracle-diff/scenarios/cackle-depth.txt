@@ -1,0 +1,112 @@
+# C-first cackle/do_action vehicle (src/interpreter.c:372;
+# src/act.social.c:102-127; lib/misc/socials:98-102). The registered command
+# requires POS_RESTING. Its social record has hide=0 and a # char_found slot,
+# so every argument is ignored and only the no-argument actor/room pair is
+# reachable.
+
+# depth-case: cackle.no-argument
+# depth-case: cackle.typed-target-ignored
+# depth-case: cackle.missing-target-ignored
+# depth-case: cackle.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+cackle
+cackle Ragnar
+cackle Nobody
+cackle Mordecai trailing words are ignored

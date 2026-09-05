@@ -1,0 +1,47 @@
+# depth-case: pour.liquid-conflict
+# depth-case: pour.pour-in-success
+# depth-case: pour.fill-success
+# Multi-container pour/fill: cup (8005, liquid type 4) forces the liquid
+# conflict; the water canteen (8012) is drunk down to make room, then the
+# skin's water pours in; the spawned fountain (8035) proves fill.
+[fixture]
+quiet-mobs
+spawn-obj 8005 1 8162 80
+spawn-obj 8012 1 8162 80
+spawn-obj 8035 1 8162 80
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open pack
+get skin pack
+get cup
+get canteen
+pour skin cup
+drink canteen
+pour skin canteen
+fill skin fountain

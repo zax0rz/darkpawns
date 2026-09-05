@@ -79,12 +79,15 @@ func DoBerserk(ch *Player) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You're about as berserk as you're gonna get."}
 	}
 
+	// C draws percent before checking whether the caster is already berserk.
+	// Preserve that draw even when the affect gate rejects the command.
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101) // 1-101, 101 = guaranteed failure
+
 	if ch.IsAffected(affBerserk) {
 		return SkillResult{Success: false, MessageToCh: "You're unable to summon your battle rage right now."}
 	}
 
-	// #nosec G404 — game RNG, not cryptographic
-	percent := dprng.Number(1, 101) // 1-101, 101 = guaranteed failure
 	if ch.GetLevel() > LVL_IMMORT {
 		percent = 0 // immortals always succeed
 	}
@@ -151,13 +154,13 @@ func checkKkSuccess(ch *Player, seal string) bool {
 // DoKujiKiri implements do_kuji_kiri() from new_cmds.c:1552-1739.
 // seal is one of the SkillKk* constants identifying which seal was invoked.
 //
-// Every seal applies an AFF_KUJI_KIRI lockout (5 ticks) regardless of
-// success/failure — that's what blocks back-to-back kuji-kiri use. On
-// success the seal's own numeric/status effect is also applied; on failure
-// it is not (matching C: af[0].modifier and af[1] are zeroed on failure).
-// The secondary affect (af1 in C) is only ever observable on success — on
-// failure C always zeroes both its bitvector and modifier, leaving nothing
-// but inert metadata, so it's skipped here rather than created as a no-op.
+// C sends every populated record through affect_join(). Since affect_join
+// replaces an existing record with the same type and location, the later
+// default af[1] replaces af[0] for seals whose records are both APPLY_SPELL:
+// successful Jin leaves one AFF_KUJI_KIRI record, while failed Jin leaves one
+// AFF_NOTHING record and does not set the aggregate lockout flag. Preserve all
+// C records and joins rather than treating af[0]/af[1] as independent stacks
+// (R1/R3/R5e).
 func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 	if ch.GetClass() != ClassNinja && ch.GetLevel() < LVL_IMMORT {
 		return SkillResult{Success: false, MessageToCh: "You know nothing of kuji-kiri!"}
@@ -171,11 +174,13 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 	if ch.IsMounted() {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
+
+	// C calls check_kk_success() before the per-seal mastery branch. Keep the
+	// draw even when an unmastered character is rejected (R3/R5e).
+	success := checkKkSuccess(ch, seal)
 	if ch.GetSkill(seal) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have not mastered this art yet!"}
 	}
-
-	success := checkKkSuccess(ch, seal)
 	skillNum := kkSkillNum(seal)
 
 	// af0 always carries the AFF_KUJI_KIRI lockout; some seals also route
@@ -185,25 +190,24 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 	af0Location := ApplySpell
 	af0Modifier := 0
 
-	// af1 carries an optional secondary status effect, only meaningful on
-	// success (see doc comment above).
-	haveAf1 := false
-	af1Bitvector := uint64(0)
+	// C initializes af[1] to the same default lockout record as af[0], then
+	// changes it to AFF_NOTHING on failure. It is therefore still populated
+	// and passed to affect_join() on every path.
+	af1Bitvector := engine.AFFKujiKiri
 	af1Location := ApplySpell
 	af1Modifier := 0
 
 	toVict := ""
-	toRoom := "$n interlaces $s fingers and meditates deeply."
+	toRoom := ActMessage("$n interlaces $s fingers and meditates deeply.", GetPronouns(ch.Name, ch.GetSex()), nil, "")
 	heal := 0
 
 	switch seal {
 	case SkillKkRin:
 		af0Location = ApplyAC
 		af0Modifier = -(15 + ch.GetLevel()/2)
-		haveAf1 = true
 		af1Bitvector = engine.AFFMetalskin
 		toVict = "Interlacing your fingers, you harden your mind and body."
-		toRoom = "$n interlaces $s fingers, and $s skin becomes metal!"
+		toRoom = ActMessage("$n interlaces $s fingers, and $s skin becomes metal!", GetPronouns(ch.Name, ch.GetSex()), nil, "")
 	case SkillKkKyo:
 		af0Location = ApplyHitroll
 		af0Modifier = 1
@@ -211,7 +215,6 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 	case SkillKkToh:
 		af0Location = ApplyDamroll
 		af0Modifier = 1
-		haveAf1 = true
 		af1Location = ApplyAC
 		af1Modifier = 10
 		toVict = "Interlacing your fingers, you focus your inner strength."
@@ -225,7 +228,6 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 	case SkillKkKai:
 		af0Location = ApplyDamroll
 		af0Modifier = -1
-		haveAf1 = true
 		af1Location = ApplyAC
 		af1Modifier = -10
 		toVict = "Interlacing your fingers, your body becomes your fortress."
@@ -241,7 +243,6 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 	case SkillKkZai:
 		af0Location = ApplyHitroll
 		af0Modifier = 0
-		haveAf1 = true
 		af1Bitvector = engine.AFFInvisible
 		toVict = "Interlacing your fingers, you slowly fade from view."
 		toRoom = "$n interlaces $s fingers and slowly fades from view."
@@ -251,17 +252,16 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 
 	if !success {
 		af0Modifier = 0
-		haveAf1 = false
+		af1Bitvector = engine.AFFNothing
+		af1Modifier = 0
 		heal = 0
 		toVict = "You try the art of kuji-kiri, but can't concentrate!"
 		// C only calls improve_skill() on FAILURE here — faithfully ported.
 		improveSkill(ch, seal)
 	}
 
-	ch.AddAffect(engine.NewAffectDirect(skillNum, af0Location, 5, af0Modifier, engine.AFFKujiKiri, "kuji-kiri"))
-	if haveAf1 {
-		ch.AddAffect(engine.NewAffectDirect(skillNum, af1Location, 5, af1Modifier, af1Bitvector, "kuji-kiri"))
-	}
+	ch.JoinAffect(engine.NewAffectDirect(skillNum, af0Location, 5, af0Modifier, engine.AFFKujiKiri, "kuji-kiri"), false, false)
+	ch.JoinAffect(engine.NewAffectDirect(skillNum, af1Location, 5, af1Modifier, af1Bitvector, "kuji-kiri"), false, false)
 
 	if heal > 0 {
 		ch.SetHP(min(ch.GetMaxHP(), ch.GetHP()+heal))

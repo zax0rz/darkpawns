@@ -61,15 +61,12 @@ func (w *World) doClanApply(ch *Player, arg string) {
 		ch.SendMessage("You are not mighty enough to apply to this clan.\r\n")
 		return
 	}
-	ch.mu.Lock()
 	if ch.GetGold() < c.AppFee {
-		ch.mu.Unlock()
 		ch.SendMessage("You cannot afford the application fee!\r\n")
 		return
 	}
 
 	ch.SetGold(ch.GetGold() - c.AppFee)
-	ch.mu.Unlock()
 	c.Treasure += int64(c.AppFee)
 	w.SaveClans()
 
@@ -89,7 +86,8 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 
 	if arg == "" {
 		// Show all clans
-		msg := "\r\n\t\tooO Clans of Dark Pawns Ooo\r\n"
+		msg := "\r"
+		visible := false
 		for i := 0; i < w.Clans.ClanCount(); i++ {
 			c := w.Clans.GetClanByIndex(i)
 			if c == nil {
@@ -99,9 +97,13 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 				msg += fmt.Sprintf("[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.ID, c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			} else if c.Private == 0 {
+				visible = true
 				msg += fmt.Sprintf("%-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			}
+		}
+		if ch.GetLevel() < LVL_IMMORT && !visible {
+			msg = "\r\t\t\tooO Clans of Dark Pawns Ooo\r\n"
 		}
 		ch.SendMessage(msg)
 		return
@@ -113,24 +115,13 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 		return
 	}
 
-	msg := fmt.Sprintf("Info for the clan %s :\r\n", c.Name)
-	msg += fmt.Sprintf("Ranks      : %d\r\nTitles     : ", c.Ranks)
-	for j := 0; j < c.Ranks && j < len(c.RankName); j++ {
-		msg += c.RankName[j] + " "
+	msg := fmt.Sprintf("Info for the clan %s :\r\n\r\n\r\nDescription:\r\n", c.Name)
+	if c.Plan == "" {
+		msg += "(null)"
+	} else {
+		msg += c.Plan
 	}
-	msg += fmt.Sprintf("\r\nMembers    : %d\r\nPower      : %d\r\nTreasure   : %d\r\nSpells     : ", c.Members, c.Power, c.Treasure)
-	for j := 0; j < 5; j++ {
-		if c.Spells[j] != 0 {
-			msg += fmt.Sprintf("%d ", c.Spells[j])
-		}
-	}
-	msg += "\r\n"
-	msg += "Clan privileges:\r\n"
-	for j := 0; j < NumCP; j++ {
-		msg += fmt.Sprintf("   %-10s: %d\r\n", clanPrivileges[j], c.Privilege[j])
-	}
-	msg += "\r\n"
-	msg += fmt.Sprintf("Description:\r\n%s\r\n\r\n", c.Plan)
+	msg += "\r\n\r\n"
 
 	atWar := false
 	for j := 0; j < 4; j++ {
@@ -144,6 +135,8 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 	} else {
 		msg += "This clan is at war.\r\n"
 	}
+	msg += fmt.Sprintf("Application fee  : %d gold\r\nMonthly Dues     : %d gold\r\n", c.AppFee, c.Dues)
+	msg += fmt.Sprintf("Application level: %d\r\n", c.ApplLevel)
 	ch.SendMessage(msg)
 }
 

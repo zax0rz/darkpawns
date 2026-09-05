@@ -1,0 +1,80 @@
+# C-first self-only social vehicle (src/interpreter.c:464; src/act.social.c:102-151;
+# lib/misc/socials:300-303). The giggle record has no char_found message, so
+# do_action ignores every typed argument and emits only its no-argument pair.
+
+# depth-case: giggle.no-argument
+# depth-case: giggle.argument-ignored
+# depth-case: giggle.missing-target-ignored
+# depth-case: giggle.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Giggleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Giggleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Giggleobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Giggleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Giggleobserver 8162
+
+[probe]
+giggle
+giggle Giggleobserver
+giggle Nobody
+giggle Giggleactor trailing words are ignored

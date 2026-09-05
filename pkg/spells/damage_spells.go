@@ -1,6 +1,8 @@
 package spells
 
 import (
+	"fmt"
+
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -50,6 +52,14 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 	// Compute base damage dice/flat from the C mag_damage() formula table.
 	num, sides, flat, ok := magDamageFormula(level, getLevel(victim), spellNum, isMage, hasReag)
 	if !ok {
+		// C still calls mag_savingthrow() and damage(0, spellnum) for the
+		// five breath weapons. They have no mag_damage formula, but damage()
+		// consumes the save draw, enrolls the combatants, and emits the loaded
+		// skill-message record (magic.c:823-827; fight.c:1455-1480).
+		if isBreathSpell(spellNum) {
+			CheckSavingThrow(victim, SavingThrowType(savetype))
+			inflictDamage(ch, victim, 0, spellNum, world)
+		}
 		return
 	}
 
@@ -134,6 +144,15 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		if randBool(11) {
 			sendToZone("Thunder rumbles through the air.", ch, world)
 		}
+	}
+}
+
+func isBreathSpell(spellNum int) bool {
+	switch spellNum {
+	case SpellFireBreath, SpellGasBreath, SpellFrostBreath, SpellAcidBreath, SpellLightningBreath:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -272,24 +291,53 @@ type spellDeathPipeline interface {
 // double-handled death alongside HandleSpellDeath. Routing straight to
 // HandleDeath keeps a single death authority across melee, skills, and spells.
 func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{}) {
-	// Send spell flavor text to victim
-	singular, _ := MagAttackModifier(attackType)
-	victimMsg := "$n " + singular + " you!"
-	type sender interface{ SendMessage(string) }
-	if s, ok := victim.(sender); ok {
-		s.SendMessage(victimMsg)
-	}
-
 	// Type-assert to combat.Combatant to run the shared damage tail.
 	chCombat, chOk := ch.(combat.Combatant)
 	victCombat, victOk := victim.(combat.Combatant)
 	if chOk && victOk {
+		// C's damage() protects low-level player characters before it emits a
+		// damage/skill message (fight.c:1344-1357). Spoken spells reach that
+		// same damage() path through mag_damage(); keep the gate here rather
+		// than allowing the spell-only damage seam to bypass it.
+		if chCombat.GetName() != victCombat.GetName() && !chCombat.IsNPC() && !victCombat.IsNPC() {
+			if chCombat.GetLevel() <= 10 {
+				sendToCaster(ch, fmt.Sprintf("You are not experienced enough to attack %s!\r\n", victCombat.GetName()))
+				return
+			}
+			victimOutlaw := false
+			if flags, ok := victim.(interface{ GetFlags() uint64 }); ok {
+				victimOutlaw = flags.GetFlags()&(1<<0) != 0
+			}
+			if victCombat.GetLevel() <= 10 && !victimOutlaw {
+				sendToCaster(ch, fmt.Sprintf("Ancient forces protect %s from your wrath!\r\n", victCombat.GetName()))
+				return
+			}
+		}
+
+		// The breath path reaches C damage(0), which enrolls both awake
+		// participants before applying the zero amount (fight.c:1367-1395).
+		// Keep this scoped to breath attack types: the existing spell damage
+		// seam intentionally preserves its established immortal-absorption
+		// behavior for non-breath spells.
+		if isBreathSpell(attackType) && chCombat.GetName() != victCombat.GetName() && chCombat.GetPosition() > combat.PosStunned {
+			if chCombat.GetFighting() == "" {
+				chCombat.SetFighting(victCombat.GetName())
+			}
+			if victCombat.GetPosition() > combat.PosStunned && victCombat.GetFighting() == "" {
+				victCombat.SetFighting(chCombat.GetName())
+			}
+		}
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
 		dam = combat.ApplyDamageModifiers(chCombat, victCombat, dam)
+		// C damage() still calls skill_message() when the adjusted damage is
+		// zero.  Immortal victims receive the god_msg branch, and ordinary
+		// zero-damage spells receive the miss branch; both consume the message
+		// selector draw and remain player-visible (fight.c:1480, 296-327).
+		combat.EmitSkillMessage(dam, chCombat.GetName(), victCombat.GetName(), attackType, chCombat.GetRoom())
 		if dam <= 0 {
-			// Fully absorbed (immortal victim, or sanctuary on a tiny hit):
-			// no damage, no death — matches World.DoSpellDamage.
+			// Fully absorbed (immortal victim, or a clamped protection result):
+			// no state damage/death — matches damage() after the message path.
 			return
 		}
 

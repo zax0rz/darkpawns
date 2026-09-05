@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:741;
+# src/act.social.c:102-127; lib/misc/socials:854-857). The authored steam
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: steam.no-argument
+# depth-case: steam.typed-target-ignored
+# depth-case: steam.missing-target-ignored
+# depth-case: steam.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Steamactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Steamactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Steampeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Steampeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Steampeer 8162
+
+[probe]
+steam
+steam Steampeer
+steam Nobody
+steam Steamactor

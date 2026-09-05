@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+gen_board	look	boards.list-empty	D1	command	oracle-green	boards-depth	boards.c:288-318	Empty bulletin-board listing and its usage text.
+gen_board	read	boards.read-empty	D1	command	oracle-green	boards-depth	boards.c:321-350	READ 1 reports the C empty-board arm; READ board shares the list path.
+gen_board	write	boards.write-headline	D2	command	oracle-green	boards-depth	boards.c:180-271; improved-edit.c:17-22	Headline allocation enters the C improved editor with its exact instructions.
+gen_board	write	boards.post-body	D3	command	oracle-green	boards-depth	boards.c:252-271; modify.c:114-235	Board body lines are posted through the PLR_WRITING string editor and saved by @.
+gen_board	write	boards.revise-post	D3	command	oracle-green	boards-depth	improved-edit.c:392-437	Improved-editor /e line replacement returns the exact C acknowledgement and persists the revised body.
+do_reply	reply	boards.reply-writing	D2	shared	oracle-green	boards-depth	act.comm.c:958-960	Reply to the active poster receives the C writing gate after a valid last-teller setup.
+gen_board	remove	boards.remove-active	D2	command	oracle-green	boards-depth	boards.c:349-354	Removing a post while its author is editing is refused until the author finishes.
+gen_board	remove	boards.remove-own	D2	shared	oracle-green	boards-depth	boards.c:356-367	The author can remove the saved post and the room receives C's numbered echo.

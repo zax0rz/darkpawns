@@ -1,0 +1,38 @@
+# commands target validation fidelity (act.informative.c::do_commands).
+# The unknown-player branch is deterministic and avoids coupling this focused
+# gate to the separately generated command-surface ordering report.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Cmdactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cmdactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+commands Nobody

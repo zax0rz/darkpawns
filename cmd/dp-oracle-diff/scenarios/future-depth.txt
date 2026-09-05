@@ -1,0 +1,43 @@
+# depth-case: future.static-page
+# depth-case: future.arguments-ignored
+# C interpreter.c:456 registers future at POS_DEAD to do_gen_ps/SCMD_FUTURE.
+# do_gen_ps pages the boot-cached lib/text/future string and does not inspect
+# the command argument. The file is shorter than one pager page, so the
+# complete byte string is emitted without a pager prompt.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Futureslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Futureslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+future
+future trailing words are ignored

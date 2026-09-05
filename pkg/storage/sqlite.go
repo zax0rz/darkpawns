@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -81,13 +82,14 @@ func (b *SQLiteBackend) migrate() error {
 }
 
 // Save persists a player's state as JSON in SQLite.
-func (b *SQLiteBackend) Save(player *game.Player) error {
+func (b *SQLiteBackend) Save(ctx context.Context, player *game.Player) error {
 	data, err := game.SerializePlayer(player)
 	if err != nil {
 		return fmt.Errorf("serialize player: %w", err)
 	}
 
-	_, err = b.db.Exec(
+	_, err = b.db.ExecContext(
+		ctx,
 		`INSERT INTO players (name, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
 		 ON CONFLICT(name) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
 		player.Name, data,
@@ -99,9 +101,9 @@ func (b *SQLiteBackend) Save(player *game.Player) error {
 }
 
 // Load retrieves a player by name from SQLite.
-func (b *SQLiteBackend) Load(name string) (*game.Player, error) {
+func (b *SQLiteBackend) Load(ctx context.Context, name string) (*game.Player, error) {
 	var data string
-	err := b.db.QueryRow("SELECT data FROM players WHERE name = ?", name).Scan(&data)
+	err := b.db.QueryRowContext(ctx, "SELECT data FROM players WHERE name = ?", name).Scan(&data)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("player not found: %s", name)
 	}
@@ -113,8 +115,8 @@ func (b *SQLiteBackend) Load(name string) (*game.Player, error) {
 }
 
 // Delete removes a player from SQLite.
-func (b *SQLiteBackend) Delete(name string) error {
-	_, err := b.db.Exec("DELETE FROM players WHERE name = ?", name)
+func (b *SQLiteBackend) Delete(ctx context.Context, name string) error {
+	_, err := b.db.ExecContext(ctx, "DELETE FROM players WHERE name = ?", name)
 	if err != nil {
 		return fmt.Errorf("delete player from sqlite: %w", err)
 	}
@@ -122,9 +124,9 @@ func (b *SQLiteBackend) Delete(name string) error {
 }
 
 // Exists checks whether a player exists in SQLite.
-func (b *SQLiteBackend) Exists(name string) (bool, error) {
+func (b *SQLiteBackend) Exists(ctx context.Context, name string) (bool, error) {
 	var count int
-	err := b.db.QueryRow("SELECT COUNT(1) FROM players WHERE name = ?", name).Scan(&count)
+	err := b.db.QueryRowContext(ctx, "SELECT COUNT(1) FROM players WHERE name = ?", name).Scan(&count)
 	if err != nil {
 		return false, fmt.Errorf("check player exists in sqlite: %w", err)
 	}
@@ -132,8 +134,8 @@ func (b *SQLiteBackend) Exists(name string) (bool, error) {
 }
 
 // List returns all saved player names.
-func (b *SQLiteBackend) List() ([]string, error) {
-	rows, err := b.db.Query("SELECT name FROM players ORDER BY name")
+func (b *SQLiteBackend) List(ctx context.Context) ([]string, error) {
+	rows, err := b.db.QueryContext(ctx, "SELECT name FROM players ORDER BY name")
 	if err != nil {
 		return nil, fmt.Errorf("list players from sqlite: %w", err)
 	}
@@ -151,13 +153,14 @@ func (b *SQLiteBackend) List() ([]string, error) {
 }
 
 // SaveWorld persists world state as JSON.
-func (b *SQLiteBackend) SaveWorld(w *game.World) error {
+func (b *SQLiteBackend) SaveWorld(ctx context.Context, w *game.World) error {
 	data, err := game.SerializeWorld(w)
 	if err != nil {
 		return fmt.Errorf("serialize world: %w", err)
 	}
 
-	_, err = b.db.Exec(
+	_, err = b.db.ExecContext(
+		ctx,
 		`INSERT INTO world_state (id, data, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)
 		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
 		data,
@@ -169,9 +172,9 @@ func (b *SQLiteBackend) SaveWorld(w *game.World) error {
 }
 
 // LoadWorld restores world state into an existing World from SQLite.
-func (b *SQLiteBackend) LoadWorld(w *game.World) error {
+func (b *SQLiteBackend) LoadWorld(ctx context.Context, w *game.World) error {
 	var data string
-	err := b.db.QueryRow("SELECT data FROM world_state WHERE id = 1").Scan(&data)
+	err := b.db.QueryRowContext(ctx, "SELECT data FROM world_state WHERE id = 1").Scan(&data)
 	if err == sql.ErrNoRows {
 		return nil // no saved state — first boot
 	}

@@ -163,19 +163,24 @@ var SkillClassReq = map[string]map[int]int{
 // SkillPosReq maps skill name → minimum position required.
 // Source: interpreter.c cmd_info[] entries.
 var SkillPosReq = map[string]int{
-	SkillBackstab: combat.PosStanding,
-	SkillFlee:     combat.PosFighting,
-	SkillBash:     combat.PosFighting,
-	SkillKick:     combat.PosFighting,
-	SkillTrip:     combat.PosFighting,
-	SkillHeadbutt: combat.PosFighting,
-	SkillRescue:   combat.PosStanding,
-	SkillSneak:    combat.PosStanding,
-	SkillHide:     combat.PosResting,
-	SkillSteal:    combat.PosStanding,
-	SkillPickLock: combat.PosStanding,
-	SkillCircle:   combat.PosFighting,
-	SkillCharge:   combat.PosFighting,
+	SkillBackstab:   combat.PosStanding,
+	SkillFlee:       combat.PosFighting,
+	SkillBash:       combat.PosFighting,
+	SkillKick:       combat.PosFighting,
+	SkillTrip:       combat.PosFighting,
+	SkillHeadbutt:   combat.PosFighting,
+	SkillSmackheads: combat.PosFighting,
+	SkillRescue:     combat.PosStanding,
+	SkillSneak:      combat.PosStanding,
+	SkillHide:       combat.PosResting,
+	SkillSteal:      combat.PosStanding,
+	SkillPickLock:   combat.PosStanding,
+	SkillCircle:     combat.PosFighting,
+	SkillCharge:     combat.PosFighting,
+	SkillFleshAlter: combat.PosFighting,
+	SkillAmbush:     combat.PosStanding,
+	SkillShoot:      combat.PosStanding,
+	SkillSleeper:    combat.PosStanding,
 }
 
 // ---------------------------------------------------------------------------
@@ -222,6 +227,8 @@ var SkillUnknownMsg = map[string]string{
 	SkillTigerPunch:  "What's that, idiot-san?\r\n",                                  // C: \r\n (act.offensive.c:700)
 	SkillDragonKick:  "What's that, idiot-san?\r\n",                                  // C: \r\n (do_dragon_kick) — shared with neckbreak/tiger_punch
 	SkillGroinrip:    "You're not trained in martial arts!\n\r",                      // C: \n\r (new_cmds.c:2582)
+	SkillShoot:       "You have no idea how.\r\n",                                    // C: \r\n (act.offensive.c:764)
+	SkillSleeper:     "You have no idea how.\r\n",
 }
 
 // CanUseSkill checks whether a player can use a skill. For Wave-1 combat skills
@@ -313,6 +320,28 @@ func FindTargetInRoom(world *World, roomVNum int, targetName string, exclude *Pl
 	return tgt.Combatant, charDisplayName(tgt), true
 }
 
+// FindFightingTargetInRoom resolves the exact combatant named by a player's
+// FIGHTING pointer. C command handlers use that pointer directly when no
+// argument is supplied; they do not pass its multi-word display name back
+// through get_char_room_vis. The Go port stores the pointer as a name string,
+// so this exact in-room lookup preserves that fallback semantics.
+func FindFightingTargetInRoom(world *World, roomVNum int, targetName string, exclude *Player) (combat.Combatant, bool) {
+	if world == nil || targetName == "" {
+		return nil, false
+	}
+	for _, p := range world.GetPlayersInRoom(roomVNum) {
+		if p != exclude && p.GetName() == targetName {
+			return p, true
+		}
+	}
+	for _, m := range world.GetMobsInRoom(roomVNum) {
+		if m.GetName() == targetName {
+			return m, true
+		}
+	}
+	return nil, false
+}
+
 // charDisplayName returns the player name or mob ShortDesc for a resolved
 // target — the second return value FindTargetInRoom historically carried.
 func charDisplayName(t CharTarget) string {
@@ -385,17 +414,59 @@ type SkillResult struct {
 	MessageToCh   string
 	MessageToVict string
 	MessageToRoom string
-	StunTarget    bool // target loses a round
-	SleepTarget   bool // target is put to sleep (PosSleeping + AFF_SLEEP)
-	SelfStumble   bool // user falls (bash fail)
-	TargetFalls   bool // target position changes to sitting
-	WaitCh        int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
-	WaitTarget    int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
+	// Targets carries the ordered target list for a multi-target skill. The
+	// ordinary result path uses the first target; additional targets receive
+	// the same damage and combat enrollment in C call order.
+	Targets []combat.Combatant
+	// MessageToRoomSecond preserves C commands that issue two consecutive
+	// TO_ROOM acts for one skill use.
+	MessageToRoomSecond string
+	StunTarget          bool // target loses a round
+	SleepTarget         bool // target is put to sleep (PosSleeping + AFF_SLEEP)
+	SelfStumble         bool // user falls (bash fail)
+	TargetFalls         bool // target position changes to sitting
+	WaitCh              int  // WAIT_STATE for attacker (PULSE_VIOLENCE ticks)
+	WaitTarget          int  // WAIT_STATE for target (PULSE_VIOLENCE ticks)
+	WaitChPulses        int  // exact WAIT_STATE pulses for non-round C cooldowns
+	// RawKill requests the C raw_kill tail after the command's authored acts
+	// have been delivered. do_spike/do_stake increment their PK/death counters
+	// and then raw_kill; the command wrapper owns that ordering (R1/R3/R5e).
+	RawKill bool
+	// RoomIncludesTarget preserves C's TO_ROOM audience when MessageToRoom
+	// intentionally includes the target instead of using TO_NOTVICT.
+	RoomIncludesTarget bool
+	// RoomIncludesActor preserves C's TO_ROOM audience when the skill's
+	// message actor is the target rather than the command issuer.
+	RoomIncludesActor bool
+	// MessageToChAfterRoom preserves C paths whose room act() precedes the
+	// command issuer's final direct message (new_cmds2.c:322-324).
+	MessageToChAfterRoom bool
+	// SelfStunnedAfterMessage preserves a C position assignment that follows
+	// the final direct message (new_cmds2.c:324-325).
+	SelfStunnedAfterMessage bool
 	// StartCombat signals the caller to initiate combat even when the skill
 	// deals no damage (miss / zero-damage hit). C: skills like backstab call
 	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.
 	// The caller (sendSkillResult) routes this through the combat engine.
 	StartCombat bool
+	// InitialAttack requests the synchronous ordinary hit() path used by C
+	// skills whose failure arm calls hit(ch, victim, skill). The caller starts
+	// the pair and resolves exactly one weapon attack before applying the
+	// result's wait state.
+	InitialAttack bool
+
+	// RetaliateHit signals that the TARGET immediately hits the actor, mirroring
+	// C's hit(vict, ch, TYPE_UNDEFINED) — used by the MOB_AWARE backstab guard
+	// (act.offensive.c:216), which notices the lunge and swings back at once.
+	// The caller enrolls target->ch and runs one synchronous swing from target.
+	RetaliateHit bool
+	// RetaliateHitBeforeSkillMessage preserves do_circle's failed-circle order:
+	// when the victim was already fighting, C calls hit(victim, ch) before the
+	// subsequent damage(ch, victim, 0, SKILL_CIRCLE) skill message.
+	RetaliateHitBeforeSkillMessage bool
+	// RetaliateHitAfterMessages preserves commands whose C act() audience
+	// messages all precede hit(vict, ch), such as do_disarm.
+	RetaliateHitAfterMessages bool
 
 	// SkillMsgType, when non-zero, routes the combat message through the
 	// skill_message path (fight.c:1023-1092) instead of emitting MessageToCh/
@@ -403,15 +474,52 @@ type SkillResult struct {
 	// 131 for the Backstab set) — NOT the Go-internal SKILL_* enum. When set,
 	// the caller (sendSkillResult) draws Dice(1,N) and emits the selected set's
 	// char/vict/room text via the combat engine, mirroring C's damage() path,
-	// and MessageToCh/Vict/Room are ignored. R4 (no invented strings) + R3
-	// (the Dice draw must happen in order).
+	// and MessageToCh/Vict/Room are ignored. SkillMsgAfterDamage is the explicit
+	// exception for C paths whose literal act() preamble precedes damage(). R4
+	// (no invented strings) + R3 (the Dice draw must happen in order).
 	SkillMsgType int
+	// SkillMsgAfterDamage preserves C paths that emit literal act() messages
+	// first and call skill_message() only from a subsequent damage() call.
+	// When set, MessageToCh/Vict/Room are emitted before damage and SkillMsgType
+	// is emitted after it. R1/R3 — preserve both byte order and draw order.
+	SkillMsgAfterDamage bool
+	// PreDamageImprove lists improve_skill calls that C makes after its literal
+	// preamble but before damage()/hit(). It is ordered and intentionally
+	// separate from DeferredImprove, whose calls happen after the combat message
+	// and damage path return.
+	PreDamageImprove []string
+	// SkillMsgInDamage says the damage implementation emits SkillMsgType at the
+	// C damage() boundary, before a lethal target enters HandleDeath. This is
+	// needed when the death path removes the target before the command wrapper
+	// can emit the message (R1/R3; cutthroat's damage() call).
+	SkillMsgInDamage bool
+
+	// DamageSkill selects the C skill/attack type used by the damage pipeline.
+	// Empty retains the legacy generic path; callers that pass a numbered skill
+	// through damage() should set its canonical name (for example, "bite").
+	DamageSkill string
 
 	// DeferredImprove lists the skills to run improveSkill() on AFTER the
 	// skill_message/damage step, matching C's order (skill_message draws its
 	// dice inside damage()/hit(), THEN improve_skill runs). Ordered; repeat an
 	// entry for a skill C improves twice (headbutt). DP-1212 / R3b.
 	DeferredImprove []string
+	// DeferredImproveAfterRoom preserves a C call path where improve_skill()
+	// follows a later room act() rather than the command's damage return.
+	DeferredImproveAfterRoom bool
+	// DeferredImproveAfterActor preserves a C call path where improve_skill()
+	// follows both the room act() and the actor's direct message.
+	DeferredImproveAfterActor bool
+	// SpawnPuke requests do_groinrip's post-room number(0,10) check and its
+	// vnum-21 room object. The command wrapper performs it after room delivery.
+	SpawnPuke bool
+	// SpawnMobVNum/Level/Room describe a C create_mobile call that must occur
+	// after the damage/message boundary. SpawnMobHunting preserves the TRUE
+	// hunting argument used by create_mobile (new_cmds2.c:588-618).
+	SpawnMobVNum    int
+	SpawnMobLevel   int
+	SpawnMobRoom    int
+	SpawnMobHunting bool
 }
 
 // DoBackstab implements do_backstab() from act.offensive.c lines 172-220.
@@ -450,39 +558,16 @@ func max(a, b int) int {
 // DoPoint, DoGroinrip, DoReview, DoWhois, DoPalm, DoFleshAlter
 // ---------------------------------------------------------------------------
 
-// DoMold implements do_mold() — rename and redescribe a clay item.
-func heShe(sex int) string {
-	switch sex {
-	case 1:
-		return "he"
-	case 2:
-		return "she"
-	default:
-		return "it"
-	}
-}
-
-// himHer returns "himself" / "herself" / "itself" based on sex.
+// himHer returns "himself" / "herself" / "itself" based on Go's actor sex
+// encoding (SexMale=0, SexFemale=1, SexNeutral=2).
 func himHer(sex int) string {
 	switch sex {
-	case 1:
+	case SexMale:
 		return "himself"
-	case 2:
+	case SexFemale:
 		return "herself"
 	default:
 		return "itself"
-	}
-}
-
-// hisHer returns "his" / "her" / "its" based on sex.
-func hisHer(sex int) string {
-	switch sex {
-	case 1:
-		return "his"
-	case 2:
-		return "her"
-	default:
-		return "its"
 	}
 }
 

@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	comfort	comfort.no-argument	D2	command	oracle-green	comfort-depth	interpreter.c:390; act.social.c:102-151; lib/misc/socials:121-129	No argument emits the C actor-only question and no room bytes.
+do_action	comfort	comfort.target-success	D3	audience	oracle-green	comfort-depth	act.social.c:145-151; lib/misc/socials:121-129	A standing peer meets the resting minimum and receives the actor/room/victim trio.
+do_action	comfort	comfort.target-not-found	D1	command	oracle-green	comfort-depth	act.social.c:128-132; lib/misc/socials:121-129	Missing target emits Comfort who? exactly.
+do_action	comfort	comfort.self-target	D2	command	oracle-green	comfort-depth	act.social.c:134-140; lib/misc/socials:121-129	Self-target uses the C self-target message.
+do_action	comfort	comfort.target-position-gate	D2	command	oracle-green	comfort-depth	act.social.c:145-147; lib/misc/socials:121-129	A sleeping target is below the C minimum position and receives the proper-position refusal.

@@ -1,0 +1,83 @@
+# `doh` is the interpreter-table alias for the self-only do_action social.
+# C registration: src/interpreter.c:419; social record: lib/misc/socials:1351.
+# The peer captures the room audience, while the sleep/wake sequence proves
+# the table's POS_RESTING gate and recovery to an allowed position.
+
+# depth-case: doh.no-argument
+# depth-case: doh.typed-target-ignored
+# depth-case: doh.position-gate
+# depth-case: doh.wake-recovery
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dohactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dohactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Dohpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Dohpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Dohpeer 8162
+
+[probe]
+doh
+doh dohpeer
+sleep
+doh
+wake
+doh

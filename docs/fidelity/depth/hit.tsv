@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_hit	hit	hit.first-token-fill-word	D1	command	oracle-green-multiseed	hit-depth@1,2,3,5,8	act.offensive.c:108-111	C one_argument skips leading fill words before get_char_room_vis; `hit the trainee` reaches the synchronous hit path.
+do_hit	hit	hit.first-token-trailing-words	D1	command	oracle-green-multiseed	hit-trailing-depth@1,2,3,5,8	act.offensive.c:108-111	C one_argument passes only the first non-fill token; trailing words do not change the target.
+do_hit	hit	hit.fill-only-no-argument	D1	command	unit-green	TestCmdHitFillWordsWithoutTargetUseNoArgumentMessage	act.offensive.c:108-109	After C fill-word removal, an argument containing only fill words is the no-argument branch and answers "Hit who?".
+do_hit	murder	murder.first-token-shared-do-hit	D1	command	delegated	combat-entry-gates	interpreter.c:562+act.offensive.c:101	Murder enters the same do_hit/one_argument path; its alias entry is already proven by murder.alias-equals-hit.
+do_hit	hit	hit.entry-and-combat-gates	D2	command	delegated	combat-entry-gates	act.offensive.c:112-131	Self, charm-master, position/fighting, mounted, peaceful, PC protection, shopkeeper, wait-state, and opener branches are owned by combat-entry.
+do_hit	hit	hit.damage-and-audiences	D5	shared	delegated	combat-swing	fight.c:1763-1935	Synchronous hit/damage formulas, RNG draw order, weapon messages, state transitions, and death tails belong to the shared melee matrix.

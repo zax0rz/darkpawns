@@ -1,0 +1,46 @@
+# depth-case: pour.pour-no-arg
+# depth-case: pour.fill-no-args
+# depth-case: pour.cant-find
+# depth-case: pour.cant-pour-from
+# depth-case: pour.no-dest
+# depth-case: pour.pour-out
+# depth-case: pour.fill-from-not-fountain
+[fixture]
+quiet-mobs
+[setup:oracle]
+Pourer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Pourer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+pour
+fill
+open pack
+get skin pack
+pour xyzzy
+pour backpack
+pour skin
+pour skin out
+fill skin skin

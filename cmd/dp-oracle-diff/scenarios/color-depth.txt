@@ -1,0 +1,62 @@
+# color command vehicle (src/interpreter.c:388; src/act.informative.c:2462-2498).
+# C lowercases any_one_arg, accepts prefixes through search_block, treats on as
+# complete, updates the two color bits, and emits its exact response while
+# ignoring arguments after the first.
+
+# depth-case: color.no-argument
+# depth-case: color.prefix-sparse
+# depth-case: color.prefix-normal
+# depth-case: color.prefix-complete
+# depth-case: color.prefix-off
+# depth-case: color.on-alias
+# depth-case: color.state-report
+# depth-case: color.invalid
+# depth-case: color.extra-argument
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Colorprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Colorprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+color
+color s
+color
+color n
+color
+color c
+color
+color o
+color
+color on
+color
+color bogus
+color sparse extra
+color

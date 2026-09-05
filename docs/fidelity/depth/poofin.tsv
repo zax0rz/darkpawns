@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_poofset	poofin	poofin.entry-gate	D1	command	unit-green	TestPoofinRegistrationUsesCEntryGate	interpreter.c:613; act.wizard.c:1711-1721	The standalone poofin row is LVL_IMMORT at POS_DEAD and reaches SCMD_POOFIN in the shared setter (R1/R2/R5e).
+do_poofset	poofin	poofin.clear-message	D4	state	unit-green	TestCmdPoofinClearsAndPreservesCRawArgument	act.wizard.c:1721-1737	An empty post-skip-spaces remainder frees the old POOFIN value, stores NULL, and still emits global OK (R1/R4/R5e).
+do_poofset	poofin	poofin.raw-message	D4	state	unit-green	TestCmdPoofinClearsAndPreservesCRawArgument	act.wizard.c:1721-1737	A non-empty remainder is stored verbatim after C skip_spaces; internal spacing is not token-normalized (R1/R3/R5e).
+do_poofset	poofin	poofin.custom-message	D2	command	oracle-green-multiseed	poofin-depth@1,2,3,5,8	act.wizard.c:1721-1737	A custom message with internal spacing receives the exact OK acknowledgement.
+do_poofset	poofin	poofin.consumer-audience	D3	shared	delegated	goto.numeric-success	act.wizard.c:298-303; act.wizard.c:1711-1737	The existing goto matrix owns the destination-room consumer of POOFIN; this slice owns only the setter's exact stored state (R5b/R5c).
+do_poofset	poofin	poofin.shared-handler-boundary	D2	shared	delegated	poofout.raw-message	act.wizard.c:1711-1737	SCMD_POOFOUT reaches the same do_poofset setter and is owned by the next source-order command slice (R5b/R5c).

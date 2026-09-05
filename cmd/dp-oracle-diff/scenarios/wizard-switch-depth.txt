@@ -1,0 +1,85 @@
+# C-first vehicle for do_switch. The primary is an Implementor; a live peer
+# exercises the in-use player body, while the disposable level-40 Satan Klaus
+# fixture makes the successful switch and already-switched handler branches
+# reachable through C's command-table level gate.
+
+# depth-case: switch.target-not-found
+# depth-case: switch.self-target
+# depth-case: switch.player-in-use
+# depth-case: switch.mob-success
+# depth-case: switch.one-argument
+# depth-case: switch.switched-npc-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Switchwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchwizard
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Switchpeer 8162
+
+[probe]
+switch Nobody
+switch Switchwizard
+switch Switchpeer
+switch satan trailing words are ignored
+switch

@@ -1,0 +1,54 @@
+# depth-case: time.frozen-render
+# depth-case: weather.boot-state
+# depth-case: score.fresh-char
+# depth-case: who.single
+# depth-case: where.mortal-gate
+# depth-case: uptime.mortal-gate
+# depth-case: date.mortal-gate
+# The mortal info-display surface on a fresh character behind DP_FIXED_TIME
+# (deterministic clock, so time/weather/score-age render identically).
+# where/uptime/date are LVL_IMMORT commands in C's table (interpreter.c:820,
+# 795, 406): a mortal invocation must answer with C's not-available response,
+# not a rendered display. Run weather multi-seed: the boot sky draw picks
+# the rendered state (R3).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+time
+weather
+score
+who
+where
+uptime
+date

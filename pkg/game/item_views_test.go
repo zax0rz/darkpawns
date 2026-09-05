@@ -152,6 +152,33 @@ func TestDoEquipmentUsesCOrderAndLabels(t *testing.T) {
 	}
 }
 
+func TestDoEquipmentRendersEveryCWearSlot(t *testing.T) {
+	w, p, msgs := newViewTestWorld(t)
+	for cPos := range cWearToGoSlot {
+		obj := NewObjectInstance(&parser.Obj{
+			VNum: 3200 + cPos, ShortDesc: fmt.Sprintf("slot-%02d", cPos), Keywords: "slot",
+		}, -1)
+		if err := w.EquipItem(p, obj, cPos); err != nil {
+			t.Fatalf("EquipItem at C position %d: %v", cPos, err)
+		}
+	}
+
+	w.DoEquipment(p)
+	got := strings.Join(*msgs, "")
+	last := -1
+	for cPos, label := range cWearWhere {
+		needle := label + fmt.Sprintf("slot-%02d", cPos)
+		idx := strings.Index(got, needle)
+		if idx < 0 {
+			t.Fatalf("missing C equipment position %d (%q) in %q", cPos, needle, got)
+		}
+		if idx <= last {
+			t.Fatalf("C equipment position %d rendered out of order", cPos)
+		}
+		last = idx
+	}
+}
+
 // ---------------------------------------------------------------------------
 // DP-1133: object-flag color parity with C show_obj_to_char / oc_show_list
 // ---------------------------------------------------------------------------
@@ -373,5 +400,40 @@ func TestDoEquipmentUnseenItemShowsSomething(t *testing.T) {
 	got := strings.Join(*msgs, "")
 	if !strings.Contains(got, "<worn on finger>     Something.\r\n") {
 		t.Fatalf("unseen item line = %q", got)
+	}
+}
+
+func TestDoEquipmentMarksCoveredPositions(t *testing.T) {
+	w, p, msgs := newViewTestWorld(t)
+	items := []struct {
+		name string
+		pos  int
+	}{
+		{"a ring", eqWearFingerR},
+		{"a glove", eqWearHands},
+		{"a shirt", eqWearBody},
+		{"a cloak", eqWearAbout},
+		{"a legging", eqWearLegs},
+		{"a leg-cover", eqWearAblegs},
+	}
+	for i, tc := range items {
+		obj := NewObjectInstance(&parser.Obj{
+			VNum: 3100 + i, ShortDesc: tc.name, Keywords: strings.TrimPrefix(tc.name, "a "),
+		}, -1)
+		if err := w.EquipItem(p, obj, tc.pos); err != nil {
+			t.Fatalf("EquipItem(%s): %v", tc.name, err)
+		}
+	}
+
+	w.DoEquipment(p)
+	got := strings.Join(*msgs, "")
+	for _, want := range []string{
+		"<worn on finger>     a ring (covered)\r\n",
+		"<worn on body>       a shirt (covered)\r\n",
+		"<worn on legs>       a legging (covered)\r\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("missing covered equipment line %q in %q", want, got)
+		}
 	}
 }

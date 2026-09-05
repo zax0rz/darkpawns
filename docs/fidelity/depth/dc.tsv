@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_dc	dc	dc.no-argument	D1	command	oracle-green	dc-depth	act.wizard.c:1736-1743	C's exact usage line is emitted when the connection argument is absent.
+do_dc	dc	dc.invalid-argument	D1	command	oracle-green	dc-depth	act.wizard.c:1739-1743	atoi-zero/non-numeric input, including "all", is usage rather than a bulk disconnect.
+do_dc	dc	dc.missing-connection	D1	command	oracle-green	dc-depth	act.wizard.c:1744-1748	Unknown numeric descriptors emit the exact no-such-connection line.
+do_dc	dc	dc.immortal-plus-one-gate	D1	command	oracle-green	dc-depth	interpreter.c:409	The command is reachable at exactly LVL_IMMORT+1 (32), not only at LVL_GOD.
+do_dc	dc	dc.equal-level	D2	state	oracle-green	dc-depth	act.wizard.c:1750-1753	The actor cannot close a connection whose logged-in character is equal or higher level.
+do_dc	dc	dc.lower-level-close	D3	state	oracle-green	dc-depth	act.wizard.c:1754-1764	The lower-level peer is marked for close and the actor receives the exact numbered confirmation.

@@ -1,7 +1,6 @@
 package session
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -79,41 +78,9 @@ func cmdPassword(s *Session, args []string) error {
 	return nil
 }
 
-// cmdPrompt sets or toggles the player's prompt display.
-// Usage: prompt              — toggle prompt on/off
-//
-//	prompt <string>     — set custom prompt (supports %h/%m/%v/%H/%M/%V)
-//	prompt all          — show all stats (hp/mana/move)
+// cmdPrompt is the C prompt alias for do_display.
+// Source: src/interpreter.c:619 -> src/act.other.c:1024-1082.
 func cmdPrompt(s *Session, args []string) error {
-	arg := strings.Join(args, " ")
-
-	// C do_display (act.other.c:1035): no-arg → usage message (NOT a toggle).
-	if arg == "" {
-		s.Send("Usage: prompt { H | M | V | T | F | all | none }\r\n")
-		return nil
-	}
-
-	if strings.EqualFold(arg, "all") {
-		s.player.PromptStr = "%h/%H hp %m/%M mana %v/%V mv > "
-		s.player.PromptOn = true
-		s.Send("Prompt set to show all.")
-		return nil
-	}
-
-	if strings.EqualFold(arg, "off") {
-		s.player.PromptOn = false
-		s.Send("Prompt now off.")
-		return nil
-	}
-
-	if strings.EqualFold(arg, "on") {
-		s.player.PromptOn = true
-		s.Send("Prompt now on.")
-		return nil
-	}
-
-	s.player.PromptStr = arg
-	s.player.PromptOn = true
-	s.Send(fmt.Sprintf("Prompt set to: %s", arg))
+	s.manager.world.ExecDisplay(s.player, strings.Join(args, " "))
 	return nil
 }

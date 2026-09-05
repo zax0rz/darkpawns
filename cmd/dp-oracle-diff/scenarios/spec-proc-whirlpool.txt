@@ -1,0 +1,102 @@
+# depth-case: mob.whirlpool-autonomous-entry
+# depth-case: mob.whirlpool-nohassle-gate
+# depth-case: mob.whirlpool-random-destination
+# depth-case: mob.whirlpool-victim-output
+# depth-case: mob.whirlpool-destination-look
+# depth-case: mob.whirlpool-state-transition
+# SPECIAL(whirlpool) vehicle — src/spec_procs2.c:244-275, ASSIGNMOB(12200,
+# whirlpool) at spec_assign.c:342. The mob is injected into the Western
+# Vestibule (8161, one room north of the mortal hometown infirmary 8162) with
+# its RANDZON scatter flag cleared, and all of 8161's exits removed so the
+# wander draw can never relocate it (no SENTINEL flag on this prototype).
+#
+# Pulse ledger (settle = 40 pulses per enter-game step, PULSE_MOBILE = 40):
+#   actor settle -> pulse 40: 8161 still empty (the God ports in afterwards).
+#   peer settle  -> pulse 80: only the PRF_NOHASSLE God stands with the mob —
+#                            C skips him (spec_procs2.c:256); a port that
+#                            lacks the gate pulls him and desyncs the draw
+#                            stream (the nohassle-gate proof).
+#   peer walk    -> `north` from 8162 into 8161, past the command-time
+#                   special() check in the empty hometown.
+#   probe pump   -> pulse 120: mobact pulls the mortal peer; room_activity
+#                   then applies the destination's water-sector damage
+#                   (comm.c:714-720) through the SPELL_DROWNING machinery.
+#
+# The destination draw is number(real_room(4600), real_room(4699)) over the
+# vnum-sorted rnum space with an unbounded PRIVATE/GODROOM/DEATH/NOMOB
+# rejection loop — the multi-seed runs expose the draw parity.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12200 999 8161 80
+clear-mob-flag 12200 RANDZON
+replace-room-exits 8161 none
+
+[setup:oracle]
+Whirlpoolactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8161
+
+[setup:port]
+Whirlpoolactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8161
+
+[setup:oracle:peer]
+Whirlpoolpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[setup:port:peer]
+Whirlpoolpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[probe:peer]
+~dpclock pulse 40
+look

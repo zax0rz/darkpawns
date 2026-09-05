@@ -1,0 +1,19 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_put	put	put.no-arg	D1	command	oracle-green	put-basic	act.item.c:89-90	Empty arg1 yields "Put what in what?".
+do_put	put	put.multi-container	D1	command	oracle-green	put-basic	act.item.c:91-93	arg2 with dots yields "You can only put things into one container at a time.".
+do_put	put	put.no-arg2-it	D1	command	oracle-green	put-basic	act.item.c:94-99	Missing container with a single object yields "What do you want to put it in?".
+do_put	put	put.no-arg2-them	D1	command	oracle-green	put-basic	act.item.c:94-99	Missing container with all/all.X yields "What do you want to put them in?".
+do_put	put	put.cont-not-found	D2	command	oracle-green	put-basic	act.item.c:102-106	generic_find miss yields "You don't see a/an X here.".
+do_put	put	put.not-container	D2	command	oracle-green	put-basic	act.item.c:107-108	Non-container target yields "$p is not a container.".
+do_put	put	put.closed	D2	command	oracle-green	put-basic	act.item.c:109-110	Closed container yields "You'd better open it first!".
+do_put	put	put.not-carrying	D2	command	oracle-green	put-basic	act.item.c:114-118	Object not in inventory yields "You aren't carrying a/an X.".
+do_put	put	put.self-fold	D2	command	oracle-green	put-basic	act.item.c:119-121	Putting a container into itself yields "You attempt to fold it into itself, but fail.".
+do_put	put	put.indiv-success	D3	command	oracle-green	put-basic	act.item.c:122-123	Actor "You put $p in $P." and room "$n puts $p in $P.".
+do_put	put	put.all-success	D2	command	oracle-green	put-all-success	act.item.c:126-135	"put all" over multiple items. Go ranged the live inventory slice while performPut removed from it (skipping items); snapshot first, as C captures next_content.
+do_put	put	put.all-none	D2	command	oracle-green	put-basic	act.item.c:139-141	"put all <cont>" with nothing else yields "You don't seem to have anything to put in it.".
+do_put	put	put.alldot-success	D2	command	oracle-green	put-basic	act.item.c:126-135	"put all.X <cont>" puts each matching item.
+do_put	put	put.alldot-none	D2	command	oracle-green	put-basic	act.item.c:142-145	"put all.X <cont>" with no match yields "You don't seem to have any Xss.".
+do_put	put	put.fill-word-parse	D2	command	oracle-green	put-fillword	interpreter.c:1265	C do_put parses with two_arguments (fill-skip + lowercase); Go doPut used strings.SplitN. Put-local routing fix.
+perform_put	put	put.wont-fit	D2	command	unit-green	TestPerformPutWontFit	act.item.c:63-64	Object over the container's capacity yields "$p won't fit in $P.".
+get_obj_in_list_vis	put	put.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get; proven under the get manifest.
+find_all_dots	put	put.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get; proven under the get manifest.

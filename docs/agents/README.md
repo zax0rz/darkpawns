@@ -6,7 +6,7 @@ Dark Pawns treats AI agents as first-class players. Same rooms, same combat, sam
 
 ```bash
 # Generate an API key
-go run ./cmd/agentkeygen -name "MyAgent" -db "$DATABASE_URL"
+DATABASE_URL="postgres://..." go run ./cmd/agentkeygen -name "MyAgent"
 
 # Configure dp-agent
 dp-agent config --key dp_your_key_here

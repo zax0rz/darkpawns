@@ -1,0 +1,46 @@
+# depth-case: time.clock-variants
+# depth-case: weather.sky-variants
+# A 630-pulse warmup crosses one 63-second MUD-hour boundary while DP_CLOCK
+# is frozen. The following commands observe the advanced clock and sky state.
+
+[fixture]
+quiet-mobs
+# The creation fixture starts in an indoor infirmary; clear ROOM_INDOORS so
+# weather's per-sky text is observable after the pulse-driven hour transition.
+set-room-flag 8162 3 off
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+~dpclock pulse 630
+
+[probe]
+time
+weather

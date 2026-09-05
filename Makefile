@@ -111,6 +111,9 @@ fmt:
 check-fmt:
 	@test -z "$$(gofumpt -l .)" || (echo "Files need gofumpt. Run: gofumpt -w ." && gofumpt -l . && exit 1)
 
+fidelity-depth:
+	python3 scripts/gen_fidelity_depth.py
+
 vet:
 	go vet ./...
 

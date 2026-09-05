@@ -1,0 +1,77 @@
+# C-first home audience vehicle (src/act.wizard.c:3254-3267). The peer is
+# placed in the destination so the before/after TO_ROOM poof messages are
+# observed on the same command that performs the saved-home teleport.
+
+# depth-case: home.poof-audiences
+# depth-case: home.saved-home-transfer
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Azorath
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Azorath
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Azobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Azobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Azobserver 8105
+home 8105
+poofout $n leaves in a cloud of pale smoke.
+
+[probe]
+home

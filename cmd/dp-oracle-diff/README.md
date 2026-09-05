@@ -14,20 +14,35 @@ DP_ORACLE_BIN=/path/to/darkpawns-c-oracle/bin/circle \
 The harness builds the Go server, allocates free ports (including the C
 server's adjacent WHOD port), copies the C `lib/` tree to a throwaway runtime
 directory, starts both servers, and tears them down after the scenario. The C
-clone and its player database are not modified. `DP_SEED=1` is applied only to
-the C process; Tier 1 masks RNG-derived values instead of seed-matching Go.
+clone, Go source world, and their player databases are not modified. The
+`--seed` value (default `1`) is applied to both processes so scenarios can prove
+RNG draw parity across several seeds. `--show-oracle` prints normalized C blocks
+even when the result is green; use it to ensure a queued command actually ran.
 
 When `DP_ORACLE_BIN` is unset, the command prints `SKIP` and exits successfully,
 so the default build and test path does not require the oracle.
 
 ## Scenario format
 
-Scenario files live in [`scenarios`](scenarios). Each non-comment line is one
-line sent identically to both servers. Empty/comment lines are ignored, and
-`<ENTER>` sends an empty line. There are deliberately no server-specific steps
-or expected-prompt branches: creation-flow differences remain visible in the
-resulting transcript.
+Scenario files live in [`scenarios`](scenarios). Setup is server-specific because
+the C and Go login flows can require different keystrokes; setup output is
+drained unless `[creation:oracle]` and `[creation:port]` are used. Probe commands
+are shared and diffed block by block. Empty/comment lines are ignored, and
+`<ENTER>` sends an empty line.
 
-The walking skeleton creates a Human Warrior, enters the game, runs `look`,
-examines the fixed starter sword (object vnum 8037), and quits. Additions beyond
-that single scenario belong in follow-up work.
+The supported sections are:
+
+- `[setup:oracle]` and `[setup:port]` for the primary client
+- `[setup:oracle:name]` and `[setup:port:name]` for passive audience clients
+- `[warmup]` for shared commands whose output is discarded
+- `[probe]` or `[probe:name]` for the shared, diffed command stream
+- `[fixture]` for disposable world changes such as quieting mobs, spawning
+  objects/mobs, replacing room exits, and toggling room flags
+
+Read `ParseScenario` in `internal/oraclediff/scenario.go` for the authoritative
+fixture grammar. Fixtures patch only throwaway C and Go world copies.
+
+For command-depth work, annotate scenarios with `# depth-case: <case-id>` and
+record the case in `docs/fidelity/depth/<command>.tsv`. Run `make fidelity-depth`
+to reject missing scenario or unit-test proof references. See
+`docs/fidelity/DEPTH_TESTING.md` for the complete workflow.

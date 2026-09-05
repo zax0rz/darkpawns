@@ -181,11 +181,13 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	if err := json.Unmarshal(lookBytes, &look); err != nil {
 		t.Fatalf("unmarshal look StateData: %v", err)
 	}
-	if want := game.NewbieHometownRoom(1); look.Room.VNum != want {
+	// C keeps the new mortal in the Burning Hut until the first PULSE_MOBILE
+	// (start_room); the look state reflects that pre-birth room.
+	if want := game.NewbieStartRoom; look.Room.VNum != want {
 		t.Errorf("look: room.vnum = %d, want %d", look.Room.VNum, want)
 	}
-	if look.Room.Name != "Temple Infirmary" {
-		t.Errorf("look: room.name = %q, want Temple Infirmary", look.Room.Name)
+	if look.Room.Name != "A Burning Hut" {
+		t.Errorf("look: room.name = %q, want A Burning Hut", look.Room.Name)
 	}
 	if look.Player.Name != "Testchar" {
 		t.Errorf("look: player.name = %q, want Testchar", look.Player.Name)

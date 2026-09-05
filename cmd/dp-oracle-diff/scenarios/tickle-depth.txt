@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:775;
+# src/act.social.c:102-151; lib/misc/socials:949-957). The authored tickle
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches. Its no-argument room slot is # and must be silent.
+
+# depth-case: tickle.no-argument
+# depth-case: tickle.target-success
+# depth-case: tickle.target-audience
+# depth-case: tickle.argument-first-token
+# depth-case: tickle.mob-target
+# depth-case: tickle.self-target
+# depth-case: tickle.target-not-found
+# depth-case: tickle.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Tickleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tickleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Tickleobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Tickleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Tickletarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Tickletarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Tickleobserver 8162
+teleport Tickletarget 8162
+
+[probe]
+tickle
+tickle Tickletarget trailing words are ignored
+tickle Tickletarget
+tickle trainee
+tickle Tickleactor
+tickle self
+tickle Nobody
+force Tickletarget sleep
+tickle Tickletarget

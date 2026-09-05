@@ -1,0 +1,75 @@
+# C-first group room-scope vehicle (src/interpreter.c:471; src/act.other.c:719-725).
+# The visible player is deliberately outside the actor's room; do_group uses
+# get_char_room_vis and must return NOPERSON rather than a world-scope match.
+
+# depth-case: group.target-out-of-room
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Grouproomleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grouproomleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Grouproomtarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Grouproomtarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Grouproomtarget 8161
+
+[probe]
+group Grouproomtarget
+

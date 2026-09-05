@@ -1,0 +1,12 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_pour	pour	pour.pour-no-arg	D1	command	oracle-green	pour-basic	act.item.c:1168-1171	Empty pour arg yields "From what do you want to pour?".
+do_pour	pour	pour.fill-no-args	D1	command	oracle-green	pour-basic	act.item.c:1186-1190	Empty fill args yield "What do you want to fill?  And what are you filling it from?".
+do_pour	pour	pour.cant-find	D2	command	oracle-green	pour-basic	act.item.c:1174-1177	pour from a missing object yields "You can't find it!".
+do_pour	pour	pour.cant-pour-from	D2	command	oracle-green	pour-basic	act.item.c:1178-1181	pour from a non-drinkcon yields "You can't pour from that!".
+do_pour	pour	pour.no-dest	D2	command	oracle-green	pour-basic	act.item.c:1229-1232	pour with no destination yields "Where do you want it?  Out or in what?".
+do_pour	pour	pour.pour-out	D3	command	oracle-green	pour-basic	act.item.c:1234-1240	"pour X out" empties the container: "You empty $p." and "$n empties $p.".
+do_pour	pour	pour.pour-out-refind	D4	state	oracle-green	pour-out-refind	act.item.c:name_from_drinkcon	After pour-out, C name_from_drinkcon strips the container's first keyword word (obj->name); a container with no liquid prefix loses its real keyword and can't be re-found. Go now mirrors this in clearDrinkconName (keywords, not short desc) and resolves pour targets via getObjInInvVis (keyword-only).
+do_pour	pour	pour.fill-from-not-fountain	D2	command	oracle-green	pour-basic	act.item.c:1210-1214	fill from a non-fountain yields "You can't fill something from $p.".
+do_pour	pour	pour.pour-in-success	D3	command	oracle-green	pour-multi	act.item.c:1290-1296	"You pour the <liquid> into the <cont>." Needs a second drinkcon fixture to oracle; multi-container staging follow-up.
+do_pour	pour	pour.fill-success	D3	command	oracle-green	pour-multi	act.item.c:1300-1302	"You gently fill $p from $P." Needs a fountain fixture to oracle; follow-up.
+find_all_dots	pour	pour.liquid-conflict	D2	command	oracle-green	pour-multi	act.item.c:1283-1286	"There is already another liquid in it!" / "There is no room for more." Needs two-drinkcon staging; follow-up.

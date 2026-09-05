@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -24,51 +25,65 @@ func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
 }
 
 type channelSpec struct {
-	verb          string
-	blocked       string
-	offMessage    string
-	offFlag       int
-	minimumLevel  int
-	zoneLimited   bool
-	minimumHearer int
+	verb             string
+	blocked          string
+	offMessage       string
+	senderOffFlag    int
+	recipientOffFlag int
+	minimumLevel     int
+	zoneLimited      bool
+	minimumHearer    int
+	moveCost         int
 }
 
 var communicationChannels = map[string]channelSpec{
 	"shout": {
-		verb:          "shout",
-		blocked:       "You cannot shout!!",
-		offMessage:    "Turn off your noshout flag first!",
-		offFlag:       PrfDeaf,
-		minimumLevel:  levelCanShout,
-		zoneLimited:   true,
-		minimumHearer: combat.PosResting,
+		verb:             "shout",
+		blocked:          "You cannot shout!!",
+		offMessage:       "Turn off your noshout flag first!",
+		senderOffFlag:    -1,
+		recipientOffFlag: PrfDeaf,
+		minimumLevel:     levelCanShout,
+		zoneLimited:      true,
+		minimumHearer:    combat.PosResting,
 	},
 	"gossip": {
-		verb:         "gossip",
-		blocked:      "You cannot gossip!!",
-		offMessage:   "You aren't even on the channel!",
-		offFlag:      PrfNoGossip,
-		minimumLevel: levelCanShout,
+		verb:             "gossip",
+		blocked:          "You cannot gossip!!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoGossip,
+		recipientOffFlag: PrfNoGossip,
+		minimumLevel:     levelCanShout,
 	},
 	"auction": {
-		verb:         "auction",
-		blocked:      "You cannot auction!!",
-		offMessage:   "You aren't even on the channel!",
-		offFlag:      PrfNoAuctions,
-		minimumLevel: levelCanShout,
+		verb:             "auction",
+		blocked:          "You cannot auction!!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoAuctions,
+		recipientOffFlag: PrfNoAuctions,
+		minimumLevel:     levelCanShout,
 	},
-	"gratz": {
-		verb:         "congrat",
-		blocked:      "You cannot congratulate!",
-		offMessage:   "You aren't even on the channel!",
-		offFlag:      PrfNoGratz,
-		minimumLevel: levelCanShout,
+	"grats": {
+		verb:             "congrat",
+		blocked:          "You cannot congratulate!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoGratz,
+		recipientOffFlag: PrfNoGratz,
+		minimumLevel:     levelCanShout,
+	},
+	"holler": {
+		verb:          "holler",
+		blocked:       "You cannot holler!!",
+		senderOffFlag: -1,
+		minimumLevel:  levelCanShout,
+		moveCost:      hollerMoveCost,
 	},
 	"newbie": {
-		verb:       "newbie",
-		blocked:    "You cannot newbie!",
-		offMessage: "You aren't even on the channel!",
-		offFlag:    PrfNoNewbie,
+		verb:             "newbie",
+		blocked:          "You cannot newbie!",
+		offMessage:       "You aren't even on the channel!",
+		senderOffFlag:    PrfNoNewbie,
+		recipientOffFlag: PrfNoNewbie,
 	},
 }
 
@@ -99,17 +114,21 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 		communicationSend(ch, "You are too stupid to communicate with language!")
 		return
 	}
-	if ch.GetFlags()&(1<<uint(spec.offFlag)) != 0 {
+	if spec.senderOffFlag >= 0 && ch.GetFlags()&(1<<uint(spec.senderOffFlag)) != 0 {
 		communicationSend(ch, spec.offMessage)
 		return
 	}
 
-	argument = strings.TrimSpace(argument)
+	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
 	if argument == "" {
 		communicationSend(ch, fmt.Sprintf("Yes, %s, fine, %s we must, but WHAT???", spec.verb, spec.verb))
 		return
 	}
 	argument = deleteANSIControls(argument)
+	if spec.moveCost > 0 && !ch.SpendMove(spec.moveCost) {
+		communicationSend(ch, "You're too exhausted to holler.")
+		return
+	}
 
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		communicationSend(ch, "Okay.")
@@ -123,7 +142,7 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 			continue
 		}
 		targetState := w.communicationEligibility(ch, target)
-		if target.GetFlags()&(1<<uint(spec.offFlag)) != 0 || targetState.targetWriting || targetState.targetSoundproof {
+		if (spec.recipientOffFlag >= 0 && target.GetFlags()&(1<<uint(spec.recipientOffFlag)) != 0) || targetState.targetWriting || targetState.targetSoundproof {
 			continue
 		}
 		if spec.zoneLimited {
@@ -147,6 +166,30 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	w.DoChannel(ch, arg, cmd)
 	return true
+}
+
+// mobGlobalGossip implements the NPC-authored do_gen_comm(SCMD_GOSSIP) call used by
+// quan_lo. C sends this through the global descriptor list, not the room act
+// path, and the NPC has no descriptor to receive a self echo.
+func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
+	if me == nil || w.communicationRoomSoundproof(me.GetRoomVNum()) {
+		return
+	}
+	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
+	if argument == "" {
+		return
+	}
+	argument = deleteANSIControls(argument)
+	message := fmt.Sprintf("%s gossips, '%s'\r\n", mobName(me), argument)
+	for _, player := range w.GetAllPlayers() {
+		if player.GetFlags()&(1<<uint(PrfNoGossip)) != 0 ||
+			player.GetFlags()&(1<<uint(PlrWriting)) != 0 ||
+			w.communicationRoomSoundproof(player.GetRoom()) {
+			continue
+		}
+		player.SendMessage(message)
+	}
+	w.updateGossipHistory(mobName(me), argument, 0)
 }
 
 // doQcomm -- port of do_qcomm() (team/quiz communication).
@@ -182,28 +225,89 @@ func (w *World) doThink(ch *Player, me *MobInstance, cmd string, arg string) boo
 // doCTell -- port of do_ctell() (clan tell).
 func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = skipSpaces(arg)
+	minLevel := 1
+	clanNumber := 0
+	levelString := ""
+
+	// C uses a separate clan-number syntax for immortals. Its validation is
+	// intentionally before the empty-message gate, and its rank lookup uses
+	// clan[c] (the source's one-based command number against a zero-based array).
+	if ch.GetLevel() >= LVLImmort {
+		first, remainder := halfChop(arg)
+		clanNumber, _ = strconv.Atoi(first)
+		if clanNumber <= 0 || w.Clans == nil || clanNumber > w.Clans.ClanCount() {
+			sendToChar(ch, "There is no clan with that number.\r\n")
+			return true
+		}
+		arg = remainder
+	} else {
+		if ch.ClanID == 0 || ch.ClanRank == 0 {
+			sendToChar(ch, "You're not part of a clan.\r\n")
+			return true
+		}
+		clanNumber = ch.ClanID
+	}
+
+	if ch.GetFlags()&(1<<uint(PrfNoCTell)) != 0 {
+		sendToChar(ch, "You aren't currently on your clan channel.\r\n")
+		return true
+	}
+	if ch.GetFlags()&(1<<uint(PlrNoshout)) != 0 {
+		sendToChar(ch, "You cannot clan-tell anything!\r\n")
+		return true
+	}
+
+	arg = skipSpaces(arg)
 	if arg == "" {
 		sendToChar(ch, "What do you want to tell your clan?\r\n")
 		return true
 	}
 
-	// Broadcast to clan members only.
-	msg := fmt.Sprintf("[Clan] %s tells the clan, '%s'\r\n", ch.Name, arg)
-	for _, p := range w.AllPlayers() {
-		if p.Name == ch.Name {
-			continue
+	if strings.HasPrefix(arg, "#") {
+		rankText, remainder := halfChop(arg[1:])
+		if !isClanNumber(rankText) {
+			sendToChar(ch, "Try entering in a number.\r\n")
+			return true
 		}
-		if p.Flags&prfDeaf != 0 || p.Flags&prfNoCtell != 0 {
-			continue
+		minLevel, _ = strconv.Atoi(rankText)
+		clanForRank := (*Clan)(nil)
+		if w.Clans != nil {
+			// Match C's clan[c] access. A missing slot is treated as a zero-rank
+			// record instead of permitting an out-of-bounds access.
+			clanForRank = w.Clans.GetClanByIndex(clanNumber)
 		}
-		// Filter: only clan members with the same ClanID
-		if ch.ClanID == 0 || p.ClanID != ch.ClanID {
-			continue
+		if clanForRank == nil || minLevel > clanForRank.Ranks {
+			sendToChar(ch, "No one has a clan rank high enough to hear you!\r\n")
+			return true
 		}
-		p.SendMessage(msg)
+		arg = skipSpaces(remainder)
+		if arg == "" {
+			sendToChar(ch, "What do you want to tell them?\r\n")
+			return true
+		}
+		levelString = fmt.Sprintf(" (%d) ", minLevel)
 	}
 
-	sendToChar(ch, fmt.Sprintf("You tell your clan, '%s'\r\n", arg))
+	arg = deleteANSIControls(arg)
+	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
+		sendToChar(ch, "Okay.\r\n")
+	} else {
+		sendToChar(ch, fmt.Sprintf("You tell your clan%s, '%s'\r\n", levelString, arg))
+	}
+
+	for _, p := range w.AllPlayers() {
+		if p == ch || p.ClanID != clanNumber || p.ClanRank < minLevel {
+			continue
+		}
+		if p.GetFlags()&(1<<uint(PrfNoCTell)) != 0 {
+			continue
+		}
+		senderName := ch.Name
+		if !canSeeSocialTarget(p, ch) {
+			senderName = "Someone"
+		}
+		p.SendMessage(fmt.Sprintf("%s tells your clan%s, '%s'\r\n", senderName, levelString, arg))
+	}
 	return true
 }
 
@@ -230,7 +334,11 @@ func (w *World) ReviewGossip(ch *Player) string {
 	var buf strings.Builder
 	buf.WriteString("Last Gossips:\r\n-------------\r\n")
 
-	for _, entry := range w.gossipHistory {
+	// gossipHistory is stored newest-first, while C's do_review() walks its
+	// fixed array from slot 24 down to slot 0 (newest entries are inserted at
+	// slot 0). Preserve the player-visible oldest-first order.
+	for index := len(w.gossipHistory) - 1; index >= 0; index-- {
+		entry := w.gossipHistory[index]
 		// Hide invisible players below viewer's level
 		if entry.Invis > ch.GetLevel() {
 			buf.WriteString("Someone invisible: ")

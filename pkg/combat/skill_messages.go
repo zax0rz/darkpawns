@@ -6,6 +6,8 @@
 // This restores that flavor for Dark Pawns.
 package combat
 
+import "strings"
+
 // skillMsgTriplet holds room/char/victim perspectives for one message variant.
 type skillMsgTriplet struct {
 	Room   string
@@ -190,8 +192,8 @@ var skillMessageTable = map[int]skillMessageEntry{
 		Die: nil,
 	},
 
-	// --- DRAGON KICK (222) ---
-	222: {
+	// --- DRAGON KICK (188) ---
+	188: {
 		Hit: []skillMsgTriplet{
 			{
 				"$n unleashes a devastating dragon kick on $N!",
@@ -648,7 +650,8 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 		chSex := cbGetSex(chName)
 		victimSex := cbGetSex(victimName)
 		render := func(message string) string {
-			return replaceMessageTokens(message, chName, victimName, "", "", chSex, victimSex)
+			rendered := replaceMessageTokens(message, chName, victimName, "", "", chSex, victimSex)
+			return strings.ReplaceAll(rendered, "$p", cbWeaponDescription(chName))
 		}
 
 		if action.Room != "" && cb.Broadcast != nil {

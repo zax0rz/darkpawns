@@ -1,0 +1,83 @@
+# depth-case: mob.conjured-entry-gates
+# depth-case: mob.conjured-default-say
+# depth-case: mob.conjured-default-disappear
+# depth-case: mob.conjured-default-audience
+# depth-case: mob.conjured-default-extraction
+# C-first vehicle for the 85-86 default branch of SPECIAL(conjured).
+# C registrations are src/spec_assign.c:190-191; the body is
+# src/spec_procs3.c:859-892. A passive peer observes both TO_ROOM messages.
+# C path: src/mobact.c:54-93 -> src/spec_procs3.c:859-892 ->
+# do_say/act -> src/handler.c:1194-1248.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 85 1 8106 80
+set-mob-flag 85 SPEC
+strip-mob-script 85
+
+[setup:oracle]
+ConjuredDisappear
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ConjuredDisappear
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ConjuredPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ConjuredPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport ConjuredPeer 8106
+goto 8106
+
+[probe]
+say hello

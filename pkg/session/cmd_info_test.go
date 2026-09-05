@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -140,16 +141,68 @@ func TestCmdLevels(t *testing.T) {
 func TestCmdAbils(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.player.Stats.Str = 15
+	s.player.Stats.Str = 10
+	s.player.Stats.Dex = 10
+	s.player.Stats.Int = 10
+	s.player.Stats.Wis = 10
+	s.player.Stats.Con = 10
+	s.player.Stats.Cha = 10
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyStr, 6, 2, 0, "strength"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyDex, 6, -1, 0, "clumsy"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyInt, 6, 1, 0, "intellect"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyWis, 6, 1, 0, "wisdom"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCon, 6, 3, 0, "constitution"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCha, 6, -2, 0, "charisma"))
 
 	err := cmdAbils(s)
 	if err != nil {
 		t.Fatalf("cmdAbils failed: %v", err)
 	}
 
-	got := readSessionText(t, s)
-	if !strings.Contains(strings.ToLower(got), "ability scores") {
-		t.Errorf("expected abils output, got %q", got)
+	var got strings.Builder
+	for range 7 {
+		got.WriteString(readSessionText(t, s))
+	}
+	want := "Your current ability scores:\r\n" +
+		"Strength:      (decent)\r\n" +
+		"Dexterity:     (average)\r\n" +
+		"Intelligence:  (decent)\r\n" +
+		"Wisdom:        (decent)\r\n" +
+		"Constitution:  (good)\r\n" +
+		"Charisma:      (below average)\r\n"
+	if got.String() != want {
+		t.Errorf("unexpected abils output:\n got %q\nwant %q", got.String(), want)
+	}
+}
+
+func TestCmdAbilsClampsCEffectiveStatCeilings(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	s.player.Stats = game.CharStats{Str: 18, Dex: 18, Int: 18, Wis: 18, Con: 18, Cha: 18}
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyStr, 6, 2, 0, "strength"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyDex, 6, 2, 0, "dexterity"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyInt, 6, 2, 0, "intelligence"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyWis, 6, 2, 0, "wisdom"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCon, 6, 2, 0, "constitution"))
+	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyCha, 6, 2, 0, "charisma"))
+
+	if err := cmdAbils(s); err != nil {
+		t.Fatalf("cmdAbils failed: %v", err)
+	}
+
+	var got strings.Builder
+	for range 7 {
+		got.WriteString(readSessionText(t, s))
+	}
+	want := "Your current ability scores:\r\n" +
+		"Strength:      (excellent)\r\n" +
+		"Dexterity:     (excellent)\r\n" +
+		"Intelligence:  (excellent)\r\n" +
+		"Wisdom:        (excellent)\r\n" +
+		"Constitution:  (excellent)\r\n" +
+		"Charisma:      (godlike)\r\n"
+	if got.String() != want {
+		t.Errorf("unexpected capped abils output:\n got %q\nwant %q", got.String(), want)
 	}
 }
 
@@ -261,6 +314,61 @@ func TestCmdScoreFixedFixtureGolden(t *testing.T) {
 	}
 }
 
+func TestCmdScoreStateVariants(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scorestate", 1001, true)
+	p := s.player
+	p.Level = 40
+	p.SetPLRFlag(game.PlrChosen)
+	p.SetPlrFlag(game.PrfSummonable, true)
+	p.SetAffect(game.AffBlind, true)
+	p.SetAffect(game.AffWerewolf, true)
+	p.SetAffect(game.AffVampire, true)
+	p.SetAffect(game.AffMount, true)
+	p.SetAffect(game.AffFleshAlter, true)
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	got := readSessionText(t, s)
+	for _, want := range []string{
+		"You are a chosen of the gods.(BadMuthaFucker)\r\n",
+		"You are summonable by other players.\r\n",
+		"You have been blinded!\r\n",
+		"You're a lycanthrope!\r\n",
+		"You're a vampire!\r\n",
+		"You're mounted.\r\n",
+		"Your hand is a gleaming scythe!\r\n",
+		"\r\nEquipment spells affecting you:\r\nblind\r\nflesh alter\r\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("score output missing %q:\n%q", want, got)
+		}
+	}
+}
+
+func TestFleshAlterWeaponMatchesCLevelBands(t *testing.T) {
+	for _, tc := range []struct {
+		level int
+		want  string
+	}{
+		{1, "studded wooden club"},
+		{3, "studded wooden club"},
+		{4, "razor-sharp dagger"},
+		{18, "steel-shafted battle axe"},
+		{19, "double-headed battle axe"},
+		{27, "gleaming broad sword"},
+		{28, "gleaming long sword"},
+		{29, "gleaming long sword"},
+		{30, "gleaming scythe"},
+		{40, "gleaming scythe"},
+	} {
+		if got := fleshAlterWeapon(tc.level); got != tc.want {
+			t.Errorf("fleshAlterWeapon(%d) = %q, want %q", tc.level, got, tc.want)
+		}
+	}
+}
+
 func TestCmdSaySelfEcho(t *testing.T) {
 	// DP-913: self-echo must conjugate in the second person ("You say"),
 	// not third ("You says"). The room echo keeps third person.
@@ -319,7 +427,7 @@ func TestCmdWhere(t *testing.T) {
 	m.sessions["alice"] = s
 	m.mu.Unlock()
 
-	err := cmdWhere(s)
+	err := cmdWhere(s, nil)
 	if err != nil {
 		t.Fatalf("cmdWhere failed: %v", err)
 	}
@@ -345,6 +453,31 @@ func TestCmdWho(t *testing.T) {
 	got := readSessionText(t, s)
 	if !strings.Contains(got, "Alice") {
 		t.Errorf("expected who output, got %q", got)
+	}
+}
+
+func TestCmdUsersCFormat(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "InformativeResidual", 1001, true)
+	s.player.SetLevel(game.LVL_IMPL)
+	s.player.Class = game.ClassWarrior
+	s.connectionNumber = 1
+	s.connectedAt = time.Date(2026, time.September, 4, 22, 58, 48, 0, time.UTC)
+	s.request = nil
+	s.SetRemoteIP("127.0.0.1")
+	m.mu.Lock()
+	m.sessions[s.player.Name] = s
+	m.mu.Unlock()
+
+	if err := cmdUsers(s, nil); err != nil {
+		t.Fatalf("cmdUsers: %v", err)
+	}
+	want := "Num Class   Name         State          Idl Login@   Site\r\n" +
+		"--- ------- ------------ -------------- --- -------- ------------------------\r\n" +
+		"  1 [40 Wa] InformativeResidual Playing          0 22:58:48 [127.000.000.001]\r\n" +
+		"\r\n1 visible sockets connected.\r\n"
+	if got := readSessionText(t, s); got != want {
+		t.Fatalf("users output = %q, want %q", got, want)
 	}
 }
 

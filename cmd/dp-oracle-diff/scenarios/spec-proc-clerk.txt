@@ -1,0 +1,94 @@
+# C-first vehicle for SPECIAL(clerk), registered for mob vnum 18228 at
+# src/spec_assign.c:407 and defined in src/spec_procs3.c:75-138. The authored
+# mob carries clerk.lua, so the fixture strips it to isolate the native C
+# procedure. A same-room peer proves that do_tell is direct to the actor.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18228 1 18228 182
+strip-mob-script 18228
+replace-room-exits 18228 none
+
+[setup:oracle]
+ClerkActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ClerkActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ClerkPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ClerkPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 18228
+teleport ClerkPeer 18228
+set ClerkActor gold 1000
+
+[probe]
+list
+buy junk
+buy citizenship
+set ClerkActor gold 3000
+buy citizenship
+buy citizenship
+gold
+
+# depth-case: mob.clerk-entry-gates
+# depth-case: mob.clerk-list-direct-tell
+# depth-case: mob.clerk-buy-argument-gate
+# depth-case: mob.clerk-buy-insufficient-gold
+# depth-case: mob.clerk-buy-success
+# depth-case: mob.clerk-buy-already-citizen
+# depth-case: mob.clerk-direct-audience
+# depth-case: mob.clerk-visibility-gate
+# depth-case: mob.clerk-state-transition
+# depth-case: mob.clerk-zone-hometown-names

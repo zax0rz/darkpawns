@@ -1,0 +1,50 @@
+# C-first do_hide entry-gate vehicle (src/interpreter.c:493,526;
+# act.other.c:247-286). The daytime fixed clock and disposable FIELD room
+# must reject both the ordinary hide and SCMD_KABUKI before their attempt
+# messages or RNG rolls.
+
+# depth-case: hide.field-daytime-gate
+# depth-case: kabuki.field-daytime-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 2
+
+[setup:oracle]
+Hidegates
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hidegates
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Hidegates 'hide' 100
+skillset Hidegates 'kabuki' 100
+
+[probe]
+hide
+kabuki

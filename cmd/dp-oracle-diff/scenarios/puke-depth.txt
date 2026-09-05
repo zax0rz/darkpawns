@@ -1,0 +1,81 @@
+# C-first do_action social vehicle (src/interpreter.c:621;
+# src/act.social.c:102-151; lib/misc/socials:605-612). The puke record has
+# no victim-position gate and exposes no-argument, target trio, self-target,
+# and missing-target branches.
+
+# depth-case: puke.no-argument
+# depth-case: puke.target-trio
+# depth-case: puke.self-target
+# depth-case: puke.missing-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Pukeslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pukeslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Pukepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Pukepeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Pukepeer 8004
+
+[probe]
+puke
+puke Pukepeer
+puke self
+puke Nobody

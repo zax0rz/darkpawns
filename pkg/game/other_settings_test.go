@@ -3,6 +3,8 @@ package game
 import (
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // TestDoGenTogRealCommandNames verifies doGenTog dispatches by the literal
@@ -84,6 +86,50 @@ func TestDoGenTogNoCTellClanGate(t *testing.T) {
 	}
 	if msg := lastMsg(); msg != "You aren't even in a clan!\r\n" {
 		t.Errorf("noctell clan-gate message:\n got %q\nwant %q", msg, "You aren't even in a clan!\r\n")
+	}
+}
+
+// TestDoGenTogGlobalAdminToggles pins the two do_gen_tog branches that mutate
+// process-wide C configuration rather than a player PRF bit (act.other.c:
+// 1251-1258). Their command rows are LVL_IMPL-1 gated in interpreter.c; the
+// direct test reaches the handler and verifies both state transitions and the
+// exact output strings.
+func TestDoGenTogGlobalAdminToggles(t *testing.T) {
+	oldIdent, oldNameserverIsSlow := identEnabled, nameserverIsSlow
+	identEnabled = false
+	nameserverIsSlow = true
+	t.Cleanup(func() {
+		identEnabled = oldIdent
+		nameserverIsSlow = oldNameserverIsSlow
+	})
+
+	w, ch, lastMsg := newDonateTestWorld(t)
+	for _, c := range []struct {
+		cmd        string
+		wantFirst  string
+		wantSecond string
+	}{
+		{"ident", "Ident changed to YES;  remote usernames lookups will be attempted.\r\n", "Ident changed to NO;  remote username lookups will not be attempted.\r\n"},
+		{"slowns", "Nameserver_is_slow changed to NO; IP addresses will now be resolved.\r\n", "Nameserver_is_slow changed to YES; sitenames will no longer be resolved.\r\n"},
+	} {
+		w.doGenTog(ch, nil, c.cmd, "ignored arguments")
+		if msg := lastMsg(); msg != c.wantFirst {
+			t.Errorf("%s first toggle: got %q, want %q", c.cmd, msg, c.wantFirst)
+		}
+		w.doGenTog(ch, nil, c.cmd, "ignored arguments")
+		if msg := lastMsg(); msg != c.wantSecond {
+			t.Errorf("%s second toggle: got %q, want %q", c.cmd, msg, c.wantSecond)
+		}
+	}
+}
+
+// TestDoGenTogNoSummonWaitState pins the one toggle-specific cooldown in C:
+// WAIT_STATE(ch, PULSE_VIOLENCE * 2) after SCMD_NOSUMMON flips the bit.
+func TestDoGenTogNoSummonWaitState(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	w.doGenTog(ch, nil, "nosummon", "")
+	if got, want := ch.GetWaitState(), engine.PULSE_VIOLENCE*2; got != want {
+		t.Fatalf("nosummon wait state = %d, want %d pulses", got, want)
 	}
 }
 
@@ -198,4 +244,26 @@ func TestDoDisplay(t *testing.T) {
 			t.Errorf("hm: move bit should NOT be set")
 		}
 	})
+}
+
+func TestDoWimpyUsesCIsdigitAndOneArgument(t *testing.T) {
+	w := &World{}
+	var out strings.Builder
+	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
+	player := NewPlayer(1, "Wimpy", 8162)
+	player.worldRef = w
+
+	w.doWimpy(player, nil, "wimpy", "-5")
+	w.doWimpy(player, nil, "wimpy", "+5")
+	w.doWimpy(player, nil, "wimpy", "the 5 trailing words")
+
+	want := "Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n" +
+		"Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n" +
+		"Okay, you'll wimp out if you drop below 5 hit points.\r\n"
+	if got := out.String(); got != want {
+		t.Fatalf("wimpy output = %q, want %q", got, want)
+	}
+	if player.WimpLevel != 5 {
+		t.Fatalf("wimp level = %d, want 5", player.WimpLevel)
+	}
 }

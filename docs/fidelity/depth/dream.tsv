@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_dream	dream	dream.awake-branch	D2	command	oracle-green	dream-depth	interpreter.c:423; act.social.c:294-298	POS_SLEEPING is the minimum command position, so an awake actor reaches the handler and receives the exact daydream branch.
+do_dream	dream	dream.sleeping-branch	D2	command	oracle-green	dream-depth	act.social.c:294-305	A sleeping actor receives the exact tulip dream line after the room act.
+do_dream	dream	dream.arguments-ignored	D1	command	oracle-green	dream-depth	act.social.c:294-305	The C handler has no argument parameter; named, missing, and self-looking tails all take the same sleeping branch.
+do_dream	dream	dream.room-awake-audience	D3	audience	oracle-green	dream-depth	act.social.c:300-302; comm.c:2480-2555	TO_ROOM emits the actor-substituted line to the awake peer while excluding the actor.
+do_dream	dream	dream.room-sleeping-suppressed	D3	audience	oracle-green	dream-depth	act.social.c:300-302; comm.c:2480-2555	Plain TO_ROOM uses SENDOK with to_sleep false, so a sleeping peer receives no room line.
+do_dream	dream	dream.room-before-actor-order	D4	state	unit-green	TestDoDreamMatchesCOrderAudienceAndVisibility	act.social.c:300-305	Focused MessageSink proof pins C's room-before-private actor emission order and exact CRLF bytes.
+do_dream	dream	dream.hide-invisible	D3	audience	unit-green	TestDoDreamMatchesCOrderAudienceAndVisibility	act.social.c:300-302; comm.c:2533	The C hide_invisible=TRUE argument suppresses the room line for an observer who cannot see the actor.

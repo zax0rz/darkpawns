@@ -1,0 +1,114 @@
+# C-first salute/do_action social vehicle (src/interpreter.c:673;
+# src/act.social.c:102-151; lib/misc/socials:1262-1270). The three-player room
+# exposes no-argument, first-token target parsing, target success audiences,
+# self-target, and missing-target branches.
+
+# depth-case: salute.no-argument
+# depth-case: salute.one-argument
+# depth-case: salute.target-success
+# depth-case: salute.target-audience
+# depth-case: salute.self-target
+# depth-case: salute.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Saluteactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Saluteactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Saluteobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Saluteobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Salutetarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Salutetarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Saluteobserver 8162
+teleport Salutetarget 8162
+
+[probe]
+salute
+salute Salutetarget trailing words are ignored
+salute Salutetarget
+salute Saluteactor
+salute Nobody

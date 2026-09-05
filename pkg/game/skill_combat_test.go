@@ -326,16 +326,21 @@ func TestDoCircle_MobAware(t *testing.T) {
 	if result.Success {
 		t.Error("expected aware mob to block circle")
 	}
-	if mob.GetFighting() != ch.Name {
-		t.Errorf("expected aware mob to start fighting %q, got %q", ch.Name, mob.GetFighting())
-	}
 	if !strings.Contains(result.MessageToCh, "notices you") {
 		t.Errorf("expected noticed message, got %q", result.MessageToCh)
 	}
-	// DP-circle-fidelity: MOB_AWARE notice must signal combat start so the
-	// caller enrolls the circler (C: hit(vict, ch) retaliates immediately).
-	if !result.StartCombat {
-		t.Error("MOB_AWARE notice should set StartCombat")
+	// C leaves the game-layer branch via hit(vict, ch); the command caller
+	// performs that synchronous opener and enrolls both fighters.
+	if !result.RetaliateHit || result.StartCombat {
+		t.Errorf("MOB_AWARE result = retaliate %v, start %v; want true, false", result.RetaliateHit, result.StartCombat)
+	}
+
+	// The same early branch still emits the notice when the mob is already
+	// fighting, but C skips hit(vict, ch) in that case.
+	mob.SetFighting("TheTank")
+	busyResult := DoCircle(ch, mob)
+	if busyResult.RetaliateHit || busyResult.StartCombat {
+		t.Errorf("already-fighting aware result = retaliate %v, start %v; want false, false", busyResult.RetaliateHit, busyResult.StartCombat)
 	}
 }
 
@@ -346,12 +351,16 @@ func TestDoCircle_Success(t *testing.T) {
 	weapon := makeCircleWeapon()
 	equipWeapon(t, ch, weapon)
 
+	// A passed circle roll still runs hit()'s ordinary THAC0 d20. Sleeping
+	// makes that C path deterministic while retaining the circle probability
+	// draw and the exact skill-message result contract.
+	mob.SetPosition(combat.PosSleeping)
 	result := DoCircle(ch, mob)
 	if !result.Success {
-		t.Errorf("expected circle success, got %q", result.MessageToCh)
+		t.Errorf("expected circle success, got %#v", result)
 	}
-	if result.Damage <= 0 {
-		t.Errorf("expected positive damage, got %d", result.Damage)
+	if result.Damage <= 0 || result.SkillMsgType != SkillCircleNum || !result.SkillMsgAfterDamage {
+		t.Errorf("circle hit result = %#v; want positive set-173 after-damage result", result)
 	}
 	if result.WaitCh != 3 {
 		t.Errorf("expected wait 3, got %d", result.WaitCh)
@@ -361,8 +370,8 @@ func TestDoCircle_Success(t *testing.T) {
 // TestDoCircle_MissPullsAggro — C: new_cmds.c:2457. A botched circle against
 // a target that's fighting someone else pulls the mob's aggro onto the circler
 // (stop_fighting + hit(vict, ch)), and the circler enters combat too
-// (damage(ch, vict, 0, SKILL_CIRCLE)). The Go port retargets the mob and sets
-// StartCombat so the caller enrolls the circler.
+// (damage(ch, vict, 0, SKILL_CIRCLE)). The result carries both the ordering
+// and caller-side combat work; the game layer does not invent output.
 func TestDoCircle_MissPullsAggro(t *testing.T) {
 	w, ch := newCircleTestWorld(t)
 	mob := spawnTargetMob(t, w)
@@ -381,15 +390,16 @@ func TestDoCircle_MissPullsAggro(t *testing.T) {
 		mob.SetFighting("TheTank") // reset each attempt
 		result := DoCircle(ch, mob)
 		if !result.Success && result.Damage == 0 {
-			// Miss: mob should turn onto the circler, and combat should start.
-			if mob.GetFighting() != ch.Name {
-				t.Errorf("missed circle should pull aggro onto circler %q, mob fighting %q", ch.Name, mob.GetFighting())
+			// Miss: C stops the old engagement before the synchronous retaliation;
+			// sendSkillResult then emits set 173 and starts the circle fight.
+			if mob.GetFighting() != "" {
+				t.Errorf("missed circle should stop the old target engagement, got %q", mob.GetFighting())
 			}
-			if !result.StartCombat {
-				t.Error("missed circle should set StartCombat so the circler enters combat")
+			if !result.RetaliateHit || !result.RetaliateHitBeforeSkillMessage || !result.StartCombat {
+				t.Errorf("missed circle result = %#v; want retaliation-before-message plus start", result)
 			}
-			if !strings.Contains(result.MessageToCh, "notices you") {
-				t.Errorf("expected miss message, got %q", result.MessageToCh)
+			if result.SkillMsgType != SkillCircleNum || result.MessageToCh != "" {
+				t.Errorf("missed circle message contract = set %d, ch %q; want set %d and no literal", result.SkillMsgType, result.MessageToCh, SkillCircleNum)
 			}
 			missed = true
 			break
@@ -555,14 +565,15 @@ func TestDoBackstab_MobAware_NoticesAndStartsCombat(t *testing.T) {
 	if result.Success {
 		t.Error("expected aware mob to block backstab")
 	}
-	if mob.GetFighting() != ch.Name {
-		t.Errorf("expected aware mob to start fighting %q, got %q", ch.Name, mob.GetFighting())
-	}
 	if !strings.Contains(result.MessageToCh, "notices you") {
 		t.Errorf("expected noticed message, got %q", result.MessageToCh)
 	}
-	if !result.StartCombat {
-		t.Error("DP-906: MOB_AWARE notice should set StartCombat so the caller enrolls the player")
+	// C act.offensive.c:216 hit(vict, ch): the aware mob swings back at once.
+	// RetaliateHit makes the caller (sendSkillResult) enroll target->ch and run
+	// one synchronous swing from the target; the game layer no longer sets the
+	// mob fighting directly (that belongs to the combat engine at the caller).
+	if !result.RetaliateHit {
+		t.Error("MOB_AWARE notice should set RetaliateHit so the caller runs the guard's hit(vict, ch)")
 	}
 }
 
@@ -771,16 +782,20 @@ func TestDoCharge_MobNobashPenalty(t *testing.T) {
 	w, ch := newChargeTestWorld(t)
 	mob := spawnTargetMob(t, w)
 	mob.SetMobFlag(MobFlagNobash)
+	ch.SetSkill(SkillCharge, 35)
 
 	weapon := makeChargeWeapon(3) // sword
 	equipWeapon(t, ch, weapon)
 
-	result := DoCharge(ch, mob)
-	// With a +25 penalty and skill 100 it may still succeed, but the path
-	// should at least run without panic and produce a valid result.
-	if result.MessageToCh == "" {
-		t.Error("expected a message from charge")
-	}
+	combat.WithRoller(combat.NewScriptedRoller([]int{1}), func() {
+		result := DoCharge(ch, mob)
+		if result.Success {
+			t.Error("expected MOB_NOBASH penalty to force this skill-35 charge to fail")
+		}
+		if result.SkillMsgType != SkillChargeNum || !result.StartCombat || !result.SelfStumble {
+			t.Errorf("charge result = success %v, skill message %d, start combat %v, stumble %v; want false, %d, true, true", result.Success, result.SkillMsgType, result.StartCombat, result.SelfStumble, SkillChargeNum)
+		}
+	})
 }
 
 func TestDoCharge_Success(t *testing.T) {
@@ -799,6 +814,15 @@ func TestDoCharge_Success(t *testing.T) {
 		}
 		if result.Damage <= 0 {
 			t.Errorf("expected positive damage, got %d", result.Damage)
+		}
+		if result.SkillMsgType != SkillChargeNum || !result.StartCombat {
+			t.Errorf("charge result = skill message %d, start combat %v; want %d, true", result.SkillMsgType, result.StartCombat, SkillChargeNum)
+		}
+		if result.DamageSkill != SkillCharge {
+			t.Errorf("damage skill = %q, want %q", result.DamageSkill, SkillCharge)
+		}
+		if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillCharge {
+			t.Errorf("deferred improvement = %v, want [%q]", result.DeferredImprove, SkillCharge)
 		}
 		if result.WaitCh != 2 {
 			t.Errorf("expected wait 2, got %d", result.WaitCh)
@@ -1631,6 +1655,21 @@ func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
 	if result.WaitCh != 3 {
 		t.Errorf("expected WaitCh 3 on hit, got %d", result.WaitCh)
 	}
+	if result.SkillMsgType != SkillDragonKickNum {
+		t.Errorf("hit SkillMsgType = %d, want C dragon-kick set %d", result.SkillMsgType, SkillDragonKickNum)
+	}
+	if result.DamageSkill != SkillDragonKick || !result.StartCombat {
+		t.Errorf("hit damage contract = skill %q, StartCombat %v; want %q, true", result.DamageSkill, result.StartCombat, SkillDragonKick)
+	}
+	if wantDamage := ch.GetLevel() * 3 / 2; result.Damage != wantDamage {
+		t.Errorf("hit damage = %d, want C integer conversion of level*1.5 = %d", result.Damage, wantDamage)
+	}
+	if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillDragonKick {
+		t.Errorf("hit DeferredImprove = %v, want [%q] after damage/message path", result.DeferredImprove, SkillDragonKick)
+	}
+	if result.MessageToCh != "" || result.MessageToVict != "" || result.MessageToRoom != "" {
+		t.Errorf("hit should use C skill_message, got literal messages ch=%q vict=%q room=%q", result.MessageToCh, result.MessageToVict, result.MessageToRoom)
+	}
 
 	ch.SetSkill(SkillDragonKick, 1)
 	var missResult SkillResult
@@ -1648,5 +1687,64 @@ func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
 	}
 	if missResult.WaitCh != 3 {
 		t.Errorf("expected WaitCh 3 on miss, got %d", missResult.WaitCh)
+	}
+	if missResult.SkillMsgType != SkillDragonKickNum || !missResult.StartCombat {
+		t.Errorf("miss damage contract = set %d, StartCombat %v; want set %d, true", missResult.SkillMsgType, missResult.StartCombat, SkillDragonKickNum)
+	}
+	if missResult.MessageToCh != "" || missResult.MessageToVict != "" || missResult.MessageToRoom != "" {
+		t.Errorf("miss should use C skill_message, got literal messages ch=%q vict=%q room=%q", missResult.MessageToCh, missResult.MessageToVict, missResult.MessageToRoom)
+	}
+}
+
+func TestDoDragonKick_BlocksInsufficientMove(t *testing.T) {
+	w, ch := newDragonKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.Move = 9
+
+	result := DoDragonKick(ch, mob)
+	if result.Success {
+		t.Fatal("dragon kick should fail below the ten-move gate")
+	}
+	if result.MessageToCh != "You're too exhausted!" {
+		t.Errorf("insufficient move message = %q, want exact C text", result.MessageToCh)
+	}
+	if ch.Move != 9 {
+		t.Errorf("insufficient move changed move from 9 to %d", ch.Move)
+	}
+}
+
+func TestDoDragonKick_MissDrawOrder(t *testing.T) {
+	w, ch := newDragonKickTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	ch.SetSkill(SkillDragonKick, 1)
+
+	cb, _, _, teardown := wireKickMessages(t, ch.Name)
+	defer teardown()
+	messages := loadMessagesFile(t)
+	variants, ok := messages.Variants(SkillDragonKickNum)
+	if !ok {
+		t.Fatalf("set %d (Dragon Kick) not in messages file", SkillDragonKickNum)
+	}
+
+	const seed = 7
+	dprng.ResetStream(seed)
+	result := DoDragonKick(ch, mob)
+	if result.Success || result.SkillMsgType != SkillDragonKickNum {
+		t.Fatalf("seed %d did not produce the expected dragon-kick miss: %+v", seed, result)
+	}
+	if !cb.SkillMessage(0, ch.Name, mob.GetName(), SkillDragonKickNum, ch.GetRoom()) {
+		t.Fatal("SkillMessage did not handle the Dragon Kick set")
+	}
+
+	dprng.ResetStream(seed)
+	dprng.Number(1, 101)
+	dprng.Dice(1, len(variants))
+	wantNext := dprng.Number(0, 999)
+
+	dprng.ResetStream(seed)
+	DoDragonKick(ch, mob)
+	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillDragonKickNum, ch.GetRoom())
+	if got := dprng.Number(0, 999); got != wantNext {
+		t.Fatalf("dragon-kick miss draw order wrong: next=%d want=%d; expected percent then set-%d dice", got, wantNext, SkillDragonKickNum)
 	}
 }

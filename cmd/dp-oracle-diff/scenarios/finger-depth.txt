@@ -1,0 +1,86 @@
+# C-first finger/do_whois vehicle (src/interpreter.c:444;
+# src/new_cmds.c:1402-1421; interpreter.c:1265-1283). The online peer makes
+# the player-file lookup result deterministic while the argument variants
+# expose C one_argument parsing.
+
+# depth-case: finger.no-arguments
+# depth-case: finger.found-player
+# depth-case: finger.argument-first-token
+# depth-case: finger.argument-trailing-ignored
+# depth-case: finger.not-found
+# depth-case: finger.whois-alias
+# depth-case: finger.whois-argument-first-token
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Fingeractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fingeractor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Fingerpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Fingerpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Fingerpeer 8162
+
+[probe]
+finger
+finger Fingerpeer
+finger the Fingerpeer
+finger Fingerpeer trailing words are ignored
+finger Nobody
+whois Fingerpeer

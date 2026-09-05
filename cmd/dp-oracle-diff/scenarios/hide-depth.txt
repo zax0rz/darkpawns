@@ -1,0 +1,54 @@
+# C-first ordinary do_hide/do_hide(SCMD_KABUKI) outcome vehicle
+# (src/interpreter.c:493,526; act.other.c:247-306). City is an allowed
+# daytime sector, so both variants reach their authored attempt message and
+# the shared clear/reroll/affect path; command arguments are ignored.
+
+# depth-case: hide.allowed-daytime-outcome
+# depth-case: hide.arguments-ignored
+# depth-case: kabuki.allowed-daytime-outcome
+# depth-case: kabuki.arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 1
+
+[setup:oracle]
+Hideactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hideactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Hideactor 'hide' 100
+skillset Hideactor 'kabuki' 100
+
+[probe]
+hide
+hide extra words are ignored
+kabuki
+kabuki extra words are ignored

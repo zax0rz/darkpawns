@@ -1,0 +1,92 @@
+# depth-case: boards.list-empty
+# depth-case: boards.read-empty
+# depth-case: boards.write-headline
+# depth-case: boards.post-body
+# depth-case: boards.revise-post
+# depth-case: tell.writing
+# depth-case: boards.reply-writing
+# depth-case: boards.remove-active
+# depth-case: boards.remove-own
+# Board object 8099 is reset into the shared start room. The actor posts while
+# the peer exercises the PLR_WRITING tell/reply and active-remove gates.
+
+[fixture]
+quiet-mobs
+spawn-obj 19652 2 8004 196
+
+[setup:oracle]
+Boardactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Boardpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Boardpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+recall
+
+[probe]
+look board
+read board
+read 1
+write depth headline
+tell Boardactor blocked while writing
+reply blocked while writing
+remove 1
+board body
+/e1 revised body
+@
+look board
+read 1
+remove 1
+look board

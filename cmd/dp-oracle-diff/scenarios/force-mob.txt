@@ -1,0 +1,48 @@
+# C-first NPC target path (src/handler.c:1303-1325; act.wizard.c:1869-1880).
+# C get_char_vis includes visible mobs in the caster's room. The harmless sit
+# command makes the NPC resolution and command_interpreter handoff observable
+# through the caster's acknowledgement without invoking an NPC say path.
+
+# depth-case: force.visible-npc-target
+# depth-case: force.npc-command-interpreter
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Forcemob
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Forcemob
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+force trainee sit
+force trainee stand

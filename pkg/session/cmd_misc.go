@@ -33,6 +33,15 @@ func cmdDisplay(s *Session, args []string) error {
 	return nil
 }
 
+// cmdDns manages the C DNS cache and pages the list branch through the
+// session descriptor, matching C page_string(ch->desc, ...).
+func cmdDns(s *Session, args []string) error {
+	if page := s.manager.world.ExecDns(s.player, strings.Join(args, " ")); page != "" {
+		PageString(s, page)
+	}
+	return nil
+}
+
 // cmdTransform transforms the player's appearance.
 func cmdTransform(s *Session, args []string) error {
 	s.manager.world.ExecTransform(s.player, strings.Join(args, " "))
@@ -144,6 +153,13 @@ func cmdTodo(s *Session, args []string) error {
 // cmdAFK toggles away-from-keyboard status.
 func cmdAFK(s *Session, args []string) error {
 	s.manager.world.ExecAFK(s.player, strings.Join(args, " "))
+	return nil
+}
+
+// cmdNotHere is C's do_not_here fallback for commands whose real behavior is
+// supplied by a room special procedure (act.other.c:206-211).
+func cmdNotHere(s *Session, _ []string) error {
+	s.sendText("Sorry, but you cannot do that here!\r\n")
 	return nil
 }
 

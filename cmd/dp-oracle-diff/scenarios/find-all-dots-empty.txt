@@ -1,0 +1,41 @@
+# depth-case: get.all-of-what
+# C find_all_dots (handler.c:1567) maps a bare "all." to FIND_ALLDOT with an
+# empty keyword, not FIND_ALL. So the empty-keyword prompt fires for both get
+# and drop. Go's findAllDots wrongly lumped "all." in with "all" (FIND_ALL).
+# Shared helper -> prove across the class.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Getdot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Getdot
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get x all.
+drop all.

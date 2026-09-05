@@ -1,0 +1,114 @@
+# C-first shame/do_action target-social vehicle (src/interpreter.c:688;
+# src/act.social.c:102-151; lib/misc/socials:1366-1374). The complete record
+# has hide=0 and no victim-position minimum, so this exercises the actor,
+# observer, victim, self, missing-target, and first-token branches.
+
+# depth-case: shame.no-argument
+# depth-case: shame.target-success
+# depth-case: shame.target-audience
+# depth-case: shame.argument-first-token
+# depth-case: shame.self-target
+# depth-case: shame.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ashactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ashactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Ashobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Ashobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ashtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ashtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Ashobserver 8162
+teleport Ashtarget 8162
+
+[probe]
+shame
+shame the Ashtarget trailing words are ignored
+shame Ashtarget
+shame Ashactor
+shame Nobody

@@ -1,0 +1,114 @@
+# C-first shishkabob/do_action target-social vehicle (src/interpreter.c:689;
+# src/act.social.c:102-151; lib/misc/socials:675-685). The complete record
+# has hide=0 and minimum victim position POS_RESTING, so this exercises the
+# actor, observer, victim, self, missing-target, and first-token branches.
+
+# depth-case: shishkabob.no-argument
+# depth-case: shishkabob.target-success
+# depth-case: shishkabob.target-audience
+# depth-case: shishkabob.argument-first-token
+# depth-case: shishkabob.self-target
+# depth-case: shishkabob.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Roflactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Roflactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Roflobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Roflobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Rofltarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Rofltarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Roflobserver 8162
+teleport Rofltarget 8162
+
+[probe]
+shishkabob
+shishkabob the Rofltarget trailing words are ignored
+shishkabob Rofltarget
+shishkabob Roflactor
+shishkabob Nobody

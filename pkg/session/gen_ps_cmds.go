@@ -5,8 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // Static info-text commands.
@@ -43,6 +46,38 @@ func sendCachedText(s *Session, filename string) {
 		cacheMu.Unlock()
 	}
 	PageString(s, text)
+}
+
+// reloadCachedText refreshes the boot-cached static text used by the C
+// do_gen_ps commands. C's file_to_string_alloc failures are not surfaced to
+// the player by do_reboot, so an unreadable file leaves the existing value in
+// place and the caller still emits Okay.
+func reloadCachedText(s *Session, filenames ...string) {
+	for _, filename := range filenames {
+		data, err := os.ReadFile(filepath.Join(s.manager.world.LibTextDir, filename))
+		if err != nil {
+			continue
+		}
+		cacheMu.Lock()
+		cachedText[filename] = string(data)
+		cacheMu.Unlock()
+	}
+}
+
+// reloadHelpScreen refreshes C's HELP_PAGE_FILE equivalent. The C handler
+// likewise hides file-read errors and still acknowledges the reload.
+func reloadHelpScreen(s *Session) {
+	helpDir := filepath.Join(s.manager.world.LibTextDir, "help")
+	if screen, err := game.LoadHelpScreen(helpDir); err == nil {
+		s.manager.world.HelpScreen = screen
+	}
+}
+
+// reloadHelpTable refreshes the indexed help entries used by xhelp. The
+// hardcoded race entries are part of the Go help surface and are reattached by
+// World.ReloadHelpTable after the disk-backed entries are loaded.
+func reloadHelpTable(s *Session) {
+	_ = s.manager.world.ReloadHelpTable()
 }
 
 // cmdCredits shows who built the game. Source: do_gen_ps SCMD_CREDITS
@@ -134,11 +169,32 @@ func cmdWhoami(s *Session, args []string) error {
 
 // cmdPlayers lists all registered players. Source: do_gen_ps SCMD_PLAYER_LIST (LVL_GRGOD)
 func cmdPlayers(s *Session, args []string) error {
-	names, err := s.manager.db.ListPlayerNames()
-	if err != nil {
-		s.Send("That information is not available right now.")
-		return nil
+	var names []string
+	if s.manager.hasDB {
+		var err error
+		names, err = s.manager.db.ListPlayerNames()
+		if err != nil {
+			// C's player table is an in-memory boot index and has no player-facing
+			// database-error branch. Preserve its list shape when the Go backing
+			// store is unavailable by using the names currently in the world.
+			names = make([]string, 0)
+			for _, player := range s.manager.world.GetAllPlayers() {
+				names = append(names, player.GetName())
+			}
+		}
+	} else {
+		// The no-DB oracle/runtime path still has C's create_entry equivalent:
+		// newly created characters are registered in the in-memory player list.
+		for _, player := range s.manager.world.GetAllPlayers() {
+			names = append(names, player.GetName())
+		}
 	}
+	for i := range names {
+		// C's player_table stores every name in lowercase, both when the boot
+		// index is built and when create_entry adds a new character.
+		names[i] = strings.ToLower(names[i])
+	}
+	sort.Strings(names)
 	var buf strings.Builder
 	buf.WriteString("A list of registered players:\r\n")
 	count := 0

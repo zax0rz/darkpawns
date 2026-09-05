@@ -1,0 +1,22 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_hide	hide	hide.entry-gate	D1	command	unit-green	TestHideFamilyRegistrationUsesCEntryGates	interpreter.c:493; act.other.c:247-306	The ordinary row is POS_RESTING with command minimum level 1; the focused registration test pins the authoritative gate.
+do_hide	kabuki	kabuki.entry-gate	D1	command	unit-green	TestHideFamilyRegistrationUsesCEntryGates	interpreter.c:526; act.other.c:247-306	SCMD_KABUKI reaches the same do_hide handler with the same POS_RESTING/level-1 gate.
+do_hide	hide	hide.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:493; interpreter.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle.
+do_hide	kabuki	kabuki.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:526; interpreter.c:910-947	The kabuki row uses the same shared POS_RESTING dispatcher rejection.
+do_hide	hide	hide.mounted-gate	D1	command	oracle-green	hide-mounted-depth	act.other.c:247-255	A ridden actor receives Dismount first! before the daytime sector switch, attempt message, or roll.
+do_hide	kabuki	kabuki.mounted-gate	D1	command	oracle-green	hide-mounted-depth	act.other.c:247-255	SCMD_KABUKI shares the mounted early return and emits the same Dismount first! bytes.
+do_hide	hide	hide.field-daytime-gate	D1	command	oracle-green	hide-entry-gates-depth	act.other.c:257-261	At daytime in SECT_FIELD, C emits Hide out here during the day? Yeah right. before any attempt text or roll.
+do_hide	kabuki	kabuki.field-daytime-gate	D1	command	oracle-green	hide-entry-gates-depth	act.other.c:257-261	The shared daytime field gate precedes the kabuki-specific attempt text.
+do_hide	hide	hide.desert-daytime-gate	D1	command	oracle-green	hide-desert-gate-depth	act.other.c:257-264	At daytime in SECT_DESERT, C emits the exact sun-and-sand refusal before the shared roll.
+do_hide	kabuki	kabuki.desert-daytime-gate	D1	command	oracle-green	hide-desert-gate-depth	act.other.c:257-264	The desert refusal is shared by ordinary hide and SCMD_KABUKI.
+do_hide	hide	hide.water-daytime-gate	D1	command	oracle-green	hide-water-gate-depth	act.other.c:257-270	The representative SECT_WATER_SWIM vehicle proves the grouped swim/no-swim/underwater/water refusal arm.
+do_hide	kabuki	kabuki.water-daytime-gate	D1	command	oracle-green	hide-water-gate-depth	act.other.c:257-270	The grouped daytime water refusal is shared by both do_hide variants.
+do_hide	hide	hide.exposed-daytime-gate	D1	command	oracle-green	hide-exposed-gate-depth	act.other.c:257-282	The representative SECT_FLYING vehicle proves the grouped flying/fire/earth/wind exposed-sector refusal arm.
+do_hide	kabuki	kabuki.exposed-daytime-gate	D1	command	oracle-green	hide-exposed-gate-depth	act.other.c:257-282	The grouped daytime exposed-sector refusal is shared by both do_hide variants.
+do_hide	hide	hide.allowed-daytime-outcome	D2	command	oracle-green-multiseed	hide-depth@1,2,3,5,8	act.other.c:284-306	the allowed daytime city room reaches the ordinary attempt message and shared clear/reroll/affect path.
+do_hide	hide	hide.arguments-ignored	D2	command	oracle-green-multiseed	hide-depth@1,2,3,5,8	act.other.c:284-306	The C handler does not parse its argument; trailing words do not alter the ordinary hide path.
+do_hide	kabuki	kabuki.allowed-daytime-outcome	D2	command	oracle-green-multiseed	hide-depth@1,2,3,5,8	act.other.c:284-306	The allowed daytime city room reaches the SCMD_KABUKI attempt message and shared roll/state path.
+do_hide	kabuki	kabuki.arguments-ignored	D2	command	oracle-green-multiseed	hide-depth@1,2,3,5,8	act.other.c:284-306	The C handler ignores kabuki command arguments after dispatch selects SCMD_KABUKI.
+do_hide	hide	hide.sector-matrix	D1	state	unit-green	TestDoHideDaytimeSectorGates	act.other.c:257-282	The focused state-level vehicle checks all four grouped water values, all four exposed values, field, and desert, plus the nighttime bypass.
+do_hide	hide	hide.affect-clear-reroll	D4	state	unit-green	TestDoHideDexBonusToggleAndImprove	act.other.c:288-306	The focused test proves AFF_HIDE is cleared before every new roll and the C skill/dex probability and improvement order remains intact.
+do_hide	kabuki	kabuki.affect-clear-reroll	D4	shared	delegated	hide.affect-clear-reroll	act.other.c:288-306	SCMD_KABUKI uses the same AFF_HIDE clear/reroll/improvement class with its own skill/message selector.

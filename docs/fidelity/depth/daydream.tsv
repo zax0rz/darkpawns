@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	daydream	daydream.no-argument	D2	audience	oracle-green	daydream-depth	interpreter.c:407; act.social.c:102-127; lib/misc/socials:186-189	The self-only daydream record emits its actor and hidden room lines.
+do_action	daydream	daydream.typed-target-ignored	D2	audience	oracle-green	daydream-depth	act.social.c:114-121; lib/misc/socials:186-189	Because char_found is absent, a visible target is ignored and the no-argument pair remains the C path.
+do_action	daydream	daydream.missing-target-ignored	D2	audience	oracle-green	daydream-depth	act.social.c:114-121; lib/misc/socials:186-189	A missing target is also ignored for this self-only social; no not-found byte is emitted.
+do_action	daydream	daydream.self-target-ignored	D2	audience	oracle-green	daydream-depth	act.social.c:114-121; lib/misc/socials:186-189	A self-named target is ignored rather than entering a self-target branch.

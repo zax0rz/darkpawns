@@ -1,0 +1,51 @@
+# C-first force rejection branches (src/act.wizard.c:1866-1872).
+# The empty-player primary is an implementor; the self target proves the
+# equal-level rejection while the missing target proves NOPERSON.
+
+# depth-case: force.no-arguments
+# depth-case: force.no-command
+# depth-case: force.missing-target
+# depth-case: force.equal-level-target
+# depth-case: force.self-alias
+# depth-case: force.me-alias
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Forcegates
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Forcegates
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+force
+force Nobody whoami
+force Forcegates
+force Forcegates whoami
+force self whoami
+force me whoami

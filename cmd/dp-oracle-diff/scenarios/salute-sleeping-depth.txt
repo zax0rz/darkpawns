@@ -1,0 +1,77 @@
+# C-first salute sleeping-target vehicle (src/interpreter.c:673;
+# src/act.social.c:102-151; lib/misc/socials:1262-1270). The social record
+# requires a resting victim, so a sleeping target reaches the canonical
+# position-failure message without any audience success bytes.
+
+# depth-case: salute.target-position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Salutesleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Salutesleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Salutesleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:target]
+Salutesleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Salutesleeptarget 8162
+
+[probe]
+salute Salutesleeptarget

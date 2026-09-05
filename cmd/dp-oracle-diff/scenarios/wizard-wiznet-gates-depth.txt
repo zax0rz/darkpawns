@@ -1,0 +1,74 @@
+# C-first vehicle for the do_wiznet sender NOWIZ gate. The primary promotes
+# the passive peer, then forces that peer offline before the peer invokes the
+# command itself.
+
+# depth-case: wiznet.nowiz
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wiznetgategod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wiznetgategod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wiznetgatepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wiznetgatepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Wiznetgatepeer 34
+force Wiznetgatepeer nowiz
+
+[probe:peer]
+wiznet offline message

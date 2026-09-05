@@ -1,0 +1,116 @@
+# C-first bitch/do_action vehicle (src/interpreter.c:355;
+# src/act.social.c:102-151; lib/misc/socials:1178-1187). The registered
+# command requires POS_RESTING; the record has hide=0 and a standing target
+# position minimum. Three players expose actor, target, observer, self,
+# not-found, and one_argument branches.
+
+# depth-case: bitch.no-argument
+# depth-case: bitch.target-success
+# depth-case: bitch.target-audience
+# depth-case: bitch.one-argument
+# depth-case: bitch.self-target
+# depth-case: bitch.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+bitch
+bitch the Ragnar trailing words are ignored
+bitch Ragnar
+bitch Mordecai
+bitch self
+bitch Nobody

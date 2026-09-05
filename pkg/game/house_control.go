@@ -51,8 +51,6 @@ func (w *World) HcontrolListHouses(ch *Player) {
 	}
 
 	var b strings.Builder
-	b.WriteString("Address  Atrium  Build Date  Guests  Owner        Last Paymt Key\r\n")
-	b.WriteString("-------  ------  ----------  ------  ------------ ---------- ---\r\n")
 
 	for i := range control {
 		h := &control[i]
@@ -67,12 +65,12 @@ func (w *World) HcontrolListHouses(ch *Player) {
 
 		builtOn := "Unknown"
 		if h.BuiltOn != 0 {
-			builtOn = time.Unix(h.BuiltOn, 0).Format("Jan 2 2006")
+			builtOn = time.Unix(h.BuiltOn, 0).Local().Format("Mon Jan _2")
 		}
 
 		lastPay := "None"
 		if h.LastPayment != 0 {
-			lastPay = time.Unix(h.LastPayment, 0).Format("Jan 2 2006")
+			lastPay = time.Unix(h.LastPayment, 0).Local().Format("Mon Jan _2")
 		}
 
 		fmt.Fprintf(&b, "%7d %7d  %-10s    %2d    %-12s %-10s %d\r\n",
@@ -108,94 +106,93 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 		return
 	}
 
+	// C's atoi() returns zero for a non-numeric token. Keep that behavior at
+	// this command boundary; inventing an "invalid vnum" branch changes the
+	// player-facing path (house.c:398-404).
+	virtHouse := cAtoi(args[0])
+	message := ""
+	var save bool
+
 	w.mu.Lock()
-	defer w.mu.Unlock()
-
 	if len(w.HouseControl) >= MaxHouses {
-		sendToChar(ch, "Max houses already defined.\r\n")
-		return
-	}
+		message = "Max houses already defined.\r\n"
+	} else {
+		// First arg: house vnum
+		realHouse := w.rooms[virtHouse]
+		if realHouse == nil {
+			message = "No such room exists.\r\n"
+		} else if findHouse(w.HouseControl, virtHouse) >= 0 {
+			message = "House already exists.\r\n"
+		} else {
+			// Second arg: exit direction
+			dirName := strings.ToLower(args[1])
+			exitNum := -1
+			for i, d := range dirs {
+				if d == dirName || strings.HasPrefix(d, dirName) {
+					exitNum = i
+					break
+				}
+			}
+			if exitNum < 0 {
+				message = fmt.Sprintf("'%s' is not a valid direction.\r\n", dirName)
+			} else {
+				destVNum := toRoom(realHouse, exitNum)
+				if destVNum < 0 {
+					message = fmt.Sprintf("There is no exit %s from room %d.\r\n", dirName, virtHouse)
+				} else {
+					destRoom := w.rooms[destVNum]
+					if destRoom == nil {
+						message = "Destination room does not exist.\r\n"
+					} else if toRoom(destRoom, revDir[exitNum]) != virtHouse {
+						message = "A house's exit must be a two-way door.\r\n"
+					} else if getPlayerIDByName == nil {
+						message = "Player lookup not available.\r\n"
+					} else {
+						// The live lookup reads World.players and therefore takes the
+						// same world read lock used by Player.SendMessage. Release
+						// the writer lock around it; otherwise a valid build can
+						// deadlock before it reaches the player-facing response.
+						lookup := getPlayerIDByName
+						w.mu.Unlock()
+						owner := lookup(args[2])
+						if owner < 0 {
+							sendToChar(ch, fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2])))
+							return
+						}
+						w.mu.Lock()
 
-	// First arg: house vnum
-	virtHouse, err := parseInt(args[0])
-	if err != nil {
-		sendToChar(ch, "Invalid house vnum.\r\n")
-		return
-	}
-	realHouse := w.rooms[virtHouse]
-	if realHouse == nil {
-		sendToChar(ch, "No such room exists.\r\n")
-		return
-	}
-	if findHouse(w.HouseControl, virtHouse) >= 0 {
-		sendToChar(ch, "House already exists.\r\n")
-		return
-	}
+						if owner < 0 {
+							message = fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2]))
+						} else {
+							now := time.Now().Unix()
+							w.HouseControl = append(w.HouseControl, HouseControl{
+								VNum:    virtHouse,
+								Atrium:  destVNum,
+								ExitNum: exitNum,
+								BuiltOn: now,
+								Owner:   owner,
+								Key:     -1, // NOTHING
+							})
 
-	// Second arg: exit direction
-	dirName := strings.ToLower(args[1])
-	exitNum := -1
-	for i, d := range dirs {
-		if d == dirName || strings.HasPrefix(d, dirName) {
-			exitNum = i
-			break
+							setRoomFlag(realHouse, RoomFlagHouse)
+							setRoomFlag(realHouse, RoomFlagPriv)
+							setRoomFlag(destRoom, RoomFlagAtrium)
+							message = "House built.  Mazel tov!\r\n"
+							save = true
+						}
+					}
+				}
+			}
 		}
 	}
-	if exitNum < 0 {
-		sendToChar(ch, fmt.Sprintf("'%s' is not a valid direction.\r\n", dirName))
-		return
+	w.mu.Unlock()
+
+	if message != "" {
+		sendToChar(ch, message)
 	}
-
-	destVNum := toRoom(realHouse, exitNum)
-	if destVNum < 0 {
-		sendToChar(ch, fmt.Sprintf("There is no exit %s from room %d.\r\n", dirName, virtHouse))
-		return
+	if save {
+		w.saveHouseControl()
 	}
-
-	destRoom := w.rooms[destVNum]
-	if destRoom == nil {
-		sendToChar(ch, "Destination room does not exist.\r\n")
-		return
-	}
-
-	// Check that the return path exists (two-way door)
-	revDest := toRoom(destRoom, revDir[exitNum])
-	if revDest != virtHouse {
-		sendToChar(ch, "A house's exit must be a two-way door.\r\n")
-		return
-	}
-
-	// Third arg: player name
-	if getPlayerIDByName == nil {
-		sendToChar(ch, "Player lookup not available.\r\n")
-		return
-	}
-	owner := getPlayerIDByName(args[2])
-	if owner < 0 {
-		sendToChar(ch, fmt.Sprintf("Unknown player '%s'.\r\n", args[2]))
-		return
-	}
-
-	now := time.Now().Unix()
-	tempHouse := HouseControl{
-		VNum:        virtHouse,
-		Atrium:      destVNum,
-		ExitNum:     exitNum,
-		BuiltOn:     now,
-		LastPayment: 0,
-		Owner:       owner,
-		NumOfGuests: 0,
-		Key:         -1, // NOTHING
-	}
-
-	w.HouseControl = append(w.HouseControl, tempHouse)
-
-	setRoomFlag(realHouse, RoomFlagHouse)
-	setRoomFlag(realHouse, RoomFlagPriv)
-	setRoomFlag(destRoom, RoomFlagAtrium)
-
-	sendToChar(ch, "House built.  Mazel tov!\r\n")
-	w.saveHouseControl()
 }
 
 // HcontrolDestroyHouse deletes a house.
@@ -207,17 +204,12 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 		return
 	}
 
-	vnum, err := parseInt(args[0])
-	if err != nil {
-		sendToChar(ch, "Invalid house vnum.\r\n")
-		return
-	}
+	vnum := cAtoi(args[0])
 
 	w.mu.Lock()
-	defer w.mu.Unlock()
-
 	i := findHouse(w.HouseControl, vnum)
 	if i < 0 {
+		w.mu.Unlock()
 		sendToChar(ch, "Unknown house.\r\n")
 		return
 	}
@@ -243,9 +235,6 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 	// Remove from slice
 	w.HouseControl = append(w.HouseControl[:i], w.HouseControl[i+1:]...)
 
-	sendToChar(ch, "House deleted.\r\n")
-	w.saveHouseControl()
-
 	// Re-set atrium flags on remaining houses that may share this atrium
 	for j := range w.HouseControl {
 		ra := w.rooms[w.HouseControl[j].Atrium]
@@ -253,6 +242,10 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 			setRoomFlag(ra, RoomFlagAtrium)
 		}
 	}
+	w.mu.Unlock()
+
+	sendToChar(ch, "House deleted.\r\n")
+	w.saveHouseControl()
 }
 
 // HcontrolPayHouse records a payment for a house.
@@ -264,17 +257,12 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 		return
 	}
 
-	vnum, err := parseInt(args[0])
-	if err != nil {
-		sendToChar(ch, "Invalid house vnum.\r\n")
-		return
-	}
+	vnum := cAtoi(args[0])
 
 	w.mu.Lock()
-	defer w.mu.Unlock()
-
 	i := findHouse(w.HouseControl, vnum)
 	if i < 0 {
+		w.mu.Unlock()
 		sendToChar(ch, "Unknown house.\r\n")
 		return
 	}
@@ -283,6 +271,8 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 	MudLog(fmt.Sprintf("Payment for house %d collected by %s.", vnum, chName), 0, LVL_IMMORT, true)
 
 	w.HouseControl[i].LastPayment = time.Now().Unix()
+	w.mu.Unlock()
+
 	w.saveHouseControl()
 	sendToChar(ch, "Payment recorded.\r\n")
 }
@@ -296,34 +286,27 @@ func (w *World) HcontrolSetKey(ch *Player, arg string) {
 		return
 	}
 
-	vnum, err := parseInt(args[0])
-	if err != nil {
-		sendToChar(ch, "Invalid house vnum.\r\n")
-		return
-	}
-
-	keyVNum, err := parseInt(args[1])
-	if err != nil {
-		sendToChar(ch, "Invalid key vnum.\r\n")
-		return
-	}
+	vnum := cAtoi(args[0])
+	keyVNum := cAtoi(args[1])
 
 	w.mu.Lock()
-	defer w.mu.Unlock()
-
 	i := findHouse(w.HouseControl, vnum)
 	if i < 0 {
+		w.mu.Unlock()
 		sendToChar(ch, "That house doesn't exist!\r\n")
 		return
 	}
 
 	// Validate key object exists
 	if _, ok := w.objs[keyVNum]; !ok {
+		w.mu.Unlock()
 		sendToChar(ch, "That object doesn't exist!\r\n")
 		return
 	}
 
 	w.HouseControl[i].Key = keyVNum
+	w.mu.Unlock()
+
 	w.saveHouseControl()
 	sendToChar(ch, "House key set.\r\n")
 }
@@ -364,6 +347,17 @@ func (w *World) Hcontrol(ch *Player, argument string) {
 	default:
 		sendToChar(ch, HcontrolFormat)
 	}
+}
+
+// cAtoi mirrors C's atoi for the house-control command. It returns zero when
+// no leading integer is present and otherwise stops at the first non-digit,
+// which is the branch-driving behavior used by house.c.
+func cAtoi(value string) int {
+	var number int
+	if _, err := fmt.Sscanf(value, "%d", &number); err != nil {
+		return 0
+	}
+	return number
 }
 
 // ---------------------------------------------------------------------------

@@ -210,8 +210,20 @@ func (w *World) GainExp(p *Player, gain int) {
 // GainExpRegardless — from limits.c gain_exp_regardless()
 // ---------------------------------------------------------------------------
 func (w *World) GainExpRegardless(p *Player, gain int) {
+	w.gainExpRegardless(p, gain, true)
+}
+
+// GainExpRegardlessSilent applies the same state transitions as
+// GainExpRegardless but leaves announcement framing to the caller. This is
+// used by do_advance, whose C loop emits one contiguous stream of
+// "You rise a level!" messages across repeated gain_exp_regardless calls.
+func (w *World) GainExpRegardlessSilent(p *Player, gain int) int {
+	return w.gainExpRegardless(p, gain, false)
+}
+
+func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
 	if p == nil {
-		return
+		return 0
 	}
 
 	p.Exp += gain
@@ -220,7 +232,7 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 	}
 
 	if p.IsNPC() {
-		return
+		return 0
 	}
 
 	numLevels := 0
@@ -244,7 +256,7 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 		}
 	}
 
-	if numLevels > 0 {
+	if announce && numLevels > 0 {
 		if numLevels == 1 {
 			sendToChar(p, "You rise a level!\r\n")
 		} else {
@@ -252,6 +264,7 @@ func (w *World) GainExpRegardless(p *Player, gain int) {
 		}
 		CheckAutowiz(p)
 	}
+	return numLevels
 }
 
 // ---------------------------------------------------------------------------

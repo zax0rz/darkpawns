@@ -14,7 +14,7 @@ var (
 	statusVitals = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
 	statsLine    = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
 	volatileLine = regexp.MustCompile(`(?i)^\s*(?:` +
-		`(?:current (?:time|date)|server (?:time|running since)|uptime)\s*[:=]|` +
+		`(?:current (?:machine )?(?:time|date)|server (?:time|running since)|uptime)\s*[:=]|` +
 		`(?:players online|players\s*:|gods\s*:)\s*[:=]?\s*\d+|` +
 		`as of \d{1,4}[-/]\d{1,2}[-/]\d{1,4}\b|` +
 		`\*{2,}.*(?:\bversion\b|\bv?\d+\.\d+\b|\bbeta\b)|` +

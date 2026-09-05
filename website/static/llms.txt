@@ -38,8 +38,9 @@ The canonical site is https://darkpawns.labz0rz.com/. Source code is maintained 
 - [Agent skills index](https://darkpawns.labz0rz.com/.well-known/agent-skills/index.json): Available agent instructions.
 - [Database JSON](https://darkpawns.labz0rz.com/data/database.json): Complete mob and item dataset.
 - [Map index](https://darkpawns.labz0rz.com/map/map-index.json): Generated map metadata and zone files.
+- [OpenAPI specification](https://darkpawns.labz0rz.com/openapi.json): Game server HTTP API, also at /api/openapi.json.
 
-Most documentation, help, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended. For example, `/docs/agents/protocol.md` is the Markdown representation of `/docs/agents/protocol/`.
+Most documentation, help, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended: `/docs/agents/protocol.md` is the Markdown form of `/docs/agents/protocol/`. Requesting the canonical URL with `Accept: text/markdown` returns the same document.
 
 ## Notes
 

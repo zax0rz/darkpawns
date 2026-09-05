@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_equipment	equipment	equipment.empty	D1	command	oracle-green	equipment-glance-depth	act.informative.c:1470-1495	Empty equipment emits the exact header plus C's leading-space Nothing line.
+do_equipment	equipment	equipment.extended-slot	D2	command	oracle-green	equipment-glance-depth	structs.h:390-413; constants.c:727-749	C's 22-slot loop renders a takeable WEAR_HOVER object at <hovering near head>.
+do_equipment	equipment	equipment.covered-positions	D2	unit	unit-green	TestDoEquipmentMarksCoveredPositions	utils.h:397-400; act.informative.c:170-174	Body/about, finger/hands, and legs/ablegs pairs reproduce C's covered annotation.
+do_equipment	equipment	equipment.object-flags	D2	unit	unit-green	TestDoEquipmentColorizesObjectFlagsAtCompleteColor	act.informative.c:132-164	Equipment short descriptions and visible object flag annotations retain C's color-level behavior.
+do_equipment	equipment	equipment.sleeping	D2	command	oracle-green	equipment-glance-depth	interpreter.c:433; act.informative.c:1470-1495	Equipment remains usable at C's POS_SLEEPING minimum.
+do_diagnose	glance	glance.no-arg	D1	command	oracle-green	equipment-glance-depth	interpreter.c:466; act.informative.c:2433-2448	Glance resolves to do_diagnose and emits Diagnose who? with no fighting target.
+do_diagnose	glance	glance.position-gate	D2	command	oracle-green	equipment-glance-depth	interpreter.c:466; interpreter.c:923-924	Glance's POS_RESTING gate emits the sleeping position failure byte.
+do_diagnose	glance	glance.target-condition	D2	command	oracle-green	equipment-glance-depth	act.informative.c:354-390	Explicit glance target uses C's diagnostic condition text.
+do_diagnose	glance	glance.private-output	D3	command	oracle-green	equipment-glance-depth	act.informative.c:2433-2448	The diagnosis is TO_CHAR-only; the connected peer receives no target bytes.

@@ -1,0 +1,86 @@
+# depth-case: junk.no-arg
+# depth-case: junk.not-carried
+# depth-case: junk.success
+# depth-case: junk.room-audience
+# depth-case: junk.reward
+# depth-case: junk.all-gate
+# depth-case: junk.alldot-none
+# depth-case: junk.gold-zero
+# depth-case: junk.gold-insufficient
+# The SCMD_JUNK arm of do_drop (src/act.item.c:529-666): argument gates,
+# perform_drop's vanish pair, the gods-reward pair (gain_exp MIN(10,value)),
+# and the gold path (no wait state for junked coins, room line before the
+# char line — C quirk kept). No RNG anywhere on this path.
+
+[fixture]
+quiet-mobs
+spawn-obj 8010 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+junk
+junk bread
+get bread
+junk bread
+junk bread
+junk all
+junk all.bread
+junk 5 coins
+junk 0 coins

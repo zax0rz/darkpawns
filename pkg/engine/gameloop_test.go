@@ -138,6 +138,42 @@ func TestGameLoopRepeatedStopDoesNotPanic(t *testing.T) {
 	gl.Stop()
 }
 
+func TestGameLoopStopContextTimesOutDuringBlockedCallback(t *testing.T) {
+	callbackStarted := make(chan struct{})
+	releaseCallback := make(chan struct{})
+	gl := NewGameLoop(GameLoopCallbacks{
+		OnDrainInput: func() {
+			select {
+			case <-callbackStarted:
+			default:
+				close(callbackStarted)
+			}
+			<-releaseCallback
+		},
+	})
+	gl.tickerInterval = time.Millisecond
+	gl.Start(context.Background())
+	<-callbackStarted
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	if err := gl.StopContext(ctx); err == nil {
+		t.Fatal("StopContext returned nil while heartbeat callback was blocked")
+	}
+
+	close(releaseCallback)
+	done := make(chan struct{})
+	go func() {
+		gl.Stop()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("game loop did not finish after blocked callback was released")
+	}
+}
+
 func TestGameLoopStartIsIdempotent(t *testing.T) {
 	gl := NewGameLoop(GameLoopCallbacks{})
 

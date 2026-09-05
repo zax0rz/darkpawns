@@ -1,0 +1,35 @@
+package session
+
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
+)
+
+func TestHehRegistrationUsesCEntryGate(t *testing.T) {
+	entry, ok := commandGates["heh"]
+	if !ok {
+		t.Fatal("heh command has no C gate")
+	}
+	if entry.MinLevel != 0 || entry.MinPosition != combat.PosResting {
+		t.Fatalf("heh gate = level %d position %d, want level 0 position %d", entry.MinLevel, entry.MinPosition, combat.PosResting)
+	}
+
+	social, ok := game.Socials["heh"]
+	if !ok {
+		t.Fatal("heh social is not registered")
+	}
+	if social.HideFlag != 0 || social.MinLevel != 0 || social.MinVictimPosition != 0 {
+		t.Fatalf("heh social metadata = hide %d, min-level %d, min-victim %d; want all zero", social.HideFlag, social.MinLevel, social.MinVictimPosition)
+	}
+	wantMessages := []string{"You heh.", "$n hehs.", "#"}
+	if len(social.Messages) != len(wantMessages) {
+		t.Fatalf("heh social has %d messages, want %d", len(social.Messages), len(wantMessages))
+	}
+	for i, want := range wantMessages {
+		if social.Messages[i] != want {
+			t.Errorf("heh social message %d = %q, want %q", i, social.Messages[i], want)
+		}
+	}
+}

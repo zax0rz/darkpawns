@@ -8,7 +8,7 @@ Your actions have consequences. Other entities will remember what you do.
 
 ```bash
 # 1. Generate an API key for your agent
-go run ./cmd/agentkeygen -name "YourAgentName" -db "$DATABASE_URL"
+DATABASE_URL="postgres://..." go run ./cmd/agentkeygen -name "YourAgentName"
 
 # 2. Configure dp-agent
 dp-agent config --key dp_your_key_here

@@ -15,7 +15,7 @@ func TestSocialFallbackUsesCommandGateTable(t *testing.T) {
 		if err := ExecuteCommand(s, "dance", nil); err != nil {
 			t.Fatal(err)
 		}
-		if got := readMsgText(t, s); got != "Nah... You feel too relaxed to do that.." {
+		if got := readMsgText(t, s); got != "Nah... You feel too relaxed to do that..\r\n" {
 			t.Fatalf("output = %q", got)
 		}
 	})
@@ -54,7 +54,7 @@ func TestPageUsesOneTargetAndRemainingMessage(t *testing.T) {
 	if err := ExecuteCommand(actor, "page", []string{"Target", "paging", "you", "now"}); err != nil {
 		t.Fatal(err)
 	}
-	const want = "\x07\x07*Wizard* paging you now"
+	const want = "\x07\x07*Wizard* paging you now\r\n\r\n"
 	if got := readMsgText(t, target); got != want {
 		t.Fatalf("target output = %q, want %q", got, want)
 	}
@@ -74,7 +74,7 @@ func TestPageNoRepeatUsesCOkayText(t *testing.T) {
 	if err := ExecuteCommand(actor, "page", []string{"Target", "hello"}); err != nil {
 		t.Fatal(err)
 	}
-	if got := readMsgText(t, target); got != "\x07\x07*Wizard* hello" {
+	if got := readMsgText(t, target); got != "\x07\x07*Wizard* hello\r\n\r\n" {
 		t.Fatalf("target output = %q", got)
 	}
 	if got := readMsgText(t, actor); got != "Okay." {
@@ -114,7 +114,7 @@ func TestPageGatesMortalAndPageAll(t *testing.T) {
 		if err := ExecuteCommand(actor, "page", []string{"all", "hello", "everyone"}); err != nil {
 			t.Fatal(err)
 		}
-		const want = "\x07\x07*GreaterGod* hello everyone"
+		const want = "\x07\x07*GreaterGod* hello everyone\r\n\r\n"
 		if got := readMsgText(t, actor); got != want {
 			t.Fatalf("actor output = %q", got)
 		}

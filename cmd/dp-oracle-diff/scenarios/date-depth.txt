@@ -1,0 +1,44 @@
+# depth-case: date.machine-time
+# depth-case: date.argument-ignored
+# C-first vehicle for the date command. The command table binds date to
+# do_date with SCMD_DATE; date arguments are not parsed. Uptime is a separate
+# command-table row at interpreter.c:795 using SCMD_UPTIME. The machine-time
+# line is volatile and intentionally normalized by the Tier-1 harness; the
+# focused unit proof pins the non-aliasing behavior.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Datedepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Datedepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+date
+date boot

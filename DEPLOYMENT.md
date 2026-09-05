@@ -1,94 +1,203 @@
-# Deployment Guide
+# Dark Pawns Production Deployment
 
-## Quick Reference
+This is the canonical deployment runbook. Production is CT 120 at
+`192.168.1.121` (`linux/amd64`). Do not use deprecated hosts or standalone site
+clones mentioned in historical notes.
 
-| What | Value |
-|------|-------|
-| CT / IP | **CT 120 — 192.168.1.121** |
-| OS | Linux x86\_64 (Proxmox LXC) |
-| Service | `dark-pawns.service` (systemd) |
-| Binary | `/opt/darkpawns/darkpawns-server` |
-| Backup | `/opt/darkpawns/darkpawns-server.bak` |
-| Listen ports | 4350 (HTTP/WS game), 7777 (telnet) |
-| Proxy | Caddy on :80 → :4350 |
-| Tunnel | Cloudflare (`cloudflared.service`) |
-| DB | Postgres — `127.0.0.1:5432` |
-| Cache | Redis — `127.0.0.1:6379` |
-| Web root | `/opt/darkpawns/web` |
-| Scripts | `/opt/darkpawns/lib/scripts` |
+## Production topology
 
-## Build Platform
+| Component | Production location |
+|---|---|
+| Game service | `dark-pawns.service` |
+| Game binary / previous binary | `/opt/darkpawns/darkpawns-server`, `/opt/darkpawns/darkpawns-server.bak` |
+| HTTP/WebSocket / Telnet | `localhost:4350`, `localhost:7777` |
+| Static web root | `/srv/hugo/` |
+| Caddy service/config | `caddy.service`, `/etc/caddy/Caddyfile` |
+| Cloudflare tunnel | `cloudflared.service` |
+| World/scripts | `/opt/darkpawns/lib/` |
+| PostgreSQL / Redis | `localhost:5432`, `localhost:6379` |
 
-Production (CT 120) is **linux/amd64**. The build artifact must be an
-`ELF 64-bit LSB x86-64` binary — anything else fails with `status=203/EXEC`.
+Caddy serves the static site and proxies `/ws`, `/api/*`, `/openapi.json`,
+`/admin/*`, `/health`, and `/metrics` to Go. Cloudflare fronts Caddy; verify
+both the origin and public URL after a change.
 
-### Native build (Linux dev workstation) — preferred
+## Preflight
 
-On a linux/amd64 workstation the build is native; no cross-compile flags:
+Deploy only a reviewed commit from `main`. Run the repository gates first:
 
 ```bash
-cd darkpawns
-go build -o darkpawns-server ./cmd/server
+git switch main
+git pull --ff-only origin main
+go build ./...
+go vet ./...
+go test ./...
+golangci-lint run ./...
 ```
 
-### Cross-compile (mac-mini fallback)
-
-When building on the mac-mini (`192.168.1.196`, darwin/arm64) — e.g. during the
-dev-environment transition — you **must** cross-compile, or the binary is Mach-O
-and won't run on CT 120:
+Check production before restarting. A restart disconnects players:
 
 ```bash
-cd /Users/zach/darkpawns
-GOOS=linux GOARCH=amd64 go build -o darkpawns-server ./cmd/server
+ssh root@192.168.1.121 \
+  "systemctl is-active dark-pawns.service caddy.service cloudflared.service && \
+   ss -Htn state established '( sport = :7777 or sport = :4350 )'"
 ```
 
-### Verify the binary (either path)
+If connections are listed, announce maintenance or choose another window.
+
+## Deploy the Go server
+
+Build an explicit Linux x86-64 artifact and verify its format:
 
 ```bash
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+  go build -o darkpawns-server ./cmd/server
 file darkpawns-server
-# Expected: "ELF 64-bit LSB executable, x86-64, ..."
-# Wrong:   "Mach-O 64-bit executable arm64"  ← you built on the mac without cross-compile flags
+# Must report: ELF 64-bit LSB ... x86-64
 ```
 
-## Deploy Steps
+Stage without replacing the running executable:
 
 ```bash
-# 1. Build. On Linux/amd64: `go build -o darkpawns-server ./cmd/server`
-#    On the mac-mini, cross-compile (see Build Platform above):
-GOOS=linux GOARCH=amd64 go build -o darkpawns-server ./cmd/server
-
-# 2. Copy to CT 120 as .new (so the old binary stays in place until we're ready)
-scp darkpawns-server root@192.168.1.121:/opt/darkpawns/darkpawns-server.new
-
-# 3. On CT 120: backup current binary, swap, restart, verify
-ssh root@192.168.1.121 "\
-  cp /opt/darkpawns/darkpawns-server /opt/darkpawns/darkpawns-server.bak && \
-  mv /opt/darkpawns/darkpawns-server.new /opt/darkpawns/darkpawns-server && \
-  chmod +x /opt/darkpawns/darkpawns-server && \
-  systemctl restart dark-pawns.service && \
-  sleep 3 && \
-  systemctl is-active dark-pawns.service && \
-  echo '=== Health ===' && \
-  curl -s http://localhost/health && \
-  echo
-"
-
-# 4. Clean up local binary
-rm darkpawns-server
+scp darkpawns-server \
+  root@192.168.1.121:/opt/darkpawns/darkpawns-server.new
+ssh root@192.168.1.121 "file /opt/darkpawns/darkpawns-server.new"
 ```
+
+Back up, swap, restart, and wait for systemd. Do not assume a fixed
+three-second startup or retry a timed-out restart blindly—inspect service state.
+
+```bash
+ssh root@192.168.1.121 "\
+  cp /opt/darkpawns/darkpawns-server \
+     /opt/darkpawns/darkpawns-server.bak && \
+  mv /opt/darkpawns/darkpawns-server.new \
+     /opt/darkpawns/darkpawns-server && \
+  chmod 0755 /opt/darkpawns/darkpawns-server && \
+  systemctl restart dark-pawns.service"
+
+ssh root@192.168.1.121 "\
+  systemctl is-active dark-pawns.service && \
+  curl --fail --silent http://localhost:4350/health && echo && \
+  journalctl -u dark-pawns.service --no-pager -n 30"
+```
+
+> **The restart can block for up to ~90s.** If the outgoing binary does not exit
+> on SIGTERM, systemd waits out `TimeoutStopSec` (~90s) and then SIGKILLs the
+> process group (`Main process exited, code=killed, status=9/KILL`; the *stop*
+> records `Result=timeout`). The combined swap+restart `ssh` above will stay open
+> for that whole window, so a client-side timeout shorter than ~90s will cut the
+> connection **while the restart is still finishing** — this is expected, not a
+> failure, and the new process still comes up. Do **not** re-run the restart.
+> Instead re-`ssh` and inspect, distinguishing "still finishing" from
+> "crash-looping":
+>
+> ```bash
+> ssh root@192.168.1.121 "\
+>   systemctl show dark-pawns.service \
+>     -p ActiveState,SubState,MainPID,NRestarts,Result,ExecMainStartTimestamp"
+> ```
+>
+> A healthy result is `ActiveState=active`, `Result=success`, `NRestarts=0`, and a
+> `MainPID`/`ExecMainStartTimestamp` dated *after* you triggered the deploy. A
+> climbing `NRestarts` or a start timestamp that keeps moving means it is
+> crash-looping — roll back. A forced SIGKILL of the *outgoing* process is safe
+> only when no players are connected (world state is file-loaded and persistence
+> is in Postgres); with players online, prefer a graceful window.
+
+Confirm startup logs include a successful database connection. Healthy HTTP
+alone does not prove persistence is available.
+
+## Deploy Caddy configuration
+
+Never overwrite the live Caddyfile without preserving its security headers,
+redirect import, and production-only routes. First retrieve the live file,
+merge the reviewed routing change into it, then stage and validate that complete
+candidate:
+
+```bash
+scp root@192.168.1.121:/etc/caddy/Caddyfile Caddyfile.production
+# Merge the reviewed website/deploy/Caddyfile change into Caddyfile.production.
+scp Caddyfile.production root@192.168.1.121:/etc/caddy/Caddyfile.new
+ssh root@192.168.1.121 "\
+  /usr/local/bin/caddy validate --adapter caddyfile \
+    --config /etc/caddy/Caddyfile.new && \
+  cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak && \
+  mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile && \
+  /usr/local/bin/caddy reload --config /etc/caddy/Caddyfile && \
+  systemctl is-active caddy.service"
+```
+
+Do not replace production with the reduced repository baseline verbatim.
+
+## Deploy the website
+
+The public files currently in `/srv/hugo/` include the newer generated site and
+machine-readable Markdown siblings. A full `rsync --delete` from a different
+generator can erase valid routes. Before a full site deployment:
+
+1. Run `make build-site` successfully.
+2. Preview `website/public/` and compare its route inventory with `/srv/hugo/`.
+3. Back up `/srv/hugo/` on CT 120.
+4. Only then run the guarded target:
+
+```bash
+make deploy-site \
+  DEPLOY_USER=root \
+  DEPLOY_HOST=192.168.1.121 \
+  DEPLOY_PATH=/srv/hugo/
+```
+
+For a small machine-readable change, stage and copy only the named files rather
+than replacing the visual site. Keep HTML and Markdown representations paired.
+
+## Required verification
+
+```bash
+# Origin
+ssh root@192.168.1.121 "\
+  systemctl is-active dark-pawns.service caddy.service cloudflared.service && \
+  curl --fail --silent http://localhost:4350/health"
+
+# Public HTML and error behavior
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' \
+  https://darkpawns.labz0rz.com/
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' \
+  https://darkpawns.labz0rz.com/path-that-does-not-exist
+
+# Public agent surfaces
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' \
+  https://darkpawns.labz0rz.com/openapi.json
+curl -sS -D - -o /dev/null -H 'Accept: text/markdown' \
+  https://darkpawns.labz0rz.com/
+curl -sS -o /dev/null -w '%{http_code} %{content_type}\n' \
+  -H 'Accept: text/markdown' \
+  https://darkpawns.labz0rz.com/path-that-does-not-exist
+```
+
+Expected: health `OK`; HTML home `200`; missing HTML and Markdown paths `404`;
+OpenAPI `200 application/json`; negotiated pages `text/markdown`; negotiated
+responses include `Vary: Accept`.
 
 ## Rollback
 
+Binary:
+
 ```bash
 ssh root@192.168.1.121 "\
-  cp /opt/darkpawns/darkpawns-server.bak /opt/darkpawns/darkpawns-server && \
-  systemctl restart dark-pawns.service
-"
+  cp /opt/darkpawns/darkpawns-server.bak \
+     /opt/darkpawns/darkpawns-server && \
+  chmod 0755 /opt/darkpawns/darkpawns-server && \
+  systemctl restart dark-pawns.service"
 ```
 
-## Verification
+Caddy:
 
-After deploy, check:
+```bash
+ssh root@192.168.1.121 "\
+  cp /etc/caddy/Caddyfile.bak /etc/caddy/Caddyfile && \
+  /usr/local/bin/caddy validate --config /etc/caddy/Caddyfile && \
+  /usr/local/bin/caddy reload --config /etc/caddy/Caddyfile"
+```
 
 1. **Service is active:** `systemctl is-active dark-pawns.service` → `active`
 2. **Health endpoint:** `curl http://localhost/health` → `OK`
@@ -97,8 +206,9 @@ After deploy, check:
 
 ## Website deployment
 
-The public site is Astro. Hugo remains in the repository only as migration
-source material and as the comparison build used by `make route-parity`.
+The public site is Astro. Hugo has been removed from the repository; only the
+shared generated assets, the parse scripts and the Caddy configuration remain
+under `website/`.
 
 Production runs on CT 120 at `192.168.1.121`. Caddy serves `/srv/hugo/`; the
 directory name is historical and does not mean the deployed site uses Hugo.
@@ -174,3 +284,6 @@ private delivery setting is missing.
 - **The `.bak` file is overwritten each deploy.** If you need to keep a specific snapshot, copy it elsewhere first.
 - **Systemd restart kills active connections.** Players get disconnected. Deploy during low-traffic windows or announce first.
 - **For Go-only changes that don't touch config or scripts**, a simple binary swap + restart is sufficient. For config/script changes, sync those separately.
+
+Use the timestamped site backup made before a full static deployment to restore
+`/srv/hugo/`. Report what was rolled back and retain failed artifacts for diagnosis.

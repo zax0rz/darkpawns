@@ -1,0 +1,62 @@
+# C-first diagnose/do_diagnose vehicle (src/interpreter.c:412;
+# src/act.informative.c:354-385,2433-2455). The spawned horse exercises the
+# visible mob path; the command aliases, one_argument parsing, not-found gate,
+# and POS_RESTING boundary are all on the same handler call path.
+
+# depth-case: diagnose.no-argument
+# depth-case: diagnose.mob-target
+# depth-case: diagnose.trailing-arguments
+# depth-case: diagnose.case-folded-target
+# depth-case: diagnose.not-found
+# depth-case: diagnose.diag-alias
+# depth-case: diagnose.glance-alias
+# depth-case: diagnose.position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Diagnoser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Diagnoser
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+diagnose
+diagnose horse
+diagnose horse trailing words are ignored
+diagnose HORSE
+diagnose nobody
+diag horse
+glance horse
+sleep
+diagnose horse
+wake

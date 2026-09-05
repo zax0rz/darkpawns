@@ -1,0 +1,44 @@
+# C-first do_return vehicle (src/interpreter.c:655; src/act.wizard.c:1205-1221).
+# A mortal descriptor-issued command reaches the registered POS_DEAD/no-level
+# entry. With no descriptor->original body, C returns silently; trailing input
+# is ignored because do_return has no argument path.
+
+# depth-case: return.no-original-silent
+# depth-case: return.argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Returnmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Returnmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+return
+return ignored trailing words

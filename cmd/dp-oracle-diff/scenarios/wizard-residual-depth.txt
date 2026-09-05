@@ -1,0 +1,65 @@
+# C-first no-argument vehicle for the registered act.wizard.c command
+# residuals that were not owned by an existing depth manifest. The
+# empty-players fixture crowns the actor at LVL_IMPL, so every command reaches
+# its handler entry gate. The final zlist probe is intentionally last because
+# the C implementation may enter the descriptor pager on a valid zone file.
+
+# depth-case: transfer.no-argument
+# depth-case: teleport.no-argument
+# depth-case: vnum.no-argument
+# depth-case: stat.no-argument
+# depth-case: switch.no-argument
+# depth-case: vstat.no-argument
+# depth-case: wiznet.no-argument
+# depth-case: zreset.no-argument
+# depth-case: syslog.no-argument
+# depth-case: sysfile.no-argument
+# depth-case: wnewbie.no-argument
+# depth-case: zlist.no-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizardresidual
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardresidual
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+transfer
+teleport
+vnum
+stat
+switch
+vstat
+wiznet
+zreset
+syslog
+sysfile
+wnewbie
+zlist

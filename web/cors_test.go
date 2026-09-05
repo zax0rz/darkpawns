@@ -36,6 +36,7 @@ func TestCORS_DevModeNonLocalRejected(t *testing.T) {
 	os.Setenv("ENVIRONMENT", "development")
 
 	req := httptest.NewRequest("GET", "http://1.2.3.4:3000/something", nil)
+	req.RemoteAddr = "5.6.7.8:53000"
 	req.Header.Set("Origin", "http://evil.example")
 
 	if isOriginAllowed("http://evil.example", nil, req) {
@@ -50,9 +51,24 @@ func TestCORS_DevModeLocalAllowed(t *testing.T) {
 
 	for _, host := range []string{"localhost:3000", "127.0.0.1:3000", "[::1]:3000"} {
 		req := httptest.NewRequest("GET", "http://"+host+"/something", nil)
+		req.RemoteAddr = "127.0.0.1:54321"
 		req.Header.Set("Origin", "http://example.com")
 		if !isOriginAllowed("http://example.com", nil, req) {
 			t.Errorf("expected local host %q to be allowed in dev mode", host)
 		}
+	}
+}
+
+func TestCORS_DevModeSpoofedLocalHostFromNonLocalPeerRejected(t *testing.T) {
+	origEnv := os.Getenv("ENVIRONMENT")
+	defer os.Setenv("ENVIRONMENT", origEnv)
+	os.Setenv("ENVIRONMENT", "development")
+
+	req := httptest.NewRequest("GET", "http://localhost:3000/something", nil)
+	req.RemoteAddr = "1.2.3.4:53000"
+	req.Header.Set("Origin", "http://evil.example")
+
+	if isOriginAllowed("http://evil.example", nil, req) {
+		t.Error("expected spoofed local Host from a non-local peer to be rejected")
 	}
 }

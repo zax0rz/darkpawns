@@ -1,0 +1,71 @@
+# depth-case: objmagic.sanctuary.to-vict
+# depth-case: objmagic.sanctuary.to-room
+# Potion 19412 casts a single sanctuary (spell 36). A fresh neutral quaffer takes the non-evil branch: to_vict "A white aura momentarily surrounds you." and to_room "$n is surrounded by a white aura." (magic.c:1194-1195). The male peer transcript proves the room audience; act(..., victim, ..., TO_ROOM) excludes only the victim.
+
+[fixture]
+quiet-mobs
+spawn-obj 19412 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get blue
+quaff blue
+~dpclock pulse 20
+~dpclock pulse 20

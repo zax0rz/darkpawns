@@ -121,9 +121,14 @@ func LoginStartRoom(p *Player) int {
 	return MortalStartRoom
 }
 
-// Instakill performs an immortal instakill extraction without XP, counters, or penalties.
-// Source: src/act.offensive.c do_kill() calls raw_kill(ch, victim) for implementor-level
-// instakills; raw_kill stops fighting, extracts the character, and respawns them.
+// Instakill performs an immortal instakill extraction without XP, counters,
+// or penalties.
+// Source: src/act.offensive.c do_kill() calls raw_kill(vict, TYPE_SLASH)
+// (fight.c:534-577) directly — no die()/die_with_killer bookkeeping. raw_kill
+// sends the death cry, makes the corpse, and extracts the victim; C defers
+// the actual extraction (and the victim's return to the main menu) to the
+// next heartbeat's extract_pending_chars, so nothing further reaches the
+// victim's connection synchronously.
 func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	if victim.IsNPC() {
 		w.handleMobDeath(victim, killer, attackType)
@@ -135,19 +140,62 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		return
 	}
 
-	// Notify victim before extraction, matching C's act() to victim.
-	player.SendMessage("You have been killed!\r\n")
-
-	// Stop fighting and respawn at the appropriate start room with no penalties.
 	player.StopFighting()
-	player.SetRoom(LoginStartRoom(player))
-	player.SetPosition(combat.PosStanding)
-	player.Heal(9999)
+	w.DieFollower(player)
 	if player.IsAffected(affWerewolf) {
 		player.SetAffect(affWerewolf, false)
 	}
-	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
-	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
+	if player.IsMounted() {
+		player.Unmount()
+	}
+
+	// death_cry (fight.c:558-577): the room hears $n's cry (TO_ROOM — the
+	// victim does not), adjacent open rooms hear "someone's".
+	Act(w, false, player, nil, nil, nil,
+		"Your blood freezes as you hear $n's death cry.", "", ToRoom)
+	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
+		for _, dir := range dirs {
+			if exit, exists := room.Exits[dir]; exists && exit.ToRoom > 0 {
+				w.roomMessage(exit.ToRoom,
+					"Your blood freezes as you hear someone's death cry.")
+			}
+		}
+	}
+
+	// make_corpse: everything carried, worn, and the gold go into the corpse.
+	var inventoryItems []*ObjectInstance
+	player.mu.Lock()
+	if player.Inventory != nil {
+		inventoryItems = player.Inventory.FindItems("")
+		player.Inventory.clear()
+	}
+	var equipmentItems []*ObjectInstance
+	if player.Equipment != nil {
+		for _, item := range player.Equipment.GetEquippedItems() {
+			equipmentItems = append(equipmentItems, item)
+		}
+		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+	}
+	player.mu.Unlock()
+	playerGold := player.GetGold()
+	player.SetGold(0)
+
+	roomVNum := player.GetRoom()
+	if attackType == 93 { // SPELL_DISINTEGRATE
+		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
+	} else {
+		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
+		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
+			slog.Warn("MoveObjectToRoom failed in instakill", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
+		}
+	}
+
+	// C extract_char only queues the victim; extract_pending_chars drains it on
+	// the next heartbeat, where extract_char_final returns a live descriptor to
+	// CON_MENU. No invented resurrection bytes reach the victim synchronously
+	// (R4).
+	w.QueuePlayerExtraction(player)
+	player.SetPosition(combat.PosDead)
 }
 
 // changeAlignment shifts a player's alignment based on the victim's alignment.
@@ -201,10 +249,10 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		mobVNum := 0
 		mobLevel := 0
 		if mob, ok := victim.(*MobInstance); ok && mob.Prototype != nil {
-			mobExp = mob.Prototype.Exp
+			mobExp = mob.GetExp()
 			mobGold = mob.Prototype.Gold
 			mobVNum = mob.Prototype.VNum
-			mobLevel = mob.Prototype.Level
+			mobLevel = mob.GetLevel()
 		}
 		roomName := ""
 		if room, ok := w.GetRoom(victim.GetRoom()); ok {
@@ -299,9 +347,16 @@ func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
 	}
 }
 
-// handleMobDeath implements raw_kill() for NPCs.
+// handleMobDeath implements the normal NPC death path.
 // Original: make_corpse (transfers inventory+equipment+gold), extract_char.
 func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant, attackType int) {
+	w.handleMobDeathWithAnnouncement(victim, killer, attackType, true)
+}
+
+// handleMobDeathWithAnnouncement is the shared NPC extraction/corpse path.
+// C raw_kill does not announce corpse creation; ordinary combat death keeps
+// the existing Go notification for its already-audited callers.
+func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer combat.Combatant, attackType int, announceCorpse bool) {
 	roomVNum := victim.GetRoom()
 
 	// Find the MobInstance
@@ -371,7 +426,11 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, corpseGold)
 	} else {
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true)
+		corpseKeywords := deadMob.GetName()
+		if deadMob.Prototype != nil && deadMob.Prototype.Keywords != "" {
+			corpseKeywords = deadMob.Prototype.Keywords
+		}
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true, corpseKeywords)
 		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoom failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		} else {
@@ -400,10 +459,15 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 		}
 	}
 
-	// Notify players in room
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
+	// The legacy C raw_kill path does not announce corpse creation. Keep the
+	// general Go notification for existing callers, but suppress it for the
+	// skill_message-backed ambush damage path (fight.c:1407-1450), whose room
+	// transcript is already proven byte-for-byte.
+	if announceCorpse && attackType != 191 && attackType != SkillCutthroatNum && attackType != SkillDisembowelNum && attackType != SkillSmackheadsNum {
+		players := w.GetPlayersInRoom(roomVNum)
+		for _, p := range players {
+			p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
+		}
 	}
 
 	// Decrement spawner instance count so the mob can respawn on next zone reset.
@@ -423,6 +487,23 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 			mob.Forget(deadMob.GetShortDesc())
 		}
 	}
+}
+
+// RawKillCombatant implements the C raw_kill tail for a command that owns its
+// authored act ordering. Player extraction stays on combat.RawKill's callback
+// bridge; NPCs use the game death path so their corpse and active-mob removal
+// are performed without combat XP/kills bookkeeping (R1/R3/R5e).
+func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
+	if victim == nil {
+		return
+	}
+	if victim.IsNPC() {
+		victim.StopFighting()
+		combat.DeathCry(victim)
+		w.handleMobDeathWithAnnouncement(victim, nil, attackType, false)
+		return
+	}
+	combat.RawKill(victim, attackType)
 }
 
 // handlePlayerDeath implements die()/die_with_killer() + raw_kill() for players.
@@ -708,6 +789,8 @@ const (
 const (
 	SkillBackstabNum    = 131
 	SkillBashNum        = 132
+	SkillCutthroatNum   = 143
+	SkillBearhugNum     = 142
 	SkillKickNum        = 134
 	SkillPunchNum       = 136
 	SkillBiteNum        = 150
@@ -715,12 +798,14 @@ const (
 	SkillTripNum        = 144
 	SkillSmackheadsNum  = 145
 	SkillSlugNum        = 146
+	SkillChargeNum      = 147
 	SkillSerpentKickNum = 156
 	SkillCircleNum      = 173
+	SkillGroinripNum    = 174
 	SkillDisembowelNum  = 184
 	SkillSleeperNum     = 187
 	SkillNeckbreakNum   = 190
-	SkillDragonKickNum  = 222
+	SkillDragonKickNum  = 188
 	SkillTigerPunchNum  = 223
 )
 
@@ -771,7 +856,7 @@ func attackTypeToCorpseAttack(attackType int) CorpseAttackType {
 	case 35: // SPELL_PETRIFY
 		return AttackPetrify
 	case TypeBludgeon, TypePound, TypePunch, TypeWhip,
-		SkillBashNum, SkillKickNum, SkillPunchNum, SkillDragonKickNum, SkillTigerPunchNum,
+		SkillBashNum, SkillBearhugNum, SkillKickNum, SkillPunchNum, SkillDragonKickNum, SkillTigerPunchNum,
 		SkillHeadbuttNum, SkillTripNum, SkillSmackheadsNum, SkillSlugNum, SkillSerpentKickNum:
 		return AttackBruised
 	case SkillBiteNum, TypeBite, TypeClaw, TypeSlash,
@@ -921,7 +1006,7 @@ func createMoneyDesc(amount int) string {
 
 // capitalize capitalizes the first letter of a string.
 func capitalize(s string) string {
-	if len(s) == 0 {
+	if s == "" {
 		return s
 	}
 	r := []rune(s)
@@ -929,6 +1014,12 @@ func capitalize(s string) string {
 		r[0] = r[0] - 32
 	}
 	return string(r)
+}
+
+// CapitalizeSentence uppercases the first rune, mirroring C act()'s CAP(lbuf)
+// (comm.c:2477) for messages assembled from lowercase $e/$n substitutions.
+func CapitalizeSentence(s string) string {
+	return capitalize(s)
 }
 
 // genderPronoun returns the possessive pronoun for the given sex value.
@@ -945,7 +1036,7 @@ func genderPronoun(sex int) string {
 	}
 }
 
-func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool) *ObjectInstance {
+func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool, keywordLists ...string) *ObjectInstance {
 	// src/fight.c make_corpse(): GET_OBJ_TYPE(corpse) = ITEM_CONTAINER
 	containerType := ITEM_CONTAINER
 	// src/utils.h IS_CORPSE(): GET_OBJ_TYPE == ITEM_CONTAINER && GET_OBJ_VAL(obj,3) == 1
@@ -975,9 +1066,16 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	}
 
 	// Name and descriptions — from make_corpse() in fight.c
-	// Keywords: "corpse <name>" matches how players target corpses and mortician searches
-	corpse.Runtime.Keywords = strings.ToLower(fmt.Sprintf("corpse %s", name))
-	corpse.Runtime.Name = fmt.Sprintf("%s corpse", name)
+	// C uses ch->player.name (the mob keyword list, not GET_NAME()) and appends
+	// " corpse".  Player callers have no separate keyword list, so their name
+	// remains the fallback.  This matters to commands such as carve, whose C
+	// path tests the generated corpse's original keywords.
+	corpseKeywords := name
+	if len(keywordLists) > 0 && keywordLists[0] != "" {
+		corpseKeywords = keywordLists[0]
+	}
+	corpse.Runtime.Keywords = strings.ToLower(fmt.Sprintf("%s corpse", corpseKeywords))
+	corpse.Runtime.Name = fmt.Sprintf("%s corpse", corpseKeywords)
 	corpse.Runtime.ShortDesc = fmt.Sprintf("the corpse of %s", name)
 	// Convert attack type to corpse description
 	corpseAttackType := attackTypeToCorpseAttack(attackType)

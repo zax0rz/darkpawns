@@ -1,0 +1,41 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_stand	stand	stand.already-standing	D2	command	oracle-green	position-basic	act.movement.c:701-706	STANDING arm (unmounted): "You are already standing."
+do_stand	stand	stand.from-sitting	D2	command	oracle-green	position-basic	act.movement.c:707-711	"You stand up." + position to STANDING; room pair proven in position-room.
+do_stand	stand	stand.from-resting	D2	command	oracle-green	position-basic	act.movement.c:712-716	"You stop resting, and stand up."
+do_stand	stand	stand.while-sleeping	D2	command	oracle-green	position-basic	act.movement.c:717-719	"You have to wake up first!" — no position change.
+do_stand	stand	stand.room-audience	D3	command	oracle-green	position-room	act.movement.c:709	"$n clambers to $s feet." with $s substitution, excludes the actor.
+do_stand	stand	stand.while-fighting	D2	command	oracle-green	position-fighting	act.movement.c:720-722	"Do you not consider fighting as standing?" Combat entry via the flee-combat trainee vehicle; the warmup pulse pad spends do_hit's WAIT_STATE(PULSE_VIOLENCE+2) on both engines (the wait fix itself is proven by hit.peaceful-wait-state). Port already faithful, pure coverage.
+do_stand	stand	stand.stunned-or-worse	D2	state	unit-green	TestPositionCommandsStunnedOrWorse	act.movement.c:723-729	C has no `set position` field (the live oracle returns "Can't set that!"); focused test drives POS_STUNNED through the default arm and proves actor/room bytes plus the POS_STANDING transition (R1/R4/R5e).
+do_sit	sit	sit.from-standing	D2	command	oracle-green	position-basic	act.movement.c:737-746	"You sit down." (unmounted); room line uses hide=FALSE in C.
+do_sit	sit	sit.already-sitting	D2	command	oracle-green	position-basic	act.movement.c:747-749	"You're sitting already."
+do_sit	sit	sit.from-resting	D2	command	oracle-green	position-basic	act.movement.c:750-754	"You stop resting, and sit up." + "$n stops resting."
+do_sit	sit	sit.while-sleeping	D2	command	oracle-green	position-basic	act.movement.c:755-757	"You have to wake up first." (no exclamation, unlike stand).
+do_sit	sit	sit.room-audience	D3	command	oracle-green	position-room	act.movement.c:741-752	"$n sits down." / "$n stops resting." with C's per-arm hide flags.
+do_sit	sit	sit.while-fighting	D2	command	oracle-green	position-fighting	act.movement.c:758-760	"Sit down while fighting? are you MAD?" Proven mid-fight after the pulse pad; pure coverage.
+do_sit	sit	sit.mounted-gate	D2	command	oracle-green	position-mounted-gates	act.movement.c:738-745	"You can't rest while mounted." (sit borrows rest's text — C quirk). Proven on the movement-mounted horse vehicle; port already faithful, pure coverage.
+do_sit	sit	sit.stunned-or-worse	D2	state	unit-green	TestPositionCommandsStunnedOrWorse	act.movement.c:761-765	C has no `set position` field; focused POS_STUNNED test proves the default arm, actor/room bytes, and POS_SITTING transition (R1/R4/R5e).
+do_rest	rest	rest.from-standing	D2	command	oracle-green	position-basic	act.movement.c:773-783	"You sit down and rest your tired bones." + "$n sits down and rests."
+do_rest	rest	rest.already-resting	D2	command	oracle-green	position-basic	act.movement.c:789-791	"You are already resting."
+do_rest	rest	rest.from-sitting	D2	command	oracle-green	position-basic	act.movement.c:784-788	"You rest your tired bones." + "$n rests."
+do_rest	rest	rest.while-sleeping	D2	command	oracle-green	position-basic	act.movement.c:792-794	"You have to wake up first."
+do_rest	rest	rest.room-audience	D3	command	oracle-green	position-room	act.movement.c:778	"$n sits down and rests."
+do_rest	rest	rest.while-fighting	D2	command	oracle-green	position-fighting	act.movement.c:795-797	"Rest while fighting?  Are you MAD?" (two spaces). Proven mid-fight; pure coverage.
+do_rest	rest	rest.mounted-gate	D2	command	oracle-green	position-mounted-gates	act.movement.c:774-782	"You can't rest while mounted." Proven on the horse vehicle; pure coverage.
+do_rest	rest	rest.stunned-or-worse	D4	state	unit-green	TestPositionCommandsStunnedOrWorse	act.movement.c:798-803	C has no `set position` field; focused POS_STUNNED test proves the default arm, its actor/room bytes, and C's POS_SITTING result rather than POS_RESTING (R1/R4/R5e).
+do_sleep	sleep	sleep.from-standing	D2	command	oracle-green	position-basic	act.movement.c:811-823	STANDING falls through the shared arm: "You go to sleep." + "$n lies down and falls asleep."
+do_sleep	sleep	sleep.from-sitting	D2	command	oracle-green	position-basic	act.movement.c:818-823	Shared STANDING/SITTING/RESTING arm.
+do_sleep	sleep	sleep.already-sleeping	D2	command	oracle-green	position-basic	act.movement.c:824-826	"You are already sound asleep."
+do_sleep	sleep	sleep.room-audience	D3	command	oracle-green	position-room	act.movement.c:821	"$n lies down and falls asleep."
+do_sleep	sleep	sleep.while-fighting	D2	command	oracle-green	position-fighting	act.movement.c:827-829	"Sleep while fighting?  Are you MAD?". Proven mid-fight; pure coverage.
+do_sleep	sleep	sleep.mounted-gate	D2	command	oracle-green	position-mounted-gates	act.movement.c:812-816	"You can't rest while mounted." (sleep borrows rest's text). Proven on the horse vehicle; pure coverage.
+do_sleep	sleep	sleep.stunned-or-worse	D2	state	unit-green	TestPositionCommandsStunnedOrWorse	act.movement.c:830-836	C has no `set position` field; focused POS_STUNNED test proves the default arm, including the room typo "$n ... lie down to sleep.", and POS_SLEEPING transition (R1/R4/R5e).
+do_wake	wake	wake.self-awaken	D2	command	oracle-green	position-basic	act.movement.c:875-879	"You awaken, and sit up." + "$n awakens." + position to SITTING.
+do_wake	wake	wake.already-awake	D2	command	oracle-green	position-basic	act.movement.c:873-874	"You are already awake..."
+do_wake	wake	wake.room-audience	D3	command	oracle-green	position-room	act.movement.c:877	"$n awakens."
+do_wake	wake	wake.self-by-name-while-sleeping	D2	command	oracle-green	position-wake-target	act.movement.c:847-849	"Maybe you should wake yourself up first."
+do_wake	wake	wake.target-success	D3	command	oracle-green	position-wake-target	act.movement.c:860-864	"You wake $M up." + "$n wakes up $N." (TO_NOTVICT) + victim to POS_SITTING.
+do_wake	wake	wake.target-vict-audience	D3	command	oracle-green	position-wake-target	act.movement.c:863	TO_VICT|TO_SLEEP delivery: the sleeping victim receives "You are awakened by $n." with the waker's name resolved.
+do_wake	wake	wake.target-already-awake	D2	command	oracle-green	position-wake-target	act.movement.c:854-855	"$E is already awake." ($E subjective pronoun).
+do_wake	wake	wake.target-noperson	D2	command	oracle-green	position-wake-target	act.movement.c:850-851	NOPERSON "No-one by that name here."
+do_wake	wake	wake.cant-wake-aff-sleep	D2	command	oracle-green-multiseed	sleep-spell-depth	act.movement.c:869-872	Live failed-save spell vehicle proves targeted AFF_SLEEP wake text across seeds; self magical-sleep arm remains pinned by TestPositionCommandsMountAndWake. "You can't wake up!" + "$n tosses and turns uncomfortably." and "You can't wake $M up!" are C-exact.
+do_wake	wake	wake.target-bad-shape	D2	state	unit-green	TestPositionCommandsMountAndWake	act.movement.c:858-859	Focused "stunned target is in bad shape" subtest drives POS_STUNNED and proves exact "$E's in pretty bad shape!\r\n" output with no position change; C has no set position field and no deterministic live vehicle (R1/R4/R5e).

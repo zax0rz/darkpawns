@@ -36,10 +36,11 @@ func cmdTitle(s *Session, args []string) error {
 		return nil
 	}
 
-	// Recover the full argument, then apply C's preprocessing.
+	// Recover the full argument, then apply C's preprocessing. The live C
+	// command path preserves doubled dollars on the direct send_to_char title
+	// acknowledgement, so do not collapse them here.
 	title := strings.Join(args, " ")
 	title = strings.TrimSpace(title)
-	title = strings.ReplaceAll(title, "$$", "$")
 	title = game.DeleteANSIControls(title)
 
 	switch {

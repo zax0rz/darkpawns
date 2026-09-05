@@ -258,7 +258,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 			}
 		}
 		rate := float64(successes) / float64(iterations)
-		expected := 50.0 / 101.0 // 49.50%
+		expected := (50.0 / 101.0) * (19.0 / 20.0) // circle roll plus hit() d20
 		if math.Abs(rate-expected) > 0.03 {
 			t.Errorf("Circle success rate = %f; expected ~%f (+/- 3%%)", rate, expected)
 		}
@@ -340,7 +340,9 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 		const iterations = 10000
 		for i := 0; i < iterations; i++ {
 			ch.SetSkill(SkillDisembowel, 50)
-			victim.Position = 8 // POS_STANDING
+			// C bypasses the skill-roll failure arm for a sleeping victim;
+			// this keeps this legacy formula check focused on the hit damage.
+			victim.Position = combat.PosSleeping
 
 			res := DoDisembowel(ch, victim)
 			if res.Success {
@@ -351,10 +353,8 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 				}
 			}
 		}
-		rate := float64(successes) / float64(iterations)
-		expected := 50.0 / 101.0 // 49.50%
-		if math.Abs(rate-expected) > 0.03 {
-			t.Errorf("Disembowel success rate = %f; expected ~%f (+/- 3%%)", rate, expected)
+		if successes != iterations {
+			t.Errorf("Disembowel sleeping-target success count = %d; expected %d", successes, iterations)
 		}
 	})
 

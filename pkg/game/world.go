@@ -22,6 +22,10 @@ import (
 // SendMessage calls route through Session.send (which writePump reads).
 type MessageSinkFunc func(playerName string, msg []byte)
 
+// MovementLookFunc renders the destination room for a connected player at the
+// exact point C calls look_at_room during do_simple_move.
+type MovementLookFunc func(player *Player)
+
 // CloseConnectionFunc is called when a player session should be forcibly closed
 // (e.g., do_quit). Set by the session manager.
 type CloseConnectionFunc func(playerName string)
@@ -44,12 +48,16 @@ type World struct {
 	snapshots *SnapshotManager
 
 	// Static world data (from parsed files)
-	rooms      map[int]*parser.Room
-	roomOrder  []int // room VNums in C world[] RNUM/load order
-	mobs       map[int]*parser.Mob
-	objs       map[int]*parser.Obj
-	zones      map[int]*parser.Zone
-	parsedData *parser.World // original parsed data, nil after boot
+	rooms     map[int]*parser.Room
+	roomOrder []int // room VNums in C world[] RNUM/load order
+	// sortedRoomVNums is the vnum-ascending copy of the room set; an index
+	// into it is exactly C's room rnum (see NewWorld). Read-only after boot:
+	// fixtures never add or remove rooms.
+	sortedRoomVNums []int
+	mobs            map[int]*parser.Mob
+	objs            map[int]*parser.Obj
+	zones           map[int]*parser.Zone
+	parsedData      *parser.World // original parsed data, nil after boot
 
 	// World path for reload support
 	WorldPath string
@@ -58,6 +66,9 @@ type World struct {
 	players    map[string]*Player   // keyed by player name
 	activeMobs map[int]*MobInstance // keyed by instance ID
 	nextMobID  int
+	// pendingPlayerExtractions is the explicit queue used by death paths that
+	// mirror C's extract_char() to next-heartbeat extract_pending_chars() flow.
+	pendingPlayerExtractions map[*Player]struct{}
 
 	// Room items: room VNum -> list of object instances
 	roomItems map[int][]*ObjectInstance
@@ -83,6 +94,9 @@ type World struct {
 
 	// Shop manager
 	shopManager common.ShopManager
+	// shopKeepers maps shopkeeper mob vnum -> shop behavior bitvector, loaded
+	// from the .shp files at boot (C: assign_the_shopkeepers).
+	shopKeepers map[int]int
 
 	// Event queue for timer-based scripted events
 	// Source: events.c event_init() — global event_q
@@ -110,6 +124,11 @@ type World struct {
 	// Set by the session manager on initialization. If nil, messages are silently dropped.
 	MessageSink MessageSinkFunc
 
+	// MovementLook is owned by the session layer because room rendering is a
+	// transport concern, but movement owns its ordering relative to arrivals,
+	// followers, and entry triggers.
+	MovementLook MovementLookFunc
+
 	// LibTextDir is the lib/text root (2010 static text + help), derived from
 	// the -world flag's parent at boot; "lib/text" when no source dir is known.
 	LibTextDir string
@@ -130,6 +149,12 @@ type World struct {
 	gossipMu      sync.RWMutex
 	gossipHistory []gossipEntry
 
+	// DNS cache — loaded from etc/dns on first use and kept in the same
+	// 257-bucket/prepend shape as C's dns_cache[] (db.h:194-201).
+	dnsMu     sync.Mutex
+	dnsCache  [dnsHashBuckets][]dnsEntry
+	dnsLoaded bool
+
 	// CommandExecFunc dispatches player commands through the session layer.
 	// Set by the session manager. If nil, executeCommand is a no-op.
 	CommandExecFunc CommandExecFunc
@@ -147,22 +172,23 @@ func (w *World) SetCombatEngine(ce CombatEngine) {
 // NewWorld creates a new game world from parsed data.
 func NewWorld(parsed *parser.World) (*World, error) {
 	w := &World{
-		rooms:           make(map[int]*parser.Room),
-		roomOrder:       make([]int, 0, len(parsed.Rooms)),
-		mobs:            make(map[int]*parser.Mob),
-		objs:            make(map[int]*parser.Obj),
-		zones:           make(map[int]*parser.Zone),
-		players:         make(map[string]*Player),
-		activeMobs:      make(map[int]*MobInstance),
-		nextMobID:       1,
-		roomItems:       make(map[int][]*ObjectInstance),
-		nextObjID:       1,
-		objectInstances: make(map[int]*ObjectInstance),
-		specRooms:       make(map[int]bool),
-		done:            make(chan bool),
-		shopManager:     nil,    // Will be set via SetShopManager
-		parsedData:      parsed, // Keep reference for door loading etc.
-		WorldPath:       "",     // Set externally for reload support
+		rooms:                    make(map[int]*parser.Room),
+		roomOrder:                make([]int, 0, len(parsed.Rooms)),
+		mobs:                     make(map[int]*parser.Mob),
+		objs:                     make(map[int]*parser.Obj),
+		zones:                    make(map[int]*parser.Zone),
+		players:                  make(map[string]*Player),
+		activeMobs:               make(map[int]*MobInstance),
+		nextMobID:                1,
+		pendingPlayerExtractions: make(map[*Player]struct{}),
+		roomItems:                make(map[int][]*ObjectInstance),
+		nextObjID:                1,
+		objectInstances:          make(map[int]*ObjectInstance),
+		specRooms:                make(map[int]bool),
+		done:                     make(chan bool),
+		shopManager:              nil,    // Will be set via SetShopManager
+		parsedData:               parsed, // Keep reference for door loading etc.
+		WorldPath:                "",     // Set externally for reload support
 	}
 
 	// Index rooms by VNum
@@ -173,6 +199,14 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		}
 		w.rooms[room.VNum] = room
 	}
+
+	// Build the rnum-equivalent index: C's world[] is strictly vnum-ascending
+	// (rooms load inside their zone's vnum range over an ascending zone table,
+	// and real_room() binary-searches it — db.c:3083), so the sorted vnum
+	// slice's indexes are exactly C room rnums.
+	w.sortedRoomVNums = make([]int, len(w.roomOrder))
+	copy(w.sortedRoomVNums, w.roomOrder)
+	sort.Ints(w.sortedRoomVNums)
 
 	// Index mobs by VNum
 	for i := range parsed.Mobs {
@@ -190,6 +224,15 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	for i := range parsed.Zones {
 		zone := &parsed.Zones[i]
 		w.zones[zone.Number] = zone
+	}
+
+	// Index shops by keeper vnum — C's assign_the_shopkeepers (shop.c:1232-1243)
+	// gives every shop's keeper the shop_keeper spec, which is what
+	// is_shopkeeper (mobprog.c:473) and ok_damage_shopkeeper test.
+	w.shopKeepers = make(map[int]int, len(parsed.Shops))
+	for i := range parsed.Shops {
+		shop := &parsed.Shops[i]
+		w.shopKeepers[shop.KeeperVNum] = shop.Bitvector
 	}
 
 	// Initialize event queue
@@ -294,6 +337,17 @@ func (w *World) GetPlayer(name string) (*Player, bool) {
 	return p, ok
 }
 
+// GetPlayers returns a snapshot of the currently online players.
+func (w *World) GetPlayers() []*Player {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	players := make([]*Player, 0, len(w.players))
+	for _, player := range w.players {
+		players = append(players, player)
+	}
+	return players
+}
+
 // GetPlayerByID finds a player by their instance ID.
 func (w *World) GetPlayerByID(id int) *Player {
 	w.mu.RLock()
@@ -384,6 +438,35 @@ func (w *World) AddPlayer(p *Player) error {
 		return fmt.Errorf("player %s already online", p.Name)
 	}
 
+	// Database-backed players already have persistent IDs. In a no-DB
+	// differential/runtime session, new characters start at ID 0; retain that
+	// first ID for fixture ownership, but give later zero-ID players distinct
+	// runtime IDs so ID↔name lookups (notably house guests) cannot alias them.
+	if p.ID == 0 {
+		zeroIDInUse := false
+		for _, existing := range w.players {
+			if existing.ID == 0 {
+				zeroIDInUse = true
+				break
+			}
+		}
+		if zeroIDInUse {
+			for candidate := 1; ; candidate++ {
+				used := false
+				for _, existing := range w.players {
+					if existing.ID == candidate {
+						used = true
+						break
+					}
+				}
+				if !used {
+					p.ID = candidate
+					break
+				}
+			}
+		}
+	}
+
 	p.mu.Lock()
 	p.worldRef = w
 	p.mu.Unlock()
@@ -456,6 +539,33 @@ func (w *World) GetRoomInWorld(vnum int) *parser.Room {
 	return w.rooms[vnum]
 }
 
+// RealRoomIndex returns the vnum-sorted room index (C's rnum) for vnum,
+// mirroring C real_room()'s binary search over the ascending world[] array
+// (db.c:3083). ok is false when the vnum has no room — C returns NOWHERE.
+func (w *World) RealRoomIndex(vnum int) (index int, ok bool) {
+	w.mu.RLock()
+	sorted := w.sortedRoomVNums
+	w.mu.RUnlock()
+	i := sort.SearchInts(sorted, vnum)
+	if i < len(sorted) && sorted[i] == vnum {
+		return i, true
+	}
+	return 0, false
+}
+
+// RoomVNumByIndex converts a vnum-sorted room index (C rnum) back to its
+// vnum. ok is false for an out-of-range index; callers on a valid rnum range
+// never hit that branch.
+func (w *World) RoomVNumByIndex(index int) (vnum int, ok bool) {
+	w.mu.RLock()
+	sorted := w.sortedRoomVNums
+	w.mu.RUnlock()
+	if index < 0 || index >= len(sorted) {
+		return 0, false
+	}
+	return sorted[index], true
+}
+
 // isLitLightSource returns true if the object is a working light source.
 // Source: src/handler.c has_light() — TypeFlag==ITEM_LIGHT and Values[1] > 0.
 func isLitLightSource(obj *ObjectInstance) bool {
@@ -483,6 +593,18 @@ func (w *World) GetRoomCount() int {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return len(w.rooms)
+}
+
+// GetRoomVNumAtIndex returns the room VNUM at the C world's stable RNUM
+// position. C spell_teleport draws a room index, while Go gameplay addresses
+// rooms by VNUM; this keeps the shared spell path's draw range and destination
+// selection faithful.
+func (w *World) GetRoomVNumAtIndex(index int) (int, bool) {
+	rooms := w.Rooms()
+	if index < 0 || index >= len(rooms) {
+		return 0, false
+	}
+	return rooms[index].VNum, true
 }
 
 // GetPlayerCount returns the number of online players.
@@ -1021,6 +1143,13 @@ func (w *World) StopAITicker() {
 
 // SpawnMob spawns a mob in the world.
 func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
+	return w.spawnMob(vnum, roomVNum, true)
+}
+
+// spawnMob creates a mob, optionally emitting the ordinary world-spawn
+// message. C read_mobile + char_to_room callers (such as stableboy) do not
+// emit that message, while regular world spawns do.
+func (w *World) spawnMob(vnum int, roomVNum int, announce bool) (*MobInstance, error) {
 	// H-11: Split into two phases to avoid blocking SendMessage while holding the write lock.
 
 	// Phase 1: Create mob under write lock.
@@ -1053,11 +1182,25 @@ func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	w.mu.Unlock()
 
 	// Phase 2: Notify outside the lock (SendMessage may block on channel buffer).
-	for _, player := range targets {
-		player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+	if announce {
+		for _, player := range targets {
+			player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
+		}
 	}
 
 	return mob, nil
+}
+
+// spawnMobQuiet matches C read_mobile followed by char_to_room.
+func (w *World) spawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
+	return w.spawnMob(vnum, roomVNum, false)
+}
+
+// SpawnMobQuiet creates a mob without the ordinary world-spawn announcement.
+// C do_load uses read_mobile followed by char_to_room, so its caller supplies
+// the command-specific narration instead (act.wizard.c:1315-1321).
+func (w *World) SpawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
+	return w.spawnMobQuiet(vnum, roomVNum)
 }
 
 // SpawnMobInstance is an alias for SpawnMob for compatibility.

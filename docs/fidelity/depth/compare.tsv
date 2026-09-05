@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_compare	compare	compare.missing-objects	D1	command	oracle-green	compare	interpreter.c:393; new_cmds.c:1952-2012	Empty or missing carried objects reach C's lookup failure and exact missing-object bytes; compare is not skill-gated.
+do_compare	compare	compare.same-object	D2	command	oracle-green	compare	new_cmds.c:1980-1983	Resolving the same carried object twice uses C's same-object refusal.
+do_compare	compare	compare.type-mismatch	D2	command	oracle-green	compare	new_cmds.c:1985-1989	A weapon and a non-weapon object use C's type-mismatch refusal.
+do_compare	compare	compare.weapon-result	D5	command	oracle-green-multiseed	compare@1,2,3,5,8	new_cmds.c:2018-2070	Two carried weapons exercise the C value arithmetic, percent/noise draw, result thresholds, capitalization, and byte output across seeds.
+do_compare	compare	compare.armor-result	D5	command	oracle-green-multiseed	compare@1,2,3,5,8	new_cmds.c:1991-2070	Two same-slot body armors exercise the C armor value arithmetic, percent/noise draw, result thresholds, capitalization, and byte output across seeds.
+do_compare	compare	compare.armor-slot-mismatch	D2	command	oracle-green	compare	new_cmds.c:1991-2016	Two armor objects with different wear slots use C's same-type-of-armor refusal before RNG.
+do_compare	compare	compare.non-comparable-type	D2	command	oracle-green	compare	new_cmds.c:1985-1990	Two distinct same-type non-armor objects reach C's weapons-and-armor-only refusal.
+do_compare	compare	compare.blind-gate	D1	state	unit-green	TestCmdCompare_Blind	new_cmds.c:1968-1971	The blindness early return is checked before carried-object resolution and preserves C's exact message.
+do_compare	compare	compare.fighting-gate	D1	state	unit-green	TestCmdCompare_Fighting	new_cmds.c:1974-1982	An active FIGHTING pointer takes C's busy refusal even when object lookup also fails.

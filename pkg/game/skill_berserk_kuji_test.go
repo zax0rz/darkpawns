@@ -2,6 +2,9 @@ package game
 
 import (
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // ---------------------------------------------------------------------------
@@ -31,6 +34,26 @@ func TestDoBerserk_AlreadyAffected(t *testing.T) {
 	}
 	if result.MessageToCh != "You're unable to summon your battle rage right now." {
 		t.Errorf("unexpected message: %q", result.MessageToCh)
+	}
+}
+
+func TestDoBerserk_AffectedGateConsumesPercentDraw(t *testing.T) {
+	const seed uint32 = 1
+	p := NewPlayer(1, "Berserker", 3001)
+	p.SetSkill(SkillBerserk, 75)
+	p.SetAffect(affBerserk, true)
+
+	dprng.ResetStream(seed)
+	dprng.Number(1, 101) // C's percent draw occurs before the affect gate.
+	wantNext := dprng.Number(0, 999)
+
+	dprng.ResetStream(seed)
+	result := DoBerserk(p)
+	if result.Success {
+		t.Fatal("already affected player should be rejected")
+	}
+	if got := dprng.Number(0, 999); got != wantNext {
+		t.Errorf("next RNG draw = %d, want %d after consuming C's percent draw", got, wantNext)
 	}
 }
 
@@ -82,6 +105,38 @@ func TestDoBerserk_ImproveSkillAlwaysCalled(t *testing.T) {
 	after := p.GetSkill(SkillBerserk)
 	if after < before {
 		t.Errorf("GetSkill(berserk) should never decrease: before=%d after=%d", before, after)
+	}
+}
+
+func TestDoBerserk_FailureStillInstallsInertAffectsAndWait(t *testing.T) {
+	p := NewPlayer(1, "Berserker", 3001)
+	p.SetSkill(SkillBerserk, 1)
+	dprng.ResetStream(1) // first number(1,101) is above skill 1
+
+	result := DoBerserk(p)
+	if result.Success {
+		t.Fatal("expected seed 1 to fail at berserk skill 1")
+	}
+	if result.MessageToCh != "You fail to summon up your battle rage." {
+		t.Errorf("failure message = %q", result.MessageToCh)
+	}
+	if result.WaitCh != 2 {
+		t.Errorf("WaitCh = %d, want 2 PULSE_VIOLENCE rounds", result.WaitCh)
+	}
+	if len(p.ActiveAffects) != 3 {
+		t.Fatalf("active affects = %d, want three C affect records", len(p.ActiveAffects))
+	}
+	wantLocations := []int{ApplyHitroll, ApplyDamroll, ApplyAC}
+	for i, affect := range p.ActiveAffects {
+		if affect.SpellID != skillNumBerserk || affect.Location != wantLocations[i] {
+			t.Errorf("affect %d = (spell %d, location %d), want (%d, %d)", i, affect.SpellID, affect.Location, skillNumBerserk, wantLocations[i])
+		}
+		if affect.Magnitude != 0 || affect.Duration != 1 || affect.Flags != engine.AFFBerserk {
+			t.Errorf("affect %d = (duration %d, magnitude %d, flags %d), want (1, 0, %d)", i, affect.Duration, affect.Magnitude, affect.Flags, engine.AFFBerserk)
+		}
+	}
+	if !p.IsAffected(affBerserk) {
+		t.Fatal("failed berserk attempt should still set AFF_BERSERK via the C affect record")
 	}
 }
 
@@ -284,7 +339,9 @@ func TestDoKujiKiri_ShaSuccessHeals(t *testing.T) {
 // TestDoKujiKiri_FailurePreventsNumericEffect verifies the failure-path
 // zeroing (new_cmds.c:1713-1721): on failure, Rin's AC modifier and the
 // metalskin flag must both be absent — the only observable effect should be
-// the kuji-kiri lockout. We can't force a deterministic failure roll, so we
+// the kuji-kiri lockout. Rin's af[0] uses APPLY_AC, so its lockout remains
+// separate from the failed default af[1] APPLY_SPELL record. We can't force a
+// deterministic failure roll, so we
 // approximate by using skill 1 (near-certain failure) and just assert that
 // IF the roll happened to fail, no AC change leaked through.
 func TestDoKujiKiri_FailurePreventsNumericEffect(t *testing.T) {

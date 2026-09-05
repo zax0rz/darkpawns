@@ -1,0 +1,84 @@
+# C-first group/do_group gate vehicle (src/interpreter.c:471; src/act.other.c:685-725).
+# A single in-room peer covers one_argument fill-word handling, NOPERSON, the
+# follower requirement, and the ch->master early refusal.
+
+# depth-case: group.no-argument-gate
+# depth-case: group.fill-word-no-argument
+# depth-case: group.missing-target
+# depth-case: group.target-must-follow
+# depth-case: group.master-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Groupgateleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groupgateleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Groupgatetarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Groupgatetarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Groupgatetarget 8162
+
+[probe]
+group
+group the
+group Nobody
+group Groupgatetarget trailing words are ignored
+follow Groupgatetarget
+group Groupgatetarget
+

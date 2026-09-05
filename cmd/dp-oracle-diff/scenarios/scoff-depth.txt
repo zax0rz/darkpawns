@@ -1,0 +1,81 @@
+# C-first scoff/do_action self-only vehicle (src/interpreter.c:675;
+# src/act.social.c:102-127; lib/misc/socials:1451-1453). The record has no
+# char_found message, so typed, missing, and self-looking targets all repeat
+# the actor/room no-argument pair. A peer exposes the room audience.
+
+# depth-case: scoff.no-argument
+# depth-case: scoff.typed-target-ignored
+# depth-case: scoff.missing-target-ignored
+# depth-case: scoff.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scoffactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scoffactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scoffpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scoffpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Scoffpeer 8162
+
+[probe]
+scoff
+scoff Scoffpeer
+scoff nobody
+scoff Scoffactor

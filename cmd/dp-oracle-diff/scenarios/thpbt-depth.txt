@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:767;
+# src/act.social.c:102-127; lib/misc/socials:1242-1245). The authored thpbt
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: thpbt.no-argument
+# depth-case: thpbt.typed-target-ignored
+# depth-case: thpbt.missing-target-ignored
+# depth-case: thpbt.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Thpbtactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thpbtactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Thpbtpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Thpbtpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Thpbtpeer 8162
+
+[probe]
+thpbt
+thpbt Thpbtpeer
+thpbt Nobody
+thpbt Thpbtactor

@@ -1,0 +1,46 @@
+# C-first do_leave no-outside-exit vehicle (src/interpreter.c:536;
+# src/act.movement.c:681-694). Room 8163 is patched indoor and all its exits
+# are removed, so the handler reaches its terminal refusal.
+
+# depth-case: leave.no-outside-exit
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8163 none
+set-room-flag 8163 3 on
+
+[setup:oracle]
+Leavenoexit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Leavenoexit
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8163
+
+[probe]
+leave

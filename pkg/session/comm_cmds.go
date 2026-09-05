@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -106,6 +107,13 @@ func cmdGossip(s *Session, args []string) error {
 func cmdEmote(s *Session, args []string) error {
 	if len(args) == 0 {
 		s.Send("Yes.. but what?")
+		return nil
+	}
+	// C do_echo's SCMD_EMOTE branch (act.wizard.c:135-141): a muted (PLR_NOSHOUT)
+	// or INT-0 actor cannot express themselves. Fires after the empty-argument
+	// gate, before any bytes reach the room.
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+		s.Send("You try to express yourself but cannot!")
 		return nil
 	}
 	action := sanitizeMessage(strings.Join(args, " "))
@@ -260,17 +268,26 @@ func cmdWrite(s *Session, args []string) error {
 // cmdPage sends an urgent message to one or more remote players.
 // Source: act.comm.c do_page() lines 1056-1084
 func cmdPage(s *Session, args []string) error {
-	if len(args) == 0 {
+	return cmdPageText(s, strings.Join(args, " "))
+}
+
+// cmdPageText keeps the raw remainder passed by C's half_chop. Unlike the
+// usual tokenized command arguments, this preserves internal and trailing
+// whitespace in the page body (act.comm.c:1112-1114).
+func cmdPageText(s *Session, argument string) error {
+	targetName, message := splitPageArguments(argument)
+	if targetName == "" {
 		s.Send("Whom do you wish to page?")
 		return nil
 	}
 
-	targetName := args[0]
-	message := strings.Join(args[1:], " ")
-
 	// Page message with bell chars for urgency — act.comm.c line 1068
 	// \007 is the bell character
 	pageText := fmt.Sprintf("\x07\x07*%s* %s", s.player.Name, message)
+	// C stores its CRLF in buf and act() appends another CRLF. Keep both
+	// endings; the extra blank line is observable when two act() calls target
+	// the same descriptor (notably page self).
+	cActText := pageText + "\r\n\r\n"
 
 	if strings.EqualFold(targetName, "all") {
 		if s.player.GetLevel() <= LVL_GOD {
@@ -280,26 +297,44 @@ func cmdPage(s *Session, args []string) error {
 		s.manager.mu.RLock()
 		defer s.manager.mu.RUnlock()
 		for _, target := range s.manager.sessions {
-			if target.player != nil && target.authenticated {
-				target.Send(pageText)
+			if target.player != nil && target.authenticated && target.player.GetPosition() > combat.PosSleeping {
+				target.Send(cActText)
 			}
 		}
 		return nil
 	}
 
-	target, ok := s.manager.GetSession(targetName)
-	if !ok || target.player == nil || !target.authenticated {
+	target := s
+	if !strings.EqualFold(targetName, "self") && !strings.EqualFold(targetName, "me") {
+		target = findSessionByName(s.manager, targetName)
+	}
+	if target == nil || target.player == nil || !target.authenticated {
 		s.Send("There is no such person in the game!")
 		return nil
 	}
-	target.Send(pageText)
+	if target.player.GetPosition() > combat.PosSleeping {
+		target.Send(cActText)
+	}
 	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
 		s.Send("Okay.")
 	} else {
-		s.Send(pageText)
+		s.Send(cActText)
 	}
 
 	return nil
+}
+
+// splitPageArguments mirrors C any_one_arg + skip_spaces: the target is the
+// first case-folded token, while the message keeps all remaining spacing.
+func splitPageArguments(argument string) (target, message string) {
+	argument = strings.TrimLeft(argument, cCommandWhitespace)
+	if argument == "" {
+		return "", ""
+	}
+	if idx := strings.IndexAny(argument, cCommandWhitespace); idx >= 0 {
+		return strings.ToLower(argument[:idx]), strings.TrimLeft(argument[idx+1:], cCommandWhitespace)
+	}
+	return strings.ToLower(argument), ""
 }
 
 // ---------------------------------------------------------------------------
@@ -322,6 +357,22 @@ func cmdAuction(s *Session, args []string) error {
 	return nil
 }
 
+// cmdHoller sends a message on the global holler channel.
+// Source: act.comm.c do_gen_comm() SCMD_HOLLER
+func cmdHoller(s *Session, args []string) error {
+	message := sanitizeMessage(strings.Join(args, " "))
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
+	}
+	s.manager.world.DoChannel(s.player, message, "holler")
+	return nil
+}
+
 // cmdGratz sends a message on the gratz channel.
 // Source: act.comm.c do_gen_comm() SCMD_GRATZ
 func cmdGratz(s *Session, args []string) error {
@@ -334,7 +385,7 @@ func cmdGratz(s *Session, args []string) error {
 		}
 		message = filtered
 	}
-	s.manager.world.DoChannel(s.player, message, "gratz")
+	s.manager.world.DoChannel(s.player, message, "grats")
 	return nil
 }
 
@@ -358,23 +409,18 @@ func cmdNewbieChannel(s *Session, args []string) error {
 // cmdCTell sends a message on the clan tell channel.
 // Source: act.comm.c do_ctell()
 func cmdCTell(s *Session, args []string) error {
-	// C do_ctell (act.comm.c:1451) rejects a clanless mortal BEFORE anything
-	// else — "You're not part of a clan." — ahead of argument/broadcast logic.
-	if s.player.ClanID == 0 || s.player.ClanRank == 0 {
-		s.sendText("You're not part of a clan.\r\n")
-		return nil
-	}
-	if len(args) == 0 {
-		s.Send("What do you want to tell your clan?")
-		return nil
-	}
 	message := sanitizeMessage(strings.Join(args, " "))
-	filtered, block := filterCommMessage(s, message)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
+	if len(args) > 0 {
+		filtered, block := filterCommMessage(s, message)
+		if block {
+			s.sendText("Your message was blocked.")
+			return nil
+		}
+		message = filtered
 	}
-	message = filtered
+	// C do_ctell handles the immortal clan-number syntax and all sender/channel
+	// gates inside the command path (act.comm.c:1451-1565). Keep those gates in
+	// the game layer so direct ExecCTell callers and player dispatch agree.
 	s.manager.world.ExecCTell(s.player, message)
 	return nil
 }

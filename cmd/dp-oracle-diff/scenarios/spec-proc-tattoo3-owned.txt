@@ -1,0 +1,46 @@
+# depth-case: mob.tattoo3-owned-gate
+# C-first vehicle for tattoo3's already-tattooed gate. State is configured in
+# drained warmup so the compared transcript contains only Polywig's tell.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21244 1 21281 212
+strip-mob-script 21244
+replace-room-exits 21281 none
+
+[setup:oracle]
+TattooThreeOwned
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooThreeOwned
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21281
+set TattooThreeOwned tattoo 1
+
+[probe]
+buy 0

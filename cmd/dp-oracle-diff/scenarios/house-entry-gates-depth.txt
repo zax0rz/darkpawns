@@ -1,0 +1,43 @@
+# C-first house entry-gate vehicle (src/interpreter.c:502;
+# src/house.c:603-718). The actor is in an ordinary starting room, so the
+# ROOM_HOUSE gate returns before any house-control lookup or argument parsing.
+
+# depth-case: house.entry-gate
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Housegate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Housegate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+~dpclock pulse 20
+
+[probe]
+house

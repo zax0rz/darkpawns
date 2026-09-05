@@ -199,7 +199,10 @@ func (o *ObjectInstance) AddToContainer(obj *ObjectInstance) bool {
 		return false
 	}
 
-	o.Contains = append(o.Contains, obj)
+	// C obj_to_obj (handler.c:948) links the object at the HEAD of the
+	// container's list, so contents render newest-first (the mode-15 list
+	// reverses that back to insertion order, matching C).
+	o.Contains = append([]*ObjectInstance{obj}, o.Contains...)
 	return true
 }
 

@@ -1,0 +1,73 @@
+# C-first send privilege vehicle (src/interpreter.c:681; src/act.wizard.c).
+# A mortal probe actor reaches the registered LVL_GOD gate.
+
+# depth-case: send.level-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sendgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sendgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Sendmortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Sendmortal
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sendmortal 8162
+
+[probe:mortal]
+send Sendgod denied

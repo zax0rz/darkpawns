@@ -1,0 +1,112 @@
+# C-first blink/do_action vehicle (src/interpreter.c:360;
+# src/act.social.c:102-151; lib/misc/socials:1401-1405). The registered
+# command requires POS_RESTING. Its social record has hide=0 and only the
+# no-argument actor/room pair before #, so every supplied argument is ignored.
+
+# depth-case: blink.no-argument
+# depth-case: blink.typed-target-ignored
+# depth-case: blink.missing-target-ignored
+# depth-case: blink.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ragnar
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ragnar
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Ragnar 8162
+
+[probe]
+blink
+blink Ragnar
+blink Nobody
+blink Mordecai
+

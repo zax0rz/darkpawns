@@ -1,0 +1,36 @@
+# depth-case: use.no-arg
+# depth-case: use.item-lookup-equipped
+# depth-case: use.equipped-non-wand
+[fixture]
+quiet-mobs
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+use
+wear tunic
+use tunic

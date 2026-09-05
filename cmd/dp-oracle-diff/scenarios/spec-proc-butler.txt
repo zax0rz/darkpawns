@@ -1,0 +1,107 @@
+# depth-case: mob.butler-entry-gates
+# depth-case: mob.butler-required-containers
+# depth-case: mob.butler-can-get-predicate
+# depth-case: mob.butler-four-item-cap
+# depth-case: mob.butler-type-routing
+# depth-case: mob.butler-get-audience
+# depth-case: mob.butler-container-open-close
+# depth-case: mob.butler-capacity-gate
+# depth-case: mob.butler-transfer-state
+# depth-case: mob.butler-pulse-dispatch
+# C-first vehicle for SPECIAL(butler), registered for mob vnum 8092 at
+# src/spec_assign.c:300 and defined in src/spec_procs3.c:144-196. The authored
+# servant is spawned in a disposable room with the three required containers.
+# The actor drops the test objects after login so the peer observes the room
+# Act audience and the post-pulse container state.
+# C path: src/mobact.c:68-93 -> src/spec_procs3.c:144-196;
+# CAN_GET_OBJ is src/utils.h:547-549; perform_put is src/act.item.c:53-65;
+# container open/close is src/act.movement.c:477-515.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8092 1 8105 80
+spawn-obj 8066 1 8105 80
+spawn-obj 8067 1 8105 80
+spawn-obj 8068 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+ButlerGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ButlerGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ButlerPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ButlerPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ButlerPeer 8105
+load obj 8019
+drop tunic
+load obj 8037
+drop sword
+load obj 8010
+drop bread
+load obj 8010
+drop bread
+load obj 8064
+drop board
+
+[probe]
+~dpclock pulse 40
+open case
+open cabinet
+open chest
+get bread chest
+gold

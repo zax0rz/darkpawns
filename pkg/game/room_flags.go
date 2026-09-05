@@ -40,8 +40,10 @@ const (
 )
 
 // roomHasFlagBit checks if a room's decimal flag array has a specific bit set.
+// The parser stores the C room flag words as decimal strings; each word is a
+// 32-bit bitvector, so the first word carries bits 0 through 31.
 func roomHasFlagBit(flags []string, flagBit int) bool {
-	if len(flags) < 1 {
+	if flagBit < 0 {
 		return false
 	}
 	word := flagBit / 32
@@ -54,6 +56,24 @@ func roomHasFlagBit(flags []string, flagBit int) bool {
 		return false
 	}
 	return val&(1<<uint(bit)) != 0
+}
+
+// setRoomFlagBit applies a runtime C ROOM_* bit to the parser's four 32-bit
+// decimal flag words. It is used by handlers whose C path mutates ROOM_FLAGS.
+func setRoomFlagBit(room *parser.Room, flagBit int) {
+	if room == nil || flagBit < 0 || flagBit >= 64 {
+		return
+	}
+	word := flagBit / 32
+	bit := uint(flagBit % 32)
+	for len(room.Flags) <= word {
+		room.Flags = append(room.Flags, "0")
+	}
+	value, err := strconv.ParseUint(room.Flags[word], 10, 64)
+	if err != nil {
+		return
+	}
+	room.Flags[word] = strconv.FormatUint(value|(1<<bit), 10)
 }
 
 // roomFlagBitByName resolves the names used by C, room displays, and legacy Go
@@ -121,6 +141,13 @@ func roomHasNamedFlag(room *parser.Room, flag string) bool {
 		}
 	}
 	return false
+}
+
+// HasRoomFlag reports whether a room carries the named C room flag. It is the
+// read-only boundary for command packages that must apply the same parsed
+// room-flag semantics as game logic.
+func HasRoomFlag(room *parser.Room, flag string) bool {
+	return roomHasNamedFlag(room, flag)
 }
 
 // hasWearFlag checks if a [4]int wear flags array has a specific bit set.

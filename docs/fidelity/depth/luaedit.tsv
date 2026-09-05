@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_luaedit	luaedit	luaedit.superseded-by-web-admin	D5	command	excluded	-	interpreter.c:546; luaedit.c:28-58; docs/port-reachability-map.md:289-306; docs/briefs/port-fidelity-audit-brief.md:75	The C handler is an in-game Lua directory/view/edit tool, but the port explicitly supersedes OLC and builder editing with the mounted web admin; Go has no in-game OLC command surface. Do not re-port this legacy editor or invent a substitute command (R4/R5e).

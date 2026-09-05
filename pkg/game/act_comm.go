@@ -13,22 +13,6 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// Race constants (matching structs.h RACE_*)
-// ---------------------------------------------------------------------------
-const (
-	raceDwarf      = 1
-	raceElf        = 2
-	raceGnoll      = 3
-	raceDraconian  = 4
-	raceGiantish   = 5
-	raceUndead     = 6
-	raceDrow       = 7
-	raceRakshasa   = 8
-	raceDeepDwarf  = 9
-	raceSurfaceElf = 10
-)
-
-// ---------------------------------------------------------------------------
 // Position constants — canonical source: pkg/combat/formulas.go
 // ---------------------------------------------------------------------------
 const (
@@ -48,29 +32,12 @@ const (
 // These go into p.Flags (uint64).
 // ---------------------------------------------------------------------------
 const (
-	plrNoShout    uint64 = 1 << 0
+	plrNoShout    uint64 = 1 << PlrNoshout
 	PLR_INVISIBLE uint64 = 1 << 1
 	_                    = 1 << 2
 	_                    = 1 << 3
 	plrWriting    uint64 = 1 << 4
 	plrOutlaw     uint64 = 1 << 5
-)
-
-// ---------------------------------------------------------------------------
-// PRF flags (Preference flags) — use high bits of p.Flags since low bits
-// are taken by PLR_*. The C code has these as separate bits in PRF_FLAGS.
-// ---------------------------------------------------------------------------
-const (
-	prfNoTell   uint64 = 1 << 16
-	prfNoShout  uint64 = 1 << 17
-	prfNoGossip uint64 = 1 << 18
-	prfNoAuct   uint64 = 1 << 19
-	prfNoGratz  uint64 = 1 << 20
-	prfNoNewbie uint64 = 1 << 21
-	prfNoRepeat uint64 = 1 << 22
-	prfDeaf     uint64 = 1 << 23
-	prfAfk      uint64 = 1 << 24
-	prfNoCtell  uint64 = 1 << 25
 )
 
 // ---------------------------------------------------------------------------
@@ -87,7 +54,7 @@ const (
 	noBody         = -1
 	levelCanShout  = 2 // C: level_can_shout = 2 (src/config.c)
 	levelCanGossip = 5
-	hollerMoveCost = 10
+	hollerMoveCost = 20
 	maxNoteLength  = 1000
 )
 
@@ -102,45 +69,38 @@ type syllable struct {
 	new string
 }
 
+// applySyllableSubstitution ports the C speak_* loop (act.comm.c speak_drunk /
+// speak_elven / speak_dwarven, all the same shape). Two quirks are load-bearing:
+// the inner table scan has NO break — a match appends and advances the cursor,
+// then the scan CONTINUES from the next entry at the NEW position, so an
+// earlier entry can never match text revealed by a later match in the same
+// pass ("the killer" renders "th' killer": after "the " matches, "kill" is
+// already passed and 'k' falls to the identity entry) — and each pass appends
+// at most ONE unmatched byte. Longest-match-per-position substitution is NOT
+// equivalent (it would emit "th' murderizeer ish here"). Byte-oriented like
+// the C strcat/strncat calls.
 func applySyllableSubstitution(input string, syls []syllable) string {
 	if input == "" {
 		return ""
 	}
-	runes := []rune(input)
-	var out strings.Builder
-	out.Grow(len(runes) * 2)
+	out := make([]byte, 0, len(input)*2)
 	pos := 0
-	for pos < len(runes) {
-		matched := false
-		bestLen := 0
-		bestNew := ""
+	for pos < len(input) {
 		for _, s := range syls {
-			sr := []rune(s.org)
-			if len(sr) == 0 || pos+len(sr) > len(runes) {
+			if s.org == "" {
 				continue
 			}
-			match := true
-			for i := 0; i < len(sr); i++ {
-				if runes[pos+i] != sr[i] {
-					match = false
-					break
-				}
-			}
-			if match && len(sr) > bestLen {
-				bestLen = len(sr)
-				bestNew = s.new
-				matched = true
+			if strings.HasPrefix(input[pos:], s.org) {
+				out = append(out, s.new...)
+				pos += len(s.org)
 			}
 		}
-		if matched {
-			out.WriteString(bestNew)
-			pos += bestLen
-		} else {
-			out.WriteRune(runes[pos])
+		if pos < len(input) {
+			out = append(out, input[pos])
 			pos++
 		}
 	}
-	return out.String()
+	return string(out)
 }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +137,58 @@ var rakSyllables = []syllable{
 	{"ck", "k"},
 	{"cks", "th"},
 	{"the ", "(growl) "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "Q"},
+	{"D", "E"},
+	{"E", "Ii"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "Rr"},
+	{"M", "W"},
+	{"N", "Rr"},
+	{"O", "A"},
+	{"P", "Ss"},
+	{"Q", "D"},
+	{"R", "F"},
+	{"S", "G"},
+	{"T", "H"},
+	{"U", "Ii"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "q"},
+	{"d", "e"},
+	{"e", "ii"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "rr"},
+	{"m", "w"},
+	{"n", "rr"},
+	{"o", "a"},
+	{"p", "ss"},
+	{"q", "d"},
+	{"r", "f"},
+	{"s", "g"},
+	{"t", "h"},
+	{"u", "ii"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
 }
 
 var dwarfSyllables = []syllable{
@@ -212,6 +224,58 @@ var dwarfSyllables = []syllable{
 	{"ck", "k"},
 	{"cks", "ks"},
 	{"the ", "t'el "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "'"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "'"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "'"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "'s"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "'"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
 }
 
 var elfSyllables = []syllable{
@@ -246,145 +310,402 @@ var elfSyllables = []syllable{
 	{"ck", "llin"},
 	{"cks", "llins"},
 	{"the ", "a "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "Q"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "q"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ss"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
 }
 
-var gnollSyllables = []syllable{
+var kenderSyllables = []syllable{
 	{" ", " "},
-	{"are", "is"},
-	{"and", "n"},
-	{"be", "be"},
-	{"how", "ow"},
-	{"what", "wot"},
-	{"is", "be"},
+	{"are", "ese"},
+	{"and", "ete"},
+	{"be", "este"},
+	{"how", "angti"},
+	{"what", "astem"},
+	{"is", "en"},
 	{"ou", "a"},
-	{"where", "wherr"},
-	{"me", "me"},
+	{"where", "tu'ke"},
+	{"me", "ki'ga"},
 	{"dwarf", "dwarf"},
 	{"elf", "elf"},
+	{"Elf", "Elvinisti"},
 	{"fucking", "fucking"},
 	{"serapis", "Serapis"},
 	{"Serapis", "Serapis"},
-	{"kill", "k'll"},
-	{"kender", "kender"},
+	{"kill", "beligant"},
+	{"kender", "kenderkin"},
 	{"centaur", "centaur"},
 	{"rakshasa", "rakshasa"},
 	{"Rakshasa", "Rakshasa"},
 	{"human", "human"},
-	{"elven", "elven"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
 	{"dwarven", "dwarven"},
-	{"god", "gud"},
-	{"God", "Gud"},
-	{"who", "oo"},
-	{"ck", "k"},
-	{"cks", "ks"},
-	{"the ", "da "},
+	{"god", "deus"},
+	{"God", "Deorum"},
+	{"who", "quelsteno"},
+	{"ck", "llin"},
+	{"cks", "llins"},
+	{"the ", "a "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "Q"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
 	{"a", "a"},
-	{"an", "an"},
-	{"you", "yous"},
-	{"they", "dem"},
-	{"them", "dem"},
-	{"i", "me"},
-	{"my", "me"},
-	{"your", "yer"},
-	{"have", "as"},
-	{"for", "fer"},
-	{"of", "o"},
-	{"to", "ta"},
-	{"will", "wo"},
-	{"can", "ken"},
-	{"orc", "orc"},
-	{"good", "gud"},
+	{"b", "b"},
+	{"c", "q"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ss"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
 }
 
-var draconianSyllables = []syllable{
+var minotaurSyllables = []syllable{
 	{" ", " "},
-	{"are", "or"},
-	{"and", "sz"},
-	{"be", "be"},
-	{"how", "ha"},
-	{"what", "wat"},
-	{"is", "xith"},
-	{"ou", "x"},
-	{"where", "wher"},
-	{"me", "xi"},
-	{"dwarf", "zex"},
-	{"elf", "zel"},
+	{"are", "era"},
+	{"and", "ef"},
+	{"be", "f'let"},
+	{"how", "hi'fen"},
+	{"what", "f'akal"},
+	{"is", "ge'tur"},
+	{"ou", "affah"},
+	{"where", "f'akan"},
+	{"me", "kill'tur"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
 	{"fucking", "fucking"},
-	{"serapis", "Xith'xis"},
-	{"Serapis", "Xith'xis"},
-	{"kill", "k'xith"},
-	{"kender", "kix'zel"},
-	{"centaur", "zen'tor"},
-	{"rakshasa", "xak'sa"},
-	{"Rakshasa", "Xak'sa"},
-	{"human", "xuman"},
-	{"elven", "zelven"},
-	{"dwarven", "zexen"},
-	{"god", "zexon"},
-	{"God", "Zexon"},
-	{"who", "xi"},
-	{"ck", "x"},
-	{"cks", "xis"},
-	{"the ", "zo "},
-	{"a", "ha"},
-	{"th", "zz"},
-	{"you", "xiu"},
-	{"e", "zek"},
-	{"to", "kix"},
-	{"or", "vyz"},
-	{"dragon", "vur"},
-	{"orc", "rex"},
-	{"gnoll", "zev"},
-}
-
-var giantishSyllables = []syllable{
-	{" ", " "},
-	{"are", "arr"},
-	{"and", "n"},
-	{"be", "be"},
-	{"how", "hoo"},
-	{"what", "wot"},
-	{"is", "iz"},
-	{"ou", "oo"},
-	{"where", "wur"},
-	{"me", "me"},
-	{"dwarf", "dwar"},
-	{"elf", "elf"},
-	{"fucking", "fookin"},
-	{"serapis", "Serap"},
-	{"Serapis", "Serap"},
-	{"kill", "k'rush"},
-	{"kender", "kender"},
-	{"centaur", "sentaur"},
-	{"rakshasa", "raksha"},
-	{"Rakshasa", "Raksha"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "f'else"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
 	{"human", "human"},
-	{"elven", "elven"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
 	{"dwarven", "dwarven"},
-	{"god", "gor"},
-	{"God", "Gor"},
-	{"who", "oo"},
-	{"ck", "k"},
-	{"cks", "ks"},
-	{"the ", "da "},
+	{"god", "fel'kur"},
+	{"God", "Fel'kur"},
+	{"who", "f'il"},
+	{"ck", "'f"},
+	{"cks", "'fs"},
+	{"the ", "(growl) "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "F"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "F"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
 	{"a", "a"},
-	{"to", "tuh"},
-	{"you", "yoo"},
-	{"with", "wiv"},
-	{"giant", "gigant"},
-	{"your", "yer"},
+	{"b", "b"},
+	{"c", "f"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ff"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "f"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
 }
 
-var deadspeakSyllables = []syllable{
+var ssaurSyllables = []syllable{
 	{" ", " "},
-	{"a", "au"},
-	{"e", "eu"},
-	{"i", "ei"},
-	{"o", "ou"},
-	{"u", "uu"},
-	{"the ", "theu "},
-	{"is", "eis"},
-	{"of", "eof"},
+	{"are", "era"},
+	{"and", "ef"},
+	{"be", "f'ess"},
+	{"how", "hi'fen"},
+	{"what", "f'esal"},
+	{"is", "ge'tur"},
+	{"ou", "affah"},
+	{"where", "f'akan"},
+	{"me", "kiss'tur"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "f'else"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "fel'kur"},
+	{"God", "Fel'kur"},
+	{"who", "f'il"},
+	{"ck", "'f"},
+	{"cks", "'fs"},
+	{"the ", "(growl) "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "S"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "F"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "S"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "F"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "s"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "f"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "s"},
+	{"o", "a"},
+	{"p", "ff"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "f"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+
+var humanSyllables = []syllable{
+	{" ", " "},
+	{"are", "ar"},
+	{"and", "yet"},
+	{"be", "be"},
+	{"how", "keen"},
+	{"what", "forsuth"},
+	{"is", "ist"},
+	{"ou", "e"},
+	{"where", "withal"},
+	{"me", "mine"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "todeth"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "yihew"},
+	{"God", "Yihew"},
+	{"who", "wih"},
+	{"ck", "keth"},
+	{"cks", "keths"},
+	{"the ", "doth "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "K"},
+	{"D", "L"},
+	{"E", "I"},
+	{"F", "P"},
+	{"G", "G"},
+	{"H", "Th"},
+	{"I", "U"},
+	{"J", "G"},
+	{"K", "K"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "Th"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "k"},
+	{"d", "l"},
+	{"e", "i"},
+	{"f", "p"},
+	{"g", "g"},
+	{"h", "th"},
+	{"i", "u"},
+	{"j", "g"},
+	{"k", "k"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "v"},
+	{"o", "a"},
+	{"p", "s"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "th"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
 }
 
 // ---------------------------------------------------------------------------
@@ -394,12 +715,10 @@ var deadspeakSyllables = []syllable{
 func speakRakshasan(said string) string { return applySyllableSubstitution(said, rakSyllables) }
 func speakDwarven(said string) string   { return applySyllableSubstitution(said, dwarfSyllables) }
 func speakElven(said string) string     { return applySyllableSubstitution(said, elfSyllables) }
-func speakGnoll(said string) string     { return applySyllableSubstitution(said, gnollSyllables) }
-func speakDraconian(said string) string { return applySyllableSubstitution(said, draconianSyllables) }
-
-func speakGiantish(said string) string { return applySyllableSubstitution(said, giantishSyllables) }
-
-func speakDeadspeak(said string) string { return applySyllableSubstitution(said, deadspeakSyllables) }
+func speakKender(said string) string    { return applySyllableSubstitution(said, kenderSyllables) }
+func speakMinotaur(said string) string  { return applySyllableSubstitution(said, minotaurSyllables) }
+func speakSsaur(said string) string     { return applySyllableSubstitution(said, ssaurSyllables) }
+func speakHuman(said string) string     { return applySyllableSubstitution(said, humanSyllables) }
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -413,8 +732,89 @@ func skipSpaces(s string) string {
 	return s
 }
 
-// oneArgument splits input into (firstWord, restAfterFirst).
+// fillWord reports whether a word is one of C's fill[] words (interpreter.c:853)
+// that one_argument/two_arguments skip when parsing command arguments.
+func fillWord(word string) bool {
+	switch strings.ToLower(word) {
+	case "in", "from", "with", "the", "on", "at", "to":
+		return true
+	}
+	return false
+}
+
+// oneArgument copies the first non-fill-word argument (lowercased) into the
+// first return value and returns the remainder, mirroring C one_argument
+// (interpreter.c:1265): leading fill words are skipped and the argument is
+// case-folded. The remainder preserves its original case.
 func oneArgument(input string) (string, string) {
+	for {
+		input = skipSpaces(input)
+		if input == "" {
+			return "", ""
+		}
+		fields := strings.Fields(input)
+		word := fields[0]
+		rest := skipSpaces(strings.TrimPrefix(input, word))
+		if lower := strings.ToLower(word); !fillWord(lower) {
+			return lower, rest
+		}
+		input = rest
+	}
+}
+
+// OneArgument exposes C one_argument parsing to command packages. It returns
+// the first non-fill-word token lowercased, matching interpreter.c:1265.
+func OneArgument(input string) (string, string) {
+	return oneArgument(input)
+}
+
+// oneWordArg copies the first non-fill-word token, accepting a double-quoted
+// span as one token, and returns the remainder. This mirrors C one_word
+// (interpreter.c:1291), which do_mold uses for the new object's name.
+func oneWordArg(input string) (string, string) {
+	for {
+		input = skipSpaces(input)
+		if input == "" {
+			return "", ""
+		}
+
+		var word, rest string
+		if input[0] == '"' {
+			quoted := input[1:]
+			if close := strings.IndexByte(quoted, '"'); close >= 0 {
+				word = quoted[:close]
+				rest = quoted[close+1:]
+			} else {
+				word = quoted
+				rest = ""
+			}
+		} else if split := strings.IndexByte(input, ' '); split >= 0 {
+			word = input[:split]
+			rest = input[split:]
+		} else {
+			word = input
+		}
+
+		word = strings.ToLower(word)
+		rest = skipSpaces(rest)
+		if !fillWord(word) {
+			return word, rest
+		}
+		input = rest
+	}
+}
+
+// OneWord exposes C one_word parsing to command packages. It lowercases the
+// returned token and preserves the remainder's original case.
+func OneWord(input string) (string, string) {
+	return oneWordArg(input)
+}
+
+// halfChop splits the first whitespace-delimited word from the rest, mirroring
+// C half_chop (interpreter.c:1372). It calls any_one_arg, which lowercases the
+// first token but does NOT skip fill words; the remainder keeps its original
+// case. e.g. "Bob Hello THERE" -> "bob", "Hello THERE".
+func halfChop(input string) (string, string) {
 	input = skipSpaces(input)
 	if input == "" {
 		return "", ""
@@ -424,14 +824,8 @@ func oneArgument(input string) (string, string) {
 		return "", ""
 	}
 	word := fields[0]
-	rest := strings.TrimPrefix(input, word)
-	rest = skipSpaces(rest)
-	return word, rest
-}
-
-// halfChop splits first word from rest (mirrors C half_chop).
-func halfChop(input string) (string, string) {
-	return oneArgument(input)
+	rest := skipSpaces(strings.TrimPrefix(input, word))
+	return strings.ToLower(word), rest
 }
 
 // AllPlayers returns a snapshot of all connected players.

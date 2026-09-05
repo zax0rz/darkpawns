@@ -1,0 +1,47 @@
+# C-first peaceful-room gate for do_smackheads (src/new_cmds.c:1035-1037).
+# Valid targets are present so the room check is reached after lookup.
+
+# depth-case: smackheads.peaceful-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 on
+spawn-mob 5 1 8105 80
+spawn-mob 16302 1 8105 80
+
+[setup:oracle]
+Smackpeace
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Smackpeace
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Smackpeace 'smackheads' 75
+
+[probe]
+smackheads generic recruit

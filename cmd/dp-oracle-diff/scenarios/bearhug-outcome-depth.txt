@@ -1,0 +1,84 @@
+# depth-case: bearhug.success-message-and-state
+#
+# C-first legal bearhug opener.  Skill 75 exercises both the set-142 failure
+# and success arms across the shared seed matrix while the quiet trainee keeps
+# later combat pulses deterministic.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bearhugfailuregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bearhugfailuregod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Bearhugfailuremortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Bearhugfailuremortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Bearhugfailuremortal 'bearhug' 75
+
+[probe:mortal]
+bearhug trainee
+~dpclock pulse 20
+~dpclock pulse 20

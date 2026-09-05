@@ -17,11 +17,12 @@ type AgentClient struct {
 	conn    *WSConn
 	state   *GameState
 	session *SessionLogger
+	be      *BehaviorEngine
 }
 
 // NewAgentClient creates a new agent client with the given config.
 func NewAgentClient(cfg *AgentConfig) *AgentClient {
-	return &AgentClient{Cfg: cfg}
+	return &AgentClient{Cfg: cfg, be: NewBehaviorEngine()}
 }
 
 // GameState holds the latest structured state from the server.
@@ -72,10 +73,26 @@ type Event struct {
 	Data any    `json:"data"`
 }
 
+// wsScheme returns the WebSocket URL scheme for the given config: "wss" when
+// Secure is enabled so the API key is not transmitted in plaintext, "ws" otherwise.
+func wsScheme(cfg *AgentConfig) string {
+	if cfg.Secure {
+		return "wss"
+	}
+	return "ws"
+}
+
 // Connect establishes a WebSocket connection and authenticates.
 func (a *AgentClient) Connect(ctx context.Context) error {
-	addr := fmt.Sprintf("ws://%s:%d/ws", a.Cfg.GameHost, a.Cfg.GamePort)
+	addr := fmt.Sprintf("%s://%s:%d/ws", wsScheme(a.Cfg), a.Cfg.GameHost, a.Cfg.GamePort)
 	slog.Debug("connecting", "addr", addr)
+
+	// Close any previous connection so reconnects don't leak the old
+	// socket and its read goroutine (DP-1184).
+	if a.conn != nil {
+		_ = a.conn.Close()
+		a.conn = nil
+	}
 
 	headers := http.Header{}
 	if key := a.Cfg.EffectiveKey(); key != "" {
@@ -250,6 +267,9 @@ func (a *AgentClient) handleVars(ctx context.Context, data json.RawMessage) erro
 	a.state.Fighting = vars.FIGHTING
 	a.state.Inventory = vars.INVENTORY
 
+	if action := a.be.Evaluate(a.state); action != nil {
+		return a.executeAction(ctx, action, 0)
+	}
 	if action := FSMDecision(a.state); action != nil {
 		return a.executeAction(ctx, action, 0)
 	}

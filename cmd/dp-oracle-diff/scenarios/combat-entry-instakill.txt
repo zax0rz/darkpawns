@@ -1,0 +1,77 @@
+# depth-case: kill.immortal-instinstakill
+# depth-case: kill.immortal-postdeath-menu
+# do_kill's implementor instakill trio (act.offensive.c:145-164) plus
+# raw_kill's death sequence. The old blocker ("God start rooms differ") is
+# stale: under empty-players both engines' Implementor starts at the immort
+# room (1204), and the God gotos to the mortal start room in drained warmup,
+# so a God-vs-mortal-peer kill is byte-comparable. Levels differ (Impl vs
+# L1), so the equal-level gate does not shadow the chop.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Chopgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chopgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Chopvict
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Chopvict
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+kill chopvict
+~dpclock pulse 1

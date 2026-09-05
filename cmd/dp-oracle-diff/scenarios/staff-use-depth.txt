@@ -1,0 +1,90 @@
+# depth-case: use.effect
+# Paired CAST_STAFF vehicle for mag_objectmagic (src/spell_parser.c:585-609,
+# 785-817). 8054 is the one-charge sleep staff with level 12 and spell 38;
+# the God holds it and uses it once on a room containing a mortal peer. The
+# cast exercises the staff message order, charge decrement, CAST_STAFF save
+# type, and the room fan-out. A frozen twenty-pulse pad drains WAIT_STATE
+# without adding combat or clock noise.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-obj 8054 1 8162 80
+force-load 8054
+
+[setup:oracle]
+Staffgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Staffgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:audience]
+Staffvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:audience]
+Staffvictim
+y
+victimpass
+victimpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8162
+teleport Staffvictim 8162
+get staff
+hold staff
+
+[probe]
+use staff
+~dpclock pulse 20

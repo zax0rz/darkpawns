@@ -1,0 +1,49 @@
+# Remaining privileged system-command coverage.
+# C cites: ban.c::do_ban, db.c::do_reboot, and
+# act.wizard.c::{do_date,do_wizlock,do_tick,do_shutdown}.
+# Reload and shutdown use unknown-option branches so neither live process is
+# restarted or stopped. The empty wizlock command is a read-only status query.
+
+# depth-case: wizlock.no-argument
+# depth-case: tick.no-output
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Godsystemac
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godsystemac
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+ban nonsense
+date
+wizlock
+reload nonsense
+shutdown nonsense
+tick

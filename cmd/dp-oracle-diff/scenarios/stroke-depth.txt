@@ -1,0 +1,123 @@
+# C-first do_action social vehicle (src/interpreter.c:746;
+# src/act.social.c:102-151; lib/misc/socials:869-877). The authored stroke
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches. Its no-argument room slot is # and must remain
+# silent.
+
+# depth-case: stroke.no-argument
+# depth-case: stroke.target-success
+# depth-case: stroke.target-audience
+# depth-case: stroke.argument-first-token
+# depth-case: stroke.mob-target
+# depth-case: stroke.self-target
+# depth-case: stroke.target-not-found
+# depth-case: stroke.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Strokeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Strokeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Strokeobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Strokeobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Stroketarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Stroketarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Strokeobserver 8162
+teleport Stroketarget 8162
+
+[probe]
+stroke
+stroke Stroketarget trailing words are ignored
+stroke Stroketarget
+stroke trainee
+stroke Strokeactor
+stroke self
+stroke Nobody
+force Stroketarget sleep
+stroke Stroketarget

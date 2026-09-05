@@ -1,0 +1,106 @@
+# C-first goto ROOM_PRIVATE vehicle (src/interpreter.c:467; src/act.wizard.c:184-239).
+# A level-31 immortal is barred from an occupied private room; two peers are
+# required because C checks people->next_in_room.
+
+# depth-case: goto.private-room-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8161 9 on
+
+[setup:oracle]
+Gotoprivate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gotoprivate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Privatepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Privatepeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Privateobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Privateobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Privatepeer 8161
+teleport Privateobs 8161
+set Gotoprivate level 31
+
+[probe]
+goto 8161

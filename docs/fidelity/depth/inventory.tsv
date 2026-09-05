@@ -1,0 +1,3 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_inventory	inventory	inventory.list-multi	D3	command	oracle-green	inventory-basic	act.informative.c:1465	Multi-item inventory renders C's list_obj_to_char mode-15 table (Num/Item/Encumbrance, grouped, reverse discovery order). Previously untestable: the oracle's oc_show_list self-aliasing sprintf UB clobbered item names (fixed in the oracle, same class as make_prompt/exits).
+oc_show_list	inventory	inventory.mode15-rendering	D3	shared	delegated	look.lookin-container-contents	src/oc.c	The mode-15 renderer is shared with look-in/examine container display; proven jointly.

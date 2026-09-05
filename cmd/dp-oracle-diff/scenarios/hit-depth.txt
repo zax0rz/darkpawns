@@ -1,0 +1,51 @@
+# depth-case: hit.first-token-fill-word
+# C do_hit calls one_argument(), which skips leading fill words and passes only
+# the first target token to get_char_room_vis (src/act.offensive.c:108-111).
+# The trainee target is addressed with a leading "the"; the command therefore
+# enters the synchronous hit() path.
+# Combat output is delegated to combat-swing; this vehicle proves do_hit's
+# command-side argument boundary.
+
+[fixture]
+spawn-mob 16303 1 8105 80
+quiet-mobs
+
+[setup:oracle]
+Hitparse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Hitparse
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe]
+hit the trainee

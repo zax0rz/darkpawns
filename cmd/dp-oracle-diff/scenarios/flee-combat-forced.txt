@@ -1,0 +1,124 @@
+# depth-case: flee.combat-stop
+# The mortal opens combat during setup. One deterministic combat round runs in
+# warmup, then the God synchronously forces `flee`, bypassing the descriptor
+# wait-state timing seam while invoking the same C do_flee handler. The mortal
+# and an origin-room peer expose target and audience bytes. Exact silent XP state is
+# tracked separately because this transaction has no C player-facing numeric
+# output for gain_exp(ch, -loss).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+replace-room-exits 8105 all 8104 0
+
+[setup:oracle]
+Fleecmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleecmgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fleer]
+Cmfleer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:fleer]
+Cmfleer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:oracle:origin]
+Cmorigin
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:origin]
+Cmorigin
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+~dpclock pulse 20
+
+[probe]
+force Cmfleer flee

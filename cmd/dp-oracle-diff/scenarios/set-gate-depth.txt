@@ -1,0 +1,76 @@
+# C-first do_set per-field gate vehicle (src/act.wizard.c:2577-2610).
+# Lower the crowned actor to LVL_GOD, where gold is legal but GRGOD-only
+# fields are not. The same command also exposes the level acknowledgement.
+
+# depth-case: set.per-field-level-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Setgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Setvictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Setvictim
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Setvictim 8162
+
+[probe]
+set Setgod level 34
+set Setvictim gold 1
+set Setvictim str 12

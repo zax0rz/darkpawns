@@ -1,0 +1,45 @@
+# Mortal mute/do_wizutil vehicle (src/interpreter.c:559;
+# src/act.wizard.c:2077-2085). The ordinary level-1 primary reaches the
+# command row but fails do_wizutil's PLR_CHOSEN/LVL_IMMORT guard before
+# one_argument or target lookup, so every form is the same actor-only refusal.
+
+# depth-case: mute.low-level-authorization
+# depth-case: mute.low-level-authorization-with-target
+# depth-case: mute.low-level-prefix
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mutemortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mutemortal
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+mute
+mute Nobody
+mut Nobody

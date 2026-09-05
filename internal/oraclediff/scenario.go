@@ -20,20 +20,37 @@ const pulseControl = "~dpclock pulse "
 // Scenario is a split differential script: per-server setup (not diffed) plus
 // a shared probe (diffed block-by-block).
 type Scenario struct {
-	Name             string
-	SetupOracle      []string
-	SetupPort        []string
-	Warmup           []string
-	Probe            []string
-	ProbeActor       string
+	Name        string
+	SetupOracle []string
+	SetupPort   []string
+	Warmup      []string
+	Probe       []string
+	ProbeActor  string
+	// PeerDrop names one passive peer whose TCP connection is closed after
+	// setup/warmup and before the compared probe. The character remains in the
+	// live-world lifecycle, which exposes C's linkless descriptor branches.
+	PeerDrop         string
 	Peers            map[string]*PeerSetup
 	Fixtures         []ObjectFixture
 	ObjectSpawns     []ObjectSpawnFixture
 	MobFixtures      []MobFixture
+	MobAffFixtures   []MobAffFixture
+	MobFlagFixtures  []MobFlagFixture
+	ObjIndexFixtures []ObjIndexFixture
+	WldIndexFixtures []WldIndexFixture
 	QuietZones       []int
 	QuietAllMobs     bool
 	EmptyPlayers     bool
 	ScriptlessMobIDs []int
+	ForceLoadVNums   []int
+	RoomExitFixtures []RoomExitFixture
+	RoomFlagFixtures []RoomFlagFixture
+	RoomSectors      []RoomSectorFixture
+	HouseControls    []HouseControlFixture
+	// SkipSetupSettle leaves the frozen clock untouched after character
+	// creation. Focused vehicles use this when a spawned autonomous mob must
+	// survive until a later warmup command places the actor beside it.
+	SkipSetupSettle bool
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
@@ -67,12 +84,85 @@ type ObjectSpawnFixture struct {
 
 // MobFixture adds one reset command to a disposable zone file. It is used to
 // place deterministic special-procedure actors in an oracle scenario without
-// modifying either source world tree.
+// modifying either source world trees.
 type MobFixture struct {
 	MobVNum     int
 	MaxExisting int
 	RoomVNum    int
 	ZoneNumber  int
+}
+
+// MobAffFixture patches a mob prototype's innate affected-by bitmask (the
+// flag line's second field) in each server's disposable world copy. C
+// read_mobile copies those bits onto every instance, and mag_affects'
+// mob-affection gate (magic.c:1387-1394) refuses spells whose bitvector the
+// mob carries innately — this fixture is the live vehicle for that gate.
+type MobAffFixture struct {
+	MobVNum int
+	AffMask int
+}
+
+// MobFlagFixture sets or clears one action flag on a mob prototype in
+// disposable worlds. This is used when an authoritative procedure's authored
+// placement flags need a focused two-engine vehicle (for example, enabling a
+// registered but dormant MOB_SPEC procedure).
+type MobFlagFixture struct {
+	MobVNum int
+	Flag    string
+	Enabled bool
+}
+
+// ObjIndexFixture adds one filename to the disposable obj index so the boot
+// loader reads an otherwise-unindexed .obj file. Real world vehicles live in
+// files the shipped index omits entirely (131.obj's plaid potion casts
+// blindness, 58.obj's return scroll casts curse), which made every scenario
+// step touching them vacuously fail on BOTH servers.
+type ObjIndexFixture struct {
+	FileName string
+}
+
+// WldIndexFixture adds a world-file filename to the disposable wld/index so
+// an otherwise-unindexed authoritative room file can be loaded by both
+// engines for a focused oracle vehicle.
+type WldIndexFixture struct {
+	FileName string
+}
+
+// RoomExitFixture replaces every exit on a disposable room with either no
+// exits, one explicitly described exit, or all six directions to one room. Keeping this deliberately small
+// makes RNG-sensitive movement scenarios deterministic without creating a
+// second world-file language inside scenario files.
+type RoomExitFixture struct {
+	RoomVNum  int
+	Direction string
+	ToRoom    int
+	DoorState int
+	Keyword   string
+}
+
+// RoomFlagFixture enables or disables one C ROOM_* bit on a disposable room.
+type RoomFlagFixture struct {
+	RoomVNum int
+	Bit      int
+	Enabled  bool
+}
+
+// RoomSectorFixture replaces the sector type on one disposable room.
+type RoomSectorFixture struct {
+	RoomVNum int
+	Sector   int
+}
+
+// HouseControlFixture adds one valid player-house record to both disposable
+// engines. The C oracle consumes its native binary house-control record while
+// the Go port consumes the equivalent JSON record.
+type HouseControlFixture struct {
+	VNum      int
+	Atrium    int
+	ExitNum   int
+	Owner     int64
+	PortOwner int64
+	Key       int
 }
 
 // ProbeBlock is one probe command and the raw output it produced.
@@ -99,12 +189,27 @@ type AudienceProbeBlock struct {
 //	[fixture]
 //	inert-scroll 8038         # patch this prototype in disposable worlds only
 //	spawn-mob 18306 1 8162 80 # mob, max existing, room, zone file
+//	set-mob-aff 18306 128     # mob, innate affected-by bitmask (AFF_* positions)
+//	clear-mob-flag 4 RANDZON # clear one action flag in the disposable copy
+//	set-mob-flag 14411 SPEC # set one action flag in the disposable copy
+//	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
+//	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	strip-mob-script 18306    # force native special dispatch in both copies
+//	force-load 4903           # rewrite the prototype load percent to 500% in both copies
+//	replace-room-exits 8162 none
+//	replace-room-exits 8162 all 8161 0
+//	replace-room-exits 8162 north 8161 1 gate
+//	set-room-flag 8161 1 on  # ROOM_DEATH
+//	set-room-sector 8161 7   # SECT_WATER_NOSWIM
+//	house-control 19676 19674 south 1 19604
+//	house-control 19676 19674 south 1 0 19604 # optional Go-port owner
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
+//	[peer-drop]         # close one named passive peer before [probe]
+//	peer
 //	[probe]             # sent to BOTH; this is the only diffed section
 //	look
 //	look sign
@@ -118,6 +223,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	scanner := bufio.NewScanner(r)
 	var section *[]string
 	fixtureSection := false
+	peerDropSection := false
 	lineNo := 0
 	for scanner.Scan() {
 		lineNo++
@@ -127,6 +233,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			fixtureSection = false
+			peerDropSection = false
 			lower := strings.ToLower(line)
 			switch lower {
 			case "[setup:oracle]":
@@ -149,6 +256,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			case "[fixture]", "[fixtures]":
 				section = nil
 				fixtureSection = true
+			case "[peer-drop]":
+				section = nil
+				peerDropSection = true
 			default:
 				parts := strings.Split(strings.Trim(lower, "[]"), ":")
 				if len(parts) == 2 && parts[0] == "probe" && parts[1] != "" {
@@ -177,6 +287,64 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 		if fixtureSection {
 			fields := strings.Fields(line)
+			if len(fields) == 3 && strings.EqualFold(fields[0], "replace-room-exits") && strings.EqualFold(fields[2], "none") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				if roomErr == nil && roomVNum > 0 {
+					sc.RoomExitFixtures = append(sc.RoomExitFixtures, RoomExitFixture{RoomVNum: roomVNum})
+					continue
+				}
+			}
+			if (len(fields) == 5 || len(fields) == 6) && strings.EqualFold(fields[0], "replace-room-exits") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				toRoom, toErr := strconv.Atoi(fields[3])
+				doorState, doorErr := strconv.Atoi(fields[4])
+				direction := strings.ToLower(fields[2])
+				if roomErr == nil && toErr == nil && doorErr == nil && roomVNum > 0 && toRoom > 0 && doorState >= 0 && doorState <= 2 && validFixtureDirection(direction) {
+					fixture := RoomExitFixture{RoomVNum: roomVNum, Direction: direction, ToRoom: toRoom, DoorState: doorState}
+					if len(fields) == 6 {
+						fixture.Keyword = fields[5]
+					}
+					sc.RoomExitFixtures = append(sc.RoomExitFixtures, fixture)
+					continue
+				}
+			}
+			if len(fields) == 4 && strings.EqualFold(fields[0], "set-room-flag") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				bit, bitErr := strconv.Atoi(fields[2])
+				enabled, enabledOK := parseFixtureToggle(fields[3])
+				if roomErr == nil && bitErr == nil && enabledOK && roomVNum > 0 && bit >= 0 && bit < 64 {
+					sc.RoomFlagFixtures = append(sc.RoomFlagFixtures, RoomFlagFixture{RoomVNum: roomVNum, Bit: bit, Enabled: enabled})
+					continue
+				}
+			}
+			if len(fields) == 3 && strings.EqualFold(fields[0], "set-room-sector") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				sector, sectorErr := strconv.Atoi(fields[2])
+				if roomErr == nil && sectorErr == nil && roomVNum > 0 && sector >= 0 && sector <= 15 {
+					sc.RoomSectors = append(sc.RoomSectors, RoomSectorFixture{RoomVNum: roomVNum, Sector: sector})
+					continue
+				}
+			}
+			if (len(fields) == 6 || len(fields) == 7) && strings.EqualFold(fields[0], "house-control") {
+				vnum, vnumErr := strconv.Atoi(fields[1])
+				atrium, atriumErr := strconv.Atoi(fields[2])
+				direction := strings.ToLower(fields[3])
+				owner, ownerErr := strconv.ParseInt(fields[4], 10, 64)
+				portOwner := owner
+				var portOwnerErr error
+				keyField := 5
+				if len(fields) == 7 {
+					portOwner, portOwnerErr = strconv.ParseInt(fields[5], 10, 64)
+					keyField = 6
+				}
+				key, keyErr := strconv.Atoi(fields[keyField])
+				if vnumErr == nil && atriumErr == nil && ownerErr == nil && portOwnerErr == nil && keyErr == nil && vnum > 0 && atrium > 0 && owner > 0 && portOwner >= 0 && key > 0 && validFixtureDirection(direction) && fixtureDirectionIndex(direction) >= 0 {
+					sc.HouseControls = append(sc.HouseControls, HouseControlFixture{
+						VNum: vnum, Atrium: atrium, ExitNum: fixtureDirectionIndex(direction), Owner: owner, PortOwner: portOwner, Key: key,
+					})
+					continue
+				}
+			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "inert-scroll") {
 				objVNum, objErr := strconv.Atoi(fields[1])
 				if objErr != nil || objVNum <= 0 {
@@ -184,6 +352,36 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				}
 				sc.Fixtures = append(sc.Fixtures, ObjectFixture{ObjectVNum: objVNum})
 				continue
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "add-obj-index") {
+				name := fields[1]
+				if strings.HasSuffix(name, ".obj") && !strings.ContainsRune(name, '/') {
+					sc.ObjIndexFixtures = append(sc.ObjIndexFixtures, ObjIndexFixture{FileName: name})
+					continue
+				}
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "add-wld-index") {
+				name := fields[1]
+				if strings.HasSuffix(name, ".wld") && !strings.ContainsRune(name, '/') {
+					sc.WldIndexFixtures = append(sc.WldIndexFixtures, WldIndexFixture{FileName: name})
+					continue
+				}
+			}
+			if len(fields) == 3 && strings.EqualFold(fields[0], "set-mob-aff") {
+				mobVNum, mobErr := strconv.Atoi(fields[1])
+				affMask, affErr := strconv.Atoi(fields[2])
+				if mobErr == nil && affErr == nil && mobVNum > 0 && affMask > 0 {
+					sc.MobAffFixtures = append(sc.MobAffFixtures, MobAffFixture{MobVNum: mobVNum, AffMask: affMask})
+					continue
+				}
+			}
+			if len(fields) == 3 && (strings.EqualFold(fields[0], "clear-mob-flag") || strings.EqualFold(fields[0], "set-mob-flag")) {
+				mobVNum, mobErr := strconv.Atoi(fields[1])
+				flag := strings.ToUpper(fields[2])
+				if mobErr == nil && mobVNum > 0 && (flag == "AGGRESSIVE" || flag == "RANDZON" || flag == "SPEC") {
+					sc.MobFlagFixtures = append(sc.MobFlagFixtures, MobFlagFixture{MobVNum: mobVNum, Flag: flag, Enabled: strings.EqualFold(fields[0], "set-mob-flag")})
+					continue
+				}
 			}
 			if len(fields) == 5 && strings.EqualFold(fields[0], "spawn-mob") {
 				values := make([]int, 4)
@@ -236,6 +434,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.EmptyPlayers = true
 				continue
 			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "no-settle") {
+				sc.SkipSetupSettle = true
+				continue
+			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "strip-mob-script") {
 				mobVNum, mobErr := strconv.Atoi(fields[1])
 				if mobErr == nil && mobVNum > 0 {
@@ -243,7 +445,24 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					continue
 				}
 			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "force-load") {
+				objVNum, objErr := strconv.Atoi(fields[1])
+				if objErr == nil && objVNum > 0 {
+					sc.ForceLoadVNums = append(sc.ForceLoadVNums, objVNum)
+					continue
+				}
+			}
 			return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fixture %q", name, lineNo, line)
+		}
+		if peerDropSection {
+			if sc.PeerDrop != "" {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: duplicate peer-drop", name, lineNo)
+			}
+			if len(strings.Fields(line)) != 1 {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid peer-drop %q", name, lineNo, line)
+			}
+			sc.PeerDrop = line
+			continue
 		}
 		if section == nil {
 			return Scenario{}, fmt.Errorf("scenario %q line %d: command %q before any [section]", name, lineNo, line)
@@ -264,7 +483,51 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			return Scenario{}, fmt.Errorf("scenario %q probe actor %q is not a configured peer", name, sc.ProbeActor)
 		}
 	}
+	if sc.PeerDrop != "" {
+		if _, ok := sc.Peers[sc.PeerDrop]; !ok {
+			return Scenario{}, fmt.Errorf("scenario %q peer-drop target %q is not a configured peer", name, sc.PeerDrop)
+		}
+	}
 	return sc, nil
+}
+
+func fixtureDirectionIndex(direction string) int {
+	switch direction {
+	case "north":
+		return 0
+	case "east":
+		return 1
+	case "south":
+		return 2
+	case "west":
+		return 3
+	case "up":
+		return 4
+	case "down":
+		return 5
+	default:
+		return -1
+	}
+}
+
+func validFixtureDirection(direction string) bool {
+	switch direction {
+	case "north", "east", "south", "west", "up", "down", "all":
+		return true
+	default:
+		return false
+	}
+}
+
+func parseFixtureToggle(value string) (bool, bool) {
+	switch strings.ToLower(value) {
+	case "on", "true", "1":
+		return true, true
+	case "off", "false", "0":
+		return false, true
+	default:
+		return false, false
+	}
 }
 
 // RunWarmup plays shared commands after every client has completed setup and
@@ -300,8 +563,14 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 
 		for _, name := range peerNames {
 			peerOutput, peerErr := peers[name].ReadUntilQuiescent(quiescence)
+			// A final command may intentionally close an audience connection
+			// (for example, the C do_dc lower-level target). Preserve the
+			// output captured before EOF instead of turning that expected
+			// terminal state into a harness failure.
 			if peerErr != nil {
-				return blocks, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", i+1, name, step, peerErr, peerOutput)
+				if i != len(probe)-1 || !errors.Is(peerErr, io.EOF) {
+					return blocks, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", i+1, name, step, peerErr, peerOutput)
+				}
 			}
 			blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: name, Output: peerOutput})
 		}

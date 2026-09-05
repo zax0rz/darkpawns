@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -23,7 +26,6 @@ import (
 )
 
 const (
-	fixedSeed = "1"
 	// fixedTime pins the game calendar on both engines (DP_FIXED_TIME seam,
 	// orthogonal to DP_CLOCK's pulse freeze). 1770838461 => 2pm/daytime,
 	// {hours:14,day:17,month:8,year:1245}; both derive an identical calendar.
@@ -67,24 +69,31 @@ func main() {
 func run() int {
 	var (
 		scenarioName = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
+		seed         = flag.String("seed", "1", "shared deterministic DP_SEED value")
+		showOracle   = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
+		showGoLog    = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
 		quiescence   = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout  = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
 	)
 	flag.Parse()
+	if _, err := strconv.ParseUint(*seed, 10, 64); err != nil {
+		fmt.Fprintln(os.Stderr, "dp-oracle-diff: seed must be an unsigned integer")
+		return 1
+	}
 
 	oracleBin := os.Getenv("DP_ORACLE_BIN")
 	if oracleBin == "" {
 		fmt.Println("SKIP: DP_ORACLE_BIN is unset; C oracle differential run not available")
 		return 0
 	}
-	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin); err != nil {
+	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *showGoLog); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		return 1
 	}
 	return 0
 }
 
-func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin string) error {
+func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle, showGoLog bool) error {
 	if quiescence <= 0 {
 		return errors.New("quiescence must be positive")
 	}
@@ -127,7 +136,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// mutates the oracle clone. Unless empty-players is requested, keep its
 	// baseline player file so existing mortal scenarios retain today's boot.
 	goWorld := filepath.Join(repoRoot, "lib", "world")
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
 		goWorld = filepath.Join(tmp, "go-world")
 		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
@@ -137,6 +146,18 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		// must mirror lib/{world,text}.
 		if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
 			return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
+		}
+		if err := applyObjIndexFixtures(filepath.Join(oracleData, "world"), scenario.ObjIndexFixtures); err != nil {
+			return fmt.Errorf("apply C oracle obj index fixtures: %w", err)
+		}
+		if err := applyObjIndexFixtures(goWorld, scenario.ObjIndexFixtures); err != nil {
+			return fmt.Errorf("apply Go port obj index fixtures: %w", err)
+		}
+		if err := applyWldIndexFixtures(filepath.Join(oracleData, "world"), scenario.WldIndexFixtures); err != nil {
+			return fmt.Errorf("apply C oracle wld index fixtures: %w", err)
+		}
+		if err := applyWldIndexFixtures(goWorld, scenario.WldIndexFixtures); err != nil {
+			return fmt.Errorf("apply Go port wld index fixtures: %w", err)
 		}
 		if err := applyObjectFixtures(filepath.Join(oracleData, "world"), scenario.Fixtures); err != nil {
 			return fmt.Errorf("apply C oracle fixtures: %w", err)
@@ -149,6 +170,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		if err := applyObjectSpawnFixtures(goWorld, scenario.ObjectSpawns); err != nil {
 			return fmt.Errorf("apply Go port object spawn fixtures: %w", err)
+		}
+		if err := applyForceLoadFixtures(filepath.Join(oracleData, "world"), scenario.ForceLoadVNums); err != nil {
+			return fmt.Errorf("apply C oracle force-load fixtures: %w", err)
+		}
+		if err := applyForceLoadFixtures(goWorld, scenario.ForceLoadVNums); err != nil {
+			return fmt.Errorf("apply Go port force-load fixtures: %w", err)
 		}
 		if err := applyQuietZoneFixtures(filepath.Join(oracleData, "world"), scenario.QuietZones); err != nil {
 			return fmt.Errorf("apply C oracle quiet-zone fixtures: %w", err)
@@ -170,17 +197,41 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if err := applyMobFixtures(goWorld, scenario.MobFixtures); err != nil {
 			return fmt.Errorf("apply Go port mob fixtures: %w", err)
 		}
+		if err := applyMobFlagFixtures(filepath.Join(oracleData, "world"), scenario.MobFlagFixtures); err != nil {
+			return fmt.Errorf("apply C oracle mob flag fixtures: %w", err)
+		}
+		if err := applyMobFlagFixtures(goWorld, scenario.MobFlagFixtures); err != nil {
+			return fmt.Errorf("apply Go port mob flag fixtures: %w", err)
+		}
+		if err := applyMobAffFixtures(filepath.Join(oracleData, "world"), scenario.MobAffFixtures); err != nil {
+			return fmt.Errorf("apply C oracle mob aff fixtures: %w", err)
+		}
+		if err := applyMobAffFixtures(goWorld, scenario.MobAffFixtures); err != nil {
+			return fmt.Errorf("apply Go port mob aff fixtures: %w", err)
+		}
 		if err := applyScriptlessMobFixtures(filepath.Join(oracleData, "world"), scenario.ScriptlessMobIDs); err != nil {
 			return fmt.Errorf("apply C oracle mob script fixtures: %w", err)
 		}
 		if err := applyScriptlessMobFixtures(goWorld, scenario.ScriptlessMobIDs); err != nil {
 			return fmt.Errorf("apply Go port mob script fixtures: %w", err)
 		}
+		if err := applyRoomFixtures(filepath.Join(oracleData, "world"), scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors); err != nil {
+			return fmt.Errorf("apply C oracle room fixtures: %w", err)
+		}
+		if err := applyRoomFixtures(goWorld, scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors); err != nil {
+			return fmt.Errorf("apply Go port room fixtures: %w", err)
+		}
+	}
+	if err := applyOracleHouseControlFixtures(oracleData, scenario.HouseControls); err != nil {
+		return fmt.Errorf("apply C oracle house-control fixtures: %w", err)
 	}
 
 	goWork := filepath.Join(tmp, "go-work")
 	if err := os.MkdirAll(filepath.Join(goWork, "data"), 0o750); err != nil {
 		return fmt.Errorf("create Go runtime directory: %w", err)
+	}
+	if err := applyGoHouseControlFixtures(filepath.Dir(goWorld), scenario.HouseControls); err != nil {
+		return fmt.Errorf("apply Go port house-control fixtures: %w", err)
 	}
 	oraclePort, goTelnetPort, goHTTPPort, err := allocatePorts()
 	if err != nil {
@@ -190,7 +241,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	oracleProc, err := startProcess(ctx, "C oracle", oracleRoot,
-		append(os.Environ(), "DP_SEED="+fixedSeed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+		append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 	if err != nil {
 		return err
 	}
@@ -198,7 +249,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 
 	goEnv := append(
 		os.Environ(),
-		"DP_SEED="+fixedSeed,
+		"DP_SEED="+seed,
 		"DP_CLOCK=1",
 		"DP_FIXED_TIME="+fixedTime,
 		"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
@@ -237,11 +288,18 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	goConn := oraclediff.NewTCPConn(goNetConn)
 	defer func() { _ = goConn.Close() }()
 
-	oracleSetup, err := oraclediff.RunSetupAndSettle(oracleConn, scenario.SetupOracle, settlePulses, quiescence)
+	runSetup := func(conn oraclediff.Conn, setup []string) (string, error) {
+		if scenario.SkipSetupSettle {
+			return oraclediff.RunSetup(conn, setup, quiescence)
+		}
+		return oraclediff.RunSetupAndSettle(conn, setup, settlePulses, quiescence)
+	}
+
+	oracleSetup, err := runSetup(oracleConn, scenario.SetupOracle)
 	if err != nil {
 		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
 	}
-	goSetup, err := oraclediff.RunSetupAndSettle(goConn, scenario.SetupPort, settlePulses, quiescence)
+	goSetup, err := runSetup(goConn, scenario.SetupPort)
 	if err != nil {
 		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
 	}
@@ -261,7 +319,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
 		defer func() { _ = oraclePeer.Close() }()
-		if _, setupErr := oraclediff.RunSetupAndSettle(oraclePeer, peer.SetupOracle, settlePulses, quiescence); setupErr != nil {
+		if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
 			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleProc.log.String())
 		}
 		oraclePeers[name] = oraclePeer
@@ -272,7 +330,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		goPeer := oraclediff.NewTCPConn(goPeerNet)
 		defer func() { _ = goPeer.Close() }()
-		if _, setupErr := oraclediff.RunSetupAndSettle(goPeer, peer.SetupPort, settlePulses, quiescence); setupErr != nil {
+		if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
 			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goProc.log.String())
 		}
 		goPeers[name] = goPeer
@@ -291,6 +349,26 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	}
 	if err := oraclediff.RunWarmup(goConn, goPeers, scenario.Warmup, quiescence); err != nil {
 		return fmt.Errorf("run Go port warmup: %w", err)
+	}
+	if scenario.PeerDrop != "" {
+		name := scenario.PeerDrop
+		oraclePeer, ok := oraclePeers[name]
+		if !ok {
+			return fmt.Errorf("c oracle peer-drop target %q is not connected", name)
+		}
+		if err := oraclePeer.Close(); err != nil {
+			return fmt.Errorf("close C oracle peer %q: %w", name, err)
+		}
+		delete(oraclePeers, name)
+
+		goPeer, ok := goPeers[name]
+		if !ok {
+			return fmt.Errorf("go port peer-drop target %q is not connected", name)
+		}
+		if err := goPeer.Close(); err != nil {
+			return fmt.Errorf("close Go port peer %q: %w", name, err)
+		}
+		delete(goPeers, name)
 	}
 
 	oracleActor, oracleAudience := probeClients(oracleConn, oraclePeers, scenario.ProbeActor)
@@ -339,8 +417,18 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		Scenario:   scenario.Name,
 		OracleAddr: oracleAddr,
 		GoAddr:     goAddr,
-		Seed:       fixedSeed,
+		Seed:       seed,
 	}, diffs))
+	if showOracle {
+		fmt.Println("normalized C oracle blocks:")
+		for _, diff := range diffs {
+			fmt.Printf("--- [%s]\n%s", diff.Command, diff.Oracle)
+		}
+	}
+	if showGoLog {
+		fmt.Println("go port server log:")
+		fmt.Print(goProc.log.String())
+	}
 	return nil
 }
 
@@ -354,6 +442,113 @@ func prepareOracleData(source, destination string, emptyPlayers bool) error {
 	playersPath := filepath.Join(destination, "etc", "players")
 	if err := os.WriteFile(playersPath, nil, 0o600); err != nil {
 		return fmt.Errorf("empty disposable C oracle player file: %w", err)
+	}
+	return nil
+}
+
+const cHouseControlRecordSize = 520
+
+func houseFixtureUint32(field string, value int) (uint32, error) {
+	if value < 0 || int64(value) > int64(^uint32(0)) {
+		return 0, fmt.Errorf("house fixture %s %d does not fit uint32", field, value)
+	}
+	return uint32(value), nil
+}
+
+func houseFixtureUint64(field string, value int64) (uint64, error) {
+	if value < 0 {
+		return 0, fmt.Errorf("house fixture %s %d does not fit uint64", field, value)
+	}
+	return uint64(value), nil
+}
+
+// applyOracleHouseControlFixtures writes the native 64-bit Linux C record
+// consumed by House_boot (src/house.h:31-47). The oracle and the Go fixture
+// deliberately share only the semantic fields used by key_seller; all other
+// record bytes remain zero, just as a newly built C house record does.
+func applyOracleHouseControlFixtures(oracleData string, fixtures []oraclediff.HouseControlFixture) error {
+	if len(fixtures) == 0 {
+		return nil
+	}
+	data := make([]byte, 0, len(fixtures)*cHouseControlRecordSize)
+	for _, fixture := range fixtures {
+		vnum, err := houseFixtureUint32("vnum", fixture.VNum)
+		if err != nil {
+			return err
+		}
+		atrium, err := houseFixtureUint32("atrium", fixture.Atrium)
+		if err != nil {
+			return err
+		}
+		exitNum, err := houseFixtureUint32("exit number", fixture.ExitNum)
+		if err != nil {
+			return err
+		}
+		owner, err := houseFixtureUint64("owner", fixture.Owner)
+		if err != nil {
+			return err
+		}
+		key, err := houseFixtureUint32("key", fixture.Key)
+		if err != nil {
+			return err
+		}
+		record := make([]byte, cHouseControlRecordSize)
+		binary.LittleEndian.PutUint32(record[0:], vnum)
+		binary.LittleEndian.PutUint32(record[4:], atrium)
+		binary.LittleEndian.PutUint32(record[8:], exitNum)
+		binary.LittleEndian.PutUint32(record[24:], 0) // HOUSE_PRIVATE
+		binary.LittleEndian.PutUint64(record[32:], owner)
+		binary.LittleEndian.PutUint32(record[40:], 0) // no guests
+		binary.LittleEndian.PutUint32(record[456:], key)
+		data = append(data, record...)
+	}
+	path := filepath.Join(oracleData, "etc", "hcontrol")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
+}
+
+func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseControlFixture) error {
+	if len(fixtures) == 0 {
+		return nil
+	}
+	type houseControl struct {
+		VNum        int       `json:"vnum"`
+		Atrium      int       `json:"atrium"`
+		ExitNum     int       `json:"exit_num"`
+		BuiltOn     int64     `json:"built_on"`
+		Mode        int       `json:"mode"`
+		Owner       int64     `json:"owner"`
+		NumOfGuests int       `json:"num_of_guests"`
+		Guests      [50]int64 `json:"guests"`
+		LastPayment int64     `json:"last_payment"`
+		Key         int       `json:"key"`
+		Spare1      int64     `json:"spare1"`
+		Spare2      int64     `json:"spare2"`
+		Spare3      int64     `json:"spare3"`
+		Spare4      int64     `json:"spare4"`
+		Spare5      int64     `json:"spare5"`
+		Spare6      int64     `json:"spare6"`
+		Spare7      int64     `json:"spare7"`
+	}
+	records := make([]houseControl, 0, len(fixtures))
+	for _, fixture := range fixtures {
+		records = append(records, houseControl{
+			VNum: fixture.VNum, Atrium: fixture.Atrium, ExitNum: fixture.ExitNum, Owner: fixture.PortOwner, Key: fixture.Key,
+		})
+	}
+	data, err := json.MarshalIndent(records, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal house controls: %w", err)
+	}
+	houseDir := filepath.Join(goWork, "house")
+	if err := os.MkdirAll(houseDir, 0o750); err != nil {
+		return fmt.Errorf("create %s: %w", houseDir, err)
+	}
+	path := filepath.Join(houseDir, "house_control.json")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
 }
@@ -458,6 +653,256 @@ func applyMobFixtures(worldDir string, fixtures []oraclediff.MobFixture) error {
 		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
 			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
 		}
+	}
+	return nil
+}
+
+// applyMobFlagFixtures sets or clears action flags on authoritative mob
+// prototypes in disposable worlds. The fixture is intentionally restricted to
+// the flags needed by focused vehicles: AGGRESSIVE/RANDZON for controlled
+// placement and combat, and SPEC for a registered native procedure whose
+// authored mob is dormant.
+func applyMobFlagFixtures(worldDir string, fixtures []oraclediff.MobFlagFixture) error {
+	for _, fixture := range fixtures {
+		bit, ok := map[string]uint{"AGGRESSIVE": 5, "SPEC": 0, "RANDZON": 20}[strings.ToUpper(fixture.Flag)]
+		if !ok {
+			return fmt.Errorf("unsupported mob flag %q", fixture.Flag)
+		}
+		path := filepath.Join(worldDir, "mob", fmt.Sprintf("%d.mob", fixture.MobVNum/100))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		lines := strings.Split(string(data), "\n")
+		header := fmt.Sprintf("#%d", fixture.MobVNum)
+		inTarget := false
+		blocksClosed := 0
+		patched := false
+		for index, line := range lines {
+			if strings.HasPrefix(line, "#") {
+				inTarget = line == header
+				blocksClosed = 0
+				continue
+			}
+			if !inTarget || patched {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
+			if blocksClosed < 4 {
+				if strings.HasSuffix(trimmed, "~") {
+					blocksClosed++
+				}
+				continue
+			}
+			fields := strings.Fields(line)
+			if len(fields) < 1 {
+				return fmt.Errorf("mob %d action flag line %q is empty", fixture.MobVNum, line)
+			}
+			mask, parseErr := strconv.ParseUint(fields[0], 10, 64)
+			if parseErr != nil {
+				return fmt.Errorf("mob %d action flag line %q is invalid: %w", fixture.MobVNum, line, parseErr)
+			}
+			if fixture.Enabled {
+				mask |= 1 << bit
+			} else {
+				mask &^= 1 << bit
+			}
+			fields[0] = strconv.FormatUint(mask, 10)
+			lines[index] = strings.Join(fields, " ")
+			patched = true
+		}
+		if !patched {
+			return fmt.Errorf("mob %d not found or flag line not reached in %s", fixture.MobVNum, path)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer-derived vnum
+			return fmt.Errorf("write mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+	}
+	return nil
+}
+
+// applyMobAffFixtures patches a mob prototype's innate affected-by bitmask in
+// a disposable world copy: the flag line after the vnum header's four
+// ~-terminated text blocks carries act, then affected, as its first two
+// fields. C's read_mobile copies those bits onto every instance, which is
+// what mag_affects' mob-affection gate tests.
+func applyMobAffFixtures(worldDir string, fixtures []oraclediff.MobAffFixture) error {
+	for _, fixture := range fixtures {
+		path := filepath.Join(worldDir, "mob", fmt.Sprintf("%d.mob", fixture.MobVNum/100))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		lines := strings.Split(string(data), "\n")
+		header := fmt.Sprintf("#%d", fixture.MobVNum)
+		inTarget := false
+		blocksClosed := 0
+		patched := false
+		for index, line := range lines {
+			if strings.HasPrefix(line, "#") {
+				inTarget = line == header
+				blocksClosed = 0
+				continue
+			}
+			if !inTarget || patched {
+				continue
+			}
+			// Four Diku text blocks (alias, short, long, detail) precede the
+			// flag line; each closes on a line ENDING with '~' — the marker may
+			// be inline ("trainee guard~") or standalone ("~").
+			trimmed := strings.TrimSpace(line)
+			if blocksClosed < 4 {
+				if strings.HasSuffix(trimmed, "~") {
+					blocksClosed++
+				}
+				continue
+			}
+			// Flag-line layout (db.c parse_mobile): eight flag words — act
+			// words 1-4, AFFECTED words 5-8 — then alignment, then the type
+			// letter. The first affected word (fields[4]) carries AFF bits
+			// 0-31, which is what the mob-affection gate tests.
+			fields := strings.Fields(line)
+			if len(fields) < 5 {
+				return fmt.Errorf("mob %d flag line %q has no affected word", fixture.MobVNum, line)
+			}
+			fields[4] = fmt.Sprintf("%d", fixture.AffMask)
+			lines[index] = strings.Join(fields, " ")
+			patched = true
+		}
+		if !patched {
+			return fmt.Errorf("mob %d not found or flag line not reached in %s", fixture.MobVNum, path)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer-derived file name
+			return fmt.Errorf("write mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+	}
+	return nil
+}
+
+// applyObjIndexFixtures appends filenames to the disposable obj index so
+// the boot loader parses otherwise-unindexed .obj prototypes. The index is a
+// whitespace-separated filename list terminated by "$" (db.c index_boot /
+// parser indexedDataFileNames read the same format on both servers).
+func applyObjIndexFixtures(worldDir string, fixtures []oraclediff.ObjIndexFixture) error {
+	if len(fixtures) == 0 {
+		return nil
+	}
+	path := filepath.Join(worldDir, "obj", "index")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read obj index: %w", err)
+	}
+	fileNumber := func(name string) int {
+		n, err := strconv.Atoi(strings.TrimSuffix(name, ".obj"))
+		if err != nil {
+			return -1
+		}
+		return n
+	}
+	existing := strings.Fields(string(data))
+	insertNum := fileNumber(fixtures[0].FileName)
+	insertAt := len(existing)
+	for i, name := range existing {
+		if name == "$" {
+			insertAt = i
+			break
+		}
+		if n := fileNumber(name); n > insertNum {
+			insertAt = i
+			break
+		}
+	}
+	// The index must stay ordered by vnum range: C's real_object() binary
+	// searches obj_index, which index_boot builds in index-file order.
+	added := make([]string, 0, len(fixtures))
+	for _, fixture := range fixtures {
+		if !slices.Contains(existing, fixture.FileName) {
+			added = append(added, fixture.FileName)
+		}
+	}
+	if len(added) == 0 {
+		return nil
+	}
+	slices.SortStableFunc(added, func(a, b string) int {
+		return fileNumber(a) - fileNumber(b)
+	})
+	names := append([]string{}, existing[:insertAt]...)
+	names = append(names, added...)
+	names = append(names, existing[insertAt:]...)
+	updated := []byte(strings.Join(names, "\n") + "\n")
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat obj index: %w", err)
+	}
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir
+		return fmt.Errorf("write obj index: %w", err)
+	}
+	return nil
+}
+
+// applyWldIndexFixtures appends filenames to the disposable wld/index so
+// the boot loader parses otherwise-unindexed authoritative room files. The
+// world-file index is a whitespace-separated list terminated by "$", just
+// like the object index.
+func applyWldIndexFixtures(worldDir string, fixtures []oraclediff.WldIndexFixture) error {
+	if len(fixtures) == 0 {
+		return nil
+	}
+	path := filepath.Join(worldDir, "wld", "index")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read wld index: %w", err)
+	}
+	fileNumber := func(name string) int {
+		n, err := strconv.Atoi(strings.TrimSuffix(name, ".wld"))
+		if err != nil {
+			return -1
+		}
+		return n
+	}
+	existing := strings.Fields(string(data))
+	insertNum := fileNumber(fixtures[0].FileName)
+	insertAt := len(existing)
+	for i, name := range existing {
+		if name == "$" {
+			insertAt = i
+			break
+		}
+		if n := fileNumber(name); n > insertNum {
+			insertAt = i
+			break
+		}
+	}
+	added := make([]string, 0, len(fixtures))
+	for _, fixture := range fixtures {
+		if !slices.Contains(existing, fixture.FileName) {
+			added = append(added, fixture.FileName)
+		}
+	}
+	if len(added) == 0 {
+		return nil
+	}
+	slices.SortStableFunc(added, func(a, b string) int {
+		return fileNumber(a) - fileNumber(b)
+	})
+	names := append([]string{}, existing[:insertAt]...)
+	names = append(names, added...)
+	names = append(names, existing[insertAt:]...)
+	updated := []byte(strings.Join(names, "\n") + "\n")
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat wld index: %w", err)
+	}
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and a validated fixture filename
+		return fmt.Errorf("write wld index: %w", err)
 	}
 	return nil
 }
@@ -601,6 +1046,82 @@ func makeScrollFixtureInert(worldDir string, objectVNum int) error {
 	return nil
 }
 
+// applyForceLoadFixtures rewrites one object prototype's load percent to a
+// always-true 500% in each server's disposable world copy. Circle gates every
+// zone-reset object load on percent_load (GET_OBJ_LOAD > uniform()*100), so a
+// low-percent prototype would load — or not — on a seeded RNG draw and make
+// spawn-obj fixtures probabilistic. The source world trees are never modified.
+func applyForceLoadFixtures(worldDir string, objectVNums []int) error {
+	for _, objectVNum := range objectVNums {
+		if err := forceObjectLoad(worldDir, objectVNum); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func forceObjectLoad(worldDir string, objectVNum int) error {
+	path := filepath.Join(worldDir, "obj", fmt.Sprintf("%d.obj", objectVNum/100))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read object file for %d: %w", objectVNum, err)
+	}
+	startMarker := fmt.Sprintf("#%d\n", objectVNum)
+	start := bytes.Index(data, []byte(startMarker))
+	if start < 0 {
+		return fmt.Errorf("object %d not found in %s", objectVNum, path)
+	}
+	end := bytes.Index(data[start+len(startMarker):], []byte("\n#"))
+	if end < 0 {
+		end = len(data) - start - len(startMarker)
+	}
+	end += start + len(startMarker)
+	record := string(data[start:end])
+	lines := strings.Split(record, "\n")
+	changed := false
+	for i := 0; i+2 < len(lines); i++ {
+		fields := strings.Fields(lines[i])
+		if len(fields) < 9 {
+			continue
+		}
+		validFlags := true
+		for _, field := range fields[:9] {
+			if _, parseErr := strconv.Atoi(field); parseErr != nil {
+				validFlags = false
+				break
+			}
+		}
+		if !validFlags {
+			continue
+		}
+		wcl := strings.Fields(lines[i+2])
+		if len(wcl) < 3 {
+			return fmt.Errorf("object %d has invalid weight/cost/load line %q", objectVNum, lines[i+2])
+		}
+		if _, parseErr := strconv.ParseFloat(wcl[2], 64); parseErr != nil {
+			return fmt.Errorf("object %d has invalid load percent %q", objectVNum, wcl[2])
+		}
+		wcl[2] = "500.00"
+		lines[i+2] = strings.Join(wcl, " ")
+		changed = true
+		break
+	}
+	if !changed {
+		return fmt.Errorf("object %d is not a force-load fixture candidate", objectVNum)
+	}
+	updated := append([]byte{}, data[:start]...)
+	updated = append(updated, strings.Join(lines, "\n")...)
+	updated = append(updated, data[end:]...)
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat object file for %d: %w", objectVNum, err)
+	}
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
+		return fmt.Errorf("write object file for %d: %w", objectVNum, err)
+	}
+	return nil
+}
+
 func startProcess(ctx context.Context, name, dir string, env []string, command string, args ...string) (*process, error) {
 	log := &safeBuffer{}
 	cmd := exec.CommandContext(ctx, command, args...) // #nosec G702 -- dev oracle-diff harness; command/args are hardcoded engine binaries, not request-derived
@@ -729,7 +1250,7 @@ func findOracleRoot(bin string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve DP_ORACLE_BIN: %w", err)
 	}
-	info, err := os.Stat(absBin)
+	info, err := os.Stat(absBin) // #nosec G703 -- dev oracle-diff harness; absBin derives from the developer-supplied DP_ORACLE_BIN, not request input
 	if err != nil {
 		return "", fmt.Errorf("DP_ORACLE_BIN %q: %w", absBin, err)
 	}
@@ -738,7 +1259,7 @@ func findOracleRoot(bin string) (string, error) {
 	}
 	for dir := filepath.Dir(absBin); ; dir = filepath.Dir(dir) {
 		world := filepath.Join(dir, "lib", "world")
-		if stat, statErr := os.Stat(world); statErr == nil && stat.IsDir() {
+		if stat, statErr := os.Stat(world); statErr == nil && stat.IsDir() { // #nosec G703 -- dev harness walking up from the trusted oracle binary
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)

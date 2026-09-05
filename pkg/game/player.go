@@ -55,6 +55,12 @@ type Player struct {
 	// should start for board writing. Value is board_type + BOARD_MAGIC.
 	WriteMagic int
 
+	// ClanPlanWriting tracks the descriptor-level string editor started by
+	// clan.c's do_clan_plan/string_write path.
+	ClanPlanWriting bool   `json:"-"`
+	ClanPlanClanID  int    `json:"-"`
+	ClanPlanBuffer  string `json:"-"`
+
 	// Hunger/thirst/drunk conditions — limits.c:366, structs.h:566-568
 	// Index: CondDrunk=0, CondFull=1, CondThirst=2
 	// Value: -1 = immortal (no change), 0 = depleted, 1-48 = current level
@@ -68,6 +74,11 @@ type Player struct {
 	// Player flags bitmask — structs.h PLR_* constants
 	// Source: structs.h:221-244
 	PlayerFlags uint64
+
+	// InvisLevel is C's player_specials.saved.invis_level for immortal
+	// wizinvis. It is runtime-only until the player save format has a faithful
+	// representation for this field.
+	InvisLevel int `json:"-"`
 
 	// ActiveAffects is a list of active spell/status effects on this player.
 	// This is separate from the Affects bitmask — bitmask tracks AFF_* flags,
@@ -85,6 +96,12 @@ type Player struct {
 	RaceHates [5]int
 
 	Stats CharStats
+
+	// OrigCon is the character's constitution before constitution loss, from
+	// GET_ORIG_CON in structs.h. It is runtime-only because the existing Go
+	// player save format must remain unchanged; old/load-created players fall
+	// back to their current base constitution.
+	OrigCon int `json:"-"`
 
 	// SavingThrows — array of 5 saving throw values: para, rod, petri, breath, spell
 	// Source: structs.h saving_throws[5]
@@ -107,11 +124,16 @@ type Player struct {
 	Equipment *Equipment
 
 	// Position
-	RoomVNum int // Current room
+	RoomVNum     int // Current room
+	LoadRoomVNum int `json:"-"` // C GET_LOADROOM; persisted through the existing room_vnum field when selected
 
 	// State
 	ConnectedAt time.Time
 	LastActive  time.Time
+	// Linkless marks a playing character whose transport has disconnected.
+	// C keeps such characters in character_list with desc == NULL until the
+	// linkdead lifecycle removes them.
+	Linkless bool `json:"-"`
 
 	// DP-943: atomic guard to make player death idempotent under concurrent kills.
 	dying atomic.Bool
@@ -204,7 +226,11 @@ type Player struct {
 	// ticks). SetWaitState stores rounds*PULSE_VIOLENCE here; the per-pulse
 	// drain in the heartbeat decrements it (port of comm.c:603).
 	WaitState int
-	RoomFlags bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
+
+	// ambushAction is the pending delayed ambush event, mirroring C's
+	// GET_ACTION(ch). It is runtime-only and intentionally not persisted.
+	ambushAction uint64
+	RoomFlags    bool // Show room vnums/sector in room descriptions (PRF_ROOMFLAGS)
 
 	// AutoGold indicates the player auto-loots gold from killed victims (PRF_AUTOGOLD = 24).
 	// Source: structs.h:#define PRF_AUTOGOLD 24
@@ -258,6 +284,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		ID:           id,
 		Name:         name,
 		RoomVNum:     roomVNum,
+		LoadRoomVNum: -1,
 		Health:       100,
 		MaxHealth:    100,
 		Mana:         100,
@@ -334,6 +361,7 @@ func newCharacter(id int, name string, class, race, sex int, stats CharStats) *P
 		SetTitle(p, "the Adventurer")
 	}
 	p.Stats = stats
+	p.OrigCon = stats.Con
 	p.Strength = stats.Str
 
 	// do_start(): level 1, 1 exp, 10 base HP, 100 mana — from class.c line 538

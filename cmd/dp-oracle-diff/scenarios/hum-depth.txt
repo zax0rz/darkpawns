@@ -1,0 +1,81 @@
+# C-first hum self-only social vehicle (src/interpreter.c:505;
+# act.social.c:102-121; lib/misc/socials:1391-1394). Because char_found is
+# absent, do_action ignores every typed argument and emits only the actor/room
+# pair.
+
+# depth-case: hum.no-argument
+# depth-case: hum.argument-ignored
+# depth-case: hum.missing-target-ignored
+# depth-case: hum.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Humactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Humactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Humobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Humobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Humobserver 8162
+
+[probe]
+hum
+hum Humobserver trailing words are ignored
+hum Nobody
+hum Humactor

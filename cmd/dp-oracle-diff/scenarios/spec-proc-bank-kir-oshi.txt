@@ -1,0 +1,81 @@
+# depth-case: obj.bank-kir-oshi-registration
+# The second C registration, object #18224 (src/spec_assign.c:561), is a Kir
+# Oshi ATM reset in room 18297 by zone 182. This vehicle keeps the same
+# balance/fallthrough contract on the second registered prototype rather than
+# assuming #8034 covers both object registrations.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs.c:2345-2399 ->
+# act.comm.c act() / do_coins().
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 18224 99 18297 182
+force-load 18224
+
+[setup:oracle]
+Bankkir
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bankkir
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Bankkirpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Bankkirpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Bankkir gold 10
+goto 18297
+teleport Bankkirpeer 18297
+
+[probe]
+balance
+deposit 10
+gold

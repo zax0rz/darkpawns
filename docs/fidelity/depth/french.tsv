@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	french	french.entry-gate	D1	command	unit-green	TestFrenchRegistrationUsesCEntryGate	interpreter.c:453; act.social.c:102-112	The C row is POS_RESTING with no minimum level, and the French social record has zero hide and victim-position metadata.
+do_action	french	french.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:453; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	french	french.no-argument	D2	audience	oracle-green-multiseed	french-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:260-265	The no-target record emits French whom?? and its empty room branch.
+do_action	french	french.target-success	D3	audience	oracle-green-multiseed	french-depth@1,2,3,5,8	act.social.c:128-151; lib/misc/socials:260-265	A standing peer receives the exact actor, non-victim room, and victim kiss messages.
+do_action	french	french.sleeping-target	D3	audience	oracle-green-multiseed	french-sleeping-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2480-2555; lib/misc/socials:260-265	The record's zero minimum victim position admits a sleeping target; plain TO_VICT suppresses the sleeping target's private line while the actor and awake observer retain their C output.
+do_action	french	french.target-not-found	D1	command	oracle-green-multiseed	french-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:260-265	An unresolved target emits the exact French despair line.
+do_action	french	french.self-target	D2	audience	oracle-green-multiseed	french-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:260-265	The actor self-target branch emits the exact self-kiss message and room audience.
+do_action	french	french.one-argument	D2	command	oracle-green-multiseed	french-depth@1,2,3,5,8	interpreter.c:853-867,1265-1283; act.social.c:114-121	C one_argument skips the leading fill word and discards trailing words before lookup.
+do_action	french	french.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance noshout vehicle.
+do_action	french	french.visibility	D3	shared	delegated	socials-depth	act.social.c:114-151; comm.c:2392-2555	The shared visible-target and audience visibility rules are owned by the social matrix.

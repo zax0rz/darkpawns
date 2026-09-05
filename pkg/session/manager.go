@@ -70,6 +70,7 @@ func init() {
 // Manager handles all active sessions.
 type Manager struct {
 	mu           sync.RWMutex
+	snoopMu      sync.RWMutex        // protects the bidirectional snoop links
 	sessions     map[string]*Session // keyed by player name
 	world        *game.World
 	combatEngine *combat.CombatEngine
@@ -97,6 +98,7 @@ type Manager struct {
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
+	wizlockLevel int
 
 	// dreamingDir is the path to the dreaming layer's output directory.
 	// Agent memory summaries are read from {dreamingDir}/{agent_id}/memory-summary.txt.
@@ -113,6 +115,20 @@ type Manager struct {
 	// mortals, matching C's "first player ever" semantics within a single boot.
 	// Production uses the persisted CountPlayers()==0 check instead.
 	godCrowned atomic.Bool
+
+	// nextConnectionNumber mirrors C's last_desc counter for the dc command.
+	// It is protected by m.mu and wraps from 999 back to 1.
+	nextConnectionNumber int
+
+	// shutdownRequests carries C do_shutdown's process-level request to the
+	// server entrypoint after the command has emitted its player-facing bytes.
+	shutdownRequests chan ShutdownRequest
+}
+
+// ShutdownRequest describes a C do_shutdown option. Marker is written beside
+// the server working directory by cmd/server for reboot/die/pause semantics.
+type ShutdownRequest struct {
+	Marker string
 }
 
 // isLoopback reports whether remoteAddr resolves to the loopback interface
@@ -229,12 +245,35 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	ce := combat.NewCombatEngine()
 	ce.Start()
 
+	// House-control uses the C get_name_by_id()/get_id_by_name() seam. Keep it
+	// backed by the live world for both the admin command and ordinary house
+	// commands; leaving the injected callbacks nil makes every build/list path
+	// diverge even when the player is online.
+	game.RegisterHousePlayerLookup(
+		func(id int64) string {
+			player := world.GetPlayerByID(int(id))
+			if player == nil {
+				return ""
+			}
+			return player.GetName()
+		},
+		func(name string) int64 {
+			for _, player := range world.GetPlayers() {
+				if strings.EqualFold(player.GetName(), name) {
+					return int64(player.GetID())
+				}
+			}
+			return -1
+		},
+	)
+
 	m := &Manager{
-		sessions:     make(map[string]*Session),
-		world:        world,
-		combatEngine: ce,
-		shopManager:  systems.NewShopManager(),
-		loginLimiter: auth.NewIPRateLimiter(),
+		sessions:         make(map[string]*Session),
+		world:            world,
+		combatEngine:     ce,
+		shopManager:      systems.NewShopManager(),
+		shutdownRequests: make(chan ShutdownRequest, 1),
+		loginLimiter:     auth.NewIPRateLimiter(),
 		loginAttempts: auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{
 			Threshold: 10,
 			Lockout:   15 * time.Minute,
@@ -279,6 +318,11 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		if !ok || s == nil {
 			return
 		}
+		s.notePlayerOutput()
+		if s.claimInterruptionPrefix() {
+			msg = append([]byte("\r\n"), msg...)
+		}
+		s.forwardSnoopOutput(string(msg))
 		// Wrap in JSON event envelope for WebSocket clients
 		wrapped, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
@@ -295,6 +339,18 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		case s.send <- wrapped:
 		default:
 			slog.Warn("MessageSink channel full — dropping message", "player", playerName)
+		}
+	}
+
+	// C's do_simple_move calls look_at_room before follower recursion. Keep the
+	// renderer in session while letting the game transaction own that ordering.
+	world.MovementLook = func(player *game.Player) {
+		s, ok := m.GetSession(player.Name)
+		if !ok || s == nil {
+			return
+		}
+		if err := cmdMovementLook(s); err != nil {
+			slog.Error("movement look failed", "player", player.Name, "error", err)
 		}
 	}
 
@@ -339,6 +395,18 @@ func NewManager(world *game.World, database db.Database) *Manager {
 	})
 
 	return m
+}
+
+// allocateConnectionNumber mirrors C's last_desc counter. The value is
+// assigned when the transport session is created, before character login.
+func (m *Manager) allocateConnectionNumber() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.nextConnectionNumber++
+	if m.nextConnectionNumber == 1000 {
+		m.nextConnectionNumber = 1
+	}
+	return m.nextConnectionNumber
 }
 
 // SetCombatBroadcastFunc sets the broadcast function for combat messages.
@@ -387,12 +455,32 @@ func (m *Manager) SetCombatMessageFunc() {
 		}
 		return msg
 	}
-
-	broadcast := func(roomVNum int, message string, exclude string) {
+	// enqueueCombatMessage shares the player-output framing used by the world
+	// MessageSink. Combat callbacks historically wrote directly to s.send, so
+	// the DP_CLOCK interruption prefix could land on the next ordinary text
+	// message instead of the first combat message in the pulse. C's descriptor
+	// output buffer has one ordering boundary for both sources (comm.c:1620-
+	// 1643); consume it here at the same boundary (R1/R3/R5e).
+	enqueueCombatMessage := func(s *Session, message string) {
+		if s == nil {
+			return
+		}
+		s.notePlayerOutput()
+		if s.claimInterruptionPrefix() {
+			message = "\r\n" + message
+		}
 		msg := wrap(message)
 		if msg == nil {
 			return
 		}
+		select {
+		case s.send <- msg:
+		default:
+			slog.Warn("dropping combat message: channel full", "player", s.playerName)
+		}
+	}
+
+	broadcast := func(roomVNum int, message string, exclude string) {
 		excluded := make(map[string]bool)
 		for _, name := range strings.Fields(exclude) {
 			excluded[name] = true
@@ -404,26 +492,14 @@ func (m *Manager) SetCombatMessageFunc() {
 				continue
 			}
 			if s.player != nil && s.player.GetRoom() == roomVNum {
-				select {
-				case s.send <- msg:
-				default:
-					slog.Warn("dropping combat broadcast: channel full", "player", name, "room", roomVNum)
-				}
+				enqueueCombatMessage(s, message)
 			}
 		}
 	}
 
 	sendToChar := func(name string, message string) {
-		msg := wrap(message)
-		if msg == nil {
-			return
-		}
 		if s, ok := m.GetSession(name); ok {
-			select {
-			case s.send <- msg:
-			default:
-				slog.Warn("dropping combat message: channel full", "player", name)
-			}
+			enqueueCombatMessage(s, message)
 		}
 	}
 
@@ -464,16 +540,75 @@ func (m *Manager) SetPulsePump(pump func(int) error) {
 	m.pulsePump = pump
 }
 
+// ExtractPendingChars drains the world's C-style deferred extraction pass and
+// returns connected victims to the main menu. C does this from heartbeat(),
+// after raw_kill() has finished its synchronous death bytes; a linkless
+// descriptor receives no menu because extract_char_final() has nothing to
+// write to.
+func (m *Manager) ExtractPendingChars() {
+	extracted := m.world.ExtractPendingPlayers()
+	for _, player := range extracted {
+		m.mu.RLock()
+		var victim *Session
+		for _, s := range m.sessions {
+			if s.player == player {
+				victim = s
+				break
+			}
+		}
+		m.mu.RUnlock()
+		if victim == nil || !victim.hasTransport() {
+			continue
+		}
+		victim.showMainMenu()
+	}
+}
+
 // PumpPulses advances the deterministic heartbeat without routing through the
-// player command interpreter.
+// command interpreter. After the heartbeats return, every session that
+// received player-bound output during the pump gets its prompt — C's
+// process_output flushes every player every game-loop pass and each flush
+// carries the prompt at its tail (comm.c:632-648, 1624-1640).
 func (m *Manager) PumpPulses(n int) error {
+	return m.PumpPulsesFrom(nil, n)
+}
+
+// PumpPulsesFrom is PumpPulses with the session whose input line drove the
+// pump. C's input processing clears that descriptor's has_prompt
+// (comm.c:607), so its next output flush carries process_output's
+// interruption CRLF prefix.
+func (m *Manager) PumpPulsesFrom(s *Session, n int) error {
+	if s != nil {
+		s.promptInvalidated.Store(true)
+	}
 	m.pulsePumpMu.RLock()
 	pump := m.pulsePump
 	m.pulsePumpMu.RUnlock()
 	if pump == nil {
 		return fmt.Errorf("pulse pump is not configured")
 	}
-	return pump(n)
+	if err := pump(n); err != nil {
+		return err
+	}
+	m.flushAsyncPrompts()
+	return nil
+}
+
+// flushAsyncPrompts emits the trailing prompt for sessions that received
+// game output outside their own command path (pumped pulse output delivered
+// to idle players).
+func (m *Manager) flushAsyncPrompts() {
+	m.mu.RLock()
+	sessions := make([]*Session, 0, len(m.sessions))
+	for _, s := range m.sessions {
+		sessions = append(sessions, s)
+	}
+	m.mu.RUnlock()
+	for _, s := range sessions {
+		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() && !s.IsPaging() {
+			s.SendPrompt()
+		}
+	}
 }
 
 // Stop halts the manager's background workers and waits for them to exit.
@@ -481,6 +616,21 @@ func (m *Manager) PumpPulses(n int) error {
 // cannot outlive their manager and race later package-global callback wiring.
 func (m *Manager) Stop() {
 	m.combatEngine.Stop()
+}
+
+// RequestShutdown hands an accepted do_shutdown option to the process
+// lifecycle owner. A second request cannot replace the first C shutdown arm.
+func (m *Manager) RequestShutdown(marker string) {
+	select {
+	case m.shutdownRequests <- ShutdownRequest{Marker: marker}:
+	default:
+		slog.Warn("shutdown request already pending")
+	}
+}
+
+// ShutdownRequests returns the process-level shutdown request stream.
+func (m *Manager) ShutdownRequests() <-chan ShutdownRequest {
+	return m.shutdownRequests
 }
 
 // GetBanManager returns the ban manager for checking host bans.
@@ -569,6 +719,24 @@ func (m *Manager) SetScriptFightFunc() {
 	}
 }
 
+// SetMobSpecialFunc wires native MOB_SPEC procedures into the combat engine.
+// C perform_violence() invokes an assigned mob special after the mob's
+// ordinary attack loop; mobile_activity() deliberately skips fighters, so the
+// combat seam is the only correct call path for combat-time specials.
+func (m *Manager) SetMobSpecialFunc() {
+	m.combatEngine.MobSpecialFunc = func(mob combat.Combatant) bool {
+		instance, ok := mob.(*game.MobInstance)
+		if !ok || instance == nil || !instance.HasFlag("spec") {
+			return false
+		}
+		spec := game.GetMobSpec(instance.GetVNum())
+		if spec == nil {
+			return false
+		}
+		return spec(m.world, nil, instance, "", "")
+	}
+}
+
 // SetScriptDeathFunc wires the death trigger into the combat engine.
 // When a mob dies, if it has a death script, it fires.
 func (m *Manager) SetScriptDeathFunc() {
@@ -643,8 +811,10 @@ func (m *Manager) shouldCrownFirstPlayer() bool {
 // queuedInput is a single buffered command awaiting the per-pulse drain
 // (DP-1201; port of comm.c:603 game_loop input queue).
 type queuedInput struct {
-	cmd  string
-	args []string
+	cmd     string
+	args    []string
+	rawArgs string
+	aliased bool
 }
 
 // tryExecuteNow is the single player-input funnel gate (called from
@@ -661,11 +831,15 @@ type queuedInput struct {
 // A drains without setting a new wait, then a freshly-typed C arrives while
 // wait==0 — C must still go behind B). The fast path is taken only when BOTH
 // wait==0 AND the queue is empty.
-func (s *Session) tryExecuteNow(cmd string, args []string) bool {
+func (s *Session) tryExecuteNow(cmd string, args []string, rawArgText ...string) bool {
 	s.inputMu.Lock()
 	defer s.inputMu.Unlock()
 	if (s.player != nil && s.player.GetWaitState() > 0) || len(s.inputQueue) > 0 {
-		s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args})
+		rawArgs := ""
+		if len(rawArgText) > 0 {
+			rawArgs = rawArgText[0]
+		}
+		s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args, rawArgs: rawArgs})
 		return true
 	}
 	return false
@@ -680,16 +854,33 @@ func (s *Session) enqueueInput(cmd string, args []string) {
 	s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args})
 }
 
+// prependAliasedInputs puts the commands generated by a complex alias ahead
+// of any already-buffered player input. The aliased marker mirrors C's
+// game-loop flag: queued expansions must not recursively expand aliases when
+// they are drained.
+func (s *Session) prependAliasedInputs(commands []string) {
+	if len(commands) == 0 {
+		return
+	}
+	inputs := make([]queuedInput, 0, len(commands)+len(s.inputQueue))
+	for _, command := range commands {
+		cmd, args := splitCommandInput(command)
+		inputs = append(inputs, queuedInput{cmd: cmd, args: args, aliased: true})
+	}
+	inputs = append(inputs, s.inputQueue...)
+	s.inputQueue = inputs
+}
+
 // dequeueInput pops the head of the drain queue. Returns ok=false when empty.
-func (s *Session) dequeueInput() (string, []string, bool) {
+func (s *Session) dequeueInput() (queuedInput, bool) {
 	s.inputMu.Lock()
 	defer s.inputMu.Unlock()
 	if len(s.inputQueue) == 0 {
-		return "", nil, false
+		return queuedInput{}, false
 	}
 	head := s.inputQueue[0]
 	s.inputQueue = s.inputQueue[1:]
-	return head.cmd, head.args, true
+	return head, true
 }
 
 // queueLen returns the current drain-queue depth (test helper).
@@ -714,9 +905,11 @@ func (s *Session) queueLen() int {
 // under the lock (it touches only Player.WaitState under p.mu, never m.mu).
 func (m *Manager) DrainInputQueues() {
 	type drainJob struct {
-		s    *Session
-		cmd  string
-		args []string
+		s       *Session
+		cmd     string
+		args    []string
+		rawArgs string
+		aliased bool
 	}
 
 	m.mu.RLock()
@@ -729,15 +922,15 @@ func (m *Manager) DrainInputQueues() {
 		s.player.DecrementWaitState()
 		// Fact 3: one command drains per pulse (if, not while).
 		if s.player.GetWaitState() <= 0 {
-			if cmd, args, ok := s.dequeueInput(); ok {
-				jobs = append(jobs, drainJob{s: s, cmd: cmd, args: args})
+			if input, ok := s.dequeueInput(); ok {
+				jobs = append(jobs, drainJob{s: s, cmd: input.cmd, args: input.args, rawArgs: input.rawArgs, aliased: input.aliased})
 			}
 		}
 	}
 	m.mu.RUnlock()
 
 	for _, job := range jobs {
-		if err := ExecuteCommand(job.s, job.cmd, job.args); err != nil {
+		if err := executeCommandRaw(job.s, job.cmd, job.args, !job.aliased, job.rawArgs); err != nil {
 			slog.Error("drained command failed",
 				"player", job.s.playerName, "command", job.cmd, "error", err)
 		}
@@ -766,7 +959,7 @@ func (m *Manager) SetFleeHooks() {
 		if !ok || s == nil {
 			return
 		}
-		if err := cmdFlee(s); err != nil {
+		if err := cmdRetreat(s); err != nil {
 			slog.Error("DoRetreat failed", "player", name, "error", err)
 		}
 	}
@@ -831,6 +1024,8 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		wantsStructuredData: true,
 		sessionCtx:          ctx,
 		cancelFunc:          cancel,
+		transportDone:       make(chan struct{}),
+		connectionNumber:    m.allocateConnectionNumber(),
 	}
 
 	// Start goroutines for reading and writing
@@ -961,12 +1156,16 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 
 	// 3. Clean snoop references
+	m.snoopMu.Lock()
 	if s.snoopBy != nil {
 		s.snoopBy.snooping = nil
 	}
 	if s.snooping != nil {
 		s.snooping.snoopBy = nil
 	}
+	s.snoopBy = nil
+	s.snooping = nil
+	m.snoopMu.Unlock()
 
 	// 3b. M-16: Auto-return from switched body on disconnect
 	if s.isSwitched {
@@ -1010,6 +1209,33 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	if s.cancelFunc != nil {
 		s.cancelFunc()
 	}
+}
+
+// HandleTelnetDisconnect preserves an authenticated playing character after
+// an unexpected TCP EOF. C close_socket() saves the character and clears its
+// descriptor, but leaves it in character_list so directed speech can report
+// that the target is linkless. The linkdead reaper later owns extraction.
+// It returns true when the session was retained as linkdead; orderly quits
+// and pre-auth disconnects return false and use normal cleanup.
+func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
+	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() {
+		return false
+	}
+
+	p := s.player
+	p.SetLinkless(true)
+	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
+
+	if m.hasDB && p.ID > 0 && !s.isGuest {
+		if rec, err := db.PlayerToRecord(p, nil); err == nil {
+			if err := m.db.SavePlayer(rec); err != nil {
+				slog.Error("linkdead save error", "player", s.playerName, "error", err)
+			}
+		}
+	}
+
+	s.DetachTransport()
+	return true
 }
 
 func (m *Manager) Unregister(playerName string) {
@@ -1199,6 +1425,19 @@ func (m *Manager) SessionCount() int {
 
 // BroadcastToRoom sends a message to all players in a room.
 func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer string) {
+	// Some callers hand over a raw text line instead of a marshaled
+	// ServerMessage envelope. Every transport renders only envelope frames
+	// (the telnet writeLoop json.Unmarshals each send), so raw payloads were
+	// silently dropped for every client — wrap them at the sink.
+	if !json.Valid(message) {
+		if envelope, err := json.Marshal(ServerMessage{
+			Type: MsgEvent,
+			Data: EventData{Type: "text", Text: string(message)},
+		}); err == nil {
+			message = envelope
+		}
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -1225,7 +1464,7 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 type Session struct {
 	conn                 *websocket.Conn
 	request              *http.Request // Store the original HTTP request for IP extraction
-	remoteIP             string        // Store IP directly for non-HTTP (Telnet) sessions
+	remoteIP             string        // Store remote IP directly for non-HTTP (Telnet) sessions
 	manager              *Manager
 	send                 chan []byte
 	player               *game.Player
@@ -1235,14 +1474,32 @@ type Session struct {
 	connCountDecremented bool // C5: prevents double-decrement of IP connection count
 	banLevel             int  // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
 
+	// outputSincePrompt counts player-bound messages enqueued since the last
+	// prompt. C's process_output appends "\r\n" + make_prompt to every output
+	// flush (comm.c:1624-1640); this counter lets SendPrompt reproduce that
+	// trailing framing and lets the post-pulse sweep find sessions that owe an
+	// async prompt after pumped heartbeat output.
+	outputSincePrompt atomic.Int64
+
+	// promptInvalidated mirrors C's d->has_prompt = 0 on input: the next
+	// output flush for the descriptor that sent the input is prefixed with
+	// the interruption CRLF (comm.c:1620-1643 — process_output sends i,
+	// which begins with "\r\n", instead of i+2 when the player had no
+	// outstanding prompt). The oracle's ~dpclock pump line is input too, so
+	// pumped output for the pumping session carries the prefix; idle other
+	// sessions keep their prompt and flush without it.
+	promptInvalidated atomic.Bool
+
 	// Agent identity — set on login when is_agent=true.
 	// Harness+Model is the agent identity. Same combo = same agent across sessions.
-	isAgent      bool
-	agentHarness string    // e.g. "openclaw", "claude-code"
-	agentModel   string    // e.g. "mimo-v2.5-base"
-	agentVersion string    // harness version
-	agentKeyID   int64     // legacy: kept for backward compat, deprecated
-	connectedAt  time.Time // set on session creation, used for sessionID()
+	isAgent          bool
+	agentHarness     string    // e.g. "openclaw", "claude-code"
+	agentModel       string    // e.g. "mimo-v2.5-base"
+	agentVersion     string    // harness version
+	agentKeyID       int64     // legacy: kept for backward compat, deprecated
+	connectedAt      time.Time // set on session creation, used for sessionID()
+	connectionNumber int       // C descriptor number, used by do_dc
+	olcZone          int       // C GET_OLC_ZONE; zero until an OLC zone is assigned
 
 	// H-25: JWT token rotation state
 	tokenIssuedAt time.Time // when the current JWT was issued
@@ -1320,8 +1577,12 @@ type Session struct {
 	tempData map[string]interface{}
 
 	// Infobar / display state (from act.display.c)
-	screenSize  int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
-	infobarMode int //nolint:unused // InfobarOff (0) or InfobarOn (1)
+	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
+	infobarMode                         int //nolint:unused // InfobarOff (0) or InfobarOn (1)
+	infobarLastHit, infobarLastMaxHit   int
+	infobarLastMana, infobarLastMaxMana int
+	infobarLastMove, infobarLastMaxMove int
+	infobarLastExp, infobarLastGold     int
 	// leaveBroadcastHandled is set by an orderly quit after it applies C's
 	// invisibility gate, preventing generic disconnect cleanup from announcing
 	// the same departure a second time.
@@ -1381,6 +1642,12 @@ type Session struct {
 	// sessions use s.conn directly; telnet/other transports set this so that
 	// s.Close() can tear down the underlying connection (DP-928).
 	closeFunc func()
+
+	// transportDone is closed when a transport disappears while an
+	// authenticated player remains linkdead in the world. The send channel is
+	// deliberately left open until the linkdead session is reaped.
+	transportDone chan struct{}
+	transportOnce sync.Once
 }
 
 // LiveAgentSession is already defined in admin package.
@@ -1441,6 +1708,16 @@ func (s *Session) WantsStructuredData() bool {
 
 // ShutdownGracefully drains and shuts down all active sessions gracefully.
 func (m *Manager) ShutdownGracefully(timeout time.Duration) {
+	m.shutdownGracefully(timeout, true)
+}
+
+// ShutdownGracefullyWithoutNotice is used after C do_shutdown has already
+// broadcast its exact shutdown text and forced the all-save continuation.
+func (m *Manager) ShutdownGracefullyWithoutNotice(timeout time.Duration) {
+	m.shutdownGracefully(timeout, false)
+}
+
+func (m *Manager) shutdownGracefully(timeout time.Duration, notify bool) {
 	m.Stop()
 
 	m.mu.Lock()
@@ -1457,13 +1734,15 @@ func (m *Manager) ShutdownGracefully(timeout time.Duration) {
 
 	slog.Info("session manager: shutting down active sessions", "count", len(sessions))
 
-	// 1. Notify players of the shutdown
-	for _, s := range sessions {
-		s.sendText("\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n")
+	// 1. Notify players of an external shutdown. A command-triggered C
+	// shutdown already emitted its own global bytes and save notices.
+	if notify {
+		for _, s := range sessions {
+			s.sendText("\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n")
+		}
+		// 2. Wait a brief moment for messages to flush
+		time.Sleep(1 * time.Second)
 	}
-
-	// 2. Wait a brief moment for messages to flush
-	time.Sleep(1 * time.Second)
 
 	// 3. Unregister and cleanup each session sequentially with safety timeouts
 	for name, s := range sessions {

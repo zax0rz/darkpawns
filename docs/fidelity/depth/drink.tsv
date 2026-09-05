@@ -1,0 +1,15 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_drink	drink	drink.no-arg	D1	command	oracle-green	drink-basic	act.item.c:903-907	Empty arg yields "Drink from what?".
+do_drink	drink	drink.inv-lookup-keyword	D2	command	oracle-green	drink-eat-lookup	act.item.c:908-916	Inventory lookup uses C get_obj_in_list_vis (keyword prefix via getObjInInvVis), not Inventory.FindItem which also matched the short description / interior substring. A short-desc-only arg ("of", "water" on a stripped-keyword skin) must miss.
+do_drink	drink	drink.cant-find	D2	command	oracle-green	drink-basic	act.item.c:908-916	Not in inventory or room yields "You can't find it!".
+do_drink	drink	drink.cant-drink-from	D2	command	oracle-green	drink-basic	act.item.c:917-921	A non-drinkcon/fountain yields "You can't drink from that!".
+do_drink	drink	drink.success	D3	command	oracle-green	drink-basic	act.item.c:958-963	"You drink the <liquid>." and condition gains.
+do_drink	drink	drink.sip-success	D3	command	oracle-green	drink-basic	act.item.c:966-971	sip emits "$n sips from $p." and "It tastes like <liquid>.".
+do_drink	drink	drink.holding-gate	D2	command	unit-green	TestDrinkHoldingGate	act.item.c:922-925	A drinkcon on the ground yields "You have to be holding that to drink from it.".
+do_drink	drink	drink.drunk-gate	D2	command	unit-green	TestDrinkConditionGates	act.item.c:931-937	DRUNK>10 & THIRST>0 yields "You can't seem to get close enough to your mouth.".
+do_drink	drink	drink.full-gate	D2	command	unit-green	TestDrinkConditionGates	act.item.c:939-943	FULL>20 & THIRST>0 yields "Your stomach can't contain anymore!".
+do_drink	drink	drink.explode	D2	command	unit-green	TestDrinkConditionGates	act.item.c:945-948	THIRST>40 yields "If you drink any more, you'll explode!".
+do_drink	drink	drink.empty	D2	command	unit-green	TestDrinkConditionGates	act.item.c:950-953	Empty container yields "It's empty.".
+do_drink	drink	drink.poison	D4	state	unit-green	TestDrinkConditionGates	act.item.c:1010-1015	A poisoned drink yields "Oops, it tasted rather strange!" and applies poison.
+do_drink	drink	drink.vampire	D5	state	blocked	-	act.item.c:988-995	Reachable, mis-filed as excluded: PLR_VAMPIRE night branch fires for a vampire PC (PLR_VAMPIRE set via Dracula bite spec_procs.c:1829 / spell spells.c:784) drinking a non-blood liquid at SUN_SET/SUN_DARK. Blocked on staging the vampire transform + weather in a disposable oracle scenario; prove via a Dracula-bite/vampire-spell + night vehicle. Reclassified excluded->blocked 2026-09-03 (Section 5.2 audit).
+get_obj_in_list_vis	drink	drink.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get.

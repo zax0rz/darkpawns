@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -39,118 +40,81 @@ func cmdHeal(s *Session, args []string) error {
 // restore — fully restore target (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdRestore(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !checkLevel(s, LVL_GOD-1) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	// C do_restore (act.wizard.c) no-arg → "Whom do you wish to restore?";
-	// cmdRestore otherwise delegates the with-target path to cmdHeal.
-	if len(args) == 0 {
+	// C do_restore uses one_argument: fill words are skipped and trailing input
+	// is ignored. Its visible lookup includes both players and NPCs.
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
 		s.Send("Whom do you wish to restore?\r\n")
 		return nil
 	}
-	return cmdHeal(s, args)
-}
 
-// ---------------------------------------------------------------------------
-// set — set a player field (LVL_GRGOD)
-// ---------------------------------------------------------------------------
-func cmdSet(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
-	if len(args) < 3 {
-		s.Send("Usage: set <player> <field> <value>")
-		return nil
-	}
-	targetName := args[0]
-	field := args[1]
-	value := strings.Join(args[2:], " ")
 	targetSess := findSessionByName(s.manager, targetName)
-	if targetSess == nil || targetSess.player == nil {
-		s.Send("No one by that name online.")
-		return nil
+	var targetMob *game.MobInstance
+	if targetSess == nil && s.manager != nil && s.manager.world != nil {
+		targetMob = s.manager.world.GetMobByName(targetName)
 	}
-	field = strings.ToLower(field)
-
-	// Validate numeric value before assignment
-	val, err := strconv.Atoi(value)
-	if err != nil {
-		s.Send("Invalid numeric value.")
+	if targetSess == nil && targetMob == nil {
+		s.Send("No-one by that name here.\r\n")
 		return nil
 	}
 
-	// Validate field bounds
-	switch field {
-	case "str", "sta", "dex", "int", "wil", "cha":
-		val = clamp(val, 3, 25)
-	case "level":
-		val = clamp(val, 0, 61)
-	case "hp", "mana", "move":
-		if val > 10000 && targetSess.player.Level < 60 {
-			return fmt.Errorf("cannot set %s above 10000 for non-immortals", field)
+	if targetSess != nil && targetSess.player != nil {
+		target := targetSess.player
+		target.SetHealth(target.GetMaxHP())
+		target.SetMana(target.GetMaxMana())
+		target.SetMove(target.GetMaxMove())
+		if target.GetHP() > 0 && target.GetPosition() <= combat.PosStunned {
+			target.SetPosition(combat.PosStanding)
+		}
+
+		if getEffectiveLevel(s) >= LVL_GRGOD && target.GetLevel() >= LVL_IMMORT {
+			if target.SkillManager != nil {
+				for _, skill := range target.SkillManager.GetAllSkills() {
+					target.SetSkill(skill.Name, 100)
+				}
+			}
+			if target.GetLevel() >= LVL_GRGOD {
+				target.Lock()
+				target.Stats.StrAdd = 100
+				target.Stats.Int = 25
+				target.Stats.Wis = 25
+				target.Stats.Dex = 25
+				target.Stats.Str = 25
+				target.Stats.Con = 25
+				target.Stats.Cha = 25
+				target.Strength = 25
+				target.Unlock()
+			}
+		}
+	} else if targetMob != nil {
+		targetMob.SetHealth(targetMob.GetMaxHP())
+		targetMob.SetMana(targetMob.GetMaxMana())
+		targetMob.SetMove(targetMob.GetMaxMove())
+		if targetMob.GetHP() > 0 && targetMob.GetPosition() <= combat.PosStunned {
+			targetMob.SetPosition(combat.PosStanding)
 		}
 	}
 
-	switch field {
-	case "level":
-		targetSess.player.Level = val
-		s.Send(fmt.Sprintf("Level set to %d.", val))
-	case "gold":
-		targetSess.player.Gold = val
-		s.Send(fmt.Sprintf("Gold set to %d.", val))
-	case "alignment":
-		targetSess.player.Alignment = val
-		s.Send(fmt.Sprintf("Alignment set to %d.", val))
-	case "str":
-		targetSess.player.Stats.Str = val
-		targetSess.player.Strength = val
-		s.Send(fmt.Sprintf("Strength set to %d.", val))
-	case "sta":
-		targetSess.player.Stats.Con = val
-		s.Send(fmt.Sprintf("Constitution set to %d.", val))
-	case "dex":
-		targetSess.player.Stats.Dex = val
-		s.Send(fmt.Sprintf("Dexterity set to %d.", val))
-	case "int":
-		targetSess.player.Stats.Int = val
-		s.Send(fmt.Sprintf("Intelligence set to %d.", val))
-	case "wil":
-		targetSess.player.Stats.Wis = val
-		s.Send(fmt.Sprintf("Wisdom set to %d.", val))
-	case "cha":
-		targetSess.player.Stats.Cha = val
-		s.Send(fmt.Sprintf("Charisma set to %d.", val))
-	case "hp":
-		targetSess.player.MaxHealth = val
-		targetSess.player.Health = val
-		s.Send(fmt.Sprintf("Hit points set to %d.", val))
-	case "mana":
-		targetSess.player.MaxMana = val
-		targetSess.player.Mana = val
-		s.Send(fmt.Sprintf("Mana set to %d.", val))
-	case "move":
-		targetSess.player.MaxMove = val
-		targetSess.player.Move = val
-		s.Send(fmt.Sprintf("Move points set to %d.", val))
-	default:
-		s.Send("Unknown field. Try: level, gold, alignment, str, sta, dex, int, wil, cha, hp, mana, move.")
+	s.Send("Okay.\r\n")
+	if targetSess != nil && targetSess.player != nil {
+		targetSess.Send(fmt.Sprintf("The hand of %s touches you, healing your wounds and leaving you refreshed!\r\n", s.player.Name))
 	}
-	slog.Warn("wizard set", "by", s.player.Name, "target", targetName, "field", field, "value", value)
 	return nil
 }
 
 // clamp restricts v to the [min, max] range.
 func cmdSwitch(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
-
-	// M-16 toggle: if already switched, return to original body
+	// The command-table level gate is authoritative. If the descriptor is
+	// already attached to a switched body, do_switch reports this before any
+	// target parsing; the interpreter's switched-NPC gate normally intercepts
+	// that case first.
 	if s.isSwitched {
-		return cmdReturn(s, args)
+		s.Send("You're already switched.\r\n")
+		return nil
 	}
 
 	if len(args) == 0 {
@@ -164,14 +128,6 @@ func cmdSwitch(s *Session, args []string) error {
 	origLevel := s.player.Level
 	origPlayer := s.player
 
-	// Save wizard state before switching
-	if err := game.SavePlayer(origPlayer); err != nil {
-		slog.Error("cmdSwitch: failed to save wizard state checkpoint",
-			"wizard", origPlayer.Name, "error", err)
-	} else {
-		slog.Info("switch: saved wizard state checkpoint", "wizard", origPlayer.Name)
-	}
-
 	// Look for a mob in the room
 	mobs := s.manager.world.GetMobsInRoom(roomVNum)
 	for _, mob := range mobs {
@@ -181,13 +137,7 @@ func cmdSwitch(s *Session, args []string) error {
 			s.switchedMob = mob
 			s.isSwitched = true
 			s.switchedStartTime = time.Now()
-			slog.Info(
-				"switch: wizard switched into mob",
-				"wizard", origPlayer.Name,
-				"wizard_level", origLevel,
-				"target_mob", mob.GetShortDesc(),
-			)
-			s.Send(fmt.Sprintf("You switch into %s.\r\n", mob.GetShortDesc()))
+			s.Send("Okay.\r\n")
 			return nil
 		}
 	}
@@ -196,16 +146,17 @@ func cmdSwitch(s *Session, args []string) error {
 	players := s.manager.world.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
 		if strings.ToLower(p.GetName()) == targetName {
-			if p.Level >= s.player.Level {
-				s.Send("Fuuuuuuuuu!\r\n")
+			if p == s.player {
+				s.Send("Hee hee... we are jolly funny today, eh?\r\n")
 				return nil
 			}
-			// Save target player state before switching
-			if err := game.SavePlayer(p); err != nil {
-				slog.Error("cmdSwitch: failed to save target player checkpoint",
-					"target", p.Name, "error", err)
-			} else {
-				slog.Info("switch: saved target player state checkpoint", "target", p.Name)
+			if findSessionByName(s.manager, p.GetName()) != nil {
+				s.Send("You can't do that, the body is already in use!\r\n")
+				return nil
+			}
+			if s.player.Level < LVL_IMPL {
+				s.Send("You aren't holy enough to use a mortal's body.\r\n")
+				return nil
 			}
 
 			s.switchedOriginal = origPlayer
@@ -213,18 +164,11 @@ func cmdSwitch(s *Session, args []string) error {
 			s.switchedPlayer = p
 			s.isSwitched = true
 			s.switchedStartTime = time.Now()
-			slog.Info(
-				"switch: wizard switched into player",
-				"wizard", origPlayer.Name,
-				"wizard_level", origLevel,
-				"target_player", p.GetName(),
-				"target_level", p.Level,
-			)
-			s.Send(fmt.Sprintf("You switch into %s.\r\n", p.GetName()))
+			s.Send("Okay.\r\n")
 			return nil
 		}
 	}
-	s.Send("No one here by that name.\r\n")
+	s.Send("No such character.\r\n")
 	return nil
 }
 
@@ -236,12 +180,9 @@ func cmdSwitch(s *Session, args []string) error {
 // - Detach the wizard's session from the switched character
 // - Re-attach to the wizard's original character
 func cmdReturn(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
+	// C do_return has no handler-level authorization gate and is silent unless
+	// the descriptor is attached to a switched body. Its arguments are ignored.
 	if !s.isSwitched || s.switchedOriginal == nil {
-		s.Send("You aren't switched.\r\n")
 		return nil
 	}
 
@@ -262,31 +203,13 @@ func cmdReturn(s *Session, args []string) error {
 		)
 	}
 
-	// Save target character state to persist any changes made while switched
-	if s.switchedPlayer != nil {
-		if err := game.SavePlayer(s.switchedPlayer); err != nil {
-			slog.Error("cmdReturn: failed to save switched player state",
-				"player", s.switchedPlayer.Name, "error", err)
-		} else {
-			slog.Info("return: saved switched player state", "player", s.switchedPlayer.Name)
-		}
-	}
-
-	// Save wizard state before restoring
-	if err := game.SavePlayer(s.switchedOriginal); err != nil {
-		slog.Error("cmdReturn: failed to save wizard state before restore",
-			"wizard", s.switchedOriginal.Name, "error", err)
-	} else {
-		slog.Info("return: saved wizard state before restore", "wizard", s.switchedOriginal.Name)
-	}
-
 	s.player = s.switchedOriginal
 	s.isSwitched = false
 	s.switchedOriginal = nil
 	s.switchedOriginalLevel = 0
 	s.switchedMob = nil
 	s.switchedPlayer = nil
-	s.Send("You return to your own body.\r\n")
+	s.Send("You return to your original body.\r\n")
 	return nil
 }
 
@@ -298,14 +221,7 @@ func cmdInvis(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	// Toggle invisibility
-	if s.player.Flags&game.PLR_INVISIBLE != 0 {
-		s.player.Flags &^= game.PLR_INVISIBLE
-		s.Send("You are now visible.")
-	} else {
-		s.player.Flags |= game.PLR_INVISIBLE
-		s.Send("You are now invisible.")
-	}
+	s.manager.world.DoInvis(s.player, strings.Join(args, " "))
 	return nil
 }
 
@@ -346,31 +262,149 @@ func cmdAdvance(s *Session, args []string) error {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
+	if len(args) == 0 {
 		s.Send("Advance who?\r\n")
 		return nil
 	}
-	targetName := args[0]
-	newLevel, err := strconv.Atoi(args[1])
-	if err != nil {
-		s.Send("Invalid level.")
+	target, ok := s.manager.world.ResolveCharWorld(s.player, args[0])
+	if !ok {
+		s.Send("That player is not here.\r\n")
 		return nil
 	}
-	if newLevel < 0 || newLevel > 60 {
-		s.Send("Level must be between 0 and 60.")
+
+	actorLevel := s.player.GetLevel()
+	victimLevel := target.Combatant.GetLevel()
+	if actorLevel != LVL_IMPL && actorLevel <= victimLevel {
+		s.Send("Maybe that's not such a great idea.\r\n")
 		return nil
 	}
-	target := findSessionByName(s.manager, targetName)
-	if target == nil || target.player == nil {
-		s.Send("There is no such player.")
+	if target.Combatant.IsNPC() {
+		s.Send("NO!  Not on NPC's.\r\n")
 		return nil
 	}
-	oldLevel := target.player.Level
-	target.player.Level = newLevel
-	slog.Warn("player advanced", "target", target.player.Name, "old", oldLevel, "new", newLevel, "by", s.player.Name)
-	s.Send(fmt.Sprintf("%s advanced from level %d to %d.", target.player.Name, oldLevel, newLevel))
-	target.Send(fmt.Sprintf("You have been advanced from level %d to %d!", oldLevel, newLevel))
+	newLevel, ok := parseAdvanceLevel(args[1:])
+	if !ok || newLevel <= 0 {
+		s.Send("That's not a level!\r\n")
+		return nil
+	}
+	if newLevel > LVL_IMPL {
+		s.Send(fmt.Sprintf("%d is the highest possible level.\r\n", LVL_IMPL))
+		return nil
+	}
+	if newLevel > actorLevel {
+		s.Send("Yeah, right.\r\n")
+		return nil
+	}
+	victim, ok := target.Combatant.(*game.Player)
+	if !ok || victim == nil {
+		// The NPC branch above is exhaustive for the current CharTarget
+		// implementations. Keep the C target failure text if a future target
+		// type reaches this command instead of inventing a success path.
+		s.Send("That player is not here.\r\n")
+		return nil
+	}
+	if newLevel == victimLevel {
+		s.Send("They are already at that level.\r\n")
+		return nil
+	}
+
+	oldLevel := victimLevel
+	if newLevel < victimLevel {
+		// C do_advance demotes by running do_start(), which resets level/exp and
+		// base hit/mana, gives another starting kit, advances once, then leaves
+		// the real abilities intact. Go stores real abilities directly in Stats;
+		// no separate roll is performed here, so there is nothing to restore.
+		victim.SendMessage("You are momentarily enveloped by darkness!\r\n" +
+			"You can feel all your power and knowledge being\r\n" +
+			"drained away from you!\r\n")
+		s.manager.world.GiveStartingItems(victim)
+		victim.SetLevel(1)
+		victim.SetExp(1)
+		victim.SetMaxHP(10)
+		victim.SetMaxMana(100)
+		game.GiveStartingSkills(victim)
+		victim.AdvanceLevel()
+		victim.SetHP(victim.GetMaxHP())
+		victim.SetMana(victim.GetMaxMana())
+		victim.SetMove(victim.GetMaxMove())
+		victim.SetCondition(game.CondThirst, 36)
+		victim.SetCondition(game.CondFull, 36)
+		victim.SetCondition(game.CondDrunk, 0)
+		victim.WimpLevel = 5
+		victim.SetPractices(victim.GetPractices() + 2)
+
+		if newLevel != 1 {
+			// This mirrors do_advance's recursive promotion after do_start().
+			_ = cmdAdvance(s, args)
+		}
+	} else {
+		promotionText := "$n makes some strange gestures.\n" +
+			"A strange feeling comes upon you,\n" +
+			"Like a giant hand, light comes down\n" +
+			"from above, grabbing your body, that\n" +
+			"begins to pulse with colored lights\n" +
+			"from inside.\n\n" +
+			"Your head seems to be filled with demons\n" +
+			"from another plane as your body dissolves\n" +
+			"to the elements of time and space itself.\n" +
+			"Suddenly a silent explosion of light\n" +
+			"snaps you back to reality.\n\n" +
+			"You feel slightly different."
+		game.Act(s.manager.world, false, s.player, victim, nil, nil,
+			promotionText, "", game.ToVict)
+		var levelMessages strings.Builder
+		for level := victim.GetLevel(); level < newLevel; level++ {
+			gain := game.ExpNeededForLevel(victim) - victim.GetExp()
+			levelsGained := s.manager.world.GainExpRegardlessSilent(victim, gain)
+			if levelsGained == 1 {
+				levelMessages.WriteString("You rise a level!\r\n")
+			} else if levelsGained > 1 {
+				_, _ = fmt.Fprintf(&levelMessages, "You rise %d levels!\r\n", levelsGained)
+			}
+		}
+		if levelMessages.Len() > 0 {
+			victim.SendMessage(levelMessages.String())
+		}
+	}
+
+	s.Send("Okay.\r\n")
+	slog.Info("(GC) player advanced", "by", s.player.Name, "target", victim.Name, "old", oldLevel, "new", newLevel)
+	if err := game.SavePlayer(victim); err != nil {
+		slog.Error("advance: save player failed", "player", victim.Name, "error", err)
+	}
 	return nil
+}
+
+// parseAdvanceLevel mirrors C atoi() for do_advance: it accepts an optional
+// sign and consumes the leading decimal digits, ignoring a trailing suffix.
+func parseAdvanceLevel(args []string) (int, bool) {
+	if len(args) == 0 {
+		return 0, false
+	}
+	value := strings.TrimSpace(args[0])
+	if value == "" {
+		return 0, false
+	}
+	index := 0
+	sign := 1
+	if value[0] == '+' || value[0] == '-' {
+		if value[0] == '-' {
+			sign = -1
+		}
+		index++
+	}
+	start := index
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	if index == start {
+		return 0, false
+	}
+	parsed, err := strconv.Atoi(value[start:index])
+	if err != nil {
+		return 0, false
+	}
+	return sign * parsed, true
 }
 
 // ---------------------------------------------------------------------------
@@ -402,20 +436,27 @@ func cmdSkillset(s *Session, args []string) error {
 		return nil
 	}
 
-	// Step 2: target lookup (get_char_vis scope: player sessions, then mobs).
+	// Step 2: target lookup. C's get_char_vis checks visible in-room players and
+	// mobs with keyword abbreviations, then exact global character names. Keep
+	// that scope in the shared resolver so self/me, ordinals, NPCs, and room
+	// visibility follow the same call path as other C-targeted commands.
 	name := args[0]
-	targetSess := findSessionByName(s.manager, name)
-	if targetSess == nil || targetSess.player == nil {
-		// Could be a mob — C's get_char_vis resolves mobs too. If it is a mob,
-		// fall through to the NPC rejection below; otherwise NOPERSON.
-		if mob := s.manager.world.GetMobByName(name); mob == nil {
-			s.Send(noPersonHere)
-			return nil
-		}
+	target, found := s.manager.world.ResolveCharWorld(s.player, name)
+	if !found {
+		s.Send(noPersonHere)
+		return nil
+	}
+	if target.Mob != nil {
 		s.Send("You can't set NPC skills.\n\r")
 		return nil
 	}
-	vict := targetSess.player
+	vict := target.Player
+	if vict == nil {
+		// ResolveCharWorld only returns a player or mob, but preserve the C
+		// failure bytes if a future combatant type reaches this command.
+		s.Send(noPersonHere)
+		return nil
+	}
 
 	// The remainder after the target name: '<skill>' <value>.
 	rest := strings.Join(args[1:], " ")
@@ -448,22 +489,17 @@ func cmdSkillset(s *Session, args []string) error {
 		return nil
 	}
 
-	// Step 7: next arg = value (whatever follows the closing quote).
+	// Step 7: next arg = value. C calls one_argument, so only the first token
+	// is passed to atoi; atoi consumes an optional sign and leading digits and
+	// returns zero when no digits are present.
 	valueStr := strings.TrimSpace(rest[1+closeIdx+1:])
 	if valueStr == "" {
 		s.Send("Learned value expected.\n\r")
 		return nil
 	}
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		// C's atoi returns 0 on non-numeric input (e.g. atoi("garbage")==0),
-		// which passes the >=0 check and sets the skill to 0. strconv.Atoi
-		// rejects the whole string, so mirror C by treating a parse failure as
-		// value 0. Known divergence: C atoi("75abc")==75 (leading digits), but
-		// strconv.Atoi("75abc") fails → 0 here. Edge case; left as-is (note).
-		value = 0
-	} else if value < 0 {
-		// atoi of a negative like "-5" yields -5 → min error.
+	valueToken := strings.Fields(valueStr)[0]
+	value := cAtoi(valueToken)
+	if value < 0 {
 		s.Send("Minimum value for learned is 0.\n\r")
 		return nil
 	}
@@ -485,7 +521,26 @@ func cmdSkillset(s *Session, args []string) error {
 	// Step 10: SET_SKILL(vict, skill, value). Go stores skills by name string;
 	// use the canonical spells[] display name (lowercased, matching how callers
 	// key GetSkill/SetSkill — see spec_procs.go practice).
-	canonicalName := strings.ToLower(game.SkillCatalogName(skillNum))
+	canonicalName := game.SkillStorageName(skillNum)
+	// C's spells[] display name is "pick lock", while the door command's
+	// gameplay lookup uses the Go storage key pick_lock. First aid is likewise
+	// displayed as C's "aid" but stored under the Go key first_aid.
+	switch canonicalName {
+	case "search":
+		// C's spells[SKILL_DETECT] display name is "search", while
+		// do_detect's gameplay lookup uses the command-facing SkillDetect key.
+		canonicalName = game.SkillDetect
+	case "pick lock":
+		canonicalName = game.SkillPickLock
+	case "aid":
+		canonicalName = game.SkillFirstAid
+	case "flesh alter":
+		canonicalName = game.SkillFleshAlter
+	case "dragon kick":
+		canonicalName = game.SkillDragonKick
+	case "serpent kick":
+		canonicalName = game.SkillSerpentKick
+	}
 	vict.SetSkill(canonicalName, value)
 
 	// Step 11: confirmation to the actor. spells[skill] is the display name.

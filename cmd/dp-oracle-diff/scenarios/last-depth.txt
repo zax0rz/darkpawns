@@ -1,0 +1,83 @@
+# C-first do_last vehicle (src/interpreter.c:535; src/act.wizard.c:1834-1854).
+# The peer is a persisted player-file target. The argument variants exercise
+# one_argument's fill-word and trailing-input behavior alongside the usage and
+# missing-player branches.
+
+# depth-case: last.no-arguments
+# depth-case: last.found-player
+# depth-case: last.argument-first-token
+# depth-case: last.argument-trailing-ignored
+# depth-case: last.not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Lastactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lastactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Lastpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Lastpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Lastpeer 8162
+
+[probe]
+last
+last Lastpeer
+last the Lastpeer
+last Lastpeer trailing words are ignored
+last Nobody

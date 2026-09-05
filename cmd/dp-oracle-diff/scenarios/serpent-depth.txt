@@ -1,0 +1,134 @@
+# C-first live vehicle for do_serpent_kick (src/new_cmds2.c:693-743).
+# A God grants the L1 attacker the skill; the attacker and named observer walk
+# to the deterministic non-peaceful room and the probe exercises C's target
+# parser, skill-message audience, damage branch, and fighting fallback.
+
+# depth-case: serpent.no-argument-no-fighting
+# depth-case: serpent.missing-target
+# depth-case: serpent.target-trailing-arguments
+# depth-case: serpent.hit-or-miss-skill-message
+# depth-case: serpent.room-audience
+# depth-case: serpent.no-argument-fighting-fallback
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Serpentgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Serpentgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Serpentatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Serpentatt
+y
+attpass
+attpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Serpentobs
+Y
+obspass
+obspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Serpentobs
+y
+obspass
+obspass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Serpentatt 'serpent kick' 75
+
+[probe:attacker]
+serpent
+serpent nobody
+serpent trainee trailing words
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+serpent
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20

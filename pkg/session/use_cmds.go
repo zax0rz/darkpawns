@@ -14,13 +14,15 @@ import (
 // Source: src/act.other.c (do_use SCMD_RECITE) + src/spell_parser.c (mag_objectmagic ITEM_SCROLL)
 func cmdRecite(s *Session, args []string) error {
 	if len(args) == 0 {
-		s.Send("Recite what?")
+		s.Send("What do you want to recite?")
 		return nil
 	}
 
 	fullInput := strings.Join(args, " ")
 
-	// Parse item name and optional target
+	// C do_use (SCMD_RECITE) parses with half_chop: arg = first token (the
+	// scroll), buf = the rest (the target). Resolve via get_obj_in_list_vis
+	// (keyword prefix, carrying), not the short description.
 	var itemName, targetName string
 	parts := strings.SplitN(fullInput, " ", 2)
 	itemName = parts[0]
@@ -28,23 +30,23 @@ func cmdRecite(s *Session, args []string) error {
 		targetName = strings.TrimSpace(parts[1])
 	}
 
-	// Find scroll in inventory
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.Send("You don't have that item.")
+	// C do_use (SCMD_RECITE) resolves WEAR_HOLD first (act.other.c:897-910),
+	// then the carrying list.
+	item := s.manager.world.HeldItemVis(s.player, itemName)
+	fromHold := item != nil
+	if item == nil {
+		item = s.manager.world.FindCarriedVis(s.player, itemName)
+	}
+	if item == nil {
+		s.Send(fmt.Sprintf("You don't seem to have %s %s.", articleFor(itemName), itemName))
 		return nil
 	}
 
-	// Check it's a scroll — flexible check:
-	// CircleMUD ITEM_SCROLL = 12, but also accept 2 or 11 as fallback
-	// Also accept any item that has spell values in Values[0]
+	// C do_use accepts only ITEM_SCROLL here (act.other.c:961-963).
 	typeFlag := item.GetTypeFlag()
-	if typeFlag != 2 && typeFlag != 11 && typeFlag != 12 {
-		// Still allow if it has spell values that look valid
-		if item.Prototype == nil || item.Prototype.Values[0] <= 0 || len(item.Prototype.Values) < 2 {
-			s.Send("You can't recite that.")
-			return nil
-		}
+	if typeFlag != game.ITEM_SCROLL {
+		s.Send("You can only recite scrolls.")
+		return nil
 	}
 
 	if item.Prototype == nil || len(item.Prototype.Values) < 2 {
@@ -86,7 +88,16 @@ func cmdRecite(s *Session, args []string) error {
 	game.Act(s.manager.world, false, s.player, nil, item, nil,
 		"$n recites $p.", "", game.ToRoom)
 
-	// Remove scroll from inventory
+	// C mag_objectmagic stalls the reader for one combat round before the
+	// spells resolve (spell_parser.c:683).
+	s.player.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
+
+	// Remove scroll (C extract_obj after the cast loop; a held item leaves
+	// the equipment slot on the way out).
+	if fromHold {
+		s.player.Equipment.UnequipItem(item, s.player.Inventory)
+		s.markDirty(VarEquipment)
+	}
 	s.player.Inventory.RemoveItem(item)
 	s.markDirty(VarInventory)
 

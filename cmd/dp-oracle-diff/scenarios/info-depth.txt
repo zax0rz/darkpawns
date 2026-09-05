@@ -1,0 +1,51 @@
+# C-first depth vehicle for do_gen_ps(SCMD_INFO) at src/interpreter.c:516 and
+# src/act.informative.c:2117-2133. The command passes the boot-cached
+# lib/text/info string to page_string without inspecting arguments. The
+# authored 46-line file spans three PAGE_LENGTH=22 pages; RETURN advances
+# through the complete page sequence for both bare and trailing-argument
+# invocations.
+#
+# depth-case: info.static-page
+# depth-case: info.arguments-ignored
+# depth-case: info.pager-navigation
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Infodepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Infodepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+info
+<ENTER>
+<ENTER>
+info trailing words are ignored
+<ENTER>
+<ENTER>

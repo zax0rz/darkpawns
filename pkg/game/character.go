@@ -4,8 +4,6 @@ package game
 // Source: class.c, structs.h
 
 import (
-	"strings"
-
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -341,6 +339,16 @@ func BootstrapFirstPlayerGod(p *Player) {
 	// db.c:3016-3024 — the God stat block.
 	p.SetExp(7000000)
 	p.SetLevel(LVL_IMPL)
+	// db.c:3014-3074: init_char() does not set PRF_AUTOEXIT for the first
+	// player; only the later do_start() path does that for mortals.
+	p.SetAutoExit(false)
+	// The first player enters through init_char(), not do_start(). Keep the
+	// constructor's mortal preference defaults out of the God record: C leaves
+	// these display flags and the wimp threshold at their zeroed values.
+	p.SetPlrFlag(PrfDisphp, false)
+	p.SetPlrFlag(PrfDispmmana, false)
+	p.SetPlrFlag(PrfDispmove, false)
+	p.WimpLevel = 0
 	p.SetMaxHP(500)
 	p.SetHP(500)
 	p.SetMaxMana(100)
@@ -351,7 +359,7 @@ func BootstrapFirstPlayerGod(p *Player) {
 	// db.c:3059-3065 — SET_SKILL(ch, i, 100) for every skill when level == LVL_IMPL.
 	size := spells.SkillCatalogSize()
 	for num := 1; num < size; num++ {
-		name := strings.ToLower(SkillCatalogName(num))
+		name := SkillStorageName(num)
 		if name == "" {
 			continue
 		}

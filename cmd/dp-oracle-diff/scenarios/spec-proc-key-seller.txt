@@ -1,0 +1,43 @@
+# depth-case: mob.key-seller-owner-list
+# depth-case: mob.key-seller-owner-buy-no-arg
+# depth-case: mob.key-seller-owner-buy-wrong-key
+# depth-case: mob.key-seller-owner-buy-unaffordable
+# C key_seller (spec_procs2.c:1870-1932) first requires a house-control
+# record for the seller's room. The C owner is the seeded Testor record (ID 1);
+# the no-DB Go fixture explicitly maps that owner to the new Testor's ID 0.
+# The two room placements cover C's immortal load room and Go's post-birth
+# mortal room.
+
+[fixture]
+quiet-mobs
+spawn-mob 19610 2 1204 80
+spawn-mob 19610 2 8162 80
+house-control 1204 1205 down 1 0 19604
+house-control 8162 8161 north 1 0 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+list
+buy
+buy junk
+buy key

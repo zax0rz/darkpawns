@@ -1,7 +1,6 @@
 package session
 
 import (
-	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -28,22 +27,15 @@ func finishMovementCommand(s *Session, result game.MoveResult) error {
 	}
 
 	for _, followerName := range result.Followers {
-		follower, ok := s.manager.world.GetPlayer(followerName)
-		if !ok {
-			continue
-		}
-		_ = s.manager.world.OnPlayerEnterRoom(follower, follower.GetRoom(), s.manager.combatEngine)
 		if followerSession, ok := s.manager.GetSession(followerName); ok {
-			if err := cmdMovementLook(followerSession); err != nil {
-				slog.Error("movement look failed for follower", "follower", followerName, "error", err)
-			}
 			followerSession.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
 		}
 	}
 
-	if s.manager.world.OnPlayerEnterRoom(s.player, result.NewRoomVNum, s.manager.combatEngine) {
-		s.sendText("You are attacked!")
-	}
+	// C has no room-entry aggro path: aggressive mobs attack from their own
+	// mobile_activity tick (mobact.c, PULSE_MOBILE), gated on AWAKE — a mob
+	// never engages merely because a player walked in. The invented entry
+	// hook even engaged sleeping mobs; removed per R4.
 	s.markDirty(VarRoomVnum, VarRoomName, VarRoomExits, VarRoomMobs, VarRoomItems, VarMove)
-	return cmdMovementLook(s)
+	return nil
 }

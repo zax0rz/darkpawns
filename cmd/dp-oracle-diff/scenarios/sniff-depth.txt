@@ -1,0 +1,77 @@
+# C-first sniff social vehicle (src/interpreter.c:720; src/act.social.c:102-151;
+# lib/misc/socials:774-778). Because sniff has no char_found, do_action ignores
+# every typed argument and takes the no-argument actor/room branch.
+
+# depth-case: sniff.no-argument
+# depth-case: sniff.argument-ignored
+# depth-case: sniff.room-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sniffactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sniffactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Sniffobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Sniffobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sniffobserver 8162
+
+[probe]
+sniff
+sniff somebody trailing words are ignored

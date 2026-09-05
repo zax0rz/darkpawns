@@ -1,0 +1,43 @@
+# C-first levels/do_levels vehicle (src/interpreter.c:538;
+# src/act.informative.c:2311-2328; src/class.c:1089-1166). A first-player
+# character is an Implementor but retains the selected Warrior class, so the
+# live table exercises all 30 rows of the non-NPC branch and the C pager.
+
+# depth-case: levels.output
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Levelsactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Levelsactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+levels
+<ENTER>

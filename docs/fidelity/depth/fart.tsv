@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	fart	fart.entry-gate	D1	command	unit-green	TestFartRegistrationUsesCEntryGate	interpreter.c:442; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
+do_action	fart	fart.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:442; interpreter.c:910-947	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
+do_action	fart	fart.no-argument	D2	audience	oracle-green-multiseed	fart-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:226-234	The no-argument record emits the actor's exact etiquette line and the room audience.
+do_action	fart	fart.argument-ignored	D2	command	oracle-green-multiseed	fart-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:226-234	Because char_found is absent, typed targets and trailing words are ignored.
+do_action	fart	fart.self-argument-ignored	D2	audience	oracle-green-multiseed	fart-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:226-234	A self-looking argument still takes the no-argument branch rather than char_auto.
+do_action	fart	fart.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT do_action gate is proven by the dance social matrix.
+do_action	fart	fart.visibility	D3	shared	delegated	socials-depth	act.social.c:102-113; comm.c:2392-2555	The no-target room audience uses the shared Act visibility behavior.

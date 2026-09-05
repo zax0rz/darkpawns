@@ -79,14 +79,16 @@ func (s *Session) GetPlayerLevel() int {
 func (m *Manager) NewSession() *Session {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Session{
-		manager:        m,
-		send:           make(chan []byte, 256),
-		limiter:        rate.NewLimiter(rate.Limit(10), 10),
-		subscribedVars: make(map[string]bool),
-		dirtyVars:      make(map[string]bool),
-		connectedAt:    time.Now(),
-		sessionCtx:     ctx,
-		cancelFunc:     cancel,
+		manager:          m,
+		send:             make(chan []byte, 256),
+		limiter:          rate.NewLimiter(rate.Limit(10), 10),
+		subscribedVars:   make(map[string]bool),
+		dirtyVars:        make(map[string]bool),
+		connectedAt:      time.Now(),
+		sessionCtx:       ctx,
+		cancelFunc:       cancel,
+		transportDone:    make(chan struct{}),
+		connectionNumber: m.allocateConnectionNumber(),
 	}
 }
 
@@ -151,6 +153,34 @@ func (s *Session) Close() {
 // (DP-928).
 func (s *Session) SetCloseFunc(fn func()) {
 	s.closeFunc = fn
+}
+
+// DetachTransport stops the transport writer while leaving the authenticated
+// session and player registered for C-style linkdead handling. Telnet EOF is
+// not an orderly quit: close_socket() keeps the playing character in the
+// world with a NULL descriptor so tell can report the linkless state.
+func (s *Session) DetachTransport() {
+	s.transportOnce.Do(func() {
+		close(s.transportDone)
+	})
+}
+
+// TransportDone is closed when a transport disappears but the session remains
+// registered as linkdead. It is consumed by transport-specific writer loops.
+func (s *Session) TransportDone() <-chan struct{} {
+	return s.transportDone
+}
+
+func (s *Session) hasTransport() bool {
+	if s.transportDone == nil {
+		return true
+	}
+	select {
+	case <-s.transportDone:
+		return false
+	default:
+		return true
+	}
 }
 
 // IsCharCreating returns whether the session is currently in character creation.

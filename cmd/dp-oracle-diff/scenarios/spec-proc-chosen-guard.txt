@@ -1,0 +1,80 @@
+# C-first vehicle for SPECIAL(chosen_guard), assigned to mob 8096 by
+# src/spec_assign.c:302 and implemented at src/spec_procs2.c:2113-2132.
+# The command dispatcher calls the mobile special with a movement command;
+# the guard blocks south for a mortal who is not chosen, then returns TRUE
+# before do_move. The primary is an immortal only to position the mortal peer.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8144 none
+spawn-mob 8096 1 8144 80
+
+[setup:oracle]
+ChosenGuardGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ChosenGuardGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ChosenMortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ChosenMortal
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8144
+teleport ChosenMortal 8144
+
+[probe:peer]
+south
+
+# depth-case: mob.chosen-guard-entry-gates
+# depth-case: mob.chosen-guard-south-audience
+# depth-case: mob.chosen-guard-return-intercept

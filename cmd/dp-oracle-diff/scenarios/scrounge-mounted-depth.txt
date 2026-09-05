@@ -1,0 +1,51 @@
+# C-first do_scrounge mounted gate (src/new_cmds2.c:77-81). The actor has a
+# skill and a registered horse, but IS_MOUNTED returns the private refusal
+# before the random roll, sector dispatch, object work, or room act.
+
+# depth-case: scrounge.mounted-gate
+# depth-case: scrounge.mounted-no-roll
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 3 off
+set-room-sector 8105 3
+spawn-mob 8021 1 8105 80
+
+[setup:oracle]
+Scroungemounted
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungemounted
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Scroungemounted 'scrounge' 100
+ride horse
+
+[probe]
+scrounge
+roll 100

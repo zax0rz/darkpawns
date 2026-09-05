@@ -35,7 +35,7 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// Immort visibility
 	if ch.GetLevel() >= LVL_IMMORT {
-		ch.SendMessage("You are visible.\r\n")
+		w.performImmortVis(ch)
 		return true
 	}
 
@@ -47,6 +47,10 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 	if ch.IsAffected(affSneak) {
 		ch.SendMessage("You stop sneaking.\r\n")
+		// C affect_from_char() removes both the ordinary sneak and ninja
+		// stealth records, not just the aggregate AFF_SNEAK bit.
+		ch.RemoveAffectBySpell(skillNumSneak)
+		ch.RemoveAffectBySpell(skillNumStealth)
 		ch.SetAffect(affSneak, false)
 		altered = true
 	}
@@ -65,6 +69,7 @@ func (w *World) doReport(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
+	w.actToRoom(ch, "$n reports:\r\n", nil, nil)
 	ch.SendMessage("You report:\r\n")
 
 	players := w.GetPlayersInRoom(ch.GetRoomVNum())

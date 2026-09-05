@@ -306,7 +306,23 @@ func DeathCry(ch Combatant) string {
 // 5. takeDamage()
 // **********************************
 
+// TakeDamage applies the complete C damage() path and uses the package's
+// normal death callback. Callers that own a game-layer death pipeline should
+// use TakeDamageWithDeath so the damage/message ordering stays shared.
 func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
+	return takeDamage(ch, victim, dam, attackType, nil)
+}
+
+// TakeDamageWithDeath applies the complete C damage() path, replacing the
+// default DieWithKiller/RawKill tail with onDeath. This is needed by delayed
+// game-layer actions whose death bookkeeping is owned by World.HandleDeath;
+// the callback runs only after C's skill/wound/death messages and state
+// transitions have been emitted.
+func TakeDamageWithDeath(ch, victim Combatant, dam int, attackType int, onDeath func()) bool {
+	return takeDamage(ch, victim, dam, attackType, onDeath)
+}
+
+func takeDamage(ch, victim Combatant, dam int, attackType int, onDeath func()) bool {
 	if victim.GetPosition() <= PosDead {
 		return false
 	}
@@ -396,8 +412,11 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 	}
 
-	// stop_follower: if victim follows ch, break following (fight.c:1457)
-	// Handled via game-layer hooks.
+	// stop_follower: if victim follows ch, break following (fight.c:1457) —
+	// the charm branch makes the attacking master's pet denounce him.
+	if cbGetFollowing(victimName) == chName {
+		cbStopFollowerOfMaster(victimName, chName)
+	}
 
 	// AFF_HIDE: attacker becomes visible on offensive action (fight.c:1459)
 	if cbHasAffect(chName, AFF_HIDE) {
@@ -415,6 +434,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	}
 
 	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
+	victim.SetPosition(newPos)
 
 	if newPos <= PosStunned {
 		if ch.IsNPC() && !victim.IsNPC() && victim.GetLevel() <= 5 {
@@ -464,10 +484,19 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName), "")
 	case PosDead:
 		victim.SendMessage("You are dead!  Sorry...\r\n")
-		cbBroadcast(roomVNum, fmt.Sprintf("%s is dead!  R.I.P.", victimName), "")
+		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), "")
 	default:
 		if dam > victim.GetMaxHP()/4 {
 			victim.SendMessage("That really did HURT!\r\n")
+			// C burns number(0,2) for the optional room scream even when the
+			// victim is an NPC; TO_NOTVICT excludes both combatants
+			// (fight.c:1580-1585). Keep the draw before the caller's
+			// post-damage improve_skill (R3/R5e).
+			if GetRoller().Number(0, 2) == 0 {
+				cbBroadcast(roomVNum,
+					capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", victimName)),
+					chName+" "+victimName)
+			}
 		}
 		if victim.GetHP() < victim.GetMaxHP()/4 {
 			victim.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")
@@ -494,7 +523,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 	}
 
 	if newPos == PosDead {
-		if victim.IsNPC() {
+		if onDeath == nil && victim.IsNPC() {
 			if IsInGroup(ch) {
 				GroupGain(ch, victim)
 			} else {
@@ -545,7 +574,7 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 		}
 
 		// player death section (fight.c:1665)
-		if !victim.IsNPC() {
+		if onDeath == nil && !victim.IsNPC() {
 			if !ch.IsNPC() && chName != victimName {
 				// Pkill (fight.c:1672)
 				cbLog(fmt.Sprintf("(PK) %s killed by %s at room %d", victimName, chName, roomVNum),
@@ -565,18 +594,22 @@ func TakeDamage(ch, victim Combatant, dam int, attackType int) bool {
 			cbSetLastDeath(victimName, time.Now().Unix())
 		}
 
-		cbSetKills(chName, cbGetKills(chName)+1)
+		if onDeath != nil {
+			onDeath()
+		} else {
+			cbSetKills(chName, cbGetKills(chName)+1)
 
-		CounterProcs(ch)
-		DieWithKiller(victim, ch, attackType)
+			CounterProcs(ch)
+			DieWithKiller(victim, ch, attackType)
+		}
 
-		if chName != victimName &&
+		if onDeath == nil && chName != victimName &&
 			(cbHasMobFlag(chName, "MOB_AGGR24") || cbHasMobFlag(chName, "MOB_LOOTS")) {
 			AttitudeLoot(ch, victim)
 		}
 
 		// autoloot on kill (fight.c:1708)
-		if !ch.IsNPC() && victim.IsNPC() && chName != victimName {
+		if onDeath == nil && !ch.IsNPC() && victim.IsNPC() && chName != victimName {
 			if cbHasPrfFlag(chName, "PRF_AUTOLOOT") {
 				cbPerformCommand(chName, "get all corpse")
 			}

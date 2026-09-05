@@ -1,0 +1,76 @@
+# C-first PRF_NOREPEAT global echo vehicle (src/act.wizard.c:1699-1707).
+# The first player is crowned by empty-players and the norepeat toggle is
+# applied before gecho, so the actor must receive C's OK text while the peer
+# still receives the exact global message.
+
+# depth-case: gecho.norepeat
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Godgechonr
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godgechonr
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gechonrpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gechonrpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Gechonrpeer 8162
+norepeat
+
+[probe]
+gecho Quiet signal.

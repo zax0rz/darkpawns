@@ -2,9 +2,11 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
-	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -36,18 +38,6 @@ func chCanSee(ch *Player, target interface{}) bool {
 	return !ch.IsAffected(affBlind)
 }
 
-// mobCanSee checks whether a mob can see. Uses the mob's AffectFlags for blindness.
-func mobCanSee(m *MobInstance) bool {
-	if m.Prototype != nil {
-		for _, aff := range m.Prototype.AffectFlags {
-			if strings.EqualFold(aff, "BLIND") {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
 	if obj == nil {
 		return false
@@ -63,7 +53,11 @@ func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
 }
 
 func chCanSeeInDark(ch *Player) bool {
-	return ch.GetHolyLight() || ch.IsAffected(affInfravision) || ch.Level >= 31
+	// CAN_SEE_IN_DARK(ch) is exactly AFF_INFRAVISION or PRF_HOLYLIGHT
+	// (src/utils.h:451-452). Immortal level alone does not grant dark vision;
+	// the first-player God reaches LVL_IMPL through init_char without the
+	// advance_level() holy-light assignment (src/db.c:3014-3074).
+	return ch.GetHolyLight() || ch.IsAffected(affInfravision)
 }
 
 func (w *World) isRoomDark(vnum int) bool {
@@ -98,31 +92,6 @@ func (w *World) findCharInRoom(ch *Player, roomVNum int, name string) (*Player, 
 		}
 	}
 	return nil, nil
-}
-
-// findObjNear finds an object near the player (inventory, equipment, room).
-func (w *World) findObjNear(ch *Player, name string) *ObjectInstance {
-	argLower := strings.ToLower(name)
-	// Check inventory
-	for _, item := range ch.Inventory.Items {
-		if item != nil && strings.Contains(strings.ToLower(item.Prototype.ShortDesc), argLower) {
-			return item
-		}
-	}
-	// Check equipment
-	for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
-		item, ok := ch.Equipment.GetItemInSlot(slot)
-		if ok && strings.Contains(strings.ToLower(item.Prototype.ShortDesc), argLower) {
-			return item
-		}
-	}
-	// Check room items
-	for _, item := range w.roomItems[ch.RoomVNum] {
-		if strings.Contains(strings.ToLower(item.Prototype.ShortDesc), argLower) {
-			return item
-		}
-	}
-	return nil
 }
 
 // ---------------------------------------------------------------------------
@@ -198,43 +167,104 @@ func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, re
 	return b.String()
 }
 
-// KenderSteal attempts to pilfer a random item from a mob (from spec_procs2.c:594).
+// KenderSteal ports kender_steal() and its NPC do_steal(..., subcmd=1)
+// follow-up (spec_procs2.c:594-650). It is called after look_at_char has
+// rendered, matching the C call order. Player victims return before this
+// procedure is entered in C; this boundary therefore accepts only mobs.
 func (w *World) KenderSteal(ch *Player, mob *MobInstance) {
-	if mob == nil || len(mob.Inventory) == 0 {
+	if ch == nil || mob == nil || ch.GetRace() != RaceKender ||
+		ch.GetLevel() >= LVL_IMMORT || mob.GetLevel() >= LVL_IMMORT {
 		return
 	}
-	for _, obj := range mob.Inventory {
+
+	// C walks a linked list while do_steal may unlink the selected object. A
+	// pointer snapshot preserves the same next-object traversal without letting
+	// slice removal skip the following object.
+	items := append([]*ObjectInstance(nil), mob.Inventory...)
+	for _, obj := range items {
 		if obj == nil || obj.Prototype == nil || !chCanSeeObj(ch, obj) {
 			continue
 		}
-		if int(w.randPct()%601) >= ch.GetLevel() {
+		if !mobCarriesObject(mob, obj) {
 			continue
 		}
-		percent := int(w.randPct()%100) + 1
-		if mob.GetPosition() < posSleeping {
-			percent = -1
+		if dprng.Number(0, 600) >= ch.GetLevel() {
+			continue
 		}
-		if ch.GetLevel() >= lvlImmort {
-			percent = 101
-		}
-		if ch.GetLevel() <= 10 || mob.GetLevel() <= 10 {
+		// kender_steal computes this roll even though the NPC branch passes
+		// through to do_steal, whose own percent roll is authoritative.
+		_ = dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+		if w.roomHasFlag(ch.GetRoom(), "peaceful") || isShopKeeper(mob) ||
+			ch.GetLevel() <= 10 || mob.GetLevel() <= 10 {
 			return
 		}
-		if percent < 0 {
-			mob.RemoveFromInventory(obj)
-			if err := ch.Inventory.AddItem(obj); err != nil {
-				mob.AddToInventory(obj) // restore on failure
-				return
-			}
-			ch.SendMessage("You stealthily filch an item.\r\n")
-			return
+		if ch.GetLevel() <= 5 {
+			continue
 		}
+		w.kenderStealItem(ch, mob, obj)
 	}
 }
 
-// FindClassBitvector moved to class_tables.go (with ranger/mystic support).
-
-// randPct returns a simple pseudo-random uint64 for game RNG needs.
-func (w *World) randPct() uint64 {
-	return uint64(time.Now().UnixNano()) * 6364136223846793005 % (1 << 32)
+func mobCarriesObject(mob *MobInstance, wanted *ObjectInstance) bool {
+	for _, item := range mob.Inventory {
+		if item == wanted {
+			return true
+		}
+	}
+	return false
 }
+
+// kenderStealItem is the NPC carrying-object arm of do_steal. The caller has
+// already consumed kender_steal's outer selection and pocket rolls.
+func (w *World) kenderStealItem(ch *Player, mob *MobInstance, obj *ObjectInstance) {
+	percent := dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+	if mob.GetLevel() >= LVL_IMMORT || w.roomHasFlag(ch.GetRoom(), "peaceful") || isShopKeeper(mob) {
+		percent = 101
+	}
+	if ch.GetLevel() > LVL_IMMORT && mob.GetLevel() < ch.GetLevel() {
+		percent = -1
+	}
+	percent += obj.GetTotalWeight()
+	if mob.GetLevel() > ch.GetLevel() {
+		percent += mob.GetLevel() - ch.GetLevel()
+	}
+
+	if percent > ch.GetSkill(SkillSteal) {
+		Act(w, false, ch, mob, nil, nil, "$N catches you trying to steal something...", "", ToChar)
+		Act(w, false, ch, mob, nil, nil, "$n tried to steal something from you!", "", ToVict)
+		Act(w, true, ch, mob, nil, nil, "$n tries to steal something from $N.", "", ToNotVict)
+		if mob.GetPosition() > combat.PosSleeping && w.combatEngine != nil {
+			if err := w.combatEngine.StartCombat(mob, ch); err != nil {
+				slog.Error("kender steal retaliation failed", "mob", mob.GetName(), "player", ch.GetName(), "error", err)
+			}
+		}
+		ch.SetWaitState(1)
+		return
+	}
+
+	if ok, message := canCarryStolenItem(ch, obj); !ok {
+		if message != "" {
+			ch.SendMessage(message + "\r\n")
+		}
+		ch.SetWaitState(1)
+		return
+	}
+	if !mob.RemoveFromInventory(obj) {
+		ch.SetWaitState(1)
+		return
+	}
+	if err := ch.Inventory.AddItem(obj); err != nil {
+		mob.AddToInventory(obj)
+		if !mobCarriesObject(mob, obj) {
+			slog.Error("kender steal rollback failed", "mob", mob.GetName(), "player", ch.GetName(), "item", obj.GetShortDesc(), "error", err)
+		}
+		ch.SetWaitState(1)
+		return
+	}
+	obj.Location = LocInventoryPlayer(ch.Name)
+	Act(w, true, ch, nil, obj, nil, "Somehow $p makes it's way into your pack.", "", ToChar)
+	ImproveSkill(ch, SkillSteal)
+	ch.SetWaitState(1)
+}
+
+// FindClassBitvector moved to class_tables.go (with ranger/mystic support).

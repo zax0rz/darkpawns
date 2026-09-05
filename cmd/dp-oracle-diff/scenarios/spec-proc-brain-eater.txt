@@ -1,0 +1,90 @@
+# depth-case: mob.brain-eater-entry-gates
+# depth-case: mob.brain-eater-corpse-predicate
+# depth-case: mob.brain-eater-behead
+# depth-case: mob.brain-eater-content-transfer
+# depth-case: mob.brain-eater-level-or-damroll
+# depth-case: mob.brain-eater-room-audience
+# depth-case: mob.brain-eater-pulse-dispatch
+# C-first vehicle for SPECIAL(brain_eater).  Mob vnum 14420 is the first
+# active registration (14432 is the second) and is used in a fixed-room
+# vehicle.  The God kills a disposable trainee to create a native corpse,
+# then a padded mobile pulse lets the brain eater call do_behead() and emit
+# its room Act.  C path: src/mobact.c:68-93 -> src/spec_procs3.c:198-223;
+# do_behead is src/new_cmds.c:222-365 and native corpse creation is
+# src/fight.c:534-633.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14420 1 8105 144
+spawn-mob 16303 1 8105 80
+clear-mob-flag 14420 AGGRESSIVE
+strip-mob-script 14420
+replace-room-exits 8105 none
+
+[setup:oracle]
+BrainGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BrainGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BrainPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BrainPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BrainPeer 8105
+nohassle
+kill trainee
+
+[probe]
+~dpclock pulse 40

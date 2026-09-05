@@ -50,6 +50,9 @@ type GameCallbacks struct {
 	Dismount      func(name string)
 	Unmount       func(name string)
 	GetWeaponInfo func(chName string) (wType, damDice, damSize int, isBlessed bool)
+	// GetWeaponDescription returns the wielded object's short description for
+	// C act()'s $p substitution in skill/fight messages.
+	GetWeaponDescription func(chName string) string
 
 	// Room navigation
 	GetAdjacentRoom func(roomVNum, door int) int
@@ -89,6 +92,11 @@ type GameCallbacks struct {
 
 	// Commands
 	PerformCommand func(chName, cmd string)
+
+	// Follower break: fight.c:1457 stop_follower(victim) when the attacker is
+	// the victim's own master — the charm branch renders the "jerk"/"hates
+	// your guts!" trio with proper act audiences.
+	StopFollowerOfMaster func(victimName, masterName string)
 
 	// Flee/Retreat
 	GetWimpyLev func(name string) int
@@ -141,6 +149,15 @@ func cbSkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool
 	return false
 }
 
+// EmitSkillMessage is the exported entry point the spells package uses to route
+// a spell's damage message through the same skill_message path C's damage()
+// uses (fight.c: !IS_WEAPON(attacktype) → skill_message). It draws Dice(1,N)
+// from the shared roller and emits the char/vict/room text for the attack type,
+// or returns false when no message set exists.
+func EmitSkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool {
+	return cbSkillMessage(dam, ch, vict, attackType, roomVNum)
+}
+
 // cbWeaponInfo returns the wielded weapon's message attack-type OFFSET for the
 // named attacker (fight.c:1792-1806 one_hit w_type derivation). The value is
 // C's val3 (e.g. 11 for pierce, 3 for slash) — the 0-based offset that
@@ -153,6 +170,13 @@ func cbWeaponInfo(chName string) int {
 		return wType
 	}
 	return 0
+}
+
+func cbWeaponDescription(chName string) string {
+	if cb := callbacks; cb != nil && cb.GetWeaponDescription != nil {
+		return cb.GetWeaponDescription(chName)
+	}
+	return ""
 }
 
 func cbBroadChat(chName string, msg string) {
@@ -539,6 +563,12 @@ func cbJunkInventoryItems(chName string) {
 func cbPerformCommand(chName, cmd string) {
 	if cb := callbacks; cb != nil && cb.PerformCommand != nil {
 		cb.PerformCommand(chName, cmd)
+	}
+}
+
+func cbStopFollowerOfMaster(victimName, masterName string) {
+	if cb := callbacks; cb != nil && cb.StopFollowerOfMaster != nil {
+		cb.StopFollowerOfMaster(victimName, masterName)
 	}
 }
 

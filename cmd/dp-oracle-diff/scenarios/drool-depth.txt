@@ -1,0 +1,119 @@
+# C-first drool command vehicle (src/interpreter.c:425;
+# src/act.social.c:102-151; lib/misc/socials:191-199). The record has
+# hide=1 and minimum victim position zero, so this covers the complete
+# target matrix and the sleeping-target audience behavior.
+
+# depth-case: drool.no-argument
+# depth-case: drool.one-argument
+# depth-case: drool.target-not-found
+# depth-case: drool.self-target
+# depth-case: drool.target-success
+# depth-case: drool.sleeping-target
+# depth-case: drool.position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Drooler
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Drooler
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Sleepero 8162
+
+[probe]
+drool
+drool the barnaby extra
+drool nobody
+drool drooler
+drool sleepero
+sleep
+drool

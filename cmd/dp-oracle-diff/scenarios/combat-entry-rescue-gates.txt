@@ -1,0 +1,128 @@
+# depth-case: rescue.no-arg
+# depth-case: rescue.not-found
+# depth-case: rescue.self
+# depth-case: rescue.nobody-fighting
+# do_rescue's argument gates with the skill granted, so the gates past the
+# level-4 warrior requirement are reachable (act.offensive.c:501-551): the
+# no-arg prompt, the shared resolution-failure prompt, the self gate, and
+# C's $M pronoun in "But nobody is fighting him!". The peers walk to
+# non-peaceful 8105 so the peaceful gate does not shadow the scan. Pattern
+# from combat-kick-opener: empty-players crowns the primary as God,
+# [warmup] grants the mortal peer the rescue skill (drained, not diffed),
+# and the probe runs on the peer.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rescugod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rescugod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rescuer]
+Rescugar
+Y
+rescuepass
+rescuepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:rescuer]
+Rescugar
+y
+rescuepass
+rescuepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Victimxo
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Victimxo
+y
+victimpass
+victimpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Rescugar 'rescue' 75
+
+[probe:rescuer]
+rescue
+rescue nobody
+rescue rescugar
+rescue victimxo

@@ -1,0 +1,82 @@
+# depth-case: mob.jailguard-entry-gates
+# depth-case: mob.jailguard-audience
+# depth-case: mob.jailguard-block
+# depth-case: mob.jailguard-return-intercept
+# C-first vehicle for SPECIAL(jailguard), registered at vnum 8088 in
+# src/spec_assign.c:298 and implemented at src/spec_procs.c:1781-1798.
+# The jailguard is placed in the main holding cell (room 8118), where north
+# is the blocked movement back toward the jail entrance. C path:
+# src/interpreter.c:1407-1456 -> src/spec_procs.c:1781-1798 -> src/comm.c;
+# a TRUE return prevents the north command from reaching do_move().
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8088 1 8118 80
+strip-mob-script 8088
+
+[setup:oracle]
+Jailguardgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Jailguardgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Jailguardwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Jailguardwitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8118
+teleport Jailguardwitness 8118
+set Jailguardgod level 1
+
+[probe]
+north

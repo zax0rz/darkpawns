@@ -72,6 +72,9 @@ func TestProcessCombatPair_MobStandupRoundDrawsFirst(t *testing.T) {
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat: %v", err)
 	}
+	// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
+	// re-down the attacker to model a mid-fight bash.
+	attacker.SetPosition(PosSitting)
 
 	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
 
@@ -107,6 +110,9 @@ func TestProcessCombatPair_MobAttacksOnStandupRound(t *testing.T) {
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat: %v", err)
 	}
+	// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
+	// re-down the attacker to model a mid-fight bash.
+	attacker.SetPosition(PosSitting)
 
 	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
 
@@ -148,6 +154,9 @@ func TestProcessCombatPair_ScrambleCapitalized(t *testing.T) {
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat: %v", err)
 	}
+	// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
+	// re-down the attacker to model a mid-fight bash.
+	attacker.SetPosition(PosSitting)
 
 	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "a guard trainee", Target: "Hero"}])
 
@@ -182,6 +191,9 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
+		// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
+		// re-down the attacker to model a mid-fight bash.
+		attacker.SetPosition(PosSitting)
 
 		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Hero", Target: "Orc"}])
 
@@ -221,6 +233,9 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
+		// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
+		// re-down the attacker to model a mid-fight bash.
+		attacker.SetPosition(PosSitting)
 
 		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Hero", Target: "Orc"}])
 
@@ -257,6 +272,9 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
+		// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
+		// re-down the attacker to model a mid-fight bash.
+		attacker.SetPosition(PosSitting)
 		// mockCombatant has no waitStateHolder, so the PC stand-up branch fires
 		// (waitOK=true) and stands the attacker. To test the "stays sitting
 		// AND attacks" case, we need to skip stand-up — use a non-wait holder
@@ -290,6 +308,9 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
+		// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
+		// re-apply the sleeping position to model a slept mid-fight combatant.
+		attacker.SetPosition(PosSleeping)
 		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Hero", Target: "Orc"}])
 
 		// Sleeping attacker (couldn't stand due to CHECK_WAIT): C stops combat.

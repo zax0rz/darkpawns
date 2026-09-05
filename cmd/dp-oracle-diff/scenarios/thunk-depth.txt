@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:772;
+# src/act.social.c:102-151; lib/misc/socials:1277-1285). The authored
+# thunk record is target-capable and is exercised through no-argument,
+# visible player/NPC target, named self, missing target, one_argument/fill-word,
+# and sleeping-target branches.
+
+# depth-case: thunk.no-argument
+# depth-case: thunk.target-success
+# depth-case: thunk.target-audience
+# depth-case: thunk.argument-first-token
+# depth-case: thunk.mob-target
+# depth-case: thunk.self-target
+# depth-case: thunk.target-not-found
+# depth-case: thunk.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Thunkactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thunkactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Thunkobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Thunkobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Thunktarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Thunktarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Thunkobserver 8162
+teleport Thunktarget 8162
+
+[probe]
+thunk
+thunk Thunktarget trailing words are ignored
+thunk Thunktarget
+thunk trainee
+thunk Thunkactor
+thunk self
+thunk Nobody
+force Thunktarget sleep
+thunk Thunktarget

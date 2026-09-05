@@ -1,0 +1,80 @@
+# C-first retsu failure vehicle (src/interpreter.c:654;
+# src/new_cmds.c:1500-1739). Skill 1 reaches the shared failure arm; the
+# second invocation after learning the seal proves the failed retsu record
+# does not retain the aggregate kuji lockout.
+#
+# depth-case: retsu.failure-actor
+# depth-case: retsu.failure-origin-audience
+# depth-case: retsu.failure-retry
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Retsufailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retsufailactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Retsufailpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Retsufailpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Retsufailpeer 8105
+
+[probe]
+skillset Retsufailactor 'kuji-kiri retsu' 1
+retsu
+skillset Retsufailactor 'kuji-kiri retsu' 100
+retsu

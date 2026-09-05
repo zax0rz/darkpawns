@@ -1,0 +1,88 @@
+# depth-case: social.self-only
+# depth-case: social.victim-trio
+# depth-case: social.not-found
+# depth-case: social.self-target
+# depth-case: social.high-traffic
+# C-first do_action/social table vehicle (src/act.social.c:102-151,
+# src/act.social.c:220-275; lib/misc/socials). Covers a self-only social
+# (bah), victim-targeted actor/room/victim trios, missing-target text,
+# self-target variants, and representative high-traffic socials. Act()'s CAP
+# behavior is exercised by the $n/$N/$M/$e substitutions in the room lines.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+
+[probe]
+bah barnaby
+smile
+smile barnaby
+smile nobody
+smile mordecai
+laugh barnaby
+laugh mordecai
+nod barnaby
+wave barnaby
+bow barnaby

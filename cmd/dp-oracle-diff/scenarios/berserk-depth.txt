@@ -1,0 +1,74 @@
+# depth-case: berserk.success
+# depth-case: berserk.one-argument
+# C-first player vehicle for do_berserk's learned-skill success path.  The
+# command ignores its argument; hidden affect and wait state are pinned by
+# focused tests because this God fixture's score/affects commands do not emit
+# comparable C blocks.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Berserkdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Berserkdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Berserksuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Berserksuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Berserksuccess 'berserk' 100
+
+[probe]
+force Berserksuccess berserk ignored trailing words

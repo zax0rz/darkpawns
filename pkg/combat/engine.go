@@ -20,6 +20,10 @@ type CombatPair struct {
 	Defender       Combatant
 	Started        time.Time
 	LastAttackType int // Track what type of attack killed the victim (spell number, skill number, or TYPE_ constant)
+	// DeferDefenderEnrollment preserves hit()'s NPC-special ordering.  C's
+	// damage() sets the victim's FIGHTING field after the NPC switcheroo scan;
+	// ordinary command entry keeps the historical eager enrollment.
+	DeferDefenderEnrollment bool
 }
 
 // CombatEngine manages all active combat in the game
@@ -56,6 +60,11 @@ type CombatEngine struct {
 	// Set by the game layer. Called with (mobName, targetName, roomVNum).
 	// Source: mobact.c — mobs use scripts during combat
 	ScriptFightFunc func(mobName string, targetName string, roomVNum int)
+
+	// MobSpecialFunc fires a MOB_SPEC procedure after an NPC's combat turn.
+	// Set by the game layer. Source: fight.c:2030-2031 — perform_violence()
+	// invokes the assigned special after the ordinary attack loop.
+	MobSpecialFunc func(mob Combatant) bool
 
 	// ScriptDeathFunc fires the "death" trigger on a mob when it dies.
 	// Set by the game layer. Called with (victimName, killerName, roomVNum).
@@ -221,6 +230,27 @@ func (ce *CombatEngine) Stop() {
 
 // StartCombat initiates combat between two combatants
 func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
+	return ce.startCombat(attacker, defender, false)
+}
+
+// StartCombatFromMob starts the synchronous combat opener used by a C mobile
+// special that calls hit().  The defender is enrolled inside performOneHit,
+// after hit() has consumed its to-hit and damage draws and after the C
+// high-level switcheroo scan, rather than at the StartCombat boundary.
+func (ce *CombatEngine) StartCombatFromMob(attacker, defender Combatant) error {
+	return ce.startCombat(attacker, defender, true)
+}
+
+// ApplyMobDamageRedirects exposes the damage() redirect seam to native mob
+// specials that call damage() directly rather than entering through a
+// one_hit() combat pair. C performs these redirects before applying the
+// caller-supplied damage amount (fight.c:1370-1440), so the game layer must
+// use this same seam for direct fighter-special damage as well.
+func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bool {
+	return ce.applyMobCombatRedirects(attacker, defender)
+}
+
+func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment bool) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -250,10 +280,26 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// combat: in DikuMUD a character FIGHTs one opponent at a time and only
 	// retargets when that opponent dies or flees. Overwriting it here would
 	// leave the defender's FIGHTING pointing at the new attacker while its
-	// original combat pair still exists — an inconsistent state.
+	// original combat pair still exists — an inconsistent state. Mobile
+	// specials defer this write until the damage-side C path.
 	attacker.SetFighting(defenderName)
+	// The attacker is stood to POS_FIGHTING at entry: it is always standing when
+	// it initiates (do_hit gates on position), so this is observably equal to
+	// C's set_fighting(ch)-in-damage() and keeps do_hit's swing-branch check
+	// (GET_POS == POS_STANDING) refusing a second target once fighting.
+	if attacker.GetPosition() > PosStunned {
+		attacker.SetPosition(PosFighting)
+	}
 	ce.prependFighterLocked(attacker)
-	if defender.GetFighting() == "" {
+	// The DEFENDER is NOT stood here. C's set_fighting(victim) runs inside
+	// damage() (fight.c:1443-1445), AFTER the opener's to-hit decision, so the
+	// to-hit reads the victim's pre-combat position — a sleeping victim is
+	// auto-hit (AWAKE(victim) is false), not stood into an awake miss. Go
+	// mirrors this by transitioning the victim to POS_FIGHTING at the damage
+	// point (performOneHit), gated on > POS_STUNNED like C. Only the fighting
+	// flag/target is set at entry so the round loop enrolls it. Mobile-special
+	// entry defers both operations until the damage-side path below.
+	if !deferDefenderEnrollment && defender.GetFighting() == "" {
 		defender.SetFighting(attackerName)
 	}
 	// The defender must be in combatOrder (C's combat_list) whenever it is
@@ -262,15 +308,16 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 	// (damage_stubs.go) without enrolling it, so gating the prepend on an
 	// empty field left positive-damage skill victims out of combatOrder and
 	// they never got a turn (DP-1213). prependFighterLocked is idempotent.
-	if defender.GetFighting() == attackerName {
+	if !deferDefenderEnrollment && defender.GetFighting() == attackerName {
 		ce.prependFighterLocked(defender)
 	}
 
 	// Start combat
 	ce.combatPairs[key] = &CombatPair{
-		Attacker: attacker,
-		Defender: defender,
-		Started:  time.Now(),
+		Attacker:                attacker,
+		Defender:                defender,
+		Started:                 time.Now(),
+		DeferDefenderEnrollment: deferDefenderEnrollment,
 	}
 
 	return nil
@@ -461,20 +508,14 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	// every round; NPC dodge draws Number(0,100) if AFF_DODGE.
 	ce.prepareRoundDefense(attacker, defender)
 
-	// 3. Mob combat redirects — leave in current position (draws short-circuited
-	// off in gated scenarios where the defender is a PC).
-	if ce.applyMobCombatRedirects(attacker, defender) {
-		return
-	}
-
-	// 4. Shopkeeper protection — C: fight.c:1359-1366.
+	// 3. Shopkeeper protection — C: fight.c:1359-1366.
 	if cbIsShopkeeper(defender.GetName()) {
 		ce.StopCombat(attacker.GetName())
 		ce.StopCombat(defender.GetName())
 		return
 	}
 
-	// 5. NPC stand-up (fight.c:1975-1988). C zeros attacks only for
+	// 4. NPC stand-up (fight.c:1975-1988). C zeros attacks only for
 	// GET_MOB_WAIT > 0, which only the Lua bridge writes (scripts.c:2017) —
 	// never WAIT_STATE (utils.h:462-464 writes ch->wait, a different field).
 	// Go's scripting layer writes no mob wait, so NPC attacks are NEVER zeroed
@@ -484,7 +525,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		ce.scrambleBroadcast(attacker)
 	}
 
-	// 6. PC stand-up (fight.c:1990-1998). C: !IS_NPC && GET_POS < POS_FIGHTING
+	// 5. PC stand-up (fight.c:1990-1998). C: !IS_NPC && GET_POS < POS_FIGHTING
 	// && !CHECK_WAIT (wait <= 1). PC wait drains in the heartbeat (manager.go
 	// OnDrainInput), NOT here — do not decrement (C drains in comm.c:597).
 	if !attacker.IsNPC() && attacker.GetPosition() < PosFighting {
@@ -498,7 +539,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 	}
 
-	// 7. IS_PARRIED adjustment (fight.c:1999-2007).
+	// 6. IS_PARRIED adjustment (fight.c:1999-2007).
 	defenseAction := ce.consumeParried(attacker.GetName())
 	if defenseAction != "" {
 		defenderDexDefense := dexApp[dexIndex(defender)].Defensive
@@ -512,7 +553,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 	}
 
-	// 8. Attack loop (fight.c:2009-2025). Gated ONLY on AWAKE (GET_POS >
+	// 7. Attack loop (fight.c:2009-2025). Gated ONLY on AWAKE (GET_POS >
 	// POS_SLEEPING) and same-room — a sitting/resting attacker (downed but
 	// awake) still swings. NOT awake or different room → stop_fighting.
 	if attacker.GetPosition() <= PosSleeping {
@@ -534,6 +575,12 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		if ce.performOneHit(pair) {
 			break
 		}
+	}
+
+	// C perform_violence() invokes MOB_SPEC after the mob's ordinary attack
+	// loop and before the combat-round script trigger.
+	if attacker.IsNPC() && ce.MobSpecialFunc != nil {
+		ce.MobSpecialFunc(attacker)
 	}
 
 	// Fire fight trigger on mob attacker after combat round
@@ -615,6 +662,13 @@ func (ce *CombatEngine) setParried(name, defenseAction string) {
 	ce.parried[name] = defenseAction
 }
 
+// MarkParried records a C IS_PARRIED result for the named fighter. Native
+// mob specials use this same one-round defense state as perform_violence's
+// built-in parry/dodge path.
+func (ce *CombatEngine) MarkParried(name, defenseAction string) {
+	ce.setParried(name, defenseAction)
+}
+
 func (ce *CombatEngine) consumeParried(name string) string {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
@@ -638,15 +692,64 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// (R3: damage math is unchanged).
 	msgAttackType := cbWeaponInfo(attacker.GetName())
 
-	if !CalculateHitChance(attacker, defender, HitModifiers{}) {
+	hit := CalculateHitChance(attacker, defender, HitModifiers{})
+	var damage int
+	if hit {
+		weaponDamage := attacker.GetDamageRoll()
+		damage = CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
+	}
+
+	// fight.c reaches mob redirects from damage(), after hit() has consumed
+	// its to-hit and damage-roll draws but before damage messages/state land.
+	if ce.applyMobCombatRedirects(attacker, defender) {
+		return true
+	}
+
+	// C damage() enrolls the victim after the NPC switcheroo scan.  Do this
+	// before the remaining damage-side effects, including stop_follower and
+	// the hit/miss message path.
+	if pair.DeferDefenderEnrollment && defender.GetFighting() == "" && defender.GetPosition() > PosStunned {
+		defender.SetFighting(attacker.GetName())
+		ce.mu.Lock()
+		ce.prependFighterLocked(defender)
+		ce.mu.Unlock()
+		pair.DeferDefenderEnrollment = false
+	}
+
+	// C set_fighting(victim) — which sets POS_FIGHTING — runs INSIDE damage(),
+	// after the to-hit decision AND after one_hit has finished computing damage
+	// (which itself reads the victim's pre-fight position for the prone-victim
+	// multiplier, fight.c:1857 dam *= 1 + (POS_FIGHTING - GET_POS(victim))/3).
+	// So the victim must keep its pre-combat position through BOTH the to-hit
+	// AWAKE check and the damage multiplier, and only stand at the damage point.
+	// Miss path: C still calls damage(ch,victim,0,...), so the victim stands on
+	// a miss too. Gate on > POS_STUNNED (fight.c:1443): a dying victim stays prone.
+	standVictim := func() {
+		if defender.GetPosition() > PosStunned && defender.GetPosition() != PosFighting {
+			defender.SetPosition(PosFighting)
+		}
+	}
+
+	// C damage() breaks the victim's following when the attacker IS the
+	// master (fight.c:1457-1458): stop_follower's charm branch announces
+	// "$n hates your guts!" to the master BEFORE the swing's message, on
+	// both the miss (damage 0) and hit paths.
+	if cbGetFollowing(defender.GetName()) == attacker.GetName() {
+		cbStopFollowerOfMaster(defender.GetName(), attacker.GetName())
+	}
+
+	if !hit {
+		standVictim()
 		ce.sendMissMessage(attacker, defender, msgAttackType)
 		return false
 	}
 
-	weaponDamage := attacker.GetDamageRoll()
 	pair.LastAttackType = int(AttackNormal)
-	damage := CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
 	damage = ApplyDamageModifiers(attacker, defender, damage)
+
+	// Stand the victim only now — after the prone-victim damage multiplier has
+	// been read against its pre-fight position (mirrors C set_fighting-in-damage).
+	standVictim()
 
 	defender.TakeDamage(damage)
 	if ce.DamageFunc != nil {
@@ -757,7 +860,7 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 	// character in the room that is currently fighting them.
 	if attacker.GetLevel() > 20 {
 		for _, vict := range cbGetRoomCombatants(attacker.GetRoom()) {
-			if vict == nil || vict.GetName() == defenderName {
+			if vict == nil {
 				continue
 			}
 			if vict.GetFighting() == attackerName && GetRoller().Number(0, 80) == 0 {
@@ -781,7 +884,16 @@ func findRoomCombatantByName(roomVNum int, name string) Combatant {
 
 func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) {
 	ce.StopCombat(attacker.GetName())
-	_ = ce.StartCombat(attacker, target)
+	if err := ce.StartCombat(attacker, target); err != nil {
+		return
+	}
+	// C's redirect branches call hit(), not only set_fighting(). Preserve
+	// that synchronous opener before the normal combat round resumes.
+	if initial, ok := interface{}(ce).(interface {
+		PerformInitialAttack(Combatant, Combatant) error
+	}); ok {
+		_ = initial.PerformInitialAttack(attacker, target)
+	}
 }
 
 // sendHitMessage sends hit messages to combatants and room.

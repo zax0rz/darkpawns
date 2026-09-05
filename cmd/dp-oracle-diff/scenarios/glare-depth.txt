@@ -1,0 +1,113 @@
+# C-first glare/do_action vehicle (src/interpreter.c:465; src/act.social.c:102-151;
+# lib/misc/socials:305-314). The standing peer and room observer expose the
+# target audience, while the actor probes the no-arg, self, missing, and
+# one_argument branches.
+
+# depth-case: glare.no-argument
+# depth-case: glare.target-success
+# depth-case: glare.self-target
+# depth-case: glare.target-not-found
+# depth-case: glare.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Glareactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Glareactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Glarepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Glarepeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:roompeer]
+Glareobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:roompeer]
+Glareobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Glarepeer 8004
+teleport Glareobserver 8004
+
+[probe]
+glare
+glare Glarepeer
+glare Glareactor
+glare Nobody
+glare the Glarepeer trailing words are ignored

@@ -1,0 +1,9 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	giggle	giggle.entry-gate	D1	command	unit-green	TestGiggleRegistrationUsesCEntryGate	interpreter.c:464; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level.
+do_action	giggle	giggle.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:464; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	giggle	giggle.no-argument	D2	audience	oracle-green-multiseed	giggle-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:300-303	The self-only record emits the exact actor and room giggle lines with no argument.
+do_action	giggle	giggle.argument-ignored	D2	command	oracle-green-multiseed	giggle-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:300-303	Because char_found is NULL, a visible target is ignored and the no-argument pair remains the C path.
+do_action	giggle	giggle.missing-target-ignored	D2	command	oracle-green-multiseed	giggle-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:300-303	A missing target is also ignored because the self-only record has no target branch or not-found byte.
+do_action	giggle	giggle.self-target-ignored	D2	audience	oracle-green-multiseed	giggle-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:300-303	A self-named target still takes the no-argument actor/room pair rather than a self-target branch.
+do_action	giggle	giggle.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance social matrix.
+do_action	giggle	giggle.visibility	D3	shared	delegated	socials-depth	act.social.c:102-113; comm.c:2392-2555	The no-target room audience uses the shared Act visibility behavior.

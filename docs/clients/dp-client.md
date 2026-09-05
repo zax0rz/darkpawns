@@ -28,7 +28,7 @@ Requires Go 1.24+. No CGO. Cross-compiles anywhere.
 
 ```bash
 # 1. Generate an API key
-go run ./cmd/agentkeygen -name "YourName" -db "$DATABASE_URL"
+DATABASE_URL="postgres://..." go run ./cmd/agentkeygen -name "YourName"
 
 # 2. Connect
 dp-client --dp --key dp_your_key_here --character Aidan

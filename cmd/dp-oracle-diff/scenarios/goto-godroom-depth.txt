@@ -1,0 +1,45 @@
+# C-first goto ROOM_GODROOM vehicle (src/interpreter.c:467; src/act.wizard.c:184-239).
+# A level-31 immortal is below LVL_GRGOD and receives C's god-room refusal.
+
+# depth-case: goto.god-room-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8161 10 on
+
+[setup:oracle]
+Gotogodroom
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gotogodroom
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set Gotogodroom level 31
+
+[probe]
+goto 8161

@@ -1,0 +1,96 @@
+# C-first do_set vehicle (src/interpreter.c:682; src/act.wizard.c:2523-3069).
+# The crowned primary exercises the target/field parser, per-field privilege
+# and PC/NPC gates, C prefix matching, clamping, binary acknowledgements, and
+# representative numeric/misc state updates.
+
+# depth-case: set.no-argument
+# depth-case: set.missing-target
+# depth-case: set.unknown-field
+# depth-case: set.binary-field
+# depth-case: set.numeric-clamp
+# depth-case: set.misc-field
+# depth-case: set.maxhit-and-hit
+# depth-case: set.level
+# depth-case: set.field-prefix
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Setactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Settarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Settarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Settarget 8162
+
+[probe]
+set
+set Nobody gold 1
+set Settarget junk 1
+set Settarget brief on
+set Settarget align -2000
+set Settarget str 99
+set Settarget stradd 1
+set Settarget sex female
+set Settarget drunk 24
+set Settarget maxhit 50
+set Settarget hit 5
+set Settarget gold 123
+set Settarget bank 99
+set Settarget level 5

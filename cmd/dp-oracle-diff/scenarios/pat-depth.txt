@@ -1,0 +1,120 @@
+# C-first pat/do_action target-social vehicle (src/interpreter.c:597;
+# src/act.social.c:102-151; lib/misc/socials:550-558). The authored record
+# has hide 0 and no victim-position restriction, so player, NPC, self,
+# missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: pat.no-argument
+# depth-case: pat.target-success
+# depth-case: pat.target-audience
+# depth-case: pat.argument-first-token
+# depth-case: pat.mob-target
+# depth-case: pat.self-target
+# depth-case: pat.target-not-found
+# depth-case: pat.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Patactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Patactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Patobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Patobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Pattarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Pattarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Patobserver 8162
+teleport Pattarget 8162
+
+[probe]
+pat
+pat Pattarget trailing words are ignored
+pat Pattarget
+pat trainee
+pat Patactor
+pat Nobody
+force Pattarget sleep
+pat Pattarget

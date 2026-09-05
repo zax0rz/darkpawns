@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -23,6 +24,7 @@ type ObservationResult struct {
 type ObservationMessage struct {
 	Format        string
 	Literal       bool
+	Raw           bool
 	HideInvisible bool
 	Actor         Actor
 	Target        Actor
@@ -65,6 +67,17 @@ func (r *ObservationResult) literal(ch *Player, text string) {
 	})
 }
 
+// raw queues a block sent verbatim via SendMessage — bypassing act(), so it is
+// neither capitalized nor $-substituted. Mirrors C send_to_char for list output
+// (inventory / look-in container). Ordering is preserved with other messages.
+func (r *ObservationResult) raw(ch *Player, text string) {
+	r.Messages = append(r.Messages, ObservationMessage{
+		Format: text,
+		Raw:    true,
+		Actor:  ch,
+	})
+}
+
 func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, format string) {
 	r.Messages = append(r.Messages, ObservationMessage{
 		Format: format,
@@ -79,6 +92,12 @@ func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, f
 // canonical act() delivery path.
 func (w *World) RenderObservationMessages(result ObservationResult) {
 	for _, message := range result.Messages {
+		if message.Raw {
+			if p, ok := message.Actor.(*Player); ok && p != nil {
+				p.SendMessage(message.Format)
+			}
+			continue
+		}
 		format := message.Format
 		if message.Literal {
 			format = strings.ReplaceAll(format, "$", "$$")
@@ -222,7 +241,9 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 
 func (w *World) appendDarkOccupants(result *ObservationResult, ch *Player, room *parser.Room) {
 	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
-		if mob == nil {
+		// C list_char_to_char suppresses a mount while get_rider(mob) is
+		// non-nil; the rider's presence line represents the pair.
+		if mob == nil || mob.GetMountRider() != "" {
 			continue
 		}
 		if mob.IsAffected(affSneak) || mob.IsAffected(affHide) {
@@ -308,19 +329,54 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 	lines := make([]string, 0, len(order))
 	for i := len(order) - 1; i >= 0; i-- {
 		entry := groups[order[i]]
-		line := entry.line + objectVisibleFlags(ch, entry.item)
+		line := entry.line
 		if entry.count > 1 {
 			line += fmt.Sprintf("[%d]", entry.count)
 		}
 		lines = append(lines, line)
+		if flags := roomObjectVisibleFlags(ch, entry.item); flags != "" {
+			lines = append(lines, flags)
+		}
 	}
 	return lines
+}
+
+// roomObjectVisibleFlags renders the second line emitted by C's oc_show_list
+// for room contents. It deliberately differs from show_obj_to_char: room
+// lists use the plain "...it glows" vocabulary, not parenthesized flags.
+func roomObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
+	if object == nil {
+		return ""
+	}
+	extras := object.GetExtraFlags()[0]
+	var flags []string
+	if extras&(1<<itemExtraInvisible) != 0 {
+		flags = append(flags, "...it is invisible ")
+	}
+	if extras&(1<<itemExtraBless) != 0 && ch.IsAffected(affDetectAlign) {
+		flags = append(flags, "...it glows blue")
+	}
+	if extras&(1<<itemExtraMagic) != 0 && ch.IsAffected(affDetectMagic) {
+		flags = append(flags, "...it glows gold")
+	}
+	if extras&(1<<itemExtraGlow) != 0 {
+		flags = append(flags, "...it glows white")
+	}
+	if extras&(1<<itemExtraHum) != 0 {
+		flags = append(flags, "...it is humming")
+	}
+	if len(flags) == 0 {
+		return ""
+	}
+	return "          " + strings.Join(flags, "")
 }
 
 func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {
 	var lines []string
 	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
-		if mob == nil {
+		// C list_char_to_char suppresses a mount while get_rider(mob) is
+		// non-nil; the rider's presence line represents the pair.
+		if mob == nil || mob.GetMountRider() != "" {
 			continue
 		}
 		if !canSee(ch, mob) || mob.IsAffected(affHide) {
@@ -346,7 +402,7 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 			}
 			continue
 		}
-		line := playerPresenceLine(player, ch)
+		line := w.playerPresenceLine(player, ch)
 		lines = append(lines, line)
 		view.Players = append(view.Players, player.GetName())
 	}
@@ -425,10 +481,15 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 		} else {
 			result.act(ch, player, nil, "You see nothing special about $M.")
 		}
-		race := strings.ToLower(RaceNames[player.GetRace()])
-		result.literal(ch, fmt.Sprintf("%s is %s.", player.GetName(), race))
+		if player.IsAffected(affFleshAlter) {
+			result.literal(ch, fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), RaceNames[player.GetRace()], hshr(player), fleshAlterWeapon(player.GetLevel())))
+		} else {
+			result.literal(ch, fmt.Sprintf("%s is %s.", persName(player, ch), RaceNames[player.GetRace()]))
+		}
+		appendCharacterAffectLook(result, ch, player)
 		result.act(ch, player, nil, "$N "+diagCondition(player.GetHP(), player.GetMaxHP()))
 		appendPlayerEquipment(result, ch, player)
+		appendPeekInventory(result, ch, player)
 		return
 	}
 	if target.Mob != nil {
@@ -440,7 +501,101 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 		}
 		result.act(ch, mob, nil, "$N "+diagCondition(mob.GetHP(), mob.GetMaxHP()))
 		appendMobEquipment(result, ch, mob)
+		appendPeekInventory(result, ch, mob)
 	}
+}
+
+// appendCharacterAffectLook ports the direct player-visible status lines in
+// C look_at_char (act.informative.c:408-438). They are deliberately separate
+// from the generic room-listing status rendering: look_at_char always exposes
+// these lines to its viewer.
+func appendCharacterAffectLook(result *ObservationResult, ch *Player, target *Player) {
+	if target.Tattoo != TattooNone {
+		tattoo := tattooDescription(target.Tattoo)
+		if tattoo != "" {
+			glow := ""
+			if completeObservationColor(ch) {
+				glow = "\x1b[37m"
+			}
+			reset := ""
+			if glow != "" {
+				reset = "\x1b[0m"
+			}
+			result.literal(ch, fmt.Sprintf("On %s right arm is a tattoo %s... it %sglows%s softly.", hshr(target), tattoo, glow, reset))
+		}
+	}
+	if target.IsAffected(affVampire) {
+		result.literal(ch, fmt.Sprintf("Looking at %s closely, you see two white fangs --  %s is a vampire!", hmhr(target), hssh(target)))
+	}
+	if target.IsAffected(affWerewolf) {
+		result.literal(ch, fmt.Sprintf("May the gods have mercy --  %s is a werewolf!", hssh(target)))
+	}
+	if target.IsAffected(affMetalskin) {
+		result.literal(ch, fmt.Sprintf("You notice %s skin has a metallic hue!", hshr(target)))
+	}
+	if target.IsAffected(affCutthroat) {
+		result.literal(ch, fmt.Sprintf("%s's throat has been slit from ear to ear!", persName(target, ch)))
+	}
+}
+
+func tattooDescription(tattoo int) string {
+	if tattoo < TattooNone || tattoo > TattooOwl {
+		return ""
+	}
+	return []string{
+		"None", "of a green dragon", "in a tribal design", "of a flaming skull",
+		"of a leaping tiger", "of an ice worm", "of an open eye", "of crossed swords",
+		"of a screaming eagle", "of a heart", "of a star", "of a ship", "of a spider",
+		"of the symbol of the Jyhad", "of the word 'MOM'", "of an angel", "of a fox", "of an owl",
+	}[tattoo]
+}
+
+// appendPeekInventory is the inventory half of C look_at_char. It is part of
+// the ordinary look_at_char path, so both look-at-character and peek preserve
+// the same class, higher-immortal, visibility, and per-object RNG gates.
+func appendPeekInventory(result *ObservationResult, ch *Player, target Actor) {
+	if ch == nil || target == nil || ch == target {
+		return
+	}
+	if ch.GetClass() != ClassThief && ch.GetClass() != ClassAssassin && ch.GetLevel() < LVL_IMMORT {
+		return
+	}
+
+	// C passes the observed character as act()'s actor and the viewer as its
+	// victim object, so $s is the observed character's possessive pronoun.
+	result.literal(ch, "\r\nYou attempt to peek at "+hshr(target)+" inventory:")
+	if player, ok := target.(*Player); ok && player.GetLevel() > LVL_IMMORT && ch.GetLevel() < player.GetLevel() {
+		result.literal(ch, "Your soul (burning)")
+		return
+	}
+
+	items := characterInventory(target)
+	found := false
+	for _, item := range items {
+		if item == nil || !chCanSeeObj(ch, item) {
+			continue
+		}
+		// C number(0,20) is evaluated only after CAN_SEE_OBJ succeeds.
+		if dprng.Number(0, 20) < ch.GetLevel() {
+			result.raw(ch, item.GetShortDesc()+coloredObjectVisibleFlags(ch, item)+"\r\n")
+			found = true
+		}
+	}
+	if !found {
+		result.literal(ch, "You can't see anything.")
+	}
+}
+
+func characterInventory(target Actor) []*ObjectInstance {
+	switch typed := target.(type) {
+	case *Player:
+		if typed.Inventory != nil {
+			return typed.Inventory.Items
+		}
+	case *MobInstance:
+		return typed.Inventory
+	}
+	return nil
 }
 
 // DoLookDirection renders C's direction preface, exit state, and—when open—the
@@ -522,15 +677,11 @@ func (w *World) DoLookIn(ch *Player, arg string) ObservationResult {
 			observationRoom:      "here",
 			observationEquipment: "used",
 		}[location]
-		result.literal(ch, fmt.Sprintf("%s (%s): ", fname(object.GetKeywords()), where))
-		contents := visibleObjectShortLines(ch, object.GetContents())
-		if len(contents) == 0 {
-			result.literal(ch, "Nothing.")
-		} else {
-			for _, line := range contents {
-				result.literal(ch, line)
-			}
-		}
+		// C look_in_obj sends the header (fname) and the mode-15 content list
+		// raw via send_to_char — NOT through act() — so neither is capitalized,
+		// and the contents use the same Num/Item/Encumbrance table as inventory.
+		result.raw(ch, fmt.Sprintf("%s (%s): \r\n", fname(object.GetKeywords()), where)+
+			w.renderObjectListMode15(ch, object.GetContents()))
 		return result
 	}
 
@@ -622,14 +773,20 @@ func (w *World) DoExamine(ch *Player, arg string) ObservationResult {
 func (w *World) DoDiagnose(ch *Player, arg string) ObservationResult {
 	var result ObservationResult
 	first, _ := splitArg(arg)
+	var target CharTarget
+	var ok bool
 	if first == "" {
-		first = ch.GetFighting()
-		if first == "" {
+		// C passes FIGHTING(ch) directly to diag_char_to_char. Go stores
+		// that pointer as a name, and a mob's name is its multi-word short
+		// description, so do not send it back through keyword lookup.
+		target, ok = w.ResolveFightingTarget(ch)
+		if !ok {
 			result.literal(ch, "Diagnose who?")
 			return result
 		}
+	} else {
+		target, ok = w.ResolveCharInRoom(ch, first)
 	}
-	target, ok := w.ResolveCharInRoom(ch, first)
 	if !ok {
 		result.literal(ch, "No-one by that name here.")
 		return result
@@ -653,6 +810,17 @@ func (w *World) doLook(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
 	w.RenderObservationMessages(w.DoLookRoom(ch, ignoreBrief))
+}
+
+// LookAtRoomForSpell exposes the native spell landing look through a narrow bridge.
+// The spells package cannot import game, but C spell_teleport calls
+// look_at_room(victim, 0) after moving a player (spells.c:213-214).
+func (w *World) LookAtRoomForSpell(victim interface{}) {
+	player, ok := victim.(*Player)
+	if !ok || player == nil {
+		return
+	}
+	w.lookAtRoom(player, false)
 }
 
 func (w *World) listObjToChar(room *parser.Room, ch *Player) {
@@ -824,7 +992,7 @@ func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
-		result.literal(ch, fmt.Sprintf("%-20s%s%s", equipmentWhere(slot), item.GetShortDesc(), coloredObjectVisibleFlags(ch, item)))
+		result.literal(ch, equipmentWhere(slot)+item.GetShortDesc()+coloredObjectVisibleFlags(ch, item))
 	}
 }
 
@@ -843,9 +1011,9 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
-		where := "<used>             "
-		if position >= 0 && position < len(WhereNames) {
-			where = WhereNames[position]
+		where := "<used>               "
+		if position >= 0 && position < len(cWearWhere) {
+			where = cWearWhere[position]
 		}
 		result.literal(ch, where+item.GetShortDesc()+coloredObjectVisibleFlags(ch, item))
 	}
@@ -854,39 +1022,45 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 func equipmentWhere(slot EquipmentSlot) string {
 	switch slot {
 	case SlotLight:
-		return "<used as light>"
+		return cWearWhere[0]
 	case SlotFinger, SlotFingerR, SlotFingerL:
-		return "<worn on finger>"
+		return cWearWhere[1]
 	case SlotNeck, SlotNeck1, SlotNeck2:
-		return "<worn around neck>"
+		return cWearWhere[3]
 	case SlotBody:
-		return "<worn on body>"
+		return cWearWhere[5]
 	case SlotHead:
-		return "<worn on head>"
+		return cWearWhere[6]
 	case SlotLegs:
-		return "<worn on legs>"
+		return cWearWhere[7]
 	case SlotFeet:
-		return "<worn on feet>"
+		return cWearWhere[8]
 	case SlotHands:
-		return "<worn on hands>"
+		return cWearWhere[9]
 	case SlotArms:
-		return "<worn on arms>"
+		return cWearWhere[10]
 	case SlotShield:
-		return "<worn as shield>"
+		return cWearWhere[11]
 	case SlotAbout:
-		return "<worn about body>"
+		return cWearWhere[12]
 	case SlotWaist:
-		return "<worn about waist>"
+		return cWearWhere[13]
 	case SlotWrist, SlotWristR, SlotWristL:
-		return "<worn around wrist>"
+		return cWearWhere[14]
 	case SlotWield:
-		return "<wielded>"
+		return cWearWhere[16]
 	case SlotHold:
-		return "<held>"
-	case SlotEar:
-		return "<worn on ear>"
+		return cWearWhere[17]
+	case SlotThrow:
+		return cWearWhere[18]
+	case SlotAblegs:
+		return cWearWhere[19]
+	case SlotFace:
+		return cWearWhere[20]
+	case SlotHover:
+		return cWearWhere[21]
 	default:
-		return "<used>"
+		return "<used>               "
 	}
 }
 
@@ -937,17 +1111,7 @@ func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string,
 	return "", false
 }
 
-func visibleObjectShortLines(ch *Player, objects []*ObjectInstance) []string {
-	var lines []string
-	for _, object := range objects {
-		if object != nil && chCanSeeObj(ch, object) {
-			lines = append(lines, object.GetShortDesc()+objectVisibleFlags(ch, object))
-		}
-	}
-	return lines
-}
-
-func playerPresenceLine(player, viewer *Player) string {
+func (w *World) playerPresenceLine(player, viewer *Player) string {
 	name := player.GetName()
 	title := strings.TrimSpace(player.GetTitle())
 	if title == "" {
@@ -961,6 +1125,13 @@ func playerPresenceLine(player, viewer *Player) string {
 	}
 	if player.IsAffected(affHide) {
 		name += " (hidden)"
+	}
+	if player.IsMounted() {
+		mountName := "thin air"
+		if mount := w.riddenMount(player); mount != nil {
+			mountName = mount.GetShortDesc()
+		}
+		return name + " is here, mounted on " + mountName + "."
 	}
 	if player.GetPosition() == posFighting {
 		target := player.GetFighting()

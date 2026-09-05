@@ -1,0 +1,75 @@
+# C-first do_scrounge field mapping (src/new_cmds2.c:93-97). Field captures
+# object vnum 29 with the capture-and-kill wording and room search act.
+
+# depth-case: scrounge.field-capture
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 2
+
+[setup:oracle]
+Scroungefield
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungefield
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungefieldpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungefieldpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungefieldpeer 8105
+skillset Scroungefield 'scrounge' 100
+
+[probe]
+scrounge

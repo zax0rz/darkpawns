@@ -164,17 +164,8 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 	return nil
 }
 
-// MoveObject moves an object from its current location to a new one.
-// This is the centralized movement function. All object location changes
-// should go through this to maintain invariant consistency.
-func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
-	if err := dst.Validate(); err != nil {
-		return fmt.Errorf("invalid destination: %w", err)
-	}
-
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
+// moveObjectLocked moves an object while the world lock is held.
+func (w *World) moveObjectLocked(obj *ObjectInstance, dst ObjectLocation) error {
 	// Detach from current location
 	if _, err := w.detachObjectLocked(obj); err != nil {
 		return fmt.Errorf("detach failed: %w", err)
@@ -201,6 +192,45 @@ func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
 	return nil
 }
 
+// MoveObject moves an object from its current location to a new one.
+// This is the centralized movement function. All object location changes
+// should go through this to maintain invariant consistency.
+func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
+	if err := dst.Validate(); err != nil {
+		return fmt.Errorf("invalid destination: %w", err)
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.moveObjectLocked(obj, dst)
+}
+
+// MoveObjectToRoomFront mirrors C obj_to_room, which prepends to the room's
+// object list. It is used by C paths whose output can expose room list order.
+func (w *World) MoveObjectToRoomFront(obj *ObjectInstance, roomVNum int) error {
+	dst := LocRoom(roomVNum)
+	if err := dst.Validate(); err != nil {
+		return fmt.Errorf("invalid destination: %w", err)
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if err := w.moveObjectLocked(obj, dst); err != nil {
+		return err
+	}
+
+	items := w.roomItems[roomVNum]
+	for i, item := range items {
+		if item != obj {
+			continue
+		}
+		copy(items[1:i+1], items[:i])
+		items[0] = obj
+		return nil
+	}
+	return fmt.Errorf("moved object %d missing from room %d", obj.ID, roomVNum)
+}
+
 // --- Ergonomic helpers ---
 
 func (w *World) MoveObjectToRoom(obj *ObjectInstance, roomVNum int) error {
@@ -212,7 +242,8 @@ func (w *World) MoveObjectToPlayerInventory(obj *ObjectInstance, p *Player) erro
 }
 
 // PlaceWizardLoadedObjectInInventory mirrors C obj_to_char() for the immortal
-// load command, which deliberately bypasses mortal carry limits.
+// load command, which deliberately bypasses mortal carry limits. C prepends
+// each loaded object to ch->carrying, so preserve that visible list order.
 func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Player) error {
 	if obj == nil || p == nil || p.Inventory == nil {
 		return fmt.Errorf("object and player inventory are required")
@@ -226,7 +257,9 @@ func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Playe
 		return fmt.Errorf("detach loaded object: %w", err)
 	}
 	p.Inventory.mu.Lock()
-	p.Inventory.Items = append(p.Inventory.Items, obj)
+	p.Inventory.Items = append(p.Inventory.Items, nil)
+	copy(p.Inventory.Items[1:], p.Inventory.Items[:len(p.Inventory.Items)-1])
+	p.Inventory.Items[0] = obj
 	p.Inventory.mu.Unlock()
 	obj.RoomVNum = -1
 	obj.Location = LocInventoryPlayer(p.Name)
@@ -235,6 +268,31 @@ func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Playe
 
 func (w *World) MoveObjectToMobInventory(obj *ObjectInstance, m *MobInstance) error {
 	return w.MoveObject(obj, LocInventoryMob(m.GetID()))
+}
+
+// MoveObjectToMobInventoryFront mirrors C obj_to_char, which prepends to the
+// mob's carrying list. It is used by C paths whose inventory order is visible.
+func (w *World) MoveObjectToMobInventoryFront(obj *ObjectInstance, m *MobInstance) error {
+	dst := LocInventoryMob(m.GetID())
+	if err := dst.Validate(); err != nil {
+		return fmt.Errorf("invalid destination: %w", err)
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if err := w.moveObjectLocked(obj, dst); err != nil {
+		return err
+	}
+
+	for i, item := range m.Inventory {
+		if item != obj {
+			continue
+		}
+		copy(m.Inventory[1:i+1], m.Inventory[:i])
+		m.Inventory[0] = obj
+		return nil
+	}
+	return fmt.Errorf("moved object %d missing from mob %d inventory", obj.ID, m.GetID())
 }
 
 func (w *World) MoveObjectToContainer(obj, container *ObjectInstance) error {

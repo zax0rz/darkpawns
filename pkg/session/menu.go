@@ -272,6 +272,23 @@ func (s *Session) confirmDelete(choice string) error {
 
 func (s *Session) enterReturningPlayer() error {
 	name := s.player.Name
+	// C's CON_MENU path calls reset_char() before re-adding an extracted
+	// player. In particular, a post-death player is still at NOWHERE with
+	// non-positive H/MV; reset_char supplies the minimal playable state and
+	// the normal level-based start room is selected below.
+	if s.player.GetRoom() < 0 {
+		s.player.SetRoom(game.LoginStartRoom(s.player))
+		s.player.SetPosition(game.PosStanding)
+		if s.player.GetHP() <= 0 {
+			s.player.SetHP(1)
+		}
+		if s.player.GetMove() <= 0 {
+			s.player.SetMove(1)
+		}
+		if s.player.GetMana() <= 0 {
+			s.player.SetMana(1)
+		}
+	}
 	grantClassSpells(s.player)
 	if err := s.manager.Register(name, s); err != nil {
 		return err

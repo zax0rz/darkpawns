@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_ps	handbook	handbook.entry-gate	D1	command	unit-green	TestHandbookRegistrationUsesCEntryGate	interpreter.c:490; act.informative.c:2117-2147	The C row is LVL_IMMORT and POS_DEAD; the focused test pins both the authoritative command gate and the registered Go entry.
+do_gen_ps	handbook	handbook.mortal-gate	D1	command	oracle-green	handbook-depth	interpreter.c:490; interpreter.c:910-947	A mortal receives C's Huh?!? before do_gen_ps and before any handbook bytes are paged.
+do_gen_ps	handbook	handbook.static-page	D3	command	oracle-green-multiseed	handbook-immortal-depth@1,2,3,5,8	act.informative.c:2117-2147; db.c:196; db.h:60; lib/text/handbook	An immortal pages the boot-cached handbook text; the first page contains the exact authored bytes and pager prompt.
+do_gen_ps	handbook	handbook.argument-ignored	D2	command	oracle-green-multiseed	handbook-immortal-depth@1,2,3,5,8	act.informative.c:2117-2147	SCMD_HANDBOOK does not inspect its argument, so trailing words produce the same handbook page.
+do_gen_ps	handbook	handbook.pager-quit	D2	shared	delegated	help.pager-quit	act.informative.c:2145-2147; modify.c:454-527	The shared C/Go pager consumes q and exits without dispatching it as a command; the help family owns the direct pager proof.
+do_gen_ps	handbook	handbook.post-pager-command	D2	shared	delegated	help.post-pager-command	comm.c:617; modify.c:454-527	After q exits the pager, the next score input reaches normal command dispatch; the shared help vehicle owns this boundary.

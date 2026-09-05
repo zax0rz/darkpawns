@@ -1,0 +1,112 @@
+# C-first farewell social vehicle (src/interpreter.c:441; act.social.c:102-151;
+# lib/misc/socials:1476-1484). Named peers expose actor, non-victim room, and
+# victim audiences for the full target-bearing social record.
+
+# depth-case: farewell.no-argument
+# depth-case: farewell.target-success
+# depth-case: farewell.target-audience
+# depth-case: farewell.argument-first-token
+# depth-case: farewell.not-found
+# depth-case: farewell.self-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Farewellactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Farewellactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Farewellobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Farewellobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Farewelltarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Farewelltarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Farewellobserver 8162
+teleport Farewelltarget 8162
+
+[probe]
+farewell
+farewell Farewelltarget trailing words are ignored
+farewell Farewellactor
+farewell Nobody

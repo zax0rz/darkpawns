@@ -1,0 +1,73 @@
+# C-first PLR_NOSHOUT gate vehicle for dance (src/interpreter.c:405;
+# src/act.social.c:102-118). The named mortal is muted by the primary before
+# invoking the social, so the refusal is isolated from target lookup.
+
+# depth-case: dance.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+DanceGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DanceGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Muteon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Muteon
+
+[probe:muteon]
+dance nobody

@@ -1,0 +1,115 @@
+# cringe command vehicle (src/interpreter.c:397; src/act.social.c:102-151;
+# lib/misc/socials:136-144). The record has hide=1 and minimum victim position
+# zero, so its complete target matrix accepts a sleeping victim while room
+# emission applies the invisible-actor hide policy.
+
+# depth-case: cringe.no-argument
+# depth-case: cringe.target-success
+# depth-case: cringe.target-not-found
+# depth-case: cringe.self-target
+# depth-case: cringe.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Sleepero 8162
+
+[probe]
+cringe
+cringe barnaby
+cringe nobody
+cringe mordecai
+cringe sleepero

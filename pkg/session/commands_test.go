@@ -44,6 +44,18 @@ func TestGrabAndHoldKeepDistinctCGates(t *testing.T) {
 	}
 }
 
+func TestGenTogAdminCommandsRegisteredWithCGates(t *testing.T) {
+	for _, name := range []string{"ident", "slowns"} {
+		entry, ok := cmdRegistry.Lookup(name)
+		if !ok {
+			t.Fatalf("%s is not registered", name)
+		}
+		if entry.MinLevel != game.LVL_IMPL-1 || entry.MinPosition != combat.PosDead {
+			t.Errorf("%s gate = level %d position %d, want level %d position %d", name, entry.MinLevel, entry.MinPosition, game.LVL_IMPL-1, combat.PosDead)
+		}
+	}
+}
+
 func TestReekCommandRegistrations(t *testing.T) {
 	tests := []struct {
 		name        string

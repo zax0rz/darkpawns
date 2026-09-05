@@ -1,0 +1,64 @@
+# C-first depth vehicle for the privileged `reload` row
+# (src/interpreter.c:638; src/db.c:179-245). The Implementor is admitted to
+# every named text-cache branch; valid branches all return C's bare Okay. while
+# an unknown token returns C's exact unknown-option line. The level-38 probe
+# demonstrates the LVL_IMPL-1 dispatcher gate without invoking the handler.
+#
+# depth-case: reload.entry-gate
+# depth-case: reload.unknown-option
+# depth-case: reload.named-options
+# depth-case: reload.all-options
+# depth-case: reload.argument-parser
+# depth-case: reload.xhelp
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Godsystemac
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godsystemac
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+reload
+reload nonsense
+reload wizlist trailing words
+reload immlist
+reload news
+reload credits
+reload motd
+reload imotd
+reload help
+reload info
+reload policy
+reload handbook
+reload background
+reload future
+reload all
+reload *future
+reload xhelp

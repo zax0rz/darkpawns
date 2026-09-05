@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:786;
+# src/act.social.c:102-151; lib/misc/socials:1108-1116). The authored tug
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target branches.
+
+# depth-case: tug.no-argument
+# depth-case: tug.target-success
+# depth-case: tug.target-audience
+# depth-case: tug.argument-first-token
+# depth-case: tug.mob-target
+# depth-case: tug.self-target
+# depth-case: tug.target-not-found
+# depth-case: tug.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Tugactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tugactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Tugobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Tugobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Tugtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Tugtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Tugobserver 8162
+teleport Tugtarget 8162
+
+[probe]
+tug
+tug Tugtarget trailing words are ignored
+tug Tugtarget
+tug trainee
+tug Tugactor
+tug self
+tug Nobody
+force Tugtarget sleep
+tug Tugtarget

@@ -1,0 +1,86 @@
+# C-first vehicle for SPECIAL(oro_quarters_room), assigned to room 18397 in
+# src/spec_assign.c:614 and defined in src/spec_procs.c:2302-2318. A player
+# whose name is not Orodreth attempts south, so the special blocks the command,
+# emits an actor warning plus a TO_ROOM jolt, halves HP, and returns TRUE.
+# The exact Orodreth-name fallthrough is covered separately by the focused unit
+# test; room 18397 has no south exit, so its live vehicle proves the FALSE
+# return reaches ordinary do_move without inventing a movement destination.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2302-2318 ->
+# comm.c act / act.movement.c do_move.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Quartersactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quartersactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Quarterspeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Quarterspeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 18397
+teleport Quarterspeer 18397
+set Quartersactor hit 101
+
+[probe]
+south
+
+# depth-case: room.oro-quarters-command-gate
+# depth-case: room.oro-quarters-block
+# depth-case: room.oro-quarters-audience
+# depth-case: room.oro-quarters-hp-state
+# depth-case: room.oro-quarters-owner-fallthrough
+# depth-case: room.oro-quarters-return-intercept

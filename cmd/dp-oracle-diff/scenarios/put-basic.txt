@@ -1,0 +1,96 @@
+# depth-case: put.no-arg
+# depth-case: put.multi-container
+# depth-case: put.no-arg2-it
+# depth-case: put.no-arg2-them
+# depth-case: put.cont-not-found
+# depth-case: put.closed
+# depth-case: put.self-fold
+# depth-case: put.not-carrying
+# depth-case: put.not-container
+# depth-case: put.all-none
+# depth-case: put.alldot-none
+# depth-case: put.alldot-success
+# depth-case: put.indiv-success
+# The put tree, using the starting backpack (8038, starts CLOSED) and its
+# bread/skin. The "obs" peer proves the TO_ROOM broadcast on successful puts.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Putter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Putter
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Putobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Putobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+put
+put backpack all
+put backpack
+put all.coin
+put sword xyzzy
+put sword backpack
+open pack
+put backpack backpack
+put xyzzy backpack
+drop sword
+drop tunic
+get bread pack
+put bread bread
+put all.xyzzy backpack
+put all.bread backpack
+put all backpack
+get bread pack
+put bread backpack

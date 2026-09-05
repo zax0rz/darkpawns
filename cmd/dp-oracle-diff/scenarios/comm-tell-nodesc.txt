@@ -1,0 +1,42 @@
+# depth-case: tell.npc-nodesc
+# do_tell's NPC-without-descriptor arm (act.comm.c:911-912): get_char_vis finds
+# the spawned trainee world-wide, then the IS_NPC(vict) && !vict->desc gate
+# answers NOPERSON — telling a plain mob is indistinguishable from telling
+# nobody. Go's visibleTellTarget only resolves players, so the same NOPERSON
+# byte fires; this scenario pins the arm live.
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 1 8162 80
+
+[setup:oracle]
+Tellnodes
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tellnodes
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+tell trainee hello there

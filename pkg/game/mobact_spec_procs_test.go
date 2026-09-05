@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // ---------------------------------------------------------------------------
@@ -62,6 +63,91 @@ func TestSpecNormalChecker_NilChDoesNotPanic_AttacksNonImmortalPlayer(t *testing
 	}
 }
 
+func TestSpecNormalChecker_EntryGates(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func(*Player, *MobInstance)
+	}{
+		{
+			name:  "non-empty command",
+			setup: func(_ *Player, _ *MobInstance) {},
+		},
+		{
+			name:  "sleeping mob",
+			setup: func(_ *Player, mob *MobInstance) { mob.SetStatus("sleeping") },
+		},
+		{
+			name:  "negative hit points",
+			setup: func(_ *Player, mob *MobInstance) { mob.TakeDamage(mob.GetHP() + 1) },
+		},
+		{
+			name:  "already fighting",
+			setup: func(player *Player, mob *MobInstance) { mob.SetFighting(player.Name) },
+		},
+		{
+			name:  "immortal target",
+			setup: func(player *Player, _ *MobInstance) { player.SetLevel(LVL_IMMORT) },
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w, player := newCombatTestWorld(t)
+			mob := spawnTargetMob(t, w)
+			mob.SetPosition(combat.PosStanding)
+			test.setup(player, mob)
+
+			cmd := ""
+			if test.name == "non-empty command" {
+				cmd = "look"
+			}
+			if specNormalChecker(w, player, mob, cmd, "") {
+				t.Fatal("normal_checker should reject this entry-gate case")
+			}
+		})
+	}
+}
+
+type normalCheckerCombatEngine struct {
+	starts         [][2]string
+	initialAttacks [][2]string
+}
+
+func (e *normalCheckerCombatEngine) StartCombat(attacker, defender combat.Combatant) error {
+	e.starts = append(e.starts, [2]string{attacker.GetName(), defender.GetName()})
+	return nil
+}
+
+func (e *normalCheckerCombatEngine) PerformInitialAttack(attacker, defender combat.Combatant) error {
+	e.initialAttacks = append(e.initialAttacks, [2]string{attacker.GetName(), defender.GetName()})
+	return nil
+}
+
+func (e *normalCheckerCombatEngine) IsFighting(string) bool { return false }
+
+func (e *normalCheckerCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+	return nil, false
+}
+
+func TestSpecNormalChecker_UsesCanonicalSynchronousHit(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	player.SetLevel(LVL_IMMORT - 1)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosStanding)
+	engine := &normalCheckerCombatEngine{}
+	w.SetCombatEngine(engine)
+
+	if !specNormalChecker(w, nil, mob, "", "") {
+		t.Fatal("normal_checker should handle the first mortal target")
+	}
+	if len(engine.starts) != 1 || engine.starts[0] != [2]string{mob.GetName(), player.GetName()} {
+		t.Fatalf("StartCombat calls = %#v, want one mob-to-player opener", engine.starts)
+	}
+	if len(engine.initialAttacks) != 1 || engine.initialAttacks[0] != [2]string{mob.GetName(), player.GetName()} {
+		t.Fatalf("PerformInitialAttack calls = %#v, want one mob-to-player opener", engine.initialAttacks)
+	}
+}
+
 func TestSpecNormalChecker_SkipsWhenMobAlreadyFighting(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 	player.Level = 10
@@ -80,23 +166,118 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	if err != nil {
 		t.Fatalf("SpawnMob rescuer: %v", err)
 	}
-	ally, err := w.SpawnMob(2001, 1001)
+	allyProto := *rescuer.Prototype
+	allyProto.VNum = 2002
+	allyProto.Keywords = "elrik"
+	allyProto.ShortDesc = "Elrik"
+	w.mu.Lock()
+	w.mobs[allyProto.VNum] = &allyProto
+	w.mu.Unlock()
+	ally, err := w.SpawnMob(allyProto.VNum, 1001)
 	if err != nil {
 		t.Fatalf("SpawnMob ally: %v", err)
 	}
 	rescuer.SetPosition(combat.PosStanding)
 	ally.SetPosition(combat.PosStanding)
 	ally.SetFighting(player.Name) // player is attacking the ally mob
+	player.SetFighting(ally.GetName())
 	startHP := 200
 	player.SetHP(startHP)
+	previousNumber := rescuerNumber
+	rescuerNumber = func(_, _ int) int { return 1 }
+	t.Cleanup(func() { rescuerNumber = previousNumber })
 
 	handled := specRescuer(w, nil, rescuer, "", "")
 
 	if !handled {
-		t.Error("expected specRescuer to defend the ally mob by attacking the player")
+		t.Error("expected specRescuer to rescue the ally mob")
 	}
 	if player.GetHP() >= startHP {
-		t.Errorf("expected the rescuer to attack the player defending its ally, HP stayed at %d", player.GetHP())
+		t.Errorf("expected the ally's synchronous hit to damage the player, HP stayed at %d", player.GetHP())
+	}
+	if rescuer.GetFighting() != player.GetName() || player.GetFighting() != rescuer.GetName() {
+		t.Fatalf("expected rescue to interpose rescuer, got rescuer=%q player=%q", rescuer.GetFighting(), player.GetFighting())
+	}
+	if ally.GetFighting() != player.GetName() {
+		t.Errorf("expected ally's canonical hit to restore its attack target, got %q", ally.GetFighting())
+	}
+}
+
+func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	rescuer := spawnTargetMob(t, w)
+	rescuer.Prototype.Keywords = "avenger"
+	rescuer.Prototype.ShortDesc = "the avenger"
+	allyProto := *rescuer.Prototype
+	allyProto.VNum = 2002
+	allyProto.Keywords = "elrik"
+	allyProto.ShortDesc = "Elrik"
+	w.mu.Lock()
+	w.mobs[allyProto.VNum] = &allyProto
+	w.mu.Unlock()
+	ally, err := w.SpawnMob(allyProto.VNum, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob ally: %v", err)
+	}
+	ally.SetFighting(player.GetName())
+	player.SetFighting(ally.GetName())
+
+	var hit [2]string
+	ce := combat.NewCombatEngine()
+	ce.MessageFunc = func(attacker, defender combat.Combatant, _, _ int) bool {
+		hit = [2]string{attacker.GetName(), defender.GetName()}
+		return true
+	}
+	w.SetCombatEngine(ce)
+	previousNumber := rescuerNumber
+	rescuerNumber = func(_, _ int) int { return 1 }
+	t.Cleanup(func() { rescuerNumber = previousNumber })
+
+	if !specRescuer(w, nil, rescuer, "", "") {
+		t.Fatal("expected rescuer to handle the autonomous rescue")
+	}
+	if hit != [2]string{ally.GetName(), player.GetName()} {
+		t.Fatalf("canonical hit = %#v, want ally-to-player", hit)
+	}
+	if got := rescuer.GetFighting(); got != player.GetName() {
+		t.Errorf("rescuer fighting = %q, want %q", got, player.GetName())
+	}
+	if got := player.GetFighting(); got != rescuer.GetName() {
+		t.Errorf("player fighting = %q, want %q", got, rescuer.GetName())
+	}
+	if got := ally.GetFighting(); got != player.GetName() {
+		t.Errorf("ally fighting = %q, want %q", got, player.GetName())
+	}
+	if got := ally.GetWaitState(); got != 2*engine.PULSE_VIOLENCE {
+		t.Errorf("ally wait state = %d, want %d", got, 2*engine.PULSE_VIOLENCE)
+	}
+}
+
+func TestSpecRescuer_EntryGates(t *testing.T) {
+	cases := []struct {
+		name  string
+		setup func(*MobInstance)
+	}{
+		{name: "command", setup: func(*MobInstance) {}},
+		{name: "sleeping", setup: func(mob *MobInstance) { mob.SetPosition(combat.PosSleeping) }},
+		{name: "negative hp", setup: func(mob *MobInstance) { mob.SetHealth(-1) }},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w, _ := newCombatTestWorld(t)
+			rescuer := spawnTargetMob(t, w)
+			rescuer.SetPosition(combat.PosStanding)
+			tc.setup(rescuer)
+
+			cmd := ""
+			if tc.name == "command" {
+				cmd = "look"
+			}
+			if specRescuer(w, nil, rescuer, cmd, "") {
+				t.Fatalf("specRescuer handled %s gate", tc.name)
+			}
+		})
 	}
 }
 
@@ -215,6 +396,7 @@ func TestSpecRescuer_SkipsWhenRescuerAlreadyFighting(t *testing.T) {
 	}
 	rescuer.SetPosition(combat.PosStanding)
 	rescuer.SetFighting(player.Name)
+	player.SetFighting(rescuer.GetName())
 	ally.SetPosition(combat.PosStanding)
 	ally.SetFighting(player.Name)
 

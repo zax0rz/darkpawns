@@ -1,0 +1,118 @@
+# C-first freeze/do_wizutil vehicle (src/interpreter.c:452;
+# src/act.wizard.c:2077-2155). The first player is the implementor, so the
+# direct freeze entry gate is open. Two co-located peers expose victim and
+# room-audience bytes; the injected trainee NPC reaches C's NPC rejection.
+
+# depth-case: freeze.no-argument
+# depth-case: freeze.missing-target
+# depth-case: freeze.self-alias
+# depth-case: freeze.visible-npc-target
+# depth-case: freeze.success-victim
+# depth-case: freeze.already-frozen
+# depth-case: freeze.fill-word
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Freezeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Freezeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Freezefriend
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Freezefriend
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Freezeobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Freezeobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Freezefriend 8162
+teleport Freezeobserver 8162
+
+[probe]
+freeze
+freeze Nobody
+freeze self
+freeze trainee
+freeze Freezefriend
+freeze Freezefriend
+freeze the Freezefriend trailing words are ignored

@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	social	social.self-only	D2	command	oracle-green	socials-depth	act.social.c:102-151;lib/misc/socials	Self-only C records have no char_found message: typed targets are ignored and the no-argument actor/room pair is emitted.
+do_action	social	social.victim-trio	D3	command	oracle-green	socials-depth	act.social.c:102-151;comm.c:2420-2500	Target-found actor, room, and victim audiences match with C perform_act substitutions and capitalization.
+do_action	social	social.not-found	D1	command	oracle-green	socials-depth	act.social.c:128-132;lib/misc/socials	Unknown targets use the social-specific not-found message.
+do_action	social	social.self-target	D2	command	oracle-green	socials-depth	act.social.c:134-140;lib/misc/socials	The self-target actor/room pair matches C.
+do_action	social	social.high-traffic	D3	command	oracle-green	socials-depth	act.social.c:102-151;lib/misc/socials	Representative smile, laugh, nod, wave, and bow arms match on no-arg, target, and self-target paths.
+do_action	social	social.table-parity	D4	state	unit-green	TestSocialTableMatchesCData	act.social.c:220-275;lib/misc/socials	Data-driven comparison covers all 187 social records, hide/minimum-position metadata, NULL sentinels, empty lines, and trailing spaces.
+do_action	social	social.visibility-gate	D3	state	unit-green	TestSocialTargetLookupHonorsVisibility	act.social.c:128-132;utils.c:get_char_room_vis	Target resolution follows the C visible-room lookup, including invisible and detect-invisible subjects.

@@ -1,0 +1,109 @@
+# C-first do_order vehicle (src/interpreter.c:586; src/act.offensive.c:294-357).
+# An outlaw God charms a mortal peer in the same room. The probe reaches the
+# named charmed-player success path, including the order text, OK response,
+# and forced command. The actor-charmed gate is pinned by the focused unit test.
+
+# depth-case: order.charmed-player-success
+# depth-case: order.actor-charmed-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Orderleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Orderleader
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ordertarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ordertarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Orderobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Orderobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Ordertarget 8105
+teleport Orderobserver 8105
+set Orderleader outlaw on
+cast 'charm' Ordertarget
+~dpclock pulse 20
+
+[probe]
+order Ordertarget say hello

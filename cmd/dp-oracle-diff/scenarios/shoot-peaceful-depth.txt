@@ -1,0 +1,53 @@
+# C-first do_shoot peaceful-room gate (src/act.offensive.c:877-881). The
+# disposable destination is peaceful; all item/equipment and exit setup is
+# valid so this branch is reached before target lookup.
+
+# depth-case: shoot.peaceful-source-or-destination
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 on
+
+[setup:oracle]
+Shootpeace
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootpeace
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+get hoopak
+get arrow
+wield hoopak
+shoot arrow north nobody

@@ -9,8 +9,14 @@ import (
 )
 
 func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Disembowel who?"}
+	}
 	if ch.GetSkill(SkillDisembowel) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
+	}
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Nah. Hari Kari is for wimps."}
 	}
 	wielded, _ := ch.Equipment.GetItemInSlot(SlotWield)
 	if wielded == nil || wielded.Prototype == nil {
@@ -19,26 +25,56 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	if wielded.Prototype.Values[3] != 11 { // TYPE_PIERCE
 		return SkillResult{Success: false, MessageToCh: "Only piercing weapons can be used for disemboweling."}
 	}
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+	// C draws both the percentage and the normal-player probability even when
+	// the target is asleep. The command's subcmd is zero, so prob is
+	// number(50,100), not GET_SKILL(ch, SKILL_DISEMBOWEL).
 	// #nosec G404 — game RNG
 	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillDisembowel)
+	// #nosec G404 — game RNG
+	prob := dprng.Number(50, 100)
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 2,
-			MessageToCh:   ActMessage("You try to disembowel $N, but $E dodges!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to disembowel you, but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to disembowel $N, but fails!", chPronouns, &victPronouns, ""),
+			Success:             false,
+			SkillMsgType:        SkillDisembowelNum,
+			SkillMsgAfterDamage: true,
+			SkillMsgInDamage:    true,
+			DamageSkill:         SkillDisembowel,
+			StartCombat:         true,
+			WaitCh:              2,
 		}
 	}
+
+	// The passed skill roll calls hit(ch, vict, SKILL_DISEMBOWEL). That path
+	// consumes the ordinary d20, then consumes the wielded weapon's dice even
+	// though disembowel replaces the rolled damage with level*2+damroll.
+	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+		return SkillResult{
+			Success:             false,
+			SkillMsgType:        SkillDisembowelNum,
+			SkillMsgAfterDamage: true,
+			SkillMsgInDamage:    true,
+			DamageSkill:         SkillDisembowel,
+			StartCombat:         true,
+			WaitCh:              2,
+			DeferredImprove:     []string{SkillDisembowel},
+		}
+	}
+	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
+	_ = combat.RollDice(weaponNum, weaponSides)
 	dam := ch.GetLevel()*2 + ch.GetDamroll()
-	improveSkill(ch, SkillDisembowel)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 2,
-		MessageToCh:   ActMessage("You drive your blade deep into $N's gut!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n drives $s blade deep into your gut!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n disembowels $N in a shower of gore!", chPronouns, &victPronouns, ""),
+		Success:             true,
+		Damage:              dam,
+		SkillMsgType:        SkillDisembowelNum,
+		SkillMsgAfterDamage: true,
+		SkillMsgInDamage:    true,
+		DamageSkill:         SkillDisembowel,
+		StartCombat:         true,
+		WaitCh:              2,
+		DeferredImprove:     []string{SkillDisembowel},
 	}
 }
 
@@ -62,8 +98,6 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	if !ch.SpendMove(10) {
 		return SkillResult{Success: false, MessageToCh: "You're too exhausted!"}
 	}
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := ((5 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillDragonKick)
@@ -71,19 +105,21 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	// branches get WaitCh=3 — act.offensive.c:689.
 	if percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 3,
-			MessageToCh:   ActMessage("You attempt a dragon kick on $N but miss!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n attempts a dragon kick on you but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n attempts a dragon kick on $N but misses!", chPronouns, &victPronouns, ""),
+			Success:      false,
+			SkillMsgType: SkillDragonKickNum,
+			StartCombat:  true,
+			WaitCh:       3,
 		}
 	}
 	dam := int(float64(ch.GetLevel()) * 1.5)
-	improveSkill(ch, SkillDragonKick)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 3,
-		MessageToCh:   ActMessage("You unleash a devastating dragon kick against $N!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n unleashes a devastating dragon kick against you!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n dragon kicks $N!", chPronouns, &victPronouns, ""),
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillDragonKickNum,
+		DamageSkill:     SkillDragonKick,
+		StartCombat:     true,
+		WaitCh:          3,
+		DeferredImprove: []string{SkillDragonKick},
 	}
 }
 
@@ -191,59 +227,105 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 
 // DoSleeper implements do_sleeper() from act.offensive.c lines 1184-1280.
 // Requires bare hands. Non-lethal sleep.
-func DoSleeper(ch *Player, target combat.Combatant) SkillResult {
+func DoSleeper(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillSleeper) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
 	}
 	if ch.GetFighting() != "" {
 		return SkillResult{Success: false, MessageToCh: "You can't do this while fighting!"}
 	}
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "This room just has such a peaceful, easy feeling..."}
+	}
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
-		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while holding that weapon!"}
+		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while you are holding that weapon!"}
+	}
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Sleeper who?"}
+	}
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Can't get to sleep fast enough, huh?"}
+	}
+	if !target.IsNPC() && ch.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
+		return SkillResult{
+			Success:       false,
+			MessageToCh:   "You can not sleeper them because you are not an Outlaw!",
+			MessageToVict: fmt.Sprintf("%s failed to sleeper you because %s is not an Outlaw.", ch.GetName(), ch.GetName()),
+		}
 	}
 	if target.GetFighting() != "" {
 		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while they're fighting!"}
+	}
+	if isShopKeeperInWorld(world, target) {
+		return SkillResult{Success: false, MessageToCh: "Ha Ha. Don't think so."}
+	}
+	if target.GetPosition() <= combat.PosSleeping {
+		return SkillResult{Success: false, MessageToCh: "What's the point of doing that now?"}
 	}
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillSleeper)
+	if mob, ok := target.(*MobInstance); ok && (mob.HasMobFlag(MobFlagAware) || mob.HasMobFlag(MobFlagNosleep)) {
+		prob = 0
+	}
 	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
 	}
 	if !target.IsNPC() && (target.GetLevel() > ch.GetLevel()+3 || target.GetLevel() < ch.GetLevel()-3) {
-		percent = prob + 1
+		prob = 0
 	}
 	if percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 2,
+			Success: false, WaitCh: 2, RetaliateHit: true, RetaliateHitAfterMessages: true,
 			MessageToCh:   ActMessage("You try to grab $N in a sleeper hold but fail!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to put a sleeper hold on you, but you break free!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to put $N in a sleeper hold...", chPronouns, &victPronouns, ""),
 		}
 	}
-	improveSkill(ch, SkillSleeper)
 	return SkillResult{
 		Success: true, Damage: 0, SleepTarget: true, WaitCh: 2,
-		MessageToCh:   ActMessage("You put $N in a sleeper hold.", chPronouns, &victPronouns, ""),
-		MessageToVict: "You feel very sleepy... Zzzzz..",
-		MessageToRoom: ActMessage("$n puts $N in a sleeper hold. $N goes to sleep.", chPronouns, &victPronouns, ""),
+		MessageToCh:         ActMessage("You put $N in a sleeper hold.", chPronouns, &victPronouns, ""),
+		MessageToVict:       "You feel very sleepy... Zzzzz..",
+		MessageToRoom:       ActMessage("$n puts $N in a sleeper hold.", chPronouns, &victPronouns, ""),
+		MessageToRoomSecond: ActMessage("$N goes to sleep.", chPronouns, &victPronouns, ""),
+		RoomIncludesTarget:  true,
+		DeferredImprove:     []string{SkillSleeper}, DeferredImproveAfterRoom: true,
 	}
 }
 
-// DoNeckbreak implements do_neckbreak() from act.offensive.c lines 1295-1360.
+// DoNeckbreak implements do_neckbreak() from act.offensive.c lines 1295-1376.
 // Requires bare hands + 51 move. Damage: 18d(level).
-func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
+func DoNeckbreak(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillNeckbreak) == 0 {
 		return SkillResult{Success: false, MessageToCh: "What's that, idiot-san?"}
 	}
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
 		return SkillResult{Success: false, MessageToCh: "You can't do this and wield a weapon at the same time!"}
 	}
+
+	// C resolves shopkeeper protection before self, peaceful, mounted, move,
+	// and RNG branches (act.offensive.c:1320-1325).
+	if isShopKeeperInWorld(world, target) {
+		return SkillResult{Success: false, MessageToCh: "Haha.. Don't think so."}
+	}
+	if target.GetName() == ch.Name {
+		return SkillResult{Success: false, MessageToCh: "Aren't we funny today..."}
+	}
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "You can't contemplate violence in such a place!"}
+	}
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
 	if !ch.SpendMove(51) {
 		return SkillResult{Success: false, MessageToCh: "You haven't the energy to do this!"}
 	}
+
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
@@ -255,55 +337,22 @@ func DoNeckbreak(ch *Player, target combat.Combatant) SkillResult {
 			MessageToCh:   ActMessage("You try to break $S neck, but $E is too strong!", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n tries to break your neck, but can't!", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$n tries to break $N's neck, but $N slips free!", chPronouns, &victPronouns, ""),
+			RetaliateHit:  true,
+			// C emits all three failure act() lines before hit(vict,ch).
+			RetaliateHitAfterMessages: true,
 		}
 	}
 	dam := combat.RollDice(18, ch.GetLevel())
-	improveSkill(ch, SkillNeckbreak)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 3,
-		MessageToCh:   ActMessage("You snap $N's neck with a sickening crack!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n snaps your neck with a sickening crack!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n breaks $N's neck!", chPronouns, &victPronouns, ""),
-	}
-}
-
-// DoAmbush implements do_ambush() from act.offensive.c lines 1454-1550.
-// Cannot ambush target already fighting. Damage: damroll + weapon + level*2.6 + 10% if hidden.
-func DoAmbush(ch *Player, target combat.Combatant) SkillResult {
-	if ch.GetSkill(SkillAmbush) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You'd better not."}
-	}
-	if target.GetFighting() != "" {
-		return SkillResult{Success: false, MessageToCh: "They're too alert for that, currently."}
-	}
-	ch.SendMessage("You crouch in the shadows and plan your ambush...\r\n")
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-	// #nosec G404
-	percent := dprng.Number(1, 131)
-	prob := ch.GetSkill(SkillAmbush)
-	if percent > prob {
-		return SkillResult{
-			Success: false, WaitCh: 1,
-			MessageToCh:   ActMessage("You spring from the shadows but $N avoids your ambush!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n springs from the shadows but you dodge the ambush!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n springs from the shadows but fails to ambush $N!", chPronouns, &victPronouns, ""),
-		}
-	}
-	dam := ch.GetDamroll()
-	if weaponNum, weaponSides := ch.Equipment.GetWeaponDamage(); weaponNum > 0 && weaponSides > 0 {
-		dam += combat.RollDice(weaponNum, weaponSides)
-	}
-	dam += int(float64(ch.GetLevel()) * 2.6)
-	if ch.IsAffected(affHide) {
-		dam += int(float64(dam) * 0.10)
-	}
-	improveSkill(ch, SkillAmbush)
-	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 1, WaitTarget: 1,
-		MessageToCh:   ActMessage("You spring from the shadows and ambush $N!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n leaps from the shadows and ambushes you!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n leaps from the shadows to ambush $N!", chPronouns, &victPronouns, ""),
+		Success:          true,
+		Damage:           dam,
+		SkillMsgType:     SkillNeckbreakNum,
+		SkillMsgInDamage: true,
+		DamageSkill:      SkillNeckbreak,
+		StartCombat:      true,
+		WaitCh:           3,
+		// C improves only after damage() returns, after set-190's dice draw.
+		DeferredImprove: []string{SkillNeckbreak},
 	}
 }
 

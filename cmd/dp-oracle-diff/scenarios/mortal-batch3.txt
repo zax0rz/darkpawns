@@ -2,6 +2,8 @@
 # inactive deferred: it toggles the INACTIVE prompt prefix (a prompt-system
 # class issue, same as AFK) which contaminates subsequent probes.
 
+# depth-case: visible.no-affect
+
 [fixture]
 quiet-mobs
 

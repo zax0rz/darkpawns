@@ -1,0 +1,53 @@
+# depth-case: mob.tattoo3-list
+# depth-case: mob.tattoo3-entry-gates
+# depth-case: mob.tattoo3-price-gate
+# depth-case: mob.tattoo3-fallthrough
+# C-first vehicle for SPECIAL(tattoo3), src/spec_procs2.c:1075-1137. The real
+# registered Polywig tattooist is mob vnum 21244 in room 21281; its tattoo.lua
+# script is stripped from disposable copies.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21244 1 21281 212
+strip-mob-script 21244
+replace-room-exits 21281 none
+
+[setup:oracle]
+TattooThree
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooThree
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21281
+
+[probe]
+list
+buy
+buy x
+buy 0
+xyzzy

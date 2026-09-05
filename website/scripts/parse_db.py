@@ -2,6 +2,7 @@
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 # Paths
@@ -83,6 +84,17 @@ AFFECT_BITS = [
 
 def clean_desc(desc):
     return desc.replace("\r", "").strip()
+
+def clean_generated_text(value):
+    """Remove source control bytes that are invalid in YAML and Markdown."""
+    return "".join(
+        char for char in value
+        if char in "\n\t" or unicodedata.category(char) != "Cc"
+    )
+
+def yaml_string(value):
+    """Encode a string as a YAML-compatible JSON double-quoted scalar."""
+    return json.dumps(clean_generated_text(value), ensure_ascii=False)
 
 def read_string(lines, i):
     parts = []
@@ -718,8 +730,8 @@ def generate_seo_mobs(mobs):
             elif m["sex"] == 2: sex_str = "Female"
             
             # Escape strings for YAML compatibility
-            escaped_title = m["short_desc"].replace('"', '\\"')
-            escaped_long = m["long_desc"].replace('"', '\\"')
+            title = clean_generated_text(m["short_desc"])
+            long_desc = clean_generated_text(m["long_desc"])
             
             # Build list of spawns and drops for content
             spawn_list = "\n".join([f"- [Room {s['room']}: {s['name']}](/map?room={s['room']})" for s in m["spawns"]])
@@ -736,7 +748,7 @@ Items Sold:
 """
 
             content = f"""---
-title: "{escaped_title}"
+title: {yaml_string(title)}
 vnum: {vnum}
 level: {m["level"]}
 race: {m["race"]}
@@ -747,14 +759,14 @@ damage_dice: "{m["damage_dice"]}"
 gold: {m["gold"]}
 exp: {m["exp"]}
 ac: {m["ac"]}
-long_desc: "{escaped_long}"
+long_desc: {yaml_string(long_desc)}
 layout: "single"
 type: "mobs"
 ---
 
-# {m["short_desc"]} (Mob VNUM {vnum})
+# {title} (Mob VNUM {vnum})
 
-> {m["long_desc"]}
+> {long_desc}
 
 ## Stats
 - **Level**: {m["level"]}
@@ -794,8 +806,8 @@ def generate_seo_items(objs):
             filename = CONTENT_ITEMS_DIR / f"{vnum}.md"
             
             # Escape strings for YAML
-            escaped_title = o["short_desc"].replace('"', '\\"')
-            escaped_long = o["long_desc"].replace('"', '\\"')
+            title = clean_generated_text(o["short_desc"])
+            long_desc = clean_generated_text(o["long_desc"])
             
             # Relationships
             mob_list = "\n".join([f"- Loaded by [{l['name']}](/mobs/{l['mob_vnum']}) ({l['slot']})" for l in o["loaded_by"]])
@@ -805,21 +817,21 @@ def generate_seo_items(objs):
             affects_list = "\n".join([f"- Affects **{a['location']}** by **{a['modifier']}**" for a in o["affects"]])
             
             content = f"""---
-title: "{escaped_title}"
+title: {yaml_string(title)}
 vnum: {vnum}
 item_type: "{o["type"]}"
 wear_flags: {o["wear_flags"]}
 extra_flags: {o["extra_flags"]}
 weight: {o["weight"]}
 cost: {o["cost"]}
-long_desc: "{escaped_long}"
+long_desc: {yaml_string(long_desc)}
 layout: "single"
 type: "items"
 ---
 
-# {o["short_desc"]} (Item VNUM {vnum})
+# {title} (Item VNUM {vnum})
 
-> {o["long_desc"]}
+> {long_desc}
 
 ## Stats
 - **Item Type**: {o["type"]}

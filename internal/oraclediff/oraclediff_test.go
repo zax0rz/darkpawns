@@ -1,6 +1,7 @@
 package oraclediff
 
 import (
+	"io"
 	"net"
 	"strings"
 	"testing"
@@ -116,6 +117,10 @@ empty-players
 quiet-mobs
 spawn-mob 18306 1 8162 80
 strip-mob-script 18306
+replace-room-exits 8162 west 8161 1 secret
+replace-room-exits 8161 none
+set-room-flag 8161 1 on
+set-room-sector 8161 7
 [probe:victim]
 recite scroll
 `
@@ -144,6 +149,41 @@ recite scroll
 	}
 	if len(sc.ScriptlessMobIDs) != 1 || sc.ScriptlessMobIDs[0] != 18306 {
 		t.Fatalf("ScriptlessMobIDs = %#v", sc.ScriptlessMobIDs)
+	}
+	if len(sc.RoomExitFixtures) != 2 || sc.RoomExitFixtures[0] != (RoomExitFixture{RoomVNum: 8162, Direction: "west", ToRoom: 8161, DoorState: 1, Keyword: "secret"}) || sc.RoomExitFixtures[1] != (RoomExitFixture{RoomVNum: 8161}) {
+		t.Fatalf("RoomExitFixtures = %#v", sc.RoomExitFixtures)
+	}
+	if len(sc.RoomFlagFixtures) != 1 || sc.RoomFlagFixtures[0] != (RoomFlagFixture{RoomVNum: 8161, Bit: 1, Enabled: true}) {
+		t.Fatalf("RoomFlagFixtures = %#v", sc.RoomFlagFixtures)
+	}
+	if len(sc.RoomSectors) != 1 || sc.RoomSectors[0] != (RoomSectorFixture{RoomVNum: 8161, Sector: 7}) {
+		t.Fatalf("RoomSectors = %#v", sc.RoomSectors)
+	}
+}
+
+func TestParseScenarioPeerDrop(t *testing.T) {
+	input := `[setup:oracle:peer]
+peer
+[setup:port:peer]
+peer
+[peer-drop]
+peer
+[probe]
+tell peer hello
+`
+	sc, err := ParseScenario("peer-drop", strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sc.PeerDrop != "peer" {
+		t.Fatalf("PeerDrop = %q, want peer", sc.PeerDrop)
+	}
+}
+
+func TestParseScenarioRejectsUnknownPeerDrop(t *testing.T) {
+	_, err := ParseScenario("bad-peer-drop", strings.NewReader("[peer-drop]\nmissing\n[probe]\nlook\n"))
+	if err == nil || !strings.Contains(err.Error(), `peer-drop target "missing" is not a configured peer`) {
+		t.Fatalf("expected unknown peer-drop error, got %v", err)
 	}
 }
 
@@ -195,9 +235,25 @@ func TestRunAudienceProbeCapturesEachRecipientInStableOrder(t *testing.T) {
 	}
 }
 
+func TestRunAudienceProbeAllowsFinalAudienceEOF(t *testing.T) {
+	actor := &scriptedConn{outputs: []string{"actor"}}
+	closedPeer := &scriptedConn{readErr: io.EOF}
+
+	blocks, err := RunAudienceProbe(actor, map[string]Conn{
+		"closed": closedPeer,
+	}, []string{"dc 2"}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(blocks) != 2 || blocks[1].Audience != "closed" {
+		t.Fatalf("blocks = %#v, want final closed audience block", blocks)
+	}
+}
+
 type scriptedConn struct {
 	outputs []string
 	sent    []string
+	readErr error
 }
 
 func (c *scriptedConn) Send(line string) error {
@@ -207,7 +263,7 @@ func (c *scriptedConn) Send(line string) error {
 
 func (c *scriptedConn) ReadUntilQuiescent(time.Duration) (string, error) {
 	if len(c.outputs) == 0 {
-		return "", nil
+		return "", c.readErr
 	}
 	out := c.outputs[0]
 	c.outputs = c.outputs[1:]

@@ -1,0 +1,16 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_bite	bite	bite.peaceful-noop	D1	command	oracle-green	bite-groinrip-peaceful	new_cmds.c:1206-1208	The peaceful-room guard returns silently before argument parsing or skill gates.
+do_bite	bite	bite.no-arg	D1	command	oracle-green	bite-depth	interpreter.c:356; new_cmds.c:1212-1219	A non-fighting caller with no argument receives C's exact Bite who?! line.
+do_bite	bite	bite.fighting-no-arg	D1	command	unit-green	TestCmdBite_FightingNoArgsIsSilent	new_cmds.c:1212-1215	A fighting caller with no argument uses FIGHTING(ch) and returns without output.
+do_bite	bite	bite.target-missing	D1	command	oracle-green	bite-depth	new_cmds.c:1217-1219	A missing room target uses the same exact Bite who?! punctuation.
+do_bite	bite	bite.one-argument	D1	command	oracle-green	bite-depth	new_cmds.c:1212-1219	C one_argument ignores trailing words after the target token.
+do_bite	bite	bite.self	D1	command	oracle-green	bite-depth	new_cmds.c:1221-1224	Self-targeting emits the exact tongue-refusal line.
+do_bite	bite	bite.love-bite	D3	command	oracle-green	bite-depth	new_cmds.c:1227-1243	An ordinary player emits the actor, victim, and room love-bite act trio without damage.
+do_bite	bite	bite.transformation-gate	D2	state	unit-green	TestDoBite_SupernaturalEntryAndVictimGates	new_cmds.c:1245-1249	A flagged but untransformed player receives the exact transformation refusal.
+do_bite	bite	bite.immortal-victim-gate	D2	state	unit-green	TestDoBite_SupernaturalEntryAndVictimGates	new_cmds.c:1252-1255	A higher-level immortal victim reaches C's Yeah, right. gate.
+do_bite	bite	bite.night-creature-victim	D2	state	unit-green	TestDoBite_SupernaturalEntryAndVictimGates	new_cmds.c:1258-1260	A player already flagged werewolf/vampire cannot be bitten.
+do_bite	bite	bite.werewolf-damage	D4	state	unit-green	TestDoBite_WerewolfDamageContract	new_cmds.c:1265-1275	Transformed werewolf damage is MIN(15, level), uses SKILL_BITE, starts combat, and waits two pulses.
+do_bite	bite	bite.vampire-sloppy-feeding	D4	state	unit-green	TestDoBite_VampireFeedsOnSloppyAndFightingBites	new_cmds.c:1279-1295	A nonzero vampire bite roll deals no damage but directly adds victim level to eligible hunger conditions.
+do_bite	bite	bite.vampire-fighting-damage	D5	state	unit-green	TestDoBite_VampireFeedsOnSloppyAndFightingBites	new_cmds.c:1284-1295	A zero vampire bite roll reaches damage(), waits two pulses, and still feeds from the victim.
+do_bite	bite	bite.skill-message	D5	state	unit-green	TestDoBite_WerewolfDamageContract	new_cmds.c:1265-1295; fight.c:1023-1092	The numbered SKILL_BITE message is emitted by the damage pipeline after the literal act preamble.
+do_bite	bite	bite.shared-damage-gates	D5	shared	delegated	combat-entry	fight.c:1336-1459	Common damage modifiers, combat enrollment, death, and resource handling remain owned by the combat-entry damage matrix.

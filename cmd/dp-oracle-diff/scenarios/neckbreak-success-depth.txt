@@ -1,0 +1,81 @@
+# C-first do_neckbreak success vehicle (src/act.offensive.c:1372-1376;
+# fight.c:1023-1092). Skill 100 exercises the numbered set-190 damage path;
+# the frozen combat pulses also prove the damage-started combat state.
+
+# depth-case: neckbreak.success-message-and-state
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Nbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nbgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Nbsucc
+Y
+succpass
+succpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Nbsucc
+y
+succpass
+succpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Nbsucc 'neckbreak' 100
+teleport Nbsucc 8162
+
+[probe:actor]
+neckbreak trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20

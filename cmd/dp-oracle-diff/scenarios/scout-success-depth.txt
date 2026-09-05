@@ -1,0 +1,92 @@
+# C-first scout success vehicle (src/interpreter.c:676;
+# src/act.other.c:1859-1922). The destination fixture exposes canonical
+# terrain, dark/death/tunnel warnings, ground-object detection, and C's
+# crowd_size output. The peer plus spawned mob make groups=2.
+
+# depth-case: scout.no-exit
+# depth-case: scout.one-argument
+# depth-case: scout.terrain-city
+# depth-case: scout.destination-dark
+# depth-case: scout.destination-death
+# depth-case: scout.destination-tunnel
+# depth-case: scout.destination-object
+# depth-case: scout.destination-people
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+set-room-flag 8162 3 off
+set-room-sector 8161 1
+set-room-flag 8161 0 on
+set-room-flag 8161 1 on
+set-room-flag 8161 8 on
+spawn-obj 8010 1 8161 80
+spawn-mob 5 1 8161 80
+
+[setup:oracle]
+Scoutsuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scoutsuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scoutpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scoutpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Scoutsuccess scout 100
+teleport Scoutpeer 8161
+
+[probe]
+scout east
+scout n extra words are ignored

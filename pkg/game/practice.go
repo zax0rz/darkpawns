@@ -81,25 +81,18 @@ func howGood(percent int) string {
 	}
 }
 
-// RenderSkillList ports spec_procs.c list_skills(): the practice-session count
-// then every skill/spell the class can learn at its level (from ClassSpells =
-// init_spell_levels), alpha-sorted by display name, with how_good(GET_SKILL).
-// Mana rendering for spells is a follow-on (DP-1166 spell-name/number work).
+// RenderSkillList ports the player-visible list_skills() result from
+// spec_procs.c: every skill/spell the class can learn at its level (from
+// ClassSpells = init_spell_levels), alpha-sorted by display name, with
+// how_good(GET_SKILL). The source's practice-count prelude is overwritten by
+// its overlapping sprintf(buf, "%s...", buf, ...) call on the live C oracle;
+// keep the observed bytes rather than inventing that line in Go. Mana
+// rendering for spells is a follow-on (DP-1166 spell-name/number work).
 func RenderSkillList(p *Player) string {
 	class := p.GetClass()
 	level := p.GetLevel()
 
 	var b strings.Builder
-	practices := p.GetPractices()
-	if practices == 0 {
-		b.WriteString("You have no practice sessions remaining.\r\n")
-	} else {
-		plural := "s"
-		if practices == 1 {
-			plural = ""
-		}
-		fmt.Fprintf(&b, "You have %d practice session%s remaining.\r\n", practices, plural)
-	}
 	fmt.Fprintf(&b, "You know of the following %ss:\r\n", SplSkl(class))
 
 	type entry struct {
@@ -134,18 +127,35 @@ func RenderSkillList(p *Player) string {
 // FindSkillNum resolves a skill/spell name to its number, mirroring C
 // find_skill_num() (spell_parser.c): case-insensitive prefix match against the
 // spells[] display-name table, returning the first (lowest-numbered) match, or
-// -1 if none. Multiword names match on the whole string as a prefix.
+// -1 if none. C also accepts an abbreviation for each token of a multiword
+// spell name (for example, "c li" resolves to "cure light").
 func FindSkillNum(name string) int {
 	q := strings.ToLower(strings.TrimSpace(name))
 	if q == "" {
 		return -1
 	}
+	queryWords := strings.Fields(q)
 	for num := 1; num < skillCatalogSize(); num++ {
 		cname := SkillCatalogName(num)
 		if cname == "" {
 			continue
 		}
-		if strings.HasPrefix(strings.ToLower(cname), q) {
+		canonical := strings.ToLower(cname)
+		if strings.HasPrefix(canonical, q) {
+			return num
+		}
+		canonicalWords := strings.Fields(canonical)
+		if len(queryWords) > len(canonicalWords) {
+			continue
+		}
+		match := true
+		for i, word := range queryWords {
+			if !strings.HasPrefix(canonicalWords[i], word) {
+				match = false
+				break
+			}
+		}
+		if match {
 			return num
 		}
 	}

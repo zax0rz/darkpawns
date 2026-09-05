@@ -1,0 +1,62 @@
+# depth-case: put.all-success
+[fixture]
+quiet-mobs
+[setup:oracle]
+Putall
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Putall
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:obs]
+Putaobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:obs]
+Putaobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+open pack
+get bread pack
+get skin pack
+put all backpack

@@ -1,0 +1,80 @@
+# Depth vehicle for do_checkload (src/interpreter.c:381, src/act.wizard.c:3681-3870).
+# The first empty-players character is an immortal, so the command reaches the
+# actual report path. Zone 303 supplies an object tree (including P commands),
+# while zone 163 supplies repeated mob loads and equipment commands.
+#
+# depth-case: checkload.no-args
+# depth-case: checkload.missing-number
+# depth-case: checkload.non-digit
+# depth-case: checkload.invalid-type
+# depth-case: checkload.missing-mob
+# depth-case: checkload.missing-object
+# depth-case: checkload.mob-report
+# depth-case: checkload.mob-remove
+# depth-case: checkload.mob-first-char-alias
+# depth-case: checkload.atoi-prefix
+# depth-case: checkload.object-load-room
+# depth-case: checkload.object-put
+# depth-case: checkload.object-equipped
+# depth-case: checkload.object-given
+# depth-case: checkload.object-removed
+# depth-case: checkload.object-first-char-alias
+# depth-case: checkload.object-no-load
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Checkloadgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Checkloadgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+checkload
+checkload mob
+checkload mob nope
+checkload thing 16303
+checkload mob 999999
+checkload obj 999999
+checkload mob 16303
+checkload M 16303 trailing
+checkload mob 16303x
+checkload mob 8023
+checkload mob 8008
+checkload mob 8012
+checkload obj 8065
+checkload obj 8022
+checkload obj 8032
+checkload obj 8034
+checkload obj 8099
+checkload obj 8064
+checkload objects 8065 trailing
+checkload obj 19530
+checkload obj 19505
+checkload obj 19501
+checkload obj 11001
+checkload obj 19503

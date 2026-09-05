@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_whois	finger	finger.entry-gate	D1	command	unit-green	TestFingerRegistrationUsesCEntryGate	interpreter.c:444; new_cmds.c:1402-1410	The registered C row is available at POS_DEAD with no minimum level.
+do_whois	finger	finger.no-arguments	D1	command	oracle-green-multiseed	finger-depth@1,2,3,5,8	new_cmds.c:1407-1411	An empty one_argument path emits the exact usage response.
+do_whois	finger	finger.found-player	D2	command	oracle-green-multiseed	finger-depth@1,2,3,5,8	new_cmds.c:1412-1421	A saved peer formats level, class abbreviation, name, and title byte-for-byte.
+do_whois	finger	finger.argument-first-token	D1	command	oracle-green-multiseed	finger-depth@1,2,3,5,8	interpreter.c:1265-1283; new_cmds.c:1407	Leading C fill words are skipped before selecting the player token.
+do_whois	finger	finger.argument-trailing-ignored	D1	command	oracle-green-multiseed	finger-depth@1,2,3,5,8	interpreter.c:1265-1283; new_cmds.c:1407	Only the first non-fill token is loaded; trailing words are discarded.
+do_whois	finger	finger.not-found	D1	command	oracle-green-multiseed	finger-depth@1,2,3,5,8	new_cmds.c:1412-1415	A failed load_char emits the exact not-found response.
+do_whois	whois	finger.whois-alias	D2	command	oracle-green-multiseed	finger-depth@1,2,3,5,8	interpreter.c:819; new_cmds.c:1402-1421	The second C registration reaches the same do_whois formatter.
+do_whois	whois	finger.whois-argument-first-token	D1	command	oracle-green-multiseed	finger-depth@1,2,3,5,8	interpreter.c:819; new_cmds.c:1407; interpreter.c:1265-1283	The whois registration shares C one_argument parsing and trailing-token discard.
+do_whois	finger	finger.offline-player	D2	command	oracle-green-multiseed	finger-offline-depth@1,2,3,5,8	new_cmds.c:1407-1421; db.c:2342-2391	A saved peer after TCP drop remains linkless and produces the same load-and-format bytes.

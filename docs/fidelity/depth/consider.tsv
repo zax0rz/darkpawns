@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_consider	consider	consider.no-arg	D1	command	oracle-green	consider-depth	act.informative.c:2330-2338	Empty argument reaches C's exact "Consider killing who?" gate.
+do_consider	consider	consider.not-found	D1	command	oracle-green	consider-depth	act.informative.c:2330-2338	Unknown room target returns the same C early-return line.
+do_consider	consider	consider.self	D1	command	oracle-green	consider-depth	act.informative.c:2338-2343	Self-name/alias reaches "Easy! Very easy indeed!" without drawing combat damage.
+do_consider	consider	consider.target-level-description	D2	command	oracle-green-multiseed	consider-depth	act.informative.c:2345-2431	Spawned horse vehicle compares C's damage, physical-shape, and level-confidence description lines across seeds 1-5.
+do_consider	consider	consider.private-output	D3	command	oracle-green-multiseed	consider-depth	act.informative.c:2428-2431	The complete evaluation is TO_CHAR-only; the connected peer receives no room or victim bytes across seeds 1-5.

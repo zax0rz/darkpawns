@@ -1,0 +1,103 @@
+# depth-case: assist.success
+# depth-case: assist.room-exclusion
+# depth-case: assist.join-trio
+# depth-case: assist.immediate-swing
+# depth-case: assist.already-fighting
+# depth-case: hit.best-you-can
+# depth-case: set_fighting.attacker-stand
+# do_assist's success path in non-peaceful 8105: the peer's setup ends with
+# `kill trainee`, so a live fight exists when the probe starts. The actor's
+# assist joins it — "You join the fight!" / helpee's "Mordecai assists
+# you!" — and C swings immediately via hit() (act.offensive.c:95) with NO
+# wait state (unlike do_hit). A second `assist` then proves the
+# already-fighting gate's two-space message, and `hit trainee` while
+# fighting proves "You do the best you can!". No pulses are pumped, so the
+# helper's live fight never fires a violence round.
+# The frozen clock keeps combat rounds out of the transcript; the opener
+# and assist swings are the only RNG draws, covered by the proven
+# melee-round parity class.
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:helper]
+Helpero
+Y
+helperpass
+helperpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[setup:port:helper]
+Helpero
+y
+helperpass
+helperpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[probe]
+assist Helpero
+assist
+hit trainee

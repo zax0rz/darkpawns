@@ -1,0 +1,72 @@
+# depth-case: berserk.failure
+# C-first player vehicle for do_berserk's learned-skill failure path.  Skill 1
+# makes seed 1 fail after the C number(1,101) draw while still installing the
+# inert three-affect record and the two-pulse wait proved by unit tests.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Berserkfail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Berserkfail
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Berserkmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Berserkmortal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Berserkmortal 'berserk' 1
+
+[probe]
+force Berserkmortal berserk

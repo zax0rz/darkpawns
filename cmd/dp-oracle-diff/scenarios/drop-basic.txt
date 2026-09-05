@@ -1,0 +1,86 @@
+# depth-case: drop.no-arg
+# depth-case: drop.indiv-not-carried
+# depth-case: drop.number-not-coins
+# depth-case: drop.alldot-none
+# depth-case: drop.indiv-success
+# depth-case: drop.alldot-success
+# depth-case: drop.all-success
+# depth-case: drop.all-empty
+# depth-case: drop.alldot-empty
+# Core drop tree. Droppable items come from the starting backpack (open, then
+# get bread into inventory). The "obs" peer proves the TO_ROOM drop broadcast.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Dropper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dropper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Dropobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Dropobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+drop
+drop xyzzy
+drop 5 gold
+drop all.xyzzy
+open pack
+get bread pack
+get skin pack
+drop all.bread
+drop skin
+drop all
+drop all
+drop all.

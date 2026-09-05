@@ -1,0 +1,42 @@
+# depth-case: objmagic.chameleon.to-vict
+# Potion 12126 casts a single chameleon (spell 63). C to_vict: "You blend into the surroundings." (magic.c:1296).
+
+[fixture]
+quiet-mobs
+force-load 12126
+spawn-obj 12126 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get opaque
+quaff opaque
+~dpclock pulse 20
+~dpclock pulse 20

@@ -39,6 +39,15 @@ const (
 	SlotMax // Sentinel value
 )
 
+// Extended equipment positions are real C WEAR_* slots. They sit outside
+// the legacy Go slot range so the existing public slot values remain stable.
+const (
+	SlotThrow EquipmentSlot = 100 + iota
+	SlotAblegs
+	SlotFace
+	SlotHover
+)
+
 // String returns the name of the equipment slot.
 func (s EquipmentSlot) String() string {
 	switch s {
@@ -92,6 +101,14 @@ func (s EquipmentSlot) String() string {
 	// Shield slot (M2/M3)
 	case SlotShield:
 		return "shield"
+	case SlotThrow:
+		return "throw"
+	case SlotAblegs:
+		return "ablegs"
+	case SlotFace:
+		return "face"
+	case SlotHover:
+		return "hover"
 	default:
 		return "unknown"
 	}
@@ -150,6 +167,14 @@ func ParseEquipmentSlot(s string) (EquipmentSlot, bool) {
 	// Shield slot (M2/M3)
 	case "shield":
 		return SlotShield, true
+	case "throw":
+		return SlotThrow, true
+	case "ablegs":
+		return SlotAblegs, true
+	case "face":
+		return SlotFace, true
+	case "hover":
+		return SlotHover, true
 	default:
 		return SlotMax, false
 	}
@@ -464,19 +489,16 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 			if flag&(1<<14) != 0 { // ITEM_WEAR_HOLD (bit 14)
 				slots = append(slots, SlotHold)
 			}
-			// ITEM_WEAR_THROW (bit 15) — can be thrown, not an equip slot
+			// ITEM_WEAR_THROW (bit 15) is not selected by C find_eq_pos.
 		case 1: // Secondary wear flags (bits 16-31)
 			if flag&(1<<0) != 0 { // ITEM_WEAR_ABLEGS (bit 16)
-				// Can be worn about legs
-				slots = append(slots, SlotLegs) // Approximate
+				slots = append(slots, SlotAblegs)
 			}
 			if flag&(1<<1) != 0 { // ITEM_WEAR_FACE (bit 17)
-				// Can be worn as a mask
-				slots = append(slots, SlotHead) // Approximate
+				slots = append(slots, SlotFace)
 			}
 			if flag&(1<<2) != 0 { // ITEM_WEAR_HOVER (bit 18)
-				// Hovers near head
-				slots = append(slots, SlotHead) // Approximate
+				slots = append(slots, SlotHover)
 			}
 			// Note: ITEM_WEAR_LIGHT is not in Dark Pawns structs.h
 			// Light items might be handled differently

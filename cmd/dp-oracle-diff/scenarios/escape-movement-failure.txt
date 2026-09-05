@@ -1,0 +1,118 @@
+# C-first escape vehicle (src/interpreter.c:434; src/act.offensive.c:1001-1075).
+# Every exit reaches an occupied tunnel, so the caller's movement-failure room
+# message is exercised after do_simple_move returns false.
+
+# depth-case: escape.movement-failure
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+replace-room-exits 8105 all 8161 0
+set-room-flag 8161 8 on
+
+[setup:oracle]
+Escapemoveconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Escapemoveconfig
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Escapemoveactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:actor]
+Escapemoveactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:oracle:destination]
+Escapemovedest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:destination]
+Escapemovedest
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Escapemoveactor 'retreat' 100
+goto 8105
+teleport Escapemovedest 8161
+~dpclock pulse 60
+
+[probe:actor]
+escape

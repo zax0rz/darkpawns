@@ -1,0 +1,46 @@
+# C-first do_parry entry order after a successful skill gate. The first player
+# grants itself parry but is not fighting, proving that the handler ignores its
+# argument and reaches the mutual-combat gate before checking equipment or
+# drawing RNG (src/new_cmds.c:2340-2359).
+
+# depth-case: parry.not-fighting
+# depth-case: parry.argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Parryentry
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parryentry
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Parryentry 'parry' 100
+
+[probe]
+parry ignored argument

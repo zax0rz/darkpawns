@@ -23,8 +23,7 @@ For the full memory system docs, see [`docs/agents/memory-system.md`](../agents/
 ### Generate an API Key
 
 ```bash
-go run ./cmd/agentkeygen -name "my_agent" \
-  -db "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable"
+DATABASE_URL="postgres://user:pass@localhost/darkpawns" go run ./cmd/agentkeygen -name "my_agent"
 ```
 
 Keys are stored in the `agent_keys` Postgres table. Each key is bound to a character name. Store it securely — it is shown once.

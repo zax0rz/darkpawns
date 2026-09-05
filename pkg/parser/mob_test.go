@@ -12,7 +12,7 @@ func TestParseMobFile_SingleBasic(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	content := "#100\nkeyword~\nA small test mob~\nA small test mob stands here.\nThis is a detailed description.\n~\n0 0 -100 7 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\n"
+	content := "#100\nkeyword~\nA small test mob~\nA small test mob stands here.\nThis is a detailed description.\n~\n0 0 0 0 0 0 0 0 -100 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -75,6 +75,27 @@ func TestParseMobFile_SingleBasic(t *testing.T) {
 	}
 	if m.Sex != 0 {
 		t.Errorf("expected sex 0, got %d", m.Sex)
+	}
+}
+
+func TestParseMobFile_CanonicalDetailedDescriptionDelimiter(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	content := "#100\nkeyword~\na small test mob~\nA small test mob stands here.\n~\nA detailed\ndescription survives the long-description delimiter.\n~\n0 0 0 0 0 0 0 0 0 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n$\n"
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	if len(mobs) != 1 {
+		t.Fatalf("expected 1 mob, got %d", len(mobs))
+	}
+	if got, want := mobs[0].DetailedDesc, "A detailed\ndescription survives the long-description delimiter.\n"; got != want {
+		t.Fatalf("detailed description = %q, want %q", got, want)
 	}
 }
 
@@ -634,10 +655,12 @@ func TestParseMobFile_ActionFlagsBitmask(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	// Action flags bitmask: bit 0 (SPEC) + bit 1 (SENTINEL) + bit 5 (AGGRESSIVE) = 1 + 2 + 32 = 35
-	// Affect flags bitmask: bit 0 (BLIND) + bit 26 (FLY) = 1 + 67108864 = 67108865
-	// alignment: -500, race: 1
-	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n35 67108865 -500 1 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\n"
+	// db.c parse_mobile reads EIGHT flag words (act 1-4, AFFECTED 5-8) then
+	// alignment and the type letter. Action flags: bit 0 (SPEC) + bit 1
+	// (SENTINEL) + bit 5 (AGGRESSIVE) = 1 + 2 + 32 = 35. Affect flags: bit 0
+	// (BLIND) + bit 26 (FLY) = 1 + 67108864 = 67108865 in the first affected
+	// word. Race comes from the Race: line, like the real world files.
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n35 0 0 0 67108865 0 0 0 -500 E\n1 20 0 5 10 20 1 4 2\n100 500\n8 3 0\nRace: 1\nE\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -687,7 +710,7 @@ func TestParseMobFile_ZeroFlags(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "test.mob")
 
 	// Both action and affect flags are 0 — should produce empty slices
-	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n0 0 0 0 0 0 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -710,9 +733,10 @@ func TestParseMobFile_HighBitmask(t *testing.T) {
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.mob")
 
-	// Action flags bitmask: bit 25 (EXTRACT, last entry) = 33554432
-	// Affect flags bitmask: bit 38 (ROBBED, last entry) = 274877906944
-	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n33554432 274877906944 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
+	// Action flags bitmask: bit 25 (EXTRACT, last entry) = 33554432 (word 1).
+	// Affect flags bitmask: bit 38 (ROBBED) lives in the SECOND affected word
+	// (bits 32-63): 1 << (38-32) = 64.
+	content := "#100\nkeyword~\nA test mob~\nA test mob stands here.\n~\n33554432 0 0 0 0 64 0 0 7 E\n1 20 0 1d1+0 1d1+0\n0 0\n8 3 0\n"
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}

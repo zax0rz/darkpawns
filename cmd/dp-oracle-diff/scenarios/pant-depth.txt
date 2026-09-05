@@ -1,0 +1,120 @@
+# C-first pant/do_action target-social vehicle (src/interpreter.c:596;
+# src/act.social.c:102-151; lib/misc/socials:1217-1225). The authored record
+# has hide 0 and POS_RESTING victim minimum, so player, NPC, self,
+# missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: pant.no-argument
+# depth-case: pant.target-success
+# depth-case: pant.target-audience
+# depth-case: pant.argument-first-token
+# depth-case: pant.mob-target
+# depth-case: pant.self-target
+# depth-case: pant.target-not-found
+# depth-case: pant.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Pantactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pantactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Pantobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Pantobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Panttarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Panttarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Pantobserver 8162
+teleport Panttarget 8162
+
+[probe]
+pant
+pant Panttarget trailing words are ignored
+pant Panttarget
+pant trainee
+pant Pantactor
+pant Nobody
+force Panttarget sleep
+pant Panttarget

@@ -1,0 +1,50 @@
+# depth-case: mob.conjured-entry-gates
+# depth-case: mob.conjured-charm-gate
+# C-first vehicle for the AFF_CHARM early return of SPECIAL(conjured).
+# set-mob-aff applies the C AFF_CHARM bit to the disposable spawned mob in both
+# engines; no pulse output or extraction should occur.
+# C path: src/mobact.c:54-93 -> src/spec_procs3.c:859-892.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 81 1 8106 80
+set-mob-flag 81 SPEC
+strip-mob-script 81
+set-mob-aff 81 2097152
+
+[setup:oracle]
+Charmprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Charmprobe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8106
+
+[probe]
+say hello

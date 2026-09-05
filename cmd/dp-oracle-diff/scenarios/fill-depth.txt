@@ -1,0 +1,100 @@
+# C-first fill vehicle (src/interpreter.c:443; src/act.item.c:1159-1335;
+# interpreter.c:1338-1343). Room objects make the inventory-target and
+# room-fountain lookup boundaries observable to both engines.
+
+# depth-case: fill.no-arguments
+# depth-case: fill.position-gate
+# depth-case: fill.target-missing
+# depth-case: fill.no-source
+# depth-case: fill.source-missing
+# depth-case: fill.source-not-fountain
+# depth-case: fill.target-not-drinkcon
+# depth-case: fill.liquid-conflict
+# depth-case: fill.success-audience
+# depth-case: fill.full-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8005 1 8162 80
+spawn-obj 8012 1 8162 80
+spawn-obj 8035 1 8162 80
+spawn-obj 8006 1 8162 80
+spawn-obj 8038 1 8162 80
+
+[setup:oracle]
+Fillactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fillactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Fillobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Fillobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Fillobserver 8162
+
+[probe]
+fill
+fill xyzzy fountain
+get canteen
+fill canteen fountain
+get pouch
+fill pouch fountain
+get cup
+fill cup
+fill cup xyzzy
+fill cup backpack
+drink cup
+fill tin fountain
+fill tin fountain

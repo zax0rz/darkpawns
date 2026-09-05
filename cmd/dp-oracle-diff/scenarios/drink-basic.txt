@@ -1,0 +1,69 @@
+# depth-case: drink.no-arg
+# depth-case: drink.cant-find
+# depth-case: drink.cant-drink-from
+# depth-case: drink.success
+# depth-case: drink.sip-success
+[fixture]
+quiet-mobs
+[setup:oracle]
+Drinker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Drinker
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:obs]
+Drinkobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:obs]
+Drinkobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+drink
+drink xyzzy
+open pack
+get skin pack
+drink backpack
+drink skin
+sip skin

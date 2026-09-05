@@ -1,0 +1,69 @@
+# C-first kender_steal follow-up vehicle (src/act.informative.c:483-490;
+# src/spec_procs2.c:594-650). A mortal Kender thief peeks at a high-level NPC
+# carrying one visible object, reaching the post-look racial steal procedure.
+
+# depth-case: peek.kender-mob-followup
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19101 1 1204 191
+
+[setup:oracle]
+Kenderpeek
+Y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kenderpeek
+y
+oraclepass
+oraclepass
+Y
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+skillset Kenderpeek 'peek' 100
+skillset Kenderpeek 'steal' 100
+set Kenderpeek level 30
+
+[probe]
+peek Skullgrin
+peek Skullgrin
+peek Skullgrin
+peek Skullgrin
+peek Skullgrin
+inventory

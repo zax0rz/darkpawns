@@ -1,0 +1,120 @@
+# C-first squeeze/do_action target-social vehicle (src/interpreter.c:732;
+# src/act.social.c:102-151; lib/misc/socials:834-842). The authored record
+# has hide 0 and the default zero victim-position minimum, so player, NPC,
+# self, missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: squeeze.no-argument
+# depth-case: squeeze.target-success
+# depth-case: squeeze.target-audience
+# depth-case: squeeze.argument-first-token
+# depth-case: squeeze.mob-target
+# depth-case: squeeze.self-target
+# depth-case: squeeze.target-not-found
+# depth-case: squeeze.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Squeezeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Squeezeactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Squeezeobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Squeezeobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Squeezetarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Squeezetarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Squeezeobserver 8162
+teleport Squeezetarget 8162
+
+[probe]
+squeeze
+squeeze Squeezetarget trailing words are ignored
+squeeze Squeezetarget
+squeeze trainee
+squeeze Squeezeactor
+squeeze Nobody
+force Squeezetarget sleep
+squeeze Squeezetarget

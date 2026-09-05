@@ -1,0 +1,110 @@
+# depth-case: channels.vocabulary
+# depth-case: channels.recipient-gates
+# depth-case: channels.zone-gate
+# depth-case: channels.level-gate
+# C-first do_gen_comm vehicle (src/act.comm.c:1146-1310) for gossip,
+# shout, auction, grats, and holler. The named peers exercise global versus
+# zone fanout and the shared level gate. Holler is
+# intentionally present in the first RED run because it is missing from the
+# Go command table on main.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Channelgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Channelgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:local]
+Channelpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:local]
+Channelpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:far]
+Farpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:far]
+Farpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Farpeer 2001
+
+[probe]
+gossip channel hello
+shout zone hello
+auction item hello
+grats well done
+holler world hello

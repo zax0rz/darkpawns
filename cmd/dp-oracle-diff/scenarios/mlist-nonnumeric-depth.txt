@@ -1,0 +1,41 @@
+# C-first mlist pager vehicle (src/interpreter.c:554; src/act.wizard.c:3376-3402).
+# A nonnumeric first token becomes zone 0 via C atoi; zone 0 is long enough to
+# enter page_string, so this case is isolated from subsequent pager input.
+
+# depth-case: mlist.nonnumeric-zone
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+mlist abc

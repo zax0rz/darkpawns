@@ -38,6 +38,25 @@ func makeHelpTestManager(t *testing.T) *Manager {
 	return m
 }
 
+func TestHelpRegistrationUsesCEntryGate(t *testing.T) {
+	gate, ok := commandGates["help"]
+	if !ok {
+		t.Fatal("help command has no C gate")
+	}
+	if gate.MinLevel != 0 || gate.MinPosition != combat.PosDead {
+		t.Fatalf("help gate = level %d position %d, want level 0 position %d", gate.MinLevel, gate.MinPosition, combat.PosDead)
+	}
+	for _, name := range []string{"help", "?"} {
+		entry, ok := cmdRegistry.Lookup(name)
+		if !ok {
+			t.Fatalf("%s command is not registered", name)
+		}
+		if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
+			t.Fatalf("%s registry gate = level %d position %d, want level %d position %d", name, entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
+		}
+	}
+}
+
 // --- no-arg → screen, paginated --------------------------------------------
 
 func TestCmdHelpNoArgPagesScreen(t *testing.T) {
@@ -209,5 +228,24 @@ func TestCmdHelpQuestionMarkAlias(t *testing.T) {
 	// `?` dispatched to cmdHelp (ANSI splits the header; match the topic word).
 	if !strings.Contains(out, "SAY") {
 		t.Errorf("? say did not dispatch to help handler; got %q", out)
+	}
+}
+
+func TestCmdHelpRawArgumentSpacingMatchesC(t *testing.T) {
+	m := makeHelpTestManager(t)
+	s := makeCommandTestSession(t, m, "helpee", 1, 1001)
+	s.player.SetPosition(combat.PosStanding)
+	if err := executeCommandRaw(s, "help", []string{"zzqx", "tail"}, true, "zzqx  tail"); err != nil {
+		t.Fatalf("executeCommandRaw(help): %v", err)
+	}
+	if got := drainSendChannel(t, s); !strings.Contains(got, "There is no help on: zzqx  tail") {
+		t.Fatalf("raw help miss = %q, want preserved internal spacing", got)
+	}
+
+	if err := executeCommandRaw(s, "?", []string{"cure", "light"}, true, "cure  light"); err != nil {
+		t.Fatalf("executeCommandRaw(?): %v", err)
+	}
+	if got := drainSendChannel(t, s); !strings.Contains(got, "There is no help on: cure  light") {
+		t.Fatalf("raw ? miss = %q, want C's exact miss rather than normalized topic", got)
 	}
 }

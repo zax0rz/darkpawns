@@ -17,7 +17,7 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
+	arg, _ = oneArgument(arg)
 
 	if arg == "" {
 		if ch.WimpLevel > 0 {
@@ -28,17 +28,17 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	wimpLevel := 0
-	if _, err := fmt.Sscanf(arg, "%d", &wimpLevel); err != nil {
-		ch.SendMessage("That doesn't look like a number.\r\n")
-		slog.Warn("wimpy parse failed", "player", ch.Name, "arg", arg, "error", err)
+	// C tests isdigit(*arg) before atoi(). A sign, a nonnumeric token, or a
+	// leading fill word therefore reaches the exact specification prompt;
+	// atoi() itself is only reached once the first byte is a decimal digit.
+	if arg[0] < '0' || arg[0] > '9' {
+		ch.SendMessage("Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n")
 		return true
 	}
+	wimpLevel := atoiC(arg)
 
 	if wimpLevel > 0 {
-		if wimpLevel < 0 {
-			ch.SendMessage("Heh, heh, heh.. we are jolly funny today, eh?\r\n")
-		} else if wimpLevel > ch.GetMaxHP() {
+		if wimpLevel > ch.GetMaxHP() {
 			ch.SendMessage("That doesn't make much sense, now does it?\r\n")
 		} else if wimpLevel > (ch.GetMaxHP() / 3) {
 			ch.SendMessage("You can't set your wimp level above one third your hit points.\r\n")
@@ -115,21 +115,9 @@ func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) b
 // ---------------------------------------------------------------------------
 // do_gen_write — from act.other.c subcmd=SCMD_BUG/SCMD_TYPO/SCMD_IDEA/SCMD_TODO
 // These are player-submitted bug/typo/idea reports stored in files.
-// The original writes to ~lib/%s.ideas, ~lib/%s.bugs, etc.
 // ---------------------------------------------------------------------------
 
 func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if isPlayerNPC(ch, me) {
-		return true
-	}
-
-	if arg == "" {
-		// C do_gen_write (act.other.c:1114): all subcmds share the same
-		// no-arg message — "That must be a mistake..."
-		ch.SendMessage("That must be a mistake...\r\n")
-		return true
-	}
-
 	// Map command to file — from src/db.h BUG_FILE, TYPO_FILE, IDEA_FILE, TODO_FILE
 	var filename string
 	switch cmd {
@@ -142,33 +130,47 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 	case "todo":
 		filename = "misc/todo"
 	default:
-		ch.SendMessage("Reported. Thanks!")
+		// C returns from the subcommand switch before checking the caller or
+		// argument (act.other.c:1086-1100).
 		return true
 	}
 
-	// Append report to file
-	if err := os.MkdirAll("misc", 0o755); err == nil {
-		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-		if err == nil {
-			defer f.Close()
-			if _, err := fmt.Fprintf(f, "%s [%s]: %s\n", ch.Name, time.Now().Format("2006-01-02 15:04"), arg); err != nil {
-				slog.Error("failed to write report", "type", cmd, "error", err)
-			}
-		}
+	if isPlayerNPC(ch, me) {
+		ch.SendMessage("Monsters can't have ideas - Go away.\r\n")
+		return true
 	}
 
-	switch cmd {
-	case "bug":
-		ch.SendMessage("Bug reported. Thanks!\r\n")
-	case "typo":
-		ch.SendMessage("Typo reported. Thanks!\r\n")
-	case "idea":
-		ch.SendMessage("Idea noted. Thanks!\r\n")
-	case "todo":
-		ch.SendMessage("Todo noted. Thanks!\r\n")
-	default:
-		ch.SendMessage("Reported. Thanks!\r\n")
+	// C's skip_spaces() removes only leading whitespace. Its
+	// delete_doubledollar() turns each $$ pair into a single $ before the
+	// report is logged and written (act.other.c:1108-1117).
+	arg = strings.TrimLeft(arg, " \t\r\n\v\f")
+	arg = strings.ReplaceAll(arg, "$$", "$")
+	if arg == "" {
+		ch.SendMessage("That must be a mistake...\r\n")
+		return true
 	}
+
+	if err := os.MkdirAll("misc", 0o755); err != nil {
+		slog.Error("failed to create report directory", "type", cmd, "error", err)
+		ch.SendMessage("Could not open the file.  Sorry.\r\n")
+		return true
+	}
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		slog.Error("failed to open report file", "type", cmd, "file", filename, "error", err)
+		ch.SendMessage("Could not open the file.  Sorry.\r\n")
+		return true
+	}
+	defer func() { _ = f.Close() }()
+
+	// C formats asctime()'s month/day slice with %-8s, (%6.6s), and a
+	// five-column room VNUM (act.other.c:1120-1121).
+	if _, err := fmt.Fprintf(f, "%-8s (%6.6s) [%5d] %s\n", ch.Name, time.Now().Format("Jan _2"), ch.GetRoomVNum(), arg); err != nil {
+		slog.Error("failed to write report", "type", cmd, "error", err)
+	}
+
+	// All four successful subcommands share C's single response.
+	ch.SendMessage("Okay.  Thanks!\r\n")
 	return true
 }
 
@@ -179,6 +181,16 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 // "noshout") — matching src/interpreter.c's command table, where each toggle
 // is its own top-level command rather than a "toggle <name>" dispatcher.
 // ---------------------------------------------------------------------------
+
+// These are process-wide C configuration toggles (config.c:202,282), rather
+// than player preference bits. They are kept here because do_gen_tog is the
+// only C command that mutates them. The Go server currently has no ident or
+// reverse-DNS worker, but the command state and player-facing bytes remain
+// part of the command surface.
+var (
+	nameserverIsSlow = true
+	identEnabled     bool
+)
 
 func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if isPlayerNPC(ch, me) {
@@ -191,23 +203,25 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 	// switched ON (PRF_TOG_CHK returned the new state = on), index 1 when it
 	// is being switched OFF. SCMD_* constants are from interpreter.h:117-136.
 	toggleMessages := map[string][2]string{
-		"nosummon":    {"You may now be summoned by other players.\r\n", "You are now safe from summoning by other players.\r\n"},         // SCMD_NOSUMMON
-		"nohassle":    {"Nohassle enabled.\r\n", "Nohassle disabled.\r\n"},                                                                // SCMD_NOHASSLE
-		"brief":       {"Brief mode on.\r\n", "Brief mode off.\r\n"},                                                                      // SCMD_BRIEF
-		"compact":     {"Compact mode on.\r\n", "Compact mode off.\r\n"},                                                                  // SCMD_COMPACT
-		"notell":      {"You are now deaf to tells.\r\n", "You can now hear tells.\r\n"},                                                  // SCMD_NOTELL
-		"noauction":   {"You are now deaf to auctions.\r\n", "You can now hear auctions.\r\n"},                                            // SCMD_NOAUCTION
-		"noshout":     {"You are now deaf to shouts.\r\n", "You can now hear shouts.\r\n"},                                                // SCMD_DEAF
-		"nogossip":    {"You are now deaf to gossip.\r\n", "You can now hear gossip.\r\n"},                                                // SCMD_NOGOSSIP
-		"nograts":     {"You are now deaf to the congratulation messages.\r\n", "You can now hear the congratulation messages.\r\n"},      // SCMD_NOGRATZ
-		"nowiz":       {"You are now deaf to the Wiz-channel.\r\n", "You can now hear the Wiz-channel.\r\n"},                              // SCMD_NOWIZ
-		"quest":       {"Okay, you are part of the Quest!\r\n", "You are no longer part of the Quest.\r\n"},                               // SCMD_QUEST
-		"roomflags":   {"You will now see the room flags.\r\n", "You will no longer see the room flags.\r\n"},                             // SCMD_ROOMFLAGS
-		"norepeat":    {"You will no longer have your communication repeated.\r\n", "You will now have your communication repeated.\r\n"}, // SCMD_NOREPEAT
-		"holylight":   {"HolyLight mode on.\r\n", "HolyLight mode off.\r\n"},                                                              // SCMD_HOLYLIGHT
-		"nonewbie":    {"Newbie channel off.\r\n", "Newbie channel on.\r\n"},                                                              // SCMD_NONEWBIE
-		"noctell":     {"Clan tells are now off.\r\n", "Clan tells are now on.\r\n"},                                                      // SCMD_NOCTELL
-		"nobroadcast": {"Broadcast channel is now off.\r\n", "Broadcast channel is now on.\r\n"},                                          // SCMD_NOBROAD
+		"nosummon":    {"You may now be summoned by other players.\r\n", "You are now safe from summoning by other players.\r\n"},                                                   // SCMD_NOSUMMON
+		"nohassle":    {"Nohassle enabled.\r\n", "Nohassle disabled.\r\n"},                                                                                                          // SCMD_NOHASSLE
+		"brief":       {"Brief mode on.\r\n", "Brief mode off.\r\n"},                                                                                                                // SCMD_BRIEF
+		"compact":     {"Compact mode on.\r\n", "Compact mode off.\r\n"},                                                                                                            // SCMD_COMPACT
+		"notell":      {"You are now deaf to tells.\r\n", "You can now hear tells.\r\n"},                                                                                            // SCMD_NOTELL
+		"noauction":   {"You are now deaf to auctions.\r\n", "You can now hear auctions.\r\n"},                                                                                      // SCMD_NOAUCTION
+		"noshout":     {"You are now deaf to shouts.\r\n", "You can now hear shouts.\r\n"},                                                                                          // SCMD_DEAF
+		"nogossip":    {"You are now deaf to gossip.\r\n", "You can now hear gossip.\r\n"},                                                                                          // SCMD_NOGOSSIP
+		"nograts":     {"You are now deaf to the congratulation messages.\r\n", "You can now hear the congratulation messages.\r\n"},                                                // SCMD_NOGRATZ
+		"nowiz":       {"You are now deaf to the Wiz-channel.\r\n", "You can now hear the Wiz-channel.\r\n"},                                                                        // SCMD_NOWIZ
+		"quest":       {"Okay, you are part of the Quest!\r\n", "You are no longer part of the Quest.\r\n"},                                                                         // SCMD_QUEST
+		"roomflags":   {"You will now see the room flags.\r\n", "You will no longer see the room flags.\r\n"},                                                                       // SCMD_ROOMFLAGS
+		"norepeat":    {"You will no longer have your communication repeated.\r\n", "You will now have your communication repeated.\r\n"},                                           // SCMD_NOREPEAT
+		"holylight":   {"HolyLight mode on.\r\n", "HolyLight mode off.\r\n"},                                                                                                        // SCMD_HOLYLIGHT
+		"nonewbie":    {"Newbie channel off.\r\n", "Newbie channel on.\r\n"},                                                                                                        // SCMD_NONEWBIE
+		"noctell":     {"Clan tells are now off.\r\n", "Clan tells are now on.\r\n"},                                                                                                // SCMD_NOCTELL
+		"nobroadcast": {"Broadcast channel is now off.\r\n", "Broadcast channel is now on.\r\n"},                                                                                    // SCMD_NOBROAD
+		"slowns":      {"Nameserver_is_slow changed to YES; sitenames will no longer be resolved.\r\n", "Nameserver_is_slow changed to NO; IP addresses will now be resolved.\r\n"}, // SCMD_SLOWNS
+		"ident":       {"Ident changed to YES;  remote usernames lookups will be attempted.\r\n", "Ident changed to NO;  remote username lookups will not be attempted.\r\n"},       // SCMD_IDENT
 	}
 
 	toggleFlags := map[string]int{
@@ -230,11 +244,6 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		"nobroadcast": PrfNoBroad,
 	}
 
-	flag, ok := toggleFlags[cmd]
-	if !ok {
-		ch.SendMessage("Unknown toggle.\r\n")
-		return true
-	}
 	msgs, ok := toggleMessages[cmd]
 	if !ok {
 		ch.SendMessage("Unknown toggle.\r\n")
@@ -256,15 +265,31 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 
-	// PRF_TOG_CHK: toggle the bit and capture the NEW state. result==1 means the
-	// flag is now ON → print TOG_ON (msgs[0]); result==0 → print TOG_OFF (msgs[1]).
 	var result bool
-	if ch.GetFlags()&(1<<flag) != 0 {
-		ch.SetPlrFlag(flag, false)
-		result = false
-	} else {
-		ch.SetPlrFlag(flag, true)
-		result = true
+	switch cmd {
+	case "ident":
+		identEnabled = !identEnabled
+		result = identEnabled
+	case "slowns":
+		nameserverIsSlow = !nameserverIsSlow
+		result = nameserverIsSlow
+	default:
+		flag, ok := toggleFlags[cmd]
+		if !ok {
+			ch.SendMessage("Unknown toggle.\r\n")
+			return true
+		}
+
+		// PRF_TOG_CHK: toggle the bit and capture the NEW state. result==1 means
+		// the flag is now ON → print TOG_ON (msgs[0]); result==0 → print TOG_OFF
+		// (msgs[1]).
+		if ch.GetFlags()&(1<<flag) != 0 {
+			ch.SetPlrFlag(flag, false)
+			result = false
+		} else {
+			ch.SetPlrFlag(flag, true)
+			result = true
+		}
 	}
 
 	// SCMD_NOSUMMON sets a WAIT_STATE of PULSE_VIOLENCE*2 — act.other.c:1210.

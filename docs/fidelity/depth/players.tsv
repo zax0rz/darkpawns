@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_ps	players	players.entry-gate	D1	command	unit-green	TestPlayersRegistrationUsesCEntryGate	interpreter.c:606; act.informative.c:2117-2195	The registered C row is LVL_GRGOD/POS_DEAD and the Go registry uses the same authoritative gate (R1/R2/R5e).
+do_gen_ps	players	players.list-header-and-online-name	D2	command	oracle-green-multiseed	players-depth@1,2,3,5,8	act.informative.c:2181-2195; db.c:2653-2675	C prints the fixed header and its lowercase in-memory player-table name; the no-DB Go fixture uses the active in-memory name with the same bytes (R1/R3/R5e).
+do_gen_ps	players	players.trailing-arguments-ignored	D1	command	oracle-green-multiseed	players-depth@1,2,3,5,8	act.informative.c:2117-2195	SCMD_PLAYER_LIST does not inspect the command argument; bare and trailing-argument probes are byte-identical (R1/R2/R3/R5e).

@@ -1,0 +1,120 @@
+# C-first do_wizutil/SCMD_PARDON vehicle (src/interpreter.c:601;
+# src/act.wizard.c:2077-2122). The God actor targets a remote mortal through
+# get_char_vis's global player lookup; the registered trainee mob exposes the
+# shared NPC rejection before the pardon switch.
+
+# depth-case: pardon.no-argument
+# depth-case: pardon.target-not-found
+# depth-case: pardon.visible-npc-target
+# depth-case: pardon.non-outlaw
+# depth-case: pardon.success-actor
+# depth-case: pardon.success-victim
+# depth-case: pardon.one-argument
+# depth-case: pardon.case-insensitive
+# depth-case: pardon.self-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 1204 163
+
+[setup:oracle]
+Pardonactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pardonactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Pardontarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Pardontarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fill]
+Pardonfill
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:fill]
+Pardonfill
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Pardontarget outlaw on
+set Pardonfill outlaw on
+set Pardonactor outlaw on
+
+[probe]
+pardon
+pardon Nobody
+pardon trainee
+pardon pardontarget
+pardon Pardontarget
+pardon the Pardonfill trailing words are ignored
+pardon self

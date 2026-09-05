@@ -114,10 +114,10 @@ func TestDoLookTargetPlayerEquipmentColorizesObjectFlags(t *testing.T) {
 	}
 }
 
-// DP-1133 negative control: room object lines render C's list_obj_to_char →
-// oc_show_list path, whose annotations stay plain at every color level. Test
-// roomObjectLines directly so unrelated room-view ANSI (titles) is out of
-// scope.
+// Room object lines render C's list_obj_to_char → oc_show_list path, whose
+// annotations use the plain "...it glows" vocabulary at every color level.
+// Test roomObjectLines directly so unrelated room-view ANSI (titles) is out
+// of scope.
 func TestRoomObjectLinesLeaveObjectFlagsUncolored(t *testing.T) {
 	w, p, _ := newViewTestWorld(t)
 	enableDetectAffects(p)
@@ -134,8 +134,10 @@ func TestRoomObjectLinesLeaveObjectFlagsUncolored(t *testing.T) {
 	if strings.Contains(got, "\x1b[") {
 		t.Fatalf("room object lines emitted ANSI on the oc_show_list path: %q", got)
 	}
-	if !strings.Contains(got, "(blue glow) (yellow glow) (glowing)") {
-		t.Fatalf("room object lines lost plain annotations: %q", got)
+	for _, want := range []string{"...it glows blue", "...it glows gold", "...it glows white"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("room object lines lost plain annotation %q: %q", want, got)
+		}
 	}
 }
 
@@ -159,8 +161,11 @@ func TestDoLookInContainerLeavesObjectFlagsUncolored(t *testing.T) {
 	if strings.Contains(got, "\x1b[") {
 		t.Fatalf("container contents emitted ANSI on the oc_show_list path: %q", got)
 	}
-	if !strings.Contains(got, "(blue glow) (yellow glow) (glowing)") {
-		t.Fatalf("container contents lost plain annotations: %q", got)
+	// C oc_show_list (mode 15) annotates flags as plain "...it glows X" lines.
+	for _, want := range []string{"...it glows blue", "...it glows gold", "...it glows white"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("container contents lost mode-15 annotation %q: %q", want, got)
+		}
 	}
 }
 

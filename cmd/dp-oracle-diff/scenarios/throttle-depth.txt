@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:770;
+# src/act.social.c:102-151; lib/misc/socials:1053-1061). The authored
+# throttle record is target-capable and is exercised through no-argument,
+# visible player/NPC target, named self, missing target, one_argument/fill-word,
+# and sleeping-target branches.
+
+# depth-case: throttle.no-argument
+# depth-case: throttle.target-success
+# depth-case: throttle.target-audience
+# depth-case: throttle.argument-first-token
+# depth-case: throttle.mob-target
+# depth-case: throttle.self-target
+# depth-case: throttle.target-not-found
+# depth-case: throttle.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Throttleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Throttleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Throttleobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Throttleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Throttletarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Throttletarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Throttleobserver 8162
+teleport Throttletarget 8162
+
+[probe]
+throttle
+throttle Throttletarget trailing words are ignored
+throttle Throttletarget
+throttle trainee
+throttle Throttleactor
+throttle self
+throttle Nobody
+force Throttletarget sleep
+throttle Throttletarget

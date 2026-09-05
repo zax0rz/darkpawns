@@ -72,6 +72,23 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 	if ch == nil {
 		return CharTarget{}, false
 	}
+	return w.resolveCharInRoomAt(ch, ch.GetRoom(), name)
+}
+
+// ResolveCharInRoomAt resolves a visible character in an explicitly supplied
+// room while retaining ch as the viewer. C's ranged commands use this shape:
+// the shooter remains in the origin room while get_char_room() inspects the
+// destination room (act.offensive.c:887). The ordinary resolver intentionally
+// uses the viewer's current room for all local commands, so ranged callers must
+// use this entry point instead of passing a mismatched room number.
+func (w *World) ResolveCharInRoomAt(ch *Player, roomVNum int, name string) (CharTarget, bool) {
+	if ch == nil {
+		return CharTarget{}, false
+	}
+	return w.resolveCharInRoomAt(ch, roomVNum, name)
+}
+
+func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (CharTarget, bool) {
 	original := name
 	n := GetNumber(&name)                           // strips "N." prefix; returns 1 if none, 0 if non-numeric
 	playerOnly := strings.HasPrefix(original, "0.") // C: 0.<name> → get_player_vis
@@ -92,13 +109,12 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 	// iteration order is randomized, so we sort by a stable key (mob VNum,
 	// then instance ID) to make ordinals like "2.guard" reproducible across
 	// calls — matching C's stable people-list ordering. (DP-907)
-	chRoom := ch.GetRoom()
-	players := w.GetPlayersInRoom(chRoom)
+	players := w.GetPlayersInRoom(roomVNum)
 	sort.Slice(players, func(i, j int) bool { return players[i].Name < players[j].Name })
 
 	var mobs []*MobInstance
 	if !playerOnly {
-		mobs = w.GetMobsInRoom(chRoom)
+		mobs = w.GetMobsInRoom(roomVNum)
 	}
 	sort.Slice(mobs, func(i, j int) bool {
 		if mobs[i].GetVNum() != mobs[j].GetVNum() {

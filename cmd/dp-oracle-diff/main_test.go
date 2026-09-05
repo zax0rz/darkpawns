@@ -45,6 +45,43 @@ func TestApplyObjectFixturesPreparesDisposableWorlds(t *testing.T) {
 	}
 }
 
+func TestApplyRoomFixturesReplacesExitsAndSetsFlags(t *testing.T) {
+	repoRoot, err := findRepoRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	worldDir := filepath.Join(t.TempDir(), "world")
+	if err := os.CopyFS(worldDir, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
+		t.Fatalf("copy world: %v", err)
+	}
+	if err := applyRoomFixtures(
+		worldDir,
+		[]oraclediff.RoomExitFixture{{RoomVNum: 8162, Direction: "all", ToRoom: 8161, DoorState: 1, Keyword: "gate"}},
+		[]oraclediff.RoomFlagFixture{{RoomVNum: 8161, Bit: 1, Enabled: true}},
+		[]oraclediff.RoomSectorFixture{{RoomVNum: 8161, Sector: 7}},
+	); err != nil {
+		t.Fatalf("applyRoomFixtures: %v", err)
+	}
+	parsed, err := parser.ParseWorld(worldDir)
+	if err != nil {
+		t.Fatalf("parse disposable world: %v", err)
+	}
+	rooms := make(map[int]parser.Room, len(parsed.Rooms))
+	for _, room := range parsed.Rooms {
+		rooms[room.VNum] = room
+	}
+	if got := rooms[8162].Exits; len(got) != 6 || got["west"].ToRoom != 8161 || got["up"].ToRoom != 8161 || got["north"].Keywords != "gate" || got["north"].DoorState != 1 {
+		t.Fatalf("room 8162 exits = %#v, want all six directions to 8161", got)
+	}
+	deathRoom := rooms[8161]
+	if !deathRoom.HasFlag(1) {
+		t.Fatal("room 8161 missing ROOM_DEATH bit")
+	}
+	if deathRoom.Sector != 7 {
+		t.Fatalf("room 8161 sector = %d, want 7", deathRoom.Sector)
+	}
+}
+
 func TestObservationMobFixturesPrepareDisposableWorld(t *testing.T) {
 	worldDir := t.TempDir()
 	zoneDir := filepath.Join(worldDir, "zon")

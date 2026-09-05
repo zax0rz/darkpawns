@@ -1,0 +1,85 @@
+# depth-case: mob.remorter-command-gates
+# depth-case: mob.remorter-buy-list-tell
+# depth-case: mob.remorter-fallthrough
+# C-first vehicle for SPECIAL(remorter), assigned to mob vnum 4 in
+# src/spec_assign.c:183 and defined at src/spec_procs2.c:682-845. Mob 4 carries
+# MOB_RANDZON, so this disposable vehicle clears only that placement flag and
+# loads the real remorter directly in room 8044; the peer verifies direct
+# do_tell audience.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4 999 8044 80
+clear-mob-flag 4 RANDZON
+
+[setup:oracle]
+RemortActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RemortActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+RemortWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+RemortWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8044
+teleport RemortWitness 8044
+~dpclock pulse 20
+
+[probe]
+list
+buy
+buy remort
+buy nonsense
+remort
+xyzzy

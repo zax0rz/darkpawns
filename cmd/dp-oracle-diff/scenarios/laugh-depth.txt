@@ -1,0 +1,86 @@
+# C-first laugh/do_action vehicle (src/interpreter.c:533;
+# src/act.social.c:102-151; lib/misc/socials:1034-1042). The record has no
+# hide-invisible flag and no victim-position minimum. Two clients plus a
+# registered cleaner mob expose the actor, victim, room, self, and not-found
+# audiences, while trailing words prove one_argument parsing.
+
+# depth-case: laugh.no-argument
+# depth-case: laugh.target-mob-room-audience
+# depth-case: laugh.target-player-audience
+# depth-case: laugh.argument-first-token
+# depth-case: laugh.self-target
+# depth-case: laugh.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+
+[setup:oracle]
+Laughactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Laughactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Laughpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Laughpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Laughpeer 8162
+
+[probe]
+laugh
+laugh the cleaner trailing words
+laugh Laughpeer trailing words
+laugh Laughactor
+laugh nobody

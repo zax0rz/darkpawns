@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	dance	dance.no-argument	D2	audience	oracle-green	dance-depth	interpreter.c:405; act.social.c:102-127; lib/misc/socials:176-184	No argument emits the exact C actor and hidden room lines for the dance record.
+do_action	dance	dance.one-argument	D2	command	oracle-green	dance-depth	act.social.c:114-121; lib/misc/socials:176-184	one_argument selects Barnaby from trailing input before visible target lookup.
+do_action	dance	dance.target-not-found	D1	command	oracle-green	dance-depth	act.social.c:128-132; lib/misc/socials:176-184	An absent target reaches the record's exact Eh, WHO? branch.
+do_action	dance	dance.self-target	D2	command	oracle-green	dance-depth	act.social.c:134-140; lib/misc/socials:176-184	A self-target emits the exact C auto message and hidden room audience.
+do_action	dance	dance.target-success	D3	audience	oracle-green	dance-depth	act.social.c:145-151; lib/misc/socials:176-184	A visible standing peer receives the actor, hidden non-victim room, and victim messages.
+do_action	dance	dance.sleeping-target	D2	audience	oracle-green	dance-depth	act.social.c:145-147; lib/misc/socials:176-184	A sleeping target below the record's standing minimum receives only the proper-position refusal.
+do_action	dance	dance.noshout	D1	command	oracle-green	dance-noshout	act.social.c:113-118	PLR_NOSHOUT blocks dance before target parsing and audience emission with C's emote refusal.

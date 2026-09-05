@@ -1,0 +1,91 @@
+# C-first do_roll vehicle (src/interpreter.c:664; src/act.other.c:1927-1949).
+# A room observer exposes the actor and room act for default, bounded, and
+# malformed/zero max-roll arguments; C consumes only one_argument().
+
+# depth-case: roll.no-argument
+# depth-case: roll.explicit-max
+# depth-case: roll.trailing-argument-ignored
+# depth-case: roll.zero-defaults-to-100
+# depth-case: roll.malformed-defaults-to-100
+# depth-case: roll.atoi-decimal-prefix
+# depth-case: roll.fill-word-parser
+# depth-case: roll.leading-plus
+# depth-case: roll.negative-unsigned-range
+# depth-case: roll.actor-room-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rollactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rollactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Rollobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Rollobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Rollobserver 8162
+
+[probe]
+roll
+roll 6
+roll 6 trailing words are ignored
+roll 0
+roll abc
+roll 6junk
+roll the 6
+roll +6
+roll -5

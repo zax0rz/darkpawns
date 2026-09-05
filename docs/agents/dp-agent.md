@@ -40,6 +40,7 @@ Config file: `~/.dp-agent.json` (override with `DP_CONFIG` env var).
   "litellm_endpoint": "http://localhost:4000",
   "game_host": "localhost",
   "game_port": 4350,
+  "game_secure": false,
   "temperature": 0.0,
   "valence": true,
   "log_dir": "data/logs",
@@ -51,13 +52,14 @@ Config file: `~/.dp-agent.json` (override with `DP_CONFIG` env var).
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `key` | — | Agent API key (`dp_<32hex>`) |
+| `key` | — | Agent API key (`dp_<64hex>`) |
 | `tier` | `medium` | Context budget: `small` / `medium` / `large` / `unlimited` |
 | `model_fast` | `zai/glm-5-turbo` | Primary LLM model |
-| `model_fallback` | `anthropic/claude-sonnet-4-6` | Fallback if primary fails |
+| `model_fallback` | `deepseek-v4-flash` | Fallback if primary fails |
 | `litellm_endpoint` | `http://192.168.1.106:4000` | LiteLLM proxy URL |
-| `game_host` | `192.168.1.106` | Game server host |
+| `game_host` | `192.168.1.15` | Game server host |
 | `game_port` | `4350` | Game server port |
+| `game_secure` | `false` | Use `wss://` (TLS) for the game WebSocket so the API key is not sent in plaintext |
 | `temperature` | `0.0` | LLM temperature (0 = deterministic) |
 | `valence` | `true` | Enable emotional valence in memory system |
 | `log_dir` | — | Where to write session JSONL logs |

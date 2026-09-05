@@ -1,0 +1,49 @@
+# C-first do_hide daytime WATER gate (src/act.other.c:257-282). Sector 6 is
+# the representative swim-water value for the shared C switch arm covering
+# swim, no-swim, underwater, and generic water.
+
+# depth-case: hide.water-daytime-gate
+# depth-case: kabuki.water-daytime-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 6
+
+[setup:oracle]
+Hidewater
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hidewater
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Hidewater 'hide' 100
+skillset Hidewater 'kabuki' 100
+
+[probe]
+hide
+kabuki

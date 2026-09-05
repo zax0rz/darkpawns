@@ -1,0 +1,50 @@
+# depth-case: score.state-variants
+# C-first do_score state vehicle (src/act.informative.c:1168-1405).
+# The God actor drives every score-visible state arm that has a reachable
+# command path: AC bands, chosen/summonable flags, tattoo stat totals,
+# flesh-alter weapon naming, and lycanthrope transformation.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scorevar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scorevar
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+set Scorevar ac 100
+score
+set Scorevar ac -200
+score
+set Scorevar chosen on
+score
+set Scorevar nosummon on
+score
+set Scorevar tattoo 9
+score

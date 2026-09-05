@@ -1,0 +1,41 @@
+# depth-case: flee.position-gate
+# C act.offensive.c::do_flee rejects positions below POS_FIGHTING before any
+# RNG draw or movement attempt.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Fleepos
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleepos
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+sleep
+
+[probe]
+flee

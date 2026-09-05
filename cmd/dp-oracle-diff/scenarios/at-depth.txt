@@ -1,0 +1,54 @@
+# depth-case: at.no-arg
+# depth-case: at.no-command
+# depth-case: at.named-character-target
+# depth-case: at.named-object-target
+# depth-case: at.named-target-missing
+# depth-case: at.numeric-target-missing
+# depth-case: at.execute-and-restore
+# C-first vehicle for interpreter.c:323 / act.wizard.c:242-265.
+# The first player is the crowned Implementor, so the LVL_GRGOD dispatcher
+# gate is reachable. The two targeted where calls prove that do_at restores
+# the origin after dispatching the nested command at room 8004.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Atdepthac
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Atdepthac
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+at
+at 1204
+at Atdepthac abilities
+at board abilities
+at not-a-room look
+at 999999 look
+at 8004 where Atdepthac
+where Atdepthac

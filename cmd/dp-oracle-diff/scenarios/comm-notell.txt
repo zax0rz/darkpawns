@@ -1,0 +1,81 @@
+# depth-case: tell.notell-self
+# depth-case: tell.cant-hear
+# The PRF_NOTELL arms of do_tell (act.comm.c:914-928) — no God flags needed,
+# notell is a mortal toggle (do_gen_tog SCMD_NOTELL, act.other.c:1222):
+#   - actor-side: PRF_FLAGGED(ch, PRF_NOTELL) && level < LVL_IMMORT →
+#     "You can't tell other people while you have notell on." (915-916)
+#   - victim-side: PRF_FLAGGED(vict, PRF_NOTELL) (and mortal teller) →
+#     act("$E can't hear you.", ... TO_CHAR|TO_SLEEP) (926-928)
+# Brion toggles notell ON as the last (drained) setup step; Aldous toggles it
+# in the diffed probe so the toggle bytes themselves are compared, then hits
+# both gates. Both mortals are co-located in the start room (tells are
+# world-scoped, so room placement is irrelevant); nobody else may see bytes.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Aldous
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aldous
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:brion]
+Brion
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+notell
+
+[setup:port:brion]
+Brion
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+notell
+
+[probe]
+notell
+tell Brion can you hear me
+notell
+tell Brion how about now

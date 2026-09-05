@@ -116,6 +116,18 @@ func (m *Manager) SetWizlock(locked bool) {
 	m.wizlockMutex.Lock()
 	defer m.wizlockMutex.Unlock()
 	m.wizlocked = locked
+	if locked {
+		m.wizlockLevel = 1
+	} else {
+		m.wizlockLevel = 0
+	}
+}
+
+// WizlockLevel returns the C game_restrict-equivalent login threshold.
+func (m *Manager) WizlockLevel() int {
+	m.wizlockMutex.Lock()
+	defer m.wizlockMutex.Unlock()
+	return m.wizlockLevel
 }
 
 // HasDB returns whether a database backend is configured.

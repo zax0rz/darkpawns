@@ -1,0 +1,72 @@
+# depth-case: objmagic.prot-evil.to-vict
+# depth-case: objmagic.prot-evil.to-room
+# Potion 4903 casts a single protection from evil (spell 34). A neutral quaffer survives the alignment kill-gate; to_vict "A stream of silver light surges from your fingertips, covering you!" and to_room "A stream of silver light surges from $n's fingertips, covering $m!" (magic.c:1155-1158) — the room line needs the $m objective-pronoun substitution.
+
+[fixture]
+quiet-mobs
+force-load 4903
+spawn-obj 4903 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get daemon
+quaff daemon
+~dpclock pulse 20
+~dpclock pulse 20

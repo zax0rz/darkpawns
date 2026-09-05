@@ -1,0 +1,106 @@
+# C-first hug/do_action sleeping-victim vehicle (src/interpreter.c:504;
+# act.social.c:102-151; lib/misc/socials:410-418). The social requires a
+# standing victim, so the wizard warmup forces the named target to sleep before
+# the compared probe.
+
+# depth-case: hug.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hugsleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hugsleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hugsleepobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hugsleepobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Hugsleeptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Hugsleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hugsleepobserver 8162
+teleport Hugsleeptarget 8162
+force Hugsleeptarget sleep
+
+[probe]
+hug Hugsleeptarget

@@ -1,0 +1,44 @@
+# C-first do_poofset/SCMD_POOFOUT vehicle (src/interpreter.c:614;
+# src/act.wizard.c:1711-1737). The immortal primary sets a message containing
+# internal spacing and then clears it. The focused test pins the hidden stored
+# bytes; the home vehicle owns the later room-audience consumer.
+
+# depth-case: poofout.custom-message
+# depth-case: poofout.clear-message
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Poofoutwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Poofoutwizard
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+poofout a  swirl of departure
+poofout

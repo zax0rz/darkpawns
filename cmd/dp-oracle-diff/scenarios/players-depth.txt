@@ -1,0 +1,45 @@
+# C-first do_gen_ps(SCMD_PLAYER_LIST) vehicle
+# (src/interpreter.c:606; src/act.informative.c:2117-2195).
+# The empty player-file fixture lets character creation add exactly the actor to
+# C's in-memory player table and crowns that first player at LVL_IMPL.
+
+# depth-case: players.entry-gate
+# depth-case: players.list-header-and-online-name
+# depth-case: players.trailing-arguments-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Playersdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Playersdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+players
+players trailing words are ignored

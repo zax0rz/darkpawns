@@ -15,6 +15,17 @@ func TestBootstrapFirstPlayerGod_StatsAndSkillsAndConditions(t *testing.T) {
 	p.Class = ClassThief // class doesn't matter — God gets all skills at 100
 
 	BootstrapFirstPlayerGod(p)
+	if p.GetAutoExit() {
+		t.Error("first-player God should retain C init_char's autoexit-off default")
+	}
+	for _, flag := range []int{PrfDisphp, PrfDispmmana, PrfDispmove} {
+		if p.GetFlags()&(1<<uint(flag)) != 0 {
+			t.Errorf("first-player God should retain C init_char's display-off default for flag %d", flag)
+		}
+	}
+	if p.WimpLevel != 0 {
+		t.Errorf("first-player God wimp level = %d, want C init_char default 0", p.WimpLevel)
+	}
 
 	if got := p.GetLevel(); got != LVL_IMPL {
 		t.Errorf("God level = %d, want %d (LVL_IMPL)", got, LVL_IMPL)

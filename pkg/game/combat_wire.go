@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -133,9 +132,13 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	cb.RemoveAffect = func(name string, skillNum int) {
 		if p, ok := w.GetPlayer(name); ok {
+			// fight.c passes AFF_HIDE here and clears the bitmask directly;
+			// RemoveAffectBySpell alone only removes timed spell records.
+			p.RemoveAffectBit(skillNum)
 			p.RemoveAffectBySpell(skillNum)
 		}
 		if m := w.GetMobByName(name); m != nil {
+			m.ClearAffect(skillNum)
 			m.RemoveAffectBySpell(skillNum)
 		}
 	}
@@ -258,21 +261,37 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			return false
 		}
 
+		// C stops the victim's combat before the jail messages. If the victim's
+		// opponent reciprocates the target, stop that side as well; the combat
+		// engine also removes its pair after this callback returns.
+		if victim.IsFighting() {
+			fightingName := victim.GetFighting()
+			if opponent := cityguardCombatantByName(w, victim.GetRoom(), fightingName); opponent != nil && opponent.GetFighting() == victimName {
+				switch opponent := opponent.(type) {
+				case *Player:
+					opponent.StopFighting()
+				case *MobInstance:
+					opponent.StopFighting()
+				}
+			}
+			victim.StopFighting()
+		}
 		victim.SetHP(1)
 		if victim.IsMounted() {
 			victim.Unmount()
 		}
-		if guard.HasFlag("MOB_MEMORY") {
+		if guard.HasMobFlag(MobFlagMemory) || guard.HasFlag("MOB_MEMORY") {
 			guard.Forget(victimName)
 		}
 		if guard.GetHunting() == victimName {
 			guard.ClearHunting()
 		}
 
-		roomVNum := victim.GetRoom()
-		actToRoom(w, roomVNum, fmt.Sprintf("%s grabs %s by the collar, and quickly beats them into submission.\r\nJerking them to their feet, %s carts %s off to jail.\r\n", guard.GetName(), victim.GetName(), guard.GetName(), victim.GetName()), victimName)
-		sendToChar(victim, fmt.Sprintf("%s grabs you by the collar and quickly beats you into submission.\r\n", guard.GetName()))
-		sendToChar(victim, "Jerking you to your feet, he carts you off to jail...\r\n")
+		Act(w, true, guard, victim, nil, nil,
+			"$n grabs $N by the collar, and quickly beats $M into submission.\r\nJerking $M to $S feet, $n carts $N off to jail.", "", ToNotVict)
+		Act(w, true, guard, victim, nil, nil,
+			"$n grabs you by the collar and quickly beats you into submission.", "", ToVict)
+		sendToChar(victim, "Jerking you to your feet, he carts you off to jail...")
 		victim.SetRoom(8118)
 		w.lookAtRoom(victim, false)
 		jailTimer := victim.GetLevel() / 2
@@ -320,9 +339,9 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// return is the 0-based OFFSET (C's GET_OBJ_VAL(wielded,3), e.g. 11 for a
 	// piercing dagger, 3 for slash) that SendWeaponMessage adds TYPE_HIT to.
 	// damDice/damSize/isBlessed are unused by the current message path (left
-	// zero) — only wType is consumed by performOneHit. Mobs have no wired
-	// attack_type yet (parser BareHandAttack isn't carried onto the prototype),
-	// so they return 0 ("hit"), matching C's barehand fallback.
+	// zero) — only wType is consumed by performOneHit. For mobs, wType is the
+	// parsed BareHandAttack field copied by read_mobile into mob_specials, which
+	// is C's attack_type fallback when no weapon is wielded.
 	cb.GetWeaponInfo = func(name string) (wType, damDice, damSize int, isBlessed bool) {
 		if p, ok := w.GetPlayer(name); ok && p.Equipment != nil {
 			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil && weapon.Prototype != nil {
@@ -334,7 +353,19 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			}
 			return 0, 0, 0, false // barehand → "hit"
 		}
+		if m := w.GetMobByName(name); m != nil && m.Prototype != nil {
+			return m.Prototype.BareHandAttack, 0, 0, false
+		}
 		return 0, 0, 0, false // mob / unknown → "hit"
+	}
+
+	cb.GetWeaponDescription = func(name string) string {
+		if p, ok := w.GetPlayer(name); ok && p.Equipment != nil {
+			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil {
+				return weapon.GetShortDesc()
+			}
+		}
+		return ""
 	}
 
 	// -------------------------------------------------------------------------
@@ -548,6 +579,21 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		}
 		if w.CommandExecFunc != nil {
 			w.CommandExecFunc(p, cmd)
+		}
+	}
+
+	// fight.c:1457 stop_follower(victim) when the attacker is the victim's
+	// master — the game layer owns the act audiences of the charm trio.
+	cb.StopFollowerOfMaster = func(victimName, masterName string) {
+		if p, ok := w.GetPlayer(victimName); ok {
+			StopFollower(w, p)
+			return
+		}
+		for _, m := range w.GetAllMobs() {
+			if m.GetName() == victimName {
+				StopFollowerMob(w, m)
+				return
+			}
 		}
 	}
 

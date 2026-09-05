@@ -1,0 +1,14 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_alias	alias	alias.list-empty	D1	command	oracle-green-multiseed	alias-depth	interpreter.c:981-994	Empty alias inventory emits the C header and None line.
+do_alias	alias	alias.delete-missing	D1	command	oracle-green-multiseed	alias-depth	interpreter.c:995-1004	Deleting an unknown trigger emits No such alias.
+do_alias	alias	alias.add-simple	D1	command	oracle-green-multiseed	alias-depth	interpreter.c:1005-1038	A replacement is inserted at the head and acknowledges Alias added.
+do_alias	alias	alias.list-format	D1	command	oracle-green-multiseed	alias-depth	interpreter.c:984-990	Listing uses C's fifteen-column trigger field and stored leading replacement space.
+do_alias	alias	alias.simple-args-discarded	D2	command	oracle-green-multiseed	alias-depth	interpreter.c:1102-1117	ALIAS_SIMPLE replaces the complete input and discards text after the trigger.
+do_alias	alias	alias.redefine	D2	state	oracle-green-multiseed	alias-depth	interpreter.c:995-1038	Redefinition removes the old node, inserts the new node at the head, and says Alias added.
+do_alias	alias	alias.delete-existing	D1	command	oracle-green-multiseed	alias-depth	interpreter.c:995-1004	Deleting an existing trigger removes it and emits Alias deleted.
+do_alias	alias	alias.protect-self	D1	command	oracle-green-multiseed	alias-depth	interpreter.c:1005-1010	The management command refuses the reserved alias trigger.
+do_alias	alias	alias.complex-semicolon	D3	state	oracle-green-multiseed	alias-depth	interpreter.c:1049-1100	ALIAS_COMPLEX expands semicolon-separated commands in order with C command-cycle framing.
+do_alias	alias	alias.complex-positional	D3	command	oracle-green-multiseed	alias-depth	interpreter.c:1049-1100	$1 substitutes the first post-trigger token and preserves C's token limit.
+do_alias	alias	alias.complex-glob	D3	command	oracle-green-multiseed	alias-depth	interpreter.c:1049-1100	$* substitutes the complete original text after the trigger.
+do_alias	alias	alias.doubled-dollar	D2	state	unit-green	TestCmdAliasDepthManagerBranches	interpreter.c:1011-1014;interpreter.c:1203-1225	Alias creation collapses doubled dollar signs before classifying and persisting the replacement.
+do_alias	alias	alias.length-truncate	D2	command	unit-green	TestCmdAliasDepthManagerBranches	interpreter.c:1015-1021	Replacements longer than 120 bytes emit the warning and store the C-truncated value.

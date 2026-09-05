@@ -95,6 +95,60 @@ func TestDoHideDexBonusToggleAndImprove(t *testing.T) {
 	}
 }
 
+func TestDoHideDaytimeSectorGates(t *testing.T) {
+	originalWeather := weatherInfo
+	t.Cleanup(func() {
+		weatherMu.Lock()
+		weatherInfo = originalWeather
+		weatherMu.Unlock()
+	})
+	weatherMu.Lock()
+	weatherInfo.Sunlight = SunLight
+	weatherMu.Unlock()
+
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Hide Test Room", Zone: 1}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	defer w.StopAITicker()
+	ch := NewPlayer(1, "Hider", 1001)
+
+	tests := []struct {
+		name    string
+		sector  int
+		message string
+	}{
+		{name: "field", sector: SECT_FIELD, message: "Hide out here during the day? Yeah right."},
+		{name: "desert", sector: SECT_DESERT, message: "You can't hide very well with all the sun and sand out here!"},
+		{name: "water swim", sector: SECT_WATER_SWIM, message: "Hide in the water? Don't think so."},
+		{name: "water no-swim", sector: SECT_WATER_NOSWIM, message: "Hide in the water? Don't think so."},
+		{name: "underwater", sector: SECT_UNDERWATER, message: "Hide in the water? Don't think so."},
+		{name: "water", sector: SECT_WATER, message: "Hide in the water? Don't think so."},
+		{name: "flying", sector: SECT_FLYING, message: "You are completely exposed here, nowhere to hide!"},
+		{name: "fire", sector: SECT_FIRE, message: "You are completely exposed here, nowhere to hide!"},
+		{name: "earth", sector: SECT_EARTH, message: "You are completely exposed here, nowhere to hide!"},
+		{name: "wind", sector: SECT_WIND, message: "You are completely exposed here, nowhere to hide!"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w.GetRoomInWorld(1001).Sector = test.sector
+			result := DoHideInWorld(ch, w)
+			if result.Success || result.MessageToCh != test.message {
+				t.Fatalf("hide sector %d = success %t message %q, want failure %q", test.sector, result.Success, result.MessageToCh, test.message)
+			}
+		})
+	}
+
+	weatherMu.Lock()
+	weatherInfo.Sunlight = SunDark
+	weatherMu.Unlock()
+	w.GetRoomInWorld(1001).Sector = SECT_FIELD
+	result := DoHideInWorld(ch, w)
+	if result.MessageToCh != "You attempt to hide yourself." {
+		t.Fatalf("nighttime field message = %q, want ordinary attempt message", result.MessageToCh)
+	}
+}
+
 func TestDoSneakTimedAffectAndReroll(t *testing.T) {
 	ch := NewPlayer(1, "Thief", 1001)
 	ch.SetLevel(7)
@@ -117,6 +171,45 @@ func TestDoSneakTimedAffectAndReroll(t *testing.T) {
 	affect := ch.ActiveAffects[0]
 	if affect.SpellID != skillNumSneak || affect.Duration != 7 || affect.Flags != engine.AFFSneak {
 		t.Errorf("sneak affect = %+v; want spell=%d duration=7 flags=%d", affect, skillNumSneak, engine.AFFSneak)
+	}
+}
+
+func TestDoSneakMountedGatePrecedesRoll(t *testing.T) {
+	ch := NewPlayer(1, "Mounted", 1001)
+	ch.SetAffect(affMount, true)
+
+	dprng.ResetStream(1)
+	result := DoSneak(ch)
+	if result.Success || result.MessageToCh != "Dismount first!" {
+		t.Fatalf("mounted sneak result = %+v, want the C early return", result)
+	}
+	gotNext := dprng.Number(1, 101)
+	dprng.ResetStream(1)
+	wantNext := dprng.Number(1, 101)
+	if gotNext != wantNext {
+		t.Fatalf("mounted sneak consumed a roll: next=%d want=%d", gotNext, wantNext)
+	}
+}
+
+func TestDoSneakFailedRerollClearsSneakAndStealthAffects(t *testing.T) {
+	ch := NewPlayer(1, "Failing", 1001)
+	ch.SetLevel(9)
+	ch.Stats.Dex = 1
+	ch.SetSkill(SkillSneak, 0)
+	ch.SetAffect(affSneak, true)
+	ch.AddAffect(engine.NewAffectDirect(skillNumSneak, engine.ApplyNone, 3, 0, engine.AFFSneak, SkillSneak))
+	ch.AddAffect(engine.NewAffectDirect(skillNumStealth, engine.ApplyNone, 4, 0, engine.AFFSneak, SkillStealth))
+
+	dprng.ResetStream(1)
+	result := DoSneak(ch)
+	if result.Success || result.MessageToCh != "Okay, you'll try to move silently for a while." {
+		t.Fatalf("failed sneak result = %+v", result)
+	}
+	if ch.IsAffected(affSneak) {
+		t.Fatal("failed sneak left AFF_SNEAK set")
+	}
+	if len(ch.ActiveAffects) != 0 {
+		t.Fatalf("failed sneak left active affects = %d, want 0", len(ch.ActiveAffects))
 	}
 }
 

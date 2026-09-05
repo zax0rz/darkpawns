@@ -1,0 +1,114 @@
+# C-first sneer/do_action target-social vehicle (src/interpreter.c:715;
+# src/act.social.c:102-151; lib/misc/socials:1416-1425). The authored record
+# has zero hide and zero victim-position minimum, so the actor, observer,
+# victim, self, missing-target, and first-token branches are reachable.
+
+# depth-case: sneer.no-argument
+# depth-case: sneer.target-success
+# depth-case: sneer.target-audience
+# depth-case: sneer.argument-first-token
+# depth-case: sneer.self-target
+# depth-case: sneer.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aldor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aldor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Borin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Borin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Calia
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Calia
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Borin 8162
+teleport Calia 8162
+
+[probe]
+sneer
+sneer the Calia trailing words are ignored
+sneer Calia
+sneer Aldor
+sneer Nobody

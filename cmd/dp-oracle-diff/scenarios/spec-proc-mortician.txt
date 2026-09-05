@@ -1,0 +1,101 @@
+# depth-case: mob.mortician-entry-gates
+# depth-case: mob.mortician-list-cost
+# depth-case: mob.mortician-retrieve-affordability
+# depth-case: mob.mortician-corpse-predicate
+# depth-case: mob.mortician-global-scan
+# depth-case: mob.mortician-retrieve-audience
+# depth-case: mob.mortician-transfer-state
+# depth-case: mob.mortician-missing-corpse
+# depth-case: mob.mortician-command-surface
+# C-first vehicle for SPECIAL(mortician), registered for mob vnum 8095 at
+# src/spec_assign.c:301 and defined in src/spec_procs3.c:807-856.
+# Object 1210 is deliberately used as the corpse vehicle: its C prototype is
+# a type-15 container with GET_OBJ_VAL(obj,3) == 1 but it is not marked with a
+# corpse keyword. The C predicate is type/value-only, so this catches a Go
+# implementation that invents an IsCorpse requirement.
+# The object is dropped in another room before retrieve, proving C's global
+# object_list scan; the mortician and actor share room 8105 at retrieval.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs3.c:807-856 ->
+# src/handler.c:81-104,901-915 -> src/act.comm.c:901-930.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8095 1 8105 80
+spawn-mob 16303 1 8105 80
+strip-mob-script 8095
+replace-room-exits 8105 none
+replace-room-exits 8104 none
+
+[setup:oracle]
+Fractal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fractal
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+MorticianPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+MorticianPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport MorticianPeer 8105
+set Fractal gold 10000
+goto 8104
+load obj 1210
+drop fractal
+goto 8105
+
+[probe]
+list
+retrieve
+retrieve
+gold

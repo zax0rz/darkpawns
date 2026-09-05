@@ -1,0 +1,80 @@
+# C-first vehicle for the sha command (src/interpreter.c:686;
+# src/new_cmds.c:1500-1739). The empty-player fixture makes Shaactor the
+# first-player Implementor, and the peer exposes the meditation room act. The
+# second use exposes the five-tick lockout. The failure retry exercises the
+# inert failed-affect branch after the shared skillset boundary.
+
+# depth-case: sha.success-actor-and-room
+# depth-case: sha.success-lockout
+# depth-case: sha.skill-slot
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shaactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shaactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shaper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shaper
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shaper 8162
+skillset Shaactor 'kuji-kiri sha' 100
+
+[probe]
+sha
+sha

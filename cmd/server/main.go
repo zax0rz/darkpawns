@@ -44,6 +44,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -99,6 +100,33 @@ func main() {
 		slog.Error("Usage: server -world <path-to-lib>")
 		os.Exit(1)
 	}
+	// Anchor the process to the game root (parent of the world/lib dir)
+	// before anything reads or writes a relative data/ path (DP-1193).
+	// Every persistence path — data/shops.json, data/aliases/, data/mail,
+	// data/bugs.txt, admin store — is CWD-relative; a daemon started from
+	// the wrong directory would silently fork the data set. Relative flag
+	// paths are resolved against the original CWD first.
+	absWorld, err := filepath.Abs(*worldDir)
+	if err != nil {
+		slog.Error("resolving world path", "error", err)
+		os.Exit(1)
+	}
+	for _, d := range []*string{worldDir, scriptsDir, webDir, hugoDir} {
+		if *d != "" {
+			if abs, aerr := filepath.Abs(*d); aerr == nil {
+				*d = abs
+			}
+		}
+	}
+	gameRoot := filepath.Dir(absWorld)
+	if err := os.Chdir(gameRoot); err != nil {
+		slog.Error("chdir to game root", "dir", gameRoot, "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Working directory anchored to game root", "dir", gameRoot)
+	// Pin the shops persistence path explicitly (DP-1193) — belt and
+	// suspenders with the chdir above.
+	_ = os.Setenv("DARKPAWNS_DATA_DIR", filepath.Join(gameRoot, "data"))
 	if *dbURL == "" {
 		*dbURL = os.Getenv("DATABASE_URL")
 	}
@@ -157,6 +185,7 @@ func main() {
 		os.Exit(1)
 	}
 	gameWorld.WorldPath = *worldDir
+	gameWorld.PostInit()
 
 	// Connect to database
 	slog.Info("Connecting to database...")
@@ -204,6 +233,7 @@ func main() {
 		}
 	}
 	manager.SetScriptFightFunc()                         // Enable mob fight scripts after each combat round
+	manager.SetMobSpecialFunc()                          // Enable combat-time native mob specials
 	manager.SetScriptDeathFunc()                         // Enable mob death scripts on kill
 	manager.SetOnRoundEnd()                              // Decrement wait states each combat round
 	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers
@@ -265,6 +295,9 @@ func main() {
 		OnEventProcess: func() {
 			gameWorld.EventQueue.Process(context.Background())
 		},
+		OnExtractPending: func() {
+			manager.ExtractPendingChars()
+		},
 		OnPerformViolence: func() {
 			// Production combat keeps its standalone ticker until the Phase 2
 			// unification. Pumped DP_CLOCK heartbeats must dispatch C's
@@ -276,9 +309,13 @@ func main() {
 		OnMobileActivity: func() {
 			gameWorld.MobileActivity()
 		},
-		// start_room birth already occurs synchronously in Go; retain C's
-		// room_activity/object_activity positions as explicit no-op seams.
-		OnRoomActivity:   func() {},
+		// comm.c:690 room_activity — FLAMING/UNDERWATER/WATER_NOSWIM fixed
+		// self-damage, pulse-time room specs, and FLYING-sector falls, in C's
+		// heartbeat position right after mobile_activity.
+		OnRoomActivity: func() {
+			gameWorld.RoomActivity()
+		},
+		// object_activity remains an explicit no-op seam.
 		OnObjectActivity: func() {},
 		OnWeatherAndTime: func() {
 			game.WeatherAndTime(true, manager.SendToOutdoor)
@@ -300,7 +337,6 @@ func main() {
 	loopCtx, loopCancel := context.WithCancel(context.Background())
 	defer loopCancel()
 	gameLoop.Start(loopCtx)
-	defer gameLoop.Stop()
 
 	// Setup HTTP routes
 	http.HandleFunc("/ws", manager.HandleWebSocket)
@@ -337,19 +373,19 @@ func main() {
 		})
 	}
 
-	// Setup API handler chain: Auth → ContentNegotiation
-	// The ContentNegotiationMiddleware serves OpenAPI spec and JSON responses.
-	// AuthMiddleware protects all /api/ endpoints with JWT bearer tokens.
-	apiMux := http.NewServeMux()
-	apiMux.HandleFunc("/api/openapi.json", func(w http.ResponseWriter, r *http.Request) {
+	// Publish the API contract without authentication so clients can discover
+	// how to authenticate before making a protected request.
+	openAPIHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		http.ServeFile(w, r, "web/api/openapi.json")
-	})
+	}
+	http.HandleFunc("/openapi.json", openAPIHandler)
+	http.HandleFunc("/api/openapi.json", openAPIHandler)
+
+	// All other /api/ endpoints require a JWT bearer token.
+	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte(`{"error": "API endpoint not found", "docs": "/api/openapi.json"}`)); err != nil {
-			slog.Warn("API 404 write failed", "error", err)
-		}
+		web.WriteJSONError(w, http.StatusNotFound, "ENDPOINT_NOT_FOUND", "The requested API endpoint does not exist.", "Consult /openapi.json for supported endpoints.")
 	})
 	http.Handle("/api/", web.AuthMiddleware(apiMux))
 
@@ -480,23 +516,44 @@ func main() {
 		}
 	}()
 
+	shutdownFromCommand := false
 	select {
 	case <-sigChan:
 		slog.Info("Received shutdown signal")
+	case request := <-manager.ShutdownRequests():
+		if request.Marker != "" {
+			markerPath := filepath.Join("..", request.Marker)
+			file, markerErr := os.OpenFile(filepath.Clean(markerPath), os.O_CREATE|os.O_WRONLY, 0o640)
+			if markerErr != nil {
+				slog.Error("failed to write shutdown marker", "path", markerPath, "error", markerErr)
+			} else if closeErr := file.Close(); closeErr != nil {
+				slog.Error("failed to close shutdown marker", "path", markerPath, "error", closeErr)
+			}
+		}
+		slog.Info("Shutdown requested by command", "marker", request.Marker)
+		// The command already sent C's global text and all-save output.
+		shutdownFromCommand = true
 	case err := <-errChan:
 		slog.Error("Server error, shutting down gracefully", "error", err)
 	}
 	slog.Info("Shutting down gracefully...")
 
-	// 1. Stop heartbeat callbacks before draining sessions or saving world state.
-	gameLoop.Stop()
-
-	// 1a. Stop standalone world tickers so they cannot mutate state during save.
+	// 1. Stop standalone world tickers, then stop heartbeat callbacks. A
+	// heartbeat callback can be doing slow world work, so bound the wait well
+	// below systemd's stop timeout instead of allowing SIGKILL to decide.
 	// The AI ticker and point update ticker share the World's done channel;
 	// StopAITicker closes it and stops both. StopPeriodicResets ends the
 	// zone-reset goroutine started in the boot goroutine below.
 	gameWorld.StopAITicker()
 	gameWorld.StopPeriodicResets()
+	loopCancel()
+	heartbeatCtx, heartbeatCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	heartbeatErr := gameLoop.StopContext(heartbeatCtx)
+	heartbeatCancel()
+	heartbeatStopped := heartbeatErr == nil
+	if heartbeatErr != nil {
+		slog.Error("Heartbeat did not stop before shutdown deadline; world snapshot will be skipped", "error", heartbeatErr)
+	}
 
 	// 2. Stop telnet listener (accepting new TCP connections)
 	telnet.Stop()
@@ -509,7 +566,11 @@ func main() {
 	}
 
 	// 4. Drain active player sessions (stops combat, broadcasts leave, saves profiles, closes connections)
-	manager.ShutdownGracefully(5 * time.Second)
+	if shutdownFromCommand {
+		manager.ShutdownGracefullyWithoutNotice(5 * time.Second)
+	} else {
+		manager.ShutdownGracefully(5 * time.Second)
+	}
 
 	// 5. Flush buffered decision/combat records before closing the database.
 	if decisionLogWriter != nil {
@@ -520,9 +581,13 @@ func main() {
 	// writes to world state from corrupting the save file.
 	wg.Wait()
 
-	// Save dynamic world state before exit.
-	if err := game.SaveWorld(gameWorld); err != nil {
-		slog.Error("Failed to save world state", "error", err)
+	// Save dynamic world state only after the heartbeat is proven quiescent.
+	// Saving concurrently with a stuck callback risks a corrupt snapshot; player
+	// profiles have already been drained independently above.
+	if heartbeatStopped {
+		if err := game.SaveWorld(gameWorld); err != nil {
+			slog.Error("Failed to save world state", "error", err)
+		}
 	}
 	slog.Info("Shutdown complete. Farewell.")
 }

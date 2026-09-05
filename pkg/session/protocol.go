@@ -18,6 +18,7 @@ const (
 	MsgText         = "text"
 	MsgCharCreate   = "char_create"   // server → client: prompts during char creation
 	MsgVars         = "vars"          // server → agent: variable state update
+	MsgPrompt       = "prompt"        // server → client: render the command prompt
 	MsgTokenRefresh = "token_refresh" // server → client: proactively rotated JWT
 )
 
@@ -65,6 +66,11 @@ type LoginData struct {
 type CommandData struct {
 	Command string   `json:"command"`
 	Args    []string `json:"args,omitempty"`
+	// RawArgs preserves the C command interpreter's un-tokenized argument
+	// remainder for transports that retain it. Most handlers consume Args;
+	// commands whose C path preserves internal whitespace may opt into this
+	// exact text.
+	RawArgs string `json:"raw_args,omitempty"`
 }
 
 // StateData represents the game state sent to client.

@@ -14,7 +14,23 @@ import (
 
 // MagAffects applies spell affects to a character.
 // Functions named MagXxx to match C convention; constants are RoutineXxx.
+// magAffectsSaveRoll performs the saving throw for the hostile mag_affects arms.
+// It is a package var so tests can force the save result deterministically:
+// CheckSavingThrow is RNG-backed (math/rand/v2's global generator has no Seed),
+// so asserting a specific outcome through a raw call flakes — e.g. a level-30
+// victim vs a level-30 caster saves often enough that a bounded retry loop can
+// lose every attempt.
+var magAffectsSaveRoll = magSavingThrow
+
 func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world interface{}) {
+	magAffectsForCast(level, ch, victim, spellNum, savetype, CastSpell, world)
+}
+
+// magAffectsForCast carries the C object-cast type through to the final act()
+// dispatch. C's live mag_objectmagic path does not echo the invisibility room
+// line back to the wand caster; ordinary unit/golden calls retain the original
+// shared message helper behavior.
+func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int, castType CastType, world interface{}) {
 	if victim == nil || ch == nil {
 		return
 	}
@@ -33,6 +49,37 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	case SpellMetalskin:
 		reag = checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
 			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
+	case SpellSleep:
+		// C magic.c:1203-1210 consumes the exact vnum-1226 sand component
+		// before the outlaw/level gates or save roll. Keep the two audience
+		// messages in that order and retain the reagent for the duration.
+		if consumeSpellReagentVNum(ch, 1226) {
+			reag = 1
+			sendToCaster(ch, "Pulling a bit of sand from a pocket, you cast it about the room...\r\n")
+			sendAffectRoom(ch, nil, "$n pulls a bit of sand out of a pocket and casts it about the room.\r\n", world)
+		} else {
+			sendToCaster(ch, "You attempt the spell without the components...\r\n")
+		}
+	}
+
+	// C magic.c:1212-1227 applies these cast-surface gates after the reagent
+	// narration and before mag_savingthrow. Object-magic sleep remains
+	// unreachable because the spell is TAR_NOT_SELF; this is the direct cast
+	// vehicle for the same shared mag_affects arms.
+	if spellNum == SpellSleep && !isNPC(victim) {
+		if !hasOutlawFlag(ch) {
+			sendToCaster(ch, "Your spell fails to affect them because you are not an Outlaw!\r\n")
+			casterName := "Someone"
+			if named, ok := ch.(interface{ GetName() string }); ok {
+				casterName = named.GetName()
+			}
+			sendToVictim(victim, fmt.Sprintf("%s tried to cast a spell on you but failed because %s is not an Outlaw!\r\n", casterName, casterName))
+			return
+		}
+		if getLevel(ch) < lvlImmort && absInt(getLevel(victim)-getLevel(ch)) > 3 {
+			sendAffectRoom(victim, nil, "$n shakes his head wearily, but then snaps out of it!\r\n", world)
+			return
+		}
 	}
 
 	// C only rolls a save inside the hostile cases that explicitly request it.
@@ -40,16 +87,22 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	saved := false
 	switch spellNum {
 	case SpellChillTouch, SpellBlindness, SpellSmokescreen, SpellCurse, SpellSleep, SpellFlameStrike, SpellPoison:
-		saved = magSavingThrow(victim, savetype)
+		saved = magAffectsSaveRoll(victim, savetype)
 	}
-	magAffectsApply(level, ch, victim, spellNum, saved, reag, world)
+	magAffectsApply(level, ch, victim, spellNum, saved, reag, world, castType)
 }
 
 // magAffectsApply is the deterministic core of MagAffects. It applies the spell
 // affects for a given spell number assuming the saving throw result and reagent
 // bonus are already known. This makes the C affect table testable without RNG.
-func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool, reag int, world interface{}) {
+// Messages follow C magic.c: each case only selects its to_vict/to_room/to_self
+// strings; the send block at the bottom reproduces the C dispatch order
+// (magic.c:1414-1421): to_self fires only when ch != victim, then to_vict,
+// then to_room.
+func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool, reag int, world interface{}, castTypes ...CastType) {
 	var aff *engine.Affect
+	var toVictim, toRoom, toSelf string
+	var pending []*engine.Affect
 
 	switch spellNum {
 	case SpellChillTouch:
@@ -58,14 +111,16 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			dur = 1
 		}
 		aff = engine.NewAffect(SpellChillTouch, engine.ApplyStr, dur, -1, "chill touch")
+		toVictim = "You feel your strength wither!\r\n"
+		toSelf = "Summoning the forces of magick, you press your icy hand against $M.\r\n"
 	case SpellBless:
-		aff = engine.NewAffect(SpellBless, engine.ApplyHitroll, 6, 2, "bless")
-		applyAffect(victim, aff)
-		aff = engine.NewAffect(SpellBless, engine.ApplySavingSpell, 6, -2, "bless")
-		applyAffect(victim, aff)
-		aff = nil
+		pending = append(pending, engine.NewAffect(SpellBless, engine.ApplyHitroll, 6, 2, "bless"), engine.NewAffect(SpellBless, engine.ApplySavingSpell, 6, -2, "bless"))
+		toVictim = "You feel righteous.\r\n"
+		toSelf = "You bestow the blessing of your gods on $M.\r\n"
 	case SpellArmor:
 		aff = engine.NewAffect(SpellArmor, engine.ApplyAC, 24, -15, "armor")
+		toVictim = "You feel someone protecting you.\r\n"
+		toSelf = "The magick protects $M.\r\n"
 	case SpellBlindness, SpellSmokescreen:
 		if saved {
 			if spellNum == SpellBlindness {
@@ -74,61 +129,75 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4 + reag), "blindness")
-		applyAffect(victim, aff)
-		aff = engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness")
-		applyAffect(victim, aff)
-		sendToVictim(victim, "You have been blinded!\r\n")
-		aff = nil
+		pending = append(pending, engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4+reag), "blindness"), engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness"))
+		toVictim = "You have been blinded!\r\n"
+		toRoom = "$n seems to be blinded!\r\n"
+		toSelf = "A streak of blackness courses from your hand!\r\n"
 	case SpellCurse:
 		if saved {
-			sendToVictim(victim, "The spell had no effect.\r\n")
+			sendToCaster(ch, "Nothing seems to happen.\r\n")
 			npcRetaliate(victim, ch)
 			return
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
-		// AFF_CURSE flag affect
-		aff = engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse")
-		applyAffect(victim, aff)
-		// Damroll penalty — C source: magic.c curse APPLY_DAMROLL affect (was constructed but never applied)
-		aff = engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse")
-		applyAffect(victim, aff)
-		// Hitroll penalty — C source: magic.c curse also applies APPLY_HITROLL
-		aff = engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse")
-		applyAffect(victim, aff)
-		sendToVictim(victim, "You feel very unlucky.\r\n")
-		sendToCaster(ch, "They are now cursed!\r\n")
-		aff = nil
-	case SpellInvisible:
-		aff = engine.NewAffectDirect(SpellInvisible, engine.ApplyNone, 12+getLevel(ch)/4, 0, engine.AFFInvisible, "invisibility")
+		// AFF_CURSE flag affect, plus the damroll penalty (constructed but
+		// never applied in old C) and the hitroll penalty — magic.c curse.
+		pending = append(pending,
+			engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse"),
+			engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse"),
+			engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse"))
+		toVictim = "You feel very uncomfortable.\r\n"
+		toRoom = "$n briefly glows red!\r\n"
+		toSelf = "A streak of red light courses from your hand!\r\n"
+	case SpellInvisible, SpellTransparency:
+		name := "invisibility"
+		if spellNum == SpellTransparency {
+			name = "transparency"
+		}
+		aff = engine.NewAffectDirect(spellNum, engine.ApplyNone, 12+getLevel(ch)/4, 0, engine.AFFInvisible, name)
+		if spellNum == SpellInvisible {
+			toVictim = "You vanish.\r\n"
+		} else {
+			toVictim = "Your skin turns transparent.\r\n"
+		}
+		toRoom = "$n slowly fades out of existence.\r\n"
 	case SpellSanctuary:
 		aff = engine.NewAffectDirect(SpellSanctuary, engine.ApplyNone, 4, 0, engine.AFFSanctuary, "sanctuary")
+		if isEvil(victim) {
+			toVictim = "A black aura momentarily surrounds you.\r\n"
+			toRoom = "$n is surrounded by a black aura.\r\n"
+		} else {
+			toVictim = "A white aura momentarily surrounds you.\r\n"
+			toRoom = "$n is surrounded by a white aura.\r\n"
+		}
 	case SpellSleep:
-		// MOB_NOSLEEP check — C source: magic.c sleep case MOB_FLAGGED(victim, MOB_NOSLEEP)
-		// MobFlagNosleep = 15 (pkg/game/mob_flags_bits.go)
+		// C magic.c:1229 folds MOB_NOSLEEP into the save gate; both arms
+		// produce the same room-only "shakes his head" line and no
+		// caster/victim bytes.
 		type npcSleepChecker interface {
 			IsNPC() bool
 			HasMobFlag(flag uint64) bool
 		}
+		nosleep := false
 		if ns, ok := victim.(npcSleepChecker); ok && ns.IsNPC() && ns.HasMobFlag(1<<15) {
-			sendToCaster(ch, "Your victim is immune to sleep!\r\n")
-			return
+			nosleep = true
 		}
-		if saved {
-			sendToVictim(victim, "You resist the spell!\r\n")
+		if nosleep || saved {
+			sendAffectRoom(victim, nil, "$n shakes his head wearily, but then snaps out of it!\r\n", world)
 			npcRetaliate(victim, ch)
 			return
 		}
-		aff = engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4, 0, engine.AFFSleep, "sleep")
-		// Apply affect first, then set position to sleeping — C source: magic.c after affect_to_char()
-		applyAffect(victim, aff)
-		// Set victim position to POS_SLEEPING (4) — combat.PosSleeping
-		type poserSleep interface{ SetPosition(int) }
-		if p, ok := victim.(poserSleep); ok {
-			p.SetPosition(int(PosSleeping)) // PosSleeping = 4
+		pending = append(pending, engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4+reag, 0, engine.AFFSleep, "sleep"))
+		// C magic.c:1241-1247 — the sleepy lines and the position drop only
+		// happen to a victim still above POS_SLEEPING.
+		if getPos(victim) > int(PosSleeping) {
+			toVictim = "You feel very sleepy...  Zzzz......\r\n"
+			toRoom = "$n goes to sleep.\r\n"
+			type poserSleep interface{ SetPosition(int) }
+			if p, ok := victim.(poserSleep); ok {
+				p.SetPosition(int(PosSleeping)) // PosSleeping = 4
+			}
 		}
-		sendToVictim(victim, "You feel very sleepy... zzzzzz\r\n")
-		return
 	case SpellFlameStrike:
 		// C source: magic.c:1109-1129 — outdoor-only DOT with saving throw
 		if saved {
@@ -153,8 +222,12 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			dur = 1
 		}
 		aff = engine.NewAffectDirect(SpellFlameStrike, engine.ApplyNone, dur, 0, engine.AFFFlaming, "flamestrike")
+		toVictim = "A bolt of flame shoots down from the heavens and engulfs you!\r\n"
+		toRoom = "A bolt of flame shoots down from the heavens and engulfs $n!\r\n"
+		toSelf = "You call down a bolt of flame on $M!\r\n"
 	case SpellPoison:
 		if saved {
+			sendToCaster(ch, "Nothing seems to happen.\r\n")
 			npcRetaliate(victim, ch)
 			return
 		}
@@ -162,45 +235,68 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		if dur < 1 {
 			dur = 1
 		}
-		// AFF_POISON flag affect
-		aff = engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison")
-		applyAffect(victim, aff)
-		// C source: magic.c poison — APPLY_STR -2 and APPLY_HITROLL -2
-		aff = engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison")
-		applyAffect(victim, aff)
-		aff = engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison")
-		applyAffect(victim, aff)
-		sendToVictim(victim, "You feel very sick.\r\n")
-		sendToCaster(ch, "$n turns green as your poison takes hold.\r\n")
-		return
+		// AFF_POISON flag affect, plus APPLY_STR -2 and APPLY_HITROLL -2
+		// (magic.c poison).
+		pending = append(pending,
+			engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison"),
+			engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison"),
+			engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison"))
+		toVictim = "You feel very sick.\r\n"
+		toRoom = "$n gets violently ill!\r\n"
+		toSelf = "Your tainted magick pulses towards $M.\r\n"
 	case SpellHaste:
 		aff = engine.NewAffectDirect(SpellHaste, engine.ApplyNone, level, 0, engine.AFFHaste, "haste")
+		// C quirk (magic.c:1046): "You feel your movement quicken!" is a
+		// to_self line, so the caster sees it when ch != victim and the victim
+		// never does. Kept verbatim.
+		toSelf = "You feel your movement quicken!\r\n"
 	case SpellSlow:
-		aff = engine.NewAffectDirect(SpellSlow, engine.ApplyNone, level, 0, engine.AFFSlow, "slow")
-	case SpellFly:
-		aff = engine.NewAffectDirect(SpellFly, engine.ApplyNone, getLevel(ch), 0, engine.AFFFlying, "fly")
+		// C sets bitvector AFF_HASTE for SPELL_SLOW (magic.c:1051 quirk), so a
+		// spell-slowed combatant carries the haste bit — fight.c's attacks++
+		// haste check then fires (and the AFF_SLOW attacks-- check never does,
+		// since the spell never sets it). Kept verbatim: slow makes you swing
+		// more in C.
+		aff = engine.NewAffectDirect(SpellSlow, engine.ApplyNone, level, 0, engine.AFFHaste, "slow")
+		toVictim = "You feel the world speed up around you.\r\n"
+		toSelf = "You send the forces of time against $S!\r\n"
+	case SpellFly, SpellLevitate:
+		name := "fly"
+		if spellNum == SpellLevitate {
+			name = "levitate"
+		}
+		aff = engine.NewAffectDirect(spellNum, engine.ApplyNone, getLevel(ch), 0, engine.AFFFlying, name)
+		toVictim = "Your feet rise off the ground!\r\n"
+		toRoom = "$n's feet rise off the ground!\r\n"
+		toSelf = "Like a falling feather, your magick floats toward $M.\r\n"
 	case SpellDetectMagic:
 		aff = engine.NewAffectDirect(SpellDetectMagic, engine.ApplyNone, 12+level, 0, engine.AFFDetectMagic, "detect magic")
+		toVictim = "Your eyes tingle.\r\n"
+		// Verbatim C typo: "A streak blue light" (magic.c:1029).
+		toSelf = "A streak blue light courses from your fingertips, washing over $M!\r\n"
 	case SpellDetectInvis:
 		aff = engine.NewAffectDirect(SpellDetectInvis, engine.ApplyNone, 12+level, 0, engine.AFFDetectInvisible, "detect invis")
+		toVictim = "Your eyes tingle.\r\n"
+		toSelf = "A streak of yellow light courses from your hand, washing over $M!\r\n"
 	case SpellInfravision:
 		aff = engine.NewAffectDirect(SpellInfravision, engine.ApplyNone, 12+level, 0, engine.AFFInfrared, "infravision")
 		joinAffect(victim, aff, true, false)
-		sendToVictim(victim, "Your eyes glow red.\r\n")
-		if ch != victim {
-			sendToCaster(ch, "With a light touch, you bestow the magick into "+possessivePronoun(victim)+" eyes.\r\n")
-		}
-		sendAffectRoom(victim, nil, "$n's eyes glow red.\r\n", world)
-		return
+		aff = nil
+		toVictim = "Your eyes glow red.\r\n"
+		toRoom = "$n's eyes glow red.\r\n"
+		toSelf = "With a light touch, you bestow the magick into $S eyes.\r\n"
 	case SpellWaterBreathe:
 		aff = engine.NewAffectDirect(SpellWaterBreathe, engine.ApplyNone, getLevel(ch), 0, engine.AFFWaterBreathing, "water breathe")
+		toVictim = "You feel your breath become colder.\r\n"
 	case SpellDetectAlign, SpellKnowAlign:
 		aff = engine.NewAffectDirect(SpellDetectAlign, engine.ApplyNone, 12+level, 0, engine.AFFDetectAlign, "detect align")
+		if spellNum == SpellDetectAlign {
+			toVictim = "Your eyes tingle.\r\n"
+		} else {
+			toVictim = "Like a physical blow, emotions of others wash over you.\r\n"
+		}
 	case SpellDreamTravel:
 		aff = engine.NewAffectDirect(SpellDreamTravel, engine.ApplyNone, 6, 0, engine.AFFDream, "dream travel")
-	case SpellLevitate:
-		// Levitate uses same AFF flag as Fly
-		aff = engine.NewAffectDirect(SpellLevitate, engine.ApplyNone, getLevel(ch), 0, engine.AFFFlying, "levitate")
+		toVictim = "You feel the power of the Dream Lords surround you.\r\n"
 	case SpellProtFromEvil:
 		if isEvil(victim) {
 			sendToCaster(ch, "You cannot protect yourself from the Evil inside you!\r\n")
@@ -211,8 +307,9 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			return
 		}
 		// Set flag only — no stat modifier
-		applyAffect(victim, engine.NewAffectDirect(SpellProtFromEvil, engine.ApplyNone, 24, 0, engine.AFFProtectionEvil, "prot from evil"))
-		return
+		pending = append(pending, engine.NewAffectDirect(SpellProtFromEvil, engine.ApplyNone, 24, 0, engine.AFFProtectionEvil, "prot from evil"))
+		toVictim = "A stream of silver light surges from your fingertips, covering you!\r\n"
+		toRoom = "A stream of silver light surges from $n's fingertips, covering $m!\r\n"
 	case SpellProtFromGood:
 		if isGood(victim) {
 			sendToCaster(ch, "The forces of Light destroy you for your betrayal!\r\n")
@@ -222,47 +319,280 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			}
 			return
 		}
-		applyAffect(victim, engine.NewAffectDirect(SpellProtFromGood, engine.ApplyNone, 24, 0, engine.AFFProtectionGood, "prot from good"))
-		return
+		pending = append(pending, engine.NewAffectDirect(SpellProtFromGood, engine.ApplyNone, 24, 0, engine.AFFProtectionGood, "prot from good"))
+		toVictim = "A stream of silver light surges from your fingertips, covering you!\r\n"
+		toRoom = "A stream of silver light surges from $n's fingertips, covering $m!\r\n"
 	case SpellAdrenaline, SpellStrength:
 		mag := 1 + boolToInt(level > 18)
 		if ch == victim && spellNum == SpellAdrenaline {
 			mag++
 		}
 		aff = engine.NewAffect(SpellStrength, engine.ApplyStr, (getLevel(ch)>>1)+4, mag, "strength")
+		toVictim = "You feel stronger!\r\n"
+		toSelf = "Grabbing $M, you feel a strong flow of magick course between you.\r\n"
 	case SpellSenseLife:
 		aff = engine.NewAffectDirect(SpellSenseLife, engine.ApplyNone, getLevel(ch), 0, engine.AFFSenseLife, "sense life")
+		// Verbatim C typo: "Your feel your awareness improve." (magic.c:1267).
+		toVictim = "Your feel your awareness improve.\r\n"
 	case SpellWaterwalk:
-		aff = engine.NewAffectDirect(SpellWaterwalk, engine.ApplyNone, 4+getLevel(ch)/5, 0, engine.AFFWaterwalk, "waterwalk")
+		// C duration expression "4+reag?20:0" parses as (4+reag)?20:0 — always
+		// 20 for reag >= 0 (magic.c:1279 quirk kept).
+		aff = engine.NewAffectDirect(SpellWaterwalk, engine.ApplyNone, 20, 0, engine.AFFWaterwalk, "waterwalk")
+		toVictim = "You feel webbing between your toes.\r\n"
+		toSelf = "Your magic makes $M light footed.\r\n"
 	case SpellChangeDensity:
-		aff = engine.NewAffectDirect(SpellChangeDensity, engine.ApplyNone, 4+getLevel(ch)/5, 0, engine.AFFWaterwalk, "change density")
+		// Shares C's waterwalk arm, including the always-20 duration quirk.
+		aff = engine.NewAffectDirect(SpellChangeDensity, engine.ApplyNone, 20, 0, engine.AFFWaterwalk, "change density")
+		toVictim = "Your molecular density shifts.\r\n"
+		toSelf = "You shift $S molecular density.\r\n"
 	case SpellChameleon:
 		aff = engine.NewAffectDirect(SpellChameleon, engine.ApplyNone, getLevel(ch), 0, engine.AFFHide, "chameleon")
+		toVictim = "You blend into the surroundings.\r\n"
 	case SpellMetalskin:
-		applyAffect(victim, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"))
-		applyAffect(victim, engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
+		pending = append(pending, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"), engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
+		toVictim = "Your skin turns metallic!\r\n"
 	case SpellInvulnerability:
-		applyAffect(victim, engine.NewAffectDirect(SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln, "invulnerability"))
-		aff = engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability")
+		pending = append(pending, engine.NewAffectDirect(SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln, "invulnerability"), engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability"))
+		toVictim = "A globe of protection appears around you!\r\n"
 	case SpellPsyshield:
 		aff = engine.NewAffect(SpellPsyshield, engine.ApplyAC, getLevel(ch)/2, -15, "psyshield")
+		toVictim = "You feel a shield of energy form around you.\r\n"
 	case SpellGreatPercept:
-		applyAffect(victim, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"))
-		aff = engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept")
+		pending = append(pending, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"), engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept"))
+		toVictim = "Your eyes glow briefly.\r\n"
+		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellLessPercept:
-		applyAffect(victim, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"))
-		aff = engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept")
+		pending = append(pending, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"), engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept"))
+		toVictim = "Your eyes glow briefly.\r\n"
+		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellIntellect:
 		aff = engine.NewAffect(SpellIntellect, engine.ApplyInt, 8, 1, "intellect")
+		toVictim = "Your head clears and you realize some of the secrets of life!\r\n"
 	case SpellMindBar:
-		aff = engine.NewAffectDirect(SpellMindBar, engine.ApplyNone, (level/2)-2, -18, engine.AFFMindBar, "mind bar")
+		// C applies -18 INT with bitvector AFF_NOTHING and no status flag
+		// (magic.c:1369-1377) — a pure stat affect, no invented bit.
+		aff = engine.NewAffect(SpellMindBar, engine.ApplyInt, (level/2)-2, -18, "mind bar")
+		toVictim = "Suddenly, your mind numbs and you feel somewhat impaired.\r\n"
+		toSelf = "You place a mental bar across $S mind.\r\n"
 	default:
 		return
 	}
 
+	// C magic.c:1387-1404 — pre-apply gates. A mob that carries this affect's
+	// flag innately (mob file, not the spell) refuses the spell, and a victim
+	// already affected by a non-accumulating spell refuses it; both answer
+	// NOEFFECT to the caster. Runs after the save-gated case arms (C evaluates
+	// the switch first) but before anything is applied.
+	accumDur, accumAff, bit0, bit1 := affectGateFlags(spellNum)
+	if npcInnatelyAffected(victim, bit0, bit1, spellNum) ||
+		(hasSpellAffect(victim, spellNum) && !accumDur && !accumAff) {
+		sendToCaster(ch, "Nothing seems to happen.\r\n")
+		return
+	}
+
+	for _, a := range pending {
+		applyAffect(victim, a)
+	}
 	if aff != nil {
 		applyAffect(victim, aff)
 	}
+
+	// C magic.c:1414-1421 — send block. to_self goes to the caster only when
+	// ch != victim, with $M/$S taken from the victim; to_vict always fires;
+	// to_room reaches everyone except the victim.
+	if toSelf != "" && ch != victim {
+		sendToCaster(ch, substituteToSelfPronouns(toSelf, victim))
+	}
+	if toVictim != "" {
+		sendToVictim(victim, toVictim)
+	}
+	if toRoom != "" {
+		var exclude interface{}
+		if len(castTypes) > 0 && castTypes[0] == CastWand {
+			exclude = ch
+		}
+		sendAffectRoom(victim, exclude, toRoom, world)
+	}
+}
+
+func consumeSpellReagentVNum(ch interface{}, vnum int) bool {
+	if consumer, ok := ch.(interface{ ConsumeSpellReagentVNum(int) bool }); ok {
+		return consumer.ConsumeSpellReagentVNum(vnum)
+	}
+	return false
+}
+
+func hasOutlawFlag(ch interface{}) bool {
+	const plrOutlaw = 0 // structs.h: PLR_OUTLAW
+	if flags, ok := ch.(interface{ GetFlags() uint64 }); ok {
+		return flags.GetFlags()&(1<<plrOutlaw) != 0
+	}
+	return false
+}
+
+func absInt(value int) int {
+	if value < 0 {
+		return -value
+	}
+	return value
+}
+
+// cAffBit constants are C's AFF_* bit positions (structs.h:310-348) — the
+// layout the victim's innate affect mask uses (game's aff* constants). The
+// engine's own AFF_* flags are a DIFFERENT numbering (engine/affect.go) and
+// must not leak into the mob-affection gate: sanctuary is C bit 7 but engine
+// bit 4, so testing engine positions against the C-position mask silently
+// disabled the gate for every mismatched spell.
+const (
+	cAffBlind        = 0
+	cAffInvisible    = 1
+	cAffDetectAlign  = 2
+	cAffDetectInvis  = 3
+	cAffDetectMagic  = 4
+	cAffSenseLife    = 5
+	cAffWaterwalk    = 6
+	cAffSanctuary    = 7
+	cAffCurse        = 9
+	cAffInfravision  = 10
+	cAffPoison       = 11
+	cAffProtectEvil  = 12
+	cAffProtectGood  = 13
+	cAffSleep        = 14
+	cAffHide         = 19
+	cAffFly          = 26
+	cAffInvuln       = 30
+	cAffFlaming      = 31
+	cAffHaste        = 33
+	cAffDream        = 35
+	cAffWaterBreathe = 36
+	cAffMetalskin    = 37
+)
+
+// affectGateFlags mirrors C mag_affects' per-spell accum_affect/accum_duration
+// switches and the first two affects' bitvectors (magic.c:888-1380), which the
+// magic.c:1387-1404 pre-apply gates test. bit0/bit1 are raw C AFF_* bit
+// positions; an UNSET slot stays 0, and C's gate tests IS_AFFECTED(victim, 0)
+// — bit 0 is AFF_BLIND — so an innately blind mob refuses even a single-affect
+// spell. Do not "fix" that: it is C behavior.
+func affectGateFlags(spellNum int) (accumDuration, accumAffect bool, bit0, bit1 int) {
+	switch spellNum {
+	case SpellChillTouch:
+		return true, false, affNothingBit, 0
+	case SpellArmor:
+		return false, false, affNothingBit, 0
+	case SpellBless:
+		return true, false, affNothingBit, 0
+	case SpellBlindness, SpellSmokescreen:
+		return false, false, cAffBlind, cAffBlind
+	case SpellCurse:
+		return true, true, cAffCurse, cAffCurse
+	case SpellKnowAlign, SpellDetectAlign:
+		return false, false, cAffDetectAlign, 0
+	case SpellDetectInvis:
+		return true, false, cAffDetectInvis, 0
+	case SpellDetectMagic:
+		return true, false, cAffDetectMagic, 0
+	case SpellInfravision:
+		return true, false, cAffInfravision, 0
+	case SpellHaste:
+		return false, false, cAffHaste, 0
+	case SpellSlow:
+		// C sets bitvector AFF_HASTE for SPELL_SLOW (magic.c:1051 quirk),
+		// mirrored by the apply path.
+		return false, false, cAffHaste, 0
+	case SpellDreamTravel:
+		return false, false, cAffDream, 0
+	case SpellWaterBreathe:
+		return true, false, cAffWaterBreathe, 0
+	case SpellTransparency, SpellInvisible:
+		return false, false, cAffInvisible, 0
+	case SpellPoison:
+		return false, false, cAffPoison, cAffPoison
+	case SpellFlameStrike:
+		return false, false, cAffFlaming, 0
+	case SpellFly, SpellLevitate:
+		return true, false, cAffFly, 0
+	case SpellProtFromEvil:
+		return false, false, cAffProtectEvil, 0
+	case SpellProtFromGood:
+		return false, false, cAffProtectGood, 0
+	case SpellSanctuary:
+		return true, false, cAffSanctuary, 0
+	case SpellSleep:
+		return false, false, cAffSleep, 0
+	case SpellAdrenaline:
+		return true, false, affNothingBit, 0
+	case SpellStrength:
+		return false, true, affNothingBit, 0
+	case SpellSenseLife:
+		return true, false, cAffSenseLife, 0
+	case SpellWaterwalk, SpellChangeDensity:
+		return true, false, cAffWaterwalk, 0
+	case SpellChameleon:
+		return false, false, cAffHide, 0
+	case SpellMetalskin:
+		return true, false, cAffMetalskin, 0
+	case SpellInvulnerability:
+		return true, false, cAffInvuln, 0
+	case SpellPsyshield:
+		return true, false, affNothingBit, 0
+	case SpellGreatPercept:
+		return false, false, cAffSenseLife, cAffDetectInvis
+	case SpellLessPercept:
+		return false, false, cAffInfravision, cAffDetectAlign
+	case SpellIntellect:
+		return false, true, affNothingBit, 0
+	case SpellMindBar:
+		// C sets no bitvector for MIND_BAR beyond AFF_NOTHING (magic.c:1373).
+		return false, false, affNothingBit, 0
+	}
+	return false, false, 0, 0
+}
+
+// affNothingBit is C's AFF_NOTHING (structs.h:342) — stat-only spells still
+// test this real bit index in the mob-affection gate.
+const affNothingBit = 32
+
+// npcInnatelyAffected mirrors the C mob-affection gate (magic.c:1387-1394):
+// an NPC that already carries the spell's affect flag — from its mob file,
+// not from this spell — refuses the spell. bit0/bit1 are raw C positions and
+// are BOTH tested unconditionally, exactly as C tests IS_AFFECTED(victim,
+// af[0].bitvector) || IS_AFFECTED(victim, af[1].bitvector) — an unset slot is
+// 0, i.e. the AFF_BLIND bit, so an innately blind mob refuses single-affect
+// spells too (C quirk, kept).
+func npcInnatelyAffected(victim interface{}, bit0, bit1, spellNum int) bool {
+	type npcCheck interface{ IsNPC() bool }
+	nc, ok := victim.(npcCheck)
+	if !ok || !nc.IsNPC() {
+		return false
+	}
+	type afflicted interface{ IsAffected(int) bool }
+	af, ok := victim.(afflicted)
+	if !ok {
+		return false
+	}
+	if hasSpellAffect(victim, spellNum) {
+		return false
+	}
+	return af.IsAffected(bit0) || af.IsAffected(bit1)
+}
+
+func hasSpellAffect(victim interface{}, spellNum int) bool {
+	type speller interface{ HasSpellAffect(int) bool }
+	if s, ok := victim.(speller); ok {
+		return s.HasSpellAffect(spellNum)
+	}
+	return false
+}
+
+// getPos reads a character's position; unknown types report standing.
+
+func getPos(ch interface{}) int {
+	type poser interface{ GetPosition() int }
+	if p, ok := ch.(poser); ok {
+		return p.GetPosition()
+	}
+	return int(PosStanding)
 }
 
 // MagPoints handles HP/MV restoration spells.
@@ -279,8 +609,20 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 		return
 	}
 
-	hit := dice(formula.hitNum, formula.hitSides) + formula.hitFlat
-	move := dice(formula.moveNum, formula.moveSides) + formula.moveFlat
+	// C mag_points draws MOVE before HIT (magic.c: SPELL_VITALITY does
+	// move = dice(10,10); hit = dice(5,10);), and only calls dice() for the
+	// component a spell actually uses — it never rolls a dice(0,0) for the
+	// unused one. Match both: move first, then hit, each drawn only when it has
+	// dice. (Reversing this, or drawing a phantom dice(0,0), desynced the shared
+	// stream after any points spell — e.g. a quaffed vitality+poison potion.)
+	move := formula.moveFlat
+	if formula.moveNum > 0 {
+		move += dice(formula.moveNum, formula.moveSides)
+	}
+	hit := formula.hitFlat
+	if formula.hitNum > 0 {
+		hit += dice(formula.hitNum, formula.hitSides)
+	}
 
 	switch spellNum {
 	case SpellCureLight:
@@ -365,25 +707,51 @@ func magPointsFormula(level, spellNum int, isPsionicOrMystic bool) (pointsFormul
 	}
 }
 
-// MagUnaffects removes spell affects from a target.
+// MagUnaffects is the faithful port of mag_unaffects (magic.c:1828-1876):
+// the cure arms are guarded — a victim who does not carry the removable
+// affect gets NOEFFECT to the CASTER (silent for heal/mass-heal, which ride
+// along other routines) — and the cured pair for the vision arm is
+// BLINDNESS *and* SMOKESCREEN, with the to_vict/to_room act lines.
 func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interface{}) {
 	if victim == nil {
 		return
 	}
 	_ = level
-	_ = ch
-	_ = world
 
+	var spell, spell2 int
+	var toVictim, toRoom string
 	switch spellNum {
 	case SpellCureBlind, SpellHeal, SpellMassHeal:
-		removeAffect(victim, SpellBlindness)
-		sendToVictim(victim, "Your vision clears!\r\n")
+		spell, spell2 = SpellBlindness, SpellSmokescreen
+		toVictim = "Your vision returns!\r\n"
+		toRoom = "There's a momentary gleam in $n's eyes."
 	case SpellRemovePoison:
-		removeAffect(victim, SpellPoison)
-		sendToVictim(victim, "A warm feeling runs through your body!\r\n")
+		spell = SpellPoison
+		toVictim = "A warm feeling runs through your body!\r\n"
+		toRoom = "$n looks better."
 	case SpellRemoveCurse:
-		removeAffect(victim, SpellCurse)
-		sendToVictim(victim, "You don't feel so unlucky.\r\n")
+		spell = SpellCurse
+		toVictim = "You don't feel so unlucky.\r\n"
+	default:
+		return
+	}
+
+	if !hasSpellAffect(victim, spell) && !hasSpellAffect(victim, spell2) {
+		if spellNum != SpellHeal && spellNum != SpellMassHeal {
+			sendToCaster(ch, "Nothing seems to happen.\r\n")
+		}
+		return
+	}
+
+	removeAffect(victim, spell)
+	if spell2 != 0 {
+		removeAffect(victim, spell2)
+	}
+	if toVictim != "" {
+		sendToVictim(victim, toVictim)
+	}
+	if toRoom != "" {
+		sendAffectRoom(victim, nil, toRoom, world)
 	}
 }
 
@@ -527,11 +895,10 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 	switch spellNum {
 	case SpellEarthquake:
 		sendToCaster(ch, "You gesture and the earth begins to shake all around you!\r\n")
+		sendAffectRoom(ch, nil, "$n gracefully gestures and the earth begins to shake violently!\r\n", world)
 	case SpellAcidBlast:
 		sendToCaster(ch, "A spray of acid flows from your fingertips!\r\n")
-	case SpellFireBreath:
-		// Fire breath is handled by the manual cast function
-		return
+		sendAffectRoom(ch, nil, "$n raises a hand and acid sprays from $s fingers!\r\n", world)
 	}
 
 	chars := w.GetAllCharsInRoom(roomVNum)
@@ -541,7 +908,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		}
 		// Skip immortals
 		if nc, ok := c.(npcChecker); ok && !nc.IsNPC() {
-			if l, ok := c.(lever); ok && l.GetLevel() >= 100 {
+			if l, ok := c.(lever); ok && l.GetLevel() >= lvlImmort {
 				continue
 			}
 		}
@@ -558,7 +925,9 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		if areGrouped(ch, c) {
 			continue
 		}
-		// Deal damage
+		// C mag_areas deliberately passes SAVING_SPELL (literal 1) to
+		// mag_damage, even when call_magic was entered as CAST_BREATH
+		// (magic.c:1611). Preserve that call-path quirk.
 		MagDamage(level, ch, c, spellNum, 1, world)
 	}
 }
@@ -959,12 +1328,15 @@ func sendAffectRoom(victim, exclude interface{}, format string, world interface{
 	msg := strings.ReplaceAll(format, "$n", vn.GetName())
 	msg = strings.ReplaceAll(msg, "$N", vn.GetName())
 	msg = strings.ReplaceAll(msg, "$s", possessivePronoun(victim))
+	// C act(to_room, ..., victim, ...) exposes $m as the victim's objective
+	// pronoun (prot-evil/prot-good room lines use it).
+	msg = strings.ReplaceAll(msg, "$m", objectivePronoun(victim))
 	w.ForEachPlayerInRoomInterface(vr.GetRoomVNum(), func(p interface{}) {
 		if selfTarget(victim, p) || (exclude != nil && selfTarget(exclude, p)) {
 			return
 		}
 		if s, ok := p.(sender); ok {
-			s.SendMessage(msg)
+			s.SendMessage(capitalizeActMessage(msg))
 		}
 	})
 }
@@ -1782,80 +2154,197 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 	type valuer interface{ GetValue(int) int }
 	type affecter interface{ GetAffects() []parser.ObjAffect }
 	type namer interface{ GetName() string }
+	type shortDescer interface{ GetShortDesc() string }
 	type weighter interface{ GetWeight() int }
 	type coster interface{ GetCost() int }
+	type extraFlagger interface{ GetExtraFlags() [4]int }
 
 	sendToCaster(ch, "You feel informed:\r\n")
 
-	if n, ok := ovict.(namer); ok {
-		sendToCaster(ch, "Object: "+n.GetName()+"\r\n")
+	objectName := ""
+	if d, ok := ovict.(shortDescer); ok {
+		objectName = d.GetShortDesc()
 	}
-
-	// Item type
+	if objectName == "" {
+		if n, ok := ovict.(namer); ok {
+			objectName = n.GetName()
+		}
+	}
+	itemType := -1
 	if tf, ok := ovict.(typeFlagger); ok {
-		typeNames := map[int]string{
-			1: "container", 2: "liquid container", 3: "key",
-			4: "staff", 5: "weapon", 6: "scroll", 7: "ward",
-			8: "misc", 9: "armor", 10: "potion", 11: "worn",
-			12: "other", 13: "trash", 14: "trap",
-			15: "npc corpse", 16: "pc corpse", 17: "drink container",
-			18: "fountain", 19: "food", 20: "money",
-			22: "boat", 23: "fountain",
-		}
-		if name, ok := typeNames[tf.GetTypeFlag()]; ok {
-			sendToCaster(ch, "Item type: "+name+"\r\n")
-		} else {
-			sendToCaster(ch, "Item type: unknown\r\n")
-		}
+		itemType = tf.GetTypeFlag()
 	}
+	typeName := identifyItemTypeName(itemType)
+	sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
 
-	// Weight and cost
+	// C's object bitvector is not exposed by the Go object interface yet; the
+	// parsed object format has no corresponding field, so this is NOBITS for
+	// current instances and preserves the live C output for ordinary objects.
+	sendToCaster(ch, "Item will give you following abilities:  "+identifyBits([4]int{}, identifyAffectedBitNames)+"\r\n")
+	extra := [4]int{}
+	if ef, ok := ovict.(extraFlagger); ok {
+		extra = ef.GetExtraFlags()
+	}
+	sendToCaster(ch, "Item is: "+identifyBits(extra, identifyExtraBitNames)+"\r\n")
+
+	weight := 0
 	if w, ok := ovict.(weighter); ok {
-		sendToCaster(ch, fmt.Sprintf("Weight: %d\r\n", w.GetWeight()))
+		weight = w.GetWeight()
 	}
+	cost := 0
 	if c, ok := ovict.(coster); ok {
-		sendToCaster(ch, fmt.Sprintf("Value: %d\r\n", c.GetCost()))
+		cost = c.GetCost()
 	}
+	sendToCaster(ch, fmt.Sprintf("Encumbrance: %d, Value: %d\r\n", weight, cost))
 
-	// Type-specific info
-	tf, _ := ovict.(typeFlagger)
 	v, _ := ovict.(valuer)
-	if tf != nil && v != nil {
-		switch tf.GetTypeFlag() {
-		case 5: // ITEM_WEAPON
-			sendToCaster(ch, fmt.Sprintf("Damage: %dD%d\r\n", v.GetValue(1), v.GetValue(2)))
-			avg := float64((v.GetValue(2)+1)/2) * float64(v.GetValue(1))
-			sendToCaster(ch, fmt.Sprintf("Average damage: %.1f\r\n", avg))
-		case 9: // ITEM_ARMOR
-			sendToCaster(ch, fmt.Sprintf("AC-apply: %d\r\n", v.GetValue(0)))
-		case 4, 6, 10: // ITEM_STAFF, ITEM_SCROLL, ITEM_POTION
-			// Spell contents
+	if v != nil {
+		switch itemType {
+		case 2, 10: // ITEM_SCROLL, ITEM_POTION
+			var spells string
 			for i := 1; i <= 3; i++ {
-				if v.GetValue(i) >= 1 {
-					sendToCaster(ch, fmt.Sprintf("Spell slot %d: %d\r\n", i, v.GetValue(i)))
+				if value := v.GetValue(i); value >= 1 {
+					spells += " " + identifySpellName(value)
 				}
 			}
+			sendToCaster(ch, fmt.Sprintf("This %s casts:%s\r\n", typeName, spells))
+		case 3, 4: // ITEM_WAND, ITEM_STAFF
+			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\nIt has %d maximum charge%s and %d remaining.\r\n",
+				typeName, identifySpellName(v.GetValue(3)), v.GetValue(1), pluralS(v.GetValue(1)), v.GetValue(2)))
+		case 5: // ITEM_WEAPON
+			sendToCaster(ch, fmt.Sprintf("Damage Dice is '%dD%d' for an average per-round damage of %.1f.\r\n",
+				v.GetValue(1), v.GetValue(2), ((float64(v.GetValue(2)+1)/2.0)*float64(v.GetValue(1)))))
+		case 9: // ITEM_ARMOR
+			sendToCaster(ch, fmt.Sprintf("AC-apply is %d\r\n", v.GetValue(0)))
 		}
 	}
 
-	// Affects
 	if a, ok := ovict.(affecter); ok {
-		affects := a.GetAffects()
-		applyNames := map[int]string{
-			17: "AC", 18: "hitroll", 19: "damroll", 1: "strength",
-			2: "dexterity", 3: "intelligence", 4: "wisdom",
-			5: "constitution", 6: "charisma",
-		}
-		for _, aff := range affects {
-			if aff.Location != 0 && aff.Modifier != 0 {
-				name := applyNames[aff.Location]
-				if name == "" {
-					name = fmt.Sprintf("apply(%d)", aff.Location)
-				}
-				sendToCaster(ch, fmt.Sprintf("Affects: %s by %d\r\n", name, aff.Modifier))
+		found := false
+		for _, aff := range a.GetAffects() {
+			if aff.Location == 0 || aff.Modifier == 0 {
+				continue
+			}
+			if !found {
+				sendToCaster(ch, "Can affect you as :\r\n")
+				found = true
+			}
+			switch aff.Location {
+			case 29: // APPLY_SPELL
+				sendToCaster(ch, fmt.Sprintf("   Permanent %s when equipped.\r\n", identifyAffectedBitName(aff.Modifier)))
+			case 25: // APPLY_RACE_HATE
+				sendToCaster(ch, fmt.Sprintf("   Extra damage to: %ss.\r\n", identifyMobRaceName(aff.Modifier)))
+			default:
+				sendToCaster(ch, fmt.Sprintf("   Affects: %s By %d\r\n", identifyApplyTypeName(aff.Location), aff.Modifier))
 			}
 		}
 	}
+}
+
+var identifyItemTypes = []string{
+	"UNDEFINED", "LIGHT", "SCROLL", "WAND", "STAFF", "WEAPON", "FIRE WEAPON", "MISSILE",
+	"TREASURE", "ARMOR", "POTION", "WORN", "OTHER", "TRASH", "TRAP", "CONTAINER",
+	"NOTE", "LIQ CONTAINER", "KEY", "FOOD", "MONEY", "PEN", "BOAT", "FOUNTAIN",
+}
+
+var identifyExtraBitNames = []string{
+	"GLOW", "HUM", "!RENT", "!DONATE", "!INVIS", "INVIS", "MAGIC", "!DROP", "BLESS", "!GOOD",
+	"!EVIL", "!NEU", "!MAGE", "!CLE", "!THI", "!WAR", "!SELL", "NAMED", "!PSI", "!NIN",
+	"!PAL", "!MAGUS", "!ASS", "!AVA", "RARE", "!LOCATE", "!RAN", "!MYS", "TWOHANDS",
+}
+
+var identifyAffectedBitNames = []string{
+	"BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC", "SENSE-LIFE", "WATERWALK", "SANCT",
+	"GROUP", "CURSE", "INFRA", "POISON", "PROT-EVIL", "PROT-GOOD", "SLEEP", "!TRACK", "FLESH-ALTER",
+	"DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM", "FOLLOW", "WIMPY", "KUJI-KIRI", "CUTTHROAT", "FLY",
+	"WEREWOLF", "VAMPIRE", "MOUNTED", "INVULN", "FLAMING", "NOTHING", "HASTE", "SLOW", "DREAM",
+	"WATERBREATHE", "METALSKIN", "ROBBED",
+}
+
+var identifyApplyTypes = []string{
+	"NONE", "STR", "DEX", "INT", "WIS", "CON", "CHA", "CLASS", "LEVEL", "AGE", "CHAR_WEIGHT",
+	"CHAR_HEIGHT", "MAXMANA", "MAXHIT", "MAXMOVE", "GOLD", "EXP", "ARMOR", "HITROLL", "DAMROLL",
+	"SAVING_PARA", "SAVING_ROD", "SAVING_PETRI", "SAVING_BREATH", "SAVING_SPELL", "RACE_HATE", "HIT_REGEN",
+	"MANA_REGEN", "MOVE_REGEN", "PERM_SPELL",
+}
+
+var identifyMobRaces = []string{
+	"Human", "Elf", "Dwarf", "Kender", "Centaur", "Rakshasa", "Troll", "Lycanthrope", "Vampire",
+	"Undead", "Dragon", "Demon", "Horse", "Reptile", "Arachnid", "Rodent", "Other", "Vegetable",
+	"Giant", "Demi-god", "Ogre", "Insect", "Mammal", "Fish", "Avian", "Magical Construct", "Amphibian",
+	"Humanoid", "Faery", "Ssaur", "Minotaur",
+}
+
+func identifyBits(flags [4]int, names []string) string {
+	result := ""
+	for word, flag := range flags {
+		bits := identifyFlagWord(flag)
+		for bit := 0; bits != 0; bit++ {
+			if bits&1 != 0 {
+				index := word*32 + bit
+				if index < len(names) && names[index] != "" {
+					result += names[index] + " "
+				} else {
+					result += "UNDEFINED "
+				}
+			}
+			bits >>= 1
+		}
+	}
+	if result == "" {
+		return "NOBITS "
+	}
+	return result
+}
+
+func identifyFlagWord(flag int) uint32 {
+	if flag < 0 || uint64(flag) > uint64(^uint32(0)) {
+		return 0
+	}
+	return uint32(flag)
+}
+
+func identifyItemTypeName(itemType int) string {
+	if itemType >= 0 && itemType < len(identifyItemTypes) {
+		return identifyItemTypes[itemType]
+	}
+	return "UNDEFINED"
+}
+
+func identifySpellName(spellNum int) string {
+	name := SpellRawName(spellNum)
+	if name == "" {
+		return "UNDEFINED"
+	}
+	return name
+}
+
+func identifyAffectedBitName(bit int) string {
+	if bit >= 0 && bit < len(identifyAffectedBitNames) {
+		return identifyAffectedBitNames[bit]
+	}
+	return "UNDEFINED"
+}
+
+func identifyApplyTypeName(location int) string {
+	if location >= 0 && location < len(identifyApplyTypes) {
+		return identifyApplyTypes[location]
+	}
+	return "UNDEFINED"
+}
+
+func identifyMobRaceName(race int) string {
+	if race >= 0 && race < len(identifyMobRaces) {
+		return identifyMobRaces[race]
+	}
+	return "UNDEFINED"
+}
+
+func pluralS(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }
 
 func castIdentifyCharacter(level int, ch, cvict interface{}) {
@@ -1949,15 +2438,6 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 // Interfaces for room transfer spells.
 type (
 	roomGetter2 interface{ GetRoomVNum() int }
-	fighter2    interface{ IsFighting() bool }
-	hometowner  interface{ GetHometown() int }
-
-	worldTransfer interface {
-		PlayerTransfer(ch interface{}, toRoomVNum int) error
-		MobTransfer(m interface{}, toRoomVNum int) error
-		GetRoomInWorld(vnum int) interface{ HasFlag(bit int) bool }
-		GetRoomCount() int
-	}
 
 	// grouper for are_grouped checks
 	grouper interface {
@@ -2039,73 +2519,44 @@ func areGrouped(ch, victim interface{}) bool {
 func castWordOfRecall(level int, ch, cvict, world interface{}) {
 	_ = level
 
-	// Only works on player victims
+	// C spell_recall (spells.c:124-165): NPC or missing victims return
+	// silently; every gate byte, the hometown transfer, and the room-look
+	// landing live in the world adapter (game.ExecuteWordOfRecall) — the
+	// spells package cannot import game. No invented failure text here.
 	type npcChecker interface{ IsNPC() bool }
-	if v, ok := cvict.(npcChecker); ok && v.IsNPC() {
-		return
-	}
 	if cvict == nil {
 		return
 	}
-
-	w, ok := world.(worldTransfer)
-	if !ok {
-		sendToCaster(ch, "Recall failed: world interface not available.\r\n")
+	if v, ok := cvict.(npcChecker); ok && v.IsNPC() {
 		return
 	}
-
-	// Check BFR flag on caster's room and victim's room
-	chRoom := ch.(roomGetter2).GetRoomVNum()
-	chRoomData := w.GetRoomInWorld(chRoom)
-	if chRoomData != nil && chRoomData.HasFlag(RoomBFR) {
-		sendToCaster(ch, "Your magic ebbs and dissolves as you lose your concentration.\r\n")
-		return
+	if w, ok := world.(interface {
+		ExecuteWordOfRecall(ch, victim interface{})
+	}); ok {
+		w.ExecuteWordOfRecall(ch, cvict)
 	}
-	victRoom := cvict.(roomGetter2).GetRoomVNum()
-	victRoomData := w.GetRoomInWorld(victRoom)
-	if victRoomData != nil && victRoomData.HasFlag(RoomBFR) {
-		sendToVictim(cvict, "Your magic ebbs and dissolves as you lose your concentration.\r\n")
-		return
-	}
-
-	// Can't recall while fighting
-	if f, ok := ch.(fighter2); ok && f.IsFighting() {
-		sendToCaster(ch, "Your concentration is broken by your fighting!\r\n")
-		return
-	}
-
-	// Determine hometown room
-	var destRoom int
-	if ht, ok := cvict.(hometowner); ok {
-		switch ht.GetHometown() {
-		case 1:
-			destRoom = KiroshiStartRoom
-		case 3:
-			destRoom = AlaozarStartRoom
-		default:
-			destRoom = MortalStartRoom
-		}
-	} else {
-		destRoom = MortalStartRoom
-	}
-
-	// Transfer the victim
-	sendToVictim(cvict, "You feel a brief tingling sensation...\r\n")
-	if err := w.PlayerTransfer(cvict, destRoom); err != nil {
-		sendToCaster(ch, fmt.Sprintf("Recall failed: %s\r\n", err))
-		return
-	}
-
-	sendToVictim(cvict, "You have a strange dream about falling..\r\n")
 }
 
 // spell_teleport ports src/spells.c spell_teleport (lines 168–217).
-// Random room teleport. Self-only for PCs. NPCs get saving throw.
+// Random room teleport. Self-only for PCs. Different NPC victims get a saving
+// throw; C's self-NPC teleporter vehicle does not.
 // Can't use in peaceful rooms. Avoids PRIVATE rooms.
 func castTeleport(level int, ch, cvict, world interface{}) {
 	_ = level
 
-	w, ok := world.(worldTransfer)
+	type teleportWorld interface {
+		GetRoomInWorld(vnum int) *parser.Room
+		GetRoomCount() int
+	}
+	w, ok := world.(teleportWorld)
+	if !ok {
+		sendToCaster(ch, "Teleport failed: world interface not available.\r\n")
+		return
+	}
+	type characterTransferer interface {
+		CharTransfer(charName string, isMob bool, toRoomVNum int) error
+	}
+	transferer, ok := world.(characterTransferer)
 	if !ok {
 		sendToCaster(ch, "Teleport failed: world interface not available.\r\n")
 		return
@@ -2136,8 +2587,10 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	// NPCs get a saving throw
-	if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
+	// NPC victims other than the caster get a saving throw. C's teleporter
+	// special passes the same NPC as caster and victim, so that path skips this
+	// branch (src/spells.c:191-198).
+	if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() && !selfTarget(ch, cvict) {
 		if magSavingThrow(cvict, int(SaveSpell)) {
 			sendToCaster(ch, "The magic words fail to form properly.\r\n")
 			return
@@ -2146,30 +2599,53 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 
 	// Pick a random room, avoiding PRIVATE
 	roomCount := w.GetRoomCount()
-	for attempts := 0; attempts < 100; attempts++ {
+	if roomCount <= 0 {
+		return
+	}
+	type roomIndexer interface {
+		GetRoomVNumAtIndex(index int) (int, bool)
+	}
+	indexedWorld, hasRoomIndex := w.(roomIndexer)
+	for {
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		toRoom := dprng.Number(0, roomCount-1)
+		roomIndex := dprng.Number(0, roomCount-1)
+		toRoom := roomIndex
+		if hasRoomIndex {
+			var found bool
+			toRoom, found = indexedWorld.GetRoomVNumAtIndex(roomIndex)
+			if !found {
+				continue
+			}
+		}
 		roomData := w.GetRoomInWorld(toRoom)
 		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
-			sendToCaster(ch, "The world around you turns black and you suddenly find yourself..\r\n")
 			sendToVictim(cvict, "The world around you turns black and you suddenly find yourself..\r\n")
+			sendAffectRoom(cvict, nil, "$n slowly fades out of existence and is gone.", world)
 
-			// Transfer — use CharTransfer via appropriate path
-			if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() {
-				if err := w.MobTransfer(cvict, toRoom); err != nil {
-					slog.Error("MobTransfer failed", "error", err)
-				}
-			} else {
-				if err := w.PlayerTransfer(cvict, toRoom); err != nil {
-					slog.Error("PlayerTransfer failed", "error", err)
-				}
+			// The game World exposes typed PlayerTransfer/MobTransfer methods.
+			// CharTransfer is the common interface bridge needed here because
+			// spells cannot import pkg/game without creating an import cycle.
+			victName, ok := cvict.(interface{ GetName() string })
+			if !ok {
+				return
+			}
+			isMob := false
+			if vNPC, ok := cvict.(npcChecker); ok {
+				isMob = vNPC.IsNPC()
+			}
+			if err := transferer.CharTransfer(victName.GetName(), isMob, toRoom); err != nil {
+				slog.Error("CharTransfer failed", "error", err)
+			}
+			sendAffectRoom(cvict, nil, "$n slowly fades into existence.", world)
+			// C calls look_at_room(victim, 0) after the destination act. The
+			// game adapter owns the player-facing room renderer because spells
+			// cannot import pkg/game without creating a cycle.
+			if looker, ok := world.(interface{ LookAtRoomForSpell(victim interface{}) }); ok {
+				looker.LookAtRoomForSpell(cvict)
 			}
 			return
 		}
 	}
-
-	sendToCaster(ch, "The magic fails to find a destination.\r\n")
 }
 
 // castMeteorSwarm ports src/spells.c spell_meteor_swarm (lines 1088-1133).
@@ -2378,8 +2854,10 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	// Saving throw
-	if victIsNPC && magSavingThrow(cvict, int(SaveParalysis)) {
+	// C spell_charm checks the victim's saving throw for both NPCs and PCs
+	// (spells.c:430-444). A PC victim is only gated by the caster's outlaw flag;
+	// an outlaw can establish the same master relation that do_hit later tests.
+	if magSavingThrow(cvict, int(SaveParalysis)) {
 		sendToCaster(ch, "Your victim resists!\r\n")
 		return
 	}
@@ -2396,9 +2874,12 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	// No charming PCs
-	if !victIsNPC {
-		sendToCaster(ch, "You can't charm other players!\r\n")
+	if !victIsNPC && !hasOutlawFlag(ch) {
+		// C's text contains the original typo: "in not an Outlaw".
+		sendToCaster(ch, "Your power fails to effect them because you are not an Outlaw!\r\n")
+		if caster, ok := ch.(namer); ok {
+			sendToVictim(cvict, fmt.Sprintf("%s tried to control you but failed because %s in not an Outlaw!\r\n", caster.GetName(), caster.GetName()))
+		}
 		return
 	}
 
@@ -2431,7 +2912,7 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	sendToCaster(ch, "They are now your loyal servant.\r\n")
+	sendToVictim(cvict, fmt.Sprintf("Isn't %s just such a nice fellow?\r\n", chName))
 }
 
 // castSummon ports src/spells.c spell_summon (lines 220-355).

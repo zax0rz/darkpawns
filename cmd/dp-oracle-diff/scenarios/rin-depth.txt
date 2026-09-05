@@ -1,0 +1,81 @@
+# C-first vehicle for the rin command (src/interpreter.c:660;
+# src/new_cmds.c:1500-1739). The empty-player fixture makes Rinactor the
+# first-player Implementor, and the peer exposes the meditation room act and
+# the second-use lockout. Rin's skillset entry also reaches the C catalog/key
+# boundary used by the shared Kuji Kiri handler.
+#
+# depth-case: rin.success-actor-and-room
+# depth-case: rin.success-lockout
+# depth-case: rin.skill-slot
+# depth-case: rin.argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rinactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rinactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Rinpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Rinpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Rinpeer 8162
+skillset Rinactor 'kuji-kiri rin' 100
+
+[probe]
+rin ignored trailing words
+rin

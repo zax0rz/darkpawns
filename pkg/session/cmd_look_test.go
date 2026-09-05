@@ -259,13 +259,14 @@ func TestLook_DarkRoom(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TestLook_DarkRoomWithLight
+// TestLook_DarkRoomWithHolyLight
 // ---------------------------------------------------------------------------
 
-func TestLook_DarkRoomWithLight(t *testing.T) {
+func TestLook_DarkRoomWithHolyLight(t *testing.T) {
 	m := makeLookTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1002, true) // dark room
-	s.player.SetLevel(31)                           // immortal → can see in dark
+	s.player.SetLevel(31)
+	s.player.SetHolyLight(true) // C CAN_SEE_IN_DARK: PRF_HOLYLIGHT
 
 	if err := cmdLook(s, nil); err != nil {
 		t.Fatalf("cmdLook returned error: %v", err)

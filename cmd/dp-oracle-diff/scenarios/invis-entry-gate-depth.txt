@@ -1,0 +1,47 @@
+# C-first entry-gate vehicle for do_invis (src/interpreter.c:519;
+# src/act.wizard.c:1663-1688). The first disposable player is Implementor,
+# then the same command is issued after the wizard lowers the actor below
+# LVL_IMMORT. The final command proves the dispatcher gate without relying on
+# the handler's internal NPC guard.
+#
+# depth-case: invis.entry-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Invgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Invgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Invgate level 30
+~dpclock pulse 20
+
+[probe]
+invis

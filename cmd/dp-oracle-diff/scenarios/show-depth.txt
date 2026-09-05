@@ -1,0 +1,73 @@
+# C-first do_show vehicle (src/interpreter.c:694; src/act.wizard.c:2234-2630).
+# The empty-players fixture crowns the first character at LVL_IMPL, allowing
+# the real LVL_IMMORT command and all visible field gates to be exercised.
+
+# depth-case: show.no-argument
+# depth-case: show.unknown-option
+# depth-case: show.prefix-zone-invalid
+# depth-case: show.player-no-name
+# depth-case: show.player-missing
+# depth-case: show.rent-no-name
+# depth-case: show.rent-missing
+# depth-case: show.stats
+# depth-case: show.errors
+# depth-case: show.death
+# depth-case: show.godrooms
+# depth-case: show.tattoos
+# depth-case: show.aggr
+# depth-case: show.reagents
+# depth-case: show.hooks-no-zone
+# depth-case: show.hooks-invalid-zone
+# depth-case: show.neutral
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Showdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Showdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show
+show nonsense
+show z 999999
+show player
+show player Nobody
+show rent
+show rent Nobody
+show stats
+show errors
+show death
+show godrooms
+show tattoos
+show aggr
+show reagents
+show hooks
+show hooks 999999
+show neutral

@@ -1,0 +1,98 @@
+# depth-case: gen-tog.brief
+# depth-case: gen-tog.toggle-matrix
+# depth-case: gen-tog.compact
+# depth-case: gen-tog.notell
+# depth-case: gen-tog.noauction
+# depth-case: gen-tog.noshout
+# depth-case: gen-tog.nogossip
+# depth-case: gen-tog.nograts
+# depth-case: gen-tog.nowiz
+# depth-case: gen-tog.immortal-preferences
+# depth-case: gen-tog.quest
+# depth-case: gen-tog.roomflags
+# depth-case: gen-tog.norepeat
+# depth-case: gen-tog.holylight
+# depth-case: gen-tog.nonewbie
+# depth-case: gen-tog.nobroadcast
+# depth-case: gen-tog.ident
+# depth-case: gen-tog.slowns
+# depth-case: gen-tog.noctell
+# depth-case: gen-tog.clan-gate
+# depth-case: gen-tog.nosummon
+# depth-case: gen-tog.argument-ignored
+# C-first vehicle for act.other.c:1142-1273. empty-players makes the primary
+# Implementor so every level-gated command, including ident and slowns, reaches
+# do_gen_tog. Each normal toggle is exercised in both directions; noctell is
+# the clanless early-return branch, and nosummon is last because C applies a
+# two-round WAIT_STATE.
+
+[fixture]
+quiet-mobs
+empty-players
+
+[setup:oracle]
+Gentogdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gentogdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+brief ignored trailing words
+brief
+compact
+compact
+notell
+notell
+noauction
+noauction
+noshout
+noshout
+nogossip
+nogossip
+nograts
+nograts
+nowiz
+nowiz
+quest
+quest
+roomflags
+roomflags
+norepeat
+norepeat
+holylight
+holylight
+nonewbie
+nonewbie
+nobroadcast
+nobroadcast
+ident
+ident
+slowns
+slowns
+noctell
+nosummon
+~dpclock pulse 20
+~dpclock pulse 20

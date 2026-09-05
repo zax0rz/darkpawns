@@ -1,0 +1,37 @@
+# depth-case: wear.fill-word-parse
+# depth-case: wield.fill-word-parse
+# depth-case: remove.fill-word-parse
+[fixture]
+quiet-mobs
+[setup:oracle]
+Eqfill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Eqfill
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+wield the sword
+remove the sword
+wear THE tunic
+remove tunic

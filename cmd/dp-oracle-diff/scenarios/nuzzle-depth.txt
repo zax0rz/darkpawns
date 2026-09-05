@@ -1,0 +1,120 @@
+# C-first nuzzle/do_action target-social vehicle (src/interpreter.c:584;
+# src/act.social.c:102-151; lib/misc/socials:540-548). The authored record
+# has hide 1 and POS_RESTING victim minimum, so player, NPC, self,
+# missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: nuzzle.no-argument
+# depth-case: nuzzle.target-success
+# depth-case: nuzzle.target-audience
+# depth-case: nuzzle.argument-first-token
+# depth-case: nuzzle.mob-target
+# depth-case: nuzzle.self-target
+# depth-case: nuzzle.target-not-found
+# depth-case: nuzzle.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Nuzzleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nuzzleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Nuzzleobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Nuzzleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Nuzzletarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Nuzzletarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nuzzleobserver 8162
+teleport Nuzzletarget 8162
+
+[probe]
+nuzzle
+nuzzle Nuzzletarget trailing words are ignored
+nuzzle Nuzzletarget
+nuzzle trainee
+nuzzle Nuzzleactor
+nuzzle Nobody
+force Nuzzletarget sleep
+nuzzle Nuzzletarget

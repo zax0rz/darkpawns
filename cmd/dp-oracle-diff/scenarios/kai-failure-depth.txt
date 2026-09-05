@@ -1,0 +1,80 @@
+# C-first Kai failure vehicle (src/interpreter.c:527;
+# src/new_cmds.c:1500-1739). Skill 1 reaches the failure arm; after changing
+# the skill to 100, the failed Kai's APPLY_DAMROLL AFF_KUJI_KIRI record still
+# blocks the retry because Kai's second default record is APPLY_AC and does
+# not replace it.
+#
+# depth-case: kai.failure-actor-and-room
+# depth-case: kai.failure-lockout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Kaifailactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kaifailactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Kaifailpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Kaifailpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Kaifailpeer 8162
+skillset Kaifailactor 'kuji-kiri kai' 1
+
+[probe]
+kai
+skillset Kaifailactor 'kuji-kiri kai' 100
+kai

@@ -1,0 +1,115 @@
+# C-first do_action vehicle for nod (src/interpreter.c:568;
+# src/act.social.c:102-151; lib/misc/socials:1044-1051). The actor and two
+# peers expose the authored no-argument, target, self, and missing-target
+# branches. The fill-word probe proves C one_argument consumes the first
+# non-fill token and ignores trailing words.
+
+# depth-case: nod.no-argument
+# depth-case: nod.target-success
+# depth-case: nod.target-audience
+# depth-case: nod.argument-first-token
+# depth-case: nod.self-target
+# depth-case: nod.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Nodactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nodactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Nodtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Nodtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Nodwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Nodwatch
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nodtarget 8162
+teleport Nodwatch 8162
+
+[probe]
+nod
+nod Nodtarget
+nod the Nodtarget trailing words are ignored
+nod Nodactor
+nod Nobody

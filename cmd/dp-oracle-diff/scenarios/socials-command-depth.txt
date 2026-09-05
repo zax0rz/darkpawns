@@ -1,0 +1,127 @@
+# C-first socials listing vehicle (src/interpreter.c:725;
+# src/act.informative.c:2633-2675). The actor, same-level peer, promoted
+# higher-level peer, and disposable NPC expose do_commands' target gates;
+# repeated pager advances keep the complete listing in the compared stream.
+
+# depth-case: socials.no-argument
+# depth-case: socials.target-self
+# depth-case: socials.target-peer
+# depth-case: socials.target-first-token
+# depth-case: socials.target-higher-level
+# depth-case: socials.target-not-found
+# depth-case: socials.target-npc
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Socialsactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Socialsactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Socialspeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Socialspeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:higher]
+Socialshigher
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:higher]
+Socialshigher
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Socialspeer 8162
+teleport Socialshigher 8162
+set Socialshigher level 2
+set Socialsactor level 1
+
+[probe]
+socials
+<ENTER>
+socials Socialsactor
+<ENTER>
+socials Socialspeer
+<ENTER>
+socials Socialspeer trailing words are ignored
+<ENTER>
+socials Socialshigher
+<ENTER>
+socials Nobody
+<ENTER>
+socials trainee
+<ENTER>

@@ -1,4 +1,5 @@
 # Combat skill OPENER — HEADBUTT, granted via the God/skillset fixture.
+# depth-case: headbutt.opener-outcome
 #
 # Mirrors combat-bash-opener's full skill-gate stack:
 #   - empty-players crowns the PRIMARY as Implementor.

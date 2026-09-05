@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -34,15 +35,16 @@ func newTestPlayer(name string) *game.Player {
 // ----- PlayerStore -----
 
 func TestSQLiteBackend_PlayerRoundTrip(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
 	player := newTestPlayer("TestHero")
-	if err := backend.Save(player); err != nil {
+	if err := backend.Save(ctx, player); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	loaded, err := backend.Load("TestHero")
+	loaded, err := backend.Load(ctx, "TestHero")
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -62,6 +64,7 @@ func TestSQLiteBackend_PlayerRoundTrip(t *testing.T) {
 }
 
 func TestSQLiteBackend_PlayerSaveUpsert(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
@@ -69,7 +72,7 @@ func TestSQLiteBackend_PlayerSaveUpsert(t *testing.T) {
 	p1 := game.NewPlayer(1, "Dup", 3001)
 	p1.Level = 1
 	p1.Gold = 10
-	if err := backend.Save(p1); err != nil {
+	if err := backend.Save(ctx, p1); err != nil {
 		t.Fatalf("Save #1: %v", err)
 	}
 
@@ -77,11 +80,11 @@ func TestSQLiteBackend_PlayerSaveUpsert(t *testing.T) {
 	p2 := game.NewPlayer(1, "Dup", 3001)
 	p2.Level = 10
 	p2.Gold = 999
-	if err := backend.Save(p2); err != nil {
+	if err := backend.Save(ctx, p2); err != nil {
 		t.Fatalf("Save #2: %v", err)
 	}
 
-	loaded, err := backend.Load("Dup")
+	loaded, err := backend.Load(ctx, "Dup")
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -93,7 +96,7 @@ func TestSQLiteBackend_PlayerSaveUpsert(t *testing.T) {
 	}
 
 	// List should have exactly one entry.
-	names, err := backend.List()
+	names, err := backend.List(ctx)
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -103,20 +106,22 @@ func TestSQLiteBackend_PlayerSaveUpsert(t *testing.T) {
 }
 
 func TestSQLiteBackend_LoadNotFound(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
-	_, err := backend.Load("Nonexistent")
+	_, err := backend.Load(ctx, "Nonexistent")
 	if err == nil {
 		t.Fatal("Load of nonexistent player should return an error")
 	}
 }
 
 func TestSQLiteBackend_Exists(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
-	exists, err := backend.Exists("Ghost")
+	exists, err := backend.Exists(ctx, "Ghost")
 	if err != nil {
 		t.Fatalf("Exists on missing player: %v", err)
 	}
@@ -124,11 +129,11 @@ func TestSQLiteBackend_Exists(t *testing.T) {
 		t.Error("Exists should be false for a player that was never saved")
 	}
 
-	if err := backend.Save(game.NewPlayer(1, "Ghost", 3001)); err != nil {
+	if err := backend.Save(ctx, game.NewPlayer(1, "Ghost", 3001)); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	exists, err = backend.Exists("Ghost")
+	exists, err = backend.Exists(ctx, "Ghost")
 	if err != nil {
 		t.Fatalf("Exists after save: %v", err)
 	}
@@ -138,34 +143,36 @@ func TestSQLiteBackend_Exists(t *testing.T) {
 }
 
 func TestSQLiteBackend_Delete(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
-	if err := backend.Save(game.NewPlayer(1, "ToDelete", 3001)); err != nil {
+	if err := backend.Save(ctx, game.NewPlayer(1, "ToDelete", 3001)); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	if err := backend.Delete("ToDelete"); err != nil {
+	if err := backend.Delete(ctx, "ToDelete"); err != nil {
 		t.Fatalf("Delete: %v", err)
 	}
 
-	exists, _ := backend.Exists("ToDelete")
+	exists, _ := backend.Exists(ctx, "ToDelete")
 	if exists {
 		t.Error("player should not exist after Delete")
 	}
 
 	// Deleting a nonexistent player should not error (idempotent).
-	if err := backend.Delete("ToDelete"); err != nil {
+	if err := backend.Delete(ctx, "ToDelete"); err != nil {
 		t.Errorf("Delete of nonexistent player should be idempotent, got: %v", err)
 	}
 }
 
 func TestSQLiteBackend_List(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
 	// Empty list initially.
-	names, err := backend.List()
+	names, err := backend.List(ctx)
 	if err != nil {
 		t.Fatalf("List (empty): %v", err)
 	}
@@ -174,12 +181,12 @@ func TestSQLiteBackend_List(t *testing.T) {
 	}
 
 	for i, name := range []string{"Charlie", "Alice", "Bob"} {
-		if err := backend.Save(game.NewPlayer(i+1, name, 3001)); err != nil {
+		if err := backend.Save(ctx, game.NewPlayer(i+1, name, 3001)); err != nil {
 			t.Fatalf("Save %s: %v", name, err)
 		}
 	}
 
-	names, err = backend.List()
+	names, err = backend.List(ctx)
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -198,6 +205,7 @@ func TestSQLiteBackend_List(t *testing.T) {
 // ----- WorldStore -----
 
 func TestSQLiteBackend_WorldRoundTrip(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
@@ -206,7 +214,7 @@ func TestSQLiteBackend_WorldRoundTrip(t *testing.T) {
 		t.Fatalf("NewWorld: %v", err)
 	}
 
-	if err := backend.SaveWorld(world); err != nil {
+	if err := backend.SaveWorld(ctx, world); err != nil {
 		t.Fatalf("SaveWorld: %v", err)
 	}
 
@@ -215,12 +223,13 @@ func TestSQLiteBackend_WorldRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewWorld #2: %v", err)
 	}
-	if err := backend.LoadWorld(world2); err != nil {
+	if err := backend.LoadWorld(ctx, world2); err != nil {
 		t.Fatalf("LoadWorld: %v", err)
 	}
 }
 
 func TestSQLiteBackend_LoadWorldEmpty(t *testing.T) {
+	ctx := t.Context()
 	backend, cleanup := newTestBackend(t)
 	defer cleanup()
 
@@ -230,7 +239,42 @@ func TestSQLiteBackend_LoadWorldEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
 	}
-	if err := backend.LoadWorld(world); err != nil {
+	if err := backend.LoadWorld(ctx, world); err != nil {
 		t.Errorf("LoadWorld on empty backend should return nil, got: %v", err)
+	}
+}
+
+func TestSQLiteBackend_CancelledContextAborts(t *testing.T) {
+	backend, cleanup := newTestBackend(t)
+	defer cleanup()
+	ctx := t.Context()
+
+	if err := backend.Save(ctx, game.NewPlayer(1, "Doomed", 3001)); err != nil {
+		t.Fatalf("setup save: %v", err)
+	}
+
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel() // already expired
+
+	if err := backend.Save(cancelled, game.NewPlayer(2, "Never", 3001)); err == nil {
+		t.Fatal("Save with cancelled context should fail")
+	}
+	if _, err := backend.Load(cancelled, "Doomed"); err == nil {
+		t.Fatal("Load with cancelled context should fail")
+	}
+	if _, err := backend.List(cancelled); err == nil {
+		t.Fatal("List with cancelled context should fail")
+	}
+	if err := backend.Delete(cancelled, "Doomed"); err == nil {
+		t.Fatal("Delete with cancelled context should fail")
+	}
+
+	// The cancelled calls must not have taken effect.
+	exists, err := backend.Exists(ctx, "Never")
+	if err != nil {
+		t.Fatalf("exists check: %v", err)
+	}
+	if exists {
+		t.Fatal("player from cancelled Save should not exist")
 	}
 }

@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_ps	imotd	imotd.entry-gate	D1	command	unit-green	TestImotdRegistrationUsesCEntryGate	interpreter.c:513; act.informative.c:2117-2158	The C row requires LVL_IMMORT and POS_DEAD; the focused test pins both the authoritative gate and the registered Go entry.
+do_gen_ps	imotd	imotd.mortal-gate	D1	command	oracle-green	imotd-gate-depth	interpreter.c:513; interpreter.c:910-947	A level-30 player receives C's Huh?!? before do_gen_ps and before any immortal MOTD bytes are paged.
+do_gen_ps	imotd	imotd.static-page	D3	audience	oracle-green-multiseed	imotd-depth@1,2,3,5,8	act.informative.c:2117-2158; db.c:319; db.h:53; lib/text/imotd	An immortal reaches SCMD_IMOTD, which passes the boot-cached fixed text through page_string; the authored file fits one page and emits exact bytes without a pager prompt.
+do_gen_ps	imotd	imotd.arguments-ignored	D2	command	oracle-green-multiseed	imotd-depth@1,2,3,5,8	act.informative.c:2155-2158	The SCMD_IMOTD branch does not inspect its command argument, so trailing words produce the same static page.

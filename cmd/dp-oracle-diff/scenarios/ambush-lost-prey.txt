@@ -1,0 +1,49 @@
+# depth-case: ambush.lost-prey
+# The event is planned in the origin room, then the actor leaves before the
+# PULSE_VIOLENCE*2 callback. No roll or damage is reachable after the room
+# identity check in act.offensive.c:1412-1417.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 north 8161 0
+spawn-mob 16306 1 8105 80
+
+[setup:oracle]
+Ambushlost
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ambushlost
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Ambushlost ambush 100
+ambush green
+goto 8161
+
+[probe]
+~dpclock pulse 20
+~dpclock pulse 20

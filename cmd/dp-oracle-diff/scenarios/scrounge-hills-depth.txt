@@ -1,0 +1,75 @@
+# C-first do_scrounge hills mapping (src/new_cmds2.c:93-97). Hills capture
+# object vnum 29 with the capture-and-kill wording and room search act.
+
+# depth-case: scrounge.hills-capture
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 4
+
+[setup:oracle]
+Scroungehills
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungehills
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungehillspeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungehillspeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungehillspeer 8105
+skillset Scroungehills 'scrounge' 100
+
+[probe]
+scrounge

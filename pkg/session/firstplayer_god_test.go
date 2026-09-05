@@ -101,9 +101,10 @@ func TestCompleteCharCreation_FreshGodThenMortal(t *testing.T) {
 	if mortal.Hunger == -1 {
 		t.Error("mortal hunger = -1, want a finite value (not God)")
 	}
-	// Mortal with hometown=0 (default) ends at MortalStartRoom after birth transition.
-	if got := mortal.GetRoom(); got != game.MortalStartRoom {
-		t.Errorf("mortal room = %d, want MortalStartRoom (%d)", got, game.MortalStartRoom)
+	// Mortal stays in the Burning Hut at creation; the pulse-time start_room
+	// dispatch relocates a hometown-0 mortal to MortalStartRoom.
+	if got := mortal.GetRoom(); got != game.NewbieStartRoom {
+		t.Errorf("mortal room = %d, want NewbieStartRoom (%d)", got, game.NewbieStartRoom)
 	}
 }
 

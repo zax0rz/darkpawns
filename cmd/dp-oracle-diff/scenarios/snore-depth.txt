@@ -1,0 +1,77 @@
+# C-first snore social vehicle (src/interpreter.c:721; src/act.social.c:102-151;
+# lib/misc/socials:779-783). Snore has no char_found message, so do_action
+# ignores typed arguments and always takes its no-argument actor/room branch.
+
+# depth-case: snore.no-argument
+# depth-case: snore.argument-ignored
+# depth-case: snore.room-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Snoreactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Snoreactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Snoreobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Snoreobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Snoreobserver 8162
+
+[probe]
+snore
+snore somebody trailing words are ignored

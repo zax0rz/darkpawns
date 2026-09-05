@@ -24,6 +24,21 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 - `src/` and `darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
 - When a byte is in question, **the C source wins** (R5e — verify the actual call path, don't trust a summary). A repeated failure indicts the rule, not the file: amend the rulebook + audit the whole class (R5b/R5c).
 
+### Fidelity Work: Start Here
+
+Before extending oracle coverage or declaring a command complete, read
+**[`docs/fidelity/DEPTH_TESTING.md`](docs/fidelity/DEPTH_TESTING.md)**. It explains the current
+breadth-to-depth strategy, proof levels, scenario fixtures, manifests, and the dated handoff frontier.
+Breadth coverage proves that a command can match once; it does **not** prove the port is complete.
+
+### Research Continuity
+
+Dark Pawns is also an open, ongoing research artifact. Before making paper-level
+claims or running a research-writing task, read **[`docs/research/README.md`](docs/research/README.md)**
+and update **[`docs/research/EVIDENCE_LEDGER.tsv`](docs/research/EVIDENCE_LEDGER.tsv)**. Treat cron and
+agent prose as field notes until its citations survive contact with the repository, oracle output,
+Git history, or another named primary artifact.
+
 ## Build & Verify
 
 ```bash
@@ -38,7 +53,7 @@ golangci-lint run ./... # Full lint (uses .golangci.yml)
 
 ## Project Overview
 
-Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~73K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
+Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
 
 ### Architecture
 
@@ -49,7 +64,7 @@ Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~73K li
 - `pkg/combat/` — Combat formulas and damage calculation
 - `pkg/spells/` — Spell system (saving throws, damage, affect spells)
 - `pkg/telnet/` — Telnet protocol handling
-- `pkg/db/` — SQLite persistence, narrative memory for AI agents
+- `pkg/db/` — PostgreSQL persistence, narrative memory for AI agents
 - `pkg/agent/` — AI agent hooks (BRENDA agent integration)
 - `pkg/session/memory_hooks.go` — Go→Python memory system bridge
 
@@ -112,3 +127,12 @@ This target automatically executes the complete, secure deployment sequence:
 2. Runs voice, content-inventory, and Astro build checks.
 3. Generates the Caddy permanent-redirect table.
 4. Syncs `website-astro/dist/` to the configured production document root. `DEPLOY_USER` and `DEPLOY_HOST` are required explicitly.
+
+**Always dry-run first and read the deletions.** The sync uses `--delete`, so anything production serves that your branch does not build is removed:
+
+```bash
+rsync -azn --delete --itemize-changes \
+  website-astro/dist/ root@192.168.1.121:/srv/hugo/ | grep '^\*deleting'
+```
+
+Only stale build artifacts should appear: superseded `_astro/*.css` hashes, Markdown twins for routes that no longer emit them, old `.bak` files. If a real page or image is listed, stop: its source is missing from the branch you are deploying. Commit the source and dry-run again rather than dropping `--delete`. This check caught a published blog post and its illustrations on 2026-09-04, whose only copy was untracked files in another worktree.

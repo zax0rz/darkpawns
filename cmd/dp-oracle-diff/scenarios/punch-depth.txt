@@ -1,0 +1,81 @@
+# C-first do_action social vehicle (src/interpreter.c:622;
+# src/act.social.c:102-151; lib/misc/socials:615-623). The punch record has
+# no victim-position gate and exposes no-argument, target trio, self-target,
+# and missing-target branches.
+
+# depth-case: punch.no-argument
+# depth-case: punch.target-trio
+# depth-case: punch.self-target
+# depth-case: punch.missing-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Punchslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Punchslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Punchpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Punchpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Punchpeer 8004
+
+[probe]
+punch
+punch Punchpeer
+punch self
+punch Nobody

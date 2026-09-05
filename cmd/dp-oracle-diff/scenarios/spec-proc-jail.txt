@@ -1,0 +1,44 @@
+# depth-case: room.jail-command-gate
+# C-first vehicle for the registered room SPECIAL(jail), assigned to room 8118
+# at src/spec_assign.c:609 and implemented at src/spec_procs2.c:1470-1493.
+# The command dispatcher calls room specials with a nonzero command index, so
+# C's first gate returns FALSE and the ordinary say handler owns this probe.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+JailGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+JailGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8118
+
+[probe]
+say release

@@ -73,7 +73,11 @@ func improveSkillMessage(ch *Player, skill string) string {
 	percent += newpercent
 	ch.SetSkill(skill, percent)
 	if newpercent == 3 {
-		return fmt.Sprintf("Your skill in %s improves.\r\n", skill)
+		displayName := skill
+		if skill == SkillFleshAlter {
+			displayName = "flesh alter"
+		}
+		return fmt.Sprintf("Your skill in %s improves.\r\n", displayName)
 	}
 	return ""
 }

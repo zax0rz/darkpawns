@@ -1,0 +1,111 @@
+# C-first pace/do_action self-only vehicle (src/interpreter.c:595;
+# src/act.social.c:102-151; lib/misc/socials:1227-1231). The authored record
+# has hide 0, POS_RESTING metadata, and no char_found field, so player target,
+# missing target, and self-named arguments all follow the no-argument branch.
+
+# depth-case: pace.no-argument
+# depth-case: pace.typed-target-ignored
+# depth-case: pace.missing-target-ignored
+# depth-case: pace.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Paceactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Paceactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Paceobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Paceobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Pacetarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Pacetarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Paceobserver 8162
+teleport Pacetarget 8162
+
+[probe]
+pace
+pace Pacetarget trailing words are ignored
+pace Nobody
+pace Paceactor

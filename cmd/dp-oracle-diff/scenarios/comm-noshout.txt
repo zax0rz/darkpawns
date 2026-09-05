@@ -1,0 +1,97 @@
+# depth-case: say.noshout
+# depth-case: tell.noshout
+# depth-case: whisper.noshout
+# depth-case: emote.noshout
+# depth-case: channels.sender-noshout
+# The PLR_NOSHOUT (squelch) gate arm of the comm family. Pattern per the
+# God-skillset warmup (combat-bash-opener #451): empty-players crowns the
+# PRIMARY as Implementor, and [warmup] — drained, not diffed — runs `mute
+# Muteon` on the God (do_wizutil SCMD_SQUELCH toggles PLR_NOSHOUT; the "mute"
+# command name is interpreter.c:559). The muted mortal then probes every
+# sender-side noshout gate:
+#   do_say     (act.comm.c:775-779)  "You cannot speak!"
+#   do_tell    (act.comm.c:917-918)  "You cannot tell anyone anything!"
+#   do_spec_comm (act.comm.c:981-985) "Sorry, you cannot do that."
+#   do_echo/EMOTE (act.wizard.c:135-141) "You try to express yourself but cannot!"
+# All four gates fire before any audience bytes, so the God (primary) and any
+# room listener must receive NOTHING (R4 absence). The tell target is the God
+# because C resolves the victim (NOPERSON) before the noshout gate.
+
+[fixture]
+empty-players
+quiet-mobs
+
+# PRIMARY = first player ⇒ God (runs the mute warmup).
+[setup:oracle]
+Squelchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Squelchgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# PEER = the muted mortal prober (ordinary L1 warrior, stays in the start room).
+[setup:oracle:muteon]
+Muteon
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# God squelches the mortal (toggles PLR_NOSHOUT on). Drained, not diffed.
+[warmup]
+mute Muteon
+
+[probe:muteon]
+say can anybody hear me
+tell Squelchgod let me talk
+whisper squelchgod psst
+emote waves desperately
+gossip blocked by squelch
+shout blocked by squelch
+auction blocked by squelch
+grats blocked by squelch
+holler blocked by squelch

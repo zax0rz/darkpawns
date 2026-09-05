@@ -6,15 +6,15 @@ func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) b
 	arg = skipSpaces(arg)
 
 	if checkStupid(ch) {
-		sendToChar(ch, "You are too stupid to communicate with language!\r\n")
+		ch.SendMessage("You are too stupid to communicate with language!\r\n")
 		return true
 	}
 	if ch.Flags&plrNoShout != 0 {
-		sendToChar(ch, "You cannot race-say!\r\n")
+		ch.SendMessage("You cannot race-say!\r\n")
 		return true
 	}
 	if arg == "" {
-		sendToChar(ch, "Yes, but WHAT do you want to say?\r\n")
+		ch.SendMessage("Yes, but WHAT do you want to say?\n\r")
 		return true
 	}
 
@@ -22,38 +22,42 @@ func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) b
 	var raceName string
 
 	switch ch.Race {
-	case raceDwarf, raceDeepDwarf:
-		translate = speakDwarven
-		raceName = "Dwarven"
-	case raceElf, raceSurfaceElf:
+	case RaceHuman:
+		translate = speakHuman
+		raceName = "Human"
+	case RaceElf:
 		translate = speakElven
 		raceName = "Elven"
-	case raceGnoll:
-		translate = speakGnoll
-		raceName = "Gnoll"
-	case raceDraconian:
-		translate = speakDraconian
-		raceName = "Draconian"
-	case raceGiantish:
-		translate = speakGiantish
-		raceName = "Giantish"
-	case raceUndead:
-		translate = speakDeadspeak
-		raceName = "Deadspeak"
-	case raceDrow, raceRakshasa:
+	case RaceDwarf:
+		translate = speakDwarven
+		raceName = "Dwarven"
+	case RaceKender:
+		translate = speakKender
+		raceName = "Kenderkin"
+	case RaceMinotaur:
+		translate = speakMinotaur
+		raceName = "Minotauran"
+	case RaceRakshasa:
 		translate = speakRakshasan
 		raceName = "Rakshasan"
+	case RaceSsaur:
+		translate = speakSsaur
+		raceName = "Ssauran"
 	default:
 		return true
 	}
 
 	translated := translate(arg)
 	verb := determineVerb(arg)
+	actorVerb := verb[:len(verb)-1]
 
 	// Send to others in the room.
 	verbMsg := fmt.Sprintf(" %s, ", verb)
 	for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
 		if p.Name == ch.Name {
+			continue
+		}
+		if p.GetPosition() <= posSleeping {
 			continue
 		}
 
@@ -67,10 +71,10 @@ func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	// Self-message.
-	if ch.Flags&prfNoRepeat == 0 {
-		ch.SendMessage(fmt.Sprintf("You%s'(In %s) %s'\r\n", verbMsg, raceName, arg))
+	if ch.Flags&(1<<PrfNoRepeat) == 0 {
+		ch.SendMessage(fmt.Sprintf("You %s, '(In %s) %s'\r\n", actorVerb, raceName, arg))
 	} else {
-		sendToChar(ch, "Ok.\r\n")
+		ch.SendMessage("Ok.\n\r")
 	}
 
 	return true

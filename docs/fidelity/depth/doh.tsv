@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	doh	doh.no-argument	D3	audience	oracle-green	doh-depth	interpreter.c:419; act.social.c:102-127; lib/misc/socials:1351	Self-only social emits the exact actor and room messages.
+do_action	doh	doh.typed-target-ignored	D2	audience	oracle-green	doh-depth	act.social.c:114-121; lib/misc/socials:1351	Because the C record has no char_found message, any typed target is ignored and the no-argument pair repeats.
+do_action	doh	doh.position-gate	D1	command	oracle-green	doh-depth	interpreter.c:419; comm.c:910-947	The table POS_RESTING gate rejects the sleeping actor with the canonical position text before do_action.
+do_action	doh	doh.wake-recovery	D3	audience	oracle-green	doh-depth	interpreter.c:419; act.movement.c:847-864; lib/misc/socials:1351	After wake returns the actor to an allowed position, the same self-only actor/room pair runs again.

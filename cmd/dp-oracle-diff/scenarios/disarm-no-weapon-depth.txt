@@ -1,0 +1,98 @@
+# C-first vehicle for do_disarm's equipped-weapon gate
+# (src/new_cmds2.c:218-221). Combat is opened against a player who removes
+# the authored sword before the probe, so the command reaches the exact
+# no-weapon act() branch.
+#
+# depth-case: disarm.no-weapon
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Disarmnoweaponactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Disarmnoweaponactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Disarmnoweaponvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+remove sword
+
+[setup:port:victim]
+Disarmnoweaponvictim
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+remove sword
+
+[warmup]
+goto 8105
+teleport Disarmnoweaponvictim 8105
+set Disarmnoweaponvictim level 11
+skillset Disarmnoweaponactor 'disarm' 100
+force Disarmnoweaponvictim hit Disarmnoweaponactor
+
+[probe]
+disarm nobody

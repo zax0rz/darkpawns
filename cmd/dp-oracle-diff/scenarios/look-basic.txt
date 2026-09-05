@@ -1,0 +1,52 @@
+# depth-case: look.room
+# depth-case: look.direction
+# depth-case: look.not-found
+# depth-case: look.read-no-arg
+# depth-case: look.lookin-no-arg
+# depth-case: look.lookin-not-found
+# depth-case: look.lookin-closed
+# depth-case: look.lookin-not-container
+# depth-case: look.at-target
+# depth-case: look.look-target
+# depth-case: look.read-target
+[fixture]
+quiet-mobs
+[setup:oracle]
+Looker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Looker
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+look
+look north
+look xyzzy
+read
+look in
+look in xyzzy
+look in pack
+look in sword
+look at pack
+look pack
+read pack

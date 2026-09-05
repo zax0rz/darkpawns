@@ -1,0 +1,127 @@
+# depth-case: rescue.roll-success-fail
+# The number(1,101) vs skill roll, both arms: rescuer (75 skill) rescues the
+# victim from the trainee. Fail: "You fail the rescue!" (rescuer only, no
+# state change). Success: "Banzai!  To the rescue..." + victim's "You are
+# rescued by $N, you are confused!" + room "$n heroically rescues $N!", the
+# fight redirect (rescuer takes over the fight) and WAIT_STATE(vict,
+# 2*PULSE_VIOLENCE). Probe runs as the rescuer peer; the victim peer's
+# setup ends with `kill trainee` so a live fight exists. The God grants
+# rescue 75 via warmup (drained). Multi-seed for the roll (R3).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Rescugod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rescugod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Victimxo
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[setup:port:victim]
+Victimxo
+y
+victimpass
+victimpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[setup:oracle:rescuer]
+Rescugar
+Y
+rescuepass
+rescuepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:rescuer]
+Rescugar
+y
+rescuepass
+rescuepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Rescugar 'rescue' 75
+
+[probe:rescuer]
+rescue victimxo
+~dpclock pulse 20
+~dpclock pulse 20

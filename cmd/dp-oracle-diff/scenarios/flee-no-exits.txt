@@ -1,0 +1,39 @@
+# depth-case: flee.six-invalid-attempts
+# With every exit removed, all six number(0, NUM_OF_DIRS-1) samples fail
+# CAN_GO and C reaches its terminal PANIC branch.
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+
+[setup:oracle]
+Fleenone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleenone
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+flee

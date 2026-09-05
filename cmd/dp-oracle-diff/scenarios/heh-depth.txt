@@ -1,0 +1,81 @@
+# C-first heh self-only social vehicle (src/interpreter.c:489;
+# act.social.c:102-121; lib/misc/socials:1381-1383). Because char_found is
+# absent, do_action ignores every typed argument and emits only the actor/room
+# pair.
+
+# depth-case: heh.no-argument
+# depth-case: heh.argument-ignored
+# depth-case: heh.missing-target-ignored
+# depth-case: heh.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hehactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hehactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hehobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hehobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hehobserver 8162
+
+[probe]
+heh
+heh Hehobserver trailing words are ignored
+heh Nobody
+heh Hehactor

@@ -1,0 +1,16 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_behead	behead	behead.no-arg	D1	command	oracle-green	circle-behead	interpreter.c:350; new_cmds.c:226-239	The standing no-argument path emits C's exact Behead who? line.
+do_behead	behead	behead.fighting	D1	command	unit-green	TestCmdBehead_Fighting	new_cmds.c:232-235	The POS_FIGHTING gate precedes the no-argument and object branches.
+do_behead	behead	behead.self	D1	command	unit-green	TestDoBehead_EntryAndPredicateBranches	new_cmds.c:240-244	A visible self target reaches C's exact self-mutilation refusal.
+do_behead	behead	behead.living-target	D1	command	unit-green	TestDoBehead_EntryAndPredicateBranches	new_cmds.c:245-248	A visible living target is rejected before room-object lookup.
+do_behead	behead	behead.target-missing	D2	command	unit-green	TestDoBehead_EntryAndPredicateBranches	new_cmds.c:249-253	A missing visible room object uses the argument after one_argument in C's exact refusal.
+do_behead	behead	behead.one-argument	D2	command	oracle-green	behead-object-depth	new_cmds.c:226; handler.c:1276-1300	Trailing words are ignored and the first object token resolves through the canonical visible-object matcher.
+do_behead	behead	behead.container-value-predicate	D2	command	oracle-green	behead-object-depth	new_cmds.c:254-262	C accepts an ITEM_CONTAINER with value[3] set even when its keywords do not contain corpse.
+do_behead	behead	behead.headless	D2	command	unit-green	TestDoBehead_EntryAndPredicateBranches	new_cmds.c:254-258	The case-sensitive headless keyword guard prevents a second beheading.
+do_behead	behead	behead.non-container	D2	command	unit-green	TestDoBehead_EntryAndPredicateBranches	new_cmds.c:259-262	A visible non-container reaches C's exact You can't behead that! branch.
+do_behead	behead	behead.bare-message	D3	command	oracle-green	behead-object-depth	new_cmds.c:265-290	A player bare-hand beheading matches actor and room audience bytes.
+do_behead	behead	behead.slash-message	D3	state	unit-green	TestDoBehead_SlashWeaponMessages	new_cmds.c:265-290	WEAR_WIELD value[3] == 3 selects the slash-specific actor and room messages.
+do_behead	behead	behead.room-audience	D3	command	oracle-green	behead-object-depth	new_cmds.c:265-290	The observer peer receives the room act while the actor receives only the actor act.
+do_behead	behead	behead.object-state	D4	state	oracle-green	behead-object-depth	new_cmds.c:292-353	Success creates the exact bloody head descriptions and vnum-17 beheaded-corpse room description.
+do_behead	behead	behead.content-transfer	D4	state	unit-green	TestDoBehead_ContainerValueSuccessAndTransformation	new_cmds.c:344-353	The original container's contents move into the replacement corpse before extraction.
+do_behead	behead	behead.replacement-state	D4	state	unit-green	TestDoBehead_ContainerValueSuccessAndTransformation	new_cmds.c:292-353	The head uses name head, the corpse appends headless beheaded, values/timer match C, and the original is extracted.

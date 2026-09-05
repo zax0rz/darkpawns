@@ -1,0 +1,8 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	purr	purr.entry-gate	D1	command	unit-green	TestPurrRegistrationUsesCEntryGate	interpreter.c:623; act.social.c:102-118; lib/misc/socials:625-628	The registered C row is POS_RESTING with no command minimum level; the focused test pins the gate and complete self-only social record metadata (R1/R2/R5e).
+do_action	purr	purr.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:623; comm.c:910-947	The shared POS_RESTING command rejection is already proven by the social position-gate vehicle (R5b/R5c).
+do_action	purr	purr.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before the self-only record path and is owned by the social boundary (R5b/R5c).
+do_action	purr	purr.no-argument	D3	audience	oracle-green-multiseed	purr-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:625-628	The self-only record emits its exact actor and visible room purring lines with no target (R1/R3/R5e).
+do_action	purr	purr.argument-ignored	D2	audience	oracle-green-multiseed	purr-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:625-628	Because char_found is absent, a named target and trailing words are ignored and repeat the no-argument pair (R1/R2/R3/R5e).
+do_action	purr	purr.self-argument-ignored	D2	audience	oracle-green-multiseed	purr-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:625-628	A self alias remains on the no-argument path rather than entering char_auto (R1/R2/R3/R5e).
+do_action	purr	purr.missing-argument-ignored	D2	audience	oracle-green-multiseed	purr-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:625-628	An unresolved target is likewise ignored because the C record has no char_found branch (R1/R2/R3/R5e).

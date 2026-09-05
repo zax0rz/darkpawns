@@ -51,13 +51,6 @@ func findSessionByName(m *Manager, name string) *Session {
 	return nil
 }
 
-// broadcastToRoomText sends a text message to all players in a given room.
-func broadcastToRoomText(s *Session, roomVNum int, msg string) {
-	if s.manager != nil && s.manager.world != nil {
-		s.manager.BroadcastToRoom(roomVNum, []byte(msg), "")
-	}
-}
-
 // ---------------------------------------------------------------------------
 // goto — teleport to any room (LVL_IMMORT)
 // ---------------------------------------------------------------------------

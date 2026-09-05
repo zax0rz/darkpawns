@@ -34,7 +34,7 @@ func cmdQuiStub(s *Session) error {
 // at LVL_IMPL-1+ via command_gates.tsv; below that, resolution skips it (law 3)
 // and exact typing is gate-rejected, matching C's scan behavior.
 func cmdShutdowStub(s *Session) error {
-	s.Send("If you want to shut something down, say so!")
+	s.Send("If you want to shut something down, say so!\r\n")
 	return nil
 }
 
@@ -52,7 +52,7 @@ func execQuit(s *Session, reallyQuit bool) error {
 	room := s.player.GetRoom()
 	// C: act("$n has left the game.", TRUE, ch, 0, 0, TO_ROOM) iff !GET_INVIS_LEV(ch).
 	s.leaveBroadcastHandled = true
-	if s.player.GetFlags()&game.PLR_INVISIBLE == 0 {
+	if s.player.GetInvisLevel() == 0 {
 		msg, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
 			Data: EventData{

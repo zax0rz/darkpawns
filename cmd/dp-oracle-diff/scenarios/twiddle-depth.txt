@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:788;
+# src/act.social.c:102-127; lib/misc/socials:959-962). The authored twiddle
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: twiddle.no-argument
+# depth-case: twiddle.typed-target-ignored
+# depth-case: twiddle.missing-target-ignored
+# depth-case: twiddle.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Twiddleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Twiddleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Twiddlepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Twiddlepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Twiddlepeer 8162
+
+[probe]
+twiddle
+twiddle Twiddlepeer
+twiddle Nobody
+twiddle Twiddleactor

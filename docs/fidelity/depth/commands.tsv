@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_commands	commands	commands.no-argument	D5	command	oracle-green	commands-depth	interpreter.c:392; act.informative.c:2585-2675	No argument lists the mortal commands from the C cmd_info table in lexical order through the C pager.
+do_commands	commands	commands.target-self	D3	audience	oracle-green	commands-depth	act.informative.c:2633-2675	An explicit self target is accepted and uses the actor's level-filtered command list.
+do_commands	commands	commands.target-peer	D3	audience	oracle-green	commands-depth	act.informative.c:2633-2675	A visible same-level peer is named in the header and receives the peer's level-filtered listing.
+do_commands	commands	commands.target-not-found	D1	command	oracle-green	commands-depth	act.informative.c:2644-2648	A missing visible target uses the exact C Who-is-that response.

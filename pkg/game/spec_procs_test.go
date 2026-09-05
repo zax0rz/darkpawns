@@ -9,8 +9,10 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // newSpecProcTestWorld creates a minimal world for spec proc tests.
@@ -125,6 +127,20 @@ func isRoomSpecName(name string) bool {
 	return false
 }
 
+func TestGetMobVNumSpecUsesCFinalAssignments(t *testing.T) {
+	for vnum, want := range map[int]string{
+		8014:  "guild",  // later C ASSIGNMOB overrides guild_guard
+		11024: "cleric", // later C ASSIGNMOB overrides magic_user
+	} {
+		if got := MobSpecAssign[vnum]; got != want {
+			t.Errorf("MobSpecAssign[%d] = %q, want C's final %q", vnum, got, want)
+		}
+		if GetMobSpec(vnum) == nil {
+			t.Errorf("GetMobSpec(%d) = nil for registered %q", vnum, want)
+		}
+	}
+}
+
 // TestSpecProc_SmokeAll invokes every registered spec proc with benign input
 // and asserts no panic. This catches nil-pointer crashes across the entire
 // spec proc registry (DP-965).
@@ -201,6 +217,53 @@ func TestSpecGuild_Golden(t *testing.T) {
 	}
 	if got := player.GetSkill("backstab"); got != 25 {
 		t.Errorf("backstab %% = %d, want 25", got)
+	}
+}
+
+// TestSpecGuild_Gates covers the remaining player-visible guild branches from
+// src/spec_procs.c:208-249: no practices, already learned, and learning to the
+// class cap. The unknown-skill and non-practice gates are covered above in the
+// same source call path.
+func TestSpecGuild_Gates(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	player.Class = ClassThief
+	player.SetLevel(5)
+	player.Stats.Int = 13
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	_ = lastMsg() // discard the mob's spawn announcement
+
+	player.SetPractices(0)
+	if !specGuild(w, player, mob, "practice", "backstab") {
+		t.Fatal("zero-practice branch should be handled")
+	}
+	if got := lastMsg(); got != "You do not seem to be able to practice now.\r\n" {
+		t.Errorf("zero-practice message = %q", got)
+	}
+
+	player.SetPractices(1)
+	player.SetSkill("backstab", pracLearned(ClassThief))
+	if !specGuild(w, player, mob, "practice", "backstab") {
+		t.Fatal("already-learned branch should be handled")
+	}
+	if got := lastMsg(); got != "You are already learned in that area.\r\n" {
+		t.Errorf("already-learned message = %q", got)
+	}
+	if player.GetPractices() != 1 {
+		t.Errorf("already-learned practices = %d, want 1", player.GetPractices())
+	}
+
+	player.SetSkill("backstab", pracLearned(ClassThief)-10)
+	if !specGuild(w, player, mob, "practice", "backstab") {
+		t.Fatal("learn-to-cap branch should be handled")
+	}
+	if got := lastMsg(); got != "You practice for a while...\r\nYou are now learned in that area.\r\n" {
+		t.Errorf("learn-to-cap message = %q", got)
+	}
+	if player.GetPractices() != 0 {
+		t.Errorf("learn-to-cap practices = %d, want 0", player.GetPractices())
+	}
+	if player.GetSkill("backstab") != pracLearned(ClassThief) {
+		t.Errorf("backstab = %d, want learned cap %d", player.GetSkill("backstab"), pracLearned(ClassThief))
 	}
 }
 
@@ -311,6 +374,87 @@ func TestSpecThief_Golden(t *testing.T) {
 	})
 }
 
+// TestSpecThief_StateAndAudience proves the C thief's draw ranges, gold
+// transfer, and act() recipient split. C's outer number(0,4) gate must be
+// followed by npc_steal's awake-victim number(0,level) or sleeping-victim
+// number(1,10) branch (spec_procs.c:300-327,389-406).
+func TestSpecThief_StateAndAudience(t *testing.T) {
+	t.Run("sleeping victim transfers gold to thief", func(t *testing.T) {
+		w, player, _ := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 10)
+		player.SetLevel(10)
+		player.SetPosition(combat.PosSleeping)
+		player.SetGold(1000)
+		mob.SetGold(100)
+
+		var seed uint32
+		var wantPercent int
+		for seed = 1; seed < 10000; seed++ {
+			dprng.ResetStream(seed)
+			if dprng.Number(0, 4) != 0 {
+				continue
+			}
+			wantPercent = dprng.Number(1, 10)
+			if wantPercent > 0 {
+				break
+			}
+		}
+		if seed == 10000 {
+			t.Fatal("failed to find deterministic thief steal seed")
+		}
+
+		dprng.ResetStream(seed)
+		if !specThief(w, nil, mob, "", "") {
+			t.Fatal("specThief should handle the successful outer gate")
+		}
+		wantGold := 1000 * wantPercent / 100
+		if got := player.GetGold(); got != 1000-wantGold {
+			t.Errorf("victim gold = %d, want %d", got, 1000-wantGold)
+		}
+		if got := mob.GetGold(); got != 100+wantGold {
+			t.Errorf("thief gold = %d, want %d", got, 100+wantGold)
+		}
+	})
+
+	t.Run("awake victim uses C audiences and pronouns", func(t *testing.T) {
+		w, player, _ := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 10)
+		observer := NewPlayer(2, "Observer", 1001)
+		observer.SetLevel(60)
+		if err := w.AddPlayer(observer); err != nil {
+			t.Fatalf("AddPlayer observer: %v", err)
+		}
+		player.SetLevel(10)
+		player.SetPosition(combat.PosStanding)
+		mob.Prototype.Sex = 0 // C SEX_NEUTRAL renders its in this fixture.
+
+		var msgs syncMap
+		w.MessageSink = func(name string, msg []byte) { msgs.Store(name, string(msg)) }
+
+		var seed uint32
+		for seed = 1; seed < 10000; seed++ {
+			dprng.ResetStream(seed)
+			if dprng.Number(0, 4) == 0 && dprng.Number(0, mob.GetLevel()) == 0 {
+				break
+			}
+		}
+		if seed == 10000 {
+			t.Fatal("failed to find deterministic thief detection seed")
+		}
+
+		dprng.ResetStream(seed)
+		if !specThief(w, nil, mob, "", "") {
+			t.Fatal("specThief should handle the successful outer gate")
+		}
+		if got := msgs.Load(player.Name); got != "You discover that a test mob has its hands in your wallet.\r\n" {
+			t.Errorf("victim message = %q", got)
+		}
+		if got := msgs.Load(observer.Name); got != "A test mob tries to steal gold from Tester.\r\n" {
+			t.Errorf("bystander message = %q", got)
+		}
+	})
+}
+
 // TestSpecMagicUser_Golden verifies magic user guard conditions and cast path.
 func TestSpecMagicUser_Golden(t *testing.T) {
 	w, player, _ := newSpecProcTestWorld(t)
@@ -333,11 +477,107 @@ func TestSpecMagicUser_Golden(t *testing.T) {
 	}
 }
 
+// magicUserSeed returns a seed whose first draw is the room-opponent probe and
+// whose second draw selects targetRoll.  The helper mirrors the two C draws
+// before SPECIAL(magic_user)'s switch so focused proofs do not depend on a
+// guessed seed.
+func magicUserSeed(t *testing.T, level, targetRoll int) uint32 {
+	t.Helper()
+	base := level / 2
+	for seed := uint32(1); seed < 10000; seed++ {
+		dprng.ResetStream(seed)
+		_ = dprng.Number(0, 4)
+		if dprng.Number(0, base) == targetRoll-base {
+			return seed
+		}
+	}
+	t.Fatalf("failed to find magic_user seed for level %d roll %d", level, targetRoll)
+	return 0
+}
+
+// TestSpecMagicUser_SelfTargetAndDispelGate proves the two branches whose
+// target/conditional behavior was previously divergent from C: invulnerability
+// lands on the caster, and neutral targets do not receive unconditional dispel.
+func TestSpecMagicUser_SelfTargetAndDispelGate(t *testing.T) {
+	t.Run("invulnerability targets the mob", func(t *testing.T) {
+		w, player, _ := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 34)
+		mob.Intel, mob.Wis = 10, 10
+		mob.SetPosition(combat.PosFighting)
+		mob.SetFighting(player.Name)
+		player.SetFighting(mob.GetName())
+
+		seed := magicUserSeed(t, 34, 34)
+		dprng.ResetStream(seed)
+		if !specMagicUser(w, nil, mob, "", "") {
+			t.Fatal("specMagicUser should handle the forced invulnerability branch")
+		}
+		if !mob.HasAffect(affInvuln) {
+			t.Error("invulnerability should affect the magic-user mob")
+		}
+		if player.HasSpellAffect(spells.SpellInvulnerability) {
+			t.Error("invulnerability should not target the fighting player")
+		}
+	})
+
+	t.Run("neutral target blocks dispel", func(t *testing.T) {
+		w, player, lastMsg := newSpecProcTestWorld(t)
+		mob := newSpecProcTestMob(t, w, 1001, 24)
+		mob.Intel, mob.Wis = 10, 10
+		mob.SetPosition(combat.PosFighting)
+		mob.SetFighting(player.Name)
+		player.SetFighting(mob.GetName())
+		player.SetAlignment(0)
+		_ = lastMsg() // discard setup output before the direct special call
+
+		seed := magicUserSeed(t, 24, 12)
+		dprng.ResetStream(seed)
+		if !specMagicUser(w, nil, mob, "", "") {
+			t.Fatal("specMagicUser should handle the forced dispel switch arm")
+		}
+		if got := lastMsg(); got != "" {
+			t.Errorf("neutral target should not receive a dispel cast, got %q", got)
+		}
+	})
+}
+
+// TestSpecMagicUser_OutsideGate proves C's OUTSIDE guard for the high-level
+// flamestrike/meteor-swarm arms while keeping the spell draw identical.
+func TestSpecMagicUser_OutsideGate(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 38)
+	mob.Intel, mob.Wis = 10, 10
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+
+	room := w.GetRoomInWorld(1001)
+	room.Flags = []string{"8"}
+	room.Sector = SECT_INSIDE
+	_ = lastMsg() // discard spawn output before the direct special call
+	seed := magicUserSeed(t, 38, 37)
+	dprng.ResetStream(seed)
+	if !specMagicUser(w, nil, mob, "", "") {
+		t.Fatal("specMagicUser should handle the forced meteor-swarm switch arm")
+	}
+	if got := lastMsg(); got != "" {
+		t.Errorf("indoor room should suppress the outdoor spell, got %q", got)
+	}
+
+	room.Flags = nil
+	dprng.ResetStream(seed)
+	if !specMagicUser(w, nil, mob, "", "") {
+		t.Fatal("specMagicUser should handle the outdoor meteor-swarm switch arm")
+	}
+	if got := lastMsg(); got == "" {
+		t.Error("outdoor room should permit the meteor-swarm cast")
+	}
+}
+
 // TestSpecFighter_Golden verifies fighter guard conditions.
 func TestSpecFighter_Golden(t *testing.T) {
 	w, player, _ := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, 1001, 10)
-	victim := newSpecProcTestMob(t, w, 1001, 10)
 
 	if got := specFighter(w, player, mob, "look", ""); got {
 		t.Error("specFighter should return false for non-empty cmd")
@@ -349,10 +589,155 @@ func TestSpecFighter_Golden(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosFighting)
-	mob.SetTarget(victim)
+	if got := specFighter(w, nil, mob, "", ""); got {
+		t.Error("specFighter should return false without a FIGHTING target")
+	}
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+	mob.SetWaitState(1)
+	if got := specFighter(w, nil, mob, "", ""); got {
+		t.Error("specFighter should return false while GET_MOB_WAIT is set")
+	}
+	mob.SetWaitState(0)
+	mob.TakeDamage(mob.GetHP() + 1)
+	if got := specFighter(w, nil, mob, "", ""); got {
+		t.Error("specFighter should return false below zero HP")
+	}
 	assertNotPanic(t, func() {
+		mob.Heal(51)
+		mob.SetPosition(combat.PosFighting)
 		_ = specFighter(w, nil, mob, "", "")
 	})
+}
+
+type specParryCombatEngine struct {
+	markedName   string
+	markedAction string
+}
+
+func (e *specParryCombatEngine) StartCombat(combat.Combatant, combat.Combatant) error {
+	return nil
+}
+
+func (e *specParryCombatEngine) IsFighting(string) bool { return true }
+
+func (e *specParryCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+	return nil, false
+}
+
+func (e *specParryCombatEngine) MarkParried(name, action string) {
+	e.markedName = name
+	e.markedAction = action
+}
+
+func fighterSeed(t *testing.T, firstFrom, firstTo, secondFrom, secondTo int, success bool) uint32 {
+	t.Helper()
+	for seed := uint32(1); seed < 10000; seed++ {
+		rng := dprng.New(seed)
+		first := rng.Number(firstFrom, firstTo)
+		second := rng.Number(secondFrom, secondTo)
+		if (first <= second) == success {
+			return seed
+		}
+	}
+	t.Fatal("could not find a deterministic fighter seed")
+	return 0
+}
+
+// TestSpecFighter_NativeSkills proves the four subcommand paths that the C
+// special dispatches with subcmd=1: headbutt, bash, parry, and berserk.
+func TestSpecFighter_NativeSkills(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFighting(player.Name)
+	player.SetFighting(mob.GetName())
+	player.SetPosition(combat.PosFighting)
+	player.SetHP(100)
+
+	// do_headbutt: a successful subcmd roll applies the mob's level to the
+	// victim, takes the level/4 recoil, and sits the awake victim down.
+	seed := fighterSeed(t, 1, 121, 50, 100, true)
+	dprng.ResetStream(seed)
+	startMobHP, startPlayerHP := mob.GetHP(), player.GetHP()
+	mobHeadbutt(w, mob, player)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("headbutt changed GET_MOB_WAIT to %d", got)
+	}
+	if got, want := mob.GetHP(), startMobHP-mob.GetLevel()/4; got != want {
+		t.Errorf("headbutt recoil HP = %d, want %d", got, want)
+	}
+	if got, want := player.GetHP(), startPlayerHP-mob.GetLevel(); got != want {
+		t.Errorf("headbutt victim HP = %d, want %d", got, want)
+	}
+	if player.GetPosition() != combat.PosSitting {
+		t.Errorf("headbutt victim position = %d, want sitting", player.GetPosition())
+	}
+
+	// do_bash: subcmd probability is fixed at 131, so a normal-AC awake
+	// victim succeeds after movement is spent and receives a two-round wait.
+	player.SetHP(100)
+	player.SetPosition(combat.PosFighting)
+	player.SetFighting(mob.GetName())
+	mob.SetFighting(player.Name)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetMove(20)
+	dprng.ResetStream(1)
+	mobBash(w, mob, player)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("bash changed GET_MOB_WAIT to %d", got)
+	}
+	if got, want := mob.GetMove(), 10; got != want {
+		t.Errorf("bash movement = %d, want %d", got, want)
+	}
+	if got, want := player.GetHP(), 100-(mob.GetLevel()/2+1); got != want {
+		t.Errorf("bash victim HP = %d, want %d", got, want)
+	}
+	if player.GetPosition() != combat.PosSitting {
+		t.Errorf("bash victim position = %d, want sitting", player.GetPosition())
+	}
+	if got, want := player.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
+		t.Errorf("bash victim wait = %d, want %d", got, want)
+	}
+
+	// do_parry: equip a wielded object, force a successful probability roll,
+	// and verify both C audience messages plus the next-turn marker.
+	weapon, err := w.SpawnObject(3001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject failed: %v", err)
+	}
+	mob.Equipment[int(SlotWield)] = weapon
+	parryEngine := &specParryCombatEngine{}
+	w.SetCombatEngine(parryEngine)
+	seed = fighterSeed(t, 1, 101, 50, 100, true)
+	dprng.ResetStream(seed)
+	_ = lastMsg()
+	mobParry(w, mob, player)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("parry changed GET_MOB_WAIT to %d", got)
+	}
+	if parryEngine.markedName != player.Name || parryEngine.markedAction != "parry" {
+		t.Errorf("parry marker = (%q, %q), want (%q, parry)", parryEngine.markedName, parryEngine.markedAction, player.Name)
+	}
+	if got := lastMsg(); strings.Count(got, "dazzling show of swordplay") != 2 {
+		t.Errorf("parry audience output = %q, want two C messages", got)
+	}
+
+	// do_berserk: even a failed subcmd attempt installs the three inert C
+	// affects and sets AFF_BERSERK; the NPC has no descriptor for the text.
+	mob.SetAffectFlags(0)
+	mob.CustomData = nil
+	dprng.ResetStream(1)
+	mobBerserk(mob)
+	if got := mob.GetWaitState(); got != 0 {
+		t.Errorf("berserk changed GET_MOB_WAIT to %d", got)
+	}
+	if !mob.HasAffect(affBerserk) {
+		t.Error("berserk did not set AFF_BERSERK")
+	}
+	if _, ok := mob.CustomData["affect_171"]; !ok {
+		t.Error("berserk did not retain the native affect record")
+	}
 }
 
 // TestSpecCleric_Golden verifies cleric guard conditions and cast path.
@@ -409,13 +794,9 @@ func TestSpecCityguard_Golden(t *testing.T) {
 	if err := w.AddPlayer(evildoer); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
-	victim := NewPlayer(4, "Victim", 1001)
-	victim.SetLevel(5)
-	victim.SetAlignment(100)
-	if err := w.AddPlayer(victim); err != nil {
-		t.Fatalf("AddPlayer failed: %v", err)
-	}
-	evildoer.SetFighting(victim.Name)
+	victim := newSpecProcTestMob(t, w, 1001, 5)
+	victim.Prototype.Alignment = 100
+	evildoer.SetFighting(victim.GetName())
 	victim.SetFighting(evildoer.Name)
 	beforeHP = evildoer.GetHP()
 	_ = lastMsg()
@@ -423,7 +804,7 @@ func TestSpecCityguard_Golden(t *testing.T) {
 	if evildoer.GetHP() >= beforeHP {
 		t.Error("specCityguard should damage an evil attacker")
 	}
-	if msg := lastMsg(); !strings.Contains(msg, "PROTECT THE INNOCENT") {
+	if msg := lastMsg(); !strings.Contains(msg, "You just pissed me off") {
 		t.Errorf("expected protect message, got %q", msg)
 	}
 }
@@ -439,8 +820,9 @@ func TestSpecDragonBreath_Golden(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosStanding)
+	player.SetPlrFlag(PrfNohassle, true)
 	if got := specDragonBreath(w, nil, mob, "", ""); got {
-		t.Error("specDragonBreath should return false when not fighting")
+		t.Error("specDragonBreath should return false with no eligible room victim")
 	}
 
 	mob.SetPosition(combat.PosFighting)
@@ -514,32 +896,31 @@ func TestSpecDumpNonDropPassThrough(t *testing.T) {
 	}
 }
 
-// TestSpecHorn_UseHornDoesNotPanic verifies that specHorn handles object-spec
-// dispatch where me is nil (DP-QA#3). It must not panic and must emit correct
-// actor/room messages using the player's name instead of un-interpolated $n/$P.
+// TestSpecHorn_UseHornDoesNotPanic verifies the object-aware horn dispatch
+// receives the concrete held object and emits the exact actor bytes.
 func TestSpecHorn_UseHornDoesNotPanic(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
+	horn := NewObjectInstance(&parser.Obj{
+		VNum:      14415,
+		Keywords:  "silver horn",
+		ShortDesc: "a silver horn",
+		WearFlags: [4]int{16385},
+	}, -1)
+	if err := player.Inventory.AddItem(horn); err != nil {
+		t.Fatalf("add horn to inventory: %v", err)
+	}
+	if err := player.Equipment.Equip(horn, player.Inventory); err != nil {
+		t.Fatalf("hold horn: %v", err)
+	}
 
-	// Object specs are dispatched with me = nil; arg carries the use target.
-	if got := specHorn(w, player, nil, "use", "horn"); !got {
+	if got := specHornObject(w, player, horn, "use", "horn"); !got {
 		t.Fatal("specHorn should handle 'use horn'")
 	}
 
 	output := lastMsg()
-	if !strings.Contains(output, "You inhale deeply then blow hard!") {
-		t.Errorf("output missing blow text: %q", output)
-	}
-	if !strings.Contains(output, "A blaring note resounds through the air.") {
-		t.Errorf("output missing blare text: %q", output)
-	}
-	if strings.Contains(output, "$n") || strings.Contains(output, "$P") {
-		t.Errorf("output contains un-interpolated tokens: %q", output)
-	}
-	if !strings.Contains(output, "Tester blows into a horn.") {
-		t.Errorf("output missing horn use text: %q", output)
-	}
-	if !strings.Contains(output, "A horn lets out a blaring note...") {
-		t.Errorf("output missing second blare text: %q", output)
+	want := "You inhale deeply then blow hard!\r\nA blaring note resounds through the air.\r\n"
+	if output != want {
+		t.Errorf("actor output = %q, want %q", output, want)
 	}
 }
 

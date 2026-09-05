@@ -312,6 +312,19 @@ func (r fixedRoller) Number(_, _ int) int { return r.number }
 func (r fixedRoller) Dice(_, _ int) int   { return 1 }
 func (r fixedRoller) IntN(int) int        { return 0 }
 
+type zeroTwiceThenOneRoller struct{ calls int }
+
+func (r *zeroTwiceThenOneRoller) Number(_, _ int) int {
+	r.calls++
+	if r.calls <= 3 {
+		return 0
+	}
+	return 1
+}
+
+func (r *zeroTwiceThenOneRoller) Dice(_, _ int) int { return 1 }
+func (r *zeroTwiceThenOneRoller) IntN(int) int      { return 0 }
+
 func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)
@@ -464,19 +477,23 @@ func TestMobRedirect_HighLevelSwitcheroo(t *testing.T) {
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
 		GetRoomCombatants: func(roomVNum int) []Combatant {
-			return []Combatant{dragon, tank, rogue}
+			// C scans the complete room list, including the current
+			// defender. Keep the alternate fighter first so the fixed
+			// switcheroo draw selects Rogue, as the source call path does.
+			return []Combatant{dragon, rogue, tank}
 		},
 	})
 	if err := ce.StartCombat(dragon, tank); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
 
-	WithRoller(fixedRoller{number: 0}, func() {
+	roller := &zeroTwiceThenOneRoller{}
+	WithRoller(roller, func() {
 		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Tank"}])
 	})
 
 	if dragon.GetFighting() != "Rogue" {
-		t.Fatalf("expected high-level mob retargeted to Rogue, got %q", dragon.GetFighting())
+		t.Fatalf("expected high-level mob retargeted to Rogue, got %q (roller calls=%d)", dragon.GetFighting(), roller.calls)
 	}
 	if _, ok := ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Rogue"}]; !ok {
 		t.Fatal("expected combat pair redirected to Rogue")
@@ -487,6 +504,12 @@ func TestMobRedirect_HighLevelSwitcheroo(t *testing.T) {
 }
 
 func TestHandleDeath_PassesAttackType(t *testing.T) {
+	// StartCombat now stands the defender at entry (C set_fighting,
+	// fight.c:223), so the defender is AWAKE: dex-based AC applies and a
+	// natural 1 always misses. A fixed stream makes the retry loop below
+	// deterministic instead of a ~0.5% flake.
+	dprng.ResetStream(1)
+
 	attacker := &mockCombatant{
 		name:     "Attacker",
 		npc:      false,
@@ -605,6 +628,36 @@ func TestPerformRound_DefenderRetaliates(t *testing.T) {
 	}
 	if attacker.GetHP() >= 100 {
 		t.Errorf("DP-900: attacker should have taken retaliation damage from defender, HP still %d", attacker.GetHP())
+	}
+}
+
+func TestStartCombatFromMobDefersDefenderEnrollment(t *testing.T) {
+	original := GetCallbacks()
+	t.Cleanup(func() { SetCallbacks(original) })
+	SetCallbacks(defaultCombatCallbacks())
+
+	attacker := &mockCombatant{
+		name: "stalker", npc: true, room: 1, level: 40, hp: 100, maxHP: 100,
+		position: PosStanding,
+	}
+	defender := &mockCombatant{
+		name: "victim", room: 1, level: 40, hp: 100, maxHP: 100,
+		position: PosStanding,
+	}
+
+	ce := NewCombatEngine()
+	ce.MessageFunc = func(Combatant, Combatant, int, int) bool { return true }
+	if err := ce.StartCombatFromMob(attacker, defender); err != nil {
+		t.Fatalf("StartCombatFromMob failed: %v", err)
+	}
+	if got := defender.GetFighting(); got != "" {
+		t.Fatalf("defender fighting before damage = %q, want empty", got)
+	}
+	if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+		t.Fatalf("PerformInitialAttack failed: %v", err)
+	}
+	if got := defender.GetFighting(); got != attacker.GetName() {
+		t.Fatalf("defender fighting after damage = %q, want %q", got, attacker.GetName())
 	}
 }
 
@@ -798,6 +851,9 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
+	// StartCombat stands the attacker at entry (C set_fighting, fight.c:223);
+	// re-down the attacker to model a mid-fight bash.
+	attacker.SetPosition(PosSitting)
 
 	var broadcasts []string
 	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
@@ -837,6 +893,9 @@ func TestProcessCombatPair_MobStandsWhenDowned(t *testing.T) {
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
+	// StartCombat stands the attacker at entry (C set_fighting, fight.c:223);
+	// re-down the attacker to model a mid-fight bash.
+	attacker.SetPosition(PosSitting)
 
 	var broadcasts []string
 	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
@@ -950,6 +1009,9 @@ func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T)
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
+		// StartCombat stands the attacker at entry (C set_fighting, fight.c:223);
+		// re-down the attacker to model a mid-fight bash.
+		attacker.SetPosition(PosSitting)
 		broadcasts = nil
 		ce.BroadcastFunc = func(_ int, msg, _ string) { broadcasts = append(broadcasts, msg) }
 	}

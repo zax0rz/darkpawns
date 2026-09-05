@@ -27,15 +27,9 @@ func (w *World) DoPut(ch *Player, arg string) {
 }
 
 func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
-	parts := strings.SplitN(arg, " ", 2)
-	arg1 := ""
-	arg2 := ""
-	if len(parts) > 0 {
-		arg1 = strings.TrimSpace(parts[0])
-	}
-	if len(parts) > 1 {
-		arg2 = strings.TrimSpace(parts[1])
-	}
+	// C do_put parses with two_arguments (interpreter.c): fill words dropped,
+	// tokens lowercased.
+	arg1, arg2 := twoArguments(arg)
 
 	objDotmode := findAllDots(arg1)
 	contDotmode := findAllDots(arg2)
@@ -60,7 +54,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 	// Find container in inventory or room
 	var cont *ObjectInstance
 	for _, obj := range ch.Inventory.Items {
-		if isname(arg2, obj.GetKeywords()) {
+		if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 			cont = obj
 			break
 		}
@@ -69,7 +63,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 		room := w.GetRoomInWorld(ch.GetRoomVNum())
 		if room != nil {
 			for _, obj := range w.roomItems[ch.RoomVNum] {
-				if isname(arg2, obj.GetKeywords()) {
+				if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 					cont = obj
 					break
 				}
@@ -92,7 +86,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if objDotmode == findIndiv {
 		var obj *ObjectInstance
 		for _, o := range ch.Inventory.Items {
-			if isname(arg1, o.GetKeywords()) {
+			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
 			}
@@ -107,8 +101,14 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 		}
 		w.performPut(ch, obj, cont)
 	} else {
+		keyword := strings.TrimPrefix(arg1, "all.")
 		found := false
-		for _, obj := range ch.Inventory.Items {
+		// Snapshot the inventory first: performPut removes items from
+		// ch.Inventory.Items, and ranging the live slice would skip elements.
+		// C captures next_content before perform_put for the same reason.
+		items := make([]*ObjectInstance, len(ch.Inventory.Items))
+		copy(items, ch.Inventory.Items)
+		for _, obj := range items {
 			if obj == cont {
 				continue
 			}
@@ -117,7 +117,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if !canSeeObject(ch, obj) {
 				continue
 			}
-			if objDotmode == findAll || isname(arg1, obj.GetKeywords()) {
+			if objDotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords()) {
 				found = true
 				w.performPut(ch, obj, cont)
 			}
@@ -126,7 +126,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 			if objDotmode == findAll {
 				ch.SendMessage("You don't seem to have anything to put in it.\r\n")
 			} else {
-				ch.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", arg1))
+				ch.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", keyword))
 			}
 		}
 	}

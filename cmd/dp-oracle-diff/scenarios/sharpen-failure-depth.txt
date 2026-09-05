@@ -1,0 +1,79 @@
+# depth-case: sharpen.failure-actor
+# depth-case: sharpen.failure-room
+#
+# C-first failure vehicle for do_sharpen (src/new_cmds.c:2743-2791).  The
+# ordinary long sword is carried, skill 1 makes the seed-1 number(1,101)
+# attempt fail, and the peer captures the room act before the actor line.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8022 9999 8162 80
+force-load 8022
+
+[setup:oracle]
+Sharpenfail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sharpenfail
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Failsharpenpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Failsharpenpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Failsharpenpeer 8162
+get long
+
+[probe]
+skillset Sharpenfail 'sharpen' 1
+sharpen long

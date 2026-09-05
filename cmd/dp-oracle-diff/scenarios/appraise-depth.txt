@@ -1,0 +1,54 @@
+# depth-case: appraise.no-arg
+# depth-case: appraise.target-missing
+# depth-case: appraise.half-chop
+# depth-case: appraise.success-cost
+# C-first vehicle for do_appraise (src/act.other.c:1784-1817). Bread is a
+# cheap carried object and the skillset warmup makes the success arm reachable.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Appraisedeep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Appraisedeep
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get bread
+get helmet
+wear helmet
+skillset Appraisedeep 'appraise' 100
+
+[probe]
+appraise
+appraise missing
+appraise bread extra
+appraise bre
+appraise bread

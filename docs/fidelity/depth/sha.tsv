@@ -1,0 +1,16 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_kuji_kiri	sha	sha.entry-gate	D1	command	unit-green	TestShaRegistrationUsesCEntryGate	interpreter.c:686;comm.c:910-947	The registered C row permits POS_STANDING callers at every level; the focused test pins the command-surface gate (R2/R5e).
+do_kuji_kiri	sha	sha.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:686;comm.c:910-947	The shared POS_STANDING dispatcher rejection is owned by the existing flip position-gate proof (R2/R5b/R5c).
+do_kuji_kiri	sha	sha.class-gate	D1	shared	delegated	jin.class-gate	new_cmds.c:1557-1560	The shared non-Ninja mortal refusal is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).
+do_kuji_kiri	sha	sha.fighting-gate	D1	shared	delegated	jin.fighting-gate	new_cmds.c:1562-1565	The shared FIGHTING refusal is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).
+do_kuji_kiri	sha	sha.lockout-gate	D1	shared	delegated	jin.lockout-gate	new_cmds.c:1567-1570	The shared aggregate AFF_KUJI_KIRI lockout is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).
+do_kuji_kiri	sha	sha.mounted-gate	D1	shared	delegated	jin.mounted-gate	new_cmds.c:1572-1575	The shared mounted refusal is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).
+do_kuji_kiri	sha	sha.mastery-gate	D1	shared	delegated	jin.mastery-gate	new_cmds.c:1577-1598	The shared pre-mastery branch and check_kk_success draw are owned by the Jin kuji-kiri proof (R1/R3/R5b/R5c).
+do_kuji_kiri	sha	sha.skill-slot	D4	state	delegated	kai.skill-slot	spell_parser.c:1150-1170;new_cmds.c:1500-1541	The C catalog labels slot 166 as kuji-kiri sha while do_kuji_kiri reads SkillKkSha; the class-wide catalog boundary is owned by the Kai proof (R1/R5b/R5c).
+do_kuji_kiri	sha	sha.argument-ignored	D1	command	delegated	rin.argument-ignored	new_cmds.c:1552-1739	The handler never parses its argument; the shared kuji argument behavior is owned by Rin's live proof (R1/R2/R5b/R5c).
+do_kuji_kiri	sha	sha.success-actor-and-room	D3	audience	oracle-green-multiseed	sha-depth@1,2,3,5,8	new_cmds.c:1644-1653;1697-1710;comm.c:2392-2555	A learned SHA emits the exact healing actor text and unchanged meditation room act across the required seed matrix (R1/R3/R5e).
+do_kuji_kiri	sha	sha.success-lockout	D4	state	oracle-green-multiseed	sha-depth@1,2,3,5,8	new_cmds.c:1567-1570;1644-1653;1697-1710	A second successful SHA reaches the aggregate five-tick kuji lockout without invented room bytes (R1/R3/R5e).
+do_kuji_kiri	sha	sha.success-heal-floor	D4	state	unit-green	TestDoKujiKiriShaUsesLowLevelHealFloor	new_cmds.c:1644-1653	Level below 15 heals by the C floor of 15, bounded by max_hit (R1/R3/R5e).
+do_kuji_kiri	sha	sha.success-heal-cap	D4	state	unit-green	TestDoKujiKiriShaCapsAtMaxHP	new_cmds.c:1644-1653	The success heal uses MIN(GET_MAX_HIT, GET_HIT + heal) and cannot exceed max HP (R1/R3/R5e).
+do_kuji_kiri	sha	sha.failure-actor-and-room	D3	audience	oracle-green	sha-failure-depth@1	new_cmds.c:1713-1729;comm.c:2392-2555	The failed SHA emits C's generic concentration failure to the actor while retaining the meditation room act (R1/R3/R5e).
+do_kuji_kiri	sha	sha.failure-no-lockout	D4	state	unit-green	TestDoKujiKiriShaFailureLeavesNoLockout	new_cmds.c:1713-1729;handler.c:473-499	The failed SHA joins the inert AFF_NOTHING record, does not heal, and does not retain aggregate AFF_KUJI_KIRI (R3/R5e).

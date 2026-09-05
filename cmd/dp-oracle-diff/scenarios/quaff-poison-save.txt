@@ -1,0 +1,54 @@
+# depth-case: objmagic.points-dice-order
+# depth-case: objmagic.poison-save-live
+# depth-case: objmagic.poison-apply-live
+# Live proof of the save-gated poison arm — the first live oracle coverage of
+# the class the brief deferred (save-gated spells need call_magic RNG-stream
+# parity). Quaffing 4399 (level 30, vals 68/67/33) casts invigorate and
+# vitality (mag_points, dice draws) then poison, which rolls mag_savingthrow
+# (SAVING_ROD for CAST_POTION). Both arms are player-visible — save:
+# NOEFFECT "Nothing seems to happen." to the drinker; fail: the
+# to_vict/to_room/to_self trio. The start room ROOM_PEACEFUL (bit 4) is
+# disabled via fixture so call_magic lets the violent spell through.
+# Multi-seed (R3): the save draw must land on
+# the same arm on both servers per seed.
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-obj 4399 99 8162 80
+force-load 4399
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get powder
+quaff powder
+~dpclock pulse 20
+~dpclock pulse 20

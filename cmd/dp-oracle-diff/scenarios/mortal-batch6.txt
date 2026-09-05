@@ -1,4 +1,5 @@
 # Mortal no-arg batch (batch 6) — 9 faithful greens.
+# depth-case: berserk.no-skill
 # return deferred: C produces nothing (silent), Go "Huh?!?" — needs investigation.
 
 [fixture]

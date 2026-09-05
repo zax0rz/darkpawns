@@ -19,6 +19,24 @@ func TestCmdHitNoArgumentMessage(t *testing.T) {
 	}
 }
 
+func TestCombatMessageConsumesPulseInterruptionPrefix(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	s := makeGateSession(t, m, 1, "Hero", 20)
+	m.WireCombatCallbacks()
+	m.SetCombatMessageFunc()
+
+	s.promptInvalidated.Store(true)
+	m.combatEngine.Callbacks.Broadcast(1001, "A combat line.", "")
+	if got, want := readSendText(t, s), "\r\nA combat line."; got != want {
+		t.Fatalf("combat interruption prefix = %q, want %q", got, want)
+	}
+
+	s.player.SendMessage("The next text line.\r\n")
+	if got, want := readSendText(t, s), "The next text line.\r\n"; got != want {
+		t.Fatalf("ordinary message after combat prefix = %q, want %q", got, want)
+	}
+}
+
 func TestCmdHitNotFoundMessage(t *testing.T) {
 	m := makeGateTestManager(t, false)
 	s := makeGateSession(t, m, 1, "Hero", 20)
@@ -217,7 +235,80 @@ func TestCmdKillUsesActForChopTrio(t *testing.T) {
 	if got, want := readSendText(t, observer), "Killer brutally slays Victim!\r\n"; got != want {
 		t.Errorf("room chop message = %q, want %q", got, want)
 	}
-	if victim.player.GetRoom() == 1001 {
-		t.Error("victim should be extracted after all three Act messages")
+	// C raw_kill's death_cry (fight.c:558-577) reaches the room after the
+	// chop trio — the killer and every observer hear the freeze line.
+	if got, want := readSendText(t, killer), "Your blood freezes as you hear Victim's death cry.\r\n"; got != want {
+		t.Errorf("killer death cry = %q, want %q", got, want)
+	}
+	if got, want := readSendText(t, observer), "Your blood freezes as you hear Victim's death cry.\r\n"; got != want {
+		t.Errorf("observer death cry = %q, want %q", got, want)
+	}
+	// The chop line is the victim's ENTIRE death transcript: C defers the
+	// extraction (and the return to the menu) to the next heartbeat, so no
+	// invented resurrection bytes may reach them (R4), and nothing moves
+	// them out of the room synchronously.
+	select {
+	case msg := <-victim.send:
+		t.Errorf("victim received invented post-death bytes: %s", string(msg))
+	default:
+	}
+	if victim.player.GetRoom() != 1001 {
+		t.Errorf("victim moved to room %d; C defers extraction to the next heartbeat", victim.player.GetRoom())
+	}
+}
+
+func TestCmdKillReturnsConnectedVictimToMenuOnHeartbeat(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	killer := makeGateSession(t, m, 1, "Killer", 40)
+	victim := makeGateSession(t, m, 2, "Victim", 10)
+
+	if err := cmdKill(killer, []string{"victim"}); err != nil {
+		t.Fatalf("cmdKill returned error: %v", err)
+	}
+	_ = drainMsg(t, killer)
+	_ = drainMsg(t, victim)
+
+	if _, ok := m.world.GetPlayer("Victim"); !ok {
+		t.Fatal("victim was extracted synchronously; C defers extraction to heartbeat")
+	}
+	m.ExtractPendingChars()
+
+	if _, ok := m.world.GetPlayer("Victim"); ok {
+		t.Fatal("victim remains in world after deferred extraction")
+	}
+	_, prompt := unmarshalCharCreate(t, drainMsg(t, victim))
+	if prompt.Stage != "menu" || prompt.Prompt != menuText {
+		t.Fatalf("post-death prompt = (%q, %q), want menu text", prompt.Stage, prompt.Prompt)
+	}
+}
+
+func TestCmdAssistMobHelpeeUsesPersAndHitGates(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	helper := makeGateSession(t, m, 1, "Helper", 1)
+	helpee := makeGateSession(t, m, 2, "Helpee", 20)
+	observer := makeGateSession(t, m, 3, "Observer", 20)
+	if err := m.combatEngine.StartCombat(helpee.player, mob); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+	if err := cmdAssist(helper, []string{"target"}); err != nil {
+		t.Fatalf("cmdAssist returned error: %v", err)
+	}
+	if got, want := readSendText(t, helper), "You join the fight!\r\n"; got != want {
+		t.Errorf("helper join output = %q, want %q", got, want)
+	}
+	if got, want := readSendText(t, helper), "You are not experienced enough to attack Helpee!\r\n"; got != want {
+		t.Errorf("helper hit-gate output = %q, want %q", got, want)
+	}
+	for _, session := range []*Session{helpee, observer} {
+		if got, want := readSendText(t, session), "Helper assists a test target.\r\n"; got != want {
+			t.Errorf("room output = %q, want %q", got, want)
+		}
+	}
+	if m.combatEngine.IsFighting(helper.player.Name) {
+		t.Error("low-level helper should not be enrolled after hit() gate")
 	}
 }

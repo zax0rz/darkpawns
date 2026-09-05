@@ -1,0 +1,73 @@
+# C-first self-target branch for do_headbutt. The command resolves the actor
+# through get_char_room_vis, then C emits the authored wall-impact line.
+
+# depth-case: headbutt.self-target
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+HbSelfgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HbSelfgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+HbSelfatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+HbSelfatt
+y
+attpass
+attpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset HbSelfatt 'headbutt' 75
+
+[probe:attacker]
+headbutt HbSelfatt

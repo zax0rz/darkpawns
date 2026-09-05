@@ -56,6 +56,7 @@ const (
 	CastWand   CastType = 2
 	CastStaff  CastType = 3
 	CastScroll CastType = 4
+	CastBreath CastType = 5
 )
 
 // Position constants — matching C POS_* defines

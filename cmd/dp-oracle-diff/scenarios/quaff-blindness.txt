@@ -1,0 +1,53 @@
+# depth-case: objmagic.blindness.messages
+# The blindness arm of mag_affects (magic.c:928-965) live, via the new
+# add-obj-index fixture: 13103 (the plaid potion, vals 20/52/4) lives in
+# 131.obj, which the shipped obj index omits entirely on BOTH trees — every
+# earlier consumables step touching it vacuously failed identically. With the
+# file indexed, zone 80 spawns it in the start room: get + quaff casts mass
+# heal (mag_points dice) then blindness, whose SAVING_ROD save rolls the
+# shared stream. Save → NOEFFECT "Nothing seems to happen." to the drinker;
+# fail → the to_vict/to_room/to_self trio. The start room's ROOM_PEACEFUL
+# (bit 4) is off via fixture so call_magic lets the violent spell through.
+# Multi-seed (R3): the save draw must land on the same arm per seed.
+
+[fixture]
+quiet-mobs
+add-obj-index 131.obj
+set-room-flag 8162 4 off
+spawn-obj 13103 99 8162 80
+force-load 13103
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get plaid
+quaff plaid
+~dpclock pulse 20
+~dpclock pulse 20

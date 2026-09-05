@@ -2,10 +2,13 @@ package session
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -82,6 +85,195 @@ func TestCmdFleeMovement_XPLossAtLowLevel(t *testing.T) {
 
 	if s.player.GetExp() >= preExp {
 		t.Errorf("expected XP loss at level 5, exp unchanged at %d", s.player.GetExp())
+	}
+}
+
+func TestCmdFlee_CanonicalCombatStateAndSilentXPLoss(t *testing.T) {
+	m := makeFleeTestManager(t)
+	room, ok := m.world.GetRoom(1001)
+	if !ok {
+		t.Fatal("source room missing")
+	}
+	room.Exits = make(map[string]parser.Exit, 6)
+	for _, direction := range []string{"north", "east", "south", "west", "up", "down"} {
+		room.Exits[direction] = parser.Exit{Direction: direction, ToRoom: 1002}
+	}
+
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	mob.SetHealth(mob.GetMaxHP() - 50)
+	s := makeFleeSession(t, m, "CanonicalFleer", 5)
+	if err := m.combatEngine.StartCombat(s.player, mob); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+
+	preExp := s.player.GetExp()
+	if err := cmdFlee(s); err != nil {
+		t.Fatalf("cmdFlee: %v", err)
+	}
+	if got, want := preExp-s.player.GetExp(), 50*mob.GetLevel(); got != want {
+		t.Fatalf("XP loss = %d, want %d", got, want)
+	}
+	if s.player.GetRoom() != 1002 {
+		t.Fatalf("room = %d, want 1002", s.player.GetRoom())
+	}
+	if m.combatEngine.IsFighting(s.player.Name) {
+		t.Fatal("combat still active after successful flee")
+	}
+	if output := drainSendChannel(t, s); strings.Contains(output, "experience points for fleeing") {
+		t.Fatalf("invented XP-loss message in output: %s", output)
+	}
+}
+
+func TestCmdRetreat_PreservesCombatStateAfterSuccess(t *testing.T) {
+	m := makeFleeTestManager(t)
+	room, ok := m.world.GetRoom(1001)
+	if !ok {
+		t.Fatal("source room missing")
+	}
+	room.Exits = make(map[string]parser.Exit, 6)
+	for _, direction := range []string{"north", "east", "south", "west", "up", "down"} {
+		room.Exits[direction] = parser.Exit{Direction: direction, ToRoom: 1002}
+	}
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	s := makeFleeSession(t, m, "Retreater", 5)
+	s.player.SetSkill(game.SkillRetreat, 100)
+	if err := m.combatEngine.StartCombat(s.player, mob); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+
+	// Skill 100 succeeds for every first roll except C's sentinel 101.
+	seed := uint32(1)
+	for dprng.New(seed).Number(1, 101) == 101 {
+		seed++
+	}
+	dprng.ResetStream(seed)
+	if err := cmdRetreat(s); err != nil {
+		t.Fatalf("cmdRetreat: %v", err)
+	}
+	if s.player.GetRoom() != 1002 {
+		t.Fatalf("room = %d, want 1002", s.player.GetRoom())
+	}
+	if !m.combatEngine.IsFighting(s.player.Name) {
+		t.Fatal("retreat incorrectly stopped combat")
+	}
+}
+
+func TestCmdRetreat_FailureSetsThreeRoundWait(t *testing.T) {
+	m := makeFleeTestManager(t)
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	s := makeFleeSession(t, m, "Retreatfail", 5)
+	s.player.SetSkill(game.SkillRetreat, 1)
+	if err := m.combatEngine.StartCombat(s.player, mob); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+
+	// Select a deterministic seed whose first number(1,101) is above skill 1.
+	seed := uint32(1)
+	for dprng.New(seed).Number(1, 101) <= 1 {
+		seed++
+	}
+	dprng.ResetStream(seed)
+	if err := cmdRetreat(s); err != nil {
+		t.Fatalf("cmdRetreat: %v", err)
+	}
+	if got, want := s.player.GetWaitState(), 3*engine.PULSE_VIOLENCE; got != want {
+		t.Fatalf("wait state = %d, want %d", got, want)
+	}
+	if output := drainSendChannel(t, s); !strings.Contains(output, "You try to retreat but get cornered in the process!") {
+		t.Fatalf("missing failure message: %s", output)
+	}
+}
+
+func TestSetFleeHooks_RetreatUsesRetreatHandler(t *testing.T) {
+	m := makeFleeTestManager(t)
+	room, ok := m.world.GetRoom(1001)
+	if !ok {
+		t.Fatal("source room missing")
+	}
+	room.Exits = make(map[string]parser.Exit, 6)
+	for _, direction := range []string{"north", "east", "south", "west", "up", "down"} {
+		room.Exits[direction] = parser.Exit{Direction: direction, ToRoom: 1002}
+	}
+	s := makeFleeSession(t, m, "HookRetreater", 5)
+	s.player.SetSkill(game.SkillRetreat, 100)
+	s.player.SetFighting("target")
+	m.mu.Lock()
+	m.sessions[s.player.Name] = s
+	m.mu.Unlock()
+	m.SetFleeHooks()
+
+	seed := uint32(1)
+	for dprng.New(seed).Number(1, 101) == 101 {
+		seed++
+	}
+	dprng.ResetStream(seed)
+	if cb := m.combatEngine.Callbacks; cb == nil || cb.DoRetreat == nil {
+		t.Fatal("retreat hook was not installed")
+	} else {
+		cb.DoRetreat(s.player.Name)
+	}
+	if s.player.GetRoom() != 1002 {
+		t.Fatalf("room = %d, want 1002", s.player.GetRoom())
+	}
+	if output := drainSendChannel(t, s); !strings.Contains(output, "You make a hasty retreat.") {
+		t.Fatalf("retreat hook did not invoke do_retreat output: %s", output)
+	}
+}
+
+func TestCmdFlee_CanonicalHighLevelXPBonus(t *testing.T) {
+	m := makeFleeTestManager(t)
+	room, ok := m.world.GetRoom(1001)
+	if !ok {
+		t.Fatal("source room missing")
+	}
+	room.Exits = make(map[string]parser.Exit, 6)
+	for _, direction := range []string{"north", "east", "south", "west", "up", "down"} {
+		room.Exits[direction] = parser.Exit{Direction: direction, ToRoom: 1002}
+	}
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	mob.SetHealth(mob.GetMaxHP() - 50)
+	s := makeFleeSession(t, m, "VeteranFleer", 11)
+	if err := m.combatEngine.StartCombat(s.player, mob); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+
+	preExp := s.player.GetExp()
+	if err := cmdFlee(s); err != nil {
+		t.Fatalf("cmdFlee: %v", err)
+	}
+	base := 50 * mob.GetLevel()
+	bonus := int(500 * (float64(s.player.GetLevel()) / 2.6))
+	if got, want := preExp-s.player.GetExp(), base+bonus; got != want {
+		t.Fatalf("XP loss = %d, want base %d + bonus %d = %d", got, base, bonus, want)
+	}
+}
+
+func TestCmdFlee_ThiefAutomaticCallHonorsWaitGate(t *testing.T) {
+	m := makeFleeTestManager(t)
+	s := makeFleeSession(t, m, "WaitingThief", 5)
+	s.player.Class = game.ClassThief
+	s.player.SetWaitState(1)
+
+	if err := cmdFlee(s); err != nil {
+		t.Fatalf("cmdFlee: %v", err)
+	}
+	if s.player.GetRoom() != 1001 {
+		t.Fatalf("waiting thief moved to room %d", s.player.GetRoom())
+	}
+	if output := drainSendChannel(t, s); !strings.Contains(output, "You attempt to flee but cannot!") {
+		t.Fatalf("missing C wait-gate message: %s", output)
 	}
 }
 

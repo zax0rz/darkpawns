@@ -1,0 +1,76 @@
+# C-first rsay sleeping-recipient vehicle (src/interpreter.c:667;
+# src/act.comm.c:635-755). The differing-race Elf peer is put to sleep in
+# setup, proving C's AWAKE guard suppresses the translated audience line.
+
+# depth-case: rsay.sleeping-recipient
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rsaysleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rsaysleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sleepero
+Y
+oraclepass
+oraclepass
+N
+M
+E
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:peer]
+Sleepero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+E
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Sleepero 8162
+
+[probe]
+rsay sleeping recipient?

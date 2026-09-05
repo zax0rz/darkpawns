@@ -1,0 +1,211 @@
+package session
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
+
+// makeSetTestSession creates a wizard-actor session registered in the manager
+// (so findSessionByName resolves the target) plus a separate mortal target.
+func makeSetTestSession(t *testing.T) (*Session, *Session) {
+	t.Helper()
+	m := makeTestManager(t)
+	wiz := makeTestSession(t, m, "God", 1001, true)
+	wiz.player.Level = LVL_GRGOD
+
+	target := makeTestSession(t, m, "Hero", 1001, true)
+	m.mu.Lock()
+	m.sessions["god"] = wiz
+	m.sessions["hero"] = target
+	m.mu.Unlock()
+	return wiz, target
+}
+
+// TestCmdSetConditions covers do_set cases 29-31 (act.wizard.c:2977-2993):
+// drunk/hunger/thirst map to GET_COND slots 0/1/2, accept "off" (→ -1) or a
+// number clamped to [0,48], and echo C's ack bytes ("Hero's drunk set to
+// 24.\r\n" / "Hero's drunk now off.\r\n" / "Must be 'off' or a value from 0
+// to 48.\r\n").
+func TestCmdSetConditions(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want string
+		cond int
+		val  int
+	}{
+		{"drunk set", []string{"Hero", "drunk", "24"}, "Hero's drunk set to 24.\r\n", game.CondDrunk, 24},
+		{"hunger set", []string{"Hero", "hunger", "36"}, "Hero's hunger set to 36.\r\n", game.CondFull, 36},
+		{"thirst set", []string{"Hero", "thirst", "48"}, "Hero's thirst set to 48.\r\n", game.CondThirst, 48},
+		{"drunk clamps high", []string{"Hero", "drunk", "49"}, "Hero's drunk set to 48.\r\n", game.CondDrunk, 48},
+		// C is_number() accepts digits only (src/interpreter.c:1175-1181),
+		// so a signed condition value is rejected rather than clamped.
+		{"drunk rejects signed value", []string{"Hero", "drunk", "-5"}, "Must be 'off' or a value from 0 to 48.\r\n", game.CondDrunk, 0},
+		{"drunk off", []string{"Hero", "drunk", "off"}, "Hero's drunk now off.\r\n", game.CondDrunk, -1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			wiz, target := makeSetTestSession(t)
+			if err := cmdSet(wiz, tc.args); err != nil {
+				t.Fatalf("cmdSet: %v", err)
+			}
+			if got := readSessionText(t, wiz); got != tc.want {
+				t.Errorf("ack = %q, want %q", got, tc.want)
+			}
+			if got := target.player.GetCondition(tc.cond); got != tc.val {
+				t.Errorf("condition = %d, want %d", got, tc.val)
+			}
+		})
+	}
+
+	t.Run("drunk rejects words", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		if err := cmdSet(wiz, []string{"Hero", "drunk", "tipsy"}); err != nil {
+			t.Fatalf("cmdSet: %v", err)
+		}
+		if got := readSessionText(t, wiz); got != "Must be 'off' or a value from 0 to 48.\r\n" {
+			t.Errorf("ack = %q, want usage error", got)
+		}
+		if got := target.player.GetCondition(game.CondDrunk); got != 0 {
+			t.Errorf("condition = %d, want unchanged 0", got)
+		}
+	})
+}
+
+func TestCmdSetCStatFieldsAndUnsupportedPosition(t *testing.T) {
+	t.Run("wis zero enables stupid gate vehicle", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		if err := cmdSet(wiz, []string{"Hero", "wis", "0"}); err != nil {
+			t.Fatalf("cmdSet: %v", err)
+		}
+		if got := readSessionText(t, wiz); got != "Hero's wis set to 0.\r\n" {
+			t.Fatalf("ack = %q, want C stat ack", got)
+		}
+		if target.player.Stats.Wis != 0 {
+			t.Fatalf("wis = %d, want 0", target.player.Stats.Wis)
+		}
+	})
+
+	t.Run("mortal stat range is zero through eighteen", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		if err := cmdSet(wiz, []string{"Hero", "wis", "99"}); err != nil {
+			t.Fatalf("cmdSet: %v", err)
+		}
+		if got := readSessionText(t, wiz); got != "Hero's wis set to 18.\r\n" {
+			t.Fatalf("ack = %q, want clamped C stat ack", got)
+		}
+		if target.player.Stats.Wis != 18 {
+			t.Fatalf("wis = %d, want 18", target.player.Stats.Wis)
+		}
+	})
+
+	t.Run("position is not a C field", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		if err := cmdSet(wiz, []string{"Hero", "position", "3"}); err != nil {
+			t.Fatalf("cmdSet: %v", err)
+		}
+		if got := readSessionText(t, wiz); got != "Can't set that!\r\n" {
+			t.Fatalf("ack = %q, want unsupported-field response", got)
+		}
+		if target.player.GetPosition() != combat.PosStanding {
+			t.Fatalf("position = %d, want unchanged standing", target.player.GetPosition())
+		}
+	})
+
+	t.Run("score state fields use C bounds and acknowledgements", func(t *testing.T) {
+		wiz, target := makeSetTestSession(t)
+		cases := []struct {
+			args string
+			want string
+		}{
+			{"Hero ac 100", "Hero's ac set to 100.\r\n"},
+			{"Hero chosen on", "Chosen ON for Hero.\r\n"},
+			{"Hero nosummon on", "Nosummon OFF for Hero.\r\n"},
+			{"Hero tattoo 9", "Hero's tattoo set to 9.\r\n"},
+		}
+		for _, tc := range cases {
+			parts := strings.Fields(tc.args)
+			if err := cmdSet(wiz, parts); err != nil {
+				t.Fatalf("cmdSet(%q): %v", tc.args, err)
+			}
+			if got := readSessionText(t, wiz); got != tc.want {
+				t.Errorf("ack for %q = %q, want %q", tc.args, got, tc.want)
+			}
+		}
+		if target.player.AC != 100 {
+			t.Errorf("AC = %d, want 100", target.player.AC)
+		}
+		if !target.player.HasPLRFlag(game.PlrChosen) {
+			t.Error("chosen flag was not set")
+		}
+		if target.player.GetFlags()&(1<<uint(game.PrfSummonable)) == 0 {
+			t.Error("summonable flag was not set")
+		}
+		if target.player.Tattoo != TatHeart || target.player.MaxHealth != 120 || target.player.Health != 100 {
+			t.Errorf("tattoo state = tattoo %d maxhp %d hp %d, want 9/120/100", target.player.Tattoo, target.player.MaxHealth, target.player.Health)
+		}
+	})
+}
+
+func TestCmdSetOutlaw(t *testing.T) {
+	wiz, target := makeSetTestSession(t)
+	if err := cmdSet(wiz, []string{"Hero", "outlaw", "on"}); err != nil {
+		t.Fatalf("cmdSet: %v", err)
+	}
+	if got := readSessionText(t, wiz); got != "Outlaw ON for Hero.\r\n" {
+		t.Fatalf("ack = %q, want C binary-field ack", got)
+	}
+	if got := target.player.GetFlags() & (1 << uint(game.PlrOutlaw)); got == 0 {
+		t.Fatal("outlaw flag was not set")
+	}
+
+	if err := cmdSet(wiz, []string{"Hero", "outlaw", "off"}); err != nil {
+		t.Fatalf("cmdSet off: %v", err)
+	}
+	if got := readSessionText(t, wiz); got != "Outlaw OFF for Hero.\r\n" {
+		t.Fatalf("off ack = %q, want C binary-field ack", got)
+	}
+	if got := target.player.GetFlags() & (1 << uint(game.PlrOutlaw)); got != 0 {
+		t.Fatal("outlaw flag was not cleared")
+	}
+}
+
+func TestCmdSetMobHit(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room A", Zone: 1}},
+		Mobs: []parser.Mob{{
+			VNum:      9001,
+			Keywords:  "testmob",
+			ShortDesc: "a test mob",
+			LongDesc:  "A test mob stands here.",
+			Level:     10,
+			HP:        parser.DiceRoll{Num: 1, Sides: 1, Plus: 100},
+		}},
+	}
+	w, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	m := newTestManager(t, w, nil)
+	wiz := makeTestSession(t, m, "God", 1001, true)
+	wiz.player.Level = LVL_GRGOD
+	mob, err := w.SpawnMob(9001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+
+	if err := cmdSet(wiz, []string{"test", "hit", "7"}); err != nil {
+		t.Fatalf("cmdSet: %v", err)
+	}
+	// C's final CAP(buf) capitalizes the lower-case mob short description.
+	if got := readSessionText(t, wiz); got != "A test mob's hit set to 7.\r\n" {
+		t.Fatalf("ack = %q, want mob hit acknowledgement", got)
+	}
+	if got := mob.GetHP(); got != 7 {
+		t.Fatalf("mob HP = %d, want 7", got)
+	}
+}

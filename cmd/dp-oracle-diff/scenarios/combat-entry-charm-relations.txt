@@ -1,0 +1,128 @@
+# depth-case: hit.charm-master
+# depth-case: assist.mob-helpee-pers
+# Shared relationship vehicle for do_hit/do_assist (src/act.offensive.c:54-131).
+# The God charms Thrall after moving to the mortal room, making God Thrall's
+# master. Helpee fights the spawned trainee during setup; Thrall then attempts
+# to hit its master and assists the mob helpee. The latter makes C's PERS(mob,
+# helper) rendering observable in the room audience.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Charmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[setup:port]
+Charmgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[setup:oracle:thrall]
+Thrall
+Y
+thrallpass
+thrallpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:thrall]
+Thrall
+y
+thrallpass
+thrallpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:helpee]
+Helpee
+Y
+helpeepass
+helpeepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[setup:port:helpee]
+Helpee
+y
+helpeepass
+helpeepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+kill trainee
+
+[warmup]
+set Charmgod outlaw on
+cast 'charm' thrall
+
+[probe:thrall]
+hit charmgod
+assist trainee

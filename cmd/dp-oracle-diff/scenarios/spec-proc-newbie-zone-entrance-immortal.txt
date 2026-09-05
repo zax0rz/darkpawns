@@ -1,0 +1,50 @@
+# C-first vehicle for the upper gate of SPECIAL(newbie_zone_entrance),
+# registered at room 16300 in src/spec_assign.c:607 and defined in
+# src/spec_procs.c:2262-2276. The first-player God remains level 40; C's
+# `(GET_LEVEL >= 11) && (GET_LEVEL < LEVEL_IMMORT)` condition returns FALSE,
+# so an opened south door reaches ordinary movement. The pre-fix Go handler
+# incorrectly intercepted this immortal command.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2262-2276 ->
+# act.movement.c do_move.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 16300 none
+
+[setup:oracle]
+Newbiezoneimm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Newbiezoneimm
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 16300
+
+[probe]
+south
+
+# depth-case: room.newbie-zone-immortal-fallthrough

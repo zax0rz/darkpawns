@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:815;
+# src/act.social.c:102-149; lib/misc/socials:1168-1176). The authored whap
+# record is target-capable and is exercised through no-argument, visible
+# player/NPC target, named self, missing target, one_argument/fill-word, and
+# sleeping-target position-gate branches.
+
+# depth-case: whap.no-argument
+# depth-case: whap.target-success
+# depth-case: whap.target-audience
+# depth-case: whap.argument-first-token
+# depth-case: whap.mob-target
+# depth-case: whap.self-target
+# depth-case: whap.target-not-found
+# depth-case: whap.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Whapactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whapactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Whapobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Whapobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Whaptarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Whaptarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Whapobserver 8162
+teleport Whaptarget 8162
+
+[probe]
+whap
+whap Whaptarget trailing words are ignored
+whap Whaptarget
+whap trainee
+whap Whapactor
+whap self
+whap Nobody
+force Whaptarget sleep
+whap Whaptarget

@@ -33,6 +33,11 @@ func randRange(min, max int) int {
 	return dprng.Number(min, max)
 }
 
+// citizenNumber is the C citizen special's RNG seam. It is kept separate from
+// the general helper so focused tests can pin both conditional draws without
+// changing the process-wide stream used by other specials.
+var citizenNumber = dprng.Number
+
 // randN returns a uniform random integer in [0, n). It is exclusive, so it
 // is safe for array indexing and switch selection. For C-style inclusive
 // probability gates use number(from, to) instead.
@@ -122,6 +127,31 @@ func mobMeleeTarget(me *MobInstance) *MobInstance {
 	return nil
 }
 
+// mobFightingTarget resolves the name-based FIGHTING reference used by the
+// combat engine. C's fighter special receives the actual FIGHTING pointer;
+// Go's mob instance retains that pointer only for mob-to-mob scripting, so
+// the combat pair is the authoritative source for player opponents.
+func mobFightingTarget(w *World, me *MobInstance) combat.Combatant {
+	if w != nil && w.combatEngine != nil {
+		if target, ok := w.combatEngine.GetCombatTarget(me.GetName()); ok && target != nil {
+			return target
+		}
+	}
+
+	if target := me.GetTarget(); target != nil {
+		return target
+	}
+	if targetName := me.GetFightingTarget(); targetName != "" {
+		if player, ok := w.GetPlayer(targetName); ok {
+			return player
+		}
+		if mob := w.GetMobByName(targetName); mob != nil {
+			return mob
+		}
+	}
+	return nil
+}
+
 // ================================================================
 // MOB SPECIALS
 // ================================================================
@@ -140,28 +170,30 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	arg = strings.TrimSpace(arg)
 
 	if arg == "" {
-		sendToChar(ch, RenderSkillList(ch))
+		// RenderSkillList already contains the terminal CRLF because the
+		// standalone practice command sends it directly.
+		ch.SendMessage(RenderSkillList(ch))
 		return true
 	}
 	if ch.GetPractices() <= 0 {
-		sendToChar(ch, "You do not seem to be able to practice now.\r\n")
+		sendToChar(ch, "You do not seem to be able to practice now.")
 		return true
 	}
 
 	skillNum := FindSkillNum(arg)
 	if skillNum < 1 || ch.GetLevel() < ClassSkillMinLevel(class, skillNum) {
-		sendToChar(ch, fmt.Sprintf("You do not know of that %s.\r\n", SplSkl(class)))
+		sendToChar(ch, fmt.Sprintf("You do not know of that %s.", SplSkl(class)))
 		return true
 	}
 
-	name := strings.ToLower(SkillCatalogName(skillNum))
+	name := SkillStorageName(skillNum)
 	learned := pracLearned(class)
 	if ch.GetSkill(name) >= learned {
-		sendToChar(ch, "You are already learned in that area.\r\n")
+		sendToChar(ch, "You are already learned in that area.")
 		return true
 	}
 
-	sendToChar(ch, "You practice for a while...\r\n")
+	sendToChar(ch, "You practice for a while...")
 	ch.SetPractices(ch.GetPractices() - 1)
 
 	// percent += MIN(MAXGAIN, MAX(MINGAIN, int_app[GET_INT].learn)) (spec_procs.c:242)
@@ -179,7 +211,7 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	ch.SetSkill(name, percent)
 
 	if ch.GetSkill(name) >= learned {
-		sendToChar(ch, "You are now learned in that area.\r\n")
+		sendToChar(ch, "You are now learned in that area.")
 	}
 	return true
 }
@@ -289,7 +321,7 @@ func specThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return false
 	}
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if !p.IsNPC() && p.GetLevel() < 50 && number(0, 5) == 0 {
+		if !p.IsNPC() && p.GetLevel() < LVL_IMMORT && number(0, 4) == 0 {
 			npcSteal(w, me, p)
 			return true
 		}
@@ -302,16 +334,30 @@ func npcSteal(w *World, me *MobInstance, victim *Player) {
 		return
 	}
 	if victim.GetPosition() > combat.PosSleeping && number(0, me.GetLevel()) == 0 {
-		w.roomMessage(me.RoomVNum, me.GetName()+" tries to steal gold from "+victim.GetName()+".")
-		sendToChar(victim, "You discover that "+me.GetName()+" has its hands in your wallet.")
+		Act(w, false, me, victim, nil, nil,
+			"You discover that $n has $s hands in your wallet.", "", ToVict)
+		Act(w, true, me, victim, nil, nil,
+			"$n tries to steal gold from $N.", "", ToNotVict)
 	} else {
-		victim.mu.Lock()
-		gold := (victim.Gold * randRange(1, 10)) / 100
+		gold := (victim.GetGold() * randRange(1, 10)) / 100
 		if gold > 0 {
-			victim.Gold -= gold
+			victim.SetGold(victim.GetGold() - gold)
+			me.SetGold(me.GetGold() + gold)
 		}
-		victim.mu.Unlock()
 	}
+}
+
+// castMobSpell is the native NPC cast_spell() path.  Unlike a player command,
+// a mob special enters cast_spell() directly, so the procedure must emit the
+// verbal component before dispatching call_magic (spell_parser.c:827-909).
+func castMobSpell(w *World, me *MobInstance, victim combat.Combatant, spellNum int) bool {
+	// C's GET_WIS/GET_INT and GET_MOB_WAIT gates send only to the mob, whose
+	// descriptor is absent; retaining the gate avoids inventing player bytes.
+	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+		return false
+	}
+	spells.SaySpell(me, spellNum, victim, nil, w)
+	return spells.Cast(me, victim, spellNum, me.GetLevel(), w)
 }
 
 // magic_user — mob spec: casts combat spells while fighting
@@ -322,7 +368,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 	var vict *Player
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if p.IsFighting() && p.GetName() == me.GetName() && number(0, 5) == 0 {
+		if p.GetFighting() == me.GetName() && number(0, 4) == 0 {
 			vict = p
 			break
 		}
@@ -338,66 +384,77 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 
-	spellRoll := randN(me.GetLevel()/2+1) + me.GetLevel()/2
+	spellRoll := number(0, me.GetLevel()/2) + me.GetLevel()/2
 	switch {
 	case spellRoll <= 5:
-		spells.Cast(me, vict, spells.SpellMagicMissile, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellMagicMissile)
 	case spellRoll <= 7:
-		spells.Cast(me, vict, spells.SpellChillTouch, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellChillTouch)
 	case spellRoll <= 9:
-		spells.Cast(me, vict, spells.SpellBurningHands, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellBurningHands)
 	case spellRoll <= 11:
-		spells.Cast(me, vict, spells.SpellShockingGrasp, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellShockingGrasp)
 	case spellRoll == 12:
-		spells.Cast(me, vict, spells.SpellDispelGood, me.GetLevel(), w)
+		if !mobIsEvil(me) && vict.GetAlignment() <= -350 {
+			castMobSpell(w, me, vict, spells.SpellDispelEvil)
+		} else if mobIsEvil(me) && vict.GetAlignment() >= 350 {
+			castMobSpell(w, me, vict, spells.SpellDispelGood)
+		}
 	case spellRoll == 13:
-		spells.Cast(me, vict, spells.SpellLightningBolt, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellLightningBolt)
 	case spellRoll == 14:
-		if number(0, 11) == 0 {
-			spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
+		if number(0, 10) == 0 {
+			castMobSpell(w, me, vict, spells.SpellTeleport)
 		}
 	case spellRoll >= 15 && spellRoll <= 17:
-		spells.Cast(me, vict, spells.SpellColorSpray, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellColorSpray)
 	case spellRoll == 20:
-		spells.Cast(me, vict, spells.SpellHellfire, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellHellfire)
 	case spellRoll == 25:
-		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellFlamestrike)
 	case spellRoll == 30:
-		spells.Cast(me, vict, spells.SpellDisintegrate, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellDisintegrate)
 	case spellRoll >= 31 && spellRoll <= 33:
-		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellDisrupt)
 	case spellRoll == 34:
-		spells.Cast(me, vict, spells.SpellInvulnerability, me.GetLevel(), w)
+		castMobSpell(w, me, me, spells.SpellInvulnerability)
 	case spellRoll >= 35 && spellRoll <= 36:
-		spells.Cast(me, vict, spells.SpellFlamestrike, me.GetLevel(), w)
+		if w.IsOutside(me.GetRoom()) {
+			castMobSpell(w, me, vict, spells.SpellFlamestrike)
+		}
 	case spellRoll == 37:
-		spells.Cast(me, vict, spells.SpellMeteorSwarm, me.GetLevel(), w)
+		if w.IsOutside(me.GetRoom()) {
+			castMobSpell(w, me, vict, spells.SpellMeteorSwarm)
+		}
 	case spellRoll == 38:
-		spells.Cast(me, vict, spells.SpellDisrupt, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellDisrupt)
 	default:
-		spells.Cast(me, vict, spells.SpellFireball, me.GetLevel(), w)
+		castMobSpell(w, me, vict, spells.SpellFireball)
 	}
 	return true
 }
 
 // fighter — mob spec: uses martial skills in combat
 func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
+	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFighting() == "" {
 		return false
 	}
-	melee := mobMeleeTarget(me)
+	if me.GetWaitState() > 0 {
+		return false
+	}
+	melee := mobFightingTarget(w, me)
 	if melee == nil {
 		return false
 	}
-	switch randN(11) {
+	switch number(0, 10) {
 	case 1:
-		w.roomMessage(me.RoomVNum, me.GetName()+" headbutts "+melee.GetName()+"!")
+		mobHeadbutt(w, me, melee)
 	case 2:
-		w.roomMessage(me.RoomVNum, me.GetName()+" parries an attack!")
+		mobParry(w, me, melee)
 	case 3:
-		w.roomMessage(me.RoomVNum, me.GetName()+" bashes "+melee.GetName()+"!")
+		mobBash(w, me, melee)
 	case 4:
-		w.roomMessage(me.RoomVNum, me.GetName()+" goes berserk!")
+		mobBerserk(me)
 	default:
 		return false
 	}
@@ -406,144 +463,206 @@ func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 // paladin — mob spec: paladin combat
 func specPaladin(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
+	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFighting() == "" {
 		return false
 	}
-	melee := mobMeleeTarget(me)
+	if me.GetWaitState() > 0 {
+		return false
+	}
+	melee := mobFightingTarget(w, me)
 	if melee == nil {
 		return false
 	}
-	switch randN(9) {
+	switch number(0, 8) {
 	case 0:
-		w.roomMessage(me.RoomVNum, me.GetName()+" parries an attack!")
+		mobParry(w, me, melee)
 	case 1:
-		w.roomMessage(me.RoomVNum, me.GetName()+" bashes "+melee.GetName()+"!")
+		mobBash(w, me, melee)
 	case 2:
-		w.roomMessage(me.RoomVNum, me.GetName()+" charges "+melee.GetName()+"!")
+		mobCharge(w, me, melee)
 	case 3:
-		spells.Cast(me, melee, spells.SpellDispelEvil, me.GetLevel(), w)
+		castMobSpell(w, me, melee, paladinDispelSpell(me))
 	case 5:
-		w.roomMessage(me.RoomVNum, me.GetName()+" disarms "+melee.GetName()+"!")
+		mobDisarm(w, me, melee)
 	}
 	return true
+}
+
+func paladinDispelSpell(me *MobInstance) int {
+	if mobIsEvil(me) {
+		return spells.SpellDispelGood
+	}
+	return spells.SpellDispelEvil
 }
 
 // guild_guard — mob spec: blocks unauthorized entry
 func specGuildGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "flee" || cmd == "escape" || cmd == "retreat" {
 		sendToChar(ch, "You try to flee inside the guild but the guard stops you!")
-		w.roomMessage(ch.GetRoomVNum(), ch.GetName()+" tries to flee inside the guild but the guard blocks the way!")
+		Act(w, false, ch, nil, nil, nil,
+			"$n tries to flee inside the guild but the guard block $s way!", "", ToRoom)
 		return true
 	}
-	if !isMoveCmd(cmd) {
+	direction, moving := guildGuardDirection(cmd)
+	if !moving || me.IsAffected(affBlind) {
 		if me.IsFighting() {
-			return specFighter(w, ch, me, cmd, arg)
+			return specFighter(w, nil, me, "", "")
 		}
 		return false
 	}
-	if ch.GetLevel() >= 50 || ch.IsNPC() {
+	if ch.GetLevel() >= LVL_IMMORT || isRemortOnlyClass(ch.GetClass()) || w.IsHunting(ch.GetName(), false) {
 		return false
 	}
-
-	type guildEntry struct {
-		class     int
-		room      int
-		direction string
-	}
-	entries := []guildEntry{
-		{ClassThief, 4813, "south"},
-		{ClassMagus, 4821, "south"},
-		{ClassMystic, 4825, "south"},
-		{ClassNinja, 8012, "south"},
-		{ClassAssassin, 8013, "south"},
-		{ClassPaladin, 8015, "south"},
-		{ClassMageUser, 21214, "south"},
-		{ClassCleric, 21215, "south"},
-		{ClassWarrior, 21216, "south"},
-		{ClassRanger, 21217, "south"},
-		{ClassPsionic, 8024, "south"},
-		{ClassMagus, 8026, "south"},
-	}
 	roomVNum := ch.GetRoomVNum()
-	for _, e := range entries {
-		if ch.GetClass() != e.class && roomVNum == e.room && cmd == e.direction {
+	for _, e := range GuildInfo {
+		if ch.GetClass() != e.Class && roomVNum == e.Room && direction == e.Direction {
 			sendToChar(ch, "The guard humiliates you, and blocks your way.")
-			w.roomMessage(roomVNum, "The guard humiliates "+ch.GetName()+", and blocks their way.")
+			Act(w, false, ch, nil, nil, nil,
+				"The guard humiliates $n, and blocks $s way.", "", ToRoom)
 			return true
 		}
 	}
 	return false
 }
 
-// puff — mob spec: random says on pulse
+func guildGuardDirection(cmd string) (int, bool) {
+	switch cmd {
+	case "north", "n":
+		return 0, true
+	case "east", "e":
+		return 1, true
+	case "south", "s":
+		return 2, true
+	case "west", "w":
+		return 3, true
+	case "up", "u":
+		return 4, true
+	case "down", "d":
+		return 5, true
+	default:
+		return -1, false
+	}
+}
+
+func isRemortOnlyClass(class int) bool {
+	switch class {
+	case ClassMagus, ClassAvatar, ClassAssassin, ClassPaladin, ClassRanger, ClassMystic:
+		return true
+	default:
+		return false
+	}
+}
+
+// puff — mob spec: ambient random speech/emotes on pulse
 func specPuff(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" {
 		return false
 	}
 	if me.GetHP() < 0 {
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Shit, I'm dead.'")
+		puffSay(w, me, "Shit, I'm dead.")
 		return true
 	}
-	puffSayings := []string{
-		"My god!  It's full of stars!",
-		"How'd all those fish get up here?",
-		"I'm a very female dragon.",
-		"Boo!  Hiss!  I say!",
-		"'The voices!  The voices!'",
-		"Why are there so many songs about rainbows?",
-		"'Help!  I'm being repressed!'",
-		"What is the capital of Assyria?",
-		"Our Lady of Blessed Acceleration, don't fail me now.",
-		"Hi, do you have any Grey Poupon?",
-		"Are we there yet?",
-		"'We're not worthy!  We're not worthy!'",
-		"What's the color of the wind?",
-		"I see dead people.",
-		"Is that a flame thrower in your pocket...",
-		"'I have a nice, heavy club for you.'",
-		"'She turned me into a newt!'",
-		"'...I got better...'",
-		"There is no magic, only rearranged physics.",
-		"Filthy, Precious!  It stole us, Precious!",
-		"I have no legs, and I must scream.",
-		"Reach out and touch faith.",
-		"Life?  Don't talk to me about life.",
-		"He's not the Messiah, he's a very naughty boy!",
-		"Nobody expects the Spanish Inquisition!",
-		"Help, I'm a bug!",
-		"I'm melting!  What a world!  What a world!",
-		"Follow the yellow brick road.",
-		"Praise Helix!",
-		"If I only had a brain.",
-		"More tea, vicar?",
-		"I'll get you, my pretty!",
-		"I'll be back.",
-		"Negative.  I am a meat popsicle.",
-	}
-	if number(0, 91) == 0 {
-		saying := puffSayings[randN(len(puffSayings))]
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
+	switch number(0, 90) {
+	case 0:
+		puffSay(w, me, "My god!  It's full of stars!")
+	case 1:
+		puffSay(w, me, "How'd all those fish get up here?")
+	case 2:
+		puffSay(w, me, "I'm a very female dragon.")
+	case 3:
+		puffSay(w, me, "I've got this peaceful, easy feeling.")
+	case 4, 5, 6:
 		return true
+	case 7:
+		puffSay(w, me, "Goddamn, what a trip! Listen to those colors!")
+	case 8:
+		puffSay(w, me, "Bring out your dead!")
+	case 9:
+		puffSay(w, me, "Rule number 6...there is NO rule number 6.")
+	case 10:
+		puffSay(w, me, "To be rich is no longer a sin...its a MIRACLE!")
+	case 11, 12:
+		return true
+	case 13:
+		puffEmote(w, me, "$n looks at you and then breaks out in a fit of laughter!")
+	case 14:
+		return true
+	case 15:
+		puffSay(w, me, "What is the sound of down?")
+	case 16:
+		return true
+	case 17:
+		puffEmote(w, me, "$n wonders where she left that darn wand.")
+	case 18, 19:
+		return true
+	case 20, 21:
+		puffSay(w, me, "Do you want to stroke my tail?")
+	case 22:
+		return true
+	case 23, 24:
+		puffEmote(w, me, "$n does female stuff.")
+	case 25:
+		return true
+	case 26:
+		puffEmote(w, me, "$n contemplates the meaning of life.")
+	case 27:
+		puffSay(w, me, "NIH!")
+	case 28, 29, 30:
+		return true
+	case 31, 32:
+		puffEmote(w, me, "$n rocks out to some funky beats.")
+	case 33, 34, 35, 36:
+		return true
+	case 37, 38, 39:
+		puffSay(w, me, "I'm gonna kick your ASS!")
+	case 40, 41, 42:
+		return true
+	default:
+		return false
 	}
-	return false
+	return true
+}
+
+func puffSay(w *World, me *MobInstance, saying string) {
+	verb := "says"
+	if saying != "" {
+		switch saying[len(saying)-1] {
+		case '!':
+			verb = "exclaims"
+		case '?':
+			verb = "asks"
+		case '.':
+			verb = "states"
+		}
+	}
+	Act(w, false, me, nil, nil, nil, "$n "+verb+", '$T'", saying, ToRoom)
+}
+
+func puffEmote(w *World, me *MobInstance, emote string) {
+	Act(w, true, me, nil, nil, nil, emote, "", ToRoom)
 }
 
 // fido — mob spec: dog scavenges corpses
 func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || number(0, 3) != 0 {
+	if me.IsFighting() || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.RoomVNum)
 	for _, obj := range items {
-		if strings.Contains(obj.GetKeywords(), "corpse") {
-			w.roomMessage(me.RoomVNum, me.GetName()+" savagely devours "+obj.GetShortDesc()+".")
-			// Spill corpse contents to room floor before destroying corpse.
-			// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room for each child.
-			for _, content := range obj.GetContents() {
-				w.AddItemToRoom(content, me.RoomVNum)
+		if obj.GetTypeFlag() == ITEM_CONTAINER && obj.GetValue(3) != 0 {
+			Act(w, false, me, nil, nil, nil, "$n savagely devours a corpse.", "", ToRoom)
+			// Spill corpse contents to the room before extracting the corpse.
+			// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room.
+			for len(obj.GetContents()) > 0 {
+				content := obj.GetContents()[0]
+				if err := w.MoveObjectToRoomFront(content, me.RoomVNum); err != nil {
+					slog.Error("MoveObjectToRoom failed in fido spec", "obj_vnum", content.GetVNum(), "room", me.RoomVNum, "error", err)
+					return false
+				}
 			}
 			if err := w.MoveObjectToNowhere(obj); err != nil {
-				slog.Warn("MoveObjectToNowhere failed in fido spec", "obj_vnum", obj.GetVNum(), "error", err)
+				slog.Error("MoveObjectToNowhere failed in fido spec", "obj_vnum", obj.GetVNum(), "error", err)
+				return false
 			}
 			return true
 		}
@@ -553,82 +672,162 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 
 // janitor — mob spec: cleans up items
 func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || number(0, 5) != 0 {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.RoomVNum)
 	for _, obj := range items {
-		if !strings.Contains(obj.GetKeywords(), "corpse") && number(0, 2) == 0 {
-			w.roomMessage(me.GetRoom(), me.GetName()+" picks up "+obj.GetShortDesc()+".")
-			// Move to janitor's inventory (matches C obj_to_char) — players can kill
-			// janitor to retrieve items, unlike RemoveItemFromRoom which destroys them.
-			w.RemoveItemFromRoom(obj, me.GetRoom())
-			me.AddToInventory(obj)
-			return true
+		// C uses CAN_WEAR(i, ITEM_WEAR_TAKE) and the reversed isname(i->name,
+		// "corpse") call at src/spec_procs.c:759.
+		if !obj.IsTakeable() || isName(obj.GetKeywords(), "corpse") {
+			continue
 		}
+		Act(w, false, me, nil, nil, nil, "$n picks up some trash.", "", ToRoom)
+		// Move to janitor's inventory through the canonical path. C obj_to_char
+		// prepends, so preserve that order for later player-visible inspection.
+		if err := w.MoveObjectToMobInventoryFront(obj, me); err != nil {
+			slog.Error("MoveObjectToMobInventoryFront failed in janitor spec", "obj_vnum", obj.GetVNum(), "mob", me.GetVNum(), "error", err)
+			return false
+		}
+		return true
 	}
 	return false
 }
 
 // cityguard — mob spec: guards patrol, arrest outlaws, and protect citizens.
-// Ported from src/spec_procs.c:771-821. Handles four behaviors:
-// 1. If fighting, delegate to fighter skill routine.
-// 2. Scan room for outlaws and attack them.
-// 3. Scan for evil combatants attacking good-aligned targets and intervene.
+// Ported from src/spec_procs.c:771-821. Handles the reachable autonomous
+// branches; fighter() is a shared callee owned by mob.fighter.
 func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" || me.GetPosition() <= 0 {
 		return false
 	}
 
-	// If already fighting, use fighter combat skills (bash/parry/headbutt)
+	// C's mobile_activity() skips fighting mobs before calling a special, so
+	// this branch is only relevant to the command path, where cityguard's
+	// cmd gate has already returned FALSE. Keep the direct C call path explicit
+	// for callers that invoke the proc synchronously in focused tests.
 	if me.IsFighting() {
 		return specFighter(w, ch, me, cmd, arg)
 	}
 
 	players := w.GetPlayersInRoom(me.RoomVNum)
 
-	// Scan for outlaws — attack on sight (src/spec_procs.c:785-796)
+	// Scan for outlaws — attack on sight (src/spec_procs.c:785-796). C gates
+	// this branch with CAN_SEE and emits an act() template, not a pre-rendered
+	// room string.
 	for _, tch := range players {
-		if tch.IsNPC() {
+		if !canSee(me, tch) || tch.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
 			continue
 		}
-		if (tch.GetFlags() & (1 << uint(PlrOutlaw))) != 0 {
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'We don't like OUTLAWS like you in this city!'")
-			if err := me.Attack(tch, w); err != nil {
-				slog.Warn("cityguard outlaw attack failed", "guard", me.GetName(), "target", tch.GetName(), "error", err)
-			}
-			return specFighter(w, ch, me, cmd, arg)
+		Act(w, false, me, nil, nil, nil,
+			"$n says, 'We don't like OUTLAWS like you in this city!'", "", ToRoom)
+		if err := w.mobHit(me, tch); err != nil {
+			slog.Warn("cityguard outlaw attack failed", "guard", me.GetName(), "target", tch.GetName(), "error", err)
 		}
+		return specFighter(w, ch, me, cmd, arg)
 	}
 
-	// Find the most evil combatant attacking a good-aligned target (src/spec_procs.c:799-821)
-	var evil *Player
+	// Find the lowest-aligned visible combatant attacking a good-aligned target
+	// (src/spec_procs.c:799-821). The C condition intentionally allows either
+	// side of the fight to be an NPC; preserve that topology here.
+	var evil cityguardAlignedCombatant
+	var evilTarget cityguardAlignedCombatant
 	maxEvil := 1000
-	for _, tch := range players {
-		if !tch.IsFighting() {
+	for _, candidate := range cityguardRoomCombatants(w, me.RoomVNum) {
+		tch, ok := candidate.(cityguardAlignedCombatant)
+		if !ok {
+			continue
+		}
+		if !canSee(me, tch) || tch.GetFighting() == "" {
 			continue
 		}
 		align := tch.GetAlignment()
-		if align < maxEvil {
-			// Check their target is good-aligned (a player being attacked by an evil)
-			targetName := tch.GetFighting()
-			if tp, ok := w.GetPlayer(targetName); ok && tp.GetAlignment() >= 0 {
-				maxEvil = align
-				evil = tch
-			}
+		target := cityguardCombatantByName(w, me.RoomVNum, tch.GetFighting())
+		targetAligned, ok := target.(cityguardAlignedCombatant)
+		if targetAligned == nil || !ok || align >= maxEvil || (!tch.IsNPC() && !target.IsNPC()) {
+			continue
 		}
+		maxEvil = align
+		evil = tch
+		evilTarget = targetAligned
 	}
-	if evil != nil && evil.GetAlignment() < 0 {
-		targetName := evil.GetFighting()
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'PROTECT THE INNOCENT!  Surrender, "+evil.GetName()+"!'")
-		if err := me.Attack(evil, w); err != nil {
+	if evil != nil && evilTarget.GetAlignment() >= 0 {
+		Act(w, false, me, evil, nil, nil,
+			"$n says, 'You just pissed me off, $N!'", "", ToRoom)
+		if err := w.mobHit(me, evil); err != nil {
 			slog.Warn("cityguard protect attack failed", "guard", me.GetName(), "target", evil.GetName(), "error", err)
 		}
-		_ = targetName
 		return specFighter(w, ch, me, cmd, arg)
 	}
 
 	return false
+}
+
+type cityguardAlignedCombatant interface {
+	combat.Combatant
+	GetAlignment() int
+}
+
+// cityguardRoomCombatants mirrors the C world[].people walk closely enough
+// for the cityguard's visible protection scan. The Go world stores players and
+// mobs separately, so retain both sets at this boundary.
+func cityguardRoomCombatants(w *World, roomVNum int) []combat.Combatant {
+	players := w.GetPlayersInRoom(roomVNum)
+	mobs := w.GetMobsInRoom(roomVNum)
+	actors := make([]combat.Combatant, 0, len(players)+len(mobs))
+	for _, player := range players {
+		actors = append(actors, player)
+	}
+	for _, mob := range mobs {
+		actors = append(actors, mob)
+	}
+	return actors
+}
+
+func cityguardCombatantByName(w *World, roomVNum int, name string) combat.Combatant {
+	for _, player := range w.GetPlayersInRoom(roomVNum) {
+		if player.GetName() == name {
+			return player
+		}
+	}
+	for _, mob := range w.GetMobsInRoom(roomVNum) {
+		if mob.GetName() == name {
+			return mob
+		}
+	}
+	return nil
+}
+
+// mobHit mirrors C hit(): a mob special calls the synchronous combat entry,
+// not the placeholder damage helper used by older mob paths. The fallback
+// keeps focused spec tests useful when they intentionally omit a combat
+// engine; production worlds provide the canonical initial-attack seam.
+func (w *World) mobHit(attacker *MobInstance, defender combat.Combatant) error {
+	if w.combatEngine == nil {
+		player, ok := defender.(*Player)
+		if !ok {
+			return fmt.Errorf("mob special fallback cannot attack non-player %q", defender.GetName())
+		}
+		return attacker.Attack(player, w)
+	}
+	starter, hasDeferredStarter := w.combatEngine.(interface {
+		StartCombatFromMob(combat.Combatant, combat.Combatant) error
+	})
+	var err error
+	if hasDeferredStarter {
+		err = starter.StartCombatFromMob(attacker, defender)
+	} else {
+		err = w.combatEngine.StartCombat(attacker, defender)
+	}
+	if err != nil {
+		return err
+	}
+	if initial, ok := w.combatEngine.(interface {
+		PerformInitialAttack(combat.Combatant, combat.Combatant) error
+	}); ok {
+		return initial.PerformInitialAttack(attacker, defender)
+	}
+	return nil
 }
 
 // mayorState holds per-mob state for the mayor path-walking system.
@@ -768,85 +967,146 @@ func mayorMobCloseDoor(w *World, me *MobInstance, dir int, keyword string) {
 	w.roomMessage(me.GetRoom(), me.GetName()+" closes and locks the gate.")
 }
 
-// dragon_breath — mob spec: breath weapon in combat
-func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
-		return false
+// dragonBreathSpell returns the spell selected by SPECIAL(dragon_breath)'s
+// exact VNUM switch (src/spec_procs.c:937-954). The default is intentional:
+// an assigned future dragon still uses C's fire-breath fallback.
+func dragonBreathSpell(vnum int) int {
+	switch vnum {
+	case 4209, 4705:
+		return spells.SpellFrostBreath
+	case 11000:
+		return spells.SpellAcidBreath
+	case 11001, 20027:
+		return spells.SpellLightningBreath
+	case 11002:
+		return spells.SpellFireBreath
+	default:
+		return spells.SpellFireBreath
 	}
-	melee := mobMeleeTarget(me)
-	if melee == nil || number(0, 4) != 0 {
-		return false
-	}
-	breathSpells := []int{
-		spells.SpellFireBreath,
-		spells.SpellGasBreath,
-		spells.SpellFrostBreath,
-		spells.SpellAcidBreath,
-		spells.SpellLightningBreath,
-	}
-	breathNames := []string{"fire", "gas", "frost", "acid", "lightning"}
-	n := randN(len(breathSpells))
-	w.roomMessage(me.RoomVNum, me.GetName()+" breathes "+breathNames[n]+" at "+melee.GetName()+"!")
-	spells.Cast(me, melee, breathSpells[n], me.GetLevel(), w)
-	return true
 }
 
-// citizen — mob spec: random greetings
-func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || number(0, 8) != 0 {
+// specDragonBreath — mob spec: lair threat and breath weapon.
+// Ported from src/spec_procs.c:926-983. The autonomous caller reaches the
+// non-fighting branch; the combat engine reaches the fighting branch after
+// the ordinary NPC attack loop, matching fight.c:1898-2032.
+func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	citizenSayings := []string{
-		"Don't speak to me.",
-		"Piss off.",
-		"Get out of my face.",
-		"Nice day.",
-		"Good weather we're having.",
-		"Huh?  What?  I'm busy.",
-		"I've got an axe to grind.",
-		"Who are you?",
-		"Get away from me!",
+
+	spell := dragonBreathSpell(me.GetVNum())
+	fighting := mobFightingTarget(w, me)
+	if fighting != nil {
+		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
+			// C calls do_stand() here. An NPC has no descriptor, so only its
+			// state transition and the room Act are player-visible.
+			switch me.GetPosition() {
+			case combat.PosSitting:
+				Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
+			case combat.PosResting:
+				Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
+			default:
+				Act(w, true, me, nil, nil, nil, "$n stops floating around, and puts $s feet on the ground.", "", ToRoom)
+			}
+			me.SetPosition(combat.PosStanding)
+		} else if number(0, 3) == 0 {
+			spells.CallMagic(me, fighting, nil, spell, me.GetLevel(), spells.CastBreath, w)
+			return specMagicUser(w, nil, me, "", "")
+		}
+		return true
 	}
-	saying := citizenSayings[randN(len(citizenSayings))]
-	w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
-	return true
+
+	for _, victim := range w.GetPlayersInRoom(me.GetRoom()) {
+		if !canSee(me, victim) || victim.GetFlags()&(1<<PrfNohassle) != 0 {
+			continue
+		}
+		Act(w, true, me, nil, nil, nil, "$n looks at you.", "", ToRoom)
+		Act(w, true, me, nil, nil, nil, "$n growls, 'So, you have found my lair...'", "", ToRoom)
+		Act(w, true, me, nil, nil, nil, "$n exclaims, 'For that you must die!'", "", ToRoom)
+		spells.CallMagic(me, victim, nil, spell, me.GetLevel(), spells.CastBreath, w)
+		return true
+	}
+	return false
+}
+
+// citizen — mob spec: random greetings.
+// Ported from src/spec_procs.c:986-1032. C calls this with ch==the mob on
+// autonomous/combat paths, while command dispatch supplies the player as ch;
+// the nil/non-nil distinction preserves that NPC gate in this signature.
+func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if me == nil || ch != nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+		return false
+	}
+
+	if me.GetFighting() != "" {
+		switch me.GetPosition() {
+		case combat.PosSitting:
+			Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
+			me.SetPosition(combat.PosStanding)
+		case combat.PosResting:
+			Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
+			me.SetPosition(combat.PosStanding)
+		}
+		return false
+	}
+
+	if citizenNumber(0, 19) != 0 {
+		return false
+	}
+
+	switch citizenNumber(1, 10) {
+	case 1:
+		Act(w, true, me, nil, nil, nil, "$n jingles some change in $s pocket.", "", ToRoom)
+	case 2:
+		Act(w, true, me, nil, nil, nil, "$n stares into the sky.", "", ToRoom)
+		Act(w, true, me, nil, nil, nil, "$n says, 'Looks like rain. *sigh*'", "", ToRoom)
+	case 3:
+		Act(w, true, me, nil, nil, nil, "$n glances at you out of the corner of $s eye.", "", ToRoom)
+	case 4:
+		Act(w, true, me, nil, nil, nil, "$n mumbles something about the price of a crappy loaf of bread.", "", ToRoom)
+	case 5:
+		Act(w, true, me, nil, nil, nil, "$n kicks a pebble out of the road.", "", ToRoom)
+	case 6:
+		Act(w, true, me, nil, nil, nil, "$n looks at you and shouts 'Repent! The end is near!'", "", ToRoom)
+	case 7:
+		Act(w, true, me, nil, nil, nil, "$n eyes your coin purse.", "", ToRoom)
+	case 8:
+		Act(w, true, me, nil, nil, nil, "$n looks around for the cityguards just before giving you the bird.", "", ToRoom)
+	}
+
+	// C returns FALSE even when it emits a room message, allowing the rest of
+	// mobile_activity() to continue with its normal AI work.
+	return false
 }
 
 // cuchi — mob spec: Easter egg + random speech.
 // Matches src/spec_procs.c:1034-1071.
 func specCuchi(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// "pat" command: Orodreth gets promoted; everyone else gets 10 gold (Easter egg)
-	if cmd == "pat" {
-		w.roomMessage(me.RoomVNum, ch.GetName()+" pats "+me.GetName()+" on the head and rubs around her ears.")
-		sendToChar(ch, "You pat "+me.GetName()+" on the head and rub around her ears.\r\n")
-		if ch.GetName() == "Orodreth" {
-			ch.SetLevel(LVL_IMPL)
-			sendToChar(ch, "Cuchi purrs at you contently.\r\n")
-			w.roomMessage(me.RoomVNum, me.GetName()+" purrs contently at "+ch.GetName()+".")
-		} else {
-			ch.mu.Lock()
-			ch.Gold += 10
-			ch.mu.Unlock()
-			sendToChar(ch, "Cuchi purrs at you and bestows a gift from the gods.\r\n")
-			w.roomMessage(me.RoomVNum, me.GetName()+" purrs at "+ch.GetName()+" and bestows a gift from the gods.")
-		}
-		return true
-	}
-
-	if cmd != "" || number(0, 4) != 0 {
+	// C's CMD_IS("pat") gate is command-table based, so autonomous dispatch
+	// (cmd == "") and every other command fall through without side effects.
+	if cmd != "pat" || ch == nil || me == nil {
 		return false
 	}
-	cuchiSayings := []string{
-		"I am not amused.",
-		"You're all just jealous.",
-		"*sigh* Nobody understands me.",
-		"Minions of the universe, unite!",
-		"I am the master of all I survey.",
-		"Bow before me, mortals!",
-		"Your insolence will be your undoing.",
+
+	// The C act() calls use ch as the actor and TO_ROOM, so the command actor
+	// receives only the two stc() messages and everyone else receives the two
+	// room messages. The literal Cuchi is intentional; it is not me's runtime
+	// short description.
+	sendToChar(ch, "You pat Cuchi on the head and rub around her ears.")
+	Act(w, false, ch, nil, nil, nil, "$n pats Cuchi on the head and rubs around her ears.", "", ToRoom)
+
+	if ch.GetName() == "Orodreth" {
+		ch.SetLevel(LVL_IMPL)
+		sendToChar(ch, "Cuchi purrs at you contently.")
+		Act(w, false, ch, nil, nil, nil, "Cuchi purrs contently at $n.", "", ToRoom)
+	} else {
+		ch.mu.Lock()
+		ch.Gold += 10
+		ch.mu.Unlock()
+		sendToChar(ch, "Cuchi purrs at you and bestows a gift from the gods.")
+		Act(w, false, ch, nil, nil, nil, "Cuchi purrs at $n and bestows a gift from the gods.", "", ToRoom)
 	}
-	saying := cuchiSayings[randN(len(cuchiSayings))]
-	w.roomMessage(me.RoomVNum, me.GetName()+" says, '"+saying+"'")
+
 	return true
 }
 

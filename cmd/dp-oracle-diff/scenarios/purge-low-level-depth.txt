@@ -1,0 +1,44 @@
+# C-first do_purge dispatcher authorization vehicle (src/interpreter.c:624;
+# src/comm.c:910-947). Lowering the first-player character below the C
+# LVL_IMMORT+1 table gate must stop before do_purge and emit Huh?!?.
+
+# depth-case: purge.low-level-authorization
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Purgelow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Purgelow
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Purgelow level 1
+
+[probe]
+purge

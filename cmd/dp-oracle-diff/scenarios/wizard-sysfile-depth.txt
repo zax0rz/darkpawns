@@ -1,0 +1,57 @@
+# C-first vehicle for do_sysfile. The no-argument refusal is already covered
+# by wizard-residual-depth; this vehicle keeps it first as a gate/context check
+# and expands the selector, missing-file, case-folding, and first-token paths.
+# Both trees intentionally lack misc/bugs, misc/ideas, misc/todo, and
+# misc/typos, so successful file contents and descriptor paging remain a
+# separately tracked blocked branch rather than an invented fixture.
+
+# depth-case: sysfile.bugs-prefix
+# depth-case: sysfile.ideas-prefix
+# depth-case: sysfile.todo-prefix
+# depth-case: sysfile.typos-prefix
+# depth-case: sysfile.case-insensitive
+# depth-case: sysfile.invalid
+# depth-case: sysfile.trailing-words
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sysfiledepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sysfiledepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+sysfile
+sysfile b
+sysfile i
+sysfile t
+sysfile ty
+sysfile BUGS
+sysfile nope
+sysfile bugs trailing words are ignored

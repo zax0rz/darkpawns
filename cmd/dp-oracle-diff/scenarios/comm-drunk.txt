@@ -1,0 +1,114 @@
+# depth-case: say.drunk-speech
+# The drunk-speech arm of do_say (act.comm.c:776-778 + speak_drunk 1389-1436):
+# GET_COND(ch, DRUNK) > 10 wraps the ROOM message in speak_drunk(), while the
+# actor's own line keeps the ORIGINAL text (C quirk: "You say '%s'" uses
+# argument+i, not drunk_speak). Vehicle: the God-set condition surface —
+# [warmup] (drained) runs `set Drunko drunk 24` on the Implementor (do_set
+# case 29, act.wizard.c:2977-2993: RANGE(0,48) on GET_COND(vict, DRUNK));
+# fresh mortals are sober because roll_real_abils zeroes drunk (class.c:580).
+# Hestia co-locates to capture the drunk ROOM lines; the three says exercise
+# word substitutions ("the ", "kill", "is", "how", "are", "what"), the letter
+# rules (s→sh, t→th), the fallback pass-through, and the !/? verb variants.
+
+[fixture]
+empty-players
+quiet-mobs
+
+# PRIMARY = first player ⇒ God (runs the set-condition warmup).
+[setup:oracle]
+Drunkgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Drunkgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# PEER = the soon-drunk prober.
+[setup:oracle:drunko]
+Drunko
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:drunko]
+Drunko
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# PEER = sober room audience in the same start room.
+[setup:oracle:hestia]
+Hestia
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:hestia]
+Hestia
+y
+mortalpass
+mortalpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# God sets the mortal's drunk condition to 24 (> 10). Drained, not diffed.
+[warmup]
+set Drunko drunk 24
+
+[probe:drunko]
+say the killer is here
+say what is this!
+say how are you?

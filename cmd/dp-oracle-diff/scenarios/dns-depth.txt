@@ -1,0 +1,65 @@
+# do_dns (src/act.wizard.c:3106-3208) — C's DNS-cache admin surface.
+# empty-players makes the first character an Implementor, so the LVL_IMPL-1
+# command gate reaches the handler. quiet-mobs keeps the disposable boot quiet
+# while forcing both servers to use throwaway world/data roots.
+
+# depth-case: dns.no-argument-warning
+# depth-case: dns.delete-missing-argument
+# depth-case: dns.delete-malformed-address
+# depth-case: dns.add-missing-arguments
+# depth-case: dns.add-missing-name
+# depth-case: dns.add-four-octet-entry
+# depth-case: dns.add-three-octet-entry
+# depth-case: dns.delete-prefix-matches
+# depth-case: dns.unknown-subcommand-silent
+#
+# `list` is intentionally not sent by this proof vehicle. C builds its list
+# with overlapping sprintf(buf, "%s...", buf, ...), and this fixture's empty
+# etc/dns also reaches boot_dns's uninitialized EOF-buffer path. The shipped
+# Linux oracle emits unstable garbage on that reachable branch; the manifest
+# records it as an explicit undefined-behavior exclusion (R1/R5e), matching the
+# established treatment of `auto`'s overlapping listing.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dnsadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dnsadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+dns
+dns delete
+dns delete bad
+dns add
+dns add 001.002.003
+dns add 001.002.003.004 HostFour
+dns add 001.002.003 HostThree
+dns del 1.2.3
+dns nope

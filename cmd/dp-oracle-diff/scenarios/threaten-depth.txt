@@ -1,0 +1,122 @@
+# C-first do_action social vehicle (src/interpreter.c:769;
+# src/act.social.c:102-151; lib/misc/socials:1332-1340). The authored
+# threaten record is target-capable and is exercised through no-argument,
+# visible player/NPC target, named self, missing target, one_argument/fill-word,
+# and sleeping-target branches.
+
+# depth-case: threaten.no-argument
+# depth-case: threaten.target-success
+# depth-case: threaten.target-audience
+# depth-case: threaten.argument-first-token
+# depth-case: threaten.mob-target
+# depth-case: threaten.self-target
+# depth-case: threaten.target-not-found
+# depth-case: threaten.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Threatenactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Threatenactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Threatenobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Threatenobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Threatentarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Threatentarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Threatenobserver 8162
+teleport Threatentarget 8162
+
+[probe]
+threaten
+threaten Threatentarget trailing words are ignored
+threaten Threatentarget
+threaten trainee
+threaten Threatenactor
+threaten self
+threaten Nobody
+force Threatentarget sleep
+threaten Threatentarget

@@ -1,0 +1,118 @@
+# C-first flip/do_action vehicle (src/interpreter.c:448;
+# src/act.social.c:102-151; lib/misc/socials:231-239). A standing target
+# exposes the complete target audience, while the sleeping target is a
+# separate probe: flip's record has min_victim_position 0, so that branch must
+# still run. The room peer exposes non-victim bytes.
+
+# depth-case: flip.no-argument
+# depth-case: flip.target-success
+# depth-case: flip.self-target
+# depth-case: flip.target-not-found
+# depth-case: flip.sleeping-target-allowed
+# depth-case: flip.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Flipactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Flipactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Flippeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Flippeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeppeer]
+Flipsleep
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeppeer]
+Flipsleep
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8004
+teleport Flippeer 8004
+teleport Flipsleep 8004
+
+[probe]
+flip
+flip Flippeer
+flip Flipactor
+flip Nobody
+flip Flipsleep
+flip the Flippeer trailing words are ignored

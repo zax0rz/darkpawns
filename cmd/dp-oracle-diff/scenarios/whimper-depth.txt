@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:816;
+# src/act.social.c:102-127; lib/misc/socials:984-987). The authored whimper
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: whimper.no-argument
+# depth-case: whimper.typed-target-ignored
+# depth-case: whimper.missing-target-ignored
+# depth-case: whimper.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Whimperactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whimperactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Whimperpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Whimperpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Whimperpeer 8162
+
+[probe]
+whimper
+whimper Whimperpeer
+whimper Nobody
+whimper Whimperactor

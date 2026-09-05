@@ -1,0 +1,85 @@
+# C-first vehicle for SPECIAL(prostitute)'s CAN_SEE failure arm. The authored
+# elven_prostitute.lua script is stripped, and RANDZON is cleared so the real
+# registered mob vnum 8023 stays in room 8021. Velvet is briefly immortal only
+# to cast the real invisibility spell, then is lowered to mortal before probe.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8023 1 8021 80
+clear-mob-flag 8023 RANDZON
+strip-mob-script 8023
+replace-room-exits 8021 none
+
+[setup:oracle]
+Velvet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Velvet
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Witness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Witness 8021
+goto 8021
+cast 'invisibility' Velvet
+~dpclock pulse 20
+set Velvet level 1
+~dpclock pulse 1
+
+[probe]
+list
+buy
+
+# depth-case: mob.prostitute-invisible-list-audience
+# depth-case: mob.prostitute-invisible-buy-audience

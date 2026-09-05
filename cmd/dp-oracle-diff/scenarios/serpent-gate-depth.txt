@@ -1,0 +1,39 @@
+# C-first entry vehicle for do_serpent_kick (src/new_cmds2.c:693-743).
+# The skill gate is checked before one_argument/target lookup.
+
+# depth-case: serpent.no-skill
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Serpentgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Serpentgate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+serpent nobody

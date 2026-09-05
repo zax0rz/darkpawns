@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_gen_door	open/close/lock/unlock/pick	door.no-arg	D1	command	oracle-green	door-basic	act.movement.c:604-608	Empty arg yields "<Cmd> what?" (capitalized per subcmd).
+do_gen_door	open/close/lock/unlock/pick	door.not-found	D2	command	oracle-green	door-basic	act.movement.c:611-613	Neither object nor door found: find_door reports it is not here.
+do_gen_door	open/close	door.open-container	D3	command	oracle-green	door-basic	act.movement.c:614-636	"open <container>" opens a closed container (actor + room).
+do_gen_door	open	door.open-success	D3	command	oracle-green	door-basic	act.movement.c:635-636	"open <door>" opens a closed door (actor + room).
+do_gen_door	open	door.open-already-open	D2	command	oracle-green	door-basic	act.movement.c:623-624	Opening an already-open door yields "But it's currently open!".
+do_gen_door	close	door.close-success	D3	command	oracle-green	door-basic	act.movement.c:635-636	"close <door>" closes an open door (actor + room).
+do_gen_door	close	door.close-already-closed	D2	command	oracle-green	door-basic	act.movement.c:621-622	Closing an already-closed door yields "But it's already closed!".
+do_gen_door	open/close	door.open-direction	D2	command	oracle-green	door-basic	act.movement.c:611-613	find_door resolves a door by direction keyword (e.g. "open north").
+do_gen_door	lock/unlock/pick	door.lock-unlock-pick	D5	state	oracle-green-multiseed	door-lock-pick-depth	act.movement.c:530-578; act.movement.c:604-637	God skillset sets the mortal's pick lock skill key; keyed gate lock/unlock/pick and pickproof resistance/lockpick breakage match across seeds 1,2,3,5,8.
+two_arguments	open/close/lock/unlock/pick	door.fill-word-parse	D2	shared	delegated	get.fill-word-parse	interpreter.c:1265	do_gen_door parses with two_arguments; fixed + regression-proven in #619 (door-fillword).

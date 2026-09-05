@@ -1,0 +1,121 @@
+# C-first do_action social vehicle (src/interpreter.c:637;
+# src/act.social.c:102-151; lib/misc/socials:1088-1096). The authored reel
+# record is exercised through no-argument, visible player/NPC target, named
+# self, missing target, one_argument/fill-word, and sleeping-target branches.
+
+# depth-case: reel.no-argument
+# depth-case: reel.target-success
+# depth-case: reel.target-audience
+# depth-case: reel.argument-first-token
+# depth-case: reel.mob-target
+# depth-case: reel.self-target
+# depth-case: reel.target-not-found
+# depth-case: reel.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Reelactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reelactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Reelobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Reelobserver
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Reeltarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Reeltarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Reelobserver 8162
+teleport Reeltarget 8162
+
+[probe]
+reel
+reel Reeltarget trailing words are ignored
+reel Reeltarget
+reel trainee
+reel Reelactor
+reel self
+reel Nobody
+force Reeltarget sleep
+reel Reeltarget

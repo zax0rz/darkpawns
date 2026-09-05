@@ -1,0 +1,114 @@
+# C-first ruffle/do_action social vehicle (src/interpreter.c:668;
+# src/act.social.c:102-151; lib/misc/socials:650-658). The three-player room
+# exposes no-argument, first-token target parsing, target success audiences,
+# self-target, and missing-target branches.
+
+# depth-case: ruffle.no-argument
+# depth-case: ruffle.one-argument
+# depth-case: ruffle.target-success
+# depth-case: ruffle.target-audience
+# depth-case: ruffle.self-target
+# depth-case: ruffle.target-not-found
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ruffleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ruffleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Ruffleobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Ruffleobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Ruffletarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Ruffletarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Ruffleobserver 8162
+teleport Ruffletarget 8162
+
+[probe]
+ruffle
+ruffle Ruffletarget trailing words are ignored
+ruffle Ruffletarget
+ruffle Ruffleactor
+ruffle Nobody

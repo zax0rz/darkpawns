@@ -1,0 +1,75 @@
+# C-first keyword case vehicle for search/do_detect.
+# C's strstr(EXIT(...)->keyword, "secret") is case-sensitive; uppercase
+# SECRET must not become a discovered exit.
+#
+# depth-case: search.case-sensitive-keyword
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 north 8161 1 SECRET
+
+[setup:oracle]
+Searchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Searchgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Searchtarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Searchtarget
+y
+targetpass
+targetpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Searchtarget 8105
+skillset Searchtarget 'search' 100
+
+[probe:target]
+search

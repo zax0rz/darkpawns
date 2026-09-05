@@ -1,0 +1,52 @@
+# depth-case: mob.cityguard-breed-killer
+# C-first vehicle for the shared breed_killer() arm reached from
+# SPECIAL(cityguard). The target mob's innate AFF_VAMPIRE bit is patched in
+# both disposable world copies; the cityguard's Lua script is stripped so the
+# autonomous pulse reaches the native special. No outlaw player is configured,
+# so cityguard's breed_killer call is the first intervention branch.
+# C path: src/spec_procs.c:799-801 -> src/spec_procs2.c:1679-1722;
+# mobile_activity() supplies cmd==0 and filters only the cityguard itself.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18215 1 18215 182
+strip-mob-script 18215
+spawn-mob 18207 1 18215 182
+set-mob-aff 18207 268435456
+replace-room-exits 18215 none
+
+[setup:oracle]
+CityguardBreedGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CityguardBreedGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 18215
+
+[probe]
+~dpclock pulse 40

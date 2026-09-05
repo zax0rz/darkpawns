@@ -1,0 +1,126 @@
+# C-first qsay vehicle (src/interpreter.c:631; src/act.comm.c:1301-1360).
+# The first player is an immortal under empty-players. The actor starts outside
+# the quest, then joins it; a questing peer and non-questing peer expose the
+# guards, global audience, raw spacing, and sleep-safe recipient behavior.
+
+# depth-case: qsay.entry-gate
+# depth-case: qsay.quest-gate
+# depth-case: qsay.noshout-gate
+# depth-case: qsay.empty
+# depth-case: qsay.broadcast
+# depth-case: qsay.spacing
+# depth-case: qsay.ansi-controls
+# depth-case: qsay.norepeat
+# depth-case: qsay.sleeping-recipient
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Qsayactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qsayactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Qsaypart
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Qsaypart
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Qsaynon
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Qsaynon
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Qsaypart 8162
+teleport Qsaynon 8162
+force Qsaypart quest
+
+[probe]
+qsay before-quest
+quest
+qsay
+qsay Alpha  beta  gamma  
+qsay &Rred&n
+noshout
+qsay muted channel
+noshout
+norepeat
+qsay norepeat  spacing
+norepeat
+force Qsaypart sleep
+qsay Qsaypart  receives  while  sleeping

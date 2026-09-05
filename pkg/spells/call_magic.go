@@ -6,6 +6,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// lvlImmort mirrors C LVL_IMMORT (31); duplicated here to avoid an import cycle
+// with pkg/game (same pattern as pkg/combat/fight_core.go).
+const lvlImmort = 31
+
 // CallMagic is the central spell dispatch function, ported from src/spell_parser.c call_magic().
 //
 // Parameters:
@@ -14,11 +18,23 @@ import (
 //   - ovict: the object target (can be nil)
 //   - spellNum: the spell number
 //   - level: effective level of the spell (usually caster level, from item for scrolls/potions)
-//   - castType: CAST_SPELL, CAST_WAND, CAST_STAFF, CAST_POTION, CAST_SCROLL
+//   - castType: CAST_SPELL, CAST_WAND, CAST_STAFF, CAST_POTION, CAST_SCROLL, CAST_BREATH
 //   - world: game world reference (interface{} to avoid circular imports)
 //
 // Returns true if the spell was executed.
 func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}) bool {
+	return callMagic(caster, cvict, ovict, spellNum, level, castType, world, false)
+}
+
+// CastFromSpecial dispatches a spell from a native special-procedure call.
+// C call_magic() does not apply the command parser's per-spell minimum
+// position; it only rejects POS_SITTING (spell_parser.c:434-439). The normal
+// CallMagic path retains the parser-facing position check used by commands.
+func CastFromSpecial(caster, cvict interface{}, spellNum, level int, world interface{}) bool {
+	return callMagic(caster, cvict, nil, spellNum, level, CastSpell, world, true)
+}
+
+func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, fromSpecial bool) bool {
 	si := GetSpellInfo(spellNum)
 	if si == nil {
 		return false
@@ -33,18 +49,35 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 		return false
 	}
 
-	// Check position
-	if !checkPosition(caster, si) {
+	// Command dispatch checks each spell's minimum position. Native special
+	// procedures enter call_magic() directly, whose only position gate is the
+	// C sitting check; resting/fighting/standing casters are accepted there.
+	if fromSpecial {
+		type poser interface{ GetPosition() int }
+		if p, ok := caster.(poser); ok && p.GetPosition() == int(PosSitting) {
+			return false
+		}
+	} else if !checkPosition(caster, si) {
 		return false
 	}
 
-	// Check peaceful room for violent spells
-	if si.IsViolent() && roomIsPeaceful(caster, world) {
-		type sender interface{ SendMessage(string) }
-		if s, ok := caster.(sender); ok {
-			s.SendMessage("This room is peaceful; you cannot cast violent spells here.\r\n")
+	// Peaceful room blocks violent OR damaging spells for mortal casters —
+	// C spell_parser.c:436-450. The caster sees a "flash of white light"
+	// message (violent magic, or "power" for psionic/mystic), the room sees the
+	// light appear, and the spell is aborted. Immortals are exempt.
+	if roomIsPeaceful(caster, world) && (si.IsViolent() || si.HasRoutine(RoutineDamage)) {
+		if getLevel(caster) < lvlImmort {
+			type sender interface{ SendMessage(string) }
+			if s, ok := caster.(sender); ok {
+				if isClassPsionicOrMystic(getClass(caster)) {
+					s.SendMessage("A flash of white light fills the room, dispelling your violent power!\r\n")
+				} else {
+					s.SendMessage("A flash of white light fills the room, dispelling your violent magic!\r\n")
+				}
+			}
+			sendAffectRoom(caster, caster, "White light from no particular source suddenly fills the room, then vanishes.\r\n", world)
+			return false
 		}
-		return false
 	}
 
 	// Determine saving throw type based on cast type
@@ -64,7 +97,7 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 	}
 
 	if si.HasRoutine(RoutineAffects) {
-		MagAffects(level, caster, cvict, spellNum, int(savetype), world)
+		magAffectsForCast(level, caster, cvict, spellNum, int(savetype), castType, world)
 	}
 
 	if si.HasRoutine(RoutineUnaffects) {

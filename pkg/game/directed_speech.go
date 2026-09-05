@@ -131,6 +131,10 @@ func (w *World) DoSay(ch *Player, argument string) {
 	communicationSend(ch, fmt.Sprintf("You %s '%s'", actorVerb, actorMessage))
 }
 
+// drunkSyllables is speak_drunk's table verbatim (act.comm.c:1400-1435). The
+// single-letter IDENTITY entries are load-bearing: they consume letters as
+// matches mid-scan, which changes what a later table pass can match ("Sick"
+// → "SHick" because the 'c' falls back past the "ck" entry). Do not prune.
 var drunkSyllables = []syllable{
 	{" ", " "},
 	{"are", "arsh"},
@@ -142,11 +146,58 @@ var drunkSyllables = []syllable{
 	{"kill", "murderize"},
 	{"ck", "shkin"},
 	{"the ", "th' "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "C"},
+	{"D", "D"},
+	{"E", "E"},
+	{"F", "F"},
+	{"G", "G"},
+	{"H", "H"},
+	{"I", "I"},
+	{"J", "J"},
+	{"K", "K"},
+	{"L", "L"},
+	{"M", "M"},
+	{"N", "N"},
+	{"O", "O"},
+	{"P", "P"},
+	{"Q", "Q"},
+	{"R", "R"},
 	{"S", "SH"},
 	{"T", "Th"},
 	{"U", "u"},
+	{"V", "V"},
+	{"W", "W"},
+	{"X", "X"},
+	{"Y", "Y"},
+	{"Z", "Z"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "c"},
+	{"d", "d"},
+	{"e", "e"},
+	{"f", "f"},
+	{"g", "g"},
+	{"h", "h"},
+	{"i", "i"},
+	{"j", "j"},
+	{"k", "k"},
+	{"l", "l"},
+	{"m", "m"},
+	{"n", "n"},
+	{"o", "o"},
+	{"p", "p"},
+	{"q", "q"},
+	{"r", "r"},
 	{"s", "sh"},
 	{"t", "th"},
+	{"u", "u"},
+	{"v", "v"},
+	{"w", "w"},
+	{"x", "x"},
+	{"y", "y"},
+	{"z", "z"},
 }
 
 func speakDrunk(message string) string {
@@ -180,6 +231,10 @@ func (w *World) DoTell(ch *Player, argument string) {
 	}
 	if state.senderSoundproof {
 		communicationSend(ch, "The walls seem to absorb your words.")
+		return
+	}
+	if target.IsLinkless() {
+		Act(nil, false, ch, target, nil, nil, "$E's linkless at the moment.", "", ToChar|ToSleep)
 		return
 	}
 	if state.targetWriting {
@@ -238,6 +293,10 @@ func (w *World) DoReply(ch *Player, argument string) {
 	}
 	if state.senderSoundproof {
 		communicationSend(ch, "The walls seem to absorb your words.")
+		return
+	}
+	if target.IsLinkless() {
+		Act(nil, false, ch, target, nil, nil, "$E's linkless at the moment.", "", ToChar|ToSleep)
 		return
 	}
 	if state.targetSoundproof {

@@ -27,6 +27,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
@@ -43,13 +44,23 @@ import (
 // fall back to TYPE_SLASH (303) to preserve legacy behavior.
 func skillToAttackType(skill string) int {
 	switch skill {
-	case "backstab", "circle":
-		return TypeSting // 301
-	case "bash", "kick", "punch", "dragon_kick", "tiger_punch", "headbutt",
+	case "backstab":
+		return SkillBackstabNum
+	case "circle":
+		return SkillCircleNum
+	case "bash", "kick", "punch", "tiger_punch", "headbutt",
 		"smackheads", "slug", "serpent_kick":
 		return TypeBludgeon // 305
+	case "dragon_kick":
+		return SkillDragonKickNum
 	case "bite":
-		return TypeBite // 304
+		return SkillBiteNum // SKILL_BITE (150)
+	case "groinrip":
+		return SkillGroinripNum // SKILL_GROINRIP (174)
+	case "charge":
+		return SkillChargeNum // SKILL_CHARGE (147), default corpse wording
+	case "cutthroat":
+		return SkillCutthroatNum // SKILL_CUTTHROAT (143)
 	case "disembowel":
 		return SkillDisembowelNum // 184
 	case "neckbreak":
@@ -94,7 +105,14 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 		v.SetFighting(attackerName)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
+		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
+		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
+			// C damage() burns the pain/scream number(0,2) draw even when the
+			// victim is an NPC with no descriptor (fight.c:1580-1585). The
+			// charge vehicle reaches this branch and relies on its draw order.
+			_ = dprng.Number(0, 2)
+		}
+		if newPos == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -103,13 +121,106 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 		v.SetFighting(attackerName)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
+		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
+		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
+			// C evaluates this random scream branch for mobs too; act() simply
+			// has no descriptor to deliver the victim-directed output to.
+			_ = dprng.Number(0, 2)
+		}
+		if newPos == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	default:
 		return false
 	}
+}
+
+// DoDisembowelDamage preserves do_disembowel's damage() call path: damage
+// updates the victim position, emits skill_message after that update, and
+// runs death_cry/raw_kill only after the numbered message and death bytes.
+func (w *World) DoDisembowelDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillDisembowelNum, func() {
+		w.HandleDeath(victim, attacker, SkillDisembowelNum)
+		combat.DeathCry(victim)
+	})
+}
+
+// DoGroinripDamage preserves do_groinrip's damage() boundary: damage applies
+// HP and position changes, emits numbered skill_message set 174, then returns
+// to the command for its victim-room act() and skill improvement.
+func (w *World) DoGroinripDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillGroinripNum, func() {
+		w.HandleDeath(victim, attacker, SkillGroinripNum)
+		combat.DeathCry(victim)
+	})
+}
+
+// DoNeckbreakDamage preserves do_neckbreak's damage() boundary: apply damage,
+// update position, emit numbered skill_message set 190, then return for the
+// command's deferred improve_skill and WAIT_STATE (fight.c:1023-1092).
+func (w *World) DoNeckbreakDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillNeckbreakNum, func() {
+		w.HandleDeath(victim, attacker, SkillNeckbreakNum)
+		combat.DeathCry(victim)
+	})
+}
+
+// DoSmackheadsDamage preserves do_smackheads' damage() boundary: the two
+// ordered damage calls must use the C skill attack type and complete death
+// path, including the authored death bytes and death cry before game-layer
+// removal/XP bookkeeping (new_cmds.c:1090-1102; R1/R5e).
+func (w *World) DoSmackheadsDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillSmackheadsNum, func() {
+		w.HandleDeath(victim, attacker, SkillSmackheadsNum)
+		combat.DeathCry(victim)
+	})
+}
+
+// MaybeSpawnPuke preserves do_groinrip's post-room 1-in-11 vnum-21 object
+// branch, including its shared RNG draw and two-tick timer.
+func (w *World) MaybeSpawnPuke(roomVNum int) {
+	// #nosec G404 — game RNG, not cryptographic
+	if dprng.Number(0, 10) != 0 {
+		return
+	}
+	obj, err := w.SpawnObject(21, -1)
+	if err != nil {
+		slog.Error("groinrip puke prototype missing", "error", err)
+		return
+	}
+	if err := w.MoveObjectToRoomFront(obj, roomVNum); err != nil {
+		slog.Error("groinrip puke room placement failed", "room", roomVNum, "error", err)
+		return
+	}
+	obj.SetTimer(2)
+}
+
+// DoCutthroatDamage completes do_cutthroat's damage() call with the shared C
+// ordering: apply damage, update position, emit message set 143, emit the
+// death-position bytes, then run the game-layer death bookkeeping. The
+// callback is necessary because a lethal mob is removed by HandleDeath before
+// a command wrapper can look it up for skill_message (fight.c:1534-1718).
+func (w *World) DoCutthroatDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillCutthroatNum, func() {
+		w.HandleDeath(victim, attacker, SkillCutthroatNum)
+		combat.DeathCry(victim)
+	})
 }
 
 // doDamage applies skill/offensive damage to a player or mob and handles death.

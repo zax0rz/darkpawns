@@ -17,13 +17,17 @@ import (
 // phonetically-translated version.
 // Source: act.comm.c do_race_say() — wired to ExecRaceSay bridge in comm_say.go
 func cmdRaceSay(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.Send("Yes, but WHAT do you want to say?\n\r")
-		return nil
-	}
-
 	msg := sanitizeMessage(strings.Join(args, " "))
 	s.manager.world.ExecRaceSay(s.player, msg)
+	return nil
+}
+
+// cmdRaceSayText preserves the raw argument remainder delivered by the
+// telnet transport. C's do_race_say keeps internal spacing and only strips
+// leading spaces before dispatch, so the transport-aware path must not rebuild
+// the message from tokenized words (act.comm.c:641-676).
+func cmdRaceSayText(s *Session, msg string) error {
+	s.manager.world.ExecRaceSay(s.player, sanitizeMessage(msg))
 	return nil
 }
 
@@ -63,23 +67,38 @@ func cmdQcomm(s *Session, args []string) error {
 // cmdQsay — "qsay <message>" quest-say (act.comm.c do_qcomm/SCMD_QSAY, level 0).
 // Broadcasts "<name> quest-says, '<msg>'" to PRF_QUEST participants. C colors it &W...&n.
 func cmdQsay(s *Session, args []string) error {
+	return cmdQsayText(s, strings.Join(args, " "))
+}
+
+func cmdQsayText(s *Session, msg string) error {
 	if blocked := qcommGuard(s); blocked {
 		return nil
 	}
-	if len(args) == 0 {
+	msg = strings.TrimLeft(msg, cCommandWhitespace)
+	if msg == "" {
 		s.Send(qcommEmptyMsg("qsay"))
 		return nil
 	}
-	msg := sanitizeMessage(strings.Join(args, " "))
-	self := fmt.Sprintf("You quest-say, '%s'", msg)
-	other := fmt.Sprintf("%s quest-says, '%s'", s.player.Name, msg)
+	// C delete_ansi_controls runs on the argument before the SCMD_QSAY
+	// templates are built. The &W/&n wrappers are part of those templates and
+	// must remain in the player-facing act bytes (act.comm.c:1325-1341).
+	msg = game.DeleteANSIControls(sanitizeMessage(msg))
+	self := fmt.Sprintf("&WYou quest-say, '%s'&n", msg)
+	other := fmt.Sprintf("&W%s quest-says, '%s'&n", s.player.Name, msg)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		self = "Okay."
+	}
 	broadcastQuest(s, self, other)
 	return nil
 }
 
 // cmdQecho — "qecho <text>" immortal quest-echo (act.comm.c do_qcomm/SCMD_QECHO, LVL_IMMORT).
-// Echoes the raw text verbatim to PRF_QUEST participants (no prefix, no color).
+// Echoes the raw text to PRF_QUEST participants (no prefix, no color).
 func cmdQecho(s *Session, args []string) error {
+	return cmdQechoText(s, strings.Join(args, " "))
+}
+
+func cmdQechoText(s *Session, msg string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
@@ -87,12 +106,16 @@ func cmdQecho(s *Session, args []string) error {
 	if blocked := qcommGuard(s); blocked {
 		return nil
 	}
-	if len(args) == 0 {
+	if msg == "" {
 		s.Send(qcommEmptyMsg("qecho"))
 		return nil
 	}
-	msg := sanitizeMessage(strings.Join(args, " "))
-	broadcastQuest(s, msg, msg)
+	msg = game.CapitalizeSentence(game.DeleteANSIControls(sanitizeMessage(msg)))
+	self := msg
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		self = "Okay."
+	}
+	broadcastQuest(s, self, msg)
 	return nil
 }
 
@@ -129,7 +152,8 @@ func broadcastQuest(s *Session, selfMsg, otherMsg string) {
 		if sess.player == nil || sess == s {
 			continue
 		}
-		if sess.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
+		flags := sess.player.GetFlags()
+		if flags&(1<<uint(game.PrfQuest)) == 0 || flags&(1<<uint(game.PlrWriting)) != 0 {
 			continue
 		}
 		sess.Send(otherMsg)

@@ -1,0 +1,78 @@
+# C-first fart social vehicle (src/interpreter.c:442; act.social.c:102-151;
+# lib/misc/socials:226-234). The record has no victim branch, so typed targets
+# are ignored and the no-argument pair is emitted.
+
+# depth-case: fart.no-argument
+# depth-case: fart.argument-ignored
+# depth-case: fart.self-argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Fartactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fartactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Fartobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Fartobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Fartobserver 8162
+
+[probe]
+fart
+fart Nobody
+fart Fartactor trailing words are ignored

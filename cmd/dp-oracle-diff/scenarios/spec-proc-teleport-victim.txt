@@ -1,0 +1,60 @@
+# C-first vehicle for SPECIAL(teleport_victim), assigned to mob 14405 by
+# src/spec_assign.c:377 and defined in src/spec_procs3.c:225-237.
+# mobile_activity() skips fighting mobs, so the registered special is reached
+# from perform_violence() after the mob's ordinary combat turn.  The player
+# starts combat with Gil-Glash, then a fixed combat pulse exercises the special.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14405 1 8105 144
+# Gil-Glash's native AFF_DODGE is cleared so the vehicle does not claim the
+# already-blocked shared combat defense transcript; the special still runs
+# from the registered mob's ordinary combat pulse.
+set-mob-aff 14405 1082504
+strip-mob-script 14405
+replace-room-exits 8105 none
+
+[setup:oracle]
+TeleportVictimGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TeleportVictimGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+hit gil-glash
+~dpclock pulse 20
+score
+
+# depth-case: mob.teleport-victim-entry-gates
+# depth-case: mob.teleport-victim-scoff-social
+# depth-case: mob.teleport-victim-speech-gate
+# depth-case: mob.teleport-victim-player-teleport
+# depth-case: mob.teleport-victim-combat-teardown
+# depth-case: mob.teleport-victim-pulse-dispatch

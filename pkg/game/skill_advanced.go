@@ -6,84 +6,208 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 func DoCarve(ch *Player, targetName string, world *World) SkillResult {
-	// Find target corpse in room
-	objects := world.GetItemsInRoom(ch.GetRoomVNum())
-	var corpse *ObjectInstance
-	for _, obj := range objects {
-		if obj.Prototype.TypeFlag == 9 && strings.Contains(strings.ToLower(obj.GetShortDesc()), strings.ToLower(targetName)) {
-			corpse = obj
-			break
+	// C: new_cmds.c:115 — one_argument() runs before every branch in do_carve.
+	targetName, _ = OneArgument(targetName)
+
+	// C checks room characters before it checks room objects.  There is no
+	// skill gate: do_carve is registered as a plain command at interpreter.c:374.
+	if target, found := world.ResolveCharInRoom(ch, targetName); found {
+		if target.Combatant == ch {
+			return SkillResult{MessageToCh: "This game doesn't support self-mutilation!"}
+		}
+		return SkillResult{MessageToCh: "You kill it first and THEN you can eat it!"}
+	}
+
+	corpse, found := world.ResolveObjectInRoom(ch, targetName)
+	if !found {
+		return SkillResult{
+			MessageToCh: fmt.Sprintf("You can't seem to find a %s to carve!", targetName),
 		}
 	}
 
-	if corpse == nil {
-		return SkillResult{Success: false, MessageToCh: "There is nothing like that here."}
+	// C uses literal strstr() predicates on the object's keyword list; it does
+	// not require ITEM_CONTAINER or the corpse value flag here.
+	if !strings.Contains(corpse.GetKeywords(), "corpse") {
+		return SkillResult{MessageToCh: "Your initials are about all you can carve in that!"}
+	}
+	if !strings.Contains(corpse.GetKeywords(), "carve_") {
+		return SkillResult{MessageToCh: "There's no way you could ever eat THAT!!!"}
+	}
+	if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
+		return SkillResult{MessageToCh: "Your arms are already full!"}
 	}
 
-	if ch.GetSkill(SkillCarve) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
+	// C reads one of four fixed food prototypes based on exact isname() token
+	// matching, with meat as the fallback for any other carve_ keyword.
+	foodVNum := 8015
+	switch {
+	case isCompleteName("carve_meat", corpse.GetKeywords()):
+		foodVNum = 8015
+	case isCompleteName("carve_fish", corpse.GetKeywords()):
+		foodVNum = 12
+	case isCompleteName("carve_bird", corpse.GetKeywords()):
+		foodVNum = 13
+	case isCompleteName("carve_rabbit", corpse.GetKeywords()):
+		foodVNum = 14
 	}
 
-	// Create food item
-	food := &ObjectInstance{
-		VNum:     corpse.VNum,
-		RoomVNum: ch.GetRoomVNum(),
+	food, err := world.SpawnObject(foodVNum, -1)
+	if err != nil {
+		slog.Error("carve food prototype missing", "obj_vnum", foodVNum, "error", err)
+		return SkillResult{}
 	}
-	food.Runtime.ShortDescOverride = "some carved meat from " + corpse.GetShortDesc()
 
+	// C creates the food before checking the wielded weapon and extracts it on
+	// either weapon failure.  Keep that lifecycle even though the failed object
+	// is not player-visible.
+	wielded, hasWeapon := (*ObjectInstance)(nil), false
+	if ch.Equipment != nil {
+		wielded, hasWeapon = ch.Equipment.GetItemInSlot(SlotWield)
+	}
+	if !hasWeapon || wielded == nil {
+		world.ExtractObject(food, -1)
+		return SkillResult{MessageToCh: "You don't have anything to carve with!"}
+	}
+	if wielded.GetValue(3) != 3 && wielded.GetValue(3) != 11 {
+		world.ExtractObject(food, -1)
+		return SkillResult{MessageToCh: "You can't carve with that!"}
+	}
 	if err := world.MoveObjectToPlayerInventory(food, ch); err != nil {
-		if err2 := world.MoveObjectToRoom(food, ch.GetRoomVNum()); err2 != nil {
-			slog.Warn("MoveObjectToRoom failed in carve fallback", "obj_vnum", food.GetVNum(), "error", err2)
-		}
+		slog.Error("carve food inventory placement failed", "obj_vnum", foodVNum, "error", err)
+		world.ExtractObject(food, -1)
+		return SkillResult{}
 	}
 
-	// Remove corpse from room
-	if err := world.MoveObjectToNowhere(corpse); err != nil {
-		slog.Warn("MoveObjectToNowhere failed in carve", "obj_vnum", corpse.GetVNum(), "error", err)
+	// C obj_to_room() prepends each extracted child.  Iterating the original
+	// slice and using MoveObjectToRoomFront preserves that linked-list order.
+	contents := append([]*ObjectInstance(nil), corpse.Contains...)
+	for _, item := range contents {
+		if item == nil {
+			continue
+		}
+		if err := world.MoveObjectToRoomFront(item, ch.GetRoomVNum()); err != nil {
+			slog.Error("carve corpse contents placement failed", "obj_vnum", item.GetVNum(), "error", err)
+		}
 	}
+	world.ExtractObject(corpse, -1)
 
 	return SkillResult{
-		Success:     true,
-		MessageToCh: fmt.Sprintf("You carve some meat from %s.", corpse.GetShortDesc()),
+		Success:       true,
+		MessageToCh:   fmt.Sprintf("You carve up some meat from the %s.", corpse.GetShortDesc()),
+		MessageToRoom: fmt.Sprintf("%s carves up some meat from the %s.", ch.Name, corpse.GetShortDesc()),
 	}
 }
 
 // DoCutthroat implements do_cutthroat() — attempt throat slit from behind.
-func DoCutthroat(ch *Player, target combat.Combatant) SkillResult {
+// Source: src/new_cmds.c:552-655. The command wrapper owns visible target
+// lookup; this function preserves the remaining C gate order and the separate
+// success (damage with set 143) and failure (ordinary hit) paths.
+func DoCutthroat(ch *Player, target combat.Combatant, world *World) SkillResult {
+	if target == nil {
+		return SkillResult{MessageToCh: "Cut what throat where?"}
+	}
+
 	if ch.GetSkill(SkillCutthroat) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You don't know how!"}
+		return SkillResult{MessageToCh: "You're not trained in slitting throats!"}
 	}
 
-	if target.GetPosition() == combat.PosDead {
-		return SkillResult{Success: false, MessageToCh: "They're already dead!"}
+	var (
+		weapon *ObjectInstance
+		ok     bool
+	)
+	if ch.Equipment != nil {
+		weapon, ok = ch.Equipment.GetItemInSlot(SlotWield)
+	}
+	if !ok || weapon == nil {
+		return SkillResult{MessageToCh: "You need to wield a weapon to make it a success."}
+	}
+	if weapon.GetValue(3) != 11 {
+		return SkillResult{MessageToCh: "Only daggers and such can be used for cutting a throat."}
 	}
 
-	// Skill check: D100 vs skill
+	if ch.IsMounted() {
+		return SkillResult{MessageToCh: "Dismount first!"}
+	}
+
+	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{MessageToCh: "You feel too peaceful to slit a throat!"}
+	}
+
+	if !target.IsNPC() && target.GetLevel() <= 10 {
+		return SkillResult{MessageToCh: fmt.Sprintf("Ancient forces protect %s from your wrath!", target.GetName())}
+	}
+
+	if combatantIsAffected(target, affCutthroat) {
+		return SkillResult{MessageToCh: "Their throat is already slit!"}
+	}
+
+	if ch.GetFighting() != "" || target.GetFighting() != "" {
+		return SkillResult{MessageToCh: "You can't get close enough!"}
+	}
+
+	// C's number(1,101) makes 101 an automatic failure.
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	roll := dprng.Number(1, 100)
-	if roll > ch.GetSkill(SkillCutthroat) {
+	percent := dprng.Number(1, 101)
+	prob := ch.GetSkill(SkillCutthroat)
+	if ch.GetLevel() > LVL_IMMORT {
+		prob = 102
+	}
+	if target.GetLevel() > LVL_IMMORT {
+		prob = -1
+	}
+
+	if percent < prob {
+		// C affect_join(): duration = level*2, APPLY_HITROLL -2, and
+		// AFF_CUTTHROAT. Keep both the runtime affect and the C-compatible bit
+		// because limits.c reads the latter for the ongoing bleed/silence.
+		applyCutthroatAffect(target, ch.GetLevel()*2)
 		return SkillResult{
-			Success:     false,
-			MessageToCh: "Your attempt fails!",
+			Success:             true,
+			Damage:              ch.GetLevel() / 2,
+			MessageToCh:         "You slit their throat from ear to ear!",
+			MessageToVict:       fmt.Sprintf("Suddenly %s slits your throat!", ch.GetName()),
+			SkillMsgType:        SkillCutthroatNum,
+			SkillMsgAfterDamage: true,
+			SkillMsgInDamage:    true,
+			DamageSkill:         SkillCutthroat,
+			PreDamageImprove:    []string{SkillCutthroat},
+			StartCombat:         true,
+			WaitCh:              2,
 		}
 	}
 
-	// C: GET_LEVEL(ch)/2 damage + silence affect
-	damage := ch.GetLevel() / 2
-	target.TakeDamage(damage)
-
 	return SkillResult{
-		Success:       true,
-		Damage:        damage,
-		MessageToCh:   "You slash their throat!",
-		MessageToVict: "Your throat is slashed!",
-		MessageToRoom: fmt.Sprintf("%s slashes %s's throat!", ch.Name, target.GetName()),
+		Success:             false,
+		MessageToCh:         "Your slash at their throat barely misses!",
+		MessageToVict:       fmt.Sprintf("%s makes a vicious lunge at your throat!", ch.GetName()),
+		InitialAttack:       true,
+		SkillMsgAfterDamage: true,
+		StartCombat:         true,
+		WaitCh:              2,
+	}
+}
+
+func applyCutthroatAffect(target combat.Combatant, duration int) {
+	switch victim := target.(type) {
+	case *Player:
+		victim.SetAffect(affCutthroat, true)
+		victim.AddAffect(engine.NewAffectDirect(
+			SkillCutthroatNum,
+			engine.ApplyHitroll,
+			duration,
+			-2,
+			engine.AFFCutthroat,
+			SkillCutthroat,
+		))
+	case *MobInstance:
+		victim.SetAffected(affCutthroat)
 	}
 }
 
@@ -111,9 +235,9 @@ func DoStrike(ch *Player, target combat.Combatant) SkillResult {
 // gates compare on a skill (it only uses APPRAISE for the success probability);
 // the prior Go wrapper invented a CanUseSkill gate and this was a stub that
 // printed "X vs Y: comparing...". The deterministic rejection paths below are
-// oracle-verified; the comparison path (RNG) is transcribed verbatim but marked
-// TODO(port) as oracle-unverified — the fresh-mortal fixture carries only one
-// weapon/armor, so two comparable items can't be constructed to exercise it.
+// oracle-verified; the comparison path is covered by the compare oracle
+// vehicle, including weapon and same-slot armor RNG draws. The C vehicle also
+// covers the non-comparable same-type and armor-slot mismatch gates.
 func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 	// prob = APPRAISE if learned, else 20 + level. C sets prob only.
 	prob := ch.GetSkill(SkillAppraise)
@@ -155,7 +279,7 @@ func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 		return SkillResult{MessageToCh: "Compare is only for weapons and armor.\r\n"}
 	}
 
-	// --- Comparison path: RNG-gated, oracle-unverified (see TODO above). ---
+	// --- Comparison path: C's RNG-gated comparison and skill-improvement path. ---
 	if t1 == ITEM_ARMOR {
 		if armorWearSlot(obj1) != armorWearSlot(obj2) {
 			return SkillResult{MessageToCh: "You can only compare the same types of armor!\r\n"}
@@ -298,34 +422,68 @@ func DoScan(ch *Player, world *World) SkillResult {
 
 // DoSharpen implements do_sharpen() — sharpen a weapon.
 func DoSharpen(ch *Player, objName string) SkillResult {
-	if ch.GetSkill(SkillSharpen) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
+	// C half_chop() supplies only the first word to get_obj_in_list_vis(), and
+	// that lookup is restricted to carrying.  In particular, equipped objects
+	// are not eligible here (new_cmds.c:2744).
+	if ch.Inventory == nil || objName == "" {
+		return SkillResult{MessageToCh: "Sharpen what?"}
 	}
-
-	obj, found := findItemByName(ch, objName)
+	obj, found := resolveVisibleObject(ch, objName, ch.Inventory.FindItems(""), true)
 	if !found {
-		return SkillResult{Success: false, MessageToCh: "You don't have that item."}
+		return SkillResult{MessageToCh: "Sharpen what?"}
 	}
 
-	// Check it's a weapon
-	if obj.Prototype.TypeFlag != 0 {
-		return SkillResult{Success: false, MessageToCh: "You can only sharpen weapons."}
+	// C accepts only ITEM_WEAPON objects whose attack type is TYPE_SLASH.  The
+	// values check is intentionally separate from the general weapon helper:
+	// fire weapons and missiles are not accepted by this command.
+	if obj.GetTypeFlag() != ITEM_WEAPON || obj.GetValue(3) != 3 {
+		return SkillResult{MessageToCh: "This weapon can not be sharpened."}
 	}
 
-	// Simple sharpen: success based on skill level
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	roll := dprng.Number(1, 100)
-	if roll <= ch.GetSkill(SkillSharpen) {
-		return SkillResult{
-			Success:     true,
-			MessageToCh: fmt.Sprintf("You sharpen %s. It looks more deadly!", obj.GetShortDesc()),
+	// C scans all MAX_OBJ_AFFECT slots and also refuses ITEM_MAGIC weapons.
+	if obj.HasExtraFlag(0, itemExtraMagic) {
+		return SkillResult{MessageToCh: "This weapon can not be sharpened any further."}
+	}
+	for _, affect := range obj.GetAffects() {
+		if affect.Location != 0 {
+			return SkillResult{MessageToCh: "This weapon can not be sharpened any further."}
 		}
 	}
 
+	// do_sharpen checks FIGHTING(ch) after resolving and validating the object,
+	// rather than using the command table position gate as a substitute.
+	if ch.GetFighting() != "" {
+		return SkillResult{MessageToCh: "You're too busy to be sharpening anything!"}
+	}
+
+	// C draws number(1,101) and succeeds only when the draw is strictly below
+	// GET_SKILL(ch, SKILL_SHARPEN).  A zero skill is not an early return: a
+	// valid carried slash weapon reaches the failure mutation below.
+	// #nosec G404 — game RNG, not cryptographic
+	roll := dprng.Number(1, 101)
+	if roll < ch.GetSkill(SkillSharpen) {
+		modifier := 1
+		if ch.GetLevel() == 30 {
+			modifier++
+		}
+		if ch.GetLevel() > 25 {
+			modifier++
+		}
+		obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: modifier}})
+		return SkillResult{
+			Success:       true,
+			MessageToCh:   "You sharpen it to perfection!",
+			MessageToRoom: fmt.Sprintf("%s sharpens %s to perfection.", ch.GetName(), obj.GetShortDesc()),
+		}
+	}
+
+	obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: -1}})
 	return SkillResult{
-		Success:     false,
-		MessageToCh: "You fail to sharpen it properly.",
+		MessageToCh:               "You damage it trying to sharpen it!",
+		MessageToRoom:             fmt.Sprintf("%s damages %s trying to sharpen it!", ch.GetName(), obj.GetShortDesc()),
+		DeferredImprove:           []string{SkillSharpen},
+		MessageToChAfterRoom:      true,
+		DeferredImproveAfterActor: true,
 	}
 }
 

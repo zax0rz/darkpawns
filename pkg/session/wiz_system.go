@@ -1,4 +1,4 @@
-//lint:file-ignore U1000 Game logic port — not yet wired to command registry.
+//lint:file-ignore U1000 Wizard command handlers share generated command-table wiring.
 package session
 
 import (
@@ -10,89 +10,205 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
+
+type shutdownPlan struct {
+	broadcast string
+	marker    string
+}
+
+func shutdownPlanFor(option string) (shutdownPlan, bool) {
+	switch strings.ToLower(option) {
+	case "":
+		return shutdownPlan{broadcast: "Shutting down.\r\n"}, true
+	case "reboot":
+		return shutdownPlan{
+			broadcast: "Rebooting.. come back in a minute or two.\r\n",
+			marker:    ".fastboot",
+		}, true
+	case "die":
+		return shutdownPlan{
+			broadcast: "Shutting down for maintenance.\r\n",
+			marker:    ".killscript",
+		}, true
+	case "pause":
+		return shutdownPlan{
+			broadcast: "Shutting down for maintenance.\r\n",
+			marker:    "pause",
+		}, true
+	default:
+		return shutdownPlan{}, false
+	}
+}
 
 func cmdShutdown(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	slog.Warn("server shutdown initiated", "by", s.player.Name)
-	s.Send("World shudders and begins to fade...")
-	s.Send("Shutting down...")
+	option := ""
+	if len(args) > 0 {
+		option = strings.ToLower(args[0])
+	}
+	plan, ok := shutdownPlanFor(option)
+	if !ok {
+		s.Send("Unknown shutdown option.\r\n")
+		return nil
+	}
+
+	s.manager.SendToAll(plan.broadcast)
+	s.manager.forceAllSave(s)
+	s.manager.RequestShutdown(plan.marker)
 	return nil
+}
+
+// forceAllSave mirrors do_shutdown's do_force(ch, "all save") continuation.
+// The command itself sends the C force notice and invokes the existing Go save
+// path for lower-level playing sessions; the process shutdown is then handed
+// to main through Manager.RequestShutdown.
+func (m *Manager) forceAllSave(caster *Session) {
+	if caster == nil || caster.player == nil {
+		return
+	}
+	caster.Send("Okay.\r\n")
+
+	m.mu.RLock()
+	targets := make([]*Session, 0, len(m.sessions))
+	for _, target := range m.sessions {
+		if target == nil || target.player == nil || !target.authenticated || target == caster {
+			continue
+		}
+		if target.player.Level >= caster.player.Level {
+			continue
+		}
+		targets = append(targets, target)
+	}
+	m.mu.RUnlock()
+
+	for _, target := range targets {
+		target.Send(fmt.Sprintf("%s has forced you to 'all save'.\r\n", caster.player.Name))
+		m.world.ExecSave(target.player)
+	}
 }
 
 // ---------------------------------------------------------------------------
 // snoop — spy on player input (LVL_GOD)
 // ---------------------------------------------------------------------------
 func cmdSnoop(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
+	// The LVL_GOD and POS_DEAD gates live in the authoritative command table;
+	// C's do_snoop itself starts at the descriptor check and emits no second
+	// authorization branch.
+	if s == nil || s.manager == nil || s.player == nil || s.manager.world == nil {
 		return nil
 	}
+
 	if len(args) == 0 {
-		s.Send("You aren't snooping anyone.\r\n")
+		if stopSnooping(s) {
+			s.Send("You stop snooping.\r\n")
+		} else {
+			s.Send("You aren't snooping anyone.\r\n")
+		}
 		return nil
 	}
-	targetName := args[0]
-	target := findSessionByName(s.manager, targetName)
-	if target == nil || target.player == nil {
-		s.Send("They aren't here.")
+
+	target, ok := s.manager.world.ResolveCharWorld(s.player, args[0])
+	if !ok {
+		s.Send("No such person around.\r\n")
 		return nil
 	}
-	// Toggle snoop
-	if s.snooping == target {
-		s.snooping = nil
-		target.snoopBy = nil
-		s.Send(fmt.Sprintf("Snoop on %s removed.", target.player.Name))
-	} else {
+	if target.Player == nil {
+		s.Send("There's no link.. nothing to snoop.\r\n")
+		return nil
+	}
+	targetSession := findSessionForPlayer(s.manager, target.Player)
+	if targetSession == nil {
+		s.Send("There's no link.. nothing to snoop.\r\n")
+		return nil
+	}
+
+	s.manager.snoopMu.Lock()
+	switch {
+	case targetSession == s:
+		if s.snooping != nil {
+			s.snooping.snoopBy = nil
+			s.snooping = nil
+		}
+		s.manager.snoopMu.Unlock()
+		s.Send("You stop snooping.\r\n")
+		return nil
+	case targetSession.snoopBy != nil:
+		s.manager.snoopMu.Unlock()
+		s.Send("Busy already. \r\n")
+		return nil
+	case targetSession.snooping == s:
+		s.manager.snoopMu.Unlock()
+		s.Send("Don't be stupid.\r\n")
+		return nil
+	case getEffectiveLevel(targetSession) >= getEffectiveLevel(s):
+		s.manager.snoopMu.Unlock()
+		s.Send("You can't.\r\n")
+		return nil
+	default:
 		if s.snooping != nil {
 			s.snooping.snoopBy = nil
 		}
-		s.snooping = target
-		target.snoopBy = s
-		s.Send(fmt.Sprintf("Now snooping on %s.", target.player.Name))
+		s.snooping = targetSession
+		targetSession.snoopBy = s
 	}
+	s.manager.snoopMu.Unlock()
+	s.Send("Okay.\r\n")
 	return nil
 }
 
+func stopSnooping(s *Session) bool {
+	s.manager.snoopMu.Lock()
+	defer s.manager.snoopMu.Unlock()
+	if s.snooping == nil {
+		return false
+	}
+	s.snooping.snoopBy = nil
+	s.snooping = nil
+	return true
+}
+
 // ---------------------------------------------------------------------------
-// advance — advance a player's level (LVL_GRGOD)
+// reload — refresh cached text/help data (LVL_IMPL-1)
 // ---------------------------------------------------------------------------
 func cmdReload(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
+	option := ""
+	if len(args) > 0 {
+		option = strings.ToLower(args[0])
+	}
+	if option == "" {
+		s.Send("Unknown reload option.\r\n")
 		return nil
 	}
-	slog.Info("(GC) reload initiated", "by", s.player.Name)
-	s.Send("Reloading world data...\r\n")
-
-	// Notify all online players
-	s.manager.SendToAll(fmt.Sprintf("\\r\\n*** World data reload initiated by %s. ***\\r\\n", s.player.Name))
-
-	pw, err := parser.ParseWorld("world/")
-	if err != nil {
-		slog.Error("world reload failed", "error", err)
-		s.Send(fmt.Sprintf("Reload failed: %v\r\n", err))
-		s.manager.SendToAll("\\r\\n*** World reload FAILED. ***\\r\\n")
-		return nil
+	if option == "all" || strings.HasPrefix(option, "*") {
+		reloadCachedText(s, "wizlist", "immlist", "news", "credits", "motd", "imotd", "info", "policies", "handbook", "future")
+		reloadHelpScreen(s)
+	} else {
+		switch option {
+		case "wizlist", "immlist", "news", "credits", "motd", "imotd", "info", "handbook", "future":
+			reloadCachedText(s, option)
+		case "policy":
+			reloadCachedText(s, "policies")
+		case "help":
+			reloadHelpScreen(s)
+		case "background":
+			// Background text is read on demand by the Go port.
+		case "xhelp":
+			reloadHelpTable(s)
+		default:
+			s.Send("Unknown reload option.\r\n")
+			return nil
+		}
 	}
-	s.manager.world.ReplaceParsedWorld(pw)
-	slog.Info("(GC) reload complete", "by", s.player.Name, "rooms", len(pw.Rooms))
-	s.Send(fmt.Sprintf("World reloaded: %d rooms, %d mobs, %d objects.\r\n",
-		len(pw.Rooms), len(pw.Mobs), len(pw.Objs)))
-	s.manager.SendToAll("\\r\\n*** World reload complete. ***\\r\\n")
+	s.Send("Okay.\r\n")
 	return nil
 }
 
 // cmdStat — inspect a character, room, or object (LVL_IMMORT)
 func cmdWizlock(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMPL) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if s.manager == nil {
 		s.Send("Cannot access manager state.")
 		return nil
@@ -101,32 +217,33 @@ func cmdWizlock(s *Session, args []string) error {
 	s.manager.wizlockMutex.Lock()
 	defer s.manager.wizlockMutex.Unlock()
 
+	when := "currently"
 	if len(args) > 0 {
-		val, err := strconv.Atoi(args[0])
-		if err != nil || val < 0 {
-			s.Send("Invalid wizlock value.")
+		val := cAtoi(args[0])
+		if val < 0 || val > s.player.Level {
+			s.Send("Invalid wizlock value.\r\n")
 			return nil
 		}
-		if val > s.player.Level {
-			s.Send("You cannot set wizlock above your own level.")
-			return nil
-		}
-		s.manager.wizlocked = (val != 0)
-	} else {
-		s.manager.wizlocked = !s.manager.wizlocked
+		s.manager.wizlockLevel = val
+		s.manager.wizlocked = val != 0
+		when = "now"
 	}
 
-	if s.manager.wizlocked {
-		s.Send("Wizlock enabled — only immortals may enter.")
-	} else {
-		s.Send("Wizlock disabled — normal login restored.")
+	level := s.manager.wizlockLevel
+	switch level {
+	case 0:
+		s.Send(fmt.Sprintf("The game is %s completely open.\r\n", when))
+	case 1:
+		s.Send(fmt.Sprintf("The game is %s closed to new players.\r\n", when))
+	default:
+		s.Send(fmt.Sprintf("Only level %d and above may enter the game %s.\r\n", level, when))
 	}
 	return nil
 }
 
-// cmdDc — disconnect a player (LVL_GOD)
+// cmdDc — disconnect a player (LVL_IMMORT+1)
 func cmdDc(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
+	if !checkLevel(s, LVL_IMMORT+1) {
 		s.Send("Huh?!?")
 		return nil
 	}
@@ -134,32 +251,61 @@ func cmdDc(s *Session, args []string) error {
 		s.Send("Usage: DC <connection number> (type USERS for a list)\r\n")
 		return nil
 	}
-	target := strings.ToLower(args[0])
-	if target == "all" {
-		disconnected := 0
-		s.manager.mu.RLock()
-		toClose := make([]*Session, 0)
-		for name, sess := range s.manager.sessions {
-			if sess.player != nil && sess.player.Level < LVL_IMMORT && name != strings.ToLower(s.player.Name) {
-				toClose = append(toClose, sess)
-			}
-		}
-		s.manager.mu.RUnlock()
-		for _, sess := range toClose {
-			sess.Close()
-			disconnected++
-		}
-		s.Send(fmt.Sprintf("Disconnected %d players.", disconnected))
+	numToDC, ok := parseDCNumber(args[0])
+	if !ok || numToDC == 0 {
+		s.Send("Usage: DC <connection number> (type USERS for a list)\r\n")
 		return nil
 	}
-	if sess := findSessionByName(s.manager, target); sess != nil {
-		name := sess.player.Name
-		sess.Close()
-		s.Send(fmt.Sprintf("Disconnected %s.", name))
-	} else {
-		s.Send("No such player.")
+
+	var target *Session
+	s.manager.mu.RLock()
+	for _, candidate := range s.manager.sessions {
+		if candidate.connectionNumber == numToDC {
+			target = candidate
+			break
+		}
 	}
+	s.manager.mu.RUnlock()
+	if target == nil {
+		s.Send("No such connection.\r\n")
+		return nil
+	}
+	if target.player != nil && target.player.GetLevel() >= s.player.GetLevel() {
+		s.Send("Umm.. maybe that's not such a good idea...\r\n")
+		return nil
+	}
+	target.Close()
+	s.Send(fmt.Sprintf("Connection #%d closed.\r\n", numToDC))
 	return nil
+}
+
+// parseDCNumber mirrors the decimal-prefix and optional-sign behavior of C's
+// atoi used by do_dc. A zero result is handled by cmdDc as the usage branch.
+func parseDCNumber(value string) (int, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, false
+	}
+	index := 0
+	sign := 1
+	if value[0] == '+' || value[0] == '-' {
+		if value[0] == '-' {
+			sign = -1
+		}
+		index++
+	}
+	start := index
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	if index == start {
+		return 0, false
+	}
+	parsed, err := strconv.Atoi(value[start:index])
+	if err != nil {
+		return 0, false
+	}
+	return sign * parsed, true
 }
 
 // cmdHome — teleport to home room (LVL_IMMORT)
@@ -169,12 +315,9 @@ func cmdDate(s *Session, args []string) error {
 		return nil
 	}
 	now := time.Now()
-	isUptime := len(args) > 0 && strings.ToLower(args[0]) == "boot"
-	if isUptime {
-		sendUptime(s, now)
-	} else {
-		s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
-	}
+	// C dispatches date with SCMD_DATE, so do_date ignores its argument;
+	// uptime is a separate command-table entry using SCMD_UPTIME.
+	s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
 	return nil
 }
 
@@ -206,9 +349,11 @@ func sendUptime(s *Session, now time.Time) {
 	s.Send(fmt.Sprintf("Up since %s: %d %s, %d:%02d", boot.Format("Mon Jan 2 15:04:05 2006"), days, dayWord, hours, minutes))
 }
 
-// cmdLast — show last login info for a player (LVL_IMMORT)
+// cmdLast — show last login info for a player (LVL_GOD-1).
+// Source: act.wizard.c:1834-1854; the command-table gate is
+// LVL_GOD-1/POS_DEAD (interpreter.c:535).
 func cmdLast(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	if !checkLevel(s, LVL_GOD-1) {
 		s.Send("Huh?!?")
 		return nil
 	}
@@ -216,9 +361,9 @@ func cmdLast(s *Session, args []string) error {
 		s.Send("For whom do you wish to search?\r\n")
 		return nil
 	}
-	target := strings.Join(args, " ")
+	target, _ := game.OneArgument(strings.Join(args, " "))
 	if s.manager == nil || !s.manager.hasDB {
-		s.Send("No database available.\r\n")
+		s.Send("There is no such player.\r\n")
 		return nil
 	}
 	rec, err := s.manager.db.GetPlayer(target)
@@ -290,7 +435,23 @@ func cmdWizutil(s *Session, args []string) error {
 // (TO_ROOM) messages, and the "(GC) ... by <god>." acknowledgements. The
 // mudlog() calls are not player-facing and are intentionally not reproduced.
 func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error {
-	target := findSessionByName(s.manager, targetName)
+	targetName, _ = game.OneArgument(targetName)
+	resolved, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if ok && resolved.Mob != nil {
+		// do_wizutil resolves visible NPCs before the sub-command switch and
+		// rejects them with this shared branch (act.wizard.c:2101-2103).
+		s.Send("You can't do that to a mob!\r\n")
+		return nil
+	}
+
+	// Keep the session fallback for test fixtures and link-state cases where a
+	// player session exists without a corresponding World registration. Live
+	// commands normally take the C-faithful world-resolved path above.
+	targetNameForSession := targetName
+	if ok && resolved.Player != nil {
+		targetNameForSession = resolved.Player.Name
+	}
+	target := findSessionByName(s.manager, targetNameForSession)
 	if target == nil || target.player == nil {
 		s.Send("There is no such player.\r\n")
 		return nil
@@ -302,10 +463,18 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 
 	switch subcmd {
 	case wizutilReroll:
-		s.Send("Rerolled!")
-		s.Send(fmt.Sprintf("New stats: Str %d, Int %d, Wis %d, Dex %d, Con %d, Cha %d",
-			target.player.Stats.Str, target.player.Stats.Int, target.player.Stats.Wis,
-			target.player.Stats.Dex, target.player.Stats.Con, target.player.Stats.Cha))
+		// C roll_real_abils() replaces both real_abils and aff_abils with a
+		// fresh class/race-dependent roll before copying the new constitution
+		// into GET_ORIG_CON (class.c:380-497; act.wizard.c:2101-2111).
+		stats := game.RollRealAbils(target.player.Class, target.player.Race)
+		target.player.Lock()
+		target.player.Stats = stats
+		target.player.Strength = stats.Str
+		target.player.OrigCon = stats.Con
+		target.player.Unlock()
+		s.Send("Rerolled...\r\n")
+		s.Send(fmt.Sprintf("New stats: Str %d/%d, Int %d, Wis %d, Dex %d, Con %d, Cha %d\r\n",
+			stats.Str, stats.StrAdd, stats.Int, stats.Wis, stats.Dex, stats.Con, stats.Cha))
 	case wizutilPardon:
 		// act.wizard.c:2113 — a non-outlaw victim is rejected.
 		if target.player.GetFlags()&(1<<game.PlrOutlaw) == 0 {
@@ -414,10 +583,11 @@ func cmdReroll(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: reroll <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilReroll, args[0])
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	return wizutilDispatch(s, wizutilReroll, targetName)
 }
 
 // cmdUnaffect — standalone "unaffect <player>" command.
@@ -445,7 +615,8 @@ func cmdFreeze(s *Session, args []string) error {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilFreeze, args[0])
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	return wizutilDispatch(s, wizutilFreeze, targetName)
 }
 
 // cmdThaw — standalone "thaw <player>" command.
@@ -474,7 +645,11 @@ func cmdPardon(s *Session, args []string) error {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilPardon, args[0])
+	// C do_wizutil receives the complete argument remainder and applies
+	// one_argument, which skips leading fill words before resolving the target
+	// (interpreter.c:1265-1283; act.wizard.c:2088). Preserve that boundary
+	// instead of selecting args[0] in the command wrapper.
+	return wizutilDispatch(s, wizutilPardon, strings.Join(args, " "))
 }
 
 // cmdNotitle — standalone "notitle <player>" command.
@@ -488,7 +663,11 @@ func cmdNotitle(s *Session, args []string) error {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
-	return wizutilDispatch(s, wizutilNotitle, args[0])
+	// C do_wizutil receives the whole argument string and applies
+	// one_argument, which skips leading fill words and ignores the remainder
+	// (interpreter.c:1265; act.wizard.c:2082). Rejoin the tokenized command so
+	// wizutilDispatch can preserve that boundary.
+	return wizutilDispatch(s, wizutilNotitle, strings.Join(args, " "))
 }
 
 // cmdMute — standalone "mute <player>" command.
@@ -517,9 +696,12 @@ func cmdTick(s *Session, args []string) error {
 		return nil
 	}
 
-	// Log and acknowledge the command
 	slog.Warn("wizard tick forced", "by", s.playerName)
-	s.Send("Forcing game tick...")
+	game.WeatherAndTime(true, s.manager.SendToOutdoor)
+	s.manager.world.AffectUpdate()
+	s.manager.world.PointUpdate()
+	// TODO(port): C calls hunt_items() after point_update(); no Go equivalent
+	// exists yet. Add it here in the same order when that subsystem is ported.
 	return nil
 }
 
@@ -564,26 +746,62 @@ func cmdBroadcast(s *Session, args []string) error {
 	return nil
 }
 
-// cmdNewbie — give newbie equipment to a player (LVL_IMMORT)
+// cmdNewbie — give newbie equipment to a character (LVL_IMMORT)
 // Original: act.wizard.c do_newbie() — gives starter items: tunic, bread, skin, club
 func cmdNewbie(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Whom do you wish to newbie?")
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
+		s.Send("Whom do you wish to newbie?\r\n")
 		return nil
 	}
-	targetName := args[0]
-	targetSess := findSessionByName(s.manager, targetName)
-	if targetSess == nil || targetSess.player == nil {
-		s.Send("No one by that name online.")
+
+	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if !ok {
+		s.Send("No-one by that name here.\r\n")
 		return nil
 	}
+
+	var targetActor game.Actor
+	switch {
+	case target.Player != nil:
+		targetActor = target.Player
+	case target.Mob != nil:
+		targetActor = target.Mob
+	default:
+		slog.Error("wizard newbie resolved unsupported target", "by", s.playerName, "target", targetName)
+		return nil
+	}
+
+	// C's give_obj array is passed to obj_to_char in this order. obj_to_char
+	// prepends each object, so the visible carrying order is club, skin, bread,
+	// tunic. Use the canonical world-owned movement helpers so the object
+	// location registry and inventory list stay consistent.
+	for _, vnum := range []int{8019, 8062, 8063, 8023} {
+		obj, spawnErr := s.manager.world.SpawnObject(vnum, -1)
+		if spawnErr != nil {
+			slog.Error("wizard newbie object spawn failed", "by", s.playerName, "target", targetName, "vnum", vnum, "error", spawnErr)
+			return nil
+		}
+
+		var moveErr error
+		if target.Player != nil {
+			moveErr = s.manager.world.PlaceWizardLoadedObjectInInventory(obj, target.Player)
+		} else {
+			moveErr = s.manager.world.MoveObjectToMobInventoryFront(obj, target.Mob)
+		}
+		if moveErr != nil {
+			slog.Error("wizard newbie object placement failed", "by", s.playerName, "target", targetName, "vnum", vnum, "error", moveErr)
+			return nil
+		}
+	}
+
 	slog.Warn("wizard newbie", "by", s.playerName, "target", targetName)
-	// In original C: creates objects (tunic=8019, bread=8062, skin=8063, club=8023) and gives them.
-	// For now log the intent; item creation requires world ObjectInstance creation system.
-	s.Send("Newbied.")
+	s.Send("Newbied.\r\n")
+	game.Act(nil, true, targetActor, s.player, nil, nil,
+		"$N makes a magickal gesture, creating a bunch of equipment, and hands it to you!", "", game.ToChar)
 	return nil
 }

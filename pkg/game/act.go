@@ -113,7 +113,10 @@ func persName(ch, observer Actor) string {
 	if observer == nil {
 		return ch.GetName()
 	}
-	if !canSee(observer, ch) {
+	// C's PERS() delegates to CAN_SEE(), whose macro checks blindness, light,
+	// and invisibility but deliberately does not treat AFF_HIDE as invisible.
+	// Room listing has a separate AFF_HIDE branch; keep that distinction here.
+	if !canSeeForPers(observer, ch) {
 		return "someone"
 	}
 	return ch.GetName()
@@ -122,6 +125,17 @@ func persName(ch, observer Actor) string {
 // canSee returns true if observer can see subject.
 // Faithful port of CAN_SEE macro.
 func canSee(observer, subject Actor) bool {
+	return canSeeWithHide(observer, subject, true)
+}
+
+// canSeeForPers mirrors the narrower C CAN_SEE path used by PERS(). C's
+// CAN_SEE macro does not inspect AFF_HIDE; callers that need room-listing hide
+// semantics use canSee instead.
+func canSeeForPers(observer, subject Actor) bool {
+	return canSeeWithHide(observer, subject, false)
+}
+
+func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	if observer == nil || subject == nil {
 		return true
 	}
@@ -141,11 +155,6 @@ func canSee(observer, subject Actor) bool {
 		return true
 	}
 
-	// IMMORT levels always see everything
-	if obsSub.GetLevel() >= LVL_IMMORT {
-		return true
-	}
-
 	// Check PRF_HOLYLIGHT
 	if hl, ok := obsSub.(holyLightSubject); ok && hl.GetHolyLight() {
 		return true
@@ -156,6 +165,18 @@ func canSee(observer, subject Actor) bool {
 		return false
 	}
 
+	// C's CAN_SEE compares the observer's real level with a wizinvis
+	// character's GET_INVIS_LEV before applying immortal visibility rules.
+	if invis, ok := subject.(invisLevelSubject); ok && obsSub.GetLevel() < invis.GetInvisLevel() {
+		return false
+	}
+
+	// IMMORT levels see ordinary hidden/invisible subjects after the explicit
+	// wizinvis threshold check above.
+	if obsSub.GetLevel() >= LVL_IMMORT {
+		return true
+	}
+
 	// 2. Invisibility check
 	if sbjSub.IsAffected(affInvisible) {
 		if !obsSub.IsAffected(affDetectInvisible) {
@@ -163,8 +184,9 @@ func canSee(observer, subject Actor) bool {
 		}
 	}
 
-	// 3. Hiding check
-	if sbjSub.IsAffected(affHide) {
+	// 3. Hiding check — this is a Go room-visibility extension and is not part
+	// of C's CAN_SEE macro, so PERS() opts out via canSeeForPers.
+	if hide && sbjSub.IsAffected(affHide) {
 		if !obsSub.IsAffected(affSenseLife) {
 			return false
 		}
@@ -231,6 +253,10 @@ type visibilitySubject interface {
 	GetRoom() int
 	IsAffected(bit int) bool
 	IsNPC() bool
+}
+
+type invisLevelSubject interface {
+	GetInvisLevel() int
 }
 
 var (

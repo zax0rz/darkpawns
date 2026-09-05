@@ -1,0 +1,74 @@
+# curse PLR_NOSHOUT gate vehicle (src/interpreter.c:401;
+# src/act.social.c:102-118). The primary Implementor mutes the named mortal
+# in warmup; the mortal then invokes curse, proving the emote refusal occurs
+# before the social's no-argument messages.
+
+# depth-case: curse.noshout
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CurseGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CurseGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:muteon]
+Muteon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muteon]
+Muteon
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Muteon
+
+[probe:muteon]
+curse nobody

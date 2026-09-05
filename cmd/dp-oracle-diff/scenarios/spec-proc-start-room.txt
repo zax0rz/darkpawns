@@ -1,0 +1,53 @@
+# C-first vehicle for the assigned room SPECIAL(start_room), registered at
+# room 8099 in src/spec_assign.c:606 and defined in src/spec_procs.c:2204-2243.
+# A first-player God enters the Burning Hut as an immortal, so the warmup's
+# set command is allowed to pass through the special; the following look runs
+# with the player as a level-1 mortal. C start_room emits the birth text,
+# routes the player by hometown K to room 8162, calls do_look there, and
+# returns TRUE before ordinary look in room 8099.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2204-2243 ->
+# act.informative.c do_look.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Startroomgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Startroomgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8099
+set Startroomgod level 1
+
+[probe]
+look
+
+# depth-case: room.start-room-birth-transition
+# depth-case: room.start-room-hometown-routing
+# depth-case: room.start-room-return-intercept

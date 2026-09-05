@@ -1,0 +1,53 @@
+# C-first do_transform vehicle (src/act.other.c:1415-1542). Dracula's
+# registered look procedure makes the actor PLR_VAMPIRE, after which the fixed
+# daytime clock reaches the vampire day gate without inventing a transform.
+
+# depth-case: transform.non-eligible
+# depth-case: transform.vampire-day-gate
+# depth-case: transform.argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14110 1 8105 80
+strip-mob-script 14110
+replace-room-exits 8105 none
+
+[setup:oracle]
+Transformactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Transformactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Transformactor level 1
+
+[probe]
+transform
+look lothar
+transform trailing words
+transform

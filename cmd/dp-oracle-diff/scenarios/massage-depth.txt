@@ -1,0 +1,117 @@
+# C-first massage/do_action vehicle (src/interpreter.c:557;
+# src/act.social.c:102-151; lib/misc/socials:480-488). The record has hide=0
+# and no victim-position gate, so this probes actor, victim, room, not-found,
+# self, sleeping-target, and argument parsing branches.
+
+# depth-case: massage.no-argument
+# depth-case: massage.one-argument
+# depth-case: massage.target-success
+# depth-case: massage.target-victim-audience
+# depth-case: massage.target-not-found
+# depth-case: massage.self-target
+# depth-case: massage.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Massageactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Massageactor
+Y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Massagetarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Massagetarget
+Y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Massagesleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Massagesleeper
+Y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8162
+teleport Massagetarget 8162
+teleport Massagesleeper 8162
+
+[probe]
+massage
+massage Massagetarget trailing words are ignored
+massage Nobody
+massage Massageactor
+massage Massagesleeper

@@ -1,0 +1,39 @@
+# depth-case: map.mortal-gate
+# C do_map's direct entry gate (src/mapcode.c:152-156) sends the help hint to
+# a mortal and returns without initializing or rendering the map.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mortalmap
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mortalmap
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+map

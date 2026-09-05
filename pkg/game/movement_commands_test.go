@@ -8,6 +8,15 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+type movementTriggerRecorder struct {
+	events *[]string
+}
+
+func (r movementTriggerRecorder) RunScript(ctx *ScriptContext, filename, trigger string) (bool, error) {
+	*r.events = append(*r.events, filename+":"+trigger)
+	return true, nil
+}
+
 func captureMovementOutput(w *World) map[string]*strings.Builder {
 	output := make(map[string]*strings.Builder)
 	w.MessageSink = func(name string, message []byte) {
@@ -28,6 +37,22 @@ func addMovementPlayer(t *testing.T, w *World, name string, room int) *Player {
 		t.Fatalf("AddPlayer(%s): %v", name, err)
 	}
 	return player
+}
+
+func addMovementMount(t *testing.T, w *World, rider *Player, room int) *MobInstance {
+	t.Helper()
+	mount := NewMob(&parser.Mob{VNum: 9001, Keywords: "pony mount", ShortDesc: "a pony"}, room)
+	w.mu.Lock()
+	mount.ID = w.nextMobID
+	w.nextMobID++
+	w.activeMobs[mount.ID] = mount
+	w.mu.Unlock()
+	mount.SetMountRider(rider.Name)
+	mount.SetAffected(affMounted)
+	mount.SetFollowing(rider.Name)
+	rider.MountName = mount.GetName()
+	rider.SetAffect(affMounted, true)
+	return mount
 }
 
 func TestDoMoveArrivalUsesReverseDirection(t *testing.T) {
@@ -127,13 +152,51 @@ func TestPerformMoveFollowerPositionAndHide(t *testing.T) {
 		if follower.GetRoom() != 3001 {
 			t.Fatalf("follower room = %d, want 3001", follower.GetRoom())
 		}
-		if got := output[follower.Name].String(); !strings.Contains(got, "blocked by a heavy object") {
+		if got := output[follower.Name].String(); !strings.Contains(got, "A blocker humiliates you and blocks your way") {
 			t.Fatalf("follower output = %q", got)
 		}
 	})
 }
 
+func TestPerformMoveRendersLeaderBeforeFollowerRecursion(t *testing.T) {
+	w, leader := newMovementTestWorld(t)
+	follower := addMovementPlayer(t, w, "Follower", 1001)
+	follower.SetFollowing(leader.Name)
+
+	var rendered []string
+	w.MovementLook = func(player *Player) {
+		rendered = append(rendered, player.Name)
+		if player == leader && follower.GetRoom() != 1001 {
+			t.Fatalf("follower moved before leader room render: room = %d", follower.GetRoom())
+		}
+	}
+
+	if !w.DoMove(leader, "north").Success {
+		t.Fatal("leader move failed")
+	}
+	if got, want := strings.Join(rendered, ","), "TestPlayer,Follower"; got != want {
+		t.Fatalf("render order = %q, want %q", got, want)
+	}
+}
+
 func TestMovementFailureMessagesAndMountGate(t *testing.T) {
+	t.Run("charmed follower cannot leave master", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		master := addMovementPlayer(t, w, "Master", 1001)
+		actor.SetFollowing(master.Name)
+		actor.SetAffect(affCharm, true)
+		output := captureMovementOutput(w)
+
+		result := w.DoMove(actor, "north")
+
+		if result.Success || actor.GetRoom() != 1001 {
+			t.Fatalf("result = %+v, room = %d", result, actor.GetRoom())
+		}
+		if got := output[actor.Name].String(); !strings.Contains(got, "The thought of leaving your master makes you weep.") {
+			t.Fatalf("actor output = %q", got)
+		}
+	})
+
 	t.Run("closed named door", func(t *testing.T) {
 		w, actor := newMovementTestWorld(t)
 		room := w.GetRoomInWorld(1001)
@@ -183,7 +246,7 @@ func TestMovementFailureMessagesAndMountGate(t *testing.T) {
 	t.Run("mounted indoor movement refused", func(t *testing.T) {
 		w, actor := newMovementTestWorld(t)
 		w.GetRoomInWorld(1002).Flags = []string{"indoors"}
-		actor.MountName = "pony"
+		addMovementMount(t, w, actor, 1001)
 		output := captureMovementOutput(w)
 
 		result := w.DoMove(actor, "north")
@@ -193,6 +256,256 @@ func TestMovementFailureMessagesAndMountGate(t *testing.T) {
 		}
 		if got := output[actor.Name].String(); !strings.Contains(got, "You can't ride in there! Dismount first!") {
 			t.Fatalf("actor output = %q", got)
+		}
+	})
+}
+
+func TestMountedMovementPairStateAndAudiences(t *testing.T) {
+	w, rider := newMovementTestWorld(t)
+	mount := addMovementMount(t, w, rider, 1001)
+	origin := addMovementPlayer(t, w, "Origin", 1001)
+	destination := addMovementPlayer(t, w, "Destination", 1002)
+	output := captureMovementOutput(w)
+	riderBefore := rider.GetMove()
+	mountBefore := mount.GetMove()
+
+	result := w.DoMove(rider, "north")
+
+	if !result.Success || rider.GetRoom() != 1002 || mount.GetRoom() != 1002 {
+		t.Fatalf("result=%+v rider room=%d mount room=%d", result, rider.GetRoom(), mount.GetRoom())
+	}
+	if got := rider.GetMove(); got != riderBefore {
+		t.Fatalf("rider movement = %d, want unchanged %d", got, riderBefore)
+	}
+	if got, want := mount.GetMove(), mountBefore-2; got != want {
+		t.Fatalf("mount movement = %d, want %d", got, want)
+	}
+	if got := mount.GetMountRider(); got != rider.Name {
+		t.Fatalf("mount rider = %q, want %q", got, rider.Name)
+	}
+	look := w.DoLookRoom(rider, false)
+	for _, message := range look.Messages {
+		if strings.Contains(message.Format, "a pony") {
+			t.Fatalf("rider room observation exposed own mount: %q", message.Format)
+		}
+	}
+	destinationLook := w.DoLookRoom(destination, false)
+	foundMountedRider := false
+	for _, message := range destinationLook.Messages {
+		if strings.Contains(message.Format, "TestPlayer") && strings.Contains(message.Format, "mounted on a pony.") {
+			foundMountedRider = true
+		}
+		if strings.Contains(message.Format, "A pony stands here") {
+			t.Fatalf("destination observation listed mounted mob separately: %q", message.Format)
+		}
+	}
+	if !foundMountedRider {
+		t.Fatalf("destination observation omitted mounted rider: %#v", destinationLook.Messages)
+	}
+	if got := output[origin.Name].String(); !strings.Contains(got, "TestPlayer rides north on a pony.\r\n") {
+		t.Fatalf("origin output = %q", got)
+	}
+	if got := output[destination.Name].String(); !strings.Contains(got, "TestPlayer rides in from the south on a pony.\r\n") {
+		t.Fatalf("destination output = %q", got)
+	}
+}
+
+func TestMountedMovementFailureState(t *testing.T) {
+	t.Run("invalid pair silently dismounts", func(t *testing.T) {
+		w, rider := newMovementTestWorld(t)
+		rider.SetFollowing("Master")
+		rider.MountName = "a missing pony"
+		rider.SetAffect(affMounted, true)
+		output := captureMovementOutput(w)
+
+		if w.DoMove(rider, "north").Success {
+			t.Fatal("invalid mounted pair moved")
+		}
+		if rider.IsMounted() || rider.GetMountName() != "" {
+			t.Fatal("invalid mounted pair was not cleared")
+		}
+		if got := rider.GetFollowing(); got != "Master" {
+			t.Fatalf("ordinary following relation = %q, want preserved", got)
+		}
+		if builder := output[rider.Name]; builder != nil && builder.Len() != 0 {
+			t.Fatalf("unexpected output = %q", builder.String())
+		}
+	})
+
+	t.Run("mount position blocks", func(t *testing.T) {
+		w, rider := newMovementTestWorld(t)
+		mount := addMovementMount(t, w, rider, 1001)
+		mount.SetPosition(combat.PosSitting)
+		output := captureMovementOutput(w)
+
+		if w.DoMove(rider, "north").Success {
+			t.Fatal("sitting mount moved")
+		}
+		if got := output[rider.Name].String(); !strings.Contains(got, "Your mount is in no position to go ANYWHERE!") {
+			t.Fatalf("rider output = %q", got)
+		}
+	})
+
+	t.Run("mount exhaustion blocks without charging rider", func(t *testing.T) {
+		w, rider := newMovementTestWorld(t)
+		mount := addMovementMount(t, w, rider, 1001)
+		mount.SetMove(0)
+		riderBefore := rider.GetMove()
+		output := captureMovementOutput(w)
+
+		if w.DoMove(rider, "north").Success {
+			t.Fatal("exhausted mount moved")
+		}
+		if rider.GetMove() != riderBefore || mount.GetMove() != 0 {
+			t.Fatalf("movement changed: rider=%d mount=%d", rider.GetMove(), mount.GetMove())
+		}
+		if got := output[rider.Name].String(); !strings.Contains(got, "Your mount is too exhausted to carry you further.") {
+			t.Fatalf("rider output = %q", got)
+		}
+	})
+}
+
+func TestMountedMovementMobPoolRegenerates(t *testing.T) {
+	w, rider := newMovementTestWorld(t)
+	mount := addMovementMount(t, w, rider, 1001)
+	mount.Level = 3
+	mount.SetMove(40)
+
+	w.PointUpdate()
+
+	if got, want := mount.GetMove(), 43; got != want {
+		t.Fatalf("mount movement after point update = %d, want %d", got, want)
+	}
+	mount.SetMove(49)
+	w.PointUpdate()
+	if got, want := mount.GetMove(), 50; got != want {
+		t.Fatalf("capped mount movement = %d, want %d", got, want)
+	}
+}
+
+func TestMountedMovementVerticalArrivalAudiences(t *testing.T) {
+	for _, test := range []struct {
+		direction string
+		origin    string
+		arrival   string
+	}{
+		{direction: "up", origin: "TestPlayer rides up on a pony.\r\n", arrival: "TestPlayer rides in from below on a pony.\r\n"},
+		{direction: "down", origin: "TestPlayer rides down on a pony.\r\n", arrival: "TestPlayer rides in from above on a pony.\r\n"},
+	} {
+		t.Run(test.direction, func(t *testing.T) {
+			w, rider := newMovementTestWorld(t)
+			w.GetRoomInWorld(1001).Exits = map[string]parser.Exit{
+				test.direction: {Direction: test.direction, ToRoom: 1002},
+			}
+			addMovementMount(t, w, rider, 1001)
+			origin := addMovementPlayer(t, w, "Origin", 1001)
+			destination := addMovementPlayer(t, w, "Destination", 1002)
+			output := captureMovementOutput(w)
+
+			if !w.DoMove(rider, test.direction).Success {
+				t.Fatalf("DoMove(%s) failed", test.direction)
+			}
+			if got := output[origin.Name].String(); !strings.Contains(got, test.origin) {
+				t.Fatalf("origin output = %q, want %q", got, test.origin)
+			}
+			if got := output[destination.Name].String(); !strings.Contains(got, test.arrival) {
+				t.Fatalf("destination output = %q, want %q", got, test.arrival)
+			}
+		})
+	}
+}
+
+func TestDoSimpleMoveTriggerOrdering(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Origin", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+			{VNum: 1002, Name: "Destination", ScriptName: "room.lua", ScriptFunctions: 1 << 1},
+		},
+		Mobs: []parser.Mob{{
+			VNum:         9001,
+			Keywords:     "greeter",
+			ShortDesc:    "a greeter",
+			ScriptName:   "mob.lua",
+			LuaFunctions: 1 << 2,
+		}},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	actor := addMovementPlayer(t, w, "Mover", 1001)
+	if _, err := w.SpawnMob(9001, 1002); err != nil {
+		t.Fatal(err)
+	}
+
+	events := make([]string, 0, 3)
+	previousEngine := ScriptEngine
+	ScriptEngine = movementTriggerRecorder{events: &events}
+	t.Cleanup(func() { ScriptEngine = previousEngine })
+	w.MovementLook = func(player *Player) {
+		if player != actor {
+			t.Fatalf("look callback player = %v, want actor", player)
+		}
+		events = append(events, "look")
+	}
+
+	if !w.DoMove(actor, "north").Success {
+		t.Fatal("DoMove failed")
+	}
+
+	if got, want := strings.Join(events, ","), "look,mob.lua:greet,room.lua:enter"; got != want {
+		t.Fatalf("movement trigger order = %q, want %q", got, want)
+	}
+
+	deathParsed := &parser.World{Rooms: []parser.Room{
+		{VNum: 2001, Name: "Origin", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 2002}}},
+		{VNum: 2002, Name: "Death", Flags: []string{"2"}, ScriptName: "death-room.lua", ScriptFunctions: 1 << 1},
+		{VNum: MortalStartRoom, Name: "Temple"},
+	}}
+	deathWorld, err := NewWorld(deathParsed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(deathWorld.StopAITicker)
+	deathActor := addMovementPlayer(t, deathWorld, "Deathmover", 2001)
+	deathEvents := make([]string, 0, 2)
+	ScriptEngine = movementTriggerRecorder{events: &deathEvents}
+	deathWorld.MovementLook = func(*Player) { deathEvents = append(deathEvents, "look") }
+
+	if deathWorld.DoMove(deathActor, "north").Success {
+		t.Fatal("death-trap movement unexpectedly succeeded")
+	}
+	if got, want := strings.Join(deathEvents, ","), "look"; got != want {
+		t.Fatalf("death-trap trigger order = %q, want %q (room enter must not run)", got, want)
+	}
+}
+
+func TestDoMoveMovementCostAndImmortalExemption(t *testing.T) {
+	t.Run("mortal pays averaged sector cost", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		w.GetRoomInWorld(1001).Sector = SECT_FIELD
+		w.GetRoomInWorld(1002).Sector = SECT_DESERT
+		actor.SetMove(100)
+
+		if !w.DoMove(actor, "north").Success {
+			t.Fatal("DoMove failed")
+		}
+		if got, want := actor.GetMove(), 95; got != want {
+			t.Fatalf("move points = %d, want %d", got, want)
+		}
+	})
+
+	t.Run("immortal moves free while exhausted", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		actor.SetLevel(lvlImmort)
+		actor.SetMove(0)
+
+		if !w.DoMove(actor, "north").Success {
+			t.Fatal("DoMove failed")
+		}
+		if got := actor.GetMove(); got != 0 {
+			t.Fatalf("move points = %d, want 0", got)
 		}
 	})
 }
@@ -392,6 +705,82 @@ func TestPositionCommandsMountAndWake(t *testing.T) {
 			t.Fatalf("actor output = %q", got)
 		}
 	})
+
+	t.Run("stunned target is in bad shape", func(t *testing.T) {
+		w, actor := newMovementTestWorld(t)
+		target := addMovementPlayer(t, w, "Sleeper", 1001)
+		target.Sex = 1
+		target.SetPosition(combat.PosStunned)
+		output := captureMovementOutput(w)
+
+		w.DoWake(actor, target.Name)
+
+		if target.GetPosition() != combat.PosStunned {
+			t.Fatalf("target position = %d, want stunned", target.GetPosition())
+		}
+		if got := output[actor.Name].String(); got != "She's in pretty bad shape!\r\n" {
+			t.Fatalf("actor output = %q, want %q", got, "She's in pretty bad shape!\r\n")
+		}
+	})
+}
+
+func TestPositionCommandsStunnedOrWorse(t *testing.T) {
+	cases := []struct {
+		name     string
+		run      func(*World, *Player)
+		wantText string
+		wantRoom string
+		wantPos  int
+	}{
+		{
+			name:     "stand",
+			run:      func(w *World, p *Player) { w.DoStand(p) },
+			wantText: "You stop floating around, and put your feet on the ground.",
+			wantRoom: "TestPlayer stops floating around, and puts his feet on the ground.",
+			wantPos:  combat.PosStanding,
+		},
+		{
+			name:     "sit",
+			run:      func(w *World, p *Player) { w.DoSit(p) },
+			wantText: "You stop floating around, and sit down.",
+			wantRoom: "TestPlayer stops floating around, and sits down.",
+			wantPos:  combat.PosSitting,
+		},
+		{
+			name:     "rest",
+			run:      func(w *World, p *Player) { w.DoRest(p) },
+			wantText: "You stop floating around, and stop to rest your tired bones.",
+			wantRoom: "TestPlayer stops floating around, and rests.",
+			wantPos:  combat.PosSitting,
+		},
+		{
+			name:     "sleep",
+			run:      func(w *World, p *Player) { w.DoSleep(p) },
+			wantText: "You stop floating around, and lie down to sleep.",
+			wantRoom: "TestPlayer stops floating around, and lie down to sleep.",
+			wantPos:  combat.PosSleeping,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w, actor := newMovementTestWorld(t)
+			observer := addMovementPlayer(t, w, "Observer", 1001)
+			actor.SetPosition(combat.PosStunned)
+			output := captureMovementOutput(w)
+
+			tc.run(w, actor)
+
+			if actor.GetPosition() != tc.wantPos {
+				t.Fatalf("position = %d, want %d", actor.GetPosition(), tc.wantPos)
+			}
+			if got := output[actor.Name].String(); !strings.Contains(got, tc.wantText) {
+				t.Fatalf("actor output = %q, want %q", got, tc.wantText)
+			}
+			if got := output[observer.Name].String(); !strings.Contains(got, tc.wantRoom) {
+				t.Fatalf("room output = %q, want %q", got, tc.wantRoom)
+			}
+		})
+	}
 }
 
 func TestDoEnterAndLeave(t *testing.T) {

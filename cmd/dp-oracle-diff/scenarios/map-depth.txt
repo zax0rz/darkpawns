@@ -1,0 +1,52 @@
+# depth-case: map.default-zone-map
+# depth-case: map.all-zones-mode
+# depth-case: map.overlap-mode
+# depth-case: map.underlap-mode
+# depth-case: map.unknown-mode-defaults
+# C-first do_map vehicle (src/mapcode.c:141-218): the command is immortal-only,
+# selects mapping mode from argument[1] (not argument[0]), and always renders
+# the authored 76x25 grid plus the exact C legend.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mapgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mapgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Mapgod level 31
+goto 8105
+
+[probe]
+map
+map a
+map b
+map c
+map xyz

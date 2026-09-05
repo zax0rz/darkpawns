@@ -1,4 +1,5 @@
 # Mortal no-arg batch (batch 19).
+# depth-case: at.level-gate
 # 25 faithful greens + rsay fix. Pager contamination from socials removed.
 # Deferred: auto (PRF dual-rep), bite (peaceful silent), flee (room movement),
 # groinrip (peaceful), prompt (state toggle), roll (RNG format), socials (pager).

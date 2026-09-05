@@ -1,0 +1,73 @@
+# depth-case: tell.soundproof-room
+# depth-case: channels.soundproof
+# do_tell's ROOM_SOUNDPROOF gate (act.comm.c:919-920): with the start room
+# flagged soundproof (bit 5), a tell to the co-located peer resolves the
+# target and then dies with "The walls seem to absorb your words." — the
+# peer transcript must stay empty.
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 5 on
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+tell barnaby psst
+reply hi
+gossip absorbed by the walls

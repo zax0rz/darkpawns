@@ -36,6 +36,7 @@ func init() {
 	RegisterSpec("oro_study_room", specOroStudyRoom)
 	RegisterSpec("bank", specBank)
 	RegisterSpec("horn", specHorn)
+	RegisterObjSpec("horn", specHornObject)
 }
 
 func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
@@ -103,13 +104,24 @@ func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 }
 
 func specOutOfJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || !isMoveCmd(cmd) {
+	if w == nil || ch == nil || me == nil || cmd == "" || !isMoveCmd(cmd) {
 		return false
 	}
 
-	if me.GetRoom() == 8117 && cmd == "south" {
-		w.roomMessage(me.GetRoom(), "The guard grabs $n by the collar and blocks $s way.")
-		sendToChar(ch, "The guard stops you from entering with one quick jerk of your collar.\r\n")
+	// C: spec_procs.c:1765-1767 — only mortal, non-hunting movers reach the
+	// room-specific guard. Players have no hunting state in this port, so the
+	// world query is the faithful false result for the player case.
+	if ch.GetLevel() >= lvlImmort || w.IsHunting(ch.GetName(), false) {
+		return false
+	}
+
+	// C: ch->in_room, not the special mob's room. CMD_IS("south") is already
+	// canonicalized by command dispatch; the move-command gate above rejects
+	// all non-direction commands before this exact comparison.
+	if ch.GetRoomVNum() == 8117 && cmd == "south" {
+		Act(w, false, ch, nil, nil, nil,
+			"The guard grabs $n by the collar and blocks $s way.", "", ToRoom)
+		sendToChar(ch, "The guard stops you from entering with one quick jerk of your collar.")
 		return true
 	}
 
@@ -117,13 +129,24 @@ func specOutOfJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg s
 }
 
 func specJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || !isMoveCmd(cmd) {
+	if w == nil || ch == nil || me == nil || cmd == "" || !isMoveCmd(cmd) {
 		return false
 	}
 
-	if me.GetRoom() == 8118 && cmd == "north" {
-		w.roomMessage(me.GetRoom(), "The guard grabs $n with one hand and throws $m back in the room.")
-		sendToChar(ch, "The guard stops you from leaving with one flabby hand.\r\n")
+	// C: spec_procs.c:1783-1785 — only mortal, non-hunting movers reach the
+	// room-specific guard. Players have no hunting state in this port, so the
+	// world query is the faithful false result for the player case.
+	if ch.GetLevel() >= lvlImmort || w.IsHunting(ch.GetName(), false) {
+		return false
+	}
+
+	// C: ch->in_room, not the special mob's room. CMD_IS("north") is already
+	// canonicalized by command dispatch; the move-command gate above rejects
+	// all non-direction commands before this exact comparison.
+	if ch.GetRoomVNum() == 8118 && cmd == "north" {
+		Act(w, false, ch, nil, nil, nil,
+			"The guard grabs $n with one hand and throws $m back in the room.", "", ToRoom)
+		sendToChar(ch, "The guard stops you from leaving with one flabby hand.")
 		return true
 	}
 
@@ -131,26 +154,38 @@ func specJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 func specDracula(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if w == nil || me == nil {
+		return false
+	}
 	if cmd != "look" && cmd != "" {
 		return false
 	}
 
-	if cmd == "" && me.IsFighting() {
-		return specMagicUser(w, ch, me, cmd, arg)
-	}
-
-	arg = strings.TrimSpace(arg)
-	if !strings.Contains(strings.ToLower(arg), strings.ToLower(me.GetName())) {
+	if cmd == "" {
+		if me.IsFighting() {
+			return specMagicUser(w, ch, me, cmd, arg)
+		}
 		return false
 	}
 
-	sendToChar(ch, "You feel mesmerized... your will weakens.\r\n")
-	sendToChar(ch, fmt.Sprintf("%s sinks his fangs into your neck!\r\n", me.GetName()))
-	w.roomMessage(me.GetRoom(), fmt.Sprintf("$n looks at %s.\r\n", me.GetName()))
-	w.roomMessage(me.GetRoom(), fmt.Sprintf("%s gazes intently at $n.\r\n", me.GetName()))
-	w.roomMessage(me.GetRoom(), fmt.Sprintf("%s sinks his fangs into $n!\r\n", me.GetName()))
+	if ch == nil || ch.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
+		return false
+	}
+	arg = strings.TrimSpace(arg)
+	if !isnameWithAbbrevs(arg, charKeywords(me)) {
+		return false
+	}
 
-	sendToChar(ch, "Your blood boils with a stinging fire...\r\n")
+	sendToChar(ch, "You feel mesmerized... your will weakens.")
+	sendToChar(ch, fmt.Sprintf("%s sinks his fangs into your neck!", me.GetName()))
+	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("$n looks at %s.\r\n", me.GetName()), "", ToRoom)
+	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("%s gazes intently at $n.\r\n", me.GetName()), "", ToRoom)
+	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("%s sinks his fangs into $n!\r\n", me.GetName()), "", ToRoom)
+	w.DoSay(ch, "Now I know... The blood is the life!")
+	if ch.GetFlags()&(1<<uint(PlrVampire)) == 0 && ch.GetFlags()&(1<<uint(PlrWerewolf)) == 0 {
+		ch.SetPlrFlag(PlrVampire, true)
+		sendToChar(ch, "Your blood boils with a stinging fire...")
+	}
 
 	return true
 }
@@ -350,21 +385,83 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 		return false
 	}
 
-	arg = strings.TrimSpace(arg)
-	parts := strings.Fields(arg)
-	what := ""
-	if len(parts) > 0 {
-		what = parts[0]
-	}
+	what, _ := oneArgument(arg)
 
 	if what == "immortality" {
-		sendToChar(ch, "You feel the power pulse through your veins again!\r\n")
+		level := 0
+		switch ch.GetName() {
+		case "Serapis", "Orodreth":
+			level = 40
+		case "Frontline":
+			level = 39
+		case "this is not here":
+			// C evaluates these independent if statements in order; the
+			// later level-31 assignment is the final value for this name.
+			level = 31
+		case "neither is this":
+			level = 36
+		case "no entry here", "neither here":
+			level = 31
+		}
+		if level > 0 {
+			ch.SetLevel(level)
+			sendToChar(ch, "Welcome back "+ch.GetName()+".")
+			sendToChar(ch, "You feel the power pulse through your veins again!")
+		}
+		// C's immortality branch returns TRUE even when the player's name
+		// matches none of its hard-coded resurrection entries.
 		return true
 	}
 
-	w.roomMessage(me.GetRoom(), "$n kneels at the altar and chants a prayer to Odin.")
-	sendToChar(ch, "You notice a faint light in Odin's eye.\r\n")
-	return true
+	key := "item_for_" + ch.GetName()
+	gold := 0
+	found := false
+	for _, tmpObj := range w.GetItemsInRoom(ch.GetRoomVNum()) {
+		for _, extra := range tmpObj.GetExtraDescs() {
+			if !strings.EqualFold(key, extra.Keywords) {
+				continue
+			}
+			if gold == 0 {
+				gold = 1
+				w.actMessage(
+					ch.GetRoomVNum(), ch, nil,
+					"", "", ch.GetName()+" kneels and at the altar and chants a prayer to Odin.",
+				)
+				sendToChar(ch, "You notice a faint light in Odin's eye.")
+			}
+
+			obj, err := w.SpawnObject(tmpObj.GetVNum(), -1)
+			if err != nil {
+				slog.Error("pray_for_items failed to read object", "obj_vnum", tmpObj.GetVNum(), "error", err)
+				continue
+			}
+			if err := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err != nil {
+				slog.Error("pray_for_items failed to place object", "obj_vnum", tmpObj.GetVNum(), "room", ch.GetRoomVNum(), "error", err)
+				w.ExtractObject(obj, ch.GetRoomVNum())
+				continue
+			}
+			w.actMessage(
+				ch.GetRoomVNum(), ch, nil,
+				"", "", obj.GetShortDesc()+" slowly fades into existence.",
+			)
+			sendToChar(ch, obj.GetShortDesc()+" slowly fades into existence.")
+			gold += obj.GetCost()
+			found = true
+		}
+	}
+
+	if found {
+		if remaining := ch.GetGold() - gold; remaining > 0 {
+			ch.SetGold(remaining)
+		} else {
+			ch.SetGold(0)
+		}
+		return true
+	}
+
+	// The C special returns FALSE here, allowing interpreter.c to dispatch
+	// the ordinary pray social. In particular, me is nil for room specials.
+	return false
 }
 
 func specFearface(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
@@ -375,31 +472,41 @@ func specFearface(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 }
 
 func specStartRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" {
+	_ = me
+	_ = cmd
+	_ = arg
+	if ch == nil {
 		return false
 	}
 
-	mobs := w.GetMobsInRoom(me.GetRoom())
-	for _, m := range mobs {
-		if !m.IsNPC() {
-			continue
-		}
-		if m.GetLevel() >= lvlImmort {
+	players := w.GetPlayersInRoom(ch.GetRoomVNum())
+	for _, player := range players {
+		if player.GetLevel() >= lvlImmort {
 			return false
 		}
+	}
 
-		msg := "   Suddenly the hairs on the back of your neck stand up as if lightning had\r\nstruck nearby. A keen wailing fills the air, and an ethereal image appears\r\nbefore you.\r\n"
-		msg += fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", m.GetName())
-		msg += "   'Prove your worth and I may well grant you eternal life.'\r\n"
-		msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
-		msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"
-		msg += "   'Your life begins now...' it says, then fades -- just as the world around\r\nyou does the same.\r\n\r\n"
-		sendToChar(ch, msg)
-
-		m.SetRoom(8004) // temple altar
+	for _, player := range players {
+		player.SendMessage(startRoomBirthMessage(player.GetName()))
+		player.SetRoom(NewbieHometownRoom(player.GetHometown()))
+		// C's do_look renders the fresh mortal's default PRF_AUTOEXIT state,
+		// which is on — the oracle's hometown look carries "[ Exits: … ]".
+		w.lookAtRoom(player, false)
 	}
 
 	return true
+}
+
+func startRoomBirthMessage(name string) string {
+	// The C body builds the first three lines, then passes the same buffer as
+	// both sprintf source and destination. The oracle's libc result drops
+	// those lines; preserve the player-facing bytes observed on that path.
+	msg := fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", name)
+	msg += "   'Prove your worth and I may well grant you eternal life.'\r\n"
+	msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
+	msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"
+	msg += "   'Your life begins now...' it says, then fades -- just as the world around\r\nyou does the same.\r\n\r\n"
+	return msg
 }
 
 func specNewbieZoneEntrance(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
@@ -407,8 +514,8 @@ func specNewbieZoneEntrance(w *World, ch *Player, me *MobInstance, cmd string, a
 		return false
 	}
 
-	if ch.GetLevel() >= newbieLevel {
-		sendToChar(ch, "Nah, you're too much of a badass to go in there!\r\n")
+	if ch.GetLevel() >= newbieLevel && ch.GetLevel() < lvlImmort {
+		sendToChar(ch, "Nah, you're too much of a badass to go in there!")
 		return true
 	}
 
@@ -420,28 +527,35 @@ func specSuckIn(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		return false
 	}
 
-	arg = strings.TrimSpace(arg)
-	if strings.ToLower(arg) != "painting" {
+	what, _ := oneArgument(arg)
+	if what != "painting" {
 		return false
 	}
 
-	sendToChar(ch, "\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n")
-	w.roomMessage(me.GetRoom(), "$n suddenly vanishes!")
+	// C calls do_look with the first one_argument token before emitting the
+	// transition bytes. Room specials receive no mob receiver, so use ch as
+	// the act() actor and let TO_ROOM exclude the actor and substitute $n.
+	w.doLook(ch, me, "look", what)
+	ch.SendMessage("\r\n\r\n\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n")
+	Act(w, false, ch, nil, nil, nil, "$n suddenly vanishes!", "", ToRoom)
 	ch.SetRoom(paintingRoom)
+	w.lookAtRoom(ch, true)
 	return true
 }
 
 func specOroQuartersRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me.IsNPC() || cmd != "south" {
+	// Room specials receive no mob receiver; C's IS_MOB(ch) gate is already
+	// represented by the player-only handler boundary. A non-nil receiver is
+	// retained as the equivalent NPC guard for focused direct-call tests.
+	if (me != nil && me.IsNPC()) || cmd != "south" {
 		return false
 	}
 
 	if ch.Name != "Orodreth" {
-		w.roomMessage(me.GetRoom(), "A strong force jolts $n in $s attempt to leave south.")
-		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
-		ch.mu.Lock()
+		Act(w, false, ch, nil, nil, nil,
+			"A strong force jolts $n in $s attempt to leave south.", "", ToRoom)
+		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.")
 		ch.SetHP(ch.GetHP() / 2)
-		ch.mu.Unlock()
 		return true
 	}
 
@@ -449,16 +563,18 @@ func specOroQuartersRoom(w *World, ch *Player, me *MobInstance, cmd string, arg 
 }
 
 func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me.IsNPC() || cmd != "north" {
+	// Room specials receive no mob receiver; C's IS_MOB(ch) gate is already
+	// represented by the player-only handler boundary. A non-nil receiver is
+	// retained as the equivalent NPC guard for focused direct-call tests.
+	if (me != nil && me.IsNPC()) || cmd != "north" {
 		return false
 	}
 
 	if ch.Name != "Orodreth" {
-		w.roomMessage(me.GetRoom(), "A strong force jolts $n in $s attempt to leave north.")
-		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.\r\n")
-		ch.mu.Lock()
+		Act(w, false, ch, nil, nil, nil,
+			"A strong force jolts $n in $s attempt to leave north.", "", ToRoom)
+		sendToChar(ch, "A strong force blocks your way and gives you a nasty jolt.")
 		ch.SetHP(ch.GetHP() / 2)
-		ch.mu.Unlock()
 		return true
 	}
 
@@ -467,74 +583,132 @@ func specOroStudyRoom(w *World, ch *Player, me *MobInstance, cmd string, arg str
 
 func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	// Banking moves coins between carried gold and the bank account. Ported from
-	// src/spec_procs.c SPECIAL(bank). The previous Go port ignored BankGold:
-	// balance showed carried gold, deposit destroyed coins, and withdraw minted
-	// coins from nothing with no balance check (an economy exploit).
+	// src/spec_procs.c SPECIAL(bank). The object receiver is intentionally not
+	// used: the command path calls object specials with no MobInstance receiver,
+	// while C's act(TO_ROOM) audience is rooted at ch's room.
 	if cmd == "balance" {
 		if ch.GetBankGold() > 0 {
-			sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.\r\n", ch.GetBankGold()))
+			sendToChar(ch, fmt.Sprintf("Your current balance is %d coins.", ch.GetBankGold()))
 		} else {
-			sendToChar(ch, "You currently have no money deposited.\r\n")
+			sendToChar(ch, "You currently have no money deposited.")
 		}
 		return true
 	}
 
 	if cmd == "deposit" {
-		amount := 0
-		if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
-			slog.Warn("fmt.Sscanf failed in deposit", "arg", arg, "error", err)
-		}
+		amount := atoiC(arg)
 		if amount <= 0 {
-			sendToChar(ch, "How much do you want to deposit?\r\n")
+			sendToChar(ch, "How much do you want to deposit?")
 			return true
 		}
 		if ch.GetGold() < amount {
-			sendToChar(ch, "You don't have that many coins!\r\n")
+			sendToChar(ch, "You don't have that many coins!")
 			return true
 		}
 		ch.SetGold(ch.GetGold() - amount)
 		ch.SetBankGold(ch.GetBankGold() + amount)
-		sendToChar(ch, fmt.Sprintf("You deposit %d coins.\r\n", amount))
-		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
+		sendToChar(ch, fmt.Sprintf("You deposit %d coins.", amount))
+		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 
 	if cmd == "withdraw" {
-		amount := 0
-		if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
-			slog.Warn("fmt.Sscanf failed in withdraw", "arg", arg, "error", err)
-		}
+		amount := atoiC(arg)
 		if amount <= 0 {
-			sendToChar(ch, "How much do you want to withdraw?\r\n")
+			sendToChar(ch, "How much do you want to withdraw?")
 			return true
 		}
 		if ch.GetBankGold() < amount {
-			sendToChar(ch, "You don't have that many coins deposited!\r\n")
+			sendToChar(ch, "You don't have that many coins deposited!")
 			return true
 		}
 		ch.SetGold(ch.GetGold() + amount)
 		ch.SetBankGold(ch.GetBankGold() - amount)
-		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.\r\n", amount))
-		w.roomMessage(me.GetRoom(), "$n makes a bank transaction.")
+		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.", amount))
+		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 
 	return false
 }
 
-func specHorn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "use" {
+// atoiC mirrors the C atoi() behavior used by SPECIAL(bank): leading spaces,
+// an optional sign, and the leading decimal run are accepted; no digits yield
+// zero and trailing text is ignored.
+func atoiC(s string) int {
+	s = strings.TrimLeft(s, " \t\n\r\v\f")
+	if s == "" {
+		return 0
+	}
+
+	sign := 1
+	index := 0
+	if s[0] == '+' || s[0] == '-' {
+		if s[0] == '-' {
+			sign = -1
+		}
+		index++
+	}
+	start := index
+	value := 0
+	for index < len(s) && s[index] >= '0' && s[index] <= '9' {
+		value = value*10 + int(s[index]-'0')
+		index++
+	}
+	if index == start {
+		return 0
+	}
+	return sign * value
+}
+
+// specHorn is retained in the common registry for compatibility with direct
+// SpecFunc callers. The C object dispatch supplies the concrete object, so the
+// faithful command path uses specHornObject below.
+func specHorn(_ *World, _ *Player, _ *MobInstance, _ string, _ string) bool {
+	return false
+}
+
+// sendToZoneExceptRoom mirrors comm.c send_to_zone for SPECIAL(horn): awake
+// players in the same zone receive the message, except everyone in the
+// actor's room (which also excludes the actor).
+func (w *World) sendToZoneExceptRoom(roomVNum int, msg string) {
+	room := w.GetRoomInWorld(roomVNum)
+	if room == nil {
+		return
+	}
+	zone := room.Zone
+
+	w.mu.RLock()
+	players := make([]*Player, 0, len(w.players))
+	for _, p := range w.players {
+		players = append(players, p)
+	}
+	w.mu.RUnlock()
+
+	for _, p := range players {
+		if p == nil || p.GetPosition() <= combat.PosSleeping || p.GetRoomVNum() == roomVNum {
+			continue
+		}
+		if playerRoom := w.GetRoomInWorld(p.GetRoomVNum()); playerRoom != nil && playerRoom.Zone == zone {
+			p.SendMessage(msg)
+		}
+	}
+}
+
+func specHornObject(w *World, ch *Player, obj *ObjectInstance, cmd string, arg string) bool {
+	if cmd != "use" || ch == nil || obj == nil || ch.Equipment == nil {
 		return false
 	}
 
-	arg = strings.TrimSpace(arg)
-	if !strings.Contains(strings.ToLower(arg), "horn") {
+	held, ok := ch.Equipment.GetItemInSlot(SlotHold)
+	if !ok || held != obj || !isName(strings.TrimSpace(arg), obj.GetKeywords()) {
 		return false
 	}
 
-	sendToChar(ch, "You inhale deeply then blow hard!\r\n")
-	sendToChar(ch, "A blaring note resounds through the air.\r\n")
-	w.roomMessage(ch.GetRoomVNum(), ch.GetName()+" blows into a horn.")
-	w.roomMessage(ch.GetRoomVNum(), "A horn lets out a blaring note...")
+	w.sendToZoneExceptRoom(ch.GetRoomVNum(), "You hear the blaring of a loud horn.\r\n")
+	sendToChar(ch, "You inhale deeply then blow hard!")
+	sendToChar(ch, "A blaring note resounds through the air.")
+	Act(w, true, ch, nil, nil, obj, "$n blows into $P.", "", ToRoom)
+	Act(w, false, ch, nil, nil, obj, "$P lets out a blaring note...", "", ToRoom)
 	return true
 }

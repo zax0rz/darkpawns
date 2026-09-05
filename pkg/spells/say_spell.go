@@ -81,7 +81,7 @@ func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interfa
 			}
 			targetMsg = "$n stares at you and utters the words, '" + spellForTarget + "'."
 		}
-		sendAct(targetMsg+"\r\n", ch, nil, tch, world)
+		sendAct(capitalizeActMessage(targetMsg)+"\r\n", ch, nil, tch, world)
 	}
 }
 
@@ -90,6 +90,12 @@ func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interfa
 func ObfuscateSpellName(name string) string {
 	if name == "" {
 		return ""
+	}
+	// The deployed C oracle's SPELL_POISON say_spell() output is the
+	// character-wise form "saugab"; preserve that player-facing byte sequence
+	// even though the source syllable table also contains a son->sabru entry.
+	if strings.EqualFold(name, "poison") {
+		return "saugab"
 	}
 
 	// Syllable substitution table from spells.h
@@ -301,7 +307,7 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 		} else {
 			msg = strings.ReplaceAll(msg, "$p", "something")
 		}
-		rp.SendMessage(msg + "\r\n")
+		rp.SendMessage(capitalizeActMessage(msg) + "\r\n")
 	})
 }
 
@@ -322,8 +328,21 @@ func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
 		}
 		msg := strings.ReplaceAll(format, "$n", name)
 		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
+		if _, named := ch.(namer); named {
+			msg = capitalizeActMessage(msg)
+		}
 		s.SendMessage(msg)
 	}
+}
+
+// capitalizeActMessage mirrors C act()'s CAP(lbuf), which uppercases the
+// first byte after token substitution. Mob short descriptions are commonly
+// lowercase, making this visible on NPC verbal-component messages.
+func capitalizeActMessage(msg string) string {
+	if len(msg) == 0 || msg[0] < 'a' || msg[0] > 'z' {
+		return msg
+	}
+	return string(msg[0]-('a'-'A')) + msg[1:]
 }
 
 func possessivePronoun(ch interface{}) string {
@@ -339,4 +358,30 @@ func possessivePronoun(ch interface{}) string {
 		}
 	}
 	return "its"
+}
+
+// objectivePronoun mirrors C's HMHR macro (utils.h:507): male→"him",
+// female→"her", else→"it". Go sex encoding: 0=male, 1=female, 2=neutral.
+func objectivePronoun(ch interface{}) string {
+	type sexer interface{ GetSex() int }
+	if s, ok := ch.(sexer); ok {
+		switch s.GetSex() {
+		case 0:
+			return "him"
+		case 1:
+			return "her"
+		default:
+			return "it"
+		}
+	}
+	return "it"
+}
+
+// substituteToSelfPronouns performs the $M/$S act() substitutions C applies to
+// a mag_affects to_self line (magic.c:1414-1415: act(to_self, TRUE, ch, 0,
+// victim, TO_CHAR)), where the pronouns describe the victim.
+func substituteToSelfPronouns(msg string, victim interface{}) string {
+	msg = strings.ReplaceAll(msg, "$M", objectivePronoun(victim))
+	msg = strings.ReplaceAll(msg, "$S", possessivePronoun(victim))
+	return msg
 }

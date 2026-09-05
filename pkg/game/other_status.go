@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -18,20 +17,15 @@ func (w *World) doAFK(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SetPlrFlag(PrfAFK, false)
 		ch.SetAFK(false)
 		ch.SetAFKMessage("")
-		msg := fmt.Sprintf("%s is no longer AFK.\r\n", ch.Name)
-		actToRoom(w, ch.GetRoomVNum(), msg, ch.Name)
-		ch.SendMessage("You are no longer AFK.\r\n")
+		Act(w, false, ch, nil, nil, nil, "$n returns from some repulsive act...", "", ToRoom)
+		ch.SendMessage("You return from the world of the living.\r\n")
 	} else {
 		ch.SetPlrFlag(PrfAFK, true)
 		ch.SetAFK(true)
-		ch.SetAFKMessage(arg)
-		msg := fmt.Sprintf("%s is now AFK.\r\n", ch.Name)
-		actToRoom(w, ch.GetRoomVNum(), msg, ch.Name)
-		if arg != "" {
-			ch.SendMessage("You are now AFK: " + arg + "\r\n")
-		} else {
-			ch.SendMessage("You are now AFK.\r\n")
-		}
+		ch.SetAFKMessage("")
+		Act(w, false, ch, nil, nil, nil, "$n goes AFK...", "", ToRoom)
+		// C's command/prompt cycle leaves a blank line before the AFK prompt.
+		ch.SendMessage("Go leave..no one will notice anyways.\r\n\r\n")
 	}
 	return true
 }
@@ -45,63 +39,66 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
+	// C only skips leading spaces here. The command table has already removed
+	// the command word, but do_auto compares the remaining argument literally:
+	// case and any trailing text are significant.
+	arg = strings.TrimLeft(arg, " \t")
 
 	if arg == "" {
-		var autos []string
-		if ch.GetFlags()&(1<<PrfAutoexit) != 0 {
-			autos = append(autos, "exits")
+		var result strings.Builder
+		result.WriteString("You have the following autos set:\r\n")
+		if ch.GetAutoExit() {
+			result.WriteString("Exits ")
 		}
 		if ch.GetFlags()&(1<<PrfAutoLoot) != 0 {
-			autos = append(autos, "loot")
+			result.WriteString("Loot ")
 		}
 		if ch.GetFlags()&(1<<PrfAutoGold) != 0 {
-			autos = append(autos, "gold")
+			result.WriteString("Gold ")
 		}
 		if ch.GetFlags()&(1<<PrfAutoSplit) != 0 {
-			autos = append(autos, "split")
+			result.WriteString("Split")
 		}
-
-		if len(autos) == 0 {
-			ch.SendMessage("None.\r\n")
-		} else {
-			ch.SendMessage("Autos: " + strings.Join(autos, ", ") + "\r\n")
+		if result.Len() == len("You have the following autos set:\r\n") {
+			result.WriteString("None.")
 		}
+		result.WriteString("\r\n")
+		ch.SendMessage(result.String())
 		return true
 	}
 
-	switch strings.ToLower(arg) {
+	switch arg {
 	case "exit", "exits":
-		if ch.GetFlags()&(1<<PrfAutoexit) != 0 {
-			ch.SetPlrFlag(PrfAutoexit, false)
-			ch.SendMessage("Auto exits off.\r\n")
+		if ch.GetAutoExit() {
+			ch.SetAutoExit(false)
+			ch.SendMessage("You will no longer see room exits.\r\n")
 		} else {
-			ch.SetPlrFlag(PrfAutoexit, true)
-			ch.SendMessage("Auto exits on.\r\n")
+			ch.SetAutoExit(true)
+			ch.SendMessage("You will now see room exits.\r\n")
 		}
 	case "loot":
 		if ch.GetFlags()&(1<<PrfAutoLoot) != 0 {
 			ch.SetPlrFlag(PrfAutoLoot, false)
-			ch.SendMessage("Auto loot off.\r\n")
+			ch.SendMessage("You will no longer loot corpses.\r\n")
 		} else {
 			ch.SetPlrFlag(PrfAutoLoot, true)
-			ch.SendMessage("Auto loot on.\r\n")
+			ch.SendMessage("You will now automatically loot corpses.\r\n")
 		}
 	case "gold":
 		if ch.GetFlags()&(1<<PrfAutoGold) != 0 {
 			ch.SetPlrFlag(PrfAutoGold, false)
-			ch.SendMessage("Auto gold off.\r\n")
+			ch.SendMessage("You will no longer get the gold from corpses.\r\n")
 		} else {
 			ch.SetPlrFlag(PrfAutoGold, true)
-			ch.SendMessage("Auto gold on.\r\n")
+			ch.SendMessage("You will now get the gold from corpses.\r\n")
 		}
 	case "split":
 		if ch.GetFlags()&(1<<PrfAutoSplit) != 0 {
 			ch.SetPlrFlag(PrfAutoSplit, false)
-			ch.SendMessage("Auto split off.\r\n")
+			ch.SendMessage("You will no longer split gold with your group.\r\n")
 		} else {
 			ch.SetPlrFlag(PrfAutoSplit, true)
-			ch.SendMessage("Auto split on.\r\n")
+			ch.SendMessage("You will now split gold with your group.\r\n")
 		}
 	default:
 		ch.SendMessage("What do you want to make automatic?\r\n")
@@ -125,60 +122,103 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 		return true
 	}
 
+	climate := TimeWeatherSnapshot()
+	night := climate.Weather.Sunlight == SunSet || climate.Weather.Sunlight == SunDark
+
+	// C checks werewolf first. Every branch returns, so a player carrying both
+	// PLR flags still follows only the werewolf state machine.
 	if ch.GetFlags()&(1<<PlrWerewolf) != 0 {
-		// Werewolf: toggle affWerewolf
-		if ch.IsAffected(affWerewolf) {
-			ch.SetAffect(affWerewolf, false)
-			// Restore pre-transform MaxHP to prevent the HP exploit
-			if ch.WolfBaseMaxHP > 0 {
-				ch.SetMaxHP(ch.WolfBaseMaxHP)
-				ch.WolfBaseMaxHP = 0
-			}
-			if ch.GetHP() > ch.GetMaxHP() {
-				ch.SetHP(ch.GetMaxHP())
-			}
-			ch.SendMessage("You revert back to your human form.\r\n")
-			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms back into %s human form.\r\n", ch.Name, hisHer(ch.GetSex())), ch.Name)
-		} else {
-			// Must be night and near full moon to transform
-			sun := GetSunlight()
-			if sun == SunLight || sun == SunRise {
-				ch.SendMessage("You cannot transform in the light of day!\r\n")
+		if night {
+			if ch.IsAffected(affWerewolf) {
+				ch.SendMessage("You can't change back until morning!\n\r")
 				return true
 			}
-			moon := GetMoon()
-			if moon != MoonFull && moon != MoonThreeFull {
-				ch.SendMessage("The moon is not full enough for you to transform!\r\n")
+			if climate.Time.Day < 6 && climate.Time.Day >= 1 {
+				ch.SendMessage("You can't transform when there's no moon in the sky!\r\n")
 				return true
 			}
-			ch.WolfBaseMaxHP = ch.GetMaxHP()
+
+			ch.SendMessage("Your nails grow into talons, and hair sprouts from every pore.\n\r")
+			Act(w, false, ch, nil, nil, nil, "$n shivers and transforms into a werewolf!", "", ToRoom)
 			ch.SetAffect(affWerewolf, true)
-			bonus := randRange(2, 6) * 10
+			bonus := werewolfTransformBonus(ch.GetMaxHP(), climate.Time.Moon)
 			ch.SetHP(ch.GetHP() + bonus)
 			if ch.GetHP() > 666 {
 				ch.SetHP(666)
 			}
+			return true
+		}
+
+		if ch.IsAffected(affWerewolf) {
+			ch.SendMessage("Your hair and nails shorten and you revert to your normal shape.\n\r")
+			Act(w, false, ch, nil, nil, nil, "$n shivers and transforms out of werewolf form!", "", ToRoom)
+			ch.SetAffect(affWerewolf, false)
 			if ch.GetHP() > ch.GetMaxHP() {
-				ch.SetMaxHP(ch.GetHP())
+				ch.SetHP(ch.GetMaxHP())
 			}
-			ch.SendMessage("You transform into a werewolf!\r\n")
-			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms into a werewolf!\r\n", ch.Name), ch.Name)
+			return true
 		}
-	} else if ch.GetFlags()&(1<<PlrVampire) != 0 {
-		// Vampire: toggle affVampire
-		if ch.IsAffected(affVampire) {
-			ch.SetAffect(affVampire, false)
-			ch.SendMessage("You revert back to your human form.\r\n")
-			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms back into %s human form.\r\n", ch.Name, hisHer(ch.GetSex())), ch.Name)
-		} else {
+		ch.SendMessage("You can't transform during the day!\n\r")
+		return true
+	}
+
+	if ch.GetFlags()&(1<<PlrVampire) != 0 {
+		if night {
+			if ch.IsAffected(affVampire) {
+				ch.SendMessage("You can't change back until morning!\n\r")
+				return true
+			}
+
+			ch.SendMessage("Your nails grow transluscent and fangs sprout from your incisors!\n\r")
+			Act(w, false, ch, nil, nil, nil, "$n shivers and transforms into a vampire!", "", ToRoom)
 			ch.SetAffect(affVampire, true)
-			bonus := randRange(2, 6) * 10
+			bonus := vampireTransformBonus(ch.GetMaxMana(), climate.Time.Moon)
 			ch.SetMana(ch.GetMana() + bonus)
-			ch.SendMessage("You transform into a vampire!\r\n")
-			actToRoom(w, ch.GetRoomVNum(), fmt.Sprintf("%s transforms into a vampire!\r\n", ch.Name), ch.Name)
+			return true
 		}
-	} else {
-		ch.SendMessage("You have no idea how to transform!\r\n")
+
+		if ch.IsAffected(affVampire) {
+			ch.SendMessage("Your fangs recess, and you revert to your normal shape.\n\r")
+			Act(w, false, ch, nil, nil, nil, "$n shivers and transforms out of vampire form!", "", ToRoom)
+			ch.SetAffect(affVampire, false)
+			if ch.GetMana() > ch.GetMaxMana() {
+				ch.SetMana(ch.GetMaxMana())
+			}
+			return true
+		}
+		ch.SendMessage("You can't transform during the day!\n\r")
 	}
 	return true
+}
+
+func werewolfTransformBonus(maxHP, moon int) int {
+	switch moon {
+	case MoonNew:
+		return maxHP / 6
+	case MoonQuarterFull, MoonThreeEmpty:
+		return maxHP / 5
+	case MoonHalfFull, MoonHalfEmpty:
+		return maxHP / 4
+	case MoonThreeFull, MoonQuarterEmpty:
+		return maxHP / 3
+	case MoonFull:
+		return maxHP / 2
+	default:
+		return 0
+	}
+}
+
+func vampireTransformBonus(maxMana, moon int) int {
+	switch moon {
+	case MoonNew:
+		return maxMana / 5
+	case MoonHalfFull, MoonHalfEmpty:
+		return maxMana / 4
+	case MoonThreeFull, MoonQuarterEmpty:
+		return maxMana / 3
+	case MoonFull:
+		return maxMana / 2
+	default:
+		return 0
+	}
 }

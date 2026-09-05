@@ -1,0 +1,147 @@
+# Mortal clan-member vehicle for clan / do_clan (src/interpreter.c:383,
+# src/clan.c). The primary creates the clan, lowers its application level,
+# and forces the applicant to submit a request before the member probe.
+
+# depth-case: clan.mortal-format
+# depth-case: clan.mortal-status
+# depth-case: clan.mortal-info
+# depth-case: clan.mortal-info-detail
+# depth-case: clan.mortal-who
+# depth-case: clan.mortal-members
+# depth-case: clan.mortal-private
+# depth-case: clan.mortal-bank
+# depth-case: clan.mortal-money-gates
+# depth-case: clan.mortal-ranks
+# depth-case: clan.mortal-title
+# depth-case: clan.mortal-privilege
+# depth-case: clan.mortal-membership-success
+# depth-case: clan.mortal-membership-gates
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:applicant]
+Clanapply
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:applicant]
+Clanapply
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Clanmate Wolves
+clan enroll Clanmate Wolves
+clan set applev 1 Wolves
+force Clanapply clan apply Wolves
+
+[probe:member]
+clan
+clan status
+clan info
+clan info Wolves
+clan who
+clan members
+clan private
+clan info
+clan private
+clan deposit nope
+clan deposit 0
+clan withdraw 0
+clan withdraw 1
+clan set appfee nope
+clan set appfee 5
+clan set applev 31
+clan set ranks 3
+clan set title 1 Chief
+clan set privilege enroll 1
+clan enroll Clanapply
+clan expel Clanapply
+clan enroll Clanapply
+clan promote Clanapply
+clan demote Clanapply
+clan demote Clanapply
+clan promote Clanapply
+clan promote Clanapply
+clan promote Clanapply
+clan expel Clanapply
+clan quit

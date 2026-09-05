@@ -1,0 +1,83 @@
+# C-first vehicle for SPECIAL(quan_lo), defined at src/spec_procs3.c:372-392
+# and registered first for mob vnum 19405 at src/spec_assign.c:444. The
+# authored Quan Lo mob carries quanlo.lua, so the fixture strips that script,
+# sets the native SPEC bit, and places the mob in room 19424. A remote peer
+# distinguishes C's global NPC gossip from a same-room-only implementation.
+# C command path: interpreter.c:889-947 and 1407-1456; C's final command is
+# still executed after the special returns FALSE.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19405 1 19424 194
+strip-mob-script 19405
+set-mob-flag 19405 SPEC
+replace-room-exits 19424 none
+
+[setup:oracle]
+QuanActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+QuanActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+QuanPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+QuanPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19424
+teleport QuanPeer 10049
+
+[probe]
+flee
+
+# depth-case: mob.quan-lo-flee-global-gossip
+# depth-case: mob.quan-lo-flee-command-fallthrough

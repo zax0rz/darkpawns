@@ -223,6 +223,17 @@ func (w *World) DoMove(ch *Player, direction string) MoveResult {
 	return result
 }
 
+// DoFleeMove executes the do_simple_move leg selected by C do_flee. Unlike a
+// normal directional command it does not move followers, and it re-runs the
+// direction special-procedure check because C passes need_specials_check=TRUE.
+func (w *World) DoFleeMove(ch *Player, direction string) bool {
+	dir := searchBlock(strings.ToLower(strings.TrimSpace(direction)), dirs, false)
+	if dir < 0 {
+		return false
+	}
+	return doSimpleMove(w, ch, dir, true)
+}
+
 // doSimpleMove moves a character assuming follower traversal is handled by
 // performMoveResult. It mirrors C do_simple_move.
 func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
@@ -275,9 +286,23 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// Movement points needed is avg of src and dest sector movement loss.
 	needMovement := (movementLoss[room.Sector] + movementLoss[toRoom.Sector]) >> 1
 
-	// Exhaustion is checked before tunnel/mount gates, but movement is not
+	mount := w.riddenMount(ch)
+	if ch.IsMounted() && mount == nil {
+		w.clearMountedPair(ch, nil)
+		return false
+	}
+
+	// Exhaustion is checked before tunnel/indoors gates, but movement is not
 	// deducted until every precondition has passed.
-	if !ch.IsMounted() && ch.GetLevel() < lvlImmort && ch.GetMove() < needMovement {
+	if mount != nil && mount.GetPosition() < combat.PosStanding {
+		movementSendToChar(ch, "Your mount is in no position to go ANYWHERE!")
+		return false
+	}
+	if mount != nil && mount.GetMove() < needMovement {
+		movementSendToChar(ch, "Your mount is too exhausted to carry you further.")
+		return false
+	}
+	if mount == nil && ch.GetLevel() < lvlImmort && ch.GetMove() < needMovement {
 		if needSpecialsCheck && ch.GetFollowing() != "" {
 			movementSendToChar(ch, "You are too exhausted to follow.")
 		} else {
@@ -295,26 +320,27 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		}
 	}
 
-	// TODO(DP-mount): move the mount/rider pair and charge the mount's move
-	// points once MobInstance has a movement pool. Until then, mounted movement
-	// is explicitly gated rather than silently moving only the rider.
-	if ch.IsMounted() {
-		if movementRoomHasFlag(toRoom, roomFlagIndoors, "indoors") {
-			movementSendToChar(ch, "You can't ride in there! Dismount first!")
-		} else {
-			movementSendToChar(ch, "Your mount is in no position to go ANYWHERE!")
-		}
+	if mount != nil && movementRoomHasFlag(toRoom, roomFlagIndoors, "indoors") {
+		movementSendToChar(ch, "You can't ride in there! Dismount first!")
 		return false
 	}
 
-	if ch.GetLevel() < lvlImmort && !ch.SpendMove(needMovement) {
+	if mount == nil && ch.GetLevel() < lvlImmort && !ch.SpendMove(needMovement) {
 		return false
 	}
 
 	wasIn := ch.GetRoom()
 
 	// Leave message
-	if !ch.IsAffected(affSneak) {
+	if mount != nil {
+		if !mount.IsAffected(affSneak) {
+			Act(w, true, mount, ch, nil, nil, fmt.Sprintf("$N rides %s on $n.", dirs[dir]), "", ToNotVict)
+		}
+		if err := w.MobTransfer(mount, ext.ToRoom); err != nil {
+			slog.Error("mount movement transfer failed", "mount", mount.GetName(), "from", wasIn, "to", ext.ToRoom, "error", err)
+			return false
+		}
+	} else if !ch.IsAffected(affSneak) {
 		Act(w, true, ch, nil, nil, nil, fmt.Sprintf("$n leaves %s.", dirs[dir]), "", ToRoom)
 	}
 
@@ -322,6 +348,14 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	// room membership invariants remain centralized.
 	if err := w.PlayerTransfer(ch, ext.ToRoom); err != nil {
 		slog.Error("movement transfer failed", "player", ch.Name, "from", wasIn, "to", ext.ToRoom, "error", err)
+		if mount != nil {
+			if rollbackErr := w.MobTransfer(mount, wasIn); rollbackErr != nil {
+				slog.Error("mount movement rollback failed", "mount", mount.GetName(), "to", wasIn, "error", rollbackErr)
+			}
+		}
+		return false
+	}
+	if mount != nil && !mount.SpendMove(needMovement) {
 		return false
 	}
 
@@ -335,15 +369,19 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 				msg = fmt.Sprintf("$n flies in from the %s.", direct)
 			} else if toRoom.Sector == SECT_UNDERWATER {
 				msg = fmt.Sprintf("$n swims in from the %s.", direct)
+			} else if mount != nil {
+				msg = fmt.Sprintf("$n rides in from the %s on $N.", direct)
 			} else {
 				msg = fmt.Sprintf("$n arrives from the %s.", direct)
 			}
-			Act(w, true, ch, nil, nil, nil, msg, "", ToRoom)
+			Act(w, true, ch, mount, nil, nil, msg, "", ToRoom)
 		case 4:
 			if ch.IsAffected(affFly) {
 				Act(w, true, ch, nil, nil, nil, "$n flies in from below.", "", ToRoom)
 			} else if toRoom.Sector == SECT_UNDERWATER {
 				Act(w, true, ch, nil, nil, nil, "$n swims in from below.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from below on $N.", "", ToRoom)
 			} else {
 				Act(w, true, ch, nil, nil, nil, "$n climbs in from below.", "", ToRoom)
 			}
@@ -352,10 +390,19 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 				Act(w, true, ch, nil, nil, nil, "$n flies in from above.", "", ToRoom)
 			} else if toRoom.Sector == SECT_UNDERWATER {
 				Act(w, true, ch, nil, nil, nil, "$n swims in from above.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from above on $N.", "", ToRoom)
 			} else {
 				Act(w, true, ch, nil, nil, nil, "$n climbs in from above.", "", ToRoom)
 			}
 		}
+	}
+
+	// C renders the mover's destination room here, before greet/entry triggers
+	// and before perform_move recursively moves followers (R1/R5e). The session
+	// callback is nil for NPCs and disconnected players, matching ch->desc.
+	if w.MovementLook != nil {
+		w.MovementLook(ch)
 	}
 
 	if !ch.IsAffected(affSneak) {
@@ -392,6 +439,29 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	return true
 }
 
+func (w *World) riddenMount(rider *Player) *MobInstance {
+	if rider == nil || !rider.IsMounted() {
+		return nil
+	}
+	for _, mount := range w.GetMobsInRoom(rider.GetRoom()) {
+		if mount.GetMountRider() == rider.Name && mount.GetName() == rider.GetMountName() &&
+			mount.IsAffected(affMounted) && mount.GetFollowing() == rider.Name {
+			return mount
+		}
+	}
+	return nil
+}
+
+func (w *World) clearMountedPair(rider *Player, mount *MobInstance) {
+	if rider != nil {
+		rider.SetAffect(affMounted, false)
+		rider.MountName = ""
+	}
+	if mount != nil {
+		mount.SetMountRider("")
+	}
+}
+
 // movementSpecialBlocks mirrors C special(ch, dir+1, "") for recursively
 // moved followers. The command interpreter has already run specials for the
 // original mover, but followers must independently be allowed or blocked by
@@ -410,7 +480,7 @@ func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
 		if item == nil {
 			continue
 		}
-		if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+		if spec := GetObjSpecForObject(item.VNum); spec != nil && spec(w, ch, item, direction, "") {
 			return true
 		}
 	}
@@ -419,7 +489,7 @@ func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
 			if item == nil {
 				continue
 			}
-			if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+			if spec := GetObjSpecForObject(item.VNum); spec != nil && spec(w, ch, item, direction, "") {
 				return true
 			}
 		}
@@ -429,7 +499,7 @@ func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
 			if item == nil {
 				continue
 			}
-			if spec := GetObjSpec(item.VNum); spec != nil && spec(w, ch, nil, direction, "") {
+			if spec := GetObjSpecForObject(item.VNum); spec != nil && spec(w, ch, item, direction, "") {
 				return true
 			}
 		}
@@ -711,14 +781,14 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 	canBreak := 0
 	switch {
 	case keynum < 0:
-		sendToChar(ch, "Odd - you can't seem to find a keyhole.\r\n")
+		sendToChar(ch, "Odd - you can't seem to find a keyhole.")
 	case (picks == nil || picks.VNum != 8027) && ch.GetLevel() < lvlImmort:
-		sendToChar(ch, "You'll need to hold a set of lockpicks before you can pick a lock!\r\n")
+		sendToChar(ch, "You'll need to hold a set of lockpicks before you can pick a lock!")
 	case pickproof:
-		sendToChar(ch, "It resists your attempts to pick it.\r\n")
+		sendToChar(ch, "It resists your attempts to pick it.")
 		canBreak = 2
 	case percent > ch.GetSkill(SkillPickLock):
-		sendToChar(ch, "You failed to pick the lock.\r\n")
+		sendToChar(ch, "You failed to pick the lock.")
 		canBreak = 1
 	default:
 		return true
@@ -726,7 +796,7 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 
 	if picks != nil && canBreak != 0 && ch.GetLevel() < doorNumber(0, 30)+canBreak {
 		Act(w, false, ch, nil, nil, nil, "$n curses as $e bends some of $s lockpicks.", "", ToRoom)
-		sendToChar(ch, "You ruin your lockpicks in the process.\r\n")
+		sendToChar(ch, "You ruin your lockpicks in the process.")
 		if err := ch.Equipment.Unequip(SlotHold, ch.Inventory); err != nil {
 			slog.Error("unequip ruined lockpicks", "player", ch.GetName(), "error", err)
 			return false
@@ -749,15 +819,12 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 
 // doGenDoor generic door command handler (open/close/lock/unlock/pick).
 func doGenDoor(w *World, ch *Player, argument string, scmd int) {
-	fields := strings.Fields(argument)
-	if len(fields) == 0 {
+	// C do_gen_door parses with two_arguments (interpreter.c): fill words
+	// dropped, tokens lowercased.
+	doorType, dir := twoArguments(argument)
+	if doorType == "" {
 		sendToChar(ch, strings.ToUpper(cmdDoor[scmd][:1])+cmdDoor[scmd][1:]+" what?\r\n")
 		return
-	}
-	doorType := fields[0]
-	dir := ""
-	if len(fields) > 1 {
-		dir = fields[1]
 	}
 
 	var obj *ObjectInstance

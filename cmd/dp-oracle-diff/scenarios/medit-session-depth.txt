@@ -1,0 +1,44 @@
+# Second honest C-first medit vehicle (src/interpreter.c:553; src/olc.c:80-144;
+# src/medit.c:612-735). A valid mobile VNUM enters the descriptor-driven C
+# MEDIT_MAIN_MENU; q then exits the unchanged editor. Go has no OLC session
+# surface, so this vehicle tests whether the family is provable without
+# inventing an implementation.
+
+# depth-case: medit.interactive-olc
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+medit 18305
+q

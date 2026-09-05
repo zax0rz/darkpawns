@@ -1,0 +1,41 @@
+# depth-case: say.stupid-gate
+# God set field vehicle: prove C's stat field and its unknown-field behavior,
+# then exercise the communication stupid gate with WIS 0.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+set Mordecai position 3
+set Mordecai wis 0
+say hello

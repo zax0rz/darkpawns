@@ -1,0 +1,46 @@
+# depth-case: dig.permission-target-zone
+# depth-case: dig.builder-success
+# C-first vehicle for do_dig's builder permission branches. The immortal
+# prepares its saved OLC zone, then drops to LVL_BUILDER before probing.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Digperm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Digperm
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Digperm olc 12
+set Digperm level 31
+
+[probe]
+dig north 1205
+dig north 21200
+dig east 1205

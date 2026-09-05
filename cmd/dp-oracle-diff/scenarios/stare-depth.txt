@@ -1,0 +1,120 @@
+# C-first stare/do_action target-social vehicle (src/interpreter.c:736;
+# src/act.social.c:102-151; lib/misc/socials:844-852). The authored record
+# has hide 0 and a POS_RESTING victim minimum, so player, NPC, self,
+# missing-target, first-token, and sleeping-target branches are visible.
+
+# depth-case: stare.no-argument
+# depth-case: stare.target-success
+# depth-case: stare.target-audience
+# depth-case: stare.argument-first-token
+# depth-case: stare.mob-target
+# depth-case: stare.self-target
+# depth-case: stare.target-not-found
+# depth-case: stare.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Stareactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stareactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Stareobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Stareobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Staretarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Staretarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Stareobserver 8162
+teleport Staretarget 8162
+
+[probe]
+stare
+stare Staretarget trailing words are ignored
+stare Staretarget
+stare trainee
+stare Stareactor
+stare Nobody
+force Staretarget sleep
+stare Staretarget

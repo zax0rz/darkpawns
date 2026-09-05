@@ -36,10 +36,11 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 		return
 	}
 
-	// Resolve object: inventory first, then room.
-	item, found := ch.Inventory.FindItem(arg1)
+	// Resolve object: inventory first, then room. C get_obj_in_list_vis matches
+	// the keyword list (prefix), not the short description.
+	item := getObjInInvVis(ch, arg1)
 	onGround := false
-	if !found {
+	if item == nil {
 		item = w.findObjectInRoomByName(ch.GetRoomVNum(), arg1)
 		if item != nil {
 			onGround = true
@@ -158,7 +159,9 @@ func (w *World) DoEat(ch *Player, me *MobInstance, cmd, arg string, subcmd int) 
 		return
 	}
 
-	item, found := ch.Inventory.FindItem(arg1)
+	// C get_obj_in_list_vis matches the keyword list (prefix), not short desc.
+	item := getObjInInvVis(ch, arg1)
+	found := item != nil
 	if !found {
 		// Werewolves can eat corpses in the room (low-frequency branch).
 		if ch.IsAffected(affWerewolf) {
@@ -253,7 +256,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 			Act(nil, false, ch, nil, nil, nil, "From what do you want to pour?", "", ToChar)
 			return
 		}
-		fromObj, _ = ch.Inventory.FindItem(arg1)
+		fromObj = getObjInInvVis(ch, arg1)
 		if fromObj == nil {
 			Act(nil, false, ch, nil, nil, nil, "You can't find it!", "", ToChar)
 			return
@@ -267,7 +270,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 			ch.SendMessage("What do you want to fill?  And what are you filling it from?\r\n")
 			return
 		}
-		toObj, _ = ch.Inventory.FindItem(arg1)
+		toObj = getObjInInvVis(ch, arg1)
 		if toObj == nil {
 			ch.SendMessage("You can't find it!\r\n")
 			return
@@ -329,7 +332,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 			return
 		}
 
-		toObj, _ = ch.Inventory.FindItem(arg2)
+		toObj = getObjInInvVis(ch, arg2)
 		if toObj == nil {
 			Act(nil, false, ch, nil, nil, nil, "You can't find it!", "", ToChar)
 			return
@@ -403,43 +406,34 @@ func twoArguments(s string) (string, string) {
 	return first, second
 }
 
-// findObjectInRoomByName locates an object in the room by keyword or short desc.
+// findObjectInRoomByName locates an object in the room by keyword, mirroring
+// C get_obj_in_list_vis (isname_with_abbrevs). C does not match short
+// descriptions here, so neither do we (R4).
 func (w *World) findObjectInRoomByName(roomVNum int, name string) *ObjectInstance {
-	lowerName := strings.ToLower(name)
 	for _, obj := range w.GetItemsInRoom(roomVNum) {
-		if isname(lowerName, obj.GetKeywords()) || strings.Contains(strings.ToLower(obj.GetShortDesc()), lowerName) {
+		if isnameWithAbbrevs(name, obj.GetKeywords()) {
 			return obj
 		}
 	}
 	return nil
 }
 
-// setDrinkconName prefixes the object's short description with the liquid name,
-// reproducing C name_to_drinkcon().
+// setDrinkconName prepends the liquid's keyword name to the container's KEYWORD
+// list, reproducing C name_to_drinkcon() (which links drinknames[type] onto
+// obj->name). C does NOT touch the short description, and it does not dedupe.
 func setDrinkconName(obj *ObjectInstance, liq int) {
-	prefix := DrinkName(liq)
-	if prefix == "" || prefix == "unknown" {
-		return
-	}
-	base := obj.GetShortDesc()
-	// Avoid double-prefixing.
-	if strings.HasPrefix(strings.ToLower(base), strings.ToLower(prefix)+" ") {
-		return
-	}
-	obj.Runtime.ShortDescOverride = fmt.Sprintf("%s %s", prefix, base)
+	obj.Runtime.Keywords = DrinkKeyword(liq) + " " + obj.GetKeywords()
 }
 
-// clearDrinkconName strips the leading liquid-name prefix, reproducing C
-// name_from_drinkcon().
+// clearDrinkconName strips the first (liquid-name) word from the container's
+// KEYWORD list, reproducing C name_from_drinkcon(): it removes everything up to
+// and including the first space, unconditionally — so a container whose keyword
+// list has no liquid prefix loses its real first keyword. If there is no space,
+// the name is left unchanged.
 func clearDrinkconName(obj *ObjectInstance) {
-	if obj.Runtime.ShortDescOverride == "" {
-		return
-	}
-	fields := strings.Fields(obj.Runtime.ShortDescOverride)
-	if len(fields) > 1 {
-		obj.Runtime.ShortDescOverride = strings.Join(fields[1:], " ")
-	} else {
-		obj.Runtime.ShortDescOverride = ""
+	kw := obj.GetKeywords()
+	if i := strings.IndexByte(kw, ' '); i >= 0 {
+		obj.Runtime.Keywords = kw[i+1:]
 	}
 }
 

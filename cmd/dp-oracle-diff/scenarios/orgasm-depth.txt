@@ -1,0 +1,120 @@
+# C-first do_otouch vehicle (src/interpreter.c:587; src/new_cmds.c:666-724).
+# The immortal primary is placed with a male peer, a female peer, and a quiet
+# trainee NPC. The opposite-gender peer observes each named target, so probes
+# reach one_argument, unresolved/self/NPC resolution, all named-target
+# audiences, the silent hit/condition mutations, and the male-caster/female-
+# victim follow-up branch.
+
+# depth-case: orgasm.no-argument
+# depth-case: orgasm.target-not-found
+# depth-case: orgasm.self-target
+# depth-case: orgasm.visible-npc
+# depth-case: orgasm.male-target-audience-state
+# depth-case: orgasm.female-target-audience-state
+# depth-case: orgasm.one-argument-fill-word
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Otouchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Otouchgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:male]
+Otouchmale
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:male]
+Otouchmale
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:female]
+Otouchwoman
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:female]
+Otouchwoman
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Otouchmale 8105
+teleport Otouchwoman 8105
+
+[probe]
+orgasm
+orgasm nobody
+orgasm Otouchgod
+orgasm trainee
+orgasm Otouchmale
+orgasm Otouchwoman
+orgasm the Otouchmale trailing words are ignored

@@ -40,12 +40,13 @@ func cmdAlias(s *Session, args []string) error {
 
 	if len(args) == 0 {
 		aliases := player.Aliases
+		s.Send("Currently defined aliases:\r\n")
 		if len(aliases) == 0 {
-			s.Send("Currently defined aliases:\r\n None.")
+			s.Send(" None.\r\n")
 			return nil
 		}
 		for _, a := range aliases {
-			s.Send(fmt.Sprintf("%s -> %s", a.Alias, a.Replacement))
+			s.Send(fmt.Sprintf("%-15s %s\r\n", a.Alias, a.Replacement))
 		}
 		return nil
 	}
@@ -64,37 +65,57 @@ func cmdAlias(s *Session, args []string) error {
 				return nil
 			}
 		}
-		s.Send(fmt.Sprintf("Alias '%s' not found.", args[0]))
+		s.Send("No such alias.\r\n")
 		return nil
 	}
 
 	// Set alias: args[0] = from, args[1] = to
 	aliasName := strings.ToLower(args[0])
-	replacement := " " + strings.Join(args[1:], " ") // skip initial space
-
-	// Check for duplicate
-	for i := range player.Aliases {
-		if strings.EqualFold(player.Aliases[i].Alias, aliasName) {
-			player.Aliases[i].Replacement = replacement
-			if err := game.WriteAliases(player.Name, player.Aliases); err != nil {
-				s.Send("Error saving aliases.")
-				return nil
-			}
-			s.Send("Alias updated.")
-			return nil
-		}
+	replacement := " " + strings.Join(args[1:], " ") // C's repl points after the alias token
+	replacement = collapseDoubledDollar(replacement)
+	if len(replacement) > 120 {
+		s.Send("Maximum alias length is 120 characters. Yours has been truncated.\r\n")
+		replacement = replacement[:120]
+	}
+	aliasType := game.AliasSimple
+	if strings.ContainsAny(replacement, ";$") {
+		aliasType = game.AliasComplex
 	}
 
-	// Add new alias
-	player.Aliases = append(player.Aliases, game.PlayerAlias{
+	// C removes an existing definition before handling a redefine or the
+	// protected name. New definitions are inserted at the head of the list.
+	for i := range player.Aliases {
+		if strings.EqualFold(player.Aliases[i].Alias, aliasName) {
+			player.Aliases = append(player.Aliases[:i], player.Aliases[i+1:]...)
+			break
+		}
+	}
+	if aliasName == "alias" {
+		s.Send("You can't alias 'alias'.\r\n")
+		return nil
+	}
+
+	player.Aliases = append([]game.PlayerAlias{{
 		Alias:       aliasName,
 		Replacement: replacement,
-		Type:        0,
-	})
+		Type:        aliasType,
+	}}, player.Aliases...)
 	if err := game.WriteAliases(player.Name, player.Aliases); err != nil {
 		s.Send("Error saving aliases.")
 		return nil
 	}
 	s.Send("Alias added.")
 	return nil
+}
+
+func collapseDoubledDollar(input string) string {
+	var b strings.Builder
+	b.Grow(len(input))
+	for i := 0; i < len(input); i++ {
+		b.WriteByte(input[i])
+		if input[i] == '$' && i+1 < len(input) && input[i+1] == '$' {
+			i++
+		}
+	}
+	return b.String()
 }

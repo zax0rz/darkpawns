@@ -1,0 +1,49 @@
+# C-first vehicle for the hard-coded pray immortality branch in the assigned
+# room SPECIAL(pray_for_items).  The character name is the exact C key
+# "Serapis", so the procedure raises the level to 40 and emits both welcome
+# lines before returning TRUE.  A score probe exposes the silent level state.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2071-2145 ->
+# src/act.informative.c score rendering.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Serapis
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Serapis
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8008
+
+[probe]
+pray immortality
+score
+
+# depth-case: room.pray-immortality-serapis
+# depth-case: room.pray-immortality-level-state

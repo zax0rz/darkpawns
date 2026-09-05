@@ -1,0 +1,81 @@
+# depth-case: mob.identifier-success-audience
+# depth-case: mob.identifier-success-state
+# C-first vehicle for the successful identifier give path. The peer captures
+# TO_NOTVICT room acts; the real bread object exercises spell_identify's food
+# output after the fee is deducted.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8087 1 8116 80
+strip-mob-script 8087
+replace-room-exits 8116 none
+spawn-obj 8010 1 8116 80
+
+[setup:oracle]
+IdentifierSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+IdentifierSuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+IdentifierWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+IdentifierWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8116
+get bread
+teleport IdentifierWitness 8116
+set IdentifierSuccess gold 1
+
+[probe]
+give bread Ferrenx
+gold

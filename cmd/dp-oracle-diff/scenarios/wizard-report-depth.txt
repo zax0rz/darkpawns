@@ -1,0 +1,63 @@
+# C-first error/empty-report vehicle for the residual vnum/stat/vstat command
+# handlers. It avoids valid report bodies (which are larger state surfaces)
+# while covering each C selector's lookup and validation branch.
+
+# depth-case: vnum.mob-missing
+# depth-case: vnum.obj-missing
+# depth-case: vnum.invalid-category
+# depth-case: stat.mob-missing
+# depth-case: stat.player-missing
+# depth-case: stat.file-missing
+# depth-case: stat.object-missing
+# depth-case: stat.fallback-missing
+# depth-case: vstat.mob-missing
+# depth-case: vstat.obj-missing
+# depth-case: vstat.room-missing
+# depth-case: vstat.invalid-category
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizardreport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardreport
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+vnum mob Nobody
+vnum obj Nobody
+vnum nonsense Nobody
+stat mob Nobody
+stat player Nobody
+stat file Nobody
+stat object Nobody
+stat Nobody
+vstat mob 999999
+vstat obj 999999
+vstat room 999999
+vstat nonsense 1

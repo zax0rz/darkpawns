@@ -241,19 +241,44 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob long desc")
 	}
-	mob.LongDesc = strings.TrimSuffix(lb.Text(), "~")
+	longDesc := lb.Text()
+	mob.LongDesc = strings.TrimSuffix(longDesc, "~")
+
+	// The shipped world uses the canonical Diku form where a one-line long
+	// description is followed by a standalone '~'. Older fixture snippets in
+	// this parser's tests omit that delimiter and put the detailed description
+	// on the next line. Probe the next logical line so both forms remain
+	// readable, while an empty detailed description does not consume the flags
+	// line as prose.
+	detailedPending := true
+	if !lb.Scan() {
+		return mob, "", fmt.Errorf("expected mob detailed description or flags")
+	}
+	next := lb.Text()
+	if next == "~" {
+		if !lb.Scan() {
+			return mob, "", fmt.Errorf("expected mob detailed description or flags")
+		}
+		next = lb.Text()
+	}
+	if isMobFlagsLine(next) {
+		detailedPending = false
+	}
+	lb.Unread(next)
 
 	// Detailed description (ends with ~)
-	var descLines []string
-	for lb.Scan() {
-		line := lb.Text()
-		if strings.HasSuffix(line, "~") {
-			descLines = append(descLines, strings.TrimSuffix(line, "~"))
-			break
+	if detailedPending {
+		var descLines []string
+		for lb.Scan() {
+			line := lb.Text()
+			if strings.HasSuffix(line, "~") {
+				descLines = append(descLines, strings.TrimSuffix(line, "~"))
+				break
+			}
+			descLines = append(descLines, line)
 		}
-		descLines = append(descLines, line)
+		mob.DetailedDesc = strings.Join(descLines, "\n")
 	}
-	mob.DetailedDesc = strings.Join(descLines, "\n")
 
 	// Action flags, affect flags, alignment, race (ends with E or S)
 	if !lb.Scan() {
@@ -276,28 +301,41 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	flagsLine = strings.TrimSuffix(flagsLine, " S")
 	flagsLine = strings.TrimSuffix(flagsLine, "S")
 
-	// Parse action flags (bitmask as string), affect flags (bitmask), alignment
-	// Format: <action_flags> <affect_flags> <alignment> <race>
+	// db.c parse_mobile reads EIGHT flag words, then alignment (t[2]), then
+	// the type letter. Race is NOT on this line: it comes from the "Race:"
+	// extra line (db.c:1201, RANGE 0-99) and defaults to RACE_OTHER (7) in
+	// parse_simple_mob.
+	mob.Race = 7
 	fields := strings.Fields(flagsLine)
-	if len(fields) >= 3 {
-		mob.Alignment, _ = strconv.Atoi(fields[2])
-	}
-	if len(fields) >= 4 {
-		mob.Race, _ = strconv.Atoi(fields[3])
-	} else {
-		// C source: default race = RACE_OTHER (7)
-		mob.Race = 7
+	if len(fields) >= 9 {
+		mob.Alignment, _ = strconv.Atoi(fields[8])
 	}
 
-	// Convert action flags bitmask to string array.
-	// We duplicate the mapping here instead of importing game to avoid circular
-	// dependency (game imports parser). Bit positions match game.ActionBitNames.
+	// Convert flag words to name arrays.
+	// db.c parse_mobile reads EIGHT flag words off this line: act words 1-4
+	// into MOB_FLAGS[0..3], AFFECTED words 5-8 into AFF_FLAGS[0..3], then
+	// alignment and the type letter. The first word of each pair carries bits
+	// 0-31 and the second bits 32-63, so both are merged. We duplicate the
+	// mapping here instead of importing game to avoid circular dependency
+	// (game imports parser). Bit positions match src/structs.h.
 	if len(fields) >= 1 {
 		actionMask, _ := strconv.ParseInt(fields[0], 10, 64)
+		if len(fields) >= 4 {
+			for _, w := range fields[1:4] {
+				if hi, err := strconv.ParseInt(w, 10, 64); err == nil {
+					actionMask |= hi << 32
+				}
+			}
+		}
 		mob.ActionFlags = bitmaskToFlagNames(actionMask, actionBitNames)
 	}
-	if len(fields) >= 2 {
-		affectMask, _ := strconv.ParseInt(fields[1], 10, 64)
+	if len(fields) >= 5 {
+		affectMask, _ := strconv.ParseInt(fields[4], 10, 64)
+		if len(fields) >= 6 {
+			if hi, err := strconv.ParseInt(fields[5], 10, 64); err == nil {
+				affectMask |= hi << 32
+			}
+		}
 		mob.AffectFlags = bitmaskToFlagNames(affectMask, affectBitNames)
 	}
 
@@ -392,6 +430,11 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob position line")
 	}
+	// C clear_char defaults position and default_pos to POS_STANDING
+	// (utils.c:2997-2998) before the file line overwrites them; a record
+	// without the line keeps standing, never POS_DEAD.
+	mob.Position = 8
+	mob.DefaultPos = 8
 	pos := strings.Fields(lb.Text())
 	if len(pos) >= 3 {
 		mob.Position, _ = strconv.Atoi(pos[0])
@@ -562,6 +605,18 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	}
 
 	return mob, nextLine, nil
+}
+
+func isMobFlagsLine(line string) bool {
+	fields := strings.Fields(line)
+	if len(fields) < 2 {
+		return false
+	}
+	if fields[len(fields)-1] != "E" && fields[len(fields)-1] != "S" {
+		return false
+	}
+	_, err := strconv.Atoi(fields[0])
+	return err == nil
 }
 
 // ParseAllMobFiles parses all .mob files in a directory.

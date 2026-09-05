@@ -1,0 +1,118 @@
+# C-first vehicle for rsay (src/interpreter.c:667; src/act.comm.c:635-755).
+# The primary is Human; the named peers cover same-race/original, differing
+# race/translated, and passive-room audiences. The final toggles cover the
+# actor's no-repeat and PLR_NOSHOUT gates.
+#
+# depth-case: rsay.no-argument
+# depth-case: rsay.human-translation
+# depth-case: rsay.same-race-original
+# depth-case: rsay.other-race-translated
+# depth-case: rsay.punctuation-verbs
+# depth-case: rsay.norepeat
+# depth-case: rsay.raw-internal-spacing
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rsayhuman
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rsayhuman
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:same]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:same]
+Barnaby
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:other]
+Rsayelf
+Y
+oraclepass
+oraclepass
+N
+M
+E
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:other]
+Rsayelf
+y
+oraclepass
+oraclepass
+Y
+N
+M
+E
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Barnaby 8162
+teleport Rsayelf 8162
+
+[probe]
+rsay
+rsay how are you?
+rsay what is this!
+rsay thus.
+rsay how   are you?
+norepeat
+rsay repeat is hidden.
+norepeat

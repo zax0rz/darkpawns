@@ -1,0 +1,78 @@
+# depth-case: room.assassin-gold-gate
+# depth-case: room.assassin-victim-not-found
+# C-first vehicle for the price and global-victim branches of
+# SPECIAL(assassin). The real room registration is 8114 and the fixed roster
+# is the street urchin prototype 8070 in room 8115; removing that room's exits
+# prevents autonomous wandering during setup.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8070 1 8115 80
+replace-room-exits 8115 none
+
+[setup:oracle]
+AssassinGold
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AssassinGold
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+GoldTarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+GoldTarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8114
+teleport GoldTarget 8114
+set AssassinGold gold 0
+
+[probe]
+hire street GoldTarget

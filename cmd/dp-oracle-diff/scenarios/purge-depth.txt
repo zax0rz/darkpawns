@@ -1,0 +1,80 @@
+# C-first do_purge room-cleaning vehicle (src/interpreter.c:624;
+# src/act.wizard.c:1423-1478). The no-argument branch emits the room gesture,
+# sends the cleaner-room line, extracts every NPC and object, and does not send
+# the actor an OK acknowledgement.
+
+# depth-case: purge.no-argument-audiences
+# depth-case: purge.no-argument-cleanup
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8004 183
+strip-mob-script 18305
+spawn-obj 8010 1 8004 80
+
+[setup:oracle]
+Purgegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Purgegod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Purgewitness
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Purgewitness
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Purgewitness 8004
+
+[probe]
+purge
+purge cleaner

@@ -1,0 +1,7 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_think	think	think.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:766; act.comm.c:1356-1386	The registered POS_RESTING command gate is covered by the shared command-gate suite (R2/R5e).
+do_think	think	think.no-argument	D3	command	oracle-green	think-depth	act.comm.c:1356-1365; comm.c:2392-2555	The actor's exact life/universe confirmation and the co-located peer's room thought match C byte-for-byte.
+do_think	think	think.spoken-thought	D3	audience	oracle-green	think-depth	act.comm.c:1366-1386; comm.c:2392-2555	The nonempty thought preserves the C room template, actor echo, and internal argument spacing for the actor and peer.
+do_think	think	think.noshout	D1	command	unit-green	TestCmdThinkBlockedByNoshout	act.comm.c:1367-1372	PLR_NOSHOUT blocks the spoken thought before audience output with C's exact refusal.
+do_think	think	think.zero-int	D1	command	unit-green	TestCmdThinkBlockedByZeroInt	act.comm.c:1367-1372	GET_INT zero shares the C refusal branch and emits no room output.
+do_think	think	think.norepeat	D3	state	unit-green	TestCmdThinkNoRepeatSendsOk	act.comm.c:1378-1386	PRF_NOREPEAT suppresses only the actor's thought echo and sends C's exact `Ok.` acknowledgement.

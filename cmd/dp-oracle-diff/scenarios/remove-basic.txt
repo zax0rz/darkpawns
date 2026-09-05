@@ -1,0 +1,73 @@
+# depth-case: remove.no-arg
+# depth-case: remove.indiv-not-using
+# depth-case: remove.all-none
+# depth-case: remove.alldot-none
+# depth-case: remove.indiv-success
+# depth-case: remove.all-success
+# depth-case: remove.alldot-empty
+[fixture]
+quiet-mobs
+[setup:oracle]
+Remover
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Remover
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:obs]
+Removobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:obs]
+Removobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+remove
+remove xyzzy
+remove all
+wield sword
+wear tunic
+remove all.xyzzy
+remove sword
+remove all
+remove all.

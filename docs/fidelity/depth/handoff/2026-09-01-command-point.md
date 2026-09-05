@@ -39,10 +39,10 @@ The handler is `src/new_cmds.c:2505-2560`. Its actual path is:
 
 The direct C message and audience branches are therefore no argument, six
 direction abbreviations, visible player/NPC target with and without a wielded
-weapon, named self, `self` alias, visible room object with and without a
-wielded weapon, unresolved-target fallback, and fill-word/trailing-input
-parsing. The command's shared POS_RESTING gate and target/object visibility
-machinery are separately claimed or delegated in the manifest.
+weapon, named self, `self` alias, visible room object with and without a wielded
+weapon, unresolved-target fallback, and fill-word/trailing-input parsing. The
+command's shared POS_RESTING gate and target/object visibility machinery are
+separately claimed or delegated in the manifest.
 
 ## Evidence and confirmed divergences
 

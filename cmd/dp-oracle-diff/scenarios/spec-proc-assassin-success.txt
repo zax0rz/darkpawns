@@ -1,0 +1,81 @@
+# depth-case: room.assassin-success-state
+# depth-case: room.assassin-success-audience
+# C-first vehicle for the successful hire branch of SPECIAL(assassin). The
+# victim is level 5 so the low-level prey gate is passed; the peer shares the
+# actor's room to capture C's TO_ROOM act, while the actor's gold output proves
+# the price deduction.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8070 1 8115 80
+replace-room-exits 8115 none
+
+[setup:oracle]
+SuccessActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SuccessActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+SuccessTarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+SuccessTarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8114
+teleport SuccessTarget 8114
+set SuccessActor gold 1000
+set SuccessTarget level 5
+
+[probe]
+gold
+hire street SuccessTarget
+gold

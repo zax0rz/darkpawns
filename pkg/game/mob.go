@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -31,6 +32,8 @@ type MobInstance struct {
 	MaxHP       int
 	CurrentMana int
 	MaxMana     int
+	CurrentMove int
+	MaxMove     int
 	Status      string // "standing", "sleeping", "fighting", etc.
 	Level       int    // Level override (0 = use prototype level)
 
@@ -138,14 +141,36 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	}
 
 	mob := &MobInstance{
-		Prototype:      proto,
-		VNum:           proto.VNum,
-		RoomVNum:       roomVNum,
-		CurrentHP:      hp,
-		MaxHP:          hp,
-		CurrentMana:    100,
-		MaxMana:        100,
-		Status:         "standing",
+		Prototype: proto,
+		VNum:      proto.VNum,
+		RoomVNum:  roomVNum,
+		CurrentHP: hp,
+		MaxHP:     hp,
+		// C read_mobile initializes every ordinary mob's mana fields to 10
+		// (src/db.c:1069-1072), then copies that prototype state into the
+		// instance (src/db.c:1757).
+		CurrentMana: 10,
+		MaxMana:     10,
+		CurrentMove: 50,
+		MaxMove:     50,
+		// C read_mobile copies the whole prototype struct (db.c:1757), so the
+		// mob file's loadpos (line-11 first field) is the spawn position — a
+		// sleeping loader like 2109 must spawn asleep or mobile_activity's
+		// position gate lets it wander on the very first settle pulses.
+		// 0 means unset (clear_char's POS_STANDING default; no real record
+		// carries POS_DEAD as a loadpos).
+		Status: positionStatus(proto.Position),
+		// C read_mobile copies the whole prototype struct (db.c:1757), so the
+		// mob file's act flags ride along. Without this, HasMobFlag reads a
+		// zero mask for every world-loaded mob and C's MOB_AWARE backstab
+		// guard (act.offensive.c:212) never fires.
+		Flags: actionFlagBits(proto.ActionFlags),
+		// ...and the mob file's AFFECTED flags ride along the same way —
+		// nearly a thousand world mobs carry innate AFF bits (sanctuary,
+		// invisibility, ...), and mag_affects' mob-affection gate
+		// (magic.c:1387-1394) refuses spells whose bitvector the mob holds
+		// innately.
+		Affects:        affectFlagBits(proto.AffectFlags),
 		Inventory:      make([]*ObjectInstance, 0),
 		Equipment:      make(map[int]*ObjectInstance),
 		Fighting:       false,
@@ -194,6 +219,9 @@ func NewMobInstance(proto *parser.Mob, roomVNum int) *MobInstance {
 // (0=male, 1=female, 2=neutral). Mob files retain C's encoding
 // (0=neutral, 1=male, 2=female), so translate at the Actor boundary.
 func (m *MobInstance) GetSex() int {
+	if m.Runtime.SexOverride != nil {
+		return *m.Runtime.SexOverride
+	}
 	if m.Prototype != nil {
 		switch m.Prototype.Sex {
 		case 1:
@@ -229,6 +257,49 @@ func (m *MobInstance) SetRoom(vnum int) {
 	m.RoomVNum = vnum
 }
 
+// GetMove returns the mob's current movement points. C initializes every
+// spawned mobile to max_move=50 in read_mobile (src/db.c:1073,1758).
+func (m *MobInstance) GetMove() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.CurrentMove
+}
+
+// SetMove sets the mob's current movement points.
+func (m *MobInstance) SetMove(move int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.CurrentMove = move
+}
+
+// GetMaxMove returns the mob's maximum movement points.
+func (m *MobInstance) GetMaxMove() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.MaxMove
+}
+
+// SpendMove deducts movement points after all movement gates pass.
+func (m *MobInstance) SpendMove(cost int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if cost < 0 || m.CurrentMove < cost {
+		return false
+	}
+	m.CurrentMove -= cost
+	return true
+}
+
+// GainMove restores movement points up to the mob's fixed maximum.
+func (m *MobInstance) GainMove(gain int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.CurrentMove += gain
+	if m.CurrentMove > m.MaxMove {
+		m.CurrentMove = m.MaxMove
+	}
+}
+
 // SetFollowing changes who the mob is following.
 func (m *MobInstance) SetFollowing(leader string) {
 	m.mu.Lock()
@@ -249,7 +320,7 @@ func (m *MobInstance) HasFlag(flag string) bool {
 		return false
 	}
 	for _, f := range m.Prototype.ActionFlags {
-		if f == flag {
+		if strings.EqualFold(strings.TrimPrefix(f, "MOB_"), strings.TrimPrefix(flag, "MOB_")) {
 			return true
 		}
 	}
@@ -408,6 +479,9 @@ func (m *MobInstance) UnequipItem(position int) *ObjectInstance {
 func (m *MobInstance) GetAC() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+	if m.Runtime.ACOverride != nil {
+		return *m.Runtime.ACOverride
+	}
 	if m.Prototype != nil {
 		return m.Prototype.AC
 	}
@@ -434,15 +508,95 @@ func (m *MobInstance) SetLevel(level int) {
 	m.Level = level
 }
 
+// ConfigureCreatedMobile applies create_mobile()'s per-instance level stats.
+// C new_cmds2.c:588-618 writes these fields after read_mobile(), so they must
+// remain instance-local and never mutate the shared mob prototype.
+func (m *MobInstance) ConfigureCreatedMobile(level int) {
+	damroll := 0
+	ndd := 0
+	if level > 10 {
+		damroll = int(float64(level+1) / 1.50)
+		ndd = int(float64(level) / 1.50)
+	} else {
+		damroll = (level + 1) / 2
+		ndd = (level + 1) / 2
+	}
+	sdd := 4
+	ac := 100 - (10 * level)
+	hitroll := level
+	maxHP := 10*level + 10
+	if level > 22 {
+		maxHP += 13 * (level - 22)
+	}
+	if level > 30 {
+		maxHP += 560 * (level - 30)
+	}
+	zeroExp := 0
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Level = level
+	m.Runtime.DamrollOverride = &damroll
+	m.Runtime.DamageNumOverride = &ndd
+	m.Runtime.DamageSidesOverride = &sdd
+	m.Runtime.HitrollOverride = &hitroll
+	m.Runtime.ACOverride = &ac
+	m.Runtime.ExpOverride = &zeroExp
+	m.MaxHP = maxHP
+	m.CurrentHP = maxHP
+}
+
+// SetDamroll overrides the mob's instance-local GET_DAMROLL value. C specials
+// may assign points.damroll on a spawned mobile without changing its shared
+// prototype (src/spec_procs2.c:1743).
+func (m *MobInstance) SetDamroll(damroll int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.DamrollOverride = &damroll
+}
+
+// SetDamageDice overrides the instance-local mob_specials damage dice.
+// Native specials can mutate these without changing the shared prototype.
+func (m *MobInstance) SetDamageDice(num, sides int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.DamageNumOverride = &num
+	m.Runtime.DamageSidesOverride = &sides
+}
+
+// AddDamrollBonus adds to the instance-local GET_DAMROLL value without
+// mutating the shared mob prototype. C specials use this for permanent
+// per-instance growth such as brain_eater at level 30.
+func (m *MobInstance) AddDamrollBonus(bonus int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.DamrollBonus += bonus
+}
+
 // GetDamageRoll returns the damage dice for the mob's attacks.
 func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.Prototype != nil {
+		num := m.Prototype.Damage.Num
+		sides := m.Prototype.Damage.Sides
+		plus := m.Prototype.Damage.Plus
+		if m.Runtime.DamageNumOverride != nil {
+			num = *m.Runtime.DamageNumOverride
+		}
+		if m.Runtime.DamageSidesOverride != nil {
+			sides = *m.Runtime.DamageSidesOverride
+		}
+		if m.Runtime.DamrollOverride != nil {
+			// The mob-file damage plus is the normal Go representation of the
+			// C damroll value. Once C overwrites points.damroll, it must not be
+			// counted again as the dice roll's plus component.
+			plus = 0
+		}
 		return combat.DiceRoll{
-			Num:   m.Prototype.Damage.Num,
-			Sides: m.Prototype.Damage.Sides,
-			Plus:  m.Prototype.Damage.Plus,
+			Num:   num,
+			Sides: sides,
+			Plus:  plus,
 		}
 	}
 	return combat.DiceRoll{Num: 0, Sides: 0, Plus: 0} // bare hands
@@ -529,6 +683,88 @@ func (m *MobInstance) GetPosition() int {
 	}
 }
 
+// actionFlagBitNames mirrors the parser's act-flag name table (parser/mob.go);
+// index = C MOB_* bit. Kept in sync by TestActionFlagBitsMatchParserTable.
+var actionFlagBitNames = []string{
+	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
+	"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY",
+	"HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH", "NOBLIND", "HUNTER",
+}
+
+// actionFlagBits converts parsed act-flag names to the C MOB_* bitmask.
+func actionFlagBits(names []string) uint64 {
+	index := make(map[string]int, len(actionFlagBitNames))
+	for i, n := range actionFlagBitNames {
+		index[n] = i
+	}
+	var bits uint64
+	for _, n := range names {
+		if bit, ok := index[n]; ok {
+			bits |= 1 << uint(bit)
+		}
+	}
+	return bits
+}
+
+// affectFlagBitNames mirrors the parser's affect-flag name table
+// (parser/mob.go affectBitNames); index = C AFF_* bit (structs.h:310-348).
+// Kept in sync by TestAffectFlagBitsMatchParserTable.
+var affectFlagBitNames = []string{
+	"BLIND", "INVISIBLE", "DETECT_ALIGN", "DETECT_INVIS", "DETECT_MAGIC",
+	"SENSE_LIFE", "WATERWALK", "SANCTUARY", "GROUP", "CURSE",
+	"INFRAVISION", "POISON", "PROTECT_EVIL", "PROTECT_GOOD", "SLEEP",
+	"NOTRACK", "FLESH_ALTER", "DODGE", "SNEAK", "HIDE",
+	"BERSERK", "CHARM", "FOLLOW", "WIMPY", "KUJI_KIRI",
+	"CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNT",
+	"INVULN", "FLAMING", "NOTHING", "HASTE", "SLOW",
+	"DREAM", "WATERBREATHE", "METALSKIN", "ROBBED",
+}
+
+// affectFlagBits converts parsed affect-flag names to the C AFF_* bitmask.
+// The bits are C struct positions — the same positions MobInstance.Affects
+// and the spells package's mob-affection gate use.
+func affectFlagBits(names []string) uint64 {
+	index := make(map[string]int, len(affectFlagBitNames))
+	for i, n := range affectFlagBitNames {
+		index[n] = i
+	}
+	var bits uint64
+	for _, n := range names {
+		if bit, ok := index[n]; ok {
+			bits |= 1 << uint(bit)
+		}
+	}
+	return bits
+}
+
+// positionStatus maps a C POS_* loadpos constant to the Status string
+// encoding. Unknown values default to standing like GetPosition does.
+func positionStatus(pos int) string {
+	if pos <= combat.PosDead || pos > combat.PosStanding {
+		pos = combat.PosStanding
+	}
+	switch pos {
+	case combat.PosDead:
+		return "dead"
+	case combat.PosMortally:
+		return "mortally_wounded"
+	case combat.PosIncap:
+		return "incapacitated"
+	case combat.PosStunned:
+		return "stunned"
+	case combat.PosSleeping:
+		return "sleeping"
+	case combat.PosResting:
+		return "resting"
+	case combat.PosSitting:
+		return "sitting"
+	case combat.PosFighting:
+		return "fighting"
+	default:
+		return "standing"
+	}
+}
+
 // SetPosition sets the mob's position using the same int constants as Player.
 func (m *MobInstance) SetPosition(pos int) {
 	m.mu.Lock()
@@ -595,7 +831,13 @@ func (m *MobInstance) DecrementWaitState() {
 func (m *MobInstance) SetFighting(target string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.Status = "fighting"
+	// C set_fighting sets FIGHTING(ch) here but POS_FIGHTING only inside
+	// damage() (fight.c), which runs AFTER the to-hit decision. Setting the
+	// position here would make a sleeping victim "awake" for the opener's
+	// to-hit and let it be missed, where C auto-hits a non-awake victim. So set
+	// only the fighting flag/target; the combat engine transitions the position
+	// to POS_FIGHTING at the damage point (performOneHit). GetFighting() reads
+	// the flag, so enrollment still works.
 	m.Fighting = true
 	m.FightingTarget = target
 }
@@ -642,6 +884,9 @@ func (m *MobInstance) GetFighting() string {
 
 // GetClass returns the mob's class
 func (m *MobInstance) GetClass() int {
+	if m.Runtime.ClassOverride != nil {
+		return *m.Runtime.ClassOverride
+	}
 	return 0 // CLASS_MAGE
 }
 
@@ -693,6 +938,9 @@ func (m *MobInstance) GetCha() int {
 func (m *MobInstance) GetHitroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+	if m.Runtime.HitrollOverride != nil {
+		return *m.Runtime.HitrollOverride
+	}
 	total := 0
 	if m.Prototype != nil {
 		total = 20 - m.Prototype.THAC0
@@ -716,6 +964,10 @@ func (m *MobInstance) GetDamroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	total := 0
+	if m.Runtime.DamrollOverride != nil {
+		total = *m.Runtime.DamrollOverride
+	}
+	total += m.Runtime.DamrollBonus
 	for _, item := range m.Equipment {
 		if item == nil || item.Prototype == nil {
 			continue
@@ -731,6 +983,9 @@ func (m *MobInstance) GetDamroll() int {
 
 // GetStrAdd returns the mob's strength add
 func (m *MobInstance) GetStrAdd() int {
+	if m.Runtime.StrAddOverride != nil {
+		return *m.Runtime.StrAddOverride
+	}
 	return 0
 }
 
@@ -746,6 +1001,20 @@ func (m *MobInstance) GetHealth() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.CurrentHP
+}
+
+// GetExp returns the instance experience value, including create_mobile's
+// explicit zero override, falling back to the prototype for ordinary mobs.
+func (m *MobInstance) GetExp() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.Runtime.ExpOverride != nil {
+		return *m.Runtime.ExpOverride
+	}
+	if m.Prototype != nil {
+		return m.Prototype.Exp
+	}
+	return 0
 }
 
 func (m *MobInstance) SetHealth(health int) {
@@ -969,6 +1238,9 @@ func (m *MobInstance) GetFightingTarget() string {
 
 // GetAlignment returns the mob's alignment from its prototype.
 func (m *MobInstance) GetAlignment() int {
+	if m.Runtime.AlignmentOverride != nil {
+		return *m.Runtime.AlignmentOverride
+	}
 	if m.Prototype != nil {
 		return m.Prototype.Alignment
 	}

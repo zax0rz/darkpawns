@@ -1,0 +1,82 @@
+# C-first vehicle for the complete four-talisman branch of
+# SPECIAL(elements_master_column). The actor carries all four exact object
+# vnums; the peer carries none and exercises the next per-player iteration.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+ColumnCarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ColumnCarrier
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ColumnPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ColumnPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 1300
+load obj 1301
+load obj 1302
+load obj 1303
+teleport ColumnPeer 1315
+goto 1315
+
+[probe]
+say hello
+
+# depth-case: room.elements-master-column-four-talisman
+# depth-case: room.elements-master-column-no-talisman
+# depth-case: room.elements-master-column-audience
+# depth-case: room.elements-master-column-relocation

@@ -1,0 +1,43 @@
+# Isolated C-first no-argument accuse vehicle (src/interpreter.c:330;
+# src/act.social.c:102-121; lib/misc/socials:58-66).
+
+# depth-case: accuse.no-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+accuse

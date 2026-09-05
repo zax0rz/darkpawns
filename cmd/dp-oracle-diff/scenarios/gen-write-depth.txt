@@ -1,0 +1,51 @@
+# depth-case: gen-write.no-arg
+# depth-case: gen-write.bug-no-arg
+# depth-case: gen-write.typo-no-arg
+# depth-case: gen-write.idea-no-arg
+# depth-case: gen-write.todo-no-arg
+# C-first vehicle for do_gen_write: interpreter.c:370,510,780,789 and
+# act.other.c:1079-1127. empty-players makes the primary Implementor so the
+# LVL_GOD-1 todo row reaches the common handler. The no-argument vehicle is
+# intentionally non-mutating: a successful C report appends to BUG_FILE,
+# TYPO_FILE, IDEA_FILE, or TODO_FILE under the oracle process working tree.
+# Focused Go tests cover the successful and NPC branches without touching the
+# read-only oracle checkout.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Genwritedepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Genwritedepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+bug
+typo
+idea
+todo

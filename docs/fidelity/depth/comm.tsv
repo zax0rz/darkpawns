@@ -1,0 +1,36 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_say	say	say.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:781-783	"Yes, but WHAT do you want to say?" (C uses \n\r; the normalizer settles it).
+do_say	say	say.says-variant	D2	command	oracle-green	comm-depth	act.comm.c:784-821	Default punctuation: "$n says, 'x'" / "You say 'x'".
+do_say	say	say.exclaims-variant	D2	command	oracle-green	comm-depth	act.comm.c:786-788	Trailing '!' → exclaims pair.
+do_say	say	say.asks-variant	D2	command	oracle-green	comm-depth	act.comm.c:789-791	Trailing '?' → asks pair.
+do_say	say	say.states-variant	D2	command	oracle-green	comm-depth	act.comm.c:792-794	Trailing '.' → states pair.
+do_say	say	say.drunk-speech	D2	command	oracle-green	comm-drunk	act.comm.c:776-778, act.item.c:932-936	God-set condition vehicle: warmup `set <name> drunk 24` (do_set case 29) on the Implementor, then three says prove speak_drunk live — the ROOM gets the drunk transform ("th' killer ish here", "wha' ish thhish!", "howsh arsh you?") while the actor keeps the sober original (C quirk: the self-echo uses argument+i). RED pre-fix: Go cmdSet had no drunk/hunger/thirst fields AND speakDrunk used longest-match substitution instead of C's no-break chain scan (would emit "th' murderizeer ish here"); both fixed with the exact C table incl. identity entries.
+do_say	say	say.stupid-gate	D1	command	oracle-green	godset-vehicle	act.comm.c:770-773	RED on main: C `set <player> wis 0` is a real stat field with the mortal [0,18] range; Go recognized only the invented `wil` spelling and printed an invented unknown-field hint. Go now accepts C's `wis` field, matches the stat clamp and ack, and the stupid gate emits exactly "You are too stupid to communicate with language!" (R1/R2/R4/R5c).
+do_say	say	say.noshout	D1	command	oracle-green	comm-noshout	act.comm.c:775-779	PLR_NOSHOUT vehicle: God warmup `mute <name>` (do_wizutil SCMD_SQUELCH toggles PLR_NOSHOUT). Muted mortal probes say/tell/whisper/emote; all four gates fire sender-side and no audience byte may appear. say arm GREEN pre-fix (gate already ported).
+do_spec_comm	whisper	whisper.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:999-1001	"Whom do you want to whisper to.. and what??"
+do_spec_comm	whisper	whisper.success	D3	command	oracle-green	comm-depth	act.comm.c:1006-1016	Vict "$n whispers to you, 'x'" / self "You whisper to Barnaby, 'x'".
+do_spec_comm	whisper	whisper.not-found	D1	command	oracle-green	comm-depth	act.comm.c:1002-1003	NOPERSON "No-one by that name here."
+do_spec_comm	whisper	whisper.self	D1	command	oracle-green	comm-depth	act.comm.c:1004-1005	"You can't get your mouth close enough to your ear..."
+do_spec_comm	ask	ask.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:999-1001	"Whom do you want to ask.. and what??" (shared arm, ask wording).
+do_spec_comm	ask	ask.success	D3	command	oracle-green	comm-depth	act.comm.c:992-1016	Vict "$n asks you, 'x'" / self "You ask Barnaby, 'x'".
+do_spec_comm	ask	ask.not-found	D1	command	delegated	whisper.not-found	act.comm.c:1002-1003	Shared do_spec_comm resolution gate; proven under whisper.
+do_spec_comm	ask	ask.self	D1	command	delegated	whisper.self	act.comm.c:1004-1005	Shared self gate.
+do_spec_comm	whisper	whisper.noshout	D1	command	oracle-green	comm-noshout	act.comm.c:981-985	PLR_NOSHOUT vehicle (same God-mute warmup): "Sorry, you cannot do that." fires before target resolution. GREEN pre-fix (gate already ported).
+do_tell	tell	tell.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:907-908	"Who do you wish to tell what??"
+do_tell	tell	tell.not-found	D1	command	oracle-green	comm-depth	act.comm.c:909-910	NOPERSON; tell resolves world-wide via get_char_vis.
+do_tell	tell	tell.self	D1	command	oracle-green	comm-depth	act.comm.c:913-914	"You try to tell yourself something."
+do_tell	tell	tell.success	D3	command	oracle-green	comm-depth	act.comm.c:929-930	perform_tell pair: "You tell Barnaby, 'x'" / peer "Mordecai tells you, 'x'".
+do_tell	tell	tell.soundproof-room	D2	command	oracle-green	comm-soundproof	act.comm.c:919-920	"The walls seem to absorb your words." with the room flagged ROOM_SOUNDPROOF (bit 5); peer transcript stays empty.
+do_tell	tell	tell.linkless	D2	command	oracle-green	tell-linkless-depth	act.comm.c:921-922	Peer-drop fixture closes the named peer TCP connection after setup; the playing character remains linkless and matches "$E's linkless at the moment."
+do_tell	tell	tell.writing	D2	shared	oracle-green	boards-depth	act.comm.c:923-925	Board post enters PLR_WRITING, so a peer telling the active writer receives C's writing gate.
+do_tell	tell	tell.cant-hear	D2	command	oracle-green	comm-notell	act.comm.c:926-928	Victim NOTELL arm: peer toggles mortal `notell` in (drained) setup, actor tells them — act("$E can't hear you.", TO_CHAR|TO_SLEEP) for a mortal teller. GREEN pre-fix.
+do_tell	tell	tell.notell-self	D2	command	oracle-green	comm-notell	act.comm.c:915-916	Self NOTELL arm: actor toggles `notell` in the diffed probe (toggle bytes compared too) then tells — "You can't tell other people while you have notell on." GREEN pre-fix.
+do_tell	tell	tell.noshout	D1	command	oracle-green	comm-noshout	act.comm.c:917-918	PLR_NOSHOUT vehicle (same God-mute warmup): "You cannot tell anyone anything!" fires after the self-notell gate, before victim gates (target = the God). GREEN pre-fix.
+do_tell	tell	tell.npc-nodesc	D2	command	oracle-green	comm-tell-nodesc	act.comm.c:911-912	get_char_vis finds the spawned trainee world-wide, then the IS_NPC-without-descriptor gate answers NOPERSON. Go's visibleTellTarget resolves players only, so the same NOPERSON byte fires — pure coverage.
+do_reply	reply	reply.no-target	D1	command	oracle-green	comm-depth	act.comm.c:940-941	"You have no-one to reply to!"
+do_reply	reply	reply.success	D3	command	oracle-green	comm-depth	act.comm.c:944-971	After a successful tell, `reply hi` routes back through perform_tell.
+do_reply	reply	reply.no-arg	D1	command	oracle-green	reply-noarg	act.comm.c:942-943	Primary tells the peer in warmup, then the peer's bare reply reaches the valid-LAST_TELL empty-argument gate and matches "What is your reply?".
+do_echo	emote	emote.no-arg	D1	command	oracle-green	comm-depth	act.wizard.c:133-134	"Yes.. but what?"
+do_echo	emote	emote.success	D3	command	oracle-green	comm-depth	act.wizard.c:135-155	"$n waves happily." room + self pair.
+do_echo	emote	emote.noshout	D1	command	oracle-green	comm-noshout	act.wizard.c:138-141	PLR_NOSHOUT vehicle (same God-mute warmup). RED pre-fix: Go cmdEmote had NO mute/INT gate — the muted actor's "Muteon waves desperately" broadcast instead of C's "You try to express yourself but cannot!" (act.wizard.c:135-141, PLR_NOSHOUT || INT==0, checked after the empty-arg gate). Gate ported.
+do_echo	echo	echo.immort	D2	command	oracle-green	comm-echo-immort	act.wizard.c:130-154 (registered LVL_IMMORT, interpreter.c:428)	RED pre-fix ×2: Manager.BroadcastToRoom silently dropped every non-JSON payload (the telnet writeLoop json.Unmarshals each send), so the room line never reached ANY client — now wrapped at the sink; and cmdEcho's broadcast included the echoer, so the actor saw two copies where C's TO_ROOM excludes ch. Empty-arg "Yes.. but what?" arm covered in the same scenario.

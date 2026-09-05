@@ -22,21 +22,21 @@ var commandNumber = dprng.Number
 func positionFailMessage(pos int) string {
 	switch pos {
 	case combat.PosDead:
-		return "Lie still; you are DEAD!!! :-("
+		return "Lie still; you are DEAD!!! :-(\r\n"
 	case combat.PosMortally, combat.PosIncap:
-		return "You are in a pretty bad shape, unable to do anything!"
+		return "You are in a pretty bad shape, unable to do anything!\r\n"
 	case combat.PosStunned:
-		return "All you can do right now is think about the stars!"
+		return "All you can do right now is think about the stars!\r\n"
 	case combat.PosSleeping:
-		return "In your dreams, or what?"
+		return "In your dreams, or what?\r\n"
 	case combat.PosResting:
-		return "Nah... You feel too relaxed to do that.."
+		return "Nah... You feel too relaxed to do that..\r\n"
 	case combat.PosSitting:
-		return "Maybe you should get on your feet first?"
+		return "Maybe you should get on your feet first?\r\n"
 	case combat.PosFighting:
-		return "No way!  You're fighting for your life!"
+		return "No way!  You're fighting for your life!\r\n"
 	default:
-		return "You are in no position to do that!"
+		return "You are in no position to do that!\r\n"
 	}
 }
 
@@ -77,6 +77,7 @@ func init() {
 	registerCommand("emote", wrapArgs(cmdEmote), "Perform a roleplay action.", "me")
 	registerCommand(":", wrapArgs(cmdEmote), "Perform a roleplay action.")
 	registerCommand("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.")
+	registerCommand("holler", wrapArgs(cmdHoller), "Holler to everyone in the world.")
 	registerCommand("gtell", wrapArgs(cmdGtell), "Send a message to your group.", "gsay")
 	registerCommand("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.")
 	registerCommand("insult", wrapArgs(cmdInsult), "Insult a target in the room.")
@@ -85,8 +86,10 @@ func init() {
 	// Combat
 	registerCommand("hit", wrapArgs(cmdHit), "Attack a target.", "attack")
 	registerCommand("murder", wrapArgs(cmdHit), "Attack a target (C alias of hit).")
+	registerCommand("parry", wrapArgs(cmdParry), "Enter a defensive parry position.")
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
+	registerCommand("escape", wrapNoArgs(cmdRetreat), "Attempt to escape from combat.")
 
 	// Position / Movement
 	registerCommand("stand", wrapNoArgs(cmdStand), "Stand up.")
@@ -121,11 +124,10 @@ func init() {
 	// Info
 	registerCommand("score", wrapNoArgs(cmdScore), "Show your character stats.", "sc")
 	registerCommand("who", wrapArgs(cmdWho), "List all online players.")
-	registerCommand("where", wrapNoArgs(cmdWhere), "Show player locations.")
+	registerCommand("where", wrapArgs(cmdWhere), "Show player locations.")
 	registerCommand("coins", wrapNoArgs(cmdCoins), "Display your gold and bank balance.")
 	registerCommand("gold", wrapNoArgs(cmdCoins), "Display your gold and bank balance (C alias of coins).")
-	// real C command name is "abilities" (src/interpreter.c); "abils" kept as alias.
-	registerCommand("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.", "abils")
+	registerCommand("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.")
 	registerCommand("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.")
 	registerCommand("review", wrapNoArgs(cmdReview), "Show recent gossip history.")
 	registerCommand("whois", wrapArgs(cmdWhois), "Look up a player's info.")
@@ -163,6 +165,21 @@ func init() {
 	registerCommand("list", wrapArgs(cmdList), "List items for sale at a shop.")
 	registerCommand("buy", wrapArgs(cmdBuy), "Buy an item from a shop.")
 	registerCommand("sell", wrapArgs(cmdSell), "Sell an item to a shop.")
+	// C registers these names under do_not_here (act.other.c:208). Room
+	// special procedures intercept them first; these handlers preserve C's
+	// generic fallback when no matching special procedure is present.
+	for _, name := range []string{
+		"balance", "check", "collect", "deposit", "hire", "mail",
+	} {
+		registerCommand(name, wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
+	}
+	registerCommand("offer", wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
+	for _, name := range []string{
+		"recharge", "receive", "remort", "rent", "retrieve", "stable", "value",
+		"withdraw",
+	} {
+		registerCommand(name, wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
+	}
 	registerCommand("use", wrapArgs(cmdUse), "Use a wand/staff or a skill.")
 	registerCommand("skillinfo", wrapSkill(command.CmdSkillInfo), "Show info about a skill.", "sinfo")
 
@@ -180,10 +197,10 @@ func init() {
 	registerCommand("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.")
 	registerCommand("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.")
 	registerCommand("kabuki", wrapSkill(command.CmdKabuki), "Practice the art of kabuki (hide variant).")
-	// NOTE: the dig command is deliberately NOT registered here. C do_dig (src/new_cmds2.c:818)
-	// is a LVL_BUILDER OLC exit-creator; the Go CmdDig is an unrelated mortal foraging skill.
-	// Wiring the foraging handler under the C name plus the C builder gate would serve neither
-	// audience (builders get foraging; mortals cannot reach it). The C OLC dig is unported — DP-1225.
+	// C do_dig (src/new_cmds2.c:818) is the LVL_BUILDER OLC exit-creator. The
+	// unrelated mortal foraging skill remains available only through its game
+	// layer API; the command name belongs to the C OLC surface.
+	registerCommand("dig", wrapArgs(cmdDig), "Create a room exit.")
 	registerCommand("steal", wrapSkill(command.CmdSteal), "Steal from a target.")
 	registerCommand("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.")
 	registerCommand("rin", wrapSkill(command.CmdKujiKiri(game.SkillKkRin)), "Kuji-kiri seal: harden body for an AC bonus and metalskin.")
@@ -212,6 +229,7 @@ func init() {
 	registerCommand("at", wrapArgs(cmdAt), "Execute a command at another room.")
 	registerCommand("load", wrapArgs(cmdLoad), "Load a mob or object by VNum.")
 	registerCommand("purge", wrapArgs(cmdPurge), "Remove all mobs/items from a room.")
+	registerCommand("transfer", wrapArgs(cmdTransfer), "Transfer another character to your room.")
 	registerCommand("teleport", wrapArgs(cmdTeleport), "Teleport another player to a room.")
 	registerCommand("heal", wrapArgs(cmdHeal), "Fully heal a target.")
 	registerCommand("restore", wrapArgs(cmdRestore), "Restore all stats of a target.")
@@ -226,6 +244,7 @@ func init() {
 	registerCommand("force", wrapArgs(cmdForce), "Force a command on another character.")
 	registerCommand("shutdown", wrapArgs(cmdShutdown), "Shutdown the server.")
 	registerCommand("snoop", wrapArgs(cmdSnoop), "Spy on a player's input.")
+	registerCommand("admobs", wrapNoArgs(cmdAdmobs), "Adjust all mob prototypes.")
 	registerCommand("advance", wrapArgs(cmdAdvance), "Advance a player's level.")
 	registerCommand("skillset", wrapArgs(cmdSkillset), "Set a player's skill value.")
 	registerCommand("reload", wrapArgs(cmdReload), "Reload world data.")
@@ -252,6 +271,7 @@ func init() {
 	registerCommand("show", wrapArgs(cmdShow), "Show system info (players/uptime/stats/reset).")
 	registerCommand("dark", wrapArgs(cmdDark), "Stop combat in the current room.")
 	registerCommand("syslog", wrapArgs(cmdSyslog), "Toggle system logging level.")
+	registerCommand("dns", wrapArgs(cmdDns), "Manage the DNS cache.")
 	registerCommand("idlist", wrapArgs(cmdIdlist), "Dump object ID list to file.")
 	registerCommand("checkload", wrapArgs(cmdCheckload), "Check zone load info for a mob/obj.")
 	registerCommand("poofset", wrapArgs(cmdPoofset), "Set poof in/out messages.")
@@ -332,6 +352,7 @@ func init() {
 	registerCommand("scan", wrapSkill(command.CmdScan), "Scan adjacent rooms for creatures.")
 
 	registerCommand("order", wrapArgs(cmdOrder), "Order a pet or follower.")
+	registerCommand("orgasm", wrapArgs(cmdOrgasm), "Touch someone into orgasm.")
 
 	// Informative commands (act_informative.go)
 	registerCommand("color", wrapArgs(cmdColor), "Toggle ANSI color.")
@@ -343,7 +364,7 @@ func init() {
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")
 	registerCommand("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).")
 	registerCommand("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.")
-	registerCommand("users", wrapArgs(cmdUsersSafe), "Show connected players.")
+	registerCommand("users", wrapArgs(cmdUsers), "Show connected players.")
 
 	// Other commands (act_other.go)
 	registerCommand("save", wrapArgs(cmdSave), "Save your character.")
@@ -385,6 +406,8 @@ func init() {
 	registerCommand("nonewbie", wrapToggle("nonewbie"), "Toggle newbie channel.")
 	registerCommand("noctell", wrapToggle("noctell"), "Toggle deafness to clan tells.")
 	registerCommand("nobroadcast", wrapToggle("nobroadcast"), "Toggle deafness to broadcasts.")
+	registerCommand("ident", wrapToggle("ident"), "Toggle ident lookups.")
+	registerCommand("slowns", wrapToggle("slowns"), "Toggle nameserver resolution.")
 	registerCommand("bug", wrapArgs(cmdBug), "Report a bug.")
 	registerCommand("typo", wrapArgs(cmdTypo), "Report a typo.")
 	registerCommand("idea", wrapArgs(cmdIdea), "Submit an idea.")
@@ -502,16 +525,42 @@ func SplitCommandInput(input string) (string, []string) {
 	return splitCommandInput(input)
 }
 
+// CommandArgumentText returns the argument remainder after C's command-word
+// scan. It skips leading command whitespace but preserves internal and
+// trailing whitespace, matching command_interpreter's pointer passed to a
+// handler after any_one_arg.
+func CommandArgumentText(input string) string {
+	input = strings.TrimLeft(input, cCommandWhitespace)
+	if input == "" {
+		return ""
+	}
+	if first := input[0]; (first < 'A' || first > 'Z') && (first < 'a' || first > 'z') {
+		return strings.TrimLeft(input[1:], cCommandWhitespace)
+	}
+	idx := strings.IndexAny(input, cCommandWhitespace)
+	if idx < 0 {
+		return ""
+	}
+	return strings.TrimLeft(input[idx+1:], cCommandWhitespace)
+}
+
 // ExecuteCommand processes a game command.
 func ExecuteCommand(s *Session, cmdStr string, args []string) error {
-	// C command_interpreter draws number(0,3) at the top of every playing
-	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890).
-	// This must precede moderation, alias expansion, and command lookup.
-	// #nosec G404 — game RNG, not cryptographic
-	if s.player != nil && commandNumber(0, 3) == 0 {
-		s.player.SetAffect(game.AffHide, false)
-	}
+	return executeCommandRaw(s, cmdStr, args, true, "")
+}
 
+// executeCommand mirrors comm.c's aliased flag. A normal input line may
+// expand one player alias; commands placed at the front of the queue by a
+// complex alias are executed with alias expansion disabled to prevent
+// recursive aliases.
+func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) error {
+	return executeCommandRaw(s, cmdStr, args, allowAlias, "")
+}
+
+// executeCommandRaw is the transport-aware command path. rawArgs is retained
+// only for command handlers whose C implementation consumes the original
+// argument remainder instead of tokenized words.
+func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool, rawArgs string) error {
 	// Moderation pre-check: mute, ban
 	if s.manager.modChecker != nil && s.player != nil {
 		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
@@ -529,19 +578,55 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	}
 	cmd := strings.ToLower(cmdStr)
 
-	// Expand player aliases before command dispatch (DP-415)
-	if s.player != nil && len(s.player.Aliases) > 0 {
+	// C performs alias expansion before command_interpreter, so the command
+	// interpreter's leading RNG draw belongs to the resolved command, not to
+	// the alias trigger itself.
+	if allowAlias && s.player != nil && len(s.player.Aliases) > 0 {
 		fullInput := cmd
 		if len(args) > 0 {
 			fullInput = cmd + " " + strings.Join(args, " ")
 		}
-		if expanded, ok := game.PerformAlias(s.player.Aliases, fullInput); ok {
-			cmdStr, args = splitCommandInput(expanded)
+		if expanded, ok := game.ExpandAlias(s.player.Aliases, fullInput); ok {
+			if len(expanded) == 0 {
+				return nil
+			}
+			if len(expanded) > 1 {
+				for i, command := range expanded {
+					if i > 0 && s.player.GetWaitState() > 0 {
+						s.inputMu.Lock()
+						s.prependAliasedInputs(expanded[i:])
+						s.inputMu.Unlock()
+						return nil
+					}
+					if i > 0 {
+						// C's game loop emits the command-cycle separation
+						// between entries pulled from the alias queue. Prompt
+						// normalization removes the prompt itself but retains
+						// these two blank lines.
+						s.Send("\r\n\r\n")
+					}
+					nextCmd, nextArgs := splitCommandInput(command)
+					if err := executeCommandRaw(s, nextCmd, nextArgs, false, ""); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+			cmdStr, args = splitCommandInput(expanded[0])
+			rawArgs = ""
 			if cmdStr == "" {
 				return nil
 			}
 			cmd = strings.ToLower(cmdStr)
 		}
+	}
+
+	// C command_interpreter draws number(0,3) at the top of every playing
+	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890).
+	// This must follow alias expansion and precede command lookup.
+	// #nosec G404 — game RNG, not cryptographic
+	if s.player != nil && commandNumber(0, 3) == 0 {
+		s.player.SetAffect(game.AffHide, false)
 	}
 
 	if s.isGuest {
@@ -638,8 +723,8 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			roomItems := s.manager.world.GetItemsInRoom(roomVNum)
 			for _, item := range roomItems {
 				if item != nil {
-					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
 							return nil
 						}
 					}
@@ -652,8 +737,8 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			equipped := s.player.Equipment.GetEquippedItems()
 			for _, item := range equipped {
 				if item != nil {
-					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
 							return nil
 						}
 					}
@@ -666,8 +751,8 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 			invItems := s.player.Inventory.FindItems("")
 			for _, item := range invItems {
 				if item != nil {
-					if objSpec := game.GetObjSpec(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, nil, cmd, argStr) {
+					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
 							return nil
 						}
 					}
@@ -706,6 +791,46 @@ func ExecuteCommand(s *Session, cmdStr string, args []string) error {
 	if commandGateRejected(s, commandGate{MinLevel: entry.MinLevel, MinPosition: entry.MinPosition}) {
 		return nil
 	}
+	if cmd == "send" {
+		return cmdSendText(s, args, rawArgs)
+	}
+	if cmd == "set" {
+		return cmdSetText(s, args, rawArgs)
+	}
+	if (cmd == "wiznet" || cmd == ";") && rawArgs != "" {
+		return cmdWiznetText(s, rawArgs)
+	}
+	if (cmd == "help" || cmd == "?") && rawArgs != "" {
+		return cmdHelpText(s, rawArgs)
+	}
+	if (cmd == "gtell" || cmd == "gsay") && rawArgs != "" {
+		return cmdGtellText(s, rawArgs)
+	}
+	if cmd == "gecho" && rawArgs != "" {
+		return cmdGechoText(s, rawArgs)
+	}
+	if (cmd == "rsay" || cmd == "race_say" || cmd == "rac") && rawArgs != "" {
+		return cmdRaceSayText(s, rawArgs)
+	}
+	if cmd == "qsay" && rawArgs != "" {
+		return cmdQsayText(s, rawArgs)
+	}
+	if cmd == "qecho" && rawArgs != "" {
+		return cmdQechoText(s, rawArgs)
+	}
+	if cmd == "page" && rawArgs != "" {
+		return cmdPageText(s, rawArgs)
+	}
+	if (cmd == "poofin" || cmd == "poofout") && rawArgs != "" {
+		// C do_poofset receives the complete post-command remainder after
+		// skip_spaces; preserve internal spacing instead of rebuilding it from
+		// tokenized Args (act.wizard.c:1721-1729).
+		direction := "in"
+		if cmd == "poofout" {
+			direction = "out"
+		}
+		return cmdPoofsetText(s, direction, rawArgs)
+	}
 
 	// NOTE: C's WAIT_STATE no longer gates commands here. comm.c:603's game-loop
 	// drain short-circuits get_from_q while wait>0 — the command STAYS QUEUED
@@ -731,11 +856,11 @@ func commandGateRejected(s *Session, gate commandGate) bool {
 		return false
 	}
 	if s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && effectiveLevel < LVL_IMPL-1 {
-		s.sendText("You try, but the mind-numbing cold prevents you...")
+		s.sendText("You try, but the mind-numbing cold prevents you...\r\n")
 		return true
 	}
 	if s.isSwitched && s.switchedMob != nil && gate.MinLevel >= LVL_IMMORT {
-		s.sendText("You can't use immortal commands while switched.")
+		s.sendText("You can't use immortal commands while switched.\r\n")
 		return true
 	}
 	playerPos := s.player.GetPosition()
@@ -785,7 +910,8 @@ func doorBroadcast(s *Session, message string) {
 	s.manager.BroadcastToRoom(roomVNum, msg, s.player.Name)
 }
 
-// cmdUse handles using an item (wand/staff/potion/scroll) or falls back to using a skill.
+// cmdUse handles using an item through C's do_use path. The original command
+// has no skill-use fallback: an unmatched target is reported by do_use.
 func cmdUse(s *Session, args []string) error {
 	if s.player == nil {
 		return fmt.Errorf("not logged in")
@@ -796,30 +922,28 @@ func cmdUse(s *Session, args []string) error {
 	}
 
 	itemArg := args[0]
-	var item *game.ObjectInstance
-	if s.player.Inventory != nil {
-		item, _ = s.player.Inventory.FindItem(itemArg)
-	}
-	if item == nil && s.player.Equipment != nil {
-		equipped := s.player.Equipment.GetEquippedItems()
-		for _, eqItem := range equipped {
-			if eqItem != nil && (strings.Contains(strings.ToLower(eqItem.GetKeywords()), strings.ToLower(itemArg)) || strings.Contains(strings.ToLower(eqItem.GetShortDesc()), strings.ToLower(itemArg))) {
-				item = eqItem
-				break
-			}
-		}
-	}
 
-	if item != nil {
+	// C do_use SCMD_USE (act.other.c:920): "tattoo" is a keyword special-case;
+	// otherwise the target must be EQUIPPED (WEAR_HOLD then any worn slot),
+	// matched by keyword — never inventory, and only wand/staff are usable.
+	// When nothing equipped matches, continue through C do_use so object-special
+	// fallthrough preserves the original command surface and bytes.
+	if strings.EqualFold(itemArg, "tattoo") {
+		s.manager.world.DoUse(s.player, strings.Join(args, " "))
+		return nil
+	}
+	if item := s.manager.world.FindEquippedVis(s.player, itemArg); item != nil {
 		itemType := item.GetTypeFlag()
-		if itemType == game.ITEM_WAND || itemType == game.ITEM_STAFF || itemType == game.ITEM_POTION || itemType == game.ITEM_SCROLL {
-			argStr := strings.Join(args, " ")
-			s.manager.world.DoUse(s.player, argStr)
+		if itemType == game.ITEM_WAND || itemType == game.ITEM_STAFF {
+			s.manager.world.DoUse(s.player, strings.Join(args, " "))
 			return nil
 		}
+		s.sendText("You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n")
+		return nil
 	}
 
-	return command.CmdUseSkill(s, args)
+	s.manager.world.DoUse(s.player, strings.Join(args, " "))
+	return nil
 }
 
 // cmdSave saves the player's character.

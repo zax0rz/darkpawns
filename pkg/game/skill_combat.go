@@ -59,17 +59,18 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
-	// 6. MOB_AWARE awake mobs notice the attempt and retaliate — act.offensive.c:212
+	// 6. MOB_AWARE awake mobs notice the attempt and retaliate — act.offensive.c:212.
+	// C emits the three notice lines then hit(vict, ch, TYPE_UNDEFINED): the guard
+	// swings back at once. RetaliateHit routes that synchronous target->actor hit
+	// through the caller (which enrolls and swings), so the actor sees the notice
+	// line followed by the guard's real hit message.
 	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) && target.GetPosition() > combat.PosSleeping {
-		if target.GetFighting() == "" {
-			target.SetFighting(ch.Name)
-		}
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
 			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
 			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
-			StartCombat:   true,
+			RetaliateHit:  true,
 		}
 	}
 
@@ -542,7 +543,8 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 
 	if attacker == nil {
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
-		return SkillResult{Success: false, MessageToCh: ActMessage("But nobody is fighting $N!", GetPronouns(ch.Name, ch.GetSex()), &victPronouns, "")}
+		// C uses $M here (objective pronoun): "But nobody is fighting him!"
+		return SkillResult{Success: false, MessageToCh: ActMessage("But nobody is fighting $M!", GetPronouns(ch.Name, ch.GetSex()), &victPronouns, "")}
 	}
 
 	// Roll for success
@@ -575,9 +577,12 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	_ = combatEngine.StartCombat(ch, attacker)
 
 	return SkillResult{
-		Success:       true,
-		MessageToCh:   "Banzai!  To the rescue...",
-		MessageToVict: ActMessage("You are rescued by $N, you are confused!", chPronouns, &victPronouns, ""),
+		Success:     true,
+		MessageToCh: "Banzai!  To the rescue...",
+		// C act("You are rescued by $N...", FALSE, vict, 0, ch, TO_CHAR) —
+		// the victim is the message's "ch" and the RESCUER is $N, so the
+		// pronoun roles swap relative to the room line.
+		MessageToVict: ActMessage("You are rescued by $N, you are confused!", victPronouns, &chPronouns, ""),
 		MessageToRoom: ActMessage("$n heroically rescues $N!", chPronouns, &victPronouns, ""),
 		WaitTarget:    2, // WAIT_STATE(vict, 2*PULSE_VIOLENCE) — act.offensive.c:579; no WaitCh in C
 	}
@@ -615,7 +620,9 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 	}
 
 	weapon, ok := ch.Equipment.GetItemInSlot(SlotWield)
-	if !ok || weapon == nil || !strings.Contains(strings.ToLower(weapon.GetShortDesc()), weaponName) {
+	// C's OBJN() check searches the wielded object's keywords, not its
+	// player-facing short description (new_cmds.c:1124-1128).
+	if !ok || weapon == nil || !strings.Contains(strings.ToLower(weapon.GetKeywords()), weaponName) {
 		return SkillResult{
 			Success:     false,
 			MessageToCh: fmt.Sprintf("You need to wield a %s to succeed!\r\n", weaponName),
@@ -630,16 +637,25 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 		return SkillResult{Success: false, MessageToCh: "The monster in you won't let you suicide!\r\n"}
 	}
 
-	// Targets must expose the Player interface to check affects/PLR flags.
-	tp, ok := target.(*Player)
-	if !ok {
+	// C's get_char_room_vis returns both players and NPCs. Only the player
+	// branch has PLR nightbreed flags; the AFF requirement and level check apply
+	// to either concrete target type (new_cmds.c:1135-1153).
+	var targetIsAffected func(int) bool
+	var targetFlags uint64
+	switch victim := target.(type) {
+	case *Player:
+		targetIsAffected = victim.IsAffected
+		targetFlags = victim.GetFlags()
+	case *MobInstance:
+		targetIsAffected = victim.IsAffected
+	default:
 		return SkillResult{Success: false, MessageToCh: fmt.Sprintf("You can't %s that!\r\n", weaponName)}
 	}
 
-	if subcmd == 0 && !tp.IsAffected(affWerewolf) {
+	if subcmd == 0 && !targetIsAffected(affWerewolf) {
 		return SkillResult{Success: false, MessageToCh: "Spiking is only for werewolves..\r\n"}
 	}
-	if subcmd == 1 && !tp.IsAffected(affVampire) {
+	if subcmd == 1 && !targetIsAffected(affVampire) {
 		return SkillResult{Success: false, MessageToCh: "Staking is only for vampires..\r\n"}
 	}
 
@@ -650,35 +666,35 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 		return SkillResult{Success: false, MessageToCh: "You can't destroy your own kind!\r\n"}
 	}
 
-	if tp.GetLevel() >= LVL_IMMORT && ch.GetLevel() < LVL_IMMORT {
+	if target.GetLevel() >= LVL_IMMORT && ch.GetLevel() < LVL_IMMORT {
 		return SkillResult{Success: false, MessageToCh: "Yeah, right.\r\n"}
 	}
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(tp.GetName(), tp.GetSex())
+	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 
 	// Success if attacker level > victim, level gap < random(0, LVL_IMMORT), or victim asleep.
 	// #nosec G404 — game RNG, not cryptographic
-	if ch.GetLevel() > tp.GetLevel() ||
-		tp.GetLevel()-ch.GetLevel() < dprng.Number(0, LVL_IMMORT-1) ||
-		tp.GetPosition() <= combat.PosSleeping {
-		// Remove vampire/werewolf PLR flag from the victim so raw_kill can proceed.
-		if tp.GetFlags()&(1<<PlrVampire) != 0 {
-			tp.SetPlrFlag(PlrVampire, false)
+	if ch.GetLevel() > target.GetLevel() ||
+		target.GetLevel()-ch.GetLevel() < dprng.Number(0, LVL_IMMORT) ||
+		target.GetPosition() <= combat.PosSleeping {
+		// C clears PLR flags only when the victim is a player; an NPC has no
+		// player-flag storage and proceeds directly to raw_kill.
+		if targetPlayer, ok := target.(*Player); ok {
+			if targetFlags&(1<<PlrVampire) != 0 {
+				targetPlayer.SetPlrFlag(PlrVampire, false)
+			}
+			if targetFlags&(1<<PlrWerewolf) != 0 {
+				targetPlayer.SetPlrFlag(PlrWerewolf, false)
+			}
 		}
-		if tp.GetFlags()&(1<<PlrWerewolf) != 0 {
-			tp.SetPlrFlag(PlrWerewolf, false)
-		}
-		// Note: C increments GET_PKS/GET_DEATHS and calls raw_kill. We rely on
-		// RawKill and the existing kill-tracking callbacks.
-		combat.RawKill(target, combat.TYPE_UNDEFINED)
-
 		return SkillResult{
 			Success:       true,
 			MessageToCh:   ActMessage("You drive $p into $S chest!", chPronouns, &victPronouns, weapon.GetShortDesc()),
 			MessageToVict: ActMessage("$n drives $p into your chest with a solid blow!", chPronouns, &victPronouns, weapon.GetShortDesc()),
 			MessageToRoom: ActMessage("$n drives $p into the chest of $N!", chPronouns, &victPronouns, weapon.GetShortDesc()),
 			WaitCh:        2,
+			RawKill:       true,
 		}
 	}
 
@@ -719,21 +735,19 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!\r\n"}
 	}
 
-	// MOB_AWARE mobs that are awake notice the attempt and retaliate.
-	// C: new_cmds.c:2427 — hit(vict, ch) if the mob isn't already fighting.
-	// Go has no instant-hit primitive here, so we redirect the mob onto the
-	// circler and set StartCombat; the combat engine's next PerformRound
-	// (bidirectional since DP-900) delivers the mob's retaliatory swing.
+	// MOB_AWARE mobs that are awake notice the attempt. C emits the three
+	// notice acts and, only when the mob was not already fighting, immediately
+	// calls hit(vict, ch, TYPE_UNDEFINED). The command's caller performs that
+	// synchronous opener; no circle cooldown is applied on this early return.
 	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) && target.GetPosition() > combat.PosSleeping {
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
-		target.SetFighting(ch.Name)
 		return SkillResult{
 			Success:       false,
 			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
 			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
 			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
-			StartCombat:   true,
+			RetaliateHit:  target.GetFighting() == "",
 		}
 	}
 
@@ -746,55 +760,68 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	percent := dprng.Number(1, 101) // 1-101; 101% is automatic failure
 	prob := ch.GetSkill(SkillCircle)
 
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-
 	if target.GetPosition() > combat.PosSleeping && percent > prob {
 		// Miss. C: new_cmds.c:2457 — if the target is fighting, stop_fighting
-		// + hit(vict, ch): the botched circle pulls the mob's aggro onto the
-		// circler. Then damage(ch, vict, 0, SKILL_CIRCLE) starts combat for the
-		// circler too. We retarget the mob onto the circler and set StartCombat
-		// so the caller enrolls the circler; the engine delivers the mob's
-		// swing next round. (C also deals the mob's hit instantly; the engine's
-		// tick delivers it within one PULSE_VIOLENCE — acceptable fidelity
-		// trade consistent with the rest of the Go combat engine.)
-		target.SetFighting(ch.Name)
+		// + hit(vict, ch) runs first. Then damage(ch, vict, 0, SKILL_CIRCLE)
+		// emits set 173 and starts combat for the circler.
+		retaliate := target.GetFighting() != ""
+		if retaliate {
+			target.StopFighting()
+		}
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You try to circle $N, but $E notices you!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n tries to circle you, but you notice $m in time!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to circle $N, but fails.", chPronouns, &victPronouns, ""),
-			StartCombat:   true,
-			WaitCh:        3, // PULSE_VIOLENCE + 2
+			Success:                        false,
+			SkillMsgType:                   SkillCircleNum,
+			StartCombat:                    true,
+			WaitCh:                         3, // PULSE_VIOLENCE + 2
+			RetaliateHit:                   retaliate,
+			RetaliateHitBeforeSkillMessage: retaliate,
 		}
 	}
 
-	// Hit — weapon damage + damroll + str-to-dam, multiplied by
-	// backstab_mult(level)/3. C: hit() → damage() includes str_app.todam;
-	// this was missing before (DP-906 added GetStrToDam for backstab).
+	// Passed circle roll — C now calls hit(ch, vict, SKILL_CIRCLE), which runs
+	// the ordinary THAC0 d20 before calculating damage. A to-hit miss still
+	// calls damage(..., 0, SKILL_CIRCLE), while a hit uses the weapon dice,
+	// strength-to-damage, damroll, the exact integer position multiplier, and
+	// backstab_mult(level)/3. Both paths then use skill_message set 173.
+	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+		return SkillResult{
+			Success:             false,
+			SkillMsgType:        SkillCircleNum,
+			SkillMsgAfterDamage: true,
+			StartCombat:         true,
+			WaitCh:              3,
+			DeferredImprove:     []string{SkillCircle},
+		}
+	}
+
 	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
 	dam := weaponDam + ch.GetDamroll() + ch.GetStrToDam()
-	mult := int(combat.BackstabMult(ch.GetLevel())) / 3
-	if mult < 1 {
-		mult = 1
+	if target.GetPosition() < combat.PosFighting {
+		dam *= 1 + (combat.PosFighting-target.GetPosition())/3
 	}
+	if dam < 1 {
+		dam = 1
+	}
+	mult := int(combat.BackstabMult(ch.GetLevel())) / 3
 	dam *= mult
 
-	improveSkill(ch, SkillCircle)
-
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   ActMessage("You circle around $N and plunge your weapon into $S back!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n circles around you and plunges $s weapon into your back!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n circles around $N and plunges $s weapon into $S back!", chPronouns, &victPronouns, ""),
-		WaitCh:        3, // PULSE_VIOLENCE + 2
+		Success:             true,
+		Damage:              dam,
+		SkillMsgType:        SkillCircleNum,
+		SkillMsgAfterDamage: true,
+		DamageSkill:         SkillCircle,
+		StartCombat:         true,
+		WaitCh:              3, // PULSE_VIOLENCE + 2
+		DeferredImprove:     []string{SkillCircle},
 	}
 }
 
 // DoCharge implements do_charge() from src/new_cmds.c lines 880-955.
-// Warrior/paladin/ranger charge attack requiring a sword or lance.
+// Warrior/paladin/ranger charge attack requiring a sword or lance. Both C
+// outcomes call damage(), so the result routes through the numbered charge
+// skill-message set and enrolls the pair in combat even for zero damage.
 func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 	if target == nil {
 		return SkillResult{Success: false, MessageToCh: "Great! Fine! Charge who?!?!\r\n"}
@@ -829,17 +856,14 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 
 	prob := ch.GetSkill(SkillCharge)
 
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
-
 	if percent > prob {
+		// C damage(ch, victim, 0, SKILL_CHARGE) emits skill_message before
+		// sitting the unmounted attacker and then waits two violence pulses.
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("You charge at $N, but lose your balance and fall!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n charges at you, but loses $s balance and falls!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n charges at $N, but loses $s balance and falls!", chPronouns, &victPronouns, ""),
-			SelfStumble:   !ch.IsMounted(),
-			WaitCh:        2, // PULSE_VIOLENCE * 2
+			SkillMsgType: SkillChargeNum,
+			StartCombat:  true,
+			SelfStumble:  !ch.IsMounted(),
+			WaitCh:       2, // PULSE_VIOLENCE * 2
 		}
 	}
 
@@ -849,14 +873,13 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 		dam += 50
 	}
 
-	improveSkill(ch, SkillCharge)
-
 	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   ActMessage("You charge at $N and run $M through with your weapon!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n charges at you and runs you through with $s weapon!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n charges at $N and runs $M through with $s weapon!", chPronouns, &victPronouns, ""),
-		WaitCh:        2, // PULSE_VIOLENCE * 2
+		Success:         true,
+		Damage:          dam,
+		SkillMsgType:    SkillChargeNum,
+		DamageSkill:     SkillCharge,
+		StartCombat:     true,
+		WaitCh:          2, // PULSE_VIOLENCE * 2
+		DeferredImprove: []string{SkillCharge},
 	}
 }

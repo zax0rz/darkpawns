@@ -1,0 +1,11 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_wizutil	reroll	reroll.entry-gate	D1	command	unit-green	TestRerollRegistrationUsesCEntryGate	interpreter.c:649; act.wizard.c:2077-2085	The registered row is POS_DEAD at LVL_GRGOD; the focused test pins the authoritative command gate.
+do_wizutil	reroll	reroll.no-argument	D1	command	oracle-green-multiseed	reroll-depth@1,2,3,5,8	act.wizard.c:2088-2089	An authorized caster with no target receives exactly Yes, but for whom?!?
+do_wizutil	reroll	reroll.target-not-found	D1	command	oracle-green-multiseed	reroll-depth@1,2,3,5,8	act.wizard.c:2089-2091	An unresolved visible-world target receives exactly There is no such player.
+do_wizutil	reroll	reroll.visible-npc-target	D2	command	oracle-green-multiseed	reroll-depth@1,2,3,5,8	act.wizard.c:2091-2093; handler.c:1276-1300	The registered trainee mob reaches C's shared NPC rejection before the reroll switch.
+do_wizutil	reroll	reroll.higher-immortal-target	D2	command	unit-green	TestCmdRerollRejectsHigherImmortal	act.wizard.c:2094-2095	A target above the caster and above LVL_IMMORT is refused without a roll or mutation.
+do_wizutil	reroll	reroll.success	D2	command	oracle-green-multiseed	reroll-depth@1,2,3,5,8	act.wizard.c:2101-2111	The mortal target receives C's actor-only Rerolled... acknowledgement and class/race stat line.
+do_wizutil	reroll	reroll.one-argument	D2	command	oracle-green-multiseed	reroll-depth@1,2,3,5,8	interpreter.c:1265-1283; act.wizard.c:2087-2091	C one_argument skips the leading fill word and ignores trailing words after the selected target.
+do_wizutil	reroll	reroll.actor-only	D3	audience	oracle-green-multiseed	reroll-depth@1,2,3,5,8	act.wizard.c:2101-2111	Reroll sends its acknowledgement and new stats only to the caster; the target and other peers remain silent.
+do_wizutil	reroll	reroll.state	D4	state	unit-green	TestCmdRerollMatchesCStatRollAndState	class.c:380-497; act.wizard.c:2103-2105	The focused test proves the deterministic class/race roll, exceptional strength, inventory strength, and GET_ORIG_CON update.
+do_wizutil	reroll	reroll.shared-target-gates	D2	shared	delegated	mute.target-gates	act.wizard.c:2088-2110; handler.c:1276-1332	Visible resolution, NPC rejection, and higher-immortal protection are the shared do_wizutil target boundary; this vehicle confirms reroll reaches it.

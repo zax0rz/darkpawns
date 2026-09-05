@@ -1,0 +1,81 @@
+# depth-case: mob.remorter-success-state
+# depth-case: mob.remorter-success-audience
+# C-first vehicle for the full successful remort transition. The actor is
+# made mortal and funded while still the first-player God, then stripped of
+# starter equipment before invoking REMORT; the peer proves the final direct
+# output is actor-only.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4 999 8044 80
+clear-mob-flag 4 RANDZON
+
+[setup:oracle]
+RemortSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RemortSuccess
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+RemortWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+RemortWitness
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8044
+teleport RemortWitness 8044
+set RemortSuccess gold 60000
+set RemortSuccess level 30
+remove all
+
+[probe]
+remort
+score

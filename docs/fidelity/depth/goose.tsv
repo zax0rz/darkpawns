@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_action	goose	goose.entry-gate	D1	command	unit-green	TestGooseRegistrationUsesCEntryGate	interpreter.c:470; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level, and the social metadata is hide 0 with no victim-position minimum.
+do_action	goose	goose.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:470; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	goose	goose.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the dance social matrix.
+do_action	goose	goose.no-argument	D3	audience	oracle-green-multiseed	goose-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:1456-1461	The no-target record emits the exact actor and non-victim room lines.
+do_action	goose	goose.target-success	D3	audience	oracle-green-multiseed	goose-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:1456-1461	An awake visible peer receives the actor, room, and victim goose messages with C substitutions.
+do_action	goose	goose.target-not-found	D1	command	oracle-green-multiseed	goose-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:1456-1461	An unresolved room target emits the exact goose-specific not-found text.
+do_action	goose	goose.self-target	D2	audience	oracle-green-multiseed	goose-depth@1,2,3,5,8	act.social.c:134-140; lib/misc/socials:1456-1461	A self target uses the record's auto actor and room messages.
+do_action	goose	goose.one-argument	D2	command	oracle-green-multiseed	goose-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:114-121; lib/misc/socials:1456-1461	C one_argument skips the leading fill word and discards trailing words before visible target lookup.
+do_action	goose	goose.visibility	D3	shared	delegated	socials-depth	act.social.c:102-151; comm.c:2392-2555	The non-hidden target and room audiences use the shared social visibility and Act behavior.

@@ -1,0 +1,76 @@
+# C-first do_scrounge desert mapping (src/new_cmds2.c:98-101). Desert
+# captures object vnum 30 with the capture-and-kill wording and room search
+# act.
+
+# depth-case: scrounge.desert-capture
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 10
+
+[setup:oracle]
+Scroungedesert
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungedesert
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scroungedesertpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scroungedesertpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Scroungedesertpeer 8105
+skillset Scroungedesert 'scrounge' 100
+
+[probe]
+scrounge

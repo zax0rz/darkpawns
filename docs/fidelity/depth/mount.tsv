@@ -1,0 +1,20 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_ride	mount	mount.entry-gate	D1	command	unit-green	TestMountAndRideRegistrationUseCEntryGates	interpreter.c:558; act.other.c:1545-1557	The C mount row is unrestricted at POS_STANDING; the focused registration test pins the authoritative gate (R1/R2/R5e).
+do_ride	ride	mount.alias-gate	D1	command	unit-green	TestMountAndRideRegistrationUseCEntryGates	interpreter.c:659; act.other.c:1545-1557	The later ride row aliases the same do_ride call path and carries the same C gate (R1/R2/R5e).
+do_ride	mount	mount.fighting	D1	command	unit-green	TestDoRideDirectGates	act.other.c:1548-1551	The fighting early return preserves C's exact newline ordering (R1/R5e).
+do_ride	mount	mount.indoors	D1	command	unit-green	TestDoRideDirectGates	act.other.c:1552-1556	ROOM_INDOORS rejects riding before argument lookup with C's exact bytes (R1/R5e).
+do_ride	mount	mount.no-argument	D1	command	oracle-green-multiseed	mount-depth@1,2,3,5,8	act.other.c:1558-1562; config.c:93	Bare mount reaches the exact prompt after one_argument (R1/R3/R5e).
+do_ride	mount	mount.one-argument	D2	command	oracle-green-multiseed	mount-depth@1,2,3,5,8	interpreter.c:1265-1283; act.other.c:1558-1565	C consumes the first target token and ignores trailing words; the live vehicle proves that boundary (R1/R2/R3/R5e).
+do_ride	mount	mount.target-not-found	D2	command	oracle-green-multiseed	mount-depth@1,2,3,5,8	act.other.c:1563-1565; config.c:93	An unresolved room target emits NOPERSON exactly (R1/R3/R5e).
+do_ride	mount	mount.self-target	D2	audience	oracle-green-multiseed	mount-depth@1,2,3,5,8	act.other.c:1565-1567	Self-targeting reaches C's exact disgusting refusal (R1/R3/R5e).
+do_ride	mount	mount.player-target	D2	audience	oracle-green-multiseed	mount-depth@1,2,3,5,8	act.other.c:1565-1576; utils.h:362-366	A player target is not mountable and receives the canonical $N refusal (R1/R3/R5e).
+do_ride	mount	mount.actor-already-mounted	D2	state	unit-green	TestDoRideMountedGates	act.other.c:1568-1570	IS_MOUNTED(ch) wins before mount lookup state changes (R1/R4/R5e).
+do_ride	mount	mount.already-ridden	D2	state	oracle-green-multiseed	mount-ridden-depth@1,2,3,5,8	act.other.c:1570-1572	A pre-ridden mount reaches the distinct C refusal after target resolution (R1/R3/R5e).
+do_ride	mount	mount.not-mountable	D2	command	unit-green	TestDoRideDirectGates	act.other.c:1572-1574; utils.h:362-364	The focused test exercises IS_MOUNTABLE false and the exact $N refusal (R1/R5e).
+do_ride	mount	mount.cannot-mount	D1	command	excluded	-	act.other.c:1574-1576; utils.h:365-366	CAN_MOUNT is true for every descriptor-issued player command after the preceding IS_MOUNTED gate; the !IS_MOB false branch is unreachable from this surface (R2/R4/R5e).
+do_ride	mount	mount.actor-charmed	D1	command	unit-green	TestDoRideDirectGates	act.other.c:1574-1578; utils.h:365-366	A charmed rider is denied after mountability and CAN_MOUNT gates (R1/R5e).
+do_ride	mount	mount.mount-charmed	D1	command	unit-green	TestDoRideDirectGates	act.other.c:1576-1578	A mount charmed to another master is denied with the C $S expansion (R1/R5e).
+do_ride	mount	mount.success-state	D4	state	unit-green	TestDoRideSuccessStateAndAudience	act.other.c:1580-1590; follow.c:130-177	Success sets both AFF_MOUNT bits, adds charm/follow state, and records the rider (R1/R4/R5e).
+do_ride	mount	mount.success-audiences	D3	audience	oracle-green-multiseed	mount-depth@1,2,3,5,8	act.other.c:1587-1590; utils.c:480-498	The actor and room peer receive the exact success bytes; the mob victim has no descriptor audience (R1/R3/R5e).
+do_ride	mount	mount.alias-ride	D2	command	oracle-green-multiseed	mount-depth@1,2,3,5,8	interpreter.c:558,659; act.other.c:1545-1593	The ride alias reaches the same do_ride success path after dismounting (R1/R2/R3/R5e).
+do_ride	mount	mount.script-entry	D5	command	excluded	-	scripts.c:876-895; act.other.c:1545-1593	Lua mount(ride) is a non-command API call, not a registered descriptor command; its script caller plumbing is outside this command-family surface (R2/R4/R5e).

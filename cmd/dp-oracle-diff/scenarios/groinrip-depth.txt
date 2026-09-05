@@ -1,0 +1,89 @@
+# C-first legal groinrip opener (src/interpreter.c:478; src/new_cmds.c:2565-2640).
+# The learned mortal uses a registered male trainee so the target, RNG,
+# damage/skill-message, combat, improvement, and wait path are reachable.
+
+# depth-case: groinrip.no-argument
+# depth-case: groinrip.target-missing
+# depth-case: groinrip.self-target
+# depth-case: groinrip.one-argument
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Groinripgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groinripgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Groinripactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Groinripactor
+y
+actorpass
+actorpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Groinripactor 'groinrip' 75
+
+[probe:actor]
+groinrip
+groinrip nobody
+groinrip Groinripactor
+groinrip trainee trailing words are ignored
+~dpclock pulse 20

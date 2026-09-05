@@ -1,0 +1,46 @@
+# C-first depth vehicle for do_inactive (src/act.other.c:1818-1824),
+# registered at src/interpreter.c:515. C only toggles PRF_INACTIVE and emits
+# no command text; the command/prompt cycle exposes the state as INACTIVE >
+# after enabling and returns to the ordinary > prompt after disabling.
+# Arguments are ignored by the C procedure.
+#
+# depth-case: inactive.enable
+# depth-case: inactive.disable
+# depth-case: inactive.argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Inactivedepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Inactivedepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+inactive
+inactive ignored argument

@@ -1,0 +1,115 @@
+# C-first do_restore vehicle (src/interpreter.c:650;
+# src/act.wizard.c:1584-1618). The Implementor primary targets a remote mortal
+# and the registered trainee mob; a passive peer exposes that restore emits no
+# room-wide announcement. Leading fill words and trailing input exercise C's
+# one_argument boundary.
+
+# depth-case: restore.no-argument
+# depth-case: restore.target-not-found
+# depth-case: restore.visible-npc-target
+# depth-case: restore.success
+# depth-case: restore.one-argument
+# depth-case: restore.actor-only
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Restoreadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restoreadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Restoretarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Restoretarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Restoreobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Restoreobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Restoretarget 8162
+teleport Restoreobserver 8162
+
+[probe]
+restore
+restore Nobody
+restore trainee
+restore the Restoretarget trailing words are ignored

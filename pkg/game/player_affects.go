@@ -101,6 +101,17 @@ func (p *Player) SetWaitState(rounds int) {
 	p.WaitState = rounds * engine.PULSE_VIOLENCE
 }
 
+// SetWaitStatePulses sets the raw wait-state pulse count for C paths whose
+// WAIT_STATE argument is not an even number of PULSE_VIOLENCE rounds.
+func (p *Player) SetWaitStatePulses(pulses int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if pulses < 0 {
+		pulses = 0
+	}
+	p.WaitState = pulses
+}
+
 // DecrementWaitState reduces wait state by one pulse (called per heartbeat
 // drain; port of comm.c:603 `--(d->character->wait)`).
 func (p *Player) DecrementWaitState() {
@@ -109,6 +120,27 @@ func (p *Player) DecrementWaitState() {
 	if p.WaitState > 0 {
 		p.WaitState--
 	}
+}
+
+// GetAmbushAction returns the event ID held in C's GET_ACTION(ch) slot.
+func (p *Player) GetAmbushAction() uint64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.ambushAction
+}
+
+// SetAmbushAction records the pending delayed ambush event.
+func (p *Player) SetAmbushAction(eventID uint64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.ambushAction = eventID
+}
+
+// ClearAmbushAction clears the pending delayed ambush event.
+func (p *Player) ClearAmbushAction() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.ambushAction = 0
 }
 
 // TakeDamage applies damage to the player.

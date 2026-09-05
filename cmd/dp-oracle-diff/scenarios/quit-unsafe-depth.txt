@@ -1,0 +1,44 @@
+# C-first quit unsafe-room vehicle (src/interpreter.c:630;
+# src/act.other.c:72-181). A level-one mortal uses the full quit command in
+# the default unsafe room and must receive the three-line safe-room refusal;
+# trailing input is ignored by do_quit.
+
+# depth-case: quit.entry-gate
+# depth-case: quit.unsafe-refusal
+# depth-case: quit.argument-ignored
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Quitunsafe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quitunsafe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+quit
+quit trailing words

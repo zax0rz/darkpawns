@@ -1,0 +1,91 @@
+# depth-case: room.assassin-list
+# depth-case: room.assassin-hire-entry-gates
+# depth-case: room.assassin-low-level-victim
+# depth-case: room.assassin-fallthrough
+# C-first vehicle for SPECIAL(assassin), assigned to room 8114 in
+# src/spec_assign.c:608 and defined in src/spec_procs2.c:845-928.  The room
+# special computes its private assassin roster as the next C room index; in
+# the authoritative world-file order that is room 8115, whose first usable
+# native roster entry is street urchin #8070. Quiet mobile resets and an
+# explicit prototype spawn keep that roster deterministic.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs2.c:845-928 ->
+# do_tell/get_char_room/get_player_vis/read_mobile/char_to_room/act.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8070 1 8115 80
+replace-room-exits 8115 none
+
+[setup:oracle]
+AssassinActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AssassinActor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+AssassinPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+AssassinPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8114
+teleport AssassinPeer 8114
+set AssassinActor gold 1000
+
+[probe]
+list
+hire
+hire nobody
+hire petitioner
+hire petitioner Nobody
+hire street
+hire street AssassinPeer
+xyzzy

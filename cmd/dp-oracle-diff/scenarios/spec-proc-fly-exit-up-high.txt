@@ -1,0 +1,76 @@
+# C-first vehicle for SPECIAL(fly_exit_up), registered on room 1389 by
+# src/spec_assign.c:635 and defined at src/spec_procs3.c:1289-1301.
+# A level-40 player must pass the room special and use the ordinary up path.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+UpHero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+UpHero
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:origin]
+UpOrigin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:origin]
+UpOrigin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1389
+holylight
+teleport UpOrigin 1389
+
+[probe]
+up
+
+# depth-case: room.fly-exit-up-high-level-gate
+# depth-case: room.fly-exit-up-allowed-audience

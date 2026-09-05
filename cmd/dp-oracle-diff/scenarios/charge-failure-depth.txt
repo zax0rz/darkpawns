@@ -1,0 +1,86 @@
+# Failure vehicle for do_charge (src/new_cmds.c:880-955).
+# A skill-1 warrior reaches the same legal sword path, forcing the percent
+# failure arm: damage(..., 0, SKILL_CHARGE), the numbered miss message, combat
+# enrollment, the unmounted sitting state, and the two-pulse wait.
+#
+# depth-case: charge.failure
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Chargefailgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chargefailgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Chargefailwarrior]
+Chargefailwarrior
+Y
+chargepass
+chargepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:Chargefailwarrior]
+Chargefailwarrior
+y
+chargepass
+chargepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[warmup]
+skillset Chargefailwarrior 'charge' 1
+
+[probe:Chargefailwarrior]
+charge trainee
+~dpclock pulse 20

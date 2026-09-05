@@ -1,0 +1,81 @@
+# C-first grimace self-only social vehicle (src/interpreter.c:476;
+# act.social.c:102-121; lib/misc/socials:325-328). Because char_found is
+# absent, do_action ignores every typed argument and stays on the no-argument
+# actor/room pair.
+
+# depth-case: grimace.no-argument
+# depth-case: grimace.argument-ignored
+# depth-case: grimace.missing-target-ignored
+# depth-case: grimace.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Grimaceactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Grimaceactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Grimaceobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Grimaceobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Grimaceobserver 8162
+
+[probe]
+grimace
+grimace Grimaceobserver trailing words are ignored
+grimace Nobody
+grimace Grimaceactor

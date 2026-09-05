@@ -1,0 +1,48 @@
+# C-first vehicle for the live Galeru gate in SPECIAL(elements_galeru_alive),
+# assigned to room 1394 by src/spec_assign.c:632 and defined at
+# src/spec_procs3.c:1184-1216.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 1315 1 1394 80
+strip-mob-script 1315
+
+[setup:oracle]
+GaleruAliveProbe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GaleruAliveProbe
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1394
+
+[probe]
+say hello
+
+# depth-case: room.elements-galeru-alive-entry
+# depth-case: room.elements-galeru-alive-live-galeru
+# depth-case: room.elements-galeru-alive-fallthrough

@@ -2,9 +2,11 @@ package game
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/events"
 )
 
@@ -159,6 +161,45 @@ func TestDoSpellDamageAwardsXP(t *testing.T) {
 	}
 	if player.Kills != startKills+1 {
 		t.Errorf("player Kills = %d, want %d", player.Kills, startKills+1)
+	}
+}
+
+func TestDoSpellDamageCircleUsesCircleCorpseType(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	hp := mob.GetHP()
+
+	if !w.DoSpellDamage(player, mob, hp+11, SkillCircle) {
+		t.Fatal("DoSpellDamage(circle) returned false")
+	}
+
+	for _, obj := range w.GetItemsInRoom(player.GetRoom()) {
+		if obj.IsCorpse && strings.Contains(obj.GetLongDesc(), "hacked up, bloody corpse") {
+			return
+		}
+	}
+	t.Fatalf("circle killing blow did not create the C hacked-up bloody corpse: %#v", w.GetItemsInRoom(player.GetRoom()))
+}
+
+func TestDoSpellDamageChargePainDraw(t *testing.T) {
+	// C damage() consumes the pain/scream number(0,2) draw when a surviving
+	// charge hit exceeds one quarter of the victim's max HP (fight.c:1580-1585).
+	// Pin the charge-specific bridge so the next combat draw is not shifted.
+	w, player := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	dam := mob.GetMaxHP()/4 + 1
+
+	dprng.ResetStream(1)
+	dprng.Number(0, 2)
+	wantNext := dprng.Number(0, 999)
+
+	dprng.ResetStream(1)
+	if !w.DoSpellDamage(player, mob, dam, SkillCharge) {
+		t.Fatal("DoSpellDamage(charge) returned false")
+	}
+	gotNext := dprng.Number(0, 999)
+	if gotNext != wantNext {
+		t.Fatalf("next RNG draw after charge pain branch = %d, want %d", gotNext, wantNext)
 	}
 }
 

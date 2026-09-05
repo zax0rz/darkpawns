@@ -3,32 +3,37 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
+	"sort"
 	"strings"
-	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdGecho(s *Session, args []string) error {
+	return cmdGechoText(s, strings.Join(args, " "))
+}
+
+func cmdGechoText(s *Session, msg string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) == 0 {
+	if msg == "" {
 		s.Send("That must be a mistake...\r\n")
-		return nil
-	}
-	msg := strings.Join(args, " ")
-	if len(msg) > 500 {
-		s.Send("Maximum gecho length is 500 characters.")
 		return nil
 	}
 	s.manager.mu.RLock()
 	for _, sess := range s.manager.sessions {
-		if sess.player != nil {
+		if sess.player != nil && sess.player != s.player {
 			sess.Send(msg)
 		}
 	}
 	s.manager.mu.RUnlock()
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.Send("Okay.\r\n")
+	} else {
+		s.Send(msg)
+	}
 	slog.Warn("wizard gecho", "message", msg, "by", s.player.Name)
 	return nil
 }
@@ -50,7 +55,9 @@ func cmdEcho(s *Session, args []string) error {
 		s.Send("Maximum echo length is 500 characters.")
 		return nil
 	}
-	broadcastToRoomText(s, s.player.RoomVNum, msg)
+	// C act(buf, ..., TO_ROOM) excludes the echoer; the TO_CHAR copy below
+	// delivers their own view (or OK under norepeat).
+	s.manager.BroadcastToRoom(s.player.RoomVNum, []byte(msg), s.player.Name)
 	slog.Warn("wizard echo", "by", s.player.Name, "room", s.player.RoomVNum, "message", msg)
 	s.Send(msg)
 	return nil
@@ -60,225 +67,358 @@ func cmdEcho(s *Session, args []string) error {
 // send — send message to another character (LVL_GOD)
 // ---------------------------------------------------------------------------
 func cmdSend(s *Session, args []string) error {
+	return cmdSendText(s, args, "")
+}
+
+// cmdSendText preserves the un-tokenized argument remainder used by C's
+// half_chop (src/interpreter.c:1372-1379). The target is the first token, and
+// the message is the remaining text after skip_spaces, including internal and
+// trailing whitespace.
+func cmdSendText(s *Session, args []string, rawArgs string) error {
+	if !checkLevel(s, LVL_GOD) {
+		s.Send("Huh?!?\r\n")
+		return nil
+	}
+	targetName, msg, hasTarget := splitSendArgs(args, rawArgs)
+	if !hasTarget {
+		s.Send("Send what to who?\r\n")
+		return nil
+	}
+
+	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if !ok {
+		s.Send("No-one by that name here.\r\n")
+		return nil
+	}
+
+	// C's send_to_char is a no-op for NPCs. Player.SendMessage routes through
+	// the manager's descriptor sink, so linkless players likewise receive no
+	// bytes while the actor still gets the confirmation below.
+	if target.Player != nil {
+		target.Player.SendMessage(msg + "\r\n")
+	}
+
+	targetDisplayName := target.Combatant.GetName()
+	slog.Warn("wizard send", "by", s.player.Name, "target", targetDisplayName, "message", msg)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.Send("Sent.\r\n")
+	} else {
+		s.Send(fmt.Sprintf("You send '%s' to %s.\r\n", msg, targetDisplayName))
+	}
+	return nil
+}
+
+func splitSendArgs(args []string, rawArgs string) (target, msg string, ok bool) {
+	if rawArgs != "" {
+		remainder := strings.TrimLeft(rawArgs, cCommandWhitespace)
+		if remainder == "" {
+			return "", "", false
+		}
+		idx := strings.IndexAny(remainder, cCommandWhitespace)
+		if idx < 0 {
+			return remainder, "", true
+		}
+		return remainder[:idx], strings.TrimLeft(remainder[idx+1:], cCommandWhitespace), true
+	}
+	if len(args) == 0 {
+		return "", "", false
+	}
+	return args[0], strings.Join(args[1:], " "), true
+}
+
+// ---------------------------------------------------------------------------
+// force — force command on another character (LVL_GOD)
+//
+// Source: src/act.wizard.c:1856-1906. The C handler deliberately has no
+// command denylist or cooldown; its command surface is part of the game (R2).
+// ---------------------------------------------------------------------------
+func cmdForce(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 {
-		s.Send("Send what to who?")
+	if len(args) < 2 || strings.TrimSpace(strings.Join(args[1:], " ")) == "" {
+		s.Send("Whom do you wish to force do what?\r\n")
 		return nil
 	}
 
+	forceCmd := strings.Join(args[1:], " ")
 	targetName := args[0]
-	msg := strings.Join(args[1:], " ")
 
-	target := findSessionByName(s.manager, targetName)
-	if target == nil || target.player == nil {
-		s.Send("No one by that name online.")
-		return nil
-	}
-
-	target.Send(msg)
-	slog.Warn("wizard send", "by", s.player.Name, "target", target.player.Name, "message", msg)
-	s.Send(fmt.Sprintf("You send '%s' to %s.", msg, target.player.Name))
-	return nil
-}
-
-// ---------------------------------------------------------------------------
-// force — force command on another character (LVL_GRGOD)
-//
-// Safety measures implemented:
-//  1. ForcedPrivilegeLevel wired into getEffectiveLevel (checkLevel path)
-//  2. IsForced flag prevents transitive force chains
-//  3. Command denylist blocks dangerous commands
-//  4. 3-second cooldown between force commands on the same target
-//
-// ---------------------------------------------------------------------------
-func cmdForce(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
-	if len(args) < 2 {
-		s.Send("Whom do you wish to force do what?")
-		return nil
-	}
-
-	forceCmd := args[1]
-	targetName := strings.ToLower(args[0])
-
-	// --- Safety 3: Command denylist ---
-	denyList := []string{"force", "shutdown", "purge", "set", "advance", "switch", "wiznet"}
-	cmdLower := strings.ToLower(forceCmd)
-	for _, denied := range denyList {
-		if cmdLower == denied {
-			s.Send(fmt.Sprintf("You cannot force '%s'.", forceCmd))
-			slog.Warn("force denied: blocked command", "command", forceCmd, "by", s.player.Name)
-			return nil
+	// C treats "room" and "all" specially only for LVL_GRGOD and above.
+	// Below that level they fall through to ordinary get_char_vis lookup.
+	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "room") {
+		s.Send("Okay.\r\n")
+		for _, target := range forceTargets(s, true) {
+			forceSessionCommand(s, target, forceCmd, true)
 		}
+		return nil
 	}
-
-	if targetName == "all" {
-		// Force-all: collect sessions under RLock, then release and execute
-		// to avoid deadlock when a forced command acquires a write lock.
-		s.Send("OK.")
-		s.manager.mu.RLock()
-		var targets []*Session
-		for _, sess := range s.manager.sessions {
-			if sess.player == nil || sess.IsForced {
-				continue
-			}
-			targets = append(targets, sess)
-		}
-		s.manager.mu.RUnlock()
-
-		for _, sess := range targets {
-			sess.IsForced = true
-			sess.ForcedPrivilegeLevel = sess.player.Level
-			sess.LastForceTime = time.Now()
-			slog.Info("force all", "target", sess.player.Name, "command", forceCmd, "by", s.player.Name)
-			// Execute the forced command
-			forceArgs := strings.Fields(forceCmd)
-			if len(forceArgs) > 0 {
-				_ = ExecuteCommand(sess, forceArgs[0], forceArgs[1:])
-			}
-			sess.IsForced = false
-			sess.ForcedPrivilegeLevel = 0
+	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "all") {
+		s.Send("Okay.\r\n")
+		for _, target := range forceTargets(s, false) {
+			forceSessionCommand(s, target, forceCmd, true)
 		}
 		return nil
 	}
 
-	target := findSessionByName(s.manager, targetName)
+	// C get_char_vis checks the room first and then the global character list.
+	// ResolveCharWorld carries those visibility, self/me, abbreviation, and
+	// ordinal rules; the session lookup then selects the connected PC that C's
+	// descriptor-backed force path can command.
+	target := findForceSession(s, targetName)
 	if target == nil || target.player == nil {
 		s.Send(noPersonHere)
 		return nil
 	}
 
 	if target.player.Level >= s.player.Level {
-		s.Send("You cannot force that player.")
+		s.Send("No, no, no!\r\n")
 		return nil
 	}
 
-	// --- Safety 2: No transitive force chains ---
-	if target.IsForced {
-		s.Send("That player is already executing a forced command.")
-		slog.Warn("force denied: transitive chain blocked", "target", target.player.Name, "by", s.player.Name)
+	s.Send("Okay.\r\n")
+	forceSessionCommand(s, target, forceCmd, s.player.GetLevel() < LVL_IMPL)
+	return nil
+}
+
+func findForceSession(s *Session, name string) *Session {
+	if s == nil || s.player == nil || s.manager == nil || s.manager.world == nil {
+		return nil
+	}
+	target, ok := s.manager.world.ResolveCharWorld(s.player, name)
+	if !ok || target.Player == nil {
 		return nil
 	}
 
-	// --- Safety 4: Rate limiting (3-second cooldown per target) ---
-	if !target.LastForceTime.IsZero() && time.Since(target.LastForceTime) < 3*time.Second {
-		s.Send(fmt.Sprintf("You must wait before forcing %s again.", target.player.Name))
-		return nil
+	s.manager.mu.RLock()
+	defer s.manager.mu.RUnlock()
+	for _, sess := range s.manager.sessions {
+		if sess.player == target.Player {
+			return sess
+		}
 	}
+	return nil
+}
 
-	// --- Safety 1: Set privilege level to target's level ---
-	target.ForcedPrivilegeLevel = target.player.Level
-	target.IsForced = true
-	target.LastForceTime = time.Now()
+// forceTargets returns the connected player sessions that C's room/all loops
+// would visit. C skips any victim whose level is not below the caster's.
+func forceTargets(s *Session, sameRoom bool) []*Session {
+	s.manager.mu.RLock()
+	defer s.manager.mu.RUnlock()
 
-	// Execute the forced command on the target
-	forceArgs := strings.Fields(forceCmd)
-	var execErr error
-	if len(forceArgs) > 0 {
-		execErr = ExecuteCommand(target, forceArgs[0], forceArgs[1:])
+	targets := make([]*Session, 0, len(s.manager.sessions))
+	for _, target := range s.manager.sessions {
+		if target.player == nil || target.player.Level >= s.player.Level {
+			continue
+		}
+		if sameRoom && target.player.GetRoom() != s.player.GetRoom() {
+			continue
+		}
+		targets = append(targets, target)
 	}
+	return targets
+}
 
-	// Clear force state
-	target.IsForced = false
-	target.ForcedPrivilegeLevel = 0
-
-	slog.Info("forced", "target", target.player.Name, "command", forceCmd, "by", s.player.Name)
-	s.Send(fmt.Sprintf("Forced %s to '%s'.", target.player.Name, forceCmd))
-	return execErr
+// forceSessionCommand mirrors command_interpreter(vict, to_force). The C
+// helper is called directly, so the victim's aliases are not expanded.
+func forceSessionCommand(caster, target *Session, command string, notifyVictim bool) {
+	if notifyVictim {
+		target.Send(fmt.Sprintf("%s has forced you to '%s'.\r\n", caster.player.Name, command))
+	}
+	cmd, args := splitCommandInput(command)
+	if cmd == "" {
+		return
+	}
+	if err := executeCommand(target, cmd, args, false); err != nil {
+		// command_interpreter is void in C; errors are diagnostic only and must
+		// not create a second player-facing error response.
+		slog.Error("forced command failed", "target", target.player.Name, "command", command, "error", err)
+	}
+	slog.Info("forced", "target", target.player.Name, "command", command, "by", caster.player.Name)
 }
 
 // ---------------------------------------------------------------------------
 // shutdown — shut down the server (LVL_GRGOD)
 // ---------------------------------------------------------------------------
 func cmdWiznet(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
+	return cmdWiznetText(s, strings.Join(args, " "))
+}
+
+// cmdWiznetText ports do_wiznet() (src/act.wizard.c:1912-2034). The C
+// handler consumes the original argument remainder, so the transport path
+// supplies rawArgs to preserve internal and trailing spaces.
+func cmdWiznetText(s *Session, rawArgs string) error {
+	if s.player.GetLevel() < LVL_IMMORT && !s.player.HasPLRFlag(game.PlrChosen) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Usage: wiznet <text> | #<level> <text> | *<emote> | @")
-		return nil
-	}
-	fullArg := strings.Join(args, " ")
 
-	// wiznet @ — list gods online
-	if fullArg == "@" {
-		var online, offline strings.Builder
-		online.WriteString("Gods online:\r\n")
-		offline.WriteString("Gods offline:\r\n")
-		anyOnline := false
-		anyOffline := false
-		s.manager.mu.RLock()
-		for _, sess := range s.manager.sessions {
-			if sess.player == nil || sess.player.Level < LVL_IMMORT {
-				continue
-			}
-			// Simple distinction: all immortals in session are "online"
-			fmt.Fprintf(&online, "  %s\r\n", sess.player.Name)
-			anyOnline = true
-		}
-		s.manager.mu.RUnlock()
-		if anyOnline {
-			s.Send(online.String())
-		}
-		if anyOffline {
-			s.Send(offline.String())
-		}
+	argument := strings.TrimLeft(rawArgs, cCommandWhitespace)
+	argument = collapseDoubledDollar(argument)
+	if argument == "" {
+		s.Send("Usage: wiznet <text> | #<level> <text> | *<emotetext> |\r\n " +
+			"       wiznet @\r\n")
 		return nil
 	}
 
-	// Check for level prefix: #<level> <text>
+	emote := false
+	noChosen := false
 	level := LVL_IMMORT
-	text := fullArg
-	if len(args[0]) > 0 && args[0][0] == '#' {
-		lvlStr := args[0][1:]
-		lvl, err := strconv.Atoi(lvlStr)
-		if err == nil && lvl >= LVL_IMMORT {
-			level = lvl
-			if level > s.player.Level {
-				s.Send("You can't wizline above your own level.")
+	switch argument[0] {
+	case '*':
+		emote = true
+		fallthrough
+	case '#':
+		// C uses one_argument to decide whether the prefix is numeric, then
+		// half_chop to consume the actual first token. Those parsers differ
+		// when fill words occur, so preserve both call sites here.
+		prefix, _ := game.OneArgument(argument[1:])
+		if cIsNumber(prefix) {
+			first, remainder := wiznetHalfChop(argument[1:])
+			level = cAtoi(first)
+			if level < LVL_IMMORT {
+				level = LVL_IMMORT
+			}
+			noChosen = true
+			if level > s.player.GetLevel() {
+				s.Send("You can't wizline above your own level.\r\n")
 				return nil
 			}
-			text = strings.Join(args[1:], " ")
+			argument = remainder
+		} else if emote {
+			argument = argument[1:]
 		}
+	case '@':
+		return wiznetList(s)
+	case '\\':
+		argument = argument[1:]
 	}
 
-	// Check for emote prefix: *<text>
-	isEmote := false
-	if len(args[0]) > 0 && args[0][0] == '*' {
-		isEmote = true
-		text = strings.Join(args, " ")[1:]
-	}
-
-	if len(text) == 0 {
-		s.Send("Don't bother the gods like that!")
+	if s.player.GetFlags()&(1<<uint(game.PrfNowiz)) != 0 {
+		s.Send("You are offline!\r\n")
 		return nil
 	}
 
-	fromName := s.playerName
-	msg := fmt.Sprintf("%s: %s%s\r\n", fromName, map[bool]string{true: "<--- ", false: ""}[isEmote], text)
-	shadowMsg := fmt.Sprintf("Someone: %s%s\r\n", map[bool]string{true: "<--- ", false: ""}[isEmote], text)
+	argument = strings.TrimLeft(argument, cCommandWhitespace)
+	if argument == "" {
+		s.Send("Don't bother the gods like that!\r\n")
+		return nil
+	}
 
-	s.manager.mu.RLock()
-	for _, sess := range s.manager.sessions {
-		if sess.player == nil || sess.player.Level < level {
+	levelPrefix := ""
+	if noChosen {
+		levelPrefix = fmt.Sprintf("<%d> ", level)
+	}
+	message := fmt.Sprintf("%s: %s%s%s\r\n", s.player.GetName(), levelPrefix, wiznetEmotePrefix(emote), argument)
+	shadow := fmt.Sprintf("Someone: %s%s%s\r\n", levelPrefix, wiznetEmotePrefix(emote), argument)
+	norepeat := s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0
+
+	sessions := wiznetSessions(s.manager)
+	for _, sess := range sessions {
+		if !wiznetRecipientEligible(sess, level, noChosen) || (sess == s && norepeat) {
 			continue
 		}
-		if sess.player.Level >= level {
-			toSend := msg
-			if sess.player.Level < s.player.Level {
-				toSend = shadowMsg
+		toSend := message
+		if sess != s && s.player.GetLevel() != LVL_IMPL && !game.CanSee(sess.player, s.player) {
+			toSend = shadow
+		}
+		sess.Send(toSend)
+	}
+
+	if norepeat {
+		s.Send("Okay.\r\n")
+	}
+	return nil
+}
+
+func wiznetEmotePrefix(emote bool) string {
+	if emote {
+		return "<--- "
+	}
+	return ""
+}
+
+func wiznetHalfChop(input string) (first, remainder string) {
+	input = strings.TrimLeft(input, cCommandWhitespace)
+	if input == "" {
+		return "", ""
+	}
+	end := strings.IndexAny(input, cCommandWhitespace)
+	if end < 0 {
+		return strings.ToLower(input), ""
+	}
+	return strings.ToLower(input[:end]), strings.TrimLeft(input[end:], cCommandWhitespace)
+}
+
+func wiznetSessions(m *Manager) []*Session {
+	m.mu.RLock()
+	sessions := make([]*Session, 0, len(m.sessions))
+	for _, sess := range m.sessions {
+		sessions = append(sessions, sess)
+	}
+	m.mu.RUnlock()
+	sort.SliceStable(sessions, func(i, j int) bool {
+		return sessions[i].connectedAt.After(sessions[j].connectedAt)
+	})
+	return sessions
+}
+
+func wiznetRecipientEligible(sess *Session, level int, noChosen bool) bool {
+	if sess == nil || !sess.authenticated || sess.player == nil || !sess.hasTransport() {
+		return false
+	}
+	if sess.player.GetLevel() < level && (noChosen || !sess.player.HasPLRFlag(game.PlrChosen)) {
+		return false
+	}
+	flags := sess.player.GetFlags()
+	if flags&(1<<uint(game.PrfNowiz)) != 0 {
+		return false
+	}
+	return !sess.player.HasPLRFlag(game.PlrMailing) || !sess.player.HasPLRFlag(game.PlrWriting)
+}
+
+func wiznetList(s *Session) error {
+	var online, offline strings.Builder
+	anyOnline := false
+	anyOffline := false
+	for _, sess := range wiznetSessions(s.manager) {
+		if sess == nil || !sess.authenticated || sess.player == nil || sess.player.GetLevel() < LVL_IMMORT {
+			continue
+		}
+		if sess.player.GetFlags()&(1<<uint(game.PrfNowiz)) != 0 {
+			continue
+		}
+		if s.player.GetLevel() != LVL_IMPL && !game.CanSee(s.player, sess.player) {
+			continue
+		}
+		if sess.hasTransport() {
+			if !anyOnline {
+				online.WriteString("Gods online:\r\n")
+				anyOnline = true
 			}
-			sess.Send(toSend)
+			fmt.Fprintf(&online, "  %s", sess.player.GetName())
+			if sess.player.HasPLRFlag(game.PlrWriting) {
+				online.WriteString(" (Writing)\r\n")
+			} else if sess.player.HasPLRFlag(game.PlrMailing) {
+				online.WriteString(" (Writing mail)\r\n")
+			} else {
+				online.WriteString("\r\n")
+			}
+		} else {
+			if !anyOffline {
+				offline.WriteString("Gods offline:\r\n")
+				anyOffline = true
+			}
+			fmt.Fprintf(&offline, "  %s\r\n", sess.player.GetName())
 		}
 	}
-	s.manager.mu.RUnlock()
+	if anyOnline {
+		s.Send(online.String())
+	}
+	if anyOffline {
+		s.Send(offline.String())
+	}
 	return nil
 }
 

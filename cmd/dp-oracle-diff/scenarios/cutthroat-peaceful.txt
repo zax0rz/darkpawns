@@ -1,0 +1,51 @@
+# C-first peaceful-room vehicle for do_cutthroat (src/new_cmds.c:588-593).
+# The skill and piercing weapon are prepared before the command so the room
+# flag is the first refusal after the equipment gates.
+#
+# depth-case: cutthroat.peaceful
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 on
+spawn-mob 4300 1 8105 80
+
+[setup:oracle]
+Cutthroatpeacegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[setup:port]
+Cutthroatpeacegod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[warmup]
+skillset Cutthroatpeacegod 'cutthroat' 100
+load obj 8036
+wield dagger
+
+[probe]
+cutthroat rick
+~dpclock pulse 20

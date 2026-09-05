@@ -31,8 +31,17 @@ type mockSpellsChar struct {
 	inventory     *mockInventory
 }
 
-func (m *mockSpellsChar) GetName() string        { return m.name }
-func (m *mockSpellsChar) IsNPC() bool            { return m.npc }
+func (m *mockSpellsChar) GetName() string  { return m.name }
+func (m *mockSpellsChar) IsNPC() bool      { return m.npc }
+func (m *mockSpellsChar) GetFlags() uint64 { return m.flags }
+func (m *mockSpellsChar) HasSpellAffect(n int) bool {
+	for _, aff := range m.activeAffects {
+		if aff.SpellID == n {
+			return true
+		}
+	}
+	return false
+}
 func (m *mockSpellsChar) GetLevel() int          { return m.level }
 func (m *mockSpellsChar) GetClass() int          { return m.class }
 func (m *mockSpellsChar) GetSex() int            { return m.sex }
@@ -129,25 +138,22 @@ func TestMagAffects_Armor(t *testing.T) {
 	}
 }
 
+// forceMagAffectsSave makes the mag_affects saving throw deterministic for the
+// duration of a test: saved=true means the victim resists, saved=false means the
+// spell lands. Restores the real (RNG-backed) roll via t.Cleanup.
+func forceMagAffectsSave(t *testing.T, saved bool) {
+	t.Helper()
+	prev := magAffectsSaveRoll
+	magAffectsSaveRoll = func(interface{}, int) bool { return saved }
+	t.Cleanup(func() { magAffectsSaveRoll = prev })
+}
+
 func TestMagAffects_Sleep(t *testing.T) {
-	ch := &mockSpellsChar{level: 30}
-	victim := &mockSpellsChar{level: 10, position: 8} // standing = 8
+	forceMagAffectsSave(t, false)                     // save fails -> Sleep lands
+	ch := &mockSpellsChar{level: 30, flags: 1}        // PLR_OUTLAW
+	victim := &mockSpellsChar{level: 30, position: 8} // standing = 8
 
-	// Sleep has a saving throw. Loop up to 50 times until the save fails and spell succeeds.
-	succeeded := false
-	for i := 0; i < 50; i++ {
-		victim.activeAffects = nil
-		victim.position = 8
-		MagAffects(30, ch, victim, SpellSleep, int(SaveSpell), nil)
-		if len(victim.activeAffects) > 0 {
-			succeeded = true
-			break
-		}
-	}
-
-	if !succeeded {
-		t.Fatal("failed to land Sleep spell after 50 retries")
-	}
+	MagAffects(30, ch, victim, SpellSleep, int(SaveSpell), nil)
 
 	if len(victim.activeAffects) != 1 {
 		t.Fatalf("expected 1 affect on victim, got %d", len(victim.activeAffects))
@@ -161,24 +167,27 @@ func TestMagAffects_Sleep(t *testing.T) {
 	}
 }
 
+func TestMagAffects_Sleep_SavedResists(t *testing.T) {
+	forceMagAffectsSave(t, true)                      // save succeeds -> Sleep is resisted
+	ch := &mockSpellsChar{level: 30, flags: 1}        // PLR_OUTLAW
+	victim := &mockSpellsChar{level: 30, position: 8} // standing = 8
+
+	MagAffects(30, ch, victim, SpellSleep, int(SaveSpell), nil)
+
+	if len(victim.activeAffects) != 0 {
+		t.Fatalf("expected no affect on a successful save, got %d", len(victim.activeAffects))
+	}
+	if victim.position != 8 { // unchanged: still standing
+		t.Errorf("victim position = %d, want 8 (standing, unaffected)", victim.position)
+	}
+}
+
 func TestMagAffects_Poison(t *testing.T) {
+	forceMagAffectsSave(t, false) // save fails -> Poison lands
 	ch := &mockSpellsChar{level: 20}
 	victim := &mockSpellsChar{level: 10}
 
-	// Poison has a saving throw. Loop up to 50 times until the save fails and spell succeeds.
-	succeeded := false
-	for i := 0; i < 50; i++ {
-		victim.activeAffects = nil
-		MagAffects(20, ch, victim, SpellPoison, int(SaveSpell), nil)
-		if len(victim.activeAffects) > 0 {
-			succeeded = true
-			break
-		}
-	}
-
-	if !succeeded {
-		t.Fatal("failed to land Poison spell after 50 retries")
-	}
+	MagAffects(20, ch, victim, SpellPoison, int(SaveSpell), nil)
 
 	if len(victim.activeAffects) != 3 {
 		t.Fatalf("expected 3 affects on victim for Poison, got %d", len(victim.activeAffects))
@@ -273,39 +282,80 @@ func TestMagPoints(t *testing.T) {
 	}
 }
 
+// TestMagUnaffects pins mag_unaffects (magic.c:1828-1876): the cured pair for
+// the vision arm is BLINDNESS and SMOKESCREEN, unaffected victims answer
+// NOEFFECT to the caster (SILENT for heal/mass-heal, which ride along other
+// routines), and the removed affect yields "Your vision returns!".
+func victimText(m *mockSpellsChar) string {
+	if len(m.messages) == 0 {
+		return ""
+	}
+	return m.messages[0]
+}
+
 func TestMagUnaffects(t *testing.T) {
-	ch := &mockSpellsChar{}
-	victim := &mockSpellsChar{
-		activeAffects: []*engine.Affect{
-			engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 5, -2, "blind"),
-			engine.NewAffect(SpellPoison, engine.ApplyStr, 5, -2, "poison"),
-			engine.NewAffect(SpellCurse, engine.ApplyHitroll, 5, -2, "curse"),
-		},
-	}
-
-	// Remove Blindness
-	MagUnaffects(20, ch, victim, SpellCureBlind, nil)
-	for _, aff := range victim.activeAffects {
-		if aff.SpellID == SpellBlindness {
-			t.Error("SpellBlindness was not removed")
+	newVictim := func() *mockSpellsChar {
+		return &mockSpellsChar{
+			activeAffects: []*engine.Affect{
+				engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 5, -2, "blind"),
+				engine.NewAffect(SpellPoison, engine.ApplyStr, 5, -2, "poison"),
+				engine.NewAffect(SpellCurse, engine.ApplyHitroll, 5, -2, "curse"),
+			},
 		}
 	}
 
-	// Remove Poison
-	MagUnaffects(20, ch, victim, SpellRemovePoison, nil)
-	for _, aff := range victim.activeAffects {
-		if aff.SpellID == SpellPoison {
-			t.Error("SpellPoison was not removed")
-		}
-	}
+	t.Run("cures", func(t *testing.T) {
+		ch := &mockSpellsChar{}
+		victim := newVictim()
 
-	// Remove Curse
-	MagUnaffects(20, ch, victim, SpellRemoveCurse, nil)
-	for _, aff := range victim.activeAffects {
-		if aff.SpellID == SpellCurse {
-			t.Error("SpellCurse was not removed")
+		MagUnaffects(20, ch, victim, SpellCureBlind, nil)
+		for _, aff := range victim.activeAffects {
+			if aff.SpellID == SpellBlindness {
+				t.Error("SpellBlindness was not removed")
+			}
 		}
-	}
+		if got := victimText(victim); got != "Your vision returns!\r\n" {
+			t.Errorf("vision to_vict = %q, want C's 'Your vision returns!'", got)
+		}
+
+		MagUnaffects(20, ch, victim, SpellRemovePoison, nil)
+		for _, aff := range victim.activeAffects {
+			if aff.SpellID == SpellPoison {
+				t.Error("SpellPoison was not removed")
+			}
+		}
+
+		MagUnaffects(20, ch, victim, SpellRemoveCurse, nil)
+		for _, aff := range victim.activeAffects {
+			if aff.SpellID == SpellCurse {
+				t.Error("SpellCurse was not removed")
+			}
+		}
+	})
+
+	t.Run("mass heal on unblinded drinker is silent", func(t *testing.T) {
+		ch := &mockSpellsChar{}
+		victim := &mockSpellsChar{} // no affects
+		MagUnaffects(20, ch, victim, SpellMassHeal, nil)
+		if got := victimText(victim); got != "" {
+			t.Errorf("victim output = %q, want silence (guard returns before bytes)", got)
+		}
+		if got := victimText(ch); got != "" {
+			t.Errorf("caster output = %q, want silence (heal/mass-heal never NOEFFECT)", got)
+		}
+	})
+
+	t.Run("cure blind on unblinded victim answers caster NOEFFECT", func(t *testing.T) {
+		ch := &mockSpellsChar{}
+		victim := &mockSpellsChar{}
+		MagUnaffects(20, ch, victim, SpellCureBlind, nil)
+		if got := victimText(ch); got != "Nothing seems to happen.\r\n" {
+			t.Errorf("caster output = %q, want NOEFFECT", got)
+		}
+		if got := victimText(victim); got != "" {
+			t.Errorf("victim output = %q, want none", got)
+		}
+	})
 }
 
 // mockCorpse satisfies the interfaces MagSummons uses to find a corpse.

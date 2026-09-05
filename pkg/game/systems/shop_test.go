@@ -478,8 +478,8 @@ func TestShopConcurrentSell_NoOverdraw(t *testing.T) {
 // TestShopPersistence tests saving and loading shop state.
 func TestShopPersistence(t *testing.T) {
 	// Clean up shops file if it exists
-	_ = os.Remove(shopsFile)
-	defer func() { _ = os.Remove(shopsFile) }()
+	_ = os.Remove(shopsFilePath)
+	defer func() { _ = os.Remove(shopsFilePath) }()
 
 	manager := NewShopManager()
 	shop := manager.CreateShopConcrete(1001, "Test Shop", 3001)
@@ -543,8 +543,8 @@ func TestShopPersistence(t *testing.T) {
 // TestLoadShops_ClearsExistingState ensures a reload replaces stale manager
 // state rather than merging with it.
 func TestLoadShops_ClearsExistingState(t *testing.T) {
-	_ = os.Remove(shopsFile)
-	defer func() { _ = os.Remove(shopsFile) }()
+	_ = os.Remove(shopsFilePath)
+	defer func() { _ = os.Remove(shopsFilePath) }()
 
 	proto := &parser.Obj{
 		VNum:      1001,
@@ -599,5 +599,18 @@ func TestLoadShops_ClearsExistingState(t *testing.T) {
 	}
 	if loaded.Name != "Saved Shop" {
 		t.Errorf("loaded shop name = %q, want Saved Shop", loaded.Name)
+	}
+}
+
+func TestResolveShopsFile_DataDirOverride(t *testing.T) {
+	t.Setenv("DARKPAWNS_DATA_DIR", "/srv/dp-data")
+	if got, want := resolveShopsFile(), "/srv/dp-data/shops.json"; got != want {
+		t.Fatalf("override: got %q, want %q", got, want)
+	}
+}
+
+func TestResolveShopsFile_DefaultRelative(t *testing.T) {
+	if got, want := resolveShopsFile(), "./data/shops.json"; got != want {
+		t.Fatalf("default: got %q, want %q", got, want)
 	}
 }

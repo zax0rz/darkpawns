@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,6 +12,10 @@ import (
 )
 
 func cmdLevels(s *Session) error {
+	if s.isSwitched && s.switchedMob != nil {
+		s.Send("You ain't nothin' but a hound-dog.\r\n")
+		return nil
+	}
 	p := s.player
 	if p == nil {
 		return nil
@@ -33,13 +38,27 @@ func cmdAbils(s *Session) error {
 		return nil
 	}
 	s.Send("Your current ability scores:\r\n")
-	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(p.Stats.Str)))
-	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(p.Stats.Dex)))
-	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(p.Stats.Int)))
-	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(p.Stats.Wis)))
-	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(p.Stats.Con)))
-	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(p.Stats.Cha)))
+	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(cDisplayAbility(p.GetStr()))))
+	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(cDisplayAbility(p.GetDex()))))
+	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetInt()))))
+	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(cDisplayAbility(p.GetWis()))))
+	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetCon()))))
+	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(p.GetCha())))
 	return nil
+}
+
+// cDisplayAbility mirrors affect_total's player-stat normalization
+// (handler.c:352-366). C keeps these five displayed ability values in [0,18]
+// after applying equipment and spell affects; exceptional strength is carried
+// separately in GET_ADD and does not change do_abils' GET_STR output.
+func cDisplayAbility(score int) int {
+	if score < 0 {
+		return 0
+	}
+	if score > 18 {
+		return 18
+	}
+	return score
 }
 
 func cmdCoins(s *Session) error {
@@ -163,7 +182,7 @@ func cmdScore(s *Session) error {
 	// 2. HP/Mana/Move (from C line 1196)
 	manaLabel := scoreManaLabel(p.Class)
 	fmt.Fprintf(&buf, "Hit points: %d(%d)  %s points: %d(%d)  Movement points: %d(%d)\r\n",
-		p.Health, p.MaxHealth, manaLabel, p.Mana, p.MaxMana, p.Move, p.MaxMove)
+		p.GetHP(), p.GetMaxHP(), manaLabel, p.GetMana(), p.GetMaxMana(), p.GetMove(), p.GetMaxMove())
 
 	// 3. Alignment text (from C lines 1213-1238)
 	buf.WriteString(alignmentText(p.Alignment))
@@ -171,7 +190,7 @@ func cmdScore(s *Session) error {
 
 	// 4. AC text (from C lines 1240-1265). acText already returns "You are ..."
 	// sentences, so do not prepend another "You" — that produced "You You are well armored."
-	buf.WriteString(acText(p.AC))
+	buf.WriteString(acText(p.GetAC()))
 	buf.WriteString("\r\n")
 
 	// 5. Experience (from C line 1267)
@@ -255,8 +274,10 @@ func cmdScore(s *Session) error {
 		buf.WriteString(weightText + "\r\n")
 	}
 
-	// PLR_CHOSEN check (from C line 1316)
-	// Skip — PLR_CHOSEN is bit 19
+	// PLR_CHOSEN check (from C line 1316).
+	if p.HasPLRFlag(game.PlrChosen) {
+		buf.WriteString("You are a chosen of the gods.(BadMuthaFucker)\r\n")
+	}
 
 	// 16. Position (from C lines 1318-1340)
 	buf.WriteString(positionText(p.Position))
@@ -274,29 +295,29 @@ func cmdScore(s *Session) error {
 	}
 
 	// 18. Active affects (from C lines 1349-1369)
-	if p.Affects&(1<<0) != 0 { // AFF_BLIND = bit 0
+	if p.IsAffected(game.AffBlind) {
 		buf.WriteString("You have been blinded!\r\n")
 	}
 	// Check PRF_SUMMONABLE flag on Player.Flags (PRF bit 48)
 	if p.Flags&(1<<game.PrfSummonable) != 0 {
 		buf.WriteString("You are summonable by other players.\r\n")
 	}
-	// AFF_WEREWOLF = bit 32 (in C structs.h: AFF_WEREWOLF bit 32)
-	if p.Affects&(1<<32) != 0 {
+	// AFF_WEREWOLF = bit 27 (src/structs.h).
+	if p.IsAffected(game.AffWerewolf) {
 		buf.WriteString("You're a lycanthrope!\r\n")
 	}
-	// AFF_VAMPIRE = bit 33
-	if p.Affects&(1<<33) != 0 {
+	// AFF_VAMPIRE = bit 28 (src/structs.h).
+	if p.IsAffected(game.AffVampire) {
 		buf.WriteString("You're a vampire!\r\n")
 	}
 	// AFF_MOUNT — check via IsAffected or flags
 	// Source: structs.h AFF_MOUNT bit
-	if p.Affects&(1<<10) != 0 { // AFF_MOUNT is bit 10 in structs.h
+	if p.IsAffected(game.AffMount) {
 		buf.WriteString("You're mounted.\r\n")
 	}
 	// AFF_FLESH_ALTER = bit 16
-	if p.Affects&(1<<16) != 0 {
-		buf.WriteString("Your hand is a weapon!\r\n")
+	if p.IsAffected(game.AffFleshAlter) {
+		fmt.Fprintf(&buf, "Your hand is a %s!\r\n", fleshAlterWeapon(p.GetLevel()))
 	}
 
 	// 19. Spell affects list (from C lines 1371-1397)
@@ -347,8 +368,87 @@ func cmdScore(s *Session) error {
 		}
 	}
 
+	// C's second score affect pass (act.informative.c:1416-1448) reports
+	// active affect bits that are present without a matching ch->affected node.
+	// These are normally equipment/status bits; spell-backed nodes belong in
+	// the preceding list. The exclusion set is copied from the C condition.
+	var equipmentAffects []string
+	for bit, name := range scoreEquipmentAffectNames {
+		if bit == 8 || bit == 25 || bit == game.AffWerewolf || bit == game.AffMount || bit == 28 || bit == 32 {
+			continue
+		}
+		if !p.IsAffected(bit) || scoreAffectHasNode(p, bit) {
+			continue
+		}
+		equipmentAffects = append(equipmentAffects, name)
+	}
+	if len(equipmentAffects) > 0 {
+		buf.WriteString("\r\nEquipment spells affecting you:")
+		for _, name := range equipmentAffects {
+			buf.WriteString("\r\n" + name)
+		}
+		buf.WriteString("\r\n")
+	}
+
 	s.Send(buf.String())
 	return nil
+}
+
+// scoreEquipmentAffectNames mirrors C's affected_names[] table in
+// src/constants.c:646-686. The C score loop indexes this table by the C
+// affect bit, so keeping the exact order and lowercase spelling matters.
+var scoreEquipmentAffectNames = []string{
+	"blind", "invisibility", "detect alignment", "detect invisibility",
+	"detect magic", "sense life", "waterwalk", "sanctuary", "group", "curse",
+	"infravision", "poison", "protection from evil", "protection from good",
+	"sleep", "no track", "flesh alter", "dodge", "sneak", "hide", "berserk",
+	"charm", "follow", "wimpy", "kuji-kiri", "cutthroat", "fly", "werewolf",
+	"vampire", "mounted", "invulnerability", "flaming", "nothing", "haste",
+	"slow", "dream", "waterbreathe", "metalskin", "robbed",
+}
+
+func scoreAffectHasNode(p *game.Player, bit int) bool {
+	cMask := uint64(1) << uint(bit)
+	engineMask := game.AffBitToEngineFlag[bit]
+	for _, aff := range p.MasterAffects {
+		if aff != nil && (aff.Bitvector&cMask != 0 || engineMask != 0 && aff.Bitvector&engineMask != 0) {
+			return true
+		}
+	}
+	for _, aff := range p.ActiveAffects {
+		if aff != nil && (aff.Flags&cMask != 0 || engineMask != 0 && aff.Flags&engineMask != 0) {
+			return true
+		}
+	}
+	return false
+}
+
+// fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.
+func fleshAlterWeapon(level int) string {
+	switch {
+	case level <= 3:
+		return "studded wooden club"
+	case level <= 6:
+		return "razor-sharp dagger"
+	case level <= 9:
+		return "steel-shafted axe"
+	case level <= 12:
+		return "studded steel mace"
+	case level <= 15:
+		return "battle flail"
+	case level <= 18:
+		return "steel-shafted battle axe"
+	case level <= 21:
+		return "double-headed battle axe"
+	case level <= 24:
+		return "studded morning-star"
+	case level <= 27:
+		return "gleaming broad sword"
+	case level <= 29:
+		return "gleaming long sword"
+	default:
+		return "gleaming scythe"
+	}
 }
 
 func scoreManaLabel(class int) string {
@@ -372,60 +472,160 @@ func articleFor(word string) string {
 	}
 }
 
-// cmdUsersSafe replaces cmdUsers to gate IP display behind LVL_GOD+.
-// Regular immortals see name/level only; gods and above see IPs.
-func cmdUsersSafe(s *Session, args []string) error {
+const usersFormat = "format: users [-l minlevel[-maxlevel]] [-n name] [-h host] [-c classlist] [-o] [-p]\r\n"
+
+type usersOptions struct {
+	low        int
+	high       int
+	name       string
+	host       string
+	classMask  int64
+	playing    bool
+	deadweight bool
+}
+
+func parseUsersArgs(args []string) (usersOptions, bool) {
+	opts := usersOptions{high: game.LVL_IMPL}
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if len(arg) < 2 || arg[0] != '-' {
+			return usersOptions{}, false
+		}
+		switch arg[1] {
+		case 'o', 'k':
+			// C sets outlaws here, but never consumes that local in the
+			// descriptor loop; its observable effect is the same as -p.
+			opts.playing = true
+		case 'p':
+			opts.playing = true
+		case 'd':
+			opts.deadweight = true
+		case 'l', 'n', 'h', 'c':
+			if i+1 >= len(args) {
+				return usersOptions{}, false
+			}
+			i++
+			value := args[i]
+			switch arg[1] {
+			case 'l':
+				parts := strings.SplitN(value, "-", 2)
+				low, err := strconv.Atoi(parts[0])
+				if err != nil {
+					return usersOptions{}, false
+				}
+				opts.low = low
+				if len(parts) == 2 {
+					high, err := strconv.Atoi(parts[1])
+					if err != nil {
+						return usersOptions{}, false
+					}
+					opts.high = high
+				}
+			case 'n':
+				opts.name = value
+			case 'h':
+				opts.host = value
+			case 'c':
+				value = strings.ToLower(value)
+				for i := 0; i < len(value); i++ {
+					opts.classMask |= game.FindClassBitvector(value[i])
+				}
+			}
+		default:
+			return usersOptions{}, false
+		}
+	}
+	return opts, true
+}
+
+func usersHost(s *Session) string {
+	host := s.RemoteIP()
+	if ip := net.ParseIP(host).To4(); ip != nil {
+		return fmt.Sprintf("%03d.%03d.%03d.%03d", ip[0], ip[1], ip[2], ip[3])
+	}
+	if host != "" {
+		return host
+	}
+	return "Hostname unknown"
+}
+
+// cmdUsers ports act.informative.c do_users. The Go session map contains only
+// authenticated playing descriptors, so the menu/deadweight branches have no
+// rows to emit; the descriptor number, C host spelling, wall-clock login time,
+// and table layout remain visible exactly as they are in C.
+func cmdUsers(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.sendText("Huh?!?")
 		return nil
 	}
 
-	showIPs := s.player.Level >= LVL_GOD
-
-	filter := ""
-	if len(args) > 0 {
-		filter = strings.ToLower(args[0])
+	opts, ok := parseUsersArgs(args)
+	if !ok {
+		s.sendText(usersFormat)
+		return nil
 	}
 
 	var buf strings.Builder
-	if showIPs {
-		fmt.Fprintf(&buf, "%-15s %-6s %-20s\n", "Name", "Level", "Remote Addr")
-		buf.WriteString(strings.Repeat("-", 45) + "\n")
-	} else {
-		fmt.Fprintf(&buf, "%-15s %-6s\n", "Name", "Level")
-		buf.WriteString(strings.Repeat("-", 25) + "\n")
-	}
+	buf.WriteString("Num Class   Name         State          Idl Login@   Site\r\n")
+	buf.WriteString("--- ------- ------------ -------------- --- -------- ------------------------\r\n")
 
 	count := 0
 	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
+		sessions = append(sessions, sess)
+	}
+	sort.SliceStable(sessions, func(i, j int) bool {
+		if sessions[i].connectionNumber != sessions[j].connectionNumber {
+			return sessions[i].connectionNumber > sessions[j].connectionNumber
+		}
+		return sessions[i].playerName > sessions[j].playerName
+	})
+	for _, sess := range sessions {
 		if sess.player == nil {
 			continue
 		}
-		name := sess.player.Name
-		level := sess.player.GetLevel()
-
-		if filter != "" && !strings.Contains(strings.ToLower(name), filter) {
+		player := sess.player
+		level := player.GetLevel()
+		if opts.name != "" && !strings.EqualFold(player.Name, opts.name) {
 			continue
 		}
-
-		if showIPs {
-			ip := "unknown"
-			if sess.request != nil {
-				ip = sess.request.RemoteAddr
-				if fwd := sess.request.Header.Get("X-Forwarded-For"); fwd != "" {
-					ip = fwd
-				}
-			}
-			fmt.Fprintf(&buf, "%-15s %-6d %-20s\n", name, level, ip)
-		} else {
-			fmt.Fprintf(&buf, "%-15s %-6d\n", name, level)
+		if opts.host != "" && !strings.Contains(usersHost(sess), opts.host) {
+			continue
 		}
+		if level < opts.low || level > opts.high {
+			continue
+		}
+		if opts.classMask != 0 && opts.classMask&(1<<uint(player.GetClass())) == 0 {
+			continue
+		}
+		if !game.CanSee(s.player, player) || s.player.GetInvisLevel() > s.player.GetLevel() {
+			continue
+		}
+		if opts.deadweight {
+			// There are no non-playing descriptors in Manager.sessions.
+			continue
+		}
+		classAbbr := "--"
+		if class := player.GetClass(); class >= 0 && class < len(game.ClassAbbrevs) {
+			classAbbr = game.ClassAbbrevs[class]
+		}
+		idle := ""
+		if player.GetLevel() < s.player.GetLevel() || s.player.GetLevel() == game.LVL_IMPL {
+			idle = fmt.Sprintf("%3d", player.GetIdleTimer()*game.SECS_PER_MUD_HOUR/60)
+		}
+		loginAt := sess.connectedAt.Format("15:04:05")
+		state := "Playing"
+		if sess.isSwitched {
+			state = "Switched"
+		}
+		fmt.Fprintf(&buf, "%3d [%-2d %s] %-12s %-14s %-3s %-8s [%s]\r\n",
+			sess.connectionNumber, level, classAbbr, player.Name, state, idle, loginAt, usersHost(sess))
 		count++
 	}
 	s.manager.mu.RUnlock()
 
-	fmt.Fprintf(&buf, "\n%d player(s) connected.\n", count)
+	fmt.Fprintf(&buf, "\r\n%d visible sockets connected.\r\n", count)
 	s.sendText(buf.String())
 	return nil
 }
@@ -773,16 +973,51 @@ func cmdWho(s *Session, args []string) error {
 
 // cmdWhere lists all online players and their locations.
 // Source: act.informative.c do_where() lines 2244-2307
-// TODO(domain7b): the critical mortal vnum exposure is closed by the
-// LVL_IMMORT command gate; the optional immortal target-search and C visibility
-// residual still belongs here.
-func cmdWhere(s *Session) error {
+// The critical mortal vnum exposure is closed by the LVL_IMMORT command gate;
+// the optional immortal target-search branch mirrors C's one_argument path.
+func cmdWhere(s *Session, args []string) error {
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
 		sessions = append(sessions, sess)
 	}
 	s.manager.mu.RUnlock()
+	// C iterates descriptor_list, which prepends new connections — the most
+	// recently connected player is listed first (same order cmdWhere's who
+	// sibling uses).
+	sort.SliceStable(sessions, func(i, j int) bool {
+		return sessions[i].connectedAt.After(sessions[j].connectedAt)
+	})
+
+	// C's one_argument branch searches the visible character list by name
+	// (act.informative.c:2283-2301); it does not interpret the argument as a
+	// zone filter. Keep the optional argument's player-facing format separate
+	// from the no-argument Players page.
+	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
+		query := strings.ToLower(strings.TrimSpace(args[0]))
+		count := 0
+		var out strings.Builder
+		for _, sess := range sessions {
+			if sess.player == nil || !strings.HasPrefix(strings.ToLower(sess.player.Name), query) {
+				continue
+			}
+			room, ok := s.manager.world.GetRoom(sess.player.GetRoom())
+			if !ok || !game.CanSee(s.player, sess.player) {
+				continue
+			}
+			count++
+			fmt.Fprintf(&out, "M%3d. %-25s - [%5d]%s\r\n", count, sess.player.Name, room.VNum, room.Name)
+			if count >= 30 {
+				break
+			}
+		}
+		if count == 0 {
+			s.sendText("Couldn't find any such thing.\r\n")
+		} else {
+			s.sendText(out.String())
+		}
+		return nil
+	}
 
 	out := "Players\n-------\n"
 	found := false
@@ -855,8 +1090,15 @@ const helpSeparator = helpRed +
 // "did you mean" surface are all removed — a command with no help entry is, per
 // C, "There is no help on:".
 func cmdHelp(s *Session, args []string) error {
+	return cmdHelpText(s, strings.Join(args, " "))
+}
+
+// cmdHelpText is the transport-aware do_help path. C's handler receives the
+// original argument remainder after skip_spaces, so the lookup and miss line
+// retain internal whitespace instead of rebuilding it from tokenized words.
+func cmdHelpText(s *Session, argument string) error {
 	// no argument → page_string the help screen (C: page_string(ch->desc, help, 0)).
-	if len(args) == 0 {
+	if argument == "" {
 		PageString(s, s.manager.world.HelpScreen)
 		return nil
 	}
@@ -868,7 +1110,6 @@ func cmdHelp(s *Session, args []string) error {
 		return nil
 	}
 
-	argument := strings.Join(args, " ")
 	entry := game.SearchHelp(table, argument)
 	if entry == nil {
 		// C: "There is no help on: %s\r\n" + mudlog + append to misc/help file.
@@ -930,7 +1171,9 @@ func cmdWhois(s *Session, args []string) error {
 		s.sendText("For whom do you wish to search?\r\n")
 		return nil
 	}
-	targetName := strings.Join(args, " ")
+	// C do_whois uses one_argument: skip leading fill words, select the first
+	// non-fill token, and ignore the remainder (new_cmds.c:1407).
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 
 	// Check online players first
 	for _, p := range s.manager.world.AllPlayers() {

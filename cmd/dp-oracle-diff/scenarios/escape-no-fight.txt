@@ -1,0 +1,75 @@
+# C-first escape no-fight vehicle (src/interpreter.c:434;
+# src/act.offensive.c:1001-1033). The God grants the mortal the ordinary
+# retreat skill, but the mortal is not fighting, so the class-specific
+# no-fight response is reached after the skill gate and before RNG.
+
+# depth-case: escape.no-fight
+# depth-case: escape.argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Escapeconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Escapeconfig
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Escapenofight
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Escapenofight
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Escapenofight 'retreat' 75
+
+[probe:actor]
+escape nonsense extra

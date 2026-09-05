@@ -1,0 +1,78 @@
+# C-first do_neckbreak movement gate (src/act.offensive.c:1342-1351). A God
+# lowers the learned actor's move pool to the exact below-51 boundary.
+
+# depth-case: neckbreak.low-move
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Nbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nbgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Nblow
+Y
+lowpass
+lowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Nblow
+y
+lowpass
+lowpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Nblow 'neckbreak' 100
+set Nblow move 50
+teleport Nblow 8162
+
+[probe:actor]
+neckbreak trainee

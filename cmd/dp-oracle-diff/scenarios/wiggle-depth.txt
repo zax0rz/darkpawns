@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:826;
+# src/act.social.c:102-127; lib/misc/socials:999-1002). The authored wiggle
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path.
+
+# depth-case: wiggle.no-argument
+# depth-case: wiggle.typed-target-ignored
+# depth-case: wiggle.missing-target-ignored
+# depth-case: wiggle.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wiggleactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wiggleactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wigglepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wigglepeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Wigglepeer 8162
+
+[probe]
+wiggle
+wiggle Wigglepeer
+wiggle Nobody
+wiggle Wiggleactor

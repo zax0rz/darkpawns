@@ -1,0 +1,65 @@
+# C-first vehicle for do_syslog. The Implementor actor walks every log level
+# through status and mutation paths, including C's case-insensitive prefixes,
+# one_argument trailing-word boundary, and invalid selector usage.
+
+# depth-case: syslog.no-argument
+# depth-case: syslog.brief-prefix
+# depth-case: syslog.query-brief
+# depth-case: syslog.full-brief
+# depth-case: syslog.normal-transition
+# depth-case: syslog.query-normal-after-brief
+# depth-case: syslog.complete-prefix
+# depth-case: syslog.query-complete
+# depth-case: syslog.off-prefix
+# depth-case: syslog.query-off-again
+# depth-case: syslog.invalid
+# depth-case: syslog.trailing-words
+# depth-case: syslog.query-complete-again
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Syslogdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Syslogdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+syslog
+syslog b
+syslog
+syslog brief
+syslog normal
+syslog
+syslog c
+syslog
+syslog o
+syslog
+syslog nonsense
+syslog Complete trailing words are ignored
+syslog

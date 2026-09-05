@@ -10,7 +10,7 @@ import (
 // ---------------------------------------------------------------------------
 
 // cWearToGoSlot maps each C WEAR_ index to the Go EquipmentSlot that stores
-// that item. A negative value means the C position has no Go equivalent.
+// that item, including C's extended throw/ablegs/face/hover positions.
 var cWearToGoSlot = []EquipmentSlot{
 	0:  SlotLight,
 	1:  SlotFingerR,
@@ -30,22 +30,18 @@ var cWearToGoSlot = []EquipmentSlot{
 	15: SlotWristL,
 	16: SlotWield,
 	17: SlotHold,
-	18: -1, // THROW — no Go slot
-	19: -1, // ABLEGS — no Go slot
-	20: -1, // FACE — no Go slot
-	21: -1, // HOVER — no Go slot
+	18: SlotThrow,
+	19: SlotAblegs,
+	20: SlotFace,
+	21: SlotHover,
 }
 
 // cWearSlot maps a C WEAR_ position to the Go EquipmentSlot used for storage.
-// THROW, ABLEGS, FACE, and HOVER do not yet have Go storage slots.
 func cWearSlot(where int) (EquipmentSlot, bool) {
 	if where < 0 || where >= len(cWearToGoSlot) {
 		return 0, false
 	}
 	slot := cWearToGoSlot[where]
-	if slot < 0 {
-		return 0, false
-	}
 	return slot, true
 }
 
@@ -85,9 +81,6 @@ func (w *World) DoEquipment(ch *Player) {
 	found := false
 	for i := 0; i < len(cWearToGoSlot); i++ {
 		slot := cWearToGoSlot[i]
-		if slot < 0 {
-			continue
-		}
 		item, ok := ch.Equipment.GetItemInSlot(slot)
 		if !ok || item == nil {
 			continue
@@ -96,7 +89,7 @@ func (w *World) DoEquipment(ch *Player) {
 		b.WriteString(cWearWhere[i])
 		if chCanSeeObj(ch, item) {
 			b.WriteString(item.GetShortDesc())
-			b.WriteString(coloredObjectVisibleFlags(ch, item))
+			b.WriteString(coloredEquipmentObjectFlags(ch, item, i))
 			b.WriteString("\r\n")
 		} else {
 			b.WriteString("Something.\r\n")
@@ -109,18 +102,60 @@ func (w *World) DoEquipment(ch *Player) {
 	ch.SendMessage(b.String())
 }
 
+// coloredEquipmentObjectFlags adds the equipment-only covered annotation.
+// C's show_obj_to_char receives the wearer's worn_on position and marks an
+// item covered when another equipped item hides that position.
+func coloredEquipmentObjectFlags(ch *Player, object *ObjectInstance, cPos int) string {
+	flags := coloredObjectVisibleFlags(ch, object)
+	if !equipmentPositionCovered(ch, cPos) {
+		return flags
+	}
+	if flags == "" {
+		return " (covered)"
+	}
+	return flags + " (covered)"
+}
+
+func equipmentPositionCovered(ch *Player, cPos int) bool {
+	if ch == nil || ch.Equipment == nil {
+		return false
+	}
+	var coverSlot EquipmentSlot
+	switch cPos {
+	case eqWearFingerR, eqWearFingerL:
+		coverSlot = SlotHands
+	case eqWearBody:
+		coverSlot = SlotAbout
+	case eqWearLegs:
+		coverSlot = SlotAblegs
+	default:
+		return false
+	}
+	item, ok := ch.Equipment.GetItemInSlot(coverSlot)
+	return ok && item != nil
+}
+
 // DoInventory prints the player's inventory with C's object-clumping format.
 // Source: C do_inventory() + list_obj_to_char() + oc_show_list() (mode 15)
 func (w *World) DoInventory(ch *Player) {
 	var b strings.Builder
 	b.WriteString("You are carrying:\r\n")
 
-	if ch.Inventory == nil || ch.Inventory.GetItemCount() == 0 {
-		b.WriteString("Nothing.\r\n")
-		ch.SendMessage(b.String())
-		return
+	var items []*ObjectInstance
+	if ch.Inventory != nil {
+		items = ch.Inventory.Items
 	}
+	b.WriteString(w.renderObjectListMode15(ch, items))
+	ch.SendMessage(b.String())
+}
 
+// renderObjectListMode15 renders a slice of objects the way C list_obj_to_char
+// does for mode 15 (short desc, weights, wide list, indent, Num/Item/
+// Encumbrance header). An empty/all-invisible list renders "Nothing.". Grouping
+// and reverse discovery order mirror oc_add_front + oc_show_list. This block is
+// sent raw (like C send_to_char), so it is NOT routed through the capitalizing
+// act() path used for ordinary observation lines.
+func (w *World) renderObjectListMode15(ch *Player, items []*ObjectInstance) string {
 	type group struct {
 		line  string
 		count int
@@ -129,7 +164,7 @@ func (w *World) DoInventory(ch *Player) {
 	groups := make(map[string]*group)
 	order := make([]string, 0)
 
-	for _, item := range ch.Inventory.Items {
+	for _, item := range items {
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
@@ -146,11 +181,10 @@ func (w *World) DoInventory(ch *Player) {
 	}
 
 	if len(groups) == 0 {
-		b.WriteString("Nothing.\r\n")
-		ch.SendMessage(b.String())
-		return
+		return "Nothing.\r\n"
 	}
 
+	var b strings.Builder
 	// mode = 15 -> short descr, show weights, wide list, indent, header
 	b.WriteString("\r\n Num  Item   " + strings.Repeat(" ", 51) + "Encumbrance\r\n")
 	b.WriteString("-------------------------------------------------------------------------------\r\n")
@@ -162,7 +196,7 @@ func (w *World) DoInventory(ch *Player) {
 		b.WriteString(formatOCShowListLine(g.line, g.count, g.item.GetTotalWeight(), g.item, ch))
 	}
 
-	ch.SendMessage(b.String())
+	return b.String()
 }
 
 // formatOCShowListLine renders one entry the way C oc_show_list() does for

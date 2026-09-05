@@ -1,0 +1,106 @@
+# C-first glare/do_action sleeping-victim vehicle (src/interpreter.c:465;
+# src/act.social.c:102-151; lib/misc/socials:305-314). Glare's minimum victim
+# position is 5, so a sleeping visible peer must receive the exact C position
+# rejection and no audience act.
+
+# depth-case: glare.target-position-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Glaresleepactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Glaresleepactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Glaresleeptarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Glaresleeptarget
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Glaresleepobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Glaresleepobs
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Glaresleeptarget 8162
+teleport Glaresleepobs 8162
+force Glaresleeptarget sleep
+
+[probe]
+glare Glaresleeptarget

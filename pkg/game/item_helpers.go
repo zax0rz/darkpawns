@@ -167,7 +167,7 @@ const (
 	eqWearWristL
 	eqWearWield
 	eqWearHold
-	eqWearHold2
+	eqWearThrow
 	eqWearAblegs
 	eqWearFace
 	eqWearHover
@@ -284,8 +284,10 @@ func wearBitForPosition(where int) int {
 		return 1 << 12 // wrist
 	case eqWearWield:
 		return 1 << 13 // wield
-	case eqWearHold, eqWearHold2:
+	case eqWearHold:
 		return 1 << 14 // hold
+	case eqWearThrow:
+		return 1 << 15 // throw
 	case eqWearAblegs:
 		return 1 << 16 // ablegs
 	case eqWearFace:
@@ -313,23 +315,13 @@ func canWearObject(obj *ObjectInstance, where int) bool {
 	return wearMask&bit != 0
 }
 
-// isname checks if str matches keywords in a space-separated namelist
-func isname(str, namelist string) bool {
-	if namelist == "" {
-		return false
-	}
-	words := strings.Fields(namelist)
-	for _, w := range words {
-		if strings.Contains(strings.ToLower(w), strings.ToLower(str)) {
-			return true
-		}
-	}
-	return false
-}
-
 // findAllDots returns the dot mode for an argument
+// findAllDots mirrors C find_all_dots (handler.c:1567): "all" is FIND_ALL,
+// anything beginning "all." (including a bare "all." with an empty keyword) is
+// FIND_ALLDOT, everything else is FIND_INDIV. C strips the "all." prefix in
+// place; callers here take the remainder with TrimPrefix.
 func findAllDots(arg string) int {
-	if arg == "all" || arg == "all." {
+	if arg == "all" {
 		return findAll
 	}
 	if strings.HasPrefix(arg, "all.") {
@@ -361,8 +353,14 @@ func (w *World) FindPlayerInRoom(vnum int, name string) *Player {
 
 // FindMobInRoom finds a mob by name in a specific room
 func (w *World) FindMobInRoom(vnum int, name string) *MobInstance {
+	if strings.TrimSpace(name) == "" {
+		return nil
+	}
 	for _, m := range w.GetMobsInRoom(vnum) {
-		if strings.HasPrefix(strings.ToLower(m.GetName()), strings.ToLower(name)) {
+		// C get_char_room_vis() matches the mob's keyword namelist, not the
+		// rendered short description (handler.c:1276-1300). The distinction
+		// matters for authored aliases such as "elemental" and "servant".
+		if isnameWithAbbrevs(name, charKeywords(m)) {
 			return m
 		}
 	}

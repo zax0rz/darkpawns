@@ -859,8 +859,8 @@ func TestKillPayout_NonExistentTarget_SkillError(t *testing.T) {
 		t.Fatalf("CmdBackstab should not return error for missing target: %v", err)
 	}
 
-	if !sess.hasMessage("don't seem to be here") {
-		t.Error("expected 'not here' message for nonexistent target")
+	if !sess.hasMessage("Backstab who?") {
+		t.Error("expected C's Backstab who? message for nonexistent target")
 	}
 }
 

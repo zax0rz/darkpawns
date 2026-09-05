@@ -1,0 +1,88 @@
+# depth-case: mob.janitor-entry-gates
+# depth-case: mob.janitor-trash-predicate
+# depth-case: mob.janitor-trash-pickup
+# depth-case: mob.janitor-inventory-transfer
+# depth-case: mob.janitor-pulse-dispatch
+# C-first vehicle for SPECIAL(janitor). Mob 8061 is the first active
+# registration. This vehicle exercises the assigned mob with a takeable bread
+# object and a native corpse; the autonomous pulse is retained as a live
+# dispatch attempt, but the native janitor did not remain in-room before the
+# probe in either registration vehicle, so it is not claimed as oracle-green.
+# C path: src/mobact.c:68-93 -> src/interpreter.c:1407-1456 ->
+# src/spec_procs.c:750-768; object transfer is src/handler.c:559-574.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8061 99 8105 80
+spawn-mob 16303 1 8105 80
+strip-mob-script 8061
+replace-room-exits 8105 none
+
+[setup:oracle]
+JanitorGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+JanitorGod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+JanitorPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+JanitorPeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport JanitorPeer 8105
+kill trainee
+load obj 8010
+drop bread
+
+[probe]
+~dpclock pulse 40

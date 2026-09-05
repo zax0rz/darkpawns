@@ -101,8 +101,8 @@ func TestBoardSystem_InitAndWrite(t *testing.T) {
 
 	bs.FinalizeBoardWrite(magic, ch)
 
-	if !strings.Contains(ch.lastMessage(), "Message written.") {
-		t.Fatalf("expected 'Message written.' message, got %q", ch.lastMessage())
+	if strings.Contains(ch.allMessages(), "Message written.") {
+		t.Fatalf("C board save has no completion acknowledgement, got %q", ch.allMessages())
 	}
 
 	// Verify the message is readable.
@@ -154,6 +154,35 @@ func TestBoardSystem_RemoveMsg_LevelCheck(t *testing.T) {
 	}
 }
 
+func TestBoardSystem_RemoveMsg_ReadLvl(t *testing.T) {
+	bs := InitBoards(t.TempDir())
+	// Board 3 (immort) has ReadLvl=50, RemoveLvl=61.
+	poster := newMockBoardPlayer("Dave", 60, 4001)
+	reader := newMockBoardPlayer("Eve", 1, 4001)
+
+	magic := bs.WriteMessage(3, poster, "secret news")
+	bs.AppendBoardLine(magic, "body text")
+	bs.FinalizeBoardWrite(magic, poster)
+
+	// A player below ReadLvl must be rejected on permission grounds, never
+	// given a message-existence hint.
+	if !bs.RemoveMsg(3, reader, "1") {
+		t.Fatal("RemoveMsg = false, want true")
+	}
+	if !strings.Contains(reader.lastMessage(), "holy words") {
+		t.Fatalf("expected ReadLvl rejection, got %q", reader.lastMessage())
+	}
+	if strings.Contains(reader.allMessages(), "empty") || strings.Contains(reader.allMessages(), "imagination") {
+		t.Fatalf("ReadLvl rejection must not leak message count, got %q", reader.allMessages())
+	}
+
+	// Message should still be present.
+	out := newMockBoardPlayer("Out", 60, 4001)
+	if !bs.DisplayMsg(3, out, "1") {
+		t.Fatal("DisplayMsg after ReadLvl-rejected remove = false, want true")
+	}
+}
+
 func TestBoardSystem_RemoveMsg_RoomEcho(t *testing.T) {
 	bs := InitBoards(t.TempDir())
 	world := &mockBoardWorld{}
@@ -165,6 +194,9 @@ func TestBoardSystem_RemoveMsg_RoomEcho(t *testing.T) {
 	magic := bs.WriteMessage(0, poster, "removable")
 	bs.AppendBoardLine(magic, "body")
 	bs.FinalizeBoardWrite(magic, poster)
+	world.mu.Lock()
+	world.echoes = nil
+	world.mu.Unlock()
 
 	if !bs.RemoveMsg(0, remover, "1") {
 		t.Fatal("RemoveMsg = false, want true")
@@ -175,8 +207,28 @@ func TestBoardSystem_RemoveMsg_RoomEcho(t *testing.T) {
 	if len(world.echoes) != 1 {
 		t.Fatalf("expected 1 room echo, got %d", len(world.echoes))
 	}
-	if !strings.Contains(world.echoes[0], "removed a message") {
+	if !strings.Contains(world.echoes[0], "just removed message 1.") {
 		t.Fatalf("expected room echo about removed message, got %q", world.echoes[0])
+	}
+}
+
+func TestBoardSystem_RemoveMsg_ActivePost(t *testing.T) {
+	bs := InitBoards(t.TempDir())
+	poster := newMockBoardPlayer("Frank", 1, 7001)
+	remover := newMockBoardPlayer("Frank", 1, 7001)
+
+	magic := bs.WriteMessage(0, poster, "in progress")
+	if bs.RemoveMsg(0, remover, "1") == false {
+		t.Fatal("RemoveMsg(active) = false, want true")
+	}
+	if !strings.Contains(remover.lastMessage(), "author is finished") {
+		t.Fatalf("expected active-post rejection, got %q", remover.lastMessage())
+	}
+
+	bs.AppendBoardLine(magic, "body")
+	bs.FinalizeBoardWrite(magic, poster)
+	if !bs.RemoveMsg(0, remover, "1") {
+		t.Fatal("RemoveMsg(after finalize) = false, want true")
 	}
 }
 
@@ -292,5 +344,34 @@ func TestBoardSystem_LoadTruncatedFile(t *testing.T) {
 	}
 	if slotA == slotB {
 		t.Fatalf("slot double-booking: msgIndex[0][0].SlotNum == msgIndex[0][1].SlotNum == %d", slotA)
+	}
+}
+
+func TestBoardSystem_SaveFailureNotifiesPlayer(t *testing.T) {
+	blocker := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(blocker, []byte("blocker"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// BasePath is a regular file, so any save under it must fail.
+	bs := InitBoards(blocker)
+	ch := newMockBoardPlayer("Ivy", 10, 8001)
+
+	magic := bs.WriteMessage(0, ch, "unsaved")
+	if magic != BoardMagic {
+		t.Fatalf("WriteMessage magic = %d, want %d", magic, BoardMagic)
+	}
+	bs.AppendBoardLine(magic, "body")
+	bs.FinalizeBoardWrite(magic, ch)
+
+	if strings.Contains(ch.lastMessage(), "Message written.") {
+		t.Fatalf("player told 'Message written.' despite save failure, got %q", ch.lastMessage())
+	}
+	if !strings.Contains(ch.lastMessage(), "saved") {
+		t.Fatalf("expected save failure notice, got %q", ch.lastMessage())
+	}
+
+	remover := newMockBoardPlayer("Ivy", 10, 8001)
+	if !bs.RemoveMsg(0, remover, "1") {
+		t.Fatal("RemoveMsg = false, want true")
 	}
 }

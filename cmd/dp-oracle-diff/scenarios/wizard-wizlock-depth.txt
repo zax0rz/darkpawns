@@ -1,0 +1,63 @@
+# C-first vehicle for do_wizlock. The Implementor actor walks the integer
+# restriction state through open, closed-to-new-players, and level-qualified
+# modes, then exercises C's atoi prefix behavior and invalid bounds.
+
+# depth-case: wizlock.query-open
+# depth-case: wizlock.set-level-one
+# depth-case: wizlock.query-level-one
+# depth-case: wizlock.set-level-two
+# depth-case: wizlock.query-level-two
+# depth-case: wizlock.set-open
+# depth-case: wizlock.query-open-again
+# depth-case: wizlock.atoi-nonnumeric
+# depth-case: wizlock.negative-invalid
+# depth-case: wizlock.above-own-level-invalid
+# depth-case: wizlock.one-argument
+# depth-case: wizlock.query-level-three
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizlockdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizlockdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+wizlock
+wizlock 1
+wizlock
+wizlock 2
+wizlock
+wizlock 0
+wizlock
+wizlock nonsense
+wizlock -1
+wizlock 999
+wizlock 3 trailing words are ignored
+wizlock

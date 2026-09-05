@@ -1,0 +1,51 @@
+# C-first depth vehicle for do_gen_ps(SCMD_CREDITS) at
+# src/interpreter.c:396 and src/act.informative.c:2117-2130. The unrestricted
+# command serves the boot-cached lib/text/credits string through page_string;
+# this authored 32-line file spans two PAGE_LENGTH=22 pages. RETURN completes
+# the first page and the second invocation proves trailing arguments are
+# ignored before a normal command confirms the pager has exited.
+
+# depth-case: credits.entry-gate
+# depth-case: credits.static-page
+# depth-case: credits.arguments-ignored
+# depth-case: credits.pager-navigation
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Creditsdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Creditsdepth
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+credits
+<ENTER>
+credits trailing words are ignored
+<ENTER>
+score

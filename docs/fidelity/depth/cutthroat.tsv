@@ -1,0 +1,17 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_cutthroat	cutthroat	cutthroat.no-skill	D1	command	unit-green	TestCmdCutthroat_NoSkill	interpreter.c:403; new_cmds.c:559-562	GET_SKILL is checked before argument parsing and preserves the cutthroat-specific \n\r terminator.
+do_cutthroat	cutthroat	cutthroat.no-argument	D1	command	oracle-green	cutthroat-depth	interpreter.c:403; new_cmds.c:559-568	A skilled caller with no argument receives the exact target prompt before any equipment or RNG branch.
+do_cutthroat	cutthroat	cutthroat.target-missing	D1	command	oracle-green	cutthroat-depth	new_cmds.c:567-571	The first target token must resolve through get_char_room_vis or C emits Cut what throat where? without a draw.
+do_cutthroat	cutthroat	cutthroat.self-target	D1	command	oracle-green	cutthroat-depth	new_cmds.c:572-576	A visible self-target reaches the exact That would be bad. refusal before weapon, room, or RNG work.
+do_cutthroat	cutthroat	cutthroat.no-wield	D1	command	oracle-green	cutthroat-depth	new_cmds.c:577-581	A valid target without WEAR_WIELD receives the exact weapon gate.
+do_cutthroat	cutthroat	cutthroat.non-piercing	D1	command	oracle-green	cutthroat-depth	new_cmds.c:581-585	A wielded weapon whose value[3] is not 11 reaches the exact dagger-family gate.
+do_cutthroat	cutthroat	cutthroat.first-token-target	D2	command	oracle-green	cutthroat-depth	new_cmds.c:564-571; interpreter.c:1265-1283	one_argument runs before get_char_room_vis, so trailing words do not alter the selected victim.
+do_cutthroat	cutthroat	cutthroat.mounted	D1	command	oracle-green	cutthroat-mounted	new_cmds.c:584-588	The mounted refusal follows weapon validation and emits Dismount first! with C line endings.
+do_cutthroat	cutthroat	cutthroat.peaceful	D1	command	oracle-green	cutthroat-peaceful	new_cmds.c:588-593	The peaceful-room refusal follows the mount gate and precedes low-level protection and RNG.
+do_cutthroat	cutthroat	cutthroat.low-level-player	D2	command	oracle-green	cutthroat-low-level	new_cmds.c:594-599	A non-NPC victim at level 10 or below receives Ancient forces protect without combat or a draw.
+do_cutthroat	cutthroat	cutthroat.existing-affect	D2	state	unit-green	TestDoCutthroatGateOrder	new_cmds.c:600-604	AFF_CUTTHROAT blocks a second attempt after the low-level-PC gate.
+do_cutthroat	cutthroat	cutthroat.fighting	D1	state	unit-green	TestDoCutthroatGateOrder	new_cmds.c:605-609	Either the actor or victim already fighting reaches the close-enough refusal before RNG.
+do_cutthroat	cutthroat	cutthroat.immortal-caster	D5	state	oracle-green	cutthroat-depth	new_cmds.c:611-616	The immortal attacker override sets prob=102, forcing the success arm after the ordinary 1..101 draw.
+do_cutthroat	cutthroat	cutthroat.immortal-target	D5	state	unit-green	TestDoCutthroatImmortalTargetOverridesCaster	new_cmds.c:611-616	The later victim-level override sets prob=-1 and wins over the immortal-caster success override.
+do_cutthroat	cutthroat	cutthroat.success	D4	state	oracle-green	cutthroat-depth	new_cmds.c:617-650; fight.c:1023-1092; lib/misc/messages:322-333	Success installs duration level*2/APPLY_HITROLL -2/AFF_CUTTHROAT, improves before damage, applies level/2 damage through set 143, and waits two violence pulses.
+do_cutthroat	cutthroat	cutthroat.failure	D5	state	oracle-green	cutthroat-failure	new_cmds.c:619-655; fight.c:1763-1888	Failure emits the literal lunge preamble, then calls ordinary hit with the wielded weapon, and waits two violence pulses.

@@ -1,0 +1,81 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:623;
+# src/act.social.c:102-127; lib/misc/socials:625-628). The purr record has no
+# char_found branch, so named targets, self, and missing targets are ignored
+# after the C early record check.
+
+# depth-case: purr.no-argument
+# depth-case: purr.argument-ignored
+# depth-case: purr.self-argument-ignored
+# depth-case: purr.missing-argument-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Purrslice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Purrslice
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Purrpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Purrpeer
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Purrpeer 8004
+
+[probe]
+purr
+purr Purrpeer trailing words are ignored
+purr self
+purr Nobody

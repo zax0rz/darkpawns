@@ -1,0 +1,51 @@
+# C-first shared OLC vehicle for the sedit row (src/interpreter.c:684;
+# src/olc.c:74-277; src/sedit.c:817-1179). This intentionally stops after the
+# valid shop VNUM enters the descriptor-driven SEDIT state: Go has no OLC
+# session state machine to invent, and the existing redit/medit audits already
+# establish that shared boundary.
+
+# depth-case: sedit.no-argument
+# depth-case: sedit.nonnumeric-argument
+# depth-case: sedit.unknown-zone
+# depth-case: sedit.interactive-olc
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Seditadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Seditadmin
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+sedit
+sedit nope
+sedit 999
+sedit 8000

@@ -1,0 +1,115 @@
+# C-first hug/do_action target-social vehicle (src/interpreter.c:504;
+# act.social.c:102-151; lib/misc/socials:410-418). The record hides an
+# invisible actor and requires a standing victim, so the vehicle keeps a room
+# observer, an awake target, and a sleeping target.
+
+# depth-case: hug.no-argument
+# depth-case: hug.argument-first-token
+# depth-case: hug.target-success
+# depth-case: hug.target-audience
+# depth-case: hug.self-target
+# depth-case: hug.target-not-found
+# depth-case: hug.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hugactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hugactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hugobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hugobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Hugtarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Hugtarget
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hugobserver 8162
+teleport Hugtarget 8162
+
+[probe]
+hug
+hug the Hugtarget trailing words are ignored
+hug Hugtarget
+hug Hugactor
+hug Nobody

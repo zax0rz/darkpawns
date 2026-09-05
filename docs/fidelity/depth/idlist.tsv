@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_idlist	idlist	idlist.registration-gate	D1	command	oracle-green	idlist-gate-depth	interpreter.c:512; act.wizard.c:3575-3589	The LVL_GRGOD row admits level 38 and reaches C's fixed-file operation.
+do_idlist	idlist	idlist.success	D2	command	oracle-green-multiseed	idlist-depth@1,2,3,5,8	act.wizard.c:3585-3693	Implementor success emits only C's exact completion line after writing all prototypes.
+do_idlist	idlist	idlist.arguments-ignored	D2	command	oracle-green-multiseed	idlist-depth@1,2,3,5,8	act.wizard.c:3582-3589	C ignores every argument and always uses object_idlist; trailing words do not alter the player bytes or output target.
+writeObjectIDList	idlist	idlist.report-body	D4	state	unit-green	TestWriteObjectIDListMatchesCReportShape	act.wizard.c:3594-3690; constants.c:596-930; spell_parser.c:51-260	Focused report test pins C's object order, type branches, spell concatenation, charge grammar, averages, affects, flags, and blank-line shape.
+idlistBitArray	idlist	idlist.undefined-flag-bits	D4	state	unit-green	TestIDListBitArrayUsesUndefinedForOutOfTableBits	utils.c:269-285,825-843; constants.c:596-930	Out-of-table bits retain sprintbitarray's UNDEFINED label while empty four-word arrays remain NOBITS.

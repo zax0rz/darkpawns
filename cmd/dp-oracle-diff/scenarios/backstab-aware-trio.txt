@@ -1,0 +1,135 @@
+# WIP (advancing GLM depth-actflip): proves MOB_AWARE notice + hit(vict,ch) retaliation
+# and act() capitalization. Two known-red probes remain: the mortally-wounded
+# trailing prompt, and look room-occupant ordering (char_to_room prepend vs Go
+# append) — deeper follow-ups. Not annotated until fully green.
+# The MOB_AWARE guard trio with its flipped act() subjects
+# (act.offensive.c:213-216): the aware target receives "You notice $N
+# lunging at you!" ($N = the backstabber), the backstabber receives
+# "$e notices you lunging at $m!" (target's pronouns), and the room sees
+# "$n notices $N lunging at $m!". The harbor guard (18223, act=6232:
+# AWARE+MEMORY+HELPER+STAY_ZONE — no RANDZON scatter, no AGGRESSIVE) is
+# the vehicle; the God grants backstab 75 via warmup. hit(vict, ch,
+# TYPE_UNDEFINED) follows — the level-15 guard's retaliation kills the
+# mortal, which the pulse pumps settle. A third peer captures TO_NOTVICT.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18223 1 8105 80
+spawn-obj 8036 1 8105 80
+
+[setup:oracle]
+Backgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Backgod
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Backstabo
+Y
+backpass
+backpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+get dagger
+wield dagger
+
+[setup:port:mortal]
+Backstabo
+y
+backpass
+backpass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+get dagger
+wield dagger
+
+[setup:oracle:watcher]
+Watchero
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:watcher]
+Watchero
+y
+watchpass
+watchpass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Backstabo 'backstab' 75
+
+[probe:mortal]
+look
+backstab guard
+~dpclock pulse 20
+~dpclock pulse 20

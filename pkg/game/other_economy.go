@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -18,27 +19,29 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
-		// C do_split (act.other.c): is_number("") is true, so amount = atoi("")
-		// = 0, which hits the amount<=0 branch → "Sorry, you can't do that."
-		ch.SendMessage("Sorry, you can't do that.\r\n")
-		return true
-	}
-
+	arg, _ = OneArgument(arg)
 	amount := 0
-	if _, err := fmt.Sscanf(arg, "%d", &amount); err != nil {
-		ch.SendMessage("That doesn't look like a number.\r\n")
-		slog.Warn("split parse failed", "player", ch.Name, "arg", arg, "error", err)
-		return true
+	if arg != "" {
+		for _, digit := range arg {
+			if digit < '0' || digit > '9' {
+				ch.SendMessage("How many coins do you wish to split with your group?\r\n")
+				return true
+			}
+		}
+		var err error
+		amount, err = strconv.Atoi(arg)
+		if err != nil {
+			slog.Warn("split amount parse failed", "player", ch.Name, "arg", arg, "error", err)
+			ch.SendMessage("How many coins do you wish to split with your group?\r\n")
+			return true
+		}
 	}
 	if amount <= 0 {
 		ch.SendMessage("Sorry, you can't do that.\r\n")
 		return true
 	}
-	ch.mu.Lock()
+	grouped := ch.IsAffected(affGroup)
 	if amount > ch.GetGold() {
-		ch.mu.Unlock()
 		ch.SendMessage("You don't seem to have that much gold to split.\r\n")
 		return true
 	}
@@ -63,14 +66,19 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 		}
 	}
 
-	if num <= 1 || !ch.IsAffected(affGroup) {
-		ch.mu.Unlock()
+	if num == 0 || !grouped {
 		ch.SendMessage("With whom do you wish to share your gold?\r\n")
 		return true
 	}
 
 	share := amount / num
-	ch.SetGold(ch.GetGold() - share*(num-1))
+	ch.mu.Lock()
+	if amount > ch.Gold {
+		ch.mu.Unlock()
+		ch.SendMessage("You don't seem to have that much gold to split.\r\n")
+		return true
+	}
+	ch.Gold -= share * (num - 1)
 	ch.mu.Unlock()
 
 	for _, p := range players {
@@ -84,7 +92,7 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 			continue
 		}
 		p.mu.Lock()
-		p.SetGold(p.GetGold() + share)
+		p.Gold += share
 		p.mu.Unlock()
 		p.SendMessage(fmt.Sprintf("%s splits %d coins; you receive %d.\r\n", ch.Name, amount, share))
 	}
@@ -102,12 +110,9 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	parts := strings.SplitN(arg, " ", 2)
-	itemArg := strings.TrimSpace(parts[0])
-	_ = itemArg // suppress unused
-	if len(parts) > 1 {
-		_ = strings.TrimSpace(parts[1]) // subArg placeholder
-	}
+	// C do_use parses with half_chop (interpreter.c): the first token is
+	// lowercased; fill words are not skipped.
+	itemArg, useRest := halfChop(arg)
 
 	if itemArg == "" {
 		ch.SendMessage(fmt.Sprintf("What do you want to %s?\r\n", cmd))
@@ -162,146 +167,155 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	// Find item via findObjNear
-	item := w.findObjNear(ch, itemArg)
+	// C do_use (act.other.c:897-936) searches equipped objects only, with
+	// WEAR_HOLD checked before the remaining wear positions. FindEquippedVis
+	// preserves that lookup and CAN_SEE_OBJ gate; inventory and room objects
+	// are not valid `use` targets.
+	item := w.FindEquippedVis(ch, itemArg)
 
 	if item == nil {
-		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", "a", itemArg))
+		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(itemArg), itemArg))
 		return true
 	}
 
 	itemType := item.GetTypeFlag()
-	if itemType != ITEM_WAND && itemType != ITEM_STAFF && itemType != ITEM_POTION && itemType != ITEM_SCROLL {
-		ch.SendMessage("You can't use that item.\r\n")
+	if itemType != ITEM_WAND && itemType != ITEM_STAFF {
+		ch.SendMessage("You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n")
 		return true
 	}
 
-	spellLvl := item.GetValue(0)
-	spellType := item.GetValue(3)
-
-	switch itemType {
-	case ITEM_WAND:
-		currCharges := item.GetValue(2)
-		if currCharges <= 0 {
-			ch.SendMessage("The wand is out of charges!\r\n")
-			return true
-		}
-		item.SetValue(2, currCharges-1)
-
-		targetName := ""
-		if len(parts) > 1 {
-			targetName = strings.TrimSpace(parts[1])
-		}
-
-		var target interface{}
-		if targetName != "" {
-			if p := w.FindPlayerInRoom(ch.GetRoomVNum(), targetName); p != nil {
-				target = p
-			} else if m := w.FindMobInRoom(ch.GetRoomVNum(), targetName); m != nil {
-				target = m
-			}
-		}
-		if target == nil {
-			if ch.Fighting != "" {
-				if p, ok := w.GetPlayer(ch.Fighting); ok {
-					target = p
-				} else {
-					for _, mob := range w.GetMobsInRoom(ch.GetRoomVNum()) {
-						if mob.GetName() == ch.Fighting {
-							target = mob
-							break
-						}
-					}
-				}
-			}
-		}
-		if target == nil {
-			target = ch
-		}
-
-		var targetNameDisp string
-		if p, ok := target.(*Player); ok {
-			targetNameDisp = p.Name
-		} else if m, ok := target.(*MobInstance); ok {
-			targetNameDisp = m.Prototype.ShortDesc
-		} else {
-			targetNameDisp = "someone"
-		}
-
-		ch.SendMessage(fmt.Sprintf("You point %s at %s.\r\n", item.GetShortDesc(), targetNameDisp))
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s points %s at %s.", ch.Name, item.GetShortDesc(), targetNameDisp))
-
-		spells.Cast(ch, target, spellType, spellLvl, w)
-
-	case ITEM_STAFF:
-		currCharges := item.GetValue(2)
-		if currCharges <= 0 {
-			ch.SendMessage("The staff is out of charges!\r\n")
-			return true
-		}
-		item.SetValue(2, currCharges-1)
-
-		ch.SendMessage(fmt.Sprintf("You tap %s on the ground.\r\n", item.GetShortDesc()))
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s taps %s on the ground.", ch.Name, item.GetShortDesc()))
-
-		// Cast spell on everyone in the room
-		players := w.GetPlayersInRoom(ch.GetRoomVNum())
-		for _, p := range players {
-			if p != nil {
-				spells.Cast(ch, p, spellType, spellLvl, w)
-			}
-		}
-		mobs := w.GetMobsInRoom(ch.GetRoomVNum())
-		for _, mob := range mobs {
-			if mob != nil {
-				spells.Cast(ch, mob, spellType, spellLvl, w)
-			}
-		}
-
-	case ITEM_POTION:
-		ch.SendMessage(fmt.Sprintf("You quaff %s.", item.GetShortDesc()))
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s quaffs %s.", ch.Name, item.GetShortDesc()))
-
-		spells.Cast(ch, ch, spellType, spellLvl, w)
-
-		ch.Inventory.RemoveItem(item)
-
-	case ITEM_SCROLL:
-		targetName := ""
-		if len(parts) > 1 {
-			targetName = strings.TrimSpace(parts[1])
-		}
-
-		var target interface{}
-		if targetName != "" {
-			if p := w.FindPlayerInRoom(ch.GetRoomVNum(), targetName); p != nil {
-				target = p
-			} else if m := w.FindMobInRoom(ch.GetRoomVNum(), targetName); m != nil {
-				target = m
-			}
-		}
-		if target == nil {
-			target = ch
-		}
-
-		var targetNameDisp string
-		if p, ok := target.(*Player); ok {
-			targetNameDisp = p.Name
-		} else if m, ok := target.(*MobInstance); ok {
-			targetNameDisp = m.Prototype.ShortDesc
-		} else {
-			targetNameDisp = "someone"
-		}
-
-		ch.SendMessage(fmt.Sprintf("You recite %s targeting %s.", item.GetShortDesc(), targetNameDisp))
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s recites %s targeting %s.", ch.Name, item.GetShortDesc(), targetNameDisp))
-
-		spells.Cast(ch, target, spellType, spellLvl, w)
-
-		ch.Inventory.RemoveItem(item)
+	spellLevel := item.GetValue(0)
+	spellNum := item.GetValue(3)
+	if itemType == ITEM_WAND {
+		w.useWand(ch, item, useRest, spellNum, spellLevel)
+	} else {
+		w.useStaff(ch, item, spellNum, spellLevel)
 	}
 
 	return true
+}
+
+const defaultMagicItemLevel = 12 // C spells.h: DEFAULT_WAND_LVL/DEFAULT_STAFF_LVL
+
+// useWand is the castable-equipment branch of mag_objectmagic
+// (src/spell_parser.c:754-783). In C, equipd is compared against the second
+// half_chop token, so an ordinary `use wand target` takes this branch even when
+// the wand is held; the source call path and its bytes are the authority here.
+func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spellNum, spellLevel int) {
+	target, targetObj, found := w.resolveMagicItemTarget(ch, targetArg, spellNum)
+	if !found {
+		Act(nil, false, ch, nil, item, nil, "You can't use $p like that.", "", ToChar)
+		return
+	}
+
+	if target != nil {
+		if target == ch {
+			Act(nil, false, ch, nil, item, nil,
+				"Your $p bathes you in a blinding glow!", "", ToChar)
+			Act(w, false, ch, nil, item, nil,
+				"$n's $p bathes $m in a blinding glow!", "", ToRoom)
+		} else {
+			Act(nil, false, ch, target, item, nil,
+				"Your $p flares up with a blinding glow that surges toward $N!", "", ToChar)
+			Act(w, true, ch, target, item, nil,
+				"$n's $p flares up with a blinding glow that surges toward $N!", "", ToRoom)
+		}
+	} else {
+		Act(nil, false, ch, nil, item, targetObj,
+			"Your $p flares up with a blinding glow that surges toward $P!", "", ToChar)
+		Act(w, true, ch, nil, item, targetObj,
+			"$n's $p flares up with a blinding glow that surges toward $P!", "", ToRoom)
+	}
+
+	if item.GetValue(2) <= 0 {
+		Act(nil, false, ch, nil, item, nil, "It seems powerless.", "", ToChar)
+		Act(w, false, ch, nil, item, nil, "Nothing seems to happen.", "", ToRoom)
+		return
+	}
+	item.SetValue(2, item.GetValue(2)-1)
+	ch.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
+	level := spellLevel
+	if level == 0 {
+		level = defaultMagicItemLevel
+	}
+	var objectTarget interface{}
+	if targetObj != nil {
+		objectTarget = targetObj
+	}
+	spells.CallMagic(ch, target, objectTarget, spellNum, level, spells.CastWand, w)
+}
+
+// useStaff is the castable-equipment staff branch of mag_objectmagic
+// (src/spell_parser.c:785-817). The caster is excluded from the room fan-out;
+// area/mass routines receive a nil character target once, matching C.
+func (w *World) useStaff(ch *Player, item *ObjectInstance, spellNum, spellLevel int) {
+	Act(w, true, ch, nil, item, nil,
+		"$n's $p sparks blindingly, bathing you in its glow.", "", ToRoom)
+	Act(nil, false, ch, nil, item, nil,
+		"Your $p radiates an ethereal glow that lights the room.", "", ToChar)
+
+	if item.GetValue(2) <= 0 {
+		Act(nil, false, ch, nil, item, nil, "It seems powerless.", "", ToChar)
+		Act(w, false, ch, nil, item, nil, "Nothing seems to happen.", "", ToRoom)
+		return
+	}
+	item.SetValue(2, item.GetValue(2)-1)
+	ch.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
+	level := spellLevel
+	if level == 0 {
+		level = defaultMagicItemLevel
+	}
+	si := spells.GetSpellInfo(spellNum)
+	if si != nil && (si.HasRoutine(spells.RoutineMasses) || si.HasRoutine(spells.RoutineAreas)) {
+		spells.CallMagic(ch, nil, nil, spellNum, level, spells.CastStaff, w)
+		return
+	}
+	for _, actor := range w.actChar(ch.GetRoomVNum()) {
+		if actor == ch {
+			continue
+		}
+		spells.CallMagic(ch, actor, nil, spellNum, level, spells.CastStaff, w)
+	}
+}
+
+// resolveMagicItemTarget mirrors generic_find's character-first target lookup
+// for wand use, followed by the object scopes allowed by the spell template.
+func (w *World) resolveMagicItemTarget(ch *Player, targetArg string, spellNum int) (Actor, *ObjectInstance, bool) {
+	targetArg, _ = halfChop(targetArg)
+	if targetArg == "" {
+		return nil, nil, false
+	}
+	if target, ok := w.ResolveCharInRoom(ch, targetArg); ok {
+		actor := asActor(target.Combatant)
+		if actor != nil {
+			return actor, nil, true
+		}
+	}
+	si := spells.GetSpellInfo(spellNum)
+	if si == nil {
+		return nil, nil, false
+	}
+	if si.HasTarget(spells.TarObjInv) {
+		if obj, ok := w.ResolveObjectInInventory(ch, targetArg); ok {
+			return nil, obj, true
+		}
+	}
+	if si.HasTarget(spells.TarObjRoom) {
+		if obj, ok := w.ResolveObjectInRoom(ch, targetArg); ok {
+			return nil, obj, true
+		}
+	}
+	if si.HasTarget(spells.TarObjEquip) {
+		if obj, ok := w.ResolveObjectInEquipment(ch, targetArg); ok {
+			return nil, obj, true
+		}
+	}
+	if si.HasTarget(spells.TarObjWorld) {
+		if obj, ok := w.ResolveObjectWorld(ch, targetArg); ok {
+			return nil, obj, true
+		}
+	}
+	return nil, nil, false
 }
 
 // DoUse is the exported session-level entrypoint for item usage.

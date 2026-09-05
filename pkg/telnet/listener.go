@@ -166,10 +166,12 @@ func Listen(port int, manager *session.Manager) error {
 
 			// Check site bans (DP-419 / DP-557): BanAll disconnects immediately;
 			// BanNew/BanSelect allow connection but restrict at login.
-			// Hostnames resolved from the IP are also checked, with a timeout to
-			// avoid blocking the accept loop on slow DNS.
-			banLevel := effectiveBanLevel(remoteIP, manager.GetBanManager())
-			if banLevel == game.BanAll {
+			// The accept loop only runs the fast in-memory IP check. Hostname
+			// reverse-DNS resolution (which can block up to dnsLookupTimeout)
+			// happens inside the per-connection goroutine so a slow or
+			// unresponsive resolver cannot stall the accept queue.
+			banManager := manager.GetBanManager()
+			if banManager.IsBanned(remoteIP) == game.BanAll {
 				_ = conn.Close() //nolint:errcheck // best-effort cleanup
 				slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
 				connMu.Lock()
@@ -182,8 +184,21 @@ func Listen(port int, manager *session.Manager) error {
 				continue
 			}
 
-			go func(ip string, bl int) {
-				handleConn(conn, manager, bl)
+			go func(ip string) {
+				banLevel := effectiveBanLevel(ip, banManager)
+				if banLevel == game.BanAll {
+					_ = conn.Close() //nolint:errcheck // best-effort cleanup
+					slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
+					connMu.Lock()
+					connCount--
+					connPerIP[ip]--
+					if connPerIP[ip] <= 0 {
+						delete(connPerIP, ip)
+					}
+					connMu.Unlock()
+					return
+				}
+				handleConn(conn, manager, banLevel)
 				connMu.Lock()
 				connCount--
 				connPerIP[ip]--
@@ -191,7 +206,7 @@ func Listen(port int, manager *session.Manager) error {
 					delete(connPerIP, ip)
 				}
 				connMu.Unlock()
-			}(remoteIP, banLevel)
+			}(remoteIP)
 		}
 	}()
 	return nil
@@ -213,6 +228,12 @@ func ipFromAddr(addr string) string {
 // block the connection accept loop.
 func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
 	level := banManager.IsBanned(remoteIP)
+	// BanAll is the most restrictive level. If the in-memory IP check already
+	// matches, no hostname ban can be stricter, so skip the reverse-DNS wait
+	// entirely (banned IPs must be dropped without paying for a slow PTR).
+	if level == game.BanAll {
+		return level
+	}
 
 	type result struct {
 		hostnames []string
@@ -404,6 +425,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			break
 		}
 
+		rawLine := line
 		line = strings.TrimSpace(line)
 
 		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
@@ -411,7 +433,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		// The oracle harness control is intercepted before player/session
 		// command handling so the trigger itself consumes no command RNG, wait
 		// state, or activity state. Only the pumped heartbeats may draw.
-		if handlePulseControl(manager, line) {
+		if handlePulseControl(s, manager, line) {
 			continue
 		}
 
@@ -436,18 +458,23 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
 		} else if line == "" {
-			// Pressing Enter with no command just refreshes the prompt.
-			tc.writeLine("> ")
+			// Pressing Enter with no command just refreshes the prompt. Route it
+			// through the session's send channel so writeLoop renders it in FIFO
+			// order after any still-pending output (C: comm.c:643-648).
+			s.SendPrompt()
 		} else {
 			// C-faithful tokenization (interpreter.c:883-907): a non-letter
 			// first char is a one-char command, no separating space needed
 			// ("'hello"). Plain whitespace splitting broke those forms.
 			cmdWord, cmdArgs := session.SplitCommandInput(line)
-			if err := sendCommand(s, cmdWord, cmdArgs); err != nil {
+			if err := sendCommand(s, cmdWord, cmdArgs, session.CommandArgumentText(rawLine)); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
+			// The prompt is enqueued after the command so writeLoop drains the
+			// command's output first, then prints "> " — matching C's flush-then-
+			// prompt order instead of racing the output writer goroutine.
 			if !s.SendClosed() {
-				tc.writeLine("> ")
+				s.SendPrompt()
 			}
 		}
 		if s.SendClosed() {
@@ -456,17 +483,19 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	}
 
 	// Cleanup
-	s.Manager().Unregister(s.PlayerName())
-	s.CloseSend()
+	if !s.Manager().HandleTelnetDisconnect(s) {
+		s.Manager().Unregister(s.PlayerName())
+		s.CloseSend()
+	}
 	// A successful quit queues its goodbye immediately before Unregister closes
-	// the send channel. Let writeLoop drain that queue before handleConn's defer
-	// closes the TCP socket.
+	// the send channel. For an unexpected EOF, DetachTransport ends writeLoop
+	// while retaining the open send channel for the linkdead session.
 	_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	<-done
 	slog.Info("Telnet disconnect", "remote_addr", remoteAddr, "player", s.PlayerName())
 }
 
-func handlePulseControl(manager *session.Manager, line string) bool {
+func handlePulseControl(s *session.Session, manager *session.Manager, line string) bool {
 	if !dpclock.Frozen() {
 		return false
 	}
@@ -478,7 +507,10 @@ func handlePulseControl(manager *session.Manager, line string) bool {
 	if err != nil || n <= 0 || n > maxControlPumpPulses {
 		return false
 	}
-	if err := manager.PumpPulses(n); err != nil {
+	// The control line is input on this session's descriptor: C's input
+	// processing clears has_prompt, so this session's next output flush
+	// carries process_output's interruption CRLF (comm.c:607, 1620-1643).
+	if err := manager.PumpPulsesFrom(s, n); err != nil {
 		slog.Error("DP_CLOCK pulse pump failed", "pulses", n, "error", err)
 	}
 	return true
@@ -487,7 +519,17 @@ func handlePulseControl(manager *session.Manager, line string) bool {
 // writeLoop reads from the session's send channel and writes formatted output to the telnet conn.
 func writeLoop(tc *telnetConn, s *session.Session) {
 	ch := s.SendChannel()
-	for msg := range ch {
+	for {
+		var msg []byte
+		var ok bool
+		select {
+		case msg, ok = <-ch:
+			if !ok {
+				return
+			}
+		case <-s.TransportDone():
+			return
+		}
 		var sm session.ServerMessage
 		if err := json.Unmarshal(msg, &sm); err != nil {
 			continue
@@ -503,6 +545,10 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		case "event":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				if text, ok := ed["text"].(string); ok {
+					if eventType, _ := ed["type"].(string); eventType == "raw" {
+						tc.write([]byte(text))
+						continue
+					}
 					if strings.HasSuffix(text, "\n") {
 						tc.writeLine(text)
 					} else {
@@ -522,6 +568,17 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 					tc.writeLine(fmt.Sprintf("%s\r\n", text))
 				}
 			}
+		case "prompt":
+			// The command prompt travels through the session's send channel so
+			// it is written only after the command's queued output has been
+			// drained (C: comm.c:643-648 flush output, then prompt).
+			prompt := "> "
+			if data, ok := sm.Data.(map[string]interface{}); ok {
+				if text, ok := data["text"].(string); ok && text != "" {
+					prompt = text
+				}
+			}
+			tc.writeLine(prompt)
 		case "char_create":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				secret, _ := ed["secret"].(bool)
@@ -878,13 +935,17 @@ func (tc *telnetConn) writeLine(s string) {
 	tc.write([]byte(normalizeCRLF(s)))
 }
 
-// normalizeCRLF converts any mix of "\r\n", lone "\r", and lone "\n" line
-// endings into canonical "\r\n". Applied to all text written to telnet clients.
+// normalizeCRLF converts any mix of "\r\n", C's historical "\n\r", lone
+// "\r", and lone "\n" line endings into canonical "\r\n". Applied to all
+// text written to telnet clients. LFCR is a single C line ending, not two
+// lines; preserving that pair matters for handlers such as do_skillset that
+// build output from mixed-order strings.
 func normalizeCRLF(s string) string {
 	if !strings.ContainsAny(s, "\r\n") {
 		return s
 	}
 	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\n\r", "\n")
 	s = strings.ReplaceAll(s, "\r", "\n")
 	return strings.ReplaceAll(s, "\n", "\r\n")
 }
@@ -1047,10 +1108,11 @@ func sendPagerInput(s *session.Session, line string) error {
 	return s.HandleMessage(lineMsg)
 }
 
-func sendCommand(s *session.Session, cmd string, args []string) error {
-	cmdData, err := json.Marshal(map[string]interface{}{
-		"command": cmd,
-		"args":    args,
+func sendCommand(s *session.Session, cmd string, args []string, rawArgs string) error {
+	cmdData, err := json.Marshal(session.CommandData{
+		Command: cmd,
+		Args:    args,
+		RawArgs: rawArgs,
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)

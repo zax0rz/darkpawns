@@ -1,0 +1,95 @@
+# C-first vehicle for do_spike (src/new_cmds.c:1098-1188).
+# The registered command targets an innate werewolf NPC so get_char_room_vis,
+# the wielded-keyword gate, the authored audience messages, and raw_kill's
+# NPC extraction are all observable without editing either oracle tree.
+#
+# depth-case: spike.no-arg
+# depth-case: spike.target-missing
+# depth-case: spike.no-weapon
+# depth-case: spike.success-audience
+# depth-case: spike.success-mob-extraction
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-aff 16303 134217728
+spawn-obj 7905 1 8105 79
+
+[setup:oracle]
+Spikewarden
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spikewarden
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Spikewitness
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Spikewitness
+y
+oraclepass
+oraclepass
+Y
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+
+[probe]
+spike
+spike nobody
+spike trainee
+get spike
+wield spike
+spike trainee
+~dpclock pulse 20

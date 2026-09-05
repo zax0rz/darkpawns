@@ -1,0 +1,58 @@
+# C-first wielded-weapon gate for do_smackheads (src/new_cmds.c:1013-1016).
+# The actor reaches two visible targets with the authored starting sword
+# equipped; the bare-hand refusal must precede mount, fighting, and RNG.
+
+# depth-case: smackheads.wielded-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5 1 8105 80
+spawn-mob 16302 1 8105 80
+spawn-obj 8037 1 8105 80
+
+[setup:oracle]
+Smackwield
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+Smackwield
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+skillset Smackwield 'smackheads' 75
+get sword
+wield sword
+
+[probe]
+smackheads generic recruit

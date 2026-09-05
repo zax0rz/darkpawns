@@ -1,0 +1,44 @@
+# depth-case: objmagic.damage-spell-message
+[fixture]
+quiet-mobs
+spawn-mob 2109 1 8105 80
+force-load 9906
+spawn-obj 9906 20 8105 80
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+[probe]
+get scroll
+recite scroll orc

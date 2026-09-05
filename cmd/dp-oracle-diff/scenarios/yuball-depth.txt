@@ -1,0 +1,82 @@
+# C-first do_action self-only social vehicle (src/interpreter.c:842;
+# src/act.social.c:102-127; lib/misc/socials:1257-1260). The authored yuball
+# record has no char_found branch, so no-argument, typed-target, self-target,
+# and missing-target probes all stay on the same actor/room path; its
+# min-victim-position 5 is unreachable without target message slots.
+
+# depth-case: yuball.no-argument
+# depth-case: yuball.typed-target-ignored
+# depth-case: yuball.missing-target-ignored
+# depth-case: yuball.self-target-ignored
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Yuballactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Yuballactor
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Yuballpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Yuballpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Yuballpeer 8162
+
+[probe]
+yuball
+yuball Yuballpeer
+yuball Nobody
+yuball Yuballactor

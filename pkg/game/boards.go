@@ -63,8 +63,11 @@ func genBoard(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	case "write":
 		magic := w.Boards.WriteMessage(boardType, ch, arg)
 		if magic > 0 {
-			// Return magic value so session layer can pick up editor setup
+			// C's Board_write_message enters the ordinary string editor. Keep the
+			// board write distinguishable from note/mail editing while exposing
+			// the same PLR_WRITING communication gate.
 			ch.WriteMagic = magic
+			ch.SetPlrFlag(PlrWriting, true)
 		}
 		return true
 	case "look", "examine":
@@ -74,6 +77,10 @@ func genBoard(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		}
 		return w.Boards.ShowBoard(boardType, ch)
 	case "read":
+		fields := strings.Fields(arg)
+		if len(fields) == 1 && (strings.EqualFold(fields[0], "board") || strings.EqualFold(fields[0], "bulletin")) {
+			return w.Boards.ShowBoard(boardType, ch)
+		}
 		return w.Boards.DisplayMsg(boardType, ch, arg)
 	case "remove":
 		return w.Boards.RemoveMsg(boardType, ch, arg)

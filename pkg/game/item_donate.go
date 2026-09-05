@@ -40,7 +40,10 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 			ch.Inventory.AddItem(obj)
 			return 0
 		}
-		w.roomMessage(donationRoom, strings.ReplaceAll("$p suddenly appears in a puff a smoke!", "$p", obj.GetShortDesc()))
+		// C act() uppercases the assembled message's first letter (comm.c:2477
+		// SEND_TO_Q(CAP(lbuf))), so a $p-initial line renders "A loaf of bread
+		// suddenly appears in a puff a smoke!".
+		w.roomMessage(donationRoom, capitalize(strings.ReplaceAll("$p suddenly appears in a puff a smoke!", "$p", obj.GetShortDesc())))
 		return 0
 	case scmdJunk:
 		value := min(max(obj.GetCost()>>4, 1), 200)
@@ -76,7 +79,7 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 			ch.SendMessage("Something went wrong. Your gold was not donated.\r\n")
 			return
 		}
-		w.roomMessage(donationRoom, strings.ReplaceAll("$p suddenly appears in a puff of orange smoke!", "$p", moneyObj.GetShortDesc()))
+		w.roomMessage(donationRoom, capitalize(strings.ReplaceAll("$p suddenly appears in a puff of orange smoke!", "$p", moneyObj.GetShortDesc())))
 	}
 
 	ch.SetGold(ch.GetGold() - amount)
@@ -88,18 +91,17 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 // gated on sname, not on any per-item mode flip (donate never grants exp,
 // even when the dice roll secretly junks an item).
 func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donationRoom int) {
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
+	// C do_drop (junk/donate) parses with one_argument: fill words dropped,
+	// argument lowercased. A fill-word-only argument reads as empty.
+	arg1, rest := oneArgument(arg)
+	if arg1 == "" {
 		ch.SendMessage(fmt.Sprintf("What do you want to %s?\r\n", sname))
 		return
 	}
 
-	parts := strings.Fields(arg)
-	arg1 := parts[0]
-
 	if amount, err := strconv.Atoi(arg1); err == nil {
-		rest := strings.Join(parts[1:], " ")
-		if rest == "coins" || rest == "coin" {
+		arg2, _ := oneArgument(rest)
+		if arg2 == "coins" || arg2 == "coin" {
 			w.performDisposeGold(ch, amount, mode, donationRoom)
 		} else {
 			ch.SendMessage("Sorry, you can't do that to more than one item at a time.\r\n")
@@ -127,7 +129,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 		copy(items, ch.Inventory.Items)
 		found := false
 		for _, obj := range items {
-			if isname(keyword, obj.GetKeywords()) {
+			if isnameWithAbbrevs(keyword, obj.GetKeywords()) {
 				found = true
 				amount += w.performDispose(ch, obj, mode, sname, donationRoom)
 			}
@@ -138,7 +140,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 	default:
 		var obj *ObjectInstance
 		for _, o := range ch.Inventory.Items {
-			if isname(arg1, o.GetKeywords()) {
+			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
 			}

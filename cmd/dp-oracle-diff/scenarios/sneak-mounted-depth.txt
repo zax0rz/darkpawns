@@ -1,0 +1,49 @@
+# C-first do_sneak mounted gate (src/interpreter.c:719; src/act.other.c:214-223).
+# The shared authored horse reaches IS_MOUNTED before do_sneak emits its normal
+# attempt line or consumes the skill roll. This is the dedicated early-return
+# branch; the ordinary success/failure and affect replacement arms are covered
+# by thief-sneak plus the focused game test.
+
+# depth-case: sneak.mounted-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Sneakmounted
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sneakmounted
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+ride horse
+sneak

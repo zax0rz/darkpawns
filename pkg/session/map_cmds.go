@@ -24,17 +24,44 @@ var offY = [4]int{-1, 0, 1, 0}
 // link maps N/E/S/W direction index to link display value (same as C: {-2,-3,-2,-3}).
 var link = [4]int{-2, -3, -2, -3}
 
-// hasExit checks whether a room has an exit with to_room > -2 (matching the C pattern
-// "if (world[thisroom].dir_option[DIR])" which was truthy when the exit pointer was non-null).
+// mapRoomIndex builds the RNUM-indexed room view that C's renum_world()
+// supplies to map(). The parser intentionally retains VNUMs for ordinary Go
+// gameplay, so the map's private copy resolves every exit before traversal.
+func mapRoomIndex(ordered []Room) (map[int]*Room, map[int]int) {
+	rnumByVNum := make(map[int]int, len(ordered))
+	for rnum := range ordered {
+		if _, exists := rnumByVNum[ordered[rnum].VNum]; !exists {
+			rnumByVNum[ordered[rnum].VNum] = rnum
+		}
+	}
+
+	rooms := make(map[int]*Room, len(ordered))
+	for rnum := range ordered {
+		room := ordered[rnum]
+		room.Exits = make(map[string]parser.Exit, len(ordered[rnum].Exits))
+		for direction, exit := range ordered[rnum].Exits {
+			if exit.ToRoom != -1 {
+				if target, ok := rnumByVNum[exit.ToRoom]; ok {
+					exit.ToRoom = target
+				} else {
+					exit.ToRoom = -1
+				}
+			}
+			room.Exits[direction] = exit
+		}
+		rooms[rnum] = &room
+	}
+	return rooms, rnumByVNum
+}
+
+// hasExit checks whether a room has an exit pointer (matching C's direct
+// "if (world[thisroom].dir_option[DIR])" test, regardless of to_room).
 func hasExit(room *Room, dirName string) bool {
 	if room == nil {
 		return false
 	}
-	exit, ok := room.Exits[dirName]
-	if !ok {
-		return false
-	}
-	return exit.ToRoom > -2
+	_, ok := room.Exits[dirName]
+	return ok
 }
 
 // mapRecurse is a faithful port of the C map() function.
@@ -124,10 +151,11 @@ func mapRecurse(thisroom int, x, y, overlap, dontleavezone int, display *[][]int
 		}
 	}
 
-	// Same as C: if((overlap)&&(display[x+offx[dir]][y+offy[dir]] != 0))
-	// NOTE: In the C code, 'dir' here refers to the final value of dir after the loop (dir==4).
-	if overlap != 0 && (*display)[x+offX[3]][y+offY[3]] != 0 {
-		(*display)[x+offX[3]][y+offY[3]] = -6
+	// Same as C: after the loop dir is 4, so the legacy out-of-bounds
+	// offx[4]/offy[4] access lands on offy[0]/link[0] in the oracle build.
+	// Preserve that observed C byte behavior: x-1, y-2, then graph[-6].
+	if overlap != 0 && (*display)[x-1][y-2] != 0 {
+		(*display)[x-1][y-2] = -6
 	}
 }
 
@@ -164,23 +192,24 @@ func CmdMap(s *Session, args []string) error {
 	arg := strings.Join(args, " ")
 	if len(arg) == 0 {
 		i = 1
-	} else if len(arg) >= 2 && arg[1] == 'a' {
+	} else if arg[0] == 'a' {
 		i = 0
-	} else if len(arg) >= 2 && arg[1] == 'b' {
+	} else if arg[0] == 'b' {
 		i = 2
-	} else if len(arg) >= 2 && arg[1] == 'c' {
+	} else if arg[0] == 'c' {
 		i = 3
 	} else {
 		i = 1
 	}
 
-	// Build rooms map from world via lock-free snapshot
-	snap := s.manager.world.GetSnapshotManager().Snapshot()
-	if snap == nil {
-		s.Send("World snapshot unavailable.\r\n")
+	// C's boot path renumbers room exits from VNUMs to stable RNUMs before
+	// do_map() can call map(). Keep that identity and resolution boundary local
+	// to this command; the rest of Go continues to address rooms by VNUM.
+	rooms, rnumByVNum := mapRoomIndex(s.manager.world.Rooms())
+	thisroom, ok := rnumByVNum[thisroom]
+	if !ok {
 		return nil
 	}
-	rooms := snap.Rooms
 
 	// Same as C: map(thisroom,x,y,0,i, ch);
 	mapRecurse(thisroom, x, y, 0, i, &display, rooms)
@@ -230,17 +259,12 @@ func CmdMap(s *Session, args []string) error {
 		s.Send(line.String())
 	}
 
-	// Key legend output — ported from the C original's key legend
-	s.Send("\r\nMap Key:\r\n")
-	s.Send("&RX&n = You          &D*&n = Blocked exit\r\n")
-	s.Send("&D|&n = N/S passage  &D-&n = E/W passage\r\n")
-	s.Send("&Do&n = Closed door  / = Up/Down exit\r\n")
-	s.Send("&g0&n = Inside       &m#&n = City       &Y:&n = Field\r\n")
-	s.Send("&G+&n = Forest       &w%&n = Hills      &y^&n = Mountains\r\n")
-	s.Send("&B~&n = Water(Swim)  &b~&n = Water      &b_&n = Rapids\r\n")
-	s.Send("&C@&n = Unused       &r$&n = Road       &RF&n = Clan Hall\r\n")
-	s.Send("&YE&n = Rune Essence &CW&n = Water(Walk)&cw&n = Water(Noswim)\r\n")
-	s.Send("&D`&n = Death Trap   &WI&n = Rune Nexus\r\n")
+	// Key legend output — src/mapcode.c:196-216 builds one sprintf buffer.
+	s.Send("\r\nKEY: inside = &g0&n, city = &m#&n, field = &Y:&n, forest = &G+&n, hills = &w%&n,\r\n" +
+		"     mountain = &y^&n, swim water = &B~&n, noswim water = &b~&n, underwater = &b_&n,\r\n" +
+		"     flying = &C@&n, desert = &r$&n, fire = &RF&n, earth = &YE&n, wind = &CW&n,\r\n" +
+		"     water = &cw&n, swamp = &D`&n\r\n" +
+		"     &RX&n = You are here. &D*&n = overlapping room(s)\r\n")
 
 	return nil
 }

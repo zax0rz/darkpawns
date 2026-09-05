@@ -1,0 +1,55 @@
+# C-first do_shoot closed-exit gate (src/act.offensive.c:864-875). A real
+# missile and fireweapon are equipped, while the disposable north door carries
+# the keyword "gate" and remains closed.
+
+# depth-case: shoot.closed-exit
+# depth-case: shoot.closed-exit-keyword
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+replace-room-exits 8162 north 8163 1 gate
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootclosed
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootclosed
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+get hoopak
+get arrow
+wield hoopak
+close gate
+shoot arrow north nobody

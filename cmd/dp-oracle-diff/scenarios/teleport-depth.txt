@@ -1,0 +1,114 @@
+# C-first vehicle for do_teleport. The primary is an Implementor with a
+# mortal target and room observer. The probe covers the ordered target and
+# destination gates, self-target refusal, invalid-room handling, and a valid
+# relocation with room audience and landing look.
+
+# depth-case: teleport.target-not-found
+# depth-case: teleport.self-target
+# depth-case: teleport.missing-destination
+# depth-case: teleport.invalid-room
+# depth-case: teleport.success-audience
+# depth-case: teleport.two-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Teleportwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teleportwizard
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Teleportpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Teleportpeer
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Teleportobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Teleportobserver
+y
+oraclepass
+oraclepass
+Y
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Teleportpeer 8162
+teleport Teleportobserver 8162
+
+[probe]
+teleport Nobody 8162
+teleport Teleportwizard 8162
+teleport Teleportpeer
+teleport Teleportpeer 999999
+teleport Teleportpeer 8161 trailing words are ignored
