@@ -281,29 +281,29 @@ func cmdInfoBarUpdate(s *Session) {
 	}
 
 	is := newInfobarState(s)
-	output := ""
+	var output strings.Builder
 	if update&InfoMana != 0 {
-		output += vtCurSave + infobarClearManaPoints(is) + infobarManaPoints(is) + vtCurRest
+		output.WriteString(vtCurSave + infobarClearManaPoints(is) + infobarManaPoints(is) + vtCurRest)
 	}
 	if update&InfoMove != 0 {
-		output += vtCurSave + infobarClearMovePoints(is) + infobarMovePoints(is) + vtCurRest
+		output.WriteString(vtCurSave + infobarClearMovePoints(is) + infobarMovePoints(is) + vtCurRest)
 	}
 	if update&InfoHit != 0 {
-		output += vtCurSave + infobarClearHitPoints(is) + infobarHitPoints(is) + vtCurRest
+		output.WriteString(vtCurSave + infobarClearHitPoints(is) + infobarHitPoints(is) + vtCurRest)
 	}
 	if update&InfoExp != 0 {
-		output += vtCurSave + infobarClearExpPoints(is) + infobarExpPoints(is)
+		output.WriteString(vtCurSave + infobarClearExpPoints(is) + infobarExpPoints(is))
 		if is.level < game.LVL_IMMORT {
-			output += infobarClearLevel(is) + infobarLevel(is)
-			output += infobarClearNeededExpPoints(is) + infobarNeededExpPoints(is)
+			output.WriteString(infobarClearLevel(is) + infobarLevel(is))
+			output.WriteString(infobarClearNeededExpPoints(is) + infobarNeededExpPoints(is))
 		}
-		output += vtCurRest
+		output.WriteString(vtCurRest)
 	}
 	if update&InfoGold != 0 {
-		output += vtCurSave + infobarClearGold(is) + infobarGold(is) + vtCurRest
+		output.WriteString(vtCurSave + infobarClearGold(is) + infobarGold(is) + vtCurRest)
 	}
 
-	s.sendRawEvent(output)
+	s.sendRawEvent(output.String())
 	s.rememberInfobarValues()
 }
 
@@ -426,55 +426,55 @@ func cmdInfoBarOn(s *Session) {
 	}
 
 	is := newInfobarState(s)
-	output := ""
+	var output strings.Builder
 
 	// Clear screen
-	output += vtHomeClr
+	output.WriteString(vtHomeClr)
 
 	// Set scroll margin
-	output += fmt.Sprintf(vtMarSet, 0, is.screenSize-5)
+	fmt.Fprintf(&output, vtMarSet, 0, is.screenSize-5)
 
 	// Draw labels and separators
-	output += infobarSeparator(is)
-	output += infobarHitPointsStr(is)
-	output += infobarManaPointsStr(is)
-	output += infobarMovePointsStr(is)
-	output += infobarExpPointsStr(is)
+	output.WriteString(infobarSeparator(is))
+	output.WriteString(infobarHitPointsStr(is))
+	output.WriteString(infobarManaPointsStr(is))
+	output.WriteString(infobarMovePointsStr(is))
+	output.WriteString(infobarExpPointsStr(is))
 
 	if is.level < game.LVL_IMMORT {
-		output += infobarLevelStr(is)
-		output += infobarNeededExpPointsStr(is)
+		output.WriteString(infobarLevelStr(is))
+		output.WriteString(infobarNeededExpPointsStr(is))
 	}
 
-	output += infobarGoldStr(is)
+	output.WriteString(infobarGoldStr(is))
 
 	// Draw values
-	output += infobarHitPoints(is)
-	output += infobarMovePoints(is)
-	output += infobarManaPoints(is)
-	output += infobarExpPoints(is)
+	output.WriteString(infobarHitPoints(is))
+	output.WriteString(infobarMovePoints(is))
+	output.WriteString(infobarManaPoints(is))
+	output.WriteString(infobarExpPoints(is))
 
 	if is.level < game.LVL_IMMORT {
-		output += infobarNeededExpPoints(is)
-		output += infobarLevel(is)
+		output.WriteString(infobarNeededExpPoints(is))
+		output.WriteString(infobarLevel(is))
 	}
 
-	output += infobarGold(is)
+	output.WriteString(infobarGold(is))
 	s.rememberInfobarValues()
 
 	// Cursor to top-left
-	output += fmt.Sprintf(vtCurSp, 0, 0)
+	fmt.Fprintf(&output, vtCurSp, 0, 0)
 
-	s.sendRawEvent(output)
+	s.sendRawEvent(output.String())
 }
 
 // cmdInfoBarOff — InfoBarOff from act.display.c
 func cmdInfoBarOff(s *Session) {
-	output := ""
+	var output strings.Builder
 	// Reset margin to full screen
-	output += fmt.Sprintf(vtMarSet, 0, s.screenSize-1)
+	fmt.Fprintf(&output, vtMarSet, 0, s.screenSize-1)
 	// Clear screen
-	output += vtHomeClr
+	output.WriteString(vtHomeClr)
 
-	s.sendRawEvent(output)
+	s.sendRawEvent(output.String())
 }
