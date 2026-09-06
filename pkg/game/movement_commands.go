@@ -13,33 +13,110 @@ func movementSendToChar(ch *Player, message string) {
 	Act(nil, false, ch, nil, nil, nil, strings.TrimSuffix(message, "\r\n"), "", ToChar|ToSleep)
 }
 
-// DoStand implements the C position transition, including stand-as-dismount.
-func (w *World) DoStand(ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosStanding:
-		if ch.IsMounted() {
+type positionCommandArm struct {
+	self     string
+	room     string
+	hideRoom bool
+	next     int
+}
+
+type positionCommandSpec struct {
+	arms            [combat.PosStanding + 1]positionCommandArm
+	defaultArm      positionCommandArm
+	mountedDismount bool
+	mountedMessage  string
+}
+
+var positionCommandSpecs = [...]positionCommandSpec{
+	{
+		mountedDismount: true,
+		arms: [combat.PosStanding + 1]positionCommandArm{
+			combat.PosStanding: {self: "You are already standing."},
+			combat.PosSitting:  {self: "You stand up.", room: "$n clambers to $s feet.", hideRoom: true, next: combat.PosStanding},
+			combat.PosResting:  {self: "You stop resting, and stand up.", room: "$n stops resting, and clambers on $s feet.", hideRoom: true, next: combat.PosStanding},
+			combat.PosSleeping: {self: "You have to wake up first!"},
+			combat.PosFighting: {self: "Do you not consider fighting as standing?"},
+		},
+		defaultArm: positionCommandArm{
+			self:     "You stop floating around, and put your feet on the ground.",
+			room:     "$n stops floating around, and puts $s feet on the ground.",
+			hideRoom: true,
+			next:     combat.PosStanding,
+		},
+	},
+	{
+		mountedMessage: "You can't rest while mounted.",
+		arms: [combat.PosStanding + 1]positionCommandArm{
+			combat.PosStanding: {self: "You sit down.", room: "$n sits down.", next: combat.PosSitting},
+			combat.PosSitting:  {self: "You're sitting already."},
+			combat.PosResting:  {self: "You stop resting, and sit up.", room: "$n stops resting.", hideRoom: true, next: combat.PosSitting},
+			combat.PosSleeping: {self: "You have to wake up first."},
+			combat.PosFighting: {self: "Sit down while fighting? are you MAD?"},
+		},
+		defaultArm: positionCommandArm{
+			self:     "You stop floating around, and sit down.",
+			room:     "$n stops floating around, and sits down.",
+			hideRoom: true,
+			next:     combat.PosSitting,
+		},
+	},
+	{
+		mountedMessage: "You can't rest while mounted.",
+		arms: [combat.PosStanding + 1]positionCommandArm{
+			combat.PosStanding: {self: "You sit down and rest your tired bones.", room: "$n sits down and rests.", hideRoom: true, next: combat.PosResting},
+			combat.PosSitting:  {self: "You rest your tired bones.", room: "$n rests.", hideRoom: true, next: combat.PosResting},
+			combat.PosResting:  {self: "You are already resting."},
+			combat.PosSleeping: {self: "You have to wake up first."},
+			combat.PosFighting: {self: "Rest while fighting?  Are you MAD?"},
+		},
+		defaultArm: positionCommandArm{
+			self: "You stop floating around, and stop to rest your tired bones.",
+			room: "$n stops floating around, and rests.",
+			next: combat.PosSitting,
+		},
+	},
+	{
+		mountedMessage: "You can't rest while mounted.",
+		arms: [combat.PosStanding + 1]positionCommandArm{
+			combat.PosStanding: {self: "You go to sleep.", room: "$n lies down and falls asleep.", hideRoom: true, next: combat.PosSleeping},
+			combat.PosSitting:  {self: "You go to sleep.", room: "$n lies down and falls asleep.", hideRoom: true, next: combat.PosSleeping},
+			combat.PosResting:  {self: "You go to sleep.", room: "$n lies down and falls asleep.", hideRoom: true, next: combat.PosSleeping},
+			combat.PosSleeping: {self: "You are already sound asleep."},
+			combat.PosFighting: {self: "Sleep while fighting?  Are you MAD?"},
+		},
+		defaultArm: positionCommandArm{
+			self:     "You stop floating around, and lie down to sleep.",
+			room:     "$n stops floating around, and lie down to sleep.",
+			hideRoom: true,
+			next:     combat.PosSleeping,
+		},
+	},
+}
+
+func (w *World) doPositionCommand(ch *Player, spec positionCommandSpec) {
+	position := ch.GetPosition()
+	if position == combat.PosStanding && ch.IsMounted() {
+		if spec.mountedDismount {
 			w.dismountForStand(ch)
 		} else {
-			movementSendToChar(ch, "You are already standing.\r\n")
+			movementSendToChar(ch, spec.mountedMessage)
 		}
-	case combat.PosSitting:
-		movementSendToChar(ch, "You stand up.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
-		ch.SetPosition(combat.PosStanding)
-	case combat.PosResting:
-		movementSendToChar(ch, "You stop resting, and stand up.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
-		ch.SetPosition(combat.PosStanding)
-	case combat.PosSleeping:
-		movementSendToChar(ch, "You have to wake up first!\r\n")
-	case combat.PosFighting:
-		movementSendToChar(ch, "Do you not consider fighting as standing?\r\n")
-	default:
-		movementSendToChar(ch, "You stop floating around, and put your feet on the ground.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n stops floating around, and puts $s feet on the ground.", "", ToRoom)
-		ch.SetPosition(combat.PosStanding)
+		return
+	}
+
+	arm := spec.defaultArm
+	if position >= 0 && position < len(spec.arms) && spec.arms[position].self != "" {
+		arm = spec.arms[position]
+	}
+	movementSendToChar(ch, arm.self)
+	if arm.room != "" {
+		Act(w, arm.hideRoom, ch, nil, nil, nil, arm.room, "", ToRoom)
+		ch.SetPosition(arm.next)
 	}
 }
+
+// DoStand implements the C position transition, including stand-as-dismount.
+func (w *World) DoStand(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[0]) }
 
 func (w *World) dismountForStand(ch *Player) {
 	mount := w.GetMount(ch)
@@ -57,84 +134,13 @@ func (w *World) dismountForStand(ch *Player) {
 }
 
 // DoSit implements do_sit from act.movement.c.
-func (w *World) DoSit(ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosStanding:
-		if ch.IsMounted() {
-			movementSendToChar(ch, "You can't rest while mounted.\r\n")
-			return
-		}
-		movementSendToChar(ch, "You sit down.\r\n")
-		Act(w, false, ch, nil, nil, nil, "$n sits down.", "", ToRoom)
-		ch.SetPosition(combat.PosSitting)
-	case combat.PosSitting:
-		movementSendToChar(ch, "You're sitting already.\r\n")
-	case combat.PosResting:
-		movementSendToChar(ch, "You stop resting, and sit up.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n stops resting.", "", ToRoom)
-		ch.SetPosition(combat.PosSitting)
-	case combat.PosSleeping:
-		movementSendToChar(ch, "You have to wake up first.\r\n")
-	case combat.PosFighting:
-		movementSendToChar(ch, "Sit down while fighting? are you MAD?\r\n")
-	default:
-		movementSendToChar(ch, "You stop floating around, and sit down.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n stops floating around, and sits down.", "", ToRoom)
-		ch.SetPosition(combat.PosSitting)
-	}
-}
+func (w *World) DoSit(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[1]) }
 
 // DoRest implements do_rest from act.movement.c.
-func (w *World) DoRest(ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosStanding:
-		if ch.IsMounted() {
-			movementSendToChar(ch, "You can't rest while mounted.\r\n")
-			return
-		}
-		movementSendToChar(ch, "You sit down and rest your tired bones.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n sits down and rests.", "", ToRoom)
-		ch.SetPosition(combat.PosResting)
-	case combat.PosSitting:
-		movementSendToChar(ch, "You rest your tired bones.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n rests.", "", ToRoom)
-		ch.SetPosition(combat.PosResting)
-	case combat.PosResting:
-		movementSendToChar(ch, "You are already resting.\r\n")
-	case combat.PosSleeping:
-		movementSendToChar(ch, "You have to wake up first.\r\n")
-	case combat.PosFighting:
-		movementSendToChar(ch, "Rest while fighting?  Are you MAD?\r\n")
-	default:
-		movementSendToChar(ch, "You stop floating around, and stop to rest your tired bones.\r\n")
-		Act(w, false, ch, nil, nil, nil, "$n stops floating around, and rests.", "", ToRoom)
-		ch.SetPosition(combat.PosSitting)
-	}
-}
+func (w *World) DoRest(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[2]) }
 
 // DoSleep implements do_sleep from act.movement.c.
-func (w *World) DoSleep(ch *Player) {
-	switch ch.GetPosition() {
-	case combat.PosStanding:
-		if ch.IsMounted() {
-			movementSendToChar(ch, "You can't rest while mounted.\r\n")
-			return
-		}
-		fallthrough
-	case combat.PosSitting, combat.PosResting:
-		movementSendToChar(ch, "You go to sleep.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n lies down and falls asleep.", "", ToRoom)
-		ch.SetPosition(combat.PosSleeping)
-	case combat.PosSleeping:
-		movementSendToChar(ch, "You are already sound asleep.\r\n")
-	case combat.PosFighting:
-		movementSendToChar(ch, "Sleep while fighting?  Are you MAD?\r\n")
-	default:
-		movementSendToChar(ch, "You stop floating around, and lie down to sleep.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n stops floating around, and lie down to sleep.", "", ToRoom)
-		ch.SetPosition(combat.PosSleeping)
-	}
-}
+func (w *World) DoSleep(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[3]) }
 
 // DoWake implements self and targeted wake behavior, including magical sleep.
 func (w *World) DoWake(ch *Player, argument string) {

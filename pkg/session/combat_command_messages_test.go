@@ -20,16 +20,15 @@ func TestCmdHitNoArgumentMessage(t *testing.T) {
 	}
 }
 
-func TestCombatMessageConsumesPulseInterruptionPrefix(t *testing.T) {
+func TestCombatMessageDoesNotCarryStalePulsePrefix(t *testing.T) {
 	m := makeGateTestManager(t, false)
 	s := makeGateSession(t, m, 1, "Hero", 20)
 	m.WireCombatCallbacks()
 	m.SetCombatMessageFunc()
 
-	s.promptInvalidated.Store(true)
 	m.combatEngine.Callbacks.Broadcast(1001, "A combat line.", "")
-	if got, want := readSendText(t, s), "\r\nA combat line."; got != want {
-		t.Fatalf("combat interruption prefix = %q, want %q", got, want)
+	if got, want := readSendText(t, s), "A combat line."; got != want {
+		t.Fatalf("combat message framing = %q, want %q", got, want)
 	}
 
 	s.player.SendMessage("The next text line.\r\n")

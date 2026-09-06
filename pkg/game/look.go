@@ -255,7 +255,16 @@ func (w *World) appendDarkOccupants(result *ObservationResult, ch *Player, room 
 			result.literal(ch, "You hear someone or something moving around nearby.")
 		}
 	}
-	for _, player := range sortedPlayers(w.GetPlayersInRoom(room.VNum)) {
+	players := w.GetPlayersInRoom(room.VNum)
+	sort.SliceStable(players, func(i, j int) bool {
+		sequenceI := players[i].GetRoomEntrySequence()
+		sequenceJ := players[j].GetRoomEntrySequence()
+		if sequenceI != sequenceJ {
+			return sequenceI > sequenceJ
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+	for _, player := range players {
 		if player == nil || player == ch || player.GetLevel() >= LVL_IMMORT {
 			continue
 		}
@@ -372,8 +381,14 @@ func roomObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
 }
 
 func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {
+	type character struct {
+		actor Actor
+		seq   uint64
+		line  string
+	}
+	characters := make([]character, 0)
 	var lines []string
-	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
+	for _, mob := range w.GetMobsInRoom(room.VNum) {
 		// C list_char_to_char suppresses a mount while get_rider(mob) is
 		// non-nil; the rider's presence line represents the pair.
 		if mob == nil || mob.GetMountRider() != "" {
@@ -389,10 +404,10 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 		if line == "" {
 			continue
 		}
-		lines = append(lines, line)
-		view.Mobs = append(view.Mobs, line)
+		characters = append(characters, character{actor: mob, seq: mob.GetRoomEntrySequence(), line: line})
 	}
-	for _, player := range sortedPlayers(w.GetPlayersInRoom(room.VNum)) {
+	players := w.GetPlayersInRoom(room.VNum)
+	for _, player := range players {
 		if player == nil || player == ch {
 			continue
 		}
@@ -403,8 +418,22 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 			continue
 		}
 		line := w.playerPresenceLine(player, ch)
-		lines = append(lines, line)
-		view.Players = append(view.Players, player.GetName())
+		characters = append(characters, character{actor: player, seq: player.GetRoomEntrySequence(), line: line})
+	}
+	sort.SliceStable(characters, func(i, j int) bool {
+		if characters[i].seq != characters[j].seq {
+			return characters[i].seq > characters[j].seq
+		}
+		return characters[i].actor.GetName() < characters[j].actor.GetName()
+	})
+	for _, entry := range characters {
+		lines = append(lines, entry.line)
+		switch entry.actor.(type) {
+		case *MobInstance:
+			view.Mobs = append(view.Mobs, entry.line)
+		case *Player:
+			view.Players = append(view.Players, entry.actor.GetName())
+		}
 	}
 	return lines
 }
@@ -1254,12 +1283,6 @@ func startsWithVowel(text string) bool {
 		return false
 	}
 	return strings.ContainsRune("aeiouyAEIOUY", rune(text[0]))
-}
-
-func sortedPlayers(players []*Player) []*Player {
-	result := append([]*Player(nil), players...)
-	sort.Slice(result, func(i, j int) bool { return result[i].GetName() < result[j].GetName() })
-	return result
 }
 
 func sortedMobs(mobs []*MobInstance) []*MobInstance {

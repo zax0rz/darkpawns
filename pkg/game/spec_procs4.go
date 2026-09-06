@@ -506,7 +506,9 @@ func startRoomBirthMessage(name string) string {
 	msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
 	msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"
 	msg += "   'Your life begins now...' it says, then fades -- just as the world around\r\nyou does the same.\r\n\r\n"
-	return msg
+	// The overlapping sprintf/strcat buffer in C leaves the discarded opening
+	// paragraph's final CRLF immediately before the surviving figure speech.
+	return "\r\n" + msg
 }
 
 func specNewbieZoneEntrance(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {

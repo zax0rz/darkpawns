@@ -1680,6 +1680,16 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		if !result.RetaliateHit || target == nil || target.GetPosition() == combat.PosDead {
 			return
 		}
+		if result.RetaliateHitUnenrolled {
+			if engine, ok := s.GetCombatEngine().(interface {
+				PerformUnenrolledInitialAttack(combat.Combatant, combat.Combatant) error
+			}); ok && engine != nil {
+				if err := engine.PerformUnenrolledInitialAttack(target, ch); err != nil {
+					slog.Error("unenrolled retaliation failed", "attacker", target.GetName(), "target", ch.GetName(), "error", err)
+				}
+				return
+			}
+		}
 		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
 			if err := engine.StartCombat(target, ch); err == nil {
 				_ = engine.PerformInitialAttack(target, ch)

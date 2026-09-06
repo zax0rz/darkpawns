@@ -221,7 +221,9 @@ func (bm *BanManager) ListBans() string {
 	for _, entry := range bm.bans {
 		dateStr := "Unknown"
 		if !entry.Date.IsZero() {
-			dateStr = entry.Date.Format("Mon Jan 02")
+			// C uses the first ten bytes of asctime(localtime(...)); the
+			// day-of-month field is space-padded rather than zero-padded.
+			dateStr = entry.Date.Format("Mon Jan _2")
 		}
 		fmt.Fprintf(&sb, "%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
 			entry.Site, banTypeName(entry.BanType), dateStr, entry.BannedBy)

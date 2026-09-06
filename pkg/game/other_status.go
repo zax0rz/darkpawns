@@ -24,8 +24,7 @@ func (w *World) doAFK(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		ch.SetAFK(true)
 		ch.SetAFKMessage("")
 		Act(w, false, ch, nil, nil, nil, "$n goes AFK...", "", ToRoom)
-		// C's command/prompt cycle leaves a blank line before the AFK prompt.
-		ch.SendMessage("Go leave..no one will notice anyways.\r\n\r\n")
+		ch.SendMessage("Go leave..no one will notice anyways.\r\n")
 	}
 	return true
 }

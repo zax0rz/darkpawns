@@ -445,6 +445,12 @@ func (s *Spawner) moveMobToRoom(mob *MobInstance, newRoomVNum int) {
 
 	mob.SetRoom(newRoomVNum)
 	if newRoomVNum >= 0 {
+		s.world.mu.Lock()
+		s.world.nextRoomEntrySequence++
+		mob.mu.Lock()
+		mob.RoomEntrySequence = s.world.nextRoomEntrySequence
+		mob.mu.Unlock()
+		s.world.mu.Unlock()
 		s.roomMobs[newRoomVNum] = append(s.roomMobs[newRoomVNum], mob)
 	}
 }

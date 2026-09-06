@@ -183,6 +183,11 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return m.HasFlag(flag)
 	}
 
+	cb.IsShopkeeper = func(name string) bool {
+		mob := w.GetMobByName(name)
+		return mob != nil && isShopKeeperInWorld(w, mob)
+	}
+
 	cb.HasMobVNum = func(name string, vnum int) bool {
 		m := w.GetMobByName(name)
 		if m == nil || m.Prototype == nil {

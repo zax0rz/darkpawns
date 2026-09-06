@@ -131,9 +131,6 @@ func (s *Session) sendCurrentRoomState() {
 }
 
 func (s *Session) SendMessage(message string) error {
-	if s.claimInterruptionPrefix() {
-		message = "\r\n" + message
-	}
 	s.forwardSnoopOutput(message)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
@@ -239,14 +236,6 @@ func (s *Session) notePlayerOutput() {
 	s.outputSincePrompt.Add(1)
 }
 
-// claimInterruptionPrefix consumes the pending prompt invalidation, if any.
-// It returns true for the first player-bound output after the session's own
-// input invalidated its prompt — that flush carries process_output's leading
-// interruption CRLF (comm.c:1620-1643).
-func (s *Session) claimInterruptionPrefix() bool {
-	return s.promptInvalidated.Swap(false)
-}
-
 // SendPrompt enqueues a prompt marker on the session's outgoing channel so the
 // transport writes the prompt only after all earlier output (FIFO ordering).
 // Telnet renders it as the "> " command prompt; WebSocket clients may ignore
@@ -290,11 +279,28 @@ func (s *Session) promptText() string {
 		return "> "
 	}
 	flags := s.player.GetFlags()
+	// C's make_prompt returns a bare "] " immediately while d->str is active.
+	// The board, note, and mail editors therefore suppress invisibility and
+	// vitals fields as well as the normal AFK/inactive prefixes.
+	if flags&(1<<uint(game.PlrWriting)) != 0 {
+		return "] "
+	}
+	// C's status branches rebuild prompt in-place with sprintf(prompt, ...)
+	// after the vitals/invisibility fields. On the oracle libc this overwrites
+	// those earlier fields, leaving only the status marker; INACTIVE is the
+	// later branch and therefore wins if both flags are present.
+	if flags&(1<<uint(game.PrfInactive)) != 0 {
+		return "INACTIVE > "
+	}
+	if flags&(1<<uint(game.PrfAFK)) != 0 {
+		return "AFK > "
+	}
 	prefix := ""
 	if level := s.player.GetInvisLevel(); level > 0 {
-		// C's wizinvis prompt is preceded by a carriage-return/line-feed
-		// boundary after command output (comm.c:1062-1065).
-		prefix = fmt.Sprintf("\r\ni%d ", level)
+		// C's make_prompt adds the wizinvis marker itself; process_output owns
+		// the preceding CRLF when an output buffer is being flushed
+		// (comm.c:1062-1065, 1624-1640).
+		prefix = fmt.Sprintf("i%d ", level)
 	}
 	// C's make_prompt playing branch renders the vitals fields (HP/mana/move)
 	// only when the infobar is off (comm.c:1064-1105); the VT100 infobar owns
@@ -310,18 +316,6 @@ func (s *Session) promptText() string {
 		if flags&(1<<uint(game.PrfDispmove)) != 0 {
 			prefix += fmt.Sprintf("%dV ", s.player.Move)
 		}
-	}
-	// C's make_prompt emits a bare "] " while d->str is active. The board,
-	// note, and mail editors all set PLR_WRITING, so preserve that framing
-	// before the normal AFK/inactive prompt prefixes.
-	if flags&(1<<uint(game.PlrWriting)) != 0 {
-		return prefix + "\r\n] "
-	}
-	if flags&(1<<uint(game.PrfInactive)) != 0 {
-		return prefix + "INACTIVE > "
-	}
-	if flags&(1<<uint(game.PrfAFK)) != 0 {
-		return prefix + "AFK > "
 	}
 	return prefix + "> "
 }

@@ -1831,9 +1831,9 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // breed_killer — 5% chance per tick to screech and attack
 // ================================================================
 func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// ch is nil during autonomous AI ticks; the mob's own state is checked
-	// via me (mirrors the C source, which is always called with ch==the mob).
-	if cmd != "" {
+	// The C special is also called synchronously from cityguard(), so use the
+	// supplied mob for all state gates (src/spec_procs2.c:1679-1689).
+	if me == nil || cmd != "" {
 		return false
 	}
 	if me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
@@ -1842,21 +1842,51 @@ func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	if me.GetFighting() != "" {
 		return false
 	}
-	if randRange(1, 100) > 5 {
-		return false
-	}
-	// Attack players in room
-	for _, victim := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if victim.GetLevel() >= 50 {
+
+	var victim combat.Combatant
+	for _, candidate := range cityguardRoomCombatants(w, me.GetRoomVNum()) {
+		if !isNightbreed(candidate) {
 			continue
 		}
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s lets out a blood-chilling screech!", mobName(me)))
-		if err := me.Attack(victim, w); err != nil {
-			slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-		}
+		victim = candidate
+		break
+	}
+	if victim == nil || !canSee(me, victim) {
+		return false
+	}
+
+	// C's speaking branch emits the exclamation without consuming RNG. The
+	// fallback growl is the only draw in this special's authored body.
+	noHassle := false
+	if player, ok := victim.(*Player); ok {
+		noHassle = player.GetFlags()&(1<<uint(PrfNohassle)) != 0
+	}
+	if me.CanSpeak() && !noHassle {
+		Act(w, true, me, nil, nil, nil, "$n exclaims, 'Die, nightbreed!!'", "", ToRoom)
+	} else if randRange(0, 5) == 0 {
+		Act(w, false, me, nil, nil, nil, "You hear a low growl in the back of $n's throat.", "", ToRoom)
+	}
+
+	// C suppresses the actual hit for NOHASSLE victims, but still handles the
+	// special after the authored speech/growl branch.
+	if noHassle || victim.GetRoom() != me.GetRoomVNum() {
 		return true
 	}
-	return false
+	if err := w.mobHit(me, victim); err != nil {
+		slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+	}
+	return true
+}
+
+func isNightbreed(candidate combat.Combatant) bool {
+	switch character := candidate.(type) {
+	case *Player:
+		return character.IsAffected(affVampire) || character.IsAffected(affWerewolf)
+	case *MobInstance:
+		return character.IsAffected(affVampire) || character.IsAffected(affWerewolf)
+	default:
+		return false
+	}
 }
 
 // ================================================================

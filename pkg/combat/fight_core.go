@@ -290,7 +290,9 @@ func DeathCry(ch Combatant) string {
 	var rooms []string
 	roomVNum := ch.GetRoom()
 	msg := fmt.Sprintf("Your blood freezes as you hear %s's death cry.", ch.GetName())
-	cbBroadcast(roomVNum, msg, "")
+	// death_cry() uses TO_ROOM: the dead character does not hear the room
+	// broadcast (fight.c:558-577).
+	cbBroadcast(roomVNum, msg, ch.GetName())
 	rooms = append(rooms, fmt.Sprintf("%d", roomVNum))
 	for door := 0; door < NUM_OF_DIRS; door++ {
 		adjRoom := cbGetAdjacentRoom(roomVNum, door)
@@ -300,6 +302,19 @@ func DeathCry(ch Combatant) string {
 		}
 	}
 	return strings.Join(rooms, ";")
+}
+
+// EmitDeathPositionMessage emits the POS_DEAD branch of damage(). It is kept
+// separate from UpdatePositionAfterDamage because the latter is also used by
+// callers that only need the wounded-band transition; the actual C death
+// pipeline owns this message immediately before death_cry/raw_kill.
+func EmitDeathPositionMessage(victim Combatant, broadcast func(roomVNum int, message, exclude string)) {
+	victim.SendMessage("You are dead!  Sorry...\r\n")
+	if broadcast != nil {
+		broadcast(victim.GetRoom(),
+			capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victim.GetName())),
+			victim.GetName())
+	}
 }
 
 // **********************************

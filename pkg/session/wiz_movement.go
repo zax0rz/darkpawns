@@ -318,9 +318,13 @@ func cmdTeleport(s *Session, args []string) error {
 	game.Act(s.manager.world, false, target.Combatant, nil, nil, nil,
 		"$n disappears in a puff of smoke.", "", game.ToRoom)
 	if target.Combatant.IsNPC() {
-		target.Combatant.(*game.MobInstance).SetRoom(dest)
+		if err := s.manager.world.MobTransfer(target.Combatant.(*game.MobInstance), dest); err != nil {
+			return err
+		}
 	} else {
-		target.Combatant.(*game.Player).SetRoom(dest)
+		if err := s.manager.world.PlayerTransfer(target.Combatant.(*game.Player), dest); err != nil {
+			return err
+		}
 	}
 	slog.Warn("wizard teleport", "by", s.player.Name, "target", target.Combatant.GetName(), "room", dest)
 	game.Act(s.manager.world, false, target.Combatant, nil, nil, nil,

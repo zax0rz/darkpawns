@@ -26,16 +26,19 @@ type MobInstance struct {
 	ID        int // World-assigned instance ID
 
 	// Current state
-	alive       atomic.Bool // CRIT-004: fast alive check without acquiring mu
-	RoomVNum    int         // -1 if not in a room (carried, etc.)
-	CurrentHP   int
-	MaxHP       int
-	CurrentMana int
-	MaxMana     int
-	CurrentMove int
-	MaxMove     int
-	Status      string // "standing", "sleeping", "fighting", etc.
-	Level       int    // Level override (0 = use prototype level)
+	alive    atomic.Bool // CRIT-004: fast alive check without acquiring mu
+	RoomVNum int         // -1 if not in a room (carried, etc.)
+	// RoomEntrySequence mirrors char_to_room's prepend order for room looks.
+	// Higher values are newer arrivals and therefore appear first.
+	RoomEntrySequence uint64
+	CurrentHP         int
+	MaxHP             int
+	CurrentMana       int
+	MaxMana           int
+	CurrentMove       int
+	MaxMove           int
+	Status            string // "standing", "sleeping", "fighting", etc.
+	Level             int    // Level override (0 = use prototype level)
 
 	// AI
 	// Brain *ai.Brain // Temporarily commented out to fix circular import
@@ -255,6 +258,13 @@ func (m *MobInstance) SetRoom(vnum int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.RoomVNum = vnum
+}
+
+// GetRoomEntrySequence returns the runtime arrival order used by room looks.
+func (m *MobInstance) GetRoomEntrySequence() uint64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.RoomEntrySequence
 }
 
 // GetMove returns the mob's current movement points. C initializes every
@@ -683,13 +693,10 @@ func (m *MobInstance) GetPosition() int {
 	}
 }
 
-// actionFlagBitNames mirrors the parser's act-flag name table (parser/mob.go);
-// index = C MOB_* bit. Kept in sync by TestActionFlagBitsMatchParserTable.
-var actionFlagBitNames = []string{
-	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
-	"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY",
-	"HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH", "NOBLIND", "HUNTER",
-}
+// actionFlagBitNames mirrors the parser's complete act-flag name table
+// (parser/mob.go); index = C MOB_* bit. Reuse the canonical game table so
+// extended flags such as AGGR24 and LOOTS are carried onto mob instances.
+var actionFlagBitNames = ActionBitNames
 
 // actionFlagBits converts parsed act-flag names to the C MOB_* bitmask.
 func actionFlagBits(names []string) uint64 {

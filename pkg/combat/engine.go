@@ -52,7 +52,7 @@ type CombatEngine struct {
 	// misses), and the attack type recorded on the combat pair.
 	MessageFunc func(attacker, defender Combatant, dam, attackType int) bool
 
-	// DeathFunc handles corpse creation and respawn (set by game layer)
+	// DeathFunc handles corpse creation and deferred extraction (set by game layer)
 	// Called after death messages are sent.
 	DeathFunc func(victim, killer Combatant, attackType int)
 
@@ -338,6 +338,23 @@ func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error
 	}
 
 	ce.performOneHit(pair)
+	return nil
+}
+
+// PerformUnenrolledInitialAttack resolves a direct hit() call made by a mob
+// special without creating the command-engine combat pair. In C, the aware
+// backstab branch calls hit(vict, ch) directly: damage() leaves the mob facing
+// the player, but the player is not enrolled as a reciprocal fighter and the
+// hit is not added as a new engine pair. The mob therefore does not receive a
+// later perform_violence turn from this one-off retaliation.
+func (ce *CombatEngine) PerformUnenrolledInitialAttack(attacker, defender Combatant) error {
+	ce.performOneHit(&CombatPair{Attacker: attacker, Defender: defender})
+	if defender.GetPosition() != PosDead && attacker.GetFighting() == "" {
+		attacker.SetFighting(defender.GetName())
+		if attacker.GetPosition() > PosStunned {
+			attacker.SetPosition(PosFighting)
+		}
+	}
 	return nil
 }
 
@@ -699,6 +716,16 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		damage = CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
 	}
 
+	// C's damage() protects shopkeepers after hit() has consumed its
+	// to-hit/damage draws but before combat enrollment or messages. Mob specials
+	// use this same synchronous opener, so apply the boundary here as well as
+	// in the normal perform_violence path (fight.c:1359-1366).
+	if cbIsShopkeeper(defender.GetName()) {
+		ce.StopCombat(attacker.GetName())
+		ce.StopCombat(defender.GetName())
+		return true
+	}
+
 	// fight.c reaches mob redirects from damage(), after hit() has consumed
 	// its to-hit and damage-roll draws but before damage messages/state land.
 	if ce.applyMobCombatRedirects(attacker, defender) {
@@ -766,6 +793,10 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return ce.handleSurvivingVictimState(attacker, defender, damage, newPos)
 	}
 
+	// damage() emits its POS_DEAD bytes, then raw_kill() emits death_cry
+	// before the game-layer corpse/extraction bookkeeping (fight.c:1514-1534).
+	EmitDeathPositionMessage(defender, ce.BroadcastFunc)
+	DeathCry(defender)
 	ce.handleDeath(defender, attacker)
 	if ce.OnCombatAction != nil {
 		ce.OnCombatAction(attacker, defender, "hit", damage, "killed", 0)
@@ -969,22 +1000,12 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 	killerName := killer.GetName()
 	roomVNum := victim.GetRoom()
 
-	// Death message to victim
-	victim.SendMessage("You have been KILLED!\r\n")
-
-	// Death message to room
-	if ce.BroadcastFunc != nil {
-		ce.BroadcastFunc(roomVNum,
-			fmt.Sprintf("%s has been killed by %s!", victimName, killerName),
-			"")
-	}
-
 	// Fire death script trigger on victim mob (before DeathFunc removes it)
 	if ce.ScriptDeathFunc != nil && victim.IsNPC() {
 		ce.ScriptDeathFunc(victimName, killerName, roomVNum)
 	}
 
-	// Delegate to game layer for corpse creation + respawn
+	// Delegate to game layer for corpse creation + deferred extraction
 	if ce.DeathFunc != nil {
 		// Get attack type from combat pair if available
 		attackType := -1 // TYPE_UNDEFINED

@@ -76,7 +76,7 @@ func TestCanUseSkill_Audited_KnownSkill_Passes(t *testing.T) {
 		{SkillKick, combat.PosFighting},
 		{SkillTrip, combat.PosFighting},
 		{SkillHeadbutt, combat.PosFighting},
-		{SkillRescue, combat.PosStanding},
+		{SkillRescue, combat.PosFighting},
 		{SkillShoot, combat.PosStanding},
 	}
 	for _, tc := range cases {
