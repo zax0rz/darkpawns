@@ -365,7 +365,8 @@ func DoDetect(ch *Player, world *World) SkillResult {
 		return SkillResult{MessageToCh: "You are lost in the void.\r\n"}
 	}
 
-	results := "You carefully check the room...\r\n"
+	var results strings.Builder
+	results.WriteString("You carefully check the room...\r\n")
 	prob := ch.GetSkill(SkillDetect)
 	// C's number(1, 101) is inclusive; the roll follows the blind gate and
 	// the initial room-check line is emitted before this branch.
@@ -373,7 +374,7 @@ func DoDetect(ch *Player, world *World) SkillResult {
 	if prob <= dprng.Number(1, 101) {
 		return SkillResult{
 			Success:      false,
-			MessageToCh:  results + "You can't seem to find anything.\r\n",
+			MessageToCh:  results.String() + "You can't seem to find anything.\r\n",
 			WaitChPulses: engine.PULSE_VIOLENCE + 1,
 		}
 	}
@@ -389,14 +390,14 @@ func DoDetect(ch *Player, world *World) SkillResult {
 			case "down":
 				where = "the floor"
 			}
-			results += fmt.Sprintf("You notice something funny about %s.\r\n", where)
+			fmt.Fprintf(&results, "You notice something funny about %s.\r\n", where)
 			found = true
 			if !movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark") {
 				setRoomFlagBit(room, roomFlagSecretMark)
 			}
 		}
 	}
-	return SkillResult{Success: found, MessageToCh: results}
+	return SkillResult{Success: found, MessageToCh: results.String()}
 }
 
 // ---------------------------------------------------------------------------
