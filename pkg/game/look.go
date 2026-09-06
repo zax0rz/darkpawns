@@ -1049,48 +1049,24 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 }
 
 func equipmentWhere(slot EquipmentSlot) string {
-	switch slot {
-	case SlotLight:
-		return cWearWhere[0]
-	case SlotFinger, SlotFingerR, SlotFingerL:
-		return cWearWhere[1]
-	case SlotNeck, SlotNeck1, SlotNeck2:
-		return cWearWhere[3]
-	case SlotBody:
-		return cWearWhere[5]
-	case SlotHead:
-		return cWearWhere[6]
-	case SlotLegs:
-		return cWearWhere[7]
-	case SlotFeet:
-		return cWearWhere[8]
-	case SlotHands:
-		return cWearWhere[9]
-	case SlotArms:
-		return cWearWhere[10]
-	case SlotShield:
-		return cWearWhere[11]
-	case SlotAbout:
-		return cWearWhere[12]
-	case SlotWaist:
-		return cWearWhere[13]
-	case SlotWrist, SlotWristR, SlotWristL:
-		return cWearWhere[14]
-	case SlotWield:
-		return cWearWhere[16]
-	case SlotHold:
-		return cWearWhere[17]
-	case SlotThrow:
-		return cWearWhere[18]
-	case SlotAblegs:
-		return cWearWhere[19]
-	case SlotFace:
-		return cWearWhere[20]
-	case SlotHover:
-		return cWearWhere[21]
-	default:
-		return "<used>               "
+	if position, ok := equipmentWherePositions[slot]; ok {
+		return cWearWhere[position]
 	}
+	return "<used>               "
+}
+
+// equipmentWherePositions maps Go's stored equipment slots to the C wear
+// positions used by show_char_to_char_1(). Slots sharing a C position retain
+// C's identical labels.
+var equipmentWherePositions = map[EquipmentSlot]int{
+	SlotLight:  0,
+	SlotFinger: 1, SlotFingerR: 1, SlotFingerL: 1,
+	SlotNeck: 3, SlotNeck1: 3, SlotNeck2: 3,
+	SlotBody: 5, SlotHead: 6, SlotLegs: 7, SlotFeet: 8,
+	SlotHands: 9, SlotArms: 10, SlotShield: 11, SlotAbout: 12,
+	SlotWaist: 13, SlotWrist: 14, SlotWristR: 14, SlotWristL: 14,
+	SlotWield: 16, SlotHold: 17, SlotThrow: 18, SlotAblegs: 19,
+	SlotFace: 20, SlotHover: 21,
 }
 
 type observationObjectLocation int

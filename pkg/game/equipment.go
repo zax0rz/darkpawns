@@ -48,136 +48,65 @@ const (
 	SlotHover
 )
 
+// equipmentSlotNames is the canonical player-facing name for each slot.
+var equipmentSlotNames = map[EquipmentSlot]string{
+	SlotHead:     "head",
+	SlotBody:     "body",
+	SlotArms:     "arms",
+	SlotHands:    "hands",
+	SlotLegs:     "legs",
+	SlotFeet:     "feet",
+	SlotWield:    "wield",
+	SlotHold:     "hold",
+	SlotLight:    "light",
+	SlotNeck:     "neck",
+	SlotAbout:    "about",
+	SlotWaist:    "waist",
+	SlotWrist:    "wrist",
+	SlotFinger:   "finger",
+	SlotEar:      "ear",
+	SlotShoulder: "shoulder",
+	SlotBack:     "back",
+	SlotFingerR:  "finger right",
+	SlotFingerL:  "finger left",
+	SlotNeck1:    "neck 1",
+	SlotNeck2:    "neck 2",
+	SlotWristR:   "wrist right",
+	SlotWristL:   "wrist left",
+	SlotShield:   "shield",
+	SlotThrow:    "throw",
+	SlotAblegs:   "ablegs",
+	SlotFace:     "face",
+	SlotHover:    "hover",
+}
+
+var equipmentSlotInputs = map[string]EquipmentSlot{
+	"head": SlotHead, "body": SlotBody, "arms": SlotArms, "hands": SlotHands,
+	"legs": SlotLegs, "feet": SlotFeet, "wield": SlotWield, "hold": SlotHold,
+	"light": SlotLight, "neck": SlotNeck, "about": SlotAbout, "waist": SlotWaist,
+	"wrist": SlotWrist, "finger": SlotFinger, "ear": SlotEar, "shoulder": SlotShoulder,
+	"back": SlotBack, "finger right": SlotFingerR, "finger_r": SlotFingerR,
+	"finger left": SlotFingerL, "finger_l": SlotFingerL, "neck 1": SlotNeck1,
+	"neck1": SlotNeck1, "neck 2": SlotNeck2, "neck2": SlotNeck2,
+	"wrist right": SlotWristR, "wrist_r": SlotWristR, "wrist left": SlotWristL,
+	"wrist_l": SlotWristL, "shield": SlotShield, "throw": SlotThrow,
+	"ablegs": SlotAblegs, "face": SlotFace, "hover": SlotHover,
+}
+
 // String returns the name of the equipment slot.
 func (s EquipmentSlot) String() string {
-	switch s {
-	case SlotHead:
-		return "head"
-	case SlotBody:
-		return "body"
-	case SlotArms:
-		return "arms"
-	case SlotHands:
-		return "hands"
-	case SlotLegs:
-		return "legs"
-	case SlotFeet:
-		return "feet"
-	case SlotWield:
-		return "wield"
-	case SlotHold:
-		return "hold"
-	case SlotLight:
-		return "light"
-	case SlotNeck:
-		return "neck"
-	case SlotAbout:
-		return "about"
-	case SlotWaist:
-		return "waist"
-	case SlotWrist:
-		return "wrist"
-	case SlotFinger:
-		return "finger"
-	case SlotEar:
-		return "ear"
-	case SlotShoulder:
-		return "shoulder"
-	case SlotBack:
-		return "back"
-	// Dual equipment slots (M4)
-	case SlotFingerR:
-		return "finger right"
-	case SlotFingerL:
-		return "finger left"
-	case SlotNeck1:
-		return "neck 1"
-	case SlotNeck2:
-		return "neck 2"
-	case SlotWristR:
-		return "wrist right"
-	case SlotWristL:
-		return "wrist left"
-	// Shield slot (M2/M3)
-	case SlotShield:
-		return "shield"
-	case SlotThrow:
-		return "throw"
-	case SlotAblegs:
-		return "ablegs"
-	case SlotFace:
-		return "face"
-	case SlotHover:
-		return "hover"
-	default:
-		return "unknown"
+	if name, ok := equipmentSlotNames[s]; ok {
+		return name
 	}
+	return "unknown"
 }
 
 // ParseEquipmentSlot parses a string into an EquipmentSlot.
 func ParseEquipmentSlot(s string) (EquipmentSlot, bool) {
-	switch strings.ToLower(s) {
-	case "head":
-		return SlotHead, true
-	case "body":
-		return SlotBody, true
-	case "arms":
-		return SlotArms, true
-	case "hands":
-		return SlotHands, true
-	case "legs":
-		return SlotLegs, true
-	case "feet":
-		return SlotFeet, true
-	case "wield":
-		return SlotWield, true
-	case "hold":
-		return SlotHold, true
-	case "light":
-		return SlotLight, true
-	case "neck":
-		return SlotNeck, true
-	case "about":
-		return SlotAbout, true
-	case "waist":
-		return SlotWaist, true
-	case "wrist":
-		return SlotWrist, true
-	case "finger":
-		return SlotFinger, true
-	case "ear":
-		return SlotEar, true
-	case "shoulder":
-		return SlotShoulder, true
-	case "back":
-		return SlotBack, true
-	// Dual equipment slots (M4)
-	case "finger right", "finger_r":
-		return SlotFingerR, true
-	case "finger left", "finger_l":
-		return SlotFingerL, true
-	case "neck 1", "neck1":
-		return SlotNeck1, true
-	case "neck 2", "neck2":
-		return SlotNeck2, true
-	case "wrist right", "wrist_r":
-		return SlotWristR, true
-	case "wrist left", "wrist_l":
-		return SlotWristL, true
-	// Shield slot (M2/M3)
-	case "shield":
-		return SlotShield, true
-	case "throw":
-		return SlotThrow, true
-	case "ablegs":
-		return SlotAblegs, true
-	case "face":
-		return SlotFace, true
-	case "hover":
-		return SlotHover, true
-	default:
-		return SlotMax, false
+	if slot, ok := equipmentSlotInputs[strings.ToLower(s)]; ok {
+		return slot, true
 	}
+	return SlotMax, false
 }
 
 // Equipment represents a player's equipped items.

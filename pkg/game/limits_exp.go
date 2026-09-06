@@ -74,62 +74,53 @@ func CheckAutowiz(p *Player) {
 // ---------------------------------------------------------------------------
 // FindExp — from class.c find_exp()
 // ---------------------------------------------------------------------------
+// findExpClassModifiers mirrors the class modifier table in src/class.c.
+// Classes outside this table use C's default modifier of 1.0.
+var findExpClassModifiers = map[int]float64{
+	ClassMageUser: 0.3,
+	ClassCleric:   0.4,
+	ClassWarrior:  0.7,
+	ClassThief:    0.1,
+	ClassMagus:    1.5,
+	ClassMystic:   1.5,
+	ClassAvatar:   1.6,
+	ClassAssassin: 1.2,
+	ClassPaladin:  1.9,
+	ClassRanger:   1.9,
+	ClassNinja:    0.6,
+	ClassPsionic:  0.6,
+}
+
+// findExpFixedLevels contains C's hardcoded values for levels 0 through 12.
+var findExpFixedLevels = [...]int{
+	1,
+	1500,
+	3000,
+	6000,
+	11000,
+	21000,
+	42000,
+	80000,
+	155000,
+	300000,
+	450000,
+	650000,
+	870000,
+}
+
 func FindExp(class int, level int) int {
-	var modifier float64
-
-	switch class {
-	case ClassMageUser:
-		modifier = 0.3
-	case ClassCleric:
-		modifier = 0.4
-	case ClassWarrior:
-		modifier = 0.7
-	case ClassThief:
-		modifier = 0.1
-	case ClassMagus, ClassMystic:
-		modifier = 1.5
-	case ClassAvatar:
-		modifier = 1.6
-	case ClassAssassin:
-		modifier = 1.2
-	case ClassPaladin, ClassRanger:
-		modifier = 1.9
-	case ClassNinja, ClassPsionic:
-		modifier = 0.6
-	default:
-		modifier = 1.0
+	modifier := 1.0
+	if classModifier, ok := findExpClassModifiers[class]; ok {
+		modifier = classModifier
 	}
 
-	switch {
-	case level <= 0:
-		return 1
-	case level == 1:
-		return 1500
-	case level == 2:
-		return 3000
-	case level == 3:
-		return 6000
-	case level == 4:
-		return 11000
-	case level == 5:
-		return 21000
-	case level == 6:
-		return 42000
-	case level == 7:
-		return 80000
-	case level == 8:
-		return 155000
-	case level == 9:
-		return 300000
-	case level == 10:
-		return 450000
-	case level == 11:
-		return 650000
-	case level == 12:
-		return 870000
-	default:
-		return 900000 + ((level - 13) * level * 20000) + (level * level * 1000) + int(modifier*10000*float64(level))
+	if level <= 0 {
+		return findExpFixedLevels[0]
 	}
+	if level < len(findExpFixedLevels) {
+		return findExpFixedLevels[level]
+	}
+	return 900000 + ((level - 13) * level * 20000) + (level * level * 1000) + int(modifier*10000*float64(level))
 }
 
 // ---------------------------------------------------------------------------
