@@ -54,14 +54,17 @@ main() {
 			return 0
 		fi
 		if [[ $status2 -ne 3 ]]; then
+			# Retry crashed differently: fall through to the timeout/infra block,
+			# which may retry once more (bounded at two extra runs total).
 			status=$status2
 		elif ! diff <(fingerprints "$log_file.attempt1") <(fingerprints "$log_file") >/dev/null; then
 			if [[ $in_baseline -eq 1 ]]; then
 				# Run-varying divergence bytes (e.g. the accuse pointer anomaly the
-				# ledger documents): the shape can never be pinned, but the ledger
-				# row already justifies the divergence itself.
-				printf 'EXPECTED\t%s\n' "$scenario" >"$result_dir/$scenario"
-				printf 'EXPECTED %s (ledger-backed divergence; shape unpinnable — run-varying bytes)\n' "$scenario"
+				# ledger documents). The ledger row justifies A divergence, not an
+				# unverifiable one: grade UNPINNABLE — visible every run, human-
+				# cleared, never auto-blessed.
+				printf 'UNPINNABLE\t%s\n' "$scenario" >"$result_dir/$scenario"
+				printf 'UNPINNABLE %s (ledger-backed divergence; shape unpinnable — run-varying bytes; requires human clearance)\n' "$scenario"
 			else
 				printf 'INFRA\t%s\t%d\n' "$scenario" "$status" >"$result_dir/$scenario"
 				printf 'INFRA %s (unstable divergence across attempts; not classified as content)\n' "$scenario" >&2

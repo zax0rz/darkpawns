@@ -1,0 +1,21 @@
+scenario	label	sha256	citations
+accuse-depth	accuse Ragnar [actor]	9242b15c4e3726f2eefede496829fb154b99a39e6913820c453f23773deb75f6	accuse.tsv:accuse.one-argument:blocked;accuse.tsv:accuse.target-audience:blocked;accuse.tsv:accuse.target-success:blocked
+accuse-depth	accuse the Ragnar trailing words are ignored [actor]	9242b15c4e3726f2eefede496829fb154b99a39e6913820c453f23773deb75f6	accuse.tsv:accuse.one-argument:blocked;accuse.tsv:accuse.target-audience:blocked;accuse.tsv:accuse.target-success:blocked
+accuse-noarg-depth	accuse	118e8baa2ee8a929cec60571c235daaa79cf450b6c2d7200dc858aa9f4632f21	accuse.tsv:accuse.no-argument:blocked
+force-mob	force trainee sit	1ad72fbba7d667612f4659ae072470bbb2c2450c64b972ed3364ea4ee46b7aca	force.tsv:force.npc-command-interpreter:blocked;force.tsv:force.visible-npc-target:blocked
+force-mob	force trainee stand	bf0860b9ed3d932a6e6e316b0cdf0fa69c25f9df5f435068480edf379e801da5	force.tsv:force.npc-command-interpreter:blocked;force.tsv:force.visible-npc-target:blocked
+medit-entry-depth	medit	134cb9c489e39d317ab67587e401d50b8f0382d5ceb9cfdd3050ddaceaaa2eda	medit.tsv:medit.no-argument:blocked;medit.tsv:medit.nonnumeric-argument:blocked;medit.tsv:medit.unknown-zone:blocked
+medit-entry-depth	medit 999999	0f8807f28888522a9809fedd3386d648b22fa17f977fbc3d9cf220f3acb576d3	medit.tsv:medit.no-argument:blocked;medit.tsv:medit.nonnumeric-argument:blocked;medit.tsv:medit.unknown-zone:blocked
+medit-entry-depth	medit abc	5d8d92b3c45a9d7f753223206d917b47609be74601ef7c19ed48866c87d0abf9	medit.tsv:medit.no-argument:blocked;medit.tsv:medit.nonnumeric-argument:blocked;medit.tsv:medit.unknown-zone:blocked
+medit-session-depth	medit 18305	c9a5294452e6b4b0cd6e1012245841fd83ba5eacc2d934e8786d8fdb30aff75a	medit.tsv:medit.interactive-olc:blocked
+medit-session-depth	q	fd6eea3f7f6a4181daa262430f8f542741ccc7aa7e415bcd2cfcde2d1d007007	medit.tsv:medit.interactive-olc:blocked
+redit-entry-depth	redit 999999	0f8807f28888522a9809fedd3386d648b22fa17f977fbc3d9cf220f3acb576d3	redit.tsv:redit.nonnumeric-argument:blocked;redit.tsv:redit.unknown-zone:blocked
+redit-entry-depth	redit abc	5d8d92b3c45a9d7f753223206d917b47609be74601ef7c19ed48866c87d0abf9	redit.tsv:redit.nonnumeric-argument:blocked;redit.tsv:redit.unknown-zone:blocked
+redit-session-depth	redit	9d7f71d68d783802e9b44478f159ac2d98d36c58d57cc8d8c793d62ff60e391d	redit.tsv:redit.interactive-olc:blocked;redit.tsv:redit.no-argument-current-room:blocked
+sedit-entry-depth	sedit	02ca237fef33965883772d8ad6dcc8053261a22b9be05f43919ae50658c9a1f5	sedit.tsv:sedit.no-argument:blocked;sedit.tsv:sedit.nonnumeric-argument:blocked;sedit.tsv:sedit.unknown-zone:blocked
+sedit-entry-depth	sedit 8000	8891858f304c93a2d4bf0b400167bd4de151fb832a29a43defaf7eea34ed04c2	sedit.tsv:sedit.no-argument:blocked;sedit.tsv:sedit.nonnumeric-argument:blocked;sedit.tsv:sedit.unknown-zone:blocked
+sedit-entry-depth	sedit 999	0f8807f28888522a9809fedd3386d648b22fa17f977fbc3d9cf220f3acb576d3	sedit.tsv:sedit.no-argument:blocked;sedit.tsv:sedit.nonnumeric-argument:blocked;sedit.tsv:sedit.unknown-zone:blocked
+sedit-entry-depth	sedit nope	5d8d92b3c45a9d7f753223206d917b47609be74601ef7c19ed48866c87d0abf9	sedit.tsv:sedit.no-argument:blocked;sedit.tsv:sedit.nonnumeric-argument:blocked;sedit.tsv:sedit.unknown-zone:blocked
+sedit-session-depth	q	fd6eea3f7f6a4181daa262430f8f542741ccc7aa7e415bcd2cfcde2d1d007007	sedit.tsv:sedit.interactive-olc:blocked
+sedit-session-depth	sedit 8000	8891858f304c93a2d4bf0b400167bd4de151fb832a29a43defaf7eea34ed04c2	sedit.tsv:sedit.interactive-olc:blocked
+shoot-target-depth	shoot arrow north instructor	ac883792c2782e2660dfca34b30dc9aa2082f9a84060b25108a7b896778603ff	shoot.tsv:shoot.mob-hit-miss:blocked;shoot.tsv:shoot.pc-level-window:blocked;shoot.tsv:shoot.player-hit-miss:blocked;shoot.tsv:shoot.target-fallback:blocked;shoot.tsv:shoot.target-fighting:blocked;shoot.tsv:shoot.targeted-shot:blocked;shoot.tsv:shoot.targeted-shot-audience:blocked;shoot.tsv:shoot.wait-and-object-consumption:blocked

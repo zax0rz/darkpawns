@@ -110,4 +110,5 @@ docs/reports/scenario-coverage-*.tsv
 .github/agents/
 .github/hooks/
 .github/skills/
-dp-oracle-diff
+/dp-oracle-diff
+/lib/object_idlist

@@ -15,7 +15,31 @@ MANIFEST_DIR = ROOT / "docs" / "fidelity" / "depth"
 SCENARIO_DIR = ROOT / "cmd" / "dp-oracle-diff" / "scenarios"
 OUT = ROOT / "cmd" / "dp-oracle-diff" / "expected_divergences.tsv"
 
+def check_pins(pins_path: pathlib.Path) -> int:
+    """Oracle-free integrity check: every pins row must cite a ledger row that
+    exists in expected_divergences.tsv (same scenario, citation present)."""
+    with pins_path.open(encoding="utf-8") as stream:
+        pin_lines = [line.rstrip("\n").split("\t") for line in stream][1:]
+    ledger = {}
+    with OUT.open(encoding="utf-8") as stream:
+        for line in stream:
+            scenario, manifest, case_id, status = line.rstrip("\n").split("\t")
+            ledger.setdefault(scenario, set()).add(f"{manifest}:{case_id}:{status}")
+    bad = 0
+    for scenario, _label, _sha, citations in pin_lines:
+        for citation in citations.split(";"):
+            if citation not in ledger.get(scenario, set()):
+                print(f"pin cites unknown ledger row: {scenario}: {citation}", file=sys.stderr)
+                bad += 1
+    return bad
+
+
 def main() -> int:
+    if "--check-pins" in sys.argv:
+        pins = ROOT / "cmd" / "dp-oracle-diff" / "expected_divergence_pins.tsv"
+        bad = check_pins(pins)
+        print(f"expected_divergence_pins: {'OK' if bad == 0 else f'{bad} dangling citations'}")
+        return 1 if bad else 0
     rows = []
     for path in sorted(MANIFEST_DIR.glob("*.tsv")):
         with path.open(encoding="utf-8", newline="") as stream:

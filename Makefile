@@ -126,6 +126,7 @@ expected-divergence-pins:
 expected-divergences-check: expected-divergences
 	@git diff --exit-code -- cmd/dp-oracle-diff/expected_divergences.tsv \
 		|| (echo "expected_divergences.tsv is stale; run make expected-divergences and commit" && exit 1)
+	@python3 scripts/gen_expected_divergences.py --check-pins
 
 oracle-regression:
 	ORACLE_REGRESSION_GO=$${ORACLE_REGRESSION_GO:-/usr/local/go/bin/go} \
