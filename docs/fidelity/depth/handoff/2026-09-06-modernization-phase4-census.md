@@ -72,5 +72,6 @@ vehicles, and R5e for tracing the reachable C call path.
 
 ## Phase-4 audit state
 
-PRs #1390, #1391, #1392, and #1393 are merged. PR #1394 is ready to close
-after this item-4.5 redo and its evidence are accepted.
+PRs #1390, #1391, #1392, and #1393 are merged. Superseded PR #1394 was
+closed after this item-4.5 redo; the corrected implementation is committed as
+`63e5bb6d0` on `codex/fidelity-census-fixes`.
