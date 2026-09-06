@@ -1019,7 +1019,8 @@ func cmdWhere(s *Session, args []string) error {
 		return nil
 	}
 
-	out := "Players\n-------\n"
+	var out strings.Builder
+	out.WriteString("Players\n-------\n")
 	found := false
 	for _, sess := range sessions {
 		if sess.player == nil {
@@ -1031,13 +1032,13 @@ func cmdWhere(s *Session, args []string) error {
 			continue
 		}
 		// Format mirrors do_where() line 2272: name - [vnum] room name
-		out += fmt.Sprintf("%-20s - [%5d] %s\n", p.Name, room.VNum, room.Name)
+		fmt.Fprintf(&out, "%-20s - [%5d] %s\n", p.Name, room.VNum, room.Name)
 		found = true
 	}
 	if !found {
-		out += "No-one visible.\n"
+		out.WriteString("No-one visible.\n")
 	}
-	s.sendText(out)
+	s.sendText(out.String())
 	return nil
 }
 
