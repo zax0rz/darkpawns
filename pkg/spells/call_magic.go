@@ -1,14 +1,15 @@
 package spells
 
 import (
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// lvlImmort mirrors C LVL_IMMORT (31); duplicated here to avoid an import cycle
-// with pkg/game (same pattern as pkg/combat/fight_core.go).
-const lvlImmort = 31
+// lvlImmort is the package-local spelling used by the spell files. The value
+// is owned by combat because spells cannot import game without a cycle.
+const lvlImmort = combat.LVL_IMMORT
 
 // CallMagic is the central spell dispatch function, ported from src/spell_parser.c call_magic().
 //
@@ -66,7 +67,7 @@ func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 	// message (violent magic, or "power" for psionic/mystic), the room sees the
 	// light appear, and the spell is aborted. Immortals are exempt.
 	if roomIsPeaceful(caster, world) && (si.IsViolent() || si.HasRoutine(RoutineDamage)) {
-		if getLevel(caster) < lvlImmort {
+		if getLevel(caster) < combat.LVL_IMMORT {
 			type sender interface{ SendMessage(string) }
 			if s, ok := caster.(sender); ok {
 				if isClassPsionicOrMystic(getClass(caster)) {

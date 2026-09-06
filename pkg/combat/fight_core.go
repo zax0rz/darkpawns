@@ -50,7 +50,7 @@ var AttackHitTexts = []AttackHitText{
 // ---------------------------------------------------------------------------
 
 const (
-	LVL_IMMORT  = 31 // C: LVL_IMMORT=31 — duplicated here to avoid import cycle with pkg/game
+	LVL_IMMORT  = 31 // C: LVL_IMMORT=31 — shared by lower-level packages to avoid import cycles
 	NUM_OF_DIRS = 6
 	maxExpGain  = 1000000
 )
@@ -867,16 +867,24 @@ func IsInGroup(ch Combatant) bool {
 }
 
 func CalcLevelDiff(ch, victim Combatant, base int) int {
-	levelDiff := ch.GetLevel() - victim.GetLevel()
+	return CalcXPShare(ch.GetLevel(), victim.GetLevel(), base, IsInGroup(ch), maxExpGain)
+}
+
+// CalcXPShare ports src/fight.c calc_level_diff() for callers that already
+// have the character levels and group state. maxShare is passed by the caller
+// because the combat and world paths retain their existing caps.
+func CalcXPShare(chLevel, victimLevel, base int, inGroup bool, maxShare int) int {
 	share := base
-	if share > maxExpGain {
-		share = maxExpGain
+	if share > maxShare {
+		share = maxShare
 	}
 	if share < 1 {
 		share = 1
 	}
+
+	levelDiff := chLevel - victimLevel
 	if levelDiff > 0 {
-		if !IsInGroup(ch) {
+		if !inGroup {
 			levelDiff -= 2
 		}
 		switch {
@@ -888,7 +896,7 @@ func CalcLevelDiff(ch, victim Combatant, base int) int {
 			share = int(float64(share) - float64(share)*0.3)
 		}
 	}
-	if ch.GetLevel() > 20 {
+	if chLevel > 20 {
 		share = int(float64(share) - float64(share)*0.2)
 	}
 	if share < 1 {

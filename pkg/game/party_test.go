@@ -3,6 +3,7 @@ package game
 import (
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -122,9 +123,9 @@ func TestCalcKillXPShareMatchesCLevelDiff(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := calcKillXPShare(tt.chLevel, tt.victimLevel, tt.base, tt.inGroup)
+			got := combat.CalcXPShare(tt.chLevel, tt.victimLevel, tt.base, tt.inGroup, maxExpGain)
 			if got != tt.want {
-				t.Fatalf("calcKillXPShare(%d, %d, %d, %t) = %d, want %d",
+				t.Fatalf("combat.CalcXPShare(%d, %d, %d, %t) = %d, want %d",
 					tt.chLevel, tt.victimLevel, tt.base, tt.inGroup, got, tt.want)
 			}
 		})

@@ -114,41 +114,6 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 	return members
 }
 
-// calcKillXPShare ports src/fight.c calc_level_diff(). The caller supplies
-// inGroup explicitly because AwardMobKillXP has already resolved the live
-// group membership for this death path.
-func calcKillXPShare(chLevel, victimLevel, base int, inGroup bool) int {
-	share := base
-	if share > maxExpGain {
-		share = maxExpGain
-	}
-	if share < 1 {
-		share = 1
-	}
-
-	levelDiff := chLevel - victimLevel
-	if levelDiff > 0 {
-		if !inGroup {
-			levelDiff -= 2
-		}
-		switch {
-		case levelDiff > 15:
-			share = int(float64(share) - float64(share)*0.7)
-		case levelDiff > 10:
-			share = int(float64(share) - float64(share)*0.5)
-		case levelDiff > 5:
-			share = int(float64(share) - float64(share)*0.3)
-		}
-	}
-	if chLevel > 20 {
-		share = int(float64(share) - float64(share)*0.2)
-	}
-	if share < 1 {
-		share = 1
-	}
-	return share
-}
-
 // AwardMobKillXP distributes experience to the killer and all grouped members in the same room.
 // Solo kills use the C calc_level_diff() path with two levels of slack before
 // higher-level penalties apply.
@@ -250,7 +215,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 		}
 		// Level-difference XP penalty — fight.c calc_level_diff(), solo path
 		// gets the C two-level slack before higher-level penalties apply.
-		xp := calcKillXPShare(killer.GetLevel(), victimLevel, victimExp, false)
+		xp := combat.CalcXPShare(killer.GetLevel(), victimLevel, victimExp, false, maxExpGain)
 		w.GainExp(p, xp)
 		if xp > 1 {
 			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
@@ -288,7 +253,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 
 	// perform_group_gain() for each member — fight.c lines 688–705
 	for _, m := range inRoom {
-		xp := calcKillXPShare(m.GetLevel(), victimLevel, base, true)
+		xp := combat.CalcXPShare(m.GetLevel(), victimLevel, base, true, maxExpGain)
 		w.GainExp(m, xp)
 		if xp > 1 {
 			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", xp))
