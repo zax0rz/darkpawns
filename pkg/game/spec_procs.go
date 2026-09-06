@@ -435,15 +435,23 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 // fighter — mob spec: uses martial skills in combat
-func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+func mobCombatSpecialTarget(w *World, me *MobInstance, cmd string) (combat.Combatant, bool) {
 	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFighting() == "" {
-		return false
+		return nil, false
 	}
 	if me.GetWaitState() > 0 {
-		return false
+		return nil, false
 	}
 	melee := mobFightingTarget(w, me)
 	if melee == nil {
+		return nil, false
+	}
+	return melee, true
+}
+
+func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	melee, ok := mobCombatSpecialTarget(w, me, cmd)
+	if !ok {
 		return false
 	}
 	switch number(0, 10) {
@@ -463,14 +471,8 @@ func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 // paladin — mob spec: paladin combat
 func specPaladin(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFighting() == "" {
-		return false
-	}
-	if me.GetWaitState() > 0 {
-		return false
-	}
-	melee := mobFightingTarget(w, me)
-	if melee == nil {
+	melee, ok := mobCombatSpecialTarget(w, me, cmd)
+	if !ok {
 		return false
 	}
 	switch number(0, 8) {
@@ -1147,12 +1149,28 @@ func specMiniThief(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	return false
 }
 
-// black_undead_knight — mob spec: taunts + hates red undead
-func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+func specUndeadKnight(w *World, me *MobInstance, cmd string, hatedVNum int, taunt func()) bool {
 	if cmd != "" || me.GetHP() < 0 {
 		return false
 	}
 	if me.IsFighting() {
+		taunt()
+		return true
+	}
+	for _, m := range w.GetMobsInRoom(me.RoomVNum) {
+		if m.VNum == hatedVNum && m != me && number(0, 3) == 0 {
+			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
+			me.SetTarget(m)
+			me.SetFighting(m.GetName())
+			return true
+		}
+	}
+	return false
+}
+
+// black_undead_knight — mob spec: taunts + hates red undead
+func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	return specUndeadKnight(w, me, cmd, 11471, func() {
 		switch randRange(1, 20) {
 		case 1:
 			w.roomMessage(me.RoomVNum, me.GetName()+" screams, 'Protect the kingdom!'")
@@ -1168,26 +1186,12 @@ func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, ar
 		case 5:
 			w.roomMessage(me.RoomVNum, me.GetName()+" claims, 'I am the greatest!'")
 		}
-		return true
-	}
-	mobs := w.GetMobsInRoom(me.RoomVNum)
-	for _, m := range mobs {
-		if m.VNum == 11471 && m != me && number(0, 3) == 0 {
-			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
-			me.SetTarget(m)
-			me.SetFighting(m.GetName())
-			return true
-		}
-	}
-	return false
+	})
 }
 
 // red_undead_knight — mob spec: taunts + hates black undead
 func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetHP() < 0 {
-		return false
-	}
-	if me.IsFighting() {
+	return specUndeadKnight(w, me, cmd, 11470, func() {
 		switch randRange(1, 20) {
 		case 1:
 			w.roomMessage(me.RoomVNum, me.GetName()+" screams, 'Protect the homeland!'")
@@ -1202,18 +1206,7 @@ func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg 
 		case 5:
 			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'A friend with weed is a friend indeed.'")
 		}
-		return true
-	}
-	mobs := w.GetMobsInRoom(me.RoomVNum)
-	for _, m := range mobs {
-		if m.VNum == 11470 && m != me && number(0, 3) == 0 {
-			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
-			me.SetTarget(m)
-			me.SetFighting(m.GetName())
-			return true
-		}
-	}
-	return false
+	})
 }
 
 // mickey — mob spec: harasses and attacks (from Natural Born Killers)
