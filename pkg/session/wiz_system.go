@@ -4,6 +4,7 @@ package session
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -338,7 +339,15 @@ func cmdLast(s *Session, args []string) error {
 		return nil
 	}
 	target, _ := game.OneArgument(strings.Join(args, " "))
-	if s.manager == nil || !s.manager.hasDB {
+	if s.manager == nil {
+		s.Send("There is no such player.\r\n")
+		return nil
+	}
+	if !s.manager.hasDB {
+		if player, targetSession := s.manager.onlinePlayerForLast(target); player != nil {
+			s.Send(formatOnlineLast(player, targetSession))
+			return nil
+		}
 		s.Send("There is no such player.\r\n")
 		return nil
 	}
@@ -349,6 +358,60 @@ func cmdLast(s *Session, args []string) error {
 	}
 	s.Send(fmt.Sprintf("[%d] [%2d] %-12s : Level %d\r\n", rec.ID, rec.Level, rec.Name, rec.Level))
 	return nil
+}
+
+// onlinePlayerForLast resolves the same named online character that C's
+// do_last vehicle exposes through its saved player row. The no-database
+// runtime has no offline pfiles, but its live sessions still carry the
+// character identity and connection metadata needed for this branch.
+func (m *Manager) onlinePlayerForLast(name string) (*game.Player, *Session) {
+	for _, player := range m.world.GetPlayers() {
+		if !strings.EqualFold(player.GetName(), name) {
+			continue
+		}
+		m.mu.RLock()
+		defer m.mu.RUnlock()
+		for _, session := range m.sessions {
+			if session.player == player {
+				return player, session
+			}
+		}
+		return nil, nil
+	}
+	return nil, nil
+}
+
+func formatOnlineLast(player *game.Player, session *Session) string {
+	class := "???"
+	if classID := player.GetClass(); classID >= 0 && classID < len(game.ClassAbbrevs) {
+		class = game.ClassAbbrevs[classID]
+	}
+	host := ""
+	lastLogon := time.Now()
+	if session != nil {
+		host = formatLastHost(session.RemoteIP())
+		if !session.connectedAt.IsZero() {
+			lastLogon = session.connectedAt
+		}
+	}
+	return fmt.Sprintf("[%5d] [%2d %s] %-12s : %-18s : %s\r\n",
+		player.GetID(), player.GetLevel(), class, player.GetName(), host,
+		lastLogon.Format("Mon Jan _2 15:04:05 2006"))
+}
+
+func formatLastHost(ip string) string {
+	parts := strings.Split(ip, ".")
+	if len(parts) != 4 {
+		return ip
+	}
+	for i, part := range parts {
+		value, err := strconv.Atoi(part)
+		if err != nil || value < 0 || value > 255 {
+			return ip
+		}
+		parts[i] = fmt.Sprintf("%03d", value)
+	}
+	return strings.Join(parts, ".")
 }
 
 // wizutilSubcmd represents a wizutil sub-command.

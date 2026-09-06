@@ -529,6 +529,11 @@ func (s *Session) completeCharCreation() error {
 			}
 			s.player.ID = r.ID
 		}
+	} else {
+		// The no-database oracle vehicle still needs C's process-local idnum
+		// for commands that inspect an online character. This does not alter
+		// the persisted save format or production database identity.
+		s.player.ID = s.manager.allocateEphemeralPlayerID()
 	}
 
 	// Populate legacy spell-catalog metadata; proficiency still requires practice.

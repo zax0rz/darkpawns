@@ -1,9 +1,12 @@
 package session
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func TestLastRegistrationUsesCEntryGate(t *testing.T) {
@@ -33,5 +36,30 @@ func TestLastUsesCOneArgumentAndMissingPlayerText(t *testing.T) {
 	}
 	if got, want := readSessionText(t, s), "There is no such player.\r\n"; got != want {
 		t.Fatalf("cmdLast missing target = %q, want %q", got, want)
+	}
+}
+
+func TestLastNoDatabaseFindsOnlinePlayer(t *testing.T) {
+	m := makeTestManager(t)
+	target := makeTestSession(t, m, "Lastpeer", 1001, true)
+	target.remoteIP = "127.0.0.1"
+	target.connectedAt = time.Date(2026, time.September, 6, 11, 44, 17, 0, time.UTC)
+	target.player = game.NewCharacter(2, "Lastpeer", game.ClassWarrior, game.RaceHuman)
+	if err := m.world.AddPlayer(target.player); err != nil {
+		t.Fatalf("add player: %v", err)
+	}
+	m.mu.Lock()
+	m.sessions[target.playerName] = target
+	m.mu.Unlock()
+
+	actor := makeTestSession(t, m, "Lastactor", 1001, true)
+	actor.player = game.NewCharacter(1, "Lastactor", game.ClassWarrior, game.RaceHuman)
+	actor.player.Level = game.LVL_IMPL
+	if err := cmdLast(actor, []string{"the", "LASTPEER", "ignored"}); err != nil {
+		t.Fatalf("cmdLast: %v", err)
+	}
+	got := readSessionText(t, actor)
+	if !strings.Contains(got, "[    2] [ 1 Wa] Lastpeer") {
+		t.Fatalf("online last lookup = %q, want C-shaped player row", got)
 	}
 }

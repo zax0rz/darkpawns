@@ -20,6 +20,14 @@ func TestNormalizeTier1Rules(t *testing.T) {
 	}
 }
 
+func TestNormalizeMasksCtimeWallClock(t *testing.T) {
+	raw := "[    2] [ 1 Wa] Lastpeer     : 127.000.000.001    : Sun Sep  6 11:44:17 2026\r\n"
+	want := "[    2] [ 1 Wa] Lastpeer     : 127.000.000.001    : <WALL_CLOCK>\n"
+	if got := Normalize(raw); got != want {
+		t.Fatalf("Normalize() = %q, want %q", got, want)
+	}
+}
+
 func TestNormalizeCanonicalizesCRLFAndLFCRAsSingleNewlines(t *testing.T) {
 	raw := "crlf\r\nlfcr\n\rlone-cr\rlone-lf\n"
 	want := "crlf\nlfcr\nlone-cr\nlone-lf\n"
