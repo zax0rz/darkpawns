@@ -1127,6 +1127,32 @@ var tattoo1Offers = [...]tattooOffer{
 	{number: TattooOwl, price: 3000, name: "of an owl", description: "gain the wisdom of the owl"},
 }
 
+func sendTattooList(ch *Player, offers []tattooOffer) {
+	ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
+	ch.SendMessage("Available tattoos are:\r\n")
+	for i, offer := range offers {
+		ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
+	}
+}
+
+func parseTattooChoice(ch *Player, arg string, offerCount int) (int, bool) {
+	arg = skipSpaces(arg)
+	if arg == "" {
+		sendToChar(ch, "Buy what number?")
+		return 0, false
+	}
+	if arg[0] < '0' || arg[0] > '9' {
+		sendToChar(ch, "Buy by number!")
+		return 0, false
+	}
+	choice := atoi(arg)
+	if choice >= offerCount {
+		sendToChar(ch, "Buy by number!")
+		return 0, false
+	}
+	return choice, true
+}
+
 func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if ch == nil || ch.IsNPC() {
 		return false
@@ -1134,11 +1160,7 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 	switch strings.ToLower(cmd) {
 	case "list":
-		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
-		ch.SendMessage("Available tattoos are:\r\n")
-		for i, offer := range tattoo1Offers {
-			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
-		}
+		sendTattooList(ch, tattoo1Offers[:])
 		return true
 	case "buy":
 		if me == nil {
@@ -1149,19 +1171,8 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			return true
 		}
 
-		arg = skipSpaces(arg)
-		if arg == "" {
-			sendToChar(ch, "Buy what number?")
-			return true
-		}
-		if arg[0] < '0' || arg[0] > '9' {
-			sendToChar(ch, "Buy by number!")
-			return true
-		}
-
-		choice := atoi(arg)
-		if choice >= len(tattoo1Offers) {
-			sendToChar(ch, "Buy by number!")
+		choice, ok := parseTattooChoice(ch, arg, len(tattoo1Offers))
+		if !ok {
 			return true
 		}
 
@@ -1213,29 +1224,14 @@ func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 	switch strings.ToLower(cmd) {
 	case "list":
-		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
-		ch.SendMessage("Available tattoos are:\r\n")
-		for i, offer := range tattoo2Offers {
-			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
-		}
+		sendTattooList(ch, tattoo2Offers[:])
 		return true
 	case "buy":
-		arg = skipSpaces(arg)
 		if ch.IsNPC() {
 			return false
 		}
-		if arg == "" {
-			sendToChar(ch, "Buy what number?")
-			return true
-		}
-		if arg[0] < '0' || arg[0] > '9' {
-			sendToChar(ch, "Buy by number!")
-			return true
-		}
-
-		choice := atoi(arg)
-		if choice >= len(tattoo2Offers) {
-			sendToChar(ch, "Buy by number!")
+		choice, ok := parseTattooChoice(ch, arg, len(tattoo2Offers))
+		if !ok {
 			return true
 		}
 		if me == nil {
@@ -1277,29 +1273,14 @@ func specTattoo3(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 	switch strings.ToLower(cmd) {
 	case "list":
-		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
-		ch.SendMessage("Available tattoos are:\r\n")
-		for i, offer := range tattoo3Offers {
-			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
-		}
+		sendTattooList(ch, tattoo3Offers[:])
 		return true
 	case "buy":
-		arg = skipSpaces(arg)
 		if ch.IsNPC() {
 			return false
 		}
-		if arg == "" {
-			sendToChar(ch, "Buy what number?")
-			return true
-		}
-		if arg[0] < '0' || arg[0] > '9' {
-			sendToChar(ch, "Buy by number!")
-			return true
-		}
-
-		choice := atoi(arg)
-		if choice >= len(tattoo3Offers) {
-			sendToChar(ch, "Buy by number!")
+		choice, ok := parseTattooChoice(ch, arg, len(tattoo3Offers))
+		if !ok {
 			return true
 		}
 		if me == nil {
@@ -1461,25 +1442,11 @@ func specTattoo4(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 	switch strings.ToLower(cmd) {
 	case "list":
-		ch.SendMessage("To buy a tattoo: BUY <number of tattoo>.\r\n")
-		ch.SendMessage("Available tattoos are:\r\n")
-		for i, offer := range tattoo4Offers {
-			ch.SendMessage(fmt.Sprintf("[%d] - (%d) tattoo %s : %s\r\n", i, offer.price, offer.name, offer.description))
-		}
+		sendTattooList(ch, tattoo4Offers[:])
 		return true
 	case "buy":
-		arg = skipSpaces(arg)
-		if arg == "" {
-			sendToChar(ch, "Buy what number?")
-			return true
-		}
-		if arg[0] < '0' || arg[0] > '9' {
-			sendToChar(ch, "Buy by number!")
-			return true
-		}
-		choice := atoi(arg)
-		if choice >= len(tattoo4Offers) {
-			sendToChar(ch, "Buy by number!")
+		choice, ok := parseTattooChoice(ch, arg, len(tattoo4Offers))
+		if !ok {
 			return true
 		}
 		if ch.Tattoo != TattooNone {
@@ -2251,11 +2218,17 @@ func specChosenGuard(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	return true
 }
 
-// ================================================================
-// specCastleGuardDown — Blocks movement down into the castle.
-// C equivalent: castle_guard_down in spec_procs2.c:2123-2184
-// ================================================================
-func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+type castleGuardSpec struct {
+	direction          string
+	ownerOffset        int
+	groupedOwnerOffset int
+	assignedName       string
+}
+
+// specCastleGuard shares the command gate and autonomous second-guard scan
+// across the three directional castle guards. The offsets remain explicit:
+// C's up guard checks a different house coordinate for its grouped-owner arm.
+func specCastleGuard(w *World, ch *Player, me *MobInstance, cmd string, spec castleGuardSpec) bool {
 	if me == nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
@@ -2268,8 +2241,8 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 			return false
 		}
 
-		if cmd == "down" && !isOwner(w, ch, me.GetRoomVNum()+2) {
-			if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
+		if cmd == spec.direction && !isOwner(w, ch, me.GetRoomVNum()+spec.ownerOffset) {
+			if isOwnerGrouped(w, ch, me.GetRoomVNum()+spec.groupedOwnerOffset) {
 				Act(w, false, me, ch, nil, nil, "$n moves aside and allows you to pass.", "", ToVict)
 				Act(w, false, me, ch, nil, nil, "$n moves aside and allows $N to pass.", "", ToNotVict)
 			} else {
@@ -2287,7 +2260,7 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	// canonical hit() seam, even when that target is a mob.
 	if me.GetFighting() == "" {
 		for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if MobSpecAssign[other.GetVNum()] != "castle_guard_down" || !other.IsFighting() {
+			if MobSpecAssign[other.GetVNum()] != spec.assignedName || !other.IsFighting() {
 				continue
 			}
 			targetName := other.GetFightingTarget()
@@ -2312,6 +2285,19 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	}
 
 	return false
+}
+
+// ================================================================
+// specCastleGuardDown — Blocks movement down into the castle.
+// C equivalent: castle_guard_down in spec_procs2.c:2123-2184
+// ================================================================
+func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	return specCastleGuard(w, ch, me, cmd, castleGuardSpec{
+		direction:          "down",
+		ownerOffset:        2,
+		groupedOwnerOffset: 2,
+		assignedName:       "castle_guard_down",
+	})
 }
 
 // ================================================================
@@ -2320,64 +2306,12 @@ func specCastleGuardDown(w *World, ch *Player, me *MobInstance, cmd string, arg 
 // Uses +1 for the house check (vs +2 for other guards).
 // ================================================================
 func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil || me.GetPosition() <= combat.PosSleeping {
-		return false
-	}
-
-	// C's command path receives a player, while the commandless mobile path
-	// passes the guard as both ch and me. The Go autonomous dispatcher uses a
-	// nil ch to represent that same commandless call.
-	if cmd != "" {
-		if ch == nil || ch.GetLevel() >= LVL_IMMORT {
-			return false
-		}
-
-		if cmd == "up" && !isOwner(w, ch, me.GetRoomVNum()+1) {
-			// C's grouped-owner check intentionally uses the current room,
-			// unlike the actor owner check above, which uses room+1.
-			if isOwnerGrouped(w, ch, me.GetRoomVNum()) {
-				Act(w, false, me, ch, nil, nil, "$n moves aside and allows you to pass.", "", ToVict)
-				Act(w, false, me, ch, nil, nil, "$n moves aside and allows $N to pass.", "", ToNotVict)
-			} else {
-				Act(w, false, me, ch, nil, nil, "$n blocks your way.", "", ToVict)
-				Act(w, false, me, ch, nil, nil, "$n blocks $N's path.", "", ToNotVict)
-				Act(w, false, me, nil, nil, nil, "$n states, 'Thou shalt not pass.'", "", ToRoom)
-				return true
-			}
-		}
-		return false
-	}
-
-	// C's !cmd arm scans world[mobile->in_room].people, not just players. A
-	// second assigned castle-up guard that is fighting another character is
-	// handed to the canonical hit() seam, even when that target is a mob.
-	if me.GetFighting() == "" {
-		for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if MobSpecAssign[other.GetVNum()] != "castle_guard_up" || !other.IsFighting() {
-				continue
-			}
-			targetName := other.GetFightingTarget()
-			if targetName == "" || targetName == me.GetName() {
-				continue
-			}
-
-			var target combat.Combatant
-			if player, ok := w.GetPlayer(targetName); ok {
-				target = player
-			} else if mob := w.GetMobByName(targetName); mob != nil {
-				target = mob
-			}
-			if target == nil {
-				continue
-			}
-			if err := w.mobHit(me, target); err != nil {
-				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-			}
-			return true
-		}
-	}
-
-	return false
+	return specCastleGuard(w, ch, me, cmd, castleGuardSpec{
+		direction:          "up",
+		ownerOffset:        1,
+		groupedOwnerOffset: 0,
+		assignedName:       "castle_guard_up",
+	})
 }
 
 // ================================================================
@@ -2385,62 +2319,12 @@ func specCastleGuardUp(w *World, ch *Player, me *MobInstance, cmd string, arg st
 // C equivalent: castle_guard_north in spec_procs2.c:2218-2258
 // ================================================================
 func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil || me.GetPosition() <= combat.PosSleeping {
-		return false
-	}
-
-	// C's command path receives a player, while the commandless mobile path
-	// passes the guard as both ch and me. The Go autonomous dispatcher uses a
-	// nil ch to represent that same commandless call.
-	if cmd != "" {
-		if ch == nil || ch.GetLevel() >= LVL_IMMORT {
-			return false
-		}
-
-		if cmd == "north" && !isOwner(w, ch, me.GetRoomVNum()+2) {
-			if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
-				Act(w, false, me, ch, nil, nil, "$n moves aside and allows you to pass.", "", ToVict)
-				Act(w, false, me, ch, nil, nil, "$n moves aside and allows $N to pass.", "", ToNotVict)
-			} else {
-				Act(w, false, me, ch, nil, nil, "$n blocks your way.", "", ToVict)
-				Act(w, false, me, ch, nil, nil, "$n blocks $N's path.", "", ToNotVict)
-				Act(w, false, me, nil, nil, nil, "$n states, 'Thou shalt not pass.'", "", ToRoom)
-				return true
-			}
-		}
-		return false
-	}
-
-	// C's !cmd arm scans world[mobile->in_room].people, not just players. A
-	// second assigned castle-north guard that is fighting another character is
-	// handed to the canonical hit() seam, even when that target is a mob.
-	if me.GetFighting() == "" {
-		for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if MobSpecAssign[other.GetVNum()] != "castle_guard_north" || !other.IsFighting() {
-				continue
-			}
-			targetName := other.GetFightingTarget()
-			if targetName == "" || targetName == me.GetName() {
-				continue
-			}
-
-			var target combat.Combatant
-			if player, ok := w.GetPlayer(targetName); ok {
-				target = player
-			} else if mob := w.GetMobByName(targetName); mob != nil {
-				target = mob
-			}
-			if target == nil {
-				continue
-			}
-			if err := w.mobHit(me, target); err != nil {
-				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-			}
-			return true
-		}
-	}
-
-	return false
+	return specCastleGuard(w, ch, me, cmd, castleGuardSpec{
+		direction:          "north",
+		ownerOffset:        2,
+		groupedOwnerOffset: 2,
+		assignedName:       "castle_guard_north",
+	})
 }
 
 // ================================================================
