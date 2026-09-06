@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 )
 
 func (w *World) doClanStatus(ch *Player) {
@@ -86,7 +87,8 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 
 	if arg == "" {
 		// Show all clans
-		msg := "\r"
+		var msg strings.Builder
+		msg.WriteString("\r")
 		visible := false
 		for i := 0; i < w.Clans.ClanCount(); i++ {
 			c := w.Clans.GetClanByIndex(i)
@@ -94,18 +96,19 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 				continue
 			}
 			if ch.GetLevel() >= LVL_IMMORT {
-				msg += fmt.Sprintf("[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
+				fmt.Fprintf(&msg, "[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.ID, c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			} else if c.Private == 0 {
 				visible = true
-				msg += fmt.Sprintf("%-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
+				fmt.Fprintf(&msg, "%-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			}
 		}
 		if ch.GetLevel() < LVL_IMMORT && !visible {
-			msg = "\r\t\t\tooO Clans of Dark Pawns Ooo\r\n"
+			msg.Reset()
+			msg.WriteString("\r\t\t\tooO Clans of Dark Pawns Ooo\r\n")
 		}
-		ch.SendMessage(msg)
+		ch.SendMessage(msg.String())
 		return
 	}
 
@@ -115,13 +118,14 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 		return
 	}
 
-	msg := fmt.Sprintf("Info for the clan %s :\r\n\r\n\r\nDescription:\r\n", c.Name)
+	var msg strings.Builder
+	fmt.Fprintf(&msg, "Info for the clan %s :\r\n\r\n\r\nDescription:\r\n", c.Name)
 	if c.Plan == "" {
-		msg += "(null)"
+		msg.WriteString("(null)")
 	} else {
-		msg += c.Plan
+		msg.WriteString(c.Plan)
 	}
-	msg += "\r\n\r\n"
+	msg.WriteString("\r\n\r\n")
 
 	atWar := false
 	for j := 0; j < 4; j++ {
@@ -131,13 +135,13 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 		}
 	}
 	if !atWar {
-		msg += "This clan is at peace with all others.\r\n"
+		msg.WriteString("This clan is at peace with all others.\r\n")
 	} else {
-		msg += "This clan is at war.\r\n"
+		msg.WriteString("This clan is at war.\r\n")
 	}
-	msg += fmt.Sprintf("Application fee  : %d gold\r\nMonthly Dues     : %d gold\r\n", c.AppFee, c.Dues)
-	msg += fmt.Sprintf("Application level: %d\r\n", c.ApplLevel)
-	ch.SendMessage(msg)
+	fmt.Fprintf(&msg, "Application fee  : %d gold\r\nMonthly Dues     : %d gold\r\n", c.AppFee, c.Dues)
+	fmt.Fprintf(&msg, "Application level: %d\r\n", c.ApplLevel)
+	ch.SendMessage(msg.String())
 }
 
 // ExecClanCommand dispatches the "clan" player command.
