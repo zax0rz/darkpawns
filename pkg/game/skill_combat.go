@@ -66,11 +66,13 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// line followed by the guard's real hit message.
 	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) && target.GetPosition() > combat.PosSleeping {
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
-			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
-			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
-			RetaliateHit:  true,
+			Success:                   false,
+			MessageToCh:               ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
+			MessageToVict:             ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
+			MessageToRoom:             ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
+			RetaliateHit:              true,
+			RetaliateHitAfterMessages: true,
+			RetaliateHitUnenrolled:    true,
 		}
 	}
 

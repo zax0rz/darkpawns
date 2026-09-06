@@ -47,13 +47,26 @@ func cCommandsForLevel(level int) []string {
 		if entry.minLevel < 0 || entry.minLevel >= game.LVL_IMMORT || level < entry.minLevel {
 			continue
 		}
-		if _, social := game.Socials[entry.name]; social || entry.name == "insult" {
+		// C marks socials by their command-table handler (do_action), not by
+		// whether the social file happens to contain the same word.  `roll` is
+		// the load-bearing collision: C registers it as do_roll while the
+		// social data also has a record named roll (act.informative.c:2609).
+		if isCCommandSocial(entry.name) || entry.name == "insult" {
 			continue
 		}
 		names = append(names, entry.name)
 	}
 	sort.Strings(names)
 	return names
+}
+
+func isCCommandSocial(name string) bool {
+	for _, entry := range cSocialCommandOrder {
+		if entry.name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // socialCommandOrderTSV is generated from the C cmd_info[] do_action rows,

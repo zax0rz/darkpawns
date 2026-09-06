@@ -9,10 +9,9 @@ package game
 //                    transfer all inventory+equipment+gold into it,
 //                    place corpse in room (or mortal_start_room if NOWHERE)
 //
-// Respawn (not in original — players reconnected or got resurrected):
-//   We add a modern respawn: move player to room 8004, heal to full.
-//   Placeholder implementation — should be replaced with proper
-//   resurrection mechanics later.
+// Extraction is deferred until the next heartbeat, matching C's
+// extract_char()/extract_pending_chars() lifecycle. A player is not
+// synchronously respawned by the death path.
 
 import (
 	"context"
@@ -108,7 +107,7 @@ func IsDonationRoom(vnum int) bool {
 	return vnum == DonationRoom1 || vnum == DonationRoom2
 }
 
-// LoginStartRoom returns the appropriate start room for a player logging in or respawning.
+// LoginStartRoom returns the appropriate start room for a player logging in.
 // Priority: frozen → FrozenStartRoom, immortal → ImmortStartRoom, else MortalStartRoom.
 // Matches config.c start room selection logic.
 func LoginStartRoom(p *Player) int {
@@ -304,6 +303,16 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			IsCombat:    true,
 		})
 		w.handlePlayerDeath(victim, true, attackType, killerName) // combat death with killer
+		if mobKiller, ok := killer.(*MobInstance); ok &&
+			killerName != victim.GetName() &&
+			(mobKiller.HasMobFlag(MobFlagAggr24) ||
+				mobKiller.HasMobFlag(MobFlagLoots) ||
+				mobKiller.GetVNum() == 19650) {
+			w.attitudeLootMob(mobKiller, victim)
+			if mobKiller.HasMobFlag(MobFlagAggr24) {
+				combat.BragMessage(mobKiller, victim)
+			}
+		}
 		// Publish typed event bus event
 		if w.Events != nil {
 			if err := w.Events.Publish(context.Background(), events.PlayerKilledEvent{
@@ -518,13 +527,22 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 //	if GET_LEVEL(ch) > 5 && !number(0,3):  lose 1 con (1/4 chance)
 //	if GET_LEVEL(ch) > 20 && !number(0,5): lose 1 more con (1/6 additional chance)
 //
-// Modern addition: respawn at MortalStartRoom, heal to full.
+// Extraction is deferred to the next heartbeat, matching extract_char() /
+// extract_pending_chars() in handler.c. The session layer then returns the
+// descriptor to the login menu.
 func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string) {
 	roomVNum := victim.GetRoom()
 
 	// Find the Player
 	player, ok := victim.(*Player)
 	if !ok {
+		return
+	}
+
+	extractMask := uint64(1 << uint(plrExtractBit))
+	// extract_char() is idempotent while a player is queued. This also closes
+	// the sequential duplicate-delivery window after the CAS latch resets.
+	if player.GetFlags()&extractMask != 0 {
 		return
 	}
 
@@ -538,15 +556,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	}
 	defer player.dying.Store(false)
 
-	// DP-943 (cont.): the CAS latch serializes concurrent handlers, but it resets
-	// on return so the player can die again later. That reset reopens a sequential
-	// double-processing window: if a duplicate handler for the SAME death event
-	// arrives after the winning handler has already respawned + Heal(9999)'d the
-	// player, it would re-apply the EXP/CON penalty. Gate on HP: only a player
-	// actually at death's door (HP <= 0) has a pending death to process. The
-	// atomic CAS establishes happens-before, so a handler that acquires the latch
-	// observes the winner's respawn heal and no-ops. In the single-threaded C
-	// original, die()/die_with_killer() are only ever reached with HP already <= 0.
+	// In the single-threaded C original, die()/die_with_killer() are only ever
+	// reached with HP already <= 0.
 	if player.GetHP() > 0 {
 		return
 	}
@@ -662,19 +673,11 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		}
 	}
 
-	// Notify room
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		if p != player {
-			p.SendMessage(fmt.Sprintf("The lifeless body of %s crumples to the ground.\r\n", player.GetName()))
-		}
-	}
-
-	// Respawn to appropriate start room: frozen → FrozenStartRoom, immort → ImmortStartRoom, else mortal.
-	player.SetRoom(LoginStartRoom(player))
-	player.SetPosition(combat.PosStanding)
-	player.Heal(9999)
+	// raw_kill() queues extract_char(); it does not synchronously respawn a
+	// player or emit a temple/room-body narration (fight.c:534-577).
 	player.StopFighting()
+	player.SetPosition(combat.PosDead)
+	w.QueuePlayerExtraction(player)
 
 	// HIGH-016: Remove AFF_WEREWOLF affect on death.
 	// Matches C fight.c:raw_kill — AFF_WEREWOLF (bit 27 / affWerewolf=32) is an
@@ -682,9 +685,6 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	if player.IsAffected(affWerewolf) {
 		player.SetAffect(affWerewolf, false)
 	}
-
-	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
-	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
 }
 
 // deathTrap performs an immortal-exempt ROOM_DEATH extraction, faithful to

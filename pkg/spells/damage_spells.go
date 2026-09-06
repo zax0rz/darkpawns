@@ -326,6 +326,20 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 			if victCombat.GetPosition() > combat.PosStunned && victCombat.GetFighting() == "" {
 				victCombat.SetFighting(chCombat.GetName())
 			}
+			// The C damage(0) call updates FIGHTING fields, and the main
+			// combat list is the engine's corresponding runtime state. Start
+			// the pair through the world bridge so the next violence pulse
+			// continues with normal melee (fight.c:1367-1445).
+			if starter, ok := world.(interface {
+				StartCombat(combat.Combatant, combat.Combatant) error
+			}); ok {
+				if err := starter.StartCombat(chCombat, victCombat); err != nil {
+					// An existing pair is expected when a dragon breathes during
+					// combat; its fighting fields are already the authoritative
+					// state and the error is otherwise non-fatal.
+					_ = err
+				}
+			}
 		}
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
@@ -351,6 +365,8 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 			wb = b.WoundBroadcast
 		}
 		if combat.UpdatePositionAfterDamage(victCombat, wb) == combat.PosDead {
+			combat.EmitDeathPositionMessage(victCombat, wb)
+			combat.DeathCry(victCombat)
 			if dp, ok := world.(spellDeathPipeline); ok {
 				dp.HandleDeath(victCombat, chCombat, attackType)
 			}

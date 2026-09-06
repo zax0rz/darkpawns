@@ -126,6 +126,9 @@ type Player struct {
 	// Position
 	RoomVNum     int // Current room
 	LoadRoomVNum int `json:"-"` // C GET_LOADROOM; persisted through the existing room_vnum field when selected
+	// RoomEntrySequence is the runtime equivalent of char_to_room's
+	// front-inserted world[room].people link. It is deliberately not persisted.
+	RoomEntrySequence uint64 `json:"-"`
 
 	// State
 	ConnectedAt time.Time

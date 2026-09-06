@@ -727,6 +727,13 @@ func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return specFighter(w, ch, me, cmd, arg)
 	}
 
+	// cityguard() calls breed_killer() before its protection scan. Keep this
+	// nested special on the same C call path; it is not a random 5% cityguard
+	// action (src/spec_procs.c:799-801, src/spec_procs2.c:1679-1722).
+	if specBreedKiller(w, nil, me, "", "") {
+		return true
+	}
+
 	// Find the lowest-aligned visible combatant attacking a good-aligned target
 	// (src/spec_procs.c:799-821). The C condition intentionally allows either
 	// side of the fight to be an NPC; preserve that topology here.
@@ -1023,7 +1030,14 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str
 		Act(w, true, me, nil, nil, nil, "$n looks at you.", "", ToRoom)
 		Act(w, true, me, nil, nil, nil, "$n growls, 'So, you have found my lair...'", "", ToRoom)
 		Act(w, true, me, nil, nil, nil, "$n exclaims, 'For that you must die!'", "", ToRoom)
-		spells.CallMagic(me, victim, nil, spell, me.GetLevel(), spells.CastBreath, w)
+		// raw_kill() leaves the extracted player in the room until the next
+		// heartbeat, but damage() rejects a POS_DEAD/PLR_EXTRACT target. Keep
+		// the dragon's authored greeting visible to other room occupants while
+		// avoiding a second breath message for the already-dead player.
+		extracted := victim.GetFlags()&(1<<uint(PlrExtract)) != 0
+		if victim.GetPosition() != combat.PosDead && !extracted {
+			spells.CallMagic(me, victim, nil, spell, me.GetLevel(), spells.CastBreath, w)
+		}
 		return true
 	}
 	return false

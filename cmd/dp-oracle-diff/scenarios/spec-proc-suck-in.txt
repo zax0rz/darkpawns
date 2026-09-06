@@ -40,7 +40,6 @@ K
 Y
 <ENTER>
 1
-autoexit
 
 [warmup]
 goto 20073

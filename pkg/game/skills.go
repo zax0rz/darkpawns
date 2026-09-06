@@ -170,7 +170,9 @@ var SkillPosReq = map[string]int{
 	SkillTrip:       combat.PosFighting,
 	SkillHeadbutt:   combat.PosFighting,
 	SkillSmackheads: combat.PosFighting,
-	SkillRescue:     combat.PosStanding,
+	// C's interpreter gate is POS_FIGHTING (interpreter.c:650), even
+	// though do_rescue's own post-resolution checks follow it.
+	SkillRescue:     combat.PosFighting,
 	SkillSneak:      combat.PosStanding,
 	SkillHide:       combat.PosResting,
 	SkillSteal:      combat.PosStanding,
@@ -467,6 +469,10 @@ type SkillResult struct {
 	// RetaliateHitAfterMessages preserves commands whose C act() audience
 	// messages all precede hit(vict, ch), such as do_disarm.
 	RetaliateHitAfterMessages bool
+	// RetaliateHitUnenrolled preserves MOB_AWARE backstab's direct hit(vict, ch)
+	// path: C's damage() leaves only the mob fighting, without creating the
+	// command-engine combat pair used by ordinary command entry.
+	RetaliateHitUnenrolled bool
 
 	// SkillMsgType, when non-zero, routes the combat message through the
 	// skill_message path (fight.c:1023-1092) instead of emitting MessageToCh/

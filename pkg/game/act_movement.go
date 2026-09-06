@@ -561,6 +561,9 @@ func performMoveResult(w *World, ch *Player, dir int, needSpecialsCheck bool, re
 	for _, f := range followers {
 		if f.GetRoom() == wasIn && f.GetPosition() >= combat.PosStanding {
 			Act(nil, false, f, ch, nil, nil, "You follow $N.", "", ToChar)
+			// C's follower loop emits this notice, then the recursive
+			// perform_move() starts a separate room-look output burst.
+			f.SendMessage("\r\n")
 			f.SetAffect(affHide, false)
 			if performMoveResult(w, f, dir, true, result) && result != nil {
 				result.Followers = append(result.Followers, f.Name)

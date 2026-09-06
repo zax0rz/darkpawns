@@ -42,7 +42,7 @@ func TestSpecStartRoom_BirthTransitionAndImmortalGate(t *testing.T) {
 			level:       1,
 			wantHandled: true,
 			wantRoom:    8162,
-			wantPrefix:  "   'Startroom, now is not your time to die,' speaks the figure.",
+			wantPrefix:  "\r\n   'Startroom, now is not your time to die,' speaks the figure.",
 		},
 		{
 			name:        "immortal",

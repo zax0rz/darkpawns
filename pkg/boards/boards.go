@@ -364,7 +364,9 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 	}
 
 	now := time.Now()
-	tmStr := now.Format("Mon Jan 2 15:04:05 2006")
+	// C uses asctime(localtime(...)) and truncates it after the first ten
+	// bytes, whose day-of-month field is space-padded ("Sun Sep  6").
+	tmStr := now.Format("Mon Jan _2 15:04:05 2006")
 	heading := fmt.Sprintf("%6.10s %-12s :: %s", tmStr, "("+ch.GetName()+")", arg)
 
 	idx := bs.numOfMsgs[boardType]

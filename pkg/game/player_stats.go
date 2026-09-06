@@ -27,6 +27,13 @@ func (p *Player) GetRoom() int {
 	return p.RoomVNum
 }
 
+// GetRoomEntrySequence returns the runtime arrival order used by room looks.
+func (p *Player) GetRoomEntrySequence() uint64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.RoomEntrySequence
+}
+
 // GetLoadRoom returns the player's configured home/load room.
 // Source: C GET_LOADROOM (structs.h/utils.h); it is distinct from the current room.
 func (p *Player) GetLoadRoom() int {

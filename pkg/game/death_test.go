@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -255,9 +256,19 @@ func TestHandleDeath_Player(t *testing.T) {
 	victim.SetHP(-1)
 	w.HandleDeath(victim, killer, 303) // Slash
 
-	// Verify victim was moved to respawn room (MortalStartRoom)
-	if victim.GetRoom() != MortalStartRoom {
-		t.Errorf("victim room = %d, want %d", victim.GetRoom(), MortalStartRoom)
+	// C queues extraction; it does not synchronously respawn the victim.
+	if victim.GetRoom() != 1001 {
+		t.Errorf("victim room = %d, want 1001 while extraction is queued", victim.GetRoom())
+	}
+	if victim.GetHP() > 0 || victim.GetPosition() != combat.PosDead {
+		t.Errorf("victim state = hp %d position %d, want dead", victim.GetHP(), victim.GetPosition())
+	}
+	if _, ok := w.GetPlayer("Victim"); !ok {
+		t.Error("victim should remain in the world until the extraction heartbeat")
+	}
+	w.ExtractPendingPlayers()
+	if _, ok := w.GetPlayer("Victim"); ok {
+		t.Error("victim should be removed by the extraction heartbeat")
 	}
 
 	// Verify XP penalty (combat death = exp/37)
@@ -333,7 +344,7 @@ func TestHandlePlayerDeathIdempotent(t *testing.T) {
 }
 
 // TestHandlePlayerDeathDyingReset verifies that the dying flag is cleared
-// after respawn so future deaths can be processed normally (DP-943).
+// after the death handler returns, even though extraction is deferred (DP-943).
 func TestHandlePlayerDeathDyingReset(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
@@ -359,7 +370,7 @@ func TestHandlePlayerDeathDyingReset(t *testing.T) {
 	w.handlePlayerDeath(victim, true, 303, "Killer")
 
 	if victim.IsDying() {
-		t.Error("IsDying should be false after respawn")
+		t.Error("IsDying should be false after death handling")
 	}
 }
 
@@ -373,7 +384,7 @@ func TestHandlePlayerDeathDyingReset(t *testing.T) {
 // the second goroutine finds dying=true and no-ops.
 //
 // Assertions:
-//  1. Player respawned (in MortalStartRoom, HP > 0)
+//  1. Player remains dead in the death room until deferred extraction
 //  2. EXACTLY one EXP penalty applied (not doubled)
 //  3. Exactly one corpse in the death room
 //  4. No -race violations
@@ -392,9 +403,7 @@ func TestHandlePlayerDeath_ConcurrentKills(t *testing.T) {
 	t.Cleanup(func() { w.StopAITicker() })
 
 	// Create victim player with some EXP, dropped to <=0 HP so a death is
-	// actually pending — the production precondition for HandleDeath (combat only
-	// calls it once HP hits <=0). The first handler respawns + heals; a duplicate
-	// must then no-op (single penalty).
+	// actually pending — the production precondition for HandleDeath.
 	victim := NewPlayer(1, "Victim", 1001)
 	victim.SetLevel(10)
 	victim.SetExp(10000)
@@ -426,12 +435,12 @@ func TestHandlePlayerDeath_ConcurrentKills(t *testing.T) {
 
 	wg.Wait()
 
-	// Assertion 1: player respawned to MortalStartRoom with positive HP
-	if victim.GetRoom() != MortalStartRoom {
-		t.Errorf("victim room = %d, want %d (respawn)", victim.GetRoom(), MortalStartRoom)
+	// Assertion 1: extraction is queued, so the player is still dead in place.
+	if victim.GetRoom() != 1001 {
+		t.Errorf("victim room = %d, want 1001 while extraction is queued", victim.GetRoom())
 	}
-	if victim.GetHP() <= 0 {
-		t.Errorf("victim HP = %d, want > 0 after respawn", victim.GetHP())
+	if victim.GetHP() > 0 || victim.GetPosition() != combat.PosDead {
+		t.Errorf("victim state = hp %d position %d, want dead", victim.GetHP(), victim.GetPosition())
 	}
 
 	// Assertion 2: EXACTLY one EXP penalty (combat death: exp/37, not doubled)
@@ -538,11 +547,8 @@ func TestHandleMobDeath_ConcurrentKills(t *testing.T) {
 	}
 }
 
-// TestHandlePlayerDeath_SecondKillNoOps verifies the dying CAS guard in the
-// sequential case: calling HandleDeath twice on the same player. The first
-// call processes the death path normally (CAS succeeds, defer resets). The
-// second call also processes because dying is reset — this confirms the
-// guard doesn't permanently lock the player out of future deaths.
+// TestHandlePlayerDeath_SecondKillNoOps verifies that a duplicate HandleDeath
+// call is ignored while C-style deferred extraction is pending.
 func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
@@ -573,12 +579,12 @@ func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 	victim.SetHP(-1)
 	w.HandleDeath(victim, killer, TypeSlash)
 
-	// After first death: respawned at MortalStartRoom, dying flag reset
+	// After first death: still dead in the arena, with extraction queued.
 	if victim.IsDying() {
 		t.Error("dying should be false after first death completes (defer reset)")
 	}
-	if victim.GetRoom() != MortalStartRoom {
-		t.Errorf("after first death: room = %d, want %d", victim.GetRoom(), MortalStartRoom)
+	if victim.GetRoom() != 1001 {
+		t.Errorf("after first death: room = %d, want 1001", victim.GetRoom())
 	}
 	expAfterFirst := victim.GetExp()
 	expectedFirstExp := 20000 - (20000 / 37)
@@ -586,10 +592,7 @@ func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 		t.Errorf("after first death: Exp = %d, want %d", expAfterFirst, expectedFirstExp)
 	}
 
-	// Move victim back to arena room for second death
-	victim.SetRoom(1001)
-
-	// Verify there's exactly 1 corpse from the first death
+	// Verify there's exactly 1 corpse from the first death.
 	items := w.GetItemsInRoom(1001)
 	corpseCount := 0
 	for _, item := range items {
@@ -601,22 +604,18 @@ func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 		t.Errorf("first death: corpse count = %d, want 1", corpseCount)
 	}
 
-	// Second death — a genuine re-death: the player took lethal damage again
-	// (HP <=0) after respawning. dying was reset by the first death's defer, so
-	// this processes normally and applies a second penalty.
-	victim.SetHP(-1)
+	// A duplicate death notification must not apply a second penalty or corpse.
+	secondExp := victim.GetExp()
 	w.HandleDeath(victim, killer, TypeSlash)
 
-	// After second death: EXP penalized again, second corpse
-	expectedSecondExp := expAfterFirst - (expAfterFirst / 37)
-	if victim.GetExp() != expectedSecondExp {
-		t.Errorf("after second death: Exp = %d, want %d", victim.GetExp(), expectedSecondExp)
+	if victim.GetExp() != secondExp {
+		t.Errorf("duplicate death changed EXP to %d, want %d", victim.GetExp(), secondExp)
 	}
 	if victim.IsDying() {
 		t.Error("dying should be false after second death completes (defer reset)")
 	}
 
-	// Exactly 2 corpses now in the room (one from each death)
+	// Still exactly 1 corpse in the room.
 	items = w.GetItemsInRoom(1001)
 	corpseCount = 0
 	for _, item := range items {
@@ -624,8 +623,8 @@ func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
 			corpseCount++
 		}
 	}
-	if corpseCount != 2 {
-		t.Errorf("second death: corpse count = %d, want 2 (one per death)", corpseCount)
+	if corpseCount != 1 {
+		t.Errorf("duplicate death: corpse count = %d, want 1", corpseCount)
 	}
 }
 

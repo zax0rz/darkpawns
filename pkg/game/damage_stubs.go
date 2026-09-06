@@ -113,6 +113,8 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 			_ = dprng.Number(0, 2)
 		}
 		if newPos == combat.PosDead {
+			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
+			combat.DeathCry(v)
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -128,6 +130,8 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 			_ = dprng.Number(0, 2)
 		}
 		if newPos == combat.PosDead {
+			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
+			combat.DeathCry(v)
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -144,8 +148,8 @@ func (w *World) DoDisembowelDamage(attacker, victim combat.Combatant, dam int) b
 		return false
 	}
 	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillDisembowelNum, func() {
-		w.HandleDeath(victim, attacker, SkillDisembowelNum)
 		combat.DeathCry(victim)
+		w.HandleDeath(victim, attacker, SkillDisembowelNum)
 	})
 }
 
@@ -157,8 +161,8 @@ func (w *World) DoGroinripDamage(attacker, victim combat.Combatant, dam int) boo
 		return false
 	}
 	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillGroinripNum, func() {
-		w.HandleDeath(victim, attacker, SkillGroinripNum)
 		combat.DeathCry(victim)
+		w.HandleDeath(victim, attacker, SkillGroinripNum)
 	})
 }
 
@@ -170,8 +174,8 @@ func (w *World) DoNeckbreakDamage(attacker, victim combat.Combatant, dam int) bo
 		return false
 	}
 	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillNeckbreakNum, func() {
-		w.HandleDeath(victim, attacker, SkillNeckbreakNum)
 		combat.DeathCry(victim)
+		w.HandleDeath(victim, attacker, SkillNeckbreakNum)
 	})
 }
 
@@ -184,8 +188,8 @@ func (w *World) DoSmackheadsDamage(attacker, victim combat.Combatant, dam int) b
 		return false
 	}
 	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillSmackheadsNum, func() {
-		w.HandleDeath(victim, attacker, SkillSmackheadsNum)
 		combat.DeathCry(victim)
+		w.HandleDeath(victim, attacker, SkillSmackheadsNum)
 	})
 }
 
@@ -218,8 +222,8 @@ func (w *World) DoCutthroatDamage(attacker, victim combat.Combatant, dam int) bo
 		return false
 	}
 	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillCutthroatNum, func() {
-		w.HandleDeath(victim, attacker, SkillCutthroatNum)
 		combat.DeathCry(victim)
+		w.HandleDeath(victim, attacker, SkillCutthroatNum)
 	})
 }
 

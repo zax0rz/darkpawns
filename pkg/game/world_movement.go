@@ -41,7 +41,25 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 	}
 
 	if fromRoomVNum == toRoomVNum {
-		return nil // already there
+		// C's transfer commands still pass through char_from_room/char_to_room
+		// when the destination is the current room. The relink prepends the
+		// character again, which is visible in subsequent room looks.
+		w.nextRoomEntrySequence++
+		if isMob {
+			for _, m := range w.activeMobs {
+				if m.GetName() == charName {
+					m.mu.Lock()
+					m.RoomEntrySequence = w.nextRoomEntrySequence
+					m.mu.Unlock()
+					break
+				}
+			}
+		} else if p, ok := w.players[charName]; ok {
+			p.mu.Lock()
+			p.RoomEntrySequence = w.nextRoomEntrySequence
+			p.mu.Unlock()
+		}
+		return nil
 	}
 
 	// Stop fighting for everyone who was fighting the transferee in the old room
@@ -83,6 +101,10 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 					w.adjustRoomLight(fromRoomVNum, -1)
 				}
 				m.SetRoom(toRoomVNum)
+				m.mu.Lock()
+				w.nextRoomEntrySequence++
+				m.RoomEntrySequence = w.nextRoomEntrySequence
+				m.mu.Unlock()
 				if hasLight {
 					w.adjustRoomLight(toRoomVNum, 1)
 				}
@@ -96,6 +118,10 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 				w.adjustRoomLight(fromRoomVNum, -1)
 			}
 			p.SetRoom(toRoomVNum)
+			w.nextRoomEntrySequence++
+			p.mu.Lock()
+			p.RoomEntrySequence = w.nextRoomEntrySequence
+			p.mu.Unlock()
 			if hasLight {
 				w.adjustRoomLight(toRoomVNum, 1)
 			}
@@ -106,6 +132,10 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 				for _, m := range w.activeMobs {
 					if m.GetName() == p.MountName && m.GetRoom() == fromRoomVNum {
 						m.SetRoom(toRoomVNum)
+						m.mu.Lock()
+						w.nextRoomEntrySequence++
+						m.RoomEntrySequence = w.nextRoomEntrySequence
+						m.mu.Unlock()
 						break
 					}
 				}

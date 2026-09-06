@@ -322,9 +322,6 @@ func NewManager(world *game.World, database db.Database) *Manager {
 			return
 		}
 		s.notePlayerOutput()
-		if s.claimInterruptionPrefix() {
-			msg = append([]byte("\r\n"), msg...)
-		}
 		s.forwardSnoopOutput(string(msg))
 		// Wrap in JSON event envelope for WebSocket clients
 		wrapped, err := json.Marshal(ServerMessage{
@@ -459,19 +456,13 @@ func (m *Manager) SetCombatMessageFunc() {
 		return msg
 	}
 	// enqueueCombatMessage shares the player-output framing used by the world
-	// MessageSink. Combat callbacks historically wrote directly to s.send, so
-	// the DP_CLOCK interruption prefix could land on the next ordinary text
-	// message instead of the first combat message in the pulse. C's descriptor
-	// output buffer has one ordering boundary for both sources (comm.c:1620-
-	// 1643); consume it here at the same boundary (R1/R3/R5e).
+	// MessageSink. Combat callbacks historically wrote directly to s.send; the
+	// session queue keeps both sources in one C-style flush boundary.
 	enqueueCombatMessage := func(s *Session, message string) {
 		if s == nil {
 			return
 		}
 		s.notePlayerOutput()
-		if s.claimInterruptionPrefix() {
-			message = "\r\n" + message
-		}
 		msg := wrap(message)
 		if msg == nil {
 			return
@@ -576,14 +567,12 @@ func (m *Manager) PumpPulses(n int) error {
 	return m.PumpPulsesFrom(nil, n)
 }
 
-// PumpPulsesFrom is PumpPulses with the session whose input line drove the
-// pump. C's input processing clears that descriptor's has_prompt
-// (comm.c:607), so its next output flush carries process_output's
-// interruption CRLF prefix.
-func (m *Manager) PumpPulsesFrom(s *Session, n int) error {
-	if s != nil {
-		s.promptInvalidated.Store(true)
-	}
+// PumpPulsesFrom is PumpPulses with the session whose control line drove the
+// pump. The DP_CLOCK control is consumed inside process_input before the line
+// enters C's input queue, so it does not clear has_prompt; pulse output is
+// therefore flushed with the existing prompt's leading CRLF (comm.c:607,
+// 1620-1643; tools/oracle-seam/dp-determinism.patch).
+func (m *Manager) PumpPulsesFrom(_ *Session, n int) error {
 	m.pulsePumpMu.RLock()
 	pump := m.pulsePump
 	m.pulsePumpMu.RUnlock()
@@ -1483,15 +1472,6 @@ type Session struct {
 	// trailing framing and lets the post-pulse sweep find sessions that owe an
 	// async prompt after pumped heartbeat output.
 	outputSincePrompt atomic.Int64
-
-	// promptInvalidated mirrors C's d->has_prompt = 0 on input: the next
-	// output flush for the descriptor that sent the input is prefixed with
-	// the interruption CRLF (comm.c:1620-1643 — process_output sends i,
-	// which begins with "\r\n", instead of i+2 when the player had no
-	// outstanding prompt). The oracle's ~dpclock pump line is input too, so
-	// pumped output for the pumping session carries the prefix; idle other
-	// sessions keep their prompt and flush without it.
-	promptInvalidated atomic.Bool
 
 	// Agent identity — set on login when is_agent=true.
 	// Harness+Model is the agent identity. Same combo = same agent across sessions.
