@@ -54,8 +54,8 @@ func TestFindExp(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := findExp(tt.class, tt.level); got != tt.want {
-				t.Errorf("findExp(%d, %d) = %d, want %d", tt.class, tt.level, got, tt.want)
+			if got := game.FindExp(tt.class, tt.level); got != tt.want {
+				t.Errorf("game.FindExp(%d, %d) = %d, want %d", tt.class, tt.level, got, tt.want)
 			}
 		})
 	}
