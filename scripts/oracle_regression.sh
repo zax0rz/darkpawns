@@ -70,11 +70,19 @@ fi
 export ORACLE_REGRESSION_SERVER="$server_bin"
 
 export repo_root go_bin oracle_bin scenario_timeout seed log_dir result_dir harness_bin server_bin
+# Ledger-backed expected-divergence baseline (see scripts/gen_expected_divergences.py).
+# Entries cite blocked/excluded manifest rows; divergence without a row is FAIL,
+# an entry that stops diverging is STALE. Never minted from observed behavior.
+export EXPECTED_DIVERGENCES_FILE="$repo_root/cmd/dp-oracle-diff/expected_divergences.tsv"
+export EXPECTED_DIVERGENCE_PINS_FILE="$repo_root/cmd/dp-oracle-diff/expected_divergence_pins.tsv"
 
 printf 'oracle-regression: %d scenarios, seed=%s, timeout=%s, jobs=%s\n' "${#scenarios[@]}" "$seed" "$scenario_timeout" "$jobs"
 printf '%s\0' "${scenarios[@]}" | xargs -0 -n1 -P "$jobs" "$script_dir"/oracle_regression_worker.sh
 
 passed=0
+expected=0
+unpinnable=0
+stale=0
 failed=0
 infra=0
 timed_out=0
@@ -89,6 +97,17 @@ for scenario_file in "${scenarios[@]}"; do
 	case $(cut -f1 "$result_file") in
 	PASS)
 		passed=$((passed + 1))
+		;;
+	EXPECTED)
+		expected=$((expected + 1))
+		;;
+	UNPINNABLE)
+		unpinnable=$((unpinnable + 1))
+		printf 'UNPINNABLE %s (requires human clearance)\n' "$scenario" >&2
+		;;
+	STALE)
+		stale=$((stale + 1))
+		printf 'STALE %s (baseline expects divergence but scenario passed; reconcile ledger)\n' "$scenario" >&2
 		;;
 	TIMEOUT)
 		timed_out=$((timed_out + 1))
@@ -108,11 +127,17 @@ elapsed_ns=$((run_finished_ns - run_started_ns))
 elapsed_seconds=$((elapsed_ns / 1000000000))
 elapsed_remainder=$(( (elapsed_ns % 1000000000) / 1000000 ))
 
-printf 'oracle-regression: scenarios=%d passed=%d failed=%d infra=%d timed_out=%d elapsed=%d.%03ds started=%s finished=%s\n' \
-	"${#scenarios[@]}" "$passed" "$failed" "$infra" "$timed_out" "$elapsed_seconds" "$elapsed_remainder" \
+printf 'oracle-regression: scenarios=%d passed=%d expected=%d unpinnable=%d stale=%d failed=%d infra=%d timed_out=%d elapsed=%d.%03ds started=%s finished=%s\n' \
+	"${#scenarios[@]}" "$passed" "$expected" "$unpinnable" "$stale" "$failed" "$infra" "$timed_out" "$elapsed_seconds" "$elapsed_remainder" \
 	"$(date -d "@$run_started" '+%Y-%m-%dT%H:%M:%S%z')" \
 	"$(date -d "@$run_finished" '+%Y-%m-%dT%H:%M:%S%z')"
 
-if (( failed != 0 || infra != 0 || timed_out != 0 )); then
+if (( failed != 0 )); then
+	exit 1
+fi
+if (( stale != 0 || unpinnable != 0 )); then
+	exit 2
+fi
+if (( infra != 0 || timed_out != 0 )); then
 	exit 1
 fi
