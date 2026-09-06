@@ -383,6 +383,43 @@ func setCPrfFlag(p *game.Player, bit int, enabled bool) {
 	p.SetPlrFlag(bit, enabled)
 }
 
+// setBinaryFieldFlags contains the mechanical C flag assignments for binary
+// do_set fields. Fields with additional gates or side effects remain explicit
+// in applySetField below.
+type setBinaryFieldFlags struct {
+	playerBits []int
+	prfBits    []int
+}
+
+var setBinaryFieldTable = map[string]setBinaryFieldFlags{
+	"brief":     {prfBits: []int{game.PrfBrief}},
+	"invstart":  {playerBits: []int{game.PlrInvstart}},
+	"nosummon":  {prfBits: []int{game.PrfSummonable}},
+	"outlaw":    {playerBits: []int{game.PlrOutlaw}},
+	"roomflag":  {prfBits: []int{game.PrfRoomFlags}},
+	"siteok":    {playerBits: []int{game.PlrSiteok}},
+	"deleted":   {playerBits: []int{game.PlrDeleted}},
+	"nowizlist": {playerBits: []int{game.PlrNowizlist}},
+	"quest":     {prfBits: []int{game.PrfQuest}},
+	"color":     {prfBits: []int{game.PrfColor1, game.PrfColor2}},
+	"nodelete":  {playerBits: []int{game.PlrNODELETE}},
+	"chosen":    {playerBits: []int{game.PlrChosen}},
+}
+
+func applySetBinaryField(p *game.Player, field string, on bool) bool {
+	flags, ok := setBinaryFieldTable[field]
+	if !ok {
+		return false
+	}
+	for _, bit := range flags.playerBits {
+		setCPlayerFlag(p, bit, on)
+	}
+	for _, bit := range flags.prfBits {
+		setCPrfFlag(p, bit, on)
+	}
+	return true
+}
+
 func applySetField(s *Session, target setTarget, field setField, value string, valueInt int, on bool) (ack string, changed, early bool) {
 	p, m := target.player, target.mob
 	name := setTargetName(target)
@@ -396,17 +433,18 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		// acknowledgement prints that clamped value.
 		valueInt = clampSetValue(field.name, valueInt, p, m)
 	}
+	// The ordinary binary fields are a direct C flag assignment. Keep the two
+	// fields with extra authority/self-target gates below in the switch.
+	if field.typ == setBinary && field.name != "nohassle" && field.name != "frozen" {
+		if applySetBinaryField(p, field.name, on) {
+			return ack, true, false
+		}
+	}
 
 	switch field.name {
-	case "brief":
-		setCPrfFlag(p, game.PrfBrief, on)
-	case "invstart":
-		setCPlayerFlag(p, game.PlrInvstart, on)
 	case "title":
 		game.SetTitle(p, value)
 		ack = fmt.Sprintf("%s's title is now: %s", name, p.GetTitle())
-	case "nosummon":
-		setCPrfFlag(p, game.PrfSummonable, on)
 	case "maxhit":
 		if p != nil {
 			p.SetMaxHP(valueInt)
@@ -543,8 +581,6 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 			p.SetCondition(cond, valueInt)
 			ack = fmt.Sprintf("%s's %s set to %d.", name, field.name, valueInt)
 		}
-	case "outlaw":
-		setCPlayerFlag(p, game.PlrOutlaw, on)
 	case "name":
 		old := p.Name
 		p.Name = value
@@ -576,12 +612,6 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		if err != nil {
 			return "No room exists with that number.\r\n", false, true
 		}
-	case "roomflag":
-		setCPrfFlag(p, game.PrfRoomFlags, on)
-	case "siteok":
-		setCPlayerFlag(p, game.PlrSiteok, on)
-	case "deleted":
-		setCPlayerFlag(p, game.PlrDeleted, on)
 	case "class":
 		class, ok := parseSetClass(value)
 		if !ok {
@@ -592,10 +622,6 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		} else {
 			m.Runtime.ClassOverride = &class
 		}
-	case "nowizlist":
-		setCPlayerFlag(p, game.PlrNowizlist, on)
-	case "quest":
-		setCPrfFlag(p, game.PrfQuest, on)
 	case "loadroom":
 		if value == "off" {
 			setCPlayerFlag(p, game.PlrLoadroom, false)
@@ -608,9 +634,6 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 			p.SetLoadRoom(valueInt)
 			ack = fmt.Sprintf("%s will enter at room #%d.", name, valueInt)
 		}
-	case "color":
-		setCPrfFlag(p, game.PrfColor1, on)
-		setCPrfFlag(p, game.PrfColor2, on)
 	case "idnum":
 		if s.player.GetID() != 1 || m == nil {
 			return "", false, true
@@ -621,8 +644,6 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 			return "You must use set file with this command.\r\nThe player *must* not be logged in when this command is run.\r\n", false, true
 		}
 		return "Assuming the player is not logged in, this will not take effect if they are.\r\n", false, true
-	case "nodelete":
-		setCPlayerFlag(p, game.PlrNODELETE, on)
 	case "olc":
 		if target.session != nil {
 			target.session.olcZone = valueInt
@@ -659,8 +680,6 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		}
 	case "origcon":
 		p.SetOrigCon(valueInt)
-	case "chosen":
-		setCPlayerFlag(p, game.PlrChosen, on)
 	case "clan":
 		p.ClanID = valueInt
 		if valueInt == 0 {
