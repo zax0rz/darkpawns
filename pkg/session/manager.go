@@ -119,6 +119,11 @@ type Manager struct {
 	// It is protected by m.mu and wraps from 999 back to 1.
 	nextConnectionNumber int
 
+	// nextEphemeralPlayerID mirrors C's process-local idnum sequence when the
+	// development/oracle server is deliberately running without a database.
+	// It is never persisted and is not used when the database owns identity.
+	nextEphemeralPlayerID int
+
 	// shutdownRequests carries C do_shutdown's process-level request to the
 	// server entrypoint after the command has emitted its player-facing bytes.
 	shutdownRequests chan ShutdownRequest
@@ -281,7 +286,8 @@ func NewManager(world *game.World, database db.Database) *Manager {
 			Threshold: 10,
 			Lockout:   15 * time.Minute,
 		}),
-		ipConnCount: make(map[string]int),
+		ipConnCount:           make(map[string]int),
+		nextEphemeralPlayerID: 1,
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
 	// db.Database interface is itself non-nil. Normalize it to a real nil so
@@ -1406,6 +1412,19 @@ func (m *Manager) GetSession(playerName string) (*Session, bool) {
 	defer m.mu.RUnlock()
 	s, ok := m.sessions[playerName]
 	return s, ok
+}
+
+// allocateEphemeralPlayerID returns the process-local idnum used by the
+// no-database runtime. C assigns every newly created character an idnum even
+// before the pfile is written; keeping the same small seam lets commands that
+// inspect an online player retain C's identity shape without changing the Go
+// save format.
+func (m *Manager) allocateEphemeralPlayerID() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	id := m.nextEphemeralPlayerID
+	m.nextEphemeralPlayerID++
+	return id
 }
 
 // SessionCount returns the number of active player sessions.

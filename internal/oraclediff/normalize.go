@@ -7,6 +7,7 @@ import (
 
 var (
 	ansiEscape   = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
+	wallClock    = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
 	vitalsPrompt = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
 	promptOnly   = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
 	promptPrefix = regexp.MustCompile(`^> ?`)
@@ -45,6 +46,10 @@ func Normalize(raw string) string {
 	// C and Go transports repaint prompts at different times around identical
 	// asynchronous game text, so prompt-only lines are framing, not game output.
 	for i := range lines {
+		// ctime(3) values in durable-player/admin output are host-clock
+		// metadata, not game bytes. The deterministic harness freezes the
+		// game clock but intentionally does not freeze process wall time.
+		lines[i] = wallClock.ReplaceAllString(lines[i], "<WALL_CLOCK>")
 		lines[i] = vitalsPrompt.ReplaceAllString(lines[i], "<PROMPT>")
 		lines[i] = promptPrefix.ReplaceAllString(lines[i], "")
 		lines[i] = statusVitals.ReplaceAllString(lines[i], "<VITALS>")
