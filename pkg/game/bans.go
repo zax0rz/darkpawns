@@ -211,13 +211,11 @@ func (bm *BanManager) ListBans() string {
 	if len(bm.bans) == 0 {
 		return "No sites are banned.\r\n"
 	}
-	header := fmt.Sprintf("%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
-		"Banned Site Name", "Ban Type", "Banned On", "Banned By")
-	header += fmt.Sprintf("%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
-		"-------------------------", "--------", "----------", "----------------")
-
 	var sb strings.Builder
-	sb.WriteString(header)
+	fmt.Fprintf(&sb, "%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
+		"Banned Site Name", "Ban Type", "Banned On", "Banned By")
+	fmt.Fprintf(&sb, "%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n",
+		"-------------------------", "--------", "----------", "----------------")
 	for _, entry := range bm.bans {
 		dateStr := "Unknown"
 		if !entry.Date.IsZero() {
