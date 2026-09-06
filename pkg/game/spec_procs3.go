@@ -1346,14 +1346,26 @@ func specRecruiter(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	return false
 }
 
-// specElementsMasterColumn teleports players based on which talismans they carry.
-func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || ch == nil {
-		return false
-	}
+type elementsPlayerTransferPlan struct {
+	destination   int
+	directMessage string
+}
 
-	roomVNum := ch.GetRoomVNum()
-	players := w.GetPlayersInRoom(roomVNum)
+type elementsPlayerTransferSpec struct {
+	prepare       func(*Player) elementsPlayerTransferPlan
+	departure     string
+	arrival       string
+	transferLog   string
+	sendDirect    func(*Player, string)
+	lookAfterMove func(*Player)
+}
+
+// elementsPlayerTransferOrder reconstructs the room-people order used by the
+// element vehicles. C front-inserts room occupants; the Go world uses the
+// command actor first, then stable connection/name order for the remaining
+// players. Every player-only element teleport uses this same snapshot.
+func elementsPlayerTransferOrder(w *World, ch *Player) []*Player {
+	players := w.GetPlayersInRoom(ch.GetRoomVNum())
 	// C walks world[room].people, a front-inserted linked list. Player IDs are
 	// the stable connection-order surrogate used by the Go world. The command
 	// actor is the most recent room entrant in the C vehicle, so keep it first;
@@ -1370,62 +1382,95 @@ func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string,
 		}
 		return players[i].GetName() < players[j].GetName()
 	})
+	return players
+}
+
+// transferElementPlayers is the shared player teleport spine for the element
+// vehicles. It preserves the C-visible order of direct text, departure Act,
+// checked transfer, optional destination look, and arrival Act.
+func (w *World) transferElementPlayers(ch *Player, spec elementsPlayerTransferSpec) {
+	for _, ppl := range elementsPlayerTransferOrder(w, ch) {
+		if ppl == nil {
+			continue
+		}
+
+		plan := spec.prepare(ppl)
+		if spec.sendDirect == nil {
+			Act(w, false, ppl, nil, nil, nil, plan.directMessage, "", ToChar)
+		} else {
+			spec.sendDirect(ppl, plan.directMessage)
+		}
+		Act(w, true, ppl, nil, nil, nil, spec.departure, "", ToNotVict)
+
+		if err := w.PlayerTransfer(ppl, plan.destination); err != nil {
+			slog.Warn(spec.transferLog, "player", ppl.GetName(), "room", plan.destination, "error", err)
+			continue
+		}
+		if spec.lookAfterMove != nil {
+			spec.lookAfterMove(ppl)
+		}
+		Act(w, true, ppl, nil, nil, nil, spec.arrival, "", ToNotVict)
+	}
+}
+
+// specElementsMasterColumn teleports players based on which talismans they carry.
+func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if w == nil || ch == nil {
+		return false
+	}
 
 	newLocs := []int{1320, 1331, 1342, 1353, 1372}
 	objNames := []string{"earth", "air", "fire", "water"}
 	hasObject := [4]bool{}
 
-	for _, ppl := range players {
-		if ppl == nil {
-			continue
-		}
-		for _, obj := range ppl.GetInventory() {
-			if obj == nil {
-				continue
+	w.transferElementPlayers(ch, elementsPlayerTransferSpec{
+		prepare: func(ppl *Player) elementsPlayerTransferPlan {
+			for _, obj := range ppl.GetInventory() {
+				if obj == nil {
+					continue
+				}
+				switch obj.GetVNum() {
+				case 1300:
+					hasObject[0] = true
+				case 1301:
+					hasObject[1] = true
+				case 1302:
+					hasObject[2] = true
+				case 1303:
+					hasObject[3] = true
+				}
 			}
-			switch obj.GetVNum() {
-			case 1300:
-				hasObject[0] = true
-			case 1301:
-				hasObject[1] = true
-			case 1302:
-				hasObject[2] = true
-			case 1303:
-				hasObject[3] = true
+
+			found := 0
+			for i := range hasObject {
+				if !hasObject[i] {
+					break
+				}
+				found++
+				hasObject[i] = false
 			}
-		}
 
-		found := 0
-		for i := range hasObject {
-			if !hasObject[i] {
-				break
+			var message string
+			switch found {
+			case 0:
+				message = "You feel a tingling sensation and your vision fades. When you wake...\r\n"
+			case len(objNames):
+				message = "The four talismans glow softly and your vision fades. When you wake...\r\n"
+			default:
+				message = fmt.Sprintf("The talisman of %s glows softly and your vision fades. When you wake...\r\n", objNames[found-1])
 			}
-			found++
-			hasObject[i] = false
-		}
-
-		var message string
-		switch found {
-		case 0:
-			message = "You feel a tingling sensation and your vision fades. When you wake...\r\n"
-		case len(objNames):
-			message = "The four talismans glow softly and your vision fades. When you wake...\r\n"
-		default:
-			message = fmt.Sprintf("The talisman of %s glows softly and your vision fades. When you wake...\r\n", objNames[found-1])
-		}
-		Act(w, false, ppl, nil, nil, nil, message, "", ToChar)
-		Act(w, true, ppl, nil, nil, nil, "$n vanishes in a brilliant flash of light.", "", ToNotVict)
-
-		if err := w.PlayerTransfer(ppl, newLocs[found]); err != nil {
-			slog.Warn("elements master column player transfer failed", "player", ppl.GetName(), "room", newLocs[found], "error", err)
-			continue
-		}
-		w.lookAtRoom(ppl, false)
-		// The C room-look path leaves one literal spacer when the destination
-		// has no visible occupants; the following act() therefore begins with
-		// that byte for the next observer (spec_procs3.c:998-1002).
-		Act(w, true, ppl, nil, nil, nil, " $n appears in a brilliant flash of light.", "", ToNotVict)
-	}
+			return elementsPlayerTransferPlan{destination: newLocs[found], directMessage: message}
+		},
+		departure:   "$n vanishes in a brilliant flash of light.",
+		arrival:     " $n appears in a brilliant flash of light.",
+		transferLog: "elements master column player transfer failed",
+		lookAfterMove: func(ppl *Player) {
+			w.lookAtRoom(ppl, false)
+			// The C room-look path leaves one literal spacer when the destination
+			// has no visible occupants; the following act() therefore begins with
+			// that byte for the next observer (spec_procs3.c:998-1002).
+		},
+	})
 	return true
 }
 
@@ -1434,35 +1479,17 @@ func specElementsPlatforms(w *World, ch *Player, me *MobInstance, cmd string, ar
 	if w == nil || ch == nil {
 		return false
 	}
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
-	// C walks world[room].people, a front-inserted linked list. The command
-	// actor is the most recent entrant in the vehicle; IDs and names keep the
-	// remaining snapshot deterministic when the harness IDs tie.
-	sort.SliceStable(players, func(i, j int) bool {
-		if players[i] == ch {
-			return true
-		}
-		if players[j] == ch {
-			return false
-		}
-		if players[i].GetID() != players[j].GetID() {
-			return players[i].GetID() < players[j].GetID()
-		}
-		return players[i].GetName() < players[j].GetName()
+	w.transferElementPlayers(ch, elementsPlayerTransferSpec{
+		prepare: func(*Player) elementsPlayerTransferPlan {
+			return elementsPlayerTransferPlan{
+				destination:   1314,
+				directMessage: "A wave of power surges through you and you feel dizzy.",
+			}
+		},
+		departure:   "$n disappears in a brilliant flash of light.",
+		arrival:     "$n appears in a brilliant flash of light.",
+		transferLog: "elements platforms player transfer failed",
 	})
-
-	for _, ppl := range players {
-		if ppl == nil {
-			continue
-		}
-		Act(w, false, ppl, nil, nil, nil, "A wave of power surges through you and you feel dizzy.", "", ToChar)
-		Act(w, true, ppl, nil, nil, nil, "$n disappears in a brilliant flash of light.", "", ToNotVict)
-		if err := w.PlayerTransfer(ppl, 1314); err != nil {
-			slog.Warn("elements platforms player transfer failed", "player", ppl.GetName(), "room", 1314, "error", err)
-			continue
-		}
-		Act(w, true, ppl, nil, nil, nil, "$n appears in a brilliant flash of light.", "", ToNotVict)
-	}
 	return true
 }
 
@@ -1568,38 +1595,25 @@ func specElementsGaleruColumn(w *World, ch *Player, me *MobInstance, cmd string,
 		return false
 	}
 
-	// C walks the front-inserted world[room].people list. The command actor is
-	// the most recent entrant in the vehicle; use ID/name for the remaining
-	// players to keep the Go order deterministic.
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
-	sort.SliceStable(players, func(i, j int) bool {
-		if players[i] == ch {
-			return true
-		}
-		if players[j] == ch {
-			return false
-		}
-		if players[i].GetID() != players[j].GetID() {
-			return players[i].GetID() < players[j].GetID()
-		}
-		return players[i].GetName() < players[j].GetName()
+	w.transferElementPlayers(ch, elementsPlayerTransferSpec{
+		prepare: func(*Player) elementsPlayerTransferPlan {
+			return elementsPlayerTransferPlan{
+				destination:   1389,
+				directMessage: "Four beams of colored light from the corners of the chamber converge around you.\r\n\n",
+			}
+		},
+		departure:   "$n is struck by four beams of colored light and slowly vanishes!",
+		arrival:     " $n materialises from nowhere in a swirl of colors.",
+		transferLog: "elements galeru column player transfer failed",
+		sendDirect: func(ppl *Player, message string) {
+			// C's send_to_char buffer already contains its unusual CRLF/LF spacing;
+			// send the bytes directly instead of letting Act append another line end.
+			ppl.SendMessage(message)
+		},
+		lookAfterMove: func(ppl *Player) {
+			w.lookAtRoom(ppl, false)
+		},
 	})
-
-	for _, ppl := range players {
-		if ppl == nil {
-			continue
-		}
-		// C's send_to_char buffer already contains its unusual CRLF/LF spacing;
-		// send the bytes directly instead of letting Act append another line end.
-		ppl.SendMessage("Four beams of colored light from the corners of the chamber converge around you.\r\n\n")
-		Act(w, true, ppl, nil, nil, nil, "$n is struck by four beams of colored light and slowly vanishes!", "", ToNotVict)
-		if err := w.PlayerTransfer(ppl, 1389); err != nil {
-			slog.Warn("elements galeru column player transfer failed", "player", ppl.GetName(), "room", 1389, "error", err)
-			continue
-		}
-		w.lookAtRoom(ppl, false)
-		Act(w, true, ppl, nil, nil, nil, " $n materialises from nowhere in a swirl of colors.", "", ToNotVict)
-	}
 	return true
 }
 
@@ -1618,19 +1632,7 @@ func specElementsGaleruAlive(w *World, ch *Player, me *MobInstance, cmd string, 
 
 	// C walks every character, not just players. The command actor is the
 	// newest room entrant in the normal vehicle; use stable IDs for the rest.
-	players := w.GetPlayersInRoom(roomVNum)
-	sort.SliceStable(players, func(i, j int) bool {
-		if players[i] == ch {
-			return true
-		}
-		if players[j] == ch {
-			return false
-		}
-		if players[i].GetID() != players[j].GetID() {
-			return players[i].GetID() < players[j].GetID()
-		}
-		return players[i].GetName() < players[j].GetName()
-	})
+	players := elementsPlayerTransferOrder(w, ch)
 	characters := make([]Actor, 0, len(players)+len(w.GetMobsInRoom(roomVNum)))
 	for _, player := range players {
 		if player != nil {
