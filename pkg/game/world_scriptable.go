@@ -547,69 +547,33 @@ func (w *World) GetObjByInstanceID(id int) scripting.ScriptableObject {
 // Called by the combat engine's ScriptFightFunc after each round.
 // Source: mobact.c — mob_activity() calls Lua fight trigger during violence.
 func (w *World) FireMobFightScript(mobName string, targetName string, roomVNum int) {
-	if ScriptEngine == nil {
-		return
-	}
-
-	// Find the mob by name in the room
-	w.mu.RLock()
-	var mob *MobInstance
-	for _, m := range w.activeMobs {
-		if m.GetRoom() == roomVNum && m.GetName() == mobName && m.HasScript("fight") {
-			mob = m
-			break
-		}
-	}
-	// Find the target player
-	var target scripting.ScriptablePlayer
-	for _, p := range w.players {
-		if p.GetName() == targetName {
-			target = p
-			break
-		}
-	}
-	w.mu.RUnlock()
-
-	if mob == nil {
-		return
-	}
-
-	ctx := mob.CreateScriptContext(nil, nil, "")
-	if target != nil {
-		if p, ok := target.(*Player); ok {
-			ctx.Ch = p
-		}
-	}
-	ctx.World = NewWorldScriptableAdapter(w)
-	ctx.RoomVNum = roomVNum
-
-	if _, err := mob.RunScript("fight", ctx); err != nil {
-		slog.Warn("fight script error", "mob_vnum", mob.GetVNum(), "mob_name", mob.GetName(), "error", err)
-	}
+	w.fireMobScript("fight", mobName, targetName, roomVNum)
 }
 
 // FireMobDeathScript fires the "death" trigger on a mob when it dies.
 // Called by the combat engine's ScriptDeathFunc after death.
 // Source: fight.c — raw_kill() calls Lua death trigger.
 func (w *World) FireMobDeathScript(victimName string, killerName string, roomVNum int) {
+	w.fireMobScript("death", victimName, killerName, roomVNum)
+}
+
+func (w *World) fireMobScript(trigger, mobName, actorName string, roomVNum int) {
 	if ScriptEngine == nil {
 		return
 	}
 
-	// Find the dying mob by name in the room
 	w.mu.RLock()
 	var mob *MobInstance
 	for _, m := range w.activeMobs {
-		if m.GetRoom() == roomVNum && m.GetName() == victimName && m.HasScript("death") {
+		if m.GetRoom() == roomVNum && m.GetName() == mobName && m.HasScript(trigger) {
 			mob = m
 			break
 		}
 	}
-	// Find the killer player
-	var killer scripting.ScriptablePlayer
+	var actor scripting.ScriptablePlayer
 	for _, p := range w.players {
-		if p.GetName() == killerName {
-			killer = p
+		if p.GetName() == actorName {
+			actor = p
 			break
 		}
 	}
@@ -620,16 +584,16 @@ func (w *World) FireMobDeathScript(victimName string, killerName string, roomVNu
 	}
 
 	ctx := mob.CreateScriptContext(nil, nil, "")
-	if killer != nil {
-		if p, ok := killer.(*Player); ok {
+	if actor != nil {
+		if p, ok := actor.(*Player); ok {
 			ctx.Ch = p
 		}
 	}
 	ctx.World = NewWorldScriptableAdapter(w)
 	ctx.RoomVNum = roomVNum
 
-	if _, err := mob.RunScript("death", ctx); err != nil {
-		slog.Warn("death script error", "mob_vnum", mob.GetVNum(), "mob_name", mob.GetName(), "error", err)
+	if _, err := mob.RunScript(trigger, ctx); err != nil {
+		slog.Warn(trigger+" script error", "mob_vnum", mob.GetVNum(), "mob_name", mob.GetName(), "error", err)
 	}
 }
 
