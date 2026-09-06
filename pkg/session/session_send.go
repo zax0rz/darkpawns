@@ -295,12 +295,12 @@ func (s *Session) promptText() string {
 	if flags&(1<<uint(game.PrfAFK)) != 0 {
 		return "AFK > "
 	}
-	prefix := ""
+	var prefix strings.Builder
 	if level := s.player.GetInvisLevel(); level > 0 {
 		// C's make_prompt adds the wizinvis marker itself; process_output owns
 		// the preceding CRLF when an output buffer is being flushed
 		// (comm.c:1062-1065, 1624-1640).
-		prefix = fmt.Sprintf("i%d ", level)
+		fmt.Fprintf(&prefix, "i%d ", level)
 	}
 	// C's make_prompt playing branch renders the vitals fields (HP/mana/move)
 	// only when the infobar is off (comm.c:1064-1105); the VT100 infobar owns
@@ -308,16 +308,16 @@ func (s *Session) promptText() string {
 	// differential normalizer, so only the numeric fields are emitted.
 	if s.infobarMode != InfobarOn {
 		if flags&(1<<uint(game.PrfDisphp)) != 0 {
-			prefix += fmt.Sprintf("%dH ", s.player.Health)
+			fmt.Fprintf(&prefix, "%dH ", s.player.Health)
 		}
 		if flags&(1<<uint(game.PrfDispmmana)) != 0 {
-			prefix += fmt.Sprintf("%dM ", s.player.Mana)
+			fmt.Fprintf(&prefix, "%dM ", s.player.Mana)
 		}
 		if flags&(1<<uint(game.PrfDispmove)) != 0 {
-			prefix += fmt.Sprintf("%dV ", s.player.Move)
+			fmt.Fprintf(&prefix, "%dV ", s.player.Move)
 		}
 	}
-	return prefix + "> "
+	return prefix.String() + "> "
 }
 
 // MarkDirty marks a variable as dirty for agent subscriptions.
