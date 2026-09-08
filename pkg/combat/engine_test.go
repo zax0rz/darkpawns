@@ -212,6 +212,46 @@ func TestPerformInitialAttackResolvesExactlyOneSynchronousHit(t *testing.T) {
 	}
 }
 
+func TestPerformInitialAttackSkipsDeadDefenderAfterHitDraws(t *testing.T) {
+	attacker := &mockCombatant{
+		name: "Guard", room: 1, level: 20, hp: 100, maxHP: 100,
+		position: PosStanding, class: ClassWarrior, str: 10, dex: 10, intVal: 10, wis: 10,
+		damageRoll: DiceRoll{Num: 1, Sides: 1},
+	}
+	defender := &mockCombatant{
+		name: "DeadTarget", room: 1, level: 1, hp: 0, maxHP: 20,
+		position: PosDead, class: ClassWarrior, str: 10, dex: 10, intVal: 10, wis: 10,
+	}
+
+	ce := NewCombatEngine()
+	messageCalls := 0
+	ce.MessageFunc = func(Combatant, Combatant, int, int) bool {
+		messageCalls++
+		return true
+	}
+	if err := ce.StartCombatFromMob(attacker, defender); err != nil {
+		t.Fatalf("StartCombatFromMob() error = %v", err)
+	}
+	defer ce.StopCombat(attacker.GetName())
+
+	roller := NewScriptedRoller([]int{20, 1, 1})
+	WithRoller(roller, func() {
+		if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+			t.Fatalf("PerformInitialAttack() error = %v", err)
+		}
+	})
+
+	if messageCalls != 0 {
+		t.Fatalf("dead defender received %d combat messages, want 0", messageCalls)
+	}
+	if defender.GetHP() != 0 {
+		t.Fatalf("dead defender HP = %d, want unchanged at 0", defender.GetHP())
+	}
+	if roller.Index != 2 {
+		t.Fatalf("dead-defender attack consumed %d draws, want to-hit plus damage", roller.Index)
+	}
+}
+
 func TestHandleSurvivingVictimState_AutoWimpyFleesAfterBleedingMessage(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)

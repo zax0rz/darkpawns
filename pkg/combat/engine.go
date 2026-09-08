@@ -715,6 +715,13 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		weaponDamage := attacker.GetDamageRoll()
 		damage = CalculateDamage(attacker, defender, weaponDamage, AttackNormal)
 	}
+	// hit() still consumes its to-hit and damage draws before damage() rejects
+	// a POS_DEAD victim (fight.c:1319-1326). Keep that boundary here so a
+	// second mobile special cannot print a duplicate death transcript during
+	// the heartbeat in which the first attacker killed the target.
+	if defender.GetPosition() <= PosDead {
+		return false
+	}
 
 	// C's damage() protects shopkeepers after hit() has consumed its
 	// to-hit/damage draws but before combat enrollment or messages. Mob specials
