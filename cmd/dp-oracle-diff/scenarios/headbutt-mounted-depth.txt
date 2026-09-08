@@ -29,7 +29,6 @@ HbMntgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ HbMntrider
 y
 riderpass
 riderpass
-Y
 N
 M
 H

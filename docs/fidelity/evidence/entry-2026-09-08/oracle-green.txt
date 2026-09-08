@@ -1,0 +1,42 @@
+Focused oracle: character-creation-name-retry, C oracle binary /home/zach/darkpawns-c-oracle/bin/circle.
+Normalized transcript proof only; no persistent Go database in this vehicle.
+
+seed 1
+Dark Pawns Tier-1 differential report
+scenario: character-creation-name-retry
+c-oracle: 127.0.0.1:33853 (DP_SEED=1)
+go-port: 127.0.0.1:45471 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+
+seed 2
+Dark Pawns Tier-1 differential report
+scenario: character-creation-name-retry
+c-oracle: 127.0.0.1:33087 (DP_SEED=2)
+go-port: 127.0.0.1:40437 (DP_SEED=2)
+result: no normalized divergence
+normalized C oracle blocks:
+
+seed 3
+Dark Pawns Tier-1 differential report
+scenario: character-creation-name-retry
+c-oracle: 127.0.0.1:41901 (DP_SEED=3)
+go-port: 127.0.0.1:32903 (DP_SEED=3)
+result: no normalized divergence
+normalized C oracle blocks:
+
+seed 5
+Dark Pawns Tier-1 differential report
+scenario: character-creation-name-retry
+c-oracle: 127.0.0.1:37811 (DP_SEED=5)
+go-port: 127.0.0.1:45551 (DP_SEED=5)
+result: no normalized divergence
+normalized C oracle blocks:
+
+seed 8
+Dark Pawns Tier-1 differential report
+scenario: character-creation-name-retry
+c-oracle: 127.0.0.1:45003 (DP_SEED=8)
+go-port: 127.0.0.1:38355 (DP_SEED=8)
+result: no normalized divergence
+normalized C oracle blocks:

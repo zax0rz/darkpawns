@@ -39,7 +39,6 @@ Sleepgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Sleepcast
 y
 spellpass
 spellpass
-Y
 N
 M
 H
@@ -97,7 +95,6 @@ Sleeptarget
 y
 victimpass
 victimpass
-Y
 N
 M
 H

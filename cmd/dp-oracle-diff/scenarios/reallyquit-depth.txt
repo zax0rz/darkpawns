@@ -30,7 +30,6 @@ Reallyadmin
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Reallypeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -88,7 +86,6 @@ Reallyobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

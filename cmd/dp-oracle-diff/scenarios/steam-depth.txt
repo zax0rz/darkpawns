@@ -31,7 +31,6 @@ Steamactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Steampeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

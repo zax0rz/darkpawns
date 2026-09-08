@@ -29,7 +29,6 @@ Stablegod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Rescrider
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

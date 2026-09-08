@@ -33,7 +33,6 @@ Flexactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Flexpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -92,7 +90,6 @@ Flexsleep
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

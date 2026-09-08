@@ -33,7 +33,6 @@ Roaractor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Roarobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Roartarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

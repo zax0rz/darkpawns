@@ -31,7 +31,6 @@ Whistleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Whistlepeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

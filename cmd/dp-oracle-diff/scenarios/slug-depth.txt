@@ -34,7 +34,6 @@ Slugdepthgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Slugactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H

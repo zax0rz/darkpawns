@@ -31,7 +31,6 @@ Shudderactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Shudderpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

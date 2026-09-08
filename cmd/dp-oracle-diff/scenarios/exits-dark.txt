@@ -28,7 +28,6 @@ Exitsdarkconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Exitsdarkactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

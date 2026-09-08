@@ -28,7 +28,6 @@ Bearhugfailuregod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Bearhugfailuremortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

@@ -30,7 +30,6 @@ Shootentry
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Shootactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

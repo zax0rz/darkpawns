@@ -39,7 +39,6 @@ Tripgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -72,7 +71,6 @@ Tripmortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

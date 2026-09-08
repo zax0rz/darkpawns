@@ -34,7 +34,6 @@ Jailguardgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Jailguardwitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

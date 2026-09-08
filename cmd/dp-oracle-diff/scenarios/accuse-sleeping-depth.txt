@@ -27,7 +27,6 @@ Mordecai
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Dozer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

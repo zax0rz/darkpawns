@@ -36,7 +36,6 @@ Fondleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Fondlepeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -34,7 +34,6 @@ Flipactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Flippeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -93,7 +91,6 @@ Flipsleep
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

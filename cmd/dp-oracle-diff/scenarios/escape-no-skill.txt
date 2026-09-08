@@ -41,7 +41,6 @@ Escapenoconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Escapenofresh
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

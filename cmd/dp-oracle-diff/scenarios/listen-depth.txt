@@ -31,7 +31,6 @@ Listenactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Listenobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

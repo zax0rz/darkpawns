@@ -39,7 +39,6 @@ Wiznetdepth
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Wiznetpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

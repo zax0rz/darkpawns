@@ -29,7 +29,6 @@ Leersleepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Leersleeper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

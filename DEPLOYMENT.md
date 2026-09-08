@@ -287,3 +287,24 @@ private delivery setting is missing.
 
 Use the timestamped site backup made before a full static deployment to restore
 `/srv/hugo/`. Report what was rolled back and retain failed artifacts for diagnosis.
+
+
+### Entry identity migration preflight
+
+The entry-flow repair adds a unique index on `lower(players.name)`. Before deploying
+that revision, query collisions in the target database:
+
+```sql
+SELECT lower(name) AS identity, array_agg(id ORDER BY id) AS ids,
+       array_agg(name ORDER BY id) AS names
+FROM players GROUP BY lower(name) HAVING count(*) > 1;
+```
+
+Resolve each result through an owner-reviewed record plan before restarting the
+new server. The migration deliberately fails instead of choosing or deleting a
+character. The 2026-09-08 audit found `aiko`, `test`, and `brenda69` collisions;
+re-query at deployment time. This repair has not changed those records.
+Database initialization failure now stops server startup. `DP_ALLOW_NO_DB=1` is an
+explicit development/oracle opt-in for ephemeral play, not a production remedy
+for migration or connection failure. The oracle runner supplies it for its
+isolated no-database vehicle.

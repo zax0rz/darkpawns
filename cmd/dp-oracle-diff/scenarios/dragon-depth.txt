@@ -34,7 +34,6 @@ Dragonlord
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Dragonwarrior
 y
 dragonpass
 dragonpass
-Y
 N
 M
 H
@@ -104,7 +102,6 @@ Dragonobserver
 y
 observerpass
 observerpass
-Y
 N
 F
 H

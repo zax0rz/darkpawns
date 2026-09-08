@@ -1,0 +1,16 @@
+Final-code oracle matrix (all runs used --show-oracle):
+character-creation@1: no normalized divergence
+character-creation@2: no normalized divergence
+character-creation@3: no normalized divergence
+character-creation@5: no normalized divergence
+character-creation@8: no normalized divergence
+character-creation-name-retry@1: no normalized divergence
+character-creation-name-retry@2: no normalized divergence
+character-creation-name-retry@3: no normalized divergence
+character-creation-name-retry@5: no normalized divergence
+character-creation-name-retry@8: no normalized divergence
+god-harness-smoke@1: no normalized divergence
+god-harness-smoke@2: no normalized divergence
+god-harness-smoke@3: no normalized divergence
+god-harness-smoke@5: no normalized divergence
+god-harness-smoke@8: no normalized divergence

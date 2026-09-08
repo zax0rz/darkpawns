@@ -31,7 +31,6 @@ Grumbleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Grumbleobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

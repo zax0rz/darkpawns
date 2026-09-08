@@ -33,7 +33,6 @@ Dfailactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -71,7 +70,6 @@ Dfailvictim
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -109,7 +107,6 @@ Dfailobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -42,7 +42,6 @@ Bankactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -72,7 +71,6 @@ Bankpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

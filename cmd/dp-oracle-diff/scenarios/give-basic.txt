@@ -35,7 +35,6 @@ Giver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Givevic
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -93,7 +91,6 @@ Giveobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -26,7 +26,6 @@ Sendgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -55,7 +54,6 @@ Sendmortal
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

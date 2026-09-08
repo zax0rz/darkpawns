@@ -28,7 +28,6 @@ Gotoprivate
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Privatepeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -86,7 +84,6 @@ Privateobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

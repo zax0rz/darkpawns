@@ -34,7 +34,6 @@ Drunkgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Drunko
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H
@@ -94,7 +92,6 @@ Hestia
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

@@ -26,7 +26,6 @@ Obsactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Obstarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

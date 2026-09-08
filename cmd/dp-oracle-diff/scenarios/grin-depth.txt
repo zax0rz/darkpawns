@@ -34,7 +34,6 @@ Grinactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Grinobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -93,7 +91,6 @@ Grinsleeper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

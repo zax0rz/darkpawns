@@ -48,8 +48,8 @@ func callHandleLogin(s *Session, data json.RawMessage) (error, bool) {
 // drainSend reads one message from s.send without blocking.
 func drainSend(s *Session) ([]byte, bool) {
 	select {
-	case msg := <-s.send:
-		return msg, true
+	case msg, ok := <-s.send:
+		return msg, ok
 	default:
 		return nil, false
 	}
@@ -88,6 +88,9 @@ func TestHandleLogin_EmptyFields(t *testing.T) {
 
 	if err != ErrInvalidPlayerName {
 		t.Errorf("expected ErrInvalidPlayerName, got %v", err)
+	}
+	if !s.SendClosed() {
+		t.Fatal("C CON_GET_NAME closes on an empty name")
 	}
 	// No message should have been sent
 	if msg, ok := drainSend(s); ok {

@@ -29,7 +29,6 @@ Quitadmin
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Quitpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

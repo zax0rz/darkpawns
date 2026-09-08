@@ -31,7 +31,6 @@ Gooseactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Goosepeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -89,7 +87,6 @@ Gooseobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

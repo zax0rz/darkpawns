@@ -37,7 +37,6 @@ Winkactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -66,7 +65,6 @@ Winkobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -95,7 +93,6 @@ Winktarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

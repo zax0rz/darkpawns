@@ -27,7 +27,6 @@ PortalHero
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ PortalWitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

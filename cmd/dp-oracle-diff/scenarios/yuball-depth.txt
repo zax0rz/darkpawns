@@ -32,7 +32,6 @@ Yuballactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Yuballpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

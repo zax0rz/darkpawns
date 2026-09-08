@@ -41,7 +41,6 @@ Snoopboss
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -70,7 +69,6 @@ Snooptarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -99,7 +97,6 @@ Snooppeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

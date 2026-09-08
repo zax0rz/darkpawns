@@ -44,7 +44,6 @@ Mordecai
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -82,7 +81,6 @@ Helpero
 y
 helperpass
 helperpass
-Y
 N
 M
 H

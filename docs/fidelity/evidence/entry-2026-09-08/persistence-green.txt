@@ -1,0 +1,58 @@
+=== RUN   TestEntryIdentityCaseInsensitive
+--- PASS: TestEntryIdentityCaseInsensitive (0.07s)
+=== RUN   TestEntryNameRetryLoadsExisting
+2026/09/08 06:59:43 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:43 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+--- PASS: TestEntryNameRetryLoadsExisting (0.08s)
+=== RUN   TestEntryAcceptedStatsPersistBeforeMenu
+2026/09/08 06:59:43 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:43 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+--- PASS: TestEntryAcceptedStatsPersistBeforeMenu (0.13s)
+=== RUN   TestEntryAikoResolvesExistingWithoutCreation
+2026/09/08 06:59:43 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:43 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+--- PASS: TestEntryAikoResolvesExistingWithoutCreation (0.07s)
+=== RUN   TestEntryAikoCollisionDoesNotLeaveEnterableCandidate
+2026/09/08 06:59:43 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:43 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 06:59:43 ERROR entry failed player=guest session=-1788865183629914160 stage=stats_roll error="save new character: pq: duplicate key value violates unique constraint \"players_name_key\" (23505)"
+--- PASS: TestEntryAikoCollisionDoesNotLeaveEnterableCandidate (0.12s)
+=== RUN   TestEntryMenuDisconnectResumesSavedCharacter
+2026/09/08 06:59:43 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:43 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 06:59:43 INFO advanced to level name=Newhero level=1
+2026/09/08 06:59:43 INFO completeCharCreation: player added to world player=Newhero session=Newhero-1788865183805130044 room=8099
+2026/09/08 06:59:43 INFO completeCharCreation: state cleared player=Newhero session=Newhero-1788865183805130044 room=8099
+--- PASS: TestEntryMenuDisconnectResumesSavedCharacter (0.17s)
+=== RUN   TestEntryPasswordRetries
+2026/09/08 06:59:43 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:43 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+--- PASS: TestEntryPasswordRetries (0.09s)
+=== RUN   TestEntryConcurrentCaseVariantsCannotCreateTwoRows
+--- PASS: TestEntryConcurrentCaseVariantsCannotCreateTwoRows (0.07s)
+=== RUN   TestEntryLegacyCollisionIsAmbiguous
+2026/09/08 06:59:44 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:44 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 06:59:44 ERROR entry failed player=guest session=-1788865184103334963 error="load character: ambiguous character name; saved records require administrator review"
+--- PASS: TestEntryLegacyCollisionIsAmbiguous (0.09s)
+=== RUN   TestEntryCreationDrawBoundaries
+=== RUN   TestEntryCreationDrawBoundaries/false
+2026/09/08 06:59:44 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:44 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 06:59:44 INFO advanced to level name=Drawtest level=1
+2026/09/08 06:59:44 INFO completeCharCreation: player added to world player=Drawtest session=Drawtest-1788865184114591533 room=8099
+2026/09/08 06:59:44 INFO completeCharCreation: state cleared player=Drawtest session=Drawtest-1788865184114591533 room=8099
+2026/09/08 06:59:44 ERROR failed to generate JWT token player=Drawtest session=Drawtest-1788865184114591533 room=8099 error="JWT_SECRET environment variable not set"
+2026/09/08 06:59:44 ERROR sendWelcome: mortal start room not found vnum=8004
+=== RUN   TestEntryCreationDrawBoundaries/true
+2026/09/08 06:59:44 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 06:59:44 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 06:59:44 INFO completeCharCreation: player added to world player=Drawtest session=Drawtest-1788865184114850362 room=1204
+2026/09/08 06:59:44 INFO completeCharCreation: state cleared player=Drawtest session=Drawtest-1788865184114850362 room=1204
+2026/09/08 06:59:44 ERROR failed to generate JWT token player=Drawtest session=Drawtest-1788865184114850362 room=1204 error="JWT_SECRET environment variable not set"
+2026/09/08 06:59:44 ERROR sendWelcome: mortal start room not found vnum=8004
+--- PASS: TestEntryCreationDrawBoundaries (0.00s)
+    --- PASS: TestEntryCreationDrawBoundaries/false (0.00s)
+    --- PASS: TestEntryCreationDrawBoundaries/true (0.00s)
+PASS
+ok  	github.com/zax0rz/darkpawns/pkg/session	0.902s

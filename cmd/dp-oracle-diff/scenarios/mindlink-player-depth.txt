@@ -27,7 +27,6 @@ Mindlinkplayer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Mindlinkpeer
 y
 peerpass
 peerpass
-Y
 N
 M
 H

@@ -36,7 +36,6 @@ Squeezeactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Squeezeobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -94,7 +92,6 @@ Squeezetarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

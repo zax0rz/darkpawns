@@ -31,7 +31,6 @@ Mordecai
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Barnaby
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

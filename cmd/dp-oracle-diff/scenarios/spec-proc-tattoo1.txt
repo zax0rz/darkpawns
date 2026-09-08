@@ -34,7 +34,6 @@ TattooActor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ TattooPeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -344,44 +344,6 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		tc.writeLine("Invalid name, please try another.\r\nName: ")
 	}
 
-	var password string
-	var newChar bool
-
-	if strings.HasPrefix(strings.ToLower(name), "guest") {
-		// Ephemeral guest bypasses password prompting!
-		newChar = false
-	} else if manager.HasDatabase() {
-		database := manager.GetDatabase()
-		rec, err := database.GetPlayer(name)
-		if err != nil {
-			slog.Error("Telnet DB lookup error", "player", name, "error", err)
-		}
-
-		if rec != nil {
-			// Returning player - prompt for password statefully (ECHO OFF)
-			tc.write([]byte{IAC, WILL, OPT_ECHO})
-			tc.writeLine("Password: ")
-			var ok bool
-			password, ok = tc.readLinePreAuth()
-			tc.write([]byte{IAC, WONT, OPT_ECHO})
-			tc.writeLine("\r\n")
-			if !ok {
-				return
-			}
-			if strings.TrimSpace(password) == "" {
-				tc.writeLine("Password cannot be empty. Disconnecting.\r\n")
-				return
-			}
-			newChar = false
-		} else {
-			newChar = true
-		}
-	} else {
-		// In no-DB/dev mode every non-guest name follows the same C creation
-		// path as an unknown player-file name.
-		newChar = true
-	}
-
 	// Start the output writer before login so everything login produces —
 	// prompts, rejection messages, and the success welcome/look — reaches the
 	// client as it is generated. (DP-591)
@@ -392,7 +354,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	}()
 
 	// Send login with password
-	if err := sendLoginWithPassword(s, name, password, newChar); err != nil {
+	if err := sendLoginWithPassword(s, name, "", false); err != nil {
 		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
 		// Set a write deadline so a client that stops reading cannot block
 		// writeLoop forever and leak this goroutine/file descriptor.
@@ -445,7 +407,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// A blank line is meaningful during character creation (e.g. the
 			// "PRESS RETURN" step), so forward it as char_input rather than
 			// swallowing it. Forwarding "" disconnected new players otherwise.
-			if err := sendCharInput(s, line); err != nil {
+			if err := sendCharInput(s, rawLine); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
 		} else if s.IsPaging() {

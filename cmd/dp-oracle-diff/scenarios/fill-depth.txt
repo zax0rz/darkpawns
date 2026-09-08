@@ -41,7 +41,6 @@ Fillactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -70,7 +69,6 @@ Fillobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -1,0 +1,10 @@
+=== RUN   TestEntryTransientSaveFailureDoesNotPersistAbortedBootstrap
+2026/09/08 13:42:02 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 13:42:02 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 13:42:02 INFO advanced to level name=Newhero level=1
+2026/09/08 13:42:02 ERROR entry failed player=Newhero session=Newhero-1788889322350408383 room=8162 error="save character entry: entry save unavailable"
+    entry_persistence_test.go:257: entry-save failure changed persisted candidate: stored=&{ID:2 Name:Newhero Password:$2a$10$xu9zu3IOVaKe3p13051OK.EcmlI4Z76/UNAw0P9RrVu7Z/3c1LoLy Description: RoomVNum:8162 Level:1 Exp:1 Health:19 MaxHealth:19 Mana:100 MaxMana:100 Strength:13 Class:2 Race:3 StatStr:13 StatStrAdd:0 StatInt:12 StatWis:10 StatDex:17 StatCon:13 StatCha:6 Hunger:36 Thirst:36 Drunk:0 Move:83 MaxMove:83 Hometown:1 Inventory:[91 93] Equipment:[91 93] FailedLoginAttempts:0 LockedUntil:<nil>} err=<nil>
+--- FAIL: TestEntryTransientSaveFailureDoesNotPersistAbortedBootstrap (0.14s)
+FAIL
+FAIL	github.com/zax0rz/darkpawns/pkg/session	0.141s
+FAIL

@@ -68,6 +68,7 @@ func init() {
 
 // Manager handles all active sessions.
 type Manager struct {
+	creationMu   sync.Mutex // Serializes first-player selection with persistence.
 	mu           sync.RWMutex
 	snoopMu      sync.RWMutex        // protects the bidirectional snoop links
 	sessions     map[string]*Session // keyed by player name
@@ -1057,6 +1058,10 @@ func (m *Manager) Register(playerName string, s *Session) error {
 
 	m.mu.Lock()
 	if oldSess, exists := m.sessions[playerName]; exists {
+		if oldSess == s {
+			m.mu.Unlock()
+			return nil
+		}
 		// DP-GOAT P0-3: Session handoff grace period
 		// Give the old session a brief window to prove it's alive before
 		// forcible takeover. During this window the old session's readPump
@@ -1217,6 +1222,11 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 // and pre-auth disconnects return false and use normal cleanup.
 func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() {
+		return false
+	}
+	// C close_socket (comm.c:2129) retains only CON_PLAYING. Authentication
+	// and accepted-stat persistence precede world entry and are not sufficient.
+	if s.charCreating || s.creationSaved || s.menuActive {
 		return false
 	}
 
@@ -1411,6 +1421,13 @@ func (m *Manager) GetSession(playerName string) (*Session, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	s, ok := m.sessions[playerName]
+	if !ok {
+		for name, candidate := range m.sessions {
+			if strings.EqualFold(name, playerName) {
+				return candidate, true
+			}
+		}
+	}
 	return s, ok
 }
 
@@ -1516,16 +1533,18 @@ type Session struct {
 	wantsStructuredData bool
 
 	// Character creation state
-	charCreating bool
-	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
-	charName     string
-	charPassword string // hashed password during creation
-	charColor    bool   // ANSI color preference
-	charSex      int
-	charRace     int
-	charClass    int
-	charHometown int
-	charStats    game.CharStats
+	creationSaved bool // New character persisted at accepted stats, not yet admitted.
+	loginFailures int
+	charCreating  bool
+	charStage     string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
+	charName      string
+	charPassword  string // hashed password during creation
+	charColor     bool   // ANSI color preference
+	charSex       int
+	charRace      int
+	charClass     int
+	charHometown  int
+	charStats     game.CharStats
 
 	// Post-MOTD main menu state. This is separate from character creation
 	// because returning players pass through the same menu before world entry.

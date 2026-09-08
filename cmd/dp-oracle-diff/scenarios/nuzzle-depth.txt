@@ -36,7 +36,6 @@ Nuzzleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Nuzzleobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Nuzzletarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

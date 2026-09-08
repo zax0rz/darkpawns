@@ -29,7 +29,6 @@ Mutemortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

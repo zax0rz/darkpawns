@@ -29,7 +29,6 @@ Escapecornerconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Escapecorneractor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

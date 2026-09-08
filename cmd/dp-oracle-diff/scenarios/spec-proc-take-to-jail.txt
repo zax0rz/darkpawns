@@ -42,7 +42,6 @@ JailGod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -71,7 +70,6 @@ JailVictim
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

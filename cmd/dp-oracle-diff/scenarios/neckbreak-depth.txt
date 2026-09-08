@@ -35,7 +35,6 @@ Neckbreakgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Neckbreakactor
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H
@@ -93,7 +91,6 @@ Neckbreaktarget
 y
 mortalpass
 mortalpass
-Y
 N
 F
 H

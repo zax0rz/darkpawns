@@ -35,7 +35,6 @@ Peekgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Peekvictim
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -31,7 +31,6 @@ Paceactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Paceobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -89,7 +87,6 @@ Pacetarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

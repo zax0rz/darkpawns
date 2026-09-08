@@ -34,7 +34,6 @@ Rsayhuman
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Barnaby
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -92,7 +90,6 @@ Rsayelf
 y
 oraclepass
 oraclepass
-Y
 N
 M
 E

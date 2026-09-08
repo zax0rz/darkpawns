@@ -28,7 +28,6 @@ Quiactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

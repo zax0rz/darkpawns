@@ -25,7 +25,6 @@ Remover
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -52,7 +51,6 @@ Removobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -45,7 +45,6 @@ Infoactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -74,7 +73,6 @@ Infowatcher
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

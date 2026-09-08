@@ -1,6 +1,6 @@
 ---
 tags: [active, governing, fidelity, port, rulebook]
-last_updated: 2026-07-24
+last_updated: 2026-09-08
 author: Claude Code (Opus) with The Architect
 ---
 # The Port Rulebook — C→Go Translation Law
@@ -119,6 +119,21 @@ cannot observe them.
   first review because the finding's existence was checked and its reachability
   wasn't.)
 
+- **R5f. Proof stops at the tested boundary.** A telnet oracle cannot certify
+  browser-authored dialogue, and a no-database fixture cannot certify saved-name
+  lookup or persistence timing. Shared state machines still require transport
+  and storage boundary tests. Taught by the [Aiko entry incident](../briefs/2026-09-08-entry-flow-fidelity.md):
+  the browser invented a password preamble, case-sensitive lookup missed an
+  existing identity, and a failed insert left an enterable candidate despite
+  earlier creation oracle coverage. Inventory the whole entry class and retain
+  explicit gaps; do not label a transport or persistence branch green from a
+  fixture that bypasses it.
+  Audit drained setup inputs when entry states change, too: the follow-up
+  [cleanup review](evidence/entry-2026-09-08/cleanup-review.md) found 1,757 stale
+  extra-Y inputs in 932 scenarios. They silently enabled Go color while C
+  received N, producing five downstream report failures. Align fixture intent;
+  do not classify downstream differences as unrelated without tracing setup.
+
 ---
 
 ## Amendment log
@@ -128,3 +143,4 @@ cannot observe them.
 | 2026-07-22 | R1–R5 seeded | July fidelity sprint (DP_CLOCK, zone-reset, nanny, recall) + reachability findings (DP-1185/1186/1187) |
 | 2026-07-23 | R5e added | DP-1198 dead-code false alarm + the obj-3117 misattribution — reachability of findings must be verified |
 | 2026-07-24 | R3d added; R5a refined | DP-1212 — God creation drew 2 phantom AdvanceLevel values (C gates do_start on !GET_LEVEL); +2 offset flipped bash/trip/headbutt, left kick/backstab green by coincidence |
+| 2026-09-08 | R5f added | Aiko entry incident: independent browser dialogue and persistence failures escaped creation oracle coverage |

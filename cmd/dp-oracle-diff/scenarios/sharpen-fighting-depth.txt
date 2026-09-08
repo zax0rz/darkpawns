@@ -32,7 +32,6 @@ Sharpenadmin
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Sharpenactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -90,7 +88,6 @@ Sharpenvictim
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

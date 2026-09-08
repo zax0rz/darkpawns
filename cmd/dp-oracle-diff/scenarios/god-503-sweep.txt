@@ -52,7 +52,6 @@ Godprobe
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -81,7 +80,6 @@ Godmortal
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

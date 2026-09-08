@@ -31,7 +31,6 @@ Shadowactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Shadowleader
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -89,7 +87,6 @@ Shadowobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

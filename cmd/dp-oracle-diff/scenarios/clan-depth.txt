@@ -45,7 +45,6 @@ Clangod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -74,7 +73,6 @@ Clanapply
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -103,7 +101,6 @@ Clanmate
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

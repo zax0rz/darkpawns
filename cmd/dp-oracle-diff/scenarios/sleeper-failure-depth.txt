@@ -32,7 +32,6 @@ Sleeperfailgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Sleeperfailactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H

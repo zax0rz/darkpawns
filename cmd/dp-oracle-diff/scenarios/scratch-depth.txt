@@ -31,7 +31,6 @@ Scratchactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Scratchpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

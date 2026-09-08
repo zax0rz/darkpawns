@@ -28,7 +28,6 @@ Exitsclosedconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Exitsclosedactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

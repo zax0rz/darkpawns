@@ -40,7 +40,6 @@ Headbuttgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -73,7 +72,6 @@ Headbuttmortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

@@ -43,7 +43,6 @@ Mindactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -76,7 +75,6 @@ Mindvictim
 y
 mindpass
 mindpass
-Y
 N
 M
 H

@@ -32,7 +32,6 @@ RemortActor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ RemortWitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

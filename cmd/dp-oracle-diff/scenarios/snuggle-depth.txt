@@ -36,7 +36,6 @@ Snuggleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Snuggleobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Snuggletarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

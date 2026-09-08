@@ -145,6 +145,9 @@ func (s *Session) writePump() {
 
 // handleMessage processes incoming WebSocket messages.
 func (s *Session) handleMessage(data []byte) error {
+	if s.SendClosed() {
+		return ErrNotAuthenticated
+	}
 	var msg ClientMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
 		return err
@@ -154,7 +157,7 @@ func (s *Session) handleMessage(data []byte) error {
 	case MsgLogin:
 		return s.handleLogin(msg.Data)
 	case MsgCommand:
-		if !s.authenticated || s.menuActive {
+		if !s.authenticated || s.menuActive || s.charCreating || s.creationSaved {
 			return ErrNotAuthenticated
 		}
 		return s.handleCommand(msg.Data)

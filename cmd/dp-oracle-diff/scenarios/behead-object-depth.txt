@@ -32,7 +32,6 @@ Beheadobjgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Beheadobjpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

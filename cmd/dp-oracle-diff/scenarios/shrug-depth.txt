@@ -31,7 +31,6 @@ Shrugactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Shrugpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

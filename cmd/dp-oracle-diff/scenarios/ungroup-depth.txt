@@ -31,7 +31,6 @@ Ungroupleader
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Ungrouppeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -89,7 +87,6 @@ Ungroupobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

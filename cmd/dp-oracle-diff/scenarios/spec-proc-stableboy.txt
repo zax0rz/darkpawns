@@ -43,7 +43,6 @@ Stableactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -80,7 +79,6 @@ Stablepeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

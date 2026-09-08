@@ -30,7 +30,6 @@ Nbgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Nbshop
 y
 shoppass
 shoppass
-Y
 N
 M
 H

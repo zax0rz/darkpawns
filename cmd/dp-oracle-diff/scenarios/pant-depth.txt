@@ -36,7 +36,6 @@ Pantactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Pantobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Panttarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -28,7 +28,6 @@ Wearer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -55,7 +54,6 @@ Wearobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

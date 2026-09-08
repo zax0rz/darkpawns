@@ -33,7 +33,6 @@ Teleportwizard
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Teleportpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Teleportobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

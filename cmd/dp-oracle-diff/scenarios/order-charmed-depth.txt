@@ -29,7 +29,6 @@ Orderleader
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Ordertarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -87,7 +85,6 @@ Orderobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

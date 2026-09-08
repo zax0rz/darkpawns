@@ -33,7 +33,6 @@ Chargegod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Chargewarrior
 y
 chargepass
 chargepass
-Y
 N
 M
 H

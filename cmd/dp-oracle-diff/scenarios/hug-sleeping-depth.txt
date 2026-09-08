@@ -28,7 +28,6 @@ Hugsleepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Hugsleepobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -86,7 +84,6 @@ Hugsleeptarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

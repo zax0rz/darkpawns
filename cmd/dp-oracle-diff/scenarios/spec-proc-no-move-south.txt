@@ -28,7 +28,6 @@ Specactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Specpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -30,7 +30,6 @@ AssassinPlayer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ AssassinRosterPlayer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

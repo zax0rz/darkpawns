@@ -30,7 +30,6 @@ Kyoactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Kyopeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

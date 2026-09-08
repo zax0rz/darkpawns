@@ -35,7 +35,6 @@ Wnewbiewizard
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Wnewbiepeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -93,7 +91,6 @@ Wnewbieglobal
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -28,7 +28,6 @@ Roflsleepact
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Roflsleepobs
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -86,7 +84,6 @@ Roflsleeptgt
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

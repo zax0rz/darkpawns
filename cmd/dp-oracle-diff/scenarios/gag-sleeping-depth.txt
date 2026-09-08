@@ -28,7 +28,6 @@ Sootgagsleepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Sootgagsleeptarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -86,7 +84,6 @@ Sootgagsleepobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

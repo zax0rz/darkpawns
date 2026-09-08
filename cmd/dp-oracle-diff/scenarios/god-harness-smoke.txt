@@ -26,7 +26,6 @@ Harnessgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -55,7 +54,6 @@ Harnessmortal
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

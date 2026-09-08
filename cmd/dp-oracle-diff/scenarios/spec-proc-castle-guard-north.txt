@@ -29,7 +29,6 @@ CastleNorthGod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ CastleNorthMortal
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

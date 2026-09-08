@@ -30,7 +30,6 @@ AssassinGold
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ GoldTarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

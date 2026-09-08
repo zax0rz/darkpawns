@@ -30,7 +30,6 @@ Chopgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Chopvict
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

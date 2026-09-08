@@ -33,7 +33,6 @@ Splitactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Splitpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -91,7 +89,6 @@ Splitobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

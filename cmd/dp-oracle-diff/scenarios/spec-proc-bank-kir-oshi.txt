@@ -31,7 +31,6 @@ Bankkir
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Bankkirpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

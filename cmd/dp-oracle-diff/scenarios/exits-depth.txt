@@ -29,7 +29,6 @@ Exitsconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Exitsactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

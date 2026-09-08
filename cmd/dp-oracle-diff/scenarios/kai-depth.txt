@@ -30,7 +30,6 @@ Kaiactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Kaipeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -40,7 +40,6 @@ Groupleader
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ Grouppeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -98,7 +96,6 @@ Groupobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

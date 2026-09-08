@@ -28,7 +28,6 @@ MoanGod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Moanmute
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

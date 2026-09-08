@@ -1,4 +1,7 @@
-(function () {
+import { Terminal } from 'xterm';
+import { FitAddon } from '@xterm/addon-fit';
+
+function startClient() {
   'use strict';
 
   const params = new URLSearchParams(location.search);
@@ -21,7 +24,7 @@
       selectionBackground: '#3a2a1a',
     },
   });
-  const fitAddon = new FitAddon.FitAddon();
+  const fitAddon = new FitAddon();
   term.loadAddon(fitAddon);
   term.open(document.getElementById('terminal'));
   fitAddon.fit();
@@ -395,9 +398,8 @@
   let loggedIn = false;
   let inCharCreation = false;
   let charInputSecret = false;
-  let loginStage = 'name'; // 'name', 'password', 'new_char', 'confirm_password'
-  let username = '';
-  let password = '';
+  let awaitingEntryReply = false;
+  let queuedInput = '';
 
   const greetingsLogo =
     "\r\n\r\n" +
@@ -469,31 +471,23 @@
           inCharCreation = true;
           loggedIn = false;
           charInputSecret = Boolean(msg.data.secret);
-          term.write('\r\n' + msg.data.prompt + '\r\n');
-          const promptContainsOptions = msg.data.prompt.includes('0) Exit from Dark Pawns') || msg.data.prompt.includes('[');
-          if (msg.data.options && !promptContainsOptions) {
-            const options = Array.isArray(msg.data.options)
-              ? msg.data.options
-              : Object.entries(msg.data.options).map(([key, label]) => ({ key, label }));
-            for (const option of options) {
-              term.write(`  [${option.key}] - ${option.label}\r\n`);
-            }
-          }
-          term.write('> ');
+          awaitingEntryReply = false;
+          term.write(msg.data.prompt);
+          drainInput();
         } else if (msg.type === 'error') {
           term.write('\r\n\x1b[31m' + msg.data.message + '\x1b[0m\r\n');
           // Reset login flow on failure so they can try again
           if (!loggedIn && !inCharCreation) {
             term.write('\r\nBy what name do you wish to be known? ');
-            loginStage = 'name';
-            username = '';
-            password = '';
+            awaitingEntryReply = false;
           }
         } else if (msg.type === 'state') {
           if (!loggedIn && msg.data && msg.data.player && msg.data.player.name) {
             loggedIn = true;
             inCharCreation = false;
             charInputSecret = false;
+            awaitingEntryReply = false;
+            drainInput();
           }
           if (loggedIn && msg.data) {
             handleStateMsg(msg.data);
@@ -513,9 +507,9 @@
       loggedIn = false;
       inCharCreation = false;
       charInputSecret = false;
-      loginStage = 'name';
-      username = '';
-      password = '';
+      awaitingEntryReply = false;
+      queuedInput = '';
+      inputBuffer = '';
       if (statusBar) statusBar.classList.add('hidden');
     };
 
@@ -524,73 +518,39 @@
     };
   }
 
+  // Typeahead waits for each server-owned entry state before echoing. A paste
+  // containing a name and password must not echo the password as part of the name.
   term.onData(function (data) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    queuedInput += data.replace(/\r\n/g, '\r');
+    drainInput();
+  });
+
+  function drainInput() {
+    while (!awaitingEntryReply && queuedInput.length) {
+      const character = queuedInput[0];
+      queuedInput = queuedInput.slice(1);
+      handleInputCharacter(character);
+    }
+  }
+
+  function handleInputCharacter(data) {
 
     if (data === '\r' || data === '\n') {
-      term.writeln('');
+      if (!charInputSecret) term.writeln('');
       const input = inputBuffer;
       inputBuffer = '';
 
       if (!loggedIn && !inCharCreation) {
-        // Stateful terminal authentication flow
-        if (loginStage === 'name') {
-          username = input.trim();
-          if (username) {
-            if (username.toLowerCase().startsWith('guest')) {
-              // Bypasses password prompt and goes directly to guest login!
-              ws.send(JSON.stringify({
-                type: 'login',
-                data: { player_name: username, password: '', new_char: false }
-              }));
-              term.write('Connecting as Guest...\r\n');
-              loginStage = 'name';
-            } else {
-              term.write('Password: ');
-              loginStage = 'password';
-            }
-          } else {
-            term.write('By what name do you wish to be known? ');
-          }
-        } else if (loginStage === 'password') {
-          password = input;
-          term.write('\r\nIs this a new character? (y/n): ');
-          loginStage = 'new_char';
-        } else if (loginStage === 'new_char') {
-          const choice = input.trim().toLowerCase();
-          if (choice === 'y' || choice === 'yes') {
-            term.write('Confirm password: ');
-            loginStage = 'confirm_password';
-          } else {
-            // Returning character login
-            ws.send(JSON.stringify({
-              type: 'login',
-              data: { player_name: username, password: password, new_char: false }
-            }));
-            term.write('Connecting...\r\n');
-            loginStage = 'name'; // reset in case login fails
-          }
-        } else if (loginStage === 'confirm_password') {
-          const confirm = input;
-          if (confirm !== password) {
-            term.write('\x1b[31mPasswords do not match.\x1b[0m\r\nBy what name do you wish to be known? ');
-            loginStage = 'name';
-            username = '';
-            password = '';
-          } else {
-            // New character login
-            ws.send(JSON.stringify({
-              type: 'login',
-              data: { player_name: username, password: password, new_char: true }
-            }));
-            term.write('Creating character...\r\n');
-            loginStage = 'name'; // reset in case login fails
-          }
+        if (!awaitingEntryReply) {
+          awaitingEntryReply = true;
+          ws.send(JSON.stringify({ type: 'login', data: { player_name: input.trim() } }));
         }
         return;
       }
 
       if (inCharCreation) {
+        awaitingEntryReply = true;
         ws.send(JSON.stringify({ type: 'char_input', data: { choice: input } }));
         return;
       }
@@ -600,28 +560,30 @@
     } else if (data === '\x7f' || data === '\b') {
       if (inputBuffer.length > 0) {
         inputBuffer = inputBuffer.slice(0, -1);
-        if (loginStage !== 'password' && loginStage !== 'confirm_password' && !charInputSecret) {
+        if (!charInputSecret) {
           term.write('\b \b');
         }
       }
     } else if (data.charCodeAt(0) >= 32) {
       inputBuffer += data;
-      if (loginStage !== 'password' && loginStage !== 'confirm_password' && !charInputSecret) {
+      if (!charInputSecret) {
         term.write(data);
       }
     }
-  });
+  }
 
   reconnectBtn.addEventListener('click', function () {
     loggedIn = false;
     inCharCreation = false;
     charInputSecret = false;
-    loginStage = 'name';
-    username = '';
-    password = '';
+    awaitingEntryReply = false;
     inputBuffer = '';
+    queuedInput = '';
     connect();
   });
 
   connect();
-})();
+}
+
+if (document.readyState === 'complete') startClient();
+else window.addEventListener('load', startClient, { once: true });

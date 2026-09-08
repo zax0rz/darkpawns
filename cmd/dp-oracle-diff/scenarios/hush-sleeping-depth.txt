@@ -27,7 +27,6 @@ Hushsleepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Hushsleepobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -85,7 +83,6 @@ Hushleeptarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

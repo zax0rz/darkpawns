@@ -31,7 +31,6 @@ Weepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Weeppeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

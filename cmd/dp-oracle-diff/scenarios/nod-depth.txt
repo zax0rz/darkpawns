@@ -34,7 +34,6 @@ Nodactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Nodtarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -92,7 +90,6 @@ Nodwatch
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

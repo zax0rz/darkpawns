@@ -40,7 +40,6 @@ Advancedepth
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ Advancepeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

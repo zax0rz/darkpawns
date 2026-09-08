@@ -27,7 +27,6 @@ Grigod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Griattacker
 y
 actorpass
 actorpass
-Y
 N
 M
 H

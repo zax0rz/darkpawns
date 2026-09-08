@@ -22,7 +22,6 @@ Wielder
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -49,7 +48,6 @@ Wieldobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

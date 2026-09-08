@@ -34,7 +34,6 @@ Serpentgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Serpentatt
 y
 attpass
 attpass
-Y
 N
 M
 H
@@ -104,7 +102,6 @@ Serpentobs
 y
 obspass
 obspass
-Y
 N
 M
 H

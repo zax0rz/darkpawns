@@ -33,7 +33,6 @@ Fadeactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Fadeobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Fadetarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

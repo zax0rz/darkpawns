@@ -31,7 +31,6 @@ Punchslice
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Punchpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

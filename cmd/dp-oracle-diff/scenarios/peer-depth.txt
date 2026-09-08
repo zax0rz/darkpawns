@@ -36,7 +36,6 @@ Peeractor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Peerobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

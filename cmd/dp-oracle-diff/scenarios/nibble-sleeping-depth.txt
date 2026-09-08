@@ -29,7 +29,6 @@ Nibawake
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Nibsleep
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -87,7 +85,6 @@ Nibwatch
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

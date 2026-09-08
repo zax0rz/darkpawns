@@ -39,7 +39,6 @@ Gsayleader
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Gsaypeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -97,7 +95,6 @@ Gsayobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -30,7 +30,6 @@ Bashfailuregod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Bashfailuremortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

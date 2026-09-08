@@ -32,7 +32,6 @@ StableSuccess
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ StableWitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

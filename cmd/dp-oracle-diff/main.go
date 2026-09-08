@@ -598,14 +598,14 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 func withFreshMUDEnv(env []string, enabled bool) []string {
 	filtered := make([]string, 0, len(env)+1)
 	for _, entry := range env {
-		if !strings.HasPrefix(entry, "DP_FRESH_MUD=") {
+		if !strings.HasPrefix(entry, "DP_FRESH_MUD=") && !strings.HasPrefix(entry, "DP_ALLOW_NO_DB=") {
 			filtered = append(filtered, entry)
 		}
 	}
 	if enabled {
 		filtered = append(filtered, "DP_FRESH_MUD=1")
 	}
-	return filtered
+	return append(filtered, "DP_ALLOW_NO_DB=1")
 }
 
 func probeClients(primary oraclediff.Conn, peers map[string]oraclediff.Conn, actorName string) (oraclediff.Conn, map[string]oraclediff.Conn) {

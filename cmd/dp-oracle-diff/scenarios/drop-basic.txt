@@ -32,7 +32,6 @@ Dropper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Dropobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

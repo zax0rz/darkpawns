@@ -28,7 +28,6 @@ Scoutskillhost
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Scoutrookie
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

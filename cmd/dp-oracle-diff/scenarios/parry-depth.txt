@@ -37,7 +37,6 @@ Parryactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -70,7 +69,6 @@ Parryobserver
 y
 observerpass
 observerpass
-Y
 N
 M
 H

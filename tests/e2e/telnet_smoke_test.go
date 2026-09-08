@@ -313,8 +313,8 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn2: returning player was not prompted for a password (not loaded from DB?)")
 	}
 	mustWrite(t, c2, "definitely-wrong\r\n")
-	if got := readUntil(t, c2, r2, "Invalid password", 10*time.Second); got == "" {
-		t.Error("conn2: wrong password did not produce an 'Invalid password' rejection")
+	if got := readUntil(t, c2, r2, "Wrong password.\r\nPassword: ", 10*time.Second); got == "" {
+		t.Error("conn2: wrong password did not return C's password retry prompt")
 	}
 	_ = c2.Close()
 
@@ -424,8 +424,15 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	// game pulses keep firing, which the combat-round observation depends on.
 	// The timestamp is beginning_of_time + 12 MUD-hours (12*63s), a daytime
 	// instant.
+	// This vehicle deliberately exercises ephemeral play. Keep real-database
+	// tests fail-closed even if the parent shell opted into no-DB operation.
+	allowNoDB := "0"
+	if dbURL == deadDBURL {
+		allowNoDB = "1"
+	}
 	cmd.Env = append(
 		os.Environ(),
+		"DP_ALLOW_NO_DB="+allowNoDB,
 		"JWT_SECRET=e2e-smoke-test-secret-at-least-32-chars-long",
 		"ENVIRONMENT=development",
 		"DP_SEED=1",

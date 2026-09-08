@@ -39,7 +39,6 @@ Sethuntadmin
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Sethuntvictim
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -97,7 +95,6 @@ Sethunthigh
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

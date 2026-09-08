@@ -36,7 +36,6 @@ Setactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Settarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -31,7 +31,6 @@ Purrslice
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Purrpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

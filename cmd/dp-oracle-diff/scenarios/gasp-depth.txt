@@ -30,7 +30,6 @@ Gaspactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Gaspobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

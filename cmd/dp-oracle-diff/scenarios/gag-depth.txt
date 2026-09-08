@@ -31,7 +31,6 @@ Sootgagactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Sootgagpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -89,7 +87,6 @@ Sootgagobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

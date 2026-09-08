@@ -33,7 +33,6 @@ Shootgate
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -36,7 +36,6 @@ Grabdepth
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Grabviewer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

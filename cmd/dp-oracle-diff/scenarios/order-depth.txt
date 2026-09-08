@@ -36,7 +36,6 @@ Orderleader
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Orderpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Orderobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

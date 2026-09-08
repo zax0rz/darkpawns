@@ -45,7 +45,6 @@ Kickgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -81,7 +80,6 @@ Kickmortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

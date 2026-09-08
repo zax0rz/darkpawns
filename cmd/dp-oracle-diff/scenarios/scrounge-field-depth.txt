@@ -27,7 +27,6 @@ Scroungefield
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Scroungefieldpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

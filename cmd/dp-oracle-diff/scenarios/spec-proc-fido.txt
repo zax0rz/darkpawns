@@ -37,7 +37,6 @@ Fidogod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -66,7 +65,6 @@ Fidopeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

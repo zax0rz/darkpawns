@@ -34,7 +34,6 @@ Equipdepth
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Equippeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

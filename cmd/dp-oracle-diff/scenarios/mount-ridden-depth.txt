@@ -29,7 +29,6 @@ Mountactor
 Y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Mountpeer
 Y
 oraclepass
 oraclepass
-Y
 N
 F
 H

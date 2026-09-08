@@ -32,7 +32,6 @@ Draklord
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Drakblade
 y
 dragonpass
 dragonpass
-Y
 N
 M
 H
@@ -102,7 +100,6 @@ Drakseer
 y
 observerpass
 observerpass
-Y
 N
 F
 H

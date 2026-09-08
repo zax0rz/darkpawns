@@ -36,7 +36,6 @@ Noogieactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Noogieobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Noogietarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

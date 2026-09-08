@@ -40,7 +40,6 @@ CityguardGod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ CityguardPeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

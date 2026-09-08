@@ -36,7 +36,6 @@ Startleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Startleobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -94,7 +92,6 @@ Startletarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

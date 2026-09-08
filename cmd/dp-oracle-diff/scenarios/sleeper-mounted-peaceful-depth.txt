@@ -31,7 +31,6 @@ Sleepermountgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Sleepermountactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H

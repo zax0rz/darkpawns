@@ -35,7 +35,6 @@ Sendactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Sendtarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -1,0 +1,15 @@
+Command: ORACLE_REGRESSION_JOBS=4 make oracle-regression
+Reported rerun log: /tmp/dp-entry-census-final.log
+UNPINNABLE accuse-noarg-depth (ledger-backed divergence; shape unpinnable — run-varying bytes; requires human clearance)
+EXPECTED accuse-depth (ledger-backed divergence, pinned shape)
+EXPECTED force-mob (ledger-backed divergence, pinned shape)
+EXPECTED medit-entry-depth (ledger-backed divergence, pinned shape)
+EXPECTED medit-session-depth (ledger-backed divergence, pinned shape)
+EXPECTED redit-entry-depth (ledger-backed divergence, pinned shape)
+EXPECTED redit-session-depth (ledger-backed divergence, pinned shape)
+EXPECTED sedit-entry-depth (ledger-backed divergence, pinned shape)
+EXPECTED sedit-session-depth (ledger-backed divergence, pinned shape)
+EXPECTED shoot-target-depth (ledger-backed divergence, pinned shape)
+UNPINNABLE accuse-noarg-depth (requires human clearance)
+oracle-regression: scenarios=935 passed=925 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0 elapsed=7006.275s started=2026-09-08T14:36:12-0400 finished=2026-09-08T16:32:59-0400
+Exit 2: standing UNPINNABLE requires human clearance; not an unconditional green gate.

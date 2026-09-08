@@ -31,7 +31,6 @@ Roflactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Roflobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

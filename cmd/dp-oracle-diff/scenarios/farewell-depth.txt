@@ -32,7 +32,6 @@ Farewellactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Farewellobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -90,7 +88,6 @@ Farewelltarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -29,7 +29,6 @@ Cutthroatfailgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Cutthroatfailthief
 y
 cutthroatpass
 cutthroatpass
-Y
 N
 M
 H
