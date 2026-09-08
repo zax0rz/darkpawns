@@ -163,3 +163,18 @@ Production data and deployment are unchanged. The folded unique index will rejec
 the three known colliding identities (`aiko`, `test`, `brenda69`); no automated
 winner selection or deletion was implemented. Next: bounded proof expansion,
 then a concrete owner-reviewed collision proposal and deployment review.
+
+## Lifecycle proof and cleanup checkpoint
+
+The follow-up proof and cleanup are recorded in
+[cleanup-review.md](../fidelity/evidence/entry-2026-09-08/cleanup-review.md).
+Real TCP tests now cover disconnect at MOTD and menu, same-ID/stat reconnect,
+and playing-only linkdead retention. One-shot entry-save failure leaves the
+accepted level-zero row intact. The 1,757 stale extra-Y setup inputs in 932
+oracle fixtures were removed, resolving all five color-report failures.
+
+The complete census rerun reports 925 passes, nine expected divergences, one
+standing unpinnable case, and zero unexpected failures across 935 scenarios.
+The exit-2 clearance requirement remains; it has not been waived. Other blocked
+entry branches remain explicit in the manifest. Production collision resolution
+and deployment remain separate from this repair.

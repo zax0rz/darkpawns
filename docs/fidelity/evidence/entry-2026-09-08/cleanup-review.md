@@ -48,13 +48,23 @@ tests used only isolated schemas on the disposable loopback cluster at port 5543
 - Final-code `character-creation`, `character-creation-name-retry`, and
   `god-harness-smoke` each pass seeds 1,2,3,5,8 (15/15), all with
   `--show-oracle`. See cleanup-oracle-green.txt.
-- Complete fixture census: result pending below.
+- Complete fixture census rerun: 935 scenarios, 925 passes, nine expected
+  divergences, one standing unpinnable (`accuse-noarg-depth`), zero stale
+  entries, unexpected failures, infrastructure failures or timeouts. Exit 2
+  retains the human-clearance requirement. See cleanup-census-summary.txt.
+- Voice lint: removed three stale baseline entries caused by the client move;
+  no new findings were added to the baseline. The 19 editorial warnings remain
+  visible and nonblocking. `make site-check` passed, including the 13,188-page
+  Astro build. Build, vet, the full Go suite, lint and formatting were rerun
+  successfully before the final documentation commit.
 
-The full census binary was built after the telnet state-gate repair and before
+The initial cleanup census binary was built after the telnet state-gate repair and before
 the later abortEntry transient-failure repair. The latter branch requires a
 persistence failure and is not reachable in the census's no-database vehicle;
 final-code PostgreSQL race tests and repository gates cover that branch. The
-seeded creation runs use a server rebuilt after both repairs.
+seeded creation runs use a server rebuilt after both repairs. A subsequent
+complete census rerun on the saved checkpoint finished at 16:32:59 on September
+8 with the tally above, confirming the same result after the handoff.
 
 ## Remaining boundaries
 
