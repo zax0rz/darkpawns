@@ -1,7 +1,7 @@
 # depth-case: mob.key-seller-non-owner
 # key_seller performs the same house lookup before its owner check. The C
 # record names seeded Oraklet (ID 2), while Testor (ID 1) is the probe actor;
-# the Go fixture uses an owner ID that the no-DB Testor (ID 0) does not own.
+# the Go fixture uses an owner ID that the no-DB Testor (ID 1) does not own.
 
 [fixture]
 quiet-mobs

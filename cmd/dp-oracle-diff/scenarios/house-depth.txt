@@ -1,6 +1,6 @@
 # C-first house/do_house vehicle (src/interpreter.c:502; src/house.c:603-718).
 # The fixture creates a private house at 8162 with atrium 8161 and maps the
-# seeded C owner ID 1 to the no-DB Go Testor ID 0. The online guest makes
+# seeded C owner ID 1 to the no-DB Go Testor ID 1. The online guest makes
 # get_id_by_name reachable in both engines.
 
 # depth-case: house.usage
@@ -18,7 +18,7 @@
 
 [fixture]
 quiet-mobs
-house-control 8162 8161 north 1 0 19604
+house-control 8162 8161 north 1 1 19604
 
 [setup:oracle]
 Testor
