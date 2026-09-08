@@ -1,0 +1,30 @@
+=== RUN   TestEntryIdentityCaseInsensitive
+    entry_persistence_test.go:117: lookup "aiko" did not resolve saved identity 1
+    entry_persistence_test.go:117: lookup "AIKO" did not resolve saved identity 1
+--- FAIL: TestEntryIdentityCaseInsensitive (0.07s)
+=== RUN   TestEntryNameRetryLoadsExisting
+2026/09/07 23:07:24 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/07 23:07:24 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+    entry_persistence_test.go:136: retry into saved name: prompt="Please remember to choose an appropriate fantasy-oriented name.\r\nDid I get that right, Aiko (Y/N)? " secret=false; want existing-password prompt
+--- FAIL: TestEntryNameRetryLoadsExisting (0.08s)
+=== RUN   TestEntryAcceptedStatsPersistBeforeMenu
+2026/09/07 23:07:24 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/07 23:07:24 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+    entry_persistence_test.go:154: accepted stats reached MOTD without persisting the character
+--- FAIL: TestEntryAcceptedStatsPersistBeforeMenu (0.12s)
+=== RUN   TestEntryAikoCollisionDoesNotLeaveEnterableCandidate
+2026/09/07 23:07:24 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/07 23:07:24 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+    entry_persistence_test.go:176: create attempts before menu 1: 0
+2026/09/07 23:07:24 INFO advanced to level name=Aiko level=1
+2026/09/07 23:07:24 WARN duplicate character name, rejecting creation player=guest session=-1788836844867974902 room=8162
+    entry_persistence_test.go:178: create attempts after menu 1: 1
+    entry_persistence_test.go:180: reproduced first-entry collision: a character named 'Aiko' already exists
+    entry_persistence_test.go:182: failed insert retained candidate player: authenticated=false menuActive=true; next menu 1 dispatches to enterReturningPlayer
+    entry_persistence_test.go:185: second menu 1: error=<nil> worldPresent=true authenticated=false creates=1
+    entry_persistence_test.go:187: unsaved candidate entered the world after failed creation
+    entry_persistence_test.go:192: entry journey failed: a character named 'Aiko' already exists
+--- FAIL: TestEntryAikoCollisionDoesNotLeaveEnterableCandidate (0.12s)
+FAIL
+FAIL	github.com/zax0rz/darkpawns/pkg/session	0.399s
+FAIL

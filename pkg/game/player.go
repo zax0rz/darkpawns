@@ -343,17 +343,23 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 // NewCharacter creates a brand new level 1 character with class/race and rolled stats.
 // Implements do_start() from class.c — call this on first login.
 func NewCharacter(id int, name string, class, race int) *Player {
-	return newCharacter(id, name, class, race, 0, RollRealAbils(class, race))
+	return newCharacter(id, name, class, race, 0, RollRealAbils(class, race), true)
 }
 
 // NewCharacterWithStats creates a level-1 character from the stats and sex
 // already accepted during nanny character creation. C rolls abilities before
 // do_start(); consuming another roll here would shift every later RNG draw.
 func NewCharacterWithStats(id int, name string, class, race, sex int, stats CharStats) *Player {
-	return newCharacter(id, name, class, race, sex, stats)
+	return newCharacter(id, name, class, race, sex, stats, true)
 }
 
-func newCharacter(id int, name string, class, race, sex int, stats CharStats) *Player {
+// RestoreCharacterWithStats restores constructor defaults without any creation
+// RNG draws. C store_to_char does not call roll_real_abils or init_char (R3).
+func RestoreCharacterWithStats(id int, name string, class, race int, stats CharStats) *Player {
+	return newCharacter(id, name, class, race, 0, stats, false)
+}
+
+func newCharacter(id int, name string, class, race, sex int, stats CharStats, rollBody bool) *Player {
 	p := NewPlayer(id, name, MortalStartRoom)
 	p.Class = class
 	p.Race = race
@@ -403,13 +409,15 @@ func newCharacter(id int, name string, class, race, sex int, stats CharStats) *P
 	// Starting practices — class.c:590
 	p.Practices = 2
 
-	// Random height/weight by sex — db.c:3041-3047
-	if p.Sex == 0 { // SEX_MALE = 0
-		p.Weight = dprng.Number(120, 180) // 120-180
-		p.Height = dprng.Number(160, 200) // 160-200
-	} else {
-		p.Weight = dprng.Number(100, 160) // 100-160
-		p.Height = dprng.Number(150, 180) // 150-180
+	if rollBody {
+		// Random height/weight by sex — db.c:3041-3047
+		if p.Sex == 0 { // SEX_MALE = 0
+			p.Weight = dprng.Number(120, 180) // 120-180
+			p.Height = dprng.Number(160, 200) // 160-200
+		} else {
+			p.Weight = dprng.Number(100, 160) // 100-160
+			p.Height = dprng.Number(150, 180) // 150-180
+		}
 	}
 
 	// THAC0 from class table

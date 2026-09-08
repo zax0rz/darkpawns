@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 
 	"github.com/lib/pq"
@@ -12,7 +13,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/validation"
 )
 
 // C source race help constants from src/constants.c
@@ -143,16 +143,27 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	}
 
 	choice := strings.TrimSpace(input.Choice)
+	if s.charStage == "create_password" || s.charStage == "confirm_password" || s.charStage == "login_password" {
+		choice = input.Choice // C passwords are byte strings, including whitespace.
+	}
 
 	switch s.charStage {
 	case "get_name":
-		if !validation.IsValidPlayerName(choice) || !game.ValidName(choice) {
-			s.sendCharCreatePrompt("get_name", "Invalid name, please try another.\r\nName: ", nil)
+		if choice == "" {
+			s.CloseSend()
 			return nil
 		}
-		s.charName = choice
-		s.charStage = "confirm_name"
-		s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Please remember to choose an appropriate fantasy-oriented name.\r\nDid I get that right, %s (Y/N)? ", choice), nil)
+		login, err := json.Marshal(LoginData{PlayerName: choice})
+		if err != nil {
+			return err
+		}
+		return s.handleLogin(login)
+	case "login_password":
+		login, err := json.Marshal(LoginData{PlayerName: s.charName, Password: input.Choice})
+		if err != nil {
+			return err
+		}
+		return s.handleLogin(login)
 
 	case "confirm_name":
 		switch strings.ToUpper(choice) {
@@ -323,6 +334,9 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	case "stats_roll":
 		switch strings.ToUpper(choice) {
 		case "Y":
+			if err := s.persistAcceptedCharacter(); err != nil {
+				return s.abortEntry(err)
+			}
 			// Show MOTD and transition to PRESS RETURN state
 			motd := game.ShowMOTD(s.manager.world.WorldPath)
 			s.charStage = "motd"
@@ -426,6 +440,9 @@ func (s *Session) startCharCreation(playerName string) {
 // startNewCharFlow begins the C nanny flow at name confirmation. Passwords for
 // new characters are always collected here, never by a transport auth shim.
 func (s *Session) startNewCharFlow(playerName string) {
+	if playerName != "" {
+		playerName = strings.ToUpper(playerName[:1]) + playerName[1:] // C CAP, not title-case.
+	}
 	s.charCreating = true
 	s.charName = playerName
 	s.charPassword = ""
@@ -456,6 +473,9 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options []CharCreat
 }
 
 func (s *Session) sendCharCreatePromptWithSecret(stage, prompt string, options []CharCreateOption, secret bool) {
+	if s.charColor {
+		prompt = expandEntryColors(prompt)
+	}
 	data := CharCreateData{
 		Stage:   stage,
 		Prompt:  prompt,
@@ -475,65 +495,112 @@ func (s *Session) sendCharCreatePromptWithSecret(stage, prompt string, options [
 	s.send <- msg
 }
 
-// completeCharCreation finalizes character creation and enters the world.
-func (s *Session) completeCharCreation() error {
-	// Create the player with collected attributes
-	s.player = game.NewCharacterWithStats(0, s.charName, s.charClass, s.charRace, s.charSex, s.charStats)
-	s.player.Description = s.menuDescription
+// abortEntry fails closed: an unavailable store is never an unknown name,
+// and an unsaved candidate must never reach menu/world dispatch.
+func (s *Session) abortEntry(err error) error {
+	slog.ErrorContext(s.sessionCtx, "entry failed", s.logAttrs(slog.Any("error", err))...)
+	s.authenticated = false
+	s.player = nil
+	s.creationSaved = false
+	s.charCreating = false
+	s.charStage = ""
+	s.charPassword = ""
+	s.clearMenuState()
+	s.sendError(err.Error())
+	s.CloseSend()
+	return nil
+}
 
-	// Set hometown
-	s.player.Hometown = s.charHometown
-
-	// First-player-God bootstrap (init_char, db.c:3016). On a fresh MUD the
-	// very first character becomes an Implementor. Runs before the DB save so
-	// the persisted row reflects Level 40 / God stats. The God gets every skill
-	// at 100, so skip the class's low starting-skill grants for it (C's
-	// init_char sets all-100 after do_start would, unconditionally).
-	isGod := s.manager.shouldCrownFirstPlayer()
-	if isGod {
-		game.BootstrapFirstPlayerGod(s.player)
-	} else {
-		// C: do_start()→advance_level() runs only `if (!GET_LEVEL(ch))`
-		// (interpreter.c:2214) — i.e. for a real level-1 mortal, never for the
-		// God (already LVL_IMPL). AdvanceLevel grants the level-1 HP/move bonus
-		// (and its 2 RNG draws); GiveStartingSkills then layers the class skills,
-		// matching C's do_start order. The constructor no longer calls
-		// AdvanceLevel (DP-1212: it consumed 2 phantom draws on the God path).
-		s.player.AdvanceLevel()
-		game.GiveStartingSkills(s.player)
+// persistAcceptedCharacter corresponds to CON_ROLLABL2's init_char/save_char.
+// Keep the candidate local until the insert succeeds. The manager lock orders
+// concurrent first-player decisions with their inserts on this server.
+func (s *Session) persistAcceptedCharacter() error {
+	if s.creationSaved {
+		return nil
 	}
+	s.manager.creationMu.Lock()
+	defer s.manager.creationMu.Unlock()
+	if s.charName == "" {
+		return ErrInvalidPlayerName
+	}
+	isGod := false
+	if s.manager.hasDB {
+		count, err := s.manager.db.CountPlayers()
+		if err != nil {
+			return fmt.Errorf("check character store: %w", err)
+		}
+		isGod = count == 0
+	}
+	if os.Getenv("DP_FRESH_MUD") != "" {
+		isGod = s.manager.shouldCrownFirstPlayer()
+	}
+	p := game.NewCharacterWithStats(0, s.charName, s.charClass, s.charRace, s.charSex, s.charStats)
+	p.Description = s.menuDescription
+	p.Hometown = s.charHometown
+	p.SetPlrFlag(game.PrfColor1, s.charColor)
+	p.SetPlrFlag(game.PrfColor2, s.charColor)
+	p.Level = 0 // C do_start is deferred until the first menu entry.
+	p.Exp = 0
+	p.Hunger, p.Thirst = 24, 24
+	p.Conditions[game.CondFull], p.Conditions[game.CondThirst] = 24, 24
+	p.SetRoom(-1)
+	if isGod {
+		game.BootstrapFirstPlayerGod(p)
+	}
+	if s.manager.hasDB {
+		r, err := db.PlayerToRecord(p, nil)
+		if err != nil {
+			return err
+		}
+		r.Password = s.charPassword
+		if err := s.manager.db.CreatePlayer(r); err != nil {
+			return fmt.Errorf("save new character: %w", err)
+		}
+		p.ID = r.ID
+	} else {
+		p.ID = s.manager.allocateEphemeralPlayerID()
+	}
+	s.player = p
+	s.authenticated = true
+	s.creationSaved = true
+	s.menuPasswordHash = s.charPassword
+	return nil
+}
 
-	// Level-based entry routing (interpreter.c:2191-2243). Immortals enter
-	// ImmortStartRoom (1204); mortals use the newbie intro room (8099) then
-	// transition to their hometown room after the birth sequence.
-	newbieRoom := game.NewbieHometownRoom(s.charHometown)
-	if s.player.GetLevel() >= game.LVL_IMMORT {
+// completeCharCreation performs the first world entry, after accepted stats
+// have been saved. Direct internal callers can still prepare and enter together.
+func (s *Session) completeCharCreation() error {
+	resumingCreation := s.authenticated && s.player != nil && s.player.Level == 0
+	if !s.creationSaved && !resumingCreation {
+		if err := s.persistAcceptedCharacter(); err != nil {
+			return s.abortEntry(err)
+		}
+	}
+	s.charName = s.player.Name
+	isGod := s.player.GetLevel() >= game.LVL_IMMORT
+	if s.player.Level == 0 {
+		s.player.Level = 1
+		s.player.Exp = 1
+		s.player.MaxHealth = 10
+		s.player.MaxMana = 100
+		s.player.AdvanceLevel() // C do_start gate; never for the first-player God.
+		game.GiveStartingSkills(s.player)
+		s.player.Hunger, s.player.Thirst = 36, 36
+		s.player.Conditions[game.CondFull], s.player.Conditions[game.CondThirst] = 36, 36
+	}
+	if isGod {
 		s.player.SetRoom(game.ImmortStartRoom)
 	} else {
-		s.player.SetRoom(newbieRoom)
+		s.player.SetRoom(game.NewbieHometownRoom(s.player.Hometown))
 	}
-
-	// Save to DB if available
 	if s.manager.hasDB {
-		if r, err := db.PlayerToRecord(s.player, nil); err == nil {
-			// Apply the hashed password collected during login
-			r.Password = s.charPassword
-			if err := s.manager.db.CreatePlayer(r); err != nil {
-				// Check for constraint violation (player already exists)
-				if isUniqueConstraintError(err) {
-					slog.WarnContext(s.sessionCtx, "duplicate character name, rejecting creation", s.logAttrs()...)
-					return fmt.Errorf("a character named '%s' already exists", s.charName)
-				}
-				slog.ErrorContext(s.sessionCtx, "DB create error during char creation", s.logAttrs(slog.Any("error", err))...)
-				return fmt.Errorf("failed to save character: %w", err)
-			}
-			s.player.ID = r.ID
+		r, err := db.PlayerToRecord(s.player, nil)
+		if err != nil {
+			return s.abortEntry(err)
 		}
-	} else {
-		// The no-database oracle vehicle still needs C's process-local idnum
-		// for commands that inspect an online character. This does not alter
-		// the persisted save format or production database identity.
-		s.player.ID = s.manager.allocateEphemeralPlayerID()
+		if err := s.manager.db.SavePlayer(r); err != nil {
+			return s.abortEntry(fmt.Errorf("save character entry: %w", err))
+		}
 	}
 
 	// Populate legacy spell-catalog metadata; proficiency still requires practice.
@@ -576,6 +643,7 @@ func (s *Session) completeCharCreation() error {
 	}()
 
 	// Clear char creation state
+	s.creationSaved = false
 	s.charCreating = false
 	s.charStage = ""
 	s.charName = ""
@@ -700,4 +768,23 @@ func isUniqueConstraintError(err error) bool {
 	}
 	return strings.Contains(err.Error(), "unique constraint") ||
 		strings.Contains(err.Error(), "duplicate key")
+}
+
+// expandEntryColors follows comm.c color_expansion. Unknown markers and a lone
+// ampersand are preserved; expansion is gated by the chosen ANSI preference.
+func expandEntryColors(text string) string {
+	const codes = "&ndbgcrmywDBGCRMYW"
+	values := [...]string{"&", "\x1b[0m", "\x1b[0;30m", "\x1b[0;34m", "\x1b[0;32m", "\x1b[0;36m", "\x1b[0;31m", "\x1b[0;35m", "\x1b[0;33m", "\x1b[0;37m", "\x1b[1;30m", "\x1b[1;34m", "\x1b[1;32m", "\x1b[1;36m", "\x1b[1;31m", "\x1b[1;35m", "\x1b[1;33m", "\x1b[1;37m"}
+	var out strings.Builder
+	for i := 0; i < len(text); i++ {
+		if text[i] == '&' && i+1 < len(text) {
+			if j := strings.IndexByte(codes, text[i+1]); j >= 0 {
+				out.WriteString(values[j])
+				i++
+				continue
+			}
+		}
+		out.WriteByte(text[i])
+	}
+	return out.String()
 }

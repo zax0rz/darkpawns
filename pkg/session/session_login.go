@@ -29,6 +29,9 @@ import (
 var guestSeq atomic.Int64
 
 func (s *Session) handleLogin(data json.RawMessage) error {
+	if s.authenticated || s.SendClosed() {
+		return ErrNotInCharCreation
+	}
 	var login LoginData
 	if err := json.Unmarshal(data, &login); err != nil {
 		return err
@@ -70,6 +73,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	}
 
 	if login.PlayerName == "" {
+		s.CloseSend()
 		return ErrInvalidPlayerName
 	}
 
@@ -161,10 +165,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if s.manager.hasDB {
 		rec, err := s.manager.db.GetPlayer(login.PlayerName)
 		if err != nil {
-			slog.ErrorContext(s.sessionCtx, "DB load error", s.logAttrs(slog.Any("error", err))...)
+			return s.abortEntry(fmt.Errorf("load character: %w", err))
 		}
 
-		if rec != nil && !login.NewChar {
+		if rec != nil {
+			login.PlayerName = rec.Name // Identity lookup and all subsequent accounting use the stored name.
 			// DP-592: Account-level lockout check for returning players.
 			if s.manager.accountLockouts != nil {
 				if locked, remaining := s.manager.accountLockouts.IsLocked(login.PlayerName); locked {
@@ -176,60 +181,61 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				}
 			}
 
-			// Returning player — verify password
-			if rec.Password != "" {
-				if login.Password == "" {
-					s.sendError("Password required.")
-					s.CloseSend()
-					return nil
+			// C CON_GET_NAME selects the password state. Legacy structured clients
+			// may supply a password with login; interactive transports send only a name.
+			if login.Password == "" && s.charStage != "login_password" {
+				s.charCreating = true
+				s.charStage = "login_password"
+				s.charName = rec.Name
+				s.sendCharCreatePromptWithSecret("login_password", "Password: ", nil, true)
+				return nil
+			}
+			if login.Password == "" {
+				s.CloseSend()
+				return nil
+			}
+			if rec.Password != "" && bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)) != nil {
+				s.manager.loginAttempts.RecordFailure(ip)
+				if s.manager.accountLockouts != nil {
+					s.manager.accountLockouts.RecordFailure(rec.Name)
 				}
-				if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)); err != nil {
-					s.manager.loginAttempts.RecordFailure(ip)
-					if s.manager.accountLockouts != nil {
-						if newlyLocked := s.manager.accountLockouts.RecordFailure(login.PlayerName); newlyLocked {
-							mins := int(s.manager.accountLockouts.Lockout().Minutes())
-							s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
-							s.CloseSend()
-							audit.LogSecurityEvent("account_locked", "Account locked after threshold failures", login.PlayerName, ip)
-							return nil
-						}
-					}
-					s.sendError("Invalid password.")
+				s.loginFailures++
+				if s.loginFailures >= 3 { // C config.c max_bad_pws.
+					s.sendCharCreatePrompt("closing", "Wrong password... disconnecting.\r\n", nil)
 					s.CloseSend()
-					audit.LogSecurityEvent("login_failed", "Invalid password", login.PlayerName, ip)
-					return nil
+				} else {
+					s.charCreating = true
+					s.charStage = "login_password"
+					s.charName = rec.Name
+					s.sendCharCreatePromptWithSecret("login_password", "Wrong password.\r\nPassword: ", nil, true)
 				}
+				return nil
 			}
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
-				slog.ErrorContext(s.sessionCtx, "RecordToPlayer error", s.logAttrs(slog.Any("error", err))...)
-				// Fall back to character creation (only check profanity list/length without active check)
-				if !game.ValidNameNoActive(login.PlayerName) {
-					s.restartNameEntry()
-					return nil
-				}
-				s.startNewCharFlow(login.PlayerName)
-				return nil
+				return s.abortEntry(fmt.Errorf("restore character: %w", err))
 			}
 			if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
 				p.Aliases = aliases
 			}
+			s.charCreating = false
+			s.charStage = ""
+			s.charPassword = ""
+			s.loginFailures = 0
 			s.player = p
 			s.authenticated = true
 			s.menuPasswordHash = rec.Password
 		} else {
-			// New character or player doesn't exist — start stateful creation flow
+			// A record removed during password entry must never become creation.
+			if s.charStage == "login_password" {
+				return s.abortEntry(fmt.Errorf("character is no longer available"))
+			}
+			// Unknown name — start stateful creation flow.
 
 			// Block new char creation from BanNew/BanSelect sites (DP-418)
 			if s.banLevel == game.BanNew || s.banLevel == game.BanSelect {
 				s.sendError("New character creation is not allowed from your site.")
 				s.CloseSend()
-				return nil
-			}
-
-			if rec != nil && login.NewChar {
-				// Name already exists — reject
-				s.sendError(fmt.Sprintf("A character named '%s' already exists. Please choose a different name.", login.PlayerName))
 				return nil
 			}
 

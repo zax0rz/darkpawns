@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -15,6 +16,9 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+// ErrAmbiguousPlayerName refuses legacy case-colliding rows rather than selecting an account.
+var ErrAmbiguousPlayerName = errors.New("ambiguous character name; saved records require administrator review")
 
 // DB wraps the database connection.
 type DB struct {
@@ -179,6 +183,9 @@ func (db *DB) createTables() error {
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP;
 	ALTER TABLE players ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
 
+	-- C find_name uses str_cmp: character identity is case-insensitive.
+	-- Existing colliding rows must be resolved explicitly before this migration.
+	CREATE UNIQUE INDEX IF NOT EXISTS players_name_folded_key ON players (lower(name));
 	CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
 	CREATE INDEX IF NOT EXISTS idx_players_locked_until ON players(locked_until);
 
@@ -268,10 +275,11 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		       hunger, thirst, drunk, hometown,
 		       inventory, equipment,
-		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, '')
-		FROM players WHERE name = $1
+		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COUNT(*) OVER ()
+		FROM players WHERE lower(name) = lower($1)
 	`
 	var p PlayerRecord
+	var matches int
 	var lockedUntil sql.NullTime
 	err := db.conn.QueryRow(query, name).Scan(
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
@@ -279,7 +287,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
 		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown,
 		&p.Inventory, &p.Equipment,
-		&p.FailedLoginAttempts, &lockedUntil, &p.Description,
+		&p.FailedLoginAttempts, &lockedUntil, &p.Description, &matches,
 	)
 	if lockedUntil.Valid {
 		p.LockedUntil = &lockedUntil.Time
@@ -289,6 +297,9 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	}
 	if err != nil {
 		return nil, err
+	}
+	if matches != 1 {
+		return nil, ErrAmbiguousPlayerName
 	}
 	return &p, nil
 }
@@ -364,7 +375,7 @@ func (db *DB) DeletePlayer(playerID int) error {
 // GetAccountLockout returns the current failed-login attempt count and any
 // active lockout deadline for the named account.
 func (db *DB) GetAccountLockout(name string) (int, *time.Time, error) {
-	query := `SELECT COALESCE(failed_login_attempts, 0), locked_until FROM players WHERE name = $1`
+	query := `SELECT COALESCE(failed_login_attempts, 0), locked_until FROM players WHERE lower(name) = lower($1)`
 	var attempts int
 	var lockedUntil sql.NullTime
 	err := db.conn.QueryRow(query, name).Scan(&attempts, &lockedUntil)
@@ -391,7 +402,7 @@ func (db *DB) RecordLoginFailure(name string, threshold int, lockoutDuration tim
 		        WHEN failed_login_attempts + 1 >= $2 THEN NOW() + $3::interval
 		        ELSE locked_until
 		    END
-		WHERE name = $1
+		WHERE lower(name) = lower($1)
 		RETURNING failed_login_attempts, locked_until
 	`
 	var attempts int
@@ -409,7 +420,7 @@ func (db *DB) RecordLoginFailure(name string, threshold int, lockoutDuration tim
 // RecordLoginSuccess clears failed-login state for a player.
 func (db *DB) RecordLoginSuccess(name string) error {
 	_, err := db.conn.Exec(
-		`UPDATE players SET failed_login_attempts = 0, locked_until = NULL WHERE name = $1`,
+		`UPDATE players SET failed_login_attempts = 0, locked_until = NULL WHERE lower(name) = lower($1)`,
 		name,
 	)
 	return err

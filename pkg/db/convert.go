@@ -58,10 +58,7 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 
 // RecordToPlayer restores a *game.Player from a *PlayerRecord.
 func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
-	p := game.NewCharacter(r.ID, r.Name, r.Class, r.Race)
-
-	// Override rolled stats with saved values
-	p.Stats = game.CharStats{
+	stats := game.CharStats{
 		Str:    r.StatStr,
 		StrAdd: r.StatStrAdd,
 		Int:    r.StatInt,
@@ -70,6 +67,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 		Con:    r.StatCon,
 		Cha:    r.StatCha,
 	}
+	p := game.RestoreCharacterWithStats(r.ID, r.Name, r.Class, r.Race, stats)
 	p.Strength = r.StatStr
 	p.Level = r.Level
 	p.Exp = r.Exp

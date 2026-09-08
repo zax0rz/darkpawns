@@ -1,0 +1,124 @@
+divergence-fingerprint	creation	736a2b0bc4db86294a0a6da4ed688c3509eec6e4eb04dad7aab317a3726e8561
+Dark Pawns Tier-1 differential report
+scenario: character-creation-name-retry
+c-oracle: 127.0.0.1:33151 (DP_SEED=1)
+go-port: 127.0.0.1:45853 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [creation] c-oracle
++++ [creation] go-port
+@@ -16,7 +16,7 @@
+ 
+ 
+ By what name do you wish to be known? Please remember to choose an appropriate fantasy-oriented name.
+-Did I get that right, Aiko (Y/N)? Okay, what IS it, then? Please remember to choose an appropriate fantasy-oriented name.
++Did I get that right, aiko (Y/N)? Okay, what IS it, then? Please remember to choose an appropriate fantasy-oriented name.
+ Did I get that right, Aiko (Y/N)? New character.
+ Give me a password for Aiko:
+ Please retype password:
+@@ -47,7 +47,7 @@
+ Press 'Y' to keep these stats, and 'N' to reroll:
+ Welcome to Dark Pawns: darkpawns.com 4300
+ 
+-Dark Pawns webpage: http://www.darkpawns.com
++Dark Pawns webpage: &chttp://www.darkpawns.com&n
+ 
+ **** ATTENTION:  This is now DP Classic
+ **** So go there immediately, if not sooner.
+
+normalized C oracle blocks:
+--- [creation]
+         (_____)           (_)    (_____)
+   _     /  __ \           | |    |  __ \                            _
+  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;
+   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \ \ /\ / / '_ \/ __|    =
+ .***.  /| |__| | (_| | |  |   <  | |  | (_| |\ V  V /| | | \__ \  .***.
+ ~~~~~  /|_____/ \__,_|_|  |_|\_\ |||   \__,_| \_/\_/ |_| |_|___/  ~~~~~
+                                  |||
+                                  |||
+                                  `.'
+
+             Based on CircleMUD 3.0 created by J. Elson and
+            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,
+                H. Staerfeldt, M. Seifert, and S. Hammer
+
+
+
+
+By what name do you wish to be known? Please remember to choose an appropriate fantasy-oriented name.
+Did I get that right, Aiko (Y/N)? Okay, what IS it, then? Please remember to choose an appropriate fantasy-oriented name.
+Did I get that right, Aiko (Y/N)? New character.
+Give me a password for Aiko:
+Please retype password:
+Do you want ANSI color (Y/N)? What is your sex (M/F)?
+Choose a race:
+  [H]uman        [E]lven       [D]warven      [K]enderkin
+  [M]inotaur     [R]akshasan   [S]sauran
+  [?]Help on races in general
+  [?<race abbreviation>] Help on a specific race (i.e ?D for help on dwarves)
+
+Race:
+Select a class:
+  [C]leric     - Healers and warriors of the gods
+  [T]hief      - Stealthy, quick-fingered, lock-picking back-stabbers
+  [W]arrior    - Fierce, battle-trained fighters
+  [M]agic-user - Spell-casters trained in the art of magick
+  Ps[i]onic    - Fighters endowed with the powers of the mind
+Class:
+Choose your home town:
+  [K]ir Drax'in  - The Main City. New players should choose this.
+  Kir-[O]shi     - The Port City.
+  [A]laozar      - The Holy City.
+
+Select:
+Your ability scores:
+<ROLLED_STATS>
+
+Press 'Y' to keep these stats, and 'N' to reroll:
+Welcome to Dark Pawns: darkpawns.com 4300
+
+Dark Pawns webpage: http://www.darkpawns.com
+
+**** ATTENTION:  This is now DP Classic
+**** So go there immediately, if not sooner.
+
+
+*** PRESS RETURN:
+Welcome to Dark Pawns!
+0) Exit from Dark Pawns.
+1) Enter the game.
+2) Enter description.
+3) Read the background story.
+4) Change password.
+5) Delete this character.
+
+   Make your choice:
+Welcome to Dark Pawns! May your visit here be... Interesting.
+
+A Burning Hut
+You stand inside a burning hut; what you considered home until a few moments
+ago when the orcs entered the village. You slept soundly until it was too
+late; only the horrified screams of your parents dying woke you.
+Now you stand bravely, though petrified with fear in your mind, as you watch
+the hairy, tusked orcs advance toward you, swords in hand.
+[ Exits: None! ]
+
+   'Aiko, now is not your time to die,' speaks the figure.
+   'Prove your worth and I may well grant you eternal life.'
+   'Trust no one, for all here are but dark pawns above which you must
+struggle to prove yourself.  All here strive to be a king... at any cost.'
+   The figure glows a moment, then disappears, but his voice remains.
+   'Your life begins now...' it says, then fades -- just as the world around
+you does the same.
+
+Temple Infirmary
+   This is a large room where the sick and the dying are cared for by the
+nuns and priestesses of the Church.  There are about fifty straw beds arranged
+in four rows here, and almost all of them are full.  Most of the patients are
+either common citizens or foreigners; the military has their own infirmary
+as do the large temples.  The wealthier citizens can afford an in-home visit
+by a Church healer.  The entire room smells of medicinal soap.  There is
+a single exit through a marble archway to the north.
+[ Exits: north ]
+dp-oracle-diff: normalized divergence detected
+exit status 3

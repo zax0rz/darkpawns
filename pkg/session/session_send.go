@@ -63,6 +63,9 @@ func (s *Session) sendError(text string) {
 // Agents receive deterministic state recovery after every error.
 // Humans see the same error + prompt they already see — no behavioral change.
 func (s *Session) sendErrorWithState(err error) {
+	if s.SendClosed() {
+		return
+	}
 	s.sendError(err.Error())
 
 	// Re-broadcast the current expected input, derived from server state.
@@ -89,6 +92,8 @@ func (s *Session) resendCurrentCharPrompt() {
 		s.sendCharCreatePrompt("get_name", "Name: ", nil)
 	case "confirm_name":
 		s.sendCharCreatePrompt("confirm_name", fmt.Sprintf("Did I get that right, %s (Y/N)? ", s.charName), nil)
+	case "login_password":
+		s.sendCharCreatePromptWithSecret("login_password", "Password: ", nil, true)
 	case "create_password":
 		s.sendCharCreatePromptWithSecret("create_password", "Password: ", nil, true)
 	case "confirm_password":

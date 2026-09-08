@@ -1,0 +1,40 @@
+# Entry audit: CON_NAME_CNFRM N must repeat the entire CON_GET_NAME path.
+# Fresh name only: saved-name retries also require persistence-backed proof.
+# Compare all creation bytes, including capitalization after the retry (R1).
+# depth-case: entry.display-case
+# depth-case: entry.retry-new
+# depth-case: entry.motd-color
+[fixture]
+quiet-mobs
+
+[creation:oracle]
+aiko
+N
+Aiko
+Y
+oraclepass
+oraclepass
+Y
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[creation:port]
+aiko
+N
+Aiko
+Y
+oraclepass
+oraclepass
+Y
+M
+K
+T
+K
+Y
+<ENTER>
+1

@@ -76,6 +76,9 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 		return err
 	}
 	choice := strings.TrimSpace(input.Choice)
+	if s.menuStage == "password_old" || s.menuStage == "password_new" || s.menuStage == "password_confirm" || s.menuStage == "delete_password" {
+		choice = input.Choice
+	}
 
 	switch s.menuStage {
 	case "motd":
@@ -139,11 +142,11 @@ func (s *Session) handleMenuChoice(choice string) error {
 		s.menuActive = false
 		s.CloseSend()
 	case "1":
-		if s.player == nil {
-			if err := s.completeCharCreation(); err != nil {
-				return err
-			}
-			return nil
+		if !s.authenticated || s.player == nil {
+			return ErrNotAuthenticated
+		}
+		if s.creationSaved || s.player.Level == 0 {
+			return s.completeCharCreation()
 		}
 		return s.enterReturningPlayer()
 	case "2":
@@ -271,6 +274,9 @@ func (s *Session) confirmDelete(choice string) error {
 }
 
 func (s *Session) enterReturningPlayer() error {
+	if !s.authenticated || s.player == nil {
+		return ErrNotAuthenticated
+	}
 	name := s.player.Name
 	// C's CON_MENU path calls reset_char() before re-adding an extracted
 	// player. In particular, a post-death player is still at NOWHERE with

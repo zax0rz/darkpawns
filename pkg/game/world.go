@@ -358,6 +358,13 @@ func (w *World) GetPlayer(name string) (*Player, bool) {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	p, ok := w.players[name]
+	if !ok {
+		for key, candidate := range w.players {
+			if strings.EqualFold(key, name) {
+				return candidate, true
+			}
+		}
+	}
 	return p, ok
 }
 
@@ -458,8 +465,10 @@ func (w *World) AddPlayer(p *Player) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	if _, exists := w.players[p.Name]; exists {
-		return fmt.Errorf("player %s already online", p.Name)
+	for name := range w.players {
+		if strings.EqualFold(name, p.Name) {
+			return fmt.Errorf("player %s already online", p.Name)
+		}
 	}
 
 	// Database-backed players already have persistent IDs. In a no-DB

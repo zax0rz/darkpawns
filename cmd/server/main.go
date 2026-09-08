@@ -191,7 +191,11 @@ func main() {
 	slog.Info("Connecting to database...")
 	database, err := db.New(*dbURL)
 	if err != nil {
-		slog.Warn("Database connection failed, continuing without persistence", "error", err)
+		if os.Getenv("DP_ALLOW_NO_DB") != "1" {
+			slog.Error("Database initialization failed; refusing logins without persistence", "error", err)
+			os.Exit(1)
+		}
+		slog.Warn("Database connection failed, explicitly running without persistence", "error", err)
 		database = nil
 	} else {
 		defer func() { _ = database.Close() }()

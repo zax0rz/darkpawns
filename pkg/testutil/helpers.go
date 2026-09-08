@@ -143,8 +143,16 @@ func (m *MockDatabase) CountPlayers() (int, error) {
 func (m *MockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	p, ok := m.players[name]
-	if !ok {
+	var p *db.PlayerRecord
+	for key, record := range m.players {
+		if strings.EqualFold(key, name) {
+			if p != nil {
+				return nil, db.ErrAmbiguousPlayerName
+			}
+			p = record
+		}
+	}
+	if p == nil {
 		return nil, nil
 	}
 	copyP := *p
@@ -155,8 +163,10 @@ func (m *MockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 func (m *MockDatabase) CreatePlayer(p *db.PlayerRecord) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if _, ok := m.players[p.Name]; ok {
-		return fmt.Errorf("duplicate key value violates unique constraint")
+	for name := range m.players {
+		if strings.EqualFold(name, p.Name) {
+			return fmt.Errorf("duplicate key value violates unique constraint")
+		}
 	}
 	p.ID = m.nextPlayerID
 	m.nextPlayerID++

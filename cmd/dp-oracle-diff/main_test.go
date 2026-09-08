@@ -191,13 +191,13 @@ func TestPrepareOracleDataPreservesPlayersByDefault(t *testing.T) {
 }
 
 func TestWithFreshMUDEnvFollowsEmptyPlayersFixture(t *testing.T) {
-	base := []string{"KEEP=1", "DP_FRESH_MUD=stale"}
+	base := []string{"KEEP=1", "DP_FRESH_MUD=stale", "DP_ALLOW_NO_DB=0"}
 	enabled := withFreshMUDEnv(base, true)
-	if got := strings.Join(enabled, ","); got != "KEEP=1,DP_FRESH_MUD=1" {
+	if got := strings.Join(enabled, ","); got != "KEEP=1,DP_FRESH_MUD=1,DP_ALLOW_NO_DB=1" {
 		t.Fatalf("enabled env = %q", got)
 	}
 	disabled := withFreshMUDEnv(base, false)
-	if got := strings.Join(disabled, ","); got != "KEEP=1" {
+	if got := strings.Join(disabled, ","); got != "KEEP=1,DP_ALLOW_NO_DB=1" {
 		t.Fatalf("disabled env = %q", got)
 	}
 }
