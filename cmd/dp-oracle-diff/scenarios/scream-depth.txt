@@ -31,7 +31,6 @@ Screamactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Screampeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

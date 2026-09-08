@@ -1,6 +1,6 @@
 ---
 tags: [active, governing, fidelity, port, rulebook]
-last_updated: 2026-07-24
+last_updated: 2026-09-08
 author: Claude Code (Opus) with The Architect
 ---
 # The Port Rulebook — C→Go Translation Law
@@ -128,6 +128,11 @@ cannot observe them.
   earlier creation oracle coverage. Inventory the whole entry class and retain
   explicit gaps; do not label a transport or persistence branch green from a
   fixture that bypasses it.
+  Audit drained setup inputs when entry states change, too: the follow-up
+  [cleanup review](evidence/entry-2026-09-08/cleanup-review.md) found 1,757 stale
+  extra-Y inputs in 932 scenarios. They silently enabled Go color while C
+  received N, producing five downstream report failures. Align fixture intent;
+  do not classify downstream differences as unrelated without tracing setup.
 
 ---
 

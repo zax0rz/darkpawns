@@ -28,7 +28,6 @@ Failgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Fleshfail
 y
 failpass
 failpass
-Y
 N
 M
 H

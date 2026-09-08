@@ -34,7 +34,6 @@ WolfVictim
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ WolfWitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -92,7 +90,6 @@ WolfDistant
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

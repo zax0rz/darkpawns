@@ -48,7 +48,9 @@ func entryDatabase(t *testing.T) *db.DB {
 		}
 	})
 	q := u.Query()
-	q.Set("search_path", schema)
+	// Use a lib/pq startup option so every pooled connection, including the
+	// cleanup save path, resolves the isolated schema.
+	q.Set("options", "-csearch_path="+schema)
 	u.RawQuery = q.Encode()
 	database, err := db.New(u.String())
 	if err != nil {
@@ -95,6 +97,47 @@ func (d *entryCountingDatabase) CreatePlayer(p *db.PlayerRecord) error {
 	return d.Database.CreatePlayer(p)
 }
 
+type entryFaultDatabase struct {
+	db.Database
+	getErr        error
+	countErr      error
+	createErr     error
+	saveErr       error
+	saveFailsOnce bool
+}
+
+func (d *entryFaultDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
+	if d.getErr != nil {
+		return nil, d.getErr
+	}
+	return d.Database.GetPlayer(name)
+}
+
+func (d *entryFaultDatabase) CountPlayers() (int, error) {
+	if d.countErr != nil {
+		return 0, d.countErr
+	}
+	return d.Database.CountPlayers()
+}
+
+func (d *entryFaultDatabase) CreatePlayer(p *db.PlayerRecord) error {
+	if d.createErr != nil {
+		return d.createErr
+	}
+	return d.Database.CreatePlayer(p)
+}
+
+func (d *entryFaultDatabase) SavePlayer(p *db.PlayerRecord) error {
+	if d.saveErr != nil {
+		err := d.saveErr
+		if d.saveFailsOnce {
+			d.saveErr = nil
+		}
+		return err
+	}
+	return d.Database.SavePlayer(p)
+}
+
 func entryInput(s *Session, choice string) error {
 	data, err := json.Marshal(CharInputData{Choice: choice})
 	if err != nil {
@@ -105,6 +148,16 @@ func entryInput(s *Session, choice string) error {
 		return err
 	}
 	return s.handleMessage(msg)
+}
+
+func driveEntryToStats(t *testing.T, s *Session, name string) {
+	t.Helper()
+	s.startNewCharFlow(name)
+	for _, line := range []string{"Y", "oraclepass", "oraclepass", "N", "M", "K", "T", "K"} {
+		if err := entryInput(s, line); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 // C: load_char -> find_name -> str_cmp (interpreter.c, db.c, utils.c).
@@ -119,6 +172,91 @@ func TestEntryIdentityCaseInsensitive(t *testing.T) {
 		if got == nil || got.ID != want.ID {
 			t.Errorf("lookup %q did not resolve saved identity %d", name, want.ID)
 		}
+	}
+}
+
+func TestEntryLookupFailureFailsClosed(t *testing.T) {
+	database := entryDatabase(t)
+	fault := &entryFaultDatabase{Database: database, getErr: errors.New("lookup unavailable")}
+	s := entrySession(t, fault)
+	if err := s.handleLogin(loginMsg("Aiko", "")); err != nil {
+		t.Fatal(err)
+	}
+	if !s.SendClosed() || s.player != nil || s.authenticated || s.charCreating {
+		t.Fatal("lookup failure left an entry candidate or open session")
+	}
+	if count, err := database.CountPlayers(); err != nil || count != 0 {
+		t.Fatalf("lookup failure changed player count: count=%d err=%v", count, err)
+	}
+}
+
+func TestEntryCountFailureFailsClosed(t *testing.T) {
+	database := entryDatabase(t)
+	fault := &entryFaultDatabase{Database: database, countErr: errors.New("count unavailable")}
+	s := entrySession(t, fault)
+	driveEntryToStats(t, s, "Newhero")
+	if err := entryInput(s, "Y"); err != nil {
+		t.Fatal(err)
+	}
+	if !s.SendClosed() || s.player != nil || s.authenticated || s.menuActive {
+		t.Fatal("count failure left an entry candidate or open menu")
+	}
+	if count, err := database.CountPlayers(); err != nil || count != 0 {
+		t.Fatalf("count failure changed player count: count=%d err=%v", count, err)
+	}
+}
+
+func TestEntryEntrySaveFailureFailsClosed(t *testing.T) {
+	database := entryDatabase(t)
+	entrySeed(t, database, "Founder")
+	fault := &entryFaultDatabase{Database: database, saveErr: errors.New("entry save unavailable")}
+	s := entrySession(t, fault)
+	driveEntryToStats(t, s, "Newhero")
+	if err := entryInput(s, "Y"); err != nil {
+		t.Fatal(err)
+	}
+	if err := entryInput(s, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := entryInput(s, "1"); err != nil {
+		t.Fatal(err)
+	}
+	if !s.SendClosed() || s.player != nil || s.authenticated || s.menuActive {
+		t.Fatal("entry-save failure left an enterable candidate")
+	}
+	if _, present := s.manager.world.GetPlayer("Newhero"); present {
+		t.Fatal("entry-save failure admitted the character to the world")
+	}
+	stored, err := database.GetPlayer("Newhero")
+	if err != nil || stored == nil || stored.Level != 0 {
+		t.Fatalf("entry-save failure changed persisted candidate: stored=%+v err=%v", stored, err)
+	}
+}
+
+func TestEntryTransientSaveFailureDoesNotPersistAbortedBootstrap(t *testing.T) {
+	database := entryDatabase(t)
+	entrySeed(t, database, "Founder")
+	fault := &entryFaultDatabase{Database: database, saveErr: errors.New("entry save unavailable"), saveFailsOnce: true}
+	s := entrySession(t, fault)
+	driveEntryToStats(t, s, "Newhero")
+	if err := entryInput(s, "Y"); err != nil {
+		t.Fatal(err)
+	}
+	if err := entryInput(s, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := entryInput(s, "1"); err != nil {
+		t.Fatal(err)
+	}
+	if !s.SendClosed() || s.player != nil || s.authenticated || s.menuActive {
+		t.Fatal("entry-save failure left an enterable candidate")
+	}
+	if _, present := s.manager.world.GetPlayer("Newhero"); present {
+		t.Fatal("entry-save failure admitted the character to the world")
+	}
+	stored, err := database.GetPlayer("Newhero")
+	if err != nil || stored == nil || stored.Level != 0 {
+		t.Fatalf("entry-save failure changed persisted candidate: stored=%+v err=%v", stored, err)
 	}
 }
 
@@ -256,6 +394,60 @@ func TestEntryMenuDisconnectResumesSavedCharacter(t *testing.T) {
 	}
 }
 
+func TestEntryDatabasePersistsGodAndMortalEntry(t *testing.T) {
+	database := entryDatabase(t)
+	t.Setenv("DP_FRESH_MUD", "")
+
+	god := entrySession(t, database)
+	driveEntryToStats(t, god, "Freshgod")
+	if err := entryInput(god, "Y"); err != nil {
+		t.Fatal(err)
+	}
+	godLevel := -1
+	if god.player != nil {
+		godLevel = god.player.GetLevel()
+	}
+	if godLevel < game.LVL_IMMORT {
+		t.Fatalf("first persisted character level = %d, want God", godLevel)
+	}
+	if err := entryInput(god, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := entryInput(god, "1"); err != nil {
+		t.Fatal(err)
+	}
+	godRecord, err := database.GetPlayer("FRESHGOD")
+	if err != nil || godRecord == nil || godRecord.Level < game.LVL_IMMORT {
+		t.Fatalf("God acceptance/entry was not persisted: record=%+v err=%v", godRecord, err)
+	}
+
+	mortal := entrySession(t, database)
+	driveEntryToStats(t, mortal, "Freshmortal")
+	if err := entryInput(mortal, "Y"); err != nil {
+		t.Fatal(err)
+	}
+	mortalLevel := -1
+	if mortal.player != nil {
+		mortalLevel = mortal.player.GetLevel()
+	}
+	if mortalLevel != 0 {
+		t.Fatalf("mortal accepted-stat level = %d, want level zero before menu entry", mortalLevel)
+	}
+	if err := entryInput(mortal, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := entryInput(mortal, "1"); err != nil {
+		t.Fatal(err)
+	}
+	mortalRecord, err := database.GetPlayer("FRESHMORTAL")
+	if err != nil || mortalRecord == nil || mortalRecord.Level != 1 {
+		t.Fatalf("mortal first entry was not persisted: record=%+v err=%v", mortalRecord, err)
+	}
+	if godRecord.ID == mortalRecord.ID {
+		t.Fatal("God and mortal persistence reused one player ID")
+	}
+}
+
 func TestEntryPasswordRetries(t *testing.T) {
 	database := entryDatabase(t)
 	entrySeed(t, database, "Aiko")
@@ -300,6 +492,51 @@ func TestEntryConcurrentCaseVariantsCannotCreateTwoRows(t *testing.T) {
 	}
 	if successes != 1 {
 		t.Fatalf("successful case-variant inserts = %d, want 1", successes)
+	}
+}
+
+func TestEntryConcurrentCaseVariantSessionsCannotCreateTwoRows(t *testing.T) {
+	database := entryDatabase(t)
+	t.Setenv("DP_FRESH_MUD", "")
+	s1 := entrySession(t, database)
+	s2 := entrySession(t, database)
+	driveEntryToStats(t, s1, "Aiko")
+	driveEntryToStats(t, s2, "aiko")
+
+	var wg sync.WaitGroup
+	for _, s := range []*Session{s1, s2} {
+		wg.Add(1)
+		go func(current *Session) {
+			defer wg.Done()
+			if err := entryInput(current, "Y"); err != nil {
+				t.Errorf("concurrent stats acceptance: %v", err)
+			}
+		}(s)
+	}
+	wg.Wait()
+
+	count, err := database.CountPlayers()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("concurrent case-variant sessions created %d rows, want 1", count)
+	}
+	winners := 0
+	for _, s := range []*Session{s1, s2} {
+		if s.creationSaved && s.authenticated && s.player != nil {
+			winners++
+			continue
+		}
+		if !s.SendClosed() || s.player != nil || s.authenticated {
+			t.Fatal("losing concurrent creator remained registered or enterable")
+		}
+		if err := entryInput(s, "1"); err == nil {
+			t.Fatal("closed losing creator accepted menu input")
+		}
+	}
+	if winners != 1 {
+		t.Fatalf("concurrent case-variant session winners = %d, want 1", winners)
 	}
 }
 

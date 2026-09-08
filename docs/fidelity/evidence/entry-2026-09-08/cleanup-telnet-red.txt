@@ -1,0 +1,25 @@
+=== RUN   TestEntryTelnetNewCharacterDisconnectResumes
+=== RUN   TestEntryTelnetNewCharacterDisconnectResumes/menu=false
+2026/09/08 13:39:17 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 13:39:17 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 13:39:17 INFO Telnet listening address=:43831
+2026/09/08 13:39:17 INFO Telnet connect remote_addr=127.0.0.1:58802
+2026/09/08 13:39:17 SYSERR: no valid target to act()!
+2026/09/08 13:39:17 INFO Telnet disconnect remote_addr=127.0.0.1:58802 player=Freshwire
+    entry_transport_test.go:206: pre-world character retained as a session after TCP EOF
+2026/09/08 13:39:20 ERROR Telnet accept error, listener stopped error="accept tcp [::]:43831: use of closed network connection"
+=== RUN   TestEntryTelnetNewCharacterDisconnectResumes/menu=true
+2026/09/08 13:39:20 WARN unable to open ban file path=lib/etc/banned error="open lib/etc/banned: no such file or directory"
+2026/09/08 13:39:20 WARN unable to open invalid name file path=lib/text/xnames error="open lib/text/xnames: no such file or directory"
+2026/09/08 13:39:20 INFO Telnet listening address=:46671
+2026/09/08 13:39:20 INFO Telnet connect remote_addr=127.0.0.1:56122
+2026/09/08 13:39:20 SYSERR: no valid target to act()!
+2026/09/08 13:39:20 INFO Telnet disconnect remote_addr=127.0.0.1:56122 player=Freshwire
+    entry_transport_test.go:206: pre-world character retained as a session after TCP EOF
+2026/09/08 13:39:23 ERROR Telnet accept error, listener stopped error="accept tcp [::]:46671: use of closed network connection"
+--- FAIL: TestEntryTelnetNewCharacterDisconnectResumes (6.28s)
+    --- FAIL: TestEntryTelnetNewCharacterDisconnectResumes/menu=false (3.14s)
+    --- FAIL: TestEntryTelnetNewCharacterDisconnectResumes/menu=true (3.14s)
+FAIL
+FAIL	github.com/zax0rz/darkpawns/pkg/telnet	6.287s
+FAIL

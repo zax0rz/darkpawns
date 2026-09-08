@@ -23,7 +23,6 @@ Drinker
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -50,7 +49,6 @@ Drinkobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

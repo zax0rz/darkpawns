@@ -31,7 +31,6 @@ Quartersactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Quarterspeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -34,7 +34,6 @@ Sleepergod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Sleeperactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H
@@ -100,7 +98,6 @@ Sleepertarget
 y
 targetpass
 targetpass
-Y
 N
 F
 H

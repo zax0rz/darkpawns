@@ -32,7 +32,6 @@ Bearhugdepthgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Bearhugdepthmortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

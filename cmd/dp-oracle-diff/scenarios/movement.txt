@@ -39,7 +39,6 @@ Movactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Movobserv
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

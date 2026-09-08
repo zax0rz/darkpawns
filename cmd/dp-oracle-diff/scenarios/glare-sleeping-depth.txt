@@ -28,7 +28,6 @@ Glaresleepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Glaresleeptarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -86,7 +84,6 @@ Glaresleepobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

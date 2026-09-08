@@ -34,7 +34,6 @@ Mordecai
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Barnaby
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -92,7 +90,6 @@ Ragnar
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

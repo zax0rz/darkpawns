@@ -36,7 +36,6 @@ Reelactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Reelobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Reeltarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -32,7 +32,6 @@ Disarmnoweaponactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -71,7 +70,6 @@ Disarmnoweaponvictim
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

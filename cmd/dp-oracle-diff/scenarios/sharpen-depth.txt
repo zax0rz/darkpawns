@@ -40,7 +40,6 @@ Sharpenactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ Sharpenpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

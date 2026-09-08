@@ -32,7 +32,6 @@ Rinactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Rinpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -25,7 +25,6 @@ GaleruDeadCarrier
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -54,7 +53,6 @@ GaleruDeadPeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

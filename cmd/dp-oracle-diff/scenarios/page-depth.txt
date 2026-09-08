@@ -39,7 +39,6 @@ Pgactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Pgtarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -97,7 +95,6 @@ Pgsleep
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

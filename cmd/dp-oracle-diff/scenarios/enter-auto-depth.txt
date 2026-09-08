@@ -32,7 +32,6 @@ Enterauto
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Enterorigin
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -90,7 +88,6 @@ Enterinside
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

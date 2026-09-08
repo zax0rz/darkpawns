@@ -36,7 +36,6 @@ Shakeactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Shakeobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Shaketarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

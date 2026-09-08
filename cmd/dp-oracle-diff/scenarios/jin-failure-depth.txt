@@ -30,7 +30,6 @@ Jinfailactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Jinfailpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

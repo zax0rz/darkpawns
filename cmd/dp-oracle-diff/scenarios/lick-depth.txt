@@ -34,7 +34,6 @@ Mordecai
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Sable
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -38,7 +38,6 @@ Invisactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Invlow
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

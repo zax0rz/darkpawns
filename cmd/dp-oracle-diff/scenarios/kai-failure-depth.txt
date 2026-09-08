@@ -30,7 +30,6 @@ Kaifailactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Kaifailpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

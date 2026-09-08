@@ -31,7 +31,6 @@ Grimaceactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Grimaceobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

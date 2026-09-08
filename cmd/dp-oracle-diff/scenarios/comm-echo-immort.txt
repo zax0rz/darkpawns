@@ -28,7 +28,6 @@ Echoimm
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Echopeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

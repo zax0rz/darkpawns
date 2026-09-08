@@ -31,7 +31,6 @@ Aiddepth
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Barnaby
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -89,7 +87,6 @@ Aidobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

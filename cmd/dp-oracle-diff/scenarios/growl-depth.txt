@@ -31,7 +31,6 @@ Growlactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Growlobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

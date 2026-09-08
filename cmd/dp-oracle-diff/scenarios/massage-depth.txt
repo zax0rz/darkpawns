@@ -34,7 +34,6 @@ Massageactor
 Y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Massagetarget
 Y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -93,7 +91,6 @@ Massagesleeper
 Y
 oraclepass
 oraclepass
-Y
 N
 M
 H

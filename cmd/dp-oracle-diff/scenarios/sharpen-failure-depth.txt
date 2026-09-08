@@ -30,7 +30,6 @@ Sharpenfail
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Failsharpenpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

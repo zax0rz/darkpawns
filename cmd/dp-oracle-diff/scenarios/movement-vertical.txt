@@ -24,7 +24,6 @@ Movevert
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -53,7 +52,6 @@ Vertaud
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

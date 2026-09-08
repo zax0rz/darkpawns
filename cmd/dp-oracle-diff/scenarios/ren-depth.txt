@@ -36,7 +36,6 @@ Renactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Renobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Rentarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

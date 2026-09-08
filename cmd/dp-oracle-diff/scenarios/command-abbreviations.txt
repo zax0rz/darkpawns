@@ -44,7 +44,6 @@ Abbrevactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -73,7 +72,6 @@ Abbrevobser
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

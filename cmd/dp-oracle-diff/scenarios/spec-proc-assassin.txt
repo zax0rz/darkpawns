@@ -36,7 +36,6 @@ AssassinActor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ AssassinPeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

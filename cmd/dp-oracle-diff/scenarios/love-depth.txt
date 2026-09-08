@@ -34,7 +34,6 @@ Luvactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Luvobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -92,7 +90,6 @@ Luvtarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -28,7 +28,6 @@ Purgegod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Purgevictim
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -54,7 +54,6 @@ Whirlpoolactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -86,7 +85,6 @@ Whirlpoolpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

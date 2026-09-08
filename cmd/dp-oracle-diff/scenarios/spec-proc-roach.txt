@@ -42,7 +42,6 @@ RoachGod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -71,7 +70,6 @@ RoachPeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

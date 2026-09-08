@@ -27,7 +27,6 @@ Imactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Imtarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -85,7 +83,6 @@ Imobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -31,7 +31,6 @@ Thpbtactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Thpbtpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

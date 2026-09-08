@@ -19,7 +19,6 @@ Putall
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -46,7 +45,6 @@ Putaobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

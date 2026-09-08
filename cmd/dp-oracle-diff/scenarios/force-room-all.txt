@@ -29,7 +29,6 @@ Forceloops
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Forceroom
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -88,7 +86,6 @@ Forceall
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

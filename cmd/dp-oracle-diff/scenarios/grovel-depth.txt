@@ -35,7 +35,6 @@ Grovelactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Grovelobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -94,7 +92,6 @@ Grovelsleeper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

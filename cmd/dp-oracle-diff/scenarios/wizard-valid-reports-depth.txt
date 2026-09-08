@@ -39,7 +39,6 @@ Wizardvalid
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Wizardvalidpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

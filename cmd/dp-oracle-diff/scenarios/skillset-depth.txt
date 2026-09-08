@@ -46,7 +46,6 @@ Skillsetactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -75,7 +74,6 @@ Skillsettarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

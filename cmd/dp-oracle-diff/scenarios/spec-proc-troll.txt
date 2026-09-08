@@ -34,7 +34,6 @@ TrollActor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ TrollPeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

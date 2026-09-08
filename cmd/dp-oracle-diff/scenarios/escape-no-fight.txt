@@ -29,7 +29,6 @@ Escapeconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Escapenofight
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

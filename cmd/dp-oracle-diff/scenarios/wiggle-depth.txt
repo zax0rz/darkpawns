@@ -31,7 +31,6 @@ Wiggleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Wigglepeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -19,7 +19,6 @@ Givefil
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -46,7 +45,6 @@ Givevic
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

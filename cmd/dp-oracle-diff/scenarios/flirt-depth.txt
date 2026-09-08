@@ -32,7 +32,6 @@ Flirtactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Flirtpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -90,7 +88,6 @@ Flirtroom
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -36,7 +36,6 @@ Setallgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Setalltarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

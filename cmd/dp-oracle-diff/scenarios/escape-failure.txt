@@ -29,7 +29,6 @@ Escapefailconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Escapefailactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -28,7 +28,6 @@ Scroungedesert
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Scroungedesertpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

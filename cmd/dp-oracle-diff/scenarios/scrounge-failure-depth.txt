@@ -31,7 +31,6 @@ Scroungefailuregod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Scroungefailmortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H
@@ -89,7 +87,6 @@ Scroungefailurepeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

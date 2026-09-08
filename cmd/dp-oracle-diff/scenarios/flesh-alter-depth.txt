@@ -33,7 +33,6 @@ Fleshgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -68,7 +67,6 @@ Fleshpeer
 y
 fleshpass
 fleshpass
-Y
 N
 M
 H
@@ -107,7 +105,6 @@ Fleshover
 y
 observerpass
 observerpass
-Y
 N
 M
 H

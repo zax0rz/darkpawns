@@ -34,7 +34,6 @@ Switchwizard
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Switchpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -28,7 +28,6 @@ Spanksleepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Spanksleepobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -86,7 +84,6 @@ Spanksleeptarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

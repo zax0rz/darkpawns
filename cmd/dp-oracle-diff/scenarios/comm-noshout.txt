@@ -41,7 +41,6 @@ Squelchgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -71,7 +70,6 @@ Muteon
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

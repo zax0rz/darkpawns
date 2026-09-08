@@ -36,7 +36,6 @@ Castgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Casttarget
 y
 targetpass
 targetpass
-Y
 N
 M
 H

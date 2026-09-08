@@ -27,7 +27,6 @@ Scroungehills
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Scroungehillspeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

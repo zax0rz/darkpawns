@@ -31,7 +31,6 @@ Pukeslice
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Pukepeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

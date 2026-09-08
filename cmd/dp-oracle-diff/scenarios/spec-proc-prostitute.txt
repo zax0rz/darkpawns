@@ -31,7 +31,6 @@ Velvet
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Witness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

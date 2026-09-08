@@ -34,7 +34,6 @@ Rescugod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Rescugar
 y
 rescuepass
 rescuepass
-Y
 N
 M
 H
@@ -104,7 +102,6 @@ Victimxo
 y
 victimpass
 victimpass
-Y
 N
 M
 H

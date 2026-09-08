@@ -28,7 +28,6 @@ Grifbgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Grifbact
 y
 actorpass
 actorpass
-Y
 N
 M
 H

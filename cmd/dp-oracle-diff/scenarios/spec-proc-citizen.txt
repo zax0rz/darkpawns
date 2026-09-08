@@ -40,7 +40,6 @@ Mordecai
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ Watcher
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

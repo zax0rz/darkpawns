@@ -34,7 +34,6 @@ Spackleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Spackleobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -92,7 +90,6 @@ Spackletarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

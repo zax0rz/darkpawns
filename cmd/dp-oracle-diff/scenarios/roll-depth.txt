@@ -36,7 +36,6 @@ Rollactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Rollobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

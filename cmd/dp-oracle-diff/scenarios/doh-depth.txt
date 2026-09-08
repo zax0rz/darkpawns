@@ -31,7 +31,6 @@ Dohactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Dohpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

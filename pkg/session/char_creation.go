@@ -499,14 +499,26 @@ func (s *Session) sendCharCreatePromptWithSecret(stage, prompt string, options [
 // and an unsaved candidate must never reach menu/world dispatch.
 func (s *Session) abortEntry(err error) error {
 	slog.ErrorContext(s.sessionCtx, "entry failed", s.logAttrs(slog.Any("error", err))...)
+	registered := false
+	if s.playerName != "" {
+		if current, ok := s.manager.GetSession(s.playerName); ok && current == s {
+			registered = true
+		}
+	}
+	s.sendError(err.Error())
+	// Discard the failed candidate before cleanup: cleanupSession normally
+	// saves its player, which would retry an aborted do_start after a transient
+	// entry-save failure and overwrite the durable level-zero character.
 	s.authenticated = false
 	s.player = nil
+	if registered {
+		s.manager.Unregister(s.playerName)
+	}
 	s.creationSaved = false
 	s.charCreating = false
 	s.charStage = ""
 	s.charPassword = ""
 	s.clearMenuState()
-	s.sendError(err.Error())
 	s.CloseSend()
 	return nil
 }
@@ -563,7 +575,11 @@ func (s *Session) persistAcceptedCharacter() error {
 	s.player = p
 	s.authenticated = true
 	s.creationSaved = true
+	s.playerName = s.charName
 	s.menuPasswordHash = s.charPassword
+	if err := s.manager.Register(s.charName, s); err != nil {
+		return fmt.Errorf("register accepted character: %w", err)
+	}
 	return nil
 }
 

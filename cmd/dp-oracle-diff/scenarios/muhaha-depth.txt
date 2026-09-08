@@ -31,7 +31,6 @@ Muhahaactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Muhahaobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -35,7 +35,6 @@ Dismountgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Roommate
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

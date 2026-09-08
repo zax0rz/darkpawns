@@ -27,7 +27,6 @@ HbSelfgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ HbSelfatt
 y
 attpass
 attpass
-Y
 N
 M
 H

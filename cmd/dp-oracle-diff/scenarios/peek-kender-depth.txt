@@ -28,7 +28,6 @@ Kenderpeek
 y
 oraclepass
 oraclepass
-Y
 N
 M
 K

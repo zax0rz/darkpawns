@@ -36,7 +36,6 @@ Spitactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Spitobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -94,7 +92,6 @@ Spittarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

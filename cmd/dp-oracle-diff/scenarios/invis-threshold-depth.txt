@@ -29,7 +29,6 @@ Invthactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Invthat
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

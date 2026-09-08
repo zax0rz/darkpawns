@@ -33,7 +33,6 @@ Smackactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Smackobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Smacktarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

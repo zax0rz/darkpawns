@@ -33,7 +33,6 @@ Ashactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Ashobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Ashtarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

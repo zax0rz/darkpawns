@@ -1,0 +1,2 @@
+ok  	github.com/zax0rz/darkpawns/pkg/telnet	4.488s
+ok  	github.com/zax0rz/darkpawns/pkg/session	12.213s

@@ -40,7 +40,6 @@ Puffgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ Puffpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

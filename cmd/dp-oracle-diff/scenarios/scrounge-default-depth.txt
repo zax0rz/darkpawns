@@ -30,7 +30,6 @@ Scroungedefault
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Scroungedefaultpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

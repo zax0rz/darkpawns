@@ -26,7 +26,6 @@ Linkgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -55,7 +54,6 @@ Linkpeer
 y
 peerpass
 peerpass
-Y
 N
 M
 H

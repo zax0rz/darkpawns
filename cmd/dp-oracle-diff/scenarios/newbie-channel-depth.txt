@@ -33,7 +33,6 @@ Nwbgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Nwbactor
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Nwbsilent
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

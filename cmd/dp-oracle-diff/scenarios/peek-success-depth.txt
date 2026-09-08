@@ -31,7 +31,6 @@ Peeksuccess
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Peektarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -35,7 +35,6 @@ Jeeractor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Jeerpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

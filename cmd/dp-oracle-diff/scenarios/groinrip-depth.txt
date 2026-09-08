@@ -31,7 +31,6 @@ Groinripgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Groinripactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H

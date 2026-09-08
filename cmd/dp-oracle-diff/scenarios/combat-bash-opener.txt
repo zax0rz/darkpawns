@@ -46,7 +46,6 @@ Bashgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -82,7 +81,6 @@ Bashmortal
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

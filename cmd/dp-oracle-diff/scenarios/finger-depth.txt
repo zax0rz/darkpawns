@@ -34,7 +34,6 @@ Fingeractor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Fingerpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

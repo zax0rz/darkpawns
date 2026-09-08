@@ -30,7 +30,6 @@ Forcelow
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Forcegod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -88,7 +86,6 @@ Forcemortal
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

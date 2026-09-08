@@ -35,7 +35,6 @@ Circlelord
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -70,7 +69,6 @@ Circlethief
 y
 circlepass
 circlepass
-Y
 N
 M
 H

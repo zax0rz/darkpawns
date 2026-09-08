@@ -33,7 +33,6 @@ Escapesuccessconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -67,7 +66,6 @@ Escapesuccessactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -101,7 +99,6 @@ Escdest
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -5,10 +5,12 @@ ready-to-run prompt, not an instruction to launch another task automatically.
 
 ## Starting context
 
-Work in `/home/zach/darkpawns` on `codex/entry-flow-fidelity`. The repair and its
-tests are currently uncommitted, including untracked evidence and a moved browser
-client. Preserve them. Inspect status and diff before editing; do not reset,
-clean, switch branches, or start from main and lose this baseline. No other agent
+Work in `/home/zach/darkpawns` on `codex/entry-flow-fidelity`. The user saved the
+repair, tests, and evidence in commit `0f6373303` (`wip: entry-flow fidelity repair
+(verified locally; round incomplete)`). Start from that commit or a descendant,
+not main. This handoff's starting-context correction may be a local modification;
+preserve it and any subsequent user changes. Inspect status and diff before
+editing; do not reset, clean, or discard the repair baseline. No other agent
 should mutate this checkout while you work.
 
 Read AGENTS.md, docs/fidelity/RULEBOOK.md, docs/fidelity/DEPTH_TESTING.md,

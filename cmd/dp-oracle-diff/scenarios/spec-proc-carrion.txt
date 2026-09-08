@@ -30,7 +30,6 @@ Carrionactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Carrionwitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

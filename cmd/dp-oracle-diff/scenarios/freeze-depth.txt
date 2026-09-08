@@ -35,7 +35,6 @@ Freezeactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Freezefriend
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -93,7 +91,6 @@ Freezeobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

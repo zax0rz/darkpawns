@@ -29,7 +29,6 @@ CastleUpGod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ CastleUpMortal
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

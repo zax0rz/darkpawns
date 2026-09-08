@@ -29,7 +29,6 @@ Jeersleepactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Jeersleeper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

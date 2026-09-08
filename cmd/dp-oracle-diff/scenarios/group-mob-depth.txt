@@ -29,7 +29,6 @@ Groupmobleader
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

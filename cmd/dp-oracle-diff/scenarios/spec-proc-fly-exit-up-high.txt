@@ -25,7 +25,6 @@ UpHero
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -54,7 +53,6 @@ UpOrigin
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

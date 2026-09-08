@@ -30,7 +30,6 @@ TattooThreeSuccess
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ TattooThreeWitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

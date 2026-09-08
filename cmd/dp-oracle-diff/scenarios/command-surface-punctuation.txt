@@ -41,7 +41,6 @@ Punctactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -70,7 +69,6 @@ Punctobser
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

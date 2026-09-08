@@ -34,7 +34,6 @@ Moshactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Moshtarget
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -93,7 +91,6 @@ Moshsleeper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

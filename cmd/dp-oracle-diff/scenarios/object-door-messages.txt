@@ -30,7 +30,6 @@ Dooractor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -70,7 +69,6 @@ Doorobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -112,7 +110,6 @@ Doorother
 y
 oraclepass
 oraclepass
-Y
 N
 N
 H

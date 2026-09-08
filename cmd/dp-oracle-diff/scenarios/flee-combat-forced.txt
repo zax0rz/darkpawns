@@ -31,7 +31,6 @@ Fleecmgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Cmfleer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -103,7 +101,6 @@ Cmorigin
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

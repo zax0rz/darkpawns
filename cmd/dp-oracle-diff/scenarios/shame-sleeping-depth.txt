@@ -28,7 +28,6 @@ Ashsleepact
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Ashsleepobs
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -86,7 +84,6 @@ Ashsleeptgt
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

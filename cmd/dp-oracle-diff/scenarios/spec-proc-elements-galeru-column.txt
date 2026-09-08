@@ -24,7 +24,6 @@ GaleruCarrier
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -53,7 +52,6 @@ GaleruPeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

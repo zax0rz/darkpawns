@@ -31,7 +31,6 @@ Jinactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Jinpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

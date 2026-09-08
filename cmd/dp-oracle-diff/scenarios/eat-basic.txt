@@ -24,7 +24,6 @@ Eater
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -51,7 +50,6 @@ Eatobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

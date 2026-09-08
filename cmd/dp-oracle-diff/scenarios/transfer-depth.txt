@@ -30,7 +30,6 @@ Transferwizard
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Transferpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -88,7 +86,6 @@ Transferobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

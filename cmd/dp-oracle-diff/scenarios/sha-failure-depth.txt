@@ -30,7 +30,6 @@ Shafailactor
 y
 attpass
 attpass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Shafailpeer
 y
 obspass
 obspass
-Y
 N
 M
 H

@@ -30,7 +30,6 @@ Forceboss
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Forcevictim
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

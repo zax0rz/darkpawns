@@ -34,7 +34,6 @@ Greetactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Greetobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -93,7 +91,6 @@ Greetsleeper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

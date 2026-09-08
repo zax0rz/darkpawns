@@ -32,7 +32,6 @@ Sootactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Sootpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -90,7 +88,6 @@ Sootobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

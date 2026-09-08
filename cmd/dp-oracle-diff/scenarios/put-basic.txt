@@ -36,7 +36,6 @@ Putter
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Putobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

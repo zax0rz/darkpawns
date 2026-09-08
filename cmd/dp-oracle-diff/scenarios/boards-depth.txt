@@ -33,7 +33,6 @@ Boardactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Boardpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

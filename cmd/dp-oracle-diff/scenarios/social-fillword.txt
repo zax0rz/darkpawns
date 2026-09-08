@@ -18,7 +18,6 @@ Socialr
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -45,7 +44,6 @@ Socpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

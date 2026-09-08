@@ -31,7 +31,6 @@ Groanactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Groanobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

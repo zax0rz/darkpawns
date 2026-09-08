@@ -28,7 +28,6 @@ Groinripoutgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Groinripoutactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H

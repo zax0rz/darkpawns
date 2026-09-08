@@ -26,7 +26,6 @@ Moveboat
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Boatsaw
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

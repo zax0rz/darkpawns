@@ -33,7 +33,6 @@ Highfiveactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Highfiveobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Highfivetarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

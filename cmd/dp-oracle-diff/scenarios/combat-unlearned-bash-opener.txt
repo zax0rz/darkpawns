@@ -43,7 +43,6 @@ Nobashgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -78,7 +77,6 @@ Nobashmort
 y
 mortalpass
 mortalpass
-Y
 N
 M
 H

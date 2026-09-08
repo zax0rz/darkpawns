@@ -34,7 +34,6 @@ Spankactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Spankobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -92,7 +90,6 @@ Spanktarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

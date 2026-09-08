@@ -27,7 +27,6 @@ Chanactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -56,7 +55,6 @@ Chanwatch
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -29,7 +29,6 @@ Quiimmortal
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Quibystander
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

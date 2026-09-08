@@ -26,7 +26,6 @@ Groinripnoskillgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Groinripnoskillactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H

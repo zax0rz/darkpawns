@@ -33,7 +33,6 @@ Ruffleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -62,7 +61,6 @@ Ruffleobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -91,7 +89,6 @@ Ruffletarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -29,7 +29,6 @@ Sgategod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Sgate
 y
 targetpass
 targetpass
-Y
 N
 M
 H

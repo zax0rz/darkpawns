@@ -30,7 +30,6 @@ SuccessActor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ SuccessTarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

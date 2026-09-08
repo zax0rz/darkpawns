@@ -32,7 +32,6 @@ Staffgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Staffvictim
 y
 victimpass
 victimpass
-Y
 N
 M
 H

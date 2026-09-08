@@ -32,7 +32,6 @@ Sleeperoutgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Sleeperoutactor
 y
 actorpass
 actorpass
-Y
 N
 M
 H
@@ -98,7 +96,6 @@ Sleeperouttarget
 y
 targetpass
 targetpass
-Y
 N
 F
 H

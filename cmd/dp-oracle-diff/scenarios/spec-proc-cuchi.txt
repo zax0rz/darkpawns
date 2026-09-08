@@ -40,7 +40,6 @@ Cuchipater
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ Cuchiwitness
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

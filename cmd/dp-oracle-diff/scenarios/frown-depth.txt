@@ -30,7 +30,6 @@ Frownactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -59,7 +58,6 @@ Frownobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

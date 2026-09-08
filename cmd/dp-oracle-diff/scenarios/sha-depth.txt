@@ -31,7 +31,6 @@ Shaactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Shaper
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -31,7 +31,6 @@ Invisgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Invishelp
 y
 helperpass
 helperpass
-Y
 N
 M
 H
@@ -102,7 +100,6 @@ Invishelpee
 y
 helpeepass
 helpeepass
-Y
 N
 M
 H

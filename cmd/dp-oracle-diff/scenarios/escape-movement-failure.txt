@@ -30,7 +30,6 @@ Escapemoveconfig
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Escapemoveactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -98,7 +96,6 @@ Escapemovedest
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

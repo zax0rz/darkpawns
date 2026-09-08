@@ -40,7 +40,6 @@ Carvegod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -69,7 +68,6 @@ Carveobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

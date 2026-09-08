@@ -36,7 +36,6 @@ Mumbleactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Mumbleobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -94,7 +92,6 @@ Mumbletarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

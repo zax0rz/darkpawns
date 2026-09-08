@@ -29,7 +29,6 @@ Groinripmountgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -58,7 +57,6 @@ Groinriprider
 y
 riderpass
 riderpass
-Y
 N
 M
 H

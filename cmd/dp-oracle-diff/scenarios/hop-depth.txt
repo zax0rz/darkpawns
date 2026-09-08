@@ -35,7 +35,6 @@ Hopactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Hopobserver
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -94,7 +92,6 @@ Hoptarget
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

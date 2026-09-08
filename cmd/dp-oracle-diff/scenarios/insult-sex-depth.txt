@@ -27,7 +27,6 @@ Ifactor
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -56,7 +55,6 @@ Ifmale
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -85,7 +83,6 @@ Ifobs
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

@@ -31,7 +31,6 @@ Channelgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -60,7 +59,6 @@ Channelpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -89,7 +87,6 @@ Farpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

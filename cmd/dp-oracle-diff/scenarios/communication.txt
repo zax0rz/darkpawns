@@ -34,7 +34,6 @@ Comactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Comobserv
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

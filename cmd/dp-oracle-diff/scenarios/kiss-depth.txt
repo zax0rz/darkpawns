@@ -35,7 +35,6 @@ Kissactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -64,7 +63,6 @@ Kisspeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -24,7 +24,7 @@ look
 recall
 
 [setup:port]
-# Go telnet flow: create-new confirmation, password, name confirmation,
+# Go uses the shared C nanny flow: name confirmation, password,
 # color/sex/race/class/hometown, keep stats, PRESS RETURN, then menu option 1.
 # Recall aligns this generic login-room regression at 8004 after the newbie
 # hometown start-room behavior sends Kir Drax'in characters to 8162.
@@ -32,7 +32,6 @@ Oracletst
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

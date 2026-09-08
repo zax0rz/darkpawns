@@ -32,7 +32,6 @@ Frenchactor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -61,7 +60,6 @@ Frenchpeer
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H
@@ -90,7 +88,6 @@ Frenchobserver
 y
 oraclepass
 oraclepass
-Y
 N
 F
 H

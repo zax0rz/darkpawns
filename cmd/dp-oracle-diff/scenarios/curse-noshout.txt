@@ -28,7 +28,6 @@ CurseGod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Muteon
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

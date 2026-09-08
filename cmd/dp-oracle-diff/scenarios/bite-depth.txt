@@ -32,7 +32,6 @@ Bitedepth
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -65,7 +64,6 @@ Biterxo
 y
 biterpass
 biterpass
-Y
 N
 M
 H

@@ -34,7 +34,6 @@ Leeractor
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -63,7 +62,6 @@ Leerpeer
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H

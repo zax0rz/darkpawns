@@ -28,7 +28,6 @@ Searchgod
 y
 oraclepass
 oraclepass
-Y
 N
 M
 H
@@ -57,7 +56,6 @@ Searchtarget
 y
 targetpass
 targetpass
-Y
 N
 M
 H
