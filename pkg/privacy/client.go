@@ -116,15 +116,15 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
-		// Fallback to simple filtering if service is unavailable
-		return c.fallbackFilter(text), []string{"fallback"}, nil
+		// Fallback to simple filtering if service is unavailable, but report
+		// the failure so callers can distinguish degradation from health (DP-1241).
+		return c.fallbackFilter(text), []string{"fallback"}, fmt.Errorf("privacy filter request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		_, _ = io.ReadAll(resp.Body) // Read and discard body
-		// Return fallback without error
-		return c.fallbackFilter(text), []string{"fallback"}, nil
+		return c.fallbackFilter(text), []string{"fallback"}, fmt.Errorf("privacy filter returned status %d", resp.StatusCode)
 	}
 
 	var filterResp FilterResponse
@@ -133,8 +133,7 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 	}
 
 	if filterResp.Error != "" {
-		// Return fallback without error
-		return c.fallbackFilter(text), []string{"fallback"}, nil
+		return c.fallbackFilter(text), []string{"fallback"}, fmt.Errorf("privacy filter service error: %s", filterResp.Error)
 	}
 
 	return filterResp.FilteredText, filterResp.Detected, nil

@@ -123,6 +123,19 @@ func NewEquipment() *Equipment {
 	}
 }
 
+// Snapshot returns a copy of the currently equipped slots. Safe for
+// concurrent use; iterating eq.Slots without holding eq.mu races with
+// Equip/Unequip (DP-1247).
+func (eq *Equipment) Snapshot() map[EquipmentSlot]*ObjectInstance {
+	eq.mu.RLock()
+	defer eq.mu.RUnlock()
+	slots := make(map[EquipmentSlot]*ObjectInstance, len(eq.Slots))
+	for k, v := range eq.Slots {
+		slots[k] = v
+	}
+	return slots
+}
+
 // SetSlot places an item in one exact equipment slot without deriving a slot
 // from its wear flags. Callers remain responsible for moving the item out of
 // its previous location and updating its ObjectLocation.
@@ -268,8 +281,11 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 
 	// Clear equipment state
 
-	// Try to add to inventory
-	if err := inv.addItem(item); err != nil {
+	// Try to add to inventory. Use the locking AddItem: the no-lock addItem
+	// variant races with concurrent inventory writers that hold inv.mu
+	// (DP-1247). Lock order is eq.mu → inv.mu, which cannot cycle —
+	// no code path holds inv.mu and calls into Equipment.
+	if err := inv.AddItem(item); err != nil {
 		return fmt.Errorf("inventory full, cannot unequip")
 	}
 

@@ -188,6 +188,13 @@ func (inv *Inventory) AddItem(item *ObjectInstance) error {
 	return inv.addItem(item)
 }
 
+// Snapshot returns a copy of the current item list. Safe for concurrent use.
+func (inv *Inventory) Snapshot() []*ObjectInstance {
+	inv.mu.RLock()
+	defer inv.mu.RUnlock()
+	return append([]*ObjectInstance(nil), inv.Items...)
+}
+
 // RestoreItem adds an item to the inventory ignoring the capacity limit. It is
 // for loading a player's saved inventory, where the items were already
 // legitimately owned and must not be silently dropped if the current capacity

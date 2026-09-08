@@ -254,6 +254,73 @@ func TestBoardSystem_FullBoard_RejectsOverflow(t *testing.T) {
 	}
 }
 
+// TestLoadBoard_RemapsCollidingFileSlots pins the C load contract
+// (src/boards.c:517): the slot number stored in the save file is discarded
+// and a fresh globally-unique slot is allocated via find_slot(). Two boards
+// whose files claim the same slot must load into distinct storage (DP-1242).
+func TestLoadBoard_RemapsCollidingFileSlots(t *testing.T) {
+	dir := t.TempDir()
+
+	writeBoard := func(filename, heading, body string) {
+		path := filepath.Join(dir, filename)
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		headingBytes := []byte(heading + "\x00")
+		messageBytes := []byte(body + "\x00")
+		var buf bytes.Buffer
+		if err := binary.Write(&buf, binary.LittleEndian, int32(1)); err != nil {
+			t.Fatal(err)
+		}
+		// Both files deliberately claim file slot 0 — the collision the C
+		// remap exists to prevent.
+		for _, v := range []int32{0, 0, 50, int32(len(headingBytes)), int32(len(messageBytes))} {
+			if err := binary.Write(&buf, binary.LittleEndian, v); err != nil {
+				t.Fatal(err)
+			}
+		}
+		buf.Write(headingBytes)
+		buf.Write(messageBytes)
+		if err := os.WriteFile(path, buf.Bytes(), 0o640); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeBoard(defaultBoardInfo[0].Filename, "(Mon) (Alice) :: first", "body of board zero")
+	writeBoard(defaultBoardInfo[1].Filename, "(Mon) (Bob) :: second", "body of board one")
+
+	bs := InitBoards(dir)
+
+	s0 := bs.msgIndex[0][0].SlotNum
+	s1 := bs.msgIndex[1][0].SlotNum
+	if s0 < 0 || s1 < 0 {
+		t.Fatalf("slots after remap = %d, %d; both must be freshly allocated", s0, s1)
+	}
+	if s0 == s1 {
+		t.Fatalf("both boards loaded into msgStorage slot %d; C find_slot() remap violated", s0)
+	}
+
+	ch := newMockBoardPlayer("Carol", 10, 1001)
+	if !bs.DisplayMsg(0, ch, "1") {
+		t.Fatal("DisplayMsg board 0 = false, want true")
+	}
+	got := ch.allMessages()
+	if !strings.Contains(got, "body of board zero") {
+		t.Errorf("board 0 message = %q, want body of board zero", got)
+	}
+	if strings.Contains(got, "body of board one") {
+		t.Errorf("board 0 message leaks board 1 body: %q", got)
+	}
+
+	ch2 := newMockBoardPlayer("Dave", 10, 1001)
+	if !bs.DisplayMsg(1, ch2, "1") {
+		t.Fatal("DisplayMsg board 1 = false, want true")
+	}
+	if got := ch2.allMessages(); !strings.Contains(got, "body of board one") {
+		t.Errorf("board 1 message = %q, want body of board one", got)
+	}
+}
+
 func TestBoardSystem_DisplayMsg_InvalidNumber(t *testing.T) {
 	bs := InitBoards(t.TempDir())
 	ch := newMockBoardPlayer("Grace", 1, 6001)
@@ -319,11 +386,18 @@ func TestBoardSystem_LoadTruncatedFile(t *testing.T) {
 	}
 
 	bs := InitBoards(dir)
+	// The truncated body still loads (C's single unchecked fread behaves the
+	// same), but its storage slot must be a freshly allocated one, not the
+	// file's claimed slot number.
 	if bs.numOfMsgs[0] != 1 {
 		t.Fatalf("numOfMsgs[0] = %d, want 1", bs.numOfMsgs[0])
 	}
-	if !bs.msgStorageTaken[0] {
-		t.Fatal("slot from truncated body read must be marked taken")
+	slot := bs.msgIndex[0][0].SlotNum
+	if slot < 0 || slot >= len(bs.msgStorage) {
+		t.Fatalf("slot after remap = %d, want allocated storage slot", slot)
+	}
+	if !bs.msgStorageTaken[slot] {
+		t.Fatalf("fresh slot %d must be marked taken", slot)
 	}
 
 	ch := newMockBoardPlayer("Bob", 10, 1001)

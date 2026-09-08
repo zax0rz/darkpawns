@@ -56,9 +56,10 @@ func (pl *PrivacyLogger) log(msg string) {
 
 	filtered, detected, err := pl.client.FilterText(msg)
 	if err != nil {
-		// Log the error but still output the original message
+		// Log the degradation but never the raw message: emit the fallback
+		// result so a failing filter cannot leak PII into the audit log (DP-1241).
 		pl.stdLog.Printf("PII filter error: %v", err)
-		pl.stdLog.Print(msg)
+		pl.stdLog.Print(filtered)
 		return
 	}
 

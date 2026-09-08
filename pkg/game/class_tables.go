@@ -177,27 +177,24 @@ func FindClassBitvector(arg byte) int64 {
 // Source: class.c invalid_class()
 func InvalidClass(chClass int, objAntiClassBits uint32, isWieldedSlashWeapon bool, isShield bool) bool {
 	// Check ITEM_ANTI_{class} bitvectors
-	// Bit indices match the ExtraBitNames order in constants.go:
-	// 15=ANTI_CLERIC, 16=ANTI_MAGIC_USER, 17=ANTI_THIEF, 18=ANTI_WARRIOR,
-	// 19=ANTI_MAGUS, 20=ANTI_AVATAR, 21=ANTI_ASSASSIN, 22=ANTI_PALADIN,
-	// 23=ANTI_NINJA, 24=ANTI_PSIONIC, 25=ANTI_RANGER, 26=ANTI_MYSTIC
+	// Bit indices are the C ITEM_ANTI_* positions from src/structs.h:480-495
+	// (C-numbered world data; ExtraBitNames in constants.go is Merc-numbered
+	// display-only dead code and must NOT be used as the bit source).
 	if chClass >= 0 && chClass < 12 {
-		// Map class to the anti-class bit index
-		// The bit order in ExtraBitNames: ANTI_CLERIC=15, ANTI_MAGIC_USER=16, ANTI_THIEF=17, ANTI_WARRIOR=18,
-		// ANTI_MAGUS=19, ANTI_AVATAR=20, ANTI_ASSASSIN=21, ANTI_PALADIN=22, ANTI_NINJA=23, ANTI_PSIONIC=24, ANTI_RANGER=25, ANTI_MYSTIC=26
+		// Map class to the anti-class bit index per src/structs.h
 		antiBitMap := [12]int{
-			16, // ClassMageUser → bit 16 (ANTI_MAGIC_USER)
-			15, // ClassCleric   → bit 15 (ANTI_CLERIC)
-			17, // ClassThief    → bit 17 (ANTI_THIEF)
-			18, // ClassWarrior  → bit 18 (ANTI_WARRIOR)
-			19, // ClassMagus    → bit 19 (ANTI_MAGUS)
-			20, // ClassAvatar   → bit 20 (ANTI_AVATAR)
-			21, // ClassAssassin → bit 21 (ANTI_ASSASSIN)
-			22, // ClassPaladin  → bit 22 (ANTI_PALADIN)
-			23, // ClassNinja    → bit 23 (ANTI_NINJA)
-			24, // ClassPsionic  → bit 24 (ANTI_PSIONIC)
-			25, // ClassRanger   → bit 25 (ANTI_RANGER)
-			26, // ClassMystic   → bit 26 (ANTI_MYSTIC)
+			12, // ClassMageUser → ITEM_ANTI_MAGIC_USER
+			13, // ClassCleric   → ITEM_ANTI_CLERIC
+			14, // ClassThief    → ITEM_ANTI_THIEF
+			15, // ClassWarrior  → ITEM_ANTI_WARRIOR
+			21, // ClassMagus    → ITEM_ANTI_MAGUS
+			23, // ClassAvatar   → ITEM_ANTI_AVATAR
+			22, // ClassAssassin → ITEM_ANTI_ASSASSIN
+			20, // ClassPaladin  → ITEM_ANTI_PALADIN
+			19, // ClassNinja    → ITEM_ANTI_NINJA
+			18, // ClassPsionic  → ITEM_ANTI_PSIONIC
+			26, // ClassRanger   → ITEM_ANTI_RANGER
+			27, // ClassMystic   → ITEM_ANTI_MYSTIC
 		}
 		bit := antiBitMap[chClass]
 		if objAntiClassBits&(1<<bit) != 0 {
