@@ -145,13 +145,16 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 	}
 
 	flags := p.GetFlags()
-	id := p.GetID() + 1
+	// Player IDs assigned by the no-database runtime already use C's
+	// one-based idnum sequence (manager.go:1422-1427). Do not add another
+	// offset when rendering the C-facing report.
+	id := p.GetID()
 	if file {
 		// The temporary C char_data is populated from the saved player record.
 		// Go's disk snapshot may predate the runtime ID field, so prefer the
 		// matching live session's C-facing ID when that session is available.
 		if live := findSessionByName(s.manager, p.GetName()); live != nil && live.player != nil {
-			id = live.player.GetID() + 1
+			id = live.player.GetID()
 		}
 	}
 	s.Send(fmt.Sprintf("%s PC '%s'  IDNum: [%5d], In room [%5d]\r\n",
