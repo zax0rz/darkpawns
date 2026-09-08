@@ -34,10 +34,10 @@ The cleared scenarios, in the census order, were:
 `spec-proc-cityguard-breed`, `spec-proc-cityguard`,
 `spec-proc-dragon-breath-combat`, and `spec-proc-suck-in`.
 
-The first fourteen already had green/proven coverage in the current depth
-ledger after the earlier modernization work; this round re-ran them and
-preserved their green status. The three special-procedure ledger rows that
-were still blocked were promoted only after five-seed proof:
+The first fourteen were re-run and are green in the final regression; their
+existing ledger coverage, where present, was left untouched. The three
+special-procedure ledger rows that were still blocked were promoted only after
+five-seed proof:
 
 - `mob.cityguard-breed-killer` → `oracle-green-multiseed`,
   `spec-proc-cityguard-breed@1,2,3,5,8`.
