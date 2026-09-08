@@ -171,28 +171,30 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 		}
 
 		bs.msgIndex[boardType][i] = BoardMsgInfo{
-			SlotNum:    int(info.SlotNum),
 			Heading:    string(heading[:info.HeadingLen-1]), // strip null
 			Level:      int(info.Level),
 			HeadingLen: int(info.HeadingLen),
 			MessageLen: int(info.MessageLen),
+			SlotNum:    -1,
 		}
 
 		if info.MessageLen > 0 {
-			slot := int(info.SlotNum)
-			if slot >= 0 && slot < len(bs.msgStorage) {
-				msgBytes := make([]byte, info.MessageLen)
-				if _, err := f.Read(msgBytes); err != nil {
-					bs.msgStorageTaken[slot] = true
-					continue
-				}
-				bs.msgStorage[slot] = string(msgBytes[:info.MessageLen-1])
-				bs.msgStorageTaken[slot] = true
+			msgBytes := make([]byte, info.MessageLen)
+			if _, err := f.Read(msgBytes); err != nil {
+				bs.resetBoard(boardType)
+				return
 			}
-		}
-
-		if info.HeadingLen > 0 && int(info.SlotNum) >= 0 && int(info.SlotNum) < len(bs.msgStorage) {
-			bs.msgStorageTaken[info.SlotNum] = true
+			// C boards.c:517 — the file's slot number is discarded and a fresh
+			// globally-unique slot is allocated via find_slot(). Trusting the
+			// file's slot lets two boards claim the same msgStorage entry and
+			// silently overwrite each other (DP-1242).
+			slot := bs.findSlot()
+			if slot == -1 {
+				bs.resetBoard(boardType)
+				return
+			}
+			bs.msgStorage[slot] = string(msgBytes[:info.MessageLen-1])
+			bs.msgIndex[boardType][i].SlotNum = slot
 		}
 	}
 }

@@ -46,8 +46,8 @@ func TestClient_FilterText_Fallback(t *testing.T) {
 	client := NewClient(server.URL, config)
 
 	filtered, detected, err := client.FilterText("Hello John Doe")
-	if err != nil {
-		t.Fatalf("FilterText should not return error on fallback: %v", err)
+	if err == nil {
+		t.Fatal("FilterText should report error on service failure (DP-1241)")
 	}
 
 	if !contains(detected, "fallback") {

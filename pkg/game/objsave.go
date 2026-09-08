@@ -109,10 +109,10 @@ func cWearPosCanWearFlag(cPos int) int {
 // Flag constants matching ITEM_* from structs.h used for alignment checks.
 // ExtraFlags[0] bits.
 const (
-	FlagAntiGood    = 1 << 2  // ITEM_ANTI_GOOD
-	FlagAntiEvil    = 1 << 3  // ITEM_ANTI_EVIL
+	FlagAntiGood    = 1 << 9  // ITEM_ANTI_GOOD
+	FlagAntiEvil    = 1 << 10 // ITEM_ANTI_EVIL
 	FlagAntiNeutral = 1 << 11 // ITEM_ANTI_NEUTRAL
-	FlagNoRent      = 1 << 5  // ITEM_NORENT
+	FlagNoRent      = 1 << 2  // ITEM_NORENT
 )
 
 // NumWears is the number of equipment slots (0-based). Matches NUM_WEARS in C (used in loops).

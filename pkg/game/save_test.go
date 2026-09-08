@@ -2,9 +2,12 @@ package game
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"sync"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -419,6 +422,96 @@ func TestLoadPlayer_FutureVersion_Warns(t *testing.T) {
 	}
 	if loaded.GetLevel() != 20 {
 		t.Errorf("Level = %d, want 20", loaded.GetLevel())
+	}
+}
+
+// TestPlayerSaveData_ConcurrentSnapshot exercises playerToSaveData against
+// concurrent inventory, equipment, affect, and scalar mutations. The race
+// detector is the referee — this test must be run with -race (DP-1247).
+func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
+	player := NewPlayer(4242, "RaceTestPlayer", 1001)
+	player.SetLevel(15)
+	player.SetHP(100)
+	player.SetMaxHP(100)
+
+	mkItem := func() *ObjectInstance {
+		return &ObjectInstance{VNum: 3001, Prototype: &parser.Obj{VNum: 3001}}
+	}
+
+	if err := player.Inventory.AddItem(mkItem()); err != nil {
+		t.Fatalf("seed inventory: %v", err)
+	}
+
+	const iterations = 150
+
+	var wg sync.WaitGroup
+
+	// Saver goroutines
+	for w := 0; w < 2; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < iterations; i++ {
+				_ = playerToSaveData(player)
+			}
+		}()
+	}
+
+	// Inventory mutator
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			item := mkItem()
+			if err := player.Inventory.AddItem(item); err != nil {
+				continue // capacity reached — try removing instead
+			}
+			player.Inventory.RemoveItem(item)
+		}
+	}()
+
+	// Equipment mutator
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			item := mkItem()
+			if err := player.Equipment.SetSlot(SlotNeck1, item); err == nil {
+				_ = player.Equipment.Unequip(SlotNeck1, player.Inventory)
+			}
+		}
+	}()
+
+	// Affect + scalar mutator
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			aff := &engine.Affect{SpellID: i%50 + 1, Location: 1, Duration: 5, Magnitude: 1}
+			player.AddAffect(aff)
+			player.RemoveAffectBySpell(i%50 + 1)
+			player.SetHP(90 + i%10)
+			player.SetAlignment(i%700 - 350)
+		}
+	}()
+
+	// SpellMap mutator
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			player.mu.Lock()
+			player.SpellMap[fmt.Sprintf("spell_%d", i%30)] = i
+			player.mu.Unlock()
+		}
+	}()
+
+	wg.Wait()
+
+	// Final snapshot must not panic and must be internally consistent.
+	data := playerToSaveData(player)
+	if data.Name != "RaceTestPlayer" {
+		t.Errorf("Name = %q, want RaceTestPlayer", data.Name)
 	}
 }
 

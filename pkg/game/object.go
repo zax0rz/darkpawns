@@ -384,9 +384,6 @@ func (o *ObjectInstance) MigrateCustomData() {
 // on save, GetSaveState puts them back so the JSON state map is complete.
 // Returns nil when there is no custom state to persist.
 func (o *ObjectInstance) GetSaveState() map[string]interface{} {
-	if o.CustomData == nil {
-		o.CustomData = make(map[string]interface{})
-	}
 	// C ITEM_TAKE_NAME rewrites short_description only for the live object;
 	// reboot reconstructs it from the prototype. Other short-description
 	// overrides remain persistent object state.

@@ -169,21 +169,33 @@ func PlayerSaveExists(name string) bool {
 }
 
 // playerToSaveData converts a Player to the serializable savePlayerData.
-// Acquires p.mu.RLock to prevent torn reads from concurrent mutations.
+// Each component is read under its own lock: scalars via the p.mu-based
+// getters, direct fields under a single p.mu.RLock (never nested with the
+// getters — a writer queuing between two RLocks deadlocks), inventory under
+// inv.mu, equipment under eq.mu (DP-1247).
 func playerToSaveData(p *Player) savePlayerData {
+	// Direct fields with no getter, read under one short RLock.
 	p.mu.RLock()
-	defer p.mu.RUnlock()
-	roomVNum := p.RoomVNum
-	if p.Flags&(1<<uint(PlrLoadroom)) != 0 {
-		roomVNum = p.LoadRoomVNum
+	poofIn, poofOut := p.PoofIn, p.PoofOut
+	title, description := p.Title, p.Description
+	clanID, clanRank := p.ClanID, p.ClanRank
+	stats := p.Stats
+	loadRoomVNum := p.LoadRoomVNum
+	hasLoadroom := p.Flags&(1<<uint(PlrLoadroom)) != 0
+	affects := append([]*engine.Affect(nil), p.ActiveAffects...)
+	p.mu.RUnlock()
+
+	roomVNum := p.GetRoom()
+	if hasLoadroom {
+		roomVNum = loadRoomVNum
 	}
 
 	data := savePlayerData{
 		SaveVersion: CurrentSaveVersion,
 		ID:          p.ID,
 		Name:        p.Name,
-		PoofIn:      p.PoofIn,
-		PoofOut:     p.PoofOut,
+		PoofIn:      poofIn,
+		PoofOut:     poofOut,
 		Sex:         p.GetSex(),
 		Level:       p.GetLevel(),
 		Class:       p.GetClass(),
@@ -195,35 +207,35 @@ func playerToSaveData(p *Player) savePlayerData {
 		Move:        p.GetMove(),
 		MaxMove:     p.GetMaxMove(),
 		Gold:        p.GetGold(),
-		BankGold:    p.BankGold,
-		ClanID:      p.ClanID,
-		ClanRank:    p.ClanRank,
+		BankGold:    p.GetBankGold(),
+		ClanID:      clanID,
+		ClanRank:    clanRank,
 		Exp:         p.GetExp(),
 		Alignment:   p.GetAlignment(),
 		RoomVNum:    roomVNum,
 		Position:    p.GetPosition(),
-		Title:       p.Title,
-		Description: p.Description,
+		Title:       title,
+		Description: description,
 		AC:          p.GetAC(),
 		Hitroll:     p.GetHitroll(),
 		Damroll:     p.GetDamroll(),
 		Strength:    p.GetStrength(),
-		THAC0:       p.THAC0,
-		Hunger:      p.Conditions[CondFull],
-		Thirst:      p.Conditions[CondThirst],
-		Drunk:       p.Conditions[CondDrunk],
+		THAC0:       p.GetTHAC0(),
+		Hunger:      p.GetCondition(CondFull),
+		Thirst:      p.GetCondition(CondThirst),
+		Drunk:       p.GetCondition(CondDrunk),
 		Flags:       p.GetFlags(),
 		AutoExit:    p.GetAutoExit(),
-		Stats:       p.Stats,
+		Stats:       stats,
 		SpellMap:    make(map[string]int),
 	}
 
-	// Copy spell map
-	if p.SpellMap != nil {
-		for k, v := range p.SpellMap {
-			data.SpellMap[k] = v
-		}
+	// Copy spell map under p.mu (all SpellMap writers hold p.mu).
+	p.mu.RLock()
+	for k, v := range p.SpellMap {
+		data.SpellMap[k] = v
 	}
+	p.mu.RUnlock()
 
 	// Copy skills from SkillManager
 	data.Skills = make(map[string]int)
@@ -233,8 +245,8 @@ func playerToSaveData(p *Player) savePlayerData {
 		}
 	}
 
-	// Flatten inventory to VNUM + state
-	for _, item := range p.Inventory.Items {
+	// Flatten inventory to VNUM + state (snapshot under inv.mu)
+	for _, item := range p.Inventory.Snapshot() {
 		if item == nil {
 			continue
 		}
@@ -250,8 +262,8 @@ func playerToSaveData(p *Player) savePlayerData {
 		})
 	}
 
-	// Flatten equipment to VNUM + state + locate (C WEAR_*+1)
-	for slot, item := range p.Equipment.Slots {
+	// Flatten equipment to VNUM + state + locate (C WEAR_*+1) (snapshot under eq.mu)
+	for slot, item := range p.Equipment.Snapshot() {
 		if item == nil {
 			continue
 		}
@@ -272,8 +284,8 @@ func playerToSaveData(p *Player) savePlayerData {
 		})
 	}
 
-	// Serialize active affects
-	for _, aff := range p.ActiveAffects {
+	// Serialize active affects (copied above under p.mu)
+	for _, aff := range affects {
 		data.Affects = append(data.Affects, saveAffect{
 			SpellID:   aff.SpellID,
 			Location:  aff.Location,
