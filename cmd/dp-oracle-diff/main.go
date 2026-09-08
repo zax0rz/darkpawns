@@ -159,21 +159,21 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err := prepareOracleData(filepath.Join(oracleRoot, "lib"), oracleData, scenario.EmptyPlayers); err != nil {
 		return err
 	}
-	// The copied data directory is disposable, so character creation never
-	// mutates the oracle clone. Unless empty-players is requested, keep its
-	// baseline player file so existing mortal scenarios retain today's boot.
-	goWorld := filepath.Join(repoRoot, "lib", "world")
+	// Keep the Go world disposable for every scenario, not only fixture cases.
+	// The server anchors relative runtime state (./data/world_state.json) to the
+	// world directory's parent; sharing repoRoot/lib lets one scenario's quit
+	// save poison later scenarios and makes a clean oracle comparison flaky.
+	goWorld := filepath.Join(tmp, "go-world")
+	if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
+		return fmt.Errorf("copy Go world to throwaway directory: %w", err)
+	}
+	// Sibling lib/text rides along: the server derives help (and future static
+	// text) from the -world dir's parent, so the throwaway layout mirrors
+	// lib/{world,text}.
+	if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
+		return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
+	}
 	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
-		goWorld = filepath.Join(tmp, "go-world")
-		if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
-			return fmt.Errorf("copy Go world to throwaway directory: %w", err)
-		}
-		// Sibling lib/text rides along: the server derives help (and future
-		// static text) from the -world dir's parent, so the throwaway layout
-		// must mirror lib/{world,text}.
-		if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
-			return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
-		}
 		if err := applyObjIndexFixtures(filepath.Join(oracleData, "world"), scenario.ObjIndexFixtures); err != nil {
 			return fmt.Errorf("apply C oracle obj index fixtures: %w", err)
 		}
