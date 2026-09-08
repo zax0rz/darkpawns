@@ -72,3 +72,16 @@ The broader blocked rows in entry.tsv remain open. These checks do not certify
 all menu actions, restrictions, usurp/unswitch, frozen/unhealthy entry, every
 identity consumer, or full visual-browser and preference-persistence fidelity.
 The three production identity collisions still require owner-reviewed resolution.
+
+## CI harness correction
+
+CI run 34278034557 exposed that the assembled no-database smoke launcher still
+relied on implicit fallback. It now sets DP_ALLOW_NO_DB=1 only for its deliberately
+dead database URL and sets 0 for the persistence vehicle, overriding inherited
+shell configuration. The real PostgreSQL round trip also had the obsolete
+Invalid-password expectation; it now checks C's Wrong-password retry prompt.
+
+Validation: full `go test -race ./... -timeout 120s` passes; the explicit local
+PostgreSQL `TestTelnetSmoke_PersistenceRoundTrip` passes with `-race -count=1`.
+Build, vet, lint and formatting pass. These are test-harness corrections; the
+production fail-closed policy and player-facing behavior are unchanged.
