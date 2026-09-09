@@ -145,15 +145,18 @@ func TestConvertNarrativeMemoryToEvent_ValidRawEvent(t *testing.T) {
 
 func TestSendMemoryEvent_ReusesKeepAliveConnection(t *testing.T) {
 	var conns atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
-	}))
-	defer server.Close()
 
 	// Count distinct server-side connections; a drained body lets the
 	// transport reuse the first connection for the second request (DP-1240).
 	connSeen := map[net.Conn]bool{}
 	var mu sync.Mutex
+
+	// Configure ConnState BEFORE starting the server: httptest.NewServer starts
+	// serving immediately, so assigning server.Config after it would race the
+	// serve goroutine reading it. NewUnstartedServer lets us set it first.
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
 	server.Config.ConnState = func(c net.Conn, s http.ConnState) {
 		if s == http.StateNew {
 			mu.Lock()
@@ -162,6 +165,8 @@ func TestSendMemoryEvent_ReusesKeepAliveConnection(t *testing.T) {
 			mu.Unlock()
 		}
 	}
+	server.Start()
+	defer server.Close()
 
 	client := NewREMSynthesisClient(PythonSystemConfig{
 		BaseURL: server.URL,
