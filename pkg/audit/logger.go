@@ -61,9 +61,12 @@ func (a *AuditLogger) Log(event AuditEvent) {
 
 	a.mu.Lock()
 	_, werr := a.file.Write(append(data, '\n'))
+	if werr == nil {
+		werr = a.file.Sync()
+	}
 	a.mu.Unlock()
 	if werr != nil {
-		slog.Error("audit log write failed", "error", werr)
+		slog.Error("audit log write/sync failed", "error", werr)
 	}
 
 	// Also log to console for important events
@@ -80,6 +83,10 @@ func (a *AuditLogger) Log(event AuditEvent) {
 
 // Close flushes and closes the underlying audit log file.
 func (a *AuditLogger) Close() error {
+	if err := a.file.Sync(); err != nil {
+		slog.Error("audit log sync on close failed", "error", err)
+		return err
+	}
 	if err := a.file.Close(); err != nil {
 		slog.Error("audit log close failed", "error", err)
 		return err
