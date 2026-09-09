@@ -212,6 +212,22 @@ func (w *World) SetRoomFlags(vnum int, flags []string) bool {
 	return true
 }
 
+// SetRoomFlagBit sets a single runtime C ROOM_* bit in a room's flag words
+// under the world lock. Callers must NOT mutate room.Flags through the
+// *parser.Room handed out by GetRoomInWorld — that pointer escapes the read
+// lock, so lock-free writes race with locked readers. Returns false if the
+// room doesn't exist.
+func (w *World) SetRoomFlagBit(vnum int, flagBit int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	room, ok := w.rooms[vnum]
+	if !ok {
+		return false
+	}
+	setRoomFlagBit(room, flagBit)
+	return true
+}
+
 // SetRoomSector sets a room's sector type. Returns false if the room doesn't exist.
 func (w *World) SetRoomSector(vnum int, sector int) bool {
 	w.mu.Lock()

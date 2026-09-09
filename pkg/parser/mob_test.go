@@ -919,3 +919,71 @@ func TestMobActionBitNamesStayZone(t *testing.T) {
 		t.Errorf("actionBitNames[6] = %q, want STAY_ZONE", actionBitNames[6])
 	}
 }
+
+func TestParseMobFile_TrailingSpaceTerminators(t *testing.T) {
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.mob")
+
+	// C's fread_string (db.c) terminates on '~' anywhere in the line and
+	// get_line+sscanf tolerate trailing whitespace, so area files with
+	// "~ " / "E " style lines must not swallow the following record.
+	content := "#100\n" +
+		"first~ \n" +
+		"A first mob~\n" +
+		"The first mob stands here.~ \n" +
+		"~ \n" +
+		"First detail line~ \n" +
+		"0 0 0 0 0 0 0 0 -100 E \n" +
+		"1 20 0 5 10 20 1 4 2\n" +
+		"100 500\n" +
+		"8 3 0\n" +
+		"#200\n" +
+		"second~\n" +
+		"A second mob~\n" +
+		"The second mob stands here.\n" +
+		"Second detail.\n" +
+		"~\n" +
+		"0 0 0 0 0 0 0 0 -50 E\n" +
+		"1 20 0 5 10 20 1 4 2\n" +
+		"100 500\n" +
+		"8 3 0\n"
+	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	mobs, err := ParseMobFile(testFile)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	if len(mobs) != 2 {
+		t.Fatalf("expected 2 mobs, got %d", len(mobs))
+	}
+
+	first := mobs[0]
+	if first.VNum != 100 {
+		t.Errorf("expected vnum 100, got %d", first.VNum)
+	}
+	if first.Keywords != "first" {
+		t.Errorf("expected keywords 'first', got %q", first.Keywords)
+	}
+	if first.LongDesc != "The first mob stands here." {
+		t.Errorf("expected long desc without trailing junk, got %q", first.LongDesc)
+	}
+	if first.DetailedDesc != "First detail line" {
+		t.Errorf("expected detailed desc 'First detail line', got %q", first.DetailedDesc)
+	}
+	if first.Alignment != -100 {
+		t.Errorf("expected alignment -100, got %d", first.Alignment)
+	}
+
+	second := mobs[1]
+	if second.VNum != 200 {
+		t.Errorf("expected vnum 200, got %d (record absorbed by mob 1?)", second.VNum)
+	}
+	if second.Keywords != "second" {
+		t.Errorf("expected keywords 'second', got %q", second.Keywords)
+	}
+	if second.Alignment != -50 {
+		t.Errorf("expected alignment -50, got %d", second.Alignment)
+	}
+}

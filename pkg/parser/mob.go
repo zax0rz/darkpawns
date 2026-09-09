@@ -190,6 +190,16 @@ func ParseMobFile(path string) ([]Mob, error) {
 	return mobs, nil
 }
 
+// readMobTildeLine mirrors C's fread_string for single-line strings: the '~'
+// terminator may have trailing whitespace after it, and everything before the
+// first '~' is the value.
+func readMobTildeLine(line string) string {
+	if idx := strings.IndexByte(line, '~'); idx >= 0 {
+		return line[:idx]
+	}
+	return line
+}
+
 func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	mob := Mob{VNum: vnum}
 	var nextLine string
@@ -198,13 +208,13 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob keywords")
 	}
-	mob.Keywords = strings.TrimSuffix(lb.Text(), "~")
+	mob.Keywords = readMobTildeLine(lb.Text())
 
 	// Short description (ends with ~)
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob short desc")
 	}
-	mob.ShortDesc = strings.TrimSuffix(lb.Text(), "~")
+	mob.ShortDesc = readMobTildeLine(lb.Text())
 
 	// C source (parse_mobile): auto-lowercase articles in short_desc
 	// "A", "An", "The" at start of short desc -> "a", "an", "the"
@@ -241,8 +251,8 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	if !lb.Scan() {
 		return mob, "", fmt.Errorf("expected mob long desc")
 	}
-	longDesc := lb.Text()
-	mob.LongDesc = strings.TrimSuffix(longDesc, "~")
+	longDesc := readMobTildeLine(lb.Text())
+	mob.LongDesc = longDesc
 
 	// The shipped world uses the canonical Diku form where a one-line long
 	// description is followed by a standalone '~'. Older fixture snippets in
@@ -255,7 +265,9 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 		return mob, "", fmt.Errorf("expected mob detailed description or flags")
 	}
 	next := lb.Text()
-	if next == "~" {
+	// C's fread_string (db.c) terminates on '~' anywhere in the line and
+	// tolerates trailing whitespace, so "~ " still closes the string.
+	if strings.TrimRight(next, " \t\r") == "~" {
 		if !lb.Scan() {
 			return mob, "", fmt.Errorf("expected mob detailed description or flags")
 		}
@@ -271,8 +283,10 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 		var descLines []string
 		for lb.Scan() {
 			line := lb.Text()
-			if strings.HasSuffix(line, "~") {
-				descLines = append(descLines, strings.TrimSuffix(line, "~"))
+			// Mirror readObjTildeString: '~' anywhere terminates, trailing
+			// whitespace after it is ignored (C fread_string semantics).
+			if idx := strings.IndexByte(line, '~'); idx >= 0 {
+				descLines = append(descLines, line[:idx])
 				break
 			}
 			descLines = append(descLines, line)
@@ -286,9 +300,15 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	}
 	flagsLine := lb.Text()
 
-	// Parse until we hit E or S (Simple flag)
-	for !strings.HasSuffix(flagsLine, " E") && !strings.HasSuffix(flagsLine, "E") &&
-		!strings.HasSuffix(flagsLine, " S") && !strings.HasSuffix(flagsLine, "S") {
+	// Parse until we hit E or S (Simple flag). C's get_line + sscanf tolerate
+	// trailing whitespace, so trim it before the suffix test rather than
+	// requiring the terminator to be the last byte of the line.
+	for {
+		flagsLine = strings.TrimRight(flagsLine, " \t\r")
+		if strings.HasSuffix(flagsLine, " E") || strings.HasSuffix(flagsLine, "E") ||
+			strings.HasSuffix(flagsLine, " S") || strings.HasSuffix(flagsLine, "S") {
+			break
+		}
 		if !lb.Scan() {
 			return mob, "", fmt.Errorf("expected end of flags (E or S)")
 		}

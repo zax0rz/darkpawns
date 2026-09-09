@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -888,8 +889,9 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 		masterName := cbGetFollowing(defenderName)
 		if masterName != "" {
 			if master := findRoomCombatantByName(attacker.GetRoom(), masterName); master != nil {
-				ce.redirectAttacker(attacker, master)
-				return true
+				if ce.redirectAttacker(attacker, master) {
+					return true
+				}
 			}
 		}
 	}
@@ -902,8 +904,9 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 				continue
 			}
 			if vict.GetFighting() == attackerName && GetRoller().Number(0, 80) == 0 {
-				ce.redirectAttacker(attacker, vict)
-				return true
+				if ce.redirectAttacker(attacker, vict) {
+					return true
+				}
 			}
 		}
 	}
@@ -920,10 +923,18 @@ func findRoomCombatantByName(roomVNum int, name string) Combatant {
 	return nil
 }
 
-func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) {
+func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) bool {
 	ce.StopCombat(attacker.GetName())
 	if err := ce.StartCombat(attacker, target); err != nil {
-		return
+		// Only reachable via a concurrent re-engagement race: another
+		// goroutine started this attacker between StopCombat and StartCombat.
+		// The redirect did not happen, so let the original attack proceed
+		// instead of silently dropping the round (DP-1239).
+		slog.Warn("combat redirect failed, original attack proceeds",
+			"attacker", attacker.GetName(),
+			"target", target.GetName(),
+			"error", err)
+		return false
 	}
 	// C's redirect branches call hit(), not only set_fighting(). Preserve
 	// that synchronous opener before the normal combat round resumes.
@@ -932,6 +943,7 @@ func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) {
 	}); ok {
 		_ = initial.PerformInitialAttack(attacker, target)
 	}
+	return true
 }
 
 // sendHitMessage sends hit messages to combatants and room.

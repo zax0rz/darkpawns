@@ -392,9 +392,10 @@ func DoDetect(ch *Player, world *World) SkillResult {
 			}
 			fmt.Fprintf(&results, "You notice something funny about %s.\r\n", where)
 			found = true
-			if !movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark") {
-				setRoomFlagBit(room, roomFlagSecretMark)
-			}
+			// The flag write must go through the locked World setter:
+			// room.Flags is shared mutable state and this runs on the
+			// session goroutine, not the game loop.
+			world.SetRoomFlagBit(ch.GetRoom(), roomFlagSecretMark)
 		}
 	}
 	return SkillResult{Success: found, MessageToCh: results.String()}

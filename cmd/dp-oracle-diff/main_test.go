@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -229,3 +231,31 @@ type scriptedTestConn struct {
 func (*scriptedTestConn) Send(string) error                                { return nil }
 func (*scriptedTestConn) ReadUntilQuiescent(time.Duration) (string, error) { return "", nil }
 func (*scriptedTestConn) Close() error                                     { return nil }
+
+func TestAllocatePortsHoldsReservationsOpen(t *testing.T) {
+	oracle, whod, goTelnet, goHTTP, err := allocatePorts()
+	if err != nil {
+		t.Fatalf("allocatePorts: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = oracle.Close()
+		_ = whod.Close()
+		_ = goTelnet.Close()
+		_ = goHTTP.Close()
+	})
+
+	// Regression for the TOCTOU (DP-1262): the returned listeners must still
+	// be bound so the ports stay reserved until the caller closes them.
+	oraclePort := oracle.Addr().(*net.TCPAddr).Port
+	whodPort := whod.Addr().(*net.TCPAddr).Port
+	if whodPort != oraclePort+1 {
+		t.Fatalf("WHOD port = %d, want oracle+1 (%d)", whodPort, oraclePort+1)
+	}
+	for _, port := range []int{oraclePort, whodPort, goTelnet.Addr().(*net.TCPAddr).Port, goHTTP.Addr().(*net.TCPAddr).Port} {
+		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+		if err == nil {
+			_ = ln.Close()
+			t.Errorf("port %d was free while its reservation listener was held open", port)
+		}
+	}
+}
