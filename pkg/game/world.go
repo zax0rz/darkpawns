@@ -568,6 +568,11 @@ func (w *World) ForEachMobInRoomInterface(roomVNum int, fn func(m interface{})) 
 // GetRoomInWorld returns a room by VNum, or nil if not found.
 //
 // Deprecated: use GetRoom (snapshot version) instead.
+//
+// The returned pointer aliases live world state: the read lock is released
+// before the caller runs, so callers must NOT mutate the room through it.
+// Writes must go through the locked setters (SetRoomFlags, SetRoomFlagBit,
+// SetRoomSector, SetRoomExit, SetExitInfo, ...).
 func (w *World) GetRoomInWorld(vnum int) *parser.Room {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -985,7 +990,10 @@ func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
 
 	var players []*Player
 	for _, p := range w.players {
-		if p.RoomVNum == roomVNum {
+		// Read through the player's own lock: SetRoom runs on session
+		// goroutines under p.mu only, so a raw p.RoomVNum read here would
+		// race movement even though the map iteration is covered by w.mu.
+		if p.GetRoom() == roomVNum {
 			players = append(players, p)
 		}
 	}

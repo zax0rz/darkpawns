@@ -1,8 +1,10 @@
 package agent
 
 import (
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -138,5 +140,48 @@ func TestConvertNarrativeMemoryToEvent_ValidRawEvent(t *testing.T) {
 	event := ConvertNarrativeMemoryToEvent(mem, map[string]string{"victim": "rat"})
 	if event.RawEventData == "" {
 		t.Fatal("expected non-empty RawEventData for marshalable raw event")
+	}
+}
+
+func TestSendMemoryEvent_ReusesKeepAliveConnection(t *testing.T) {
+	var conns atomic.Int32
+
+	// Count distinct server-side connections; a drained body lets the
+	// transport reuse the first connection for the second request (DP-1240).
+	connSeen := map[net.Conn]bool{}
+	var mu sync.Mutex
+
+	// Configure ConnState BEFORE starting the server: httptest.NewServer starts
+	// serving immediately, so assigning server.Config after it would race the
+	// serve goroutine reading it. NewUnstartedServer lets us set it first.
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	server.Config.ConnState = func(c net.Conn, s http.ConnState) {
+		if s == http.StateNew {
+			mu.Lock()
+			connSeen[c] = true
+			conns.Store(int32(len(connSeen)))
+			mu.Unlock()
+		}
+	}
+	server.Start()
+	defer server.Close()
+
+	client := NewREMSynthesisClient(PythonSystemConfig{
+		BaseURL: server.URL,
+		Enabled: true,
+		Timeout: 5 * time.Second,
+	})
+
+	event := &MemoryEvent{AgentName: "tester", EventType: "mob_kill"}
+	if err := client.SendMemoryEvent(event); err != nil {
+		t.Fatalf("first SendMemoryEvent: %v", err)
+	}
+	if err := client.SendMemoryEvent(event); err != nil {
+		t.Fatalf("second SendMemoryEvent: %v", err)
+	}
+	if got := conns.Load(); got != 1 {
+		t.Errorf("expected 1 reused connection, got %d distinct connections (body not drained?)", got)
 	}
 }

@@ -28,7 +28,7 @@ To fix these circular dependencies:
 ## Next Steps
 
 1. Update `game` package to use `common.ObjectInstance` instead of its own
-2. Update `game` to use `common.ShopManagerInterface` instead of `*world.ShopManager`
+2. Update `game` to use `common.ShopManager` instead of `*world.ShopManager`
 3. Update `world` to use `*common.ObjectInstance` instead of `*game.ObjectInstance`
 4. Update `command` to use `common.SessionInterface` instead of `*session.Session`
 5. Update `session` to use command functions via interface or dependency injection
