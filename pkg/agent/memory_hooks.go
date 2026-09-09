@@ -104,6 +104,9 @@ func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
 		if err != nil {
 			lastErr = err
 		} else {
+			// Drain the body before Close so the shared transport can reuse
+			// the keep-alive connection for the next hook call / retry.
+			_, _ = io.Copy(io.Discard, resp.Body)
 			_ = resp.Body.Close()
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 				return nil
