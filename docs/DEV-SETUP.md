@@ -153,18 +153,14 @@ git worktree add /tmp/cov origin/main && cd /tmp/cov && make scenario-coverage
 
 ## 6. Deploy access
 
-Production deploys (see [`DEPLOYMENT.md`](../DEPLOYMENT.md)) go over SSH to CT 120.
-The deploy key must be present on this workstation:
+Building the server for your own instance is covered in
+[`DEPLOYMENT.md`](../DEPLOYMENT.md). Access to the official `darkpawns.org` box —
+the ssh target, deploy key, and deploy/rollback runbook — lives in the private ops
+repo, not here.
 
-- Copy `~/.ssh/id_ed25519_darkpawns` (+ `.pub`) from the old machine, **or**
-- Generate a fresh key here and append its public half to
-  `root@192.168.1.121:~/.ssh/authorized_keys`.
-
-Confirm access: `ssh root@192.168.1.121 'systemctl is-active dark-pawns.service'`
-should print `active`.
-
-On a Linux workstation the deploy build is **native** (`go build`), not a
-cross-compile — DEPLOYMENT.md documents both paths.
+On a Linux workstation the deploy build is **native** (`go build`); on macOS it is a
+`GOOS=linux GOARCH=amd64` cross-compile. `DEPLOYMENT.md` shows the build; the private
+runbook shows where it goes.
 
 ## 7. Continuity notes (optional, for the maintaining agent)
 
