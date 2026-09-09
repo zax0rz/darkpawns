@@ -770,6 +770,14 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 		return
 	}
 
+	// Both C parsers accept attack-type values up to 99 (db.c RANGE(0,99);
+	// Go parser/mob.go clamps to the same band), but attack_hit_text holds
+	// only 15 entries. C reads past the array — undefined garbage bytes, so
+	// there are no C player-visible bytes to preserve out of range. Clamp so
+	// malformed weapon/obj data degrades to "hit" instead of panicking.
+	if attackType < 0 || attackType >= len(AttackHitTexts) {
+		attackType = 0
+	}
 	singular := AttackHitTexts[attackType].Singular
 	plural := AttackHitTexts[attackType].Plural
 

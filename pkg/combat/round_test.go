@@ -167,6 +167,35 @@ func TestDamMessage_ZeroDamage(t *testing.T) {
 	}
 }
 
+// DP-1263: both C parsers accept attack-type values up to 99 (db.c
+// RANGE(0,99) for BareHandAttack; GET_OBJ_VAL(wielded,3) is unvalidated),
+// but attack_hit_text holds only 15 entries. Out-of-range values must
+// degrade to "hit" instead of panicking the server.
+func TestDamMessage_OutOfRangeAttackType(t *testing.T) {
+	var broadcastMsg string
+
+	cb := defaultCombatCallbacks()
+	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
+		broadcastMsg = msg
+	}
+	SetCallbacks(cb)
+
+	attacker := &mockCombatant{name: "Player", room: 100, sex: 0, position: PosStanding}
+	defender := &mockCombatant{name: "Rat", room: 100, sex: 0, position: PosStanding}
+
+	// Values a malformed mob file (BareHandAttack: 99) or weapon obj value
+	// could feed into the zero-based index.
+	for _, attackType := range []int{-1, 15, 50, 98, 99} {
+		DamMessage(10, attacker, defender, attackType) // must not panic
+	}
+
+	// In-range bytes must be preserved exactly: attackType 3 = "slash".
+	DamMessage(10, attacker, defender, 3)
+	if !strings.Contains(broadcastMsg, "slash") {
+		t.Errorf("expected in-range attack type 3 to keep 'slash', got %q", broadcastMsg)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // TestDeathCry
 // ---------------------------------------------------------------------------
