@@ -110,7 +110,7 @@ The Dark Pawns website is a static site built using **Astro** and served via Cad
 ### Core Codebase Location
 * Authored website source lives in **`website-astro/`**, including page scripts under `website-astro/src/scripts/`.
 * **`website/` is not a second site.** Hugo was removed once the migration completed; what remains there is shared, non-Astro material: `static/` (Astro's public directory: generated map and database assets, `llms.txt`, `.well-known/`), `scripts/` (the world and database parsers the build runs), `deploy/` (the Caddy configuration), and `data/history.toml`. Do not add pages, layouts or templates there.
-* **NEVER** edit or build website source on the production server. `/srv/hugo/` is only the deployed document root; its name is historical, as is the `website/` directory name.
+* **NEVER** edit or build website source on the production server. `/srv/darkpawns/` is only the deployed document root (the `website/` directory name is historical).
 
 ### Design Aesthetics & Philosophy
 * **"Haunted Paperback" style** (see `website-astro/DESIGN.md`): worn cream paper backgrounds, charcoal ink text, one oxblood accent, flat ink, serif typography.

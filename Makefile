@@ -154,11 +154,11 @@ test-parse:
 # `make deploy-site` silently targets a hardcoded host as root (DP-785).
 #
 # DEPLOY_PATH is the website docroot Caddy serves from on prod. The historical
-# path remains `/srv/hugo/`; the directory name does not select the generator.
+# path remains `/srv/darkpawns/`; the directory name does not select the generator.
 # The Go binary's
 # `-web /opt/darkpawns/web` is a separate legacy client, NOT what /play uses.
 # The prod host needs `rsync` installed (apt-get install rsync).
-DEPLOY_PATH ?= /srv/hugo/
+DEPLOY_PATH ?= /srv/darkpawns/
 
 # Website commands
 .PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory generate-caddy-redirects site-check

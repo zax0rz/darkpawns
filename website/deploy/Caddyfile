@@ -62,7 +62,7 @@
 		path_regexp trailing ^(.+)/$
 	}
 	handle @markdownTrailing {
-		root * /srv/hugo/
+		root * /srv/darkpawns/
 		header Vary "Accept, Accept-Encoding"
 		header Content-Type "text/markdown; charset=utf-8"
 		try_files {re.trailing.1}.md {path}index.md {path}/index.md
@@ -71,7 +71,7 @@
 
 	@markdown header Accept *text/markdown*
 	handle @markdown {
-		root * /srv/hugo/
+		root * /srv/darkpawns/
 		header Vary "Accept, Accept-Encoding"
 		header Content-Type "text/markdown; charset=utf-8"
 		try_files {path}.md {path}index.md {path}/index.md
@@ -80,7 +80,7 @@
 
 	# Astro static files (catch-all; the document-root name is historical).
 	handle {
-		root * /srv/hugo/
+		root * /srv/darkpawns/
 		# Discovery headers for agents and crawlers.
 		header Link "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", </sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\", </rss.xml>; rel=\"alternate\"; type=\"application/rss+xml\", </.well-known/agent-skills/index.json>; rel=\"alternate\"; type=\"application/json\""
 		header Vary "Accept, Accept-Encoding"
@@ -90,7 +90,7 @@
 
 	# Serve 404.html for unmatched routes
 	handle_errors {
-		root * /srv/hugo/
+		root * /srv/darkpawns/
 		@markdownError header Accept *text/markdown*
 		handle @markdownError {
 			header Content-Type "text/markdown; charset=utf-8"
