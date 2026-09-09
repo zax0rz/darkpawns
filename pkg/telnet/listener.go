@@ -955,7 +955,7 @@ func (tc *telnetConn) sendMSSP() {
 	writeField("CODEBASE", "CircleMUD 3.0 (Go port)")
 	writeField("FAMILY", "DikuMUD")
 	writeField("CREATED", "1997")
-	writeField("WEBSITE", "darkpawns.labz0rz.com")
+	writeField("WEBSITE", "darkpawns.org")
 	writeField("PORT", "7777")
 	writeField("LANGUAGE", "English")
 	writeField("LOCATION", "US")

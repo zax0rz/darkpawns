@@ -39,7 +39,7 @@ func entryWebSocketJourney(t *testing.T, serverURL, name string) StateData {
 func entryWebSocketJourneyWithPassword(t *testing.T, serverURL, name, password string) StateData {
 	t.Helper()
 	wsURL := "ws" + strings.TrimPrefix(serverURL, "http")
-	headers := http.Header{"Origin": []string{"https://darkpawns.labz0rz.com"}}
+	headers := http.Header{"Origin": []string{"https://darkpawns.org"}}
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 	if err != nil {
 		t.Fatalf("WebSocket dial: %v", err)
@@ -88,7 +88,7 @@ func entryWebSocketJourneyWithPassword(t *testing.T, serverURL, name, password s
 func entryWebSocketNewCharacterToMenu(t *testing.T, serverURL, name string) (*websocket.Conn, CharStatsDisplay) {
 	t.Helper()
 	wsURL := "ws" + strings.TrimPrefix(serverURL, "http")
-	headers := http.Header{"Origin": []string{"https://darkpawns.labz0rz.com"}}
+	headers := http.Header{"Origin": []string{"https://darkpawns.org"}}
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 	if err != nil {
 		t.Fatalf("WebSocket dial: %v", err)

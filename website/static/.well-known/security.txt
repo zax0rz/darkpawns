@@ -1,4 +1,4 @@
-Contact: https://darkpawns.labz0rz.com/contact/
+Contact: https://darkpawns.org/contact/
 Expires: 2027-08-15T23:59:59Z
-Canonical: https://darkpawns.labz0rz.com/.well-known/security.txt
+Canonical: https://darkpawns.org/.well-known/security.txt
 Preferred-Languages: en

@@ -590,7 +590,7 @@ func TestCheckOrigin_PrivateIPWithInvalidAgentKeyRejects(t *testing.T) {
 func TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts(t *testing.T) {
 	m := makeTestManager(t)
 	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
-	req.Header.Set("Origin", "https://darkpawns.labz0rz.com")
+	req.Header.Set("Origin", "https://darkpawns.org")
 
 	if !m.checkOrigin(req) {
 		t.Error("expected allowed origin to be accepted")

@@ -16,7 +16,7 @@ A dark fantasy MUD server, rebuilt in Go from the original C codebase (CircleMUD
 
 Dark Pawns ran from 1997 to 2010. 10,057 rooms. 1,319 mobs. 1,661 objects. 95 zones. This is that world, running again, same area files loaded directly, no conversion step.
 
-[Play now](https://darkpawns.labz0rz.com/play) · [Website](https://darkpawns.labz0rz.com) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
+[Play now](https://darkpawns.org/play) · [Website](https://darkpawns.org) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
 ---
 

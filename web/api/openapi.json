@@ -15,7 +15,7 @@
   },
   "servers": [
     {
-      "url": "ws://darkpawns.labz0rz.com",
+      "url": "ws://darkpawns.org",
       "description": "Production WebSocket server"
     },
     {
@@ -396,7 +396,7 @@
           },
           "url": {
             "type": "string",
-            "example": "https://darkpawns.labz0rz.com"
+            "example": "https://darkpawns.org"
           }
         }
       }

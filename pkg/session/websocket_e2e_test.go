@@ -108,7 +108,7 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
 	headers := http.Header{}
-	headers.Set("Origin", "https://darkpawns.labz0rz.com")
+	headers.Set("Origin", "https://darkpawns.org")
 	c, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 	if err != nil {
 		t.Fatalf("WebSocket dial: %v", err)

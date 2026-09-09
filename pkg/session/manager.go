@@ -46,7 +46,7 @@ const (
 // allowedWebSocketOrigins lists the public origins that may connect without
 // presenting an agent key.
 var allowedWebSocketOrigins = []string{
-	"https://darkpawns.labz0rz.com",
+	"https://darkpawns.org",
 }
 
 // agentKeyHeaderNames and agentKeyQueryParams name where an agent may present

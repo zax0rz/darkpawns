@@ -96,16 +96,16 @@ func TestRateLimiter(t *testing.T) {
 func TestTurnstileResultRequiresSuccessActionAndHostname(t *testing.T) {
 	verifier := &turnstileVerifier{
 		expectedAction:    "contact",
-		expectedHostnames: map[string]struct{}{"darkpawns.labz0rz.com": {}},
+		expectedHostnames: map[string]struct{}{"darkpawns.org": {}},
 	}
 	tests := []struct {
 		name   string
 		result turnstileResult
 		want   bool
 	}{
-		{"valid", turnstileResult{Success: true, Action: "contact", Hostname: "darkpawns.labz0rz.com"}, true},
-		{"failed", turnstileResult{Success: false, Action: "contact", Hostname: "darkpawns.labz0rz.com"}, false},
-		{"wrong action", turnstileResult{Success: true, Action: "login", Hostname: "darkpawns.labz0rz.com"}, false},
+		{"valid", turnstileResult{Success: true, Action: "contact", Hostname: "darkpawns.org"}, true},
+		{"failed", turnstileResult{Success: false, Action: "contact", Hostname: "darkpawns.org"}, false},
+		{"wrong action", turnstileResult{Success: true, Action: "login", Hostname: "darkpawns.org"}, false},
 		{"wrong hostname", turnstileResult{Success: true, Action: "contact", Hostname: "localhost"}, false},
 	}
 	for _, test := range tests {

@@ -13,7 +13,7 @@ Auth contract (pkg/admin):
 Env:
   DP_ADMIN_USER      builder-role player name  (required; absent = skip quietly)
   DP_ADMIN_PASSWORD  builder-role password     (required; absent = skip quietly)
-  DP_API_BASE        default https://darkpawns.labz0rz.com
+  DP_API_BASE        default https://darkpawns.org
 
   Any of the above may also live in the repo-root .env file (gitignored);
   real environment variables always win over .env values.
@@ -56,7 +56,7 @@ def _load_dotenv(path):
 
 _load_dotenv(REPO_ROOT / ".env")
 
-API_BASE = os.environ.get("DP_API_BASE", "https://darkpawns.labz0rz.com")
+API_BASE = os.environ.get("DP_API_BASE", "https://darkpawns.org")
 
 
 def _post_json(url, payload):

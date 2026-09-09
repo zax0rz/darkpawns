@@ -133,7 +133,7 @@ func TestWritePumpExitTriggersCleanup(t *testing.T) {
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
 	headers := http.Header{}
-	headers.Set("Origin", "https://darkpawns.labz0rz.com")
+	headers.Set("Origin", "https://darkpawns.org")
 	client, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 	if err != nil {
 		t.Fatalf("dial: %v", err)

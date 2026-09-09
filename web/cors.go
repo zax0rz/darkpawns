@@ -56,7 +56,7 @@ func getAllowedOrigins() []string {
 
 	// Production defaults — explicit list only, no wildcards
 	return []string{
-		"https://darkpawns.labz0rz.com",
+		"https://darkpawns.org",
 	}
 }
 

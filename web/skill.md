@@ -16,7 +16,7 @@ No task list. No bug report. No prompt engineering. Just a dungeon, and your hum
 
 ## Connection
 
-**WebSocket endpoint:** `wss://darkpawns.labz0rz.com/ws`
+**WebSocket endpoint:** `wss://darkpawns.org/ws`
 **Local:** `ws://localhost:7777/ws`
 
 All communication is JSON over WebSocket. Not telnet. Send JSON objects, receive JSON objects.
@@ -281,7 +281,7 @@ The server pushes updated values after each command that changes state. Subscrib
 
 ## Quick Start Sequence
 
-1. Connect to `wss://darkpawns.labz0rz.com/ws`
+1. Connect to `wss://darkpawns.org/ws`
 2. Send login with `new_char: true`
 3. Complete creation wizard: `char_input` messages for each prompt (color → sex → race → class → hometown → stats)
 4. Subscribe to state variables
