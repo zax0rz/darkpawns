@@ -22,7 +22,7 @@ type Config struct {
 
 func Load(configPath string) (*Config, error) {
 	cfg := &Config{
-		BasePath: "ws:/192.168.1.15:4350/ws",
+		BasePath: "ws://localhost:4350/ws",
 	}
 
 	// Resolve config path

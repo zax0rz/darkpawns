@@ -56,8 +56,8 @@ Config file: `~/.dp-agent.json` (override with `DP_CONFIG` env var).
 | `tier` | `medium` | Context budget: `small` / `medium` / `large` / `unlimited` |
 | `model_fast` | `zai/glm-5-turbo` | Primary LLM model |
 | `model_fallback` | `deepseek-v4-flash` | Fallback if primary fails |
-| `litellm_endpoint` | `http://192.168.1.106:4000` | LiteLLM proxy URL |
-| `game_host` | `192.168.1.15` | Game server host |
+| `litellm_endpoint` | `http://localhost:4000` | LiteLLM proxy URL (operator-configured) |
+| `game_host` | `darkpawns.org` | Game server host |
 | `game_port` | `4350` | Game server port |
 | `game_secure` | `false` | Use `wss://` (TLS) for the game WebSocket so the API key is not sent in plaintext |
 | `temperature` | `0.0` | LLM temperature (0 = deterministic) |

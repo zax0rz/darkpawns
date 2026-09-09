@@ -133,7 +133,7 @@ This target automatically executes the complete, secure deployment sequence:
 
 ```bash
 rsync -azn --delete --itemize-changes \
-  website-astro/dist/ root@192.168.1.121:/srv/hugo/ | grep '^\*deleting'
+  website-astro/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH" | grep '^\*deleting'
 ```
 
 Only stale build artifacts should appear: superseded `_astro/*.css` hashes, Markdown twins for routes that no longer emit them, old `.bak` files. If a real page or image is listed, stop: its source is missing from the branch you are deploying. Commit the source and dry-run again rather than dropping `--delete`. This check caught a published blog post and its illustrations on 2026-09-04, whose only copy was untracked files in another worktree.
