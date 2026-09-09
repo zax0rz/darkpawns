@@ -53,7 +53,7 @@ CheckOrigin: func(r *http.Request) bool {
 
 **Change line 8 from:**
 ```bash
-AI_API_KEY=br3nd4-69-ag3nt-k3y-d3f4ult
+AI_API_KEY=DEAD-DEFAULT-KEY-REMOVED
 ```
 
 **To:**
@@ -65,7 +65,7 @@ AI_API_KEY=REPLACE_WITH_SECURE_RANDOM_KEY
 
 **Change line 22 from:**
 ```bash
-AI_API_KEY=br3nd4-69-ag3nt-k3y-d3f4ult
+AI_API_KEY=DEAD-DEFAULT-KEY-REMOVED
 ```
 
 **To:**
@@ -81,7 +81,7 @@ fi
 ```go
 func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
     // Reject default/example keys
-    if rawKey == "br3nd4-69-ag3nt-k3y-d3f4ult" || 
+    if rawKey == "DEAD-DEFAULT-KEY-REMOVED" || 
        strings.Contains(rawKey, "example") || 
        strings.Contains(rawKey, "test") {
         return "", 0, false

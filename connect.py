@@ -39,7 +39,7 @@ def strip_iac(data: bytes) -> bytes:
     return bytes(out)
 
 def main():
-    host = "192.168.1.106"
+    host = "localhost"
     port = 4350
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

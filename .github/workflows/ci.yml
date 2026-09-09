@@ -319,52 +319,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-  deploy:
-    needs: build-and-push
-    if: |
-      always() &&
-      needs.build-and-push.result != 'failure' &&
-      needs.build-and-push.result != 'cancelled' &&
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: production
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Check KUBECONFIG secret exists
-      id: check-kube
-      run: |
-        if [ -n "${{ secrets.KUBECONFIG }}" ]; then
-          echo "KUBECONFIG is set"
-          echo "skip=false" >> $GITHUB_OUTPUT
-        else
-          echo "KUBECONFIG not set — skipping deploy"
-          echo "skip=true" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Deploy to Kubernetes
-      if: steps.check-kube.outputs.skip != 'true'
-      env:
-        KUBECONFIG: ${{ secrets.KUBECONFIG }}
-      run: |
-        kubectl apply -f k8s/namespace.yaml
-        kubectl apply -f k8s/configmap.yaml
-        kubectl apply -f k8s/secrets.yaml
-        kubectl apply -f k8s/postgres.yaml
-        kubectl apply -f k8s/redis.yaml
-        kubectl apply -f k8s/server.yaml
-        kubectl apply -f k8s/ai-agent.yaml
-        kubectl rollout status deployment/darkpawns-server -n darkpawns
-        kubectl rollout status deployment/darkpawns-ai-agent -n darkpawns
-
-    - name: Update deployment documentation
-      if: steps.check-kube.outputs.skip != 'true'
-      run: |
-        echo "Deployment completed at $(date)" >> deployment/deployment-log.md
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add deployment/deployment-log.md
-        git commit -m "Update deployment log" || echo "No changes to commit"
-        git push || echo "Push failed (not critical)"
+  # (removed) k8s deploy job — the Kubernetes stack was a decoy and production is
+  # a single-binary VPS deploy (see the private ops runbook). The job self-skipped
+  # without a KUBECONFIG secret anyway. build-and-push (ghcr image) is retained.
