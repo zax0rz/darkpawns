@@ -70,38 +70,6 @@ case $DEPLOY_MODE in
         echo "4. Start Dark Pawns server: ./dp-server -world ./lib/world"
         ;;
         
-    "docker")
-        echo "🐳 Setting up Docker deployment..."
-        
-        # Check for docker
-        if ! command -v docker &> /dev/null; then
-            echo "❌ Docker not found. Install Docker first."
-            exit 1
-        fi
-        
-        # Create Dockerfile for web server
-        cat > web/Dockerfile << 'EOF'
-FROM nginx:alpine
-
-COPY . /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
-EOF
-        
-        # Build and run
-        cd web
-        docker build -t darkpawns-web .
-        
-        echo ""
-        echo "📋 Docker setup complete. Run with:"
-        echo "  docker run -p 8080:80 darkpawns-web"
-        echo ""
-        echo "⚠️  Note: This only serves the web UI. You still need to run"
-        echo "   the Dark Pawns game server separately."
-        ;;
         
     "test")
         echo "🧪 Running tests..."
@@ -338,7 +306,6 @@ EOF
         echo "Available modes:"
         echo "  local       - Local development setup"
         echo "  nginx       - Nginx reverse proxy setup"
-        echo "  docker      - Docker container setup"
         echo "  test        - Run tests"
         echo "  update-server - Update Go server with web support"
         exit 1

@@ -5,6 +5,11 @@
 **Date:** 2026-05-09
 **Type:** First feature — medium lift
 
+**2026-09-09 scope update:** target native Go installation with PostgreSQL.
+Container deployment is retired. This is still a draft; configuration-file and
+wizard interfaces below are proposals and must be reconciled with the current
+[running guide](../../DEPLOYMENT.md) before implementation.
+
 ---
 
 ## 1. What This Is
@@ -58,13 +63,14 @@ The repo ships world data in `lib/`. The server binary does NOT embed it — it 
 
 ### Database
 
-PostgreSQL is optional. If the connection fails, the server continues without persistence (no player saves, no moderation, no mail). The docker-compose includes Postgres + Redis. Redis is only used by the AI agent container, not the core server.
+PostgreSQL is required for normal operation. Database initialization failure stops
+startup unless the explicit dev/oracle bypass is enabled. Redis is not a core
+server installation requirement.
 
 ### Build Artifacts
 
 - Binary: `go build -o darkpawns ./cmd/server`
-- Docker: `Dockerfile` builds a multi-stage image (Go builder → Python builder → Alpine runtime)
-- Compose: `docker-compose.yml` includes server, postgres, redis, ai-agent
+- Installation target: native binary plus an operator-provisioned PostgreSQL database.
 
 ---
 
@@ -113,7 +119,7 @@ Runs before the TUI renders. Checks:
 - **Terminal size:** minimum 80×24. If smaller, degrade gracefully (no ASCII art, no borders).
 - **Go version:** `go version` — warn if <1.21.
 - **Port availability:** attempt `net.Listen("tcp", ":PORT")` for the proposed port. If blocked, warn and suggest an alternative.
-- **Root check:** if `os.Getuid() == 0`, print a warning. Don't refuse — some Docker flows run as root. But warn loudly.
+- **Root check:** if `os.Getuid() == 0`, explain that the game process should use a dedicated service account.
 - **Existing config:** if `darkpawns.yaml` exists, offer to edit it (rehydrate the TUI with current values) or overwrite.
 
 ### Screen 1: Welcome
@@ -444,7 +450,6 @@ func main() {
 ### Non-TUI Fallback
 
 The plain-interactive mode reuses the same step logic but prints questions to stdout and reads answers from stdin. Same validation, same config output, no Bubble Tea dependency. This is critical for:
-- Docker builds (`docker run -it darkpawns/setup`)
 - CI/CD pipelines
 - SSH sessions with no ANSI support
 - Users who just prefer answering prompts
@@ -546,15 +551,11 @@ config: build
 	./darkpawns -generate-config  # optional: generate a default config without TUI
 ```
 
-### Docker
+### Native installation
 
-The Dockerfile stays the same. The setup wizard is a separate binary — users run it on the host before `docker compose up`, or inside a container with `-it`:
-
-```bash
-docker run -it -v $(pwd)/data:/app darkpawns/setup
-```
-
-Or the wizard generates `darkpawns.yaml` on the host, which is mounted into the container.
+The wizard targets the native Go binary and PostgreSQL. Container deployment
+is retired and is not a wizard requirement. Config-file support elsewhere in
+this draft remains a proposal, not an implemented server interface.
 
 ---
 
@@ -602,7 +603,7 @@ Or the wizard generates `darkpawns.yaml` on the host, which is mounted into the 
 
 The wizard is the foundation for everything else:
 
-- **Config file** → enables Docker without flag soup
+- **Config file** → centralizes native server configuration
 - **`pkg/config/`** → every future feature reads config from one place
 - **`cmd/setup/`** → can be extended with post-install steps (create admin account, import legacy data)
 - **Non-TUI fallback** → scriptable, CI/CD friendly

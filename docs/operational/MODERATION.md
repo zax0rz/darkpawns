@@ -14,7 +14,6 @@ The Dark Pawns moderation system provides tools for managing player behavior, ha
 2. **Admin Commands** (`pkg/command/admin_commands.go`) - In-game admin commands
 3. **Database Schema** - PostgreSQL tables for persistence
 4. **Admin Web Interface** (Optional) - Web-based moderation dashboard
-5. **Docker Compose Stack** - Standalone moderation services
 
 ### Data Flow
 
@@ -26,33 +25,11 @@ Player Report → Abuse Report → Admin Review → Action Taken → Audit Log
 
 ## Installation
 
-### Option 1: Integrated with Main Server
-
-1. Ensure PostgreSQL is running
-2. Update the main server to initialize moderation tables:
-
-```go
-// In main.go
-import "github.com/zax0rz/darkpawns/pkg/moderation"
-
-// After creating database connection
-modManager := moderation.NewManager(database)
-adminCommands := command.NewAdminCommands(manager, modManager)
-adminCommands.RegisterCommands()
-```
-
-### Option 2: Standalone Moderation Stack
-
-```bash
-# Start the moderation stack
-docker-compose -f docker-compose.moderation.yml up -d
-
-# The stack includes:
-# - PostgreSQL database on port 5433
-# - Admin web interface on port 3000 (placeholder)
-# - Moderation API on port 8081
-# - Redis cache on port 6379
-```
+Moderation is wired into the main server when its database is initialized.
+Follow [Running Dark Pawns](../../DEPLOYMENT.md); no source edits or standalone
+moderation stack are required. The inherited Compose moderation services have
+been retired. The command/API notes below are historical and need verification
+against current code before use.
 
 ## Usage
 

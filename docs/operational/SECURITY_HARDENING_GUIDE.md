@@ -159,32 +159,12 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains  # Production onl
 
 ## Deployment Security
 
-### Docker Security
-```yaml
-# docker-compose.yml security settings
-services:
-  server:
-    read_only: true  # Read-only filesystem
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-```
+### Native deployment
 
-### Kubernetes Security
-```yaml
-# k8s/deployment.yaml security settings
-securityContext:
-  runAsNonRoot: true
-  runAsUser: 1000
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop:
-      - ALL
-```
+Docker and Kubernetes recipes are retired. Follow
+[Running Dark Pawns](../../DEPLOYMENT.md) for the supported runtime, environment,
+and persistent state layout. Official service configuration belongs in the
+private ops repository.
 
 ### TLS/HTTPS
 ```bash

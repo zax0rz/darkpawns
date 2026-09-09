@@ -1,6 +1,9 @@
 # Binaries
 /server
 /darkpawns
+/performance
+/lib/admin-ui-dist/
+/.hugo_build.lock
 *.exe
 
 # Go
@@ -60,7 +63,7 @@ src/*.o
 src/*.Po
 maps/world_data.json
 data/
-# ...but the website's canonical Hugo data/ (the history SSOT) must ship:
+# ...but the website's shared history data must ship:
 !website/data/
 !website/data/**
 

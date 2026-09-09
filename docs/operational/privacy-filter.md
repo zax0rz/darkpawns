@@ -39,35 +39,13 @@ The OpenAI Privacy Filter detects 8 categories of PII:
 
 ## Installation
 
-### Option 1: Docker Compose (Recommended)
-
-```bash
-# Start with privacy filter
-docker-compose -f docker-compose.yml -f docker-compose.privacy.yml up -d
-
-# Or use the combined command
-make up-with-privacy
-```
-
-### Option 2: Manual Setup
-
-1. **Start Privacy Filter Service:**
-```bash
-cd deployment
-docker build -f ../Dockerfile.privacy-filter -t privacy-filter .
-docker run -p 8001:8000 --gpus all privacy-filter
-```
-
-2. **Configure Dark Pawns Server:**
-```bash
-cp .env.privacy.example .env.privacy
-# Edit .env.privacy with your settings
-```
-
-3. **Start Server with Privacy Filter:**
-```bash
-PRIVACY_FILTER_URL=http://localhost:8001 ./server
-```
+The inherited Docker/Compose privacy-service deployment has been retired. The
+Go client and `deployment/privacy_filter_api.py` remain as optional integration
+code; this repository does not provide a verified service installation recipe.
+An operator using the integration must provision the service and its model
+dependencies independently, then configure `PRIVACY_FILTER_URL` in the game
+server environment. The native game installation is documented in
+[Running Dark Pawns](../../DEPLOYMENT.md).
 
 ## Configuration
 
@@ -77,7 +55,7 @@ Create a `.env.privacy` file or set environment variables:
 
 ```bash
 # Privacy Filter Service
-PRIVACY_FILTER_URL=http://privacy-filter:8000
+PRIVACY_FILTER_URL=http://localhost:8001
 PRIVACY_FILTER_ENABLED=true
 
 # What to filter (comma-separated)
@@ -273,7 +251,7 @@ Set log level via `PRIVACY_FILTER_LOG_LEVEL`:
 1. **Service Unavailable**
    ```
    Error: connection refused
-   Fix: Check if privacy filter service is running: docker ps | grep privacy-filter
+   Fix: Check the configured privacy-service URL and its service-manager logs.
    ```
 
 2. **Slow Performance**

@@ -48,29 +48,10 @@ Dark Pawns server exposes Prometheus metrics at `/metrics` endpoint:
 
 ## Getting Started
 
-### 1. Start the Monitoring Stack
-
-```bash
-docker-compose -f docker-compose.monitoring.yml up -d
-```
-
-This will start:
-- Dark Pawns server on port 4350
-- Prometheus on port 9090
-- Grafana on port 3000
-- Alertmanager on port 9093
-- Node Exporter on port 9100
-
-### 2. Access Dashboards
-
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Prometheus**: http://localhost:9090
-- **Alertmanager**: http://localhost:9093
-- **Dark Pawns**: http://localhost:4350
-
-### 3. Import Grafana Dashboard
-
-The Dark Pawns dashboard is automatically provisioned. You can also manually import the dashboard JSON from `grafana/dashboards/darkpawns-overview.json`.
+Use the [native monitoring quick start](QUICKSTART-MONITORING.md). The Compose
+stack has been retired. Prometheus/Grafana configuration and dashboards remain
+reference assets, not automatically installed services. Configure them against
+your own server metrics endpoint and verify metric names before using alerts.
 
 ## Alerting Rules
 
