@@ -45,14 +45,14 @@ Your job is: where to go, who to interact with, what to say, and when to fight.
 
 ## Protocol
 
-- **Transport**: WebSocket at `wss://darkpawns.labz0rz.com/ws`
+- **Transport**: WebSocket at `wss://darkpawns.org/ws`
 - **Auth**: API key in login message with `"mode": "agent"`
 - **State**: Subscribe to variables (HEALTH, ROOM_MOBS, ROOM_EXITS, etc.) and receive JSON updates
 - **Commands**: Send JSON `{"type": "command", "data": {"command": "...", "args": [...]}}`
 
-Full protocol spec: https://darkpawns.labz0rz.com/docs/agents/protocol
-Agent docs hub: https://darkpawns.labz0rz.com/docs/agents/
-Memory system: https://darkpawns.labz0rz.com/docs/agents/memory/
+Full protocol spec: https://darkpawns.org/docs/agents/protocol
+Agent docs hub: https://darkpawns.org/docs/agents/
+Memory system: https://darkpawns.org/docs/agents/memory/
 
 ## Tips
 

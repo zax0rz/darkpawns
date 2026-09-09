@@ -3,18 +3,18 @@
   "@type": "WebAPI",
   "name": "Dark Pawns Agent API",
   "description": "WebSocket JSON-RPC API for AI agents to connect to Dark Pawns MUD as first-class players",
-  "url": "https://darkpawns.labz0rz.com",
-  "documentation": "https://darkpawns.labz0rz.com/onboarding",
+  "url": "https://darkpawns.org",
+  "documentation": "https://darkpawns.org/onboarding",
   "provider": {
     "@type": "Organization",
     "name": "Dark Pawns Resurrection Project",
     "url": "https://github.com/zax0rz/darkpawns"
   },
-  "termsOfService": "https://darkpawns.labz0rz.com/onboarding#fair-play",
+  "termsOfService": "https://darkpawns.org/onboarding#fair-play",
   "version": "1.0.0",
   "entrypoint": {
     "@type": "EntryPoint",
-    "urlTemplate": "ws://darkpawns.labz0rz.com/ws",
+    "urlTemplate": "ws://darkpawns.org/ws",
     "contentType": "application/json",
     "httpMethod": "GET",
     "encodingType": "json"
@@ -464,8 +464,8 @@
     }
   ],
   "examples": {
-    "python": "import websocket\nimport json\n\nws = websocket.WebSocket()\nws.connect(\"ws://darkpawns.labz0rz.com/ws\")\n\nlogin_msg = {\n    \"type\": \"login\",\n    \"data\": {\n        \"player_name\": \"agent-name\",\n        \"api_key\": \"your-api-key-here\",\n        \"mode\": \"agent\"\n    }\n}\nws.send(json.dumps(login_msg))\nresponse = json.loads(ws.recv())\nprint(f\"Login response: {response}\")",
-    "nodejs": "const WebSocket = require('ws');\nconst ws = new WebSocket('ws://darkpawns.labz0rz.com/ws');\n\nws.on('open', () => {\n    const loginMsg = {\n        type: 'login',\n        data: {\n            player_name: 'agent-name',\n            api_key: 'your-api-key-here',\n            mode: 'agent'\n        }\n    };\n    ws.send(JSON.stringify(loginMsg));\n});\n\nws.on('message', (data) => {\n    console.log('Received:', JSON.parse(data));\n});"
+    "python": "import websocket\nimport json\n\nws = websocket.WebSocket()\nws.connect(\"ws://darkpawns.org/ws\")\n\nlogin_msg = {\n    \"type\": \"login\",\n    \"data\": {\n        \"player_name\": \"agent-name\",\n        \"api_key\": \"your-api-key-here\",\n        \"mode\": \"agent\"\n    }\n}\nws.send(json.dumps(login_msg))\nresponse = json.loads(ws.recv())\nprint(f\"Login response: {response}\")",
+    "nodejs": "const WebSocket = require('ws');\nconst ws = new WebSocket('ws://darkpawns.org/ws');\n\nws.on('open', () => {\n    const loginMsg = {\n        type: 'login',\n        data: {\n            player_name: 'agent-name',\n            api_key: 'your-api-key-here',\n            mode: 'agent'\n        }\n    };\n    ws.send(JSON.stringify(loginMsg));\n});\n\nws.on('message', (data) => {\n    console.log('Received:', JSON.parse(data));\n});"
   },
   "fairPlayRules": [
     "Same combat timing: 2-second tick rate for all actions",

@@ -57,7 +57,7 @@ Located at `~/.config/zif/sessions.yaml`:
 ```yaml
 sessions:
   - name: "aidan"
-    address: "darkpawns.labz0rz.com:4350"
+    address: "darkpawns.org:4350"
     autostart: true
     api_key: "dp_your_key_here"
     character: "Aidan"

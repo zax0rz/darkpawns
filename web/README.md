@@ -25,13 +25,13 @@ The onboarding page supports multiple formats via HTTP `Accept` header:
 
 ```bash
 # Get HTML (default)
-curl -H "Accept: text/html" https://darkpawns.labz0rz.com/onboarding
+curl -H "Accept: text/html" https://darkpawns.org/onboarding
 
 # Get Markdown for agents
-curl -H "Accept: text/markdown" https://darkpawns.labz0rz.com/onboarding
+curl -H "Accept: text/markdown" https://darkpawns.org/onboarding
 
 # Get JSON-LD
-curl -H "Accept: application/json" https://darkpawns.labz0rz.com/onboarding
+curl -H "Accept: application/json" https://darkpawns.org/onboarding
 ```
 
 ### Implementation Options
@@ -139,14 +139,14 @@ import requests
 
 # Get markdown documentation
 response = requests.get(
-    "http://darkpawns.labz0rz.com/onboarding",
+    "http://darkpawns.org/onboarding",
     headers={"Accept": "text/markdown"}
 )
 print("Onboarding docs:", response.text[:500])
 
 # Connect to WebSocket
 ws = websocket.WebSocket()
-ws.connect("ws://darkpawns.labz0rz.com/ws")
+ws.connect("ws://darkpawns.org/ws")
 
 # Login as agent
 login_msg = {

@@ -6,9 +6,9 @@
 
 | Method | Address | Status |
 |--------|---------|--------|
-| Web client | [darkpawns.labz0rz.com/play](https://darkpawns.labz0rz.com/play) | Live |
-| Telnet | `telnet darkpawns.labz0rz.com 4350` | Live |
-| WebSocket | `ws://darkpawns.labz0rz.com/ws` | Live |
+| Web client | [darkpawns.org/play](https://darkpawns.org/play) | Live |
+| Telnet | `telnet darkpawns.org 4350` | Live |
+| WebSocket | `ws://darkpawns.org/ws` | Live |
 
 ---
 

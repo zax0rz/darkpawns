@@ -37,7 +37,7 @@ except ImportError:
 # Config
 # ---------------------------------------------------------------------------
 
-SITE_BASE = "https://darkpawns.labz0rz.com"
+SITE_BASE = "https://darkpawns.org"
 IGNORE_EXTERNAL_PATTERNS = [
     r"github\.com/zax0rz/darkpawns",  # repo links may 404 if private
     r"discord\.gg",                     # invite links expire
