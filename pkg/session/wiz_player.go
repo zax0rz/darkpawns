@@ -26,9 +26,7 @@ func cmdHeal(s *Session, args []string) error {
 		s.Send("No one by that name online.")
 		return nil
 	}
-	targetSess.player.Health = targetSess.player.MaxHealth
-	targetSess.player.Mana = targetSess.player.MaxMana
-	targetSess.player.Move = targetSess.player.MaxMove
+	targetSess.player.RestoreVitals()
 	slog.Warn("wizard heal", "by", s.player.Name, "target", targetSess.player.Name)
 	s.Send(fmt.Sprintf("You heal %s.", targetSess.player.Name))
 	targetSess.Send(fmt.Sprintf("%s has healed you!", s.player.Name))

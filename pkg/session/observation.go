@@ -79,17 +79,18 @@ func observationPlayerState(player *game.Player) PlayerState {
 	if player == nil {
 		return PlayerState{}
 	}
+	v := player.VitalsSnapshot()
 	return PlayerState{
 		Name:      player.Name,
-		Health:    player.Health,
-		MaxHealth: player.MaxHealth,
-		Mana:      player.Mana,
-		MaxMana:   player.MaxMana,
-		Move:      player.Move,
-		MaxMove:   player.MaxMove,
-		Gold:      player.Gold,
-		Level:     player.Level,
-		Class:     game.ClassNames[player.Class],
+		Health:    v.Health,
+		MaxHealth: v.MaxHealth,
+		Mana:      v.Mana,
+		MaxMana:   v.MaxMana,
+		Move:      v.Move,
+		MaxMove:   v.MaxMove,
+		Gold:      v.Gold,
+		Level:     v.Level,
+		Class:     game.ClassNames[v.Class],
 		Race:      game.RaceNames[player.Race],
 		Str:       player.Stats.Str,
 		Int:       player.Stats.Int,

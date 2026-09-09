@@ -189,23 +189,23 @@ type infobarState struct {
 
 func newInfobarState(s *Session) *infobarState {
 	p := s.player
+	v := p.VitalsSnapshot()
 	// C's exp_needed_for_level(ch) passes the current level to find_exp.
-	expNeeded := game.FindExp(p.Class, p.Level)
-	nextLvl := p.Level + 1
+	expNeeded := game.FindExp(v.Class, v.Level)
 
 	return &infobarState{
 		screenSize:        s.screenSize,
-		lastHit:           p.Health,
-		lastMaxHit:        p.MaxHealth,
-		lastMana:          p.Mana,
-		lastMaxMana:       p.MaxMana,
-		lastMove:          p.Move,
-		lastMaxMove:       p.MaxMove,
-		lastExp:           p.Exp,
-		lastGold:          p.Gold,
+		lastHit:           v.Health,
+		lastMaxHit:        v.MaxHealth,
+		lastMana:          v.Mana,
+		lastMaxMana:       v.MaxMana,
+		lastMove:          v.Move,
+		lastMaxMove:       v.MaxMove,
+		lastExp:           v.Exp,
+		lastGold:          v.Gold,
 		expNeededForLevel: expNeeded,
-		nextLevel:         nextLvl,
-		level:             p.Level,
+		nextLevel:         v.Level + 1,
+		level:             v.Level,
 	}
 }
 
@@ -213,14 +213,15 @@ func (s *Session) rememberInfobarValues() {
 	if s.player == nil {
 		return
 	}
-	s.infobarLastHit = s.player.Health
-	s.infobarLastMaxHit = s.player.MaxHealth
-	s.infobarLastMana = s.player.Mana
-	s.infobarLastMaxMana = s.player.MaxMana
-	s.infobarLastMove = s.player.Move
-	s.infobarLastMaxMove = s.player.MaxMove
-	s.infobarLastExp = s.player.Exp
-	s.infobarLastGold = s.player.Gold
+	v := s.player.VitalsSnapshot()
+	s.infobarLastHit = v.Health
+	s.infobarLastMaxHit = v.MaxHealth
+	s.infobarLastMana = v.Mana
+	s.infobarLastMaxMana = v.MaxMana
+	s.infobarLastMove = v.Move
+	s.infobarLastMaxMove = v.MaxMove
+	s.infobarLastExp = v.Exp
+	s.infobarLastGold = v.Gold
 }
 
 func infobarClearHitPoints(ch *infobarState) string {
@@ -260,20 +261,21 @@ func cmdInfoBarUpdate(s *Session) {
 	}
 
 	p := s.player
+	v := p.VitalsSnapshot()
 	update := 0
-	if p.Move != s.infobarLastMove || p.MaxMove != s.infobarLastMaxMove {
+	if v.Move != s.infobarLastMove || v.MaxMove != s.infobarLastMaxMove {
 		update |= InfoMove
 	}
-	if p.Mana != s.infobarLastMana || p.MaxMana != s.infobarLastMaxMana {
+	if v.Mana != s.infobarLastMana || v.MaxMana != s.infobarLastMaxMana {
 		update |= InfoMana
 	}
-	if p.Health != s.infobarLastHit || p.MaxHealth != s.infobarLastMaxHit {
+	if v.Health != s.infobarLastHit || v.MaxHealth != s.infobarLastMaxHit {
 		update |= InfoHit
 	}
-	if p.Gold != s.infobarLastGold {
+	if v.Gold != s.infobarLastGold {
 		update |= InfoGold
 	}
-	if p.Exp != s.infobarLastExp {
+	if v.Exp != s.infobarLastExp {
 		update |= InfoExp
 	}
 	if update == 0 {
