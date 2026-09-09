@@ -232,6 +232,56 @@ func (p *Player) GetMaxMove() int {
 	return p.MaxMove + p.sumAffectModsLocked(ApplyMove) + p.sumEquipAffectModsLocked(ApplyMove)
 }
 
+// PlayerVitals is a point-in-time copy of the stored (raw) vitals fields —
+// no affect modifiers, exactly the values a direct field read would return.
+// Display paths (prompt, VT100 infobar, score, agent var dumps, observation
+// state) run on session goroutines concurrently with the combat-round and
+// point-update goroutines, so they must read through VitalsSnapshot instead
+// of racing the bare fields.
+type PlayerVitals struct {
+	Health    int
+	MaxHealth int
+	Mana      int
+	MaxMana   int
+	Move      int
+	MaxMove   int
+	Exp       int
+	Gold      int
+	Level     int
+	Class     int
+	Position  int
+}
+
+// VitalsSnapshot returns the stored vitals fields under a single read lock.
+func (p *Player) VitalsSnapshot() PlayerVitals {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return PlayerVitals{
+		Health:    p.Health,
+		MaxHealth: p.MaxHealth,
+		Mana:      p.Mana,
+		MaxMana:   p.MaxMana,
+		Move:      p.Move,
+		MaxMove:   p.MaxMove,
+		Exp:       p.Exp,
+		Gold:      p.Gold,
+		Level:     p.Level,
+		Class:     p.Class,
+		Position:  p.Position,
+	}
+}
+
+// RestoreVitals sets health, mana, and move to their stored maxima under a
+// single write lock. Used by the wizard heal/restore commands so the write
+// cannot interleave with a concurrent combat damage or regen update.
+func (p *Player) RestoreVitals() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Health = p.MaxHealth
+	p.Mana = p.MaxMana
+	p.Move = p.MaxMove
+}
+
 // SetMaxMove sets the player's maximum movement points.
 func (p *Player) SetMaxMove(v int) {
 	p.mu.Lock()

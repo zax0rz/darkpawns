@@ -156,29 +156,29 @@ func (s *Session) sendFullVarDump() {
 func (s *Session) buildVarValue(varName string) interface{} {
 	switch varName {
 	case VarHealth:
-		return s.player.Health
+		return s.player.GetHP()
 	case VarMaxHealth:
-		return s.player.MaxHealth
+		return s.player.GetMaxHealth()
 	case VarMana:
-		return s.player.Mana
+		return s.player.GetMana()
 	case VarMaxMana:
-		return s.player.MaxMana
+		return s.player.VitalsSnapshot().MaxMana
 	case VarMove:
-		return s.player.Move
+		return s.player.GetMove()
 	case VarMaxMove:
-		return s.player.MaxMove
+		return s.player.VitalsSnapshot().MaxMove
 	case VarGold:
-		return s.player.Gold
+		return s.player.GetGold()
 	case VarPosition:
-		pos := s.player.Position
+		pos := s.player.GetPosition()
 		if pos >= 0 && pos < len(game.PositionNames) {
 			return game.PositionNames[pos]
 		}
 		return fmt.Sprintf("unknown (%d)", pos)
 	case VarLevel:
-		return s.player.Level
+		return s.player.GetLevel()
 	case VarExp:
-		return s.player.Exp
+		return s.player.GetExp()
 	case VarRoomVnum:
 		return s.player.GetRoom()
 	case VarRoomName:
@@ -300,7 +300,7 @@ func (s *Session) buildRoomMobs() []RoomMobVar {
 			InstanceID:   fmt.Sprintf("mob_%d_%d", mob.VNum, i),
 			TargetString: targetStrings[i],
 			VNum:         mob.VNum,
-			Fighting:     mob.Fighting,
+			Fighting:     mob.IsFighting(),
 		}
 	}
 	return result

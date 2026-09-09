@@ -280,7 +280,7 @@ func cmdScore(s *Session) error {
 	}
 
 	// 16. Position (from C lines 1318-1340)
-	buf.WriteString(positionText(p.Position))
+	buf.WriteString(positionText(p.GetPosition()))
 	buf.WriteString("\r\n")
 
 	// 17. Status conditions (from C lines 1342-1347)

@@ -313,13 +313,13 @@ func (s *Session) promptText() string {
 	// differential normalizer, so only the numeric fields are emitted.
 	if s.infobarMode != InfobarOn {
 		if flags&(1<<uint(game.PrfDisphp)) != 0 {
-			fmt.Fprintf(&prefix, "%dH ", s.player.Health)
+			fmt.Fprintf(&prefix, "%dH ", s.player.GetHP())
 		}
 		if flags&(1<<uint(game.PrfDispmmana)) != 0 {
-			fmt.Fprintf(&prefix, "%dM ", s.player.Mana)
+			fmt.Fprintf(&prefix, "%dM ", s.player.GetMana())
 		}
 		if flags&(1<<uint(game.PrfDispmove)) != 0 {
-			fmt.Fprintf(&prefix, "%dV ", s.player.Move)
+			fmt.Fprintf(&prefix, "%dV ", s.player.GetMove())
 		}
 	}
 	return prefix.String() + "> "
