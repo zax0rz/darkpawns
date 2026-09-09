@@ -33,7 +33,7 @@ Grab a MUD client, roll a character, and try not to get looted.
 
 ---
 
-*Connect via telnet at `darkpawns.labz0rz.com 7777` or play directly in your browser at [/play](/play/).*
+*Connect via telnet at `darkpawns.org 7777` or play directly in your browser at [/play](/play/).*
 
 
 

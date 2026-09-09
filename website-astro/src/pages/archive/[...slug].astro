@@ -42,7 +42,7 @@ const held = topics.filter((topic) => recovered.has(topic.id)).length;
 // location and a known archived copy, which is exactly what isBasedOn and
 // citation are for, so the provenance the page states in words is also stated
 // in a form a machine can check.
-const site = 'https://darkpawns.labz0rz.com';
+const site = 'https://darkpawns.org';
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': entry.data.kind === 'forum-thread' ? 'DiscussionForumPosting' : 'Article',

@@ -879,4 +879,4 @@ Building the judge first and proving behavior at the byte level turns a massive 
 
 ---
 
-*If you want to help close the gap on the remaining depth ledgers and mob AI, take a look at the [Contributing Guide](/docs/server/contributing/) or grab an open issue on [GitHub](https://github.com/zax0rz/darkpawns). You can also connect to the live port via telnet at `darkpawns.labz0rz.com 7777` or test it in your browser at [/play](/play/).*
+*If you want to help close the gap on the remaining depth ledgers and mob AI, take a look at the [Contributing Guide](/docs/server/contributing/) or grab an open issue on [GitHub](https://github.com/zax0rz/darkpawns). You can also connect to the live port via telnet at `darkpawns.org 7777` or test it in your browser at [/play](/play/).*

@@ -18,7 +18,7 @@ const jsonLd = {
   name: room.name,
   description: room.description || room.name,
   identifier: { '@type': 'PropertyValue', propertyID: 'Dark Pawns room VNUM', value: String(room.id) },
-  isPartOf: { '@type': 'VideoGame', name: 'Dark Pawns', url: 'https://darkpawns.labz0rz.com/' },
+  isPartOf: { '@type': 'VideoGame', name: 'Dark Pawns', url: 'https://darkpawns.org/' },
   additionalProperty: [
     { '@type': 'PropertyValue', name: 'Zone', value: `${room.zoneName} (${room.zoneId})` },
     { '@type': 'PropertyValue', name: 'Sector', value: sectorName(room.sector) },

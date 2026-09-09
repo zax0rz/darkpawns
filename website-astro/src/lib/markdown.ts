@@ -7,7 +7,7 @@ const yamlValue = (value: string | number | boolean | Date): string => {
 };
 
 export function markdownResponse(body: string, metadata: MarkdownMetadata, canonicalPath: string): Response {
-  const fields: MarkdownMetadata = { ...metadata, canonical: `https://darkpawns.labz0rz.com${canonicalPath}` };
+  const fields: MarkdownMetadata = { ...metadata, canonical: `https://darkpawns.org${canonicalPath}` };
   const frontmatter = Object.entries(fields)
     .flatMap(([key, value]) => value === undefined ? [] : [`${key}: ${yamlValue(value)}`])
     .join('\n');
@@ -16,7 +16,7 @@ export function markdownResponse(body: string, metadata: MarkdownMetadata, canon
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
       'Content-Language': 'en',
-      Link: `<https://darkpawns.labz0rz.com${canonicalPath}>; rel="canonical"; type="text/html"`,
+      Link: `<https://darkpawns.org${canonicalPath}>; rel="canonical"; type="text/html"`,
     },
   });
 }

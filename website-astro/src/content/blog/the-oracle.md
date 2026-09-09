@@ -96,4 +96,4 @@ Dark Pawns ran from 1994 to about 2010. Its dice are still rolling the same numb
 
 ---
 
-*Connect via telnet at `darkpawns.labz0rz.com 7777` or play directly in your browser at [/play](/play/). The port is open source on [GitHub](https://github.com/zax0rz/darkpawns).*
+*Connect via telnet at `darkpawns.org 7777` or play directly in your browser at [/play](/play/). The port is open source on [GitHub](https://github.com/zax0rz/darkpawns).*

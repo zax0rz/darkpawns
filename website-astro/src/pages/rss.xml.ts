@@ -8,7 +8,7 @@ export async function GET(context: { site?: URL }) {
   return rss({
     title: 'Dark Pawns restoration notes',
     description: 'Project notes from the Dark Pawns restoration.',
-    site: context.site ?? new URL('https://darkpawns.labz0rz.com/'),
+    site: context.site ?? new URL('https://darkpawns.org/'),
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,
