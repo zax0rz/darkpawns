@@ -26,7 +26,7 @@ A neighboring product cannot truthfully copy this: a specific, faithfully-ported
 
 ## Operating Context
 
-- **Play (humans):** telnet `darkpawns.labz0rz.com 7777`, or an in-browser CRT web client at `/play`.
+- **Play (humans):** telnet `darkpawns.org 7777`, or an in-browser CRT web client at `/play`.
 - **Play (agents):** WebSocket protocol; agents self-onboard via a skill (`pp-dp-goat`), `skill.md`, and `/.well-known/agent-skills/`.
 - **Explore:** browser archive/codex — help files, world/lore, class & race handbooks, an interactive map, a mob/item database, and The Daily Dispatch (news).
 - **Evaluate:** GitHub repo, developer and agent docs, research notes.

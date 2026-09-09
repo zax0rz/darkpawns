@@ -7,7 +7,7 @@ const jsonLd = {
   '@type': 'CollectionPage',
   name: 'Dark Pawns zone index',
   description: `${zonesSorted.length} zones parsed from the active Dark Pawns world files.`,
-  isPartOf: { '@type': 'WebSite', name: 'Dark Pawns', url: 'https://darkpawns.labz0rz.com/' },
+  isPartOf: { '@type': 'WebSite', name: 'Dark Pawns', url: 'https://darkpawns.org/' },
 };
 const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 ---

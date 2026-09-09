@@ -90,7 +90,7 @@ const redirects = {
 
 // Dark Pawns — Astro migration (replaces the Hugo site in ../website).
 export default defineConfig({
-  site: 'https://darkpawns.labz0rz.com',
+  site: 'https://darkpawns.org',
   markdown: {
     // Smart punctuation is off site-wide. Almost every Markdown file here is
     // verbatim text somebody else wrote: 430 help entries copied out of the
