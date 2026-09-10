@@ -130,12 +130,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	clientIP := remoteIP(r)
-	if !h.limit.Allow(clientIP, time.Now()) {
-		writeJSON(w, http.StatusTooManyRequests, "Too many messages have been sent from this connection. Try again later.")
-		return
-	}
 	if err := h.verify.Verify(r.Context(), form.Turnstile, clientIP); err != nil {
 		writeJSON(w, http.StatusBadRequest, "The spam check did not pass. Please try again.")
+		return
+	}
+	if !h.limit.Allow(clientIP, time.Now()) {
+		writeJSON(w, http.StatusTooManyRequests, "Too many messages have been sent from this connection. Try again later.")
 		return
 	}
 	if err := h.send.Send(form); err != nil {
@@ -258,20 +258,48 @@ type rateLimiter struct {
 }
 
 func newRateLimiter(limit int, window time.Duration) *rateLimiter {
-	return &rateLimiter{limit: limit, window: window, maxKeys: 10_000, entries: make(map[string][]time.Time)}
+	return newRateLimiterWithCapacity(limit, window, 10_000)
+}
+
+func newRateLimiterWithCapacity(limit int, window time.Duration, maxKeys int) *rateLimiter {
+	return &rateLimiter{
+		limit:   limit,
+		window:  window,
+		maxKeys: maxKeys,
+		entries: make(map[string][]time.Time),
+	}
 }
 
 func (l *rateLimiter) Allow(key string, now time.Time) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if _, exists := l.entries[key]; !exists && len(l.entries) >= l.maxKeys {
-		return false
-	}
+
 	cutoff := now.Add(-l.window)
-	kept := l.entries[key][:0]
-	for _, stamp := range l.entries[key] {
-		if stamp.After(cutoff) {
-			kept = append(kept, stamp)
+	if _, exists := l.entries[key]; !exists && len(l.entries) >= l.maxKeys {
+		for k, stamps := range l.entries {
+			hasActive := false
+			for _, stamp := range stamps {
+				if stamp.After(cutoff) {
+					hasActive = true
+					break
+				}
+			}
+			if !hasActive {
+				delete(l.entries, k)
+			}
+		}
+		if len(l.entries) >= l.maxKeys {
+			return false
+		}
+	}
+
+	var kept []time.Time
+	if existing, ok := l.entries[key]; ok {
+		kept = existing[:0]
+		for _, stamp := range existing {
+			if stamp.After(cutoff) {
+				kept = append(kept, stamp)
+			}
 		}
 	}
 	if len(kept) >= l.limit {

@@ -51,7 +51,7 @@ type ExtraDesc struct {
 	Description string
 }
 
-// lineBuffer is defined in linebuffer.go (shared between obj and mob parsers).
+// lineBuffer is defined in mob.go (shared between obj and mob parsers).
 
 // ParseObjFile parses a single .obj file and returns all objects.
 func ParseObjFile(path string) ([]Obj, error) {

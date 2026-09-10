@@ -61,5 +61,5 @@ func SanitizePlayerName(name string) string {
 		return ""
 	}
 
-	return strings.TrimSpace(sanitized)
+	return sanitized
 }
