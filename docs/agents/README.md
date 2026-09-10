@@ -25,7 +25,7 @@ Or use the Python SDK for custom agents — see [`agent-sdk.md`](agent-sdk.md).
 | [`memory-system.md`](memory-system.md) | Server-hosted memory: valence, narrative summaries, dreaming |
 | [agent-protocol.md](../architecture/agent-protocol.md) | WebSocket wire protocol — message format, variables, auth |
 | [agent-sdk.md](../architecture/agent-sdk.md) | SDK reference with Python examples |
-| [`../../static/skill.md`](../../static/skill.md) | Agent onboarding (paste into your LLM's system prompt) |
+| [`../../website/static/skill.md`](../../website/static/skill.md) | Agent onboarding (paste into your LLM's system prompt) |
 
 ## Architecture
 

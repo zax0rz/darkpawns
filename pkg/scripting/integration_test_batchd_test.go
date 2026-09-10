@@ -12,24 +12,24 @@ func TestBatchDScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"aki_kuroda", "../../test_scripts/mob/archive/aki_kuroda.lua"},
-		{"autodraw", "../../test_scripts/mob/archive/autodraw.lua"},
-		{"baker_dough", "../../test_scripts/mob/archive/baker_dough.lua"},
-		{"baker_flour", "../../test_scripts/mob/archive/baker_flour.lua"},
-		{"crystal_forger", "../../test_scripts/mob/archive/crystal_forger.lua"},
-		{"dragon_forger", "../../test_scripts/mob/archive/dragon_forger.lua"},
-		{"enchanter", "../../test_scripts/mob/archive/enchanter.lua"},
-		{"farmer_wheat", "../../test_scripts/mob/archive/farmer_wheat.lua"},
-		{"golem_from_crate", "../../test_scripts/mob/archive/golem_from_crate.lua"},
-		{"golem_miner", "../../test_scripts/mob/archive/golem_miner.lua"},
-		{"golem_to_crate", "../../test_scripts/mob/archive/golem_to_crate.lua"},
-		{"miller", "../../test_scripts/mob/archive/miller.lua"},
-		{"tattoo", "../../test_scripts/mob/archive/tattoo.lua"},
-		{"town_teleport", "../../test_scripts/mob/archive/town_teleport.lua"},
+		{"aki_kuroda", "../../tests/test_scripts/mob/archive/aki_kuroda.lua"},
+		{"autodraw", "../../tests/test_scripts/mob/archive/autodraw.lua"},
+		{"baker_dough", "../../tests/test_scripts/mob/archive/baker_dough.lua"},
+		{"baker_flour", "../../tests/test_scripts/mob/archive/baker_flour.lua"},
+		{"crystal_forger", "../../tests/test_scripts/mob/archive/crystal_forger.lua"},
+		{"dragon_forger", "../../tests/test_scripts/mob/archive/dragon_forger.lua"},
+		{"enchanter", "../../tests/test_scripts/mob/archive/enchanter.lua"},
+		{"farmer_wheat", "../../tests/test_scripts/mob/archive/farmer_wheat.lua"},
+		{"golem_from_crate", "../../tests/test_scripts/mob/archive/golem_from_crate.lua"},
+		{"golem_miner", "../../tests/test_scripts/mob/archive/golem_miner.lua"},
+		{"golem_to_crate", "../../tests/test_scripts/mob/archive/golem_to_crate.lua"},
+		{"miller", "../../tests/test_scripts/mob/archive/miller.lua"},
+		{"tattoo", "../../tests/test_scripts/mob/archive/tattoo.lua"},
+		{"town_teleport", "../../tests/test_scripts/mob/archive/town_teleport.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}

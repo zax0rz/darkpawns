@@ -13,7 +13,7 @@ func TestIsFightingBasic(t *testing.T) {
 	// This test verifies that the engine can be created and basic functions work
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -152,7 +152,7 @@ func TestSpellDamageFormulas(t *testing.T) {
 // TestRoomTable tests that room table is created with proper structure
 func TestRoomTable(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -177,15 +177,15 @@ func TestTier2CombatAIScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"dragon_breath", "../../test_scripts/mob/archive/dragon_breath.lua"},
-		{"anhkheg", "../../test_scripts/mob/archive/anhkheg.lua"},
-		{"drake", "../../test_scripts/mob/archive/drake.lua"},
-		{"bradle", "../../test_scripts/mob/archive/bradle.lua"},
-		{"caerroil", "../../test_scripts/mob/archive/caerroil.lua"},
+		{"dragon_breath", "../../tests/test_scripts/mob/archive/dragon_breath.lua"},
+		{"anhkheg", "../../tests/test_scripts/mob/archive/anhkheg.lua"},
+		{"drake", "../../tests/test_scripts/mob/archive/drake.lua"},
+		{"bradle", "../../tests/test_scripts/mob/archive/bradle.lua"},
+		{"caerroil", "../../tests/test_scripts/mob/archive/caerroil.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -221,7 +221,7 @@ func TestDragonBreathSpellConstants(t *testing.T) {
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -281,15 +281,15 @@ func TestBatchBScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"ettin", "../../test_scripts/mob/archive/ettin.lua"},
-		{"snake", "../../test_scripts/mob/archive/snake.lua"},
-		{"troll", "../../test_scripts/mob/archive/troll.lua"},
-		{"mindflayer", "../../test_scripts/mob/archive/mindflayer.lua"},
-		{"paladin", "../../test_scripts/mob/archive/paladin.lua"},
+		{"ettin", "../../tests/test_scripts/mob/archive/ettin.lua"},
+		{"snake", "../../tests/test_scripts/mob/archive/snake.lua"},
+		{"troll", "../../tests/test_scripts/mob/archive/troll.lua"},
+		{"mindflayer", "../../tests/test_scripts/mob/archive/mindflayer.lua"},
+		{"paladin", "../../tests/test_scripts/mob/archive/paladin.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -312,11 +312,11 @@ func TestBatchBScriptsParse(t *testing.T) {
 // onpulse_all() triggers. Source: troll.lua
 func TestTrollDefinesBothTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/troll.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/troll.lua"); err != nil {
 		t.Fatalf("troll.lua load error: %v", err)
 	}
 	for _, fn := range []string{"fight", "onpulse_all"} {
@@ -367,7 +367,7 @@ func TestSnakePoisonChanceFormula(t *testing.T) {
 // Source: engine.go (SPELL_SOUL_LEECH=83, SPELL_PSIBLAST=100)
 func TestMindflayerSpellConstants(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -390,20 +390,20 @@ func TestTier3EconomyScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"merchant_walk", "../../test_scripts/mob/archive/merchant_walk.lua"},
-		{"teacher", "../../test_scripts/mob/archive/teacher.lua"},
-		{"recruiter", "../../test_scripts/mob/archive/recruiter.lua"},
-		{"pet_store", "../../test_scripts/mob/archive/pet_store.lua"},
-		{"remove_curse", "../../test_scripts/mob/archive/remove_curse.lua"},
-		{"shopkeeper", "../../test_scripts/mob/archive/shopkeeper.lua"},
-		{"shop_give", "../../test_scripts/mob/archive/shop_give.lua"},
-		{"identifier", "../../test_scripts/mob/archive/identifier.lua"},
-		{"stable", "../../test_scripts/mob/archive/stable.lua"},
-		{"merchant_inn", "../../test_scripts/mob/archive/merchant_inn.lua"},
+		{"merchant_walk", "../../tests/test_scripts/mob/archive/merchant_walk.lua"},
+		{"teacher", "../../tests/test_scripts/mob/archive/teacher.lua"},
+		{"recruiter", "../../tests/test_scripts/mob/archive/recruiter.lua"},
+		{"pet_store", "../../tests/test_scripts/mob/archive/pet_store.lua"},
+		{"remove_curse", "../../tests/test_scripts/mob/archive/remove_curse.lua"},
+		{"shopkeeper", "../../tests/test_scripts/mob/archive/shopkeeper.lua"},
+		{"shop_give", "../../tests/test_scripts/mob/archive/shop_give.lua"},
+		{"identifier", "../../tests/test_scripts/mob/archive/identifier.lua"},
+		{"stable", "../../tests/test_scripts/mob/archive/stable.lua"},
+		{"merchant_inn", "../../tests/test_scripts/mob/archive/merchant_inn.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -425,11 +425,11 @@ func TestTier3EconomyScriptsParse(t *testing.T) {
 // TestMerchantWalkDefinesTriggers verifies merchant_walk.lua defines onpulse_all and oncmd.
 func TestMerchantWalkDefinesTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/merchant_walk.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/merchant_walk.lua"); err != nil {
 		t.Fatalf("merchant_walk.lua load error: %v", err)
 	}
 	for _, fn := range []string{"onpulse_all", "oncmd"} {
@@ -445,11 +445,11 @@ func TestMerchantWalkDefinesTriggers(t *testing.T) {
 // TestRemoveCurseDefinesTriggers verifies remove_curse.lua defines oncmd and greet.
 func TestRemoveCurseDefinesTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/remove_curse.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/remove_curse.lua"); err != nil {
 		t.Fatalf("remove_curse.lua load error: %v", err)
 	}
 	for _, fn := range []string{"oncmd", "greet"} {
@@ -466,7 +466,7 @@ func TestRemoveCurseDefinesTriggers(t *testing.T) {
 // Source: spells.h (SPELL_DISPEL_EVIL=22, SPELL_DISPEL_GOOD=46)
 func TestPaladinSpellConstants(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -490,20 +490,20 @@ func TestTier4EnvironmentalScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"aurumvorax", "../../test_scripts/mob/archive/aurumvorax.lua"},
-		{"beholder", "../../test_scripts/mob/archive/beholder.lua"},
-		{"brain_eater", "../../test_scripts/mob/archive/brain_eater.lua"},
-		{"donation", "../../test_scripts/mob/archive/donation.lua"},
-		{"eq_thief", "../../test_scripts/mob/archive/eq_thief.lua"},
-		{"memory_moss", "../../test_scripts/mob/archive/memory_moss.lua"},
-		{"medusa", "../../test_scripts/mob/archive/medusa.lua"},
-		{"sandstorm", "../../test_scripts/mob/archive/sandstorm.lua"},
-		{"phoenix", "../../test_scripts/mob/archive/phoenix.lua"},
-		{"souleater", "../../test_scripts/mob/archive/souleater.lua"},
+		{"aurumvorax", "../../tests/test_scripts/mob/archive/aurumvorax.lua"},
+		{"beholder", "../../tests/test_scripts/mob/archive/beholder.lua"},
+		{"brain_eater", "../../tests/test_scripts/mob/archive/brain_eater.lua"},
+		{"donation", "../../tests/test_scripts/mob/archive/donation.lua"},
+		{"eq_thief", "../../tests/test_scripts/mob/archive/eq_thief.lua"},
+		{"memory_moss", "../../tests/test_scripts/mob/archive/memory_moss.lua"},
+		{"medusa", "../../tests/test_scripts/mob/archive/medusa.lua"},
+		{"sandstorm", "../../tests/test_scripts/mob/archive/sandstorm.lua"},
+		{"phoenix", "../../tests/test_scripts/mob/archive/phoenix.lua"},
+		{"souleater", "../../tests/test_scripts/mob/archive/souleater.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -600,29 +600,29 @@ func TestBatchBAmbientScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"beggar", "../../test_scripts/mob/archive/beggar.lua"},
-		{"bhang", "../../test_scripts/mob/archive/bhang.lua"},
-		{"blacksmith", "../../test_scripts/mob/archive/blacksmith.lua"},
-		{"carpenter", "../../test_scripts/mob/archive/carpenter.lua"},
-		{"citizen", "../../test_scripts/mob/archive/citizen.lua"},
-		{"elven_prostitute", "../../test_scripts/mob/archive/elven_prostitute.lua"},
-		{"forester", "../../test_scripts/mob/archive/forester.lua"},
-		{"hermit", "../../test_scripts/mob/archive/hermit.lua"},
-		{"mime", "../../test_scripts/mob/archive/mime.lua"},
-		{"minstrel", "../../test_scripts/mob/archive/minstrel.lua"},
-		{"petitioner", "../../test_scripts/mob/archive/petitioner.lua"},
-		{"puff", "../../test_scripts/mob/archive/puff.lua"},
-		{"seiji", "../../test_scripts/mob/archive/seiji.lua"},
-		{"singingdrunk", "../../test_scripts/mob/archive/singingdrunk.lua"},
-		{"tyr", "../../test_scripts/mob/archive/tyr.lua"},
-		{"warg", "../../test_scripts/mob/archive/warg.lua"},
-		{"zealot", "../../test_scripts/mob/archive/zealot.lua"},
-		{"bearcub", "../../test_scripts/mob/archive/bearcub.lua"},
-		{"towncrier", "../../test_scripts/mob/archive/towncrier.lua"},
+		{"beggar", "../../tests/test_scripts/mob/archive/beggar.lua"},
+		{"bhang", "../../tests/test_scripts/mob/archive/bhang.lua"},
+		{"blacksmith", "../../tests/test_scripts/mob/archive/blacksmith.lua"},
+		{"carpenter", "../../tests/test_scripts/mob/archive/carpenter.lua"},
+		{"citizen", "../../tests/test_scripts/mob/archive/citizen.lua"},
+		{"elven_prostitute", "../../tests/test_scripts/mob/archive/elven_prostitute.lua"},
+		{"forester", "../../tests/test_scripts/mob/archive/forester.lua"},
+		{"hermit", "../../tests/test_scripts/mob/archive/hermit.lua"},
+		{"mime", "../../tests/test_scripts/mob/archive/mime.lua"},
+		{"minstrel", "../../tests/test_scripts/mob/archive/minstrel.lua"},
+		{"petitioner", "../../tests/test_scripts/mob/archive/petitioner.lua"},
+		{"puff", "../../tests/test_scripts/mob/archive/puff.lua"},
+		{"seiji", "../../tests/test_scripts/mob/archive/seiji.lua"},
+		{"singingdrunk", "../../tests/test_scripts/mob/archive/singingdrunk.lua"},
+		{"tyr", "../../tests/test_scripts/mob/archive/tyr.lua"},
+		{"warg", "../../tests/test_scripts/mob/archive/warg.lua"},
+		{"zealot", "../../tests/test_scripts/mob/archive/zealot.lua"},
+		{"bearcub", "../../tests/test_scripts/mob/archive/bearcub.lua"},
+		{"towncrier", "../../tests/test_scripts/mob/archive/towncrier.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -700,24 +700,24 @@ func TestBatchACombatAIScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"backstabber", "../../test_scripts/mob/archive/backstabber.lua"},
-		{"fire_ant", "../../test_scripts/mob/archive/fire_ant.lua"},
-		{"fire_ant_larva", "../../test_scripts/mob/archive/fire_ant_larva.lua"},
-		{"gazer", "../../test_scripts/mob/archive/gazer.lua"},
-		{"griffin", "../../test_scripts/mob/archive/griffin.lua"},
-		{"kelpie", "../../test_scripts/mob/archive/kelpie.lua"},
-		{"neckbreak", "../../test_scripts/mob/archive/neckbreak.lua"},
-		{"paralyse", "../../test_scripts/mob/archive/paralyse.lua"},
-		{"porcupine", "../../test_scripts/mob/archive/porcupine.lua"},
-		{"strike", "../../test_scripts/mob/archive/strike.lua"},
-		{"thornslinger", "../../test_scripts/mob/archive/thornslinger.lua"},
-		{"weatherworker", "../../test_scripts/mob/archive/weatherworker.lua"},
-		{"werewolf", "../../test_scripts/mob/archive/werewolf.lua"},
-		{"zen_master", "../../test_scripts/mob/archive/zen_master.lua"},
+		{"backstabber", "../../tests/test_scripts/mob/archive/backstabber.lua"},
+		{"fire_ant", "../../tests/test_scripts/mob/archive/fire_ant.lua"},
+		{"fire_ant_larva", "../../tests/test_scripts/mob/archive/fire_ant_larva.lua"},
+		{"gazer", "../../tests/test_scripts/mob/archive/gazer.lua"},
+		{"griffin", "../../tests/test_scripts/mob/archive/griffin.lua"},
+		{"kelpie", "../../tests/test_scripts/mob/archive/kelpie.lua"},
+		{"neckbreak", "../../tests/test_scripts/mob/archive/neckbreak.lua"},
+		{"paralyse", "../../tests/test_scripts/mob/archive/paralyse.lua"},
+		{"porcupine", "../../tests/test_scripts/mob/archive/porcupine.lua"},
+		{"strike", "../../tests/test_scripts/mob/archive/strike.lua"},
+		{"thornslinger", "../../tests/test_scripts/mob/archive/thornslinger.lua"},
+		{"weatherworker", "../../tests/test_scripts/mob/archive/weatherworker.lua"},
+		{"werewolf", "../../tests/test_scripts/mob/archive/werewolf.lua"},
+		{"zen_master", "../../tests/test_scripts/mob/archive/zen_master.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -752,11 +752,11 @@ func TestFireAntPoisonProbability(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/zen_master.lua
 func TestZenMasterDefinesAllTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/zen_master.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/zen_master.lua"); err != nil {
 		t.Fatalf("zen_master.lua load error: %v", err)
 	}
 	for _, fn := range []string{"fight", "teleport", "word"} {
@@ -826,7 +826,7 @@ func TestThornslingerDamageRange(t *testing.T) {
 // Source: engine.go setupBasicConstants
 func TestSpellConstantsBatchA(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -893,29 +893,29 @@ func TestBatchCScriptsParse(t *testing.T) {
 		name string
 		path string
 	}{
-		{"aversin", "../../test_scripts/mob/archive/aversin.lua"},
-		{"breed_killer", "../../test_scripts/mob/archive/breed_killer.lua"},
-		{"cabinguard", "../../test_scripts/mob/archive/cabinguard.lua"},
-		{"conjured", "../../test_scripts/mob/archive/conjured.lua"},
-		{"cuchi", "../../test_scripts/mob/archive/cuchi.lua"},
-		{"guard_captain", "../../test_scripts/mob/archive/guard_captain.lua"},
-		{"guardian", "../../test_scripts/mob/archive/guardian.lua"},
-		{"head_shrinker", "../../test_scripts/mob/archive/head_shrinker.lua"},
-		{"jailguard", "../../test_scripts/mob/archive/jailguard.lua"},
-		{"janitor", "../../test_scripts/mob/archive/janitor.lua"},
-		{"keep_sorcerer", "../../test_scripts/mob/archive/keep_sorcerer.lua"},
-		{"mercenary", "../../test_scripts/mob/archive/mercenary.lua"},
-		{"minion", "../../test_scripts/mob/archive/minion.lua"},
-		{"mount", "../../test_scripts/mob/archive/mount.lua"},
-		{"mymic", "../../test_scripts/mob/archive/mymic.lua"},
-		{"no_get", "../../test_scripts/mob/archive/no_get.lua"},
-		{"prisoner", "../../test_scripts/mob/archive/prisoner.lua"},
-		{"rescuer", "../../test_scripts/mob/archive/rescuer.lua"},
-		{"thief", "../../test_scripts/mob/archive/thief.lua"},
+		{"aversin", "../../tests/test_scripts/mob/archive/aversin.lua"},
+		{"breed_killer", "../../tests/test_scripts/mob/archive/breed_killer.lua"},
+		{"cabinguard", "../../tests/test_scripts/mob/archive/cabinguard.lua"},
+		{"conjured", "../../tests/test_scripts/mob/archive/conjured.lua"},
+		{"cuchi", "../../tests/test_scripts/mob/archive/cuchi.lua"},
+		{"guard_captain", "../../tests/test_scripts/mob/archive/guard_captain.lua"},
+		{"guardian", "../../tests/test_scripts/mob/archive/guardian.lua"},
+		{"head_shrinker", "../../tests/test_scripts/mob/archive/head_shrinker.lua"},
+		{"jailguard", "../../tests/test_scripts/mob/archive/jailguard.lua"},
+		{"janitor", "../../tests/test_scripts/mob/archive/janitor.lua"},
+		{"keep_sorcerer", "../../tests/test_scripts/mob/archive/keep_sorcerer.lua"},
+		{"mercenary", "../../tests/test_scripts/mob/archive/mercenary.lua"},
+		{"minion", "../../tests/test_scripts/mob/archive/minion.lua"},
+		{"mount", "../../tests/test_scripts/mob/archive/mount.lua"},
+		{"mymic", "../../tests/test_scripts/mob/archive/mymic.lua"},
+		{"no_get", "../../tests/test_scripts/mob/archive/no_get.lua"},
+		{"prisoner", "../../tests/test_scripts/mob/archive/prisoner.lua"},
+		{"rescuer", "../../tests/test_scripts/mob/archive/rescuer.lua"},
+		{"thief", "../../tests/test_scripts/mob/archive/thief.lua"},
 	}
 
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
@@ -984,11 +984,11 @@ func TestJailguardBribeThreshold(t *testing.T) {
 // Source: jailguard.lua
 func TestJailguardDefinesTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/jailguard.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/jailguard.lua"); err != nil {
 		t.Fatalf("jailguard.lua load error: %v", err)
 	}
 	for _, fn := range []string{"bribe", "sound", "onpulse_pc"} {
@@ -1027,11 +1027,11 @@ func TestMercenaryBribeCost(t *testing.T) {
 // Source: prisoner.lua
 func TestPrisonerDefinesTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/prisoner.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/prisoner.lua"); err != nil {
 		t.Fatalf("prisoner.lua load error: %v", err)
 	}
 	for _, fn := range []string{"onpulse_pc", "sound", "ongive"} {
@@ -1048,11 +1048,11 @@ func TestPrisonerDefinesTriggers(t *testing.T) {
 // Source: rescuer.lua
 func TestRescuerDefinesTrigger(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/rescuer.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/rescuer.lua"); err != nil {
 		t.Fatalf("rescuer.lua load error: %v", err)
 	}
 	val := engine.l.GetGlobal("onpulse_pc")
@@ -1125,11 +1125,11 @@ func TestBatchCEngineGaps(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/never_die.lua — mob 19113 unkillable mechanic.
 func TestNeverDieDefinesTrigger(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/never_die.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/never_die.lua"); err != nil {
 		t.Fatalf("never_die.lua load error: %v", err)
 	}
 	val := engine.l.GetGlobal("onpulse_all")
@@ -1144,11 +1144,11 @@ func TestNeverDieDefinesTrigger(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/sungod.lua — mob 10205 disappearing fire god.
 func TestSungodDefinesTrigger(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/sungod.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/sungod.lua"); err != nil {
 		t.Fatalf("sungod.lua load error: %v", err)
 	}
 	val := engine.l.GetGlobal("onpulse_all")
@@ -1163,11 +1163,11 @@ func TestSungodDefinesTrigger(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/teleporter.lua — mob 14411 self-teleport on low HP.
 func TestTeleporterDefinesTrigger(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/teleporter.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/teleporter.lua"); err != nil {
 		t.Fatalf("teleporter.lua load error: %v", err)
 	}
 	val := engine.l.GetGlobal("fight")
@@ -1182,11 +1182,11 @@ func TestTeleporterDefinesTrigger(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/teleport_vict.lua — mob 14405 victim teleporter.
 func TestTeleportVictDefinesTrigger(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/teleport_vict.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/teleport_vict.lua"); err != nil {
 		t.Fatalf("teleport_vict.lua load error: %v", err)
 	}
 	val := engine.l.GetGlobal("fight")
@@ -1201,11 +1201,11 @@ func TestTeleportVictDefinesTrigger(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/take_jail.lua — jail mechanic used by aversin/jailguard.
 func TestTakeJailDefinesTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/take_jail.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/take_jail.lua"); err != nil {
 		t.Fatalf("take_jail.lua load error: %v", err)
 	}
 	for _, fn := range []string{"fight", "onpulse_pc", "jail"} {
@@ -1222,11 +1222,11 @@ func TestTakeJailDefinesTriggers(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/quanlo.lua — command interception NPC.
 func TestQuanloDefinesTrigger(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/quanlo.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/quanlo.lua"); err != nil {
 		t.Fatalf("quanlo.lua load error: %v", err)
 	}
 	val := engine.l.GetGlobal("oncmd")
@@ -1241,11 +1241,11 @@ func TestQuanloDefinesTrigger(t *testing.T) {
 // Source: scripts_full_dump.txt ./mob/archive/triflower.lua — mob 20310 carnivorous plant.
 func TestTriflowerDefinesTriggers(t *testing.T) {
 	mockWorld := &mockWorldForTest{}
-	engine := NewEngine("../../test_scripts", mockWorld)
+	engine := NewEngine("../../tests/test_scripts", mockWorld)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}
-	if err := engine.l.DoFile("../../test_scripts/mob/archive/triflower.lua"); err != nil {
+	if err := engine.l.DoFile("../../tests/test_scripts/mob/archive/triflower.lua"); err != nil {
 		t.Fatalf("triflower.lua load error: %v", err)
 	}
 	for _, fn := range []string{"onpulse_pc", "fight"} {
@@ -1323,7 +1323,7 @@ func TestItemCheckShopType(t *testing.T) {
 		},
 	}
 
-	engine := NewEngine("../../test_scripts", mock)
+	engine := NewEngine("../../tests/test_scripts", mock)
 	if engine == nil {
 		t.Fatal("Failed to create engine")
 	}

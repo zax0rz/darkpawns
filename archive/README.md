@@ -7,6 +7,9 @@ operating instructions or an open task queue.
   to its obsolete database advice. Other entries have not been reconciled.
 - [Root deployment brief](briefs/deploy-production-root.md): preserved variant
   from the former duplicate root brief directory; already marked superseded.
+- [Reviews](reviews/): early C-to-Go port and security reviews (May 2026).
+- [Maps](maps/): early Graphviz and ASCII map experiments.
+- [Design prototypes](website-mockup.html): standalone HTML mockups prior to Astro.
 - The optimization, security, performance, and admin-refactor documents in this
   directory remain historical references, not verified current guidance.
 
