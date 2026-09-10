@@ -420,3 +420,161 @@ func TestDaemonReconnectClosesOldConnection(t *testing.T) {
 		t.Fatal("reconnect reused the old connection")
 	}
 }
+
+func TestStartConcurrentCallsDoNotUnlinkSocket(t *testing.T) {
+	shortHome(t)
+
+	srv, _ := fakeMUDServer(t)
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		t.Fatalf("parse server url: %v", err)
+	}
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		t.Fatalf("parse server port: %v", err)
+	}
+	cfg := &AgentConfig{
+		Key:        "test-key",
+		PlayerName: "RaceDaemonBot",
+		GameHost:   u.Hostname(),
+		GamePort:   port,
+	}
+
+	d, err := NewDaemon(cfg)
+	if err != nil {
+		t.Fatalf("new daemon: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	barrier := make(chan struct{})
+	errs := make(chan error, 2)
+
+	for i := 0; i < 2; i++ {
+		go func() {
+			<-barrier
+			errs <- d.Start(ctx)
+		}()
+	}
+
+	close(barrier)
+
+	var firstErr error
+	select {
+	case firstErr = <-errs:
+	case <-time.After(2 * time.Second):
+		t.Fatal("neither Start returned within 2 seconds")
+	}
+
+	if firstErr == nil || !strings.Contains(firstErr.Error(), "daemon already running") {
+		t.Fatalf("expected 'daemon already running' error, got: %v", firstErr)
+	}
+
+	// Wait for the winner to finish starting and bind the socket
+	sock := socketPath(cfg.PlayerName)
+	var conn net.Conn
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		conn, err = net.DialTimeout("unix", sock, 50*time.Millisecond)
+		if err == nil {
+			_ = conn.Close()
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if err != nil {
+		t.Fatalf("winner never started listening on socket: %v", err)
+	}
+
+	if _, err := os.Stat(sock); err != nil {
+		t.Fatalf("winner's socket file missing: %v", err)
+	}
+
+	cancel()
+
+	select {
+	case secondErr := <-errs:
+		if secondErr != nil && !errors.Is(secondErr, context.Canceled) {
+			t.Fatalf("expected clean winner shutdown, got: %v", secondErr)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("winner did not shut down within 2 seconds")
+	}
+}
+
+func TestStartSecondDaemonInstanceRejectsAndPreservesSocket(t *testing.T) {
+	shortHome(t)
+
+	srv, _ := fakeMUDServer(t)
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		t.Fatalf("parse server url: %v", err)
+	}
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		t.Fatalf("parse server port: %v", err)
+	}
+	cfg := &AgentConfig{
+		Key:        "test-key",
+		PlayerName: "SecondBot",
+		GameHost:   u.Hostname(),
+		GamePort:   port,
+	}
+
+	d1, err := NewDaemon(cfg)
+	if err != nil {
+		t.Fatalf("new daemon 1: %v", err)
+	}
+	d2, err := NewDaemon(cfg)
+	if err != nil {
+		t.Fatalf("new daemon 2: %v", err)
+	}
+
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel1()
+
+	d1Started := make(chan error, 1)
+	go func() {
+		d1Started <- d1.Start(ctx1)
+	}()
+
+	sock := socketPath(cfg.PlayerName)
+	var liveConn net.Conn
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		liveConn, err = net.DialTimeout("unix", sock, 50*time.Millisecond)
+		if err == nil {
+			_ = liveConn.Close()
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if err != nil {
+		t.Fatalf("first daemon never started listening on socket: %v", err)
+	}
+
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel2()
+
+	err2 := d2.Start(ctx2)
+	if err2 == nil || !strings.Contains(err2.Error(), "daemon already running") {
+		t.Fatalf("expected d2.Start to fail with 'daemon already running', got: %v", err2)
+	}
+
+	connAfter, err := net.DialTimeout("unix", sock, 500*time.Millisecond)
+	if err != nil {
+		t.Fatalf("d1 socket was unlinked or broken by d2: %v", err)
+	}
+	_ = connAfter.Close()
+
+	cancel1()
+	select {
+	case err := <-d1Started:
+		if err != nil && !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected clean d1 shutdown, got: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("d1 did not shut down in time")
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -66,24 +67,41 @@ func socketPath(name string) string {
 
 // Start connects to the MUD and starts listening on the Unix socket.
 func (d *Daemon) Start(ctx context.Context) error {
-	// Ensure socket directory exists
-	sockPath := socketPath(d.cfg.PlayerName)
-	if err := os.MkdirAll(filepath.Dir(sockPath), 0o755); err != nil {
-		return fmt.Errorf("mkdir socket dir: %w", err)
-	}
-	// Remove stale socket
-	_ = os.Remove(sockPath)
-
 	d.mu.Lock()
 	if d.running {
 		d.mu.Unlock()
 		return fmt.Errorf("daemon already running")
 	}
+	d.running = true
 	d.mu.Unlock()
+
+	cleanupRunning := func() {
+		d.mu.Lock()
+		d.running = false
+		d.mu.Unlock()
+	}
+
+	// Ensure socket directory exists
+	sockPath := socketPath(d.cfg.PlayerName)
+	if err := os.MkdirAll(filepath.Dir(sockPath), 0o755); err != nil {
+		cleanupRunning()
+		return fmt.Errorf("mkdir socket dir: %w", err)
+	}
+
+	// Check if a live daemon is already listening on this socket
+	if conn, err := net.DialTimeout("unix", sockPath, 200*time.Millisecond); err == nil {
+		_ = conn.Close()
+		cleanupRunning()
+		return fmt.Errorf("daemon already running")
+	}
+
+	// Socket is dead or nonexistent: remove any stale file
+	_ = os.Remove(sockPath)
 
 	// Connect to MUD server
 	client := NewAgentClient(d.cfg)
 	if err := client.Connect(ctx); err != nil {
+		cleanupRunning()
 		return fmt.Errorf("connect to MUD: %w", err)
 	}
 
@@ -98,20 +116,20 @@ func (d *Daemon) Start(ctx context.Context) error {
 	ln, err := net.Listen("unix", sockPath)
 	if err != nil {
 		_ = client.Close()
+		cleanupRunning()
 		return fmt.Errorf("listen socket: %w", err)
 	}
 
 	d.mu.Lock()
-	if d.running {
+	if !d.running {
 		d.mu.Unlock()
 		_ = client.Close()
 		_ = ln.Close()
 		_ = os.Remove(sockPath)
-		return fmt.Errorf("daemon already running")
+		return ctx.Err()
 	}
 	d.client = client
 	d.sock = ln
-	d.running = true
 	d.mu.Unlock()
 
 	slog.Info("daemon listening", "socket", sockPath)
@@ -358,6 +376,9 @@ func (d *Daemon) acceptLoop(ctx context.Context) {
 
 		conn, err := d.sock.Accept()
 		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				return
+			}
 			select {
 			case <-ctx.Done():
 				return

@@ -3,6 +3,7 @@ package contact
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -114,5 +115,72 @@ func TestTurnstileResultRequiresSuccessActionAndHostname(t *testing.T) {
 				t.Fatalf("accepts() = %t, want %t", got, test.want)
 			}
 		})
+	}
+}
+
+func TestRateLimiterReclaimsExpiredKeysAtCapacity(t *testing.T) {
+	const cap = 5
+	limiter := newRateLimiterWithCapacity(1, time.Hour, cap)
+	oldTime := time.Now().Add(-2 * time.Hour)
+
+	// Fill table to capacity with expired timestamps
+	for i := 0; i < cap; i++ {
+		key := fmt.Sprintf("ip-%d", i)
+		if !limiter.Allow(key, oldTime) {
+			t.Fatalf("failed to insert initial key %s", key)
+		}
+	}
+
+	if len(limiter.entries) != cap {
+		t.Fatalf("expected %d entries, got %d", cap, len(limiter.entries))
+	}
+
+	// Brand new key at now should succeed by sweeping the expired entries
+	now := time.Now()
+	if !limiter.Allow("new-ip", now) {
+		t.Fatal("Allow on brand new key failed after capacity reached with expired keys")
+	}
+
+	// After sweep, old expired keys are gone and only new-ip is tracked
+	if len(limiter.entries) != 1 {
+		t.Fatalf("expected 1 entry after sweep, got %d", len(limiter.entries))
+	}
+
+	// Second request within limit should be blocked
+	if limiter.Allow("new-ip", now) {
+		t.Fatal("second request for new-ip should have been rate limited")
+	}
+
+	// If capacity is filled with active keys, brand new key should be rejected
+	for i := 0; i < cap; i++ {
+		key := fmt.Sprintf("active-ip-%d", i)
+		limiter.Allow(key, now)
+	}
+	if limiter.Allow("overflow-ip", now) {
+		t.Fatal("new key should be rejected when active keys fill capacity")
+	}
+}
+
+func TestTurnstileFailureDoesNotConsumeRateLimit(t *testing.T) {
+	delivery := &fakeSender{}
+	limiter := newRateLimiter(1, time.Hour)
+	handler := &Handler{
+		verify: fakeVerifier{err: errors.New("spam check failed")},
+		send:   delivery,
+		limit:  limiter,
+	}
+
+	body := `{"email":"player@example.com","message":"This message is long enough to pass.","turnstile":"bad"}`
+	request := httptest.NewRequest(http.MethodPost, "/api/contact", strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+
+	if len(limiter.entries) != 0 {
+		t.Fatalf("rate limiter entries = %d, want 0 after failed Turnstile", len(limiter.entries))
 	}
 }

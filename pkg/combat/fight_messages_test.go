@@ -207,3 +207,29 @@ func TestDamMessageSeverityBoundariesConsumeNoDraws(t *testing.T) {
 		t.Fatalf("DamMessage consumed %d RNG draws, want 0", got)
 	}
 }
+
+func TestDamMessage_OutOfBoundsAttackType(t *testing.T) {
+	originalCallbacks := GetCallbacks()
+	defer SetCallbacks(originalCallbacks)
+
+	var attackerMessage string
+	cb := defaultCombatCallbacks()
+	cb.SendToChar = func(name, message string) {
+		if name == "Attacker" {
+			attackerMessage = message
+		}
+	}
+	SetCallbacks(cb)
+
+	attacker := &mockCombatant{name: "Attacker", room: 100, sex: 0, position: PosStanding}
+	victim := &mockCombatant{name: "Victim", room: 100, sex: 1, position: PosStanding}
+
+	for _, invalidType := range []int{-1, -100, len(AttackHitTexts), len(AttackHitTexts) + 10} {
+		attackerMessage = ""
+		DamMessage(10, attacker, victim, invalidType)
+		want := "You hit Victim hard."
+		if attackerMessage != want {
+			t.Errorf("DamMessage(10, attackType=%d) = %q, want %q", invalidType, attackerMessage, want)
+		}
+	}
+}

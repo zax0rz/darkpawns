@@ -4,6 +4,7 @@ package combat
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 	"unicode"
@@ -768,6 +769,11 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 	}
 	if tier == nil {
 		return
+	}
+
+	if attackType < 0 || attackType >= len(AttackHitTexts) {
+		slog.Warn("weapon attack type out of table", "attack_type", attackType)
+		attackType = 0
 	}
 
 	singular := AttackHitTexts[attackType].Singular
