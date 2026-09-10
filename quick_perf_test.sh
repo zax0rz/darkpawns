@@ -97,7 +97,7 @@ echo "=== Next Steps ==="
 echo "1. Fix build issues to enable actual testing"
 echo "2. Run: go test ./benchmarks -bench=. -benchtime=5s"
 echo "3. Run: go run load_test/load_test.go (after build fix)"
-echo "4. Monitor with: docker-compose -f docker-compose.monitoring.yml up"
+echo "4. Inspect native server metrics at: http://localhost:4350/metrics"
 echo ""
 
 echo "Test completed at: $(date)"

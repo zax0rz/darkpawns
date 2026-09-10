@@ -227,30 +227,6 @@ check_security_headers() {
     fi
 }
 
-check_docker_security() {
-    print_section "Checking Docker Security"
-    
-    if [ -f "Dockerfile" ]; then
-        # Check for root user
-        if grep -q "USER root" Dockerfile && ! grep -q "USER [0-9]" Dockerfile; then
-            print_warning "Dockerfile runs as root (consider adding non-root user)"
-        fi
-        
-        # Check for latest tag
-        if grep -q "FROM.*:latest" Dockerfile; then
-            print_warning "Dockerfile uses 'latest' tag (pin to specific version)"
-        fi
-    fi
-    
-    if [ -f "docker-compose.yml" ]; then
-        # Check for security options
-        if grep -q "read_only\|security_opt\|cap_drop" docker-compose.yml; then
-            print_success "Docker Compose has security options"
-        else
-            print_warning "Consider adding security options to docker-compose.yml"
-        fi
-    fi
-}
 
 quick_audit() {
     print_header
@@ -277,7 +253,6 @@ full_audit() {
     check_rate_limiting
     check_audit_logging
     check_security_headers
-    check_docker_security
 }
 
 generate_report() {

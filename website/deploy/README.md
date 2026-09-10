@@ -1,13 +1,14 @@
 # Website Deployment Files
 
-The canonical production procedure is [`../../DEPLOYMENT.md`](../../DEPLOYMENT.md).
+Use the root `make deploy-site` workflow and the dry-run instructions in
+[AGENTS.md](../../AGENTS.md). Official host access and service configuration live
+in the private ops repository. For the game server, see
+[Running Dark Pawns](../../DEPLOYMENT.md).
 
 - `Caddyfile` is the repository baseline for static files, reverse-proxy routes,
   content negotiation, and agent-friendly errors.
 - Validate a complete staged configuration with production Caddy before reload.
-- Production serves `/srv/darkpawns/` on CT 120 (`192.168.1.121`). References to
-  frankendell, `192.168.1.15`, `/opt/darkpawns/hugo-site/`, or Docker Caddy are
-  obsolete.
+- The Docker Caddy recipe is retired; the Caddy reference configuration remains.
 - Do not run `rsync --delete` until routes have been compared with production
   and `/srv/darkpawns/` has been backed up. Read the dry run's `*deleting` lines and
   account for every one: only stale build artifacts belong there. A real page or

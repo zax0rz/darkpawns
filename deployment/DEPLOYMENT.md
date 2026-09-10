@@ -1,9 +1,9 @@
 # Deployment (see the canonical guides)
 
-This mixed Docker/Kubernetes guide has been retired. The Kubernetes stack was a
-decoy and is not the production topology.
+The supported installation is a native Go binary with PostgreSQL. Container
+deployment scripts and image recipes have been retired.
 
-- **Run your own instance** (build, flags, ports, Docker Compose, reverse proxy):
+- **Run your own instance** (build, flags, ports, reverse proxy):
   [`../DEPLOYMENT.md`](../DEPLOYMENT.md).
 - **Operate the official `darkpawns.org` instance:** the private ops repo, not this
   public repo.

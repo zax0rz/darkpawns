@@ -3,7 +3,7 @@
 **Superseded.** This brief documented a one-off 2026-05-27 deploy to the old
 `frankendell` Docker host, which is no longer the production topology.
 
-- **Running your own instance:** see [`DEPLOYMENT.md`](../DEPLOYMENT.md).
+- **Running your own instance:** see [`DEPLOYMENT.md`](../../DEPLOYMENT.md).
 - **Operating the official `darkpawns.org` instance** (host access, deploy/rollback):
   the private ops repo, not this public repo.
 

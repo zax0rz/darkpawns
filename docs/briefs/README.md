@@ -1,5 +1,21 @@
 # Briefs — Coding Agent Task System
 
+## Status and retention
+
+This directory is the canonical brief collection. A brief's presence here does
+not mean its work is still open: many are historical instructions, and completion
+must be checked against code, commits, and issue status before execution.
+
+See the [file inventory](../maintenance/brief-inventory.tsv) for the 2026-09-09
+triage baseline. `unverified` means no completion claim has been made, not that
+the work remains to do. Start current fidelity work from
+[DEPTH_TESTING.md](../fidelity/DEPTH_TESTING.md), not the date on a brief.
+
+Keep briefs cited by code or fidelity evidence at stable paths. Archive a brief
+only after recording its disposition and updating live references; preserve
+unique evidence. The duplicate root `briefs/` collection has been consolidated
+here. Use `.local/` for disposable drafts.
+
 ## Core Principle: C Fidelity
 
 **Every behavior must match the C source exactly.** The Go port is from DikuMUD/Merc 2.2 (`src/`). C files in `src/` are the single source of truth for all gameplay mechanics — combat formulas, spell tables, skill success rates, spec proc behaviors, saving throws, AC reduction, damage messages, attribute applications, class tables, etc.

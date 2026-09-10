@@ -1,4 +1,4 @@
-name: Dark Pawns CI/CD
+name: Dark Pawns CI
 
 on:
   push:
@@ -7,13 +7,10 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Disposable test dependencies only; Dark Pawns is deployed natively.
     services:
       postgres:
         image: postgres:16-alpine
@@ -246,79 +243,3 @@ jobs:
         retry() { for i in 1 2 3; do "$@" && return 0; echo "install attempt $i failed; retrying in $((i*5))s"; sleep $((i*5)); done; return 1; }
         [ -x "$(go env GOPATH)/bin/gosec" ] || retry go install github.com/securego/gosec/v2/cmd/gosec@v2.29.0
         "$(go env GOPATH)/bin/gosec" -severity=high -quiet ./...
-
-  build-and-push:
-    needs: test
-    if: github.repository_owner == 'zax0rz' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Check GITHUB_TOKEN can push packages
-      id: check-token
-      run: |
-        # Verify we can actually authenticate before attempting the push
-        TOKEN_OK=$(curl -s -o /dev/null -w "%{http_code}" \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/user" 2>/dev/null)
-        if [ "$TOKEN_OK" = "200" ]; then
-          echo "can_push=true" >> $GITHUB_OUTPUT
-        else
-          echo "can_push=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Set up Docker Buildx
-      if: steps.check-token.outputs.can_push == 'true'
-      uses: docker/setup-buildx-action@v3
-
-    - name: Log in to Container Registry
-      if: steps.check-token.outputs.can_push == 'true'
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Extract metadata for Docker
-      if: steps.check-token.outputs.can_push == 'true'
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=sha,prefix=sha-
-
-    - name: Build and push Docker image
-      if: steps.check-token.outputs.can_push == 'true'
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - name: Build and push AI Agent image
-      if: steps.check-token.outputs.can_push == 'true'
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        file: Dockerfile.ai-agent
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-ai-agent:${{ github.sha }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-  # (removed) k8s deploy job — the Kubernetes stack was a decoy and production is
-  # a single-binary VPS deploy (see the private ops runbook). The job self-skipped
-  # without a KUBECONFIG secret anyway. build-and-push (ghcr image) is retained.

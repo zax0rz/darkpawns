@@ -15,8 +15,8 @@ Three moving parts:
 2. **The C oracle** — [`zax0rz/darkpawns-c-oracle`](https://github.com/zax0rz/darkpawns-c-oracle)
    (private), a deterministic fork of the original C server. The *answer key*.
    The differential harness diffs the Go port's output against it.
-3. **The deploy path** — production runs on a Linux LXC (CT 120). See
-   [`DEPLOYMENT.md`](../DEPLOYMENT.md).
+3. **Running an instance** — see [`DEPLOYMENT.md`](../DEPLOYMENT.md).
+   The official VPS deployment is documented in the private ops repository.
 
 ## Prerequisites
 
