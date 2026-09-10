@@ -16,8 +16,8 @@ PLAN_FILE = "scripts/wiring_plan_v2.txt"
 def get_trigger_bitmask(script_name):
     paths = [
         os.path.join("lib/world/scripts/mob", script_name),
-        os.path.join("test_scripts/mob/archive", os.path.basename(script_name)),
-        os.path.join("test_scripts/mob", script_name)
+        os.path.join("tests/test_scripts/mob/archive", os.path.basename(script_name)),
+        os.path.join("tests/test_scripts/mob", script_name)
     ]
     
     path = None

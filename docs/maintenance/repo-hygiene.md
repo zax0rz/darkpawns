@@ -21,37 +21,37 @@ selected generated artifacts. `investigate` means retained pending evidence.
 | `Dockerfile.local` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
 | `Dockerfile.prebuilt` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
 | `Dockerfile.privacy-filter` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `GLM.md` | keep | Agent-specific operating manual; relocation requires checking external agent entry points. |
+| `GLM.md` | move | Moved to .agents/GLM.md alongside other agent tooling. |
 | `LICENSE` | keep | Current project entry point, build configuration, or dependency manifest. |
 | `Makefile` | keep | Current project entry point, build configuration, or dependency manifest. |
-| `Makefile.optimization` | investigate | Separate benchmark/profiling workflow; verify targets before consolidation. |
+| `Makefile.optimization` | move | Consolidated into profiling/Makefile.optimization. |
 | `README.md` | keep | Current project entry point, build configuration, or dependency manifest. |
-| `RESEARCH-LOG.md` | investigate | Preserve at current path: research documents cite it; reconcile automation consumers before moving. |
-| `TEST_BUILD.sh` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
+| `RESEARCH-LOG.md` | move | Consolidated into docs/research/RESEARCH-LOG.md. |
+| `TEST_BUILD.sh` | remove | Retired container test script. |
 | `ZACHLOG.md` | move | Archived with obsolete database claim corrected; remaining entries are not a verified task queue. |
-| `connect.py` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `docker-compose.moderation.yml` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `docker-compose.monitoring.yml` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `docker-compose.privacy.yml` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `docker-compose.yml` | investigate | Signing configuration and telnet publication missing; Docker build requires prebuilt admin UI. |
-| `example_agent.py` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
+| `connect.py` | move | Moved to scripts/connect.py helper. |
+| `docker-compose.moderation.yml` | remove | Retired container recipe. |
+| `docker-compose.monitoring.yml` | remove | Retired container recipe. |
+| `docker-compose.privacy.yml` | remove | Retired container recipe. |
+| `docker-compose.yml` | remove | Retired container recipe. |
+| `example_agent.py` | move | Moved to examples/example_agent.py. |
 | `go.mod` | keep | Current project entry point, build configuration, or dependency manifest. |
 | `go.sum` | keep | Current project entry point, build configuration, or dependency manifest. |
-| `map-generation-example.js` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `parse_world.py` | investigate | Root parser overlaps other parser tools; verify imports and generated outputs. |
-| `parse_world_fixed.py` | investigate | Variant parser; do not delete based on filename alone. |
-| `parse_world_test.py` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
+| `map-generation-example.js` | move | Archived to archive/map-generation-example.js. |
+| `parse_world.py` | remove | Obsolete root parser; authoritative parser is website/scripts/parse_world.py. |
+| `parse_world_fixed.py` | remove | Obsolete variant parser; authoritative parser is website/scripts/parse_world.py. |
+| `parse_world_test.py` | remove | Obsolete root parser test; authoritative parser is website/scripts/parse_world.py. |
 | `performance` | remove | Untrack build artifact; preserve local file and ignore future builds. |
-| `performance_config.yaml` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `quick_perf_test.sh` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
+| `performance_config.yaml` | move | Consolidated into profiling/performance_config.yaml. |
+| `quick_perf_test.sh` | move | Consolidated into profiling/quick_perf_test.sh. |
 | `requirements-lock.txt` | keep | Current project entry point, build configuration, or dependency manifest. |
 | `requirements.txt` | keep | Current project entry point, build configuration, or dependency manifest. |
-| `test.sh` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `test_direct_memory.py` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `test_parse_world_report.py` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `test_performance.sh` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `test_simple.lua` | investigate | Retain for now; verify callers and supported workflow before moving or removing. |
-| `website-mockup.html` | investigate | Candidate historical design artifact; inspect consumers before archiving. |
+| `test.sh` | keep | Called by Makefile test targets (test-all, test-unit, test-e2e). |
+| `test_direct_memory.py` | move | Moved to tests/integration/python/test_direct_memory.py. |
+| `test_parse_world_report.py` | remove | Obsolete root parse report script. |
+| `test_performance.sh` | remove | Obsolete script referencing non-existent file. |
+| `test_simple.lua` | remove | Unused 7-line scratch test. |
+| `website-mockup.html` | move | Archived to archive/website-mockup.html. |
 
 ## Briefs and other artifacts
 

@@ -5,6 +5,9 @@
 /lib/admin-ui-dist/
 /.hugo_build.lock
 *.exe
+load_test/loadtest
+cmd/dp-goat/dp-goat
+cmd/dp-goat/build/
 
 # Go
 vendor/
