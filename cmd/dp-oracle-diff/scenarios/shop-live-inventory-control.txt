@@ -2,8 +2,9 @@
 #
 # The authored zone-121 M/G reset places keeper 12100 and stocked spice
 # objects in room 12133. A valid carried item is therefore visible through
-# the same command path; list pepper also proves keyword filtering against live
-# object names rather than a missing keeper/closed shop/lookup failure.
+# the same command path; list pepper proves exact-token keyword filtering
+# against live object names, while list pep proves that C's isname() rejects
+# abbreviations and list cinnamon proves its final-group found quirk.
 # depth-case: shops.live-inventory-control
 [fixture]
 empty-players
@@ -45,3 +46,5 @@ goto 12133
 look
 list
 list pepper
+list pep
+list cinnamon

@@ -1,0 +1,15 @@
+Command:
+
+    export PATH=/usr/local/go/bin:$PATH
+    make expected-divergences-check
+
+Result: exit 2. The check reports that the committed
+cmd/dp-oracle-diff/expected_divergences.tsv is stale and would add the
+unrelated row:
+
+    character-creation-name-retry entry.tsv entry.motd-color blocked
+
+The generated row was not committed, pinned, or excluded. Full raw output
+is preserved outside the harness at
+/tmp/dp-review-1437-expected-divergences-final.log
+(SHA-256 b0a3e6f89f2c0fcad6415e359f071b80944ec71759273ccc2de3a9e43006ac98b).

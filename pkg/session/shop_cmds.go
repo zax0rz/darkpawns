@@ -138,8 +138,11 @@ func shopListKeywordMatches(keyword, keywords string) bool {
 		return keyword == ""
 	}
 	keyword = strings.ToLower(keyword)
+	// src/handler.c:isname() accepts a complete name token only. It does
+	// not accept an abbreviation that ends in the middle of an alphabetic
+	// token: "pepper" matches "pepper", while "pep" does not.
 	for _, name := range strings.Fields(strings.ToLower(keywords)) {
-		if strings.HasPrefix(name, keyword) {
+		if name == keyword {
 			return true
 		}
 	}
@@ -249,7 +252,12 @@ func cmdList(s *Session, args []string) error {
 			last, count = obj, 1
 		}
 	}
-	flush()
+	// Preserve src/shop.c:910-925 exactly: the final group increments the
+	// ordinal before C checks found, and is only appended when the command has
+	// already found an earlier matching group (or has no keyword). Therefore a
+	// keyword that matches only the final group still receives the fixed
+	// "none are for sale" response.
+	index++
 
 	if last == nil {
 		s.Send("Currently, there is nothing for sale.\r\n")
@@ -258,6 +266,9 @@ func cmdList(s *Session, args []string) error {
 		// interpolation.
 		s.Send("Presently, none of those are for sale.\r\n")
 	} else {
+		if keyword == "" || shopListKeywordMatches(keyword, last.GetKeywords()) {
+			output.WriteString(shopListLine(s, shop, last, count, index))
+		}
 		s.Send(output.String())
 	}
 	return nil
