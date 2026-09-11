@@ -118,6 +118,6 @@ unrelated entry-depth work.
 
 Review PR: #1441
 (`https://github.com/zax0rz/darkpawns/pull/1441`), intentionally unmerged.
-Final branch/head: `glm/modernize-elements-teleport` at `36c49d1d0`.
+Final branch/head identifier: `glm/modernize-elements-teleport`.
 The production candidate exercised by the validation runs is the unchanged
-`e6c7e7312` parent; `cd96e0925` and `36c49d1d0` add only evidence text.
+`e6c7e7312` parent; the subsequent commits add only evidence text.
