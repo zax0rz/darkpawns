@@ -86,7 +86,7 @@ and shares only the proven player ordering helper in `elements_galeru_alive`.
 shared teleport branch and remain local. The estimate of −90 is retained as a
 planning estimate only; line reduction is not an acceptance criterion.
 
-### Phase 5.2 audit result (2026-09-11)
+### Phase 5.2 audit result (2026-09-11; [PR #1442](https://github.com/zax0rz/darkpawns/pull/1442))
 
 Merged PR #1400 (`ad3a9e7db70169fd02e4be51183b6f33ab97976f`) is present on
 current `origin/main` at `18b5a911ce75702e5ab71df4aa46e87baa00c076`, with no

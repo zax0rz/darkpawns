@@ -55,3 +55,5 @@ The dated audit is recorded in
 It preserves the historical evidence, verifies the active registered families
 within their named boundaries, and blocks a whole-Phase 5.2 verification claim
 on the unassigned undead-knight source/coverage and vnum/probability mismatch.
+The documentation-only audit is open for review as [PR #1442](https://github.com/zax0rz/darkpawns/pull/1442)
+and remains unmerged.

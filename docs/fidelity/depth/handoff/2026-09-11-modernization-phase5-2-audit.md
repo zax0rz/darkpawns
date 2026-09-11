@@ -17,6 +17,8 @@ tested input was changed by this audit.
 ## Tested state and history
 
 - Audit branch: `glm/audit-phase5-2` in an isolated worktree.
+- Audit PR: [#1442](https://github.com/zax0rz/darkpawns/pull/1442), left
+  unmerged for review.
 - Tested commit: `18b5a911ce75702e5ab71df4aa46e87baa00c076` (current
   `origin/main` on 2026-09-11), which includes merged PR #1441.
 - Audited merge: PR #1400, `ad3a9e7db70169fd02e4be51183b6f33ab97976f`, with
