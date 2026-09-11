@@ -326,7 +326,10 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				s.extractSpawnedObject(obj)
 				continue
 			}
-			lastMob.Inventory = append(lastMob.Inventory, obj)
+			if err := s.world.MoveObjectToMobInventoryFront(obj, lastMob); err != nil {
+				slog.Error("error moving spawned object to mob inventory", "obj_vnum", cmd.Arg1, "mob", lastMob.GetVNum(), "error", err)
+				continue
+			}
 			lastCmd = 1
 
 		case "E": // Equip object on last loaded mob

@@ -1,0 +1,51 @@
+# C-first empty-live-inventory vehicle.
+#
+# Shop 12105 is still parsed from lib/world/shp/121.shp and keeper 12100 is
+# still assigned by the boot-time shop association. quiet-zone removes the
+# authored M/G/E resets from disposable zone 121; the appended M reset then
+# creates the associated keeper in room 12133 without any carried objects.
+# This is the static-definition/live-carried-inventory mismatch required by
+# shops.live-inventory-gate. The look block proves the keeper reached the room;
+# the list block exercises shopping_list after is_ok and must use keeper->carrying.
+# depth-case: shops.live-inventory-gate
+[fixture]
+empty-players
+quiet-zone 80
+quiet-zone 121
+set-room-flag 8162 4 off
+spawn-mob 12100 1 12133 121
+
+[setup:oracle]
+Shopliveempty
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopliveempty
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12133
+
+[probe]
+look
+list

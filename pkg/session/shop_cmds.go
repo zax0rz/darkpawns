@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -17,18 +19,23 @@ import (
 // findShopKeeperInRoom scans mobs in the current room for a shopkeeper NPC
 // and returns the matching Shop if found.
 func findShopKeeperInRoom(s *Session) (*game.Shop, string) {
+	shop, name, _ := findShopKeeperAndMobInRoom(s)
+	return shop, name
+}
+
+func findShopKeeperAndMobInRoom(s *Session) (*game.Shop, string, *game.MobInstance) {
 	if s.player == nil || s.manager == nil || s.manager.world == nil {
-		return nil, ""
+		return nil, "", nil
 	}
 
 	roomVNum := s.player.GetRoomVNum()
 	if roomVNum < 0 {
-		return nil, ""
+		return nil, "", nil
 	}
 
 	mobs := s.manager.world.GetMobsInRoom(roomVNum)
 	if len(mobs) == 0 {
-		return nil, ""
+		return nil, "", nil
 	}
 
 	// Check each mob — if its VNum matches a shop keeper, return that shop
@@ -38,11 +45,11 @@ func findShopKeeperInRoom(s *Session) (*game.Shop, string) {
 			if name == "" {
 				name = "The shopkeeper"
 			}
-			return shop, name
+			return shop, name, mob
 		}
 	}
 
-	return nil, ""
+	return nil, "", nil
 }
 
 // shopKeeperTell formats the direct do_tell path used by shop.c. The C shop
@@ -60,10 +67,138 @@ func shopKeeperTell(keeperName, message, playerName string) string {
 	return fmt.Sprintf("%s tells you, '%s'\r\n", keeperName, formatted)
 }
 
+func shopKeeperSay(keeperName, message string) string {
+	if keeperName == "" {
+		keeperName = "The shopkeeper"
+	} else {
+		keeperName = capitalizeFirstRune(keeperName)
+	}
+	return fmt.Sprintf("%s says, '%s'\r\n", keeperName, message)
+}
+
+const (
+	shopTradeNoGood = 1 << iota
+	shopTradeNoEvil
+	shopTradeNoNeutral
+	shopTradeNoMage
+	shopTradeNoCleric
+	shopTradeNoThief
+	shopTradeNoWarrior
+)
+
+func shopIsOK(s *Session, shop *game.Shop, keeper game.Actor, keeperName string) bool {
+	hours := game.TimeSnapshot().Hours
+	closedMessage := ""
+	if shop.OpenHour1 > hours {
+		closedMessage = "Come back later!"
+	} else if shop.CloseHour1 < hours {
+		if shop.OpenHour2 > hours {
+			closedMessage = "Sorry, we have closed, but come back later."
+		} else if shop.CloseHour2 < hours {
+			closedMessage = "Sorry, come back tomorrow."
+		}
+	}
+	if closedMessage != "" {
+		s.Send(shopKeeperSay(keeperName, closedMessage))
+		return false
+	}
+
+	if !game.CanSee(keeper, s.player) {
+		s.Send(shopKeeperSay(keeperName, "I don't trade with someone I can't see!"))
+		return false
+	}
+
+	// C is_ok_char lets gods and NPCs bypass the trade restrictions after the
+	// visibility check. The live command has a player actor, but retain the
+	// source ordering at this boundary.
+	if s.player.GetLevel() >= game.LVL_GOD || s.player.IsNPC() {
+		return true
+	}
+
+	trade := shop.WithWho
+	if (s.player.IsGood() && trade&shopTradeNoGood != 0) ||
+		(s.player.IsEvil() && trade&shopTradeNoEvil != 0) ||
+		(s.player.IsNeutral() && trade&shopTradeNoNeutral != 0) {
+		s.Send(shopKeeperTell(keeperName, "%s Get out of here before I call the guards!", s.player.GetName()))
+		return false
+	}
+
+	if (s.player.GetClass() == game.ClassMageUser && trade&shopTradeNoMage != 0) ||
+		(s.player.GetClass() == game.ClassCleric && trade&shopTradeNoCleric != 0) ||
+		(s.player.GetClass() == game.ClassThief && trade&shopTradeNoThief != 0) ||
+		(s.player.GetClass() == game.ClassWarrior && trade&shopTradeNoWarrior != 0) {
+		s.Send(shopKeeperTell(keeperName, "%s We don't serve your kind here!", s.player.GetName()))
+		return false
+	}
+	return true
+}
+
+func shopListKeywordMatches(keyword, keywords string) bool {
+	if keyword == "" || keywords == "" {
+		return keyword == ""
+	}
+	keyword = strings.ToLower(keyword)
+	for _, name := range strings.Fields(strings.ToLower(keywords)) {
+		if strings.HasPrefix(name, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func shopObjectsSame(left, right *game.ObjectInstance) bool {
+	if left == nil || right == nil || left.GetVNum() != right.GetVNum() || left.GetCost() != right.GetCost() {
+		return false
+	}
+	if left.GetExtraFlags() != right.GetExtraFlags() {
+		return false
+	}
+	leftAffects, rightAffects := left.GetAffects(), right.GetAffects()
+	if len(leftAffects) != len(rightAffects) {
+		return false
+	}
+	for i := range leftAffects {
+		if leftAffects[i] != rightAffects[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func shopObjectIsProduced(s *Session, shop *game.Shop, obj *game.ObjectInstance) bool {
+	for _, vnum := range shop.SellTypes {
+		proto, ok := s.manager.world.GetObjPrototype(vnum)
+		if !ok {
+			continue
+		}
+		if shopObjectsSame(obj, game.NewObjectInstance(proto, -1)) {
+			return true
+		}
+	}
+	return false
+}
+
+func capitalizeFirstRune(value string) string {
+	r, size := utf8.DecodeRuneInString(value)
+	if size == 0 {
+		return value
+	}
+	return string(unicode.ToUpper(r)) + value[size:]
+}
+
+func shopListLine(s *Session, shop *game.Shop, obj *game.ObjectInstance, count, index int) string {
+	available := fmt.Sprintf("%5d       ", count)
+	if shopObjectIsProduced(s, shop, obj) {
+		available = "Unlimited   "
+	}
+	description := capitalizeFirstRune(obj.GetShortDesc())
+	return fmt.Sprintf(" %2d)  %s%-48s %6d\r\n", index, available, description, shop.BuyPrice(obj.GetCost(), s.player.GetCha()))
+}
+
 // cmdList lists items for sale at the shop.
 // Usage: list [keyword]
 func cmdList(s *Session, args []string) error {
-	shop, keeperName := findShopKeeperInRoom(s)
+	shop, keeperName, keeper := findShopKeeperAndMobInRoom(s)
 	if shop == nil {
 		// No shop special-proc → C routes buy/sell/list to do_not_here
 		// (act.other.c:208): "Sorry, but you cannot do that here!" — the
@@ -75,56 +210,56 @@ func cmdList(s *Session, args []string) error {
 
 	keyword := ""
 	if len(args) > 0 {
-		keyword = strings.ToLower(strings.Join(args, " "))
+		// shopping_list calls one_argument(), so only the first word is
+		// consumed by C's isname() matcher.
+		keyword = strings.ToLower(args[0])
 	}
 
-	if len(shop.SellTypes) == 0 {
-		// src/shop.c:918. The live-inventory gate is a separate depth item;
-		// this preserves the C bytes for the existing empty branch.
-		s.Send("Currently, there is nothing for sale.\r\n")
+	if !shopIsOK(s, shop, keeper, keeperName) {
 		return nil
 	}
 
-	lines := []string{
-		fmt.Sprintf("%s has the following items for sale:", keeperName),
-		"----------------------------------------",
-		fmt.Sprintf(" %-4s %-48s %6s", "##", "Item", "Cost"),
-	}
-
+	var last *game.ObjectInstance
+	count, index := 0, 0
 	found := false
-	index := 0
-	for _, vnum := range shop.SellTypes {
-		proto, ok := s.manager.world.GetObjPrototype(vnum)
-		if !ok {
+	var output strings.Builder
+	output.WriteString(" ##   Available   Item                                               Cost\r\n")
+	output.WriteString("-------------------------------------------------------------------------\r\n")
+
+	flush := func() {
+		if last == nil {
+			return
+		}
+		index++
+		if keyword == "" || shopListKeywordMatches(keyword, last.GetKeywords()) {
+			output.WriteString(shopListLine(s, shop, last, count, index))
+			found = true
+		}
+	}
+	for _, obj := range keeper.Inventory {
+		if obj == nil || obj.GetCost() <= 0 || !game.CanSeeObject(s.player, obj) {
 			continue
 		}
-
-		// Filter by keyword if given
-		if keyword != "" {
-			if !strings.Contains(strings.ToLower(proto.Keywords), keyword) &&
-				!strings.Contains(strings.ToLower(proto.ShortDesc), keyword) {
-				continue
-			}
-		}
-
-		index++
-		price := shop.BuyPrice(proto.Cost, s.player.Stats.Cha)
-		lines = append(lines, fmt.Sprintf(" %2d)  %-48s %6d", index, proto.ShortDesc, price))
-		found = true
-	}
-
-	if !found {
-		if keyword != "" {
-			// src/shop.c:920 — this is a fixed C string, not a keeper-name
-			// interpolation.
-			s.Send("Presently, none of those are for sale.\r\n")
+		if last == nil {
+			last, count = obj, 1
+		} else if shopObjectsSame(last, obj) {
+			count++
 		} else {
-			s.Send("Currently, there is nothing for sale.\r\n")
+			flush()
+			last, count = obj, 1
 		}
-		return nil
 	}
+	flush()
 
-	s.Send(strings.Join(lines, "\r\n"))
+	if last == nil {
+		s.Send("Currently, there is nothing for sale.\r\n")
+	} else if keyword != "" && !found {
+		// src/shop.c:920 — this is a fixed C string, not a keeper-name
+		// interpolation.
+		s.Send("Presently, none of those are for sale.\r\n")
+	} else {
+		s.Send(output.String())
+	}
 	return nil
 }
 
@@ -175,7 +310,7 @@ func cmdBuy(s *Session, args []string) error {
 	}
 
 	// Calculate price per item
-	pricePerItem := shop.BuyPrice(matchedProto.Cost, s.player.Stats.Cha)
+	pricePerItem := shop.BuyPrice(matchedProto.Cost, s.player.GetCha())
 	totalPrice := pricePerItem * count
 
 	// Check if player can afford
@@ -263,7 +398,7 @@ func cmdSell(s *Session, args []string) error {
 	}
 
 	// Calculate sell price
-	price := shop.SellPrice(item.GetCost(), s.player.Stats.Cha)
+	price := shop.SellPrice(item.GetCost(), s.player.GetCha())
 
 	// Remove item from player, add gold
 	if s.player.Inventory.RemoveItem(item) {
@@ -294,7 +429,7 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string) error {
 			continue
 		}
 
-		price := shop.SellPrice(item.GetCost(), s.player.Stats.Cha)
+		price := shop.SellPrice(item.GetCost(), s.player.GetCha())
 		if s.player.Inventory.RemoveItem(item) {
 			s.player.Gold += price
 			totalGold += price

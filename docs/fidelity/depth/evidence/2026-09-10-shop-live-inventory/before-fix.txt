@@ -1,0 +1,48 @@
+# Preserved pre-fix oracle evidence
+
+Tested checkout: 6c054d5c9 (main), with the new disposable gate/control
+scenario inputs present but before the shop-list/live-inventory correction.
+Environment: PATH=/usr/local/go/bin:$PATH, DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle,
+GOCACHE=/tmp/dp-gocache-shop-live.
+
+Command:
+
+    go run ./cmd/dp-oracle-diff -scenario shop-live-inventory-gate -seed 1 --show-oracle
+
+Raw report:
+
+    divergence-fingerprint list 4aeacfa7eadb559e61c154a83407e5a1b1d2b7ffc737d1eff80298b294b5e
+    report scenario shop-live-inventory-gate
+    result: normalized divergence detected
+    list C: Currently, there is nothing for sale.
+    list Go:
+    the fat merchant has the following items for sale:
+    ----------------------------------------
+     ##   Item                                               Cost
+     1)  some black pepper 2
+     2)  some curry powder 1
+     3)  some paprika 4
+     4)  some cinnamon 2
+
+Command:
+
+    go run ./cmd/dp-oracle-diff -scenario shop-live-inventory-control -seed 1 --show-oracle
+
+Raw report:
+
+    divergence-fingerprint list pepper 24bb22cf7e491e5b8dadcec9752ae65387bcc9fffe125f25a4c456c5315cd0d9
+    report scenario shop-live-inventory-control
+    result: normalized divergence detected
+    list pepper C:
+     ##   Available   Item                                               Cost
+    -------------------------------------------------------------------------
+      2)  Unlimited   Some black pepper                                     2
+    list pepper Go:
+    the fat merchant has the following items for sale:
+    ----------------------------------------
+     ##   Item                                               Cost
+     1)  some black pepper                                     2
+
+The first report is the preserved static-definition/live-inventory failure;
+the second is the populated control proving that the old Go path was not a
+missing keeper or closed-shop result.

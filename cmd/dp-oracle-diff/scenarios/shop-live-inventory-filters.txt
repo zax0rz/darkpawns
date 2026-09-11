@@ -1,0 +1,52 @@
+# C-first live-list filter vehicle.
+#
+# The appended keeper receives one zero-cost object, one positive-cost
+# ITEM_INVISIBLE object, and one stocked positive-cost spice. A fresh mortal
+# cannot see the invisible object. C shopping_list must discard both gated
+# objects before grouping/indexing the carried black pepper.
+# depth-case: shops.live-inventory-filters
+[fixture]
+empty-players
+quiet-zone 80
+quiet-zone 121
+add-obj-index 160.obj
+set-room-flag 8162 4 off
+spawn-mob 12100 1 12133 121
+give-object 12100 1210 100000 121
+give-object 12100 16005 100000 121
+give-object 12100 12132 100000 121
+
+[setup:oracle]
+Shoplivefilters
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shoplivefilters
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[warmup]
+goto 12133
+
+[probe]
+look
+list

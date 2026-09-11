@@ -173,7 +173,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
 		return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
 	}
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobObjectFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
 		if err := applyObjIndexFixtures(filepath.Join(oracleData, "world"), scenario.ObjIndexFixtures); err != nil {
 			return fmt.Errorf("apply C oracle obj index fixtures: %w", err)
 		}
@@ -223,6 +223,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		if err := applyMobFixtures(goWorld, scenario.MobFixtures); err != nil {
 			return fmt.Errorf("apply Go port mob fixtures: %w", err)
+		}
+		if err := applyMobObjectFixtures(filepath.Join(oracleData, "world"), scenario.MobObjectFixtures); err != nil {
+			return fmt.Errorf("apply C oracle mob-object fixtures: %w", err)
+		}
+		if err := applyMobObjectFixtures(goWorld, scenario.MobObjectFixtures); err != nil {
+			return fmt.Errorf("apply Go port mob-object fixtures: %w", err)
 		}
 		if err := applyMobFlagFixtures(filepath.Join(oracleData, "world"), scenario.MobFlagFixtures); err != nil {
 			return fmt.Errorf("apply C oracle mob flag fixtures: %w", err)
@@ -704,6 +710,38 @@ func applyMobFixtures(worldDir string, fixtures []oraclediff.MobFixture) error {
 			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
 		}
 		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
+			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
+		}
+	}
+	return nil
+}
+
+func applyMobObjectFixtures(worldDir string, fixtures []oraclediff.MobObjectFixture) error {
+	for _, fixture := range fixtures {
+		path := filepath.Join(worldDir, "zon", fmt.Sprintf("%d.zon", fixture.ZoneNumber))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read zone %d: %w", fixture.ZoneNumber, err)
+		}
+		marker := []byte("\nS\n$")
+		index := bytes.LastIndex(data, marker)
+		if index < 0 {
+			return fmt.Errorf("zone %d has no terminal reset marker", fixture.ZoneNumber)
+		}
+		mobPrefix := []byte(fmt.Sprintf("\nM 0 %d ", fixture.MobVNum))
+		if !bytes.Contains(data[:index], mobPrefix) {
+			return fmt.Errorf("zone %d has no preceding mob fixture for mob %d", fixture.ZoneNumber, fixture.MobVNum)
+		}
+		command := fmt.Sprintf("\nG 1 %d %d -1", fixture.ObjectVNum, fixture.MaxExisting)
+		updated := make([]byte, 0, len(data)+len(command))
+		updated = append(updated, data[:index]...)
+		updated = append(updated, command...)
+		updated = append(updated, data[index:]...)
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
+		}
+		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and validated fixture values
 			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
 		}
 	}

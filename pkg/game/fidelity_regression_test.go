@@ -84,6 +84,16 @@ func TestFidelityCanSeeObjectInvisibility(t *testing.T) {
 	if !canSeeObject(observer, invisible) {
 		t.Error("Observer with detect invisible should see an invisible object")
 	}
+
+	immort := NewPlayer(2, "Immort", 1001)
+	immort.SetLevel(LVL_IMMORT)
+	if canSeeObject(immort, invisible) {
+		t.Error("an immortal without holy light should not see an invisible object via CAN_SEE_OBJ")
+	}
+	immort.SetHolyLight(true)
+	if !canSeeObject(immort, invisible) {
+		t.Error("an immortal with holy light should see an invisible object via CAN_SEE_OBJ")
+	}
 }
 
 // TestFidelityChCanSeeObjInvisibility verifies chCanSeeObj's ITEM_INVISIBLE
