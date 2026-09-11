@@ -1,0 +1,37 @@
+Dark Pawns Tier-1 differential report
+scenario: set-exceptions-depth
+c-oracle: 127.0.0.1:40993 (DP_SEED=1)
+go-port: 127.0.0.1:43149 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [set Setexceptions nohassle on [actor]]
+Nohassle ON for Setexceptions.
+--- [set Setexceptions nohassle on [target]]
+
+--- [set Setexceptions nohassle off [actor]]
+Nohassle OFF for Setexceptions.
+--- [set Setexceptions nohassle off [target]]
+
+--- [set Setexceptiontarget nohassle on [actor]]
+You aren't godly enough for that!
+--- [set Setexceptiontarget nohassle on [target]]
+
+--- [set Setexceptiontarget nohassle off [actor]]
+You aren't godly enough for that!
+--- [set Setexceptiontarget nohassle off [target]]
+
+--- [set Setexceptiontarget frozen on [actor]]
+Frozen ON for Setexceptiontarget.
+--- [set Setexceptiontarget frozen on [target]]
+
+--- [set Setexceptiontarget frozen off [actor]]
+Frozen OFF for Setexceptiontarget.
+--- [set Setexceptiontarget frozen off [target]]
+
+--- [set Setexceptions frozen on [actor]]
+Better not -- could be a long winter!
+--- [set Setexceptions frozen on [target]]
+
+--- [set Setexceptions frozen off [actor]]
+Better not -- could be a long winter!
+--- [set Setexceptions frozen off [target]]

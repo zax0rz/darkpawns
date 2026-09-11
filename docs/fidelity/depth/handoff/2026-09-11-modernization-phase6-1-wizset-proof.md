@@ -44,9 +44,46 @@ target authority rejection, `frozen` other-target success, and `frozen`
 self-target refusal. `loadroom` remains explicit and outside this milestone;
 equipment maps, Phase 6.2 inventory work, and Phase 6.3 remain outside scope.
 
-## Final disposition
+## Validation so far
 
-To be completed after the proof runs: record per-field oracle and state-test
-results, the focused scenario/seed tally, full-corpus census, exact tested
-commit, changed files, and any residual gaps. This handoff does not claim
-whole-Phase 6.1 completion or close the equipment-map debt.
+The new unit tests pass through `ExecuteCommand` and use C-derived literal
+PLR/PRF bit numbers. `TestCmdSetDirectBinaryFieldsMatchCBits` covers all six
+direct rows, both transitions, unrelated legacy PLR/PRF bits, and the typed
+PLR synchronization. The two exception tests cover the successful and
+rejected transitions without changing production behavior.
+
+The affected scenario matrix has five scenarios and five required seeds
+(`1,2,3,5,8`), for 25 scenario-seed executions:
+
+| scenario | purpose | executions | pass | failed | infra | timed out | stale | unpinnable |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `set-depth` | existing baseline | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
+| `set-extended-depth` | existing broad field vehicle | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
+| `set-gate-depth` | existing generic level gate | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
+| `set-direct-flags-depth` | six named direct rows, on/off | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
+| `set-exceptions-depth` | `nohassle`/`frozen` boundaries | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
+| **total** | | **25** | **25** | **0** | **0** | **0** | **0** | **0** |
+
+The tally was computed from the five preserved `focused-seed-*.log` files,
+requiring exactly one `PASS` line for each of the five scenario names in each
+seed file; no missing or duplicate scenario-seed result was accepted. The
+seed-1 `--show-oracle` logs preserve every actor block, including the
+authority/self-target refusals and the empty target audience blocks:
+
+`docs/fidelity/depth/evidence/2026-09-11-wizset-proof/`
+
+Repository gates run on checkpoint `1bb46bb23` so far: `make fmt`,
+`gofumpt -l .`, `go build ./...`, `go vet ./...`, `go test ./...`,
+`go test ./pkg/game/...`, `golangci-lint run ./...`, `make fidelity-depth`,
+`make expected-divergences-check`, and `git diff --check` pass. The current
+depth census is **4811 total, 4692 proven/delegated, 68 blocked, 51
+excluded**. The required full `make oracle-regression` census remains to be
+run before final delivery.
+
+## Final disposition boundary
+
+This milestone closes only the named wizard-set proof slice. `loadroom`
+remains explicit and outside this work; equipment-map reachability, Phase
+6.2 inventory work, and Phase 6.3 remain deferred. The final delivery must
+record the full census and exact final tested commit, and must not claim
+whole-Phase 6.1 completion.

@@ -1,0 +1,7 @@
+oracle-regression: 5 scenarios, seed=1, timeout=240s, jobs=2
+PASS set-depth
+PASS set-gate-depth
+PASS set-extended-depth
+PASS set-direct-flags-depth
+PASS set-exceptions-depth
+oracle-regression: scenarios=5 passed=5 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 elapsed=122.411s started=2026-09-11T19:07:14-0400 finished=2026-09-11T19:09:17-0400

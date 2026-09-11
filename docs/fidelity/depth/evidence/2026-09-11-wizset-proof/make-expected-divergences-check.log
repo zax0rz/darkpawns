@@ -1,0 +1,21 @@
+python3 scripts/gen_expected_divergences.py
+  unresolved: entry.tsv:entry.name-validation:pending
+  unresolved: entry.tsv:entry.browser-name-routing:scripts/entry-client.test.mjs
+  unresolved: entry.tsv:entry.deleted-name:pending
+  unresolved: entry.tsv:entry.new-password:pending
+  unresolved: entry.tsv:entry.password-retries:pending
+  unresolved: entry.tsv:entry.login-restrictions:pending
+  unresolved: entry.tsv:entry.duplicate-session:pending
+  unresolved: entry.tsv:entry.creation-choices:pending
+  unresolved: entry.tsv:entry.stats-reroll:pending
+  unresolved: entry.tsv:entry.lookup-load-failure:pending
+  unresolved: entry.tsv:entry.motd-mortal-color-on-raw:pending
+  unresolved: entry.tsv:entry.motd-mortal-color-off-raw:pending
+  unresolved: entry.tsv:entry.motd-immortal-color-on-raw:pending
+  unresolved: entry.tsv:entry.motd-immortal-color-off-raw:pending
+  unresolved: entry.tsv:entry.menu-actions:pending
+  unresolved: entry.tsv:entry.world-entry:pending
+  unresolved: entry.tsv:entry.god-mortal-bootstrap:pending
+  unresolved: entry.tsv:entry.identity-consumers:pending
+expected_divergences: 26 rows across 10 scenarios (136 blocked/excluded rows carry no scenario proof; 18 proofs did not resolve to a scenario file)
+expected_divergence_pins: OK

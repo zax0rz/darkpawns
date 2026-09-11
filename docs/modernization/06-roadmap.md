@@ -133,6 +133,12 @@ finds both phases **partially complete** on current `origin/main`:
   but the `94`/`57` figures are aggregate heuristics rather than a closure
   checklist. `DoScan` and `roomObjectLines` remain concrete output-loop
   candidates pending inventory and proof review.
+- The bounded wizard-set follow-up is recorded in
+  [`2026-09-11-modernization-phase6-1-wizset-proof.md`](../fidelity/depth/handoff/2026-09-11-modernization-phase6-1-wizset-proof.md): six direct binary
+  fields now have named live on/off transcript vehicles paired with C-derived
+  bit assertions, and `nohassle`/`frozen` have separate authority/self-target
+  cases. This does not close the equipment-map or `loadroom` boundaries and
+  does not claim whole-Phase 6.1 completion.
 
 Do not interpret the eight 2026-09-06 slice handoffs as whole-phase completion
 records. The audit recommends closing the named 6.1 wizard-set proof slice

@@ -1,0 +1,50 @@
+ok  	github.com/zax0rz/darkpawns/benchmarks	0.008s [no tests to run]
+ok  	github.com/zax0rz/darkpawns/cmd/agentkeygen	0.050s
+ok  	github.com/zax0rz/darkpawns/cmd/dp-agent	0.016s
+?   	github.com/zax0rz/darkpawns/cmd/dp-command-gates	[no test files]
+?   	github.com/zax0rz/darkpawns/cmd/dp-goatd	[no test files]
+ok  	github.com/zax0rz/darkpawns/cmd/dp-oracle-diff	0.480s
+?   	github.com/zax0rz/darkpawns/cmd/dp-socials	[no test files]
+ok  	github.com/zax0rz/darkpawns/cmd/server	0.218s
+?   	github.com/zax0rz/darkpawns/cmd/test-race	[no test files]
+ok  	github.com/zax0rz/darkpawns/examples	0.389s
+?   	github.com/zax0rz/darkpawns/examples/performance	[no test files]
+ok  	github.com/zax0rz/darkpawns/internal/dpclock	0.011s
+ok  	github.com/zax0rz/darkpawns/internal/lintguard	0.104s
+ok  	github.com/zax0rz/darkpawns/internal/oraclediff	0.263s
+?   	github.com/zax0rz/darkpawns/lib/misc	[no test files]
+ok  	github.com/zax0rz/darkpawns/load_test	(cached) [no tests to run]
+ok  	github.com/zax0rz/darkpawns/pkg/admin	0.087s
+ok  	github.com/zax0rz/darkpawns/pkg/agent	0.618s
+ok  	github.com/zax0rz/darkpawns/pkg/agentcli	5.423s
+ok  	github.com/zax0rz/darkpawns/pkg/audit	0.445s
+ok  	github.com/zax0rz/darkpawns/pkg/auth	0.131s
+ok  	github.com/zax0rz/darkpawns/pkg/boards	0.144s
+ok  	github.com/zax0rz/darkpawns/pkg/combat	0.067s
+ok  	github.com/zax0rz/darkpawns/pkg/command	0.035s
+?   	github.com/zax0rz/darkpawns/pkg/common	[no test files]
+ok  	github.com/zax0rz/darkpawns/pkg/contact	0.020s
+ok  	github.com/zax0rz/darkpawns/pkg/db	0.124s
+ok  	github.com/zax0rz/darkpawns/pkg/dprng	0.010s
+ok  	github.com/zax0rz/darkpawns/pkg/dreaming	0.007s
+ok  	github.com/zax0rz/darkpawns/pkg/engine	1.147s
+ok  	github.com/zax0rz/darkpawns/pkg/events	0.538s
+ok  	github.com/zax0rz/darkpawns/pkg/game	0.420s
+ok  	github.com/zax0rz/darkpawns/pkg/grapevine	0.126s
+ok  	github.com/zax0rz/darkpawns/pkg/metrics	0.018s
+ok  	github.com/zax0rz/darkpawns/pkg/moderation	0.007s
+ok  	github.com/zax0rz/darkpawns/pkg/optimization	2.890s
+ok  	github.com/zax0rz/darkpawns/pkg/parser	0.027s
+ok  	github.com/zax0rz/darkpawns/pkg/privacy	0.062s
+ok  	github.com/zax0rz/darkpawns/pkg/scripting	5.458s
+ok  	github.com/zax0rz/darkpawns/pkg/secrets	0.002s
+ok  	github.com/zax0rz/darkpawns/pkg/session	0.884s
+ok  	github.com/zax0rz/darkpawns/pkg/spells	0.014s
+ok  	github.com/zax0rz/darkpawns/pkg/storage	0.071s
+ok  	github.com/zax0rz/darkpawns/pkg/telnet	1.041s
+ok  	github.com/zax0rz/darkpawns/pkg/testutil	0.003s
+ok  	github.com/zax0rz/darkpawns/pkg/validation	0.004s
+ok  	github.com/zax0rz/darkpawns/profiling	0.507s
+ok  	github.com/zax0rz/darkpawns/tests/e2e	9.461s
+ok  	github.com/zax0rz/darkpawns/tests/unit	0.003s
+ok  	github.com/zax0rz/darkpawns/web	0.005s
