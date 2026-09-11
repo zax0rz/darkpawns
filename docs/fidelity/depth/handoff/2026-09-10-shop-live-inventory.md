@@ -83,7 +83,50 @@ Each differential report says `result: no normalized divergence`; the
 expected-divergence check required regenerating the existing manifest-backed
 ledger's missing `character-creation-name-retry / entry.motd-color` row; no
 pin or exclusion was created. The full `make oracle-regression` census is
-the remaining release gate for this handoff.
+recorded below.
+
+## Final gates and disposition
+
+The final code/evidence candidate was commit `e4c9df54e`. The exact full
+census command was:
+
+```text
+set -o pipefail
+export PATH=/usr/local/go/bin:$PATH
+export DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle
+export ORACLE_REGRESSION_GO=/usr/local/go/bin/go
+export ORACLE_REGRESSION_TIMEOUT=240s
+export ORACLE_REGRESSION_SEED=1
+export ORACLE_REGRESSION_JOBS=4
+make oracle-regression
+```
+
+The complete output is preserved in
+`docs/fidelity/depth/evidence/2026-09-10-shop-live-inventory/oracle-regression-full-final.txt`.
+Its final tally is `scenarios=938 passed=928 expected=9 unpinnable=1
+stale=0 failed=0 infra=0 timed_out=0`; the exit status is 2 solely for the
+previously human-cleared `accuse-noarg-depth` baseline. The four shop
+scenarios are PASS in that census. Three transient C listener collisions and
+one additional readiness collision were manually inspected and recovered on
+the worker's bounded retry; the inspection is preserved in
+`cutthroat-peaceful-infra-inspection.txt`, and none filed as INFRA.
+
+`make fidelity-depth` passed with 4794 total cases, 4678 proven/delegated, 65
+blocked, and 51 excluded. The final-candidate `make expected-divergences-check`
+does not pass: its generator requires the unrelated
+`character-creation-name-retry / entry.motd-color` row from the still-blocked
+`docs/fidelity/depth/entry.tsv`, while the census proves that scenario PASS and
+therefore reports the generated row stale. The exact failed output is in
+`expected-divergences-final.txt`. The generated row was not committed, and the
+unrelated entry debt was not repaired, pinned, or excluded.
+
+Disposition: B (blocked). The shop debt itself is proven at D4 with C-vs-Go
+fixtures and the isolated Go correction, but the requested final gate set is
+not simultaneously satisfiable without an unrelated entry-manifest decision.
+Smallest next action: reconcile `entry.motd-color` against its existing
+scenario/evidence, then rerun `make expected-divergences-check` and the full
+census. No PR was opened because this candidate does not meet the requested
+all-gates-passing condition.
 
 ## Remaining boundary
 

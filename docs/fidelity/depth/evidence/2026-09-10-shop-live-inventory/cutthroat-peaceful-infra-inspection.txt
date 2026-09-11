@@ -1,0 +1,28 @@
+# Manual inspection during the final full census
+
+Scenario: cutthroat-peaceful, DP_SEED=1.
+
+The first worker attempt was infrastructure-shaped: the harness reported
+`C oracle exited before readiness: exit status 1`. The preserved temporary C
+server log identified `SYSERR: bind: Address already in use` after `Boot db --
+DONE`; this was a listener collision, not a C-vs-Go transcript divergence.
+The worker's bounded retry produced `result: no normalized divergence` and
+was graded PASS. No INFRA result was filed for this scenario.
+
+The same inspection for `flee-combat-forced` found the first attempt failed
+before readiness with the identical C-side `SYSERR: bind: Address already in
+use` listener collision (`Boot db -- DONE` had completed). Its retry log
+produced `result: no normalized divergence`; it was graded PASS, with no INFRA
+result filed.
+
+The `recite-infravision` first attempt had the same pre-readiness C oracle
+listener collision: `C oracle exited before readiness: exit status 1`, followed
+by `SYSERR: bind: Address already in use` after `Boot db -- DONE`. Its bounded
+retry produced `result: no normalized divergence` and the worker graded it
+PASS; no content result was inferred from the first attempt.
+
+The `spec-proc-prostitute` first attempt likewise failed before readiness
+because the C oracle logged `SYSERR: bind: Address already in use` after
+`Boot db -- DONE`. Its bounded retry produced `result: no normalized
+divergence` and the worker graded it PASS; this event was infrastructure-shaped,
+not a fidelity result.
