@@ -125,8 +125,9 @@ fixtures and the isolated Go correction, but the requested final gate set is
 not simultaneously satisfiable without an unrelated entry-manifest decision.
 Smallest next action: reconcile `entry.motd-color` against its existing
 scenario/evidence, then rerun `make expected-divergences-check` and the full
-census. No PR was opened because this candidate does not meet the requested
-all-gates-passing condition.
+census. Reviewable PR: [#1437](https://github.com/zax0rz/darkpawns/pull/1437).
+It is intentionally left unmerged and explicitly records the unrelated gate
+blocker.
 
 ## Remaining boundary
 
