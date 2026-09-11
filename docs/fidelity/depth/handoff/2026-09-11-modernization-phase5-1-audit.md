@@ -113,3 +113,11 @@ local except for its proven player ordering helper.
 
 This handoff stops at Phase 5.1. It does not start Phase 5.2, Phase 6, or
 unrelated entry-depth work.
+
+## Review handoff
+
+Review PR: #1441
+(`https://github.com/zax0rz/darkpawns/pull/1441`), intentionally unmerged.
+Final branch/head: `glm/modernize-elements-teleport` at `36c49d1d0`.
+The production candidate exercised by the validation runs is the unchanged
+`e6c7e7312` parent; `cd96e0925` and `36c49d1d0` add only evidence text.
