@@ -106,9 +106,9 @@ The complete output is preserved in
 Its final tally is `scenarios=938 passed=928 expected=9 unpinnable=1
 stale=0 failed=0 infra=0 timed_out=0`; the exit status is 2 solely for the
 previously human-cleared `accuse-noarg-depth` baseline. The four shop
-scenarios are PASS in that census. Three transient C listener collisions and
-one additional readiness collision were manually inspected and recovered on
-the worker's bounded retry; the inspection is preserved in
+scenarios are PASS in that census. Four transient C listener collisions were
+manually inspected and recovered on the worker's bounded retry; the inspection
+is preserved in
 `cutthroat-peaceful-infra-inspection.txt`, and none filed as INFRA.
 
 `make fidelity-depth` passed with 4794 total cases, 4678 proven/delegated, 65
