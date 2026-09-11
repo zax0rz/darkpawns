@@ -47,3 +47,17 @@ The unassigned `SPECIAL(elemental_room)` at `src/spec_procs.c:2021-2068` is
 not one of the seven active registrations; its excluded manifest row
 `mob.elemental-room-unassigned` records the R2/R4/R5e boundary. It is not a
 valid teleport vehicle or a Phase 5.1 extraction target.
+
+## Validation checkpoint
+
+The final affected-family rerun covered all 38 recorded scenario/seed pairs:
+the three master-column vehicles at seeds `1,2,3`, and the platforms,
+cylinders, Galeru-column, both Galeru-alive vehicles, minion, and guardian
+vehicles at seeds `1,2,3,5,8`. Every run reported `no normalized divergence`;
+the proving blocks were inspected with `--show-oracle`. Durable logs are in
+`/home/zach/dp-phase51-final-20260911/`. The initial parallel attempt is
+preserved in `/home/zach/dp-phase51-final-20260911-path-misconfig/` and is
+infrastructure-only (`Address already in use`).
+
+Full `make oracle-regression` remains the final validation gate before PR
+creation; no new fixture or production change is pending.
