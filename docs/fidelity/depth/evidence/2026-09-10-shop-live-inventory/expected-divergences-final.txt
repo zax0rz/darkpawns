@@ -1,0 +1,49 @@
+python3 scripts/gen_expected_divergences.py
+  unresolved: entry.tsv:entry.name-validation:pending
+  unresolved: entry.tsv:entry.browser-name-routing:scripts/entry-client.test.mjs
+  unresolved: entry.tsv:entry.deleted-name:pending
+  unresolved: entry.tsv:entry.new-password:pending
+  unresolved: entry.tsv:entry.password-retries:pending
+  unresolved: entry.tsv:entry.login-restrictions:pending
+  unresolved: entry.tsv:entry.duplicate-session:pending
+  unresolved: entry.tsv:entry.creation-choices:pending
+  unresolved: entry.tsv:entry.stats-reroll:pending
+  unresolved: entry.tsv:entry.lookup-load-failure:pending
+  unresolved: entry.tsv:entry.menu-actions:pending
+  unresolved: entry.tsv:entry.world-entry:pending
+  unresolved: entry.tsv:entry.god-mortal-bootstrap:pending
+  unresolved: entry.tsv:entry.identity-consumers:pending
+expected_divergences: 27 rows across 11 scenarios (136 blocked/excluded rows carry no scenario proof; 14 proofs did not resolve to a scenario file)
+diff --git a/cmd/dp-oracle-diff/expected_divergences.tsv b/cmd/dp-oracle-diff/expected_divergences.tsv
+index 380252be3..3a3cec3e5 100644
+--- a/cmd/dp-oracle-diff/expected_divergences.tsv
++++ b/cmd/dp-oracle-diff/expected_divergences.tsv
+@@ -3,6 +3,7 @@ accuse-depth	accuse.tsv	accuse.one-argument	blocked
+ accuse-depth	accuse.tsv	accuse.target-audience	blocked
+ accuse-depth	accuse.tsv	accuse.target-success	blocked
+ accuse-noarg-depth	accuse.tsv	accuse.no-argument	blocked
++character-creation-name-retry	entry.tsv	entry.motd-color	blocked
+ force-mob	force.tsv	force.npc-command-interpreter	blocked
+ force-mob	force.tsv	force.visible-npc-target	blocked
+ medit-entry-depth	medit.tsv	medit.no-argument	blocked
+expected_divergences.tsv is stale; run make expected-divergences and commit
+make: *** [Makefile:100: expected-divergences-check] Error 1
+
+RERUN AFTER CHECKPOINT 7433f88a3
+python3 scripts/gen_expected_divergences.py
+  unresolved: entry.tsv:entry.name-validation:pending
+  unresolved: entry.tsv:entry.browser-name-routing:scripts/entry-client.test.mjs
+  unresolved: entry.tsv:entry.deleted-name:pending
+  unresolved: entry.tsv:entry.new-password:pending
+  unresolved: entry.tsv:entry.password-retries:pending
+  unresolved: entry.tsv:entry.login-restrictions:pending
+  unresolved: entry.tsv:entry.duplicate-session:pending
+  unresolved: entry.tsv:entry.creation-choices:pending
+  unresolved: entry.tsv:entry.stats-reroll:pending
+  unresolved: entry.tsv:entry.lookup-load-failure:pending
+  unresolved: entry.tsv:entry.menu-actions:pending
+  unresolved: entry.tsv:entry.world-entry:pending
+  unresolved: entry.tsv:entry.god-mortal-bootstrap:pending
+  unresolved: entry.tsv:entry.identity-consumers:pending
+expected_divergences: 27 rows across 11 scenarios (136 blocked/excluded rows carry no scenario proof; 14 proofs did not resolve to a scenario file)
+expected_divergence_pins: OK
