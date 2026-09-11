@@ -119,6 +119,25 @@ until that boundary is resolved.
 | 6.4 | Global→struct injection: mail.go (8 globals), weather.go, merge_bridge banManager, spec_assign registries | −250–400 | YELLOW (behavior-adjacent) | weather/mail/ban scenarios + unit tests |
 | 6.5 | Production `_ =` → handle-or-slog (AGENTS.md:63) | ~0 (adds lines) | GREEN | build + vet |
 
+### Phase 6.1/6.2 audit tracking (2026-09-11)
+
+The original Phase 6 table and estimates above are preserved. The dated audit
+[`2026-09-11-modernization-phase6-1-6-2-audit.md`](../fidelity/depth/handoff/2026-09-11-modernization-phase6-1-6-2-audit.md)
+finds both phases **partially complete** on current `origin/main`:
+
+- 6.1's known lookup-table and wizard-flag slices landed, but six direct
+  wizard flags, exceptional `nohassle`/`frozen`/`loadroom` boundaries, and
+  equipment-map entry/reachability proof remain. The original `reports/02`
+  candidate inventory is not present in the repository.
+- 6.2's six known builder slices landed and passed their focused scenarios,
+  but the `94`/`57` figures are aggregate heuristics rather than a closure
+  checklist. `DoScan` and `roomObjectLines` remain concrete output-loop
+  candidates pending inventory and proof review.
+
+Do not interpret the eight 2026-09-06 slice handoffs as whole-phase completion
+records. The audit recommends closing the named 6.1 wizard-set proof slice
+before Phase 6.3.
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**
