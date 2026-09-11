@@ -59,6 +59,32 @@ After correction, the target, control, and filter scenarios matched C at
 seeds 1 and 2 with `--show-oracle`; the raw post-fix runs are stored beside
 that file.
 
+## Reproduction record
+
+The target and companion runs used the isolated checkout at commit
+`02d72c305` with `PATH=/usr/local/go/bin:$PATH` and
+`DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle`:
+
+```text
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-live-inventory-gate --seed 1 --show-oracle
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-live-inventory-gate --seed 2 --show-oracle
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-live-inventory-control --seed 1 --show-oracle
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-live-inventory-control --seed 2 --show-oracle
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-live-inventory-filters --seed 1 --show-oracle
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-live-inventory-filters --seed 2 --show-oracle
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-stack-list-live --seed 1 --show-oracle
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle /usr/local/go/bin/go run ./cmd/dp-oracle-diff --scenario shop-stack-list-live --seed 2 --show-oracle
+make fidelity-depth
+make expected-divergences-check
+```
+
+Each differential report says `result: no normalized divergence`; the
+`--show-oracle` blocks are preserved in the corresponding seed log. The
+expected-divergence check required regenerating the existing manifest-backed
+ledger's missing `character-creation-name-retry / entry.motd-color` row; no
+pin or exclusion was created. The full `make oracle-regression` census is
+the remaining release gate for this handoff.
+
 ## Remaining boundary
 
 This milestone proves `list` at the live keeper-inventory gate, stocked
