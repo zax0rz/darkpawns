@@ -66,6 +66,26 @@ One PR per cluster; each re-verified by its units' named scenarios.
 | 5.1 | Elements×7 shared teleport spine | −90 | YELLOW per proc | each element spec's scenario rows |
 | 5.2 | Tattoo×4, castle-guards×3, undead-knights×2, fighter/paladin gate+picker, combat-gate idiom (~25 procs) | −370 | YELLOW per proc | spec-procs.tsv rows (241 scenario-proven, 243 unit) |
 
+### Phase 5.1 measured result (2026-09-11)
+
+Phase 5.1 is already present on current `origin/main` through merged PR #1399
+(`ecafde5302596e29d525617513bbd033d2c78727`, based on
+`38c4f1b35875a28fb5fcf93fb5257951fa9ad1a2`). The measured delta is the
+reviewed source diff, not the roadmap estimate:
+
+| scope | before | after | measured delta |
+|---|---:|---:|---:|
+| production `pkg/game/spec_procs3.go` | 1,885 physical lines / 1,748 nonblank | 1,887 physical lines / 1,748 nonblank | **+127 / −125, net +2 physical lines** |
+| tests and oracle scenarios | unchanged | unchanged | **0** |
+| Phase 5.1 handoff documentation | absent | 48 lines | **+48** |
+
+The production change shares the player-only transfer spine across
+`elements_master_column`, `elements_platforms`, and `elements_galeru_column`,
+and shares only the proven player ordering helper in `elements_galeru_alive`.
+`elements_load_cylinders`, `elements_minion`, and `elements_guardian` have no
+shared teleport branch and remain local. The estimate of −90 is retained as a
+planning estimate only; line reduction is not an acceptance criterion.
+
 ## Phase 6 — C-isms mechanical wave (~−2,300; subset of reports/02)
 
 | # | Target | Δ lines | Risk | Verifying cases |
