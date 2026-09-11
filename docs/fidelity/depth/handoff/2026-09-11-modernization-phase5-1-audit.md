@@ -61,3 +61,55 @@ infrastructure-only (`Address already in use`).
 
 Full `make oracle-regression` remains the final validation gate before PR
 creation; no new fixture or production change is pending.
+
+## Final validation and disposition
+
+The full census was run from candidate head `e6c7e7312` on branch
+`glm/modernize-elements-teleport`, with
+`PATH=/usr/local/go/bin:$PATH`, `DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle`,
+and `ORACLE_REGRESSION_JOBS=4`. The durable log is
+`/home/zach/dp-phase51-oracle-regression-20260911.log`. Its final tally is:
+
+| census result | count |
+|---|---:|
+| scenarios | 938 |
+| passed | 928 |
+| expected (ledger-backed, pinned shape) | 9 |
+| unpinnable (human-cleared baseline) | 1 |
+| stale | 0 |
+| failed | 0 |
+| infra | 0 |
+| timed out | 0 |
+
+The sole unpinnable result is the established `accuse-noarg-depth` baseline;
+the harness exit 2 is solely the consequence of that human-clearance rule.
+The bounded retry policy recovered `checkload-depth`, `flip-depth`,
+`get-mounted-block`, `handbook-immortal-depth`, `hush-depth`, `look-basic`,
+`tackle-depth`, `think-depth`, and `wizard-valid-reports-depth`; none remained
+in the final infra count.
+
+All 38 affected scenario/seed pairs were rerun with `--show-oracle` from the
+same production candidate: master-column none/all/stale at seeds `1,2,3`,
+and platforms, load cylinders, Galeru column, Galeru alive, Galeru alive
+dead, minion, and guardian at seeds `1,2,3,5,8`. Every pair reported `no
+normalized divergence`, and the proving blocks were inspected. The easy
+gates also passed: `gofumpt`, `go build ./...`, `go vet ./...`,
+`go test ./...`, `go test ./pkg/game/...`, `golangci-lint run ./...`,
+`make fidelity-depth`, and `make expected-divergences-check`. The current
+depth snapshot is `4798 total, 4679 proven/delegated, 68 blocked, 51
+excluded`.
+
+### Per-proc next actions
+
+The three non-teleport procedures are explicit Phase 5.1 deferrals, not
+missing work: `elements_load_cylinders` remains an object-state slice,
+`elements_minion` remains an object-cleanup/pulse slice, and
+`elements_guardian` remains a combat/RNG slice. No Phase 5.1 action remains
+for them. If any is revisited, the smallest next action is a separate,
+manifest-backed extraction using its listed rows, with fresh proof for object
+ordering or combat draw order; do not route it through the player teleport
+helper. The mixed NPC/player path in `elements_galeru_alive` likewise remains
+local except for its proven player ordering helper.
+
+This handoff stops at Phase 5.1. It does not start Phase 5.2, Phase 6, or
+unrelated entry-depth work.
