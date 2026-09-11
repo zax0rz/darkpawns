@@ -50,7 +50,7 @@ valid teleport vehicle or a Phase 5.1 extraction target.
 
 ## Validation checkpoint
 
-The final affected-family rerun covered all 38 recorded scenario/seed pairs:
+The final affected-family rerun covered all 44 recorded scenario/seed pairs:
 the three master-column vehicles at seeds `1,2,3`, and the platforms,
 cylinders, Galeru-column, both Galeru-alive vehicles, minion, and guardian
 vehicles at seeds `1,2,3,5,8`. Every run reported `no normalized divergence`;
@@ -88,7 +88,7 @@ The bounded retry policy recovered `checkload-depth`, `flip-depth`,
 `tackle-depth`, `think-depth`, and `wizard-valid-reports-depth`; none remained
 in the final infra count.
 
-All 38 affected scenario/seed pairs were rerun with `--show-oracle` from the
+All 44 affected scenario/seed pairs were rerun with `--show-oracle` from the
 same production candidate: master-column none/all/stale at seeds `1,2,3`,
 and platforms, load cylinders, Galeru column, Galeru alive, Galeru alive
 dead, minion, and guardian at seeds `1,2,3,5,8`. Every pair reported `no
