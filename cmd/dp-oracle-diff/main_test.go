@@ -112,6 +112,10 @@ func TestObservationMobFixturesPrepareDisposableWorld(t *testing.T) {
 	if err := applyMobFixtures(worldDir, []oraclediff.MobFixture{fixture}); err != nil {
 		t.Fatalf("spawn mob: %v", err)
 	}
+	objectFixture := oraclediff.MobObjectFixture{MobVNum: 18306, ObjectVNum: 8038, MaxExisting: 1, ZoneNumber: 80}
+	if err := applyMobObjectFixtures(worldDir, []oraclediff.MobObjectFixture{objectFixture}); err != nil {
+		t.Fatalf("give object: %v", err)
+	}
 	if err := applyScriptlessMobFixtures(worldDir, []int{18306}); err != nil {
 		t.Fatalf("strip mob script: %v", err)
 	}
@@ -126,7 +130,7 @@ func TestObservationMobFixturesPrepareDisposableWorld(t *testing.T) {
 			t.Fatalf("zone did not suppress reset %q:\n%s", reset, gotZone)
 		}
 	}
-	if !strings.Contains(gotZone, "O 0 4 1 8000") || !strings.Contains(gotZone, "M 0 18306 1 8162\nS\n$") {
+	if !strings.Contains(gotZone, "O 0 4 1 8000") || !strings.Contains(gotZone, "M 0 18306 1 8162\nG 1 8038 1 -1\nS\n$") {
 		t.Fatalf("zone did not preserve objects and insert deterministic mob:\n%s", gotZone)
 	}
 

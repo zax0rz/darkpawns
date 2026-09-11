@@ -131,21 +131,21 @@ func (sm *ShopManager) GetShopsInRoom(roomVNum int) []interface{} {
 //	if (GET_CHA(ch)) price -= price*(GET_CHA(ch)*.005)
 //	return MAX(MAX(price, 1), GET_OBJ_COST(obj))
 func (s *Shop) BuyPrice(itemCost int, cha int) int {
-	price := float64(itemCost) * s.ProfitBuy
+	price := int(float64(itemCost) * s.ProfitBuy)
 
 	// CHA discount: price -= price * (CHA * 0.005)
 	if cha > 0 {
-		price -= price * (float64(cha) * 0.005)
+		price = int(float64(price) - float64(price)*(float64(cha)*0.005))
 	}
 
 	// C: MAX(MAX(price, 1), GET_OBJ_COST(obj)) — buy price is at least item cost
 	if price < 1 {
 		price = 1
 	}
-	if float64(itemCost) > price {
-		price = float64(itemCost)
+	if itemCost > price {
+		price = itemCost
 	}
-	return int(price)
+	return price
 }
 
 // SellPrice calculates the price a shop pays the player for an item.
@@ -156,27 +156,27 @@ func (s *Shop) BuyPrice(itemCost int, cha int) int {
 //	if ((bprice = buy_price(ch, obj, shop_nr)) < price) price = bprice
 //	return MIN(MAX(1, price), GET_OBJ_COST(obj))
 func (s *Shop) SellPrice(itemCost int, cha int) int {
-	price := float64(itemCost) * s.ProfitSell
+	price := int(float64(itemCost) * s.ProfitSell)
 
 	// CHARISMA modifier: price += price * (CHA * 0.005)
 	if cha > 0 {
-		price += price * (float64(cha) * 0.005)
+		price = int(float64(price) + float64(price)*(float64(cha)*0.005))
 	}
 
 	// C: if buy_price < price, cap at buy_price
 	buyPrice := s.BuyPrice(itemCost, cha)
-	if buyPrice < int(price) {
-		price = float64(buyPrice)
+	if buyPrice < price {
+		price = buyPrice
 	}
 
 	// C: MIN(MAX(1, price), GET_OBJ_COST(obj))
 	if price < 1 {
 		price = 1
 	}
-	if price > float64(itemCost) {
-		price = float64(itemCost)
+	if price > itemCost {
+		price = itemCost
 	}
-	return int(price)
+	return price
 }
 
 // WillBuyType returns true if the shop buys items of the given type.

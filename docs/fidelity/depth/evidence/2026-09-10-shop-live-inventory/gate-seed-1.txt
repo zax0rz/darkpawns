@@ -1,0 +1,17 @@
+Dark Pawns Tier-1 differential report
+scenario: shop-live-inventory-gate
+c-oracle: 127.0.0.1:36987 (DP_SEED=1)
+go-port: 127.0.0.1:35569 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [look]
+A Spice Store
+   Spices, spices and even more spices. These items have been brought here
+from afar in an attempt to liven up the otherwise staple diet of fish that
+the majority of the citizens and visitors to Haven are treated to. The
+merchant is very enthusiastic about his goods and does everything except
+steal from you to get you to stay in his store. The docks of Haven are through
+the doorway to the south.
+A plump and jovial merchant hovers around you.
+--- [list]
+Currently, there is nothing for sale.

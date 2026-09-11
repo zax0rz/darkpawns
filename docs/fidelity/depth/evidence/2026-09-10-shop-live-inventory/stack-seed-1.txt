@@ -1,0 +1,10 @@
+Dark Pawns Tier-1 differential report
+scenario: shop-stack-list-live
+c-oracle: 127.0.0.1:46189 (DP_SEED=1)
+go-port: 127.0.0.1:34201 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [list sword]
+Presently, none of those are for sale.
+--- [buy sword]
+The fat merchant tells you, 'Sorry, I don't stock that item.'

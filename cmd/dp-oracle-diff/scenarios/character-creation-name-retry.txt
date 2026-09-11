@@ -3,7 +3,7 @@
 # Compare all creation bytes, including capitalization after the retry (R1).
 # depth-case: entry.display-case
 # depth-case: entry.retry-new
-# depth-case: entry.motd-color
+# depth-case: entry.motd-mortal-color-on-normalized
 [fixture]
 quiet-mobs
 

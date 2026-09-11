@@ -203,6 +203,26 @@ func TestZoneResetObjectLoadCreatesBeforePercentAndExtractsOnFailure(t *testing.
 	}
 }
 
+func TestZoneResetGPrependsToMobInventory(t *testing.T) {
+	world, spawner := newZoneResetTestSpawner(t)
+	zone := &parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
+		{Command: "G", IfFlag: 1, Arg1: 200, Arg2: 1},
+		{Command: "G", IfFlag: 1, Arg1: 201, Arg2: 1},
+	}}
+
+	if err := spawner.ExecuteZoneReset(zone); err != nil {
+		t.Fatal(err)
+	}
+	mobs := world.GetMobsInRoom(100)
+	if len(mobs) != 1 {
+		t.Fatalf("reset mobs = %d, want 1", len(mobs))
+	}
+	if got := []int{mobs[0].Inventory[0].GetVNum(), mobs[0].Inventory[1].GetVNum()}; !slices.Equal(got, []int{201, 200}) {
+		t.Fatalf("mob inventory order = %v, want C obj_to_char order [201 200]", got)
+	}
+}
+
 func TestZoneResetFloatingOSkipsPercentLoad(t *testing.T) {
 	_, spawner := newZoneResetTestSpawner(t)
 	calls := installZoneObjectOrderHooks(t, false)

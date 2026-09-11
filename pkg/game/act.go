@@ -202,6 +202,13 @@ func CanSee(observer, subject Actor) bool {
 	return canSee(observer, subject)
 }
 
+// CanSeeObject reports whether observer can see obj using the canonical
+// CAN_SEE_OBJ rules. Session-owned commands use this viewer-aware boundary
+// instead of duplicating object visibility policy.
+func CanSeeObject(observer Actor, obj *ObjectInstance) bool {
+	return canSeeObject(observer, obj)
+}
+
 // sendOk checks whether 'to' can receive a message.
 // C: SENDOK(ch, to_sleep) — desc && (AWAKE(ch) || to_sleep) && !PLR_WRITING
 func sendOk(to Actor, toSleep bool) bool {
@@ -291,11 +298,6 @@ func canSeeObject(to Actor, obj *ObjectInstance) bool {
 	sub, ok := to.(visibilitySubject)
 	if !ok {
 		// Fallback: can't check affects, assume visible
-		return true
-	}
-
-	// IMMORT levels always see everything (source: C LVL_IMMORT level check)
-	if sub.GetLevel() >= LVL_IMMORT {
 		return true
 	}
 

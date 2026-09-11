@@ -29,24 +29,25 @@ type Scenario struct {
 	// PeerDrop names one passive peer whose TCP connection is closed after
 	// setup/warmup and before the compared probe. The character remains in the
 	// live-world lifecycle, which exposes C's linkless descriptor branches.
-	PeerDrop         string
-	Peers            map[string]*PeerSetup
-	Fixtures         []ObjectFixture
-	ObjectSpawns     []ObjectSpawnFixture
-	MobFixtures      []MobFixture
-	MobAffFixtures   []MobAffFixture
-	MobFlagFixtures  []MobFlagFixture
-	ObjIndexFixtures []ObjIndexFixture
-	WldIndexFixtures []WldIndexFixture
-	QuietZones       []int
-	QuietAllMobs     bool
-	EmptyPlayers     bool
-	ScriptlessMobIDs []int
-	ForceLoadVNums   []int
-	RoomExitFixtures []RoomExitFixture
-	RoomFlagFixtures []RoomFlagFixture
-	RoomSectors      []RoomSectorFixture
-	HouseControls    []HouseControlFixture
+	PeerDrop          string
+	Peers             map[string]*PeerSetup
+	Fixtures          []ObjectFixture
+	ObjectSpawns      []ObjectSpawnFixture
+	MobFixtures       []MobFixture
+	MobObjectFixtures []MobObjectFixture
+	MobAffFixtures    []MobAffFixture
+	MobFlagFixtures   []MobFlagFixture
+	ObjIndexFixtures  []ObjIndexFixture
+	WldIndexFixtures  []WldIndexFixture
+	QuietZones        []int
+	QuietAllMobs      bool
+	EmptyPlayers      bool
+	ScriptlessMobIDs  []int
+	ForceLoadVNums    []int
+	RoomExitFixtures  []RoomExitFixture
+	RoomFlagFixtures  []RoomFlagFixture
+	RoomSectors       []RoomSectorFixture
+	HouseControls     []HouseControlFixture
 	// SkipSetupSettle leaves the frozen clock untouched after character
 	// creation. Focused vehicles use this when a spawned autonomous mob must
 	// survive until a later warmup command places the actor beside it.
@@ -89,6 +90,16 @@ type MobFixture struct {
 	MobVNum     int
 	MaxExisting int
 	RoomVNum    int
+	ZoneNumber  int
+}
+
+// MobObjectFixture appends a G reset for the last mob reset in a disposable
+// zone. It is deliberately paired with spawn-mob in focused vehicles so a
+// scenario can populate a known keeper without editing authoritative zones.
+type MobObjectFixture struct {
+	MobVNum     int
+	ObjectVNum  int
+	MaxExisting int
 	ZoneNumber  int
 }
 
@@ -195,6 +206,7 @@ type AudienceProbeBlock struct {
 //	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
 //	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
+//	give-object 12100 12132 1 121 # mob, object, max existing, zone file
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	strip-mob-script 18306    # force native special dispatch in both copies
@@ -397,6 +409,24 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				if valid {
 					sc.MobFixtures = append(sc.MobFixtures, MobFixture{
 						MobVNum: values[0], MaxExisting: values[1], RoomVNum: values[2], ZoneNumber: values[3],
+					})
+					continue
+				}
+			}
+			if len(fields) == 5 && strings.EqualFold(fields[0], "give-object") {
+				values := make([]int, 4)
+				valid := true
+				for i := range values {
+					parsed, parseErr := strconv.Atoi(fields[i+1])
+					values[i] = parsed
+					if parseErr != nil || values[i] <= 0 {
+						valid = false
+						break
+					}
+				}
+				if valid {
+					sc.MobObjectFixtures = append(sc.MobObjectFixtures, MobObjectFixture{
+						MobVNum: values[0], ObjectVNum: values[1], MaxExisting: values[2], ZoneNumber: values[3],
 					})
 					continue
 				}
