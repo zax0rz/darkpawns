@@ -44,3 +44,16 @@ focused unit tests remain the local proof boundary.
 
 The next step is the normal repository gates, then a PR based on merged Phase
 5.1 (`ecafde5302596e29`, PR #1399).
+
+## 2026-09-11 status correction
+
+The historical `implementation prepared locally` status above is stale. PR
+#1400 merged this work as `ad3a9e7db70169fd02e4be51183b6f33ab97976f`, and the
+current `origin/main` audit candidate is `18b5a911ce75702e5ab71df4aa46e87baa00c076`.
+The dated audit is recorded in
+[`2026-09-11-modernization-phase5-2-audit.md`](2026-09-11-modernization-phase5-2-audit.md).
+It preserves the historical evidence, verifies the active registered families
+within their named boundaries, and blocks a whole-Phase 5.2 verification claim
+on the unassigned undead-knight source/coverage and vnum/probability mismatch.
+The documentation-only audit is open for review as [PR #1442](https://github.com/zax0rz/darkpawns/pull/1442)
+and remains unmerged.

@@ -86,6 +86,29 @@ and shares only the proven player ordering helper in `elements_galeru_alive`.
 shared teleport branch and remain local. The estimate of −90 is retained as a
 planning estimate only; line reduction is not an acceptance criterion.
 
+### Phase 5.2 audit result (2026-09-11; [PR #1442](https://github.com/zax0rz/darkpawns/pull/1442))
+
+Merged PR #1400 (`ad3a9e7db70169fd02e4be51183b6f33ab97976f`) is present on
+current `origin/main` at `18b5a911ce75702e5ab71df4aa46e87baa00c076`, with no
+later changes to its production paths. The original measured production delta
+is `pkg/game/spec_procs.go` +34/−41 and `pkg/game/spec_procs2.go` +77/−193,
+for **+111/−234, net −123 physical lines**. Tests and oracle scenarios were
+unchanged; #1400 added 46 handoff-documentation lines. This is separate from
+the roadmap estimate of −370.
+
+The active registered tattoo ×4, castle-guard down/up/north ×3, and
+fighter/paladin shared gate/target-picker behavior are verified within the
+manifest, focused-unit, and named-seed oracle boundaries recorded in the
+[`2026-09-11 Phase 5.2 audit handoff`](../fidelity/depth/handoff/2026-09-11-modernization-phase5-2-audit.md).
+The two extracted undead-knight procedures remain **audit-blocked, not
+excluded**: C declares them without an assignment, Go has no VNum assignment,
+and the moved Go helper uses 11470/11471 and `number(0,3)` where C uses
+18401/18402 and `!number(0,2)`. No synthetic registration or oracle case was
+added. The smallest next action is to establish authoritative assignment
+intent, then add C-first proof and a separate fidelity correction if the
+procedures are meant to be live. Phase 5.2 is not advanced to verified status
+until that boundary is resolved.
+
 ## Phase 6 — C-isms mechanical wave (~−2,300; subset of reports/02)
 
 | # | Target | Δ lines | Risk | Verifying cases |
