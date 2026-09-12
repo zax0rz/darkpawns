@@ -31,8 +31,21 @@ var thacoClassNames = [12]string{
 	"ASSASSIN", "PALADIN", "NINJA", "PSIONIC", "RANGER", "MYSTIC",
 }
 
+// TestTHAC0_TableCellsMatchCSource compares every stored cell, including the
+// level-0 sentinel, against the independently frozen C fixture. This catches
+// swapped keyed rows and shifted, omitted, or changed level entries.
+func TestTHAC0_TableCellsMatchCSource(t *testing.T) {
+	for class := 0; class < len(thacoGolden); class++ {
+		for level := 0; level < len(thacoGolden[class]); level++ {
+			if got, want := thaco[class][level], thacoGolden[class][level]; got != want {
+				t.Errorf("thaco[%d][%d] = %d, want %d (%s)", class, level, got, want, thacoClassNames[class])
+			}
+		}
+	}
+}
+
 // TestTHAC0_GoldenAgainstCSource asserts getTHAC0 reproduces the C thaco table for every
-// (class, level). A failure means the Go port's to-hit numbers diverge from the original.
+// valid (class, level). A failure means the Go port's to-hit numbers diverge from the original.
 func TestTHAC0_GoldenAgainstCSource(t *testing.T) {
 	for class := 0; class < 12; class++ {
 		for level := 1; level <= 40; level++ {
@@ -51,10 +64,25 @@ func TestTHAC0_Clamps(t *testing.T) {
 	if g := getTHAC0(&mockCombatant{npc: true}); g != 20 {
 		t.Errorf("NPC THAC0 = %d, want 20", g)
 	}
-	if g := getTHAC0(&mockCombatant{class: ClassWarrior, level: 0}); g != thacoGolden[ClassWarrior][1] {
-		t.Errorf("level<1 clamp = %d, want %d (level 1)", g, thacoGolden[ClassWarrior][1])
+	for _, level := range []int{-1, 0} {
+		if g := getTHAC0(&mockCombatant{class: ClassWarrior, level: level}); g != 20 {
+			t.Errorf("level %d clamp = %d, want 20 (level 1)", level, g)
+		}
 	}
-	if g := getTHAC0(&mockCombatant{class: ClassWarrior, level: 99}); g != thacoGolden[ClassWarrior][40] {
-		t.Errorf("level>40 clamp = %d, want %d (level 40)", g, thacoGolden[ClassWarrior][40])
+	if g := getTHAC0(&mockCombatant{class: ClassWarrior, level: 1}); g != 20 {
+		t.Errorf("level 1 lookup = %d, want 20", g)
+	}
+	if g := getTHAC0(&mockCombatant{class: ClassWarrior, level: 40}); g != 1 {
+		t.Errorf("level 40 lookup = %d, want 1", g)
+	}
+	for _, level := range []int{41, 99} {
+		if g := getTHAC0(&mockCombatant{class: ClassWarrior, level: level}); g != 1 {
+			t.Errorf("level %d clamp = %d, want 1 (level 40)", level, g)
+		}
+	}
+	for _, class := range []int{-1, 12, 99} {
+		if g := getTHAC0(&mockCombatant{class: class, level: 5}); g != 16 {
+			t.Errorf("class %d fallback = %d, want 16 (warrior level 5)", class, g)
+		}
 	}
 }
