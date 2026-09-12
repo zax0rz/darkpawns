@@ -49,7 +49,7 @@ var WhodModeNames = []string{
 
 // WhodMinLevel is the minimum level to be considered a wizard/immortal.
 // Source: whod.c #define WIZ_MIN_LEVEL LVL_IMMORT
-const WhodMinLevel = LVLImmort // 31
+const WhodMinLevel = LVLImmort
 
 // WhodEntry represents one player's entry in the who display.
 type WhodEntry struct {

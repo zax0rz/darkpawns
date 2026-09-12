@@ -16,9 +16,11 @@ const (
 	ApplyMoveRegen = 28
 )
 
-// Level/immortal constants — from structs.h LVL_*
+// Level/immortal constants — from structs.h LVL_*. LVL_IMMORT is owned by
+// pkg/combat so lower-level packages can share the compile-time value without
+// introducing an import cycle.
 const (
-	LVL_IMMORT = 31
+	LVL_IMMORT = combat.LVL_IMMORT
 	LVL_GOD    = 34
 	LVL_IMPL   = 40
 

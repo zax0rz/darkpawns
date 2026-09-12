@@ -126,6 +126,7 @@ func TestArticleFor(t *testing.T) {
 func TestCmdLevels(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
+	s.wantsStructuredData = true
 
 	err := cmdLevels(s)
 	if err != nil {
@@ -135,6 +136,13 @@ func TestCmdLevels(t *testing.T) {
 	got := readSessionText(t, s)
 	if !strings.Contains(got, "[ 1]") {
 		t.Errorf("expected level info output, got %q", got)
+	}
+	const cLVLImmort = 31 // src/structs.h:620; independent C expectation
+	if rows := strings.Count(got, "\r\n"); rows != cLVLImmort-1 {
+		t.Errorf("levels output has %d rows, want %d", rows, cLVLImmort-1)
+	}
+	if !strings.Contains(got, "[30]") || strings.Contains(got, "[31]") {
+		t.Errorf("levels output crossed the C immortal boundary: %q", got)
 	}
 }
 
