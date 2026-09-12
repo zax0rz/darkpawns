@@ -106,3 +106,5 @@ The reviewable PR records the changed-file list, measured deltas, exact
 checkpoint, preservation checksum, and review URL. It remains unmerged for
 human review. This handoff still claims THAC0 only and does not close the
 remaining Phase 6.3 slices.
+
+Review: [PR #1446](https://github.com/zax0rz/darkpawns/pull/1446)
