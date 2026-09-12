@@ -146,6 +146,22 @@ Do not interpret the eight 2026-09-06 slice handoffs as whole-phase completion
 records. The audit recommends closing the named 6.1 wizard-set proof slice
 before Phase 6.3.
 
+### Phase 6.3 spellDB slice tracking (2026-09-11)
+
+The bounded spellDB slice is implemented on `glm/modernize-spelldb-keys` and
+is awaiting review in its unmerged PR. The current representation was already
+`map[int]*spellData`; the useful risk reduction was replacing raw numeric map
+keys and unkeyed `spellData` literals with the existing named spell constants
+and named fields. The map container, lookup behavior, `SpellNum` field, all 103
+records, the 28 absent indices in the `0..130` range, and all zero/default
+effects remain unchanged. An independent exhaustive pre-keying fixture covers
+every index and field; the dated handoff records the C comparison and reader
+coverage.
+
+This slice does not advance or claim the rest of Phase 6.3. THAC0,
+saving-throws, literal ladders, `LVL_IMMORT`, and spell-dispatch consolidation
+remain outside this change and require separate audits and proofs.
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**
