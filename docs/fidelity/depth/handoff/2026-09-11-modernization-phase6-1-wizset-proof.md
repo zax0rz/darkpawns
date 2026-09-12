@@ -72,18 +72,29 @@ authority/self-target refusals and the empty target audience blocks:
 
 `docs/fidelity/depth/evidence/2026-09-11-wizset-proof/`
 
-Repository gates run on checkpoint `1bb46bb23` so far: `make fmt`,
+Repository gates run on code checkpoint `1bb46bb23`: `make fmt`,
 `gofumpt -l .`, `go build ./...`, `go vet ./...`, `go test ./...`,
 `go test ./pkg/game/...`, `golangci-lint run ./...`, `make fidelity-depth`,
 `make expected-divergences-check`, and `git diff --check` pass. The current
 depth census is **4811 total, 4692 proven/delegated, 68 blocked, 51
-excluded**. The required full `make oracle-regression` census remains to be
-run before final delivery.
+excluded**.
+
+The full `make oracle-regression` run used seed `1`, four jobs, and tested
+commit `a6461f7c0` (the evidence-only descendant of the code checkpoint).
+All five affected scenarios were present in the 940-scenario run,
+including `set-direct-flags-depth` and `set-exceptions-depth`. Its terminal
+census was **scenarios=940 passed=930 expected=9 unpinnable=1 stale=0
+failed=0 infra=0 timed_out=0**. The sole unpinnable result was the
+previously human-cleared, ledger-backed `accuse-noarg-depth` baseline. The
+Make target consequently returned exit 2 for that known baseline condition;
+this is not a new failure. The complete output is preserved at
+`docs/fidelity/depth/evidence/2026-09-11-wizset-proof/full-oracle-regression.log`.
 
 ## Final disposition boundary
 
 This milestone closes only the named wizard-set proof slice. `loadroom`
 remains explicit and outside this work; equipment-map reachability, Phase
-6.2 inventory work, and Phase 6.3 remain deferred. The final delivery must
-record the full census and exact final tested commit, and must not claim
-whole-Phase 6.1 completion.
+6.2 inventory work, and Phase 6.3 remain deferred. The full regression was
+tested at `a6461f7c0`; the final branch may add only documentation/evidence
+descendants of that tested state. This handoff does not claim whole-Phase
+6.1 completion.
