@@ -194,6 +194,44 @@ focused and full fidelity checks. The current full corpus census was 940
 scenarios: 930 passed, 9 expected, 1 permitted human-cleared unpinnable
 `accuse-noarg-depth`, with `failed=0`, `infra=0`, `timed_out=0`, and `stale=0`.
 
+### Phase 6.3 saving-throw table-keying slice tracking (2026-09-12)
+
+The bounded saving-throw table-keying slice is implemented on
+`glm/modernize-saving-throw-keys` from `origin/main` commit
+`e54301fb4abfea6bf0c4811111d244c4ae141912e`. The table remains
+`[12][5][41]int`; its class rows now use the existing class identifiers and
+its five category rows use the existing `SavingThrowType` identifiers. No
+values, dimensions, element types, initialization effects, sentinels,
+defaults, lookup clamps/fallbacks, NPC handling, formulas, or draw order
+changed. The actual readers are `GetSavingThrow` and `CheckSavingThrow`, with
+focused live coverage through poison, sleep, and medusa save paths.
+
+The complete pre-edit baseline covers 2,460 cells and matches the independent
+C fixture at SHA-256
+`caf57e8dc021b352253db65c00274194fe1cf1ba393101aa008b1403ad9a6b80`.
+Focused oracle coverage is 20 unique scenario/seed runs: poison 12, sleep 5,
+and medusa 3, with missing 0, duplicates 0, and no normalized divergence.
+Repository code gates, depth, and expected-divergence checks pass.
+
+The full `make oracle-regression` was started at implementation checkpoint
+`f9e3178d5`; the merged runner fix was integrated at `d3871f69f` from PR
+#1448 (`d580f1389`). With the fixed runner and frozen inputs, the complete
+parallel census produced `scenarios=940 passed=930 expected=9 unpinnable=1
+stale=0 failed=0 infra=0 timed_out=0`. The aggregate exit was 2 solely for
+the existing human-cleared `accuse-noarg-depth` UNPINNABLE baseline. The
+reconciliation found 940 unique scenario names, no missing or unexpected
+scenarios, and one duplicate aggregate display of that baseline—not a
+duplicate run. `medit-entry-depth` is now correctly classified as pinned
+EXPECTED after infrastructure recovery. The durable run log and frozen-input
+manifest are under
+`/home/zach/saving-throw-evidence-2026-09-12/full-census-d3871f69f/`.
+
+This slice removes only saving-table row-position risk. It does not claim
+`LVL_IMMORT`, other literal ladders, spellDB, THAC0, spell dispatch,
+saving-throw formulas, broader combat work, or all of Phase 6.3. See the
+[`saving-throw evidence`](../fidelity/evidence/2026-09-12-saving-throws/README.md)
+and [dated handoff](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-saving-throws.md).
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**
