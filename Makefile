@@ -1,4 +1,4 @@
-.PHONY: expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression
+.PHONY: expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -107,7 +107,10 @@ oracle-regression:
 	ORACLE_REGRESSION_TIMEOUT=$${ORACLE_REGRESSION_TIMEOUT:-240s} \
 	ORACLE_REGRESSION_SEED=$${ORACLE_REGRESSION_SEED:-1} \
 	ORACLE_REGRESSION_JOBS=$${ORACLE_REGRESSION_JOBS:-4} \
-		scripts/oracle_regression.sh
+			scripts/oracle_regression.sh
+
+oracle-regression-worker-test:
+	scripts/test_oracle_regression_worker.sh
 
 vet:
 	go vet ./...
