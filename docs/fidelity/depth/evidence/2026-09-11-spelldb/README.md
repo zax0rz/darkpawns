@@ -116,6 +116,20 @@ actual census `4811 total; 4692 proven/delegated; 68 blocked; 51 excluded`.
 `make expected-divergences-check` passed with the repository ledger reporting
 26 expected-divergence rows across 10 scenarios.
 
-The final `make oracle-regression` census and final PR commit are appended to
-this evidence file before delivery; no historical corpus count is used as an
-expectation.
+## Full final oracle census
+
+`make oracle-regression` was run from the clean `bba25758b198990239f968cb08cbaf864f23261e`
+state with the required C oracle and default four workers. The run started on
+2026-09-11 and finished on 2026-09-12:
+
+```text
+oracle-regression: scenarios=940 passed=930 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0 elapsed=7048.494s started=2026-09-11T23:04:33-0400 finished=2026-09-12T01:02:01-0400
+```
+
+The command exited 2 solely because of the specifically identified,
+previously human-cleared `accuse-noarg-depth` baseline. The nine
+ledger-pinned expected-divergence scenarios were `accuse-depth`, `force-mob`,
+`medit-entry-depth`, `medit-session-depth`, `redit-entry-depth`,
+`redit-session-depth`, `sedit-entry-depth`, `sedit-session-depth`, and
+`shoot-target-depth`. No result was stale, failed, infrastructural, or timed
+out. These are actual run counts, not historical corpus expectations.

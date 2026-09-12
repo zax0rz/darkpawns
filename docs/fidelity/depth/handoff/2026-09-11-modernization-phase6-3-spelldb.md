@@ -64,5 +64,11 @@ results. Focused cast proof passed for `cast-depth@1,2,3,5,8`,
 `cast-gating@1`, and `cast-mob-innate@1,2,3,5,8`; seed-1 runs were inspected
 with `--show-oracle`.
 
-Final full-corpus counts, exact final commit, and PR URL are added to the
-evidence file before the branch is handed to human review.
+The full final oracle run from clean commit
+`bba25758b198990239f968cb08cbaf864f23261e` covered 940 scenarios and reported
+`passed=930 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0`.
+Exit 2 was solely the specifically identified, previously human-cleared
+`accuse-noarg-depth` baseline. The nine expected rows were all ledger-pinned;
+no stale, failed, infrastructure, or timed-out result occurred. The final PR
+URL is intentionally left to the review record rather than making this dated
+handoff depend on a mutable hosting URL.
