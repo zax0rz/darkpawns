@@ -105,15 +105,41 @@ RNG streams; the result is not presented as a standalone draw-parity proof.
 
 ## Required gates
 
-Focused unit baseline and post-edit checks passed:
+The source/validation checkpoint is `e38120cd38ecc8df2edc96665280626752e4013d`.
+The complete repository gates passed at that checkpoint:
 
 ```text
+make fmt
+go build ./...
+go vet ./...
+go test ./...
+go test ./pkg/game/...
+golangci-lint run ./...
 go test ./pkg/combat ./pkg/game
+make fidelity-depth
+make expected-divergences-check
 ```
 
-The complete repository gates, `make fidelity-depth`,
-`make expected-divergences-check`, and the full `make oracle-regression` census
-are recorded in the dated handoff after the final checkpoint. The only
-permitted unpinnable row, if present in the full census, is the established
-human-cleared `accuse-noarg-depth` baseline; `failed`, `infra`, `timed_out`,
-and `stale` must all be zero.
+Current `make fidelity-depth` counts were `4811 total`, `4692
+proven/delegated`, `68 blocked`, and `51 excluded`; actionable completion was
+`4692/4760 = 98.6%`. `make expected-divergences-check` passed with `26 rows
+across 10 scenarios`; its existing ledger reports `136 blocked/excluded rows`
+without scenario proof and `18 proofs` not resolved to a scenario file.
+
+The full corpus was run with `make oracle-regression` using seed 1, timeout
+240 seconds, and four jobs. The durable full log is
+`/home/zach/thac0-full-oracle-regression-2026-09-12.log`. Its final census was:
+
+```text
+scenarios=940 passed=930 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0
+elapsed=7046.330s started=2026-09-12T10:34:23-0400 finished=2026-09-12T12:31:49-0400
+```
+
+The single unpinnable result was the specifically identified,
+previously human-cleared `accuse-noarg-depth` baseline. The five
+infrastructure-shaped retries listed in the durable log all passed on their
+single retry: `bleed-depth`, `cutthroat-depth`, `hiccup-depth`,
+`spec-proc-elements-guardian`, and `transform-depth`. The make target returned
+exit 2 solely because the permitted unpinnable baseline remains unpinnable;
+the required failure, infrastructure, timeout, and stale tallies are all
+zero.

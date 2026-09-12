@@ -188,6 +188,12 @@ work, or all of Phase 6.3. See
 [`2026-09-12-modernization-phase6-3-thac0.md`](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-thac0.md)
 and the [THAC0 evidence](../fidelity/evidence/2026-09-12-thac0/README.md).
 
+Validation at source checkpoint `e38120cd38ecc8df2edc96665280626752e4013d`
+passed the repository build, vet, test, formatter, and lint gates, plus the
+focused and full fidelity checks. The current full corpus census was 940
+scenarios: 930 passed, 9 expected, 1 permitted human-cleared unpinnable
+`accuse-noarg-depth`, with `failed=0`, `infra=0`, `timed_out=0`, and `stale=0`.
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**

@@ -66,8 +66,9 @@ parity.
 
 ## Validation and next state
 
-The focused table/reader checks passed before this handoff was written. The
-final checkpoint must also pass every `AGENTS.md` gate:
+The source/validation checkpoint is
+`e38120cd38ecc8df2edc96665280626752e4013d`. Focused table/reader checks and
+every `AGENTS.md` gate passed there:
 
 ```text
 make fmt
@@ -81,8 +82,27 @@ make expected-divergences-check
 make oracle-regression
 ```
 
-For the full census, require `failed=0 infra=0 timed_out=0 stale=0`; the only
-allowed unpinnable result is the specifically identified, previously
-human-cleared `accuse-noarg-depth` baseline. The final PR description records
-the exact tested checkpoint commit, complete census tally, changed-file list,
-measured deltas, and review URL. Leave the PR unmerged and stop for review.
+The current `make fidelity-depth` census was `4811 total`, `4692
+proven/delegated`, `68 blocked`, and `51 excluded` (`4692/4760 = 98.6%`
+actionable). `make expected-divergences-check` passed with `26 rows across 10
+scenarios`. The full `make oracle-regression` run used seed 1, timeout 240
+seconds, and four jobs, and ended with:
+
+```text
+scenarios=940 passed=930 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0
+elapsed=7046.330s started=2026-09-12T10:34:23-0400 finished=2026-09-12T12:31:49-0400
+```
+
+The only unpinnable result was the specifically identified, previously
+human-cleared `accuse-noarg-depth` baseline. Five infrastructure-shaped cases
+(`bleed-depth`, `cutthroat-depth`, `hiccup-depth`,
+`spec-proc-elements-guardian`, and `transform-depth`) passed after one
+established bounded retry each. The regression target returned exit 2 solely
+for the permitted unpinnable baseline; `failed=0 infra=0 timed_out=0 stale=0`.
+The complete log is retained at
+`/home/zach/thac0-full-oracle-regression-2026-09-12.log`.
+
+The reviewable PR records the changed-file list, measured deltas, exact
+checkpoint, preservation checksum, and review URL. It remains unmerged for
+human review. This handoff still claims THAC0 only and does not close the
+remaining Phase 6.3 slices.
