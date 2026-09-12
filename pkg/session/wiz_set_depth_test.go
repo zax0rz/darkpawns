@@ -8,21 +8,25 @@ import (
 )
 
 // These six rows are the direct C assignments in act.wizard.c:2724-2726,
-// 2913-2921, and 2942-2946. The expected bit family and bit number are written
-// from src/structs.h, rather than derived from setBinaryFieldTable.
+// 2913-2921, and 2942-2946. cBit and goBit are independent expected values
+// pinned from the C and Go flag namespaces. PRF C bits intentionally differ
+// from the combined Go Flags storage positions; productionBit must agree with
+// the independent Go position rather than defining the expected mask.
 func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 	cases := []struct {
-		field       string
-		ackName     string
-		bit         int
-		playerFlags bool
+		field         string
+		ackName       string
+		cBit          int
+		goBit         int
+		productionBit int
+		playerFlags   bool
 	}{
-		{field: "invstart", ackName: "Invstart", bit: game.PlrInvstart, playerFlags: true},
-		{field: "roomflag", ackName: "Roomflag", bit: game.PrfRoomFlags},
-		{field: "siteok", ackName: "Siteok", bit: game.PlrSiteok, playerFlags: true},
-		{field: "deleted", ackName: "Deleted", bit: game.PlrDeleted, playerFlags: true},
-		{field: "nowizlist", ackName: "Nowizlist", bit: game.PlrNowizlist, playerFlags: true},
-		{field: "quest", ackName: "Quest", bit: game.PrfQuest},
+		{field: "invstart", ackName: "Invstart", cBit: 14, goBit: 14, productionBit: game.PlrInvstart, playerFlags: true},
+		{field: "roomflag", ackName: "Roomflag", cBit: 21, goBit: 39, productionBit: game.PrfRoomFlags},
+		{field: "siteok", ackName: "Siteok", cBit: 7, goBit: 7, productionBit: game.PlrSiteok, playerFlags: true},
+		{field: "deleted", ackName: "Deleted", cBit: 10, goBit: 10, productionBit: game.PlrDeleted, playerFlags: true},
+		{field: "nowizlist", ackName: "Nowizlist", cBit: 12, goBit: 12, productionBit: game.PlrNowizlist, playerFlags: true},
+		{field: "quest", ackName: "Quest", cBit: 9, goBit: 49, productionBit: game.PrfQuest},
 	}
 
 	const unrelatedPLR = game.PlrChosen
@@ -36,9 +40,12 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 
 			initialFlags := target.player.GetFlags()
 			initialPlayerFlags := target.player.PlayerFlags
-			bit := uint64(1) << uint(tc.bit)
+			if tc.productionBit != tc.goBit {
+				t.Fatalf("Go %s production bit = %d, want independently pinned Go bit %d (C bit %d)", tc.field, tc.productionBit, tc.goBit, tc.cBit)
+			}
+			bit := uint64(1) << uint(tc.goBit)
 			if initialFlags&bit != 0 {
-				t.Fatalf("C target bit %d unexpectedly set before command", tc.bit)
+				t.Fatalf("C target bit %d unexpectedly set before command", tc.cBit)
 			}
 
 			for _, state := range []struct {
@@ -56,7 +63,7 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 					wantFlags = beforeFlags | bit
 				}
 				if got := target.player.GetFlags(); got != wantFlags {
-					t.Fatalf("%s %s flags = %#x, want exactly %#x (C bit %d)", tc.field, state.word, got, wantFlags, tc.bit)
+					t.Fatalf("%s %s flags = %#x, want exactly %#x (C bit %d)", tc.field, state.word, got, wantFlags, tc.cBit)
 				}
 
 				wantPlayerFlags := beforePlayerFlags
@@ -90,20 +97,26 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 func TestCmdSetNohassleAuthorityAndSelfTarget(t *testing.T) {
 	t.Run("self succeeds at field level", func(t *testing.T) {
 		wiz, _ := makeSetTestSession(t)
-		const bit = uint64(1) << uint(game.PrfNohassle)
+		const cBit = 8   // src/structs.h:283, PRF_NOHASSLE
+		const goBit = 28 // pkg/game/other_helpers.go:30, combined Flags storage
+		if game.PrfNohassle != goBit {
+			t.Fatalf("Go nohassle bit = %d, want independently pinned Go bit %d (C bit %d)", game.PrfNohassle, goBit, cBit)
+		}
+		const bit = uint64(1) << goBit
 		for _, state := range []struct {
 			word    string
 			enabled bool
 		}{{word: "on", enabled: true}, {word: "off", enabled: false}} {
+			beforeFlags := wiz.player.GetFlags()
 			if err := ExecuteCommand(wiz, "set", []string{"God", "nohassle", state.word}); err != nil {
 				t.Fatalf("ExecuteCommand(set nohassle %s): %v", state.word, err)
 			}
-			want := uint64(0)
+			wantFlags := beforeFlags &^ bit
 			if state.enabled {
-				want = bit
+				wantFlags = beforeFlags | bit
 			}
-			if got := wiz.player.GetFlags() & bit; got != want {
-				t.Fatalf("self nohassle %s bit = %#x, want %#x", state.word, got, want)
+			if got := wiz.player.GetFlags(); got != wantFlags {
+				t.Fatalf("self nohassle %s flags = %#x, want exactly %#x (C bit %d)", state.word, got, wantFlags, cBit)
 			}
 			wantAck := fmt.Sprintf("Nohassle %s for God.\r\n", map[bool]string{true: "ON", false: "OFF"}[state.enabled])
 			if got := readSessionText(t, wiz); got != wantAck {
@@ -134,20 +147,26 @@ func TestCmdSetNohassleAuthorityAndSelfTarget(t *testing.T) {
 func TestCmdSetFrozenAuthorityAndSelfTarget(t *testing.T) {
 	t.Run("other target succeeds at field level", func(t *testing.T) {
 		wiz, target := makeSetTestSession(t)
-		const bit = uint64(1) << uint(game.PlrFrozen)
+		const cBit = 2  // src/structs.h:223, PLR_FROZEN
+		const goBit = 2 // pkg/game/player_flags.go:8, combined Flags storage
+		if game.PlrFrozen != goBit {
+			t.Fatalf("Go frozen bit = %d, want independently pinned Go bit %d (C bit %d)", game.PlrFrozen, goBit, cBit)
+		}
+		const bit = uint64(1) << goBit
 		for _, state := range []struct {
 			word    string
 			enabled bool
 		}{{word: "on", enabled: true}, {word: "off", enabled: false}} {
+			beforeFlags := target.player.GetFlags()
 			if err := ExecuteCommand(wiz, "set", []string{"Hero", "frozen", state.word}); err != nil {
 				t.Fatalf("ExecuteCommand(set frozen %s): %v", state.word, err)
 			}
-			want := uint64(0)
+			wantFlags := beforeFlags &^ bit
 			if state.enabled {
-				want = bit
+				wantFlags = beforeFlags | bit
 			}
-			if got := target.player.GetFlags() & bit; got != want {
-				t.Fatalf("other-target frozen %s bit = %#x, want %#x", state.word, got, want)
+			if got := target.player.GetFlags(); got != wantFlags {
+				t.Fatalf("other-target frozen %s flags = %#x, want exactly %#x (C bit %d)", state.word, got, wantFlags, cBit)
 			}
 			wantAck := fmt.Sprintf("Frozen %s for Hero.\r\n", map[bool]string{true: "ON", false: "OFF"}[state.enabled])
 			if got := readSessionText(t, wiz); got != wantAck {
@@ -158,7 +177,12 @@ func TestCmdSetFrozenAuthorityAndSelfTarget(t *testing.T) {
 
 	t.Run("self refused after field checks", func(t *testing.T) {
 		wiz, _ := makeSetTestSession(t)
-		const bit = uint64(1) << uint(game.PlrFrozen)
+		const cBit = 2  // src/structs.h:223, PLR_FROZEN
+		const goBit = 2 // pkg/game/player_flags.go:8, combined Flags storage
+		if game.PlrFrozen != goBit {
+			t.Fatalf("Go frozen bit = %d, want independently pinned Go bit %d (C bit %d)", game.PlrFrozen, goBit, cBit)
+		}
+		const bit = uint64(1) << goBit
 		before := wiz.player.GetFlags()
 		for _, word := range []string{"on", "off"} {
 			if err := ExecuteCommand(wiz, "set", []string{"God", "frozen", word}); err != nil {

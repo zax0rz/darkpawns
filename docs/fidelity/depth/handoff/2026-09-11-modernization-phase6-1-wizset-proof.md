@@ -33,12 +33,20 @@ Shared checks: C's generic safety runs before field lookup (`act.wizard.c:2674-2
 then the field level and PC/NPC checks (`:2682-2700`), then exact lower-case
 `on|yes|off|no` parsing (`:2701-2712`). The Go path keeps those checks before
 the direct table or explicit exception. Unit expectations below use the C bit
-numbers and storage family above, not the Go table under test.
+numbers for the C-field mapping and independent Go storage positions for
+combined `Flags` masks; they do not treat Go PRF positions as C bit numbers.
+
+The direct unit table independently pins the C bit numbers from `src/structs.h`
+as literals and asserts that the corresponding Go constants agree before using
+the independently pinned Go storage positions for expected masks.
 
 ## Proof additions
 
 The direct vehicle covers each named field with on and off commands against a
-disposable live player. The exception vehicle first lowers the Implementor to
+disposable live player. The `deleted` fixture is deliberately clanless: it
+proves the bit and acknowledgement only. The C clan and crash/alias-file side
+effects at `act.wizard.c:2919-2933` remain an explicit debt requiring a separate
+fixture and evidence. The exception vehicle first lowers the Implementor to
 level 38, then separately reaches `nohassle` self success, `nohassle` other
 target authority rejection, `frozen` other-target success, and `frozen`
 self-target refusal. `loadroom` remains explicit and outside this milestone;
@@ -46,11 +54,15 @@ equipment maps, Phase 6.2 inventory work, and Phase 6.3 remain outside scope.
 
 ## Validation so far
 
-The new unit tests pass through `ExecuteCommand` and use C-derived literal
-PLR/PRF bit numbers. `TestCmdSetDirectBinaryFieldsMatchCBits` covers all six
-direct rows, both transitions, unrelated legacy PLR/PRF bits, and the typed
-PLR synchronization. The two exception tests cover the successful and
-rejected transitions without changing production behavior.
+The new unit tests pass through `ExecuteCommand`. The direct test independently
+pins the six C PLR/PRF bit numbers as literals, asserts the corresponding Go
+production constants agree with independently pinned Go storage positions, and
+uses those Go positions for expected combined `Flags` state.
+`TestCmdSetDirectBinaryFieldsMatchCBits` covers all six direct rows, both
+transitions, unrelated legacy PLR/PRF bits, and typed PLR synchronization. The
+exception tests compare complete before/after flags for successful transitions
+and complete unchanged state for rejected transitions, without changing
+production behavior.
 
 The affected scenario matrix has five scenarios and five required seeds
 (`1,2,3,5,8`), for 25 scenario-seed executions:
