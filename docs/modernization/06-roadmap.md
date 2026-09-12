@@ -162,6 +162,38 @@ This slice does not advance or claim the rest of Phase 6.3. THAC0,
 saving-throws, literal ladders, `LVL_IMMORT`, and spell-dispatch consolidation
 remain outside this change and require separate audits and proofs.
 
+### Phase 6.3 THAC0 keying slice tracking (2026-09-12)
+
+The bounded THAC0 slice is implemented on `glm/modernize-thac0-keys` from
+`origin/main` commit `2ea3474002e5f055395ac9d90251e22bb84eabf6`. Both live Go
+tables remain `[12][41]int`; the 12 rows are now keyed by the existing class
+identifiers in `pkg/combat/formulas.go` and `pkg/game/player.go`. No values,
+dimensions, sentinel/default entries, initialization effects, or consumers
+changed. The actual readers are `getTHAC0` → `CalculateHitChance` and
+`newCharacter`'s level-1 THAC0 initialization. NPC/file THAC0 handling and
+derived combat formulas remain separate.
+
+The complete pre-edit baseline covers 984 Go cells (two copies of 12×41) at
+the source commit above. An independent numeric fixture and the existing C
+golden fixture cover the level-0 sentinel and levels 1–40; semantic checksums
+are recorded in the dated evidence and handoff. The focused oracle matrix
+covers 20 unique scenario/seed runs across `combat-swing`,
+`combat-hit-weapon`, `combat-hit-sleeping`, and `hit-depth`, with seeds
+1/2/3/5/8 and no missing, duplicate, failed, infrastructure, timeout, or
+stale results. Seed-1 `--show-oracle` blocks were inspected for each vehicle.
+
+This slice removes only row-position risk. It does not claim saving throws,
+`LVL_IMMORT`, other literal ladders, spellDB, spell dispatch, combat-ticker
+work, or all of Phase 6.3. See
+[`2026-09-12-modernization-phase6-3-thac0.md`](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-thac0.md)
+and the [THAC0 evidence](../fidelity/evidence/2026-09-12-thac0/README.md).
+
+Validation at source checkpoint `e38120cd38ecc8df2edc96665280626752e4013d`
+passed the repository build, vet, test, formatter, and lint gates, plus the
+focused and full fidelity checks. The current full corpus census was 940
+scenarios: 930 passed, 9 expected, 1 permitted human-cleared unpinnable
+`accuse-noarg-depth`, with `failed=0`, `infra=0`, `timed_out=0`, and `stale=0`.
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**
