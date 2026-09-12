@@ -1,0 +1,53 @@
+Dark Pawns Tier-1 differential report
+scenario: set-direct-flags-depth
+c-oracle: 127.0.0.1:43089 (DP_SEED=1)
+go-port: 127.0.0.1:40791 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [set Setflagtarget invstart on [actor]]
+Invstart ON for Setflagtarget.
+--- [set Setflagtarget invstart on [target]]
+
+--- [set Setflagtarget invstart off [actor]]
+Invstart OFF for Setflagtarget.
+--- [set Setflagtarget invstart off [target]]
+
+--- [set Setflagtarget roomflag on [actor]]
+Roomflag ON for Setflagtarget.
+--- [set Setflagtarget roomflag on [target]]
+
+--- [set Setflagtarget roomflag off [actor]]
+Roomflag OFF for Setflagtarget.
+--- [set Setflagtarget roomflag off [target]]
+
+--- [set Setflagtarget siteok on [actor]]
+Siteok ON for Setflagtarget.
+--- [set Setflagtarget siteok on [target]]
+
+--- [set Setflagtarget siteok off [actor]]
+Siteok OFF for Setflagtarget.
+--- [set Setflagtarget siteok off [target]]
+
+--- [set Setflagtarget deleted on [actor]]
+Deleted ON for Setflagtarget.
+--- [set Setflagtarget deleted on [target]]
+
+--- [set Setflagtarget deleted off [actor]]
+Deleted OFF for Setflagtarget.
+--- [set Setflagtarget deleted off [target]]
+
+--- [set Setflagtarget nowizlist on [actor]]
+Nowizlist ON for Setflagtarget.
+--- [set Setflagtarget nowizlist on [target]]
+
+--- [set Setflagtarget nowizlist off [actor]]
+Nowizlist OFF for Setflagtarget.
+--- [set Setflagtarget nowizlist off [target]]
+
+--- [set Setflagtarget quest on [actor]]
+Quest ON for Setflagtarget.
+--- [set Setflagtarget quest on [target]]
+
+--- [set Setflagtarget quest off [actor]]
+Quest OFF for Setflagtarget.
+--- [set Setflagtarget quest off [target]]

@@ -1,0 +1,83 @@
+# C-first live do_set vehicle for the explicit nohassle/frozen branches.
+# Lowering the first-player Implementor to LVL_GRGOD makes the field-specific
+# branches reachable without the generic command/field level rejection.
+#
+# depth-case: set.nohassle.self
+# depth-case: set.nohassle.authority
+# depth-case: set.frozen.self
+# depth-case: set.frozen.other
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Setexceptions
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setexceptions
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Setexceptiontarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Setexceptiontarget
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Setexceptiontarget 8162
+set Setexceptions level 38
+
+[probe]
+set Setexceptions nohassle on
+set Setexceptions nohassle off
+set Setexceptiontarget nohassle on
+set Setexceptiontarget nohassle off
+set Setexceptiontarget frozen on
+set Setexceptiontarget frozen off
+set Setexceptions frozen on
+set Setexceptions frozen off

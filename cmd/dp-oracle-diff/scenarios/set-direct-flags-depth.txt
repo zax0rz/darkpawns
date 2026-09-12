@@ -1,0 +1,89 @@
+# C-first live do_set vehicle for the six direct binary table entries.
+# The actor is lowered to LVL_GRGOD so every field-specific level gate passes;
+# the target is a disposable online PC. Each field exercises both transitions.
+#
+# depth-case: set.direct.invstart
+# depth-case: set.direct.roomflag
+# depth-case: set.direct.siteok
+# depth-case: set.direct.deleted
+# depth-case: set.direct.nowizlist
+# depth-case: set.direct.quest
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Setflags
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setflags
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Setflagtarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Setflagtarget
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Setflagtarget 8162
+set Setflags level 38
+
+[probe]
+set Setflagtarget invstart on
+set Setflagtarget invstart off
+set Setflagtarget roomflag on
+set Setflagtarget roomflag off
+set Setflagtarget siteok on
+set Setflagtarget siteok off
+set Setflagtarget deleted on
+set Setflagtarget deleted off
+set Setflagtarget nowizlist on
+set Setflagtarget nowizlist off
+set Setflagtarget quest on
+set Setflagtarget quest off
