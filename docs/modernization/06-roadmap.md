@@ -214,16 +214,17 @@ and medusa 3, with missing 0, duplicates 0, and no normalized divergence.
 Repository code gates, depth, and expected-divergence checks pass.
 
 The full `make oracle-regression` was started at implementation checkpoint
-`f9e3178d5` but emitted no final census tally. The unrelated
-`medit-entry-depth` scenario had an infrastructure-shaped first attempt; its
-bounded retry produced fingerprints exactly matching the checked-in pinned
-baseline, but the worker's infrastructure-retry path misclassified that
-status-3 pinned result as `FAIL`. This is a runner-classification gap, not a
-new content divergence or saving-table regression. No retry or driver change
-was made in this slice. A serial mitigation was started with the same inputs,
-but was stopped after 18 statuses because the 940-case run was impractically
-slow; it did not produce a final tally. The runner owner must validate the
-classification before a final full-census tally is claimed.
+`f9e3178d5`; the merged runner fix was integrated at `d3871f69f` from PR
+#1448 (`d580f1389`). With the fixed runner and frozen inputs, the complete
+parallel census produced `scenarios=940 passed=930 expected=9 unpinnable=1
+stale=0 failed=0 infra=0 timed_out=0`. The aggregate exit was 2 solely for
+the existing human-cleared `accuse-noarg-depth` UNPINNABLE baseline. The
+reconciliation found 940 unique scenario names, no missing or unexpected
+scenarios, and one duplicate aggregate display of that baseline—not a
+duplicate run. `medit-entry-depth` is now correctly classified as pinned
+EXPECTED after infrastructure recovery. The durable run log and frozen-input
+manifest are under
+`/home/zach/saving-throw-evidence-2026-09-12/full-census-d3871f69f/`.
 
 This slice removes only saving-table row-position risk. It does not claim
 `LVL_IMMORT`, other literal ladders, spellDB, THAC0, spell dispatch,

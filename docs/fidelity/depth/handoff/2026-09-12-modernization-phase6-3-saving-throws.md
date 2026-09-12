@@ -4,6 +4,8 @@ Date: 2026-09-12
 Branch: `glm/modernize-saving-throw-keys`
 Implementation checkpoint: `f9e3178d5`
 Base: `origin/main` `e54301fb4abfea6bf0c4811111d244c4ae141912e`
+Runner integration checkpoint: `d3871f69f`, integrating merged PR #1448
+(`d580f1389`)
 
 ## Bounded result
 
@@ -26,28 +28,32 @@ medusa 3/3 seeds; 20 unique runs, missing 0, duplicates 0, and all 20 with no
 normalized divergence. Seed-1 `--show-oracle` blocks reached the intended
 save-gated reader paths.
 
-## Validation boundary
+## Validation and census
 
 Formatting, build, vet, full Go tests, game tests, lint, `make fidelity-depth`,
-and `make expected-divergences-check` pass. The required full
-`make oracle-regression` was run at `f9e3178d5` with the current 940-scenario
-census, seed 1, four workers, and 240-second timeout, but no final census
-tally was emitted. `medit-entry-depth` had an infrastructure-shaped first
-attempt; its bounded retry produced C's `Specify a mobile VNUM to edit.`,
-`Yikes! Stop that, someone will get hurt!`, and `Sorry, there is no zone for
-that number!` while Go emits `Huh?!?` for all three. Those retry fingerprints
-exactly match the checked-in pinned baseline. The worker's infrastructure
-retry path misclassified the pinned status-3 retry as `FAIL`; this is not a
-new content divergence and not a saving-table regression. The exact output is
-recorded in the evidence README and durable log.
+and `make expected-divergences-check` pass. After integrating the merged
+runner fix, the complete frozen-input parallel census was run at
+`d3871f69f` with seed 1, four workers, and a 240-second timeout. Its complete
+tally was:
 
-This is outside the saving-throw scope. A one-worker rerun with the same
-inputs was then started to avoid the retry race; it reached 18 statuses
-(16 pass, 1 expected, 1 permitted unpinnable) before being stopped because
-serial execution was impractically slow, with outer exit 141. The smallest
-next action is to fix or validate the runner's infrastructure-retry
-classification outside this PR, then rerun the full corpus with bounded
-parallelism. This handoff does not claim a final all-green full-census tally.
+```text
+scenarios=940 passed=930 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0
+```
+
+The aggregate exit was 2 solely because the existing exit ordering reports
+the human-cleared `accuse-noarg-depth` UNPINNABLE baseline. Reconciliation
+found 940 unique scenario names, no missing or unexpected scenarios, and one
+duplicate display of that UNPINNABLE result by the aggregate printer; it was
+not a duplicate execution. The durable run log, frozen-input manifest, and
+reconciliation are under
+`/home/zach/saving-throw-evidence-2026-09-12/full-census-d3871f69f/`.
+`medit-entry-depth` is now correctly classified as pinned EXPECTED after its
+infrastructure-shaped attempt, while the other observed recoveries ended as
+PASS within the worker's shared three-attempt budget.
+
+This runner integration is evidence for the census only; it does not broaden
+the saving-throw slice. The runner fix is already merged in PR #1448 and no
+runner source is changed by this saving-throw PR.
 
 ## Phase boundary
 

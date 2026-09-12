@@ -4,6 +4,8 @@ Date: 2026-09-12
 Branch: `glm/modernize-saving-throw-keys`
 Implementation checkpoint: `f9e3178d5`
 Starting point: `origin/main` at `e54301fb4abfea6bf0c4811111d244c4ae141912e`
+Runner integration checkpoint: `d3871f69f` (integrates merged PR #1448 at
+`d580f1389`)
 
 ## Result and boundary
 
@@ -15,11 +17,41 @@ The only production logic adjustment is spelling the unchanged NPC Warrior
 override with the existing named class constant. No values, formulas, spell
 dispatch, THAC0, `LVL_IMMORT`, save format, or broader combat behavior changed.
 
-The implementation proof is green. The required full `make oracle-regression`
-was started at the implementation checkpoint but did not emit a final census
-tally. The unrelated `medit-entry-depth` case had an infrastructure-shaped
-first attempt; its bounded retry produced C output for all three probes while
-Go emits `Huh?!?`. The three retry fingerprints are:
+The implementation proof is green. The runner fix from merged PR #1448 is
+integrated at `d3871f69f`; it keeps recovery and content classification on the
+same bounded attempt budget and re-enters the normal PASS/STALE/EXPECTED/FAIL
+decision after infrastructure recovery.
+
+The complete parallel census was run at `d3871f69f` with the frozen inputs
+listed in the durable manifest:
+
+```bash
+export PATH=/usr/local/go/bin:$PATH
+export DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle
+ORACLE_REGRESSION_JOBS=4 ORACLE_REGRESSION_TIMEOUT=240s \
+ORACLE_REGRESSION_SEED=1 make oracle-regression
+```
+
+The complete aggregate tally was:
+
+```text
+scenarios=940 passed=930 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0
+```
+
+The aggregate exit was 2 because its existing exit ordering reports the
+established human-clearance `accuse-noarg-depth` UNPINNABLE result. This is
+not a content-red or infrastructure failure. The durable run log is
+`/home/zach/saving-throw-evidence-2026-09-12/full-census-d3871f69f/run.log`;
+the frozen-input manifest and result reconciliation are in the same
+directory. The reconciliation found 940 unique result scenario names, no
+missing or unexpected names, and one duplicate display line for
+`accuse-noarg-depth` because the aggregate prints that human-clearance result
+again after the worker result. It was not a duplicate run.
+
+The repaired retry path was exercised in the corpus: `force-mob` and
+`players-depth` recovered from infrastructure to PASS, and `french-depth`
+recovered to PASS. The key prior failure, `medit-entry-depth`, now reaches
+the normal pinned EXPECTED classification:
 
 ```text
 medit              134cb9c489e39d317ab67587e401d50b8f0382d5ceb9cfdd3050ddaceaaa2eda
@@ -28,24 +60,13 @@ medit 999999       0f8807f28888522a9809fedd3386d648b22fa17f977fbc3d9cf220f3acb57
 ```
 
 Those fingerprints exactly match the checked-in `medit-entry-depth` entries in
-`cmd/dp-oracle-diff/expected_divergence_pins.tsv`. The regression worker's
-infrastructure-retry branch does not re-enter its pinned-divergence classifier
-when the retry returns status 3, so it printed `FAIL` instead of `EXPECTED`.
-This is a runner-classification gap, not a new unpinned content divergence or
-a saving-table regression. The run was stopped after that bounded retry and
-was not restarted. The durable partial log is
-`/home/zach/saving-throw-evidence-2026-09-12/oracle-regression.log`.
-
-A completed 940-scenario census is recorded in the immediately preceding
-THAC0 handoff at source checkpoint `e38120cd3`, an ancestor of current
-`origin/main`; current main adds only the THAC0 merge and documentation after
-that checkpoint. That historical result is context, not a final tally for
-this invocation. A one-worker rerun with the same 940 scenarios, seed, timeout,
-and pins was then started to avoid the retry-classification race. It produced
-18 status lines (16 pass, 1 expected, and the permitted 1 unpinnable) before
-being stopped because serial execution was impractically slow; its outer exit
-was 141. It is also not a final full-census tally. The durable partial log is
-`/home/zach/saving-throw-evidence-2026-09-12/oracle-regression-serial.log`.
+`cmd/dp-oracle-diff/expected_divergence_pins.tsv`. The prior
+infrastructure-retry misclassification was a runner defect, not a new
+unpinned content divergence or a saving-table regression. The pre-fix partial
+logs remain preserved at
+`/home/zach/saving-throw-evidence-2026-09-12/oracle-regression.log` and
+`/home/zach/saving-throw-evidence-2026-09-12/oracle-regression-serial.log` as
+historical evidence; they are not used as the final census tally.
 
 ## Audit
 
@@ -189,7 +210,7 @@ go run ./cmd/dp-oracle-diff --scenario spec-proc-medusa --seed 8
 
 ## Validation
 
-At implementation checkpoint `f9e3178d5`:
+At implementation checkpoint `f9e3178d5`, before the merged runner fix:
 
 - `gofumpt -l .` — pass
 - `go build ./...` — pass
@@ -204,7 +225,8 @@ At implementation checkpoint `f9e3178d5`:
   hit an infrastructure-shaped failure, then its retry matched the existing
   pinned fingerprints but was misclassified by the worker retry path.
 
-The next action is to fix or otherwise validate that infrastructure-retry
-classification outside this scoped PR, then rerun `make oracle-regression`
-from this branch with bounded parallelism. No saving-throw table change is
-indicated by the runner gap.
+After the runner integration at `d3871f69f`, the required full census passed
+its content and infrastructure gates with the complete tally recorded above.
+The deterministic runner suite from merged PR #1448 reports 29 cases passed,
+and `make expected-divergences-check` reports the unchanged 26-row ledger and
+20 pin rows as valid.
