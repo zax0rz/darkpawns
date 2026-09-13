@@ -164,11 +164,12 @@ level `39`, not `59`.
 The live path is `pkg/game/spec_assign.go:336-355` registration of `gen_board`
 → `pkg/game/boards.go:45-94` → `genBoard`’s remove case at lines 85-86 →
 `BoardSystem.RemoveMsg`. On a board whose `RemoveLvl` permits the actor (for
-example, a board configured with `RemoveLvl=0`), a level-40 actor removing a
-higher-level message is accepted by C but rejected by Go; Go rejects the
-corresponding levels 39–58 as well. Existing `pkg/boards/boards_test.go`
+example, a board configured with `RemoveLvl=0`), a level-39 actor removing a
+level-40 author’s message is accepted by C but rejected by Go, after passing
+the board read/remove gates. This demonstrates the mismatch within C’s
+normal level range. Existing `pkg/boards/boards_test.go`
 coverage proves low-level rejection and read-level gating, but has no
-level-39/40/58/59 boundary case. `git blame` attributes the literal to the
+level-38/39/40 boundary case against a level-40 author. `git blame` attributes the literal to the
 package extraction commit `4c1759cc72` (2026-07-06), with no later repair.
 
 This is behavior-changing fidelity work, not evidence that the completed
