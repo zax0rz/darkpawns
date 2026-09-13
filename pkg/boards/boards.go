@@ -33,6 +33,11 @@ const (
 	MaxBoardMessages = 60
 	MaxMessageLength = 4096
 	BoardMagic       = 1048575
+
+	// boardRemoveAuthorityBypassLevel is C's LVL_IMPL-1 boundary. C keeps the
+	// author-level rejection active below this value and lets the boundary
+	// level remove a holier message (src/structs.h:610; src/boards.c:403-405).
+	boardRemoveAuthorityBypassLevel = 39
 )
 
 // BoardMsgInfo describes one message on a board.
@@ -542,7 +547,7 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 		ch.SendMessage("You are not holy enough to remove other people's messages.\r\n")
 		return true
 	}
-	if ch.GetLevel() < mi.Level && ch.GetLevel() < 59 { // LVL_IMPL-1
+	if ch.GetLevel() < mi.Level && ch.GetLevel() < boardRemoveAuthorityBypassLevel {
 		ch.SendMessage("You can't remove a message holier than yourself.\r\n")
 		return true
 	}

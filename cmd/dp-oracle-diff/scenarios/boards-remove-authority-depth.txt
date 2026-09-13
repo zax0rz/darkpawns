@@ -1,0 +1,128 @@
+# depth-case: boards.remove-author-level-38
+# depth-case: boards.remove-author-level-39
+# depth-case: boards.remove-author-level-40
+# C-first vehicle for Board_remove_msg's author-level comparison
+# (src/boards.c:371-440). The first empty-player actor is the C
+# Implementor (level 40), so each completed post is authored at level 40.
+# Three real assigned board objects in separate rooms keep each boundary case
+# independent: board 19652/room 8004, 19601/room 8005, and 19627/room 8006.
+# Their C board definitions all have read/remove level 0, so the level-38/39
+# actors reach the author-level check rather than a board or ownership gate.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 19652 2 8004 196
+spawn-obj 19601 2 8005 196
+spawn-obj 19627 2 8006 196
+
+[setup:oracle]
+Boardauth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardauth
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:low]
+Boardlow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:low]
+Boardlow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mid]
+Boardmid
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mid]
+Boardmid
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Boardlow level 38
+set Boardmid level 39
+goto 8004
+write level-38 boundary post
+level-38 boundary body
+@
+goto 8005
+write level-39 boundary post
+level-39 boundary body
+@
+goto 8006
+write level-40 boundary post
+level-40 boundary body
+@
+teleport Boardlow 8004
+teleport Boardmid 8005
+
+[probe]
+force Boardlow remove 1
+goto 8005
+force Boardmid remove 1
+goto 8006
+remove 1
+look board
+read 1
