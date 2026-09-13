@@ -32,18 +32,31 @@ Historical report excerpts and their hashes are preserved in
 ## Census reuse boundary
 
 The recovered Phase 6.3 census was run at documentation checkpoint
-`5c0f517e8c888f0e1dfe4d22a3c792e69e9232a7`. The exact comparison
+`ab916e4b21d4b99a1740521846c21b9b90b7dd23`. The exact comparison
 
 ```text
-git diff --name-status 5c0f517e8c888f0e1dfe4d22a3c792e69e9232a7 HEAD
+git diff --name-status ab916e4b21d4b99a1740521846c21b9b90b7dd23 HEAD
 ```
 
-contains only the Phase 6.3 provenance handoff, its original-excerpt evidence,
-and the recovered census output. The later merge to current `origin/main`
-also changes only `docs/`. No production, scenario, fixture, or runner input
-changed between the census checkpoint and this audit base, so the aggregate
-is reusable for the unchanged corpus. This is a reuse justification, not a
-claim that the recovered stream is complete.
+contains only documentation paths: the Phase 6.3 provenance handoff and
+evidence, the recovered census output, this Phase 6.4 handoff and evidence,
+and the roadmap. The later merge to current `origin/main` also changes only
+`docs/`. No production, scenario, fixture, or runner input changed between
+the actual census checkpoint and this audit base, so the aggregate is reusable
+for the unchanged corpus. This is a reuse justification, not a claim that the
+recovered stream is complete.
+
+The exact path set in the reviewed diff is:
+
+```text
+M  docs/fidelity/depth/handoff/2026-09-13-modernization-phase6-3-provenance.md
+A  docs/fidelity/depth/handoff/2026-09-13-modernization-phase6-4-audit.md
+M  docs/fidelity/evidence/2026-09-13-phase6-3-provenance/original-excerpts.md
+A  docs/fidelity/evidence/2026-09-13-phase6-3-provenance/recovered-census-output.txt
+A  docs/fidelity/evidence/2026-09-13-phase6-4/README.md
+A  docs/fidelity/evidence/2026-09-13-phase6-4/original-excerpts.md
+M  docs/modernization/06-roadmap.md
+```
 
 The durable recovered output is
 [`recovered-census-output.txt`](../2026-09-13-phase6-3-provenance/recovered-census-output.txt).
@@ -88,10 +101,52 @@ DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle
 The complete output is preserved at
 `/home/zach/dp-phase6-4-oracle-focused-2026-09-13.log`. The matrix is
 recorded in the handoff with scenario names, seed sets, and the final
-reconciled tally: 33/33 selected runs passed, with failed=0, infra=0,
-timed_out=0, and stale=0. One seed-1 `info-basic` run was repeated with `--show-oracle`
-and its normalized C blocks are preserved at
+reconciled tally: 33 unique selected runs passed, with failed=0, infra=0,
+timed_out=0, and stale=0. The preserved base log has 32 completed PASS
+report blocks: `spec-proc-bank` contains seeds 1, 2, 5, and 8, so seed 3 was
+missing. It also contains one incomplete C-oracle readiness diagnostic
+(`bind: Address already in use`, lines 86-228), which has no result row and
+is not counted as a completed run. No completed scenario/seed pair is
+duplicated. Seed 3 was rerun on unchanged inputs; its complete result is
+preserved at
+`/home/zach/dp-phase6-4-oracle-spec-proc-bank-seed3-2026-09-13.log` and is
+`result: no normalized divergence`. The repeated seed-1 `info-basic` smoke
+run does not substitute for the missing bank seed. One seed-1 `info-basic`
+run was repeated with `--show-oracle` and its normalized C blocks are
+preserved at
 `/home/zach/dp-phase6-4-oracle-smoke-info-basic-seed1-2026-09-13.log`.
+
+The rerun used the same built harness and frozen scenario input:
+
+```text
+PATH=/usr/local/go/bin:$PATH \
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle \
+/home/zach/dp-phase6-4-oracle-diff-2026-09-13 --scenario spec-proc-bank --seed 3
+```
+
+Harness SHA-256: `67cf2b002b521256f49bd4b668f76210bae12bd35b3347600dd474192b07a5a0`.
+Scenario SHA-256: `66c180a56d53533d7ed14ee3e02e79e66a582625fd363352273a331e35930a45`.
+
+## Review correction: weather lock re-entry
+
+The current live path has a separate concrete locking defect. The production
+heartbeat invokes `OnWeatherAndTime` every 63 seconds at
+`pkg/engine/gameloop.go:325-328`; `cmd/server/main.go:324-326` calls
+`game.WeatherAndTime(true, ...)`; and `pkg/game/weather.go:313-319` holds
+`weatherMu.Lock()` across `AnotherHour`. When the pre-increment hour is 4 or
+20, `AnotherHour` reaches the hour-5 or hour-21 event helpers, each of which
+calls `weatherMu.RLock()` before checking `weatherWorld` (`weather.go:329-351,
+533-603`). A Go `sync.RWMutex` cannot be re-entered this way, so the heartbeat
+blocks. The manual `tick` path reaches the same call at
+`pkg/session/wiz_system.go:732-740`.
+
+The existing tests miss this because they call `AnotherHour` or the event
+helpers directly without the enclosing write lock, or call
+`WeatherAndTime(false)` from hour 8. The selected info pulse advances hour 14
+to 15 and does not reach an event hour. The C comparison is
+`src/comm.c:825-831` → `src/weather.c:41-80`; no production fix or
+weather/RNG/scheduler refactor is included here. This defect is now the
+highest-priority proof/triage task, ahead of the mail lifecycle proof.
 
 ## Validation record
 
@@ -112,12 +167,12 @@ gate:
 
 Complete command outputs are preserved at:
 
-- `/home/zach/dp-phase6-4-gofumpt-2026-09-13.log`
-- `/home/zach/dp-phase6-4-diff-check-2026-09-13.log`
-- `/home/zach/dp-phase6-4-build-2026-09-13.log`
-- `/home/zach/dp-phase6-4-vet-2026-09-13.log`
-- `/home/zach/dp-phase6-4-test-all-2026-09-13.log`
-- `/home/zach/dp-phase6-4-test-game-2026-09-13.log`
-- `/home/zach/dp-phase6-4-lint-2026-09-13.log`
-- `/home/zach/dp-phase6-4-fidelity-depth-2026-09-13.log`
-- `/home/zach/dp-phase6-4-expected-divergences-2026-09-13.log`
+- `/home/zach/dp-phase6-4-gofumpt-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-diff-check-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-build-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-vet-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-test-all-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-test-game-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-lint-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-fidelity-depth-review-2026-09-13.log`
+- `/home/zach/dp-phase6-4-expected-divergences-review-2026-09-13.log`

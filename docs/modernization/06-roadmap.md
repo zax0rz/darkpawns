@@ -334,9 +334,11 @@ implemented and not complete:
 - mail state/hooks require a lifecycle and storage proof first; the current
   production path does not call InitMailSystem, and the recovered C mail
   contract differs from current Go constants/paths;
-- weather weatherWorld has a clear back-pointer seam, but the canonical
-  weather/tick state and conditional RNG path remain one protected boundary;
-  selected command rows do not prove the blocked weather/time lifecycle;
+- weather weatherWorld has a clear back-pointer seam, but the live heartbeat
+  re-enters `weatherMu.RLock()` from event helpers while holding
+  `weatherMu.Lock()` at hours 5 and 21; the canonical weather/tick state and
+  conditional RNG path remain one protected boundary, and selected command
+  rows do not prove the blocked weather/time lifecycle;
 - merge_bridge.go banManager and World.Bans are two live authorities with
   different login/admin callers and file paths, so consolidation is deferred
   as a separate fidelity decision; and
@@ -345,12 +347,15 @@ implemented and not complete:
   are retained pending a bounded proof task.
 
 No family is currently ready for an unqualified implementation slice. The
-recommended next task is a bounded mail lifecycle proof covering boot scan,
-fixed-block/restart behavior, postmaster output, composition cancellation, and
-concurrent access. Only after that proof should a human authorize one explicit
-mail owner and an injection slice. The full inventory, exact original excerpts
-and hashes, focused coverage, proof gaps, separate fidelity defects, and stop
-conditions are in
+recommended next task is a bounded weather lock-reentry proof/triage task for
+the scheduled hour-5/hour-21 paths, ahead of the mail lifecycle proof, because
+the defect can block the live heartbeat. It must not become a weather/RNG,
+scheduler, or injection refactor. After that defect has a reviewed
+disposition, the mail proof remains the next candidate: boot scan, fixed-block/
+restart behavior, postmaster output, composition cancellation, and concurrent
+access. Only after those proofs should a human authorize any injection slice.
+The full inventory, exact original excerpts and hashes, corrected focused
+coverage, proof gaps, separate fidelity defects, and stop conditions are in
 [2026-09-13-modernization-phase6-4-audit.md](../fidelity/depth/handoff/2026-09-13-modernization-phase6-4-audit.md)
 and its [evidence package](../fidelity/evidence/2026-09-13-phase6-4/README.md).
 

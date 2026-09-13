@@ -9,13 +9,17 @@ No family is ready for an unqualified implementation slice. The explicit disposi
 | family | disposition | reason |
 |---|---|---|
 | mail subsystem state and hooks | proof-first work required | The production boot call to InitMailSystem is not present; restart/index behavior and the C-versus-Go mail storage contract are therefore not proven. |
-| weather weatherWorld wiring | proof-first work required; retain the canonical weather/tick boundary | The world back-pointer is a clear injection seam, but the canonical clock/weather state, timed event effects, scheduler callback, and conditional RNG draws share one locked path. Existing command rows do not prove the lifecycle boundary. |
+| weather weatherWorld wiring | concrete locking defect requires proof-first triage; retain the canonical weather/tick boundary | The live heartbeat can re-enter weatherMu through event helpers at hours 5 and 21 and block indefinitely. Injection is not a safe next step; the defect must be separately characterized and resolved without changing tick or RNG order. |
 | merge_bridge.go ban manager | deferred with evidence | banManager and World.Bans are genuinely separate live authorities today, with different callers and file paths. Consolidation would first need a fidelity decision and authority proof. |
 | spec_assign registries | retain as-is pending a bounded proof task | Assignment maps are C-derived registration data, while handler registries are startup-mutated maps and exported assignment maps are mutated by tests and read directly by production code. No single owning runtime struct is established without changing dispatch seams. |
 
 The historical −250–400 line estimate is not used as a disposition or a current measurement. The four original candidates remain YELLOW and unimplemented.
 
-The smallest useful next task is therefore a proof task, not an implementation PR: establish the mail lifecycle and compatibility boundary described in Recommended next task: mail lifecycle proof. Only after that proof should a human authorize a single MailSystem owner and a bounded injection slice.
+The smallest useful next task is therefore a proof-first weather lock
+re-entry defect task, not an implementation PR or an injection refactor. It
+must precede the mail lifecycle proof because it can stop the live heartbeat
+on an ordinary scheduled tick. The mail proof remains the next modernization
+candidate after this weather defect has its own reviewed disposition.
 
 ## Audit vehicle and governing boundary
 
@@ -27,13 +31,20 @@ The current source hashes at the audit base are recorded in the companion eviden
 
 ## Census provenance and reusable boundary
 
-The accepted Phase 6.3 provenance record provides the only reusable whole-corpus census. Its census checkpoint was 5c0f517e8c888f0e1dfe4d22a3c792e69e9232a7. The verified diff from that checkpoint to this audit base contains only documentation/evidence paths:
+The accepted Phase 6.3 provenance record provides the only reusable whole-corpus census. Its census checkpoint was `ab916e4b21d4b99a1740521846c21b9b90b7dd23`. The verified diff from that checkpoint to this audit base contains only documentation/evidence paths:
 
     M  docs/fidelity/depth/handoff/2026-09-13-modernization-phase6-3-provenance.md
+    A  docs/fidelity/depth/handoff/2026-09-13-modernization-phase6-4-audit.md
     M  docs/fidelity/evidence/2026-09-13-phase6-3-provenance/original-excerpts.md
     A  docs/fidelity/evidence/2026-09-13-phase6-3-provenance/recovered-census-output.txt
+    A  docs/fidelity/evidence/2026-09-13-phase6-4/README.md
+    A  docs/fidelity/evidence/2026-09-13-phase6-4/original-excerpts.md
+    M  docs/modernization/06-roadmap.md
 
-The subsequent merge to current origin/main adds only the corresponding documentation merge history. Production files, scenario files, fixture inputs, and runner scripts are identical to the census checkpoint. Reuse is therefore justified for the unchanged corpus, but only as aggregate evidence.
+The subsequent merge to current origin/main and this audit’s commits add only
+documentation. Production files, scenario files, fixture inputs, and runner
+scripts are identical to the actual census checkpoint. Reuse is therefore
+justified for the unchanged corpus, but only as aggregate evidence.
 
 The preserved aggregate is:
 
@@ -105,9 +116,46 @@ The original candidate is specifically the last row and its associated SetWeathe
 
 - cmd/server/main.go:164-170 calls ResetTime before ParseWorld, preserving C’s first boot pressure draw. :218 sets the weather world after the session manager exists. The main heartbeat callback at :324-326 calls game.WeatherAndTime(true, manager.SendToOutdoor).
 - pkg/session/wiz_system.go:739 is the manual tick path and calls the same weather/time function before affect/point updates. This corresponds to src/act.wizard.c:3501-3510; the normal C heartbeat is src/comm.c:822-829.
-- WeatherAndTime (pkg/game/weather.go:310-320) advances AnotherHour and, when mode is true, calls WeatherChange under one weatherMu write lock. At hours 5/6/21/22, AnotherHour emits outdoor text and calls the six special event helpers. The helpers copy weatherWorld under a read lock and broadcast after releasing it (:533-603).
+- WeatherAndTime (pkg/game/weather.go:310-320) advances AnotherHour and, when mode is true, calls WeatherChange under one weatherMu write lock. At hours 5 and 21, AnotherHour emits outdoor text and calls the special event helpers. The helpers copy weatherWorld under a read lock and broadcast after releasing it (:533-603).
 - Weather consumers use snapshots or sunlight under the same canonical state: pkg/session time/weather commands, pkg/game/world.go:969, pkg/game/skill_stealth.go:125, pkg/game/item_consumable.go:113,215, and pkg/game/spec_procs3.go:274.
 - World has no weather field. Existing MessageSink/session manager ownership can deliver messages, but does not own the clock, weather state, or event side effects. Multiple World instances therefore share package state and the one event target.
+
+#### Separate concrete locking defect: weather lock re-entry
+
+The live Go call path contains a blocking lock re-entry at the scheduled event
+hours:
+
+1. `pkg/engine/gameloop.go:325-328` invokes the registered
+   `OnWeatherAndTime` callback every 63 real seconds.
+2. `cmd/server/main.go:324-326` supplies the production callback, which calls
+   `game.WeatherAndTime(true, manager.SendToOutdoor)`.
+3. `pkg/game/weather.go:313-319` takes `weatherMu.Lock()` and keeps that write
+   lock while calling `AnotherHour`.
+4. When the incremented hour is 5, `AnotherHour` calls
+   `ghostShipDisappear` and `removeNightGate` (`:329-335`). When it is 21, it
+   calls `ghostShipAppear` and `loadNightGate` and, for days 21-24, also
+   `fullMoon` and `lunarHunter` (`:341-351`).
+5. Each helper takes `weatherMu.RLock()` before checking `weatherWorld`
+   (`:533-603`). `weatherMu` is the same `sync.RWMutex` at `:170`.
+
+Go's `sync.RWMutex` is not re-entrant: a goroutine holding its write lock
+cannot acquire the read lock. Therefore a normal production heartbeat blocks
+at the first helper when `timeInfo.Hours` is 4 or 20 before the increment. At
+hour 5 both sunrise helpers are reachable regardless of `weatherWorld`; a nil
+world does not avoid the lock because the read lock precedes the nil check. At
+hour 21 the ghost-ship and night-gate helpers are always reachable, and the
+full-moon/lunar-hunter pair is additionally reachable when the pre-increment
+day is 21-24. The immortal `tick` command reaches the same path at
+`pkg/session/wiz_system.go:732-740`, so it can trigger the defect immediately
+when manually invoked at those hours.
+
+This is a separate concrete fidelity/availability defect, not an authorization
+to refactor weather, RNG, scheduler, or injection code. The C call path is
+`src/comm.c:825-831` → `weather_and_time(1)` and
+`src/weather.c:41-80` → event helpers inside `another_hour`; C has no analogous
+Go `RWMutex` re-entry boundary. The defect can stop subsequent heartbeat work
+and therefore player-visible time, weather, and world updates. No production
+code is changed in this PR.
 
 #### RNG and player-visible boundaries
 
@@ -135,7 +183,7 @@ Named focused tests run and passed:
 
 The depth manifest rows are time.clock-variants, weather.boot-state, and weather.sky-variants in docs/fidelity/depth/info.tsv. They use info-pulse-variants or info-basic, seeds 1,2,3,5,8 as listed in the manifest, and C informative weather/time readers at src/act.informative.c:1501-1529,1568-1600. The fresh matrix matched with no normalized divergence for all listed runs. The durable full focused output is /home/zach/dp-phase6-4-oracle-focused-2026-09-13.log; the seed-1 info-basic show-oracle capture is /home/zach/dp-phase6-4-oracle-smoke-info-basic-seed1-2026-09-13.log.
 
-The proof gap is the separate lifecycle row docs/fidelity/depth/surface-inventory.tsv:66, weather and time pulses, which remains blocked: progression, rendered output, clock, and draw dependencies require a dedicated frozen-time vehicle. The command rows prove selected renders and variants; they do not prove every hour event, concurrent world target, manual tick interleave, or all C world side effects.
+The proof gap is the separate lifecycle row docs/fidelity/depth/surface-inventory.tsv:66, weather and time pulses, which remains blocked: progression, rendered output, clock, and draw dependencies require a dedicated frozen-time vehicle. The command rows prove selected renders and variants; they do not prove every hour event, concurrent world target, manual tick interleave, or all C world side effects. In particular, `TestAnotherHour_AdvancesTimeAndSunlight` calls `AnotherHour` directly without the enclosing write lock, `TestWeatherEvents_BroadcastToWorld` calls each helper directly, and `TestTimeWeatherSnapshotTracksCanonicalClock` exercises only `WeatherAndTime(false, nil)` from hour 8. No named test calls `WeatherAndTime(true, ...)` from pre-increment hour 4 or 20, and the selected `info-pulse-variants` vehicle advances from hour 14 to 15, so these tests and scenarios do not reach the live re-entry defect.
 
 #### Separate fidelity defects recorded, not fixed
 
@@ -258,16 +306,56 @@ Retain the registry representation as-is for this phase. The static assignment m
 
 The named unit and oracle runs establish reachability and selected bytes, not whole-family closure:
 
-- A passing info-basic or weather variant proves selected command rendering after a particular boot/tick setup; it does not prove every event branch or scheduler/draw interleave.
+- A passing info-basic or weather variant proves selected command rendering after a particular boot/tick setup; it does not prove every event branch, scheduler/draw interleave, or the lock-reentry path.
 - A passing ban-depth proves its isolated scenario’s manager and output behavior; it does not prove the current load/login/admin authorities are one instance across restart.
 - A passing spec-proc scenario proves the named VNum and dispatch topology; it does not prove all assignment rows or registration mutation safety.
 - The one mail helper test proves a Go block round trip only. It does not prove the live postmaster, boot scan, fixed-file compatibility, or restart.
 
 Under R5, the proof stops exactly at those boundaries. No historical estimate, green breadth row, or unit-only seam is treated as authorization to move state.
 
-## Recommended next task: mail lifecycle proof
+## Recommended next task: weather lock re-entry proof and triage
 
-Because no family is implementation-ready, the recommended first task is one bounded proof vehicle for the mail lifecycle. This task is a gate for a later implementation slice, not part of this PR.
+Because the live weather path has a concrete heartbeat-blocking defect, the
+recommended first task is a bounded proof/triage task for that defect. This is
+not a production fix or a weather injection refactor, and it is not part of
+this PR. The mail lifecycle proof below remains the next modernization proof
+task only after this weather boundary has a reviewed disposition.
+
+### Exact weather scope
+
+Trace and prove only the existing lock boundary and its two event-hour paths:
+
+- Go: `pkg/game/weather.go:313-357,533-603`,
+  `pkg/engine/gameloop.go:325-328`, `cmd/server/main.go:324-326`, and
+  `pkg/session/wiz_system.go:732-740`;
+- C reference: `src/weather.c:41-80`, `src/comm.c:825-831`, and
+  `src/act.wizard.c:3501-3510`; and
+- the future focused proof owner: `pkg/game/weather_test.go` plus a dedicated
+  weather event/lifecycle oracle vehicle if the existing scenarios cannot
+  observe the boundary.
+
+The proof must exercise `WeatherAndTime(true, ...)` when the pre-increment
+hour is 4 and 20, with both a nil and a live `weatherWorld` target as
+applicable, and must establish whether the call returns at the scheduled
+heartbeat and manual `tick` entry points. It must separately record the event
+order and player-visible output at hour 5 and hour 21, including the day
+21-24 full-moon/lunar-hunter condition. Any eventual fix must preserve C/Go
+event order, conditional RNG draws, `SendToOutdoor` ordering, and the 63-second
+scheduler boundary; do not combine it with weather-world injection.
+
+### Weather stop conditions
+
+Stop before any implementation if the lock ownership remains ambiguous, the
+event-hour return behavior is not proven, output or draw order changes, the
+proposal requires scheduler/RNG refactoring, or the work expands into the
+separate C-vs-Go weather side-effect defects listed above. A separate human
+review must authorize any production fix.
+
+## Subsequent task: mail lifecycle proof
+
+After the weather defect has its own reviewed disposition, the next bounded
+proof vehicle remains the mail lifecycle task. It is a gate for a later
+implementation slice, not part of this PR.
 
 ### Exact scope
 
@@ -294,7 +382,7 @@ The proof must explicitly resolve the C-versus-Go constants/path/storage discrep
 
 ### Exclusions and stop conditions
 
-Exclude weather/tick/RNG changes, ban authority consolidation, spec registry movement, player-save format changes, database schema changes, production behavior changes without C evidence, and any edit to src/ or darkpawns-c-oracle.
+Exclude weather/tick/RNG refactoring, weather-world injection, ban authority consolidation, spec registry movement, player-save format changes, database schema changes, production behavior changes without C evidence, and any edit to src/ or darkpawns-c-oracle. The weather lock-reentry defect is recorded and prioritized here, but not fixed here.
 
 Stop before implementation if any of these remains unresolved: no production boot owner for InitMailSystem; no authoritative file/path decision; no restart/index proof; any output or block-byte divergence; an unclassified concurrent access; or any need to change the save/storage format. A future implementation PR should be a separate reviewable slice with its own focused oracle vehicle and no automatic merge.
 
@@ -310,7 +398,40 @@ The combined selected game tests passed (0.079s), the selected session tests pas
 
 ### Fresh focused oracle matrix
 
-The input scripts and tested scenario files were frozen during the runs. The complete output is /home/zach/dp-phase6-4-oracle-focused-2026-09-13.log. All runs returned result: no normalized divergence:
+The input scripts and tested scenario files were frozen during the runs. The
+preserved base output is `/home/zach/dp-phase6-4-oracle-focused-2026-09-13.log`.
+It contains 32 completed PASS report blocks with these exact identities:
+
+| scenario | completed seeds in preserved base log | count |
+|---|---|---:|
+| `info-basic` | 1,2,3,5,8 | 5 |
+| `info-pulse-variants` | 1,2,3,5,8 | 5 |
+| `ban-depth` | 1,2,3,5,8 | 5 |
+| `spec-proc-bank` | 1,2,5,8 | 4 |
+| `spec-proc-bank-kir-oshi` | 1,2,3,5,8 | 5 |
+| `spec-proc-whirlpool` | 1,2,3,5,8 | 5 |
+| `spec-proc-elements-master-column-none` | 1,2,3 | 3 |
+| **total** | **unique completed report identities** | **32** |
+
+The base log also contains one incomplete C-oracle readiness diagnostic at
+lines 86-228: the seed-3 bank attempt exited before readiness because of
+`SYSERR: bind: Address already in use`. It has no result row, was manually
+inspected, and is not counted as a pass or as a duplicate. The missing unique
+identity was `spec-proc-bank` seed 3. It was rerun with the same harness and
+unchanged scenario input using:
+
+```text
+PATH=/usr/local/go/bin:$PATH \
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle \
+/home/zach/dp-phase6-4-oracle-diff-2026-09-13 --scenario spec-proc-bank --seed 3
+```
+
+The complete rerun output is
+`/home/zach/dp-phase6-4-oracle-spec-proc-bank-seed3-2026-09-13.log`; it
+returned `result: no normalized divergence`. The reconciled matrix therefore
+contains 33 unique scenario/seed identities, all passing, with no duplicate
+completed identity. The separate seed-1 `info-basic --show-oracle` capture
+does not replace the missing bank seed.
 
 | family | scenarios and seeds | runs | passed | failed | infra | timed out | stale |
 |---|---|---:|---:|---:|---:|---:|---:|
@@ -318,9 +439,12 @@ The input scripts and tested scenario files were frozen during the runs. The com
 | bans | ban-depth × 1,2,3,5,8 | 5 | 5 | 0 | 0 | 0 | 0 |
 | spec registries | spec-proc-bank, spec-proc-bank-kir-oshi, spec-proc-whirlpool × 1,2,3,5,8; spec-proc-elements-master-column-none × 1,2,3 | 18 | 18 | 0 | 0 | 0 | 0 |
 | mail | no mail oracle scenario exists; unit only | 0 | — | — | — | — | — |
-| total | selected matrix | 33 | 33 | 0 | 0 | 0 | 0 |
+| total | reconciled unique selected matrix | 33 | 33 | 0 | 0 | 0 | 0 |
 
-One seed-1 info-basic run was repeated with --show-oracle; the normalized C blocks are preserved at /home/zach/dp-phase6-4-oracle-smoke-info-basic-seed1-2026-09-13.log.
+One seed-1 `info-basic` run was repeated with `--show-oracle`; the normalized
+C blocks are preserved at
+/home/zach/dp-phase6-4-oracle-smoke-info-basic-seed1-2026-09-13.log. That
+repeat is not included as an additional matrix identity.
 
 ### Required repository gates
 
@@ -329,15 +453,15 @@ outputs are preserved outside self-cleaning directories:
 
 | gate | result | durable output |
 |---|---|---|
-| `gofumpt -l .` | PASS; no files listed | `/home/zach/dp-phase6-4-gofumpt-2026-09-13.log` |
-| `git diff --check` | PASS | `/home/zach/dp-phase6-4-diff-check-2026-09-13.log` |
-| `/usr/local/go/bin/go build ./...` | PASS | `/home/zach/dp-phase6-4-build-2026-09-13.log` |
-| `/usr/local/go/bin/go vet ./...` | PASS | `/home/zach/dp-phase6-4-vet-2026-09-13.log` |
-| `/usr/local/go/bin/go test ./...` | PASS | `/home/zach/dp-phase6-4-test-all-2026-09-13.log` |
-| `/usr/local/go/bin/go test ./pkg/game/...` | PASS | `/home/zach/dp-phase6-4-test-game-2026-09-13.log` |
-| `golangci-lint run ./...` | PASS; 0 issues | `/home/zach/dp-phase6-4-lint-2026-09-13.log` |
-| `make fidelity-depth` | PASS; 4816 total, 4697 proven/delegated, 68 blocked, 51 excluded | `/home/zach/dp-phase6-4-fidelity-depth-2026-09-13.log` |
-| `make expected-divergences-check` | PASS; 26 rows across 10 scenarios; pins OK | `/home/zach/dp-phase6-4-expected-divergences-2026-09-13.log` |
+| `gofumpt -l .` | PASS; no files listed | `/home/zach/dp-phase6-4-gofumpt-review-2026-09-13.log` |
+| `git diff --check` | PASS | `/home/zach/dp-phase6-4-diff-check-review-2026-09-13.log` |
+| `/usr/local/go/bin/go build ./...` | PASS | `/home/zach/dp-phase6-4-build-review-2026-09-13.log` |
+| `/usr/local/go/bin/go vet ./...` | PASS | `/home/zach/dp-phase6-4-vet-review-2026-09-13.log` |
+| `/usr/local/go/bin/go test ./...` | PASS | `/home/zach/dp-phase6-4-test-all-review-2026-09-13.log` |
+| `/usr/local/go/bin/go test ./pkg/game/...` | PASS | `/home/zach/dp-phase6-4-test-game-review-2026-09-13.log` |
+| `golangci-lint run ./...` | PASS; 0 issues | `/home/zach/dp-phase6-4-lint-review-2026-09-13.log` |
+| `make fidelity-depth` | PASS; 4816 total, 4697 proven/delegated, 68 blocked, 51 excluded | `/home/zach/dp-phase6-4-fidelity-depth-review-2026-09-13.log` |
+| `make expected-divergences-check` | PASS; 26 rows across 10 scenarios; pins OK | `/home/zach/dp-phase6-4-expected-divergences-review-2026-09-13.log` |
 
 The first lint invocation lacked `/usr/local/go/bin` on PATH and stopped at
 environment discovery without code diagnostics; the recorded rerun with the
