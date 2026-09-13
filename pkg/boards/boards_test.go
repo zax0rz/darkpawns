@@ -154,6 +154,141 @@ func TestBoardSystem_RemoveMsg_LevelCheck(t *testing.T) {
 	}
 }
 
+func TestBoardSystem_RemoveMsg_AuthorLevelBoundary(t *testing.T) {
+	// Independent C expectations: LVL_IMPL is 40 in src/structs.h:610, and
+	// Board_remove_msg bypasses the comparison at LVL_IMPL-1 (39), not at a
+	// level-59 sentinel. Board 19652 is the real C-assigned board with both
+	// read and remove level 0 (src/boards.c:99, src/spec_assign.c:542).
+	for _, tc := range []struct {
+		name        string
+		actorLevel  int
+		wantRemoved bool
+	}{
+		{name: "level 38 rejects", actorLevel: 38, wantRemoved: false},
+		{name: "level 39 bypasses", actorLevel: 39, wantRemoved: true},
+		{name: "level 40 equals author", actorLevel: 40, wantRemoved: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			bs := InitBoards(dir)
+			info := bs.BoardInfo(6)
+			if info.VNum != 19652 || info.ReadLvl != 0 || info.RemoveLvl != 0 {
+				t.Fatalf("board 6 = %+v, want C board 19652 with read/remove level 0", info)
+			}
+
+			author := newMockBoardPlayer("Author", 40, 8004)
+			magic := bs.WriteMessage(6, author, "boundary post")
+			if magic != BoardMagic+6 {
+				t.Fatalf("WriteMessage magic = %d, want %d", magic, BoardMagic+6)
+			}
+			bs.AppendBoardLine(magic, "boundary body")
+			bs.FinalizeBoardWrite(magic, author)
+
+			boardFile := filepath.Join(dir, info.Filename)
+			if _, err := os.Stat(boardFile); err != nil {
+				t.Fatalf("completed post save = %v", err)
+			}
+			world := &mockBoardWorld{}
+			bs.SetWorld(world)
+			actor := newMockBoardPlayer("Remover", tc.actorLevel, 8004)
+			if got := bs.RemoveMsg(6, actor, "1"); got != true {
+				t.Fatalf("RemoveMsg = %t, want true", got)
+			}
+
+			if tc.wantRemoved {
+				if got := actor.lastMessage(); got != "Message removed.\r\n" {
+					t.Fatalf("success actor output = %q, want C output", got)
+				}
+				if len(world.echoes) != 1 || world.echoes[0] != "Remover just removed message 1." {
+					t.Fatalf("observer echoes = %#v, want one C removal echo", world.echoes)
+				}
+				if bs.numOfMsgs[6] != 0 || bs.msgStorageTaken[0] || bs.msgStorage[0] != "" {
+					t.Fatalf("successful removal state = num %d, taken %t, body %q", bs.numOfMsgs[6], bs.msgStorageTaken[0], bs.msgStorage[0])
+				}
+				if _, err := os.Stat(boardFile); !os.IsNotExist(err) {
+					t.Fatalf("successful removal save file stat = %v, want removed", err)
+				}
+				return
+			}
+
+			if got := actor.lastMessage(); got != "You can't remove a message holier than yourself.\r\n" {
+				t.Fatalf("level-38 actor output = %q, want C author-level rejection", got)
+			}
+			if len(world.echoes) != 0 {
+				t.Fatalf("rejected removal emitted observer echoes = %#v", world.echoes)
+			}
+			if bs.numOfMsgs[6] != 1 || bs.msgStorage[0] != "boundary body" || !bs.msgStorageTaken[0] {
+				t.Fatalf("rejected removal state = num %d, taken %t, body %q", bs.numOfMsgs[6], bs.msgStorageTaken[0], bs.msgStorage[0])
+			}
+			if _, err := os.Stat(boardFile); err != nil {
+				t.Fatalf("rejected removal save file = %v, want intact", err)
+			}
+			reloaded := InitBoards(dir)
+			if reloaded.numOfMsgs[6] != 1 || reloaded.msgStorage[reloaded.msgIndex[6][0].SlotNum] != "boundary body" {
+				t.Fatalf("reloaded rejected state = %#v, want intact message", reloaded.msgIndex[6][0])
+			}
+		})
+	}
+}
+
+func TestBoardSystem_RemoveMsg_PreservesAdjacentMessages(t *testing.T) {
+	dir := t.TempDir()
+	bs := InitBoards(dir)
+	author := newMockBoardPlayer("Author", 40, 8004)
+	for _, post := range []struct {
+		heading string
+		body    string
+	}{
+		{heading: "first adjacent", body: "first body"},
+		{heading: "middle target", body: "middle body"},
+		{heading: "third adjacent", body: "third body"},
+	} {
+		magic := bs.WriteMessage(6, author, post.heading)
+		bs.AppendBoardLine(magic, post.body)
+		bs.FinalizeBoardWrite(magic, author)
+	}
+
+	world := &mockBoardWorld{}
+	bs.SetWorld(world)
+	actor := newMockBoardPlayer("Remover", 39, 8004)
+	if !bs.RemoveMsg(6, actor, "2") {
+		t.Fatal("RemoveMsg(2) = false, want true")
+	}
+	if got := actor.lastMessage(); got != "Message removed.\r\n" {
+		t.Fatalf("actor output = %q, want C success output", got)
+	}
+	if len(world.echoes) != 1 || world.echoes[0] != "Remover just removed message 2." {
+		t.Fatalf("observer echoes = %#v, want C message-2 echo", world.echoes)
+	}
+	if bs.numOfMsgs[6] != 2 {
+		t.Fatalf("message count after middle removal = %d, want 2", bs.numOfMsgs[6])
+	}
+	want := []struct {
+		heading string
+		body    string
+	}{
+		{heading: "first adjacent", body: "first body"},
+		{heading: "third adjacent", body: "third body"},
+	}
+	for i, post := range want {
+		mi := bs.msgIndex[6][i]
+		if !strings.Contains(mi.Heading, post.heading) || bs.msgStorage[mi.SlotNum] != post.body {
+			t.Fatalf("message %d after compaction = heading %q body %q, want %q/%q", i+1, mi.Heading, bs.msgStorage[mi.SlotNum], post.heading, post.body)
+		}
+	}
+
+	reloaded := InitBoards(dir)
+	if reloaded.numOfMsgs[6] != 2 {
+		t.Fatalf("reloaded message count = %d, want 2", reloaded.numOfMsgs[6])
+	}
+	for i, post := range want {
+		mi := reloaded.msgIndex[6][i]
+		if !strings.Contains(mi.Heading, post.heading) || reloaded.msgStorage[mi.SlotNum] != post.body {
+			t.Fatalf("reloaded message %d = heading %q body %q, want %q/%q", i+1, mi.Heading, reloaded.msgStorage[mi.SlotNum], post.heading, post.body)
+		}
+	}
+}
+
 func TestBoardSystem_RemoveMsg_ReadLvl(t *testing.T) {
 	bs := InitBoards(t.TempDir())
 	// Board 3 (immort) has ReadLvl=50, RemoveLvl=61.
