@@ -323,6 +323,46 @@ Full details, proof boundaries, deltas, the corrected prior audit, and the
 fresh current-main validation are in the dated provenance handoff and the
 [`2026-09-12 audit`](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-audit.md).
 
+### Phase 6.4 global→struct audit tracking (2026-09-13; documentation-only)
+
+The original Phase 6.4 row and its −250–400 estimate remain historical
+planning metadata. A fresh audit from origin/main at
+57414fb998f2d1257afd17a62eecb5894a79a482 verified the four named families
+against current Go/C call paths under R5. The result is YELLOW, not
+implemented and not complete:
+
+- mail state/hooks require a lifecycle and storage proof first; the current
+  production path does not call InitMailSystem, and the recovered C mail
+  contract differs from current Go constants/paths;
+- weather weatherWorld has a clear back-pointer seam, but the live heartbeat
+  re-enters `weatherMu.RLock()` from event helpers while holding
+  `weatherMu.Lock()` at hours 5 and 21; the canonical weather/tick state and
+  conditional RNG path remain one protected boundary, and selected command
+  rows do not prove the blocked weather/time lifecycle;
+- merge_bridge.go banManager and World.Bans are two live authorities with
+  different login/admin callers and file paths, so consolidation is deferred
+  as a separate fidelity decision; and
+- spec assignment maps and handler registries have different startup/runtime
+  roles, direct production readers, and exported test mutation seams, so they
+  are retained pending a bounded proof task.
+
+No family is currently ready for an unqualified implementation slice. The
+recommended next task is a bounded weather lock-reentry proof/triage task for
+the scheduled hour-5/hour-21 paths, ahead of the mail lifecycle proof, because
+the defect can block the live heartbeat. It must not become a weather/RNG,
+scheduler, or injection refactor. After that defect has a reviewed
+disposition, the mail proof remains the next candidate: boot scan, fixed-block/
+restart behavior, postmaster output, composition cancellation, and concurrent
+access. Only after those proofs should a human authorize any injection slice.
+The full inventory, exact original excerpts and hashes, corrected focused
+coverage, proof gaps, separate fidelity defects, and stop conditions are in
+[2026-09-13-modernization-phase6-4-audit.md](../fidelity/depth/handoff/2026-09-13-modernization-phase6-4-audit.md)
+and its [evidence package](../fidelity/evidence/2026-09-13-phase6-4/README.md).
+
+This tracking entry does not authorize implementation, change save/storage
+formats, reopen Phase 6.3 deferred combat/RNG or authority candidates, or
+close Phase 6.4.
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**
