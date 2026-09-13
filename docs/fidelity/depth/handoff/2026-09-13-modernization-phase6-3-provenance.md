@@ -93,14 +93,47 @@ The prior `caf62b6f7` census cannot be reused as current-main whole-corpus
 evidence: the current base includes merged #1451, which changed board
 production, tests, and scenario inputs after that checkpoint. The final
 validation record below therefore uses a fresh `make oracle-regression` on
-this branch after the documentation commit. Scripts and tested inputs were
-frozen during the run; no driver or scenario inputs were changed.
+this branch at documentation checkpoint
+`ab916e4b21d4b99a1740521846c21b9b90b7dd23`. The worktree was clean at
+launch; scripts and tested inputs were frozen during the run, and no driver or
+scenario inputs were changed.
 
-The complete command record, exact tally, manual INFRA inspection, and the
-per-gate results are recorded here before PR publication. A healthy result
-must have `failed=0`, `infra=0`, `timed_out=0`, and `stale=0`; the only allowed
-non-pass is the established human-cleared `accuse-noarg-depth` unpinnable
-baseline. Exit status 2 by itself is not acceptance evidence.
+The complete census command was:
+
+```text
+PATH=/usr/local/go/bin:$PATH \
+DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle \
+make oracle-regression
+```
+
+It completed on 2026-09-13 with this exact result:
+
+| scenarios | passed | expected | unpinnable | stale | failed | infra | timed_out | elapsed | exit |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 941 | 931 | 9 | 1 | 0 | 0 | 0 | 0 | 7066.739s | 2 |
+
+The single unpinnable row was the established human-cleared
+`accuse-noarg-depth`; all nine expected rows were ledger-backed and pinned.
+The runner emitted no `INFRA`, `TIMEOUT`, `FAIL`, or `STALE` rows; the live
+result stream and aggregate were inspected, so there were no INFRA rows
+requiring a per-row exception review. The #1451
+`boards-remove-authority-depth` scenario passed. Exit status 2 is solely the
+known unpinnable baseline, not evidence of a census failure.
+
+Repository validation on this documentation checkpoint:
+
+| command | result |
+|---|---|
+| `make fmt` | PASS; no source changes |
+| `git diff --check` | PASS |
+| `go build ./...` | PASS |
+| `go vet ./...` | PASS |
+| `go test ./...` | PASS |
+| `go test ./pkg/game/...` | PASS |
+| `golangci-lint run ./...` | PASS; 0 issues |
+| `make fidelity-depth` | PASS; 4,816 total / 4,697 proven-or-delegated / 68 blocked / 51 excluded |
+| `make expected-divergences-check` | PASS; 26 unresolved rows across 10 scenarios; pins OK |
+| `make oracle-regression` | Exit 2 for the single established `accuse-noarg-depth` unpinnable row; healthy aggregate above |
 
 ## Handoff
 
