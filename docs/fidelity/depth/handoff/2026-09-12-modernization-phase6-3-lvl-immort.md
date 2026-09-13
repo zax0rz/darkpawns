@@ -185,9 +185,10 @@ execution. The durable full-log SHA-256 is
 Relative to `origin/main`, the implementation checkpoint measures **+20/-15
 production lines** (aliases, one loop, one conversion, and comments) and
 **+53/-0 test lines** (independent canonical, Lua, and `levels` boundary
-proof). Documentation is limited to this dated handoff and the single
-LVL_IMMORT-only roadmap tracking entry. No `src/` or oracle checkout file,
-save format, generator, runner, pin, website, or deployment file changed.
+proof). The final documentation delta is **+216/-0 lines**: 194 lines in this
+handoff and 22 lines in the single LVL_IMMORT-only roadmap tracking entry. No
+`src/` or oracle checkout file, save format, generator, runner, pin, website,
+or deployment file changed.
 
 The next action is human review of the single PR. Do not merge it from this
 handoff. Remaining Phase 6.3 candidates must be reconciled separately before
