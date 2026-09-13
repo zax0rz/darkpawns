@@ -324,17 +324,24 @@ One seed-1 info-basic run was repeated with --show-oracle; the normalized C bloc
 
 ### Required repository gates
 
-At the final documentation checkpoint, the following gates must remain green:
+All required gates passed at the final documentation checkpoint. Complete
+outputs are preserved outside self-cleaning directories:
 
-    gofumpt -l .
-    git diff --check
-    /usr/local/go/bin/go build ./...
-    /usr/local/go/bin/go vet ./...
-    /usr/local/go/bin/go test ./...
-    /usr/local/go/bin/go test ./pkg/game/...
-    golangci-lint run ./...
-    make fidelity-depth
-    make expected-divergences-check
+| gate | result | durable output |
+|---|---|---|
+| `gofumpt -l .` | PASS; no files listed | `/home/zach/dp-phase6-4-gofumpt-2026-09-13.log` |
+| `git diff --check` | PASS | `/home/zach/dp-phase6-4-diff-check-2026-09-13.log` |
+| `/usr/local/go/bin/go build ./...` | PASS | `/home/zach/dp-phase6-4-build-2026-09-13.log` |
+| `/usr/local/go/bin/go vet ./...` | PASS | `/home/zach/dp-phase6-4-vet-2026-09-13.log` |
+| `/usr/local/go/bin/go test ./...` | PASS | `/home/zach/dp-phase6-4-test-all-2026-09-13.log` |
+| `/usr/local/go/bin/go test ./pkg/game/...` | PASS | `/home/zach/dp-phase6-4-test-game-2026-09-13.log` |
+| `golangci-lint run ./...` | PASS; 0 issues | `/home/zach/dp-phase6-4-lint-2026-09-13.log` |
+| `make fidelity-depth` | PASS; 4816 total, 4697 proven/delegated, 68 blocked, 51 excluded | `/home/zach/dp-phase6-4-fidelity-depth-2026-09-13.log` |
+| `make expected-divergences-check` | PASS; 26 rows across 10 scenarios; pins OK | `/home/zach/dp-phase6-4-expected-divergences-2026-09-13.log` |
+
+The first lint invocation lacked `/usr/local/go/bin` on PATH and stopped at
+environment discovery without code diagnostics; the recorded rerun with the
+required Go path passed with zero issues.
 
 The reusable census aggregate is documented above and in the evidence README; it is not rerun because production/scenario/fixture/runner identity was verified against its checkpoint. No INFRA row requires manual exception review in that aggregate; the only non-PASS baseline is the known human-cleared unpinnable accuse-noarg-depth.
 
@@ -348,4 +355,3 @@ This PR’s intended changed-file set is documentation/evidence only:
 - docs/modernization/06-roadmap.md — Phase 6.4 tracking update.
 
 No production, test, scenario, fixture, runner, CI, deploy, website, src/, oracle, or save-format file is changed. Human review is requested on the four dispositions, the separate fidelity defects, and the bounded mail proof task. Do not treat this audit as implementation authorization. The branch and resulting PR remain unmerged; stop here for review.
-

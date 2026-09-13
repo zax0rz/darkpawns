@@ -95,7 +95,29 @@ and its normalized C blocks are preserved at
 
 ## Validation record
 
-The final documentation checkpoint records `gofumpt -l .`, build, vet, full
-tests, game tests, lint, `make fidelity-depth`, and
-`make expected-divergences-check`. The exact command results and the
-single-baseline census limitation are in the handoff.
+The final documentation checkpoint passed every required documentation-PR
+gate:
+
+| gate | result |
+|---|---|
+| `gofumpt -l .` | PASS; no files listed |
+| `git diff --check` | PASS |
+| `/usr/local/go/bin/go build ./...` | PASS |
+| `/usr/local/go/bin/go vet ./...` | PASS |
+| `/usr/local/go/bin/go test ./...` | PASS |
+| `/usr/local/go/bin/go test ./pkg/game/...` | PASS |
+| `golangci-lint run ./...` | PASS; 0 issues |
+| `make fidelity-depth` | PASS; 4816 total, 4697 proven/delegated, 68 blocked, 51 excluded |
+| `make expected-divergences-check` | PASS; 26 rows across 10 scenarios; pins OK |
+
+Complete command outputs are preserved at:
+
+- `/home/zach/dp-phase6-4-gofumpt-2026-09-13.log`
+- `/home/zach/dp-phase6-4-diff-check-2026-09-13.log`
+- `/home/zach/dp-phase6-4-build-2026-09-13.log`
+- `/home/zach/dp-phase6-4-vet-2026-09-13.log`
+- `/home/zach/dp-phase6-4-test-all-2026-09-13.log`
+- `/home/zach/dp-phase6-4-test-game-2026-09-13.log`
+- `/home/zach/dp-phase6-4-lint-2026-09-13.log`
+- `/home/zach/dp-phase6-4-fidelity-depth-2026-09-13.log`
+- `/home/zach/dp-phase6-4-expected-divergences-2026-09-13.log`
