@@ -115,7 +115,7 @@ until that boundary is resolved.
 |---|---|---|---|---|
 | 6.1 | Giant switches → data tables where mechanical: `wiz_set` toggle majority (51 cases), `findExp` class/level ladders, equipment slot↔name maps, small lookup switches | −1,200–1,800 (mechanical subset only) | GREEN for the listed ones; spell-dispatch consolidation is **NOT here** | affected proven units |
 | 6.2 | String cleanup in proven files: 94 nested Sprintf → flatten; 57 loop-concats → Builder | −200–400 | GREEN | per-file unit scenarios |
-| 6.3 | Keyed tables + constants: key the unkeyed data tables (spellDB 509 L, THAC0, saving-throws 1,943 L), name the literal ladders, single-source LVL_IMMORT | ~0 net (churn) | GREEN | unit tests; **highest bug-class value per line in the census** |
+| 6.3 | Keyed tables + constants: key the unkeyed data tables (spellDB 509 L, THAC0, saving-throws 1,943 L), name the literal ladders, single-source LVL_IMMORT | ~0 net (churn) | BOUNDED GREEN for the four named slices; whole-phase review disposition below | unit tests; **highest bug-class value per line in the census** |
 | 6.4 | Global→struct injection: mail.go (8 globals), weather.go, merge_bridge banManager, spec_assign registries | −250–400 | YELLOW (behavior-adjacent) | weather/mail/ban scenarios + unit tests |
 | 6.5 | Production `_ =` → handle-or-slog (AGENTS.md:63) | ~0 (adds lines) | GREEN | build + vet |
 
@@ -146,17 +146,18 @@ Do not interpret the eight 2026-09-06 slice handoffs as whole-phase completion
 records. The audit recommends closing the named 6.1 wizard-set proof slice
 before Phase 6.3.
 
-### Phase 6.3 spellDB slice tracking (2026-09-11)
+### Phase 6.3 spellDB slice tracking (2026-09-11; corrected 2026-09-12)
 
-The bounded spellDB slice is implemented on `glm/modernize-spelldb-keys` and
-is awaiting review in its unmerged PR. The current representation was already
-`map[int]*spellData`; the useful risk reduction was replacing raw numeric map
-keys and unkeyed `spellData` literals with the existing named spell constants
-and named fields. The map container, lookup behavior, `SpellNum` field, all 103
-records, the 28 absent indices in the `0..130` range, and all zero/default
-effects remain unchanged. An independent exhaustive pre-keying fixture covers
-every index and field; the dated handoff records the C comparison and reader
-coverage.
+The bounded spellDB slice merged as PR #1445 (merge
+`2ea3474002e5f055395ac9d90251e22bb84eabf6`, implementation checkpoint
+`e59809f5d`). The current representation was already `map[int]*spellData`;
+the useful risk reduction was replacing raw numeric map keys and unkeyed
+`spellData` literals with the existing named spell constants and named fields.
+The map container, lookup behavior, `SpellNum` field, all 103 records, the 28
+absent indices in the `0..130` range, and all zero/default effects remain
+unchanged. An independent exhaustive pre-keying fixture covers every index and
+field; the dated handoff and [evidence](../fidelity/depth/evidence/2026-09-11-spelldb/README.md)
+record the C comparison and reader coverage.
 
 This slice does not advance or claim the rest of Phase 6.3. THAC0,
 saving-throws, literal ladders, `LVL_IMMORT`, and spell-dispatch consolidation
@@ -253,6 +254,49 @@ scenario census are recorded in the
 This entry advances only the named `LVL_IMMORT` candidate. It does not claim
 the remaining Phase 6.3 named ladders, other constants, spell dispatch,
 privilege-policy work, or whole-Phase 6.3 completion.
+
+### Phase 6.3 bounded audit disposition (2026-09-12)
+
+The four explicitly listed implementation slices are complete within their
+named scope: spellDB keys/fields (#1445), THAC0 class rows in both runtime
+tables (#1446), saving-throw class/category rows (#1447), and the canonical
+`LVL_IMMORT` with compatibility aliases/consumers (#1449). Their production
+implementation checkpoints are all ancestors of current `origin/main`
+(`3b131e940b8cece457044d9895ff8ba45d942092`), and the audited production files
+have no later changes. PR #1448 is the independent oracle retry-classification
+repair; it is part of the tested baseline where noted, but is excluded from
+the Phase 6.3 implementation delta.
+
+The whole roadmap sentence is not closed as an unbounded claim. The original
+`reports/01–05` material named by this roadmap is not present in the tracked
+tree, reachable history, or the bounded unreachable-object search, and the
+concrete examples behind “name the literal ladders” could not be recovered.
+The finite replacement inventory in the dated audit handoff is therefore the
+review boundary:
+
+1. Review the remaining C authority-level family from `src/structs.h:610-624`:
+   `LVL_GOD=34`, `LVL_LEGEND=35`, `LVL_HIGOD=36`, `LVL_GRGOD=38`,
+   `LVL_IMPL=40`, and `LVL_FREEZE=LVL_GRGOD`, including the remaining Go
+   package-local definitions and live consumers. This is a candidate inventory,
+   not an authorization to change privilege behavior.
+2. Keep `GetAttacksPerRound`’s numeric thresholds tied to C’s combat formula
+   (`src/fight.c:1898-1947`), not misclassified as authority constants. Keep
+   spell IDs, class IDs, dimensions, sentinels, defaults, formulas, and
+   authored values distinct unless a separate C-backed scope proves shared
+   meaning.
+3. Track the reachable board fidelity debt separately: Go
+   `pkg/boards/boards.go:545` uses `59` where C
+   `src/boards.c:403-405` uses `LVL_IMPL-1` (`39`). The smallest repair is a
+   boundary test at the C threshold plus a dependency-neutral or injected
+   authority value; it is behavior-changing fidelity work, not part of the
+   behavior-preserving keying slice.
+
+The recommendation is **accept a bounded inventory disposition**: record the
+four slices as complete within scope, retain the authority-level inventory and
+board defect as separately reviewable work, and do not claim whole-Phase 6.3
+completion or launch a follow-up slice from this audit. Full details, proof
+boundaries, deltas, reused census checkpoints, and runnable commands are in
+[`2026-09-12-modernization-phase6-3-audit.md`](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-audit.md).
 
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
