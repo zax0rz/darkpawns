@@ -250,7 +250,37 @@ aggregate comparison, not fresh full-census proof; the only non-PASS baseline
 is the established human-cleared `accuse-noarg-depth` unpinnable row. Fresh
 focused characterization output is the proof for this defect.
 
-The final validation commands and results will be appended to this handoff by
-the proof branch before the PR is opened. Any unexpected or flaky failure is a
-stop condition; the four deliberately reproduced deadlocks are the only
-expected characterization result.
+Final validation on commit `aa742b617` plus the documentation-only follow-up
+was:
+
+| gate | result | durable output |
+|---|---|---|
+| `make fmt`; `gofumpt -l .` | PASS; no formatting changes remained | command output was empty after the formatter line |
+| `git diff --check` | PASS | command output was empty |
+| `/usr/local/go/bin/go build ./...` | PASS | `/home/zach/dp-weather-lock-build-2026-09-13.log` |
+| `/usr/local/go/bin/go vet ./...` | PASS | `/home/zach/dp-weather-lock-vet-2026-09-13.log` |
+| `/usr/local/go/bin/go test ./...` | PASS | `/home/zach/dp-weather-lock-test-all-2026-09-13.log` |
+| `/usr/local/go/bin/go test ./pkg/game/...` | PASS | `/home/zach/dp-weather-lock-test-game-2026-09-13.log` |
+| `golangci-lint run ./...` with `/usr/local/go/bin` on `PATH` | PASS; 0 issues | `/home/zach/dp-weather-lock-lint-2026-09-13.log` |
+| `make fidelity-depth` | PASS; 4816 total, 4697 proven/delegated, 68 blocked, 51 excluded | `/home/zach/dp-weather-lock-fidelity-depth-2026-09-13.log` |
+| `make expected-divergences-check` | PASS; 26 ledger rows across 10 scenarios; pins OK | `/home/zach/dp-weather-lock-expected-divergences-2026-09-13.log` |
+| focused characterization test | PASS; 4 expected deadlocks, 4 controls | `/home/zach/dp-weather-lock-characterization-2026-09-13.log` |
+| focused race characterization test | PASS; 4 expected deadlocks, 4 controls, no race reports | `/home/zach/dp-weather-lock-characterization-race-2026-09-13.log` |
+
+The full-census aggregate was reused under the checkpoint rule rather than
+rerunning the 2-hour-plus corpus. The exact comparison
+`git diff --name-status ab916e4b21d4b99a1740521846c21b9b90b7dd23 HEAD` contains
+only the prior Phase 6.3/6.4 documentation evidence, this handoff/evidence,
+the roadmap, and `pkg/game/weather_lock_characterization_test.go`; a filtered
+comparison over production, scenario, fixture, and runner-input paths is
+empty. The reused durable result is
+`docs/fidelity/evidence/2026-09-13-phase6-3-provenance/recovered-census-output.txt`
+and its accepted aggregate is
+`scenarios=941 passed=931 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0`.
+The recovered stream has 856 status lines rather than all 941 scenario
+identities and no temporary attempt logs, so it is an aggregate comparison
+with that limitation. Its only non-PASS baseline is the human-cleared
+`accuse-noarg-depth` unpinnable row; no INFRA row is being waived.
+
+Any unexpected or flaky failure is a stop condition. The four deliberately
+reproduced, isolated deadlocks are the only expected characterization result.
