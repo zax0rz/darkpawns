@@ -232,6 +232,28 @@ saving-throw formulas, broader combat work, or all of Phase 6.3. See the
 [`saving-throw evidence`](../fidelity/evidence/2026-09-12-saving-throws/README.md)
 and [dated handoff](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-saving-throws.md).
 
+### Phase 6.3 `LVL_IMMORT` single-source slice tracking (2026-09-12)
+
+The bounded `LVL_IMMORT` slice is complete on
+`glm/modernize-lvl-immort`, based on `origin/main` at
+`dd2e4638a583d5c876f59af3aca732f37f90e7b9`. PR #1447 (saving-throw keys) was
+verified merged before the branch was created and is present in that base.
+The canonical compile-time value remains `31` in `pkg/combat`; the duplicate
+Go definitions in `pkg/game` and `pkg/session`, the game-local `LVLImmort` and
+`lvlImmort` aliases, the Lua export, and the confirmed `cmdLevels` threshold
+now refer to that owner. Existing spell aliasing was already satisfied.
+
+The C value is independently pinned at `src/structs.h:620`. The focused proof
+covers the 30-row `levels` output, strict `fly_exit_up` above/equal/below
+boundaries, mortal XP cap at level 30, compile-time arithmetic/array use, and
+the Lua numeric export. The 13-run focused oracle matrix and the full 940-
+scenario census are recorded in the
+[`LVL_IMMORT handoff`](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-lvl-immort.md).
+
+This entry advances only the named `LVL_IMMORT` candidate. It does not claim
+the remaining Phase 6.3 named ladders, other constants, spell dispatch,
+privilege-policy work, or whole-Phase 6.3 completion.
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**
