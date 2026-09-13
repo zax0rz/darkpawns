@@ -32,7 +32,7 @@ Source lines 69–75:
 > |---|---|---|---|---|
 > | 6.1 | Giant switches → data tables where mechanical: `wiz_set` toggle majority (51 cases), `findExp` class/level ladders, equipment slot↔name maps, small lookup switches | −1,200–1,800 (mechanical subset only) | GREEN for the listed ones; spell-dispatch consolidation is **NOT here** | affected proven units |
 > | 6.2 | String cleanup in proven files: 94 nested Sprintf → flatten; 57 loop-concats → Builder | −200–400 | GREEN | per-file unit scenarios |
-> | 6.3 | Keyed tables + constants: key the unkeyed data tables (spellDB 509 L, THAC0, saving-throws 1,943 L), name the literal ladders, single-source LVL_IMMORT | ~0 net (churn) | GREEN | unit tests; highest bug-class value per line in census |
+> | 6.3 | Keyed tables + constants: key the unkeyed data tables (spellDB 509 L, THAC0, saving-throws 1,943 L), name the literal ladders, single-source LVL_IMMORT | ~0 net (churn) | GREEN | unit tests; **highest bug-class value per line in the census** |
 
 This is the original roadmap’s only Phase 6.3 row. It explicitly names the
 three keyed data tables and `LVL_IMMORT`; “name the literal ladders” is a
@@ -45,10 +45,11 @@ Source lines 22–29:
 > ## 2. Magic numbers — the real residue
 >
 > 7,795 bare ≥2-digit integer literals (5,021 excluding data-table rows). No constants package exists. Worst aspects:
-> - LVL_IMMORT=31 duplicated at combat/fight_core.go:53 because import cycle — one place constant back-ported into literal.
-> - Unkeyed composite-literal data tables — spellDB (spells/cast_cmds.go:31-120, 509 lines), THAC0 (combat/formulas.go:65), saving throws (saving_throws.go, 1,943 lines of positional numbers). ... No LevelCap/MaxLevel ... level thresholds literal ladder (combat/formulas.go:311-637).
-> - Live literal dice...
-> Naming these loses ~0–100...
+> - **`LVL_IMMORT=31` duplicated at combat/fight_core.go:53** because of an import cycle — the one place a constant was *back-ported* into a literal.
+> - Unkeyed composite-literal data tables — `spellDB` (spells/cast_cmds.go:31-120, 509 lines), THAC0 (combat/formulas.go:65), saving throws (saving_throws.go, 1,943 lines of positional numbers). Positional tables are corruption bait: inserting a column shifts every row silently. No `LevelCap` exists anywhere; level thresholds live as a literal ladder (combat/formulas.go:311-637).
+> - Live literal dice (~20 sites): scripting/engine.go:1547-1699, affect_spells.go:2746, weather.go:415.
+>
+> Naming these loses ~0–100 lines but removes a real bug class; the unkeyed tables + LVL_IMMORT duplication are the highest-value micro-refactor in this category.
 
 The report’s explicit `LVL_IMMORT` duplication and the three unkeyed table
 families map directly to the four merged slices. Its `formulas.go` range is a

@@ -143,3 +143,28 @@ reopen 6.1/6.2, begin 6.4, or merge itself. The review decision still needed
 is whether to accept the four completed slices plus these explicit retained
 and deferred dispositions as the Phase 6.3 record, and separately whether to
 authorize a future bounded `GetAttacksPerRound` proof slice.
+
+## Review correction: durable census evidence
+
+The [recovered census output](../../evidence/2026-09-13-phase6-3-provenance/recovered-census-output.txt)
+is extracted from tool-result text in the original Luna session record,
+`/home/zach/.codex/sessions/2026/09/13/rollout-2026-09-13T08-33-59-01a09ac2-972d-7503-82da-704c458a526e.jsonl`.
+It preserves 856 scenario status lines (847 PASS, 8 EXPECTED, 1 UNPINNABLE),
+the final 941-scenario aggregate, and make's exit-2 message. This is a partial
+captured status stream, not a complete per-scenario ledger: 85 scenario status
+lines are absent from this recovery. The original runner's EXIT trap removed
+its temporary results and per-attempt logs. The aggregate supports the recorded
+tally; this recovery cannot independently reconcile all 941 scenario identities
+or inspect deleted attempt logs. No missing output has been reconstructed.
+
+`git diff --name-only ab916e4b21d4b99a1740521846c21b9b90b7dd23 HEAD`
+at reviewed head `5c0f517e8c888f0e1dfe4d22a3c792e69e9232a7` lists only
+`docs/fidelity/depth/handoff/2026-09-13-modernization-phase6-3-provenance.md`.
+The subsequent review correction changes only documentation/evidence under
+`docs/`. Production, scenarios, and runner inputs therefore remain identical
+to the census checkpoint. No new census was run for these documentation fixes.
+
+Review-fix validation: formatting, diff whitespace check, build, vet, full Go
+tests, game tests, lint, fidelity-depth, and expected-divergences-check all
+passed. All six preserved quotation blocks were replaced directly from their
+cited source line ranges.
