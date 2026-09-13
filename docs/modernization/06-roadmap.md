@@ -115,7 +115,7 @@ until that boundary is resolved.
 |---|---|---|---|---|
 | 6.1 | Giant switches → data tables where mechanical: `wiz_set` toggle majority (51 cases), `findExp` class/level ladders, equipment slot↔name maps, small lookup switches | −1,200–1,800 (mechanical subset only) | GREEN for the listed ones; spell-dispatch consolidation is **NOT here** | affected proven units |
 | 6.2 | String cleanup in proven files: 94 nested Sprintf → flatten; 57 loop-concats → Builder | −200–400 | GREEN | per-file unit scenarios |
-| 6.3 | Keyed tables + constants: key the unkeyed data tables (spellDB 509 L, THAC0, saving-throws 1,943 L), name the literal ladders, single-source LVL_IMMORT | ~0 net (churn) | BOUNDED GREEN for the four named slices; whole-phase review disposition below | unit tests; **highest bug-class value per line in the census** |
+| 6.3 | Keyed tables + constants: key the unkeyed data tables (spellDB 509 L, THAC0, saving-throws 1,943 L), reconcile the recovered literal-ladder candidates, single-source LVL_IMMORT | ~0 net (churn) | BOUNDED GREEN for the four named slices; recovered formula candidates remain separately bounded; no unconditional whole-phase closure | unit tests; **highest bug-class value per line in the census** |
 | 6.4 | Global→struct injection: mail.go (8 globals), weather.go, merge_bridge banManager, spec_assign registries | −250–400 | YELLOW (behavior-adjacent) | weather/mail/ban scenarios + unit tests |
 | 6.5 | Production `_ =` → handle-or-slog (AGENTS.md:63) | ~0 (adds lines) | GREEN | build + vet |
 
@@ -255,7 +255,7 @@ This entry advances only the named `LVL_IMMORT` candidate. It does not claim
 the remaining Phase 6.3 named ladders, other constants, spell dispatch,
 privilege-policy work, or whole-Phase 6.3 completion.
 
-### Phase 6.3 bounded audit disposition (2026-09-12)
+### Phase 6.3 bounded audit disposition (2026-09-12; provenance corrected 2026-09-13)
 
 The four explicitly listed implementation slices are complete within their
 named scope: spellDB keys/fields (#1445), THAC0 class rows in both runtime
@@ -268,22 +268,41 @@ repair; it is part of the tested baseline where noted, but is excluded from
 the Phase 6.3 implementation delta.
 
 The whole roadmap sentence is not closed as an unbounded claim. The original
-`reports/01–05` material named by this roadmap is not present in the tracked
-tree, reachable history, or the bounded unreachable-object search, and the
-concrete examples behind “name the literal ladders” could not be recovered.
-The finite replacement inventory in the dated audit handoff is therefore the
-review boundary:
+audit reports were absent from the tracked tree, reachable history, and the
+bounded unreachable-object search when #1450 was written, so its
+“unrecoverable” conclusion was evidence-bounded and correct at that time.
+The original reports have now been recovered at `/home/zach/dp-modernization`.
+Their relevant excerpts, exact source hashes, and the distinction between
+explicit candidates and inferences are preserved in the
+[`2026-09-13 provenance evidence`](../fidelity/evidence/2026-09-13-phase6-3-provenance/original-excerpts.md).
+The finite reconciliation and actual C/Go call-path verification are in the
+[`2026-09-13 provenance handoff`](../fidelity/depth/handoff/2026-09-13-modernization-phase6-3-provenance.md).
+
+The recovered source changes the review boundary. In particular, the
+structural report’s historical `formulas.go` examples explicitly recover
+`GetAttacksPerRound` NPC attack-count thresholds and player extra-attack
+thresholds/chances. Source verification under R5 shows these are combat
+formula/RNG candidates, not authority constants. The report’s line-111
+“weapon-skill learn thresholds” label is not supported by the cited functions:
+the actual practice path is `src/spec_procs.c:203-249` plus
+`src/class.c:261-267`, and its Go counterpart is `pkg/game/practice.go` and
+`pkg/game/class_spells.go`. No practice slice is inferred from that label.
+
+The finite reconciliation review boundary is:
 
 1. Review the remaining C authority-level family from `src/structs.h:610-624`:
    `LVL_GOD=34`, `LVL_LEGEND=35`, `LVL_HIGOD=36`, `LVL_GRGOD=38`,
    `LVL_IMPL=40`, and `LVL_FREEZE=LVL_GRGOD`, including the remaining Go
    package-local definitions and live consumers. This is a candidate inventory,
    not an authorization to change privilege behavior.
-2. Keep `GetAttacksPerRound`’s numeric thresholds tied to C’s combat formula
-   (`src/fight.c:1898-1947`), not misclassified as authority constants. Keep
-   spell IDs, class IDs, dimensions, sentinels, defaults, formulas, and
-   authored values distinct unless a separate C-backed scope proves shared
-   meaning.
+2. Retain two separately bounded future slices for `GetAttacksPerRound`:
+   NPC bands/random bonus and player gates/chances, tied to C’s combat formula
+   (`src/fight.c:1898-1947`) and its live violence call path. Do not extract
+   or rename the thresholds in this documentation PR. Keep spell IDs, class
+   IDs, dimensions, sentinels, defaults, formulas, authored values, and
+   authority levels distinct unless a separate C-backed scope proves shared
+   meaning. The current unit/golden and delegated combat coverage is not yet
+   a complete C-derived threshold/draw-order proof.
 3. Track the reachable board fidelity debt separately: Go
    `pkg/boards/boards.go:545` uses `59` where C
    `src/boards.c:403-405` uses `LVL_IMPL-1` (`39`). The smallest repair is a
@@ -292,12 +311,17 @@ review boundary:
    behavior-preserving keying slice. The correction and its proof are recorded
    in [`2026-09-13-board-remove-authority.md`](../fidelity/depth/handoff/2026-09-13-board-remove-authority.md).
 
-The recommendation is **accept a bounded inventory disposition**: record the
-four slices as complete within scope, retain the authority-level inventory and
-board defect as separately reviewable work, and do not claim whole-Phase 6.3
-completion or launch a follow-up slice from this audit. Full details, proof
-boundaries, deltas, reused census checkpoints, and runnable commands are in
-[`2026-09-12-modernization-phase6-3-audit.md`](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-audit.md).
+The recommendation is **accept a bounded reconciliation disposition**: record
+the four slices as complete within scope; retain `getTHAC0`’s defensive
+`1..40` guard as a literal with its documented rationale; retain the two
+recovered attack-count formula candidates for separately authorized future
+work; and defer the inferred practice label, unnamed literal ladders, and
+broader `LVL_GOD`–`LVL_IMPL` consolidation for insufficient original scope or
+proof. The board defect remains separate under #1451. Do not claim
+unconditional whole-Phase 6.3 completion or start Phase 6.4 from this audit.
+Full details, proof boundaries, deltas, the corrected prior audit, and the
+fresh current-main validation are in the dated provenance handoff and the
+[`2026-09-12 audit`](../fidelity/depth/handoff/2026-09-12-modernization-phase6-3-audit.md).
 
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 

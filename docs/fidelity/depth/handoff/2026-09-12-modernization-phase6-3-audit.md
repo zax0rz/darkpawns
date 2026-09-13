@@ -11,17 +11,23 @@ their named scope:
 - saving-throw class/category keys (#1447); and
 - canonical `LVL_IMMORT` with compatibility aliases and consumers (#1449).
 
-The whole roadmap item is not closed as an unbounded claim. The phrase “name
-the literal ladders” has no recoverable original candidate inventory, and a
-finite current-source authority-level inventory remains for human review. The
-recommendation is **accept a bounded inventory disposition**: record the four
-slices as complete within scope, keep the finite authority inventory and the
-separate board fidelity defect below reviewable, and do not launch another
-Phase 6.3 slice from this audit.
+The whole roadmap item is not closed as an unbounded claim. The original audit
+reports have now been recovered at `/home/zach/dp-modernization`; durable
+verbatim excerpts and source hashes are preserved in the
+[`2026-09-13 provenance evidence`](../../evidence/2026-09-13-phase6-3-provenance/original-excerpts.md).
+That recovery changes the provenance conclusion, not the implementation
+status. It establishes two additional explicit formula candidates in
+`GetAttacksPerRound` (NPC attack-count bands and player extra-attack
+thresholds/chances). They remain separately bounded future combat/RNG slices;
+the report's “weapon-skill” label is corrected by the actual C and Go call
+paths. The recommendation is **accept a bounded reconciliation disposition**:
+record the four slices as complete within scope, retain the two formula
+candidates for separately authorized future work, and defer inferred or
+broader authority-level candidates whose original scope is not finite.
 
-Audit vehicle: `/home/zach/darkpawns-phase6-3-audit`, branch
-`glm/audit-phase6-3`, based on `origin/main` at
-`3b131e940b8cece457044d9895ff8ba45d942092`. The primary checkout’s existing
+Audit vehicle: `/home/zach/darkpawns-provenance-audit`, branch
+`glm/audit-provenance-reconciliation`, based on `origin/main` at
+`d688d51f1`. The primary checkout’s existing
 `docs/specs/tui-setup-wizard.md` edit was left untouched. `src/` and
 `darkpawns-c-oracle/` were not modified.
 
@@ -45,12 +51,12 @@ files.
 | #1449 | `3b131e940b8cece457044d9895ff8ba45d942092` | `caf62b6f7` | Phase 6.3 `LVL_IMMORT` slice merged |
 
 The four implementation commits were checked with
-`git merge-base --is-ancestor`. `git log --since=2026-09-11` over the audited
-production files finds only the four implementation commits. The current
-`HEAD` differs from `caf62b6f7` only in the two documentation files added by
-the #1449 merge (`docs/modernization/06-roadmap.md` and the LVL_IMMORT
-handoff), so the recorded final census at `caf62b6f7` is a valid current-main
-production-state census.
+`git merge-base --is-ancestor`. The current `HEAD` also includes merged PR
+#1451, which changed `pkg/boards/boards.go`, its tests, the board depth input,
+the board ledger, and the board handoff after `caf62b6f7`. Therefore the prior
+`caf62b6f7` census is historical evidence for the four implementation slices,
+not a reusable current-main whole-corpus census. This PR runs a fresh census
+after the documentation checkpoint.
 
 There were no open PRs when the audit checked GitHub. The audit itself will
 open one documentation-only PR after this handoff and roadmap update; it will
@@ -64,7 +70,7 @@ remain unmerged.
 | THAC0 class rows; `src/class.c:297-371`, class IDs `src/structs.h:115-128`, reader `src/fight.c:1763-1786` | Both Go copies remain `[12][41]int`, keyed by existing class identifiers in `pkg/combat/formulas.go` and `pkg/game/player.go`. Readers: `getTHAC0` → `CalculateHitChance`, and `newCharacter` level-1 initialization. | #1446 / `e38120cd3`; current THAC0 preservation, identifier, clamp, golden, and constructor tests pass. | Independent numeric fixture covers both 12×41 copies (984 cells total); C golden fixture and semantic checksum `38562ecc51aa1043b365442250e3cf8684b26c9d055ee07dc781e12ea1d85b9b` cover the 492-cell table. | NPC/file THAC0 handling and derived combat formulas were not changed. **Complete within named scope.** |
 | saving-throw class/category rows; `src/magic.c:83-404,407-426`, class/category IDs in `src/structs.h` and `src/spells.h` | `pkg/spells/saving_throws.go:27` remains `[12][5][41]int`; class and category dimensions use existing identifiers. Readers: `GetSavingThrow` and `CheckSavingThrow`. | #1447 / `f9e3178d5`; current table, identifier, sentinel/default, accessor-boundary, NPC, and saving tests pass. | Independent pre-keying fixture covers 2,460 cells and matches the C fixture at SHA-256 `caf57e8dc021b352253db65c00274194fe1cf1ba393101aa008b1403ad9a6b80`. | Level `0..40` is intentionally positional; fallbacks, NPC Warrior handling, save formulas, and draw order remain separate. **Complete within named scope.** |
 | single-source `LVL_IMMORT`; `src/structs.h:610-624`, especially line 620 | Canonical untyped compile-time `combat.LVL_IMMORT = 31` in `pkg/combat/fight_core.go:54`. `pkg/game` and `pkg/session` compatibility aliases, plus the Lua export, now consume it. Live checks include combat gates, `cmdLevels`, XP, `fly_exit_up`, and scripting export. | #1449 / `caf62b6f7`; current compile-time, consumer, and focused boundary tests pass. | Independent C expectation is `31`; tests exercise constant arithmetic/array use, level-30/31 boundaries, command output, and Lua numeric export. | Other authority levels, formula thresholds, and privilege policy were deliberately not unified. **Complete within named scope.** |
-| roadmap phrase “name the literal ladders” | No original concrete inventory is recoverable; see bounded provenance search below. | No PR claims this as complete. | Current source inventory is finite but requires human scope confirmation. | **Explicitly deferred / bounded inventory disposition.** |
+| roadmap phrase “name the literal ladders” | The recovered phrase still does not enumerate a finite candidate list; see the corrected provenance section below. | No PR claims this as complete. | The recovered source supports two explicit combat-formula candidates; other numeric examples require separate scope proof. | **Explicitly deferred / bounded reconciliation disposition.** |
 
 ## Proof-boundary review
 
@@ -92,15 +98,16 @@ boundaries kept explicit:
   board levels remain separate unless C and a live call path establish the
   relationship.
 
-## “Name the literal ladders” provenance and finite replacement inventory
+## “Name the literal ladders” provenance and current-source follow-on inventory
 
-The roadmap says it was derived from `reports/01–05`, but those report files
-are absent. A bounded search found no `reports/01–05` paths in the tracked
-tree or `git rev-list --objects --all`; the bounded inspection of unreachable
-objects also recovered no such report. `git log --all -S'name the literal
-ladders'` found the roadmap wording, not an original report or concrete list.
-The search was stopped at that finite boundary rather than treating every
-numeric literal as unfinished modernization work.
+The roadmap says it was derived from `reports/01–05`. Those report files are
+still absent from the tracked tree, reachable history, and the bounded
+unreachable-object search; the recovered home-directory copy is the newly
+identified original source. `git log --all -S'name the literal ladders'`
+continues to find the roadmap wording, not a finite candidate manifest. The
+recovered reports therefore narrow the boundary by proving the two
+`GetAttacksPerRound` formula candidates, but they do not turn every numeric
+literal into unfinished modernization work.
 
 The following is the finite current-source replacement inventory for human
 review.
@@ -140,18 +147,30 @@ complete boundary matrix for every live consumer. The smallest justified
 future slice is a human-approved constants inventory followed by compile-time
 aliases and independent threshold tests for the identified live consumers;
 it must explicitly exclude formula bands and authored values. Leave it
-unchanged during this audit because the original scope is unavailable and
-unifying privilege thresholds may change behavior.
+unchanged during this audit because the recovered original scope explicitly
+names `LVL_IMMORT`, not a complete authority-policy family, and unifying
+privilege thresholds may change behavior.
 
-### B. `GetAttacksPerRound` — explicitly not a named-ladder candidate
+### B. `GetAttacksPerRound` — recovered explicit formula candidates
 
-`pkg/combat/formulas.go:561-640` mirrors the combat formula in
-`src/fight.c:1898-1947`: NPC bands at `31/30/27/20/10`, player gates at
-`10/12/15/25/30/39`, plus the C random probes. These are formula thresholds
-inside one live function, not authority levels. Naming them would add an
-indirection and could blur the important `>30` versus `>=31` distinction; it
-does not remove duplicated-constant risk. This belongs to combat formula
-fidelity, not the current 6.3 constants slice, and remains unchanged.
+The recovered structural report explicitly cites the historical
+`formulas.go:582-637` thresholds and percentile checks. Source inspection
+against `src/fight.c:1898-1947` proves that the cited code is
+`GetAttacksPerRound`/`perform_violence` behavior: NPC bands at
+`31/30/27/20/10`, player gates at `>10/>12/>15/>25/>30/>39`, and the C random
+probes. These are formula thresholds inside one live function, not authority
+levels. The C call is `comm.c:822-823` → `perform_violence`; Go reaches the
+function from `pkg/engine/gameloop.go:320-323` → `PerformRound` →
+`processCombatPair:519-523`. Existing unit/golden tests and delegated combat
+coverage do not yet constitute a complete C-derived threshold and draw-order
+matrix. The two candidates remain unchanged and are suitable only for
+separately bounded future combat/RNG slices.
+
+The original report's phrase “weapon-skill learn thresholds” is not supported
+by the cited functions. Actual C practice uses `spec_procs.c:203-249` and
+`class.c:261-267`; current Go uses `pkg/game/practice.go:9-27,91-124` and
+`pkg/game/class_spells.go`. No practice modernization is authorized by the
+recovered Phase 6.3 source.
 
 ### C. Concrete separate fidelity debt: board removal authority bypass
 
@@ -238,7 +257,10 @@ The expected-divergence command’s unresolved rows are the existing ledger
 state, not a new content-red result. No unexpected or flaky content-red was
 found.
 
-No new two-hour census was run. The valid recorded checkpoints are:
+The following focused current-main commands all passed before this
+documentation-only change, as recorded below. The old full-corpus checkpoints
+are retained as slice evidence, but are not claimed as the final current-main
+census because of #1451:
 
 - spellDB: focused 11-run matrix and full census at `bba25758b`, recorded as
   `940/930/9/1/0/0/0/0`, elapsed `7048.494s`; the spellDB production file is
@@ -258,21 +280,23 @@ In each tally the fields are `scenarios/passed/expected/unpinnable/stale/
 failed/infra/timed_out`. The recorded full censuses exit 2 only because the
 existing human-cleared `accuse-noarg-depth` result is `UNPINNABLE`; each has
 zero failed, infrastructure, timed-out, and stale results. The final
-`caf62b6f7` census is the one reused as current-main whole-corpus evidence,
-because `git diff caf62b6f7 HEAD` contains only the two documentation files
-described above. The saved logs and manifests remain outside self-cleaning
-directories.
+current-main census is recorded in the 2026-09-13 provenance handoff, after
+the documentation checkpoint. The saved historical logs and manifests remain
+outside self-cleaning directories.
 
 ## Documentation corrections made
 
 The roadmap’s top-level Phase 6.3 status now distinguishes bounded-green
 named slices from whole-phase review. The spellDB entry now identifies merged
 PR #1445 and its implementation checkpoint instead of describing an unmerged
-PR. A dated audit entry records per-target dispositions, the exact whole-phase
-scope, the finite replacement inventory, the board debt, excluded #1448 delta,
-measured changes, tests, and reused census relationships. Historical slice
-handoffs were left intact.
+PR. This audit is corrected by the 2026-09-13 provenance reconciliation,
+which records per-target dispositions, original-source excerpts/hashes, the
+actual formula call paths, the corrected “weapon-skill” label, the board
+boundary, excluded #1448 delta, measured changes, tests, and the fresh
+current-main census. Historical slice handoffs remain intact.
 
-Recommendation remains: accept the bounded inventory disposition and stop for
-human review. Do not merge the documentation PR automatically and do not
-start Phase 6.4 or a remaining candidate implementation from this audit.
+Recommendation remains: accept the bounded reconciliation disposition and stop
+for human review. See the dated provenance handoff for the fresh current-main
+census and the exact next bounded task. Do not merge the documentation PR
+automatically and do not start Phase 6.4 or a remaining candidate
+implementation from this audit.
