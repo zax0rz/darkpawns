@@ -289,7 +289,8 @@ review boundary:
    `src/boards.c:403-405` uses `LVL_IMPL-1` (`39`). The smallest repair is a
    boundary test at the C threshold plus a dependency-neutral or injected
    authority value; it is behavior-changing fidelity work, not part of the
-   behavior-preserving keying slice.
+   behavior-preserving keying slice. The correction and its proof are recorded
+   in [`2026-09-13-board-remove-authority.md`](../fidelity/depth/handoff/2026-09-13-board-remove-authority.md).
 
 The recommendation is **accept a bounded inventory disposition**: record the
 four slices as complete within scope, retain the authority-level inventory and
