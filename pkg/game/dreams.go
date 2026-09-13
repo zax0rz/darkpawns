@@ -242,10 +242,9 @@ func DreamTravelFn(ch DreamContext, subcmd int) {
 	}
 }
 
-// LVLImmort is the minimum immortal level.
-// Source: structs.h LVL_IMMORT 31 (Dark Pawns used 31 per act.wizard.c constants)
-// This is a local alias to avoid import cycles — session/wizard_cmds.go has LVL_IMMORT = 31.
-const LVLImmort = 31
+// LVLImmort is the compatibility alias for the canonical minimum immortal
+// level owned by pkg/combat.
+const LVLImmort = LVL_IMMORT
 
 // Go Improvements Over C
 // ======================

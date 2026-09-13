@@ -41,7 +41,8 @@ const (
 )
 
 // ---------------------------------------------------------------------------
-// Level constants. lvlImmort is declared in spec_procs4.go (31).
+// Level constants. lvlImmort is the package-local compatibility alias to the
+// canonical pkg/combat.LVL_IMMORT, declared in spec_procs4.go.
 // ---------------------------------------------------------------------------
 const (
 	lvlGod = 34 // used in item_transfer.go

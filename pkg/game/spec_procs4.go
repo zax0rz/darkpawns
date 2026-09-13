@@ -14,7 +14,7 @@ const (
 	portalRoom     = 5799
 	elevatorDest   = 5743
 	newbieLevel    = 11
-	lvlImmort      = 31
+	lvlImmort      = LVL_IMMORT
 )
 
 func init() {

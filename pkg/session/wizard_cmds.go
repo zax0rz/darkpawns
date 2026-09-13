@@ -2,12 +2,15 @@ package session
 
 import (
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// Wizard level constants — from src/config.c
-// These duplicate pkg/game/limits.go to avoid import cycle.
+// Wizard level constants — from src/config.c. LVL_IMMORT aliases the
+// canonical value in pkg/game; the remaining authority levels stay local and
+// numeric because they are outside this bounded single-source slice.
 const (
-	LVL_IMMORT = 31
+	LVL_IMMORT = game.LVL_IMMORT
 	LVL_GOD    = 34
 	LVL_LEGEND = 35
 	LVL_HIGOD  = 36

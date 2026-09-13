@@ -51,7 +51,7 @@ var AttackHitTexts = []AttackHitText{
 // ---------------------------------------------------------------------------
 
 const (
-	LVL_IMMORT  = 31 // C: LVL_IMMORT=31 — shared by lower-level packages to avoid import cycles
+	LVL_IMMORT  = 31 // C: structs.h:620; canonical owner shared by lower-level packages
 	NUM_OF_DIRS = 6
 	maxExpGain  = 1000000
 )

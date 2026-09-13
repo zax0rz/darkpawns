@@ -716,7 +716,7 @@ func (e *Engine) setupBasicConstantsOn(L *lua.LState) {
 	L.SetGlobal("NIL", lua.LNil)
 
 	// Level constants
-	L.SetGlobal("LVL_IMMORT", lua.LNumber(31))
+	L.SetGlobal("LVL_IMMORT", lua.LNumber(combat.LVL_IMMORT))
 	L.SetGlobal("LVL_IMPL", lua.LNumber(40))
 
 	// Player flags

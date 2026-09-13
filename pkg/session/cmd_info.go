@@ -21,7 +21,7 @@ func cmdLevels(s *Session) error {
 		return nil
 	}
 	var buf strings.Builder
-	for i := 1; i < 31; i++ { // LVL_IMMORT = 31
+	for i := 1; i < LVL_IMMORT; i++ {
 		xpNeeded := game.FindExp(p.Class, i)
 		xpPrev := game.FindExp(p.Class, i-1)
 		fmt.Fprintf(&buf, "[%2d] %8d-%-8d    (%6d)\r\n", i, xpPrev, xpNeeded, xpNeeded-xpPrev)
