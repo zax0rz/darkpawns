@@ -413,13 +413,29 @@ Track per phase (record after each phase merges, in this table's continuation in
 
 **First PR recommendation:** 0.1, the corrected 0.2 disposition, and the isolated 0.3 bugfix establish the evidence boundary; then land 1.1 and 2.1 as separate deletion/loaderization PRs only after their changed-file coverage lookups are proven.
 
-### 2026-09-13 weather lock proof boundary
+### 2026-09-13 weather lock re-entry repair boundary
 
-The weather portion of Phase 6.4 is now a separate proof-first availability
-task. `WeatherAndTime` owns `weatherMu.Lock()` across `AnotherHour`; hour 5
-and hour 21 event helpers re-enter the same mutex with `RLock()` before their
-`weatherWorld` nil check. The bounded characterization and proposed
-lock-owner split are recorded in
-`docs/fidelity/depth/handoff/2026-09-13-weather-lock-reentry.md`. No weather
-injection or production repair is authorized by this entry. Mail lifecycle
-proof remains downstream of the reviewed weather disposition.
+The specific weather lock re-entry defect is repaired within the tested
+boundary in `eac85ac30` (`fix: prevent weather lock re-entry`). `WeatherAndTime`
+retains one `weatherMu.Lock()` across the combined tick; its lock-held
+`anotherHourLocked` and `weatherChangeLocked` bodies preserve the existing
+callback/event/clock/draw order. Exported `AnotherHour` and `WeatherChange`
+are now synchronized direct-entry wrappers, and all six event helpers use an
+owner-captured `weatherWorld` pointer in the combined tick while retaining
+synchronized pointer snapshots for direct helper calls.
+
+Completion regressions cover hour 4→5 and 20→21 with nil/live targets,
+non-event and `mode=false` controls, hour/sunlight progression, exact
+existing Go event output with outdoor-before-event ordering, qualifying and
+nonqualifying moon-condition boundaries, all six helper paths, the direct
+entry points, focused race coverage, and independent weather draw plans.
+The exact test/output boundary is recorded in
+`docs/fidelity/depth/handoff/2026-09-13-weather-lock-reentry-repair.md` and
+`docs/fidelity/evidence/2026-09-13-weather-lock/README.md`.
+
+This does not claim full C weather fidelity: the known event output/state
+differences and separate C/Go lunar/ghost-ship/gate RNG debts remain open.
+Existing named weather/time command cases may not reach event hours, so their
+oracle results do not replace the focused lifecycle regressions. Phase 6.4
+weather-world injection remains unimplemented, and mail lifecycle proof stays
+downstream of this reviewed locking repair.
