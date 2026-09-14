@@ -1,8 +1,10 @@
 # Weather lock re-entry characterization — 2026-09-13
 
-Status: proof only. This evidence does not implement a production repair, change
-weather output, alter the scheduler or RNG stream, or authorize Phase 6.4
-global-to-struct injection.
+Status: characterization plus bounded repair evidence. The repair removes only
+the weather lock re-entry hang; it does not change weather output, alter the
+scheduler or RNG stream, or implement Phase 6.4 global-to-struct injection.
+The original deadlock observations below are retained as the before-fix proof;
+the completion and gate evidence is recorded after them.
 
 ## Reproduction
 
@@ -88,9 +90,100 @@ events, `WeatherChange`, or subsequent heartbeat/manual work.
 
 ## Scope boundary
 
-The six event helpers and their callers were audited statically. The existing
-`TestWeatherEvents_BroadcastToWorld` calls helpers directly without holding
-`weatherMu`, so its green result does not cover this re-entry path. The
+The six event helpers and their callers were audited statically. The repaired
+`TestWeatherEvents_SynchronizedDirectEntryPoints` now exercises all six helper
+wrappers with a live observer and exact existing Go output expectations. The
 weather event output/state differences from C, the lunar RNG path, and the
 gate/ghost-ship world side effects are recorded in the dated handoff, but are
 not repaired or blessed here.
+
+## Repair evidence — tested checkpoint `eac85ac30`
+
+The production repair keeps one write lock across `WeatherAndTime`'s combined
+tick and splits the lock-held bodies from synchronized direct-entry wrappers.
+The tick captures `weatherWorld` under that owning lock and passes the pointer
+to no-lock event bodies. Direct helper wrappers still snapshot the pointer
+under `weatherMu.RLock()` before broadcasting. Outdoor callbacks remain inside
+the write-locked C order; they must not call a weather accessor or mutator that
+tries to acquire `weatherMu`.
+
+The completion subprocess matrix is
+`TestWeatherLockReentryRegression`: 12 cases cover the four nil/live event
+hours, two non-event controls, two `mode=false` controls, and moon days
+20/21/24/25. Live cases use a player-backed `World.MessageSink`, and assert
+exact output and outdoor-before-event ordering. No completion case expects a
+deadlock. `TestWeatherSynchronizationRace` covers synchronized wrappers and
+concurrent `SetWeatherWorld` under `-race`. The six direct helper paths are
+also covered by `TestWeatherEvents_SynchronizedDirectEntryPoints`.
+
+`TestWeatherAndTimePreservesWeatherDrawOrder` independently models the C
+`weather_change` draw sequence. It verifies the three unconditional dice calls,
+the conditional `number(1,4)` branches, branch arguments, and the next stream
+value. The event-hour case makes clear that these are existing draws which
+now execute because the old deadlock no longer prevents `WeatherChange`; no
+new production draw site was introduced.
+
+The repair remains bounded. Existing C/Go event discrepancies are separate
+debts, and the named `info-basic` / `info-pulse-variants` oracle cases are
+command-surface checks that may not reach event hours. They must not be read as
+full weather lifecycle parity.
+
+## Final gate and census evidence — 2026-09-13
+
+The repair branch was tested from production checkpoint `eac85ac30` with the
+following gates green:
+
+- formatting (`make fmt`, `gofumpt -l .`, `git diff --check`), build, vet,
+  full tests, game tests, and `golangci-lint run ./...` (`0 issues`);
+- focused weather tests and `-race` coverage for the completion matrix,
+  synchronized wrappers/direct helpers, and independent draw-order model;
+- `make fidelity-depth`: 4,816 total cases, 4,697 proven/delegated, 68
+  blocked, 51 excluded; actionable completion 98.6%;
+- `make expected-divergences-check`: 26 ledger rows across 10 scenarios,
+  pins `OK`;
+- the named oracle matrix: `info-basic` and `info-pulse-variants`, seeds
+  `1,2,3,5,8` (10 runs), all `no normalized divergence`.
+
+The named command matrix is intentionally limited: these cases may not reach
+the event hours exercised by the lifecycle regressions. No pins, exclusions,
+or normalization changes were made for this repair.
+
+The fresh full `make oracle-regression` used frozen inputs from
+`52b17db9b8b52240d5ede4704c3e2c15a40f5ad5` through production checkpoint
+`eac85ac30`, with `DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle`,
+`/usr/local/go/bin/go`, timeout `240s`, seed `1`, and four jobs. It completed
+all 941 scenarios with the aggregate:
+
+```text
+scenarios=941 passed=931 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0
+```
+
+The exit status was 2 solely for the established human-cleared
+`accuse-noarg-depth` unpinnable baseline. The nine `EXPECTED` rows were the
+existing pinned ledger shapes: `accuse-depth`, `force-mob`,
+`medit-entry-depth`, `medit-session-depth`, `redit-entry-depth`,
+`redit-session-depth`, `sedit-entry-depth`, `sedit-session-depth`, and
+`shoot-target-depth`.
+
+The frozen manifest listed 941 scenario inputs. After removing the manifest's
+`.txt` suffix for comparison, the durable result directory contained 941
+matching identities: missing 0, unexpected 0, duplicates 0. The preserved
+full output and attempt logs are outside self-cleaning directories at:
+
+- `/home/zach/weather-lock-fix-evidence-2026-09-13/full-census-52b17db9b-production-eac85ac30/frozen-input-manifest.txt`;
+- `/home/zach/weather-lock-fix-evidence-2026-09-13/full-census-52b17db9b-production-eac85ac30/full-run.log`;
+- `/home/zach/weather-lock-fix-evidence-2026-09-13/full-census-52b17db9b-production-eac85ac30/live-run-snapshot/`.
+
+There were seven bounded infrastructure-shaped first attempts, all recovered
+on attempt 2 with `result: no normalized divergence`:
+`disarm-no-weapon-depth`, `fwap-depth`, `mount-depth`, `sing-depth`,
+`spank-depth`, `spec-proc-conjured-charmed`, and `spit-depth`. Their preserved
+attempt-1 server logs all show `SYSERR: bind: Address already in use`; no
+content-red or unrecovered infrastructure result occurred. The ten additional
+attempt-2 logs belong to the nine pinned expected rows and the one
+run-varying `accuse-noarg-depth` unpinnable row, and were retained for manual
+reconciliation.
+
+The census driver, scenario inventory, fixtures, and ledger inputs remained
+frozen during the live run. The post-checkpoint changes are documentation only;
+the production and regression checkpoint remains `eac85ac30`.

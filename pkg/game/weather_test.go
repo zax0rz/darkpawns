@@ -1,6 +1,7 @@
 package game
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -155,7 +156,7 @@ func TestWeatherChange_AdjustsPressureAndSky(t *testing.T) {
 	}
 }
 
-func TestWeatherEvents_BroadcastToWorld(t *testing.T) {
+func TestWeatherEvents_SynchronizedDirectEntryPoints(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: 8004, Name: "Temple", Zone: 8},
@@ -184,7 +185,8 @@ func TestWeatherEvents_BroadcastToWorld(t *testing.T) {
 
 	SetWeatherWorld(w)
 
-	// Trigger weather events directly to verify world broadcasting
+	// Trigger all six event helpers through their synchronized direct wrappers
+	// to verify world broadcasting and preserve their exact existing Go output.
 	fullMoon()
 	lunarHunter()
 	loadNightGate()
@@ -192,20 +194,16 @@ func TestWeatherEvents_BroadcastToWorld(t *testing.T) {
 	ghostShipAppear()
 	ghostShipDisappear()
 
-	if len(broadcastMessages) != 6 {
-		t.Errorf("expected 6 broadcast messages, got %d", len(broadcastMessages))
+	wantMessages := []string{
+		"[ FULL MOON RISES ] The full moon casts an eerie glow across the land.\r\n",
+		"[ LUNAR HUNTER ] The lunar hunter rises in the east, its cry echoing across the valleys.\r\n",
+		"[ NIGHT GATE ] A shimmering gate materializes in the darkness...\r\n",
+		"[ NIGHT GATE ] The shimmering gate fades into nothingness.\r\n",
+		"[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!\r\n",
+		"[ GHOST SHIP ] The fog lifts... the ghost ship vanishes into the mists.\r\n",
 	}
-
-	// Check content of one message
-	foundFullMoon := false
-	for _, msg := range broadcastMessages {
-		if strings.Contains(msg, "FULL MOON RISES") {
-			foundFullMoon = true
-			break
-		}
-	}
-	if !foundFullMoon {
-		t.Error("expected fullMoon message in broadcasts")
+	if !slices.Equal(broadcastMessages, wantMessages) {
+		t.Errorf("broadcast messages = %#v, want %#v", broadcastMessages, wantMessages)
 	}
 }
 
