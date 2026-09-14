@@ -116,7 +116,7 @@ until that boundary is resolved.
 | 6.1 | Giant switches → data tables where mechanical: `wiz_set` toggle majority (51 cases), `findExp` class/level ladders, equipment slot↔name maps, small lookup switches | −1,200–1,800 (mechanical subset only) | GREEN for the listed ones; spell-dispatch consolidation is **NOT here** | affected proven units |
 | 6.2 | String cleanup in proven files: 94 nested Sprintf → flatten; 57 loop-concats → Builder | −200–400 | GREEN | per-file unit scenarios |
 | 6.3 | Keyed tables + constants: key the unkeyed data tables (spellDB 509 L, THAC0, saving-throws 1,943 L), reconcile the recovered literal-ladder candidates, single-source LVL_IMMORT | ~0 net (churn) | BOUNDED GREEN for the four named slices; recovered formula candidates remain separately bounded; no unconditional whole-phase closure | unit tests; **highest bug-class value per line in the census** |
-| 6.4 | Global→struct injection: mail.go (8 globals), weather.go, merge_bridge banManager, spec_assign registries | −250–400 | YELLOW (behavior-adjacent) | weather/mail/ban scenarios + unit tests |
+| 6.4 | Global→struct injection: mail.go (8 globals), weather.go, merge_bridge banManager, spec_assign registries | −250–400 | YELLOW (weather lock re-entry proof required before any injection) | weather/mail/ban scenarios + unit tests |
 | 6.5 | Production `_ =` → handle-or-slog (AGENTS.md:63) | ~0 (adds lines) | GREEN | build + vet |
 
 ### Phase 6.1/6.2 audit tracking (2026-09-11)
@@ -412,3 +412,14 @@ Track per phase (record after each phase merges, in this table's continuation in
 0.1 ∥ 0.2 ∥ 0.3 (parallel) → 1.x (no deps) → 2.1 (needs corrected 0.2, after 1.1) → 3.1 (needs the 0.3 bugfix plus remaining shop proof) → 4.x/5.x/6.x (independent of each other; 4.2 wants its units' cases, 5.x per-proc) → 7 (parallel whenever oracle is busy) → 8 (needs 7's combat cases for 8.1/8.2; 8.4 anytime).
 
 **First PR recommendation:** 0.1, the corrected 0.2 disposition, and the isolated 0.3 bugfix establish the evidence boundary; then land 1.1 and 2.1 as separate deletion/loaderization PRs only after their changed-file coverage lookups are proven.
+
+### 2026-09-13 weather lock proof boundary
+
+The weather portion of Phase 6.4 is now a separate proof-first availability
+task. `WeatherAndTime` owns `weatherMu.Lock()` across `AnotherHour`; hour 5
+and hour 21 event helpers re-enter the same mutex with `RLock()` before their
+`weatherWorld` nil check. The bounded characterization and proposed
+lock-owner split are recorded in
+`docs/fidelity/depth/handoff/2026-09-13-weather-lock-reentry.md`. No weather
+injection or production repair is authorized by this entry. Mail lifecycle
+proof remains downstream of the reviewed weather disposition.
