@@ -24,3 +24,25 @@ func TestMailReadWriteSharedFilePositioning(t *testing.T) {
 		t.Fatalf("read mail block differs from written block")
 	}
 }
+
+func TestMailInitializationFailsClosedWithoutOverwritingUnusableStore(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.MkdirAll("data/mail", 0o700); err != nil {
+		t.Fatalf("mkdir mail directory: %v", err)
+	}
+
+	oldNameFunc, oldIDFunc := worldNameFunc, worldIDFunc
+	t.Cleanup(func() {
+		worldNameFunc, worldIDFunc = oldNameFunc, oldIDFunc
+	})
+	if InitMailSystem(nil, nil) {
+		t.Fatal("mail initialization succeeded for a directory mail store")
+	}
+	info, err := os.Stat("data/mail")
+	if err != nil {
+		t.Fatalf("stat mail store: %v", err)
+	}
+	if !info.IsDir() {
+		t.Fatal("mail initialization replaced the unusable store")
+	}
+}

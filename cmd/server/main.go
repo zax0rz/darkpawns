@@ -214,6 +214,22 @@ func main() {
 		dbIface = database
 	}
 	manager := session.NewManager(gameWorld, dbIface)
+	if database == nil {
+		// The no-DB mode is an explicitly non-persistent development/oracle
+		// configuration. Its process-local IDs cannot safely address mail
+		// across an offline login and restart, so do not wire an incomplete
+		// online-only identity lookup.
+		slog.Warn("Mail disabled: persistent player identity requires a database")
+	} else {
+		mailIdentity, err := newMailIdentity(dbIface)
+		if err != nil {
+			fatal("mail identity initialization failed — refusing to start: %v", err)
+		}
+		if !game.InitMailSystem(mailIdentity.nameByID, mailIdentity.idByName) {
+			fatal("mail initialization failed — refusing to start with unusable storage")
+		}
+		slog.Info("Mail system initialized with persistent player identity")
+	}
 	gameWorld.SetShopManager(manager.GetShopManager()) // Wire shop system to world
 	game.SetWeatherWorld(gameWorld)                    // Wire world for weather broadcasts
 	manager.SetCombatBroadcastFunc()                   // Enable combat messages to rooms

@@ -7,6 +7,7 @@ package game
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"os"
@@ -92,11 +93,16 @@ type mailWriteEntry struct {
 	buffer      string
 }
 
-// InitMailSystem initializes mail from disk.
-func InitMailSystem(nameFunc func(id int) string, idFunc func(name string) int) {
+// InitMailSystem initializes mail from disk and reports whether the on-disk
+// store is usable. The caller must refuse player acceptance when initialization
+// fails; continuing would make existing mail inaccessible or unsafe to modify.
+func InitMailSystem(nameFunc func(id int) string, idFunc func(name string) int) bool {
 	worldNameFunc = nameFunc
 	worldIDFunc = idFunc
-	scanFile()
+	mailIndex = nil
+	freeList = nil
+	fileEndPos = 0
+	return scanFile()
 }
 
 func GetNameByID(id int) string {
@@ -211,23 +217,47 @@ func indexMail(idToIndex int, pos int) {
 func scanFile() bool {
 	f, err := os.Open(MailFile)
 	if err != nil {
+		if !os.IsNotExist(err) {
+			slog.Error("mail file open failed", "file", MailFile, "error", err)
+			return false
+		}
 		log.Print("   Mail file non-existant... creating new file.")
 		if err := os.WriteFile(MailFile, []byte{}, 0o600); err != nil {
-			slog.Warn("mail file creation failed", "file", MailFile, "error", err)
+			slog.Error("mail file creation failed", "file", MailFile, "error", err)
+			return false
 		}
 		return true
 	}
 	defer func() { _ = f.Close() }()
+	// A malformed block must never leave a partially rebuilt index usable.
+	valid := false
+	defer func() {
+		if !valid {
+			mailIndex = nil
+			freeList = nil
+			fileEndPos = 0
+		}
+	}()
 
 	var nextBlock mailHeader
 	totalMessages := 0
 	blockNum := 0
 
 	for {
-		n, err := f.Read(marshalMailHeader(&nextBlock))
-		if n == 0 || err != nil {
-			break
+		blockBytes := make([]byte, MailBlockSize)
+		n, err := io.ReadFull(f, blockBytes)
+		if err != nil {
+			if err == io.EOF && n == 0 {
+				break
+			}
+			slog.Error("mail file block read failed", "file", MailFile, "block", blockNum, "bytes", n, "error", err)
+			return false
 		}
+		// scanFile must decode the current Go representation before inspecting
+		// its marker and recipient. marshalMailHeader only serializes a struct;
+		// using it as the read buffer leaves nextBlock at zero values after a
+		// restart and silently drops every indexed message.
+		unmarshalMailHeader(&nextBlock, blockBytes)
 		switch nextBlock.BlockType {
 		case MailBlockHeader:
 			indexMail(nextBlock.To, blockNum*MailBlockSize)
@@ -238,7 +268,11 @@ func scanFile() bool {
 		blockNum++
 	}
 
-	stat, _ := f.Stat()
+	stat, err := f.Stat()
+	if err != nil {
+		slog.Error("mail file stat failed", "file", MailFile, "error", err)
+		return false
+	}
 	fileEndPos = stat.Size()
 	log.Printf("   %d bytes read.", fileEndPos)
 	if fileEndPos%int64(MailBlockSize) != 0 {
@@ -247,6 +281,7 @@ func scanFile() bool {
 		return false
 	}
 	log.Printf("   Mail file read -- %d messages.", totalMessages)
+	valid = true
 	return true
 }
 
