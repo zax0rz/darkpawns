@@ -128,3 +128,40 @@ unexpected=0, and duplicate=0. Execution coverage is complete with
 Do not merge, deploy, change the Go/C mail format, add schema or save fields,
 or begin Phase 6.4 injection. Human review is required at this bounded repair
 boundary.
+
+
+## Review correction: disabled dispatch and C object identity
+
+Implementation checkpoint `d6b64449b` adds an explicit boot-configured disabled
+state. Failed initialization leaves it set; successful initialization clears
+it. For recognized `mail`, `check`, and `receive` commands, the postmaster
+emits exactly `Sorry, the mail system is having technical difficulties.\r\n`
+and returns false, matching `src/mail.c:484-487` and preserving ordinary
+command fallthrough. Unrelated commands receive no diagnostic. This is distinct
+from merely clearing the mailbox index or identity hooks. Configuration remains
+a boot-only operation before session acceptance; it is not a runtime reload API.
+
+The created mail object's keywords now match C `src/mail.c:574-576`:
+`mail paper letter`. The production lifecycle reads it with `read letter`,
+rather than inventing a `note` keyword for its test. Short description and
+ITEM_NOTE type are independently pinned alongside the keywords. The sibling
+field audit records remaining pre-existing discrepancies: the synthetic Go
+object lacks C's room description, hold flag, weight 1, cost 30, and load 10.
+Those fields and their persistence/interaction proof are separate debt; this
+correction does not claim complete mail-object fidelity or modify save format.
+
+Validation at this checkpoint: required formatting/build/vet/full tests/game
+tests/lint/depth/divergence gates passed, as did focused mail/server race tests.
+The production lifecycle passed in a newly created disposable database
+`dp_mail_review_20260914`, with isolated storage and preserved logs under
+`/home/zach/dp-mail-review-fix-evidence-2026-09-14/production/` and
+`production-isolated.log`. It verifies `read letter` sender/body and exactly one
+inventory object after the second empty receive. An initial attempt used an
+invalid placeholder database credential and failed before setup; a subsequent
+unprivileged database-creation attempt failed, after which the disposable
+database was created by the local PostgreSQL administrator. Neither setup
+failure exercised game behavior.
+
+Fresh census evidence for this correction is collected separately under
+`/home/zach/dp-mail-review-fix-evidence-2026-09-14/census/`; the earlier census
+above applies to its stated historical checkpoint only.

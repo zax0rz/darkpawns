@@ -222,3 +222,25 @@ found 941 unique result files for 941 scenario inputs, with missing=0,
 unexpected=0, and duplicate=0. The preserved status tally is exactly 931
 `PASS`, 9 `EXPECTED`, and 1 `UNPINNABLE`; execution coverage is complete and
 the only nonzero exit disposition is the established human-cleared baseline.
+
+
+## Final review correction — disabled dispatch and keywords
+
+At implementation checkpoint `d6b64449b`, failed initialization explicitly
+marks mail disabled. Recognized postmaster commands emit C's exact technical
+failure diagnostic and return false; unrelated commands remain silent. A
+successful initialization clears the disabled state. The state is configured
+at boot, not through a supported runtime reload operation.
+
+Mail keywords now use C's `mail paper letter`; the production regression uses
+`read letter`. Required local gates and focused race checks passed. The new
+isolated PostgreSQL production lifecycle passed, including actual delivered
+sender/body and one inventory object after a second empty receive. Evidence:
+`/home/zach/dp-mail-review-fix-evidence-2026-09-14/production-isolated.log`,
+`production/`, and `race.log`. The dated handoff records the sibling object-field
+debts and setup-only failed attempts, separately from game behavior.
+
+This checkpoint supersedes the earlier implementation for final review.
+Fresh full-census evidence is being collected under
+`/home/zach/dp-mail-review-fix-evidence-2026-09-14/census/`; prior census tallies
+above remain historical evidence for their named checkpoints.
