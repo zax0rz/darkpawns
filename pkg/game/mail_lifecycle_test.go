@@ -166,9 +166,13 @@ func runMailSendPhase(t *testing.T) {
 }
 
 func runMailRestartPhase(t *testing.T) {
-	w, recipient, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
+	w, _, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
 	InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName)
 
+	recipient := NewPlayer(mailLifecycleRecipientID, "Recipient", 1001)
+	if err := w.AddPlayer(recipient); err != nil {
+		t.Fatalf("add recipient after restart: %v", err)
+	}
 	postmasterFn(w, recipient, postmasterMob, "check", "")
 	postmasterFn(w, recipient, postmasterMob, "receive", "")
 	stat, err := os.Stat(MailFile)
