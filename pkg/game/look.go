@@ -930,6 +930,11 @@ func appendObjectLook(result *ObservationResult, ch *Player, object *ObjectInsta
 		return
 	}
 	if object.GetTypeFlag() == ITEM_NOTE {
+		if object.Runtime.MailText != "" {
+			mailText := strings.TrimRight(object.Runtime.MailText, "\x00")
+			result.literal(ch, "There is something written upon it:\r\n\r\n"+mailText)
+			return
+		}
 		if object.Prototype != nil && object.Prototype.ActionDesc != "" {
 			result.literal(ch, "There is something written upon it:\r\n\r\n"+object.Prototype.ActionDesc)
 		} else {

@@ -18,6 +18,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const productionMailBody = "proof-mail-body"
+
 // TestMailProductionBootBoundary reaches the real no-DB server, session,
 // command, special-procedure, and postmaster dispatch paths. No-DB mode has no
 // persistent identity authority, so it remains a separate affordability
@@ -133,7 +135,7 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	if !strings.Contains(mailPrompt, "Write your message") {
 		t.Fatalf("production sender did not reach mail composition: %q", mailPrompt)
 	}
-	mustWrite(t, senderConn, "proof-mail-body\r\n")
+	mustWrite(t, senderConn, productionMailBody+"\r\n")
 	mustWrite(t, senderConn, "@\r\n")
 	if got := readUntil(t, senderConn, senderReader, "Mail sent.", 5*time.Second); got == "" {
 		t.Fatal("production message was not completed")
@@ -144,7 +146,7 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	if sentHeader.blockType != 1 || sentHeader.from != sender.ID || sentHeader.to != recipient.ID {
 		t.Fatalf("sent Go header = %+v, want header marker/from/to = 1/%d/%d", sentHeader, sender.ID, recipient.ID)
 	}
-	if sentHeader.text != "proof-mail-body" {
+	if sentHeader.text != productionMailBody {
 		t.Fatalf("sent Go header body = %q, want exact single-line body", sentHeader.text)
 	}
 	preserveMailLifecycleArtifact(t, "mail-before-restart.bin", readMailFile(t, mailPath))
@@ -186,7 +188,7 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	if receivedHeader.blockType != 2 || receivedHeader.from != sender.ID || receivedHeader.to != recipient.ID {
 		t.Fatalf("received Go header = %+v, want deleted marker/from/to = 2/%d/%d", receivedHeader, sender.ID, recipient.ID)
 	}
-	if receivedHeader.text != "proof-mail-body" {
+	if receivedHeader.text != productionMailBody {
 		t.Fatalf("received Go header body = %q, want exact single-line body", receivedHeader.text)
 	}
 	preserveMailLifecycleArtifact(t, "mail-after-receive.bin", readMailFile(t, mailPath))
@@ -203,6 +205,36 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	}
 	t.Logf("production_restart completed=true check=%q receive=%q sender=%q body=%q second_check=%q second_receive=%q", check, receive, returnedSender.Name, receivedHeader.text, secondCheck, secondReceive)
 
+	// Read the delivered object through the real player-facing observation path.
+	// This verifies the note in the recipient's live inventory rather than
+	// treating the mail file/header as a proxy for what the recipient got.
+	mustWrite(t, recipientConn, "read note\r\n")
+	deliveredText := readUntil(t, recipientConn, recipientReader, productionMailBody, 5*time.Second)
+	if deliveredText == "" {
+		t.Fatal("recipient could not read the delivered note")
+	}
+	fromMarker := "From: " + sender.Name + "\r\n\r\n"
+	toMarker := "  To: " + recipient.Name + "\r\n"
+	if !strings.Contains(deliveredText, toMarker) {
+		t.Fatalf("delivered note missing recipient %q: %q", recipient.Name, deliveredText)
+	}
+	fromIndex := strings.Index(deliveredText, fromMarker)
+	if fromIndex == -1 {
+		t.Fatalf("delivered note missing sender %q: %q", sender.Name, deliveredText)
+	}
+	actualBody := strings.TrimRight(deliveredText[fromIndex+len(fromMarker):], "\x00")
+	if actualBody != productionMailBody {
+		t.Fatalf("delivered note body = %q, want %q", actualBody, productionMailBody)
+	}
+	mustWrite(t, recipientConn, "inventory\r\n")
+	inventory := readFor(t, recipientConn, recipientReader, 3*time.Second)
+	if got := strings.Count(inventory, "a piece of mail"); got != 1 {
+		t.Fatalf("recipient inventory mail count = %d, want exactly one: %q", got, inventory)
+	}
+	t.Logf("production_delivered_note verified=true sender=%q body=%q inventory_items=1", sender.Name, actualBody)
+
+	mustWrite(t, recipientConn, "quit\r\n")
+	_ = readFor(t, recipientConn, recipientReader, time.Second)
 	_ = recipientConn.Close()
 	serverTwo.stop(t)
 }

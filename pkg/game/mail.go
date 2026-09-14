@@ -93,16 +93,33 @@ type mailWriteEntry struct {
 	buffer      string
 }
 
-// InitMailSystem initializes mail from disk and reports whether the on-disk
-// store is usable. The caller must refuse player acceptance when initialization
-// fails; continuing would make existing mail inaccessible or unsafe to modify.
-func InitMailSystem(nameFunc func(id int) string, idFunc func(name string) int) bool {
-	worldNameFunc = nameFunc
-	worldIDFunc = idFunc
+// DisableMailSystem clears the mail index, free list, and identity hooks.
+// The C boot path keeps the server running with no_mail set when mail storage
+// is unusable; this is the Go equivalent of that explicit availability policy.
+func DisableMailSystem() {
+	mailGlobalMu.Lock()
 	mailIndex = nil
 	freeList = nil
 	fileEndPos = 0
-	return scanFile()
+	mailGlobalMu.Unlock()
+
+	worldNameFunc = nil
+	worldIDFunc = nil
+}
+
+// InitMailSystem initializes mail from disk and reports whether the on-disk
+// store is usable. It also installs the identity hooks used by the mail
+// command path. On failure, mail is left disabled so callers can continue
+// booting under the explicit C-compatible no-mail policy.
+func InitMailSystem(nameFunc func(id int) string, idFunc func(name string) int) bool {
+	DisableMailSystem()
+	worldNameFunc = nameFunc
+	worldIDFunc = idFunc
+	if scanFile() {
+		return true
+	}
+	DisableMailSystem()
+	return false
 }
 
 func GetNameByID(id int) string {
@@ -590,12 +607,16 @@ func CancelMailWriting(playerID int) {
 }
 
 func (w *World) CreateMailObject(ch *Player, mailText string) *ObjectInstance {
-	// Create a note object with mail text as action_description.
+	// Create a readable note object with the delivered mail text.
 	// Uses explicit field setting since CreateObject from prototype may not exist.
+	mailType := ITEM_NOTE
 	obj := &ObjectInstance{
-		VNum:      -1, // no prototype
-		CanPickUp: true,
+		VNum:             -1, // no prototype
+		CanPickUp:        true,
+		TypeFlagOverride: &mailType,
 	}
+	obj.Runtime.Keywords = "mail note"
+	obj.Runtime.ShortDesc = "a piece of mail"
 	obj.Runtime.MailText = mailText
 	return obj
 }

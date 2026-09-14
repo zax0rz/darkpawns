@@ -35,8 +35,16 @@ func TestMailInitializationFailsClosedWithoutOverwritingUnusableStore(t *testing
 	t.Cleanup(func() {
 		worldNameFunc, worldIDFunc = oldNameFunc, oldIDFunc
 	})
+	worldNameFunc = func(int) string { return "unexpected" }
+	worldIDFunc = func(string) int { return 999 }
 	if InitMailSystem(nil, nil) {
 		t.Fatal("mail initialization succeeded for a directory mail store")
+	}
+	if got := GetIDByName("Recipient"); got != -1 {
+		t.Fatalf("failed mail initialization left name lookup enabled: %d", got)
+	}
+	if got := GetNameByID(101); got != "Player(101)" {
+		t.Fatalf("failed mail initialization left ID lookup enabled: %q", got)
 	}
 	info, err := os.Stat("data/mail")
 	if err != nil {

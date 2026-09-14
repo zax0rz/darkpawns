@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
 
 // These tests exercise the server entrypoint's boot-validation chain by
@@ -117,5 +119,22 @@ func TestServerBootFailsCleanlyOnUnreachableDatabase(t *testing.T) {
 	// not panic or hang.
 	if !strings.Contains(out, "Database initialization failed") {
 		t.Errorf("expected database initialization error, got:\n%s", out)
+	}
+}
+
+func TestMailBootFailureIsNonFatalAndDisablesMail(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.MkdirAll(filepath.Join("data", "mail"), 0o700); err != nil {
+		t.Fatalf("create unusable mail store: %v", err)
+	}
+
+	err := initializePersistentMail(testutil.NewMockDatabase())
+	if err == nil {
+		t.Fatal("mail boot unexpectedly succeeded with a directory mail store")
+	}
+	// The caller logs this error and continues boot; the initializer itself
+	// must leave mail disabled so later sessions cannot use partial state.
+	if !strings.Contains(err.Error(), "mail storage initialization failed") {
+		t.Fatalf("mail boot error = %v, want storage failure", err)
 	}
 }
