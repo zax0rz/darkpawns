@@ -520,6 +520,28 @@ race (`yuball-depth`) with a tight-poll same-input recovery; execution
 coverage was complete and no unexpected or duplicate scenario identity
 remained.
 
+### 2026-09-14 recipient-save failure proof boundary
+
+The post-#1462 lifecycle audit found that receipt was proven without proving
+recipient persistence. A fresh isolated proof now establishes the exact
+failure: `readDelete` copies the full fixed 488-byte Go header text into
+`Runtime.MailText`; a short message carries 473 NULs into the inventory state,
+`encoding/json` emits `\u0000`, and PostgreSQL rejects `players.inventory`
+JSONB with `22P05 unsupported Unicode escape sequence`. The recipient reload
+after the failed statement remains unchanged, while a terminated-value control
+saves and reloads the mail body.
+
+This is **cause established; repair deferred**, not Phase 6.4 completion. The
+smallest next repair is a C-string conversion at the mail fixed-block read
+boundary for header and sibling data text, preserving the existing file bytes,
+locks, identity, JSON/schema/save format, and once-only receipt. It must prove
+receipt, save success, reload, byte preservation, and a second empty receive.
+The characterization evidence and dated handoff are in
+[`2026-09-14-mail-save-failure`](../fidelity/evidence/2026-09-14-mail-save-failure/README.md)
+and
+[`2026-09-14-mail-save-failure`](../fidelity/depth/handoff/2026-09-14-mail-save-failure.md).
+No production repair, schema change, mail migration, or ownership injection
+is included in this proof boundary.
 ### 2026-09-14 mail ownership-injection readiness decision
 
 This documentation-only follow-up starts from fresh `origin/main` at
