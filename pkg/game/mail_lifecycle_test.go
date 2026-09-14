@@ -180,7 +180,7 @@ func runMailRestartPhase(t *testing.T) {
 }
 
 func runMailSameProcessPhase(t *testing.T) {
-	if err := os.Mkdir(filepath.Join("data"), 0o700); err != nil {
+	if err := os.Mkdir("data", 0o700); err != nil {
 		t.Fatalf("create same-process data directory: %v", err)
 	}
 	w, sender, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
