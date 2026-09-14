@@ -21,10 +21,10 @@ const (
 
 const mailLifecycleBody = "proof-mail-body"
 
-// TestMailLookupFallbackWithoutInitialization records the production boot
-// boundary without pretending that an isolated fixture is a boot proof.
-// InitMailSystem is the only writer for these hooks; the production boot call
-// path currently never reaches it (see the dated mail proof handoff).
+// TestMailLookupFallbackWithoutInitialization records the deliberate no-DB
+// boundary. InitMailSystem is the only writer for these hooks; the production
+// no-DB configuration does not call it because it has no persistent identity
+// authority.
 func TestMailLookupFallbackWithoutInitialization(t *testing.T) {
 	oldNameFunc, oldIDFunc := worldNameFunc, worldIDFunc
 	worldNameFunc, worldIDFunc = nil, nil
@@ -43,8 +43,7 @@ func TestMailLookupFallbackWithoutInitialization(t *testing.T) {
 // TestMailLifecycleAcrossProcessRestart_HelperLevel runs the smallest Go-only
 // mail vehicle with explicit InitMailSystem calls. Each phase is a distinct
 // test process, so the restart phase cannot reuse package globals from send.
-// The expected restart result is deliberately a green characterization of the
-// current scanFile defect, not a lifecycle success claim.
+// This is the Go-native control for the production restart vehicle.
 func TestMailLifecycleAcrossProcessRestart_HelperLevel(t *testing.T) {
 	fixtureRoot := t.TempDir()
 	if err := os.Mkdir(filepath.Join(fixtureRoot, "data"), 0o700); err != nil {
@@ -65,15 +64,18 @@ func TestMailLifecycleAcrossProcessRestart_HelperLevel(t *testing.T) {
 	restartOutput := runMailLifecycleHelper(t, fixtureRoot, "restart")
 	for _, want := range []string{
 		"phase=restart init_scan=true",
-		"check=$n tells you, 'Sorry, you don't have any mail waiting.'",
-		"receive_inventory_items=0",
+		"check=$n tells you, 'You have mail waiting.'",
+		"receive=$n gives you a piece of mail.",
+		"received_body=true",
+		"second_check=$n tells you, 'Sorry, you don't have any mail waiting.'",
+		"second_receive=$n tells you, 'Sorry, you don't have any mail waiting.'",
+		"receive_inventory_items=1",
 		"mail_remaining=false",
 	} {
 		if !strings.Contains(restartOutput, want) {
 			t.Fatalf("restart phase missing %q\n%s", want, restartOutput)
 		}
 	}
-	t.Log("BLOCKED at restart/reopen: explicit InitMailSystem returns, but scanFile does not rebuild mailIndex; recipient check cannot reach receive")
 
 	if preserveDir := os.Getenv(mailLifecyclePreserveEnv); preserveDir != "" {
 		if err := preserveMailFixture(fixtureRoot, preserveDir); err != nil {
@@ -146,7 +148,9 @@ func TestMailLifecycleHelperProcess(t *testing.T) {
 func runMailSendPhase(t *testing.T) {
 	t.Helper()
 	w, sender, postmasterFn, postmasterMob, _ := newMailLifecycleWorld(t)
-	InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName)
+	if !InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName) {
+		t.Fatal("mail initialization failed")
+	}
 
 	postmasterFn(w, sender, postmasterMob, "mail", "Recipient body")
 	if !HandleMailInput(sender, mailLifecycleBody) {
@@ -167,20 +171,32 @@ func runMailSendPhase(t *testing.T) {
 
 func runMailRestartPhase(t *testing.T) {
 	w, _, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
-	InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName)
+	if !InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName) {
+		t.Fatal("mail initialization failed")
+	}
 
 	recipient := NewPlayer(mailLifecycleRecipientID, "Recipient", 1001)
 	if err := w.AddPlayer(recipient); err != nil {
 		t.Fatalf("add recipient after restart: %v", err)
 	}
 	postmasterFn(w, recipient, postmasterMob, "check", "")
+	checkOutput := mailLifecycleLastMessage(messages, recipient.Name)
 	postmasterFn(w, recipient, postmasterMob, "receive", "")
+	receiveOutput := mailLifecycleLastMessage(messages, recipient.Name)
+	if len(recipient.Inventory.Items) != 1 {
+		t.Fatalf("restart receive inventory items = %d, want 1", len(recipient.Inventory.Items))
+	}
+	receivedBody := strings.Contains(recipient.Inventory.Items[0].Runtime.MailText, mailLifecycleBody)
+	postmasterFn(w, recipient, postmasterMob, "check", "")
+	secondCheckOutput := mailLifecycleLastMessage(messages, recipient.Name)
+	postmasterFn(w, recipient, postmasterMob, "receive", "")
+	secondReceiveOutput := mailLifecycleLastMessage(messages, recipient.Name)
 	stat, err := os.Stat(MailFile)
 	if err != nil {
 		t.Fatalf("stat mail file after restart: %v", err)
 	}
-	fmt.Printf("phase=restart init_scan=true mail_file_bytes=%d check=%s receive_inventory_items=%d mail_remaining=%t\n",
-		stat.Size(), mailLifecycleLastMessage(messages, recipient.Name), len(recipient.Inventory.Items), hasMail(mailLifecycleRecipientID))
+	fmt.Printf("phase=restart init_scan=true mail_file_bytes=%d check=%s receive=%s received_body=%t second_check=%s second_receive=%s receive_inventory_items=%d mail_remaining=%t\n",
+		stat.Size(), checkOutput, receiveOutput, receivedBody, secondCheckOutput, secondReceiveOutput, len(recipient.Inventory.Items), hasMail(mailLifecycleRecipientID))
 }
 
 func runMailSameProcessPhase(t *testing.T) {
@@ -188,7 +204,9 @@ func runMailSameProcessPhase(t *testing.T) {
 		t.Fatalf("create same-process data directory: %v", err)
 	}
 	w, sender, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
-	InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName)
+	if !InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName) {
+		t.Fatal("mail initialization failed")
+	}
 
 	postmasterFn(w, sender, postmasterMob, "mail", "Recipient body")
 	_ = HandleMailInput(sender, mailLifecycleBody)

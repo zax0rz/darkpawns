@@ -14,6 +14,13 @@ func postmaster(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		return false
 	}
 
+	// C mail.c:postmaster checks no_mail only for recognized mail commands
+	// and returns false after the diagnostic, preserving command fallthrough.
+	if mailDisabled && (cmd == "mail" || cmd == "check" || cmd == "receive") {
+		ch.SendMessage("Sorry, the mail system is having technical difficulties.\r\n")
+		return false
+	}
+
 	switch cmd {
 	case "mail":
 		w.PostmasterSendMail(ch, me, arg)
