@@ -241,6 +241,10 @@ sender/body and one inventory object after a second empty receive. Evidence:
 debts and setup-only failed attempts, separately from game behavior.
 
 This checkpoint supersedes the earlier implementation for final review.
-Fresh full-census evidence is being collected under
-`/home/zach/dp-mail-review-fix-evidence-2026-09-14/census/`; prior census tallies
-above remain historical evidence for their named checkpoints.
+The fresh full census completed before #1462 merged. Its durable checkpoint,
+identity reconciliation, retry inspection, final tally, and exit-2 baseline
+disposition are recorded in the [mail ownership-injection readiness
+evidence](../2026-09-14-mail-ownership-readiness/README.md). The final tally is
+`931 PASS / 9 EXPECTED / 1 UNPINNABLE`, with `failed=0`, `infra=0`,
+`timed_out=0`, and `stale=0`; prior census tallies above remain historical
+evidence for their named checkpoints.
