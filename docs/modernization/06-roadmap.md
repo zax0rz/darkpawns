@@ -469,3 +469,49 @@ Existing named weather/time command cases may not reach event hours, so their
 oracle results do not replace the focused lifecycle regressions. Phase 6.4
 weather-world injection remains unimplemented, and mail lifecycle proof stays
 downstream of this reviewed locking repair.
+
+### 2026-09-14 bounded mail initialization/restart repair
+
+PR #1461 was verified merged into `origin/main` before this dependent repair.
+The isolated branch `glm/fix-mail-initialization` started at merge commit
+`1dd4794ac`; the implementation checkpoint is `411ad4b20`. The primary
+checkout's unrelated edit was preserved. This repair is one production PR and
+does not begin Phase 6.4 ownership injection.
+
+The persistent identity authority is the existing PostgreSQL player record
+(`players.id` plus canonical `players.name`), matching Go returning-player
+login and the C `player_table`/`get_id_by_name`/`get_name_by_id` call paths.
+`cmd/server/mail_identity.go` uses the existing `ListPlayerNames` and
+`GetPlayer` APIs, with case-insensitive name matching delegated to the DB,
+validated boot enumeration, reverse-map refresh on ID misses, and fail-closed
+lookup errors. The boot owner is `cmd/server/main.go` immediately after
+`session.NewManager` and before listener acceptance. No-DB mode remains an
+explicit non-persistent/oracle configuration and does not receive an
+online-only mail identity hook.
+
+`pkg/game/mail.go` now decodes each complete existing Go 512-byte header with
+`unmarshalMailHeader` before inspecting its marker/recipient, returns failure
+for unusable storage, and preserves the current Go path, markers, block size,
+encoding, and written bytes. The Go helper restart regression and the
+production telnet vehicle now prove one short send, real SIGTERM/restart on
+the same disposable storage, offline recipient check/receipt, preserved
+sender ID/name and body, and a second no-mail check/receive. The full evidence
+and remaining gaps are recorded in
+[`2026-09-14-mail-initialization-repair`](../fidelity/evidence/2026-09-14-mail-initialization-repair/README.md)
+and the dated handoff
+[`2026-09-14-mail-initialization-repair`](../fidelity/depth/handoff/2026-09-14-mail-initialization-repair.md).
+
+C and Go mail remain separate native formats (`etc/plrmail`/100-byte C blocks
+versus `data/mail`/512-byte Go blocks), with distinct markers and current
+level/price behavior. The host C ABI size guard still limits C runtime
+comparison. Multi-block/corruption/free-list/concurrency coverage, C mail
+repair, output/object fidelity, and Phase 6.4 injection remain open; no C,
+format, constant, normalization, pin, or exclusion was changed.
+
+The fresh full oracle census completed with
+`scenarios=941 passed=931 expected=9 unpinnable=1 stale=0 failed=0 infra=0
+timed_out=0`; seven bounded infrastructure-shaped retries recovered to PASS.
+The dated evidence explicitly reconciles the one final-result preservation
+race (`yuball-depth`) with a tight-poll same-input recovery; execution
+coverage was complete and no unexpected or duplicate scenario identity
+remained.
