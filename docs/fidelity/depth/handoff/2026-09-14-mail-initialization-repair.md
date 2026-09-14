@@ -2,14 +2,18 @@
 
 ## Disposition
 
-One reviewable, unmerged repair PR is being prepared on
-`glm/fix-mail-initialization`. PR #1461 was verified merged before work began;
-its merge is `1dd4794ac`. The original implementation checkpoint is
-`411ad4b20` (`fix: initialize persistent mail and rebuild index`). Review
-corrections are in `7992c3b0d` (`fix: keep boot alive when mail is
-unavailable`). The final head will be the documentation-only follow-up commit
-after validation; the production code, tests, fixtures, scenarios, and runner
-inputs remain frozen at the corrected checkpoint.
+PR #1462 is now merged. This handoff is retained as the historical repair
+record for branch `glm/fix-mail-initialization`; its final implementation
+checkpoint is `d6b64449b4f66c48b2567f22f241f778bab9357c`. PR #1461 was verified
+merged before that work began; its merge is `1dd4794ac`. The original
+implementation checkpoint was `411ad4b20` (`fix: initialize persistent mail
+and rebuild index`), followed by correction `7992c3b0d` (`fix: keep boot alive
+when mail is unavailable`) and the final disabled-dispatch/keyword correction
+at `d6b64449b`. The ownership-readiness decision is recorded in the dated
+follow-up handoff
+[`2026-09-14-mail-ownership-readiness`](2026-09-14-mail-ownership-readiness.md).
+The production code, tests, fixtures, scenarios, and runner inputs remain
+frozen at the corrected checkpoint.
 
 The primary checkout's pre-existing `docs/specs/tui-setup-wizard.md` edit was
 not touched. There are no edits to `src/` or `darkpawns-c-oracle/`. The open
@@ -123,11 +127,11 @@ reconciliation found 941 unique results for 941 inputs, with missing=0,
 unexpected=0, and duplicate=0. Execution coverage is complete with
 `failed=0`, `infra=0`, `timed_out=0`, and `stale=0`.
 
-## Review stop
+## Historical review stop
 
-Do not merge, deploy, change the Go/C mail format, add schema or save fields,
-or begin Phase 6.4 injection. Human review is required at this bounded repair
-boundary.
+This section records the pre-merge review boundary for #1462. That PR is now
+merged; this handoff does not authorize deployment, Go/C mail-format changes,
+schema or save fields, Phase 6.4 injection, or a claim of mail fidelity.
 
 
 ## Review correction: disabled dispatch and C object identity
@@ -162,6 +166,7 @@ unprivileged database-creation attempt failed, after which the disposable
 database was created by the local PostgreSQL administrator. Neither setup
 failure exercised game behavior.
 
-Fresh census evidence for this correction is collected separately under
-`/home/zach/dp-mail-review-fix-evidence-2026-09-14/census/`; the earlier census
-above applies to its stated historical checkpoint only.
+The fresh census for this correction completed before #1462 merged. Its
+durable checkpoint and final reconciliation are recorded in the [mail
+ownership-injection readiness evidence](../../evidence/2026-09-14-mail-ownership-readiness/README.md);
+the earlier census above applies to its stated historical checkpoint only.
