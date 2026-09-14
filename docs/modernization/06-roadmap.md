@@ -485,9 +485,12 @@ login and the C `player_table`/`get_id_by_name`/`get_name_by_id` call paths.
 `GetPlayer` APIs, with case-insensitive name matching delegated to the DB,
 validated boot enumeration, reverse-map refresh on ID misses, and fail-closed
 lookup errors. The boot owner is `cmd/server/main.go` immediately after
-`session.NewManager` and before listener acceptance. No-DB mode remains an
-explicit non-persistent/oracle configuration and does not receive an
-online-only mail identity hook.
+`session.NewManager` and before listener acceptance. If identity or storage
+initialization fails, `cmd/server/mail_boot.go` disables mail and the boot
+owner logs the failure while continuing the server, matching C's explicit
+`no_mail` availability disposition; this is covered by the server boot test.
+No-DB mode remains an explicit non-persistent/oracle configuration and does
+not receive an online-only mail identity hook.
 
 `pkg/game/mail.go` now decodes each complete existing Go 512-byte header with
 `unmarshalMailHeader` before inspecting its marker/recipient, returns failure
@@ -495,7 +498,8 @@ for unusable storage, and preserves the current Go path, markers, block size,
 encoding, and written bytes. The Go helper restart regression and the
 production telnet vehicle now prove one short send, real SIGTERM/restart on
 the same disposable storage, offline recipient check/receipt, preserved
-sender ID/name and body, and a second no-mail check/receive. The full evidence
+sender ID/name and body, a second no-mail check/receive, and direct reading of
+the delivered note with exactly one mail inventory item. The full evidence
 and remaining gaps are recorded in
 [`2026-09-14-mail-initialization-repair`](../fidelity/evidence/2026-09-14-mail-initialization-repair/README.md)
 and the dated handoff

@@ -14,14 +14,15 @@ open PRs. The primary checkout's pre-existing
 `docs/specs/tui-setup-wizard.md` edit was preserved and untouched. No file in
 `src/` or `darkpawns-c-oracle/` was edited.
 
-The implementation checkpoint is `411ad4b20`:
+The original implementation checkpoint is `411ad4b20`. Review corrections are
+in `7992c3b0d`:
 
 ```text
-fix: initialize persistent mail and rebuild index
+fix: keep boot alive when mail is unavailable
 ```
 
 The final documentation commit is intentionally separate and must remain
-production/test-input identical to that checkpoint.
+production/test-input identical to the corrected checkpoint.
 
 ## R5 identity authority and boot ownership
 
@@ -53,17 +54,20 @@ has its world/database context and before zone/listener acceptance, the
 PostgreSQL-backed path constructs the identity resolver and calls
 `game.InitMailSystem`. A missing `data/mail` is created as the existing empty
 Go store. A non-ENOENT open error, creation error, short/corrupt block,
-stat error, or failed identity preflight returns failure and calls the
-existing fatal startup path; the server does not accept players with an
-unusable mail store. `DP_ALLOW_NO_DB=1` remains an explicit no-persistence
-development/oracle configuration: it logs mail disabled and does not wire an
-online-only identity source. The JSON player-save path is not substituted for
-the production login authority.
+stat error, or failed identity preflight disables mail and logs the failure;
+the server continues booting under the explicit C-compatible `no_mail`
+availability policy. `cmd/server/mail_boot.go:11-26` makes that boundary
+testable: it clears partial mail state, returns the initialization error, and
+leaves the caller responsible for the nonfatal log. `DP_ALLOW_NO_DB=1` remains
+an explicit no-persistence development/oracle configuration: it logs mail
+disabled and does not wire an online-only identity source. The JSON player-save
+path is not substituted for the production login authority.
 
 ## Exact production repair
 
-`pkg/game/mail.go:96-105` now returns the existing scan result from
-`InitMailSystem` and clears stale in-memory index state before initialization.
+`pkg/game/mail.go:96-120` now clears stale in-memory index/identity state,
+returns the existing scan result from `InitMailSystem`, and disables mail on a
+failed scan rather than leaving partial hooks installed.
 `pkg/game/mail.go:217-286` now:
 
 1. creates only a genuinely absent `data/mail`;
@@ -97,7 +101,7 @@ second_receive=... 'Sorry, you don't have any mail waiting.'
 receive_inventory_items=1 mail_remaining=false
 ```
 
-The production vehicle in `tests/e2e/mail_lifecycle_test.go:67-204` uses:
+The production vehicle in `tests/e2e/mail_lifecycle_test.go:67-238` uses:
 
 - disposable native Go fixture storage rooted at a temporary `lib/data/mail`;
 - existing PostgreSQL-backed sender and recipient rows seeded before boot;
@@ -109,26 +113,32 @@ The production vehicle in `tests/e2e/mail_lifecycle_test.go:67-204` uses:
 - a real SIGTERM shutdown and a fresh server process against the same mail
   file; and
 - recipient login, `check`, `receive`, a second `check`, and a second
-  `receive`.
+  `receive`, followed by `read note` and `inventory` on the delivered object.
 
 The production run observed one 512-byte header with Go marker `1`, the
 expected persistent sender/recipient IDs, and exact body `proof-mail-body`
 before restart. After restart and receipt the same header had marker `2`,
 preserved IDs/body, and PostgreSQL returned the same sender ID/name. The
 actual telnet output was one waiting-mail response, one receipt response, and
-no-mail responses for both second operations. Header inspection is explicitly
-Go-format preservation evidence; it is not a claim that the C format or C
-runtime can cross-read it.
+no-mail responses for both second operations. The delivered note was then read
+through the live observation path and asserted to contain the expected sender
+and exact body; inventory output contained exactly one `a piece of mail`. The
+`CreateMailObject`/note observation additions make that assertion inspect the
+player-facing object instead of proxying receipt with the mail file. Header
+inspection remains explicitly Go-format preservation evidence; it is not a
+claim that the C format or C runtime can cross-read it.
 
 Durable production outputs from the final run are under:
 
-`/home/zach/dp-mail-initialization-repair-evidence-2026-09-14/production-final/`
+`/home/zach/dp-mail-initialization-repair-evidence-2026-09-14/production-correction-final/`
 
 The complete test transcript is
-`production-final.log`; the process logs and pre/post-receive native mail
-files are retained in that directory. An earlier TCP-credential attempt was
-an authentication setup failure; it was bounded and recovered by rerunning
-with the local PostgreSQL peer DSN. The final supported persistence run passed.
+`production-correction-final.log`; the process logs and pre/post-receive native
+mail files are retained in that directory. An earlier TCP-credential attempt
+and two bounded note-target debugging attempts were authentication/setup
+failures; they were recovered by rerunning with the local PostgreSQL peer DSN
+and the unambiguous `read note` target. The final supported persistence run
+passed.
 
 ## C/Go boundary and remaining gaps
 
@@ -152,18 +162,24 @@ injection is explicitly not started.
 
 ## Validation and measured delta
 
-At checkpoint `411ad4b20`, `git diff origin/main...411ad4b20 --stat` measured
-7 changed files, `+669/-29` lines. The changed-file coverage is:
+At corrected checkpoint `7992c3b0d`, `git diff origin/main...7992c3b0d --stat`
+measured 13 changed files, `+1154/-32` lines. The final documentation commit
+only changes the evidence/roadmap/handoff prose below; production code, tests,
+fixtures, scenarios, and runner inputs remain identical to this checkpoint.
+The changed-file coverage is:
 
 | file | coverage citation |
 |---|---|
 | `cmd/server/main.go` | production boot owner and failure gate, `:208-231` |
+| `cmd/server/mail_boot.go` | nonfatal C-compatible mail disposition, `:11-26` |
+| `cmd/server/main_test.go` | nonfatal unusable-store boundary, `:121-140` |
 | `cmd/server/mail_identity.go` | persistent identity resolver, `:11-119` |
 | `cmd/server/mail_identity_test.go` | authority and lookup-failure tests, `:11-108` |
-| `pkg/game/mail.go` | init result and decoded scan, `:96-105`, `:217-286` |
-| `pkg/game/mail_test.go` | unusable-store non-overwrite test, `:27-49` |
+| `pkg/game/mail.go` | init result, disabled failure state, and decoded scan, `:96-120`, `:217-286` |
+| `pkg/game/mail_test.go` | unusable-store non-overwrite/disabled-hooks test, `:27-57` |
+| `pkg/game/look.go` | delivered note observation, `:918-947` |
 | `pkg/game/mail_lifecycle_test.go` | helper restart and once-only regression, `:43-82`, `:173-199` |
-| `tests/e2e/mail_lifecycle_test.go` | production lifecycle vehicle, `:67-204` |
+| `tests/e2e/mail_lifecycle_test.go` | production lifecycle and direct note proof, `:67-238` |
 
 The following final gates passed from the checkpoint, with logs preserved in
 `/home/zach/dp-mail-initialization-repair-evidence-2026-09-14/`:
@@ -180,29 +196,29 @@ make fidelity-depth                  pass
 make expected-divergences-check      pass
 focused mail races                   pass
 not-here-depth seeds 1,2,3,5,8       pass; no normalized divergence
+corrected production lifecycle        pass; sender/body read from note, inventory count 1
 ```
 
-The fresh full `make oracle-regression` census completed with this aggregate:
+The corrected focused logs are `go-helper-correction-final.log`,
+`go-server-correction-final.log`, and `production-correction-final.log`.
+
+The fresh full `make oracle-regression` census on corrected checkpoint
+`7992c3b0d` completed with this aggregate:
 
 ```text
 scenarios=941 passed=931 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0
 ```
 
 The sole unpinnable case was the established human-cleared
-`accuse-noarg-depth` baseline. Seven infrastructure-shaped first attempts
-(`combat-entry-gates`, `french-sleeping-depth`, `leave-outside-depth`,
-`mindlink-low-mana-depth`, `mortal-batch6`, `spec-proc-jail`, and
-`spec-proc-tattoo2-price`) recovered within the runner's bounded retry budget;
-the final aggregate has `infra=0` and no flaky-red content result.
+`accuse-noarg-depth` baseline. Five infrastructure-shaped first attempts
+(`disarm-depth`, `donate-basic`, `home-depth`, `lines-depth`, and
+`spec-proc-tattoo2`) recovered within the runner's bounded retry budget; the
+final aggregate has `infra=0` and no flaky-red content result.
 
-The preserved full-run attempt log is
-`oracle-regression-final/oracle-regression.log`, with the result mirror under
-`oracle-regression-final/preserved/`. Its result-name reconciliation found 940
-unique full-run result files, no unexpected names, and no duplicate result
-names; `yuball-depth` was the final PASS in the runner log and its result file
-was removed by the runner's cleanup trap between preservation polls. A tight-
-poll, same-input one-scenario recovery preserved the missing result at
-`oracle-yuball-recovery-2026-09-14-tight/` as `PASS\tyuball-depth`, alongside
-its attempt log. Thus execution coverage is the runner's 941/941 aggregate
-(`failed=0`), while the one preservation race is explicitly accounted for
-and does not represent a missing or unexpected scenario execution.
+The complete corrected run log is
+`oracle-regression-correction-final.log`, with its mirrored result/attempt
+files under `oracle-regression-correction-final/preserved/`. Reconciliation
+found 941 unique result files for 941 scenario inputs, with missing=0,
+unexpected=0, and duplicate=0. The preserved status tally is exactly 931
+`PASS`, 9 `EXPECTED`, and 1 `UNPINNABLE`; execution coverage is complete and
+the only nonzero exit disposition is the established human-cleared baseline.
