@@ -363,6 +363,36 @@ This tracking entry does not authorize implementation, change save/storage
 formats, reopen Phase 6.3 deferred combat/RNG or authority candidates, or
 close Phase 6.4.
 
+### 2026-09-14 mail initialization and lifecycle proof boundary
+
+The bounded mail proof follows the reviewed weather repair in #1457 and does
+not reopen the broad modernization audit. On fresh `origin/main` at
+`d5328ce1b`, the R5 call-path sweep confirms that `InitMailSystem` has no
+production caller. The live server reaches room 1204's assigned postmaster
+and dispatches `mail`, but the disposable fresh character stops at the current
+Go stamp-affordability gate before recipient lookup or composition. An
+explicitly initialized helper vehicle proves one short message can complete,
+be stored, be checked, be received, and be consumed once in the same process.
+The real child-process restart/reopen then reads the 512-byte file but indexes
+zero messages because `scanFile` reads into a marshaled temporary buffer and
+does not unmarshal `nextBlock`.
+
+Disposition: **blocked**, with production and helper evidence intentionally
+separate. C's boot/no-mail/postmaster lifecycle remains the comparison source,
+and C/Go fixtures remain native and separate: `etc/plrmail`/100-byte C blocks
+versus `data/mail`/512-byte Go blocks. This proof does not wire initialization,
+change constants or storage, claim C/Go format compatibility, or claim Phase
+6.4 completion. The dated result table and durable outputs are in
+[`2026-09-14-mail-lifecycle.md`](../fidelity/depth/handoff/2026-09-14-mail-lifecycle.md)
+and its [evidence package](../fidelity/evidence/2026-09-14-mail-lifecycle/README.md).
+
+The concrete next task is one bounded initialization/fidelity repair: add the
+reviewed production `InitMailSystem` owner/identity hooks and repair Go header
+decode in `scanFile`, without changing the current Go format or attempting
+C-format convergence. Only after that repair proves this exact production
+send→restart→receive vehicle should any human consider a further mail slice;
+no injection readiness is established here.
+
 ## Phase 7 — YELLOW promotions (case-writing waves; enables nothing by itself but enlarges every later bite)
 
 Priority order by downstream unlock: shoot state machine (9 cases) → shared combat/breed transcript (6) → show report surfaces (6) → OLC-family decision (15 blocked: *decide* whether Go keeps emitting `Huh?!?` — a deliberate divergence ticket — rather than porting OLC) → persistence-dependent last/wizlock (2) → staging gaps. **Every case written here converts YELLOW files to GREEN and is reusable proof forever.**
