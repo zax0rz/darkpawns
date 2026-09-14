@@ -208,7 +208,7 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	// Read the delivered object through the real player-facing observation path.
 	// This verifies the note in the recipient's live inventory rather than
 	// treating the mail file/header as a proxy for what the recipient got.
-	mustWrite(t, recipientConn, "read note\r\n")
+	mustWrite(t, recipientConn, "read letter\r\n")
 	deliveredText := readUntil(t, recipientConn, recipientReader, productionMailBody, 5*time.Second)
 	if deliveredText == "" {
 		t.Fatal("recipient could not read the delivered note")

@@ -93,10 +93,14 @@ type mailWriteEntry struct {
 	buffer      string
 }
 
+// mailDisabled is configured during boot, before sessions are accepted.
+var mailDisabled bool
+
 // DisableMailSystem clears the mail index, free list, and identity hooks.
 // The C boot path keeps the server running with no_mail set when mail storage
 // is unusable; this is the Go equivalent of that explicit availability policy.
 func DisableMailSystem() {
+	mailDisabled = true
 	mailGlobalMu.Lock()
 	mailIndex = nil
 	freeList = nil
@@ -116,6 +120,7 @@ func InitMailSystem(nameFunc func(id int) string, idFunc func(name string) int) 
 	worldNameFunc = nameFunc
 	worldIDFunc = idFunc
 	if scanFile() {
+		mailDisabled = false
 		return true
 	}
 	DisableMailSystem()
@@ -615,7 +620,7 @@ func (w *World) CreateMailObject(ch *Player, mailText string) *ObjectInstance {
 		CanPickUp:        true,
 		TypeFlagOverride: &mailType,
 	}
-	obj.Runtime.Keywords = "mail note"
+	obj.Runtime.Keywords = "mail paper letter"
 	obj.Runtime.ShortDesc = "a piece of mail"
 	obj.Runtime.MailText = mailText
 	return obj

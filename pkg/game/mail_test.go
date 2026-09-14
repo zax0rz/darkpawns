@@ -31,9 +31,11 @@ func TestMailInitializationFailsClosedWithoutOverwritingUnusableStore(t *testing
 		t.Fatalf("mkdir mail directory: %v", err)
 	}
 
+	oldDisabled := mailDisabled
 	oldNameFunc, oldIDFunc := worldNameFunc, worldIDFunc
 	t.Cleanup(func() {
 		worldNameFunc, worldIDFunc = oldNameFunc, oldIDFunc
+		mailDisabled = oldDisabled
 	})
 	worldNameFunc = func(int) string { return "unexpected" }
 	worldIDFunc = func(string) int { return 999 }
@@ -52,5 +54,34 @@ func TestMailInitializationFailsClosedWithoutOverwritingUnusableStore(t *testing
 	}
 	if !info.IsDir() {
 		t.Fatal("mail initialization replaced the unusable store")
+	}
+}
+
+// C mail.c:484-487: all three commands emit the same bytes and fall through.
+func TestPostmasterDisabledDispatch(t *testing.T) {
+	oldDisabled := mailDisabled
+	t.Cleanup(func() { mailDisabled = oldDisabled })
+	mailDisabled = true
+	w, sender, fn, mob, messages := newMailLifecycleWorld(t)
+	for _, cmd := range []string{"mail", "check", "receive", "look"} {
+		messages[sender.Name] = nil
+		if fn(w, sender, mob, cmd, "Recipient body") {
+			t.Fatalf("disabled %s was handled", cmd)
+		}
+		got := messages[sender.Name]
+		if cmd == "look" {
+			if len(got) != 0 {
+				t.Fatalf("unrelated command output: %q", got)
+			}
+		} else if len(got) != 1 || got[0] != "Sorry, the mail system is having technical difficulties.\r\n" {
+			t.Fatalf("%s output: %q", cmd, got)
+		}
+	}
+}
+
+func TestMailObjectCKeywords(t *testing.T) {
+	obj := (&World{}).CreateMailObject(nil, "body")
+	if obj.Runtime.Keywords != "mail paper letter" || obj.GetShortDesc() != "a piece of mail" || obj.GetTypeFlag() != ITEM_NOTE || !obj.CanPickUp {
+		t.Fatalf("mail object does not match C identity: %+v", obj)
 	}
 }
