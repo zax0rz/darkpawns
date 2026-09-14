@@ -6,6 +6,7 @@
 package game
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -453,7 +454,7 @@ func readDelete(recipient int) string {
 	fmt.Fprintf(&sb, "Date: %s\r\n", tm)
 	fmt.Fprintf(&sb, "  To: %s\r\n", toName)
 	fmt.Fprintf(&sb, "From: %s\r\n\r\n", fromName)
-	sb.WriteString(string(header.Text[:]))
+	sb.WriteString(fixedMailText(header.Text[:]))
 	message := sb.String()
 
 	followingBlock := header.NextBlock
@@ -470,7 +471,7 @@ func readDelete(recipient int) string {
 		readFromFile(dataBytes, MailBlockSize, followingBlock)
 		unmarshalMailData(&data, dataBytes)
 
-		message += string(data.Text[:])
+		message += fixedMailText(data.Text[:])
 		mailAddress = followingBlock
 		followingBlock = data.BlockType
 
@@ -481,6 +482,17 @@ func readDelete(recipient int) string {
 	}
 
 	return message
+}
+
+// fixedMailText applies the C string contract to one fixed-size mail text
+// field. The writer zero-fills each block and writes a terminator, but a full
+// field may legitimately contain no NUL at all. Do not trim the tail: C stops
+// at the first terminator and preserves every byte before it.
+func fixedMailText(field []byte) string {
+	if end := bytes.IndexByte(field, 0); end >= 0 {
+		field = field[:end]
+	}
+	return string(field)
 }
 
 // ---------------------------------------------------------------------------
