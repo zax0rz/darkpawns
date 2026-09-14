@@ -58,9 +58,20 @@ overall production lifecycle: blocked; no injection readiness claim
 
 ## Validation and census reuse
 
-The focused helper trace and production telnet trace are preserved under
-`/home/zach/dp-mail-lifecycle-evidence-2026-09-14/`. The full validation gate
-record will be appended to the evidence package before the PR is opened.
+The focused helper trace, production telnet trace, call-path trace, native
+fixtures, and final gate logs are preserved under
+`/home/zach/dp-mail-lifecycle-evidence-2026-09-14/`. Final gates passed:
+
+```text
+gofumpt, git diff --check, go build ./..., go vet ./..., go test ./...,
+go test ./pkg/game/..., golangci-lint run ./..., make fidelity-depth,
+make expected-divergences-check
+```
+
+The depth gate reports 4,816 total cases, 4,697 proven/delegated, 68 blocked,
+and 51 excluded. Expected-divergence pins are OK for 26 rows across 10
+scenarios.
+
 No oracle scenario, fixture, manifest, or runner input changed, so a fresh
 `make oracle-regression` is not required. Reuse is tied to the tested #1457
 checkpoint `eac85ac30379879633167611b858016414287f97`; the established healthy
@@ -79,3 +90,14 @@ a disposable sender fixture that can pay the current stamp, then perform a
 real process restart and verify recipient receipt/once-only consumption.
 
 STOP HERE for human review. Do not merge or begin the repair in this task.
+
+## Changed files
+
+- `pkg/game/mail_lifecycle_test.go` — explicit-init helper vehicle, separate
+  child-process reopen, fallback-hook characterization, and once-only receipt.
+- `tests/e2e/mail_lifecycle_test.go` — real server boot/login/postmaster
+  dispatch probe, stopping at the exact affordability gate.
+- `docs/modernization/06-roadmap.md` — dated Phase 6.4 disposition.
+- `docs/fidelity/evidence/2026-09-14-mail-lifecycle/README.md` — call-path,
+  C comparison, finite result table, fixtures, and validation record.
+- this dated handoff.

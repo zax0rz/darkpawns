@@ -135,3 +135,24 @@ The only unpinnable row is the established human-cleared
 `accuse-noarg-depth` baseline. Fresh focused mail tests and the validation
 gates below are the evidence for this PR's changed surface; the census is
 not a claim of mail coverage.
+
+Final gate records are preserved in the same evidence directory:
+
+```text
+gofumpt -l .                         pass
+git diff --check                     pass
+go build ./...                       pass
+go vet ./...                         pass
+go test ./...                        pass
+go test ./pkg/game/...               pass
+golangci-lint run ./...              pass
+make fidelity-depth                  pass (4816 total; 4697 proven/delegated, 68 blocked, 51 excluded)
+make expected-divergences-check      pass (26 pins across 10 scenarios; pins OK)
+```
+
+The final command logs are `gofumpt-final-2026-09-14.log`,
+`git-diff-check-final-2026-09-14.log`, `go-build-final-2026-09-14.log`,
+`go-vet-final-2026-09-14.log`, `go-test-all-final-2026-09-14.log`,
+`go-test-game-final-2026-09-14.log`, `golangci-lint-final2-2026-09-14.log`,
+`fidelity-depth-2026-09-14.log`, and
+`expected-divergences-check-2026-09-14.log`.
