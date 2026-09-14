@@ -310,18 +310,34 @@ func SetWeatherWorld(w *World) {
 // WeatherAndTime advances time and updates weather.
 // Ported from weather.c:weather_and_time().
 // mode controls whether weather_change() is called (mode=1 or true).
+// sendToOutdoor is invoked while weatherMu is write-locked, in the same
+// positions as the C event sequence. It must not call a weather accessor or
+// mutator that attempts to acquire weatherMu.
 func WeatherAndTime(mode bool, sendToOutdoor func(string)) {
 	weatherMu.Lock()
-	AnotherHour(mode, sendToOutdoor)
+	defer weatherMu.Unlock()
+
+	anotherHourLocked(mode, sendToOutdoor, weatherWorld)
 	if mode {
-		WeatherChange(sendToOutdoor)
+		weatherChangeLocked(sendToOutdoor)
 	}
-	weatherMu.Unlock()
 }
 
 // AnotherHour advances the MUD time by one hour.
 // Ported from weather.c:another_hour().
+// sendToOutdoor is invoked while weatherMu is write-locked and must not call
+// a weather accessor or mutator that attempts to acquire weatherMu.
 func AnotherHour(mode bool, sendToOutdoor func(string)) {
+	weatherMu.Lock()
+	defer weatherMu.Unlock()
+
+	anotherHourLocked(mode, sendToOutdoor, weatherWorld)
+}
+
+// anotherHourLocked advances time while the caller owns weatherMu's write
+// lock. The world pointer is captured by that owner so event bodies do not
+// re-enter weatherMu during the combined tick.
+func anotherHourLocked(mode bool, sendToOutdoor func(string), w *World) {
 	timeInfo.Hours++
 
 	if mode {
@@ -331,8 +347,8 @@ func AnotherHour(mode bool, sendToOutdoor func(string)) {
 			if sendToOutdoor != nil {
 				sendToOutdoor("The suns rise in the east and north.\r\n")
 			}
-			ghostShipDisappear()
-			removeNightGate()
+			ghostShipDisappearForWorld(w)
+			removeNightGateForWorld(w)
 		case 6:
 			weatherInfo.Sunlight = SunLight
 			if sendToOutdoor != nil {
@@ -343,11 +359,11 @@ func AnotherHour(mode bool, sendToOutdoor func(string)) {
 			if sendToOutdoor != nil {
 				sendToOutdoor("The suns slowly disappear in the west and south.\r\n")
 			}
-			ghostShipAppear()
-			loadNightGate()
+			ghostShipAppearForWorld(w)
+			loadNightGateForWorld(w)
 			if timeInfo.Day+1 < 26 && timeInfo.Day+1 >= 22 {
-				fullMoon()
-				lunarHunter()
+				fullMoonForWorld(w)
+				lunarHunterForWorld(w)
 			}
 		case 22:
 			weatherInfo.Sunlight = SunDark
@@ -394,7 +410,18 @@ func AnotherHour(mode bool, sendToOutdoor func(string)) {
 
 // WeatherChange updates the weather based on pressure changes.
 // Ported from weather.c:weather_change().
+// sendToOutdoor is invoked while weatherMu is write-locked and must not call
+// a weather accessor or mutator that attempts to acquire weatherMu.
 func WeatherChange(sendToOutdoor func(string)) {
+	weatherMu.Lock()
+	defer weatherMu.Unlock()
+
+	weatherChangeLocked(sendToOutdoor)
+}
+
+// weatherChangeLocked updates weather while the caller owns weatherMu's write
+// lock. It preserves the C draw sites and their existing branch conditions.
+func weatherChangeLocked(sendToOutdoor func(string)) {
 	var diff int
 	if timeInfo.Month >= 9 && timeInfo.Month <= 16 {
 		// Winter months
@@ -533,9 +560,10 @@ func dice(num, size int) int {
 // fullMoon broadcasts the full moon rise to all players.
 // Called on day 22-25 at hour 21 (sunset).
 func fullMoon() {
-	weatherMu.RLock()
-	w := weatherWorld
-	weatherMu.RUnlock()
+	fullMoonForWorld(weatherWorldSnapshot())
+}
+
+func fullMoonForWorld(w *World) {
 	if w == nil {
 		return
 	}
@@ -545,9 +573,10 @@ func fullMoon() {
 // lunarHunter broadcasts the lunar hunter event.
 // Called alongside fullMoon on day 22-25 at hour 21.
 func lunarHunter() {
-	weatherMu.RLock()
-	w := weatherWorld
-	weatherMu.RUnlock()
+	lunarHunterForWorld(weatherWorldSnapshot())
+}
+
+func lunarHunterForWorld(w *World) {
 	if w == nil {
 		return
 	}
@@ -557,9 +586,10 @@ func lunarHunter() {
 // loadNightGate broadcasts the night gate appearance.
 // Called at hour 21 (sunset).
 func loadNightGate() {
-	weatherMu.RLock()
-	w := weatherWorld
-	weatherMu.RUnlock()
+	loadNightGateForWorld(weatherWorldSnapshot())
+}
+
+func loadNightGateForWorld(w *World) {
 	if w == nil {
 		return
 	}
@@ -569,9 +599,10 @@ func loadNightGate() {
 // removeNightGate broadcasts the night gate removal.
 // Called at hour 5 (sunrise).
 func removeNightGate() {
-	weatherMu.RLock()
-	w := weatherWorld
-	weatherMu.RUnlock()
+	removeNightGateForWorld(weatherWorldSnapshot())
+}
+
+func removeNightGateForWorld(w *World) {
 	if w == nil {
 		return
 	}
@@ -581,9 +612,10 @@ func removeNightGate() {
 // ghostShipAppear broadcasts the ghost ship sighting.
 // Called at hour 21 (sunset).
 func ghostShipAppear() {
-	weatherMu.RLock()
-	w := weatherWorld
-	weatherMu.RUnlock()
+	ghostShipAppearForWorld(weatherWorldSnapshot())
+}
+
+func ghostShipAppearForWorld(w *World) {
 	if w == nil {
 		return
 	}
@@ -593,13 +625,23 @@ func ghostShipAppear() {
 // ghostShipDisappear broadcasts the ghost ship departure.
 // Called at hour 5 (sunrise).
 func ghostShipDisappear() {
-	weatherMu.RLock()
-	w := weatherWorld
-	weatherMu.RUnlock()
+	ghostShipDisappearForWorld(weatherWorldSnapshot())
+}
+
+func ghostShipDisappearForWorld(w *World) {
 	if w == nil {
 		return
 	}
 	w.SendToAll("[ GHOST SHIP ] The fog lifts... the ghost ship vanishes into the mists.\r\n")
+}
+
+// weatherWorldSnapshot preserves synchronized direct-helper entry points.
+// Combined ticks pass their owner-captured pointer directly to the event
+// bodies, so they never re-enter weatherMu.
+func weatherWorldSnapshot() *World {
+	weatherMu.RLock()
+	defer weatherMu.RUnlock()
+	return weatherWorld
 }
 
 // ModifyWeatherChange adjusts the weather change variable.
