@@ -150,9 +150,9 @@ make fidelity-depth                  pass (4816 total; 4697 proven/delegated, 68
 make expected-divergences-check      pass (26 pins across 10 scenarios; pins OK)
 ```
 
-The final command logs are `gofumpt-final-2026-09-14.log`,
-`git-diff-check-final-2026-09-14.log`, `go-build-final-2026-09-14.log`,
-`go-vet-final-2026-09-14.log`, `go-test-all-final-2026-09-14.log`,
-`go-test-game-final-2026-09-14.log`, `golangci-lint-final2-2026-09-14.log`,
-`fidelity-depth-2026-09-14.log`, and
-`expected-divergences-check-2026-09-14.log`.
+The final command logs are `gofumpt-final2-2026-09-14.log`,
+`git-diff-check-final2-2026-09-14.log`, `go-build-final2-2026-09-14.log`,
+`go-vet-final2-2026-09-14.log`, `go-test-all-final2-2026-09-14.log`,
+`go-test-game-final2-2026-09-14.log`, `golangci-lint-final3-2026-09-14.log`,
+`fidelity-depth-final2-2026-09-14.log`, and
+`expected-divergences-check-final2-2026-09-14.log`.
