@@ -519,3 +519,37 @@ The dated evidence explicitly reconciles the one final-result preservation
 race (`yuball-depth`) with a tight-poll same-input recovery; execution
 coverage was complete and no unexpected or duplicate scenario identity
 remained.
+
+### 2026-09-14 mail ownership-injection readiness decision
+
+This documentation-only follow-up starts from fresh `origin/main` at
+`f51eb840a`, containing merged #1462 (`4af6d9fad`). The durable census record
+was verified at implementation checkpoint `d6b64449b4f66c48b2567f22f241f778bab9357c`:
+941 result identities match 941 tested scenario inputs, with `931 PASS / 9
+EXPECTED / 1 UNPINNABLE`, `failed=0`, `infra=0`, `timed_out=0`, and `stale=0`.
+The seven infrastructure-shaped attempts were manually inspected; six
+recovered to PASS and `redit-entry-depth` recovered to two identical pinned
+expected results. The only unpinnable identity is the established
+human-cleared `accuse-noarg-depth` baseline. Checkpoint-to-`origin/main`
+equivalence is documentation-only outside the tested implementation, so the
+repair's production, tests, scenarios, fixtures, runner, and oracle inputs
+remain equivalent.
+
+The finite #1455 mail inventory was rechecked under R5. #1462 proves the
+production boot/identity/disabled/header/restart-delivery paths and preserves
+the current Go persistence contract, but its passing receive vehicle records
+a PostgreSQL `22P05` recipient-save error during shutdown. The supported
+disposition is **PROOF-FIRST**, not READY: first run one future test-only
+disposable-PostgreSQL proof that saves/reloads the recipient before receipt,
+delivers one short message, attempts the post-receipt save, captures the exact
+serialized payload/offending bytes and SQL error, checks reload persistence,
+and compares a minimal no-mail-object control. The ownership-boundary
+experiment remains deferred until that result is reviewed; it is not launched
+here.
+
+The concrete owner task, exact production callers and compatibility boundary,
+unchanged identity/persistence contracts, lock ordering, remaining globals,
+acceptance tests, known C/Go debts, and separate recipient save-error symptom
+are recorded in the [dated ownership-readiness handoff](../fidelity/depth/handoff/2026-09-14-mail-ownership-readiness.md)
+and [preserved evidence README](../fidelity/evidence/2026-09-14-mail-ownership-readiness/README.md).
+Phase 6.4 remains open; no ownership implementation is part of this change.
