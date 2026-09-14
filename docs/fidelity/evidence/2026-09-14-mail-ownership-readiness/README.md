@@ -111,13 +111,21 @@ failures.
 
 The finite reconciliation and concrete next-task specification are in
 [`2026-09-14-mail-ownership-readiness`](../../depth/handoff/2026-09-14-mail-ownership-readiness.md).
-The supported decision is **PROOF-FIRST**. The smallest enabling experiment is
-a future test-only `-race` mail-owner boundary run using the current Go format:
-one multi-block message, one deleted/free block, concurrent check versus
-send/receive, reopen/free reuse, and composition cancellation, with a serial
-control and exact-byte/once-only assertions. Its result decides whether the
-existing storage lock can move unchanged into one owner or requires a separate
-lock repair. It is not launched here.
+The supported decision is **PROOF-FIRST**, with recipient-save
+characterization preceding ownership injection. The smallest next task is a
+future test-only disposable-PostgreSQL proof that saves/reloads the recipient
+before receipt, delivers one short message, attempts the recipient save after
+receipt, captures the exact serialized payload/offending bytes and SQL error,
+checks reload persistence, and compares a minimal no-mail-object control. It
+is not launched here.
+
+The previously proposed `-race` mail-owner boundary remains deferred until
+that save proof passes or produces a reviewed blocker. It covers the current Go
+format, a multi-block message whose receipt creates deleted/free blocks,
+reopen/free reuse, composition cancellation, concurrent check versus
+send/receive, a serial control, and exact-byte/once-only assertions. Its
+result then decides whether the existing storage lock can move unchanged into
+one owner or requires a separate lock repair.
 
 The proposed owner would be the sole runtime authority for the mail index,
 free list, file cursor, identity callbacks, disabled state, file/index lock,

@@ -537,14 +537,14 @@ remain equivalent.
 
 The finite #1455 mail inventory was rechecked under R5. #1462 proves the
 production boot/identity/disabled/header/restart-delivery paths and preserves
-the current Go persistence contract, but does not prove free-list or
-multi-block reuse, composition abort/max/disconnect behavior, or concurrent
-`hasMail` versus store/delete access. The supported disposition is
-**PROOF-FIRST**, not READY: one future test-only `-race` mail-owner boundary
-experiment must combine those smallest missing state/lifetime paths with a
-serial control, exact-byte and once-only assertions, and durable output. Its
-result decides whether the current file/index lock can move unchanged into a
-single owner or needs a separate lock repair. That experiment is not launched
+the current Go persistence contract, but its passing receive vehicle records
+a PostgreSQL `22P05` recipient-save error during shutdown. The supported
+disposition is **PROOF-FIRST**, not READY: first run one future test-only
+disposable-PostgreSQL proof that saves/reloads the recipient before receipt,
+delivers one short message, attempts the post-receipt save, captures the exact
+serialized payload/offending bytes and SQL error, checks reload persistence,
+and compares a minimal no-mail-object control. The ownership-boundary
+experiment remains deferred until that result is reviewed; it is not launched
 here.
 
 The concrete owner task, exact production callers and compatibility boundary,

@@ -2,26 +2,34 @@
 
 ## Decision
 
-**PROOF-FIRST.** The completed #1462 repair clears the previous production
-boot, persistent-identity, header-decode, restart-delivery, disabled-dispatch,
-and C-keyword blockers. It does not yet prove every mutable authority that a
-useful mail owner would acquire. In particular, the existing proof does not
-exercise deleted/free-block reuse, a multi-block chain, empty/maximum-length
-composition, disconnect cancellation, or concurrent `hasMail` versus
-`storeMail`/`readDelete` access. A green single-message restart is therefore
-not ownership-injection authorization under R5a/R5c/R5f.
+**PROOF-FIRST — recipient-save characterization takes priority.** The
+completed #1462 repair clears the previous production boot, persistent-
+identity, header-decode, restart-delivery, disabled-dispatch, and C-keyword
+blockers, but its passing receive vehicle records a PostgreSQL `22P05` save
+error while the recipient is shutting down. Receipt is therefore established;
+recipient persistence is not. The smallest next task is a separate,
+test-only disposable-PostgreSQL proof of that exact post-receipt save and
+reload consequence. Until that proof is complete, the ownership-boundary
+experiment below is deferred: a green single-message receipt cannot authorize
+ownership injection under R5a/R5c/R5f.
 
-The smallest enabling experiment is one future, test-only **mail owner
-boundary** run under `-race`: start from the current Go 512-byte format with
-one multi-block message and one deleted/free block, then exercise send, check,
-receive, free-block reuse after reopen, and composition cancellation while a
-concurrent checker observes the index. The run must compare a serial control
-with the concurrent path and report exact file bytes, recipient IDs, once-only
-consumption, and no race. This single bounded vehicle decides whether the
-existing file/index lock can move into an owner unchanged or whether a lock
-repair is required before any injection. It is not a C-parity experiment.
+The save proof must first save and reload the recipient successfully, deliver
+one short message through the existing path, attempt the recipient save after
+receipt, capture the exact failing operation, offending serialized bytes, SQL
+error, and reload result, and compare it with a minimal control that uses the
+same save path without the delivered object. It must use a dedicated database
+and disposable mail storage, and must not change production code, schema,
+mail-file bytes, or ownership. The expected isolated `22P05` characterization
+is not a repair or a C-parity experiment.
 
-Do not launch that experiment or an implementation from this handoff.
+The previously proposed test-only **mail owner boundary** remains the next
+ownership experiment after the save proof: under `-race`, start from the
+current Go 512-byte format with one multi-block message whose receipt creates
+deleted/free blocks, then exercise send, check, receive, free-block reuse after
+reopen, composition cancellation, and concurrent index observation against a
+serial control. It must report exact file bytes, recipient IDs, once-only
+consumption, and no race. Do not launch either experiment or an implementation
+from this handoff.
 
 ## Provenance and scope
 
