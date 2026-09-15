@@ -615,3 +615,51 @@ because it has no world prototype. A separately authorized mail-object
 rehydration/ownership-boundary slice is required for reload proof. Known
 mail-object, C/Go format/output, broader lifecycle, and Phase 6.4 ownership
 debts remain open. Phase 6.4 ownership injection is deferred.
+
+### 2026-09-15 bounded persisted synthetic mail-object reload repair
+
+The separate reload failure is repaired on the unmerged branch
+`glm/fix-mail-reload`. PR #1465 was verified merged before implementation;
+fresh `origin/main` was `29aa29d96e95fe224489bdf366bf2aa7efd166bd`, and the
+implementation checkpoint is `cbe87c8b7e67b000d0c116b22e87d094b8946294`.
+The repair changes exactly three files (`pkg/db/convert.go`,
+`pkg/db/convert_test.go`, and `tests/e2e/mail_lifecycle_test.go`) for a
+measured delta of 235 insertions and 0 deletions. No source/oracle, ordinary
+prototype path, unrelated synthetic path, mail file, JSON/schema/save format,
+or ownership code changed.
+
+Under R5, returning-player login reaches `RecordToPlayer`, whose prototype
+lookup skipped persisted synthetic mail at VNum -1. The narrow reconstruction
+contract requires existing non-empty string `state.mail_text`; it then uses
+`World.CreateMailObject`, preserves the text and canonical identity/type
+fields, restores through `Inventory.RestoreItem`, and establishes
+`LocInventoryPlayer`. Missing/malformed mail state is explicitly skipped;
+VNum -1 alone does not identify mail, no prototype is invented, and ordinary
+or unrelated synthetic objects remain unchanged.
+
+The dedicated production proof now establishes exactly one receive → actual
+recipient save → server restart → recipient login → read path. It used
+disposable PostgreSQL and isolated mail storage, a persistent sender, an
+offline recipient, real session/server/persistence paths, exact sender/body,
+one readable inventory object, and empty subsequent check/receive. The
+recipient save result and receive/reload server logs report no DB-save or
+linkdead-save errors. A separate race-backed production run repeats the
+lifecycle. Durable artifacts and the exact proof boundary are in the
+[`2026-09-15 mail reload evidence`](../fidelity/evidence/2026-09-15-mail-reload/README.md)
+and [dated handoff](../fidelity/depth/handoff/2026-09-15-mail-reload.md).
+
+The full frozen-input oracle census completed with
+`scenarios=941 passed=931 expected=9 unpinnable=1 stale=0 failed=0 infra=0
+timed_out=0`; it exited 2 only for the established human-cleared
+`accuse-noarg-depth` unpinnable baseline. Five infrastructure-shaped first
+attempts recovered to PASS, and all 941 identities reconciled with no missing,
+unexpected, duplicate, stale, failed, final-infra, or timed-out result.
+
+Remaining debts are the C/Go format, output, object-field, free-list,
+corruption, and concurrency gaps; broader synthetic-object reload and mail
+lifecycle coverage; and Phase 6.4 mail ownership injection. Phase 6.4
+ownership injection is explicitly deferred. The next recommended non-mail
+slice is the separately evidenced Phase 6.3 board authority candidate
+`boards-remove-authority-depth` under #1451; it is only a recommendation and
+is not started here. Stop for human review; do not merge, deploy, or expand
+this PR.
