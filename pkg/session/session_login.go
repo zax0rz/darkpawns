@@ -303,7 +303,26 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 
 	// C's process_input exposes the raw line to an active snooper before any
 	// editor, wait-state, alias, or command routing consumes it.
-	s.forwardSnoopInput(cmd.Command, cmd.RawArgs, cmd.Args)
+	if cmd.RawLine != "" {
+		// Telnet has the original line; use it so a snooper sees `/h` rather
+		// than a reconstructed `/ h` while a descriptor editor is active.
+		s.forwardSnoopInput(cmd.RawLine, "", nil)
+	} else {
+		s.forwardSnoopInput(cmd.Command, cmd.RawArgs, cmd.Args)
+	}
+
+	// A descriptor string editor owns the complete next line. In particular,
+	// slash commands must not be rebuilt as "/ h" from tokenized JSON args;
+	// telnet supplies RawLine and direct/WebSocket clients can still use the
+	// faithful fallback reconstruction.
+	if s.player != nil && s.isTextEditing() {
+		line := cmd.RawLine
+		if line == "" {
+			line = commandInputLine(cmd.Command, cmd.Args)
+		}
+		s.handleTextEditInput(line)
+		return nil
+	}
 
 	// Clan plan writes use the same PLR_WRITING flag as
 	// notes/mail and are completed by the generic string editor equivalent.

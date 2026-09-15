@@ -429,7 +429,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// first char is a one-char command, no separating space needed
 			// ("'hello"). Plain whitespace splitting broke those forms.
 			cmdWord, cmdArgs := session.SplitCommandInput(line)
-			if err := sendCommand(s, cmdWord, cmdArgs, session.CommandArgumentText(rawLine)); err != nil {
+			if err := sendCommand(s, cmdWord, cmdArgs, rawLine); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
 			// The prompt is enqueued after the command so writeLoop drains the
@@ -1070,11 +1070,12 @@ func sendPagerInput(s *session.Session, line string) error {
 	return s.HandleMessage(lineMsg)
 }
 
-func sendCommand(s *session.Session, cmd string, args []string, rawArgs string) error {
+func sendCommand(s *session.Session, cmd string, args []string, rawLine string) error {
 	cmdData, err := json.Marshal(session.CommandData{
 		Command: cmd,
 		Args:    args,
-		RawArgs: rawArgs,
+		RawLine: rawLine,
+		RawArgs: session.CommandArgumentText(rawLine),
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)

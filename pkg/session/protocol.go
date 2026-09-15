@@ -66,6 +66,10 @@ type LoginData struct {
 type CommandData struct {
 	Command string   `json:"command"`
 	Args    []string `json:"args,omitempty"`
+	// RawLine preserves the complete input line for descriptor states such as
+	// C's CON_TEDIT, where /h, /s, and @ are editor input rather than commands.
+	// Telnet supplies it; WebSocket clients may omit it and use Command/Args.
+	RawLine string `json:"raw_line,omitempty"`
 	// RawArgs preserves the C command interpreter's un-tokenized argument
 	// remainder for transports that retain it. Most handlers consume Args;
 	// commands whose C path preserves internal whitespace may opt into this

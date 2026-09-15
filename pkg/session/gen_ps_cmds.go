@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,26 +25,74 @@ var (
 	cacheMu    sync.RWMutex
 )
 
+// readCTextFile mirrors db.c:file_to_string for the text files whose boot
+// representation is consumed by do_gen_ps and tedit. The C loader removes
+// each input line's trailing LF and stores CRLF in memory; the editor writes
+// the CR characters back out before saving, so disk files remain LF-delimited.
+func readCTextFile(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	if len(data) == 0 {
+		return "", nil
+	}
+
+	var text strings.Builder
+	text.Grow(len(data) + strings.Count(string(data), "\n"))
+	for start := 0; start < len(data); {
+		end := bytes.IndexByte(data[start:], '\n')
+		if end < 0 {
+			// file_to_string unconditionally removes the final byte when the
+			// last fgets did not end at a newline. Preserve that legacy edge.
+			line := data[start:]
+			if len(line) > 0 {
+				line = line[:len(line)-1]
+			}
+			text.Write(line)
+			text.WriteString("\r\n")
+			break
+		}
+		text.Write(data[start : start+end])
+		text.WriteString("\r\n")
+		start += end + 1
+	}
+	return text.String(), nil
+}
+
+// cachedTextForFile returns the C-style boot cache for a text path. Keeping
+// this behind the same cache used by the public static-text commands is
+// important: a tedit save must become visible to news/motd/etc. immediately,
+// without introducing a second authority for the same file.
+func cachedTextForFile(s *Session, filename string) (string, error) {
+	cacheMu.RLock()
+	text, ok := cachedText[filename]
+	cacheMu.RUnlock()
+	if ok {
+		return text, nil
+	}
+
+	text, err := readCTextFile(filepath.Join(s.manager.world.LibTextDir, filename))
+	if err != nil {
+		return "", err
+	}
+	cacheMu.Lock()
+	cachedText[filename] = text
+	cacheMu.Unlock()
+	return text, nil
+}
+
 // sendCachedText serves a static text file through the pager, loading and
 // caching it from lib/text/ on first access. Matches C's
 // page_string(ch->desc, <cached>, 0) pattern.
 func sendCachedText(s *Session, filename string) {
-	cacheMu.RLock()
-	text, ok := cachedText[filename]
-	cacheMu.RUnlock()
-	if !ok {
-		// LibTextDir is derived from the -world flag at boot (World.LibTextDir);
-		// a CWD-relative path here is dead under the oracle harness, which runs
-		// the server in a scratch dir (the help-system gate's lesson, #440).
-		data, err := os.ReadFile(filepath.Join(s.manager.world.LibTextDir, filename))
-		if err != nil {
-			s.Send("That information is not available right now.")
-			return
-		}
-		text = string(data)
-		cacheMu.Lock()
-		cachedText[filename] = text
-		cacheMu.Unlock()
+	// LibTextDir is derived from the -world flag at boot (World.LibTextDir);
+	// a CWD-relative path here is dead under the oracle harness, which runs
+	// the server in a scratch dir (the help-system gate's lesson, #440).
+	text, err := cachedTextForFile(s, filename)
+	if err != nil {
+		s.Send("That information is not available right now.")
+		return
 	}
 	PageString(s, text)
 }
@@ -54,12 +103,12 @@ func sendCachedText(s *Session, filename string) {
 // place and the caller still emits Okay.
 func reloadCachedText(s *Session, filenames ...string) {
 	for _, filename := range filenames {
-		data, err := os.ReadFile(filepath.Join(s.manager.world.LibTextDir, filename))
+		text, err := readCTextFile(filepath.Join(s.manager.world.LibTextDir, filename))
 		if err != nil {
 			continue
 		}
 		cacheMu.Lock()
-		cachedText[filename] = string(data)
+		cachedText[filename] = text
 		cacheMu.Unlock()
 	}
 }

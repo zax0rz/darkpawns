@@ -253,7 +253,10 @@ func (s *Session) notePlayerOutput() {
 func (s *Session) SendPrompt() {
 	cmdInfoBarUpdate(s)
 	text := s.promptText()
-	if s.outputSincePrompt.Swap(0) > 0 {
+	// C's CON_TEDIT prompt is written directly after the editor's final
+	// output; unlike the ordinary playing prompt it does not receive the
+	// non-compact interruption CRLF between the buffer and "] ".
+	if s.outputSincePrompt.Swap(0) > 0 && !s.isTextEditing() {
 		text = "\r\n" + text
 	}
 	msg, err := json.Marshal(ServerMessage{
