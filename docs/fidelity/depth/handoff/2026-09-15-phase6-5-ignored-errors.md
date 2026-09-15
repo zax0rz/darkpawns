@@ -113,6 +113,67 @@ Coverage citations for the implementation checkpoint:
   reconciliation, and retry review stored outside the repository and linked in
   the final PR description.
 
-The final handoff will record the implementation head, frozen census head,
-full tally, all gate results, measured production/test/doc deltas, changed-file
-list, and durable evidence paths. Stop after the unmerged PR for human review.
+## Frozen checkpoint and final census
+
+The implementation and census inputs were frozen at
+`3f106fe9a30039fbf0b1da99c10ec57eaa7db872`, with a clean worktree and
+`origin/main` at `ebb5feff8b4b6f5a7d76492ae10b6fed3fdd7309`. The SHA-256
+manifest covers all 5,430 tracked repository files; its digest is
+`697773f2c5164e69a7f3ac3f2088ddcf63305ef283eb0754917d9628840f27a3`.
+Production Go, tests, fixtures, scenarios, and drivers were not changed after
+that freeze. The only post-census repository change is this handoff update.
+
+Exactly one full `make oracle-regression` ran from that frozen checkpoint:
+
+```text
+scenarios=941 passed=931 expected=9 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0
+elapsed=7061.881s
+```
+
+Exit status 2 is the established baseline status for the one human-cleared
+`accuse-noarg-depth` unpinnable scenario. The nine `EXPECTED` scenarios were
+`accuse-depth`, `force-mob`, `medit-entry-depth`, `medit-session-depth`,
+`redit-entry-depth`, `redit-session-depth`, `sedit-entry-depth`,
+`sedit-session-depth`, and `shoot-target-depth`. There were eight
+infrastructure-shaped first attempts (`apologize-sleeping-depth`,
+`bounce-depth`, `diagnose-depth`, `give-gold`, `informative-residual-depth`,
+`movement-mounted`, `peek-depth`, and `spec-proc-tattoo2-price`); every one
+recovered to `PASS` within the runner’s existing retry budget. No scenario
+ended `FAIL`, `INFRA`, `TIMEOUT`, or `STALE`.
+
+The final classification identities reconcile exactly: 941 scenario files,
+941 unique classified scenario names, no missing names, and no unexpected
+names. The durable evidence contains 959 per-attempt logs for those 941
+scenarios, the complete console transcript, the freeze check, the input
+manifest, and the reconciliation report.
+
+## Measured delta and gates
+
+Relative to `origin/main`, this batch is 25 tracked files, 313 insertions, and
+42 deletions: 22 production Go files, two focused test files, and this
+handoff document. No scenario, fixture, driver, oracle, save format, schema,
+roadmap, or deployment file changed.
+
+The frozen implementation checkpoint passed:
+
+- `make fmt` and `make check-fmt`;
+- `go build ./...`;
+- `go vet ./...`;
+- `go test ./...`;
+- `go test ./pkg/game/...`;
+- `golangci-lint run ./... --color never` (`0 issues`);
+- `make fidelity-depth`;
+- `make expected-divergences-check`;
+- focused changed-package tests and `go test -race ./pkg/agent ./pkg/agentcli ./pkg/optimization ./pkg/errlog`; and
+- named oracle smoke checks for `look-start-room`, `advance-depth`, and `dns-depth`, with no normalized divergence.
+
+Durable evidence is outside the repository at
+`/home/zach/dp-phase6-5-evidence-20260915-3f106fe9/`, including
+`01-make-fmt.log` through `10-race.log`,
+`full-oracle-regression-console-run1.log`,
+`oracle-attempt-logs-run1/`, `frozen-input-manifest.tsv`,
+`freeze-check.log`, and `census-reconciliation.log`.
+
+This remains one coherent implementation batch, not a claim that all Phase 6.5
+deferred classes are closed. Deliver the branch as one unmerged PR and stop
+for human review; do not merge or deploy.
