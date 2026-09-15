@@ -149,10 +149,12 @@ manifest, and the reconciliation report.
 
 ## Measured delta and gates
 
-Relative to `origin/main`, this batch is 25 tracked files, 313 insertions, and
-42 deletions: 22 production Go files, two focused test files, and this
-handoff document. No scenario, fixture, driver, oracle, save format, schema,
-roadmap, or deployment file changed.
+At the frozen implementation checkpoint, the batch was 25 tracked files, 313
+insertions, and 42 deletions: 22 production Go files, two focused test files,
+and this handoff document. The final handoff-only proof update adds 64 lines
+and removes 3 lines, so the aggregate branch diff is 25 tracked files, 374
+insertions, and 42 deletions. No scenario, fixture, driver, oracle, save
+format, schema, roadmap, or deployment file changed.
 
 The frozen implementation checkpoint passed:
 
