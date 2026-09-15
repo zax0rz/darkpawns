@@ -658,8 +658,28 @@ unexpected, duplicate, stale, failed, final-infra, or timed-out result.
 Remaining debts are the C/Go format, output, object-field, free-list,
 corruption, and concurrency gaps; broader synthetic-object reload and mail
 lifecycle coverage; and Phase 6.4 mail ownership injection. Phase 6.4
-ownership injection is explicitly deferred. The next recommended non-mail
-slice is the separately evidenced Phase 6.3 board authority candidate
-`boards-remove-authority-depth` under #1451; it is only a recommendation and
-is not started here. Stop for human review; do not merge, deploy, or expand
+ownership injection is explicitly deferred. PR #1451 already repaired the
+board authority case and is not a next task. The current next task is the
+bounded Phase 6.5 batch described in the disposition below. Stop for human review; do not merge, deploy, or expand
 this PR.
+
+
+### 2026-09-15 Phase 6.4 disposition — ruled, implementation deferred
+
+Following merged #1466, Zach accepted recording the four ownership candidates
+as retained/deferred and proceeding to Phase 6.5. This satisfies the standing
+charter's **“6.4 ruled”** milestone; it does not claim that global-to-struct
+injection was implemented or that the remaining fidelity debts are resolved.
+The historical line-reduction estimate is not a measured saving.
+
+| Family | Current disposition | Evidence and reopening condition |
+|---|---|---|
+| Weather | Retain current ownership; defer injection. | #1456 characterized lock re-entry and #1457 repaired it. Broader weather/event/RNG proof remains required before ownership changes. |
+| Mail | Retain current ownership; defer injection. | #1462, #1465, and #1466 repair initialization/decoding, text conversion, and persisted note reload. The bounded production lifecycle is proven; multi-block/free-list, cancellation/max, corruption, and concurrent check/mutation boundaries still need named proof before injection. |
+| Ban manager | Retain both existing authorities; defer consolidation. | The 2026-09-13 audit identifies distinct login/admin callers and file paths. Reopen only with an explicit fidelity decision and scenarios for both authorities. |
+| Spec registries | Retain existing registries; defer injection. | The 2026-09-13 audit identifies distinct assignment/handler roles, direct readers, and exported mutation seams. Reopen only with startup/runtime/mutation proof. |
+
+See [the disposition handoff](../fidelity/depth/handoff/2026-09-15-phase6-4-disposition.md).
+Next: a coherent Phase 6.5 production ignored-error batch, with local/focused
+validation throughout and one full frozen-input census after implementation.
+Do not reopen #1451 or broaden mail as part of that batch.
