@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // Room represents a parsed room from a .wld file.
@@ -123,7 +125,7 @@ func ParseWldFile(path string) ([]Room, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	defer func() { _ = file.Close() }()
+	defer errlog.Close(file, "parse world file", "path", path)
 
 	var rooms []Room
 	scanner := bufio.NewScanner(file)

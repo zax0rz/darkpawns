@@ -2,6 +2,7 @@ package agentcli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
@@ -17,6 +18,17 @@ import (
 
 	"github.com/gorilla/websocket"
 )
+
+func TestHandleEventReturnsEventPersistenceError(t *testing.T) {
+	d := &Daemon{
+		events: &EventBuffer{path: t.TempDir(), events: make([]AgentEvent, 0), maxCache: 10},
+	}
+
+	err := d.handleEvent("state", json.RawMessage(`{"type":"combat","text":"hit"}`))
+	if err == nil || !strings.Contains(err.Error(), "append combat event") {
+		t.Fatalf("handleEvent error = %v, want event append error", err)
+	}
+}
 
 func shortHome(t *testing.T) string {
 	t.Helper()

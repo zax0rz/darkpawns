@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/errlog"
+
 	_ "github.com/lib/pq"
 )
 
@@ -144,7 +146,7 @@ func (ia *IndexAnalyzer) AnalyzeTable(tableName string) ([]IndexRecommendation, 
 	if err != nil {
 		return nil, fmt.Errorf("query pg_stats: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close query-analysis rows")
 
 	var recommendations []IndexRecommendation
 

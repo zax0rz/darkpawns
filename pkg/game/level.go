@@ -458,10 +458,12 @@ func (p *Player) AdvanceLevel() {
 
 	// Publish level-up event to the event bus
 	if p.worldRef != nil {
-		_ = p.worldRef.Events.Publish(context.Background(), events.PlayerLeveledEvent{
+		if err := p.worldRef.Events.Publish(context.Background(), events.PlayerLeveledEvent{
 			PlayerID: name,
 			NewLevel: level,
 			RoomVNum: p.RoomVNum,
-		})
+		}); err != nil {
+			slog.Error("failed to publish level-up event", "player", name, "level", level, "error", err)
+		}
 	}
 }

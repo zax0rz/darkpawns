@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // LLMResponse represents the parsed LiteLLM response.
@@ -25,7 +28,10 @@ func CallLLM(endpoint, apiKey, model string, messages []map[string]string, timeo
 		"temperature": temperature,
 	}
 
-	raw, _ := json.Marshal(body)
+	raw, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("marshal llm request: %w", err)
+	}
 	req, err := http.NewRequest("POST", endpoint+"/v1/chat/completions", bytes.NewReader(raw))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
@@ -38,9 +44,13 @@ func CallLLM(endpoint, apiKey, model string, messages []map[string]string, timeo
 	if err != nil {
 		return nil, fmt.Errorf("llm request: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer errlog.Close(resp.Body, "close llm response body")
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		slog.Warn("read llm response failed", "error", err)
+		return nil, fmt.Errorf("read llm response: %w", err)
+	}
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("llm status %d: %s", resp.StatusCode, string(respBody))
 	}

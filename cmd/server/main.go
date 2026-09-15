@@ -126,7 +126,10 @@ func main() {
 	slog.Info("Working directory anchored to game root", "dir", gameRoot)
 	// Pin the shops persistence path explicitly (DP-1193) — belt and
 	// suspenders with the chdir above.
-	_ = os.Setenv("DARKPAWNS_DATA_DIR", filepath.Join(gameRoot, "data"))
+	if err := os.Setenv("DARKPAWNS_DATA_DIR", filepath.Join(gameRoot, "data")); err != nil {
+		slog.Error("failed to set persistence data directory", "error", err)
+		os.Exit(1)
+	}
 	if *dbURL == "" {
 		*dbURL = os.Getenv("DATABASE_URL")
 	}
@@ -154,7 +157,10 @@ func main() {
 			slog.Error("failed to generate ephemeral dev JWT secret", "error", gerr)
 			os.Exit(1)
 		}
-		_ = os.Setenv("JWT_SECRET", ephemeral)
+		if err := os.Setenv("JWT_SECRET", ephemeral); err != nil {
+			slog.Error("failed to install ephemeral dev JWT secret", "error", err)
+			os.Exit(1)
+		}
 		slog.Warn("JWT_SECRET missing/short in development; generated an ephemeral secret",
 			"hint", "issued tokens are invalid across restarts; set JWT_SECRET for stable dev")
 	}
@@ -198,7 +204,11 @@ func main() {
 		slog.Warn("Database connection failed, explicitly running without persistence", "error", err)
 		database = nil
 	} else {
-		defer func() { _ = database.Close() }()
+		defer func() {
+			if err := database.Close(); err != nil {
+				slog.Error("database close failed during server shutdown", "error", err)
+			}
+		}()
 		slog.Info("Database connected.")
 	}
 

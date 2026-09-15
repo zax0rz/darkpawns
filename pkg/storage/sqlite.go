@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 	"github.com/zax0rz/darkpawns/pkg/game"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -44,13 +45,13 @@ func NewSQLiteBackend(dbPath string) (*SQLiteBackend, error) {
 	db.SetConnMaxLifetime(5 * time.Minute)
 
 	if err := db.Ping(); err != nil {
-		_ = db.Close()
+		errlog.Close(db, "close sqlite after ping failure")
 		return nil, fmt.Errorf("ping sqlite: %w", err)
 	}
 
 	b := &SQLiteBackend{db: db}
 	if err := b.migrate(); err != nil {
-		_ = db.Close()
+		errlog.Close(db, "close sqlite after migration failure")
 		return nil, fmt.Errorf("migrate sqlite: %w", err)
 	}
 
@@ -139,7 +140,7 @@ func (b *SQLiteBackend) List(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list players from sqlite: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close sqlite player listing rows")
 
 	var names []string
 	for rows.Next() {

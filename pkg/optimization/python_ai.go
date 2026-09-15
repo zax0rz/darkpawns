@@ -3,6 +3,7 @@ package optimization
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -427,7 +428,10 @@ func (ap *AsyncProcessor) Close() error {
 	ap.mu.Lock()
 	defer ap.mu.Unlock()
 
-	_ = ap.batchProcessor.Close()
+	if err := ap.batchProcessor.Close(); err != nil {
+		ap.workerPool.Close()
+		return fmt.Errorf("close AI batch processor: %w", err)
+	}
 	ap.workerPool.Close()
 
 	return nil

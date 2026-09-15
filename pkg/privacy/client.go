@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // PII categories supported by OpenAI Privacy Filter
@@ -120,10 +123,12 @@ func (c *Client) FilterText(text string) (string, []string, error) {
 		// the failure so callers can distinguish degradation from health (DP-1241).
 		return c.fallbackFilter(text), []string{"fallback"}, fmt.Errorf("privacy filter request failed: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer errlog.Close(resp.Body, "close privacy filter response body")
 
 	if resp.StatusCode != http.StatusOK {
-		_, _ = io.ReadAll(resp.Body) // Read and discard body
+		if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+			slog.Warn("privacy filter error response drain failed", "error", err)
+		}
 		return c.fallbackFilter(text), []string{"fallback"}, fmt.Errorf("privacy filter returned status %d", resp.StatusCode)
 	}
 
