@@ -2,8 +2,6 @@ package db
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -11,48 +9,55 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// TestMailSaveSerializationCharacterizesFixedBlockPadding proves the exact
-// serializer boundary independently of PostgreSQL. The control differs only
-// by C-style termination of the fixed-block text; both payloads remain valid
-// JSON text, but only the padded one contains the JSONB-invalid \u0000 escape.
-func TestMailSaveSerializationCharacterizesFixedBlockPadding(t *testing.T) {
-	const body = "proof-mail-body"
-	mailText := "mail header\r\n" + body + strings.Repeat("\x00", game.MailHeaderDataSize-len(body))
+// TestMailReceivedObjectSerializesWithoutFixedBlockPadding proves that the
+// native received mail object reaches PlayerToRecord with semantic text and
+// therefore no JSONB-invalid NUL escape.
+func TestMailReceivedObjectSerializesWithoutFixedBlockPadding(t *testing.T) {
+	const (
+		body     = "proof-mail-body"
+		mailText = "mail header\r\nFrom: Sender\r\n\r\n" + body
+	)
 
-	cases := []struct {
-		name       string
-		mailText   string
-		wantEscape bool
-	}{
-		{name: "fixed_block_text", mailText: mailText, wantEscape: true},
-		{name: "terminated_control", mailText: strings.TrimRight(mailText, "\x00"), wantEscape: false},
+	player := game.NewPlayer(901, "MailSavePayload", 1001)
+	obj := (&game.World{}).CreateMailObject(player, mailText)
+	player.Inventory.RestoreItem(obj)
+
+	record, err := PlayerToRecord(player, nil)
+	if err != nil {
+		t.Fatalf("PlayerToRecord: %v", err)
+	}
+	if !json.Valid(record.Inventory) {
+		t.Fatalf("inventory payload is not valid JSON: %q", record.Inventory)
+	}
+	if bytes.IndexByte(record.Inventory, 0) >= 0 {
+		t.Fatal("serialized inventory contains a raw NUL byte")
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			player := game.NewPlayer(901, "MailSavePayload", 1001)
-			obj := (&game.World{}).CreateMailObject(player, tc.mailText)
-			player.Inventory.RestoreItem(obj)
-
-			record, err := PlayerToRecord(player, nil)
-			if err != nil {
-				t.Fatalf("PlayerToRecord: %v", err)
-			}
-			if !json.Valid(record.Inventory) {
-				t.Fatalf("inventory payload is not valid JSON: %q", record.Inventory)
-			}
-			if bytes.IndexByte(record.Inventory, 0) >= 0 {
-				t.Fatal("serialized inventory contains a raw NUL byte")
-			}
-
-			payload := string(record.Inventory)
-			gotEscape := strings.Contains(payload, `\u0000`)
-			if gotEscape != tc.wantEscape {
-				t.Fatalf("JSON NUL escape = %t, want %t; payload=%q", gotEscape, tc.wantEscape, payload)
-			}
-			sanitized := strings.ReplaceAll(payload, `\u0000`, "<NUL>")
-			payloadHash := sha256.Sum256(record.Inventory)
-			t.Logf("serialized_inventory_sha256=%s serialized_inventory_sanitized=%s runtime_nul_count=%d", hex.EncodeToString(payloadHash[:]), sanitized, strings.Count(tc.mailText, "\x00"))
-		})
+	payload := string(record.Inventory)
+	if strings.Contains(payload, `\u0000`) {
+		t.Fatalf("received mail inventory contains JSON NUL escape: %q", payload)
 	}
+	if !strings.Contains(payload, body) {
+		t.Fatalf("received mail body missing from inventory payload: %q", payload)
+	}
+	t.Logf("received_mail_serialization nul_escape=false body=%q inventory=%s", body, payload)
+}
+
+// TestSerializerControlRetainsEmbeddedNUL is a separately labeled control for
+// the existing serializer. This repair does not strip NULs globally from
+// player JSON; only fixed mail text is converted at the mail read boundary.
+func TestSerializerControlRetainsEmbeddedNUL(t *testing.T) {
+	player := game.NewPlayer(902, "MailSerializerControl", 1001)
+	obj := (&game.World{}).CreateMailObject(player, "body")
+	obj.Runtime.ShortDesc = "control\x00tail"
+	player.Inventory.RestoreItem(obj)
+
+	record, err := PlayerToRecord(player, nil)
+	if err != nil {
+		t.Fatalf("PlayerToRecord: %v", err)
+	}
+	if !strings.Contains(string(record.Inventory), `\u0000`) {
+		t.Fatalf("serializer control lost embedded NUL escape: %q", record.Inventory)
+	}
+	t.Logf("serializer_control embedded_nul_preserved=true inventory=%s", record.Inventory)
 }

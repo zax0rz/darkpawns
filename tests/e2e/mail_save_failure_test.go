@@ -1,8 +1,6 @@
 package e2e
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,11 +15,12 @@ import (
 
 const mailSaveFailureBody = "proof-mail-body"
 
-// TestMailProductionRecipientSaveFailure proves the post-receipt persistence
-// failure through a disposable PostgreSQL database and the real mail path.
-// It is deliberately a characterization test: it must fail on 22P05 and does
-// not repair or normalize the production value.
-func TestMailProductionRecipientSaveFailure(t *testing.T) {
+// TestMailProductionRecipientSave proves the repaired fixed-block
+// conversion through the real server path and a disposable PostgreSQL
+// database. The recipient is saved by the server's shutdown cleanup after
+// receiving the live note; the persisted row is inspected directly so the
+// proof never reconstructs or sanitizes a replacement object.
+func TestMailProductionRecipientSave(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e: builds and launches the server binary; skipped in -short")
 	}
@@ -66,14 +65,11 @@ func TestMailProductionRecipientSaveFailure(t *testing.T) {
 	suffix := time.Now().UnixNano() % 1000000000
 	senderName := fmt.Sprintf("SaveSender%d", suffix)
 	recipientName := fmt.Sprintf("SaveRcpt%d", suffix)
-	controlName := fmt.Sprintf("SaveCtrl%d", suffix)
 	const password = "mailproof"
 	sender := seedMailPlayer(t, database, senderName, password, 34)
 	seededIDs = append(seededIDs, sender.ID)
 	recipient := seedMailPlayer(t, database, recipientName, password, 1)
 	seededIDs = append(seededIDs, recipient.ID)
-	control := seedMailPlayer(t, database, controlName, password, 1)
-	seededIDs = append(seededIDs, control.ID)
 	serverSender, err := database.GetPlayer(senderName)
 	if err != nil || serverSender == nil {
 		t.Fatalf("verify seeded sender before server: record=%+v err=%v", serverSender, err)
@@ -93,14 +89,14 @@ func TestMailProductionRecipientSaveFailure(t *testing.T) {
 	}
 	beforeReload, err := database.GetPlayer(recipientName)
 	if err != nil || beforeReload == nil {
-		t.Fatalf("reload recipient before receipt: record=%+v err=%v", beforeReload, err)
+		t.Fatalf("reload recipient before proof: record=%+v err=%v", beforeReload, err)
 	}
 	if got := strings.TrimSpace(string(beforeReload.Inventory)); got != "[]" {
 		t.Fatalf("recipient inventory before receipt = %q, want []", got)
 	}
 	t.Logf("recipient_before_receipt save_succeeded=true reload_inventory=%s", strings.TrimSpace(string(beforeReload.Inventory)))
 
-	serverOne, senderConn, senderReader := launchMailServer(t, root, dbURL, fixtureRoot, "save-failure-send")
+	serverOne, senderConn, senderReader := launchMailServer(t, root, dbURL, fixtureRoot, "save-send")
 	senderEntered := loginMailPlayer(t, senderConn, senderReader, senderName, password)
 	if !strings.Contains(strings.ToLower(senderEntered), "postman") {
 		t.Fatalf("sender did not enter the postmaster room: %q", senderEntered)
@@ -132,7 +128,7 @@ func TestMailProductionRecipientSaveFailure(t *testing.T) {
 	_ = senderConn.Close()
 	serverOne.stop(t)
 
-	serverTwo, recipientConn, recipientReader := launchMailServer(t, root, dbURL, fixtureRoot, "save-failure-receive")
+	serverTwo, recipientConn, recipientReader := launchMailServer(t, root, dbURL, fixtureRoot, "save-receive")
 	recipientEntered := loginMailPlayer(t, recipientConn, recipientReader, recipientName, password)
 	if !strings.Contains(strings.ToLower(recipientEntered), "postman") {
 		t.Fatalf("recipient did not enter the postmaster room: %q", recipientEntered)
@@ -161,103 +157,84 @@ func TestMailProductionRecipientSaveFailure(t *testing.T) {
 	if delivered == "" {
 		t.Fatal("recipient could not read the delivered note")
 	}
+	fromMarker := "From: " + sender.Name + "\r\n\r\n"
+	toMarker := "  To: " + recipient.Name + "\r\n"
+	if !strings.Contains(delivered, toMarker) {
+		t.Fatalf("delivered note missing recipient %q: %q", recipient.Name, delivered)
+	}
+	fromIndex := strings.Index(delivered, fromMarker)
+	if fromIndex == -1 {
+		t.Fatalf("delivered note missing sender %q: %q", sender.Name, delivered)
+	}
+	actualBody := delivered[fromIndex+len(fromMarker):]
+	if actualBody != mailSaveFailureBody {
+		t.Fatalf("delivered note body = %q, want exact %q", actualBody, mailSaveFailureBody)
+	}
+	if strings.IndexByte(delivered, 0) >= 0 {
+		t.Fatal("player-facing delivered note contains fixed-block NUL padding")
+	}
+	mustWrite(t, recipientConn, "inventory\r\n")
+	inventory := readFor(t, recipientConn, recipientReader, 3*time.Second)
+	if got := strings.Count(inventory, "a piece of mail"); got != 1 {
+		t.Fatalf("recipient inventory mail count = %d, want exactly one: %q", got, inventory)
+	}
+	t.Logf("production_delivered_note verified=true sender=%q body=%q inventory_items=1 runtime_nul_count=0", sender.Name, actualBody)
 
-	mailText := reconstructDeliveredMailText(t, delivered, recipientName, mailSaveFailureBody)
-	probePlayer := game.NewPlayer(recipient.ID, recipientName, 1203)
-	probeObject := (&game.World{}).CreateMailObject(probePlayer, mailText)
-	probePlayer.Inventory.RestoreItem(probeObject)
-	failedRecord, err := db.PlayerToRecord(probePlayer, nil)
-	if err != nil {
-		t.Fatalf("serialize post-receipt player: %v", err)
-	}
-	if !json.Valid(failedRecord.Inventory) {
-		t.Fatalf("post-receipt inventory is not valid JSON text: %q", failedRecord.Inventory)
-	}
-	if !strings.Contains(string(failedRecord.Inventory), `\u0000`) {
-		t.Fatalf("post-receipt inventory lacks the expected JSON NUL escape: %q", failedRecord.Inventory)
-	}
-	sanitizedPayload := strings.ReplaceAll(string(failedRecord.Inventory), `\u0000`, "<NUL>")
-	payloadHash := sha256.Sum256(failedRecord.Inventory)
-	nulCount := strings.Count(mailText, "\x00")
-	if nulCount != game.MailHeaderDataSize-len(mailSaveFailureBody) {
-		t.Fatalf("reconstructed Runtime.MailText NUL count = %d, want %d", nulCount, game.MailHeaderDataSize-len(mailSaveFailureBody))
-	}
-	t.Logf("post_receipt_runtime mail_text_bytes=%d mail_text_nul_count=%d first_nul_offset=%d mail_text_sha256=%s", len(mailText), nulCount, strings.IndexByte(mailText, 0), sha256Hex(mailText))
-	t.Logf("post_receipt_serialization inventory_json_sha256=%s inventory_json_sanitized=%s", hex.EncodeToString(payloadHash[:]), sanitizedPayload)
-
-	failureErr := database.SavePlayer(failedRecord)
-	if failureErr == nil {
-		t.Fatal("post-receipt SavePlayer unexpectedly succeeded")
-	}
-	if !strings.Contains(failureErr.Error(), "unsupported Unicode escape sequence") || !strings.Contains(failureErr.Error(), "22P05") {
-		t.Fatalf("post-receipt SavePlayer error = %v, want PostgreSQL 22P05 unsupported Unicode escape sequence", failureErr)
-	}
-	t.Logf("post_receipt_save operation=db.SavePlayer result=expected_failure error=%q", failureErr)
-
-	afterDirectFailure, err := database.GetPlayer(recipientName)
-	if err != nil || afterDirectFailure == nil {
-		t.Fatalf("reload recipient after failed save: record=%+v err=%v", afterDirectFailure, err)
-	}
-	if got := strings.TrimSpace(string(afterDirectFailure.Inventory)); got != "[]" {
-		t.Fatalf("recipient inventory after failed save = %q, want unchanged []", got)
-	}
-	if afterDirectFailure.RoomVNum != beforeReload.RoomVNum {
-		t.Fatalf("recipient room after failed save = %d, want unchanged %d", afterDirectFailure.RoomVNum, beforeReload.RoomVNum)
-	}
-	t.Logf("post_receipt_reload after_failed_save=true inventory=%s room_vnum=%d persisted_mail_object=false", strings.TrimSpace(string(afterDirectFailure.Inventory)), afterDirectFailure.RoomVNum)
-
-	controlPlayer := game.NewPlayer(control.ID, controlName, 1203)
-	controlText := strings.TrimRight(mailText, "\x00")
-	controlObject := (&game.World{}).CreateMailObject(controlPlayer, controlText)
-	controlPlayer.Inventory.RestoreItem(controlObject)
-	controlRecord, err := db.PlayerToRecord(controlPlayer, nil)
-	if err != nil {
-		t.Fatalf("serialize terminated control: %v", err)
-	}
-	if strings.Contains(string(controlRecord.Inventory), `\u0000`) {
-		t.Fatalf("terminated control still contains JSON NUL escape: %q", controlRecord.Inventory)
-	}
-	if err := database.SavePlayer(controlRecord); err != nil {
-		t.Fatalf("terminated control SavePlayer: %v", err)
-	}
-	controlReload, err := database.GetPlayer(controlName)
-	if err != nil || controlReload == nil {
-		t.Fatalf("reload terminated control: record=%+v err=%v", controlReload, err)
-	}
-	if !strings.Contains(string(controlReload.Inventory), mailSaveFailureBody) {
-		t.Fatalf("terminated control reload lost mail body: %q", controlReload.Inventory)
-	}
-	t.Logf("control terminated_value save_succeeded=true reload_contains_body=true inventory=%s", strings.TrimSpace(string(controlReload.Inventory)))
-
-	mustWrite(t, recipientConn, "quit\r\n")
-	_ = readFor(t, recipientConn, recipientReader, time.Second)
-	_ = recipientConn.Close()
+	// SIGTERM exercises the actual server session cleanup path, including
+	// PlayerToRecord and DB.SavePlayer for the live received object.
 	serverTwo.stop(t)
+	_ = recipientConn.Close()
 	serverLog := serverTwo.logBuffer.String()
-	if !strings.Contains(serverLog, "22P05") || !strings.Contains(serverLog, "DB save error") {
-		t.Fatalf("production shutdown log lacks expected recipient save failure: %q", serverLog)
+	if strings.Contains(serverLog, "DB save error") || strings.Contains(serverLog, "linkdead save error") {
+		t.Fatalf("production recipient shutdown save logged an error: %q", serverLog)
 	}
-	t.Logf("production_shutdown_save_log matched=true 22P05=true db_save_error=true")
-	preserveMailSaveFailureArtifact(t, preserveDir, "proof-summary.json", []byte(fmt.Sprintf("{\"failure_error\":%q,\"runtime_mail_text_nul_count\":%d,\"serialized_inventory_sanitized\":%q,\"recipient_inventory_after_failed_save\":%q,\"control_save_succeeded\":true}\n", failureErr.Error(), nulCount, sanitizedPayload, strings.TrimSpace(string(afterDirectFailure.Inventory)))))
+	persisted, err := database.GetPlayer(recipientName)
+	if err != nil || persisted == nil {
+		t.Fatalf("reload recipient after server save: record=%+v err=%v", persisted, err)
+	}
+	persistedMailText := assertPersistedMailObject(t, persisted.Inventory, sender.Name, recipient.Name, mailSaveFailureBody)
+	t.Logf("production_recipient_save path=server_shutdown_cleanup succeeded=true inventory_items=1 runtime_nul_count=0 mail_text_bytes=%d", len(persistedMailText))
+
+	summary, err := json.Marshal(map[string]interface{}{
+		"sender":                  sender.Name,
+		"recipient":               recipient.Name,
+		"body":                    mailSaveFailureBody,
+		"persisted_inventory":     json.RawMessage(persisted.Inventory),
+		"persisted_mail_text_len": len(persistedMailText),
+		"reload_proof":            "blocked: RecordToPlayer skips synthetic VNum -1 mail objects",
+	})
+	if err != nil {
+		t.Fatalf("marshal proof summary: %v", err)
+	}
+	preserveMailSaveFailureArtifact(t, preserveDir, "proof-summary.json", append(summary, '\n'))
 }
 
-func reconstructDeliveredMailText(t *testing.T, delivered, recipientName, body string) string {
+func assertPersistedMailObject(t *testing.T, inventory []byte, senderName, recipientName, body string) string {
 	t.Helper()
-	const header = " * * * * Dark Pawns Mail System * * * *\r\n"
-	start := strings.Index(delivered, header)
-	if start < 0 {
-		t.Fatalf("delivered note lacks mail header: %q", delivered)
+	if !json.Valid(inventory) {
+		t.Fatalf("persisted inventory is not valid JSON: %q", inventory)
 	}
-	bodyOffset := strings.Index(delivered[start:], body)
-	if bodyOffset < 0 {
-		t.Fatalf("delivered note lacks body %q: %q", body, delivered)
+	var items []game.SaveItemData
+	if err := json.Unmarshal(inventory, &items); err != nil {
+		t.Fatalf("decode persisted inventory: %v", err)
 	}
-	bodyOffset += start
-	prefix := delivered[start:bodyOffset]
-	if !strings.Contains(prefix, "  To: "+recipientName+"\r\n") {
-		t.Fatalf("delivered note header lacks recipient %q: %q", recipientName, prefix)
+	if len(items) != 1 {
+		t.Fatalf("persisted inventory items = %d, want exactly one: %q", len(items), inventory)
 	}
-	return prefix + body + strings.Repeat("\x00", game.MailHeaderDataSize-len(body))
+	if items[0].VNum != -1 || items[0].State == nil {
+		t.Fatalf("persisted item = %+v, want synthetic mail object with state", items[0])
+	}
+	mailText, ok := items[0].State["mail_text"].(string)
+	if !ok {
+		t.Fatalf("persisted mail state missing string mail_text: %+v", items[0].State)
+	}
+	if strings.IndexByte(mailText, 0) >= 0 {
+		t.Fatalf("persisted Runtime.MailText contains NUL padding: %q", mailText)
+	}
+	if !strings.Contains(mailText, "  To: "+recipientName+"\r\n") || !strings.Contains(mailText, "From: "+senderName+"\r\n\r\n") || !strings.HasSuffix(mailText, body) {
+		t.Fatalf("persisted mail text lost exact sender/body: %q", mailText)
+	}
+	return mailText
 }
 
 func preserveMailSaveFailureArtifact(t *testing.T, dir, name string, data []byte) {
@@ -268,9 +245,4 @@ func preserveMailSaveFailureArtifact(t *testing.T, dir, name string, data []byte
 	if err := os.WriteFile(filepath.Join(dir, name), data, 0o600); err != nil {
 		t.Fatalf("preserve proof artifact %s: %v", name, err)
 	}
-}
-
-func sha256Hex(value string) string {
-	hash := sha256.Sum256([]byte(value))
-	return hex.EncodeToString(hash[:])
 }
