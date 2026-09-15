@@ -1,11 +1,152 @@
 package db
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
+
+func TestRecordToPlayerReconstructsPersistedMail(t *testing.T) {
+	world := newConversionWorld(t, nil)
+	const mailText = " * * * * Dark Pawns Mail System * * * *\r\n" +
+		"Date: Mon Jan 1 00:00:00 1990\r\n" +
+		"  To: Recipient\r\n" +
+		"From: Sender\r\n\r\n" +
+		"exact persisted body"
+	record := conversionRecord(`[{"vnum":-1,"count":1,"locate":0,"state":{"mail_text":"` +
+		" * * * * Dark Pawns Mail System * * * *\\r\\n" +
+		"Date: Mon Jan 1 00:00:00 1990\\r\\n" +
+		"  To: Recipient\\r\\n" +
+		"From: Sender\\r\\n\\r\\nexact persisted body" +
+		`"}}]`)
+
+	restored, err := RecordToPlayer(record, world)
+	if err != nil {
+		t.Fatalf("RecordToPlayer: %v", err)
+	}
+	items := restored.Inventory.FindItems("")
+	if len(items) != 1 {
+		t.Fatalf("restored inventory items = %d, want 1", len(items))
+	}
+	mail := items[0]
+	if mail.VNum != -1 || mail.Prototype != nil {
+		t.Fatalf("restored mail identity = vnum %d prototype %v, want synthetic vnum -1", mail.VNum, mail.Prototype)
+	}
+	if mail.Runtime.MailText != mailText {
+		t.Fatalf("restored mail text = %q, want exact sender/body text %q", mail.Runtime.MailText, mailText)
+	}
+	if !strings.Contains(mail.Runtime.MailText, "From: Sender\r\n\r\nexact persisted body") {
+		t.Fatalf("restored mail lost sender/body: %q", mail.Runtime.MailText)
+	}
+	if mail.GetKeywords() != "mail paper letter" || mail.GetShortDesc() != "a piece of mail" {
+		t.Fatalf("restored mail identity fields = keywords %q short %q", mail.GetKeywords(), mail.GetShortDesc())
+	}
+	if mail.GetTypeFlag() != game.ITEM_NOTE || !mail.CanPickUp {
+		t.Fatalf("restored mail type fields = type %d can_pick_up %t, want note/take", mail.GetTypeFlag(), mail.CanPickUp)
+	}
+	if got, want := mail.Location, game.LocInventoryPlayer(restored.Name); got != want {
+		t.Fatalf("restored mail location = %#v, want %#v", got, want)
+	}
+	if err := mail.Location.Validate(); err != nil {
+		t.Fatalf("restored mail location invalid: %v", err)
+	}
+}
+
+func TestRecordToPlayerDoesNotTreatUnrelatedSyntheticAsMail(t *testing.T) {
+	world := newConversionWorld(t, nil)
+	record := conversionRecord(`[{"vnum":-1,"count":1,"locate":0,"state":{"name":"the corpse of someone","short_desc":"a corpse"}}]`)
+
+	restored, err := RecordToPlayer(record, world)
+	if err != nil {
+		t.Fatalf("RecordToPlayer: %v", err)
+	}
+	if got := len(restored.Inventory.FindItems("")); got != 0 {
+		t.Fatalf("unrelated synthetic inventory items = %d, want 0", got)
+	}
+}
+
+func TestRecordToPlayerSkipsMalformedPersistedMailState(t *testing.T) {
+	world := newConversionWorld(t, nil)
+	tests := []struct {
+		name string
+		json string
+	}{
+		{name: "missing_state", json: `[{"vnum":-1,"count":1,"locate":0}]`},
+		{name: "missing_mail_text", json: `[{"vnum":-1,"count":1,"locate":0,"state":{}}]`},
+		{name: "null_mail_text", json: `[{"vnum":-1,"count":1,"locate":0,"state":{"mail_text":null}}]`},
+		{name: "non_string_mail_text", json: `[{"vnum":-1,"count":1,"locate":0,"state":{"mail_text":7}}]`},
+		{name: "empty_mail_text", json: `[{"vnum":-1,"count":1,"locate":0,"state":{"mail_text":""}}]`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restored, err := RecordToPlayer(conversionRecord(tt.json), world)
+			if err != nil {
+				t.Fatalf("RecordToPlayer: %v", err)
+			}
+			if got := len(restored.Inventory.FindItems("")); got != 0 {
+				t.Fatalf("malformed mail inventory items = %d, want 0", got)
+			}
+		})
+	}
+}
+
+func TestRecordToPlayerKeepsOrdinaryPrototypeInventoryPath(t *testing.T) {
+	proto := parser.Obj{VNum: 42, ShortDesc: "a plain token", Keywords: "token", TypeFlag: game.ITEM_OTHER}
+	world := newConversionWorld(t, []parser.Obj{proto})
+	record := conversionRecord(`[{"vnum":42,"count":1,"locate":0,"state":{"short_desc_override":"a marked token"}}]`)
+
+	restored, err := RecordToPlayer(record, world)
+	if err != nil {
+		t.Fatalf("RecordToPlayer: %v", err)
+	}
+	items := restored.Inventory.FindItems("")
+	if len(items) != 1 {
+		t.Fatalf("ordinary inventory items = %d, want 1", len(items))
+	}
+	item := items[0]
+	if item.Prototype == nil || item.Prototype.VNum != proto.VNum || item.VNum != proto.VNum {
+		t.Fatalf("ordinary item identity = vnum %d prototype %#v", item.VNum, item.Prototype)
+	}
+	if item.GetShortDesc() != "a marked token" || item.GetTypeFlag() != game.ITEM_OTHER {
+		t.Fatalf("ordinary item state/type = short %q type %d", item.GetShortDesc(), item.GetTypeFlag())
+	}
+}
+
+func newConversionWorld(t *testing.T, objects []parser.Obj) *game.World {
+	t.Helper()
+	parsed := &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Conversion room", Zone: 1}},
+		Objs:  objects,
+	}
+	world, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(world.StopAITicker)
+	return world
+}
+
+func conversionRecord(inventory string) *PlayerRecord {
+	return &PlayerRecord{
+		ID:        777,
+		Name:      "Recipient",
+		RoomVNum:  1001,
+		Level:     1,
+		Class:     3,
+		Race:      0,
+		StatStr:   10,
+		StatInt:   10,
+		StatWis:   10,
+		StatDex:   10,
+		StatCon:   10,
+		StatCha:   10,
+		Inventory: []byte(inventory),
+		Equipment: []byte("{}"),
+	}
+}
 
 func TestPlayerToRecordAndBack(t *testing.T) {
 	// Create mock world with object prototypes

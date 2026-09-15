@@ -94,6 +94,15 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 		var invItems []game.SaveItemData
 		if err := json.Unmarshal(r.Inventory, &invItems); err == nil {
 			for _, item := range invItems {
+				if item.VNum == -1 {
+					if obj, ok := restorePersistedMail(p, world, item); ok {
+						if p.Inventory.RestoreItem(obj) {
+							slog.Warn("restored item over inventory capacity",
+								"player", p.Name, "vnum", obj.VNum)
+						}
+					}
+					continue
+				}
 				if proto, ok := world.GetObjPrototype(item.VNum); ok {
 					obj := game.NewObjectInstance(proto, -1)
 					if item.State != nil {
@@ -170,6 +179,28 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	}
 
 	return p, nil
+}
+
+// restorePersistedMail reconstructs the one synthetic inventory object that
+// has an established persisted representation. VNum -1 is not sufficient to
+// identify mail because other synthetic objects also use it; mail_text is the
+// existing state discriminator written by ObjectInstance.GetSaveState.
+func restorePersistedMail(p *game.Player, world *game.World, item game.SaveItemData) (*game.ObjectInstance, bool) {
+	mailText, ok := item.State["mail_text"].(string)
+	if !ok || mailText == "" {
+		slog.Warn("skipping persisted synthetic object with invalid mail state",
+			"player", p.Name, "vnum", item.VNum, "has_state", item.State != nil)
+		return nil, false
+	}
+
+	obj := world.CreateMailObject(p, mailText)
+	if obj == nil {
+		slog.Warn("skipping persisted mail object that could not be constructed",
+			"player", p.Name, "vnum", item.VNum)
+		return nil, false
+	}
+	obj.Location = game.LocInventoryPlayer(p.Name)
+	return obj, true
 }
 
 // inventorySaveData returns SaveItemData for each inventory item, preserving state.

@@ -237,6 +237,69 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	_ = readFor(t, recipientConn, recipientReader, time.Second)
 	_ = recipientConn.Close()
 	serverTwo.stop(t)
+	assertMailServerSaveLogClean(t, serverTwo)
+
+	persistedRecipient, err := database.GetPlayer(recipientName)
+	if err != nil || persistedRecipient == nil {
+		t.Fatalf("recipient identity after receipt save: record=%+v err=%v", persistedRecipient, err)
+	}
+	persistedMailText := assertPersistedMailObject(t, persistedRecipient.Inventory, sender.Name, recipient.Name, productionMailBody)
+	preserveMailLifecycleArtifact(t, "recipient-inventory.json", persistedRecipient.Inventory)
+	t.Logf("production_recipient_save completed=true inventory_items=1 mail_text_bytes=%d", len(persistedMailText))
+
+	serverThree, reloadedConn, reloadedReader := launchMailServer(t, root, dbURL, fixtureRoot, "reload")
+	reloadedEntered := loginMailPlayer(t, reloadedConn, reloadedReader, recipientName, password)
+	if !strings.Contains(strings.ToLower(reloadedEntered), "postman") {
+		t.Fatalf("recipient did not enter the postmaster room on reload: %q", reloadedEntered)
+	}
+	mustWrite(t, reloadedConn, "inventory\r\n")
+	reloadedInventory := readFor(t, reloadedConn, reloadedReader, 3*time.Second)
+	if got := strings.Count(reloadedInventory, "a piece of mail"); got != 1 {
+		t.Fatalf("reloaded recipient inventory mail count = %d, want exactly one: %q", got, reloadedInventory)
+	}
+
+	mustWrite(t, reloadedConn, "read letter\r\n")
+	reloadedRead := readUntil(t, reloadedConn, reloadedReader, productionMailBody, 5*time.Second)
+	if reloadedRead == "" {
+		t.Fatal("reloaded recipient could not read the persisted mail object")
+	}
+	if !strings.Contains(reloadedRead, toMarker) || !strings.Contains(reloadedRead, fromMarker) {
+		t.Fatalf("reloaded note missing exact sender/recipient markers: %q", reloadedRead)
+	}
+	reloadedFromIndex := strings.Index(reloadedRead, fromMarker)
+	reloadedBody := strings.TrimRight(reloadedRead[reloadedFromIndex+len(fromMarker):], "\x00")
+	if reloadedBody != productionMailBody {
+		t.Fatalf("reloaded note body = %q, want %q", reloadedBody, productionMailBody)
+	}
+
+	mustWrite(t, reloadedConn, "check\r\n")
+	reloadedCheck := readUntil(t, reloadedConn, reloadedReader, "Sorry, you don't have any mail waiting.", 5*time.Second)
+	if reloadedCheck == "" {
+		t.Fatal("reloaded recipient check did not report an empty mailbox")
+	}
+	mustWrite(t, reloadedConn, "receive\r\n")
+	reloadedReceive := readUntil(t, reloadedConn, reloadedReader, "Sorry, you don't have any mail waiting.", 5*time.Second)
+	if reloadedReceive == "" {
+		t.Fatal("reloaded recipient receive did not report an empty mailbox")
+	}
+	t.Logf("production_relogin completed=true inventory_items=1 sender=%q body=%q check=%q receive=%q", sender.Name, reloadedBody, reloadedCheck, reloadedReceive)
+
+	mustWrite(t, reloadedConn, "quit\r\n")
+	_ = readFor(t, reloadedConn, reloadedReader, time.Second)
+	_ = reloadedConn.Close()
+	serverThree.stop(t)
+	assertMailServerSaveLogClean(t, serverThree)
+}
+
+func assertMailServerSaveLogClean(t *testing.T, process *mailServerProcess) {
+	t.Helper()
+	log := process.logBuffer.String()
+	for _, marker := range []string{"DB save error", "linkdead save error"} {
+		if strings.Contains(log, marker) {
+			t.Fatalf("mail server %s log contains %q: %s", process.label, marker, log)
+		}
+	}
+	t.Logf("mail_server_save_log_checked server=%s db_save_errors=0 linkdead_save_errors=0", process.label)
 }
 
 type mailServerProcess struct {
