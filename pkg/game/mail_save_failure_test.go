@@ -113,6 +113,59 @@ func TestMailReceiveJoinsBoundedFullMultiBlockText(t *testing.T) {
 	}
 }
 
+// TestMailReceiveStopsContinuationAtFirstNUL proves that readDelete applies
+// the fixed-field C string contract to continuation blocks, including when a
+// corrupt-looking nonzero tail follows the first terminator.
+func TestMailReceiveStopsContinuationAtFirstNUL(t *testing.T) {
+	setupNativeMailReadFixture(t)
+
+	headerText := "header text"
+	continuationPrefix := "continuation text"
+	continuationTail := "nonzero padding"
+	header := mailHeader{
+		BlockType: MailBlockHeader,
+		To:        mailLifecycleRecipientID,
+		From:      mailLifecycleSenderID,
+		MailTime:  0,
+		NextBlock: MailBlockSize,
+	}
+	copy(header.Text[:], headerText)
+	data := mailData{BlockType: MailBlockLast}
+	copy(data.Text[:], continuationPrefix)
+	data.Text[len(continuationPrefix)] = 0
+	copy(data.Text[len(continuationPrefix)+1:], continuationTail)
+
+	before := append(marshalMailHeader(&header), marshalMailData(&data)...)
+	writeToFile(marshalMailHeader(&header), MailBlockSize, 0)
+	writeToFile(marshalMailData(&data), MailBlockSize, MailBlockSize)
+	indexMail(header.To, 0)
+
+	got := readDelete(header.To)
+	wantText := headerText + continuationPrefix
+	if !strings.HasSuffix(got, wantText) {
+		t.Fatalf("received continuation text = %q, want suffix %q", got, wantText)
+	}
+	if strings.Contains(got, continuationTail) || strings.IndexByte(got, 0) >= 0 {
+		t.Fatalf("received continuation leaked bytes after first NUL: %q", got)
+	}
+
+	deletedHeader := header
+	deletedHeader.BlockType = MailBlockDeleted
+	deletedData := data
+	deletedData.BlockType = MailBlockDeleted
+	wantAfter := append(marshalMailHeader(&deletedHeader), marshalMailData(&deletedData)...)
+	after, err := os.ReadFile(MailFile)
+	if err != nil {
+		t.Fatalf("read deleted continuation fixture: %v", err)
+	}
+	if !bytes.Equal(after, wantAfter) {
+		t.Fatalf("deleted continuation fixture changed beyond block-type markers")
+	}
+	if bytes.Equal(before, after) {
+		t.Fatalf("mail fixture did not record the existing deletion-marker transitions")
+	}
+}
+
 // TestMailReceiveProducesSemanticRuntimeText proves the native Go mail path
 // places the C-semantic text in the delivered object before persistence.
 func TestMailReceiveProducesSemanticRuntimeText(t *testing.T) {
