@@ -10,6 +10,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/zax0rz/darkpawns/pkg/errlog"
+
 	_ "github.com/lib/pq"
 )
 
@@ -141,7 +143,7 @@ func (m *Manager) loadActivePenalties() {
 		slog.Error("Failed to load penalties", "error", err)
 		return
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close active-penalty rows")
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -183,7 +185,7 @@ func (m *Manager) loadWordFilters() {
 		slog.Error("Failed to load word filters", "error", err)
 		return
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close word-filter rows")
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -484,7 +486,7 @@ func (m *Manager) ListReports() ([]AbuseReport, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query reports: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close abuse-report rows")
 
 	var result []AbuseReport
 	for rows.Next() {

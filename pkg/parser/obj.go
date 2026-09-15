@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 const (
@@ -63,7 +65,7 @@ func ParseObjFile(path string) ([]Obj, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	defer func() { _ = file.Close() }()
+	defer errlog.Close(file, "parse object file", "path", path)
 
 	var objs []Obj
 	lb := &lineBuffer{scanner: bufio.NewScanner(file)}

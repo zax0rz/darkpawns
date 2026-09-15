@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,22 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 )
+
+type failingMemoryHookBody struct{}
+
+func (failingMemoryHookBody) Read([]byte) (int, error) {
+	return 0, errors.New("request body read failed")
+}
+
+func (failingMemoryHookBody) Close() error { return nil }
+
+func TestDoMemoryHookWithRetryReturnsRequestBodyReadError(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "http://memory-hook.test/event", failingMemoryHookBody{})
+	err := doMemoryHookWithRetry(&http.Client{}, req)
+	if err == nil || err.Error() != "read memory hook request body: request body read failed" {
+		t.Fatalf("request body error = %v, want read error", err)
+	}
+}
 
 func TestSendMemoryEvent_2xxSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

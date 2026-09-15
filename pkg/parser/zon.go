@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // Zone represents a parsed zone from a .zon file.
@@ -39,7 +41,7 @@ func ParseZonFile(path string) (*Zone, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	defer func() { _ = file.Close() }()
+	defer errlog.Close(file, "parse zone file", "path", path)
 
 	scanner := bufio.NewScanner(file)
 

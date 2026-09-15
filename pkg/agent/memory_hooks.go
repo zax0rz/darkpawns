@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -89,8 +90,12 @@ func NewREMSynthesisClient(config PythonSystemConfig) *REMSynthesisClient {
 func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
 	var body []byte
 	if req.Body != nil {
-		body, _ = io.ReadAll(req.Body)
-		_ = req.Body.Close()
+		var err error
+		body, err = io.ReadAll(req.Body)
+		errlog.Close(req.Body, "read memory hook request body")
+		if err != nil {
+			return fmt.Errorf("read memory hook request body: %w", err)
+		}
 	}
 
 	var lastErr error
@@ -106,8 +111,10 @@ func doMemoryHookWithRetry(httpClient *http.Client, req *http.Request) error {
 		} else {
 			// Drain the body before Close so the shared transport can reuse
 			// the keep-alive connection for the next hook call / retry.
-			_, _ = io.Copy(io.Discard, resp.Body)
-			_ = resp.Body.Close()
+			if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+				slog.Warn("memory hook response drain failed", "error", err)
+			}
+			errlog.Close(resp.Body, "close memory hook response body")
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 				return nil
 			}

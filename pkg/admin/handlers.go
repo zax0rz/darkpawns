@@ -13,6 +13,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -1653,7 +1654,7 @@ func handleDecisionLog(database *db.DB) http.HandlerFunc {
 			http.Error(w, `{"error":"query failed"}`, http.StatusInternalServerError)
 			return
 		}
-		defer func() { _ = rows.Close() }()
+		defer errlog.Close(rows, "close admin player rows")
 
 		type DecisionRow struct {
 			ID           int64    `json:"id"`
@@ -2290,7 +2291,7 @@ func handleNarrativeFeed(database *db.DB) http.HandlerFunc {
 			http.Error(w, `{"error":"query failed"}`, http.StatusInternalServerError)
 			return
 		}
-		defer func() { _ = rows.Close() }()
+		defer errlog.Close(rows, "close admin narrative rows")
 
 		type NarrativeRow struct {
 			ID            int64     `json:"id"`

@@ -205,7 +205,9 @@ func (gl *GameLoop) PumpPulses(n int) error {
 // already exited via context cancellation — it just observes the closed
 // doneCh and returns.
 func (gl *GameLoop) Stop() {
-	_ = gl.StopContext(context.Background())
+	if err := gl.StopContext(context.Background()); err != nil {
+		slog.Error("game loop stop failed", "error", err)
+	}
 }
 
 // StopContext signals the loop goroutine to stop and waits until it exits or

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // sendDiscordNotification dispatches a content payload to a Discord Webhook.
@@ -44,7 +46,7 @@ func sendDiscordNotification(content string) {
 			slog.Error("Discord: webhook delivery failed", "error", err)
 			return
 		}
-		defer func() { _ = resp.Body.Close() }()
+		defer errlog.Close(resp.Body, "close Discord webhook response body")
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			slog.Error("Discord: webhook returned non-success code", "status", resp.Status)

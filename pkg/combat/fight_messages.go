@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	miscdata "github.com/zax0rz/darkpawns/lib/misc"
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // FightMessageAction contains the three audience-specific forms of one fight
@@ -59,7 +60,7 @@ func LoadFightMessages(path string) (FightMessages, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open fight messages: %w", err)
 	}
-	defer func() { _ = file.Close() }()
+	defer errlog.Close(file, "load fight messages", "path", path)
 
 	messages, err := ParseFightMessages(file)
 	if err != nil {

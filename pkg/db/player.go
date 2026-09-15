@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/errlog"
+
 	_ "github.com/lib/pq"
 )
 
@@ -311,7 +313,7 @@ func (db *DB) ListPlayerNames() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close player-name listing rows")
 	var names []string
 	for rows.Next() {
 		var name string

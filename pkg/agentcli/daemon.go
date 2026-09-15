@@ -321,8 +321,11 @@ func (d *Daemon) handleVars(data json.RawMessage) error {
 		slog.Warn("save state", "error", err)
 	}
 
-	// Buffer event
-	_, _ = d.events.Append("vars", vars)
+	// Buffer event. State remains updated in memory even if the optional event
+	// journal is unavailable; surface the persistence failure to the caller.
+	if _, err := d.events.Append("vars", vars); err != nil {
+		return fmt.Errorf("append vars event: %w", err)
+	}
 
 	return nil
 }
@@ -338,7 +341,9 @@ func (d *Daemon) handleState(data json.RawMessage) error {
 		slog.Warn("save state", "error", err)
 	}
 
-	_, _ = d.events.Append("state", state)
+	if _, err := d.events.Append("state", state); err != nil {
+		return fmt.Errorf("append state event: %w", err)
+	}
 	return nil
 }
 
@@ -354,14 +359,18 @@ func (d *Daemon) handleEvent(envType string, data json.RawMessage) error {
 	}
 	if err := json.Unmarshal(data, &evt); err != nil {
 		// Not all events have structured data; fall back to the envelope type.
-		_, _ = d.events.Append(envType, data)
+		if _, err := d.events.Append(envType, data); err != nil {
+			return fmt.Errorf("append %s event: %w", envType, err)
+		}
 		return nil
 	}
 
 	if evt.Type == "" {
 		evt.Type = envType
 	}
-	_, _ = d.events.Append(evt.Type, data)
+	if _, err := d.events.Append(evt.Type, data); err != nil {
+		return fmt.Errorf("append %s event: %w", evt.Type, err)
+	}
 	return nil
 }
 
@@ -423,7 +432,9 @@ func (d *Daemon) sendResponse(conn net.Conn, resp DaemonResponse) {
 		return
 	}
 	data = append(data, '\n')
-	_, _ = conn.Write(data)
+	if _, err := conn.Write(data); err != nil {
+		slog.Warn("daemon response write failed", "error", err)
+	}
 }
 
 // executeCommand routes a CLI request to the appropriate handler.

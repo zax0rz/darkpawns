@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // NarrativeMemory is one server-written narrative fact about an agent's experience.
@@ -150,7 +152,7 @@ func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap memories: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close narrative bootstrap rows")
 	return scanNarrativeMemories(rows)
 }
 
@@ -170,7 +172,7 @@ func (db *DB) RecentMemories(agentName, sessionID string) ([]*NarrativeMemory, e
 	if err != nil {
 		return nil, fmt.Errorf("recent memories: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close recent narrative rows")
 	return scanNarrativeMemories(rows)
 }
 
@@ -193,7 +195,7 @@ func (db *DB) SocialEventMemories(socialEventID string) ([]*NarrativeMemory, err
 	if err != nil {
 		return nil, fmt.Errorf("social event memories: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close social-event narrative rows")
 	return scanNarrativeMemories(rows)
 }
 
@@ -230,7 +232,7 @@ func (db *DB) GetSessionSummaries(agentName string, limit int) ([]string, error)
 	if err != nil {
 		return nil, fmt.Errorf("get session summaries: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
+	defer errlog.Close(rows, "close session-summary rows")
 
 	var summaries []string
 	for rows.Next() {

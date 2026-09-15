@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // lineBuffer wraps a bufio.Scanner to allow one-line "unread" for the mob parser.
@@ -146,7 +147,7 @@ func ParseMobFile(path string) ([]Mob, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	defer func() { _ = file.Close() }()
+	defer errlog.Close(file, "parse mob file", "path", path)
 
 	var mobs []Mob
 	lb := &lineBuffer{scanner: bufio.NewScanner(file)}
