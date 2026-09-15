@@ -32,14 +32,14 @@ The initial lint invocation was the known environment-only failure when `go`
 was absent from PATH; the corrected `/usr/local/go/bin` PATH invocation
 reported `0 issues`.
 
-This correction changes only
-`pkg/game/mail_save_failure_test.go` relative to the tested implementation
-checkpoint `ec34175862827fec6d497354b1228de44f4b6ec6`. Production code,
-oracle code, Makefile, scenario files, fixtures, and runner inputs are
-identical, so the full census recorded at the implementation checkpoint is
-reused rather than rerun for this test-only delta. The branch was pushed to
-the open #1465 PR for human merge; no reload implementation is stacked on
-that unmerged prerequisite.
+The correction commit changes only `pkg/game/mail_save_failure_test.go`
+relative to the tested implementation checkpoint
+`ec34175862827fec6d497354b1228de44f4b6ec6`. Production code, oracle code,
+Makefile, scenario files, fixtures, and runner inputs are identical, so the
+full census recorded at the implementation checkpoint is reused rather than
+rerun for this test-only delta. The branch was pushed to the open #1465 PR for
+human merge; no reload implementation is stacked on that unmerged
+prerequisite.
 
 ## R5 call-path finding
 
