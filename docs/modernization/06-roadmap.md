@@ -575,3 +575,43 @@ acceptance tests, known C/Go debts, and separate recipient save-error symptom
 are recorded in the [dated ownership-readiness handoff](../fidelity/depth/handoff/2026-09-14-mail-ownership-readiness.md)
 and [preserved evidence README](../fidelity/evidence/2026-09-14-mail-ownership-readiness/README.md).
 Phase 6.4 remains open; no ownership implementation is part of this change.
+
+### 2026-09-14 bounded mail text-conversion repair
+
+The fixed-block NUL-padding/save defect established after #1464 is repaired
+within its tested boundary on the unmerged branch
+glm/fix-mail-text-conversion. Fresh origin/main was f3c1bfbf0 and the
+implementation checkpoint was ec34175862827fec6d497354b1228de44f4b6ec6.
+The four-file production/test delta adds a first-NUL C-string conversion for
+both header and continuation text in readDelete; the Go writer, native file
+format, written bytes, markers, offsets, identity resolution, locks,
+serializer, schema, and save representation are unchanged. No src/ or
+darkpawns-c-oracle/ file changed.
+
+Native conversion regressions cover empty, padded short, embedded-terminator,
+full no-terminator, short single-block, and bounded multi-block text. The
+explicit disposable PostgreSQL proof used isolated native storage, a
+persistent sender, an offline recipient, real composition, server restart
+before receipt, live read, empty second check/receive, and the actual
+shutdown cleanup save path. The persisted database row contains exactly one
+mail object with exact sender/body and no NUL or \u0000 escape. This
+distinguishes live receipt proof from database persistence proof.
+
+Fresh full oracle regression on frozen inputs completed with
+941 scenarios: 931 PASS, 9 established EXPECTED, 1 established
+human-cleared UNPINNABLE (accuse-noarg-depth), and zero failed, infra,
+timed-out, or stale scenarios. Nine bounded infrastructure-shaped attempts
+recovered to PASS. The complete output and available attempt logs are
+preserved under
+/home/zach/dp-mail-text-conversion-evidence-2026-09-14/full-census-ec3417586.
+The dated evidence is in
+docs/fidelity/evidence/2026-09-14-mail-text-conversion/README.md and the
+dated handoff is in
+docs/fidelity/depth/handoff/2026-09-14-mail-text-conversion.md.
+
+The diagnostic fresh relogin remains a separate blocked proof: PostgreSQL
+persists the synthetic VNum -1 mail object, but RecordToPlayer skips it
+because it has no world prototype. A separately authorized mail-object
+rehydration/ownership-boundary slice is required for reload proof. Known
+mail-object, C/Go format/output, broader lifecycle, and Phase 6.4 ownership
+debts remain open. Phase 6.4 ownership injection is deferred.
