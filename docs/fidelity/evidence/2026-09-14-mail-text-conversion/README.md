@@ -8,6 +8,20 @@ f3c1bfbf0, which contains merged PRs #1463 and #1464. The implementation
 checkpoint is ec34175862827fec6d497354b1228de44f4b6ec6. The repair is
 intentionally unmerged and stops for human review.
 
+The #1465 test correction is checkpoint
+`77635a46a149eca863a4f5db8ea8cdce1e513764`. It changes only
+`pkg/game/mail_save_failure_test.go` relative to the tested implementation
+checkpoint `ec34175862827fec6d497354b1228de44f4b6ec6`. Production code,
+oracle code, Makefile, scenarios, fixtures, and runner inputs are identical;
+the full census is therefore reused for this test-only delta. The focused
+suite and race variant, gofumpt, diff check, build, vet, full tests, game
+tests, lint (with `/usr/local/go/bin` on PATH), fidelity-depth, and
+expected-divergences-check all pass. The new regression drives a
+continuation prefix/NUL/nonzero-tail field through `readDelete`, verifies
+first-NUL termination, and verifies that receipt changes native bytes only
+through the established deletion markers. The full-field/no-terminator
+control remains covered.
+
 The fixed-block padding defect is repaired within the tested boundary. Full
 recipient restart/reload acceptance remains blocked by a separate existing
 mail-object rehydration defect, described below. This document does not claim

@@ -14,6 +14,33 @@ ec34175862827fec6d497354b1228de44f4b6ec6, based on fresh origin/main
 f3c1bfbf0 containing merged #1463 and #1464. No open PR overlapped this
 branch when work began. The primary checkout remained untouched.
 
+## #1465 test correction — 2026-09-15
+
+The missing continuation regression was added at checkpoint
+`77635a46a149eca863a4f5db8ea8cdce1e513764`. The test drives a continuation
+field through `readDelete` with valid prefix bytes, a NUL, and nonzero trailing
+padding; it asserts that only the prefix is delivered and that the native file
+after receipt differs only by the existing header/data deletion-marker
+transitions. The full-field/no-terminator control remains in
+`TestFixedMailTextUsesFirstNULTerminator` and the existing full continuation
+test.
+
+The focused conversion suite and race variant pass at this checkpoint. The
+repository gates were rerun: gofumpt, diff check, build, vet, full tests,
+game tests, lint, fidelity-depth, and expected-divergences-check all pass.
+The initial lint invocation was the known environment-only failure when `go`
+was absent from PATH; the corrected `/usr/local/go/bin` PATH invocation
+reported `0 issues`.
+
+This correction changes only
+`pkg/game/mail_save_failure_test.go` relative to the tested implementation
+checkpoint `ec34175862827fec6d497354b1228de44f4b6ec6`. Production code,
+oracle code, Makefile, scenario files, fixtures, and runner inputs are
+identical, so the full census recorded at the implementation checkpoint is
+reused rather than rerun for this test-only delta. The branch was pushed to
+the open #1465 PR for human merge; no reload implementation is stacked on
+that unmerged prerequisite.
+
 ## R5 call-path finding
 
 The C writer creates fixed-size mail blocks with zero-filled bounded text and
