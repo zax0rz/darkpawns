@@ -144,10 +144,10 @@ is 4,859 total cases with 4,740 proven/delegated, 68 blocked, and 51 excluded;
 `do_tedit` is 43/43. Expected-divergence pins remain valid (26 rows across 10
 scenarios).
 
-The required full oracle census was run against those frozen inputs. The
-preserved external log is
-`/home/zach/dp-phase7-olc-full-census-2026-09-15.log`; it reports 943
-scenarios, 933 passed, 9 expected, 1 established unpinnable
+The required full oracle census was rerun against those frozen inputs after
+the correction. The preserved external log is
+`/home/zach/dp-phase7-olc-census-2026-09-16.log`; it reports 943 scenarios,
+933 passed, 9 expected, 1 established unpinnable
 `accuse-noarg-depth` case requiring human clearance, and zero stale, failed,
 infrastructure, or timed-out cases. The command exits 2 for that existing
 unpinnable baseline; this is the expected repository behavior. The handoff
