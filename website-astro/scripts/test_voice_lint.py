@@ -60,6 +60,40 @@ class VoiceLintTest(unittest.TestCase):
         self.assertEqual(findings[0].rule, "trailer-rhythm")
         self.assertEqual(findings[0].severity, "warning")
 
+    def test_style_and_script_blocks_skip_prose_heuristics(self):
+        findings = self.lint(
+            "<div class=\"status\"></div>\n"
+            "<style>\n"
+            "  .status.online .dot { background: var(--online); }\n"
+            "</style>\n"
+            "<script>\n"
+            "  settle(response.ok ? 'online' : 'offline', 'server online');\n"
+            "</script>\n",
+            "src/components/Test.astro",
+        )
+        self.assertEqual(findings, [])
+
+    def test_hard_rules_still_run_inside_script_blocks(self):
+        findings = self.lint(
+            "<script>\n"
+            "  label.textContent = 'server offline — try again';\n"
+            "</script>\n",
+            "src/components/Test.astro",
+        )
+        self.assertEqual([finding.rule for finding in findings], ["dash-ban"])
+        self.assertEqual(findings[0].severity, "error")
+
+    def test_prose_outside_a_style_block_is_still_linted(self):
+        findings = self.lint(
+            "<p>A lost world. A dead server. One final resurrection.</p>\n"
+            "<style>\n"
+            "  .a.b .c { color: red; }\n"
+            "</style>\n",
+            "src/components/Test.astro",
+        )
+        self.assertEqual([finding.rule for finding in findings], ["trailer-rhythm"])
+        self.assertEqual(findings[0].line, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
