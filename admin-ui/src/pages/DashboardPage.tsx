@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Icon } from '../components/Icon';
 import { api, type AgentStatus, type Finding } from '../api/client';
 import { StatCardSkeleton } from '../components/Skeleton';
 
@@ -52,7 +53,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
 
       {/* Server Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -101,24 +102,24 @@ export function DashboardPage() {
 
       {/* Uptime */}
       {server?.uptime && (
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-          <span className="text-sm text-slate-500 dark:text-slate-400">Uptime: </span>
-          <span className="text-sm text-slate-900 dark:text-white font-mono">{server.uptime}</span>
+        <div className="bg-paper-deep rounded-none border border-rule p-4">
+          <span className="text-sm text-ink-muted">Uptime: </span>
+          <span className="text-sm text-ink font-mono">{server.uptime}</span>
         </div>
       )}
 
       {/* Live Data Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Agent Status Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+        <div className="bg-paper-deep rounded-none border border-rule p-4">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">🤖</span>
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Agent Status</h3>
+            <Icon name="agents" className="h-4 w-4 text-ink-muted" />
+            <h3 className="text-sm font-medium text-ink-muted">Agent Status</h3>
           </div>
           {agentsLoading ? (
-            <div className="text-xs text-slate-400 dark:text-slate-500 animate-pulse">Loading agents...</div>
+            <div className="text-xs text-ink-muted animate-pulse">Loading agents...</div>
           ) : !agents || agents.length === 0 ? (
-            <div className="text-xs text-slate-400 dark:text-slate-500">No agents reporting</div>
+            <div className="text-xs text-ink-muted">No agents reporting</div>
           ) : (
             <div className="space-y-2">
               {agents.map((agent) => (
@@ -129,15 +130,15 @@ export function DashboardPage() {
         </div>
 
         {/* Recent Findings Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+        <div className="bg-paper-deep rounded-none border border-rule p-4">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">🔍</span>
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent Findings</h3>
+            <Icon name="search" className="h-4 w-4 text-ink-muted" />
+            <h3 className="text-sm font-medium text-ink-muted">Recent Findings</h3>
           </div>
           {findingsLoading ? (
-            <div className="text-xs text-slate-400 dark:text-slate-500 animate-pulse">Loading findings...</div>
+            <div className="text-xs text-ink-muted animate-pulse">Loading findings...</div>
           ) : latestFindings.length === 0 ? (
-            <div className="text-xs text-slate-400 dark:text-slate-500">No findings yet</div>
+            <div className="text-xs text-ink-muted">No findings yet</div>
           ) : (
             <div className="space-y-1">
               {latestFindings.map((finding) => (
@@ -149,10 +150,10 @@ export function DashboardPage() {
       </div>
 
       {/* Dev note */}
-      <div className="bg-white/50 dark:bg-slate-800/50 rounded border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-500 dark:text-slate-400">
-        💡 If server stats show "...", the Go server may not be running on port
+      <div className="bg-paper-deep rounded border border-dashed border-rule p-4 text-sm text-ink-muted">
+        If server stats show "...", the Go server may not be running on port
         4350. Start it with{' '}
-        <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">go run ./cmd/server</code>
+        <code className="bg-paper px-1 rounded">go run ./cmd/server</code>
       </div>
     </div>
   );
@@ -160,42 +161,42 @@ export function DashboardPage() {
 
 function AgentRow({ agent }: { agent: AgentStatus }) {
   const dotColor = agent.status === 'active'
-    ? 'bg-green-500'
+    ? 'bg-online'
     : agent.status === 'error'
-      ? 'bg-red-500'
-      : 'bg-yellow-500';
+      ? 'bg-accent'
+      : 'bg-paper-deep';
 
   return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
-      <span className={`w-2 h-2 rounded-full ${dotColor} shrink-0`} />
-      <span className="text-sm text-slate-900 dark:text-white font-medium">{agent.name}</span>
-      <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{agent.status}</span>
-      <span className="text-xs text-slate-400 dark:text-slate-500 ml-auto font-mono truncate max-w-[120px]">{agent.model}</span>
+    <div className="flex items-center gap-2 py-1.5 border-b border-rule last:border-0">
+      <span className={`w-2 h-2 rounded-none ${dotColor} shrink-0`} />
+      <span className="text-sm text-ink font-medium">{agent.name}</span>
+      <span className="text-xs text-ink-muted capitalize">{agent.status}</span>
+      <span className="text-xs text-ink-muted ml-auto font-mono truncate max-w-[120px]">{agent.model}</span>
     </div>
   );
 }
 
 const severityBadgeColors: Record<string, string> = {
-  critical: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300',
-  high: 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300',
-  medium: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300',
-  low: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
+  critical: 'bg-paper-deep text-accent',
+  high: 'bg-paper-deep text-ink-muted',
+  medium: 'bg-paper-deep text-ink-muted',
+  low: 'bg-paper text-ink-muted',
 };
 
 const statusBadgeColors: Record<string, string> = {
-  open: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300',
-  confirmed: 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300',
-  rejected: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400',
-  fixed: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300',
+  open: 'bg-paper-deep text-ink-muted',
+  confirmed: 'bg-paper-deep text-ink-muted',
+  rejected: 'bg-paper text-ink-muted',
+  fixed: 'bg-paper-deep text-ink',
 };
 
 function FindingRow({ finding }: { finding: Finding }) {
   return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-slate-100 dark:border-slate-700/50 last:border-0">
+    <div className="flex items-center gap-2 py-1.5 border-b border-rule last:border-0">
       <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${severityBadgeColors[finding.severity] || severityBadgeColors.low}`}>
         {finding.severity.toUpperCase()}
       </span>
-      <span className="text-sm text-slate-900 dark:text-white truncate flex-1 min-w-0">{finding.title}</span>
+      <span className="text-sm text-ink truncate flex-1 min-w-0">{finding.title}</span>
       <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight shrink-0 ${statusBadgeColors[finding.status] || statusBadgeColors.open}`}>
         {finding.status}
       </span>
@@ -215,15 +216,15 @@ function StatCard({
   color?: 'green' | 'slate';
 }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-      <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{label}</div>
+    <div className="bg-paper-deep rounded-none border border-rule p-4">
+      <div className="text-xs text-ink-muted mb-1">{label}</div>
       <div
         className={`text-2xl font-bold ${
           error
-            ? 'text-red-500 dark:text-red-400'
+            ? 'text-accent'
             : color === 'green'
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-slate-900 dark:text-white'
+              ? 'text-online'
+              : 'text-ink'
         }`}
       >
         {error ? '—' : value}
@@ -242,15 +243,15 @@ function StatPill({
   color: 'slate' | 'blue' | 'orange' | 'green' | 'red';
 }) {
   const colorClasses: Record<string, string> = {
-    slate: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-    blue: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-    orange: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-    green: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
-    red: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
+    slate: 'bg-paper text-ink-muted border-rule',
+    blue: 'bg-paper-deep text-ink-muted border-rule',
+    orange: 'bg-paper-deep text-ink-muted border-rule',
+    green: 'bg-paper-deep text-ink border-rule',
+    red: 'bg-paper-deep text-accent border-accent',
   };
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium ${colorClasses[color]}`}>
+    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-xs font-medium ${colorClasses[color]}`}>
       <span>{label}:</span>
       <span className="font-bold">{value}</span>
     </div>

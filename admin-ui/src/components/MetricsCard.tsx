@@ -21,18 +21,18 @@ export function MetricsCard() {
 
   if (isLoading) {
     return (
-      <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
-        <h2 className="text-sm font-medium text-slate-300 mb-3">Server Metrics</h2>
-        <div className="text-sm text-slate-500 animate-pulse">Loading metrics...</div>
+      <div className="bg-paper-deep rounded-none border border-rule p-4">
+        <h2 className="text-sm font-medium text-ink-muted mb-3">Server Metrics</h2>
+        <div className="text-sm text-ink-muted animate-pulse">Loading metrics...</div>
       </div>
     );
   }
 
   if (error || !metrics) {
     return (
-      <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
-        <h2 className="text-sm font-medium text-slate-300 mb-3">Server Metrics</h2>
-        <div className="text-sm text-red-400">Failed to load metrics</div>
+      <div className="bg-paper-deep rounded-none border border-rule p-4">
+        <h2 className="text-sm font-medium text-ink-muted mb-3">Server Metrics</h2>
+        <div className="text-sm text-accent">Failed to load metrics</div>
       </div>
     );
   }
@@ -42,18 +42,18 @@ export function MetricsCard() {
     : 0;
 
   return (
-    <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
-      <h2 className="text-sm font-medium text-slate-300 mb-3">Server Metrics</h2>
+    <div className="bg-paper-deep rounded-none border border-rule p-4">
+      <h2 className="text-sm font-medium text-ink-muted mb-3">Server Metrics</h2>
 
       {/* Memory */}
       <div className="mb-3">
-        <div className="flex justify-between text-xs text-slate-400 mb-1">
+        <div className="flex justify-between text-xs text-ink-muted mb-1">
           <span>Heap / Sys</span>
           <span>{formatBytes(metrics.memory_heap)} / {formatBytes(metrics.memory_sys)}</span>
         </div>
-        <div className="w-full bg-slate-700 rounded-full h-2">
+        <div className="w-full bg-paper rounded-none h-2">
           <div
-            className="h-2 rounded-full bg-cyan-500"
+            className="h-2 rounded-none bg-cyan-500"
             style={{ width: `${Math.min(heapPct, 100)}%` }}
           />
         </div>
@@ -86,11 +86,11 @@ export function MetricsCard() {
 function MetricItem({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
     <div>
-      <div className="flex items-center gap-1 text-xs text-slate-400 mb-0.5">
+      <div className="flex items-center gap-1 text-xs text-ink-muted mb-0.5">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-sm text-white font-mono">{value}</div>
+      <div className="text-sm text-ink font-mono">{value}</div>
     </div>
   );
 }

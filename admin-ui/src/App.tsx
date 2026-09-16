@@ -12,10 +12,6 @@ import { MobDetailPage } from './pages/MobDetailPage';
 import { ObjectsPage } from './pages/ObjectsPage';
 import { ObjectDetailPage } from './pages/ObjectDetailPage';
 import { RoomDetailPage } from './pages/RoomDetailPage';
-import { RoomEditPage } from './pages/RoomEditPage';
-import { MobEditPage } from './pages/MobEditPage';
-import { ObjectEditPage } from './pages/ObjectEditPage';
-import { ShopEditPage } from './pages/ShopEditPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { DecisionsPage } from './pages/DecisionsPage';
 import { MindReaderPage } from './pages/MindReaderPage';
@@ -41,10 +37,6 @@ export default function App() {
             <Route path="/admin/game/objects" element={<ErrorBoundary><ObjectsPage /></ErrorBoundary>} />
             <Route path="/admin/game/objects/:vnum" element={<ErrorBoundary><ObjectDetailPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum" element={<ErrorBoundary><RoomDetailPage /></ErrorBoundary>} />
-            <Route path="/admin/game/rooms/:vnum/edit" element={<ErrorBoundary><RoomEditPage /></ErrorBoundary>} />
-            <Route path="/admin/game/mobs/:vnum/edit" element={<ErrorBoundary><MobEditPage /></ErrorBoundary>} />
-            <Route path="/admin/game/objects/:vnum/edit" element={<ErrorBoundary><ObjectEditPage /></ErrorBoundary>} />
-            <Route path="/admin/game/shops/:keeperVnum" element={<ErrorBoundary><ShopEditPage /></ErrorBoundary>} />
             <Route path="/admin/agents" element={<ErrorBoundary><AgentsPage /></ErrorBoundary>} />
             <Route path="/admin/decisions" element={<ErrorBoundary><DecisionsPage /></ErrorBoundary>} />
             <Route path="/admin/narrative" element={<ErrorBoundary><MindReaderPage /></ErrorBoundary>} />
