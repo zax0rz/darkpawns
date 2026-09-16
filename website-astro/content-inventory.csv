@@ -90,6 +90,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /blog/the-long-middle/,src/content/blog/the-long-middle.md,blog,authored editorial,1,rewrite and source review,1031,original,mythic-admin,"Dark Pawns repository: git history (2,238 commits from 2026-04-17), docs/fidelity/ (RULEBOOK.md, depth/*.tsv), docs/reports/scenario-coverage-*.tsv, and PRs #243 / #601."
 /blog/the-oracle.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1596,original,mythic-admin,"Dark Pawns repository (src/, PR #469, docs/fidelity/RULEBOOK.md) and Zach"
 /blog/the-oracle/,src/content/blog/the-oracle.md,blog,authored editorial,1,rewrite and source review,1596,original,mythic-admin,"Dark Pawns repository (src/, PR #469, docs/fidelity/RULEBOOK.md) and Zach"
+/blog/what-the-wayback-machine-kept.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,798,original,mythic-admin,"RECOVERY-MANIFEST.csv (342 URLs, terminal 2026-09-04), the recovered records under src/content/archive/, and Zach"
+/blog/what-the-wayback-machine-kept/,src/content/blog/what-the-wayback-machine-kept.md,blog,authored editorial,1,rewrite and source review,798,original,mythic-admin,"RECOVERY-MANIFEST.csv (342 URLs, terminal 2026-09-04), the recovered records under src/content/archive/, and Zach"
 /contact/,src/pages/contact.astro,core,authored static page,1,full editorial review,,,,
 /credits/,src/pages/credits.astro,core,authored static page,1,full editorial review,,,,
 /database/,src/pages/database.astro,core,authored static page,1,full editorial review,,,,

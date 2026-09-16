@@ -41,7 +41,12 @@ const tally = {
   records: entries.length,
   threads: threads.length,
   posts: threads.reduce((sum, entry) => sum + (entry.data.postCount ?? 0), 0),
-  people: new Set(threads.flatMap((entry) => (entry.data.participants ?? []).map((p) => p.name))).size,
+  // Handles are counted case-insensitively. The board rendered the same person
+  // as both "Aidan" and "aidan"; the display names stay as captured, but a
+  // headline that says "people" has to mean people, not spellings.
+  people: new Set(
+    threads.flatMap((entry) => (entry.data.participants ?? []).map((p) => p.name.toLowerCase())),
+  ).size,
 };
 // The tally is a provenance claim. If any thread cannot contribute a count, the
 // posts figure would understate the corpus, so it is withheld rather than shown
