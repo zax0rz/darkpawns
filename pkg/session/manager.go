@@ -1141,6 +1141,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	// character's departure. Preserve the editor's in-memory cache (without a
 	// disk commit) and emit the shared OLC room transition first.
 	s.cancelTextEdit()
+	s.cancelRoomEdit()
 
 	// 1. Stop combat
 	m.combatEngine.StopCombat(playerName)
@@ -1235,6 +1236,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 		return false
 	}
 	s.cancelTextEdit()
+	s.cancelRoomEdit()
 
 	p := s.player
 	p.SetLinkless(true)
@@ -1609,6 +1611,10 @@ type Session struct {
 	// tedit and news/motd/etc. retain C's one live global authority.
 	textEditMu sync.Mutex
 	textEdit   *textEditState
+	// roomEdit is the descriptor-owned CON_REDIT state. It uses textEditMu as
+	// its serialization boundary so disconnect cleanup and raw-line input
+	// cannot commit or discard the same working room concurrently.
+	roomEdit *reditState
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)

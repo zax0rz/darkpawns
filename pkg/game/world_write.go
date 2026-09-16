@@ -11,26 +11,12 @@ import (
 
 // SetRoomName updates a room's name. Returns false if the room doesn't exist.
 func (w *World) SetRoomName(vnum int, name string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	room.Name = name
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Name = name })
 }
 
 // SetRoomDescription updates a room's description. Returns false if the room doesn't exist.
 func (w *World) SetRoomDescription(vnum int, desc string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	room.Description = desc
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Description = desc })
 }
 
 // SetMobShortDesc updates a mob's short description. Returns false if the mob doesn't exist.
@@ -202,14 +188,9 @@ func (w *World) SetObjCost(vnum int, cost int) bool {
 
 // SetRoomFlags sets a room's flag bitmasks. Returns false if the room doesn't exist.
 func (w *World) SetRoomFlags(vnum int, flags []string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	room.Flags = flags
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) {
+		room.Flags = append([]string(nil), flags...)
+	})
 }
 
 // SetRoomFlagBit sets a single runtime C ROOM_* bit in a room's flag words
@@ -218,73 +199,47 @@ func (w *World) SetRoomFlags(vnum int, flags []string) bool {
 // lock, so lock-free writes race with locked readers. Returns false if the
 // room doesn't exist.
 func (w *World) SetRoomFlagBit(vnum int, flagBit int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	setRoomFlagBit(room, flagBit)
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) { setRoomFlagBit(room, flagBit) })
 }
 
 // SetRoomSector sets a room's sector type. Returns false if the room doesn't exist.
 func (w *World) SetRoomSector(vnum int, sector int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	room.Sector = sector
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Sector = sector })
 }
 
 // SetRoomExit sets or creates an exit in a room for the given direction.
 // Returns false if the room doesn't exist.
 func (w *World) SetRoomExit(vnum int, direction string, toRoom int, key int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	exit, exists := room.Exits[direction]
-	if !exists {
-		exit = parser.Exit{Direction: direction}
-	}
-	exit.ToRoom = toRoom
-	exit.Key = key
-	room.Exits[direction] = exit
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) {
+		if room.Exits == nil {
+			room.Exits = make(map[string]parser.Exit)
+		}
+		exit, exists := room.Exits[direction]
+		if !exists {
+			exit = parser.Exit{Direction: direction}
+		}
+		exit.ToRoom = toRoom
+		exit.Key = key
+		room.Exits[direction] = exit
+	})
 }
 
 // CreateRoomExit replaces an exit with the bare runtime record created by C's
 // do_dig. It intentionally clears any prior door metadata and descriptions.
 func (w *World) CreateRoomExit(vnum int, direction string, toRoom int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	if room.Exits == nil {
-		room.Exits = make(map[string]parser.Exit)
-	}
-	room.Exits[direction] = parser.Exit{Direction: direction, ToRoom: toRoom}
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) {
+		if room.Exits == nil {
+			room.Exits = make(map[string]parser.Exit)
+		}
+		room.Exits[direction] = parser.Exit{Direction: direction, ToRoom: toRoom}
+	})
 }
 
 // SetRoomExtraDescs sets a room's extra descriptions. Returns false if the room doesn't exist.
 func (w *World) SetRoomExtraDescs(vnum int, descs []parser.ExtraDesc) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	room, ok := w.rooms[vnum]
-	if !ok {
-		return false
-	}
-	room.ExtraDescs = descs
-	return true
+	return w.updateRoom(vnum, func(room *parser.Room) {
+		room.ExtraDescs = append([]parser.ExtraDesc(nil), descs...)
+	})
 }
 
 // --------------------------------------------------------------------------

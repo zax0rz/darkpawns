@@ -311,6 +311,18 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		s.forwardSnoopInput(cmd.Command, cmd.RawArgs, cmd.Args)
 	}
 
+	// A descriptor room editor owns the complete next line, including its
+	// transient improved-editor buffer. This check precedes ordinary command
+	// routing just like interpreter.c's CON_REDIT dispatch.
+	if s.player != nil && s.isRoomEditing() {
+		line := cmd.RawLine
+		if line == "" {
+			line = commandInputLine(cmd.Command, cmd.Args)
+		}
+		s.handleReditInput(line)
+		return nil
+	}
+
 	// A descriptor string editor owns the complete next line. In particular,
 	// slash commands must not be rebuilt as "/ h" from tokenized JSON args;
 	// telnet supplies RawLine and direct/WebSocket clients can still use the

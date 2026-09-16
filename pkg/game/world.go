@@ -448,16 +448,18 @@ func (w *World) SetExitInfo(roomVNum int, direction string, info int) bool {
 	defer w.mu.Unlock()
 
 	room, ok := w.rooms[roomVNum]
+	if !ok || room == nil {
+		return false
+	}
+	_, ok = room.Exits[direction]
 	if !ok {
 		return false
 	}
-	exit, ok := room.Exits[direction]
-	if !ok {
-		return false
-	}
-	exit.ExitInfo = info
-	room.Exits[direction] = exit
-	return true
+	copyRoom := CloneRoom(*room)
+	copyRoomExit := copyRoom.Exits[direction]
+	copyRoomExit.ExitInfo = info
+	copyRoom.Exits[direction] = copyRoomExit
+	return w.commitEditedRoomLocked(copyRoom)
 }
 
 // AddPlayer adds a player to the world.

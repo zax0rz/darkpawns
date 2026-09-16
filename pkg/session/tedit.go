@@ -58,6 +58,14 @@ type textEditState struct {
 	path     string
 	original string
 	buffer   string
+	// roomEditor keeps the bounded REDIT string_write buffer descriptor-local.
+	// Ordinary tedit intentionally shares the C process-global text pointer;
+	// room descriptions and exit/extra descriptions do not.
+	roomEditor bool
+	// onComplete is used by the bounded room OLC string fields. The improved
+	// editor has one descriptor-owned line buffer, but its save/abort target is
+	// supplied by the owning OLC state rather than a text file.
+	onComplete func(action textEditAction, buffer, original string)
 }
 
 type textEditAction uint8
@@ -187,12 +195,21 @@ func (s *Session) isTextEditing() bool {
 func (s *Session) handleTextEditInput(line string) {
 	s.textEditMu.Lock()
 	defer s.textEditMu.Unlock()
+	s.handleTextEditInputLocked(line)
+}
+
+// handleTextEditInputLocked is the common CON_TEDIT/REDIT string_add route.
+// The caller owns textEditMu; room OLC uses it while retaining its enclosing
+// room state, so save/abort cannot race disconnect cleanup.
+func (s *Session) handleTextEditInputLocked(line string) {
 	if s.textEdit == nil {
 		return
 	}
 	liveTextEditMu.Lock()
 	defer liveTextEditMu.Unlock()
-	s.refreshTextEditBufferLocked()
+	if !s.textEdit.roomEditor {
+		s.refreshTextEditBufferLocked()
+	}
 
 	line = editorSanitizeInput(line)
 	if strings.HasPrefix(line, "@") {
@@ -257,6 +274,14 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 	if state == nil {
 		return
 	}
+	if state.onComplete != nil {
+		// REDIT's string_write callback returns to its owning menu. It does not
+		// emit tedit's file "Saved." or "Edit aborted." text and it keeps the
+		// descriptor in PLR_WRITING until the room OLC itself exits.
+		s.textEdit = nil
+		state.onComplete(action, state.buffer, state.original)
+		return
+	}
 
 	switch action {
 	case textEditSave:
@@ -289,6 +314,12 @@ func (s *Session) cancelTextEdit() {
 	s.textEditMu.Lock()
 	defer s.textEditMu.Unlock()
 	if s.textEdit == nil {
+		return
+	}
+	if s.textEdit.onComplete != nil {
+		// cleanup_olc drops an active REDIT string buffer without invoking its
+		// menu callback. cancelRoomEdit owns the enclosing OLC transition.
+		s.textEdit = nil
 		return
 	}
 	liveTextEditMu.Lock()
@@ -335,7 +366,7 @@ func (s *Session) refreshTextEditBufferLocked() {
 
 func (s *Session) commitTextEditBufferLocked() {
 	state := s.textEdit
-	if state != nil {
+	if state != nil && !state.roomEditor {
 		setTextEditCache(s, state.field.filename, state.buffer)
 	}
 }

@@ -1,0 +1,1131 @@
+package session
+
+import (
+	"fmt"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
+
+// These values mirror the REDIT_MODE constants in src/olc.h. Keeping the
+// state names local makes the descriptor transition table auditable without
+// pretending that the other OLC families share this implementation.
+type reditMode uint8
+
+const (
+	reditMainMenu reditMode = iota + 1
+	reditName
+	reditDescription
+	reditFlags
+	reditSector
+	reditExitMenu
+	reditConfirmSave
+	reditConfirmSaveString
+	reditExitNumber
+	reditExitDescription
+	reditExitKeyword
+	reditExitKey
+	reditExitDoorFlags
+	reditExtraMenu
+	reditExtraKey
+	reditExtraDescription
+	reditCopy
+	reditScriptMenu
+	reditScriptName
+	reditScriptFlags
+)
+
+type reditExtraMeta struct {
+	keywordSet     bool
+	descriptionSet bool
+}
+
+type reditState struct {
+	room       parser.Room
+	number     int
+	zoneNumber int
+	isNew      bool
+	mode       reditMode
+	value      int // C OLC_VAL while an exit is selected.
+	olcVal     int // C OLC_VAL's dirty/quit-prompt value.
+
+	currentExtra  int
+	extraMeta     []reditExtraMeta
+	pendingOutput string
+}
+
+type reditStringField uint8
+
+const (
+	reditRoomDescription reditStringField = iota + 1
+	reditExitDescriptionField
+	reditExtraDescriptionField
+)
+
+var (
+	reditSaveMu    sync.Mutex
+	reditSaveRooms = make(map[int]bool)
+)
+
+var reditRoomFlagNames = []string{
+	"DARK", "DEATH", "!MOB", "INDOORS", "PEACEFUL", "SOUNDPROOF", "!TRACK",
+	"!MAGIC", "TUNNEL", "PRIVATE", "GODROOM", "HOUSE", "HCRSH", "ATRIUM",
+	"OLC", "*", "NEUTRAL", "BFR", "REGENROOM", "NO_WHO_ROOM", "**",
+	"FLOW_NORTH", "FLOW_SOUTH", "FLOW_EAST", "FLOW_WEST", "FLOW_UP",
+	"FLOW_DOWN", "ARENA",
+}
+
+var reditSectorNames = []string{
+	"Inside", "City", "Field", "Forest", "Hills", "Mountains", "Water (Swim)",
+	"Water (No Swim)", "Underwater", "In Flight", "Desert", "Fire", "Earth",
+	"Wind", "Water", "Swamp",
+}
+
+var reditScriptFlagNames = []string{"NONE", "ENTER", "ONPULSE", "ONDROP", "ONGET", "ONCMD"}
+
+// cmdRedit ports the reachable SCMD_OLC_REDIT entry in do_olc. The other OLC
+// command names remain unregistered; their shared surface is not part of this
+// bounded room-editor goal.
+func cmdRedit(s *Session, args []string) error {
+	if s.player == nil || s.manager == nil || s.manager.world == nil {
+		return fmt.Errorf("not logged in")
+	}
+
+	first := ""
+	if len(args) > 0 {
+		first = strings.ToLower(args[0])
+	}
+	if first == "" {
+		first = strconv.Itoa(s.player.GetRoomVNum())
+	}
+
+	if strings.HasPrefix(first, "save") {
+		if len(args) < 2 || args[1] == "" {
+			s.reditSend("Save which zone?\r\n")
+			return nil
+		}
+		zoneNumber := atoiC(args[1])
+		zone, ok := reditZoneForVNum(s.manager.world, zoneNumber*100)
+		if !ok {
+			s.reditSend("Sorry, there is no zone for that number!\r\n")
+			return nil
+		}
+		if reditDuplicate(s.manager, zoneNumber*100) {
+			other := reditDuplicateName(s.manager, zoneNumber*100)
+			if other == "" {
+				other = "someone"
+			}
+			s.reditSend(fmt.Sprintf("That room is currently being edited by %s.\r\n", other))
+			return nil
+		}
+		if !reditAuthorized(s, zone.Number) {
+			s.reditSend("You do not have permission to edit this zone.\r\n")
+			return nil
+		}
+		s.reditSend("Saving all rooms in zone.\r\n")
+		if err := saveReditZone(s.manager.world, zone); err != nil {
+			slog.Error("redit disk save failed", "player", s.playerName, "zone", zone.Number, "error", err)
+		}
+		return nil
+	}
+
+	if !isASCIIDigit(first[0]) {
+		s.reditSend("Yikes!  Stop that, someone will get hurt!\r\n")
+		return nil
+	}
+	number := atoiC(first)
+	zone, ok := reditZoneForVNum(s.manager.world, number)
+	if !ok {
+		s.reditSend("Sorry, there is no zone for that number!\r\n")
+		return nil
+	}
+	if reditDuplicate(s.manager, number) {
+		other := reditDuplicateName(s.manager, number)
+		if other == "" {
+			other = "someone"
+		}
+		s.reditSend(fmt.Sprintf("That room is currently being edited by %s.\r\n", other))
+		return nil
+	}
+	if !reditAuthorized(s, zone.Number) {
+		s.reditSend("You do not have permission to edit this zone.\r\n")
+		return nil
+	}
+	return s.startRedit(number, zone)
+}
+
+func (s *Session) startRedit(number int, zone *parser.Zone) error {
+	room, exists := s.manager.world.SnapshotRoom(number)
+	if !exists {
+		room = parser.Room{
+			VNum:        number,
+			Name:        "An unfinished room",
+			Description: "You are in an unfinished room.\n",
+			Zone:        zone.Number,
+			Flags:       []string{"0", "0", "0", "0"},
+			Exits:       make(map[string]parser.Exit),
+		}
+	}
+	state := &reditState{
+		room:       game.CloneRoom(room),
+		number:     number,
+		zoneNumber: zone.Number,
+		isNew:      !exists,
+		mode:       reditMainMenu,
+	}
+	state.extraMeta = make([]reditExtraMeta, len(state.room.ExtraDescs))
+	for i, extra := range state.room.ExtraDescs {
+		state.extraMeta[i] = reditExtraMeta{
+			keywordSet:     extra.Keywords != "",
+			descriptionSet: extra.Description != "",
+		}
+	}
+
+	s.textEditMu.Lock()
+	s.roomEdit = state
+	s.reditDisplayMainLocked()
+	s.flushReditOutputLocked()
+	s.textEditMu.Unlock()
+
+	game.Act(s.manager.world, true, s.player, nil, nil, nil,
+		"$n starts using OLC.", "", game.ToRoom)
+	s.player.SetPlrFlag(game.PlrWriting, true)
+	return nil
+}
+
+func reditAuthorized(s *Session, zoneNumber int) bool {
+	return getEffectiveLevel(s) >= LVL_GOD+1 || s.olcZone == zoneNumber
+}
+
+func reditZoneForVNum(world *game.World, vnum int) (*parser.Zone, bool) {
+	for _, zone := range world.GetAllZones() {
+		if vnum >= zone.Number*100 && vnum <= zone.TopRoom {
+			return zone, true
+		}
+	}
+	return nil, false
+}
+
+func reditDuplicate(manager *Manager, number int) bool {
+	return reditDuplicateName(manager, number) != ""
+}
+
+func reditDuplicateName(manager *Manager, number int) string {
+	manager.mu.RLock()
+	sessions := make([]*Session, 0, len(manager.sessions))
+	for _, candidate := range manager.sessions {
+		sessions = append(sessions, candidate)
+	}
+	manager.mu.RUnlock()
+
+	for _, candidate := range sessions {
+		candidate.textEditMu.Lock()
+		state := candidate.roomEdit
+		name := candidate.playerName
+		numberMatches := state != nil && state.number == number
+		candidate.textEditMu.Unlock()
+		if numberMatches {
+			return name
+		}
+	}
+	return ""
+}
+
+func (s *Session) reditSend(text string) {
+	if s.roomEdit != nil {
+		s.roomEdit.pendingOutput += text
+		return
+	}
+	s.reditSendDirect(text)
+}
+
+func (s *Session) reditSendDirect(text string) {
+	if err := s.SendMessage(text); err != nil {
+		slog.Error("redit output failed", "player", s.playerName, "error", err)
+	}
+}
+
+func (s *Session) flushReditOutputLocked() {
+	if s.roomEdit == nil || s.roomEdit.pendingOutput == "" {
+		return
+	}
+	text := s.roomEdit.pendingOutput
+	s.roomEdit.pendingOutput = ""
+	s.reditSendDirect(text)
+}
+
+func (s *Session) IsRoomEditing() bool {
+	s.textEditMu.Lock()
+	defer s.textEditMu.Unlock()
+	return s.roomEdit != nil
+}
+
+func (s *Session) isRoomEditing() bool {
+	return s.IsRoomEditing()
+}
+
+// handleReditInput is the CON_REDIT route. The dispatcher has already removed
+// C's leading input whitespace before redit_parse sees the line.
+func (s *Session) handleReditInput(line string) {
+	s.textEditMu.Lock()
+	defer s.textEditMu.Unlock()
+	if s.roomEdit == nil {
+		return
+	}
+	line = strings.TrimLeft(line, " \t\r\n\v\f")
+	if s.textEdit != nil {
+		s.handleTextEditInputLocked(line)
+		s.flushReditOutputLocked()
+		return
+	}
+	s.parseReditLocked(line)
+	s.flushReditOutputLocked()
+}
+
+func (s *Session) cancelRoomEdit() {
+	s.textEditMu.Lock()
+	defer s.textEditMu.Unlock()
+	if s.roomEdit == nil {
+		return
+	}
+	// A disconnect follows cleanup_olc(CLEANUP_ALL): no room commit and no
+	// menu callback. Live script fields already changed through the C-shallow
+	// script pointer intentionally remain changed.
+	s.textEdit = nil
+	s.roomEdit = nil
+	if s.player != nil {
+		s.player.SetPlrFlag(game.PlrWriting, false)
+		game.Act(s.manager.world, true, s.player, nil, nil, nil,
+			"$n stops using OLC.", "", game.ToRoom)
+	}
+}
+
+func (s *Session) finishReditLocked(save bool) {
+	state := s.roomEdit
+	if state == nil {
+		return
+	}
+	if save {
+		state.room.VNum = state.number
+		if !state.isNew {
+			// C's OLC room copy shallow-copies the live script pointer. Script
+			// menu changes therefore survive a later whole-room assignment.
+			if live, ok := s.manager.world.SnapshotRoom(state.number); ok {
+				state.room.ScriptName = live.ScriptName
+				state.room.ScriptFunctions = live.ScriptFunctions
+			}
+		}
+		if s.manager.world.CommitEditedRoom(state.room) {
+			reditAddSaveRoom(state.zoneNumber)
+		}
+	}
+	s.textEdit = nil
+	s.roomEdit = nil
+	if s.player != nil {
+		s.player.SetPlrFlag(game.PlrWriting, false)
+		game.Act(s.manager.world, true, s.player, nil, nil, nil,
+			"$n stops using OLC.", "", game.ToRoom)
+	}
+	if save {
+		s.reditSend("Room saved to memory.\r\n")
+	}
+}
+
+func (s *Session) parseReditLocked(line string) {
+	state := s.roomEdit
+	if state == nil {
+		return
+	}
+	switch state.mode {
+	case reditConfirmSaveString:
+		switch firstByte(line) {
+		case 'y', 'Y':
+			s.finishReditLocked(true)
+		case 'n', 'N':
+			s.finishReditLocked(false)
+		default:
+			s.reditSend("Invalid choice!\r\n")
+			s.reditSend("Do you wish to save this room internally? : ")
+		}
+		return
+	case reditMainMenu:
+		s.parseReditMainLocked(line)
+	case reditName:
+		name := line
+		if len(name) > 75 {
+			name = name[:74]
+		}
+		state.room.Name = name
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	case reditFlags:
+		s.parseReditFlagsLocked(line)
+	case reditSector:
+		s.parseReditSectorLocked(line)
+	case reditExitMenu:
+		s.parseReditExitMenuLocked(line)
+	case reditExitNumber:
+		s.parseReditExitNumberLocked(line)
+	case reditExitKeyword:
+		exit := s.reditEnsureExitLocked(state.value)
+		exit.Keywords = line
+		state.room.Exits[game.DirectionNames[state.value]] = exit
+		state.mode = reditExitMenu
+		s.reditDisplayExitMenuLocked()
+	case reditExitKey:
+		exit := s.reditEnsureExitLocked(state.value)
+		exit.Key = atoiC(line)
+		state.room.Exits[game.DirectionNames[state.value]] = exit
+		state.mode = reditExitMenu
+		s.reditDisplayExitMenuLocked()
+	case reditExitDoorFlags:
+		s.parseReditDoorFlagsLocked(line)
+	case reditExtraKey:
+		if state.currentExtra < len(state.room.ExtraDescs) {
+			state.room.ExtraDescs[state.currentExtra].Keywords = line
+			state.extraMeta[state.currentExtra].keywordSet = true
+		}
+		state.mode = reditExtraMenu
+		s.reditDisplayExtraMenuLocked()
+	case reditExtraMenu:
+		s.parseReditExtraMenuLocked(line)
+	case reditCopy:
+		s.parseReditCopyLocked(line)
+	case reditScriptMenu:
+		s.parseReditScriptMenuLocked(line)
+	case reditScriptName:
+		current, ok := s.manager.world.SnapshotRoom(state.number)
+		if ok {
+			if err := s.manager.world.SetRoomScript(state.number, current.ScriptFunctions, line); !err {
+				slog.Warn("redit script name update lost room", "room", state.number)
+			}
+		}
+		s.reditDisplayScriptMenuLocked()
+	case reditScriptFlags:
+		s.parseReditScriptFlagsLocked(line)
+	default:
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	}
+}
+
+func (s *Session) parseReditMainLocked(line string) {
+	state := s.roomEdit
+	if state == nil {
+		return
+	}
+	switch firstByte(line) {
+	case 'q', 'Q':
+		if state.olcVal != 0 {
+			state.mode = reditConfirmSaveString
+			s.reditSend("Do you wish to save this room internally? : ")
+		} else {
+			s.finishReditLocked(false)
+		}
+	case '1':
+		state.mode = reditName
+		s.reditSend("Enter room name:-\r\n| ")
+	case '2':
+		state.mode = reditDescription
+		state.olcVal = 1
+		s.startReditStringLocked(reditRoomDescription)
+	case '3':
+		state.mode = reditFlags
+		s.reditDisplayFlagsLocked()
+	case '4':
+		state.mode = reditSector
+		s.reditDisplaySectorLocked()
+	case '5', '6', '7', '8', '9', 'a', 'A':
+		direction := int(firstByte(line) - '5')
+		if firstByte(line) == 'a' || firstByte(line) == 'A' {
+			direction = 5
+		}
+		state.value = direction
+		state.olcVal = direction
+		state.mode = reditExitMenu
+		s.reditDisplayExitMenuLocked()
+	case 'b', 'B':
+		if len(state.room.ExtraDescs) == 0 {
+			state.room.ExtraDescs = append(state.room.ExtraDescs, parser.ExtraDesc{})
+			state.extraMeta = append(state.extraMeta, reditExtraMeta{})
+		}
+		state.currentExtra = 0
+		state.olcVal = 1
+		state.mode = reditExtraMenu
+		s.reditDisplayExtraMenuLocked()
+	case 'c', 'C':
+		state.mode = reditCopy
+		s.reditSend("Enter virtual number of room to copy : ")
+	case 's', 'S':
+		state.mode = reditScriptMenu
+		s.reditDisplayScriptMenuLocked()
+	default:
+		s.reditSend("Invalid choice!")
+		s.reditDisplayMainLocked()
+	}
+}
+
+func (s *Session) parseReditFlagsLocked(line string) {
+	state := s.roomEdit
+	number := atoiC(line)
+	if number < 0 || number > len(reditRoomFlagNames) {
+		s.reditSend("That's not a valid choice!\r\n")
+		s.reditDisplayFlagsLocked()
+		return
+	}
+	if number == 0 {
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+		return
+	}
+	reditToggleRoomFlag(&state.room, number-1)
+	s.reditDisplayFlagsLocked()
+}
+
+func (s *Session) parseReditSectorLocked(line string) {
+	state := s.roomEdit
+	number := atoiC(line)
+	if number < 0 || number >= len(reditSectorNames) {
+		s.reditSend("Invalid choice!")
+		s.reditDisplaySectorLocked()
+		return
+	}
+	state.room.Sector = number
+	state.olcVal = 1
+	state.mode = reditMainMenu
+	s.reditDisplayMainLocked()
+}
+
+func (s *Session) parseReditExitMenuLocked(line string) {
+	state := s.roomEdit
+	switch firstByte(line) {
+	case '0':
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	case '1':
+		state.mode = reditExitNumber
+		s.reditSend("Exit to room number : ")
+	case '2':
+		state.mode = reditExitDescription
+		s.startReditStringLocked(reditExitDescriptionField)
+	case '3':
+		state.mode = reditExitKeyword
+		s.reditSend("Enter keywords : ")
+	case '4':
+		state.mode = reditExitKey
+		s.reditSend("Enter key number : ")
+	case '5':
+		state.mode = reditExitDoorFlags
+		s.reditDisplayExitFlagLocked()
+	case '6':
+		delete(state.room.Exits, game.DirectionNames[state.value])
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	default:
+		s.reditSend("Try again : ")
+	}
+}
+
+func (s *Session) parseReditExitNumberLocked(line string) {
+	state := s.roomEdit
+	number := atoiC(line)
+	if number != -1 {
+		if _, ok := s.manager.world.SnapshotRoom(number); !ok {
+			s.reditSend("That room does not exist, try again : ")
+			return
+		}
+	}
+	exit := s.reditEnsureExitLocked(state.value)
+	exit.ToRoom = number
+	state.room.Exits[game.DirectionNames[state.value]] = exit
+	state.mode = reditExitMenu
+	s.reditDisplayExitMenuLocked()
+}
+
+func (s *Session) parseReditDoorFlagsLocked(line string) {
+	state := s.roomEdit
+	number := atoiC(line)
+	if number < 0 || number > 2 {
+		s.reditSend("That's not a valid choice!\r\n")
+		s.reditDisplayExitFlagLocked()
+		return
+	}
+	exit := s.reditEnsureExitLocked(state.value)
+	switch number {
+	case 0:
+		exit.ExitInfo = 0
+		exit.DoorState = 0
+	case 1:
+		exit.ExitInfo = parser.ExitIsDoor
+		exit.DoorState = 1
+	case 2:
+		exit.ExitInfo = parser.ExitIsDoor | parser.ExitPickproof
+		exit.DoorState = 2
+	}
+	state.room.Exits[game.DirectionNames[state.value]] = exit
+	state.mode = reditExitMenu
+	s.reditDisplayExitMenuLocked()
+}
+
+func (s *Session) parseReditExtraMenuLocked(line string) {
+	state := s.roomEdit
+	number := atoiC(line)
+	if number == 0 {
+		if state.currentExtra < len(state.room.ExtraDescs) &&
+			(!state.extraMeta[state.currentExtra].keywordSet || !state.extraMeta[state.currentExtra].descriptionSet) {
+			// C unlinks the current node by writing NULL through the predecessor,
+			// dropping the remainder of the linked list as a side effect.
+			state.room.ExtraDescs = state.room.ExtraDescs[:state.currentExtra]
+			state.extraMeta = state.extraMeta[:state.currentExtra]
+			state.currentExtra = 0
+		}
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+		return
+	}
+	switch number {
+	case 1:
+		state.mode = reditExtraKey
+		s.reditSend("Enter keywords, separated by spaces : ")
+	case 2:
+		state.mode = reditExtraDescription
+		s.startReditStringLocked(reditExtraDescriptionField)
+	case 3:
+		if state.currentExtra >= len(state.room.ExtraDescs) ||
+			!state.extraMeta[state.currentExtra].keywordSet ||
+			!state.extraMeta[state.currentExtra].descriptionSet {
+			s.reditSend("You can't edit the next extra desc without completing this one.\r\n")
+			s.reditDisplayExtraMenuLocked()
+			return
+		}
+		if state.currentExtra+1 < len(state.room.ExtraDescs) {
+			state.currentExtra++
+		} else {
+			state.room.ExtraDescs = append(state.room.ExtraDescs, parser.ExtraDesc{})
+			state.extraMeta = append(state.extraMeta, reditExtraMeta{})
+			state.currentExtra++
+		}
+		state.mode = reditExtraMenu
+		s.reditDisplayExtraMenuLocked()
+	default:
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	}
+}
+
+func (s *Session) parseReditCopyLocked(line string) {
+	state := s.roomEdit
+	number := atoiC(line)
+	if number != -1 {
+		room, ok := s.manager.world.SnapshotRoom(number)
+		if !ok {
+			s.reditSend("That room does not exist, try again : ")
+			return
+		}
+		state.room.Name = room.Name
+		state.room.Description = room.Description
+	}
+	state.olcVal = 1
+	state.mode = reditMainMenu
+	s.reditDisplayMainLocked()
+}
+
+func (s *Session) parseReditScriptMenuLocked(line string) {
+	state := s.roomEdit
+	switch atoiC(line) {
+	case 0:
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	case 1:
+		state.mode = reditScriptName
+		s.reditSend("Enter script name: ")
+	case 2:
+		state.mode = reditScriptFlags
+		s.reditDisplayScriptFlagsLocked()
+	default:
+		state.olcVal = 1
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	}
+}
+
+func (s *Session) parseReditScriptFlagsLocked(line string) {
+	number := atoiC(line)
+	if number == 0 {
+		s.roomEdit.mode = reditScriptMenu
+		s.reditDisplayScriptMenuLocked()
+		return
+	}
+	if number > 0 && number <= len(reditScriptFlagNames) {
+		room, ok := s.manager.world.SnapshotRoom(s.roomEdit.number)
+		if ok {
+			flags := room.ScriptFunctions ^ (1 << uint(number-1))
+			if !s.manager.world.SetRoomScript(s.roomEdit.number, flags, room.ScriptName) {
+				slog.Warn("redit script flag update lost room", "room", s.roomEdit.number)
+			}
+		}
+	}
+	s.reditDisplayScriptFlagsLocked()
+}
+
+func (s *Session) reditEnsureExitLocked(direction int) parser.Exit {
+	state := s.roomEdit
+	name := game.DirectionNames[direction]
+	if exit, ok := state.room.Exits[name]; ok {
+		return exit
+	}
+	toRoom := 0
+	if first, ok := s.manager.world.RoomVNumByIndex(0); ok {
+		toRoom = first
+	}
+	exit := parser.Exit{Direction: name, ToRoom: toRoom}
+	state.room.Exits[name] = exit
+	return exit
+}
+
+func (s *Session) startReditStringLocked(field reditStringField) {
+	state := s.roomEdit
+	initial := ""
+	maxBytes := 0
+	switch field {
+	case reditRoomDescription:
+		initial = state.room.Description
+		maxBytes = 1024
+	case reditExitDescriptionField:
+		exit := s.reditEnsureExitLocked(state.value)
+		initial = exit.Description
+		maxBytes = 256
+	case reditExtraDescriptionField:
+		if state.currentExtra < len(state.room.ExtraDescs) && state.extraMeta[state.currentExtra].descriptionSet {
+			initial = state.room.ExtraDescs[state.currentExtra].Description
+		}
+		maxBytes = 4096
+	}
+	initial = editorCRLF(initial)
+	s.textEdit = &textEditState{
+		field:      textEditField{maxBytes: maxBytes},
+		original:   initial,
+		buffer:     initial,
+		roomEditor: true,
+		onComplete: func(action textEditAction, buffer, original string) {
+			s.finishReditStringLocked(field, action, buffer, original)
+		},
+	}
+	switch field {
+	case reditRoomDescription:
+		s.reditSend("Instructions: /s or @ to save, /h for more options.\r\n" +
+			"Enter room description:\r\n\r\n" + initial)
+	case reditExitDescriptionField:
+		s.reditSend("Instructions: /s or @ to save, /h for more options.\r\n" +
+			"Enter exit description:\r\n\r\n" + initial)
+	case reditExtraDescriptionField:
+		s.reditSend("Instructions: /s or @ to save, /h for more options.\r\n" +
+			"Enter extra description:\r\n\r\n" + initial)
+	}
+}
+
+func (s *Session) finishReditStringLocked(field reditStringField, action textEditAction, buffer, original string) {
+	state := s.roomEdit
+	if state == nil {
+		return
+	}
+	if action == textEditSave {
+		value := editorToRoomText(buffer)
+		switch field {
+		case reditRoomDescription:
+			state.room.Description = value
+		case reditExitDescriptionField:
+			exit := s.reditEnsureExitLocked(state.value)
+			exit.Description = value
+			state.room.Exits[game.DirectionNames[state.value]] = exit
+		case reditExtraDescriptionField:
+			if state.currentExtra < len(state.room.ExtraDescs) {
+				state.room.ExtraDescs[state.currentExtra].Description = value
+				state.extraMeta[state.currentExtra].descriptionSet = true
+			}
+		}
+	}
+	// Abort intentionally leaves the working target untouched: C string_add
+	// restored d->backstr before redit_string_cleanup was called.
+	switch field {
+	case reditRoomDescription:
+		state.mode = reditMainMenu
+		s.reditDisplayMainLocked()
+	case reditExitDescriptionField:
+		state.mode = reditExitMenu
+		s.reditDisplayExitMenuLocked()
+	case reditExtraDescriptionField:
+		state.mode = reditExtraMenu
+		s.reditDisplayExtraMenuLocked()
+	}
+}
+
+func editorToRoomText(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	return strings.ReplaceAll(text, "\r", "\n")
+}
+
+func atoiC(input string) int {
+	input = strings.TrimLeft(input, " \t\r\n\v\f")
+	if input == "" {
+		return 0
+	}
+	end := 0
+	if input[0] == '+' || input[0] == '-' {
+		end = 1
+	}
+	start := end
+	for end < len(input) && input[end] >= '0' && input[end] <= '9' {
+		end++
+	}
+	if end == start {
+		return 0
+	}
+	number, err := strconv.Atoi(input[:end])
+	if err != nil {
+		return 0
+	}
+	return number
+}
+
+func firstByte(input string) byte {
+	if input == "" {
+		return 0
+	}
+	return input[0]
+}
+
+func isASCIIDigit(b byte) bool {
+	return b >= '0' && b <= '9'
+}
+
+func reditToggleRoomFlag(room *parser.Room, bit int) {
+	if room == nil || bit < 0 || bit >= 28 {
+		return
+	}
+	for len(room.Flags) < 4 {
+		room.Flags = append(room.Flags, "0")
+	}
+	word := bit / 32
+	bitInWord := uint(bit % 32)
+	value, err := strconv.ParseUint(room.Flags[word], 10, 32)
+	if err != nil {
+		value = 0
+	}
+	value ^= 1 << bitInWord
+	room.Flags[word] = strconv.FormatUint(value, 10)
+}
+
+func reditRoomFlagSet(room parser.Room, bit int) bool {
+	if bit < 0 || bit >= 28 || bit/32 >= len(room.Flags) {
+		return false
+	}
+	value, err := strconv.ParseUint(room.Flags[bit/32], 10, 32)
+	return err == nil && value&(1<<uint(bit%32)) != 0
+}
+
+func reditRoomFlags(room parser.Room) string {
+	var out strings.Builder
+	for bit, name := range reditRoomFlagNames {
+		if reditRoomFlagSet(room, bit) {
+			out.WriteString(name)
+			out.WriteByte(' ')
+		}
+	}
+	if out.Len() == 0 {
+		return "NOBITS "
+	}
+	return out.String()
+}
+
+func reditScriptFlagsText(flags int) string {
+	var out strings.Builder
+	for bit, name := range reditScriptFlagNames {
+		if flags&(1<<uint(bit)) != 0 {
+			out.WriteString(name)
+			out.WriteByte(' ')
+		}
+	}
+	if out.Len() == 0 {
+		return "NOBITS "
+	}
+	return out.String()
+}
+
+func (s *Session) reditDisplayMainLocked() {
+	state := s.roomEdit
+	if state == nil {
+		return
+	}
+	var out strings.Builder
+	fmt.Fprintf(&out, "\r\n-- Room number : [%d]      Room zone: [%d]\r\n", state.number, state.zoneNumber)
+	fmt.Fprintf(&out, "1) Name        : %s\r\n", state.room.Name)
+	fmt.Fprintf(&out, "2) Description :\r\n%s", editorCRLF(state.room.Description))
+	fmt.Fprintf(&out, "3) Room flags  : %s\r\n", reditRoomFlags(state.room))
+	sector := "<INVALID>"
+	if state.room.Sector >= 0 && state.room.Sector < len(reditSectorNames) {
+		sector = reditSectorNames[state.room.Sector]
+	}
+	fmt.Fprintf(&out, "4) Sector type : %s\r\n", sector)
+	exitLabels := []string{
+		"5) Exit north  : ",
+		"6) Exit east   : ",
+		"7) Exit south  : ",
+		"8) Exit west   : ",
+		"9) Exit up     : ",
+		"A) Exit down   : ",
+	}
+	for i, label := range game.DirectionNames {
+		target := -1
+		if exit, ok := state.room.Exits[label]; ok {
+			target = s.reditExitTargetDisplay(exit.ToRoom)
+		}
+		fmt.Fprintf(&out, "%s%d\r\n", exitLabels[i], target)
+	}
+	out.WriteString("B) Extra descriptions menu\r\n")
+	out.WriteString("C) Copy another room description\r\n")
+	out.WriteString("S) Script menu\r\n")
+	out.WriteString("Q) Quit\r\n")
+	out.WriteString("Enter choice : ")
+	s.reditSend(out.String())
+	state.mode = reditMainMenu
+}
+
+func (s *Session) reditExitTargetDisplay(target int) int {
+	if target == -1 {
+		return -1
+	}
+	if _, ok := s.manager.world.SnapshotRoom(target); !ok {
+		return -1
+	}
+	return target
+}
+
+func (s *Session) reditDisplayFlagsLocked() {
+	state := s.roomEdit
+	var out strings.Builder
+	out.WriteString("\r\n")
+	for i, name := range reditRoomFlagNames {
+		fmt.Fprintf(&out, "%2d) %-20.20s ", i+1, name)
+		if (i+1)%2 == 0 {
+			out.WriteString("\r\n")
+		}
+	}
+	fmt.Fprintf(&out, "\r\nRoom flags: %s\r\nEnter room flags, 0 to quit : ", reditRoomFlags(state.room))
+	s.reditSend(out.String())
+	state.mode = reditFlags
+}
+
+func (s *Session) reditDisplaySectorLocked() {
+	state := s.roomEdit
+	var out strings.Builder
+	out.WriteString("\r\n")
+	for i, name := range reditSectorNames {
+		fmt.Fprintf(&out, "%2d) %-20.20s ", i, name)
+		if (i+1)%2 == 0 {
+			out.WriteString("\r\n")
+		}
+	}
+	out.WriteString("\r\nEnter sector type : ")
+	s.reditSend(out.String())
+	state.mode = reditSector
+}
+
+func (s *Session) reditDisplayExitMenuLocked() {
+	state := s.roomEdit
+	exit := s.reditEnsureExitLocked(state.value)
+	toRoom := s.reditExitTargetDisplay(exit.ToRoom)
+	door := "No door"
+	if exit.ExitInfo&parser.ExitIsDoor != 0 {
+		door = "Is a door"
+		if exit.ExitInfo&parser.ExitPickproof != 0 {
+			door = "Pickproof"
+		}
+	}
+	var out strings.Builder
+	out.WriteString("\r\n")
+	fmt.Fprintf(&out, "1) Exit to     : %d\r\n", toRoom)
+	fmt.Fprintf(&out, "2) Description :-\r\n%s\r\n", reditDisplayValue(exit.Description))
+	fmt.Fprintf(&out, "3) Door name   : %s\r\n", reditDisplayValue(exit.Keywords))
+	fmt.Fprintf(&out, "4) Key         : %d\r\n", exit.Key)
+	fmt.Fprintf(&out, "5) Door flags  : %s\r\n", door)
+	out.WriteString("6) Purge exit.\r\nEnter choice, 0 to quit : ")
+	s.reditSend(out.String())
+	state.mode = reditExitMenu
+}
+
+func reditDisplayValue(value string) string {
+	if value == "" {
+		return "<NONE>"
+	}
+	return editorCRLF(value)
+}
+
+func (s *Session) reditDisplayExitFlagLocked() {
+	s.reditSend("0) No door\r\n1) Closeable door\r\n2) Pickproof\r\nEnter choice : ")
+}
+
+func (s *Session) reditDisplayExtraMenuLocked() {
+	state := s.roomEdit
+	if state.currentExtra >= len(state.room.ExtraDescs) {
+		state.currentExtra = 0
+	}
+	extra := state.room.ExtraDescs[state.currentExtra]
+	meta := state.extraMeta[state.currentExtra]
+	keyword := "<NONE>"
+	if meta.keywordSet {
+		keyword = extra.Keywords
+	}
+	description := "<NONE>"
+	if meta.descriptionSet {
+		description = reditDisplayValue(extra.Description)
+	}
+	var out strings.Builder
+	out.WriteString("\r\n")
+	fmt.Fprintf(&out, "1) Keyword: %s\r\n", keyword)
+	fmt.Fprintf(&out, "2) Description:\r\n%s\r\n", description)
+	if state.currentExtra+1 < len(state.room.ExtraDescs) {
+		out.WriteString("3) Goto next description: Set.\r\n")
+	} else {
+		out.WriteString("3) Goto next description: <NOT SET>\r\n")
+	}
+	out.WriteString("Enter choice (0 to quit) : ")
+	s.reditSend(out.String())
+	state.mode = reditExtraMenu
+}
+
+func (s *Session) reditDisplayScriptFlagsLocked() {
+	state := s.roomEdit
+	room, ok := s.manager.world.SnapshotRoom(state.number)
+	if !ok {
+		room = state.room
+	}
+	var out strings.Builder
+	out.WriteString("\x1b[H\x1b[J")
+	for i, name := range reditScriptFlagNames {
+		fmt.Fprintf(&out, "%2d) %-20.20s  ", i+1, name)
+		if (i+1)%2 == 0 {
+			out.WriteString("\r\n")
+		}
+	}
+	fmt.Fprintf(&out, "\r\nCurrent flags   : %s\r\nEnter script flags (0 to quit) : ", reditScriptFlagsText(room.ScriptFunctions))
+	s.reditSend(out.String())
+	state.mode = reditScriptFlags
+}
+
+func (s *Session) reditDisplayScriptMenuLocked() {
+	state := s.roomEdit
+	if state.isNew {
+		s.reditSend("\r\nCannot assign a script until the room is saved at least once.\r\n")
+		s.reditDisplayMainLocked()
+		return
+	}
+	room, ok := s.manager.world.SnapshotRoom(state.number)
+	if !ok {
+		room = state.room
+	}
+	name := room.ScriptName
+	if name == "" {
+		name = "None"
+	}
+	var out strings.Builder
+	out.WriteString("\r\n")
+	fmt.Fprintf(&out, "1) Name: %s\r\n2) Script Flags: %s\r\nEnter choice (0 to quit) : ", name, reditScriptFlagsText(room.ScriptFunctions))
+	s.reditSend(out.String())
+	state.mode = reditScriptMenu
+}
+
+func reditAddSaveRoom(zone int) {
+	reditSaveMu.Lock()
+	reditSaveRooms[zone] = true
+	reditSaveMu.Unlock()
+}
+
+func reditRemoveSaveRoom(zone int) {
+	reditSaveMu.Lock()
+	delete(reditSaveRooms, zone)
+	reditSaveMu.Unlock()
+}
+
+func saveReditZone(world *game.World, zone *parser.Zone) error {
+	rooms := world.SnapshotRooms()
+	var out strings.Builder
+	minimum := zone.Number * 100
+	for i := range rooms {
+		room := rooms[i]
+		if room.VNum < minimum || room.VNum > zone.TopRoom {
+			continue
+		}
+		fmt.Fprintf(&out, "#%d\n%s~\n%s~\n%d %s %s %s %s %d\n",
+			room.VNum,
+			room.Name,
+			diskReditString(room.Description),
+			zone.Number,
+			reditFlagWord(room, 0),
+			reditFlagWord(room, 1),
+			reditFlagWord(room, 2),
+			reditFlagWord(room, 3),
+			room.Sector,
+		)
+		if room.ScriptName != "" {
+			fmt.Fprintf(&out, "R %s %d\n", room.ScriptName, room.ScriptFunctions)
+		}
+		for direction, name := range game.DirectionNames {
+			exit, ok := room.Exits[name]
+			if !ok {
+				continue
+			}
+			doorState := 0
+			if exit.ExitInfo&parser.ExitIsDoor != 0 {
+				doorState = 1
+				if exit.ExitInfo&parser.ExitPickproof != 0 {
+					doorState = 2
+				}
+			}
+			fmt.Fprintf(&out, "D%d\n%s~\n%s~\n%d %d %d\n",
+				direction,
+				diskReditString(exit.Description),
+				diskReditString(exit.Keywords),
+				doorState,
+				exit.Key,
+				exit.ToRoom,
+			)
+		}
+		for _, extra := range room.ExtraDescs {
+			fmt.Fprintf(&out, "E\n%s~\n%s~\n", extra.Keywords, diskReditString(extra.Description))
+		}
+		out.WriteString("S\n")
+	}
+	out.WriteString("$~\n")
+
+	path := filepath.Join(world.WorldPath, "wld", fmt.Sprintf("%d.wld", zone.Number))
+	if err := os.WriteFile(filepath.Clean(path), []byte(out.String()), 0o666); err != nil {
+		return err
+	}
+	reditRemoveSaveRoom(zone.Number)
+	return nil
+}
+
+func reditFlagWord(room parser.Room, index int) string {
+	if index >= 0 && index < len(room.Flags) && room.Flags[index] != "" {
+		return room.Flags[index]
+	}
+	return "0"
+}
+
+func diskReditString(text string) string {
+	return strings.ReplaceAll(text, "\r", "")
+}
