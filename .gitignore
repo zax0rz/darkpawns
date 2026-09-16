@@ -78,6 +78,11 @@ data/
 /dp-goatd
 server-linux
 public/
+# `public/` above is unanchored, so it swallows any directory of that name at
+# any depth. web/public is the server's document root and must ship, the same
+# exception website/data needed above.
+!web/public/
+!web/public/**
 website/REVIEW-*.md
 # Design-review / planning scratch (conversational review artifacts)
 website/DESIGN-REVIEW-*.md

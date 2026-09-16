@@ -187,7 +187,7 @@ Runs before the TUI renders. Checks:
   [Enter] Continue    [Esc] Back
 
   Default: 4350 (standard Dark Pawns port)
-  Players connect via: telnet://localhost:4350
+  Players connect via: the telnet port below (default 7777)
 ```
 
 **Validation:**
@@ -287,7 +287,7 @@ Runs before the TUI renders. Checks:
   ┌─────────────────────────────────────────┐
   │  Dark Pawns is running!                  │
   │                                          │
-  │  Connect:  telnet://localhost:4350        │
+  │  Connect:  telnet localhost 7777          │
   │  Web:      http://localhost:4350          │
   │  Health:   http://localhost:4350/health   │
   │                                          │

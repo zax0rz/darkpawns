@@ -22,7 +22,7 @@ scenario-coverage-weekly:
 # Default world directory — resolve relative to this Makefile so it works
 # regardless of the checkout directory name.
 WORLD_DIR ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))lib/world
-WEB_DIR ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))web
+WEB_DIR ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))web/public
 
 build:
 	go build -o darkpawns ./cmd/server
