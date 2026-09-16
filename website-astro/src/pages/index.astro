@@ -17,7 +17,6 @@ const fieldGuides = [
   <div class="home-page">
     <section class="cover container">
       <div class="cover-copy">
-        <p class="eyebrow">A Multi-User Dungeon, established 1994</p>
         <h1>A fantasy world first opened in 1994.</h1>
         <p class="lede">Play in your browser, explore the original world, or read what survived from the people who built it.</p>
         <div class="cover-actions">
@@ -59,7 +58,6 @@ const fieldGuides = [
     <section class="world-desk">
       <div class="container world-grid">
         <div class="world-intro">
-          <p class="eyebrow">Field guides</p>
           <h2>Field guides to the original world</h2>
           <p>The map, database, and help index are generated from the same files used by the server. They are useful before you enter and after you get lost.</p>
         </div>
@@ -109,7 +107,7 @@ const fieldGuides = [
   .btn-primary { border-color: var(--accent); background: var(--accent); color: var(--paper); }
   .btn-primary:hover { background: var(--accent-deep); text-decoration: none; }
   .btn-secondary:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
-  .connection-slip { border-top: 3px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
+  .connection-slip { border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
   .slip-label { font-family: var(--font-display); font-size: 1.1rem; }
   .connection-slip dl { margin: 0 0 var(--space-md); }
   .connection-slip dl div { display: grid; grid-template-columns: 5rem 1fr; gap: var(--space-sm); border-top: 1px solid var(--rule); padding-block: var(--space-sm); }
@@ -126,11 +124,11 @@ const fieldGuides = [
   .guide-list h3 { font-size: 1.2rem; margin: 0; }
   .guide-list p { color: var(--ink-muted); margin: 0; }
   .record { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .55fr); gap: var(--space-xl); padding-block: var(--space-xl); }
-  .archive-feature { border-top: 3px solid var(--rule); padding-top: var(--space-md); }
+  .archive-feature { border-top: 2px solid var(--rule); padding-top: var(--space-md); }
   .archive-feature h2 { max-width: 21ch; font-size: clamp(2rem, 4vw, 3.5rem); }
   .archive-feature > p:not(.eyebrow) { color: var(--ink-muted); }
   .record-links { display: flex; flex-wrap: wrap; gap: var(--space-lg); }
-  .restoration-note { align-self: start; border-top: 3px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
+  .restoration-note { align-self: start; border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
   .restoration-note h2 { font-size: 1.45rem; }
   .restoration-note p:not(.eyebrow) { color: var(--ink-muted); }
   .dispatch { border-top: 1px solid var(--rule); padding-block: var(--space-lg) var(--space-xl); }
@@ -139,7 +137,7 @@ const fieldGuides = [
   .dispatch-list { list-style: none; margin: var(--space-lg) 0 0; padding: 0; border-top: 1px solid var(--rule); }
   .dispatch-list li { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-lg); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
   .dispatch-list time { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; }
-  .dispatch-list h3 { font-size: 1.2rem; margin-bottom: var(--space-xs); }
+  .dispatch-list h3 { font-size: 1.2rem; margin-bottom: 0; }
   .dispatch-list h3 a { color: var(--ink); }
   .dispatch-list h3 a:hover { color: var(--accent); text-decoration: none; }
   @media (max-width: 800px) {
