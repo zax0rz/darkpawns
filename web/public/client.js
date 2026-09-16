@@ -1,3 +1,11 @@
+// A self-hoster is not on darkpawns.org, so the landing page names the host
+// they actually reached. Inline script is blocked by the server's CSP, so this
+// lives here, where script-src 'self' allows it.
+(function nameThisHost() {
+  var el = document.getElementById('telnet-host');
+  if (el) el.textContent = window.location.hostname + ' port 7777';
+})();
+
 (function () {
   'use strict';
 

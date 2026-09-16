@@ -83,7 +83,7 @@ rejects the old example default and any key containing `example`/`test`/`REPLACE
 ```bash
 ./darkpawns-server \
   -world ./lib/world \
-  -web ./web \
+  -web ./web/public \
   -telnet-port 7777
 # DATABASE_URL is read from the environment (or pass -db).
 ```

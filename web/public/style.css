@@ -1,0 +1,264 @@
+/* DM Serif Display, SIL Open Font License 1.1. Latin subset, 24 KB.
+   Vendored so a self-hosted install needs no network at render time. */
+@font-face {
+  font-family: 'DM Serif Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('static/fonts/dm-serif-display-latin-400.woff2') format('woff2');
+}
+
+/* The palette is the one in website-astro/DESIGN.md. Paper everywhere; the
+   terminal below is the single dark surface the system allows, and it keeps
+   its own colours further down this file. */
+:root {
+  --paper: #EFE7D6;
+  --paper-deep: #E5DAC1;
+  --ink: #1A1614;
+  --ink-muted: #56504A;
+  --rule: #1A1614;
+  --accent: #A8201A;
+  --accent-deep: #7A1812;
+  /* Self-hosted: font-src is 'self', so the face ships with the server rather
+     than being fetched from Google. Works offline, no third-party request, and
+     the wordmark matches darkpawns.org instead of falling back to Georgia. */
+  --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+  --font-body: Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); }
+
+/* ── Landing ── */
+.landing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding: 3rem 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.pawn { height: 4rem; width: auto; color: var(--ink); flex-shrink: 0; }
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  line-height: 0.82;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.wordmark .accent { color: var(--accent); }
+
+.lore {
+  margin-top: 1.75rem;
+  max-width: 34rem;
+  color: var(--ink-muted);
+}
+
+.ctas { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+
+/* Flat by physical law: no shadow, no radius, a hairline or a fill. */
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: background-color 120ms linear, color 120ms linear;
+}
+
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
+.btn-secondary { background: transparent; color: var(--ink); }
+.btn-secondary:hover { background: var(--ink); color: var(--paper); }
+
+/* How to reach this particular server, which is what a self-hoster came for. */
+.connection {
+  margin-top: 2.5rem;
+  width: 100%;
+  border-top: 1px solid var(--rule);
+}
+
+.connection > div {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.connection dt {
+  flex: 0 0 5.5rem;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  padding-top: 0.15rem;
+}
+
+.connection dd { font-family: var(--font-mono); font-size: 0.85rem; }
+
+/* ── Terminal Section ── */
+.terminal-section {
+  padding: 2rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.terminal-frame {
+  width: 100%;
+  max-width: 960px;
+  border: 2px solid var(--rule);
+  border-radius: 0;
+  background: #0a0908;
+  position: relative;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: #141210;
+  border-bottom: 1px solid #2a2218;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: #5a5245;
+  text-transform: uppercase;
+}
+
+.conn-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.conn-status .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #5a3a3a;
+  transition: background 0.3s;
+}
+.conn-status.connected .dot { background: #4a8a4a; }
+.conn-status.disconnected .dot { background: #8b0000; }
+
+#reconnect-btn {
+  display: none;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c4b89a;
+  background: transparent;
+  border: 1px solid #3a3228;
+  padding: 0.3em 1em;
+  cursor: pointer;
+}
+#reconnect-btn:hover { border-color: #8b0000; }
+#reconnect-btn.visible { display: inline-block; }
+
+#terminal {
+  width: 100%;
+  height: 70vh;
+  padding: 0.5rem;
+}
+
+#terminal .xterm { padding: 8px; }
+
+/* ── Status Bar ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.4em 0.8em;
+  background: #141210;
+  border-top: 1px solid #2a2218;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #a89880;
+  letter-spacing: 0.03em;
+  flex-wrap: wrap;
+}
+.status-bar.hidden { display: none; }
+
+.stat-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.stat-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  color: #8a7a6a;
+  min-width: 2.2em;
+}
+
+.bar-track {
+  width: 80px;
+  height: 8px;
+  background: #0a0908;
+  border: 1px solid #2a2218;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 1px;
+}
+
+.stat-value {
+  font-size: 0.7rem;
+  color: #c4b89a;
+  min-width: 4em;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 14px;
+  background: #2a2218;
+}
+
+.stat-info {
+  font-size: 0.7rem;
+  color: #c4b89a;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--paper-deep); }
+::-webkit-scrollbar-thumb { background: #2a2218; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3228; }

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dark Pawns</title>
+  <meta name="description" content="Dark Pawns is a text world first opened in 1994. Connect over telnet, or play in this browser.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="xterm.css">
+  <link rel="icon" href="static/pawn.svg">
+</head>
+<body>
+
+  <!-- Landing. Paper, like every surface but the terminal below. -->
+  <section class="landing" id="top">
+    <a class="brand" href="#top" aria-label="Dark Pawns">
+      <svg class="pawn" viewBox="24 8 52 88" aria-hidden="true" focusable="false">
+        <g fill="currentColor">
+          <circle cx="50" cy="23" r="12" />
+          <rect x="37" y="38" width="26" height="5" />
+          <polygon points="43,46 57,46 62,75 38,75" />
+          <rect x="31" y="77" width="38" height="6" />
+          <rect x="26" y="85" width="48" height="7" />
+        </g>
+      </svg>
+      <span class="wordmark">DARK<br><span class="accent">PAWNS</span></span>
+    </a>
+
+    <p class="lore">
+      A text world first opened in 1994, rebuilt in Go and running on this server.
+    </p>
+
+    <div class="ctas">
+      <a href="#terminal-section" class="btn btn-primary">Play in this browser</a>
+      <a href="https://darkpawns.org/" class="btn btn-secondary">The archive and handbooks</a>
+    </div>
+
+    <dl class="connection" aria-label="Direct connection">
+      <div><dt>Telnet</dt><dd id="telnet-host">this server, port 7777</dd></div>
+      <div><dt>Source</dt><dd><a href="https://github.com/zax0rz/darkpawns">github.com/zax0rz/darkpawns</a></dd></div>
+      <div><dt>Docs</dt><dd><a href="https://darkpawns.org/docs/">darkpawns.org/docs</a></dd></div>
+    </dl>
+  </section>
+
+  <!-- Terminal. The one dark surface in the system, by design. -->
+  <section class="terminal-section" id="terminal-section">
+    <div class="terminal-frame">
+      <div class="terminal-header">
+        <span>Dark Pawns</span>
+        <div class="conn-status disconnected">
+          <span class="dot"></span>
+          <span>Disconnected</span>
+        </div>
+        <button id="reconnect-btn">Reconnect</button>
+      </div>
+      <div id="terminal"></div>
+      <div id="status-bar" class="status-bar hidden">
+        <div class="stat-group">
+          <span class="stat-label">HP</span>
+          <div class="bar-track">
+            <div class="bar-fill hp-bar" id="hp-bar"></div>
+          </div>
+          <span class="stat-value" id="hp-text">&mdash;</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">Mana</span>
+          <div class="bar-track">
+            <div class="bar-fill mana-bar" id="mana-bar"></div>
+          </div>
+          <span class="stat-value" id="mana-text">&mdash;</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">Move</span>
+          <div class="bar-track">
+            <div class="bar-fill move-bar" id="move-bar"></div>
+          </div>
+          <span class="stat-value" id="move-text">&mdash;</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-info" id="level-info">Lv &mdash;</div>
+        <div class="stat-info" id="gold-info">Gold &mdash;</div>
+      </div>
+    </div>
+  </section>
+
+  <script src="xterm.js"></script>
+  <script src="addon-fit.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
