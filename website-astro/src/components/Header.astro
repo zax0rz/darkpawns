@@ -38,7 +38,18 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   </div>
 
   <nav class="sectionbar" aria-label="Site sections">
-    <div class="container sectionbar-inner">
+    <details class="nav-disclosure">
+      <summary class="nav-toggle">
+        <span class="container nav-toggle-inner">
+          <svg class="burger" viewBox="0 0 20 16" width="20" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">
+            <line class="bar-top" x1="1" y1="3" x2="19" y2="3" />
+            <line class="bar-mid" x1="1" y1="8" x2="19" y2="8" />
+            <line class="bar-bot" x1="1" y1="13" x2="19" y2="13" />
+          </svg>
+          <span class="visually-hidden">Menu</span>
+        </span>
+      </summary>
+      <div class="container sectionbar-inner">
       <ul class="nav-primary">
         {primary.map((s) => (
           <li>
@@ -63,7 +74,8 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
           </li>
         ))}
       </ul>
-    </div>
+      </div>
+    </details>
   </nav>
 </header>
 
@@ -102,6 +114,17 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   .masthead-meta .est { color: var(--accent); }
 
   .sectionbar { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  /* The disclosure is a mobile affordance only: on desktop the summary is
+     removed and the panel forced open, so <details> never collapses a bar that
+     has room for itself, and the element still toggles without any JS. */
+  .nav-disclosure > summary { display: none; }
+  /* Chrome wraps details content in ::details-content and paints it only when
+     open. Visibility here is driven by `display` on the panel instead, so the
+     bar behaves identically in browsers with and without that pseudo-element. */
+  .nav-disclosure::details-content { content-visibility: visible; }
+  .nav-disclosure > .sectionbar-inner { display: flex; content-visibility: visible; }
+  .nav-toggle { list-style: none; cursor: pointer; }
+  .nav-toggle::-webkit-details-marker { display: none; }
   .sectionbar-inner {
     display: flex;
     align-items: center;
@@ -116,7 +139,10 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
     gap: var(--space-lg);
     list-style: none;
     margin: 0;
+    /* padding-block alone leaves the UA's 40px padding-inline-start in place,
+       which pushed Play off the container edge every other element sits on. */
     padding-block: 0.7rem;
+    padding-inline: 0;
     font-family: var(--font-display);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -169,7 +195,48 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   @media (max-width: 640px) {
     .masthead-row { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
     .masthead-meta { text-align: left; flex-direction: row; gap: var(--space-md); }
-    .sectionbar-inner { justify-content: flex-start; gap: var(--space-md); }
-    .nav-primary, .nav-secondary { gap: var(--space-md); }
+
+    .nav-disclosure > summary { display: block; }
+    .nav-toggle-inner {
+      display: flex;
+      align-items: center;
+      padding-block: 0.8rem;
+      color: var(--ink);
+    }
+    .nav-toggle:hover .burger { color: var(--accent); }
+    /* Open state crosses the top and bottom bars and fades the middle one, so
+       the control changes shape rather than colour and the single-accent rule
+       holds; oxblood stays reserved for the hover state. */
+    .nav-disclosure[open] .bar-top { transform: translateY(5px) rotate(45deg); }
+    .nav-disclosure[open] .bar-bot { transform: translateY(-5px) rotate(-45deg); }
+    .nav-disclosure[open] .bar-mid { opacity: 0; }
+    .burger line { transform-origin: center; }
+
+    .nav-disclosure:not([open]) > .sectionbar-inner { display: none; }
+    .nav-disclosure[open] > .sectionbar-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      overflow-x: visible;
+      border-top: 1px solid var(--rule);
+      padding-block: var(--space-sm) var(--space-md);
+    }
+    /* Stacked, the two clusters read as one list, so the utility group keeps
+       its quieter ink rather than its horizontal position to stay secondary. */
+    .nav-primary, .nav-secondary {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      padding-block: 0;
+      width: 100%;
+    }
+    .nav-primary li, .nav-secondary li { width: 100%; }
+    .sectionbar a { display: block; padding-block: 0.55rem; }
+    .nav-search-btn { margin-block: 0.4rem; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .burger line { transition: transform 200ms var(--ease-out-expo), opacity 120ms linear; }
   }
 </style>

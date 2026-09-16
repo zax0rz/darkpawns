@@ -10,35 +10,39 @@ const year = new Date().getFullYear();
       <ul>
         <li><a href="/play/">Play In-Browser</a></li>
         <li><a href="/map/">Interactive World Map</a></li>
+        <li><a href="/database/">Mob &amp; Item Database</a></li>
         <li><a href="/zones/">Zone Records</a></li>
         <li><a href="/help/">Help Index</a></li>
-        <li><a href="/world/lore/">World Lore</a></li>
+        <li><a href="/world/">The World</a></li>
+        <li><a href="https://www.mudlet.org/">Mudlet Desktop Client</a></li>
       </ul>
     </div>
     <div class="footer-col">
-      <h2>Research &amp; Code</h2>
+      <h2>The Archive</h2>
       <ul>
-        <li><a href="/research/">AI Agent Research</a></li>
+        <li><a href="/archive/">Community Archive</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="https://web.archive.org/web/20040803063038/http://www.dp-players.com/">dp-players.com (2004)</a></li>
+        <li><a href="https://www.darkpawns.net/">darkpawns.net (revival)</a></li>
+        <li><a href="https://www.circlemud.org/">CircleMUD Lineage</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h2>About &amp; Code</h2>
+      <ul>
+        <li><a href="/about/">About</a></li>
         <li><a href="/docs/">Developer Docs</a></li>
+        <li><a href="/research/">AI Agent Research</a></li>
         <li><a href="https://github.com/zax0rz/darkpawns">GitHub Repository</a></li>
         <li><a href="/credits/">Credits &amp; Staff</a></li>
         <li><a href="/privacy/">Privacy</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h2>Historic Resources</h2>
-      <ul>
-        <li><a href="https://web.archive.org/web/20040803063038/http://www.dp-players.com/">dp-players.com (2004)</a></li>
-        <li><a href="https://www.darkpawns.net/">darkpawns.net (revival)</a></li>
-        <li><a href="https://www.circlemud.org/">CircleMUD Engine</a></li>
-        <li><a href="https://www.mudlet.org/">Mudlet Desktop Client</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom container">
     <p class="footer-wordmark">DARK PAWNS · EST. 1994 · RESURRECTED 2026</p>
     <div class="footer-bottom-info">
-      <span class="status" id="footer-status" title="MUD server status">
+      <span class="status" id="footer-status" title="MUD server status" aria-live="polite">
         <span class="dot" aria-hidden="true"></span><span id="footer-status-text">checking status</span>
       </span>
       <p>Released under the MIT &amp; CircleMUD Licenses · &copy; {year}</p>
@@ -87,8 +91,43 @@ const year = new Date().getFullYear();
     gap: 0.4rem;
     color: var(--ink-muted);
   }
+  /* Default is the unresolved state: muted until /health answers. Online and
+     offline follow the dot convention the play client already uses. */
   .status .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--ink-muted); }
+  .status.online .dot { background: var(--online); }
+  .status.offline .dot { background: var(--accent); }
 
   @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 520px) { .footer-grid { grid-template-columns: 1fr; } }
 </style>
+
+<script>
+  // The footer dot reports whether the game server is answering. /health is the
+  // Go binary's own endpoint and same-origin, so this needs no CORS and no key.
+  // The binary serves telnet and HTTP from one process, so a healthy response
+  // means the MUD is reachable too; it is liveness, not a telnet-port probe.
+  const status = document.getElementById('footer-status');
+  const label = document.getElementById('footer-status-text');
+
+  if (status && label) {
+    const settle = (state, text) => {
+      status.classList.remove('online', 'offline');
+      if (state) status.classList.add(state);
+      label.textContent = text;
+    };
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    fetch('/health', { signal: controller.signal, cache: 'no-store' })
+      .then((response) => {
+        settle(response.ok ? 'online' : 'offline', response.ok ? 'server online' : 'server offline');
+      })
+      .catch(() => {
+        // An aborted or failed request proves nothing about the server, so the
+        // dot stays muted rather than claiming an outage it did not observe.
+        settle(null, 'status unavailable');
+      })
+      .finally(() => clearTimeout(timeout));
+  }
+</script>

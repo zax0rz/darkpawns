@@ -11,7 +11,7 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
-const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 ---
 <Base title={`${post.data.title} | Dark Pawns`} description={post.data.description}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/blog/${post.id}.md`} title={`${post.data.title} as Markdown`} />

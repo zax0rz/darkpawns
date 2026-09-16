@@ -25,6 +25,9 @@
   --max-width: 72rem;
   --content-width: 42rem;
   --nav-height: 3.5rem;
+  /* Exponential ease-out, for motion that starts from an already-visible
+     default rather than animating something into existence. */
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * { box-sizing: border-box; }

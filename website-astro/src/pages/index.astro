@@ -5,7 +5,7 @@ import { getCollection } from 'astro:content';
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 3);
-const fmt = (date: Date) => date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const fmt = (date: Date) => date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 const fieldGuides = [
   { href: '/map/', title: 'Map', text: 'Trace rooms and connections drawn from the world files.' },
   { href: '/database/', title: 'Database', text: 'Look through the mobs and objects loaded by the current server.' },
@@ -34,6 +34,26 @@ const fieldGuides = [
         </dl>
         <p><a href="/play/#desktop-client">Desktop client instructions</a></p>
       </aside>
+    </section>
+
+    <section class="dispatch container">
+      <header>
+        <div>
+          <p class="eyebrow">Dispatch</p>
+          <h2>Notes from the restoration</h2>
+        </div>
+        <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
+      </header>
+      <ol class="dispatch-list">
+        {posts.map((post) => (
+          <li>
+            <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
+            <div>
+              <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
 
     <section class="world-desk">
@@ -76,25 +96,6 @@ const fieldGuides = [
       </aside>
     </section>
 
-    <section class="dispatch container">
-      <header>
-        <div>
-          <p class="eyebrow">Dispatch</p>
-          <h2>Notes from the restoration</h2>
-        </div>
-        <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
-      </header>
-      <ol class="dispatch-list">
-        {posts.map((post) => (
-          <li>
-            <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
-            <div>
-              <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
   </div>
 </Base>
 
