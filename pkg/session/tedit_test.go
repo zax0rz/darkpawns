@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -294,26 +295,87 @@ func TestTeditReplacementMatchesCUnsignedSizeAndStrtokEdges(t *testing.T) {
 	s.textEdit.buffer = "aaaa\r\n"
 	s.textEdit.field.maxBytes = 10
 	s.parseTextEditorReplace("a 'a' 'bbb'")
-	if got := readMsgText(t, s); got != "ERROR: Replacement string causes buffer overflow, aborted replace.\r\n" {
+	if got := readMsgText(t, s); got != "String 'a' not found.\r\n" {
 		t.Fatalf("replace-all overflow output = %q", got)
 	}
-	if s.textEdit.buffer != "aaaa\r\n" {
-		t.Fatalf("replace-all overflow mutated buffer = %q", s.textEdit.buffer)
+	if s.textEdit.buffer != "aaa" {
+		t.Fatalf("replace-all overflow buffer = %q, want C's failed-match truncation", s.textEdit.buffer)
 	}
 
-	// C's replace_str performs a conservative per-occurrence check for /ra:
-	// the exact final result fits, but the second check still includes the
-	// pattern about to be removed and therefore reports overflow.
+	// C NUL-terminates each match before its inner size check, so only the
+	// prefix before the match contributes to that check. The exact final result
+	// fits and /ra succeeds at this boundary.
 	s.textEdit.buffer = "aab"
 	s.textEdit.field.maxBytes = 5
 	s.parseTextEditorReplace("a 'a' 'bb'")
-	if got := readMsgText(t, s); got != "ERROR: Replacement string causes buffer overflow, aborted replace.\r\n" {
-		t.Fatalf("replace-all conservative boundary output = %q", got)
+	if got := readMsgText(t, s); got != "Replaced 2 occurances of 'a' with 'bb'.\r\n" {
+		t.Fatalf("replace-all prefix boundary output = %q", got)
 	}
-	if s.textEdit.buffer != "aab" {
-		t.Fatalf("replace-all conservative boundary mutated buffer = %q", s.textEdit.buffer)
+	if s.textEdit.buffer != "bbbbb" {
+		t.Fatalf("replace-all prefix boundary buffer = %q", s.textEdit.buffer)
+	}
+
+	// This is the compiled-C boundary reported for the editor: replacing the
+	// final character in xxa with a one-byte replacement succeeds with max=4,
+	// even though the untouched suffix would make Go's old check reject it.
+	s.textEdit.buffer = "xxa"
+	s.textEdit.field.maxBytes = 4
+	s.parseTextEditorReplace("a 'a' 'b'")
+	if got := readMsgText(t, s); got != "Replaced 1 occurance of 'a' with 'b'.\r\n" {
+		t.Fatalf("replace-all trailing-match boundary output = %q", got)
+	}
+	if s.textEdit.buffer != "xxb" {
+		t.Fatalf("replace-all trailing-match boundary buffer = %q", s.textEdit.buffer)
 	}
 	s.textEdit = nil
+}
+
+func TestTeditHelpScreenSynchronizesWithHelpAndReload(t *testing.T) {
+	m := makeTestManager(t)
+	editor := makeCommandTestSession(t, m, "Tedithelp", game.LVL_IMPL, 1001)
+	reader := makeCommandTestSession(t, m, "Helpreader", game.LVL_IMPL, 1001)
+	reloader := makeCommandTestSession(t, m, "Helpreloader", game.LVL_IMPL, 1001)
+
+	helpDir := filepath.Join(t.TempDir(), "help")
+	if err := os.MkdirAll(helpDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(helpDir, "screen"), []byte("disk help\r\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	m.world.LibTextDir = filepath.Dir(helpDir)
+	m.world.HelpScreen = "initial help\r\n"
+
+	if err := cmdTedit(editor, []string{"help"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, editor)
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			if err := cmdHelp(reader, nil); err != nil {
+				t.Errorf("help read failed: %v", err)
+				return
+			}
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			reloadHelpScreen(reloader)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			editor.handleTextEditInput("draft")
+		}
+	}()
+	wg.Wait()
+	editor.cancelTextEdit()
 }
 
 func textEditTestCache(filename string) string {

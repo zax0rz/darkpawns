@@ -118,7 +118,9 @@ func reloadCachedText(s *Session, filenames ...string) {
 func reloadHelpScreen(s *Session) {
 	helpDir := filepath.Join(s.manager.world.LibTextDir, "help")
 	if screen, err := game.LoadHelpScreen(helpDir); err == nil {
+		liveTextEditMu.Lock()
 		s.manager.world.HelpScreen = screen
+		liveTextEditMu.Unlock()
 	}
 }
 

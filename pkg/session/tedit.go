@@ -68,10 +68,12 @@ const (
 	textEditAbort
 )
 
-// liveTextEditMu serializes mutations to the process-global text pointers
+// liveTextEditMu serializes access to the process-global text pointers
 // represented by cachedText and World.HelpScreen. C's d->str points directly
 // at those globals, so overlapping descriptors observe each other's edits.
-var liveTextEditMu sync.Mutex
+// Ordinary help-screen reads take the shared lock; editor/reload mutations take
+// the exclusive lock.
+var liveTextEditMu sync.RWMutex
 
 // cmdTedit ports do_tedit/general_file_edit. It intentionally owns only the
 // finite C text-file editor; object, room, mob, shop, and zone OLC remain
@@ -636,6 +638,7 @@ func (s *Session) parseTextEditorReplace(actions string) {
 	if count < 0 {
 		s.sendTextEditor("ERROR: Replacement string causes buffer overflow, aborted replace.\r\n")
 	} else if count == 0 {
+		s.textEdit.buffer = updated
 		s.sendTextEditor(fmt.Sprintf("String '%s' not found.\r\n", pattern))
 	} else {
 		s.textEdit.buffer = updated
@@ -667,20 +670,26 @@ func replaceEditorString(input, pattern, replacement string, all bool, maxBytes 
 	}
 	var out strings.Builder
 	flow := input
+	flowOffset := 0
 	for {
 		idx := strings.Index(flow, pattern)
 		if idx < 0 {
 			out.WriteString(flow)
 			break
 		}
-		out.WriteString(flow[:idx])
-		// improved-edit.c checks the pre-replacement remainder (jetsam),
-		// including the pattern about to be removed, before each append. That
-		// conservative check is observable for /ra at the exact size boundary.
-		if maxBytes > 0 && out.Len()+len(flow)+len(replacement) > maxBytes {
-			return input, -1
+		// improved-edit.c temporarily NUL-terminates flow at the match before
+		// measuring jetsam. strlen(jetsam) is therefore idx, the prefix before
+		// the current match, not the untouched suffix after it. out already holds
+		// the prefixes and replacements accepted by earlier iterations. If this
+		// inner guard trips, C sets i to -1 but the later i <= 0 branch returns 0,
+		// so the caller reports "not found". C does not restore the temporary
+		// NUL on this break, so d->str is left truncated at the failed match.
+		if maxBytes > 0 && out.Len()+idx+len(replacement) > maxBytes {
+			return input[:flowOffset+idx], 0
 		}
+		out.WriteString(flow[:idx])
 		out.WriteString(replacement)
+		flowOffset += idx + len(pattern)
 		flow = flow[idx+len(pattern):]
 	}
 	return out.String(), count

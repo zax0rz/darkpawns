@@ -78,7 +78,9 @@ observer see the same unsaved bytes as C's `d->str`. On save, C's
 from disk reconstructs CRLF. `help/screen` updates the live `World.HelpScreen`
 path rather than creating a second cache authority. The editor replacement
 path preserves C's unsigned size arithmetic, `strtok` token positions, and
-the conservative per-occurrence `/ra` size check.
+the temporary-NUL prefix accounting in `/ra`'s per-match guard; an inner
+guard failure follows C's later `i <= 0` result and reports the pattern as
+not found after leaving the live buffer truncated at the failed match.
 
 `RawLine` in `CommandData` and the telnet boundary preserve the complete input
 line for active `CON_TEDIT` state. This is necessary for blank/whitespace-only
@@ -108,8 +110,10 @@ Focused unit proof in `pkg/session/tedit_test.go` covers:
 - save, live-cache visibility, and a fresh-manager disk reload; and
 - raw-line routing before the ordinary command interpreter;
 - blank-line append, overlapping descriptors with independent abort snapshots,
-  and the replacement unsigned-size/`strtok` boundary audit, including
-  malformed delete/replace arguments and `/ra` overflow behavior.
+  and the replacement unsigned-size/temporary-NUL/`strtok` boundary audit,
+  including malformed delete/replace arguments and `/ra` inner-guard behavior;
+- concurrent bare `help`, `reload help`, and `help/screen` editor writes under
+  the shared world lock (including the race detector).
 
 `cmd/dp-oracle-diff/scenarios/tedit-depth.txt` is the live C-vs-Go vehicle. It
 has a named peer for the begin/abort OLC room audience and probes field listing,
@@ -127,16 +131,17 @@ directed `send:<peer>` probe support is unit-tested in
 `internal/oraclediff/oraclediff_test.go`.
 
 Both scenarios are normalized-green at seed 1, and the five-seed matrix is
-green for seeds 1, 2, 3, 5, and 8 for each vehicle. Its preserved external log
-is `/home/zach/dp-phase7-tedit-boundaries-matrix-2026-09-15.log`.
+green for seeds 1, 2, 3, 5, and 8 for each vehicle. The corrected boundary
+vehicle exercises `/ra` short replacement. Its preserved external log is
+`/home/zach/dp-phase7-tedit-correction-matrix-2026-09-16.log`.
 
 The final repository gates passed on the frozen implementation and scenario
 inputs: `make fmt`, `make check-fmt`, `git diff --check`, `go build ./...`,
 `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`,
 `golangci-lint run ./...` (0 issues), `go test -race ./pkg/session ./pkg/telnet`,
 `make fidelity-depth`, and `make expected-divergences-check`. The depth report
-is 4,858 total cases with 4,739 proven/delegated, 68 blocked, and 51 excluded;
-`do_tedit` is 42/42. Expected-divergence pins remain valid (26 rows across 10
+is 4,859 total cases with 4,740 proven/delegated, 68 blocked, and 51 excluded;
+`do_tedit` is 43/43. Expected-divergence pins remain valid (26 rows across 10
 scenarios).
 
 The required full oracle census was run against those frozen inputs. The

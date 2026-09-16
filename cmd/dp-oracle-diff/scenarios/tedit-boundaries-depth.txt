@@ -110,7 +110,7 @@ Lots
 /r bad
 /r 'Lots'
 /r 'Lots' bad
-/r 'Lots' 'Few'
+/ra 'Lots' 'Few'
 /r 'Few' 'F
 /l
 /a

@@ -1100,7 +1100,10 @@ func cmdHelp(s *Session, args []string) error {
 func cmdHelpText(s *Session, argument string) error {
 	// no argument → page_string the help screen (C: page_string(ch->desc, help, 0)).
 	if argument == "" {
-		PageString(s, s.manager.world.HelpScreen)
+		liveTextEditMu.RLock()
+		screen := s.manager.world.HelpScreen
+		liveTextEditMu.RUnlock()
+		PageString(s, screen)
 		return nil
 	}
 
