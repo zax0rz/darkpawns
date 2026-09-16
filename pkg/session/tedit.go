@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -67,6 +68,11 @@ const (
 	textEditAbort
 )
 
+// liveTextEditMu serializes mutations to the process-global text pointers
+// represented by cachedText and World.HelpScreen. C's d->str points directly
+// at those globals, so overlapping descriptors observe each other's edits.
+var liveTextEditMu sync.Mutex
+
 // cmdTedit ports do_tedit/general_file_edit. It intentionally owns only the
 // finite C text-file editor; object, room, mob, shop, and zone OLC remain
 // separate future work rather than being hidden behind a generic editor.
@@ -124,6 +130,8 @@ func cmdTedit(s *Session, args []string) error {
 }
 
 func (s *Session) startTextEdit(field textEditField) error {
+	s.textEditMu.Lock()
+	liveTextEditMu.Lock()
 	var text string
 	var err error
 	if field.filename == "help/screen" && s.manager.world.HelpScreen != "" {
@@ -143,8 +151,8 @@ func (s *Session) startTextEdit(field textEditField) error {
 		original: text,
 		buffer:   text,
 	}
-	s.textEditMu.Lock()
 	s.textEdit = state
+	liveTextEditMu.Unlock()
 	s.textEditMu.Unlock()
 
 	s.sendTextEditor("Instructions: /s or @ to save, /h for more options.\r\n" +
@@ -161,10 +169,14 @@ func (s *Session) sendTextEditor(text string) {
 	}
 }
 
-func (s *Session) isTextEditing() bool {
+func (s *Session) IsTextEditing() bool {
 	s.textEditMu.Lock()
 	defer s.textEditMu.Unlock()
 	return s.textEdit != nil
+}
+
+func (s *Session) isTextEditing() bool {
+	return s.IsTextEditing()
 }
 
 // handleTextEditInput is the CON_TEDIT/string_add route. It runs before the
@@ -176,6 +188,9 @@ func (s *Session) handleTextEditInput(line string) {
 	if s.textEdit == nil {
 		return
 	}
+	liveTextEditMu.Lock()
+	defer liveTextEditMu.Unlock()
+	s.refreshTextEditBufferLocked()
 
 	line = editorSanitizeInput(line)
 	if strings.HasPrefix(line, "@") {
@@ -192,6 +207,7 @@ func (s *Session) handleTextEditInput(line string) {
 		return
 	}
 	s.appendTextEditorLineLocked(line)
+	s.commitTextEditBufferLocked()
 }
 
 func editorSanitizeInput(line string) string {
@@ -273,11 +289,13 @@ func (s *Session) cancelTextEdit() {
 	if s.textEdit == nil {
 		return
 	}
+	liveTextEditMu.Lock()
+	defer liveTextEditMu.Unlock()
 	// close_socket calls cleanup_olc directly, not tedit_string_cleanup. That
 	// drops descriptor state but leaves the already-mutated boot-cache pointer
 	// live; the unsaved bytes are therefore visible in memory but never reach
-	// disk.
-	setTextEditCache(s, s.textEdit.field.filename, s.textEdit.buffer)
+	// disk. The buffer has already been committed after each input line/action;
+	// do not write this descriptor's stale snapshot back over another editor.
 	s.textEdit = nil
 	s.player.SetPlrFlag(game.PlrWriting, false)
 	game.Act(s.manager.world, true, s.player, nil, nil, nil,
@@ -292,6 +310,32 @@ func setTextEditCache(s *Session, filename, text string) {
 	cacheMu.Lock()
 	cachedText[filename] = text
 	cacheMu.Unlock()
+}
+
+// refreshTextEditBufferLocked mirrors d->str: each descriptor action starts
+// from the current process-global text, not from a private session copy. The
+// caller holds liveTextEditMu and s.textEditMu.
+func (s *Session) refreshTextEditBufferLocked() {
+	state := s.textEdit
+	if state == nil {
+		return
+	}
+	if state.field.filename == "help/screen" {
+		state.buffer = s.manager.world.HelpScreen
+		return
+	}
+	cacheMu.RLock()
+	if text, ok := cachedText[state.field.filename]; ok {
+		state.buffer = text
+	}
+	cacheMu.RUnlock()
+}
+
+func (s *Session) commitTextEditBufferLocked() {
+	state := s.textEdit
+	if state != nil {
+		setTextEditCache(s, state.field.filename, state.buffer)
+	}
 }
 
 func editorCRLF(text string) string {
@@ -369,17 +413,22 @@ func (s *Session) executeTextEditorLocked(line string) textEditAction {
 	default:
 		s.sendTextEditor("Invalid option.\r\n")
 	}
+	s.commitTextEditBufferLocked()
 	return textEditContinue
 }
 
 func (s *Session) parseTextEditorDelete(actions string) {
 	low, high, ok := parseEditorRange(actions)
 	if !ok {
-		// sscanf returns EOF for an empty input in the oracle libc; the C
-		// handler then falls through its uninitialized line-number branch.
-		// Preserve that observed byte rather than normalizing it to the
-		// case-0 message used for non-empty, non-numeric input.
-		s.sendTextEditor("Invalid, line numbers to delete must be higher than 0.\r\n")
+		if strings.TrimSpace(actions) == "" {
+			// sscanf returns EOF for an empty input in the oracle libc; the C
+			// handler then falls through its uninitialized line-number branch.
+			// Preserve that observed byte rather than normalizing it.
+			s.sendTextEditor("Invalid, line numbers to delete must be higher than 0.\r\n")
+		} else {
+			// A non-empty malformed argument is sscanf's case 0.
+			s.sendTextEditor("You must specify a line number or range to delete.\r\n")
+		}
 		return
 	}
 	if high < low {
@@ -552,50 +601,38 @@ func (s *Session) listTextEditor(actions string, numbered bool) {
 
 func (s *Session) parseTextEditorReplace(actions string) {
 	repAll := len(actions) > 0 && actions[0] == 'a'
-	firstQuote := strings.IndexByte(actions, '\'')
-	if firstQuote < 0 {
-		if strings.TrimSpace(actions) == "" {
-			s.sendTextEditor("Invalid format.\r\n")
-		} else {
-			s.sendTextEditor("Target string must be enclosed in single quotes.\r\n")
-		}
+	tokens := editorQuoteTokens(actions)
+	if len(tokens) == 0 {
+		s.sendTextEditor("Invalid format.\r\n")
 		return
 	}
-	secondQuoteRel := strings.IndexByte(actions[firstQuote+1:], '\'')
-	if secondQuoteRel < 0 {
+	if len(tokens) < 2 {
 		s.sendTextEditor("Target string must be enclosed in single quotes.\r\n")
 		return
 	}
-	secondQuote := firstQuote + 1 + secondQuoteRel
-	thirdQuoteRel := strings.IndexByte(actions[secondQuote+1:], '\'')
-	if thirdQuoteRel < 0 {
+	if len(tokens) < 3 {
 		s.sendTextEditor("No replacement string.\r\n")
 		return
 	}
-	thirdQuote := secondQuote + 1 + thirdQuoteRel
-	fourthQuoteRel := strings.IndexByte(actions[thirdQuote+1:], '\'')
-	if fourthQuoteRel < 0 {
+	if len(tokens) < 4 {
 		s.sendTextEditor("Replacement string must be enclosed in single quotes.\r\n")
 		return
 	}
-	fourthQuote := thirdQuote + 1 + fourthQuoteRel
-	pattern := actions[firstQuote+1 : secondQuote]
-	replacement := actions[thirdQuote+1 : fourthQuote]
+	pattern := tokens[1]
+	replacement := tokens[3]
 	if s.textEdit.buffer == "" {
 		return
 	}
 
-	// improved-edit.c stores this in unsigned total_len, so a shorter
-	// replacement underflows and takes the "not enough space" branch.
-	if len(replacement) < len(pattern) {
+	// improved-edit.c evaluates this expression as unsigned size_t. For a
+	// shorter replacement, the subtraction wraps before the existing buffer
+	// length is added, yielding the ordinary resulting length.
+	totalLen := uint(len(replacement)) - uint(len(pattern)) + uint(len(s.textEdit.buffer))
+	if totalLen > uint(s.textEdit.field.maxBytes) {
 		s.sendTextEditor("Not enough space left in buffer.\r\n")
 		return
 	}
-	if len(s.textEdit.buffer)+len(replacement)-len(pattern) > s.textEdit.field.maxBytes {
-		s.sendTextEditor("Not enough space left in buffer.\r\n")
-		return
-	}
-	updated, count := replaceEditorString(s.textEdit.buffer, pattern, replacement, repAll)
+	updated, count := replaceEditorString(s.textEdit.buffer, pattern, replacement, repAll, s.textEdit.field.maxBytes)
 	if count < 0 {
 		s.sendTextEditor("ERROR: Replacement string causes buffer overflow, aborted replace.\r\n")
 	} else if count == 0 {
@@ -607,7 +644,13 @@ func (s *Session) parseTextEditorReplace(actions string) {
 	}
 }
 
-func replaceEditorString(input, pattern, replacement string, all bool) (string, int) {
+// editorQuoteTokens mirrors strtok(actions, "'"): delimiters are removed and
+// adjacent/leading/trailing delimiters do not produce empty tokens.
+func editorQuoteTokens(actions string) []string {
+	return strings.FieldsFunc(actions, func(r rune) bool { return r == '\'' })
+}
+
+func replaceEditorString(input, pattern, replacement string, all bool, maxBytes int) (string, int) {
 	if pattern == "" {
 		return input, 0
 	}
@@ -622,7 +665,25 @@ func replaceEditorString(input, pattern, replacement string, all bool) (string, 
 	if count == 0 {
 		return input, 0
 	}
-	return strings.ReplaceAll(input, pattern, replacement), count
+	var out strings.Builder
+	flow := input
+	for {
+		idx := strings.Index(flow, pattern)
+		if idx < 0 {
+			out.WriteString(flow)
+			break
+		}
+		out.WriteString(flow[:idx])
+		// improved-edit.c checks the pre-replacement remainder (jetsam),
+		// including the pattern about to be removed, before each append. That
+		// conservative check is observable for /ra at the exact size boundary.
+		if maxBytes > 0 && out.Len()+len(flow)+len(replacement) > maxBytes {
+			return input, -1
+		}
+		out.WriteString(replacement)
+		flow = flow[idx+len(pattern):]
+	}
+	return out.String(), count
 }
 
 func formatTextEditor(input string, indent bool, maxBytes int) string {

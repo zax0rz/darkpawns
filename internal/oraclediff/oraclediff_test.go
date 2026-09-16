@@ -243,6 +243,39 @@ func TestRunAudienceProbeCapturesEachRecipientInStableOrder(t *testing.T) {
 	}
 }
 
+func TestRunAudienceProbeSupportsDirectedPeerSteps(t *testing.T) {
+	primary := &scriptedConn{outputs: []string{"primary-audience"}}
+	victim := &scriptedConn{outputs: []string{"victim-target"}}
+	observer := &scriptedConn{outputs: []string{"observer-audience"}}
+
+	blocks, err := RunAudienceProbe(primary, map[string]Conn{
+		"observer": observer,
+		"victim":   victim,
+	}, []string{"send:victim tedit news"}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []AudienceProbeBlock{
+		{Command: "send:victim tedit news", Audience: "victim", Output: "victim-target"},
+		{Command: "send:victim tedit news", Audience: "observer", Output: "observer-audience"},
+		{Command: "send:victim tedit news", Audience: "primary", Output: "primary-audience"},
+	}
+	if len(blocks) != len(want) {
+		t.Fatalf("len(blocks) = %d, want %d: %#v", len(blocks), len(want), blocks)
+	}
+	for i := range want {
+		if blocks[i] != want[i] {
+			t.Errorf("blocks[%d] = %#v, want %#v", i, blocks[i], want[i])
+		}
+	}
+	if got := strings.Join(victim.sent, ","); got != "tedit news" {
+		t.Errorf("victim commands = %q, want tedit news", got)
+	}
+	if len(primary.sent) != 0 || len(observer.sent) != 0 {
+		t.Errorf("passive clients sent commands: primary=%v observer=%v", primary.sent, observer.sent)
+	}
+}
+
 func TestRunAudienceProbeAllowsFinalAudienceEOF(t *testing.T) {
 	actor := &scriptedConn{outputs: []string{"actor"}}
 	closedPeer := &scriptedConn{readErr: io.EOF}

@@ -1,0 +1,125 @@
+# C-backed boundary vehicle for the shared CON_TEDIT path.
+# depth-case: tedit.blank-line
+# depth-case: tedit.delete-malformed-input
+# depth-case: tedit.replace-malformed-input
+# depth-case: tedit.short-replacement
+# depth-case: tedit.shared-live-buffer
+# depth-case: tedit.overlapping-backstr
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Teditboundary
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teditboundary
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:editor]
+Teditboundarypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:editor]
+Teditboundarypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Teditobs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Teditobs
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Teditboundarypeer 38
+goto 8004
+teleport Teditboundarypeer 8004
+teleport Teditobs 8004
+
+[probe]
+tedit news
+/c
+Lots
+<ENTER>
+/l
+/d bad
+/r bad
+/r 'Lots'
+/r 'Lots' bad
+/r 'Lots' 'Few'
+/r 'Few' 'F
+/l
+/a
+tedit news
+/c
+first live line
+send:editor tedit news
+send:editor second live line
+send:observer news
+send:editor /a
+send:observer news
+/a

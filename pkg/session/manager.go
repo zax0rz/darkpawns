@@ -1604,9 +1604,9 @@ type Session struct {
 	tempData map[string]interface{}
 
 	// textEditMu/textEdit mirror a descriptor's d->str/backstr/OLC_STORAGE
-	// while CON_TEDIT is active. The state is session-owned, but its buffer is
-	// committed back to the shared static-text cache so tedit and news/motd/etc.
-	// retain one live authority.
+	// while CON_TEDIT is active. The descriptor snapshot is session-owned, but
+	// the active buffer is serialized through the shared static-text cache so
+	// tedit and news/motd/etc. retain C's one live global authority.
 	textEditMu sync.Mutex
 	textEdit   *textEditState
 

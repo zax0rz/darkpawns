@@ -1,6 +1,6 @@
 # Phase 7 OLC handoff — bounded `tedit` workflow
 
-Date: 2026-09-15
+Date: 2026-09-16
 
 ## Decision and review boundary
 
@@ -12,10 +12,12 @@ data, deployment, or production data. The larger object/room/mobile/shop/zone
 editors remain out of scope.
 
 The implementation branch is `glm/phase7-olc-tedit`, based on the freshly
-fetched `origin/main` at the start of this round. The implementation is
-committed as `ebec34baf` (`feat: restore tedit text editor workflow`). The
-primary checkout was preserved. This handoff stops at one reviewable,
-unmerged PR; it does not merge or deploy.
+fetched `origin/main` at the start of this round. The initial workflow is
+committed as `f186df61c` (`feat: restore tedit text editor workflow`); this
+follow-up closes the blank-line, shared-live-buffer, replacement-size, and
+sibling-parser fidelity gaps described below. The primary checkout was
+preserved. This handoff stops at one reviewable, unmerged PR; it does not
+merge or deploy.
 
 ## Original in-game OLC inventory
 
@@ -65,20 +67,25 @@ The selected path is:
    the tedit save/abort callback.
 
 `pkg/session/tedit.go` ports the finite field table and complete improved
-editor action set. It uses one per-session descriptor state, preserves the
-shared static-text cache used by `news`/`motd`/the other static commands, and
-keeps the C source-order prefix behavior. `pkg/session/gen_ps_cmds.go` now
-constructs the C boot representation (CRLF in memory). On save, C's
+editor action set. It keeps the C source-order prefix behavior and uses a
+per-session descriptor snapshot only for `backstr`/cleanup; the active buffer
+is serialized through the shared static-text cache used by
+`news`/`motd`/the other static commands. Each editor input/action refreshes
+from and commits to that live authority, so overlapping descriptors and an
+observer see the same unsaved bytes as C's `d->str`. On save, C's
 `src/olc.c:424-440` `strip_string` mutates that live buffer to LF before
 `fputs`; the Go path preserves that post-save cache state, while a later read
 from disk reconstructs CRLF. `help/screen` updates the live `World.HelpScreen`
-path rather than creating a second cache authority.
+path rather than creating a second cache authority. The editor replacement
+path preserves C's unsigned size arithmetic, `strtok` token positions, and
+the conservative per-occurrence `/ra` size check.
 
 `RawLine` in `CommandData` and the telnet boundary preserve the complete input
-line for active `CON_TEDIT` state. This is necessary for `/h`, `/s`, `@`, and
-attached slash actions to remain editor input instead of becoming ordinary
-commands. Manager and telnet disconnect paths call the C-equivalent cleanup;
-they do not save unsaved text.
+line for active `CON_TEDIT` state. This is necessary for blank/whitespace-only
+lines, `/h`, `/s`, `@`, and attached slash actions to remain editor input
+instead of becoming ordinary commands. The Go audience gate also mirrors C's
+`SENDOK`: room acts omit players carrying `PLR_WRITING`. Manager and telnet
+disconnect paths call the C-equivalent cleanup; they do not save unsaved text.
 
 The `pkg/admin` router was inspected as part of the boundary check. Its
 mutation endpoints cover world entities and `/admin/save-world`; there is no
@@ -99,7 +106,10 @@ Focused unit proof in `pkg/session/tedit_test.go` covers:
 - C boot CRLF representation;
 - abort rollback and disconnect cleanup;
 - save, live-cache visibility, and a fresh-manager disk reload; and
-- raw-line routing before the ordinary command interpreter.
+- raw-line routing before the ordinary command interpreter;
+- blank-line append, overlapping descriptors with independent abort snapshots,
+  and the replacement unsigned-size/`strtok` boundary audit, including
+  malformed delete/replace arguments and `/ra` overflow behavior.
 
 `cmd/dp-oracle-diff/scenarios/tedit-depth.txt` is the live C-vs-Go vehicle. It
 has a named peer for the begin/abort OLC room audience and probes field listing,
@@ -108,24 +118,31 @@ used by this workflow, invalid inputs, append/abort, save, and post-save
 `news` visibility. The scenario is intentionally small and does not mutate
 checked-in world or production inputs.
 
-The scenario is normalized-green at seed 1, and a `--show-oracle` run verified
-that the intended C editor blocks execute. The five-seed matrix is also green
-for seeds 1, 2, 3, 5, and 8; its preserved external log is
-`/home/zach/dp-phase7-tedit-matrix-2026-09-15.log`.
+`cmd/dp-oracle-diff/scenarios/tedit-boundaries-depth.txt` is the directed
+multi-client C-vs-Go boundary vehicle. It proves that a blank line appends,
+malformed delete/replace arguments retain C diagnostics, shorter replacements
+are accepted under C's unsigned arithmetic, an observer sees unsaved live
+`news`, and a second editor's abort restores its own `backstr` snapshot. The
+directed `send:<peer>` probe support is unit-tested in
+`internal/oraclediff/oraclediff_test.go`.
+
+Both scenarios are normalized-green at seed 1, and the five-seed matrix is
+green for seeds 1, 2, 3, 5, and 8 for each vehicle. Its preserved external log
+is `/home/zach/dp-phase7-tedit-boundaries-matrix-2026-09-15.log`.
 
 The final repository gates passed on the frozen implementation and scenario
 inputs: `make fmt`, `make check-fmt`, `git diff --check`, `go build ./...`,
 `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`,
 `golangci-lint run ./...` (0 issues), `go test -race ./pkg/session ./pkg/telnet`,
 `make fidelity-depth`, and `make expected-divergences-check`. The depth report
-is 4,849 total cases with 4,730 proven/delegated, 68 blocked, and 51 excluded;
-`do_tedit` is 33/33. Expected-divergence pins remain valid (26 rows across 10
+is 4,858 total cases with 4,739 proven/delegated, 68 blocked, and 51 excluded;
+`do_tedit` is 42/42. Expected-divergence pins remain valid (26 rows across 10
 scenarios).
 
 The required full oracle census was run against those frozen inputs. The
 preserved external log is
-`/home/zach/dp-phase7-oracle-regression-2026-09-15.log`; it reports 942
-scenarios, 932 passed, 9 expected, 1 established unpinnable
+`/home/zach/dp-phase7-olc-full-census-2026-09-15.log`; it reports 943
+scenarios, 933 passed, 9 expected, 1 established unpinnable
 `accuse-noarg-depth` case requiring human clearance, and zero stale, failed,
 infrastructure, or timed-out cases. The command exits 2 for that existing
 unpinnable baseline; this is the expected repository behavior. The handoff

@@ -191,6 +191,137 @@ func TestTeditRawLineRoutesSlashInputBeforeCommands(t *testing.T) {
 	}
 }
 
+func TestTeditBlankLineAppendsToSharedBuffer(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "Teditblank", game.LVL_IMPL, 1001)
+	path := filepath.Join(t.TempDir(), "news")
+	if err := os.WriteFile(path, []byte("old line\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	m.world.LibTextDir = filepath.Dir(path)
+	setTeditTestCache(t, "news", "")
+
+	if err := cmdTedit(s, []string{"news"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, s)
+	s.handleTextEditInput("")
+	cacheMu.RLock()
+	got := cachedText["news"]
+	cacheMu.RUnlock()
+	if got != "old line\r\n\r\n" {
+		t.Fatalf("blank editor line = %q, want shared CRLF blank line", got)
+	}
+	s.cancelTextEdit()
+}
+
+func TestTeditOverlappingEditorsShareLiveBufferAndBackstr(t *testing.T) {
+	m := makeTestManager(t)
+	first := makeCommandTestSession(t, m, "Teditfirst", game.LVL_IMPL, 1001)
+	second := makeCommandTestSession(t, m, "Teditsecond", game.LVL_IMPL, 1001)
+	observer := makeCommandTestSession(t, m, "Teditobserver", 1, 1001)
+	path := filepath.Join(t.TempDir(), "news")
+	if err := os.WriteFile(path, []byte("old line\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	m.world.LibTextDir = filepath.Dir(path)
+	setTeditTestCache(t, "news", "")
+
+	if err := cmdTedit(first, []string{"news"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, first)
+	first.handleTextEditInput("first live line")
+
+	if err := cmdNews(observer, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := readMsgText(t, observer); got != "old line\r\nfirst live line\r\n" {
+		t.Fatalf("observer news during edit = %q", got)
+	}
+
+	if err := cmdTedit(second, []string{"news"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, second)
+	second.handleTextEditInput("second live line")
+	if got := textEditTestCache("news"); got != "old line\r\nfirst live line\r\nsecond live line\r\n" {
+		t.Fatalf("overlapping live buffer = %q", got)
+	}
+
+	// C's second descriptor restores its own backstr on abort, even though the
+	// first descriptor is still in CON_TEDIT against the same global pointer.
+	second.handleTextEditInput("/a")
+	if got := textEditTestCache("news"); got != "old line\r\nfirst live line\r\n" {
+		t.Fatalf("second abort restored = %q", got)
+	}
+	first.handleTextEditInput("/a")
+	if got := textEditTestCache("news"); got != "old line\r\n" {
+		t.Fatalf("first abort restored = %q", got)
+	}
+}
+
+func TestTeditReplacementMatchesCUnsignedSizeAndStrtokEdges(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "Teditreplace", game.LVL_IMPL, 1001)
+	s.textEdit = &textEditState{
+		field:  textEditFields[1],
+		buffer: "Lots\r\n",
+	}
+
+	s.parseTextEditorReplace(" 'Lots' 'Few'")
+	if got := readMsgText(t, s); got != "Replaced 1 occurance of 'Lots' with 'Few'.\r\n" {
+		t.Fatalf("short replacement output = %q", got)
+	}
+	if s.textEdit.buffer != "Few\r\n" {
+		t.Fatalf("short replacement buffer = %q", s.textEdit.buffer)
+	}
+
+	for _, test := range []struct {
+		actions string
+		want    string
+	}{
+		{actions: "bad", want: "Target string must be enclosed in single quotes.\r\n"},
+		{actions: " 'Few'", want: "No replacement string.\r\n"},
+		{actions: " 'Few' bad", want: "Replacement string must be enclosed in single quotes.\r\n"},
+	} {
+		s.parseTextEditorReplace(test.actions)
+		if got := readMsgText(t, s); got != test.want {
+			t.Errorf("replace %q = %q, want %q", test.actions, got, test.want)
+		}
+	}
+
+	s.textEdit.buffer = "aaaa\r\n"
+	s.textEdit.field.maxBytes = 10
+	s.parseTextEditorReplace("a 'a' 'bbb'")
+	if got := readMsgText(t, s); got != "ERROR: Replacement string causes buffer overflow, aborted replace.\r\n" {
+		t.Fatalf("replace-all overflow output = %q", got)
+	}
+	if s.textEdit.buffer != "aaaa\r\n" {
+		t.Fatalf("replace-all overflow mutated buffer = %q", s.textEdit.buffer)
+	}
+
+	// C's replace_str performs a conservative per-occurrence check for /ra:
+	// the exact final result fits, but the second check still includes the
+	// pattern about to be removed and therefore reports overflow.
+	s.textEdit.buffer = "aab"
+	s.textEdit.field.maxBytes = 5
+	s.parseTextEditorReplace("a 'a' 'bb'")
+	if got := readMsgText(t, s); got != "ERROR: Replacement string causes buffer overflow, aborted replace.\r\n" {
+		t.Fatalf("replace-all conservative boundary output = %q", got)
+	}
+	if s.textEdit.buffer != "aab" {
+		t.Fatalf("replace-all conservative boundary mutated buffer = %q", s.textEdit.buffer)
+	}
+	s.textEdit = nil
+}
+
+func textEditTestCache(filename string) string {
+	cacheMu.RLock()
+	defer cacheMu.RUnlock()
+	return cachedText[filename]
+}
+
 func TestTeditDisconnectDropsDescriptorWithoutSaving(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCommandTestSession(t, m, "Teditgod", game.LVL_IMPL, 1001)

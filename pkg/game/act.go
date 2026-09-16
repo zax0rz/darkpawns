@@ -215,6 +215,9 @@ func sendOk(to Actor, toSleep bool) bool {
 	if !toSleep && to.GetPosition() <= combat.PosSleeping {
 		return false
 	}
+	if player, ok := to.(*Player); ok && player.GetFlags()&(1<<uint(PlrWriting)) != 0 {
+		return false
+	}
 	return true
 }
 
