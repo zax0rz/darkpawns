@@ -92,6 +92,35 @@ def split_frontmatter(lines: list[str]) -> tuple[set[int], set[int]]:
     return set(), all_lines
 
 
+def code_region_lines(lines: list[str]) -> set[int]:
+    """Line numbers inside <style> or <script> elements.
+
+    The prose heuristics read a line as a sentence. CSS selector chains and JS
+    property access split on '.' into short fragments, so `.status.online` and
+    `response.ok` register as three short sentences and trip trailer-rhythm
+    forever. Component files under src/components and src/pages are code with
+    prose in them, not prose with code in it.
+
+    Hard rules still run in here: a <script> can hold user-facing strings, and a
+    banned dash in one of those ships to a reader like any other copy.
+    """
+    inside: set[int] = set()
+    open_tag: str | None = None
+    for number, line in enumerate(lines, start=1):
+        if open_tag is None:
+            match = re.search(r"<\s*(style|script)\b[^>]*>", line, re.IGNORECASE)
+            if match:
+                open_tag = match.group(1).lower()
+                inside.add(number)
+                if re.search(rf"</\s*{open_tag}\s*>", line[match.end():], re.IGNORECASE):
+                    open_tag = None
+        else:
+            inside.add(number)
+            if re.search(rf"</\s*{open_tag}\s*>", line, re.IGNORECASE):
+                open_tag = None
+    return inside
+
+
 def frontmatter_value(lines: list[str], key: str) -> str | None:
     frontmatter, _ = split_frontmatter(lines)
     for number in sorted(frontmatter):
@@ -116,6 +145,8 @@ def lint_file(path: Path) -> list[Finding]:
     allowed_lines = frontmatter | body
     if relative.startswith("src/content/help/") or text_kind in PRESERVED_TEXT_KINDS:
         allowed_lines = frontmatter
+    # Heuristics are prose-shaped and misfire on code; hard rules are not.
+    prose_lines = allowed_lines - code_region_lines(lines)
 
     findings: list[Finding] = []
     if relative.startswith(PROVENANCE_COLLECTIONS):
@@ -146,6 +177,8 @@ def lint_file(path: Path) -> list[Finding]:
                 )
 
         for word in SYNTHETIC_WORDS:
+            if number not in prose_lines:
+                break
             match = re.search(rf"\b{re.escape(word)}\b", lowered)
             if match:
                 findings.append(
@@ -155,7 +188,7 @@ def lint_file(path: Path) -> list[Finding]:
         # Three short declarative fragments in a row often produce the fake
         # trailer cadence described in the guide. This is intentionally only
         # a warning because terse technical prose can match it legitimately.
-        if number in body:
+        if number in body and number in prose_lines:
             plain = re.sub(r"[`*_>#\[\]()]", "", line).strip()
             sentences = [part.strip() for part in re.split(r"[.!?]+", plain) if part.strip()]
             if len(sentences) >= 3 and all(len(part.split()) <= 7 for part in sentences[:3]):
