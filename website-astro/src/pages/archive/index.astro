@@ -136,7 +136,7 @@ const missing = [
           {section.entries.map((entry) => (
             <li>
               <a href={`/archive/${entry.id}/`}>
-                <span class="r-date">{contentsDate(entry.data.dateLabel)}</span>
+                <span class="r-date" title={entry.data.dateLabel}>{contentsDate(entry.data.dateLabel)}</span>
                 <span class="r-title">{entry.data.title}</span>
                 <span class="r-lead" aria-hidden="true"></span>
                 <span class="r-meta">
@@ -163,7 +163,7 @@ const missing = [
               {section.threads.map((entry) => (
                 <li>
                   <a href={`/archive/${entry.id}/`}>
-                    <span class="r-date">{contentsDate(entry.data.dateLabel)}</span>
+                    <span class="r-date" title={entry.data.dateLabel}>{contentsDate(entry.data.dateLabel)}</span>
                     <span class="r-title">{entry.data.title}</span>
                     <span class="r-lead" aria-hidden="true"></span>
                     <span class="r-meta">
@@ -286,7 +286,9 @@ const missing = [
     color: var(--ink);
   }
   .r-date {
-    flex: 0 0 11rem;
+    /* 13rem fits every label but the one compound provenance string; that one
+       ellipsizes and keeps its full text in the title attribute. */
+    flex: 0 0 13rem;
     color: var(--ink-muted);
     font-family: var(--font-mono);
     font-size: var(--t-label);
