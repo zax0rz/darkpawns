@@ -5,12 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './index.css';
 
-// Set initial dark class before React renders to prevent flash
-const stored = localStorage.getItem('dp_theme');
-if (stored !== 'light') {
-  document.documentElement.classList.add('dark');
-}
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

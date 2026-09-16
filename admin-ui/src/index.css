@@ -10,7 +10,9 @@
   --color-accent-deep: var(--color-accent-deep);
   --color-registration: var(--color-registration);
 
-  --font-sans: 'Archivo Narrow', 'Arial Narrow', sans-serif;
+  --color-online: var(--color-online);
+
+  --font-display: 'DM Serif Display', Georgia, serif;
   --font-serif: 'Source Serif 4', 'Georgia', serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
@@ -27,18 +29,7 @@
   --color-accent: #A8201A;      /* Oxblood Red */
   --color-accent-deep: #7A1812; /* Deep Blood Red */
   --color-registration: #0F0F0F;/* Pure Registration Black */
-}
-
-/* Dark mode mapping: Charcoal & Blood Red */
-.dark {
-  --color-paper: #161311;       /* Charcoal Pulp Background */
-  --color-paper-deep: #0C0A09;  /* Heavy Registration Black */
-  --color-ink: #EFE7D6;         /* Ivory Ink */
-  --color-ink-muted: #A29A8A;   /* Muted Cream */
-  --color-rule: #36302C;        /* Charcoal borders */
-  --color-accent: #E2362E;      /* Vivid Blood Red for contrast */
-  --color-accent-deep: #A8201A; /* Oxblood Red */
-  --color-registration: #EFE7D6;
+  --color-online: #3A8A3A;      /* Forest green: live status only, never decorative */
 }
 
 @keyframes slideInLeft {
@@ -88,109 +79,32 @@ html, body {
 
 /* Custom layout typography defaults */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Archivo Narrow', sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
-/* ==========================================================================
-   GLOBAL UTILITY OVERRIDES (Reskinning Tailwind Slate classes to retro theme)
-   ========================================================================== */
-
-/* Cards & containers background + border overrides */
-.bg-slate-800, 
-.bg-slate-800\/80, 
-.bg-slate-800\/50, 
-.dark .bg-slate-800, 
-.dark .bg-slate-950,
-.bg-white,
-.dark .bg-white {
-  background-color: var(--color-paper-deep) !important;
-  border-color: var(--color-rule) !important;
-  border-radius: 0px !important;
-}
-
-.border-slate-700, 
-.border-slate-700\/50, 
-.border-slate-700\/80,
-.dark .border-slate-700, 
-.border-slate-200,
-.dark .border-slate-200,
-.border-slate-600,
-.dark .border-slate-600 {
-  border-color: var(--color-rule) !important;
-  border-radius: 0px !important;
-}
-
-/* Inputs & Filter selectors overrides */
-.bg-slate-900, 
-.dark .bg-slate-900, 
-.bg-slate-700, 
-.dark .bg-slate-700,
-.bg-slate-100,
-.dark .bg-slate-100 {
-  background-color: var(--color-paper) !important;
-  color: var(--color-ink) !important;
-  border-color: var(--color-rule) !important;
-  border-radius: 0px !important;
-}
-
-/* Ensure placeholder text matches the aesthetic */
-input::placeholder, select::placeholder {
-  color: var(--color-ink-muted) !important;
-  opacity: 0.6;
-}
-
-/* Reset rounded corners everywhere for vintage look */
-.rounded-lg, 
-.rounded-md, 
-.rounded-sm, 
-.rounded {
-  border-radius: 0px !important;
-}
-
-/* Table styling overrides */
-table {
-  border-collapse: collapse !important;
-  width: 100%;
-}
-
+/* Tables keep their print treatment: ink hairlines, no zebra fill, and a
+   faint oxblood wash on hover. Everything else is a token in the markup. */
+table { border-collapse: collapse; width: 100%; }
 table th {
-  background-color: var(--color-paper-deep) !important;
-  color: var(--color-ink) !important;
-  font-family: 'Archivo Narrow', sans-serif !important;
-  text-transform: uppercase !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.05em !important;
-  border-bottom: 2px solid var(--color-rule) !important;
-  padding: 10px 14px !important;
+  background-color: var(--color-paper-deep);
+  color: var(--color-ink);
+  font-family: 'DM Serif Display', Georgia, serif;
+  letter-spacing: 0.02em;
+  text-align: left;
+  border-bottom: 2px solid var(--color-rule);
+  padding: 10px 14px;
 }
-
 table td {
-  border-bottom: 1px solid var(--color-rule) !important;
-  padding: 10px 14px !important;
+  border-bottom: 1px solid var(--color-rule);
+  padding: 10px 14px;
   font-family: 'Source Serif 4', Georgia, serif;
 }
+table tr:hover { background-color: rgba(168, 32, 26, 0.05); }
 
-table tr {
-  border-color: var(--color-rule) !important;
-}
+input::placeholder, select::placeholder { color: var(--color-ink-muted); opacity: 0.7; }
 
-/* Faint blood-red tint on row hovers */
-table tr:hover {
-  background-color: rgba(168, 32, 26, 0.05) !important;
-  transition: background-color 0.15s ease;
-}
-
-/* Text colors overrides */
-.text-slate-100, .dark .text-slate-100,
-.text-slate-200, .dark .text-slate-200,
-.text-slate-300, .dark .text-slate-300,
-.text-slate-400, .dark .text-slate-400,
-.text-white, .dark .text-white {
-  color: var(--color-ink) !important;
-}
 
 .text-slate-500, .dark .text-slate-500,
 .text-slate-600, .dark .text-slate-600 {

@@ -1,3 +1,4 @@
+import { Icon } from './Icon';
 import { Component, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -31,23 +32,23 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
-          <div className="text-5xl mb-4">💀</div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+          <Icon name="pawn" className="h-10 w-10 text-ink-muted mb-4" />
+          <h2 className="text-xl font-bold text-ink mb-2">
             Something went wrong
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-2 text-sm max-w-md">
+          <p className="text-ink-muted mb-2 text-sm max-w-md">
             {this.state.error?.message || 'An unexpected error occurred.'}
           </p>
           <div className="flex gap-3 mt-4">
             <button
               onClick={this.handleReset}
-              className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              className="bg-accent hover:bg-accent text-ink px-4 py-2 rounded text-sm font-medium transition-colors"
             >
               Try Again
             </button>
             <Link
               to="/admin/"
-              className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white px-4 py-2 rounded text-sm transition-colors"
+              className="bg-paper-deep hover:bg-paper-deep text-ink px-4 py-2 rounded text-sm transition-colors"
             >
               Go Home
             </Link>

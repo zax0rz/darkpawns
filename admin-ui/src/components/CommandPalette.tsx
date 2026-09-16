@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Icon, type IconName } from './Icon';
 import { useNavigate } from 'react-router-dom';
 
 interface CommandItem {
   id: string;
   label: string;
-  icon?: string;
+  icon?: IconName;
   group: string;
   action: () => void;
 }
@@ -72,15 +73,15 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const commands: CommandItem[] = [
-    { id: 'nav-dashboard', label: 'Go to Dashboard', icon: '📊', group: 'Navigation', action: () => navigate('/admin/') },
-    { id: 'nav-zones', label: 'Go to Zones', icon: '🗺️', group: 'Navigation', action: () => navigate('/admin/game/zones') },
-    { id: 'nav-mobs', label: 'Go to Mobs', icon: '🐉', group: 'Navigation', action: () => navigate('/admin/game/mobs') },
-    { id: 'nav-objects', label: 'Go to Objects', icon: '💎', group: 'Navigation', action: () => navigate('/admin/game/objects') },
-    { id: 'nav-terminal', label: 'Go to Terminal', icon: '🖥️', group: 'Navigation', action: () => navigate('/admin/webclient') },
-    { id: 'nav-operations', label: 'Go to Operations', icon: '⚙️', group: 'Navigation', action: () => navigate('/admin/operations') },
-    { id: 'nav-agents', label: 'Go to Agents', icon: '🤖', group: 'Navigation', action: () => navigate('/admin/agents') },
-    { id: 'action-reek', label: 'Trigger Reek Crawl', icon: '🔍', group: 'Actions', action: () => { /* placeholder */ } },
-    { id: 'action-refresh', label: 'Refresh Server Status', icon: '🔄', group: 'Actions', action: () => window.location.reload() },
+    { id: 'nav-dashboard', label: 'Go to Dashboard', icon: 'dashboard', group: 'Navigation', action: () => navigate('/admin/') },
+    { id: 'nav-zones', label: 'Go to Zones', icon: 'zones', group: 'Navigation', action: () => navigate('/admin/game/zones') },
+    { id: 'nav-mobs', label: 'Go to Mobs', icon: 'mobs', group: 'Navigation', action: () => navigate('/admin/game/mobs') },
+    { id: 'nav-objects', label: 'Go to Objects', icon: 'objects', group: 'Navigation', action: () => navigate('/admin/game/objects') },
+    { id: 'nav-terminal', label: 'Go to Terminal', icon: 'terminal', group: 'Navigation', action: () => navigate('/admin/webclient') },
+    { id: 'nav-operations', label: 'Go to Operations', icon: 'operations', group: 'Navigation', action: () => navigate('/admin/operations') },
+    { id: 'nav-agents', label: 'Go to Agents', icon: 'agents', group: 'Navigation', action: () => navigate('/admin/agents') },
+    { id: 'action-reek', label: 'Trigger Reek Crawl', icon: 'search', group: 'Actions', action: () => { /* placeholder */ } },
+    { id: 'action-refresh', label: 'Refresh Server Status', icon: 'refresh', group: 'Actions', action: () => window.location.reload() },
   ];
 
   // Add recent items
@@ -157,13 +158,13 @@ export function CommandPalette({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink/60" onClick={onClose} />
 
       {/* Palette */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-lg bg-paper-deep border border-rule rounded-none shadow-2xl overflow-hidden">
         {/* Search input */}
-        <div className="flex items-center border-b border-slate-200 dark:border-slate-700 px-4">
-          <span className="text-slate-400 mr-2">🔍</span>
+        <div className="flex items-center border-b border-rule px-4">
+          <Icon name="search" className="h-4 w-4 text-ink-muted mr-2 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -171,9 +172,9 @@ export function CommandPalette({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a command..."
-            className="flex-1 bg-transparent py-3 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none"
+            className="flex-1 bg-transparent py-3 text-sm text-ink placeholder-slate-400 focus:outline-none"
           />
-          <kbd className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+          <kbd className="text-[10px] text-ink-muted bg-paper px-1.5 py-0.5 rounded border border-rule">
             ESC
           </kbd>
         </div>
@@ -181,13 +182,13 @@ export function CommandPalette({
         {/* Results */}
         <div className="max-h-72 overflow-y-auto py-2">
           {items.length === 0 ? (
-            <div className="px-4 py-6 text-center text-sm text-slate-500">
+            <div className="px-4 py-6 text-center text-sm text-ink-muted">
               No results found
             </div>
           ) : (
             groups.map((group) => (
               <div key={group.name}>
-                <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
                   {group.name}
                 </div>
                 {group.items.map((item) => {
@@ -200,11 +201,11 @@ export function CommandPalette({
                       onMouseEnter={() => setSelectedIndex(idx)}
                       className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left transition-colors ${
                         isSelected
-                          ? 'bg-amber-600/20 text-amber-300 dark:text-amber-300 text-slate-900'
-                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          ? 'bg-accent text-paper'
+                          : 'text-ink-muted hover:bg-paper'
                       }`}
                     >
-                      {item.icon && <span>{item.icon}</span>}
+                      {item.icon && <Icon name={item.icon} className="h-4 w-4 shrink-0 text-ink-muted" />}
                       <span>{item.label}</span>
                     </button>
                   );
@@ -215,7 +216,7 @@ export function CommandPalette({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center gap-3 text-[10px] text-slate-400">
+        <div className="border-t border-rule px-4 py-2 flex items-center gap-3 text-[10px] text-ink-muted">
           <span>↑↓ Navigate</span>
           <span>↵ Select</span>
           <span>Esc Close</span>

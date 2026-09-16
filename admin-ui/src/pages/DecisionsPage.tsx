@@ -17,28 +17,28 @@ function timeAgo(dateStr: string): string {
 }
 
 const outcomeStyles: Record<string, string> = {
-  movement: 'bg-blue-900 text-blue-300',
-  combat_hit_taken: 'bg-red-900 text-red-300',
-  combat_started: 'bg-orange-900 text-orange-300',
-  combat_ended: 'bg-slate-700 text-slate-300',
-  healed: 'bg-green-900 text-green-300',
-  agent_died: 'bg-red-900 text-red-400 font-bold',
-  level_up: 'bg-yellow-900 text-yellow-300',
+  movement: 'bg-paper-deep text-ink-muted',
+  combat_hit_taken: 'bg-paper-deep text-accent',
+  combat_started: 'bg-paper-deep text-ink-muted',
+  combat_ended: 'bg-paper text-ink-muted',
+  healed: 'bg-paper-deep text-ink',
+  agent_died: 'bg-paper-deep text-accent font-bold',
+  level_up: 'bg-paper-deep text-ink-muted',
   item_acquired: 'bg-cyan-900 text-cyan-300',
-  item_dropped: 'bg-slate-700 text-slate-400',
-  error: 'bg-red-950 text-red-400',
-  no_change: 'bg-slate-800 text-slate-500',
+  item_dropped: 'bg-paper text-ink-muted',
+  error: 'bg-paper-deep text-accent',
+  no_change: 'bg-paper-deep text-ink-muted',
 };
 
 const classStyles: Record<string, string> = {
-  movement: 'bg-blue-800 text-blue-200',
-  combat: 'bg-red-800 text-red-200',
+  movement: 'bg-paper-deep text-ink-muted',
+  combat: 'bg-paper-deep text-accent',
   inventory: 'bg-cyan-800 text-cyan-200',
   social: 'bg-purple-800 text-purple-200',
-  info: 'bg-slate-700 text-slate-300',
+  info: 'bg-paper text-ink-muted',
   magic: 'bg-violet-800 text-violet-200',
-  system: 'bg-amber-800 text-amber-200',
-  other: 'bg-slate-700 text-slate-400',
+  system: 'bg-paper-deep text-accent',
+  other: 'bg-paper text-ink-muted',
 };
 
 function DecisionRowView({ row }: { row: DecisionRow }) {
@@ -46,43 +46,43 @@ function DecisionRowView({ row }: { row: DecisionRow }) {
   const roomChanged = row.pre_room !== row.post_room;
 
   return (
-    <tr className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-      <td className="px-3 py-2 text-slate-500 text-xs font-mono">{row.id}</td>
-      <td className="px-3 py-2 text-slate-400 text-xs">{timeAgo(row.ts)}</td>
+    <tr className="border-b border-rule hover:bg-paper transition-colors">
+      <td className="px-3 py-2 text-ink-muted text-xs font-mono">{row.id}</td>
+      <td className="px-3 py-2 text-ink-muted text-xs">{timeAgo(row.ts)}</td>
       <td className="px-3 py-2">
-        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${classStyles[row.command_class || 'other'] || 'bg-slate-700 text-slate-300'}`}>
+        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${classStyles[row.command_class || 'other'] || 'bg-paper text-ink-muted'}`}>
           {row.command_class || '—'}
         </span>
       </td>
-      <td className="px-3 py-2 text-white font-mono text-sm">{row.command}</td>
+      <td className="px-3 py-2 text-ink font-mono text-sm">{row.command}</td>
       <td className="px-3 py-2">
-        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${outcomeStyles[row.outcome_category] || 'bg-slate-700 text-slate-300'}`}>
+        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${outcomeStyles[row.outcome_category] || 'bg-paper text-ink-muted'}`}>
           {row.outcome_category}
         </span>
       </td>
       <td className="px-3 py-2 text-xs">
         {row.pre_room !== null && (
-          <span className={roomChanged ? 'text-yellow-400' : 'text-slate-400'}>
+          <span className={roomChanged ? 'text-ink-muted' : 'text-ink-muted'}>
             Room {row.pre_room}{roomChanged ? ` → ${row.post_room}` : ''}
           </span>
         )}
       </td>
       <td className="px-3 py-2 text-xs">
         {row.pre_health !== null && (
-          <span className={hpChanged ? (row.post_health !== null && row.post_health < (row.pre_health || 0) ? 'text-red-400' : 'text-green-400') : 'text-slate-400'}>
+          <span className={hpChanged ? (row.post_health !== null && row.post_health < (row.pre_health || 0) ? 'text-accent' : 'text-online') : 'text-ink-muted'}>
             {row.pre_health}/{row.pre_max_health}{hpChanged ? ` → ${row.post_health}` : ''}
           </span>
         )}
       </td>
       <td className="px-3 py-2">
         {row.is_agent ? (
-          <span className="text-xs font-mono text-green-400">{row.agent_harness}/{row.agent_model}</span>
+          <span className="text-xs font-mono text-online">{row.agent_harness}/{row.agent_model}</span>
         ) : (
-          <span className="text-xs text-slate-500">{row.player_name}</span>
+          <span className="text-xs text-ink-muted">{row.player_name}</span>
         )}
       </td>
-      <td className="px-3 py-2 text-slate-500 text-xs">{row.turn_number}</td>
-      <td className="px-3 py-2 text-slate-500 text-xs">{row.duration_ms !== null ? `${row.duration_ms.toFixed(1)}ms` : '—'}</td>
+      <td className="px-3 py-2 text-ink-muted text-xs">{row.turn_number}</td>
+      <td className="px-3 py-2 text-ink-muted text-xs">{row.duration_ms !== null ? `${row.duration_ms.toFixed(1)}ms` : '—'}</td>
     </tr>
   );
 }
@@ -116,29 +116,29 @@ export function DecisionsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-white">Decision Log</h1>
+      <h1 className="text-2xl font-bold text-ink">Decision Log</h1>
 
       {/* Filters */}
-      <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
+      <div className="bg-paper-deep rounded-none border border-rule p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <input
             type="text"
             placeholder="Session ID"
             value={sessionId}
             onChange={(e) => { setSessionId(e.target.value); setPage(0); }}
-            className="bg-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 border border-slate-600"
+            className="bg-paper text-ink-muted text-xs rounded px-2 py-1.5 border border-rule"
           />
           <input
             type="text"
             placeholder="Player name"
             value={playerName}
             onChange={(e) => { setPlayerName(e.target.value); setPage(0); }}
-            className="bg-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 border border-slate-600"
+            className="bg-paper text-ink-muted text-xs rounded px-2 py-1.5 border border-rule"
           />
           <select
             value={isAgent}
             onChange={(e) => { setIsAgent(e.target.value); setPage(0); }}
-            className="bg-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 border border-slate-600"
+            className="bg-paper text-ink-muted text-xs rounded px-2 py-1.5 border border-rule"
           >
             <option value="">All players</option>
             <option value="true">Agents only</option>
@@ -147,7 +147,7 @@ export function DecisionsPage() {
           <select
             value={commandClass}
             onChange={(e) => { setCommandClass(e.target.value); setPage(0); }}
-            className="bg-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 border border-slate-600"
+            className="bg-paper text-ink-muted text-xs rounded px-2 py-1.5 border border-rule"
           >
             <option value="">All commands</option>
             <option value="movement">Movement</option>
@@ -161,7 +161,7 @@ export function DecisionsPage() {
           <select
             value={outcome}
             onChange={(e) => { setOutcome(e.target.value); setPage(0); }}
-            className="bg-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 border border-slate-600"
+            className="bg-paper text-ink-muted text-xs rounded px-2 py-1.5 border border-rule"
           >
             <option value="">All outcomes</option>
             <option value="movement">Movement</option>
@@ -176,7 +176,7 @@ export function DecisionsPage() {
           <select
             value={harness}
             onChange={(e) => { setHarness(e.target.value); setPage(0); }}
-            className="bg-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 border border-slate-600"
+            className="bg-paper text-ink-muted text-xs rounded px-2 py-1.5 border border-rule"
           >
             <option value="">All harnesses</option>
             <option value="openclaw">OpenClaw</option>
@@ -188,18 +188,18 @@ export function DecisionsPage() {
       </div>
 
       {/* Results */}
-      <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+      <div className="bg-paper-deep rounded-none border border-rule overflow-hidden">
         {isLoading ? (
-          <div className="p-6 text-center text-slate-500 animate-pulse">Loading decisions...</div>
+          <div className="p-6 text-center text-ink-muted animate-pulse">Loading decisions...</div>
         ) : data && data.data.length > 0 ? (
           <>
-            <div className="px-4 py-2 border-b border-slate-700 text-xs text-slate-400">
+            <div className="px-4 py-2 border-b border-rule text-xs text-ink-muted">
               {data.total.toLocaleString()} decisions {data.total > limit ? `(showing ${page * limit + 1}–${Math.min((page + 1) * limit, data.total)} of ${data.total.toLocaleString()})` : ''}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-700 text-xs text-slate-400 uppercase tracking-wider">
+                  <tr className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
                     <th className="text-left px-3 py-2">ID</th>
                     <th className="text-left px-3 py-2">Time</th>
                     <th className="text-left px-3 py-2">Class</th>
@@ -220,28 +220,28 @@ export function DecisionsPage() {
               </table>
             </div>
             {/* Pagination */}
-            <div className="px-4 py-3 border-t border-slate-700 flex justify-between items-center">
+            <div className="px-4 py-3 border-t border-rule flex justify-between items-center">
               <button
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
-                className="px-3 py-1 text-xs rounded bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 text-xs rounded bg-paper text-ink-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ← Previous
               </button>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-ink-muted">
                 Page {page + 1} of {totalPages}
               </span>
               <button
                 onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                 disabled={page >= totalPages - 1}
-                className="px-3 py-1 text-xs rounded bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 text-xs rounded bg-paper text-ink-muted hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next →
               </button>
             </div>
           </>
         ) : (
-          <div className="p-6 text-center text-slate-500 text-sm">
+          <div className="p-6 text-center text-ink-muted text-sm">
             No decisions logged yet. Decision capture activates when agents connect.
           </div>
         )}

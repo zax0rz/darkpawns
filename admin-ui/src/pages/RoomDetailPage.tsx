@@ -29,7 +29,7 @@ export function RoomDetailPage() {
   });
 
   if (isLoading) {
-    return <div className="text-slate-400 animate-pulse">Loading room...</div>;
+    return <div className="text-ink-muted animate-pulse">Loading room...</div>;
   }
 
   if (error || !room) {
@@ -37,13 +37,13 @@ export function RoomDetailPage() {
       <div className="space-y-4">
         <Link
           to="/admin/game/zones"
-          className="text-amber-400 hover:text-amber-300 text-sm"
+          className="text-accent hover:text-accent text-sm"
         >
           ← Back to Zones
         </Link>
-        <div className="bg-red-900/30 border border-red-700 rounded p-4 text-sm text-red-300">
+        <div className="bg-paper-deep border border-accent rounded p-4 text-sm text-accent">
           Room not found or failed to load.
-          <div className="mt-1 text-red-400/70 text-xs">
+          <div className="mt-1 text-accent text-xs">
             {(error as Error)?.message || 'Not found'}
           </div>
         </div>
@@ -55,28 +55,22 @@ export function RoomDetailPage() {
     <div className="space-y-6">
       <Link
         to="/admin/game/zones"
-        className="text-amber-400 hover:text-amber-300 text-sm"
+        className="text-accent hover:text-accent text-sm"
       >
         ← Back to Zones
       </Link>
 
       {/* Header */}
-      <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <div className="bg-paper-deep rounded-none border border-rule p-6">
         <div className="flex items-baseline gap-3">
-          <span className="text-lg font-mono text-amber-400">#{room.vnum}</span>
-          <h1 className="text-xl font-bold text-white">{room.name}</h1>
-          <Link
-            to={`/admin/game/rooms/${room.vnum}/edit`}
-            className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1 rounded text-sm ml-auto"
-          >
-            Edit
-          </Link>
+          <span className="text-lg font-mono text-accent">#{room.vnum}</span>
+          <h1 className="text-xl font-bold text-ink">{room.name}</h1>
         </div>
       </div>
 
       {/* Meta */}
-      <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-        <h2 className="text-sm font-medium text-slate-300 mb-4">Properties</h2>
+      <div className="bg-paper-deep rounded-none border border-rule p-6">
+        <h2 className="text-sm font-medium text-ink-muted mb-4">Properties</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <StatBlock label="Zone" value={room.zone} />
           <StatBlock label="Sector" value={sectorLabel(room.sector)} />
@@ -89,11 +83,11 @@ export function RoomDetailPage() {
 
       {/* Description */}
       {room.description && (
-        <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-          <h2 className="text-sm font-medium text-slate-300 mb-2">
+        <div className="bg-paper-deep rounded-none border border-rule p-6">
+          <h2 className="text-sm font-medium text-ink-muted mb-2">
             Description
           </h2>
-          <p className="text-sm text-slate-200 italic whitespace-pre-wrap">
+          <p className="text-sm text-ink italic whitespace-pre-wrap">
             {room.description}
           </p>
         </div>
@@ -111,8 +105,8 @@ function StatBlock({
 }) {
   return (
     <div>
-      <div className="text-xs text-slate-500 mb-1">{label}</div>
-      <div className="text-sm text-white font-mono">{value}</div>
+      <div className="text-xs text-ink-muted mb-1">{label}</div>
+      <div className="text-sm text-ink font-mono">{value}</div>
     </div>
   );
 }

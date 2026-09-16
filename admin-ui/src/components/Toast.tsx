@@ -1,3 +1,4 @@
+import { Icon, type IconName } from './Icon';
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -36,15 +37,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const typeStyles: Record<ToastType, string> = {
-    success: 'bg-green-800 border-green-600 text-green-100',
-    error: 'bg-red-800 border-red-600 text-red-100',
-    info: 'bg-slate-800 border-slate-600 text-slate-100',
+    success: 'bg-paper-deep border-rule text-ink',
+    error: 'bg-accent border-accent-deep text-paper',
+    info: 'bg-paper-deep border-rule text-ink',
   };
 
-  const typeIcons: Record<ToastType, string> = {
-    success: '✓',
-    error: '✗',
-    info: 'ℹ',
+  const typeIcons: Record<ToastType, IconName> = {
+    success: 'check',
+    error: 'cross',
+    info: 'info',
   };
 
   return (
@@ -55,9 +56,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-lg border shadow-lg text-sm animate-[slideIn_0.2s_ease-out] ${typeStyles[toast.type]}`}
+            className={`pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-none border shadow-lg text-sm animate-[slideIn_0.2s_ease-out] ${typeStyles[toast.type]}`}
           >
-            <span className="text-base">{typeIcons[toast.type]}</span>
+            <Icon name={typeIcons[toast.type]} className="h-4 w-4 shrink-0" />
             <span>{toast.message}</span>
             <button
               onClick={() => dismiss(toast.id)}

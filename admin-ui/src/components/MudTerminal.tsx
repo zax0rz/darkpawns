@@ -59,8 +59,8 @@ function StatusRow({
   const p = pct(cur, max);
   return (
     <div className="flex items-center gap-1.5 min-w-[140px]">
-      <span className="text-[11px] text-slate-400 w-10 shrink-0">{label}</span>
-      <div className="flex-1 h-3 bg-slate-800 rounded overflow-hidden">
+      <span className="text-[11px] text-ink-muted w-10 shrink-0">{label}</span>
+      <div className="flex-1 h-3 bg-paper-deep rounded overflow-hidden">
         <div
           className="h-full transition-all duration-300"
           style={{
@@ -69,7 +69,7 @@ function StatusRow({
           }}
         />
       </div>
-      <span className="text-[11px] text-slate-300 w-20 text-right tabular-nums">
+      <span className="text-[11px] text-ink-muted w-20 text-right tabular-nums">
         {max > 0 ? `${cur}/${max}` : '—'}
       </span>
     </div>
@@ -304,25 +304,25 @@ export function MudTerminal({ className = '' }: MudTerminalProps) {
 
       {/* Status bar */}
       {showStatusBar && (
-        <div className="flex items-center gap-4 px-3 py-1.5 bg-slate-950 border-t border-slate-700 flex-wrap">
+        <div className="flex items-center gap-4 px-3 py-1.5 bg-paper-deep border-t border-rule flex-wrap">
           <StatusRow label="HP" cur={playerState.health} max={playerState.maxHealth} colorFn={hpColor} />
           <StatusRow label="Mana" cur={playerState.mana} max={playerState.maxMana} colorFn={manaColor} />
           <StatusRow label="Move" cur={playerState.move} max={playerState.maxMove} colorFn={moveColor} />
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-ink-muted">
             Lv {playerState.level || '—'}
           </span>
-          <span className="text-[11px] text-amber-400">
+          <span className="text-[11px] text-accent">
             Gold {playerState.gold || 0}
           </span>
         </div>
       )}
 
       {/* Connection status + reconnect */}
-      <div className="flex items-center gap-3 px-3 py-1 bg-slate-950 border-t border-slate-800 text-xs">
+      <div className="flex items-center gap-3 px-3 py-1 bg-paper-deep border-t border-rule text-xs">
         <span className="flex items-center gap-1.5">
           <span
-            className={`w-2 h-2 rounded-full ${
-              connected ? 'bg-green-500' : 'bg-red-500'
+            className={`w-2 h-2 rounded-none ${
+              connected ? 'bg-online' : 'bg-accent'
             }`}
           />
           {connected ? 'Connected' : 'Disconnected'}
@@ -330,7 +330,7 @@ export function MudTerminal({ className = '' }: MudTerminalProps) {
         {!connected && (
           <button
             onClick={connect}
-            className="text-amber-400 hover:text-amber-300 transition-colors"
+            className="text-accent hover:text-accent transition-colors"
           >
             Reconnect
           </button>
