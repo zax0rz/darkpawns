@@ -572,27 +572,34 @@ func RunWarmup(primary Conn, peers map[string]Conn, steps []string, quiescence t
 }
 
 // RunAudienceProbe plays commands through the primary actor and captures the
-// resulting output separately for the actor and every passive peer.
+// resulting output separately for the actor and every passive peer. A directed
+// step of the form send:<peer> <line> sends the line to that named peer and
+// captures the primary plus all other peers as its audience. This is used by
+// multi-descriptor vehicles whose C behavior depends on which connection owns
+// the next input line.
 func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration) ([]AudienceProbeBlock, error) {
-	peerNames := make([]string, 0, len(peers))
-	for name := range peers {
-		peerNames = append(peerNames, name)
-	}
-	sort.Strings(peerNames)
-
 	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
 	for i, step := range probe {
-		if err := primary.Send(step); err != nil {
+		target, targetName, audience, sendLine, err := resolveAudienceProbeTarget(primary, peers, step)
+		if err != nil {
+			return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
+		}
+		if err := target.Send(sendLine); err != nil {
 			return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
 		}
-		output, err := primary.ReadUntilQuiescent(quiescence)
+		output, err := target.ReadUntilQuiescent(quiescence)
 		if err != nil && (i != len(probe)-1 || !errors.Is(err, io.EOF)) {
 			return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
 		}
-		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: "actor", Output: output})
+		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output})
 
+		peerNames := make([]string, 0, len(audience))
+		for name := range audience {
+			peerNames = append(peerNames, name)
+		}
+		sort.Strings(peerNames)
 		for _, name := range peerNames {
-			peerOutput, peerErr := peers[name].ReadUntilQuiescent(quiescence)
+			peerOutput, peerErr := audience[name].ReadUntilQuiescent(quiescence)
 			// A final command may intentionally close an audience connection
 			// (for example, the C do_dc lower-level target). Preserve the
 			// output captured before EOF instead of turning that expected
@@ -606,6 +613,47 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 		}
 	}
 	return blocks, nil
+}
+
+func resolveAudienceProbeTarget(primary Conn, peers map[string]Conn, step string) (target Conn, targetName string, audience map[string]Conn, sendLine string, err error) {
+	if !strings.HasPrefix(step, "send:") {
+		return primary, "actor", peers, step, nil
+	}
+
+	directed := strings.TrimPrefix(step, "send:")
+	space := strings.IndexByte(directed, ' ')
+	name := directed
+	if space >= 0 {
+		name = directed[:space]
+		sendLine = directed[space+1:]
+	}
+	if name == "" {
+		return nil, "", nil, "", fmt.Errorf("directed probe has no target")
+	}
+
+	audience = make(map[string]Conn, len(peers)+1)
+	if name == "primary" {
+		target = primary
+		targetName = "primary"
+		for peerName, peer := range peers {
+			audience[peerName] = peer
+		}
+		return target, targetName, audience, sendLine, nil
+	}
+
+	var ok bool
+	target, ok = peers[name]
+	if !ok {
+		return nil, "", nil, "", fmt.Errorf("directed probe target %q is not configured", name)
+	}
+	targetName = name
+	audience["primary"] = primary
+	for peerName, peer := range peers {
+		if peerName != name {
+			audience[peerName] = peer
+		}
+	}
+	return target, targetName, audience, sendLine, nil
 }
 
 // RunSetup plays one server's setup lines and returns the captured transcript.

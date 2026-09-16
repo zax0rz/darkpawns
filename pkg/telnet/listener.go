@@ -419,6 +419,16 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			if err := sendPagerInput(s, line); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
+		} else if s.IsTextEditing() {
+			// CON_TEDIT owns every complete input line, including an empty or
+			// whitespace-only line. C's string_add appends that line to d->str;
+			// it is not the ordinary playing prompt refresh.
+			if err := sendCommand(s, "", nil, rawLine); err != nil {
+				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
+			}
+			if !s.SendClosed() {
+				s.SendPrompt()
+			}
 		} else if line == "" {
 			// Pressing Enter with no command just refreshes the prompt. Route it
 			// through the session's send channel so writeLoop renders it in FIFO
@@ -429,7 +439,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			// first char is a one-char command, no separating space needed
 			// ("'hello"). Plain whitespace splitting broke those forms.
 			cmdWord, cmdArgs := session.SplitCommandInput(line)
-			if err := sendCommand(s, cmdWord, cmdArgs, session.CommandArgumentText(rawLine)); err != nil {
+			if err := sendCommand(s, cmdWord, cmdArgs, rawLine); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
 			// The prompt is enqueued after the command so writeLoop drains the
@@ -1070,11 +1080,12 @@ func sendPagerInput(s *session.Session, line string) error {
 	return s.HandleMessage(lineMsg)
 }
 
-func sendCommand(s *session.Session, cmd string, args []string, rawArgs string) error {
+func sendCommand(s *session.Session, cmd string, args []string, rawLine string) error {
 	cmdData, err := json.Marshal(session.CommandData{
 		Command: cmd,
 		Args:    args,
-		RawArgs: rawArgs,
+		RawLine: rawLine,
+		RawArgs: session.CommandArgumentText(rawLine),
 	})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)

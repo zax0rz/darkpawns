@@ -144,6 +144,7 @@ func init() {
 	registerCommand("imotd", wrapArgs(cmdImotd), "Show the immortal MOTD.")
 	registerCommand("wizlist", wrapArgs(cmdWizlist), "Show the list of wizards.")
 	registerCommand("immlist", wrapArgs(cmdImmlist), "Show the list of immortals.")
+	registerCommand("tedit", wrapArgs(cmdTedit), "Edit the game's text files.")
 	registerCommand("players", wrapArgs(cmdPlayers), "Show all registered players.")
 	registerCommand("clear", wrapArgs(cmdClear), "Clear the screen.", "cls")
 	registerCommand("whoami", wrapArgs(cmdWhoami), "Show your own name.")
@@ -542,6 +543,25 @@ func CommandArgumentText(input string) string {
 		return ""
 	}
 	return strings.TrimLeft(input[idx+1:], cCommandWhitespace)
+}
+
+// commandInputLine reconstructs a complete line for protocol clients that do
+// not provide RawLine. Non-letter commands in the C interpreter consume their
+// first character without requiring a separating space (notably /h in the
+// improved editor).
+func commandInputLine(command string, args []string) string {
+	line := command
+	if len(args) == 0 {
+		return line
+	}
+	if len(command) == 1 && !isASCIICommandLetter(command[0]) {
+		return line + strings.Join(args, " ")
+	}
+	return line + " " + strings.Join(args, " ")
+}
+
+func isASCIICommandLetter(b byte) bool {
+	return b >= 'A' && b <= 'Z' || b >= 'a' && b <= 'z'
 }
 
 // ExecuteCommand processes a game command.

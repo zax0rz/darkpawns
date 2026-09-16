@@ -202,6 +202,23 @@ func TestActAudienceRouting(t *testing.T) {
 	}
 }
 
+func TestActSkipsPlayersInStringEditors(t *testing.T) {
+	w, actor, victim, observer, _ := newActTestWorld(t)
+	received := make(map[string][]string)
+	w.MessageSink = func(name string, msg []byte) {
+		received[name] = append(received[name], string(msg))
+	}
+	victim.SetPlrFlag(PlrWriting, true)
+
+	Act(w, false, actor, nil, nil, nil, "$n nods.", "", ToRoom)
+	if len(received[victim.Name]) != 0 {
+		t.Fatalf("writing player received room act: %v", received[victim.Name])
+	}
+	if got := received[observer.Name]; len(got) != 1 || got[0] != "Hero nods.\r\n" {
+		t.Fatalf("awake observer output = %v, want actor room act", got)
+	}
+}
+
 func TestActVisibilityIsRecipientSpecific(t *testing.T) {
 	w, actor, _, observer, _ := newActTestWorld(t)
 	observer.SetAffect(affBlind, true)

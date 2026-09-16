@@ -1,0 +1,126 @@
+# depth-case: tedit.entry-list
+# depth-case: tedit.invalid-option
+# depth-case: tedit.uppercase-option-lowercased-by-one-argument
+# depth-case: tedit.prefix-selection
+# depth-case: tedit.editor-help
+# depth-case: tedit.invalid-editor-action
+# depth-case: tedit.invalid-delete-input
+# depth-case: tedit.invalid-list-input
+# depth-case: tedit.invalid-edit-input
+# depth-case: tedit.invalid-insert-input
+# depth-case: tedit.invalid-replace-input
+# depth-case: tedit.numbered-list
+# depth-case: tedit.numbered-range
+# depth-case: tedit.normal-list
+# depth-case: tedit.edit
+# depth-case: tedit.insert
+# depth-case: tedit.delete
+# depth-case: tedit.replace
+# depth-case: tedit.replace-all
+# depth-case: tedit.clear
+# depth-case: tedit.format
+# depth-case: tedit.indented-format
+# depth-case: tedit.delete-empty
+# depth-case: tedit.append-and-abort
+# depth-case: tedit.save
+# depth-case: tedit.live-cache
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Teditdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teditdepth
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Teditpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Teditpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Teditpeer 8004
+
+[probe]
+tedit
+tedit nope
+tedit N
+tedit n
+tedit news
+draft line
+/h
+/z
+/d
+/l 0
+/e0
+/i0
+/r bad
+/n
+/n 1-2
+/n 2-3
+/n 1-3
+/l 1
+/e13 replacement
+/i1 inserted
+/r 'Lots' 'Many'
+/ra 'Many' 'Lots'
+/d1
+/c
+/d1
+/a
+tedit news
+/f
+/fi
+/a
+tedit news
+new saved line
+/s
+news

@@ -1137,6 +1137,11 @@ func (m *Manager) Register(playerName string, s *Session) error {
 // multiple times for the same session. Both Unregister and UnregisterAndClose
 // delegate here to guarantee consistent cleanup ordering.
 func (m *Manager) cleanupSession(s *Session, playerName string) {
+	// C close_socket clears CON_TEDIT through cleanup_olc before it handles the
+	// character's departure. Preserve the editor's in-memory cache (without a
+	// disk commit) and emit the shared OLC room transition first.
+	s.cancelTextEdit()
+
 	// 1. Stop combat
 	m.combatEngine.StopCombat(playerName)
 
@@ -1229,6 +1234,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 	if s.charCreating || s.creationSaved || s.menuActive {
 		return false
 	}
+	s.cancelTextEdit()
 
 	p := s.player
 	p.SetLinkless(true)
@@ -1596,6 +1602,13 @@ type Session struct {
 
 	// Temporary data storage for command handlers
 	tempData map[string]interface{}
+
+	// textEditMu/textEdit mirror a descriptor's d->str/backstr/OLC_STORAGE
+	// while CON_TEDIT is active. The descriptor snapshot is session-owned, but
+	// the active buffer is serialized through the shared static-text cache so
+	// tedit and news/motd/etc. retain C's one live global authority.
+	textEditMu sync.Mutex
+	textEdit   *textEditState
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
