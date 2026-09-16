@@ -157,3 +157,49 @@ earns a rulebook citation, and what to do with a green you do not trust.
 Deployment is `make deploy-site` only, with explicit authorization, per the
 repository root instructions. Commit and push only when Zach asks. The skill
 prepares; Zach publishes.
+
+Three things bite here, all of them learned the hard way:
+
+- **The tree must be current before building.** `deploy-site` builds `dist/`
+  from the working tree and then syncs with `rsync --delete`. A stale worktree
+  therefore rebuilds a site that is missing whatever it has not pulled, and the
+  sync removes those pages from production. Pull first, then build, then read
+  the dry-run the root `AGENTS.md` mandates. Only stale build artifacts should
+  appear under `*deleting`. A real page there means stop.
+- **The post source is invisible to `git status`.** `/website-astro/` is listed
+  in `.git/info/exclude`, so a new post under `src/content/blog/` never shows as
+  untracked and is easy to publish without committing. Add it explicitly with
+  `git add -f`. A post live on production whose only copy is one working tree is
+  one clean checkout away from being deleted by the next `--delete` sync.
+- **Drafts do not build.** `draft: true` means Astro emits nothing, so a deploy
+  with the flag still set publishes everything except the post. Flipping it is
+  Zach's call; confirm it is flipped before treating a deploy as a publish.
+
+### After publishing: verify the live page
+
+The build gates cannot catch a value that is well-formed and wrong, so check the
+published page itself rather than trusting a green build:
+
+```bash
+URL=https://darkpawns.org/blog/<slug>/
+curl -sS -o /dev/null -w "%{http_code}\n" "$URL"     # expect 200
+curl -sS "$URL" | grep -oE '>[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}<'
+curl -sS "$URL" | grep -oE 'href="https?://[^"]+"'    # then check each resolves
+```
+
+Confirm three things:
+
+1. **The rendered date matches the frontmatter date.** Dates are authored as
+   calendar dates, so every formatter must pass `timeZone: 'UTC'`. Without it
+   `2026-09-15` parses as UTC midnight, renders in US Eastern, and publishes as
+   September 14. The schema cannot catch this; the date is valid, just wrong.
+   The archive formatters have always passed `timeZone: 'UTC'`; the three blog
+   formatters did not until 2026-09-16, and a post shipped a day early because
+   of it. Check any new formatter for the same omission.
+2. **Every link resolves.** Verify each target returns 200 before deploying, not
+   after. Links into the archive need the record's real slug, which is the
+   filename under `src/content/archive/` (for example `map-kir-draxin`), not a
+   guess from the record's title.
+3. **The post appears where it should.** It is listed on `/blog/`, and the
+   homepage `dispatch` section carries the three most recent non-draft posts by
+   date.

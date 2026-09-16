@@ -139,7 +139,20 @@ A warm print palette: two creams, two inks, and one rare oxblood stamp. Green ap
 
 A centered broadsheet. The global container is `--max-width: 72rem`; editorial reading columns narrow to `--content-width: 42rem` (≈45–75ch). The home page is a two-column broadsheet grid (main dispatch column + sidebar). Spacing follows a fixed scale: `xs 0.25rem`, `sm 0.5rem`, `md 1rem`, `lg 2rem`, `xl 4rem` — density is tight and print-like, not airy SaaS whitespace. The persistent section bar sits at `--nav-height: 3.5rem`.
 
-**Breakpoints:** mobile `640px` (single column; the section bar becomes one horizontally-scrolling row, no hamburger, no JS), tablet `1024px` (two-column list grids).
+**Breakpoints:** mobile `640px` (single column; the section bar collapses behind a hamburger, still no JS), tablet `1024px` (two-column list grids).
+
+The mobile section bar was a horizontally-scrolling row until 2026-09-16. It was
+replaced because it failed in practice: ten items in a 375px bar clipped at the
+sixth, and `scrollbar-width: none` removed the only cue that the rest existed, so
+Archive, Blog, Search, Docs and About were unreachable. The replacement is a
+standard hamburger, built on `<details>`/`<summary>` so the no-JS half of the
+original rule survives: the element toggles itself and is keyboard-accessible
+natively. Two gotchas that rule out the naive implementation. Chrome wraps
+details content in a `::details-content` pseudo-element carrying
+`content-visibility: hidden`, so the desktop panel must opt back in or it holds
+layout without ever painting. And `.nav-disclosure > summary` outranks a bare
+`.nav-toggle` class, so the mobile override has to match that selector shape
+rather than rely on the media query to win.
 
 ### Hero discipline (adapted from tasteskill.dev)
 For any landing or hero surface: headline **two lines maximum** on desktop; subtext **≤20 words and 4 lines**; the primary action is **visible without scrolling**; the section bar stays a **single line, ≤80px tall**. A hero that needs a scroll cue has failed, and there are no scroll cues here.
