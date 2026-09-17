@@ -124,7 +124,6 @@ const (
 
 // SpamDetectionConfig configures spam detection.
 type SpamDetectionConfig struct {
-	MessagesPerMinute int           `json:"messages_per_minute"` // Threshold for spam
-	DuplicateWindow   time.Duration `json:"duplicate_window"`    // Time window for duplicate detection
-	Action            FilterAction  `json:"action"`              // What to do when spam detected
+	MessagesPerMinute int          `json:"messages_per_minute"` // Threshold for spam
+	Action            FilterAction `json:"action"`              // What to do when spam detected
 }

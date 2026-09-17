@@ -67,7 +67,7 @@ This document serves as the comprehensive execution plan and mapping system for 
 | 49 | `redit.c` | 1,078 | `NONE` | NONE | HIGH | **UNPORTED** (Legacy OLC room editor. Obsoleted by modern tooling). |
 | 50 | `scripts.c` | 2,115 | `pkg/game/scripts.go`<br>`pkg/game/world_scriptable.go`<br>`pkg/scripting/engine.go` | 1:N | HIGH | Lua scripting bridge for triggers on mobs/rooms/objects. |
 | 51 | `sedit.c` | 1,178 | `NONE` | NONE | HIGH | **UNPORTED** (Legacy OLC shop editor. Obsoleted by modern tooling). |
-| 52 | `shop.c` | 1,445 | `pkg/game/shop.go`<br>`pkg/game/systems/shop.go`<br>`pkg/game/systems/shop_manager.go`<br>`pkg/session/shop_cmds.go` | 1:N | HIGH | Shopkeeper transactions, inventory buying/selling, pricing. |
+| 52 | `shop.c` | 1,445 | `pkg/game/shop.go`<br>`pkg/session/shop_cmds.go` | 1:N | HIGH | Shopkeeper transactions, inventory buying/selling, pricing. |
 | 53 | `spec_assign.c` | 642 | `pkg/game/spec_assign.go` | 1:1 | MEDIUM | Assigning special procedures to mob/room/object templates. |
 | 54 | `spec_procs.c` | 2,420 | `pkg/game/spec_procs.go`<br>`pkg/game/postmaster.go` | 1:N | HIGH | Core special procedures (guildmasters, postmasters, cityguards, puff). |
 | 55 | `spec_procs2.c` | 2,300 | `pkg/game/spec_procs2.go` | 1:1 | HIGH | Additional special procedures. |

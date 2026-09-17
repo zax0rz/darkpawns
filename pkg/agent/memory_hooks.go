@@ -385,6 +385,11 @@ func (hm *HookManager) OnSocialInteraction(agentName, otherEntity, interactionTy
 	valence := 0                                       // neutral by default, can be adjusted
 	salience := db.SalienceScore(valence, true, false) // social events get bonus
 
+	socialEventID := fmt.Sprintf("social_%s_%s_%d", agentName, otherEntity, time.Now().UnixNano())
+	if interactionType != "" {
+		socialEventID = fmt.Sprintf("social_%s_%s_%s_%d", agentName, otherEntity, interactionType, time.Now().UnixNano())
+	}
+
 	mem := &db.NarrativeMemory{
 		AgentName:     agentName,
 		EventType:     db.NarrEventPlayerEncounter,
@@ -394,7 +399,7 @@ func (hm *HookManager) OnSocialInteraction(agentName, otherEntity, interactionTy
 		RelatedEntity: otherEntity,
 		Valence:       valence,
 		Salience:      salience,
-		SocialEventID: fmt.Sprintf("social_%s_%s_%d", agentName, otherEntity, time.Now().UnixNano()),
+		SocialEventID: socialEventID,
 		SessionID:     sessionID,
 	}
 
@@ -406,7 +411,11 @@ func (hm *HookManager) OnSocialInteraction(agentName, otherEntity, interactionTy
 	mem.ID = id
 
 	// Send to Python system
-	event := ConvertNarrativeMemoryToEvent(mem, nil)
+	var rawEvent interface{}
+	if interactionType != "" {
+		rawEvent = map[string]string{"interaction_type": interactionType}
+	}
+	event := ConvertNarrativeMemoryToEvent(mem, rawEvent)
 	go func() {
 		if err := hm.client.SendMemoryEvent(event); err != nil {
 			slog.Error("failed to send social interaction to Python system", "error", err)

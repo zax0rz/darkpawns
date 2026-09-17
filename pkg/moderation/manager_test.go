@@ -101,7 +101,6 @@ func TestSpamDetection(t *testing.T) {
 		messageHistory: make(map[string][]time.Time),
 		spamConfig: SpamDetectionConfig{
 			MessagesPerMinute: 3,
-			DuplicateWindow:   5 * time.Second,
 			Action:            FilterActionWarn,
 		},
 	}
@@ -149,7 +148,6 @@ func TestCheckMessage(t *testing.T) {
 		messageHistory: make(map[string][]time.Time),
 		spamConfig: SpamDetectionConfig{
 			MessagesPerMinute: 10,
-			DuplicateWindow:   5 * time.Second,
 			Action:            FilterActionWarn,
 		},
 	}
