@@ -24,42 +24,63 @@ A setup wizard for Dark Pawns that runs in the terminal, generates a config file
 
 ### Server Startup (`cmd/server/main.go`)
 
-The server takes 5 CLI flags:
+**2026-09-17:** corrected against the source during the startup-surface pass. The
+table describes the running binary, including its default paths.
+
+The server takes 7 CLI flags:
 
 | Flag | Default | Required | Description |
 |------|---------|----------|-------------|
-| `-world` | `""` | **Yes** | Path to world lib directory |
-| `-scripts` | `""` | No | Path to Lua scripts (defaults to `world/lib/scripts`) |
-| `-port` | `"4350"` | No | TCP listen port |
-| `-db` | `postgres://postgres:postgres@localhost/darkpawns?sslmode=disable` | No | PostgreSQL URL |
-| `-web` | `""` | No | Path to web client files |
+| `-world` | `lib/world` | No (default) | World data directory: the one holding `wld/`, `mob/`, `obj/`, `zon/`, `shp/` |
+| `-scripts` | `<world>/scripts` | No | Path to Lua scripts |
+| `-port` | `"4350"` | No | HTTP and WebSocket listen port |
+| `-db` | `""` | **Yes**, via `-db` or `DATABASE_URL` | PostgreSQL URL |
+| `-web` | `web/public` | No | Browser client files served at `/` |
+| `-static` | `""` | No | Static site served at `/`, takes precedence over `-web`; `-hugo` is a deprecated alias |
+| `-telnet-port` | `7777` | No | Telnet port (`0` disables) |
+
+Defaults are relative to the repository root, so `./server` with no arguments
+starts a checkout instance. Startup refuses, naming the fix in the message, when:
+
+- `-world` does not exist, or exists without a `wld/` subdirectory. Passing
+  `lib/` instead of `lib/world` is called out by name.
+- neither `-db` nor `DATABASE_URL` is set.
+- `JWT_SECRET` is missing or shorter than 32 characters, unless
+  `ENVIRONMENT=development`, which mints an ephemeral secret for the process.
 
 Additional env vars read at runtime:
+- `DATABASE_URL` — PostgreSQL URL when `-db` is absent
+- `ENVIRONMENT` — `development` relaxes the `JWT_SECRET` requirement
+- `JWT_SECRET` — signing key (validated at boot; read in `pkg/auth/jwt.go`)
+- `DP_ALLOW_NO_DB=1` — continue after a failed database connection (dev and oracle only)
 - `USE_TLS` — enable TLS (`"true"`)
 - `TLS_CERT_FILE` — cert path
 - `TLS_KEY_FILE` — key path
-- `JWT_SECRET` — signing key (read in `pkg/auth/jwt.go`)
+- `DP_SEED`, `DP_CLOCK`, `DP_FIXED_TIME` — determinism controls for oracle and test runs
 
 **No config file exists.** Everything is flags + env vars. There is no config loading code anywhere in the server.
 
 ### World Data Structure
 
-The parser expects a `libDir` with this layout:
+The parser expects the `-world` directory to hold:
 
 ```
-libDir/
-  wld/    # Room files (*.wld)
-  mob/    # Mob files (*.mob)
-  obj/    # Object files (*.obj)
-  zon/    # Zone files (*.zon)
-  shp/    # Shop files (*.shp)
-  scripts/  # Lua mob scripts
-  etc/    # Player data, clans, mail
-  text/   # Help files
-  misc/   # Socials database
+lib/world/         # the -world directory
+  wld/             # Room files (*.wld)
+  mob/             # Mob files (*.mob)
+  obj/             # Object files (*.obj)
+  zon/             # Zone files (*.zon)
+  shp/             # Shop files (*.shp)
+  movesel/         # Movement selection data
+  scripts/         # Lua mob scripts
+  text/            # Help files
 ```
 
-The repo ships world data in `lib/`. The server binary does NOT embed it — it reads from a filesystem path at runtime.
+That directory's parent (`lib/` here) is the game root: it holds `etc/` (clans,
+players, plrmail), `misc/` (help, messages, socials) and `plrobjs/`. The server
+changes its working directory to the game root at boot, so CWD-relative state
+lands in `lib/data/`. The repo ships world data in `lib/world/`; the binary does
+NOT embed it and reads from a filesystem path at runtime.
 
 ### Database
 
@@ -526,7 +547,8 @@ This is backward compatible. If no config file exists, the server works exactly 
 | Config file exists, wizard rerun | Rehydrate forms with current values. Offer "edit" or "overwrite." |
 | Config file exists, server started without flags | Server reads config. Works. |
 | Config file exists, server started WITH flags | Flags override config. Works. |
-| No config file, no flags | Server errors: "Usage: server -world <path>" (current behavior) |
+| No config file, no flags | Starts a checkout instance from the built-in defaults once `DATABASE_URL` and `JWT_SECRET` are set; otherwise refuses and names the variable to set |
+| World path is one level too high (`lib/` instead of `lib/world`) | Refused at boot with the missing `wld/` explained, before any parse |
 | World path is valid but wrong format | Parser returns error, wizard shows it. |
 | Database URL is wrong | Connection test fails, wizard shows error, offers "continue without DB." |
 | Port is in use | Bind test fails, wizard shows which process is using it (if possible). |

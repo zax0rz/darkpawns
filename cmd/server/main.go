@@ -68,17 +68,67 @@ import (
 	"github.com/zax0rz/darkpawns/web"
 )
 
+// Defaults for a checkout run from the repository root, so that `./server` with
+// no flags does something sane. lib/world is the directory the parser expects
+// (it reads wld/, mob/, obj/, zon/ and shp/ out of the path it is handed);
+// passing lib/ has never worked but was the obvious guess.
+const (
+	defaultWorldDir = "lib/world"
+	defaultWebDir   = "web/public"
+)
+
+// usage is the operator's first stop after a boot refusal, so it leads with a
+// command that works in a fresh checkout and only then lists the flags. The
+// database line is the one that authenticates on a stock local PostgreSQL:
+// TCP asks for a password, the Unix socket trusts the peer identity.
+func usage() {
+	out := flag.CommandLine.Output()
+	// Header and footer are checked separately because flag.PrintDefaults has to
+	// run between them; a failure to write usage is worth a log line, not an exit.
+	if _, err := fmt.Fprint(out, "Dark Pawns server\n\n"+
+		"Usage:\n  server [flags]\n\n"+
+		"In a checkout, from the repository root:\n\n"+
+		"  export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql'\n"+
+		"  export JWT_SECRET=\"$(openssl rand -hex 32)\"\n"+
+		"  ./server\n\n"+
+		"Flags:\n"); err != nil {
+		slog.Warn("writing usage failed", "error", err)
+		return
+	}
+	flag.PrintDefaults()
+	if _, err := fmt.Fprint(out, "\nSee DEPLOYMENT.md for database setup and the supported deployment model,\n"+
+		"and `go run ./cmd/server` for a build-free local run.\n"); err != nil {
+		slog.Warn("writing usage failed", "error", err)
+	}
+}
+
 func main() {
+	// Every path has a real default so that `./server`, run from a checkout
+	// root, does something. The world tree is lib/world, not lib/: the parser
+	// reads wld/, mob/, obj/ and zon/ directly out of the directory it is
+	// handed, and handing it lib/ fails with "parse rooms: open lib/wld".
 	var (
-		worldDir   = flag.String("world", "", "Path to world files (lib directory)")
-		scriptsDir = flag.String("scripts", "", "Path to Lua scripts (defaults to world/lib/scripts)")
-		port       = flag.String("port", "4350", "Server port")
-		dbURL      = flag.String("db", "", "Database URL (falls back to DATABASE_URL env var)")
-		webDir     = flag.String("web", "", "Path to web client files (index.html, client.js, style.css)")
-		hugoDir    = flag.String("hugo", "", "Path to Hugo static site (served as root)")
+		worldDir   = flag.String("world", defaultWorldDir, "World data directory: the one holding wld/, mob/, obj/, zon/ and shp/")
+		scriptsDir = flag.String("scripts", "", "Lua script directory (defaults to <world>/scripts)")
+		port       = flag.String("port", "4350", "HTTP and WebSocket port")
+		dbURL      = flag.String("db", "", "PostgreSQL URL (falls back to DATABASE_URL env var)")
+		webDir     = flag.String("web", defaultWebDir, "Browser client directory served at / (index.html, client.js, style.css)")
+		staticDir  = flag.String("static", "", "Static site directory served at /, takes precedence over -web")
+		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
 	)
+	flag.Usage = usage
 	flag.Parse()
+	// Hugo was removed from this repository (no config, no content, no themes);
+	// the flag has been a plain file server for a while. Scripts and systemd
+	// units still pass it, so keep honoring it and say once per boot that the
+	// spelling moved on.
+	if *hugoDir != "" {
+		if *staticDir == "" {
+			*staticDir = *hugoDir
+		}
+		slog.Warn("-hugo is deprecated; use -static instead", "hugo", *hugoDir, "static", *staticDir)
+	}
 	seed, err := dprng.ConfigureFromEnvironment()
 	if err != nil {
 		slog.Error("Invalid DP_SEED", "error", err)
@@ -96,9 +146,50 @@ func main() {
 		slog.Info("DP_FIXED_TIME pinned", "now", ts)
 	}
 
-	if *worldDir == "" {
-		slog.Error("Usage: server -world <path-to-lib>")
+	// Refuse a world directory that cannot be parsed here, where the message can
+	// still name the path the operator meant. Deeper in, the parser says
+	// "parse rooms: open lib/wld: no such file" — true, but it does not say
+	// that -world takes lib/world and not its parent. Start dir must exist,
+	// must be a directory, and must hold wld/.
+	if err := validateWorldDir(*worldDir); err != nil {
+		slog.Error("world directory unusable; refusing to start",
+			"path", *worldDir,
+			"error", err,
+			"hint", "from the repository root run: ./server -world ./lib/world -web ./web/public",
+			"layout", "the -world directory holds wld/, mob/, obj/, zon/ and shp/; in this checkout that is lib/world")
 		os.Exit(1)
+	}
+	// Decide what / serves before the world parse spends seconds on files.
+	// -static (a built site) wins over -web (the bundled browser client), and
+	// neither is required: /ws and /api/* work without a front door.
+	switch {
+	case *staticDir != "":
+		if err := validateDir(*staticDir); err != nil {
+			slog.Error("static site directory unusable; refusing to start",
+				"path", *staticDir,
+				"error", err,
+				"hint", "pass -static <dir>, or drop the flag to serve the bundled client")
+			os.Exit(1)
+		}
+	case *webDir != "":
+		if err := validateDir(*webDir); err != nil {
+			if *webDir != defaultWebDir {
+				slog.Error("web client directory unusable; refusing to start",
+					"path", *webDir,
+					"error", err,
+					"hint", "pass -web <dir>, or -static <dir> to serve a built site instead")
+				os.Exit(1)
+			}
+			// An installed deployment may carry the binary without this
+			// checkout's web/ tree, and the operator never asked for this path,
+			// so warn rather than refuse. The front door goes dark but the
+			// game does not: /ws, /api/*, telnet and /health all still answer.
+			slog.Warn("bundled web client not found; serving the plain-text index only",
+				"path", *webDir,
+				"error", err,
+				"hint", "pass -web <dir> to serve the browser client")
+			*webDir = ""
+		}
 	}
 	// Anchor the process to the game root (parent of the world/lib dir)
 	// before anything reads or writes a relative data/ path (DP-1193).
@@ -111,7 +202,7 @@ func main() {
 		slog.Error("resolving world path", "error", err)
 		os.Exit(1)
 	}
-	for _, d := range []*string{worldDir, scriptsDir, webDir, hugoDir} {
+	for _, d := range []*string{worldDir, scriptsDir, webDir, staticDir} {
 		if *d != "" {
 			if abs, aerr := filepath.Abs(*d); aerr == nil {
 				*d = abs
@@ -134,7 +225,15 @@ func main() {
 		*dbURL = os.Getenv("DATABASE_URL")
 	}
 	if *dbURL == "" {
-		slog.Error("Database URL is required; pass -db or set DATABASE_URL")
+		// No honest default exists here: the role, database name and password
+		// are the operator's choices. So the refusal carries the one URL that
+		// works on a stock local PostgreSQL, where TCP wants a password but the
+		// Unix socket authenticates by peer identity, plus the documented way
+		// out for ephemeral runs.
+		slog.Error("database URL required; refusing to start without persistence",
+			"hint", "export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql' (local Unix socket, peer auth)",
+			"or", "pass -db postgres://user:password@host:5432/darkpawns?sslmode=disable",
+			"dev_only", "DP_ALLOW_NO_DB=1 starts without persistence for ephemeral, dev and oracle runs")
 		os.Exit(1)
 	}
 
@@ -142,14 +241,15 @@ func main() {
 	// token issuance for the whole process lifetime (DP-910): GenerateJWT/
 	// ValidateJWT return an error that call sites log-and-continue, so WS agent
 	// clients get empty tokens and CI never notices because telnet play doesn't
-	// need a token. Fail loud at startup instead.
-	//   - production: refuse to start with a clear message.
+	// need a token. Fail loud at startup instead, and name the command.
+	//   - production: refuse to start with the export line to paste.
 	//   - development: derive an ephemeral 32-byte secret so local boot works.
 	if err := auth.ValidateJWTSecret(); err != nil {
 		if os.Getenv("ENVIRONMENT") != "development" {
-			slog.Error("JWT_SECRET invalid; refusing to start in production",
+			slog.Error("JWT_SECRET invalid; refusing to start outside development",
 				"error", err,
-				"hint", "set JWT_SECRET to a >=32 char value, e.g. openssl rand -hex 32")
+				"hint", `export JWT_SECRET="$(openssl rand -hex 32)"`,
+				"development", "ENVIRONMENT=development generates an ephemeral secret instead, and issued tokens do not survive a restart")
 			os.Exit(1)
 		}
 		ephemeral, gerr := generateEphemeralJWTSecret()
@@ -382,12 +482,13 @@ func main() {
 	} else {
 		http.Handle("/api/contact", contactHandler)
 	}
-	// Serve Hugo static site if -hugo flag provided
-	// Falls back to -web flag for legacy web client, then plain text index
-	if *hugoDir != "" {
-		fs := revalidated(http.FileServer(http.Dir(*hugoDir)))
+	// Serve the front door: -static wins, then the bundled browser client, then
+	// a plain-text index. Both directories were validated at startup, so the
+	// only way here with an empty field is a deliberate omission.
+	if *staticDir != "" {
+		fs := revalidated(http.FileServer(http.Dir(*staticDir)))
 		http.Handle("/", fs)
-		slog.Info("Serving Hugo site", "path", *hugoDir)
+		slog.Info("Serving static site", "path", *staticDir)
 	} else if *webDir != "" {
 		fs := revalidated(http.FileServer(http.Dir(*webDir)))
 		http.Handle("/", fs)
@@ -629,6 +730,35 @@ func generateEphemeralJWTSecret() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+// validateDir reports, in operator terms, why a directory cannot be served.
+func validateDir(dir string) error {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("not a directory")
+	}
+	return nil
+}
+
+// validateWorldDir checks the two mistakes that cost the most time to diagnose:
+// a -world path that does not exist, and a -world path one level too high
+// (lib/ instead of lib/world), which the room parser reports only as a missing
+// lib/wld file several steps later.
+func validateWorldDir(dir string) error {
+	if err := validateDir(dir); err != nil {
+		return err
+	}
+	if _, err := os.Stat(filepath.Join(dir, "wld")); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("no wld/ subdirectory: -world wants the directory holding wld/, mob/, obj/, zon/ and shp/, not its parent")
+		}
+		return err
+	}
+	return nil
 }
 
 // fatal logs an error message and exits the process. Kept in a helper so that

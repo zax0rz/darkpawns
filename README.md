@@ -53,12 +53,19 @@ export DATABASE_URL='postgres://USER:PASSWORD@localhost:5432/darkpawns?sslmode=d
 export JWT_SECRET="$(openssl rand -hex 32)"
 
 go build -o server ./cmd/server
-./server -world ./lib/world -web ./web -port 4350 -telnet-port 7777
+./server
 ```
 
-Replace the database credentials with your own. Keep the signing secret stable
-across restarts. The binary reads environment variables; it does not load
+Replace the database credentials with your own. On a local PostgreSQL, the
+socket form `postgres:///darkpawns?host=/var/run/postgresql` authenticates
+without a password, where the TCP form asks for one. Keep the signing secret
+stable across restarts. The binary reads environment variables; it does not load
 `.env` automatically.
+
+Run from the repository root, `./server` needs no flags: the world comes from
+`lib/world` and the browser client from `web/public`. The explicit form is
+`./server -world ./lib/world -web ./web/public -port 4350 -telnet-port 7777`, and
+`./server -h` lists every flag.
 
 Connect with `telnet localhost 7777` or open
 [the local browser client](http://localhost:4350).

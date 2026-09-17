@@ -12,8 +12,8 @@ draft: false
 ## Requirements
 
 - Go at the version declared in [`go.mod`](https://github.com/zax0rz/darkpawns/blob/main/go.mod).
-- PostgreSQL and a database URL. The current server requires `-db` or `DATABASE_URL` at startup, although it can continue without persistence if the configured database cannot be reached.
-- The repository's `lib/` directory, which contains the original world files.
+- PostgreSQL and a database URL. The current server requires `-db` or `DATABASE_URL` at startup, and stops if the database cannot be reached. `DP_ALLOW_NO_DB=1` is the explicit dev and oracle bypass.
+- The repository's `lib/world/` directory, which contains the original world files.
 
 ## Build
 
@@ -29,9 +29,15 @@ Development mode can generate a temporary JWT secret. Provide a stable secret fo
 
 ```bash
 export ENVIRONMENT=development
-export DATABASE_URL='postgres://postgres:postgres@localhost/darkpawns?sslmode=disable'
-./server -world ./lib -port 4350 -telnet-port 7777
+export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql'
+./server
 ```
+
+Run from the repository root, no flags are needed: the world is read from
+`lib/world` and the browser client is served from `web/public`. The local
+database URL above uses the PostgreSQL Unix socket, which authenticates by your
+operating-system identity; the TCP form
+`postgres://postgres:postgres@localhost/darkpawns` asks for a password instead.
 
 The HTTP and WebSocket server listens on `-port`; raw telnet uses `-telnet-port`. Pass `0` to disable the telnet listener.
 
