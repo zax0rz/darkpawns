@@ -54,8 +54,10 @@ test-report:
 run: build
 	./darkpawns -world "$(WORLD_DIR)" -web "$(WEB_DIR)"
 
-parse: build
-	./darkpawns -world $(WORLD_DIR) -parse-only
+# A parse-only mode (validate the world files without booting) would be useful,
+# and the setup wizard wants it as a "check my world" step, but the flag it needs
+# does not exist in cmd/server: a target here would just exit 2 on an unknown
+# flag. Removed rather than left broken. See `test-parse` for parser tests.
 
 clean:
 	rm -f darkpawns

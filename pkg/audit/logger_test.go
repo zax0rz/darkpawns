@@ -157,6 +157,29 @@ func TestNewAuditLogger_PathTraversalRejected(t *testing.T) {
 	}
 }
 
+// TestNewAuditLogger_CreatesMissingDirectory covers the fresh checkout: logs/ is
+// gitignored, and O_CREATE on the file does not create it, so an install with no
+// logs/ directory silently ran with the admin audit trail off.
+func TestNewAuditLogger_CreatesMissingDirectory(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "logs", "audit.log")
+
+	logger, err := NewAuditLogger(path)
+	if err != nil {
+		t.Fatalf("NewAuditLogger failed to create the log directory: %v", err)
+	}
+	if err := logger.Close(); err != nil {
+		t.Fatalf("Close returned unexpected error: %v", err)
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat audit log: %v", err)
+	}
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Errorf("audit log mode = %o, want 600", got)
+	}
+}
+
 func TestLogEvent_SilentDropWhenUninitialized(t *testing.T) {
 	var buf bytes.Buffer
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))

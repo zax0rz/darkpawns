@@ -35,6 +35,16 @@ func NewAuditLogger(filename string) (*AuditLogger, error) {
 		return nil, fmt.Errorf("invalid audit log path: %s", filename)
 	}
 	clean := filepath.Clean(filename)
+	// O_CREATE creates the file, never the directory above it. logs/ is
+	// gitignored, so a fresh checkout has no logs/ directory at all: the open
+	// failed with ENOENT and every admin world edit went unrecorded. Create the
+	// parent here rather than at the call site so any path a caller names works;
+	// 0o750 because the directory holds nothing but this log.
+	if dir := filepath.Dir(clean); dir != "." {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			return nil, fmt.Errorf("create audit log directory %s: %w", dir, err)
+		}
+	}
 	file, err := os.OpenFile(clean, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, err
