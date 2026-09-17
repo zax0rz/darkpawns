@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, type LoginError } from '../hooks/useAuth';
 import { api } from '../api/client';
+import { Wordmark } from '../components/Wordmark';
 
 export function LoginPage() {
   const [playerName, setPlayerName] = useState('');
@@ -59,19 +60,8 @@ export function LoginPage() {
     <div className="min-h-screen bg-paper text-ink font-serif flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 border-2 border-rule bg-paper-deep mb-4">
-            <svg viewBox="24 8 52 88" className="h-9 w-auto text-ink" aria-hidden="true">
-              <g fill="currentColor">
-                <circle cx="50" cy="23" r="12" />
-                <rect x="37" y="38" width="26" height="5" />
-                <polygon points="43,46 57,46 62,75 38,75" />
-                <rect x="31" y="77" width="38" height="6" />
-                <rect x="26" y="85" width="48" height="7" />
-              </g>
-            </svg>
-          </div>
-          <h1 className="text-3xl text-accent tracking-wide font-display">DARK PAWNS</h1>
+        <div className="mb-8 text-center">
+          <Wordmark className="justify-center" />
           <p className="text-ink-muted uppercase tracking-widest text-[10px] mt-1 font-mono">
             Server administration
           </p>

@@ -5,6 +5,7 @@ import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCommandPalette } from '../hooks/useCommandPalette';
 import { CommandPalette } from './CommandPalette';
 import { Icon, type IconName } from './Icon';
+import { Wordmark } from './Wordmark';
 
 interface NavItem {
   to: string;
@@ -216,9 +217,8 @@ function SidebarContent({
     <>
       {/* Logo / Title */}
       <div className="p-4 border-b border-rule bg-paper-deep/20">
-        <h1 className="text-xl text-accent tracking-wide font-display flex items-center gap-2">
-          <Icon name="pawn" className="h-5 w-5 text-ink" />
-          DARK PAWNS
+        <h1>
+          <Wordmark pawnClass="h-8" textClass="text-[1.15rem]" />
         </h1>
         {onClose && (
           <button
