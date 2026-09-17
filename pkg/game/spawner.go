@@ -253,8 +253,16 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			continue
 
 		case "M": // Load mobile
+			// Hitting max_in_world is the normal branch, not a fault. C's
+			// reset_zone is a bare `if (mob_index[...].number < ZCMD.arg2)`
+			// with no else and no log (db.c:2108): the zone file is saying
+			// "keep up to N of these alive", so on a populated world most
+			// reset commands are expected to skip. Logging it at warning made
+			// every reset emit a burst about the system working, and filled
+			// the admin log buffer 100 lines out of 100, where a real error
+			// could not surface. Genuine failures still log at Error below.
 			if !s.canSpawnMob(cmd.Arg1, cmd.Arg2) {
-				slog.Warn("cannot spawn mob: max in world reached", "mob_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
+				slog.Debug("cannot spawn mob: max in world reached", "mob_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
 				continue
 			}
 
@@ -285,7 +293,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 
 		case "O": // Load object to room
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
-				slog.Warn("cannot spawn object: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
+				slog.Debug("cannot spawn object: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2)
 				continue
 			}
 
@@ -312,7 +320,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				continue
 			}
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
-				slog.Warn("cannot spawn object for mob: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_inventory")
+				slog.Debug("cannot spawn object for mob: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_inventory")
 				continue
 			}
 
@@ -338,7 +346,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				continue
 			}
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
-				slog.Warn("cannot spawn object for mob equip: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_equip")
+				slog.Debug("cannot spawn object for mob equip: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "mob_equip")
 				continue
 			}
 
@@ -365,7 +373,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 
 		case "P": // Put object in container
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
-				slog.Warn("cannot spawn object for container: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "container")
+				slog.Debug("cannot spawn object for container: max in world reached", "obj_vnum", cmd.Arg1, "max_in_world", cmd.Arg2, "context", "container")
 				continue
 			}
 
