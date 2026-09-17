@@ -99,6 +99,8 @@
 
   <script src="xterm.js"></script>
   <script src="addon-fit.js"></script>
-  <script src="client.js"></script>
+  <!-- type="module" so client.js can import the shared protocol module.
+       Both are same-origin, which the CSP's script-src 'self' allows. -->
+  <script type="module" src="client.js"></script>
 </body>
 </html>

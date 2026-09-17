@@ -42,12 +42,24 @@
   setInterval(refresh, 15000);
 })();
 
-(function () {
+
+// The terminal. Until 2026-09-17 this file carried its own copy of the client,
+// which had drifted from the one on /play and rendered `state` messages into
+// the terminal as invented prose — so a self-hoster saw every room twice, once
+// as the game wrote it and once paraphrased. The protocol now lives in
+// mud-client.js, shared verbatim with /play and the admin console.
+//
+// xterm arrives as a UMD global from the two <script> tags above rather than as
+// a bare import, because this page is served straight off disk with no build
+// step. The shared module takes the constructed terminal, so that difference
+// stops at this file.
+import { createMudClient } from './mud-client.js';
+
+(function bootTerminal() {
   'use strict';
 
-  const params = new URLSearchParams(location.search);
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = params.get('host') || `${proto}//${location.host}/ws`;
+  const mount = document.getElementById('terminal');
+  if (!mount || typeof Terminal === 'undefined') return;
 
   const term = new Terminal({
     cursorBlink: true,
@@ -65,330 +77,14 @@
       selectionBackground: '#3a2a1a',
     },
   });
-  const fitAddon = new FitAddon.FitAddon();
-  term.loadAddon(fitAddon);
-  term.open(document.getElementById('terminal'));
-  fitAddon.fit();
 
-  window.addEventListener('resize', () => fitAddon.fit());
+  const fit = new FitAddon.FitAddon();
+  term.loadAddon(fit);
+  term.open(mount);
+  fit.fit();
+  window.addEventListener('resize', () => fit.fit());
 
-  const statusEl = document.querySelector('.conn-status');
-  const reconnectBtn = document.getElementById('reconnect-btn');
-  const statusBar = document.getElementById('status-bar');
-  let inputBuffer = '';
-  let ws;
-
-  // ── Status Bar State ──
-  const playerState = {
-    health: 0, maxHealth: 0,
-    mana: 0, maxMana: 0,
-    move: 0, maxMove: 0,
-    level: 0, gold: 0,
-  };
-
-  function pct(cur, max) {
-    return max > 0 ? Math.round((cur / max) * 100) : 0;
-  }
-
-  function hpColor(p) {
-    if (p > 75) return '#4a8a4a';
-    if (p > 25) return '#b8960a';
-    return '#8b0000';
-  }
-
-  function manaColor(p) {
-    if (p > 75) return '#3a6a9a';
-    if (p > 25) return '#2a5a7a';
-    return '#1a3a5a';
-  }
-
-  function moveColor(p) {
-    if (p > 75) return '#6a8a3a';
-    if (p > 25) return '#8a7a2a';
-    return '#5a4a1a';
-  }
-
-  function updateBar(id, cur, max, colorFn) {
-    const bar = document.getElementById(id);
-    const p = pct(cur, max);
-    bar.style.width = (max > 0 ? p : 0) + '%';
-    bar.style.backgroundColor = colorFn(p);
-  }
-
-  function updateStatusBar() {
-    updateBar('hp-bar', playerState.health, playerState.maxHealth, hpColor);
-    document.getElementById('hp-text').textContent =
-      playerState.maxHealth > 0 ? `${playerState.health}/${playerState.maxHealth}` : '—';
-
-    updateBar('mana-bar', playerState.mana, playerState.maxMana, manaColor);
-    document.getElementById('mana-text').textContent =
-      playerState.maxMana > 0 ? `${playerState.mana}/${playerState.maxMana}` : '—';
-
-    updateBar('move-bar', playerState.move, playerState.maxMove, moveColor);
-    document.getElementById('move-text').textContent =
-      playerState.maxMove > 0 ? `${playerState.move}/${playerState.maxMove}` : '—';
-
-    document.getElementById('level-info').textContent =
-      playerState.level > 0 ? `Lv ${playerState.level}` : 'Lv —';
-    document.getElementById('gold-info').textContent =
-      playerState.gold > 0 ? `Gold ${playerState.gold}` : 'Gold —';
-
-    // Show status bar once we have any real data
-    if (playerState.maxHealth > 0) {
-      statusBar.classList.remove('hidden');
-    }
-  }
-
-  function handleStateMsg(data) {
-    if (!data || !data.player) return;
-    const p = data.player;
-    playerState.health = p.health || 0;
-    playerState.maxHealth = p.max_health || 0;
-    playerState.level = p.level || 0;
-    // Future-proof: grab mana/move/gold if server adds them
-    if (p.mana !== undefined) playerState.mana = p.mana;
-    if (p.max_mana !== undefined) playerState.maxMana = p.max_mana;
-    if (p.move !== undefined) playerState.move = p.move;
-    if (p.max_move !== undefined) playerState.maxMove = p.max_move;
-    if (p.gold !== undefined) playerState.gold = p.gold;
-    updateStatusBar();
-  }
-
-  function renderStateToTerminal(data) {
-    if (!data || !data.room) return;
-    const room = data.room;
-
-    // Print a blank line first to separate from any previous output
-    term.writeln('');
-
-    // Room Name (bold cyan/teal)
-    term.writeln('\x1b[1;36m' + room.name + '\x1b[0m');
-
-    // Room Description (light gray)
-    if (room.description) {
-      term.writeln('\x1b[37m' + room.description + '\x1b[0m');
-    }
-
-    // Exits (bold green)
-    const exitsList = room.exits || [];
-    if (exitsList.length === 0) {
-      term.writeln('\x1b[1;32m[Exits: None!]\x1b[0m');
-    } else {
-      term.writeln('\x1b[1;32m[Exits: ' + exitsList.join(' ') + ']\x1b[0m');
-    }
-
-    // Items (green)
-    const itemsList = room.items || [];
-    itemsList.forEach(item => {
-      term.writeln('\x1b[32m' + item + '\x1b[0m');
-    });
-
-    // Mobs (yellow)
-    const mobsList = room.mobs || [];
-    mobsList.forEach(mob => {
-      term.writeln('\x1b[33m' + mob + '\x1b[0m');
-    });
-
-    // Players (bold yellow/gold)
-    const playersList = room.players || [];
-    playersList.forEach(player => {
-      term.writeln('\x1b[1;33m' + player + ' is here.\x1b[0m');
-    });
-  }
-
-
-  function handleVarsMsg(data) {
-    if (!data) return;
-    if (data.HEALTH !== undefined) playerState.health = data.HEALTH;
-    if (data.MAX_HEALTH !== undefined) playerState.maxHealth = data.MAX_HEALTH;
-    if (data.MANA !== undefined) playerState.mana = data.MANA;
-    if (data.MAX_MANA !== undefined) playerState.maxMana = data.MAX_MANA;
-    if (data.LEVEL !== undefined) playerState.level = data.LEVEL;
-    // Future: MOVE, MAX_MOVE, GOLD vars when server adds them
-    if (data.MOVE !== undefined) playerState.move = data.MOVE;
-    if (data.MAX_MOVE !== undefined) playerState.maxMove = data.MAX_MOVE;
-    if (data.GOLD !== undefined) playerState.gold = data.GOLD;
-    updateStatusBar();
-  }
-
-  // ── Connection ──
-
-  function setStatus(state) {
-    statusEl.className = 'conn-status ' + state;
-    const label = state === 'connected' ? 'Connected' : 'Disconnected';
-    statusEl.querySelector('span').textContent = label;
-    reconnectBtn.classList.toggle('visible', state === 'disconnected');
-  }
-
-  function connect() {
-    setStatus('disconnected');
-    term.writeln('\x1b[2mConnecting to ' + wsUrl + '...\x1b[0m');
-    try {
-      ws = new WebSocket(wsUrl);
-    } catch (e) {
-      term.writeln('\x1b[31mConnection failed: ' + e.message + '\x1b[0m');
-      return;
-    }
-
-    ws.onopen = function () {
-      setStatus('connected');
-      term.writeln('\x1b[32mConnected.\x1b[0m');
-      term.writeln('\x1b[33mEnter your character name:\x1b[0m');
-      loginPhase = 'name';
-    };
-
-    ws.onmessage = function (evt) {
-      let text;
-      try {
-        const msg = JSON.parse(evt.data);
-
-        // Route structured messages
-        if (msg.type === 'state') {
-          handleStateMsg(msg.data);
-          renderStateToTerminal(msg.data);
-          charCreating = false;
-          return;
-        }
-        if (msg.type === 'vars') {
-          handleVarsMsg(msg.data);
-          return; // vars are for status bar only
-        }
-        if (msg.type === 'char_create') {
-          charCreating = true;
-          if (msg.data && msg.data.prompt) {
-            term.write(msg.data.prompt.replace(/\r/g, ''));
-          }
-          // Show the option list only when the prompt does not already embed a
-          // formatted menu. Static menu prompts (race/class/hometown) carry
-          // their own "[X] label" lines, so re-printing options duplicates them
-          // (mirrors telnet's promptContainsMenu dedup).
-          const promptText = (msg.data && msg.data.prompt) || '';
-          const promptHasMenu = promptText.indexOf('[') >= 0;
-          if (!promptHasMenu && msg.data && msg.data.options && typeof msg.data.options === 'object') {
-            const opts = msg.data.options;
-            if (Array.isArray(opts)) {
-              // Server sends []CharCreateOption marshalled as [{key, label}, ...]
-              // — JSON tags are lowercase, so read o.key / o.label (not o.Key).
-              opts.forEach(function (o) {
-                term.writeln('  \x1b[33m' + o.key + '\x1b[0m) ' + o.label);
-              });
-            } else {
-              // Fallback: plain {key: label} map
-              const keys = Object.keys(opts);
-              if (keys.length > 0 && typeof opts[keys[0]] === 'string') {
-                keys.forEach(function (k) {
-                  term.writeln('  \x1b[33m' + k + '\x1b[0m) ' + opts[k]);
-                });
-              }
-            }
-          }
-          return;
-        }
-        if (msg.type === 'error') {
-          text = '\x1b[31m' + (msg.data && msg.data.message || evt.data) + '\x1b[0m';
-          // Password required — re-prompt
-          if (text.indexOf('Password required') >= 0) {
-            loginPhase = 'password';
-            term.writeln('\x1b[2mEnter password:\x1b[0m');
-          }
-        } else if (msg.type === 'event') {
-          text = (msg.data && msg.data.text) || '';
-        } else if (msg.type === 'text') {
-          text = (msg.data && msg.data.text) || evt.data;
-        } else {
-          text = msg.text || evt.data;
-        }
-      } catch {
-        text = evt.data;
-      }
-      if (text) term.writeln(text.replace(/\r/g, ''));
-    };
-
-    ws.onclose = function () {
-      setStatus('disconnected');
-      term.writeln('\x1b[31m--- Connection lost ---\x1b[0m');
-      loggedIn = false;
-      charCreating = false;
-      awaitingPassword = false;
-      loginPhase = 'name';
-    };
-
-    ws.onerror = function () {
-      term.writeln('\x1b[31mConnection error.\x1b[0m');
-    };
-  }
-
-  let loggedIn = false;
-  let charCreating = false;
-  let awaitingPassword = false;
-  let lastPlayerName = '';
-  let loginPhase = 'name'; // 'name' | 'password' | 'done'
-
-  term.onData(function (data) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-    if (data === '\r' || data === '\n') {
-      term.writeln('');
-      if (loginPhase === 'name') {
-        const name = inputBuffer.trim();
-        if (name) {
-          lastPlayerName = name;
-          if (name.toLowerCase().startsWith('guest')) {
-            ws.send(JSON.stringify({ type: 'login', data: { player_name: name, password: '', mode: 'player' } }));
-            loginPhase = 'done';
-            term.writeln('\x1b[2mConnecting as Guest...\x1b[0m');
-          } else {
-            loginPhase = 'password';
-            term.writeln('\x1b[2mEnter password:\x1b[0m');
-          }
-        }
-        inputBuffer = '';
-        return;
-      }
-      if (loginPhase === 'password') {
-        const pw = inputBuffer.trim();
-        ws.send(JSON.stringify({ type: 'login', data: { player_name: lastPlayerName, password: pw, mode: 'player' } }));
-        loginPhase = 'done';
-        inputBuffer = '';
-        term.writeln('\x1b[2m' + '*'.repeat(pw.length) + '\x1b[0m');
-        return;
-      }
-      if (awaitingPassword) {
-        const pw = inputBuffer.trim();
-        ws.send(JSON.stringify({ type: 'login', data: { player_name: lastPlayerName, password: pw, mode: 'player' } }));
-        awaitingPassword = false;
-        inputBuffer = '';
-        term.writeln('\x1b[2m' + '*'.repeat(pw.length) + '\x1b[0m');
-        return;
-      }
-      if (charCreating) {
-        ws.send(JSON.stringify({ type: 'char_input', data: { choice: inputBuffer.trim() } }));
-        inputBuffer = '';
-        return;
-      }
-      if (inputBuffer.trim()) {
-        ws.send(JSON.stringify({ type: 'command', data: { command: inputBuffer } }));
-      }
-      inputBuffer = '';
-    } else if (data === '\x7f' || data === '\b') {
-      if (inputBuffer.length > 0) {
-        inputBuffer = inputBuffer.slice(0, -1);
-        term.write('\b \b');
-      }
-    } else if (data >= ' ') {
-      inputBuffer += data;
-      term.write(data);
-    }
-  });
-
-  reconnectBtn.addEventListener('click', function () {
-    loggedIn = false;
-    charCreating = false;
-    awaitingPassword = false;
-    loginPhase = 'name';
-    inputBuffer = '';
-    connect();
-  });
-
-  connect();
+  // No sidebar panels on this page, so the shared client renders the terminal
+  // and the status bar and skips the rest. Nothing to configure for that.
+  createMudClient({ terminal: term });
 })();

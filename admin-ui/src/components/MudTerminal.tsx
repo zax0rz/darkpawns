@@ -4,6 +4,9 @@ import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
 import { useAuth } from '../hooks/useAuth';
+// The one client. Lives in web/public so the splash, which has no build step,
+// can serve the same file verbatim; Vite bundles it for this app.
+import { createMudClient } from '../../../web/public/mud-client.js';
 
 const theme = {
   background: '#0a0908',
@@ -82,11 +85,7 @@ interface MudTerminalProps {
 
 export function MudTerminal({ className = '' }: MudTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const termRef = useRef<Terminal | null>(null);
-  const fitAddonRef = useRef<FitAddon | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const inputBufferRef = useRef('');
-  const loggedInRef = useRef(false);
+  const clientRef = useRef<{ connect: () => void; disconnect: () => void } | null>(null);
   const { playerName } = useAuth();
 
   const [connected, setConnected] = useState(false);
@@ -97,203 +96,51 @@ export function MudTerminal({ className = '' }: MudTerminalProps) {
     level: 0, gold: 0,
   });
 
-  const handleStateMsg = useCallback((data: any) => {
-    if (!data?.player) return;
-    const p = data.player;
-    setPlayerState((prev) => ({
-      health: p.health || 0,
-      maxHealth: p.max_health || 0,
-      mana: p.mana ?? prev.mana,
-      maxMana: p.max_mana ?? prev.maxMana,
-      move: p.move ?? prev.move,
-      maxMove: p.max_move ?? prev.maxMove,
-      level: p.level || 0,
-      gold: p.gold ?? prev.gold,
-    }));
-  }, []);
-
-  const handleVarsMsg = useCallback((data: any) => {
-    if (!data) return;
-    setPlayerState((prev) => {
-      const next = { ...prev };
-      if (data.HEALTH !== undefined) next.health = data.HEALTH;
-      if (data.MAX_HEALTH !== undefined) next.maxHealth = data.MAX_HEALTH;
-      if (data.MANA !== undefined) next.mana = data.MANA;
-      if (data.MAX_MANA !== undefined) next.maxMana = data.MAX_MANA;
-      if (data.MOVE !== undefined) next.move = data.MOVE;
-      if (data.MAX_MOVE !== undefined) next.maxMove = data.MAX_MOVE;
-      if (data.LEVEL !== undefined) next.level = data.LEVEL;
-      if (data.GOLD !== undefined) next.gold = data.GOLD;
-      return next;
-    });
-  }, []);
-
-  const connect = useCallback(() => {
-    const term = termRef.current;
-    if (!term) return;
-
-    // Close existing connection
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    setConnected(false);
-    loggedInRef.current = false;
-    inputBufferRef.current = '';
-
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Dev proxy rewrites /ws, so just use origin-relative URL
-    const wsUrl = `${proto}//${window.location.host}/ws`;
-
-    term.writeln('\x1b[2mConnecting...\x1b[0m');
-
-    try {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-    } catch (e: any) {
-      term.writeln(`\x1b[31mConnection failed: ${e.message}\x1b[0m`);
-      return;
-    }
-
-    const ws = wsRef.current!;
-
-    ws.onopen = () => {
-      setConnected(true);
-      term.writeln('\x1b[32mConnected.\x1b[0m');
-    };
-
-    ws.onmessage = (evt) => {
-      let text: string | undefined;
-      try {
-        const msg = JSON.parse(evt.data);
-
-        if (msg.type === 'state') {
-          handleStateMsg(msg.data);
-          return;
-        }
-        if (msg.type === 'vars') {
-          handleVarsMsg(msg.data);
-          return;
-        }
-        if (msg.type === 'char_create') {
-          if (msg.data?.prompt) {
-            term.writeln(msg.data.prompt);
-          }
-          return;
-        }
-        if (msg.type === 'error') {
-          text = `\x1b[31m${msg.data?.message || evt.data}\x1b[0m`;
-        } else if (msg.type === 'event') {
-          text = msg.data?.text || '';
-        } else if (msg.type === 'text') {
-          text = msg.data?.text || evt.data;
-        } else {
-          text = msg.text || evt.data;
-        }
-      } catch {
-        text = evt.data;
-      }
-      if (text) term.writeln(text);
-    };
-
-    ws.onclose = () => {
-      setConnected(false);
-      term.writeln('\x1b[31m--- Connection lost ---\x1b[0m');
-    };
-
-    ws.onerror = () => {
-      term.writeln('\x1b[31mConnection error.\x1b[0m');
-    };
-
-    // Auto-login with admin player name
-    const name = playerName || 'Admin';
-    term.writeln(`Enter your character name [auto-logging as ${name}]:`);
-    setTimeout(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'login', data: { player_name: name } }));
-        loggedInRef.current = true;
-        inputBufferRef.current = '';
-      }
-    }, 500);
-  }, [playerName, handleStateMsg, handleVarsMsg]);
-
-  // Initialize terminal
+  // The protocol, the login and character-creation state machine, typeahead and
+  // secret masking all live in the shared client. This component owns only what
+  // is genuinely React's: the terminal instance, and a status bar rendered from
+  // component state rather than by writing to DOM nodes.
+  //
+  // Before this, the admin Terminal spoke its own dialect of the protocol and
+  // could display char_create prompts but never sent char_input, so a character
+  // could not be created here at all.
   useEffect(() => {
     if (!containerRef.current) return;
 
     const term = new Terminal({
       cursorBlink: true,
+      convertEol: true,
       fontSize: 15,
       fontFamily: '"IM Fell English", "Courier New", monospace',
       theme,
     });
 
     const fitAddon = new FitAddon();
-    const webLinksAddon = new WebLinksAddon();
     term.loadAddon(fitAddon);
-    term.loadAddon(webLinksAddon);
+    term.loadAddon(new WebLinksAddon());
     term.open(containerRef.current);
     fitAddon.fit();
-
-    termRef.current = term;
-    fitAddonRef.current = fitAddon;
 
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
-    // Handle user input
-    const disposable = term.onData((data: string) => {
-      const ws = wsRef.current;
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
-
-      if (data === '\r' || data === '\n') {
-        term.writeln('');
-        if (!loggedInRef.current) {
-          const name = inputBufferRef.current.trim();
-          if (name) {
-            ws.send(JSON.stringify({ type: 'login', data: { player_name: name } }));
-            loggedInRef.current = true;
-          }
-          inputBufferRef.current = '';
-          return;
-        }
-        if (inputBufferRef.current.trim()) {
-          ws.send(
-            JSON.stringify({
-              type: 'command',
-              data: { command: inputBufferRef.current },
-            })
-          );
-        }
-        inputBufferRef.current = '';
-      } else if (data === '\x7f' || data === '\b') {
-        if (inputBufferRef.current.length > 0) {
-          inputBufferRef.current = inputBufferRef.current.slice(0, -1);
-          term.write('\b \b');
-        }
-      } else if (data >= ' ') {
-        inputBufferRef.current += data;
-        term.write(data);
-      }
+    clientRef.current = createMudClient({
+      terminal: term,
+      autoLogin: playerName || 'Admin',
+      onStatus: (state: string) => setConnected(state === 'connected'),
+      onPlayerState: (next: PlayerState) => setPlayerState(next),
     });
 
-    // Connect on mount
-    connect();
-
     return () => {
-      disposable.dispose();
       window.removeEventListener('resize', handleResize);
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      // Without this the socket outlives every navigation away from the page.
+      clientRef.current?.disconnect();
+      clientRef.current = null;
       term.dispose();
-      termRef.current = null;
-      fitAddonRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [playerName]);
+
+  const reconnect = useCallback(() => clientRef.current?.connect(), []);
 
   const showStatusBar = playerState.maxHealth > 0;
 
@@ -329,7 +176,7 @@ export function MudTerminal({ className = '' }: MudTerminalProps) {
         </span>
         {!connected && (
           <button
-            onClick={connect}
+            onClick={reconnect}
             className="text-accent hover:text-accent transition-colors"
           >
             Reconnect
