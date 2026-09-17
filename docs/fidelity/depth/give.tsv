@@ -16,7 +16,7 @@ perform_give	give	give.hands-full	D2	command	unit-green	TestPerformGiveHandsFull
 perform_give	give	give.weight	D2	command	unit-green	TestPerformGiveHandsFullAndWeight	act.item.c:696-698	Recipient over weight yields "$E can't carry that much weight.".
 perform_give_gold	give	give.gold-zero	D2	command	oracle-green	give-gold	act.item.c:730-732	"give 0 coins X" yields "Heh heh heh ... we are jolly funny today, eh?".
 perform_give_gold	give	give.gold-insufficient	D2	command	oracle-green	give-gold	act.item.c:733-736	Giving more coins than held yields "You don't have that many coins!".
-perform_give_gold	give	give.gold-success	D3	command	unit-green	TestPerformGiveGoldSuccess	act.item.c:737-744	Actor "Ok.", victim "$n gives you N gold coins." (TO_VICT), bystander "$n gives <money_desc> to $N." (TO_NOTVICT).
+perform_give_gold	give	give.gold-success	D3	command	unit-green	TestPerformGiveGoldSuccess	act.item.c:737-744	Actor "Okay.\r\n", victim "$n gives you N gold coins." (TO_VICT), bystander "$n gives <money_desc> to $N." (TO_NOTVICT).
 get_obj_in_list_vis	give	give.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get; proven under the get manifest.
 find_all_dots	give	give.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get; proven under the get manifest.
 perform_give	give	give.mob-ongive	D5	npc-call	excluded	-	act.item.c:707-709	Mob ongive/bribe behavior belongs to the mob/specproc depth surface.

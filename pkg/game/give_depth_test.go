@@ -42,7 +42,7 @@ func msgOf(msgs map[string]*strings.Builder, name string) string {
 }
 
 // TestPerformGiveGoldSuccess proves perform_give_gold's success branch
-// (act.item.c:737): actor "Ok.", recipient "$n gives you N gold coins.", the
+// (act.item.c:737): actor "Okay.\r\n", recipient "$n gives you N gold coins.", the
 // exact gold transfer — and that it no longer deadlocks on the player mutex.
 func TestPerformGiveGoldSuccess(t *testing.T) {
 	w, ch, vict, msgs := newGiveTestWorld(t)
@@ -60,7 +60,7 @@ func TestPerformGiveGoldSuccess(t *testing.T) {
 	if ch.GetGold() != 90 || vict.GetGold() != 15 {
 		t.Fatalf("gold transfer: giver=%d taker=%d, want 90/15", ch.GetGold(), vict.GetGold())
 	}
-	if got := msgOf(msgs, "Giver"); !strings.Contains(got, "Ok.") {
+	if got := msgOf(msgs, "Giver"); !strings.Contains(got, "Okay.\r\n") {
 		t.Fatalf("giver byte: got %q", got)
 	}
 	if got := msgOf(msgs, "Taker"); !strings.Contains(got, "Giver gives you 10 gold coins.") {

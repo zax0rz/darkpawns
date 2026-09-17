@@ -125,7 +125,7 @@ func (w *World) DoSay(ch *Player, argument string) {
 	}
 	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("$n %s, '%s'", roomVerb, roomMessage), "", ToRoom)
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
-		communicationSend(ch, "Ok.")
+		ch.SendMessage("Ok.\n\r")
 		return
 	}
 	communicationSend(ch, fmt.Sprintf("You %s '%s'", actorVerb, actorMessage))

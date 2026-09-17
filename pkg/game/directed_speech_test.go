@@ -93,7 +93,7 @@ func TestDoSayCBehavior(t *testing.T) {
 		w, actor, target, output := newDirectedSpeechWorld(t)
 		actor.SetPlrFlag(PrfNoRepeat, true)
 		w.DoSay(actor, "really?")
-		if got := directedOutput(output, actor.Name); got != "Ok.\r\n" {
+		if got := directedOutput(output, actor.Name); got != "Ok.\n\r" {
 			t.Fatalf("actor output = %q", got)
 		}
 		if got := directedOutput(output, target.Name); got != "Actor asks, 'really?'\r\n" {

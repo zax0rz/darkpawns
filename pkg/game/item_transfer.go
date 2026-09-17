@@ -518,7 +518,7 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 		return
 	}
 
-	ch.SendMessage("Ok.\r\n")
+	ch.SendMessage("Okay.\r\n")
 	// C sprintf()s the amount/money_desc into the string before act(); the act
 	// helpers only substitute $n/$N, so pre-format here.
 	actToVictim(ch, vict, fmt.Sprintf("$n gives you %d gold coins.", amount), nil, nil)

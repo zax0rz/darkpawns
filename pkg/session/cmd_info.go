@@ -1208,10 +1208,17 @@ func cmdWhois(s *Session, args []string) error {
 		if rec.Class >= 0 && rec.Class < len(game.ClassAbbrevs) {
 			classAbbr = game.ClassAbbrevs[rec.Class]
 		}
-		// TODO(port): PlayerRecord does not persist Title (C chdata.title), so
-		// the offline path omits the trailing title field C prints here. The
-		// online path above is faithful; closing this gap needs a schema change.
-		s.sendText(fmt.Sprintf("[%2d %s] %s\r\n", rec.Level, classAbbr, rec.Name))
+		// C do_whois (new_cmds.c:1418): "[%2d %s] %s %s" — level, class
+		// abbrev, name, AND title.
+		title := rec.Title
+		if title == "" {
+			if rec.Class >= 0 && rec.Class < len(game.Titles) {
+				title = game.Titles[rec.Class]
+			} else {
+				title = "the Adventurer"
+			}
+		}
+		s.sendText(fmt.Sprintf("[%2d %s] %s %s\r\n", rec.Level, classAbbr, rec.Name, title))
 		return nil
 	}
 

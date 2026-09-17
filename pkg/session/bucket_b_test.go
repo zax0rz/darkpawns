@@ -276,8 +276,8 @@ func TestCmdThinkNoRepeatSendsOk(t *testing.T) {
 	if err := cmdThink(s, []string{"about", "tulips"}); err != nil {
 		t.Fatalf("cmdThink: %v", err)
 	}
-	if msg := readSessionText(t, s); msg != "Ok." {
-		t.Errorf("norepeat think message: got %q, want %q", msg, "Ok.")
+	if msg := readSessionText(t, s); msg != "Ok.\n\r" {
+		t.Errorf("norepeat think message: got %q, want %q", msg, "Ok.\n\r")
 	}
 }
 
