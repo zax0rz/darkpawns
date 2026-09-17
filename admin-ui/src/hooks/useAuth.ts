@@ -1,5 +1,9 @@
 import { useState, useCallback } from 'react';
 
+export interface LoginError extends Error {
+  status?: number;
+}
+
 interface AuthState {
   token: string | null;
   role: string | null;
@@ -33,7 +37,12 @@ export function useAuth() {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: 'Login failed' }));
-      throw new Error(body.error || `Login failed (${res.status})`);
+      // The caller decides the wording. Relaying the server's text verbatim is
+      // what leaked "invalid password" versus "invalid credentials" to the
+      // screen, which tells a stranger whether a character name exists.
+      const err = new Error(body.error || `Login failed (${res.status})`) as LoginError;
+      err.status = res.status;
+      throw err;
     }
 
     const data = await res.json();

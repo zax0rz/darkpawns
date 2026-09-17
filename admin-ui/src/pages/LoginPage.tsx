@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth, type LoginError } from '../hooks/useAuth';
 import { api } from '../api/client';
 
 export function LoginPage() {
@@ -36,13 +36,19 @@ export function LoginPage() {
       await login(playerName, password);
       navigate('/admin/');
     } catch (err) {
+      const status = (err as LoginError).status;
       const msg = (err as Error).message;
-      if (msg.includes('401') || msg.includes('Unauthorized')) {
-        setError('Incorrect player name or password.');
-      } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-        setError('Cannot reach server. Check your connection and try again.');
-      } else {
+      if (status === 429) {
+        // Worth relaying: it tells the user to wait rather than to retype.
         setError(msg);
+      } else if (status === 401 || status === 400) {
+        // One answer for every auth failure, so the response cannot be used to
+        // work out which character names exist.
+        setError('Incorrect character name or password.');
+      } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        setError('Cannot reach the server. Check that Dark Pawns is running.');
+      } else {
+        setError('Could not sign in. Try again.');
       }
     } finally {
       setLoading(false);
@@ -50,11 +56,11 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-paper text-ink font-serif flex items-center justify-center p-4 transition-colors duration-200">
+    <div className="min-h-screen bg-paper text-ink font-serif flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 border-2 border-rule bg-paper-deep shadow-[3px_3px_0px_0px_rgba(26,22,20,0.1)] mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 border-2 border-rule bg-paper-deep mb-4">
             <svg viewBox="24 8 52 88" className="h-9 w-auto text-ink" aria-hidden="true">
               <g fill="currentColor">
                 <circle cx="50" cy="23" r="12" />
@@ -73,20 +79,20 @@ export function LoginPage() {
 
         {/* Connection Status */}
         {serverReachable === false && (
-          <div className="mb-6 bg-accent text-paper border-2 border-accent-deep p-3 text-xs font-mono tracking-wide uppercase text-center font-bold">
+          <div className="mb-6 bg-paper-deep text-accent border border-accent p-3 text-xs text-center">
             Cannot reach the server. Check that Dark Pawns is running on port 4350.
           </div>
         )}
 
         {/* Login card (Vintage Bookplate style) */}
-        <div className="bg-paper-deep border-2 border-rule shadow-[6px_6px_0px_0px_rgba(26,22,20,0.15)] p-8 rounded-none relative">
+        <div className="bg-paper-deep border-2 border-rule p-8 rounded-none relative">
           {/* Ornamental corner markings */}
           <div className="absolute top-2 left-2 w-2 h-2 border-t-2 border-l-2 border-rule/35" />
           <div className="absolute top-2 right-2 w-2 h-2 border-t-2 border-r-2 border-rule/35" />
           <div className="absolute bottom-2 left-2 w-2 h-2 border-b-2 border-l-2 border-rule/35" />
           <div className="absolute bottom-2 right-2 w-2 h-2 border-b-2 border-r-2 border-rule/35" />
 
-          <h2 className="text-lg font-bold text-ink uppercase tracking-widest font-mono mb-6 border-b border-rule pb-1 text-center">
+          <h2 className="text-lg text-ink tracking-wide font-display mb-6 border-b border-rule pb-2 text-center">
             Sign in
           </h2>
 
@@ -123,21 +129,20 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-paper border-2 border-rule rounded-none px-3 py-2 text-ink text-sm font-mono focus:outline-none focus:border-accent transition-colors"
-                placeholder="••••••••••••"
                 autoComplete="current-password"
               />
             </div>
 
             {error && (
-              <div className="bg-paper border border-accent p-3 text-xs text-accent font-mono uppercase font-bold tracking-wide">
-                [ERROR] {error}
+              <div className="bg-paper border border-accent p-3 text-xs text-accent" role="alert">
+                {error}
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading || !playerName || !password}
-              className="w-full bg-accent hover:bg-accent-deep disabled:opacity-40 disabled:cursor-not-allowed text-paper font-mono font-bold uppercase tracking-widest py-3 border-2 border-accent-deep shadow-[3px_3px_0px_0px_rgba(26,22,20,0.1)] transition-all flex items-center justify-center gap-2 rounded-none"
+              className="w-full bg-accent hover:bg-accent-deep disabled:opacity-40 disabled:cursor-not-allowed text-paper font-display tracking-wide py-3 border-2 border-accent-deep transition-all flex items-center justify-center gap-2 rounded-none"
             >
               {loading ? (
                 <span className="font-mono text-xs tracking-normal animate-pulse">

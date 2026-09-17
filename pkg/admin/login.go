@@ -31,6 +31,14 @@ type loginPlayerDB interface {
 }
 
 // handleLogin creates a new login handler bound to the given database.
+// authFailureBody is the single answer for every authentication failure:
+// unknown player, player without a password, and wrong password all return it.
+const authFailureBody = `{"error":"invalid credentials"}`
+
+// timingDecoyHash is a valid bcrypt hash of a value no caller can produce. It
+// gives the no-such-player path the same cost as a real comparison.
+const timingDecoyHash = `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` // #nosec G101 -- not a credential; a fixed decoy hash for constant-time behaviour
+
 // POST /admin/login — authenticates a player and returns a JWT.
 func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -66,23 +74,25 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 			return
 		}
 
-		// Look up the player
+		// Every authentication failure answers identically. Distinguishing
+		// "no such player" from "wrong password" lets a stranger enumerate
+		// character names one request at a time, and a character name is the
+		// public half of a player's credentials.
 		rec, err := database.GetPlayer(req.PlayerName)
-		if err != nil || rec == nil {
-			loginAttempts.RecordFailure(ip)
-			http.Error(w, `{"error":"invalid credentials"}`, http.StatusUnauthorized)
-			return
-		}
 
-		// Verify password
-		if rec.Password == "" {
-			loginAttempts.RecordFailure(ip)
-			http.Error(w, `{"error":"no password set for this player"}`, http.StatusUnauthorized)
-			return
+		// The comparison runs even when there is no player, against a fixed
+		// hash, so a missing account costs the same time as a wrong password.
+		// Without this the timing answers the question the message no longer
+		// does. The hash below is bcrypt of a value nothing can present.
+		stored := timingDecoyHash
+		if rec != nil && err == nil && rec.Password != "" {
+			stored = rec.Password
 		}
-		if err := bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(req.Password)); err != nil {
+		passwordOK := bcrypt.CompareHashAndPassword([]byte(stored), []byte(req.Password)) == nil
+
+		if err != nil || rec == nil || rec.Password == "" || !passwordOK {
 			loginAttempts.RecordFailure(ip)
-			http.Error(w, `{"error":"invalid password"}`, http.StatusUnauthorized)
+			http.Error(w, authFailureBody, http.StatusUnauthorized)
 			return
 		}
 

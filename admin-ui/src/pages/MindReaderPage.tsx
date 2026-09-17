@@ -96,7 +96,7 @@ export function MindReaderPage() {
       </div>
 
       {/* Scroll Sheet (Aged Typewriter Scroll) */}
-      <div className="bg-paper border-2 border-rule p-6 md:p-8 rounded-none relative min-h-[400px] shadow-[4px_4px_0px_0px_rgba(26,22,20,0.1)]">
+      <div className="bg-paper border-2 border-rule p-6 md:p-8 rounded-none relative min-h-[400px]">
         {/* Horizontal Red Margin Rule lines (classic paper design) */}
         <div className="absolute left-8 md:left-12 top-0 bottom-0 border-l border-accent/20" />
         
