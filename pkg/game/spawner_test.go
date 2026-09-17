@@ -1,7 +1,10 @@
 package game
 
 import (
+	"bytes"
+	"log/slog"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -403,5 +406,46 @@ func TestInitRareMatchesCDrawRangesAndUnsupportedApplyBurn(t *testing.T) {
 	}
 	if got[1].Modifier != 2 {
 		t.Fatalf("damroll modifier = %d, want 2", got[1].Modifier)
+	}
+}
+
+// TestZoneResetCapIsNotAWarning pins the log level of the max_in_world guard.
+//
+// C's reset_zone is a bare `if (mob_index[ZCMD.arg1].number < ZCMD.arg2)` with
+// no else and no log (db.c:2108). The zone file is saying "keep up to N of
+// these alive", so on a populated world most reset commands are expected to
+// skip, and the skip is the system working. Logging it at warning made every
+// reset emit a burst about normal operation and filled the admin console's
+// 100-line log buffer 100 lines out of 100, where a real error could not
+// surface. Genuine spawn failures still log at Error.
+func TestZoneResetCapIsNotAWarning(t *testing.T) {
+	_, spawner := newZoneResetTestSpawner(t)
+
+	var buf bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	t.Cleanup(func() { slog.SetDefault(previous) })
+
+	// Two commands for the same mob with a cap of one: the second must skip.
+	zone := &parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
+		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
+	}}
+	if err := spawner.ExecuteZoneReset(zone); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := len(spawner.mobInstances[300]); got != 1 {
+		t.Fatalf("cap not enforced: %d instances in world, want 1", got)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "max in world reached") {
+		t.Fatal("the cap guard did not log at all; it should still be visible at debug")
+	}
+	for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
+		if strings.Contains(line, "max in world reached") && !strings.Contains(line, "level=DEBUG") {
+			t.Errorf("cap guard logged above debug, which floods the log with normal operation:\n  %s", line)
+		}
 	}
 }
