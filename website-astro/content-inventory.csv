@@ -106,8 +106,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/agents/protocol.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,206,,,website-astro/src/content/docs/agents/protocol.md
 /docs/agents/protocol/,src/content/docs/agents/protocol.md,docs,authored technical documentation,3,technical accuracy review,206,,,website-astro/src/content/docs/agents/protocol.md
 /docs/getting-started/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
-/docs/getting-started/local-server.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,122,,,website-astro/src/content/docs/getting-started/local-server.md
-/docs/getting-started/local-server/,src/content/docs/getting-started/local-server.md,docs,authored technical documentation,3,technical accuracy review,122,,,website-astro/src/content/docs/getting-started/local-server.md
+/docs/getting-started/local-server.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,184,,,website-astro/src/content/docs/getting-started/local-server.md
+/docs/getting-started/local-server/,src/content/docs/getting-started/local-server.md,docs,authored technical documentation,3,technical accuracy review,184,,,website-astro/src/content/docs/getting-started/local-server.md
 /docs/research/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
 /docs/research/agent-memory.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,158,,,website-astro/src/content/docs/research/agent-memory.md
 /docs/research/agent-memory/,src/content/docs/research/agent-memory.md,docs,authored technical documentation,3,technical accuracy review,158,,,website-astro/src/content/docs/research/agent-memory.md

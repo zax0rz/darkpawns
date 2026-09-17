@@ -23,6 +23,41 @@ layout below, the server changes its working directory to `lib/`, so that state
 is in **`lib/data/`**, not the repository-root `data/`. Back up Postgres and the
 instance's `lib/` tree, including any edited world files.
 
+## Quickstart
+
+A fresh clone to a running server, against a local PostgreSQL. Create the
+database once, export two variables, build, run:
+
+```bash
+git clone https://github.com/zax0rz/darkpawns.git
+cd darkpawns
+
+createdb darkpawns                        # run as the PostgreSQL role you will use
+export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql'
+export JWT_SECRET="$(openssl rand -hex 32)"
+
+go build -o server ./cmd/server
+./server
+```
+
+`./server` with no flags works from the repository root: it loads the world from
+`lib/world` (the directory holding `wld/`, `mob/`, `obj/`, `zon/` and `shp/`),
+serves the browser client from `web/public` on `:4350`, and accepts telnet on
+`:7777` (`-telnet-port 0` disables it). Every flag is listed in `./server -h`;
+none of the defaults need to be passed.
+
+That database line is the one that authenticates on a stock local PostgreSQL.
+`postgres://user:password@localhost:5432/darkpawns` connects over TCP and asks
+for the role's password; the three-slash form with `host=/var/run/postgresql`
+connects over the Unix socket, where the server trusts your operating-system
+identity instead. If you created the database as yourself, the socket form needs
+no password and no role name.
+
+Both `DATABASE_URL` and a stable `JWT_SECRET` are required to start. The server
+refuses to boot without them and prints exactly what to set, so a refusal is the
+fastest way to see the current requirement. Connect with `telnet localhost 7777`,
+or open <http://localhost:4350>.
+
 ## Prerequisites
 
 - Go (see `go.mod` for the version); a C toolchain is not required (`CGO_ENABLED=0`).
@@ -80,6 +115,15 @@ rejects the old example default and any key containing `example`/`test`/`REPLACE
 
 ## Run
 
+From the repository root, the defaults are already correct:
+
+```bash
+./server
+```
+
+The equivalent explicit form, for a layout that is not a checkout or a service
+unit that prefers every path spelled out:
+
 ```bash
 ./darkpawns-server \
   -world ./lib/world \
@@ -89,11 +133,16 @@ rejects the old example default and any key containing `example`/`test`/`REPLACE
 ```
 
 The `-world` directory must contain `wld/`, `mob/`, `obj/`, `zon/`, and `shp/`.
-In this checkout that is `lib/world/`; passing `lib/` fails to parse the world.
-The default script directory is `lib/world/scripts/`. The process anchors its
-working directory to the parent of `-world` (`lib/` with this command).
+In this checkout that is `lib/world/`; passing `lib/` is rejected at boot with
+the reason, instead of failing later as a parser error about `lib/wld`. The
+default script directory is `<world>/scripts`, that is `lib/world/scripts/`. The
+process anchors its working directory to the parent of `-world` (`lib/`).
 Confirm the startup logs show a successful DB connection —
 a healthy `/health` alone does not prove persistence is available.
+
+Two flag notes: `-static <dir>` serves a built static site at `/` and takes
+precedence over `-web`, and `-hugo` is a deprecated alias for it that still
+works and warns. Hugo is no longer part of this repository.
 
 Connect with `telnet localhost 7777` or open `http://localhost:4350`. On an empty
 database, the first character becomes the administrator; create that character
