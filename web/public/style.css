@@ -19,6 +19,8 @@
   --rule: #1A1614;
   --accent: #A8201A;
   --accent-deep: #7A1812;
+  /* The single functional colour: means "live", never decoration. */
+  --online: #3A8A3A;
   /* Self-hosted: font-src is 'self', so the face ships with the server rather
      than being fetched from Google. Works offline, no third-party request, and
      the wordmark matches darkpawns.org instead of falling back to Georgia. */
@@ -99,6 +101,28 @@ a { color: var(--accent); }
 .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
 .btn-secondary { background: transparent; color: var(--ink); }
 .btn-secondary:hover { background: var(--ink); color: var(--paper); }
+
+/* Status. The dot is the only round thing on the page and the only place the
+   functional green appears; everything else stays ink on paper. */
+.status { margin-top: 2.25rem; width: 100%; }
+
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.status-line .dot {
+  width: .6rem;
+  height: .6rem;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  flex-shrink: 0;
+}
+.status.is-up .dot { background: var(--online); }
+.status.is-down .dot { background: var(--accent); }
 
 /* How to reach this particular server, which is what a self-hoster came for. */
 .connection {

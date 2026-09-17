@@ -35,6 +35,20 @@
       <a href="https://darkpawns.org/" class="btn btn-secondary">The archive and handbooks</a>
     </div>
 
+    <!-- Liveness, from /health, which is unauthenticated on this server.
+         Player and world figures belong here too, but /metrics currently
+         reports zeros for every gauge: the collectors are registered and
+         nothing in cmd/server writes them, so the only code that has ever
+         populated them is examples/metrics_integration.go. Showing those
+         zeros would be worse than showing nothing, so this says the one
+         thing the server can actually answer. -->
+    <section class="status" aria-label="Server status">
+      <p class="status-line">
+        <span class="dot" id="status-dot" aria-hidden="true"></span>
+        <span id="status-text">Checking this server</span>
+      </p>
+    </section>
+
     <dl class="connection" aria-label="Direct connection">
       <div><dt>Telnet</dt><dd id="telnet-host">this server, port 7777</dd></div>
       <div><dt>Source</dt><dd><a href="https://github.com/zax0rz/darkpawns">github.com/zax0rz/darkpawns</a></dd></div>

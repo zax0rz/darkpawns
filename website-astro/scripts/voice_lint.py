@@ -207,6 +207,33 @@ def code_region_lines(lines: list[str]) -> set[int]:
     return inside
 
 
+def comment_region_lines(lines: list[str]) -> set[int]:
+    """Line numbers inside an HTML comment.
+
+    Same category as code_region_lines: source commentary, never rendered. The
+    tag stripper removes <...>, which leaves the interior of a multi-line
+    <!-- --> block standing as bare text, so an explanatory comment gets read as
+    body copy. The note in web/public/index.html explaining why the status block
+    shows no figures tripped trailer-rhythm that way.
+
+    Unlike a <script>, a comment ships nothing to a reader, so the hard rules
+    are skipped in here too.
+    """
+    inside: set[int] = set()
+    open_comment = False
+    for number, line in enumerate(lines, start=1):
+        if open_comment:
+            inside.add(number)
+            if "-->" in line:
+                open_comment = False
+            continue
+        if "<!--" in line:
+            inside.add(number)
+            if "-->" not in line.split("<!--", 1)[1]:
+                open_comment = True
+    return inside
+
+
 def frontmatter_value(lines: list[str], key: str) -> str | None:
     frontmatter, _ = split_frontmatter(lines)
     for number in sorted(frontmatter):
@@ -246,7 +273,7 @@ def lint_file(path: Path) -> list[Finding]:
     if "src/content/help/" in relative or text_kind in PRESERVED_TEXT_KINDS:
         allowed_lines = frontmatter
     # Heuristics are prose-shaped and misfire on code; hard rules are not.
-    prose_lines = allowed_lines - code_region_lines(lines)
+    prose_lines = allowed_lines - code_region_lines(lines) - comment_region_lines(lines)
     extracts_prose = path.suffix in CODE_SUFFIXES | MARKUP_SUFFIXES
 
     findings: list[Finding] = []

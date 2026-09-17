@@ -385,11 +385,11 @@ func main() {
 	// Serve Hugo static site if -hugo flag provided
 	// Falls back to -web flag for legacy web client, then plain text index
 	if *hugoDir != "" {
-		fs := http.FileServer(http.Dir(*hugoDir))
+		fs := revalidated(http.FileServer(http.Dir(*hugoDir)))
 		http.Handle("/", fs)
 		slog.Info("Serving Hugo site", "path", *hugoDir)
 	} else if *webDir != "" {
-		fs := http.FileServer(http.Dir(*webDir))
+		fs := revalidated(http.FileServer(http.Dir(*webDir)))
 		http.Handle("/", fs)
 		slog.Info("Serving web client", "path", *webDir)
 	} else {
@@ -447,7 +447,7 @@ func main() {
 	http.Handle("/admin/", adminRouter)
 
 	// Serve admin UI static assets (compiled React app)
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("admin-ui-dist/assets"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", fingerprinted(http.FileServer(http.Dir("admin-ui-dist/assets")))))
 
 	// Track the production zone reset goroutine for graceful shutdown.
 	// DP_CLOCK performs this initial population synchronously so the harness's
@@ -636,4 +636,30 @@ func generateEphemeralJWTSecret() (string, error) {
 func fatal(format string, args ...interface{}) {
 	slog.Error(fmt.Sprintf(format, args...))
 	os.Exit(1)
+}
+
+// Cache policy for static files, which differs by whether the filename carries
+// a build hash.
+//
+// The front door ships unversioned names — style.css, client.js — and sent no
+// Cache-Control at all, leaving browsers to cache it heuristically. A browser
+// that had stored the pre-restructure stylesheet went on using it, so the page
+// rendered new markup against the old rules: the wordmark lost its .brand rule
+// and fell back to the user-agent's link blue. "no-cache" does not forbid
+// storing, only using a stored copy without asking, so Last-Modified still
+// yields a 304 and the body is sent again only when it has actually changed.
+func revalidated(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		h.ServeHTTP(w, r)
+	})
+}
+
+// Vite fingerprints the admin bundle, so a changed file is a changed URL and
+// the old one is never requested again. Those can be cached hard.
+func fingerprinted(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		h.ServeHTTP(w, r)
+	})
 }
