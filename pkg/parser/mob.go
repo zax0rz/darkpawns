@@ -20,6 +20,7 @@ import (
 // return that line to the caller rather than consuming it.
 type lineBuffer struct {
 	scanner  *bufio.Scanner
+	current  string
 	buffered string
 	has      bool
 }
@@ -27,16 +28,21 @@ type lineBuffer struct {
 func (lb *lineBuffer) Scan() bool {
 	if lb.has {
 		lb.has = false
+		lb.current = lb.buffered
 		return true
 	}
-	return lb.scanner.Scan()
+	if lb.scanner.Scan() {
+		lb.current = lb.scanner.Text()
+		return true
+	}
+	return false
 }
 
 func (lb *lineBuffer) Text() string {
 	if lb.has {
 		return lb.buffered
 	}
-	return lb.scanner.Text()
+	return lb.current
 }
 
 func (lb *lineBuffer) Unread(line string) {

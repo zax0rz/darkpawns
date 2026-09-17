@@ -95,18 +95,6 @@ func TestParseFlag_InvalidChars(t *testing.T) {
 }
 
 // lineBuffer scan/unread behavior
-//
-// NOTE: lineBuffer.Text() after consuming a buffered line (via Unread+Scan)
-// returns stale text from the underlying scanner's last Scan() call.
-// This means the correct usage pattern is:
-//  1. Scan() from scanner → Text() is valid
-//  2. Unread(line) → sets buffered
-//  3. Scan() → consumes buffered line (returns true, but Text() is stale)
-//  4. Scan() → reads next from scanner → Text() is valid
-//
-// The production code (ParseMobFile) works correctly because it does NOT
-// call Text() between steps 3 and 4 — it calls Scan() twice to skip the
-// stale text. Our white-box tests verify the internal state directly.
 func TestLineBuffer_ScanAndUnread(t *testing.T) {
 	content := "line1\nline2\nline3\n"
 	tmpDir := t.TempDir()
@@ -140,12 +128,15 @@ func TestLineBuffer_ScanAndUnread(t *testing.T) {
 		t.Errorf("expected buffered='unread_line', got %q", lb.buffered)
 	}
 
-	// Consume the buffered line — Text() will be stale, so don't check it
+	// Consume the buffered line — Text() should return the buffered line
 	if !lb.Scan() {
 		t.Fatal("expected scan to return true for buffered line")
 	}
 	if lb.has {
 		t.Error("expected has=false after consuming buffer")
+	}
+	if lb.Text() != "unread_line" {
+		t.Errorf("expected 'unread_line', got %q", lb.Text())
 	}
 
 	// Next scan reads from scanner — should be "line2"
@@ -217,13 +208,15 @@ func TestLineBuffer_BufferedThenScanner(t *testing.T) {
 	lb := &lineBuffer{scanner: bufio.NewScanner(file)}
 	lb.Unread("buffered")
 
-	// Scan consumes the buffered line. After this, lb.Text() is stale (scanner's
-	// last scan hadn't happened yet), so check via internal state.
+	// Scan consumes the buffered line — Text() should return the buffered line.
 	if !lb.Scan() {
 		t.Fatal("expected scan for buffered")
 	}
 	if lb.has {
 		t.Error("expected has=false after consuming buffer")
+	}
+	if lb.Text() != "buffered" {
+		t.Errorf("expected 'buffered', got %q", lb.Text())
 	}
 
 	// Now scan from the scanner — should get "real1"

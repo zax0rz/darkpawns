@@ -191,7 +191,7 @@ func (eq *EventQueue) Process(ctx context.Context) int {
 
 	processed := 0
 	for _, evt := range due {
-		// Cancellation may have been requested after the event was popped.
+		// Check whether the event was cancelled while it was still in the queue.
 		if evt.Cancelled {
 			continue
 		}

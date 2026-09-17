@@ -46,7 +46,6 @@ func NewManager(db *sql.DB) *Manager {
 		messageHistory:  make(map[string][]time.Time),
 		spamConfig: SpamDetectionConfig{
 			MessagesPerMinute: 10,
-			DuplicateWindow:   5 * time.Second,
 			Action:            FilterActionWarn,
 		},
 		stop: make(chan struct{}),

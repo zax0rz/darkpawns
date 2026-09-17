@@ -821,7 +821,6 @@ func (ac *AdminCommands) getSpamConfig() moderation.SpamDetectionConfig {
 	if ac.mod == nil {
 		return moderation.SpamDetectionConfig{
 			MessagesPerMinute: 10,
-			DuplicateWindow:   5 * time.Second,
 			Action:            moderation.FilterActionWarn,
 		}
 	}

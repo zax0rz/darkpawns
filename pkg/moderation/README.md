@@ -137,9 +137,8 @@ Configure via `SpamDetectionConfig`:
 
 ```go
 config := SpamDetectionConfig{
-    MessagesPerMinute: 10,    // Threshold for spam
-    DuplicateWindow:   5 * time.Second, // Window for duplicate detection
-    Action:           FilterActionWarn, // Action when spam detected
+    MessagesPerMinute: 10,               // Threshold for spam
+    Action:            FilterActionWarn, // Action when spam detected
 }
 ```
 

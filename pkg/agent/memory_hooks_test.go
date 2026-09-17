@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -157,6 +158,28 @@ func TestConvertNarrativeMemoryToEvent_ValidRawEvent(t *testing.T) {
 	event := ConvertNarrativeMemoryToEvent(mem, map[string]string{"victim": "rat"})
 	if event.RawEventData == "" {
 		t.Fatal("expected non-empty RawEventData for marshalable raw event")
+	}
+}
+
+func TestConvertNarrativeMemoryToEvent_SocialInteractionType(t *testing.T) {
+	mem := &db.NarrativeMemory{
+		ID:            44,
+		AgentName:     "brenda",
+		EventType:     db.NarrEventPlayerEncounter,
+		Summary:       "Waved at traveler.",
+		SocialEventID: "social_brenda_traveler_wave_12345",
+	}
+
+	rawEvent := map[string]string{"interaction_type": "wave"}
+	event := ConvertNarrativeMemoryToEvent(mem, rawEvent)
+	if event.RawEventData == "" {
+		t.Fatal("expected non-empty RawEventData for social interaction")
+	}
+	if !strings.Contains(event.RawEventData, "interaction_type") || !strings.Contains(event.RawEventData, "wave") {
+		t.Errorf("expected RawEventData to contain interaction_type 'wave', got %q", event.RawEventData)
+	}
+	if !strings.Contains(event.SocialEventID, "wave") {
+		t.Errorf("expected SocialEventID to contain interaction_type 'wave', got %q", event.SocialEventID)
 	}
 }
 
