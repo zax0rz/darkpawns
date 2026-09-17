@@ -62,7 +62,7 @@ export function LoginPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <Wordmark className="justify-center" />
-          <p className="text-ink-muted uppercase tracking-widest text-[10px] mt-1 font-mono">
+          <p className="text-ink-muted uppercase tracking-widest text-xs mt-1 font-mono">
             Server administration
           </p>
         </div>
@@ -132,7 +132,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={loading || !playerName || !password}
-              className="w-full bg-accent hover:bg-accent-deep disabled:opacity-40 disabled:cursor-not-allowed text-paper font-display tracking-wide py-3 border-2 border-accent-deep transition-all flex items-center justify-center gap-2 rounded-none"
+              className="w-full bg-accent hover:bg-accent-deep disabled:bg-paper-deep disabled:text-ink-muted disabled:border-rule disabled:cursor-not-allowed text-paper font-display tracking-wide py-3 border-2 border-accent-deep transition-all flex items-center justify-center gap-2 rounded-none"
             >
               {loading ? (
                 <span className="font-mono text-xs tracking-normal animate-pulse">
@@ -146,7 +146,7 @@ export function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[10px] uppercase font-mono tracking-widest text-ink-muted mt-8">
+        <p className="text-center text-xs uppercase font-mono tracking-widest text-ink-muted mt-8">
           Repository:{' '}
           <a
             href="https://github.com/zax0rz/darkpawns"

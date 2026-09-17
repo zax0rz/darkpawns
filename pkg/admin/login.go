@@ -9,6 +9,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -98,11 +99,18 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 
 		loginAttempts.RecordSuccess(ip)
 
-		// Determine role from level
+		// Panel roles follow the game's own ladder rather than magic numbers.
+		// Level 50 did not exist: LVL_IMPL (40) is the ceiling ported from
+		// structs.h:610, so no character created through the game could ever
+		// hold "admin" and the first player, the Implementor, signed in as a
+		// builder. 33 matched nothing either; C gates every OLC editor on
+		// LVL_BUILDER, which olc.h:54 aliases to LVL_IMMORT (31), so that is
+		// what "builder" means here.
 		role := "player"
-		if rec.Level >= 50 {
+		switch {
+		case rec.Level >= game.LVL_IMPL:
 			role = "admin"
-		} else if rec.Level >= 33 {
+		case rec.Level >= game.LVL_IMMORT:
 			role = "builder"
 		}
 

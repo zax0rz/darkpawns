@@ -53,7 +53,7 @@ export function MetricsCard() {
         </div>
         <div className="w-full bg-paper rounded-none h-2">
           <div
-            className="h-2 rounded-none bg-cyan-500"
+            className="h-2 rounded-none bg-ink"
             style={{ width: `${Math.min(heapPct, 100)}%` }}
           />
         </div>

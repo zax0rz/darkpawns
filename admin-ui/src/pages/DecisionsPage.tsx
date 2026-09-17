@@ -24,7 +24,7 @@ const outcomeStyles: Record<string, string> = {
   healed: 'bg-paper-deep text-ink',
   agent_died: 'bg-paper-deep text-accent font-bold',
   level_up: 'bg-paper-deep text-ink-muted',
-  item_acquired: 'bg-cyan-900 text-cyan-300',
+  item_acquired: 'bg-paper-deep text-ink',
   item_dropped: 'bg-paper text-ink-muted',
   error: 'bg-paper-deep text-accent',
   no_change: 'bg-paper-deep text-ink-muted',
@@ -33,10 +33,10 @@ const outcomeStyles: Record<string, string> = {
 const classStyles: Record<string, string> = {
   movement: 'bg-paper-deep text-ink-muted',
   combat: 'bg-paper-deep text-accent',
-  inventory: 'bg-cyan-800 text-cyan-200',
-  social: 'bg-purple-800 text-purple-200',
+  inventory: 'bg-paper-deep text-ink',
+  social: 'bg-paper text-ink-muted',
   info: 'bg-paper text-ink-muted',
-  magic: 'bg-violet-800 text-violet-200',
+  magic: 'bg-paper-deep text-ink-muted',
   system: 'bg-paper-deep text-accent',
   other: 'bg-paper text-ink-muted',
 };

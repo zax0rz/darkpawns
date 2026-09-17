@@ -154,10 +154,13 @@ check-content-inventory:
 check-wordmark:
 	python3 scripts/check_wordmark.py
 
+check-palette:
+	python3 scripts/check_palette.py
+
 generate-caddy-redirects:
 	python3 website-astro/scripts/caddy_redirects.py
 
-site-check: voice-lint test-voice-lint check-content-inventory check-wordmark
+site-check: voice-lint test-voice-lint check-content-inventory check-wordmark check-palette
 	cd website-astro && npm run build
 
 parse-world-json:
