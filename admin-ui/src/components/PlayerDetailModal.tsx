@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { useToast } from './Toast';
+import { sexLabel } from '../lib/gameLabels';
 
 const classNames: Record<number, string> = {
   0: 'Magic User', 1: 'Cleric', 2: 'Thief', 3: 'Warrior',
@@ -15,9 +16,6 @@ const raceNames: Record<number, string> = {
   10: 'Gnoll', 11: 'Bugbear', 12: 'Kender', 13: 'Vampire', 14: 'Werewolf', 15: 'Faerie',
 };
 
-const sexLabels: Record<number, string> = {
-  0: 'Male', 1: 'Female', 2: 'Neutral',
-};
 
 type Tab = 'stats' | 'inventory' | 'equipment';
 
@@ -118,7 +116,7 @@ export function PlayerDetailModal({ playerName, onClose }: PlayerDetailModalProp
           <div>
             <h2 className="text-lg font-bold text-ink">{playerName}</h2>
             <p className="text-xs text-ink-muted mt-0.5">
-              Lv.{player.level} {classNames[player.class] || `Class ${player.class}`} · {raceNames[player.race] || `Race ${player.race}`} · {sexLabels[player.sex] || 'Unknown'}
+              Lv.{player.level} {classNames[player.class] || `Class ${player.class}`} · {raceNames[player.race] || `Race ${player.race}`} · {sexLabel(player.sex)}
             </p>
           </div>
           <button onClick={onClose} className="text-ink-muted hover:text-ink text-xl leading-none">&times;</button>

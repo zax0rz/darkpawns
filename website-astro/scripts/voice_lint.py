@@ -22,11 +22,19 @@ ROOT = Path(__file__).resolve().parents[2]
 SITE = ROOT / "website-astro"
 BASELINE = SITE / "voice-lint-baseline.json"
 
-SCAN_GLOBS = (
-    "src/components/**/*.astro",
-    "src/layouts/**/*.astro",
-    "src/pages/**/*.astro",
-    "src/content/**/*.md",
+# (root, glob) pairs, relative to the repository. The console and the
+# self-hosted front door carry user-facing copy too, and nothing was reading
+# them: every piece of overwrought chrome removed from the admin panel on
+# 2026-09-16 was invisible to this linter because it only ever looked at
+# website-astro.
+SCAN_ROOTS = (
+    ("website-astro", "src/components/**/*.astro"),
+    ("website-astro", "src/layouts/**/*.astro"),
+    ("website-astro", "src/pages/**/*.astro"),
+    ("website-astro", "src/content/**/*.md"),
+    ("admin-ui", "src/**/*.tsx"),
+    ("admin-ui", "index.html"),
+    ("web/public", "*.html"),
 )
 
 PROVENANCE_COLLECTIONS = ("src/content/archive/", "src/content/blog/")
@@ -45,6 +53,28 @@ BANNED_PHRASES = (
     "seamlessly",
     "whether you are a veteran or a newcomer",
     "where tradition meets",
+)
+
+# DESIGN.md reserves the mythic register for game content: lore, rooms, classes.
+# The interface's own chrome stays factual and dry. That rule existed only as
+# prose, and nothing enforced it, which is how the admin console came to greet
+# people with "Mythic Administrative Console", ask for "Operator Credentials"
+# under a "PASSPHRASE" label, and report "TRANSMITTING ENCRYPTED TELEMETRY"
+# while signing in. Of the six strings removed on 2026-09-16, five broke no
+# encoded rule; only an em dash in the page title was catchable.
+#
+# These are drawn from that drift rather than imagined. A warning, not an error:
+# any of them can be right in game content, and the check cannot tell which
+# surface it is reading. If one is legitimate, baseline it with a reason.
+CHROME_REGISTER = (
+    "mythic",
+    "cognitive",
+    "telemetry",
+    "autonomous entities",
+    "establish link",
+    "operator credentials",
+    "transmitting",
+    "encrypted",
 )
 
 SYNTHETIC_WORDS = (
@@ -78,6 +108,62 @@ class Finding:
         normalized = re.sub(r"\s+", " ", self.excerpt.strip().lower())
         digest = hashlib.sha256(normalized.encode()).hexdigest()[:16]
         return f"{self.path}|{self.rule}|{digest}"
+
+
+
+# Files that are code end to end. Skipping <style>/<script> blocks buys nothing
+# here, so instead of reading whole lines these are reduced to the copy a reader
+# actually sees: JSX text nodes and string literals that read as prose.
+CODE_SUFFIXES = {".tsx", ".ts", ".jsx", ".js"}
+MARKUP_SUFFIXES = {".html"}
+
+_JSX_TEXT = re.compile(r">([^<>{}]+)<")
+_STRING = re.compile(r"""(['"])([^'"\n]{4,200})\1""")
+_TAG = re.compile(r"<[^>]+>")
+# A class attribute is never prose. Trying to tell "bg-paper" from "self-hosted"
+# lexically is a losing game; where the string sits says it outright.
+_CLASS_ATTR = re.compile(r"""class(?:Name)?\s*=\s*(?:(['"])[^'"]*\1|\{[^{}]*\})""")
+# No hyphens: "border-t", "bg-paper" and "w-1.5" are utilities, not words, and
+# a class list assigned to a variable is not inside a class attribute to strip.
+# Prose survives the stricter test because a genuine compound is rare enough to
+# stay a minority of the line.
+_WORD = re.compile(r"^[A-Za-z][A-Za-z'’]*$")
+
+
+def reads_as_prose(text: str) -> bool:
+    """True when a person would read this as words rather than as data.
+
+    A word count alone is not enough. SVG path data ("M4.5 6.5 L6.5 8"),
+    Tailwind class lists ("w-1.5 h-1.5 border-t border-l") and URLs all clear a
+    three-token bar, and then their dots split into short sentences and trip the
+    cadence heuristic. Prose is mostly plain words; these are mostly not.
+    """
+    tokens = text.split()
+    if len(tokens) < 3:
+        return False
+    words = [t for t in tokens if _WORD.match(t.strip(".,:;!?()"))]
+    if len(words) < 3:
+        return False
+    return len(words) / len(tokens) >= 0.6
+
+
+def readable_text(line: str, suffix: str) -> str:
+    """The copy a reader actually sees on this line, or "" if there is none."""
+    if suffix in MARKUP_SUFFIXES:
+        stripped = _TAG.sub(" ", _CLASS_ATTR.sub(" ", line))
+        return stripped.strip() if reads_as_prose(stripped) else ""
+
+    line = _CLASS_ATTR.sub(" ", line)
+    parts: list[str] = []
+    for match in _JSX_TEXT.finditer(line):
+        text = match.group(1).strip()
+        if reads_as_prose(text):
+            parts.append(text)
+    for _, text in _STRING.findall(line):
+        text = text.strip()
+        if reads_as_prose(text):
+            parts.append(text)
+    return "  ".join(parts)
 
 
 def split_frontmatter(lines: list[str]) -> tuple[set[int], set[int]]:
@@ -132,24 +218,39 @@ def frontmatter_value(lines: list[str], key: str) -> str | None:
 
 def iter_files() -> list[Path]:
     files: set[Path] = set()
-    for pattern in SCAN_GLOBS:
-        files.update(SITE.glob(pattern))
+    for root, pattern in SCAN_ROOTS:
+        files.update((ROOT / root).glob(pattern))
     return sorted(path for path in files if path.is_file())
 
 
+def display_path(path: Path) -> str:
+    """Path as reported in findings and fingerprints, relative to the repo.
+
+    Falls back to SITE for tests, which lint a file in a temporary directory.
+    """
+    resolved = path.resolve()
+    for base in (ROOT, SITE):
+        try:
+            return resolved.relative_to(base).as_posix()
+        except ValueError:
+            continue
+    return resolved.name
+
+
 def lint_file(path: Path) -> list[Finding]:
-    relative = path.relative_to(SITE).as_posix()
+    relative = display_path(path)
     lines = path.read_text(encoding="utf-8").splitlines()
     frontmatter, body = split_frontmatter(lines)
     text_kind = frontmatter_value(lines, "textKind")
     allowed_lines = frontmatter | body
-    if relative.startswith("src/content/help/") or text_kind in PRESERVED_TEXT_KINDS:
+    if "src/content/help/" in relative or text_kind in PRESERVED_TEXT_KINDS:
         allowed_lines = frontmatter
     # Heuristics are prose-shaped and misfire on code; hard rules are not.
     prose_lines = allowed_lines - code_region_lines(lines)
+    extracts_prose = path.suffix in CODE_SUFFIXES | MARKUP_SUFFIXES
 
     findings: list[Finding] = []
-    if relative.startswith(PROVENANCE_COLLECTIONS):
+    if any(c in relative for c in PROVENANCE_COLLECTIONS):
         required = ("textKind", "source", "voiceLayer")
         for key in required:
             if frontmatter_value(lines, key) is None:
@@ -159,6 +260,11 @@ def lint_file(path: Path) -> list[Finding]:
     for number, line in enumerate(lines, start=1):
         if number not in allowed_lines:
             continue
+
+        if extracts_prose:
+            line = readable_text(line, path.suffix)
+            if not line:
+                continue
 
         for character, name in (("—", "em dash"), ("–", "en dash")):
             start = 0
@@ -174,6 +280,18 @@ def lint_file(path: Path) -> list[Finding]:
             if column >= 0:
                 findings.append(
                     Finding(relative, number, column + 1, "launch-copy", "error", f"generic launch phrase: {phrase!r}", line)
+                )
+
+        for phrase in CHROME_REGISTER:
+            # Body copy only. Frontmatter is schema, and `voiceLayer:
+            # mythic-admin` is a field value naming the register, not a surface
+            # written in it.
+            if number not in prose_lines or number not in body:
+                break
+            column = lowered.find(phrase)
+            if column >= 0:
+                findings.append(
+                    Finding(relative, number, column + 1, "chrome-register", "warning", f"{phrase!r} is the game's voice, not the interface's; chrome stays factual", line)
                 )
 
         for word in SYNTHETIC_WORDS:

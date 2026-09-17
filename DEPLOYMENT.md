@@ -116,9 +116,15 @@ interface, build it and put its output under the server's working directory:
 ```bash
 npm --prefix admin-ui ci
 npm --prefix admin-ui run build
+rm -rf lib/admin-ui-dist
 mkdir -p lib/admin-ui-dist
 cp -R admin-ui/dist/. lib/admin-ui-dist/
 ```
+
+Clear the directory first: vite fingerprints its bundles, so copying over
+the top leaves every superseded `index-*.js` and `index-*.css` behind. Two
+builds are enough to start serving a directory of orphans, and a stale
+bundle sitting next to a live one is easy to read by mistake.
 
 Then restart the server and visit `/admin/`. Both the admin router and `/assets/`
 expect this layout by default. The frontend build is verified; administrative

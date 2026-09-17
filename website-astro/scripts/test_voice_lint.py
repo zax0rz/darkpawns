@@ -94,6 +94,53 @@ class VoiceLintTest(unittest.TestCase):
         self.assertEqual([finding.rule for finding in findings], ["trailer-rhythm"])
         self.assertEqual(findings[0].line, 1)
 
+    def test_tsx_lints_copy_and_ignores_the_code_around_it(self):
+        # A no-data em dash and a numeric range are typography, not prose; the
+        # dash ban is aimed at sentences. Reading whole lines reported eight of
+        # these as errors across the console.
+        findings = self.lint(
+            "export function Row({ n }: { n: number }) {\n"
+            "  return <td className=\"px-4 text-ink-muted\">{n > 0 ? `Lvl ${n}` : '\u2014'}</td>;\n"
+            "}\n",
+            "src/pages/Row.tsx",
+        )
+        self.assertEqual(findings, [])
+
+    def test_tsx_still_lints_real_copy(self):
+        findings = self.lint(
+            "export function Empty() {\n"
+            "  return <p>A lost world. A dead server. One final resurrection.</p>;\n"
+            "}\n",
+            "src/pages/Empty.tsx",
+        )
+        self.assertEqual([f.rule for f in findings], ["trailer-rhythm"])
+
+    def test_svg_paths_and_class_lists_are_not_prose(self):
+        findings = self.lint(
+            "const Icon = () => (\n"
+            "  <svg><path d=\"M4.5 6.5 L6.5 8 L4.5 9.5\" /></svg>\n"
+            ");\n"
+            "const cls = 'w-1.5 h-1.5 border-t border-l border-rule';\n",
+            "src/components/Icon.tsx",
+        )
+        self.assertEqual(findings, [])
+
+    def test_chrome_register_flags_the_games_voice_in_the_interface(self):
+        # Every one of these was live in the admin console and broke no rule.
+        findings = self.lint(
+            "---\ntextKind: original\nsource: test\nvoiceLayer: mythic-admin\n---\n"
+            "Mythic Administrative Console\n",
+        )
+        self.assertEqual([f.rule for f in findings], ["chrome-register"])
+        self.assertEqual(findings[0].severity, "warning")
+
+    def test_chrome_register_ignores_frontmatter_schema(self):
+        # `voiceLayer: mythic-admin` names the register; it is not written in it.
+        findings = self.lint(
+            "---\ntextKind: original\nsource: test\nvoiceLayer: mythic-admin\n---\n"
+            "The archive is live.\n",
+        )
+        self.assertEqual(findings, [])
 
 if __name__ == "__main__":
     unittest.main()

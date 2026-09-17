@@ -1,23 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { sectorLabel } from '../lib/gameLabels';
 
-const sectorLabels = [
-  'Inside',
-  'City',
-  'Field',
-  'Forest',
-  'Hills',
-  'Mountain',
-  'Water (Swim)',
-  'Water (No Swim)',
-  'Underwater',
-  'Flying',
-];
 
-function sectorLabel(sector: number): string {
-  return sectorLabels[sector] || `Sector ${sector}`;
-}
 
 export function RoomDetailPage() {
   const { vnum } = useParams<{ vnum: string }>();
