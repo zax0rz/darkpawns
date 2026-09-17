@@ -5,6 +5,8 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
+
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 func (p *Player) HasSpellAffect(spellID int) bool {
@@ -151,6 +153,14 @@ func (p *Player) ClearAmbushAction() {
 // transitions and death are handled by callers via
 // combat.UpdatePositionAfterDamage / HandleDeath, not here (DP-1021).
 func (p *Player) TakeDamage(amount int) {
+	// Every one of the 24 TakeDamage call sites — melee, spells, spec procs,
+	// ambush, hunger and thirst — arrives here, which is why the metric counts
+	// damage taken rather than damage dealt: this side knows who lost the hit
+	// points, not who took them off. Healing arrives as a negative amount and
+	// is not damage.
+	if amount > 0 {
+		metrics.DamageTaken("player", amount)
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Health -= amount

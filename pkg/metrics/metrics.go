@@ -28,7 +28,7 @@ var (
 
 	// Combat metrics
 	combatRounds prometheus.Counter
-	damageDealt  *prometheus.CounterVec
+	damageTaken  *prometheus.CounterVec
 	deathsTotal  prometheus.Counter
 
 	// Error metrics
@@ -101,10 +101,18 @@ func Init(r prometheus.Registerer) {
 			Name: "darkpawns_combat_rounds_total",
 			Help: "Total number of combat rounds processed",
 		})
-		damageDealt = prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "darkpawns_damage_dealt_total",
-			Help: "Total damage dealt in combat",
-		}, []string{"source_type"})
+		// Renamed from darkpawns_damage_dealt_total{source_type}. The only
+		// chokepoint every hit passes through is the victim's TakeDamage, where
+		// the receiver is who took the damage, not who dealt it — labelling that
+		// as a source would have been a guess. It also carries hunger, thirst,
+		// spells and spec procs, so "in combat" was never true either. Threading
+		// an attacker through all 24 call sites is a different change; measuring
+		// what the code can actually answer is this one. Renaming is free exactly
+		// now, because the old name has only ever reported zero.
+		damageTaken = prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "darkpawns_damage_taken_total",
+			Help: "Total hit points lost, by what took them, from every cause",
+		}, []string{"victim_type"})
 		deathsTotal = prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "darkpawns_deaths_total",
 			Help: "Total number of player/mob deaths",
@@ -145,7 +153,7 @@ func Init(r prometheus.Registerer) {
 			roomsActive,
 			mobsActive,
 			combatRounds,
-			damageDealt,
+			damageTaken,
 			deathsTotal,
 			errorsTotal,
 			dbQueriesTotal,
@@ -206,11 +214,11 @@ func CombatRound() {
 	combatRounds.Inc()
 }
 
-func DamageDealt(sourceType string, amount int) {
+func DamageTaken(victimType string, amount int) {
 	if amount < 0 {
 		return
 	}
-	damageDealt.WithLabelValues(sourceType).Add(float64(amount))
+	damageTaken.WithLabelValues(victimType).Add(float64(amount))
 }
 
 func Death() {

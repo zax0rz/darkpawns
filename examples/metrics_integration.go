@@ -28,8 +28,8 @@ func MetricsIntegration() {
 
 	// Simulate combat
 	metrics.CombatRound()
-	metrics.DamageDealt("player", 15)
-	metrics.DamageDealt("mob", 8)
+	metrics.DamageTaken("mob", 15)
+	metrics.DamageTaken("player", 8)
 
 	// Simulate errors
 	metrics.ErrorOccurred("websocket")

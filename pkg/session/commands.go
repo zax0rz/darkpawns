@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
+
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 // commandNumber is a test seam for verifying command_interpreter draw parity.
@@ -597,6 +600,14 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		return nil
 	}
 	cmd := strings.ToLower(cmdStr)
+	// Counted here, after the empty line is discarded and before any of the
+	// special-cased text branches below return early, so every path that runs a
+	// command is covered by one deferred call rather than thirty call sites.
+	// classifyCommand is reused rather than inventing a second taxonomy: the
+	// decision log already groups commands this way, and two groupings that
+	// disagree would be worse than none.
+	cmdStart := time.Now()
+	defer func() { metrics.CommandProcessed(classifyCommand(cmd), time.Since(cmdStart)) }()
 
 	// C performs alias expansion before command_interpreter, so the command
 	// interpreter's leading RNG draw belongs to the resolved command, not to

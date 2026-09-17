@@ -18,6 +18,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/session"
 	"github.com/zax0rz/darkpawns/pkg/validation"
 )
@@ -286,7 +287,14 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		wmu:     make(chan struct{}, 1),
 		manager: manager,
 	}
+	// Paired here rather than at Accept: the reject paths above close the
+	// connection and return without ever reaching this function, so counting at
+	// Accept would leak an increment into connections_active every time a ban
+	// fired. A gauge that drifts upward forever is worse than one that does not
+	// count refused connections.
+	metrics.ConnectionOpened()
 	defer func() {
+		metrics.ConnectionClosed()
 		if tc.compressWriter != nil {
 			_ = tc.compressWriter.Close()
 		}

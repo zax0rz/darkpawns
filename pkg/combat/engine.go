@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
+
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 // CombatPairKey uniquely identifies a combat pair by both participants.
@@ -446,6 +448,7 @@ func (ce *CombatEngine) IsFighting(charName string) bool {
 // prepends newly engaged characters, so the most recently engaged fighter acts
 // first. Each fighter attacks its own current FIGHTING target.
 func (ce *CombatEngine) PerformRound() {
+	metrics.CombatRound()
 	ce.mu.RLock()
 	fighters := append([]Combatant(nil), ce.combatOrder...)
 	ce.mu.RUnlock()

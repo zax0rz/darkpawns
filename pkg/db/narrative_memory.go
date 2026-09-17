@@ -21,6 +21,8 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/errlog"
+
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 // NarrativeMemory is one server-written narrative fact about an agent's experience.
@@ -108,6 +110,7 @@ func (db *DB) InitNarrativeMemory() error {
 // WriteNarrativeMemory inserts one narrative fact. Fire-and-forget safe to call
 // from Manager callback hooks — does not block game loop.
 func (db *DB) WriteNarrativeMemory(m *NarrativeMemory) (int64, error) {
+	metrics.MemoryWrite()
 	var id int64
 	err := db.conn.QueryRow(
 		`
@@ -137,6 +140,7 @@ func (db *DB) WriteNarrativeMemory(m *NarrativeMemory) (int64, error) {
 //	large:    30 memories  (~1200 tokens)
 //	unlimited: no limit    (not recommended in production)
 func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory, error) {
+	metrics.MemoryRead()
 	rows, err := db.conn.Query(
 		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
@@ -159,6 +163,7 @@ func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory
 // RecentMemories returns memories from a specific session — used for session
 // consolidation cron (scripts/dp_session_consolidate.py).
 func (db *DB) RecentMemories(agentName, sessionID string) ([]*NarrativeMemory, error) {
+	metrics.MemoryRead()
 	rows, err := db.conn.Query(
 		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
@@ -179,6 +184,7 @@ func (db *DB) RecentMemories(agentName, sessionID string) ([]*NarrativeMemory, e
 // SocialEventMemories returns all agent perspectives on a shared social event.
 // Used by the research log automation to detect cross-agent memory references.
 func (db *DB) SocialEventMemories(socialEventID string) ([]*NarrativeMemory, error) {
+	metrics.MemoryRead()
 	if socialEventID == "" {
 		return nil, fmt.Errorf("social_event_id cannot be empty")
 	}

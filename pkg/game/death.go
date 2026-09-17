@@ -22,6 +22,8 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/events"
+
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 // Con loss probability thresholds — from fight.c die_with_killer()
@@ -366,6 +368,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 // C raw_kill does not announce corpse creation; ordinary combat death keeps
 // the existing Go notification for its already-audited callers.
 func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer combat.Combatant, attackType int, announceCorpse bool) {
+	metrics.Death()
 	roomVNum := victim.GetRoom()
 
 	// Find the MobInstance
@@ -531,6 +534,10 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 // extract_pending_chars() in handler.c. The session layer then returns the
 // descriptor to the login menu.
 func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string) {
+	// Player half of deaths_total; the mob half is handleMobDeathWithAnnouncement
+	// below. The two split by species and never call each other, so a death is
+	// counted exactly once no matter which of the raw_kill paths reached it.
+	metrics.Death()
 	roomVNum := victim.GetRoom()
 
 	// Find the Player
