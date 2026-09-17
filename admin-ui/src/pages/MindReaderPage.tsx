@@ -77,20 +77,20 @@ export function MindReaderPage() {
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono uppercase font-bold tracking-wider text-ink-muted">
-              FILTER OPERATOR:
+              Agent:
             </span>
             <select
               value={selectedAgent}
               onChange={(e) => { setSelectedAgent(e.target.value); setPage(0); }}
               className="bg-paper text-ink text-xs font-mono uppercase tracking-wider rounded-none px-3 py-2 border-2 border-rule focus:outline-none focus:border-accent"
             >
-              <option value="">All Autonomous Entities</option>
-              <option value="Daeron">Daeron (Triage Master)</option>
-              <option value="Reek">Reek (Code Crawler)</option>
+              <option value="">All agents</option>
+              <option value="Daeron">Daeron</option>
+              <option value="Reek">Reek</option>
             </select>
           </div>
           <div className="text-right text-[10px] font-mono text-ink-muted uppercase tracking-wider">
-            SYSTEM STATUS: POLLING ACTIVE [10s]
+            Refreshing every 10s
           </div>
         </div>
       </div>
