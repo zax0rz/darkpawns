@@ -527,9 +527,20 @@ func main() {
 	http.Handle("/api/", web.AuthMiddleware(apiMux))
 
 	// Admin routes — JWT-protected, role-gated
-	auditLogger, err := audit.NewAuditLogger("logs/audit.log")
+	// The log belongs beside the instance's other runtime state, under the game
+	// root the process anchored to above (lib/ in a checkout). Naming it
+	// absolutely keeps the warning below pointing at the file it means, instead
+	// of at a logs/ directory that only exists relative to a CWD nobody chose.
+	auditLogPath := filepath.Join(gameRoot, "logs", "audit.log")
+	auditLogger, err := audit.NewAuditLogger(auditLogPath)
 	if err != nil {
-		slog.Warn("Failed to create audit logger, admin audit trail disabled", "error", err)
+		// Non-fatal by design. NewAuditLogger creates the directory itself, so
+		// what is left is a real permissions problem, and refusing to boot the
+		// game over an admin-only log would be disproportionate: telnet, /ws,
+		// /health and the world do not need it. Name what stops being recorded,
+		// because a silent audit trail is indistinguishable from a clean one.
+		slog.Warn("Admin audit trail disabled: world edits through /admin/ will not be recorded",
+			"error", err, "path", auditLogPath)
 	}
 
 	// Log buffer for admin operations panel — captures slog output in-memory

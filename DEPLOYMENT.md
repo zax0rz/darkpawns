@@ -20,8 +20,10 @@ A single Go binary (`cmd/server`) that serves three surfaces:
 It also reads/writes on-disk state: the world/scripts tree (`-world`, `-scripts`) and a
 CWD-relative `data/` directory (shops, aliases, mail, admin store). With the checkout
 layout below, the server changes its working directory to `lib/`, so that state
-is in **`lib/data/`**, not the repository-root `data/`. Back up Postgres and the
-instance's `lib/` tree, including any edited world files.
+is in **`lib/data/`**, not the repository-root `data/`. The admin audit trail follows
+the same rule: the log is **`lib/logs/audit.log`** (mode `600`, in a `750` directory it
+creates on first boot). Back up Postgres and the instance's `lib/` tree, including any
+edited world files.
 
 ## Quickstart
 
