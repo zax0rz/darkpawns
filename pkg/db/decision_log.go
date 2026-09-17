@@ -6,9 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // createDecisionLogTables creates the decision_log and combat_log tables.
@@ -141,6 +146,80 @@ func (db *DB) EnsureDecisionLogPartitions() error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+// partitionNamePattern matches only the names EnsureDecisionLogPartitions
+// creates. Partition names come back from the catalog and are interpolated into
+// DDL, which cannot be parameterised, so nothing that fails this check is ever
+// put in a statement.
+var partitionNamePattern = regexp.MustCompile(`^(decision_log|combat_log)_(\d{4})_(\d{2})$`)
+
+// DropExpiredLogPartitions drops whole monthly partitions older than
+// retainMonths, and returns the names it dropped.
+//
+// decision_log stores raw_input: the literal line a player typed, which in a
+// MUD includes tells, says and gossip. Filtering that is a mitigation; not
+// keeping it is the control, and because these tables are partitioned by month
+// the control costs one DROP rather than a scan-and-delete.
+//
+// retainMonths <= 0 means keep everything, and that is the default on purpose:
+// silently deleting a research corpus would be a far worse surprise than
+// keeping one. The caller logs which policy is in force so the choice is
+// visible at boot instead of implied.
+func (db *DB) DropExpiredLogPartitions(retainMonths int) ([]string, error) {
+	if retainMonths <= 0 {
+		return nil, nil
+	}
+
+	// Compare by month rather than by day: a partition covers a whole month, so
+	// it may only be dropped once every day it holds is older than the cutoff.
+	now := time.Now().UTC()
+	cutoff := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, -retainMonths, 0)
+
+	rows, err := db.conn.Query(
+		`SELECT tablename FROM pg_tables
+		  WHERE tablename ~ '^(decision_log|combat_log)_[0-9]{4}_[0-9]{2}$'`)
+	if err != nil {
+		return nil, fmt.Errorf("list log partitions: %w", err)
+	}
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			errlog.Close(rows, "close partition listing")
+			return nil, fmt.Errorf("scan partition name: %w", err)
+		}
+		names = append(names, name)
+	}
+	if err := rows.Err(); err != nil {
+		errlog.Close(rows, "close partition listing")
+		return nil, fmt.Errorf("iterate log partitions: %w", err)
+	}
+	errlog.Close(rows, "close partition listing")
+
+	var dropped []string
+	var errs []error
+	for _, name := range names {
+		m := partitionNamePattern.FindStringSubmatch(name)
+		if m == nil {
+			continue // not ours; never reaches a statement
+		}
+		year, _ := strconv.Atoi(m[2])
+		month, _ := strconv.Atoi(m[3])
+		if month < 1 || month > 12 {
+			continue
+		}
+		start := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+		if !start.Before(cutoff) {
+			continue
+		}
+		if _, err := db.conn.Exec(fmt.Sprintf(`DROP TABLE IF EXISTS %s`, name)); err != nil {
+			errs = append(errs, fmt.Errorf("drop partition %s: %w", name, err))
+			continue
+		}
+		dropped = append(dropped, name)
+	}
+	return dropped, errors.Join(errs...)
 }
 
 func (db *DB) ensurePartition(parent, name string, start, end time.Time) error {
@@ -336,11 +415,43 @@ func (dlw *DecisionLogWriter) RecordCombat(r *CombatRecord) {
 
 // HashPlayerName returns a pseudonymized name for human players.
 // Agent names are stored in plaintext (research subjects).
+// legacyPlayerNameSalt is the salt this hash used when it was the only one.
+// It is a constant in a public repository, which means the pseudonyms it
+// produces are reversible by anyone who can read the source: a MUD publishes
+// its player list through `who` and through the archive, so recovering the
+// mapping is a dictionary of a few hundred names, not an attack. It remains the
+// default only so that an existing corpus keeps matching itself across an
+// upgrade; DP_LOG_SALT replaces it, and the server says which one is in force
+// at boot.
+const legacyPlayerNameSalt = "darkpawns_salt:"
+
+// playerNameSalt is resolved once. Changing the salt renames every pseudonym,
+// so rows written before and after a change will not join — which is why this
+// is an operator's deliberate choice and never a generated value.
+var playerNameSalt = sync.OnceValue(func() string {
+	if s := os.Getenv("DP_LOG_SALT"); s != "" {
+		return s + ":"
+	}
+	return legacyPlayerNameSalt
+})
+
+// UsingLegacySalt reports whether the pseudonyms in this log are derived with
+// the salt that ships in the source. The caller warns once at boot rather than
+// per row.
+func UsingLegacySalt() bool { return playerNameSalt() == legacyPlayerNameSalt }
+
+// HashPlayerName pseudonymises a player name for the decision log. Agents keep
+// their names: they are the subject of the research, not its bystanders.
+//
+// This is pseudonymisation, not anonymisation. The same player always hashes to
+// the same value, which is what makes the log analysable and also what makes it
+// personal data: the rows it labels contain raw_input, the literal line the
+// player typed.
 func (dlw *DecisionLogWriter) HashPlayerName(name string, isAgent bool) string {
 	if isAgent {
 		return name
 	}
-	h := sha256.Sum256([]byte("darkpawns_salt:" + name))
+	h := sha256.Sum256([]byte(playerNameSalt() + name))
 	return fmt.Sprintf("player_%s", h[:8])
 }
 

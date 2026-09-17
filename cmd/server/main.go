@@ -45,6 +45,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -365,7 +366,39 @@ func main() {
 		} else {
 			decisionLogWriter = database.NewDecisionLogWriter()
 			manager.SetDecisionLog(decisionLogWriter)
-			slog.Info("decision capture enabled")
+
+			// decision_log keeps raw_input, the literal line a player typed,
+			// which in a MUD carries tells, says and gossip. Say so at boot
+			// rather than leaving an operator to discover it from the schema.
+			retain := 0
+			if v := os.Getenv("DP_LOG_RETENTION_MONTHS"); v != "" {
+				parsed, perr := strconv.Atoi(v)
+				if perr != nil || parsed < 0 {
+					slog.Error("DP_LOG_RETENTION_MONTHS must be a non-negative whole number of months; refusing to guess",
+						"value", v)
+					os.Exit(1)
+				}
+				retain = parsed
+			}
+			if retain > 0 {
+				dropped, derr := database.DropExpiredLogPartitions(retain)
+				if derr != nil {
+					slog.Warn("could not drop expired log partitions", "error", derr)
+				}
+				if len(dropped) > 0 {
+					slog.Info("dropped expired log partitions", "partitions", dropped)
+				}
+				slog.Info("decision capture enabled", "records", "command text including tells and says",
+					"retention_months", retain)
+			} else {
+				slog.Info("decision capture enabled", "records", "command text including tells and says",
+					"retention", "unlimited",
+					"hint", "set DP_LOG_RETENTION_MONTHS to expire whole monthly partitions")
+			}
+			if db.UsingLegacySalt() {
+				slog.Warn("decision log pseudonyms use the salt that ships in the source, so they are reversible from a player list",
+					"hint", `set DP_LOG_SALT to a value of your own; it renames every pseudonym, so choose before collecting data you intend to keep`)
+			}
 		}
 	}
 	manager.SetScriptFightFunc()                         // Enable mob fight scripts after each combat round
