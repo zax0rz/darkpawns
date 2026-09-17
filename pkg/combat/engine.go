@@ -710,7 +710,10 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// (R3: damage math is unchanged).
 	msgAttackType := cbWeaponInfo(attacker.GetName())
 
-	hit := CalculateHitChance(attacker, defender, HitModifiers{})
+	hit := CalculateHitChance(attacker, defender, HitModifiers{
+		WeaponBlessed: cbWeaponBlessed(attacker.GetName()),
+		DrunkLevel:    cbDrunk(attacker.GetName()),
+	})
 	var damage int
 	if hit {
 		weaponDamage := attacker.GetDamageRoll()

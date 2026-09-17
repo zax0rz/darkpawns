@@ -1317,3 +1317,15 @@ func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
 	}
 	delete(m.CustomData, key)
 }
+
+// HitModifiers returns combat modifiers for the mob's equipped weapon.
+// Source: fight.c:1793 (ITEM_BLESS weapon bonus). Mobs do not have a drunk condition.
+func (m *MobInstance) HitModifiers() combat.HitModifiers {
+	var blessed bool
+	if weapon, wielded := m.Equipment[int(SlotWield)]; wielded && weapon != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
+		blessed = weapon.HasExtraFlag(0, itemExtraBless)
+	}
+	return combat.HitModifiers{
+		WeaponBlessed: blessed,
+	}
+}

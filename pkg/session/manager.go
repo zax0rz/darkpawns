@@ -1540,7 +1540,7 @@ type Session struct {
 
 	// Character creation state
 	creationSaved bool // New character persisted at accepted stats, not yet admitted.
-	loginFailures int
+	loginFailures atomic.Int32
 	charCreating  bool
 	charStage     string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
 	charName      string

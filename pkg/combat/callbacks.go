@@ -54,6 +54,9 @@ type GameCallbacks struct {
 	// C act()'s $p substitution in skill/fight messages.
 	GetWeaponDescription func(chName string) string
 
+	// Character conditions
+	GetDrunk func(name string) int
+
 	// Room navigation
 	GetAdjacentRoom func(roomVNum, door int) int
 
@@ -168,6 +171,21 @@ func cbWeaponInfo(chName string) int {
 	if cb := callbacks; cb != nil && cb.GetWeaponInfo != nil {
 		wType, _, _, _ := cb.GetWeaponInfo(chName)
 		return wType
+	}
+	return 0
+}
+
+func cbWeaponBlessed(chName string) bool {
+	if cb := callbacks; cb != nil && cb.GetWeaponInfo != nil {
+		_, _, _, isBlessed := cb.GetWeaponInfo(chName)
+		return isBlessed
+	}
+	return false
+}
+
+func cbDrunk(chName string) int {
+	if cb := callbacks; cb != nil && cb.GetDrunk != nil {
+		return cb.GetDrunk(chName)
 	}
 	return 0
 }

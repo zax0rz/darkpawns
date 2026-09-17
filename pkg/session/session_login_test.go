@@ -6,6 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/testutil"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/time/rate"
 )
 
@@ -279,5 +283,166 @@ func TestHandleCommand_UnknownCommand(t *testing.T) {
 	// C interpreter.c:916 answers any unmatched command with "Huh?!?".
 	if !strings.Contains(td.Text, "Huh?!?") {
 		t.Errorf("expected 'Huh?!?' in response, got %q", td.Text)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Account Lockout & Login Failure Tests (DP-1281, DP-1282)
+// ---------------------------------------------------------------------------
+
+func TestHandleLogin_LockedAccountReturnsErrorAndCloses(t *testing.T) {
+	database := testutil.NewMockDatabase()
+	world := testutil.NewTestWorld()
+	t.Cleanup(world.StopAITicker)
+	m := newTestManager(t, world, database)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("secret123"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := &db.PlayerRecord{
+		Name: "LockedUser", Password: string(hash), RoomVNum: game.MortalStartRoom,
+		Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
+		Move: 100, MaxMove: 100, Class: game.ClassWarrior, Race: game.RaceHuman,
+		StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
+		Inventory: []byte("[]"), Equipment: []byte("{}"),
+	}
+	if err := database.CreatePlayer(record); err != nil {
+		t.Fatal(err)
+	}
+
+	// Trigger lockout (threshold is 10)
+	for i := 0; i < 10; i++ {
+		m.accountLockouts.RecordFailure("LockedUser")
+	}
+
+	s := makeCharSession(t, m)
+	err, panicked := callHandleLogin(s, loginMsg("LockedUser", "wrongpass"))
+	if panicked || err != nil {
+		t.Fatalf("callHandleLogin = (%v, panicked=%v), want nil", err, panicked)
+	}
+
+	if !s.SendClosed() {
+		t.Fatal("expected locked account login to close session")
+	}
+
+	msg, ok := drainSend(s)
+	if !ok {
+		t.Fatal("expected lockout error message on send channel")
+	}
+	srv := unmarshalServerMsg(t, msg)
+	if srv.Type != MsgError {
+		t.Fatalf("message type = %q, want %q", srv.Type, MsgError)
+	}
+	var ed ErrorData
+	b, _ := json.Marshal(srv.Data)
+	_ = json.Unmarshal(b, &ed)
+	if !strings.Contains(ed.Message, "Account locked") {
+		t.Fatalf("error message = %q, want it to contain 'Account locked'", ed.Message)
+	}
+}
+
+func TestHandleLogin_NewlyLockedClosesImmediately(t *testing.T) {
+	database := testutil.NewMockDatabase()
+	world := testutil.NewTestWorld()
+	t.Cleanup(world.StopAITicker)
+	m := newTestManager(t, world, database)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("secret123"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := &db.PlayerRecord{
+		Name: "ThresholdUser", Password: string(hash), RoomVNum: game.MortalStartRoom,
+		Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
+		Move: 100, MaxMove: 100, Class: game.ClassWarrior, Race: game.RaceHuman,
+		StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
+		Inventory: []byte("[]"), Equipment: []byte("{}"),
+	}
+	if err := database.CreatePlayer(record); err != nil {
+		t.Fatal(err)
+	}
+
+	// Record 9 failures so the next failed login attempt reaches threshold (10)
+	for i := 0; i < 9; i++ {
+		m.accountLockouts.RecordFailure("ThresholdUser")
+	}
+
+	s := makeCharSession(t, m)
+	err, panicked := callHandleLogin(s, loginMsg("ThresholdUser", "wrongpass"))
+	if panicked || err != nil {
+		t.Fatalf("callHandleLogin = (%v, panicked=%v), want nil", err, panicked)
+	}
+
+	if !s.SendClosed() {
+		t.Fatal("expected newly locked account to close session immediately")
+	}
+
+	msg, ok := drainSend(s)
+	if !ok {
+		t.Fatal("expected lockout error message on send channel")
+	}
+	srv := unmarshalServerMsg(t, msg)
+	if srv.Type != MsgError {
+		t.Fatalf("message type = %q, want %q", srv.Type, MsgError)
+	}
+	var ed ErrorData
+	b, _ := json.Marshal(srv.Data)
+	_ = json.Unmarshal(b, &ed)
+	if !strings.Contains(ed.Message, "Account locked") {
+		t.Fatalf("error message = %q, want it to contain 'Account locked'", ed.Message)
+	}
+}
+
+func TestHandleLogin_SessionDisconnectsAfterThreeBadPasswords(t *testing.T) {
+	database := testutil.NewMockDatabase()
+	world := testutil.NewTestWorld()
+	t.Cleanup(world.StopAITicker)
+	m := newTestManager(t, world, database)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("secret123"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := &db.PlayerRecord{
+		Name: "ThreeTries", Password: string(hash), RoomVNum: game.MortalStartRoom,
+		Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
+		Move: 100, MaxMove: 100, Class: game.ClassWarrior, Race: game.RaceHuman,
+		StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
+		Inventory: []byte("[]"), Equipment: []byte("{}"),
+	}
+	if err := database.CreatePlayer(record); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeCharSession(t, m)
+
+	// Attempt 1: wrong password
+	_, _ = callHandleLogin(s, loginMsg("ThreeTries", "wrong1"))
+	if s.SendClosed() {
+		t.Fatal("session closed after attempt 1, want open")
+	}
+	if s.loginFailures.Load() != 1 {
+		t.Fatalf("loginFailures = %d, want 1", s.loginFailures.Load())
+	}
+	_, _ = drainSend(s)
+
+	// Attempt 2: wrong password
+	_, _ = callHandleLogin(s, loginMsg("ThreeTries", "wrong2"))
+	if s.SendClosed() {
+		t.Fatal("session closed after attempt 2, want open")
+	}
+	if s.loginFailures.Load() != 2 {
+		t.Fatalf("loginFailures = %d, want 2", s.loginFailures.Load())
+	}
+	_, _ = drainSend(s)
+
+	// Attempt 3: wrong password -> should disconnect
+	_, _ = callHandleLogin(s, loginMsg("ThreeTries", "wrong3"))
+	if !s.SendClosed() {
+		t.Fatal("session not closed after 3 bad passwords")
+	}
+	if s.loginFailures.Load() != 3 {
+		t.Fatalf("loginFailures = %d, want 3", s.loginFailures.Load())
 	}
 }

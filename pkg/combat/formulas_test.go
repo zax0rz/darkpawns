@@ -563,6 +563,25 @@ func TestCheckDodge_NPCAffDodge(t *testing.T) {
 	}
 }
 
+func TestCheckDodge_DrawConsumedEvenIfNotMutualFighting(t *testing.T) {
+	// Defender has AFF_DODGE and roll < level, but defender is fighting someone else
+	defender := &mockCombatant{npc: true, name: "dodging_mob", position: PosStanding, fighting: "someone_else", level: 50}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "dodging_mob"}
+
+	roller := NewScriptedRoller([]int{10, 11})
+	old := GetRoller()
+	SetRoller(roller)
+	defer SetRoller(old)
+
+	result := CheckDodge(defender, attacker)
+	if result != DodgeFail {
+		t.Fatalf("CheckDodge when not mutually fighting = %v, want DodgeFail", result)
+	}
+	if roller.Index != 1 {
+		t.Fatalf("AFF_DODGE NPC consumed %d dodge draws, want 1", roller.Index)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // GetAttacksPerRound tests — NPC
 // ---------------------------------------------------------------------------
@@ -753,6 +772,57 @@ func TestCalculateHitChance_NegativeDefenderACClamped(t *testing.T) {
 	// Very low AC defender — should still hit sometimes (natural 20)
 	if hits == 0 {
 		t.Error("expected at least some hits from natural 20s")
+	}
+}
+
+func TestCalculateHitChance_WeaponBlessedBonus(t *testing.T) {
+	// Attacker level 1 NPC (thaco=20, str=13, int=13, wis=13, hitroll=0) -> base calcThaco=20
+	// Defender standing AC 100 (dex=13) -> victimAC=10
+	// Borderline diceroll = 9:
+	// Without bless: calcThaco=20, 20 - 9 = 11 > 10 -> miss
+	// With bless: calcThaco=19, 19 - 9 = 10 not > 10 -> hit
+	attacker := &mockCombatant{npc: true, level: 1, str: 13, intVal: 13, wis: 13, hitroll: 0}
+	defender := &mockCombatant{npc: true, position: PosStanding, ac: 100, dex: 13}
+
+	old := GetRoller()
+	defer SetRoller(old)
+
+	SetRoller(NewScriptedRoller([]int{9, 9}))
+	if got := CalculateHitChance(attacker, defender, HitModifiers{WeaponBlessed: false}); got {
+		t.Fatalf("CalculateHitChance without bless on borderline roll = true, want false (miss)")
+	}
+
+	SetRoller(NewScriptedRoller([]int{9, 9}))
+	if got := CalculateHitChance(attacker, defender, HitModifiers{WeaponBlessed: true}); !got {
+		t.Fatalf("CalculateHitChance with bless on borderline roll = false, want true (hit)")
+	}
+}
+
+func TestCalculateHitChance_DrunkPenalty(t *testing.T) {
+	// Attacker level 1 NPC (thaco=20, str=13, int=13, wis=13, hitroll=0) -> base calcThaco=20
+	// Defender standing AC 100 (dex=13) -> victimAC=10
+	// Diceroll = 10:
+	// Sober (DrunkLevel <= 1): calcThaco=20, 20 - 10 = 10 not > 10 -> hit
+	// Drunk (DrunkLevel > 1): calcThaco=22 (+2 penalty), 22 - 10 = 12 > 10 -> miss
+	attacker := &mockCombatant{npc: true, level: 1, str: 13, intVal: 13, wis: 13, hitroll: 0}
+	defender := &mockCombatant{npc: true, position: PosStanding, ac: 100, dex: 13}
+
+	old := GetRoller()
+	defer SetRoller(old)
+
+	SetRoller(NewScriptedRoller([]int{10, 10}))
+	if got := CalculateHitChance(attacker, defender, HitModifiers{DrunkLevel: 0}); !got {
+		t.Fatalf("CalculateHitChance sober (0) on roll 10 = false, want true (hit)")
+	}
+
+	SetRoller(NewScriptedRoller([]int{10, 10}))
+	if got := CalculateHitChance(attacker, defender, HitModifiers{DrunkLevel: 1}); !got {
+		t.Fatalf("CalculateHitChance drunk 1 on roll 10 = false, want true (hit, threshold is > 1)")
+	}
+
+	SetRoller(NewScriptedRoller([]int{10, 10}))
+	if got := CalculateHitChance(attacker, defender, HitModifiers{DrunkLevel: 2}); got {
+		t.Fatalf("CalculateHitChance drunk 2 on roll 10 = true, want false (miss from +2 penalty)")
 	}
 }
 

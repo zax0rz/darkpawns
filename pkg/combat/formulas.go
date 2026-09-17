@@ -678,9 +678,12 @@ func CheckParry(fighter, opponent Combatant) ParryResult {
 // Dodge requirements:
 //   - Defender must be an NPC
 //   - Defender must have AFF_DODGE
+//   - The inclusive number(0,100) roll must be strictly less than defender's level
 //   - Defender and attacker must be fighting each other
 //
 // Formula: number(0,100) < GET_LEVEL(ch).
+// C evaluates number(0,100) before the mutual-fighting check, so every
+// AFF_DODGE NPC turn consumes the probe even if mutual fighting fails.
 //
 // Returns DodgeSuccess if the attacker's attack count should be reduced.
 func CheckDodge(defender, attacker Combatant) DodgeResult {
@@ -692,11 +695,11 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 		return DodgeFail
 	}
 
-	if attacker == nil || defender.GetFighting() != attacker.GetName() || attacker.GetFighting() != defender.GetName() {
+	if GetRoller().Number(0, 100) >= defender.GetLevel() {
 		return DodgeFail
 	}
 
-	if GetRoller().Number(0, 100) >= defender.GetLevel() {
+	if attacker == nil || defender.GetFighting() != attacker.GetName() || attacker.GetFighting() != defender.GetName() {
 		return DodgeFail
 	}
 
