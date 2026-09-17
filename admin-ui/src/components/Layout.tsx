@@ -5,6 +5,7 @@ import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCommandPalette } from '../hooks/useCommandPalette';
 import { CommandPalette } from './CommandPalette';
 import { Icon, type IconName } from './Icon';
+import { Wordmark } from './Wordmark';
 
 interface NavItem {
   to: string;
@@ -216,9 +217,8 @@ function SidebarContent({
     <>
       {/* Logo / Title */}
       <div className="p-4 border-b border-rule bg-paper-deep/20">
-        <h1 className="text-xl text-accent tracking-wide font-display flex items-center gap-2">
-          <Icon name="pawn" className="h-5 w-5 text-ink" />
-          DARK PAWNS
+        <h1>
+          <Wordmark pawnClass="h-8" textClass="text-[1.15rem]" />
         </h1>
         {onClose && (
           <button
@@ -240,7 +240,7 @@ function SidebarContent({
             className={({ isActive }) =>
               `flex items-center gap-2.5 px-3.5 py-2.5 rounded-none text-xs uppercase tracking-wider font-mono border transition-all ${
                 isActive
-                  ? 'bg-paper-deep text-accent border-rule font-extrabold shadow-[2px_2px_0px_0px_rgba(26,22,20,0.1)]'
+                  ? 'bg-paper-deep text-accent border-rule font-extrabold'
                   : 'text-ink border-transparent hover:bg-paper-deep hover:text-accent hover:border-rule/30'
               }`
             }

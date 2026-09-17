@@ -144,15 +144,21 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M8 4.8 L8 5.4" />
     </>
   ),
-  // The house mark, drawn solid like the site header.
+  // The house mark. Canonical geometry, transplanted into the 16x16 grid by
+  // transform rather than redrawn: a simplified pawn is a different mark, not
+  // the same mark smaller. See DESIGN.md, The Wordmark Lockup Rule.
   pawn: (
-    <>
-      <circle cx="8" cy="3.5" r="2" fill="currentColor" stroke="none" />
-      <rect x="5.7" y="6" width="4.6" height="0.9" fill="currentColor" stroke="none" />
-      <polygon points="6.7,7.3 9.3,7.3 10.2,12 5.8,12" fill="currentColor" stroke="none" />
-      <rect x="4.5" y="12.4" width="7" height="1.1" fill="currentColor" stroke="none" />
-      <rect x="3.6" y="13.9" width="8.8" height="1.3" fill="currentColor" stroke="none" />
-    </>
+    <g
+      transform="translate(-4.6154 -1.4615) scale(0.18462)"
+      fill="currentColor"
+      stroke="none"
+    >
+      <circle cx="50" cy="23" r="12" />
+      <rect x="37" y="38" width="26" height="5" />
+      <polygon points="43,46 57,46 62,75 38,75" />
+      <rect x="31" y="77" width="38" height="6" />
+      <rect x="26" y="85" width="48" height="7" />
+    </g>
   ),
 };
 

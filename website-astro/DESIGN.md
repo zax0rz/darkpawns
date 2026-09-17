@@ -171,6 +171,47 @@ Sharp, printed geometry. Corners are square by default; the maximum radius anywh
 ### Named Rules
 **The 2px Rule.** Nothing on this site is rounder than 2px, with one exception: a true circle (`50%`) for a genuine dot (status indicator) or avatar. There are currently two violations to fix — a `9999px` pill and a `20px` radius in `style.css`; both must come down to `2px` or become sharp.
 
+## Identity
+
+### The mark
+
+The pawn is five shapes on a `24 8 52 88` viewBox, filled with `currentColor`:
+
+```
+circle   cx=50 cy=23 r=12
+rect     x=37 y=38 width=26 height=5
+polygon  points=43,46 57,46 62,75 38,75
+rect     x=31 y=77 width=38 height=6
+rect     x=26 y=85 width=48 height=7
+```
+
+### The lockup
+
+Pawn in Ink, then the name in the display serif, uppercase, two lines,
+`line-height: 0.82`, `letter-spacing: 0.01em`. **DARK** is Ink. **PAWNS** is
+Oxblood. Pawn and lettering sit in a flex row, vertically centred, `gap:
+--space-sm`. The site header sets the pawn at `3.2rem` and the lettering at
+`2rem`; smaller chrome scales both together.
+
+The two words always share a left edge. DARK and PAWNS are different
+lengths, so a centred parent will centre them against each other, which
+reads as a different mark. The lettering pins its own alignment rather
+than inheriting one; the lockup as a whole may sit wherever the layout
+needs it.
+
+### Named Rules
+
+**The Wordmark Lockup Rule.** There is one mark and one lockup. The pawn is
+always those five shapes at those coordinates: scale it and translate it
+freely, but a redraw, a simplification, or a Unicode chess glyph is a
+different mark, not the same mark smaller. The lettering is always stacked
+with Oxblood on PAWNS alone — never one line, never a single colour, never
+Oxblood on DARK. The mark is drawn in four runtimes that cannot share a
+component (Astro, React, static HTML, and the favicon), so nothing but a check
+keeps the copies identical: `make check-wordmark` enforces both halves, and it
+exists because on 2026-09-16 the tree held three different pawn drawings and
+two different lockups at once.
+
 ## Components
 
 ### Buttons
