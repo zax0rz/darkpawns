@@ -5,6 +5,19 @@ import { useToast } from '../components/Toast';
 import { PlayerDetailModal } from '../components/PlayerDetailModal';
 import { MetricsCard } from '../components/MetricsCard';
 
+// The buffer writes the level first (pkg/admin/log_buffer.go writes
+// record.Level.String() ahead of the timestamp), so a line reads
+// "WARN 2026-09-17T12:25:31-04:00 cannot spawn mob: ...". Reading the level
+// lets the log be scanned by weight without adding a column: errors take the
+// accent, warnings full ink, the rest stays muted. Fifty zone-reset warnings
+// at one weight is a wall, not a log.
+function logLineClass(line: string): string {
+  const level = /^\s*([A-Z]+)\b/.exec(line)?.[1];
+  if (level === 'ERROR' || level === 'FATAL') return 'text-accent';
+  if (level === 'WARN') return 'text-ink';
+  return 'text-ink-muted';
+}
+
 export function OperationsPage() {
   const [logLines, setLogLines] = useState(50);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -168,9 +181,9 @@ export function OperationsPage() {
           ) : !logs || logs.length === 0 ? (
             <div className="text-sm text-ink-muted font-mono">No log entries yet</div>
           ) : (
-            <pre className="text-xs text-ink-muted font-mono whitespace-pre-wrap">
+            <pre className="text-xs font-mono whitespace-pre-wrap">
               {logs.map((line, i) => (
-                <div key={i} className="hover:bg-paper-deep">
+                <div key={i} className={`hover:bg-paper-deep ${logLineClass(line)}`}>
                   {line}
                 </div>
               ))}

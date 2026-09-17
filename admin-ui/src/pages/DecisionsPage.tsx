@@ -120,7 +120,9 @@ export function DecisionsPage() {
 
       {/* Filters */}
       <div className="bg-paper-deep rounded-none border border-rule p-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Six controls in a four-wide grid wrapped 4-then-2, which reads as
+          overflow. Three columns fill two even rows. */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <input
             type="text"
             placeholder="Session ID"
