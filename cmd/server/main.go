@@ -483,6 +483,29 @@ func main() {
 		}
 	})
 	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
+	// Gauges describe state, not events, so they are sampled rather than
+	// maintained. Tracking every mutation means finding every mutation, and one
+	// missed path leaves the gauge wrong until restart; re-reading the truth on
+	// a timer cannot drift. Ten seconds is well inside a normal scrape interval.
+	//
+	// Until this existed, /metrics answered 200 with every gauge reading zero:
+	// the collectors were registered and nothing ever wrote them, so a scraper
+	// saw a healthy target reporting an empty world. Silence that looks like
+	// data is worse than an endpoint that is honestly absent.
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-loopCtx.Done():
+				return
+			case <-ticker.C:
+				metrics.SetPlayersOnline(manager.SessionCount())
+				metrics.SetRoomsActive(len(gameWorld.Rooms()))
+				metrics.SetMobsActive(len(gameWorld.GetAllMobs()))
+			}
+		}
+	}()
 	contactHandler, err := contact.NewFromEnvironment()
 	if err != nil {
 		slog.Warn("Website contact form disabled", "error", err)

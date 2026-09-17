@@ -10,10 +10,17 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 func (s *Session) readPump() {
+	// The WebSocket connection's life is this function, not HandleWebSocket,
+	// which returns as soon as it spawns this goroutine. Counting at the
+	// upgrade would leak whenever a ban check rejected the socket in between.
+	metrics.ConnectionOpened()
 	defer func() {
+		metrics.ConnectionClosed()
 		if r := recover(); r != nil {
 			slog.Error(
 				"CRITICAL PANIC RECOVERED in readPump",

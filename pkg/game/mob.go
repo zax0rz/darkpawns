@@ -14,6 +14,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
+
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 // MobInstance represents a spawned mob in the world.
@@ -386,6 +388,14 @@ func (m *MobInstance) GetLongDesc() string {
 // would pre-empt HandleDeath's CompareAndSwap guard and skip the entire
 // kill-payout pipeline (XP, gold, kill counter, corpse, events).
 func (m *MobInstance) TakeDamage(amount int) {
+	// Every one of the 24 TakeDamage call sites — melee, spells, spec procs,
+	// ambush, hunger and thirst — arrives here, which is why the metric counts
+	// damage taken rather than damage dealt: this side knows who lost the hit
+	// points, not who took them off. Healing arrives as a negative amount and
+	// is not damage.
+	if amount > 0 {
+		metrics.DamageTaken("mob", amount)
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.CurrentHP -= amount
