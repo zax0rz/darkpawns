@@ -186,7 +186,7 @@ func cmdThink(s *Session, args []string) error {
 	if s.player.Flags&(1<<game.PrfNoRepeat) == 0 {
 		s.Send(fmt.Sprintf("You think . o O ( %s )", message))
 	} else {
-		s.Send("Ok.")
+		s.Send("Ok.\n\r")
 	}
 	return nil
 }

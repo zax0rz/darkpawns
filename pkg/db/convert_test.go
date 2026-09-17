@@ -192,7 +192,7 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	p.Stats.Cha = 11
 	p.Hunger = 20
 	p.Thirst = 24
-	p.Drunk = 0
+	p.Title = "the Champion of Light"
 
 	// Add inventory item
 	proto10, ok := world.GetObjPrototype(10)
@@ -225,6 +225,9 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	if rec.Name != p.Name {
 		t.Errorf("Record Name = %q, want %q", rec.Name, p.Name)
 	}
+	if rec.Title != p.Title {
+		t.Errorf("Record Title = %q, want %q", rec.Title, p.Title)
+	}
 	if rec.Level != p.Level {
 		t.Errorf("Record Level = %d, want %d", rec.Level, p.Level)
 	}
@@ -247,6 +250,9 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	}
 	if restored.Name != p.Name {
 		t.Errorf("Restored Name = %q, want %q", restored.Name, p.Name)
+	}
+	if restored.Title != p.Title {
+		t.Errorf("Restored Title = %q, want %q", restored.Title, p.Title)
 	}
 	if restored.Level != p.Level {
 		t.Errorf("Restored Level = %d, want %d", restored.Level, p.Level)

@@ -2,12 +2,16 @@ package session
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
 
 func readSessionText(t *testing.T, s *Session) string {
@@ -507,5 +511,61 @@ func TestCmdSummon(t *testing.T) {
 	got := readSessionText(t, s1)
 	if !strings.Contains(got, "materializes before you") {
 		t.Errorf("expected summon success output, got %q", got)
+	}
+}
+
+func TestCmdWhoisOffline(t *testing.T) {
+	database := testutil.NewMockDatabase()
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Room A", Zone: 1},
+		},
+		Mobs: []parser.Mob{},
+		Objs: []parser.Obj{},
+	}
+	w, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	m := newTestManager(t, w, database)
+	s := makeTestSession(t, m, "OnlinePlayer", 1001, true)
+
+	// Create offline player in DB
+	err = database.CreatePlayer(&db.PlayerRecord{
+		Name:     "OfflineHero",
+		Level:    25,
+		Class:    game.ClassWarrior,
+		Title:    "the Veteran of the North",
+		RoomVNum: 1001,
+	})
+	if err != nil {
+		t.Fatalf("CreatePlayer failed: %v", err)
+	}
+
+	// 1. No args
+	if err := cmdWhois(s, nil); err != nil {
+		t.Fatalf("cmdWhois nil args: %v", err)
+	}
+	if got := readSessionText(t, s); got != "For whom do you wish to search?\r\n" {
+		t.Errorf("no-arg got %q, want %q", got, "For whom do you wish to search?\r\n")
+	}
+
+	// 2. Offline player lookup (persisted title)
+	if err := cmdWhois(s, []string{"OfflineHero"}); err != nil {
+		t.Fatalf("cmdWhois: %v", err)
+	}
+	wantOffline := fmt.Sprintf("[%2d %s] %s %s\r\n", 25, "Wa", "OfflineHero", "the Veteran of the North")
+	if got := readSessionText(t, s); got != wantOffline {
+		t.Errorf("offline whois: got %q, want %q", got, wantOffline)
+	}
+
+	// 3. Unknown player lookup
+	if err := cmdWhois(s, []string{"NoSuchHero"}); err != nil {
+		t.Fatalf("cmdWhois: %v", err)
+	}
+	if got := readSessionText(t, s); got != "There is no such player.\r\n" {
+		t.Errorf("unknown whois: got %q, want %q", got, "There is no such player.\r\n")
 	}
 }
