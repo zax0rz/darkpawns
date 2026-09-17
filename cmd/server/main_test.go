@@ -161,6 +161,30 @@ func TestServerBootRequiresDatabaseURL(t *testing.T) {
 	}
 }
 
+// The database refusal advertises DP_ALLOW_NO_DB. Before this test, following
+// that hint exactly reproduced the same refusal: the missing-URL check ignored
+// the variable, which was only consulted later on connection failure. A message
+// that names an escape hatch and then ignores it is the defect this whole pass
+// exists to remove.
+func TestAllowNoDBHonouredWhenURLIsMissing(t *testing.T) {
+	_, out := bootServer(t,
+		[]string{"-world", fakeWorld(t)},
+		"ENVIRONMENT=development",
+		"DATABASE_URL=",
+		"DP_ALLOW_NO_DB=1",
+	)
+	if strings.Contains(out, "database URL required") {
+		t.Fatalf("DP_ALLOW_NO_DB=1 was ignored; the hint the refusal prints does not work\n%s", out)
+	}
+	// Boot gets past the database gate and on to the world, which is as far as a
+	// fake world tree goes: the parse happens before db.New, so the explicit
+	// no-persistence warning is not reachable from here. Passing the gate is the
+	// whole claim.
+	if !strings.Contains(out, "Loading world") {
+		t.Errorf("expected boot to reach the world load, got:\n%s", out)
+	}
+}
+
 func TestServerBootRejectsShortJWTSecretOutsideDevelopment(t *testing.T) {
 	code, out := bootServer(t,
 		[]string{"-world", fakeWorld(t), "-db", "postgres://unused"},

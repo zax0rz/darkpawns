@@ -224,12 +224,20 @@ func main() {
 	if *dbURL == "" {
 		*dbURL = os.Getenv("DATABASE_URL")
 	}
-	if *dbURL == "" {
+	if *dbURL == "" && os.Getenv("DP_ALLOW_NO_DB") != "1" {
 		// No honest default exists here: the role, database name and password
 		// are the operator's choices. So the refusal carries the one URL that
 		// works on a stock local PostgreSQL, where TCP wants a password but the
 		// Unix socket authenticates by peer identity, plus the documented way
 		// out for ephemeral runs.
+		//
+		// DP_ALLOW_NO_DB is honoured here and not only on connection failure,
+		// because the message names it: a refusal that advertises an escape
+		// hatch and then ignores it is the same defect as help that points at a
+		// directory which does not exist. An empty URL falls through to db.New
+		// below, which fails and takes the explicitly-allowed no-persistence
+		// path. cmd/dp-oracle-diff sets this and does not guarantee a
+		// DATABASE_URL in the environment it builds.
 		slog.Error("database URL required; refusing to start without persistence",
 			"hint", "export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql' (local Unix socket, peer auth)",
 			"or", "pass -db postgres://user:password@host:5432/darkpawns?sslmode=disable",
