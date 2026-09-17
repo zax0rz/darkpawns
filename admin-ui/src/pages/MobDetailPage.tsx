@@ -2,12 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { CardSkeleton } from '../components/Skeleton';
+import { positionLabel, sexLabel, raceLabel } from '../lib/gameLabels';
 
-const sexLabels = ['Male', 'Female', 'Neutral'];
-const positionLabels = [
-  'Standing', 'Sitting', 'Fighting', 'Sleeping', 'Resting',
-  'Stunned', 'Hanging', 'Prone', 'Dead', 'Incapacitated', 'Stunned',
-];
 
 export function MobDetailPage() {
   const { vnum } = useParams<{ vnum: string }>();
@@ -69,9 +65,9 @@ export function MobDetailPage() {
           <StatBlock label="EXP" value={mob.exp.toLocaleString()} />
           <StatBlock label="Gold" value={mob.gold.toLocaleString()} />
           <StatBlock label="Alignment" value={mob.alignment === 0 ? 'Neutral' : mob.alignment > 0 ? `Good (+${mob.alignment})` : `Evil (${mob.alignment})`} />
-          <StatBlock label="Sex" value={sexLabels[mob.sex] || `Unknown (${mob.sex})`} />
-          <StatBlock label="Position" value={positionLabels[mob.position] || `Unknown (${mob.position})`} />
-          <StatBlock label="Race" value={String(mob.race)} />
+          <StatBlock label="Sex" value={sexLabel(mob.sex)} />
+          <StatBlock label="Position" value={positionLabel(mob.position)} />
+          <StatBlock label="Race" value={raceLabel(mob.race)} />
         </div>
       </div>
 

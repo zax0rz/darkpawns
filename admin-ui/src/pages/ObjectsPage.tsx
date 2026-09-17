@@ -3,18 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, type Obj } from '../api/client';
 import { TableSkeleton } from '../components/Skeleton';
-
-const itemTypeLabels: Record<number, string> = {
-  0: 'Light', 1: 'Scroll', 2: 'Wand', 3: 'Staff', 4: 'Weapon',
-  5: 'Fire Weapon', 6: 'Missile', 7: 'Treasure', 8: 'Armor', 9: 'Potion',
-  10: 'Worn', 11: 'Furniture', 12: 'Trash', 13: 'Container', 14: 'Note',
-  15: 'Drink Container', 16: 'Key', 17: 'Food', 18: 'Money', 19: 'Pen',
-  20: 'Boat', 21: 'Fountain', 22: 'Campfire', 23: 'Corpse',
-};
-
-function itemTypeLabel(flag: number): string {
-  return itemTypeLabels[flag] || `Type ${flag}`;
-}
+import { itemTypeLabel } from '../lib/gameLabels';
 
 export function ObjectsPage() {
   const [search, setSearch] = useState('');
