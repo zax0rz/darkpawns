@@ -1,39 +1,80 @@
-import { Terminal } from 'xterm';
-import { FitAddon } from '@xterm/addon-fit';
+// The one MUD client. Three surfaces speak this protocol — the self-host splash
+// (web/public), the /play page on darkpawns.org, and the admin console's
+// Terminal — and until 2026-09-17 each carried its own implementation of it.
+// They had drifted apart in both directions, and each had a defect the other
+// two did not:
+//
+//   splash   rendered `state` into the terminal as invented prose, so every
+//            room appeared twice: once as the game wrote it, once paraphrased
+//   admin    displayed char_create prompts but never sent char_input, so
+//            character creation could not be completed there at all
+//   all three dropped `prompt` and `token_refresh`, which the server sends
+//
+// Terminal construction stays with the host: the three run different xterm
+// versions and mount differently (a DOM id here, a React ref there), and that
+// difference is legitimate. What must not differ — the wire protocol, the
+// login and character-creation state machine, typeahead, and secret masking —
+// lives here and is written once.
+//
+// This file is served verbatim to the splash, which has no build step, so it
+// must stay plain ESM with no bare-specifier imports. The two bundled hosts
+// import it by relative path.
+//
+// Panels are optional. A host that provides the panel elements gets minimap,
+// room contents, inventory/equipment and target; one that does not gets the
+// terminal and status bar alone. Nothing here requires an element to exist.
 
-function startClient() {
+// Vitals thresholds. Exported because the admin console renders its status bar
+// as React components and so cannot use the DOM writers below — without a
+// shared definition the two would drift, which is the failure this file exists
+// to end. The bands are the same ones the bars have always used.
+export function pct(cur, max) {
+  return max > 0 ? Math.round((cur / max) * 100) : 0;
+}
+
+export function hpColor(p) {
+  if (p > 75) return '#4a8a4a';
+  if (p > 25) return '#b8960a';
+  return '#8b0000';
+}
+
+export function manaColor(p) {
+  if (p > 75) return '#3a6a9a';
+  if (p > 25) return '#2a5a7a';
+  return '#1a3a5a';
+}
+
+export function moveColor(p) {
+  if (p > 75) return '#6a8a3a';
+  if (p > 25) return '#8a7a2a';
+  return '#5a4a1a';
+}
+
+/**
+ * Attach a Dark Pawns client to a terminal.
+ *
+ * @param {object}   options
+ * @param {object}   options.terminal  an opened xterm Terminal, owned by the host
+ * @param {string}   [options.wsUrl]   defaults to /ws on the current origin
+ * @param {Document} [options.doc]     document to query for optional panels
+ * @returns {{ connect: () => void, disconnect: () => void }}
+ */
+export function createMudClient(options) {
   'use strict';
 
+  const term = options.terminal;
+  const doc = options.doc || document;
   const params = new URLSearchParams(location.search);
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = params.get('host') || `${proto}//${location.host}/ws`;
+  const wsUrl =
+    options.wsUrl || params.get('host') || `${proto}//${location.host}/ws`;
 
-  const term = new Terminal({
-    cursorBlink: true,
-    // Game text (MOTD, room/help files) uses bare "\n" line endings. Without
-    // convertEol, xterm treats a lone LF as line-feed-only — the cursor drops a
-    // row but keeps its column — producing runaway "staircase" indentation.
-    // convertEol makes every "\n" behave as "\r\n" so lines return to column 0.
-    convertEol: true,
-    fontSize: 15,
-    fontFamily: '"IM Fell English", "Courier New", monospace',
-    theme: {
-      background: '#0a0908',
-      foreground: '#c8b896',
-      cursor: '#8b0000',
-      selectionBackground: '#3a2a1a',
-    },
-  });
-  const fitAddon = new FitAddon();
-  term.loadAddon(fitAddon);
-  term.open(document.getElementById('terminal'));
-  fitAddon.fit();
-
-  window.addEventListener('resize', () => fitAddon.fit());
-
-  const statusEl = document.querySelector('.conn-status');
-  const reconnectBtn = document.getElementById('reconnect-btn');
-  const statusBar = document.getElementById('status-bar');
+  // Every one of these is optional. The splash has the connection chrome and
+  // the status bar but none of the sidebar panels; the admin Terminal has
+  // neither. Absent elements simply mean that feature does not render.
+  const statusEl = doc.querySelector('.conn-status');
+  const reconnectBtn = doc.getElementById('reconnect-btn');
+  const statusBar = doc.getElementById('status-bar');
   let inputBuffer = '';
   let ws;
 
@@ -57,30 +98,8 @@ function startClient() {
     })
     .catch(err => console.warn('Failed to load world map for minimap:', err));
 
-  function pct(cur, max) {
-    return max > 0 ? Math.round((cur / max) * 100) : 0;
-  }
-
-  function hpColor(p) {
-    if (p > 75) return '#4a8a4a';
-    if (p > 25) return '#b8960a';
-    return '#8b0000';
-  }
-
-  function manaColor(p) {
-    if (p > 75) return '#3a6a9a';
-    if (p > 25) return '#2a5a7a';
-    return '#1a3a5a';
-  }
-
-  function moveColor(p) {
-    if (p > 75) return '#6a8a3a';
-    if (p > 25) return '#8a7a2a';
-    return '#5a4a1a';
-  }
-
   function updateBar(id, cur, max, colorFn) {
-    const bar = document.getElementById(id);
+    const bar = doc.getElementById(id);
     if (!bar) return;
     const p = pct(cur, max);
     bar.style.width = (max > 0 ? p : 0) + '%';
@@ -88,23 +107,29 @@ function startClient() {
   }
 
   function updateStatusBar() {
+    // Fires before the DOM guard below. The admin console renders its status
+    // bar from React state rather than from elements this module can write to,
+    // so it takes the vitals through this hook and has no #status-bar at all.
+    if (typeof options.onPlayerState === 'function') {
+      options.onPlayerState(Object.assign({}, playerState));
+    }
     if (!statusBar) return;
     updateBar('hp-bar', playerState.health, playerState.maxHealth, hpColor);
-    const hpText = document.getElementById('hp-text');
+    const hpText = doc.getElementById('hp-text');
     if (hpText) hpText.textContent = playerState.maxHealth > 0 ? `${playerState.health}/${playerState.maxHealth}` : '—';
 
     updateBar('mana-bar', playerState.mana, playerState.maxMana, manaColor);
-    const manaText = document.getElementById('mana-text');
+    const manaText = doc.getElementById('mana-text');
     if (manaText) manaText.textContent = playerState.maxMana > 0 ? `${playerState.mana}/${playerState.maxMana}` : '—';
 
     updateBar('move-bar', playerState.move, playerState.maxMove, moveColor);
-    const moveText = document.getElementById('move-text');
+    const moveText = doc.getElementById('move-text');
     if (moveText) moveText.textContent = playerState.maxMove > 0 ? `${playerState.move}/${playerState.maxMove}` : '—';
 
-    const lvlInfo = document.getElementById('level-info');
+    const lvlInfo = doc.getElementById('level-info');
     if (lvlInfo) lvlInfo.textContent = playerState.level > 0 ? `Lv ${playerState.level}` : 'Lv —';
 
-    const goldInfo = document.getElementById('gold-info');
+    const goldInfo = doc.getElementById('gold-info');
     if (goldInfo) goldInfo.textContent = playerState.gold > 0 ? `Gold ${playerState.gold}` : 'Gold —';
 
     // Show status bar once we have any real data
@@ -139,10 +164,10 @@ function startClient() {
     if (!data) return;
 
     // Show panels and hide connection panel once logged in and receiving vars
-    const connectPanel = document.getElementById('sidebar-connect-panel');
+    const connectPanel = doc.getElementById('sidebar-connect-panel');
     if (connectPanel) connectPanel.classList.add('hidden');
 
-    const panels = document.querySelectorAll('.sidebar-panel');
+    const panels = doc.querySelectorAll('.sidebar-panel');
     panels.forEach(p => p.classList.remove('hidden'));
 
     // Update player status state
@@ -185,7 +210,7 @@ function startClient() {
   }
 
   function updateMinimap(currentVnum) {
-    const container = document.getElementById('minimap-container');
+    const container = doc.getElementById('minimap-container');
     if (!container) return;
 
     if (!worldMapData) {
@@ -258,7 +283,7 @@ function startClient() {
   let cachedItems = [];
 
   function updateRoomContents(mobs, items) {
-    const container = document.getElementById('room-contents-container');
+    const container = doc.getElementById('room-contents-container');
     if (!container) return;
 
     if (mobs !== undefined) cachedMobs = mobs || [];
@@ -305,7 +330,7 @@ function startClient() {
   let activeTab = 'inventory';
 
   function updateInventoryEquipment(inventory, equipment) {
-    const container = document.getElementById('inventory-equipment-container');
+    const container = doc.getElementById('inventory-equipment-container');
     if (!container) return;
 
     if (inventory !== undefined) cachedInventory = inventory || [];
@@ -353,18 +378,18 @@ function startClient() {
       </div>
     `;
 
-    document.getElementById('tab-btn-inv')?.addEventListener('click', () => {
+    doc.getElementById('tab-btn-inv')?.addEventListener('click', () => {
       activeTab = 'inventory';
       updateInventoryEquipment();
     });
-    document.getElementById('tab-btn-eq')?.addEventListener('click', () => {
+    doc.getElementById('tab-btn-eq')?.addEventListener('click', () => {
       activeTab = 'equipment';
       updateInventoryEquipment();
     });
   }
 
   function updateTargetDisplay(fightingData) {
-    const container = document.getElementById('target-container');
+    const container = doc.getElementById('target-container');
     if (!container) return;
 
     if (!fightingData || !fightingData.fighting || !fightingData.target) {
@@ -423,9 +448,9 @@ function startClient() {
   function handleStateRoom(data) {
     const r = data.room;
     if (!r) return;
-    const connectPanel = document.getElementById('sidebar-connect-panel');
+    const connectPanel = doc.getElementById('sidebar-connect-panel');
     if (connectPanel) connectPanel.classList.add('hidden');
-    document.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('hidden'));
+    doc.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('hidden'));
     if (r.vnum) {
       playerState.roomVnum = r.vnum;
       updateMinimap(r.vnum);
@@ -436,10 +461,18 @@ function startClient() {
   }
 
   function setStatus(state) {
-    statusEl.className = 'conn-status ' + state;
-    const label = state === 'connected' ? 'Connected' : 'Disconnected';
-    statusEl.querySelector('span:last-child').textContent = label;
-    reconnectBtn.classList.toggle('visible', state === 'disconnected');
+    // The admin console's Terminal has no connection chrome at all, so every
+    // element here is optional.
+    if (statusEl) {
+      statusEl.className = 'conn-status ' + state;
+      const label = state === 'connected' ? 'Connected' : 'Disconnected';
+      const slot = statusEl.querySelector('span:last-child');
+      if (slot) slot.textContent = label;
+    }
+    if (reconnectBtn) {
+      reconnectBtn.classList.toggle('visible', state === 'disconnected');
+    }
+    if (typeof options.onStatus === 'function') options.onStatus(state);
   }
 
   function connect() {
@@ -455,6 +488,17 @@ function startClient() {
     ws.onopen = function () {
       setStatus('connected');
       term.writeln('\x1b[32mConnected.\x1b[0m\r\n');
+      // The admin console already knows who is signed in, so it names the
+      // character instead of asking. Everywhere else the server owns the
+      // question and the player answers it.
+      if (options.autoLogin) {
+        term.writeln('\x1b[2mSigning in as ' + options.autoLogin + '.\x1b[0m');
+        awaitingEntryReply = true;
+        ws.send(
+          JSON.stringify({ type: 'login', data: { player_name: options.autoLogin } })
+        );
+        return;
+      }
       term.write(greetingsLogo);
       term.write('By what name do you wish to be known? ');
     };
@@ -493,10 +537,32 @@ function startClient() {
             handleStateMsg(msg.data);
             handleStateRoom(msg.data);
           }
+        } else if (msg.type === 'prompt') {
+          // Deliberately not rendered. pkg/session/session_send.go:246 states
+          // the contract: "Telnet renders it as the '> ' command prompt;
+          // WebSocket clients may ignore it." It reaches browsers for real —
+          // Manager.flushAsyncPrompts iterates every session, not just telnet
+          // ones, so an idle player who receives pulse output gets one — and
+          // before this branch existed it fell through and wrote its own JSON
+          // envelope into the terminal.
+        } else if (msg.type === 'token_refresh') {
+          // Only sessions issued a JWT receive these: maybeRefreshToken
+          // returns early unless tokenIssuedAt is set, and a browser that
+          // logs in by name never has one. Recognised so that an agent-shaped
+          // session driving this client cannot corrupt the terminal with it.
         } else {
-          term.write(evt.data);
+          // Never write an unrecognised frame to the terminal. evt.data is the
+          // raw JSON envelope, so doing that prints protocol at the player
+          // instead of game text — which is exactly how `prompt` surfaced.
+          // Game text arrives as 'text' or 'event' and is handled above.
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('mud-client: unhandled message type', msg.type);
+          }
         }
       } catch {
+        // Not JSON at all. The server frames everything it sends, so this is
+        // either a proxy injecting something or a protocol change; the raw
+        // text is the most useful thing to show and cannot be an envelope.
         term.write(evt.data);
       }
     };
@@ -572,18 +638,39 @@ function startClient() {
     }
   }
 
-  reconnectBtn.addEventListener('click', function () {
+  function resetSession() {
     loggedIn = false;
     inCharCreation = false;
     charInputSecret = false;
     awaitingEntryReply = false;
     inputBuffer = '';
     queuedInput = '';
-    connect();
-  });
+  }
+
+  if (reconnectBtn) {
+    reconnectBtn.addEventListener('click', function () {
+      resetSession();
+      connect();
+    });
+  }
 
   connect();
-}
 
-if (document.readyState === 'complete') startClient();
-else window.addEventListener('load', startClient, { once: true });
+  // The host owns the lifetime: a React component unmounts, a page does not.
+  // Without disconnect() the admin console's Terminal would leak a socket on
+  // every navigation away from it.
+  return {
+    connect: function () {
+      resetSession();
+      connect();
+    },
+    disconnect: function () {
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+      }
+      resetSession();
+    },
+  };
+}

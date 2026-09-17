@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import 'xterm/css/xterm.css';
+import '@xterm/xterm/css/xterm.css';
 ---
 
 <Base title="Play Dark Pawns" description="Enter Dark Pawns in your browser or connect with a desktop MUD client.">
@@ -83,7 +83,38 @@ import 'xterm/css/xterm.css';
   </section>
 
   <script>
-    import '../scripts/client.js';
+    // The client itself lives in web/public so the self-host splash, which has
+    // no build step, can serve the same file verbatim. Vite bundles it here.
+    // Terminal construction stays with the host: this page picks the fonts and
+    // theme that match the site, the admin console picks its own.
+    import { Terminal } from '@xterm/xterm';
+    import { FitAddon } from '@xterm/addon-fit';
+    import { createMudClient } from '../../../web/public/mud-client.js';
+
+    const term = new Terminal({
+      cursorBlink: true,
+      // Game text (MOTD, room and help files) uses bare "\n" line endings.
+      // Without convertEol, xterm treats a lone LF as line-feed-only: the
+      // cursor drops a row but keeps its column, producing runaway "staircase"
+      // indentation. convertEol makes every "\n" behave as "\r\n", so lines
+      // return to column 0.
+      convertEol: true,
+      fontSize: 15,
+      fontFamily: '"IM Fell English", "Courier New", monospace',
+      theme: {
+        background: '#0a0908',
+        foreground: '#c8b896',
+        cursor: '#8b0000',
+        selectionBackground: '#3a2a1a',
+      },
+    });
+    const fit = new FitAddon();
+    term.loadAddon(fit);
+    term.open(document.getElementById('terminal'));
+    fit.fit();
+    window.addEventListener('resize', () => fit.fit());
+
+    createMudClient({ terminal: term });
   </script>
 </Base>
 
