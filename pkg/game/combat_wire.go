@@ -339,27 +339,32 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		}
 	}
 
-	// GetWeaponInfo returns the wielded weapon's message attack-type for the
-	// named attacker — fight.c:1792-1806 one_hit w_type derivation. The wType
-	// return is the 0-based OFFSET (C's GET_OBJ_VAL(wielded,3), e.g. 11 for a
+	// GetWeaponInfo returns the wielded weapon's message attack-type and blessed
+	// status for the named attacker — fight.c:1792-1806 one_hit w_type / ITEM_BLESS.
+	// The wType return is the 0-based OFFSET (C's GET_OBJ_VAL(wielded,3), e.g. 11 for a
 	// piercing dagger, 3 for slash) that SendWeaponMessage adds TYPE_HIT to.
-	// damDice/damSize/isBlessed are unused by the current message path (left
-	// zero) — only wType is consumed by performOneHit. For mobs, wType is the
+	// damDice/damSize are unused by the current message path (left zero) — only
+	// wType and isBlessed are consumed by performOneHit. For mobs, wType is the
 	// parsed BareHandAttack field copied by read_mobile into mob_specials, which
 	// is C's attack_type fallback when no weapon is wielded.
 	cb.GetWeaponInfo = func(name string) (wType, damDice, damSize int, isBlessed bool) {
 		if p, ok := w.GetPlayer(name); ok && p.Equipment != nil {
-			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil && weapon.Prototype != nil {
+			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
 				// Values[3] holds the weapon attack type (pierce=11, slash=3,
 				// bludgeon=5, …) — the offset into attack_hit_text, NOT a
 				// TYPE_* constant. fight.c:1795 w_type = val3 + TYPE_HIT, and
 				// SendWeaponMessage performs that +TYPE_HIT itself.
-				return weapon.Prototype.Values[3], 0, 0, false
+				return weapon.Prototype.Values[3], 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
 			}
 			return 0, 0, 0, false // barehand → "hit"
 		}
-		if m := w.GetMobByName(name); m != nil && m.Prototype != nil {
-			return m.Prototype.BareHandAttack, 0, 0, false
+		if m := w.GetMobByName(name); m != nil {
+			if weapon, wielded := m.Equipment[int(SlotWield)]; wielded && weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
+				return weapon.Prototype.Values[3], 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
+			}
+			if m.Prototype != nil {
+				return m.Prototype.BareHandAttack, 0, 0, false
+			}
 		}
 		return 0, 0, 0, false // mob / unknown → "hit"
 	}
@@ -371,6 +376,13 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			}
 		}
 		return ""
+	}
+
+	cb.GetDrunk = func(name string) int {
+		if p, ok := w.GetPlayer(name); ok {
+			return p.GetCondition(CondDrunk)
+		}
+		return 0
 	}
 
 	// -------------------------------------------------------------------------

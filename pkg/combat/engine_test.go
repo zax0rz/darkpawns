@@ -212,6 +212,88 @@ func TestPerformInitialAttackResolvesExactlyOneSynchronousHit(t *testing.T) {
 	}
 }
 
+func TestPerformInitialAttack_ModifiersApplied(t *testing.T) {
+	// Base: attacker level 1 NPC (calcThaco=20), defender AC 100 standing (victimAC=10)
+	// Roll 9 misses without bless; with bless, calcThaco=19 and roll 9 hits (takes damage).
+	ce := NewCombatEngine()
+	isBlessed := false
+	drunkVal := 0
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+	ce.SetCallbacks(&GameCallbacks{
+		GetWeaponInfo: func(chName string) (wType, damDice, damSize int, blessed bool) {
+			return 0, 0, 0, isBlessed
+		},
+		GetDrunk: func(chName string) int {
+			return drunkVal
+		},
+	})
+
+	attacker := &mockCombatant{
+		name: "Hero", room: 1, level: 1, hp: 20, maxHP: 20,
+		position: PosStanding, str: 13, dex: 10, intVal: 13, wis: 13,
+		damageRoll: DiceRoll{Num: 1, Sides: 1},
+	}
+	defender := &mockCombatant{
+		name: "Monster", room: 1, level: 1, hp: 20, maxHP: 20,
+		position: PosStanding, ac: 100, dex: 13, intVal: 10, wis: 10,
+	}
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat() error = %v", err)
+	}
+
+	// 1. Without bless, roll 9 misses (HP remains 20)
+	isBlessed = false
+	WithRoller(NewScriptedRoller([]int{9, 9}), func() {
+		if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+			t.Fatalf("PerformInitialAttack error: %v", err)
+		}
+	})
+	if defender.GetHP() != 20 {
+		t.Fatalf("unblessed roll 9 should miss; defender HP = %d, want 20", defender.GetHP())
+	}
+
+	// 2. With bless, roll 9 hits (HP reduced)
+	isBlessed = true
+	WithRoller(NewScriptedRoller([]int{9, 1, 9}), func() { // roll 9 to-hit, roll 1 damage
+		if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+			t.Fatalf("PerformInitialAttack error: %v", err)
+		}
+	})
+	if defender.GetHP() >= 20 {
+		t.Fatalf("blessed roll 9 should hit; defender HP = %d, want < 20", defender.GetHP())
+	}
+
+	// Reset defender HP
+	defender.hp = 20
+	isBlessed = false
+
+	// 3. Roll 10 hits when sober (drunkVal=0)
+	drunkVal = 0
+	WithRoller(NewScriptedRoller([]int{10, 1, 10}), func() {
+		if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+			t.Fatalf("PerformInitialAttack error: %v", err)
+		}
+	})
+	if defender.GetHP() >= 20 {
+		t.Fatalf("sober roll 10 should hit; defender HP = %d, want < 20", defender.GetHP())
+	}
+
+	// Reset defender HP
+	defender.hp = 20
+
+	// 4. Roll 10 misses when drunk (drunkVal=2, +2 THAC0 penalty)
+	drunkVal = 2
+	WithRoller(NewScriptedRoller([]int{10, 10}), func() {
+		if err := ce.PerformInitialAttack(attacker, defender); err != nil {
+			t.Fatalf("PerformInitialAttack error: %v", err)
+		}
+	})
+	if defender.GetHP() != 20 {
+		t.Fatalf("drunk roll 10 should miss; defender HP = %d, want 20", defender.GetHP())
+	}
+}
+
 func TestPerformInitialAttackSkipsDeadDefenderAfterHitDraws(t *testing.T) {
 	attacker := &mockCombatant{
 		name: "Guard", room: 1, level: 20, hp: 100, maxHP: 100,

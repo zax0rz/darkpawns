@@ -50,7 +50,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	// The passed skill roll calls hit(ch, vict, SKILL_DISEMBOWEL). That path
 	// consumes the ordinary d20, then consumes the wielded weapon's dice even
 	// though disembowel replaces the rolled damage with level*2+damroll.
-	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+	if !combat.CalculateHitChance(ch, target, ch.HitModifiers()) {
 		return SkillResult{
 			Success:             false,
 			SkillMsgType:        SkillDisembowelNum,

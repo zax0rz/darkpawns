@@ -106,7 +106,7 @@ func (w *World) mobBackstab(me *MobInstance, vict combat.Combatant) {
 		return
 	}
 
-	if !combat.CalculateHitChance(me, vict, combat.HitModifiers{}) {
+	if !combat.CalculateHitChance(me, vict, me.HitModifiers()) {
 		w.mobBackstabDamage(me, vict, 0)
 		return
 	}

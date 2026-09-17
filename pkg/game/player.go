@@ -540,3 +540,18 @@ func (p *Player) HasBoat() bool {
 	}
 	return false
 }
+
+// HitModifiers returns combat modifiers for the player's current equipment and conditions.
+// Source: fight.c:1793 (ITEM_BLESS weapon bonus) and fight.c:1809 (GET_COND(DRUNK) penalty).
+func (p *Player) HitModifiers() combat.HitModifiers {
+	var blessed bool
+	if p.Equipment != nil {
+		if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
+			blessed = weapon.HasExtraFlag(0, itemExtraBless)
+		}
+	}
+	return combat.HitModifiers{
+		WeaponBlessed: blessed,
+		DrunkLevel:    p.GetCondition(CondDrunk),
+	}
+}

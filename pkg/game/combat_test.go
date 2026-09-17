@@ -271,3 +271,70 @@ func TestBackstabMult(t *testing.T) {
 		}
 	}
 }
+
+func TestPlayer_HitModifiers(t *testing.T) {
+	player := NewPlayer(1, "Hero", 1001)
+	mods := player.HitModifiers()
+	if mods.WeaponBlessed || mods.DrunkLevel != 0 {
+		t.Fatalf("bare player HitModifiers = %+v, want all zero", mods)
+	}
+
+	player.SetCondition(CondDrunk, 5)
+	mods = player.HitModifiers()
+	if mods.DrunkLevel != 5 {
+		t.Fatalf("drunk player HitModifiers.DrunkLevel = %d, want 5", mods.DrunkLevel)
+	}
+
+	// Equip normal weapon
+	plainWeapon := &ObjectInstance{
+		Prototype: &parser.Obj{
+			TypeFlag: ITEM_WEAPON,
+		},
+	}
+	_ = player.Equipment.SetSlot(SlotWield, plainWeapon)
+	mods = player.HitModifiers()
+	if mods.WeaponBlessed {
+		t.Fatalf("plain weapon reported blessed = true, want false")
+	}
+
+	if err := player.Equipment.Unequip(SlotWield, player.Inventory); err != nil {
+		t.Fatalf("failed to unequip plain weapon: %v", err)
+	}
+
+	// Equip blessed weapon
+	blessedWeapon := &ObjectInstance{
+		Prototype: &parser.Obj{
+			TypeFlag:   ITEM_WEAPON,
+			ExtraFlags: [4]int{1 << itemExtraBless, 0, 0, 0},
+		},
+	}
+	if err := player.Equipment.SetSlot(SlotWield, blessedWeapon); err != nil {
+		t.Fatalf("failed to equip blessed weapon: %v", err)
+	}
+	mods = player.HitModifiers()
+	if !mods.WeaponBlessed {
+		t.Fatalf("blessed weapon reported blessed = false, want true")
+	}
+}
+
+func TestMobInstance_HitModifiers(t *testing.T) {
+	mob := &MobInstance{
+		Equipment: make(map[int]*ObjectInstance),
+	}
+	mods := mob.HitModifiers()
+	if mods.WeaponBlessed {
+		t.Fatalf("unarmed mob HitModifiers.WeaponBlessed = true, want false")
+	}
+
+	blessedWeapon := &ObjectInstance{
+		Prototype: &parser.Obj{
+			TypeFlag:   ITEM_WEAPON,
+			ExtraFlags: [4]int{1 << itemExtraBless, 0, 0, 0},
+		},
+	}
+	mob.Equipment[int(SlotWield)] = blessedWeapon
+	mods = mob.HitModifiers()
+	if !mods.WeaponBlessed {
+		t.Fatalf("armed mob with blessed weapon HitModifiers.WeaponBlessed = false, want true")
+	}
+}

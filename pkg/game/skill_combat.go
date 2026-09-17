@@ -106,7 +106,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// full THAC0 d20 to-hit check (fight.c:1825-1830) that can still miss.
 	// Go previously skipped this roll — every successful backstab landed.
 	// (DP-1033)
-	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+	if !combat.CalculateHitChance(ch, target, ch.HitModifiers()) {
 		// To-hit miss: C's hit() calls damage(ch, vict, 0, SKILL_BACKSTAB) on a
 		// miss too, so the same skill_message path emits the miss_msg (R1/R4).
 		// C's improve_skill(ch, SKILL_BACKSTAB) runs AFTER hit() returns
@@ -785,7 +785,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	// calls damage(..., 0, SKILL_CIRCLE), while a hit uses the weapon dice,
 	// strength-to-damage, damroll, the exact integer position multiplier, and
 	// backstab_mult(level)/3. Both paths then use skill_message set 173.
-	if !combat.CalculateHitChance(ch, target, combat.HitModifiers{}) {
+	if !combat.CalculateHitChance(ch, target, ch.HitModifiers()) {
 		return SkillResult{
 			Success:             false,
 			SkillMsgType:        SkillCircleNum,

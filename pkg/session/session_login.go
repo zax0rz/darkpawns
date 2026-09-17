@@ -19,6 +19,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// timingDecoyHash is a valid bcrypt hash of a value no caller can produce. It
+// gives the locked-account path the same cost as a real comparison (DP-1281).
+const timingDecoyHash = `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` // #nosec G101 -- not a credential; a fixed decoy hash for constant-time behaviour
+
 // guestSeq is a monotonic counter for generated guest names so two guests
 // never share a "Guest_NNNN" name (DP-912). The previous scheme derived the
 // suffix from time.Now().UnixNano()%10000, which collided for sequential
@@ -173,6 +177,10 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			// DP-592: Account-level lockout check for returning players.
 			if s.manager.accountLockouts != nil {
 				if locked, remaining := s.manager.accountLockouts.IsLocked(login.PlayerName); locked {
+					if login.Password != "" {
+						// Mask timing difference against password check (DP-1281)
+						_ = bcrypt.CompareHashAndPassword([]byte(timingDecoyHash), []byte(login.Password))
+					}
 					mins := int(remaining.Minutes()) + 1
 					s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
 					s.CloseSend()
@@ -197,10 +205,16 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if rec.Password != "" && bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)) != nil {
 				s.manager.loginAttempts.RecordFailure(ip)
 				if s.manager.accountLockouts != nil {
-					s.manager.accountLockouts.RecordFailure(rec.Name)
+					if newlyLocked := s.manager.accountLockouts.RecordFailure(rec.Name); newlyLocked {
+						_, remaining := s.manager.accountLockouts.IsLocked(rec.Name)
+						mins := int(remaining.Minutes()) + 1
+						s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
+						s.CloseSend()
+						audit.LogSecurityEvent("account_locked", "Account locked after threshold failures", rec.Name, ip)
+						return nil
+					}
 				}
-				s.loginFailures++
-				if s.loginFailures >= 3 { // C config.c max_bad_pws.
+				if s.loginFailures.Add(1) >= 3 { // C config.c max_bad_pws.
 					s.sendCharCreatePrompt("closing", "Wrong password... disconnecting.\r\n", nil)
 					s.CloseSend()
 				} else {
@@ -221,7 +235,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			s.charCreating = false
 			s.charStage = ""
 			s.charPassword = ""
-			s.loginFailures = 0
+			s.loginFailures.Store(0)
 			s.player = p
 			s.authenticated = true
 			s.menuPasswordHash = rec.Password
