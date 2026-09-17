@@ -239,9 +239,13 @@ function SidebarContent({
             end={item.to === '/admin/'}
             className={({ isActive }) =>
               `flex items-center gap-2.5 px-3.5 py-2.5 rounded-none text-xs uppercase tracking-wider font-mono border transition-all ${
+                // Hover used to reproduce the whole active treatment, which
+                // made the current page indistinguishable from whatever the
+                // cursor was resting on. Hover is now the tonal shift alone;
+                // the accent and the rule belong to the active item.
                 isActive
                   ? 'bg-paper-deep text-accent border-rule font-extrabold'
-                  : 'text-ink border-transparent hover:bg-paper-deep hover:text-accent hover:border-rule/30'
+                  : 'text-ink border-transparent hover:bg-paper-deep/60'
               }`
             }
           >
