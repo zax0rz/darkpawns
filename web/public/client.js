@@ -6,6 +6,42 @@
   if (el) el.textContent = window.location.hostname + ' port 7777';
 })();
 
+// Liveness for the page the setup wizard sends people to on success
+// (docs/specs/tui-setup-wizard.md). /health is unauthenticated on this server
+// and answers the one question a self-hoster has just opened the page to ask.
+//
+// Player and world counts are deliberately absent. /metrics exposes them, but
+// every gauge reads zero: the collectors are registered and cmd/server wires
+// only the handler, never a writer, so the numbers would be honest-looking
+// zeros rather than readings. Nothing here is invented.
+(function serverStatus() {
+  var section = document.querySelector('.status');
+  var text = document.getElementById('status-text');
+  if (!section || !text) return;
+
+  function setState(state, message) {
+    section.classList.remove('is-up', 'is-down');
+    if (state) section.classList.add(state);
+    text.textContent = message;
+  }
+
+  function refresh() {
+    fetch('/health', { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('health ' + res.status);
+        setState('is-up', 'This server is running');
+      })
+      .catch(function () {
+        // A failed request proves the page could not reach the server, not
+        // that the server is down; say the smaller thing.
+        setState('is-down', 'Cannot reach this server');
+      });
+  }
+
+  refresh();
+  setInterval(refresh, 15000);
+})();
+
 (function () {
   'use strict';
 
