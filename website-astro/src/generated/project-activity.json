@@ -1,16 +1,8 @@
 {
-  "generatedAt": "2026-09-05T08:12:00-04:00",
+  "generatedAt": "2026-09-17T12:16:23-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
-    {
-      "week": "2026-06-15",
-      "commits": 15
-    },
-    {
-      "week": "2026-06-22",
-      "commits": 78
-    },
     {
       "week": "2026-06-29",
       "commits": 50
@@ -49,39 +41,47 @@
     },
     {
       "week": "2026-08-31",
-      "commits": 16
+      "commits": 37
+    },
+    {
+      "week": "2026-09-07",
+      "commits": 29
+    },
+    {
+      "week": "2026-09-14",
+      "commits": 23
     }
   ],
   "recentCommits": [
     {
-      "sha": "1e5af3bf8cfa65f24f8892de711bc94106534214",
-      "date": "2026-09-05",
-      "title": "Merge remote-tracking branch 'origin/main' into website-deslop",
-      "url": "https://github.com/zax0rz/darkpawns/commit/1e5af3bf8cfa65f24f8892de711bc94106534214"
+      "sha": "a4479a6eeb889612df9a5cda71dd1461d31bc2fc",
+      "date": "2026-09-17",
+      "title": "Merge pull request #1484 from zax0rz/admin/fix-ledger-gaps",
+      "url": "https://github.com/zax0rz/darkpawns/commit/a4479a6eeb889612df9a5cda71dd1461d31bc2fc"
     },
     {
-      "sha": "3712e4bdffcfaff7235e2ff1dbfe3776a36b4088",
-      "date": "2026-09-05",
-      "title": "feat(archive): make the hub a contents page instead of a stack of summaries",
-      "url": "https://github.com/zax0rz/darkpawns/commit/3712e4bdffcfaff7235e2ff1dbfe3776a36b4088"
+      "sha": "66b4b1f4879628e4ff1039f69ea8c01675bc9f16",
+      "date": "2026-09-17",
+      "title": "Merge pull request #1483 from zax0rz/admin/fix-ledger-1",
+      "url": "https://github.com/zax0rz/darkpawns/commit/66b4b1f4879628e4ff1039f69ea8c01675bc9f16"
     },
     {
-      "sha": "a9687c08d46d9c7668217418933efc64b896c88b",
-      "date": "2026-09-04",
-      "title": "feat(search): index every word, not just slugs",
-      "url": "https://github.com/zax0rz/darkpawns/commit/a9687c08d46d9c7668217418933efc64b896c88b"
+      "sha": "dddfda4d127d3cf0e80a90e31f9a8427ea3871d6",
+      "date": "2026-09-17",
+      "title": "Merge pull request #1482 from zax0rz/zdgreene/command-fidelity-batch-1",
+      "url": "https://github.com/zax0rz/darkpawns/commit/dddfda4d127d3cf0e80a90e31f9a8427ea3871d6"
     },
     {
-      "sha": "5c0a69a2513a5424dac3c24b8c6cbc2a86b5003b",
-      "date": "2026-09-04",
-      "title": "chore(web): remove Hugo now that the Astro migration is complete",
-      "url": "https://github.com/zax0rz/darkpawns/commit/5c0a69a2513a5424dac3c24b8c6cbc2a86b5003b"
+      "sha": "6ee3948a9f35598152c3638fae82f06bfe96ca11",
+      "date": "2026-09-17",
+      "title": "Merge pull request #1481 from zax0rz/zdgreene/reek-med-batch-1281-1284",
+      "url": "https://github.com/zax0rz/darkpawns/commit/6ee3948a9f35598152c3638fae82f06bfe96ca11"
     },
     {
-      "sha": "310c28d3f473fc75f28930cb42301723fcfe7a69",
-      "date": "2026-09-04",
-      "title": "Merge remote-tracking branch 'origin/main' into website-deslop",
-      "url": "https://github.com/zax0rz/darkpawns/commit/310c28d3f473fc75f28930cb42301723fcfe7a69"
+      "sha": "b512f667750256539089c7763d4a7ff21693559b",
+      "date": "2026-09-17",
+      "title": "Merge pull request #1480 from zax0rz/zdgreene/reek-low-batch-1275-1280",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b512f667750256539089c7763d4a7ff21693559b"
     }
   ],
   "pullRequests": [

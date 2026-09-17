@@ -77,7 +77,6 @@ export function MetricsCard() {
         <MetricItem label="GC Cycles" value={String(metrics.gc_cycles)} />
         <MetricItem label="GC Pause" value={formatDuration(metrics.pause_total_ns)} />
         <MetricItem label="Last GC" value={metrics.last_gc} />
-        <MetricItem label="Uptime" value={metrics.uptime} />
       </div>
     </div>
   );

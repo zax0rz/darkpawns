@@ -68,7 +68,8 @@ export function DashboardPage() {
           <>
             <StatCard
               label="Status"
-              value={health?.status || '...'}
+              value={health?.status === 'ok' ? 'Online' : 'Unreachable'}
+              detail={server?.uptime ? `up ${server.uptime}` : undefined}
               error={!!serverError}
               color={health?.status === 'ok' ? 'green' : 'slate'}
             />
@@ -91,7 +92,9 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* Findings Stats Row */}
+      {/* Only once there are findings: five pills reading zero say nothing the
+          "No findings yet" panel below does not already say. */}
+      {totalFindings > 0 && (
       <div className="flex flex-wrap gap-2">
         <StatPill label="Total" value={totalFindings} color="slate" />
         <StatPill label="Open" value={openCount} color="blue" />
@@ -99,13 +102,6 @@ export function DashboardPage() {
         <StatPill label="Fixed" value={fixedCount} color="green" />
         <StatPill label="Critical/High" value={criticalHighCount} color="red" />
       </div>
-
-      {/* Uptime */}
-      {server?.uptime && (
-        <div className="bg-paper-deep rounded-none border border-rule p-4">
-          <span className="text-sm text-ink-muted">Uptime: </span>
-          <span className="text-sm text-ink font-mono">{server.uptime}</span>
-        </div>
       )}
 
       {/* Live Data Cards */}
@@ -148,13 +144,12 @@ export function DashboardPage() {
           )}
         </div>
       </div>
-
-      {/* Dev note */}
-      <div className="bg-paper-deep rounded border border-dashed border-rule p-4 text-sm text-ink-muted">
-        If server stats show "...", the Go server may not be running on port
-        4350. Start it with{' '}
-        <code className="bg-paper px-1 rounded">go run ./cmd/server</code>
-      </div>
+      {serverError && (
+        <div className="bg-paper-deep border border-accent p-4 text-sm text-ink" role="status">
+          The game server is not answering on port 4350. Figures above are the
+          last values it reported.
+        </div>
+      )}
     </div>
   );
 }
@@ -207,11 +202,13 @@ function FindingRow({ finding }: { finding: Finding }) {
 function StatCard({
   label,
   value,
+  detail,
   error,
   color,
 }: {
   label: string;
   value: string;
+  detail?: string;
   error?: boolean;
   color?: 'green' | 'slate';
 }) {
@@ -229,6 +226,9 @@ function StatCard({
       >
         {error ? '—' : value}
       </div>
+      {detail && !error && (
+        <div className="text-xs text-ink-muted font-mono mt-1">{detail}</div>
+      )}
     </div>
   );
 }

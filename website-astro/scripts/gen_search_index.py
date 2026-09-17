@@ -150,7 +150,12 @@ def index_markdown_content():
                     "c": "help",
                     "s": subtype,
                     "u": f"/help/{cat}/{slug}/",
-                    "k": " ".join(set(keywords)),
+                    # Deduplicated but order-stable. A bare set reorders on
+                    # every run, because Python randomises string hashing per
+                    # process, so 261 entries changed on every regeneration
+                    # with identical keywords in a different order. That churn
+                    # dirtied the tree after every build and buried real diffs.
+                    "k": " ".join(dict.fromkeys(keywords)),
                     "d": desc,
                     "b": searchable_body(body),
                     "v": 0
