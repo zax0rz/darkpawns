@@ -261,12 +261,17 @@ per column:
 INFO converted game-store column to timestamptz column=players.locked_until
 ```
 
-Values are reinterpreted as UTC (`ALTER COLUMN ... TYPE timestamptz USING
-column AT TIME ZONE 'UTC'`), which keeps the wall clock that is stored and
-attaches UTC to it. Rows written before the upgrade therefore keep reading the
-way they already did, and every row written after it is an exact instant. UTC
-is the only reading that needs no guess: whatever zone the writing server ran
-in was never recorded, and it can differ between rows.
+Values are reinterpreted in the database session's zone (`ALTER COLUMN ... TYPE
+timestamptz USING column AT TIME ZONE current_setting('TimeZone')`), which keeps
+the wall clock that is stored and attaches that zone to it. Rows written before
+the upgrade therefore read back with the same wall clock in that zone, and every
+row written after it is an exact instant. The stored value was a wall clock with
+no zone attached, so the writing zone had to be supplied from somewhere: the
+session's zone is the one the provisioning in this document sets up, and naming
+it instead of assuming UTC is what keeps a lockout that is still in flight in
+force through the restart. A row written while the database ran in a different
+zone is read in the current one — the writing zone is not recorded anywhere, so
+no conversion can recover it.
 
 The rewrite takes an exclusive lock on the table once, at that first boot (a
 few thousand rows in `players`). Every boot after it finds the columns already

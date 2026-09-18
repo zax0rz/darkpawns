@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -227,7 +228,7 @@ func TestGameStoreTimestamptzSchema(t *testing.T) {
 // TestMigrateNaiveTimestamptz builds the pre-migration schema in a throwaway
 // table, converts it, and checks the three claims the migration owns: the types
 // change, a second run moves no value, and rows written before the conversion
-// survive with their stored wall clock read as UTC.
+// survive with their stored wall clock read in the database session's zone.
 func TestMigrateNaiveTimestamptz(t *testing.T) {
 	database := openGameStore(t, postgresDSN(t))
 	// Unique per process: this database may be shared with a concurrent run.
@@ -268,15 +269,40 @@ func TestMigrateNaiveTimestamptz(t *testing.T) {
 		}
 	}
 
+	// The expected instants are derived from the database's own zone rather
+	// than written as literals: the conversion attaches
+	// current_setting('TimeZone'), so a fixed expectation would only hold on a
+	// server whose zone happens to match it.
+	var wantCreated, wantLocked time.Time
+	if err := database.queryRow(
+		`SELECT TIMESTAMP '2000-01-01 00:00:00' AT TIME ZONE current_setting('TimeZone'),
+		        TIMESTAMP '2030-06-15 12:30:00' AT TIME ZONE current_setting('TimeZone')`,
+	).Scan(&wantCreated, &wantLocked); err != nil {
+		t.Fatalf("compute expected instants: %v", err)
+	}
 	var created, locked time.Time
 	if err := database.queryRow(`SELECT created_at, locked_until FROM `+probe+` WHERE id = 1`).Scan(&created, &locked); err != nil {
 		t.Fatalf("read converted row: %v", err)
 	}
-	if got, want := created.UTC().Format(time.RFC3339), "2000-01-01T00:00:00Z"; got != want {
-		t.Errorf("created_at = %s, want %s: the stored wall clock is kept", got, want)
+	if !created.Equal(wantCreated) {
+		t.Errorf("created_at = %v, want %v: the stored wall clock is kept in the session's zone", created, wantCreated)
 	}
-	if got, want := locked.UTC().Format(time.RFC3339), "2030-06-15T12:30:00Z"; got != want {
-		t.Errorf("locked_until = %s, want %s: the stored wall clock is kept", got, want)
+	if !locked.Equal(wantLocked) {
+		t.Errorf("locked_until = %v, want %v: the stored wall clock is kept in the session's zone", locked, wantLocked)
+	}
+
+	// The wall clock the game prints is the part that must not move, and it is
+	// not the same claim as the instant above: read back in the session's zone
+	// it is still the value that was stored.
+	var wallClock string
+	if err := database.queryRow(
+		`SELECT to_char(created_at AT TIME ZONE current_setting('TimeZone'), 'YYYY-MM-DD HH24:MI:SS')
+		   FROM ` + probe + ` WHERE id = 1`,
+	).Scan(&wallClock); err != nil {
+		t.Fatalf("read converted wall clock: %v", err)
+	}
+	if wallClock != "2000-01-01 00:00:00" {
+		t.Errorf("created_at reads back as %q in the session's zone, want %q", wallClock, "2000-01-01 00:00:00")
 	}
 
 	// The second run is the idempotency proof, and it is not cosmetic: on an
@@ -724,6 +750,95 @@ func TestRebind(t *testing.T) {
 	want := `INSERT INTO players (name, password_hash) VALUES (?, ?) ON CONFLICT DO NOTHING`
 	if got := DialectSQLite.Rebind(q); got != want {
 		t.Errorf("sqlite rebind = %q, want %q", got, want)
+	}
+}
+
+// TestExpandRepeatedPlaceholders covers the argument contract shared by the
+// dialect choke points: one argument per placeholder occurrence, in order.
+// SQLite binds positionally and already behaves that way; PostgreSQL numbers
+// distinct parameters, so a repeated marker has to be expanded or lib/pq
+// rejects the call before it reaches the server.
+func TestExpandRepeatedPlaceholders(t *testing.T) {
+	tests := []struct {
+		name      string
+		query     string
+		args      []interface{}
+		wantQuery string
+		wantArgs  []interface{}
+	}{
+		{
+			name:      "no placeholders",
+			query:     `SELECT 1`,
+			args:      nil,
+			wantQuery: `SELECT 1`,
+			wantArgs:  nil,
+		},
+		{
+			name:      "distinct placeholders unchanged",
+			query:     `SELECT $1, $2`,
+			args:      []interface{}{"a", "b"},
+			wantQuery: `SELECT $1, $2`,
+			wantArgs:  []interface{}{"a", "b"},
+		},
+		{
+			name:      "repeated marker expands one per occurrence",
+			query:     `INSERT INTO t (a, b, c) VALUES ($1, $2, $2)`,
+			args:      []interface{}{1, "same", "same"},
+			wantQuery: `INSERT INTO t (a, b, c) VALUES ($1, $2, $3)`,
+			wantArgs:  []interface{}{1, "same", "same"},
+		},
+		{
+			// The shape TestGameStoreMemoryDecay seeds with: $6 twice, one
+			// argument per occurrence.
+			name:      "trailing repeated marker (decay seed shape)",
+			query:     `VALUES ($1, $2, $3, $4, $5, $6, $6)`,
+			args:      []interface{}{1, 2, 3, 4, 5, "old", "old"},
+			wantQuery: `VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			wantArgs:  []interface{}{1, 2, 3, 4, 5, "old", "old"},
+		},
+		{
+			// The classic PostgreSQL idiom passes one argument for a marker
+			// used twice; that must pass through untouched.
+			name:      "postgres-style reuse untouched",
+			query:     `SELECT $1, $1`,
+			args:      []interface{}{"only"},
+			wantQuery: `SELECT $1, $1`,
+			wantArgs:  []interface{}{"only"},
+		},
+		{
+			name:      "argument count mismatch untouched",
+			query:     `SELECT $1, $2`,
+			args:      []interface{}{"only"},
+			wantQuery: `SELECT $1, $2`,
+			wantArgs:  []interface{}{"only"},
+		},
+		{
+			name:      "out-of-range marker untouched",
+			query:     `SELECT $1, $3`,
+			args:      []interface{}{"a", "b"},
+			wantQuery: `SELECT $1, $3`,
+			wantArgs:  []interface{}{"a", "b"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotQuery, gotArgs := expandRepeatedPlaceholders(tt.query, tt.args)
+			if gotQuery != tt.wantQuery {
+				t.Errorf("query = %q, want %q", gotQuery, tt.wantQuery)
+			}
+			if !reflect.DeepEqual(gotArgs, tt.wantArgs) {
+				t.Errorf("args = %v, want %v", gotArgs, tt.wantArgs)
+			}
+			// The rewrite must never leave the positional dialect with a
+			// marker/argument mismatch. Only statements following the
+			// one-argument-per-occurrence convention are checkable here; the
+			// PostgreSQL-style cases above are meant to pass through.
+			if occurrences := len(postgresPlaceholder.FindAllStringIndex(gotQuery, -1)); occurrences == len(gotArgs) {
+				if sqlite := DialectSQLite.Rebind(gotQuery); strings.Count(sqlite, "?") != len(gotArgs) {
+					t.Errorf("sqlite markers = %d, args = %d", strings.Count(sqlite, "?"), len(gotArgs))
+				}
+			}
+		})
 	}
 }
 
