@@ -21,6 +21,18 @@ The likely port-fidelity paper should not inherit experimental claims from the
 agent-memory track merely because both use Dark Pawns. Each track needs its own
 research questions, methods, evidence, and limitations.
 
+## Recording a corpus
+
+Capture is opt-in and per-run, so a research session starts with an operator
+step: `DP_RESEARCH_URL` must name the (PostgreSQL) corpus database, and after
+each boot someone must enable recording via `POST /admin/research/capture`.
+The corpus database is separate from the game database on purpose — player
+speech is only ever written to a database somebody deliberately pointed at.
+Setup, the enable/disable controls, and retention live in
+[`DEPLOYMENT.md`](../DEPLOYMENT.md#the-research-corpus-optional). If a run was
+supposed to be recording and the corpus is empty, the first check is whether
+anyone enabled capture after that boot.
+
 ## Start Here
 
 - `EVIDENCE_LEDGER.tsv` — claim inventory and verification state; this is the

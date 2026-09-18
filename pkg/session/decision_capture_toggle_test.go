@@ -3,6 +3,8 @@ package session
 import (
 	"sync"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
 // TestDecisionCaptureToggleUnderConcurrentReaders drives the toggle against
@@ -40,8 +42,13 @@ func TestDecisionCaptureToggleUnderConcurrentReaders(t *testing.T) {
 	}
 
 	// Writer: flip it as fast as the admin endpoint ever could, and faster.
+	// Alternate a real writer with nil so readers actually observe both
+	// values — storing only nil would exercise load-vs-nil and never the
+	// enabled->disabled interleaving the toggle exists to perform. The writer
+	// is a zero value and never used beyond pointer identity here.
+	writer := &db.DecisionLogWriter{}
 	for i := 0; i < 2000; i++ {
-		m.decisionLog.Store(nil)
+		m.decisionLog.Store(writer)
 		m.decisionLog.Store(nil)
 	}
 	close(stop)

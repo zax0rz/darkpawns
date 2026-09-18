@@ -59,7 +59,8 @@ is rejected at boot with the command to fix it. Connect with
   boots against it.
 - PostgreSQL is the opt-in backend for scaled deployments: pass a
   `postgres://` URL via `-db` or `DATABASE_URL`. The research corpus
-  (decision_log, combat_log) is only written on this backend.
+  (decision_log, combat_log) is a separate, separately-enabled database — see
+  [The research corpus](#the-research-corpus-optional) below.
 - Optionally a reverse proxy (Caddy, nginx, …) terminating TLS in front of `:4350`.
 
 ## Build
@@ -117,6 +118,40 @@ set +a
 **Agent API keys:** generate real keys with `go run ./cmd/agentkeygen`. The server
 rejects the old example default and any key containing `example`/`test`/`REPLACE_WITH`
 (`pkg/db/player.go` → `ValidateAgentKey`), so a placeholder will not authenticate.
+
+### The research corpus (optional)
+
+Decision capture — the corpus behind the research tracks — has its own
+database, named by `DP_RESEARCH_URL`, and is **not** the game database:
+choosing PostgreSQL for the game does not record anything. The corpus uses
+PostgreSQL-native range partitioning, so the URL must be a `postgres://` one;
+provision it like the game database (own role and database recommended).
+
+```bash
+export DP_RESEARCH_URL='postgres://darkpawns:YOUR_PASSWORD@localhost:5432/darkpawns_research?sslmode=disable'
+```
+
+With `DP_RESEARCH_URL` set, capture is **available but off** at boot. It is
+turned on deliberately, per run, through the admin console:
+
+```bash
+curl -X POST -H 'Authorization: Bearer <builder-token>' \
+  -d '{"enabled": true}' http://localhost:4350/admin/research/capture
+```
+
+`GET` on the same endpoint reports the current state. The control names what
+it records because it should be said where it is operated: **the literal
+command text of every player, tells and says included**, written verbatim to
+`decision_log.raw_input` (player names are salted hashes; see the boot-time
+salt warning). Disabling flushes what is buffered, so the last second of a
+run lands; re-enabling works without a restart. An unreachable research
+database does not stop the game — boot logs an error and capture stays
+unavailable for that run.
+
+Retention is whole monthly partitions: set `DP_LOG_RETENTION_MONTHS` to have
+expired partitions dropped automatically; without it the corpus is retained
+indefinitely. Until it is enabled, no connection to the research database is
+made beyond schema/partition setup.
 
 ## Run
 
