@@ -116,11 +116,7 @@ func cmdRedit(s *Session, args []string) error {
 			s.reditSend("Sorry, there is no zone for that number!\r\n")
 			return nil
 		}
-		if reditDuplicate(s.manager, zoneNumber*100) {
-			other := reditDuplicateName(s.manager, zoneNumber*100)
-			if other == "" {
-				other = "someone"
-			}
+		if other := s.manager.roomEditHolder(zoneNumber * 100); other != "" {
 			s.reditSend(fmt.Sprintf("That room is currently being edited by %s.\r\n", other))
 			return nil
 		}
@@ -140,24 +136,31 @@ func cmdRedit(s *Session, args []string) error {
 		return nil
 	}
 	number := atoiC(first)
-	zone, ok := reditZoneForVNum(s.manager.world, number)
-	if !ok {
-		s.reditSend("Sorry, there is no zone for that number!\r\n")
-		return nil
-	}
-	if reditDuplicate(s.manager, number) {
-		other := reditDuplicateName(s.manager, number)
-		if other == "" {
-			other = "someone"
-		}
+	// The duplicate-editor gate runs before zone lookup and authorization,
+	// matching do_olc's descriptor scan order. C relies on its single-threaded
+	// interpreter for atomicity; here the claim itself is the check, so two
+	// sessions racing through cmdRedit cannot both be admitted. Every refusal
+	// and failure path below releases the claim.
+	if other, ok := s.manager.claimRoomEdit(number, s); !ok {
 		s.reditSend(fmt.Sprintf("That room is currently being edited by %s.\r\n", other))
 		return nil
 	}
+	zone, ok := reditZoneForVNum(s.manager.world, number)
+	if !ok {
+		s.manager.releaseRoomEdit(number, s)
+		s.reditSend("Sorry, there is no zone for that number!\r\n")
+		return nil
+	}
 	if !reditAuthorized(s, zone.Number) {
+		s.manager.releaseRoomEdit(number, s)
 		s.reditSend("You do not have permission to edit this zone.\r\n")
 		return nil
 	}
-	return s.startRedit(number, zone)
+	if err := s.startRedit(number, zone); err != nil {
+		s.manager.releaseRoomEdit(number, s)
+		return err
+	}
+	return nil
 }
 
 func (s *Session) startRedit(number int, zone *parser.Zone) error {
@@ -212,29 +215,56 @@ func reditZoneForVNum(world *game.World, vnum int) (*parser.Zone, bool) {
 	return nil, false
 }
 
-func reditDuplicate(manager *Manager, number int) bool {
-	return reditDuplicateName(manager, number) != ""
+// claimRoomEdit atomically reserves the room for this session's editor. It
+// returns ("", true) on success — including a re-claim by the owning session —
+// and (holderName, false) when another session already holds the room, mirroring
+// do_olc's duplicate-editor refusal (olc.c:150-158).
+func (m *Manager) claimRoomEdit(number int, s *Session) (string, bool) {
+	m.roomEditMu.Lock()
+	defer m.roomEditMu.Unlock()
+	if holder, ok := m.roomEdits[number]; ok && holder != s {
+		name := ""
+		if holder != nil {
+			name = holder.playerName
+		}
+		if name == "" {
+			name = "someone"
+		}
+		return name, false
+	}
+	if m.roomEdits == nil {
+		m.roomEdits = make(map[int]*Session)
+	}
+	m.roomEdits[number] = s
+	return "", true
 }
 
-func reditDuplicateName(manager *Manager, number int) string {
-	manager.mu.RLock()
-	sessions := make([]*Session, 0, len(manager.sessions))
-	for _, candidate := range manager.sessions {
-		sessions = append(sessions, candidate)
+// roomEditHolder reports the player name currently editing the room, or "".
+// It is the read-only peek used by the olc-save path, which refuses while an
+// editor owns the room but never reserves one itself.
+func (m *Manager) roomEditHolder(number int) string {
+	m.roomEditMu.Lock()
+	defer m.roomEditMu.Unlock()
+	holder, ok := m.roomEdits[number]
+	if !ok || holder == nil {
+		return ""
 	}
-	manager.mu.RUnlock()
+	name := holder.playerName
+	if name == "" {
+		return "someone"
+	}
+	return name
+}
 
-	for _, candidate := range sessions {
-		candidate.textEditMu.Lock()
-		state := candidate.roomEdit
-		name := candidate.playerName
-		numberMatches := state != nil && state.number == number
-		candidate.textEditMu.Unlock()
-		if numberMatches {
-			return name
-		}
+// releaseRoomEdit drops the session's reservation. Ownership-checked so a
+// stale release path (double disconnect cleanup, a refused entry) can never
+// drop a newer editor's claim.
+func (m *Manager) releaseRoomEdit(number int, s *Session) {
+	m.roomEditMu.Lock()
+	defer m.roomEditMu.Unlock()
+	if m.roomEdits[number] == s {
+		delete(m.roomEdits, number)
 	}
-	return ""
 }
 
 func (s *Session) reditSend(text string) {
@@ -297,8 +327,12 @@ func (s *Session) cancelRoomEdit() {
 	// A disconnect follows cleanup_olc(CLEANUP_ALL): no room commit and no
 	// menu callback. Live script fields already changed through the C-shallow
 	// script pointer intentionally remain changed.
+	number := s.roomEdit.number
 	s.textEdit = nil
 	s.roomEdit = nil
+	if s.manager != nil {
+		s.manager.releaseRoomEdit(number, s)
+	}
 	if s.player != nil {
 		s.player.SetPlrFlag(game.PlrWriting, false)
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,
@@ -325,6 +359,9 @@ func (s *Session) finishReditLocked(save bool) {
 			reditAddSaveRoom(state.zoneNumber)
 		}
 	}
+	// Both the save and abort exits of REDIT_CONFIRM_SAVESTRING end the
+	// editor; the duplicate-editor reservation must not outlive either.
+	s.manager.releaseRoomEdit(state.number, s)
 	s.textEdit = nil
 	s.roomEdit = nil
 	if s.player != nil {
@@ -865,40 +902,55 @@ func reditScriptFlagsText(flags int) string {
 	return out.String()
 }
 
+// reditCols mirrors get_char_cols (src/olc.c:416): the OLC menu color strings
+// for this character. screen.h's CC* macros emit the K* ANSI codes only when
+// the character's color level (PRF_COLOR_1=1 + PRF_COLOR_2=2) reaches C_NRM
+// (2), i.e. exactly when the PRF_COLOR_2 bit is set; creation's single Y sets
+// both bits (interpreter.c CON_COLOR).
+func (s *Session) reditCols() (nrm, grn, cyn, yel string) {
+	if s.player != nil && s.player.GetFlags()&(1<<uint(game.PrfColor2)) != 0 {
+		return "\x1b[0m", "\x1b[32m", "\x1b[36m", "\x1b[33m"
+	}
+	return "", "", "", ""
+}
+
 func (s *Session) reditDisplayMainLocked() {
 	state := s.roomEdit
 	if state == nil {
 		return
 	}
+	nrm, grn, cyn, yel := s.reditCols()
 	var out strings.Builder
-	fmt.Fprintf(&out, "\r\n-- Room number : [%d]      Room zone: [%d]\r\n", state.number, state.zoneNumber)
-	fmt.Fprintf(&out, "1) Name        : %s\r\n", state.room.Name)
-	fmt.Fprintf(&out, "2) Description :\r\n%s", editorCRLF(state.room.Description))
-	fmt.Fprintf(&out, "3) Room flags  : %s\r\n", reditRoomFlags(state.room))
+	fmt.Fprintf(&out, "\r\n-- Room number : [%s%d%s]      Room zone: [%s%d%s]\r\n",
+		cyn, state.number, nrm, cyn, state.zoneNumber, nrm)
+	fmt.Fprintf(&out, "%s1%s) Name        : %s%s\r\n", grn, nrm, yel, state.room.Name)
+	fmt.Fprintf(&out, "%s2%s) Description :\r\n%s%s", grn, nrm, yel, editorCRLF(state.room.Description))
+	fmt.Fprintf(&out, "%s3%s) Room flags  : %s%s\r\n", grn, nrm, cyn, reditRoomFlags(state.room))
 	sector := "<INVALID>"
 	if state.room.Sector >= 0 && state.room.Sector < len(reditSectorNames) {
 		sector = reditSectorNames[state.room.Sector]
 	}
-	fmt.Fprintf(&out, "4) Sector type : %s\r\n", sector)
+	fmt.Fprintf(&out, "%s4%s) Sector type : %s%s\r\n", grn, nrm, cyn, sector)
 	exitLabels := []string{
-		"5) Exit north  : ",
-		"6) Exit east   : ",
-		"7) Exit south  : ",
-		"8) Exit west   : ",
-		"9) Exit up     : ",
-		"A) Exit down   : ",
+		") Exit north  : ",
+		") Exit east   : ",
+		") Exit south  : ",
+		") Exit west   : ",
+		") Exit up     : ",
+		") Exit down   : ",
 	}
-	for i, label := range game.DirectionNames {
+	exitKeys := []byte{'5', '6', '7', '8', '9', 'A'}
+	for i, direction := range game.DirectionNames {
 		target := -1
-		if exit, ok := state.room.Exits[label]; ok {
+		if exit, ok := state.room.Exits[direction]; ok {
 			target = s.reditExitTargetDisplay(exit.ToRoom)
 		}
-		fmt.Fprintf(&out, "%s%d\r\n", exitLabels[i], target)
+		fmt.Fprintf(&out, "%s%c%s%s%s%d\r\n", grn, exitKeys[i], nrm, exitLabels[i], cyn, target)
 	}
-	out.WriteString("B) Extra descriptions menu\r\n")
-	out.WriteString("C) Copy another room description\r\n")
-	out.WriteString("S) Script menu\r\n")
-	out.WriteString("Q) Quit\r\n")
+	fmt.Fprintf(&out, "%sB%s) Extra descriptions menu\r\n", grn, nrm)
+	fmt.Fprintf(&out, "%sC%s) Copy another room description\r\n", grn, nrm)
+	fmt.Fprintf(&out, "%sS%s) Script menu\r\n", grn, nrm)
+	fmt.Fprintf(&out, "%sQ%s) Quit\r\n", grn, nrm)
 	out.WriteString("Enter choice : ")
 	s.reditSend(out.String())
 	state.mode = reditMainMenu
@@ -916,25 +968,31 @@ func (s *Session) reditExitTargetDisplay(target int) int {
 
 func (s *Session) reditDisplayFlagsLocked() {
 	state := s.roomEdit
+	nrm, grn, cyn, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
 	for i, name := range reditRoomFlagNames {
-		fmt.Fprintf(&out, "%2d) %-20.20s ", i+1, name)
+		fmt.Fprintf(&out, "%s%2d%s) %-20.20s ", grn, i+1, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")
 		}
 	}
-	fmt.Fprintf(&out, "\r\nRoom flags: %s\r\nEnter room flags, 0 to quit : ", reditRoomFlags(state.room))
+	fmt.Fprintf(&out, "\r\nRoom flags: %s%s%s\r\nEnter room flags, 0 to quit : ", cyn, reditRoomFlags(state.room), nrm)
 	s.reditSend(out.String())
 	state.mode = reditFlags
 }
 
 func (s *Session) reditDisplaySectorLocked() {
 	state := s.roomEdit
+	// redit_disp_sector_menu (redit.c:541-556) reads the grn/nrm globals
+	// without refreshing them through get_char_cols; in the reachable flow the
+	// main menu just set them for this same character, so the bytes equal this
+	// character's own colors.
+	nrm, grn, _, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
 	for i, name := range reditSectorNames {
-		fmt.Fprintf(&out, "%2d) %-20.20s ", i, name)
+		fmt.Fprintf(&out, "%s%2d%s) %-20.20s ", grn, i, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")
 		}
@@ -955,14 +1013,15 @@ func (s *Session) reditDisplayExitMenuLocked() {
 			door = "Pickproof"
 		}
 	}
+	nrm, grn, cyn, yel := s.reditCols()
 	var out strings.Builder
-	out.WriteString("\r\n")
-	fmt.Fprintf(&out, "1) Exit to     : %d\r\n", toRoom)
-	fmt.Fprintf(&out, "2) Description :-\r\n%s\r\n", reditDisplayValue(exit.Description))
-	fmt.Fprintf(&out, "3) Door name   : %s\r\n", reditDisplayValue(exit.Keywords))
-	fmt.Fprintf(&out, "4) Key         : %d\r\n", exit.Key)
-	fmt.Fprintf(&out, "5) Door flags  : %s\r\n", door)
-	out.WriteString("6) Purge exit.\r\nEnter choice, 0 to quit : ")
+	fmt.Fprintf(&out, "\r\n%s1%s) Exit to     : %s%d\r\n", grn, nrm, cyn, toRoom)
+	fmt.Fprintf(&out, "%s2%s) Description :-\r\n%s%s\r\n", grn, nrm, yel, reditDisplayValue(exit.Description))
+	fmt.Fprintf(&out, "%s3%s) Door name   : %s%s\r\n", grn, nrm, yel, reditDisplayValue(exit.Keywords))
+	fmt.Fprintf(&out, "%s4%s) Key         : %s%d\r\n", grn, nrm, cyn, exit.Key)
+	fmt.Fprintf(&out, "%s5%s) Door flags  : %s%s\r\n", grn, nrm, cyn, door)
+	fmt.Fprintf(&out, "%s6%s) Purge exit.\r\n", grn, nrm)
+	out.WriteString("Enter choice, 0 to quit : ")
 	s.reditSend(out.String())
 	state.mode = reditExitMenu
 }
@@ -975,7 +1034,9 @@ func reditDisplayValue(value string) string {
 }
 
 func (s *Session) reditDisplayExitFlagLocked() {
-	s.reditSend("0) No door\r\n1) Closeable door\r\n2) Pickproof\r\nEnter choice : ")
+	nrm, grn, _, _ := s.reditCols()
+	s.reditSend(fmt.Sprintf("%s0%s) No door\r\n%s1%s) Closeable door\r\n%s2%s) Pickproof\r\nEnter choice : ",
+		grn, nrm, grn, nrm, grn, nrm))
 }
 
 func (s *Session) reditDisplayExtraMenuLocked() {
@@ -993,14 +1054,15 @@ func (s *Session) reditDisplayExtraMenuLocked() {
 	if meta.descriptionSet {
 		description = reditDisplayValue(extra.Description)
 	}
+	nrm, grn, _, yel := s.reditCols()
 	var out strings.Builder
-	out.WriteString("\r\n")
-	fmt.Fprintf(&out, "1) Keyword: %s\r\n", keyword)
-	fmt.Fprintf(&out, "2) Description:\r\n%s\r\n", description)
+	fmt.Fprintf(&out, "\r\n%s1%s) Keyword: %s%s\r\n", grn, nrm, yel, keyword)
+	fmt.Fprintf(&out, "%s2%s) Description:\r\n%s%s\r\n", grn, nrm, yel, description)
+	fmt.Fprintf(&out, "%s3%s) Goto next description: ", grn, nrm)
 	if state.currentExtra+1 < len(state.room.ExtraDescs) {
-		out.WriteString("3) Goto next description: Set.\r\n")
+		out.WriteString("Set.\r\n")
 	} else {
-		out.WriteString("3) Goto next description: <NOT SET>\r\n")
+		out.WriteString("<NOT SET>\r\n")
 	}
 	out.WriteString("Enter choice (0 to quit) : ")
 	s.reditSend(out.String())
@@ -1013,15 +1075,16 @@ func (s *Session) reditDisplayScriptFlagsLocked() {
 	if !ok {
 		room = state.room
 	}
+	nrm, grn, cyn, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\x1b[H\x1b[J")
 	for i, name := range reditScriptFlagNames {
-		fmt.Fprintf(&out, "%2d) %-20.20s  ", i+1, name)
+		fmt.Fprintf(&out, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")
 		}
 	}
-	fmt.Fprintf(&out, "\r\nCurrent flags   : %s\r\nEnter script flags (0 to quit) : ", reditScriptFlagsText(room.ScriptFunctions))
+	fmt.Fprintf(&out, "\r\nCurrent flags   : %s%s%s\r\nEnter script flags (0 to quit) : ", cyn, reditScriptFlagsText(room.ScriptFunctions), nrm)
 	s.reditSend(out.String())
 	state.mode = reditScriptFlags
 }
@@ -1041,9 +1104,12 @@ func (s *Session) reditDisplayScriptMenuLocked() {
 	if name == "" {
 		name = "None"
 	}
+	nrm, grn, _, yel := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
-	fmt.Fprintf(&out, "1) Name: %s\r\n2) Script Flags: %s\r\nEnter choice (0 to quit) : ", name, reditScriptFlagsText(room.ScriptFunctions))
+	fmt.Fprintf(&out, "%s1%s) Name: %s%s\r\n", grn, nrm, yel, name)
+	fmt.Fprintf(&out, "%s2%s) Script Flags: %s%s%s\r\n", grn, nrm, yel, reditScriptFlagsText(room.ScriptFunctions), nrm)
+	out.WriteString("Enter choice (0 to quit) : ")
 	s.reditSend(out.String())
 	state.mode = reditScriptMenu
 }

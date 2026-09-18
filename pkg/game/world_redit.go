@@ -66,6 +66,48 @@ func (w *World) CommitEditedRoom(room parser.Room) bool {
 	return w.commitEditedRoomLocked(room)
 }
 
+// mutateRoom applies one routine runtime mutation to an existing room. This
+// is the C shape for state do_open/do_close/lock and zone resets change
+// directly on world[] in place: one room, one exit flag word, no topology
+// change. Publication is copy-on-write for that single room — the room is
+// cloned, the map entry is repointed, and a fresh snapshot generation is
+// published — so lock-free snapshot readers keep seeing immutable rooms. The
+// update returns false to refuse the mutation (e.g. a missing exit), which
+// propagates as a false result without publishing.
+//
+// mutateRoom deliberately skips the structural work commitEditedRoomLocked
+// does (parsed-definition copy, roomOrder/sortedRoomVNums maintenance): those
+// are new-room insertion costs, and paying them per door command would make
+// every open/close/lock O(world). The parsed definition is intentionally left
+// alone: door state is runtime-only in C, re-derived by zone resets, and the
+// redit disk writer serializes the live room, not the parsed copy.
+func (w *World) mutateRoom(vnum int, update func(*parser.Room) bool) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	room, ok := w.rooms[vnum]
+	if !ok || room == nil {
+		return false
+	}
+	copyRoom := CloneRoom(*room)
+	if !update(&copyRoom) {
+		return false
+	}
+	return w.replaceRoomLocked(copyRoom)
+}
+
+// replaceRoomLocked swaps one existing room pointer and republishes. The
+// caller must hold w.mu and supply a room clone it exclusively owns.
+func (w *World) replaceRoomLocked(room parser.Room) bool {
+	if _, existed := w.rooms[room.VNum]; !existed {
+		return false
+	}
+	w.rooms[room.VNum] = &room
+	if w.snapshots != nil {
+		w.snapshots.Publish(w.rooms)
+	}
+	return true
+}
+
 // updateRoom applies one short administrative/runtime room mutation to a
 // copied room while holding the same lock as REDIT publication. This keeps
 // the lock-free topology snapshot immutable for readers that overlap a web
@@ -82,9 +124,10 @@ func (w *World) updateRoom(vnum int, update func(*parser.Room)) bool {
 	return w.commitEditedRoomLocked(copyRoom)
 }
 
+// commitEditedRoomLocked publishes an edited or new room. Callers must hand
+// over a room value they exclusively own; the definition list is rebuilt
+// copy-on-write because boot-time room pointers alias its backing array.
 func (w *World) commitEditedRoomLocked(room parser.Room) bool {
-	room = CloneRoom(room)
-
 	if w.rooms == nil {
 		w.rooms = make(map[int]*parser.Room)
 	}
@@ -107,22 +150,19 @@ func (w *World) commitEditedRoomLocked(room parser.Room) bool {
 			parsedRooms[parsedIndex] = room
 		}
 		w.parsedData.Rooms = parsedRooms
-
-		// The backing array is copied before replacement. Repoint every parsed
-		// room so old snapshots and escaped read pointers stay immutable.
-		updated := make(map[int]*parser.Room, len(w.rooms)+1)
-		for i := range w.parsedData.Rooms {
-			updated[w.parsedData.Rooms[i].VNum] = &w.parsedData.Rooms[i]
-		}
-		for vnum, oldRoom := range w.rooms {
-			if _, ok := updated[vnum]; !ok {
-				updated[vnum] = oldRoom
-			}
-		}
-		w.rooms = updated
-	} else {
-		w.rooms[room.VNum] = &room
 	}
+
+	// Keep every live room pointer — including routine-mutation clones that
+	// hold runtime door/flag state — and swap in the committed room. Repointing
+	// the map into the fresh parsed array instead would silently revert
+	// unrelated rooms' runtime state, which C never does. Nothing aliases the
+	// new array, so escaped read pointers stay immutable either way.
+	updated := make(map[int]*parser.Room, len(w.rooms)+1)
+	for vnum, liveRoom := range w.rooms {
+		updated[vnum] = liveRoom
+	}
+	updated[room.VNum] = &room
+	w.rooms = updated
 
 	if !existed {
 		w.roomOrder = append(w.roomOrder, room.VNum)

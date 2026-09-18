@@ -441,9 +441,19 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	}
 	for i, oracleResult := range oracleBlocks {
 		var oracleBlock, goBlock string
-		oracleBlock = oraclediff.Normalize(oracleResult.Output)
+		// keep-ansi scenarios compare probe blocks with ANSI intact: the raw
+		// proof mode for surfaces whose C colors are player-facing bytes.
+		if scenario.KeepANSI {
+			oracleBlock = oraclediff.NormalizeKeepANSI(oracleResult.Output)
+		} else {
+			oracleBlock = oraclediff.Normalize(oracleResult.Output)
+		}
 		if i < len(goBlocks) {
-			goBlock = oraclediff.Normalize(goBlocks[i].Output)
+			if scenario.KeepANSI {
+				goBlock = oraclediff.NormalizeKeepANSI(goBlocks[i].Output)
+			} else {
+				goBlock = oraclediff.Normalize(goBlocks[i].Output)
+			}
 		}
 		label := oracleResult.Command
 		if len(scenario.Peers) > 0 {

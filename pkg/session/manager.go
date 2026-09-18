@@ -95,6 +95,14 @@ type Manager struct {
 	// Moderation manager for mute/filter/spam checks
 	modChecker ModerationChecker
 
+	// roomEdits reserves room VNums against concurrent duplicate REDIT entry.
+	// C's do_olc duplicate gate is a descriptor_list scan made safe by the
+	// single-threaded interpreter; the Go dispatcher runs sessions on separate
+	// goroutines, so admission is one atomic claim here instead of a
+	// check-then-install pair. Keyed by the OLC room number being edited.
+	roomEditMu sync.Mutex
+	roomEdits  map[int]*Session
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -288,6 +296,7 @@ func NewManager(world *game.World, database db.Database) *Manager {
 			Lockout:   15 * time.Minute,
 		}),
 		ipConnCount:           make(map[string]int),
+		roomEdits:             make(map[int]*Session),
 		nextEphemeralPlayerID: 1,
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a

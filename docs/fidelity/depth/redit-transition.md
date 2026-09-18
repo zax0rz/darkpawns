@@ -35,3 +35,16 @@ Shared improved-editor behavior is the existing bounded `modify.c`/`improved-edi
 port used by `tedit`; this checklist treats its line/action branches as part of
 each reachable room/exit/extra string boundary, including blank lines and raw
 line routing.
+
+## Menu color layer
+
+Every menu above renders through `get_char_cols` (`src/olc.c:416`): the C
+format strings interleave `grn`/`nrm`/`cyn`/`yel` around menu keys, labels,
+and values. At color level ≥ 2 (`PRF_COLOR_2` set; screen.h `_clrlevel`) these
+are `\x1B[32m`/`\x1B[0m`/`\x1B[36m`/`\x1B[33m`; below it they are empty and
+the menus are plain. `redit_disp_sector_menu` reads the globals without
+refreshing them — in the reachable flow the main menu just set them for the
+same character, so the bytes equal that character's own colors. The raw
+on/off proof vehicles are `redit-menu-color-on`/`redit-menu-color-off`
+(`keep-ansi` mode); plain-text scenarios cannot see this layer because
+normalization rule 1 strips ANSI.

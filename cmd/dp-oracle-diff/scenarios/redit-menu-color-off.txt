@@ -1,0 +1,53 @@
+# C-backed REDIT menu bytes with color disabled, compared with ANSI escapes
+# intact (keep-ansi). Creation answers N to "Do you want ANSI color", so
+# get_char_cols yields KNUL ("") for every slot and the menus must carry no
+# escape bytes at all — the raw proof that the port does not invent color the
+# C server never emits at color level 0.
+# depth-case: redit.menu-colors-off-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Reditplain
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reditplain
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+redit
+1
+Plain Room Name
+3
+0
+4
+0
+5
+0

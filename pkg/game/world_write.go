@@ -199,7 +199,12 @@ func (w *World) SetRoomFlags(vnum int, flags []string) bool {
 // lock, so lock-free writes race with locked readers. Returns false if the
 // room doesn't exist.
 func (w *World) SetRoomFlagBit(vnum int, flagBit int) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) { setRoomFlagBit(room, flagBit) })
+	// Runtime room bits (the search skill's secret mark) are routine C
+	// world[] mutations, not editor definitions; take the cheap path.
+	return w.mutateRoom(vnum, func(room *parser.Room) bool {
+		setRoomFlagBit(room, flagBit)
+		return true
+	})
 }
 
 // SetRoomSector sets a room's sector type. Returns false if the room doesn't exist.
