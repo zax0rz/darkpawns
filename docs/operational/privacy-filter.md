@@ -1,6 +1,6 @@
 # Privacy Filter Integration for Dark Pawns
 
-**Last updated:** 2026-05-08
+**Last updated:** 2026-09-18
 
 ## Overview
 
@@ -39,13 +39,41 @@ The OpenAI Privacy Filter detects 8 categories of PII:
 
 ## Installation
 
-The inherited Docker/Compose privacy-service deployment has been retired. The
-Go client and `deployment/privacy_filter_api.py` remain as optional integration
-code; this repository does not provide a verified service installation recipe.
-An operator using the integration must provision the service and its model
-dependencies independently, then configure `PRIVACY_FILTER_URL` in the game
-server environment. The native game installation is documented in
-[Running Dark Pawns](../../DEPLOYMENT.md).
+The service is native Python, run on the same host as the game server:
+
+```bash
+python3 -m venv ~/.venvs/darkpawns-privacy
+~/.venvs/darkpawns-privacy/bin/pip install -r deployment/requirements.txt
+```
+
+The `opf` package downloads the model weights (~3 GB BF16, Apache 2.0,
+`openai/privacy-filter`) to `~/.opf/privacy_filter` the first time the model
+is constructed — at service startup, so the download is visible in the logs.
+Pre-seed that directory or set `OPF_CHECKPOINT` to use an existing
+checkpoint. The game server never downloads the model; only this service
+touches it, and text never leaves the host.
+
+Run the service:
+
+```bash
+cd deployment
+~/.venvs/darkpawns-privacy/bin/uvicorn privacy_filter_api:app --host 127.0.0.1 --port 8001
+```
+
+Bind and device are environment-controlled: `PRIVACY_FILTER_API_HOST`
+(default `127.0.0.1`), `PRIVACY_FILTER_API_PORT` (default `8001`),
+`PRIVACY_FILTER_DEVICE` (default `cpu`; the model is CPU-feasible). Then
+point the game server at it with `PRIVACY_FILTER_URL=http://127.0.0.1:8001`.
+
+The wire contract between this service and the Go client is pinned by tests
+on both sides: `deployment/test_privacy_filter_api.py` (no model needed,
+`python -m pytest`) and the stub-server tests in `pkg/privacy`.
+
+**Wiring status:** the PII slog handler in `pkg/privacy` is still not
+installed in `cmd/server`, on purpose. The client's fallback is fail-closed —
+an unreachable service replaces filtered output with `[FILTERED]` — so the
+handler must only be wired once a reachable service exists. That wiring is a
+separate, deliberate change, not part of standing the service up.
 
 ## Configuration
 
@@ -168,21 +196,25 @@ func (cf *CachingFilter) FilterText(text string) (string, []string, error) {
 ### Fallback Strategies
 When the privacy filter service is unavailable:
 
-1. **Basic Masking** (default): Simple regex patterns for common PII
-2. **Pass Through**: Log everything (not recommended for production)
-3. **Error**: Fail the log operation
+1. **Fail closed** (default): `Client.FilterText` replaces the filtered
+   output with `[FILTERED]` and returns an error, so callers can tell
+   degradation from health (DP-1241).
+2. **PII slog handler**: on a filter error it keeps the original message and
+   annotates it with `pii_filter_error`, rather than destroying it — the
+   regression tests in `slog_handler_test.go` pin this.
 
 ## Testing
 
-Run the integration tests:
-
 ```bash
-# Unit tests
-cd pkg/privacy
-go test -v
+# Go unit tests (stub servers, no service needed)
+go test -v ./pkg/privacy/...
 
-# Integration test (requires privacy filter service)
-PRIVACY_FILTER_URL=http://localhost:8001 go test -v -tags=integration
+# Service contract tests (no model download)
+cd deployment && python -m pytest test_privacy_filter_api.py
+
+# Live check against a running service — the only test that touches the
+# real model; skips when PRIVACY_FILTER_URL is unset
+make privacy-test
 ```
 
 Test examples:
@@ -266,7 +298,8 @@ Set log level via `PRIVACY_FILTER_LOG_LEVEL`:
 
 4. **Memory Issues**
    ```
-   Fix: The model requires ~6GB RAM. Reduce batch size or use GPU.
+   Fix: The model weights are ~3 GB BF16; CPU inference needs headroom
+   above that. Reduce batch size or use GPU.
    ```
 
 ### Debug Mode

@@ -43,7 +43,7 @@ type Config struct {
 // DefaultConfig returns default configuration
 func DefaultConfig() Config {
 	return Config{
-		URL:                 "http://privacy-filter:8000",
+		URL:                 "http://127.0.0.1:8001",
 		Enabled:             true,
 		Categories:          []string{"account_number", "address", "email", "person", "phone", "url", "secret"},
 		Replacement:         "[REDACTED]",
