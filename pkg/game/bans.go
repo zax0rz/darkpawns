@@ -8,7 +8,9 @@ package game
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -88,6 +90,13 @@ func (bm *BanManager) LoadBanned(path string) {
 
 	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			// An absent ban file is the empty state, not a fault: the 1994
+			// lib never shipped one, and C's load_banned() returns silently
+			// when fopen fails. Warn only on real read errors.
+			slog.Debug("no ban file; starting with an empty ban list", "path", path)
+			return
+		}
 		slog.Warn("unable to open ban file", "path", path, "error", err)
 		return
 	}
@@ -240,6 +249,13 @@ func (bm *BanManager) ReadInvalidList(path string) {
 
 	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			// xnames is C's INVALID_FILE; the 1994 lib never shipped one, so
+			// absence is the normal empty state (Read_Invalid_List() returns
+			// silently in C). Warn only on real read errors.
+			slog.Debug("no invalid-name file; starting with an empty list", "path", path)
+			return
+		}
 		slog.Warn("unable to open invalid name file", "path", path, "error", err)
 		return
 	}

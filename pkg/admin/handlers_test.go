@@ -1395,6 +1395,75 @@ func TestNewRouter_CORS_Headers(t *testing.T) {
 	}
 }
 
+func TestNewRouter_ConsoleNotBuilt_SaysWhatToRun(t *testing.T) {
+	setJWTSecret(t)
+	w := testWorld(t)
+	lb := NewLogBuffer(10)
+
+	// An empty directory stands in for a fresh checkout: no index.html.
+	t.Setenv("ADMIN_UI_DIR", t.TempDir())
+
+	handler, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("status = %d, want 503; body: %s", rec.Code, rec.Body.String())
+	}
+	body := rec.Body.String()
+	for _, want := range []string{
+		"npm --prefix admin-ui ci",
+		"npm --prefix admin-ui run build",
+		"lib/admin-ui-dist",
+		"DEPLOYMENT.md",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("guidance page missing %q; body: %s", want, body)
+		}
+	}
+
+	// The bare /admin spelling must reach the same answer, not a bare 404.
+	req = httptest.NewRequest(http.MethodGet, "/admin", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusMovedPermanently || rec.Header().Get("Location") != "/admin/" {
+		t.Errorf("/admin: status = %d, Location = %q; want 301 to /admin/", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
+func TestNewRouter_ConsoleBuilt_ServesIndex(t *testing.T) {
+	setJWTSecret(t)
+	w := testWorld(t)
+	lb := NewLogBuffer(10)
+
+	dir := t.TempDir()
+	if err := os.WriteFile(dir+"/index.html", []byte("<!DOCTYPE html><html>console</html>"), 0o600); err != nil { // #nosec G304 -- test-owned temp path
+		t.Fatalf("write index.html: %v", err)
+	}
+	t.Setenv("ADMIN_UI_DIR", dir)
+
+	handler, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
+	}
+	if body := rec.Body.String(); !strings.Contains(body, "console") {
+		t.Errorf("index body wrong: %s", body)
+	}
+}
+
 func TestNewRouter_Unauthenticated_Returns401(t *testing.T) {
 	setJWTSecret(t)
 	w := testWorld(t)

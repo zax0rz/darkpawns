@@ -49,6 +49,7 @@ database. The server creates and migrates its schema at startup.
 git clone https://github.com/zax0rz/darkpawns.git
 cd darkpawns
 
+createdb darkpawns
 export DATABASE_URL='postgres://USER:PASSWORD@localhost:5432/darkpawns?sslmode=disable'
 export JWT_SECRET="$(openssl rand -hex 32)"
 
@@ -58,7 +59,16 @@ go build -o server ./cmd/server
 
 Replace the database credentials with your own. On a local PostgreSQL, the
 socket form `postgres:///darkpawns?host=/var/run/postgresql` authenticates
-without a password, where the TCP form asks for one. Keep the signing secret
+without a password, where the TCP form asks for one. If `createdb` answers
+`permission denied to create database`, the role lacks `CREATEDB`; provision
+as the PostgreSQL administrator instead:
+
+```sh
+sudo -u postgres createuser --pwprompt USER
+sudo -u postgres createdb --owner=USER darkpawns
+```
+
+Keep the signing secret
 stable across restarts. The binary reads environment variables; it does not load
 `.env` automatically.
 
