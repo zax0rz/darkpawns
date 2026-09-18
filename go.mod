@@ -6,12 +6,11 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.12.3
-	github.com/mattn/go-sqlite3 v1.14.44
 	github.com/prometheus/client_golang v1.23.2
 	github.com/yuin/gopher-lua v1.1.2
 	golang.org/x/crypto v0.53.0
-	golang.org/x/text v0.40.0
 	golang.org/x/time v0.15.0
+	modernc.org/sqlite v1.59.0
 )
 
 require (
@@ -34,5 +33,4 @@ require (
 	modernc.org/libc v1.75.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	modernc.org/sqlite v1.59.0 // indirect
 )
