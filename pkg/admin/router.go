@@ -13,6 +13,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
 // NewRouter creates an admin HTTP handler with role-protected endpoints.
@@ -116,6 +117,17 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Server metrics — requires builder role
 	mux.HandleFunc("/admin/metrics", wrap(corsMiddleware(requireRole("builder", handleMetrics(world)))))
+	// The Prometheus endpoint, moved here from an unauthenticated /metrics on
+	// the root mux. It was public on darkpawns.org and nobody noticed, because
+	// every gauge read zero until the collectors were wired: publishing real
+	// player counts, command volume and command_duration_seconds to anyone who
+	// asks should be a decision, not a side effect of fixing them.
+	//
+	// "builder" matches the sibling /admin/metrics above and the rest of the
+	// read-only console: any immortal who can sign in can read it. A Prometheus
+	// scraper cannot present a JWT, so if one is ever wanted the usual answer is
+	// a second listener bound to localhost, not loosening this.
+	mux.HandleFunc("/admin/prometheus", wrap(corsMiddleware(requireRole("builder", metrics.Handler().ServeHTTP))))
 
 	// Save world — requires admin role
 	mux.HandleFunc("/admin/save-world", wrap(corsMiddleware(requireRole("admin", handleSaveWorld(world, auditLogger)))))
