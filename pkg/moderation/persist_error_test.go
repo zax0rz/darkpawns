@@ -97,7 +97,7 @@ func TestRemoveWordFilter_DBFailureKeepsMemoryEntry(t *testing.T) {
 // TestRemoveWordFilter_NoDBRemovesMemoryEntry confirms the no-DB path removes
 // the in-memory entry (there is no DB row to stay in sync with).
 func TestRemoveWordFilter_NoDBRemovesMemoryEntry(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	m.wordFilters = []WordFilterEntry{
 		{ID: 7, Pattern: "badword", Action: FilterActionCensor},
 	}
@@ -111,7 +111,7 @@ func TestRemoveWordFilter_NoDBRemovesMemoryEntry(t *testing.T) {
 
 // TestAddPenalty_NoDBReturnsNil confirms the no-DB path reports success.
 func TestAddPenalty_NoDBReturnsNil(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	t.Cleanup(m.Close)
 	if err := m.AddPenalty(PlayerPenalty{
 		PlayerName:  "villain",

@@ -334,10 +334,15 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 	}
 
 	// Wire moderation checker (in-memory when no DB, DB-backed when available).
+	// The dialect travels with the handle: the moderation tables are created
+	// and queried by the same connection, so they are translated by the same
+	// dialect value rather than a second copy of the rewrite.
 	if concreteDB, ok := database.(*db.DB); ok {
-		m.modChecker = NewModerationAdapter(moderation.NewManager(concreteDB.SQLDB()))
+		m.modChecker = NewModerationAdapter(moderation.NewManager(concreteDB.SQLDB(), concreteDB.Dialect()))
 	} else {
-		m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
+		// No connection at all, so no statement is issued and the dialect is
+		// never read.
+		m.modChecker = NewModerationAdapter(moderation.NewManager(nil, db.DialectPostgres))
 	}
 
 	// Wire MessageSink so that Player.SendMessage routes through Session.send

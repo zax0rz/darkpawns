@@ -3,7 +3,17 @@ package moderation
 import (
 	"testing"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/db"
 )
+
+// newMemoryManager builds the manager the no-database boot path builds: no
+// connection, so no statement is ever issued and the dialect is never read.
+// The zero value is passed because it is the pass-through dialect, the one
+// under which both translators are the identity function.
+func newMemoryManager() *Manager {
+	return NewManager(nil, db.DialectPostgres)
+}
 
 func TestWordFilterCensor(t *testing.T) {
 	wf := WordFilterEntry{
@@ -204,7 +214,7 @@ func TestCheckMessage(t *testing.T) {
 }
 
 func TestClose_StopsCleanupRoutine(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 
 	m.Close()
 	m.Close() // double Close must not panic
@@ -268,7 +278,7 @@ func TestHasPenalty(t *testing.T) {
 }
 
 func TestAddWordFilter_MemoryIDsDoNotCollide(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	t.Cleanup(m.Close)
 	// Simulate DB load ordering by created_at DESC: ids 2 then 1.
 	m.wordFilters = []WordFilterEntry{
@@ -290,7 +300,7 @@ func TestAddWordFilter_MemoryIDsDoNotCollide(t *testing.T) {
 }
 
 func TestIsMuted_CaseInsensitiveLookup(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	t.Cleanup(m.Close)
 	_ = m.AddPenalty(PlayerPenalty{
 		PlayerName:  "MixedCasePlayer",
@@ -308,7 +318,7 @@ func TestIsMuted_CaseInsensitiveLookup(t *testing.T) {
 }
 
 func TestCleanupExpiredPenalties_RemovesFromMemory(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	t.Cleanup(m.Close)
 	player := "ExpiredPlayer"
 	past := time.Now().Add(-time.Hour)
@@ -331,7 +341,7 @@ func TestCleanupExpiredPenalties_RemovesFromMemory(t *testing.T) {
 }
 
 func TestPenaltyHelpersConcurrentAccess(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	t.Cleanup(m.Close)
 	player := "ConcurrentPlayer"
 	now := time.Now()

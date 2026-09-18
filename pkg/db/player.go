@@ -29,7 +29,7 @@ var ErrAmbiguousPlayerName = errors.New("ambiguous character name; saved records
 // DB wraps the database connection.
 type DB struct {
 	conn    *sql.DB
-	dialect dialect
+	dialect Dialect
 }
 
 // SQLDB returns the underlying *sql.DB for use by other packages (e.g., moderation).
@@ -37,19 +37,26 @@ func (db *DB) SQLDB() *sql.DB {
 	return db.conn
 }
 
+// Dialect returns the SQL flavour the connection was opened for. A bare *sql.DB
+// cannot answer that, and packages sharing this handle (moderation) must not
+// guess: guessing is what put "no such function: NOW" in the boot log.
+func (db *DB) Dialect() Dialect {
+	return db.dialect
+}
+
 // exec, query and queryRow are the statement choke points for the game store:
 // they rebind $N placeholders when the connection is SQLite. DDL goes through
 // execDDL instead, which additionally translates the schema.
 func (db *DB) exec(query string, args ...interface{}) (sql.Result, error) {
-	return db.conn.Exec(db.dialect.rebind(query), args...)
+	return db.conn.Exec(db.dialect.Rebind(query), args...)
 }
 
 func (db *DB) query(query string, args ...interface{}) (*sql.Rows, error) {
-	return db.conn.Query(db.dialect.rebind(query), args...)
+	return db.conn.Query(db.dialect.Rebind(query), args...)
 }
 
 func (db *DB) queryRow(query string, args ...interface{}) *sql.Row {
-	return db.conn.QueryRow(db.dialect.rebind(query), args...)
+	return db.conn.QueryRow(db.dialect.Rebind(query), args...)
 }
 
 // execDDL runs one schema statement, translating PostgreSQL-only syntax when
@@ -57,10 +64,7 @@ func (db *DB) queryRow(query string, args ...interface{}) *sql.Row {
 // rejects multi-statement strings, and single statements report the failing
 // piece precisely.
 func (db *DB) execDDL(stmt string) error {
-	if db.dialect == dialectSQLite {
-		stmt = sqliteDDL(stmt)
-	}
-	_, err := db.conn.Exec(stmt)
+	_, err := db.conn.Exec(db.dialect.DDL(stmt))
 	return err
 }
 
@@ -104,12 +108,12 @@ type PlayerRecord struct {
 // postgres:// (or postgresql://) uses PostgreSQL; sqlite://, a bare file path
 // or :memory: uses embedded SQLite.
 func New(connString string) (*DB, error) {
-	dialect, dsn, err := splitDSN(connString)
+	dialect, dsn, err := SplitDSN(connString)
 	if err != nil {
 		return nil, err
 	}
 	driver := "postgres"
-	if dialect == dialectSQLite {
+	if dialect == DialectSQLite {
 		driver = "sqlite"
 	}
 	conn, err := sql.Open(driver, dsn)
@@ -133,7 +137,7 @@ func New(connString string) (*DB, error) {
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
 
-	if dialect == dialectSQLite {
+	if dialect == DialectSQLite {
 		// Single connection plus WAL: SQLite allows one writer at a time, and
 		// there are no explicit transactions in this package to serialize.
 		// busy_timeout keeps event-driven writes from failing on a locked file.
@@ -165,7 +169,7 @@ func New(connString string) (*DB, error) {
 	// Decision capture tables (DP-213). These are PostgreSQL-only (PARTITION
 	// BY RANGE, pg_tables catalog queries, TEXT[]), so SQLite deployments skip
 	// them entirely; the ResearchStore interface is never satisfied there.
-	if dialect == dialectPostgres {
+	if dialect == DialectPostgres {
 		if err := db.createDecisionLogTables(); err != nil {
 			return nil, fmt.Errorf("create decision log tables: %w", err)
 		}
@@ -307,27 +311,11 @@ func (db *DB) createTables() error {
 	return nil
 }
 
-// addColumnIfNotExists applies one migration column idempotently. PostgreSQL
-// has ADD COLUMN IF NOT EXISTS natively; SQLite has ADD COLUMN but not the
-// IF NOT EXISTS guard, so the column is looked up in pragma_table_info first.
-// Verified idempotent across repeat runs on both dialects.
+// addColumnIfNotExists applies one migration column to the players table
+// idempotently, through the shared guard in dialect.go. Verified idempotent
+// across repeat runs on both dialects.
 func (db *DB) addColumnIfNotExists(table, columnDef string) error {
-	column := strings.Fields(columnDef)[0]
-	if db.dialect == dialectSQLite {
-		var n int
-		if err := db.queryRow(
-			`SELECT COUNT(*) FROM pragma_table_info(` + quoteLiteral(table) + `) WHERE name = ` + quoteLiteral(column),
-		).Scan(&n); err != nil {
-			return err
-		}
-		if n > 0 {
-			return nil
-		}
-		_, err := db.exec(`ALTER TABLE ` + table + ` ADD COLUMN ` + columnDef)
-		return err
-	}
-	_, err := db.exec(`ALTER TABLE ` + table + ` ADD COLUMN IF NOT EXISTS ` + columnDef)
-	return err
+	return AddColumnIfNotExists(db.conn, db.dialect, table, columnDef)
 }
 
 // CreateAgentKey generates a new agent API key for the given character.

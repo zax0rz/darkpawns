@@ -444,7 +444,7 @@ func main() {
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
-		modManager := moderation.NewManager(database.SQLDB())
+		modManager := moderation.NewManager(database.SQLDB(), database.Dialect())
 		modAdapter := session.NewModerationAdapter(modManager)
 		manager.SetModerationChecker(modAdapter)
 		slog.Info("Moderation manager wired with database backend")

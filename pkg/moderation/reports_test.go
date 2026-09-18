@@ -155,7 +155,7 @@ func newFakeReportsManager(t *testing.T) *Manager {
 }
 
 func TestMaxReportID_NoDB(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	t.Cleanup(m.Close)
 	maxID, err := m.MaxReportID()
 	if err != nil {
@@ -191,7 +191,7 @@ func TestMaxReportID_DBError(t *testing.T) {
 }
 
 func TestListReports_NoDB(t *testing.T) {
-	m := NewManager(nil)
+	m := newMemoryManager()
 	t.Cleanup(m.Close)
 	reports, err := m.ListReports()
 	if err != nil {

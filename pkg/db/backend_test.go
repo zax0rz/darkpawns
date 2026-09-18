@@ -52,7 +52,7 @@ func catalog(t *testing.T, database *DB) (tables, indexes map[string]bool) {
 	indexes = make(map[string]bool)
 	var rows *sql.Rows
 	var err error
-	if database.dialect == dialectSQLite {
+	if database.dialect == DialectSQLite {
 		rows, err = database.conn.Query(
 			`SELECT type, name FROM sqlite_master WHERE (type = 'table' OR type = 'index') AND name NOT LIKE 'sqlite_%'`)
 	} else {
@@ -505,45 +505,45 @@ func TestSQLiteJournalMode(t *testing.T) {
 func TestSplitDSN(t *testing.T) {
 	tests := []struct {
 		in      string
-		dialect dialect
+		dialect Dialect
 		dsn     string
 		wantErr bool
 	}{
-		{"postgres://u:p@host/db", dialectPostgres, "postgres://u:p@host/db", false},
-		{"postgres:///darkpawns?host=/var/run/postgresql", dialectPostgres, "postgres:///darkpawns?host=/var/run/postgresql", false},
-		{"postgresql://u:p@host/db", dialectPostgres, "postgresql://u:p@host/db", false},
-		{"sqlite:///tmp/game.db", dialectSQLite, "/tmp/game.db", false},
-		{"sqlite://:memory:", dialectSQLite, ":memory:", false},
-		{"data/darkpawns.db", dialectSQLite, "data/darkpawns.db", false},
-		{":memory:", dialectSQLite, ":memory:", false},
+		{"postgres://u:p@host/db", DialectPostgres, "postgres://u:p@host/db", false},
+		{"postgres:///darkpawns?host=/var/run/postgresql", DialectPostgres, "postgres:///darkpawns?host=/var/run/postgresql", false},
+		{"postgresql://u:p@host/db", DialectPostgres, "postgresql://u:p@host/db", false},
+		{"sqlite:///tmp/game.db", DialectSQLite, "/tmp/game.db", false},
+		{"sqlite://:memory:", DialectSQLite, ":memory:", false},
+		{"data/darkpawns.db", DialectSQLite, "data/darkpawns.db", false},
+		{":memory:", DialectSQLite, ":memory:", false},
 		{"", 0, "", true},
 		{"   ", 0, "", true},
 	}
 	for _, tt := range tests {
-		d, dsn, err := splitDSN(tt.in)
+		d, dsn, err := SplitDSN(tt.in)
 		if tt.wantErr {
 			if err == nil {
-				t.Errorf("splitDSN(%q): want error", tt.in)
+				t.Errorf("SplitDSN(%q): want error", tt.in)
 			}
 			continue
 		}
 		if err != nil {
-			t.Errorf("splitDSN(%q): %v", tt.in, err)
+			t.Errorf("SplitDSN(%q): %v", tt.in, err)
 			continue
 		}
 		if d != tt.dialect || dsn != tt.dsn {
-			t.Errorf("splitDSN(%q) = (%v, %q), want (%v, %q)", tt.in, d, dsn, tt.dialect, tt.dsn)
+			t.Errorf("SplitDSN(%q) = (%v, %q), want (%v, %q)", tt.in, d, dsn, tt.dialect, tt.dsn)
 		}
 	}
 }
 
 func TestRebind(t *testing.T) {
 	const q = `INSERT INTO players (name, password_hash) VALUES ($1, $2) ON CONFLICT DO NOTHING`
-	if got := dialectPostgres.rebind(q); got != q {
+	if got := DialectPostgres.Rebind(q); got != q {
 		t.Errorf("postgres rebind changed the query: %q", got)
 	}
 	want := `INSERT INTO players (name, password_hash) VALUES (?, ?) ON CONFLICT DO NOTHING`
-	if got := dialectSQLite.rebind(q); got != want {
+	if got := DialectSQLite.Rebind(q); got != want {
 		t.Errorf("sqlite rebind = %q, want %q", got, want)
 	}
 }

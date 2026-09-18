@@ -12,7 +12,7 @@ The `moderation` package provides comprehensive tools for managing player behavi
 - **Word Filtering**: Automatic detection and handling of inappropriate content
 - **Spam Detection**: Rate limiting and duplicate message detection
 - **Player Penalties**: Temporary and permanent restrictions
-- **Database Integration**: PostgreSQL persistence for all moderation data
+- **Database Integration**: persistence for all moderation data, on PostgreSQL or embedded SQLite
 
 ## Quick Start
 
@@ -21,9 +21,11 @@ The `moderation` package provides comprehensive tools for managing player behavi
 ```go
 import "github.com/zax0rz/darkpawns/pkg/moderation"
 
-// Initialize moderation system
-db, _ := sql.Open("postgres", "your-connection-string")
-modManager := moderation.NewManager(db)
+// Initialize moderation system. The dialect travels with the handle: these
+// tables are created and queried through the connection pkg/db opened, so they
+// are translated by the same dialect value.
+database, _ := db.New("sqlite:///data/darkpawns.db") // or a postgres:// DSN
+modManager := moderation.NewManager(database.SQLDB(), database.Dialect())
 
 // Check messages for filtered content
 filteredMsg, action, shouldBlock := modManager.CheckMessage(playerName, message)
@@ -38,12 +40,17 @@ modManager.RecordMessage(playerName)
 
 ### Database Schema
 
-The package automatically creates the following tables:
+The package automatically creates the following tables, on either backend:
 
 1. `abuse_reports` - Player-submitted reports
 2. `admin_log` - Audit trail of admin actions
 3. `player_penalties` - Active player restrictions
 4. `word_filters` - Filtered words and phrases
+
+On SQLite the schema is translated by `pkg/db`'s dialect support: `SERIAL`
+becomes `INTEGER PRIMARY KEY AUTOINCREMENT`, `ADD COLUMN IF NOT EXISTS` becomes a
+`pragma_table_info` guard, and `NOW()` in a query body is computed in Go and
+bound, because SQLite has no such function.
 
 ## API Reference
 
@@ -96,9 +103,11 @@ type PlayerPenalty struct {
 
 #### NewManager
 ```go
-func NewManager(db *sql.DB) *Manager
+func NewManager(conn *sql.DB, dialect db.Dialect) *Manager
 ```
-Creates a new moderation manager with optional database connection.
+Creates a new moderation manager. `conn` is the game store's connection and
+`dialect` is the SQL flavour it was opened for; a nil `conn` gives the
+memory-only manager and the dialect is then never consulted.
 
 #### CheckMessage
 ```go
@@ -148,8 +157,8 @@ config := SpamDetectionConfig{
 
 ```go
 // Setup
-db, _ := sql.Open("postgres", "postgres://user:pass@localhost/db")
-mod := moderation.NewManager(db)
+database, _ := db.New("postgres://user:pass@localhost/db")
+mod := moderation.NewManager(database.SQLDB(), database.Dialect())
 
 // In your message handler
 func handleChatMessage(playerName, message string) (string, error) {
@@ -200,11 +209,13 @@ Tests cover:
 - Regex pattern matching
 - Spam detection logic
 - Message checking workflow
+- The four tables against a real database: SQLite always, PostgreSQL when
+  `DATABASE_URL` points at a disposable database (`backend_test.go`)
 
 ## Dependencies
 
-- PostgreSQL (optional, for persistence)
-- Standard Go libraries only
+- `github.com/zax0rz/darkpawns/pkg/db` for the connection and its dialect
+- Standard Go libraries only, plus the `pkg/db` drivers (lib/pq, modernc.org/sqlite)
 
 ## License
 
