@@ -27,15 +27,13 @@ edited world files.
 
 ## Quickstart
 
-A fresh clone to a running server, against a local PostgreSQL. Create the
-database once, export two variables, build, run:
+A fresh clone to a running server. No external services are required: the
+server boots against an embedded SQLite database by default. Build and run:
 
 ```bash
 git clone https://github.com/zax0rz/darkpawns.git
 cd darkpawns
 
-createdb darkpawns                        # run as the PostgreSQL role you will use
-export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql'
 export JWT_SECRET="$(openssl rand -hex 32)"
 
 go build -o server ./cmd/server
@@ -44,26 +42,24 @@ go build -o server ./cmd/server
 
 `./server` with no flags works from the repository root: it loads the world from
 `lib/world` (the directory holding `wld/`, `mob/`, `obj/`, `zon/` and `shp/`),
-serves the browser client from `web/public` on `:4350`, and accepts telnet on
-`:7777` (`-telnet-port 0` disables it). Every flag is listed in `./server -h`;
-none of the defaults need to be passed.
+creates the SQLite database at `lib/data/darkpawns.db` on first boot, serves the
+browser client from `web/public` on `:4350`, and accepts telnet on `:7777`
+(`-telnet-port 0` disables it). Every flag is listed in `./server -h`; none of
+the defaults need to be passed.
 
-That database line is the one that authenticates on a stock local PostgreSQL.
-`postgres://user:password@localhost:5432/darkpawns` connects over TCP and asks
-for the role's password; the three-slash form with `host=/var/run/postgresql`
-connects over the Unix socket, where the server trusts your operating-system
-identity instead. If you created the database as yourself, the socket form needs
-no password and no role name.
-
-Both `DATABASE_URL` and a stable `JWT_SECRET` are required to start. The server
-refuses to boot without them and prints exactly what to set, so a refusal is the
-fastest way to see the current requirement. Connect with `telnet localhost 7777`,
-or open <http://localhost:4350>.
+A stable `JWT_SECRET` is required outside development; a missing or short one
+is rejected at boot with the command to fix it. Connect with
+`telnet localhost 7777`, or open <http://localhost:4350>.
 
 ## Prerequisites
 
 - Go (see `go.mod` for the version); a C toolchain is not required (`CGO_ENABLED=0`).
-- PostgreSQL reachable via `DATABASE_URL`.
+- No database server: with no `-db` flag and no `DATABASE_URL`, the server
+  creates an embedded SQLite database at `<world>/../data/darkpawns.db` and
+  boots against it.
+- PostgreSQL is the opt-in backend for scaled deployments: pass a
+  `postgres://` URL via `-db` or `DATABASE_URL`. The research corpus
+  (decision_log, combat_log) is only written on this backend.
 - Optionally a reverse proxy (Caddy, nginx, …) terminating TLS in front of `:4350`.
 
 ## Build
@@ -77,8 +73,9 @@ Drop `GOOS`/`GOARCH` to build natively for your own platform.
 
 ## Configure
 
-Provision a PostgreSQL role and database. For example, run these as a PostgreSQL
-administrator (the commands prompt for the new role's password):
+PostgreSQL is opt-in. To use it, provision a role and database; for example, run
+these as a PostgreSQL administrator (the commands prompt for the new role's
+password):
 
 ```bash
 createuser --pwprompt darkpawns
@@ -95,6 +92,12 @@ Export your connection string and a signing secret:
 export DATABASE_URL='postgres://darkpawns:YOUR_PASSWORD@localhost:5432/darkpawns?sslmode=disable'
 export JWT_SECRET="$(openssl rand -hex 32)"
 ```
+
+`postgres://user:password@localhost:5432/darkpawns` connects over TCP and asks
+for the role's password; the three-slash form with `host=/var/run/postgresql`
+connects over the Unix socket, where the server trusts your operating-system
+identity instead. If you created the database as yourself, the socket form needs
+no password and no role name.
 
 Replace `YOUR_PASSWORD` with the role's password (URL-encode special characters).
 Keep the signing secret private and stable across restarts. Startup
