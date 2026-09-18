@@ -1776,3 +1776,89 @@ func TestWorldWritePUTs_AreGone(t *testing.T) {
 		}
 	}
 }
+
+// fakeCaptureProvider stands in for the session manager.
+type fakeCaptureProvider struct {
+	available bool
+	enabled   bool
+	flushed   int
+}
+
+func (f *fakeCaptureProvider) GetLiveAgentSessions() []LiveAgentSession { return nil }
+func (f *fakeCaptureProvider) DecisionCaptureAvailable() bool           { return f.available }
+func (f *fakeCaptureProvider) DecisionCaptureEnabled() bool             { return f.enabled }
+func (f *fakeCaptureProvider) DisableDecisionCapture()                  { f.enabled = false; f.flushed++ }
+
+func (f *fakeCaptureProvider) EnableDecisionCapture() bool {
+	if !f.available {
+		return false
+	}
+	f.enabled = true
+	return true
+}
+
+// TestResearchCaptureToggle covers the enable/run/disable cycle, and the case
+// that matters most: enabling when no research store was configured must fail
+// loudly rather than report success and record nothing.
+func TestResearchCaptureToggle(t *testing.T) {
+	setJWTSecret(t)
+	token := generateTestToken(t, "builder")
+
+	post := func(h http.Handler, body string) (int, string) {
+		req := httptest.NewRequest(http.MethodPost, "/admin/research/capture", strings.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec.Code, rec.Body.String()
+	}
+
+	t.Run("no research store configured", func(t *testing.T) {
+		p := &fakeCaptureProvider{available: false}
+		h, err := NewRouter(testWorld(t), nil, NewLogBuffer(10), nil, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		code, body := post(h, `{"enabled":true}`)
+		if code != http.StatusConflict {
+			t.Errorf("enable with no store = %d, want 409; body: %s", code, body)
+		}
+		if p.enabled {
+			t.Error("capture turned on with nothing to record into")
+		}
+	})
+
+	t.Run("enable then disable", func(t *testing.T) {
+		p := &fakeCaptureProvider{available: true}
+		h, err := NewRouter(testWorld(t), nil, NewLogBuffer(10), nil, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		code, body := post(h, `{"enabled":true}`)
+		if code != http.StatusOK || !p.enabled {
+			t.Fatalf("enable = %d enabled=%v; body: %s", code, p.enabled, body)
+		}
+		// The response names what is being recorded, in the same words the boot
+		// log uses: a control that starts recording player speech should say so
+		// where it is operated.
+		if !strings.Contains(body, "tells and says") {
+			t.Errorf("enable response does not say what it records: %s", body)
+		}
+
+		code, _ = post(h, `{"enabled":false}`)
+		if code != http.StatusOK || p.enabled {
+			t.Errorf("disable = %d enabled=%v", code, p.enabled)
+		}
+		if p.flushed != 1 {
+			t.Errorf("disable flushed %d times, want 1; buffered records would be dropped", p.flushed)
+		}
+	})
+
+	t.Run("body must say which way", func(t *testing.T) {
+		p := &fakeCaptureProvider{available: true}
+		h, _ := NewRouter(testWorld(t), nil, NewLogBuffer(10), nil, p)
+		if code, _ := post(h, `{}`); code != http.StatusBadRequest {
+			t.Errorf("empty body = %d, want 400", code)
+		}
+	})
+}

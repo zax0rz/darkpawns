@@ -878,6 +878,82 @@ type LiveAgentSession struct {
 // to show live agent sessions.
 type LiveSessionProvider interface {
 	GetLiveAgentSessions() []LiveAgentSession
+
+	// Decision capture. Separated from the writer's existence on purpose:
+	// provisioning a research database must not by itself start recording what
+	// players type. Available reports whether DP_RESEARCH_URL was configured, so
+	// a caller can distinguish "off" from "impossible".
+	EnableDecisionCapture() bool
+	DisableDecisionCapture()
+	DecisionCaptureEnabled() bool
+	DecisionCaptureAvailable() bool
+}
+
+// researchCaptureResponse is the state of decision capture. It names what
+// capture records in the same words the boot log uses, because a control that
+// turns on recording of player speech should say so where it is operated and
+// not only in a log nobody is reading at the time.
+type researchCaptureResponse struct {
+	Enabled   bool   `json:"enabled"`
+	Available bool   `json:"available"`
+	Records   string `json:"records,omitempty"`
+}
+
+const researchCaptureRecords = "command text including tells and says"
+
+// handleResearchCapture reads (GET) and sets (POST) decision capture.
+func handleResearchCapture(provider LiveSessionProvider, auditLogger *audit.AuditLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		respond := func(code int) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(code)
+			resp := researchCaptureResponse{
+				Enabled:   provider.DecisionCaptureEnabled(),
+				Available: provider.DecisionCaptureAvailable(),
+			}
+			if resp.Available {
+				resp.Records = researchCaptureRecords
+			}
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				slog.Warn("research capture encode failed", "error", err)
+			}
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			respond(http.StatusOK)
+		case http.MethodPost:
+			var req struct {
+				Enabled *bool `json:"enabled"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Enabled == nil {
+				http.Error(w, `{"error":"body must be {\"enabled\": true|false}"}`, http.StatusBadRequest)
+				return
+			}
+			if *req.Enabled {
+				if !provider.EnableDecisionCapture() {
+					http.Error(w, `{"error":"no research store configured; set DP_RESEARCH_URL and restart"}`,
+						http.StatusConflict)
+					return
+				}
+			} else {
+				// Flushes what is buffered; see Manager.DisableDecisionCapture.
+				provider.DisableDecisionCapture()
+			}
+			if auditLogger != nil {
+				auditLogger.Log(audit.AuditEvent{
+					EventType: "research",
+					Action:    "decision_capture",
+					Success:   true,
+					Details:   fmt.Sprintf("enabled=%t records=%q", *req.Enabled, researchCaptureRecords),
+				})
+			}
+			slog.Info("decision capture toggled", "enabled", *req.Enabled, "records", researchCaptureRecords)
+			respond(http.StatusOK)
+		default:
+			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+	}
 }
 
 // handleLiveAgentSessions returns all active agent sessions in the game server.

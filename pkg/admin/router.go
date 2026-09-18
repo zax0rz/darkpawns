@@ -153,6 +153,10 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Live agent sessions — requires builder role, shows connected game agents
 	if liveSessions != nil {
 		mux.HandleFunc("/admin/sessions/agents", wrap(corsMiddleware(requireRole("builder", handleLiveAgentSessions(liveSessions)))))
+		// Decision capture, behind the same login as the rest of the console.
+		// Inside this guard because a nil provider means there is no session
+		// manager to ask, the same reason the route above is gated.
+		mux.HandleFunc("/admin/research/capture", wrap(corsMiddleware(requireRole("builder", handleResearchCapture(liveSessions, auditLogger)))))
 	}
 
 	// Decision log — requires builder role

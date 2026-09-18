@@ -116,7 +116,10 @@ func (s *Session) capturePlayerState() playerState {
 // captureAndLog captures pre/post state and logs the decision.
 // Called from handleCommand after ExecuteCommand returns.
 func (s *Session) captureAndLog(cmdStr string, args []string, preState playerState, startTime time.Time, execErr error) {
-	if s.manager.decisionLog == nil {
+	// Loaded once. The pointer is swapped at runtime when capture is toggled, so
+	// re-reading it below could see nil after a non-nil check and panic.
+	decisionLog := s.manager.decisionLog.Load()
+	if decisionLog == nil {
 		return
 	}
 
@@ -144,7 +147,7 @@ func (s *Session) captureAndLog(cmdStr string, args []string, preState playerSta
 
 	record := &db.DecisionRecord{
 		SessionID:      s.sessionID(),
-		PlayerName:     s.manager.decisionLog.HashPlayerName(s.playerName, s.isAgent),
+		PlayerName:     decisionLog.HashPlayerName(s.playerName, s.isAgent),
 		IsAgent:        s.isAgent,
 		AgentHarness:   s.agentHarness,
 		AgentModel:     s.agentModel,
@@ -187,6 +190,6 @@ func (s *Session) captureAndLog(cmdStr string, args []string, preState playerSta
 		DurationMs:      float64(time.Since(startTime).Microseconds()) / 1000.0,
 	}
 
-	s.manager.decisionLog.RecordDecision(record)
+	decisionLog.RecordDecision(record)
 	s.commandCount++
 }
