@@ -80,8 +80,9 @@ const (
 
 // usage is the operator's first stop after a boot refusal, so it leads with a
 // command that works in a fresh checkout and only then lists the flags. The
-// database line is the one that authenticates on a stock local PostgreSQL:
-// TCP asks for a password, the Unix socket trusts the peer identity.
+// checkout command needs nothing external: the server boots against an
+// embedded SQLite database by default, and DATABASE_URL only matters when the
+// operator opts into PostgreSQL.
 func usage() {
 	out := flag.CommandLine.Output()
 	// Header and footer are checked separately because flag.PrintDefaults has to
@@ -89,9 +90,10 @@ func usage() {
 	if _, err := fmt.Fprint(out, "Dark Pawns server\n\n"+
 		"Usage:\n  server [flags]\n\n"+
 		"In a checkout, from the repository root:\n\n"+
-		"  export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql'\n"+
 		"  export JWT_SECRET=\"$(openssl rand -hex 32)\"\n"+
 		"  ./server\n\n"+
+		"Boots against an embedded SQLite database in data/ by default. Set\n"+
+		"DATABASE_URL (or pass -db) to use PostgreSQL instead.\n\n"+
 		"Flags:\n"); err != nil {
 		slog.Warn("writing usage failed", "error", err)
 		return
@@ -112,7 +114,7 @@ func main() {
 		worldDir   = flag.String("world", defaultWorldDir, "World data directory: the one holding wld/, mob/, obj/, zon/ and shp/")
 		scriptsDir = flag.String("scripts", "", "Lua script directory (defaults to <world>/scripts)")
 		port       = flag.String("port", "4350", "HTTP and WebSocket port")
-		dbURL      = flag.String("db", "", "PostgreSQL URL (falls back to DATABASE_URL env var)")
+		dbURL      = flag.String("db", "", "Database URL or SQLite path (falls back to DATABASE_URL env var; default: embedded SQLite beside the world data)")
 		webDir     = flag.String("web", defaultWebDir, "Browser client directory served at / (index.html, client.js, style.css)")
 		staticDir  = flag.String("static", "", "Static site directory served at /, takes precedence over -web")
 		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
@@ -225,25 +227,29 @@ func main() {
 	if *dbURL == "" {
 		*dbURL = os.Getenv("DATABASE_URL")
 	}
-	if *dbURL == "" && os.Getenv("DP_ALLOW_NO_DB") != "1" {
-		// No honest default exists here: the role, database name and password
-		// are the operator's choices. So the refusal carries the one URL that
-		// works on a stock local PostgreSQL, where TCP wants a password but the
-		// Unix socket authenticates by peer identity, plus the documented way
-		// out for ephemeral runs.
-		//
-		// DP_ALLOW_NO_DB is honoured here and not only on connection failure,
-		// because the message names it: a refusal that advertises an escape
-		// hatch and then ignores it is the same defect as help that points at a
-		// directory which does not exist. An empty URL falls through to db.New
-		// below, which fails and takes the explicitly-allowed no-persistence
-		// path. cmd/dp-oracle-diff sets this and does not guarantee a
-		// DATABASE_URL in the environment it builds.
-		slog.Error("database URL required; refusing to start without persistence",
-			"hint", "export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql' (local Unix socket, peer auth)",
-			"or", "pass -db postgres://user:password@host:5432/darkpawns?sslmode=disable",
-			"dev_only", "DP_ALLOW_NO_DB=1 starts without persistence for ephemeral, dev and oracle runs")
-		os.Exit(1)
+	if *dbURL == "" {
+		if os.Getenv("DP_ALLOW_NO_DB") == "1" {
+			// The explicitly allowed no-persistence path: the empty DSN falls
+			// through to db.New below, which fails, and boot continues without
+			// a store. cmd/dp-oracle-diff sets this and does not guarantee a
+			// DATABASE_URL in the environment it builds. Honoured here and not
+			// only on connection failure so the defaulting branch cannot
+			// resurrect persistence against the operator's stated intent.
+		} else {
+			// Boot with no external services: default to embedded SQLite beside
+			// the world data. The path is anchored the same way as
+			// DARKPAWNS_DATA_DIR (DP-1193): the directory holding the world
+			// dir's sibling data. PostgreSQL remains the documented choice for
+			// scaled deployments, not a requirement to start.
+			defaultPath := filepath.Clean(filepath.Join(*worldDir, "..", "data", "darkpawns.db"))
+			if err := os.MkdirAll(filepath.Dir(defaultPath), 0o755); err != nil {
+				slog.Error("default database directory unusable; refusing to start",
+					"dir", filepath.Dir(defaultPath), "error", err)
+				os.Exit(1)
+			}
+			*dbURL = "sqlite://" + defaultPath
+			slog.Info("no database configured; defaulting to embedded SQLite", "path", defaultPath)
+		}
 	}
 
 	// Validate JWT signing secret at boot. A sub-32-char secret silently breaks

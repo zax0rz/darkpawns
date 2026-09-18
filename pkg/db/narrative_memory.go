@@ -58,53 +58,58 @@ const (
 // InitNarrativeMemory creates the narrative memory tables if they don't exist.
 // Called from DB.New() alongside createTables().
 func (db *DB) InitNarrativeMemory() error {
-	query := `
-	CREATE TABLE IF NOT EXISTS agent_narrative_memory (
-		id               BIGSERIAL PRIMARY KEY,
-		agent_name       VARCHAR(64)   NOT NULL,
-		event_type       VARCHAR(32)   NOT NULL,
-		summary          TEXT          NOT NULL,
-		room_vnum        INTEGER       NOT NULL DEFAULT 0,
-		room_name        VARCHAR(128)  NOT NULL DEFAULT '',
-		related_entity   VARCHAR(128),   -- e.g., 'mob:giant_rat', 'player:zach'
-		related_vnum     INTEGER,         -- vnum of related mob/item, NULL if not applicable
-		valence          SMALLINT      NOT NULL DEFAULT 0 CHECK (valence BETWEEN -3 AND 3),
-		salience         REAL          NOT NULL DEFAULT 1.0 CHECK (salience BETWEEN 0.0 AND 1.0),
-		social_event_id  VARCHAR(64),   -- NULL for non-social events
-		session_id       VARCHAR(64)   NOT NULL DEFAULT '',
-		created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-		updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-	);
+	// Statements are issued one at a time: SQLite rejects multi-statement
+	// strings, and single statements report the failing piece precisely.
+	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS agent_narrative_memory (
+			id               BIGSERIAL PRIMARY KEY,
+			agent_name       VARCHAR(64)   NOT NULL,
+			event_type       VARCHAR(32)   NOT NULL,
+			summary          TEXT          NOT NULL,
+			room_vnum        INTEGER       NOT NULL DEFAULT 0,
+			room_name        VARCHAR(128)  NOT NULL DEFAULT '',
+			related_entity   VARCHAR(128),   -- e.g., 'mob:giant_rat', 'player:zach'
+			related_vnum     INTEGER,         -- vnum of related mob/item, NULL if not applicable
+			valence          SMALLINT      NOT NULL DEFAULT 0 CHECK (valence BETWEEN -3 AND 3),
+			salience         REAL          NOT NULL DEFAULT 1.0 CHECK (salience BETWEEN 0.0 AND 1.0),
+			social_event_id  VARCHAR(64),   -- NULL for non-social events
+			session_id       VARCHAR(64)   NOT NULL DEFAULT '',
+			created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+			updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_anm_agent_name    ON agent_narrative_memory(agent_name)`,
+		`CREATE INDEX IF NOT EXISTS idx_anm_event_type    ON agent_narrative_memory(event_type)`,
+		`CREATE INDEX IF NOT EXISTS idx_anm_salience      ON agent_narrative_memory(salience DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_anm_social_event  ON agent_narrative_memory(social_event_id) WHERE social_event_id != ''`,
+		`CREATE INDEX IF NOT EXISTS idx_anm_agent_session ON agent_narrative_memory(agent_name, session_id)`,
 
-	CREATE INDEX IF NOT EXISTS idx_anm_agent_name    ON agent_narrative_memory(agent_name);
-	CREATE INDEX IF NOT EXISTS idx_anm_event_type    ON agent_narrative_memory(event_type);
-	CREATE INDEX IF NOT EXISTS idx_anm_salience      ON agent_narrative_memory(salience DESC);
-	CREATE INDEX IF NOT EXISTS idx_anm_social_event  ON agent_narrative_memory(social_event_id) WHERE social_event_id != '';
-	CREATE INDEX IF NOT EXISTS idx_anm_agent_session ON agent_narrative_memory(agent_name, session_id);
+		// Composite for bootstrap query: agent + salience DESC + recency
+		`CREATE INDEX IF NOT EXISTS idx_anm_bootstrap
+			ON agent_narrative_memory(agent_name, salience DESC, created_at DESC)`,
 
-	-- Composite for bootstrap query: agent + salience DESC + recency
-	CREATE INDEX IF NOT EXISTS idx_anm_bootstrap
-		ON agent_narrative_memory(agent_name, salience DESC, created_at DESC);
+		// Session summaries table: LLM-generated consolidations written after each session.
+		// Separate from raw events — summaries are the distillation, events are the log.
+		`CREATE TABLE IF NOT EXISTS agent_session_summaries (
+			id             BIGSERIAL PRIMARY KEY,
+			agent_name     VARCHAR(64)  NOT NULL,
+			session_id     VARCHAR(64)  NOT NULL UNIQUE,
+			summary        TEXT         NOT NULL,
+			event_count    INTEGER      NOT NULL DEFAULT 0,
+			session_start  TIMESTAMPTZ,
+			session_end    TIMESTAMPTZ,
+			created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+		)`,
 
-	-- Session summaries table: LLM-generated consolidations written after each session.
-	-- Separate from raw events — summaries are the distillation, events are the log.
-	CREATE TABLE IF NOT EXISTS agent_session_summaries (
-		id             BIGSERIAL PRIMARY KEY,
-		agent_name     VARCHAR(64)  NOT NULL,
-		session_id     VARCHAR(64)  NOT NULL UNIQUE,
-		summary        TEXT         NOT NULL,
-		event_count    INTEGER      NOT NULL DEFAULT 0,
-		session_start  TIMESTAMPTZ,
-		session_end    TIMESTAMPTZ,
-		created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
-	);
+		`CREATE INDEX IF NOT EXISTS idx_ass_agent_name ON agent_session_summaries(agent_name)`,
+		`CREATE INDEX IF NOT EXISTS idx_ass_session_id ON agent_session_summaries(session_id)`,
+	}
 
-	CREATE INDEX IF NOT EXISTS idx_ass_agent_name ON agent_session_summaries(agent_name);
-	CREATE INDEX IF NOT EXISTS idx_ass_session_id ON agent_session_summaries(session_id);
-	`
-
-	_, err := db.conn.Exec(query)
-	return err
+	for _, stmt := range stmts {
+		if err := db.execDDL(stmt); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // WriteNarrativeMemory inserts one narrative fact. Fire-and-forget safe to call
@@ -112,7 +117,7 @@ func (db *DB) InitNarrativeMemory() error {
 func (db *DB) WriteNarrativeMemory(m *NarrativeMemory) (int64, error) {
 	metrics.MemoryWrite()
 	var id int64
-	err := db.conn.QueryRow(
+	err := db.queryRow(
 		`
 		INSERT INTO agent_narrative_memory
 			(agent_name, event_type, summary, room_vnum, room_name,
@@ -141,7 +146,7 @@ func (db *DB) WriteNarrativeMemory(m *NarrativeMemory) (int64, error) {
 //	unlimited: no limit    (not recommended in production)
 func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory, error) {
 	metrics.MemoryRead()
-	rows, err := db.conn.Query(
+	rows, err := db.query(
 		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
 		       related_entity, related_vnum, valence, salience,
@@ -164,7 +169,7 @@ func (db *DB) BootstrapMemories(agentName string, limit int) ([]*NarrativeMemory
 // consolidation cron (scripts/dp_session_consolidate.py).
 func (db *DB) RecentMemories(agentName, sessionID string) ([]*NarrativeMemory, error) {
 	metrics.MemoryRead()
-	rows, err := db.conn.Query(
+	rows, err := db.query(
 		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
 		       related_entity, related_vnum, valence, salience,
@@ -188,7 +193,7 @@ func (db *DB) SocialEventMemories(socialEventID string) ([]*NarrativeMemory, err
 	if socialEventID == "" {
 		return nil, fmt.Errorf("social_event_id cannot be empty")
 	}
-	rows, err := db.conn.Query(
+	rows, err := db.query(
 		`
 		SELECT id, agent_name, event_type, summary, room_vnum, room_name,
 		       related_entity, related_vnum, valence, salience,
@@ -207,7 +212,7 @@ func (db *DB) SocialEventMemories(socialEventID string) ([]*NarrativeMemory, err
 
 // WriteSessionSummary stores a post-session LLM consolidation.
 func (db *DB) WriteSessionSummary(agentName, sessionID, summary string, eventCount int, start, end time.Time) error {
-	_, err := db.conn.Exec(
+	_, err := db.exec(
 		`
 		INSERT INTO agent_session_summaries
 			(agent_name, session_id, summary, event_count, session_start, session_end)
@@ -227,7 +232,7 @@ func (db *DB) WriteSessionSummary(agentName, sessionID, summary string, eventCou
 // GetSessionSummaries returns the N most recent session summaries for an agent.
 // Included in LLM bootstrap after raw memories (higher-level context).
 func (db *DB) GetSessionSummaries(agentName string, limit int) ([]string, error) {
-	rows, err := db.conn.Query(
+	rows, err := db.query(
 		`
 		SELECT summary FROM agent_session_summaries
 		WHERE agent_name = $1
@@ -264,14 +269,14 @@ func (db *DB) DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error
 
 	// Decay: multiply salience by 0.5 for neutral, 0.75 for high-valence
 	// (high-valence = |valence| >= 2, per PHASE4-AGENT-PROTOCOL.md spec)
-	result, err := db.conn.Exec(
+	result, err := db.exec(
 		`
 		UPDATE agent_narrative_memory
 		SET salience = CASE
 			WHEN ABS(valence) >= 2 THEN salience * 0.75
 			ELSE salience * 0.5
 		END,
-		updated_at = NOW()
+		updated_at = CURRENT_TIMESTAMP
 		WHERE created_at < $1 AND salience > 0.05`,
 		cutoff,
 	)
@@ -282,7 +287,7 @@ func (db *DB) DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error
 	decayed = int(n)
 
 	// Prune below floor
-	result, err = db.conn.Exec(
+	result, err = db.exec(
 		`
 		DELETE FROM agent_narrative_memory WHERE salience <= 0.05`,
 	)
