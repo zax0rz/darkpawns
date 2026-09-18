@@ -70,10 +70,21 @@ on both sides: `deployment/test_privacy_filter_api.py` (no model needed,
 `python -m pytest`) and the stub-server tests in `pkg/privacy`.
 
 **Wiring status:** the PII slog handler in `pkg/privacy` is still not
-installed in `cmd/server`, on purpose. The client's fallback is fail-closed —
-an unreachable service replaces filtered output with `[FILTERED]` — so the
-handler must only be wired once a reachable service exists. That wiring is a
-separate, deliberate change, not part of standing the service up.
+installed in `cmd/server`, on purpose — but not for the reason it is tempting
+to assume. `Client.FilterText` does return `[FILTERED]` when the service is
+unreachable, yet `PIIHandler` discards that fallback and restores the original
+message (see Fallback Strategies below). So an unwired or unreachable filter
+does not destroy logs: it lets them through **unfiltered**, carrying only a
+`pii_filter_error` attr. The service must exist first because otherwise there
+is no protection while appearing to have some, which is the worse failure.
+
+Two things must be settled before that wiring lands, and neither belongs here:
+`PIIHandler.Handle` is synchronous and calls the filter once per message plus
+once per string attribute, so a record with three string attrs costs four
+sequential round-trips to CPU inference against a 10-pulse-per-second game
+loop; and `fallbackFilter` returns a sentinel its only caller throws away,
+where a real local regex scrubber would give operators who never run this
+service actual protection.
 
 ## Configuration
 

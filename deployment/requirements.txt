@@ -10,4 +10,8 @@
 # contract-tested against (deployment/test_privacy_filter_api.py).
 fastapi==0.141.1
 uvicorn==0.53.0
+# Pinned because fastapi's pydantic compatibility is what breaks first: an
+# unpinned pydantic already fails collection with "cannot import name 'IncEx'",
+# and these tests are not run by CI, so nothing else would catch it.
+pydantic==2.12.4
 opf @ git+https://github.com/openai/privacy-filter.git
