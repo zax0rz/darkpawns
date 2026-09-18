@@ -305,3 +305,35 @@ func TestNewMockDecisionLogWriter_RecordAndStop(t *testing.T) {
 	dlw.Stop()
 	dlw.Stop()
 }
+
+// TestPartitionNamePattern guards the one place a catalog value reaches DDL.
+// DROP TABLE cannot be parameterised, so the pattern is the boundary: it must
+// accept exactly what EnsureDecisionLogPartitions creates and nothing else.
+func TestPartitionNamePattern(t *testing.T) {
+	accept := []string{
+		"decision_log_2026_09",
+		"combat_log_2026_01",
+		"decision_log_1999_12",
+	}
+	for _, name := range accept {
+		if !partitionNamePattern.MatchString(name) {
+			t.Errorf("pattern rejected a partition we create: %q", name)
+		}
+	}
+
+	reject := []string{
+		"decision_log", // the parent table itself
+		"combat_log",   // ditto
+		"players",      // unrelated table
+		"decision_log_2026_09; DROP TABLE players", // statement injection
+		"decision_log_2026_9",                      // month not zero-padded
+		"decision_log_26_09",                       // short year
+		"x_decision_log_2026_09",                   // prefixed
+		"decision_log_2026_09_extra",               // suffixed
+	}
+	for _, name := range reject {
+		if partitionNamePattern.MatchString(name) {
+			t.Errorf("pattern accepted a name that must never reach a statement: %q", name)
+		}
+	}
+}
