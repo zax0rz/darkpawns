@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
@@ -46,8 +48,24 @@ func TestServerBootHelper(t *testing.T) {
 // combined output.
 func bootServer(t *testing.T, args []string, env ...string) (int, string) {
 	t.Helper()
+	return bootServerContext(t, args, 0, env...)
+}
+
+// bootServerContext is bootServer with an optional lifetime cap. A timed-out
+// boot is not a failure by itself: with a parseable fixture world the server
+// boots all the way to its listeners, so tests that only care about how far
+// the boot chain got cap the run and assert on the logged markers. A capped
+// run reports exit code -1 (killed while still running).
+func bootServerContext(t *testing.T, args []string, timeout time.Duration, env ...string) (int, string) {
+	t.Helper()
 	cmdArgs := append([]string{"-test.run=TestServerBootHelper", "--"}, args...)
-	cmd := exec.Command(os.Args[0], cmdArgs...) // #nosec G704 -- test re-executes its own binary
+	ctx := context.Background()
+	cancel := context.CancelFunc(func() {})
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+	}
+	defer cancel()
+	cmd := exec.CommandContext(ctx, os.Args[0], cmdArgs...) // #nosec G704 -- test re-executes its own binary
 	cmd.Env = append(os.Environ(), append(env, bootHelperEnv+"=1")...)
 	out, runErr := cmd.CombinedOutput()
 	if runErr == nil {
@@ -61,13 +79,28 @@ func bootServer(t *testing.T, args []string, env ...string) (int, string) {
 }
 
 // fakeWorld builds the minimum tree validateWorldDir accepts: <root>/lib/world
-// holding a wld/ directory. Boot stops at the database or JWT check long before
-// the parser opens a file, so no room data is needed.
+// holding a wld/ directory. Boot stops at the world parse (the fixture has no
+// mob/obj/zon data), long before any listener binds.
 func fakeWorld(t *testing.T) string {
 	t.Helper()
 	worldDir := filepath.Join(t.TempDir(), "lib", "world")
 	if err := os.MkdirAll(filepath.Join(worldDir, "wld"), 0o700); err != nil {
 		t.Fatalf("create fake world: %v", err)
+	}
+	return worldDir
+}
+
+// parseableWorld builds a complete but empty world tree: all five directories
+// the parser reads exist, so boot gets past the world load. Callers must cap
+// the run (bootServerContext), because a parseable world means the server
+// reaches its listeners.
+func parseableWorld(t *testing.T) string {
+	t.Helper()
+	worldDir := filepath.Join(t.TempDir(), "lib", "world")
+	for _, d := range []string{"wld", "mob", "obj", "zon", "shp"} {
+		if err := os.MkdirAll(filepath.Join(worldDir, d), 0o700); err != nil {
+			t.Fatalf("create parseable world: %v", err)
+		}
 	}
 	return worldDir
 }
@@ -104,24 +137,37 @@ func TestServerBootNoFlagsNamesTheCommand(t *testing.T) {
 }
 
 // TestServerBootNoFlagsFindsCheckoutWorld proves the -world default does not
-// need an operator to know the layout: from a checkout root, no flags get as
-// far as the database check. That is as far as boot can go without an operator
-// supplying a URL, and it is the point.
+// need an operator to know the layout: from a checkout-shaped root (lib/world
+// present), no flags resolve the whole tree and boot all the way to an
+// embedded database. The run is capped: a parseable fixture world means the
+// server reaches its listeners, and "Database connected." is the marker that
+// matters.
 func TestServerBootNoFlagsFindsCheckoutWorld(t *testing.T) {
-	repoWorld(t)
-	t.Chdir(filepath.Join("..", ".."))
-	code, out := bootServer(t, nil,
+	root := t.TempDir()
+	worldDir := filepath.Join(root, "lib", "world")
+	for _, d := range []string{"wld", "mob", "obj", "zon", "shp"} {
+		if err := os.MkdirAll(filepath.Join(worldDir, d), 0o700); err != nil {
+			t.Fatalf("create checkout-shaped tree: %v", err)
+		}
+	}
+	t.Chdir(root)
+	_, out := bootServerContext(t, nil, 5*time.Second,
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
 	)
-	if code != 1 {
-		t.Fatalf("exit code = %d, want 1\n%s", code, out)
-	}
 	if strings.Contains(out, "world directory unusable") {
 		t.Errorf("default -world did not resolve in the checkout root:\n%s", out)
 	}
-	if !strings.Contains(out, "database URL required") {
-		t.Errorf("expected the database refusal, got:\n%s", out)
+	if !strings.Contains(out, "no database configured; defaulting to embedded SQLite") {
+		t.Errorf("expected the embedded SQLite default, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Database connected.") {
+		t.Errorf("expected the SQLite database to finish booting, got:\n%s", out)
+	}
+	// The default file must live beside the world data, not wherever the
+	// process happened to start.
+	if _, err := os.Stat(filepath.Join(root, "lib", "data", "darkpawns.db")); err != nil {
+		t.Errorf("default database file not created beside the world data: %v", err)
 	}
 }
 
@@ -142,22 +188,26 @@ func TestServerBootRejectsParentOfWorldDir(t *testing.T) {
 	}
 }
 
-func TestServerBootRequiresDatabaseURL(t *testing.T) {
-	code, out := bootServer(t,
-		[]string{"-world", fakeWorld(t)},
+// TestServerBootDefaultsToSQLite replaces the old database-URL refusal: with
+// no -db and no DATABASE_URL, boot must default to an embedded SQLite file
+// beside the world data and get on with starting.
+func TestServerBootDefaultsToSQLite(t *testing.T) {
+	worldDir := parseableWorld(t) // .../lib/world
+	_, out := bootServerContext(t, []string{"-world", worldDir}, 5*time.Second,
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
 	)
-	if code != 1 {
-		t.Fatalf("exit code = %d, want 1\n%s", code, out)
+	if !strings.Contains(out, "no database configured; defaulting to embedded SQLite") {
+		t.Errorf("expected the embedded SQLite default, got:\n%s", out)
 	}
-	if !strings.Contains(out, "database URL required") {
-		t.Errorf("expected database URL error, got:\n%s", out)
+	if strings.Contains(out, "world directory unusable") {
+		t.Errorf("-world did not resolve:\n%s", out)
 	}
-	// The refusal has to carry the URL that actually authenticates on a stock
-	// local PostgreSQL, not just the fault.
-	if !strings.Contains(out, "host=/var/run/postgresql") {
-		t.Errorf("expected the local socket URL in the message, got:\n%s", out)
+	if !strings.Contains(out, "Database connected.") {
+		t.Errorf("expected the SQLite database to finish booting, got:\n%s", out)
+	}
+	if _, err := os.Stat(filepath.Join(filepath.Dir(worldDir), "data", "darkpawns.db")); err != nil {
+		t.Errorf("default database file not created beside the world data: %v", err)
 	}
 }
 

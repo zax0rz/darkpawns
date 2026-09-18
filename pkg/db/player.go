@@ -17,6 +17,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/errlog"
 
 	_ "github.com/lib/pq"
+	// modernc.org/sqlite is the pure-Go SQLite driver: the static
+	// CGO_ENABLED=0 build in DEPLOYMENT.md depends on it. mattn/go-sqlite3
+	// would pull in cgo (see pkg/storage for how that rots).
+	_ "modernc.org/sqlite"
 )
 
 // ErrAmbiguousPlayerName refuses legacy case-colliding rows rather than selecting an account.
@@ -24,12 +28,40 @@ var ErrAmbiguousPlayerName = errors.New("ambiguous character name; saved records
 
 // DB wraps the database connection.
 type DB struct {
-	conn *sql.DB
+	conn    *sql.DB
+	dialect dialect
 }
 
 // SQLDB returns the underlying *sql.DB for use by other packages (e.g., moderation).
 func (db *DB) SQLDB() *sql.DB {
 	return db.conn
+}
+
+// exec, query and queryRow are the statement choke points for the game store:
+// they rebind $N placeholders when the connection is SQLite. DDL goes through
+// execDDL instead, which additionally translates the schema.
+func (db *DB) exec(query string, args ...interface{}) (sql.Result, error) {
+	return db.conn.Exec(db.dialect.rebind(query), args...)
+}
+
+func (db *DB) query(query string, args ...interface{}) (*sql.Rows, error) {
+	return db.conn.Query(db.dialect.rebind(query), args...)
+}
+
+func (db *DB) queryRow(query string, args ...interface{}) *sql.Row {
+	return db.conn.QueryRow(db.dialect.rebind(query), args...)
+}
+
+// execDDL runs one schema statement, translating PostgreSQL-only syntax when
+// the connection is SQLite. Statements must be issued one at a time: SQLite
+// rejects multi-statement strings, and single statements report the failing
+// piece precisely.
+func (db *DB) execDDL(stmt string) error {
+	if db.dialect == dialectSQLite {
+		stmt = sqliteDDL(stmt)
+	}
+	_, err := db.conn.Exec(stmt)
+	return err
 }
 
 // PlayerRecord represents a player in the database.
@@ -68,9 +100,19 @@ type PlayerRecord struct {
 	LockedUntil         *time.Time
 }
 
-// New creates a new database connection.
+// New creates a new database connection. The DSN scheme selects the dialect:
+// postgres:// (or postgresql://) uses PostgreSQL; sqlite://, a bare file path
+// or :memory: uses embedded SQLite.
 func New(connString string) (*DB, error) {
-	conn, err := sql.Open("postgres", connString)
+	dialect, dsn, err := splitDSN(connString)
+	if err != nil {
+		return nil, err
+	}
+	driver := "postgres"
+	if dialect == dialectSQLite {
+		driver = "sqlite"
+	}
+	conn, err := sql.Open(driver, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
@@ -91,18 +133,50 @@ func New(connString string) (*DB, error) {
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
 
-	// Configure connection pool to avoid exhausting pg max_connections under load.
-	// Values mirror deployment guidance; override via env vars if needed.
-	conn.SetMaxOpenConns(getEnvInt("DB_MAX_OPEN_CONNS", 25))
-	conn.SetMaxIdleConns(getEnvInt("DB_MAX_IDLE_CONNS", 5))
-	conn.SetConnMaxLifetime(time.Duration(getEnvInt("DB_CONN_MAX_LIFETIME_SECONDS", 300)) * time.Second)
+	if dialect == dialectSQLite {
+		// Single connection plus WAL: SQLite allows one writer at a time, and
+		// there are no explicit transactions in this package to serialize.
+		// busy_timeout keeps event-driven writes from failing on a locked file.
+		conn.SetMaxOpenConns(1)
+		for _, pragma := range []string{
+			"PRAGMA busy_timeout = 5000",
+			"PRAGMA journal_mode = WAL",
+		} {
+			if _, err := conn.Exec(pragma); err != nil {
+				return nil, fmt.Errorf("set sqlite pragma %q: %w", pragma, err)
+			}
+		}
+	} else {
+		// Configure connection pool to avoid exhausting pg max_connections under load.
+		// Values mirror deployment guidance; override via env vars if needed.
+		conn.SetMaxOpenConns(getEnvInt("DB_MAX_OPEN_CONNS", 25))
+		conn.SetMaxIdleConns(getEnvInt("DB_MAX_IDLE_CONNS", 5))
+		conn.SetConnMaxLifetime(time.Duration(getEnvInt("DB_CONN_MAX_LIFETIME_SECONDS", 300)) * time.Second)
+	}
 
-	db := &DB{conn: conn}
+	db := &DB{conn: conn, dialect: dialect}
 	if err := db.createTables(); err != nil {
 		return nil, fmt.Errorf("create tables: %w", err)
 	}
 	if err := db.InitNarrativeMemory(); err != nil {
 		return nil, fmt.Errorf("init narrative memory: %w", err)
+	}
+
+	// Decision capture tables (DP-213). These are PostgreSQL-only (PARTITION
+	// BY RANGE, pg_tables catalog queries, TEXT[]), so SQLite deployments skip
+	// them entirely; the ResearchStore interface is never satisfied there.
+	if dialect == dialectPostgres {
+		if err := db.createDecisionLogTables(); err != nil {
+			return nil, fmt.Errorf("create decision log tables: %w", err)
+		}
+		// Bootstrap the current/next-month partitions. decision_log and
+		// combat_log are PARTITION BY RANGE(ts) parents; without a matching
+		// partition every INSERT fails ("no partition of relation ... found
+		// for row"). Fail loudly here rather than only warning, since decision
+		// capture is unusable otherwise.
+		if err := db.EnsureDecisionLogPartitions(); err != nil {
+			return nil, fmt.Errorf("ensure decision log partitions: %w", err)
+		}
 	}
 
 	success = true
@@ -127,101 +201,133 @@ func getEnvInt(name string, defaultValue int) int {
 	return n
 }
 
-// createTables creates the necessary tables if they don't exist.
+// playersMigrationColumns are the columns added to existing installs since
+// the original players schema. Applied idempotently per boot: PostgreSQL via
+// ADD COLUMN IF NOT EXISTS, SQLite via a pragma_table_info guard.
+var playersMigrationColumns = []string{
+	"strength INTEGER DEFAULT 10",
+	"class INTEGER DEFAULT 3",
+	"race INTEGER DEFAULT 0",
+	"stat_str INTEGER DEFAULT 10",
+	"stat_str_add INTEGER DEFAULT 0",
+	"stat_int INTEGER DEFAULT 10",
+	"stat_wis INTEGER DEFAULT 10",
+	"stat_dex INTEGER DEFAULT 10",
+	"stat_con INTEGER DEFAULT 10",
+	"stat_cha INTEGER DEFAULT 10",
+	"inventory JSONB DEFAULT '[]'",
+	"equipment JSONB DEFAULT '{}'",
+	"move INTEGER DEFAULT 100",
+	"max_move INTEGER DEFAULT 100",
+	"hunger INTEGER DEFAULT 24",
+	"thirst INTEGER DEFAULT 24",
+	"drunk INTEGER DEFAULT 0",
+	"is_admin BOOLEAN DEFAULT false",
+	"hometown INTEGER DEFAULT 0",
+	"failed_login_attempts INTEGER DEFAULT 0",
+	"locked_until TIMESTAMP",
+	"description TEXT DEFAULT ''",
+	"title VARCHAR(80) DEFAULT ''",
+}
+
+// createTables creates the game-store tables if they don't exist.
 func (db *DB) createTables() error {
-	query := `
-	CREATE TABLE IF NOT EXISTS players (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(32) UNIQUE NOT NULL,
-		password_hash VARCHAR(255),
-		room_vnum INTEGER DEFAULT 8004,
-		level INTEGER DEFAULT 1,
-		exp INTEGER DEFAULT 1,
-		health INTEGER DEFAULT 10,
-		max_health INTEGER DEFAULT 10,
-		mana INTEGER DEFAULT 100,
-		max_mana INTEGER DEFAULT 100,
-		move INTEGER DEFAULT 100,
-		max_move INTEGER DEFAULT 100,
-		strength INTEGER DEFAULT 10,
-		class INTEGER DEFAULT 3,
-		race INTEGER DEFAULT 0,
-		stat_str INTEGER DEFAULT 10,
-		stat_int INTEGER DEFAULT 10,
-		stat_wis INTEGER DEFAULT 10,
-		stat_dex INTEGER DEFAULT 10,
-		stat_con INTEGER DEFAULT 10,
-		stat_cha INTEGER DEFAULT 10,
-		hunger INTEGER DEFAULT 24,
-		thirst INTEGER DEFAULT 24,
-		drunk INTEGER DEFAULT 0,
-		hometown INTEGER DEFAULT 0,
-		inventory JSONB DEFAULT '[]',
-		equipment JSONB DEFAULT '{}',
-		description TEXT DEFAULT '',
-		title VARCHAR(80) DEFAULT '',
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);
-	-- Add new columns to existing installs
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS strength INTEGER DEFAULT 10;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS class INTEGER DEFAULT 3;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS race INTEGER DEFAULT 0;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_str INTEGER DEFAULT 10;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_str_add INTEGER DEFAULT 0;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_int INTEGER DEFAULT 10;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_wis INTEGER DEFAULT 10;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_dex INTEGER DEFAULT 10;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_con INTEGER DEFAULT 10;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS stat_cha INTEGER DEFAULT 10;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS inventory JSONB DEFAULT '[]';
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS equipment JSONB DEFAULT '{}';
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS move INTEGER DEFAULT 100;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS max_move INTEGER DEFAULT 100;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS hunger INTEGER DEFAULT 24;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS thirst INTEGER DEFAULT 24;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS drunk INTEGER DEFAULT 0;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS hometown INTEGER DEFAULT 0;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP;
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
-	ALTER TABLE players ADD COLUMN IF NOT EXISTS title VARCHAR(80) DEFAULT '';
+	// Statements are issued one at a time: SQLite rejects multi-statement
+	// strings, and a single failing statement then names itself in the error.
+	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS players (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(32) UNIQUE NOT NULL,
+			password_hash VARCHAR(255),
+			room_vnum INTEGER DEFAULT 8004,
+			level INTEGER DEFAULT 1,
+			exp INTEGER DEFAULT 1,
+			health INTEGER DEFAULT 10,
+			max_health INTEGER DEFAULT 10,
+			mana INTEGER DEFAULT 100,
+			max_mana INTEGER DEFAULT 100,
+			move INTEGER DEFAULT 100,
+			max_move INTEGER DEFAULT 100,
+			strength INTEGER DEFAULT 10,
+			class INTEGER DEFAULT 3,
+			race INTEGER DEFAULT 0,
+			stat_str INTEGER DEFAULT 10,
+			stat_int INTEGER DEFAULT 10,
+			stat_wis INTEGER DEFAULT 10,
+			stat_dex INTEGER DEFAULT 10,
+			stat_con INTEGER DEFAULT 10,
+			stat_cha INTEGER DEFAULT 10,
+			hunger INTEGER DEFAULT 24,
+			thirst INTEGER DEFAULT 24,
+			drunk INTEGER DEFAULT 0,
+			hometown INTEGER DEFAULT 0,
+			inventory JSONB DEFAULT '[]',
+			equipment JSONB DEFAULT '{}',
+			description TEXT DEFAULT '',
+			title VARCHAR(80) DEFAULT '',
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)`,
+		// C find_name uses str_cmp: character identity is case-insensitive.
+		// Existing colliding rows must be resolved explicitly before this migration.
+		`CREATE UNIQUE INDEX IF NOT EXISTS players_name_folded_key ON players (lower(name))`,
+		`CREATE INDEX IF NOT EXISTS idx_players_name ON players(name)`,
+		`CREATE INDEX IF NOT EXISTS idx_players_locked_until ON players(locked_until)`,
 
-	-- C find_name uses str_cmp: character identity is case-insensitive.
-	-- Existing colliding rows must be resolved explicitly before this migration.
-	CREATE UNIQUE INDEX IF NOT EXISTS players_name_folded_key ON players (lower(name));
-	CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
-	CREATE INDEX IF NOT EXISTS idx_players_locked_until ON players(locked_until);
-
-	CREATE TABLE IF NOT EXISTS agent_keys (
-		id             SERIAL PRIMARY KEY,
-		character_name VARCHAR(64) NOT NULL,
-		key_hash       VARCHAR(64) NOT NULL UNIQUE,
-		created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
-		revoked        BOOLEAN NOT NULL DEFAULT FALSE
-	);
-	`
-
-	_, err := db.conn.Exec(query)
-	if err != nil {
-		return err
+		`CREATE TABLE IF NOT EXISTS agent_keys (
+			id             SERIAL PRIMARY KEY,
+			character_name VARCHAR(64) NOT NULL,
+			key_hash       VARCHAR(64) NOT NULL UNIQUE,
+			created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+			revoked        BOOLEAN NOT NULL DEFAULT FALSE
+		)`,
 	}
 
-	// Decision capture tables (DP-213)
-	if err := db.createDecisionLogTables(); err != nil {
-		return fmt.Errorf("create decision log tables: %w", err)
+	for _, stmt := range stmts[:1] {
+		if err := db.execDDL(stmt); err != nil {
+			return err
+		}
 	}
 
-	// Bootstrap the current/next-month partitions. decision_log and combat_log
-	// are PARTITION BY RANGE(ts) parents; without a matching partition every
-	// INSERT fails ("no partition of relation ... found for row"). Fail loudly
-	// here rather than only warning, since decision capture is unusable otherwise.
-	if err := db.EnsureDecisionLogPartitions(); err != nil {
-		return fmt.Errorf("ensure decision log partitions: %w", err)
+	// Add new columns to existing installs before the indexes that reference
+	// them: locked_until and friends arrive via these migrations, and an index
+	// built on a not-yet-added column fails on both dialects.
+	for _, col := range playersMigrationColumns {
+		if err := db.addColumnIfNotExists("players", col); err != nil {
+			return fmt.Errorf("add players column %s: %w", strings.Fields(col)[0], err)
+		}
+	}
+
+	for _, stmt := range stmts[1:] {
+		if err := db.execDDL(stmt); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+// addColumnIfNotExists applies one migration column idempotently. PostgreSQL
+// has ADD COLUMN IF NOT EXISTS natively; SQLite has ADD COLUMN but not the
+// IF NOT EXISTS guard, so the column is looked up in pragma_table_info first.
+// Verified idempotent across repeat runs on both dialects.
+func (db *DB) addColumnIfNotExists(table, columnDef string) error {
+	column := strings.Fields(columnDef)[0]
+	if db.dialect == dialectSQLite {
+		var n int
+		if err := db.queryRow(
+			`SELECT COUNT(*) FROM pragma_table_info(` + quoteLiteral(table) + `) WHERE name = ` + quoteLiteral(column),
+		).Scan(&n); err != nil {
+			return err
+		}
+		if n > 0 {
+			return nil
+		}
+		_, err := db.exec(`ALTER TABLE ` + table + ` ADD COLUMN ` + columnDef)
+		return err
+	}
+	_, err := db.exec(`ALTER TABLE ` + table + ` ADD COLUMN IF NOT EXISTS ` + columnDef)
+	return err
 }
 
 // CreateAgentKey generates a new agent API key for the given character.
@@ -238,7 +344,7 @@ func (db *DB) CreateAgentKey(characterName string) (rawKey string, id int64, err
 	h := sha256.Sum256([]byte(rawKey))
 	keyHash := hex.EncodeToString(h[:])
 
-	err = db.conn.QueryRow(
+	err = db.queryRow(
 		`INSERT INTO agent_keys (character_name, key_hash) VALUES ($1, $2) RETURNING id`,
 		characterName, keyHash,
 	).Scan(&id)
@@ -262,7 +368,7 @@ func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64
 	h := sha256.Sum256([]byte(rawKey))
 	keyHash := hex.EncodeToString(h[:])
 
-	err := db.conn.QueryRow(
+	err := db.queryRow(
 		`SELECT id, character_name FROM agent_keys WHERE key_hash = $1 AND revoked = FALSE`,
 		keyHash,
 	).Scan(&keyID, &characterName)
@@ -286,7 +392,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	var p PlayerRecord
 	var matches int
 	var lockedUntil sql.NullTime
-	err := db.conn.QueryRow(query, name).Scan(
+	err := db.queryRow(query, name).Scan(
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Move, &p.MaxMove, &p.Strength,
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
@@ -312,7 +418,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 // ListPlayerNames returns all registered player names sorted alphabetically.
 // Source: C player_table iteration in do_gen_ps SCMD_PLAYER_LIST.
 func (db *DB) ListPlayerNames() ([]string, error) {
-	rows, err := db.conn.Query(`SELECT name FROM players ORDER BY name`)
+	rows, err := db.query(`SELECT name FROM players ORDER BY name`)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +439,7 @@ func (db *DB) ListPlayerNames() ([]string, error) {
 // when the player store is empty, the first character created is crowned God.
 func (db *DB) CountPlayers() (int, error) {
 	var n int
-	if err := db.conn.QueryRow(`SELECT COUNT(*) FROM players`).Scan(&n); err != nil {
+	if err := db.queryRow(`SELECT COUNT(*) FROM players`).Scan(&n); err != nil {
 		return 0, err
 	}
 	return n, nil
@@ -350,7 +456,7 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
 		RETURNING id
 	`
-	return db.conn.QueryRow(
+	return db.queryRow(
 		query,
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
@@ -361,19 +467,19 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 
 // UpdatePassword updates a player's password hash.
 func (db *DB) UpdatePassword(playerID int, hash string) error {
-	_, err := db.conn.Exec(`UPDATE players SET password_hash = $1 WHERE id = $2`, hash, playerID)
+	_, err := db.exec(`UPDATE players SET password_hash = $1 WHERE id = $2`, hash, playerID)
 	return err
 }
 
 // UpdateDescription updates the description displayed when another player looks at this character.
 func (db *DB) UpdateDescription(playerID int, description string) error {
-	_, err := db.conn.Exec(`UPDATE players SET description = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, description, playerID)
+	_, err := db.exec(`UPDATE players SET description = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, description, playerID)
 	return err
 }
 
 // DeletePlayer permanently removes a player record.
 func (db *DB) DeletePlayer(playerID int) error {
-	_, err := db.conn.Exec(`DELETE FROM players WHERE id = $1`, playerID)
+	_, err := db.exec(`DELETE FROM players WHERE id = $1`, playerID)
 	return err
 }
 
@@ -383,7 +489,7 @@ func (db *DB) GetAccountLockout(name string) (int, *time.Time, error) {
 	query := `SELECT COALESCE(failed_login_attempts, 0), locked_until FROM players WHERE lower(name) = lower($1)`
 	var attempts int
 	var lockedUntil sql.NullTime
-	err := db.conn.QueryRow(query, name).Scan(&attempts, &lockedUntil)
+	err := db.queryRow(query, name).Scan(&attempts, &lockedUntil)
 	if err == sql.ErrNoRows {
 		return 0, nil, nil
 	}
@@ -400,19 +506,24 @@ func (db *DB) GetAccountLockout(name string) (int, *time.Time, error) {
 // if the threshold is reached, sets locked_until to lockoutDuration from now.
 // It returns true when this failure caused the account to become locked.
 func (db *DB) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
+	// The lockout deadline is computed in Go rather than in SQL: the
+	// PostgreSQL spelling (NOW() + $3::interval) has no SQLite equivalent,
+	// and one statement that runs on both dialects beats two. Placeholders
+	// are numbered in order of appearance because SQLite binds positionally.
+	lockoutUntil := time.Now().Add(lockoutDuration)
 	query := `
 		UPDATE players
 		SET failed_login_attempts = failed_login_attempts + 1,
 		    locked_until = CASE
-		        WHEN failed_login_attempts + 1 >= $2 THEN NOW() + $3::interval
+		        WHEN failed_login_attempts + 1 >= $1 THEN $2
 		        ELSE locked_until
 		    END
-		WHERE lower(name) = lower($1)
+		WHERE lower(name) = lower($3)
 		RETURNING failed_login_attempts, locked_until
 	`
 	var attempts int
 	var lockedUntil sql.NullTime
-	err := db.conn.QueryRow(query, name, threshold, lockoutDuration.Seconds()).Scan(&attempts, &lockedUntil)
+	err := db.queryRow(query, threshold, lockoutUntil, name).Scan(&attempts, &lockedUntil)
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
@@ -424,7 +535,7 @@ func (db *DB) RecordLoginFailure(name string, threshold int, lockoutDuration tim
 
 // RecordLoginSuccess clears failed-login state for a player.
 func (db *DB) RecordLoginSuccess(name string) error {
-	_, err := db.conn.Exec(
+	_, err := db.exec(
 		`UPDATE players SET failed_login_attempts = 0, locked_until = NULL WHERE lower(name) = lower($1)`,
 		name,
 	)
@@ -432,7 +543,9 @@ func (db *DB) RecordLoginSuccess(name string) error {
 }
 
 // Exec runs a raw SQL query against the database.
-// Used for operations not covered by the typed methods.
+// Used for operations not covered by the typed methods. The query is passed
+// through exactly as given: callers own the dialect syntax, just like before
+// the SQLite support landed.
 func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return db.conn.Exec(query, args...)
 }
@@ -449,7 +562,7 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  inventory=$24, equipment=$25, description=$26, title=$27, updated_at=CURRENT_TIMESTAMP
 		WHERE id=$28
 	`
-	_, err := db.conn.Exec(
+	_, err := db.exec(
 		query,
 		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth,
 		p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,

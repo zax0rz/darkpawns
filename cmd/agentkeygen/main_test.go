@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -148,7 +149,9 @@ func TestRunWithDBCreateKeyError(t *testing.T) {
 }
 
 func TestRunReturnsErrorOnBadDSN(t *testing.T) {
-	err := run("Aidan", "invalid-dsn")
+	// A DSN whose directory cannot be created is invalid on every dialect;
+	// note that arbitrary strings are no longer errors, they are SQLite paths.
+	err := run("Aidan", "sqlite://"+filepath.Join(t.TempDir(), "no-such-dir", "db.sqlite"))
 	if err == nil {
 		t.Fatal("expected error for invalid DSN, got nil")
 	}
