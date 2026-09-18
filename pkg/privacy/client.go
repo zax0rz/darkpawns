@@ -78,7 +78,7 @@ type Client struct {
 // NewClient creates a new privacy filter client
 func NewClient(baseURL string, config FilterConfig) *Client {
 	if baseURL == "" {
-		baseURL = "http://privacy-filter:8000"
+		baseURL = "http://127.0.0.1:8001"
 	}
 
 	// Honor a configured timeout; fall back to 10s when unset (≤0).

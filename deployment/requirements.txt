@@ -1,0 +1,17 @@
+# Native privacy-filter service dependencies.
+#
+# The opf package pulls the inference runtime (torch and friends) and is
+# installed from its repository; it has no PyPI release. Weights are NOT
+# included: `opf` downloads openai/privacy-filter (~3 GB BF16) to
+# ~/.opf/privacy_filter on first model construction, or use OPF_CHECKPOINT
+# to point at an existing checkpoint.
+#
+# fastapi/uvicorn versions below are the pair this service was written and
+# contract-tested against (deployment/test_privacy_filter_api.py).
+fastapi==0.141.1
+uvicorn==0.53.0
+# Pinned because fastapi's pydantic compatibility is what breaks first: an
+# unpinned pydantic already fails collection with "cannot import name 'IncEx'",
+# and these tests are not run by CI, so nothing else would catch it.
+pydantic==2.12.4
+opf @ git+https://github.com/openai/privacy-filter.git
