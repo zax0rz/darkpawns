@@ -9,189 +9,9 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// SetRoomName updates a room's name. Returns false if the room doesn't exist.
-func (w *World) SetRoomName(vnum int, name string) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) { room.Name = name })
-}
-
-// SetRoomDescription updates a room's description. Returns false if the room doesn't exist.
-func (w *World) SetRoomDescription(vnum int, desc string) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) { room.Description = desc })
-}
-
-// SetMobShortDesc updates a mob's short description. Returns false if the mob doesn't exist.
-func (w *World) SetMobShortDesc(vnum int, desc string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.ShortDesc = desc
-	return true
-}
-
-// SetMobLongDesc updates a mob's long description. Returns false if the mob doesn't exist.
-func (w *World) SetMobLongDesc(vnum int, desc string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.LongDesc = desc
-	return true
-}
-
-// SetMobLevel updates a mob's level. Returns false if the mob doesn't exist.
-func (w *World) SetMobLevel(vnum int, level int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Level = level
-	return true
-}
-
-// SetMobAC updates a mob's armor class. Returns false if the mob doesn't exist.
-func (w *World) SetMobAC(vnum int, ac int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.AC = ac
-	return true
-}
-
-// SetMobHP updates a mob's hit point dice roll. Returns false if the mob doesn't exist.
-func (w *World) SetMobHP(vnum int, numDice, sizeDice, addHP int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.HP.Num = numDice
-	mob.HP.Sides = sizeDice
-	mob.HP.Plus = addHP
-	return true
-}
-
-// SetMobGold updates a mob's gold. Returns false if the mob doesn't exist.
-func (w *World) SetMobGold(vnum int, gold int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	if gold < 0 {
-		gold = 0
-	}
-	mob.Gold = gold
-	return true
-}
-
-// SetMobExp updates a mob's experience value. Returns false if the mob doesn't exist.
-func (w *World) SetMobExp(vnum int, exp int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	if exp < 0 {
-		exp = 0
-	}
-	mob.Exp = exp
-	return true
-}
-
-// SetMobAlignment updates a mob's alignment. Returns false if the mob doesn't exist.
-func (w *World) SetMobAlignment(vnum int, alignment int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	if alignment < -1000 {
-		alignment = -1000
-	} else if alignment > 1000 {
-		alignment = 1000
-	}
-	mob.Alignment = alignment
-	return true
-}
-
-// SetObjShortDesc updates an object's short description. Returns false if the object doesn't exist.
-func (w *World) SetObjShortDesc(vnum int, desc string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.ShortDesc = desc
-	return true
-}
-
-// SetObjLongDesc updates an object's long description. Returns false if the object doesn't exist.
-func (w *World) SetObjLongDesc(vnum int, desc string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.LongDesc = desc
-	return true
-}
-
-// SetObjWeight updates an object's weight. Returns false if the object doesn't exist.
-func (w *World) SetObjWeight(vnum int, weight int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	if weight < 0 {
-		weight = 0
-	}
-	obj.Weight = weight
-	return true
-}
-
-// SetObjCost updates an object's cost. Returns false if the object doesn't exist.
-func (w *World) SetObjCost(vnum int, cost int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	if cost < 0 {
-		cost = 0
-	}
-	obj.Cost = cost
-	return true
-}
-
 // --------------------------------------------------------------------------
 // Room write methods
 // --------------------------------------------------------------------------
-
-// SetRoomFlags sets a room's flag bitmasks. Returns false if the room doesn't exist.
-func (w *World) SetRoomFlags(vnum int, flags []string) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) {
-		room.Flags = append([]string(nil), flags...)
-	})
-}
 
 // SetRoomFlagBit sets a single runtime C ROOM_* bit in a room's flag words
 // under the world lock. Callers must NOT mutate room.Flags through the
@@ -207,28 +27,6 @@ func (w *World) SetRoomFlagBit(vnum int, flagBit int) bool {
 	})
 }
 
-// SetRoomSector sets a room's sector type. Returns false if the room doesn't exist.
-func (w *World) SetRoomSector(vnum int, sector int) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) { room.Sector = sector })
-}
-
-// SetRoomExit sets or creates an exit in a room for the given direction.
-// Returns false if the room doesn't exist.
-func (w *World) SetRoomExit(vnum int, direction string, toRoom int, key int) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) {
-		if room.Exits == nil {
-			room.Exits = make(map[string]parser.Exit)
-		}
-		exit, exists := room.Exits[direction]
-		if !exists {
-			exit = parser.Exit{Direction: direction}
-		}
-		exit.ToRoom = toRoom
-		exit.Key = key
-		room.Exits[direction] = exit
-	})
-}
-
 // CreateRoomExit replaces an exit with the bare runtime record created by C's
 // do_dig. It intentionally clears any prior door metadata and descriptions.
 func (w *World) CreateRoomExit(vnum int, direction string, toRoom int) bool {
@@ -240,124 +38,9 @@ func (w *World) CreateRoomExit(vnum int, direction string, toRoom int) bool {
 	})
 }
 
-// SetRoomExtraDescs sets a room's extra descriptions. Returns false if the room doesn't exist.
-func (w *World) SetRoomExtraDescs(vnum int, descs []parser.ExtraDesc) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) {
-		room.ExtraDescs = append([]parser.ExtraDesc(nil), descs...)
-	})
-}
-
 // --------------------------------------------------------------------------
 // Mob write methods
 // --------------------------------------------------------------------------
-
-// SetMobKeywords updates a mob's keywords. Returns false if the mob doesn't exist.
-func (w *World) SetMobKeywords(vnum int, keywords string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Keywords = keywords
-	return true
-}
-
-// SetMobActionFlags updates a mob's action flags. Returns false if the mob doesn't exist.
-func (w *World) SetMobActionFlags(vnum int, flags []string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.ActionFlags = flags
-	return true
-}
-
-// SetMobAffectFlags updates a mob's affect flags. Returns false if the mob doesn't exist.
-func (w *World) SetMobAffectFlags(vnum int, flags []string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.AffectFlags = flags
-	return true
-}
-
-// SetMobStr updates a mob's strength. Returns false if the mob doesn't exist.
-func (w *World) SetMobStr(vnum int, val int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Str = val
-	return true
-}
-
-// SetMobInt updates a mob's intelligence. Returns false if the mob doesn't exist.
-func (w *World) SetMobInt(vnum int, val int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Int = val
-	return true
-}
-
-// SetMobWis updates a mob's wisdom. Returns false if the mob doesn't exist.
-func (w *World) SetMobWis(vnum int, val int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Wis = val
-	return true
-}
-
-// SetMobDex updates a mob's dexterity. Returns false if the mob doesn't exist.
-func (w *World) SetMobDex(vnum int, val int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Dex = val
-	return true
-}
-
-// SetMobCon updates a mob's constitution. Returns false if the mob doesn't exist.
-func (w *World) SetMobCon(vnum int, val int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Con = val
-	return true
-}
-
-// SetMobCha updates a mob's charisma. Returns false if the mob doesn't exist.
-func (w *World) SetMobCha(vnum int, val int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Cha = val
-	return true
-}
 
 // SetMobTHAC0 updates a mob's THAC0. Returns false if the mob doesn't exist.
 func (w *World) SetMobTHAC0(vnum int, val int) bool {
@@ -368,20 +51,6 @@ func (w *World) SetMobTHAC0(vnum int, val int) bool {
 		return false
 	}
 	mob.THAC0 = val
-	return true
-}
-
-// SetMobDamage updates a mob's damage dice roll. Returns false if the mob doesn't exist.
-func (w *World) SetMobDamage(vnum int, numDice, sizeDice, addHP int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Damage.Num = numDice
-	mob.Damage.Sides = sizeDice
-	mob.Damage.Plus = addHP
 	return true
 }
 
@@ -415,142 +84,9 @@ func (w *World) AdjustMobPrototypes() int {
 	return len(w.mobs)
 }
 
-// SetMobPosition updates a mob's position. Returns false if the mob doesn't exist.
-func (w *World) SetMobPosition(vnum int, pos int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Position = pos
-	return true
-}
-
-// SetMobDefaultPos updates a mob's default position. Returns false if the mob doesn't exist.
-func (w *World) SetMobDefaultPos(vnum int, pos int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.DefaultPos = pos
-	return true
-}
-
-// SetMobSex updates a mob's sex. sex is C-encoded (structs.h: 0=neutral/1=male/2=female).
-// Returns false if the mob doesn't exist.
-func (w *World) SetMobSex(vnum int, sex int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Sex = sex
-	return true
-}
-
-// SetMobRace updates a mob's race. Returns false if the mob doesn't exist.
-func (w *World) SetMobRace(vnum int, race int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.Race = race
-	return true
-}
-
 // --------------------------------------------------------------------------
 // Object write methods
 // --------------------------------------------------------------------------
-
-// SetObjKeywords updates an object's keywords. Returns false if the object doesn't exist.
-func (w *World) SetObjKeywords(vnum int, keywords string) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.Keywords = keywords
-	return true
-}
-
-// SetObjTypeFlag updates an object's type flag. Returns false if the object doesn't exist.
-func (w *World) SetObjTypeFlag(vnum int, typeFlag int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.TypeFlag = typeFlag
-	return true
-}
-
-// SetObjValues updates an object's values array. Returns false if the object doesn't exist.
-func (w *World) SetObjValues(vnum int, values [4]int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.Values = values
-	return true
-}
-
-// SetObjWearFlags updates an object's wear flags. Returns false if the object doesn't exist.
-func (w *World) SetObjWearFlags(vnum int, flags [4]int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.WearFlags = flags
-	return true
-}
-
-// SetObjExtraFlags updates an object's extra flags. Returns false if the object doesn't exist.
-func (w *World) SetObjExtraFlags(vnum int, flags [4]int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.ExtraFlags = flags
-	return true
-}
-
-// SetObjAffects updates an object's affects. Returns false if the object doesn't exist.
-func (w *World) SetObjAffects(vnum int, affects []parser.ObjAffect) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.Affects = affects
-	return true
-}
-
-// SetObjExtraDescs sets an object's extra descriptions. Returns false if the object doesn't exist.
-func (w *World) SetObjExtraDescs(vnum int, descs []parser.ExtraDesc) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	obj, ok := w.objs[vnum]
-	if !ok {
-		return false
-	}
-	obj.ExtraDescs = descs
-	return true
-}
 
 // --------------------------------------------------------------------------
 // Shop write methods
@@ -611,64 +147,6 @@ func (w *World) SetShopProfit(keeperVNum int, buyProfit, sellProfit float64) boo
 	return true
 }
 
-// SetZoneLifespan updates a zone's lifespan (minutes between resets). Returns false if the zone doesn't exist.
-func (w *World) SetZoneLifespan(number int, lifespan int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	zone, ok := w.zones[number]
-	if !ok {
-		return false
-	}
-	if lifespan < 0 {
-		lifespan = 0
-	}
-	zone.Lifespan = lifespan
-	return true
-}
-
-// SetZoneResetMode updates a zone's reset mode. Returns false if the zone doesn't exist.
-// Mode: 0=never, 1=if empty, 2=always
-func (w *World) SetZoneResetMode(number int, mode int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	zone, ok := w.zones[number]
-	if !ok {
-		return false
-	}
-	if mode < 0 || mode > 2 {
-		return false
-	}
-	zone.ResetMode = mode
-	return true
-}
-
-// AddZoneCommand appends a zone reset command. Returns false if the zone doesn't exist.
-func (w *World) AddZoneCommand(number int, cmd parser.ZoneCommand) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	zone, ok := w.zones[number]
-	if !ok {
-		return false
-	}
-	zone.Commands = append(zone.Commands, cmd)
-	return true
-}
-
-// RemoveZoneCommand removes a zone reset command by index. Returns false if the zone or index is invalid.
-func (w *World) RemoveZoneCommand(number int, index int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	zone, ok := w.zones[number]
-	if !ok {
-		return false
-	}
-	if index < 0 || index >= len(zone.Commands) {
-		return false
-	}
-	zone.Commands = append(zone.Commands[:index], zone.Commands[index+1:]...)
-	return true
-}
-
 // ResetZone triggers a manual zone reset. Returns an error if the zone or spawner is unavailable.
 func (w *World) ResetZone(number int) error {
 	w.mu.RLock()
@@ -681,4 +159,35 @@ func (w *World) ResetZone(number int) error {
 		return fmt.Errorf("spawner not initialized")
 	}
 	return w.spawner.ExecuteZoneReset(zone)
+}
+
+// The four setters below outlived the HTTP write path that was their only
+// production caller. They stay because the OLC and telnet tests use them as
+// fixtures — pkg/game/world_redit_test.go, pkg/session/redit_test.go and
+// pkg/telnet/listener_test.go set a room up before exercising the real editor.
+//
+// A fixture helper is not the defect the HTTP path was: the problem there was a
+// route that mutated the world without passing through the command parser, so
+// dp-oracle-diff could not observe it. Nothing outside a test reaches these.
+
+// SetRoomName updates a room's name. Returns false if the room doesn't exist.
+func (w *World) SetRoomName(vnum int, name string) bool {
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Name = name })
+}
+
+// SetRoomDescription updates a room's description. Returns false if the room doesn't exist.
+func (w *World) SetRoomDescription(vnum int, desc string) bool {
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Description = desc })
+}
+
+// SetRoomSector sets a room's sector type. Returns false if the room doesn't exist.
+func (w *World) SetRoomSector(vnum int, sector int) bool {
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Sector = sector })
+}
+
+// SetRoomFlags sets a room's flag bitmasks. Returns false if the room doesn't exist.
+func (w *World) SetRoomFlags(vnum int, flags []string) bool {
+	return w.updateRoom(vnum, func(room *parser.Room) {
+		room.Flags = append([]string(nil), flags...)
+	})
 }

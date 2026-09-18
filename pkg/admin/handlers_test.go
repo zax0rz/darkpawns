@@ -189,70 +189,6 @@ func TestHandleZoneByIDOrReset_WrongMethod(t *testing.T) {
 // handleZoneUpdate (PUT)
 // ---------------------------------------------------------------------------
 
-func TestHandleZoneUpdate_PUT_Valid(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	body := `{"lifespan": 30, "reset_mode": 2}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/zones/1", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var z zoneResponse
-	json.Unmarshal(rec.Body.Bytes(), &z)
-	if z.Lifespan != 30 {
-		t.Errorf("lifespan = %d, want 30", z.Lifespan)
-	}
-	if z.ResetMode != 2 {
-		t.Errorf("reset mode = %d, want 2", z.ResetMode)
-	}
-}
-
-func TestHandleZoneUpdate_PUT_InvalidJSON(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	req := httptest.NewRequest(http.MethodPut, "/admin/zones/1", strings.NewReader(`not json`))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", rec.Code)
-	}
-}
-
-func TestHandleZoneUpdate_PUT_NotFound(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	body := `{"lifespan": 10}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/zones/99", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleZoneUpdate_PUT_NoFields(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	body := `{}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/zones/1", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleMobs
 // ---------------------------------------------------------------------------
@@ -798,83 +734,6 @@ func TestHandleRoomByVnum_GET_EmptyVNum(t *testing.T) {
 // handleRoomUpdate (PUT)
 // ---------------------------------------------------------------------------
 
-func TestHandleRoomUpdate_PUT_Valid(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	body := `{"name": "Updated Room", "description": "An updated description."}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/rooms/1001", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var room roomResponse
-	json.Unmarshal(rec.Body.Bytes(), &room)
-	if room.Name != "Updated Room" {
-		t.Errorf("name = %q, want %q", room.Name, "Updated Room")
-	}
-}
-
-func TestHandleRoomUpdate_PUT_NotFound(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	body := `{"name": "Ghost Room"}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/rooms/9999", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleRoomUpdate_PUT_NoFields(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	body := `{}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/rooms/1001", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleRoomUpdate_PUT_InvalidJSON(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	body := `not json`
-	req := httptest.NewRequest(http.MethodPut, "/admin/rooms/1001", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", rec.Code)
-	}
-}
-
-func TestHandleRoomUpdate_PUT_Validation(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	// Empty name should fail validation
-	body := `{"name": ""}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/rooms/1001", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("empty name should return 400, got %d: %s", rec.Code, rec.Body.String())
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleMobByVnum
 // ---------------------------------------------------------------------------
@@ -914,48 +773,6 @@ func TestHandleMobByVnum_GET_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 // handleMobUpdate (PUT)
 // ---------------------------------------------------------------------------
-
-func TestHandleMobUpdate_PUT_Valid(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMobByVnum(w, nil)
-
-	body := `{"short_desc": "a veteran guard", "level": 10}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/mobs/2001", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleMobUpdate_PUT_NotFound(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMobByVnum(w, nil)
-
-	body := `{"short_desc": "ghost"}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/mobs/9999", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404", rec.Code)
-	}
-}
-
-func TestHandleMobUpdate_PUT_NoFields(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMobByVnum(w, nil)
-
-	body := `{}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/mobs/2001", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", rec.Code)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handleObjectByVnum
@@ -1918,5 +1735,44 @@ func TestPrometheusEndpoint_RequiresAuth(t *testing.T) {
 	}
 	if body := rec.Body.String(); !strings.Contains(body, "darkpawns_") {
 		t.Errorf("no darkpawns_ metrics in the exposition output: %s", body)
+	}
+}
+
+// TestWorldWritePUTs_AreGone pins the removal of the HTTP world-write path.
+//
+// These endpoints mutated world state directly through world_write.go setters,
+// bypassing the session and the command parser — so dp-oracle-diff, which
+// drives the game over telnet, could never see the writes or compare them
+// against the C original. They existed because there was no other way to edit
+// the world from outside the game; redit (PR #1473) and medit (PR #1500) close
+// that gap through the command path, where the oracle can reach them.
+//
+// GET on the same routes is untouched: the console's detail pages read through
+// it, and reads cannot drift from C.
+func TestWorldWritePUTs_AreGone(t *testing.T) {
+	setJWTSecret(t)
+	handler, err := NewRouter(testWorld(t), nil, NewLogBuffer(10), nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
+	token := generateTestToken(t, "builder")
+
+	for _, path := range []string{"/admin/rooms/3001", "/admin/mobs/3001", "/admin/objects/3001", "/admin/zones/30"} {
+		req := httptest.NewRequest(http.MethodPut, path, strings.NewReader(`{"name":"x"}`))
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusMethodNotAllowed {
+			t.Errorf("PUT %s = %d, want 405; the parser-bypassing write path is back", path, rec.Code)
+		}
+
+		// The read path on the same route must still work.
+		req = httptest.NewRequest(http.MethodGet, path, nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec = httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code == http.StatusMethodNotAllowed {
+			t.Errorf("GET %s = 405; the read path was removed with the write path", path)
+		}
 	}
 }
