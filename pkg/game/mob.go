@@ -22,8 +22,11 @@ import (
 type MobInstance struct {
 	mu sync.RWMutex
 
-	// Link to prototype
-	Prototype *parser.Mob
+	// Link to prototype. Stored atomically: the pointed-to parser.Mob is
+	// never mutated in place (writers clone+swap), so readers can Load()
+	// without holding mu. This fixes the data race where RefreshLiveMobStrings
+	// mutated shared prototype fields while look.go read them unlocked.
+	prototype atomic.Pointer[parser.Mob]
 	VNum      int
 	ID        int // World-assigned instance ID
 
@@ -146,7 +149,6 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	}
 
 	mob := &MobInstance{
-		Prototype: proto,
 		VNum:      proto.VNum,
 		RoomVNum:  roomVNum,
 		CurrentHP: hp,
@@ -191,6 +193,7 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Cha:            cha,
 		Gold:           gold,
 	}
+	mob.SetProto(proto)
 
 	mob.alive.Store(true)
 
@@ -227,8 +230,8 @@ func (m *MobInstance) GetSex() int {
 	if m.Runtime.SexOverride != nil {
 		return *m.Runtime.SexOverride
 	}
-	if m.Prototype != nil {
-		switch m.Prototype.Sex {
+	if m.Proto() != nil {
+		switch m.Proto().Sex {
 		case 1:
 			return 0
 		case 2:
@@ -242,8 +245,8 @@ func (m *MobInstance) GetSex() int {
 
 // GetShortDesc returns the mob's short description.
 func (m *MobInstance) GetShortDesc() string {
-	if m.Prototype != nil {
-		return m.Prototype.ShortDesc
+	if m.Proto() != nil {
+		return m.Proto().ShortDesc
 	}
 	return "a generic mob"
 }
@@ -328,10 +331,10 @@ func (m *MobInstance) GetFollowing() string {
 
 // HasFlag checks if the mob has a specific flag.
 func (m *MobInstance) HasFlag(flag string) bool {
-	if m == nil || m.Prototype == nil || len(m.Prototype.ActionFlags) == 0 {
+	if m == nil || m.Proto() == nil || len(m.Proto().ActionFlags) == 0 {
 		return false
 	}
-	for _, f := range m.Prototype.ActionFlags {
+	for _, f := range m.Proto().ActionFlags {
 		if strings.EqualFold(strings.TrimPrefix(f, "MOB_"), strings.TrimPrefix(flag, "MOB_")) {
 			return true
 		}
@@ -376,8 +379,8 @@ func (m *MobInstance) Update(world *World) error {
 
 // GetLongDesc returns the mob's long description.
 func (m *MobInstance) GetLongDesc() string {
-	if m.Prototype != nil {
-		return m.Prototype.LongDesc
+	if m.Proto() != nil {
+		return m.Proto().LongDesc
 	}
 	return "A generic mob is here."
 }
@@ -502,8 +505,8 @@ func (m *MobInstance) GetAC() int {
 	if m.Runtime.ACOverride != nil {
 		return *m.Runtime.ACOverride
 	}
-	if m.Prototype != nil {
-		return m.Prototype.AC
+	if m.Proto() != nil {
+		return m.Proto().AC
 	}
 	return 0
 }
@@ -515,8 +518,8 @@ func (m *MobInstance) GetLevel() int {
 	if m.Level > 0 {
 		return m.Level
 	}
-	if m.Prototype != nil {
-		return m.Prototype.Level
+	if m.Proto() != nil {
+		return m.Proto().Level
 	}
 	return 1
 }
@@ -597,10 +600,10 @@ func (m *MobInstance) AddDamrollBonus(bonus int) {
 func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	if m.Prototype != nil {
-		num := m.Prototype.Damage.Num
-		sides := m.Prototype.Damage.Sides
-		plus := m.Prototype.Damage.Plus
+	if m.Proto() != nil {
+		num := m.Proto().Damage.Num
+		sides := m.Proto().Damage.Sides
+		plus := m.Proto().Damage.Plus
 		if m.Runtime.DamageNumOverride != nil {
 			num = *m.Runtime.DamageNumOverride
 		}
@@ -628,8 +631,8 @@ func (m *MobInstance) GetDamageRoll() combat.DiceRoll {
 func (m *MobInstance) GetTHAC0() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	if m.Prototype != nil {
-		return m.Prototype.THAC0
+	if m.Proto() != nil {
+		return m.Proto().THAC0
 	}
 	return 20 // Default
 }
@@ -959,8 +962,8 @@ func (m *MobInstance) GetHitroll() int {
 		return *m.Runtime.HitrollOverride
 	}
 	total := 0
-	if m.Prototype != nil {
-		total = 20 - m.Prototype.THAC0
+	if m.Proto() != nil {
+		total = 20 - m.Proto().THAC0
 	}
 	for _, item := range m.Equipment {
 		if item == nil || item.Prototype == nil {
@@ -1028,8 +1031,8 @@ func (m *MobInstance) GetExp() int {
 	if m.Runtime.ExpOverride != nil {
 		return *m.Runtime.ExpOverride
 	}
-	if m.Prototype != nil {
-		return m.Prototype.Exp
+	if m.Proto() != nil {
+		return m.Proto().Exp
 	}
 	return 0
 }
@@ -1087,7 +1090,7 @@ func (m *MobInstance) GetRoomVNum() int {
 }
 
 func (m *MobInstance) GetPrototype() scripting.ScriptableMobPrototype {
-	return m.Prototype
+	return m.Proto()
 }
 
 // HasMobFlag returns true if the given MOB flag bit is set.
@@ -1258,16 +1261,32 @@ func (m *MobInstance) GetAlignment() int {
 	if m.Runtime.AlignmentOverride != nil {
 		return *m.Runtime.AlignmentOverride
 	}
-	if m.Prototype != nil {
-		return m.Prototype.Alignment
+	if m.Proto() != nil {
+		return m.Proto().Alignment
 	}
 	return 0
 }
 
+// Proto returns the mob's prototype snapshot. The returned
+// *parser.Mob is immutable — writers clone+swap via SetProto — so
+// callers can safely dereference it without holding the instance lock.
+func (m *MobInstance) Proto() *parser.Mob {
+	return m.prototype.Load()
+}
+
+// SetProto atomically replaces the mob's prototype snapshot.
+// Callers must pass a freshly cloned *parser.Mob, never a shared pointer
+// that will be mutated afterwards.
+func (m *MobInstance) SetProto(p *parser.Mob) {
+	m.prototype.Store(p)
+}
+
 // SetName sets the mob instance's short description (name).
 func (m *MobInstance) SetName(name string) {
-	if m.Prototype != nil {
-		m.Prototype.ShortDesc = name
+	if proto := m.Proto(); proto != nil {
+		clone := *proto
+		clone.ShortDesc = name
+		m.SetProto(&clone)
 	}
 }
 

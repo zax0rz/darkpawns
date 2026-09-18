@@ -104,7 +104,11 @@ func TestSpecRemorterSuccessResetsStateAndSeedsClassSkills(t *testing.T) {
 func TestSpecRemorterRejectsPlayerCommandsAtTheCorrectGates(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 	mob := spawnTargetMob(t, w)
-	mob.Prototype.ShortDesc = "the remorter"
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "the remorter"
+		mob.SetProto(&p)
+	}
 
 	cases := []struct {
 		name  string

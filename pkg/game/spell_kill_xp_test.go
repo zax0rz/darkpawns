@@ -24,8 +24,16 @@ func TestSpellKill_AwardsXPAndKillCredit(t *testing.T) {
 	// Give the victim an XP bounty and a level equal to the killer's so the
 	// level-difference scaling doesn't zero the award (robust to the F3/F4
 	// share-formula rework, which only changes the magnitude).
-	mob.Prototype.Exp = 5000
-	mob.Prototype.Level = player.GetLevel()
+	{
+		p := *mob.Proto()
+		p.Exp = 5000
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.Level = player.GetLevel()
+		mob.SetProto(&p)
+	}
 	mob.MaxHP = 100
 	mob.CurrentHP = 1
 

@@ -55,7 +55,11 @@ func TestSpecElementsGaleruAlive_EntryAndExactMobGate(t *testing.T) {
 
 func TestSpecElementsGaleruAlive_UsesExactVNumAndMovesNPCs(t *testing.T) {
 	w, actor, peer, npc, _ := newGaleruColumnTestWorld(t)
-	npc.Prototype.Keywords = "galeru decoy"
+	{
+		p := *npc.Proto()
+		p.Keywords = "galeru decoy"
+		npc.SetProto(&p)
+	}
 
 	if !specElementsGaleruAlive(w, actor, nil, "say", "hello") {
 		t.Fatal("non-1315 Galeru keyword should not block the dead branch")

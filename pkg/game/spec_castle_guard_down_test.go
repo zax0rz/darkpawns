@@ -152,9 +152,21 @@ func TestSpecCastleGuardDown_AutonomousSecondGuardTargetsMob(t *testing.T) {
 	target := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	guard.VNum = 19627
 	other.VNum = 19627
-	guard.Prototype.ShortDesc = "a castle guard"
-	other.Prototype.ShortDesc = "another castle guard"
-	target.Prototype.ShortDesc = "a target mob"
+	{
+		p := *guard.Proto()
+		p.ShortDesc = "a castle guard"
+		guard.SetProto(&p)
+	}
+	{
+		p := *other.Proto()
+		p.ShortDesc = "another castle guard"
+		other.SetProto(&p)
+	}
+	{
+		p := *target.Proto()
+		p.ShortDesc = "a target mob"
+		target.SetProto(&p)
+	}
 	other.SetFighting(target.GetName())
 	lastMsg()
 

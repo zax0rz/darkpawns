@@ -151,8 +151,8 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 				Magnitude: 0,
 				Flags:     1 << 3, // AFF_CHARM
 			})
-			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s's tattoo glows brightly for a second, and %s appears!", ch.Name, mob.Prototype.ShortDesc))
-			ch.SendMessage(fmt.Sprintf("Your tattoo glows brightly for a second, and %s appears!\r\n", mob.Prototype.ShortDesc))
+			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s's tattoo glows brightly for a second, and %s appears!", ch.Name, mob.Proto().ShortDesc))
+			ch.SendMessage(fmt.Sprintf("Your tattoo glows brightly for a second, and %s appears!\r\n", mob.Proto().ShortDesc))
 		case TattooEye:
 			spells.Cast(ch, ch, spells.SpellGreatPercept, ch.GetLevel(), w)
 		case TattooShip:

@@ -483,7 +483,7 @@ func combatantIsAffected(target combat.Combatant, bit int) bool {
 
 func isShopKeeper(target combat.Combatant) bool {
 	mob, ok := target.(*MobInstance)
-	return ok && mob.Prototype != nil && MobSpecAssign[mob.Prototype.VNum] == "shop_keeper"
+	return ok && mob.Proto() != nil && MobSpecAssign[mob.Proto().VNum] == "shop_keeper"
 }
 
 // isShopKeeperInWorld includes the boot-time shop assignment. C's
@@ -495,10 +495,10 @@ func isShopKeeperInWorld(world *World, target combat.Combatant) bool {
 		return true
 	}
 	mob, ok := target.(*MobInstance)
-	if !ok || mob == nil || mob.Prototype == nil || world == nil {
+	if !ok || mob == nil || mob.Proto() == nil || world == nil {
 		return false
 	}
-	_, ok = world.ShopBitvectorForKeeper(mob.Prototype.VNum)
+	_, ok = world.ShopBitvectorForKeeper(mob.Proto().VNum)
 	return ok
 }
 

@@ -87,7 +87,7 @@ func (w *World) findCharInRoom(ch *Player, roomVNum int, name string) (*Player, 
 	}
 	// Check mobs
 	for _, m := range w.GetMobsInRoom(roomVNum) {
-		if strings.Contains(strings.ToLower(m.Prototype.ShortDesc), argLower) {
+		if strings.Contains(strings.ToLower(m.Proto().ShortDesc), argLower) {
 			return nil, m
 		}
 	}

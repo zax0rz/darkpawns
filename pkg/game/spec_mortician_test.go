@@ -20,8 +20,16 @@ func newMorticianTestWorld(t *testing.T) (*World, *Player, *Player, *MobInstance
 	messages := make(map[string]string)
 	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
 	mob := newSpecProcTestMob(t, w, actor.GetRoomVNum(), 10)
-	mob.Prototype.ShortDesc = "the Mortician"
-	mob.Prototype.Keywords = "mortician undertaker"
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "the Mortician"
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.Keywords = "mortician undertaker"
+		mob.SetProto(&p)
+	}
 	clearMorticianMessages(messages)
 	return w, actor, peer, mob, messages
 }

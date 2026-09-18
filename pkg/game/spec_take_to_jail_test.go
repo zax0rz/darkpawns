@@ -63,7 +63,11 @@ func TestSpecTakeToJail_ReturnContractAndProtectionDelegation(t *testing.T) {
 		t.Fatalf("AddPlayer protected: %v", err)
 	}
 	attacker := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
-	attacker.Prototype.Alignment = -500
+	{
+		p := *attacker.Proto()
+		p.Alignment = -500
+		attacker.SetProto(&p)
+	}
 	attacker.SetFighting(protected.GetName())
 	engine := &cityguardTestCombatEngine{}
 	w.SetCombatEngine(engine)

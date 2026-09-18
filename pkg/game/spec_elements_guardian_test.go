@@ -56,7 +56,11 @@ func TestSpecElementsGuardian_PairUsesRoomOrderAudienceAndHit(t *testing.T) {
 		t.Fatalf("AddPlayer third: %v", err)
 	}
 	mob := newSpecProcTestMob(t, w, actor.GetRoomVNum(), 80)
-	mob.Prototype.ShortDesc = "a guardian spirit"
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "a guardian spirit"
+		mob.SetProto(&p)
+	}
 
 	transcript := make(map[string]string)
 	w.MessageSink = func(name string, msg []byte) { transcript[name] += string(msg) }
@@ -104,7 +108,11 @@ func TestSpecElementsGuardian_SoloUsesSelfDamageAndActPronouns(t *testing.T) {
 		t.Fatalf("AddPlayer target: %v", err)
 	}
 	mob := newSpecProcTestMob(t, w, actor.GetRoomVNum(), 80)
-	mob.Prototype.ShortDesc = "a guardian spirit"
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "a guardian spirit"
+		mob.SetProto(&p)
+	}
 
 	transcript := make(map[string]string)
 	w.MessageSink = func(name string, msg []byte) { transcript[name] += string(msg) }

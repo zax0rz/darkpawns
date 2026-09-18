@@ -426,7 +426,11 @@ func TestSpecThief_StateAndAudience(t *testing.T) {
 		}
 		player.SetLevel(10)
 		player.SetPosition(combat.PosStanding)
-		mob.Prototype.Sex = 0 // C SEX_NEUTRAL renders its in this fixture.
+		{
+			p := *mob.Proto()
+			p.Sex = 0 // C SEX_NEUTRAL renders its in this fixture.
+			mob.SetProto(&p)
+		}
 
 		var msgs syncMap
 		w.MessageSink = func(name string, msg []byte) { msgs.Store(name, string(msg)) }
@@ -795,7 +799,11 @@ func TestSpecCityguard_Golden(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 	victim := newSpecProcTestMob(t, w, 1001, 5)
-	victim.Prototype.Alignment = 100
+	{
+		p := *victim.Proto()
+		p.Alignment = 100
+		victim.SetProto(&p)
+	}
 	evildoer.SetFighting(victim.GetName())
 	victim.SetFighting(evildoer.Name)
 	beforeHP = evildoer.GetHP()

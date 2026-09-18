@@ -26,10 +26,10 @@ var mobactNumber = dprng.Number
 // ---------------------------------------------------------------------------
 
 func hasMobFlag(mob *MobInstance, flag string) bool {
-	if mob == nil || mob.Prototype == nil {
+	if mob == nil || mob.Proto() == nil {
 		return false
 	}
-	for _, f := range mob.Prototype.ActionFlags {
+	for _, f := range mob.Proto().ActionFlags {
 		if strings.EqualFold(f, flag) {
 			return true
 		}
@@ -79,7 +79,7 @@ func callMobSpecSafely(specFn SpecFunc, w *World, mob *MobInstance) (handled boo
 	defer func() {
 		if r := recover(); r != nil {
 			slog.Error("mob spec proc panicked during autonomous activity — skipping this tick",
-				"mob", mob.GetName(), "vnum", mob.Prototype.VNum, "panic", r)
+				"mob", mob.GetName(), "vnum", mob.Proto().VNum, "panic", r)
 			handled = false
 		}
 	}()
@@ -87,17 +87,17 @@ func callMobSpecSafely(specFn SpecFunc, w *World, mob *MobInstance) (handled boo
 }
 
 func mobIsEvil(mob *MobInstance) bool {
-	if mob == nil || mob.Prototype == nil {
+	if mob == nil || mob.Proto() == nil {
 		return false
 	}
-	return mob.Prototype.Alignment <= -350
+	return mob.Proto().Alignment <= -350
 }
 
 func mobIsGood(mob *MobInstance) bool {
-	if mob == nil || mob.Prototype == nil {
+	if mob == nil || mob.Proto() == nil {
 		return false
 	}
-	return mob.Prototype.Alignment >= 350
+	return mob.Proto().Alignment >= 350
 }
 
 // getMobVNumSpec looks up a mob's registered spec proc by its VNum.
@@ -119,7 +119,7 @@ func getMobVNumSpec(vnum int) SpecFunc {
 //
 // C macros translated:
 //
-//	IS_MOB(mob)   → mob.Prototype != nil
+//	IS_MOB(mob)   → mob.Proto() != nil
 //	FIGHTING(mob) → mob.GetFighting() != ""
 //	AWAKE(mob)    → mob.GetPosition() >= combat.PosSitting
 //	MOB_FLAGGED   → hasMobFlag()
@@ -128,7 +128,7 @@ func getMobVNumSpec(vnum int) SpecFunc {
 //	GET_MAX_HIT   → mob.GetMaxHP()
 //	CAN_SEE       → canSeePlayer()
 //	PRF_NOHASSLE  → hasPrfNoHassle()
-//	GET_MOB_RNUM  → mob.Prototype.VNum
+//	GET_MOB_RNUM  → mob.Proto().VNum
 //	mob_index[].func → getMobVNumSpec()
 func (w *World) MobileActivity() {
 	w.mu.RLock()
@@ -149,7 +149,7 @@ func (w *World) MobileActivity() {
 		// first awake mob and hanging every player command that scanned its
 		// room. The accessors provide their own synchronization. (DP-590)
 		ch.mu.RLock()
-		ready := ch.Prototype != nil
+		ready := ch.Proto() != nil
 		ch.mu.RUnlock()
 		if !ready {
 			continue
@@ -190,7 +190,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// -- MOB_SPEC: special procedure dispatch --
 	// C: spec proc returns true to skip to next mob.
 	if hasMobFlag(ch, "spec") {
-		specFn := getMobVNumSpec(ch.Prototype.VNum)
+		specFn := getMobVNumSpec(ch.Proto().VNum)
 		if specFn != nil && callMobSpecSafely(specFn, w, ch) {
 			return
 		}
@@ -338,8 +338,8 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 
 	// -- Race-hate aggression (src/mobact.c:236-258) --
 	// Mobs attack players whose race_hate slots match the mob's race.
-	if MobSpecAssign[ch.Prototype.VNum] != "shop_keeper" {
-		mobRace := ch.Prototype.Race
+	if MobSpecAssign[ch.Proto().VNum] != "shop_keeper" {
+		mobRace := ch.Proto().Race
 		for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
 			if vict.IsNPC() {
 				continue

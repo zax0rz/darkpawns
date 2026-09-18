@@ -211,7 +211,7 @@ func TestRaceHateAggression_MobAttacksHater(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	mob := newMobactTestMob(w, 9001, 7, 0, "sentinel")
 	p := newMobactTestPlayer(w, "Hater")
-	p.RaceHates[0] = mob.Prototype.Race
+	p.RaceHates[0] = mob.Proto().Race
 
 	w.mobileActivityForMob(mob)
 
@@ -227,15 +227,15 @@ func TestRaceHateAggression_ShopKeeperSkips(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	mob := newMobactTestMob(w, 9002, 7, 0, "sentinel")
 	p := newMobactTestPlayer(w, "Hater")
-	p.RaceHates[0] = mob.Prototype.Race
+	p.RaceHates[0] = mob.Proto().Race
 
-	old := MobSpecAssign[mob.Prototype.VNum]
-	MobSpecAssign[mob.Prototype.VNum] = "shop_keeper"
+	old := MobSpecAssign[mob.Proto().VNum]
+	MobSpecAssign[mob.Proto().VNum] = "shop_keeper"
 	defer func() {
 		if old == "" {
-			delete(MobSpecAssign, mob.Prototype.VNum)
+			delete(MobSpecAssign, mob.Proto().VNum)
 		} else {
-			MobSpecAssign[mob.Prototype.VNum] = old
+			MobSpecAssign[mob.Proto().VNum] = old
 		}
 	}()
 
@@ -250,7 +250,7 @@ func TestRaceHateAggression_ProtectEvilBlocks(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	mob := newMobactTestMob(w, 9003, 7, 0, "sentinel") // non-evil mob
 	p := newMobactTestPlayer(w, "Hater")
-	p.RaceHates[0] = mob.Prototype.Race
+	p.RaceHates[0] = mob.Proto().Race
 	p.Affects |= 1 << affProtectEvil
 
 	w.mobileActivityForMob(mob)
@@ -264,7 +264,7 @@ func TestRaceHateAggression_ProtectEvilEvilPasses(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	mob := newMobactTestMob(w, 9004, 7, -500, "sentinel") // evil mob
 	p := newMobactTestPlayer(w, "Hater")
-	p.RaceHates[0] = mob.Prototype.Race
+	p.RaceHates[0] = mob.Proto().Race
 	p.Affects |= 1 << affProtectEvil
 
 	// With a 1-in-6 bypass chance and an unseedable global RNG, run enough

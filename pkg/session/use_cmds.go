@@ -220,7 +220,7 @@ func cmdZap(s *Session, args []string) error {
 			if p, ok := target.(*game.Player); ok {
 				targetNameDisp = p.Name
 			} else if m, ok := target.(*game.MobInstance); ok {
-				targetNameDisp = m.Prototype.ShortDesc
+				targetNameDisp = m.Proto().ShortDesc
 			}
 			s.Send(fmt.Sprintf("Your %s flares up with a blinding glow that surges toward %s!", item.GetShortDesc(), targetNameDisp))
 			broadcastToRoom(s, fmt.Sprintf("%s's %s flares up with a blinding glow that surges toward %s!", actorName, item.GetShortDesc(), targetNameDisp))

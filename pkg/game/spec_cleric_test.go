@@ -132,7 +132,11 @@ func TestSpecCleric_BlindnessGateConsumesCDraw(t *testing.T) {
 	w, player, _ := newSpecProcTestWorld(t)
 	mob := prepareClericTestCombat(t, w, player, 10)
 	mob.SetHealth(40)
-	mob.Prototype.AffectFlags = []string{"blind"}
+	{
+		p := *mob.Proto()
+		p.AffectFlags = []string{"blind"}
+		mob.SetProto(&p)
+	}
 	draws := scriptClericRolls(t, 0, 2, 1, 0)
 
 	if got := specCleric(w, nil, mob, "", ""); !got {

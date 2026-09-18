@@ -187,13 +187,13 @@ func (p *Player) CanSpeak() bool {
 }
 
 func (m *MobInstance) CanSpeak() bool {
-	if m == nil || m.Prototype == nil {
+	if m == nil || m.Proto() == nil {
 		return false
 	}
 	// C is_intelligent() compares the mobile race against the literal
 	// intelligent_races[] list (src/constants.c:353-373). This is deliberately
 	// not the player-race bitvector in pkg/game/constants.go.
-	switch m.Prototype.Race {
+	switch m.Proto().Race {
 	case 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 18, 19, 20, 27, 28, 29, 30:
 		return true
 	default:

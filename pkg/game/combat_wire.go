@@ -20,8 +20,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		if p, ok := w.GetPlayer(name); ok {
 			return p.GetRace()
 		}
-		if m := w.GetMobByName(name); m != nil && m.Prototype != nil {
-			return m.Prototype.Race
+		if m := w.GetMobByName(name); m != nil && m.Proto() != nil {
+			return m.Proto().Race
 		}
 		return 0
 	}
@@ -190,18 +190,18 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	cb.HasMobVNum = func(name string, vnum int) bool {
 		m := w.GetMobByName(name)
-		if m == nil || m.Prototype == nil {
+		if m == nil || m.Proto() == nil {
 			return false
 		}
-		return m.Prototype.VNum == vnum
+		return m.Proto().VNum == vnum
 	}
 
 	cb.MobHasJailGuardSpec = func(name string) bool {
 		m := w.GetMobByName(name)
-		if m == nil || m.Prototype == nil {
+		if m == nil || m.Proto() == nil {
 			return false
 		}
-		switch MobSpecAssign[m.Prototype.VNum] {
+		switch MobSpecAssign[m.Proto().VNum] {
 		case "take_to_jail", "wall_guard_ns":
 			return true
 		default:
@@ -362,8 +362,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			if weapon, wielded := m.Equipment[int(SlotWield)]; wielded && weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
 				return weapon.Prototype.Values[3], 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
 			}
-			if m.Prototype != nil {
-				return m.Prototype.BareHandAttack, 0, 0, false
+			if m.Proto() != nil {
+				return m.Proto().BareHandAttack, 0, 0, false
 			}
 		}
 		return 0, 0, 0, false // mob / unknown → "hit"

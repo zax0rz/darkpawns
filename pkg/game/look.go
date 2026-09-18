@@ -523,8 +523,8 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 	}
 	if target.Mob != nil {
 		mob := target.Mob
-		if mob.Prototype != nil && mob.Prototype.DetailedDesc != "" {
-			result.literal(ch, mob.Prototype.DetailedDesc)
+		if mob.Proto() != nil && mob.Proto().DetailedDesc != "" {
+			result.literal(ch, mob.Proto().DetailedDesc)
 		} else {
 			result.act(ch, mob, nil, "You see nothing special about $M.")
 		}
@@ -1159,8 +1159,8 @@ func (w *World) playerPresenceLine(player, viewer *Player) string {
 }
 
 func mobPresenceLine(mob *MobInstance, viewer *Player) string {
-	if mob.Prototype != nil && mob.Prototype.LongDesc != "" && mob.GetPosition() == mob.Prototype.DefaultPos {
-		return normalizeObservationText(mob.Prototype.LongDesc)
+	if mob.Proto() != nil && mob.Proto().LongDesc != "" && mob.GetPosition() == mob.Proto().DefaultPos {
+		return normalizeObservationText(mob.Proto().LongDesc)
 	}
 	name := mob.GetShortDesc()
 	if mob.IsAffected(affInvisible) {

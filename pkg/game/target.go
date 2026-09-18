@@ -35,8 +35,8 @@ func charKeywords(c combat.Combatant) string {
 		return ""
 	}
 	if mob, ok := c.(*MobInstance); ok && mob != nil {
-		if mob.Prototype != nil && mob.Prototype.Keywords != "" {
-			return mob.Prototype.Keywords
+		if mob.Proto() != nil && mob.Proto().Keywords != "" {
+			return mob.Proto().Keywords
 		}
 		// Fall back to the short description for mobs without a keyword list,
 		// matching the historical Go behavior so old world data still resolves.

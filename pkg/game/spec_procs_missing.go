@@ -116,7 +116,7 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	item.SetValue(2, newCurr)
 	item.SetValue(1, newMax)
 
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s recharges %s.", me.Prototype.ShortDesc, item.GetShortDesc()))
+	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s recharges %s.", me.Proto().ShortDesc, item.GetShortDesc()))
 	ch.SendMessage(fmt.Sprintf("The recharger works their magic on %s! It costs %d gold. The item now has %d charges remaining.\r\n", item.GetShortDesc(), cost, newCurr))
 	return true
 }

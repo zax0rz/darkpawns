@@ -114,9 +114,21 @@ func TestDoDamage_ZeroDamageNoOpsOnMob(t *testing.T) {
 func TestDoDamageAwardsXP(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 	mob := spawnTargetMob(t, w)
-	mob.Prototype.Exp = 1000
-	mob.Prototype.Gold = 100
-	mob.Prototype.Level = 5
+	{
+		p := *mob.Proto()
+		p.Exp = 1000
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.Gold = 100
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.Level = 5
+		mob.SetProto(&p)
+	}
 
 	startExp := player.GetExp()
 	startKills := player.Kills
@@ -142,9 +154,21 @@ func TestDoDamageAwardsXP(t *testing.T) {
 func TestDoSpellDamageAwardsXP(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 	mob := spawnTargetMob(t, w)
-	mob.Prototype.Exp = 1000
-	mob.Prototype.Gold = 100
-	mob.Prototype.Level = 5
+	{
+		p := *mob.Proto()
+		p.Exp = 1000
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.Gold = 100
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.Level = 5
+		mob.SetProto(&p)
+	}
 
 	startExp := player.GetExp()
 	startKills := player.Kills

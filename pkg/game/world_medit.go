@@ -94,6 +94,10 @@ func (w *World) CommitEditedMob(mob parser.Mob) bool {
 // (src/medit.c): alias, short/long/detailed descriptions, and noise. Only
 // those fields move; a live mob keeps its own combat stats, exactly as C's
 // per-instance char_data does.
+//
+// The prototype is never mutated in place: each instance gets a cloned
+// snapshot via atomic swap, so concurrent readers (e.g. look.go) see a
+// consistent immutable *parser.Mob without locking.
 func (w *World) RefreshLiveMobStrings(vnum int, mob parser.Mob) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -101,15 +105,15 @@ func (w *World) RefreshLiveMobStrings(vnum int, mob parser.Mob) {
 		if inst == nil || inst.VNum != vnum {
 			continue
 		}
-		inst.mu.Lock()
-		if inst.Prototype != nil {
-			inst.Prototype.Keywords = mob.Keywords
-			inst.Prototype.ShortDesc = mob.ShortDesc
-			inst.Prototype.LongDesc = mob.LongDesc
-			inst.Prototype.DetailedDesc = mob.DetailedDesc
-			inst.Prototype.Noise = mob.Noise
+		if proto := inst.Proto(); proto != nil {
+			clone := *proto
+			clone.Keywords = mob.Keywords
+			clone.ShortDesc = mob.ShortDesc
+			clone.LongDesc = mob.LongDesc
+			clone.DetailedDesc = mob.DetailedDesc
+			clone.Noise = mob.Noise
+			inst.SetProto(&clone)
 		}
-		inst.mu.Unlock()
 	}
 }
 

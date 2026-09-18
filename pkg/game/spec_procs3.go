@@ -17,7 +17,7 @@ import (
 
 // mobHasAffect checks if a MobInstance has a given affect flag string in its prototype.
 func mobHasAffect(me *MobInstance, affect string) bool {
-	for _, f := range me.Prototype.AffectFlags {
+	for _, f := range me.Proto().AffectFlags {
 		if strings.EqualFold(f, affect) {
 			return true
 		}
@@ -170,12 +170,12 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// Prevent dispel-self if same alignment as victim (lspell < 3)
 	if lspell < 3 {
-		casterAlign := me.Prototype.Alignment
+		casterAlign := me.Proto().Alignment
 		// Check mobs in room for target
 		for _, m := range w.GetMobsInRoom(me.GetRoomVNum()) {
 			if m.GetName() == victName {
-				if (casterAlign <= -350 && m.Prototype.Alignment <= -350) ||
-					(casterAlign >= 350 && m.Prototype.Alignment >= 350) {
+				if (casterAlign <= -350 && m.Proto().Alignment <= -350) ||
+					(casterAlign >= 350 && m.Proto().Alignment >= 350) {
 					lspell = 4
 				}
 				break
@@ -280,7 +280,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Offensive spells by lspell
 	switch {
 	case lspell <= 3:
-		if me.Prototype.Alignment <= -350 {
+		if me.Proto().Alignment <= -350 {
 			castClericSpell(w, me, vict, spells.SpellDispelGood)
 		} else {
 			castClericSpell(w, me, vict, spells.SpellDispelEvil)

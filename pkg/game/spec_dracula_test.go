@@ -8,8 +8,16 @@ import (
 func TestSpecDracula_EntryGatesAndDelegation(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
-	mob.Prototype.Keywords = "Lothar Vampire Lord"
-	mob.Prototype.ShortDesc = "Lothar the Vampire Lord"
+	{
+		p := *mob.Proto()
+		p.Keywords = "Lothar Vampire Lord"
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "Lothar the Vampire Lord"
+		mob.SetProto(&p)
+	}
 	player.Stats.Int = 10
 	player.Stats.Wis = 10
 	lastMsg() // discard the spawn announcement
@@ -65,8 +73,16 @@ func TestSpecDracula_LookBiteAudienceAndVampireState(t *testing.T) {
 		t.Fatalf("AddPlayer observer: %v", err)
 	}
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
-	mob.Prototype.Keywords = "Lothar Vampire Lord"
-	mob.Prototype.ShortDesc = "Lothar the Vampire Lord"
+	{
+		p := *mob.Proto()
+		p.Keywords = "Lothar Vampire Lord"
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "Lothar the Vampire Lord"
+		mob.SetProto(&p)
+	}
 	player.Stats.Int = 10
 	player.Stats.Wis = 10
 	lastMsg() // discard the spawn announcement
@@ -102,8 +118,16 @@ func TestSpecDracula_ExistingVampireOrWerewolfSkipsTransformation(t *testing.T) 
 		t.Run(map[int]string{PlrVampire: "vampire", PlrWerewolf: "werewolf"}[flag], func(t *testing.T) {
 			w, player, lastMsg := newSpecProcTestWorld(t)
 			mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
-			mob.Prototype.Keywords = "Lothar Vampire Lord"
-			mob.Prototype.ShortDesc = "Lothar the Vampire Lord"
+			{
+				p := *mob.Proto()
+				p.Keywords = "Lothar Vampire Lord"
+				mob.SetProto(&p)
+			}
+			{
+				p := *mob.Proto()
+				p.ShortDesc = "Lothar the Vampire Lord"
+				mob.SetProto(&p)
+			}
 			lastMsg()
 			player.Stats.Int = 10
 			player.Stats.Wis = 10

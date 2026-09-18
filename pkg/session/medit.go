@@ -1280,6 +1280,12 @@ func writeMeditFlagInts(sb *strings.Builder, set []string, parserNames []string)
 	fmt.Fprintf(sb, "%d %d %d %d", words[0], words[1], words[2], words[3])
 }
 
+// IsMeditEditing reports whether a medit (CON_MEDIT) session is active and
+// no descriptor string editor has taken over the line. Exported for the
+// telnet listener's input dispatch: like CON_TEDIT and CON_REDIT, CON_MEDIT
+// owns every complete input line including bare <ENTER>.
+func (s *Session) IsMeditEditing() bool { return s.isMeditEditing() }
+
 // isMeditEditing reports whether a medit (CON_MEDIT) session is active and
 // no descriptor string editor has taken over the line. It mirrors C's
 // CON_MEDIT routing: while the D-description editor runs, lines go to the

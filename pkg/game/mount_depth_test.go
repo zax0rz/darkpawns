@@ -92,7 +92,11 @@ func TestDoRideDirectGates(t *testing.T) {
 	t.Run("not mountable", func(t *testing.T) {
 		w, rider, mount := newRideDepthWorld(t)
 		output := captureMovementOutput(w)
-		mount.Prototype.ActionFlags = nil
+		{
+			p := *mount.Proto()
+			p.ActionFlags = nil
+			mount.SetProto(&p)
+		}
 
 		w.doRide(rider, nil, "mount", "horse")
 

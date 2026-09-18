@@ -166,7 +166,7 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	if err != nil {
 		t.Fatalf("SpawnMob rescuer: %v", err)
 	}
-	allyProto := *rescuer.Prototype
+	allyProto := *rescuer.Proto()
 	allyProto.VNum = 2002
 	allyProto.Keywords = "elrik"
 	allyProto.ShortDesc = "Elrik"
@@ -206,9 +206,9 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
 	w, player := newCombatTestWorld(t)
 	rescuer := spawnTargetMob(t, w)
-	rescuer.Prototype.Keywords = "avenger"
-	rescuer.Prototype.ShortDesc = "the avenger"
-	allyProto := *rescuer.Prototype
+	rescuer.Proto().Keywords = "avenger"
+	rescuer.Proto().ShortDesc = "the avenger"
+	allyProto := *rescuer.Proto()
 	allyProto.VNum = 2002
 	allyProto.Keywords = "elrik"
 	allyProto.ShortDesc = "Elrik"

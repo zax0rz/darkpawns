@@ -84,10 +84,10 @@ func cmdStat(s *Session, args []string) error {
 }
 
 func (s *Session) sendStatMob(mob *game.MobInstance) {
-	if mob == nil || mob.Prototype == nil {
+	if mob == nil || mob.Proto() == nil {
 		return
 	}
-	proto := mob.Prototype
+	proto := mob.Proto()
 	rnum := -1
 	if parsed := s.manager.world.GetParsedWorld(); parsed != nil {
 		for i := range parsed.Mobs {

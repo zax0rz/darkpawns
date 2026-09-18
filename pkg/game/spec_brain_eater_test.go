@@ -44,8 +44,8 @@ func TestSpecBrainEater_BeheadsCorpseAndLevelsInstance(t *testing.T) {
 	if mob.GetLevel() != 23 {
 		t.Errorf("mob level = %d, want 23", mob.GetLevel())
 	}
-	if mob.Prototype.Level != 22 {
-		t.Errorf("prototype level = %d, want unchanged 22", mob.Prototype.Level)
+	if mob.Proto().Level != 22 {
+		t.Errorf("prototype level = %d, want unchanged 22", mob.Proto().Level)
 	}
 
 	var head, beheaded *ObjectInstance
@@ -91,8 +91,8 @@ func TestSpecBrainEater_DamrollGrowthAtLevelThirty(t *testing.T) {
 	if got := mob.GetDamroll(); got != 2 {
 		t.Errorf("damroll after brain = %d, want 2", got)
 	}
-	if got := mob.GetDamageRoll().Plus; got != mob.Prototype.Damage.Plus {
-		t.Errorf("damage-roll plus = %d, want prototype plus %d", got, mob.Prototype.Damage.Plus)
+	if got := mob.GetDamageRoll().Plus; got != mob.Proto().Damage.Plus {
+		t.Errorf("damage-roll plus = %d, want prototype plus %d", got, mob.Proto().Damage.Plus)
 	}
 }
 

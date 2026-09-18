@@ -32,7 +32,11 @@ func prepareBackstabber(t *testing.T, wield bool) (*World, *Player, *MobInstance
 	mob.Intel = 11
 	mob.Wis = 11
 	mob.Dex = 11
-	mob.Prototype.Damage = parser.DiceRoll{Num: 1, Sides: 1, Plus: 2}
+	{
+		p := *mob.Proto()
+		p.Damage = parser.DiceRoll{Num: 1, Sides: 1, Plus: 2}
+		mob.SetProto(&p)
+	}
 	if wield {
 		mob.EquipItem(backstabberWeapon(), int(SlotWield))
 	}

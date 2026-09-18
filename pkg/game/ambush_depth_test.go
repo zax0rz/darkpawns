@@ -102,7 +102,11 @@ func TestAmbushDamageFormulaAndHiddenClear(t *testing.T) {
 
 func TestAmbushAwareForcesFailureAndStartsCombat(t *testing.T) {
 	w, ch, target := newAmbushDepthWorld(t)
-	target.Prototype.ActionFlags = []string{"AWARE"}
+	{
+		p := *target.Proto()
+		p.ActionFlags = []string{"AWARE"}
+		target.SetProto(&p)
+	}
 	startHP := target.GetHP()
 
 	dprng.ResetStream(1)

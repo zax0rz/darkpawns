@@ -249,10 +249,10 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		mobGold := 0
 		mobVNum := 0
 		mobLevel := 0
-		if mob, ok := victim.(*MobInstance); ok && mob.Prototype != nil {
+		if mob, ok := victim.(*MobInstance); ok && mob.Proto() != nil {
 			mobExp = mob.GetExp()
-			mobGold = mob.Prototype.Gold
-			mobVNum = mob.Prototype.VNum
+			mobGold = mob.Proto().Gold
+			mobVNum = mob.Proto().VNum
 			mobLevel = mob.GetLevel()
 		}
 		roomName := ""
@@ -439,8 +439,8 @@ func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer c
 		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, corpseGold)
 	} else {
 		corpseKeywords := deadMob.GetName()
-		if deadMob.Prototype != nil && deadMob.Prototype.Keywords != "" {
-			corpseKeywords = deadMob.Prototype.Keywords
+		if deadMob.Proto() != nil && deadMob.Proto().Keywords != "" {
+			corpseKeywords = deadMob.Proto().Keywords
 		}
 		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true, corpseKeywords)
 		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {

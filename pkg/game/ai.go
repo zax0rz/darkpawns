@@ -56,7 +56,7 @@ func (w *World) AITick() {
 // accessors provide their own synchronization; we no longer hold mob.mu here.
 func (w *World) runMobAI(mob *MobInstance) {
 	mob.mu.RLock()
-	ready := mob.Prototype != nil
+	ready := mob.Proto() != nil
 	mob.mu.RUnlock()
 	if !ready {
 		return
