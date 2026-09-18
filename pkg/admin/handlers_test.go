@@ -1436,6 +1436,37 @@ func TestNewRouter_ConsoleNotBuilt_SaysWhatToRun(t *testing.T) {
 	}
 }
 
+// TestNewRouter_ConsoleDirMissingEntirely covers the actual fresh-clone
+// condition, which is not the same as the empty-directory case above:
+// admin-ui-dist does not exist at all. That distinction is load-bearing. The
+// pre-fix code decided once at boot with os.Stat(adminUIDir), so an existing
+// but empty directory still registered the route and still reached the
+// guidance page — meaning the sibling tests pass against the unfixed router
+// and only this one fails.
+func TestNewRouter_ConsoleDirMissingEntirely(t *testing.T) {
+	setJWTSecret(t)
+	w := testWorld(t)
+	lb := NewLogBuffer(10)
+
+	t.Setenv("ADMIN_UI_DIR", t.TempDir()+"/never-created")
+
+	handler, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("status = %d, want 503; a bare 404 means the fresh-clone case is unguarded", rec.Code)
+	}
+	if body := rec.Body.String(); !strings.Contains(body, "npm --prefix admin-ui run build") {
+		t.Errorf("guidance page missing the build command; body: %s", body)
+	}
+}
+
 func TestNewRouter_ConsoleBuilt_ServesIndex(t *testing.T) {
 	setJWTSecret(t)
 	w := testWorld(t)
