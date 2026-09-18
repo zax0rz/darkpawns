@@ -1,0 +1,43 @@
+# C-backed MEDIT main menu bytes with ANSI color disabled, compared with ANSI
+# escapes intact (keep-ansi). Creation answers N to "Do you want ANSI color",
+# so get_char_cols yields empty strings and the menu renders plain. The first
+# created character is crowned God (LVL_IMPL) by the empty-players fixture,
+# granting LVL_BUILDER medit access. Mob 3100 exists in the shared lib (31.mob).
+# depth-case: medit.menu-colors-off-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Zaxedit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zaxedit
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+medit 3100
+q

@@ -275,21 +275,12 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		return
 	}
 	if state.onComplete != nil {
-		// REDIT's string_write callback returns to its owning menu. It does not
-		// emit tedit's file "Saved." or "Edit aborted." text and it keeps the
-		// descriptor in PLR_WRITING until the room OLC itself exits.
+		// OLC string_write callbacks (redit, medit D-description) return to
+		// their owning menu. They do not emit tedit's file "Saved." or "Edit
+		// aborted." text and they keep the descriptor in PLR_WRITING until
+		// the OLC session itself exits.
 		s.textEdit = nil
 		state.onComplete(action, state.buffer, state.original)
-		return
-	}
-
-	// Descriptor-owned OLC string editing (medit D-description): hand the
-	// buffer back to the editor instead of touching files. The OLC session
-	// continues, so PlrWriting stays set and no stop-editing broadcast goes
-	// out here.
-	if state.onComplete != nil {
-		s.textEdit = nil
-		state.onComplete(action == textEditSave, state.buffer)
 		return
 	}
 

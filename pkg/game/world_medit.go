@@ -89,6 +89,30 @@ func (w *World) CommitEditedMob(mob parser.Mob) bool {
 	return true
 }
 
+// RefreshLiveMobStrings updates the five display strings on every standing
+// instance of vnum, mirroring medit_save_internally's character_list sweep
+// (src/medit.c): alias, short/long/detailed descriptions, and noise. Only
+// those fields move; a live mob keeps its own combat stats, exactly as C's
+// per-instance char_data does.
+func (w *World) RefreshLiveMobStrings(vnum int, mob parser.Mob) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, inst := range w.activeMobs {
+		if inst == nil || inst.VNum != vnum {
+			continue
+		}
+		inst.mu.Lock()
+		if inst.Prototype != nil {
+			inst.Prototype.Keywords = mob.Keywords
+			inst.Prototype.ShortDesc = mob.ShortDesc
+			inst.Prototype.LongDesc = mob.LongDesc
+			inst.Prototype.DetailedDesc = mob.DetailedDesc
+			inst.Prototype.Noise = mob.Noise
+		}
+		inst.mu.Unlock()
+	}
+}
+
 // SetMobScript replaces the live script fields used by MEDIT's script menu.
 // C shallow-copies the mob script pointer into OLC (medit.c copy_mobile), so
 // script name/flag edits intentionally bypass the working mob and become

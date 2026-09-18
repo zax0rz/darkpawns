@@ -251,10 +251,12 @@ func (s *Session) notePlayerOutput() {
 // bare game-loop prompt pass writes the prompt alone.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
-	// CON_REDIT menus own their trailing prompt. The telnet loop still calls
-	// SendPrompt after every line, but C's descriptor state does not append the
-	// ordinary playing prompt while redit_parse owns the input.
-	if s.isRoomEditing() {
+	// CON_REDIT and CON_MEDIT menus own their trailing prompt. The telnet
+	// loop still calls SendPrompt after every line, but C's descriptor
+	// state does not append the ordinary playing prompt while an OLC menu
+	// owns the input. While the descriptor string editor runs (d->str set),
+	// C's make_prompt writes "] ".
+	if s.isRoomEditing() || s.isMobEditing() {
 		if s.isTextEditing() {
 			s.sendPromptText("] ")
 		}

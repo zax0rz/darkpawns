@@ -163,6 +163,46 @@ var meditExpLookup = []int{
 	363000, 369000, 372000, 375000, 400000,
 }
 
+// claimMobEdit atomically reserves a mob VNum for this session, mirroring
+// do_olc's duplicate-editor descriptor scan (src/olc.c: "That mobile is
+// currently being edited by %s."). C relies on its single-threaded
+// interpreter for atomicity; here the claim itself is the check, so two
+// sessions racing through cmdMedit cannot both be admitted. The returned
+// name is the other editor's when the claim fails.
+func (m *Manager) claimMobEdit(number int, s *Session) (string, bool) {
+	m.mobEditMu.Lock()
+	defer m.mobEditMu.Unlock()
+	if holder, ok := m.mobEdits[number]; ok && holder != s {
+		return holder.playerName, false
+	}
+	if m.mobEdits == nil {
+		m.mobEdits = make(map[int]*Session)
+	}
+	m.mobEdits[number] = s
+	return "", true
+}
+
+// releaseMobEdit frees a mob VNum reservation, but only when this session
+// still holds it.
+func (m *Manager) releaseMobEdit(number int, s *Session) {
+	m.mobEditMu.Lock()
+	defer m.mobEditMu.Unlock()
+	if m.mobEdits[number] == s {
+		delete(m.mobEdits, number)
+	}
+}
+
+// mobEditHolder peeks at who is editing a mob VNum, for the save path which
+// refuses while an editor owns the mob but never reserves one itself.
+func (m *Manager) mobEditHolder(number int) string {
+	m.mobEditMu.Lock()
+	defer m.mobEditMu.Unlock()
+	if holder, ok := m.mobEdits[number]; ok && holder != nil {
+		return holder.playerName
+	}
+	return ""
+}
+
 // cmdMedit is the Go port of do_olc's SCMD_OLC_MEDIT branch (src/olc.c).
 func cmdMedit(s *Session, args []string) error {
 	if s.player == nil || s.manager == nil || s.manager.world == nil {
@@ -202,27 +242,22 @@ func cmdMedit(s *Session, args []string) error {
 		number = atoiC(buf1)
 	}
 
-	if other := olcDuplicateName(s.manager, number, func(c *Session) (int, bool) {
-		if c.mobEdit == nil {
-			return 0, false
-		}
-		return c.mobEdit.number, true
-	}); other != "" {
-		s.meditSend(fmt.Sprintf("That mobile is currently being edited by %s.\r\n", other))
-		return nil
-	}
-
-	zone, ok := olcZoneForVNum(s.manager.world, number)
-	if !ok {
-		s.meditSend("Sorry, there is no zone for that number!\r\n")
-		return nil
-	}
-	if !olcAuthorized(s, zone.Number) {
-		s.meditSend("You do not have permission to edit this zone.\r\n")
-		return nil
-	}
-
 	if save {
+		// C's duplicate scan runs on the save path too, against the zone's
+		// base vnum; the save never reserves the mob itself.
+		if other := s.manager.mobEditHolder(number); other != "" {
+			s.meditSend(fmt.Sprintf("That mobile is currently being edited by %s.\r\n", other))
+			return nil
+		}
+		zone, ok := olcZoneForVNum(s.manager.world, number)
+		if !ok {
+			s.meditSend("Sorry, there is no zone for that number!\r\n")
+			return nil
+		}
+		if !olcAuthorized(s, zone.Number) {
+			s.meditSend("You do not have permission to edit this zone.\r\n")
+			return nil
+		}
 		s.meditSend("Saving all mobiles in zone.\r\n")
 		slog.Info("OLC: medit zone save",
 			"player", s.playerName, "zone", zone.Number)
@@ -233,7 +268,32 @@ func cmdMedit(s *Session, args []string) error {
 		return nil
 	}
 
-	return s.startMedit(number, zone)
+	// The duplicate-editor gate runs before zone lookup and authorization,
+	// matching do_olc's descriptor scan order. The claim itself is the
+	// check, so two sessions racing through cmdMedit cannot both be
+	// admitted. Every refusal and failure path below releases the claim.
+	if other, ok := s.manager.claimMobEdit(number, s); !ok {
+		s.meditSend(fmt.Sprintf("That mobile is currently being edited by %s.\r\n", other))
+		return nil
+	}
+
+	zone, ok := olcZoneForVNum(s.manager.world, number)
+	if !ok {
+		s.manager.releaseMobEdit(number, s)
+		s.meditSend("Sorry, there is no zone for that number!\r\n")
+		return nil
+	}
+	if !olcAuthorized(s, zone.Number) {
+		s.manager.releaseMobEdit(number, s)
+		s.meditSend("You do not have permission to edit this zone.\r\n")
+		return nil
+	}
+
+	if err := s.startMedit(number, zone); err != nil {
+		s.manager.releaseMobEdit(number, s)
+		return err
+	}
+	return nil
 }
 
 // startMedit begins a medit session for vnum, mirroring do_olc's
@@ -296,6 +356,7 @@ func (s *Session) finishMeditLocked(mode cleanupMeditMode) {
 	if s.mobEdit == nil {
 		return
 	}
+	number := s.mobEdit.number
 	switch mode {
 	case cleanupMeditAll:
 		s.setPlayerWritingLocked(false)
@@ -303,6 +364,9 @@ func (s *Session) finishMeditLocked(mode cleanupMeditMode) {
 			s.meditActLocked(game.ToRoom, "$n stops using OLC.")
 		}
 		s.mobEdit = nil
+	}
+	if s.manager != nil {
+		s.manager.releaseMobEdit(number, s)
 	}
 }
 
@@ -347,48 +411,72 @@ func (s *Session) meditActLocked(actType int, format string) {
 	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", actType)
 }
 
-// meditShowMenuLocked renders the C medit_disp_menu layout (src/medit.c).
-// The zone-name lookup mirrors medit_setup_existing's OLC_ZNUM-based display;
-// the script name/flags come from the live shallow script (C copies the mob
-// script pointer into OLC, so script edits are authoritative outside the
-// working copy).
+// meditDisplayLongDesc mirrors C's fread_string output for the mob long
+// description: the stored string always ends with "\r\n" (the line's newline
+// is preserved before the "~" terminator). The Go parser strips it, so the
+// menu display restores it for byte fidelity.
+func meditDisplayLongDesc(longDesc string) string {
+	if !strings.HasSuffix(longDesc, "\r\n") {
+		return longDesc + "\r\n"
+	}
+	return longDesc
+}
+
+// meditShowMenuLocked renders medit_disp_menu (src/medit.c:611-678) byte for
+// byte, including get_char_cols colors and the field widths/precisions of
+// the C format strings. The zone-name lookup mirrors medit_setup_existing's
+// OLC_ZNUM-based display; the script name/flags come from the live shallow
+// script (C copies the mob script pointer into OLC, so script edits are
+// authoritative outside the working copy).
 func (s *Session) meditShowMenuLocked() {
 	state := s.mobEdit
 	mob := &state.mob
-
-	scriptName := mob.ScriptName
-	scriptFlags := mob.LuaFunctions
-	if state.isNew {
-		scriptName = ""
-		scriptFlags = 0
-	} else if live, ok := s.manager.world.SnapshotMob(state.number); ok {
-		scriptName = live.ScriptName
-		scriptFlags = live.LuaFunctions
-	}
+	nrm, grn, cyn, yel := s.reditCols()
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "-- Mob number: [%5d]\r\n", state.number)
-	fmt.Fprintf(&sb, "1) Sex: %-7.7s         2) Alias: %s\r\n", meditSexName(mob.Sex), mob.Keywords)
-	fmt.Fprintf(&sb, "3) S-Desc: %s\r\n", mob.ShortDesc)
-	fmt.Fprintf(&sb, "4) L-Desc: %s\r\n", strings.TrimSuffix(mob.LongDesc, "\r\n"))
-	fmt.Fprintf(&sb, "5) D-Desc:\r\n%s", mob.DetailedDesc)
-	fmt.Fprintf(&sb, "6) Level: [%4d], 7) Alignment: [%4d], 8) Hitroll: [%2d], 9) Damroll: [%2d]\r\n",
-		mob.Level, mob.Alignment, meditDisplayHitroll(mob), mob.Damage.Plus)
-	fmt.Fprintf(&sb, "A) NDD: [%2d], B) SDD: [%2d], C) Num HP Dice: [%2d], D) Size HP Dice: [%3d], E) HP Bonus: [%5d]\r\n",
-		mob.Damage.Num, mob.Damage.Sides, mob.HP.Num, mob.HP.Sides, mob.HP.Plus)
-	fmt.Fprintf(&sb, "F) Armor Class: [%3d], G) Exp: [%9d], H) Gold: [%8d]\r\n",
-		mob.AC, mob.Exp, mob.Gold)
-	fmt.Fprintf(&sb, "I) Position: %s\r\n", meditPosName(mob.Position))
-	fmt.Fprintf(&sb, "J) Default position: %s\r\n", meditPosName(mob.DefaultPos))
-	fmt.Fprintf(&sb, "K) Attack: %s\r\n", meditAttackName(mob.BareHandAttack))
-	fmt.Fprintf(&sb, "L) NPC flags: %s\r\n", meditSprintBitArray(mob.ActionFlags, meditParserActionBits, meditMobFlagNames))
-	fmt.Fprintf(&sb, "M) AFF flags: %s\r\n", meditSprintBitArray(mob.AffectFlags, meditParserAffectBits, meditAffFlagNames))
-	fmt.Fprintf(&sb, "N) Race: %s\r\n", meditRaceName(mob.Race))
-	fmt.Fprintf(&sb, "O) Noise: %s\r\n", mob.Noise)
-	fmt.Fprintf(&sb, "S) Edit Mob Script: Name: %s Flags: %s\r\n", scriptName, meditSprintScriptFlags(scriptFlags))
-	fmt.Fprintf(&sb, "Q) Quit\r\n")
-	fmt.Fprintf(&sb, "Enter choice : ")
+	// Direct port of medit_disp_menu (src/medit.c:611-678). The HP dice are
+	// C's GET_HIT/GET_MANA/GET_MOVE; hitroll displays as 20 - THAC0.
+	fmt.Fprintf(&sb, "\r\n-- Mob Number:  [%s%d%s]\r\n", cyn, state.number, nrm)
+	fmt.Fprintf(&sb, "%s1%s) Sex: %s%-7.7s%s            %s2%s) Alias: %s%s\r\n",
+		grn, nrm, yel, meditSexName(mob.Sex), nrm,
+		grn, nrm, yel, mob.Keywords)
+	fmt.Fprintf(&sb, "%s3%s) S-Desc: %s%s\r\n", grn, nrm, yel, mob.ShortDesc)
+	fmt.Fprintf(&sb, "%s4%s) L-Desc:-\r\n%s%s", grn, nrm, yel, meditDisplayLongDesc(mob.LongDesc))
+	fmt.Fprintf(&sb, "%s5%s) D-Desc:-\r\n%s%s", grn, nrm, yel, mob.DetailedDesc)
+	fmt.Fprintf(&sb, "%s6%s) Level:       [%s%4d%s],  %s7%s) Alignment:    [%s%4d%s]\r\n",
+		grn, nrm, cyn, mob.Level, nrm,
+		grn, nrm, cyn, mob.Alignment, nrm)
+	fmt.Fprintf(&sb, "%s8%s) Hitroll:     [%s%4d%s],  %s9%s) Damroll:      [%s%4d%s]\r\n",
+		grn, nrm, cyn, meditDisplayHitroll(mob), nrm,
+		grn, nrm, cyn, mob.Damage.Plus, nrm)
+	fmt.Fprintf(&sb, "%sA%s) NumDamDice:  [%s%4d%s],  %sB%s) SizeDamDice:  [%s%4d%s]\r\n",
+		grn, nrm, cyn, mob.Damage.Num, nrm,
+		grn, nrm, cyn, mob.Damage.Sides, nrm)
+	fmt.Fprintf(&sb, "%sC%s) Num HP Dice: [%s%4d%s],  %sD%s) Size HP Dice: [%s%4d%s],  %sE%s) HP Bonus: [%s%5d%s]\r\n",
+		grn, nrm, cyn, mob.HP.Num, nrm,
+		grn, nrm, cyn, mob.HP.Sides, nrm,
+		grn, nrm, cyn, mob.HP.Plus, nrm)
+	fmt.Fprintf(&sb, "%sF%s) Armor Class: [%s%4d%s],  %sG%s) Exp:     [%s%9d%s],  %sH%s) Gold:  [%s%8d%s]\r\n",
+		grn, nrm, cyn, mob.AC, nrm,
+		grn, nrm, cyn, mob.Exp, nrm,
+		grn, nrm, cyn, mob.Gold, nrm)
 
+	noise := mob.Noise
+	if noise == "" {
+		noise = "None"
+	}
+	fmt.Fprintf(&sb, "%sI%s) Position  : %s%s\r\n", grn, nrm, yel, meditPosName(mob.Position))
+	fmt.Fprintf(&sb, "%sJ%s) Default   : %s%s\r\n", grn, nrm, yel, meditPosName(mob.DefaultPos))
+	fmt.Fprintf(&sb, "%sK%s) Attack    : %s%s\r\n", grn, nrm, yel, meditAttackName(mob.BareHandAttack))
+	fmt.Fprintf(&sb, "%sL%s) NPC Flags : %s%s\r\n", grn, nrm, cyn,
+		meditSprintBitArray(mob.ActionFlags, meditParserActionBits, meditMobFlagNames))
+	fmt.Fprintf(&sb, "%sM%s) AFF Flags : %s%s\r\n", grn, nrm, cyn,
+		meditSprintBitArray(mob.AffectFlags, meditParserAffectBits, meditAffFlagNames))
+	fmt.Fprintf(&sb, "%sN%s) Race      : %s%s\r\n", grn, nrm, cyn, meditRaceName(mob.Race))
+	fmt.Fprintf(&sb, "%sO%s) Noise     : %s%s\r\n", grn, nrm, cyn, noise)
+	fmt.Fprintf(&sb, "%sS%s) Script Menu   \r\n", grn, nrm)
+	fmt.Fprintf(&sb, "%sQ%s) Quit\r\n", grn, nrm)
+	sb.WriteString("Enter choice : ")
 	s.meditSendLocked(sb.String())
 	state.mode = meditMainMenu
 }
@@ -438,13 +526,18 @@ func meditDisplayHitroll(mob *parser.Mob) int {
 // (meditParserActionBits / meditParserAffectBits), which share bit positions
 // with the C menu tables.
 func meditSprintBitArray(set []string, parserNames, displayNames []string) string {
-	index := make(map[string]int, len(parserNames))
-	for i, name := range parserNames {
-		index[name] = i
+	inSet := make(map[string]bool, len(set))
+	for _, name := range set {
+		inSet[name] = true
 	}
 	var sb strings.Builder
-	for _, name := range set {
-		if i, ok := index[name]; ok && i < len(displayNames) {
+	// C's sprintnbit walks bits 0..n in order; iterate the parser bit table
+	// (which mirrors the C bit positions) rather than the set's storage order.
+	for i, parserName := range parserNames {
+		if i >= len(displayNames) {
+			break
+		}
+		if inSet[parserName] {
 			sb.WriteString(displayNames[i])
 			sb.WriteString(" ")
 		}
@@ -456,8 +549,8 @@ func meditSprintBitArray(set []string, parserNames, displayNames []string) strin
 }
 
 // meditSprintScriptFlags mirrors sprintbit over mscript_bits for the script
-// flags segment: bit i renders mscript_bits[i] followed by a space; an empty
-// set renders "NOBITS ".
+// flags segment: bit i renders mscript_bits[i] followed by a space. C's
+// sprintbit (singular) falls back to "NOBITS " for an empty set.
 func meditSprintScriptFlags(flags int) string {
 	var sb strings.Builder
 	for i, name := range meditScriptFlagNames {
@@ -473,100 +566,145 @@ func meditSprintScriptFlags(flags int) string {
 }
 
 // meditShowSexLocked mirrors medit_disp_sex.
+// meditShowSexLocked mirrors medit_disp_sex (src/medit.c:458-476): a leading
+// blank line, one "%s%2d%s) %s" line per gender with get_char_cols colors,
+// and the "Enter gender number : " prompt.
 func (s *Session) meditShowSexLocked() {
+	nrm, grn, _, _ := s.reditCols()
 	var sb strings.Builder
+	sb.WriteString("\r\n")
 	for i, name := range meditGenderNames {
-		fmt.Fprintf(&sb, "%2d) %-7.7s\r\n", i, name)
+		fmt.Fprintf(&sb, "%s%2d%s) %s\r\n", grn, i, nrm, name)
 	}
-	sb.WriteString("Enter sex for this mob : ")
+	sb.WriteString("Enter gender number : ")
 	s.meditSendLocked(sb.String())
-	s.mobEdit.mode = meditSex
 }
 
-// meditShowPositionsLocked mirrors medit_disp_positions. C terminates the
-// list with position_types[NUM_POSITIONS]; the Go table holds only the nine
-// real entries.
+// meditShowPositionsLocked mirrors medit_disp_positions (src/medit.c:458-476):
+// single column, "%s%2d%s) %s" per position. C's trailing
+// position_types[NUM_POSITIONS] is "" and the display loop skips empty names,
+// so only the nine real positions print.
 func (s *Session) meditShowPositionsLocked() {
+	nrm, grn, _, _ := s.reditCols()
 	var sb strings.Builder
+	sb.WriteString("\r\n")
 	for i, name := range meditPositionNames {
-		fmt.Fprintf(&sb, "%2d) %-20.20s\r\n", i, name)
+		fmt.Fprintf(&sb, "%s%2d%s) %s\r\n", grn, i, nrm, name)
 	}
-	sb.WriteString("Enter position for this mob : ")
+	sb.WriteString("Enter position number : ")
 	s.meditSendLocked(sb.String())
 }
 
-// meditShowAttackTypesLocked mirrors medit_disp_attack_types.
+// meditShowAttackTypesLocked mirrors medit_disp_attack_types (src/medit.c:497-514).
 func (s *Session) meditShowAttackTypesLocked() {
+	nrm, grn, _, _ := s.reditCols()
 	var sb strings.Builder
+	sb.WriteString("\r\n")
 	for i, name := range meditAttackNames {
-		fmt.Fprintf(&sb, "%2d) %s\r\n", i, name)
+		fmt.Fprintf(&sb, "%s%2d%s) %s\r\n", grn, i, nrm, name)
 	}
-	sb.WriteString("Enter attack type for this mob : ")
+	sb.WriteString("Enter attack type : ")
 	s.meditSendLocked(sb.String())
 }
 
-// meditShowRacesLocked mirrors medit_disp_races. C lays the 31 races out in
-// two columns via get_char_cols; the captured C byte stream lays them out in
-// a single column (the fixture terminal is narrower than 31 entries), so the
-// Go port lists them in index order, one per line, like the other medit
-// submenus.
+// meditShowRacesLocked mirrors medit_disp_races (src/medit.c:590-610): one
+// "%s%2d%s) %-20.20s  " per race numbered from 0, with "\r\n" appended after
+// every second entry; a trailing odd entry gets no newline of its own.
 func (s *Session) meditShowRacesLocked() {
+	nrm, grn, _, _ := s.reditCols()
 	var sb strings.Builder
+	sb.WriteString("\r\n")
+	columns := 0
 	for i, name := range meditRaceNames {
-		fmt.Fprintf(&sb, "%2d) %-20.20s\r\n", i, name)
+		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i, nrm, name)
+		columns++
+		if columns%2 == 0 {
+			sb.WriteString("\r\n")
+		}
 	}
-	sb.WriteString("Enter race for this mob : ")
+	sb.WriteString("\r\nEnter mob race : ")
 	s.meditSendLocked(sb.String())
 }
 
-// meditShowMobFlagsLocked mirrors medit_disp_mob_flags.
+// meditShowMobFlagsLocked mirrors medit_disp_mob_flags (src/medit.c:516-540):
+// one "%s%2d%s) %-20.20s  " per flag numbered from 1, "\r\n" after every
+// second entry, then "\r\nCurrent flags : %s%s%s\r\n" (cyn around the
+// sprintbitarray output) and "Enter mob flags (0 to quit) : ".
 func (s *Session) meditShowMobFlagsLocked() {
+	nrm, grn, cyn, _ := s.reditCols()
 	var sb strings.Builder
+	sb.WriteString("\r\n")
+	columns := 0
 	for i, name := range meditMobFlagNames {
-		fmt.Fprintf(&sb, "%2d) %-20.20s\r\n", i+1, name)
+		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
+		columns++
+		if columns%2 == 0 {
+			sb.WriteString("\r\n")
+		}
 	}
-	sb.WriteString("Enter npc flags (0 to quit) : ")
+	fmt.Fprintf(&sb, "\r\nCurrent flags : %s%s%s\r\n", cyn,
+		meditSprintBitArray(s.mobEdit.mob.ActionFlags, meditParserActionBits, meditMobFlagNames), nrm)
+	sb.WriteString("Enter mob flags (0 to quit) : ")
 	s.meditSendLocked(sb.String())
 }
 
-// meditShowAffFlagsLocked mirrors medit_disp_aff_flags.
+// meditShowAffFlagsLocked mirrors medit_disp_aff_flags (src/medit.c:542-562):
+// same layout as the NPC flags, but the current-flags line has three spaces
+// after "flags" and the prompt is "Enter aff flags (0 to quit) : ".
 func (s *Session) meditShowAffFlagsLocked() {
+	nrm, grn, cyn, _ := s.reditCols()
 	var sb strings.Builder
+	sb.WriteString("\r\n")
+	columns := 0
 	for i, name := range meditAffFlagNames {
-		fmt.Fprintf(&sb, "%2d) %-20.20s\r\n", i+1, name)
+		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
+		columns++
+		if columns%2 == 0 {
+			sb.WriteString("\r\n")
+		}
 	}
+	fmt.Fprintf(&sb, "\r\nCurrent flags   : %s%s%s\r\n", cyn,
+		meditSprintBitArray(s.mobEdit.mob.AffectFlags, meditParserAffectBits, meditAffFlagNames), nrm)
 	sb.WriteString("Enter aff flags (0 to quit) : ")
 	s.meditSendLocked(sb.String())
 }
 
-// meditShowScriptMenuLocked mirrors medit_disp_script_menu (src/medit.c).
+// meditShowScriptMenuLocked mirrors medit_disp_script_menu (src/medit.c:679-710).
+// A new (never-saved) mob gets "\r\nCannot assign a script until the mob is
+// saved at least once.\r\n" followed by the main menu; otherwise the two
+// script-menu lines with get_char_cols colors and "Enter choice (0 to quit) : ".
 func (s *Session) meditShowScriptMenuLocked() {
 	state := s.mobEdit
-	scriptName := ""
+	nrm, grn, _, yel := s.reditCols()
+	if state.isNew {
+		s.meditSendLocked("\r\nCannot assign a script until the mob is saved at least once.\r\n")
+		s.meditShowMenuLocked()
+		return
+	}
+	scriptName := "None"
 	scriptFlags := 0
-	if !state.isNew {
-		if live, ok := s.manager.world.SnapshotMob(state.number); ok {
+	if live, ok := s.manager.world.SnapshotMob(state.number); ok {
+		if live.ScriptName != "" {
 			scriptName = live.ScriptName
-			scriptFlags = live.LuaFunctions
 		}
+		scriptFlags = live.LuaFunctions
 	}
 	var sb strings.Builder
-	sb.WriteString("-- Mob script editor --\r\n")
-	fmt.Fprintf(&sb, "1) Script name: %s\r\n", scriptName)
-	fmt.Fprintf(&sb, "2) Script flags: %s\r\n", meditSprintScriptFlags(scriptFlags))
-	sb.WriteString("0) Back to main menu\r\n")
-	sb.WriteString("Enter choice: ")
+	sb.WriteString("\r\n")
+	fmt.Fprintf(&sb, "%s1%s) Name: %s%s\r\n", grn, nrm, yel, scriptName)
+	fmt.Fprintf(&sb, "%s2%s) Script Flags: %s%s%s\r\n", grn, nrm, yel, meditSprintScriptFlags(scriptFlags), nrm)
+	sb.WriteString("Enter choice (0 to quit) : ")
 	s.meditSendLocked(sb.String())
 	state.mode = meditScriptMenu
 }
 
-// meditShowScriptFlagsLocked mirrors medit_disp_script_flags, including the
-// clear-screen escape and the two-column flag layout the C loop produces
-// (every second flag ends the line), followed by the "Current flags" line.
-// Color codes are omitted: the Go port has no color system, matching C's
-// no-color default.
+// meditShowScriptFlagsLocked mirrors medit_disp_script_flags (src/medit.c:564-588):
+// the ANSI clear-screen sequence (ESC[H ESC[J, verified as real escape bytes
+// in the C source), the two-column flag list, "\r\nCurrent flags   : %s%s%s\r\n"
+// and "Enter script flags (0 to quit) : ".
 func (s *Session) meditShowScriptFlagsLocked() {
 	state := s.mobEdit
+	nrm, grn, cyn, _ := s.reditCols()
 	scriptFlags := 0
 	if !state.isNew {
 		if live, ok := s.manager.world.SnapshotMob(state.number); ok {
@@ -575,13 +713,15 @@ func (s *Session) meditShowScriptFlagsLocked() {
 	}
 	var sb strings.Builder
 	sb.WriteString("\x1b[H\x1b[J")
+	columns := 0
 	for i, name := range meditScriptFlagNames {
-		fmt.Fprintf(&sb, "%2d) %-20.20s  ", i+1, name)
-		if (i+1)%2 == 0 {
+		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
+		columns++
+		if columns%2 == 0 {
 			sb.WriteString("\r\n")
 		}
 	}
-	fmt.Fprintf(&sb, "\r\nCurrent flags   : %s\r\n", meditSprintScriptFlags(scriptFlags))
+	fmt.Fprintf(&sb, "\r\nCurrent flags   : %s%s%s\r\n", cyn, meditSprintScriptFlags(scriptFlags), nrm)
 	sb.WriteString("Enter script flags (0 to quit) : ")
 	s.meditSendLocked(sb.String())
 	state.mode = meditScriptFlags
@@ -701,10 +841,10 @@ func (s *Session) parseMeditLocked(arg string) {
 		if i == 0 {
 			break
 		}
-		// C uses SET_BIT_AR here (not toggle!), despite the menu implying
-		// toggling. NUM_AFF_FLAGS is 37; the menu numbers flags 1-37.
+		// C toggles the AFF bit (TOGGLE_BIT_AR), mirroring the NPC and
+		// script flag menus. The menu numbers flags 1-37.
 		if i > 0 && i <= len(meditAffFlagNames) {
-			mob.AffectFlags = meditSetParserFlag(mob.AffectFlags, meditParserAffectBits, i-1)
+			mob.AffectFlags = meditToggleParserFlag(mob.AffectFlags, meditParserAffectBits, i-1)
 		}
 		s.meditShowAffFlagsLocked()
 		return
@@ -891,12 +1031,7 @@ func (s *Session) parseMeditMainMenuLocked(arg string) {
 	case 'o', 'O':
 		state.mode = meditNoise
 	case 's', 'S':
-		if state.isNew {
-			// C: "Cannot assign a script until the mob is saved at least once."
-			s.meditSendLocked("Cannot assign a script until the mob is saved at least once.\r\n")
-			s.meditShowMenuLocked()
-			return
-		}
+		state.mode = meditScriptMenu
 		s.meditShowScriptMenuLocked()
 		return
 	default:
@@ -943,8 +1078,14 @@ func (s *Session) parseMeditLevelLocked(raw int) {
 		mob.Damage.Plus = (level + 1) / 2
 	}
 	mob.HP.Num = level
-	mob.HP.Sides = 0
-	mob.HP.Plus = 0
+	mob.HP.Sides = 5
+	mob.HP.Plus = 10*level + 10
+	if level > 22 {
+		mob.HP.Plus += 13 * (level - 22)
+	}
+	if level > 30 {
+		mob.HP.Plus += 560 * (level - 30)
+	}
 	mob.AC = 100 - (10 * level)
 	// C sets GET_HITROLL(level); the parser stores file THAC0 = 20 - hitroll.
 	mob.THAC0 = 20 - level
@@ -974,22 +1115,6 @@ func (s *Session) toggleMeditScriptFlagLocked(bit int) {
 	}
 }
 
-// meditSetParserFlag sets bit (0-based) in a parser storage-name flag set,
-// mirroring C's SET_BIT_AR in MEDIT_AFF_FLAGS (which sets, not toggles,
-// despite the menu's toggle implication).
-func meditSetParserFlag(set []string, parserNames []string, bit int) []string {
-	if bit < 0 || bit >= len(parserNames) {
-		return set
-	}
-	target := parserNames[bit]
-	for _, name := range set {
-		if name == target {
-			return set
-		}
-	}
-	return append(set, target)
-}
-
 func clampInt(value, low, high int) int {
 	if value < low {
 		return low
@@ -1016,50 +1141,47 @@ func (s *Session) startMeditDescEditorLocked() {
 	state := s.mobEdit
 	state.olcVal = 1
 
+	// The improved string editor works on CRLF text; the parser stores
+	// DetailedDesc with LF endings, so normalize on the way in and back.
+	initial := editorCRLF(state.mob.DetailedDesc)
 	s.textEdit = &textEditState{
-		field:    textEditField{name: "medit-desc", maxBytes: 1024},
-		original: state.mob.DetailedDesc,
-		buffer:   state.mob.DetailedDesc,
-		onComplete: func(saved bool, text string) {
+		field:      textEditField{name: "medit-desc", maxBytes: 1024},
+		original:   initial,
+		buffer:     initial,
+		roomEditor: true,
+		onComplete: func(action textEditAction, buffer, original string) {
 			s.textEditMu.Lock()
 			defer s.textEditMu.Unlock()
 			if s.mobEdit == nil {
 				return
 			}
-			if saved {
-				s.mobEdit.mob.DetailedDesc = text
+			if action == textEditSave {
+				s.mobEdit.mob.DetailedDesc = editorToRoomText(buffer)
 			}
 			s.meditShowMenuLocked()
 		},
 	}
 	s.meditSendLocked("Instructions: /s or @ to save, /h for more options.\r\n" +
-		"Enter mob description:\r\n\r\n" + state.mob.DetailedDesc)
+		"Enter mob description:\r\n\r\n" + initial)
 }
 
 // saveMeditInternallyLocked ports medit_save_internally (src/medit.c): the
 // working copy is committed to the world (inserting or replacing the
-// prototype), the editor is marked for a zone-file save, and a subsequent
-// save writes the .mob file. C's rnum-shift of zone M-commands and shop
-// keepers has no Go analogue: zone commands and shops key mobs by VNUM, so
-// inserting under the VNUM key is the complete observable effect.
+// prototype), standing live instances get the five C-specified display
+// strings, and the zone is added to the OLC save list. C performs no disk
+// write here; the .mob file is written by the separate save command
+// (medit_save_to_disk) or saveall. C's rnum-shift of zone M-commands and
+// shop keepers has no Go analogue: zone commands and shops key mobs by VNUM,
+// so inserting under the VNUM key is the complete observable effect.
 func (s *Session) saveMeditInternallyLocked() {
 	state := s.mobEdit
 
 	s.manager.world.CommitEditedMob(state.mob)
+	s.manager.world.RefreshLiveMobStrings(state.number, state.mob)
 
 	meditSaveMu.Lock()
 	meditSaveMobs[state.number] = true
 	meditSaveMu.Unlock()
-
-	// A builder-visible save writes the zone .mob file immediately, matching
-	// the C flow where medit_save_internally queues OLC_SAVE_MOB and the
-	// command loop's olc_save_list write follows.
-	if zone, ok := olcZoneForVNum(s.manager.world, state.number); ok {
-		if err := saveMeditZone(s.manager.world, zone); err != nil {
-			slog.Error("medit disk save failed",
-				"player", s.playerName, "zone", zone.Number, "error", err)
-		}
-	}
 }
 
 // saveMeditZone writes one zone's .mob file from the world prototypes,
@@ -1166,6 +1288,16 @@ func (s *Session) isMeditEditing() bool {
 	s.textEditMu.Lock()
 	defer s.textEditMu.Unlock()
 	return s.mobEdit != nil && s.textEdit == nil
+}
+
+// isMobEditing reports whether a medit session owns this descriptor,
+// including while its D-description string editor is active. It mirrors
+// SendPrompt's redit suppression: C's make_prompt writes "] " while d->str
+// is set and no ordinary prompt while an OLC menu owns the input.
+func (s *Session) isMobEditing() bool {
+	s.textEditMu.Lock()
+	defer s.textEditMu.Unlock()
+	return s.mobEdit != nil
 }
 
 // cancelMedit discards an in-progress medit session without saving, used on

@@ -103,6 +103,14 @@ type Manager struct {
 	roomEditMu sync.Mutex
 	roomEdits  map[int]*Session
 
+	// mobEdits reserves mob VNums against concurrent duplicate MEDIT entry.
+	// Mirrors roomEdits: C's do_olc duplicate gate is a descriptor_list scan
+	// made safe by the single-threaded interpreter; the Go dispatcher runs
+	// sessions on separate goroutines, so admission is one atomic claim
+	// instead of a check-then-install pair. Keyed by the OLC mob number.
+	mobEditMu sync.Mutex
+	mobEdits  map[int]*Session
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -297,6 +305,7 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		}),
 		ipConnCount:           make(map[string]int),
 		roomEdits:             make(map[int]*Session),
+		mobEdits:              make(map[int]*Session),
 		nextEphemeralPlayerID: 1,
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a

@@ -815,40 +815,6 @@ func editorToRoomText(text string) string {
 	return strings.ReplaceAll(text, "\r", "\n")
 }
 
-func atoiC(input string) int {
-	input = strings.TrimLeft(input, " \t\r\n\v\f")
-	if input == "" {
-		return 0
-	}
-	end := 0
-	if input[0] == '+' || input[0] == '-' {
-		end = 1
-	}
-	start := end
-	for end < len(input) && input[end] >= '0' && input[end] <= '9' {
-		end++
-	}
-	if end == start {
-		return 0
-	}
-	number, err := strconv.Atoi(input[:end])
-	if err != nil {
-		return 0
-	}
-	return number
-}
-
-func firstByte(input string) byte {
-	if input == "" {
-		return 0
-	}
-	return input[0]
-}
-
-func isASCIIDigit(b byte) bool {
-	return b >= '0' && b <= '9'
-}
-
 func reditToggleRoomFlag(room *parser.Room, bit int) {
 	if room == nil || bit < 0 || bit >= 28 {
 		return

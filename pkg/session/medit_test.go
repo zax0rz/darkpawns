@@ -152,7 +152,7 @@ func TestMeditPermissionGate(t *testing.T) {
 	}
 	// Should enter the editor (menu output), not the permission error.
 	got := readMsgText(t, admin)
-	if !strings.HasPrefix(got, "-- Mob number: [ 3101]") {
+	if !strings.HasPrefix(got, "\r\n-- Mob Number:  [3101]") {
 		t.Fatalf("admin edit = %q", got)
 	}
 	admin.cancelMedit()
@@ -195,21 +195,21 @@ func TestMeditNewMobDefaults(t *testing.T) {
 	}
 	menu := readMsgText(t, s)
 
-	if !strings.Contains(menu, "-- Mob number: [ 3050]") {
+	if !strings.Contains(menu, "-- Mob Number:  [3050]") {
 		t.Fatalf("menu missing vnum: %q", menu)
 	}
 	// C medit_setup_new: "mob unfinished", RACE_OTHER (16) = "Other".
 	if !strings.Contains(menu, "2) Alias: mob unfinished") {
 		t.Fatalf("menu missing alias: %q", menu)
 	}
-	if !strings.Contains(menu, "N) Race: Other") {
+	if !strings.Contains(menu, "N) Race      : Other") {
 		t.Fatalf("menu missing race Other: %q", menu)
 	}
 	// init_mobile: 1d1 HP, 1d1 damage, AC 100 (clear_char), standing.
-	if !strings.Contains(menu, "C) Num HP Dice: [ 1], D) Size HP Dice: [  1]") {
+	if !strings.Contains(menu, "C) Num HP Dice: [   1],  D) Size HP Dice: [   1]") {
 		t.Fatalf("menu missing HP dice: %q", menu)
 	}
-	if !strings.Contains(menu, "F) Armor Class: [100]") {
+	if !strings.Contains(menu, "F) Armor Class: [ 100]") {
 		t.Fatalf("menu missing AC: %q", menu)
 	}
 
@@ -272,7 +272,7 @@ func TestMeditFieldEditing(t *testing.T) {
 	// Level 12: derived stats (C float division: 12/1.5=8).
 	s.handleMeditInput("12")
 	menu = readMsgText(t, s)
-	if !strings.Contains(menu, "6) Level: [  12]") {
+	if !strings.Contains(menu, "6) Level:       [  12]") {
 		t.Fatalf("level not updated: %q", menu)
 	}
 	s.textEditMu.Lock()
@@ -395,7 +395,7 @@ func TestMeditScriptShallowBehavior(t *testing.T) {
 	// Open script menu, set name.
 	s.handleMeditInput("s")
 	scriptMenu := readMsgText(t, s)
-	if !strings.Contains(scriptMenu, "1) Script name: goblin_script") {
+	if !strings.Contains(scriptMenu, "1) Name: goblin_script") {
 		t.Fatalf("script menu = %q", scriptMenu)
 	}
 	s.handleMeditInput("1")
@@ -534,7 +534,7 @@ func TestMeditFlagToggle(t *testing.T) {
 	// 0 → back to main menu.
 	s.handleMeditInput("0")
 	menu := readMsgText(t, s)
-	if !strings.HasPrefix(menu, "-- Mob number: [ 3002]") {
+	if !strings.HasPrefix(menu, "\r\n-- Mob Number:  [3002]") {
 		t.Fatalf("flag quit != main menu: %q", menu)
 	}
 	s.cancelMedit()
