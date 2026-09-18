@@ -67,27 +67,3 @@ func olcZoneForVNum(world *game.World, vnum int) (*parser.Zone, bool) {
 	}
 	return nil, false
 }
-
-// olcDuplicateName returns the name of the player currently editing vnum with
-// the given editor, or "" when nobody is. This mirrors do_olc's
-// descriptor-list scan ("That %s is currently being edited by %s."). The
-// accessor reports the vnum under edit and whether an edit is active.
-func olcDuplicateName(manager *Manager, vnum int, editingVNum func(*Session) (int, bool)) string {
-	manager.mu.RLock()
-	sessions := make([]*Session, 0, len(manager.sessions))
-	for _, candidate := range manager.sessions {
-		sessions = append(sessions, candidate)
-	}
-	manager.mu.RUnlock()
-
-	for _, candidate := range sessions {
-		candidate.textEditMu.Lock()
-		edited, active := editingVNum(candidate)
-		name := candidate.playerName
-		candidate.textEditMu.Unlock()
-		if active && edited == vnum {
-			return name
-		}
-	}
-	return ""
-}
