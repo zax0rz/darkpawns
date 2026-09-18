@@ -14,6 +14,7 @@ main() {
 	local attempt_status=0
 	local attempt_log
 	local in_baseline=0
+	local declared_unstable=0
 	local pins_file=${EXPECTED_DIVERGENCE_PINS_FILE:-}
 	local fingerprint_dir="$log_dir/$scenario.fingerprints"
 	local fingerprint_file
@@ -23,6 +24,13 @@ main() {
 	if [[ -n "${EXPECTED_DIVERGENCES_FILE:-}" && -f "$EXPECTED_DIVERGENCES_FILE" ]] \
 		&& awk -F '\t' -v s="$scenario" '$1 == s { found = 1 } END { exit !found }' "$EXPECTED_DIVERGENCES_FILE"; then
 		in_baseline=1
+	fi
+	# A manifest-declared run-varying divergence (stability=run-varying in the
+	# generated ledger): its shape differs every run by nature, so the census
+	# accepts it as EXPECTED_UNSTABLE instead of demanding an impossible pin.
+	if [[ -n "${EXPECTED_DIVERGENCES_FILE:-}" && -f "$EXPECTED_DIVERGENCES_FILE" ]] \
+		&& awk -F '\t' -v s="$scenario" '$1 == s && $5 == "run-varying" { unstable = 1 } END { exit !unstable }' "$EXPECTED_DIVERGENCES_FILE"; then
+		declared_unstable=1
 	fi
 
 	write_result() {
@@ -125,6 +133,11 @@ main() {
 		local first_fingerprints="$fingerprint_dir/attempt$first"
 		local second_fingerprints="$fingerprint_dir/attempt$second"
 		if ! diff -- "$first_fingerprints" "$second_fingerprints" >/dev/null; then
+			if [[ $in_baseline -eq 1 && $declared_unstable -eq 1 ]]; then
+				write_result EXPECTED_UNSTABLE
+				printf 'EXPECTED_UNSTABLE %s (ledger-backed divergence declared run-varying in the manifest)\n' "$scenario"
+				return
+			fi
 			if [[ $in_baseline -eq 1 ]]; then
 				write_result UNPINNABLE
 				printf 'UNPINNABLE %s (ledger-backed divergence; shape unpinnable — run-varying bytes; requires human clearance)\n' "$scenario"

@@ -32,6 +32,7 @@ run_case() {
 	local want_result=$5
 	local want_attempts=$6
 	local want_logs=$7
+	local stability=${8:-}
 	local case_dir="$test_root/$name"
 	local log_dir="$case_dir/logs"
 	local result_dir="$case_dir/results"
@@ -41,9 +42,9 @@ run_case() {
 
 	mkdir -p -- "$log_dir" "$result_dir"
 	if [[ "$baseline" == yes ]]; then
-		printf 'scenario\tmanifest\tcase_id\tstatus\nfake\ttest.tsv\t%s\tblocked\n' "$name" >"$ledger"
+		printf 'scenario\tmanifest\tcase_id\tstatus\tstability\nfake\ttest.tsv\t%s\tblocked\t%s\n' "$name" "$stability" >"$ledger"
 	else
-		printf 'scenario\tmanifest\tcase_id\tstatus\n' >"$ledger"
+		printf 'scenario\tmanifest\tcase_id\tstatus\tstability\n' >"$ledger"
 	fi
 	if [[ -n "$pins" ]]; then
 		printf 'scenario\tlabel\tsha256\tcitations\n%s\n' "$pins" >"$pins_file"
@@ -150,6 +151,7 @@ run_case infra-single-divergence "I|D:cast:$one_a|I" yes "$(pin_one "$one_a" inf
 run_case divergence-then-success "D:cast:$one_a|P" no "" $'INFRA\tfake\t3' 2 2
 run_case baseline-divergence-then-success "D:cast:$one_a|P" yes "$(pin_one "$one_a" baseline-divergence-then-success)" $'STALE\tfake' 2 2
 run_case unstable-divergence "D:cast:$one_a|D:cast:$one_b" yes "$(pin_one "$one_a" unstable-divergence)" $'UNPINNABLE\tfake' 2 2
+run_case unstable-confirmed "D:cast:$one_a|D:cast:$one_b" yes "" $'EXPECTED_UNSTABLE\tfake' 2 2 run-varying
 run_case divergence-infra-confirmed "D:cast:$one_a|I|D:cast:$one_a" yes "$(pin_one "$one_a" divergence-infra-confirmed)" $'EXPECTED\tfake' 3 3
 run_case repeated-infra "I|I|I" no "" $'INFRA\tfake\t1' 3 3
 run_case timeout T no "" $'TIMEOUT\tfake\t124' 1 1
@@ -161,12 +163,13 @@ run_case multiblock-missing "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:
 run_case multiblock-extra "I|D:cast:$two_a|D:cast:$two_a" yes "$(pin_two "$two_a" multiblock-extra "$two_b")" $'FAIL\tfake\t3' 3 3
 run_case multiblock-changed "I|D:cast:$two_a,damage:$two_c|D:cast:$two_a,damage:$two_c" yes "$(pin_two "$two_a" multiblock-changed "$two_b")" $'FAIL\tfake\t3' 3 3
 
-run_aggregate_case aggregate-pass yuball-depth P 0 'scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0'
-run_aggregate_case aggregate-stale medit-entry-depth P 2 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=1 failed=0 infra=0 timed_out=0'
-run_aggregate_case aggregate-expected medit-entry-depth "$medit_set|$medit_set" 0 'scenarios=1 passed=0 expected=1 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0'
-run_aggregate_case aggregate-fail medit-entry-depth "D:medit:$one_a|D:medit:$one_a" 1 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=1 infra=0 timed_out=0'
-run_aggregate_case aggregate-unpinnable accuse-noarg-depth "D:accuse:$one_a|D:accuse:$one_b" 2 'scenarios=1 passed=0 expected=0 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0'
-run_aggregate_case aggregate-infra yuball-depth "I|I|I" 1 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=0 infra=1 timed_out=0'
-run_aggregate_case aggregate-timeout yuball-depth T 1 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=1'
+run_aggregate_case aggregate-pass yuball-depth P 0 'scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0'
+run_aggregate_case aggregate-stale medit-entry-depth P 2 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=1 failed=0 infra=0 timed_out=0 unstable=0'
+run_aggregate_case aggregate-expected medit-entry-depth "$medit_set|$medit_set" 0 'scenarios=1 passed=0 expected=1 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0'
+run_aggregate_case aggregate-fail medit-entry-depth "D:medit:$one_a|D:medit:$one_a" 1 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=1 infra=0 timed_out=0 unstable=0'
+run_aggregate_case aggregate-unpinnable force-mob "D:force:$one_a|D:force:$one_b" 2 'scenarios=1 passed=0 expected=0 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0 unstable=0'
+run_aggregate_case aggregate-unstable accuse-noarg-depth "D:accuse:$one_a|D:accuse:$one_b" 0 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1'
+run_aggregate_case aggregate-infra yuball-depth "I|I|I" 1 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=0 infra=1 timed_out=0 unstable=0'
+run_aggregate_case aggregate-timeout yuball-depth T 1 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=1 unstable=0'
 
 printf 'PASS: %d deterministic oracle regression cases\n' "$pass_count"
