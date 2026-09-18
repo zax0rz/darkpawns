@@ -232,7 +232,7 @@ var playersMigrationColumns = []string{
 	"is_admin BOOLEAN DEFAULT false",
 	"hometown INTEGER DEFAULT 0",
 	"failed_login_attempts INTEGER DEFAULT 0",
-	"locked_until TIMESTAMP",
+	"locked_until TIMESTAMPTZ",
 	"description TEXT DEFAULT ''",
 	"title VARCHAR(80) DEFAULT ''",
 }
@@ -272,8 +272,8 @@ func (db *DB) createTables() error {
 			equipment JSONB DEFAULT '{}',
 			description TEXT DEFAULT '',
 			title VARCHAR(80) DEFAULT '',
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 		)`,
 		// C find_name uses str_cmp: character identity is case-insensitive.
 		// Existing colliding rows must be resolved explicitly before this migration.
@@ -285,7 +285,7 @@ func (db *DB) createTables() error {
 			id             SERIAL PRIMARY KEY,
 			character_name VARCHAR(64) NOT NULL,
 			key_hash       VARCHAR(64) NOT NULL UNIQUE,
-			created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+			created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 			revoked        BOOLEAN NOT NULL DEFAULT FALSE
 		)`,
 	}
@@ -311,6 +311,13 @@ func (db *DB) createTables() error {
 		}
 	}
 
+	// Installs that predate the TIMESTAMPTZ spelling above keep their naive
+	// columns (ADD COLUMN IF NOT EXISTS finds them present and does nothing),
+	// so they are converted here, after both tables exist.
+	if err := db.migrateNaiveTimestamps(); err != nil {
+		return fmt.Errorf("migrate naive timestamps: %w", err)
+	}
+
 	return nil
 }
 
@@ -319,6 +326,95 @@ func (db *DB) createTables() error {
 // across repeat runs on both dialects.
 func (db *DB) addColumnIfNotExists(table, columnDef string) error {
 	return AddColumnIfNotExists(db.conn, db.dialect, table, columnDef)
+}
+
+// gameStoreTimestamptzColumns are the game-store columns authored as naive
+// TIMESTAMP before this pass. Fresh installs get TIMESTAMPTZ straight from the
+// DDL in createTables, but a database created by an older build still holds
+// naive columns, and ADD COLUMN IF NOT EXISTS cannot repair them: the column is
+// already there, so the re-authored definition is never applied. They are
+// converted in place, once, by convertNaiveTimestamps.
+//
+// Entries are "table.column" so the list reads as the migration log it is.
+// Both halves are package constants, never user input.
+var gameStoreTimestamptzColumns = []string{
+	"players.locked_until",
+	"players.created_at",
+	"players.updated_at",
+	"agent_keys.created_at",
+}
+
+// migrateNaiveTimestamps converts the game store's own timestamp columns on
+// PostgreSQL, where a zone-aware type is available and the columns were
+// authored naive by every build up to this one.
+//
+// SQLite skips it entirely. SQLite has no zone-aware type: the DDL translation
+// folds TIMESTAMPTZ back to TIMESTAMP there (dialect.go), so there is nothing
+// to convert to, and no information_schema to ask either.
+func (db *DB) migrateNaiveTimestamps() error {
+	if db.dialect != DialectPostgres {
+		return nil
+	}
+	return db.convertNaiveTimestamps(gameStoreTimestamptzColumns)
+}
+
+// convertNaiveTimestamps rewrites each table.column from timestamp (without
+// time zone) to timestamptz, one statement at a time.
+//
+// The information_schema guard is correctness, not an optimisation. On an
+// already-converted column "USING column AT TIME ZONE 'UTC'" is not a no-op:
+// timestamptz AT TIME ZONE 'UTC' yields a naive timestamp, which the ALTER then
+// re-interprets in the session's zone, shifting every value by the server's
+// offset. Skipping columns that are already zone-aware is what makes a second
+// boot harmless, and it is also what makes an interrupted conversion
+// resumable: the columns already rewritten are skipped and the rest are
+// converted on the next boot, because each ALTER TABLE is atomic on its own.
+//
+// UTC is the deliberate interpretation for values written before this pass.
+// Those columns were written from Go time.Time values whose offset PostgreSQL
+// drops on the way into a naive column, so what is stored is a wall clock with
+// no zone attached. AT TIME ZONE 'UTC' preserves that stored wall clock
+// exactly, which is the only reading that needs no per-row guess: the writing
+// server's zone is not recorded anywhere, it can differ between rows across a
+// DST boundary or a host move, and it is simply unknown for rows written by a
+// UTC host. The consequence for a deployment whose host zone is not UTC is
+// that pre-existing rows keep the instant they already read as before the
+// conversion (they do not move), while every row written afterwards is an
+// exact instant. See DEPLOYMENT.md.
+func (db *DB) convertNaiveTimestamps(columns []string) error {
+	for _, target := range columns {
+		table, column, ok := strings.Cut(target, ".")
+		if !ok {
+			return fmt.Errorf("timestamp target %q is not table.column", target)
+		}
+
+		var dataType string
+		err := db.queryRow(
+			`SELECT data_type FROM information_schema.columns
+			  WHERE table_schema = current_schema() AND table_name = $1 AND column_name = $2`,
+			table, column,
+		).Scan(&dataType)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			// Not in this install's schema: an older build may predate the
+			// column entirely, in which case there is nothing to convert.
+			continue
+		case err != nil:
+			return fmt.Errorf("read type of %s: %w", target, err)
+		case dataType != "timestamp without time zone":
+			// Already converted, or a type this migration does not own.
+			continue
+		}
+
+		if _, err := db.exec(
+			`ALTER TABLE ` + table + ` ALTER COLUMN ` + column +
+				` TYPE TIMESTAMPTZ USING ` + column + ` AT TIME ZONE 'UTC'`,
+		); err != nil {
+			return fmt.Errorf("convert %s to timestamptz: %w", target, err)
+		}
+		slog.Info("converted game-store column to timestamptz", "column", target)
+	}
+	return nil
 }
 
 // CreateAgentKey generates a new agent API key for the given character.

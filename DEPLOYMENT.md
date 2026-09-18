@@ -246,3 +246,33 @@ than choosing or deleting a character:
 SELECT lower(name) AS identity, array_agg(id ORDER BY id) AS ids
 FROM players GROUP BY lower(name) HAVING count(*) > 1;
 ```
+
+## Timestamp migration note
+
+The game store's timestamp columns (`players.created_at`, `players.updated_at`,
+`players.locked_until`, `agent_keys.created_at`) are declared `timestamptz`. A
+database created by an earlier build holds them as naive `timestamp`, which
+records a wall clock with no zone attached, so lockout and expiry comparisons
+land hours off on a host that is not UTC. **Restarting is the whole procedure.**
+The first boot after the upgrade rewrites those columns and says so, one line
+per column:
+
+```
+INFO converted game-store column to timestamptz column=players.locked_until
+```
+
+Values are reinterpreted as UTC (`ALTER COLUMN ... TYPE timestamptz USING
+column AT TIME ZONE 'UTC'`), which keeps the wall clock that is stored and
+attaches UTC to it. Rows written before the upgrade therefore keep reading the
+way they already did, and every row written after it is an exact instant. UTC
+is the only reading that needs no guess: whatever zone the writing server ran
+in was never recorded, and it can differ between rows.
+
+The rewrite takes an exclusive lock on the table once, at that first boot (a
+few thousand rows in `players`). Every boot after it finds the columns already
+zone-aware and does nothing, and a conversion interrupted part way through
+finishes the remaining columns on the next boot. If the database role lacks
+`ALTER` on the table, boot fails with `migrate naive timestamps: ...` instead
+of starting against a schema it cannot trust — grant `ALTER` and restart.
+SQLite needs none of this: it has no zone-aware type, and the DDL translation
+already folds `TIMESTAMPTZ` back to `TIMESTAMP` there.

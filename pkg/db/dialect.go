@@ -96,6 +96,14 @@ func quoteLiteral(s string) string {
 // Verified idempotent across repeat runs on both dialects, and exported so a
 // second package with tables of its own (pkg/moderation) reuses this guard
 // instead of growing a copy that drifts.
+//
+// The constructed statement goes through DDL, the same translator CREATE TABLE
+// uses, so a migration column may be spelled in the PostgreSQL dialect the way
+// the rest of the schema is. It is identity on PostgreSQL; on SQLite it is what
+// folds TIMESTAMPTZ to TIMESTAMP and DEFAULT NOW() to DEFAULT CURRENT_TIMESTAMP.
+// Skipping it is not harmless: a column declared TIMESTAMPTZ reaches SQLite as
+// an unknown type name, which takes no affinity, so modernc hands every value
+// back as a string and the first Scan into time.Time fails at runtime.
 func AddColumnIfNotExists(conn *sql.DB, d Dialect, table, columnDef string) error {
 	column := strings.Fields(columnDef)[0]
 	if d == DialectSQLite {
@@ -108,9 +116,9 @@ func AddColumnIfNotExists(conn *sql.DB, d Dialect, table, columnDef string) erro
 		if n > 0 {
 			return nil
 		}
-		_, err := conn.Exec(d.Rebind(`ALTER TABLE ` + table + ` ADD COLUMN ` + columnDef))
+		_, err := conn.Exec(d.DDL(d.Rebind(`ALTER TABLE ` + table + ` ADD COLUMN ` + columnDef)))
 		return err
 	}
-	_, err := conn.Exec(d.Rebind(`ALTER TABLE ` + table + ` ADD COLUMN IF NOT EXISTS ` + columnDef))
+	_, err := conn.Exec(d.DDL(d.Rebind(`ALTER TABLE ` + table + ` ADD COLUMN IF NOT EXISTS ` + columnDef)))
 	return err
 }
