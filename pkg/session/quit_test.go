@@ -36,7 +36,7 @@ func (m *captureSaveDB) SavePlayer(p *db.PlayerRecord) error {
 // makeQuitTestManager builds a Manager over the rooms C's do_quit cares about:
 // safe temples 8004/8008, the unsafe newbie infirmary 8162, and the hometown
 // home rooms 18201 (hometown 2) and 21202/21258 (hometown 3).
-func makeQuitTestManager(t *testing.T, database db.Database) *Manager {
+func makeQuitTestManager(t *testing.T, database db.GameStore) *Manager {
 	t.Helper()
 	parsed := &parser.World{
 		Rooms: []parser.Room{

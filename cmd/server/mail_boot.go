@@ -12,7 +12,7 @@ import (
 // mail scan fails; the Go server keeps that availability boundary explicit by
 // returning an error for the caller to log while leaving the rest of boot
 // independent of mail.
-func initializePersistentMail(database db.Database) error {
+func initializePersistentMail(database db.GameStore) error {
 	game.DisableMailSystem()
 
 	identity, err := newMailIdentity(database)

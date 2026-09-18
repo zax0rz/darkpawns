@@ -4,7 +4,7 @@
 // The first test here, TestTelnetSmoke_GuestEntersWorld, exists because the
 // server once shipped two bugs that every unit test passed straight through:
 //
-//   - main.go wired a nil *db.DB into the db.Database interface, so the
+//   - main.go wired a nil *db.DB into the store interface, so the
 //     advertised "run without a database" path panicked on boot (DP-589).
 //   - the telnet layer double-encoded the login envelope, so no telnet client
 //     could ever log in.

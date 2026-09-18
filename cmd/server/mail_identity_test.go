@@ -44,8 +44,8 @@ func TestMailIdentityUsesPersistentRecordsForOfflineAndRestartLookups(t *testing
 func TestMailIdentityRejectsIncompletePersistentAuthority(t *testing.T) {
 	listErr := errors.New("player index unavailable")
 	_, err := newMailIdentity(&mailIdentityFaultDB{
-		Database: testutil.NewMockDatabase(),
-		listErr:  listErr,
+		GameStore: testutil.NewMockDatabase(),
+		listErr:   listErr,
 	})
 	if !errors.Is(err, listErr) {
 		t.Fatalf("newMailIdentity error = %v, want %v", err, listErr)
@@ -58,15 +58,15 @@ func TestMailIdentityRejectsIncompletePersistentAuthority(t *testing.T) {
 	}
 	lookupErr := errors.New("player lookup unavailable")
 	identity.database = &mailIdentityFaultDB{
-		Database: database,
-		getErr:   lookupErr,
+		GameStore: database,
+		getErr:    lookupErr,
 	}
 	if got := identity.idByName("Recipient"); got != -1 {
 		t.Fatalf("failed ID lookup = %d, want -1", got)
 	}
 
 	_, err = newMailIdentity(&mailIdentityFaultDB{
-		Database:  testutil.NewMockDatabase(),
+		GameStore: testutil.NewMockDatabase(),
 		listNames: []string{"Ghost"},
 	})
 	if err == nil {
@@ -75,7 +75,7 @@ func TestMailIdentityRejectsIncompletePersistentAuthority(t *testing.T) {
 }
 
 type mailIdentityFaultDB struct {
-	db.Database
+	db.GameStore
 	listErr   error
 	getErr    error
 	listNames []string
@@ -88,12 +88,12 @@ func (f *mailIdentityFaultDB) ListPlayerNames() ([]string, error) {
 	if f.listNames != nil {
 		return f.listNames, nil
 	}
-	return f.Database.ListPlayerNames()
+	return f.GameStore.ListPlayerNames()
 }
 
 func (f *mailIdentityFaultDB) GetPlayer(name string) (*db.PlayerRecord, error) {
 	if f.getErr != nil {
 		return nil, f.getErr
 	}
-	return f.Database.GetPlayer(name)
+	return f.GameStore.GetPlayer(name)
 }

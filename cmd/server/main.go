@@ -325,21 +325,24 @@ func main() {
 	game.SetBanFilePaths(*worldDir)
 
 	// Create session manager.
-	// Pass a true-nil db.Database interface when there is no database: a nil
-	// *db.DB stored in an interface is itself non-nil, which would defeat the
-	// nil checks downstream and panic. (DP-589)
-	var dbIface db.Database
+	// gameStore is the player-facing store; researchStore is the decision-capture
+	// telemetry surface (decision_log/combat_log). Both are true-nil interfaces
+	// when there is no database: a nil *db.DB stored in an interface is itself
+	// non-nil, which would defeat the nil checks downstream and panic. (DP-589)
+	var gameStore db.GameStore
+	var researchStore db.ResearchStore
 	if database != nil {
-		dbIface = database
+		gameStore = database
+		researchStore = database
 	}
-	manager := session.NewManager(gameWorld, dbIface)
+	manager := session.NewManager(gameWorld, gameStore)
 	if database == nil {
 		// The no-DB mode is an explicitly non-persistent development/oracle
 		// configuration. Its process-local IDs cannot safely address mail
 		// across an offline login and restart, so do not wire an incomplete
 		// online-only identity lookup.
 		slog.Warn("Mail disabled: persistent player identity requires a database")
-	} else if err := initializePersistentMail(dbIface); err != nil {
+	} else if err := initializePersistentMail(gameStore); err != nil {
 		// C's boot_db() sets no_mail and continues when scan_file() fails.
 		// Mail is optional; do not make an unavailable mail store take down
 		// the world, listener, or unrelated player sessions.
@@ -360,11 +363,11 @@ func main() {
 	// unset so the manager falls back to its no-op behavior and records are not
 	// silently dropped during flush.
 	var decisionLogWriter *db.DecisionLogWriter
-	if database != nil {
-		if err := database.EnsureDecisionLogPartitions(); err != nil {
+	if researchStore != nil {
+		if err := researchStore.EnsureDecisionLogPartitions(); err != nil {
 			slog.Warn("failed to create decision log partitions; decision capture disabled", "error", err)
 		} else {
-			decisionLogWriter = database.NewDecisionLogWriter()
+			decisionLogWriter = researchStore.NewDecisionLogWriter()
 			manager.SetDecisionLog(decisionLogWriter)
 
 			// decision_log keeps raw_input, the literal line a player typed,

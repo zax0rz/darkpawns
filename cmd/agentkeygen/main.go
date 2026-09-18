@@ -53,7 +53,7 @@ func run(name, dsn string) error {
 	return runWithDB(name, database)
 }
 
-func runWithDB(name string, database db.Database) error {
+func runWithDB(name string, database db.GameStore) error {
 	player, err := database.GetPlayer(name)
 	if err != nil {
 		return fmt.Errorf("get player %q: %w", name, err)

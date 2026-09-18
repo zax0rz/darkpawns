@@ -300,7 +300,7 @@ func (t *LoginAttemptTracker) RecordSuccess(ip string) {
 // ---------------------------------------------------------------------------
 
 // AccountLockoutStore is the persistence interface required by
-// AccountLockoutTracker. It is satisfied by db.Database.
+// AccountLockoutTracker. It is satisfied by db.GameStore.
 type AccountLockoutStore interface {
 	GetAccountLockout(name string) (failedAttempts int, lockedUntil *time.Time, err error)
 	RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error)
