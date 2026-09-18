@@ -16,7 +16,10 @@ import (
 // disposable database. The fake-driver tests elsewhere in this package prove
 // statements execute; these prove the statements are actually valid SQL on
 // both dialects, that ids autoincrement, and that the schema is idempotent.
-// Without them the SQLite path rots exactly the way pkg/storage did.
+// Without them the SQLite path rots the way the store this package replaced
+// did: pkg/storage (since deleted) only passed where cgo happened to be
+// enabled, so nothing noticed that it could not work in the configuration the
+// project ships.
 
 type backend struct {
 	name string
