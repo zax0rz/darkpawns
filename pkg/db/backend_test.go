@@ -161,6 +161,182 @@ func TestGameStoreSchema(t *testing.T) {
 	}
 }
 
+// postgresDSN returns the disposable PostgreSQL DSN, skipping the test when
+// DATABASE_URL is not set. The timestamp migration tests are PostgreSQL-only:
+// SQLite has no zone-aware type to convert to, and no information_schema.
+func postgresDSN(t *testing.T) string {
+	t.Helper()
+	pg := os.Getenv("DATABASE_URL")
+	if pg == "" {
+		t.Skip("set DATABASE_URL to run the PostgreSQL timestamp migration tests")
+	}
+	return pg
+}
+
+// wantGameStoreTimestamptz is every game-store column that must be zone-aware:
+// the four naive TIMESTAMP sites the DDL used to author (players.locked_until
+// via the migration-column list, players.created_at, players.updated_at,
+// agent_keys.created_at). Spelled out rather than derived from the production
+// list, so a new naive column that never made it into that list fails here
+// instead of shipping.
+var wantGameStoreTimestamptz = []string{
+	"players.locked_until",
+	"players.created_at",
+	"players.updated_at",
+	"agent_keys.created_at",
+}
+
+// columnType reads a column's declared type through information_schema, the way
+// a DBA would check it.
+func columnType(t *testing.T, database *DB, table, column string) string {
+	t.Helper()
+	var dataType string
+	if err := database.queryRow(
+		`SELECT data_type FROM information_schema.columns
+		  WHERE table_schema = current_schema() AND table_name = $1 AND column_name = $2`,
+		table, column,
+	).Scan(&dataType); err != nil {
+		t.Fatalf("read type of %s.%s: %v", table, column, err)
+	}
+	return dataType
+}
+
+// TestGameStoreTimestamptzSchema proves the DDL half of the fix: a fresh
+// PostgreSQL install authors zone-aware columns, so the defect cannot come back
+// through CREATE TABLE or through the ADD COLUMN path that creates
+// locked_until. It also pins the migration list against that schema, in both
+// directions.
+func TestGameStoreTimestamptzSchema(t *testing.T) {
+	database := openGameStore(t, postgresDSN(t))
+	for _, target := range wantGameStoreTimestamptz {
+		if !containsString(gameStoreTimestamptzColumns, target) {
+			t.Errorf("%s is zone-aware but missing from gameStoreTimestamptzColumns: an install that already has it naive would never be converted", target)
+		}
+		table, column, _ := strings.Cut(target, ".")
+		if got := columnType(t, database, table, column); got != "timestamp with time zone" {
+			t.Errorf("%s is declared %q, want timestamp with time zone", target, got)
+		}
+	}
+	for _, target := range gameStoreTimestamptzColumns {
+		if !containsString(wantGameStoreTimestamptz, target) {
+			t.Errorf("gameStoreTimestamptzColumns lists %s, which is not a game-store timestamp column", target)
+		}
+	}
+}
+
+// TestMigrateNaiveTimestamptz builds the pre-migration schema in a throwaway
+// table, converts it, and checks the three claims the migration owns: the types
+// change, a second run moves no value, and rows written before the conversion
+// survive with their stored wall clock read as UTC.
+func TestMigrateNaiveTimestamptz(t *testing.T) {
+	database := openGameStore(t, postgresDSN(t))
+	// Unique per process: this database may be shared with a concurrent run.
+	probe := fmt.Sprintf("tz_migration_probe_%d", os.Getpid())
+	if _, err := database.conn.Exec(`DROP TABLE IF EXISTS ` + probe); err != nil {
+		t.Fatalf("drop stale probe table: %v", err)
+	}
+	t.Cleanup(func() {
+		if _, err := database.conn.Exec(`DROP TABLE IF EXISTS ` + probe); err != nil {
+			t.Errorf("drop probe table: %v", err)
+		}
+	})
+
+	// The shape an older build left behind: naive columns, one carrying the
+	// CURRENT_TIMESTAMP default the players table used and one the NOW()
+	// default agent_keys used.
+	if _, err := database.conn.Exec(`CREATE TABLE ` + probe + ` (
+		id           SERIAL PRIMARY KEY,
+		created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		locked_until TIMESTAMP
+	)`); err != nil {
+		t.Fatalf("create legacy probe table: %v", err)
+	}
+	if _, err := database.conn.Exec(
+		`INSERT INTO ` + probe + ` (created_at, locked_until)
+		 VALUES ('2000-01-01 00:00:00', '2030-06-15 12:30:00')`,
+	); err != nil {
+		t.Fatalf("seed legacy row: %v", err)
+	}
+
+	targets := []string{probe + ".created_at", probe + ".locked_until"}
+	if err := database.convertNaiveTimestamps(targets); err != nil {
+		t.Fatalf("first conversion: %v", err)
+	}
+	for _, column := range []string{"created_at", "locked_until"} {
+		if got := columnType(t, database, probe, column); got != "timestamp with time zone" {
+			t.Errorf("%s.%s is %q after conversion, want timestamp with time zone", probe, column, got)
+		}
+	}
+
+	var created, locked time.Time
+	if err := database.queryRow(`SELECT created_at, locked_until FROM `+probe+` WHERE id = 1`).Scan(&created, &locked); err != nil {
+		t.Fatalf("read converted row: %v", err)
+	}
+	if got, want := created.UTC().Format(time.RFC3339), "2000-01-01T00:00:00Z"; got != want {
+		t.Errorf("created_at = %s, want %s: the stored wall clock is kept", got, want)
+	}
+	if got, want := locked.UTC().Format(time.RFC3339), "2030-06-15T12:30:00Z"; got != want {
+		t.Errorf("locked_until = %s, want %s: the stored wall clock is kept", got, want)
+	}
+
+	// The second run is the idempotency proof, and it is not cosmetic: on an
+	// already-converted column the AT TIME ZONE expression re-interprets the
+	// value and shifts it by the host's offset, so without the
+	// information_schema guard every boot would move the data again.
+	if err := database.convertNaiveTimestamps(targets); err != nil {
+		t.Fatalf("second conversion: %v", err)
+	}
+	var againCreated, againLocked time.Time
+	if err := database.queryRow(`SELECT created_at, locked_until FROM `+probe+` WHERE id = 1`).Scan(&againCreated, &againLocked); err != nil {
+		t.Fatalf("read row after second conversion: %v", err)
+	}
+	if !againCreated.Equal(created) || !againLocked.Equal(locked) {
+		t.Errorf("second conversion moved values: created %v -> %v, locked %v -> %v",
+			created, againCreated, locked, againLocked)
+	}
+
+	// A column this install does not have (an older build may predate it) is
+	// skipped rather than treated as an error.
+	if err := database.convertNaiveTimestamps([]string{probe + "_absent.created_at"}); err != nil {
+		t.Errorf("converting an absent column: %v, want a silent skip", err)
+	}
+
+	// The column default has to survive the type change: rows after the
+	// conversion rely on it.
+	var insertedID int
+	if err := database.queryRow(
+		`INSERT INTO ` + probe + ` (locked_until) VALUES (NULL) RETURNING id`,
+	).Scan(&insertedID); err != nil {
+		t.Fatalf("insert relying on the default: %v", err)
+	}
+	var fresh sql.NullTime
+	if err := database.queryRow(`SELECT created_at FROM `+probe+` WHERE id = $1`, insertedID).Scan(&fresh); err != nil {
+		t.Fatalf("read defaulted created_at: %v", err)
+	}
+	if !fresh.Valid {
+		t.Fatal("created_at default did not fire after the type change")
+	}
+	if d := time.Since(fresh.Time).Abs(); d > time.Minute {
+		t.Errorf("defaulted created_at = %v (%v from now), want about now", fresh.Time, d)
+	}
+}
+
+// TestMigrateNaiveTimestampsOnCurrentSchema runs the production entry point
+// against a schema this build just created, on both backends. On PostgreSQL
+// every listed column is already zone-aware, so the guard has to make it a
+// silent no-op; on SQLite it has to skip outright, because there is no
+// zone-aware type to convert to and no information_schema to ask.
+func TestMigrateNaiveTimestampsOnCurrentSchema(t *testing.T) {
+	for _, be := range gameStoreBackends(t) {
+		t.Run(be.name, func(t *testing.T) {
+			database := openGameStore(t, be.dsn)
+			if err := database.migrateNaiveTimestamps(); err != nil {
+				t.Fatalf("migrateNaiveTimestamps on a current schema: %v", err)
+			}
+		})
+	}
+}
+
 // TestGameStoreSchemaIdempotent proves the migration shim: running the schema
 // a second time over the same database must be a clean no-op on both dialects.
 func TestGameStoreSchemaIdempotent(t *testing.T) {
