@@ -515,7 +515,6 @@ func main() {
 			slog.Warn("health check write failed", "error", err)
 		}
 	})
-	http.HandleFunc("/metrics", metrics.Handler().ServeHTTP)
 	// Gauges describe state, not events, so they are sampled rather than
 	// maintained. Tracking every mutation means finding every mutation, and one
 	// missed path leaves the gauge wrong until restart; re-reading the truth on

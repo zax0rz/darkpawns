@@ -1886,3 +1886,37 @@ func TestCorsMiddleware_EnvOriginAlwaysAllowed(t *testing.T) {
 		t.Errorf("ADMIN_CORS_ORIGIN should be allowed, got %q", got)
 	}
 }
+
+// TestPrometheusEndpoint_RequiresAuth pins the move off the public root mux.
+// The endpoint was unauthenticated on darkpawns.org and went unnoticed only
+// because every gauge read zero; once the collectors were wired it would have
+// published player counts and command_duration_seconds to anyone.
+func TestPrometheusEndpoint_RequiresAuth(t *testing.T) {
+	setJWTSecret(t)
+	w := testWorld(t)
+	lb := NewLogBuffer(10)
+
+	handler, err := NewRouter(w, nil, lb, nil, nil)
+	if err != nil {
+		t.Fatalf("NewRouter failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/prometheus", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("unauthenticated /admin/prometheus = %d, want 401", rec.Code)
+	}
+
+	// And with a valid immortal token it serves the exposition format.
+	req = httptest.NewRequest(http.MethodGet, "/admin/prometheus", nil)
+	req.Header.Set("Authorization", "Bearer "+generateTestToken(t, "builder"))
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("authenticated /admin/prometheus = %d, want 200; body: %s", rec.Code, rec.Body.String())
+	}
+	if body := rec.Body.String(); !strings.Contains(body, "darkpawns_") {
+		t.Errorf("no darkpawns_ metrics in the exposition output: %s", body)
+	}
+}
