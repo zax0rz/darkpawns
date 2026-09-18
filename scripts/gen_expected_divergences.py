@@ -23,7 +23,8 @@ def check_pins(pins_path: pathlib.Path) -> int:
     ledger = {}
     with OUT.open(encoding="utf-8") as stream:
         for line in stream:
-            scenario, manifest, case_id, status = line.rstrip("\n").split("\t")
+            parts = line.rstrip("\n").split("\t")
+            scenario, manifest, case_id, status = parts[:4]
             ledger.setdefault(scenario, set()).add(f"{manifest}:{case_id}:{status}")
     bad = 0
     for scenario, _label, _sha, citations in pin_lines:
@@ -49,10 +50,18 @@ def main() -> int:
                 proof = (row.get("proof") or "").strip()
                 if status not in ("blocked", "excluded") or not proof or proof == "-":
                     continue
+                # stability is the optional divergence-shape class: "" (default)
+                # pins a stable shape; "run-varying" marks a C-side divergence
+                # whose bytes differ every run, which the census accepts as
+                # EXPECTED_UNSTABLE instead of demanding an impossible pin.
+                stability = (row.get("stability") or "").strip()
+                if stability not in ("", "run-varying"):
+                    print(f"unknown stability {stability!r} in {path.name}:{row['case_id']}", file=sys.stderr)
+                    return 1
                 scenario = proof.split("@", 1)[0]
                 if not (SCENARIO_DIR / f"{scenario}.txt").exists():
                     continue
-                rows.append((scenario, path.name, row["case_id"], status))
+                rows.append((scenario, path.name, row["case_id"], status, stability))
     rows.sort()
     kept_scenarios = sorted({r[0] for r in rows})
     no_proof = 0
@@ -76,7 +85,7 @@ def main() -> int:
     for item in unresolved:
         print(f"  unresolved: {item}", file=sys.stderr)
     with OUT.open("w", encoding="utf-8", newline="") as stream:
-        stream.write("scenario\tmanifest\tcase_id\tstatus\n")
+        stream.write("scenario\tmanifest\tcase_id\tstatus\tstability\n")
         for row in rows:
             stream.write("\t".join(row) + "\n")
     return 0

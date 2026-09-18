@@ -1,7 +1,8 @@
 scenario	label	sha256	citations
 accuse-depth	accuse Ragnar [actor]	9242b15c4e3726f2eefede496829fb154b99a39e6913820c453f23773deb75f6	accuse.tsv:accuse.one-argument:blocked;accuse.tsv:accuse.target-audience:blocked;accuse.tsv:accuse.target-success:blocked
 accuse-depth	accuse the Ragnar trailing words are ignored [actor]	9242b15c4e3726f2eefede496829fb154b99a39e6913820c453f23773deb75f6	accuse.tsv:accuse.one-argument:blocked;accuse.tsv:accuse.target-audience:blocked;accuse.tsv:accuse.target-success:blocked
-accuse-noarg-depth	accuse	118e8baa2ee8a929cec60571c235daaa79cf450b6c2d7200dc858aa9f4632f21	accuse.tsv:accuse.no-argument:blocked
+force-mob	force trainee sit	1ad72fbba7d667612f4659ae072470bbb2c2450c64b972ed3364ea4ee46b7aca	force.tsv:force.npc-command-interpreter:blocked;force.tsv:force.visible-npc-target:blocked
+force-mob	force trainee stand	bf0860b9ed3d932a6e6e316b0cdf0fa69c25f9df5f435068480edf379e801da5	force.tsv:force.npc-command-interpreter:blocked;force.tsv:force.visible-npc-target:blocked
 medit-entry-depth	medit	134cb9c489e39d317ab67587e401d50b8f0382d5ceb9cfdd3050ddaceaaa2eda	medit.tsv:medit.no-argument:blocked;medit.tsv:medit.nonnumeric-argument:blocked;medit.tsv:medit.unknown-zone:blocked
 medit-entry-depth	medit 999999	0f8807f28888522a9809fedd3386d648b22fa17f977fbc3d9cf220f3acb576d3	medit.tsv:medit.no-argument:blocked;medit.tsv:medit.nonnumeric-argument:blocked;medit.tsv:medit.unknown-zone:blocked
 medit-entry-depth	medit abc	5d8d92b3c45a9d7f753223206d917b47609be74601ef7c19ed48866c87d0abf9	medit.tsv:medit.no-argument:blocked;medit.tsv:medit.nonnumeric-argument:blocked;medit.tsv:medit.unknown-zone:blocked

@@ -81,6 +81,7 @@ printf '%s\0' "${scenarios[@]}" | xargs -0 -n1 -P "$jobs" "$script_dir"/oracle_r
 
 passed=0
 expected=0
+unstable=0
 unpinnable=0
 stale=0
 failed=0
@@ -100,6 +101,13 @@ for scenario_file in "${scenarios[@]}"; do
 		;;
 	EXPECTED)
 		expected=$((expected + 1))
+		;;
+	EXPECTED_UNSTABLE)
+		# Ledger-backed divergence whose manifest row declares
+		# stability=run-varying (e.g. the C-side accuse pointer anomaly).
+		# Green, but surfaced so the standing roster stays visible.
+		unstable=$((unstable + 1))
+		printf 'EXPECTED_UNSTABLE %s (ledger-backed, declared run-varying)\n' "$scenario"
 		;;
 	UNPINNABLE)
 		unpinnable=$((unpinnable + 1))
@@ -127,8 +135,8 @@ elapsed_ns=$((run_finished_ns - run_started_ns))
 elapsed_seconds=$((elapsed_ns / 1000000000))
 elapsed_remainder=$(( (elapsed_ns % 1000000000) / 1000000 ))
 
-printf 'oracle-regression: scenarios=%d passed=%d expected=%d unpinnable=%d stale=%d failed=%d infra=%d timed_out=%d elapsed=%d.%03ds started=%s finished=%s\n' \
-	"${#scenarios[@]}" "$passed" "$expected" "$unpinnable" "$stale" "$failed" "$infra" "$timed_out" "$elapsed_seconds" "$elapsed_remainder" \
+printf 'oracle-regression: scenarios=%d passed=%d expected=%d unpinnable=%d stale=%d failed=%d infra=%d timed_out=%d unstable=%d elapsed=%d.%03ds started=%s finished=%s\n' \
+	"${#scenarios[@]}" "$passed" "$expected" "$unpinnable" "$stale" "$failed" "$infra" "$timed_out" "$unstable" "$elapsed_seconds" "$elapsed_remainder" \
 	"$(date -d "@$run_started" '+%Y-%m-%dT%H:%M:%S%z')" \
 	"$(date -d "@$run_finished" '+%Y-%m-%dT%H:%M:%S%z')"
 

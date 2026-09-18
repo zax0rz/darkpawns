@@ -16,6 +16,10 @@ MANIFEST_DIR = ROOT / "docs" / "fidelity" / "depth"
 SCENARIO_DIR = ROOT / "cmd" / "dp-oracle-diff" / "scenarios"
 CASE_RE = re.compile(r"^\s*#\s*depth-case:\s*(\S+)\s*$", re.MULTILINE)
 FIELDS = ("handler", "command", "case_id", "depth", "scope", "status", "proof", "c_site", "notes")
+# stability is an optional trailing column: "" (default) or "run-varying",
+# consumed by gen_expected_divergences.py to mark C-side divergences whose
+# bytes differ every run (classified EXPECTED_UNSTABLE by the census).
+OPTIONAL_FIELDS = ("stability",)
 VALID_STATUSES = {
     "oracle-green",
     "oracle-green-multiseed",
@@ -37,7 +41,7 @@ def load_rows() -> list[dict[str, str]]:
             continue
         with path.open(encoding="utf-8", newline="") as stream:
             reader = csv.DictReader(stream, delimiter="\t")
-            if tuple(reader.fieldnames or ()) != FIELDS:
+            if tuple(reader.fieldnames or ()) not in (FIELDS, FIELDS + OPTIONAL_FIELDS):
                 raise ValueError(f"{path}: fields {reader.fieldnames!r}, want {FIELDS!r}")
             for line_no, row in enumerate(reader, 2):
                 if None in row or any(row.get(field) is None for field in FIELDS):
