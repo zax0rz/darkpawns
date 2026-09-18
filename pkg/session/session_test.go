@@ -457,7 +457,7 @@ func TestCmdQcomm_NonQuestPlayerFiltered(t *testing.T) {
 	}
 }
 
-// mockAgentKeyDB is a minimal db.Database implementation that validates a
+// mockAgentKeyDB is a minimal db.GameStore implementation that validates a
 // single agent key for DP-594 tests.
 type mockAgentKeyDB struct {
 	validKey string

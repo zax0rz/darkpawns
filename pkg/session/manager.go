@@ -77,7 +77,7 @@ type Manager struct {
 	shopManager  *game.ShopManager
 	pulsePumpMu  sync.RWMutex
 	pulsePump    func(int) error
-	db           db.Database
+	db           db.GameStore
 	hasDB        bool
 	loginLimiter *auth.IPRateLimiter // Rate limiter for login attempts
 	upgrader     websocket.Upgrader
@@ -254,7 +254,7 @@ func (m *Manager) GetModerationChecker() ModerationChecker {
 }
 
 // NewManager creates a new session manager.
-func NewManager(world *game.World, database db.Database) *Manager {
+func NewManager(world *game.World, database db.GameStore) *Manager {
 	ce := combat.NewCombatEngine()
 	ce.Start()
 
@@ -300,7 +300,7 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		nextEphemeralPlayerID: 1,
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
-	// db.Database interface is itself non-nil. Normalize it to a real nil so
+	// db.GameStore interface is itself non-nil. Normalize it to a real nil so
 	// the no-database path below is taken instead of dereferencing nil. (DP-589)
 	if concreteDB, ok := database.(*db.DB); ok && concreteDB == nil {
 		database = nil

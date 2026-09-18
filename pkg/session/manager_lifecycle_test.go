@@ -9,7 +9,7 @@ import (
 
 // newTestManager ensures NewManager's combat ticker cannot outlive its test.
 // Use this instead of NewManager directly in package session tests.
-func newTestManager(t *testing.T, world *game.World, database db.Database) *Manager {
+func newTestManager(t *testing.T, world *game.World, database db.GameStore) *Manager {
 	t.Helper()
 	m := NewManager(world, database)
 	t.Cleanup(m.Stop)

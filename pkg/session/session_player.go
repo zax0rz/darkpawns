@@ -199,7 +199,7 @@ func (m *Manager) HasDatabase() bool {
 }
 
 // GetDatabase returns the database instance.
-func (m *Manager) GetDatabase() db.Database {
+func (m *Manager) GetDatabase() db.GameStore {
 	return m.db
 }
 

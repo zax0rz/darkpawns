@@ -84,7 +84,8 @@ func NewTestWorld() *game.World {
 	return w
 }
 
-// MockDatabase is a thread-safe, memory-backed struct fully satisfying the db.Database interface.
+// MockDatabase is a thread-safe, memory-backed struct fully satisfying the
+// db.GameStore and db.ResearchStore interfaces.
 type MockDatabase struct {
 	mu           sync.RWMutex
 	players      map[string]*db.PlayerRecord
@@ -101,6 +102,14 @@ type MockDatabase struct {
 	summaryOrder []string          // compound keys in first-write order (deterministic reads)
 }
 
+// Compile-time proof that the mock covers both halves of the split store
+// interface, so a method added to either one fails here rather than in a
+// downstream package.
+var (
+	_ db.GameStore     = (*MockDatabase)(nil)
+	_ db.ResearchStore = (*MockDatabase)(nil)
+)
+
 // NewMockDatabase creates an initialized MockDatabase instance.
 func NewMockDatabase() *MockDatabase {
 	return &MockDatabase{
@@ -115,12 +124,12 @@ func NewMockDatabase() *MockDatabase {
 	}
 }
 
-// Close satisfies db.Database.
+// Close satisfies db.GameStore.
 func (m *MockDatabase) Close() error {
 	return nil
 }
 
-// ListPlayerNames satisfies db.Database.
+// ListPlayerNames satisfies db.GameStore.
 func (m *MockDatabase) ListPlayerNames() ([]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -132,14 +141,14 @@ func (m *MockDatabase) ListPlayerNames() ([]string, error) {
 	return names, nil
 }
 
-// CountPlayers satisfies db.Database. Used by the first-player-God bootstrap.
+// CountPlayers satisfies db.GameStore. Used by the first-player-God bootstrap.
 func (m *MockDatabase) CountPlayers() (int, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return len(m.players), nil
 }
 
-// GetPlayer satisfies db.Database.
+// GetPlayer satisfies db.GameStore.
 func (m *MockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -159,7 +168,7 @@ func (m *MockDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	return &copyP, nil
 }
 
-// CreatePlayer satisfies db.Database.
+// CreatePlayer satisfies db.GameStore.
 func (m *MockDatabase) CreatePlayer(p *db.PlayerRecord) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -174,7 +183,7 @@ func (m *MockDatabase) CreatePlayer(p *db.PlayerRecord) error {
 	return nil
 }
 
-// SavePlayer satisfies db.Database.
+// SavePlayer satisfies db.GameStore.
 func (m *MockDatabase) SavePlayer(p *db.PlayerRecord) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -182,7 +191,7 @@ func (m *MockDatabase) SavePlayer(p *db.PlayerRecord) error {
 	return nil
 }
 
-// GetAccountLockout satisfies db.Database.
+// GetAccountLockout satisfies db.GameStore.
 func (m *MockDatabase) GetAccountLockout(name string) (int, *time.Time, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -193,7 +202,7 @@ func (m *MockDatabase) GetAccountLockout(name string) (int, *time.Time, error) {
 	return p.FailedLoginAttempts, p.LockedUntil, nil
 }
 
-// UpdatePassword satisfies db.Database.
+// UpdatePassword satisfies db.GameStore.
 func (m *MockDatabase) UpdatePassword(playerID int, hash string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -206,7 +215,7 @@ func (m *MockDatabase) UpdatePassword(playerID int, hash string) error {
 	return fmt.Errorf("player not found")
 }
 
-// UpdateDescription satisfies db.Database.
+// UpdateDescription satisfies db.GameStore.
 func (m *MockDatabase) UpdateDescription(playerID int, description string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -219,7 +228,7 @@ func (m *MockDatabase) UpdateDescription(playerID int, description string) error
 	return fmt.Errorf("player not found")
 }
 
-// DeletePlayer satisfies db.Database.
+// DeletePlayer satisfies db.GameStore.
 func (m *MockDatabase) DeletePlayer(playerID int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -232,7 +241,7 @@ func (m *MockDatabase) DeletePlayer(playerID int) error {
 	return fmt.Errorf("player not found")
 }
 
-// RecordLoginFailure satisfies db.Database.
+// RecordLoginFailure satisfies db.GameStore.
 func (m *MockDatabase) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -249,7 +258,7 @@ func (m *MockDatabase) RecordLoginFailure(name string, threshold int, lockoutDur
 	return false, nil
 }
 
-// RecordLoginSuccess satisfies db.Database.
+// RecordLoginSuccess satisfies db.GameStore.
 func (m *MockDatabase) RecordLoginSuccess(name string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -260,12 +269,12 @@ func (m *MockDatabase) RecordLoginSuccess(name string) error {
 	return nil
 }
 
-// Exec satisfies db.Database.
+// Exec satisfies db.GameStore.
 func (m *MockDatabase) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return nil, nil
 }
 
-// CreateAgentKey satisfies db.Database.
+// CreateAgentKey satisfies db.GameStore.
 func (m *MockDatabase) CreateAgentKey(characterName string) (rawKey string, id int64, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -281,7 +290,7 @@ func (m *MockDatabase) CreateAgentKey(characterName string) (rawKey string, id i
 	return rawKey, id, nil
 }
 
-// ValidateAgentKey satisfies db.Database.
+// ValidateAgentKey satisfies db.GameStore.
 func (m *MockDatabase) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -297,23 +306,23 @@ func (m *MockDatabase) ValidateAgentKey(rawKey string) (characterName string, ke
 	return characterName, 1, true
 }
 
-// EnsureDecisionLogPartitions satisfies db.Database.
+// EnsureDecisionLogPartitions satisfies db.ResearchStore.
 func (m *MockDatabase) EnsureDecisionLogPartitions() error {
 	return nil
 }
 
-// NewDecisionLogWriter satisfies db.Database. It returns a non-persisting
+// NewDecisionLogWriter satisfies db.ResearchStore. It returns a non-persisting
 // writer so tests using RecordDecision/Stop do not nil-panic (DP-1017).
 func (m *MockDatabase) NewDecisionLogWriter() *db.DecisionLogWriter {
 	return db.NewMockDecisionLogWriter()
 }
 
-// InitNarrativeMemory satisfies db.Database.
+// InitNarrativeMemory satisfies db.GameStore.
 func (m *MockDatabase) InitNarrativeMemory() error {
 	return nil
 }
 
-// WriteNarrativeMemory satisfies db.Database.
+// WriteNarrativeMemory satisfies db.GameStore.
 func (m *MockDatabase) WriteNarrativeMemory(mem *db.NarrativeMemory) (int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -323,7 +332,7 @@ func (m *MockDatabase) WriteNarrativeMemory(mem *db.NarrativeMemory) (int64, err
 	return mem.ID, nil
 }
 
-// BootstrapMemories satisfies db.Database.
+// BootstrapMemories satisfies db.GameStore.
 func (m *MockDatabase) BootstrapMemories(agentName string, limit int) ([]*db.NarrativeMemory, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -342,7 +351,7 @@ func (m *MockDatabase) BootstrapMemories(agentName string, limit int) ([]*db.Nar
 	return out, nil
 }
 
-// RecentMemories satisfies db.Database.
+// RecentMemories satisfies db.GameStore.
 func (m *MockDatabase) RecentMemories(agentName, sessionID string) ([]*db.NarrativeMemory, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -355,7 +364,7 @@ func (m *MockDatabase) RecentMemories(agentName, sessionID string) ([]*db.Narrat
 	return out, nil
 }
 
-// SocialEventMemories satisfies db.Database.
+// SocialEventMemories satisfies db.GameStore.
 func (m *MockDatabase) SocialEventMemories(socialEventID string) ([]*db.NarrativeMemory, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -368,7 +377,7 @@ func (m *MockDatabase) SocialEventMemories(socialEventID string) ([]*db.Narrativ
 	return out, nil
 }
 
-// WriteSessionSummary satisfies db.Database. Summaries are keyed by
+// WriteSessionSummary satisfies db.GameStore. Summaries are keyed by
 // (agentName, sessionID) so distinct sessions never collapse into one list.
 // Re-writing the same session upserts, mirroring the real DB's
 // session_id UNIQUE + ON CONFLICT DO UPDATE behavior.
@@ -383,7 +392,7 @@ func (m *MockDatabase) WriteSessionSummary(agentName, sessionID, summary string,
 	return nil
 }
 
-// GetSessionSummaries satisfies db.Database. Returns the most recent `limit`
+// GetSessionSummaries satisfies db.GameStore. Returns the most recent `limit`
 // summaries for the agent across all sessions, in write order.
 func (m *MockDatabase) GetSessionSummaries(agentName string, limit int) ([]string, error) {
 	m.mu.RLock()
@@ -404,7 +413,7 @@ func (m *MockDatabase) GetSessionSummaries(agentName string, limit int) ([]strin
 	return sums, nil
 }
 
-// DecayStaleMemories satisfies db.Database.
+// DecayStaleMemories satisfies db.GameStore.
 func (m *MockDatabase) DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error) {
 	return 0, 0, nil
 }

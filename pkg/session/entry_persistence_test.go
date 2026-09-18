@@ -79,7 +79,7 @@ func entrySeed(t *testing.T, database *db.DB, name string) *db.PlayerRecord {
 	return p
 }
 
-func entrySession(t *testing.T, database db.Database) *Session {
+func entrySession(t *testing.T, database db.GameStore) *Session {
 	t.Helper()
 	t.Setenv("JWT_SECRET", "entry-test-jwt-secret-at-least-32-characters")
 	world := testutil.NewTestWorld()
@@ -88,17 +88,17 @@ func entrySession(t *testing.T, database db.Database) *Session {
 }
 
 type entryCountingDatabase struct {
-	db.Database
+	db.GameStore
 	creates int
 }
 
 func (d *entryCountingDatabase) CreatePlayer(p *db.PlayerRecord) error {
 	d.creates++
-	return d.Database.CreatePlayer(p)
+	return d.GameStore.CreatePlayer(p)
 }
 
 type entryFaultDatabase struct {
-	db.Database
+	db.GameStore
 	getErr        error
 	countErr      error
 	createErr     error
@@ -110,21 +110,21 @@ func (d *entryFaultDatabase) GetPlayer(name string) (*db.PlayerRecord, error) {
 	if d.getErr != nil {
 		return nil, d.getErr
 	}
-	return d.Database.GetPlayer(name)
+	return d.GameStore.GetPlayer(name)
 }
 
 func (d *entryFaultDatabase) CountPlayers() (int, error) {
 	if d.countErr != nil {
 		return 0, d.countErr
 	}
-	return d.Database.CountPlayers()
+	return d.GameStore.CountPlayers()
 }
 
 func (d *entryFaultDatabase) CreatePlayer(p *db.PlayerRecord) error {
 	if d.createErr != nil {
 		return d.createErr
 	}
-	return d.Database.CreatePlayer(p)
+	return d.GameStore.CreatePlayer(p)
 }
 
 func (d *entryFaultDatabase) SavePlayer(p *db.PlayerRecord) error {
@@ -135,7 +135,7 @@ func (d *entryFaultDatabase) SavePlayer(p *db.PlayerRecord) error {
 		}
 		return err
 	}
-	return d.Database.SavePlayer(p)
+	return d.GameStore.SavePlayer(p)
 }
 
 func entryInput(s *Session, choice string) error {
@@ -177,7 +177,7 @@ func TestEntryIdentityCaseInsensitive(t *testing.T) {
 
 func TestEntryLookupFailureFailsClosed(t *testing.T) {
 	database := entryDatabase(t)
-	fault := &entryFaultDatabase{Database: database, getErr: errors.New("lookup unavailable")}
+	fault := &entryFaultDatabase{GameStore: database, getErr: errors.New("lookup unavailable")}
 	s := entrySession(t, fault)
 	if err := s.handleLogin(loginMsg("Aiko", "")); err != nil {
 		t.Fatal(err)
@@ -192,7 +192,7 @@ func TestEntryLookupFailureFailsClosed(t *testing.T) {
 
 func TestEntryCountFailureFailsClosed(t *testing.T) {
 	database := entryDatabase(t)
-	fault := &entryFaultDatabase{Database: database, countErr: errors.New("count unavailable")}
+	fault := &entryFaultDatabase{GameStore: database, countErr: errors.New("count unavailable")}
 	s := entrySession(t, fault)
 	driveEntryToStats(t, s, "Newhero")
 	if err := entryInput(s, "Y"); err != nil {
@@ -209,7 +209,7 @@ func TestEntryCountFailureFailsClosed(t *testing.T) {
 func TestEntryEntrySaveFailureFailsClosed(t *testing.T) {
 	database := entryDatabase(t)
 	entrySeed(t, database, "Founder")
-	fault := &entryFaultDatabase{Database: database, saveErr: errors.New("entry save unavailable")}
+	fault := &entryFaultDatabase{GameStore: database, saveErr: errors.New("entry save unavailable")}
 	s := entrySession(t, fault)
 	driveEntryToStats(t, s, "Newhero")
 	if err := entryInput(s, "Y"); err != nil {
@@ -236,7 +236,7 @@ func TestEntryEntrySaveFailureFailsClosed(t *testing.T) {
 func TestEntryTransientSaveFailureDoesNotPersistAbortedBootstrap(t *testing.T) {
 	database := entryDatabase(t)
 	entrySeed(t, database, "Founder")
-	fault := &entryFaultDatabase{Database: database, saveErr: errors.New("entry save unavailable"), saveFailsOnce: true}
+	fault := &entryFaultDatabase{GameStore: database, saveErr: errors.New("entry save unavailable"), saveFailsOnce: true}
 	s := entrySession(t, fault)
 	driveEntryToStats(t, s, "Newhero")
 	if err := entryInput(s, "Y"); err != nil {
@@ -304,7 +304,7 @@ func TestEntryAcceptedStatsPersistBeforeMenu(t *testing.T) {
 func TestEntryAikoResolvesExistingWithoutCreation(t *testing.T) {
 	database := entryDatabase(t)
 	want := entrySeed(t, database, "Aiko")
-	counted := &entryCountingDatabase{Database: database}
+	counted := &entryCountingDatabase{GameStore: database}
 	s := entrySession(t, counted)
 	if err := s.handleLogin(loginMsg("aiko", "")); err != nil {
 		t.Fatal(err)
@@ -333,7 +333,7 @@ func TestEntryAikoResolvesExistingWithoutCreation(t *testing.T) {
 // PostgreSQL, not a mocked constraint, rejects the losing insert.
 func TestEntryAikoCollisionDoesNotLeaveEnterableCandidate(t *testing.T) {
 	database := entryDatabase(t)
-	counted := &entryCountingDatabase{Database: database}
+	counted := &entryCountingDatabase{GameStore: database}
 	s := entrySession(t, counted)
 	s.startNewCharFlow("aiko")
 	for _, line := range []string{"Y", "oraclepass", "oraclepass", "Y", "M", "K", "T", "K"} {

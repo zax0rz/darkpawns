@@ -14,7 +14,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-func entryTransportManager(t *testing.T, database db.Database) *Manager {
+func entryTransportManager(t *testing.T, database db.GameStore) *Manager {
 	t.Helper()
 	parsed := &parser.World{
 		Rooms: []parser.Room{

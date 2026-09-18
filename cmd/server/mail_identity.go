@@ -13,13 +13,13 @@ import (
 // intentionally not involved: mail must address players who are offline and
 // remain addressable after a server restart.
 type mailIdentity struct {
-	database db.Database
+	database db.GameStore
 
 	mu   sync.RWMutex
 	byID map[int]string
 }
 
-func newMailIdentity(database db.Database) (*mailIdentity, error) {
+func newMailIdentity(database db.GameStore) (*mailIdentity, error) {
 	if database == nil {
 		return nil, fmt.Errorf("persistent database is required")
 	}

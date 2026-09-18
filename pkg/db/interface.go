@@ -6,10 +6,14 @@ import (
 	"time"
 )
 
-// Database defines the fully comprehensive interface for DB persistence in Dark Pawns.
-// It matches all public operations exposed by db.DB, ensuring complete decoupling
-// from raw database connection pools and enabling full mock implementations in tests.
-type Database interface {
+// GameStore is the player-facing persistence surface: players, agent keys and
+// the AI narrative memory layer. It is the seam the game server compiles
+// against; *DB satisfies it on both PostgreSQL and SQLite.
+//
+// The research corpus (decision_log, combat_log) is deliberately not here:
+// those tables stay on PostgreSQL and are reached through ResearchStore, so a
+// self-hosted SQLite deployment never sees player-typed input.
+type GameStore interface {
 	Close() error
 
 	// Player Persistence
@@ -30,10 +34,6 @@ type Database interface {
 	CreateAgentKey(characterName string) (rawKey string, id int64, err error)
 	ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool)
 
-	// Decision Capture Telemetry
-	EnsureDecisionLogPartitions() error
-	NewDecisionLogWriter() *DecisionLogWriter
-
 	// AI Narrative Memory Layer
 	InitNarrativeMemory() error
 	WriteNarrativeMemory(m *NarrativeMemory) (int64, error)
@@ -44,3 +44,20 @@ type Database interface {
 	GetSessionSummaries(agentName string, limit int) ([]string, error)
 	DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error)
 }
+
+// ResearchStore is the decision-capture telemetry surface. It stays
+// PostgreSQL-only: decision_log.raw_input is the literal line a player typed,
+// and the corpus tables use PostgreSQL-only features (PARTITION BY RANGE,
+// pg_tables catalog queries, TEXT[]).
+type ResearchStore interface {
+	EnsureDecisionLogPartitions() error
+	NewDecisionLogWriter() *DecisionLogWriter
+}
+
+// *DB satisfies both halves; the split exists so callers can depend on only
+// the surface they need and a SQLite deployment never has to satisfy the
+// PostgreSQL-only research methods.
+var (
+	_ GameStore     = (*DB)(nil)
+	_ ResearchStore = (*DB)(nil)
+)
