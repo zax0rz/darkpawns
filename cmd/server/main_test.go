@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"os"
 	"os/exec"
@@ -208,6 +209,55 @@ func TestServerBootDefaultsToSQLite(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(filepath.Dir(worldDir), "data", "darkpawns.db")); err != nil {
 		t.Errorf("default database file not created beside the world data: %v", err)
+	}
+}
+
+// TestServerBootNoModerationErrorsOnSQLiteDefault is the point of the
+// moderation SQLite pass: with no -db and no DATABASE_URL the server defaults
+// to embedded SQLite, and the moderation store has to come up on it silently.
+// Before this, every boot logged "Failed to create moderation tables",
+// "Failed to load penalties" and "Failed to load word filters", because the
+// four moderation tables were written in PostgreSQL-only SQL (SERIAL,
+// ADD COLUMN IF NOT EXISTS, NOW() in query bodies).
+func TestServerBootNoModerationErrorsOnSQLiteDefault(t *testing.T) {
+	worldDir := parseableWorld(t) // .../lib/world, so the default store lands beside it
+	_, out := bootServerContext(t, []string{"-world", worldDir}, 5*time.Second,
+		"ENVIRONMENT=development",
+		"DATABASE_URL=",
+	)
+	if !strings.Contains(out, "Moderation manager wired with database backend") {
+		t.Fatalf("boot did not wire moderation against the default SQLite store:\n%s", out)
+	}
+	for _, bad := range []string{
+		"Failed to create moderation tables",
+		"Failed to load penalties",
+		"Failed to load word filters",
+	} {
+		if strings.Contains(out, bad) {
+			t.Errorf("moderation boot logged %q:\n%s", bad, out)
+		}
+	}
+	// The four tables must be in the default store the boot just created, so a
+	// later restart reads them instead of recreating them.
+	store := filepath.Join(filepath.Dir(worldDir), "data", "darkpawns.db")
+	if _, err := os.Stat(store); err != nil {
+		t.Fatalf("default database file not created beside the world data: %v", err)
+	}
+	sqlDB, err := sql.Open("sqlite", store)
+	if err != nil {
+		t.Fatalf("open %s: %v", store, err)
+	}
+	defer func() { _ = sqlDB.Close() }()
+	for _, table := range []string{"abuse_reports", "admin_log", "player_penalties", "word_filters"} {
+		var n int
+		if err := sqlDB.QueryRow(
+			`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, table,
+		).Scan(&n); err != nil {
+			t.Fatalf("look up %s: %v", table, err)
+		}
+		if n == 0 {
+			t.Errorf("moderation table %s missing from the default SQLite store", table)
+		}
 	}
 }
 

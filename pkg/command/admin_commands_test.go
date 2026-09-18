@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
 )
 
@@ -285,12 +286,14 @@ func TestInitReports_LoadsFromDB(t *testing.T) {
 		},
 	})
 
-	db, err := sql.Open("fakeadmindb", "")
+	fakeDB, err := sql.Open("fakeadmindb", "")
 	if err != nil {
 		t.Fatalf("sql.Open: %v", err)
 	}
-	t.Cleanup(func() { _ = db.Close() })
-	mod := moderation.NewManager(db)
+	t.Cleanup(func() { _ = fakeDB.Close() })
+	// The fake driver answers PostgreSQL-flavoured text, and the zero dialect
+	// is the pass-through one, so the query reaches it byte-for-byte.
+	mod := moderation.NewManager(fakeDB, db.DialectPostgres)
 
 	mgr := &mockCommandManager{}
 	NewAdminCommands(mgr, mod)
