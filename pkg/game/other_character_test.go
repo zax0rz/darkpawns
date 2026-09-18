@@ -14,7 +14,8 @@ func TestDoVisibleRemovesSneakAndStealthAffects(t *testing.T) {
 	player := NewPlayer(1, "Visible", 8162)
 	player.worldRef = w
 	player.SetAffect(affSneak, true)
-	player.ActiveAffects = append(player.ActiveAffects,
+	player.ActiveAffects = append(
+		player.ActiveAffects,
 		engine.NewAffectDirect(skillNumSneak, engine.ApplyNone, 6, 0, engine.AFFSneak, SkillSneak),
 		engine.NewAffectDirect(skillNumStealth, engine.ApplyNone, 6, 0, engine.AFFSneak, SkillStealth),
 	)

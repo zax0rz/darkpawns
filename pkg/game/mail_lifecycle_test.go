@@ -109,7 +109,8 @@ func runMailLifecycleHelper(t *testing.T, fixtureRoot, phase string) string {
 	t.Helper()
 	cmd := exec.Command(os.Args[0], "-test.run", "^TestMailLifecycleHelperProcess$", "-test.v")
 	cmd.Dir = fixtureRoot
-	cmd.Env = append(os.Environ(),
+	cmd.Env = append(
+		os.Environ(),
 		mailLifecycleHelperEnv+"=1",
 		mailLifecyclePhaseEnv+"="+phase,
 		"DP_FIXED_TIME=650337471",

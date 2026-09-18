@@ -104,7 +104,8 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 		}
 	}
 
-	return performBehead(world, ch, obj, wielded, slashWeapon,
+	return performBehead(
+		world, ch, obj, wielded, slashWeapon,
 		func(headObj *ObjectInstance) bool { return world.canTakeObj(ch, headObj) },
 		func(headObj *ObjectInstance) error { return world.MoveObjectToPlayerInventory(headObj, ch) },
 	)

@@ -316,14 +316,16 @@ func launchMailServer(t *testing.T, root, dbURL, fixtureRoot, label string) (*ma
 	telnetPort := freePort(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	process := &mailServerProcess{cancel: cancel, label: label}
-	process.cmd = exec.CommandContext(ctx, serverBinary(t, root),
+	process.cmd = exec.CommandContext(
+		ctx, serverBinary(t, root),
 		"-world", filepath.Join(fixtureRoot, "lib", "world"),
 		"-port", fmt.Sprintf("%d", httpPort),
 		"-telnet-port", fmt.Sprintf("%d", telnetPort),
 		"-db", dbURL,
 	)
 	process.cmd.Dir = root
-	process.cmd.Env = append(os.Environ(),
+	process.cmd.Env = append(
+		os.Environ(),
 		"DP_ALLOW_NO_DB=0",
 		"JWT_SECRET=e2e-mail-lifecycle-secret-at-least-32-chars-long",
 		"ENVIRONMENT=development",

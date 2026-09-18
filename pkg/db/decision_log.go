@@ -178,7 +178,8 @@ func (db *DB) DropExpiredLogPartitions(retainMonths int) ([]string, error) {
 
 	rows, err := db.conn.Query(
 		`SELECT tablename FROM pg_tables
-		  WHERE tablename ~ '^(decision_log|combat_log)_[0-9]{4}_[0-9]{2}$'`)
+		  WHERE tablename ~ '^(decision_log|combat_log)_[0-9]{4}_[0-9]{2}$'`,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list log partitions: %w", err)
 	}

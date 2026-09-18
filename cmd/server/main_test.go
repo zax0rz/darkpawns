@@ -88,7 +88,8 @@ func repoWorld(t *testing.T) string {
 // refusal has to name the exact command to run instead of just failing.
 func TestServerBootNoFlagsNamesTheCommand(t *testing.T) {
 	t.Chdir(t.TempDir()) // a directory that is not a checkout
-	code, out := bootServer(t, nil,
+	code, out := bootServer(
+		t, nil,
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
 	)
@@ -110,7 +111,8 @@ func TestServerBootNoFlagsNamesTheCommand(t *testing.T) {
 func TestServerBootNoFlagsFindsCheckoutWorld(t *testing.T) {
 	repoWorld(t)
 	t.Chdir(filepath.Join("..", ".."))
-	code, out := bootServer(t, nil,
+	code, out := bootServer(
+		t, nil,
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
 	)
@@ -129,7 +131,8 @@ func TestServerBootNoFlagsFindsCheckoutWorld(t *testing.T) {
 // parser bug: -world lib/ instead of lib/world.
 func TestServerBootRejectsParentOfWorldDir(t *testing.T) {
 	worldDir := fakeWorld(t) // .../lib/world
-	code, out := bootServer(t,
+	code, out := bootServer(
+		t,
 		[]string{"-world", filepath.Dir(worldDir)}, // .../lib
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
@@ -143,7 +146,8 @@ func TestServerBootRejectsParentOfWorldDir(t *testing.T) {
 }
 
 func TestServerBootRequiresDatabaseURL(t *testing.T) {
-	code, out := bootServer(t,
+	code, out := bootServer(
+		t,
 		[]string{"-world", fakeWorld(t)},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
@@ -167,7 +171,8 @@ func TestServerBootRequiresDatabaseURL(t *testing.T) {
 // that names an escape hatch and then ignores it is the defect this whole pass
 // exists to remove.
 func TestAllowNoDBHonouredWhenURLIsMissing(t *testing.T) {
-	_, out := bootServer(t,
+	_, out := bootServer(
+		t,
 		[]string{"-world", fakeWorld(t)},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
@@ -186,7 +191,8 @@ func TestAllowNoDBHonouredWhenURLIsMissing(t *testing.T) {
 }
 
 func TestServerBootRejectsShortJWTSecretOutsideDevelopment(t *testing.T) {
-	code, out := bootServer(t,
+	code, out := bootServer(
+		t,
 		[]string{"-world", fakeWorld(t), "-db", "postgres://unused"},
 		"ENVIRONMENT=production",
 		"JWT_SECRET=tooshort",
@@ -206,7 +212,8 @@ func TestServerBootRejectsShortJWTSecretOutsideDevelopment(t *testing.T) {
 // the world parse begins. The fake world then fails to parse, which is the
 // sentinel: a rejected -static would have exited before "Loading world".
 func TestStaticSiteFlagReachesBoot(t *testing.T) {
-	code, out := bootServer(t,
+	code, out := bootServer(
+		t,
 		[]string{"-static", t.TempDir(), "-world", fakeWorld(t), "-db", "postgres://unused"},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
@@ -225,7 +232,8 @@ func TestStaticSiteFlagReachesBoot(t *testing.T) {
 // TestHugoFlagStillWorksAndWarns guards scripts and units that still pass the
 // pre-rename spelling: it must work, and it must say it is on the way out.
 func TestHugoFlagStillWorksAndWarns(t *testing.T) {
-	code, out := bootServer(t,
+	code, out := bootServer(
+		t,
 		[]string{"-hugo", t.TempDir(), "-world", fakeWorld(t), "-db", "postgres://unused"},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
@@ -248,7 +256,8 @@ func TestHugoFlagStillWorksAndWarns(t *testing.T) {
 // operator-supplied directory that does not exist is a refusal, not a silently
 // dark front door.
 func TestUnusableStaticDirRefusesBeforeParse(t *testing.T) {
-	code, out := bootServer(t,
+	code, out := bootServer(
+		t,
 		[]string{"-static", filepath.Join(t.TempDir(), "missing"), "-world", fakeWorld(t), "-db", "postgres://unused"},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
@@ -263,7 +272,8 @@ func TestUnusableStaticDirRefusesBeforeParse(t *testing.T) {
 
 func TestServerBootFailsCleanlyOnUnreachableDatabase(t *testing.T) {
 	worldDir := repoWorld(t)
-	code, out := bootServer(t,
+	code, out := bootServer(
+		t,
 		[]string{"-world", worldDir, "-db", "postgres://127.0.0.1:1/unreachable"},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
