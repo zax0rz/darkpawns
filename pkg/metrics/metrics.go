@@ -247,8 +247,18 @@ func MemoryRead() {
 
 // Handler returns the Prometheus metrics HTTP handler using the configured
 // registry. Init must have been called before Handler is used.
+//
+// registerer is typed as prometheus.Registerer, which does not require
+// prometheus.Gatherer (wrapping registerers such as
+// prometheus.WrapRegistererWith satisfy only the former). When the configured
+// registerer cannot gather, fall back to the default gatherer instead of
+// panicking on the type assertion.
 func Handler() http.Handler {
-	return promhttp.HandlerFor(registerer.(prometheus.Gatherer), promhttp.HandlerOpts{})
+	gatherer, ok := registerer.(prometheus.Gatherer)
+	if !ok {
+		gatherer = prometheus.DefaultGatherer
+	}
+	return promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{})
 }
 
 // RegisterMetrics registers all metrics (called automatically on import)
