@@ -1078,12 +1078,14 @@ func saveMeditZone(world *game.World, zone *parser.Zone) error {
 		return err
 	}
 
+	mobs := world.SnapshotMobs()
 	var sb strings.Builder
-	for _, mob := range world.SnapshotMobs() {
+	for i := range mobs {
+		mob := &mobs[i]
 		if mob.VNum < zone.Number*100 || mob.VNum > zone.TopRoom {
 			continue
 		}
-		writeMeditMob(&sb, &mob)
+		writeMeditMob(&sb, mob)
 	}
 	sb.WriteString("$\n")
 
@@ -1093,9 +1095,9 @@ func saveMeditZone(world *game.World, zone *parser.Zone) error {
 	}
 
 	meditSaveMu.Lock()
-	for _, mob := range world.SnapshotMobs() {
-		if mob.VNum >= zone.Number*100 && mob.VNum <= zone.TopRoom {
-			delete(meditSaveMobs, mob.VNum)
+	for i := range mobs {
+		if vnum := mobs[i].VNum; vnum >= zone.Number*100 && vnum <= zone.TopRoom {
+			delete(meditSaveMobs, vnum)
 		}
 	}
 	meditSaveMu.Unlock()
