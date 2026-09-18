@@ -253,8 +253,6 @@ export const api = {
   health: () => request<Health>('/health'),
   zones: () => request<Zone[]>('/zones'),
   zone: (id: number) => request<Zone>(`/zones/${id}`),
-  updateZone: (id: number, data: { lifespan?: number; reset_mode?: number }) =>
-    request<Zone>(`/zones/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   server: () => request<ServerInfo>('/server'),
   mobs: () => request<Mob[]>('/mobs'),
   mob: (vnum: number) => request<Mob>(`/mobs/${vnum}`),
@@ -262,15 +260,8 @@ export const api = {
   object: (vnum: number) => request<Obj>(`/objects/${vnum}`),
   room: (vnum: number) => request<Room>(`/rooms/${vnum}`),
 
-  // Write methods (Phase 4)
-  updateRoom: (vnum: number, data: { name?: string; description?: string }) =>
-    request<Room>(`/rooms/${vnum}`, { method: 'PUT', body: JSON.stringify(data) }),
 
-  updateMob: (vnum: number, data: Record<string, unknown>) =>
-    request<Mob>(`/mobs/${vnum}`, { method: 'PUT', body: JSON.stringify(data) }),
 
-  updateObject: (vnum: number, data: Record<string, unknown>) =>
-    request<Obj>(`/objects/${vnum}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   logs: (lines?: number) => request<string[]>(`/logs?lines=${lines || 50}`),
   players: () => request<PlayerInfo[]>('/players'),
