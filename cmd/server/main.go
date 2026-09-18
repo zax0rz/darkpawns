@@ -336,10 +336,47 @@ func main() {
 	// when there is no database: a nil *db.DB stored in an interface is itself
 	// non-nil, which would defeat the nil checks downstream and panic. (DP-589)
 	var gameStore db.GameStore
-	var researchStore db.ResearchStore
 	if database != nil {
 		gameStore = database
-		researchStore = database
+	}
+
+	// The research corpus gets its own connection, named by DP_RESEARCH_URL, and
+	// is absent unless that is set.
+	//
+	// It used to be the game store's own handle wearing a second interface, which
+	// made decision capture a side effect of choosing PostgreSQL: an operator who
+	// picked it for scale also silently began recording decision_log.raw_input —
+	// the literal line every player types, tells and says included. Nobody opted
+	// into that; it arrived with the database choice. It also meant a SQLite boot
+	// held a non-nil research store that could only fail, which is where the
+	// pg_tables warnings came from.
+	//
+	// Separate DSN, so the only database holding player speech is one somebody
+	// deliberately pointed at. PostgreSQL only: decision_log and combat_log use
+	// native range partitioning and pg_tables catalog queries.
+	// An unreachable research database does not stop the game. The corpus is
+	// optional by construction, and refusing to boot a MUD because an
+	// analytics store is down would be disproportionate — the same reasoning
+	// that keeps a failed audit logger non-fatal.
+	//
+	// It is an Error rather than a Warn because DP_RESEARCH_URL is only ever
+	// set deliberately: somebody expected to be recording, and the alternative
+	// to saying so here is their finding out from an empty corpus afterwards.
+	var researchStore db.ResearchStore
+	if url := os.Getenv("DP_RESEARCH_URL"); url != "" {
+		rdb, rerr := db.New(url)
+		if rerr != nil {
+			slog.Error("DP_RESEARCH_URL is set but unusable; starting with decision capture unavailable",
+				"error", rerr,
+				"consequence", "no commands will be recorded for this run")
+		} else {
+			researchStore = rdb
+			defer func() {
+				if cerr := rdb.Close(); cerr != nil {
+					slog.Error("research database close failed during shutdown", "error", cerr)
+				}
+			}()
+		}
 	}
 	manager := session.NewManager(gameWorld, gameStore)
 	if database == nil {
@@ -371,9 +408,11 @@ func main() {
 	var decisionLogWriter *db.DecisionLogWriter
 	if researchStore != nil {
 		if err := researchStore.EnsureDecisionLogPartitions(); err != nil {
-			slog.Warn("failed to create decision log partitions; decision capture disabled", "error", err)
+			slog.Warn("failed to create decision log partitions; decision capture unavailable", "error", err)
 		} else {
 			decisionLogWriter = researchStore.NewDecisionLogWriter()
+			// Installs the writer; does not start recording. Capture is turned
+			// on deliberately, per research session, through /admin/research.
 			manager.SetDecisionLog(decisionLogWriter)
 
 			// decision_log keeps raw_input, the literal line a player typed,
@@ -397,12 +436,16 @@ func main() {
 				if len(dropped) > 0 {
 					slog.Info("dropped expired log partitions", "partitions", dropped)
 				}
-				slog.Info("decision capture enabled", "records", "command text including tells and says",
-					"retention_months", retain)
+				slog.Info("decision capture available but OFF",
+					"records_when_enabled", "command text including tells and says",
+					"retention_months", retain,
+					"enable", "POST /admin/research/capture {\"enabled\":true}")
 			} else {
-				slog.Info("decision capture enabled", "records", "command text including tells and says",
+				slog.Info("decision capture available but OFF",
+					"records_when_enabled", "command text including tells and says",
 					"retention", "unlimited",
-					"hint", "set DP_LOG_RETENTION_MONTHS to expire whole monthly partitions")
+					"hint", "set DP_LOG_RETENTION_MONTHS to expire whole monthly partitions",
+					"enable", "POST /admin/research/capture {\"enabled\":true}")
 			}
 			if db.UsingLegacySalt() {
 				slog.Warn("decision log pseudonyms use the salt that ships in the source, so they are reversible from a player list",

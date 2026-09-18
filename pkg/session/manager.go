@@ -122,7 +122,16 @@ type Manager struct {
 
 	// decisionLog is the write buffer for decision capture (DP-213).
 	// nil when decision capture is disabled.
-	decisionLog *db.DecisionLogWriter
+	// Held atomically because it is swapped at runtime: decision capture can be
+	// turned on and off without a restart, while sessions read it concurrently.
+	// Readers must Load() once into a local — a Load-check-Load-use pair can see
+	// nil on the second read and panic.
+	decisionLog atomic.Pointer[db.DecisionLogWriter]
+
+	// decisionWriter is the writer capture uses when enabled. Set once at boot
+	// and never swapped, so it needs no synchronisation; decisionLog above is
+	// what actually gates recording.
+	decisionWriter *db.DecisionLogWriter
 
 	// godCrowned is the in-process latch for the first-player-God bootstrap
 	// (init_char, db.c:3016). Under DP_FRESH_MUD (the oracle harness path), the
@@ -993,9 +1002,52 @@ func (m *Manager) SetDreamingDir(dir string) {
 	m.dreamingDir = dir
 }
 
-// SetDecisionLog enables decision capture with the given writer.
+// SetDecisionLog installs the writer decision capture will use once enabled.
+// It does not enable capture: a writer being available and capture being on are
+// deliberately separate, so an operator who provisioned a research database has
+// not thereby started recording what players type.
 func (m *Manager) SetDecisionLog(dlw *db.DecisionLogWriter) {
-	m.decisionLog = dlw
+	m.decisionWriter = dlw
+}
+
+// EnableDecisionCapture starts recording. Returns false when no writer was
+// installed, which is the ordinary case: no DP_RESEARCH_URL, nothing to record
+// into.
+func (m *Manager) EnableDecisionCapture() bool {
+	if m.decisionWriter == nil {
+		return false
+	}
+	m.decisionLog.Store(m.decisionWriter)
+	return true
+}
+
+// DisableDecisionCapture stops recording and flushes what is buffered.
+//
+// The order matters. Clearing the pointer first means no session can add to the
+// buffer while it drains, and flushing second means the last second of a
+// research run lands rather than being dropped with the buffer — the writer
+// batches for up to flushInterval, so "disable" without a flush silently loses
+// the most recent records, which are the ones somebody just went to the trouble
+// of producing.
+//
+// The writer itself keeps running: Stop is one-way (stopOnce), so stopping here
+// would make capture un-re-enableable for the life of the process.
+func (m *Manager) DisableDecisionCapture() {
+	m.decisionLog.Store(nil)
+	if m.decisionWriter != nil {
+		m.decisionWriter.Flush()
+	}
+}
+
+// DecisionCaptureEnabled reports whether commands are being recorded right now.
+func (m *Manager) DecisionCaptureEnabled() bool {
+	return m.decisionLog.Load() != nil
+}
+
+// DecisionCaptureAvailable reports whether a research store was configured, so
+// callers can tell "off" from "impossible".
+func (m *Manager) DecisionCaptureAvailable() bool {
+	return m.decisionWriter != nil
 }
 
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
