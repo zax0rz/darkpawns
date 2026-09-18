@@ -22,7 +22,7 @@ var ScriptEngine interface {
 // HasScript checks if a mob has a script for the given trigger.
 // Based on the bitmask values in structs.h lines 659-690.
 func (m *MobInstance) HasScript(trigger string) bool {
-	if m.Prototype == nil || m.Prototype.ScriptName == "" {
+	if m.Proto() == nil || m.Proto().ScriptName == "" {
 		return false
 	}
 
@@ -54,7 +54,7 @@ func (m *MobInstance) HasScript(trigger string) bool {
 		return false
 	}
 
-	return (m.Prototype.LuaFunctions & bitmask) != 0
+	return (m.Proto().LuaFunctions & bitmask) != 0
 }
 
 // RunScript executes a mob's script for the given trigger.
@@ -69,7 +69,7 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 	}
 
 	// Run the script
-	handled, err := ScriptEngine.RunScript(ctx, m.Prototype.ScriptName, trigger)
+	handled, err := ScriptEngine.RunScript(ctx, m.Proto().ScriptName, trigger)
 
 	// If ongive returns false/nil, send default message (matches C: "You can't give that here.")
 	if trigger == "ongive" && !handled && err == nil && ctx.Ch != nil {

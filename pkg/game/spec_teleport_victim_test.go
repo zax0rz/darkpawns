@@ -111,7 +111,11 @@ func TestSpecTeleportVictim_ScoffSpeechTeleportAndLandingLook(t *testing.T) {
 func TestSpecTeleportVictim_NonIntelligentMobSkipsSpeech(t *testing.T) {
 	w, player, mob, lastMsg := prepareTeleportVictim(t)
 	addTeleportDestination(t, w)
-	mob.Prototype.Race = 12 // RACE_HORSE is absent from C intelligent_races[].
+	{
+		p := *mob.Proto()
+		p.Race = 12 // RACE_HORSE is absent from C intelligent_races[].
+		mob.SetProto(&p)
+	}
 	dprng.ResetStream(2)
 
 	if !specTeleportVictim(w, nil, mob, "", "") {

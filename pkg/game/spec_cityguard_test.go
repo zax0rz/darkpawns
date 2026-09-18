@@ -73,12 +73,28 @@ func TestSpecCityguard_ProtectionSelectionAndHitBoundary(t *testing.T) {
 	}
 
 	lessEvil := newSpecProcTestMob(t, w, 1001, 10)
-	lessEvil.Prototype.Alignment = -100
-	lessEvil.Prototype.ShortDesc = "a less evil mob"
+	{
+		p := *lessEvil.Proto()
+		p.Alignment = -100
+		lessEvil.SetProto(&p)
+	}
+	{
+		p := *lessEvil.Proto()
+		p.ShortDesc = "a less evil mob"
+		lessEvil.SetProto(&p)
+	}
 	lessEvil.SetFighting(protected.GetName())
 	mostEvil := newSpecProcTestMob(t, w, 1001, 10)
-	mostEvil.Prototype.Alignment = -500
-	mostEvil.Prototype.ShortDesc = "the most evil mob"
+	{
+		p := *mostEvil.Proto()
+		p.Alignment = -500
+		mostEvil.SetProto(&p)
+	}
+	{
+		p := *mostEvil.Proto()
+		p.ShortDesc = "the most evil mob"
+		mostEvil.SetProto(&p)
+	}
 	mostEvil.SetFighting(protected.GetName())
 
 	engine := &cityguardTestCombatEngine{}

@@ -283,8 +283,8 @@ func (s *Session) buildRoomMobs() []RoomMobVar {
 	keywords := make([]string, len(mobs))
 	for i, mob := range mobs {
 		kw := ""
-		if mob.Prototype != nil {
-			kw = firstMeaningfulKeyword(mob.Prototype.Keywords)
+		if mob.Proto() != nil {
+			kw = firstMeaningfulKeyword(mob.Proto().Keywords)
 		}
 		if kw == "" || kw == "unknown" {
 			kw = fmt.Sprintf("mob%d", mob.VNum)

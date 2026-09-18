@@ -1,0 +1,62 @@
+# C-backed MEDIT submenu bytes with ANSI color enabled (keep-ansi). Walks the
+# sex, position, attack, race, NPC-flag, AFF-flag, and script submenus of mob
+# 3100, re-selecting each current value (Male/8/0/0) so the bytes are those of
+# the stock prototype. The script submenu also opens the script-flags screen
+# (option 2, covering the \x1b[H\x1b[J clear sequence) then quits it.
+# Every submenu return sets OLC_VAL, so the final quit answers n to the save
+# prompt.
+# depth-case: medit.submenus-colors-on-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Zaxedit
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zaxedit
+y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+medit 3100
+1
+1
+i
+8
+k
+0
+n
+0
+l
+0
+m
+0
+s
+2
+0
+0
+q
+n

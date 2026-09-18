@@ -437,6 +437,19 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			if !s.SendClosed() {
 				s.SendPrompt()
 			}
+		} else if s.IsRoomEditing() || s.IsMeditEditing() {
+			// CON_REDIT and CON_MEDIT own every complete input line, including
+			// a bare <ENTER>. C's interpreter hands the OLC menu parsers every
+			// line (interpreter.c: CON_REDIT/CON_MEDIT dispatch); an empty line
+			// at a numerical prompt must reach the gate ("Field must be
+			// numerical, try again : "), not die in prompt-refresh. This branch
+			// sits above the `line == ""` refresh like the TEDIT branch.
+			if err := sendCommand(s, "", nil, rawLine); err != nil {
+				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
+			}
+			if !s.SendClosed() {
+				s.SendPrompt()
+			}
 		} else if line == "" {
 			// Pressing Enter with no command just refreshes the prompt. Route it
 			// through the session's send channel so writeLoop renders it in FIFO

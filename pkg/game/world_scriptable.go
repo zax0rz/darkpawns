@@ -644,7 +644,7 @@ func (w *World) dispatchScriptEvent(source, target, objVNum, argument int, trigg
 	} else {
 		// The mob's prototype may not have the trigger bit set, but the
 		// function might still exist in the Lua file — try anyway
-		if _, err := ScriptEngine.RunScript(ctx, mob.Prototype.ScriptName, trigger); err != nil {
+		if _, err := ScriptEngine.RunScript(ctx, mob.Proto().ScriptName, trigger); err != nil {
 			slog.Error("script error", "mob_vnum", mob.GetVNum(), "trigger", trigger, "error", err)
 		}
 	}

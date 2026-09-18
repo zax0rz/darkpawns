@@ -272,7 +272,7 @@ func (w *World) GetObjNum(rnum int) *ObjectInstance {
 // C: struct char_data *get_char_num(int nr) — linear search of character_list.
 func (w *World) GetCharNum(rnum int) *MobInstance {
 	for _, mob := range w.activeMobs {
-		if mob.Prototype != nil && mob.Prototype.VNum == rnum {
+		if mob.Proto() != nil && mob.Proto().VNum == rnum {
 			return mob
 		}
 	}

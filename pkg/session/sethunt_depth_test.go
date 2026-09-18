@@ -37,7 +37,7 @@ func TestCmdSethuntSetsHunterState(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob: %v", err)
 	}
-	keywords := strings.Fields(hunter.Prototype.Keywords)
+	keywords := strings.Fields(hunter.Proto().Keywords)
 	if len(keywords) == 0 {
 		t.Fatal("test mob has no keyword")
 	}

@@ -356,8 +356,8 @@ func (w *World) mobAttackPlayer(m *MobInstance, target *Player) {
 // mobIsIntelligent checks if a mob is intelligent enough to open doors.
 func mobIsIntelligent(m *MobInstance) bool {
 	// Check mob prototype flags for intelligence
-	if m.Prototype != nil {
-		for _, f := range m.Prototype.AffectFlags {
+	if m.Proto() != nil {
+		for _, f := range m.Proto().AffectFlags {
 			if f == "intelligent" {
 				return true
 			}

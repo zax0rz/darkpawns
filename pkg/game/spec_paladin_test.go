@@ -85,12 +85,20 @@ func TestSpecPaladin_DispelAlignment(t *testing.T) {
 	w, player, _ := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, 1001, 32)
 
-	mob.Prototype.Alignment = -350
+	{
+		p := *mob.Proto()
+		p.Alignment = -350
+		mob.SetProto(&p)
+	}
 	if got := paladinDispelSpell(mob); got != spells.SpellDispelGood {
 		t.Errorf("evil paladin spell = %d, want SPELL_DISPEL_GOOD (%d)", got, spells.SpellDispelGood)
 	}
 
-	mob.Prototype.Alignment = 0
+	{
+		p := *mob.Proto()
+		p.Alignment = 0
+		mob.SetProto(&p)
+	}
 	if got := paladinDispelSpell(mob); got != spells.SpellDispelEvil {
 		t.Errorf("neutral paladin spell = %d, want SPELL_DISPEL_EVIL (%d)", got, spells.SpellDispelEvil)
 	}

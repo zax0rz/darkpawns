@@ -1,0 +1,49 @@
+# C-first medit boundary vehicle (src/medit.c:612-735). Exercises the
+# numerical-input gate quirk, field clamping, flag toggling, and the script
+# menu's live shallow-script behavior on an existing mobile prototype.
+
+# depth-case: medit.numerical-gate
+# depth-case: medit.field-clamping
+# depth-case: medit.flag-toggle
+# depth-case: medit.script-shallow
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+medit 18305
+6
+<ENTER>
+abc
+12
+q
+y

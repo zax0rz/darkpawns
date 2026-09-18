@@ -11,11 +11,19 @@ func conjuredTestMob(t *testing.T, w *World, vnum int, room int) *MobInstance {
 	t.Helper()
 	mob := newSpecProcTestMob(t, w, room, 10)
 	mob.VNum = vnum
-	mob.Prototype.VNum = vnum
-	mob.Prototype.ShortDesc = map[int]string{
-		81: "an earth elemental",
-		85: "a Dominion Angel",
-	}[vnum]
+	{
+		p := *mob.Proto()
+		p.VNum = vnum
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.ShortDesc = map[int]string{
+			81: "an earth elemental",
+			85: "a Dominion Angel",
+		}[vnum]
+		mob.SetProto(&p)
+	}
 	return mob
 }
 
@@ -111,7 +119,11 @@ func TestSpecConjured_DefaultSpeechAudienceAndExtraction(t *testing.T) {
 func TestSpecConjured_AutonomousRegisteredDispatch(t *testing.T) {
 	w, actor, lastMsg := newSpecProcTestWorld(t)
 	mob := conjuredTestMob(t, w, 85, actor.GetRoom())
-	mob.Prototype.ActionFlags = []string{"SPEC"}
+	{
+		p := *mob.Proto()
+		p.ActionFlags = []string{"SPEC"}
+		mob.SetProto(&p)
+	}
 	oldName, hadName := MobSpecAssign[mob.GetVNum()]
 	MobSpecAssign[mob.GetVNum()] = "conjured"
 	t.Cleanup(func() {

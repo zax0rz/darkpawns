@@ -350,6 +350,19 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return nil
 	}
 
+	// A medit (CON_MEDIT) session owns the complete next line while no
+	// descriptor string editor is active, mirroring C's CON_MEDIT case in
+	// interpreter.c which calls medit_parse instead of the command
+	// interpreter.
+	if s.player != nil && s.isMeditEditing() {
+		line := cmd.RawLine
+		if line == "" {
+			line = commandInputLine(cmd.Command, cmd.Args)
+		}
+		s.handleMeditInput(line)
+		return nil
+	}
+
 	// Clan plan writes use the same PLR_WRITING flag as
 	// notes/mail and are completed by the generic string editor equivalent.
 	if s.player != nil && s.player.ClanPlanWriting {

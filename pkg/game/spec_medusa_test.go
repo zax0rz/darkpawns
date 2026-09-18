@@ -10,8 +10,16 @@ import (
 func medusaTestMob(t *testing.T, w *World, player *Player) *MobInstance {
 	t.Helper()
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
-	mob.Prototype.Keywords = "Medusa Echidna"
-	mob.Prototype.ShortDesc = "Echidna, the greater medusa"
+	{
+		p := *mob.Proto()
+		p.Keywords = "Medusa Echidna"
+		mob.SetProto(&p)
+	}
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "Echidna, the greater medusa"
+		mob.SetProto(&p)
+	}
 	return mob
 }
 

@@ -103,6 +103,14 @@ type Manager struct {
 	roomEditMu sync.Mutex
 	roomEdits  map[int]*Session
 
+	// mobEdits reserves mob VNums against concurrent duplicate MEDIT entry.
+	// Mirrors roomEdits: C's do_olc duplicate gate is a descriptor_list scan
+	// made safe by the single-threaded interpreter; the Go dispatcher runs
+	// sessions on separate goroutines, so admission is one atomic claim
+	// instead of a check-then-install pair. Keyed by the OLC mob number.
+	mobEditMu sync.Mutex
+	mobEdits  map[int]*Session
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -297,6 +305,7 @@ func NewManager(world *game.World, database db.Database) *Manager {
 		}),
 		ipConnCount:           make(map[string]int),
 		roomEdits:             make(map[int]*Session),
+		mobEdits:              make(map[int]*Session),
 		nextEphemeralPlayerID: 1,
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
@@ -1208,6 +1217,16 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		game.CancelMailWriting(s.player.ID)
 	}
 
+	// 3d. Discard any in-progress medit (CON_MEDIT) session, mirroring C's
+	// cleanup_olc(d, CLEANUP_ALL) on descriptor close. Unsaved changes are
+	// discarded; the writing flag is cleared and the stop-editing broadcast
+	// goes out.
+	s.textEditMu.Lock()
+	if s.mobEdit != nil {
+		s.finishMeditLocked(cleanupMeditAll)
+	}
+	s.textEditMu.Unlock()
+
 	// 4. Save player to DB
 	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest {
 		if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
@@ -1246,6 +1265,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 	}
 	s.cancelTextEdit()
 	s.cancelRoomEdit()
+	s.cancelMedit()
 
 	p := s.player
 	p.SetLinkless(true)
@@ -1624,6 +1644,11 @@ type Session struct {
 	// its serialization boundary so disconnect cleanup and raw-line input
 	// cannot commit or discard the same working room concurrently.
 	roomEdit *reditState
+
+	// mobEdit holds the descriptor-owned medit (CON_MEDIT) working state.
+	// It is guarded by textEditMu, mirroring how the C descriptor owns the
+	// OLC struct while CON_MEDIT is active.
+	mobEdit *meditState
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
