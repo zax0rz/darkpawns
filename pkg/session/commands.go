@@ -149,6 +149,7 @@ func init() {
 	registerCommand("immlist", wrapArgs(cmdImmlist), "Show the list of immortals.")
 	registerCommand("tedit", wrapArgs(cmdTedit), "Edit the game's text files.")
 	registerCommand("redit", wrapArgs(cmdRedit), "Edit a room.")
+	registerCommand("medit", wrapArgs(cmdMedit), "Edit a mobile with the OLC mobile editor.")
 	registerCommand("players", wrapArgs(cmdPlayers), "Show all registered players.")
 	registerCommand("clear", wrapArgs(cmdClear), "Clear the screen.", "cls")
 	registerCommand("whoami", wrapArgs(cmdWhoami), "Show your own name.")

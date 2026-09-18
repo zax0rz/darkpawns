@@ -1208,6 +1208,16 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		game.CancelMailWriting(s.player.ID)
 	}
 
+	// 3d. Discard any in-progress medit (CON_MEDIT) session, mirroring C's
+	// cleanup_olc(d, CLEANUP_ALL) on descriptor close. Unsaved changes are
+	// discarded; the writing flag is cleared and the stop-editing broadcast
+	// goes out.
+	s.textEditMu.Lock()
+	if s.mobEdit != nil {
+		s.finishMeditLocked(cleanupMeditAll)
+	}
+	s.textEditMu.Unlock()
+
 	// 4. Save player to DB
 	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest {
 		if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
@@ -1246,6 +1256,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 	}
 	s.cancelTextEdit()
 	s.cancelRoomEdit()
+	s.cancelMedit()
 
 	p := s.player
 	p.SetLinkless(true)
@@ -1624,6 +1635,11 @@ type Session struct {
 	// its serialization boundary so disconnect cleanup and raw-line input
 	// cannot commit or discard the same working room concurrently.
 	roomEdit *reditState
+
+	// mobEdit holds the descriptor-owned medit (CON_MEDIT) working state.
+	// It is guarded by textEditMu, mirroring how the C descriptor owns the
+	// OLC struct while CON_MEDIT is active.
+	mobEdit *meditState
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)

@@ -283,6 +283,16 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		return
 	}
 
+	// Descriptor-owned OLC string editing (medit D-description): hand the
+	// buffer back to the editor instead of touching files. The OLC session
+	// continues, so PlrWriting stays set and no stop-editing broadcast goes
+	// out here.
+	if state.onComplete != nil {
+		s.textEdit = nil
+		state.onComplete(action == textEditSave, state.buffer)
+		return
+	}
+
 	switch action {
 	case textEditSave:
 		// C's strip_string removes carriage returns in the same buffer that is
