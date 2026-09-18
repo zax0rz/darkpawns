@@ -42,6 +42,18 @@ The supported sections are:
 Read `ParseScenario` in `internal/oraclediff/scenario.go` for the authoritative
 fixture grammar. Fixtures patch only throwaway C and Go world copies.
 
+## Raw ANSI proof mode (`keep-ansi`)
+
+Normalization rule 1 strips ANSI CSI escapes, which hides any surface where C
+embeds color bytes the port is missing (or invents color C never emits). A
+scenario that declares the `keep-ansi` fixture compares its probe blocks with
+escapes intact instead (`NormalizeKeepANSI`), certifying the raw color bytes
+themselves. `scenarios/redit-menu-color-on.txt` and
+`scenarios/redit-menu-color-off.txt` are the model vehicles: they answer the
+creation ANSI question Y/N respectively and keep every probe step inside the
+OLC menus, because the ordinary playing prompt and vitals masking expect
+ANSI-stripped text and are outside what the mode certifies.
+
 For command-depth work, annotate scenarios with `# depth-case: <case-id>` and
 record the case in `docs/fidelity/depth/<command>.tsv`. Run `make fidelity-depth`
 to reject missing scenario or unit-test proof references. See

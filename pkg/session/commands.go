@@ -148,6 +148,7 @@ func init() {
 	registerCommand("wizlist", wrapArgs(cmdWizlist), "Show the list of wizards.")
 	registerCommand("immlist", wrapArgs(cmdImmlist), "Show the list of immortals.")
 	registerCommand("tedit", wrapArgs(cmdTedit), "Edit the game's text files.")
+	registerCommand("redit", wrapArgs(cmdRedit), "Edit a room.")
 	registerCommand("players", wrapArgs(cmdPlayers), "Show all registered players.")
 	registerCommand("clear", wrapArgs(cmdClear), "Clear the screen.", "cls")
 	registerCommand("whoami", wrapArgs(cmdWhoami), "Show your own name.")

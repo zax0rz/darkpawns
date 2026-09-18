@@ -9,10 +9,6 @@ medit-entry-depth	medit.tsv	medit.no-argument	blocked
 medit-entry-depth	medit.tsv	medit.nonnumeric-argument	blocked
 medit-entry-depth	medit.tsv	medit.unknown-zone	blocked
 medit-session-depth	medit.tsv	medit.interactive-olc	blocked
-redit-entry-depth	redit.tsv	redit.nonnumeric-argument	blocked
-redit-entry-depth	redit.tsv	redit.unknown-zone	blocked
-redit-session-depth	redit.tsv	redit.interactive-olc	blocked
-redit-session-depth	redit.tsv	redit.no-argument-current-room	blocked
 sedit-entry-depth	sedit.tsv	sedit.no-argument	blocked
 sedit-entry-depth	sedit.tsv	sedit.nonnumeric-argument	blocked
 sedit-entry-depth	sedit.tsv	sedit.unknown-zone	blocked

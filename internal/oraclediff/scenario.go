@@ -52,6 +52,13 @@ type Scenario struct {
 	// creation. Focused vehicles use this when a spawned autonomous mob must
 	// survive until a later warmup command places the actor beside it.
 	SkipSetupSettle bool
+	// KeepANSI compares probe blocks with ANSI escapes intact (NormalizeKeepANSI)
+	// instead of stripping them. It is the raw-byte proof mode for C surfaces
+	// whose embedded colors are player-facing bytes, such as OLC menus colored
+	// through get_char_cols. Scenarios using it must keep every probe block
+	// inside that surface: colored prompts and vitals outside it are masked by
+	// rules that expect ANSI already stripped.
+	KeepANSI bool
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
@@ -466,6 +473,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "no-settle") {
 				sc.SkipSetupSettle = true
+				continue
+			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "keep-ansi") {
+				sc.KeepANSI = true
 				continue
 			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "strip-mob-script") {

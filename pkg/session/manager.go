@@ -95,6 +95,14 @@ type Manager struct {
 	// Moderation manager for mute/filter/spam checks
 	modChecker ModerationChecker
 
+	// roomEdits reserves room VNums against concurrent duplicate REDIT entry.
+	// C's do_olc duplicate gate is a descriptor_list scan made safe by the
+	// single-threaded interpreter; the Go dispatcher runs sessions on separate
+	// goroutines, so admission is one atomic claim here instead of a
+	// check-then-install pair. Keyed by the OLC room number being edited.
+	roomEditMu sync.Mutex
+	roomEdits  map[int]*Session
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -288,6 +296,7 @@ func NewManager(world *game.World, database db.Database) *Manager {
 			Lockout:   15 * time.Minute,
 		}),
 		ipConnCount:           make(map[string]int),
+		roomEdits:             make(map[int]*Session),
 		nextEphemeralPlayerID: 1,
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
@@ -1141,6 +1150,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	// character's departure. Preserve the editor's in-memory cache (without a
 	// disk commit) and emit the shared OLC room transition first.
 	s.cancelTextEdit()
+	s.cancelRoomEdit()
 
 	// 1. Stop combat
 	m.combatEngine.StopCombat(playerName)
@@ -1235,6 +1245,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 		return false
 	}
 	s.cancelTextEdit()
+	s.cancelRoomEdit()
 
 	p := s.player
 	p.SetLinkless(true)
@@ -1609,6 +1620,10 @@ type Session struct {
 	// tedit and news/motd/etc. retain C's one live global authority.
 	textEditMu sync.Mutex
 	textEdit   *textEditState
+	// roomEdit is the descriptor-owned CON_REDIT state. It uses textEditMu as
+	// its serialization boundary so disconnect cleanup and raw-line input
+	// cannot commit or discard the same working room concurrently.
+	roomEdit *reditState
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)

@@ -251,6 +251,15 @@ func (s *Session) notePlayerOutput() {
 // bare game-loop prompt pass writes the prompt alone.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
+	// CON_REDIT menus own their trailing prompt. The telnet loop still calls
+	// SendPrompt after every line, but C's descriptor state does not append the
+	// ordinary playing prompt while redit_parse owns the input.
+	if s.isRoomEditing() {
+		if s.isTextEditing() {
+			s.sendPromptText("] ")
+		}
+		return
+	}
 	cmdInfoBarUpdate(s)
 	text := s.promptText()
 	// C's CON_TEDIT prompt is written directly after the editor's final
@@ -259,6 +268,10 @@ func (s *Session) SendPrompt() {
 	if s.outputSincePrompt.Swap(0) > 0 && !s.isTextEditing() {
 		text = "\r\n" + text
 	}
+	s.sendPromptText(text)
+}
+
+func (s *Session) sendPromptText(text string) {
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgPrompt,
 		Data: map[string]interface{}{"text": text},

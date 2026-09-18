@@ -1,0 +1,54 @@
+# C-backed REDIT menu bytes with ANSI color enabled, compared with ANSI
+# escapes intact (keep-ansi). Creation answers Y to "Do you want ANSI color",
+# which sets both PRF_COLOR bits (interpreter.c CON_COLOR), so every menu
+# renders through get_char_cols with grn/nrm/cyn/yel live. The probe stays
+# inside the editor: the playing prompt is colored at C_CMP outside this
+# surface and is not what this vehicle certifies.
+# depth-case: redit.menu-colors-on-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Reditcolor
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reditcolor
+y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+redit
+1
+Colored Room Name
+3
+0
+4
+0
+5
+0

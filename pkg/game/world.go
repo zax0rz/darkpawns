@@ -443,21 +443,19 @@ func (w *World) SetObjectExtraFlag(vnum int, flag int, set bool) bool {
 }
 
 // SetExitInfo replaces the runtime EX_* bitfield for an exit in a room.
+// It takes the routine mutation path: door operations (open/close/lock,
+// zone-reset D commands, scripting) must not pay the structural insertion
+// cost of a full world rebuild per call.
 func (w *World) SetExitInfo(roomVNum int, direction string, info int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	room, ok := w.rooms[roomVNum]
-	if !ok {
-		return false
-	}
-	exit, ok := room.Exits[direction]
-	if !ok {
-		return false
-	}
-	exit.ExitInfo = info
-	room.Exits[direction] = exit
-	return true
+	return w.mutateRoom(roomVNum, func(room *parser.Room) bool {
+		exit, ok := room.Exits[direction]
+		if !ok {
+			return false
+		}
+		exit.ExitInfo = info
+		room.Exits[direction] = exit
+		return true
+	})
 }
 
 // AddPlayer adds a player to the world.

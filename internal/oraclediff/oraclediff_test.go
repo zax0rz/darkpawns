@@ -445,3 +445,27 @@ func TestReportBlockDivergence(t *testing.T) {
 		t.Fatalf("expected command label, got:\n%s", r)
 	}
 }
+
+func TestNormalizeKeepANSIPreservesEscapeBytes(t *testing.T) {
+	raw := "\r\n\x1b[32m1\x1b[0m) Name        : \x1b[33mAt the Temple Altar\r\nEnter choice : "
+	want := "\x1b[32m1\x1b[0m) Name        : \x1b[33mAt the Temple Altar\nEnter choice :\n"
+	if got := NormalizeKeepANSI(raw); got != want {
+		t.Fatalf("NormalizeKeepANSI() = %q, want %q", got, want)
+	}
+	if got := Normalize(raw); strings.Contains(got, "\x1b") {
+		t.Fatalf("Normalize() kept ANSI bytes: %q", got)
+	}
+}
+
+func TestParseScenarioKeepANSIFixture(t *testing.T) {
+	sc, err := ParseScenario("keep-ansi", strings.NewReader("[fixture]\nquiet-mobs\nkeep-ansi\n[setup:oracle]\nname\n[probe]\nlook\n"))
+	if err != nil {
+		t.Fatalf("ParseScenario: %v", err)
+	}
+	if !sc.KeepANSI {
+		t.Fatal("keep-ansi fixture did not set sc.KeepANSI")
+	}
+	if !sc.QuietAllMobs {
+		t.Fatal("quiet-mobs fixture dropped alongside keep-ansi")
+	}
+}

@@ -27,8 +27,24 @@ var (
 // Normalize applies the Tier-1 rules in this deliberate order. Keep this as
 // the single rule list: order matters, and each rule documents why it exists.
 func Normalize(raw string) string {
+	return normalize(raw, false)
+}
+
+// NormalizeKeepANSI runs the same Tier-1 pipeline with rule 1 disabled, so the
+// comparison certifies raw ANSI bytes. This is the proof mode for surfaces
+// whose C colors are player-facing law (OLC's get_char_cols menus): the
+// ordinary mode strips ANSI and therefore cannot see a missing-color port.
+// Colored prompts and vitals masks expect rule-1-stripped text, so scenarios
+// using this mode must stay inside the colored surface they certify.
+func NormalizeKeepANSI(raw string) string {
+	return normalize(raw, true)
+}
+
+func normalize(raw string, keepANSI bool) string {
 	// 1. Strip ANSI CSI escapes: color capability is transport presentation, not game text.
-	raw = ansiEscape.ReplaceAllString(raw, "")
+	if !keepANSI {
+		raw = ansiEscape.ReplaceAllString(raw, "")
+	}
 
 	// 2. Canonicalize CRLF/LFCR/CR and trailing whitespace: both telnet stacks may frame lines differently.
 	raw = strings.ReplaceAll(raw, "\r\n", "\n")
