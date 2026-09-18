@@ -103,10 +103,7 @@ Command registry and skill command handlers. `Registry` maps command names to `H
 Shared interfaces to break circular dependencies. `CommandSession` abstracts session for command handlers. `CommandManager` abstracts the session manager. `ShopManager` interface for shop operations. **Key types:** `CommandSession`, `CommandManager`, `ShopManager`. **Depends on:** none.
 
 ### `pkg/db`
-Postgres persistence. Player records (stats, inventory, equipment) serialized to/from JSON columns. Agent API key validation. `New()` connects, `SavePlayer`/`GetPlayer`/`CreatePlayer` for CRUD. Graceful: server runs without DB (no persistence). **Key types:** `DB`, `PlayerRecord`. **Depends on:** `game`.
-
-### `pkg/storage`
-Optional SQLite persistence backend via mattn/go-sqlite3 with WAL mode. Players table (JSON player state with timestamps), world state (zone reset tracking, mob respawn timers), narrative memory (agent long-term memory, future use). **Status:** Backend implemented and tested. Not wired into `cmd/server/main.go` yet — currently in-memory only. Wire-in: `NewSQLiteBackend(path)` → pass through World constructor. **Depends on:** none.
+The store: player, agent-key and narrative-memory persistence on PostgreSQL or embedded SQLite, chosen by the DSN scheme (see Persistence below). Player records (stats, inventory, equipment) serialized to/from JSON columns. Agent API key validation. `New()` connects, `SavePlayer`/`GetPlayer`/`CreatePlayer` for CRUD. A store is only absent under `DP_ALLOW_NO_DB=1`; otherwise an empty DSN is a boot error. **Key types:** `DB`, `PlayerRecord`. **Depends on:** `game`.
 
 ### Other packages
 - **`pkg/ai`** — AI agent combat integration, AI ticker for NPC behavior
@@ -275,14 +272,16 @@ cmdRegistry.Use(RateLimitMiddleware(250 * time.Millisecond))
 
 **Status:** Functions exist, `Registry.Use()` is implemented. No middleware is currently wired onto the registry. Intended for production — logging middleware adds noise during active development.
 
-## Persistence (SQLite)
+## Persistence
 
-`pkg/storage/` provides an optional SQLite persistence backend via mattn/go-sqlite3 with WAL mode:
-- **Players table:** serialized JSON player state with timestamps
-- **World state:** zone reset tracking, mob respawn timers
-- **Narrative memory:** agent long-term memory (future use)
+`pkg/db` is the store: one connection, chosen by the DSN scheme. `postgres://` (or `postgresql://`) selects PostgreSQL via lib/pq; `sqlite://`, a bare file path or `:memory:` selects embedded SQLite via modernc.org/sqlite, the pure-Go driver that keeps the `CGO_ENABLED=0` build static (DEPLOYMENT.md). With no `-db` and no `DATABASE_URL`, boot defaults to an embedded SQLite file beside the world data.
 
-**Status:** Backend implemented and tested. Server (`cmd/server/main.go`) does not wire it in yet — currently in-memory only. Wire-in: `NewSQLiteBackend(path)` → pass through World constructor.
+- **Game store (`GameStore`):** `players`, `agent_keys`, `agent_narrative_memory`, `agent_session_summaries`
+- **Moderation (`pkg/moderation`):** `abuse_reports`, `admin_log`, `player_penalties`, `word_filters`, created and queried through the same connection
+- **Research corpus (`ResearchStore`):** `decision_log` and `combat_log` stay PostgreSQL-only (range partitioning, `pg_tables` catalog queries, `TEXT[]`), so decision capture is disabled on a SQLite deployment rather than writing player-typed input to the file
+- **World state** is not in the store: it is written to `data/world_state.json`
+
+**Status:** Both backends are live and covered by real-database tests (`pkg/db/backend_test.go`, `pkg/moderation/backend_test.go`): SQLite always, PostgreSQL when `DATABASE_URL` is set. The cgo-backed `pkg/storage` backend (mattn/go-sqlite3, never wired into `cmd/server/main.go`, and unable to work at all in the `CGO_ENABLED=0` build) has been deleted as superseded by `pkg/db`.
 
 ## Lua Scripting
 

@@ -19,7 +19,10 @@ import (
 	_ "github.com/lib/pq"
 	// modernc.org/sqlite is the pure-Go SQLite driver: the static
 	// CGO_ENABLED=0 build in DEPLOYMENT.md depends on it. mattn/go-sqlite3
-	// would pull in cgo (see pkg/storage for how that rots).
+	// needed cgo, which is how the store this package replaced rotted:
+	// pkg/storage (since deleted) still compiled without cgo, and every call
+	// then failed at runtime with "go-sqlite3 requires cgo to work. This is a
+	// stub".
 	_ "modernc.org/sqlite"
 )
 
