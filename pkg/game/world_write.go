@@ -42,18 +42,6 @@ func (w *World) CreateRoomExit(vnum int, direction string, toRoom int) bool {
 // Mob write methods
 // --------------------------------------------------------------------------
 
-// SetMobTHAC0 updates a mob's THAC0. Returns false if the mob doesn't exist.
-func (w *World) SetMobTHAC0(vnum int, val int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	mob, ok := w.mobs[vnum]
-	if !ok {
-		return false
-	}
-	mob.THAC0 = val
-	return true
-}
-
 // AdjustMobPrototypes mirrors C adjust_mobs() (src/olc.c:279-307). It
 // recalculates each prototype's damroll and hit-point addend from its level.
 // The C command also marks each prototype's zone for a later OLC save; Go's
@@ -161,14 +149,18 @@ func (w *World) ResetZone(number int) error {
 	return w.spawner.ExecuteZoneReset(zone)
 }
 
-// The four setters below outlived the HTTP write path that was their only
-// production caller. They stay because the OLC and telnet tests use them as
-// fixtures — pkg/game/world_redit_test.go, pkg/session/redit_test.go and
-// pkg/telnet/listener_test.go set a room up before exercising the real editor.
+// The three setters below outlived the HTTP write path that was their only
+// production caller. They stay because redit's concurrency tests use them to
+// simulate an external write landing on a live room while the editor holds a
+// working copy — pkg/game/world_redit_test.go drives them in a loop against
+// CommitEditedRoom, and pkg/session/redit_test.go covers the D5 manifest
+// scenario redit.overlap-web-admin.
 //
-// A fixture helper is not the defect the HTTP path was: the problem there was a
-// route that mutated the world without passing through the command parser, so
-// dp-oracle-diff could not observe it. Nothing outside a test reaches these.
+// That is a different thing from the defect this file's other forty-odd
+// setters were part of: a route that wrote to the world without passing
+// through the command parser, where dp-oracle-diff could not observe it.
+// Simulating a concurrent writer inside a test is not a bypass. Nothing
+// outside a test reaches these.
 
 // SetRoomName updates a room's name. Returns false if the room doesn't exist.
 func (w *World) SetRoomName(vnum int, name string) bool {
@@ -183,11 +175,4 @@ func (w *World) SetRoomDescription(vnum int, desc string) bool {
 // SetRoomSector sets a room's sector type. Returns false if the room doesn't exist.
 func (w *World) SetRoomSector(vnum int, sector int) bool {
 	return w.updateRoom(vnum, func(room *parser.Room) { room.Sector = sector })
-}
-
-// SetRoomFlags sets a room's flag bitmasks. Returns false if the room doesn't exist.
-func (w *World) SetRoomFlags(vnum int, flags []string) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) {
-		room.Flags = append([]string(nil), flags...)
-	})
 }

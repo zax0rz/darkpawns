@@ -69,17 +69,6 @@ func newTestWorldForWrite(t *testing.T) *game.World {
 // Mob write methods
 // ---------------------------------------------------------------------------
 
-func TestSetMobTHAC0(t *testing.T) {
-	w := newTestWorldForWrite(t)
-	if !w.SetMobTHAC0(2002, 5) {
-		t.Fatal("SetMobTHAC0 returned false")
-	}
-	mob, _ := w.GetMobPrototype(2002)
-	if mob.THAC0 != 5 {
-		t.Errorf("THAC0 = %d, want 5", mob.THAC0)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Object write methods
 // ---------------------------------------------------------------------------
