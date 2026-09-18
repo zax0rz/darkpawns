@@ -3,6 +3,7 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"html"
 	"net/http"
 	"os"
 	"strings"
@@ -48,10 +49,10 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if adminUIDir == "" {
 		adminUIDir = "admin-ui-dist"
 	}
+	mux.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/", http.StatusMovedPermanently)
+	})
 	if _, err := os.Stat(adminUIDir); err == nil { // #nosec G703 -- adminUIDir is operator-set (ADMIN_UI_DIR env), not request-derived
-		mux.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "/admin/", http.StatusMovedPermanently)
-		})
 		mux.HandleFunc("/admin/favicon.svg", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
@@ -154,14 +155,57 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// SPA fallback — this MUST be registered last, after all API routes.
 	// Catches any /admin/* path that didn't match an API route above.
-	if _, err := os.Stat(adminUIDir); err == nil { // #nosec G703 -- adminUIDir is operator-set (ADMIN_UI_DIR env), not request-derived
-		mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, adminUIDir+"/index.html") // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
-		})
-	}
+	// Registered whether or not the console is built: when the build is absent
+	// the fallback answers with the build commands instead of Go's bare 404,
+	// so a fresh checkout says what to run rather than looking broken.
+	mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
+		index := adminUIDir + "/index.html"
+		if _, err := os.Stat(index); err != nil { // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
+			serveConsoleNotBuilt(w, index)
+			return
+		}
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+		http.ServeFile(w, r, index) // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
+	})
 
 	return mux, nil
 }
+
+// serveConsoleNotBuilt answers /admin/ when the console build is absent. A
+// fresh checkout has no admin-ui-dist — the console is a separate npm build,
+// not something `go build` produces — and Go's default 404 says nothing about
+// the step that creates it. The commands mirror DEPLOYMENT.md ("Admin console").
+func serveConsoleNotBuilt(w http.ResponseWriter, index string) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusServiceUnavailable)
+	_, _ = fmt.Fprintf(w, consoleNotBuiltPage, html.EscapeString(index))
+}
+
+const consoleNotBuiltPage = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dark Pawns admin console — not built</title>
+</head>
+<body>
+<h1>Admin console not built</h1>
+<p>This server has no admin console at <code>%s</code>.
+The console is a separate frontend build, not part of <code>go build</code>.</p>
+<p>From the repository root:</p>
+<pre>npm --prefix admin-ui ci
+npm --prefix admin-ui run build
+rm -rf lib/admin-ui-dist
+mkdir -p lib/admin-ui-dist
+cp -R admin-ui/dist/. lib/admin-ui-dist/</pre>
+<p>Then restart the server and reload this page.
+See DEPLOYMENT.md, &ldquo;Admin console&rdquo;, for details &mdash;
+including <code>ADMIN_UI_DIR</code> if the console lives somewhere else.</p>
+</body>
+</html>
+`
 
 // requireRole wraps a handler, rejecting requests that lack the required role.
 // It first ensures a valid JWT is present (parsing the Authorization header if
