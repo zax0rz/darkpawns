@@ -9,7 +9,7 @@ import (
 )
 
 // unmigratedAdminRoutes is the allowlist of admin-mux routes that have not
-// been migrated to Huma operations yet — tranche 1 leaves ~30 entries. It
+// been migrated to Huma operations yet — tranche 2 leaves 21 entries. It
 // must only SHRINK: landing a migration removes its entry, and the gate fails
 // if an entry is stale, so nothing here rots.
 var unmigratedAdminRoutes = []struct {
@@ -22,22 +22,11 @@ var unmigratedAdminRoutes = []struct {
 	{"/admin/icons.svg", "static console asset"},
 	{"/admin/assets/", "static console assets"},
 	{"/admin/index.html", "SPA entry point"},
-	{"/admin/zones", "zone list"},
 	{"/admin/zones/reset", "zone reset trigger"},
-	{"/admin/zones/", "zone detail by id"},
-	{"/admin/server", "server info"},
-	{"/admin/logs", "server logs"},
-	{"/admin/players", "online players"},
-	{"/admin/players/", "player detail"},
-	{"/admin/mobs", "mob list"},
-	{"/admin/mobs/", "mob detail by vnum"},
-	{"/admin/objects", "object list"},
-	{"/admin/objects/", "object detail by vnum"},
-	{"/admin/shops", "shop list"},
-	{"/admin/shops/", "shop detail by keeper"},
-	{"/admin/rooms/", "room detail by vnum"},
-	{"/admin/metrics", "server metrics"},
-	{"/admin/prometheus", "prometheus exposition"},
+	{"/admin/zones/", "zone detail by id; GET stays with its POST {id}/reset sibling until the tranche-4 sub-action pattern exists"},
+	{"/admin/players/", "player detail; GET stays with its POST save/kick actions until those migrate"},
+	{"/admin/shops/", "shop detail by keeper; GET stays with its PUT until tranche 4"},
+	{"/admin/prometheus", "prometheus exposition; text format, permanently not a typed JSON operation"},
 	{"/admin/save-world", "save world"},
 	{"/admin/reset-all-zones", "reset all zones"},
 	{"/admin/agents", "agent store list"},

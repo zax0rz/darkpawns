@@ -103,6 +103,17 @@ func TestAPIRouteDriftGate(t *testing.T) {
 		"GET /admin/research/capture",
 		"POST /admin/research/capture",
 		"GET /admin/sessions/agents",
+		"GET /admin/zones",
+		"GET /admin/server",
+		"GET /admin/logs",
+		"GET /admin/players",
+		"GET /admin/mobs",
+		"GET /admin/mobs/{vnum}",
+		"GET /admin/objects",
+		"GET /admin/objects/{vnum}",
+		"GET /admin/shops",
+		"GET /admin/rooms/{vnum}",
+		"GET /admin/metrics",
 	} {
 		if !opSet[want] {
 			t.Errorf("generated spec missing operation %s; ops: %v", want, dump.Ops)

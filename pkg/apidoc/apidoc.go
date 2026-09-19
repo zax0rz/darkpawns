@@ -11,6 +11,8 @@ package apidoc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"sync"
 
@@ -97,14 +99,71 @@ func (d *Doc) NewInternalAPI(mux humago.Mux) huma.API {
 // Link header, which would change player-visible bytes the port already emits
 // (R1 — the migrated handlers must keep returning the bodies they returned on
 // the plain mux).
+//
+// The JSON marshal is also pinned to the standard library's default encoder
+// settings: Huma's DefaultJSONFormat disables HTML escaping, but the
+// hand-rolled handlers this migration replaces wrote through
+// json.NewEncoder's defaults, which escape `<`, `>` and `&` as <, > and
+// &. Keeping the default escaping means every migrated success body is
+// byte-identical to the plain-mux handler it replaces, for every possible
+// string, not just the ones the fixtures happen to contain. Both encoders
+// append the trailing newline json.Encoder has always emitted.
 func newConfig() huma.Config {
 	cfg := huma.DefaultConfig(Title, Version)
 	cfg.CreateHooks = nil
 	cfg.Transformers = nil
 	cfg.DocsPath = ""
 	cfg.SchemasPath = ""
+	cfg.Formats["application/json"] = huma.Format{
+		Marshal:   func(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) },
+		Unmarshal: json.Unmarshal,
+	}
+	cfg.Formats["text/plain"] = huma.Format{
+		Marshal: func(w io.Writer, v any) error {
+			pe, ok := v.(*PlainError)
+			if !ok {
+				return fmt.Errorf("text/plain format cannot marshal %T", v)
+			}
+			_, err := io.WriteString(w, pe.Body+"\n")
+			return err
+		},
+		Unmarshal: func(_ []byte, _ any) error { return fmt.Errorf("text/plain requests are not supported") },
+	}
 	return cfg
 }
+
+// PlainError is an operation error that answers with the exact wire shape
+// http.Error produced for the pre-migration handlers: the given status, a
+// text/plain content type, the X-Content-Type-Options: nosniff header, and
+// the body written verbatim followed by a newline. Huma's default error
+// writer would instead emit an application/problem+json body (title/status/
+// detail); returning a PlainError from an operation handler keeps the
+// error-path bytes identical to the plain mux the operation migrated off.
+type PlainError struct {
+	Status int
+	Body   string
+}
+
+// NewPlainError returns a PlainError for status with body written verbatim.
+func NewPlainError(status int, body string) *PlainError {
+	return &PlainError{Status: status, Body: body}
+}
+
+// Error implements the error interface; it returns the response body.
+func (e *PlainError) Error() string { return e.Body }
+
+// GetStatus implements huma.StatusError.
+func (e *PlainError) GetStatus() int { return e.Status }
+
+// GetHeaders implements huma.HeadersError: http.Error sets nosniff on every
+// error it writes, and the bytes a caller sees include that header.
+func (e *PlainError) GetHeaders() http.Header {
+	return http.Header{"X-Content-Type-Options": {"nosniff"}}
+}
+
+// ContentType implements huma.ContentTypeFilter: answer text/plain for any
+// negotiated content type, exactly as http.Error did regardless of Accept.
+func (e *PlainError) ContentType(string) string { return "text/plain; charset=utf-8" }
 
 // HealthOutput is the body of the /health liveness probe. A []byte Body is
 // written verbatim, preserving the exact "OK\n" response the endpoint has

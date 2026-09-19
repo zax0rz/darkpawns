@@ -135,39 +135,64 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Authenticated routes below — require valid JWT + role
 	// Health is public, everything else requires auth
 
+	// Huma operations live on a private mux mounted per-path behind the same
+	// rate-limit/CORS/role chain the hand-rolled handlers sat behind —
+	// wrap(corsMiddleware(requireRole(...))) — so the middleware composition is
+	// unchanged. Tranche 1 registered this API inside the liveSessions guard;
+	// tranche 2's world reads are unconditional, so the mux and the API are
+	// created here and the guard below only adds the session-dependent
+	// operations.
+	humaMux := http.NewServeMux()
+	doc := cfg.sharedDoc
+	if doc == nil {
+		doc = apidoc.New()
+	}
+	ri.api = doc.NewInternalAPI(humaMux)
+	registerZones(ri.api, world)
+	registerServerInfo(ri.api, world, auditLogger)
+	registerLogs(ri.api, logBuffer)
+	registerPlayers(ri.api, world)
+	registerMobs(ri.api, world)
+	registerObjects(ri.api, world)
+	registerShops(ri.api, world)
+	registerRooms(ri.api, world)
+	registerMetrics(ri.api, world)
+
 	// Zones — read/write, requires builder role
-	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", handleZones(world)))))
+	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	track("/admin/zones/reset", wrap(corsMiddleware(requireRole("admin", handleZoneReset(world)))))
 	track("/admin/zones/", wrap(corsMiddleware(requireRole("builder", handleZoneByIDOrReset(world, auditLogger)))))
 
-	// Server info — requires builder role
-	track("/admin/server", wrap(corsMiddleware(requireRole("builder", handleServerInfo(world, auditLogger)))))
+	// Server info — requires builder role. withClientIP stashes the client IP
+	// for the operation's audit log, which the old handler read from the
+	// request directly.
+	track("/admin/server", wrap(corsMiddleware(requireRole("builder", withClientIP(humaMux.ServeHTTP)))))
 
 	// Server logs — requires builder role
-	track("/admin/logs", wrap(corsMiddleware(requireRole("builder", handleLogs(logBuffer)))))
+	track("/admin/logs", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
 	// Online players — requires builder role
-	track("/admin/players", wrap(corsMiddleware(requireRole("builder", handlePlayers(world)))))
+	track("/admin/players", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	// Player detail — requires builder role for GET, admin for POST
 	track("/admin/players/", wrap(corsMiddleware(requireRole("builder", handlePlayerDetail(world, auditLogger)))))
 
 	// Mobs — read/write, requires builder role
-	track("/admin/mobs", wrap(corsMiddleware(requireRole("builder", handleMobs(world)))))
-	track("/admin/mobs/", wrap(corsMiddleware(requireRole("builder", handleMobByVnum(world, auditLogger)))))
+	track("/admin/mobs", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	track("/admin/mobs/{vnum}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
 	// Objects — read/write, requires builder role
-	track("/admin/objects", wrap(corsMiddleware(requireRole("builder", handleObjects(world)))))
-	track("/admin/objects/", wrap(corsMiddleware(requireRole("builder", handleObjectByVnum(world, auditLogger)))))
+	track("/admin/objects", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	track("/admin/objects/{vnum}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
 	// Shops — read/write, requires builder role
-	track("/admin/shops", wrap(corsMiddleware(requireRole("builder", handleShops(world)))))
+	track("/admin/shops", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	track("/admin/shops/", wrap(corsMiddleware(requireRole("builder", handleShopByKeeper(world, auditLogger)))))
 
 	// Rooms — read/write, requires builder role
-	track("/admin/rooms/", wrap(corsMiddleware(requireRole("builder", handleRoomByVnum(world, auditLogger)))))
+	track("/admin/rooms/{vnum}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
 	// Server metrics — requires builder role
-	track("/admin/metrics", wrap(corsMiddleware(requireRole("builder", handleMetrics(world)))))
+	track("/admin/metrics", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	// The Prometheus endpoint, moved here from an unauthenticated /metrics on
 	// the root mux. It was public on darkpawns.org and nobody noticed, because
 	// every gauge read zero until the collectors were wired: publishing real
@@ -204,28 +229,38 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Live agent sessions and decision capture — requires builder role.
 	// Inside the guard because a nil provider means there is no session
 	// manager to ask. Tranche 1 of the Huma migration: these two routes are
-	// Huma operations now. They are registered on a private Huma mux and
-	// mounted behind the exact same rate-limit/CORS/role chain the hand-rolled
-	// handlers sat behind — wrap(corsMiddleware(requireRole(...))) — so the
-	// middleware composition is unchanged.
+	// Huma operations now, registered on the router-wide Huma mux created
+	// above and mounted behind the exact same rate-limit/CORS/role chain the
+	// hand-rolled handlers sat behind.
 	if liveSessions != nil {
-		humaMux := http.NewServeMux()
-		doc := cfg.sharedDoc
-		if doc == nil {
-			doc = apidoc.New()
-		}
-		ri.api = doc.NewInternalAPI(humaMux)
 		registerLiveAgentSessions(ri.api, liveSessions)
 		registerResearchCapture(ri.api, liveSessions, auditLogger)
 
 		track("/admin/sessions/agents", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 		track("/admin/research/capture", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	}
 
-		// The handlers these routes replace answered wrong methods with a JSON
-		// 405; the Huma mux answers plain-text 405 on its own. Keep the old
-		// body for methods the operations do not define.
-		humaMux.HandleFunc("/admin/sessions/agents", methodNotAllowedJSON)
-		humaMux.HandleFunc("/admin/research/capture", methodNotAllowedJSON)
+	// The handlers these routes replace answered wrong methods with a JSON
+	// 405; the Huma mux answers plain-text 405 on its own. Keep the old body
+	// for methods the operations do not define — the bare pattern loses to the
+	// method-qualified Huma pattern on Go's ServeMux, so defined methods still
+	// reach the operation.
+	for _, p := range []string{
+		"/admin/zones",
+		"/admin/server",
+		"/admin/logs",
+		"/admin/players",
+		"/admin/mobs",
+		"/admin/mobs/{vnum}",
+		"/admin/objects",
+		"/admin/objects/{vnum}",
+		"/admin/shops",
+		"/admin/rooms/{vnum}",
+		"/admin/metrics",
+		"/admin/sessions/agents",
+		"/admin/research/capture",
+	} {
+		humaMux.HandleFunc(p, methodNotAllowedJSON)
 	}
 
 	// Decision log — requires builder role
