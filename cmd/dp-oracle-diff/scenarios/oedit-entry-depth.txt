@@ -1,0 +1,50 @@
+# C-backed OEDIT entry and first menu transitions.
+# depth-case: oedit.no-argument
+# depth-case: oedit.nonnumeric-argument
+# depth-case: oedit.unknown-zone
+# depth-case: oedit.interactive-olc
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Oeditentry
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Oeditentry
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+oedit
+oedit nope
+oedit 999999
+oedit 3100
+0
+9
+0
+a
+50
+q
+n

@@ -1,0 +1,79 @@
+# C-first OEDIT boundary vehicle (src/oedit.c:1016-1553). Exercises the
+# instruction-attention traps on an existing weapon prototype: the ITEM_WEAPON
+# val3 fallthrough, the lying cost prompt, type 0 being unlisted-as-selectable,
+# the extras-vs-wear error asymmetry, the float percent-load rounding, str_udup
+# on an empty extra-description keyword, and the save-confirmation prompts.
+# depth-case: oedit.weapon-val3-fallthrough
+# depth-case: oedit.cost-prompt
+# depth-case: oedit.type-menu
+# depth-case: oedit.extras-wear-asymmetry
+# depth-case: oedit.load-float
+# depth-case: oedit.extra-desc
+# depth-case: oedit.apply-forms
+# depth-case: oedit.confirm-save
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Oeditbounds
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Oeditbounds
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+oedit 3104
+d
+3
+50
+0
+5
+0
+24
+9
+6
+30
+1
+0
+7
+20
+0
+9
+999999
+a
+12.567
+f
+1
+<ENTER>
+0
+e
+2
+25
+5
+0
+q
+z
+n
