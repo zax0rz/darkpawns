@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/zax0rz/darkpawns/pkg/apidoc"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -16,11 +18,60 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
+// RouterOption configures NewRouter.
+type RouterOption func(*routerConfig)
+
+type routerConfig struct {
+	// sharedDoc, when set, is the apidoc document the router's Huma operations
+	// are registered into. main passes it so the admin operations appear in
+	// the server-wide spec served at /openapi.json. Tests leave it nil and get
+	// a private document per router.
+	sharedDoc *apidoc.Doc
+}
+
+// WithSharedSpec registers the router's Huma operations into doc, the
+// server-wide OpenAPI document, instead of a private one.
+func WithSharedSpec(doc *apidoc.Doc) RouterOption {
+	return func(c *routerConfig) { c.sharedDoc = doc }
+}
+
+// routerInternal is the full router construction result. NewRouter returns
+// only the handler; the drift gate and spec tests use newRouter to also see
+// the registered route patterns and the Huma API holding the migrated
+// operations.
+type routerInternal struct {
+	handler http.Handler
+	routes  []string
+	api     huma.API
+}
+
 // NewRouter creates an admin HTTP handler with role-protected endpoints.
 // liveSessions is the session manager (or nil to disable live session endpoints).
 // It returns an error if the agent store cannot be initialized (DP-1016).
-func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider) (http.Handler, error) {
+func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider, opts ...RouterOption) (http.Handler, error) {
+	ri, err := newRouter(world, auditLogger, logBuffer, database, liveSessions, opts...)
+	if ri == nil {
+		return nil, err
+	}
+	return ri.handler, err
+}
+
+func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider, opts ...RouterOption) (*routerInternal, error) {
+	var cfg routerConfig
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	mux := http.NewServeMux()
+	ri := &routerInternal{handler: mux}
+
+	// track registers a pattern on the mux and records it for the route drift
+	// gate: every pattern on this mux must be either a Huma operation or on
+	// the commented allowlist in drift_gate_test.go.
+	track := func(pattern string, hf http.HandlerFunc) {
+		ri.routes = append(ri.routes, pattern)
+		mux.HandleFunc(pattern, hf)
+	}
 
 	// Rate limiter for admin endpoints
 	rateLimiter := auth.NewIPRateLimiter()
@@ -43,37 +94,37 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	})
 
 	// Public routes (no auth required)
-	mux.HandleFunc("/admin/login", wrap(handleLogin(database, loginAttempts)))
+	track("/admin/login", wrap(handleLogin(database, loginAttempts)))
 
 	// Static admin UI files (no auth required — SPA needs to load before login)
 	adminUIDir := os.Getenv("ADMIN_UI_DIR")
 	if adminUIDir == "" {
 		adminUIDir = "admin-ui-dist"
 	}
-	mux.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+	track("/admin", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/", http.StatusMovedPermanently)
 	})
 	if _, err := os.Stat(adminUIDir); err == nil { // #nosec G703 -- adminUIDir is operator-set (ADMIN_UI_DIR env), not request-derived
-		mux.HandleFunc("/admin/favicon.svg", func(w http.ResponseWriter, r *http.Request) {
+		track("/admin/favicon.svg", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
 			http.ServeFile(w, r, adminUIDir+"/favicon.svg") // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 		})
-		mux.HandleFunc("/admin/icons.svg", func(w http.ResponseWriter, r *http.Request) {
+		track("/admin/icons.svg", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
 			http.ServeFile(w, r, adminUIDir+"/icons.svg") // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 		})
-		mux.HandleFunc("/admin/assets/", func(w http.ResponseWriter, r *http.Request) {
+		track("/admin/assets/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
 			http.StripPrefix("/admin/", http.FileServer(http.Dir(adminUIDir))).ServeHTTP(w, r)
 		})
 		// SPA fallback — serve index.html for any /admin/* that doesn't match an API route
-		mux.HandleFunc("/admin/index.html", func(w http.ResponseWriter, r *http.Request) {
+		track("/admin/index.html", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
@@ -85,38 +136,38 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Health is public, everything else requires auth
 
 	// Zones — read/write, requires builder role
-	mux.HandleFunc("/admin/zones", wrap(corsMiddleware(requireRole("builder", handleZones(world)))))
-	mux.HandleFunc("/admin/zones/reset", wrap(corsMiddleware(requireRole("admin", handleZoneReset(world)))))
-	mux.HandleFunc("/admin/zones/", wrap(corsMiddleware(requireRole("builder", handleZoneByIDOrReset(world, auditLogger)))))
+	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", handleZones(world)))))
+	track("/admin/zones/reset", wrap(corsMiddleware(requireRole("admin", handleZoneReset(world)))))
+	track("/admin/zones/", wrap(corsMiddleware(requireRole("builder", handleZoneByIDOrReset(world, auditLogger)))))
 
 	// Server info — requires builder role
-	mux.HandleFunc("/admin/server", wrap(corsMiddleware(requireRole("builder", handleServerInfo(world, auditLogger)))))
+	track("/admin/server", wrap(corsMiddleware(requireRole("builder", handleServerInfo(world, auditLogger)))))
 
 	// Server logs — requires builder role
-	mux.HandleFunc("/admin/logs", wrap(corsMiddleware(requireRole("builder", handleLogs(logBuffer)))))
+	track("/admin/logs", wrap(corsMiddleware(requireRole("builder", handleLogs(logBuffer)))))
 
 	// Online players — requires builder role
-	mux.HandleFunc("/admin/players", wrap(corsMiddleware(requireRole("builder", handlePlayers(world)))))
+	track("/admin/players", wrap(corsMiddleware(requireRole("builder", handlePlayers(world)))))
 	// Player detail — requires builder role for GET, admin for POST
-	mux.HandleFunc("/admin/players/", wrap(corsMiddleware(requireRole("builder", handlePlayerDetail(world, auditLogger)))))
+	track("/admin/players/", wrap(corsMiddleware(requireRole("builder", handlePlayerDetail(world, auditLogger)))))
 
 	// Mobs — read/write, requires builder role
-	mux.HandleFunc("/admin/mobs", wrap(corsMiddleware(requireRole("builder", handleMobs(world)))))
-	mux.HandleFunc("/admin/mobs/", wrap(corsMiddleware(requireRole("builder", handleMobByVnum(world, auditLogger)))))
+	track("/admin/mobs", wrap(corsMiddleware(requireRole("builder", handleMobs(world)))))
+	track("/admin/mobs/", wrap(corsMiddleware(requireRole("builder", handleMobByVnum(world, auditLogger)))))
 
 	// Objects — read/write, requires builder role
-	mux.HandleFunc("/admin/objects", wrap(corsMiddleware(requireRole("builder", handleObjects(world)))))
-	mux.HandleFunc("/admin/objects/", wrap(corsMiddleware(requireRole("builder", handleObjectByVnum(world, auditLogger)))))
+	track("/admin/objects", wrap(corsMiddleware(requireRole("builder", handleObjects(world)))))
+	track("/admin/objects/", wrap(corsMiddleware(requireRole("builder", handleObjectByVnum(world, auditLogger)))))
 
 	// Shops — read/write, requires builder role
-	mux.HandleFunc("/admin/shops", wrap(corsMiddleware(requireRole("builder", handleShops(world)))))
-	mux.HandleFunc("/admin/shops/", wrap(corsMiddleware(requireRole("builder", handleShopByKeeper(world, auditLogger)))))
+	track("/admin/shops", wrap(corsMiddleware(requireRole("builder", handleShops(world)))))
+	track("/admin/shops/", wrap(corsMiddleware(requireRole("builder", handleShopByKeeper(world, auditLogger)))))
 
 	// Rooms — read/write, requires builder role
-	mux.HandleFunc("/admin/rooms/", wrap(corsMiddleware(requireRole("builder", handleRoomByVnum(world, auditLogger)))))
+	track("/admin/rooms/", wrap(corsMiddleware(requireRole("builder", handleRoomByVnum(world, auditLogger)))))
 
 	// Server metrics — requires builder role
-	mux.HandleFunc("/admin/metrics", wrap(corsMiddleware(requireRole("builder", handleMetrics(world)))))
+	track("/admin/metrics", wrap(corsMiddleware(requireRole("builder", handleMetrics(world)))))
 	// The Prometheus endpoint, moved here from an unauthenticated /metrics on
 	// the root mux. It was public on darkpawns.org and nobody noticed, because
 	// every gauge read zero until the collectors were wired: publishing real
@@ -127,13 +178,13 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// read-only console: any immortal who can sign in can read it. A Prometheus
 	// scraper cannot present a JWT, so if one is ever wanted the usual answer is
 	// a second listener bound to localhost, not loosening this.
-	mux.HandleFunc("/admin/prometheus", wrap(corsMiddleware(requireRole("builder", metrics.Handler().ServeHTTP))))
+	track("/admin/prometheus", wrap(corsMiddleware(requireRole("builder", metrics.Handler().ServeHTTP))))
 
 	// Save world — requires admin role
-	mux.HandleFunc("/admin/save-world", wrap(corsMiddleware(requireRole("admin", handleSaveWorld(world, auditLogger)))))
+	track("/admin/save-world", wrap(corsMiddleware(requireRole("admin", handleSaveWorld(world, auditLogger)))))
 
 	// Reset all zones — requires admin role
-	mux.HandleFunc("/admin/reset-all-zones", wrap(corsMiddleware(requireRole("admin", handleResetAllZones(world, auditLogger)))))
+	track("/admin/reset-all-zones", wrap(corsMiddleware(requireRole("admin", handleResetAllZones(world, auditLogger)))))
 
 	// Agent status, findings, and triage — requires builder role
 	storePath := os.Getenv("ADMIN_STORE_PATH")
@@ -144,29 +195,47 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if err != nil {
 		return nil, fmt.Errorf("init agent store: %w", err)
 	}
-	mux.HandleFunc("/admin/agents", wrap(corsMiddleware(requireRole("builder", handleAgents(agentStore)))))
-	mux.HandleFunc("/admin/agents/status", wrap(corsMiddleware(requireRole("builder", handleAgentStatus(agentStore)))))
-	mux.HandleFunc("/admin/findings", wrap(corsMiddleware(requireRole("builder", handleFindings(agentStore)))))
-	mux.HandleFunc("/admin/findings/", wrap(corsMiddleware(requireRole("builder", handleFindingByID(agentStore)))))
-	mux.HandleFunc("/admin/triage/summaries", wrap(corsMiddleware(requireRole("builder", handleTriageSummaries(agentStore)))))
+	track("/admin/agents", wrap(corsMiddleware(requireRole("builder", handleAgents(agentStore)))))
+	track("/admin/agents/status", wrap(corsMiddleware(requireRole("builder", handleAgentStatus(agentStore)))))
+	track("/admin/findings", wrap(corsMiddleware(requireRole("builder", handleFindings(agentStore)))))
+	track("/admin/findings/", wrap(corsMiddleware(requireRole("builder", handleFindingByID(agentStore)))))
+	track("/admin/triage/summaries", wrap(corsMiddleware(requireRole("builder", handleTriageSummaries(agentStore)))))
 
-	// Live agent sessions — requires builder role, shows connected game agents
+	// Live agent sessions and decision capture — requires builder role.
+	// Inside the guard because a nil provider means there is no session
+	// manager to ask. Tranche 1 of the Huma migration: these two routes are
+	// Huma operations now. They are registered on a private Huma mux and
+	// mounted behind the exact same rate-limit/CORS/role chain the hand-rolled
+	// handlers sat behind — wrap(corsMiddleware(requireRole(...))) — so the
+	// middleware composition is unchanged.
 	if liveSessions != nil {
-		mux.HandleFunc("/admin/sessions/agents", wrap(corsMiddleware(requireRole("builder", handleLiveAgentSessions(liveSessions)))))
-		// Decision capture, behind the same login as the rest of the console.
-		// Inside this guard because a nil provider means there is no session
-		// manager to ask, the same reason the route above is gated.
-		mux.HandleFunc("/admin/research/capture", wrap(corsMiddleware(requireRole("builder", handleResearchCapture(liveSessions, auditLogger)))))
+		humaMux := http.NewServeMux()
+		doc := cfg.sharedDoc
+		if doc == nil {
+			doc = apidoc.New()
+		}
+		ri.api = doc.NewInternalAPI(humaMux)
+		registerLiveAgentSessions(ri.api, liveSessions)
+		registerResearchCapture(ri.api, liveSessions, auditLogger)
+
+		track("/admin/sessions/agents", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+		track("/admin/research/capture", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+
+		// The handlers these routes replace answered wrong methods with a JSON
+		// 405; the Huma mux answers plain-text 405 on its own. Keep the old
+		// body for methods the operations do not define.
+		humaMux.HandleFunc("/admin/sessions/agents", methodNotAllowedJSON)
+		humaMux.HandleFunc("/admin/research/capture", methodNotAllowedJSON)
 	}
 
 	// Decision log — requires builder role
 	if database != nil {
-		mux.HandleFunc("/admin/decisions", wrap(corsMiddleware(requireRole("builder", handleDecisionLog(database)))))
+		track("/admin/decisions", wrap(corsMiddleware(requireRole("builder", handleDecisionLog(database)))))
 	}
 
 	// Narrative feed — requires builder role
 	if database != nil {
-		mux.HandleFunc("/admin/narrative", wrap(corsMiddleware(requireRole("builder", handleNarrativeFeed(database)))))
+		track("/admin/narrative", wrap(corsMiddleware(requireRole("builder", handleNarrativeFeed(database)))))
 	}
 
 	// SPA fallback — this MUST be registered last, after all API routes.
@@ -174,7 +243,7 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Registered whether or not the console is built: when the build is absent
 	// the fallback answers with the build commands instead of Go's bare 404,
 	// so a fresh checkout says what to run rather than looking broken.
-	mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
+	track("/admin/", func(w http.ResponseWriter, r *http.Request) {
 		index := adminUIDir + "/index.html"
 		if _, err := os.Stat(index); err != nil { // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 			serveConsoleNotBuilt(w, index)
@@ -186,7 +255,15 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		http.ServeFile(w, r, index) // #nosec G703 -- constant filename under operator-set adminUIDir, not request-derived
 	})
 
-	return mux, nil
+	return ri, nil
+}
+
+// methodNotAllowedJSON answers 405 with the JSON body the pre-Huma handlers
+// returned for undefined methods. Registered on the Huma mux without a
+// method, so Go's ServeMux precedence sends defined methods to the Huma
+// operation and everything else here.
+func methodNotAllowedJSON(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
 }
 
 // serveConsoleNotBuilt answers /admin/ when the console build is absent. A

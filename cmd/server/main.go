@@ -38,6 +38,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -45,6 +46,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"sync"
 	"syscall"
@@ -52,6 +54,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/admin"
+	"github.com/zax0rz/darkpawns/pkg/apidoc"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/contact"
@@ -103,6 +106,84 @@ func usage() {
 		"and `go run ./cmd/server` for a build-free local run.\n"); err != nil {
 		slog.Warn("writing usage failed", "error", err)
 	}
+}
+
+// trackedMux wraps a ServeMux and records every pattern registered on it.
+// The API route drift gate (TestAPIRouteDriftGate in api_routes_test.go)
+// enumerates rootRoutes so a route added to the root mux outside Huma or the
+// commented allowlist fails CI.
+type trackedMux struct {
+	inner    *http.ServeMux
+	patterns []string
+}
+
+func (t *trackedMux) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
+	t.patterns = append(t.patterns, pattern)
+	t.inner.HandleFunc(pattern, handler)
+}
+
+func (t *trackedMux) Handle(pattern string, handler http.Handler) {
+	t.patterns = append(t.patterns, pattern)
+	t.inner.Handle(pattern, handler)
+}
+
+func (t *trackedMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	t.inner.ServeHTTP(w, r)
+}
+
+// dumpAPIRoutes prints the registered root patterns and the Huma operations
+// from the shared OpenAPI document as one JSON line prefixed with
+// dumpRoutesPrefix. main calls it only under the DP_DUMP_API_ROUTES test
+// hook, before any listener binds.
+const dumpRoutesPrefix = "DP_API_ROUTES_JSON: "
+
+func dumpAPIRoutes(rootMux *trackedMux, doc *apidoc.Doc) {
+	ops := make([]string, 0)
+	for p, item := range doc.OpenAPI().Paths {
+		if item.Delete != nil {
+			ops = append(ops, "DELETE "+p)
+		}
+		if item.Get != nil {
+			ops = append(ops, "GET "+p)
+		}
+		if item.Head != nil {
+			ops = append(ops, "HEAD "+p)
+		}
+		if item.Options != nil {
+			ops = append(ops, "OPTIONS "+p)
+		}
+		if item.Patch != nil {
+			ops = append(ops, "PATCH "+p)
+		}
+		if item.Post != nil {
+			ops = append(ops, "POST "+p)
+		}
+		if item.Put != nil {
+			ops = append(ops, "PUT "+p)
+		}
+		if item.Trace != nil {
+			ops = append(ops, "TRACE "+p)
+		}
+	}
+	// Huma serves the document at these routes without documenting them in it;
+	// they are Huma-handled operations of the API, so the drift gate should
+	// treat them like the operations below.
+	ops = append(ops,
+		"GET /openapi.json",
+		"GET /openapi.yaml",
+		"GET /openapi-3.0.json",
+		"GET /openapi-3.0.yaml",
+	)
+	sort.Strings(ops)
+	line, err := json.Marshal(map[string]any{
+		"root": rootMux.patterns,
+		"ops":  ops,
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "dump routes:", err)
+		os.Exit(1)
+	}
+	fmt.Println(dumpRoutesPrefix + string(line))
 }
 
 func main() {
@@ -560,13 +641,16 @@ func main() {
 	gameLoop.Start(loopCtx)
 
 	// Setup HTTP routes
-	http.HandleFunc("/ws", manager.HandleWebSocket)
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("OK\n")); err != nil {
-			slog.Warn("health check write failed", "error", err)
-		}
-	})
+	rootMux := &trackedMux{inner: http.DefaultServeMux}
+	// apiDoc is the single OpenAPI document for the HTTP API. Huma generates
+	// it from the registered operations; the root API below serves it at
+	// /openapi.json, /api/openapi.json mirrors it, and the admin router adds
+	// its migrated operations to it.
+	apiDoc := apidoc.New()
+	rootAPI := apiDoc.NewAPI(rootMux)
+	apidoc.RegisterHealth(rootAPI)
+
+	rootMux.HandleFunc("/ws", manager.HandleWebSocket)
 	// Gauges describe state, not events, so they are sampled rather than
 	// maintained. Tracking every mutation means finding every mutation, and one
 	// missed path leaves the gauge wrong until restart; re-reading the truth on
@@ -593,23 +677,23 @@ func main() {
 	contactHandler, err := contact.NewFromEnvironment()
 	if err != nil {
 		slog.Warn("Website contact form disabled", "error", err)
-		http.Handle("/api/contact", contact.UnavailableHandler())
+		rootMux.Handle("/api/contact", contact.UnavailableHandler())
 	} else {
-		http.Handle("/api/contact", contactHandler)
+		rootMux.Handle("/api/contact", contactHandler)
 	}
 	// Serve the front door: -static wins, then the bundled browser client, then
 	// a plain-text index. Both directories were validated at startup, so the
 	// only way here with an empty field is a deliberate omission.
 	if *staticDir != "" {
 		fs := revalidated(http.FileServer(http.Dir(*staticDir)))
-		http.Handle("/", fs)
+		rootMux.Handle("/", fs)
 		slog.Info("Serving static site", "path", *staticDir)
 	} else if *webDir != "" {
 		fs := revalidated(http.FileServer(http.Dir(*webDir)))
-		http.Handle("/", fs)
+		rootMux.Handle("/", fs)
 		slog.Info("Serving web client", "path", *webDir)
 	} else {
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		rootMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "text/plain")
 			if _, err := w.Write([]byte("Dark Pawns Server\nWebSocket: ws://" + r.Host + "/ws\n")); err != nil {
 				slog.Warn("index page write failed", "error", err)
@@ -617,21 +701,18 @@ func main() {
 		})
 	}
 
-	// Publish the API contract without authentication so clients can discover
-	// how to authenticate before making a protected request.
-	openAPIHandler := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		http.ServeFile(w, r, "web/api/openapi.json")
-	}
-	http.HandleFunc("/openapi.json", openAPIHandler)
-	http.HandleFunc("/api/openapi.json", openAPIHandler)
+	// The generated API contract is published without authentication so clients
+	// can discover how to authenticate before making a protected request.
+	// Huma serves it at /openapi.json; /api/openapi.json is the compatibility
+	// alias deploy scripts and the website already point at.
+	rootMux.HandleFunc("/api/openapi.json", apiDoc.Handler())
 
 	// All other /api/ endpoints require a JWT bearer token.
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		web.WriteJSONError(w, http.StatusNotFound, "ENDPOINT_NOT_FOUND", "The requested API endpoint does not exist.", "Consult /openapi.json for supported endpoints.")
 	})
-	http.Handle("/api/", web.AuthMiddleware(apiMux))
+	rootMux.Handle("/api/", web.AuthMiddleware(apiMux))
 
 	// Admin routes — JWT-protected, role-gated
 	// The log belongs beside the instance's other runtime state, under the game
@@ -660,21 +741,30 @@ func main() {
 	logHandler := admin.NewSlogHandler(baseHandler, logBuffer)
 	slog.SetDefault(slog.New(logHandler))
 
-	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager)
+	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc))
 	if err != nil {
 		fatal("failed to init admin router: %v", err)
 	}
 	// Health endpoint is unauthenticated — registered before the auth-wrapped catch-all
-	http.HandleFunc("/admin/health", func(w http.ResponseWriter, r *http.Request) {
+	rootMux.HandleFunc("/admin/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if _, err := w.Write([]byte(`{"status":"ok"}`)); err != nil {
 			slog.Warn("admin health write failed", "error", err)
 		}
 	})
-	http.Handle("/admin/", adminRouter)
+	rootMux.Handle("/admin/", adminRouter)
 
 	// Serve admin UI static assets (compiled React app)
-	http.Handle("/assets/", http.StripPrefix("/assets/", fingerprinted(http.FileServer(http.Dir("admin-ui-dist/assets")))))
+	rootMux.Handle("/assets/", http.StripPrefix("/assets/", fingerprinted(http.FileServer(http.Dir("admin-ui-dist/assets")))))
+
+	// Test hook for the API route drift gate (TestAPIRouteDriftGate in
+	// api_routes_test.go): with the env guard set, print the root route table
+	// and the generated operations and exit before any listener binds. The
+	// subprocess boot pattern is documented in main_test.go.
+	if os.Getenv("DP_DUMP_API_ROUTES") == "1" {
+		dumpAPIRoutes(rootMux, apiDoc)
+		os.Exit(0) //nolint:gocritic // exitAfterDefer: test-hook subprocess (see api_routes_test.go); defers intentionally skipped
+	}
 
 	// Track the production zone reset goroutine for graceful shutdown.
 	// DP_CLOCK performs this initial population synchronously so the harness's

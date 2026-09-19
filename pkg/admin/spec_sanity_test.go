@@ -1,0 +1,97 @@
+package admin
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/apidoc"
+)
+
+// TestGeneratedOpenAPISpec pins the tranche-1 contract for the generated
+// document: it parses, is OpenAPI 3.1, is served at both public URLs with
+// identical bytes, and documents exactly the migrated operations — nothing
+// missing, nothing extra. /ws and /onboarding are deliberately absent (a
+// WebSocket upgrade and a browser entry page are not typed REST operations;
+// modeling them is a later decision).
+func TestGeneratedOpenAPISpec(t *testing.T) {
+	setJWTSecret(t)
+
+	doc := apidoc.New()
+	root := http.NewServeMux()
+	api := doc.NewAPI(root)
+	apidoc.RegisterHealth(api)
+	root.HandleFunc("/api/openapi.json", doc.Handler())
+
+	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), nil, &fakeCaptureProvider{available: true}, WithSharedSpec(doc))
+	if err != nil {
+		t.Fatalf("newRouter: %v", err)
+	}
+	root.Handle("/admin/", ri.handler)
+
+	wantPaths := map[string][]string{
+		"/health":                 {"get"},
+		"/admin/research/capture": {"get", "post"},
+		"/admin/sessions/agents":  {"get"},
+	}
+
+	var first []byte
+	for _, url := range []string{"/openapi.json", "/api/openapi.json"} {
+		rec := httptest.NewRecorder()
+		root.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, url, nil))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("GET %s = %d, want 200; body: %s", url, rec.Code, rec.Body.String())
+		}
+		body := rec.Body.Bytes()
+		if first == nil {
+			first = body
+		} else if !bytes.Equal(first, body) {
+			t.Errorf("GET %s body differs from /openapi.json", url)
+		}
+
+		var spec struct {
+			OpenAPI string                                `json:"openapi"`
+			Info    struct{ Title, Version string }       `json:"info"`
+			Paths   map[string]map[string]json.RawMessage `json:"paths"`
+		}
+		if err := json.Unmarshal(body, &spec); err != nil {
+			t.Fatalf("GET %s does not parse as JSON: %v", url, err)
+		}
+		if spec.OpenAPI != "3.1.0" {
+			t.Errorf("openapi version = %q, want 3.1.0", spec.OpenAPI)
+		}
+		if spec.Info.Title == "" || spec.Info.Version == "" {
+			t.Errorf("spec info missing title or version: %+v", spec.Info)
+		}
+
+		if len(spec.Paths) != len(wantPaths) {
+			got := make([]string, 0, len(spec.Paths))
+			for p := range spec.Paths {
+				got = append(got, p)
+			}
+			t.Errorf("spec paths = %v, want exactly the migrated operations %v", got, wantPaths)
+		}
+		for p, methods := range wantPaths {
+			item, ok := spec.Paths[p]
+			if !ok {
+				t.Errorf("spec missing path %q", p)
+				continue
+			}
+			seen := map[string]bool{}
+			for m := range item {
+				seen[m] = true
+			}
+			for _, m := range methods {
+				if !seen[m] {
+					t.Errorf("spec %s missing %s operation", p, m)
+				}
+				delete(seen, m)
+			}
+			for extra := range seen {
+				t.Errorf("spec %s has unexpected %s operation", p, extra)
+			}
+		}
+	}
+}

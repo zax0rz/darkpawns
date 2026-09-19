@@ -10,12 +10,14 @@ web/
 │   ├── index.html          # HTML page for humans
 │   ├── onboarding.md       # Markdown for agents
 │   └── onboarding.json     # JSON-LD structured data
-├── api/
-│   └── openapi.json        # OpenAPI specification
 ├── static/                 # Static assets (CSS, JS, images)
 ├── middleware.go           # Go content negotiation middleware
 └── nginx.conf             # Nginx configuration for content negotiation
 ```
+
+The OpenAPI specification is no longer a static file here: the server
+generates it from its registered operations (Huma v2) and serves it at
+`/openapi.json`, with `/api/openapi.json` as a compatibility alias.
 
 ## Content Negotiation
 
@@ -79,9 +81,8 @@ mux.HandleFunc("/onboarding", func(w http.ResponseWriter, r *http.Request) {
     http.ServeFile(w, r, filepath.Join(*webDir, "onboarding", "index.html"))
 })
 
-mux.HandleFunc("/api/openapi.json", func(w http.ResponseWriter, r *http.Request) {
-    http.ServeFile(w, r, filepath.Join(*webDir, "api", "openapi.json"))
-})
+// /api/openapi.json is served by the server itself: the OpenAPI document is
+// generated from the registered operations (Huma v2), not read from a file.
 ```
 
 ### Option 2: Use Nginx
