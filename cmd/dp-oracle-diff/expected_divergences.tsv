@@ -5,10 +5,6 @@ accuse-depth	accuse.tsv	accuse.target-success	blocked
 accuse-noarg-depth	accuse.tsv	accuse.no-argument	blocked	run-varying
 force-mob	force.tsv	force.npc-command-interpreter	blocked	
 force-mob	force.tsv	force.visible-npc-target	blocked	
-sedit-entry-depth	sedit.tsv	sedit.no-argument	blocked	
-sedit-entry-depth	sedit.tsv	sedit.nonnumeric-argument	blocked	
-sedit-entry-depth	sedit.tsv	sedit.unknown-zone	blocked	
-sedit-session-depth	sedit.tsv	sedit.interactive-olc	blocked	
 shoot-target-depth	shoot.tsv	shoot.mob-hit-miss	blocked	
 shoot-target-depth	shoot.tsv	shoot.pc-level-window	blocked	
 shoot-target-depth	shoot.tsv	shoot.player-hit-miss	blocked	

@@ -234,11 +234,15 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	w.shopKeepers = make(map[int]int, len(parsed.Shops))
 	for i := range parsed.Shops {
 		shop := &parsed.Shops[i]
-		w.shopKeepers[shop.KeeperVNum] = shop.Bitvector
+		if shop.KeeperVNum >= 0 {
+			w.shopKeepers[shop.KeeperVNum] = shop.Bitvector
+		}
 		legacyShop := &Shop{
+			VNum:       shop.VNum,
 			KeeperVNum: shop.KeeperVNum,
 			SellTypes:  append([]int(nil), shop.Products...),
 			BuyTypes:   append([]int(nil), shop.BuyTypes...),
+			BuyWords:   append([]string(nil), shop.BuyWords...),
 			ProfitBuy:  shop.BuyProfit,
 			ProfitSell: shop.SellProfit,
 			Flags:      shop.Bitvector,
@@ -250,6 +254,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 			OpenHour2:  shop.OpenHour2,
 			CloseHour2: shop.CloseHour2,
 		}
+		legacyShop.Rooms = append([]int(nil), shop.Rooms...)
 		if len(shop.Rooms) > 0 {
 			legacyShop.RoomVNum = shop.Rooms[0]
 		}

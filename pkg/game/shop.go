@@ -1,17 +1,22 @@
 package game
 
+import "sort"
+
 // Shop represents a shopkeeper's shop, matching the CircleMUD shop_data structure.
 // Source: src/shop.h
 type Shop struct {
-	ID         int     // unique shop ID (assigned by ShopManager)
-	KeeperVNum int     // VNUM of the NPC shopkeeper
-	BuyTypes   []int   // item types this shop buys (list of TypeFlag values)
-	SellTypes  []int   // VNUMs of item prototypes this shop sells
-	ProfitBuy  float64 // markup factor when player buys (e.g., 1.20 = 120%)
-	ProfitSell float64 // markup factor when player sells (e.g., 0.80 = 80%)
-	Flags      int     // shop behavior flags (optional)
-	KeeperName string  // name of keeper for message formatting
-	RoomVNum   int     // room where the shop is located
+	ID         int      // unique shop ID (assigned by ShopManager)
+	VNum       int      // virtual number of the shop definition
+	KeeperVNum int      // VNUM of the NPC shopkeeper
+	BuyTypes   []int    // item types this shop buys (list of TypeFlag values)
+	BuyWords   []string // optional namelist keywords paired with BuyTypes
+	SellTypes  []int    // VNUMs of item prototypes this shop sells
+	ProfitBuy  float64  // markup factor when player buys (e.g., 1.20 = 120%)
+	ProfitSell float64  // markup factor when player sells (e.g., 0.80 = 80%)
+	Flags      int      // shop behavior flags (optional)
+	KeeperName string   // name of keeper for message formatting
+	RoomVNum   int      // room where the shop is located
+	Rooms      []int    // all rooms in which the shop operates, including the C terminator concept
 	Messages   [7]string
 	Temper     int
 	WithWho    int
@@ -51,6 +56,39 @@ func (sm *ShopManager) AddShop(s *Shop) {
 		sm.nextID++
 	}
 	sm.shops = append(sm.shops, s)
+}
+
+// GetShopByVNum returns a shop definition by its virtual number.
+func (sm *ShopManager) GetShopByVNum(vnum int) *Shop {
+	for _, s := range sm.shops {
+		if s.VNum == vnum {
+			return s
+		}
+	}
+	return nil
+}
+
+// ReplaceShop replaces a shop with the same VNUM, or inserts it in VNUM order.
+// The world lock is the concurrency boundary for the manager; this method is
+// deliberately a small in-memory operation like C's shop_index swap.
+func (sm *ShopManager) ReplaceShop(updated *Shop) {
+	for i, shop := range sm.shops {
+		if shop.VNum == updated.VNum {
+			updated.ID = shop.ID
+			sm.shops[i] = updated
+			return
+		}
+	}
+	if updated.ID == 0 {
+		updated.ID = sm.nextID
+		sm.nextID++
+	}
+	index := sort.Search(len(sm.shops), func(i int) bool {
+		return sm.shops[i].VNum > updated.VNum
+	})
+	sm.shops = append(sm.shops, nil)
+	copy(sm.shops[index+1:], sm.shops[index:])
+	sm.shops[index] = updated
 }
 
 // GetShopByKeeper returns the first shop run by the given NPC VNUM.

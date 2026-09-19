@@ -20,6 +20,7 @@ type ShopProto struct {
 	BuyProfit  float64
 	SellProfit float64
 	BuyTypes   []int
+	BuyWords   []string
 	Messages   [7]string
 	Temper     int
 	Bitvector  int
@@ -173,9 +174,29 @@ func parseShopRecord(lines []string, i *int, vnum int, path string) (ShopProto, 
 	if err != nil {
 		return shop, fmt.Errorf("%s: shop #%d invalid sell profit %q: %w", path, vnum, sellProfit, err)
 	}
-	shop.BuyTypes, err = nextIntList() // trade types
-	if err != nil {
-		return shop, err
+	// Trade types are encoded as an integer immediately followed by an
+	// optional keyword (the C reader uses sscanf("%d%s")). Keep the keyword
+	// alongside the type so SEDIT can display and write the same namelist.
+	shop.BuyTypes = make([]int, 0)
+	shop.BuyWords = make([]string, 0)
+	for {
+		line, lineErr := nextLine()
+		if lineErr != nil {
+			return shop, lineErr
+		}
+		end := 0
+		for end < len(line) && (line[end] == '-' || (line[end] >= '0' && line[end] <= '9')) {
+			end++
+		}
+		value, convErr := strconv.Atoi(line[:end])
+		if convErr != nil {
+			return shop, fmt.Errorf("%s: shop #%d expected buy type, got %q", path, vnum, line)
+		}
+		if value < 0 {
+			break
+		}
+		shop.BuyTypes = append(shop.BuyTypes, value)
+		shop.BuyWords = append(shop.BuyWords, strings.TrimSpace(line[end:]))
 	}
 	for index := range shop.Messages { // no_such_item1/2, do_not_buy, missing_cash1/2, message_buy, message_sell
 		shop.Messages[index], err = nextString()
