@@ -1682,12 +1682,18 @@ func (s *Session) saveOeditInternallyLocked() {
 		obj.LuaFunctions = live.LuaFunctions
 	}
 
+	// Hold the zone save lock across the world commit and the dirty-marker
+	// set so the pair is atomic against a concurrent saveOeditZone: without
+	// this, a commit landing between the save's snapshot and its marker
+	// cleanup would be cleared from the save list without being persisted.
+	saveMu := zoneSaveLock(state.zoneNumber)
+	saveMu.Lock()
 	s.manager.world.CommitEditedObj(obj)
 	s.manager.world.RefreshLiveObjInstances(state.number, obj)
-
 	oeditSaveMu.Lock()
 	oeditSaveObjs[state.number] = true
 	oeditSaveMu.Unlock()
+	saveMu.Unlock()
 }
 
 // saveOeditZone writes one zone's .obj file from the world prototypes,
@@ -1707,6 +1713,15 @@ func saveOeditZone(world *game.World, zone *parser.Zone) error {
 		return err
 	}
 
+	// Serialize the whole snapshot -> write -> save-list cleanup against
+	// concurrent saves of this zone and against working-copy commits (see
+	// saveOeditInternallyLocked): a commit landing mid-save is either fully
+	// inside the snapshot or keeps its dirty marker, never silently marked
+	// saved.
+	saveMu := zoneSaveLock(zone.Number)
+	saveMu.Lock()
+	defer saveMu.Unlock()
+
 	objs := world.SnapshotObjs()
 	var sb strings.Builder
 	for i := range objs {
@@ -1719,7 +1734,7 @@ func saveOeditZone(world *game.World, zone *parser.Zone) error {
 	sb.WriteString("$~\n")
 
 	path := filepath.Join(libDir, fmt.Sprintf("%d.obj", zone.Number))
-	if err := os.WriteFile(filepath.Clean(path), []byte(sb.String()), 0o666); err != nil {
+	if err := atomicWriteFile(path, []byte(sb.String()), 0o666); err != nil {
 		return err
 	}
 
