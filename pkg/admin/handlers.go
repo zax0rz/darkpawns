@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -54,6 +53,11 @@ type serverInfoResponse struct {
 }
 
 // handleZones returns all zones as a JSON array.
+//
+// Tranche 2 of the Huma migration: GET /admin/zones is a typed Huma operation
+// registered in huma.go, and this constructor remains as the behavioral
+// referee the existing tests exercise — it answers through the same shared
+// response builder, so its bytes are the operation's bytes.
 func handleZones(world *game.World) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -61,20 +65,8 @@ func handleZones(world *game.World) http.HandlerFunc {
 			return
 		}
 
-		zones := world.GetAllZones()
-		result := make([]zoneResponse, 0, len(zones))
-		for _, z := range zones {
-			result = append(result, zoneResponse{
-				Number:    z.Number,
-				Name:      z.Name,
-				TopRoom:   z.TopRoom,
-				Lifespan:  z.Lifespan,
-				ResetMode: z.ResetMode,
-			})
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(result); err != nil {
+		if err := json.NewEncoder(w).Encode(zoneList(world)); err != nil {
 			slog.Warn("admin zones encode failed", "error", err)
 		}
 	}
@@ -183,6 +175,10 @@ type roomResponse struct {
 }
 
 // handleMobs returns all mob prototypes.
+//
+// Tranche 2 of the Huma migration: GET /admin/mobs is a typed Huma operation
+// registered in huma.go; this constructor remains as the behavioral referee
+// the existing tests exercise, answering through the same shared builders.
 func handleMobs(world *game.World) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -190,44 +186,19 @@ func handleMobs(world *game.World) http.HandlerFunc {
 			return
 		}
 
-		mobs := world.GetAllMobPrototypes()
-		result := make([]mobResponse, 0, len(mobs))
-		for _, m := range mobs {
-			result = append(result, mobResponse{
-				VNum:        m.VNum,
-				Keywords:    m.Keywords,
-				ShortDesc:   m.ShortDesc,
-				LongDesc:    m.LongDesc,
-				Level:       m.Level,
-				Alignment:   m.Alignment,
-				AC:          m.AC,
-				HP:          m.HP.String(),
-				Gold:        m.Gold,
-				Exp:         m.Exp,
-				Position:    m.Position,
-				DefaultPos:  m.DefaultPos,
-				Sex:         m.Sex,
-				Race:        m.Race,
-				ActionFlags: m.ActionFlags,
-				AffectFlags: m.AffectFlags,
-				ScriptName:  m.ScriptName,
-				Str:         m.Str,
-				Int:         m.Int,
-				Wis:         m.Wis,
-				Dex:         m.Dex,
-				Con:         m.Con,
-				Cha:         m.Cha,
-			})
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(result); err != nil {
+		if err := json.NewEncoder(w).Encode(mobList(world)); err != nil {
 			slog.Warn("admin mobs encode failed", "error", err)
 		}
 	}
 }
 
 // handleMobByVnum returns a single mob prototype by VNum.
+//
+// Tranche 2 of the Huma migration: GET /admin/mobs/{vnum} is a typed Huma
+// operation registered in huma.go; this constructor remains as the
+// behavioral referee the existing tests exercise, answering through the same
+// shared builders.
 func handleMobByVnum(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -253,40 +224,19 @@ func handleMobByVnum(world *game.World, auditLogger *audit.AuditLogger) http.Han
 			return
 		}
 
-		resp := mobResponse{
-			VNum:        mob.VNum,
-			Keywords:    mob.Keywords,
-			ShortDesc:   mob.ShortDesc,
-			LongDesc:    mob.LongDesc,
-			Level:       mob.Level,
-			Alignment:   mob.Alignment,
-			AC:          mob.AC,
-			HP:          mob.HP.String(),
-			Gold:        mob.Gold,
-			Exp:         mob.Exp,
-			Position:    mob.Position,
-			DefaultPos:  mob.DefaultPos,
-			Sex:         mob.Sex,
-			Race:        mob.Race,
-			ActionFlags: mob.ActionFlags,
-			AffectFlags: mob.AffectFlags,
-			ScriptName:  mob.ScriptName,
-			Str:         mob.Str,
-			Int:         mob.Int,
-			Wis:         mob.Wis,
-			Dex:         mob.Dex,
-			Con:         mob.Con,
-			Cha:         mob.Cha,
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
+		if err := json.NewEncoder(w).Encode(mobView(mob)); err != nil {
 			slog.Warn("admin mob encode failed", "error", err)
 		}
 	}
 }
 
 // handleObjects returns all object prototypes.
+//
+// Tranche 2 of the Huma migration: GET /admin/objects is a typed Huma
+// operation registered in huma.go; this constructor remains as the
+// behavioral referee the existing tests exercise, answering through the same
+// shared builders.
 func handleObjects(world *game.World) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -294,32 +244,19 @@ func handleObjects(world *game.World) http.HandlerFunc {
 			return
 		}
 
-		objs := world.GetAllObjPrototypes()
-		result := make([]objResponse, 0, len(objs))
-		for _, o := range objs {
-			result = append(result, objResponse{
-				VNum:       o.VNum,
-				Keywords:   o.Keywords,
-				ShortDesc:  o.ShortDesc,
-				LongDesc:   o.LongDesc,
-				TypeFlag:   o.TypeFlag,
-				Weight:     o.Weight,
-				Cost:       o.Cost,
-				ExtraFlags: o.ExtraFlags,
-				WearFlags:  o.WearFlags,
-				Values:     o.Values,
-				ScriptName: o.ScriptName,
-			})
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(result); err != nil {
+		if err := json.NewEncoder(w).Encode(objList(world)); err != nil {
 			slog.Warn("admin objects encode failed", "error", err)
 		}
 	}
 }
 
 // handleObjectByVnum returns a single object prototype by VNum.
+//
+// Tranche 2 of the Huma migration: GET /admin/objects/{vnum} is a typed Huma
+// operation registered in huma.go; this constructor remains as the
+// behavioral referee the existing tests exercise, answering through the same
+// shared builders.
 func handleObjectByVnum(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -345,28 +282,19 @@ func handleObjectByVnum(world *game.World, auditLogger *audit.AuditLogger) http.
 			return
 		}
 
-		resp := objResponse{
-			VNum:       obj.VNum,
-			Keywords:   obj.Keywords,
-			ShortDesc:  obj.ShortDesc,
-			LongDesc:   obj.LongDesc,
-			TypeFlag:   obj.TypeFlag,
-			Weight:     obj.Weight,
-			Cost:       obj.Cost,
-			ExtraFlags: obj.ExtraFlags,
-			WearFlags:  obj.WearFlags,
-			Values:     obj.Values,
-			ScriptName: obj.ScriptName,
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
+		if err := json.NewEncoder(w).Encode(objView(obj)); err != nil {
 			slog.Warn("admin object encode failed", "error", err)
 		}
 	}
 }
 
 // handleRoomByVnum returns a single room by VNum.
+//
+// Tranche 2 of the Huma migration: GET /admin/rooms/{vnum} is a typed Huma
+// operation registered in huma.go; this constructor remains as the
+// behavioral referee the existing tests exercise, answering through the same
+// shared builders.
 func handleRoomByVnum(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -392,23 +320,26 @@ func handleRoomByVnum(world *game.World, auditLogger *audit.AuditLogger) http.Ha
 			return
 		}
 
-		resp := roomResponse{
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(roomResponse{
 			VNum:        room.VNum,
 			Name:        room.Name,
 			Description: room.Description,
 			Zone:        room.Zone,
 			Sector:      room.Sector,
 			Flags:       room.Flags,
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
+		}); err != nil {
 			slog.Warn("admin room encode failed", "error", err)
 		}
 	}
 }
 
 // handleServerInfo returns server status information.
+//
+// Tranche 2 of the Huma migration: GET /admin/server is a typed Huma
+// operation registered in huma.go; this constructor remains as the
+// behavioral referee the existing tests exercise, answering through the same
+// shared builders.
 func handleServerInfo(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -416,12 +347,7 @@ func handleServerInfo(world *game.World, auditLogger *audit.AuditLogger) http.Ha
 			return
 		}
 
-		resp := serverInfoResponse{
-			Uptime:      time.Since(processStartTime).Round(time.Second).String(),
-			RoomCount:   world.GetRoomCount(),
-			PlayerCount: world.GetPlayerCount(),
-			ZoneCount:   len(world.GetAllZones()),
-		}
+		resp := serverInfo(world)
 
 		// Log admin access
 		if auditLogger != nil {
@@ -447,6 +373,12 @@ func handleServerInfo(world *game.World, auditLogger *audit.AuditLogger) http.Ha
 }
 
 // handleLogs returns recent log entries from the in-memory buffer.
+//
+// Tranche 2 of the Huma migration: GET /admin/logs is a typed Huma operation
+// registered in huma.go; this constructor remains as the behavioral referee
+// the existing tests exercise. The ?lines= semantics are the silent
+// fallback the plain-mux handler had (a missing, unparsable or non-positive
+// value means the default of 100 — not a 400), shared via logLineCount.
 func handleLogs(logBuffer *LogBuffer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -454,14 +386,7 @@ func handleLogs(logBuffer *LogBuffer) http.HandlerFunc {
 			return
 		}
 
-		n := 100
-		if q := r.URL.Query().Get("lines"); q != "" {
-			if parsed, err := strconv.Atoi(q); err == nil && parsed > 0 {
-				n = parsed
-			}
-		}
-
-		entries := logBuffer.GetRecent(n)
+		entries := logBuffer.GetRecent(logLineCount(r.URL.Query().Get("lines")))
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(entries); err != nil {
 			slog.Warn("admin logs encode failed", "error", err)
@@ -477,6 +402,11 @@ type playerResponse struct {
 }
 
 // handlePlayers returns a list of online players.
+//
+// Tranche 2 of the Huma migration: GET /admin/players is a typed Huma
+// operation registered in huma.go; this constructor remains as the
+// behavioral referee the existing tests exercise, answering through the same
+// shared builders.
 func handlePlayers(world *game.World) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -484,18 +414,8 @@ func handlePlayers(world *game.World) http.HandlerFunc {
 			return
 		}
 
-		players := world.GetAllPlayers()
-		result := make([]playerResponse, 0, len(players))
-		for _, p := range players {
-			result = append(result, playerResponse{
-				Name:  p.Name,
-				Level: p.Level,
-				Room:  p.RoomVNum,
-			})
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(result); err != nil {
+		if err := json.NewEncoder(w).Encode(playerList(world)); err != nil {
 			slog.Warn("admin players encode failed", "error", err)
 		}
 	}
@@ -726,6 +646,11 @@ func playerDetailToResponse(p *game.Player) playerDetailResponse {
 }
 
 // handleMetrics returns runtime statistics.
+//
+// Tranche 2 of the Huma migration: GET /admin/metrics is a typed Huma
+// operation registered in huma.go; this constructor remains as the
+// behavioral referee the existing tests exercise, answering through the same
+// shared builders.
 func handleMetrics(world *game.World) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -733,25 +658,8 @@ func handleMetrics(world *game.World) http.HandlerFunc {
 			return
 		}
 
-		var memStats runtime.MemStats
-		runtime.ReadMemStats(&memStats)
-
-		resp := metricsResponse{
-			MemoryAlloc:  memStats.Alloc,
-			MemorySys:    memStats.Sys,
-			MemoryHeap:   memStats.HeapInuse,
-			Goroutines:   runtime.NumGoroutine(),
-			GCCycles:     memStats.NumGC,
-			LastGC:       time.Unix(0, int64(memStats.LastGC)).Format(time.RFC3339Nano), // #nosec G115 -- runtime GC nanosecond timestamp cannot exceed int64 before year 2262
-			PauseTotalNs: memStats.PauseTotalNs,
-			Uptime:       time.Since(processStartTime).Round(time.Second).String(),
-			PlayerCount:  world.GetPlayerCount(),
-			RoomCount:    world.GetRoomCount(),
-			ZoneCount:    len(world.GetAllZones()),
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
+		if err := json.NewEncoder(w).Encode(metricsSnapshot(world)); err != nil {
 			slog.Warn("admin metrics encode failed", "error", err)
 		}
 	}
@@ -1321,6 +1229,10 @@ type shopUpdateRequest struct {
 }
 
 // handleShops returns all shops.
+//
+// Tranche 2 of the Huma migration: GET /admin/shops is a typed Huma operation
+// registered in huma.go; this constructor remains as the behavioral referee
+// the existing tests exercise, answering through the same shared builders.
 func handleShops(world *game.World) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -1328,22 +1240,8 @@ func handleShops(world *game.World) http.HandlerFunc {
 			return
 		}
 
-		shops := world.GetAllShops()
-		resp := make([]shopResponse, 0, len(shops))
-		for _, s := range shops {
-			resp = append(resp, shopResponse{
-				KeeperVNum: s.KeeperVNum,
-				BuyTypes:   s.BuyTypes,
-				SellTypes:  s.SellTypes,
-				ProfitBuy:  s.ProfitBuy,
-				ProfitSell: s.ProfitSell,
-				KeeperName: s.KeeperName,
-				RoomVNum:   s.RoomVNum,
-			})
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
+		if err := json.NewEncoder(w).Encode(shopList(world)); err != nil {
 			slog.Warn("admin shops encode failed", "error", err)
 		}
 	}

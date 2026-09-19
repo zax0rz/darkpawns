@@ -10,12 +10,15 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
 )
 
-// TestGeneratedOpenAPISpec pins the tranche-1 contract for the generated
-// document: it parses, is OpenAPI 3.1, is served at both public URLs with
-// identical bytes, and documents exactly the migrated operations — nothing
-// missing, nothing extra. /ws and /onboarding are deliberately absent (a
-// WebSocket upgrade and a browser entry page are not typed REST operations;
-// modeling them is a later decision).
+// TestGeneratedOpenAPISpec pins the contract for the generated document: it
+// parses, is OpenAPI 3.1, is served at both public URLs with identical
+// bytes, and documents exactly the migrated operations — nothing missing,
+// nothing extra. Tranche 1 migrated /health, /admin/research/capture and
+// /admin/sessions/agents; tranche 2 adds the eleven builder world reads.
+// /ws and /onboarding are deliberately absent (a WebSocket upgrade and a
+// browser entry page are not typed REST operations; modeling them is a later
+// decision), as are the routes still on the plain mux per the drift gate's
+// allowlist.
 func TestGeneratedOpenAPISpec(t *testing.T) {
 	setJWTSecret(t)
 
@@ -35,6 +38,17 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/health":                 {"get"},
 		"/admin/research/capture": {"get", "post"},
 		"/admin/sessions/agents":  {"get"},
+		"/admin/zones":            {"get"},
+		"/admin/server":           {"get"},
+		"/admin/logs":             {"get"},
+		"/admin/players":          {"get"},
+		"/admin/mobs":             {"get"},
+		"/admin/mobs/{vnum}":      {"get"},
+		"/admin/objects":          {"get"},
+		"/admin/objects/{vnum}":   {"get"},
+		"/admin/shops":            {"get"},
+		"/admin/rooms/{vnum}":     {"get"},
+		"/admin/metrics":          {"get"},
 	}
 
 	var first []byte
