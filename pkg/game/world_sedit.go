@@ -53,30 +53,6 @@ func (w *World) SnapshotShops() []Shop {
 	return shops
 }
 
-// shopToProto maps the live manager shape back to the parser shape used by
-// the zone writer and parsed-world bridge.
-func shopToProto(shop Shop) parser.ShopProto {
-	proto := parser.ShopProto{
-		VNum:       shop.VNum,
-		Products:   append([]int(nil), shop.SellTypes...),
-		BuyProfit:  shop.ProfitBuy,
-		SellProfit: shop.ProfitSell,
-		BuyTypes:   append([]int(nil), shop.BuyTypes...),
-		BuyWords:   append([]string(nil), shop.BuyWords...),
-		Messages:   shop.Messages,
-		Temper:     shop.Temper,
-		Bitvector:  shop.Flags,
-		KeeperVNum: shop.KeeperVNum,
-		WithWho:    shop.WithWho,
-		Rooms:      append([]int(nil), shop.Rooms...),
-		OpenHour1:  shop.OpenHour1,
-		CloseHour1: shop.CloseHour1,
-		OpenHour2:  shop.OpenHour2,
-		CloseHour2: shop.CloseHour2,
-	}
-	return proto
-}
-
 // protoToShop maps the parser shape to the live manager shape. The first room
 // is retained in RoomVNum for the existing command-layer lookup adapter; the
 // full list remains available to the editor and writer.

@@ -653,7 +653,7 @@ func (s *Session) parseSeditConfirmLocked(arg string) {
 func (s *Session) parseSeditMainMenuLocked(arg string) {
 	state := s.sedit
 	choice := firstByte(arg)
-	mode := seditMode(-1)
+	var mode seditMode
 	changed := 0
 	switch choice {
 	case 'q', 'Q':
@@ -897,9 +897,9 @@ func saveSeditZone(world *game.World, zone *parser.Zone) error {
 		return err
 	}
 	seditSaveMu.Lock()
-	for _, shop := range shops {
-		if shop.VNum >= zone.Number*100 && shop.VNum <= zone.TopRoom {
-			delete(seditSaveShops, shop.VNum)
+	for i := range shops {
+		if shops[i].VNum >= zone.Number*100 && shops[i].VNum <= zone.TopRoom {
+			delete(seditSaveShops, shops[i].VNum)
 		}
 	}
 	seditSaveMu.Unlock()
