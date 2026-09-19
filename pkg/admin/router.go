@@ -184,7 +184,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	track("/admin/objects", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	track("/admin/objects/{vnum}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
-	// Shops — read/write, requires builder role
+	// Shops — read-only, requires builder role
 	track("/admin/shops", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	track("/admin/shops/", wrap(corsMiddleware(requireRole("builder", handleShopByKeeper(world, auditLogger)))))
 

@@ -76,65 +76,6 @@ func (w *World) AdjustMobPrototypes() int {
 // Object write methods
 // --------------------------------------------------------------------------
 
-// --------------------------------------------------------------------------
-// Shop write methods
-// --------------------------------------------------------------------------
-
-// SetShopBuyTypes sets the buy types for the shop run by the given keeper NPC.
-// Returns false if no shop exists for that keeper.
-func (w *World) SetShopBuyTypes(keeperVNum int, buyTypes []int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	sm, ok := w.shopManager.(*ShopManager)
-	if !ok {
-		return false
-	}
-	shop := sm.GetShopByKeeper(keeperVNum)
-	if shop == nil {
-		return false
-	}
-	shop.BuyTypes = buyTypes
-	return true
-}
-
-// SetShopSellTypes sets the sell types for the shop run by the given keeper NPC.
-// Returns false if no shop exists for that keeper.
-func (w *World) SetShopSellTypes(keeperVNum int, sellTypes []int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	sm, ok := w.shopManager.(*ShopManager)
-	if !ok {
-		return false
-	}
-	shop := sm.GetShopByKeeper(keeperVNum)
-	if shop == nil {
-		return false
-	}
-	shop.SellTypes = sellTypes
-	return true
-}
-
-// SetShopProfit sets the buy and sell profit multipliers for the shop run by
-// the given keeper NPC. Returns false if no shop exists for that keeper.
-func (w *World) SetShopProfit(keeperVNum int, buyProfit, sellProfit float64) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	sm, ok := w.shopManager.(*ShopManager)
-	if !ok {
-		return false
-	}
-	shop := sm.GetShopByKeeper(keeperVNum)
-	if shop == nil {
-		return false
-	}
-	shop.ProfitBuy = buyProfit
-	shop.ProfitSell = sellProfit
-	return true
-}
-
 // ResetZone triggers a manual zone reset. Returns an error if the zone or spawner is unavailable.
 func (w *World) ResetZone(number int) error {
 	w.mu.RLock()

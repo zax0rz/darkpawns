@@ -476,9 +476,9 @@ type shopsOutput struct {
 	Body []shopResponse
 }
 
-// registerShops registers GET /admin/shops on api. The shop-by-keeper route
-// stays on the plain mux: its PUT is tranche-4 material and both methods
-// should migrate together.
+// registerShops registers GET /admin/shops on api. The shop-by-keeper GET
+// remains on the plain mux while SEDIT owns shop writes through the game
+// command path.
 func registerShops(api huma.API, world *game.World) {
 	huma.Register(api, huma.Operation{
 		OperationID: "list-shops",
