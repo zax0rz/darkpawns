@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -345,4 +346,36 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 	oeditSaveMu.Lock()
 	delete(oeditSaveObjs, 3001)
 	oeditSaveMu.Unlock()
+}
+
+// TestSaveMeditZoneWritesTheLoadedDirectory pins the disk-path resolution:
+// the .mob file must land beside the wld directory (SourceDir/mob), where
+// ParseAllMobFiles reads. The pre-fix "../mob" form wrote to <lib>/mob, a
+// directory no boot ever reads — silent data loss for builder saves.
+func TestSaveMeditZoneWritesTheLoadedDirectory(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "mob"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	w, err := game.NewWorld(&parser.World{
+		SourceDir: dir,
+		Rooms:     []parser.Room{{VNum: 1001, Name: "R", Zone: 1, Flags: []string{"0", "0", "0", "0"}}},
+		Mobs:      []parser.Mob{{VNum: 1101, Keywords: "k", ShortDesc: "s", LongDesc: "l\r\n"}},
+		Zones:     []parser.Zone{{Number: 1, TopRoom: 1999}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	w.WorldPath = dir
+
+	if err := saveMeditZone(w, &parser.Zone{Number: 1, TopRoom: 1999}); err != nil {
+		t.Fatalf("saveMeditZone: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "mob", "1.mob")); err != nil {
+		t.Errorf("zone file missing at the loaded location (SourceDir/mob/1.mob): %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "..", "mob", "1.mob")); err == nil {
+		t.Errorf("zone file escaped the world directory (../mob) - the loader never reads there")
+	}
 }
