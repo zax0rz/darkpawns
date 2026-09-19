@@ -48,18 +48,30 @@ func (db *DB) Dialect() Dialect {
 }
 
 // exec, query and queryRow are the statement choke points for the game store:
-// they rebind $N placeholders when the connection is SQLite. DDL goes through
-// execDDL instead, which additionally translates the schema.
+// bind prepares the statement and its arguments for the connection's dialect.
+// DDL goes through execDDL instead, which additionally translates the schema.
 func (db *DB) exec(query string, args ...interface{}) (sql.Result, error) {
-	return db.conn.Exec(db.dialect.Rebind(query), args...)
+	query, args = db.bind(query, args)
+	return db.conn.Exec(query, args...)
 }
 
 func (db *DB) query(query string, args ...interface{}) (*sql.Rows, error) {
-	return db.conn.Query(db.dialect.Rebind(query), args...)
+	query, args = db.bind(query, args)
+	return db.conn.Query(query, args...)
 }
 
 func (db *DB) queryRow(query string, args ...interface{}) *sql.Row {
-	return db.conn.QueryRow(db.dialect.Rebind(query), args...)
+	query, args = db.bind(query, args)
+	return db.conn.QueryRow(query, args...)
+}
+
+// bind prepares a statement for the connection's dialect and returns the
+// argument list it must be executed with: repeated placeholders are expanded
+// to one marker per argument (see expandRepeatedPlaceholders), then $N markers
+// are made positional for SQLite.
+func (db *DB) bind(query string, args []interface{}) (string, []interface{}) {
+	query, args = expandRepeatedPlaceholders(query, args)
+	return db.dialect.Rebind(query), args
 }
 
 // execDDL runs one schema statement, translating PostgreSQL-only syntax when
@@ -101,8 +113,8 @@ type PlayerRecord struct {
 	Move                int
 	MaxMove             int
 	Hometown            int
-	Inventory           []byte // JSONB encoded inventory
-	Equipment           []byte // JSONB encoded equipment
+	Inventory           []byte // JSON encoded inventory
+	Equipment           []byte // JSON encoded equipment
 	FailedLoginAttempts int
 	LockedUntil         *time.Time
 }
@@ -222,8 +234,8 @@ var playersMigrationColumns = []string{
 	"stat_dex INTEGER DEFAULT 10",
 	"stat_con INTEGER DEFAULT 10",
 	"stat_cha INTEGER DEFAULT 10",
-	"inventory JSONB DEFAULT '[]'",
-	"equipment JSONB DEFAULT '{}'",
+	"inventory JSON DEFAULT '[]'",
+	"equipment JSON DEFAULT '{}'",
 	"move INTEGER DEFAULT 100",
 	"max_move INTEGER DEFAULT 100",
 	"hunger INTEGER DEFAULT 24",
@@ -268,8 +280,8 @@ func (db *DB) createTables() error {
 			thirst INTEGER DEFAULT 24,
 			drunk INTEGER DEFAULT 0,
 			hometown INTEGER DEFAULT 0,
-			inventory JSONB DEFAULT '[]',
-			equipment JSONB DEFAULT '{}',
+			inventory JSON DEFAULT '[]',
+			equipment JSON DEFAULT '{}',
 			description TEXT DEFAULT '',
 			title VARCHAR(80) DEFAULT '',
 			created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -318,6 +330,12 @@ func (db *DB) createTables() error {
 		return fmt.Errorf("migrate naive timestamps: %w", err)
 	}
 
+	// Same for the JSON columns: an install that already has them keeps its
+	// JSONB type, so ADD COLUMN IF NOT EXISTS cannot repair them either.
+	if err := db.migrateCanonicalizingJSON(); err != nil {
+		return fmt.Errorf("migrate JSON columns: %w", err)
+	}
+
 	return nil
 }
 
@@ -359,33 +377,70 @@ func (db *DB) migrateNaiveTimestamps() error {
 }
 
 // convertNaiveTimestamps rewrites each table.column from timestamp (without
-// time zone) to timestamptz, one statement at a time.
+// time zone) to timestamptz through convertColumns.
+//
+// The stored value is a wall clock with no zone attached: those columns were
+// written from Go time.Time values whose offset PostgreSQL drops on the way
+// into a naive column. It is re-read in the database session's zone
+// (AT TIME ZONE current_setting('TimeZone')) — the zone it was written in for
+// the localhost provisioning DEPLOYMENT.md documents, and a named zone, so a
+// summer value keeps its summer offset. The wall clock therefore reads back
+// the way it already did in that zone, a lockout still in flight stays in
+// force instead of expiring on deploy, and every row written afterwards is an
+// exact instant. A row written while the database ran in a different zone is
+// read in the current one: the writing zone is not recorded anywhere, so no
+// conversion can recover it. See DEPLOYMENT.md.
+func (db *DB) convertNaiveTimestamps(columns []string) error {
+	return db.convertColumns(columns, "timestamp without time zone", "TIMESTAMPTZ", func(column string) string {
+		return column + ` AT TIME ZONE current_setting('TimeZone')`
+	})
+}
+
+// gameStoreJSONColumns are the game-store columns that were authored JSONB.
+// JSONB canonicalizes its input — it re-spaces, re-orders object keys and drops
+// duplicate ones — so a record read back did not equal the bytes that were
+// written. A fresh install gets json straight from the DDL in createTables, but
+// a database created by an older build still holds jsonb, and ADD COLUMN IF NOT
+// EXISTS cannot repair it: the column is already there. They are converted in
+// place, once, by convertColumns. json stores the exact input text and still
+// validates it on write, which is what makes save -> load byte-identical.
+var gameStoreJSONColumns = []string{
+	"players.inventory",
+	"players.equipment",
+}
+
+// migrateCanonicalizingJSON converts the JSON columns above on PostgreSQL,
+// where the columns were authored canonicalizing and there is an
+// information_schema to ask.
+//
+// SQLite skips it entirely: the DDL translation already stores these columns as
+// text, so there is nothing to convert, exactly as migrateNaiveTimestamps skips
+// there.
+func (db *DB) migrateCanonicalizingJSON() error {
+	if db.dialect != DialectPostgres {
+		return nil
+	}
+	return db.convertColumns(gameStoreJSONColumns, "jsonb", "JSON", func(column string) string {
+		return column + "::json"
+	})
+}
+
+// convertColumns rewrites each table.column from fromType to wantType, one
+// statement at a time, with the caller supplying the USING expression.
 //
 // The information_schema guard is correctness, not an optimisation. On an
-// already-converted column "USING column AT TIME ZONE 'UTC'" is not a no-op:
-// timestamptz AT TIME ZONE 'UTC' yields a naive timestamp, which the ALTER then
-// re-interprets in the session's zone, shifting every value by the server's
-// offset. Skipping columns that are already zone-aware is what makes a second
-// boot harmless, and it is also what makes an interrupted conversion
+// already-converted column the USING expression is not a no-op: it re-reads
+// the stored value in the session's zone and the ALTER writes that back, so
+// without the guard every boot would shift the data by the server's offset
+// again. Skipping columns that are already the target type is what makes a
+// second boot harmless, and it is also what makes an interrupted conversion
 // resumable: the columns already rewritten are skipped and the rest are
 // converted on the next boot, because each ALTER TABLE is atomic on its own.
-//
-// UTC is the deliberate interpretation for values written before this pass.
-// Those columns were written from Go time.Time values whose offset PostgreSQL
-// drops on the way into a naive column, so what is stored is a wall clock with
-// no zone attached. AT TIME ZONE 'UTC' preserves that stored wall clock
-// exactly, which is the only reading that needs no per-row guess: the writing
-// server's zone is not recorded anywhere, it can differ between rows across a
-// DST boundary or a host move, and it is simply unknown for rows written by a
-// UTC host. The consequence for a deployment whose host zone is not UTC is
-// that pre-existing rows keep the instant they already read as before the
-// conversion (they do not move), while every row written afterwards is an
-// exact instant. See DEPLOYMENT.md.
-func (db *DB) convertNaiveTimestamps(columns []string) error {
+func (db *DB) convertColumns(columns []string, fromType, wantType string, using func(column string) string) error {
 	for _, target := range columns {
 		table, column, ok := strings.Cut(target, ".")
 		if !ok {
-			return fmt.Errorf("timestamp target %q is not table.column", target)
+			return fmt.Errorf("column target %q is not table.column", target)
 		}
 
 		var dataType string
@@ -401,18 +456,18 @@ func (db *DB) convertNaiveTimestamps(columns []string) error {
 			continue
 		case err != nil:
 			return fmt.Errorf("read type of %s: %w", target, err)
-		case dataType != "timestamp without time zone":
+		case dataType != fromType:
 			// Already converted, or a type this migration does not own.
 			continue
 		}
 
 		if _, err := db.exec(
 			`ALTER TABLE ` + table + ` ALTER COLUMN ` + column +
-				` TYPE TIMESTAMPTZ USING ` + column + ` AT TIME ZONE 'UTC'`,
+				` TYPE ` + wantType + ` USING ` + using(column),
 		); err != nil {
-			return fmt.Errorf("convert %s to timestamptz: %w", target, err)
+			return fmt.Errorf("convert %s to %s: %w", target, wantType, err)
 		}
-		slog.Info("converted game-store column to timestamptz", "column", target)
+		slog.Info("converted game-store column to "+strings.ToLower(wantType), "column", target)
 	}
 	return nil
 }

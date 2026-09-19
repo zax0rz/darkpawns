@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -50,6 +51,59 @@ func (d Dialect) Rebind(query string) string {
 		return query
 	}
 	return postgresPlaceholder.ReplaceAllString(query, "?")
+}
+
+// expandRepeatedPlaceholders is what makes the store's argument contract the
+// same on both dialects. Callers bind one argument per placeholder *occurrence*,
+// in order of appearance — that is exactly how SQLite's positional markers
+// work, so `VALUES ($6, $6)` consumes two arguments there. PostgreSQL numbers
+// distinct parameters instead, so the identical statement takes one argument
+// and lib/pq rejects the call outright ("got 7 parameters but the statement
+// requires 6"), which is how a statement that ran on SQLite silently failed
+// once a PostgreSQL deployment touched it.
+//
+// When the argument count matches the number of occurrences, every repeated
+// marker is rewritten to a fresh $N so both dialects consume the arguments the
+// caller supplied. Statements without repeats, and statements bound
+// PostgreSQL-style (one argument per distinct parameter), are returned
+// unchanged; the argument-count check is what keeps the classic `$1 ... $1`
+// reuse working. The rewrite is a semantic no-op for SQLite: occurrence i is
+// still bound to argument i.
+func expandRepeatedPlaceholders(query string, args []interface{}) (string, []interface{}) {
+	matches := postgresPlaceholder.FindAllStringIndex(query, -1)
+	if len(matches) == 0 || len(matches) != len(args) {
+		return query, args
+	}
+
+	numbers := make([]int, len(matches))
+	maxParam := 0
+	for i, m := range matches {
+		n, err := strconv.Atoi(query[m[0]+1 : m[1]])
+		if err != nil || n < 1 || n > len(args) {
+			return query, args
+		}
+		numbers[i] = n
+		if n > maxParam {
+			maxParam = n
+		}
+	}
+	if maxParam == len(matches) {
+		return query, args // already one distinct marker per argument
+	}
+
+	var b strings.Builder
+	b.Grow(len(query))
+	expanded := make([]interface{}, 0, len(matches))
+	last := 0
+	for i, m := range matches {
+		b.WriteString(query[last:m[0]])
+		b.WriteString("$")
+		b.WriteString(strconv.Itoa(i + 1))
+		last = m[1]
+		expanded = append(expanded, args[numbers[i]-1])
+	}
+	b.WriteString(query[last:])
+	return b.String(), expanded
 }
 
 // DDL rewrites the PostgreSQL-flavoured schema in this package into the
