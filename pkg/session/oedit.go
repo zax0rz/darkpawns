@@ -556,7 +556,7 @@ func oeditSprintNBit(bits uint32, names []string) string {
 func oeditSprintBitArray(words [4]int, names []string) string {
 	var sb strings.Builder
 	for _, word := range words {
-		rendered := oeditSprintNBit(uint32(word), names)
+		rendered := oeditSprintNBit(uint32(word), names) // #nosec G115 -- deliberate wrap mirroring C's (bitvector_t) cast of the int word in sprintbitarray (src/utils.c:836)
 		if rendered != "NOBITS " {
 			sb.WriteString(rendered)
 		}
@@ -572,7 +572,7 @@ func oeditSprintBit(bits int, names []string) string {
 	if bits < 0 {
 		return "<INVALID BITVECTOR>"
 	}
-	return oeditSprintNBit(uint32(bits), names)
+	return oeditSprintNBit(uint32(bits), names) // #nosec G115 -- bits guarded non-negative above; uint32 wrap mirrors C's unsigned bitvector_t parameter (src/structs.h:697)
 }
 
 // oeditSprintType mirrors C's sprinttype: index into a name table, or
