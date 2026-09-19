@@ -34,6 +34,7 @@ type Doc struct {
 
 	jsonOnce sync.Once
 	json     []byte
+	jsonErr  error
 }
 
 // New creates the shared OpenAPI document. Every Huma API built from this Doc
@@ -46,12 +47,15 @@ func New() *Doc {
 // OpenAPI returns the shared document.
 func (d *Doc) OpenAPI() *huma.OpenAPI { return d.oapi }
 
-// JSON returns the marshaled document, computed once.
-func (d *Doc) JSON() []byte {
+// JSON returns the marshaled document, computed once. A marshal failure is
+// cached alongside the bytes and reported on every call rather than being
+// swallowed into a nil document: callers must not mistake an encoding error
+// for a successful empty spec.
+func (d *Doc) JSON() ([]byte, error) {
 	d.jsonOnce.Do(func() {
-		d.json, _ = json.Marshal(d.oapi)
+		d.json, d.jsonErr = json.Marshal(d.oapi)
 	})
-	return d.json
+	return d.json, d.jsonErr
 }
 
 // Handler serves the generated document for the /api/openapi.json
@@ -65,7 +69,12 @@ func (d *Doc) Handler() http.HandlerFunc {
 			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
 			return
 		}
-		if _, err := w.Write(d.JSON()); err != nil {
+		body, err := d.JSON()
+		if err != nil {
+			http.Error(w, "openapi document encoding failed", http.StatusInternalServerError)
+			return
+		}
+		if _, err := w.Write(body); err != nil {
 			http.Error(w, "write failed", http.StatusInternalServerError)
 		}
 	}
