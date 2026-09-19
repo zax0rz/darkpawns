@@ -1862,3 +1862,40 @@ func TestResearchCaptureToggle(t *testing.T) {
 		}
 	})
 }
+
+// TestLiveAgentSessionsEndpoint is the behavioral referee for the migrated
+// GET /admin/sessions/agents operation (it had no coverage on the plain mux
+// either): builder auth, and the documented wire shape — a nil session list
+// marshals to a bare `null`, byte-exact.
+func TestLiveAgentSessionsEndpoint(t *testing.T) {
+	setJWTSecret(t)
+	token := generateTestToken(t, "builder")
+	p := &fakeCaptureProvider{}
+	h, err := NewRouter(testWorld(t), nil, NewLogBuffer(10), nil, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	get := func(auth bool) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, "/admin/sessions/agents", nil)
+		if auth {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec
+	}
+
+	if rec := get(false); rec.Code != http.StatusUnauthorized {
+		t.Errorf("unauthenticated = %d, want 401", rec.Code)
+	}
+	rec := get(true)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("authenticated = %d: %s", rec.Code, rec.Body.String())
+	}
+	// Byte-exact wire shape as served: a trailing newline follows the JSON
+	// (matching the encoder behavior of the pre-migration handler).
+	if got := rec.Body.String(); got != "null\n" {
+		t.Errorf("nil session list body = %q, want %q", got, "null\n")
+	}
+}
