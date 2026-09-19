@@ -1,0 +1,51 @@
+# C-backed OEDIT main menu bytes with ANSI color disabled, compared with ANSI
+# escapes intact (keep-ansi). Creation answers N to "Do you want ANSI color",
+# so get_char_cols yields empty strings and every menu renders plain. The
+# keep-ansi comparison is the raw proof that the port neither drops nor invents
+# escape bytes at color level 0. The first created character is crowned God
+# (LVL_IMPL) by the empty-players fixture, granting LVL_BUILDER oedit access.
+# Object 3100 exists in the shared lib (31.obj).
+# depth-case: oedit.menu-colors-off-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Oeditplain
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Oeditplain
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+oedit 3100
+5
+0
+7
+0
+6
+0
+q

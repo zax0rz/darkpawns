@@ -1176,12 +1176,18 @@ func (s *Session) startMeditDescEditorLocked() {
 func (s *Session) saveMeditInternallyLocked() {
 	state := s.mobEdit
 
+	// Hold the zone save lock across the world commit and the dirty-marker
+	// set so the pair is atomic against a concurrent saveMeditZone: without
+	// this, a commit landing between the save's snapshot and its marker
+	// cleanup would be cleared from the save list without being persisted.
+	saveMu := zoneSaveLock(state.zoneNumber)
+	saveMu.Lock()
 	s.manager.world.CommitEditedMob(state.mob)
 	s.manager.world.RefreshLiveMobStrings(state.number, state.mob)
-
 	meditSaveMu.Lock()
 	meditSaveMobs[state.number] = true
 	meditSaveMu.Unlock()
+	saveMu.Unlock()
 }
 
 // saveMeditZone writes one zone's .mob file from the world prototypes,
@@ -1193,12 +1199,24 @@ func saveMeditZone(world *game.World, zone *parser.Zone) error {
 	if parsed == nil || parsed.SourceDir == "" {
 		return fmt.Errorf("world has no source directory")
 	}
-	// C's MOB_PREFIX is "world/mob"; the Go world derives lib roots from the
-	// parsed source directory's parent (see World.LibTextDir).
-	libDir := filepath.Join(parsed.SourceDir, "..", "mob")
+	// C's MOB_PREFIX is "world/mob": the mob files are a sibling of the wld
+	// directory inside the world directory (SourceDir is the "world"
+	// directory itself — same resolution as saveOeditZone's "obj"). The old
+	// "../mob" form resolved to <lib>/mob, a directory the loader never
+	// reads, so disk saves silently landed where boots never find them.
+	libDir := filepath.Join(parsed.SourceDir, "mob")
 	if err := os.MkdirAll(libDir, 0o755); err != nil {
 		return err
 	}
+
+	// Serialize the whole snapshot -> write -> save-list cleanup against
+	// concurrent saves of this zone and against working-copy commits (see
+	// saveMeditInternallyLocked): a commit landing mid-save is either fully
+	// inside the snapshot or keeps its dirty marker, never silently marked
+	// saved.
+	saveMu := zoneSaveLock(zone.Number)
+	saveMu.Lock()
+	defer saveMu.Unlock()
 
 	mobs := world.SnapshotMobs()
 	var sb strings.Builder
@@ -1212,7 +1230,7 @@ func saveMeditZone(world *game.World, zone *parser.Zone) error {
 	sb.WriteString("$\n")
 
 	path := filepath.Join(libDir, fmt.Sprintf("%d.mob", zone.Number))
-	if err := os.WriteFile(path, []byte(sb.String()), 0o644); err != nil {
+	if err := atomicWriteFile(path, []byte(sb.String()), 0o644); err != nil {
 		return err
 	}
 
