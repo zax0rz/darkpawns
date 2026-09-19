@@ -3,7 +3,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -355,9 +354,18 @@ func (s *Session) finishReditLocked(save bool) {
 				state.room.ScriptFunctions = live.ScriptFunctions
 			}
 		}
-		if s.manager.world.CommitEditedRoom(state.room) {
+		// Hold the zone save lock across the world commit and the dirty-marker
+		// set so the pair is atomic against a concurrent saveReditZone:
+		// without this, a commit landing between the save's snapshot and its
+		// marker cleanup would be cleared from the save list without being
+		// persisted.
+		saveMu := zoneSaveLock(state.zoneNumber)
+		saveMu.Lock()
+		committed := s.manager.world.CommitEditedRoom(state.room)
+		if committed {
 			reditAddSaveRoom(state.zoneNumber)
 		}
+		saveMu.Unlock()
 	}
 	// Both the save and abort exits of REDIT_CONFIRM_SAVESTRING end the
 	// editor; the duplicate-editor reservation must not outlive either.
@@ -1093,6 +1101,14 @@ func reditRemoveSaveRoom(zone int) {
 }
 
 func saveReditZone(world *game.World, zone *parser.Zone) error {
+	// Serialize the whole snapshot -> write -> save-list cleanup against
+	// concurrent saves of this zone and against working-copy commits (see
+	// finishReditLocked): a commit landing mid-save is either fully inside
+	// the snapshot or keeps its dirty marker, never silently marked saved.
+	saveMu := zoneSaveLock(zone.Number)
+	saveMu.Lock()
+	defer saveMu.Unlock()
+
 	rooms := world.SnapshotRooms()
 	var out strings.Builder
 	minimum := zone.Number * 100
@@ -1144,7 +1160,7 @@ func saveReditZone(world *game.World, zone *parser.Zone) error {
 	out.WriteString("$~\n")
 
 	path := filepath.Join(world.WorldPath, "wld", fmt.Sprintf("%d.wld", zone.Number))
-	if err := os.WriteFile(filepath.Clean(path), []byte(out.String()), 0o666); err != nil {
+	if err := atomicWriteFile(path, []byte(out.String()), 0o666); err != nil {
 		return err
 	}
 	reditRemoveSaveRoom(zone.Number)

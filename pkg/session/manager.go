@@ -111,6 +111,12 @@ type Manager struct {
 	mobEditMu sync.Mutex
 	mobEdits  map[int]*Session
 
+	// objEdits reserves object VNums against concurrent duplicate OEDIT entry.
+	// Mirrors roomEdits/mobEdits: one atomic claim replaces C's single-
+	// threaded descriptor_list scan. Keyed by the OLC object number.
+	objEditMu sync.Mutex
+	objEdits  map[int]*Session
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -1282,6 +1288,9 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	if s.mobEdit != nil {
 		s.finishMeditLocked(cleanupMeditAll)
 	}
+	if s.oedit != nil {
+		s.finishOeditLocked()
+	}
 	s.textEditMu.Unlock()
 
 	// 4. Save player to DB
@@ -1323,6 +1332,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 	s.cancelTextEdit()
 	s.cancelRoomEdit()
 	s.cancelMedit()
+	s.cancelOedit()
 
 	p := s.player
 	p.SetLinkless(true)
@@ -1706,6 +1716,10 @@ type Session struct {
 	// It is guarded by textEditMu, mirroring how the C descriptor owns the
 	// OLC struct while CON_MEDIT is active.
 	mobEdit *meditState
+
+	// oedit holds the descriptor-owned oedit (CON_OEDIT) working state.
+	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
+	oedit *oeditState
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)

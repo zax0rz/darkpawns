@@ -337,6 +337,20 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return nil
 	}
 
+	// An object OLC editor owns the complete next line, including its transient
+	// improved-editor buffer, mirroring C's CON_OEDIT case in interpreter.c
+	// which calls oedit_parse instead of the command interpreter. Like
+	// CON_REDIT it precedes the generic string-editor route so the editor's
+	// buffered output flushes in the same turn.
+	if s.player != nil && s.isOeditEditing() {
+		line := cmd.RawLine
+		if line == "" {
+			line = commandInputLine(cmd.Command, cmd.Args)
+		}
+		s.handleOeditInput(line)
+		return nil
+	}
+
 	// A descriptor string editor owns the complete next line. In particular,
 	// slash commands must not be rebuilt as "/ h" from tokenized JSON args;
 	// telnet supplies RawLine and direct/WebSocket clients can still use the

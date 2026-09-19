@@ -437,13 +437,14 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			if !s.SendClosed() {
 				s.SendPrompt()
 			}
-		} else if s.IsRoomEditing() || s.IsMeditEditing() {
-			// CON_REDIT and CON_MEDIT own every complete input line, including
-			// a bare <ENTER>. C's interpreter hands the OLC menu parsers every
-			// line (interpreter.c: CON_REDIT/CON_MEDIT dispatch); an empty line
-			// at a numerical prompt must reach the gate ("Field must be
-			// numerical, try again : "), not die in prompt-refresh. This branch
-			// sits above the `line == ""` refresh like the TEDIT branch.
+		} else if s.IsRoomEditing() || s.IsMeditEditing() || s.IsOeditEditing() {
+			// CON_REDIT, CON_MEDIT and CON_OEDIT own every complete input
+			// line, including a bare <ENTER>. C's interpreter hands the OLC
+			// menu parsers every line (interpreter.c: CON_REDIT/CON_MEDIT/
+			// CON_OEDIT dispatch); an empty line at a numerical prompt must
+			// reach the gate ("Field must be numerical, try again : "), not
+			// die in prompt-refresh. This branch sits above the `line == ""`
+			// refresh like the TEDIT branch.
 			if err := sendCommand(s, "", nil, rawLine); err != nil {
 				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
 			}
