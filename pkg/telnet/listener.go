@@ -437,7 +437,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 			if !s.SendClosed() {
 				s.SendPrompt()
 			}
-		} else if s.IsRoomEditing() || s.IsMeditEditing() || s.IsOeditEditing() {
+		} else if s.IsRoomEditing() || s.IsMeditEditing() || s.IsOeditEditing() || s.IsSeditEditing() {
 			// CON_REDIT, CON_MEDIT and CON_OEDIT own every complete input
 			// line, including a bare <ENTER>. C's interpreter hands the OLC
 			// menu parsers every line (interpreter.c: CON_REDIT/CON_MEDIT/

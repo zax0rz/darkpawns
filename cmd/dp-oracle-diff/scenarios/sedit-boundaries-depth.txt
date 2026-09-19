@@ -1,0 +1,62 @@
+# C-backed SEDIT menu and boundary vehicle. The shop VNUM is an existing
+# definition so products, rooms, namelists, flags, and the save confirmation
+# all execute through sedit_parse rather than the new-shop defaults.
+# depth-case: sedit.products-menu
+# depth-case: sedit.rooms-menu
+# depth-case: sedit.namelist-menu
+# depth-case: sedit.flags-menu
+# depth-case: sedit.confirm-save
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Seditbound
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Seditbound
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+sedit 8034
+P
+Q
+R
+C
+Q
+T
+A
+0
+wheat
+Q
+F
+1
+0
+Q
+q
+n

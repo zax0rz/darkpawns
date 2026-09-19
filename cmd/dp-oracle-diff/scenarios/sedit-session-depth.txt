@@ -1,6 +1,6 @@
 # Second honest proof attempt for the shared do_olc boundary. A valid SEDIT
 # entry changes the descriptor into CON_SEDIT; the following q is consumed by
-# sedit_parse in C, while Go has no descriptor-driven OLC state machine.
+# sedit_parse in C and the Go descriptor-owned SEDIT state machine.
 
 # depth-case: sedit.interactive-olc
 

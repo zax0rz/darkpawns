@@ -351,6 +351,19 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return nil
 	}
 
+	// A shop SEDIT session owns the complete next line, mirroring C's
+	// CON_SEDIT dispatch in interpreter.c. It has no improved string editor,
+	// but it must still precede ordinary command routing so a bare line such as
+	// "q" cannot become the quaff command.
+	if s.player != nil && s.isSeditEditing() {
+		line := cmd.RawLine
+		if line == "" {
+			line = commandInputLine(cmd.Command, cmd.Args)
+		}
+		s.handleSeditInput(line)
+		return nil
+	}
+
 	// A descriptor string editor owns the complete next line. In particular,
 	// slash commands must not be rebuilt as "/ h" from tokenized JSON args;
 	// telnet supplies RawLine and direct/WebSocket clients can still use the
