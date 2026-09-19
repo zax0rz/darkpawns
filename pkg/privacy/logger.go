@@ -85,8 +85,12 @@ func (pl *PrivacyLogger) Enable() {
 	pl.enabled = true
 }
 
-// SetClient updates the privacy filter client
+// SetClient updates the privacy filter client. A nil client is replaced with a
+// disabled client so subsequent logging does not panic.
 func (pl *PrivacyLogger) SetClient(client *Client) {
+	if client == nil {
+		client = NewClient("disabled", DefaultFilterConfig())
+	}
 	pl.mu.Lock()
 	defer pl.mu.Unlock()
 	pl.client = client

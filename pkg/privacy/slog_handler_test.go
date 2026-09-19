@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -223,6 +224,40 @@ func TestPIIHandler_HandleFiltersMixedKindsAndGroups(t *testing.T) {
 	}
 	if !strings.Contains(out, "active=true") {
 		t.Errorf("expected group bool attr to pass through, got: %q", out)
+	}
+}
+
+// TestNewPIIHandler_NilClient guards against a nil-client panic: constructing
+// a handler with a nil client must fall back to a disabled client (mirroring
+// NewPrivacyLogger) instead of dereferencing nil on the first log call.
+func TestNewPIIHandler_NilClient(t *testing.T) {
+	var buf bytes.Buffer
+	inner := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
+
+	logger := slog.New(NewPIIHandler(inner, nil))
+	logger.Info("login attempt", slog.String("email", "user@example.com"))
+
+	out := buf.String()
+	if !strings.Contains(out, "email=") {
+		t.Errorf("expected attr to be present with nil client, got: %q", out)
+	}
+}
+
+// TestPrivacyLogger_SetClient_Nil guards the same latent panic on the
+// PrivacyLogger.SetClient path.
+func TestPrivacyLogger_SetClient_Nil(t *testing.T) {
+	var buf bytes.Buffer
+	logger := &PrivacyLogger{
+		client:  NewClient("disabled", DefaultFilterConfig()),
+		stdLog:  log.New(&buf, "", 0),
+		enabled: true,
+	}
+
+	logger.SetClient(nil)
+	logger.Print("hello")
+
+	if buf.Len() == 0 {
+		t.Error("expected logging to emit output after SetClient(nil)")
 	}
 }
 

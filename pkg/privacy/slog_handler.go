@@ -15,8 +15,13 @@ type PIIHandler struct {
 }
 
 // NewPIIHandler creates a PIIHandler that wraps next and filters all
-// log records through the provided privacy Client.
+// log records through the provided privacy Client. A nil client is replaced
+// with a disabled client, mirroring NewPrivacyLogger, so the handler never
+// panics on its first record.
 func NewPIIHandler(next slog.Handler, client *Client) *PIIHandler {
+	if client == nil {
+		client = NewClient("disabled", DefaultFilterConfig())
+	}
 	return &PIIHandler{next: next, client: client}
 }
 
