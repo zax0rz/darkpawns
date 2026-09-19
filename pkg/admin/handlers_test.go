@@ -1895,9 +1895,7 @@ func TestLiveAgentSessionsEndpoint(t *testing.T) {
 	}
 	// Byte-exact wire shape as served: a trailing newline follows the JSON
 	// (matching the encoder behavior of the pre-migration handler).
-	if got := rec.Body.String(); got != "null
-" {
-		t.Errorf("nil session list body = %q, want %q", got, "null
-")
+	if got := rec.Body.String(); got != "null\n" {
+		t.Errorf("nil session list body = %q, want %q", got, "null\n")
 	}
 }
