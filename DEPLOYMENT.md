@@ -247,7 +247,17 @@ SELECT lower(name) AS identity, array_agg(id ORDER BY id) AS ids
 FROM players GROUP BY lower(name) HAVING count(*) > 1;
 ```
 
-## Timestamp migration note
+## Game-store column migration note
+
+The first boot after upgrading also rewrites `players.inventory` and
+`players.equipment` from `jsonb` to `json`. `jsonb` canonicalizes whatever is
+written to it (keys reordered by length, spacing normalized), which made
+byte-identical save→load impossible; `json` stores the input text exactly and
+still validates it as JSON on write. Legacy values already canonicalized by
+`jsonb` come across in that form — the original byte layout of old rows is not
+recoverable — and everything written after the change is preserved verbatim.
+It happens on the same first boot, takes the same one-time table lock, and
+logs the same way (`converted game-store column to json column=players.inventory`).
 
 The game store's timestamp columns (`players.created_at`, `players.updated_at`,
 `players.locked_until`, `agent_keys.created_at`) are declared `timestamptz`. A

@@ -859,3 +859,84 @@ func containsString(haystack []string, needle string) bool {
 	}
 	return false
 }
+
+// TestMigrateCanonicalizingJSON pins the jsonb→json half of the first-boot
+// migration: a legacy install's canonicalizing columns become exact-text json,
+// content survives, and a second boot is a no-op.
+func TestMigrateCanonicalizingJSON(t *testing.T) {
+	database := openGameStore(t, postgresDSN(t))
+	probe := fmt.Sprintf("json_migration_probe_%d", os.Getpid())
+	if _, err := database.conn.Exec(`DROP TABLE IF EXISTS ` + probe); err != nil {
+		t.Fatalf("drop stale probe table: %v", err)
+	}
+	t.Cleanup(func() {
+		if _, err := database.conn.Exec(`DROP TABLE IF EXISTS ` + probe); err != nil {
+			t.Errorf("drop probe table: %v", err)
+		}
+	})
+	// The shape an older build left behind: canonicalizing jsonb columns.
+	if _, err := database.conn.Exec(`CREATE TABLE ` + probe + ` (
+		id        SERIAL PRIMARY KEY,
+		inventory JSONB,
+		equipment JSONB
+	)`); err != nil {
+		t.Fatalf("create legacy probe table: %v", err)
+	}
+	const seed = `[{"vnum":3032,"count":1,"locate":0,"state":null}]`
+	if _, err := database.conn.Exec(
+		`INSERT INTO `+probe+` (inventory, equipment) VALUES ($1::jsonb, '{}'::jsonb)`, seed,
+	); err != nil {
+		t.Fatalf("seed legacy row: %v", err)
+	}
+
+	// The legacy row's canonicalized content must survive the conversion
+	// unchanged: capture what jsonb rendered before the migration runs, and
+	// require the same text after. (The seeded literal itself is gone the
+	// moment jsonb stores it — key order and spacing were normalized at
+	// insert — so "unchanged" is the claim, not "restored".)
+	var before, got string
+	if err := database.conn.QueryRow(`SELECT inventory FROM ` + probe + ` WHERE id = 1`).Scan(&before); err != nil {
+		t.Fatalf("read legacy row: %v", err)
+	}
+
+	targets := []string{probe + ".inventory", probe + ".equipment"}
+	if err := database.convertColumns(targets, "jsonb", "JSON", func(column string) string {
+		return column + "::json"
+	}); err != nil {
+		t.Fatalf("first conversion: %v", err)
+	}
+	for _, column := range []string{"inventory", "equipment"} {
+		var dataType string
+		if err := database.conn.QueryRow(
+			`SELECT data_type FROM information_schema.columns
+			  WHERE table_schema = current_schema() AND table_name = $1 AND column_name = $2`,
+			probe, column,
+		).Scan(&dataType); err != nil || dataType != "json" {
+			t.Errorf("%s.%s is %q (err %v) after conversion, want json", probe, column, dataType, err)
+		}
+	}
+	if err := database.conn.QueryRow(`SELECT inventory FROM ` + probe + ` WHERE id = 1`).Scan(&got); err != nil {
+		t.Fatalf("read converted row: %v", err)
+	}
+	if got != before {
+		t.Errorf("inventory content changed across conversion: before %q, after %q", before, got)
+	}
+	// After the conversion the column is exact-text json: a write comes back
+	// byte-identical, which is the property jsonb never had.
+	if _, err := database.conn.Exec(`UPDATE `+probe+` SET inventory = $1 WHERE id = 1`, seed); err != nil {
+		t.Fatalf("write exact text: %v", err)
+	}
+	if err := database.conn.QueryRow(`SELECT inventory FROM ` + probe + ` WHERE id = 1`).Scan(&got); err != nil || got != seed {
+		t.Errorf("inventory content = %q (err %v) after exact-text write, want %q", got, err, seed)
+	}
+	// Second boot: the type guard finds nothing to convert, and the row is
+	// untouched.
+	if err := database.convertColumns(targets, "jsonb", "JSON", func(column string) string {
+		return column + "::json"
+	}); err != nil {
+		t.Fatalf("second conversion: %v", err)
+	}
+	if err := database.conn.QueryRow(`SELECT inventory FROM ` + probe + ` WHERE id = 1`).Scan(&got); err != nil || got != seed {
+		t.Errorf("inventory content = %q (err %v) after second boot, want unchanged", got, err)
+	}
+}
