@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -48,20 +49,14 @@ func isASCIIDigit(b byte) bool {
 	return b >= '0' && b <= '9'
 }
 
-// olcAuthorized mirrors do_olc's zone permission gate (src/olc.c): builders
-// at LVL_SET_BUILD (LVL_GOD+1) may edit any zone; lower builders are confined
-// to their assigned OLC zone.
+// olcAuthorized keeps the descriptor-owned editor call sites on their existing
+// shape while the rule itself lives in pkg/olc for all frontends.
 func olcAuthorized(s *Session, zoneNumber int) bool {
-	return getEffectiveLevel(s) >= game.LVL_GOD+1 || s.olcZone == zoneNumber
+	return olc.Authorized(getEffectiveLevel(s), s.olcZone, zoneNumber)
 }
 
-// olcZoneForVNum finds the zone whose [number*100, top] range contains vnum,
-// mirroring C's real_zone. It returns false when no zone covers the vnum.
+// olcZoneForVNum adapts the world-owned zone snapshot for the shared parser-
+// only lookup, keeping the descriptor-owned editor call sites unchanged.
 func olcZoneForVNum(world *game.World, vnum int) (*parser.Zone, bool) {
-	for _, zone := range world.GetAllZones() {
-		if vnum >= zone.Number*100 && vnum <= zone.TopRoom {
-			return zone, true
-		}
-	}
-	return nil, false
+	return olc.ZoneForVNum(world.GetAllZones(), vnum)
 }
