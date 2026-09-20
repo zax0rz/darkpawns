@@ -237,6 +237,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			s.charPassword = ""
 			s.loginFailures.Store(0)
 			s.player = p
+			s.olcZone = rec.OlcZone
 			s.authenticated = true
 			s.menuPasswordHash = rec.Password
 		} else {

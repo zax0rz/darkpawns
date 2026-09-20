@@ -11,7 +11,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
-	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -560,7 +559,7 @@ func (s *Session) persistAcceptedCharacter() error {
 		game.BootstrapFirstPlayerGod(p)
 	}
 	if s.manager.hasDB {
-		r, err := db.PlayerToRecord(p, nil)
+		r, err := s.playerRecordForSave(p)
 		if err != nil {
 			return err
 		}
@@ -610,7 +609,7 @@ func (s *Session) completeCharCreation() error {
 		s.player.SetRoom(game.NewbieHometownRoom(s.player.Hometown))
 	}
 	if s.manager.hasDB {
-		r, err := db.PlayerToRecord(s.player, nil)
+		r, err := s.playerRecordForSave(s.player)
 		if err != nil {
 			return s.abortEntry(err)
 		}
