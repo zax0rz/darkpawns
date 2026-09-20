@@ -118,15 +118,9 @@ func TestZoneSaveConcurrentSavesStayValid(t *testing.T) {
 	dir := w.GetParsedWorld().SourceDir
 	zone := &parser.Zone{Number: 30, TopRoom: 3099}
 
-	// Hermetic w.r.t. the package-global save list: drop any markers other
-	// tests left for this zone's vnums before starting.
-	oeditSaveMu.Lock()
-	for vnum := range oeditSaveObjs {
-		if vnum >= zone.Number*100 && vnum <= zone.TopRoom {
-			delete(oeditSaveObjs, vnum)
-		}
-	}
-	oeditSaveMu.Unlock()
+	// Hermetic w.r.t. the package-global save list: drop any marker another
+	// test left for this zone before starting.
+	olcSaveList.Remove(olcKindObject, zone.Number)
 
 	if err := saveOeditZone(w, zone); err != nil {
 		t.Fatal(err)
@@ -161,12 +155,9 @@ func TestZoneSaveConcurrentSavesStayValid(t *testing.T) {
 		t.Fatalf("saved .obj does not reparse: %v", err)
 	}
 
-	// The save list must be drained: every vnum was persisted.
-	oeditSaveMu.Lock()
-	remaining := len(oeditSaveObjs)
-	oeditSaveMu.Unlock()
-	if remaining != 0 {
-		t.Fatalf("%d save markers remain after zone save", remaining)
+	// The save list must be drained: the zone was persisted.
+	if olcSaveList.Dirty(olcKindObject, zone.Number) {
+		t.Fatal("object save marker remains after zone save")
 	}
 }
 
@@ -237,9 +228,7 @@ func TestZoneSaveCommitBlockedByHeldLock(t *testing.T) {
 	if _, ok := w.SnapshotObj(3010); ok {
 		committed = true
 	}
-	oeditSaveMu.Lock()
-	marked := oeditSaveObjs[3010]
-	oeditSaveMu.Unlock()
+	marked := olcSaveList.Dirty(olcKindObject, 30)
 	mu.Unlock()
 	if proceeded {
 		t.Fatal("commit proceeded while the zone save lock was held")
@@ -258,10 +247,8 @@ func TestZoneSaveCommitBlockedByHeldLock(t *testing.T) {
 	if _, ok := w.SnapshotObj(3010); !ok {
 		t.Fatal("commit did not land in the world after lock release")
 	}
-	oeditSaveMu.Lock()
-	marked = oeditSaveObjs[3010]
-	delete(oeditSaveObjs, 3010)
-	oeditSaveMu.Unlock()
+	marked = olcSaveList.Dirty(olcKindObject, 30)
+	olcSaveList.Remove(olcKindObject, 30)
 	if !marked {
 		t.Fatal("commit did not set the dirty marker after lock release")
 	}
@@ -299,9 +286,7 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 			my := seq.Add(1)
 			obj.Keywords = fmt.Sprintf("race-sword-%d-x", my)
 			w.CommitEditedObj(obj)
-			oeditSaveMu.Lock()
-			oeditSaveObjs[3001] = true
-			oeditSaveMu.Unlock()
+			olcSaveList.Mark(olcKindObject, zone.Number)
 			kwMu.Lock()
 			lastKW[my] = obj.Keywords
 			kwMu.Unlock()
@@ -329,9 +314,7 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	oeditSaveMu.Lock()
-	marked := oeditSaveObjs[3001]
-	oeditSaveMu.Unlock()
+	marked := olcSaveList.Dirty(olcKindObject, zone.Number)
 
 	// The last commit (in zone-lock order) is either in the final file or
 	// still marked dirty. Anything else is the lost-marker bug.
@@ -343,9 +326,7 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 	if err := saveOeditZone(w, zone); err != nil {
 		t.Fatal(err)
 	}
-	oeditSaveMu.Lock()
-	delete(oeditSaveObjs, 3001)
-	oeditSaveMu.Unlock()
+	olcSaveList.Remove(olcKindObject, zone.Number)
 }
 
 // TestSaveMeditZoneWritesTheLoadedDirectory pins the disk-path resolution:
