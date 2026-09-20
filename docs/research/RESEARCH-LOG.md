@@ -3438,3 +3438,22 @@ what was specified. Bonus find: command_gates.tsv golden can't reproduce itself
 (8 hand-added skill rows missing from the generator) → DP-1191. Registered 258→260,
 the abbreviation surface (~500 commands × every prefix) now C-faithful, law 3
 (level-filter-during-scan) proven live: mortal `go` → gossip, immortal `go` → goto.
+
+## 2026-09-20 — Milestone: OLC Complete, 3,000 Commits, All-Green Census
+
+The Architect reports the OLC port is done, with a full oracle census run after
+**every ported command** — all green, byte-for-byte. Repo crossed 3,000 commits
+(verified: `git rev-list --count` = 3002 at this entry). Next in the pipeline:
+luaedit, then webOLC — telnet-parity for all builder commands via
+darkpawns.org/admin.
+
+**Why this entry matters for the paper:** byte-for-byte census at command
+granularity is the strongest fidelity evidence class the port has produced —
+it upgrades the verification claim from "oracle-gated PRs" (sampled at the
+seam) to "every ported command re-derived against C transcripts." That is the
+methodology headline if we hold it through luaedit/webOLC. WebOLC is also a
+new fidelity surface: the admin UI becomes a *writer* of world files, so the
+save-format (field order, delimiters, zedit reset serialization) must round-trip
+identically or the census's "byte-for-byte" property silently stops covering
+the files the web writes. zone_save.go (+tests) landed on main the same evening —
+first look suggests the save path is being treated as first-class.
