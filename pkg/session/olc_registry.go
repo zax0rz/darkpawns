@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -147,6 +148,46 @@ func (m *Manager) ReleaseOLC(kind olc.Kind, number int, owner olc.Owner) {
 
 func (m *Manager) MarkOLCDirty(kind olc.Kind, zone int) {
 	markOLCDirty(kind, zone)
+}
+
+// SaveOLCZone serializes all five OLC files while holding the one zone lock.
+// The member-claim check is deliberately across kinds: a pending editor must
+// not be able to commit new in-memory bytes while the save snapshot is being
+// assembled.
+func (m *Manager) SaveOLCZone(number int) error {
+	if m.world == nil {
+		return fmt.Errorf("world unavailable")
+	}
+	zone, ok := m.world.SnapshotZone(number)
+	if !ok {
+		return fmt.Errorf("zone %d not found", number)
+	}
+	start := number * 100
+	for _, entry := range m.olcClaims().List() {
+		if entry.Number >= start && entry.Number <= zone.TopRoom {
+			return &olc.ZoneSaveConflict{Entry: entry}
+		}
+	}
+
+	saveMu := olc.ZoneSaveLock(number)
+	saveMu.Lock()
+	defer saveMu.Unlock()
+	if err := saveReditZoneLocked(m.world, &zone); err != nil {
+		return err
+	}
+	if err := saveMeditZoneLocked(m.world, &zone); err != nil {
+		return err
+	}
+	if err := saveOeditZoneLocked(m.world, &zone); err != nil {
+		return err
+	}
+	if err := saveSeditZoneLocked(m.world, &zone); err != nil {
+		return err
+	}
+	if err := saveZeditZoneLocked(m.world, &zone); err != nil {
+		return err
+	}
+	return nil
 }
 
 // EmitOLCPresence emits the existing room emote for an online player. It

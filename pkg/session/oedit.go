@@ -124,7 +124,7 @@ type oeditState struct {
 	// affects mirrors C's fixed affected[MAX_OBJ_AFFECT] array. The parser
 	// stores variable-length ObjAffect slices, so slots beyond the stored
 	// length are zeroed here exactly as clear_object leaves them in C.
-	affects [maxObjAffect]parser.ObjAffect
+	affects []parser.ObjAffect
 
 	// extraMeta tracks C's NULL-ness for the ex_description linked list,
 	// which the parser's plain strings cannot represent: an unset keyword or
@@ -355,6 +355,7 @@ func (s *Session) startOedit(number int, zone *parser.Zone) error {
 		zoneNumber: zone.Number,
 		isNew:      !exists,
 		mode:       oeditMainMenu,
+		affects:    make([]parser.ObjAffect, maxObjAffect),
 	}
 	for i, affect := range obj.Affects {
 		if i >= maxObjAffect {
@@ -1078,15 +1079,6 @@ func (s *Session) oeditShowVal4MenuLocked() {
 	}
 }
 
-// oeditToggleValueFlagBit XORs bit (1 << (n-1)) in a val word, mirroring the
-// container-flag toggle at oedit.c:1306-1310.
-func oeditToggleValueFlagBit(word *int, bit int) {
-	if bit < 0 || bit > 31 {
-		return
-	}
-	*word ^= 1 << uint(bit)
-}
-
 // oeditToggleExtraFlag XORs one bit of the object's extra flag word 0,
 // mirroring TOGGLE_BIT_AR over the 4-int array (NUM_ITEM_FLAGS is 29, so only
 // word 0 is reachable).
@@ -1171,7 +1163,7 @@ func (s *Session) parseOeditMainMenuLocked(arg string) {
 		s.oeditShowPromptApplyMenuLocked()
 	case 'f', 'F':
 		if len(state.obj.ExtraDescs) == 0 {
-			state.obj.ExtraDescs = append(state.obj.ExtraDescs, parser.ExtraDesc{})
+			applyOLC(olc.Operation{Kind: olc.OpAddObjExtraDescription, Obj: &state.obj, Index: -1})
 			state.extraMeta = append(state.extraMeta, oeditExtraMeta{})
 		}
 		state.currentExtra = 0
@@ -1278,7 +1270,7 @@ func (s *Session) parseOeditLocked(arg string) {
 	case oeditLevel:
 		// C's object level flags are compiled out.
 	case oeditValue1:
-		obj.Values[0] = atoiC(arg)
+		applyOLC(olc.Operation{Kind: olc.OpSetObjValue1, Obj: obj, Value: atoiC(arg)})
 		state.olcVal = 1
 		s.oeditShowVal2MenuLocked()
 		return
@@ -1289,7 +1281,7 @@ func (s *Session) parseOeditLocked(arg string) {
 			if number < 0 || number >= numSpells {
 				s.oeditShowVal2MenuLocked()
 			} else {
-				obj.Values[1] = number
+				applyOLC(olc.Operation{Kind: olc.OpSetObjValue2, Obj: obj, Value: number})
 				s.oeditShowVal3MenuLocked()
 			}
 		case itemContainer:
@@ -1299,65 +1291,24 @@ func (s *Session) parseOeditLocked(arg string) {
 			case number < 0 || number > 4:
 				s.oeditShowContainerFlagsLocked()
 			case number != 0:
-				oeditToggleValueFlagBit(&obj.Values[1], number-1)
+				applyOLC(olc.Operation{Kind: olc.OpToggleObjContainerFlag, Obj: obj, Value: number - 1})
 				s.oeditShowVal2MenuLocked()
 			default:
 				s.oeditShowVal3MenuLocked()
 			}
 		default:
-			obj.Values[1] = number
+			applyOLC(olc.Operation{Kind: olc.OpSetObjValue2, Obj: obj, Value: number})
 			s.oeditShowVal3MenuLocked()
 		}
 		return
 	case oeditValue3:
 		number := atoiC(arg)
-		var minVal, maxVal int
-		switch obj.TypeFlag {
-		case itemScroll, itemPotion:
-			minVal, maxVal = 0, numSpells-1
-		case itemWeapon:
-			// oedit.c:1333-1340 — ITEM_WEAPON sets 1..50 and has NO break,
-			// falling into WAND/STAFF which overwrite to 0..20. Weapons are
-			// therefore clamped 0-20, not 1-50. Do not "fix" this.
-			//nolint:ineffassign // the C fallthrough deliberately overwrites this assignment
-			minVal, maxVal = 1, 50
-			fallthrough
-		case itemWand, itemStaff:
-			minVal, maxVal = 0, 20
-		case itemDrinkcon, itemFountain:
-			minVal, maxVal = 0, numLiqTypes-1
-		default:
-			minVal, maxVal = -32000, 32000
-		}
-		applyOLC(olc.Operation{
-			Kind:  olc.OpSetObjValue3,
-			Obj:   obj,
-			Value: number,
-			Low:   minVal,
-			High:  maxVal,
-		})
+		applyOLC(olc.Operation{Kind: olc.OpSetObjValue3, Obj: obj, Value: number})
 		s.oeditShowVal4MenuLocked()
 		return
 	case oeditValue4:
 		number := atoiC(arg)
-		var minVal, maxVal int
-		switch obj.TypeFlag {
-		case itemScroll, itemPotion:
-			minVal, maxVal = 0, numSpells-1
-		case itemWand, itemStaff:
-			minVal, maxVal = 1, numSpells-1
-		case itemWeapon:
-			minVal, maxVal = 0, numAttackTypes-1
-		default:
-			minVal, maxVal = -32000, 32000
-		}
-		applyOLC(olc.Operation{
-			Kind:  olc.OpSetObjValue4,
-			Obj:   obj,
-			Value: number,
-			Low:   minVal,
-			High:  maxVal,
-		})
+		applyOLC(olc.Operation{Kind: olc.OpSetObjValue4, Obj: obj, Value: number})
 	case oeditPromptApply:
 		number := atoiC(arg)
 		if number == 0 {
@@ -1374,24 +1325,37 @@ func (s *Session) parseOeditLocked(arg string) {
 		number := atoiC(arg)
 		switch {
 		case number == 0:
-			state.affects[state.olcVal] = parser.ObjAffect{}
+			applyOLC(olc.Operation{
+				Kind:    olc.OpSetObjAffect,
+				Affects: &state.affects,
+				Index:   state.olcVal,
+				Affect:  &parser.ObjAffect{},
+			})
 			s.oeditShowPromptApplyMenuLocked()
 		case number < 0 || number >= numApplies:
 			s.oeditShowApplyMenuLocked()
 		case number == applySpell:
-			state.affects[state.olcVal].Location = number
+			affect := state.affects[state.olcVal]
+			affect.Location = number
+			applyOLC(olc.Operation{Kind: olc.OpSetObjAffect, Affects: &state.affects, Index: state.olcVal, Affect: &affect})
 			s.oeditShowSpellMenuLocked()
 		case number == applyRaceHate:
-			state.affects[state.olcVal].Location = number
+			affect := state.affects[state.olcVal]
+			affect.Location = number
+			applyOLC(olc.Operation{Kind: olc.OpSetObjAffect, Affects: &state.affects, Index: state.olcVal, Affect: &affect})
 			s.oeditShowRaceMenuLocked()
 		default:
-			state.affects[state.olcVal].Location = number
+			affect := state.affects[state.olcVal]
+			affect.Location = number
+			applyOLC(olc.Operation{Kind: olc.OpSetObjAffect, Affects: &state.affects, Index: state.olcVal, Affect: &affect})
 			s.oeditSendLocked("Modifier : ")
 			state.mode = oeditApplyMod
 		}
 		return
 	case oeditApplyMod:
-		state.affects[state.olcVal].Modifier = atoiC(arg)
+		affect := state.affects[state.olcVal]
+		affect.Modifier = atoiC(arg)
+		applyOLC(olc.Operation{Kind: olc.OpSetObjAffect, Affects: &state.affects, Index: state.olcVal, Affect: &affect})
 		s.oeditShowPromptApplyMenuLocked()
 		return
 	case oeditScriptMenu:
@@ -1426,7 +1390,8 @@ func (s *Session) parseOeditLocked(arg string) {
 		if state.currentExtra < len(obj.ExtraDescs) {
 			applyOLC(olc.Operation{
 				Kind:  olc.OpSetObjExtraKeywords,
-				Extra: &obj.ExtraDescs[state.currentExtra],
+				Obj:   obj,
+				Index: state.currentExtra,
 				Text:  strUDup(arg),
 			})
 			state.extraMeta[state.currentExtra].keywordSet = true
@@ -1441,7 +1406,9 @@ func (s *Session) parseOeditLocked(arg string) {
 			if state.currentExtra < len(obj.ExtraDescs) {
 				meta := state.extraMeta[state.currentExtra]
 				if !meta.keywordSet || !meta.descriptionSet {
-					obj.ExtraDescs = obj.ExtraDescs[:state.currentExtra]
+					for len(obj.ExtraDescs) > state.currentExtra {
+						applyOLC(olc.Operation{Kind: olc.OpRemoveObjExtraDescription, Obj: obj, Index: state.currentExtra})
+					}
 					state.extraMeta = state.extraMeta[:state.currentExtra]
 				}
 			}
@@ -1460,7 +1427,7 @@ func (s *Session) parseOeditLocked(arg string) {
 					if state.currentExtra+1 < len(obj.ExtraDescs) {
 						state.currentExtra++
 					} else {
-						obj.ExtraDescs = append(obj.ExtraDescs, parser.ExtraDesc{})
+						applyOLC(olc.Operation{Kind: olc.OpAddObjExtraDescription, Obj: obj, Index: -1})
 						state.extraMeta = append(state.extraMeta, oeditExtraMeta{})
 						state.currentExtra++
 					}
@@ -1668,6 +1635,13 @@ func (s *Session) saveOeditInternallyLocked() {
 // falls in the zone's [number*100, top] range are written, in ascending VNUM
 // order (C walks the obj_index[] table, which is VNUM-ordered).
 func saveOeditZone(world *game.World, zone *parser.Zone) error {
+	saveMu := zoneSaveLock(zone.Number)
+	saveMu.Lock()
+	defer saveMu.Unlock()
+	return saveOeditZoneLocked(world, zone)
+}
+
+func saveOeditZoneLocked(world *game.World, zone *parser.Zone) error {
 	parsed := world.GetParsedWorld()
 	if parsed == nil || parsed.SourceDir == "" {
 		return fmt.Errorf("world has no source directory")
@@ -1685,10 +1659,6 @@ func saveOeditZone(world *game.World, zone *parser.Zone) error {
 	// saveOeditInternallyLocked): a commit landing mid-save is either fully
 	// inside the snapshot or keeps its dirty marker, never silently marked
 	// saved.
-	saveMu := zoneSaveLock(zone.Number)
-	saveMu.Lock()
-	defer saveMu.Unlock()
-
 	objs := world.SnapshotObjs()
 	var sb strings.Builder
 	for i := range objs {

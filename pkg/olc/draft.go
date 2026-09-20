@@ -112,12 +112,44 @@ func (d Draft) Diff(snapshot parser.Room) []string {
 // intentionally process-local: a JWT can expire while the draft remains, but
 // a process restart is not a persistence boundary for P4.
 type DraftStore struct {
-	mu     sync.Mutex
-	drafts map[string]Draft
+	mu       sync.Mutex
+	drafts   map[string]Draft
+	entities *EntityDraftStore
 }
 
 func NewDraftStore() *DraftStore {
-	return &DraftStore{drafts: make(map[string]Draft)}
+	return &DraftStore{drafts: make(map[string]Draft), entities: NewEntityDraftStore()}
+}
+
+// The typed entity methods keep one DraftStore lifecycle owner for all five
+// editor kinds while preserving the room-shaped P4 API used by existing
+// callers. The entity substore has its own mutex because a player may recover
+// a non-room draft independently of a room draft created by the older API.
+func (s *DraftStore) entityStore() *EntityDraftStore {
+	if s.entities == nil {
+		s.entities = NewEntityDraftStore()
+	}
+	return s.entities
+}
+
+func (s *DraftStore) OpenEntity(owner string, kind Kind, vnum int, snapshot EntityValue) (EntityDraft, error) {
+	return s.entityStore().Open(owner, kind, vnum, snapshot)
+}
+
+func (s *DraftStore) GetEntity(owner string) (EntityDraft, bool) {
+	return s.entityStore().Get(owner)
+}
+
+func (s *DraftStore) PatchEntity(owner string, operations []Operation) (EntityDraft, error) {
+	return s.entityStore().Patch(owner, operations)
+}
+
+func (s *DraftStore) CommitEntityWith(owner string, commit func(EntityDraft) error) (EntityDraft, error) {
+	return s.entityStore().CommitWith(owner, commit)
+}
+
+func (s *DraftStore) DiscardEntity(owner string) bool {
+	return s.entityStore().Discard(owner)
 }
 
 // Open creates a draft or returns the owner's existing draft for the same

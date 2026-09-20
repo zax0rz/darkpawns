@@ -73,15 +73,39 @@ const (
 	OpSetObjActionDescription
 	OpSetObjExtraKeywords
 	OpSetObjExtraDescription
+	OpSetObjAffect
+	OpAddObjAffect
+	OpRemoveObjAffect
+	OpAddObjExtraDescription
+	OpRemoveObjExtraDescription
+	OpSetObjValue1
+	OpSetObjValue2
 	OpSetObjValue3
 	OpSetObjValue4
+	OpToggleObjContainerFlag
 
+	OpAddShopProduct
+	OpRemoveShopProduct
+	OpSetShopBuyProfit
+	OpSetShopSellProfit
+	OpSetShopKeeper
+	OpSetShopFlags
+	OpSetShopWithWho
+	OpAddShopRoom
+	OpRemoveShopRoom
 	OpSetShopOpenHour1
 	OpSetShopOpenHour2
 	OpSetShopCloseHour1
 	OpSetShopCloseHour2
 
 	OpSetZoneTopRoom
+	OpSetZoneName
+	OpSetZoneLifespan
+	OpSetZoneResetMode
+	OpAddZoneCommand
+	OpModifyZoneCommand
+	OpRemoveZoneCommand
+	OpReorderZoneCommand
 )
 
 // Operation is the transport-free typed input to Apply. Only the target
@@ -105,8 +129,12 @@ type Operation struct {
 	RoomExists func(int) bool
 	Mob        *parser.Mob
 	Obj        *parser.Obj
+	Affect     *parser.ObjAffect
+	Affects    *[]parser.ObjAffect
 	Shop       *parser.ShopProto
 	Zone       *parser.Zone
+	Command    *parser.ZoneCommand
+	ToIndex    int
 }
 
 // Apply performs one C-semantics OLC write. It intentionally mutates the
@@ -430,28 +458,162 @@ func Apply(op Operation) error {
 		}
 		op.Obj.ActionDesc = truncateBytes(op.Text, MaxMessage)
 	case OpSetObjExtraKeywords:
-		if op.Extra == nil {
+		if op.Extra == nil && op.Obj == nil {
 			return fmt.Errorf("object extra keywords operation requires an extra description")
 		}
-		op.Extra.Keywords = op.Text
+		if op.Extra != nil {
+			op.Extra.Keywords = op.Text
+		} else if op.Index >= 0 && op.Index < len(op.Obj.ExtraDescs) {
+			op.Obj.ExtraDescs[op.Index].Keywords = op.Text
+		} else {
+			return fmt.Errorf("object extra description index %d is out of range", op.Index)
+		}
 	case OpSetObjExtraDescription:
-		if op.Extra == nil {
+		if op.Extra == nil && op.Obj == nil {
 			return fmt.Errorf("object extra description operation requires an extra description")
 		}
-		op.Extra.Description = truncateBytes(op.Text, MaxExtraDesc)
-	case OpSetObjValue3, OpSetObjValue4:
+		if op.Extra != nil {
+			op.Extra.Description = truncateBytes(op.Text, MaxExtraDesc)
+		} else if op.Index >= 0 && op.Index < len(op.Obj.ExtraDescs) {
+			op.Obj.ExtraDescs[op.Index].Description = truncateBytes(op.Text, MaxExtraDesc)
+		} else {
+			return fmt.Errorf("object extra description index %d is out of range", op.Index)
+		}
+	case OpAddObjAffect:
+		if op.Obj == nil {
+			return fmt.Errorf("add object affect operation requires an object")
+		}
+		if len(op.Obj.Affects) >= parser.MAX_OBJ_AFFECT {
+			return fmt.Errorf("object affect limit %d exceeded", parser.MAX_OBJ_AFFECT)
+		}
+		affect := parser.ObjAffect{}
+		if op.Affect != nil {
+			affect = *op.Affect
+		}
+		if op.Index < 0 || op.Index >= len(op.Obj.Affects) {
+			op.Obj.Affects = append(op.Obj.Affects, affect)
+		} else {
+			op.Obj.Affects = append(op.Obj.Affects, parser.ObjAffect{})
+			copy(op.Obj.Affects[op.Index+1:], op.Obj.Affects[op.Index:])
+			op.Obj.Affects[op.Index] = affect
+		}
+	case OpRemoveObjAffect:
+		if op.Obj == nil {
+			return fmt.Errorf("remove object affect operation requires an object")
+		}
+		if op.Index < 0 || op.Index >= len(op.Obj.Affects) {
+			return fmt.Errorf("object affect index %d is out of range", op.Index)
+		}
+		copy(op.Obj.Affects[op.Index:], op.Obj.Affects[op.Index+1:])
+		op.Obj.Affects = op.Obj.Affects[:len(op.Obj.Affects)-1]
+	case OpSetObjAffect:
+		if op.Affects == nil || op.Affect == nil {
+			return fmt.Errorf("set object affect operation requires affect storage and value")
+		}
+		if op.Index < 0 || op.Index >= parser.MAX_OBJ_AFFECT {
+			return fmt.Errorf("object affect index %d is out of range", op.Index)
+		}
+		for len(*op.Affects) <= op.Index {
+			*op.Affects = append(*op.Affects, parser.ObjAffect{})
+		}
+		(*op.Affects)[op.Index] = *op.Affect
+	case OpAddObjExtraDescription:
+		if op.Obj == nil {
+			return fmt.Errorf("add object extra description operation requires an object")
+		}
+		extra := parser.ExtraDesc{}
+		if op.Extra != nil {
+			extra = *op.Extra
+		}
+		extra.Description = truncateBytes(extra.Description, MaxExtraDesc)
+		if op.Index < 0 || op.Index >= len(op.Obj.ExtraDescs) {
+			op.Obj.ExtraDescs = append(op.Obj.ExtraDescs, extra)
+		} else {
+			op.Obj.ExtraDescs = append(op.Obj.ExtraDescs, parser.ExtraDesc{})
+			copy(op.Obj.ExtraDescs[op.Index+1:], op.Obj.ExtraDescs[op.Index:])
+			op.Obj.ExtraDescs[op.Index] = extra
+		}
+	case OpRemoveObjExtraDescription:
+		if op.Obj == nil {
+			return fmt.Errorf("remove object extra description operation requires an object")
+		}
+		if op.Index < 0 || op.Index >= len(op.Obj.ExtraDescs) {
+			return fmt.Errorf("object extra description index %d is out of range", op.Index)
+		}
+		copy(op.Obj.ExtraDescs[op.Index:], op.Obj.ExtraDescs[op.Index+1:])
+		op.Obj.ExtraDescs = op.Obj.ExtraDescs[:len(op.Obj.ExtraDescs)-1]
+	case OpSetObjValue1, OpSetObjValue2, OpSetObjValue3, OpSetObjValue4:
 		if op.Obj == nil {
 			return fmt.Errorf("object value operation requires an object")
 		}
-		if op.Low > op.High {
-			return fmt.Errorf("object value operation has invalid bounds %d..%d", op.Low, op.High)
+		index := int(op.Kind - OpSetObjValue1)
+		low, high := objectValueBounds(op.Obj.TypeFlag, index)
+		if op.Low != 0 || op.High != 0 {
+			low, high = op.Low, op.High
 		}
-		index := 2
-		if op.Kind == OpSetObjValue4 {
-			index = 3
+		if low > high {
+			return fmt.Errorf("object value operation has invalid bounds %d..%d", low, high)
 		}
-		op.Obj.Values[index] = clampInt(op.Value, op.Low, op.High)
+		op.Obj.Values[index] = clampInt(op.Value, low, high)
+	case OpToggleObjContainerFlag:
+		if op.Obj == nil {
+			return fmt.Errorf("object container flag operation requires an object")
+		}
+		if op.Obj.TypeFlag != 15 || op.Value < 0 || op.Value > 3 {
+			return fmt.Errorf("object container flag %d is invalid", op.Value)
+		}
+		op.Obj.Values[1] ^= 1 << uint(op.Value)
 
+	case OpAddShopProduct:
+		if op.Shop == nil {
+			return fmt.Errorf("add shop product operation requires a shop")
+		}
+		if op.Value < 0 {
+			return nil // -1 is the C list terminator, never a stored product.
+		}
+		if op.Index < 0 || op.Index >= len(op.Shop.Products) {
+			op.Shop.Products = append(op.Shop.Products, op.Value)
+		} else {
+			op.Shop.Products = append(op.Shop.Products, 0)
+			copy(op.Shop.Products[op.Index+1:], op.Shop.Products[op.Index:])
+			op.Shop.Products[op.Index] = op.Value
+		}
+	case OpRemoveShopProduct:
+		if op.Shop == nil {
+			return fmt.Errorf("remove shop product operation requires a shop")
+		}
+		if op.Index < 0 || op.Index >= len(op.Shop.Products) {
+			return fmt.Errorf("shop product index %d is out of range", op.Index)
+		}
+		copy(op.Shop.Products[op.Index:], op.Shop.Products[op.Index+1:])
+		op.Shop.Products = op.Shop.Products[:len(op.Shop.Products)-1]
+	case OpSetShopBuyProfit, OpSetShopSellProfit, OpSetShopKeeper, OpSetShopFlags, OpSetShopWithWho,
+		OpAddShopRoom, OpRemoveShopRoom:
+		if op.Shop == nil {
+			return fmt.Errorf("shop operation requires a shop")
+		}
+		switch op.Kind {
+		case OpSetShopBuyProfit:
+			op.Shop.BuyProfit = float64(op.Value) / 100.0
+		case OpSetShopSellProfit:
+			op.Shop.SellProfit = float64(op.Value) / 100.0
+		case OpSetShopKeeper:
+			op.Shop.KeeperVNum = op.Value
+		case OpSetShopFlags:
+			op.Shop.Bitvector = op.Value
+		case OpSetShopWithWho:
+			op.Shop.WithWho = op.Value
+		case OpAddShopRoom:
+			if op.Value >= 0 {
+				op.Shop.Rooms = append(op.Shop.Rooms, op.Value)
+			}
+		case OpRemoveShopRoom:
+			if op.Index < 0 || op.Index >= len(op.Shop.Rooms) {
+				return fmt.Errorf("shop room index %d is out of range", op.Index)
+			}
+			copy(op.Shop.Rooms[op.Index:], op.Shop.Rooms[op.Index+1:])
+			op.Shop.Rooms = op.Shop.Rooms[:len(op.Shop.Rooms)-1]
+		}
 	case OpSetShopOpenHour1, OpSetShopOpenHour2, OpSetShopCloseHour1, OpSetShopCloseHour2:
 		if op.Shop == nil {
 			return fmt.Errorf("shop hour operation requires a shop")
@@ -475,6 +637,66 @@ func Apply(op Operation) error {
 			return fmt.Errorf("zone top operation has invalid bounds %d..%d", op.Low, op.High)
 		}
 		op.Zone.TopRoom = clampInt(op.Value, op.Low, op.High)
+	case OpSetZoneName:
+		if op.Zone == nil {
+			return fmt.Errorf("zone name operation requires a zone")
+		}
+		op.Zone.Name = truncateBytes(op.Text, MaxRoomName-1)
+	case OpSetZoneLifespan:
+		if op.Zone == nil {
+			return fmt.Errorf("zone lifespan operation requires a zone")
+		}
+		op.Zone.Lifespan = clampInt(op.Value, 0, 240)
+	case OpSetZoneResetMode:
+		if op.Zone == nil {
+			return fmt.Errorf("zone reset mode operation requires a zone")
+		}
+		op.Zone.ResetMode = clampInt(op.Value, 0, 2)
+	case OpAddZoneCommand:
+		if op.Zone == nil || op.Command == nil {
+			return fmt.Errorf("add zone command operation requires a zone and command")
+		}
+		command := *op.Command
+		if op.Index < 0 || op.Index >= len(op.Zone.Commands) {
+			op.Zone.Commands = append(op.Zone.Commands, command)
+		} else {
+			op.Zone.Commands = append(op.Zone.Commands, parser.ZoneCommand{})
+			copy(op.Zone.Commands[op.Index+1:], op.Zone.Commands[op.Index:])
+			op.Zone.Commands[op.Index] = command
+		}
+	case OpModifyZoneCommand:
+		if op.Zone == nil || op.Command == nil {
+			return fmt.Errorf("modify zone command operation requires a zone and command")
+		}
+		if op.Index < 0 || op.Index >= len(op.Zone.Commands) {
+			return fmt.Errorf("zone command index %d is out of range", op.Index)
+		}
+		op.Zone.Commands[op.Index] = *op.Command
+	case OpRemoveZoneCommand:
+		if op.Zone == nil {
+			return fmt.Errorf("remove zone command operation requires a zone")
+		}
+		if op.Index < 0 || op.Index >= len(op.Zone.Commands) {
+			return fmt.Errorf("zone command index %d is out of range", op.Index)
+		}
+		copy(op.Zone.Commands[op.Index:], op.Zone.Commands[op.Index+1:])
+		op.Zone.Commands = op.Zone.Commands[:len(op.Zone.Commands)-1]
+	case OpReorderZoneCommand:
+		if op.Zone == nil {
+			return fmt.Errorf("reorder zone command operation requires a zone")
+		}
+		if op.Index < 0 || op.Index >= len(op.Zone.Commands) || op.ToIndex < 0 || op.ToIndex >= len(op.Zone.Commands) {
+			return fmt.Errorf("zone command reorder %d -> %d is out of range", op.Index, op.ToIndex)
+		}
+		if op.Index != op.ToIndex {
+			command := op.Zone.Commands[op.Index]
+			if op.Index < op.ToIndex {
+				copy(op.Zone.Commands[op.Index:op.ToIndex], op.Zone.Commands[op.Index+1:op.ToIndex+1])
+			} else {
+				copy(op.Zone.Commands[op.ToIndex+1:op.Index+1], op.Zone.Commands[op.ToIndex:op.Index])
+			}
+			op.Zone.Commands[op.ToIndex] = command
+		}
 	default:
 		return fmt.Errorf("unknown OLC operation %d", op.Kind)
 	}
@@ -489,6 +711,50 @@ func clampInt(value, low, high int) int {
 		return high
 	}
 	return value
+}
+
+func objectValueBounds(typeFlag, index int) (int, int) {
+	const (
+		itemScroll    = 2
+		itemWand      = 3
+		itemStaff     = 4
+		itemWeapon    = 5
+		itemPotion    = 10
+		itemContainer = 15
+		itemDrinkcon  = 17
+		itemFountain  = 23
+	)
+	const numSpells, numLiqTypes, numAttackTypes = 104, 16, 15
+	switch index {
+	case 0:
+		return -32000, 32000
+	case 1:
+		if typeFlag == itemScroll || typeFlag == itemPotion {
+			return 0, numSpells - 1
+		}
+		if typeFlag == itemContainer {
+			return 0, 15
+		}
+	case 2:
+		switch typeFlag {
+		case itemScroll, itemPotion:
+			return 0, numSpells - 1
+		case itemWeapon, itemWand, itemStaff:
+			return 0, 20
+		case itemDrinkcon, itemFountain:
+			return 0, numLiqTypes - 1
+		}
+	case 3:
+		switch typeFlag {
+		case itemScroll, itemPotion:
+			return 0, numSpells - 1
+		case itemWand, itemStaff:
+			return 1, numSpells - 1
+		case itemWeapon:
+			return 0, numAttackTypes - 1
+		}
+	}
+	return -32000, 32000
 }
 
 func truncateBytes(value string, limit int) string {

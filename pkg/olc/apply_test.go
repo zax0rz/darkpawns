@@ -1,6 +1,8 @@
 package olc
 
 import (
+	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -267,6 +269,22 @@ func TestApplyNumericClampBoundaries(t *testing.T) {
 			t.Fatalf("zone top input %d: got %d, want %d", input, zone.TopRoom, want)
 		}
 	}
+	for _, input := range []int{-1, 0, 240, 241} {
+		zone := parser.Zone{}
+		if err := Apply(Operation{Kind: OpSetZoneLifespan, Zone: &zone, Value: input}); err != nil {
+			t.Fatal(err)
+		}
+		want := input
+		if want < 0 {
+			want = 0
+		}
+		if want > 240 {
+			want = 240
+		}
+		if zone.Lifespan != want {
+			t.Fatalf("zone lifespan input %d: got %d, want %d", input, zone.Lifespan, want)
+		}
+	}
 }
 
 func TestApplyMobLevelCascadeWritesCFields(t *testing.T) {
@@ -313,6 +331,110 @@ func TestApplyMobLevelCascadeWritesCFields(t *testing.T) {
 	}
 	if got, want := zero.Exp, 100; got != want {
 		t.Errorf("zero-level cascade exp = %d, want %d", got, want)
+	}
+}
+
+func TestApplyObjectTypeValueBoundaries(t *testing.T) {
+	tests := []struct {
+		name     string
+		typeFlag int
+		kind     OperationKind
+		input    int
+		want     int
+	}{
+		{"scroll spell low", 2, OpSetObjValue3, -1, 0},
+		{"scroll spell high", 2, OpSetObjValue3, 104, 103},
+		{"weapon damage sides", 5, OpSetObjValue3, 21, 20},
+		{"drink liquid low", parser.ITEM_DRINKCON, OpSetObjValue3, -1, 0},
+		{"drink liquid high", parser.ITEM_DRINKCON, OpSetObjValue3, 16, 15},
+		{"weapon attack high", 5, OpSetObjValue4, 15, 14},
+		{"wand spell lower bound", 3, OpSetObjValue4, 0, 1},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			object := parser.Obj{TypeFlag: test.typeFlag}
+			if err := Apply(Operation{Kind: test.kind, Obj: &object, Value: test.input}); err != nil {
+				t.Fatal(err)
+			}
+			index := int(test.kind - OpSetObjValue1)
+			if got := object.Values[index]; got != test.want {
+				t.Fatalf("value[%d] = %d, want %d", index, got, test.want)
+			}
+		})
+	}
+
+	object := parser.Obj{TypeFlag: 15}
+	if err := Apply(Operation{Kind: OpToggleObjContainerFlag, Obj: &object, Value: 2}); err != nil {
+		t.Fatal(err)
+	}
+	if object.Values[1] != 4 {
+		t.Fatalf("container flags = %d, want bit 2", object.Values[1])
+	}
+}
+
+func TestApplyStructuralListsAndExplicitZoneReorder(t *testing.T) {
+	shop := parser.ShopProto{Products: []int{10, 20}}
+	if err := Apply(Operation{Kind: OpAddShopProduct, Shop: &shop, Value: -1, Index: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpAddShopProduct, Shop: &shop, Value: 30, Index: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpRemoveShopProduct, Shop: &shop, Index: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if got := fmt.Sprint(shop.Products); got != "[10 30]" {
+		t.Fatalf("shop products = %s, want [10 30]", got)
+	}
+
+	object := parser.Obj{}
+	if err := Apply(Operation{Kind: OpAddObjAffect, Obj: &object, Affect: &parser.ObjAffect{Location: 1, Modifier: 2}, Index: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpAddObjExtraDescription, Obj: &object, Extra: &parser.ExtraDesc{Keywords: "key", Description: "desc"}, Index: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpRemoveObjAffect, Obj: &object, Index: 0}); err != nil {
+		t.Fatal(err)
+	}
+	if len(object.Affects) != 0 || len(object.ExtraDescs) != 1 {
+		t.Fatalf("object lists = affects %d extras %d", len(object.Affects), len(object.ExtraDescs))
+	}
+
+	zone := parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "M", IfFlag: 0, Arg1: 1},
+		{Command: "G", IfFlag: 1, Arg1: 2},
+		{Command: "O", IfFlag: 1, Arg1: 3},
+	}}
+	if err := Apply(Operation{Kind: OpReorderZoneCommand, Zone: &zone, Index: 2, ToIndex: 0}); err != nil {
+		t.Fatal(err)
+	}
+	if got := []string{zone.Commands[0].Command, zone.Commands[1].Command, zone.Commands[2].Command}; !reflect.DeepEqual(got, []string{"O", "M", "G"}) {
+		t.Fatalf("command order = %#v", got)
+	}
+	if got := []int{zone.Commands[0].IfFlag, zone.Commands[1].IfFlag, zone.Commands[2].IfFlag}; !reflect.DeepEqual(got, []int{1, 0, 1}) {
+		t.Fatalf("IfFlag chain = %#v, want [1 0 1]", got)
+	}
+}
+
+func TestApplyMobLevelAndExpAreOrderedOperations(t *testing.T) {
+	levelThenExp := parser.Mob{}
+	if err := Apply(Operation{Kind: OpSetMobLevel, Mob: &levelThenExp, Value: 30}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetMobExp, Mob: &levelThenExp, Value: 123}); err != nil {
+		t.Fatal(err)
+	}
+
+	expThenLevel := parser.Mob{}
+	if err := Apply(Operation{Kind: OpSetMobExp, Mob: &expThenLevel, Value: 123}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetMobLevel, Mob: &expThenLevel, Value: 30}); err != nil {
+		t.Fatal(err)
+	}
+	if levelThenExp.Exp != 123 || expThenLevel.Exp == 123 {
+		t.Fatalf("ordered exp writes collapsed: level->exp=%d exp->level=%d", levelThenExp.Exp, expThenLevel.Exp)
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -57,6 +58,15 @@ func (f *fakeOLCWriteStateProvider) ReleaseOLC(kind olc.Kind, number int, owner 
 
 func (f *fakeOLCWriteStateProvider) MarkOLCDirty(kind olc.Kind, zone int) {
 	f.saves.Mark(kind, zone)
+}
+
+func (f *fakeOLCWriteStateProvider) SaveOLCZone(zone int) error {
+	for _, entry := range f.registry.List() {
+		if entry.Number >= zone*100 && entry.Number <= zone*100+3000 {
+			return &olc.ZoneSaveConflict{Entry: entry}
+		}
+	}
+	return nil
 }
 
 func (f *fakeOLCWriteStateProvider) EmitOLCPresence(_ string, start bool) {
@@ -115,13 +125,14 @@ func newOLCTestWorld(t *testing.T) *game.World {
 		Zones: []parser.Zone{{
 			Number:  1,
 			Name:    "Test Zone",
-			TopRoom: 2000,
+			TopRoom: 4000,
 			Commands: []parser.ZoneCommand{
 				{Command: "M", Arg1: 2001, Arg3: 1001},
 				{Command: "G", Arg1: 3001},
 				{Command: "M", Arg1: 2001, Arg3: 1002},
 			},
 		}},
+		Shops: []parser.ShopProto{{VNum: 3901, KeeperVNum: 2001, Products: []int{3001}}},
 	})
 	if err != nil {
 		t.Fatalf("game.NewWorld: %v", err)
@@ -224,6 +235,38 @@ func TestOLCPreviewAndZoneCommandView(t *testing.T) {
 	}
 }
 
+func TestOLCEntityDraftLifecycleForMobObjectShopAndZone(t *testing.T) {
+	state := newFakeOLCWriteStateProvider()
+	tests := []struct {
+		kind  string
+		vnum  int
+		patch string
+		want  string
+	}{
+		{"mob", 2001, `[{"kind":"set_level","value":30}]`, `"Level":30`},
+		{"obj", 3001, `[{"kind":"add_affect","location":1,"modifier":2}]`, `"Location":1`},
+		{"shop", 3901, `[{"kind":"add_product","value":3001}]`, `"Products":[3001,3001]`},
+		{"zone", 1001, `[{"kind":"reorder_command","index":1,"to_index":0}]`, `"position":0`},
+	}
+	for _, test := range tests {
+		t.Run(test.kind, func(t *testing.T) {
+			handler := newOLCTestRouter(t, 31, 1, state)
+			open := doOLCJSONRequest(t, handler, http.MethodPost, "/admin/olc/"+test.kind+"/"+strconv.Itoa(test.vnum), nil)
+			if open.Code != http.StatusOK {
+				t.Fatalf("open status = %d; body: %s", open.Code, open.Body.String())
+			}
+			patch := doOLCJSONRequest(t, handler, http.MethodPatch, "/admin/olc/"+test.kind+"/"+strconv.Itoa(test.vnum)+"/draft", []byte(test.patch))
+			if patch.Code != http.StatusOK || !strings.Contains(patch.Body.String(), test.want) {
+				t.Fatalf("patch status/body = %d/%s; want %q", patch.Code, patch.Body.String(), test.want)
+			}
+			commit := doOLCJSONRequest(t, handler, http.MethodPost, "/admin/olc/"+test.kind+"/"+strconv.Itoa(test.vnum)+"/draft/commit", nil)
+			if commit.Code != http.StatusOK {
+				t.Fatalf("commit status = %d; body: %s", commit.Code, commit.Body.String())
+			}
+		})
+	}
+}
+
 func TestOLCReadLists(t *testing.T) {
 	state := &fakeOLCReadStateProvider{
 		claims: []olc.ClaimEntry{{
@@ -313,5 +356,21 @@ func TestOLCRoomClaimConflictIncludesFrontendAndIdle(t *testing.T) {
 	}
 	if conflict.Frontend != string(olc.FrontendTelnet) || conflict.Holder != "TelnetBuilder" || conflict.IdleSecs < 0 {
 		t.Fatalf("conflict = %#v", conflict)
+	}
+}
+
+func TestOLCZoneSaveRefusesHeldMemberWithFrontend(t *testing.T) {
+	state := newFakeOLCWriteStateProvider()
+	handler := newOLCTestRouter(t, 31, 1, state)
+	owner := testWebConflictOwner{}
+	if _, ok := state.registry.Claim(olc.KindMob, 2001, owner); !ok {
+		t.Fatal("claim refused")
+	}
+	rec := doOLCJSONRequest(t, handler, http.MethodPost, "/admin/olc/zones/1/save", nil)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("save status = %d, want 409; body: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"frontend":"telnet"`) || !strings.Contains(rec.Body.String(), "zone save refused") {
+		t.Fatalf("save refusal = %s", rec.Body.String())
 	}
 }

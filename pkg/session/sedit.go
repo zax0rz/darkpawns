@@ -565,7 +565,7 @@ func (s *Session) parseSeditLocked(arg string) {
 		s.seditShowProductsMenuLocked()
 		return
 	case seditDeleteProduct:
-		removeSeditInt(&state.shop.Products, atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpRemoveShopProduct, Shop: &state.shop, Index: atoiC(arg)})
 		s.seditShowProductsMenuLocked()
 		return
 	case seditNewRoom:
@@ -575,7 +575,7 @@ func (s *Session) parseSeditLocked(arg string) {
 		s.seditShowRoomsMenuLocked()
 		return
 	case seditDeleteRoom:
-		removeSeditInt(&state.shop.Rooms, atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpRemoveShopRoom, Shop: &state.shop, Index: atoiC(arg)})
 		s.seditShowRoomsMenuLocked()
 		return
 	case seditShopFlags:
@@ -755,7 +755,7 @@ func (s *Session) seditAddProductLocked(vnum int) bool {
 		}
 	}
 	if vnum >= 0 {
-		s.sedit.shop.Products = append(s.sedit.shop.Products, vnum)
+		applyOLC(olc.Operation{Kind: olc.OpAddShopProduct, Shop: &s.sedit.shop, Value: vnum, Index: -1})
 	}
 	return true
 }
@@ -768,7 +768,7 @@ func (s *Session) seditAddRoomLocked(vnum int) bool {
 		}
 	}
 	if vnum >= 0 {
-		s.sedit.shop.Rooms = append(s.sedit.shop.Rooms, vnum)
+		applyOLC(olc.Operation{Kind: olc.OpAddShopRoom, Shop: &s.sedit.shop, Value: vnum, Index: -1})
 	}
 	return true
 }
@@ -795,14 +795,6 @@ func seditRemoveBuyType(shop *parser.ShopProto, index int) {
 	}
 }
 
-func removeSeditInt(values *[]int, index int) {
-	if index < 0 || index >= len(*values) {
-		return
-	}
-	copy((*values)[index:], (*values)[index+1:])
-	*values = (*values)[:len(*values)-1]
-}
-
 func parseSeditFloat(input string) (float64, bool) {
 	input = strings.TrimSpace(input)
 	// C's sscanf("%f") accepts the longest valid numeric prefix and ignores
@@ -826,6 +818,13 @@ func seditByteAt(input string, index int) byte {
 
 // saveSeditZone writes the C .shp format from a VNUM-ordered world snapshot.
 func saveSeditZone(world *game.World, zone *parser.Zone) error {
+	saveMu := zoneSaveLock(zone.Number)
+	saveMu.Lock()
+	defer saveMu.Unlock()
+	return saveSeditZoneLocked(world, zone)
+}
+
+func saveSeditZoneLocked(world *game.World, zone *parser.Zone) error {
 	parsed := world.GetParsedWorld()
 	if parsed == nil || parsed.SourceDir == "" {
 		return fmt.Errorf("world has no source directory")
@@ -834,10 +833,6 @@ func saveSeditZone(world *game.World, zone *parser.Zone) error {
 	if err := os.MkdirAll(libDir, 0o755); err != nil {
 		return err
 	}
-	saveMu := zoneSaveLock(zone.Number)
-	saveMu.Lock()
-	defer saveMu.Unlock()
-
 	shops := world.SnapshotShops()
 	var out strings.Builder
 	out.WriteString("CircleMUD v3.0 Shop File~\n")
