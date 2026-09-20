@@ -124,6 +124,12 @@ type Manager struct {
 	zoneEditMu sync.Mutex
 	zoneEdits  map[int]*Session
 
+	// shopEdits reserves shop VNUMs against concurrent duplicate SEDIT entry.
+	// It mirrors the descriptor scan in C's do_olc while remaining atomic across
+	// the Go session goroutines.
+	shopEditMu sync.Mutex
+	shopEdits  map[int]*Session
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -1343,6 +1349,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 	s.cancelRoomEdit()
 	s.cancelMedit()
 	s.cancelOedit()
+	s.cancelSedit()
 
 	p := s.player
 	p.SetLinkless(true)
@@ -1732,8 +1739,25 @@ type Session struct {
 	oedit *oeditState
 
 	// zedit holds the descriptor-owned zedit (CON_ZEDIT) working state.
-	// Guarded by textEditMu, matching the other OLC editors.
+	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
 	zedit *zeditState
+
+	// sedit holds the descriptor-owned sedit (CON_SEDIT) working state.
+	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
+	sedit *seditState
+
+	// zoneEdits reserves room VNums against concurrent duplicate ZEDIT entry.
+	// ZEDIT's C duplicate gate is per room number even though the working copy
+	// contains only that room's reset commands. It is a separate connection
+	// state from REDIT, so the same room may be held by one editor of each type.
+	zoneEditMu sync.Mutex
+	zoneEdits  map[int]*Session
+
+	// shopEdits reserves shop VNUMs against concurrent duplicate SEDIT entry.
+	// It mirrors the descriptor scan in C's do_olc while remaining atomic across
+	// the Go session goroutines.
+	shopEditMu sync.Mutex
+	shopEdits  map[int]*Session
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)

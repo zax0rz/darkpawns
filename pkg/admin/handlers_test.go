@@ -38,6 +38,23 @@ func testWorld(t *testing.T) *game.World {
 	return w
 }
 
+func newWorldWithShops(t *testing.T) *game.World {
+	t.Helper()
+	w := testWorld(t)
+	sm := game.NewShopManager()
+	sm.AddShop(&game.Shop{
+		KeeperVNum: 2002,
+		BuyTypes:   []int{1, 5},
+		SellTypes:  []int{3001},
+		ProfitBuy:  1.2,
+		ProfitSell: 0.8,
+		KeeperName: "Merchant",
+		RoomVNum:   1001,
+	})
+	w.SetShopManager(sm)
+	return w
+}
+
 // setJWTSecret sets JWT_SECRET for the duration of a test.
 func setJWTSecret(t *testing.T) {
 	t.Helper()
@@ -870,31 +887,16 @@ func TestHandleShopByKeeper_GET_NotFound(t *testing.T) {
 	}
 }
 
-func TestHandleShopByKeeper_PUT_Valid(t *testing.T) {
+func TestHandleShopByKeeper_PUT_NotAllowed(t *testing.T) {
 	w := newWorldWithShops(t)
 	handler := handleShopByKeeper(w, nil)
 
-	body := `{"buy_types": [2, 3]}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/shops/2002", strings.NewReader(body))
+	req := httptest.NewRequest(http.MethodPut, "/admin/shops/2002", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleShopByKeeper_PUT_NotFound(t *testing.T) {
-	w := newWorldWithShops(t)
-	handler := handleShopByKeeper(w, nil)
-
-	body := `{"buy_types": [1]}`
-	req := httptest.NewRequest(http.MethodPut, "/admin/shops/9999", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404", rec.Code)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("status = %d, want 405", rec.Code)
 	}
 }
 
@@ -1757,7 +1759,7 @@ func TestWorldWritePUTs_AreGone(t *testing.T) {
 	}
 	token := generateTestToken(t, "builder")
 
-	for _, path := range []string{"/admin/rooms/3001", "/admin/mobs/3001", "/admin/objects/3001", "/admin/zones/30"} {
+	for _, path := range []string{"/admin/rooms/3001", "/admin/mobs/3001", "/admin/objects/3001", "/admin/zones/30", "/admin/shops/2002"} {
 		req := httptest.NewRequest(http.MethodPut, path, strings.NewReader(`{"name":"x"}`))
 		req.Header.Set("Authorization", "Bearer "+token)
 		rec := httptest.NewRecorder()

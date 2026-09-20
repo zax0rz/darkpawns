@@ -1,0 +1,42 @@
+# C-backed SEDIT main menu with ANSI enabled. keep-ansi compares the raw
+# get_char_cols bytes embedded by sedit_disp_menu.
+# depth-case: sedit.menu-colors-on-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Seditcolor
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Seditcolor
+y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+sedit 8034

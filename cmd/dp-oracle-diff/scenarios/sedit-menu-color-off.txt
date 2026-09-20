@@ -1,0 +1,42 @@
+# C-backed SEDIT main menu with ANSI disabled. keep-ansi proves the port does
+# not invent color bytes when get_char_cols returns empty strings.
+# depth-case: sedit.menu-colors-off-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Seditplain
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Seditplain
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+sedit 8034

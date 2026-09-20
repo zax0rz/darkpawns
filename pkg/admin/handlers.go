@@ -1220,14 +1220,6 @@ type shopResponse struct {
 	RoomVNum   int     `json:"room_vnum"`
 }
 
-// shopUpdateRequest is the JSON body for shop update requests.
-type shopUpdateRequest struct {
-	BuyTypes   *[]int   `json:"buy_types"`
-	SellTypes  *[]int   `json:"sell_types"`
-	ProfitBuy  *float64 `json:"profit_buy"`
-	ProfitSell *float64 `json:"profit_sell"`
-}
-
 // handleShops returns all shops.
 //
 // Tranche 2 of the Huma migration: GET /admin/shops is a typed Huma operation
@@ -1247,7 +1239,7 @@ func handleShops(world *game.World) http.HandlerFunc {
 	}
 }
 
-// handleShopByKeeper handles GET/PUT /admin/shops/{keeper_vnum}.
+// handleShopByKeeper handles GET /admin/shops/{keeper_vnum}.
 func handleShopByKeeper(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vnumStr := strings.TrimPrefix(r.URL.Path, "/admin/shops/")
@@ -1281,75 +1273,6 @@ func handleShopByKeeper(world *game.World, auditLogger *audit.AuditLogger) http.
 			w.Header().Set("Content-Type", "application/json")
 			if err := json.NewEncoder(w).Encode(resp); err != nil {
 				slog.Warn("admin shop encode failed", "error", err)
-			}
-
-		case http.MethodPut:
-			var req shopUpdateRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				http.Error(w, `{"error":"invalid json"}`, http.StatusBadRequest)
-				return
-			}
-
-			updated := false
-			if req.BuyTypes != nil {
-				if !world.SetShopBuyTypes(vnum, *req.BuyTypes) {
-					http.Error(w, `{"error":"shop not found"}`, http.StatusNotFound)
-					return
-				}
-				updated = true
-			}
-			if req.SellTypes != nil {
-				if !world.SetShopSellTypes(vnum, *req.SellTypes) {
-					http.Error(w, `{"error":"shop not found"}`, http.StatusNotFound)
-					return
-				}
-				updated = true
-			}
-			if req.ProfitBuy != nil && req.ProfitSell != nil {
-				if !world.SetShopProfit(vnum, *req.ProfitBuy, *req.ProfitSell) {
-					http.Error(w, `{"error":"shop not found"}`, http.StatusNotFound)
-					return
-				}
-				updated = true
-			}
-
-			if !updated {
-				http.Error(w, `{"error":"no fields to update"}`, http.StatusBadRequest)
-				return
-			}
-
-			if auditLogger != nil {
-				playerName := ""
-				if claims, ok := auth.GetClaimsFromContext(r.Context()); ok {
-					playerName = claims.PlayerName
-				}
-				auditLogger.Log(audit.AuditEvent{
-					IPAddress: auth.GetIPFromRequest(r),
-					EventType: "administration",
-					User:      playerName,
-					Action:    "admin_shop_update",
-					Details:   fmt.Sprintf("updated shop keeper %d", vnum),
-					Success:   true,
-				})
-			}
-
-			shop, ok := world.GetShopByKeeper(vnum)
-			if !ok {
-				http.Error(w, `{"error":"shop not found after update"}`, http.StatusInternalServerError)
-				return
-			}
-			resp := shopResponse{
-				KeeperVNum: shop.KeeperVNum,
-				BuyTypes:   shop.BuyTypes,
-				SellTypes:  shop.SellTypes,
-				ProfitBuy:  shop.ProfitBuy,
-				ProfitSell: shop.ProfitSell,
-				KeeperName: shop.KeeperName,
-				RoomVNum:   shop.RoomVNum,
-			}
-			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(resp); err != nil {
-				slog.Warn("admin shop update encode failed", "error", err)
 			}
 
 		default:

@@ -59,6 +59,9 @@ func TestParseAllShopFiles_FieldOrder(t *testing.T) {
 	if len(shop.BuyTypes) != 1 || shop.BuyTypes[0] != 10 {
 		t.Errorf("buy types = %v, want [10]", shop.BuyTypes)
 	}
+	if len(shop.BuyWords) != 1 || shop.BuyWords[0] != "wheat" {
+		t.Errorf("buy words = %v, want [wheat]", shop.BuyWords)
+	}
 	if shop.Messages[0] != "%s No such item one" || shop.Messages[6] != "%s Sell message" {
 		t.Errorf("messages = %#v, want parsed seven shop messages", shop.Messages)
 	}
