@@ -315,3 +315,104 @@ func TestApplyMobLevelCascadeWritesCFields(t *testing.T) {
 		t.Errorf("zero-level cascade exp = %d, want %d", got, want)
 	}
 }
+
+func TestApplyRoomOperations(t *testing.T) {
+	room := parser.Room{
+		VNum: 1001,
+		Name: "old",
+		Exits: map[string]parser.Exit{
+			"north": {Direction: "north", ToRoom: 1002},
+		},
+		ExtraDescs: []parser.ExtraDesc{{Keywords: "old", Description: "old"}},
+	}
+	if err := Apply(Operation{Kind: OpSetRoomFlag, Room: &room, Bit: 0, Value: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetRoomFlag, Room: &room, Bit: 27, Value: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if got := room.Flags[0]; got != "134217729" {
+		t.Fatalf("room flag word = %q, want bits 0 and 27 set", got)
+	}
+	if err := Apply(Operation{Kind: OpSetRoomSector, Room: &room, Value: 15}); err != nil {
+		t.Fatal(err)
+	}
+	if room.Sector != 15 {
+		t.Fatalf("sector = %d, want 15", room.Sector)
+	}
+	if err := Apply(Operation{Kind: OpSetRoomSector, Room: &room, Value: 16}); err == nil {
+		t.Fatal("invalid sector was accepted")
+	}
+
+	if err := Apply(Operation{
+		Kind:       OpSetExitTarget,
+		Room:       &room,
+		Direction:  "east",
+		Value:      1003,
+		RoomExists: func(vnum int) bool { return vnum == 1002 },
+	}); err == nil {
+		t.Fatal("nonexistent exit target was accepted")
+	}
+	if err := Apply(Operation{
+		Kind:       OpSetExitTarget,
+		Room:       &room,
+		Direction:  "east",
+		Value:      1002,
+		RoomExists: func(vnum int) bool { return vnum == 1002 },
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetExitKeywords, Room: &room, Direction: "east", Text: "door"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetExitKey, Room: &room, Direction: "east", Value: 3001}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetExitDoorFlags, Room: &room, Direction: "east", Value: 2}); err != nil {
+		t.Fatal(err)
+	}
+	if got := room.Exits["east"]; got.ToRoom != 1002 || got.Keywords != "door" || got.Key != 3001 || got.DoorState != 2 || got.ExitInfo != parser.ExitIsDoor|parser.ExitPickproof {
+		t.Fatalf("east exit = %#v", got)
+	}
+	if err := Apply(Operation{Kind: OpSetExitDescription, Room: &room, Direction: "east", Text: strings.Repeat("x", MaxExitDesc+1)}); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(room.Exits["east"].Description); got != MaxExitDesc {
+		t.Fatalf("exit description length = %d, want %d", got, MaxExitDesc)
+	}
+
+	if err := Apply(Operation{
+		Kind:  OpAddExtraDescription,
+		Room:  &room,
+		Index: -1,
+		Extra: &parser.ExtraDesc{Keywords: "new", Description: "new"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetExtraKeywords, Room: &room, Index: 1, Text: "changed"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetExtraDescription, Room: &room, Index: 1, Text: "changed description"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpRemoveExtraDescription, Room: &room, Index: 0}); err != nil {
+		t.Fatal(err)
+	}
+	if len(room.ExtraDescs) != 1 || room.ExtraDescs[0].Keywords != "changed" {
+		t.Fatalf("extra descriptions = %#v", room.ExtraDescs)
+	}
+
+	source := parser.Room{Name: "copied", Description: "copied description"}
+	if err := Apply(Operation{Kind: OpCopyRoom, Room: &room, Source: &source}); err != nil {
+		t.Fatal(err)
+	}
+	if room.Name != source.Name || room.Description != source.Description {
+		t.Fatalf("copy result = %q / %q", room.Name, room.Description)
+	}
+	if err := Apply(Operation{Kind: OpPurgeExit, Room: &room, Direction: "east"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := room.Exits["east"]; ok {
+		t.Fatal("purged exit remains")
+	}
+}

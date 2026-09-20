@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -47,6 +48,7 @@ type reditExtraMeta struct {
 
 type reditState struct {
 	room       parser.Room
+	snapshot   parser.Room
 	number     int
 	zoneNumber int
 	isNew      bool
@@ -171,6 +173,7 @@ func (s *Session) startRedit(number int, zone *parser.Zone) error {
 	}
 	state := &reditState{
 		room:       game.CloneRoom(room),
+		snapshot:   game.CloneRoom(room),
 		number:     number,
 		zoneNumber: zone.Number,
 		isNew:      !exists,
@@ -291,10 +294,29 @@ func (s *Session) finishReditLocked(save bool) {
 		// persisted.
 		saveMu := zoneSaveLock(state.zoneNumber)
 		saveMu.Lock()
-		committed := s.manager.world.CommitEditedRoom(state.room)
-		if committed {
-			reditAddSaveRoom(state.zoneNumber)
-		}
+		_ = olc.CommitRoom(olc.RoomCommitInput{
+			Draft: olc.Draft{
+				OwnerIdentity: s.Identity(),
+				Kind:          olc.KindRoom,
+				VNum:          state.number,
+				Snapshot:      state.snapshot,
+				Working:       state.room,
+			},
+			Actor:     s.playerName,
+			IPAddress: s.RemoteIP(),
+			Commit:    s.manager.world.CommitEditedRoom,
+			MarkDirty: func() { reditAddSaveRoom(state.zoneNumber) },
+			Audit: func(event olc.AuditEvent) {
+				audit.LogEvent(audit.AuditEvent{
+					EventType: "olc",
+					User:      event.User,
+					IPAddress: event.IPAddress,
+					Action:    event.Action,
+					Details:   event.Details,
+					Success:   event.Success,
+				})
+			},
+		})
 		saveMu.Unlock()
 	}
 	// Both the save and abort exits of REDIT_CONFIRM_SAVESTRING end the
@@ -345,22 +367,33 @@ func (s *Session) parseReditLocked(line string) {
 	case reditExitNumber:
 		s.parseReditExitNumberLocked(line)
 	case reditExitKeyword:
-		exit := s.reditEnsureExitLocked(state.value)
-		exit.Keywords = line
-		state.room.Exits[game.DirectionNames[state.value]] = exit
+		applyOLC(olc.Operation{
+			Kind:      olc.OpSetExitKeywords,
+			Room:      &state.room,
+			Direction: game.DirectionNames[state.value],
+			Text:      line,
+		})
 		state.mode = reditExitMenu
 		s.reditDisplayExitMenuLocked()
 	case reditExitKey:
-		exit := s.reditEnsureExitLocked(state.value)
-		exit.Key = atoiC(line)
-		state.room.Exits[game.DirectionNames[state.value]] = exit
+		applyOLC(olc.Operation{
+			Kind:      olc.OpSetExitKey,
+			Room:      &state.room,
+			Direction: game.DirectionNames[state.value],
+			Value:     atoiC(line),
+		})
 		state.mode = reditExitMenu
 		s.reditDisplayExitMenuLocked()
 	case reditExitDoorFlags:
 		s.parseReditDoorFlagsLocked(line)
 	case reditExtraKey:
 		if state.currentExtra < len(state.room.ExtraDescs) {
-			state.room.ExtraDescs[state.currentExtra].Keywords = line
+			applyOLC(olc.Operation{
+				Kind:  olc.OpSetExtraKeywords,
+				Room:  &state.room,
+				Index: state.currentExtra,
+				Text:  line,
+			})
 			state.extraMeta[state.currentExtra].keywordSet = true
 		}
 		state.mode = reditExtraMenu
@@ -424,7 +457,11 @@ func (s *Session) parseReditMainLocked(line string) {
 		s.reditDisplayExitMenuLocked()
 	case 'b', 'B':
 		if len(state.room.ExtraDescs) == 0 {
-			state.room.ExtraDescs = append(state.room.ExtraDescs, parser.ExtraDesc{})
+			applyOLC(olc.Operation{
+				Kind:  olc.OpAddExtraDescription,
+				Room:  &state.room,
+				Index: -1,
+			})
 			state.extraMeta = append(state.extraMeta, reditExtraMeta{})
 		}
 		state.currentExtra = 0
@@ -457,7 +494,12 @@ func (s *Session) parseReditFlagsLocked(line string) {
 		s.reditDisplayMainLocked()
 		return
 	}
-	reditToggleRoomFlag(&state.room, number-1)
+	bit := number - 1
+	value := 0
+	if !reditRoomFlagSet(state.room, bit) {
+		value = 1
+	}
+	applyOLC(olc.Operation{Kind: olc.OpSetRoomFlag, Room: &state.room, Bit: bit, Value: value})
 	s.reditDisplayFlagsLocked()
 }
 
@@ -469,7 +511,7 @@ func (s *Session) parseReditSectorLocked(line string) {
 		s.reditDisplaySectorLocked()
 		return
 	}
-	state.room.Sector = number
+	applyOLC(olc.Operation{Kind: olc.OpSetRoomSector, Room: &state.room, Value: number})
 	state.olcVal = 1
 	state.mode = reditMainMenu
 	s.reditDisplayMainLocked()
@@ -498,7 +540,11 @@ func (s *Session) parseReditExitMenuLocked(line string) {
 		state.mode = reditExitDoorFlags
 		s.reditDisplayExitFlagLocked()
 	case '6':
-		delete(state.room.Exits, game.DirectionNames[state.value])
+		applyOLC(olc.Operation{
+			Kind:      olc.OpPurgeExit,
+			Room:      &state.room,
+			Direction: game.DirectionNames[state.value],
+		})
 		state.olcVal = 1
 		state.mode = reditMainMenu
 		s.reditDisplayMainLocked()
@@ -510,15 +556,20 @@ func (s *Session) parseReditExitMenuLocked(line string) {
 func (s *Session) parseReditExitNumberLocked(line string) {
 	state := s.roomEdit
 	number := atoiC(line)
-	if number != -1 {
-		if _, ok := s.manager.world.SnapshotRoom(number); !ok {
-			s.reditSend("That room does not exist, try again : ")
-			return
-		}
+	err := olc.Apply(olc.Operation{
+		Kind:      olc.OpSetExitTarget,
+		Room:      &state.room,
+		Direction: game.DirectionNames[state.value],
+		Value:     number,
+		RoomExists: func(vnum int) bool {
+			_, ok := s.manager.world.SnapshotRoom(vnum)
+			return ok
+		},
+	})
+	if err != nil {
+		s.reditSend("That room does not exist, try again : ")
+		return
 	}
-	exit := s.reditEnsureExitLocked(state.value)
-	exit.ToRoom = number
-	state.room.Exits[game.DirectionNames[state.value]] = exit
 	state.mode = reditExitMenu
 	s.reditDisplayExitMenuLocked()
 }
@@ -531,19 +582,12 @@ func (s *Session) parseReditDoorFlagsLocked(line string) {
 		s.reditDisplayExitFlagLocked()
 		return
 	}
-	exit := s.reditEnsureExitLocked(state.value)
-	switch number {
-	case 0:
-		exit.ExitInfo = 0
-		exit.DoorState = 0
-	case 1:
-		exit.ExitInfo = parser.ExitIsDoor
-		exit.DoorState = 1
-	case 2:
-		exit.ExitInfo = parser.ExitIsDoor | parser.ExitPickproof
-		exit.DoorState = 2
-	}
-	state.room.Exits[game.DirectionNames[state.value]] = exit
+	applyOLC(olc.Operation{
+		Kind:      olc.OpSetExitDoorFlags,
+		Room:      &state.room,
+		Direction: game.DirectionNames[state.value],
+		Value:     number,
+	})
 	state.mode = reditExitMenu
 	s.reditDisplayExitMenuLocked()
 }
@@ -556,7 +600,9 @@ func (s *Session) parseReditExtraMenuLocked(line string) {
 			(!state.extraMeta[state.currentExtra].keywordSet || !state.extraMeta[state.currentExtra].descriptionSet) {
 			// C unlinks the current node by writing NULL through the predecessor,
 			// dropping the remainder of the linked list as a side effect.
-			state.room.ExtraDescs = state.room.ExtraDescs[:state.currentExtra]
+			for i := len(state.room.ExtraDescs) - 1; i >= state.currentExtra; i-- {
+				applyOLC(olc.Operation{Kind: olc.OpRemoveExtraDescription, Room: &state.room, Index: i})
+			}
 			state.extraMeta = state.extraMeta[:state.currentExtra]
 			state.currentExtra = 0
 		}
@@ -583,7 +629,11 @@ func (s *Session) parseReditExtraMenuLocked(line string) {
 		if state.currentExtra+1 < len(state.room.ExtraDescs) {
 			state.currentExtra++
 		} else {
-			state.room.ExtraDescs = append(state.room.ExtraDescs, parser.ExtraDesc{})
+			applyOLC(olc.Operation{
+				Kind:  olc.OpAddExtraDescription,
+				Room:  &state.room,
+				Index: -1,
+			})
 			state.extraMeta = append(state.extraMeta, reditExtraMeta{})
 			state.currentExtra++
 		}
@@ -605,8 +655,7 @@ func (s *Session) parseReditCopyLocked(line string) {
 			s.reditSend("That room does not exist, try again : ")
 			return
 		}
-		applyOLC(olc.Operation{Kind: olc.OpSetRoomName, Room: &state.room, Text: room.Name})
-		applyOLC(olc.Operation{Kind: olc.OpSetRoomDescription, Room: &state.room, Text: room.Description})
+		applyOLC(olc.Operation{Kind: olc.OpCopyRoom, Room: &state.room, Source: &room})
 	}
 	state.olcVal = 1
 	state.mode = reditMainMenu
@@ -662,9 +711,13 @@ func (s *Session) reditEnsureExitLocked(direction int) parser.Exit {
 	if first, ok := s.manager.world.RoomVNumByIndex(0); ok {
 		toRoom = first
 	}
-	exit := parser.Exit{Direction: name, ToRoom: toRoom}
-	state.room.Exits[name] = exit
-	return exit
+	applyOLC(olc.Operation{
+		Kind:      olc.OpEnsureExit,
+		Room:      &state.room,
+		Direction: name,
+		Value:     toRoom,
+	})
+	return state.room.Exits[name]
 }
 
 func (s *Session) startReditStringLocked(field reditStringField) {
@@ -719,14 +772,18 @@ func (s *Session) finishReditStringLocked(field reditStringField, action textEdi
 		case reditRoomDescription:
 			applyOLC(olc.Operation{Kind: olc.OpSetRoomDescription, Room: &state.room, Text: value})
 		case reditExitDescriptionField:
-			exit := s.reditEnsureExitLocked(state.value)
-			applyOLC(olc.Operation{Kind: olc.OpSetExitDescription, Exit: &exit, Text: value})
-			state.room.Exits[game.DirectionNames[state.value]] = exit
+			applyOLC(olc.Operation{
+				Kind:      olc.OpSetExitDescription,
+				Room:      &state.room,
+				Direction: game.DirectionNames[state.value],
+				Text:      value,
+			})
 		case reditExtraDescriptionField:
 			if state.currentExtra < len(state.room.ExtraDescs) {
 				applyOLC(olc.Operation{
 					Kind:  olc.OpSetExtraDescription,
-					Extra: &state.room.ExtraDescs[state.currentExtra],
+					Room:  &state.room,
+					Index: state.currentExtra,
 					Text:  value,
 				})
 				state.extraMeta[state.currentExtra].descriptionSet = true
@@ -751,23 +808,6 @@ func (s *Session) finishReditStringLocked(field reditStringField, action textEdi
 func editorToRoomText(text string) string {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	return strings.ReplaceAll(text, "\r", "\n")
-}
-
-func reditToggleRoomFlag(room *parser.Room, bit int) {
-	if room == nil || bit < 0 || bit >= 28 {
-		return
-	}
-	for len(room.Flags) < 4 {
-		room.Flags = append(room.Flags, "0")
-	}
-	word := bit / 32
-	bitInWord := uint(bit % 32)
-	value, err := strconv.ParseUint(room.Flags[word], 10, 32)
-	if err != nil {
-		value = 0
-	}
-	value ^= 1 << bitInWord
-	room.Flags[word] = strconv.FormatUint(value, 10)
 }
 
 func reditRoomFlagSet(room parser.Room, bit int) bool {

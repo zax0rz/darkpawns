@@ -178,7 +178,7 @@ func TestMeditDuplicateGate(t *testing.T) {
 	if err := cmdMedit(second, []string{"3001"}); err != nil {
 		t.Fatal(err)
 	}
-	if got := readMsgText(t, second); got != "That mobile is currently being edited by Firstedit.\r\n" {
+	if got := readMsgText(t, second); got != "That mobile is currently being edited by Firstedit (telnet; idle 0s).\r\n" {
 		t.Fatalf("duplicate = %q", got)
 	}
 	first.cancelMedit()

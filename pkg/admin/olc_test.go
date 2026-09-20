@@ -1,12 +1,14 @@
 package admin
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -18,6 +20,54 @@ type fakeOLCReadStateProvider struct {
 	claims []olc.ClaimEntry
 	dirty  []olc.DirtyEntry
 }
+
+type fakeOLCWriteStateProvider struct {
+	fakeOLCReadStateProvider
+	registry *olc.Registry
+	saves    *olc.SaveList
+	presence []bool
+}
+
+func newFakeOLCWriteStateProvider() *fakeOLCWriteStateProvider {
+	return &fakeOLCWriteStateProvider{
+		registry: olc.NewRegistry(),
+		saves:    olc.NewSaveList(),
+	}
+}
+
+func (f *fakeOLCWriteStateProvider) GetOLCClaims() []olc.ClaimEntry {
+	return f.registry.List()
+}
+
+func (f *fakeOLCWriteStateProvider) GetOLCDirtyZones() []olc.DirtyEntry {
+	return f.saves.List()
+}
+
+func (f *fakeOLCWriteStateProvider) ClaimOLC(kind olc.Kind, number int, owner olc.Owner, ttl time.Duration) (olc.Owner, bool) {
+	return f.registry.Claim(kind, number, owner, ttl)
+}
+
+func (f *fakeOLCWriteStateProvider) RenewOLC(kind olc.Kind, number int, owner olc.Owner, ttl time.Duration) bool {
+	return f.registry.Renew(kind, number, owner, ttl)
+}
+
+func (f *fakeOLCWriteStateProvider) ReleaseOLC(kind olc.Kind, number int, owner olc.Owner) {
+	f.registry.Release(kind, number, owner)
+}
+
+func (f *fakeOLCWriteStateProvider) MarkOLCDirty(kind olc.Kind, zone int) {
+	f.saves.Mark(kind, zone)
+}
+
+func (f *fakeOLCWriteStateProvider) EmitOLCPresence(_ string, start bool) {
+	f.presence = append(f.presence, start)
+}
+
+type testWebConflictOwner struct{}
+
+func (testWebConflictOwner) Identity() string       { return "telnet-owner" }
+func (testWebConflictOwner) DisplayName() string    { return "TelnetBuilder" }
+func (testWebConflictOwner) Frontend() olc.Frontend { return olc.FrontendTelnet }
 
 func (f *fakeOLCReadStateProvider) GetLiveAgentSessions() []LiveAgentSession { return nil }
 
@@ -98,6 +148,16 @@ func doOLCTestRequest(t *testing.T, handler http.Handler, path string, authentic
 	if authenticated {
 		req.Header.Set("Authorization", "Bearer "+generateTestToken(t, "builder"))
 	}
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	return rec
+}
+
+func doOLCJSONRequest(t *testing.T, handler http.Handler, method, path string, body []byte) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest(method, path, bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+generateTestToken(t, "builder"))
+	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	return rec
@@ -193,5 +253,65 @@ func TestOLCReadLists(t *testing.T) {
 				t.Fatalf("body = %s, want substring %q", rec.Body.String(), test.want)
 			}
 		})
+	}
+}
+
+func TestOLCRoomDraftLifecycleAndEffectivePatch(t *testing.T) {
+	state := newFakeOLCWriteStateProvider()
+	handler := newOLCTestRouter(t, 31, 1, state)
+
+	open := doOLCJSONRequest(t, handler, http.MethodPost, "/admin/olc/room/1001", nil)
+	if open.Code != http.StatusOK {
+		t.Fatalf("open status = %d, want 200; body: %s", open.Code, open.Body.String())
+	}
+
+	patch := []byte(`[{"kind":"set_room_name","text":"` + strings.Repeat("x", olc.MaxRoomName+10) + `"}]`)
+	patched := doOLCJSONRequest(t, handler, http.MethodPatch, "/admin/olc/room/1001/draft", patch)
+	if patched.Code != http.StatusOK {
+		t.Fatalf("patch status = %d, want 200; body: %s", patched.Code, patched.Body.String())
+	}
+	var response roomDraftBody
+	if err := json.Unmarshal(patched.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode patch response: %v; body: %s", err, patched.Body.String())
+	}
+	if len(response.Room.Name) != olc.MaxRoomName-1 || len(response.Dirty) != 1 || response.Dirty[0] != "name" {
+		t.Fatalf("effective patch = name length %d dirty %#v", len(response.Room.Name), response.Dirty)
+	}
+	if strings.Contains(patched.Body.String(), "set_room_name") {
+		t.Fatal("patch response echoed the input operation")
+	}
+
+	get := doOLCJSONRequest(t, handler, http.MethodGet, "/admin/olc/room/1001/draft", nil)
+	if get.Code != http.StatusOK {
+		t.Fatalf("get status = %d, want 200; body: %s", get.Code, get.Body.String())
+	}
+	commit := doOLCJSONRequest(t, handler, http.MethodPost, "/admin/olc/room/1001/draft/commit", nil)
+	if commit.Code != http.StatusOK {
+		t.Fatalf("commit status = %d, want 200; body: %s", commit.Code, commit.Body.String())
+	}
+	if len(state.presence) != 2 || !state.presence[0] || state.presence[1] {
+		t.Fatalf("presence transitions = %#v, want start/stop", state.presence)
+	}
+	if !state.saves.Dirty(olc.KindRoom, 1) {
+		t.Fatal("commit did not mark room zone dirty")
+	}
+}
+
+func TestOLCRoomClaimConflictIncludesFrontendAndIdle(t *testing.T) {
+	state := newFakeOLCWriteStateProvider()
+	if _, ok := state.registry.Claim(olc.KindRoom, 1001, testWebConflictOwner{}, olc.DefaultClaimTTL); !ok {
+		t.Fatal("telnet fixture claim refused")
+	}
+	handler := newOLCTestRouter(t, 31, 1, state)
+	rec := doOLCJSONRequest(t, handler, http.MethodPost, "/admin/olc/room/1001", nil)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("conflict status = %d, want 409; body: %s", rec.Code, rec.Body.String())
+	}
+	var conflict olcConflictError
+	if err := json.Unmarshal(rec.Body.Bytes(), &conflict); err != nil {
+		t.Fatalf("decode conflict: %v; body: %s", err, rec.Body.String())
+	}
+	if conflict.Frontend != string(olc.FrontendTelnet) || conflict.Holder != "TelnetBuilder" || conflict.IdleSecs < 0 {
+		t.Fatalf("conflict = %#v", conflict)
 	}
 }

@@ -6,8 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -21,6 +23,22 @@ import (
 type OLCReadStateProvider interface {
 	GetOLCClaims() []olc.ClaimEntry
 	GetOLCDirtyZones() []olc.DirtyEntry
+}
+
+// OLCWriteStateProvider is the narrow write seam between Huma and the
+// session-owned registry/dirty list. Admin never receives either live map.
+type OLCWriteStateProvider interface {
+	OLCReadStateProvider
+	ClaimOLC(kind olc.Kind, number int, owner olc.Owner, ttl time.Duration) (olc.Owner, bool)
+	RenewOLC(kind olc.Kind, number int, owner olc.Owner, ttl time.Duration) bool
+	ReleaseOLC(kind olc.Kind, number int, owner olc.Owner)
+	MarkOLCDirty(kind olc.Kind, zone int)
+}
+
+// OLCPresenceProvider emits the world emote for a web claim when the player
+// is online. It intentionally has no PlrWriting operation.
+type OLCPresenceProvider interface {
+	EmitOLCPresence(playerName string, start bool)
 }
 
 type olcPreviewInput struct {
@@ -66,7 +84,7 @@ type olcPendingOutput struct {
 // registerOLC registers the P3 read operations. They are mounted individually
 // by newRouter so no /admin/olc/* path-prefix route or drift allowlist entry is
 // needed.
-func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCReadStateProvider) {
+func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCReadStateProvider, writes OLCWriteStateProvider, presence OLCPresenceProvider, auditLogger *audit.AuditLogger, drafts *olc.DraftStore) {
 	gate := olcGate(world, database)
 
 	huma.Register(api, huma.Operation{
@@ -111,6 +129,8 @@ func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCRead
 		}
 		return &olcPendingOutput{Body: state.GetOLCDirtyZones()}, nil
 	})
+
+	registerOLCRoomWrites(api, world, database, writes, presence, auditLogger, drafts)
 }
 
 func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, error) {
@@ -265,6 +285,10 @@ func olcGate(world *game.World, database *db.DB) func(huma.Context, func(huma.Co
 			})
 			return
 		}
+		// The exact route mount may be used without requireRole in tests or by
+		// another caller. Preserve the validated identity for the operation
+		// handler whenever this gate had to parse the bearer header itself.
+		ctx = huma.WithContext(ctx, auth.SetClaimsOnContext(ctx.Context(), claims))
 		next(ctx)
 	}
 }
