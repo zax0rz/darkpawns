@@ -1,13 +1,16 @@
 package olc
 
-import "sync"
+import (
+	"sort"
+	"sync"
+)
 
 // DirtyEntry identifies an editor kind with a zone whose source file needs a
 // save. The list is deliberately keyed by zone, not by individual VNUM: one
 // zone save writes the complete file for that editor kind.
 type DirtyEntry struct {
-	Kind Kind
-	Zone int
+	Kind Kind `json:"kind"`
+	Zone int  `json:"zone"`
 }
 
 // SaveList is the single typed dirty-zone list shared by all OLC editors.
@@ -41,4 +44,22 @@ func (s *SaveList) Dirty(kind Kind, zone int) bool {
 	defer s.mu.Unlock()
 	_, ok := s.dirty[DirtyEntry{Kind: kind, Zone: zone}]
 	return ok
+}
+
+// List returns a deterministic value snapshot of all dirty editor zones.
+func (s *SaveList) List() []DirtyEntry {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	entries := make([]DirtyEntry, 0, len(s.dirty))
+	for entry := range s.dirty {
+		entries = append(entries, entry)
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Kind != entries[j].Kind {
+			return entries[i].Kind < entries[j].Kind
+		}
+		return entries[i].Zone < entries[j].Zone
+	})
+	return entries
 }

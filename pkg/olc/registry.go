@@ -3,7 +3,9 @@ package olc
 
 import (
 	"fmt"
+	"sort"
 	"sync"
+	"time"
 )
 
 // Kind identifies the OLC editor that owns a claim or dirty save entry.
@@ -34,10 +36,23 @@ type Owner interface {
 	Frontend() Frontend
 }
 
+// ClaimEntry is a value snapshot of one active OLC claim. Owner fields are
+// copied at snapshot time so callers never retain a live Owner reference.
+// ClaimedAt is captured once, when the claim is first acquired, using
+// time.Now's wall clock and monotonic reading.
+type ClaimEntry struct {
+	Kind             Kind      `json:"kind"`
+	Number           int       `json:"number"`
+	OwnerIdentity    string    `json:"owner_identity"`
+	OwnerDisplayName string    `json:"owner_display_name"`
+	OwnerFrontend    Frontend  `json:"owner_frontend"`
+	ClaimedAt        time.Time `json:"claimed_at"`
+}
+
 // Registry is the single admission registry for all OLC editor kinds.
 type Registry struct {
 	mu     sync.Mutex
-	claims map[claimKey]Owner
+	claims map[claimKey]claim
 }
 
 type claimKey struct {
@@ -47,7 +62,12 @@ type claimKey struct {
 
 // NewRegistry creates an empty OLC admission registry.
 func NewRegistry() *Registry {
-	return &Registry{claims: make(map[claimKey]Owner)}
+	return &Registry{claims: make(map[claimKey]claim)}
+}
+
+type claim struct {
+	owner     Owner
+	claimedAt time.Time
 }
 
 // Claim reserves an editor key for owner. A repeated claim by the same stable
@@ -59,10 +79,13 @@ func (r *Registry) Claim(kind Kind, number int, owner Owner) (Owner, bool) {
 	defer r.mu.Unlock()
 
 	key := claimKey{kind: kind, num: number}
-	if holder, ok := r.claims[key]; ok && !sameOwner(holder, owner) {
-		return holder, false
+	if existing, ok := r.claims[key]; ok {
+		if !sameOwner(existing.owner, owner) {
+			return existing.owner, false
+		}
+		return nil, true
 	}
-	r.claims[key] = owner
+	r.claims[key] = claim{owner: owner, claimedAt: time.Now()}
 	return nil, true
 }
 
@@ -70,8 +93,40 @@ func (r *Registry) Claim(kind Kind, number int, owner Owner) (Owner, bool) {
 func (r *Registry) Holder(kind Kind, number int) (Owner, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	holder, ok := r.claims[claimKey{kind: kind, num: number}]
-	return holder, ok
+	claim, ok := r.claims[claimKey{kind: kind, num: number}]
+	if !ok {
+		return nil, false
+	}
+	return claim.owner, true
+}
+
+// List returns a deterministic value snapshot of all active claims. The
+// returned entries and their owner fields are independent of registry state.
+func (r *Registry) List() []ClaimEntry {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	entries := make([]ClaimEntry, 0, len(r.claims))
+	for key, claim := range r.claims {
+		entry := ClaimEntry{
+			Kind:      key.kind,
+			Number:    key.num,
+			ClaimedAt: claim.claimedAt,
+		}
+		if claim.owner != nil {
+			entry.OwnerIdentity = claim.owner.Identity()
+			entry.OwnerDisplayName = claim.owner.DisplayName()
+			entry.OwnerFrontend = claim.owner.Frontend()
+		}
+		entries = append(entries, entry)
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Kind != entries[j].Kind {
+			return entries[i].Kind < entries[j].Kind
+		}
+		return entries[i].Number < entries[j].Number
+	})
+	return entries
 }
 
 // Release removes kind/number only when owner still owns it. This protects a
@@ -80,7 +135,7 @@ func (r *Registry) Release(kind Kind, number int, owner Owner) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	key := claimKey{kind: kind, num: number}
-	if holder, ok := r.claims[key]; ok && sameOwner(holder, owner) {
+	if holder, ok := r.claims[key]; ok && sameOwner(holder.owner, owner) {
 		delete(r.claims, key)
 	}
 }
