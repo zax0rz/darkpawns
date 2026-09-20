@@ -18,7 +18,7 @@ import (
 // /ws and /onboarding are deliberately absent (a WebSocket upgrade and a
 // browser entry page are not typed REST operations; modeling them is a later
 // decision), as are the routes still on the plain mux per the drift gate's
-// allowlist.
+// allowlist. P3 adds the three read-only webOLC operations.
 func TestGeneratedOpenAPISpec(t *testing.T) {
 	setJWTSecret(t)
 
@@ -35,20 +35,23 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 	root.Handle("/admin/", ri.handler)
 
 	wantPaths := map[string][]string{
-		"/health":                 {"get"},
-		"/admin/research/capture": {"get", "post"},
-		"/admin/sessions/agents":  {"get"},
-		"/admin/zones":            {"get"},
-		"/admin/server":           {"get"},
-		"/admin/logs":             {"get"},
-		"/admin/players":          {"get"},
-		"/admin/mobs":             {"get"},
-		"/admin/mobs/{vnum}":      {"get"},
-		"/admin/objects":          {"get"},
-		"/admin/objects/{vnum}":   {"get"},
-		"/admin/shops":            {"get"},
-		"/admin/rooms/{vnum}":     {"get"},
-		"/admin/metrics":          {"get"},
+		"/health":                          {"get"},
+		"/admin/research/capture":          {"get", "post"},
+		"/admin/sessions/agents":           {"get"},
+		"/admin/zones":                     {"get"},
+		"/admin/server":                    {"get"},
+		"/admin/logs":                      {"get"},
+		"/admin/players":                   {"get"},
+		"/admin/mobs":                      {"get"},
+		"/admin/mobs/{vnum}":               {"get"},
+		"/admin/objects":                   {"get"},
+		"/admin/objects/{vnum}":            {"get"},
+		"/admin/shops":                     {"get"},
+		"/admin/rooms/{vnum}":              {"get"},
+		"/admin/metrics":                   {"get"},
+		"/admin/olc/{kind}/{vnum}/preview": {"get"},
+		"/admin/olc/held":                  {"get"},
+		"/admin/olc/pending":               {"get"},
 	}
 
 	var first []byte
