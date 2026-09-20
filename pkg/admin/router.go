@@ -16,6 +16,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 )
 
 // RouterOption configures NewRouter.
@@ -161,7 +162,15 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if provider, ok := liveSessions.(OLCReadStateProvider); ok {
 		olcState = provider
 	}
-	registerOLC(ri.api, world, database, olcState)
+	var olcWrites OLCWriteStateProvider
+	if provider, ok := liveSessions.(OLCWriteStateProvider); ok {
+		olcWrites = provider
+	}
+	var olcPresence OLCPresenceProvider
+	if provider, ok := liveSessions.(OLCPresenceProvider); ok {
+		olcPresence = provider
+	}
+	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
 
 	// Zones — read/write, requires builder role
 	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
@@ -202,9 +211,12 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// OLC read surface — authorization is operation middleware so it can use
 	// Huma's parsed {kind}/{vnum} parameters. These exact mounts keep the
 	// route drift gate at zero new allowlist entries.
-	track("/admin/olc/{kind}/{vnum}/preview", wrap(corsMiddleware(humaMux.ServeHTTP)))
-	track("/admin/olc/held", wrap(corsMiddleware(humaMux.ServeHTTP)))
-	track("/admin/olc/pending", wrap(corsMiddleware(humaMux.ServeHTTP)))
+	track("/admin/olc/{kind}/{vnum}/preview", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/olc/held", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/olc/pending", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/olc/room/{vnum}", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/olc/room/{vnum}/draft", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/olc/room/{vnum}/draft/commit", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 
 	// The Prometheus endpoint, moved here from an unauthenticated /metrics on
 	// the root mux. It was public on darkpawns.org and nobody noticed, because

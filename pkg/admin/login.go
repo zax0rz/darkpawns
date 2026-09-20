@@ -9,7 +9,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
-	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -115,13 +114,7 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 		// mounting such a route on requireRole("builder") alone hands levels
 		// 31-34 unconfined edit rights over the whole world (the webOLC
 		// design review calls this B2). Reads are fine at this role.
-		role := "player"
-		switch {
-		case rec.Level >= game.LVL_IMPL:
-			role = "admin"
-		case rec.Level >= game.LVL_IMMORT:
-			role = "builder"
-		}
+		role := auth.PanelRoleForLevel(rec.Level)
 
 		// Generate JWT
 		token, err := auth.GenerateJWT(req.PlayerName, false, 0, role)

@@ -2,6 +2,7 @@ package olc
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -29,8 +30,20 @@ const (
 
 	OpSetRoomName
 	OpSetRoomDescription
+	OpSetRoomFlag
+	OpSetRoomSector
+	OpEnsureExit
+	OpSetExitTarget
 	OpSetExitDescription
+	OpSetExitKeywords
+	OpSetExitKey
+	OpSetExitDoorFlags
+	OpPurgeExit
+	OpAddExtraDescription
+	OpRemoveExtraDescription
+	OpSetExtraKeywords
 	OpSetExtraDescription
+	OpCopyRoom
 
 	OpSetMobKeywords
 	OpSetMobShortDescription
@@ -75,20 +88,25 @@ const (
 // appropriate for Kind is used. Result is used by OpClampInt for menu values
 // that are not fields in the working copy (for example SEDIT's selected type).
 type Operation struct {
-	Kind   OperationKind
-	Value  int
-	Low    int
-	High   int
-	Text   string
-	Result *int
+	Kind      OperationKind
+	Value     int
+	Low       int
+	High      int
+	Text      string
+	Result    *int
+	Bit       int
+	Index     int
+	Direction string
 
-	Room  *parser.Room
-	Exit  *parser.Exit
-	Extra *parser.ExtraDesc
-	Mob   *parser.Mob
-	Obj   *parser.Obj
-	Shop  *parser.ShopProto
-	Zone  *parser.Zone
+	Room       *parser.Room
+	Exit       *parser.Exit
+	Extra      *parser.ExtraDesc
+	Source     *parser.Room
+	RoomExists func(int) bool
+	Mob        *parser.Mob
+	Obj        *parser.Obj
+	Shop       *parser.ShopProto
+	Zone       *parser.Zone
 }
 
 // Apply performs one C-semantics OLC write. It intentionally mutates the
@@ -113,16 +131,177 @@ func Apply(op Operation) error {
 			return fmt.Errorf("room description operation requires a room")
 		}
 		op.Room.Description = truncateBytes(op.Text, MaxRoomDesc)
+	case OpSetRoomFlag:
+		if op.Room == nil {
+			return fmt.Errorf("room flag operation requires a room")
+		}
+		if op.Bit < 0 || op.Bit >= 28 {
+			return fmt.Errorf("room flag operation has invalid bit %d", op.Bit)
+		}
+		for len(op.Room.Flags) < 4 {
+			op.Room.Flags = append(op.Room.Flags, "0")
+		}
+		word := op.Bit / 32
+		bit := uint(op.Bit % 32)
+		value, err := parseFlagWord(op.Room.Flags[word])
+		if err != nil {
+			value = 0
+		}
+		if op.Value == 0 {
+			value &^= 1 << bit
+		} else {
+			value |= 1 << bit
+		}
+		op.Room.Flags[word] = formatFlagWord(value)
+	case OpSetRoomSector:
+		if op.Room == nil {
+			return fmt.Errorf("room sector operation requires a room")
+		}
+		if op.Value < 0 || op.Value >= 16 {
+			return fmt.Errorf("room sector operation has invalid value %d", op.Value)
+		}
+		op.Room.Sector = op.Value
+	case OpEnsureExit:
+		if op.Room == nil {
+			return fmt.Errorf("ensure exit operation requires a room")
+		}
+		if op.Direction == "" {
+			return fmt.Errorf("ensure exit operation requires a direction")
+		}
+		if op.Room.Exits == nil {
+			op.Room.Exits = make(map[string]parser.Exit)
+		}
+		if _, ok := op.Room.Exits[op.Direction]; !ok {
+			op.Room.Exits[op.Direction] = parser.Exit{Direction: op.Direction, ToRoom: op.Value}
+		}
+	case OpSetExitTarget:
+		if op.Room == nil {
+			return fmt.Errorf("exit target operation requires a room")
+		}
+		if op.Direction == "" {
+			return fmt.Errorf("exit target operation requires a direction")
+		}
+		if op.Value != -1 && op.RoomExists != nil && !op.RoomExists(op.Value) {
+			return fmt.Errorf("exit target room %d does not exist", op.Value)
+		}
+		exit := ensureRoomExit(op.Room, op.Direction)
+		exit.ToRoom = op.Value
+		op.Room.Exits[op.Direction] = exit
 	case OpSetExitDescription:
-		if op.Exit == nil {
+		if op.Exit == nil && op.Room == nil {
 			return fmt.Errorf("exit description operation requires an exit")
 		}
-		op.Exit.Description = truncateBytes(op.Text, MaxExitDesc)
+		if op.Room != nil && op.Direction == "" && op.Exit == nil {
+			return fmt.Errorf("exit description operation requires a direction")
+		}
+		if op.Exit != nil {
+			op.Exit.Description = truncateBytes(op.Text, MaxExitDesc)
+		} else {
+			exit := ensureRoomExit(op.Room, op.Direction)
+			exit.Description = truncateBytes(op.Text, MaxExitDesc)
+			op.Room.Exits[op.Direction] = exit
+		}
+	case OpSetExitKeywords:
+		if op.Room == nil {
+			return fmt.Errorf("exit keywords operation requires a room")
+		}
+		if op.Direction == "" {
+			return fmt.Errorf("exit keywords operation requires a direction")
+		}
+		exit := ensureRoomExit(op.Room, op.Direction)
+		exit.Keywords = op.Text
+		op.Room.Exits[op.Direction] = exit
+	case OpSetExitKey:
+		if op.Room == nil {
+			return fmt.Errorf("exit key operation requires a room")
+		}
+		if op.Direction == "" {
+			return fmt.Errorf("exit key operation requires a direction")
+		}
+		exit := ensureRoomExit(op.Room, op.Direction)
+		exit.Key = op.Value
+		op.Room.Exits[op.Direction] = exit
+	case OpSetExitDoorFlags:
+		if op.Room == nil {
+			return fmt.Errorf("exit door flags operation requires a room")
+		}
+		if op.Direction == "" {
+			return fmt.Errorf("exit door flags operation requires a direction")
+		}
+		if op.Value < 0 || op.Value > 2 {
+			return fmt.Errorf("exit door flags operation has invalid value %d", op.Value)
+		}
+		exit := ensureRoomExit(op.Room, op.Direction)
+		switch op.Value {
+		case 0:
+			exit.ExitInfo = 0
+			exit.DoorState = 0
+		case 1:
+			exit.ExitInfo = parser.ExitIsDoor
+			exit.DoorState = 1
+		case 2:
+			exit.ExitInfo = parser.ExitIsDoor | parser.ExitPickproof
+			exit.DoorState = 2
+		}
+		op.Room.Exits[op.Direction] = exit
+	case OpPurgeExit:
+		if op.Room == nil {
+			return fmt.Errorf("purge exit operation requires a room")
+		}
+		if op.Direction == "" {
+			return fmt.Errorf("purge exit operation requires a direction")
+		}
+		delete(op.Room.Exits, op.Direction)
+	case OpAddExtraDescription:
+		if op.Room == nil {
+			return fmt.Errorf("add extra description operation requires a room")
+		}
+		extra := parser.ExtraDesc{}
+		if op.Extra != nil {
+			extra = *op.Extra
+		}
+		extra.Description = truncateBytes(extra.Description, MaxExtraDesc)
+		if op.Index < 0 || op.Index >= len(op.Room.ExtraDescs) {
+			op.Room.ExtraDescs = append(op.Room.ExtraDescs, extra)
+		} else {
+			op.Room.ExtraDescs = append(op.Room.ExtraDescs, parser.ExtraDesc{})
+			copy(op.Room.ExtraDescs[op.Index+1:], op.Room.ExtraDescs[op.Index:])
+			op.Room.ExtraDescs[op.Index] = extra
+		}
+	case OpRemoveExtraDescription:
+		if op.Room == nil {
+			return fmt.Errorf("remove extra description operation requires a room")
+		}
+		if op.Index < 0 || op.Index >= len(op.Room.ExtraDescs) {
+			return fmt.Errorf("extra description index %d is out of range", op.Index)
+		}
+		copy(op.Room.ExtraDescs[op.Index:], op.Room.ExtraDescs[op.Index+1:])
+		op.Room.ExtraDescs = op.Room.ExtraDescs[:len(op.Room.ExtraDescs)-1]
+	case OpSetExtraKeywords:
+		if op.Room == nil {
+			return fmt.Errorf("extra keywords operation requires a room")
+		}
+		if op.Index < 0 || op.Index >= len(op.Room.ExtraDescs) {
+			return fmt.Errorf("extra description index %d is out of range", op.Index)
+		}
+		op.Room.ExtraDescs[op.Index].Keywords = op.Text
 	case OpSetExtraDescription:
-		if op.Extra == nil {
+		if op.Extra == nil && op.Room == nil {
 			return fmt.Errorf("extra description operation requires an extra description")
 		}
-		op.Extra.Description = truncateBytes(op.Text, MaxExtraDesc)
+		if op.Extra != nil {
+			op.Extra.Description = truncateBytes(op.Text, MaxExtraDesc)
+		} else if op.Index >= 0 && op.Index < len(op.Room.ExtraDescs) {
+			op.Room.ExtraDescs[op.Index].Description = truncateBytes(op.Text, MaxExtraDesc)
+		} else {
+			return fmt.Errorf("extra description index %d is out of range", op.Index)
+		}
+	case OpCopyRoom:
+		if op.Room == nil || op.Source == nil {
+			return fmt.Errorf("room copy operation requires source and destination rooms")
+		}
+		op.Room.Name = truncateBytes(op.Source.Name, MaxRoomName-1)
+		op.Room.Description = truncateBytes(op.Source.Description, MaxRoomDesc)
 
 	case OpSetMobKeywords:
 		if op.Mob == nil {
@@ -320,6 +499,25 @@ func truncateBytes(value string, limit int) string {
 		return value[:limit]
 	}
 	return value
+}
+
+func parseFlagWord(value string) (uint32, error) {
+	parsed, err := strconv.ParseUint(value, 10, 32)
+	return uint32(parsed), err
+}
+
+func formatFlagWord(value uint32) string {
+	return strconv.FormatUint(uint64(value), 10)
+}
+
+func ensureRoomExit(room *parser.Room, direction string) parser.Exit {
+	if room.Exits == nil {
+		room.Exits = make(map[string]parser.Exit)
+	}
+	if exit, ok := room.Exits[direction]; ok {
+		return exit
+	}
+	return parser.Exit{Direction: direction}
 }
 
 // This is the C EXP_LOOKUP table from medit.c, including the documented

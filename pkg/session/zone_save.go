@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/zax0rz/darkpawns/pkg/olc"
 )
 
 // Zone-file save infrastructure shared by the OLC editors (oedit, medit,
@@ -54,23 +56,10 @@ func atomicWriteFile(path string, data []byte, perm os.FileMode) error {
 	return os.Rename(tmpName, path)
 }
 
-// zoneSaveMu guards zoneSaveLocks.
-var (
-	zoneSaveMu    sync.Mutex
-	zoneSaveLocks = make(map[int]*sync.Mutex)
-)
-
 // zoneSaveLock returns the mutex serializing zone-file saves for one zone
 // number, creating it on first use. The three editors share one lock per
 // zone: a single lock keeps the save/commit ordering argument simple, and
 // zone saves are rare enough that the extra serialization is unmeasurable.
 func zoneSaveLock(zone int) *sync.Mutex {
-	zoneSaveMu.Lock()
-	defer zoneSaveMu.Unlock()
-	mu, ok := zoneSaveLocks[zone]
-	if !ok {
-		mu = &sync.Mutex{}
-		zoneSaveLocks[zone] = mu
-	}
-	return mu
+	return olc.ZoneSaveLock(zone)
 }

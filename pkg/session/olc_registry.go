@@ -2,7 +2,9 @@ package session
 
 import (
 	"log/slog"
+	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 )
 
@@ -59,7 +61,7 @@ func (m *Manager) claimRoomEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return olc.HolderDescription(holder), false
+	return m.olcConflictDescription(olc.KindRoom, number, holder), false
 }
 
 func (m *Manager) releaseRoomEdit(number int, owner *Session) {
@@ -71,7 +73,7 @@ func (m *Manager) claimMobEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return olc.HolderDescription(holder), false
+	return m.olcConflictDescription(olc.KindMob, number, holder), false
 }
 
 func (m *Manager) releaseMobEdit(number int, owner *Session) {
@@ -83,7 +85,7 @@ func (m *Manager) claimObjEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return olc.HolderDescription(holder), false
+	return m.olcConflictDescription(olc.KindObject, number, holder), false
 }
 
 func (m *Manager) releaseObjEdit(number int, owner *Session) {
@@ -95,7 +97,7 @@ func (m *Manager) claimShopEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return olc.HolderDescription(holder), false
+	return m.olcConflictDescription(olc.KindShop, number, holder), false
 }
 
 func (m *Manager) releaseShopEdit(number int, owner *Session) {
@@ -107,7 +109,7 @@ func (m *Manager) claimZoneEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return olc.HolderDescription(holder), false
+	return m.olcConflictDescription(olc.KindZone, number, holder), false
 }
 
 func (m *Manager) releaseZoneEdit(number int, owner *Session) {
@@ -120,6 +122,46 @@ func (m *Manager) olcHolder(kind olc.Kind, number int) string {
 		return ""
 	}
 	return olc.HolderDescription(holder)
+}
+
+func (m *Manager) olcConflictDescription(kind olc.Kind, number int, holder olc.Owner) string {
+	if entry, ok := m.olcClaims().Entry(kind, number); ok {
+		return olc.ClaimConflictDescription(entry, time.Now())
+	}
+	return olc.HolderDescription(holder)
+}
+
+// ClaimOLC exposes only the ownership-checked operations needed by the Huma
+// webOLC surface. The registry remains owned and locked by Manager.
+func (m *Manager) ClaimOLC(kind olc.Kind, number int, owner olc.Owner, ttl time.Duration) (olc.Owner, bool) {
+	return m.olcClaims().Claim(kind, number, owner, ttl)
+}
+
+func (m *Manager) RenewOLC(kind olc.Kind, number int, owner olc.Owner, ttl time.Duration) bool {
+	return m.olcClaims().Renew(kind, number, owner, ttl)
+}
+
+func (m *Manager) ReleaseOLC(kind olc.Kind, number int, owner olc.Owner) {
+	m.olcClaims().Release(kind, number, owner)
+}
+
+func (m *Manager) MarkOLCDirty(kind olc.Kind, zone int) {
+	markOLCDirty(kind, zone)
+}
+
+// EmitOLCPresence emits the existing room emote for an online player. It
+// intentionally does not touch PlrWriting: that flag is descriptor state and
+// web editing must not suppress a telnet player's prompt.
+func (m *Manager) EmitOLCPresence(playerName string, start bool) {
+	s, ok := m.GetSession(playerName)
+	if !ok || s == nil || s.player == nil || m.world == nil {
+		return
+	}
+	message := "$n stops using OLC."
+	if start {
+		message = "$n starts using OLC."
+	}
+	game.Act(m.world, true, s.player, nil, nil, nil, message, "", game.ToRoom)
 }
 
 // These named accessors retain the existing session package call sites while

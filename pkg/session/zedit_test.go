@@ -111,7 +111,7 @@ func TestZeditDuplicateGateAndCleanup(t *testing.T) {
 	if err := cmdZedit(second, []string{"3000"}); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := readMsgText(t, second), "That room is currently being edited by Zeditfirst.\r\n"; got != want {
+	if got, want := readMsgText(t, second), "That room is currently being edited by Zeditfirst (telnet; idle 0s).\r\n"; got != want {
 		t.Fatalf("duplicate gate = %q, want %q", got, want)
 	}
 	first.handleZeditInput("q")
