@@ -161,7 +161,7 @@ func registerOLCRoomWrites(api huma.API, world *game.World, database *db.DB, wri
 		}
 		operations := make([]olc.Operation, 0, len(in.Body))
 		for _, input := range in.Body {
-			operation, err := roomOperation(world, input)
+			operation, err := roomOperation(world, vnum, input)
 			if err != nil {
 				return nil, err
 			}
@@ -297,8 +297,15 @@ func accessRoomDraft(ctx context.Context, in *roomDraftPathInput, writes OLCWrit
 	return &roomDraftOutput{Body: makeRoomDraftBody(draft, claimEntry(writes, olc.KindRoom, vnum))}, nil
 }
 
-func roomOperation(world *game.World, input roomPatchOperation) (olc.Operation, error) {
+func roomOperation(world *game.World, vnum int, input roomPatchOperation) (olc.Operation, error) {
 	op := olc.Operation{Text: input.Text, Value: input.Value, Bit: input.Bit, Index: input.Index, Direction: input.Direction}
+	if input.Enabled != nil {
+		if *input.Enabled {
+			op.Value = 1
+		} else {
+			op.Value = 0
+		}
+	}
 	switch input.Kind {
 	case "set_room_name":
 		op.Kind = olc.OpSetRoomName
@@ -306,15 +313,29 @@ func roomOperation(world *game.World, input roomPatchOperation) (olc.Operation, 
 		op.Kind = olc.OpSetRoomDescription
 	case "set_room_flag":
 		op.Kind = olc.OpSetRoomFlag
-		if input.Enabled != nil {
-			if *input.Enabled {
-				op.Value = 1
-			} else {
-				op.Value = 0
-			}
-		}
 	case "set_room_sector":
 		op.Kind = olc.OpSetRoomSector
+	case "set_script_name":
+		op.Kind = olc.OpSetRoomScriptName
+		op.SetScriptName = func(name string) bool {
+			room, ok := world.SnapshotRoom(vnum)
+			return ok && world.SetRoomScript(vnum, room.ScriptFunctions, name)
+		}
+	case "set_script_flag":
+		op.Kind = olc.OpSetRoomScriptFlag
+		op.SetScriptFlag = func(bit int, enabled bool) bool {
+			room, ok := world.SnapshotRoom(vnum)
+			if !ok {
+				return false
+			}
+			flags := room.ScriptFunctions
+			if enabled {
+				flags |= 1 << uint(bit)
+			} else {
+				flags &^= 1 << uint(bit)
+			}
+			return world.SetRoomScript(vnum, flags, room.ScriptName)
+		}
 	case "ensure_exit":
 		op.Kind = olc.OpEnsureExit
 	case "set_exit_target":

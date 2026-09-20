@@ -27,19 +27,22 @@ type entityPatchInput struct {
 }
 
 type entityPatchOperation struct {
-	Kind     string `json:"kind" doc:"Semantic OLC operation."`
-	Text     string `json:"text,omitempty"`
-	Keywords string `json:"keywords,omitempty"`
-	Value    int    `json:"value,omitempty"`
-	Index    int    `json:"index,omitempty"`
-	ToIndex  int    `json:"to_index,omitempty"`
-	Location int    `json:"location,omitempty"`
-	Modifier int    `json:"modifier,omitempty"`
-	Command  string `json:"command,omitempty"`
-	IfFlag   int    `json:"if_flag,omitempty"`
-	Arg1     int    `json:"arg1,omitempty"`
-	Arg2     int    `json:"arg2,omitempty"`
-	Arg3     int    `json:"arg3,omitempty"`
+	Kind     string  `json:"kind" doc:"Semantic OLC operation."`
+	Text     string  `json:"text,omitempty"`
+	Keywords string  `json:"keywords,omitempty"`
+	Value    int     `json:"value,omitempty"`
+	Float    float64 `json:"float,omitempty"`
+	Index    int     `json:"index,omitempty"`
+	ToIndex  int     `json:"to_index,omitempty"`
+	Bit      int     `json:"bit,omitempty"`
+	Enabled  *bool   `json:"enabled,omitempty"`
+	Location int     `json:"location,omitempty"`
+	Modifier int     `json:"modifier,omitempty"`
+	Command  string  `json:"command,omitempty"`
+	IfFlag   int     `json:"if_flag,omitempty"`
+	Arg1     int     `json:"arg1,omitempty"`
+	Arg2     int     `json:"arg2,omitempty"`
+	Arg3     int     `json:"arg3,omitempty"`
 }
 
 type entityDraftOutput struct {
@@ -199,6 +202,7 @@ func patchEntityDraft(ctx context.Context, in *entityPatchInput, world *game.Wor
 		if err != nil {
 			return nil, err
 		}
+		bindEntityLiveScriptOperation(world, kind, vnum, &operation)
 		operations = append(operations, operation)
 	}
 	draft, err := drafts.PatchEntity(owner.Identity(), operations)
@@ -206,6 +210,51 @@ func patchEntityDraft(ctx context.Context, in *entityPatchInput, world *game.Wor
 		return nil, huma.NewError(http.StatusBadRequest, err.Error())
 	}
 	return &entityDraftOutput{Body: makeEntityDraftBody(draft, claimEntry(writes, kind, vnum))}, nil
+}
+
+func bindEntityLiveScriptOperation(world *game.World, kind olc.Kind, vnum int, op *olc.Operation) {
+	switch op.Kind {
+	case olc.OpSetMobScriptName:
+		op.SetScriptName = func(name string) bool {
+			mob, ok := world.SnapshotMob(vnum)
+			return ok && world.SetMobScript(vnum, name, mob.LuaFunctions)
+		}
+	case olc.OpSetMobScriptFlag:
+		op.SetScriptFlag = func(bit int, enabled bool) bool {
+			mob, ok := world.SnapshotMob(vnum)
+			if !ok {
+				return false
+			}
+			flags := mob.LuaFunctions
+			if enabled {
+				flags |= 1 << uint(bit)
+			} else {
+				flags &^= 1 << uint(bit)
+			}
+			return world.SetMobScript(vnum, mob.ScriptName, flags)
+		}
+	case olc.OpSetObjScriptName:
+		op.SetScriptName = func(name string) bool {
+			object, ok := world.SnapshotObj(vnum)
+			return ok && world.SetObjScript(vnum, name, object.LuaFunctions)
+		}
+	case olc.OpSetObjScriptFlag:
+		op.SetScriptFlag = func(bit int, enabled bool) bool {
+			object, ok := world.SnapshotObj(vnum)
+			if !ok {
+				return false
+			}
+			flags := object.LuaFunctions
+			if enabled {
+				flags |= 1 << uint(bit)
+			} else {
+				flags &^= 1 << uint(bit)
+			}
+			return world.SetObjScript(vnum, object.ScriptName, flags)
+		}
+	default:
+		return
+	}
 }
 
 func commitEntityDraft(ctx context.Context, in *entityDraftPathInput, world *game.World, writes OLCWriteStateProvider, presence OLCPresenceProvider, auditLogger *audit.AuditLogger, drafts *olc.DraftStore) (*entityDraftOutput, error) {
@@ -337,7 +386,14 @@ func snapshotEntity(world *game.World, kind olc.Kind, vnum int) (olc.EntityValue
 }
 
 func entityOperation(kind olc.Kind, input entityPatchOperation) (olc.Operation, error) {
-	op := olc.Operation{Text: input.Text, Value: input.Value, Index: input.Index, ToIndex: input.ToIndex}
+	op := olc.Operation{Text: input.Text, Float: input.Float, Value: input.Value, Bit: input.Bit, Index: input.Index, ToIndex: input.ToIndex}
+	if input.Enabled != nil {
+		if *input.Enabled {
+			op.Value = 1
+		} else {
+			op.Value = 0
+		}
+	}
 	switch kind {
 	case olc.KindMob:
 		switch input.Kind {
@@ -383,6 +439,16 @@ func entityOperation(kind olc.Kind, input entityPatchOperation) (olc.Operation, 
 			op.Kind = olc.OpSetMobAlignment
 		case "set_race":
 			op.Kind = olc.OpSetMobRace
+		case "set_action_flag":
+			op.Kind = olc.OpSetMobActionFlag
+		case "set_affect_flag":
+			op.Kind = olc.OpSetMobAffectFlag
+		case "set_noise":
+			op.Kind = olc.OpSetMobNoise
+		case "set_script_name":
+			op.Kind = olc.OpSetMobScriptName
+		case "set_script_flag":
+			op.Kind = olc.OpSetMobScriptFlag
 		default:
 			return olc.Operation{}, &webOLCError{Message: fmt.Sprintf("unknown mob operation %q", input.Kind)}
 		}
@@ -406,6 +472,26 @@ func entityOperation(kind olc.Kind, input entityPatchOperation) (olc.Operation, 
 			op.Kind = olc.OpSetObjValue4
 		case "toggle_container_flag":
 			op.Kind = olc.OpToggleObjContainerFlag
+		case "set_type":
+			op.Kind = olc.OpSetObjType
+		case "set_extra_flag":
+			op.Kind = olc.OpSetObjExtraFlag
+		case "set_wear_flag":
+			op.Kind = olc.OpSetObjWearFlag
+		case "set_weight":
+			op.Kind = olc.OpSetObjWeight
+		case "set_cost":
+			op.Kind = olc.OpSetObjCost
+		case "set_cost_per_day":
+			op.Kind = olc.OpSetObjCostPerDay
+		case "set_timer":
+			op.Kind = olc.OpSetObjTimer
+		case "set_level":
+			op.Kind = olc.OpSetObjLevel
+		case "set_script_name":
+			op.Kind = olc.OpSetObjScriptName
+		case "set_script_flag":
+			op.Kind = olc.OpSetObjScriptFlag
 		case "add_affect":
 			op.Kind, op.Affect = olc.OpAddObjAffect, &parser.ObjAffect{Location: input.Location, Modifier: input.Modifier}
 		case "remove_affect":
@@ -449,6 +535,30 @@ func entityOperation(kind olc.Kind, input entityPatchOperation) (olc.Operation, 
 			op.Kind = olc.OpSetShopCloseHour1
 		case "set_close_hour2":
 			op.Kind = olc.OpSetShopCloseHour2
+		case "set_no_item1":
+			op.Kind, op.Index = olc.OpSetShopMessage, 0
+		case "set_no_item2":
+			op.Kind, op.Index = olc.OpSetShopMessage, 1
+		case "set_no_buy":
+			op.Kind, op.Index = olc.OpSetShopMessage, 2
+		case "set_no_cash1":
+			op.Kind, op.Index = olc.OpSetShopMessage, 3
+		case "set_no_cash2":
+			op.Kind, op.Index = olc.OpSetShopMessage, 4
+		case "set_buy_message":
+			op.Kind, op.Index = olc.OpSetShopMessage, 5
+		case "set_sell_message":
+			op.Kind, op.Index = olc.OpSetShopMessage, 6
+		case "add_namelist":
+			op.Kind = olc.OpAddShopNamelist
+			op.Text = input.Text
+			if input.Text == "" {
+				op.Text = input.Keywords
+			}
+		case "remove_namelist":
+			op.Kind = olc.OpRemoveShopNamelist
+		case "set_no_trade":
+			op.Kind = olc.OpSetShopNoTrade
 		default:
 			return olc.Operation{}, &webOLCError{Message: fmt.Sprintf("unknown shop operation %q", input.Kind)}
 		}
