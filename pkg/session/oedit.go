@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -243,52 +242,6 @@ var oeditSpellNames = []string{
 // meditRaceNames and meditAttackNames are the same C mob_races[] and
 // attack_hit_text[] tables the oedit race/weapon menus print, so oedit reuses
 // them rather than duplicating the arrays.
-
-// oeditSaveMu serializes the zone object-file save list, mirroring C's
-// olc_save_list for OLC_SAVE_OBJ entries.
-var (
-	oeditSaveMu   sync.Mutex
-	oeditSaveObjs = make(map[int]bool)
-)
-
-// claimObjEdit atomically reserves an object VNum for this session, mirroring
-// do_olc's duplicate-editor descriptor scan (src/olc.c: "That object is
-// currently being edited by %s."). C relies on its single-threaded interpreter
-// for atomicity; here the claim itself is the check, so two sessions racing
-// through cmdOedit cannot both be admitted.
-func (m *Manager) claimObjEdit(number int, s *Session) (string, bool) {
-	m.objEditMu.Lock()
-	defer m.objEditMu.Unlock()
-	if holder, ok := m.objEdits[number]; ok && holder != s {
-		return holder.playerName, false
-	}
-	if m.objEdits == nil {
-		m.objEdits = make(map[int]*Session)
-	}
-	m.objEdits[number] = s
-	return "", true
-}
-
-// releaseObjEdit frees an object VNum reservation, but only when this session
-// still holds it.
-func (m *Manager) releaseObjEdit(number int, s *Session) {
-	m.objEditMu.Lock()
-	defer m.objEditMu.Unlock()
-	if m.objEdits[number] == s {
-		delete(m.objEdits, number)
-	}
-}
-
-// objEditHolder peeks at who is editing an object VNum, for the save path
-// which refuses while an editor owns the object but never reserves one itself.
-func (m *Manager) objEditHolder(number int) string {
-	m.objEditMu.Lock()
-	defer m.objEditMu.Unlock()
-	if holder, ok := m.objEdits[number]; ok && holder != nil {
-		return holder.playerName
-	}
-	return ""
-}
 
 // cmdOedit is the Go port of do_olc's SCMD_OLC_OEDIT branch (src/olc.c).
 func cmdOedit(s *Session, args []string) error {
@@ -1690,9 +1643,7 @@ func (s *Session) saveOeditInternallyLocked() {
 	saveMu.Lock()
 	s.manager.world.CommitEditedObj(obj)
 	s.manager.world.RefreshLiveObjInstances(state.number, obj)
-	oeditSaveMu.Lock()
-	oeditSaveObjs[state.number] = true
-	oeditSaveMu.Unlock()
+	markOLCDirty(olcKindObject, state.zoneNumber)
 	saveMu.Unlock()
 }
 
@@ -1738,13 +1689,7 @@ func saveOeditZone(world *game.World, zone *parser.Zone) error {
 		return err
 	}
 
-	oeditSaveMu.Lock()
-	for i := range objs {
-		if vnum := objs[i].VNum; vnum >= zone.Number*100 && vnum <= zone.TopRoom {
-			delete(oeditSaveObjs, vnum)
-		}
-	}
-	oeditSaveMu.Unlock()
+	clearOLCDirty(olcKindObject, zone.Number)
 	return nil
 }
 

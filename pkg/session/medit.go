@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -67,13 +66,6 @@ type meditState struct {
 	mode       meditMode
 	olcVal     int // C OLC_VAL: the has-changed/quit-prompt flag.
 }
-
-// meditSaveMu serializes the zone mob-file save list. It mirrors C's
-// olc_save_list for OLC_SAVE_MOB entries.
-var (
-	meditSaveMu   sync.Mutex
-	meditSaveMobs = make(map[int]bool)
-)
 
 // The display tables below are byte-faithful copies of the C constant arrays
 // the medit menus print (src/constants.c, src/fight.c). They intentionally
@@ -161,46 +153,6 @@ var meditExpLookup = []int{
 	40000, 45000, 50000, 55000, 60000,
 	90000, 120000, 180000, 270000, 360000,
 	363000, 369000, 372000, 375000, 400000,
-}
-
-// claimMobEdit atomically reserves a mob VNum for this session, mirroring
-// do_olc's duplicate-editor descriptor scan (src/olc.c: "That mobile is
-// currently being edited by %s."). C relies on its single-threaded
-// interpreter for atomicity; here the claim itself is the check, so two
-// sessions racing through cmdMedit cannot both be admitted. The returned
-// name is the other editor's when the claim fails.
-func (m *Manager) claimMobEdit(number int, s *Session) (string, bool) {
-	m.mobEditMu.Lock()
-	defer m.mobEditMu.Unlock()
-	if holder, ok := m.mobEdits[number]; ok && holder != s {
-		return holder.playerName, false
-	}
-	if m.mobEdits == nil {
-		m.mobEdits = make(map[int]*Session)
-	}
-	m.mobEdits[number] = s
-	return "", true
-}
-
-// releaseMobEdit frees a mob VNum reservation, but only when this session
-// still holds it.
-func (m *Manager) releaseMobEdit(number int, s *Session) {
-	m.mobEditMu.Lock()
-	defer m.mobEditMu.Unlock()
-	if m.mobEdits[number] == s {
-		delete(m.mobEdits, number)
-	}
-}
-
-// mobEditHolder peeks at who is editing a mob VNum, for the save path which
-// refuses while an editor owns the mob but never reserves one itself.
-func (m *Manager) mobEditHolder(number int) string {
-	m.mobEditMu.Lock()
-	defer m.mobEditMu.Unlock()
-	if holder, ok := m.mobEdits[number]; ok && holder != nil {
-		return holder.playerName
-	}
-	return ""
 }
 
 // cmdMedit is the Go port of do_olc's SCMD_OLC_MEDIT branch (src/olc.c).
@@ -1184,9 +1136,7 @@ func (s *Session) saveMeditInternallyLocked() {
 	saveMu.Lock()
 	s.manager.world.CommitEditedMob(state.mob)
 	s.manager.world.RefreshLiveMobStrings(state.number, state.mob)
-	meditSaveMu.Lock()
-	meditSaveMobs[state.number] = true
-	meditSaveMu.Unlock()
+	markOLCDirty(olcKindMob, state.zoneNumber)
 	saveMu.Unlock()
 }
 
@@ -1234,13 +1184,7 @@ func saveMeditZone(world *game.World, zone *parser.Zone) error {
 		return err
 	}
 
-	meditSaveMu.Lock()
-	for i := range mobs {
-		if vnum := mobs[i].VNum; vnum >= zone.Number*100 && vnum <= zone.TopRoom {
-			delete(meditSaveMobs, vnum)
-		}
-	}
-	meditSaveMu.Unlock()
+	clearOLCDirty(olcKindMob, zone.Number)
 	return nil
 }
 

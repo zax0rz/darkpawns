@@ -8,11 +8,9 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// Shared OLC helpers for the descriptor-owned CircleMUD editors (medit, and
-// later oedit/sedit/zedit). These mirror the helpers the redit branch carries
-// locally in pkg/session/redit.go (atoiC, firstByte, isASCIIDigit,
-// reditAuthorized, reditZoneForVNum); when that branch merges, its local
-// copies should be deleted in favor of these shared definitions.
+// Shared OLC helpers for the descriptor-owned CircleMUD editors. These
+// helpers deliberately contain no descriptor concerns; editor ownership and
+// dirty-save coordination live in olc_registry.go.
 
 // atoiC mirrors C's atoi: leading whitespace skipped, optional sign, then the
 // longest digit run. Trailing garbage is ignored; no digits means 0.

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -59,11 +58,6 @@ type seditState struct {
 	olcVal        int
 	pendingOutput string
 }
-
-var (
-	seditSaveMu    sync.Mutex
-	seditSaveShops = make(map[int]bool)
-)
 
 var seditItemTypes = []string{
 	"UNDEFINED", "LIGHT", "SCROLL", "WAND", "STAFF", "WEAPON",
@@ -167,40 +161,6 @@ func cmdSedit(s *Session, args []string) error {
 		return err
 	}
 	return nil
-}
-
-func (m *Manager) claimShopEdit(number int, s *Session) (string, bool) {
-	m.shopEditMu.Lock()
-	defer m.shopEditMu.Unlock()
-	if holder, ok := m.shopEdits[number]; ok && holder != s {
-		name := "someone"
-		if holder != nil && holder.playerName != "" {
-			name = holder.playerName
-		}
-		return name, false
-	}
-	if m.shopEdits == nil {
-		m.shopEdits = make(map[int]*Session)
-	}
-	m.shopEdits[number] = s
-	return "", true
-}
-
-func (m *Manager) releaseShopEdit(number int, s *Session) {
-	m.shopEditMu.Lock()
-	defer m.shopEditMu.Unlock()
-	if m.shopEdits[number] == s {
-		delete(m.shopEdits, number)
-	}
-}
-
-func (m *Manager) shopEditHolder(number int) string {
-	m.shopEditMu.Lock()
-	defer m.shopEditMu.Unlock()
-	if holder, ok := m.shopEdits[number]; ok && holder != nil {
-		return holder.playerName
-	}
-	return ""
 }
 
 func (s *Session) startSedit(number int, zone *parser.Zone) error {
@@ -307,9 +267,7 @@ func (s *Session) finishSeditLocked(save bool) {
 		saveMu := zoneSaveLock(state.zoneNumber)
 		saveMu.Lock()
 		if s.manager.world.CommitEditedShop(state.shop) {
-			seditSaveMu.Lock()
-			seditSaveShops[state.number] = true
-			seditSaveMu.Unlock()
+			markOLCDirty(olcKindShop, state.zoneNumber)
 		}
 		saveMu.Unlock()
 	}
@@ -896,13 +854,7 @@ func saveSeditZone(world *game.World, zone *parser.Zone) error {
 	if err := atomicWriteFile(path, []byte(out.String()), 0o666); err != nil {
 		return err
 	}
-	seditSaveMu.Lock()
-	for i := range shops {
-		if shops[i].VNum >= zone.Number*100 && shops[i].VNum <= zone.TopRoom {
-			delete(seditSaveShops, shops[i].VNum)
-		}
-	}
-	seditSaveMu.Unlock()
+	clearOLCDirty(olcKindShop, zone.Number)
 	return nil
 }
 
