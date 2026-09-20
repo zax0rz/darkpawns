@@ -538,3 +538,117 @@ func TestApplyRoomOperations(t *testing.T) {
 		t.Fatal("purged exit remains")
 	}
 }
+
+func TestApplyP6FlagsAndObjectScalars(t *testing.T) {
+	mob := parser.Mob{ActionFlags: []string{"SPEC"}, AffectFlags: []string{"BLIND"}}
+	if err := Apply(Operation{Kind: OpSetMobActionFlag, Mob: &mob, Bit: 24, Value: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetMobAffectFlag, Mob: &mob, Bit: 36, Value: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetMobNoise, Mob: &mob, Text: "growl"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetMobActionFlag, Mob: &mob, Bit: 0, Value: 0}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetMobAffectFlag, Mob: &mob, Bit: 0, Value: 0}); err != nil {
+		t.Fatal(err)
+	}
+	if got := fmt.Sprint(mob.ActionFlags); got != "[OKGIVE]" {
+		t.Fatalf("action flags = %s, want [OKGIVE]", got)
+	}
+	if got := fmt.Sprint(mob.AffectFlags); got != "[WATERBREATHE]" {
+		t.Fatalf("affect flags = %s, want [WATERBREATHE]", got)
+	}
+	if mob.Noise != "growl" {
+		t.Fatalf("noise = %q", mob.Noise)
+	}
+	if err := Apply(Operation{Kind: OpSetMobActionFlag, Mob: &mob, Bit: 25, Value: 1}); err == nil {
+		t.Fatal("reserved action bit was accepted")
+	}
+
+	object := parser.Obj{TypeFlag: 5, Values: [4]int{1, 2, 3, 4}}
+	if err := Apply(Operation{Kind: OpSetObjType, Obj: &object, Value: 10}); err != nil {
+		t.Fatal(err)
+	}
+	if object.TypeFlag != 10 || object.Values != [4]int{1, 2, 3, 4} {
+		t.Fatalf("type change touched values: type=%d values=%v", object.TypeFlag, object.Values)
+	}
+	if err := Apply(Operation{Kind: OpSetObjExtraFlag, Obj: &object, Bit: 28, Value: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetObjWearFlag, Obj: &object, Bit: 18, Value: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if object.ExtraFlags[0] != 1<<28 || object.WearFlags[0] != 1<<18 {
+		t.Fatalf("flag words = extra=%v wear=%v", object.ExtraFlags, object.WearFlags)
+	}
+	for _, test := range []struct {
+		kind  OperationKind
+		want  func(parser.Obj) int
+		value int
+	}{
+		{OpSetObjWeight, func(o parser.Obj) int { return o.Weight }, 12},
+		{OpSetObjCost, func(o parser.Obj) int { return o.Cost }, 345},
+	} {
+		if err := Apply(Operation{Kind: test.kind, Obj: &object, Value: test.value}); err != nil {
+			t.Fatal(err)
+		}
+		if got := test.want(object); got != test.value {
+			t.Fatalf("operation %d = %d, want %d", test.kind, got, test.value)
+		}
+	}
+	if err := Apply(Operation{Kind: OpSetObjCostPerDay, Obj: &object, Text: "12.345"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := object.LoadPercent; got < 12.349 || got > 12.351 {
+		t.Fatalf("load percent = %v, want 12.35", got)
+	}
+	if err := Apply(Operation{Kind: OpSetObjType, Obj: &object, Value: 0}); err == nil {
+		t.Fatal("object type 0 was accepted")
+	}
+	if err := Apply(Operation{Kind: OpSetObjExtraFlag, Obj: &object, Bit: 29, Value: 1}); err == nil {
+		t.Fatal("object extra bit 29 was accepted")
+	}
+}
+
+func TestApplyP6ShopFieldsAndLiveScripts(t *testing.T) {
+	shop := parser.ShopProto{Messages: [7]string{"old"}, BuyTypes: []int{1}, BuyWords: []string{"old"}}
+	if err := Apply(Operation{Kind: OpSetShopMessage, Shop: &shop, Index: 0, Text: "new"}); err != nil {
+		t.Fatal(err)
+	}
+	if shop.Messages[0] != "%s new" {
+		t.Fatalf("shop message = %q, want %%s new", shop.Messages[0])
+	}
+	if err := Apply(Operation{Kind: OpSetShopMessage, Shop: &shop, Index: 5, Text: "%s bought %d"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpAddShopNamelist, Shop: &shop, Value: 10, Text: "ore", Index: -1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetShopNoTrade, Shop: &shop, Bit: 6, Value: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpRemoveShopNamelist, Shop: &shop, Index: 0}); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(shop.BuyTypes, []int{10}) || !reflect.DeepEqual(shop.BuyWords, []string{"ore"}) || shop.WithWho != 64 {
+		t.Fatalf("shop fields = types=%v words=%v no-trade=%d", shop.BuyTypes, shop.BuyWords, shop.WithWho)
+	}
+
+	calledName := ""
+	calledBit := -1
+	calledEnabled := false
+	room := parser.Room{ScriptName: "draft", ScriptFunctions: 1}
+	if err := Apply(Operation{Kind: OpSetRoomScriptName, Room: &room, Text: "live", SetScriptName: func(name string) bool { calledName = name; return true }}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Apply(Operation{Kind: OpSetRoomScriptFlag, Room: &room, Bit: 4, Value: 1, SetScriptFlag: func(bit int, enabled bool) bool { calledBit, calledEnabled = bit, enabled; return true }}); err != nil {
+		t.Fatal(err)
+	}
+	if room.ScriptName != "draft" || calledName != "live" || calledBit != 4 || !calledEnabled {
+		t.Fatalf("script live/draft behavior = room=%q name=%q bit=%d enabled=%v", room.ScriptName, calledName, calledBit, calledEnabled)
+	}
+}

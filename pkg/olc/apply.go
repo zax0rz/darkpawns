@@ -3,6 +3,7 @@ package olc
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -18,6 +19,7 @@ const (
 	MaxExtraDesc = 1024
 	MaxMobDesc   = 1024
 	MaxMessage   = 4096
+	maxOLCLine   = 255 // MAX_INPUT_LENGTH - 1 in src/structs.h
 )
 
 // OperationKind identifies one semantic OLC write. An operation is ordered:
@@ -32,6 +34,8 @@ const (
 	OpSetRoomDescription
 	OpSetRoomFlag
 	OpSetRoomSector
+	OpSetRoomScriptName
+	OpSetRoomScriptFlag
 	OpEnsureExit
 	OpSetExitTarget
 	OpSetExitDescription
@@ -66,6 +70,11 @@ const (
 	OpSetMobLevel
 	OpSetMobAlignment
 	OpSetMobRace
+	OpSetMobActionFlag
+	OpSetMobAffectFlag
+	OpSetMobNoise
+	OpSetMobScriptName
+	OpSetMobScriptFlag
 
 	OpSetObjKeywords
 	OpSetObjShortDescription
@@ -83,6 +92,16 @@ const (
 	OpSetObjValue3
 	OpSetObjValue4
 	OpToggleObjContainerFlag
+	OpSetObjType
+	OpSetObjExtraFlag
+	OpSetObjWearFlag
+	OpSetObjWeight
+	OpSetObjCost
+	OpSetObjCostPerDay
+	OpSetObjTimer
+	OpSetObjLevel
+	OpSetObjScriptName
+	OpSetObjScriptFlag
 
 	OpAddShopProduct
 	OpRemoveShopProduct
@@ -97,6 +116,10 @@ const (
 	OpSetShopOpenHour2
 	OpSetShopCloseHour1
 	OpSetShopCloseHour2
+	OpSetShopMessage
+	OpAddShopNamelist
+	OpRemoveShopNamelist
+	OpSetShopNoTrade
 
 	OpSetZoneTopRoom
 	OpSetZoneName
@@ -117,6 +140,7 @@ type Operation struct {
 	Low       int
 	High      int
 	Text      string
+	Float     float64
 	Result    *int
 	Bit       int
 	Index     int
@@ -135,6 +159,11 @@ type Operation struct {
 	Zone       *parser.Zone
 	Command    *parser.ZoneCommand
 	ToIndex    int
+
+	// Script setters deliberately target the live prototype. The telnet
+	// editors shallow-copy script storage, so script writes survive discard.
+	SetScriptName func(string) bool
+	SetScriptFlag func(int, bool) bool
 }
 
 // Apply performs one C-semantics OLC write. It intentionally mutates the
@@ -189,6 +218,23 @@ func Apply(op Operation) error {
 			return fmt.Errorf("room sector operation has invalid value %d", op.Value)
 		}
 		op.Room.Sector = op.Value
+	case OpSetRoomScriptName:
+		if op.SetScriptName == nil {
+			return fmt.Errorf("room script name operation requires a live setter")
+		}
+		if !op.SetScriptName(truncateBytes(op.Text, maxOLCLine)) {
+			return fmt.Errorf("room script name update failed")
+		}
+	case OpSetRoomScriptFlag:
+		if op.SetScriptFlag == nil {
+			return fmt.Errorf("room script flag operation requires a live setter")
+		}
+		if op.Bit < 0 || op.Bit >= 6 {
+			return fmt.Errorf("room script flag operation has invalid bit %d", op.Bit)
+		}
+		if !op.SetScriptFlag(op.Bit, op.Value != 0) {
+			return fmt.Errorf("room script flag update failed")
+		}
 	case OpEnsureExit:
 		if op.Room == nil {
 			return fmt.Errorf("ensure exit operation requires a room")
@@ -436,6 +482,47 @@ func Apply(op Operation) error {
 			return fmt.Errorf("mob race operation requires a mob")
 		}
 		op.Mob.Race = clampInt(op.Value, 0, 30)
+	case OpSetMobActionFlag:
+		if op.Mob == nil {
+			return fmt.Errorf("mob action flag operation requires a mob")
+		}
+		if err := setNamedFlag(&op.Mob.ActionFlags, mobActionFlagNames, op.Bit, op.Value != 0); err != nil {
+			return err
+		}
+	case OpSetMobAffectFlag:
+		if op.Mob == nil {
+			return fmt.Errorf("mob affect flag operation requires a mob")
+		}
+		if err := setNamedFlag(&op.Mob.AffectFlags, mobAffectFlagNames, op.Bit, op.Value != 0); err != nil {
+			return err
+		}
+	case OpSetMobNoise:
+		if op.Mob == nil {
+			return fmt.Errorf("mob noise operation requires a mob")
+		}
+		noise := truncateBytes(op.Text, maxOLCLine)
+		if len(noise) > 2 {
+			op.Mob.Noise = noise
+		} else {
+			op.Mob.Noise = ""
+		}
+	case OpSetMobScriptName:
+		if op.SetScriptName == nil {
+			return fmt.Errorf("mob script name operation requires a live setter")
+		}
+		if !op.SetScriptName(truncateBytes(op.Text, maxOLCLine)) {
+			return fmt.Errorf("mob script name update failed")
+		}
+	case OpSetMobScriptFlag:
+		if op.SetScriptFlag == nil {
+			return fmt.Errorf("mob script flag operation requires a live setter")
+		}
+		if op.Bit < 0 || op.Bit >= 10 {
+			return fmt.Errorf("mob script flag operation has invalid bit %d", op.Bit)
+		}
+		if !op.SetScriptFlag(op.Bit, op.Value != 0) {
+			return fmt.Errorf("mob script flag update failed")
+		}
 
 	case OpSetObjKeywords:
 		if op.Obj == nil {
@@ -563,6 +650,85 @@ func Apply(op Operation) error {
 			return fmt.Errorf("object container flag %d is invalid", op.Value)
 		}
 		op.Obj.Values[1] ^= 1 << uint(op.Value)
+	case OpSetObjType:
+		if op.Obj == nil {
+			return fmt.Errorf("object type operation requires an object")
+		}
+		if op.Value < 1 || op.Value >= 24 {
+			return fmt.Errorf("object type %d is invalid", op.Value)
+		}
+		op.Obj.TypeFlag = op.Value
+	case OpSetObjExtraFlag:
+		if op.Obj == nil {
+			return fmt.Errorf("object extra flag operation requires an object")
+		}
+		if err := setFlagWord(&op.Obj.ExtraFlags, 29, op.Bit, op.Value != 0); err != nil {
+			return err
+		}
+	case OpSetObjWearFlag:
+		if op.Obj == nil {
+			return fmt.Errorf("object wear flag operation requires an object")
+		}
+		if err := setFlagWord(&op.Obj.WearFlags, 19, op.Bit, op.Value != 0); err != nil {
+			return err
+		}
+	case OpSetObjWeight:
+		if op.Obj == nil {
+			return fmt.Errorf("object weight operation requires an object")
+		}
+		op.Obj.Weight = op.Value
+	case OpSetObjCost:
+		if op.Obj == nil {
+			return fmt.Errorf("object cost operation requires an object")
+		}
+		op.Obj.Cost = op.Value
+	case OpSetObjCostPerDay:
+		if op.Obj == nil {
+			return fmt.Errorf("object cost-per-day operation requires an object")
+		}
+		load := op.Float
+		if op.Text != "" {
+			load = parseFloatC(op.Text)
+		} else if load == 0 {
+			load = float64(op.Value)
+		}
+		rounded := float32(load)
+		rounded = float32(int(rounded/0.01+0.5)) * 0.01
+		if rounded < 0 {
+			rounded = 0
+		} else if rounded > 100 {
+			rounded = 100
+		}
+		op.Obj.LoadPercent = float64(rounded)
+	case OpSetObjTimer:
+		if op.Obj == nil {
+			return fmt.Errorf("object timer operation requires an object")
+		}
+		// C stores this in obj_data.timer, but the ported parser and writer do
+		// not carry that runtime-only field. Accept the operation to preserve
+		// the telnet path's no-disk-effect semantics.
+	case OpSetObjLevel:
+		if op.Obj == nil {
+			return fmt.Errorf("object level operation requires an object")
+		}
+		// OEDIT_LEVEL is compiled out in the C source and is a no-op.
+	case OpSetObjScriptName:
+		if op.SetScriptName == nil {
+			return fmt.Errorf("object script name operation requires a live setter")
+		}
+		if !op.SetScriptName(truncateBytes(op.Text, maxOLCLine)) {
+			return fmt.Errorf("object script name update failed")
+		}
+	case OpSetObjScriptFlag:
+		if op.SetScriptFlag == nil {
+			return fmt.Errorf("object script flag operation requires a live setter")
+		}
+		if op.Bit < 0 || op.Bit >= 3 {
+			return fmt.Errorf("object script flag operation has invalid bit %d", op.Bit)
+		}
+		if !op.SetScriptFlag(op.Bit, op.Value != 0) {
+			return fmt.Errorf("object script flag update failed")
+		}
 
 	case OpAddShopProduct:
 		if op.Shop == nil {
@@ -629,6 +795,54 @@ func Apply(op Operation) error {
 		case OpSetShopCloseHour2:
 			op.Shop.CloseHour2 = value
 		}
+	case OpSetShopMessage:
+		if op.Shop == nil {
+			return fmt.Errorf("shop message operation requires a shop")
+		}
+		if op.Index < 0 || op.Index >= len(op.Shop.Messages) {
+			return fmt.Errorf("shop message index %d is out of range", op.Index)
+		}
+		op.Shop.Messages[op.Index] = formatShopMessage(op.Text)
+	case OpAddShopNamelist:
+		if op.Shop == nil {
+			return fmt.Errorf("shop namelist operation requires a shop")
+		}
+		if op.Value < 0 || op.Value >= 24 {
+			return fmt.Errorf("shop namelist type %d is invalid", op.Value)
+		}
+		word := truncateBytes(op.Text, maxOLCLine)
+		if op.Index < 0 || op.Index >= len(op.Shop.BuyTypes) {
+			op.Shop.BuyTypes = append(op.Shop.BuyTypes, op.Value)
+			op.Shop.BuyWords = append(op.Shop.BuyWords, word)
+		} else {
+			op.Shop.BuyTypes = append(op.Shop.BuyTypes, 0)
+			copy(op.Shop.BuyTypes[op.Index+1:], op.Shop.BuyTypes[op.Index:])
+			op.Shop.BuyTypes[op.Index] = op.Value
+			op.Shop.BuyWords = append(op.Shop.BuyWords, "")
+			copy(op.Shop.BuyWords[op.Index+1:], op.Shop.BuyWords[op.Index:])
+			op.Shop.BuyWords[op.Index] = word
+		}
+	case OpRemoveShopNamelist:
+		if op.Shop == nil {
+			return fmt.Errorf("shop namelist operation requires a shop")
+		}
+		if op.Index < 0 || op.Index >= len(op.Shop.BuyTypes) {
+			return nil // sedit_remove_from_type_list ignores invalid indexes.
+		}
+		copy(op.Shop.BuyTypes[op.Index:], op.Shop.BuyTypes[op.Index+1:])
+		op.Shop.BuyTypes = op.Shop.BuyTypes[:len(op.Shop.BuyTypes)-1]
+		if op.Index < len(op.Shop.BuyWords) {
+			copy(op.Shop.BuyWords[op.Index:], op.Shop.BuyWords[op.Index+1:])
+			op.Shop.BuyWords = op.Shop.BuyWords[:len(op.Shop.BuyWords)-1]
+		}
+	case OpSetShopNoTrade:
+		if op.Shop == nil {
+			return fmt.Errorf("shop no-trade operation requires a shop")
+		}
+		if op.Bit < 0 || op.Bit >= 7 {
+			return fmt.Errorf("shop no-trade bit %d is invalid", op.Bit)
+		}
+		setBitInt(&op.Shop.WithWho, op.Bit, op.Value != 0)
 	case OpSetZoneTopRoom:
 		if op.Zone == nil {
 			return fmt.Errorf("zone top operation requires a zone")
@@ -709,6 +923,124 @@ func clampInt(value, low, high int) int {
 	}
 	if value > high {
 		return high
+	}
+	return value
+}
+
+// These are storage names, not UI label tables. MEDIT exposes the first 25
+// action bits and first 37 affect bits; the parser has additional reserved
+// bits that are written from world files but are not editable in its menu.
+var mobActionFlagNames = []string{
+	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
+	"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY",
+	"HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH", "NOBLIND", "HUNTER",
+	"AGGR24", "RANDZON", "MOUNTABLE", "RARE", "LOOTS", "OKGIVE",
+}
+
+var mobAffectFlagNames = []string{
+	"BLIND", "INVISIBLE", "DETECT_ALIGN", "DETECT_INVIS", "DETECT_MAGIC",
+	"SENSE_LIFE", "WATERWALK", "SANCTUARY", "GROUP", "CURSE", "INFRAVISION",
+	"POISON", "PROTECT_EVIL", "PROTECT_GOOD", "SLEEP", "NOTRACK", "FLESH_ALTER",
+	"DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM", "FOLLOW", "WIMPY",
+	"KUJI_KIRI", "CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNT", "INVULN",
+	"FLAMING", "NOTHING", "HASTE", "SLOW", "DREAM", "WATERBREATHE",
+}
+
+func setNamedFlag(flags *[]string, names []string, bit int, enabled bool) error {
+	if bit < 0 || bit >= len(names) {
+		return fmt.Errorf("flag bit %d is out of range", bit)
+	}
+	target := names[bit]
+	for i, name := range *flags {
+		if name != target {
+			continue
+		}
+		if !enabled {
+			*flags = append((*flags)[:i:i], (*flags)[i+1:]...)
+		}
+		return nil
+	}
+	if enabled {
+		*flags = append(*flags, target)
+	}
+	return nil
+}
+
+func setFlagWord(words *[4]int, limit, bit int, enabled bool) error {
+	if bit < 0 || bit >= limit {
+		return fmt.Errorf("flag bit %d is out of range", bit)
+	}
+	word := bit / 32
+	mask := 1 << uint(bit%32)
+	if enabled {
+		words[word] |= mask
+	} else {
+		words[word] &^= mask
+	}
+	return nil
+}
+
+func setBitInt(value *int, bit int, enabled bool) {
+	mask := 1 << uint(bit)
+	if enabled {
+		*value |= mask
+	} else {
+		*value &^= mask
+	}
+}
+
+func formatShopMessage(text string) string {
+	text = truncateBytes(text, maxOLCLine)
+	if text == "" || text[0] != '%' {
+		return "%s " + text
+	}
+	return text
+}
+
+// parseFloatC follows atof's leading-number behavior. Web callers normally
+// send a JSON number, but Text is also accepted so the operation can preserve
+// the telnet editor's acceptance of trailing garbage.
+func parseFloatC(input string) float64 {
+	input = strings.TrimLeft(input, " \t\r\n\v\f")
+	if input == "" {
+		return 0
+	}
+	i := 0
+	if input[0] == '+' || input[0] == '-' {
+		i++
+	}
+	start := i
+	for i < len(input) && input[i] >= '0' && input[i] <= '9' {
+		i++
+	}
+	sawDigit := i > start
+	if i < len(input) && input[i] == '.' {
+		i++
+		fracStart := i
+		for i < len(input) && input[i] >= '0' && input[i] <= '9' {
+			i++
+		}
+		sawDigit = sawDigit || i > fracStart
+	}
+	if !sawDigit {
+		return 0
+	}
+	if i < len(input) && (input[i] == 'e' || input[i] == 'E') {
+		j := i + 1
+		if j < len(input) && (input[j] == '+' || input[j] == '-') {
+			j++
+		}
+		k := j
+		for k < len(input) && input[k] >= '0' && input[k] <= '9' {
+			k++
+		}
+		if k > j {
+			i = k
+		}
+	}
+	value, err := strconv.ParseFloat(input[:i], 64)
+	if err != nil {
+		return 0
 	}
 	return value
 }
