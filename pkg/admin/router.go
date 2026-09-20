@@ -157,6 +157,11 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerShops(ri.api, world)
 	registerRooms(ri.api, world)
 	registerMetrics(ri.api, world)
+	var olcState OLCReadStateProvider
+	if provider, ok := liveSessions.(OLCReadStateProvider); ok {
+		olcState = provider
+	}
+	registerOLC(ri.api, world, database, olcState)
 
 	// Zones — read/write, requires builder role
 	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
@@ -193,6 +198,14 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Server metrics — requires builder role
 	track("/admin/metrics", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+
+	// OLC read surface — authorization is operation middleware so it can use
+	// Huma's parsed {kind}/{vnum} parameters. These exact mounts keep the
+	// route drift gate at zero new allowlist entries.
+	track("/admin/olc/{kind}/{vnum}/preview", wrap(corsMiddleware(humaMux.ServeHTTP)))
+	track("/admin/olc/held", wrap(corsMiddleware(humaMux.ServeHTTP)))
+	track("/admin/olc/pending", wrap(corsMiddleware(humaMux.ServeHTTP)))
+
 	// The Prometheus endpoint, moved here from an unauthenticated /metrics on
 	// the root mux. It was public on darkpawns.org and nobody noticed, because
 	// every gauge read zero until the collectors were wired: publishing real
@@ -372,7 +385,10 @@ func requireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 // Authorization header. Returns an error on any failure (missing header,
 // wrong scheme, invalid/expired/wrong-issuer token).
 func claimsFromAuthorization(r *http.Request) (*auth.Claims, error) {
-	authHeader := r.Header.Get("Authorization")
+	return claimsFromBearerHeader(r.Header.Get("Authorization"))
+}
+
+func claimsFromBearerHeader(authHeader string) (*auth.Claims, error) {
 	if authHeader == "" {
 		return nil, errNoBearerToken
 	}

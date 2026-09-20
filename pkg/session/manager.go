@@ -1817,6 +1817,18 @@ func (m *Manager) GetLiveAgentSessions() []admin.LiveAgentSession {
 	return sessions
 }
 
+// GetOLCClaims returns the value snapshot consumed by the admin read surface.
+// The registry remains owned by session; admin only sees copied entries.
+func (m *Manager) GetOLCClaims() []olc.ClaimEntry {
+	return m.olcClaims().List()
+}
+
+// GetOLCDirtyZones returns the shared typed dirty-zone snapshot consumed by
+// the admin read surface.
+func (m *Manager) GetOLCDirtyZones() []olc.DirtyEntry {
+	return olcSaveList.List()
+}
+
 // SetWantsStructuredData sets whether this session receives structured updates.
 func (s *Session) SetWantsStructuredData(val bool) {
 	s.agentMu.Lock()
