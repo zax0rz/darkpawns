@@ -106,6 +106,15 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 		// builder. 33 matched nothing either; C gates every OLC editor on
 		// LVL_BUILDER, which olc.h:54 aliases to LVL_IMMORT (31), so that is
 		// what "builder" means here.
+		//
+		// WARNING: this panel role is NOT the OLC authorization gate. C gates
+		// the *editor surface* at LVL_IMMORT but confines levels 31-34 to
+		// their assigned zone (olcAuthorized: unconfined only at LVL_GOD+1).
+		// Any route that mutates world state through the OLC machinery must
+		// apply olcAuthorized's zone confinement on top of this role check —
+		// mounting such a route on requireRole("builder") alone hands levels
+		// 31-34 unconfined edit rights over the whole world (the webOLC
+		// design review calls this B2). Reads are fine at this role.
 		role := "player"
 		switch {
 		case rec.Level >= game.LVL_IMPL:
