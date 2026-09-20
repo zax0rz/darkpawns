@@ -1746,19 +1746,6 @@ type Session struct {
 	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
 	sedit *seditState
 
-	// zoneEdits reserves room VNums against concurrent duplicate ZEDIT entry.
-	// ZEDIT's C duplicate gate is per room number even though the working copy
-	// contains only that room's reset commands. It is a separate connection
-	// state from REDIT, so the same room may be held by one editor of each type.
-	zoneEditMu sync.Mutex
-	zoneEdits  map[int]*Session
-
-	// shopEdits reserves shop VNUMs against concurrent duplicate SEDIT entry.
-	// It mirrors the descriptor scan in C's do_olc while remaining atomic across
-	// the Go session goroutines.
-	shopEditMu sync.Mutex
-	shopEdits  map[int]*Session
-
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)
 	infobarMode                         int //nolint:unused // InfobarOff (0) or InfobarOn (1)
