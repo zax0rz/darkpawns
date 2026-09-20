@@ -1,0 +1,46 @@
+# C-backed ZEDIT entry and first menu transitions.
+# depth-case: zedit.nonnumeric-argument
+# depth-case: zedit.unknown-zone
+# depth-case: zedit.no-argument-current-room
+# depth-case: zedit.interactive-olc
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zeditentry
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zeditentry
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+zedit nope
+zedit 999999
+zedit
+q

@@ -1,0 +1,43 @@
+# C-backed ZEDIT main-menu bytes with ANSI color disabled. keep-ansi proves
+# that the editor emits no escape bytes at color level zero.
+# depth-case: zedit.menu-colors-off-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Zeditcoloroff
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zeditcoloroff
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+zedit
+q

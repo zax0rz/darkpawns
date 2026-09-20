@@ -117,6 +117,13 @@ type Manager struct {
 	objEditMu sync.Mutex
 	objEdits  map[int]*Session
 
+	// zoneEdits reserves room VNums against concurrent duplicate ZEDIT entry.
+	// ZEDIT's C duplicate gate is per room number even though the working copy
+	// contains only that room's reset commands. It is a separate connection
+	// state from REDIT, so the same room may be held by one editor of each type.
+	zoneEditMu sync.Mutex
+	zoneEdits  map[int]*Session
+
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
 	wizlocked    bool
@@ -1291,6 +1298,9 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	if s.oedit != nil {
 		s.finishOeditLocked()
 	}
+	if s.zedit != nil {
+		s.finishZeditLocked(false)
+	}
 	s.textEditMu.Unlock()
 
 	// 4. Save player to DB
@@ -1720,6 +1730,10 @@ type Session struct {
 	// oedit holds the descriptor-owned oedit (CON_OEDIT) working state.
 	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
 	oedit *oeditState
+
+	// zedit holds the descriptor-owned zedit (CON_ZEDIT) working state.
+	// Guarded by textEditMu, matching the other OLC editors.
+	zedit *zeditState
 
 	// Infobar / display state (from act.display.c)
 	screenSize                          int //nolint:unused // terminal height in lines; 0 = unset (defaults to 25)

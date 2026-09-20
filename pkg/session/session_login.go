@@ -351,6 +351,18 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return nil
 	}
 
+	// A zedit (CON_ZEDIT) session owns the complete next line, mirroring
+	// interpreter.c's CON_ZEDIT dispatch. ZEDIT has no improved string editor,
+	// but it must still win over ordinary command parsing while active.
+	if s.player != nil && s.isZoneEditing() {
+		line := cmd.RawLine
+		if line == "" {
+			line = commandInputLine(cmd.Command, cmd.Args)
+		}
+		s.handleZeditInput(line)
+		return nil
+	}
+
 	// A descriptor string editor owns the complete next line. In particular,
 	// slash commands must not be rebuilt as "/ h" from tokenized JSON args;
 	// telnet supplies RawLine and direct/WebSocket clients can still use the
