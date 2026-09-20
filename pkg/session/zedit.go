@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -47,11 +47,6 @@ type zeditState struct {
 	pendingOutput string
 }
 
-var (
-	zeditSaveMu    sync.Mutex
-	zeditSaveZones = make(map[int]bool)
-)
-
 var zeditEquipmentTypes = []string{
 	"Used as light", "Worn on right finger", "Worn on left finger",
 	"First worn around Neck", "Second worn around Neck", "Worn on body",
@@ -65,43 +60,6 @@ var zeditEquipmentTypes = []string{
 // intentionally accepted by the C off-by-one check and prints that sentinel
 // in the menu rather than being silently corrected.
 var zeditDirections = append(append([]string(nil), game.DirectionNames...), "\n")
-
-func (m *Manager) claimZoneEdit(number int, s *Session) (string, bool) {
-	m.zoneEditMu.Lock()
-	defer m.zoneEditMu.Unlock()
-	if holder, ok := m.zoneEdits[number]; ok && holder != s {
-		name := "someone"
-		if holder != nil && holder.playerName != "" {
-			name = holder.playerName
-		}
-		return name, false
-	}
-	if m.zoneEdits == nil {
-		m.zoneEdits = make(map[int]*Session)
-	}
-	m.zoneEdits[number] = s
-	return "", true
-}
-
-func (m *Manager) releaseZoneEdit(number int, s *Session) {
-	m.zoneEditMu.Lock()
-	defer m.zoneEditMu.Unlock()
-	if m.zoneEdits[number] == s {
-		delete(m.zoneEdits, number)
-	}
-}
-
-func (m *Manager) zoneEditHolder(number int) string {
-	m.zoneEditMu.Lock()
-	defer m.zoneEditMu.Unlock()
-	if holder, ok := m.zoneEdits[number]; ok && holder != nil {
-		if holder.playerName != "" {
-			return holder.playerName
-		}
-		return "someone"
-	}
-	return ""
-}
 
 // cmdZedit ports do_olc's SCMD_OLC_ZEDIT entry path (src/olc.c:80-277).
 // The editor key is a room VNUM: the containing zone is selected from that
@@ -253,9 +211,7 @@ func (s *Session) finishZeditLocked(save bool) {
 		saveMu := zoneSaveLock(state.zoneNumber)
 		saveMu.Lock()
 		if s.manager.world.CommitEditedZone(state.zoneNumber, state.roomVNum, state.zone) {
-			zeditSaveMu.Lock()
-			zeditSaveZones[state.zoneNumber] = true
-			zeditSaveMu.Unlock()
+			markOLCDirty(olcKindZone, state.zoneNumber)
 		}
 		saveMu.Unlock()
 	}
@@ -642,10 +598,21 @@ func (s *Session) parseZeditLocked(line string) {
 		oldTop := state.zone.TopRoom
 		zones := s.manager.world.GetAllZones()
 		if state.zoneIndex == len(zones)-1 {
-			state.zone.TopRoom = maxInt(state.zone.Number*100, minInt(32000, atoiC(line)))
+			applyOLC(olc.Operation{
+				Kind:  olc.OpSetZoneTopRoom,
+				Zone:  &state.zone,
+				Value: atoiC(line),
+				Low:   state.zone.Number * 100,
+				High:  32000,
+			})
 		} else if state.zoneIndex >= 0 && state.zoneIndex+1 < len(zones) {
-			state.zone.TopRoom = maxInt(state.zone.Number*100,
-				minInt(zones[state.zoneIndex+1].Number*100-1, atoiC(line)))
+			applyOLC(olc.Operation{
+				Kind:  olc.OpSetZoneTopRoom,
+				Zone:  &state.zone,
+				Value: atoiC(line),
+				Low:   state.zone.Number * 100,
+				High:  zones[state.zoneIndex+1].Number*100 - 1,
+			})
 		}
 		if oldTop != state.zone.TopRoom {
 			state.dirtyHeader = true
@@ -930,9 +897,7 @@ func (s *Session) parseZeditArg3Locked(line string) {
 }
 
 func zeditRemoveSaveZone(zone int) {
-	zeditSaveMu.Lock()
-	delete(zeditSaveZones, zone)
-	zeditSaveMu.Unlock()
+	clearOLCDirty(olcKindZone, zone)
 }
 
 func saveZeditZone(world *game.World, zone *parser.Zone) error {

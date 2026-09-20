@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -67,11 +67,6 @@ const (
 	reditExtraDescriptionField
 )
 
-var (
-	reditSaveMu    sync.Mutex
-	reditSaveRooms = make(map[int]bool)
-)
-
 var reditRoomFlagNames = []string{
 	"DARK", "DEATH", "!MOB", "INDOORS", "PEACEFUL", "SOUNDPROOF", "!TRACK",
 	"!MAGIC", "TUNNEL", "PRIVATE", "GODROOM", "HOUSE", "HCRSH", "ATRIUM",
@@ -110,7 +105,7 @@ func cmdRedit(s *Session, args []string) error {
 			return nil
 		}
 		zoneNumber := atoiC(args[1])
-		zone, ok := reditZoneForVNum(s.manager.world, zoneNumber*100)
+		zone, ok := olcZoneForVNum(s.manager.world, zoneNumber*100)
 		if !ok {
 			s.reditSend("Sorry, there is no zone for that number!\r\n")
 			return nil
@@ -119,7 +114,7 @@ func cmdRedit(s *Session, args []string) error {
 			s.reditSend(fmt.Sprintf("That room is currently being edited by %s.\r\n", other))
 			return nil
 		}
-		if !reditAuthorized(s, zone.Number) {
+		if !olcAuthorized(s, zone.Number) {
 			s.reditSend("You do not have permission to edit this zone.\r\n")
 			return nil
 		}
@@ -144,13 +139,13 @@ func cmdRedit(s *Session, args []string) error {
 		s.reditSend(fmt.Sprintf("That room is currently being edited by %s.\r\n", other))
 		return nil
 	}
-	zone, ok := reditZoneForVNum(s.manager.world, number)
+	zone, ok := olcZoneForVNum(s.manager.world, number)
 	if !ok {
 		s.manager.releaseRoomEdit(number, s)
 		s.reditSend("Sorry, there is no zone for that number!\r\n")
 		return nil
 	}
-	if !reditAuthorized(s, zone.Number) {
+	if !olcAuthorized(s, zone.Number) {
 		s.manager.releaseRoomEdit(number, s)
 		s.reditSend("You do not have permission to edit this zone.\r\n")
 		return nil
@@ -199,71 +194,6 @@ func (s *Session) startRedit(number int, zone *parser.Zone) error {
 		"$n starts using OLC.", "", game.ToRoom)
 	s.player.SetPlrFlag(game.PlrWriting, true)
 	return nil
-}
-
-func reditAuthorized(s *Session, zoneNumber int) bool {
-	return getEffectiveLevel(s) >= LVL_GOD+1 || s.olcZone == zoneNumber
-}
-
-func reditZoneForVNum(world *game.World, vnum int) (*parser.Zone, bool) {
-	for _, zone := range world.GetAllZones() {
-		if vnum >= zone.Number*100 && vnum <= zone.TopRoom {
-			return zone, true
-		}
-	}
-	return nil, false
-}
-
-// claimRoomEdit atomically reserves the room for this session's editor. It
-// returns ("", true) on success — including a re-claim by the owning session —
-// and (holderName, false) when another session already holds the room, mirroring
-// do_olc's duplicate-editor refusal (olc.c:150-158).
-func (m *Manager) claimRoomEdit(number int, s *Session) (string, bool) {
-	m.roomEditMu.Lock()
-	defer m.roomEditMu.Unlock()
-	if holder, ok := m.roomEdits[number]; ok && holder != s {
-		name := ""
-		if holder != nil {
-			name = holder.playerName
-		}
-		if name == "" {
-			name = "someone"
-		}
-		return name, false
-	}
-	if m.roomEdits == nil {
-		m.roomEdits = make(map[int]*Session)
-	}
-	m.roomEdits[number] = s
-	return "", true
-}
-
-// roomEditHolder reports the player name currently editing the room, or "".
-// It is the read-only peek used by the olc-save path, which refuses while an
-// editor owns the room but never reserves one itself.
-func (m *Manager) roomEditHolder(number int) string {
-	m.roomEditMu.Lock()
-	defer m.roomEditMu.Unlock()
-	holder, ok := m.roomEdits[number]
-	if !ok || holder == nil {
-		return ""
-	}
-	name := holder.playerName
-	if name == "" {
-		return "someone"
-	}
-	return name
-}
-
-// releaseRoomEdit drops the session's reservation. Ownership-checked so a
-// stale release path (double disconnect cleanup, a refused entry) can never
-// drop a newer editor's claim.
-func (m *Manager) releaseRoomEdit(number int, s *Session) {
-	m.roomEditMu.Lock()
-	defer m.roomEditMu.Unlock()
-	if m.roomEdits[number] == s {
-		delete(m.roomEdits, number)
-	}
 }
 
 func (s *Session) reditSend(text string) {
@@ -402,11 +332,7 @@ func (s *Session) parseReditLocked(line string) {
 	case reditMainMenu:
 		s.parseReditMainLocked(line)
 	case reditName:
-		name := line
-		if len(name) > 75 {
-			name = name[:74]
-		}
-		state.room.Name = name
+		applyOLC(olc.Operation{Kind: olc.OpSetRoomName, Room: &state.room, Text: line})
 		state.olcVal = 1
 		state.mode = reditMainMenu
 		s.reditDisplayMainLocked()
@@ -679,8 +605,8 @@ func (s *Session) parseReditCopyLocked(line string) {
 			s.reditSend("That room does not exist, try again : ")
 			return
 		}
-		state.room.Name = room.Name
-		state.room.Description = room.Description
+		applyOLC(olc.Operation{Kind: olc.OpSetRoomName, Room: &state.room, Text: room.Name})
+		applyOLC(olc.Operation{Kind: olc.OpSetRoomDescription, Room: &state.room, Text: room.Description})
 	}
 	state.olcVal = 1
 	state.mode = reditMainMenu
@@ -748,16 +674,16 @@ func (s *Session) startReditStringLocked(field reditStringField) {
 	switch field {
 	case reditRoomDescription:
 		initial = state.room.Description
-		maxBytes = 1024
+		maxBytes = olc.MaxRoomDesc
 	case reditExitDescriptionField:
 		exit := s.reditEnsureExitLocked(state.value)
 		initial = exit.Description
-		maxBytes = 256
+		maxBytes = olc.MaxExitDesc
 	case reditExtraDescriptionField:
 		if state.currentExtra < len(state.room.ExtraDescs) && state.extraMeta[state.currentExtra].descriptionSet {
 			initial = state.room.ExtraDescs[state.currentExtra].Description
 		}
-		maxBytes = 4096
+		maxBytes = olc.MaxExtraDesc
 	}
 	initial = editorCRLF(initial)
 	s.textEdit = &textEditState{
@@ -791,14 +717,18 @@ func (s *Session) finishReditStringLocked(field reditStringField, action textEdi
 		value := editorToRoomText(buffer)
 		switch field {
 		case reditRoomDescription:
-			state.room.Description = value
+			applyOLC(olc.Operation{Kind: olc.OpSetRoomDescription, Room: &state.room, Text: value})
 		case reditExitDescriptionField:
 			exit := s.reditEnsureExitLocked(state.value)
-			exit.Description = value
+			applyOLC(olc.Operation{Kind: olc.OpSetExitDescription, Exit: &exit, Text: value})
 			state.room.Exits[game.DirectionNames[state.value]] = exit
 		case reditExtraDescriptionField:
 			if state.currentExtra < len(state.room.ExtraDescs) {
-				state.room.ExtraDescs[state.currentExtra].Description = value
+				applyOLC(olc.Operation{
+					Kind:  olc.OpSetExtraDescription,
+					Extra: &state.room.ExtraDescs[state.currentExtra],
+					Text:  value,
+				})
 				state.extraMeta[state.currentExtra].descriptionSet = true
 			}
 		}
@@ -1089,15 +1019,11 @@ func (s *Session) reditDisplayScriptMenuLocked() {
 }
 
 func reditAddSaveRoom(zone int) {
-	reditSaveMu.Lock()
-	reditSaveRooms[zone] = true
-	reditSaveMu.Unlock()
+	markOLCDirty(olcKindRoom, zone)
 }
 
 func reditRemoveSaveRoom(zone int) {
-	reditSaveMu.Lock()
-	delete(reditSaveRooms, zone)
-	reditSaveMu.Unlock()
+	clearOLCDirty(olcKindRoom, zone)
 }
 
 func saveReditZone(world *game.World, zone *parser.Zone) error {

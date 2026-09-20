@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -67,13 +67,6 @@ type meditState struct {
 	mode       meditMode
 	olcVal     int // C OLC_VAL: the has-changed/quit-prompt flag.
 }
-
-// meditSaveMu serializes the zone mob-file save list. It mirrors C's
-// olc_save_list for OLC_SAVE_MOB entries.
-var (
-	meditSaveMu   sync.Mutex
-	meditSaveMobs = make(map[int]bool)
-)
 
 // The display tables below are byte-faithful copies of the C constant arrays
 // the medit menus print (src/constants.c, src/fight.c). They intentionally
@@ -145,62 +138,6 @@ var meditParserAffectBits = []string{
 	"WIMPY", "KUJI_KIRI", "CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNT",
 	"INVULN", "FLAMING", "NOTHING", "HASTE", "SLOW", "DREAM", "WATERBREATHE",
 	"METALSKIN", "ROBBED",
-}
-
-// meditExpLookup is the C EXP_LOOKUP table from medit.c, indexed by level.
-// The C array has LEVEL_IMPL+1 (41) entries; levels above 40 read out of
-// bounds in C (undefined). The Go port clamps the lookup instead of
-// reproducing the overread; see parseMeditLevelLocked.
-var meditExpLookup = []int{
-	25,
-	100, 200, 350, 600, 900,
-	1500, 2500, 3500, 4500, 6000,
-	7500, 9000, 10500, 12000, 14000,
-	16000, 18000, 20000, 22500, 25000,
-	27500, 30000, 32500, 35000, 37500,
-	40000, 45000, 50000, 55000, 60000,
-	90000, 120000, 180000, 270000, 360000,
-	363000, 369000, 372000, 375000, 400000,
-}
-
-// claimMobEdit atomically reserves a mob VNum for this session, mirroring
-// do_olc's duplicate-editor descriptor scan (src/olc.c: "That mobile is
-// currently being edited by %s."). C relies on its single-threaded
-// interpreter for atomicity; here the claim itself is the check, so two
-// sessions racing through cmdMedit cannot both be admitted. The returned
-// name is the other editor's when the claim fails.
-func (m *Manager) claimMobEdit(number int, s *Session) (string, bool) {
-	m.mobEditMu.Lock()
-	defer m.mobEditMu.Unlock()
-	if holder, ok := m.mobEdits[number]; ok && holder != s {
-		return holder.playerName, false
-	}
-	if m.mobEdits == nil {
-		m.mobEdits = make(map[int]*Session)
-	}
-	m.mobEdits[number] = s
-	return "", true
-}
-
-// releaseMobEdit frees a mob VNum reservation, but only when this session
-// still holds it.
-func (m *Manager) releaseMobEdit(number int, s *Session) {
-	m.mobEditMu.Lock()
-	defer m.mobEditMu.Unlock()
-	if m.mobEdits[number] == s {
-		delete(m.mobEdits, number)
-	}
-}
-
-// mobEditHolder peeks at who is editing a mob VNum, for the save path which
-// refuses while an editor owns the mob but never reserves one itself.
-func (m *Manager) mobEditHolder(number int) string {
-	m.mobEditMu.Lock()
-	defer m.mobEditMu.Unlock()
-	if holder, ok := m.mobEdits[number]; ok && holder != nil {
-		return holder.playerName
-	}
-	return ""
 }
 
 // cmdMedit is the Go port of do_olc's SCMD_OLC_MEDIT branch (src/olc.c).
@@ -811,12 +748,12 @@ func (s *Session) parseMeditLocked(arg string) {
 		return
 
 	case meditAlias:
-		mob.Keywords = arg
+		applyOLC(olc.Operation{Kind: olc.OpSetMobKeywords, Mob: mob, Text: arg})
 	case meditSDesc:
-		mob.ShortDesc = arg
+		applyOLC(olc.Operation{Kind: olc.OpSetMobShortDescription, Mob: mob, Text: arg})
 	case meditLDesc:
 		// C: strcpy(buf, arg); strcat(buf, "\r\n").
-		mob.LongDesc = arg + "\r\n"
+		applyOLC(olc.Operation{Kind: olc.OpSetMobLongDescription, Mob: mob, Text: arg})
 	case meditDDesc:
 		// C: "We should never get here." The '5' choice enters the string
 		// editor directly without leaving main-menu mode, so this case is
@@ -890,40 +827,40 @@ func (s *Session) parseMeditLocked(arg string) {
 		return
 
 	case meditSex:
-		mob.Sex = clampInt(atoiC(arg), 0, len(meditGenderNames)-1)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobSex, Mob: mob, Value: atoiC(arg)})
 	case meditHitroll:
 		// C sets GET_HITROLL; the parser stores file THAC0 = 20 - hitroll.
-		mob.THAC0 = 20 - clampInt(atoiC(arg), 0, 127)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobHitroll, Mob: mob, Value: atoiC(arg)})
 	case meditDamroll:
-		mob.Damage.Plus = clampInt(atoiC(arg), 0, 127)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobDamroll, Mob: mob, Value: atoiC(arg)})
 	case meditNDD:
-		mob.Damage.Num = clampInt(atoiC(arg), 0, 127)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobNumDamageDice, Mob: mob, Value: atoiC(arg)})
 	case meditSDD:
-		mob.Damage.Sides = clampInt(atoiC(arg), 0, 127)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobSizeDamageDice, Mob: mob, Value: atoiC(arg)})
 	case meditNumHPDice:
-		mob.HP.Num = clampInt(atoiC(arg), 0, 50)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobNumHPDice, Mob: mob, Value: atoiC(arg)})
 	case meditSizeHPDice:
-		mob.HP.Sides = clampInt(atoiC(arg), 0, 3000)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobSizeHPDice, Mob: mob, Value: atoiC(arg)})
 	case meditAddHP:
-		mob.HP.Plus = clampInt(atoiC(arg), 0, 30000)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAddHP, Mob: mob, Value: atoiC(arg)})
 	case meditAC:
-		mob.AC = clampInt(atoiC(arg), -200, 200)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAC, Mob: mob, Value: atoiC(arg)})
 	case meditExp:
-		mob.Exp = maxInt(0, atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpSetMobExp, Mob: mob, Value: atoiC(arg)})
 	case meditGold:
-		mob.Gold = maxInt(0, atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpSetMobGold, Mob: mob, Value: atoiC(arg)})
 	case meditPos:
-		mob.Position = clampInt(atoiC(arg), 0, 14)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobPosition, Mob: mob, Value: atoiC(arg)})
 	case meditDefaultPos:
-		mob.DefaultPos = clampInt(atoiC(arg), 0, 14)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobDefaultPosition, Mob: mob, Value: atoiC(arg)})
 	case meditAttack:
-		mob.BareHandAttack = clampInt(atoiC(arg), 0, len(meditAttackNames)-1)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAttack, Mob: mob, Value: atoiC(arg)})
 	case meditLevel:
-		s.parseMeditLevelLocked(atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpSetMobLevel, Mob: mob, Value: atoiC(arg)})
 	case meditAlignment:
-		mob.Alignment = clampInt(atoiC(arg), -1000, 1000)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAlignment, Mob: mob, Value: atoiC(arg)})
 	case meditRace:
-		mob.Race = clampInt(atoiC(arg), 0, len(meditRaceNames)-1)
+		applyOLC(olc.Operation{Kind: olc.OpSetMobRace, Mob: mob, Value: atoiC(arg)})
 
 	default:
 		// C: "We should never get here." (sysserr + cleanup_olc).
@@ -1048,52 +985,6 @@ func (s *Session) parseMeditMainMenuLocked(arg string) {
 	}
 }
 
-// parseMeditLevelLocked ports MEDIT_LEVEL's derived-stat computation. C sets
-// the level, derives exp/HP/damage/AC/hitroll from it, then re-sets the level
-// ("to handle 0s", allowing level 0 with level-1 stats). The /1.50 divisions
-// are C float divisions truncated toward zero.
-func (s *Session) parseMeditLevelLocked(raw int) {
-	mob := &s.mobEdit.mob
-	level := clampInt(raw, 1, 100)
-	mob.Level = level
-
-	if level <= len(meditExpLookup)-1 {
-		mob.Exp = meditExpLookup[level]
-	} else {
-		// C indexes EXP_LOOKUP (41 entries) out of bounds for levels 41-100
-		// (undefined). The Go port clamps the lookup instead of reproducing
-		// the overread; the stored level still matches C.
-		mob.Exp = meditExpLookup[len(meditExpLookup)-1]
-	}
-
-	if level > 10 {
-		mob.Damage.Num = int(float64(level) / 1.50)
-	} else {
-		mob.Damage.Num = (level + 1) / 2
-	}
-	mob.Damage.Sides = 4
-	if level > 10 {
-		mob.Damage.Plus = int(float64(level+1) / 1.50)
-	} else {
-		mob.Damage.Plus = (level + 1) / 2
-	}
-	mob.HP.Num = level
-	mob.HP.Sides = 5
-	mob.HP.Plus = 10*level + 10
-	if level > 22 {
-		mob.HP.Plus += 13 * (level - 22)
-	}
-	if level > 30 {
-		mob.HP.Plus += 560 * (level - 30)
-	}
-	mob.AC = 100 - (10 * level)
-	// C sets GET_HITROLL(level); the parser stores file THAC0 = 20 - hitroll.
-	mob.THAC0 = 20 - level
-
-	// C re-sets the level with a 0 floor ("to handle 0s").
-	mob.Level = clampInt(raw, 0, 100)
-}
-
 // setMeditScriptNameLocked writes the script name to the LIVE prototype,
 // mirroring C's shallow-copied mob script pointer (copy_mobile copies the
 // pointer, so the menu edits the shared struct).
@@ -1115,23 +1006,6 @@ func (s *Session) toggleMeditScriptFlagLocked(bit int) {
 	}
 }
 
-func clampInt(value, low, high int) int {
-	if value < low {
-		return low
-	}
-	if value > high {
-		return high
-	}
-	return value
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 // startMeditDescEditorLocked opens the improved string editor for the mob's
 // detailed description, mirroring medit_parse's '5' choice: the help text,
 // the "Enter mob description" prompt, the existing description, then the
@@ -1145,7 +1019,7 @@ func (s *Session) startMeditDescEditorLocked() {
 	// DetailedDesc with LF endings, so normalize on the way in and back.
 	initial := editorCRLF(state.mob.DetailedDesc)
 	s.textEdit = &textEditState{
-		field:      textEditField{name: "medit-desc", maxBytes: 1024},
+		field:      textEditField{name: "medit-desc", maxBytes: olc.MaxMobDesc},
 		original:   initial,
 		buffer:     initial,
 		roomEditor: true,
@@ -1156,7 +1030,11 @@ func (s *Session) startMeditDescEditorLocked() {
 				return
 			}
 			if action == textEditSave {
-				s.mobEdit.mob.DetailedDesc = editorToRoomText(buffer)
+				applyOLC(olc.Operation{
+					Kind: olc.OpSetMobDetailedDescription,
+					Mob:  &s.mobEdit.mob,
+					Text: editorToRoomText(buffer),
+				})
 			}
 			s.meditShowMenuLocked()
 		},
@@ -1184,9 +1062,7 @@ func (s *Session) saveMeditInternallyLocked() {
 	saveMu.Lock()
 	s.manager.world.CommitEditedMob(state.mob)
 	s.manager.world.RefreshLiveMobStrings(state.number, state.mob)
-	meditSaveMu.Lock()
-	meditSaveMobs[state.number] = true
-	meditSaveMu.Unlock()
+	markOLCDirty(olcKindMob, state.zoneNumber)
 	saveMu.Unlock()
 }
 
@@ -1234,13 +1110,7 @@ func saveMeditZone(world *game.World, zone *parser.Zone) error {
 		return err
 	}
 
-	meditSaveMu.Lock()
-	for i := range mobs {
-		if vnum := mobs[i].VNum; vnum >= zone.Number*100 && vnum <= zone.TopRoom {
-			delete(meditSaveMobs, vnum)
-		}
-	}
-	meditSaveMu.Unlock()
+	clearOLCDirty(olcKindMob, zone.Number)
 	return nil
 }
 

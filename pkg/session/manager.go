@@ -23,6 +23,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"golang.org/x/time/rate"
 )
 
@@ -95,40 +96,9 @@ type Manager struct {
 	// Moderation manager for mute/filter/spam checks
 	modChecker ModerationChecker
 
-	// roomEdits reserves room VNums against concurrent duplicate REDIT entry.
-	// C's do_olc duplicate gate is a descriptor_list scan made safe by the
-	// single-threaded interpreter; the Go dispatcher runs sessions on separate
-	// goroutines, so admission is one atomic claim here instead of a
-	// check-then-install pair. Keyed by the OLC room number being edited.
-	roomEditMu sync.Mutex
-	roomEdits  map[int]*Session
-
-	// mobEdits reserves mob VNums against concurrent duplicate MEDIT entry.
-	// Mirrors roomEdits: C's do_olc duplicate gate is a descriptor_list scan
-	// made safe by the single-threaded interpreter; the Go dispatcher runs
-	// sessions on separate goroutines, so admission is one atomic claim
-	// instead of a check-then-install pair. Keyed by the OLC mob number.
-	mobEditMu sync.Mutex
-	mobEdits  map[int]*Session
-
-	// objEdits reserves object VNums against concurrent duplicate OEDIT entry.
-	// Mirrors roomEdits/mobEdits: one atomic claim replaces C's single-
-	// threaded descriptor_list scan. Keyed by the OLC object number.
-	objEditMu sync.Mutex
-	objEdits  map[int]*Session
-
-	// zoneEdits reserves room VNums against concurrent duplicate ZEDIT entry.
-	// ZEDIT's C duplicate gate is per room number even though the working copy
-	// contains only that room's reset commands. It is a separate connection
-	// state from REDIT, so the same room may be held by one editor of each type.
-	zoneEditMu sync.Mutex
-	zoneEdits  map[int]*Session
-
-	// shopEdits reserves shop VNUMs against concurrent duplicate SEDIT entry.
-	// It mirrors the descriptor scan in C's do_olc while remaining atomic across
-	// the Go session goroutines.
-	shopEditMu sync.Mutex
-	shopEdits  map[int]*Session
+	// olcRegistry is the typed admission registry shared by every OLC
+	// frontend. The registry owns claims; the session owns descriptor state.
+	olcRegistry *olc.Registry
 
 	// Wizlock state — when true, only immortal players may log in
 	wizlockMutex sync.Mutex
@@ -332,8 +302,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			Lockout:   15 * time.Minute,
 		}),
 		ipConnCount:           make(map[string]int),
-		roomEdits:             make(map[int]*Session),
-		mobEdits:              make(map[int]*Session),
+		olcRegistry:           olc.NewRegistry(),
 		nextEphemeralPlayerID: 1,
 	}
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a

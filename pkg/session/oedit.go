@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -80,8 +80,6 @@ const (
 	applyRaceHate = 25 // APPLY_RACE_HATE
 	applySpell    = 29 // APPLY_SPELL
 
-	// C MAX_MESSAGE_LENGTH (boards.h:34) bounds both oedit string_write calls.
-	oeditMaxMessageLength = 4096
 )
 
 // C ITEM_* ordinals used by the oedit value cascade (src/structs.h:420-442).
@@ -243,52 +241,6 @@ var oeditSpellNames = []string{
 // meditRaceNames and meditAttackNames are the same C mob_races[] and
 // attack_hit_text[] tables the oedit race/weapon menus print, so oedit reuses
 // them rather than duplicating the arrays.
-
-// oeditSaveMu serializes the zone object-file save list, mirroring C's
-// olc_save_list for OLC_SAVE_OBJ entries.
-var (
-	oeditSaveMu   sync.Mutex
-	oeditSaveObjs = make(map[int]bool)
-)
-
-// claimObjEdit atomically reserves an object VNum for this session, mirroring
-// do_olc's duplicate-editor descriptor scan (src/olc.c: "That object is
-// currently being edited by %s."). C relies on its single-threaded interpreter
-// for atomicity; here the claim itself is the check, so two sessions racing
-// through cmdOedit cannot both be admitted.
-func (m *Manager) claimObjEdit(number int, s *Session) (string, bool) {
-	m.objEditMu.Lock()
-	defer m.objEditMu.Unlock()
-	if holder, ok := m.objEdits[number]; ok && holder != s {
-		return holder.playerName, false
-	}
-	if m.objEdits == nil {
-		m.objEdits = make(map[int]*Session)
-	}
-	m.objEdits[number] = s
-	return "", true
-}
-
-// releaseObjEdit frees an object VNum reservation, but only when this session
-// still holds it.
-func (m *Manager) releaseObjEdit(number int, s *Session) {
-	m.objEditMu.Lock()
-	defer m.objEditMu.Unlock()
-	if m.objEdits[number] == s {
-		delete(m.objEdits, number)
-	}
-}
-
-// objEditHolder peeks at who is editing an object VNum, for the save path
-// which refuses while an editor owns the object but never reserves one itself.
-func (m *Manager) objEditHolder(number int) string {
-	m.objEditMu.Lock()
-	defer m.objEditMu.Unlock()
-	if holder, ok := m.objEdits[number]; ok && holder != nil {
-		return holder.playerName
-	}
-	return ""
-}
 
 // cmdOedit is the Go port of do_olc's SCMD_OLC_OEDIT branch (src/olc.c).
 func cmdOedit(s *Session, args []string) error {
@@ -1162,13 +1114,6 @@ func strUDup(text string) string {
 	return text
 }
 
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // parseOeditMainMenuLocked ports the OEDIT_MAIN_MENU switch (src/oedit.c:1049-1160).
 // The choice is the first input byte (C switches on *arg), and the C case ends
 // with a bare return, so this menu never falls through to the trailing
@@ -1271,11 +1216,11 @@ func (s *Session) parseOeditLocked(arg string) {
 		return
 
 	case oeditEditNamelist:
-		obj.Keywords = arg
+		applyOLC(olc.Operation{Kind: olc.OpSetObjKeywords, Obj: obj, Text: arg})
 	case oeditShortDesc:
-		obj.ShortDesc = arg
+		applyOLC(olc.Operation{Kind: olc.OpSetObjShortDescription, Obj: obj, Text: arg})
 	case oeditLongDesc:
-		obj.LongDesc = arg
+		applyOLC(olc.Operation{Kind: olc.OpSetObjLongDescription, Obj: obj, Text: arg})
 	case oeditActDesc:
 		// C: "We should never get here." The string editor owns the line.
 		slog.Error("oedit reached ACTDESC case", "player", s.playerName)
@@ -1384,7 +1329,13 @@ func (s *Session) parseOeditLocked(arg string) {
 		default:
 			minVal, maxVal = -32000, 32000
 		}
-		obj.Values[2] = maxInt(minVal, minInt(number, maxVal))
+		applyOLC(olc.Operation{
+			Kind:  olc.OpSetObjValue3,
+			Obj:   obj,
+			Value: number,
+			Low:   minVal,
+			High:  maxVal,
+		})
 		s.oeditShowVal4MenuLocked()
 		return
 	case oeditValue4:
@@ -1400,7 +1351,13 @@ func (s *Session) parseOeditLocked(arg string) {
 		default:
 			minVal, maxVal = -32000, 32000
 		}
-		obj.Values[3] = maxInt(minVal, minInt(number, maxVal))
+		applyOLC(olc.Operation{
+			Kind:  olc.OpSetObjValue4,
+			Obj:   obj,
+			Value: number,
+			Low:   minVal,
+			High:  maxVal,
+		})
 	case oeditPromptApply:
 		number := atoiC(arg)
 		if number == 0 {
@@ -1467,7 +1424,11 @@ func (s *Session) parseOeditLocked(arg string) {
 		return
 	case oeditExtraDescKey:
 		if state.currentExtra < len(obj.ExtraDescs) {
-			obj.ExtraDescs[state.currentExtra].Keywords = strUDup(arg)
+			applyOLC(olc.Operation{
+				Kind:  olc.OpSetObjExtraKeywords,
+				Extra: &obj.ExtraDescs[state.currentExtra],
+				Text:  strUDup(arg),
+			})
 			state.extraMeta[state.currentExtra].keywordSet = true
 		}
 		s.oeditShowExtraDescMenuLocked()
@@ -1597,7 +1558,7 @@ func (s *Session) startOeditActDescEditorLocked() {
 	// descriptions with LF endings, so normalize on the way in and back.
 	initial := editorCRLF(state.obj.ActionDesc)
 	s.textEdit = &textEditState{
-		field:      textEditField{name: "oedit-actdesc", maxBytes: oeditMaxMessageLength},
+		field:      textEditField{name: "oedit-actdesc", maxBytes: olc.MaxMessage},
 		original:   initial,
 		buffer:     initial,
 		roomEditor: true,
@@ -1607,7 +1568,11 @@ func (s *Session) startOeditActDescEditorLocked() {
 				return
 			}
 			if action == textEditSave {
-				s.oedit.obj.ActionDesc = editorToRoomText(buffer)
+				applyOLC(olc.Operation{
+					Kind: olc.OpSetObjActionDescription,
+					Obj:  &s.oedit.obj,
+					Text: editorToRoomText(buffer),
+				})
 			}
 			// Abort intentionally leaves the working copy untouched, as C's
 			// string_add restored d->backstr before oedit_string_cleanup.
@@ -1632,7 +1597,7 @@ func (s *Session) startOeditExtraDescEditorLocked() {
 		initial = editorCRLF(state.obj.ExtraDescs[state.currentExtra].Description)
 	}
 	s.textEdit = &textEditState{
-		field:      textEditField{name: "oedit-extradesc", maxBytes: oeditMaxMessageLength},
+		field:      textEditField{name: "oedit-extradesc", maxBytes: olc.MaxExtraDesc},
 		original:   initial,
 		buffer:     initial,
 		roomEditor: true,
@@ -1642,7 +1607,11 @@ func (s *Session) startOeditExtraDescEditorLocked() {
 				return
 			}
 			if action == textEditSave && s.oedit.currentExtra < len(s.oedit.obj.ExtraDescs) {
-				s.oedit.obj.ExtraDescs[s.oedit.currentExtra].Description = editorToRoomText(buffer)
+				applyOLC(olc.Operation{
+					Kind:  olc.OpSetObjExtraDescription,
+					Extra: &s.oedit.obj.ExtraDescs[s.oedit.currentExtra],
+					Text:  editorToRoomText(buffer),
+				})
 				s.oedit.extraMeta[s.oedit.currentExtra].descriptionSet = true
 			}
 			s.oedit.mode = oeditExtraDescMenu
@@ -1690,9 +1659,7 @@ func (s *Session) saveOeditInternallyLocked() {
 	saveMu.Lock()
 	s.manager.world.CommitEditedObj(obj)
 	s.manager.world.RefreshLiveObjInstances(state.number, obj)
-	oeditSaveMu.Lock()
-	oeditSaveObjs[state.number] = true
-	oeditSaveMu.Unlock()
+	markOLCDirty(olcKindObject, state.zoneNumber)
 	saveMu.Unlock()
 }
 
@@ -1738,13 +1705,7 @@ func saveOeditZone(world *game.World, zone *parser.Zone) error {
 		return err
 	}
 
-	oeditSaveMu.Lock()
-	for i := range objs {
-		if vnum := objs[i].VNum; vnum >= zone.Number*100 && vnum <= zone.TopRoom {
-			delete(oeditSaveObjs, vnum)
-		}
-	}
-	oeditSaveMu.Unlock()
+	clearOLCDirty(olcKindObject, zone.Number)
 	return nil
 }
 
