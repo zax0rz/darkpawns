@@ -35,6 +35,12 @@ type OLCWriteStateProvider interface {
 	MarkOLCDirty(kind olc.Kind, zone int)
 }
 
+// OLCZoneSaveProvider owns the atomic all-kind zone save. It is optional so
+// read-only/admin test providers can still expose the rest of the OLC API.
+type OLCZoneSaveProvider interface {
+	SaveOLCZone(zone int) error
+}
+
 // OLCPresenceProvider emits the world emote for a web claim when the player
 // is online. It intentionally has no PlrWriting operation.
 type OLCPresenceProvider interface {
@@ -131,6 +137,12 @@ func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCRead
 	})
 
 	registerOLCRoomWrites(api, world, database, writes, presence, auditLogger, drafts)
+	registerOLCEntityWrites(api, world, database, writes, presence, auditLogger, drafts)
+	var saver OLCZoneSaveProvider
+	if provider, ok := writes.(OLCZoneSaveProvider); ok {
+		saver = provider
+	}
+	registerOLCZoneSave(api, world, database, saver)
 }
 
 func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, error) {
@@ -213,17 +225,7 @@ func olcKindForPath(kind string) (olc.Kind, bool) {
 // zoneCommandsForRoom mirrors zeditSetupCommands, including the C stale-carry
 // rule that G/E/P/* commands inherit the previous room-bearing command.
 func zoneCommandsForRoom(commands []parser.ZoneCommand, roomVNum int) []parser.ZoneCommand {
-	filtered := make([]parser.ZoneCommand, 0)
-	cmdRoom := -1
-	for _, command := range commands {
-		if room, hasRoom := game.ZoneCommandRoom(command); hasRoom {
-			cmdRoom = room
-		}
-		if cmdRoom == roomVNum {
-			filtered = append(filtered, command)
-		}
-	}
-	return filtered
+	return olc.ZoneCommandsForRoom(commands, roomVNum)
 }
 
 type olcMiddlewareError struct {
@@ -274,6 +276,13 @@ func olcGate(world *game.World, database *db.DB) func(huma.Context, func(huma.Co
 				return
 			}
 			zoneNumber = zone.Number
+		} else if rawZone := ctx.Param("zone"); rawZone != "" {
+			parsedZone, err := strconv.Atoi(rawZone)
+			if err != nil {
+				writeOLCError(ctx, http.StatusBadRequest, olcMiddlewareError{Error: "invalid zone"})
+				return
+			}
+			zoneNumber = parsedZone
 		} else if zone, ok := olc.ZoneForVNum(world.GetAllZones(), record.OlcZone*100); ok {
 			zoneNumber = zone.Number
 		}

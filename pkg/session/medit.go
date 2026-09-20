@@ -1071,6 +1071,13 @@ func (s *Session) saveMeditInternallyLocked() {
 // the zone's [number*100, top] range are written, in ascending VNUM order
 // (C walks the mob_index[] table, which is VNUM-ordered).
 func saveMeditZone(world *game.World, zone *parser.Zone) error {
+	saveMu := zoneSaveLock(zone.Number)
+	saveMu.Lock()
+	defer saveMu.Unlock()
+	return saveMeditZoneLocked(world, zone)
+}
+
+func saveMeditZoneLocked(world *game.World, zone *parser.Zone) error {
 	parsed := world.GetParsedWorld()
 	if parsed == nil || parsed.SourceDir == "" {
 		return fmt.Errorf("world has no source directory")
@@ -1090,10 +1097,6 @@ func saveMeditZone(world *game.World, zone *parser.Zone) error {
 	// saveMeditInternallyLocked): a commit landing mid-save is either fully
 	// inside the snapshot or keeps its dirty marker, never silently marked
 	// saved.
-	saveMu := zoneSaveLock(zone.Number)
-	saveMu.Lock()
-	defer saveMu.Unlock()
-
 	mobs := world.SnapshotMobs()
 	var sb strings.Builder
 	for i := range mobs {

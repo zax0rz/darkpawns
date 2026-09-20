@@ -65,6 +65,43 @@ func TestDraftSurvivesExpiredClaim(t *testing.T) {
 	}
 }
 
+func TestEntityDraftSurvivesLeaseExpiryForEveryKind(t *testing.T) {
+	tests := []struct {
+		name  string
+		kind  Kind
+		vnum  int
+		value EntityValue
+	}{
+		{"mob", KindMob, 2001, EntityValue{Mob: parser.Mob{VNum: 2001}}},
+		{"object", KindObject, 3001, EntityValue{Object: parser.Obj{VNum: 3001}}},
+		{"shop", KindShop, 4001, EntityValue{Shop: parser.ShopProto{VNum: 4001}}},
+		{"zone", KindZone, 1001, EntityValue{Zone: ZoneDraft{Zone: parser.Zone{Number: 1}, RoomVNum: 1001}}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			registry := NewRegistry()
+			store := NewEntityDraftStore()
+			owner := testOwner{id: test.name, name: test.name, frontend: FrontendWeb}
+			if _, err := store.Open(owner.Identity(), test.kind, test.vnum, test.value); err != nil {
+				t.Fatal(err)
+			}
+			if _, ok := registry.Claim(test.kind, test.vnum, owner, 5*time.Millisecond); !ok {
+				t.Fatal("claim refused")
+			}
+			time.Sleep(15 * time.Millisecond)
+			if _, ok := registry.Holder(test.kind, test.vnum); ok {
+				t.Fatal("expired claim still held")
+			}
+			if _, ok := store.Get(owner.Identity()); !ok {
+				t.Fatal("draft was discarded with lease")
+			}
+			if _, ok := registry.Claim(test.kind, test.vnum, owner, DefaultClaimTTL); !ok {
+				t.Fatal("re-open could not reclaim expired claim")
+			}
+		})
+	}
+}
+
 func TestCommitRoomAuditsFieldsWithoutValues(t *testing.T) {
 	events := make([]AuditEvent, 0, 1)
 	draft := Draft{

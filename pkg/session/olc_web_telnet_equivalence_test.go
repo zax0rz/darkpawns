@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +10,274 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
+
+// TestWebAndTelnetEntityEditsProduceByteIdenticalZoneFiles extends the P4
+// room proof across the remaining four writers. Each telnet sequence and its
+// web equivalent drives the same Apply/commit primitive before the existing
+// writer is invoked, so a frontend cannot quietly acquire a second encoding.
+func TestWebAndTelnetEntityEditsProduceByteIdenticalZoneFiles(t *testing.T) {
+	type entityCase struct {
+		name   string
+		ext    string
+		telnet func(*Session)
+		web    func(*game.World, *olc.DraftStore, string) error
+	}
+
+	build := func() (*game.World, *Manager) {
+		root := t.TempDir()
+		for _, dir := range []string{"mob", "obj", "shp", "zon", "wld"} {
+			if err := os.MkdirAll(filepath.Join(root, dir), 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}
+		w, err := game.NewWorld(&parser.World{
+			SourceDir: root,
+			Rooms: []parser.Room{
+				{VNum: 1001, Name: "Room", Zone: 1, Exits: map[string]parser.Exit{}},
+				{VNum: 1002, Name: "Room 2", Zone: 1, Exits: map[string]parser.Exit{}},
+			},
+			Mobs:  []parser.Mob{{VNum: 1101, Keywords: "guard", ShortDesc: "a guard", LongDesc: "A guard is here.\r\n", DetailedDesc: "A guard stands here.\r\n", ActionFlags: []string{"ISNPC"}, Level: 1, HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 1}, Damage: parser.DiceRoll{Num: 1, Sides: 1, Plus: 1}}},
+			Objs:  []parser.Obj{{VNum: 1201, Keywords: "sword", ShortDesc: "a sword", LongDesc: "A sword lies here."}},
+			Shops: []parser.ShopProto{{VNum: 1301, KeeperVNum: 1101, Products: []int{1201}, OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28}},
+			Zones: []parser.Zone{{Number: 1, Name: "Zone", TopRoom: 1999, Commands: []parser.ZoneCommand{{Command: "M", Arg1: 1101, Arg2: 1, Arg3: 1001}}}},
+		})
+		if err != nil {
+			t.Fatalf("NewWorld: %v", err)
+		}
+		w.WorldPath = root
+		t.Cleanup(w.StopAITicker)
+		return w, newTestManager(t, w, nil)
+	}
+
+	read := func(dir, ext string, w *game.World) (string, error) {
+		zone, ok := olc.ZoneForVNum(w.GetAllZones(), 1001)
+		if !ok {
+			return "", os.ErrNotExist
+		}
+		var err error
+		switch ext {
+		case "mob":
+			err = saveMeditZone(w, zone)
+		case "obj":
+			err = saveOeditZone(w, zone)
+		case "shp":
+			err = saveSeditZone(w, zone)
+		case "zon":
+			err = saveZeditZone(w, zone)
+		}
+		if err != nil {
+			return "", err
+		}
+		data, err := os.ReadFile(filepath.Join(dir, map[string]string{"mob": "mob/1.mob", "obj": "obj/1.obj", "shp": "shp/1.shp", "zon": "zon/1.zon"}[ext]))
+		return string(data), err
+	}
+
+	cases := []entityCase{
+		{
+			name: "mob",
+			ext:  "mob",
+			telnet: func(s *Session) {
+				_ = cmdMedit(s, []string{"1101"})
+				_ = readMsgText(t, s)
+				s.handleMeditInput("2")
+				_ = readMsgText(t, s)
+				s.handleMeditInput("edited guard")
+				_ = readMsgText(t, s)
+				s.handleMeditInput("q")
+				_ = readMsgText(t, s)
+				s.handleMeditInput("y")
+				_ = readMsgText(t, s)
+			},
+			web: func(w *game.World, drafts *olc.DraftStore, owner string) error {
+				mob, ok := w.SnapshotMob(1101)
+				if !ok {
+					return os.ErrNotExist
+				}
+				if _, err := drafts.OpenEntity(owner, olc.KindMob, 1101, olc.EntityValue{Mob: mob}); err != nil {
+					return err
+				}
+				draft, err := drafts.PatchEntity(owner, []olc.Operation{{Kind: olc.OpSetMobKeywords, Text: "edited guard"}})
+				if err != nil {
+					return err
+				}
+				return commitWebMob(w, draft)
+			},
+		},
+		{
+			name: "object",
+			ext:  "obj",
+			telnet: func(s *Session) {
+				_ = cmdOedit(s, []string{"1201"})
+				_ = readMsgText(t, s)
+				s.handleOeditInput("1")
+				_ = readMsgText(t, s)
+				s.handleOeditInput("edited sword")
+				_ = readMsgText(t, s)
+				s.handleOeditInput("q")
+				_ = readMsgText(t, s)
+				s.handleOeditInput("y")
+				_ = readMsgText(t, s)
+			},
+			web: func(w *game.World, drafts *olc.DraftStore, owner string) error {
+				object, ok := w.SnapshotObj(1201)
+				if !ok {
+					return os.ErrNotExist
+				}
+				if _, err := drafts.OpenEntity(owner, olc.KindObject, 1201, olc.EntityValue{Object: object}); err != nil {
+					return err
+				}
+				draft, err := drafts.PatchEntity(owner, []olc.Operation{{Kind: olc.OpSetObjKeywords, Text: "edited sword"}})
+				if err != nil {
+					return err
+				}
+				return commitWebObj(w, draft)
+			},
+		},
+		{
+			name: "shop",
+			ext:  "shp",
+			telnet: func(s *Session) {
+				_ = cmdSedit(s, []string{"1301"})
+				_ = readMsgText(t, s)
+				s.handleSeditInput("1")
+				_ = readMsgText(t, s)
+				s.handleSeditInput("12")
+				_ = readMsgText(t, s)
+				s.handleSeditInput("q")
+				_ = readMsgText(t, s)
+				s.handleSeditInput("y")
+				_ = readMsgText(t, s)
+			},
+			web: func(w *game.World, drafts *olc.DraftStore, owner string) error {
+				shop, ok := w.SnapshotShop(1301)
+				if !ok {
+					return os.ErrNotExist
+				}
+				proto := parser.ShopProto{VNum: shop.VNum, Products: append([]int(nil), shop.SellTypes...), BuyProfit: shop.ProfitBuy, SellProfit: shop.ProfitSell, KeeperVNum: shop.KeeperVNum, WithWho: shop.WithWho, Rooms: append([]int(nil), shop.Rooms...), OpenHour1: shop.OpenHour1, CloseHour1: shop.CloseHour1, OpenHour2: shop.OpenHour2, CloseHour2: shop.CloseHour2}
+				if _, err := drafts.OpenEntity(owner, olc.KindShop, 1301, olc.EntityValue{Shop: proto}); err != nil {
+					return err
+				}
+				draft, err := drafts.PatchEntity(owner, []olc.Operation{{Kind: olc.OpSetShopOpenHour1, Value: 12}})
+				if err != nil {
+					return err
+				}
+				return commitWebShop(w, draft)
+			},
+		},
+		{
+			name: "zone",
+			ext:  "zon",
+			telnet: func(s *Session) {
+				_ = cmdZedit(s, []string{"1001"})
+				_ = readMsgText(t, s)
+				s.handleZeditInput("z")
+				_ = readMsgText(t, s)
+				s.handleZeditInput("Edited Zone")
+				_ = readMsgText(t, s)
+				s.handleZeditInput("q")
+				_ = readMsgText(t, s)
+				s.handleZeditInput("y")
+				_ = readMsgText(t, s)
+			},
+			web: func(w *game.World, drafts *olc.DraftStore, owner string) error {
+				zone, ok := w.SnapshotZone(1)
+				if !ok {
+					return os.ErrNotExist
+				}
+				zone.Commands = olc.ZoneCommandsForRoom(zone.Commands, 1001)
+				if _, err := drafts.OpenEntity(owner, olc.KindZone, 1001, olc.EntityValue{Zone: olc.ZoneDraft{Zone: zone, RoomVNum: 1001}}); err != nil {
+					return err
+				}
+				draft, err := drafts.PatchEntity(owner, []olc.Operation{{Kind: olc.OpSetZoneName, Text: "Edited Zone"}})
+				if err != nil {
+					return err
+				}
+				return commitWebZone(w, draft)
+			},
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			wTelnet, manager := build()
+			telnet := makeCommandTestSession(t, manager, "Equiv", 40, 1001)
+			test.telnet(telnet)
+			telnetBytes, err := read(wTelnet.WorldPath, test.ext, wTelnet)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			wWeb, _ := build()
+			drafts := olc.NewDraftStore()
+			if err := test.web(wWeb, drafts, "web-equiv"); err != nil {
+				t.Fatal(err)
+			}
+			webBytes, err := read(wWeb.WorldPath, test.ext, wWeb)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if telnetBytes != webBytes {
+				t.Fatalf("%s bytes differ:\ntelnet=%q\nweb=%q", test.name, telnetBytes, webBytes)
+			}
+		})
+	}
+}
+
+func commitWebMob(w *game.World, draft olc.EntityDraft) error {
+	zone, ok := olc.ZoneForVNum(w.GetAllZones(), draft.VNum)
+	if !ok {
+		return fmt.Errorf("mob has no zone")
+	}
+	lock := olc.ZoneSaveLock(zone.Number)
+	lock.Lock()
+	defer lock.Unlock()
+	if !olc.CommitMob(olc.MobCommitInput{Draft: draft, Commit: w.CommitEditedMob}) {
+		return fmt.Errorf("mob commit failed")
+	}
+	return nil
+}
+
+func commitWebObj(w *game.World, draft olc.EntityDraft) error {
+	zone, ok := olc.ZoneForVNum(w.GetAllZones(), draft.VNum)
+	if !ok {
+		return fmt.Errorf("object has no zone")
+	}
+	lock := olc.ZoneSaveLock(zone.Number)
+	lock.Lock()
+	defer lock.Unlock()
+	if !olc.CommitObj(olc.ObjectCommitInput{Draft: draft, Commit: w.CommitEditedObj}) {
+		return fmt.Errorf("object commit failed")
+	}
+	return nil
+}
+
+func commitWebShop(w *game.World, draft olc.EntityDraft) error {
+	zone, ok := olc.ZoneForVNum(w.GetAllZones(), draft.VNum)
+	if !ok {
+		return fmt.Errorf("shop has no zone")
+	}
+	lock := olc.ZoneSaveLock(zone.Number)
+	lock.Lock()
+	defer lock.Unlock()
+	if !olc.CommitShop(olc.ShopCommitInput{Draft: draft, Commit: w.CommitEditedShop}) {
+		return fmt.Errorf("shop commit failed")
+	}
+	return nil
+}
+
+func commitWebZone(w *game.World, draft olc.EntityDraft) error {
+	zone, ok := olc.ZoneForVNum(w.GetAllZones(), draft.VNum)
+	if !ok {
+		return fmt.Errorf("zone has no room")
+	}
+	lock := olc.ZoneSaveLock(zone.Number)
+	lock.Lock()
+	defer lock.Unlock()
+	if !olc.CommitZone(olc.ZoneCommitInput{Draft: draft, Commit: func(room int, working parser.Zone) bool { return w.CommitEditedZone(zone.Number, room, working) }}) {
+		return fmt.Errorf("zone commit failed")
+	}
+	return nil
+}
 
 // TestWebAndTelnetRoomEditsProduceByteIdenticalZoneFiles is the webOLC design's
 // acceptance sentence, executable: the same room edit performed once through

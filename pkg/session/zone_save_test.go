@@ -2,6 +2,7 @@ package session
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,8 +13,38 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
+
+type zoneSaveTestOwner struct {
+	identity string
+	frontend olc.Frontend
+}
+
+func (o zoneSaveTestOwner) Identity() string       { return o.identity }
+func (o zoneSaveTestOwner) DisplayName() string    { return o.identity }
+func (o zoneSaveTestOwner) Frontend() olc.Frontend { return o.frontend }
+
+func TestSaveOLCZoneRefusesHeldMembersAcrossFrontends(t *testing.T) {
+	w := newOlcZonePersistenceWorld(t)
+	m := newTestManager(t, w, nil)
+	for _, frontend := range []olc.Frontend{olc.FrontendTelnet, olc.FrontendWeb} {
+		owner := zoneSaveTestOwner{identity: string(frontend), frontend: frontend}
+		if _, ok := m.olcClaims().Claim(olc.KindObject, 8004, owner); !ok {
+			t.Fatalf("claim refused for %s", frontend)
+		}
+		var conflict *olc.ZoneSaveConflict
+		err := m.SaveOLCZone(1)
+		if !errors.As(err, &conflict) {
+			t.Fatalf("SaveOLCZone error = %v, want typed conflict", err)
+		}
+		if conflict.Entry.OwnerFrontend != frontend {
+			t.Fatalf("conflict frontend = %q, want %q", conflict.Entry.OwnerFrontend, frontend)
+		}
+		m.olcClaims().Release(olc.KindObject, 8004, owner)
+	}
+}
 
 // TestAtomicWriteFileDeliversIdenticalBytes pins atomicWriteFile's contract:
 // the bytes on disk are exactly what was passed in, the requested permission

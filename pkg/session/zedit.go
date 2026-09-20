@@ -274,17 +274,7 @@ func (s *Session) zeditCols() (nrm, grn, cyn, yel string) {
 // command fields are VNUMs, so setup compares the carried room value directly
 // with the requested room VNUM. G/E/P/* deliberately do not reset cmdRoom.
 func zeditSetupCommands(commands []parser.ZoneCommand, roomVNum int) []parser.ZoneCommand {
-	filtered := make([]parser.ZoneCommand, 0)
-	cmdRoom := -1
-	for _, cmd := range commands {
-		if room, hasRoom := game.ZoneCommandRoom(cmd); hasRoom {
-			cmdRoom = room
-		}
-		if cmdRoom == roomVNum {
-			filtered = append(filtered, cmd)
-		}
-	}
-	return filtered
+	return olc.ZoneCommandsForRoom(commands, roomVNum)
 }
 
 func zeditEquipmentName(index int) string {
@@ -470,7 +460,9 @@ func (s *Session) zeditShowArg1Locked() {
 		s.zeditSend("Input object vnum : ")
 		s.zedit.mode = zeditArg1
 	case "D", "R", "L":
-		cmd.Arg1 = s.zedit.roomVNum
+		updated := *cmd
+		updated.Arg1 = s.zedit.roomVNum
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &s.zedit.zone, Index: s.zedit.position, Command: &updated})
 		s.zeditShowArg2Locked()
 	default:
 		s.finishZeditLocked(false)
@@ -522,7 +514,9 @@ func (s *Session) zeditShowArg3Locked() {
 		if cmd.Arg2 == 0 {
 			s.zeditSend("Input the number of times to repeat the loop : ")
 		} else {
-			cmd.Arg3 = -1
+			updated := *cmd
+			updated.Arg3 = -1
+			applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &s.zedit.zone, Index: s.zedit.position, Command: &updated})
 		}
 	case "R":
 		if cmd.Arg2 != 0 {
@@ -573,7 +567,7 @@ func (s *Session) parseZeditLocked(line string) {
 	case zeditArg3:
 		s.parseZeditArg3Locked(line)
 	case zeditZoneNameMode:
-		state.zone.Name = line
+		applyOLC(olc.Operation{Kind: olc.OpSetZoneName, Zone: &state.zone, Text: line})
 		state.dirtyHeader = true
 		s.zeditShowMenuLocked()
 	case zeditZoneReset:
@@ -582,7 +576,7 @@ func (s *Session) parseZeditLocked(line string) {
 			s.zeditSend("Try again (0-2) : ")
 			return
 		}
-		state.zone.ResetMode = number
+		applyOLC(olc.Operation{Kind: olc.OpSetZoneResetMode, Zone: &state.zone, Value: number})
 		state.dirtyHeader = true
 		s.zeditShowMenuLocked()
 	case zeditZoneLife:
@@ -591,7 +585,7 @@ func (s *Session) parseZeditLocked(line string) {
 			s.zeditSend("Try again (0-240) : ")
 			return
 		}
-		state.zone.Lifespan = number
+		applyOLC(olc.Operation{Kind: olc.OpSetZoneLifespan, Zone: &state.zone, Value: number})
 		state.dirtyHeader = true
 		s.zeditShowMenuLocked()
 	case zeditZoneTop:
@@ -675,9 +669,12 @@ func (s *Session) parseZeditNewLocked(line string) {
 		s.zeditShowMenuLocked()
 		return
 	}
-	state.zone.Commands = append(state.zone.Commands, parser.ZoneCommand{})
-	copy(state.zone.Commands[pos+1:], state.zone.Commands[pos:])
-	state.zone.Commands[pos] = parser.ZoneCommand{Command: "N"}
+	applyOLC(olc.Operation{
+		Kind:    olc.OpAddZoneCommand,
+		Zone:    &state.zone,
+		Index:   pos,
+		Command: &parser.ZoneCommand{Command: "N"},
+	})
 	state.position = pos
 	state.dirtyCommands = true
 	s.zeditShowCommandTypeLocked()
@@ -692,7 +689,7 @@ func (s *Session) parseZeditDeleteLocked(line string) {
 	if isASCIIDigit(firstByte(line)) {
 		state.dirtyCommands = true
 		if pos >= 0 && pos < len(state.zone.Commands) {
-			state.zone.Commands = append(state.zone.Commands[:pos], state.zone.Commands[pos+1:]...)
+			applyOLC(olc.Operation{Kind: olc.OpRemoveZoneCommand, Zone: &state.zone, Index: pos})
 		}
 	}
 	s.zeditShowMenuLocked()
@@ -726,13 +723,16 @@ func (s *Session) parseZeditCommandTypeLocked(line string) {
 		s.zeditSend("Invalid choice, try again : ")
 		return
 	}
-	state.zone.Commands[state.position].Command = string(command)
+	updated := state.zone.Commands[state.position]
+	updated.Command = string(command)
+	applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 	if state.position != 0 {
 		s.zeditSend("Is this command dependent on the success of the previous one? (y/n)\r\n")
 		state.mode = zeditIfFlag
 		return
 	}
-	state.zone.Commands[state.position].IfFlag = 0
+	updated.IfFlag = 0
+	applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 	s.zeditShowArg1Locked()
 }
 
@@ -743,9 +743,13 @@ func (s *Session) parseZeditIfFlagLocked(line string) {
 	}
 	switch firstByte(line) {
 	case 'y', 'Y':
-		state.zone.Commands[state.position].IfFlag = 1
+		updated := state.zone.Commands[state.position]
+		updated.IfFlag = 1
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 	case 'n', 'N':
-		state.zone.Commands[state.position].IfFlag = 0
+		updated := state.zone.Commands[state.position]
+		updated.IfFlag = 0
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 	default:
 		s.zeditSend("Try again : ")
 		return
@@ -779,7 +783,9 @@ func (s *Session) parseZeditArg1Locked(line string) {
 		s.finishZeditLocked(false)
 		return
 	}
-	cmd.Arg1 = number
+	updated := *cmd
+	updated.Arg1 = number
+	applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 	s.zeditShowArg2Locked()
 }
 
@@ -796,14 +802,20 @@ func (s *Session) parseZeditArg2Locked(line string) {
 	cmd := &state.zone.Commands[state.position]
 	switch cmd.Command {
 	case "M", "O":
-		cmd.Arg2 = number
-		cmd.Arg3 = state.roomVNum
+		updated := *cmd
+		updated.Arg2 = number
+		updated.Arg3 = state.roomVNum
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowMenuLocked()
 	case "G":
-		cmd.Arg2 = number
+		updated := *cmd
+		updated.Arg2 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowMenuLocked()
 	case "P", "E":
-		cmd.Arg2 = number
+		updated := *cmd
+		updated.Arg2 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowArg3Locked()
 	case "D":
 		// C counts six real directions but accepts pos == i, i.e. 6.
@@ -811,27 +823,35 @@ func (s *Session) parseZeditArg2Locked(line string) {
 			s.zeditSend("Try again : ")
 			return
 		}
-		cmd.Arg2 = number
+		updated := *cmd
+		updated.Arg2 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowArg3Locked()
 	case "R":
 		if number < 0 || number > 1 {
 			s.zeditSend("Try again : ")
 			return
 		}
-		cmd.Arg2 = number
+		updated := *cmd
+		updated.Arg2 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowArg3Locked()
 	case "L":
 		if number < 0 || number > 1 {
 			s.zeditSend("Try again : ")
 			return
 		}
-		cmd.Arg2 = number
+		updated := *cmd
+		updated.Arg2 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		if number == 0 {
 			s.zeditShowArg3Locked()
 		} else {
 			// zedit_parse handles loop finish directly: C stores -1 and
 			// redraws the main menu without entering ZEDIT_ARG3.
-			cmd.Arg3 = -1
+			updated := *cmd
+			updated.Arg3 = -1
+			applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 			s.zeditShowMenuLocked()
 		}
 	}
@@ -854,21 +874,27 @@ func (s *Session) parseZeditArg3Locked(line string) {
 			s.zeditSend("Try again : ")
 			return
 		}
-		cmd.Arg3 = number
+		updated := *cmd
+		updated.Arg3 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowMenuLocked()
 	case "P":
 		if _, ok := s.manager.world.GetObjPrototype(number); !ok {
 			s.zeditSend("That object does not exist, try again : ")
 			return
 		}
-		cmd.Arg3 = number
+		updated := *cmd
+		updated.Arg3 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowMenuLocked()
 	case "D":
 		if number < 0 || number > 2 {
 			s.zeditSend("Try again : ")
 			return
 		}
-		cmd.Arg3 = number
+		updated := *cmd
+		updated.Arg3 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowMenuLocked()
 	case "L":
 		if cmd.Arg2 == 0 {
@@ -876,9 +902,13 @@ func (s *Session) parseZeditArg3Locked(line string) {
 				s.zeditSend("The loop must repeat at least once, try again : ")
 				return
 			}
-			cmd.Arg3 = number
+			updated := *cmd
+			updated.Arg3 = number
+			applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		} else {
-			cmd.Arg3 = -1
+			updated := *cmd
+			updated.Arg3 = -1
+			applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		}
 		s.zeditShowMenuLocked()
 	case "R":
@@ -891,7 +921,9 @@ func (s *Session) parseZeditArg3Locked(line string) {
 			s.zeditSend("That mobile does not exist, try again : ")
 			return
 		}
-		cmd.Arg3 = number
+		updated := *cmd
+		updated.Arg3 = number
+		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowMenuLocked()
 	}
 }
@@ -904,7 +936,10 @@ func saveZeditZone(world *game.World, zone *parser.Zone) error {
 	saveMu := zoneSaveLock(zone.Number)
 	saveMu.Lock()
 	defer saveMu.Unlock()
+	return saveZeditZoneLocked(world, zone)
+}
 
+func saveZeditZoneLocked(world *game.World, zone *parser.Zone) error {
 	snapshot, ok := world.SnapshotZone(zone.Number)
 	if !ok {
 		return fmt.Errorf("zone %d not found", zone.Number)

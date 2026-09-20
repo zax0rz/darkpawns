@@ -6,6 +6,42 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+type MobCommitInput struct {
+	Draft     EntityDraft
+	Actor     string
+	IPAddress string
+	Commit    func(parser.Mob) bool
+	MarkDirty func()
+	Audit     func(AuditEvent)
+}
+
+type ObjectCommitInput struct {
+	Draft     EntityDraft
+	Actor     string
+	IPAddress string
+	Commit    func(parser.Obj) bool
+	MarkDirty func()
+	Audit     func(AuditEvent)
+}
+
+type ShopCommitInput struct {
+	Draft     EntityDraft
+	Actor     string
+	IPAddress string
+	Commit    func(parser.ShopProto) bool
+	MarkDirty func()
+	Audit     func(AuditEvent)
+}
+
+type ZoneCommitInput struct {
+	Draft     EntityDraft
+	Actor     string
+	IPAddress string
+	Commit    func(int, parser.Zone) bool
+	MarkDirty func()
+	Audit     func(AuditEvent)
+}
+
 // AuditEvent is the transport-neutral event emitted by the shared OLC memory
 // commit. Frontends adapt it to pkg/audit without making this layer know about
 // descriptors, HTTP, or session state.
@@ -43,6 +79,49 @@ func CommitRoom(input RoomCommitInput) bool {
 			User:      input.Actor,
 			IPAddress: input.IPAddress,
 			Action:    "olc_room_commit",
+			Details:   "fields=" + fields,
+			Success:   success,
+		})
+	}
+	return success
+}
+
+func CommitMob(input MobCommitInput) bool {
+	return commitEntity("mob", input.Draft, input.Actor, input.IPAddress,
+		func() bool { return input.Commit != nil && input.Commit(input.Draft.Effective().Mob) },
+		input.MarkDirty, input.Audit)
+}
+
+func CommitObj(input ObjectCommitInput) bool {
+	return commitEntity("object", input.Draft, input.Actor, input.IPAddress,
+		func() bool { return input.Commit != nil && input.Commit(input.Draft.Effective().Object) },
+		input.MarkDirty, input.Audit)
+}
+
+func CommitShop(input ShopCommitInput) bool {
+	return commitEntity("shop", input.Draft, input.Actor, input.IPAddress,
+		func() bool { return input.Commit != nil && input.Commit(input.Draft.Effective().Shop) },
+		input.MarkDirty, input.Audit)
+}
+
+func CommitZone(input ZoneCommitInput) bool {
+	working := input.Draft.Effective().Zone
+	return commitEntity("zone", input.Draft, input.Actor, input.IPAddress,
+		func() bool { return input.Commit != nil && input.Commit(working.RoomVNum, working.Zone) },
+		input.MarkDirty, input.Audit)
+}
+
+func commitEntity(kind string, draft EntityDraft, actor, ip string, commit func() bool, markDirty func(), audit func(AuditEvent)) bool {
+	fields := strings.Join(draft.Diff(), ",")
+	success := commit()
+	if success && markDirty != nil {
+		markDirty()
+	}
+	if audit != nil {
+		audit(AuditEvent{
+			User:      actor,
+			IPAddress: ip,
+			Action:    "olc_" + kind + "_commit",
 			Details:   "fields=" + fields,
 			Success:   success,
 		})

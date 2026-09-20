@@ -1074,7 +1074,10 @@ func saveReditZone(world *game.World, zone *parser.Zone) error {
 	saveMu := zoneSaveLock(zone.Number)
 	saveMu.Lock()
 	defer saveMu.Unlock()
+	return saveReditZoneLocked(world, zone)
+}
 
+func saveReditZoneLocked(world *game.World, zone *parser.Zone) error {
 	rooms := world.SnapshotRooms()
 	var out strings.Builder
 	minimum := zone.Number * 100

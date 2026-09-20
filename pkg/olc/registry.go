@@ -57,6 +57,17 @@ type ClaimEntry struct {
 	ExpiresAt        time.Time `json:"expires_at"`
 }
 
+// ZoneSaveConflict identifies the claim that prevents an atomic zone save.
+// It is intentionally transport-neutral; admin adapts it to JSON while the
+// session save command can keep its faithful telnet wording.
+type ZoneSaveConflict struct {
+	Entry ClaimEntry
+}
+
+func (e *ZoneSaveConflict) Error() string {
+	return "zone has an active OLC claim"
+}
+
 // Registry is the single admission registry for all OLC editor kinds.
 type Registry struct {
 	mu     sync.Mutex
