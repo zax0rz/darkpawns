@@ -1311,7 +1311,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 
 	// 4. Save player to DB
 	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest {
-		if rec, err := db.PlayerToRecord(s.player, nil); err == nil {
+		if rec, err := s.playerRecordForSave(s.player); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("DB save error", "player", playerName, "error", err)
 			}
@@ -1356,7 +1356,7 @@ func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
 	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
 
 	if m.hasDB && p.ID > 0 && !s.isGuest {
-		if rec, err := db.PlayerToRecord(p, nil); err == nil {
+		if rec, err := s.playerRecordForSave(p); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("linkdead save error", "player", s.playerName, "error", err)
 			}
@@ -1521,7 +1521,7 @@ func (s *Session) extractLinkdead() {
 
 	// Save before closing the connection.
 	if s.manager.hasDB && p.ID > 0 && !s.isGuest {
-		if rec, err := db.PlayerToRecord(p, nil); err == nil {
+		if rec, err := s.playerRecordForSave(p); err == nil {
 			if err := s.manager.db.SavePlayer(rec); err != nil {
 				slog.Error("linkdead reaper: DB save error", "player", playerName, "error", err)
 			}

@@ -85,34 +85,38 @@ func (db *DB) execDDL(stmt string) error {
 
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
-	ID                  int
-	Name                string
-	Password            string // hashed
-	Description         string
-	Title               string
-	RoomVNum            int
-	Level               int
-	Exp                 int
-	Health              int
-	MaxHealth           int
-	Mana                int
-	MaxMana             int
-	Strength            int
-	Class               int
-	Race                int
-	StatStr             int
-	StatStrAdd          int // 18/xx for warriors
-	StatInt             int
-	StatWis             int
-	StatDex             int
-	StatCon             int
-	StatCha             int
-	Hunger              int
-	Thirst              int
-	Drunk               int
-	Move                int
-	MaxMove             int
-	Hometown            int
+	ID          int
+	Name        string
+	Password    string // hashed
+	Description string
+	Title       string
+	RoomVNum    int
+	Level       int
+	Exp         int
+	Health      int
+	MaxHealth   int
+	Mana        int
+	MaxMana     int
+	Strength    int
+	Class       int
+	Race        int
+	StatStr     int
+	StatStrAdd  int // 18/xx for warriors
+	StatInt     int
+	StatWis     int
+	StatDex     int
+	StatCon     int
+	StatCha     int
+	Hunger      int
+	Thirst      int
+	Drunk       int
+	Move        int
+	MaxMove     int
+	Hometown    int
+	// OlcZone is C's player_special_data_saved.olc_zone. It is a scalar
+	// playerfile field, so keep it as a typed column rather than hiding it in
+	// the JSON inventory/equipment payloads.
+	OlcZone             int
 	Inventory           []byte // JSON encoded inventory
 	Equipment           []byte // JSON encoded equipment
 	FailedLoginAttempts int
@@ -243,6 +247,7 @@ var playersMigrationColumns = []string{
 	"drunk INTEGER DEFAULT 0",
 	"is_admin BOOLEAN DEFAULT false",
 	"hometown INTEGER DEFAULT 0",
+	"olc_zone INTEGER DEFAULT 0",
 	"failed_login_attempts INTEGER DEFAULT 0",
 	"locked_until TIMESTAMPTZ",
 	"description TEXT DEFAULT ''",
@@ -280,6 +285,7 @@ func (db *DB) createTables() error {
 			thirst INTEGER DEFAULT 24,
 			drunk INTEGER DEFAULT 0,
 			hometown INTEGER DEFAULT 0,
+			olc_zone INTEGER DEFAULT 0,
 			inventory JSON DEFAULT '[]',
 			equipment JSON DEFAULT '{}',
 			description TEXT DEFAULT '',
@@ -526,7 +532,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		SELECT id, name, COALESCE(password_hash,''), room_vnum, level, exp,
 		       health, max_health, mana, max_mana, move, max_move, strength,
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
-		       hunger, thirst, drunk, hometown,
+		       hunger, thirst, drunk, hometown, COALESCE(olc_zone, 0),
 		       inventory, equipment,
 		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COUNT(*) OVER ()
 		FROM players WHERE lower(name) = lower($1)
@@ -538,7 +544,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		&p.ID, &p.Name, &p.Password, &p.RoomVNum, &p.Level, &p.Exp,
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Move, &p.MaxMove, &p.Strength,
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
-		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown,
+		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown, &p.OlcZone,
 		&p.Inventory, &p.Equipment,
 		&p.FailedLoginAttempts, &lockedUntil, &p.Description, &p.Title, &matches,
 	)
@@ -594,8 +600,8 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		   hunger, thirst, drunk, hometown,
-		   inventory, equipment, description, title)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
+		   olc_zone, inventory, equipment, description, title)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)
 		RETURNING id
 	`
 	return db.queryRow(
@@ -603,7 +609,7 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
-		p.Inventory, p.Equipment, p.Description, p.Title,
+		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title,
 	).Scan(&p.ID)
 }
 
@@ -700,9 +706,9 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  mana=$6, max_mana=$7, move=$8, max_move=$9, strength=$10,
 		  class=$11, race=$12,
 		  stat_str=$13, stat_str_add=$14, stat_int=$15, stat_wis=$16, stat_dex=$17, stat_con=$18, stat_cha=$19,
-		  hunger=$20, thirst=$21, drunk=$22, hometown=$23,
-		  inventory=$24, equipment=$25, description=$26, title=$27, updated_at=CURRENT_TIMESTAMP
-		WHERE id=$28
+		  hunger=$20, thirst=$21, drunk=$22, hometown=$23, olc_zone=$24,
+		  inventory=$25, equipment=$26, description=$27, title=$28, updated_at=CURRENT_TIMESTAMP
+		WHERE id=$29
 	`
 	_, err := db.exec(
 		query,
@@ -710,7 +716,7 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
-		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
+		p.Hunger, p.Thirst, p.Drunk, p.Hometown, p.OlcZone,
 		p.Inventory, p.Equipment, p.Description, p.Title, p.ID,
 	)
 	return err

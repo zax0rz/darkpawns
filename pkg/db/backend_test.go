@@ -436,6 +436,7 @@ func TestGameStorePlayerRoundTrip(t *testing.T) {
 				Thirst:     20,
 				Drunk:      1,
 				Hometown:   7,
+				OlcZone:    30,
 				Inventory:  []byte(`[{"vnum":3032,"count":1,"locate":0,"state":null}]`),
 				Equipment:  []byte("{}"),
 			}
@@ -448,7 +449,7 @@ func TestGameStorePlayerRoundTrip(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GetPlayer case-insensitive: %v", err)
 			}
-			if got == nil || got.Name != name || got.Level != 5 || got.StatStrAdd != 2 || !bytes.Equal(got.Inventory, p.Inventory) {
+			if got == nil || got.Name != name || got.Level != 5 || got.StatStrAdd != 2 || got.OlcZone != 30 || !bytes.Equal(got.Inventory, p.Inventory) {
 				t.Errorf("round trip mismatch: %+v", got)
 			}
 
@@ -461,6 +462,7 @@ func TestGameStorePlayerRoundTrip(t *testing.T) {
 
 			p.Level = 9
 			p.Exp = 5000
+			p.OlcZone = 31
 			if err := database.SavePlayer(p); err != nil {
 				t.Fatalf("SavePlayer: %v", err)
 			}
@@ -468,7 +470,7 @@ func TestGameStorePlayerRoundTrip(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GetPlayer after save: %v", err)
 			}
-			if got.Level != 9 || got.Exp != 5000 {
+			if got.Level != 9 || got.Exp != 5000 || got.OlcZone != 31 {
 				t.Errorf("save did not persist: level=%d exp=%d", got.Level, got.Exp)
 			}
 
