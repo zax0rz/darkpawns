@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -597,10 +598,21 @@ func (s *Session) parseZeditLocked(line string) {
 		oldTop := state.zone.TopRoom
 		zones := s.manager.world.GetAllZones()
 		if state.zoneIndex == len(zones)-1 {
-			state.zone.TopRoom = maxInt(state.zone.Number*100, minInt(32000, atoiC(line)))
+			applyOLC(olc.Operation{
+				Kind:  olc.OpSetZoneTopRoom,
+				Zone:  &state.zone,
+				Value: atoiC(line),
+				Low:   state.zone.Number * 100,
+				High:  32000,
+			})
 		} else if state.zoneIndex >= 0 && state.zoneIndex+1 < len(zones) {
-			state.zone.TopRoom = maxInt(state.zone.Number*100,
-				minInt(zones[state.zoneIndex+1].Number*100-1, atoiC(line)))
+			applyOLC(olc.Operation{
+				Kind:  olc.OpSetZoneTopRoom,
+				Zone:  &state.zone,
+				Value: atoiC(line),
+				Low:   state.zone.Number * 100,
+				High:  zones[state.zoneIndex+1].Number*100 - 1,
+			})
 		}
 		if oldTop != state.zone.TopRoom {
 			state.dirtyHeader = true

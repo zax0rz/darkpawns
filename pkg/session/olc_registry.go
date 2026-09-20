@@ -1,6 +1,10 @@
 package session
 
-import "github.com/zax0rz/darkpawns/pkg/olc"
+import (
+	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/olc"
+)
 
 var olcSaveList = olc.NewSaveList()
 
@@ -146,4 +150,22 @@ func markOLCDirty(kind olc.Kind, zone int) {
 
 func clearOLCDirty(kind olc.Kind, zone int) {
 	olcSaveList.Remove(kind, zone)
+}
+
+func applyOLC(op olc.Operation) {
+	if err := olc.Apply(op); err != nil {
+		slog.Error("OLC operation failed", "operation", op.Kind, "error", err)
+	}
+}
+
+func applyOLCClamp(value, low, high int) int {
+	result := value
+	applyOLC(olc.Operation{
+		Kind:   olc.OpClampInt,
+		Value:  value,
+		Low:    low,
+		High:   high,
+		Result: &result,
+	})
+	return result
 }

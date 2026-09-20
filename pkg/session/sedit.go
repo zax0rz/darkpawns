@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -533,13 +534,13 @@ func (s *Session) parseSeditLocked(arg string) {
 			return
 		}
 	case seditOpen1:
-		state.shop.OpenHour1 = clampSeditHour(atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpSetShopOpenHour1, Shop: &state.shop, Value: atoiC(arg)})
 	case seditOpen2:
-		state.shop.OpenHour2 = clampSeditHour(atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpSetShopOpenHour2, Shop: &state.shop, Value: atoiC(arg)})
 	case seditClose1:
-		state.shop.CloseHour1 = clampSeditHour(atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpSetShopCloseHour1, Shop: &state.shop, Value: atoiC(arg)})
 	case seditClose2:
-		state.shop.CloseHour2 = clampSeditHour(atoiC(arg))
+		applyOLC(olc.Operation{Kind: olc.OpSetShopCloseHour2, Shop: &state.shop, Value: atoiC(arg)})
 	case seditBuyProfit:
 		if value, ok := parseSeditFloat(arg); ok {
 			state.shop.BuyProfit = value
@@ -549,7 +550,7 @@ func (s *Session) parseSeditLocked(arg string) {
 			state.shop.SellProfit = value
 		}
 	case seditTypeMenu:
-		state.olcVal = clampInt(atoiC(arg), 0, len(seditItemTypes)-1)
+		state.olcVal = applyOLCClamp(atoiC(arg), 0, len(seditItemTypes)-1)
 		s.seditSend("Enter namelist (return for none) :-\r\n| ")
 		state.mode = seditNamelist
 		return
@@ -773,7 +774,7 @@ func (s *Session) seditAddRoomLocked(vnum int) bool {
 }
 
 func (s *Session) seditToggleFlagLocked(target *int, value, limit int) bool {
-	value = clampInt(value, 0, limit)
+	value = applyOLCClamp(value, 0, limit)
 	if value <= 0 {
 		return false
 	}
@@ -801,8 +802,6 @@ func removeSeditInt(values *[]int, index int) {
 	copy((*values)[index:], (*values)[index+1:])
 	*values = (*values)[:len(*values)-1]
 }
-
-func clampSeditHour(value int) int { return clampInt(value, 0, 28) }
 
 func parseSeditFloat(input string) (float64, bool) {
 	input = strings.TrimSpace(input)

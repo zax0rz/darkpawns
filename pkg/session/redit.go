@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -331,11 +332,7 @@ func (s *Session) parseReditLocked(line string) {
 	case reditMainMenu:
 		s.parseReditMainLocked(line)
 	case reditName:
-		name := line
-		if len(name) > 75 {
-			name = name[:74]
-		}
-		state.room.Name = name
+		applyOLC(olc.Operation{Kind: olc.OpSetRoomName, Room: &state.room, Text: line})
 		state.olcVal = 1
 		state.mode = reditMainMenu
 		s.reditDisplayMainLocked()
@@ -608,8 +605,8 @@ func (s *Session) parseReditCopyLocked(line string) {
 			s.reditSend("That room does not exist, try again : ")
 			return
 		}
-		state.room.Name = room.Name
-		state.room.Description = room.Description
+		applyOLC(olc.Operation{Kind: olc.OpSetRoomName, Room: &state.room, Text: room.Name})
+		applyOLC(olc.Operation{Kind: olc.OpSetRoomDescription, Room: &state.room, Text: room.Description})
 	}
 	state.olcVal = 1
 	state.mode = reditMainMenu
@@ -677,16 +674,16 @@ func (s *Session) startReditStringLocked(field reditStringField) {
 	switch field {
 	case reditRoomDescription:
 		initial = state.room.Description
-		maxBytes = 1024
+		maxBytes = olc.MaxRoomDesc
 	case reditExitDescriptionField:
 		exit := s.reditEnsureExitLocked(state.value)
 		initial = exit.Description
-		maxBytes = 256
+		maxBytes = olc.MaxExitDesc
 	case reditExtraDescriptionField:
 		if state.currentExtra < len(state.room.ExtraDescs) && state.extraMeta[state.currentExtra].descriptionSet {
 			initial = state.room.ExtraDescs[state.currentExtra].Description
 		}
-		maxBytes = 4096
+		maxBytes = olc.MaxExtraDesc
 	}
 	initial = editorCRLF(initial)
 	s.textEdit = &textEditState{
@@ -720,14 +717,18 @@ func (s *Session) finishReditStringLocked(field reditStringField, action textEdi
 		value := editorToRoomText(buffer)
 		switch field {
 		case reditRoomDescription:
-			state.room.Description = value
+			applyOLC(olc.Operation{Kind: olc.OpSetRoomDescription, Room: &state.room, Text: value})
 		case reditExitDescriptionField:
 			exit := s.reditEnsureExitLocked(state.value)
-			exit.Description = value
+			applyOLC(olc.Operation{Kind: olc.OpSetExitDescription, Exit: &exit, Text: value})
 			state.room.Exits[game.DirectionNames[state.value]] = exit
 		case reditExtraDescriptionField:
 			if state.currentExtra < len(state.room.ExtraDescs) {
-				state.room.ExtraDescs[state.currentExtra].Description = value
+				applyOLC(olc.Operation{
+					Kind:  olc.OpSetExtraDescription,
+					Extra: &state.room.ExtraDescs[state.currentExtra],
+					Text:  value,
+				})
 				state.extraMeta[state.currentExtra].descriptionSet = true
 			}
 		}
