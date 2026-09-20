@@ -1,0 +1,44 @@
+# C-backed ZEDIT main-menu bytes with ANSI color enabled. The probe stays
+# inside the editor so keep-ansi compares the raw get_char_cols escapes rather
+# than an ordinary playing prompt outside this surface.
+# depth-case: zedit.menu-colors-on-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Zeditcoloron
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zeditcoloron
+y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+zedit
+q

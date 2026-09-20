@@ -117,6 +117,13 @@ type Manager struct {
 	objEditMu sync.Mutex
 	objEdits  map[int]*Session
 
+	// zoneEdits reserves room VNums against concurrent duplicate ZEDIT entry.
+	// ZEDIT's C duplicate gate is per room number even though the working copy
+	// contains only that room's reset commands. It is a separate connection
+	// state from REDIT, so the same room may be held by one editor of each type.
+	zoneEditMu sync.Mutex
+	zoneEdits  map[int]*Session
+
 	// shopEdits reserves shop VNUMs against concurrent duplicate SEDIT entry.
 	// It mirrors the descriptor scan in C's do_olc while remaining atomic across
 	// the Go session goroutines.
@@ -1297,6 +1304,9 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	if s.oedit != nil {
 		s.finishOeditLocked()
 	}
+	if s.zedit != nil {
+		s.finishZeditLocked(false)
+	}
 	s.textEditMu.Unlock()
 
 	// 4. Save player to DB
@@ -1728,7 +1738,11 @@ type Session struct {
 	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
 	oedit *oeditState
 
-	// sedit holds the descriptor-owned SEDIT working state.
+	// zedit holds the descriptor-owned zedit (CON_ZEDIT) working state.
+	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
+	zedit *zeditState
+
+	// sedit holds the descriptor-owned sedit (CON_SEDIT) working state.
 	// Guarded by textEditMu, mirroring the C descriptor-owned OLC struct.
 	sedit *seditState
 

@@ -351,16 +351,20 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		return nil
 	}
 
-	// A shop SEDIT session owns the complete next line, mirroring C's
-	// CON_SEDIT dispatch in interpreter.c. It has no improved string editor,
-	// but it must still precede ordinary command routing so a bare line such as
-	// "q" cannot become the quaff command.
-	if s.player != nil && s.isSeditEditing() {
+	// ZEDIT and SEDIT sessions own the complete next line, mirroring
+	// interpreter.c's CON_ZEDIT and CON_SEDIT dispatch. Neither has an
+	// improved string editor, but both must still win over ordinary command
+	// routing so a bare line such as "q" cannot become the quaff command.
+	if s.player != nil && (s.isZoneEditing() || s.isSeditEditing()) {
 		line := cmd.RawLine
 		if line == "" {
 			line = commandInputLine(cmd.Command, cmd.Args)
 		}
-		s.handleSeditInput(line)
+		if s.isZoneEditing() {
+			s.handleZeditInput(line)
+		} else {
+			s.handleSeditInput(line)
+		}
 		return nil
 	}
 

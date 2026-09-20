@@ -256,7 +256,7 @@ func (s *Session) SendPrompt() {
 	// state does not append the ordinary playing prompt while an OLC menu
 	// owns the input. While the descriptor string editor runs (d->str set),
 	// C's make_prompt writes "] ".
-	if s.isRoomEditing() || s.isMobEditing() || s.isObjEditing() || s.isSeditEditing() {
+	if s.isRoomEditing() || s.isMobEditing() || s.isObjEditing() || s.isZoneEditing() || s.isSeditEditing() {
 		if s.isTextEditing() {
 			s.sendPromptText("] ")
 		}

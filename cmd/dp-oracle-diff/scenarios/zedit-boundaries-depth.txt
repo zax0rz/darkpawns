@@ -1,0 +1,69 @@
+# C-backed ZEDIT state-machine boundaries. The disposable editor session
+# exercises the raw menu redraw path, immortal top clamp, reset/lifespan
+# gates, append-at-END insertion, door-direction terminator acceptance,
+# deletion, and the confirmation retry bytes.
+# depth-case: zedit.main-invalid
+# depth-case: zedit.top-clamp
+# depth-case: zedit.zone-header-gates
+# depth-case: zedit.new-at-end
+# depth-case: zedit.delete-numeric-invalid
+# depth-case: zedit.command-type-and-if-flag
+# depth-case: zedit.door-direction-terminator
+# depth-case: zedit.confirm-save
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zeditbounds
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zeditbounds
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+zedit
+x
+t
+99999
+l
+240
+r
+3
+2
+n
+0
+D
+6
+2
+d
+99
+0
+q
+x
+n
