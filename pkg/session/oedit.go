@@ -903,12 +903,13 @@ func (s *Session) oeditShowSpellsMenuLocked() {
 // Its skip behaviour is the same C cascade: invisible slots advance to the
 // next slot, and a type with no visible values returns to the main menu.
 func (s *Session) oeditShowObjectValueMenuLocked(index int) {
-	if index >= len(s.oedit.obj.Values) || s.oedit.obj.TypeFlag < 0 || s.oedit.obj.TypeFlag >= len(olc.ObjectValueMatrix) {
+	valueMode, ok := oeditValueMode(index)
+	if !ok || index >= len(s.oedit.obj.Values) || s.oedit.obj.TypeFlag < 0 || s.oedit.obj.TypeFlag >= len(olc.ObjectValueMatrix) {
 		s.oeditShowMenuLocked()
 		return
 	}
 	state := s.oedit
-	state.mode = oeditValue1 + oeditMode(index)
+	state.mode = valueMode
 	field := olc.ObjectValueMatrix[state.obj.TypeFlag].Values[index]
 	if !field.Visible {
 		s.oeditShowObjectValueMenuLocked(index + 1)
@@ -936,6 +937,21 @@ func (s *Session) oeditShowVal1MenuLocked() { s.oeditShowObjectValueMenuLocked(0
 func (s *Session) oeditShowVal2MenuLocked() { s.oeditShowObjectValueMenuLocked(1) }
 func (s *Session) oeditShowVal3MenuLocked() { s.oeditShowObjectValueMenuLocked(2) }
 func (s *Session) oeditShowVal4MenuLocked() { s.oeditShowObjectValueMenuLocked(3) }
+
+func oeditValueMode(index int) (oeditMode, bool) {
+	switch index {
+	case 0:
+		return oeditValue1, true
+	case 1:
+		return oeditValue2, true
+	case 2:
+		return oeditValue3, true
+	case 3:
+		return oeditValue4, true
+	default:
+		return 0, false
+	}
+}
 
 // oeditToggleExtraFlag XORs one bit of the object's extra flag word 0,
 // mirroring TOGGLE_BIT_AR over the 4-int array (NUM_ITEM_FLAGS is 29, so only
