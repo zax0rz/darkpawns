@@ -148,6 +148,7 @@ func init() {
 	registerCommand("wizlist", wrapArgs(cmdWizlist), "Show the list of wizards.")
 	registerCommand("immlist", wrapArgs(cmdImmlist), "Show the list of immortals.")
 	registerCommand("tedit", wrapArgs(cmdTedit), "Edit the game's text files.")
+	registerCommand("luaedit", wrapArgs(cmdLuaEdit), "Edit Lua scripts.")
 	registerCommand("redit", wrapArgs(cmdRedit), "Edit a room.")
 	registerCommand("medit", wrapArgs(cmdMedit), "Edit a mobile with the OLC mobile editor.")
 	registerCommand("oedit", wrapArgs(cmdOedit), "Edit an object with the OLC object editor.")

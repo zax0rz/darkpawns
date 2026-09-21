@@ -1,0 +1,43 @@
+# depth-case: luaedit.entry-list
+# depth-case: luaedit.subdirectory-list
+# depth-case: luaedit.invalid-directory
+
+[fixture]
+empty-players
+quiet-mobs
+mirror-oracle-scripts
+
+[setup:oracle]
+Luaeditlist
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luaeditlist
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+luaedit
+luaedit mob
+luaedit obj
+luaedit room
+luaedit mobile

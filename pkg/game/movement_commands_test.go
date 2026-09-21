@@ -12,6 +12,8 @@ type movementTriggerRecorder struct {
 	events *[]string
 }
 
+func (m movementTriggerRecorder) ForgetFailures() {}
+
 func (r movementTriggerRecorder) RunScript(ctx *ScriptContext, filename, trigger string) (bool, error) {
 	*r.events = append(*r.events, filename+":"+trigger)
 	return true, nil

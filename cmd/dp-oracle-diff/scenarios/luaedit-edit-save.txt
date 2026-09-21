@@ -1,0 +1,46 @@
+# depth-case: luaedit.editor-entry
+# depth-case: luaedit.save
+# depth-case: luaedit.saved-content-on-reentry
+
+[fixture]
+empty-players
+quiet-mobs
+mirror-oracle-scripts
+
+[script-twin]
+mob/dog.lua luaedit fidelity save
+
+[setup:oracle]
+Luaediteditsave
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luaediteditsave
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+luaedit mob dog
+luaedit fidelity save
+/s
+luaedit mob dog
+/a

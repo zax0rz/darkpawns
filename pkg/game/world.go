@@ -61,6 +61,10 @@ type World struct {
 
 	// World path for reload support
 	WorldPath string
+	// ScriptsDir is the live Lua script tree used by the scripting engine and
+	// the in-game luaedit command. It is normally <WorldPath>/scripts, but the
+	// server's -scripts override may point elsewhere.
+	ScriptsDir string
 
 	// Runtime state
 	players               map[string]*Player   // keyed by player name
@@ -191,6 +195,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		shopManager:              shopManager,
 		parsedData:               parsed, // Keep reference for door loading etc.
 		WorldPath:                "",     // Set externally for reload support
+		ScriptsDir:               "",     // Set by the server after resolving -scripts
 	}
 
 	// Index rooms by VNum

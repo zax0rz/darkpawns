@@ -167,6 +167,31 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 		return fmt.Errorf("copy Go world to throwaway directory: %w", err)
 	}
+	if scenario.MirrorOracleScripts {
+		goScripts := filepath.Join(goWorld, "scripts")
+		if err := os.RemoveAll(goScripts); err != nil {
+			return fmt.Errorf("clear disposable Go script tree: %w", err)
+		}
+		if err := os.CopyFS(goScripts, os.DirFS(filepath.Join(oracleData, "scripts"))); err != nil {
+			return fmt.Errorf("mirror C oracle script tree into Go fixture: %w", err)
+		}
+	}
+	var scriptTwinPath string
+	if scenario.ScriptTwin != nil {
+		sourcePath := filepath.Join(oracleData, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
+		source, err := os.ReadFile(sourcePath)
+		if err != nil {
+			return fmt.Errorf("read script twin source %s: %w", scenario.ScriptTwin.Path, err)
+		}
+		if !bytes.HasSuffix(source, []byte("\n")) {
+			return fmt.Errorf("script twin source %s must end with LF", scenario.ScriptTwin.Path)
+		}
+		scriptTwinPath = filepath.Join(tmp, "script-twin")
+		expected := append(append([]byte(nil), source...), []byte(scenario.ScriptTwin.Append+"\n")...)
+		if err := os.WriteFile(scriptTwinPath, expected, 0o600); err != nil { // #nosec G703 -- scriptTwinPath is a file directly under the os.MkdirTemp scratch root
+			return fmt.Errorf("write script twin: %w", err)
+		}
+	}
 	// Sibling lib/text rides along: the server derives help (and future static
 	// text) from the -world dir's parent, so the throwaway layout mirrors
 	// lib/{world,text}.
@@ -492,6 +517,27 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if showGoLog {
 		fmt.Println("go port server log:")
 		fmt.Print(goProc.log.String())
+	}
+	if scriptTwinPath != "" {
+		expected, err := os.ReadFile(scriptTwinPath)
+		if err != nil {
+			return fmt.Errorf("read script twin: %w", err)
+		}
+		cPath := filepath.Join(oracleData, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
+		goPath := filepath.Join(goWorld, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
+		cSaved, err := os.ReadFile(cPath)
+		if err != nil {
+			return fmt.Errorf("read saved C script twin: %w", err)
+		}
+		goSaved, err := os.ReadFile(goPath)
+		if err != nil {
+			return fmt.Errorf("read saved Go script twin: %w", err)
+		}
+		if !bytes.Equal(expected, cSaved) || !bytes.Equal(expected, goSaved) {
+			return fmt.Errorf("script twin divergence for %s", scenario.ScriptTwin.Path)
+		}
+		sum := sha256.Sum256(expected)
+		fmt.Printf("script-twin: %s sha256=%x\n", scenario.ScriptTwin.Path, sum)
 	}
 	for _, d := range diffs {
 		if d.Diff != "" {

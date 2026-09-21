@@ -555,6 +555,7 @@ func main() {
 	if *scriptsDir == "" {
 		*scriptsDir = *worldDir + "/scripts"
 	}
+	gameWorld.ScriptsDir = *scriptsDir
 	slog.Info("Loading scripts", "path", *scriptsDir)
 	worldAdapter := game.NewWorldScriptableAdapter(gameWorld)
 	scriptEngine := scripting.NewEngine(*scriptsDir, worldAdapter)

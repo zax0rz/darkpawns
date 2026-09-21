@@ -1,0 +1,43 @@
+# depth-case: luaedit.root-view
+# depth-case: luaedit.subdirectory-view
+# depth-case: luaedit.missing-file
+# depth-case: luaedit.substring-extension
+
+[fixture]
+empty-players
+quiet-mobs
+mirror-oracle-scripts
+
+[setup:oracle]
+Luaeditview
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luaeditview
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+luaedit globals
+luaedit mob assembler
+luaedit mob does-not-exist
+luaedit mob cityguard.lua.txt

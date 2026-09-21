@@ -48,6 +48,11 @@ type Scenario struct {
 	RoomFlagFixtures  []RoomFlagFixture
 	RoomSectors       []RoomSectorFixture
 	HouseControls     []HouseControlFixture
+	// MirrorOracleScripts replaces the disposable Go script tree with the C
+	// oracle's disposable tree so script-editor vehicles compare command bytes
+	// against identical file fixtures rather than unrelated repository eras.
+	MirrorOracleScripts bool
+	ScriptTwin          *ScriptTwinFixture
 	// SkipSetupSettle leaves the frozen clock untouched after character
 	// creation. Focused vehicles use this when a spawned autonomous mob must
 	// survive until a later warmup command places the actor beside it.
@@ -72,6 +77,15 @@ type Scenario struct {
 type PeerSetup struct {
 	SetupOracle []string
 	SetupPort   []string
+}
+
+// ScriptTwinFixture describes a direct on-disk twin for a live editor save.
+// The oracle vehicle writes Append plus LF through the editor, then the
+// harness compares both disposable server files with the directly-written
+// expected twin.
+type ScriptTwinFixture struct {
+	Path   string
+	Append string
 }
 
 // ObjectFixture identifies an object prototype to turn into an inert scroll in
@@ -242,6 +256,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	scanner := bufio.NewScanner(r)
 	var section *[]string
 	fixtureSection := false
+	scriptTwinSection := false
 	peerDropSection := false
 	lineNo := 0
 	for scanner.Scan() {
@@ -252,6 +267,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			fixtureSection = false
+			scriptTwinSection = false
 			peerDropSection = false
 			lower := strings.ToLower(line)
 			switch lower {
@@ -275,6 +291,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			case "[fixture]", "[fixtures]":
 				section = nil
 				fixtureSection = true
+			case "[script-twin]":
+				section = nil
+				scriptTwinSection = true
 			case "[peer-drop]":
 				section = nil
 				peerDropSection = true
@@ -302,6 +321,22 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					return Scenario{}, fmt.Errorf("scenario %q line %d: unknown section %q", name, lineNo, line)
 				}
 			}
+			continue
+		}
+		if scriptTwinSection {
+			fields := strings.Fields(line)
+			if len(fields) < 2 || sc.ScriptTwin != nil {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid script twin %q", name, lineNo, line)
+			}
+			path := fields[0]
+			if strings.HasPrefix(path, "/") || strings.Contains(path, "..") || !strings.HasSuffix(path, ".lua") {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: unsafe script twin path %q", name, lineNo, path)
+			}
+			appendText := strings.TrimSpace(strings.TrimPrefix(line, path))
+			if appendText == "" {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: empty script twin append", name, lineNo)
+			}
+			sc.ScriptTwin = &ScriptTwinFixture{Path: path, Append: appendText}
 			continue
 		}
 		if fixtureSection {
@@ -469,6 +504,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "empty-players") {
 				sc.EmptyPlayers = true
+				continue
+			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "mirror-oracle-scripts") {
+				sc.MirrorOracleScripts = true
 				continue
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "no-settle") {

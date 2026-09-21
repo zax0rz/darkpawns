@@ -1,6 +1,7 @@
 package session
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -58,6 +59,10 @@ type textEditState struct {
 	path     string
 	original string
 	buffer   string
+	// cacheKey is non-empty for tedit's process-global static text buffers.
+	// luaedit uses the same editor state and save path without a live cache.
+	cacheKey    string
+	killOnEmpty bool
 	// roomEditor keeps the bounded REDIT string_write buffer descriptor-local.
 	// Ordinary tedit intentionally shares the C process-global text pointer;
 	// room descriptions and exit/extra descriptions do not.
@@ -160,17 +165,42 @@ func (s *Session) startTextEdit(field textEditField) error {
 		path:     filepath.Join(s.manager.world.LibTextDir, field.filename),
 		original: text,
 		buffer:   text,
+		cacheKey: field.filename,
 	}
 	s.textEdit = state
 	liveTextEditMu.Unlock()
 	s.textEditMu.Unlock()
 
+	s.finishFileEditStart(state)
+	return nil
+}
+
+// startFileEdit installs the common general_file_edit state used by tedit and
+// luaedit. Keeping the editor entry in one path is important: the improved
+// editor, descriptor state, writing flag, room act, and save cleanup are one C
+// lifecycle even though the two commands choose different files.
+func (s *Session) startFileEdit(state textEditState) error {
+	s.textEditMu.Lock()
+	liveTextEditMu.Lock()
+	if s.textEdit != nil {
+		liveTextEditMu.Unlock()
+		s.textEditMu.Unlock()
+		return fmt.Errorf("already editing a file")
+	}
+	s.textEdit = &state
+	liveTextEditMu.Unlock()
+	s.textEditMu.Unlock()
+
+	s.finishFileEditStart(&state)
+	return nil
+}
+
+func (s *Session) finishFileEditStart(state *textEditState) {
 	s.sendTextEditor("Instructions: /s or @ to save, /h for more options.\r\n" +
-		"Edit file below:\r\n\r\n" + text)
+		"Edit file below:\r\n\r\n" + state.buffer)
 	game.Act(s.manager.world, true, s.player, nil, nil, nil,
 		"$n begins editing a scroll.", "", game.ToRoom)
 	s.player.SetPlrFlag(game.PlrWriting, true)
-	return nil
 }
 
 func (s *Session) sendTextEditor(text string) {
@@ -289,15 +319,32 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		// C's strip_string removes carriage returns in the same buffer that is
 		// passed to fputs. That means both the disk file and the live global
 		// become LF-delimited until a later boot/reload reconstructs CRLF.
-		savedText := strings.ReplaceAll(state.buffer, "\r", "")
-		if err := os.WriteFile(state.path, []byte(savedText), 0o666); err != nil {
-			slog.Error("tedit save failed", "player", s.playerName, "file", state.path, "error", err)
+		if state.killOnEmpty && state.buffer == "" {
+			err := os.Remove(state.path)
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				slog.Error("luaedit delete failed", "player", s.playerName, "file", state.path, "error", err)
+			} else {
+				slog.Info(fmt.Sprintf("OLC: %s deletes '%s'.", s.playerName, state.path))
+				s.sendTextEditor("Deleted.\r\n")
+				s.forgetScriptFailures(state.path)
+			}
 		} else {
-			setTextEditCache(s, state.field.filename, savedText)
-			s.sendTextEditor("Saved.\r\n")
+			savedText := strings.ReplaceAll(state.buffer, "\r", "")
+			if err := os.WriteFile(state.path, []byte(savedText), 0o666); err != nil {
+				slog.Error("file edit save failed", "player", s.playerName, "file", state.path, "error", err)
+			} else {
+				if state.cacheKey != "" {
+					setTextEditCache(s, state.cacheKey, savedText)
+				}
+				slog.Info(fmt.Sprintf("OLC: %s saves '%s'.", s.playerName, state.path))
+				s.sendTextEditor("Saved.\r\n")
+				s.forgetScriptFailures(state.path)
+			}
 		}
 	case textEditAbort:
-		setTextEditCache(s, state.field.filename, state.original)
+		if state.cacheKey != "" {
+			setTextEditCache(s, state.cacheKey, state.original)
+		}
 		s.sendTextEditor("Edit aborted.\r\n")
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,
 			"$n stops editing some scrolls.", "", game.ToRoom)
@@ -354,6 +401,9 @@ func (s *Session) refreshTextEditBufferLocked() {
 	if state == nil {
 		return
 	}
+	if state.cacheKey == "" {
+		return
+	}
 	if state.field.filename == "help/screen" {
 		state.buffer = s.manager.world.HelpScreen
 		return
@@ -367,8 +417,8 @@ func (s *Session) refreshTextEditBufferLocked() {
 
 func (s *Session) commitTextEditBufferLocked() {
 	state := s.textEdit
-	if state != nil && !state.roomEditor {
-		setTextEditCache(s, state.field.filename, state.buffer)
+	if state != nil && !state.roomEditor && state.cacheKey != "" {
+		setTextEditCache(s, state.cacheKey, state.buffer)
 	}
 }
 
