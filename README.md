@@ -1,5 +1,6 @@
 [![CI](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml/badge.svg)](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml)
 [![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
+[![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
 [![License](https://img.shields.io/github/license/zax0rz/darkpawns)](LICENSE)
 
 ```
@@ -14,16 +15,13 @@
                                  `.'
 ```
 
-# Dark Pawns
+# Dark Pawns MUD
 
 **CircleMUD 3.0, rewritten in Go.** Dark Pawns is a multiplayer text RPG in the
 DikuMUD lineage — the classic C server faithfully ported to a single modern Go
 binary, running live today and built so anyone can host their own instance.
 
-[Play in your browser](https://darkpawns.org/play) ·
-[Website](https://darkpawns.org) ·
-[Player guide](docs/player-guide/player-guide.md) ·
-[Report a bug](https://github.com/zax0rz/darkpawns/issues)
+[Play in your browser](https://darkpawns.org/play) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
 ## Play
 
@@ -96,8 +94,7 @@ repo; the public guide covers operating *your* instance.
   `admin-ui/src/components/olc/`.
 - **Agent tooling:** a command-line client and server-side hooks for AI agents
   playing as full players under the same rules. Scope and status:
-  [agent CLI guide](docs/agents/dp-agent.md),
-  [research notebook](docs/research/README.md).
+  [agent CLI guide](docs/agents/dp-agent.md), [research notebook](docs/research/README.md).
 
 ## Repository layout
 
@@ -116,11 +113,8 @@ repo; the public guide covers operating *your* instance.
 
 ## Develop
 
-Read [AGENTS.md](AGENTS.md) first — repository conventions and required checks.
-[CONTRIBUTING.md](docs/CONTRIBUTING.md) covers the contribution workflow, the
-fidelity contract, and where help is wanted.
-Gameplay changes must follow the [fidelity rulebook](docs/fidelity/RULEBOOK.md):
-player-facing bytes are law, the C source wins disputes, nothing is invented.
+Read [AGENTS.md](AGENTS.md) first — repository conventions and required checks. [CONTRIBUTING.md](docs/CONTRIBUTING.md) covers the contribution workflow, the fidelity contract, and where help is wanted.
+Gameplay changes must follow the [fidelity rulebook](docs/fidelity/RULEBOOK.md): player-facing bytes are law, the C source wins disputes, nothing is invented.
 
 ```sh
 make hooks        # one-time: install the pre-push hook
@@ -154,10 +148,6 @@ Historical briefs and reports are preserved for context, not as a task queue.
 ## Credits and license
 
 Dark Pawns grew from the work of its original developers, world builders, and
-players. The preserved [game credits](lib/text/credits) identify CircleMUD
-3.0, Jeremy Elson, and its DikuMUD foundations. The
-[original C repository](https://github.com/rparet/darkpawns) was published by
-R.E. Paret (Frontline). The Go port is maintained by
-[zax0rz](https://github.com/zax0rz).
+players. The preserved [game credits](lib/text/credits) identify CircleMUD 3.0, Jeremy Elson, and its DikuMUD foundations. The [original C repository](https://github.com/rparet/darkpawns) was published by R.E. Paret (Frontline). The Go port is maintained by [zax0rz](https://github.com/zax0rz) (Aiko/Aidan).
 
 [MIT License](LICENSE) — run it, host it, fork it.
