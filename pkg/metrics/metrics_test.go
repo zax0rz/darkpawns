@@ -151,6 +151,28 @@ func TestInit_TwiceDoesNotPanic(t *testing.T) {
 	Init(fresh) // second call must not panic
 }
 
+func TestHandler_NonGathererRegisterer(t *testing.T) {
+	// A wrapping registerer implements Registerer but not Gatherer; Handler
+	// must not panic when one is configured.
+	prev := registerer
+	defer func() { registerer = prev }()
+	registerer = prometheus.WrapRegistererWith(prometheus.Labels{"a": "b"}, prometheus.NewRegistry())
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Handler panicked with a non-gatherer registerer: %v", r)
+		}
+	}()
+
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	rr := httptest.NewRecorder()
+	Handler().ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+}
+
 func TestDamageTaken_Negative(t *testing.T) {
 	// Add positive damage
 	DamageTaken("player_test", 10)
