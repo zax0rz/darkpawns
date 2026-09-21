@@ -16,6 +16,8 @@ type mobScriptRecorder struct {
 	calls *[]mobScriptCall
 }
 
+func (m mobScriptRecorder) ForgetFailures() {}
+
 func (r mobScriptRecorder) RunScript(ctx *ScriptContext, filename, trigger string) (bool, error) {
 	actor := ""
 	if ctx.Ch != nil {

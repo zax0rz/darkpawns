@@ -274,3 +274,18 @@ func edit_file(s *Session, dir, filename string, killOnEmpty bool) error {
 		killOnEmpty: killOnEmpty,
 	})
 }
+
+// forgetScriptFailures clears the scripting engine's negative cache after a
+// save or delete under the scripts tree. The cache assumes failures are
+// stable per file (DP-903); an in-game edit invalidates that assumption, so
+// a fixed script runs on its next trigger instead of after a reboot.
+// Non-script files (tedit's news/motd) leave the cache untouched.
+func (s *Session) forgetScriptFailures(path string) {
+	if game.ScriptEngine == nil || s.manager == nil || s.manager.world == nil {
+		return
+	}
+	if !pathWithinLuaRoot(luaScriptsDir(s.manager.world), path) {
+		return
+	}
+	game.ScriptEngine.ForgetFailures()
+}

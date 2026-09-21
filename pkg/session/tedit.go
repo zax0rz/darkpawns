@@ -326,6 +326,7 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 			} else {
 				slog.Info(fmt.Sprintf("OLC: %s deletes '%s'.", s.playerName, state.path))
 				s.sendTextEditor("Deleted.\r\n")
+				s.forgetScriptFailures(state.path)
 			}
 		} else {
 			savedText := strings.ReplaceAll(state.buffer, "\r", "")
@@ -337,6 +338,7 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 				}
 				slog.Info(fmt.Sprintf("OLC: %s saves '%s'.", s.playerName, state.path))
 				s.sendTextEditor("Saved.\r\n")
+				s.forgetScriptFailures(state.path)
 			}
 		}
 	case textEditAbort:

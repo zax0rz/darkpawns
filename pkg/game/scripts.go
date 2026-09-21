@@ -15,6 +15,9 @@ type ScriptContext = scripting.ScriptContext
 // ScriptEngine is set by the server at startup.
 var ScriptEngine interface {
 	RunScript(ctx *ScriptContext, fname string, trigger string) (bool, error)
+	// ForgetFailures clears the negative cache of failed script loads so a
+	// fixed script runs on its next trigger instead of after a reboot.
+	ForgetFailures()
 }
 
 // MobInstance methods for script handling

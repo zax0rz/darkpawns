@@ -221,6 +221,16 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 // C game loop), a script blocks all others for its whole duration — lowering
 // the timeout bounds a runaway script's impact; the slow log surfaces offenders.
 // Non-positive values leave the corresponding setting unchanged.
+// ForgetFailures clears the negative cache of failed script loads. The cache
+// assumes failures are stable per file (DP-903); an in-game save under the
+// scripts tree invalidates that assumption wholesale, so luaedit clears it
+// after every successful write or delete.
+func (e *Engine) ForgetFailures() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.failedScripts = make(map[string]struct{})
+}
+
 func (e *Engine) SetScriptBudget(timeout, slowThreshold time.Duration) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
