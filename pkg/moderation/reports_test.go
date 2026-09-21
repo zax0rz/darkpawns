@@ -202,6 +202,37 @@ func TestListReports_NoDB(t *testing.T) {
 	}
 }
 
+// TestAddReport_NoDB is the memory-only contract: a report filed with no
+// database is retained in memory and served by ListReports rather than being
+// silently dropped. Regression guard for the no-DB branch of AddReport.
+func TestAddReport_NoDB(t *testing.T) {
+	m := newMemoryManager()
+	t.Cleanup(m.Close)
+
+	if err := m.AddReport(AbuseReport{
+		Reporter:    "alice",
+		Target:      "bob",
+		ReportType:  ReportTypeHarassment,
+		Description: "would not stop following me",
+		RoomVNum:    3001,
+		Timestamp:   time.Now(),
+		Status:      ReportStatusPending,
+	}); err != nil {
+		t.Fatalf("AddReport() error = %v, want nil", err)
+	}
+
+	reports, err := m.ListReports()
+	if err != nil {
+		t.Fatalf("ListReports() error = %v", err)
+	}
+	if len(reports) != 1 {
+		t.Fatalf("ListReports() returned %d reports, want 1", len(reports))
+	}
+	if reports[0].Reporter != "alice" || reports[0].Target != "bob" || reports[0].ReportType != ReportTypeHarassment {
+		t.Errorf("ListReports()[0] = %+v, want the report filed with no DB", reports[0])
+	}
+}
+
 func TestListReports_ReturnsReportsWithNullableFields(t *testing.T) {
 	setFakeReportsFail(false)
 	reviewedAt := time.Date(2026, 7, 1, 12, 0, 0, 0, time.UTC)

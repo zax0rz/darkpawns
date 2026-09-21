@@ -33,6 +33,11 @@ type Manager struct {
 	wordFilters     []WordFilterEntry
 	spamConfig      SpamDetectionConfig
 
+	// reports buffers abuse reports filed while running without a database so
+	// ListReports can still serve them. In DB mode the table is authoritative
+	// and this stays empty.
+	reports []AbuseReport
+
 	// Spam tracking
 	messageHistory map[string][]time.Time // player -> timestamps of recent messages
 
@@ -486,9 +491,11 @@ func (wf *WordFilterEntry) censor(message string) string {
 	})
 }
 
-// AddReport stores an abuse report (DB if available, always logs). Returns a
-// non-nil error if the DB write failed, so callers can warn the admin that the
-// report is memory-only and will not survive a restart.
+// AddReport stores an abuse report. With a database it is written to
+// abuse_reports and a write failure is returned so callers can warn the admin.
+// Without one it is retained in the manager's in-memory buffer (served by
+// ListReports) and logged, so the report is not silently dropped on a
+// memory-only boot.
 func (m *Manager) AddReport(r AbuseReport) error {
 	if m.hasDB {
 		_, err := m.exec(
@@ -501,7 +508,19 @@ func (m *Manager) AddReport(r AbuseReport) error {
 			slog.Error("failed to persist abuse report", "error", err)
 			return fmt.Errorf("persist abuse report: %w", err)
 		}
+		return nil
 	}
+
+	m.mu.Lock()
+	m.reports = append(m.reports, r)
+	m.mu.Unlock()
+
+	slog.Warn(
+		"abuse report recorded without a database; it will not survive a restart",
+		"reporter", r.Reporter,
+		"target", r.Target,
+		"type", r.ReportType,
+	)
 	return nil
 }
 
@@ -520,11 +539,21 @@ func (m *Manager) MaxReportID() (int, error) {
 	return maxID, nil
 }
 
-// ListReports returns all abuse reports from the database, most recent first.
-// Returns nil if no DB is configured.
+// ListReports returns all abuse reports, most recent first. With no DB it
+// serves the in-memory reports buffer (nil when none have been filed).
 func (m *Manager) ListReports() ([]AbuseReport, error) {
 	if !m.hasDB {
-		return nil, nil
+		m.mu.RLock()
+		defer m.mu.RUnlock()
+
+		if len(m.reports) == 0 {
+			return nil, nil
+		}
+		result := make([]AbuseReport, 0, len(m.reports))
+		for i := len(m.reports) - 1; i >= 0; i-- {
+			result = append(result, m.reports[i])
+		}
+		return result, nil
 	}
 
 	rows, err := m.query(`
