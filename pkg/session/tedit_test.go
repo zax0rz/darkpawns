@@ -78,6 +78,21 @@ func TestReadCTextFileUsesBootCRLFRepresentation(t *testing.T) {
 	}
 }
 
+func TestReadCTextFileDropsShortFinalFragmentAtEOF(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "text")
+	if err := os.WriteFile(path, []byte("first\nsecond"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := readCTextFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "first\r\n" {
+		t.Fatalf("readCTextFile = %q, want C's dropped final fragment", got)
+	}
+}
+
 func TestTeditAbortRestoresCacheAndLeavesDiskUntouched(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCommandTestSession(t, m, "Teditgod", game.LVL_IMPL, 1001)

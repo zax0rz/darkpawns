@@ -5,6 +5,7 @@
 [fixture]
 empty-players
 quiet-mobs
+mirror-oracle-scripts
 
 [setup:oracle]
 Luaeditlist
@@ -39,3 +40,4 @@ luaedit
 luaedit mob
 luaedit obj
 luaedit room
+luaedit mobile

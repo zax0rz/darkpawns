@@ -3,6 +3,7 @@
 [fixture]
 empty-players
 quiet-mobs
+mirror-oracle-scripts
 
 [setup:oracle]
 Luaeditviewonly
@@ -65,4 +66,4 @@ advance Luaeditbuilder 35
 
 [probe:builder]
 luaedit globals
-luaedit mob cityguard
+luaedit mob assembler

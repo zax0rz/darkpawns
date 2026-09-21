@@ -6,6 +6,7 @@
 [fixture]
 empty-players
 quiet-mobs
+mirror-oracle-scripts
 
 [setup:oracle]
 Luaeditview
@@ -37,6 +38,6 @@ Y
 
 [probe]
 luaedit globals
-luaedit mob cityguard
+luaedit mob assembler
 luaedit mob does-not-exist
 luaedit mob cityguard.lua.txt

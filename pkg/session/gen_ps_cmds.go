@@ -54,8 +54,17 @@ func readCTextFile(path string) (string, error) {
 		if end > len(data) {
 			end = len(data)
 		}
-		if newline := bytes.IndexByte(data[start:end], '\n'); newline >= 0 {
+		newline := bytes.IndexByte(data[start:end], '\n')
+		if newline >= 0 {
 			end = start + newline + 1
+		}
+		// C's fgets marks EOF when it consumes a short final fragment. The
+		// subsequent `if (!feof(fl))` therefore drops that whole fragment;
+		// preserve this legacy behavior. A full 255-byte read stops because
+		// the buffer filled, so C appends that chunk and discovers EOF on the
+		// next read instead.
+		if newline < 0 && end == len(data) && end-start < cReadSize-1 {
+			break
 		}
 
 		chunk := data[start:end]

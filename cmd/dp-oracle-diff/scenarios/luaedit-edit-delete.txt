@@ -4,6 +4,7 @@
 [fixture]
 empty-players
 quiet-mobs
+mirror-oracle-scripts
 
 [setup:oracle]
 Luaediteditdelete
@@ -34,8 +35,8 @@ Y
 1
 
 [probe]
-luaedit mob cityguard
+luaedit mob assembler
 /c
 /s
-luaedit mob cityguard
+luaedit mob assembler
 /a

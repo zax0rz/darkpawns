@@ -167,6 +167,15 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 		return fmt.Errorf("copy Go world to throwaway directory: %w", err)
 	}
+	if scenario.MirrorOracleScripts {
+		goScripts := filepath.Join(goWorld, "scripts")
+		if err := os.RemoveAll(goScripts); err != nil {
+			return fmt.Errorf("clear disposable Go script tree: %w", err)
+		}
+		if err := os.CopyFS(goScripts, os.DirFS(filepath.Join(oracleData, "scripts"))); err != nil {
+			return fmt.Errorf("mirror C oracle script tree into Go fixture: %w", err)
+		}
+	}
 	// Sibling lib/text rides along: the server derives help (and future static
 	// text) from the -world dir's parent, so the throwaway layout mirrors
 	// lib/{world,text}.

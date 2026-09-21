@@ -48,6 +48,10 @@ type Scenario struct {
 	RoomFlagFixtures  []RoomFlagFixture
 	RoomSectors       []RoomSectorFixture
 	HouseControls     []HouseControlFixture
+	// MirrorOracleScripts replaces the disposable Go script tree with the C
+	// oracle's disposable tree so script-editor vehicles compare command bytes
+	// against identical file fixtures rather than unrelated repository eras.
+	MirrorOracleScripts bool
 	// SkipSetupSettle leaves the frozen clock untouched after character
 	// creation. Focused vehicles use this when a spawned autonomous mob must
 	// survive until a later warmup command places the actor beside it.
@@ -469,6 +473,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "empty-players") {
 				sc.EmptyPlayers = true
+				continue
+			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "mirror-oracle-scripts") {
+				sc.MirrorOracleScripts = true
 				continue
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "no-settle") {
