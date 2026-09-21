@@ -25,10 +25,17 @@ var (
 	cacheMu    sync.RWMutex
 )
 
+const (
+	cReadSize          = 256
+	cMaxStringLength   = 8192
+	cMaxLoadedFileSize = cMaxStringLength - 1
+)
+
 // readCTextFile mirrors db.c:file_to_string for the text files whose boot
-// representation is consumed by do_gen_ps and tedit. The C loader removes
-// each input line's trailing LF and stores CRLF in memory; the editor writes
-// the CR characters back out before saving, so disk files remain LF-delimited.
+// representation is consumed by do_gen_ps, tedit, and luaedit. C reads at
+// most READ_SIZE-1 bytes per fgets call, removes the last byte from every
+// chunk (normally the LF), and stores CRLF in memory. The editor writes the
+// CR characters back out before saving, so disk files remain LF-delimited.
 func readCTextFile(path string) (string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -39,25 +46,37 @@ func readCTextFile(path string) (string, error) {
 	}
 
 	var text strings.Builder
-	text.Grow(len(data) + strings.Count(string(data), "\n"))
+	text.Grow(minInt(len(data)+2*strings.Count(string(data), "\n"), cMaxStringLength))
 	for start := 0; start < len(data); {
-		end := bytes.IndexByte(data[start:], '\n')
-		if end < 0 {
-			// file_to_string unconditionally removes the final byte when the
-			// last fgets did not end at a newline. Preserve that legacy edge.
-			line := data[start:]
-			if len(line) > 0 {
-				line = line[:len(line)-1]
-			}
-			text.Write(line)
-			text.WriteString("\r\n")
-			break
+		// fgets(tmp, READ_SIZE, fl) consumes at most READ_SIZE-1 bytes and
+		// stops after an LF if one occurs within that window.
+		end := start + cReadSize - 1
+		if end > len(data) {
+			end = len(data)
 		}
-		text.Write(data[start : start+end])
+		if newline := bytes.IndexByte(data[start:end], '\n'); newline >= 0 {
+			end = start + newline + 1
+		}
+
+		chunk := data[start:end]
+		if len(chunk) > 0 {
+			chunk = chunk[:len(chunk)-1]
+		}
+		if text.Len()+len(chunk)+2 > cMaxLoadedFileSize {
+			return "", fmt.Errorf("file too large for C string buffer")
+		}
+		text.Write(chunk)
 		text.WriteString("\r\n")
-		start += end + 1
+		start = end
 	}
 	return text.String(), nil
+}
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // cachedTextForFile returns the C-style boot cache for a text path. Keeping

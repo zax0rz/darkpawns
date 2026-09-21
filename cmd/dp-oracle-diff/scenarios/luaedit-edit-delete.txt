@@ -1,0 +1,41 @@
+# depth-case: luaedit.empty-save-delete
+# depth-case: luaedit.deleted-file-reentry
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Luaediteditdelete
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luaediteditdelete
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+luaedit mob cityguard
+/c
+/s
+luaedit mob cityguard
+/a
