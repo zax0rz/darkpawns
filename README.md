@@ -115,6 +115,8 @@ repo; the public guide covers operating *your* instance.
 ## Develop
 
 Read [AGENTS.md](AGENTS.md) first — repository conventions and required checks.
+[CONTRIBUTING.md](docs/CONTRIBUTING.md) covers the contribution workflow, the
+fidelity contract, and where help is wanted.
 Gameplay changes must follow the [fidelity rulebook](docs/fidelity/RULEBOOK.md):
 player-facing bytes are law, the C source wins disputes, nothing is invented.
 
