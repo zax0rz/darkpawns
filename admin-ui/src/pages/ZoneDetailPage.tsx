@@ -87,6 +87,12 @@ export function ZoneDetailPage() {
           </span>
           <h1 className="text-xl font-bold text-ink">{zone.name}</h1>
         </div>
+        <Link
+          to={`/admin/game/zones/${zone.number}/edit`}
+          className="mt-4 inline-block border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep"
+        >
+          Edit zone
+        </Link>
       </div>
 
       {/* Properties */}

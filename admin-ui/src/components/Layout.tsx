@@ -17,6 +17,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/admin/', label: 'Dashboard', icon: 'dashboard', role: 'player' },
   { to: '/admin/game/zones', label: 'Zones', icon: 'zones', role: 'player' },
+  { to: '/admin/game/shops', label: 'Shops', icon: 'objects', role: 'player' },
   { to: '/admin/game/mobs', label: 'Mobs', icon: 'mobs', role: 'player' },
   { to: '/admin/game/objects', label: 'Objects', icon: 'objects', role: 'player' },
   { to: '/admin/agents', label: 'Agents', icon: 'agents', role: 'builder' },

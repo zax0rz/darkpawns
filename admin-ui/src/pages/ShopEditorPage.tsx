@@ -1,0 +1,72 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ApiError } from '../api/client';
+import { olcApi, type OlcEntityDraft, type OlcPatchOperation } from '../api/olc';
+import { ClaimSaveFrame } from '../components/olc/ClaimSaveFrame';
+import { ShopEditorFields } from '../components/olc/ShopEditorFields';
+import { Skeleton } from '../components/Skeleton';
+
+const draftKey = (vnum: number) => ['olc-entity-draft', 'shop', vnum];
+
+function conflictSummary(error: unknown): string {
+  if (!(error instanceof ApiError)) return (error as Error)?.message || 'The shop could not be claimed.';
+  if (typeof error.payload !== 'object' || error.payload === null) return error.message;
+  const payload = error.payload as Record<string, unknown>;
+  return `${error.message} Holder: ${String(payload.holder || 'another editor')}. Frontend: ${String(payload.frontend || 'unknown')}. Idle: ${String(payload.idle || 'unknown')}.`;
+}
+
+export function ShopEditorPage() {
+  const { vnum: rawVnum } = useParams<{ vnum: string }>();
+  const vnum = Number(rawVnum);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const openedRef = useRef(false);
+  const [claimed, setClaimed] = useState(false);
+  const [committedDraft, setCommittedDraft] = useState<OlcEntityDraft | null>(null);
+
+  const schemaQuery = useQuery({ queryKey: ['olc-schema', 'shop'], queryFn: () => olcApi.schema('shop'), staleTime: 30 * 60 * 1000, retry: false });
+  const previewQuery = useQuery({ queryKey: ['olc-entity-preview', 'shop', vnum], queryFn: () => olcApi.preview('shop', vnum), enabled: Number.isInteger(vnum), retry: false });
+  const pendingQuery = useQuery({ queryKey: ['olc-pending'], queryFn: olcApi.pending, refetchInterval: 30_000, refetchIntervalInBackground: true, retry: false });
+  const heldQuery = useQuery({ queryKey: ['olc-held'], queryFn: olcApi.held, enabled: claimed && !committedDraft, refetchInterval: 30_000, refetchIntervalInBackground: true, retry: false });
+  const openMutation = useMutation({ mutationFn: () => olcApi.openEntityDraft('shop', vnum), onSuccess: (draft) => { setClaimed(true); queryClient.setQueryData(draftKey(vnum), draft); queryClient.invalidateQueries({ queryKey: ['olc-held'] }); } });
+  const draftQuery = useQuery({ queryKey: draftKey(vnum), queryFn: () => olcApi.getEntityDraft('shop', vnum), enabled: claimed && !committedDraft, refetchInterval: 30_000, refetchIntervalInBackground: true, retry: false });
+
+  useEffect(() => {
+    if (!Number.isInteger(vnum) || openedRef.current || committedDraft) return;
+    openedRef.current = true;
+    openMutation.mutate();
+  }, [committedDraft, openMutation, vnum]);
+
+  const patchMutation = useMutation({ mutationFn: (operations: OlcPatchOperation[]) => olcApi.patchEntityDraft('shop', vnum, operations), onSuccess: (draft) => { queryClient.setQueryData(draftKey(vnum), draft); queryClient.invalidateQueries({ queryKey: ['olc-held'] }); } });
+  const commitMutation = useMutation({ mutationFn: () => olcApi.commitEntityDraft('shop', vnum), onSuccess: (draft) => { setCommittedDraft(draft); setClaimed(false); queryClient.invalidateQueries({ queryKey: ['olc-held'] }); queryClient.invalidateQueries({ queryKey: ['olc-pending'] }); queryClient.invalidateQueries({ queryKey: ['shops'] }); } });
+  const discardMutation = useMutation({ mutationFn: () => olcApi.discardEntityDraft('shop', vnum), onSuccess: () => navigate('/admin/game/shops') });
+  const saveMutation = useMutation({ mutationFn: (zone: number) => olcApi.saveZone(zone), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['olc-pending'] }) });
+
+  const currentDraft = committedDraft || draftQuery.data || openMutation.data;
+  const shop = currentDraft?.shop;
+  const busy = patchMutation.isPending || commitMutation.isPending || discardMutation.isPending || saveMutation.isPending;
+  const handleOperation = useCallback((operations: OlcPatchOperation[]) => patchMutation.mutate(operations), [patchMutation]);
+  const retryClaim = () => { openedRef.current = false; openMutation.reset(); setClaimed(false); };
+
+  if (!Number.isInteger(vnum)) return <EditorError message="The shop VNUM is invalid." />;
+  if (schemaQuery.isLoading || previewQuery.isLoading || openMutation.isPending || (claimed && !currentDraft)) return <EditorLoading />;
+  if (openMutation.error && !currentDraft) return <div className="space-y-5"><Link to="/admin/game/shops" className="text-sm text-accent">← Back to shops</Link><div className="border border-accent bg-paper-deep px-5 py-5" role="alert"><h1 className="text-xl text-ink">Shop unavailable</h1><p className="mt-2 text-sm text-ink">{conflictSummary(openMutation.error)}</p><button type="button" onClick={retryClaim} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper">Try again</button></div></div>;
+  const loadError = schemaQuery.error || previewQuery.error || draftQuery.error;
+  if (loadError || !currentDraft || !shop || !schemaQuery.data || !previewQuery.data?.zoneNumber) return <EditorError message={(loadError as Error)?.message || 'The shop editor could not load.'} />;
+  const claim = heldQuery.data?.find((entry) => entry.kind === 'shop' && entry.number === vnum);
+  const saveError = saveMutation.error instanceof ApiError ? saveMutation.error : null;
+
+  return (
+    <div className="space-y-4">
+      <Link to="/admin/game/shops" className="text-sm text-accent hover:text-accent-deep">← Back to shops</Link>
+      <ClaimSaveFrame draft={currentDraft} kind="shop" title="Shop editor" subtitle={`Keeper #${shop.keeperVnum}`} zone={previewQuery.data.zoneNumber} claim={claim} pending={pendingQuery.data || []} leaseRemainingSeconds={currentDraft.leaseRemainingSeconds} committed={Boolean(committedDraft)} busy={busy} saveError={saveError} onCommit={() => commitMutation.mutate()} onDiscard={() => discardMutation.mutate()} onSave={() => saveMutation.mutate(previewQuery.data?.zoneNumber || 0)}>
+        <div className="border border-rule bg-paper-deep px-4 py-5"><ShopEditorFields schema={schemaQuery.data} shop={shop} dirty={currentDraft.dirty} disabled={busy || Boolean(committedDraft)} onOperation={handleOperation} /></div>
+      </ClaimSaveFrame>
+      {(patchMutation.error || commitMutation.error || discardMutation.error) && <div className="border border-accent bg-paper-deep px-4 py-3 text-sm text-accent" role="alert">{conflictSummary(patchMutation.error || commitMutation.error || discardMutation.error)}</div>}
+    </div>
+  );
+}
+
+function EditorLoading() { return <div className="space-y-5"><Skeleton className="h-4 w-28" /><Skeleton className="h-28 w-full" /><Skeleton className="h-96 w-full" /></div>; }
+function EditorError({ message }: { message: string }) { return <div className="border border-accent bg-paper-deep px-5 py-5" role="alert"><h1 className="text-xl text-ink">Editor unavailable</h1><p className="mt-2 text-sm text-accent">{message}</p></div>; }

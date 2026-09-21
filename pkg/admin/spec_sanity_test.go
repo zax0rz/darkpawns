@@ -57,6 +57,7 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/olc/{kind}/{vnum}/draft":        {"get", "patch", "delete"},
 		"/admin/olc/{kind}/{vnum}/draft/commit": {"post"},
 		"/admin/olc/zones/{zone}/save":          {"post"},
+		"/admin/olc/zones/{zone}":               {"post"},
 		"/admin/olc/room/{vnum}":                {"post"},
 		"/admin/olc/room/{vnum}/draft":          {"get", "patch", "delete"},
 		"/admin/olc/room/{vnum}/draft/commit":   {"post"},

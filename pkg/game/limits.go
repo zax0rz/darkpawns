@@ -22,6 +22,7 @@ const (
 const (
 	LVL_IMMORT = combat.LVL_IMMORT
 	LVL_GOD    = 34
+	LVL_HIGOD  = 36
 	LVL_IMPL   = 40
 
 	// Idle time limits — from limits.c

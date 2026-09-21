@@ -2,13 +2,28 @@
   "kind": "shop",
   "fields": [
     {
+      "key": "products",
+      "label": "Products",
+      "control": "vnum_list"
+    },
+    {
+      "key": "rooms",
+      "label": "Shop rooms",
+      "control": "vnum_list"
+    },
+    {
+      "key": "trade_namelist",
+      "label": "Trade namelist",
+      "control": "trade_namelist"
+    },
+    {
       "key": "buy_profit",
-      "label": "Sell rate",
+      "label": "Buy rate",
       "control": "number"
     },
     {
       "key": "sell_profit",
-      "label": "Buy rate",
+      "label": "Sell rate",
       "control": "number"
     },
     {
@@ -137,5 +152,10 @@
       "label": "Sell success",
       "control": "text"
     }
+  ],
+  "bespoke": [
+    "products",
+    "rooms",
+    "trade_namelist"
   ]
 }

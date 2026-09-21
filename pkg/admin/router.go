@@ -218,6 +218,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	track("/admin/olc/{kind}/{vnum}", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/{kind}/{vnum}/draft", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/{kind}/{vnum}/draft/commit", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/olc/zones/{zone}", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/zones/{zone}/save", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/room/{vnum}", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/room/{vnum}/draft", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))

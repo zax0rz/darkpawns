@@ -277,7 +277,7 @@ func commitEntityDraft(ctx context.Context, in *entityDraftPathInput, world *gam
 		if !writes.RenewOLC(kind, vnum, owner, olc.DefaultClaimTTL) {
 			return entityLeaseExpired(writes, kind, vnum)
 		}
-		zone, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
+		zone, ok := entityZone(world, kind, vnum)
 		if !ok {
 			return huma.NewError(http.StatusNotFound, "no zone covers VNUM")
 		}
@@ -347,7 +347,7 @@ func entityPath(in *entityDraftPathInput) (olc.Kind, int, error) {
 }
 
 func snapshotEntity(world *game.World, kind olc.Kind, vnum int) (olc.EntityValue, error) {
-	zone, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
+	zone, ok := entityZone(world, kind, vnum)
 	if !ok {
 		return olc.EntityValue{}, huma.NewError(http.StatusNotFound, "no zone covers VNUM")
 	}
@@ -372,15 +372,17 @@ func snapshotEntity(world *game.World, kind olc.Kind, vnum int) (olc.EntityValue
 		}
 		value.Shop = shopToProto(shop)
 	case olc.KindZone:
-		if _, exists := world.SnapshotRoom(vnum); !exists {
-			return value, huma.NewError(http.StatusNotFound, "room not found")
-		}
 		zoneCopy, exists := world.SnapshotZone(zone.Number)
 		if !exists {
 			return value, huma.NewError(http.StatusNotFound, "zone not found")
 		}
-		zoneCopy.Commands = olc.ZoneCommandsForRoom(zoneCopy.Commands, vnum)
-		value.Zone = olc.ZoneDraft{Zone: zoneCopy, RoomVNum: vnum}
+		roomVNum := vnum
+		if vnum != zone.Number {
+			zoneCopy.Commands = olc.ZoneCommandsForRoom(zoneCopy.Commands, vnum)
+		} else {
+			roomVNum = 0
+		}
+		value.Zone = olc.ZoneDraft{Zone: zoneCopy, RoomVNum: roomVNum}
 	}
 	return value, nil
 }
@@ -515,8 +517,10 @@ func entityOperation(kind olc.Kind, input entityPatchOperation) (olc.Operation, 
 			op.Kind = olc.OpRemoveShopProduct
 		case "set_buy_profit":
 			op.Kind = olc.OpSetShopBuyProfit
+			op.Value = int(input.Float * 100)
 		case "set_sell_profit":
 			op.Kind = olc.OpSetShopSellProfit
+			op.Value = int(input.Float * 100)
 		case "set_keeper":
 			op.Kind = olc.OpSetShopKeeper
 		case "set_flags":

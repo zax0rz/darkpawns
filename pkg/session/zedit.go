@@ -981,7 +981,7 @@ func zeditDiskArgs(cmd parser.ZoneCommand) (int, int, int, bool) {
 }
 
 func zeditNewZone(s *Session, number int) error {
-	if number > 326 {
+	if number > olc.NewZoneMax {
 		s.zeditSend("326 is the highest zone allowed.\r\n")
 		return nil
 	}
@@ -992,24 +992,9 @@ func zeditNewZone(s *Session, number int) error {
 		return nil
 	}
 
-	// C writes these five templates in sequence. The misspelling in the room
-	// name and the shop terminator are part of the player-visible artifact.
-	templates := []struct {
-		ext  string
-		data string
-	}{
-		{ext: "zon", data: fmt.Sprintf("#%d\nNew Zone~\n%d 30 2\nS\n$\n", number, start+99)},
-		{ext: "wld", data: fmt.Sprintf("#%d\nThe Begining~\nNot much here.\n~\n%d 0 0\nS\n$\n", start, number)},
-		{ext: "mob", data: "$\n"},
-		{ext: "obj", data: "$\n"},
-		{ext: "shp", data: "$~\n"},
-	}
-	for _, template := range templates {
-		path := filepath.Join(world.WorldPath, template.ext, fmt.Sprintf("%d.%s", number, template.ext))
-		if err := os.WriteFile(filepath.Clean(path), []byte(template.data), 0o666); err != nil {
-			slog.Error("zedit new-zone file creation failed", "zone", number, "file", path, "error", err)
-			return nil
-		}
+	if err := olc.WriteNewZoneFiles(world.WorldPath, number); err != nil {
+		slog.Error("zedit new-zone file creation failed", "zone", number, "error", err)
+		return nil
 	}
 	if _, ok := world.CreateZone(number); !ok {
 		// A concurrent creator may have won after the preflight check. The C

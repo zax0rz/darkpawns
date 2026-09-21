@@ -460,6 +460,7 @@ func shopList(world *game.World) []shopResponse {
 	result := make([]shopResponse, 0, len(shops))
 	for _, s := range shops {
 		result = append(result, shopResponse{
+			VNum:       s.VNum,
 			KeeperVNum: s.KeeperVNum,
 			BuyTypes:   s.BuyTypes,
 			SellTypes:  s.SellTypes,
