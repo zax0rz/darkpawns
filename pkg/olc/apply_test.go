@@ -147,6 +147,86 @@ func TestApplyStringCaps(t *testing.T) {
 	}
 }
 
+func TestApplyDescriptionTextNormalizesNaturalInput(t *testing.T) {
+	tests := []struct {
+		name  string
+		apply func(string) string
+	}{
+		{
+			name: "room",
+			apply: func(value string) string {
+				room := parser.Room{}
+				if err := Apply(Operation{Kind: OpSetRoomDescription, Room: &room, Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return room.Description
+			},
+		},
+		{
+			name: "exit",
+			apply: func(value string) string {
+				exit := parser.Exit{}
+				if err := Apply(Operation{Kind: OpSetExitDescription, Exit: &exit, Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return exit.Description
+			},
+		},
+		{
+			name: "extra",
+			apply: func(value string) string {
+				extra := parser.ExtraDesc{}
+				if err := Apply(Operation{Kind: OpSetExtraDescription, Extra: &extra, Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return extra.Description
+			},
+		},
+		{
+			name: "mob detail",
+			apply: func(value string) string {
+				mob := parser.Mob{}
+				if err := Apply(Operation{Kind: OpSetMobDetailedDescription, Mob: &mob, Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return mob.DetailedDesc
+			},
+		},
+		{
+			name: "object action",
+			apply: func(value string) string {
+				obj := parser.Obj{}
+				if err := Apply(Operation{Kind: OpSetObjActionDescription, Obj: &obj, Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return obj.ActionDesc
+			},
+		},
+		{
+			name: "object extra",
+			apply: func(value string) string {
+				extra := parser.ExtraDesc{}
+				if err := Apply(Operation{Kind: OpSetObjExtraDescription, Extra: &extra, Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return extra.Description
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			const naturalInput = "A natural editor line."
+			if got, want := test.apply(naturalInput), naturalInput+"\n"; got != want {
+				t.Fatalf("natural input = %q, want %q", got, want)
+			}
+			if got := test.apply(naturalInput + "\n"); got != naturalInput+"\n" {
+				t.Fatalf("terminated input = %q, want %q", got, naturalInput+"\n")
+			}
+		})
+	}
+}
+
 func TestApplyNumericClampBoundaries(t *testing.T) {
 	tests := []struct {
 		name  string

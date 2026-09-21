@@ -942,7 +942,7 @@ func TestWebAndTelnetRoomEditsProduceByteIdenticalZoneFiles(t *testing.T) {
 	working := draft.Effective()
 	draft, err = drafts.Patch(owner.Identity(), []olc.Operation{
 		{Kind: olc.OpSetRoomName, Room: &working, Text: "Edited Room"},
-		{Kind: olc.OpSetRoomDescription, Room: &working, Text: "You are in the edited room.\n"},
+		{Kind: olc.OpSetRoomDescription, Room: &working, Text: "You are in the edited room."},
 		{Kind: olc.OpSetRoomSector, Room: &working, Value: 3},
 	})
 	if err != nil {
