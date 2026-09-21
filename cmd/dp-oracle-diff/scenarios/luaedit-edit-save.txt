@@ -7,6 +7,9 @@ empty-players
 quiet-mobs
 mirror-oracle-scripts
 
+[script-twin]
+mob/dog.lua luaedit fidelity save
+
 [setup:oracle]
 Luaediteditsave
 Y
@@ -36,8 +39,8 @@ Y
 1
 
 [probe]
-luaedit mob assembler
+luaedit mob dog
 luaedit fidelity save
 /s
-luaedit mob assembler
+luaedit mob dog
 /a
