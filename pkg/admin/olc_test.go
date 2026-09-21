@@ -294,6 +294,84 @@ func TestOLCEntityDraftLifecycleForMobObjectShopAndZone(t *testing.T) {
 	}
 }
 
+func TestOLCEntityCommitPreservesLiveScript(t *testing.T) {
+	tests := []struct {
+		name       string
+		kind       string
+		vnum       int
+		oldScript  string
+		newScript  string
+		setScript  func(*game.World, string) bool
+		snapScript func(*game.World) (string, bool)
+	}{
+		{
+			name:      "mob",
+			kind:      "mob",
+			vnum:      2001,
+			oldScript: "mob-old",
+			newScript: "mob-live",
+			setScript: func(world *game.World, name string) bool {
+				return world.SetMobScript(2001, name, 0)
+			},
+			snapScript: func(world *game.World) (string, bool) {
+				mob, ok := world.SnapshotMob(2001)
+				return mob.ScriptName, ok
+			},
+		},
+		{
+			name:      "object",
+			kind:      "obj",
+			vnum:      3001,
+			oldScript: "obj-old",
+			newScript: "obj-live",
+			setScript: func(world *game.World, name string) bool {
+				return world.SetObjScript(3001, name, 0)
+			},
+			snapScript: func(world *game.World) (string, bool) {
+				object, ok := world.SnapshotObj(3001)
+				return object.ScriptName, ok
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			world := newOLCTestWorld(t)
+			if !test.setScript(world, test.oldScript) {
+				t.Fatal("initial live script write failed")
+			}
+			state := newFakeOLCWriteStateProvider()
+			setJWTSecret(t)
+			t.Setenv("ADMIN_STORE_PATH", filepath.Join(t.TempDir(), "admin-store.json"))
+			database := newOLCTestDatabase(t, 31, 1)
+			handler, err := NewRouter(world, nil, NewLogBuffer(10), database, state)
+			if err != nil {
+				t.Fatalf("NewRouter: %v", err)
+			}
+
+			path := "/admin/olc/" + test.kind + "/" + strconv.Itoa(test.vnum)
+			open := doOLCJSONRequest(t, handler, http.MethodPost, path, nil)
+			if open.Code != http.StatusOK {
+				t.Fatalf("open status = %d; body: %s", open.Code, open.Body.String())
+			}
+			patch := doOLCJSONRequest(t, handler, http.MethodPatch, path+"/draft", []byte(`[{"kind":"set_script_name","text":"`+test.newScript+`"},{"kind":"set_keywords","text":"edited"}]`))
+			if patch.Code != http.StatusOK {
+				t.Fatalf("patch status = %d; body: %s", patch.Code, patch.Body.String())
+			}
+			if got, ok := test.snapScript(world); !ok || got != test.newScript {
+				t.Fatalf("live script after patch = %q, exists=%v; want %q", got, ok, test.newScript)
+			}
+			commit := doOLCJSONRequest(t, handler, http.MethodPost, path+"/draft/commit", nil)
+			if commit.Code != http.StatusOK {
+				t.Fatalf("commit status = %d; body: %s", commit.Code, commit.Body.String())
+			}
+			if got, ok := test.snapScript(world); !ok || got != test.newScript {
+				t.Fatalf("live script after commit = %q, exists=%v; want %q", got, ok, test.newScript)
+			}
+		})
+	}
+}
+
 func TestOLCReadLists(t *testing.T) {
 	state := &fakeOLCReadStateProvider{
 		claims: []olc.ClaimEntry{{

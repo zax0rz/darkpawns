@@ -7,21 +7,23 @@ import (
 )
 
 type MobCommitInput struct {
-	Draft     EntityDraft
-	Actor     string
-	IPAddress string
-	Commit    func(parser.Mob) bool
-	MarkDirty func()
-	Audit     func(AuditEvent)
+	Draft      EntityDraft
+	Actor      string
+	IPAddress  string
+	Commit     func(parser.Mob) bool
+	LiveScript func() (parser.Mob, bool)
+	MarkDirty  func()
+	Audit      func(AuditEvent)
 }
 
 type ObjectCommitInput struct {
-	Draft     EntityDraft
-	Actor     string
-	IPAddress string
-	Commit    func(parser.Obj) bool
-	MarkDirty func()
-	Audit     func(AuditEvent)
+	Draft      EntityDraft
+	Actor      string
+	IPAddress  string
+	Commit     func(parser.Obj) bool
+	LiveScript func() (parser.Obj, bool)
+	MarkDirty  func()
+	Audit      func(AuditEvent)
 }
 
 type ShopCommitInput struct {
@@ -87,14 +89,33 @@ func CommitRoom(input RoomCommitInput) bool {
 }
 
 func CommitMob(input MobCommitInput) bool {
-	return commitEntity("mob", input.Draft, input.Actor, input.IPAddress,
-		func() bool { return input.Commit != nil && input.Commit(input.Draft.Effective().Mob) },
+	draft := input.Draft
+	if input.LiveScript != nil {
+		if live, ok := input.LiveScript(); ok {
+			// C's MEDIT copy shares the live script storage. Re-read those
+			// fields immediately before replacing the whole prototype so a
+			// live script edit cannot be clobbered by the stale draft copy.
+			draft.Working.Mob.ScriptName = live.ScriptName
+			draft.Working.Mob.LuaFunctions = live.LuaFunctions
+		}
+	}
+	return commitEntity("mob", draft, input.Actor, input.IPAddress,
+		func() bool { return input.Commit != nil && input.Commit(draft.Effective().Mob) },
 		input.MarkDirty, input.Audit)
 }
 
 func CommitObj(input ObjectCommitInput) bool {
-	return commitEntity("object", input.Draft, input.Actor, input.IPAddress,
-		func() bool { return input.Commit != nil && input.Commit(input.Draft.Effective().Object) },
+	draft := input.Draft
+	if input.LiveScript != nil {
+		if live, ok := input.LiveScript(); ok {
+			// C's OEDIT copy shares the live script storage. Keep the same
+			// shallow-copy behavior across a whole-prototype commit.
+			draft.Working.Object.ScriptName = live.ScriptName
+			draft.Working.Object.LuaFunctions = live.LuaFunctions
+		}
+	}
+	return commitEntity("object", draft, input.Actor, input.IPAddress,
+		func() bool { return input.Commit != nil && input.Commit(draft.Effective().Object) },
 		input.MarkDirty, input.Audit)
 }
 

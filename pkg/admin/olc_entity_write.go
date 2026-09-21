@@ -287,9 +287,9 @@ func commitEntityDraft(ctx context.Context, in *entityDraftPathInput, world *gam
 		success := false
 		switch kind {
 		case olc.KindMob:
-			success = olc.CommitMob(olc.MobCommitInput{Draft: draft, Actor: owner.DisplayName(), IPAddress: clientIPFrom(ctx), Commit: world.CommitEditedMob, MarkDirty: func() { writes.MarkOLCDirty(kind, zone.Number) }, Audit: auditAdapter(auditLogger)})
+			success = olc.CommitMob(olc.MobCommitInput{Draft: draft, Actor: owner.DisplayName(), IPAddress: clientIPFrom(ctx), Commit: world.CommitEditedMob, LiveScript: func() (parser.Mob, bool) { return world.SnapshotMob(vnum) }, MarkDirty: func() { writes.MarkOLCDirty(kind, zone.Number) }, Audit: auditAdapter(auditLogger)})
 		case olc.KindObject:
-			success = olc.CommitObj(olc.ObjectCommitInput{Draft: draft, Actor: owner.DisplayName(), IPAddress: clientIPFrom(ctx), Commit: world.CommitEditedObj, MarkDirty: func() { writes.MarkOLCDirty(kind, zone.Number) }, Audit: auditAdapter(auditLogger)})
+			success = olc.CommitObj(olc.ObjectCommitInput{Draft: draft, Actor: owner.DisplayName(), IPAddress: clientIPFrom(ctx), Commit: world.CommitEditedObj, LiveScript: func() (parser.Obj, bool) { return world.SnapshotObj(vnum) }, MarkDirty: func() { writes.MarkOLCDirty(kind, zone.Number) }, Audit: auditAdapter(auditLogger)})
 		case olc.KindShop:
 			success = olc.CommitShop(olc.ShopCommitInput{Draft: draft, Actor: owner.DisplayName(), IPAddress: clientIPFrom(ctx), Commit: world.CommitEditedShop, MarkDirty: func() { writes.MarkOLCDirty(kind, zone.Number) }, Audit: auditAdapter(auditLogger)})
 		case olc.KindZone:

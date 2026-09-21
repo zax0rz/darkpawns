@@ -22,6 +22,11 @@
       "control": "textarea"
     },
     {
+      "key": "noise",
+      "label": "Noise",
+      "control": "text"
+    },
+    {
       "key": "sex",
       "label": "Gender",
       "control": "select",
@@ -439,103 +444,128 @@
       "options": [
         {
           "value": 0,
-          "label": "SPEC"
+          "label": "SPEC",
+          "storage": "SPEC"
         },
         {
           "value": 1,
-          "label": "SENTINEL"
+          "label": "SENTINEL",
+          "storage": "SENTINEL"
         },
         {
           "value": 2,
-          "label": "SCAVENGER"
+          "label": "SCAVENGER",
+          "storage": "SCAVENGER"
         },
         {
           "value": 3,
-          "label": "ISNPC"
+          "label": "ISNPC",
+          "storage": "ISNPC"
         },
         {
           "value": 4,
-          "label": "AWARE"
+          "label": "AWARE",
+          "storage": "AWARE"
         },
         {
           "value": 5,
-          "label": "AGGR"
+          "label": "AGGR",
+          "storage": "AGGRESSIVE"
         },
         {
           "value": 6,
-          "label": "STAY-ZONE"
+          "label": "STAY-ZONE",
+          "storage": "STAY_ZONE"
         },
         {
           "value": 7,
-          "label": "WIMPY"
+          "label": "WIMPY",
+          "storage": "WIMPY"
         },
         {
           "value": 8,
-          "label": "AGGR_EVIL"
+          "label": "AGGR_EVIL",
+          "storage": "AGGR_EVIL"
         },
         {
           "value": 9,
-          "label": "AGGR_GOOD"
+          "label": "AGGR_GOOD",
+          "storage": "AGGR_GOOD"
         },
         {
           "value": 10,
-          "label": "AGGR_NEUTRAL"
+          "label": "AGGR_NEUTRAL",
+          "storage": "AGGR_NEUTRAL"
         },
         {
           "value": 11,
-          "label": "MEMORY"
+          "label": "MEMORY",
+          "storage": "MEMORY"
         },
         {
           "value": 12,
-          "label": "HELPER"
+          "label": "HELPER",
+          "storage": "HELPER"
         },
         {
           "value": 13,
-          "label": "!CHARM"
+          "label": "!CHARM",
+          "storage": "NOCHARM"
         },
         {
           "value": 14,
-          "label": "!SUMMN"
+          "label": "!SUMMN",
+          "storage": "NOSUMMON"
         },
         {
           "value": 15,
-          "label": "!SLEEP"
+          "label": "!SLEEP",
+          "storage": "NOSLEEP"
         },
         {
           "value": 16,
-          "label": "!BASH"
+          "label": "!BASH",
+          "storage": "NOBASH"
         },
         {
           "value": 17,
-          "label": "!BLIND"
+          "label": "!BLIND",
+          "storage": "NOBLIND"
         },
         {
           "value": 18,
-          "label": "HUNTER"
+          "label": "HUNTER",
+          "storage": "HUNTER"
         },
         {
           "value": 19,
-          "label": "AGGR24"
+          "label": "AGGR24",
+          "storage": "AGGR24"
         },
         {
           "value": 20,
-          "label": "RNDLD_ZONE"
+          "label": "RNDLD_ZONE",
+          "storage": "RANDZON"
         },
         {
           "value": 21,
-          "label": "MOUNTABLE"
+          "label": "MOUNTABLE",
+          "storage": "MOUNTABLE"
         },
         {
           "value": 22,
-          "label": "RARE"
+          "label": "RARE",
+          "storage": "RARE"
         },
         {
           "value": 23,
-          "label": "LOOTS"
+          "label": "LOOTS",
+          "storage": "LOOTS"
         },
         {
           "value": 24,
-          "label": "OKGIVE"
+          "label": "OKGIVE",
+          "storage": "OKGIVE"
         }
       ]
     },
@@ -546,151 +576,188 @@
       "options": [
         {
           "value": 0,
-          "label": "BLIND"
+          "label": "BLIND",
+          "storage": "BLIND"
         },
         {
           "value": 1,
-          "label": "INVIS"
+          "label": "INVIS",
+          "storage": "INVISIBLE"
         },
         {
           "value": 2,
-          "label": "DET-ALIGN"
+          "label": "DET-ALIGN",
+          "storage": "DETECT_ALIGN"
         },
         {
           "value": 3,
-          "label": "DET-INVIS"
+          "label": "DET-INVIS",
+          "storage": "DETECT_INVIS"
         },
         {
           "value": 4,
-          "label": "DET-MAGIC"
+          "label": "DET-MAGIC",
+          "storage": "DETECT_MAGIC"
         },
         {
           "value": 5,
-          "label": "SENSE-LIFE"
+          "label": "SENSE-LIFE",
+          "storage": "SENSE_LIFE"
         },
         {
           "value": 6,
-          "label": "WATERWALK"
+          "label": "WATERWALK",
+          "storage": "WATERWALK"
         },
         {
           "value": 7,
-          "label": "SANCT"
+          "label": "SANCT",
+          "storage": "SANCTUARY"
         },
         {
           "value": 8,
-          "label": "GROUP"
+          "label": "GROUP",
+          "storage": "GROUP"
         },
         {
           "value": 9,
-          "label": "CURSE"
+          "label": "CURSE",
+          "storage": "CURSE"
         },
         {
           "value": 10,
-          "label": "INFRA"
+          "label": "INFRA",
+          "storage": "INFRAVISION"
         },
         {
           "value": 11,
-          "label": "POISON"
+          "label": "POISON",
+          "storage": "POISON"
         },
         {
           "value": 12,
-          "label": "PROT-EVIL"
+          "label": "PROT-EVIL",
+          "storage": "PROTECT_EVIL"
         },
         {
           "value": 13,
-          "label": "PROT-GOOD"
+          "label": "PROT-GOOD",
+          "storage": "PROTECT_GOOD"
         },
         {
           "value": 14,
-          "label": "SLEEP"
+          "label": "SLEEP",
+          "storage": "SLEEP"
         },
         {
           "value": 15,
-          "label": "!TRACK"
+          "label": "!TRACK",
+          "storage": "NOTRACK"
         },
         {
           "value": 16,
-          "label": "FLESH-ALTER"
+          "label": "FLESH-ALTER",
+          "storage": "FLESH_ALTER"
         },
         {
           "value": 17,
-          "label": "DODGE"
+          "label": "DODGE",
+          "storage": "DODGE"
         },
         {
           "value": 18,
-          "label": "SNEAK"
+          "label": "SNEAK",
+          "storage": "SNEAK"
         },
         {
           "value": 19,
-          "label": "HIDE"
+          "label": "HIDE",
+          "storage": "HIDE"
         },
         {
           "value": 20,
-          "label": "BERSERK"
+          "label": "BERSERK",
+          "storage": "BERSERK"
         },
         {
           "value": 21,
-          "label": "CHARM"
+          "label": "CHARM",
+          "storage": "CHARM"
         },
         {
           "value": 22,
-          "label": "FOLLOW"
+          "label": "FOLLOW",
+          "storage": "FOLLOW"
         },
         {
           "value": 23,
-          "label": "WIMPY"
+          "label": "WIMPY",
+          "storage": "WIMPY"
         },
         {
           "value": 24,
-          "label": "KUJI-KIRI"
+          "label": "KUJI-KIRI",
+          "storage": "KUJI_KIRI"
         },
         {
           "value": 25,
-          "label": "CUTTHROAT"
+          "label": "CUTTHROAT",
+          "storage": "CUTTHROAT"
         },
         {
           "value": 26,
-          "label": "FLY"
+          "label": "FLY",
+          "storage": "FLY"
         },
         {
           "value": 27,
-          "label": "WEREWOLF"
+          "label": "WEREWOLF",
+          "storage": "WEREWOLF"
         },
         {
           "value": 28,
-          "label": "VAMPIRE"
+          "label": "VAMPIRE",
+          "storage": "VAMPIRE"
         },
         {
           "value": 29,
-          "label": "MOUNTED"
+          "label": "MOUNTED",
+          "storage": "MOUNT"
         },
         {
           "value": 30,
-          "label": "INVULN"
+          "label": "INVULN",
+          "storage": "INVULN"
         },
         {
           "value": 31,
-          "label": "FLAMING"
+          "label": "FLAMING",
+          "storage": "FLAMING"
         },
         {
           "value": 32,
-          "label": "NOTHING"
+          "label": "NOTHING",
+          "storage": "NOTHING"
         },
         {
           "value": 33,
-          "label": "HASTE"
+          "label": "HASTE",
+          "storage": "HASTE"
         },
         {
           "value": 34,
-          "label": "SLOW"
+          "label": "SLOW",
+          "storage": "SLOW"
         },
         {
           "value": 35,
-          "label": "DREAM"
+          "label": "DREAM",
+          "storage": "DREAM"
         },
         {
           "value": 36,
-          "label": "WATERBREATHE"
+          "label": "WATERBREATHE",
+          "storage": "WATERBREATHE"
         }
       ]
     },

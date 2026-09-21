@@ -51,3 +51,48 @@ func TestOLCSchemaOmitsFaithfulNoOps(t *testing.T) {
 		}
 	}
 }
+
+func TestOLCSchemaP9Descriptors(t *testing.T) {
+	mob, ok := olc.SchemaForKind("mob")
+	if !ok {
+		t.Fatal("mob schema is not registered")
+	}
+	var actionFlagStorage string
+	hasNoise := false
+	for _, field := range mob.Fields {
+		if field.Key == "noise" {
+			hasNoise = true
+		}
+		if field.Key == "action_flags" && len(field.Options) > 5 {
+			actionFlagStorage = field.Options[5].Storage
+		}
+	}
+	if !hasNoise {
+		t.Fatal("mob schema omits noise")
+	}
+	if actionFlagStorage != "AGGRESSIVE" {
+		t.Fatalf("action flag storage = %q, want AGGRESSIVE", actionFlagStorage)
+	}
+
+	object, ok := olc.SchemaForKind("obj")
+	if !ok || object.Applies == nil {
+		t.Fatal("object schema omits applies descriptor")
+	}
+	if object.Applies.Max != 6 || object.Applies.AddOperation != "add_affect" || object.Applies.RemoveOperation != "remove_affect" {
+		t.Fatalf("applies descriptor = %+v", object.Applies)
+	}
+	if len(object.Applies.Options) != len(olc.ApplyTypeNames) {
+		t.Fatalf("apply options = %d, want %d", len(object.Applies.Options), len(olc.ApplyTypeNames))
+	}
+
+	room, ok := olc.SchemaForKind("room")
+	if !ok || room.Exits == nil {
+		t.Fatal("room schema omits exit descriptor")
+	}
+	if got, want := len(room.Exits.DoorOptions), 3; got != want {
+		t.Fatalf("door options = %d, want %d", got, want)
+	}
+	if got, want := room.Exits.DoorOptions[1].Label, "Closeable door"; got != want {
+		t.Fatalf("closeable door label = %q, want %q", got, want)
+	}
+}

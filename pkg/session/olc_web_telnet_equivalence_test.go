@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -533,7 +534,7 @@ func TestP6ScriptEditsSurviveDiscardLikeTelnet(t *testing.T) {
 		w, err := game.NewWorld(&parser.World{
 			SourceDir: root,
 			Rooms:     []parser.Room{{VNum: 1001, Name: "Room", Zone: 1, ScriptName: "room-old", Exits: map[string]parser.Exit{}}},
-			Mobs:      []parser.Mob{{VNum: 1101, Keywords: "guard", ShortDesc: "a guard", LongDesc: "A guard is here.\r\n", ScriptName: "mob-old", Level: 1}},
+			Mobs:      []parser.Mob{{VNum: 1101, Keywords: "guard", ShortDesc: "a guard", LongDesc: "A guard is here.\r\n", ActionFlags: []string{"ISNPC"}, ScriptName: "mob-old", Level: 1}},
 			Objs:      []parser.Obj{{VNum: 1201, Keywords: "sword", ShortDesc: "a sword", LongDesc: "A sword lies here.", ScriptName: "obj-old"}},
 			Zones:     []parser.Zone{{Number: 1, Name: "Zone", TopRoom: 1999}},
 		})
@@ -794,6 +795,159 @@ func TestP6ScriptEditsSurviveDiscardLikeTelnet(t *testing.T) {
 	}
 }
 
+// TestP6ScriptEditsSurviveCommitLikeTelnet covers the other side of the C
+// shallow-copy seam: live script edits must survive the later whole-prototype
+// commit and the zone writer, not only a discard. This is deliberately a file
+// comparison so the test crosses the storage boundary as well as the editor
+// state machine (R5f).
+func TestP6ScriptEditsSurviveCommitLikeTelnet(t *testing.T) {
+	build := func() (*game.World, *Manager) {
+		root := t.TempDir()
+		for _, dir := range []string{"mob", "obj", "shp", "zon", "wld"} {
+			if err := os.MkdirAll(filepath.Join(root, dir), 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}
+		w, err := game.NewWorld(&parser.World{
+			SourceDir: root,
+			Rooms:     []parser.Room{{VNum: 1001, Name: "Room", Zone: 1, Exits: map[string]parser.Exit{}}},
+			Mobs:      []parser.Mob{{VNum: 1101, Keywords: "guard", ShortDesc: "a guard", LongDesc: "A guard is here.\r\n", ActionFlags: []string{"ISNPC"}, ScriptName: "mob-old", Level: 1}},
+			Objs:      []parser.Obj{{VNum: 1201, Keywords: "sword", ShortDesc: "a sword", LongDesc: "A sword lies here.", ScriptName: "obj-old"}},
+			Zones:     []parser.Zone{{Number: 1, Name: "Zone", TopRoom: 1999}},
+		})
+		if err != nil {
+			t.Fatalf("NewWorld: %v", err)
+		}
+		w.WorldPath = root
+		t.Cleanup(w.StopAITicker)
+		return w, newTestManager(t, w, nil)
+	}
+
+	drain := func(t *testing.T, s *Session) { t.Helper(); _ = readMsgText(t, s) }
+	read := func(w *game.World, ext string) (string, error) {
+		zone, ok := olc.ZoneForVNum(w.GetAllZones(), 1001)
+		if !ok {
+			return "", os.ErrNotExist
+		}
+		var err error
+		var path string
+		switch ext {
+		case "mob":
+			err = saveMeditZone(w, zone)
+			path = "mob/1.mob"
+		case "obj":
+			err = saveOeditZone(w, zone)
+			path = "obj/1.obj"
+		}
+		if err != nil {
+			return "", err
+		}
+		data, err := os.ReadFile(filepath.Join(w.WorldPath, path))
+		return string(data), err
+	}
+
+	tests := []struct {
+		name       string
+		ext        string
+		wantScript string
+		telnet     func(*Session)
+		web        func(*game.World, *olc.DraftStore) error
+	}{
+		{
+			name:       "mob",
+			ext:        "mob",
+			wantScript: "Script: mob-live 0",
+			telnet: func(s *Session) {
+				_ = cmdMedit(s, []string{"1101"})
+				drain(t, s)
+				for _, input := range []string{"s", "1", "mob-live", "0", "2", "draft guard", "q", "y"} {
+					s.handleMeditInput(input)
+					drain(t, s)
+				}
+			},
+			web: func(w *game.World, drafts *olc.DraftStore) error {
+				mob, ok := w.SnapshotMob(1101)
+				if !ok {
+					return os.ErrNotExist
+				}
+				if _, err := drafts.OpenEntity("p6-script", olc.KindMob, 1101, olc.EntityValue{Mob: mob}); err != nil {
+					return err
+				}
+				draft, err := drafts.PatchEntity("p6-script", []olc.Operation{
+					{Kind: olc.OpSetMobScriptName, Text: "mob-live", SetScriptName: func(name string) bool {
+						live, exists := w.SnapshotMob(1101)
+						return exists && w.SetMobScript(1101, name, live.LuaFunctions)
+					}},
+					{Kind: olc.OpSetMobKeywords, Text: "draft guard"},
+				})
+				if err != nil {
+					return err
+				}
+				return commitWebMob(w, draft)
+			},
+		},
+		{
+			name:       "object",
+			ext:        "obj",
+			wantScript: "S obj-live 0",
+			telnet: func(s *Session) {
+				_ = cmdOedit(s, []string{"1201"})
+				drain(t, s)
+				for _, input := range []string{"s", "1", "obj-live", "0", "1", "draft sword", "q", "y"} {
+					s.handleOeditInput(input)
+					drain(t, s)
+				}
+			},
+			web: func(w *game.World, drafts *olc.DraftStore) error {
+				object, ok := w.SnapshotObj(1201)
+				if !ok {
+					return os.ErrNotExist
+				}
+				if _, err := drafts.OpenEntity("p6-script", olc.KindObject, 1201, olc.EntityValue{Object: object}); err != nil {
+					return err
+				}
+				draft, err := drafts.PatchEntity("p6-script", []olc.Operation{
+					{Kind: olc.OpSetObjScriptName, Text: "obj-live", SetScriptName: func(name string) bool {
+						live, exists := w.SnapshotObj(1201)
+						return exists && w.SetObjScript(1201, name, live.LuaFunctions)
+					}},
+					{Kind: olc.OpSetObjKeywords, Text: "draft sword"},
+				})
+				if err != nil {
+					return err
+				}
+				return commitWebObj(w, draft)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			wTelnet, manager := build()
+			test.telnet(makeCommandTestSession(t, manager, "P6", 40, 1001))
+			telnetBytes, err := read(wTelnet, test.ext)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			wWeb, _ := build()
+			if err := test.web(wWeb, olc.NewDraftStore()); err != nil {
+				t.Fatal(err)
+			}
+			webBytes, err := read(wWeb, test.ext)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(telnetBytes, test.wantScript) || !strings.Contains(webBytes, test.wantScript) {
+				t.Fatalf("%s script missing after commit: telnet=%q web=%q", test.name, telnetBytes, webBytes)
+			}
+			if telnetBytes != webBytes {
+				t.Fatalf("%s script/commit bytes differ:\ntelnet=%q\nweb=%q", test.name, telnetBytes, webBytes)
+			}
+		})
+	}
+}
+
 func commitWebMob(w *game.World, draft olc.EntityDraft) error {
 	zone, ok := olc.ZoneForVNum(w.GetAllZones(), draft.VNum)
 	if !ok {
@@ -802,7 +956,10 @@ func commitWebMob(w *game.World, draft olc.EntityDraft) error {
 	lock := olc.ZoneSaveLock(zone.Number)
 	lock.Lock()
 	defer lock.Unlock()
-	if !olc.CommitMob(olc.MobCommitInput{Draft: draft, Commit: w.CommitEditedMob}) {
+	if !olc.CommitMob(olc.MobCommitInput{
+		Draft: draft, Commit: w.CommitEditedMob,
+		LiveScript: func() (parser.Mob, bool) { return w.SnapshotMob(draft.VNum) },
+	}) {
 		return fmt.Errorf("mob commit failed")
 	}
 	return nil
@@ -816,7 +973,10 @@ func commitWebObj(w *game.World, draft olc.EntityDraft) error {
 	lock := olc.ZoneSaveLock(zone.Number)
 	lock.Lock()
 	defer lock.Unlock()
-	if !olc.CommitObj(olc.ObjectCommitInput{Draft: draft, Commit: w.CommitEditedObj}) {
+	if !olc.CommitObj(olc.ObjectCommitInput{
+		Draft: draft, Commit: w.CommitEditedObj,
+		LiveScript: func() (parser.Obj, bool) { return w.SnapshotObj(draft.VNum) },
+	}) {
 		return fmt.Errorf("object commit failed")
 	}
 	return nil

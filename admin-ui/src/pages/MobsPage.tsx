@@ -91,6 +91,7 @@ export function MobsPage() {
                   <SortHeader label="AC" field="ac" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="Gold" field="gold" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="EXP" field="exp" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-ink-muted">Edit</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,6 +120,9 @@ export function MobsPage() {
                     </td>
                     <td className="px-4 py-3 text-ink-muted font-mono">
                       {mob.exp.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link to={`/admin/game/mobs/${mob.vnum}/edit`} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Edit</Link>
                     </td>
                   </tr>
                 ))}

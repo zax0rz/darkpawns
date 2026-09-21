@@ -91,6 +91,7 @@ export function ObjectsPage() {
                   <SortHeader label="Type" field="type_flag" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="Weight" field="weight" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="Cost" field="cost" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-ink-muted">Edit</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,6 +117,9 @@ export function ObjectsPage() {
                     </td>
                     <td className="px-4 py-3 text-ink-muted font-mono">
                       {obj.cost.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link to={`/admin/game/objects/${obj.vnum}/edit`} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Edit</Link>
                     </td>
                   </tr>
                 ))}

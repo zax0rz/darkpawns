@@ -3,8 +3,9 @@ package olc
 // VocabularyEntry is one numbered OLC menu entry. Value is the value accepted
 // by the editor operation; Label is the byte-faithful menu spelling.
 type VocabularyEntry struct {
-	Value int    `json:"value"`
-	Label string `json:"label"`
+	Value   int    `json:"value"`
+	Label   string `json:"label"`
+	Storage string `json:"storage,omitempty"`
 }
 
 // FlagVocabulary joins the world-file token and the telnet display label at
@@ -250,7 +251,7 @@ func VocabularyOptions(names []string) []VocabularyEntry {
 func FlagOptions(flags []FlagVocabulary) []VocabularyEntry {
 	options := make([]VocabularyEntry, len(flags))
 	for i, flag := range flags {
-		options[i] = VocabularyEntry{Value: flag.Bit, Label: flag.Label}
+		options[i] = VocabularyEntry{Value: flag.Bit, Label: flag.Label, Storage: flag.Storage}
 	}
 	return options
 }

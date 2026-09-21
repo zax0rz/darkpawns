@@ -988,6 +988,12 @@ func (s *Session) saveMeditInternallyLocked() {
 	// cleanup would be cleared from the save list without being persisted.
 	saveMu := zoneSaveLock(state.zoneNumber)
 	saveMu.Lock()
+	// C's MEDIT copy shallow-copies the live script storage. Preserve script
+	// edits made through the live script menu across the whole-mob commit.
+	if live, ok := s.manager.world.SnapshotMob(state.number); ok {
+		state.mob.ScriptName = live.ScriptName
+		state.mob.LuaFunctions = live.LuaFunctions
+	}
 	s.manager.world.CommitEditedMob(state.mob)
 	s.manager.world.RefreshLiveMobStrings(state.number, state.mob)
 	markOLCDirty(olcKindMob, state.zoneNumber)
