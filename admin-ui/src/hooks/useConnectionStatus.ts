@@ -16,9 +16,12 @@ export function useConnectionStatus(intervalMs = 30000) {
   }, []);
 
   useEffect(() => {
-    check();
+    const initial = setTimeout(check, 0);
     const id = setInterval(check, intervalMs);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(initial);
+      clearInterval(id);
+    };
   }, [check, intervalMs]);
 
   return status;

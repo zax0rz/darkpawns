@@ -1,6 +1,18 @@
 const API_BASE = '/admin';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+export class ApiError extends Error {
+  readonly status: number;
+  readonly payload: unknown;
+
+  constructor(status: number, payload: unknown, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
+export async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('admin_token');
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -17,8 +29,20 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`API error ${res.status}: ${body}`);
+    let payload: unknown = body;
+    try {
+      payload = body ? JSON.parse(body) : null;
+    } catch {
+      /* Keep the original text when the server did not return JSON. */
+    }
+    const message =
+      typeof payload === 'object' && payload !== null && 'error' in payload &&
+      typeof payload.error === 'string'
+        ? payload.error
+        : `API error ${res.status}: ${body}`;
+    throw new ApiError(res.status, payload, message);
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 

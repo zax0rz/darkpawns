@@ -18,7 +18,7 @@ export function ObjectsPage() {
   const filtered = useMemo(() => {
     if (!objects) return [];
     const q = search.toLowerCase();
-    let list = q
+    const list = q
       ? objects.filter(
           (o) =>
             String(o.vnum).includes(q) ||
@@ -48,24 +48,6 @@ export function ObjectsPage() {
       setSortAsc(key === 'vnum' || key === 'short_desc');
     }
   };
-
-  const SortHeader = ({
-    label,
-    field,
-  }: {
-    label: string;
-    field: keyof Obj;
-  }) => (
-    <th
-      className="text-left px-4 py-3 cursor-pointer hover:text-accent select-none"
-      onClick={() => toggleSort(field)}
-    >
-      {label}
-      {sortKey === field && (
-        <span className="ml-1 text-accent">{sortAsc ? '↑' : '↓'}</span>
-      )}
-    </th>
-  );
 
   return (
     <div className="space-y-6">
@@ -104,11 +86,11 @@ export function ObjectsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
-                  <SortHeader label="VNum" field="vnum" />
-                  <SortHeader label="Name" field="short_desc" />
-                  <SortHeader label="Type" field="type_flag" />
-                  <SortHeader label="Weight" field="weight" />
-                  <SortHeader label="Cost" field="cost" />
+                  <SortHeader label="VNum" field="vnum" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="Name" field="short_desc" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="Type" field="type_flag" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="Weight" field="weight" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="Cost" field="cost" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                 </tr>
               </thead>
               <tbody>
@@ -149,5 +131,29 @@ export function ObjectsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function SortHeader({
+  label,
+  field,
+  sortKey,
+  sortAsc,
+  onSort,
+}: {
+  label: string;
+  field: keyof Obj;
+  sortKey: keyof Obj;
+  sortAsc: boolean;
+  onSort: (field: keyof Obj) => void;
+}) {
+  return (
+    <th
+      className="cursor-pointer select-none px-4 py-3 text-left hover:text-accent"
+      onClick={() => onSort(field)}
+    >
+      {label}
+      {sortKey === field && <span className="ml-1 text-accent">{sortAsc ? '↑' : '↓'}</span>}
+    </th>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
-import { useToast } from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 import { PlayerDetailModal } from '../components/PlayerDetailModal';
 import { MetricsCard } from '../components/MetricsCard';
 

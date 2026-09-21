@@ -17,7 +17,7 @@ export function MobsPage() {
   const filtered = useMemo(() => {
     if (!mobs) return [];
     const q = search.toLowerCase();
-    let list = q
+    const list = q
       ? mobs.filter(
           (m) =>
             String(m.vnum).includes(q) ||
@@ -47,24 +47,6 @@ export function MobsPage() {
       setSortAsc(false);
     }
   };
-
-  const SortHeader = ({
-    label,
-    field,
-  }: {
-    label: string;
-    field: keyof Mob;
-  }) => (
-    <th
-      className="text-left px-4 py-3 cursor-pointer hover:text-accent select-none"
-      onClick={() => toggleSort(field)}
-    >
-      {label}
-      {sortKey === field && (
-        <span className="ml-1 text-accent">{sortAsc ? '↑' : '↓'}</span>
-      )}
-    </th>
-  );
 
   return (
     <div className="space-y-6">
@@ -103,12 +85,12 @@ export function MobsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
-                  <SortHeader label="VNum" field="vnum" />
-                  <SortHeader label="Name" field="short_desc" />
-                  <SortHeader label="Level" field="level" />
-                  <SortHeader label="AC" field="ac" />
-                  <SortHeader label="Gold" field="gold" />
-                  <SortHeader label="EXP" field="exp" />
+                  <SortHeader label="VNum" field="vnum" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="Name" field="short_desc" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="Level" field="level" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="AC" field="ac" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="Gold" field="gold" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
+                  <SortHeader label="EXP" field="exp" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                 </tr>
               </thead>
               <tbody>
@@ -152,5 +134,29 @@ export function MobsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function SortHeader({
+  label,
+  field,
+  sortKey,
+  sortAsc,
+  onSort,
+}: {
+  label: string;
+  field: keyof Mob;
+  sortKey: keyof Mob;
+  sortAsc: boolean;
+  onSort: (field: keyof Mob) => void;
+}) {
+  return (
+    <th
+      className="cursor-pointer select-none px-4 py-3 text-left hover:text-accent"
+      onClick={() => onSort(field)}
+    >
+      {label}
+      {sortKey === field && <span className="ml-1 text-accent">{sortAsc ? '↑' : '↓'}</span>}
+    </th>
   );
 }

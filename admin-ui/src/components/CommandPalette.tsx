@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from './Icon';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,29 +24,6 @@ function addRecent(id: string) {
   const recent = getRecent().filter((r) => r !== id);
   recent.unshift(id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(recent.slice(0, 8)));
-}
-
-export function useCommandPalette() {
-  const [open, setOpen] = useState(false);
-
-  const openPalette = useCallback(() => setOpen(true), []);
-  const closePalette = useCallback(() => setOpen(false), []);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setOpen((prev) => !prev);
-      }
-      if (e.key === 'Escape') {
-        setOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  return { open, openPalette, closePalette };
 }
 
 function fuzzyMatch(query: string, text: string): boolean {
@@ -103,19 +80,20 @@ export function CommandPalette({
   });
 
   useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
-  useEffect(() => {
     if (open) {
-      setQuery('');
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
 
+  const handleClose = () => {
+    setQuery('');
+    setSelectedIndex(0);
+    onClose();
+  };
+
   const execute = (item: CommandItem) => {
     addRecent(item.id);
-    onClose();
+    handleClose();
     item.action();
   };
 
@@ -129,7 +107,7 @@ export function CommandPalette({
     } else if (e.key === 'Enter' && items[selectedIndex]) {
       execute(items[selectedIndex]);
     } else if (e.key === 'Escape') {
-      onClose();
+      handleClose();
     }
   };
 
@@ -158,7 +136,7 @@ export function CommandPalette({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-ink/60" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink/60" onClick={handleClose} />
 
       {/* Palette */}
       <div className="relative w-full max-w-lg bg-paper-deep border border-rule rounded-none shadow-2xl overflow-hidden">
@@ -169,7 +147,10 @@ export function CommandPalette({
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIndex(0);
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Type a command..."
             className="flex-1 bg-transparent py-3 text-sm text-ink placeholder-slate-400 focus:outline-none"
