@@ -262,6 +262,93 @@ func TestOLCPreviewAndZoneCommandView(t *testing.T) {
 	}
 }
 
+func TestOLCVNumReadsAreReadOnly(t *testing.T) {
+	handler := newOLCTestRouter(t, 31, 1, nil)
+	mapRec := doOLCTestRequest(t, handler, "/admin/olc/zones/1/vnums", true)
+	if mapRec.Code != http.StatusOK {
+		t.Fatalf("vnum map status = %d; body: %s", mapRec.Code, mapRec.Body.String())
+	}
+	var vnumMap olcVNumMap
+	if err := json.Unmarshal(mapRec.Body.Bytes(), &vnumMap); err != nil {
+		t.Fatalf("decode vnum map: %v", err)
+	}
+	if vnumMap.Zone != 1 || len(vnumMap.Kinds) != 4 {
+		t.Fatalf("vnum map = %+v, want zone 1 and four kinds", vnumMap)
+	}
+	for _, kind := range vnumMap.Kinds {
+		if kind.Suggested == 0 || len(kind.Free) == 0 {
+			t.Fatalf("kind %+v has no free suggestion", kind)
+		}
+	}
+
+	lookupRec := doOLCTestRequest(t, handler, "/admin/olc/lookup/room/1001/name", true)
+	if lookupRec.Code != http.StatusOK {
+		t.Fatalf("lookup status = %d; body: %s", lookupRec.Code, lookupRec.Body.String())
+	}
+	var lookup olcVNumLookup
+	if err := json.Unmarshal(lookupRec.Body.Bytes(), &lookup); err != nil {
+		t.Fatalf("decode lookup: %v", err)
+	}
+	if !lookup.Exists || lookup.Name != "First Room" || lookup.ZoneNumber != 1 {
+		t.Fatalf("lookup = %+v, want existing First Room in zone 1", lookup)
+	}
+
+	missingRec := doOLCTestRequest(t, handler, "/admin/olc/lookup/room/1003/name", true)
+	if missingRec.Code != http.StatusOK {
+		t.Fatalf("missing lookup status = %d; body: %s", missingRec.Code, missingRec.Body.String())
+	}
+	if err := json.Unmarshal(missingRec.Body.Bytes(), &lookup); err != nil {
+		t.Fatalf("decode missing lookup: %v", err)
+	}
+	if lookup.Exists {
+		t.Fatalf("missing lookup = %+v, want exists=false", lookup)
+	}
+
+	var claims []olc.ClaimEntry
+	claimsRec := doOLCTestRequest(t, handler, "/admin/olc/held", true)
+	if err := json.Unmarshal(claimsRec.Body.Bytes(), &claims); err != nil {
+		t.Fatalf("decode claims: %v", err)
+	}
+	if len(claims) != 0 {
+		t.Fatalf("read lookups changed claims: %+v", claims)
+	}
+	var dirty []olc.DirtyEntry
+	dirtyRec := doOLCTestRequest(t, handler, "/admin/olc/pending", true)
+	if err := json.Unmarshal(dirtyRec.Body.Bytes(), &dirty); err != nil {
+		t.Fatalf("decode pending: %v", err)
+	}
+	if len(dirty) != 0 {
+		t.Fatalf("read lookups changed pending saves: %+v", dirty)
+	}
+}
+
+func TestOLCNewEntityDraftsUseFaithfulDefaults(t *testing.T) {
+	tests := []struct {
+		kind string
+		vnum int
+		want string
+	}{
+		{kind: "room", vnum: 1003, want: "An unfinished room"},
+		{kind: "mob", vnum: 100, want: "the unfinished mob"},
+		{kind: "obj", vnum: 101, want: "an unfinished object"},
+		{kind: "shop", vnum: 102, want: "KeeperVNum"},
+	}
+	for _, test := range tests {
+		t.Run(test.kind, func(t *testing.T) {
+			handler := newOLCTestRouter(t, 31, 1, newFakeOLCWriteStateProvider())
+			path := "/admin/olc/" + test.kind + "/" + strconv.Itoa(test.vnum)
+			open := doOLCJSONRequest(t, handler, http.MethodPost, path, nil)
+			if open.Code != http.StatusOK || !strings.Contains(open.Body.String(), test.want) {
+				t.Fatalf("open status/body = %d/%s; want %q", open.Code, open.Body.String(), test.want)
+			}
+			commit := doOLCJSONRequest(t, handler, http.MethodPost, path+"/draft/commit", nil)
+			if commit.Code != http.StatusOK {
+				t.Fatalf("commit status = %d; body: %s", commit.Code, commit.Body.String())
+			}
+		})
+	}
+}
+
 func TestOLCEntityDraftLifecycleForMobObjectShopAndZone(t *testing.T) {
 	state := newFakeOLCWriteStateProvider()
 	tests := []struct {

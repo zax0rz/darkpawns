@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, type Shop } from '../api/client';
 import { TableSkeleton } from '../components/Skeleton';
+import { NewEntityPanel } from '../components/olc/NewEntityPanel';
 
 export function ShopsPage() {
   const [search, setSearch] = useState('');
@@ -23,6 +24,8 @@ export function ShopsPage() {
         <h1 className="text-2xl font-bold text-ink">Shops</h1>
         {shops && <span className="text-sm text-ink-muted">{filtered.length} of {shops.length} shops</span>}
       </div>
+
+      <NewEntityPanel kind="shop" />
 
       <input
         type="search"

@@ -242,6 +242,15 @@
     "exits",
     "extra_descriptions"
   ],
+  "actions": [
+    {
+      "key": "new_room",
+      "label": "New room",
+      "required_level": 31,
+      "required_label": "BUILDER",
+      "allowed": false
+    }
+  ],
   "exits": {
     "directions": [
       "north",

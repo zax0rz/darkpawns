@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { api, type Obj } from '../api/client';
 import { TableSkeleton } from '../components/Skeleton';
 import { itemTypeLabel } from '../lib/gameLabels';
+import { NewEntityPanel } from '../components/olc/NewEntityPanel';
 
 export function ObjectsPage() {
   const [search, setSearch] = useState('');
@@ -59,6 +60,8 @@ export function ObjectsPage() {
           </span>
         )}
       </div>
+
+      <NewEntityPanel kind="obj" />
 
       {/* Search */}
       <input

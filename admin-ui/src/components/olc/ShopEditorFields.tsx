@@ -1,5 +1,6 @@
 import type { OlcPatchOperation, OlcSchema, OlcSchemaField, OlcShop } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
+import { VNumPicker } from './VNumPicker';
 
 interface ShopEditorFieldsProps {
   schema: OlcSchema;
@@ -186,15 +187,28 @@ export function ShopEditorFields({ schema, shop, dirty, disabled = false, onOper
             return (
               <div key={field.key}>
                 {fieldLabel(field, changed)}
-                <ServerProposal
-                  value={value}
-                  identity={`shop-${field.key}`}
-                  disabled={disabled}
-                  multiline={false}
-                  min={field.bounds?.min}
-                  max={field.bounds?.max}
-                  onCommit={(raw) => onOperation([{ kind: operation, ...(isMessage ? { text: raw, index: MESSAGE_INDEX[field.key] } : field.key.includes('profit') ? { float: Number(raw) } : { value: Number(raw) }) }])}
-                />
+                {field.key === 'keeper' ? (
+                  <VNumPicker
+                    kind="mob"
+                    value={shop.keeperVnum}
+                    identity="shop-keeper"
+                    label={field.label}
+                    showLabel={false}
+                    disabled={disabled}
+                    min={-1}
+                    onCommit={(raw) => onOperation([{ kind: operation, value: Number(raw) }])}
+                  />
+                ) : (
+                  <ServerProposal
+                    value={value}
+                    identity={`shop-${field.key}`}
+                    disabled={disabled}
+                    multiline={false}
+                    min={field.bounds?.min}
+                    max={field.bounds?.max}
+                    onCommit={(raw) => onOperation([{ kind: operation, ...(isMessage ? { text: raw, index: MESSAGE_INDEX[field.key] } : field.key.includes('profit') ? { float: Number(raw) } : { value: Number(raw) }) }])}
+                  />
+                )}
                 {field.bounds && <p className="mt-1 font-mono text-[11px] text-ink-muted">{field.bounds.min}–{field.bounds.max}</p>}
               </div>
             );

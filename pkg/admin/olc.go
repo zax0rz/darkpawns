@@ -63,6 +63,7 @@ type olcPreviewResponse struct {
 	Kind       string          `json:"kind"`
 	VNum       int             `json:"vnum"`
 	ZoneNumber int             `json:"zone_number"`
+	Exists     bool            `json:"exists"`
 	Room       *parser.Room    `json:"room,omitempty"`
 	Mob        *parser.Mob     `json:"mob,omitempty"`
 	Object     *parser.Obj     `json:"object,omitempty"`
@@ -71,12 +72,12 @@ type olcPreviewResponse struct {
 }
 
 type olcZonePreview struct {
-	Number    int                  `json:"number"`
-	Name      string               `json:"name"`
-	TopRoom   int                  `json:"top_room"`
-	Lifespan  int                  `json:"lifespan"`
-	ResetMode int                  `json:"reset_mode"`
-	Commands  []parser.ZoneCommand `json:"commands"`
+	Number    int                     `json:"number"`
+	Name      string                  `json:"name"`
+	TopRoom   int                     `json:"top_room"`
+	Lifespan  int                     `json:"lifespan"`
+	ResetMode int                     `json:"reset_mode"`
+	Commands  []entityZoneCommandView `json:"commands"`
 }
 
 type olcHeldOutput struct {
@@ -176,6 +177,7 @@ func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCRead
 	}
 	registerOLCZoneSave(api, world, database, saver)
 	registerOLCZoneCreation(api, world, database)
+	registerOLCReadGaps(api, world, database)
 }
 
 func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, error) {
@@ -192,30 +194,35 @@ func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, e
 		Kind:       kind,
 		VNum:       vnum,
 		ZoneNumber: zone.Number,
+		Exists:     true,
 	}
 	switch entityKind {
 	case olc.KindRoom:
 		room, exists := world.SnapshotRoom(vnum)
 		if !exists {
-			return olcPreviewResponse{}, huma.NewError(http.StatusNotFound, "room not found")
+			room = newOLCRoom(vnum, zone.Number)
+			preview.Exists = false
 		}
 		preview.Room = &room
 	case olc.KindMob:
 		mob, exists := world.SnapshotMob(vnum)
 		if !exists {
-			return olcPreviewResponse{}, huma.NewError(http.StatusNotFound, "mob not found")
+			mob = newOLCMob(vnum)
+			preview.Exists = false
 		}
 		preview.Mob = &mob
 	case olc.KindObject:
 		obj, exists := world.SnapshotObj(vnum)
 		if !exists {
-			return olcPreviewResponse{}, huma.NewError(http.StatusNotFound, "object not found")
+			obj = newOLCObject(vnum)
+			preview.Exists = false
 		}
 		preview.Object = &obj
 	case olc.KindShop:
 		shop, exists := world.SnapshotShop(vnum)
 		if !exists {
-			return olcPreviewResponse{}, huma.NewError(http.StatusNotFound, "shop not found")
+			shop = game.Shop{VNum: vnum, KeeperVNum: -1, ProfitBuy: 1.0, ProfitSell: 1.0, CloseHour1: 28}
+			preview.Exists = false
 		}
 		preview.Shop = &shop
 	case olc.KindZone:
@@ -227,13 +234,17 @@ func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, e
 		if vnum == zone.Number {
 			commands = append([]parser.ZoneCommand(nil), zoneCopy.Commands...)
 		}
+		views := make([]entityZoneCommandView, len(commands))
+		for i, command := range commands {
+			views[i] = entityZoneCommandView{Position: i, Command: command.Command, IfFlag: command.IfFlag, Arg1: command.Arg1, Arg2: command.Arg2, Arg3: command.Arg3}
+		}
 		preview.Zone = &olcZonePreview{
 			Number:    zoneCopy.Number,
 			Name:      zoneCopy.Name,
 			TopRoom:   zoneCopy.TopRoom,
 			Lifespan:  zoneCopy.Lifespan,
 			ResetMode: zoneCopy.ResetMode,
-			Commands:  commands,
+			Commands:  views,
 		}
 	}
 	return preview, nil

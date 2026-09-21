@@ -1,17 +1,13 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { olcApi, type OlcSchema } from '../api/olc';
 import { Skeleton, CardSkeleton } from '../components/Skeleton';
 
-function resetModeLabel(mode: number): string {
-  switch (mode) {
-    case 0: return 'Never';
-    case 1: return 'When empty';
-    case 2: return 'Always';
-    case 3: return 'Force reset';
-    default: return `Mode ${mode}`;
-  }
+function resetModeLabel(mode: number, schema?: OlcSchema): string {
+  const field = schema?.fields.find((entry) => entry.key === 'reset_mode');
+  return field?.options?.find((option) => option.value === mode)?.label || 'Mode ' + mode;
 }
 
 export function ZoneDetailPage() {
@@ -22,6 +18,11 @@ export function ZoneDetailPage() {
     queryKey: ['zone', id],
     queryFn: () => api.zone(Number(id)),
     enabled: !!id,
+  });
+  const zoneNumber = Number(id);
+  const vnumMapQuery = useQuery({ queryKey: ['olc-vnum-map', zoneNumber], queryFn: () => olcApi.vnumMap(zoneNumber), enabled: Number.isInteger(zoneNumber), retry: false });
+  const schemaQueries = useQueries({
+    queries: ['room', 'mob', 'obj', 'shop'].map((kind) => ({ queryKey: ['olc-schema', kind], queryFn: () => olcApi.schema(kind), staleTime: 30 * 60 * 1000, retry: false })),
   });
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState('');
@@ -106,9 +107,11 @@ export function ZoneDetailPage() {
           <StatBlock label="Zone Number" value={zone.number} />
           <StatBlock label="Top Room" value={zone.top_room} />
           <StatBlock label="Lifespan" value={`${zone.lifespan} min`} />
-              <StatBlock label="Reset Mode" value={resetModeLabel(zone.reset_mode)} />
+              <StatBlock label="Reset Mode" value={resetModeLabel(zone.reset_mode, schemaQueries[0]?.data as OlcSchema | undefined)} />
         </div>
       </div>
+
+      <VNumWorkshop map={vnumMapQuery.data} schemas={schemaQueries.map((query) => query.data as OlcSchema | undefined)} loading={vnumMapQuery.isLoading || schemaQueries.some((query) => query.isLoading)} />
 
       {/* Reset Zone */}
       <div className="bg-paper-deep rounded-none border border-rule p-6">
@@ -142,6 +145,39 @@ export function ZoneDetailPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function VNumWorkshop({ map, schemas, loading }: { map?: { kinds: { kind: string; used: number[]; free: { start: number; end: number }[]; suggested: number }[] }; schemas: (OlcSchema | undefined)[]; loading: boolean }) {
+  const routes: Record<string, string> = { room: '/admin/game/rooms/', mob: '/admin/game/mobs/', obj: '/admin/game/objects/', shop: '/admin/game/shops/' };
+  const labels: Record<string, string> = { room: 'Rooms', mob: 'Mobs', obj: 'Objects', shop: 'Shops' };
+  const actions: Record<string, string> = { room: 'new_room', mob: 'new_mob', obj: 'new_obj', shop: 'new_shop' };
+  return (
+    <section className="border border-rule bg-paper-deep p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div><h2 className="text-lg text-ink">Builder workshop</h2><p className="mt-1 text-sm text-ink-muted">Read-only free-VNUM map for this zone. Opening a suggested VNUM starts the draft; this map does not claim it.</p></div>
+        <Link to="/admin/workshop" className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Claims and saves →</Link>
+      </div>
+      {loading && <div className="mt-4 text-sm text-ink-muted">Loading free-VNUM map…</div>}
+      {!loading && map && (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {map.kinds.map((entry) => {
+            const schema = schemas.find((candidate) => candidate?.kind === entry.kind);
+            const action = schema?.actions.find((candidate) => candidate.key === actions[entry.kind]);
+            const suggested = entry.suggested;
+            return (
+              <div key={entry.kind} className="border border-rule bg-paper p-4">
+                <div className="flex items-baseline justify-between gap-2"><h3 className="text-sm font-semibold text-ink">{labels[entry.kind] || entry.kind}</h3><span className="font-mono text-xs text-ink-muted">{entry.used.length} used</span></div>
+                <p className="mt-2 text-xs text-ink-muted">Free: {entry.free.length ? entry.free.map((range) => range.start === range.end ? String(range.start) : range.start + '–' + range.end).join(', ') : 'none'}</p>
+                {suggested > 0 && action?.allowed ? <Link to={(routes[entry.kind] || '/') + suggested + '/edit'} className="mt-3 inline-block border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">{action.label} · #{suggested}</Link> : <p className="mt-3 text-xs text-ink-muted">{action && !action.allowed ? 'Requires ' + action.requiredLabel + ' (level ' + action.requiredLevel + ').' : 'No free VNUM is available.'}</p>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {!loading && !map && <p className="mt-4 text-sm text-accent">The free-VNUM map is unavailable for this zone.</p>}
+      <p className="mt-4 text-xs text-ink-muted">Suggested values are advisory. The server revalidates existence, zone ownership, and capability when a draft opens.</p>
+    </section>
   );
 }
 

@@ -157,5 +157,14 @@
     "products",
     "rooms",
     "trade_namelist"
+  ],
+  "actions": [
+    {
+      "key": "new_shop",
+      "label": "New shop",
+      "required_level": 31,
+      "required_label": "BUILDER",
+      "allowed": false
+    }
   ]
 }

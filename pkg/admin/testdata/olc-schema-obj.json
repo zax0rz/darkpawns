@@ -380,6 +380,15 @@
     "applies",
     "extra_descriptions"
   ],
+  "actions": [
+    {
+      "key": "new_obj",
+      "label": "New object",
+      "required_level": 31,
+      "required_label": "BUILDER",
+      "allowed": false
+    }
+  ],
   "value_matrix": [
     {
       "item_type": 0,

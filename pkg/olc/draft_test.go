@@ -43,6 +43,27 @@ func TestDraftStoreAppliesOrderedOperationsAndReturnsEffectiveCopy(t *testing.T)
 	}
 }
 
+func TestZoneCommandsForRoomUsesStickyRoomCarry(t *testing.T) {
+	commands := []parser.ZoneCommand{
+		{Command: "M", Arg3: 1001},
+		{Command: "G", Arg1: 3001},
+		{Command: "E", Arg1: 3002},
+		{Command: "O", Arg3: 1002},
+		{Command: "P", Arg1: 3003, Arg3: 3004},
+		{Command: "D", Arg1: 1001},
+		{Command: "R", Arg1: 1001},
+	}
+	filtered := ZoneCommandsForRoom(commands, 1001)
+	if len(filtered) != 5 {
+		t.Fatalf("filtered commands = %+v, want M/G/E/D/R", filtered)
+	}
+	for index, want := range []string{"M", "G", "E", "D", "R"} {
+		if filtered[index].Command != want {
+			t.Fatalf("filtered[%d] = %q, want %q", index, filtered[index].Command, want)
+		}
+	}
+}
+
 func TestDraftSurvivesExpiredClaim(t *testing.T) {
 	registry := NewRegistry()
 	owner := testOwner{id: "builder-1", name: "Builder", frontend: FrontendWeb}

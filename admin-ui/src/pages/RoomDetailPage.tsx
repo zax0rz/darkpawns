@@ -58,6 +58,12 @@ export function RoomDetailPage() {
         >
           Edit room
         </Link>
+        <Link
+          to={`/admin/game/zones/${room.zone}/edit?room=${room.vnum}`}
+          className="ml-2 mt-4 inline-block border border-rule bg-paper px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper"
+        >
+          Edit room reset commands
+        </Link>
       </div>
 
       {/* Meta */}
