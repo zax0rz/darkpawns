@@ -261,9 +261,9 @@ export interface RoomPatchOperation {
   enabled?: boolean;
   location?: number;
   modifier?: number;
-  toIndex?: number;
+  to_index?: number;
   command?: string;
-  ifFlag?: number;
+  if_flag?: number;
   arg1?: number;
   arg2?: number;
   arg3?: number;

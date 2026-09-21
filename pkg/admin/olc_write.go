@@ -208,11 +208,12 @@ func registerOLCRoomWrites(api huma.API, world *game.World, database *db.DB, wri
 			lock := olc.ZoneSaveLock(zone.Number)
 			lock.Lock()
 			ok = olc.CommitRoom(olc.RoomCommitInput{
-				Draft:     draft,
-				Actor:     owner.DisplayName(),
-				IPAddress: clientIPFrom(ctx),
-				Commit:    world.CommitEditedRoom,
-				MarkDirty: func() { writes.MarkOLCDirty(olc.KindRoom, zone.Number) },
+				Draft:      draft,
+				Actor:      owner.DisplayName(),
+				IPAddress:  clientIPFrom(ctx),
+				Commit:     world.CommitEditedRoom,
+				LiveScript: func() (parser.Room, bool) { return world.SnapshotRoom(vnum) },
+				MarkDirty:  func() { writes.MarkOLCDirty(olc.KindRoom, zone.Number) },
 				Audit: func(event olc.AuditEvent) {
 					if auditLogger != nil {
 						auditLogger.Log(audit.AuditEvent{

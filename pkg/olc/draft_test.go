@@ -130,3 +130,28 @@ func TestCommitRoomAuditsFieldsWithoutValues(t *testing.T) {
 		t.Fatalf("audit event leaked a field value: %#v", events[0])
 	}
 }
+
+func TestCommitRoomPreservesLiveScript(t *testing.T) {
+	draft := Draft{
+		Kind:     KindRoom,
+		VNum:     1001,
+		Snapshot: parser.Room{VNum: 1001, Name: "old", ScriptName: "old.lua", Exits: map[string]parser.Exit{}},
+		Working:  parser.Room{VNum: 1001, Name: "new", ScriptName: "stale.lua", Exits: map[string]parser.Exit{}},
+	}
+	var committed parser.Room
+	if !CommitRoom(RoomCommitInput{
+		Draft: draft,
+		LiveScript: func() (parser.Room, bool) {
+			return parser.Room{VNum: 1001, ScriptName: "live.lua", ScriptFunctions: 4}, true
+		},
+		Commit: func(room parser.Room) bool {
+			committed = room
+			return true
+		},
+	}) {
+		t.Fatal("commit failed")
+	}
+	if committed.ScriptName != "live.lua" || committed.ScriptFunctions != 4 {
+		t.Fatalf("committed script = %q/%d, want live.lua/4", committed.ScriptName, committed.ScriptFunctions)
+	}
+}

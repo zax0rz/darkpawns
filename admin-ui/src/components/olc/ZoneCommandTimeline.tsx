@@ -27,7 +27,7 @@ function commandWith(command: OlcZoneCommand, index: number, value: number): Olc
     kind: 'modify_command',
     index: command.position,
     command: command.command,
-    ifFlag: command.ifFlag,
+    if_flag: command.ifFlag,
     arg1: index === 0 ? value : command.arg1,
     arg2: index === 1 ? value : command.arg2,
     arg3: index === 2 ? value : command.arg3,
@@ -140,7 +140,7 @@ export function ZoneCommandTimeline({ schema, commands, disabled = false, onOper
       kind: 'add_command',
       index: -1,
       command,
-      ifFlag: Number(data.get('if_flag') || 0),
+      if_flag: Number(data.get('if_flag') || 0),
       arg1: Number(data.get('arg1') || 0),
       arg2: Number(data.get('arg2') || 0),
       arg3: Number(data.get('arg3') || 0),
@@ -191,7 +191,7 @@ export function ZoneCommandTimeline({ schema, commands, disabled = false, onOper
                   type="checkbox"
                   checked={command.ifFlag !== 0}
                   disabled={disabled || index === 0}
-                  onChange={(event) => onOperation([{ kind: 'modify_command', index: command.position, command: command.command, ifFlag: event.currentTarget.checked ? 1 : 0, arg1: command.arg1, arg2: command.arg2, arg3: command.arg3 }])}
+                  onChange={(event) => onOperation([{ kind: 'modify_command', index: command.position, command: command.command, if_flag: event.currentTarget.checked ? 1 : 0, arg1: command.arg1, arg2: command.arg2, arg3: command.arg3 }])}
                   className="h-4 w-4 accent-accent"
                 />
                 Run only if the previous command succeeds
@@ -224,7 +224,7 @@ export function ZoneCommandTimeline({ schema, commands, disabled = false, onOper
         </div>
       </form>
 
-      {reorder && <div className="mt-4"><ReorderConfirmation commands={commands} request={reorder} disabled={disabled} onCancel={() => setReorder(null)} onConfirm={() => { onOperation([{ kind: 'reorder_command', index: commands[reorder.from].position, toIndex: reorder.to }]); setReorder(null); }} /></div>}
+      {reorder && <div className="mt-4"><ReorderConfirmation commands={commands} request={reorder} disabled={disabled} onCancel={() => setReorder(null)} onConfirm={() => { onOperation([{ kind: 'reorder_command', index: commands[reorder.from].position, to_index: reorder.to }]); setReorder(null); }} /></div>}
     </section>
   );
 }

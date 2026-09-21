@@ -59,20 +59,31 @@ type AuditEvent struct {
 // game and admin packages. CommitRoom itself owns the ordering and the audit
 // payload so both frontends report the same changed-field-only details.
 type RoomCommitInput struct {
-	Draft     Draft
-	Actor     string
-	IPAddress string
-	Commit    func(parser.Room) bool
-	MarkDirty func()
-	Audit     func(AuditEvent)
+	Draft      Draft
+	Actor      string
+	IPAddress  string
+	Commit     func(parser.Room) bool
+	LiveScript func() (parser.Room, bool)
+	MarkDirty  func()
+	Audit      func(AuditEvent)
 }
 
 // CommitRoom applies a room working copy to the world and marks its zone
 // dirty. Callers must hold ZoneSaveLock(input.Draft.Working.Zone) around this
 // function. No descriptor or frontend concerns enter this primitive.
 func CommitRoom(input RoomCommitInput) bool {
-	fields := strings.Join(input.Draft.Diff(input.Draft.Snapshot), ",")
-	success := input.Commit != nil && input.Commit(input.Draft.Effective())
+	draft := input.Draft
+	if input.LiveScript != nil {
+		if live, ok := input.LiveScript(); ok {
+			// C's REDIT copy shares the live script storage. Re-read those
+			// fields immediately before replacing the whole room so a live
+			// script edit cannot be clobbered by the stale draft copy.
+			draft.Working.ScriptName = live.ScriptName
+			draft.Working.ScriptFunctions = live.ScriptFunctions
+		}
+	}
+	fields := strings.Join(draft.Diff(draft.Snapshot), ",")
+	success := input.Commit != nil && input.Commit(draft.Effective())
 	if success && input.MarkDirty != nil {
 		input.MarkDirty()
 	}
