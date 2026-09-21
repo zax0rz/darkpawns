@@ -39,5 +39,361 @@
       "label": "Top of zone",
       "control": "vnum"
     }
+  ],
+  "bespoke": [
+    "commands"
+  ],
+  "actions": [
+    {
+      "key": "create_zone",
+      "label": "New zone",
+      "required_level": 36,
+      "required_label": "HIGOD",
+      "allowed": false
+    }
+  ],
+  "zone_commands": [
+    {
+      "command": "M",
+      "label": "Load mobile to room",
+      "arguments": [
+        {
+          "key": "mob_vnum",
+          "label": "Mobile VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "max",
+          "label": "Maximum in world",
+          "control": "number",
+          "visible": true
+        },
+        {
+          "key": "room_vnum",
+          "label": "Room VNUM",
+          "control": "vnum",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "command": "O",
+      "label": "Load object to room",
+      "arguments": [
+        {
+          "key": "object_vnum",
+          "label": "Object VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "max",
+          "label": "Maximum in world",
+          "control": "number",
+          "visible": true
+        },
+        {
+          "key": "room_vnum",
+          "label": "Room VNUM",
+          "control": "vnum",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "command": "E",
+      "label": "Equip mobile with object",
+      "arguments": [
+        {
+          "key": "object_vnum",
+          "label": "Object VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "max",
+          "label": "Maximum in world",
+          "control": "number",
+          "visible": true
+        },
+        {
+          "key": "equipment",
+          "label": "Equipment position",
+          "control": "select",
+          "options": [
+            {
+              "value": 0,
+              "label": "Used as light"
+            },
+            {
+              "value": 1,
+              "label": "Worn on right finger"
+            },
+            {
+              "value": 2,
+              "label": "Worn on left finger"
+            },
+            {
+              "value": 3,
+              "label": "First worn around Neck"
+            },
+            {
+              "value": 4,
+              "label": "Second worn around Neck"
+            },
+            {
+              "value": 5,
+              "label": "Worn on body"
+            },
+            {
+              "value": 6,
+              "label": "Worn on head"
+            },
+            {
+              "value": 7,
+              "label": "Worn on legs"
+            },
+            {
+              "value": 8,
+              "label": "Worn on feet"
+            },
+            {
+              "value": 9,
+              "label": "Worn on hands"
+            },
+            {
+              "value": 10,
+              "label": "Worn on arms"
+            },
+            {
+              "value": 11,
+              "label": "Worn as shield"
+            },
+            {
+              "value": 12,
+              "label": "Worn about body"
+            },
+            {
+              "value": 13,
+              "label": "Worn around waist"
+            },
+            {
+              "value": 14,
+              "label": "Worn around right wrist"
+            },
+            {
+              "value": 15,
+              "label": "Worn around left wrist"
+            },
+            {
+              "value": 16,
+              "label": "Wielded"
+            },
+            {
+              "value": 17,
+              "label": "Held"
+            },
+            {
+              "value": 18,
+              "label": "Wielded for throwing"
+            },
+            {
+              "value": 19,
+              "label": "Worn about legs"
+            },
+            {
+              "value": 20,
+              "label": "Worn on face"
+            },
+            {
+              "value": 21,
+              "label": "Hovering near head"
+            }
+          ],
+          "visible": true
+        }
+      ]
+    },
+    {
+      "command": "G",
+      "label": "Give object to mobile",
+      "arguments": [
+        {
+          "key": "object_vnum",
+          "label": "Object VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "max",
+          "label": "Maximum in world",
+          "control": "number",
+          "visible": true
+        },
+        {
+          "key": "unused",
+          "label": "",
+          "control": "number",
+          "visible": false
+        }
+      ]
+    },
+    {
+      "command": "P",
+      "label": "Put object in another object",
+      "arguments": [
+        {
+          "key": "object_vnum",
+          "label": "Object VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "max",
+          "label": "Maximum in world",
+          "control": "number",
+          "visible": true
+        },
+        {
+          "key": "container_vnum",
+          "label": "Container VNUM",
+          "control": "vnum",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "command": "D",
+      "label": "Open, close, or lock a door",
+      "arguments": [
+        {
+          "key": "room_vnum",
+          "label": "Room VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "direction",
+          "label": "Exit direction",
+          "control": "select",
+          "options": [
+            {
+              "value": 0,
+              "label": "north"
+            },
+            {
+              "value": 1,
+              "label": "east"
+            },
+            {
+              "value": 2,
+              "label": "south"
+            },
+            {
+              "value": 3,
+              "label": "west"
+            },
+            {
+              "value": 4,
+              "label": "up"
+            },
+            {
+              "value": 5,
+              "label": "down"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "key": "door_state",
+          "label": "Door state",
+          "control": "select",
+          "options": [
+            {
+              "value": 0,
+              "label": "Door open"
+            },
+            {
+              "value": 1,
+              "label": "Door closed"
+            },
+            {
+              "value": 2,
+              "label": "Door locked"
+            }
+          ],
+          "visible": true
+        }
+      ]
+    },
+    {
+      "command": "R",
+      "label": "Remove a mobile or object",
+      "arguments": [
+        {
+          "key": "room_vnum",
+          "label": "Room VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "target_kind",
+          "label": "Target kind",
+          "control": "select",
+          "options": [
+            {
+              "value": 0,
+              "label": "Mobile"
+            },
+            {
+              "value": 1,
+              "label": "Object"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "key": "target_vnum",
+          "label": "Target VNUM",
+          "control": "vnum",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "command": "L",
+      "label": "Begin or end looping",
+      "arguments": [
+        {
+          "key": "room_vnum",
+          "label": "Room VNUM",
+          "control": "vnum",
+          "visible": true
+        },
+        {
+          "key": "loop_mode",
+          "label": "Loop mode",
+          "control": "select",
+          "options": [
+            {
+              "value": 0,
+              "label": "Loop start"
+            },
+            {
+              "value": 1,
+              "label": "Loop finish"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "key": "repeat_count",
+          "label": "Repeat count",
+          "control": "number",
+          "visible": true
+        }
+      ]
+    }
   ]
 }

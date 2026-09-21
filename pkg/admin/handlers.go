@@ -1211,6 +1211,7 @@ func handleTriageSummaries(store *AgentStore) http.HandlerFunc {
 
 // shopResponse is the JSON shape returned by shop endpoints.
 type shopResponse struct {
+	VNum       int     `json:"vnum"`
 	KeeperVNum int     `json:"keeper_vnum"`
 	BuyTypes   []int   `json:"buy_types"`
 	SellTypes  []int   `json:"sell_types"`
@@ -1262,6 +1263,7 @@ func handleShopByKeeper(world *game.World, auditLogger *audit.AuditLogger) http.
 				return
 			}
 			resp := shopResponse{
+				VNum:       shop.VNum,
 				KeeperVNum: shop.KeeperVNum,
 				BuyTypes:   shop.BuyTypes,
 				SellTypes:  shop.SellTypes,

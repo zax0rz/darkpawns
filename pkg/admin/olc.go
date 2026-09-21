@@ -114,6 +114,14 @@ func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCRead
 		if !ok {
 			return nil, huma.NewError(http.StatusBadRequest, "unknown OLC kind")
 		}
+		claims, _ := auth.GetClaimsFromContext(ctx)
+		if claims != nil && database != nil {
+			if record, err := database.GetPlayer(claims.PlayerName); err == nil && record != nil {
+				for i := range schema.Actions {
+					schema.Actions[i].Allowed = record.Level >= schema.Actions[i].RequiredLevel
+				}
+			}
+		}
 		return &olcSchemaOutput{Body: schema}, nil
 	})
 
@@ -167,6 +175,7 @@ func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCRead
 		saver = provider
 	}
 	registerOLCZoneSave(api, world, database, saver)
+	registerOLCZoneCreation(api, world, database)
 }
 
 func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, error) {
@@ -174,7 +183,7 @@ func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, e
 	if !ok {
 		return olcPreviewResponse{}, huma.NewError(http.StatusBadRequest, "unknown OLC kind")
 	}
-	zone, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
+	zone, ok := entityZone(world, entityKind, vnum)
 	if !ok {
 		return olcPreviewResponse{}, huma.NewError(http.StatusNotFound, "no zone covers VNUM")
 	}
@@ -210,12 +219,13 @@ func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, e
 		}
 		preview.Shop = &shop
 	case olc.KindZone:
-		if _, exists := world.SnapshotRoom(vnum); !exists {
-			return olcPreviewResponse{}, huma.NewError(http.StatusNotFound, "room not found")
-		}
 		zoneCopy, exists := world.SnapshotZone(zone.Number)
 		if !exists {
 			return olcPreviewResponse{}, huma.NewError(http.StatusNotFound, "zone not found")
+		}
+		commands := zoneCommandsForRoom(zoneCopy.Commands, vnum)
+		if vnum == zone.Number {
+			commands = append([]parser.ZoneCommand(nil), zoneCopy.Commands...)
 		}
 		preview.Zone = &olcZonePreview{
 			Number:    zoneCopy.Number,
@@ -223,10 +233,22 @@ func olcPreview(world *game.World, kind string, vnum int) (olcPreviewResponse, e
 			TopRoom:   zoneCopy.TopRoom,
 			Lifespan:  zoneCopy.Lifespan,
 			ResetMode: zoneCopy.ResetMode,
-			Commands:  zoneCommandsForRoom(zoneCopy.Commands, vnum),
+			Commands:  commands,
 		}
 	}
 	return preview, nil
+}
+
+func entityZone(world *game.World, kind olc.Kind, value int) (*parser.Zone, bool) {
+	if kind == olc.KindZone {
+		for _, zone := range world.GetAllZones() {
+			if zone.Number == value {
+				return zone, true
+			}
+		}
+		return olc.ZoneForVNum(world.GetAllZones(), value)
+	}
+	return olc.ZoneForVNum(world.GetAllZones(), value)
 }
 
 func olcKindForPath(kind string) (olc.Kind, bool) {
@@ -280,6 +302,7 @@ func olcGateWithZone(world *game.World, database *db.DB, zoneScoped bool) func(h
 				return
 			}
 		}
+		ctx = huma.WithContext(ctx, auth.SetClaimsOnContext(ctx.Context(), claims))
 		if !claims.HasRole("builder") {
 			writeOLCError(ctx, http.StatusForbidden, olcMiddlewareError{Error: "forbidden", Required: "builder"})
 			return
@@ -303,7 +326,8 @@ func olcGateWithZone(world *game.World, database *db.DB, zoneScoped bool) func(h
 					writeOLCError(ctx, http.StatusBadRequest, olcMiddlewareError{Error: "invalid vnum"})
 					return
 				}
-				zone, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
+				entityKind, _ := olcKindForPath(ctx.Param("kind"))
+				zone, ok := entityZone(world, entityKind, vnum)
 				if !ok {
 					writeOLCError(ctx, http.StatusNotFound, olcMiddlewareError{Error: "no zone covers VNUM"})
 					return

@@ -42,19 +42,20 @@ func (w *World) CommitEditedZone(zoneNumber, roomVNum int, working parser.Zone) 
 	if !ok || zone == nil {
 		return false
 	}
-	roomRNum, ok := w.realRoomIndexLocked(roomVNum)
-	if !ok {
-		return false
-	}
-
 	remaining := make([]parser.ZoneCommand, 0, len(zone.Commands))
-	cmdRoom := -2
-	for _, cmd := range zone.Commands {
-		if room, hasRoom := ZoneCommandRoom(cmd); hasRoom {
-			cmdRoom, _ = w.realRoomIndexLocked(room)
+	if roomVNum != 0 {
+		roomRNum, ok := w.realRoomIndexLocked(roomVNum)
+		if !ok {
+			return false
 		}
-		if cmdRoom != roomRNum {
-			remaining = append(remaining, cmd)
+		cmdRoom := -2
+		for _, cmd := range zone.Commands {
+			if room, hasRoom := ZoneCommandRoom(cmd); hasRoom {
+				cmdRoom, _ = w.realRoomIndexLocked(room)
+			}
+			if cmdRoom != roomRNum {
+				remaining = append(remaining, cmd)
+			}
 		}
 	}
 

@@ -264,6 +264,7 @@ export interface ServerMetrics {
 }
 
 export interface Shop {
+  vnum: number;
   keeper_vnum: number;
   keeper_name?: string;
   room_vnum?: number;

@@ -18,6 +18,35 @@ type SchemaField struct {
 	Options []VocabularyEntry `json:"options,omitempty"`
 }
 
+// SchemaAction describes a gated action exposed by an editor surface. The
+// browser renders the requirement from this descriptor; it never carries a
+// copy of the level ladder.
+type SchemaAction struct {
+	Key           string `json:"key"`
+	Label         string `json:"label"`
+	RequiredLevel int    `json:"required_level"`
+	RequiredLabel string `json:"required_label"`
+	Allowed       bool   `json:"allowed"`
+}
+
+// ZoneCommandArgument describes one of the three type-dependent reset
+// command arguments. A hidden argument is still present in the descriptor so
+// the command editor can render from one stable three-slot shape.
+type ZoneCommandArgument struct {
+	Key     string            `json:"key"`
+	Label   string            `json:"label"`
+	Control string            `json:"control"`
+	Bounds  *Bounds           `json:"bounds,omitempty"`
+	Options []VocabularyEntry `json:"options,omitempty"`
+	Visible bool              `json:"visible"`
+}
+
+type ZoneCommandDescriptor struct {
+	Command   string                 `json:"command"`
+	Label     string                 `json:"label"`
+	Arguments [3]ZoneCommandArgument `json:"arguments"`
+}
+
 // ObjectValueField is a resolved row of the object value matrix. The browser
 // receives a concrete row for every type and slot; it never evaluates a
 // visibility expression.
@@ -55,11 +84,14 @@ type ExitDescriptor struct {
 
 // Schema is the complete vocabulary projection for one OLC editor.
 type Schema struct {
-	Kind        string                   `json:"kind"`
-	Fields      []SchemaField            `json:"fields"`
-	ValueMatrix []ObjectValueMatrixEntry `json:"value_matrix,omitempty"`
-	Applies     *AppliesDescriptor       `json:"applies,omitempty"`
-	Exits       *ExitDescriptor          `json:"exits,omitempty"`
+	Kind         string                   `json:"kind"`
+	Fields       []SchemaField            `json:"fields"`
+	Bespoke      []string                 `json:"bespoke,omitempty"`
+	Actions      []SchemaAction           `json:"actions,omitempty"`
+	ValueMatrix  []ObjectValueMatrixEntry `json:"value_matrix,omitempty"`
+	Applies      *AppliesDescriptor       `json:"applies,omitempty"`
+	Exits        *ExitDescriptor          `json:"exits,omitempty"`
+	ZoneCommands []ZoneCommandDescriptor  `json:"zone_commands,omitempty"`
 }
 
 const (
@@ -114,6 +146,14 @@ const (
 
 const MaxIntValue = int(^uint(0) >> 1)
 
+// NewZoneRequiredLevel and NewZoneRequiredLabel mirror LVL_HIGOD in
+// src/structs.h:614, the action gate in src/olc.c:133, and the Go telnet
+// branch in pkg/session/zedit.go:83.
+const (
+	NewZoneRequiredLevel = 36
+	NewZoneRequiredLabel = "HIGOD"
+)
+
 const (
 	ItemLight      = 1
 	ItemScroll     = 2
@@ -150,6 +190,37 @@ var objectApplies = &AppliesDescriptor{
 var roomExits = &ExitDescriptor{
 	Directions:  []string{"north", "east", "south", "west", "up", "down"},
 	DoorOptions: schemaOptions(ExitDoorFlagNames),
+}
+
+var zoneCommandDescriptors = []ZoneCommandDescriptor{
+	zoneCommand("M", "Load mobile to room", zoneArgument("mob_vnum", "Mobile VNUM", "vnum"), zoneArgument("max", "Maximum in world", "number"), zoneArgument("room_vnum", "Room VNUM", "vnum")),
+	zoneCommand("O", "Load object to room", zoneArgument("object_vnum", "Object VNUM", "vnum"), zoneArgument("max", "Maximum in world", "number"), zoneArgument("room_vnum", "Room VNUM", "vnum")),
+	zoneCommand("E", "Equip mobile with object", zoneArgument("object_vnum", "Object VNUM", "vnum"), zoneArgument("max", "Maximum in world", "number"), zoneSelectArgument("equipment", "Equipment position", schemaOptions(ZoneEquipmentNames))),
+	zoneCommand("G", "Give object to mobile", zoneArgument("object_vnum", "Object VNUM", "vnum"), zoneArgument("max", "Maximum in world", "number"), hiddenZoneArgument("unused")),
+	zoneCommand("P", "Put object in another object", zoneArgument("object_vnum", "Object VNUM", "vnum"), zoneArgument("max", "Maximum in world", "number"), zoneArgument("container_vnum", "Container VNUM", "vnum")),
+	zoneCommand("D", "Open, close, or lock a door", zoneArgument("room_vnum", "Room VNUM", "vnum"), zoneSelectArgument("direction", "Exit direction", schemaOptions(ZoneDirections[:len(ZoneDirections)-1])), zoneSelectArgument("door_state", "Door state", []VocabularyEntry{{Value: 0, Label: "Door open"}, {Value: 1, Label: "Door closed"}, {Value: 2, Label: "Door locked"}})),
+	zoneCommand("R", "Remove a mobile or object", zoneArgument("room_vnum", "Room VNUM", "vnum"), zoneSelectArgument("target_kind", "Target kind", []VocabularyEntry{{Value: 0, Label: "Mobile"}, {Value: 1, Label: "Object"}}), zoneArgument("target_vnum", "Target VNUM", "vnum")),
+	zoneCommand("L", "Begin or end looping", zoneArgument("room_vnum", "Room VNUM", "vnum"), zoneSelectArgument("loop_mode", "Loop mode", []VocabularyEntry{{Value: 0, Label: "Loop start"}, {Value: 1, Label: "Loop finish"}}), zoneArgument("repeat_count", "Repeat count", "number")),
+}
+
+func zoneCommand(command, label string, args ...ZoneCommandArgument) ZoneCommandDescriptor {
+	descriptor := ZoneCommandDescriptor{Command: command, Label: label}
+	copy(descriptor.Arguments[:], args)
+	return descriptor
+}
+
+func zoneArgument(key, label, control string) ZoneCommandArgument {
+	return ZoneCommandArgument{Key: key, Label: label, Control: control, Visible: true}
+}
+
+func zoneSelectArgument(key, label string, options []VocabularyEntry) ZoneCommandArgument {
+	argument := zoneArgument(key, label, "select")
+	argument.Options = options
+	return argument
+}
+
+func hiddenZoneArgument(key string) ZoneCommandArgument {
+	return ZoneCommandArgument{Key: key, Control: "number", Visible: false}
 }
 
 // ObjectValueBounds is the same matrix used by OpSetObjValue1..4. Invisible
@@ -362,6 +433,7 @@ func SchemaForKind(kind string) (Schema, bool) {
 	schema := Schema{Kind: kind}
 	switch kind {
 	case "room":
+		schema.Bespoke = []string{"exits", "extra_descriptions"}
 		schema.Fields = []SchemaField{
 			textField("name", "Name", "text"),
 			textField("description", "Description", "textarea"),
@@ -401,6 +473,7 @@ func SchemaForKind(kind string) (Schema, bool) {
 			checkboxField("script_flags", "Script flags", schemaOptions(MobScriptFlagNames)),
 		}
 	case "obj":
+		schema.Bespoke = []string{"values", "applies", "extra_descriptions"}
 		schema.Fields = []SchemaField{
 			textField("keywords", "Keywords", "text"),
 			textField("short_description", "Short description", "text"),
@@ -419,9 +492,13 @@ func SchemaForKind(kind string) (Schema, bool) {
 		schema.ValueMatrix = ObjectValueMatrix
 		schema.Applies = objectApplies
 	case "shop":
+		schema.Bespoke = []string{"products", "rooms", "trade_namelist"}
 		schema.Fields = []SchemaField{
-			unboundedNumberField("buy_profit", "Sell rate"),
-			unboundedNumberField("sell_profit", "Buy rate"),
+			{Key: "products", Label: "Products", Control: "vnum_list"},
+			{Key: "rooms", Label: "Shop rooms", Control: "vnum_list"},
+			{Key: "trade_namelist", Label: "Trade namelist", Control: "trade_namelist"},
+			unboundedNumberField("buy_profit", "Buy rate"),
+			unboundedNumberField("sell_profit", "Sell rate"),
 			{Key: "keeper", Label: "Keeper", Control: "vnum"},
 			checkboxField("flags", "Shop flags", schemaOptions(ShopFlagNames)),
 			checkboxField("with_who", "No Trade With", schemaOptions(ShopTradeNames)),
@@ -438,6 +515,9 @@ func SchemaForKind(kind string) (Schema, bool) {
 			textField("message_sell", "Sell success", "text"),
 		}
 	case "zone":
+		schema.Bespoke = []string{"commands"}
+		schema.Actions = []SchemaAction{{Key: "create_zone", Label: "New zone", RequiredLevel: NewZoneRequiredLevel, RequiredLabel: NewZoneRequiredLabel}}
+		schema.ZoneCommands = zoneCommandDescriptors
 		schema.Fields = []SchemaField{
 			textField("name", "Zone name", "text"),
 			numberField("lifespan", "Lifespan", ZoneLifespanMin, ZoneLifespanMax),

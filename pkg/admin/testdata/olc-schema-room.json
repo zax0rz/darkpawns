@@ -238,6 +238,10 @@
       ]
     }
   ],
+  "bespoke": [
+    "exits",
+    "extra_descriptions"
+  ],
   "exits": {
     "directions": [
       "north",

@@ -375,6 +375,11 @@
       ]
     }
   ],
+  "bespoke": [
+    "values",
+    "applies",
+    "extra_descriptions"
+  ],
   "value_matrix": [
     {
       "item_type": 0,
