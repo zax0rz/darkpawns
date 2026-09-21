@@ -188,7 +188,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		scriptTwinPath = filepath.Join(tmp, "script-twin")
 		expected := append(append([]byte(nil), source...), []byte(scenario.ScriptTwin.Append+"\n")...)
-		if err := os.WriteFile(scriptTwinPath, expected, 0o600); err != nil {
+		if err := os.WriteFile(scriptTwinPath, expected, 0o600); err != nil { // #nosec G703 -- scriptTwinPath is a file directly under the os.MkdirTemp scratch root
 			return fmt.Errorf("write script twin: %w", err)
 		}
 	}
