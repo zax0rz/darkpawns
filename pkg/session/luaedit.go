@@ -238,18 +238,31 @@ func edit_file(s *Session, dir, filename string, killOnEmpty bool) error {
 	if hasParentComponent(dir) {
 		return fmt.Errorf("script path escaped root")
 	}
+	root := luaScriptsDir(s.manager.world)
 	path := filepath.Join(dir, filename)
-	if !pathWithinLuaRoot(luaScriptsDir(s.manager.world), path) {
+	if !pathWithinLuaRoot(root, path) {
 		return fmt.Errorf("script path escaped root")
 	}
 
 	text := ""
-	if file, err := os.OpenFile(path, os.O_RDWR, 0); err == nil {
-		if closeErr := file.Close(); closeErr != nil {
-			slog.Error("luaedit file close failed", "player", s.playerName, "file", path, "error", closeErr)
+	// os.Root scopes the open (and the read) under the scripts tree so a
+	// path that slipped the lexical guards fails closed here instead of
+	// reaching the filesystem. C's valid_filename stays the behavior law;
+	// the root is the security boundary gosec can see.
+	if luaRoot, rootErr := os.OpenRoot(root); rootErr == nil {
+		rel, relErr := filepath.Rel(root, path)
+		if relErr == nil {
+			if file, err := luaRoot.OpenFile(rel, os.O_RDWR, 0); err == nil {
+				if closeErr := file.Close(); closeErr != nil {
+					slog.Error("luaedit file close failed", "player", s.playerName, "file", path, "error", closeErr)
+				}
+				if loaded, readErr := readCTextFile(path); readErr == nil {
+					text = loaded
+				}
+			}
 		}
-		if loaded, readErr := readCTextFile(path); readErr == nil {
-			text = loaded
+		if closeErr := luaRoot.Close(); closeErr != nil {
+			slog.Error("luaedit scripts root close failed", "error", closeErr)
 		}
 	}
 
