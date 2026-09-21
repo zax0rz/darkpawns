@@ -7,7 +7,7 @@
 | Method | Address | Status |
 |--------|---------|--------|
 | Web client | [darkpawns.org/play](https://darkpawns.org/play) | Live |
-| Telnet | `telnet darkpawns.org 4350` | Live |
+| Telnet | `telnet darkpawns.org 7777` | Live |
 | WebSocket | `ws://darkpawns.org/ws` | Live |
 
 ---

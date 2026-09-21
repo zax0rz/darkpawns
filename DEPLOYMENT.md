@@ -15,15 +15,16 @@ A single Go binary (`cmd/server`) that serves three surfaces:
 |---|---|---|
 | HTTP + WebSocket | `:4350` (`-port`) | Web client, `/ws`, `/api/*`, `/openapi.json`, `/admin/*`, `/health`, `/metrics` |
 | Telnet | `:7777` (`-telnet-port`, `0` disables) | Classic MUD access |
-| PostgreSQL | `DATABASE_URL` | **Required** — the server refuses logins without persistence |
+| SQLite (embedded) | `lib/data/darkpawns.db` | Default game persistence — no setup, no external services |
+| PostgreSQL | `-db` / `DATABASE_URL` | Opt-in — agent/research sidecar corpus only |
 
 It also reads/writes on-disk state: the world/scripts tree (`-world`, `-scripts`) and a
 CWD-relative `data/` directory (shops, aliases, mail, admin store). With the checkout
 layout below, the server changes its working directory to `lib/`, so that state
 is in **`lib/data/`**, not the repository-root `data/`. The admin audit trail follows
 the same rule: the log is **`lib/logs/audit.log`** (mode `600`, in a `750` directory it
-creates on first boot). Back up Postgres and the instance's `lib/` tree, including any
-edited world files.
+creates on first boot). Back up the SQLite database and the instance's `lib/` tree, including any
+edited world files (plus Postgres if you run the research sidecar).
 
 ## Quickstart
 
