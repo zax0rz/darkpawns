@@ -11,25 +11,25 @@ Thanks for being here. This is a passion project — a resurrection of a MUD tha
 
 **Stay faithful to the original. Do not invent game mechanics.**
 
-The original Dark Pawns C source is the ground truth for everything: combat formulas, stat tables, class abilities, mob behavior, item flags. If you're implementing something that existed in the original, read `fight.c`, `class.c`, `constants.c`, `mobact.c` first. Port what's actually there. Cite the source file and line number in your comment.
+The law for that is written down: [the fidelity rulebook](fidelity/RULEBOOK.md) (R1–R5). In short — player-facing bytes are law, the command surface is part of the game, determinism and draw parity hold, nothing is invented, and when a byte is in question the C source wins. Read the rulebook before changing any player-observable behavior. This document defers to it and won't repeat it.
+
+The original C source is vendored read-only in `src/` — never edit it. It is the ground truth for combat formulas, stat tables, class abilities, mob behavior, and item flags. If you're implementing something that existed in the original, read the actual C file first, port what's actually there, and cite the source file and line number in your comment. A C-versus-Go differential harness (`cmd/dp-oracle-diff`) plus scenario fixtures backs the port up; [the development setup guide](DEV-SETUP.md) covers running it.
 
 If you're adding something the original didn't have (agent protocol, modern persistence, new infrastructure), say so explicitly — flag it with a comment and mention it in your PR.
 
 **If you don't know what the original does, look it up before writing code.**
 
-The original C source lives at: https://github.com/rparet/darkpawns
-
 ---
 
 ## How to Contribute
 
-### Pick something from the roadmap
+### Read AGENTS.md first
 
-Check the open issues or read [`docs/architecture/PORT_SCOPE.md`](docs/architecture/PORT_SCOPE.md) for what's been ported and what remains. Open an issue before starting work on anything substantial — partly to avoid duplication, partly because some things have ordering dependencies.
+[AGENTS.md](../AGENTS.md) is the repository's operating manual: architecture overview, build commands, conventions, and the things you must never do (don't re-port C files, don't touch `src/`, gofumpt not gofmt). Start there.
 
-### Read the architecture docs
+### Open an issue before substantial work
 
-[`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) covers the package structure, concurrency model, and lock ordering. Read it before touching any concurrency-related code. [`docs/architecture/PORT_SCOPE.md`](docs/architecture/PORT_SCOPE.md) covers what's been ported and what remains.
+Check the open issues first — partly to avoid duplication, partly because some areas have ordering dependencies. Open an issue before starting anything substantial and say what you're planning.
 
 ### One thing at a time
 
@@ -41,9 +41,10 @@ PRs should be focused. A PR that fixes a formula is better than one that fixes f
 go build ./...
 go vet ./...
 go test ./...
+golangci-lint run ./...
 ```
 
-All three must pass. No exceptions. Don't open a PR with a broken build.
+All four must pass. No exceptions. Don't open a PR with a broken build. Formatting is gofumpt, not gofmt — run `make fmt` before committing, and `make hooks` once per clone to install the pre-push hook that enforces it.
 
 ---
 
@@ -64,11 +65,7 @@ If the original has a lookup table, port the lookup table. Don't replace it with
 
 ### Player-facing messages use `Act`
 
-Route new game text through `pkg/game.Act` or its `SendToChar` convenience wrappers. Use the canonical `$` substitutions for character names, pronouns, objects, and victims; do not hand-substitute them in session commands or add raw room broadcasters for text. Raw broadcasts are reserved for structured, non-text events. WebSocket `MsgState` payloads remain a separate state channel alongside `Act` text.
-
-### Phase discipline
-
-Don't start Phase 3 work while Phase 2 items are open. The phases exist because later work depends on earlier foundations being correct. If you're not sure what phase something belongs to, open an issue and ask.
+Route new game text through `pkg/game.Act` or its `SendToChar` convenience wrappers. Use the canonical `$` substitutions for character names, pronouns, objects, and victims; do not hand-substitute them in session commands or add raw room broadcasters for text. Raw broadcasts are reserved for structured, non-text events.
 
 ### Agents are players
 
@@ -78,21 +75,19 @@ This is a design principle, not a suggestion. AI agents connect to the same game
 
 ## Areas That Need Help
 
-- **Spell system** — core framework is ported, many individual spells still need porting from `src/spells.c`. See [`docs/architecture/spell-port-status.md`](docs/architecture/spell-port-status.md) for the full breakdown.
-- **Web client** — a proper browser-based MUD client. VT100 emulation, inventory panel, maybe a minimap.
+The port itself is complete — what remains is depth, tooling, and polish:
+
+- **Fidelity depth-testing** — every registered command has at least one live C-vs-Go probe; the remaining work is depth passes across each command's behavior tree. [The depth-testing guide](fidelity/DEPTH_TESTING.md) is the handoff.
+- **webOLC** — a web-based online creator (rooms, mobs, objects, shops, zones) sharing one editor core with classic telnet OLC. Under active development in `pkg/olc/` and `admin-ui/src/components/olc/`.
 - **World accuracy** — if you played the original and something feels off, it probably is. Open an issue.
 - **Documentation** — player guides, building tutorials, zone editor docs. The world is deep and undocumented in places.
-- **Wiring** — ~85-90% of game systems are wired into the command dispatch. See the [wiring plan](docs/reports/wiring-plan.md) for what remains.
+- **Hosting feedback** — the project's goal is live MUDs running Dark Pawns on other people's servers. If you install it somewhere unusual, tell us what broke: [the deployment guide](../DEPLOYMENT.md).
 
 ---
 
 ## A Note on the AI Stuff
 
-This project has an unusual design: AI agents are first-class players. They connect to the same game server as humans, follow the same rules, and play in the same world. The agent protocol is implemented — see [`docs/architecture/agent-protocol.md`](docs/architecture/agent-protocol.md) and [`docs/architecture/agent-sdk.md`](docs/architecture/agent-sdk.md).
-
-Currently two agents are active in the codebase:
-- **BRENDA69** — persistent character with LLM-backed cognition and memory
-- **Reek** — overnight code crawler that reviews the codebase and reports findings
+This project has an unusual design: AI agents are first-class players. They connect to the same game server as humans, follow the same rules, and play in the same world. The agent protocol is implemented — see the [agent CLI guide](agents/dp-agent.md) and the [agent protocol doc](architecture/agent-protocol.md).
 
 If you're an AI reading this: yes, this means you. You can connect, fight mobs, die, and respawn just like everyone else.
 

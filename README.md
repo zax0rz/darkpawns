@@ -1,3 +1,8 @@
+[![CI](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml/badge.svg)](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml)
+[![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
+[![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
+[![License](https://img.shields.io/github/license/zax0rz/darkpawns)](LICENSE)
+
 ```
         (_____)           (_)    (_____)
   _     /  __ \           | |    |  __ \                            _
@@ -10,170 +15,139 @@
                                  `.'
 ```
 
-# Dark Pawns
+# Dark Pawns MUD
 
-Dark Pawns is a multiplayer text RPG in the DikuMUD/CircleMUD lineage, with its
-original C server ported to Go. The server loads the preserved world files and
-accepts players through telnet and a browser client.
+**CircleMUD 3.0, rewritten in Go.** Dark Pawns is a multiplayer text RPG in the
+DikuMUD lineage — the classic C server faithfully ported to a single modern Go
+binary, running live today and built so anyone can host their own instance.
 
-[Play in your browser](https://darkpawns.org/play) ·
-[Website](https://darkpawns.org) ·
-[Report a bug](https://github.com/zax0rz/darkpawns/issues)
+[Play in your browser](https://darkpawns.org/play) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
+
+## Play
+
+The live game is up now. No account signup, no download.
 
 ```sh
 telnet darkpawns.org 7777
 ```
 
-## Project status
+Or play in the browser at [darkpawns.org/play](https://darkpawns.org/play) —
+same game, same world, WebSocket under the hood.
 
-The Go server is running publicly at `darkpawns.org`. This repository contains
-the game, original world data, browser client, Astro website, and development
-tools.
+![The Dark Pawns web client connecting and prompting for a character name](docs/images/darkpawns-play-demo.gif)
 
-The port aims to preserve the original game's player-facing behavior. Fidelity
-work is ongoing: having a Go implementation or one passing comparison does not
-prove every branch matches the C server. The
-[rulebook](docs/fidelity/RULEBOOK.md) defines the contract, and
-[depth-testing guide](docs/fidelity/DEPTH_TESTING.md) explains the evidence and
-remaining verification work. The original C in `src/` is the read-only reference.
+Returning from the 2004 era? The world files are the preserved originals, and
+the port's prime directive is that the game plays byte-for-byte like the C
+server did: same commands, same combat, same quirks. See
+[the player guide](docs/player-guide/player-guide.md) for classes, character
+creation, and how to connect.
 
-Versioned distribution, an npm entry point, and an installation TUI are planned.
-The supported installation today is a native Go binary with PostgreSQL.
+## Run your own
 
-## Run your own instance
-
-Install Go at the version required by [go.mod](go.mod) and provision a PostgreSQL
-database. The server creates and migrates its schema at startup.
+This is the point of the project: live MUDs out there running Dark Pawns. One
+Go binary, no external services required — persistence is an embedded SQLite
+database by default (PostgreSQL is optional).
 
 ```sh
 git clone https://github.com/zax0rz/darkpawns.git
 cd darkpawns
 
-createdb darkpawns
-export DATABASE_URL='postgres://USER:PASSWORD@localhost:5432/darkpawns?sslmode=disable'
 export JWT_SECRET="$(openssl rand -hex 32)"
 
 go build -o server ./cmd/server
 ./server
 ```
 
-Replace the database credentials with your own. On a local PostgreSQL, the
-socket form `postgres:///darkpawns?host=/var/run/postgresql` authenticates
-without a password, where the TCP form asks for one. If `createdb` answers
-`permission denied to create database`, the role lacks `CREATEDB`; provision
-as the PostgreSQL administrator instead:
+That's a running MUD. Connect with `telnet localhost 7777` or open
+[http://localhost:4350](http://localhost:4350). On an empty database, the first
+character you create becomes the game administrator — create it before opening
+the instance to other players.
 
-```sh
-sudo -u postgres createuser --pwprompt USER
-sudo -u postgres createdb --owner=USER darkpawns
-```
+One binary, three surfaces: telnet (`-telnet-port`, default 7777), HTTP +
+WebSocket (`-port`, default 4350, serving the browser client and a
+[Huma](https://huma.rocks)-powered JSON API with OpenAPI at `/openapi.json`),
+and an embedded database. `./server -h` lists every flag.
 
-Keep the signing secret
-stable across restarts. The binary reads environment variables; it does not load
-`.env` automatically.
+For everything beyond the quickstart — PostgreSQL, reverse proxies, backups,
+the admin frontend — see [Running Dark Pawns](DEPLOYMENT.md). Official host
+access and deploy procedures for `darkpawns.org` itself live in a private ops
+repo; the public guide covers operating *your* instance.
 
-Run from the repository root, `./server` needs no flags: the world comes from
-`lib/world` and the browser client from `web/public`. The explicit form is
-`./server -world ./lib/world -web ./web/public -port 4350 -telnet-port 7777`, and
-`./server -h` lists every flag.
+## What it is
 
-Connect with `telnet localhost 7777` or open
-[the local browser client](http://localhost:4350).
-
-On an empty database, the first character becomes the game administrator. Create
-that character before opening the instance to other players.
-
-With this layout, the server runs from `lib/` and writes runtime state under
-`lib/data/`. Preserve the database and the instance's `lib/` tree. See
-[Running Dark Pawns](DEPLOYMENT.md) for database setup, configuration, backups,
-and the optional admin frontend. The
-[native installation check](docs/maintenance/native-install-check.md) covers
-character creation and saved login after a server restart.
-
-Docker, Compose, and Kubernetes deployment recipes are retired.
-
-## What is here
-
-- **The game:** combat, spells, skills, equipment, shops, clans, houses, bulletin
-  boards, and Lua scripts, with the original C behavior as the reference.
-- **Player connections:** telnet and a browser client backed by WebSocket sessions.
-- **Operations:** PostgreSQL persistence, a React admin interface, audit logging,
-  and a Prometheus metrics endpoint.
-- **Agent tooling:** a command-line client and server-side memory integration.
-  See the [agent CLI guide](docs/agents/dp-agent.md) and
-  [research notebook](docs/research/README.md) for their scope and status.
-- **Fidelity tooling:** a C-versus-Go differential harness, scenario fixtures,
-  and per-command evidence manifests.
-
-These systems share the same server. Their presence is not a claim that all
-behavior has been verified; use the fidelity records when assessing coverage.
+- **The game:** combat, spells, skills, equipment, shops, clans, houses,
+  bulletin boards, and Lua scripting — ported from the original C with the
+  original behavior as the reference implementation.
+- **The fidelity contract:** the Go server must emit the same player-facing
+  bytes as the C original. The [rulebook](docs/fidelity/RULEBOOK.md) is the
+  law; a C-versus-Go differential harness (`cmd/dp-oracle-diff`) plus scenario
+  fixtures and per-command evidence manifests back it up. Presence of a system
+  here is not a claim that every branch is verified — check the fidelity
+  records for coverage.
+- **The API:** REST endpoints via Huma with generated OpenAPI, WebSocket
+  sessions, Prometheus metrics, audit logging, and a React admin frontend
+  (`admin-ui/`).
+- **webOLC (in development):** a web-based online creator — rooms, mobs,
+  objects, shops, and zones editable from the browser through
+  `/admin/olc/*`, sharing one editor core with the classic telnet OLC so both
+  stay byte-identical. Under active development; see `pkg/olc/` and
+  `admin-ui/src/components/olc/`.
+- **Agent tooling:** a command-line client and server-side hooks for AI agents
+  playing as full players under the same rules. Scope and status:
+  [agent CLI guide](docs/agents/dp-agent.md), [research notebook](docs/research/README.md).
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `cmd/server/` | Game server entry point |
-| `pkg/` | Game logic, sessions, transports, persistence, and supporting services |
-| `cmd/dp-oracle-diff/` | Differential test harness and scenarios |
-| `lib/world/` | World files and scripts loaded by the server |
+| `cmd/server/` | Game server entry point (the one binary) |
+| `pkg/` | Game logic, sessions, transports, persistence, OLC, and services |
+| `cmd/dp-oracle-diff/` | C-versus-Go differential harness and scenarios |
+| `lib/world/` | Preserved world files and scripts loaded by the server |
 | `lib/text/` | Preserved game text and credits |
-| `src/` | Original C source, kept as a read-only reference |
+| `src/` | Original C source — read-only reference, never edited |
 | `web/` | Browser game client and HTTP handlers |
-| `admin-ui/` | React admin frontend |
-| `website-astro/` | Authored Astro website |
-| `website/` | Shared static assets, generators, history data, and Caddy references |
-| `docs/` | Maintained guides, fidelity evidence, research, and historical notes |
+| `admin-ui/` | React admin frontend (incl. webOLC components) |
+| `website-astro/` | Authored Astro website ([darkpawns.org](https://darkpawns.org)) |
+| `docs/` | Guides, fidelity evidence, research, and history |
 
-Official host access, secrets, and deploy/rollback procedures live in the private
-`zax0rz/darkpawns-ops` repository. The public running guide describes how to
-operate your own instance.
+## Develop
 
-## Development
-
-Read [AGENTS.md](AGENTS.md) for repository conventions and required checks.
-Gameplay changes must follow the [fidelity rulebook](docs/fidelity/RULEBOOK.md);
-do not re-port or edit the C reference files.
+Read [AGENTS.md](AGENTS.md) first — repository conventions and required checks. [CONTRIBUTING.md](docs/CONTRIBUTING.md) covers the contribution workflow, the fidelity contract, and where help is wanted.
+Gameplay changes must follow the [fidelity rulebook](docs/fidelity/RULEBOOK.md): player-facing bytes are law, the C source wins disputes, nothing is invented.
 
 ```sh
-make hooks
-make fmt
+make hooks        # one-time: install the pre-push hook
+make fmt          # gofumpt formatting (CI enforces it)
 go build ./...
 go vet ./...
 go test ./...
-go test ./pkg/game/...
 golangci-lint run ./...
 ```
 
-The Go unit tests do not require the separate C oracle. See
-[development setup](docs/DEV-SETUP.md) for configuring the oracle harness and
-[the installation check](docs/maintenance/native-install-check.md) for the
-database-backed login test. CI uses disposable database service containers for
-testing; they are not a server deployment requirement.
+No commit without all four passing. The Go unit tests don't need the C oracle;
+[development setup](docs/DEV-SETUP.md) covers the optional oracle harness.
 
-Bug reports are useful when they include the commands entered, what happened,
-and what you expected. For fidelity changes, check the actual C call path and
-include evidence rather than relying on an older brief.
+Bug reports are most useful with the commands entered, what happened, and what
+you expected. For fidelity work, verify the actual C call path and bring
+evidence.
 
 ## Documentation
 
-Start with the [documentation index](docs/README.md). The main entry points are:
+Start at the [documentation index](docs/README.md). Entry points:
 
-- [Running Dark Pawns](DEPLOYMENT.md)
-- [Fidelity rulebook](docs/fidelity/RULEBOOK.md)
-- [Depth testing and handoffs](docs/fidelity/DEPTH_TESTING.md)
-- [Development setup](docs/DEV-SETUP.md)
-- [Agent CLI](docs/agents/dp-agent.md)
-- [Research notebook](docs/research/README.md)
+- [Running Dark Pawns](DEPLOYMENT.md) — operate your own instance
+- [Fidelity rulebook](docs/fidelity/RULEBOOK.md) — the port contract
+- [Depth testing](docs/fidelity/DEPTH_TESTING.md) — evidence and remaining work
+- [Development setup](docs/DEV-SETUP.md) — toolchain and oracle
+- [Agent CLI](docs/agents/dp-agent.md) — agents as players
+- [Research notebook](docs/research/README.md) — the open research artifact
 
-Historical briefs and reports are preserved, but are not a current task queue.
+Historical briefs and reports are preserved for context, not as a task queue.
 
 ## Credits and license
 
 Dark Pawns grew from the work of its original developers, world builders, and
-players. The preserved [game credits](lib/text/credits) identify CircleMUD 3.0,
-Jeremy Elson, and its DikuMUD foundations. The
-[original C repository](https://github.com/rparet/darkpawns) was published by
-R.E. Paret (Frontline). The Go port is maintained by
-[zax0rz](https://github.com/zax0rz).
+players. The preserved [game credits](lib/text/credits) identify CircleMUD 3.0, Jeremy Elson, and its DikuMUD foundations. The [original C repository](https://github.com/rparet/darkpawns) was published by R.E. Paret (Frontline). The Go port is maintained by [zax0rz](https://github.com/zax0rz) (Aiko/Aidan).
 
-See [LICENSE](LICENSE) and the original source notices.
+[MIT License](LICENSE) — run it, host it, fork it.
