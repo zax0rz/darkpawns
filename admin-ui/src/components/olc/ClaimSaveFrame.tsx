@@ -1,10 +1,16 @@
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import type { ApiError } from '../../api/client';
-import type { OlcClaimEntry, OlcDirtyEntry, OlcRoomDraft } from '../../api/olc';
+import type { OlcClaimEntry, OlcDirtyEntry, OlcEntityDraft, OlcRoomDraft } from '../../api/olc';
+
+type OlcEditorDraft = OlcRoomDraft | OlcEntityDraft;
 
 interface ClaimSaveFrameProps {
-  draft: OlcRoomDraft;
+  draft: OlcEditorDraft;
+  kind: string;
+  title: string;
+  subtitle: string;
+  zone: number;
   claim?: OlcClaimEntry;
   pending: OlcDirtyEntry[];
   leaseRemainingSeconds: number;
@@ -34,6 +40,10 @@ function conflictDetails(error: ApiError | null): Record<string, string> {
 
 export function ClaimSaveFrame({
   draft,
+  kind,
+  title,
+  subtitle,
+  zone,
   claim,
   pending,
   leaseRemainingSeconds,
@@ -55,7 +65,7 @@ export function ClaimSaveFrame({
   const idleSeconds = claim?.claimedAt
     ? Math.max(0, Math.floor((now - Date.parse(claim.claimedAt)) / 1000))
     : 0;
-  const zoneDirty = pending.some((entry) => entry.kind === 'room' && entry.zone === draft.room.zone);
+  const zoneDirty = pending.some((entry) => entry.kind === kind && entry.zone === zone);
   const details = conflictDetails(saveError);
 
   return (
@@ -64,10 +74,10 @@ export function ClaimSaveFrame({
         <div className="flex flex-col gap-4 border-b border-rule px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h1 className="text-2xl text-ink">Room editor</h1>
+              <h1 className="text-2xl text-ink">{title}</h1>
               <span className="font-mono text-sm text-accent">#{draft.vnum}</span>
             </div>
-            <p className="mt-1 text-sm text-ink-muted">{draft.room.name || 'Unnamed room'}</p>
+            <p className="mt-1 text-sm text-ink-muted">{subtitle || `#${draft.vnum}`}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {!committed && (
@@ -116,7 +126,7 @@ export function ClaimSaveFrame({
             </div>
           )}
           <div className={zoneDirty ? 'font-semibold text-accent' : ''}>
-            <span className="font-semibold text-ink">Zone {draft.room.zone}:</span>{' '}
+            <span className="font-semibold text-ink">Zone {zone}:</span>{' '}
             {zoneDirty ? 'dirty; save required' : 'clean'}
           </div>
         </div>
@@ -138,7 +148,7 @@ export function ClaimSaveFrame({
 
       <div className="flex flex-col gap-3 border-t border-rule pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-ink-muted">
-          {zoneDirty ? `Zone ${draft.room.zone} has committed changes waiting for a file save.` : 'Commit changes before saving the zone file.'}
+              {zoneDirty ? `Zone ${zone} has committed changes waiting for a file save.` : 'Commit changes before saving the zone file.'}
         </p>
         <button
           type="button"

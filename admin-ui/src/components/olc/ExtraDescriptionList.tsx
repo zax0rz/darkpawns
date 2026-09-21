@@ -1,18 +1,20 @@
-import type { OlcExtraDescription, OlcRoom, RoomPatchOperation } from '../../api/olc';
+import type { OlcExtraDescription, OlcPatchOperation } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
 
 interface ExtraDescriptionListProps {
-  room: OlcRoom;
+  entries: OlcExtraDescription[];
+  kind?: 'room' | 'object';
   dirty: string[];
   disabled?: boolean;
-  onOperation: (operation: RoomPatchOperation) => void;
+  onOperation: (operation: OlcPatchOperation) => void;
 }
 
 function extraDirty(dirty: string[], index: number, suffix: string): boolean {
   return dirty.includes(`extra.${index}.${suffix}`) || dirty.includes(`extra.${index}`);
 }
 
-export function ExtraDescriptionList({ room, dirty, disabled = false, onOperation }: ExtraDescriptionListProps) {
+export function ExtraDescriptionList({ entries, kind = 'room', dirty, disabled = false, onOperation }: ExtraDescriptionListProps) {
+  const keywordOperation = kind === 'object' ? 'set_extra_keywords' : 'set_extra_keyword';
   return (
     <section className="border-t border-rule pt-5">
       <div className="mb-4 flex items-baseline justify-between gap-3">
@@ -26,19 +28,20 @@ export function ExtraDescriptionList({ room, dirty, disabled = false, onOperatio
           Add block
         </button>
       </div>
-      {room.extraDescs.length === 0 ? (
+      {entries.length === 0 ? (
         <p className="border border-dashed border-rule px-4 py-5 text-sm text-ink-muted">
           No keyed text blocks yet.
         </p>
       ) : (
         <div className="space-y-3">
-          {room.extraDescs.map((extra, index) => (
+          {entries.map((extra, index) => (
             <ExtraDescription
               key={`${index}:${extra.keywords}:${extra.description}`}
               extra={extra}
               index={index}
               dirty={dirty}
               disabled={disabled}
+              keywordOperation={keywordOperation}
               onOperation={onOperation}
             />
           ))}
@@ -53,13 +56,15 @@ function ExtraDescription({
   index,
   dirty,
   disabled,
+  keywordOperation,
   onOperation,
 }: {
   extra: OlcExtraDescription;
   index: number;
   dirty: string[];
   disabled: boolean;
-  onOperation: (operation: RoomPatchOperation) => void;
+  keywordOperation: string;
+  onOperation: (operation: OlcPatchOperation) => void;
 }) {
   return (
     <article className="border border-rule bg-paper p-4">
@@ -84,7 +89,7 @@ function ExtraDescription({
             value={extra.keywords}
             identity={`extra-${index}-keywords`}
             disabled={disabled}
-            onCommit={(value) => onOperation({ kind: 'set_extra_keyword', index, keywords: value })}
+            onCommit={(value) => onOperation(keywordOperation === 'set_extra_keywords' ? { kind: keywordOperation, index, text: value } : { kind: keywordOperation, index, keywords: value })}
           />
         </div>
         <div>

@@ -4748,5 +4748,132 @@
         }
       ]
     }
-  ]
+  ],
+  "applies": {
+    "max": 6,
+    "options": [
+      {
+        "value": 0,
+        "label": "NONE"
+      },
+      {
+        "value": 1,
+        "label": "STR"
+      },
+      {
+        "value": 2,
+        "label": "DEX"
+      },
+      {
+        "value": 3,
+        "label": "INT"
+      },
+      {
+        "value": 4,
+        "label": "WIS"
+      },
+      {
+        "value": 5,
+        "label": "CON"
+      },
+      {
+        "value": 6,
+        "label": "CHA"
+      },
+      {
+        "value": 7,
+        "label": "CLASS"
+      },
+      {
+        "value": 8,
+        "label": "LEVEL"
+      },
+      {
+        "value": 9,
+        "label": "AGE"
+      },
+      {
+        "value": 10,
+        "label": "CHAR_WEIGHT"
+      },
+      {
+        "value": 11,
+        "label": "CHAR_HEIGHT"
+      },
+      {
+        "value": 12,
+        "label": "MAXMANA"
+      },
+      {
+        "value": 13,
+        "label": "MAXHIT"
+      },
+      {
+        "value": 14,
+        "label": "MAXMOVE"
+      },
+      {
+        "value": 15,
+        "label": "GOLD"
+      },
+      {
+        "value": 16,
+        "label": "EXP"
+      },
+      {
+        "value": 17,
+        "label": "ARMOR"
+      },
+      {
+        "value": 18,
+        "label": "HITROLL"
+      },
+      {
+        "value": 19,
+        "label": "DAMROLL"
+      },
+      {
+        "value": 20,
+        "label": "SAVING_PARA"
+      },
+      {
+        "value": 21,
+        "label": "SAVING_ROD"
+      },
+      {
+        "value": 22,
+        "label": "SAVING_PETRI"
+      },
+      {
+        "value": 23,
+        "label": "SAVING_BREATH"
+      },
+      {
+        "value": 24,
+        "label": "SAVING_SPELL"
+      },
+      {
+        "value": 25,
+        "label": "RACE_HATE"
+      },
+      {
+        "value": 26,
+        "label": "HIT_REGEN"
+      },
+      {
+        "value": 27,
+        "label": "MANA_REGEN"
+      },
+      {
+        "value": 28,
+        "label": "MOVE_REGEN"
+      },
+      {
+        "value": 29,
+        "label": "PERM_SPELL"
+      }
+    ],
+    "add_operation": "add_affect",
+    "remove_operation": "remove_affect"
+  }
 }

@@ -13,6 +13,8 @@ import { ObjectsPage } from './pages/ObjectsPage';
 import { ObjectDetailPage } from './pages/ObjectDetailPage';
 import { RoomDetailPage } from './pages/RoomDetailPage';
 import { RoomEditorPage } from './pages/RoomEditorPage';
+import { MobEditorPage } from './pages/MobEditorPage';
+import { ObjectEditorPage } from './pages/ObjectEditorPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { DecisionsPage } from './pages/DecisionsPage';
 import { MindReaderPage } from './pages/MindReaderPage';
@@ -35,8 +37,10 @@ export default function App() {
             <Route path="/admin/game/zones/:id" element={<ErrorBoundary><ZoneDetailPage /></ErrorBoundary>} />
             <Route path="/admin/game/mobs" element={<ErrorBoundary><MobsPage /></ErrorBoundary>} />
             <Route path="/admin/game/mobs/:vnum" element={<ErrorBoundary><MobDetailPage /></ErrorBoundary>} />
+            <Route path="/admin/game/mobs/:vnum/edit" element={<ErrorBoundary><MobEditorPage /></ErrorBoundary>} />
             <Route path="/admin/game/objects" element={<ErrorBoundary><ObjectsPage /></ErrorBoundary>} />
             <Route path="/admin/game/objects/:vnum" element={<ErrorBoundary><ObjectDetailPage /></ErrorBoundary>} />
+            <Route path="/admin/game/objects/:vnum/edit" element={<ErrorBoundary><ObjectEditorPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum" element={<ErrorBoundary><RoomDetailPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum/edit" element={<ErrorBoundary><RoomEditorPage /></ErrorBoundary>} />
             <Route path="/admin/agents" element={<ErrorBoundary><AgentsPage /></ErrorBoundary>} />

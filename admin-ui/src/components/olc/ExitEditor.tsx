@@ -1,28 +1,28 @@
+import { useState } from 'react';
 import type { OlcExit, OlcRoom, RoomPatchOperation } from '../../api/olc';
+import type { OlcSchema } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
 
 interface ExitEditorProps {
+  schema: OlcSchema;
   room: OlcRoom;
   dirty: string[];
   disabled?: boolean;
   onOperation: (operation: RoomPatchOperation) => void;
 }
 
-const EXIT_DIRECTIONS = ['north', 'east', 'south', 'west', 'up', 'down'];
-
 function dirtyFor(dirty: string[], direction: string, suffix?: string): boolean {
   return dirty.includes(`exit.${direction}${suffix ? `.${suffix}` : ''}`) || dirty.includes(`exit.${direction}`);
-}
-
-function doorIsSet(exit: OlcExit, bit: number): boolean {
-  return bit === 0 ? exit.doorState > 0 : exit.doorState === 2;
 }
 
 function exitTitle(direction: string): string {
   return direction.charAt(0).toUpperCase() + direction.slice(1);
 }
 
-export function ExitEditor({ room, dirty, disabled = false, onOperation }: ExitEditorProps) {
+export function ExitEditor({ schema, room, dirty, disabled = false, onOperation }: ExitEditorProps) {
+  const [openDirections, setOpenDirections] = useState<Record<string, boolean>>({});
+  const directions = schema.exits?.directions || [];
+  const doorOptions = schema.exits?.doorOptions || [];
   return (
     <section className="border-t border-rule pt-5">
       <div className="mb-4 flex items-baseline justify-between gap-3">
@@ -30,10 +30,23 @@ export function ExitEditor({ room, dirty, disabled = false, onOperation }: ExitE
         <span className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">six directions</span>
       </div>
       <div className="space-y-2">
-        {EXIT_DIRECTIONS.map((direction) => {
+        {directions.map((direction) => {
           const exit = room.exits[direction];
+          const open = Object.prototype.hasOwnProperty.call(openDirections, direction)
+            ? openDirections[direction]
+            : Boolean(exit);
           return (
-            <details key={`${direction}:${Boolean(exit)}`} open={Boolean(exit)} className="border border-rule bg-paper">
+            <details
+              key={direction}
+              open={open}
+              onToggle={(event) =>
+                setOpenDirections((current) => ({
+                  ...current,
+                  [direction]: event.currentTarget.open,
+                }))
+              }
+              className="border border-rule bg-paper"
+            >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
                 <span>{exitTitle(direction)}</span>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-ink-muted">
@@ -51,7 +64,14 @@ export function ExitEditor({ room, dirty, disabled = false, onOperation }: ExitE
                     Add exit
                   </button>
                 ) : (
-                  <ExitFields exit={exit} direction={direction} dirty={dirty} disabled={disabled} onOperation={onOperation} />
+                  <ExitFields
+                    exit={exit}
+                    direction={direction}
+                    doorOptions={doorOptions}
+                    dirty={dirty}
+                    disabled={disabled}
+                    onOperation={onOperation}
+                  />
                 )}
               </div>
             </details>
@@ -65,12 +85,14 @@ export function ExitEditor({ room, dirty, disabled = false, onOperation }: ExitE
 function ExitFields({
   exit,
   direction,
+  doorOptions,
   dirty,
   disabled,
   onOperation,
 }: {
   exit: OlcExit;
   direction: string;
+  doorOptions: { value: number; label: string }[];
   dirty: string[];
   disabled: boolean;
   onOperation: (operation: RoomPatchOperation) => void;
@@ -135,27 +157,20 @@ function ExitFields({
         </div>
       </div>
 
-      <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-ink">Door flags</legend>
-        <div className="flex flex-wrap gap-2">
-          {[{ bit: 0, label: 'Door' }, { bit: 1, label: 'Pickproof' }].map((flag) => (
-            <label key={flag.bit} className="flex min-h-10 items-center gap-2 border border-rule bg-paper px-3 py-2 text-sm text-ink hover:bg-paper-deep">
-              <input
-                type="checkbox"
-                checked={doorIsSet(exit, flag.bit)}
-                disabled={disabled}
-                onChange={(event) => {
-                  const nextDoor = flag.bit === 0 ? event.currentTarget.checked : doorIsSet(exit, 0);
-                  const nextPickproof = flag.bit === 1 ? event.currentTarget.checked : doorIsSet(exit, 1);
-                  onOperation({ kind: 'set_exit_door_flags', direction, value: nextDoor ? (nextPickproof ? 2 : 1) : 0 });
-                }}
-                className="h-4 w-4 accent-accent"
-              />
-              <span>{flag.label}</span>
-            </label>
+      <div>
+        <label htmlFor={`exit-${direction}-door`} className="mb-2 block text-sm font-semibold text-ink">Door flags</label>
+        <select
+          id={`exit-${direction}-door`}
+          value={exit.doorState}
+          disabled={disabled}
+          onChange={(event) => onOperation({ kind: 'set_exit_door_flags', direction, value: Number(event.currentTarget.value) })}
+          className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {doorOptions.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
           ))}
-        </div>
-      </fieldset>
+        </select>
+      </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-rule pt-3">
         <span className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">

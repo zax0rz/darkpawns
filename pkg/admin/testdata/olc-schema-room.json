@@ -237,5 +237,29 @@
         }
       ]
     }
-  ]
+  ],
+  "exits": {
+    "directions": [
+      "north",
+      "east",
+      "south",
+      "west",
+      "up",
+      "down"
+    ],
+    "door_options": [
+      {
+        "value": 0,
+        "label": "No door"
+      },
+      {
+        "value": 1,
+        "label": "Closeable door"
+      },
+      {
+        "value": 2,
+        "label": "Pickproof"
+      }
+    ]
+  }
 }

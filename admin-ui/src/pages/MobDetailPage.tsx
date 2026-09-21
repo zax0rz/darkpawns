@@ -53,6 +53,7 @@ export function MobDetailPage() {
           <h1 className="text-xl font-bold text-ink">{mob.short_desc}</h1>
         </div>
         <p className="text-xs text-ink-muted mt-1 font-mono">Keywords: {mob.keywords}</p>
+        <Link to={`/admin/game/mobs/${mob.vnum}/edit`} className="mt-4 inline-block border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">Edit mob</Link>
       </div>
 
       {/* Stats grid */}

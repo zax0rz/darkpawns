@@ -63,6 +63,7 @@ export function ObjectDetailPage() {
           <h1 className="text-xl font-bold text-ink">{obj.short_desc}</h1>
         </div>
         <p className="text-xs text-ink-muted mt-1 font-mono">Keywords: {obj.keywords}</p>
+        <Link to={`/admin/game/objects/${obj.vnum}/edit`} className="mt-4 inline-block border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">Edit object</Link>
       </div>
 
       {/* Stats grid */}

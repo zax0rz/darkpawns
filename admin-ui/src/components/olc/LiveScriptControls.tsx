@@ -1,9 +1,14 @@
-import type { OlcRoom, OlcSchema } from '../../api/olc';
+import type { OlcSchema } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
+
+interface ScriptTarget {
+  scriptName: string;
+  scriptFunctions: number;
+}
 
 interface LiveScriptControlsProps {
   schema: OlcSchema;
-  room: OlcRoom;
+  value: ScriptTarget;
   disabled?: boolean;
   onScriptName: (value: string) => void;
   onScriptFlag: (bit: number, enabled: boolean) => void;
@@ -15,7 +20,7 @@ function isFlagSet(flags: number, bit: number): boolean {
 
 export function LiveScriptControls({
   schema,
-  room,
+  value,
   disabled = false,
   onScriptName,
   onScriptFlag,
@@ -39,7 +44,7 @@ export function LiveScriptControls({
               {scriptName.label}
             </label>
             <ServerProposal
-              value={room.scriptName}
+              value={value.scriptName}
               identity="olc-script-name"
               disabled={disabled}
               onCommit={onScriptName}
@@ -57,7 +62,7 @@ export function LiveScriptControls({
                 >
                   <input
                     type="checkbox"
-                    checked={isFlagSet(room.scriptFunctions, option.value)}
+                    checked={isFlagSet(value.scriptFunctions, option.value)}
                     disabled={disabled}
                     onChange={(event) => onScriptFlag(option.value, event.currentTarget.checked)}
                     className="h-4 w-4 accent-accent"

@@ -1,5 +1,7 @@
 package olc
 
+import "github.com/zax0rz/darkpawns/pkg/parser"
+
 // Bounds is an inclusive numeric range enforced by the shared OLC operation.
 type Bounds struct {
 	Min int `json:"min"`
@@ -34,11 +36,30 @@ type ObjectValueMatrixEntry struct {
 	Values        [4]ObjectValueField `json:"values"`
 }
 
+// AppliesDescriptor describes the bounded object-affect list and the semantic
+// operations that mutate it. The browser does not need to duplicate the
+// MAX_OBJ_AFFECT limit or invent operation names.
+type AppliesDescriptor struct {
+	Max             int               `json:"max"`
+	Options         []VocabularyEntry `json:"options"`
+	AddOperation    string            `json:"add_operation"`
+	RemoveOperation string            `json:"remove_operation"`
+}
+
+// ExitDescriptor contains the room exit vocabulary shared by telnet and the
+// bespoke web exit editor.
+type ExitDescriptor struct {
+	Directions  []string          `json:"directions"`
+	DoorOptions []VocabularyEntry `json:"door_options"`
+}
+
 // Schema is the complete vocabulary projection for one OLC editor.
 type Schema struct {
 	Kind        string                   `json:"kind"`
 	Fields      []SchemaField            `json:"fields"`
 	ValueMatrix []ObjectValueMatrixEntry `json:"value_matrix,omitempty"`
+	Applies     *AppliesDescriptor       `json:"applies,omitempty"`
+	Exits       *ExitDescriptor          `json:"exits,omitempty"`
 }
 
 const (
@@ -116,7 +137,20 @@ var (
 	objectLiquidOptions    = VocabularyOptions(LiquidNames)
 	objectAttackOptions    = VocabularyOptions(AttackNames)
 	objectContainerOptions = VocabularyOptions(ContainerFlagNames)
+	objectApplyOptions     = VocabularyOptions(ApplyTypeNames)
 )
+
+var objectApplies = &AppliesDescriptor{
+	Max:             parser.MAX_OBJ_AFFECT,
+	Options:         objectApplyOptions,
+	AddOperation:    "add_affect",
+	RemoveOperation: "remove_affect",
+}
+
+var roomExits = &ExitDescriptor{
+	Directions:  []string{"north", "east", "south", "west", "up", "down"},
+	DoorOptions: schemaOptions(ExitDoorFlagNames),
+}
 
 // ObjectValueBounds is the same matrix used by OpSetObjValue1..4. Invisible
 // rows retain the C operation's generic bounds for a stable, inspectable row.
@@ -336,12 +370,14 @@ func SchemaForKind(kind string) (Schema, bool) {
 			textField("script_name", "Script name", "text"),
 			checkboxField("script_flags", "Script flags", schemaOptions(RoomScriptFlagNames)),
 		}
+		schema.Exits = roomExits
 	case "mob":
 		schema.Fields = []SchemaField{
 			textField("keywords", "Alias", "text"),
 			textField("short_description", "Short description", "text"),
 			textField("long_description", "Long description", "text"),
 			textField("detailed_description", "Detailed description", "textarea"),
+			textField("noise", "Noise", "text"),
 			selectField("sex", "Gender", schemaOptions(GenderNames)),
 			numberField("hitroll", "Hitroll", MobHitrollMin, MobHitrollMax),
 			numberField("damroll", "Damroll", MobDamrollMin, MobDamrollMax),
@@ -381,6 +417,7 @@ func SchemaForKind(kind string) (Schema, bool) {
 			checkboxField("script_flags", "Script flags", schemaOptions(ObjectScriptFlagNames)),
 		}
 		schema.ValueMatrix = ObjectValueMatrix
+		schema.Applies = objectApplies
 	case "shop":
 		schema.Fields = []SchemaField{
 			unboundedNumberField("buy_profit", "Sell rate"),
