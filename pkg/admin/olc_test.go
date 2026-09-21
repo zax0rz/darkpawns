@@ -211,6 +211,33 @@ func TestOLCGateLevel35IsUnconfined(t *testing.T) {
 	}
 }
 
+func TestOLCSchemaIsAuthenticatedButNotZoneConfined(t *testing.T) {
+	handler := newOLCTestRouter(t, 31, 2, nil)
+	if rec := doOLCTestRequest(t, handler, "/admin/olc/schema/obj", false); rec.Code != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated schema status = %d, want 401", rec.Code)
+	}
+	rec := doOLCTestRequest(t, handler, "/admin/olc/schema/obj", true)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("schema status = %d, want 200; body: %s", rec.Code, rec.Body.String())
+	}
+	var body struct {
+		Kind        string                       `json:"kind"`
+		ValueMatrix []map[string]json.RawMessage `json:"value_matrix"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode schema: %v", err)
+	}
+	if body.Kind != "obj" || len(body.ValueMatrix) != len(olc.ItemTypeNames) {
+		t.Fatalf("schema identity/matrix = %q/%d, want obj/%d", body.Kind, len(body.ValueMatrix), len(olc.ItemTypeNames))
+	}
+	if strings.Contains(rec.Body.String(), "set_level") || strings.Contains(rec.Body.String(), "set_timer") {
+		t.Fatal("schema exposes faithful no-op operation names")
+	}
+	if !strings.Contains(rec.Body.String(), `"control":"spell_picker"`) {
+		t.Fatal("object schema does not expose spell picker controls")
+	}
+}
+
 func TestOLCPreviewAndZoneCommandView(t *testing.T) {
 	handler := newOLCTestRouter(t, 31, 1, nil)
 	rec := doOLCTestRequest(t, handler, "/admin/olc/zone/1001/preview", true)

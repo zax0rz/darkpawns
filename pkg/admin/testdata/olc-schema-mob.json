@@ -1,0 +1,750 @@
+{
+  "kind": "mob",
+  "fields": [
+    {
+      "key": "keywords",
+      "label": "Alias",
+      "control": "text"
+    },
+    {
+      "key": "short_description",
+      "label": "Short description",
+      "control": "text"
+    },
+    {
+      "key": "long_description",
+      "label": "Long description",
+      "control": "text"
+    },
+    {
+      "key": "detailed_description",
+      "label": "Detailed description",
+      "control": "textarea"
+    },
+    {
+      "key": "sex",
+      "label": "Gender",
+      "control": "select",
+      "options": [
+        {
+          "value": 0,
+          "label": "Neutral"
+        },
+        {
+          "value": 1,
+          "label": "Male"
+        },
+        {
+          "value": 2,
+          "label": "Female"
+        }
+      ]
+    },
+    {
+      "key": "hitroll",
+      "label": "Hitroll",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 127
+      }
+    },
+    {
+      "key": "damroll",
+      "label": "Damroll",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 127
+      }
+    },
+    {
+      "key": "damage_dice",
+      "label": "Damage dice",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 127
+      }
+    },
+    {
+      "key": "damage_sides",
+      "label": "Damage sides",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 127
+      }
+    },
+    {
+      "key": "hp_dice",
+      "label": "HP dice",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 50
+      }
+    },
+    {
+      "key": "hp_sides",
+      "label": "HP sides",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 3000
+      }
+    },
+    {
+      "key": "hp_plus",
+      "label": "HP plus",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 30000
+      }
+    },
+    {
+      "key": "ac",
+      "label": "AC",
+      "control": "number",
+      "bounds": {
+        "min": -200,
+        "max": 200
+      }
+    },
+    {
+      "key": "exp",
+      "label": "Experience",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 9223372036854775807
+      }
+    },
+    {
+      "key": "gold",
+      "label": "Gold",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 9223372036854775807
+      }
+    },
+    {
+      "key": "position",
+      "label": "Position",
+      "control": "select",
+      "options": [
+        {
+          "value": 0,
+          "label": "Dead"
+        },
+        {
+          "value": 1,
+          "label": "Mortally wounded"
+        },
+        {
+          "value": 2,
+          "label": "Incapacitated"
+        },
+        {
+          "value": 3,
+          "label": "Stunned"
+        },
+        {
+          "value": 4,
+          "label": "Sleeping"
+        },
+        {
+          "value": 5,
+          "label": "Resting"
+        },
+        {
+          "value": 6,
+          "label": "Sitting"
+        },
+        {
+          "value": 7,
+          "label": "Fighting"
+        },
+        {
+          "value": 8,
+          "label": "Standing"
+        }
+      ]
+    },
+    {
+      "key": "default_position",
+      "label": "Default position",
+      "control": "select",
+      "options": [
+        {
+          "value": 0,
+          "label": "Dead"
+        },
+        {
+          "value": 1,
+          "label": "Mortally wounded"
+        },
+        {
+          "value": 2,
+          "label": "Incapacitated"
+        },
+        {
+          "value": 3,
+          "label": "Stunned"
+        },
+        {
+          "value": 4,
+          "label": "Sleeping"
+        },
+        {
+          "value": 5,
+          "label": "Resting"
+        },
+        {
+          "value": 6,
+          "label": "Sitting"
+        },
+        {
+          "value": 7,
+          "label": "Fighting"
+        },
+        {
+          "value": 8,
+          "label": "Standing"
+        }
+      ]
+    },
+    {
+      "key": "attack",
+      "label": "Attack type",
+      "control": "select",
+      "options": [
+        {
+          "value": 0,
+          "label": "hit"
+        },
+        {
+          "value": 1,
+          "label": "sting"
+        },
+        {
+          "value": 2,
+          "label": "whip"
+        },
+        {
+          "value": 3,
+          "label": "slash"
+        },
+        {
+          "value": 4,
+          "label": "bite"
+        },
+        {
+          "value": 5,
+          "label": "bludgeon"
+        },
+        {
+          "value": 6,
+          "label": "crush"
+        },
+        {
+          "value": 7,
+          "label": "pound"
+        },
+        {
+          "value": 8,
+          "label": "claw"
+        },
+        {
+          "value": 9,
+          "label": "maul"
+        },
+        {
+          "value": 10,
+          "label": "thrash"
+        },
+        {
+          "value": 11,
+          "label": "pierce"
+        },
+        {
+          "value": 12,
+          "label": "blast"
+        },
+        {
+          "value": 13,
+          "label": "punch"
+        },
+        {
+          "value": 14,
+          "label": "stab"
+        }
+      ]
+    },
+    {
+      "key": "level",
+      "label": "Level",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 100
+      }
+    },
+    {
+      "key": "alignment",
+      "label": "Alignment",
+      "control": "number",
+      "bounds": {
+        "min": -1000,
+        "max": 1000
+      }
+    },
+    {
+      "key": "race",
+      "label": "Race",
+      "control": "select",
+      "options": [
+        {
+          "value": 0,
+          "label": "Human"
+        },
+        {
+          "value": 1,
+          "label": "Elf"
+        },
+        {
+          "value": 2,
+          "label": "Dwarf"
+        },
+        {
+          "value": 3,
+          "label": "Kender"
+        },
+        {
+          "value": 4,
+          "label": "Centaur"
+        },
+        {
+          "value": 5,
+          "label": "Rakshasa"
+        },
+        {
+          "value": 6,
+          "label": "Troll"
+        },
+        {
+          "value": 7,
+          "label": "Lycanthrope"
+        },
+        {
+          "value": 8,
+          "label": "Vampire"
+        },
+        {
+          "value": 9,
+          "label": "Undead"
+        },
+        {
+          "value": 10,
+          "label": "Dragon"
+        },
+        {
+          "value": 11,
+          "label": "Demon"
+        },
+        {
+          "value": 12,
+          "label": "Horse"
+        },
+        {
+          "value": 13,
+          "label": "Reptile"
+        },
+        {
+          "value": 14,
+          "label": "Arachnid"
+        },
+        {
+          "value": 15,
+          "label": "Rodent"
+        },
+        {
+          "value": 16,
+          "label": "Other"
+        },
+        {
+          "value": 17,
+          "label": "Vegetable"
+        },
+        {
+          "value": 18,
+          "label": "Giant"
+        },
+        {
+          "value": 19,
+          "label": "Demi-god"
+        },
+        {
+          "value": 20,
+          "label": "Ogre"
+        },
+        {
+          "value": 21,
+          "label": "Insect"
+        },
+        {
+          "value": 22,
+          "label": "Mammal"
+        },
+        {
+          "value": 23,
+          "label": "Fish"
+        },
+        {
+          "value": 24,
+          "label": "Avian"
+        },
+        {
+          "value": 25,
+          "label": "Magical Construct"
+        },
+        {
+          "value": 26,
+          "label": "Amphibian"
+        },
+        {
+          "value": 27,
+          "label": "Humanoid"
+        },
+        {
+          "value": 28,
+          "label": "Faery"
+        },
+        {
+          "value": 29,
+          "label": "Ssaur"
+        },
+        {
+          "value": 30,
+          "label": "Minotaur"
+        }
+      ]
+    },
+    {
+      "key": "action_flags",
+      "label": "Mob flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "SPEC"
+        },
+        {
+          "value": 1,
+          "label": "SENTINEL"
+        },
+        {
+          "value": 2,
+          "label": "SCAVENGER"
+        },
+        {
+          "value": 3,
+          "label": "ISNPC"
+        },
+        {
+          "value": 4,
+          "label": "AWARE"
+        },
+        {
+          "value": 5,
+          "label": "AGGR"
+        },
+        {
+          "value": 6,
+          "label": "STAY-ZONE"
+        },
+        {
+          "value": 7,
+          "label": "WIMPY"
+        },
+        {
+          "value": 8,
+          "label": "AGGR_EVIL"
+        },
+        {
+          "value": 9,
+          "label": "AGGR_GOOD"
+        },
+        {
+          "value": 10,
+          "label": "AGGR_NEUTRAL"
+        },
+        {
+          "value": 11,
+          "label": "MEMORY"
+        },
+        {
+          "value": 12,
+          "label": "HELPER"
+        },
+        {
+          "value": 13,
+          "label": "!CHARM"
+        },
+        {
+          "value": 14,
+          "label": "!SUMMN"
+        },
+        {
+          "value": 15,
+          "label": "!SLEEP"
+        },
+        {
+          "value": 16,
+          "label": "!BASH"
+        },
+        {
+          "value": 17,
+          "label": "!BLIND"
+        },
+        {
+          "value": 18,
+          "label": "HUNTER"
+        },
+        {
+          "value": 19,
+          "label": "AGGR24"
+        },
+        {
+          "value": 20,
+          "label": "RNDLD_ZONE"
+        },
+        {
+          "value": 21,
+          "label": "MOUNTABLE"
+        },
+        {
+          "value": 22,
+          "label": "RARE"
+        },
+        {
+          "value": 23,
+          "label": "LOOTS"
+        },
+        {
+          "value": 24,
+          "label": "OKGIVE"
+        }
+      ]
+    },
+    {
+      "key": "affect_flags",
+      "label": "Affect flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "BLIND"
+        },
+        {
+          "value": 1,
+          "label": "INVIS"
+        },
+        {
+          "value": 2,
+          "label": "DET-ALIGN"
+        },
+        {
+          "value": 3,
+          "label": "DET-INVIS"
+        },
+        {
+          "value": 4,
+          "label": "DET-MAGIC"
+        },
+        {
+          "value": 5,
+          "label": "SENSE-LIFE"
+        },
+        {
+          "value": 6,
+          "label": "WATERWALK"
+        },
+        {
+          "value": 7,
+          "label": "SANCT"
+        },
+        {
+          "value": 8,
+          "label": "GROUP"
+        },
+        {
+          "value": 9,
+          "label": "CURSE"
+        },
+        {
+          "value": 10,
+          "label": "INFRA"
+        },
+        {
+          "value": 11,
+          "label": "POISON"
+        },
+        {
+          "value": 12,
+          "label": "PROT-EVIL"
+        },
+        {
+          "value": 13,
+          "label": "PROT-GOOD"
+        },
+        {
+          "value": 14,
+          "label": "SLEEP"
+        },
+        {
+          "value": 15,
+          "label": "!TRACK"
+        },
+        {
+          "value": 16,
+          "label": "FLESH-ALTER"
+        },
+        {
+          "value": 17,
+          "label": "DODGE"
+        },
+        {
+          "value": 18,
+          "label": "SNEAK"
+        },
+        {
+          "value": 19,
+          "label": "HIDE"
+        },
+        {
+          "value": 20,
+          "label": "BERSERK"
+        },
+        {
+          "value": 21,
+          "label": "CHARM"
+        },
+        {
+          "value": 22,
+          "label": "FOLLOW"
+        },
+        {
+          "value": 23,
+          "label": "WIMPY"
+        },
+        {
+          "value": 24,
+          "label": "KUJI-KIRI"
+        },
+        {
+          "value": 25,
+          "label": "CUTTHROAT"
+        },
+        {
+          "value": 26,
+          "label": "FLY"
+        },
+        {
+          "value": 27,
+          "label": "WEREWOLF"
+        },
+        {
+          "value": 28,
+          "label": "VAMPIRE"
+        },
+        {
+          "value": 29,
+          "label": "MOUNTED"
+        },
+        {
+          "value": 30,
+          "label": "INVULN"
+        },
+        {
+          "value": 31,
+          "label": "FLAMING"
+        },
+        {
+          "value": 32,
+          "label": "NOTHING"
+        },
+        {
+          "value": 33,
+          "label": "HASTE"
+        },
+        {
+          "value": 34,
+          "label": "SLOW"
+        },
+        {
+          "value": 35,
+          "label": "DREAM"
+        },
+        {
+          "value": 36,
+          "label": "WATERBREATHE"
+        }
+      ]
+    },
+    {
+      "key": "script_name",
+      "label": "Script name",
+      "control": "text"
+    },
+    {
+      "key": "script_flags",
+      "label": "Script flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "NONE"
+        },
+        {
+          "value": 1,
+          "label": "BRIBE"
+        },
+        {
+          "value": 2,
+          "label": "GREET"
+        },
+        {
+          "value": 3,
+          "label": "ONGIVE"
+        },
+        {
+          "value": 4,
+          "label": "SOUND"
+        },
+        {
+          "value": 5,
+          "label": "DEATH"
+        },
+        {
+          "value": 6,
+          "label": "ONPULSE (ALL)"
+        },
+        {
+          "value": 7,
+          "label": "ONPULSE (PC)"
+        },
+        {
+          "value": 8,
+          "label": "FIGHT"
+        },
+        {
+          "value": 9,
+          "label": "ONCMD"
+        }
+      ]
+    }
+  ]
+}

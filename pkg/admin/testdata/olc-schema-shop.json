@@ -1,0 +1,141 @@
+{
+  "kind": "shop",
+  "fields": [
+    {
+      "key": "buy_profit",
+      "label": "Sell rate",
+      "control": "number"
+    },
+    {
+      "key": "sell_profit",
+      "label": "Buy rate",
+      "control": "number"
+    },
+    {
+      "key": "keeper",
+      "label": "Keeper",
+      "control": "vnum"
+    },
+    {
+      "key": "flags",
+      "label": "Shop flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "WILL_FIGHT"
+        },
+        {
+          "value": 1,
+          "label": "USES_BANK"
+        }
+      ]
+    },
+    {
+      "key": "with_who",
+      "label": "No Trade With",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "Good"
+        },
+        {
+          "value": 1,
+          "label": "Evil"
+        },
+        {
+          "value": 2,
+          "label": "Neutral"
+        },
+        {
+          "value": 3,
+          "label": "Magic User"
+        },
+        {
+          "value": 4,
+          "label": "Cleric"
+        },
+        {
+          "value": 5,
+          "label": "Thief"
+        },
+        {
+          "value": 6,
+          "label": "Warrior"
+        }
+      ]
+    },
+    {
+      "key": "open_hour_1",
+      "label": "Open 1",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 28
+      }
+    },
+    {
+      "key": "open_hour_2",
+      "label": "Open 2",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 28
+      }
+    },
+    {
+      "key": "close_hour_1",
+      "label": "Close 1",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 28
+      }
+    },
+    {
+      "key": "close_hour_2",
+      "label": "Close 2",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 28
+      }
+    },
+    {
+      "key": "message_no_item_keeper",
+      "label": "Keeper no item",
+      "control": "text"
+    },
+    {
+      "key": "message_no_item_player",
+      "label": "Player no item",
+      "control": "text"
+    },
+    {
+      "key": "message_no_buy",
+      "label": "Keeper no buy",
+      "control": "text"
+    },
+    {
+      "key": "message_no_cash_keeper",
+      "label": "Keeper no cash",
+      "control": "text"
+    },
+    {
+      "key": "message_no_cash_player",
+      "label": "Player no cash",
+      "control": "text"
+    },
+    {
+      "key": "message_buy",
+      "label": "Buy success",
+      "control": "text"
+    },
+    {
+      "key": "message_sell",
+      "label": "Sell success",
+      "control": "text"
+    }
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "kind": "room",
+  "fields": [
+    {
+      "key": "name",
+      "label": "Name",
+      "control": "text"
+    },
+    {
+      "key": "description",
+      "label": "Description",
+      "control": "textarea"
+    },
+    {
+      "key": "flags",
+      "label": "Room flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "DARK"
+        },
+        {
+          "value": 1,
+          "label": "DEATH"
+        },
+        {
+          "value": 2,
+          "label": "!MOB"
+        },
+        {
+          "value": 3,
+          "label": "INDOORS"
+        },
+        {
+          "value": 4,
+          "label": "PEACEFUL"
+        },
+        {
+          "value": 5,
+          "label": "SOUNDPROOF"
+        },
+        {
+          "value": 6,
+          "label": "!TRACK"
+        },
+        {
+          "value": 7,
+          "label": "!MAGIC"
+        },
+        {
+          "value": 8,
+          "label": "TUNNEL"
+        },
+        {
+          "value": 9,
+          "label": "PRIVATE"
+        },
+        {
+          "value": 10,
+          "label": "GODROOM"
+        },
+        {
+          "value": 11,
+          "label": "HOUSE"
+        },
+        {
+          "value": 12,
+          "label": "HCRSH"
+        },
+        {
+          "value": 13,
+          "label": "ATRIUM"
+        },
+        {
+          "value": 14,
+          "label": "OLC"
+        },
+        {
+          "value": 15,
+          "label": "*"
+        },
+        {
+          "value": 16,
+          "label": "NEUTRAL"
+        },
+        {
+          "value": 17,
+          "label": "BFR"
+        },
+        {
+          "value": 18,
+          "label": "REGENROOM"
+        },
+        {
+          "value": 19,
+          "label": "NO_WHO_ROOM"
+        },
+        {
+          "value": 20,
+          "label": "**"
+        },
+        {
+          "value": 21,
+          "label": "FLOW_NORTH"
+        },
+        {
+          "value": 22,
+          "label": "FLOW_SOUTH"
+        },
+        {
+          "value": 23,
+          "label": "FLOW_EAST"
+        },
+        {
+          "value": 24,
+          "label": "FLOW_WEST"
+        },
+        {
+          "value": 25,
+          "label": "FLOW_UP"
+        },
+        {
+          "value": 26,
+          "label": "FLOW_DOWN"
+        },
+        {
+          "value": 27,
+          "label": "ARENA"
+        }
+      ]
+    },
+    {
+      "key": "sector",
+      "label": "Sector type",
+      "control": "select",
+      "options": [
+        {
+          "value": 0,
+          "label": "Inside"
+        },
+        {
+          "value": 1,
+          "label": "City"
+        },
+        {
+          "value": 2,
+          "label": "Field"
+        },
+        {
+          "value": 3,
+          "label": "Forest"
+        },
+        {
+          "value": 4,
+          "label": "Hills"
+        },
+        {
+          "value": 5,
+          "label": "Mountains"
+        },
+        {
+          "value": 6,
+          "label": "Water (Swim)"
+        },
+        {
+          "value": 7,
+          "label": "Water (No Swim)"
+        },
+        {
+          "value": 8,
+          "label": "Underwater"
+        },
+        {
+          "value": 9,
+          "label": "In Flight"
+        },
+        {
+          "value": 10,
+          "label": "Desert"
+        },
+        {
+          "value": 11,
+          "label": "Fire"
+        },
+        {
+          "value": 12,
+          "label": "Earth"
+        },
+        {
+          "value": 13,
+          "label": "Wind"
+        },
+        {
+          "value": 14,
+          "label": "Water"
+        },
+        {
+          "value": 15,
+          "label": "Swamp"
+        }
+      ]
+    },
+    {
+      "key": "script_name",
+      "label": "Script name",
+      "control": "text"
+    },
+    {
+      "key": "script_flags",
+      "label": "Script flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "NONE"
+        },
+        {
+          "value": 1,
+          "label": "ENTER"
+        },
+        {
+          "value": 2,
+          "label": "ONPULSE"
+        },
+        {
+          "value": 3,
+          "label": "ONDROP"
+        },
+        {
+          "value": 4,
+          "label": "ONGET"
+        },
+        {
+          "value": 5,
+          "label": "ONCMD"
+        }
+      ]
+    }
+  ]
+}

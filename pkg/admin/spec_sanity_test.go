@@ -49,6 +49,7 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/shops":                          {"get"},
 		"/admin/rooms/{vnum}":                   {"get"},
 		"/admin/metrics":                        {"get"},
+		"/admin/olc/schema/{kind}":              {"get"},
 		"/admin/olc/{kind}/{vnum}/preview":      {"get"},
 		"/admin/olc/held":                       {"get"},
 		"/admin/olc/pending":                    {"get"},

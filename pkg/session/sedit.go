@@ -60,19 +60,6 @@ type seditState struct {
 	pendingOutput string
 }
 
-var seditItemTypes = []string{
-	"UNDEFINED", "LIGHT", "SCROLL", "WAND", "STAFF", "WEAPON",
-	"FIRE WEAPON", "MISSILE", "TREASURE", "ARMOR", "POTION", "WORN",
-	"OTHER", "TRASH", "TRAP", "CONTAINER", "NOTE", "LIQ CONTAINER",
-	"KEY", "FOOD", "MONEY", "PEN", "BOAT", "FOUNTAIN",
-}
-
-var seditShopFlagNames = []string{"WILL_FIGHT", "USES_BANK"}
-
-var seditTradeLetters = []string{
-	"Good", "Evil", "Neutral", "Magic User", "Cleric", "Thief", "Warrior",
-}
-
 var seditMessageModes = map[seditMode]int{
 	seditNoItem1: 0,
 	seditNoItem2: 1,
@@ -323,8 +310,8 @@ func (s *Session) seditShowMenuLocked() {
 		}
 	}
 	var notrade, flags string
-	notrade = seditSprintBits(shop.WithWho, seditTradeLetters)
-	flags = seditSprintBits(shop.Bitvector, seditShopFlagNames)
+	notrade = seditSprintBits(shop.WithWho, olc.ShopTradeNames)
+	flags = seditSprintBits(shop.Bitvector, olc.ShopFlagNames)
 
 	var out strings.Builder
 	fmt.Fprintf(&out, "\r\n-- Shop Number : [%s%d%s]\r\n", cyn, state.number, nrm)
@@ -438,13 +425,13 @@ func (s *Session) seditShowShopFlagsMenuLocked() {
 	nrm, grn, cyn, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
-	for i, name := range seditShopFlagNames {
+	for i, name := range olc.ShopFlagNames {
 		fmt.Fprintf(&out, "%s%2d%s) %-20.20s   ", grn, i+1, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")
 		}
 	}
-	fmt.Fprintf(&out, "\r\nCurrent Shop Flags : %s%s%s\r\nEnter choice : ", cyn, seditSprintBits(state.shop.Bitvector, seditShopFlagNames), nrm)
+	fmt.Fprintf(&out, "\r\nCurrent Shop Flags : %s%s%s\r\nEnter choice : ", cyn, seditSprintBits(state.shop.Bitvector, olc.ShopFlagNames), nrm)
 	s.seditSendLocked(out.String())
 	state.mode = seditShopFlags
 }
@@ -454,13 +441,13 @@ func (s *Session) seditShowNoTradeMenuLocked() {
 	nrm, grn, cyn, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
-	for i, name := range seditTradeLetters {
+	for i, name := range olc.ShopTradeNames {
 		fmt.Fprintf(&out, "%s%2d%s) %-20.20s   ", grn, i+1, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")
 		}
 	}
-	fmt.Fprintf(&out, "\r\nCurrently won't trade with: %s%s%s\r\nEnter choice : ", cyn, seditSprintBits(state.shop.WithWho, seditTradeLetters), nrm)
+	fmt.Fprintf(&out, "\r\nCurrently won't trade with: %s%s%s\r\nEnter choice : ", cyn, seditSprintBits(state.shop.WithWho, olc.ShopTradeNames), nrm)
 	s.seditSendLocked(out.String())
 	state.mode = seditNoTrade
 }
@@ -470,7 +457,7 @@ func (s *Session) seditShowTypesMenuLocked() {
 	nrm, grn, cyn, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
-	for i, name := range seditItemTypes {
+	for i, name := range olc.ItemTypeNames {
 		fmt.Fprintf(&out, "%s%2d%s) %s%-20s%s  ", grn, i, nrm, cyn, name, nrm)
 		if (i+1)%3 == 0 {
 			out.WriteString("\r\n")
@@ -482,8 +469,8 @@ func (s *Session) seditShowTypesMenuLocked() {
 }
 
 func seditItemName(index int) string {
-	if index >= 0 && index < len(seditItemTypes) {
-		return seditItemTypes[index]
+	if index >= 0 && index < len(olc.ItemTypeNames) {
+		return olc.ItemTypeNames[index]
 	}
 	return "UNDEFINED"
 }
@@ -550,7 +537,7 @@ func (s *Session) parseSeditLocked(arg string) {
 			state.shop.SellProfit = value
 		}
 	case seditTypeMenu:
-		state.olcVal = applyOLCClamp(atoiC(arg), 0, len(seditItemTypes)-1)
+		state.olcVal = applyOLCClamp(atoiC(arg), 0, len(olc.ItemTypeNames)-1)
 		s.seditSend("Enter namelist (return for none) :-\r\n| ")
 		state.mode = seditNamelist
 		return
@@ -579,12 +566,12 @@ func (s *Session) parseSeditLocked(arg string) {
 		s.seditShowRoomsMenuLocked()
 		return
 	case seditShopFlags:
-		if s.seditToggleFlagLocked(&state.shop.Bitvector, atoiC(arg), len(seditShopFlagNames)) {
+		if s.seditToggleFlagLocked(&state.shop.Bitvector, atoiC(arg), len(olc.ShopFlagNames)) {
 			s.seditShowShopFlagsMenuLocked()
 			return
 		}
 	case seditNoTrade:
-		if s.seditToggleFlagLocked(&state.shop.WithWho, atoiC(arg), len(seditTradeLetters)) {
+		if s.seditToggleFlagLocked(&state.shop.WithWho, atoiC(arg), len(olc.ShopTradeNames)) {
 			s.seditShowNoTradeMenuLocked()
 			return
 		}

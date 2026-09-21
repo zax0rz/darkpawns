@@ -68,78 +68,6 @@ type meditState struct {
 	olcVal     int // C OLC_VAL: the has-changed/quit-prompt flag.
 }
 
-// The display tables below are byte-faithful copies of the C constant arrays
-// the medit menus print (src/constants.c, src/fight.c). They intentionally
-// differ from the parser's storage-name lists (pkg/parser/mob.go), which use
-// normalized spellings ("AGGRESSIVE" vs C's "AGGR"); the bit positions are
-// identical, only the menu spellings differ.
-
-var meditGenderNames = []string{"Neutral", "Male", "Female"}
-
-var meditPositionNames = []string{
-	"Dead", "Mortally wounded", "Incapacitated", "Stunned", "Sleeping",
-	"Resting", "Sitting", "Fighting", "Standing",
-}
-
-var meditAttackNames = []string{
-	"hit", "sting", "whip", "slash", "bite", "bludgeon", "crush", "pound",
-	"claw", "maul", "thrash", "pierce", "blast", "punch", "stab",
-}
-
-// C action_bits[] (src/constants.c); NUM_MOB_FLAGS is 25.
-var meditMobFlagNames = []string{
-	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGR", "STAY-ZONE",
-	"WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY", "HELPER",
-	"!CHARM", "!SUMMN", "!SLEEP", "!BASH", "!BLIND", "HUNTER", "AGGR24",
-	"RNDLD_ZONE", "MOUNTABLE", "RARE", "LOOTS", "OKGIVE",
-}
-
-// C affected_bits[] (src/constants.c); NUM_AFF_FLAGS is 37.
-var meditAffFlagNames = []string{
-	"BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC", "SENSE-LIFE",
-	"WATERWALK", "SANCT", "GROUP", "CURSE", "INFRA", "POISON", "PROT-EVIL",
-	"PROT-GOOD", "SLEEP", "!TRACK", "FLESH-ALTER", "DODGE", "SNEAK", "HIDE",
-	"BERSERK", "CHARM", "FOLLOW", "WIMPY", "KUJI-KIRI", "CUTTHROAT", "FLY",
-	"WEREWOLF", "VAMPIRE", "MOUNTED", "INVULN", "FLAMING", "NOTHING", "HASTE",
-	"SLOW", "DREAM", "WATERBREATHE",
-}
-
-// C mscript_bits[] (src/constants.c); NUM_MSCRIPT_FLAGS is 10.
-var meditScriptFlagNames = []string{
-	"NONE", "BRIBE", "GREET", "ONGIVE", "SOUND", "DEATH", "ONPULSE (ALL)",
-	"ONPULSE (PC)", "FIGHT", "ONCMD",
-}
-
-// C mob_races[] (src/constants.c); NUM_MOB_RACES is 31, RACE_OTHER is 16.
-var meditRaceNames = []string{
-	"Human", "Elf", "Dwarf", "Kender", "Centaur", "Rakshasa", "Troll",
-	"Lycanthrope", "Vampire", "Undead", "Dragon", "Demon", "Horse", "Reptile",
-	"Arachnid", "Rodent", "Other", "Vegetable", "Giant", "Demi-god", "Ogre",
-	"Insect", "Mammal", "Fish", "Avian", "Magical Construct", "Amphibian",
-	"Humanoid", "Faery", "Ssaur", "Minotaur",
-}
-
-// The storage-name lists mirror pkg/parser/mob.go's private bit tables so the
-// editor can round-trip flag names through bit indices. Bit positions match
-// src/structs.h; only the spellings differ from the C menu tables above.
-
-var meditParserActionBits = []string{
-	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
-	"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY",
-	"HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH", "NOBLIND", "HUNTER",
-	"AGGR24", "RANDZON", "MOUNTABLE", "RARE", "LOOTS", "OKGIVE", "EXTRACT",
-}
-
-var meditParserAffectBits = []string{
-	"BLIND", "INVISIBLE", "DETECT_ALIGN", "DETECT_INVIS", "DETECT_MAGIC",
-	"SENSE_LIFE", "WATERWALK", "SANCTUARY", "GROUP", "CURSE", "INFRAVISION",
-	"POISON", "PROTECT_EVIL", "PROTECT_GOOD", "SLEEP", "NOTRACK",
-	"FLESH_ALTER", "DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM", "FOLLOW",
-	"WIMPY", "KUJI_KIRI", "CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNT",
-	"INVULN", "FLAMING", "NOTHING", "HASTE", "SLOW", "DREAM", "WATERBREATHE",
-	"METALSKIN", "ROBBED",
-}
-
 // cmdMedit is the Go port of do_olc's SCMD_OLC_MEDIT branch (src/olc.c).
 func cmdMedit(s *Session, args []string) error {
 	if s.player == nil || s.manager == nil || s.manager.world == nil {
@@ -406,9 +334,9 @@ func (s *Session) meditShowMenuLocked() {
 	fmt.Fprintf(&sb, "%sJ%s) Default   : %s%s\r\n", grn, nrm, yel, meditPosName(mob.DefaultPos))
 	fmt.Fprintf(&sb, "%sK%s) Attack    : %s%s\r\n", grn, nrm, yel, meditAttackName(mob.BareHandAttack))
 	fmt.Fprintf(&sb, "%sL%s) NPC Flags : %s%s\r\n", grn, nrm, cyn,
-		meditSprintBitArray(mob.ActionFlags, meditParserActionBits, meditMobFlagNames))
+		meditSprintBitArray(mob.ActionFlags, olc.MobActionStorageNames, olc.MobActionDisplayNames))
 	fmt.Fprintf(&sb, "%sM%s) AFF Flags : %s%s\r\n", grn, nrm, cyn,
-		meditSprintBitArray(mob.AffectFlags, meditParserAffectBits, meditAffFlagNames))
+		meditSprintBitArray(mob.AffectFlags, olc.MobAffectStorageNames, olc.MobAffectDisplayNames))
 	fmt.Fprintf(&sb, "%sN%s) Race      : %s%s\r\n", grn, nrm, cyn, meditRaceName(mob.Race))
 	fmt.Fprintf(&sb, "%sO%s) Noise     : %s%s\r\n", grn, nrm, cyn, noise)
 	fmt.Fprintf(&sb, "%sS%s) Script Menu   \r\n", grn, nrm)
@@ -419,15 +347,15 @@ func (s *Session) meditShowMenuLocked() {
 }
 
 func meditSexName(sex int) string {
-	if sex >= 0 && sex < len(meditGenderNames) {
-		return meditGenderNames[sex]
+	if sex >= 0 && sex < len(olc.GenderNames) {
+		return olc.GenderNames[sex]
 	}
 	return "Error"
 }
 
 func meditPosName(pos int) string {
-	if pos >= 0 && pos < len(meditPositionNames) {
-		return meditPositionNames[pos]
+	if pos >= 0 && pos < len(olc.PositionNames) {
+		return olc.PositionNames[pos]
 	}
 	// C indexes position_types[] out of bounds for 9-14 (undefined). The Go
 	// port stores C's clamped value for .mob fidelity but refuses to read
@@ -437,15 +365,15 @@ func meditPosName(pos int) string {
 }
 
 func meditAttackName(attack int) string {
-	if attack >= 0 && attack < len(meditAttackNames) {
-		return meditAttackNames[attack]
+	if attack >= 0 && attack < len(olc.AttackNames) {
+		return olc.AttackNames[attack]
 	}
 	return "Error"
 }
 
 func meditRaceName(race int) string {
-	if race >= 0 && race < len(meditRaceNames) {
-		return meditRaceNames[race]
+	if race >= 0 && race < len(olc.MobRaceNames) {
+		return olc.MobRaceNames[race]
 	}
 	return "Error"
 }
@@ -460,7 +388,7 @@ func meditDisplayHitroll(mob *parser.Mob) int {
 // meditSprintBitArray mirrors sprintbitarray: each set flag renders through
 // the C display table as "NAME " (trailing space after each name); an empty
 // set renders "NOBITS ". The parser stores flags under its own spellings
-// (meditParserActionBits / meditParserAffectBits), which share bit positions
+// (olc.MobActionStorageNames / olc.MobAffectStorageNames), which share bit positions
 // with the C menu tables.
 func meditSprintBitArray(set []string, parserNames, displayNames []string) string {
 	inSet := make(map[string]bool, len(set))
@@ -490,7 +418,7 @@ func meditSprintBitArray(set []string, parserNames, displayNames []string) strin
 // sprintbit (singular) falls back to "NOBITS " for an empty set.
 func meditSprintScriptFlags(flags int) string {
 	var sb strings.Builder
-	for i, name := range meditScriptFlagNames {
+	for i, name := range olc.MobScriptFlagNames {
 		if flags&(1<<uint(i)) != 0 {
 			sb.WriteString(name)
 			sb.WriteString(" ")
@@ -510,7 +438,7 @@ func (s *Session) meditShowSexLocked() {
 	nrm, grn, _, _ := s.reditCols()
 	var sb strings.Builder
 	sb.WriteString("\r\n")
-	for i, name := range meditGenderNames {
+	for i, name := range olc.GenderNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %s\r\n", grn, i, nrm, name)
 	}
 	sb.WriteString("Enter gender number : ")
@@ -525,7 +453,7 @@ func (s *Session) meditShowPositionsLocked() {
 	nrm, grn, _, _ := s.reditCols()
 	var sb strings.Builder
 	sb.WriteString("\r\n")
-	for i, name := range meditPositionNames {
+	for i, name := range olc.PositionNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %s\r\n", grn, i, nrm, name)
 	}
 	sb.WriteString("Enter position number : ")
@@ -537,7 +465,7 @@ func (s *Session) meditShowAttackTypesLocked() {
 	nrm, grn, _, _ := s.reditCols()
 	var sb strings.Builder
 	sb.WriteString("\r\n")
-	for i, name := range meditAttackNames {
+	for i, name := range olc.AttackNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %s\r\n", grn, i, nrm, name)
 	}
 	sb.WriteString("Enter attack type : ")
@@ -552,7 +480,7 @@ func (s *Session) meditShowRacesLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range meditRaceNames {
+	for i, name := range olc.MobRaceNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -572,7 +500,7 @@ func (s *Session) meditShowMobFlagsLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range meditMobFlagNames {
+	for i, name := range olc.MobActionDisplayNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -580,7 +508,7 @@ func (s *Session) meditShowMobFlagsLocked() {
 		}
 	}
 	fmt.Fprintf(&sb, "\r\nCurrent flags : %s%s%s\r\n", cyn,
-		meditSprintBitArray(s.mobEdit.mob.ActionFlags, meditParserActionBits, meditMobFlagNames), nrm)
+		meditSprintBitArray(s.mobEdit.mob.ActionFlags, olc.MobActionStorageNames, olc.MobActionDisplayNames), nrm)
 	sb.WriteString("Enter mob flags (0 to quit) : ")
 	s.meditSendLocked(sb.String())
 }
@@ -593,7 +521,7 @@ func (s *Session) meditShowAffFlagsLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range meditAffFlagNames {
+	for i, name := range olc.MobAffectDisplayNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -601,7 +529,7 @@ func (s *Session) meditShowAffFlagsLocked() {
 		}
 	}
 	fmt.Fprintf(&sb, "\r\nCurrent flags   : %s%s%s\r\n", cyn,
-		meditSprintBitArray(s.mobEdit.mob.AffectFlags, meditParserAffectBits, meditAffFlagNames), nrm)
+		meditSprintBitArray(s.mobEdit.mob.AffectFlags, olc.MobAffectStorageNames, olc.MobAffectDisplayNames), nrm)
 	sb.WriteString("Enter aff flags (0 to quit) : ")
 	s.meditSendLocked(sb.String())
 }
@@ -651,7 +579,7 @@ func (s *Session) meditShowScriptFlagsLocked() {
 	var sb strings.Builder
 	sb.WriteString("\x1b[H\x1b[J")
 	columns := 0
-	for i, name := range meditScriptFlagNames {
+	for i, name := range olc.MobScriptFlagNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -768,8 +696,8 @@ func (s *Session) parseMeditLocked(arg string) {
 		}
 		// C: if (!((i < 0) || (i > NUM_MOB_FLAGS))) { i--; TOGGLE_BIT_AR(...); }
 		// NUM_MOB_FLAGS is 25; the menu numbers flags 1-25.
-		if i > 0 && i <= len(meditMobFlagNames) {
-			mob.ActionFlags = meditToggleParserFlag(mob.ActionFlags, meditParserActionBits, i-1)
+		if i > 0 && i <= len(olc.MobActionFlags) {
+			mob.ActionFlags = meditToggleParserFlag(mob.ActionFlags, olc.MobActionStorageNames, i-1)
 		}
 		s.meditShowMobFlagsLocked()
 		return
@@ -780,8 +708,8 @@ func (s *Session) parseMeditLocked(arg string) {
 		}
 		// C toggles the AFF bit (TOGGLE_BIT_AR), mirroring the NPC and
 		// script flag menus. The menu numbers flags 1-37.
-		if i > 0 && i <= len(meditAffFlagNames) {
-			mob.AffectFlags = meditToggleParserFlag(mob.AffectFlags, meditParserAffectBits, i-1)
+		if i > 0 && i <= len(olc.MobAffectFlags) {
+			mob.AffectFlags = meditToggleParserFlag(mob.AffectFlags, olc.MobAffectStorageNames, i-1)
 		}
 		s.meditShowAffFlagsLocked()
 		return
@@ -819,7 +747,7 @@ func (s *Session) parseMeditLocked(arg string) {
 		if i := atoiC(arg); i == 0 {
 			s.meditShowScriptMenuLocked()
 			return
-		} else if i > 0 && i <= len(meditScriptFlagNames) {
+		} else if i > 0 && i <= len(olc.MobScriptFlagNames) {
 			// C toggles bit (i-1) on the live shallow-copied script flags.
 			s.toggleMeditScriptFlagLocked(i - 1)
 		}
@@ -1128,9 +1056,9 @@ func writeMeditMob(sb *strings.Builder, mob *parser.Mob) {
 	fmt.Fprintf(sb, "%s~\n", strings.ReplaceAll(mob.LongDesc, "\r", ""))
 	fmt.Fprintf(sb, "%s~\n", strings.ReplaceAll(mob.DetailedDesc, "\r", ""))
 	// C: mob flags (4 ints), aff flags (4 ints), alignment, then " E".
-	writeMeditFlagInts(sb, mob.ActionFlags, meditParserActionBits)
+	writeMeditFlagInts(sb, mob.ActionFlags, olc.MobActionStorageNames)
 	sb.WriteString(" ")
-	writeMeditFlagInts(sb, mob.AffectFlags, meditParserAffectBits)
+	writeMeditFlagInts(sb, mob.AffectFlags, olc.MobAffectStorageNames)
 	fmt.Fprintf(sb, " %d E\n", mob.Alignment)
 	// C: level, 20-hitroll (the file THAC0), AC/10, hit dice, dam dice.
 	fmt.Fprintf(sb, "%d %d %d %dd%d+%d %dd%d+%d\n",

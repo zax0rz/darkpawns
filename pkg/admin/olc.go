@@ -87,11 +87,35 @@ type olcPendingOutput struct {
 	Body []olc.DirtyEntry
 }
 
+type olcSchemaInput struct {
+	Kind string `path:"kind" doc:"OLC kind: room, mob, obj, shop, or zone."`
+}
+
+type olcSchemaOutput struct {
+	Body olc.Schema
+}
+
 // registerOLC registers the P3 read operations. They are mounted individually
 // by newRouter so no /admin/olc/* path-prefix route or drift allowlist entry is
 // needed.
 func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCReadStateProvider, writes OLCWriteStateProvider, presence OLCPresenceProvider, auditLogger *audit.AuditLogger, drafts *olc.DraftStore) {
 	gate := olcGate(world, database)
+	vocabularyGate := olcVocabularyGate(world, database)
+
+	huma.Register(api, huma.Operation{
+		OperationID: "get-olc-schema",
+		Method:      http.MethodGet,
+		Path:        "/admin/olc/schema/{kind}",
+		Summary:     "Get an OLC editor schema",
+		Description: "Returns the shared vocabulary and resolved controls for an OLC editor kind.",
+		Middlewares: huma.Middlewares{vocabularyGate},
+	}, func(ctx context.Context, in *olcSchemaInput) (*olcSchemaOutput, error) {
+		schema, ok := olc.SchemaForKind(in.Kind)
+		if !ok {
+			return nil, huma.NewError(http.StatusBadRequest, "unknown OLC kind")
+		}
+		return &olcSchemaOutput{Body: schema}, nil
+	})
 
 	huma.Register(api, huma.Operation{
 		OperationID: "preview-olc-resource",
@@ -238,6 +262,14 @@ type olcMiddlewareError struct {
 // wrapper so Huma has already selected the operation and exposed its path
 // parameters. The level/zone rule itself remains exclusively in pkg/olc.
 func olcGate(world *game.World, database *db.DB) func(huma.Context, func(huma.Context)) {
+	return olcGateWithZone(world, database, true)
+}
+
+func olcVocabularyGate(world *game.World, database *db.DB) func(huma.Context, func(huma.Context)) {
+	return olcGateWithZone(world, database, false)
+}
+
+func olcGateWithZone(world *game.World, database *db.DB, zoneScoped bool) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		claims, ok := auth.GetClaimsFromContext(ctx.Context())
 		if !ok {
@@ -263,36 +295,38 @@ func olcGate(world *game.World, database *db.DB) func(huma.Context, func(huma.Co
 			return
 		}
 
-		zoneNumber := record.OlcZone
-		if rawVNum := ctx.Param("vnum"); rawVNum != "" {
-			vnum, err := strconv.Atoi(rawVNum)
-			if err != nil {
-				writeOLCError(ctx, http.StatusBadRequest, olcMiddlewareError{Error: "invalid vnum"})
+		if zoneScoped {
+			zoneNumber := record.OlcZone
+			if rawVNum := ctx.Param("vnum"); rawVNum != "" {
+				vnum, err := strconv.Atoi(rawVNum)
+				if err != nil {
+					writeOLCError(ctx, http.StatusBadRequest, olcMiddlewareError{Error: "invalid vnum"})
+					return
+				}
+				zone, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
+				if !ok {
+					writeOLCError(ctx, http.StatusNotFound, olcMiddlewareError{Error: "no zone covers VNUM"})
+					return
+				}
+				zoneNumber = zone.Number
+			} else if rawZone := ctx.Param("zone"); rawZone != "" {
+				parsedZone, err := strconv.Atoi(rawZone)
+				if err != nil {
+					writeOLCError(ctx, http.StatusBadRequest, olcMiddlewareError{Error: "invalid zone"})
+					return
+				}
+				zoneNumber = parsedZone
+			} else if zone, ok := olc.ZoneForVNum(world.GetAllZones(), record.OlcZone*100); ok {
+				zoneNumber = zone.Number
+			}
+			if !olc.Authorized(record.Level, record.OlcZone, zoneNumber) {
+				zone := zoneNumber
+				writeOLCError(ctx, http.StatusForbidden, olcMiddlewareError{
+					Error: "not authorized for OLC zone",
+					Zone:  &zone,
+				})
 				return
 			}
-			zone, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
-			if !ok {
-				writeOLCError(ctx, http.StatusNotFound, olcMiddlewareError{Error: "no zone covers VNUM"})
-				return
-			}
-			zoneNumber = zone.Number
-		} else if rawZone := ctx.Param("zone"); rawZone != "" {
-			parsedZone, err := strconv.Atoi(rawZone)
-			if err != nil {
-				writeOLCError(ctx, http.StatusBadRequest, olcMiddlewareError{Error: "invalid zone"})
-				return
-			}
-			zoneNumber = parsedZone
-		} else if zone, ok := olc.ZoneForVNum(world.GetAllZones(), record.OlcZone*100); ok {
-			zoneNumber = zone.Number
-		}
-		if !olc.Authorized(record.Level, record.OlcZone, zoneNumber) {
-			zone := zoneNumber
-			writeOLCError(ctx, http.StatusForbidden, olcMiddlewareError{
-				Error: "not authorized for OLC zone",
-				Zone:  &zone,
-			})
-			return
 		}
 		// The exact route mount may be used without requireRole in tests or by
 		// another caller. Preserve the validated identity for the operation
