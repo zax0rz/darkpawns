@@ -47,20 +47,6 @@ type zeditState struct {
 	pendingOutput string
 }
 
-var zeditEquipmentTypes = []string{
-	"Used as light", "Worn on right finger", "Worn on left finger",
-	"First worn around Neck", "Second worn around Neck", "Worn on body",
-	"Worn on head", "Worn on legs", "Worn on feet", "Worn on hands",
-	"Worn on arms", "Worn as shield", "Worn about body", "Worn around waist",
-	"Worn around right wrist", "Worn around left wrist", "Wielded", "Held",
-	"Wielded for throwing", "Worn about legs", "Worn on face", "Hovering near head",
-}
-
-// zeditDirections includes C's terminal "\n" entry. The sixth direction is
-// intentionally accepted by the C off-by-one check and prints that sentinel
-// in the menu rather than being silently corrected.
-var zeditDirections = append(append([]string(nil), game.DirectionNames...), "\n")
-
 // cmdZedit ports do_olc's SCMD_OLC_ZEDIT entry path (src/olc.c:80-277).
 // The editor key is a room VNUM: the containing zone is selected from that
 // room, and the working reset list contains only commands scoped to it.
@@ -278,8 +264,8 @@ func zeditSetupCommands(commands []parser.ZoneCommand, roomVNum int) []parser.Zo
 }
 
 func zeditEquipmentName(index int) string {
-	if index >= 0 && index < len(zeditEquipmentTypes) {
-		return zeditEquipmentTypes[index]
+	if index >= 0 && index < len(olc.ZoneEquipmentNames) {
+		return olc.ZoneEquipmentNames[index]
 	}
 	return "\n"
 }
@@ -404,8 +390,8 @@ func (s *Session) zeditCommandText(cmd parser.ZoneCommand, repeat bool) string {
 			s.zeditColsCyan(), vnum, s.zeditColsYellow())
 	case "D":
 		direction := ""
-		if cmd.Arg2 >= 0 && cmd.Arg2 < len(zeditDirections) {
-			direction = zeditDirections[cmd.Arg2]
+		if cmd.Arg2 >= 0 && cmd.Arg2 < len(olc.ZoneDirections) {
+			direction = olc.ZoneDirections[cmd.Arg2]
 		}
 		doorState := "open"
 		if cmd.Arg3 == 1 {
@@ -476,7 +462,7 @@ func (s *Session) zeditShowArg2Locked() {
 		s.zeditSend("Input the maximum number that can exist on the mud : ")
 	case "D":
 		var out strings.Builder
-		for i, direction := range zeditDirections[:len(zeditDirections)-1] {
+		for i, direction := range olc.ZoneDirections[:len(olc.ZoneDirections)-1] {
 			fmt.Fprintf(&out, "%d) Exit %s.\r\n", i, direction)
 		}
 		out.WriteString("Enter exit number for door : ")
@@ -497,12 +483,12 @@ func (s *Session) zeditShowArg3Locked() {
 	switch cmd.Command {
 	case "E":
 		var out strings.Builder
-		for i := 0; i < len(zeditEquipmentTypes); i += 2 {
+		for i := 0; i < len(olc.ZoneEquipmentNames); i += 2 {
 			second := ""
-			if i+1 < len(zeditEquipmentTypes) {
-				second = zeditEquipmentTypes[i+1]
+			if i+1 < len(olc.ZoneEquipmentNames) {
+				second = olc.ZoneEquipmentNames[i+1]
 			}
-			fmt.Fprintf(&out, "%2d) %26.26s %2d) %26.26s\r\n", i, zeditEquipmentTypes[i], i+1, second)
+			fmt.Fprintf(&out, "%2d) %26.26s %2d) %26.26s\r\n", i, olc.ZoneEquipmentNames[i], i+1, second)
 		}
 		out.WriteString("Input location to equip : ")
 		s.zeditSend(out.String())
@@ -819,7 +805,7 @@ func (s *Session) parseZeditArg2Locked(line string) {
 		s.zeditShowArg3Locked()
 	case "D":
 		// C counts six real directions but accepts pos == i, i.e. 6.
-		if number < 0 || number > len(zeditDirections)-1 {
+		if number < 0 || number > len(olc.ZoneDirections)-1 {
 			s.zeditSend("Try again : ")
 			return
 		}
@@ -870,7 +856,7 @@ func (s *Session) parseZeditArg3Locked(line string) {
 	cmd := &state.zone.Commands[state.position]
 	switch cmd.Command {
 	case "E":
-		if number < 0 || number > len(zeditEquipmentTypes) {
+		if number < 0 || number > len(olc.ZoneEquipmentNames) {
 			s.zeditSend("Try again : ")
 			return
 		}

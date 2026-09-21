@@ -69,22 +69,6 @@ const (
 	reditExtraDescriptionField
 )
 
-var reditRoomFlagNames = []string{
-	"DARK", "DEATH", "!MOB", "INDOORS", "PEACEFUL", "SOUNDPROOF", "!TRACK",
-	"!MAGIC", "TUNNEL", "PRIVATE", "GODROOM", "HOUSE", "HCRSH", "ATRIUM",
-	"OLC", "*", "NEUTRAL", "BFR", "REGENROOM", "NO_WHO_ROOM", "**",
-	"FLOW_NORTH", "FLOW_SOUTH", "FLOW_EAST", "FLOW_WEST", "FLOW_UP",
-	"FLOW_DOWN", "ARENA",
-}
-
-var reditSectorNames = []string{
-	"Inside", "City", "Field", "Forest", "Hills", "Mountains", "Water (Swim)",
-	"Water (No Swim)", "Underwater", "In Flight", "Desert", "Fire", "Earth",
-	"Wind", "Water", "Swamp",
-}
-
-var reditScriptFlagNames = []string{"NONE", "ENTER", "ONPULSE", "ONDROP", "ONGET", "ONCMD"}
-
 // cmdRedit ports the reachable SCMD_OLC_REDIT entry in do_olc. The other OLC
 // command names remain unregistered; their shared surface is not part of this
 // bounded room-editor goal.
@@ -483,7 +467,7 @@ func (s *Session) parseReditMainLocked(line string) {
 func (s *Session) parseReditFlagsLocked(line string) {
 	state := s.roomEdit
 	number := atoiC(line)
-	if number < 0 || number > len(reditRoomFlagNames) {
+	if number < 0 || number > len(olc.RoomFlagNames) {
 		s.reditSend("That's not a valid choice!\r\n")
 		s.reditDisplayFlagsLocked()
 		return
@@ -506,7 +490,7 @@ func (s *Session) parseReditFlagsLocked(line string) {
 func (s *Session) parseReditSectorLocked(line string) {
 	state := s.roomEdit
 	number := atoiC(line)
-	if number < 0 || number >= len(reditSectorNames) {
+	if number < 0 || number >= len(olc.SectorNames) {
 		s.reditSend("Invalid choice!")
 		s.reditDisplaySectorLocked()
 		return
@@ -689,7 +673,7 @@ func (s *Session) parseReditScriptFlagsLocked(line string) {
 		s.reditDisplayScriptMenuLocked()
 		return
 	}
-	if number > 0 && number <= len(reditScriptFlagNames) {
+	if number > 0 && number <= len(olc.RoomScriptFlagNames) {
 		room, ok := s.manager.world.SnapshotRoom(s.roomEdit.number)
 		if ok {
 			flags := room.ScriptFunctions ^ (1 << uint(number-1))
@@ -820,7 +804,7 @@ func reditRoomFlagSet(room parser.Room, bit int) bool {
 
 func reditRoomFlags(room parser.Room) string {
 	var out strings.Builder
-	for bit, name := range reditRoomFlagNames {
+	for bit, name := range olc.RoomFlagNames {
 		if reditRoomFlagSet(room, bit) {
 			out.WriteString(name)
 			out.WriteByte(' ')
@@ -834,7 +818,7 @@ func reditRoomFlags(room parser.Room) string {
 
 func reditScriptFlagsText(flags int) string {
 	var out strings.Builder
-	for bit, name := range reditScriptFlagNames {
+	for bit, name := range olc.RoomScriptFlagNames {
 		if flags&(1<<uint(bit)) != 0 {
 			out.WriteString(name)
 			out.WriteByte(' ')
@@ -871,25 +855,17 @@ func (s *Session) reditDisplayMainLocked() {
 	fmt.Fprintf(&out, "%s2%s) Description :\r\n%s%s", grn, nrm, yel, editorCRLF(state.room.Description))
 	fmt.Fprintf(&out, "%s3%s) Room flags  : %s%s\r\n", grn, nrm, cyn, reditRoomFlags(state.room))
 	sector := "<INVALID>"
-	if state.room.Sector >= 0 && state.room.Sector < len(reditSectorNames) {
-		sector = reditSectorNames[state.room.Sector]
+	if state.room.Sector >= 0 && state.room.Sector < len(olc.SectorNames) {
+		sector = olc.SectorNames[state.room.Sector]
 	}
 	fmt.Fprintf(&out, "%s4%s) Sector type : %s%s\r\n", grn, nrm, cyn, sector)
-	exitLabels := []string{
-		") Exit north  : ",
-		") Exit east   : ",
-		") Exit south  : ",
-		") Exit west   : ",
-		") Exit up     : ",
-		") Exit down   : ",
-	}
 	exitKeys := []byte{'5', '6', '7', '8', '9', 'A'}
 	for i, direction := range game.DirectionNames {
 		target := -1
 		if exit, ok := state.room.Exits[direction]; ok {
 			target = s.reditExitTargetDisplay(exit.ToRoom)
 		}
-		fmt.Fprintf(&out, "%s%c%s%s%s%d\r\n", grn, exitKeys[i], nrm, exitLabels[i], cyn, target)
+		fmt.Fprintf(&out, "%s%c%s) Exit %-7s: %s%d\r\n", grn, exitKeys[i], nrm, direction, cyn, target)
 	}
 	fmt.Fprintf(&out, "%sB%s) Extra descriptions menu\r\n", grn, nrm)
 	fmt.Fprintf(&out, "%sC%s) Copy another room description\r\n", grn, nrm)
@@ -915,7 +891,7 @@ func (s *Session) reditDisplayFlagsLocked() {
 	nrm, grn, cyn, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
-	for i, name := range reditRoomFlagNames {
+	for i, name := range olc.RoomFlagNames {
 		fmt.Fprintf(&out, "%s%2d%s) %-20.20s ", grn, i+1, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")
@@ -935,7 +911,7 @@ func (s *Session) reditDisplaySectorLocked() {
 	nrm, grn, _, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\r\n")
-	for i, name := range reditSectorNames {
+	for i, name := range olc.SectorNames {
 		fmt.Fprintf(&out, "%s%2d%s) %-20.20s ", grn, i, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")
@@ -979,8 +955,12 @@ func reditDisplayValue(value string) string {
 
 func (s *Session) reditDisplayExitFlagLocked() {
 	nrm, grn, _, _ := s.reditCols()
-	s.reditSend(fmt.Sprintf("%s0%s) No door\r\n%s1%s) Closeable door\r\n%s2%s) Pickproof\r\nEnter choice : ",
-		grn, nrm, grn, nrm, grn, nrm))
+	var out strings.Builder
+	for i, name := range olc.ExitDoorFlagNames {
+		fmt.Fprintf(&out, "%s%d%s) %s\r\n", grn, i, nrm, name)
+	}
+	out.WriteString("Enter choice : ")
+	s.reditSend(out.String())
 }
 
 func (s *Session) reditDisplayExtraMenuLocked() {
@@ -1022,7 +1002,7 @@ func (s *Session) reditDisplayScriptFlagsLocked() {
 	nrm, grn, cyn, _ := s.reditCols()
 	var out strings.Builder
 	out.WriteString("\x1b[H\x1b[J")
-	for i, name := range reditScriptFlagNames {
+	for i, name := range olc.RoomScriptFlagNames {
 		fmt.Fprintf(&out, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
 		if (i+1)%2 == 0 {
 			out.WriteString("\r\n")

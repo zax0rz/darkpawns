@@ -1,0 +1,4752 @@
+{
+  "kind": "obj",
+  "fields": [
+    {
+      "key": "keywords",
+      "label": "Keywords",
+      "control": "text"
+    },
+    {
+      "key": "short_description",
+      "label": "Short description",
+      "control": "text"
+    },
+    {
+      "key": "long_description",
+      "label": "Long description",
+      "control": "text"
+    },
+    {
+      "key": "action_description",
+      "label": "Action description",
+      "control": "textarea"
+    },
+    {
+      "key": "type",
+      "label": "Item type",
+      "control": "select",
+      "options": [
+        {
+          "value": 1,
+          "label": "LIGHT"
+        },
+        {
+          "value": 2,
+          "label": "SCROLL"
+        },
+        {
+          "value": 3,
+          "label": "WAND"
+        },
+        {
+          "value": 4,
+          "label": "STAFF"
+        },
+        {
+          "value": 5,
+          "label": "WEAPON"
+        },
+        {
+          "value": 6,
+          "label": "FIRE WEAPON"
+        },
+        {
+          "value": 7,
+          "label": "MISSILE"
+        },
+        {
+          "value": 8,
+          "label": "TREASURE"
+        },
+        {
+          "value": 9,
+          "label": "ARMOR"
+        },
+        {
+          "value": 10,
+          "label": "POTION"
+        },
+        {
+          "value": 11,
+          "label": "WORN"
+        },
+        {
+          "value": 12,
+          "label": "OTHER"
+        },
+        {
+          "value": 13,
+          "label": "TRASH"
+        },
+        {
+          "value": 14,
+          "label": "TRAP"
+        },
+        {
+          "value": 15,
+          "label": "CONTAINER"
+        },
+        {
+          "value": 16,
+          "label": "NOTE"
+        },
+        {
+          "value": 17,
+          "label": "LIQ CONTAINER"
+        },
+        {
+          "value": 18,
+          "label": "KEY"
+        },
+        {
+          "value": 19,
+          "label": "FOOD"
+        },
+        {
+          "value": 20,
+          "label": "MONEY"
+        },
+        {
+          "value": 21,
+          "label": "PEN"
+        },
+        {
+          "value": 22,
+          "label": "BOAT"
+        },
+        {
+          "value": 23,
+          "label": "FOUNTAIN"
+        }
+      ]
+    },
+    {
+      "key": "extra_flags",
+      "label": "Object flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "GLOW"
+        },
+        {
+          "value": 1,
+          "label": "HUM"
+        },
+        {
+          "value": 2,
+          "label": "!RENT"
+        },
+        {
+          "value": 3,
+          "label": "!DONATE"
+        },
+        {
+          "value": 4,
+          "label": "!INVIS"
+        },
+        {
+          "value": 5,
+          "label": "INVIS"
+        },
+        {
+          "value": 6,
+          "label": "MAGIC"
+        },
+        {
+          "value": 7,
+          "label": "!DROP"
+        },
+        {
+          "value": 8,
+          "label": "BLESS"
+        },
+        {
+          "value": 9,
+          "label": "!GOOD"
+        },
+        {
+          "value": 10,
+          "label": "!EVIL"
+        },
+        {
+          "value": 11,
+          "label": "!NEU"
+        },
+        {
+          "value": 12,
+          "label": "!MAGE"
+        },
+        {
+          "value": 13,
+          "label": "!CLE"
+        },
+        {
+          "value": 14,
+          "label": "!THI"
+        },
+        {
+          "value": 15,
+          "label": "!WAR"
+        },
+        {
+          "value": 16,
+          "label": "!SELL"
+        },
+        {
+          "value": 17,
+          "label": "NAMED"
+        },
+        {
+          "value": 18,
+          "label": "!PSI"
+        },
+        {
+          "value": 19,
+          "label": "!NIN"
+        },
+        {
+          "value": 20,
+          "label": "!PAL"
+        },
+        {
+          "value": 21,
+          "label": "!MAGUS"
+        },
+        {
+          "value": 22,
+          "label": "!ASS"
+        },
+        {
+          "value": 23,
+          "label": "!AVA"
+        },
+        {
+          "value": 24,
+          "label": "RARE"
+        },
+        {
+          "value": 25,
+          "label": "!LOCATE"
+        },
+        {
+          "value": 26,
+          "label": "!RAN"
+        },
+        {
+          "value": 27,
+          "label": "!MYS"
+        },
+        {
+          "value": 28,
+          "label": "TWOHANDS"
+        }
+      ]
+    },
+    {
+      "key": "wear_flags",
+      "label": "Wear flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "TAKE"
+        },
+        {
+          "value": 1,
+          "label": "FINGER"
+        },
+        {
+          "value": 2,
+          "label": "NECK"
+        },
+        {
+          "value": 3,
+          "label": "BODY"
+        },
+        {
+          "value": 4,
+          "label": "HEAD"
+        },
+        {
+          "value": 5,
+          "label": "LEGS"
+        },
+        {
+          "value": 6,
+          "label": "FEET"
+        },
+        {
+          "value": 7,
+          "label": "HANDS"
+        },
+        {
+          "value": 8,
+          "label": "ARMS"
+        },
+        {
+          "value": 9,
+          "label": "SHIELD"
+        },
+        {
+          "value": 10,
+          "label": "ABOUT"
+        },
+        {
+          "value": 11,
+          "label": "WAIST"
+        },
+        {
+          "value": 12,
+          "label": "WRIST"
+        },
+        {
+          "value": 13,
+          "label": "WIELD"
+        },
+        {
+          "value": 14,
+          "label": "HOLD"
+        },
+        {
+          "value": 15,
+          "label": "THROW"
+        },
+        {
+          "value": 16,
+          "label": "ABLEGS"
+        },
+        {
+          "value": 17,
+          "label": "FACE"
+        },
+        {
+          "value": 18,
+          "label": "HOVER"
+        }
+      ]
+    },
+    {
+      "key": "weight",
+      "label": "Weight",
+      "control": "number"
+    },
+    {
+      "key": "cost",
+      "label": "Cost",
+      "control": "number"
+    },
+    {
+      "key": "cost_per_day",
+      "label": "Cost per day",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 100
+      }
+    },
+    {
+      "key": "values",
+      "label": "Values",
+      "control": "number"
+    },
+    {
+      "key": "script_name",
+      "label": "Script name",
+      "control": "text"
+    },
+    {
+      "key": "script_flags",
+      "label": "Script flags",
+      "control": "checkbox_group",
+      "options": [
+        {
+          "value": 0,
+          "label": "NONE"
+        },
+        {
+          "value": 1,
+          "label": "ONCMD"
+        },
+        {
+          "value": 2,
+          "label": "ONPULSE"
+        }
+      ]
+    }
+  ],
+  "value_matrix": [
+    {
+      "item_type": 0,
+      "item_type_label": "UNDEFINED",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 1,
+      "item_type_label": "LIGHT",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "Number of hours (0 = burnt, -1 is infinite) : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 2,
+      "item_type_label": "SCROLL",
+      "values": [
+        {
+          "label": "Spell level : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 0,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 0,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 0,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item_type": 3,
+      "item_type_label": "WAND",
+      "values": [
+        {
+          "label": "Spell level : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Max number of charges : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Number of charges remaining : ",
+          "control": "number",
+          "min": 0,
+          "max": 20,
+          "visible": true
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 1,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item_type": 4,
+      "item_type_label": "STAFF",
+      "values": [
+        {
+          "label": "Spell level : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Max number of charges : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Number of charges remaining : ",
+          "control": "number",
+          "min": 0,
+          "max": 20,
+          "visible": true
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 1,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item_type": 5,
+      "item_type_label": "WEAPON",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "Number of damage dice : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Size of damage dice : ",
+          "control": "number",
+          "min": 0,
+          "max": 20,
+          "visible": true
+        },
+        {
+          "label": "Enter weapon type : ",
+          "control": "select",
+          "min": 0,
+          "max": 14,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "hit"
+            },
+            {
+              "value": 1,
+              "label": "sting"
+            },
+            {
+              "value": 2,
+              "label": "whip"
+            },
+            {
+              "value": 3,
+              "label": "slash"
+            },
+            {
+              "value": 4,
+              "label": "bite"
+            },
+            {
+              "value": 5,
+              "label": "bludgeon"
+            },
+            {
+              "value": 6,
+              "label": "crush"
+            },
+            {
+              "value": 7,
+              "label": "pound"
+            },
+            {
+              "value": 8,
+              "label": "claw"
+            },
+            {
+              "value": 9,
+              "label": "maul"
+            },
+            {
+              "value": 10,
+              "label": "thrash"
+            },
+            {
+              "value": 11,
+              "label": "pierce"
+            },
+            {
+              "value": 12,
+              "label": "blast"
+            },
+            {
+              "value": 13,
+              "label": "punch"
+            },
+            {
+              "value": 14,
+              "label": "stab"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item_type": 6,
+      "item_type_label": "FIRE WEAPON",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "Number of damage dice : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Size of damage dice : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 7,
+      "item_type_label": "MISSILE",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "Number of damage dice : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Size of damage dice : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 8,
+      "item_type_label": "TREASURE",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 9,
+      "item_type_label": "ARMOR",
+      "values": [
+        {
+          "label": "Apply to AC : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 10,
+      "item_type_label": "POTION",
+      "values": [
+        {
+          "label": "Spell level : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 0,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 0,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        },
+        {
+          "label": "Enter spell choice (0 for none) : ",
+          "control": "spell_picker",
+          "min": 0,
+          "max": 103,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "!RESERVED!"
+            },
+            {
+              "value": 1,
+              "label": "holy ward"
+            },
+            {
+              "value": 2,
+              "label": "shift reality"
+            },
+            {
+              "value": 3,
+              "label": "bless"
+            },
+            {
+              "value": 4,
+              "label": "blindness"
+            },
+            {
+              "value": 5,
+              "label": "burning hands"
+            },
+            {
+              "value": 6,
+              "label": "call lightning"
+            },
+            {
+              "value": 7,
+              "label": "charm person"
+            },
+            {
+              "value": 8,
+              "label": "chill touch"
+            },
+            {
+              "value": 9,
+              "label": "clone"
+            },
+            {
+              "value": 10,
+              "label": "color spray"
+            },
+            {
+              "value": 11,
+              "label": "control weather"
+            },
+            {
+              "value": 12,
+              "label": "create food"
+            },
+            {
+              "value": 13,
+              "label": "create water"
+            },
+            {
+              "value": 14,
+              "label": "cure blind"
+            },
+            {
+              "value": 15,
+              "label": "cure critic"
+            },
+            {
+              "value": 16,
+              "label": "cure light"
+            },
+            {
+              "value": 17,
+              "label": "curse"
+            },
+            {
+              "value": 18,
+              "label": "detect alignment"
+            },
+            {
+              "value": 19,
+              "label": "detect invisibility"
+            },
+            {
+              "value": 20,
+              "label": "detect magic"
+            },
+            {
+              "value": 21,
+              "label": "detect poison"
+            },
+            {
+              "value": 22,
+              "label": "dispel evil"
+            },
+            {
+              "value": 23,
+              "label": "earthquake"
+            },
+            {
+              "value": 24,
+              "label": "enchant weapon"
+            },
+            {
+              "value": 25,
+              "label": "energy drain"
+            },
+            {
+              "value": 26,
+              "label": "fireball"
+            },
+            {
+              "value": 27,
+              "label": "harm"
+            },
+            {
+              "value": 28,
+              "label": "heal"
+            },
+            {
+              "value": 29,
+              "label": "invisibility"
+            },
+            {
+              "value": 30,
+              "label": "lightning bolt"
+            },
+            {
+              "value": 31,
+              "label": "locate object"
+            },
+            {
+              "value": 32,
+              "label": "flame arrow"
+            },
+            {
+              "value": 33,
+              "label": "poison"
+            },
+            {
+              "value": 34,
+              "label": "protection from evil"
+            },
+            {
+              "value": 35,
+              "label": "remove curse"
+            },
+            {
+              "value": 36,
+              "label": "sanctuary"
+            },
+            {
+              "value": 37,
+              "label": "shocking grasp"
+            },
+            {
+              "value": 38,
+              "label": "sleep"
+            },
+            {
+              "value": 39,
+              "label": "strength"
+            },
+            {
+              "value": 40,
+              "label": "summon"
+            },
+            {
+              "value": 41,
+              "label": "meteor swarm"
+            },
+            {
+              "value": 42,
+              "label": "word of recall"
+            },
+            {
+              "value": 43,
+              "label": "remove poison"
+            },
+            {
+              "value": 44,
+              "label": "sense life"
+            },
+            {
+              "value": 45,
+              "label": "animate dead"
+            },
+            {
+              "value": 46,
+              "label": "dispel good"
+            },
+            {
+              "value": 47,
+              "label": "holy shield"
+            },
+            {
+              "value": 48,
+              "label": "group heal"
+            },
+            {
+              "value": 49,
+              "label": "group recall"
+            },
+            {
+              "value": 50,
+              "label": "infravision"
+            },
+            {
+              "value": 51,
+              "label": "waterwalk"
+            },
+            {
+              "value": 52,
+              "label": "mass heal"
+            },
+            {
+              "value": 53,
+              "label": "fly"
+            },
+            {
+              "value": 54,
+              "label": "lycanthropy"
+            },
+            {
+              "value": 55,
+              "label": "vampirism"
+            },
+            {
+              "value": 56,
+              "label": "sobriety"
+            },
+            {
+              "value": 57,
+              "label": "group invisibility"
+            },
+            {
+              "value": 58,
+              "label": "hellfire"
+            },
+            {
+              "value": 59,
+              "label": "enchant armor"
+            },
+            {
+              "value": 60,
+              "label": "identify"
+            },
+            {
+              "value": 61,
+              "label": "mind poke"
+            },
+            {
+              "value": 62,
+              "label": "mind blast"
+            },
+            {
+              "value": 63,
+              "label": "chameleon"
+            },
+            {
+              "value": 64,
+              "label": "levitate"
+            },
+            {
+              "value": 65,
+              "label": "metalskin"
+            },
+            {
+              "value": 66,
+              "label": "globe of invulnerability"
+            },
+            {
+              "value": 67,
+              "label": "vitality"
+            },
+            {
+              "value": 68,
+              "label": "invigorate"
+            },
+            {
+              "value": 69,
+              "label": "lesser perception"
+            },
+            {
+              "value": 70,
+              "label": "greater perception"
+            },
+            {
+              "value": 71,
+              "label": "mind attack"
+            },
+            {
+              "value": 72,
+              "label": "adrenaline boost"
+            },
+            {
+              "value": 73,
+              "label": "psychic shield"
+            },
+            {
+              "value": 74,
+              "label": "change density"
+            },
+            {
+              "value": 75,
+              "label": "acid blast"
+            },
+            {
+              "value": 76,
+              "label": "dominate"
+            },
+            {
+              "value": 77,
+              "label": "cell adjustment"
+            },
+            {
+              "value": 78,
+              "label": "zen"
+            },
+            {
+              "value": 79,
+              "label": "mirror image"
+            },
+            {
+              "value": 80,
+              "label": "mass dominate"
+            },
+            {
+              "value": 81,
+              "label": "divine intervention"
+            },
+            {
+              "value": 82,
+              "label": "mind bar"
+            },
+            {
+              "value": 83,
+              "label": "soul leech"
+            },
+            {
+              "value": 84,
+              "label": "mindsight"
+            },
+            {
+              "value": 85,
+              "label": "transparency"
+            },
+            {
+              "value": 86,
+              "label": "know align"
+            },
+            {
+              "value": 87,
+              "label": "gate"
+            },
+            {
+              "value": 88,
+              "label": "word of intellect"
+            },
+            {
+              "value": 89,
+              "label": "lay hands"
+            },
+            {
+              "value": 90,
+              "label": "mental lapse"
+            },
+            {
+              "value": 91,
+              "label": "smokescreen"
+            },
+            {
+              "value": 92,
+              "label": "ray of disruption"
+            },
+            {
+              "value": 93,
+              "label": "disintegration"
+            },
+            {
+              "value": 94,
+              "label": "calliope"
+            },
+            {
+              "value": 95,
+              "label": "protection from good"
+            },
+            {
+              "value": 96,
+              "label": "flame strike"
+            },
+            {
+              "value": 97,
+              "label": "haste"
+            },
+            {
+              "value": 98,
+              "label": "slow"
+            },
+            {
+              "value": 99,
+              "label": "dream travel"
+            },
+            {
+              "value": 100,
+              "label": "psiblast"
+            },
+            {
+              "value": 101,
+              "label": "glyph of summoning"
+            },
+            {
+              "value": 102,
+              "label": "waterbreathe"
+            },
+            {
+              "value": 103,
+              "label": "!drowning!"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item_type": 11,
+      "item_type_label": "WORN",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 12,
+      "item_type_label": "OTHER",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 13,
+      "item_type_label": "TRASH",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 14,
+      "item_type_label": "TRAP",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 15,
+      "item_type_label": "CONTAINER",
+      "values": [
+        {
+          "label": "Max weight to contain : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Container flags: ",
+          "control": "checkbox_group",
+          "min": 0,
+          "max": 15,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "CLOSEABLE"
+            },
+            {
+              "value": 1,
+              "label": "PICKPROOF"
+            },
+            {
+              "value": 2,
+              "label": "CLOSED"
+            },
+            {
+              "value": 3,
+              "label": "LOCKED"
+            }
+          ]
+        },
+        {
+          "label": "Vnum of key to open container (-1 for no key) : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 16,
+      "item_type_label": "NOTE",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 17,
+      "item_type_label": "LIQ CONTAINER",
+      "values": [
+        {
+          "label": "Max drink units : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Initial drink units : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Enter drink type : ",
+          "control": "select",
+          "min": 0,
+          "max": 15,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "water"
+            },
+            {
+              "value": 1,
+              "label": "beer"
+            },
+            {
+              "value": 2,
+              "label": "wine"
+            },
+            {
+              "value": 3,
+              "label": "ale"
+            },
+            {
+              "value": 4,
+              "label": "dark ale"
+            },
+            {
+              "value": 5,
+              "label": "whiskey"
+            },
+            {
+              "value": 6,
+              "label": "lemonade"
+            },
+            {
+              "value": 7,
+              "label": "firebreather"
+            },
+            {
+              "value": 8,
+              "label": "local speciality"
+            },
+            {
+              "value": 9,
+              "label": "slime mold juice"
+            },
+            {
+              "value": 10,
+              "label": "milk"
+            },
+            {
+              "value": 11,
+              "label": "tea"
+            },
+            {
+              "value": 12,
+              "label": "coffee"
+            },
+            {
+              "value": 13,
+              "label": "blood"
+            },
+            {
+              "value": 14,
+              "label": "salt water"
+            },
+            {
+              "value": 15,
+              "label": "clear water"
+            }
+          ]
+        },
+        {
+          "label": "Poisoned (0 = not poison) : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "item_type": 18,
+      "item_type_label": "KEY",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 19,
+      "item_type_label": "FOOD",
+      "values": [
+        {
+          "label": "Hours to fill stomach : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "Poisoned (0 = not poison) : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "item_type": 20,
+      "item_type_label": "MONEY",
+      "values": [
+        {
+          "label": "Number of gold coins : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 21,
+      "item_type_label": "PEN",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 22,
+      "item_type_label": "BOAT",
+      "values": [
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        },
+        {
+          "label": "",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": false
+        }
+      ]
+    },
+    {
+      "item_type": 23,
+      "item_type_label": "FOUNTAIN",
+      "values": [
+        {
+          "label": "Max drink units : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Initial drink units : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        },
+        {
+          "label": "Enter drink type : ",
+          "control": "select",
+          "min": 0,
+          "max": 15,
+          "visible": true,
+          "options": [
+            {
+              "value": 0,
+              "label": "water"
+            },
+            {
+              "value": 1,
+              "label": "beer"
+            },
+            {
+              "value": 2,
+              "label": "wine"
+            },
+            {
+              "value": 3,
+              "label": "ale"
+            },
+            {
+              "value": 4,
+              "label": "dark ale"
+            },
+            {
+              "value": 5,
+              "label": "whiskey"
+            },
+            {
+              "value": 6,
+              "label": "lemonade"
+            },
+            {
+              "value": 7,
+              "label": "firebreather"
+            },
+            {
+              "value": 8,
+              "label": "local speciality"
+            },
+            {
+              "value": 9,
+              "label": "slime mold juice"
+            },
+            {
+              "value": 10,
+              "label": "milk"
+            },
+            {
+              "value": 11,
+              "label": "tea"
+            },
+            {
+              "value": 12,
+              "label": "coffee"
+            },
+            {
+              "value": 13,
+              "label": "blood"
+            },
+            {
+              "value": 14,
+              "label": "salt water"
+            },
+            {
+              "value": 15,
+              "label": "clear water"
+            }
+          ]
+        },
+        {
+          "label": "Poisoned (0 = not poison) : ",
+          "control": "number",
+          "min": -32000,
+          "max": 32000,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}

@@ -146,102 +146,6 @@ type oeditExtraMeta struct {
 	descriptionSet bool
 }
 
-// objScriptFlags names C's oscript_bits[] (src/constants.c); NUM_OSCRIPT_FLAGS
-// is 3. This is the object script table, distinct from redit's rscript_bits.
-var oeditScriptFlagNames = []string{"NONE", "ONCMD", "ONPULSE"}
-
-// The display tables below are byte-faithful copies of the C constant arrays
-// the oedit menus print (src/constants.c, src/fight.c). The parser's
-// storage-side tables (pkg/parser) intentionally use different spellings and
-// are not used for menu rendering.
-
-// C item_types[] (src/constants.c:782); NUM_ITEM_TYPES is 24.
-var oeditItemTypes = []string{
-	"UNDEFINED", "LIGHT", "SCROLL", "WAND", "STAFF", "WEAPON", "FIRE WEAPON",
-	"MISSILE", "TREASURE", "ARMOR", "POTION", "WORN", "OTHER", "TRASH", "TRAP",
-	"CONTAINER", "NOTE", "LIQ CONTAINER", "KEY", "FOOD", "MONEY", "PEN", "BOAT",
-	"FOUNTAIN",
-}
-
-// C extra_bits[] (src/constants.c:837); NUM_ITEM_FLAGS is 29.
-var oeditExtraBits = []string{
-	"GLOW", "HUM", "!RENT", "!DONATE", "!INVIS", "INVIS", "MAGIC", "!DROP",
-	"BLESS", "!GOOD", "!EVIL", "!NEU", "!MAGE", "!CLE", "!THI", "!WAR", "!SELL",
-	"NAMED", "!PSI", "!NIN", "!PAL", "!MAGUS", "!ASS", "!AVA", "RARE", "!LOCATE",
-	"!RAN", "!MYS", "TWOHANDS",
-}
-
-// C wear_bits[] (src/constants.c:812); NUM_ITEM_WEARS is 19.
-var oeditWearBits = []string{
-	"TAKE", "FINGER", "NECK", "BODY", "HEAD", "LEGS", "FEET", "HANDS", "ARMS",
-	"SHIELD", "ABOUT", "WAIST", "WRIST", "WIELD", "HOLD", "THROW", "ABLEGS",
-	"FACE", "HOVER",
-}
-
-// C apply_types[] (src/constants.c:872); NUM_APPLIES is 30.
-var oeditApplyTypes = []string{
-	"NONE", "STR", "DEX", "INT", "WIS", "CON", "CHA", "CLASS", "LEVEL", "AGE",
-	"CHAR_WEIGHT", "CHAR_HEIGHT", "MAXMANA", "MAXHIT", "MAXMOVE", "GOLD", "EXP",
-	"ARMOR", "HITROLL", "DAMROLL", "SAVING_PARA", "SAVING_ROD", "SAVING_PETRI",
-	"SAVING_BREATH", "SAVING_SPELL", "RACE_HATE", "HIT_REGEN", "MANA_REGEN",
-	"MOVE_REGEN", "PERM_SPELL",
-}
-
-// C container_bits[] (src/constants.c:908).
-var oeditContainerBits = []string{"CLOSEABLE", "PICKPROOF", "CLOSED", "LOCKED"}
-
-// C drinks[] (src/constants.c:918); NUM_LIQ_TYPES is 16.
-var oeditDrinks = []string{
-	"water", "beer", "wine", "ale", "dark ale", "whiskey", "lemonade",
-	"firebreather", "local speciality", "slime mold juice", "milk", "tea",
-	"coffee", "blood", "salt water", "clear water",
-}
-
-// C affected_bits[] (src/constants.c:596) truncated to NUM_AFF_FLAGS (37)
-// entries, which is the bound oedit_disp_spell_menu iterates for the permanent
-// spell-effect apply.
-var oeditAffectBits = []string{
-	"BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC", "SENSE-LIFE",
-	"WATERWALK", "SANCT", "GROUP", "CURSE", "INFRA", "POISON", "PROT-EVIL",
-	"PROT-GOOD", "SLEEP", "!TRACK", "FLESH-ALTER", "DODGE", "SNEAK", "HIDE",
-	"BERSERK", "CHARM", "FOLLOW", "WIMPY", "KUJI-KIRI", "CUTTHROAT", "FLY",
-	"WEREWOLF", "VAMPIRE", "MOUNTED", "INVULN", "FLAMING", "NOTHING", "HASTE",
-	"SLOW", "DREAM", "WATERBREATHE",
-}
-
-// C spells[] (src/spell_parser.c) truncated to NUM_SPELLS (104) entries. The
-// C array continues into the skill names, but oedit_disp_spells_menu iterates
-// only 0..NUM_SPELLS-1.
-var oeditSpellNames = []string{
-	"!RESERVED!", "holy ward", "shift reality", "bless", "blindness",
-	"burning hands", "call lightning", "charm person", "chill touch", "clone",
-	"color spray", "control weather", "create food", "create water",
-	"cure blind", "cure critic", "cure light", "curse", "detect alignment",
-	"detect invisibility", "detect magic", "detect poison", "dispel evil",
-	"earthquake", "enchant weapon", "energy drain", "fireball", "harm", "heal",
-	"invisibility", "lightning bolt", "locate object", "flame arrow", "poison",
-	"protection from evil", "remove curse", "sanctuary", "shocking grasp",
-	"sleep", "strength", "summon", "meteor swarm", "word of recall",
-	"remove poison", "sense life", "animate dead", "dispel good", "holy shield",
-	"group heal", "group recall", "infravision", "waterwalk", "mass heal",
-	"fly", "lycanthropy", "vampirism", "sobriety", "group invisibility",
-	"hellfire", "enchant armor", "identify", "mind poke", "mind blast",
-	"chameleon", "levitate", "metalskin", "globe of invulnerability",
-	"vitality", "invigorate", "lesser perception", "greater perception",
-	"mind attack", "adrenaline boost", "psychic shield", "change density",
-	"acid blast", "dominate", "cell adjustment", "zen", "mirror image",
-	"mass dominate", "divine intervention", "mind bar", "soul leech", "mindsight",
-	"transparency", "know align", "gate", "word of intellect", "lay hands",
-	"mental lapse", "smokescreen", "ray of disruption", "disintegration",
-	"calliope", "protection from good", "flame strike", "haste", "slow",
-	"dream travel", "psiblast", "glyph of summoning", "waterbreathe",
-	"!drowning!",
-}
-
-// meditRaceNames and meditAttackNames are the same C mob_races[] and
-// attack_hit_text[] tables the oedit race/weapon menus print, so oedit reuses
-// them rather than duplicating the arrays.
-
 // cmdOedit is the Go port of do_olc's SCMD_OLC_OEDIT branch (src/olc.c).
 func cmdOedit(s *Session, args []string) error {
 	if s.player == nil || s.manager == nil || s.manager.world == nil {
@@ -635,14 +539,14 @@ func (s *Session) oeditShowMenuLocked() {
 	fmt.Fprintf(&first, "%s3%s) L-Desc   :-\r\n%s%s\r\n", grn, nrm, yel, obj.LongDesc)
 	fmt.Fprintf(&first, "%s4%s) A-Desc   :-\r\n%s%s", grn, nrm, yel, actionDesc)
 	fmt.Fprintf(&first, "%s5%s) Type        : %s%s\r\n", grn, nrm, cyn,
-		oeditSprintType(obj.TypeFlag, oeditItemTypes))
+		oeditSprintType(obj.TypeFlag, olc.ItemTypeNames))
 	fmt.Fprintf(&first, "%s6%s) Extra flags : %s%s\r\n", grn, nrm, cyn,
-		oeditSprintBitArray(obj.ExtraFlags, oeditExtraBits))
+		oeditSprintBitArray(obj.ExtraFlags, olc.ItemExtraFlagNames))
 	s.oeditSendLocked(first.String())
 
 	var second strings.Builder
 	fmt.Fprintf(&second, "%s7%s) Wear flags  : %s%s\r\n", grn, nrm, cyn,
-		oeditSprintBitArray(obj.WearFlags, oeditWearBits))
+		oeditSprintBitArray(obj.WearFlags, olc.ItemWearFlagNames))
 	fmt.Fprintf(&second, "%s8%s) Encumbrance : %s%d\r\n", grn, nrm, cyn, obj.Weight)
 	fmt.Fprintf(&second, "%s9%s) Cost        : %s%d\r\n", grn, nrm, cyn, obj.Cost)
 	load := float32(obj.LoadPercent)
@@ -666,7 +570,7 @@ func (s *Session) oeditShowTypeMenuLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range oeditItemTypes {
+	for i, name := range olc.ItemTypeNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -690,7 +594,7 @@ func (s *Session) oeditShowExtraMenuLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range oeditExtraBits {
+	for i, name := range olc.ItemExtraFlagNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i+1, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -698,7 +602,7 @@ func (s *Session) oeditShowExtraMenuLocked() {
 		}
 	}
 	fmt.Fprintf(&sb, "\r\nObject flags: %s%s%s\r\nEnter object extra flag (0 to quit) : ",
-		cyn, oeditSprintBitArray(state.obj.ExtraFlags, oeditExtraBits), nrm)
+		cyn, oeditSprintBitArray(state.obj.ExtraFlags, olc.ItemExtraFlagNames), nrm)
 	s.oeditSendLocked(sb.String())
 }
 
@@ -709,7 +613,7 @@ func (s *Session) oeditShowWearMenuLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range oeditWearBits {
+	for i, name := range olc.ItemWearFlagNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i+1, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -717,7 +621,7 @@ func (s *Session) oeditShowWearMenuLocked() {
 		}
 	}
 	fmt.Fprintf(&sb, "\r\nWear flags: %s%s%s\r\nEnter wear flag, 0 to quit : ",
-		cyn, oeditSprintBitArray(state.obj.WearFlags, oeditWearBits), nrm)
+		cyn, oeditSprintBitArray(state.obj.WearFlags, olc.ItemWearFlagNames), nrm)
 	s.oeditSendLocked(sb.String())
 }
 
@@ -726,14 +630,15 @@ func (s *Session) oeditShowWearMenuLocked() {
 func (s *Session) oeditShowContainerFlagsLocked() {
 	state := s.oedit
 	nrm, grn, cyn, _ := s.oeditCols()
+	field := olc.ObjectValueMatrix[state.obj.TypeFlag].Values[1]
 	s.oeditSendLocked("\r\n")
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%s1%s) CLOSEABLE\r\n", grn, nrm)
 	fmt.Fprintf(&sb, "%s2%s) PICKPROOF\r\n", grn, nrm)
 	fmt.Fprintf(&sb, "%s3%s) CLOSED\r\n", grn, nrm)
 	fmt.Fprintf(&sb, "%s4%s) LOCKED\r\n", grn, nrm)
-	fmt.Fprintf(&sb, "Container flags: %s%s%s\r\n", cyn,
-		oeditSprintBit(state.obj.Values[1], oeditContainerBits), nrm)
+	fmt.Fprintf(&sb, "%s%s%s%s\r\n", field.Label, cyn,
+		oeditSprintBit(state.obj.Values[1], olc.ContainerFlagNames), nrm)
 	sb.WriteString("Enter flag, 0 to quit : ")
 	s.oeditSendLocked(sb.String())
 }
@@ -767,7 +672,7 @@ func (s *Session) oeditShowScriptMenuLocked() {
 	sb.WriteString("\r\n")
 	fmt.Fprintf(&sb, "%s1%s) Name: %s%s\r\n", grn, nrm, yel, name)
 	fmt.Fprintf(&sb, "%s2%s) Script Flags: %s%s%s\r\n", grn, nrm, yel,
-		oeditSprintBit(flags, oeditScriptFlagNames), nrm)
+		oeditSprintBit(flags, olc.ObjectScriptFlagNames), nrm)
 	sb.WriteString("Enter choice (0 to quit) : ")
 	s.oeditSendLocked(sb.String())
 	state.mode = oeditScriptMenu
@@ -788,7 +693,7 @@ func (s *Session) oeditShowScriptFlagsLocked() {
 	var sb strings.Builder
 	sb.WriteString("\x1b[H\x1b[J")
 	columns := 0
-	for i, name := range oeditScriptFlagNames {
+	for i, name := range olc.ObjectScriptFlagNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s  ", grn, i+1, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -796,7 +701,7 @@ func (s *Session) oeditShowScriptFlagsLocked() {
 		}
 	}
 	fmt.Fprintf(&sb, "\r\nCurrent flags   : %s%s%s\r\n", cyn,
-		oeditSprintBit(flags, oeditScriptFlagNames), nrm)
+		oeditSprintBit(flags, olc.ObjectScriptFlagNames), nrm)
 	sb.WriteString("Enter script flags (0 to quit) : ")
 	s.oeditSendLocked(sb.String())
 	state.mode = oeditScriptFlags
@@ -853,14 +758,14 @@ func (s *Session) oeditShowPromptApplyMenuLocked() {
 	for i := 0; i < maxObjAffect; i++ {
 		affect := state.affects[i]
 		if affect.Location != 0 {
-			applyName := oeditSprintType(affect.Location, oeditApplyTypes)
+			applyName := oeditSprintType(affect.Location, olc.ApplyTypeNames)
 			switch affect.Location {
 			case applyRaceHate:
 				fmt.Fprintf(&sb, " %s%d%s) %s to %s\r\n", grn, i+1, nrm,
-					oeditTableName(meditRaceNames, affect.Modifier), applyName)
+					oeditTableName(olc.MobRaceNames, affect.Modifier), applyName)
 			case applySpell:
 				fmt.Fprintf(&sb, " %s%d%s) %s to %s\r\n", grn, i+1, nrm,
-					oeditTableName(oeditAffectBits, affect.Modifier), applyName)
+					oeditTableName(olc.ObjectAffectFlagNames, affect.Modifier), applyName)
 			default:
 				fmt.Fprintf(&sb, " %s%d%s) %+d to %s\r\n", grn, i+1, nrm,
 					affect.Modifier, applyName)
@@ -878,17 +783,18 @@ func (s *Session) oeditShowPromptApplyMenuLocked() {
 // two columns, drink names in yel, numbered from 0.
 func (s *Session) oeditShowLiquidTypeLocked() {
 	nrm, grn, _, yel := s.oeditCols()
+	field := olc.ObjectValueMatrix[s.oedit.obj.TypeFlag].Values[2]
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range oeditDrinks {
+	for i, name := range olc.LiquidNames {
 		fmt.Fprintf(&sb, " %s%2d%s) %s%-20.20s ", grn, i, nrm, yel, name)
 		columns++
 		if columns%2 == 0 {
 			sb.WriteString("\r\n")
 		}
 	}
-	fmt.Fprintf(&sb, "\r\n%sEnter drink type : ", nrm)
+	fmt.Fprintf(&sb, "\r\n%s%s", nrm, field.Label)
 	s.oeditSendLocked(sb.String())
 	s.oedit.mode = oeditValue3
 }
@@ -900,7 +806,7 @@ func (s *Session) oeditShowApplyMenuLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range oeditApplyTypes {
+	for i, name := range olc.ApplyTypeNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -921,7 +827,7 @@ func (s *Session) oeditShowSpellMenuLocked() {
 	sb.WriteString("\r\n")
 	columns := 0
 	for i := 0; i < numAffFlags; i++ {
-		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i, nrm, oeditAffectBits[i])
+		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i, nrm, olc.ObjectAffectFlagNames[i])
 		columns++
 		if columns%2 == 0 {
 			sb.WriteString("\r\n")
@@ -938,7 +844,7 @@ func (s *Session) oeditShowRaceMenuLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range meditRaceNames {
+	for i, name := range olc.MobRaceNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i, nrm, name)
 		columns++
 		if columns%2 == 0 {
@@ -953,17 +859,18 @@ func (s *Session) oeditShowRaceMenuLocked() {
 // oeditShowWeaponMenuLocked mirrors oedit_disp_weapon_menu (src/oedit.c:678-694).
 func (s *Session) oeditShowWeaponMenuLocked() {
 	nrm, grn, _, _ := s.oeditCols()
+	field := olc.ObjectValueMatrix[s.oedit.obj.TypeFlag].Values[3]
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i, name := range meditAttackNames {
+	for i, name := range olc.AttackNames {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i, nrm, name)
 		columns++
 		if columns%2 == 0 {
 			sb.WriteString("\r\n")
 		}
 	}
-	sb.WriteString("\r\nEnter weapon type : ")
+	fmt.Fprintf(&sb, "\r\n%s%s", nrm, field.Label)
 	s.oeditSendLocked(sb.String())
 }
 
@@ -971,111 +878,78 @@ func (s *Session) oeditShowWeaponMenuLocked() {
 // THREE columns (% 3), spell names in yel, numbered from 0.
 func (s *Session) oeditShowSpellsMenuLocked() {
 	nrm, grn, _, yel := s.oeditCols()
+	prompt := "Enter spell choice (0 for none) : "
+	if state := s.oedit; state.obj.TypeFlag >= 0 && state.obj.TypeFlag < len(olc.ObjectValueMatrix) {
+		index := int(state.mode - oeditValue1)
+		if index >= 0 && index < len(state.obj.Values) {
+			prompt = olc.ObjectValueMatrix[state.obj.TypeFlag].Values[index].Label
+		}
+	}
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
 	for i := 0; i < numSpells; i++ {
-		fmt.Fprintf(&sb, "%s%2d%s) %s%-20.20s ", grn, i, nrm, yel, oeditSpellNames[i])
+		fmt.Fprintf(&sb, "%s%2d%s) %s%-20.20s ", grn, i, nrm, yel, olc.SpellNames[i])
 		columns++
 		if columns%3 == 0 {
 			sb.WriteString("\r\n")
 		}
 	}
-	fmt.Fprintf(&sb, "\r\n%sEnter spell choice (0 for none) : ", nrm)
+	fmt.Fprintf(&sb, "\r\n%s%s", nrm, prompt)
 	s.oeditSendLocked(sb.String())
 }
 
-// oeditShowVal1MenuLocked mirrors oedit_disp_val1_menu (src/oedit.c:717-759):
-// type-driven cascade where LIGHT skips to val3 and WEAPON/MISSILE/FIREWEAPON
-// skip val0.
-func (s *Session) oeditShowVal1MenuLocked() {
-	state := s.oedit
-	state.mode = oeditValue1
-	switch state.obj.TypeFlag {
-	case itemLight:
-		// C: "values 0 and 1 are unused.. jump to 2". Note the mode stays
-		// OEDIT_VALUE_3 (set by the callee at :801), not OEDIT_VALUE_1.
-		s.oeditShowVal3MenuLocked()
-	case itemScroll, itemWand, itemStaff, itemPotion:
-		s.oeditSendLocked("Spell level : ")
-	case itemMissile, itemFireweapon, itemWeapon:
-		s.oeditShowVal2MenuLocked()
-	case itemArmor:
-		s.oeditSendLocked("Apply to AC : ")
-	case itemContainer:
-		s.oeditSendLocked("Max weight to contain : ")
-	case itemDrinkcon, itemFountain:
-		s.oeditSendLocked("Max drink units : ")
-	case itemFood:
-		s.oeditSendLocked("Hours to fill stomach : ")
-	case itemMoney:
-		s.oeditSendLocked("Number of gold coins : ")
-	case itemNote:
-		// C: case ITEM_NOTE falls into default (language is unused).
+// oeditShowObjectValueMenuLocked consumes the resolved object value matrix.
+// Its skip behaviour is the same C cascade: invisible slots advance to the
+// next slot, and a type with no visible values returns to the main menu.
+func (s *Session) oeditShowObjectValueMenuLocked(index int) {
+	valueMode, ok := oeditValueMode(index)
+	if !ok || index >= len(s.oedit.obj.Values) || s.oedit.obj.TypeFlag < 0 || s.oedit.obj.TypeFlag >= len(olc.ObjectValueMatrix) {
 		s.oeditShowMenuLocked()
-	default:
-		s.oeditShowMenuLocked()
+		return
 	}
-}
-
-// oeditShowVal2MenuLocked mirrors oedit_disp_val2_menu (src/oedit.c:761-795).
-func (s *Session) oeditShowVal2MenuLocked() {
 	state := s.oedit
-	state.mode = oeditValue2
-	switch state.obj.TypeFlag {
-	case itemScroll, itemPotion:
+	state.mode = valueMode
+	field := olc.ObjectValueMatrix[state.obj.TypeFlag].Values[index]
+	if !field.Visible {
+		s.oeditShowObjectValueMenuLocked(index + 1)
+		return
+	}
+	switch field.Control {
+	case "spell_picker":
 		s.oeditShowSpellsMenuLocked()
-	case itemWand, itemStaff:
-		s.oeditSendLocked("Max number of charges : ")
-	case itemMissile, itemFireweapon, itemWeapon:
-		s.oeditSendLocked("Number of damage dice : ")
-	case itemFood:
-		// C: "values 2 and 3 are unused, jump to 4. how odd".
-		s.oeditShowVal4MenuLocked()
-	case itemContainer:
+	case "checkbox_group":
 		s.oeditShowContainerFlagsLocked()
-	case itemDrinkcon, itemFountain:
-		s.oeditSendLocked("Initial drink units : ")
+	case "select":
+		if index == 2 && (state.obj.TypeFlag == itemDrinkcon || state.obj.TypeFlag == itemFountain) {
+			s.oeditShowLiquidTypeLocked()
+		} else {
+			s.oeditShowWeaponMenuLocked()
+		}
 	default:
-		s.oeditShowMenuLocked()
+		s.oeditSendLocked(field.Label)
 	}
 }
 
-// oeditShowVal3MenuLocked mirrors oedit_disp_val3_menu (src/oedit.c:797-832).
-func (s *Session) oeditShowVal3MenuLocked() {
-	state := s.oedit
-	state.mode = oeditValue3
-	switch state.obj.TypeFlag {
-	case itemLight:
-		s.oeditSendLocked("Number of hours (0 = burnt, -1 is infinite) : ")
-	case itemScroll, itemPotion:
-		s.oeditShowSpellsMenuLocked()
-	case itemWand, itemStaff:
-		s.oeditSendLocked("Number of charges remaining : ")
-	case itemMissile, itemFireweapon, itemWeapon:
-		s.oeditSendLocked("Size of damage dice : ")
-	case itemContainer:
-		s.oeditSendLocked("Vnum of key to open container (-1 for no key) : ")
-	case itemDrinkcon, itemFountain:
-		s.oeditShowLiquidTypeLocked()
-	default:
-		s.oeditShowMenuLocked()
-	}
-}
+// These wrappers retain the descriptor state-machine names used by the C
+// ports while all type branching and prompt text comes from the matrix.
+func (s *Session) oeditShowVal1MenuLocked() { s.oeditShowObjectValueMenuLocked(0) }
+func (s *Session) oeditShowVal2MenuLocked() { s.oeditShowObjectValueMenuLocked(1) }
+func (s *Session) oeditShowVal3MenuLocked() { s.oeditShowObjectValueMenuLocked(2) }
+func (s *Session) oeditShowVal4MenuLocked() { s.oeditShowObjectValueMenuLocked(3) }
 
-// oeditShowVal4MenuLocked mirrors oedit_disp_val4_menu (src/oedit.c:834-858).
-func (s *Session) oeditShowVal4MenuLocked() {
-	state := s.oedit
-	state.mode = oeditValue4
-	switch state.obj.TypeFlag {
-	case itemScroll, itemPotion, itemWand, itemStaff:
-		s.oeditShowSpellsMenuLocked()
-	case itemWeapon:
-		s.oeditShowWeaponMenuLocked()
-	case itemDrinkcon, itemFountain, itemFood:
-		s.oeditSendLocked("Poisoned (0 = not poison) : ")
+func oeditValueMode(index int) (oeditMode, bool) {
+	switch index {
+	case 0:
+		return oeditValue1, true
+	case 1:
+		return oeditValue2, true
+	case 2:
+		return oeditValue3, true
+	case 3:
+		return oeditValue4, true
 	default:
-		s.oeditShowMenuLocked()
+		return 0, false
 	}
 }
 

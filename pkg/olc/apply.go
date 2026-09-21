@@ -401,72 +401,72 @@ func Apply(op Operation) error {
 		if op.Mob == nil {
 			return fmt.Errorf("mob sex operation requires a mob")
 		}
-		op.Mob.Sex = clampInt(op.Value, 0, 2)
+		op.Mob.Sex = clampInt(op.Value, MobSexMin, MobSexMax)
 	case OpSetMobHitroll:
 		if op.Mob == nil {
 			return fmt.Errorf("mob hitroll operation requires a mob")
 		}
-		op.Mob.THAC0 = 20 - clampInt(op.Value, 0, 127)
+		op.Mob.THAC0 = 20 - clampInt(op.Value, MobHitrollMin, MobHitrollMax)
 	case OpSetMobDamroll:
 		if op.Mob == nil {
 			return fmt.Errorf("mob damroll operation requires a mob")
 		}
-		op.Mob.Damage.Plus = clampInt(op.Value, 0, 127)
+		op.Mob.Damage.Plus = clampInt(op.Value, MobDamrollMin, MobDamrollMax)
 	case OpSetMobNumDamageDice:
 		if op.Mob == nil {
 			return fmt.Errorf("mob damage dice operation requires a mob")
 		}
-		op.Mob.Damage.Num = clampInt(op.Value, 0, 127)
+		op.Mob.Damage.Num = clampInt(op.Value, MobDamageDiceMin, MobDamageDiceMax)
 	case OpSetMobSizeDamageDice:
 		if op.Mob == nil {
 			return fmt.Errorf("mob damage sides operation requires a mob")
 		}
-		op.Mob.Damage.Sides = clampInt(op.Value, 0, 127)
+		op.Mob.Damage.Sides = clampInt(op.Value, MobDamageSidesMin, MobDamageSidesMax)
 	case OpSetMobNumHPDice:
 		if op.Mob == nil {
 			return fmt.Errorf("mob hp dice operation requires a mob")
 		}
-		op.Mob.HP.Num = clampInt(op.Value, 0, 50)
+		op.Mob.HP.Num = clampInt(op.Value, MobHPDiceMin, MobHPDiceMax)
 	case OpSetMobSizeHPDice:
 		if op.Mob == nil {
 			return fmt.Errorf("mob hp sides operation requires a mob")
 		}
-		op.Mob.HP.Sides = clampInt(op.Value, 0, 3000)
+		op.Mob.HP.Sides = clampInt(op.Value, MobHPSidesMin, MobHPSidesMax)
 	case OpSetMobAddHP:
 		if op.Mob == nil {
 			return fmt.Errorf("mob hp plus operation requires a mob")
 		}
-		op.Mob.HP.Plus = clampInt(op.Value, 0, 30000)
+		op.Mob.HP.Plus = clampInt(op.Value, MobHPPlusMin, MobHPPlusMax)
 	case OpSetMobAC:
 		if op.Mob == nil {
 			return fmt.Errorf("mob ac operation requires a mob")
 		}
-		op.Mob.AC = clampInt(op.Value, -200, 200)
+		op.Mob.AC = clampInt(op.Value, MobACMin, MobACMax)
 	case OpSetMobExp:
 		if op.Mob == nil {
 			return fmt.Errorf("mob exp operation requires a mob")
 		}
-		op.Mob.Exp = clampInt(op.Value, 0, int(^uint(0)>>1))
+		op.Mob.Exp = clampInt(op.Value, MobExpMin, MaxIntValue)
 	case OpSetMobGold:
 		if op.Mob == nil {
 			return fmt.Errorf("mob gold operation requires a mob")
 		}
-		op.Mob.Gold = clampInt(op.Value, 0, int(^uint(0)>>1))
+		op.Mob.Gold = clampInt(op.Value, MobGoldMin, MaxIntValue)
 	case OpSetMobPosition:
 		if op.Mob == nil {
 			return fmt.Errorf("mob position operation requires a mob")
 		}
-		op.Mob.Position = clampInt(op.Value, 0, 14)
+		op.Mob.Position = clampInt(op.Value, MobPositionMin, MobPositionMax)
 	case OpSetMobDefaultPosition:
 		if op.Mob == nil {
 			return fmt.Errorf("mob default position operation requires a mob")
 		}
-		op.Mob.DefaultPos = clampInt(op.Value, 0, 14)
+		op.Mob.DefaultPos = clampInt(op.Value, MobPositionMin, MobPositionMax)
 	case OpSetMobAttack:
 		if op.Mob == nil {
 			return fmt.Errorf("mob attack operation requires a mob")
 		}
-		op.Mob.BareHandAttack = clampInt(op.Value, 0, 14)
+		op.Mob.BareHandAttack = clampInt(op.Value, MobAttackMin, MobAttackMax)
 	case OpSetMobLevel:
 		if op.Mob == nil {
 			return fmt.Errorf("mob level operation requires a mob")
@@ -476,24 +476,24 @@ func Apply(op Operation) error {
 		if op.Mob == nil {
 			return fmt.Errorf("mob alignment operation requires a mob")
 		}
-		op.Mob.Alignment = clampInt(op.Value, -1000, 1000)
+		op.Mob.Alignment = clampInt(op.Value, MobAlignmentMin, MobAlignmentMax)
 	case OpSetMobRace:
 		if op.Mob == nil {
 			return fmt.Errorf("mob race operation requires a mob")
 		}
-		op.Mob.Race = clampInt(op.Value, 0, 30)
+		op.Mob.Race = clampInt(op.Value, MobRaceMin, MobRaceMax)
 	case OpSetMobActionFlag:
 		if op.Mob == nil {
 			return fmt.Errorf("mob action flag operation requires a mob")
 		}
-		if err := setNamedFlag(&op.Mob.ActionFlags, mobActionFlagNames, op.Bit, op.Value != 0); err != nil {
+		if err := setNamedFlag(&op.Mob.ActionFlags, MobActionFlags, op.Bit, op.Value != 0); err != nil {
 			return err
 		}
 	case OpSetMobAffectFlag:
 		if op.Mob == nil {
 			return fmt.Errorf("mob affect flag operation requires a mob")
 		}
-		if err := setNamedFlag(&op.Mob.AffectFlags, mobAffectFlagNames, op.Bit, op.Value != 0); err != nil {
+		if err := setNamedFlag(&op.Mob.AffectFlags, MobAffectFlags, op.Bit, op.Value != 0); err != nil {
 			return err
 		}
 	case OpSetMobNoise:
@@ -634,7 +634,7 @@ func Apply(op Operation) error {
 			return fmt.Errorf("object value operation requires an object")
 		}
 		index := int(op.Kind - OpSetObjValue1)
-		low, high := objectValueBounds(op.Obj.TypeFlag, index)
+		low, high := ObjectValueBounds(op.Obj.TypeFlag, index)
 		if op.Low != 0 || op.High != 0 {
 			low, high = op.Low, op.High
 		}
@@ -646,7 +646,7 @@ func Apply(op Operation) error {
 		if op.Obj == nil {
 			return fmt.Errorf("object container flag operation requires an object")
 		}
-		if op.Obj.TypeFlag != 15 || op.Value < 0 || op.Value > 3 {
+		if op.Obj.TypeFlag != ItemContainer || op.Value < 0 || op.Value > len(ContainerFlagNames)-1 {
 			return fmt.Errorf("object container flag %d is invalid", op.Value)
 		}
 		op.Obj.Values[1] ^= 1 << uint(op.Value)
@@ -654,7 +654,7 @@ func Apply(op Operation) error {
 		if op.Obj == nil {
 			return fmt.Errorf("object type operation requires an object")
 		}
-		if op.Value < 1 || op.Value >= 24 {
+		if op.Value < 1 || op.Value >= len(ItemTypeNames) {
 			return fmt.Errorf("object type %d is invalid", op.Value)
 		}
 		op.Obj.TypeFlag = op.Value
@@ -662,14 +662,14 @@ func Apply(op Operation) error {
 		if op.Obj == nil {
 			return fmt.Errorf("object extra flag operation requires an object")
 		}
-		if err := setFlagWord(&op.Obj.ExtraFlags, 29, op.Bit, op.Value != 0); err != nil {
+		if err := setFlagWord(&op.Obj.ExtraFlags, len(ItemExtraFlagNames), op.Bit, op.Value != 0); err != nil {
 			return err
 		}
 	case OpSetObjWearFlag:
 		if op.Obj == nil {
 			return fmt.Errorf("object wear flag operation requires an object")
 		}
-		if err := setFlagWord(&op.Obj.WearFlags, 19, op.Bit, op.Value != 0); err != nil {
+		if err := setFlagWord(&op.Obj.WearFlags, len(ItemWearFlagNames), op.Bit, op.Value != 0); err != nil {
 			return err
 		}
 	case OpSetObjWeight:
@@ -694,10 +694,10 @@ func Apply(op Operation) error {
 		}
 		rounded := float32(load)
 		rounded = float32(int(rounded/0.01+0.5)) * 0.01
-		if rounded < 0 {
-			rounded = 0
-		} else if rounded > 100 {
-			rounded = 100
+		if rounded < ObjectLoadMin {
+			rounded = ObjectLoadMin
+		} else if rounded > ObjectLoadMax {
+			rounded = ObjectLoadMax
 		}
 		op.Obj.LoadPercent = float64(rounded)
 	case OpSetObjTimer:
@@ -784,7 +784,7 @@ func Apply(op Operation) error {
 		if op.Shop == nil {
 			return fmt.Errorf("shop hour operation requires a shop")
 		}
-		value := clampInt(op.Value, 0, 28)
+		value := clampInt(op.Value, ShopHourMin, ShopHourMax)
 		switch op.Kind {
 		case OpSetShopOpenHour1:
 			op.Shop.OpenHour1 = value
@@ -860,12 +860,12 @@ func Apply(op Operation) error {
 		if op.Zone == nil {
 			return fmt.Errorf("zone lifespan operation requires a zone")
 		}
-		op.Zone.Lifespan = clampInt(op.Value, 0, 240)
+		op.Zone.Lifespan = clampInt(op.Value, ZoneLifespanMin, ZoneLifespanMax)
 	case OpSetZoneResetMode:
 		if op.Zone == nil {
 			return fmt.Errorf("zone reset mode operation requires a zone")
 		}
-		op.Zone.ResetMode = clampInt(op.Value, 0, 2)
+		op.Zone.ResetMode = clampInt(op.Value, ZoneResetModeMin, ZoneResetModeMax)
 	case OpAddZoneCommand:
 		if op.Zone == nil || op.Command == nil {
 			return fmt.Errorf("add zone command operation requires a zone and command")
@@ -927,30 +927,11 @@ func clampInt(value, low, high int) int {
 	return value
 }
 
-// These are storage names, not UI label tables. MEDIT exposes the first 25
-// action bits and first 37 affect bits; the parser has additional reserved
-// bits that are written from world files but are not editable in its menu.
-var mobActionFlagNames = []string{
-	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGRESSIVE",
-	"STAY_ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY",
-	"HELPER", "NOCHARM", "NOSUMMON", "NOSLEEP", "NOBASH", "NOBLIND", "HUNTER",
-	"AGGR24", "RANDZON", "MOUNTABLE", "RARE", "LOOTS", "OKGIVE",
-}
-
-var mobAffectFlagNames = []string{
-	"BLIND", "INVISIBLE", "DETECT_ALIGN", "DETECT_INVIS", "DETECT_MAGIC",
-	"SENSE_LIFE", "WATERWALK", "SANCTUARY", "GROUP", "CURSE", "INFRAVISION",
-	"POISON", "PROTECT_EVIL", "PROTECT_GOOD", "SLEEP", "NOTRACK", "FLESH_ALTER",
-	"DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM", "FOLLOW", "WIMPY",
-	"KUJI_KIRI", "CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNT", "INVULN",
-	"FLAMING", "NOTHING", "HASTE", "SLOW", "DREAM", "WATERBREATHE",
-}
-
-func setNamedFlag(flags *[]string, names []string, bit int, enabled bool) error {
+func setNamedFlag(flags *[]string, names []FlagVocabulary, bit int, enabled bool) error {
 	if bit < 0 || bit >= len(names) {
 		return fmt.Errorf("flag bit %d is out of range", bit)
 	}
-	target := names[bit]
+	target := names[bit].Storage
 	for i, name := range *flags {
 		if name != target {
 			continue
@@ -1043,50 +1024,6 @@ func parseFloatC(input string) float64 {
 		return 0
 	}
 	return value
-}
-
-func objectValueBounds(typeFlag, index int) (int, int) {
-	const (
-		itemScroll    = 2
-		itemWand      = 3
-		itemStaff     = 4
-		itemWeapon    = 5
-		itemPotion    = 10
-		itemContainer = 15
-		itemDrinkcon  = 17
-		itemFountain  = 23
-	)
-	const numSpells, numLiqTypes, numAttackTypes = 104, 16, 15
-	switch index {
-	case 0:
-		return -32000, 32000
-	case 1:
-		if typeFlag == itemScroll || typeFlag == itemPotion {
-			return 0, numSpells - 1
-		}
-		if typeFlag == itemContainer {
-			return 0, 15
-		}
-	case 2:
-		switch typeFlag {
-		case itemScroll, itemPotion:
-			return 0, numSpells - 1
-		case itemWeapon, itemWand, itemStaff:
-			return 0, 20
-		case itemDrinkcon, itemFountain:
-			return 0, numLiqTypes - 1
-		}
-	case 3:
-		switch typeFlag {
-		case itemScroll, itemPotion:
-			return 0, numSpells - 1
-		case itemWand, itemStaff:
-			return 1, numSpells - 1
-		case itemWeapon:
-			return 0, numAttackTypes - 1
-		}
-	}
-	return -32000, 32000
 }
 
 func truncateBytes(value string, limit int) string {

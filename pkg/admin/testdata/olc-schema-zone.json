@@ -1,0 +1,43 @@
+{
+  "kind": "zone",
+  "fields": [
+    {
+      "key": "name",
+      "label": "Zone name",
+      "control": "text"
+    },
+    {
+      "key": "lifespan",
+      "label": "Lifespan",
+      "control": "number",
+      "bounds": {
+        "min": 0,
+        "max": 240
+      }
+    },
+    {
+      "key": "reset_mode",
+      "label": "Reset Mode",
+      "control": "select",
+      "options": [
+        {
+          "value": 0,
+          "label": "Never reset"
+        },
+        {
+          "value": 1,
+          "label": "Reset when no players are in zone."
+        },
+        {
+          "value": 2,
+          "label": "Normal reset."
+        }
+      ]
+    },
+    {
+      "key": "top_room",
+      "label": "Top of zone",
+      "control": "vnum"
+    }
+  ]
+}

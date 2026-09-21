@@ -211,6 +211,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// OLC read surface — authorization is operation middleware so it can use
 	// Huma's parsed {kind}/{vnum} parameters. These exact mounts keep the
 	// route drift gate at zero new allowlist entries.
+	track("/admin/olc/schema/{kind}", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/{kind}/{vnum}/preview", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/held", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/pending", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
