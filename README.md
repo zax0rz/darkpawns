@@ -36,6 +36,8 @@ telnet darkpawns.org 7777
 Or play in the browser at [darkpawns.org/play](https://darkpawns.org/play) —
 same game, same world, WebSocket under the hood.
 
+![The Dark Pawns web client connecting and prompting for a character name](docs/images/darkpawns-play-demo.gif)
+
 Returning from the 2004 era? The world files are the preserved originals, and
 the port's prime directive is that the game plays byte-for-byte like the C
 server did: same commands, same combat, same quirks. See
