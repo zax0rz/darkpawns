@@ -187,7 +187,7 @@ func Apply(op Operation) error {
 		if op.Room == nil {
 			return fmt.Errorf("room description operation requires a room")
 		}
-		op.Room.Description = truncateBytes(op.Text, MaxRoomDesc)
+		op.Room.Description = truncateDescription(op.Text, MaxRoomDesc)
 	case OpSetRoomFlag:
 		if op.Room == nil {
 			return fmt.Errorf("room flag operation requires a room")
@@ -269,10 +269,10 @@ func Apply(op Operation) error {
 			return fmt.Errorf("exit description operation requires a direction")
 		}
 		if op.Exit != nil {
-			op.Exit.Description = truncateBytes(op.Text, MaxExitDesc)
+			op.Exit.Description = truncateDescription(op.Text, MaxExitDesc)
 		} else {
 			exit := ensureRoomExit(op.Room, op.Direction)
-			exit.Description = truncateBytes(op.Text, MaxExitDesc)
+			exit.Description = truncateDescription(op.Text, MaxExitDesc)
 			op.Room.Exits[op.Direction] = exit
 		}
 	case OpSetExitKeywords:
@@ -334,7 +334,7 @@ func Apply(op Operation) error {
 		if op.Extra != nil {
 			extra = *op.Extra
 		}
-		extra.Description = truncateBytes(extra.Description, MaxExtraDesc)
+		extra.Description = truncateDescription(extra.Description, MaxExtraDesc)
 		if op.Index < 0 || op.Index >= len(op.Room.ExtraDescs) {
 			op.Room.ExtraDescs = append(op.Room.ExtraDescs, extra)
 		} else {
@@ -364,9 +364,9 @@ func Apply(op Operation) error {
 			return fmt.Errorf("extra description operation requires an extra description")
 		}
 		if op.Extra != nil {
-			op.Extra.Description = truncateBytes(op.Text, MaxExtraDesc)
+			op.Extra.Description = truncateDescription(op.Text, MaxExtraDesc)
 		} else if op.Index >= 0 && op.Index < len(op.Room.ExtraDescs) {
-			op.Room.ExtraDescs[op.Index].Description = truncateBytes(op.Text, MaxExtraDesc)
+			op.Room.ExtraDescs[op.Index].Description = truncateDescription(op.Text, MaxExtraDesc)
 		} else {
 			return fmt.Errorf("extra description index %d is out of range", op.Index)
 		}
@@ -396,7 +396,7 @@ func Apply(op Operation) error {
 		if op.Mob == nil {
 			return fmt.Errorf("mob detailed description operation requires a mob")
 		}
-		op.Mob.DetailedDesc = truncateBytes(op.Text, MaxMobDesc)
+		op.Mob.DetailedDesc = truncateDescription(op.Text, MaxMobDesc)
 	case OpSetMobSex:
 		if op.Mob == nil {
 			return fmt.Errorf("mob sex operation requires a mob")
@@ -543,7 +543,7 @@ func Apply(op Operation) error {
 		if op.Obj == nil {
 			return fmt.Errorf("object action description operation requires an object")
 		}
-		op.Obj.ActionDesc = truncateBytes(op.Text, MaxMessage)
+		op.Obj.ActionDesc = truncateDescription(op.Text, MaxMessage)
 	case OpSetObjExtraKeywords:
 		if op.Extra == nil && op.Obj == nil {
 			return fmt.Errorf("object extra keywords operation requires an extra description")
@@ -560,9 +560,9 @@ func Apply(op Operation) error {
 			return fmt.Errorf("object extra description operation requires an extra description")
 		}
 		if op.Extra != nil {
-			op.Extra.Description = truncateBytes(op.Text, MaxExtraDesc)
+			op.Extra.Description = truncateDescription(op.Text, MaxExtraDesc)
 		} else if op.Index >= 0 && op.Index < len(op.Obj.ExtraDescs) {
-			op.Obj.ExtraDescs[op.Index].Description = truncateBytes(op.Text, MaxExtraDesc)
+			op.Obj.ExtraDescs[op.Index].Description = truncateDescription(op.Text, MaxExtraDesc)
 		} else {
 			return fmt.Errorf("object extra description index %d is out of range", op.Index)
 		}
@@ -612,7 +612,7 @@ func Apply(op Operation) error {
 		if op.Extra != nil {
 			extra = *op.Extra
 		}
-		extra.Description = truncateBytes(extra.Description, MaxExtraDesc)
+		extra.Description = truncateDescription(extra.Description, MaxExtraDesc)
 		if op.Index < 0 || op.Index >= len(op.Obj.ExtraDescs) {
 			op.Obj.ExtraDescs = append(op.Obj.ExtraDescs, extra)
 		} else {
@@ -1032,6 +1032,21 @@ func truncateBytes(value string, limit int) string {
 	}
 	if len(value) > limit {
 		return value[:limit]
+	}
+	return value
+}
+
+func truncateDescription(value string, limit int) string {
+	return truncateBytes(normalizeDescriptionText(value), limit)
+}
+
+// normalizeDescriptionText matches the string editor's natural-input result.
+// Telnet appends a line terminator to each accepted line; web callers submit
+// the same text without that transport framing, so the operation layer owns
+// the shared trailing newline.
+func normalizeDescriptionText(value string) string {
+	if value != "" && !strings.HasSuffix(value, "\n") {
+		return value + "\n"
 	}
 	return value
 }

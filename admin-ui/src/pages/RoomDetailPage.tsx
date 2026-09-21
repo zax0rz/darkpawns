@@ -52,6 +52,12 @@ export function RoomDetailPage() {
           <span className="text-lg font-mono text-accent">#{room.vnum}</span>
           <h1 className="text-xl font-bold text-ink">{room.name}</h1>
         </div>
+        <Link
+          to={`/admin/game/rooms/${room.vnum}/edit`}
+          className="mt-4 inline-block border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep"
+        >
+          Edit room
+        </Link>
       </div>
 
       {/* Meta */}

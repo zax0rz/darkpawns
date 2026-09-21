@@ -12,6 +12,7 @@ import { MobDetailPage } from './pages/MobDetailPage';
 import { ObjectsPage } from './pages/ObjectsPage';
 import { ObjectDetailPage } from './pages/ObjectDetailPage';
 import { RoomDetailPage } from './pages/RoomDetailPage';
+import { RoomEditorPage } from './pages/RoomEditorPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { DecisionsPage } from './pages/DecisionsPage';
 import { MindReaderPage } from './pages/MindReaderPage';
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/admin/game/objects" element={<ErrorBoundary><ObjectsPage /></ErrorBoundary>} />
             <Route path="/admin/game/objects/:vnum" element={<ErrorBoundary><ObjectDetailPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum" element={<ErrorBoundary><RoomDetailPage /></ErrorBoundary>} />
+            <Route path="/admin/game/rooms/:vnum/edit" element={<ErrorBoundary><RoomEditorPage /></ErrorBoundary>} />
             <Route path="/admin/agents" element={<ErrorBoundary><AgentsPage /></ErrorBoundary>} />
             <Route path="/admin/decisions" element={<ErrorBoundary><DecisionsPage /></ErrorBoundary>} />
             <Route path="/admin/narrative" element={<ErrorBoundary><MindReaderPage /></ErrorBoundary>} />

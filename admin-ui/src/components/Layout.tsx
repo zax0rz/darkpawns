@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCommandPalette } from '../hooks/useCommandPalette';
@@ -60,7 +60,6 @@ export function Layout() {
   const connectionStatus = useConnectionStatus();
   const { open, openPalette, closePalette } = useCommandPalette();
   const navigate = useNavigate();
-  const location = useLocation();
   const breakpoint = useBreakpoint();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -68,11 +67,6 @@ export function Layout() {
     logout();
     navigate('/login');
   };
-
-  // Close sidebar on navigation (mobile/tablet)
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
 
   const toggleSidebar = useCallback(() => setSidebarOpen((prev) => !prev), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -82,7 +76,7 @@ export function Layout() {
   const connectionIndicator = {
     connected: { color: 'bg-accent', label: 'ONLINE' },
     disconnected: { color: 'bg-ink-muted animate-pulse', label: 'OFFLINE' },
-    reconnecting: { color: 'bg-accent animate-bounce', label: 'RECONNECTING' },
+    reconnecting: { color: 'bg-accent animate-pulse', label: 'RECONNECTING' },
   }[connectionStatus];
 
   const isMobile = breakpoint === 'mobile';
@@ -119,6 +113,7 @@ export function Layout() {
               role={role}
               onLogout={handleLogout}
               onClose={closeSidebar}
+              onNavigate={closeSidebar}
             />
           </aside>
         </>
@@ -206,12 +201,14 @@ function SidebarContent({
   role,
   onLogout,
   onClose,
+  onNavigate,
 }: {
   navItems: NavItem[];
   playerName: string | null;
   role: string | null;
   onLogout: () => void;
   onClose?: () => void;
+  onNavigate?: () => void;
 }) {
   return (
     <>
@@ -237,6 +234,7 @@ function SidebarContent({
             key={item.to}
             to={item.to}
             end={item.to === '/admin/'}
+            onClick={onNavigate}
             className={({ isActive }) =>
               `flex items-center gap-2.5 px-3.5 py-2.5 rounded-none text-xs uppercase tracking-wider font-mono border transition-all ${
                 // Hover used to reproduce the whole active treatment, which

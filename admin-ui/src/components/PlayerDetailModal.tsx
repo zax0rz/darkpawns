@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
-import { useToast } from './Toast';
+import { useToast } from '../hooks/useToast';
 import { sexLabel } from '../lib/gameLabels';
 
 const classNames: Record<number, string> = {
