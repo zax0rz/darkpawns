@@ -356,19 +356,20 @@ func snapshotEntity(world *game.World, kind olc.Kind, vnum int) (olc.EntityValue
 	case olc.KindMob:
 		mob, exists := world.SnapshotMob(vnum)
 		if !exists {
-			return value, huma.NewError(http.StatusNotFound, "mob not found")
+			mob = newOLCMob(vnum)
 		}
 		value.Mob = mob
 	case olc.KindObject:
 		object, exists := world.SnapshotObj(vnum)
 		if !exists {
-			return value, huma.NewError(http.StatusNotFound, "object not found")
+			object = newOLCObject(vnum)
 		}
 		value.Object = object
 	case olc.KindShop:
 		shop, exists := world.SnapshotShop(vnum)
 		if !exists {
-			return value, huma.NewError(http.StatusNotFound, "shop not found")
+			value.Shop = newOLCShop(vnum)
+			break
 		}
 		value.Shop = shopToProto(shop)
 	case olc.KindZone:

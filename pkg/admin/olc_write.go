@@ -102,12 +102,12 @@ func registerOLCRoomWrites(api huma.API, world *game.World, database *db.DB, wri
 			return nil, huma.NewError(http.StatusServiceUnavailable, "OLC state unavailable")
 		}
 		room, exists := world.SnapshotRoom(vnum)
-		if !exists {
-			return nil, huma.NewError(http.StatusNotFound, "room not found")
-		}
-		_, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
+		zone, ok := olc.ZoneForVNum(world.GetAllZones(), vnum)
 		if !ok {
 			return nil, huma.NewError(http.StatusNotFound, "no zone covers VNUM")
+		}
+		if !exists {
+			room = newOLCRoom(vnum, zone.Number)
 		}
 		hadClaim := hasOLCClaim(writes, olc.KindRoom, vnum, owner)
 		if holder, claimed := writes.ClaimOLC(olc.KindRoom, vnum, owner, olc.DefaultClaimTTL); !claimed {

@@ -18,7 +18,7 @@ import (
 // /ws and /onboarding are deliberately absent (a WebSocket upgrade and a
 // browser entry page are not typed REST operations; modeling them is a later
 // decision), as are the routes still on the plain mux per the drift gate's
-// allowlist. P3 adds the three read-only webOLC operations.
+// allowlist. The webOLC read and lifecycle operations below are typed REST.
 func TestGeneratedOpenAPISpec(t *testing.T) {
 	setJWTSecret(t)
 
@@ -53,6 +53,8 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/olc/{kind}/{vnum}/preview":      {"get"},
 		"/admin/olc/held":                       {"get"},
 		"/admin/olc/pending":                    {"get"},
+		"/admin/olc/zones/{zone}/vnums":         {"get"},
+		"/admin/olc/lookup/{kind}/{vnum}/name":  {"get"},
 		"/admin/olc/{kind}/{vnum}":              {"post"},
 		"/admin/olc/{kind}/{vnum}/draft":        {"get", "patch", "delete"},
 		"/admin/olc/{kind}/{vnum}/draft/commit": {"post"},

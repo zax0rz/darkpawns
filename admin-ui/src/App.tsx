@@ -23,6 +23,8 @@ import { DecisionsPage } from './pages/DecisionsPage';
 import { MindReaderPage } from './pages/MindReaderPage';
 import { TerminalPage } from './pages/TerminalPage';
 import { OperationsPage } from './pages/OperationsPage';
+import { WorkshopPage } from './pages/WorkshopPage';
+import { OlcHelpPage } from './pages/OlcHelpPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export default function App() {
@@ -53,6 +55,8 @@ export default function App() {
             <Route path="/admin/decisions" element={<ErrorBoundary><DecisionsPage /></ErrorBoundary>} />
             <Route path="/admin/narrative" element={<ErrorBoundary><MindReaderPage /></ErrorBoundary>} />
             <Route path="/admin/operations" element={<ErrorBoundary><OperationsPage /></ErrorBoundary>} />
+            <Route path="/admin/workshop" element={<ErrorBoundary><WorkshopPage /></ErrorBoundary>} />
+            <Route path="/admin/workshop/help" element={<ErrorBoundary><OlcHelpPage /></ErrorBoundary>} />
             <Route path="/admin/webclient" element={<ErrorBoundary><TerminalPage /></ErrorBoundary>} />
           </Route>
         </Route>

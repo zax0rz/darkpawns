@@ -217,7 +217,7 @@ func ZoneCommandsForRoom(commands []parser.ZoneCommand, roomVNum int) []parser.Z
 	filtered := make([]parser.ZoneCommand, 0)
 	cmdRoom := -1
 	for _, command := range commands {
-		if room, hasRoom := zoneCommandRoom(command); hasRoom {
+		if room, hasRoom := ZoneCommandRoom(command); hasRoom {
 			cmdRoom = room
 		}
 		if cmdRoom == roomVNum {
@@ -227,7 +227,10 @@ func ZoneCommandsForRoom(commands []parser.ZoneCommand, roomVNum int) []parser.Z
 	return filtered
 }
 
-func zoneCommandRoom(command parser.ZoneCommand) (int, bool) {
+// ZoneCommandRoom mirrors zedit.c's switch. E/G/P deliberately have no case:
+// their command room is the sticky room carried from the previous room-bearing
+// command. This is the C quirk that makes the setup filter faithful.
+func ZoneCommandRoom(command parser.ZoneCommand) (int, bool) {
 	switch command.Command {
 	case "M", "O":
 		return command.Arg3, true

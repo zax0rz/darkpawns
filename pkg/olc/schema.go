@@ -146,12 +146,16 @@ const (
 
 const MaxIntValue = int(^uint(0) >> 1)
 
+// NewEntityRequiredLevel mirrors LVL_BUILDER in
+// src/olc.h:54 and the level gate shared by the five OLC editors.
 // NewZoneRequiredLevel and NewZoneRequiredLabel mirror LVL_HIGOD in
 // src/structs.h:614, the action gate in src/olc.c:133, and the Go telnet
 // branch in pkg/session/zedit.go:83.
 const (
-	NewZoneRequiredLevel = 36
-	NewZoneRequiredLabel = "HIGOD"
+	NewEntityRequiredLevel = 31
+	NewEntityRequiredLabel = "BUILDER"
+	NewZoneRequiredLevel   = 36
+	NewZoneRequiredLabel   = "HIGOD"
 )
 
 const (
@@ -433,6 +437,7 @@ func SchemaForKind(kind string) (Schema, bool) {
 	schema := Schema{Kind: kind}
 	switch kind {
 	case "room":
+		schema.Actions = []SchemaAction{{Key: "new_room", Label: "New room", RequiredLevel: NewEntityRequiredLevel, RequiredLabel: NewEntityRequiredLabel}}
 		schema.Bespoke = []string{"exits", "extra_descriptions"}
 		schema.Fields = []SchemaField{
 			textField("name", "Name", "text"),
@@ -444,6 +449,7 @@ func SchemaForKind(kind string) (Schema, bool) {
 		}
 		schema.Exits = roomExits
 	case "mob":
+		schema.Actions = []SchemaAction{{Key: "new_mob", Label: "New mob", RequiredLevel: NewEntityRequiredLevel, RequiredLabel: NewEntityRequiredLabel}}
 		schema.Fields = []SchemaField{
 			textField("keywords", "Alias", "text"),
 			textField("short_description", "Short description", "text"),
@@ -473,6 +479,7 @@ func SchemaForKind(kind string) (Schema, bool) {
 			checkboxField("script_flags", "Script flags", schemaOptions(MobScriptFlagNames)),
 		}
 	case "obj":
+		schema.Actions = []SchemaAction{{Key: "new_obj", Label: "New object", RequiredLevel: NewEntityRequiredLevel, RequiredLabel: NewEntityRequiredLabel}}
 		schema.Bespoke = []string{"values", "applies", "extra_descriptions"}
 		schema.Fields = []SchemaField{
 			textField("keywords", "Keywords", "text"),
@@ -492,6 +499,7 @@ func SchemaForKind(kind string) (Schema, bool) {
 		schema.ValueMatrix = ObjectValueMatrix
 		schema.Applies = objectApplies
 	case "shop":
+		schema.Actions = []SchemaAction{{Key: "new_shop", Label: "New shop", RequiredLevel: NewEntityRequiredLevel, RequiredLabel: NewEntityRequiredLabel}}
 		schema.Bespoke = []string{"products", "rooms", "trade_namelist"}
 		schema.Fields = []SchemaField{
 			{Key: "products", Label: "Products", Control: "vnum_list"},

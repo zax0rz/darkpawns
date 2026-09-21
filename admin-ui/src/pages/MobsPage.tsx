@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, type Mob } from '../api/client';
 import { TableSkeleton } from '../components/Skeleton';
+import { NewEntityPanel } from '../components/olc/NewEntityPanel';
 
 export function MobsPage() {
   const [search, setSearch] = useState('');
@@ -58,6 +59,8 @@ export function MobsPage() {
           </span>
         )}
       </div>
+
+      <NewEntityPanel kind="mob" />
 
       {/* Search */}
       <input

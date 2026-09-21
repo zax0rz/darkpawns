@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import type { OlcPatchOperation, OlcSchema, OlcZoneCommand, OlcZoneCommandArgument } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
+import { VNumPicker } from './VNumPicker';
 
 interface ZoneCommandTimelineProps {
   schema: OlcSchema;
   commands: OlcZoneCommand[];
   disabled?: boolean;
+  readOnly?: boolean;
+  title?: string;
   onOperation: (operations: OlcPatchOperation[]) => void;
 }
 
@@ -89,11 +92,15 @@ function ReorderConfirmation({
 }
 
 function CommandArgument({
+  command,
+  index,
   argument,
   value,
   disabled,
   onValue,
 }: {
+  command: OlcZoneCommand;
+  index: number;
   argument: OlcZoneCommandArgument;
   value: number;
   disabled: boolean;
@@ -108,6 +115,21 @@ function CommandArgument({
           {argument.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
       </label>
+    );
+  }
+  if (argument.control === 'vnum') {
+    const kind = vnumKind(command.command, index, command.arg2);
+    return (
+      <VNumPicker
+        kind={kind}
+        label={argument.label}
+        identity={`zone-arg-${argument.key}-${command.position}`}
+        value={value}
+        disabled={disabled}
+        min={argument.bounds?.min}
+        max={argument.bounds?.max}
+        onCommit={(raw) => onValue(Number(raw))}
+      />
     );
   }
   return (
@@ -125,21 +147,99 @@ function CommandArgument({
   );
 }
 
-export function ZoneCommandTimeline({ schema, commands, disabled = false, onOperation }: ZoneCommandTimelineProps) {
-  const [reorder, setReorder] = useState<ReorderRequest | null>(null);
-  const [newCommandType, setNewCommandType] = useState(schema.zoneCommands[0]?.command || '');
-  const descriptors = useMemo(() => schema.zoneCommands, [schema.zoneCommands]);
-  const addDescriptor = descriptorFor(schema, newCommandType);
+function vnumKind(command: string, index: number, targetKind: number): 'room' | 'mob' | 'obj' {
+  if (command === 'M') return index === 0 ? 'mob' : 'room';
+  if (command === 'O') return index === 0 ? 'obj' : 'room';
+  if (command === 'E' || command === 'G') return 'obj';
+  if (command === 'P') return 'obj';
+  if (command === 'D' || command === 'L') return 'room';
+  if (command === 'R') return index === 0 ? 'room' : targetKind === 0 ? 'mob' : 'obj';
+  return 'room';
+}
 
+export function ZoneCommandTimeline({ schema, commands, disabled = false, readOnly = false, title = 'Reset command timeline', onOperation }: ZoneCommandTimelineProps) {
+  const [reorder, setReorder] = useState<ReorderRequest | null>(null);
+  const descriptors = useMemo(() => schema.zoneCommands, [schema.zoneCommands]);
+
+  return (
+    <section className="border-t border-rule pt-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h2 className="text-lg text-ink">{title}</h2>
+          <p className="mt-1 text-sm text-ink-muted">IfFlag depends on the previous command. {readOnly ? 'This is the saved zone order; command changes begin from a room page.' : 'Reordering is an explicit, edge-changing operation within this room.'}</p>
+        </div>
+        <span className="font-mono text-xs text-ink-muted">{commands.length} commands</span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {commands.map((command, index) => {
+          const descriptor = descriptorFor(schema, command.command);
+          return (
+            <div key={`${command.position}-${command.command}`}>
+              {index > 0 && command.ifFlag !== 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 font-mono text-[10px] uppercase tracking-wider text-accent" aria-label={`IfFlag edge from command ${commands[index - 1].position} to command ${command.position}`}>
+                  <span className="h-4 border-l border-accent" />
+                  <span>previous succeeds → this command</span>
+                </div>
+              )}
+              <div className="border border-rule bg-paper px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm text-accent">#{index + 1}</span>
+                  <span className="font-semibold text-ink">{descriptor?.label || command.command}</span>
+                  {command.ifFlag !== 0 && <span className="border border-accent px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent">if previous succeeds</span>}
+                </div>
+                <div className="flex gap-2">
+                  {!readOnly && index > 0 && <button type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index - 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↑ Move</button>}
+                  {!readOnly && index < commands.length - 1 && <button type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index + 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↓ Move</button>}
+                  {!readOnly && <button type="button" disabled={disabled} onClick={() => onOperation([{ kind: 'remove_command', index: command.position }])} className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</button>}
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {descriptor?.arguments.map((argument, argumentIndex) => (
+                  <CommandArgument
+                    key={argument.key}
+                    command={command}
+                    index={argumentIndex}
+                    argument={argument}
+                    value={argumentValue(command, argumentIndex)}
+                    disabled={disabled || readOnly}
+                    onValue={(value) => onOperation([commandWith(command, argumentIndex, value)])}
+                  />
+                ))}
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm text-ink">
+                <input
+                  type="checkbox"
+                  checked={command.ifFlag !== 0}
+                  disabled={disabled || readOnly || index === 0}
+                  onChange={(event) => onOperation([{ kind: 'modify_command', index: command.position, command: command.command, if_flag: event.currentTarget.checked ? 1 : 0, arg1: command.arg1, arg2: command.arg2, arg3: command.arg3 }])}
+                  className="h-4 w-4 accent-accent"
+                />
+                Run only if the previous command succeeds
+              </label>
+            </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {!readOnly && descriptors.map((descriptor) => <AddCommandForm key={descriptor.command} descriptor={descriptor} disabled={disabled} onOperation={onOperation} />)}
+
+      {!readOnly && reorder && <div className="mt-4"><ReorderConfirmation commands={commands} request={reorder} disabled={disabled} onCancel={() => setReorder(null)} onConfirm={() => { onOperation([{ kind: 'reorder_command', index: commands[reorder.from].position, to_index: reorder.to }]); setReorder(null); }} /></div>}
+    </section>
+  );
+}
+
+function AddCommandForm({ descriptor, disabled, onOperation }: { descriptor: OlcSchema['zoneCommands'][number]; disabled: boolean; onOperation: (operations: OlcPatchOperation[]) => void }) {
   const addCommand = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const command = String(data.get('command') || descriptors[0]?.command || 'M');
     onOperation([{
       kind: 'add_command',
       index: -1,
-      command,
+      command: descriptor.command,
       if_flag: Number(data.get('if_flag') || 0),
       arg1: Number(data.get('arg1') || 0),
       arg2: Number(data.get('arg2') || 0),
@@ -149,82 +249,29 @@ export function ZoneCommandTimeline({ schema, commands, disabled = false, onOper
   };
 
   return (
-    <section className="border-t border-rule pt-5">
+    <form className="mt-4 border border-rule bg-paper-deep px-4 py-4" onSubmit={addCommand}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h2 className="text-lg text-ink">Reset command timeline</h2>
-          <p className="mt-1 text-sm text-ink-muted">IfFlag depends on the previous command. Reordering is an explicit, edge-changing operation.</p>
-        </div>
-        <span className="font-mono text-xs text-ink-muted">{commands.length} commands</span>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-ink">Add {descriptor.command} — {descriptor.label}</h3>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-ink-muted">server schema</span>
       </div>
-
-      <div className="mt-4 space-y-3">
-        {commands.map((command, index) => {
-          const descriptor = descriptorFor(schema, command.command);
-          return (
-            <div key={`${command.position}-${command.command}`} className="border border-rule bg-paper px-4 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-accent">#{index + 1}</span>
-                  <span className="font-semibold text-ink">{descriptor?.label || command.command}</span>
-                  {command.ifFlag !== 0 && <span className="border border-accent px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent">if previous succeeds</span>}
-                </div>
-                <div className="flex gap-2">
-                  {index > 0 && <button type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index - 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↑ Move</button>}
-                  {index < commands.length - 1 && <button type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index + 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↓ Move</button>}
-                  <button type="button" disabled={disabled} onClick={() => onOperation([{ kind: 'remove_command', index: command.position }])} className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</button>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {descriptor?.arguments.map((argument, argumentIndex) => (
-                  <CommandArgument
-                    key={argument.key}
-                    argument={argument}
-                    value={argumentValue(command, argumentIndex)}
-                    disabled={disabled}
-                    onValue={(value) => onOperation([commandWith(command, argumentIndex, value)])}
-                  />
-                ))}
-              </div>
-              <label className="mt-3 flex items-center gap-2 text-sm text-ink">
-                <input
-                  type="checkbox"
-                  checked={command.ifFlag !== 0}
-                  disabled={disabled || index === 0}
-                  onChange={(event) => onOperation([{ kind: 'modify_command', index: command.position, command: command.command, if_flag: event.currentTarget.checked ? 1 : 0, arg1: command.arg1, arg2: command.arg2, arg3: command.arg3 }])}
-                  className="h-4 w-4 accent-accent"
-                />
-                Run only if the previous command succeeds
-              </label>
-            </div>
-          );
-        })}
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
+        {descriptor.arguments.map((argument, index) => (
+          <label key={argument.key} className={argument.visible ? 'block' : 'hidden'}>
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{argument.label}</span>
+            {argument.control === 'select' ? (
+              <select name={'arg' + (index + 1)} disabled={disabled} defaultValue={argument.options[0]?.value ?? 0} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
+                {argument.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            ) : (
+              <input name={'arg' + (index + 1)} type="number" min={argument.bounds?.min} max={argument.bounds?.max} disabled={disabled} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink" />
+            )}
+          </label>
+        ))}
       </div>
-
-      <form className="mt-4 border border-rule bg-paper-deep px-4 py-4" onSubmit={addCommand}>
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-ink">Add command</h3>
-        <div className="mt-3 grid gap-3 md:grid-cols-4">
-          <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Command type</span><select name="command" value={newCommandType} onChange={(event) => setNewCommandType(event.currentTarget.value)} disabled={disabled} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">{descriptors.map((entry) => <option key={entry.command} value={entry.command}>{entry.command} — {entry.label}</option>)}</select></label>
-          {addDescriptor?.arguments.map((argument, index) => (
-            <label key={argument.key} className={argument.visible ? 'block' : 'hidden'}>
-              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{argument.label}</span>
-              {argument.control === 'select' ? (
-                <select name={`arg${index + 1}`} disabled={disabled} defaultValue={argument.options[0]?.value ?? 0} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
-                  {argument.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              ) : (
-                <input name={`arg${index + 1}`} type="number" min={argument.bounds?.min} max={argument.bounds?.max} disabled={disabled} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink" />
-              )}
-            </label>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <label className="flex items-center gap-2 text-sm text-ink"><input name="if_flag" type="checkbox" value="1" disabled={disabled} className="h-4 w-4 accent-accent" /> Depends on previous success</label>
-          <button type="submit" disabled={disabled || descriptors.length === 0} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-50">Add command</button>
-        </div>
-      </form>
-
-      {reorder && <div className="mt-4"><ReorderConfirmation commands={commands} request={reorder} disabled={disabled} onCancel={() => setReorder(null)} onConfirm={() => { onOperation([{ kind: 'reorder_command', index: commands[reorder.from].position, to_index: reorder.to }]); setReorder(null); }} /></div>}
-    </section>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <label className="flex items-center gap-2 text-sm text-ink"><input name="if_flag" type="checkbox" value="1" disabled={disabled} className="h-4 w-4 accent-accent" /> Depends on previous success</label>
+        <button type="submit" disabled={disabled} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-50">Add command</button>
+      </div>
+    </form>
   );
 }

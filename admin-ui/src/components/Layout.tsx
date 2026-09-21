@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { to: '/admin/decisions', label: 'Decisions', icon: 'decisions', role: 'builder' },
   { to: '/admin/narrative', label: 'Mind Reader', icon: 'mindreader', role: 'builder' },
   { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder' },
+  { to: '/admin/workshop', label: 'Workshop', icon: 'operations', role: 'builder' },
   { to: '/admin/webclient', label: 'Terminal', icon: 'terminal', role: 'player' },
 ];
 

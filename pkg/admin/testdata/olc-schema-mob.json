@@ -813,5 +813,14 @@
         }
       ]
     }
+  ],
+  "actions": [
+    {
+      "key": "new_mob",
+      "label": "New mob",
+      "required_level": 31,
+      "required_label": "BUILDER",
+      "allowed": false
+    }
   ]
 }

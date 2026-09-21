@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { OlcExit, OlcRoom, RoomPatchOperation } from '../../api/olc';
 import type { OlcSchema } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
+import { VNumPicker } from './VNumPicker';
 
 interface ExitEditorProps {
   schema: OlcSchema;
@@ -108,30 +109,24 @@ function ExitFields({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label htmlFor={`exit-${direction}-target`} className="mb-2 block text-sm font-semibold text-ink">
-            Target room
-          </label>
-          <ServerProposal
-            value={exit.toRoom}
-            identity={`exit-${direction}-target`}
-            disabled={disabled}
-            min={-1}
-            onCommit={(value) => commit('set_exit_target', value)}
-          />
-        </div>
-        <div>
-          <label htmlFor={`exit-${direction}-key`} className="mb-2 block text-sm font-semibold text-ink">
-            Key vnum
-          </label>
-          <ServerProposal
-            value={exit.key}
-            identity={`exit-${direction}-key`}
-            disabled={disabled}
-            min={-1}
-            onCommit={(value) => commit('set_exit_key', value)}
-          />
-        </div>
+        <VNumPicker
+          kind="room"
+          label="Target room"
+          identity={`exit-${direction}-target`}
+          value={exit.toRoom}
+          disabled={disabled}
+          min={-1}
+          onCommit={(value) => commit('set_exit_target', value)}
+        />
+        <VNumPicker
+          kind="obj"
+          label="Key vnum"
+          identity={`exit-${direction}-key`}
+          value={exit.key}
+          disabled={disabled}
+          min={-1}
+          onCommit={(value) => commit('set_exit_key', value)}
+        />
         <div>
           <label htmlFor={`exit-${direction}-keywords`} className="mb-2 block text-sm font-semibold text-ink">
             Keywords

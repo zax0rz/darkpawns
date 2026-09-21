@@ -97,7 +97,7 @@ export function ZonesPage() {
                       {zone.lifespan}
                     </td>
                     <td className="px-4 py-3 text-right text-ink-muted">
-                      {resetModeLabel(zone.reset_mode)}
+                      {resetModeLabel(zone.reset_mode, schemaQuery.data)}
                     </td>
                   </tr>
                 ))}
@@ -116,17 +116,7 @@ export function ZonesPage() {
   );
 }
 
-function resetModeLabel(mode: number): string {
-  switch (mode) {
-    case 0:
-      return 'Never';
-    case 1:
-      return 'When empty';
-    case 2:
-      return 'Always';
-    case 3:
-      return 'Force reset';
-    default:
-      return `Mode ${mode}`;
-  }
+function resetModeLabel(mode: number, schema?: { fields: { key: string; options?: { value: number; label: string }[] }[] }): string {
+  const field = schema?.fields.find((entry) => entry.key === 'reset_mode');
+  return field?.options?.find((option) => option.value === mode)?.label || 'Mode ' + mode;
 }

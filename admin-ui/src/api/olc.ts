@@ -227,11 +227,41 @@ export interface OlcPreview {
   kind: string;
   vnum: number;
   zoneNumber: number;
+  exists: boolean;
   room?: OlcRoom;
   mob?: OlcMob;
   object?: OlcObject;
   shop?: OlcShop;
   zone?: OlcZone;
+}
+
+export interface OlcVNumRange {
+  start: number;
+  end: number;
+}
+
+export interface OlcVNumKindMap {
+  kind: string;
+  start: number;
+  end: number;
+  used: number[];
+  free: OlcVNumRange[];
+  suggested: number;
+}
+
+export interface OlcVNumMap {
+  zone: number;
+  start: number;
+  end: number;
+  kinds: OlcVNumKindMap[];
+}
+
+export interface OlcVNumLookup {
+  kind: string;
+  vnum: number;
+  exists: boolean;
+  name: string;
+  zoneNumber: number;
 }
 
 export interface OlcClaimEntry {
@@ -710,11 +740,55 @@ function normalizePreview(raw: unknown): OlcPreview {
     kind: stringValue(source, 'kind', 'Kind'),
     vnum: numberValue(source, 'vnum', 'VNum'),
     zoneNumber: numberValue(source, 'zone_number', 'ZoneNumber'),
+    exists: Boolean(value<boolean>(source, 'exists', 'Exists')),
     ...(rawRoom !== undefined ? { room: normalizeRoom(rawRoom) } : {}),
     ...(rawMob !== undefined ? { mob: normalizeMob(rawMob) } : {}),
     ...(rawObject !== undefined ? { object: normalizeObject(rawObject) } : {}),
     ...(rawShop !== undefined ? { shop: normalizeShop(rawShop) } : {}),
     ...(rawZone !== undefined ? { zone: normalizeZone(rawZone) } : {}),
+  };
+}
+
+function normalizeVNumMap(raw: unknown): OlcVNumMap {
+  const source = record(raw);
+  const kinds = value<unknown>(source, 'kinds', 'Kinds');
+  return {
+    zone: numberValue(source, 'zone', 'Zone'),
+    start: numberValue(source, 'start', 'Start'),
+    end: numberValue(source, 'end', 'End'),
+    kinds: Array.isArray(kinds)
+      ? kinds.map((rawKind) => {
+          const kind = record(rawKind);
+          const free = value<unknown>(kind, 'free', 'Free');
+          return {
+            kind: stringValue(kind, 'kind', 'Kind'),
+            start: numberValue(kind, 'start', 'Start'),
+            end: numberValue(kind, 'end', 'End'),
+            used: numberArray(kind, 'used', 'Used'),
+            free: Array.isArray(free)
+              ? free.map((rawRange) => {
+                  const range = record(rawRange);
+                  return {
+                    start: numberValue(range, 'start', 'Start'),
+                    end: numberValue(range, 'end', 'End'),
+                  };
+                })
+              : [],
+            suggested: numberValue(kind, 'suggested', 'Suggested'),
+          };
+        })
+      : [],
+  };
+}
+
+function normalizeVNumLookup(raw: unknown): OlcVNumLookup {
+  const source = record(raw);
+  return {
+    kind: stringValue(source, 'kind', 'Kind'),
+    vnum: numberValue(source, 'vnum', 'VNum'),
+    exists: Boolean(value<boolean>(source, 'exists', 'Exists')),
+    name: stringValue(source, 'name', 'Name'),
+    zoneNumber: numberValue(source, 'zone_number', 'ZoneNumber'),
   };
 }
 
@@ -734,6 +808,8 @@ function normalizeClaim(raw: unknown): OlcClaimEntry {
 export const olcApi = {
   schema: async (kind: string) => normalizeSchema(await request<unknown>(`/olc/schema/${kind}`)),
   preview: async (kind: string, vnum: number) => normalizePreview(await request<unknown>(`/olc/${kind}/${vnum}/preview`)),
+  vnumMap: async (zone: number) => normalizeVNumMap(await request<unknown>(`/olc/zones/${zone}/vnums`)),
+  lookup: async (kind: string, vnum: number) => normalizeVNumLookup(await request<unknown>(`/olc/lookup/${kind}/${vnum}/name`)),
   openRoomDraft: async (vnum: number) => normalizeDraft(await request<unknown>(`/olc/room/${vnum}`, { method: 'POST' })),
   getRoomDraft: async (vnum: number) => normalizeDraft(await request<unknown>(`/olc/room/${vnum}/draft`)),
   patchRoomDraft: async (vnum: number, operations: RoomPatchOperation[]) =>
