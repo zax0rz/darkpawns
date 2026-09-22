@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/fileedit"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -15,7 +16,6 @@ import (
 // containment check below is an additional Go-side traversal guard; it does
 // not replace the C checks that define the player-facing command surface.
 var (
-	luaFilterPattern      = regexp.MustCompile(`^([0-9]+|archive|mob|obj|room|.+[.]lua)$`)
 	scriptsRootPattern    = regexp.MustCompile(`^(mob|obj|room)`)
 	validDirectoryPattern = regexp.MustCompile(`^[/a-zA-Z0-9_-]+$`)
 	validFilenamePattern  = regexp.MustCompile(`^[a-zA-Z0-9_-]+.?[a-zA-Z0-9_-]*$`)
@@ -83,7 +83,7 @@ func luaEditTwoArguments(args []string) (string, string) {
 // luafilter ports luaedit.c:10-13. C's scandir filter sees names only, so
 // matching a directory is intentional.
 func luafilter(name string) bool {
-	return luaFilterPattern.MatchString(name)
+	return fileedit.LuaFilter(name)
 }
 
 // is_scripts_root ports luaedit.c:15-18. It returns true for a root filename;

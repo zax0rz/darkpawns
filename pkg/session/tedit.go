@@ -10,12 +10,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/zax0rz/darkpawns/pkg/fileedit"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// textEditField is the C tedit table from src/tedit.c. The table order is
-// load-bearing: tedit resolves abbreviated field names with strncmp and takes
-// the first match.
+// textEditField is the session's view of one C tedit row. The table itself
+// lives in pkg/fileedit so the web controller gates on the same levels; the
+// order is load-bearing (strncmp abbreviation, first match wins).
 type textEditField struct {
 	name     string
 	filename string
@@ -23,19 +24,17 @@ type textEditField struct {
 	maxBytes int
 }
 
-var textEditFields = []textEditField{
-	{name: "credits", filename: "credits", minLevel: LVL_IMPL, maxBytes: 2400},
-	{name: "news", filename: "news", minLevel: LVL_GOD, maxBytes: 8192},
-	{name: "motd", filename: "motd", minLevel: LVL_GOD, maxBytes: 2400},
-	{name: "imotd", filename: "imotd", minLevel: LVL_IMMORT, maxBytes: 2400},
-	{name: "help", filename: "help/screen", minLevel: LVL_GOD, maxBytes: 2400},
-	{name: "info", filename: "info", minLevel: LVL_GOD, maxBytes: 8192},
-	{name: "background", filename: "background", minLevel: LVL_GRGOD, maxBytes: 8192},
-	{name: "handbook", filename: "handbook", minLevel: LVL_GRGOD, maxBytes: 8192},
-	{name: "policies", filename: "policies", minLevel: LVL_IMPL, maxBytes: 8192},
-	{name: "future", filename: "future", minLevel: LVL_GRGOD, maxBytes: 8192},
-	{name: "wizlist", filename: "wizlist", minLevel: LVL_IMPL, maxBytes: 2400},
-	{name: "immlist", filename: "immlist", minLevel: LVL_IMPL, maxBytes: 2400},
+var textEditFields = func() []textEditField {
+	fields := make([]textEditField, 0, len(fileedit.TextFields))
+	for _, f := range fileedit.TextFields {
+		fields = append(fields, textEditField{name: f.Name, filename: f.Filename, minLevel: f.MinLevel, maxBytes: f.MaxBytes})
+	}
+	return fields
+}()
+
+// A web tedit save refreshes the same live text a telnet save does.
+func init() {
+	fileedit.RegisterTextSavedHook(storeTextEditCache)
 }
 
 const textEditHelp = "Editor command formats: /<letter>\r\n\r\n" +
@@ -343,7 +342,7 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 			}
 		} else {
 			savedText := strings.ReplaceAll(state.buffer, "\r", "")
-			if err := os.WriteFile(state.path, []byte(savedText), 0o666); err != nil {
+			if err := fileedit.AtomicWrite(state.path, []byte(savedText), 0o666); err != nil {
 				slog.Error("file edit save failed", "player", s.playerName, "file", state.path, "error", err)
 			} else {
 				if state.cacheKey != "" {
@@ -397,8 +396,14 @@ func (s *Session) cancelTextEdit() {
 }
 
 func setTextEditCache(s *Session, filename, text string) {
+	storeTextEditCache(s.manager.world, filename, text)
+}
+
+func storeTextEditCache(world *game.World, filename, text string) {
 	if filename == "help/screen" {
-		s.manager.world.HelpScreen = text
+		if world != nil {
+			world.HelpScreen = text
+		}
 		return
 	}
 	cacheMu.Lock()
