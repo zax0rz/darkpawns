@@ -34,7 +34,21 @@ var textEditFields = func() []textEditField {
 
 // A web tedit save refreshes the same live text a telnet save does.
 func init() {
-	fileedit.RegisterTextSavedHook(storeTextEditCache)
+	fileedit.RegisterTextSavedHook(storeWebTextSave)
+}
+
+// storeWebTextSave is the webOLC entry to the live text. It arrives on an
+// HTTP goroutine holding none of the session locks, so it takes
+// liveTextEditMu exclusively, exactly as reload and the telnet editor do.
+// That orders it against every in-memory reader (the no-argument help
+// command's shared lock, an open tedit descriptor's refresh/commit) and
+// means a web save can never land between a telnet editor's refresh and
+// commit and be overwritten by a stale buffer. storeTextEditCache itself
+// stays lock-free because the telnet save calls it with the lock held.
+func storeWebTextSave(world *game.World, filename, text string) {
+	liveTextEditMu.Lock()
+	defer liveTextEditMu.Unlock()
+	storeTextEditCache(world, filename, text)
 }
 
 const textEditHelp = "Editor command formats: /<letter>\r\n\r\n" +
@@ -399,6 +413,7 @@ func setTextEditCache(s *Session, filename, text string) {
 	storeTextEditCache(s.manager.world, filename, text)
 }
 
+// storeTextEditCache replaces one live text. The caller holds liveTextEditMu.
 func storeTextEditCache(world *game.World, filename, text string) {
 	if filename == "help/screen" {
 		if world != nil {
