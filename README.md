@@ -15,9 +15,11 @@
                                  |||
                                  `.'
 ```
-On the banner decision: you already agreed to the plan, so you can tell your infra agent yes. I'd have them reword the gate to say the whole plan rather than just "via MSSP", something like:
+# Dark Pawns MUD
 
-7778 TLS telnet shipped and advertised where players choose how to connect: MSSP (Mudlet offers the upgrade), the website's connection instructions, the Mudlet directory listing, and the launch MOTD. The login banner stays C text (R1).
+**CircleMUD 3.0, rewritten in Go.** Dark Pawns is a multiplayer text RPG in the
+DikuMUD lineage — the classic C server faithfully ported to a single modern Go
+binary, running live today and built so anyone can host their own instance.
 
 [Play in your browser](https://darkpawns.org/play) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
