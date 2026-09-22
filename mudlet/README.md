@@ -9,24 +9,28 @@ the game text itself is exactly what any other client sees.
 
 1. In Mudlet, make a new profile:
    - **Server address:** `darkpawns.org`
-   - **Port:** `7777`
-2. Connect. If the server offers the package, Mudlet downloads and
-   installs it on its own, and upgrades it when a new version ships.
-3. Otherwise, download [`darkpawns.xml`](https://darkpawns.org/darkpawns.xml) and import it:
-   **Toolbox → Package Manager → Install**, then choose the file.
+   - **Port:** `7778`
+   - **Secure:** ticked
+2. Connect. Mudlet downloads and installs this package on its own, and
+   upgrades it when a new version ships.
+3. If it doesn't, download [`darkpawns.xml`](https://darkpawns.org/darkpawns.xml)
+   and import it: **Toolbox → Package Manager → Install**, then choose the file.
 
 The dock appears on the right. Type `dp` for its commands.
 
-### Secure connection
+### Why port 7778
 
-If the server runs its TLS port, Mudlet says so the first time you connect
-("A more secure connection on port N is available") and offers to switch.
-To set it up yourself instead, use the TLS port the server announced (the
-examples in this repository use `7778`) and tick **Secure**. Connect by the
-server's name, `darkpawns.org`, rather than an IP address: the certificate is
+Port 7778 is encrypted, so your password and everything you type stay
+private. Use the name `darkpawns.org`, not an IP address: the certificate is
 issued for the name.
 
-Your password travels encrypted only on the secure port.
+Port `7777` still works, for clients without TLS, but everything crosses the
+network in the clear, your password included. If you connect there with
+Mudlet, it tells you a more secure connection is available and offers to
+switch. Say yes.
+
+A self-hosted server may use different ports: its TLS port is whatever it was
+started with (`-telnet-tls-port`), and Mudlet learns it the same way.
 
 ## What you get
 

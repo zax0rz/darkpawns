@@ -21,7 +21,8 @@ About 30 minutes. One tester, two clients.
    ```
 
 2. **Mudlet.** The current stable release, with a new profile
-   (`localhost`, port `7780`). Record the version from **Help → About**.
+   (`localhost`, port `7780`, **Secure** unticked: the local server has no
+   certificate until the TLS cases). Record the version from **Help → About**.
 3. **A second client.** Plain `telnet localhost 7780` in a terminal. It plays
    the other character and is the plain-text control.
 4. **Inspection.** Mudlet's `lua` command prints GMCP tables, for example
