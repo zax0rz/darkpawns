@@ -17,6 +17,7 @@ About 30 minutes. One tester, two clients.
    ```bash
    python3 -m http.server 8088 --directory mudlet &
    ENVIRONMENT=development DP_MUDLET_PACKAGE_URL=http://localhost:8088/darkpawns.xml \
+     DP_MUDLET_MAP_URL=http://localhost:4360/darkpawns-map.xml \
      go run ./cmd/server -port 4360 -telnet-port 7780 -db "$(mktemp -d)/mudlet-test.db"
    ```
 
@@ -40,10 +41,11 @@ Cases 9 and 10 swap them: Warden in Mudlet, Tester in the plain client.
 | **Install** | | |
 | 1 | Connect Mudlet for the first time, and stay at the name prompt. | Mudlet prints that it is downloading and installing `darkpawns`, then "Removed Mudlet's generic mapper". The dock appears on the right. The connection stays open at the name prompt: nothing is sent to the game on your behalf. No errors. |
 | 2 | `lua display(gmcp)` before logging in. | `Client` present. No `Char` or `Room` yet. |
+| 2a | Before logging in, open the map. | Mudlet reports downloading, then "World map loaded". The whole world is there: move around the map to check a few zones. |
 | 3 | Log in as Tester. | The dock matches the website: a cream (Paper-Deep) panel with the ink pawn and **DARK** over **PAWNS** (PAWNS in oxblood) at the top, then the character line, e.g. `Tester · level 1 Human Warrior · 0 gold`, then HP, MANA and MOVE readings (`20 / 20` style) over full bars, then MAP and CHAT on dark panels. Map shows the start room. |
 | 4 | Type `dp`. | Version `1.0.0` and the command list. |
 | **Map** | | |
-| 5 | Walk out of the temple and around a few rooms, then back. | Each new room is drawn one step from the last and linked both ways. The current room stays centred. Returning redraws nothing. |
+| 5 | Walk out of the temple and around a few rooms, then back. | The map follows you: the current room stays centred, and no new rooms appear, because the downloaded map already has them. |
 | 6 | Walk into a wall (`up` where there is no exit). | "Alas, you cannot go that way..." The map does not move. |
 | 7 | Go to the Western Gate (8040, west end of Market Street). If the gate is open, `close gate`. Then `look`. | `west` is absent from `[ Exits: ]` and from `gmcp.Room.Info.exits`. |
 | 8 | `open gate`, then `look`. (If it is locked, the city has shut it for the night: skip this case and rerun it by day.) | `west` appears in both. The map gains a stub, and a real exit once you walk through. |
@@ -68,6 +70,8 @@ Cases 9 and 10 swap them: Warden in Mudlet, Tester in the plain client.
 | 23 | Bump `mudlet/VERSION` to `1.0.1`, add a changelog line, run `go run ./cmd/mudlet-package`, restart the server, reconnect. | Mudlet reports upgrading from `1.0.0` to `1.0.1` and reinstalls. `dp` shows `1.0.1`. Revert the bump afterwards. |
 | 24 | **Toolbox → Package Manager**, uninstall `darkpawns`. | The dock disappears and the window width is restored. Later GMCP produces no errors. |
 | 25 | Re-import `mudlet/darkpawns.xml` by hand with the server's package URL unset. | The package installs from the file and behaves as in cases 3–5. Mudlet's built-in starter UI stays hidden. |
+| 25a | New profile, map it by hand first: connect with the map URL unset, walk a few rooms, disconnect. Set `DP_MUDLET_MAP_URL` again, restart the server, reconnect. | Mudlet keeps the hand-made map and says a whole-world map is available via `dp map`. |
+| 25b | `dp map`. | The download replaces the hand-made map with the whole world. |
 | **TLS** (once the TLS listener is merged) | | |
 | 26 | Run the server with `-telnet-tls-port 7781` and a certificate for a name that resolves to it. Connect in plaintext by that name. | Mudlet offers "A more secure connection on port 7781". Accept it. |
 | 27 | Reconnect. | The connection is secure (padlock), and cases 3 and 15 behave the same. |

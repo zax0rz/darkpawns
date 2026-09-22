@@ -1,6 +1,12 @@
 -- Dark Pawns for Mudlet: the mapper.
 --
--- Builds the map as you walk, from Room.Info:
+-- The server offers the whole world as a Mudlet map (GMCP Client.Map). A
+-- profile with no map loads it on first connect, and a profile that loaded
+-- it before takes each new version. A map the player built by hand is never
+-- replaced without asking: "dp map" loads the full one on request.
+--
+-- Rooms the download doesn't have (new builds) are still mapped as you walk,
+-- from Room.Info:
 --   {"num":3001,"name":"...","area":"...","environment":"City","exits":{"n":3002}}
 -- Room numbers are the game's own, so the map never guesses which room you
 -- are in: a room seen once is recognised forever, and a new room is placed
@@ -17,7 +23,8 @@ map.offsets = {
 }
 
 -- Environment names from Room.Info, coloured for the map. Ids start above
--- Mudlet's reserved range so they never collide with its defaults.
+-- Mudlet's reserved range so they never collide with its defaults, and match
+-- the ids the server's downloadable map uses (pkg/mudletmap).
 map.environments = {
   Inside = { 257, 110, 100, 90 },
   City = { 258, 150, 140, 125 },
@@ -53,9 +60,14 @@ local function areaId(name)
   return addAreaName(name)
 end
 
+function map.defineEnvironments()
+  for _, env in pairs(map.environments) do
+    setCustomEnvColor(env[1], env[2], env[3], env[4], 255)
+  end
+end
+
 local function applyEnvironment(room, environment)
   local env = map.environments[environment] or map.environments.Unknown
-  setCustomEnvColor(env[1], env[2], env[3], env[4], 255)
   setRoomEnv(room, env[1])
 end
 
@@ -128,4 +140,74 @@ function doSpeedWalk()
   end
 end
 
+-- The downloadable world map -------------------------------------------------
+
+map.versionKey = "darkpawns.mapVersion"
+
+local function loadedVersion()
+  local version = getMapUserData(map.versionKey)
+  if version == "" then
+    return nil
+  end
+  return version
+end
+
+function map.download()
+  if not map.offer then
+    cecho("\n<red>[ Dark Pawns ] The server hasn't offered a map yet. Connect and try again.<reset>\n")
+    return
+  end
+  map.file = getMudletHomeDir() .. "/darkpawns-map.xml"
+  cecho("\n<ansi_white>[ Dark Pawns ] Downloading the world map...<reset>\n")
+  downloadFile(map.file, map.offer.url)
+end
+
+-- Client.Map: {"url": ..., "version": ...}
+function map.onClientMap()
+  local offer = gmcp.Client and gmcp.Client.Map
+  if not (offer and offer.url and offer.version) then
+    return
+  end
+  map.offer = offer
+  local have = loadedVersion()
+  if have == offer.version then
+    return
+  end
+  if have or next(getRooms()) == nil then
+    map.download()
+  else
+    cecho("\n<ansi_white>[ Dark Pawns ] A map of the whole world is available. Type <yellow>dp map<ansi_white> to load it; it replaces this profile's map.<reset>\n")
+  end
+end
+
+function map.onDownloaded(_, file)
+  if file ~= map.file then
+    return
+  end
+  local ok, err = loadMap(file)
+  if not ok then
+    cecho(string.format("\n<red>[ Dark Pawns ] The map downloaded but didn't load: %s<reset>\n", tostring(err)))
+    return
+  end
+  setMapUserData(map.versionKey, map.offer.version)
+  map.defineEnvironments()
+  cecho("\n<ansi_white>[ Dark Pawns ] World map loaded.<reset>\n")
+  if map.previous and roomExists(map.previous) then
+    centerview(map.previous)
+  end
+end
+
+function map.onDownloadError(_, message, file)
+  if file ~= nil and file ~= map.file then
+    return
+  end
+  if map.file then
+    cecho(string.format("\n<red>[ Dark Pawns ] The world map didn't download: %s<reset>\n", tostring(message)))
+  end
+end
+
+map.defineEnvironments()
 DarkPawns.on("map.room", "gmcp.Room.Info", map.onRoomInfo)
+DarkPawns.on("map.offer", "gmcp.Client.Map", map.onClientMap)
+DarkPawns.on("map.downloaded", "sysDownloadDone", map.onDownloaded)
+DarkPawns.on("map.downloadError", "sysDownloadError", map.onDownloadError)

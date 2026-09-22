@@ -23,6 +23,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
+	"github.com/zax0rz/darkpawns/pkg/mudletmap"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"golang.org/x/time/rate"
 )
@@ -69,6 +70,10 @@ func init() {
 
 // Manager handles all active sessions.
 type Manager struct {
+	// mudletMap is the generated Mudlet world map (GMCP Client.Map and the
+	// /darkpawns-map.xml endpoint).
+	mudletMap *mudletmap.Cache
+
 	creationMu   sync.Mutex // Serializes first-player selection with persistence.
 	mu           sync.RWMutex
 	snoopMu      sync.RWMutex        // protects the bidirectional snoop links
@@ -384,6 +389,9 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 	// Structured copies of room renders, channel lines, and regen ticks for
 	// GMCP clients. The observer only reads state; text delivery is untouched.
 	world.OutOfBand = gmcpObserver{m: m}
+	// The Mudlet world map is generated from the live world, so OLC edits
+	// reach it within the cache's lifetime.
+	m.mudletMap = mudletmap.NewCache(world, mudletMapTTL)
 
 	// Wire CloseConnection so game-layer close requests route through the session
 	world.CloseConn = func(playerName string) {

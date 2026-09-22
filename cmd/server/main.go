@@ -654,6 +654,10 @@ func main() {
 	apidoc.RegisterHealth(rootAPI)
 
 	rootMux.HandleFunc("/ws", manager.HandleWebSocket)
+	// The Mudlet world map, generated from the live world. Public on purpose:
+	// Mudlet downloads it before anyone logs in, and the site already
+	// publishes the same rooms and exits.
+	rootMux.Handle("/darkpawns-map.xml", manager.MudletMap())
 	// Gauges describe state, not events, so they are sampled rather than
 	// maintained. Tracking every mutation means finding every mutation, and one
 	// missed path leaves the gauge wrong until restart; re-reading the truth on
@@ -815,6 +819,12 @@ func main() {
 	if packageURL := os.Getenv("DP_MUDLET_PACKAGE_URL"); packageURL != "" {
 		session.SetGMCPClientGUI(packageURL, mudlet.Version)
 		slog.Info("Mudlet package offered over GMCP", "url", packageURL, "version", mudlet.Version)
+	}
+	// Offer the world map over GMCP Client.Map: the public URL through which
+	// this server's /darkpawns-map.xml is reached. Off unless configured.
+	if mapURL := os.Getenv("DP_MUDLET_MAP_URL"); mapURL != "" {
+		session.SetGMCPClientMap(mapURL)
+		slog.Info("Mudlet world map offered over GMCP", "url", mapURL)
 	}
 
 	// Start telnet listener

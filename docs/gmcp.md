@@ -145,6 +145,32 @@ On GMCP negotiation, when `DP_MUDLET_PACKAGE_URL` is set. Mudlet installs the
 package at `url` and reinstalls it whenever `version` (`mudlet/VERSION`)
 changes.
 
+### `Client.Map`
+
+```json
+{"url":"https://darkpawns.org/darkpawns-map.xml","version":"3f9a0c1d2e4b"}
+```
+
+On GMCP negotiation, when `DP_MUDLET_MAP_URL` is set. Mudlet records `url`
+as the game's map location; the Dark Pawns package also reads `version` and
+loads the map (see `mudlet/README.md`).
+
+The map is served by the game server at `/darkpawns-map.xml`
+(`pkg/mudletmap`): the whole world as a Mudlet XML map, generated from the
+**live** world so OLC edits reach it within five minutes, with an `ETag` of
+the version so an unchanged map is never downloaded twice. Each zone is a
+Mudlet area (zone *n* is area *n*+1, named as `Room.Info`'s `area`), rooms
+are keyed by vnum, and each zone is laid out on the grid by walking its
+exits. Dark Pawns has no coordinates of its own, so where exits don't fit a
+grid (mazes, loops) a room is pushed further along its exit's direction
+rather than drawn on top of another. Doors are marked but not given a state,
+because resets and players change it. The site already publishes every room,
+name and exit, so the map reveals nothing new.
+
+Room.Info's `area` uses the same names, so a room mapped live lands in the
+downloaded area. The two zones that share a name (`New Zone`) are told
+apart as `New Zone (zone 34)` and `New Zone (zone 36)`.
+
 ## Prompt marking (EOR)
 
 The server also offers `IAC WILL EOR`. A client that answers `IAC DO EOR`

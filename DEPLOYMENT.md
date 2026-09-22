@@ -193,7 +193,15 @@ server's copy offers players a package built for that server's version.
 Keep the file name `darkpawns.xml`, since Mudlet names the installed package
 after it.
 
-The server announces the version compiled into it (`mudlet/VERSION`), and
+The server also serves the whole world as a Mudlet map at
+`/darkpawns-map.xml`, generated from the live world. Proxy that path to the
+game from your front door, and set its public URL to have Mudlet load it:
+
+```bash
+export DP_MUDLET_MAP_URL='https://darkpawns.org/darkpawns-map.xml'
+```
+
+The server announces the package version compiled into it (`mudlet/VERSION`), and
 Mudlet reinstalls the package whenever that version changes, so publish the
 file from the same commit you deploy. Unset, nothing is offered and players
 can still import the file by hand.

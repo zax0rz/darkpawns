@@ -271,3 +271,32 @@ func TestGMCPDoesNotMakeASessionStructured(t *testing.T) {
 		t.Fatal("GMCP negotiation made the session a structured client")
 	}
 }
+
+// TestGMCPClientMapOffer: with a map URL configured, a GMCP client is told
+// where the world map is and which version it is, the version the map
+// endpoint serves.
+func TestGMCPClientMapOffer(t *testing.T) {
+	t.Cleanup(func() { SetGMCPClientMap("") })
+
+	s := newGMCPSession(t)
+	s.EnableGMCP()
+	for _, pkg := range gmcpPackages(drainQueued(t, s)) {
+		if pkg == "Client.Map" {
+			t.Fatal("Client.Map offered with no map URL configured")
+		}
+	}
+
+	SetGMCPClientMap("https://example.invalid/darkpawns-map.xml")
+	s = newGMCPSession(t)
+	s.EnableGMCP()
+	var offer string
+	for _, entry := range drainQueued(t, s) {
+		if entry.pkg == "Client.Map" {
+			offer = entry.payload
+		}
+	}
+	_, version := s.manager.mudletMap.Map()
+	if want := `{"url":"https://example.invalid/darkpawns-map.xml","version":"` + version + `"}`; offer != want || version == "" {
+		t.Fatalf("Client.Map = %s, want %s", offer, want)
+	}
+}
