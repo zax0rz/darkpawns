@@ -2,6 +2,7 @@ package session
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -473,5 +474,47 @@ func TestWebTeditSaveRefreshesLiveText(t *testing.T) {
 	fileedit.NotifyTextSaved(m.world, "help/screen", "web help\n")
 	if m.world.HelpScreen != "web help\n" {
 		t.Fatalf("HelpScreen after web save = %q", m.world.HelpScreen)
+	}
+}
+
+// webOLC saves arrive on an HTTP goroutine through the fileedit hook while
+// players read the live text on their own goroutines. Run with -race: an
+// unguarded hook write races the help reader's liveTextEditMu read.
+func TestWebTeditSaveDoesNotRaceLiveReaders(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "Helpreader", game.LVL_IMPL, 1001)
+	t.Cleanup(func() {
+		cacheMu.Lock()
+		delete(cachedText, "news")
+		cacheMu.Unlock()
+	})
+	const rounds = 200
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		for i := range rounds {
+			fileedit.NotifyTextSaved(m.world, "help/screen", fmt.Sprintf("help %d\n", i))
+			fileedit.NotifyTextSaved(m.world, "news", fmt.Sprintf("news %d\n", i))
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for range rounds {
+			if err := cmdHelpText(s, ""); err != nil {
+				t.Error(err)
+				return
+			}
+			cacheMu.RLock()
+			_ = cachedText["news"]
+			cacheMu.RUnlock()
+		}
+	}()
+	wg.Wait()
+	liveTextEditMu.RLock()
+	final := m.world.HelpScreen
+	liveTextEditMu.RUnlock()
+	if final != fmt.Sprintf("help %d\n", rounds-1) {
+		t.Fatalf("HelpScreen after web saves = %q", final)
 	}
 }
