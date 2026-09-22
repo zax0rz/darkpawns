@@ -51,23 +51,25 @@ import '@xterm/xterm/css/xterm.css';
     </div>
     <dl class="connection-card">
       <div><dt>Host</dt><dd><code>darkpawns.org</code></dd></div>
-      <div><dt>Port</dt><dd><code>7777</code></dd></div>
-      <div><dt>Protocol</dt><dd>Telnet / raw TCP</dd></div>
+      <div><dt>Port</dt><dd><code>7778</code></dd></div>
+      <div><dt>Protocol</dt><dd>Telnet over TLS (secure)</dd></div>
     </dl>
+    <p class="plaintext-note">Clients without TLS can use port <code>7777</code>, but everything you send there crosses the network in the clear, your password included. The browser client above always uses TLS.</p>
     <div class="client-grid">
       <article>
         <h3>Mudlet</h3>
-        <p>The friendly graphical choice for Windows, macOS, and Linux. Create a new profile using the host and port above.</p>
+        <p>The friendly graphical choice for Windows, macOS, and Linux. Create a profile with the host and port above and tick <strong>Secure</strong>. On first connect Mudlet installs the Dark Pawns package: health bars, a map that draws itself as you walk, and a chat window.</p>
         <a href="https://www.mudlet.org/download/">Download Mudlet <span aria-hidden="true">→</span></a>
       </article>
       <article>
         <h3>TinTin++</h3>
-        <p>A terminal-native client with scripting, aliases, triggers, and an automapper.</p>
+        <p>A terminal-native client with scripting, aliases, triggers, and an automapper. Connect securely with:</p>
+        <pre><code>#ssl dp darkpawns.org 7778</code></pre>
         <a href="https://tintin.mudhalla.net/download.php">Get TinTin++ <span aria-hidden="true">→</span></a>
       </article>
       <article>
         <h3>Raw terminal</h3>
-        <p>If a Telnet client is already installed, connect directly:</p>
+        <p>Plain <code>telnet</code> has no TLS, so keep it for a quick look as a <strong>guest</strong> rather than logging in with your password:</p>
         <pre><code>telnet darkpawns.org 7777</code></pre>
       </article>
     </div>
@@ -147,7 +149,8 @@ import '@xterm/xterm/css/xterm.css';
   .connection-guide { padding-block: var(--space-xl); }
   .guide-heading { max-width: var(--content-width); margin-bottom: var(--space-lg); }
   .guide-heading > p:last-child { color: var(--ink-muted); }
-  .connection-card { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 var(--space-lg); border: 1px solid var(--rule); }
+  .connection-card { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 var(--space-sm); border: 1px solid var(--rule); }
+  .plaintext-note { max-width: var(--content-width); margin: 0 0 var(--space-lg); color: var(--ink-muted); font-size: .95rem; }
   .connection-card div { padding: var(--space-md); }
   .connection-card div + div { border-left: 1px solid var(--rule); }
   .connection-card dt { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
