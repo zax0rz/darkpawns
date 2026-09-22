@@ -492,6 +492,7 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 	}
 	if target, ok := w.ResolveCharInRoom(ch, arg); ok {
 		w.appendCharacterLook(&result, ch, target)
+		w.appendLookAtNotifications(ch, target)
 		return result
 	}
 	if foundObj != nil {
@@ -502,18 +503,54 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 	return result
 }
 
+// appendLookedDescription writes C's send_to_char(i->player.description, ch)
+// (act.informative.c:394-395) verbatim: no act() capitalization and no added
+// terminator. C's next write therefore lands on the same line whenever the
+// description carries no line ending — which is exactly what do_string's inline
+// write stores, since the trailing-CRLF append there is commented out
+// (src/modify.c:762). nextLine supplies that following line so the two can be
+// emitted as one write; the transport terminates every message it is handed.
+// Returns true when the line was merged and the caller must not emit it again.
+func appendLookedDescription(result *ObservationResult, ch *Player, description string, nextLine func() string) bool {
+	if descriptionEndsLine(description) {
+		result.raw(ch, description)
+		return false
+	}
+	result.raw(ch, description+nextLine()+"\r\n")
+	return true
+}
+
+// descriptionEndsLine reports whether C's next send_to_char would start a new
+// line: the stored string already ends with \n or \r.
+func descriptionEndsLine(text string) bool {
+	return strings.HasSuffix(text, "\n") || strings.HasSuffix(text, "\r")
+}
+
+// appendLookedDescriptionPlayer is the player-target form: the line after the
+// description is the race (or flesh-alter) sentence, which C builds with
+// sprintf and no capitalization (act.informative.c:400-411). The merged write
+// keeps the cap() the ordinary literal path applies so both paths agree.
+func appendLookedDescriptionPlayer(result *ObservationResult, ch *Player, description string, raceLine func() string) bool {
+	return appendLookedDescription(result, ch, description, func() string { return cap(raceLine()) })
+}
+
 func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, target CharTarget) {
 	if target.Player != nil {
 		player := target.Player
+		raceLine := func() string {
+			if player.IsAffected(affFleshAlter) {
+				return fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), RaceNames[player.GetRace()], hshr(player), fleshAlterWeapon(player.GetLevel()))
+			}
+			return fmt.Sprintf("%s is %s.", persName(player, ch), RaceNames[player.GetRace()])
+		}
+		merged := false
 		if description := player.GetDescription(); description != "" {
-			result.literal(ch, description)
+			merged = appendLookedDescriptionPlayer(result, ch, description, raceLine)
 		} else {
 			result.act(ch, player, nil, "You see nothing special about $M.")
 		}
-		if player.IsAffected(affFleshAlter) {
-			result.literal(ch, fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), RaceNames[player.GetRace()], hshr(player), fleshAlterWeapon(player.GetLevel())))
-		} else {
-			result.literal(ch, fmt.Sprintf("%s is %s.", persName(player, ch), RaceNames[player.GetRace()]))
+		if !merged {
+			result.literal(ch, raceLine())
 		}
 		appendCharacterAffectLook(result, ch, player)
 		result.act(ch, player, nil, "$N "+diagCondition(player.GetHP(), player.GetMaxHP()))
@@ -523,15 +560,45 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 	}
 	if target.Mob != nil {
 		mob := target.Mob
-		if mob.Proto() != nil && mob.Proto().DetailedDesc != "" {
-			result.literal(ch, mob.Proto().DetailedDesc)
+		description := ""
+		if mob.Proto() != nil {
+			description = mob.Proto().DetailedDesc
+		}
+		// diag_char_to_char builds PERS(i,ch), CAPs it, and appends the condition
+		// sentence (act.informative.c:363-382) — the same bytes act() renders.
+		diagLine := func() string {
+			return cap(performAct("$N "+diagCondition(mob.GetHP(), mob.GetMaxHP()), ch, mob, nil, nil, "", "", ch))
+		}
+		merged := false
+		if description != "" {
+			merged = appendLookedDescription(result, ch, description, diagLine)
 		} else {
 			result.act(ch, mob, nil, "You see nothing special about $M.")
 		}
-		result.act(ch, mob, nil, "$N "+diagCondition(mob.GetHP(), mob.GetMaxHP()))
+		if !merged {
+			result.act(ch, mob, nil, "$N "+diagCondition(mob.GetHP(), mob.GetMaxHP()))
+		}
 		appendMobEquipment(result, ch, mob)
 		appendPeekInventory(result, ch, mob)
 	}
+}
+
+// appendLookAtNotifications ports the observer echo look_at_target emits right
+// after look_at_char (act.informative.c:1022-1029). It applies to mob targets as
+// well as players: the target hears "$n looks at you." when it can see the
+// looker, and the rest of the room sees "$n looks at $N.".
+func (w *World) appendLookAtNotifications(ch *Player, target CharTarget) {
+	if ch == nil || target.Combatant == nil {
+		return
+	}
+	victim := asActor(target.Combatant)
+	if victim == nil || victim == Actor(ch) {
+		return
+	}
+	if canSee(victim, ch) {
+		Act(w, true, ch, victim, nil, nil, "$n looks at you.", "", ToVict)
+	}
+	Act(w, true, ch, victim, nil, nil, "$n looks at $N.", "", ToNotVict)
 }
 
 // appendCharacterAffectLook ports the direct player-visible status lines in

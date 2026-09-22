@@ -1,5 +1,7 @@
 package game
 
+import "github.com/zax0rz/darkpawns/pkg/parser"
+
 // HorseState holds horse mount runtime data.
 type HorseState struct {
 	CarryWeight int `json:"carry_weight,omitempty"`
@@ -32,6 +34,15 @@ type ObjectRuntimeState struct {
 
 	// Horse mount
 	Horse *HorseState `json:"horse,omitempty"`
+
+	// ExtraDescs is the instance-local extra-description list written by
+	// do_string's field 4/6 paths (src/modify.c:709-742). C edits the live
+	// obj_data's ex_description list, so one object can gain or lose a field
+	// without touching its prototype. Go keeps prototypes immutable and shared,
+	// so the first do_string mutation snapshots the effective list here;
+	// ExtraDescsLive marks that snapshot as authoritative for this instance.
+	ExtraDescs     []parser.ExtraDesc `json:"extra_descs,omitempty"`
+	ExtraDescsLive bool               `json:"extra_descs_live,omitempty"`
 
 	// Escape hatch for genuinely dynamic script state.
 	// New Go code should NOT add keys here — add typed fields instead.

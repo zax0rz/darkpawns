@@ -139,6 +139,12 @@ pin_two() {
 	printf 'fake\tcast\t%s\ttest.tsv:%s:blocked\nfake\tdamage\t%s\ttest.tsv:%s:blocked' "$1" "$2" "$3" "$2"
 }
 
+# pin_dup repeats one label with two shapes, matching a scenario that diverges on
+# the same probe line twice (an editor's repeated "@", a repeated look target).
+pin_dup() {
+	printf 'fake\tcast\t%s\ttest.tsv:dup:blocked\nfake\tcast\t%s\ttest.tsv:dup:blocked' "$1" "$2"
+}
+
 run_case immediate-pass P no "" $'PASS\tfake' 1 1
 run_case immediate-stale P yes "" $'STALE\tfake' 1 1
 run_case immediate-pinned-confirmed "D:cast:$one_a|D:cast:$one_a" yes "$(pin_one "$one_a" immediate-pinned-confirmed)" $'EXPECTED\tfake' 2 2
@@ -158,6 +164,10 @@ run_case timeout T no "" $'TIMEOUT\tfake\t124' 1 1
 run_case infra-timeout "I|T" no "" $'TIMEOUT\tfake\t124' 2 2
 run_case missing-fingerprints M no "" $'FAIL\tfake\t3' 1 1
 run_case malformed-fingerprints X:cast:not-a-sha256 no "" $'FAIL\tfake\t3' 1 1
+# A repeated probe label must stay attributable: the repeats are suffixed rather
+# than rejected as malformed, so a pinned pair of shapes still resolves.
+run_case duplicate-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" yes "$(pin_dup "$two_a" "$two_b")" $'EXPECTED\tfake' 2 2
+run_case duplicate-labels-unpinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" no "" $'FAIL\tfake\t3' 2 2
 run_case multiblock-complete "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:$two_b" yes "$(pin_two "$two_a" multiblock-complete "$two_b")" $'EXPECTED\tfake' 3 3
 run_case multiblock-missing "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:$two_b" yes "$(pin_one "$two_a" multiblock-missing)" $'FAIL\tfake\t3' 3 3
 run_case multiblock-extra "I|D:cast:$two_a|D:cast:$two_a" yes "$(pin_two "$two_a" multiblock-extra "$two_b")" $'FAIL\tfake\t3' 3 3

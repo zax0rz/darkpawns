@@ -84,8 +84,12 @@ func run() int {
 
 	oracleBin := os.Getenv("DP_ORACLE_BIN")
 	if oracleBin == "" {
-		fmt.Println("SKIP: DP_ORACLE_BIN is unset; C oracle differential run not available")
-		return 0
+		// Never report success without the oracle: a bare exit 0 here is
+		// indistinguishable from "both implementations agree", which is how a
+		// genuinely divergent scenario can read as green when the harness is
+		// invoked outside scripts/oracle_regression.sh.
+		fmt.Fprintln(os.Stderr, "dp-oracle-diff: DP_ORACLE_BIN is unset; refusing to run without the C oracle (set it to the circle binary)")
+		return 2
 	}
 	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *showGoLog); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)

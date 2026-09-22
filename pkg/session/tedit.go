@@ -71,6 +71,19 @@ type textEditState struct {
 	// editor has one descriptor-owned line buffer, but its save/abort target is
 	// supplied by the owning OLC state rather than a text file.
 	onComplete func(action textEditAction, buffer, original string)
+	// liveString is C's d->str when it points at a live game-string field
+	// rather than at a file or an OLC working copy: do_string hands the editor
+	// a char ** into char_data/obj_data. Every accepted line and every editor
+	// action is written back through it immediately, which is why entering the
+	// editor already empties the field and why an abort cannot restore the
+	// previous text (there is no d->backstr).
+	liveString func(value string)
+	// playingEditor marks the one editor that runs with STATE(d) still
+	// CON_PLAYING: do_string hands the improved editor a live pointer without
+	// calling string_write. C's process_output frames CON_PLAYING flushes with
+	// an extra "\r\n" before the prompt (comm.c:1633-1634), so this editor's
+	// flush carries a blank line that every CON_* editor's does not.
+	playingEditor bool
 }
 
 type textEditAction uint8
@@ -417,7 +430,17 @@ func (s *Session) refreshTextEditBufferLocked() {
 
 func (s *Session) commitTextEditBufferLocked() {
 	state := s.textEdit
-	if state != nil && !state.roomEditor && state.cacheKey != "" {
+	if state == nil {
+		return
+	}
+	if state.liveString != nil {
+		// do_string's live field: C's d->str is a char ** into char_data /
+		// obj_data, so the buffer already *is* the field. Write through instead
+		// of caching a copy.
+		state.liveString(state.buffer)
+		return
+	}
+	if !state.roomEditor && state.cacheKey != "" {
 		setTextEditCache(s, state.cacheKey, state.buffer)
 	}
 }

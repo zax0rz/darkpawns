@@ -263,14 +263,31 @@ func (s *Session) SendPrompt() {
 		return
 	}
 	cmdInfoBarUpdate(s)
+	editing, playing := s.editorPromptState()
 	text := s.promptText()
-	// C's CON_TEDIT prompt is written directly after the editor's final
-	// output; unlike the ordinary playing prompt it does not receive the
-	// non-compact interruption CRLF between the buffer and "] ".
-	if s.outputSincePrompt.Swap(0) > 0 && !s.isTextEditing() {
+	// C's process_output appends "\r\n" whenever the descriptor is playing
+	// normally and the player is not compact (comm.c:1633-1634). Editors that
+	// own a CON_* state (tedit/luaedit and the OLC string fields) take their
+	// flush without that frame; do_string's editor stays in CON_PLAYING, so its
+	// "New field." / "Ok." flushes do get it — that blank line before "] " is
+	// real player-facing output.
+	if s.outputSincePrompt.Swap(0) > 0 && (!editing || playing) {
 		text = "\r\n" + text
 	}
 	s.sendPromptText(text)
+}
+
+// editorPromptState reports the descriptor string-editor state in one locked
+// pass: whether an editor owns the input (C's d->str != NULL), and whether that
+// editor runs in CON_PLAYING (do_string's live-string editor) rather than in a
+// CON_* editor state.
+func (s *Session) editorPromptState() (editing, playing bool) {
+	s.textEditMu.Lock()
+	defer s.textEditMu.Unlock()
+	if s.textEdit == nil {
+		return false, false
+	}
+	return true, s.textEdit.playingEditor
 }
 
 func (s *Session) sendPromptText(text string) {
@@ -302,10 +319,13 @@ func (s *Session) promptText() string {
 		return "> "
 	}
 	flags := s.player.GetFlags()
-	// C's make_prompt returns a bare "] " immediately while d->str is active.
-	// The board, note, and mail editors therefore suppress invisibility and
-	// vitals fields as well as the normal AFK/inactive prefixes.
-	if flags&(1<<uint(game.PlrWriting)) != 0 {
+	// C's make_prompt returns a bare "] " immediately while d->str is active
+	// (comm.c:1038-1039). That pointer, not PLR_WRITING, is the test: the file,
+	// board, mail and OLC editors set both, but do_string sets only d->str
+	// because it never routes through string_write. The board, note, and mail
+	// editors therefore suppress invisibility and vitals fields as well as the
+	// normal AFK/inactive prefixes.
+	if editing, _ := s.editorPromptState(); editing || flags&(1<<uint(game.PlrWriting)) != 0 {
 		return "] "
 	}
 	// C's status branches rebuild prompt in-place with sprintf(prompt, ...)
