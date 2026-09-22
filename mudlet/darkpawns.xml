@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE MudletPackage>
+<MudletPackage version="1.001">
+	<TriggerPackage />
+	<TimerPackage />
+	<AliasPackage>
+		<Alias isActive="yes" isFolder="no">
+			<name>dp</name>
+			<script>DarkPawns.command(matches[2])</script>
+			<command></command>
+			<packageName></packageName>
+			<regex>^dp(?:\s+(\w+))?$</regex>
+		</Alias>
+	</AliasPackage>
+	<ActionPackage />
+	<ScriptPackage>
+		<ScriptGroup isActive="yes" isFolder="yes">
+			<name>Dark Pawns 1.0.0</name>
+			<packageName></packageName>
+			<script></script>
+			<eventHandlerList />
+			<Script isActive="yes" isFolder="no">
+				<name>Dark Pawns core</name>
+				<packageName></packageName>
+				<script>-- Dark Pawns for Mudlet: core.
+--
+-- Everything this package shows comes from the game&#39;s GMCP messages
+-- (docs/gmcp.md in the Dark Pawns repository). The package never sends
+-- game commands on its own and never reads game text: the gauges, map and
+-- chat window are drawn from data the server already sent alongside the text.
+
+DarkPawns = DarkPawns or {}
+DarkPawns.version = &#34;1.0.0&#34;
+DarkPawns.packageName = &#34;darkpawns&#34;
+
+-- The GMCP modules this package reads. Mudlet enables Char and Room on its
+-- own; Comm.Channel has to be asked for.
+DarkPawns.modules = { &#34;Char 1&#34;, &#34;Room 1&#34;, &#34;Comm.Channel 1&#34; }
+
+-- Named anonymous event handlers, so reinstalling or reloading the package
+-- replaces its handlers instead of stacking a second copy of each.
+DarkPawns.handlers = DarkPawns.handlers or {}
+
+function DarkPawns.on(key, event, fn)
+  if DarkPawns.handlers[key] then
+    killAnonymousEventHandler(DarkPawns.handlers[key])
+  end
+  DarkPawns.handlers[key] = registerAnonymousEventHandler(event, fn)
+end
+
+function DarkPawns.offAll()
+  for key, id in pairs(DarkPawns.handlers) do
+    killAnonymousEventHandler(id)
+    DarkPawns.handlers[key] = nil
+  end
+end
+
+function DarkPawns.negotiate(_, protocol)
+  if protocol ~= &#34;GMCP&#34; then
+    return
+  end
+  sendGMCP(&#34;Core.Supports.Add &#34; .. yajl.to_string(DarkPawns.modules))
+end
+
+DarkPawns.on(&#34;negotiate&#34;, &#34;sysProtocolEnabled&#34;, DarkPawns.negotiate)
+
+-- A package installed mid-session (the server&#39;s Client.GUI offer arrives
+-- after GMCP is already up) has missed sysProtocolEnabled, so ask now. The
+-- gmcp table outlives a disconnect, so check the connection too.
+local _, _, connected = getConnectionInfo()
+if connected and type(gmcp) == &#34;table&#34; and next(gmcp) then
+  DarkPawns.negotiate(nil, &#34;GMCP&#34;)
+end
+</script>
+				<eventHandlerList />
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>Dark Pawns ui</name>
+				<packageName></packageName>
+				<script>-- Dark Pawns for Mudlet: the dock.
+--
+-- A right-hand dock with the character line, three gauges, the map and the
+-- chat window. Colours follow the Dark Pawns site (Haunted Paperback): cream
+-- text on the CRT canvas, oxblood for hit points. Mana and movement need two
+-- more hues the site palette does not have; they are muted so the game text
+-- stays the brightest thing on screen.
+
+DarkPawns.ui = DarkPawns.ui or {}
+local ui = DarkPawns.ui
+
+ui.palette = {
+  canvas = &#34;#0a0908&#34;,
+  paper = &#34;#EFE7D6&#34;,
+  muted = &#34;#9C948A&#34;,
+  rule = &#34;#3A3430&#34;,
+  hp = &#34;#CF4B42&#34;,
+  mana = &#34;#6F86B8&#34;,
+  move = &#34;#B8964A&#34;,
+}
+
+ui.dockPercent = 32 -- share of the window width the dock takes
+
+local function dockWidth()
+  local width = getMainWindowSize()
+  return math.floor(width * ui.dockPercent / 100)
+end
+
+local function gaugeStyle(colour)
+  return string.format([[
+    background-color: %s;
+    border: 1px solid %s;
+    border-radius: 2px;
+  ]], colour, ui.palette.rule)
+end
+
+local function gaugeBackStyle()
+  return string.format([[
+    background-color: %s;
+    border: 1px solid %s;
+    border-radius: 2px;
+  ]], ui.palette.canvas, ui.palette.rule)
+end
+
+function ui.build()
+  if ui.dock then
+    ui.dock:show()
+    ui.layout()
+    return
+  end
+
+  ui.dock = Geyser.VBox:new({
+    name = &#34;DarkPawns.dock&#34;,
+    x = &#34;-&#34; .. ui.dockPercent .. &#34;%&#34;, y = 0,
+    width = ui.dockPercent .. &#34;%&#34;, height = &#34;100%&#34;,
+  })
+
+  ui.status = Geyser.Label:new({
+    name = &#34;DarkPawns.status&#34;,
+    height = 28, v_policy = Geyser.Fixed,
+    fgColor = ui.palette.paper,
+    message = &#34;Dark Pawns&#34;,
+  }, ui.dock)
+  ui.status:setStyleSheet(string.format([[
+    background-color: %s;
+    border-bottom: 1px solid %s;
+    padding-left: 6px;
+    font-family: serif;
+  ]], ui.palette.canvas, ui.palette.rule))
+
+  ui.gauges = {}
+  for _, spec in ipairs({
+    { key = &#34;hp&#34;, label = &#34;HP&#34;, colour = ui.palette.hp },
+    { key = &#34;mp&#34;, label = &#34;Mana&#34;, colour = ui.palette.mana },
+    { key = &#34;mv&#34;, label = &#34;Move&#34;, colour = ui.palette.move },
+  }) do
+    local gauge = Geyser.Gauge:new({
+      name = &#34;DarkPawns.gauge.&#34; .. spec.key,
+      height = 22, v_policy = Geyser.Fixed,
+    }, ui.dock)
+    gauge.front:setStyleSheet(gaugeStyle(spec.colour))
+    gauge.back:setStyleSheet(gaugeBackStyle())
+    gauge.text:setStyleSheet(&#34;color: &#34; .. ui.palette.paper .. &#34;; padding-left: 6px;&#34;)
+    gauge:setValue(0, 1, spec.label)
+    gauge.label = spec.label
+    ui.gauges[spec.key] = gauge
+  end
+
+  ui.map = Geyser.Mapper:new({
+    name = &#34;DarkPawns.map&#34;,
+    v_stretch_factor = 3,
+  }, ui.dock)
+
+  ui.chat = Geyser.MiniConsole:new({
+    name = &#34;DarkPawns.chat&#34;,
+    v_stretch_factor = 2,
+    color = ui.palette.canvas,
+    fontSize = 10,
+    autoWrap = true,
+    scrollBar = true,
+  }, ui.dock)
+
+  ui.layout()
+end
+
+function ui.layout()
+  setBorderRight(dockWidth())
+end
+
+function ui.hide()
+  if ui.dock then
+    ui.dock:hide()
+  end
+  setBorderRight(0)
+end
+
+-- Char.Vitals: {&#34;hp&#34;,&#34;maxhp&#34;,&#34;mp&#34;,&#34;maxmp&#34;,&#34;mv&#34;,&#34;maxmv&#34;}
+function ui.updateVitals()
+  local vitals = gmcp.Char and gmcp.Char.Vitals
+  if not (ui.gauges and vitals) then
+    return
+  end
+  for key, gauge in pairs(ui.gauges) do
+    local current, maximum = tonumber(vitals[key]), tonumber(vitals[&#34;max&#34; .. key])
+    if current and maximum then
+      gauge:setValue(math.max(current, 0), math.max(maximum, 1),
+        string.format(&#34;%s %d / %d&#34;, gauge.label, current, maximum))
+    end
+  end
+end
+
+-- Char.Status: {&#34;name&#34;,&#34;level&#34;,&#34;race&#34;,&#34;class&#34;,&#34;gold&#34;}
+function ui.updateStatus()
+  local status = gmcp.Char and gmcp.Char.Status
+  if not (ui.status and status) then
+    return
+  end
+  ui.status:echo(string.format(&#34;%s &amp;middot; level %s %s %s &amp;middot; %s gold&#34;,
+    status.name or &#34;&#34;, status.level or &#34;?&#34;, status.race or &#34;&#34;, status.class or &#34;&#34;, status.gold or 0))
+end
+
+DarkPawns.on(&#34;ui.vitals&#34;, &#34;gmcp.Char.Vitals&#34;, ui.updateVitals)
+DarkPawns.on(&#34;ui.status&#34;, &#34;gmcp.Char.Status&#34;, ui.updateStatus)
+DarkPawns.on(&#34;ui.resize&#34;, &#34;sysWindowResizeEvent&#34;, function() if ui.dock and not ui.dock.hidden then ui.layout() end end)
+
+-- Mudlet&#39;s built-in starter interface draws its own gauges and chat for
+-- games without one. Dark Pawns has one, so ask it to stand aside rather
+-- than draw two of everything. (It does this by itself when the package
+-- arrives through the server&#39;s Client.GUI offer; a hand import needs this.)
+if BaseUI and type(BaseUI.standAside) == &#34;function&#34; and not (BaseUI.settings and BaseUI.settings.standingAside) then
+  BaseUI.standAside(nil, DarkPawns.packageName)
+end
+
+ui.build()
+ui.updateVitals()
+ui.updateStatus()
+</script>
+				<eventHandlerList />
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>Dark Pawns mapper</name>
+				<packageName></packageName>
+				<script>-- Dark Pawns for Mudlet: the mapper.
+--
+-- Builds the map as you walk, from Room.Info:
+--   {&#34;num&#34;:3001,&#34;name&#34;:&#34;...&#34;,&#34;area&#34;:&#34;...&#34;,&#34;environment&#34;:&#34;City&#34;,&#34;exits&#34;:{&#34;n&#34;:3002}}
+-- Room numbers are the game&#39;s own, so the map never guesses which room you
+-- are in: a room seen once is recognised forever, and a new room is placed
+-- one step from the room whose exit leads to it. The server leaves closed
+-- doors out of &#34;exits&#34; (as the game&#39;s own exit list does), so an exit that
+-- is missing now is never removed from the map.
+
+DarkPawns.map = DarkPawns.map or {}
+local map = DarkPawns.map
+
+map.offsets = {
+  n = { 0, 1, 0 }, s = { 0, -1, 0 }, e = { 1, 0, 0 }, w = { -1, 0, 0 },
+  u = { 0, 0, 1 }, d = { 0, 0, -1 },
+}
+
+-- Environment names from Room.Info, coloured for the map. Ids start above
+-- Mudlet&#39;s reserved range so they never collide with its defaults.
+map.environments = {
+  Inside = { 257, 110, 100, 90 },
+  City = { 258, 150, 140, 125 },
+  Field = { 259, 125, 150, 80 },
+  Forest = { 260, 60, 110, 60 },
+  Hills = { 261, 140, 120, 70 },
+  Mountain = { 262, 120, 110, 105 },
+  [&#34;Water Swim&#34;] = { 263, 80, 120, 170 },
+  [&#34;Water Noswim&#34;] = { 264, 50, 80, 150 },
+  Underwater = { 265, 30, 50, 110 },
+  Flying = { 266, 170, 190, 210 },
+  Desert = { 267, 200, 170, 100 },
+  Fire = { 268, 207, 75, 66 },
+  Earth = { 269, 110, 85, 60 },
+  Wind = { 270, 190, 200, 200 },
+  Water = { 271, 70, 110, 160 },
+  Unknown = { 272, 90, 90, 90 },
+}
+
+-- pending[destination] = list of {from, direction}: exits seen before the
+-- room they lead to has been mapped.
+map.pending = map.pending or {}
+map.previous = map.previous or nil
+
+local function areaId(name)
+  if name == nil or name == &#34;&#34; then
+    name = &#34;Dark Pawns&#34;
+  end
+  local areas = getAreaTable()
+  if areas[name] then
+    return areas[name]
+  end
+  return addAreaName(name)
+end
+
+local function applyEnvironment(room, environment)
+  local env = map.environments[environment] or map.environments.Unknown
+  setCustomEnvColor(env[1], env[2], env[3], env[4], 255)
+  setRoomEnv(room, env[1])
+end
+
+-- placeRoom picks coordinates for a new room: one step from a mapped room
+-- whose exit leads here, in the same area; otherwise the origin of its area.
+local function placeRoom(room, area)
+  for _, link in ipairs(map.pending[room] or {}) do
+    if roomExists(link.from) and getRoomArea(link.from) == area then
+      local x, y, z = getRoomCoordinates(link.from)
+      local step = map.offsets[link.direction]
+      return x + step[1], y + step[2], z + step[3]
+    end
+  end
+  return 0, 0, 0
+end
+
+local function linkExits(room, exits)
+  for direction, destination in pairs(exits) do
+    if map.offsets[direction] then
+      if roomExists(destination) then
+        setExit(room, destination, direction)
+      else
+        setExitStub(room, direction, true)
+        map.pending[destination] = map.pending[destination] or {}
+        table.insert(map.pending[destination], { from = room, direction = direction })
+      end
+    end
+  end
+end
+
+function map.onRoomInfo()
+  local info = gmcp.Room and gmcp.Room.Info
+  local room = info and tonumber(info.num)
+  if not room then
+    return
+  end
+  local area = areaId(info.area)
+
+  if not roomExists(room) then
+    addRoom(room)
+    setRoomArea(room, area)
+    setRoomCoordinates(room, placeRoom(room, area))
+  end
+  setRoomName(room, info.name or &#34;&#34;)
+  applyEnvironment(room, info.environment)
+
+  -- Exits recorded earlier that lead here can now be drawn.
+  for _, link in ipairs(map.pending[room] or {}) do
+    if roomExists(link.from) then
+      setExitStub(link.from, link.direction, false)
+      setExit(link.from, room, link.direction)
+    end
+  end
+  map.pending[room] = nil
+
+  linkExits(room, info.exits or {})
+  map.previous = room
+  centerview(room)
+end
+
+-- Mudlet calls doSpeedWalk when a map room is double-clicked; the game
+-- understands the same one-letter and up/down directions getPath returns.
+function doSpeedWalk()
+  if not getPath(speedWalkFrom, speedWalkTo) then
+    cecho(&#34;\n&lt;red&gt;[ Dark Pawns ] No mapped path to that room.&lt;reset&gt;\n&#34;)
+    return
+  end
+  for _, direction in ipairs(speedWalkDir) do
+    send(direction, false)
+  end
+end
+
+DarkPawns.on(&#34;map.room&#34;, &#34;gmcp.Room.Info&#34;, map.onRoomInfo)
+</script>
+				<eventHandlerList />
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>Dark Pawns chat</name>
+				<packageName></packageName>
+				<script>-- Dark Pawns for Mudlet: the chat window.
+--
+-- Comm.Channel.Text carries each line exactly as the game printed it:
+--   {&#34;channel&#34;:&#34;gossip&#34;,&#34;talker&#34;:&#34;Someone&#34;,&#34;text&#34;:&#34;Someone gossips, &#39;hi&#39;&#34;}
+-- The line also still appears in the main window; the chat window is a
+-- scrollback of conversation only.
+
+DarkPawns.chat = DarkPawns.chat or {}
+local chat = DarkPawns.chat
+
+-- A short channel tag ahead of each line, in the dock&#39;s muted ink.
+function chat.onText()
+  local message = gmcp.Comm and gmcp.Comm.Channel and gmcp.Comm.Channel.Text
+  local console = DarkPawns.ui and DarkPawns.ui.chat
+  if not (console and message and type(message.text) == &#34;string&#34;) then
+    return
+  end
+  local stamp = getTime(true, &#34;hh:mm&#34;)
+  console:decho(string.format(&#34;&lt;156,148,138&gt;%s %-6s&lt;r&gt; &#34;, stamp, message.channel or &#34;&#34;))
+  console:decho(ansi2decho(message.text) .. &#34;\n&#34;)
+end
+
+DarkPawns.on(&#34;chat.text&#34;, &#34;gmcp.Comm.Channel.Text&#34;, chat.onText)
+</script>
+				<eventHandlerList />
+			</Script>
+			<Script isActive="yes" isFolder="no">
+				<name>Dark Pawns commands</name>
+				<packageName></packageName>
+				<script>-- Dark Pawns for Mudlet: the &#34;dp&#34; command.
+--
+-- The package adds no game commands and no gameplay triggers: Dark Pawns
+-- already accepts n/e/s/w/u/d and command abbreviations, and a client alias
+-- that shadowed one would change what the game hears. &#34;dp&#34; only manages the
+-- package itself.
+
+function DarkPawns.command(argument)
+  argument = (argument or &#34;&#34;):lower()
+  if argument == &#34;hide&#34; then
+    DarkPawns.ui.hide()
+  elseif argument == &#34;show&#34; then
+    DarkPawns.ui.build()
+  elseif argument == &#34;clear&#34; then
+    if DarkPawns.ui.chat then
+      DarkPawns.ui.chat:clear()
+    end
+  else
+    cecho(string.format(&#34;\n&lt;ansi_white&gt;[ Dark Pawns %s ]&lt;reset&gt;\n&#34;, DarkPawns.version))
+    cecho(&#34;  &lt;yellow&gt;dp hide&lt;reset&gt;   - hide the dock\n&#34;)
+    cecho(&#34;  &lt;yellow&gt;dp show&lt;reset&gt;   - bring it back\n&#34;)
+    cecho(&#34;  &lt;yellow&gt;dp clear&lt;reset&gt;  - clear the chat window\n&#34;)
+    cecho(&#34;  Double-click a room on the map to walk there.\n&#34;)
+  end
+end
+
+-- Uninstalling the package removes its scripts but not the windows and
+-- handlers they made at runtime; take those down with it.
+DarkPawns.on(&#34;uninstall&#34;, &#34;sysUninstallPackage&#34;, function(_, name)
+  if name ~= DarkPawns.packageName then
+    return
+  end
+  DarkPawns.ui.hide()
+  DarkPawns.offAll()
+end)
+</script>
+				<eventHandlerList />
+			</Script>
+		</ScriptGroup>
+	</ScriptPackage>
+	<KeyPackage />
+	<HelpPackage>
+		<helpURL>https://github.com/zax0rz/darkpawns/tree/main/mudlet</helpURL>
+	</HelpPackage>
+</MudletPackage>

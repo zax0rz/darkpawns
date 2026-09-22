@@ -154,6 +154,22 @@ expired partitions dropped automatically; without it the corpus is retained
 indefinitely. Until it is enabled, no connection to the research database is
 made beyond schema/partition setup.
 
+### The Mudlet package (optional)
+
+The telnet listener speaks GMCP (see [`docs/gmcp.md`](docs/gmcp.md)), so
+Mudlet players get gauges, a map, and a chat window from the package in
+[`mudlet/`](mudlet/). To have Mudlet install it automatically on connect,
+publish `mudlet/darkpawns.xml` at a public URL and set:
+
+```bash
+export DP_MUDLET_PACKAGE_URL='https://example.org/mudlet/darkpawns.xml'
+```
+
+The server announces the version compiled into it (`mudlet/VERSION`), and
+Mudlet reinstalls the package whenever that version changes, so publish the
+file from the same commit you deploy. Unset, nothing is offered and players
+can still import the file by hand.
+
 ## Run
 
 From the repository root, the defaults are already correct:
