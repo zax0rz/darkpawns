@@ -79,46 +79,113 @@ end
 				<packageName></packageName>
 				<script>-- Dark Pawns for Mudlet: the dock.
 --
--- A right-hand dock with the character line, three gauges, the map and the
--- chat window. Colours follow the Dark Pawns site (Haunted Paperback): cream
--- text on the CRT canvas, oxblood for hit points. Mana and movement need two
--- more hues the site palette does not have; they are muted so the game text
--- stays the brightest thing on screen.
+-- The dock is the website&#39;s /play page brought into Mudlet: a Paper-Deep
+-- chassis around the game&#39;s dark canvas. The chassis carries the lockup (the
+-- pawn, then DARK over PAWNS with Oxblood on PAWNS alone), the character
+-- line, and the gauges; the map and the chat window are game surfaces, so they
+-- keep the dark canvas, like the terminal on the site.
+--
+-- Colours are DESIGN.md tokens only. The gauges carry their numbers as ink
+-- text on paper beside a thin bar, so no reading depends on colour and every
+-- piece of text clears WCAG AA contrast.
 
 DarkPawns.ui = DarkPawns.ui or {}
 local ui = DarkPawns.ui
 
 ui.palette = {
-  canvas = &#34;#0a0908&#34;,
   paper = &#34;#EFE7D6&#34;,
-  muted = &#34;#9C948A&#34;,
-  rule = &#34;#3A3430&#34;,
-  hp = &#34;#CF4B42&#34;,
-  mana = &#34;#6F86B8&#34;,
-  move = &#34;#B8964A&#34;,
+  paperDeep = &#34;#E5DAC1&#34;,
+  ink = &#34;#1A1614&#34;,
+  inkMuted = &#34;#56504A&#34;,
+  oxblood = &#34;#A8201A&#34;,
+  canvas = &#34;#0a0908&#34;,
+}
+
+-- DESIGN.md typography, with its own fallbacks: players rarely have the
+-- site&#39;s fonts installed, and Georgia or the system serif stands in.
+ui.fonts = {
+  display = &#34;&#39;DM Serif Display&#39;, Georgia, serif&#34;,
+  body = &#34;&#39;Source Serif 4&#39;, Georgia, serif&#34;,
+  mono = &#34;&#39;JetBrains Mono&#39;, &#39;Fira Code&#39;, monospace&#34;,
 }
 
 ui.dockPercent = 32 -- share of the window width the dock takes
+
+-- The pawn, rasterized from the site header&#39;s canonical drawing by
+-- cmd/mudlet-package (Mudlet 5.0 labels cannot show SVG). Written to the
+-- profile directory at load, because a label image has to be a file.
+ui.pawnPNG = [[
+iVBORw0KGgoAAAANSUhEUgAAAEIAAABwCAYAAACq5qZOAAADf0lEQVR4nOycPY7TUBSFHz8VCDFI
+lgs3pKRjdsCwgkxLRbbACoAdZAcMOxhWQNhB2EGmcWG5CELQgh46jgzjZBz5nOcxOp9EgRRdPz7u
+ff/23WD+YBHAIsD9MR9e5NnjEMIp/ropq/pqrLbcSfmwIs+ehhDO8edsz8/WIYRVCOGirOqvqdqW
+RAQELCHgGKKQd2VVfxE1bYdcRJFnb+M/ZmCYyxDCoqzqb6RmXUMmAvW/avUBQ9nEjFKVi0SEQELD
+NvYtChmq4VMhIXISywSiqdBFoE9QSGiYoc+gQi0NjA4bZswDxP7iEysYOyOW5HjJnkUT0ZospWJW
+5NmcFYyZESkl0J9pEYApYt/aQckJSnIwFBGKcf0IZowgrIxQzhuS4I0ZwBKRahIlgyJizJ0lLMQG
+wyyNNTFWb1grUaaIFTFWX2iLL6aIC2KsvtBEsFefnxNOrLZlVT9hBWMPn0P3Jo+Buvq8xwz2/cfP
+q0cPH8TJ1TNm3A7WZVW/YgZUTKgW4nnFFs+gQheBLfdz1vjewWIym7do6Bk5M7bs7bk2srUGZJyS
+5hdrbONLJISER35z9PLHLpljFizLqn4vatqO1IfA89Yh8MmBn8aJ0mVZ1R9TtS2piDbYWfo3Q7Yp
+T8BNB96YARYBBl8dKvLstWKmdyRxyv1mSADGHarZSFv5VFwawCKARQCLAIzOcpV4Z6qLyZ+r3Bpc
+GsAigPxSepFnHxhH92VVv+S0qJsUV5B/kUKdKe9kS0ujyLPnxHCUCyH7UPcRzAskkxbBbLx0YacW
+wWy8M0IQ6xpTEhE73xfMeG1kIkSNlt3eU2aEIpVl5aEUofjfm2RGWASQvMqkuu4sEYHGHjrbHIIk
+K1QZobybbRHK2CoRylmgJPYUM0Ky+FKJkK4UWW/ttFG8AEtvZAf08lBkhHSVCOgZpxCR4mTcGQHo
+nbFFgKmWBnuHnCuC3bgboGYeOyNSlEUDtTzYIlK+CGsRwKUBnBENzJ1y5hdFUo4YDbQMZGbEGF8M
+uJUiUvYPDbTJ29S/KOKMYD9z6iJoIwflMhnOMca6oT/K5xr+W3plhPJeQiLWN30UtG9pjPGRDCax
+bA9eTfTNW2ARwCKARQCLABYB+g6fY7+qNBS/6tQXlwbYlQbpG/dTY9W8GeSMABYBLAJYBLAIYBHA
+IoBFmL9xRgCLABYBLAL8DgAA//+6haphcxRRcwAAAABJRU5ErkJggg==
+]]
+
+local function decodeBase64(data)
+  local alphabet = &#34;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/&#34;
+  local lookup = {}
+  for i = 1, #alphabet do
+    lookup[alphabet:sub(i, i)] = i - 1
+  end
+  local out, bits, count = {}, 0, 0
+  for char in data:gmatch(&#34;[%w+/]&#34;) do
+    bits = bits * 64 + lookup[char]
+    count = count + 1
+    if count == 4 then
+      out[#out + 1] = string.char(math.floor(bits / 65536) % 256, math.floor(bits / 256) % 256, bits % 256)
+      bits, count = 0, 0
+    end
+  end
+  if count == 3 then
+    out[#out + 1] = string.char(math.floor(bits / 1024) % 256, math.floor(bits / 4) % 256)
+  elseif count == 2 then
+    out[#out + 1] = string.char(math.floor(bits / 16) % 256)
+  end
+  return table.concat(out)
+end
+ui.decodeBase64 = decodeBase64
+
+local function writePawn()
+  local path = getMudletHomeDir() .. &#34;/darkpawns-pawn.png&#34;
+  local file = io.open(path, &#34;wb&#34;)
+  if not file then
+    return nil
+  end
+  file:write(decodeBase64(ui.pawnPNG))
+  file:close()
+  return path
+end
 
 local function dockWidth()
   local width = getMainWindowSize()
   return math.floor(width * ui.dockPercent / 100)
 end
 
-local function gaugeStyle(colour)
-  return string.format([[
-    background-color: %s;
-    border: 1px solid %s;
-    border-radius: 2px;
-  ]], colour, ui.palette.rule)
+local function transparent(label)
+  label:setStyleSheet(&#34;background-color: transparent;&#34;)
 end
 
-local function gaugeBackStyle()
-  return string.format([[
-    background-color: %s;
-    border: 1px solid %s;
-    border-radius: 2px;
-  ]], ui.palette.canvas, ui.palette.rule)
+-- An eyebrow: the site&#39;s small uppercase section label in Oxblood.
+local function eyebrow(name, text)
+  local label = Geyser.Label:new({ name = name, height = 22, v_policy = Geyser.Fixed }, ui.box)
+  transparent(label)
+  label:echo(string.format(
+    [[&lt;span style=&#34;font-family: %s; font-size: 11px; font-weight: bold; color: %s;&#34;&gt;%s&lt;/span&gt;]],
+    ui.fonts.mono, ui.palette.oxblood, text))
+  return label
 end
 
 function ui.build()
@@ -128,48 +195,69 @@ function ui.build()
     return
   end
 
-  ui.dock = Geyser.VBox:new({
+  -- The chassis: Paper-Deep, an Ink rule on the edge facing the game text.
+  ui.dock = Geyser.Label:new({
     name = &#34;DarkPawns.dock&#34;,
     x = &#34;-&#34; .. ui.dockPercent .. &#34;%&#34;, y = 0,
     width = ui.dockPercent .. &#34;%&#34;, height = &#34;100%&#34;,
   })
+  ui.dock:setStyleSheet(string.format(
+    &#34;background-color: %s; border-left: 1px solid %s;&#34;, ui.palette.paperDeep, ui.palette.ink))
 
-  ui.status = Geyser.Label:new({
-    name = &#34;DarkPawns.status&#34;,
-    height = 28, v_policy = Geyser.Fixed,
-    fgColor = ui.palette.paper,
-    message = &#34;Dark Pawns&#34;,
+  ui.box = Geyser.VBox:new({
+    name = &#34;DarkPawns.box&#34;, x = &#34;4%&#34;, y = &#34;1%&#34;, width = &#34;92%&#34;, height = &#34;98%&#34;,
   }, ui.dock)
-  ui.status:setStyleSheet(string.format([[
-    background-color: %s;
-    border-bottom: 1px solid %s;
-    padding-left: 6px;
-    font-family: serif;
-  ]], ui.palette.canvas, ui.palette.rule))
 
-  ui.gauges = {}
+  -- The lockup.
+  ui.header = Geyser.HBox:new({ name = &#34;DarkPawns.header&#34;, height = 56, v_policy = Geyser.Fixed }, ui.box)
+  ui.pawn = Geyser.Label:new({ name = &#34;DarkPawns.pawn&#34;, width = 33, h_policy = Geyser.Fixed }, ui.header)
+  transparent(ui.pawn)
+  local pawnFile = writePawn()
+  if pawnFile then
+    ui.pawn:setBackgroundImage(pawnFile)
+  end
+  ui.wordmark = Geyser.Label:new({ name = &#34;DarkPawns.wordmark&#34; }, ui.header)
+  transparent(ui.wordmark)
+  ui.wordmark:echo(string.format(
+    [[&lt;div style=&#34;font-family: %s; font-size: 21px; line-height: 82%%; color: %s; padding-left: 8px;&#34;&gt;DARK&lt;br&gt;&lt;span class=&#34;accent&#34; style=&#34;color: %s;&#34;&gt;PAWNS&lt;/span&gt;&lt;/div&gt;]],
+    ui.fonts.display, ui.palette.ink, ui.palette.oxblood))
+
+  ui.status = Geyser.Label:new({ name = &#34;DarkPawns.status&#34;, height = 26, v_policy = Geyser.Fixed }, ui.box)
+  ui.status:setStyleSheet(string.format(
+    &#34;background-color: transparent; border-top: 1px solid %s;&#34;, ui.palette.ink))
+  ui.status:echo(string.format([[&lt;span style=&#34;font-family: %s; color: %s;&#34;&gt;Not in the game yet&lt;/span&gt;]],
+    ui.fonts.body, ui.palette.inkMuted))
+
+  -- Gauges: the reading in ink text, the bar as a thin rule of colour. HP is
+  -- Oxblood, mana Ink, movement Ink-Muted: all three read by label first.
+  ui.gauges, ui.readings = {}, {}
   for _, spec in ipairs({
-    { key = &#34;hp&#34;, label = &#34;HP&#34;, colour = ui.palette.hp },
-    { key = &#34;mp&#34;, label = &#34;Mana&#34;, colour = ui.palette.mana },
-    { key = &#34;mv&#34;, label = &#34;Move&#34;, colour = ui.palette.move },
+    { key = &#34;hp&#34;, label = &#34;HP&#34;, colour = ui.palette.oxblood },
+    { key = &#34;mp&#34;, label = &#34;MANA&#34;, colour = ui.palette.ink },
+    { key = &#34;mv&#34;, label = &#34;MOVE&#34;, colour = ui.palette.inkMuted },
   }) do
+    local reading = Geyser.Label:new({
+      name = &#34;DarkPawns.reading.&#34; .. spec.key, height = 20, v_policy = Geyser.Fixed,
+    }, ui.box)
+    transparent(reading)
+    reading.label = spec.label
+    ui.readings[spec.key] = reading
+
     local gauge = Geyser.Gauge:new({
-      name = &#34;DarkPawns.gauge.&#34; .. spec.key,
-      height = 22, v_policy = Geyser.Fixed,
-    }, ui.dock)
-    gauge.front:setStyleSheet(gaugeStyle(spec.colour))
-    gauge.back:setStyleSheet(gaugeBackStyle())
-    gauge.text:setStyleSheet(&#34;color: &#34; .. ui.palette.paper .. &#34;; padding-left: 6px;&#34;)
-    gauge:setValue(0, 1, spec.label)
-    gauge.label = spec.label
+      name = &#34;DarkPawns.gauge.&#34; .. spec.key, height = 8, v_policy = Geyser.Fixed,
+    }, ui.box)
+    gauge.front:setStyleSheet(string.format(&#34;background-color: %s; border: none;&#34;, spec.colour))
+    gauge.back:setStyleSheet(string.format(
+      &#34;background-color: %s; border: 1px solid %s;&#34;, ui.palette.paper, ui.palette.ink))
+    gauge.text:setStyleSheet(&#34;background-color: transparent;&#34;)
+    gauge:setValue(0, 1, &#34;&#34;)
     ui.gauges[spec.key] = gauge
   end
 
-  ui.map = Geyser.Mapper:new({
-    name = &#34;DarkPawns.map&#34;,
-    v_stretch_factor = 3,
-  }, ui.dock)
+  eyebrow(&#34;DarkPawns.mapLabel&#34;, &#34;MAP&#34;)
+  ui.map = Geyser.Mapper:new({ name = &#34;DarkPawns.map&#34;, v_stretch_factor = 3 }, ui.box)
 
+  eyebrow(&#34;DarkPawns.chatLabel&#34;, &#34;CHAT&#34;)
   ui.chat = Geyser.MiniConsole:new({
     name = &#34;DarkPawns.chat&#34;,
     v_stretch_factor = 2,
@@ -177,7 +265,7 @@ function ui.build()
     fontSize = 10,
     autoWrap = true,
     scrollBar = true,
-  }, ui.dock)
+  }, ui.box)
 
   ui.layout()
 end
@@ -193,6 +281,16 @@ function ui.hide()
   setBorderRight(0)
 end
 
+local function setReading(reading, current, maximum)
+  reading:echo(string.format(
+    [[&lt;table width=&#34;100%%&#34; cellspacing=&#34;0&#34; cellpadding=&#34;0&#34;&gt;&lt;tr&gt;]] ..
+    [[&lt;td style=&#34;font-family: %s; font-size: 11px; font-weight: bold; color: %s;&#34;&gt;%s&lt;/td&gt;]] ..
+    [[&lt;td align=&#34;right&#34; style=&#34;font-family: %s; font-size: 12px; color: %s;&#34;&gt;%d / %d&lt;/td&gt;]] ..
+    [[&lt;/tr&gt;&lt;/table&gt;]],
+    ui.fonts.mono, ui.palette.inkMuted, reading.label, ui.fonts.mono, ui.palette.ink, current, maximum))
+  reading.value = { current, maximum }
+end
+
 -- Char.Vitals: {&#34;hp&#34;,&#34;maxhp&#34;,&#34;mp&#34;,&#34;maxmp&#34;,&#34;mv&#34;,&#34;maxmv&#34;}
 function ui.updateVitals()
   local vitals = gmcp.Char and gmcp.Char.Vitals
@@ -202,8 +300,8 @@ function ui.updateVitals()
   for key, gauge in pairs(ui.gauges) do
     local current, maximum = tonumber(vitals[key]), tonumber(vitals[&#34;max&#34; .. key])
     if current and maximum then
-      gauge:setValue(math.max(current, 0), math.max(maximum, 1),
-        string.format(&#34;%s %d / %d&#34;, gauge.label, current, maximum))
+      gauge:setValue(math.max(current, 0), math.max(maximum, 1), &#34;&#34;)
+      setReading(ui.readings[key], current, maximum)
     end
   end
 end
@@ -214,7 +312,9 @@ function ui.updateStatus()
   if not (ui.status and status) then
     return
   end
-  ui.status:echo(string.format(&#34;%s &amp;middot; level %s %s %s &amp;middot; %s gold&#34;,
+  ui.status:echo(string.format(
+    [[&lt;span style=&#34;font-family: %s; color: %s;&#34;&gt;&lt;b style=&#34;color: %s;&#34;&gt;%s&lt;/b&gt; &amp;middot; level %s %s %s &amp;middot; %s gold&lt;/span&gt;]],
+    ui.fonts.body, ui.palette.inkMuted, ui.palette.ink,
     status.name or &#34;&#34;, status.level or &#34;?&#34;, status.race or &#34;&#34;, status.class or &#34;&#34;, status.gold or 0))
 end
 

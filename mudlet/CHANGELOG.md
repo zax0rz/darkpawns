@@ -8,8 +8,12 @@ package when it changes, so an unbumped change never reaches players.
 
 First release, built against Dark Pawns GMCP message set 1 (`docs/gmcp.md`).
 
-- Dock on the right: character line (`Char.Status`), hit point, mana and
-  movement gauges (`Char.Vitals`), the map, and a chat window.
+- Dock on the right, styled as the website's /play page: a Paper-Deep
+  chassis with the Dark Pawns lockup (the pawn, DARK over PAWNS), the
+  character line (`Char.Status`), hit point, mana and movement readings with
+  thin gauges (`Char.Vitals`), then the map and a chat window on the game's
+  dark canvas. DESIGN.md colours and fonts only; all text clears WCAG AA, and
+  no reading depends on colour alone.
 - Mapper built from `Room.Info` as you walk, keyed by the game's room
   numbers; double-click a room to walk there.
 - Chat window fed by `Comm.Channel.Text`: say, tell, gossip, auction,

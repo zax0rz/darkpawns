@@ -39,14 +39,14 @@ Cases 9 and 10 swap them: Warden in Mudlet, Tester in the plain client.
 | **Install** | | |
 | 1 | Connect Mudlet for the first time. | Mudlet prints that it is downloading and installing `darkpawns`. The dock appears on the right. No errors. |
 | 2 | `lua display(gmcp)` before logging in. | `Client` present. No `Char` or `Room` yet. |
-| 3 | Log in as Tester. | Character line, e.g. `Tester · level 1 Human Warrior · 0 gold`. All three gauges filled. Map shows the start room. |
+| 3 | Log in as Tester. | The dock matches the website: a cream (Paper-Deep) panel with the ink pawn and **DARK** over **PAWNS** (PAWNS in oxblood) at the top, then the character line, e.g. `Tester · level 1 Human Warrior · 0 gold`, then HP, MANA and MOVE readings (`20 / 20` style) over full bars, then MAP and CHAT on dark panels. Map shows the start room. |
 | 4 | Type `dp`. | Version `1.0.0` and the command list. |
 | **Map** | | |
 | 5 | Walk out of the temple and around a few rooms, then back. | Each new room is drawn one step from the last and linked both ways. The current room stays centred. Returning redraws nothing. |
 | 6 | Walk into a wall (`up` where there is no exit). | "Alas, you cannot go that way..." The map does not move. |
 | 7 | Go to the Western Gate (8040, west end of Market Street). If the gate is open, `close gate`. Then `look`. | `west` is absent from `[ Exits: ]` and from `gmcp.Room.Info.exits`. |
 | 8 | `open gate`, then `look`. (If it is locked, the city has shut it for the night: skip this case and rerun it by day.) | `west` appears in both. The map gains a stub, and a real exit once you walk through. |
-| 9 | Close the gate again. Quit Tester and log Mudlet in as Warden. `look` at the gate. | Warden's `[ Exits: ]` shows `(west)` in parentheses, and `gmcp.Room.Info.exits` includes `w`. Immortals see closed exits. |
+| 9 | Close the gate again. Quit Tester and log Mudlet in as Warden. Type `autoexit` if the exit line is missing (the first character starts with it off, as in C), then `look` at the gate. | Warden's `[ Exits: ]` shows `(west)` in parentheses, and `gmcp.Room.Info.exits` includes `w`. Immortals see closed exits. |
 | 10 | Still as Warden: `holylight` off if it is on, then `goto 3001` (a dark Tunnel), then `goto 8004`. | In the tunnel: "Darkness", `gmcp.Room.Info` unchanged, the map does not move. At 8004 the map recentres on the temple. |
 | 11 | Log Mudlet back in as Tester for the rest of the run. Double-click a mapped room a few steps away. | Tester walks there. The path's commands appear as sent. |
 | **Gauges** | | |

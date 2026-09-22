@@ -3,7 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
+	"image/png"
 	"os"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -133,6 +136,7 @@ function getConnectionInfo() return "darkpawns.org", 7777, connected end
 function sendGMCP(msg) record("sendGMCP", msg) end
 function send(cmd, echo) record("send", cmd) end
 function getMainWindowSize() return 1000, 700 end
+function getMudletHomeDir() return mudletHome end
 function setBorderRight(px) record("setBorderRight", px) end
 function getTime() return "12:00" end
 function cecho(text) record("cecho", text) end
@@ -147,10 +151,11 @@ local function widget(kind, cons)
   function w:decho(text) table.insert(self.log, text) end
   function w:clear() self.log = {} end
   function w:setValue(current, maximum, text) self.value = {current, maximum, text} end
+  function w:setBackgroundImage(path) self.image = path; return true end
   return w
 end
 Geyser = {Fixed = "fixed", Dynamic = "dynamic"}
-for _, kind in ipairs({"VBox", "Label", "Gauge", "Mapper", "MiniConsole"}) do
+for _, kind in ipairs({"VBox", "HBox", "Label", "Gauge", "Mapper", "MiniConsole"}) do
   Geyser[kind] = {new = function(self, cons, parent)
     local w = widget(kind, cons)
     if kind == "Gauge" then
@@ -201,9 +206,16 @@ gmcp.Char = {Vitals = {hp = 80, maxhp = 100, mp = 20, maxmp = 20, mv = 98, maxmv
 fire("gmcp.Char.Vitals")
 fire("gmcp.Char.Status")
 local hp = DarkPawns.ui.gauges.hp.value
-check(hp[1] == 80 and hp[2] == 100 and hp[3] == "HP 80 / 100", "hp gauge")
-check(DarkPawns.ui.gauges.mv.value[3] == "Move 98 / 100", "move gauge")
+check(hp[1] == 80 and hp[2] == 100, "hp gauge")
+check(DarkPawns.ui.readings.hp.text:find("80 / 100", 1, true), "hp reading")
+check(DarkPawns.ui.readings.mv.text:find("98 / 100", 1, true) and DarkPawns.ui.readings.mv.text:find("MOVE", 1, true), "move reading")
 check(DarkPawns.ui.status.text:find("Walker", 1, true) and DarkPawns.ui.status.text:find("Magic User", 1, true), "status line")
+
+-- The lockup: DARK over PAWNS, Oxblood on PAWNS alone, and the pawn image
+-- installed from the file the package wrote.
+local mark = DarkPawns.ui.wordmark.text
+check(mark:find("DARK<br>", 1, true) and mark:find([[class="accent" style="color: #A8201A;">PAWNS]], 1, true), "wordmark lockup")
+check(DarkPawns.ui.pawn.image == mudletHome .. "/darkpawns-pawn.png", "pawn image not installed")
 
 local function enter(num, name, area, exits)
   gmcp.Room = {Info = {num = num, name = name, area = area, environment = "Inside", exits = exits}}
@@ -249,6 +261,8 @@ func TestPackageLoadsAndDrives(t *testing.T) {
 	}
 	L := lua.NewState()
 	defer L.Close()
+	home := t.TempDir()
+	L.SetGlobal("mudletHome", lua.LString(home))
 	if err := L.DoString(mudletStub); err != nil {
 		t.Fatalf("stub: %v", err)
 	}
@@ -268,5 +282,61 @@ func TestPackageLoadsAndDrives(t *testing.T) {
 	L.SetGlobal("reload", L.NewFunction(func(*lua.LState) int { load(); return 0 }))
 	if err := L.DoString(scenario); err != nil {
 		t.Fatal(err)
+	}
+
+	// The PNG the Lua decoded and wrote is byte-for-byte the one the
+	// generator rendered from the site header.
+	written, err := os.ReadFile(filepath.Join(home, "darkpawns-pawn.png"))
+	if err != nil {
+		t.Fatalf("pawn not written: %v", err)
+	}
+	drawing, err := readPawn(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := renderPawnPNG(drawing, pawnHeight)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(written, want) {
+		t.Fatalf("pawn PNG round-trip through the Lua base64 decoder changed it (%d bytes, want %d)", len(written), len(want))
+	}
+}
+
+// TestPawnIsTheCanonicalDrawing: the generator found the site header's five
+// shapes, in order, and draws them. check_wordmark.py holds the header to the
+// canonical coordinates; this holds the package to the header.
+func TestPawnIsTheCanonicalDrawing(t *testing.T) {
+	drawing, err := readPawn(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []pawnShape{
+		{"circle", []float64{50, 23, 12}},
+		{"rect", []float64{37, 38, 26, 5}},
+		{"polygon", []float64{43, 46, 57, 46, 62, 75, 38, 75}},
+		{"rect", []float64{31, 77, 38, 6}},
+		{"rect", []float64{26, 85, 48, 7}},
+	}
+	if !reflect.DeepEqual(drawing.shapes, want) || drawing.viewBox != [4]float64{24, 8, 52, 88} {
+		t.Fatalf("pawn drawing = %+v viewBox %v", drawing.shapes, drawing.viewBox)
+	}
+	pngBytes, err := renderPawnPNG(drawing, pawnHeight)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := png.Decode(bytes.NewReader(pngBytes))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The head is solid ink, the gap between collar and body is empty, and
+	// the corners are transparent.
+	at := func(vx, vy float64) uint32 {
+		scale := float64(pawnHeight) / 88
+		_, _, _, a := img.At(int((vx-24)*scale), int((vy-8)*scale)).RGBA()
+		return a
+	}
+	if at(50, 23) != 0xffff || at(50, 44.5) != 0 || at(25, 9) != 0 || at(50, 88) != 0xffff {
+		t.Fatal("rendered pawn does not match its shapes")
 	}
 }

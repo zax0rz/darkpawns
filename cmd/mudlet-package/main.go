@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/xml"
 	"flag"
 	"fmt"
@@ -49,13 +50,18 @@ type Script struct {
 	Source string
 }
 
-// Scripts reads root/src/*.lua in name order, with {{VERSION}} substituted.
+// Scripts reads root/src/*.lua in name order, with {{VERSION}} and
+// {{PAWN_PNG_BASE64}} substituted.
 func Scripts(root string) (version string, scripts []Script, err error) {
 	raw, err := os.ReadFile(filepath.Clean(filepath.Join(root, "VERSION")))
 	if err != nil {
 		return "", nil, err
 	}
 	version = strings.TrimSpace(string(raw))
+	pawn, err := pawnBase64(root)
+	if err != nil {
+		return "", nil, err
+	}
 	paths, err := filepath.Glob(filepath.Join(root, "src", "*.lua"))
 	if err != nil {
 		return "", nil, err
@@ -75,10 +81,31 @@ func Scripts(root string) (version string, scripts []Script, err error) {
 		}
 		scripts = append(scripts, Script{
 			Name:   "Dark Pawns " + name,
-			Source: strings.ReplaceAll(string(source), "{{VERSION}}", version),
+			Source: strings.NewReplacer("{{VERSION}}", version, "{{PAWN_PNG_BASE64}}", pawn).Replace(string(source)),
 		})
 	}
 	return version, scripts, nil
+}
+
+// pawnBase64 is the rasterized pawn as base64, wrapped at 76 columns so the
+// generated package stays reviewable in a diff.
+func pawnBase64(root string) (string, error) {
+	drawing, err := readPawn(root)
+	if err != nil {
+		return "", err
+	}
+	pngBytes, err := renderPawnPNG(drawing, pawnHeight)
+	if err != nil {
+		return "", err
+	}
+	encoded := base64.StdEncoding.EncodeToString(pngBytes)
+	var lines []string
+	for len(encoded) > 76 {
+		lines = append(lines, encoded[:76])
+		encoded = encoded[76:]
+	}
+	lines = append(lines, encoded)
+	return strings.Join(lines, "\n"), nil
 }
 
 // Build renders the package XML in the layout Mudlet exports.
