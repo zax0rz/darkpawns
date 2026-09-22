@@ -4,6 +4,7 @@ import { api, type Zone } from '../api/client';
 import { TableSkeleton } from '../components/Skeleton';
 import { olcApi } from '../api/olc';
 import { useState } from 'react';
+import { resetModeLabel } from '../lib/zoneLabels';
 
 export function ZonesPage() {
   const queryClient = useQueryClient();
@@ -116,7 +117,3 @@ export function ZonesPage() {
   );
 }
 
-function resetModeLabel(mode: number, schema?: { fields: { key: string; options?: { value: number; label: string }[] }[] }): string {
-  const field = schema?.fields.find((entry) => entry.key === 'reset_mode');
-  return field?.options?.find((option) => option.value === mode)?.label || 'Mode ' + mode;
-}

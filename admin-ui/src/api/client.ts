@@ -13,6 +13,12 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await requestResponse(path, options);
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+export async function requestResponse(path: string, options?: RequestInit): Promise<Response> {
   const token = localStorage.getItem('admin_token');
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -35,15 +41,18 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
     } catch {
       /* Keep the original text when the server did not return JSON. */
     }
+    // Legacy handlers answer {error}; Huma operations answer RFC 9457 {detail}.
     const message =
       typeof payload === 'object' && payload !== null && 'error' in payload &&
       typeof payload.error === 'string'
         ? payload.error
-        : `API error ${res.status}: ${body}`;
+        : typeof payload === 'object' && payload !== null && 'detail' in payload &&
+            typeof payload.detail === 'string'
+          ? payload.detail
+          : `API error ${res.status}: ${body}`;
     throw new ApiError(res.status, payload, message);
   }
-  if (res.status === 204) return undefined as T;
-  return res.json();
+  return res;
 }
 
 export interface Zone {
@@ -318,11 +327,13 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request<Finding[]>(`/findings${qs ? '?' + qs : ''}`);
   },
-  createFinding: (data: Omit<Finding, 'id' | 'created_at' | 'updated_at'>) =>
+  createFinding: (data: Pick<Finding, 'source' | 'severity' | 'title' | 'file' | 'line' | 'description'>) =>
     request<Finding>('/findings', { method: 'POST', body: JSON.stringify(data) }),
   updateFinding: (id: number, data: { status: string }) =>
     request<Finding>(`/findings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   triageSummaries: () => request<TriageSummary[]>('/triage/summaries'),
+  createTriageSummary: (data: Omit<TriageSummary, 'id' | 'created_at'>) =>
+    request<TriageSummary>('/triage/summaries', { method: 'POST', body: JSON.stringify(data) }),
 
   // Shops (Phase 4)
   shops: () => request<Shop[]>('/shops'),

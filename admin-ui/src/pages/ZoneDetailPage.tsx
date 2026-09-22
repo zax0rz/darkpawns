@@ -4,11 +4,8 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { olcApi, type OlcSchema } from '../api/olc';
 import { Skeleton, CardSkeleton } from '../components/Skeleton';
+import { resetModeLabel } from '../lib/zoneLabels';
 
-function resetModeLabel(mode: number, schema?: OlcSchema): string {
-  const field = schema?.fields.find((entry) => entry.key === 'reset_mode');
-  return field?.options?.find((option) => option.value === mode)?.label || 'Mode ' + mode;
-}
 
 export function ZoneDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +21,7 @@ export function ZoneDetailPage() {
   const schemaQueries = useQueries({
     queries: ['room', 'mob', 'obj', 'shop'].map((kind) => ({ queryKey: ['olc-schema', kind], queryFn: () => olcApi.schema(kind), staleTime: 30 * 60 * 1000, retry: false })),
   });
+  const zoneSchemaQuery = useQuery({ queryKey: ['olc-schema', 'zone'], queryFn: () => olcApi.schema('zone'), staleTime: 30 * 60 * 1000, retry: false });
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState('');
 
@@ -107,7 +105,7 @@ export function ZoneDetailPage() {
           <StatBlock label="Zone Number" value={zone.number} />
           <StatBlock label="Top Room" value={zone.top_room} />
           <StatBlock label="Lifespan" value={`${zone.lifespan} min`} />
-              <StatBlock label="Reset Mode" value={resetModeLabel(zone.reset_mode, schemaQueries[0]?.data as OlcSchema | undefined)} />
+              <StatBlock label="Reset Mode" value={resetModeLabel(zone.reset_mode, zoneSchemaQuery.data)} />
         </div>
       </div>
 

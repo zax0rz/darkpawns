@@ -48,6 +48,17 @@ export function WorkshopPage() {
 
       {error && <div className="border border-accent bg-paper-deep px-4 py-3 text-sm text-accent" role="alert">Workshop data could not be loaded: {(error as Error).message}</div>}
 
+      <section className="grid gap-3 md:grid-cols-2">
+        <Link to="/admin/workshop/scripts" className="border border-rule bg-paper-deep p-4 hover:border-accent">
+          <h2 className="text-lg text-ink">Lua scripts</h2>
+          <p className="mt-2 text-sm text-ink-muted">Browse references, parse-check, and safely publish live game scripts.</p>
+        </Link>
+        <Link to="/admin/workshop/text" className="border border-rule bg-paper-deep p-4 hover:border-accent">
+          <h2 className="text-lg text-ink">Server text</h2>
+          <p className="mt-2 text-sm text-ink-muted">Edit news, MOTD, help, credits, and the other canonical tedit files.</p>
+        </Link>
+      </section>
+
       <section className="border border-rule bg-paper-deep p-4">
         <div className="flex items-baseline justify-between gap-3">
           <div>

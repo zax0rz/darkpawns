@@ -1,4 +1,5 @@
 import type { OlcSchema } from '../../api/olc';
+import { Link } from 'react-router-dom';
 import { ServerProposal } from './ServerProposal';
 
 interface ScriptTarget {
@@ -49,6 +50,14 @@ export function LiveScriptControls({
               disabled={disabled}
               onCommit={onScriptName}
             />
+            {value.scriptName && (
+              <Link
+                to={`/admin/workshop/scripts?${new URLSearchParams({ script: value.scriptName, kind: schema.kind })}`}
+                className="mt-2 inline-block text-xs font-semibold text-accent hover:underline"
+              >
+                Open {value.scriptName} in the script editor
+              </Link>
+            )}
           </div>
         )}
         {scriptFlags && (
