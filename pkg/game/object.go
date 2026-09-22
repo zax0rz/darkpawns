@@ -265,7 +265,15 @@ func (o *ObjectInstance) GetAffects() []parser.ObjAffect {
 
 // GetExtraDescs returns the object's extra descriptions, including runtime
 // extra descriptions added via Lua extra() (stored in CustomData).
+//
+// An instance mutated by do_string owns a full snapshot (Runtime.ExtraDescs)
+// because C edits the live obj_data's ex_description list in place: the field
+// added by "string obj x description <keyword>" must be found first, and a
+// field whose description was replaced must keep its original position.
 func (o *ObjectInstance) GetExtraDescs() []parser.ExtraDesc {
+	if o.Runtime.ExtraDescsLive {
+		return o.Runtime.ExtraDescs
+	}
 	var descs []parser.ExtraDesc
 	if o.Prototype != nil {
 		descs = o.Prototype.ExtraDescs

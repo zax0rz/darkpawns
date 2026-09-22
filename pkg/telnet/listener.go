@@ -544,11 +544,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 						tc.write([]byte(text))
 						continue
 					}
-					if strings.HasSuffix(text, "\n") {
-						tc.writeLine(text)
-					} else {
-						tc.writeLine(text + "\r\n")
-					}
+					tc.writeLine(ensureLineEnded(text))
 				}
 			}
 		case "error":
@@ -928,6 +924,18 @@ func (tc *telnetConn) writeLocked(data []byte) {
 // transport boundary. Idempotent: existing "\r\n" is preserved, not doubled.
 func (tc *telnetConn) writeLine(s string) {
 	tc.write([]byte(normalizeCRLF(s)))
+}
+
+// ensureLineEnded appends CRLF only to text that carries no line ending at all.
+// A trailing '\r' already ends the line: C's historical LFCR pair ("\n\r") ends
+// most handler output, and appending another CRLF after it injects a blank line
+// the oracle never wrote whenever one command emits two messages (do_string's
+// WARNING/Ok pair is the first vehicle that exposed it — modify.c:632,765).
+func ensureLineEnded(text string) string {
+	if strings.HasSuffix(text, "\n") || strings.HasSuffix(text, "\r") {
+		return text
+	}
+	return text + "\r\n"
 }
 
 // normalizeCRLF converts any mix of "\r\n", C's historical "\n\r", lone

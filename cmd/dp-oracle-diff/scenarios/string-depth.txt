@@ -1,0 +1,151 @@
+# C-first vehicle for do_string (src/modify.c:594-772) — the live world string
+# editor for mobs and carried objects. The immortal actor (first player, level
+# 40) works the inline fields in the bread/guard rooms; the 38-level peer proves
+# the rename gate refuses below LEVEL_IMPL-1.
+#
+# Not covered here on purpose: deleting a NON-HEAD extra description. C reads
+# length[5] out of bounds and then dereferences a NULL d->str on that path
+# (modify.c:722-746), so the oracle process would segfault rather than produce
+# bytes to compare. The port's refusal is unit-proven instead
+# (TestStringDeleteNonHeadExtraDescRefusesInsteadOfCrashing) and documented as a
+# forced divergence.
+#
+# depth-case: string.usage
+# depth-case: string.type-abbrev
+# depth-case: string.empty-field-token
+# depth-case: string.unknown-field
+# depth-case: string.unknown-target
+# depth-case: string.mob-inline-fields
+# depth-case: string.mob-npc-field-refusals
+# depth-case: string.inline-truncation
+# depth-case: string.mob-long-blank-append
+# depth-case: string.obj-inline-fields
+# depth-case: string.obj-undefined-field
+# depth-case: string.extradesc-create
+# depth-case: string.extradesc-modify
+# depth-case: string.extradesc-delete
+# depth-case: string.editor-write-through
+# depth-case: string.editor-abort-no-restore
+# depth-case: string.editor-clear-buffer
+# depth-case: string.player-field-refusals
+# depth-case: string.player-rename-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 1 8162 80
+spawn-mob 18223 1 8105 80
+
+[setup:oracle]
+Stringtest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stringtest
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Stringpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Stringpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+# One level below LEVEL_IMPL-1, so the peer's rename attempt is refused.
+advance Stringpeer 38
+goto 8162
+get bread
+goto 8105
+teleport Stringpeer 8105
+
+[probe]
+string
+string blah guard name x
+string mobs guard name x
+string m guard title Lord
+string mob guard
+string mob guard bogus x
+string mob nobody name x
+string obj nobody name x
+string mob guard short A watchful guard
+string mob guard long A watchful guard stands here.
+string mob guard description A scrawny figure in a harbor cloak.
+string mob guard title Lord
+look guard
+string mob guard long
+string mob guard name abcdefghijklmnopqrst
+string mob abcdefghijklmno short still standing here
+string obj bread name loaf bread
+string obj bread short A crusty loaf of bread
+string obj bread long A loaf of bread lies here.
+string obj bread title Lord
+string obj bread description
+look bread
+string obj bread description crust
+A golden crust.
+@
+look crust
+string obj bread description CRUST
+A darker crust.
+@
+look crust
+string obj bread delete-description nope
+string obj bread delete-description crust
+look crust
+string mob abcdefghijklmno short
+a guard with a fresh short description
+/l
+/a
+look abcdefghijklmno
+string mob abcdefghijklmno description
+first line of the description
+/c
+second line after clearing
+@
+look abcdefghijklmno
+string mob Stringpeer short A peer
+string mob Stringpeer title the Unlucky
+send:peer string mob Stringtest name Renamedgod
+string mob Stringpeer name Renamedpeer

@@ -769,6 +769,14 @@ func OneArgument(input string) (string, string) {
 	return oneArgument(input)
 }
 
+// IsAbbrev exposes C is_abbrev (src/interpreter.c:1356-1370) to command
+// packages: true when arg is a non-empty prefix of word, case-insensitively.
+// The direction matters — is_abbrev(buf, "mob") accepts "m"/"mo"/"mob" and
+// rejects "mobs", which is the opposite of a HasPrefix(buf, "mob") test.
+func IsAbbrev(arg, word string) bool {
+	return isAbbrev(arg, word)
+}
+
 // oneWordArg copies the first non-fill-word token, accepting a double-quoted
 // span as one token, and returns the remainder. This mirrors C one_word
 // (interpreter.c:1291), which do_mold uses for the new object's name.

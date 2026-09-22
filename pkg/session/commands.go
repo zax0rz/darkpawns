@@ -154,6 +154,7 @@ func init() {
 	registerCommand("oedit", wrapArgs(cmdOedit), "Edit an object with the OLC object editor.")
 	registerCommand("zedit", wrapArgs(cmdZedit), "Edit zone reset commands.")
 	registerCommand("sedit", wrapArgs(cmdSedit), "Edit a shop with the OLC shop editor.")
+	registerCommand("string", wrapArgs(cmdString), "Edit the strings of live mobs and objects.")
 	registerCommand("players", wrapArgs(cmdPlayers), "Show all registered players.")
 	registerCommand("clear", wrapArgs(cmdClear), "Clear the screen.", "cls")
 	registerCommand("whoami", wrapArgs(cmdWhoami), "Show your own name.")
@@ -833,6 +834,11 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	}
 	if cmd == "set" {
 		return cmdSetText(s, args, rawArgs)
+	}
+	if cmd == "string" {
+		// do_string's inline string is the raw line remainder (quad_arg copies
+		// it verbatim), so the transport's untouched text is required.
+		return cmdStringText(s, args, rawArgs)
 	}
 	if (cmd == "wiznet" || cmd == ";") && rawArgs != "" {
 		return cmdWiznetText(s, rawArgs)
