@@ -154,6 +154,28 @@ expired partitions dropped automatically; without it the corpus is retained
 indefinitely. Until it is enabled, no connection to the research database is
 made beyond schema/partition setup.
 
+### TLS telnet (optional)
+
+Plain telnet sends passwords in the clear. To also serve telnet over TLS,
+point the server at a certificate and pick a port:
+
+```bash
+export TELNET_TLS_CERT_FILE=/path/to/fullchain.pem
+export TELNET_TLS_KEY_FILE=/path/to/privkey.pem
+./server -telnet-tls-port 7778
+```
+
+These are separate from `TLS_CERT_FILE`/`TLS_KEY_FILE`, which switch the HTTP
+server to HTTPS; behind a TLS-terminating proxy, set only the telnet pair. The
+server exits if the port is requested without a readable certificate. It
+re-reads the files when they change, so a renewal (for example a Let's Encrypt
+certificate the reverse proxy already manages) needs no restart; the server
+user must be able to read them. Only TLS 1.2 and newer are accepted.
+
+While the TLS port runs, MSSP advertises it (`TLS`, plus `HOSTNAME` from the
+certificate), and Mudlet offers the encrypted port to players who connect in
+plaintext. The login banner is unchanged.
+
 ### The Mudlet package (optional)
 
 The telnet listener speaks GMCP (see [`docs/gmcp.md`](docs/gmcp.md)), so

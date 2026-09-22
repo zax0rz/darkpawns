@@ -114,6 +114,8 @@ const greetingsLogo = "\r\n\r\n" +
 var (
 	connMu   sync.Mutex
 	listener net.Listener
+	// tlsListener is the optional TLS telnet listener (ListenTLS).
+	tlsListener net.Listener
 )
 
 var (
@@ -134,6 +136,14 @@ func Listen(port int, manager *session.Manager) error {
 	listener = ln
 	connMu.Unlock()
 
+	serve(ln, manager)
+	return nil
+}
+
+// serve runs the accept loop for ln in the background. Plain and TLS
+// listeners share it, and with it the connection limits and ban checks: a
+// TLS connection is the same telnet session once its handshake is done.
+func serve(ln net.Listener, manager *session.Manager) {
 	go func() {
 		for {
 			conn, err := ln.Accept()
@@ -189,9 +199,16 @@ func Listen(port int, manager *session.Manager) error {
 
 			go func(ip string) {
 				banLevel := effectiveBanLevel(ip, banManager)
-				if banLevel == game.BanAll {
-					_ = conn.Close() //nolint:errcheck // best-effort cleanup
+				reject := banLevel == game.BanAll
+				if reject {
 					slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
+				} else if !completeTLSHandshake(conn) {
+					// A banned address is dropped before any TLS work; everyone
+					// else must finish the handshake before the banner is sent.
+					reject = true
+				}
+				if reject {
+					_ = conn.Close() //nolint:errcheck // best-effort cleanup
 					connMu.Lock()
 					connCount--
 					connPerIP[ip]--
@@ -212,7 +229,6 @@ func Listen(port int, manager *session.Manager) error {
 			}(remoteIP)
 		}
 	}()
-	return nil
 }
 
 func ipFromAddr(addr string) string {
@@ -959,6 +975,14 @@ func (tc *telnetConn) sendMSSP() {
 	writeField("CREATED", "1997")
 	writeField("WEBSITE", "darkpawns.org")
 	writeField("PORT", "7777")
+	// TLS (with the certificate's HOSTNAME) is what Mudlet reads to offer a
+	// plaintext player the encrypted port; nothing is printed to the player.
+	if advert := tlsAdvert.Load(); advert != nil {
+		writeField("TLS", strconv.Itoa(advert.port))
+		if advert.hostname != "" {
+			writeField("HOSTNAME", advert.hostname)
+		}
+	}
 	writeField("ANSI", "1")
 	writeField("GMCP", "1")
 	writeField("MCCP", "1")
@@ -1106,7 +1130,7 @@ func sendCommand(s *session.Session, cmd string, args []string, rawLine string) 
 	return s.HandleMessage(cmdMsg)
 }
 
-// Stop closes the TCP telnet listener.
+// Stop closes the TCP telnet listener and the TLS listener, if any.
 func Stop() {
 	connMu.Lock()
 	defer connMu.Unlock()
@@ -1114,4 +1138,9 @@ func Stop() {
 		_ = listener.Close()
 		listener = nil
 	}
+	if tlsListener != nil {
+		_ = tlsListener.Close()
+		tlsListener = nil
+	}
+	tlsAdvert.Store(nil)
 }

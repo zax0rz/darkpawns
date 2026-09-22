@@ -19,8 +19,14 @@ The dock appears on the right. Type `dp` for its commands.
 
 ### Secure connection
 
-Dark Pawns does not run a TLS telnet port yet, so leave **Secure** unticked.
-This section will carry the TLS port once it exists.
+If the server runs its TLS port, Mudlet says so the first time you connect
+("A more secure connection on port N is available") and offers to switch.
+To set it up yourself instead, use the TLS port the server announced (the
+examples in this repository use `7778`) and tick **Secure**. Connect by the
+server's name, `darkpawns.org`, rather than an IP address: the certificate is
+issued for the name.
+
+Your password travels encrypted only on the secure port.
 
 ## What you get
 
