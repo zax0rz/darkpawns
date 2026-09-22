@@ -381,6 +381,10 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		}
 	}
 
+	// Structured copies of room renders, channel lines, and regen ticks for
+	// GMCP clients. The observer only reads state; text delivery is untouched.
+	world.OutOfBand = gmcpObserver{m: m}
+
 	// Wire CloseConnection so game-layer close requests route through the session
 	world.CloseConn = func(playerName string) {
 		m.UnregisterAndClose(playerName)
@@ -709,6 +713,7 @@ func (m *Manager) SetDamageFunc() {
 		if s, ok := m.GetSession(victimName); ok {
 			s.markDirty(VarHealth, VarMaxHealth)
 			s.flushDirtyVars()
+			s.gmcpVitals()
 		}
 
 		// Proactively find any player session fighting this victim to update their target display in real-time
@@ -1621,6 +1626,10 @@ type Session struct {
 	dirtyVars           map[string]bool // vars changed since last flush
 	pendingEvents       []interface{}   // queued EVENTS since last flush
 	wantsStructuredData bool
+	// gmcp is the telnet GMCP negotiation and change-tracking state; see
+	// gmcp.go. It is independent of wantsStructuredData, which also changes
+	// text delivery (the pager) and so must never follow from GMCP.
+	gmcp gmcpState
 
 	// Character creation state
 	creationSaved bool // New character persisted at accepted stats, not yet admitted.
