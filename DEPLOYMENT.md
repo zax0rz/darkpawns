@@ -162,8 +162,14 @@ Mudlet players get gauges, a map, and a chat window from the package in
 publish `mudlet/darkpawns.xml` at a public URL and set:
 
 ```bash
-export DP_MUDLET_PACKAGE_URL='https://example.org/mudlet/darkpawns.xml'
+export DP_MUDLET_PACKAGE_URL='https://darkpawns.org/darkpawns.xml'
 ```
+
+That is the URL Dark Pawns itself uses, serving the file from the game deploy
+next to the binary. A self-hosted server sets its own URL: pointing at another
+server's copy offers players a package built for that server's version.
+Keep the file name `darkpawns.xml`, since Mudlet names the installed package
+after it.
 
 The server announces the version compiled into it (`mudlet/VERSION`), and
 Mudlet reinstalls the package whenever that version changes, so publish the

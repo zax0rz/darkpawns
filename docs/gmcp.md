@@ -138,7 +138,7 @@ sent.
 ### `Client.GUI`
 
 ```json
-{"version":"1.0.0","url":"https://example.org/mudlet/darkpawns.xml"}
+{"version":"1.0.0","url":"https://darkpawns.org/darkpawns.xml"}
 ```
 
 On GMCP negotiation, when `DP_MUDLET_PACKAGE_URL` is set. Mudlet installs the

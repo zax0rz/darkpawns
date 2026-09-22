@@ -12,7 +12,7 @@ the game text itself is exactly what any other client sees.
    - **Port:** `7777`
 2. Connect. If the server offers the package, Mudlet downloads and
    installs it on its own, and upgrades it when a new version ships.
-3. Otherwise, download [`darkpawns.xml`](darkpawns.xml) and import it:
+3. Otherwise, download [`darkpawns.xml`](https://darkpawns.org/darkpawns.xml) and import it:
    **Toolbox → Package Manager → Install**, then choose the file.
 
 The dock appears on the right. Type `dp` for its commands.
@@ -63,5 +63,6 @@ current, loads every script into Lua 5.1 against a stub of Mudlet's API, and
 replays a session through the gauges, map and chat.
 
 The server offers the package through GMCP `Client.GUI` when
-`DP_MUDLET_PACKAGE_URL` is set to a public URL of `darkpawns.xml`; see
+`DP_MUDLET_PACKAGE_URL` is set to a public URL of `darkpawns.xml` (Dark Pawns
+itself serves it at `https://darkpawns.org/darkpawns.xml`); see
 [`docs/gmcp.md`](../docs/gmcp.md) for the message set.
