@@ -340,5 +340,5 @@ export const api = {
   kickPlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/kick`, { method: 'POST' }),
   metrics: () => request<ServerMetrics>('/metrics'),
   saveWorld: () => request<{ status: string }>('/save-world', { method: 'POST' }),
-  resetAllZones: () => request<{ status: string; count: number }>('/reset-all-zones', { method: 'POST' }),
+  resetAllZones: () => request<{ status: string; zones_reset: number; zones_total: number; errors?: string[] }>('/reset-all-zones', { method: 'POST' }),
 };

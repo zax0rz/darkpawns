@@ -94,9 +94,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		Lockout:   15 * time.Minute,
 	})
 
-	// Public routes (no auth required)
-	track("/admin/login", wrap(handleLogin(database, loginAttempts)))
-
 	// Static admin UI files (no auth required — SPA needs to load before login)
 	adminUIDir := os.Getenv("ADMIN_UI_DIR")
 	if adminUIDir == "" {
@@ -149,6 +146,14 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		doc = apidoc.New()
 	}
 	ri.api = doc.NewInternalAPI(humaMux)
+	var loginDatabase loginPlayerDB
+	if database != nil {
+		loginDatabase = database
+	}
+	registerLoginOperation(ri.api, loginDatabase, loginAttempts)
+	// Public route: rate-limited exactly like the legacy login, but deliberately
+	// outside the JWT/role middleware used by every authenticated operation.
+	track("/admin/login", wrap(withClientIP(humaMux.ServeHTTP)))
 	registerZones(ri.api, world)
 	registerServerInfo(ri.api, world, auditLogger)
 	registerLogs(ri.api, logBuffer)
@@ -158,6 +163,8 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerShops(ri.api, world)
 	registerRooms(ri.api, world)
 	registerMetrics(ri.api, world)
+	registerWorldCompletion(ri.api, world, auditLogger)
+	registerDatabaseCompletion(ri.api, database)
 	var olcState OLCReadStateProvider
 	if provider, ok := liveSessions.(OLCReadStateProvider); ok {
 		olcState = provider
@@ -174,8 +181,9 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Zones — read/write, requires builder role
 	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
-	track("/admin/zones/reset", wrap(corsMiddleware(requireRole("admin", handleZoneReset(world)))))
-	track("/admin/zones/", wrap(corsMiddleware(requireRole("builder", handleZoneByIDOrReset(world, auditLogger)))))
+	track("/admin/zones/reset", wrap(corsMiddleware(requireRole("admin", requireMethod(http.MethodPost, withClientIP(humaMux.ServeHTTP))))))
+	track("/admin/zones/{number}", wrap(corsMiddleware(requireRole("builder", requireMethod(http.MethodGet, withClientIP(humaMux.ServeHTTP))))))
+	track("/admin/zones/{number}/reset", wrap(corsMiddleware(requireRole("admin", requireMethod(http.MethodPost, withClientIP(humaMux.ServeHTTP))))))
 
 	// Server info — requires builder role. withClientIP stashes the client IP
 	// for the operation's audit log, which the old handler read from the
@@ -188,7 +196,9 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Online players — requires builder role
 	track("/admin/players", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	// Player detail — requires builder role for GET, admin for POST
-	track("/admin/players/", wrap(corsMiddleware(requireRole("builder", handlePlayerDetail(world, auditLogger)))))
+	track("/admin/players/{name}", wrap(corsMiddleware(requireRole("builder", withClientIP(humaMux.ServeHTTP)))))
+	track("/admin/players/{name}/save", wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
+	track("/admin/players/{name}/kick", wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
 
 	// Mobs — read/write, requires builder role
 	track("/admin/mobs", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
@@ -200,7 +210,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Shops — read-only, requires builder role
 	track("/admin/shops", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
-	track("/admin/shops/", wrap(corsMiddleware(requireRole("builder", handleShopByKeeper(world, auditLogger)))))
+	track("/admin/shops/{keeper}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
 	// Rooms — read/write, requires builder role
 	track("/admin/rooms/{vnum}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
@@ -239,10 +249,10 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	track("/admin/prometheus", wrap(corsMiddleware(requireRole("builder", metrics.Handler().ServeHTTP))))
 
 	// Save world — requires admin role
-	track("/admin/save-world", wrap(corsMiddleware(requireRole("admin", handleSaveWorld(world, auditLogger)))))
+	track("/admin/save-world", wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
 
 	// Reset all zones — requires admin role
-	track("/admin/reset-all-zones", wrap(corsMiddleware(requireRole("admin", handleResetAllZones(world, auditLogger)))))
+	track("/admin/reset-all-zones", wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
 
 	// Agent status, findings, and triage — requires builder role
 	storePath := os.Getenv("ADMIN_STORE_PATH")
@@ -253,11 +263,12 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if err != nil {
 		return nil, fmt.Errorf("init agent store: %w", err)
 	}
-	track("/admin/agents", wrap(corsMiddleware(requireRole("builder", handleAgents(agentStore)))))
-	track("/admin/agents/status", wrap(corsMiddleware(requireRole("builder", handleAgentStatus(agentStore)))))
-	track("/admin/findings", wrap(corsMiddleware(requireRole("builder", handleFindings(agentStore)))))
-	track("/admin/findings/", wrap(corsMiddleware(requireRole("builder", handleFindingByID(agentStore)))))
-	track("/admin/triage/summaries", wrap(corsMiddleware(requireRole("builder", handleTriageSummaries(agentStore)))))
+	registerAgentStoreCompletion(ri.api, agentStore)
+	track("/admin/agents", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	track("/admin/agents/status", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	track("/admin/findings", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	track("/admin/findings/{id}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	track("/admin/triage/summaries", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
 	// Live agent sessions and decision capture — requires builder role.
 	// Inside the guard because a nil provider means there is no session
@@ -292,18 +303,36 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		"/admin/metrics",
 		"/admin/sessions/agents",
 		"/admin/research/capture",
+		"/admin/login",
+		"/admin/save-world",
+		"/admin/reset-all-zones",
+		"/admin/agents",
+		"/admin/agents/status",
+		"/admin/findings",
+		"/admin/triage/summaries",
+		"/admin/decisions",
+		"/admin/narrative",
 	} {
 		humaMux.HandleFunc(p, methodNotAllowedJSON)
 	}
+	// Parameterized routes keep their legacy fallback parsers for undefined
+	// methods. Besides preserving the JSON 405, this retains the historical
+	// path parsing and validation order. Method-qualified Huma patterns still win for the
+	// operations documented in OpenAPI.
+	humaMux.HandleFunc("/admin/players/{name}", handlePlayerDetail(world, auditLogger))
+	humaMux.HandleFunc("/admin/players/{name}/save", handlePlayerDetail(world, auditLogger))
+	humaMux.HandleFunc("/admin/players/{name}/kick", handlePlayerDetail(world, auditLogger))
+	humaMux.HandleFunc("/admin/shops/{keeper}", handleShopByKeeper(world, auditLogger))
+	humaMux.HandleFunc("/admin/findings/{id}", handleFindingByID(agentStore))
 
 	// Decision log — requires builder role
 	if database != nil {
-		track("/admin/decisions", wrap(corsMiddleware(requireRole("builder", handleDecisionLog(database)))))
+		track("/admin/decisions", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	}
 
 	// Narrative feed — requires builder role
 	if database != nil {
-		track("/admin/narrative", wrap(corsMiddleware(requireRole("builder", handleNarrativeFeed(database)))))
+		track("/admin/narrative", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	}
 
 	// SPA fallback — this MUST be registered last, after all API routes.
@@ -332,6 +361,16 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 // operation and everything else here.
 func methodNotAllowedJSON(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+}
+
+func requireMethod(method string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			methodNotAllowedJSON(w, r)
+			return
+		}
+		next(w, r)
+	}
 }
 
 // serveConsoleNotBuilt answers /admin/ when the console build is absent. A
