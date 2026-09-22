@@ -165,7 +165,61 @@ Modified:
 - The full corpus census runs at review (`make oracle-regression`), which is also
   where the 517-command surface count is taken.
 
-## Remaining / next
+## Fix round (post-census, 2026-09-21)
+
+The census re-ran this scenario with the oracle set and found a deterministic
+divergence my own runs had reported green. **That green was wrong and is
+withdrawn**: the same commit, same scenario and same oracle reproduce six
+fingerprints byte-for-byte here now (`look guard [actor]`,
+`look guard [peer]`, `look abcdefghijklmno [actor]` twice, `… [peer]` twice), and
+I could not reproduce the earlier passes from the record. The harness had a hole
+that made the class undetectable, which is now closed (below).
+
+Two defects, both on the `look` surface that `string`'s inline write exposes:
+
+1. **The description lost C's byte-level shape.** C's `look_at_char` calls
+   `send_to_char(i->player.description, ch)` (act.informative.c:394-395): verbatim, no
+   `act()` capitalization, and **no added terminator** — which is why an inline
+   `string mob x description …` (whose trailing-CRLF append is commented out at
+   modify.c:762) runs straight into `diag_char_to_char`'s condition sentence:
+   `A scrawny figure in a harbor cloak.A watchful guard is in excellent condition.`
+   The port terminated each message and capitalized the first letter, producing
+   two tidy lines. `appendLookedDescription` now emits the description verbatim
+   and, when it carries no line ending, merges the following line into the same
+   write (the transport terminates every message it is handed). Terminated
+   world-file descriptions keep their existing two-message shape.
+2. **The `look_at_target` observer echo was missing for mob targets.** C emits
+   `$n looks at you.` (TO_VICT, only when the target can see the looker) and
+   `$n looks at $N.` (TO_NOTVICT, which excludes the victim — comm.c:2533-2534)
+   for every character target, and only when the looker is not the target
+   (act.informative.c:1022-1029). The port emitted nothing on the ordinary `look`
+   path; the duplicate block that had been hand-rolled into the failed-peek path
+   is gone, so the echo now has one owner.
+
+Both are manifested on their own surface — `docs/fidelity/depth/look.tsv`
+(`look.description-unterminated`, `look.at-char-notify`), proved by the
+`string-depth` vehicle, with `docs/fidelity/depth/peek.tsv` delegating the echo
+to that owner because `do_peek`'s failure path reaches it through `do_look`.
+
+Harness fixes in the same round:
+
+- `cmd/dp-oracle-diff/main.go`: an unset `DP_ORACLE_BIN` used to print
+  `SKIP: …` and **exit 0**, which is indistinguishable from "both sides agree".
+  It now exits 2 with a refusal on stderr, so no path can claim green without
+  running the oracle.
+- `scripts/oracle_regression_worker.sh`: repeated probe labels (an editor's
+  repeated `@`, a repeated `look` target) were rejected as
+  `missing or malformed divergence fingerprints`, which is how this divergence
+  bounced between "green" and "unexplainable". Repeats are now suffixed
+  (`label-2`, `label-3`), in both the extractor and the pins reader, and
+  `scripts/test_oracle_regression_worker.sh` locks that in with
+  `duplicate-labels-pinned` / `duplicate-labels-unpinned` cases.
+  (Pre-existing, unrelated: the `aggregate-stale` case in that suite fails
+  identically on the untouched tree — verified by stashing this round's changes.)
+
+Validation after the fix: `string-depth` green (`--seed 1`, fresh binaries, oracle
+explicitly set, harness now unable to skip), 4 new unit tests in
+`pkg/game/look_description_test.go`, and the full corpus re-run.
 
 - Full oracle census at review, including the 517-command surface count.
 - Live review drive: a scratch instance exercising the level-39 rename and a

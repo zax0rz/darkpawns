@@ -88,11 +88,19 @@ main() {
 		if ! awk -F '\t' '
 			/^divergence-fingerprint\t/ {
 				saw = 1
-				if (NF != 3 || $2 == "" || length($3) != 64 || $3 !~ /^[0-9a-f]+$/ || seen[$2]++) {
+				if (NF != 3 || $2 == "" || length($3) != 64 || $3 !~ /^[0-9a-f]+$/) {
 					bad = 1
 					next
 				}
-				print $2 "\t" $3
+				# A scenario may repeat a probe line verbatim (the string editor
+				# repeats "@", look targets repeat, and so on), so one label can
+				# legitimately appear more than once. Suffix the repeats so the
+				# shape stays parseable and pin-comparable; rejecting duplicates
+				# outright turned an attributable divergence into "malformed".
+				label = $2
+				if (++seen[label] > 1)
+					label = label "-" seen[label]
+				print label "\t" $3
 			}
 			END { if (!saw || bad) exit 1 }
 		' "$input" >"$raw"; then
@@ -113,11 +121,16 @@ main() {
 			NR == 1 { next }
 			$1 == s {
 				found = 1
-				if (NF != 4 || $2 == "" || length($3) != 64 || $3 !~ /^[0-9a-f]+$/ || seen[$2]++) {
+				if (NF != 4 || $2 == "" || length($3) != 64 || $3 !~ /^[0-9a-f]+$/) {
 					bad = 1
 					next
 				}
-				print $2 "\t" $3
+				# Mirror extract_fingerprints: a scenario may pin several shapes
+				# for the same repeated probe label.
+				label = $2
+				if (++seen[label] > 1)
+					label = label "-" seen[label]
+				print label "\t" $3
 			}
 			END { if (!found || bad) exit 1 }
 		' "$pins_file" >"$raw"; then

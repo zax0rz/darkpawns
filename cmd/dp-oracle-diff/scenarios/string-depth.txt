@@ -29,6 +29,8 @@
 # depth-case: string.editor-clear-buffer
 # depth-case: string.player-field-refusals
 # depth-case: string.player-rename-gate
+# depth-case: look.description-unterminated
+# depth-case: look.at-char-notify
 
 [fixture]
 empty-players

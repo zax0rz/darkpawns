@@ -52,21 +52,10 @@ func (w *World) doPeek(ch *Player, me *MobInstance, cmd string, arg string) bool
 		if ok && sameCharTarget(lookedAt, victim) && victim.Mob != nil {
 			w.KenderSteal(ch, victim.Mob)
 		}
-		// C look_at_target emits the observer notifications after look_at_char.
-		// Peek's successful path calls look_at_char directly and does not emit
-		// these notifications; only the failed do_look vehicle reaches them.
-		var target Actor
-		if victim.Player != nil {
-			target = victim.Player
-		} else {
-			target = victim.Mob
-		}
-		if ok && sameCharTarget(lookedAt, victim) && target != nil {
-			if canSee(target, ch) {
-				Act(w, true, ch, target, nil, nil, "$n looks at you.", "", ToVict)
-			}
-			Act(w, true, ch, target, nil, nil, "$n looks at $N.", "", ToNotVict)
-		}
+		// The observer notifications ("$n looks at you." / "$n looks at $N.")
+		// belong to do_look's look_at_target, which the failure path above just
+		// ran through DoLook; they are emitted there and must not be repeated.
+		// C's peek success path calls look_at_char directly and emits neither.
 		return true
 	}
 
