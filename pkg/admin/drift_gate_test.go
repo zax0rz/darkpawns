@@ -16,26 +16,12 @@ var unmigratedAdminRoutes = []struct {
 	path   string
 	reason string
 }{
-	{"/admin/login", "public rate-limited login; migrate with its auth semantics"},
 	{"/admin", "SPA redirect to /admin/"},
 	{"/admin/favicon.svg", "static console asset"},
 	{"/admin/icons.svg", "static console asset"},
 	{"/admin/assets/", "static console assets"},
 	{"/admin/index.html", "SPA entry point"},
-	{"/admin/zones/reset", "zone reset trigger"},
-	{"/admin/zones/", "zone detail by id; GET stays with its POST {id}/reset sibling until the tranche-4 sub-action pattern exists"},
-	{"/admin/players/", "player detail; GET stays with its POST save/kick actions until those migrate"},
-	{"/admin/shops/", "shop detail by keeper; GET remains on the plain mux while SEDIT owns shop writes"},
 	{"/admin/prometheus", "prometheus exposition; text format, permanently not a typed JSON operation"},
-	{"/admin/save-world", "save world"},
-	{"/admin/reset-all-zones", "reset all zones"},
-	{"/admin/agents", "agent store list"},
-	{"/admin/agents/status", "agent status updates"},
-	{"/admin/findings", "agent findings"},
-	{"/admin/findings/", "finding detail by id"},
-	{"/admin/triage/summaries", "triage summaries"},
-	{"/admin/decisions", "decision log query"},
-	{"/admin/narrative", "narrative feed"},
 	{"/admin/", "SPA fallback for client-side routes"},
 }
 

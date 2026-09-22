@@ -64,7 +64,7 @@ export function OperationsPage() {
   const resetZonesMutation = useMutation({
     mutationFn: () => api.resetAllZones(),
     onSuccess: (data) => {
-      showToast(`Zone reset triggered: ${data.count} zones`, 'success');
+      showToast(`Zone reset triggered: ${data.zones_reset}/${data.zones_total} zones`, data.errors?.length ? 'error' : 'success');
       queryClient.invalidateQueries({ queryKey: ['server'] });
     },
     onError: (err: Error) => {
