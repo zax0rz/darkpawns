@@ -178,6 +178,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		olcPresence = provider
 	}
 	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
+	registerFileEdit(ri.api, world, database, auditLogger)
 
 	// Zones — read/write, requires builder role
 	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
@@ -235,6 +236,10 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	track("/admin/olc/room/{vnum}", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/room/{vnum}/draft", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	track("/admin/olc/room/{vnum}/draft/commit", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/files/{root}/listing", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/files/{root}/content", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/files/lua/usage", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	track("/admin/files/lua/resolve", wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 
 	// The Prometheus endpoint, moved here from an unauthenticated /metrics on
 	// the root mux. It was public on darkpawns.org and nobody noticed, because

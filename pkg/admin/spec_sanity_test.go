@@ -80,6 +80,10 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/olc/room/{vnum}":                {"post"},
 		"/admin/olc/room/{vnum}/draft":          {"get", "patch", "delete"},
 		"/admin/olc/room/{vnum}/draft/commit":   {"post"},
+		"/admin/files/{root}/listing":           {"get"},
+		"/admin/files/{root}/content":           {"get", "put", "delete"},
+		"/admin/files/lua/usage":                {"get"},
+		"/admin/files/lua/resolve":              {"get"},
 	}
 
 	var first []byte

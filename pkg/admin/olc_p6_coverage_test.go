@@ -297,3 +297,38 @@ func assertSameStrings(t *testing.T, want, got []string) {
 		t.Fatalf("telnet fields and wire ops differ:\nwant=%v\ngot=%v", want, got)
 	}
 }
+
+// zedit re-prompts on a prototype real_mobile/real_object cannot find; the web
+// refuses the same commands. vnum 0 is not special: it fails here only
+// because the fixture has no prototype 0.
+func TestZoneCommandPrototypesMatchZeditChecks(t *testing.T) {
+	world := newOLCTestWorld(t)
+	cases := []struct {
+		name string
+		cmd  parser.ZoneCommand
+		want string
+	}{
+		{"mob exists", parser.ZoneCommand{Command: "M", Arg1: 2001, Arg3: 1001}, ""},
+		{"mob vnum 0", parser.ZoneCommand{Command: "M", Arg1: 0, Arg3: 1001}, "That mobile does not exist (vnum 0)."},
+		{"give missing obj", parser.ZoneCommand{Command: "G", Arg1: 9999}, "That object does not exist (vnum 9999)."},
+		{"put into missing container", parser.ZoneCommand{Command: "P", Arg1: 3001, Arg3: 4444}, "That object does not exist (vnum 4444)."},
+		{"remove missing obj", parser.ZoneCommand{Command: "R", Arg1: 1001, Arg2: 1, Arg3: 5555}, "That object does not exist (vnum 5555)."},
+		{"remove mob", parser.ZoneCommand{Command: "R", Arg1: 1001, Arg2: 0, Arg3: 2001}, ""},
+		{"door has no prototype", parser.ZoneCommand{Command: "D", Arg1: 1001, Arg2: 0, Arg3: 1}, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, kind := range []olc.OperationKind{olc.OpAddZoneCommand, olc.OpModifyZoneCommand} {
+				cmd := tc.cmd
+				err := validateZoneCommandPrototypes(world, olc.Operation{Kind: kind, Command: &cmd})
+				got := ""
+				if err != nil {
+					got = err.Error()
+				}
+				if got != tc.want {
+					t.Fatalf("op %d: error = %q, want %q", kind, got, tc.want)
+				}
+			}
+		})
+	}
+}
