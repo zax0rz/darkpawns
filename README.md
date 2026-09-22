@@ -1,7 +1,8 @@
 [![CI](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml/badge.svg)](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml)
 [![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
 [![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
-[![License](https://img.shields.io/github/license/zax0rz/darkpawns)](LICENSE)
+![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ```
         (_____)           (_)    (_____)
@@ -14,12 +15,9 @@
                                  |||
                                  `.'
 ```
+On the banner decision: you already agreed to the plan, so you can tell your infra agent yes. I'd have them reword the gate to say the whole plan rather than just "via MSSP", something like:
 
-# Dark Pawns MUD
-
-**CircleMUD 3.0, rewritten in Go.** Dark Pawns is a multiplayer text RPG in the
-DikuMUD lineage — the classic C server faithfully ported to a single modern Go
-binary, running live today and built so anyone can host their own instance.
+7778 TLS telnet shipped and advertised where players choose how to connect: MSSP (Mudlet offers the upgrade), the website's connection instructions, the Mudlet directory listing, and the launch MOTD. The login banner stays C text (R1).
 
 [Play in your browser](https://darkpawns.org/play) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
