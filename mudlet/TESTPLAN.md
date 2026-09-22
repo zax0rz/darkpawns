@@ -48,7 +48,7 @@ Cases 9 and 10 swap them: Warden in Mudlet, Tester in the plain client.
 | 8 | `open gate`, then `look`. (If it is locked, the city has shut it for the night: skip this case and rerun it by day.) | `west` appears in both. The map gains a stub, and a real exit once you walk through. |
 | 9 | Close the gate again. Quit Tester and log Mudlet in as Warden. `look` at the gate. | Warden's `[ Exits: ]` shows `(west)` in parentheses, and `gmcp.Room.Info.exits` includes `w`. Immortals see closed exits. |
 | 10 | Still as Warden: `holylight` off if it is on, then `goto 3001` (a dark Tunnel), then `goto 8004`. | In the tunnel: "Darkness", `gmcp.Room.Info` unchanged, the map does not move. At 8004 the map recentres on the temple. |
-| 11 | Double-click a mapped room a few steps away. | Tester walks there. The path's commands appear as sent. |
+| 11 | Log Mudlet back in as Tester for the rest of the run. Double-click a mapped room a few steps away. | Tester walks there. The path's commands appear as sent. |
 | **Gauges** | | |
 | 12 | Walk several rooms. | The Move gauge drops with each step, in step with the prompt's `V` value. |
 | 13 | Stand still for two game hours (~2 minutes) after spending movement. | The Move gauge refills on the tick with no command typed. |
