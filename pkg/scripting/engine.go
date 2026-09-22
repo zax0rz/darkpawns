@@ -313,14 +313,21 @@ func (e *Engine) cleanupScriptGlobalsLocked(L *lua.LState, knownGlobals map[stri
 // subdirectories (mob/, room/, obj/). Matches C's SCRIPT_DIR/type/script_name
 // pattern from scripts.c:1775.
 func (e *Engine) resolveScriptPath(cleanName string) string {
+	return ResolveScriptPath(e.scriptsDir, cleanName)
+}
+
+// ResolveScriptPath is the engine's script_name lookup, exported so webOLC's
+// usage lookup and "edit script" link resolve a name to the same file the
+// next trigger will run. It returns "" when nothing matches.
+func ResolveScriptPath(scriptsDir, cleanName string) string {
 	// 1. Direct lookup (flat — globals.lua lives here)
-	direct := filepath.Join(e.scriptsDir, cleanName)
+	direct := filepath.Join(scriptsDir, cleanName)
 	if _, err := os.Stat(direct); err == nil {
 		return direct
 	}
 	// 2. Search known subdirectories (matches C's type parameter)
 	for _, sub := range []string{"mob", "room", "obj"} {
-		candidate := filepath.Join(e.scriptsDir, sub, cleanName)
+		candidate := filepath.Join(scriptsDir, sub, cleanName)
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate
 		}

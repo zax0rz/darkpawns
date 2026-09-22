@@ -202,6 +202,9 @@ func patchEntityDraft(ctx context.Context, in *entityPatchInput, world *game.Wor
 		if err != nil {
 			return nil, err
 		}
+		if err := validateZoneCommandPrototypes(world, operation); err != nil {
+			return nil, err
+		}
 		bindEntityLiveScriptOperation(world, kind, vnum, &operation)
 		operations = append(operations, operation)
 	}
@@ -210,6 +213,46 @@ func patchEntityDraft(ctx context.Context, in *entityPatchInput, world *game.Wor
 		return nil, huma.NewError(http.StatusBadRequest, err.Error())
 	}
 	return &entityDraftOutput{Body: makeEntityDraftBody(draft, claimEntry(writes, kind, vnum))}, nil
+}
+
+// validateZoneCommandPrototypes is zedit's prototype check (zedit.c:1039-1210):
+// every prototype argument must resolve through real_mobile/real_object, or
+// C re-prompts "That mobile/object does not exist". C has no vnum-0 rule; 0
+// is accepted exactly when a prototype 0 exists.
+func validateZoneCommandPrototypes(world *game.World, op olc.Operation) error {
+	if (op.Kind != olc.OpAddZoneCommand && op.Kind != olc.OpModifyZoneCommand) || op.Command == nil || world == nil {
+		return nil
+	}
+	mob := func(vnum int) error {
+		if _, ok := world.GetMobPrototype(vnum); !ok {
+			return &webOLCError{Message: fmt.Sprintf("That mobile does not exist (vnum %d).", vnum)}
+		}
+		return nil
+	}
+	obj := func(vnum int) error {
+		if _, ok := world.GetObjPrototype(vnum); !ok {
+			return &webOLCError{Message: fmt.Sprintf("That object does not exist (vnum %d).", vnum)}
+		}
+		return nil
+	}
+	c := op.Command
+	switch c.Command {
+	case "M":
+		return mob(c.Arg1)
+	case "O", "E", "G":
+		return obj(c.Arg1)
+	case "P":
+		if err := obj(c.Arg1); err != nil {
+			return err
+		}
+		return obj(c.Arg3)
+	case "R":
+		if c.Arg2 != 0 {
+			return obj(c.Arg3)
+		}
+		return mob(c.Arg3)
+	}
+	return nil
 }
 
 func bindEntityLiveScriptOperation(world *game.World, kind olc.Kind, vnum int, op *olc.Operation) {

@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type AgentStatus, type Finding, type LiveAgentSession } from '../api/client';
+import { useToast } from '../hooks/useToast';
+import { AGENT_STATUSES, FINDING_SEVERITIES, FINDING_SOURCES, FINDING_STATUSES } from '../lib/agentVocabulary';
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
@@ -15,7 +17,7 @@ function timeAgo(dateStr: string): string {
   return `${diffDay}d ago`;
 }
 
-function AgentCard({ agent }: { agent: AgentStatus }) {
+function AgentCard({ agent, onStatus }: { agent: AgentStatus; onStatus: (agentID: string, status: string) => void }) {
   const statusColor =
     agent.status === 'active'
       ? 'bg-online'
@@ -49,6 +51,12 @@ function AgentCard({ agent }: { agent: AgentStatus }) {
           <span className="text-ink-muted">{timeAgo(agent.last_run)}</span>
         </div>
       </div>
+      <label className="mt-4 block text-xs text-ink-muted">
+        Set status
+        <select value={agent.status} onChange={(event) => onStatus(agent.agent_id, event.target.value)} className="mt-1 block w-full border border-rule bg-paper px-2 py-2 text-xs text-ink">
+          {AGENT_STATUSES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      </label>
     </div>
   );
 }
@@ -67,7 +75,7 @@ const statusStyles: Record<string, string> = {
   fixed: 'bg-paper-deep text-ink',
 };
 
-function FindingRow({ finding }: { finding: Finding }) {
+function FindingRow({ finding, onStatus }: { finding: Finding; onStatus: (id: number, status: string) => void }) {
   return (
     <tr className="border-b border-rule hover:bg-paper transition-colors">
       <td className="px-4 py-3">
@@ -83,6 +91,11 @@ function FindingRow({ finding }: { finding: Finding }) {
         </span>
       </td>
       <td className="px-4 py-3 text-ink-muted text-xs">{finding.source}</td>
+      <td className="px-4 py-3">
+        <select aria-label={`Status for ${finding.title}`} value={finding.status} onChange={(event) => onStatus(finding.id, event.target.value)} className="border border-rule bg-paper px-2 py-1 text-xs text-ink">
+          {FINDING_STATUSES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      </td>
     </tr>
   );
 }
@@ -107,9 +120,43 @@ function LiveAgentRow({ session }: { session: LiveAgentSession }) {
 }
 
 export function AgentsPage() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [filterSource, setFilterSource] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('');
+  const emptyFinding = { source: 'reek', severity: 'medium', title: '', file: '', line: 0, description: '' };
+  const [newFinding, setNewFinding] = useState(emptyFinding);
+  const [newTriage, setNewTriage] = useState({ date: new Date().toISOString().slice(0, 10), confirmed: 0, rejected: 0, pending: 0, summary: '' });
+  const failed = (what: string) => (error: Error) => showToast(`${what} failed: ${error.message}`, 'error');
+  const statusMutation = useMutation({
+    mutationFn: ({ agentID, status }: { agentID: string; status: string }) => api.updateAgentStatus({ agent_id: agentID, status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['agents'] }),
+    onError: failed('Agent status update'),
+  });
+  const findingStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => api.updateFinding(id, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['findings'] }),
+    onError: failed('Finding update'),
+  });
+  const findingCreateMutation = useMutation({
+    mutationFn: () => api.createFinding(newFinding),
+    onSuccess: () => {
+      setNewFinding({ ...emptyFinding, source: newFinding.source, severity: newFinding.severity });
+      queryClient.invalidateQueries({ queryKey: ['findings'] });
+      showToast('Finding added', 'success');
+    },
+    onError: failed('Adding the finding'),
+  });
+  const triageCreateMutation = useMutation({
+    mutationFn: () => api.createTriageSummary(newTriage),
+    onSuccess: () => {
+      setNewTriage({ ...newTriage, confirmed: 0, rejected: 0, pending: 0, summary: '' });
+      queryClient.invalidateQueries({ queryKey: ['triageSummaries'] });
+      showToast('Triage summary added', 'success');
+    },
+    onError: failed('Adding the triage summary'),
+  });
 
   const { data: agents, isLoading: agentsLoading } = useQuery({
     queryKey: ['agents'],
@@ -192,7 +239,7 @@ export function AgentsPage() {
           </>
         ) : (
           agents?.map((agent) => (
-            <AgentCard key={agent.agent_id} agent={agent} />
+            <AgentCard key={agent.agent_id} agent={agent} onStatus={(agentID, status) => statusMutation.mutate({ agentID, status })} />
           ))
         )}
       </div>
@@ -208,8 +255,7 @@ export function AgentsPage() {
               className="bg-paper text-ink-muted text-xs rounded px-2 py-1 border border-rule"
             >
               <option value="">Source: All</option>
-              <option value="reek">Reek</option>
-              <option value="daeron">Daeron</option>
+              {FINDING_SOURCES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
             <select
               value={filterSeverity}
@@ -217,10 +263,7 @@ export function AgentsPage() {
               className="bg-paper text-ink-muted text-xs rounded px-2 py-1 border border-rule"
             >
               <option value="">Severity: All</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              {FINDING_SEVERITIES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
             <select
               value={filterStatus}
@@ -228,13 +271,22 @@ export function AgentsPage() {
               className="bg-paper text-ink-muted text-xs rounded px-2 py-1 border border-rule"
             >
               <option value="">Status: All</option>
-              <option value="open">Open</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="rejected">Rejected</option>
-              <option value="fixed">Fixed</option>
+              {FINDING_STATUSES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </div>
         </div>
+        <form onSubmit={(event) => { event.preventDefault(); findingCreateMutation.mutate(); }} className="grid gap-2 border-b border-rule bg-paper p-3 md:grid-cols-[8rem_8rem_1fr_1fr_6rem_auto]" aria-label="Add a finding">
+          <select aria-label="Source" value={newFinding.source} onChange={(event) => setNewFinding({ ...newFinding, source: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink">
+            {FINDING_SOURCES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <select aria-label="Severity" value={newFinding.severity} onChange={(event) => setNewFinding({ ...newFinding, severity: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink">
+            {FINDING_SEVERITIES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <input required aria-label="Title" placeholder="Finding title" value={newFinding.title} onChange={(event) => setNewFinding({ ...newFinding, title: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          <input aria-label="File" placeholder="pkg/path/file.go" value={newFinding.file} onChange={(event) => setNewFinding({ ...newFinding, file: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 font-mono text-xs text-ink" />
+          <input type="number" min="0" aria-label="Line" value={newFinding.line} onChange={(event) => setNewFinding({ ...newFinding, line: Number(event.target.value) })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          <button type="submit" disabled={findingCreateMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-40">Add finding</button>
+        </form>
 
         {findingsLoading ? (
           <div className="p-6 text-center text-ink-muted animate-pulse">Loading findings...</div>
@@ -251,11 +303,12 @@ export function AgentsPage() {
                 <th className="text-left px-4 py-3">Location</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Source</th>
+                <th className="text-left px-4 py-3">Set status</th>
               </tr>
             </thead>
             <tbody>
               {findings.map((finding) => (
-                <FindingRow key={finding.id} finding={finding} />
+                <FindingRow key={finding.id} finding={finding} onStatus={(id, status) => findingStatusMutation.mutate({ id, status })} />
               ))}
             </tbody>
           </table>
@@ -271,6 +324,14 @@ export function AgentsPage() {
         <div className="px-4 py-3 border-b border-rule">
           <h2 className="text-sm font-medium text-ink-muted">Triage Summaries</h2>
         </div>
+        <form onSubmit={(event) => { event.preventDefault(); triageCreateMutation.mutate(); }} className="grid gap-2 border-b border-rule bg-paper p-3 md:grid-cols-[10rem_6rem_6rem_6rem_1fr_auto]" aria-label="Add a triage summary">
+          <input type="date" required aria-label="Date" value={newTriage.date} onChange={(event) => setNewTriage({ ...newTriage, date: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          {(['confirmed', 'rejected', 'pending'] as const).map((field) => (
+            <input key={field} type="number" min="0" aria-label={field} placeholder={field} value={newTriage[field]} onChange={(event) => setNewTriage({ ...newTriage, [field]: Number(event.target.value) })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          ))}
+          <input aria-label="Summary" placeholder="Summary" value={newTriage.summary} onChange={(event) => setNewTriage({ ...newTriage, summary: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          <button type="submit" disabled={triageCreateMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-40">Add summary</button>
+        </form>
 
         {triagesLoading ? (
           <div className="p-6 text-center text-ink-muted animate-pulse">Loading triage summaries...</div>

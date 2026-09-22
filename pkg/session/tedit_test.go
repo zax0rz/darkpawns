@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/fileedit"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -447,4 +448,30 @@ func setTeditTestCache(t *testing.T, filename, value string) {
 		}
 		cacheMu.Unlock()
 	})
+}
+
+// webOLC saves tedit files through pkg/admin, which cannot import session.
+// The init-registered hook is the only thing that makes such a save visible
+// to news/motd; if it is ever unwired, NotifyTextSaved reports false.
+func TestWebTeditSaveRefreshesLiveText(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "Webtedit", game.LVL_IMPL, 1001)
+	t.Cleanup(func() {
+		cacheMu.Lock()
+		delete(cachedText, "news")
+		cacheMu.Unlock()
+	})
+	if !fileedit.NotifyTextSaved(m.world, "news", "web news\n") {
+		t.Fatal("session did not register the tedit live-text hook")
+	}
+	if err := cmdNews(s, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := readMsgText(t, s); got != "web news\n" {
+		t.Fatalf("news after web save = %q", got)
+	}
+	fileedit.NotifyTextSaved(m.world, "help/screen", "web help\n")
+	if m.world.HelpScreen != "web help\n" {
+		t.Fatalf("HelpScreen after web save = %q", m.world.HelpScreen)
+	}
 }

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -26,6 +27,11 @@ import { OperationsPage } from './pages/OperationsPage';
 import { WorkshopPage } from './pages/WorkshopPage';
 import { OlcHelpPage } from './pages/OlcHelpPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { Skeleton } from './components/Skeleton';
+
+// CodeMirror ships only with the file editor, not in the main bundle.
+const FileEditorPage = lazy(() => import('./pages/FileEditorPage').then((module) => ({ default: module.FileEditorPage })));
+const fileEditorFallback = <Skeleton className="h-[38rem] w-full" />;
 
 export default function App() {
   return (
@@ -57,6 +63,8 @@ export default function App() {
             <Route path="/admin/operations" element={<ErrorBoundary><OperationsPage /></ErrorBoundary>} />
             <Route path="/admin/workshop" element={<ErrorBoundary><WorkshopPage /></ErrorBoundary>} />
             <Route path="/admin/workshop/help" element={<ErrorBoundary><OlcHelpPage /></ErrorBoundary>} />
+            <Route path="/admin/workshop/scripts" element={<ErrorBoundary><Suspense fallback={fileEditorFallback}><FileEditorPage root="lua" /></Suspense></ErrorBoundary>} />
+            <Route path="/admin/workshop/text" element={<ErrorBoundary><Suspense fallback={fileEditorFallback}><FileEditorPage root="tedit" /></Suspense></ErrorBoundary>} />
             <Route path="/admin/webclient" element={<ErrorBoundary><TerminalPage /></ErrorBoundary>} />
           </Route>
         </Route>
