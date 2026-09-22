@@ -3457,3 +3457,48 @@ save-format (field order, delimiters, zedit reset serialization) must round-trip
 identically or the census's "byte-for-byte" property silently stops covering
 the files the web writes. zone_save.go (+tests) landed on main the same evening —
 first look suggests the save path is being treated as first-class.
+
+## 2026-09-21 — The Last Command-Surface Gap: `string` at PR #1546
+
+The `string` port (PR #1546) closes the command surface: per the brief, every
+command in `src/interpreter.c` now has a Go counterpart. `do_string`
+(src/modify.c:594-772) + `quad_arg` + `old_search_block` (whod.c:496-527,
+1-based/0/-1 contract) + the live editor shape (`string_add`,
+`improved_editor_execute`). CI green (lint/security/test).
+
+**Evidence class:** string-depth vehicle green ×18 incl. 4-way/6-way concurrent
+under added CPU load; fidelity-depth 27/29 (excluded: dead `get_obj` under R4
+no-invention; unreachable `IS_NPC` guard); 21 message literals byte-verified by
+script; 25-scenario regression = 24 pass + 1 worker-classification artifact,
+recorded as unexplained rather than rounded to green. The full census requires
+the C oracle binary on its host (`DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/...`)
+— not runnable from the Daeron clone; census is the one review item that runs
+on the Architect's box.
+
+**The vehicle caught two shared-transport bugs every earlier editor masked**
+(they all route through `string_write` and set PLR_WRITING; `string` does
+neither): (1) the prompt path never modeled `d->str` — `make_prompt` returns
+`"] "` whenever the descriptor string pointer is set (comm.c:1038-1039); Go
+keyed it on PLR_WRITING instead. (2) the telnet writer's `ensureLineEnded`
+treated only trailing `\n` as terminated, so C's historical `\n\r` (LFCR) got
+a second ending appended — a blank line between the two messages of one
+command. Both fixed session-wide, not string-local.
+
+**Forced divergence, justified:** field-6 delete on a non-head extra description
+is a *reachable C segfault* (modify.c:722 re-tests only the head node; the
+switch falls through and reads `length[5]` past the array, then dereferences
+NULL `d->str`). The port refuses and logs the SYSERR line; unit-proven; cannot
+be an oracle case because the C oracle dies instead of producing a transcript.
+
+**Divergences filed:** DP-1292 (live extra-desc edits are instance-lifetime
+only in Go; C persists them into the player save — object save-format change
+deferred to Architect), DP-1293 (reachability map Bucket D still lists
+string/tedit/luaedit as superseded-by-web-admin; all three are ported; the map
+feeds the Monday reachability cron).
+
+**Gate correction (record keeping):** yesterday's "pushes went past the fmt
+gate" claim was wrong. The 12 flagged files are byte-identical between main
+and the PR branch; CI's gofumpt step passes on them. Root cause: this clone
+ran gofumpt v0.10.0 while @latest is v0.12.0 — the wrapping-rule drift flagged
+line-breaks (e.g. `performBehead(` arg splitting) nobody else's toolchain
+sees. Upgraded to v0.12.0; tree clean. The gate was never bypassed.
