@@ -337,6 +337,26 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// well-formed CRLF rather than carrying its legacy LFCR framing forward.
 	tc.writeLine("\r\nBy what name do you wish to be known? ")
 
+	// Start the output writer before the name prompt is answered. Login output
+	// must reach the client as it is generated (DP-591), and so must what a
+	// session queues before login: GMCP negotiation happens while the player
+	// is still at the name prompt, and Mudlet installs the offered package
+	// (Client.GUI) from that moment. Until the name is in, nothing but GMCP is
+	// queued, so the name dialogue's own bytes are unaffected. Every exit
+	// before login stops the writer.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		writeLoop(tc, s)
+	}()
+	stopWriter := func() {
+		// A client that stops reading cannot block writeLoop forever and leak
+		// this goroutine/file descriptor.
+		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		s.CloseSend()
+		<-done
+	}
+
 	// C's CON_GET_NAME keeps the connection open until it receives a valid
 	// fantasy name. Transport only owns this first read; new-character dialogue
 	// after it belongs entirely to the shared session nanny.
@@ -345,11 +365,13 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		var ok bool
 		name, ok = tc.readLinePreAuth()
 		if !ok {
+			stopWriter()
 			return
 		}
 		name = strings.TrimSpace(name)
 		if name == "" {
 			tc.writeLine("\r\nGoodbye.\r\n")
+			stopWriter()
 			return
 		}
 		if strings.HasPrefix(strings.ToLower(name), "guest") ||
@@ -359,23 +381,10 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		tc.writeLine("Invalid name, please try another.\r\nName: ")
 	}
 
-	// Start the output writer before login so everything login produces —
-	// prompts, rejection messages, and the success welcome/look — reaches the
-	// client as it is generated. (DP-591)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		writeLoop(tc, s)
-	}()
-
 	// Send login with password
 	if err := sendLoginWithPassword(s, name, "", false); err != nil {
 		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
-		// Set a write deadline so a client that stops reading cannot block
-		// writeLoop forever and leak this goroutine/file descriptor.
-		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		s.CloseSend()
-		<-done
+		stopWriter()
 		return
 	}
 
@@ -384,11 +393,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// session output channel and called CloseSend. Flush writeLoop so the
 	// error message reaches the client before the raw connection closes. (DP-591)
 	if s.SendClosed() {
-		// Set a write deadline so a client that stops reading cannot block
-		// writeLoop forever and leak this goroutine/file descriptor.
-		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		s.CloseSend()
-		<-done
+		stopWriter()
 		return
 	}
 

@@ -393,3 +393,87 @@ func waitSessionGone(t *testing.T, manager *session.Manager, name string) {
 		time.Sleep(10 * time.Millisecond)
 	}
 }
+
+// TestGMCPClientGUIReachesPlayerAtNamePrompt reproduces the first Mudlet
+// acceptance run: Mudlet negotiates GMCP and identifies itself while the
+// player is still at the name prompt, and installs the offered package from
+// that moment. The offer was queued but not written until a name was
+// entered, so a player who sat at the prompt never got the package.
+func TestGMCPClientGUIReachesPlayerAtNamePrompt(t *testing.T) {
+	session.SetGMCPClientGUI("http://localhost:8088/darkpawns.xml", "1.0.0")
+	t.Cleanup(func() { session.SetGMCPClientGUI("", "") })
+
+	manager := session.NewManager(gmcpTestWorld(t), nil)
+	t.Cleanup(manager.Stop)
+	t.Cleanup(Stop)
+	port := listenerEntryPort(t)
+	if err := Listen(port, manager); err != nil {
+		t.Fatal(err)
+	}
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	readTelnetUntil(t, conn, "By what name do you wish to be known?")
+	if _, err := conn.Write(mudletPreamble()); err != nil { // no name follows
+		t.Fatal(err)
+	}
+
+	_ = conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+	var raw []byte
+	buf := make([]byte, 4096)
+	for !bytes.Contains(raw, []byte("Client.GUI")) {
+		n, err := conn.Read(buf)
+		if err != nil {
+			t.Fatalf("no Client.GUI before a name was entered: %v (got %q)", err, raw)
+		}
+		raw = append(raw, buf[:n]...)
+	}
+	frames := gmcpFrames(parseTelnetStream(t, raw), "Client.GUI")
+	if len(frames) != 1 || frames[0].payload != `{"version":"1.0.0","url":"http://localhost:8088/darkpawns.xml"}` {
+		t.Fatalf("Client.GUI at the name prompt = %+v", frames)
+	}
+	if visible := visibleText(parseTelnetStream(t, raw)); visible != "" {
+		t.Fatalf("the GMCP offer came with visible text: %q", visible)
+	}
+}
+
+// TestPreAuthExitsStopTheWriter: a connection that leaves before logging in
+// (blank name, idle timeout, hang-up) ends cleanly, with its writer stopped,
+// so the listener's connection count goes back to zero.
+func TestPreAuthExitsStopTheWriter(t *testing.T) {
+	manager := session.NewManager(gmcpTestWorld(t), nil)
+	t.Cleanup(manager.Stop)
+	t.Cleanup(Stop)
+	port := listenerEntryPort(t)
+	if err := Listen(port, manager); err != nil {
+		t.Fatal(err)
+	}
+	for _, input := range [][]byte{[]byte("\r\n"), nil} {
+		conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+		if err != nil {
+			t.Fatal(err)
+		}
+		readTelnetUntil(t, conn, "By what name do you wish to be known?")
+		if input != nil {
+			_, _ = conn.Write(input) // blank name: "Goodbye."
+			_ = conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+			_, _ = io.ReadAll(conn)
+		}
+		_ = conn.Close() // hang-up at the prompt
+	}
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		connMu.Lock()
+		open := connCount
+		connMu.Unlock()
+		if open == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("pre-auth exits left %d connections counted open", open)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
