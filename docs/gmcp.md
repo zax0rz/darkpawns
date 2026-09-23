@@ -141,9 +141,13 @@ sent.
 {"version":"1.0.0","url":"https://darkpawns.org/darkpawns.xml"}
 ```
 
-On GMCP negotiation, when `DP_MUDLET_PACKAGE_URL` is set. Mudlet installs the
-package at `url` and reinstalls it whenever `version` (`mudlet/VERSION`)
-changes.
+On GMCP negotiation, when `DP_MUDLET_PACKAGE_URL` is set, and again as the
+character enters the game. Mudlet installs the package at `url` and
+reinstalls it whenever `version` (`mudlet/VERSION`) changes. The second offer
+repairs a lost upgrade: Mudlet 5.0.1 can drop the new version when its
+download lands while the profile is still saving after the old one was
+removed, and an offer that finds no package installs it fresh. A client that
+has this version already ignores it.
 
 ### `Client.Map`
 
