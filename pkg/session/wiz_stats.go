@@ -309,7 +309,7 @@ func wizardFlagWord(flags uint64) uint32 {
 }
 
 func wizardPlayerFlags(p *game.Player, flags uint64) string {
-	plr := p.PlayerFlags | (flags & ((1 << 20) - 1))
+	plr := flags & (1<<uint(game.PrfBrief) - 1) // PLR bits sit below the PRF range
 	if plr == 0 && flags != 0 {
 		// Object movement sets C's crash-save bit. The Go runtime keeps the
 		// preference half of this legacy word in Flags, so preserve the visible

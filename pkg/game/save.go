@@ -19,7 +19,8 @@ const (
 	// CurrentSaveVersion is the current save format version.
 	// Bump this when making a breaking change to the save format.
 	// Existing saves without a version field are treated as version 0.
-	CurrentSaveVersion = 1
+	// Version 2 moved PRF preferences to prfBase in Flags; see migrateFlagsV1.
+	CurrentSaveVersion = 2
 
 	saveDir = "./data/players"
 )
@@ -70,6 +71,33 @@ type savePlayerData struct {
 	// Poof messages — immortals only
 	PoofIn  string `json:"poof_in,omitempty"`
 	PoofOut string `json:"poof_out,omitempty"`
+
+	// The rest of C's char_file_u (structs.h): everything save_char keeps
+	// that the fields above did not.
+	Practices     int    `json:"practices"`       // player_specials.saved.spells_to_learn
+	Height        int    `json:"height"`          // char_player_data.height
+	Weight        int    `json:"weight"`          // char_player_data.weight
+	Birth         int64  `json:"birth"`           // char_player_data.birth
+	Played        int64  `json:"played"`          // char_player_data.played (seconds)
+	InvisLevel    int    `json:"invis_level"`     // player_specials.saved.invis_level
+	FreezeLevel   int    `json:"freeze_level"`    // player_specials.saved.freeze_level
+	WimpLevel     int    `json:"wimp_level"`      // player_specials.saved.wimp_level
+	LoadRoom      int    `json:"load_room"`       // player_specials.saved.load_room
+	Kills         int    `json:"kills"`           // killcount
+	PKs           int    `json:"pks"`             // pkcount
+	Deaths        int    `json:"deaths"`          // deathcount
+	OrigCon       int    `json:"orig_con"`        // orig_con
+	SavingThrows  [5]int `json:"saving_throws"`   // char_specials.saved.apply_saving_throw
+	Tattoo        int    `json:"tattoo"`          // tattoo
+	TatTimer      int    `json:"tat_timer"`       // tattimer
+	MountVNum     int    `json:"mount_vnum"`      // mount_vnum
+	MountCostDay  int    `json:"mount_cost_day"`  // mount_cost_day
+	MountRentTime int64  `json:"mount_rent_time"` // mount_rent
+	LastDeath     int64  `json:"last_death"`      // lastdeath
+	HolyLight     bool   `json:"holy_light"`      // PRF_HOLYLIGHT's runtime mirror
+	AutoGold      bool   `json:"auto_gold"`       // PRF_AUTOGOLD's runtime mirror
+	AutoSplit     bool   `json:"auto_split"`      // PRF_AUTOSPLIT's runtime mirror
+	NoBroadcast   bool   `json:"no_broadcast"`    // PRF_NOBROAD's runtime mirror
 }
 
 type SaveItemData struct {
@@ -159,7 +187,9 @@ func LoadPlayer(name string) (*Player, error) {
 
 	// Version check: 0 means old format (pre-versioning), silently upgrade.
 	// Non-zero mismatch means a future or corrupted save — warn but still load.
-	if data.SaveVersion != 0 && data.SaveVersion != CurrentSaveVersion {
+	// Version 1 is migrated on load (migrateFlags); older than that is
+	// version 0, which shares version 1's layout.
+	if data.SaveVersion > CurrentSaveVersion {
 		slog.Warn("player save version mismatch",
 			"player", name,
 			"file_version", data.SaveVersion,
@@ -199,6 +229,19 @@ func playerToSaveData(p *Player) savePlayerData {
 	clanID, clanRank := p.ClanID, p.ClanRank
 	stats := p.Stats
 	loadRoomVNum := p.LoadRoomVNum
+	// C saves points.armor/hitroll/damroll without affects or equipment
+	// (char_to_store removes them first); the getters return totals.
+	baseAC, baseHitroll, baseDamroll := p.AC, p.Hitroll, p.Damroll
+	extra := savePlayerData{
+		Practices: p.Practices, Height: p.Height, Weight: p.Weight,
+		Birth: p.Birth, Played: p.PlayedDuration,
+		InvisLevel: p.InvisLevel, FreezeLevel: p.FreezeLevel, WimpLevel: p.WimpLevel,
+		LoadRoom: p.LoadRoomVNum, Kills: p.Kills, PKs: p.PKs, Deaths: p.Deaths,
+		OrigCon: p.OrigCon, SavingThrows: p.SavingThrows, Tattoo: p.Tattoo, TatTimer: p.TatTimer,
+		MountVNum: p.MountVNum, MountCostDay: p.MountCostDay, MountRentTime: p.MountRentTime,
+		LastDeath: p.LastDeath, HolyLight: p.HolyLight, AutoGold: p.AutoGold,
+		AutoSplit: p.AutoSplit, NoBroadcast: p.NoBroadcast,
+	}
 	hasLoadroom := p.Flags&(1<<uint(PlrLoadroom)) != 0
 	affects := append([]*engine.Affect(nil), p.ActiveAffects...)
 	p.mu.RUnlock()
@@ -234,9 +277,9 @@ func playerToSaveData(p *Player) savePlayerData {
 		Position:    p.GetPosition(),
 		Title:       title,
 		Description: description,
-		AC:          p.GetAC(),
-		Hitroll:     p.GetHitroll(),
-		Damroll:     p.GetDamroll(),
+		AC:          baseAC,
+		Hitroll:     baseHitroll,
+		Damroll:     baseDamroll,
 		Strength:    p.GetStrength(),
 		THAC0:       p.GetTHAC0(),
 		Hunger:      p.GetCondition(CondFull),
@@ -247,6 +290,7 @@ func playerToSaveData(p *Player) savePlayerData {
 		Stats:       stats,
 		SpellMap:    make(map[string]int),
 	}
+	data.copyCharFileRest(&extra)
 
 	// Copy spell map under p.mu (all SpellMap writers hold p.mu).
 	p.mu.RLock()
@@ -355,7 +399,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Hunger:        data.Hunger,
 		Thirst:        data.Thirst,
 		Drunk:         data.Drunk,
-		Flags:         data.Flags,
+		Flags:         migrateFlags(data.SaveVersion, data.Flags),
 		AutoExit:      data.AutoExit,
 		Stats:         data.Stats,
 		OrigCon:       data.Stats.Con,
@@ -378,6 +422,17 @@ func saveDataToPlayer(data savePlayerData) *Player {
 	p.Conditions[CondThirst] = p.Thirst
 	p.Conditions[CondDrunk] = p.Drunk
 	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+	if data.SaveVersion >= 2 {
+		p.Practices, p.Height, p.Weight = data.Practices, data.Height, data.Weight
+		p.Birth, p.PlayedDuration = data.Birth, data.Played
+		p.InvisLevel, p.FreezeLevel, p.WimpLevel = data.InvisLevel, data.FreezeLevel, data.WimpLevel
+		p.Kills, p.PKs, p.Deaths, p.OrigCon = data.Kills, data.PKs, data.Deaths, data.OrigCon
+		p.SavingThrows, p.Tattoo, p.TatTimer = data.SavingThrows, data.Tattoo, data.TatTimer
+		p.MountVNum, p.MountCostDay, p.MountRentTime, p.LastDeath = data.MountVNum, data.MountCostDay, data.MountRentTime, data.LastDeath
+		p.HolyLight, p.AutoGold, p.AutoSplit, p.NoBroadcast = data.HolyLight, data.AutoGold, data.AutoSplit, data.NoBroadcast
+	}
+	// The skills were saved and never read back.
+	restoreSkills(p, data.Skills)
 	return p
 }
 
@@ -440,7 +495,7 @@ func DeserializePlayer(data string) (*Player, error) {
 		return nil, fmt.Errorf("unmarshal player: %w", err)
 	}
 
-	if sd.SaveVersion != 0 && sd.SaveVersion != CurrentSaveVersion {
+	if sd.SaveVersion > CurrentSaveVersion {
 		slog.Warn("player save version mismatch (deserialize)",
 			"player", sd.Name,
 			"file_version", sd.SaveVersion,
@@ -737,4 +792,34 @@ func sanitizeName(name string) string {
 		}
 	}
 	return string(safe)
+}
+
+// flagsV1PRF is where save versions 0 and 1 kept each PRF flag in Flags,
+// indexed by C's PRF number. PRF_QUEST and PRF_SUMMONABLE sat after the
+// rest.
+var flagsV1PRF = [32]int{
+	20, 21, 22, 23, 24, 25, 26, 27, 28, 49, 48, 30, 29, 31, 32, 33,
+	34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 50, 51,
+}
+
+// migrateFlags returns a save's Flags in the current layout.
+func migrateFlags(version int, flags uint64) uint64 {
+	if version < 2 {
+		return migrateFlagsV1(flags)
+	}
+	return flags
+}
+
+// migrateFlagsV1 moves a version 0/1 save's preferences from their old bits
+// to prfBase + C's PRF number. PLR bits below 20 are unchanged. Bits 20 and
+// 21 were shared by PRF_BRIEF/PLR_REMORT and PRF_COMPACT/PLR_EXTRACT; they are
+// read as the preferences, which is what nearly every save meant.
+func migrateFlagsV1(old uint64) uint64 {
+	out := old & (1<<20 - 1)
+	for prf, bit := range flagsV1PRF {
+		if old&(1<<uint(bit)) != 0 {
+			out |= 1 << uint(prfBase+prf)
+		}
+	}
+	return out
 }
