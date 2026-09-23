@@ -4,6 +4,14 @@ Every change to `src/` bumps `VERSION` and adds an entry here. The server
 announces the version through GMCP `Client.GUI`, and Mudlet reinstalls the
 package when it changes, so an unbumped change never reaches players.
 
+## 1.1.1 (2026-09-23)
+
+- The world map offer is acted on even when it arrived before the package
+  finished loading. The server offers the package and the map together, so
+  on a first install or an upgrade the map offer landed while the package
+  was still downloading, and neither the automatic load nor `dp map` saw
+  it. Found in the Mudlet acceptance run (upgrade from 1.0.0).
+
 ## 1.1.0 (2026-09-22)
 
 - The whole world as a map. When the server offers its world map (GMCP

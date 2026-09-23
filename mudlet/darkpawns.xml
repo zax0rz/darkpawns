@@ -15,7 +15,7 @@
 	<ActionPackage />
 	<ScriptPackage>
 		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>Dark Pawns 1.1.0</name>
+			<name>Dark Pawns 1.1.1</name>
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
@@ -30,7 +30,7 @@
 -- chat window are drawn from data the server already sent alongside the text.
 
 DarkPawns = DarkPawns or {}
-DarkPawns.version = &#34;1.1.0&#34;
+DarkPawns.version = &#34;1.1.1&#34;
 DarkPawns.packageName = &#34;darkpawns&#34;
 
 -- Mudlet preinstalls its generic text mapper in every profile for a game it
@@ -510,7 +510,20 @@ local function loadedVersion()
   return version
 end
 
+-- The offer as the server last sent it. Mudlet keeps every GMCP message in
+-- the gmcp table, so an offer that arrived before this package loaded (the
+-- server offers the package and the map in the same breath, and the map
+-- offer lands while the package is still downloading) is still there.
+local function currentOffer()
+  local offer = gmcp and gmcp.Client and gmcp.Client.Map
+  if type(offer) == &#34;table&#34; and offer.url and offer.version then
+    return offer
+  end
+  return nil
+end
+
 function map.download()
+  map.offer = map.offer or currentOffer()
   if not map.offer then
     cecho(&#34;\n&lt;red&gt;[ Dark Pawns ] The server hasn&#39;t offered a map yet. Connect and try again.&lt;reset&gt;\n&#34;)
     return
@@ -522,8 +535,8 @@ end
 
 -- Client.Map: {&#34;url&#34;: ..., &#34;version&#34;: ...}
 function map.onClientMap()
-  local offer = gmcp.Client and gmcp.Client.Map
-  if not (offer and offer.url and offer.version) then
+  local offer = currentOffer()
+  if not offer then
     return
   end
   map.offer = offer
@@ -569,6 +582,14 @@ DarkPawns.on(&#34;map.room&#34;, &#34;gmcp.Room.Info&#34;, map.onRoomInfo)
 DarkPawns.on(&#34;map.offer&#34;, &#34;gmcp.Client.Map&#34;, map.onClientMap)
 DarkPawns.on(&#34;map.downloaded&#34;, &#34;sysDownloadDone&#34;, map.onDownloaded)
 DarkPawns.on(&#34;map.downloadError&#34;, &#34;sysDownloadError&#34;, map.onDownloadError)
+
+-- Act on an offer that arrived before this package finished loading.
+do
+  local _, _, connected = getConnectionInfo()
+  if connected and currentOffer() then
+    map.onClientMap()
+  end
+end
 </script>
 				<eventHandlerList />
 			</Script>

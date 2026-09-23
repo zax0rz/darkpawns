@@ -152,7 +152,20 @@ local function loadedVersion()
   return version
 end
 
+-- The offer as the server last sent it. Mudlet keeps every GMCP message in
+-- the gmcp table, so an offer that arrived before this package loaded (the
+-- server offers the package and the map in the same breath, and the map
+-- offer lands while the package is still downloading) is still there.
+local function currentOffer()
+  local offer = gmcp and gmcp.Client and gmcp.Client.Map
+  if type(offer) == "table" and offer.url and offer.version then
+    return offer
+  end
+  return nil
+end
+
 function map.download()
+  map.offer = map.offer or currentOffer()
   if not map.offer then
     cecho("\n<red>[ Dark Pawns ] The server hasn't offered a map yet. Connect and try again.<reset>\n")
     return
@@ -164,8 +177,8 @@ end
 
 -- Client.Map: {"url": ..., "version": ...}
 function map.onClientMap()
-  local offer = gmcp.Client and gmcp.Client.Map
-  if not (offer and offer.url and offer.version) then
+  local offer = currentOffer()
+  if not offer then
     return
   end
   map.offer = offer
@@ -211,3 +224,11 @@ DarkPawns.on("map.room", "gmcp.Room.Info", map.onRoomInfo)
 DarkPawns.on("map.offer", "gmcp.Client.Map", map.onClientMap)
 DarkPawns.on("map.downloaded", "sysDownloadDone", map.onDownloaded)
 DarkPawns.on("map.downloadError", "sysDownloadError", map.onDownloadError)
+
+-- Act on an offer that arrived before this package finished loading.
+do
+  local _, _, connected = getConnectionInfo()
+  if connected and currentOffer() then
+    map.onClientMap()
+  end
+end

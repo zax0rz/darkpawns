@@ -403,3 +403,65 @@ func TestPawnIsTheCanonicalDrawing(t *testing.T) {
 		t.Fatal("rendered pawn does not match its shapes")
 	}
 }
+
+// TestMapOfferBeforePackageLoads reproduces the acceptance-run upgrade: the
+// server offers the package and the map together, so the Client.Map offer
+// is already in the gmcp table when the package finishes loading, and its
+// event has been missed.
+func TestMapOfferBeforePackageLoads(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		handMap  string // Lua run before load to give the profile a map
+		scenario string
+	}{
+		{
+			name: "empty profile loads the map by itself",
+			scenario: `
+check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "an offer waiting at load was not acted on")`,
+		},
+		{
+			name:    "hand-mapped profile is asked, and dp map uses the waiting offer",
+			handMap: `rooms[8004] = {exits = {}, stubs = {}, area = 1, xyz = {0, 0, 0}, name = "The Gate Hall"}`,
+			scenario: `
+check(not sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "replaced a hand-built map without asking")
+check(sent("cecho", "\n<ansi_white>[ Dark Pawns ] A map of the whole world is available. Type <yellow>dp map<ansi_white> to load it; it replaces this profile's map.<reset>\n"), "waiting offer not announced")
+DarkPawns.command("map")
+check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "dp map ignored the waiting offer")`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, scripts, err := Scripts(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			L := lua.NewState()
+			defer L.Close()
+			L.SetGlobal("mudletHome", lua.LString(t.TempDir()))
+			if err := L.DoString(mudletStub); err != nil {
+				t.Fatal(err)
+			}
+			setup := `gmcp.Client = {Map = {url = "https://darkpawns.org/darkpawns-map.xml", version = "aaa111"}}
+` + tc.handMap
+			if err := L.DoString(setup); err != nil {
+				t.Fatal(err)
+			}
+			for _, script := range scripts {
+				if err := L.DoString(script.Source); err != nil {
+					t.Fatalf("%s fails on load: %v", script.Name, err)
+				}
+			}
+			check := `
+local function check(ok, msg) if not ok then error(msg, 2) end end
+local function sent(name, value)
+  for _, c in ipairs(calls) do
+    if c.name == name and c.args[1] == value then return true end
+  end
+  return false
+end
+`
+			if err := L.DoString(check + tc.scenario); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
