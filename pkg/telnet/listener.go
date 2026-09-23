@@ -16,7 +16,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/session"
@@ -57,8 +56,6 @@ var (
 	maxTotalConns    = 200
 	loginIdleTimeout = 120 * time.Second // DP-912: drop parked pre-auth connections
 )
-
-const maxControlPumpPulses = 100_000
 
 func init() {
 	if v := os.Getenv("TELNET_MAX_CONNS"); v != "" {
@@ -438,7 +435,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		// The oracle harness control is intercepted before player/session
 		// command handling so the trigger itself consumes no command RNG, wait
 		// state, or activity state. Only the pumped heartbeats may draw.
-		if handlePulseControl(s, manager, line) {
+		if s.HandleClockControl(line) {
 			continue
 		}
 
@@ -523,27 +520,6 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	<-done
 	slog.Info("Telnet disconnect", "remote_addr", remoteAddr, "player", s.PlayerName())
-}
-
-func handlePulseControl(s *session.Session, manager *session.Manager, line string) bool {
-	if !dpclock.Frozen() {
-		return false
-	}
-	fields := strings.Fields(line)
-	if len(fields) != 3 || fields[0] != "~dpclock" || fields[1] != "pulse" {
-		return false
-	}
-	n, err := strconv.Atoi(fields[2])
-	if err != nil || n <= 0 || n > maxControlPumpPulses {
-		return false
-	}
-	// The control line is input on this session's descriptor: C's input
-	// processing clears has_prompt, so this session's next output flush
-	// carries process_output's interruption CRLF (comm.c:607, 1620-1643).
-	if err := manager.PumpPulsesFrom(s, n); err != nil {
-		slog.Error("DP_CLOCK pulse pump failed", "pulses", n, "error", err)
-	}
-	return true
 }
 
 // writeLoop reads from the session's send channel and writes formatted output to the telnet conn.

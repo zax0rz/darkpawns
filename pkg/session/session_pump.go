@@ -164,6 +164,12 @@ func (s *Session) handleMessage(data []byte) error {
 	case MsgLogin:
 		return s.handleLogin(msg.Data)
 	case MsgCommand:
+		// The DP_CLOCK harness control reaches a WebSocket session as an
+		// ordinary command line (the browser client sends every line that
+		// way); telnet consumes it before building the message.
+		if s.isClockControlMessage(msg.Data) {
+			return nil
+		}
 		if !s.authenticated || s.menuActive || s.charCreating || s.creationSaved {
 			return ErrNotAuthenticated
 		}
