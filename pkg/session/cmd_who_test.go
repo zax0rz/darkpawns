@@ -120,7 +120,7 @@ func TestCmdWhoVisibilityAndNoWhoRoom(t *testing.T) {
 		if !ok {
 			t.Fatal("missing room 1002")
 		}
-		room.Flags = []string{"0", "8", "0", "0"} // bit 19, ROOM_NO_WHO_ROOM
+		room.Flags = []string{"524288", "0", "0", "0"} // bit 19, ROOM_NO_WHO_ROOM
 		now := time.Now()
 		viewer := addWhoSession(t, manager, "Viewer", 10, game.ClassWarrior, 1001, now)
 		addWhoSession(t, manager, "Secret", 10, game.ClassWarrior, 1002, now.Add(time.Second))
