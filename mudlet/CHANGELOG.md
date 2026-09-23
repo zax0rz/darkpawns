@@ -4,6 +4,12 @@ Every change to `src/` bumps `VERSION` and adds an entry here. The server
 announces the version through GMCP `Client.GUI`, and Mudlet reinstalls the
 package when it changes, so an unbumped change never reaches players.
 
+## 1.1.2 (2026-09-23)
+
+- The world map offer is announced once, not twice: the load-time check
+  and the `Client.Map` event could both see the same offer. A second map
+  download can't start while one is running.
+
 ## 1.1.1 (2026-09-23)
 
 - The world map offer is acted on even when it arrived before the package

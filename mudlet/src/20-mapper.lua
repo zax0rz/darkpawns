@@ -170,6 +170,10 @@ function map.download()
     cecho("\n<red>[ Dark Pawns ] The server hasn't offered a map yet. Connect and try again.<reset>\n")
     return
   end
+  if map.downloading then
+    return
+  end
+  map.downloading = true
   map.file = getMudletHomeDir() .. "/darkpawns-map.xml"
   cecho("\n<ansi_white>[ Dark Pawns ] Downloading the world map...<reset>\n")
   downloadFile(map.file, map.offer.url)
@@ -188,7 +192,9 @@ function map.onClientMap()
   end
   if have or next(getRooms()) == nil then
     map.download()
-  else
+  elseif map.announced ~= offer.version then
+    -- The load-time check and the Client.Map event can both see one offer.
+    map.announced = offer.version
     cecho("\n<ansi_white>[ Dark Pawns ] A map of the whole world is available. Type <yellow>dp map<ansi_white> to load it; it replaces this profile's map.<reset>\n")
   end
 end
@@ -197,6 +203,7 @@ function map.onDownloaded(_, file)
   if file ~= map.file then
     return
   end
+  map.downloading = false
   local ok, err = loadMap(file)
   if not ok then
     cecho(string.format("\n<red>[ Dark Pawns ] The map downloaded but didn't load: %s<reset>\n", tostring(err)))
@@ -215,6 +222,7 @@ function map.onDownloadError(_, message, file)
     return
   end
   if map.file then
+    map.downloading = false
     cecho(string.format("\n<red>[ Dark Pawns ] The world map didn't download: %s<reset>\n", tostring(message)))
   end
 end

@@ -15,7 +15,7 @@
 	<ActionPackage />
 	<ScriptPackage>
 		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>Dark Pawns 1.1.1</name>
+			<name>Dark Pawns 1.1.2</name>
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
@@ -30,7 +30,7 @@
 -- chat window are drawn from data the server already sent alongside the text.
 
 DarkPawns = DarkPawns or {}
-DarkPawns.version = &#34;1.1.1&#34;
+DarkPawns.version = &#34;1.1.2&#34;
 DarkPawns.packageName = &#34;darkpawns&#34;
 
 -- Mudlet preinstalls its generic text mapper in every profile for a game it
@@ -528,6 +528,10 @@ function map.download()
     cecho(&#34;\n&lt;red&gt;[ Dark Pawns ] The server hasn&#39;t offered a map yet. Connect and try again.&lt;reset&gt;\n&#34;)
     return
   end
+  if map.downloading then
+    return
+  end
+  map.downloading = true
   map.file = getMudletHomeDir() .. &#34;/darkpawns-map.xml&#34;
   cecho(&#34;\n&lt;ansi_white&gt;[ Dark Pawns ] Downloading the world map...&lt;reset&gt;\n&#34;)
   downloadFile(map.file, map.offer.url)
@@ -546,7 +550,9 @@ function map.onClientMap()
   end
   if have or next(getRooms()) == nil then
     map.download()
-  else
+  elseif map.announced ~= offer.version then
+    -- The load-time check and the Client.Map event can both see one offer.
+    map.announced = offer.version
     cecho(&#34;\n&lt;ansi_white&gt;[ Dark Pawns ] A map of the whole world is available. Type &lt;yellow&gt;dp map&lt;ansi_white&gt; to load it; it replaces this profile&#39;s map.&lt;reset&gt;\n&#34;)
   end
 end
@@ -555,6 +561,7 @@ function map.onDownloaded(_, file)
   if file ~= map.file then
     return
   end
+  map.downloading = false
   local ok, err = loadMap(file)
   if not ok then
     cecho(string.format(&#34;\n&lt;red&gt;[ Dark Pawns ] The map downloaded but didn&#39;t load: %s&lt;reset&gt;\n&#34;, tostring(err)))
@@ -573,6 +580,7 @@ function map.onDownloadError(_, message, file)
     return
   end
   if map.file then
+    map.downloading = false
     cecho(string.format(&#34;\n&lt;red&gt;[ Dark Pawns ] The world map didn&#39;t download: %s&lt;reset&gt;\n&#34;, tostring(message)))
   end
 end

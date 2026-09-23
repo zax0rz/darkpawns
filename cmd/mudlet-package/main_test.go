@@ -425,6 +425,13 @@ check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "an offer waitin
 			scenario: `
 check(not sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "replaced a hand-built map without asking")
 check(sent("cecho", "\n<ansi_white>[ Dark Pawns ] A map of the whole world is available. Type <yellow>dp map<ansi_white> to load it; it replaces this profile's map.<reset>\n"), "waiting offer not announced")
+-- The same offer's event arriving afterwards must not announce it again.
+local before = 0
+for _, c in ipairs(calls) do if c.name == "cecho" and c.args[1]:find("whole world is available", 1, true) then before = before + 1 end end
+fire("gmcp.Client.Map")
+local after = 0
+for _, c in ipairs(calls) do if c.name == "cecho" and c.args[1]:find("whole world is available", 1, true) then after = after + 1 end end
+check(before == 1 and after == 1, "the offer was announced " .. after .. " times")
 DarkPawns.command("map")
 check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "dp map ignored the waiting offer")`,
 		},
