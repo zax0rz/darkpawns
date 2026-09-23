@@ -25,16 +25,39 @@ binary, running live today and built so anyone can host their own instance.
 
 ## Play
 
-The live game is up now. No account signup, no download.
+The live game is up now. No account signup, no download: play in the
+browser at [darkpawns.org/play](https://darkpawns.org/play), or connect any MUD
+client to **`darkpawns.org` port `7778` with TLS**, so your password and
+everything you type stay private.
 
-```sh
-telnet darkpawns.org 7777
+In [TinTin++](https://tintin.mudhalla.net/):
+
+```text
+#ssl dp darkpawns.org 7778
 ```
 
-Or play in the browser at [darkpawns.org/play](https://darkpawns.org/play) —
-same game, same world, WebSocket under the hood.
+With no client at all:
+
+```sh
+openssl s_client -quiet -connect darkpawns.org:7778
+```
+
+Port `7777` still answers for clients without TLS, but everything sent there,
+your password included, crosses the network in the clear. Keep it for a quick
+look as a `guest`.
 
 ![The Dark Pawns web client connecting and prompting for a character name](docs/images/darkpawns-play-demo.gif)
+
+### Mudlet
+
+[Mudlet](https://www.mudlet.org/) dresses itself for Dark Pawns. Make a profile
+for `darkpawns.org`, port `7778`, with **Secure** ticked, and connect: before
+the name prompt it installs a dock with your hit points, mana and movement, a
+map of the whole world that follows you, and a chat window. The game text stays
+byte-for-byte what every other client sees. The
+[Mudlet guide](https://darkpawns.org/mudlet/) covers the rest.
+
+![Mudlet playing Dark Pawns, with the dock showing vitals, a map of Kir Drax'in and the chat window](docs/images/mudlet-dock.png)
 
 Returning from the 2004 era? The world files are the preserved originals, and
 the port's prime directive is that the game plays byte-for-byte like the C
