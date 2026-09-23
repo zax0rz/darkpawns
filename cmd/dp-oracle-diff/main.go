@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/oraclediff"
+	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
 const (
@@ -326,6 +327,15 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		"ENVIRONMENT=development",
 	)
 	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
+	// A relogin scenario reads the character back, so the port needs a store
+	// that persists; every other scenario keeps the unreachable one.
+	goDB := deadDBURL
+	if len(scenario.ReloginPort) > 0 {
+		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers)
+		if err != nil {
+			return err
+		}
+	}
 	// Release the Go-side reservations immediately before starting the port.
 	_ = goTelnetListener.Close()
 	_ = goHTTPListener.Close()
@@ -336,7 +346,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		"-world", goWorld,
 		"-port", fmt.Sprint(goHTTPPort),
 		"-telnet-port", fmt.Sprint(goTelnetPort),
-		"-db", deadDBURL,
+		"-db", goDB,
 	)
 	if err != nil {
 		return err
@@ -366,6 +376,36 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			return oraclediff.RunSetup(conn, setup, quiescence)
 		}
 		return oraclediff.RunSetupAndSettle(conn, setup, settlePulses, quiescence)
+	}
+
+	// A scenario that relogs its actor gets a primary that can reconnect to
+	// the same server and log the character in again.
+	var oraclePrimary, goPrimary oraclediff.Conn = oracleConn, goConn
+	if len(scenario.ReloginOracle) > 0 {
+		oraclePrimary = oraclediff.NewReloginConn(oracleConn,
+			func() (oraclediff.Conn, error) {
+				c, dialErr := dialWhenReady(oracleProc, oracleAddr, bootTimeout)
+				if dialErr != nil {
+					return nil, dialErr
+				}
+				return oraclediff.NewTCPConn(c), nil
+			},
+			func(c oraclediff.Conn) (string, error) { return runSetup(c, scenario.ReloginOracle) },
+			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
+		defer func() { _ = oraclePrimary.Close() }()
+	}
+	if len(scenario.ReloginPort) > 0 {
+		goPrimary = oraclediff.NewReloginConn(goConn,
+			func() (oraclediff.Conn, error) {
+				c, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
+				if dialErr != nil {
+					return nil, dialErr
+				}
+				return oraclediff.NewTCPConn(c), nil
+			},
+			func(c oraclediff.Conn) (string, error) { return runSetup(c, scenario.ReloginPort) },
+			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
+		defer func() { _ = goPrimary.Close() }()
 	}
 
 	oracleSetup, err := runSetup(oracleConn, scenario.SetupOracle)
@@ -444,8 +484,8 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		delete(goPeers, name)
 	}
 
-	oracleActor, oracleAudience := probeClients(oracleConn, oraclePeers, scenario.ProbeActor)
-	goActor, goAudience := probeClients(goConn, goPeers, scenario.ProbeActor)
+	oracleActor, oracleAudience := probeClients(oraclePrimary, oraclePeers, scenario.ProbeActor)
+	goActor, goAudience := probeClients(goPrimary, goPeers, scenario.ProbeActor)
 	oracleBlocks, err := oraclediff.RunAudienceProbe(oracleActor, oracleAudience, scenario.Probe, quiescence)
 	if err != nil {
 		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleProc.log.String())
@@ -670,6 +710,29 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
+}
+
+// prepareGoReloginDB creates the port's throwaway SQLite store for a relogin
+// scenario. The C oracle's copied lib keeps its existing player file unless the
+// scenario empties it, so its new character is an ordinary mortal; an empty Go
+// store would crown that character God instead (init_char's first-player rule),
+// so the store is seeded with one placeholder player to match. An
+// empty-players scenario keeps the store empty on both sides.
+func prepareGoReloginDB(goWork string, emptyPlayers bool) (string, error) {
+	url := "sqlite://" + filepath.Join(goWork, "relogin.db")
+	if emptyPlayers {
+		return url, nil
+	}
+	store, err := db.New(url)
+	if err != nil {
+		return "", fmt.Errorf("create relogin store: %w", err)
+	}
+	defer func() { _ = store.Close() }()
+	placeholder := &db.PlayerRecord{Name: "Zzplaceholder", Password: "x", Level: 1, RoomVNum: 8004}
+	if err := store.CreatePlayer(placeholder); err != nil {
+		return "", fmt.Errorf("seed relogin store: %w", err)
+	}
+	return url, nil
 }
 
 func withFreshMUDEnv(env []string, enabled bool) []string {

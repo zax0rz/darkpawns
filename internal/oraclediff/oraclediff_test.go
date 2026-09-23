@@ -469,3 +469,52 @@ func TestParseScenarioKeepANSIFixture(t *testing.T) {
 		t.Fatal("quiet-mobs fixture dropped alongside keep-ansi")
 	}
 }
+
+// TestRunAudienceProbeRelogin: a quit that closes the connection is accepted
+// when the next step relogs, the relogin transcript is its own block, and the
+// steps after it run on the new connection.
+func TestRunAudienceProbeRelogin(t *testing.T) {
+	first := &scriptedConn{outputs: []string{"Goodbye, friend.. Come back soon!\r\n"}, readErr: io.EOF}
+	second := &scriptedConn{outputs: []string{"greeting\r\n", "Password: ", "PRESS RETURN", "menu", "Welcome\r\n", "You have 12 gold.\r\n"}}
+	dials := 0
+	actor := NewReloginConn(first,
+		func() (Conn, error) { dials++; return second, nil },
+		func(c Conn) (string, error) {
+			return RunSetup(c, []string{"Tester", "pass", "", "1"}, time.Millisecond)
+		},
+		nil)
+
+	blocks, err := RunAudienceProbe(actor, nil, []string{"quit", ReloginStep, "gold"}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dials != 1 || len(blocks) != 3 {
+		t.Fatalf("dials = %d, blocks = %#v", dials, blocks)
+	}
+	if blocks[1].Command != ReloginStep || blocks[1].Output != "greeting\r\nPassword: PRESS RETURNmenuWelcome\r\n" {
+		t.Fatalf("relogin block = %#v", blocks[1])
+	}
+	if blocks[2].Output != "You have 12 gold.\r\n" || len(second.sent) != 5 || second.sent[4] != "gold" {
+		t.Fatalf("after relogin: block %#v, sent %v", blocks[2], second.sent)
+	}
+}
+
+// TestRunAudienceProbeCloseMidProbeStillFails: a connection closing anywhere
+// else is still a harness failure, not a silently short scenario.
+func TestRunAudienceProbeCloseMidProbeStillFails(t *testing.T) {
+	actor := &scriptedConn{readErr: io.EOF}
+	if _, err := RunAudienceProbe(actor, nil, []string{"quit", "look"}, time.Millisecond); err == nil {
+		t.Fatal("EOF before a non-relogin step was accepted")
+	}
+}
+
+func TestParseScenarioReloginNeedsBothServers(t *testing.T) {
+	src := "[setup:oracle]\nA\n[setup:port]\nA\n[relogin:oracle]\nA\n[probe]\nquit\n<RELOGIN>\n"
+	if _, err := ParseScenario("half", strings.NewReader(src)); err == nil {
+		t.Fatal("a relogin with no [relogin:port] parsed")
+	}
+	sc, err := ParseScenario("both", strings.NewReader(src+"[relogin:port]\nA\n"))
+	if err != nil || len(sc.ReloginOracle) != 1 || len(sc.ReloginPort) != 1 {
+		t.Fatalf("scenario = %+v, err %v", sc, err)
+	}
+}

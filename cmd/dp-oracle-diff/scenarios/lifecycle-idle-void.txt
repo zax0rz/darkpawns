@@ -1,0 +1,57 @@
+# Lifecycle: a silent player is pulled into the void on the ninth idle hour,
+# not before, and a command brings them back (DP-1311, DP-1315).
+# depth-case: idle.void-ninth-tick
+# depth-case: idle.return-on-command
+# depth-case: idle.dusk-events-room-local
+#
+# C's check_idling runs from point_update once per MUD hour (630 pulses:
+# SECS_PER_MUD_HOUR 63 x PASSES_PER_SEC 10) and voids a mortal whose timer
+# passes IDLE_TO_VOID (8). The ~dpclock control is intercepted before C's
+# input queue (comm.c process_input), so pumping the clock is true silence.
+# Each probe step below is one MUD hour.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+look
