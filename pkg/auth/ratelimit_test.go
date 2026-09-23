@@ -55,14 +55,73 @@ func TestGetIPFromRequest_TrustedProxy_MultipleForwards(t *testing.T) {
 	resetTrustedProxies()
 	_ = SetTrustedProxies([]string{"10.0.0.0/8"})
 
-	// Multiple proxies: first entry is the original client
+	// The header is followed from the right through trusted proxies only.
+	// 172.16.0.1 is not trusted, so it is the client as far as anyone can
+	// vouch; the entries to its left are whatever that client wrote.
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.RemoteAddr = "10.0.0.5:43210"
 	req.Header.Set("X-Forwarded-For", "203.0.113.50, 10.0.0.3, 172.16.0.1")
 
 	ip := GetIPFromRequest(req)
-	if ip != "203.0.113.50" {
-		t.Errorf("expected leftmost X-Forwarded-For IP, got %q", ip)
+	if ip != "172.16.0.1" {
+		t.Errorf("expected the rightmost untrusted X-Forwarded-For IP, got %q", ip)
+	}
+
+	// A chain of trusted proxies is followed through to the client.
+	req.Header.Set("X-Forwarded-For", "203.0.113.50, 10.0.0.3")
+	if ip := GetIPFromRequest(req); ip != "203.0.113.50" {
+		t.Errorf("expected the client behind two trusted proxies, got %q", ip)
+	}
+}
+
+// TestGetIPFromRequest_ClientCannotForgeItsAddress: a client sends its own
+// X-Forwarded-For through a proxy that appends to it. The forged entry is on
+// the left and must not be believed.
+func TestGetIPFromRequest_ClientCannotForgeItsAddress(t *testing.T) {
+	resetTrustedProxies()
+	_ = SetTrustedProxies(DefaultTrustedProxies)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.RemoteAddr = "127.0.0.1:50000"
+	req.Header.Set("X-Forwarded-For", "8.8.8.8, 198.51.100.7")
+	if ip := GetIPFromRequest(req); ip != "198.51.100.7" {
+		t.Errorf("forged leftmost entry was believed: got %q", ip)
+	}
+
+	// Split across several header lines, and with a malformed hop.
+	req.Header.Del("X-Forwarded-For")
+	req.Header.Add("X-Forwarded-For", "8.8.8.8")
+	req.Header.Add("X-Forwarded-For", "198.51.100.7")
+	if ip := GetIPFromRequest(req); ip != "198.51.100.7" {
+		t.Errorf("multi-line header: got %q", ip)
+	}
+	req.Header.Set("X-Forwarded-For", "not-an-ip")
+	if ip := GetIPFromRequest(req); ip != "127.0.0.1" {
+		t.Errorf("malformed header: got %q, want the proxy's own address", ip)
+	}
+}
+
+// TestGetIPFromRequest_LoopbackProxyDefault: with the defaults, a reverse
+// proxy on the same machine (the production topology) passes the real client
+// through, over IPv4 or IPv6 loopback.
+func TestGetIPFromRequest_LoopbackProxyDefault(t *testing.T) {
+	resetTrustedProxies()
+	_ = SetTrustedProxies(DefaultTrustedProxies)
+
+	for _, remote := range []string{"127.0.0.1:41000", "[::1]:41000"} {
+		req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+		req.RemoteAddr = remote
+		req.Header.Set("X-Forwarded-For", "203.0.113.9")
+		if ip := GetIPFromRequest(req); ip != "203.0.113.9" {
+			t.Errorf("behind a loopback proxy at %s: got %q", remote, ip)
+		}
+	}
+	// A direct public connection's header is still ignored.
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	req.RemoteAddr = "198.51.100.75:9999"
+	req.Header.Set("X-Forwarded-For", "203.0.113.9")
+	if ip := GetIPFromRequest(req); ip != "198.51.100.75" {
+		t.Errorf("direct connection trusted its own header: got %q", ip)
 	}
 }
 

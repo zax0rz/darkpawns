@@ -70,13 +70,25 @@ func isTrustedProxy(ip net.IP) bool {
 	return false
 }
 
+// DefaultTrustedProxies are trusted when the deployment names none: the
+// loopback networks, where a reverse proxy on the same machine (Caddy in the
+// production topology) connects from. Only processes on the machine itself
+// can connect from loopback, so trusting their X-Forwarded-For lets nobody
+// else choose an address.
+var DefaultTrustedProxies = []string{"127.0.0.0/8", "::1/128"}
+
 // GetIPFromRequest extracts the client IP from an HTTP request.
 //
-// SECURITY (H-12): By default this uses the TCP RemoteAddr (r.RemoteAddr)
-// and does NOT trust X-Forwarded-For, preventing clients from spoofing their
-// source IP to bypass rate limits.  X-Forwarded-For is only consulted when
-// the direct connection comes from a configured trusted proxy (via
-// SetTrustedProxies).
+// SECURITY (H-12): X-Forwarded-For is only consulted when the direct
+// connection comes from a configured trusted proxy (via SetTrustedProxies);
+// otherwise the TCP RemoteAddr is the client, so a client cannot choose its
+// own address to slip past bans and rate limits.
+//
+// Behind trusted proxies the header is read from the right. Each trusted
+// proxy vouches for the address to its left, so the client is the rightmost
+// address that is not a trusted proxy. The leftmost entry is whatever the
+// client sent: a proxy that appends to a client-supplied header would let
+// anyone pick their address if that entry were believed.
 func GetIPFromRequest(r *http.Request) string {
 	if r == nil {
 		return ""
@@ -92,18 +104,29 @@ func GetIPFromRequest(r *http.Request) string {
 	}
 
 	// Only trust X-Forwarded-For if the direct connection is from a trusted proxy.
-	if len(trustedProxies) > 0 && isTrustedProxy(remoteIP) {
-		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-			// Take the first (leftmost) IP — the original client.
-			if ips := strings.Split(forwarded, ","); len(ips) > 0 {
-				clientIP := strings.TrimSpace(ips[0])
-				if clientIP != "" {
-					return clientIP
-				}
-			}
-		}
+	if len(trustedProxies) == 0 || !isTrustedProxy(remoteIP) {
+		return host
 	}
-
+	forwarded := r.Header.Values("X-Forwarded-For")
+	hops := strings.Split(strings.Join(forwarded, ","), ",")
+	for i := len(hops) - 1; i >= 0; i-- {
+		hop := strings.TrimSpace(hops[i])
+		if hop == "" {
+			continue
+		}
+		ip := net.ParseIP(hop)
+		if ip == nil {
+			// A malformed entry breaks the chain of vouching: nothing to its
+			// left can be believed, so stop at the last proxy that spoke.
+			return host
+		}
+		if !isTrustedProxy(ip) {
+			return ip.String()
+		}
+		host = ip.String()
+	}
+	// Every hop was a trusted proxy: the innermost one is as far as the
+	// header can be followed.
 	return host
 }
 

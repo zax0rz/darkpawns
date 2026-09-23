@@ -289,6 +289,21 @@ Terminate TLS at the proxy and forward the HTTP routes to `:4350`; expose telnet
 [`website/deploy/`](website/deploy/). For a TLS telnet port, terminate TLS in front of
 the telnet listener (a dedicated port — not STARTTLS).
 
+The server learns each browser player's real address from the proxy's
+`X-Forwarded-For`, which it believes only from trusted proxies:
+`TRUSTED_PROXIES` (comma-separated CIDRs). Unset, it trusts loopback
+(`127.0.0.0/8`, `::1/128`), which covers a proxy on the same machine; set a
+proxy on another host explicitly, and set it empty to trust none. Without a
+trusted proxy, every web player looks like the proxy: one shared per-address
+connection limit, one shared login rate limit, and IP bans that can't tell
+players apart.
+
+Per-address connection caps are flood protection, not the multiplay rule
+(three characters per player, which immortals enforce, as in the original):
+`TELNET_MAX_CONNS_PER_IP` and `WEBSOCKET_MAX_CONNS_PER_IP`, 8 each by
+default, room for two players sharing a connection at three characters each.
+`TELNET_MAX_CONNS` (default 200) caps telnet overall.
+
 ## Entry-identity migration note
 
 A migration adds a unique index on `lower(players.name)`. If your database predates it,
