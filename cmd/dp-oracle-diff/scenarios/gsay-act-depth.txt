@@ -7,11 +7,13 @@
 # depth-case: gsay.act-follower-order
 # depth-case: gsay.act-sleeping-follower
 # depth-case: gsay.act-complete-color
-# keep-ansi
+# depth-case: gsay.act-listener-prompt
+# depth-case: gsay.act-echo-prompt-spacing
 
 [fixture]
 empty-players
 quiet-mobs
+keep-ansi
 
 [setup:oracle]
 Gsaygod

@@ -76,14 +76,14 @@ func (w *World) GroupSay(ch *Player, message string) {
 		format := DeleteANSIControls("$n tells the group, '" + message + "'")
 		if leader != ch && actorInGroup(leader) {
 			w.channelActWrapped("group", false, ch, leader, format, ToVict|ToSleep,
-				wrapGroupColor(3, 3, false))
+				wrapGroupColor(3, 3))
 		}
 		for _, follower := range w.GetFollowerActors(leaderName) {
 			if follower == ch || !actorInGroup(follower) {
 				continue
 			}
 			w.channelActWrapped("group", false, ch, follower, format, ToVict|ToSleep,
-				wrapGroupColor(3, 3, false))
+				wrapGroupColor(3, 3))
 		}
 	}
 
@@ -93,7 +93,7 @@ func (w *World) GroupSay(ch *Player, message string) {
 	}
 	echo := DeleteANSIControls("You tell the group, '" + message + "'")
 	w.channelActWrapped("group", false, ch, nil, echo, ToChar|ToSleep,
-		wrapGroupColor(1, 2, true))
+		wrapGroupColor(1, 2))
 }
 
 func actorInGroup(actor Actor) bool {
@@ -107,7 +107,10 @@ func actorInGroup(actor Actor) bool {
 	}
 }
 
-func wrapGroupColor(openLevel, resetLevel int, trimLineEnding bool) func(Actor, string) string {
+// wrapGroupColor is do_gsay's send_to_char(CCWHT(k, open)) / act() /
+// send_to_char(CCNRM(k, reset)) sandwich: the reset follows act's whole line,
+// line ending included.
+func wrapGroupColor(openLevel, resetLevel int) func(Actor, string) string {
 	return func(to Actor, line string) string {
 		player, ok := to.(*Player)
 		if !ok || player == nil {
@@ -120,9 +123,6 @@ func wrapGroupColor(openLevel, resetLevel int, trimLineEnding bool) func(Actor, 
 		}
 		if flags&(1<<uint(PrfColor2)) != 0 {
 			level += 2
-		}
-		if trimLineEnding {
-			line = strings.TrimSuffix(line, "\r\n")
 		}
 		if level < openLevel {
 			return line
