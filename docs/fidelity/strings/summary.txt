@@ -2,21 +2,21 @@
 # Deterministic: no dates, no paths outside the repository.
 go files scanned	258
 c files scanned	66
-data files scanned	630
-go candidates (literal at a sink)	1818
+data files scanned	620
+go candidates (literal at a sink)	1813
 c candidates (literal in a sink call)	5547
-go segments	1795
+go segments	1790
 c segments	4902
-go-only segments	151
-c-missing segments	3108
+go-only segments	149
+c-missing segments	3109
 data-sourced segments	30
-unresolved go sink arguments	515
+unresolved go sink arguments	514
 
 [go sink table]
 Act	302	pkg/game Act(): the act()-style primitive (427 call sites)
 BroadcastToRoom	0	SessionManager.BroadcastToRoom, socket-level room broadcast (22 call sites)
-Send	599	Session.Send and wrapper sessions (679 call sites)
-SendMessage	589	Player/MobInstance.SendMessage (599 call sites)
+Send	597	Session.Send and wrapper sessions (679 call sites)
+SendMessage	590	Player/MobInstance.SendMessage (599 call sites)
 SendToAll	6	World.SendToAll and SessionManager.SendToAll (10 call sites)
 SendToChar	2	act.go:600 SendToChar(): one-line Act(ToChar) wrapper
 SendToOutdoor	0	SessionManager.SendToOutdoor, weather broadcast
@@ -29,7 +29,7 @@ channelSend	3	pkg/game/out_of_band.go channelSend(): the sender's own channel ec
 communicationSend	32	directed_speech.go:56: one-line Act(ToChar|ToSleep) wrapper
 movementSendToChar	32	movement_commands.go:12: one-line Act(ToChar|ToSleep) wrapper
 sendPromptText	1	Session.sendPromptText: prompt bytes are player-facing
-sendText	59	Session.sendText, group and mail text (73 call sites)
+sendText	55	Session.sendText, group and mail text (73 call sites)
 sendToChar	150	spec_procs.go:85 sendToChar(): one-line SendMessage wrapper
 
 [c sink table]
@@ -52,8 +52,8 @@ write_to_output	72	descriptor output queue (107 call sites)
 
 [go candidates by package]
 pkg/combat	29
-pkg/game	1097
-pkg/session	679
+pkg/game	1100
+pkg/session	671
 pkg/spells	13
 
 [c candidates by file]
@@ -157,7 +157,6 @@ pkg/session/comm_cmds.go	11
 pkg/session/commands.go	1
 pkg/session/door_cmds.go	1
 pkg/session/gen_ps_cmds.go	2
-pkg/session/informative_cmds.go	2
 pkg/session/manager.go	1
 pkg/session/menu.go	4
 pkg/session/movement_cmds.go	4
@@ -173,7 +172,7 @@ pkg/spells/affect_spells.go	3
 pkg/spells/call_magic.go	1
 
 [c-missing segments by c file]
-src/act.comm.c	31
+src/act.comm.c	32
 src/act.display.c	6
 src/act.informative.c	268
 src/act.item.c	18

@@ -80,7 +80,7 @@ Choose a race:
 
 ## Issue 3: MOTD Is Wrong
 
-**Current behavior:** `sendWelcome()` in `pkg/session/session_send.go` calls `game.ShowMOTD()` which reads `lib/world/text/motd`. That file currently contains an ASCII logo + custom rules text.
+**Current behavior:** `sendWelcome()` in `pkg/session/session_send.go` calls `game.ShowMOTD()` which reads `lib/text/motd`. That file currently contains an ASCII logo + custom rules text.
 
 **C source** (`src/interpreter.c` lines 1930–1938, 2130–2138):
 - After password verification for returning players: `SEND_TO_Q(motd, d)` then `STATE(d) = CON_RMOTD`
@@ -90,13 +90,13 @@ Choose a race:
 The C source MOTD is a simple text file. The `MENU` is a separate constant shown after pressing RETURN at the MOTD.
 
 **What should happen:**
-1. Show MOTD text (the file at `lib/world/text/motd`)
+1. Show MOTD text (the file at `lib/text/motd`)
 2. Player presses RETURN
 3. Show the main menu (not implemented in web client — web client skips straight to game)
 
 **What's happening:** The MOTD file has an ASCII logo that's "mushed up" because the web client's terminal doesn't render it properly, and it's showing content that shouldn't be there.
 
-**Fix:** Replace `lib/world/text/motd` with the original C source MOTD. The C source MOTD was a simple text file — find the original in the SVN history or write a faithful recreation. The current file appears to be a custom creation with an ASCII logo that doesn't belong.
+**Fix:** Replace `lib/text/motd` with the original C source MOTD. The C source MOTD was a simple text file — find the original in the SVN history or write a faithful recreation. The current file appears to be a custom creation with an ASCII logo that doesn't belong.
 
 ---
 
@@ -314,7 +314,7 @@ The status bar is positioned **below** the terminal div, which should be correct
 ### Phase 1: Critical Fixes (blocking new players)
 
 1. **Fix race name** — Change `"3": "Halfling"` to `"3": "Kenderkin"` in `getRaceOptions()`
-2. **Fix MOTD** — Replace `lib/world/text/motd` with original C source MOTD text
+2. **Fix MOTD** — Replace `lib/text/motd` with original C source MOTD text
 3. **Fix movement** — Check command registry for direction commands, verify room 8004 exits
 
 ### Phase 2: Fidelity (word-for-word match to C source)
@@ -362,7 +362,7 @@ After each phase:
 | File | Changes |
 |------|---------|
 | `pkg/session/char_creation.go` | Fix race name, add race help text, add `?` help support |
-| `lib/world/text/motd` | Replace with original C source MOTD |
+| `lib/text/motd` | Replace with original C source MOTD |
 | `web/client.js` | Fix login/reconnect flow, handle new character creation |
 | `web/style.css` | Fix status bar overlap |
 | `web/index.html` | Possibly adjust layout |

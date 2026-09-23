@@ -58,22 +58,6 @@
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
     },
-    "Autoexits disabled.": {
-      "segment": "Autoexits disabled.",
-      "file": "pkg/session/informative_cmds.go",
-      "line": 28,
-      "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
-    "Autoexits enabled.": {
-      "segment": "Autoexits enabled.",
-      "file": "pkg/session/informative_cmds.go",
-      "line": 26,
-      "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
     "Broadcast what?": {
       "segment": "Broadcast what?",
       "file": "pkg/session/wiz_system.go",
@@ -85,7 +69,7 @@
     "Built with:": {
       "segment": "Built with:",
       "file": "pkg/session/gen_ps_cmds.go",
-      "line": 235,
+      "line": 245,
       "sink": ".Send",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -109,7 +93,7 @@
     "Description is too long; type @ or /s to save, /a to abort.": {
       "segment": "Description is too long; type @ or /s to save, /a to abort.",
       "file": "pkg/session/menu.go",
-      "line": 211,
+      "line": 212,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -117,7 +101,7 @@
     "Description not changed.": {
       "segment": "Description not changed.",
       "file": "pkg/session/menu.go",
-      "line": 184,
+      "line": 185,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -125,7 +109,7 @@
     "Description saved.": {
       "segment": "Description saved.",
       "file": "pkg/session/menu.go",
-      "line": 204,
+      "line": 205,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -165,7 +149,7 @@
     "Guest accounts are restricted from using this command.": {
       "segment": "Guest accounts are restricted from using this command.",
       "file": "pkg/session/commands.go",
-      "line": 698,
+      "line": 697,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -373,7 +357,7 @@
     "That information is not available right now.": {
       "segment": "That information is not available right now.",
       "file": "pkg/session/gen_ps_cmds.go",
-      "line": 122,
+      "line": 132,
       "sink": ".Send",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -469,7 +453,7 @@
     "Unable to save description.": {
       "segment": "Unable to save description.",
       "file": "pkg/session/menu.go",
-      "line": 197,
+      "line": 198,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -757,7 +741,7 @@
     "Your jail sentence is served. You are free!": {
       "segment": "Your jail sentence is served. You are free!",
       "file": "pkg/game/limits_condition.go",
-      "line": 134,
+      "line": 133,
       "sink": ".SendMessage",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -869,7 +853,7 @@
     "attacks you for": {
       "segment": "attacks you for",
       "file": "pkg/game/mob.go",
-      "line": 352,
+      "line": 364,
       "sink": ".SendMessage",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"

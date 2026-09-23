@@ -233,12 +233,12 @@ func cmdScore(s *Session) error {
 	}
 
 	// 13. Title line (from C lines 1293-1294)
-	className := game.ClassNames[p.Class]
 	fmt.Fprintf(&buf, "This ranks you as %s %s (level %d).\r\n", p.Name, p.Title, p.Level)
 
 	// 14. Race + Class (from C lines 1295-1298)
-	raceName := game.RaceNames[p.Race]
-	fmt.Fprintf(&buf, "You are %s %s %s.\r\n", articleFor(raceName), raceName, className)
+	raceName := game.PCRaceTypes[p.Race]
+	className := game.PCClassTypes[p.Class]
+	fmt.Fprintf(&buf, "You are %s %s %s.\n\r", articleFor(raceName), raceName, className)
 
 	// 15. Pack weight (from C lines 1304-1315)
 	carriedW := p.CarriedWeight()

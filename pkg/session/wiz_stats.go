@@ -241,8 +241,8 @@ func wizardSexName(sex int) string {
 }
 
 func wizardClassName(class int) string {
-	if name, ok := game.ClassNames[class]; ok {
-		return name
+	if class >= 0 && class < len(game.PCClassTypes) {
+		return game.PCClassTypes[class]
 	}
 	return "UNDEFINED"
 }

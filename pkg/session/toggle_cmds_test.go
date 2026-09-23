@@ -59,35 +59,31 @@ func TestCmdColorPersistsLevel(t *testing.T) {
 	}
 }
 
-// TestCmdAutoExitTogglesPersistently verifies cmdAutoExit actually flips
-// Player.AutoExit instead of just printing a fixed "Auto-exit toggled."
-// message every time regardless of state.
-func TestCmdAutoExitTogglesPersistently(t *testing.T) {
+// TestAutoUsesDoAutoAndAutoexitIsUnregistered pins the C subcommand route and
+// rejects the extra Go-only command name.
+func TestAutoUsesDoAutoAndAutoexitIsUnregistered(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
 
-	if !s.player.GetAutoExit() {
-		t.Fatalf("NewPlayer should default AutoExit to true")
+	if _, ok := cmdRegistry.Lookup("auto"); !ok {
+		t.Fatal("C command auto is not registered")
+	}
+	if _, ok := cmdRegistry.Lookup("autoexit"); ok {
+		t.Fatal("Go-only command autoexit must not be registered")
 	}
 
-	if err := cmdAutoExit(s, nil); err != nil {
-		t.Fatalf("cmdAutoExit: %v", err)
+	initial := s.player.GetAutoExit()
+	if err := cmdAuto(s, []string{"exits"}); err != nil {
+		t.Fatalf("cmdAuto exits: %v", err)
 	}
-	if s.player.GetAutoExit() {
-		t.Errorf("first toggle should disable autoexit")
+	if s.player.GetAutoExit() == initial {
+		t.Error("auto exits did not toggle PRF_AUTOEXIT")
 	}
-	if msg := readSessionText(t, s); !strings.Contains(msg, "disabled") {
-		t.Errorf("autoexit-disabled message: got %q", msg)
+	if err := cmdAuto(s, []string{"exits"}); err != nil {
+		t.Fatalf("cmdAuto exits second toggle: %v", err)
 	}
-
-	if err := cmdAutoExit(s, nil); err != nil {
-		t.Fatalf("cmdAutoExit: %v", err)
-	}
-	if !s.player.GetAutoExit() {
-		t.Errorf("second toggle should re-enable autoexit")
-	}
-	if msg := readSessionText(t, s); !strings.Contains(msg, "enabled") {
-		t.Errorf("autoexit-enabled message: got %q", msg)
+	if s.player.GetAutoExit() != initial {
+		t.Error("second auto exits toggle did not restore PRF_AUTOEXIT")
 	}
 }
 

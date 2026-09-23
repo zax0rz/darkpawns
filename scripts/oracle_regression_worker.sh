@@ -57,11 +57,17 @@ main() {
 	run_attempt() {
 		attempt=$((attempt + 1))
 		attempt_log="$log_dir/$scenario.attempt$attempt.log"
+		local -a dump_args=()
+		if [[ -n "${ORACLE_REGRESSION_DUMP:-}" ]]; then
+			# One file per scenario, overwritten by a retry: the dump records what
+			# C printed, and the last attempt is the run of record.
+			dump_args=(--dump-oracle "$ORACLE_REGRESSION_DUMP")
+		fi
 		(
 			cd "$repo_root" || exit 125
 			timeout --foreground --signal=TERM --kill-after=10s "$scenario_timeout" \
 				env DP_ORACLE_BIN="$oracle_bin" "$harness_bin" \
-				--scenario "$scenario" --seed "$seed"
+				--scenario "$scenario" --seed "$seed" "${dump_args[@]}"
 		) >"$attempt_log" 2>&1
 		attempt_status=$?
 	}

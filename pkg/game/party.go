@@ -27,6 +27,12 @@ func (w *World) GetFollowers(leaderName string) []*Player {
 			followers = append(followers, p)
 		}
 	}
+	sort.SliceStable(followers, func(i, j int) bool {
+		if followers[i].GetFollowingSequence() != followers[j].GetFollowingSequence() {
+			return followers[i].GetFollowingSequence() > followers[j].GetFollowingSequence()
+		}
+		return strings.ToLower(followers[i].GetName()) < strings.ToLower(followers[j].GetName())
+	})
 	return followers
 }
 
@@ -60,12 +66,27 @@ func (w *World) GetFollowerActors(leaderName string) []Actor {
 			followers = append(followers, mob)
 		}
 	}
-	// The Go runtime does not retain C's linked-list insertion order. Use a
-	// stable order so group messages and listings remain deterministic.
+	// C prepends each new follower to the leader's linked list (utils.c:add_follower).
+	// SetFollowing records that insertion order so this traversal matches C.
 	sort.SliceStable(followers, func(i, j int) bool {
+		left, right := actorFollowingSequence(followers[i]), actorFollowingSequence(followers[j])
+		if left != right {
+			return left > right
+		}
 		return strings.ToLower(followers[i].GetName()) < strings.ToLower(followers[j].GetName())
 	})
 	return followers
+}
+
+func actorFollowingSequence(actor Actor) uint64 {
+	switch follower := actor.(type) {
+	case *Player:
+		return follower.GetFollowingSequence()
+	case *MobInstance:
+		return follower.GetFollowingSequence()
+	default:
+		return 0
+	}
 }
 
 // GetFollowerActorsInRoom is the room-scoped form used by do_group "all".

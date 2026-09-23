@@ -304,12 +304,8 @@ func cmdGtell(s *Session, args []string) error {
 // internal and trailing whitespace, and delete_ansi_controls runs over the
 // complete formatted message before it is sent to any audience.
 func cmdGtellText(s *Session, text string) error {
-	if !s.player.InGroup {
-		s.sendText("But you are not the member of a group!")
-		return nil
-	}
-	if text == "" {
-		s.sendText("Yes, but WHAT do you want to group-say?")
+	if !s.player.IsAffected(game.AffGroup) || text == "" {
+		s.manager.world.GroupSay(s.player, text)
 		return nil
 	}
 
@@ -319,41 +315,7 @@ func cmdGtellText(s *Session, text string) error {
 		s.sendText("Your message was blocked.")
 		return nil
 	}
-	text = game.DeleteANSIControls(filtered)
-
-	broadcastMsg := fmt.Sprintf("%s tells the group, '%s'\r\n", s.player.Name, text)
-
-	// Find leader — act.comm.c do_gsay() line 838–841
-	leaderName := s.player.Name
-	if s.player.GetFollowing() != "" {
-		leaderName = s.player.GetFollowing()
-	}
-
-	// Send to leader if not self (act.comm.c lines 846–851)
-	if leaderName != s.player.Name {
-		if leader, ok := s.manager.world.GetPlayer(leaderName); ok && leader.InGroup {
-			leader.SendMessage(broadcastMsg)
-			s.manager.world.MirrorChannelLine(leader, "group", s.player.Name, broadcastMsg)
-		}
-	}
-
-	// Send to all group followers excluding self (act.comm.c lines 852–858)
-	for _, f := range s.manager.world.GetFollowers(leaderName) {
-		if f.InGroup && f.Name != s.player.Name {
-			f.SendMessage(broadcastMsg)
-			s.manager.world.MirrorChannelLine(f, "group", s.player.Name, broadcastMsg)
-		}
-	}
-
-	// Confirm to sender — act.comm.c lines 862–865. The C OK macro is
-	// "Okay.", not the shorter command-layer "Ok." used by other paths.
-	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
-		s.sendText("Okay.")
-	} else {
-		echo := fmt.Sprintf("You tell the group, '%s'", text)
-		s.sendText(echo)
-		s.manager.world.MirrorChannelLine(s.player, "group", s.player.Name, echo+"\r\n")
-	}
+	s.manager.world.GroupSay(s.player, filtered)
 	return nil
 }
 

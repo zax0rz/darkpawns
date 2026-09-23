@@ -3,6 +3,7 @@ package session
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -24,6 +25,15 @@ var (
 	cachedText = map[string]string{}
 	cacheMu    sync.RWMutex
 )
+
+func loginTextForFile(s *Session, filename string) string {
+	text, err := cachedTextForFile(s, filename)
+	if err != nil {
+		slog.Error("could not read static login text", "file", filename, "error", err)
+		return ""
+	}
+	return text
+}
 
 const (
 	cReadSize          = 256
