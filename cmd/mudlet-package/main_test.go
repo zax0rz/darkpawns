@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -65,8 +66,24 @@ func TestPackageXMLRoundTrips(t *testing.T) {
 			t.Fatalf("script %q did not round-trip through XML", script.Name)
 		}
 	}
-	if len(pkg.Aliases) != 1 || pkg.Aliases[0].Regex != `^dp(?:\s+(\w+))?$` {
+	if len(pkg.Aliases) != 1 {
 		t.Fatalf("aliases = %+v", pkg.Aliases)
+	}
+	// The one alias takes "dp" and everything after it, and nothing else:
+	// a word that only starts with "dp" still goes to the game.
+	alias := regexp.MustCompile(pkg.Aliases[0].Regex)
+	for input, want := range map[string]string{
+		"dp": "", "dp map": "map", "dp clear chat": "clear chat", "dp  clear  ": "clear",
+	} {
+		match := alias.FindStringSubmatch(input)
+		if match == nil || match[1] != want {
+			t.Errorf("dp alias on %q = %q, want argument %q", input, match, want)
+		}
+	}
+	for _, input := range []string{"dpx", "d p", "look dp"} {
+		if alias.MatchString(input) {
+			t.Errorf("dp alias took %q, which belongs to the game", input)
+		}
 	}
 }
 
@@ -135,6 +152,7 @@ connected = true
 function getConnectionInfo() return "darkpawns.org", 7777, connected end
 function sendGMCP(msg) record("sendGMCP", msg) end
 function send(cmd, echo) record("send", cmd) end
+function clearWindow(name) record("clearWindow", name or "main") end
 function getMainWindowSize() return 1000, 700 end
 function getMudletHomeDir() return mudletHome end
 function setBorderRight(px) record("setBorderRight", px) end
@@ -142,8 +160,12 @@ function getTime() return "12:00" end
 function cecho(text) record("cecho", text) end
 function ansi2decho(text) return text end
 
+-- Qt draws a widget made later over one made earlier, until raised.
+stackTop = 0
 local function widget(kind, cons)
-  local w = {kind = kind, cons = cons, hidden = false, log = {}}
+  stackTop = stackTop + 1
+  local w = {kind = kind, cons = cons, hidden = false, log = {}, z = stackTop}
+  function w:raise() stackTop = stackTop + 1; self.z = stackTop end
   function w:setStyleSheet(css) self.css = css end
   function w:show() self.hidden = false end
   function w:hide() self.hidden = true end
@@ -163,6 +185,14 @@ for _, kind in ipairs({"VBox", "HBox", "Label", "Gauge", "Mapper", "MiniConsole"
       end
     end
     local w = widget(kind, cons)
+    if kind == "Mapper" then
+      -- One map widget per profile: a second Geyser.Mapper moves the first,
+      -- keeping its place in the stack.
+      theMapper = theMapper or w
+      w.z = theMapper.z
+      local raise = w.raise
+      function w:raise() raise(self); theMapper.z = self.z end
+    end
     if kind == "Gauge" then
       w.front, w.back, w.text = widget("Label"), widget("Label"), widget("Label")
     end
@@ -210,8 +240,7 @@ function loadMap(path)
   return true
 end
 function roomExists(id) return rooms[id] ~= nil end
-speedWalkDir = {}
-function getPath(from, to) speedWalkDir = {"n", "up"}; return true end
+speedWalkDir = nil
 `
 
 // scenario drives the loaded package the way a session on the four-room keep
@@ -235,6 +264,7 @@ check(not sent("sendGMCP", 'Core.Supports.Add ["Char 1","Room 1","Comm.Channel 1
 fire("sysProtocolEnabled", "GMCP")
 check(sent("sendGMCP", 'Core.Supports.Add ["Char 1","Room 1","Comm.Channel 1"]'), "no Core.Supports.Add on GMCP enable")
 check(DarkPawns.ui.dock and not DarkPawns.ui.dock.hidden, "dock not built")
+check(DarkPawns.ui.map.z > DarkPawns.ui.dock.z, "the dock covers the map")
 
 gmcp.Char = {Vitals = {hp = 80, maxhp = 100, mp = 20, maxmp = 20, mv = 98, maxmv = 100},
              Status = {name = "Walker", level = 7, race = "Elven", class = "Magic User", gold = 12}}
@@ -246,11 +276,10 @@ check(DarkPawns.ui.readings.hp.text:find("80 / 100", 1, true), "hp reading")
 check(DarkPawns.ui.readings.mv.text:find("98 / 100", 1, true) and DarkPawns.ui.readings.mv.text:find("MOVE", 1, true), "move reading")
 check(DarkPawns.ui.status.text:find("Walker", 1, true) and DarkPawns.ui.status.text:find("Magic User", 1, true), "status line")
 
--- The lockup: DARK over PAWNS, Oxblood on PAWNS alone, and the pawn image
--- installed from the file the package wrote.
-local mark = DarkPawns.ui.wordmark.text
-check(mark:find("DARK<br>", 1, true) and mark:find([[class="accent" style="color: #A8201A;">PAWNS]], 1, true), "wordmark lockup")
-check(DarkPawns.ui.pawn.image == mudletHome .. "/darkpawns-pawn.png", "pawn image not installed")
+-- The lockup: the picture the package wrote, unscaled, in a row its height.
+local header = DarkPawns.ui.header.css
+check(header:find('background-image: url("' .. mudletHome .. '/darkpawns-lockup.png")', 1, true)
+  and header:find("no-repeat", 1, true) and not header:find("border-image", 1, true), "lockup not shown unscaled")
 
 local function enter(num, name, area, exits)
   gmcp.Room = {Info = {num = num, name = name, area = area, environment = "Inside", exits = exits}}
@@ -284,6 +313,15 @@ check(sent("cecho", "\n<ansi_white>[ Dark Pawns ] A map of the whole world is av
 -- dp map downloads it; the download loads and records its version.
 DarkPawns.command("map")
 check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "dp map did not download")
+
+-- dp clear empties the main window, as the game's clear can't in Mudlet;
+-- dp clear chat empties only the chat.
+local chatLines = #DarkPawns.ui.chat.log
+DarkPawns.command("clear")
+check(sent("clearWindow", "main"), "dp clear did not clear the main window")
+check(#DarkPawns.ui.chat.log > 0 and #DarkPawns.ui.chat.log == chatLines, "dp clear touched the chat")
+DarkPawns.command("clear   Chat")
+check(#DarkPawns.ui.chat.log == 0, "dp clear chat did not clear the chat")
 fire("sysDownloadDone", mudletHome .. "/darkpawns-map.xml")
 check(sent("loadMap", mudletHome .. "/darkpawns-map.xml") and mapUserData["darkpawns.mapVersion"] == "aaa111", "downloaded map not loaded")
 
@@ -301,7 +339,10 @@ gmcp.Client.Map.version = "bbb222"
 fire("gmcp.Client.Map")
 check(downloads() == before + 1, "a new map version was not taken")
 
-speedWalkFrom, speedWalkTo = 8004, 8005
+-- As Mudlet 5.0.1 does in its default mode: it finds the path, sets
+-- speedWalkDir and speedWalkPath, and calls doSpeedWalk. speedWalkFrom and
+-- speedWalkTo stay unset (they belong to custom pathfinding mode).
+speedWalkDir, speedWalkPath = {"n", "up"}, {8005, 8006}
 doSpeedWalk()
 check(sent("send", "n") and sent("send", "up"), "speedwalk did not send the path")
 
@@ -312,6 +353,17 @@ check(handlerCount("gmcp.Room.Info") == before, "reload stacked a second Room.In
 
 fire("sysUninstallPackage", "darkpawns")
 check(DarkPawns.ui.dock.hidden and handlerCount("gmcp.Room.Info") == 0, "uninstall left the dock or handlers behind")
+
+-- An upgrade: the new version loads into the same Lua state, where the old
+-- version's hidden dock is still held. It builds its own dock rather than
+-- showing the old one again. (Clearing the version stamp stands in for an
+-- older version; 1.1.2 and earlier left none.)
+local old = DarkPawns.ui.dock
+DarkPawns.ui.version = nil
+reload()
+check(DarkPawns.ui.dock ~= old and not DarkPawns.ui.dock.hidden and old.hidden, "an upgrade showed the old version's dock")
+check(DarkPawns.ui.header.css:find("darkpawns-lockup.png", 1, true), "the upgraded dock has no lockup")
+check(DarkPawns.ui.map.z > DarkPawns.ui.dock.z, "the upgraded dock covers the map")
 `
 
 // TestPackageLoadsAndDrives loads every script into a Lua 5.1 state with the
@@ -347,29 +399,29 @@ func TestPackageLoadsAndDrives(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The PNG the Lua decoded and wrote is byte-for-byte the one the
-	// generator rendered from the site header.
-	written, err := os.ReadFile(filepath.Join(home, "darkpawns-pawn.png"))
-	if err != nil {
-		t.Fatalf("pawn not written: %v", err)
-	}
-	drawing, err := readPawn(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want, err := renderPawnPNG(drawing, pawnHeight)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(written, want) {
-		t.Fatalf("pawn PNG round-trip through the Lua base64 decoder changed it (%d bytes, want %d)", len(written), len(want))
+	// The PNGs the Lua decoded and wrote are byte-for-byte the committed
+	// renders.
+	for _, name := range []string{"lockup.png", "lockup@2x.png"} {
+		written, err := os.ReadFile(filepath.Join(home, "darkpawns-"+name))
+		if err != nil {
+			t.Fatalf("%s not written: %v", name, err)
+		}
+		want, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(written, want) {
+			t.Fatalf("%s changed in the round-trip through the Lua base64 decoder (%d bytes, want %d)", name, len(written), len(want))
+		}
 	}
 }
 
-// TestPawnIsTheCanonicalDrawing: the generator found the site header's five
-// shapes, in order, and draws them. check_wordmark.py holds the header to the
-// canonical coordinates; this holds the package to the header.
-func TestPawnIsTheCanonicalDrawing(t *testing.T) {
+// TestLockupPawnIsCanonical: the pawn in the committed lockup pictures is
+// the site header's five shapes, where the header's CSS puts them.
+// check_wordmark.py holds the header to the canonical coordinates; this
+// holds the pictures to the header, so a changed mark fails here until
+// scripts/render_mudlet_lockup.py is rerun.
+func TestLockupPawnIsCanonical(t *testing.T) {
 	drawing, err := readPawn(root)
 	if err != nil {
 		t.Fatal(err)
@@ -384,22 +436,121 @@ func TestPawnIsTheCanonicalDrawing(t *testing.T) {
 	if !reflect.DeepEqual(drawing.shapes, want) || drawing.viewBox != [4]float64{24, 8, 52, 88} {
 		t.Fatalf("pawn drawing = %+v viewBox %v", drawing.shapes, drawing.viewBox)
 	}
-	pngBytes, err := renderPawnPNG(drawing, pawnHeight)
-	if err != nil {
-		t.Fatal(err)
+	for _, pic := range []struct {
+		name  string
+		scale float64
+	}{{"lockup.png", 1}, {"lockup@2x.png", 2}} {
+		raw, err := os.ReadFile(filepath.Join(root, pic.name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		img, err := png.Decode(bytes.NewReader(raw))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if bounds := img.Bounds(); bounds.Dx() != int(142*pic.scale) || bounds.Dy() != int(55*pic.scale) {
+			t.Fatalf("%s is %v, want 142x55 CSS pixels at %vx (ui.lockupHeight is 55)", pic.name, bounds, pic.scale)
+		}
+		// The render script's layout, in CSS pixels: a 1px margin, the pawn
+		// 51.2px tall and centred against the 52.48px wordmark.
+		const pad, pawnHeight, pawnTop = 1.0, 51.2, (52.48 - 51.2) / 2
+		scale := pawnHeight / 88 * pic.scale
+		originX, originY := pad*pic.scale, (pad+pawnTop)*pic.scale
+		// Edge pixels differ with antialiasing; a moved or redrawn shape
+		// leaves pixels that are ink in one and paper in the other.
+		wrong := 0
+		for py := 0; py < img.Bounds().Dy(); py++ {
+			for px := 0; px < int((pad+32)*pic.scale); px++ {
+				covered := 0
+				for sy := 0; sy < 4; sy++ {
+					for sx := 0; sx < 4; sx++ {
+						x := 24 + (float64(px)+(float64(sx)+0.5)/4-originX)/scale
+						y := 8 + (float64(py)+(float64(sy)+0.5)/4-originY)/scale
+						for _, shape := range drawing.shapes {
+							if shape.contains(x, y) {
+								covered++
+								break
+							}
+						}
+					}
+				}
+				_, _, _, a := img.At(px, py).RGBA()
+				if diff := int(a>>8) - covered*255/16; diff > 128 || diff < -128 {
+					wrong++
+				}
+			}
+		}
+		if wrong > 0 {
+			t.Errorf("%s: %d pawn pixels disagree with Header.astro; rerun scripts/render_mudlet_lockup.py", pic.name, wrong)
+		}
 	}
-	img, err := png.Decode(bytes.NewReader(pngBytes))
-	if err != nil {
-		t.Fatal(err)
-	}
-	// The head is solid ink, the gap between collar and body is empty, and
-	// the corners are transparent.
-	at := func(vx, vy float64) uint32 {
-		scale := float64(pawnHeight) / 88
-		_, _, _, a := img.At(int((vx-24)*scale), int((vy-8)*scale)).RGBA()
-		return a
-	}
-	if at(50, 23) != 0xffff || at(50, 44.5) != 0 || at(25, 9) != 0 || at(50, 88) != 0xffff {
-		t.Fatal("rendered pawn does not match its shapes")
+}
+
+// TestMapOfferBeforePackageLoads reproduces the acceptance-run upgrade: the
+// server offers the package and the map together, so the Client.Map offer
+// is already in the gmcp table when the package finishes loading, and its
+// event has been missed.
+func TestMapOfferBeforePackageLoads(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		handMap  string // Lua run before load to give the profile a map
+		scenario string
+	}{
+		{
+			name: "empty profile loads the map by itself",
+			scenario: `
+check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "an offer waiting at load was not acted on")`,
+		},
+		{
+			name:    "hand-mapped profile is asked, and dp map uses the waiting offer",
+			handMap: `rooms[8004] = {exits = {}, stubs = {}, area = 1, xyz = {0, 0, 0}, name = "The Gate Hall"}`,
+			scenario: `
+check(not sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "replaced a hand-built map without asking")
+check(sent("cecho", "\n<ansi_white>[ Dark Pawns ] A map of the whole world is available. Type <yellow>dp map<ansi_white> to load it; it replaces this profile's map.<reset>\n"), "waiting offer not announced")
+-- The same offer's event arriving afterwards must not announce it again.
+local before = 0
+for _, c in ipairs(calls) do if c.name == "cecho" and c.args[1]:find("whole world is available", 1, true) then before = before + 1 end end
+fire("gmcp.Client.Map")
+local after = 0
+for _, c in ipairs(calls) do if c.name == "cecho" and c.args[1]:find("whole world is available", 1, true) then after = after + 1 end end
+check(before == 1 and after == 1, "the offer was announced " .. after .. " times")
+DarkPawns.command("map")
+check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "dp map ignored the waiting offer")`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, scripts, err := Scripts(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			L := lua.NewState()
+			defer L.Close()
+			L.SetGlobal("mudletHome", lua.LString(t.TempDir()))
+			if err := L.DoString(mudletStub); err != nil {
+				t.Fatal(err)
+			}
+			setup := `gmcp.Client = {Map = {url = "https://darkpawns.org/darkpawns-map.xml", version = "aaa111"}}
+` + tc.handMap
+			if err := L.DoString(setup); err != nil {
+				t.Fatal(err)
+			}
+			for _, script := range scripts {
+				if err := L.DoString(script.Source); err != nil {
+					t.Fatalf("%s fails on load: %v", script.Name, err)
+				}
+			}
+			check := `
+local function check(ok, msg) if not ok then error(msg, 2) end end
+local function sent(name, value)
+  for _, c in ipairs(calls) do
+    if c.name == name and c.args[1] == value then return true end
+  end
+  return false
+end
+`
+			if err := L.DoString(check + tc.scenario); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }

@@ -369,6 +369,19 @@ func (s *Session) sendGMCPClientGUI() {
 	s.sendGMCPRaw("Client.GUI", string(payload))
 }
 
+// reofferGMCPClientGUI offers the Mudlet package again as the character
+// enters the game. Mudlet 5.0.1 upgrades a package by uninstalling it and then
+// downloading the new one, and when the download lands while the profile is
+// still saving after the uninstall, the install can be lost: the player is
+// left with no package until the next connection. A second offer finds the
+// package missing and installs it fresh, a path without that race. A client
+// that already has this version ignores it.
+func (s *Session) reofferGMCPClientGUI() {
+	if s.GMCPEnabled() {
+		s.sendGMCPClientGUI()
+	}
+}
+
 // sendGMCPClientMap offers the world map. Like Client.GUI it is a Mudlet
 // core message, not a negotiated module.
 func (s *Session) sendGMCPClientMap() {

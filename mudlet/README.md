@@ -18,6 +18,12 @@ the game text itself is exactly what any other client sees.
 
 The dock appears on the right. Type `dp` for its commands.
 
+If an upgrade leaves you without the dock, and `dp` answers `Huh?!?`,
+disconnect and connect again: Mudlet installs the package fresh. Mudlet 5.0.1
+can lose an upgrade when the download finishes while it is still saving the
+profile after removing the old version; the next connection finds no package
+and installs it without that step.
+
 ### Why port 7778
 
 Port 7778 is encrypted, so your password and everything you type stay
@@ -60,7 +66,8 @@ already understands `n`/`e`/`s`/`w`/`u`/`d` and abbreviated commands such as
 |---|---|
 | `dp` | show the version and these commands |
 | `dp hide` / `dp show` | hide or restore the dock |
-| `dp clear` | clear the chat window |
+| `dp clear` | clear the main window: the game's `clear` sends terminal codes Mudlet doesn't act on |
+| `dp clear chat` | clear the chat window |
 | `dp map` | load the whole world map (replaces this profile's map) |
 
 ## For developers

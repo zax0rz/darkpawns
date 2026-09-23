@@ -1,12 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"image"
-	"image/color"
-	"image/png"
-	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,22 +9,12 @@ import (
 	"strings"
 )
 
-// The pawn is not redrawn for Mudlet. Mudlet releases up to 5.0 cannot put
-// an SVG in a label, so the generator reads the five canonical shapes from
-// the site header (the drawing check_wordmark.py enforces) and rasterizes
-// them here. A change to the mark reaches the package the next time it is
-// built, and TestPackageIsCurrent fails until it is.
+// The pawn in the dock's lockup picture is checked against the site
+// header's canonical drawing: these read the five shapes from Header.astro
+// and say whether a point is inside one.
 
 // headerPath is the canonical pawn, relative to the package directory.
 const headerPath = "../website-astro/src/components/Header.astro"
-
-// pawnInk is DESIGN.md's Ink: the header draws the pawn in currentColor, and
-// the header's currentColor is Ink.
-var pawnInk = color.NRGBA{R: 0x1A, G: 0x16, B: 0x14, A: 0xFF}
-
-// pawnHeight is the rendered height in pixels: twice the dock's 56-pixel
-// header, so the mark stays crisp on high-density displays.
-const pawnHeight = 112
 
 type pawnShape struct {
 	kind   string    // circle, rect, polygon
@@ -115,42 +100,4 @@ func (s pawnShape) contains(x, y float64) bool {
 		return inside
 	}
 	return false
-}
-
-// renderPawnPNG draws the pawn in Ink on transparency, with 4x4 supersampled
-// edges. Go's PNG encoder is deterministic, so the committed package only
-// changes when the drawing does.
-func renderPawnPNG(drawing pawnDrawing, height int) ([]byte, error) {
-	vx, vy, vw, vh := drawing.viewBox[0], drawing.viewBox[1], drawing.viewBox[2], drawing.viewBox[3]
-	scale := float64(height) / vh
-	width := int(math.Round(vw * scale))
-	img := image.NewNRGBA(image.Rect(0, 0, width, height))
-	const samples = 4
-	for py := 0; py < height; py++ {
-		for px := 0; px < width; px++ {
-			covered := 0
-			for sy := 0; sy < samples; sy++ {
-				for sx := 0; sx < samples; sx++ {
-					x := vx + (float64(px)+(float64(sx)+0.5)/samples)/scale
-					y := vy + (float64(py)+(float64(sy)+0.5)/samples)/scale
-					for _, shape := range drawing.shapes {
-						if shape.contains(x, y) {
-							covered++
-							break
-						}
-					}
-				}
-			}
-			if covered > 0 {
-				c := pawnInk
-				c.A = uint8(covered * 255 / (samples * samples))
-				img.SetNRGBA(px, py, c)
-			}
-		}
-	}
-	var out bytes.Buffer
-	if err := png.Encode(&out, img); err != nil {
-		return nil, err
-	}
-	return out.Bytes(), nil
 }

@@ -50,18 +50,23 @@ type Script struct {
 	Source string
 }
 
-// Scripts reads root/src/*.lua in name order, with {{VERSION}} and
-// {{PAWN_PNG_BASE64}} substituted.
+// Scripts reads root/src/*.lua in name order, with {{VERSION}} and the
+// lockup images ({{LOCKUP_PNG_BASE64}}, {{LOCKUP_2X_PNG_BASE64}}) substituted.
 func Scripts(root string) (version string, scripts []Script, err error) {
 	raw, err := os.ReadFile(filepath.Clean(filepath.Join(root, "VERSION")))
 	if err != nil {
 		return "", nil, err
 	}
 	version = strings.TrimSpace(string(raw))
-	pawn, err := pawnBase64(root)
+	lockup, err := imageBase64(root, "lockup.png")
 	if err != nil {
 		return "", nil, err
 	}
+	lockup2x, err := imageBase64(root, "lockup@2x.png")
+	if err != nil {
+		return "", nil, err
+	}
+	replacer := strings.NewReplacer("{{VERSION}}", version, "{{LOCKUP_PNG_BASE64}}", lockup, "{{LOCKUP_2X_PNG_BASE64}}", lockup2x)
 	paths, err := filepath.Glob(filepath.Join(root, "src", "*.lua"))
 	if err != nil {
 		return "", nil, err
@@ -81,24 +86,21 @@ func Scripts(root string) (version string, scripts []Script, err error) {
 		}
 		scripts = append(scripts, Script{
 			Name:   "Dark Pawns " + name,
-			Source: strings.NewReplacer("{{VERSION}}", version, "{{PAWN_PNG_BASE64}}", pawn).Replace(string(source)),
+			Source: replacer.Replace(string(source)),
 		})
 	}
 	return version, scripts, nil
 }
 
-// pawnBase64 is the rasterized pawn as base64, wrapped at 76 columns so the
-// generated package stays reviewable in a diff.
-func pawnBase64(root string) (string, error) {
-	drawing, err := readPawn(root)
+// imageBase64 is root/name as base64, wrapped at 76 columns so the generated
+// package stays reviewable in a diff. The lockup images are rendered by
+// scripts/render_mudlet_lockup.py and committed beside the sources.
+func imageBase64(root, name string) (string, error) {
+	raw, err := os.ReadFile(filepath.Clean(filepath.Join(root, name)))
 	if err != nil {
 		return "", err
 	}
-	pngBytes, err := renderPawnPNG(drawing, pawnHeight)
-	if err != nil {
-		return "", err
-	}
-	encoded := base64.StdEncoding.EncodeToString(pngBytes)
+	encoded := base64.StdEncoding.EncodeToString(raw)
 	var lines []string
 	for len(encoded) > 76 {
 		lines = append(lines, encoded[:76])
@@ -123,7 +125,7 @@ func Build(root string) ([]byte, error) {
 	writeElement(&b, 3, "script", "DarkPawns.command(matches[2])")
 	writeElement(&b, 3, "command", "")
 	writeElement(&b, 3, "packageName", "")
-	writeElement(&b, 3, "regex", `^dp(?:\s+(\w+))?$`)
+	writeElement(&b, 3, "regex", `^dp(?:\s+(.*\S))?\s*$`)
 	b.WriteString("\t\t</Alias>\n\t</AliasPackage>\n")
 	b.WriteString("\t<ActionPackage />\n\t<ScriptPackage>\n")
 	b.WriteString("\t\t<ScriptGroup isActive=\"yes\" isFolder=\"yes\">\n")

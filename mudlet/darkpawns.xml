@@ -9,13 +9,13 @@
 			<script>DarkPawns.command(matches[2])</script>
 			<command></command>
 			<packageName></packageName>
-			<regex>^dp(?:\s+(\w+))?$</regex>
+			<regex>^dp(?:\s+(.*\S))?\s*$</regex>
 		</Alias>
 	</AliasPackage>
 	<ActionPackage />
 	<ScriptPackage>
 		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>Dark Pawns 1.1.0</name>
+			<name>Dark Pawns 1.1.6</name>
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
@@ -30,7 +30,7 @@
 -- chat window are drawn from data the server already sent alongside the text.
 
 DarkPawns = DarkPawns or {}
-DarkPawns.version = &#34;1.1.0&#34;
+DarkPawns.version = &#34;1.1.6&#34;
 DarkPawns.packageName = &#34;darkpawns&#34;
 
 -- Mudlet preinstalls its generic text mapper in every profile for a game it
@@ -98,7 +98,7 @@ end
 --
 -- The dock is the website&#39;s /play page brought into Mudlet: a Paper-Deep
 -- chassis around the game&#39;s dark canvas. The chassis carries the lockup (the
--- pawn, then DARK over PAWNS with Oxblood on PAWNS alone), the character
+-- site header&#39;s own, as a picture), the character
 -- line, and the gauges; the map and the chat window are game surfaces, so they
 -- keep the dark canvas, like the terminal on the site.
 --
@@ -106,8 +106,24 @@ end
 -- text on paper beside a thin bar, so no reading depends on colour and every
 -- piece of text clears WCAG AA contrast.
 
-DarkPawns.ui = DarkPawns.ui or {}
+-- A dock belongs to one package version. Mudlet upgrades a package inside
+-- the running profile, so the new version loads into the Lua state that
+-- still holds the old version&#39;s dock (hidden by its uninstall). Reusing it
+-- would show the old dock again; instead the new version starts a fresh
+-- table and gives its widgets names of its own.
+if DarkPawns.ui and DarkPawns.ui.version ~= DarkPawns.version then
+  if DarkPawns.ui.hide then
+    DarkPawns.ui.hide()
+  end
+  DarkPawns.ui = nil
+end
+DarkPawns.ui = DarkPawns.ui or { version = DarkPawns.version }
 local ui = DarkPawns.ui
+
+-- A widget name unique to this version.
+local function id(name)
+  return &#34;DarkPawns-&#34; .. DarkPawns.version .. &#34;.&#34; .. name
+end
 
 ui.palette = {
   paper = &#34;#EFE7D6&#34;,
@@ -119,37 +135,316 @@ ui.palette = {
 }
 
 -- DESIGN.md typography, with its own fallbacks: players rarely have the
--- site&#39;s fonts installed, and Georgia or the system serif stands in.
+-- site&#39;s fonts installed, and Georgia or the system serif stands in. The
+-- display face appears only in the lockup, which is a picture.
 ui.fonts = {
-  display = &#34;&#39;DM Serif Display&#39;, Georgia, serif&#34;,
   body = &#34;&#39;Source Serif 4&#39;, Georgia, serif&#34;,
   mono = &#34;&#39;JetBrains Mono&#39;, &#39;Fira Code&#39;, monospace&#34;,
 }
 
 ui.dockPercent = 32 -- share of the window width the dock takes
 
--- The pawn, rasterized from the site header&#39;s canonical drawing by
--- cmd/mudlet-package (Mudlet 5.0 labels cannot show SVG). Written to the
+-- The lockup, as the site header draws it: the pawn, then DARK over PAWNS in
+-- DM Serif Display. A package cannot install fonts and a label cannot draw
+-- SVG, so scripts/render_mudlet_lockup.py renders the header&#39;s own drawing
+-- and CSS to a picture, at the CSS size and at twice it. The dock shows it
+-- unscaled; Qt takes the @2x file on high-density screens. Written to the
 -- profile directory at load, because a label image has to be a file.
-ui.pawnPNG = [[
-iVBORw0KGgoAAAANSUhEUgAAAEIAAABwCAYAAACq5qZOAAADf0lEQVR4nOycPY7TUBSFHz8VCDFI
-lgs3pKRjdsCwgkxLRbbACoAdZAcMOxhWQNhB2EGmcWG5CELQgh46jgzjZBz5nOcxOp9EgRRdPz7u
-ff/23WD+YBHAIsD9MR9e5NnjEMIp/ropq/pqrLbcSfmwIs+ehhDO8edsz8/WIYRVCOGirOqvqdqW
-RAQELCHgGKKQd2VVfxE1bYdcRJFnb+M/ZmCYyxDCoqzqb6RmXUMmAvW/avUBQ9nEjFKVi0SEQELD
-NvYtChmq4VMhIXISywSiqdBFoE9QSGiYoc+gQi0NjA4bZswDxP7iEysYOyOW5HjJnkUT0ZospWJW
-5NmcFYyZESkl0J9pEYApYt/aQckJSnIwFBGKcf0IZowgrIxQzhuS4I0ZwBKRahIlgyJizJ0lLMQG
-wyyNNTFWb1grUaaIFTFWX2iLL6aIC2KsvtBEsFefnxNOrLZlVT9hBWMPn0P3Jo+Buvq8xwz2/cfP
-q0cPH8TJ1TNm3A7WZVW/YgZUTKgW4nnFFs+gQheBLfdz1vjewWIym7do6Bk5M7bs7bk2srUGZJyS
-5hdrbONLJISER35z9PLHLpljFizLqn4vatqO1IfA89Yh8MmBn8aJ0mVZ1R9TtS2piDbYWfo3Q7Yp
-T8BNB96YARYBBl8dKvLstWKmdyRxyv1mSADGHarZSFv5VFwawCKARQCLAIzOcpV4Z6qLyZ+r3Bpc
-GsAigPxSepFnHxhH92VVv+S0qJsUV5B/kUKdKe9kS0ujyLPnxHCUCyH7UPcRzAskkxbBbLx0YacW
-wWy8M0IQ6xpTEhE73xfMeG1kIkSNlt3eU2aEIpVl5aEUofjfm2RGWASQvMqkuu4sEYHGHjrbHIIk
-K1QZobybbRHK2CoRylmgJPYUM0Ky+FKJkK4UWW/ttFG8AEtvZAf08lBkhHSVCOgZpxCR4mTcGQHo
-nbFFgKmWBnuHnCuC3bgboGYeOyNSlEUDtTzYIlK+CGsRwKUBnBENzJ1y5hdFUo4YDbQMZGbEGF8M
-uJUiUvYPDbTJ29S/KOKMYD9z6iJoIwflMhnOMca6oT/K5xr+W3plhPJeQiLWN30UtG9pjPGRDCax
-bA9eTfTNW2ARwCKARQCLABYB+g6fY7+qNBS/6tQXlwbYlQbpG/dTY9W8GeSMABYBLAJYBLAIYBHA
-IoBFmL9xRgCLABYBLAL8DgAA//+6haphcxRRcwAAAABJRU5ErkJggg==
+ui.lockupPNG = [[
+iVBORw0KGgoAAAANSUhEUgAAAI4AAAA3CAYAAADaOHK1AAAVLklEQVR42u1de3zT1dn/PueXprTc
+aS5N0pIUgk50TofOTeeA6TYvzM8QGlpEN5174d2cU2Fu6vYCXtB5m3PvvG3O26ClIDitglMU9eNU
+ENjrNgZSaNM2CU3SUZiUNsnvPO8fCeWXXy5NYoHip8/nkz9yenIuz/me53aecwoM0RAN0RAN0RAN
+aqJCfuSwlk1j4Dtg+gIAMOAlpo3+UOjpE5kZFRUV46LR6CgAGDlyZKCpqal3CCIDABync/SY6KGi
+tQCmpa3AaAFopj8U+ttADG4qYNhlMd3FzNcT0TBdZ1vBtAMEIxgmEKxg7GRBb6hMDcFgsCPf/uyW
+so0ATU0wZr4vGH4il/GB+UcgGp7MCnxAjN1MXESgKgBuZrSBeLMgWuPrCK8DIFPGYC37PZiuASDS
+8ZeMxef7fL52/TraLabNAKYkvv+HgHt8wfCy4w4cp9XqirK6DcCY/uoyeGYg2PnCQA3SbjH9AsAd
+ul4W+YOdD/TVsdvLOBb5OQELGYgA+IOxN/oL7/79XTlJm3HjHNIgWg8vGDM2BELhC3Man7lsEYju
+Sxod4dpAR/jJw99tJtMUEvgzAEeiaItgqmkPhZpSwWOaA0a9bqnemXRK6OtvvYVYhmEIu8UUAGNt
+FLQoFAp9cjQljsi1YoRja3MBTRyN9JTTanUN1CAZvKe/On6/vzMQDP+UmW8hoJiAH0WNRdus1rGn
+5tSHQXi0/CDCNIvFYs3ptwR/f3UC4fAWgH+oKZqiEm8sLy83p/AvKt9N6YN5UxbQwGYx3QPgSX8o
+vOBogyZn4Nit5u8R6Iw82h0TY3XJ8dC9gVDn/QB2JBDsUqTYUF5e7swBnJfrihQD86yBHJs/2Pky
+gC6NuHeQGvtZyqIQyTS7UWaRyMsIYH8wfOux4nNuEof5u/lLCXwXx4dUMP/xCMPJKqT6XDa1XGk2
+TwSLLWAOJi+W9Az42ICdSV0QvvVpGnRYzXcQw+gPhn92LJmcq6qaVqj3dXywI17Twfh8m8VyWaba
+kniOosg/AbRWt83PH28y2QZyZMzQqREuK7Qtm9m8hIGRvlD4p8ecw59FV3GM2bwdSLYHCHJBFuk4
+pW1v54dM4nk9f6IKzR7g4Q3XgXNngQ7DL4m4zN8RujE+hcEJnK6Cdpciuo4HcLZv3x4BUgzW6U6n
+c1iKmrJaT2XmfwDASacE32SgM2lZmT0Dym/CyTrb5dG8JbnFdCsx7P5g+PrjAZrcgUPYWEDbXX7/
+wMRzClQKYV1BcSRycHKKmpKyBgbUAUDca6E/66qc5xg3rmIgRuSwmi4mYKxGb9X5O8INeaknq/ln
+DNwF0OvHCzQ5A4fAv8lfl+f/mwGmgynzkOxItW/kyYFA544+hgh+PmX6BlH9qWNRJtNJzPhdQjX2
+EtGdk0KdV+XVhtm8iJjvSXiBjznN5vLjxVxDLpV8HZ0bHRbTM7l6Sgz+m7E09tDxxQ2liXlQaZKa
+Ki87S1WxWVs2epzl9a5wsEsbs5IMD4Bf5zmAy2zmskoiKmbGZCZcRICRGe8bJM9q6wz7ffnMBvxl
+EM7XFJhikL8HcNlgtnFgKIneAOSgshgtxOJqrze3iO1RVFVKymRZJJ09xSTNQZGsT2Mfvahzmc/J
+JRak48MHgmm5AD4iwmUEGBMAOL1XUdT8wxv0AcCv6MpmVFhM3x+8Ng4Ar3d/lz8Yns7MSzMZyww8
+U1QaPXOgzqo+pcQpSRkfxQLauRPB7vfva0szkxR1JdRofkYyocMXDu9qD4brAd6qQWFpEas3F7IT
+iqFco481SeDB8RbLhEGpqrQUCHUucTpHPxQ5ZJgGxhlxHokWVYiNHR0dLYPIKx+r+x6LSOWffUam
+yXQeJEpsFtMPUgFGxcTM0AYNiTwA7itkwUmIe1hyg2aDLTCbzfeFQqG9+TTUHAx22K2m74PxkqZ4
+ZAzqM4jH2tRBC5zD0gfAC4nPYCTBDAclxYr53VAo/MkREUKzBeMJJtmT1koD/QVIiuqeNd5imdAa
+DO7JdzC+vaE1NkvZLgJNOiJ15M0Absq3LX9HuNFmMT1KwH9rxNtXK8zmhe2h0L2DBjg2c9kSIlpc
+kJXBvDQQ6lxyrFFTaTZXqcQlOp3clyIxFTDsYh7XHgqvzzhvi8lGycBBlNgD4J4ChqQK0H2sGUNC
+6tybr9QBAChFi6BGpwE4pa8D4tsdFst6XzD40aCycU4kUgW+piv6sD3YufLwl4/N5gtYZDf0h8fk
+ywB6dYKo4GBgyagxzwIcOKL5qKQIKMTWQSAQ6GYF8xBPH0mYVCiWLJ9zu93FQ8AplCTP0+zsfTDg
+Cq3+JyFnkWLMqmab/v3vAwC/rnOJz7SbTCcVMqSmpqZeweIhnUJcYCrwLCwQCG9lpl/qvL/Tuw90
+3T4oVFVC1Sw5UTDjsJouZcbXE7qyw6BgRpu/8+PDf3e73cUHD+wfFfD7O/v3jGgNGJfqtpoHwJ2F
+jG2Yqj520CBuoUSMiAglRkE3A7ixIPCEQvfbLaaLAEzXFC+ymUyNgXD4nUFlHNvMZVlBZBSGp70D
+7V2xGAfqP8Zls1hmMsunATCBVimMG1r3hrUuOLr3768VxDnZASrUDxQoerP5SgB3J3swyYHFuHWO
+kemkmN1iehTALX3tSZ4/3mp9uLWjo7mv32KMTJOyVZpOtkphuFrI2C4ARX1hBoFn7Xb7Wf5cNkeh
+wY58Ktvt5jMQ4239NHijLxh+aKDG5zCZLpYCjxNQkdwPrZLg10AoEZKdEnQhEYqIeR0Jw1PtHR3/
+SAKVzWZCLHINAYsB2i0VXLd3b/jtjCC02UwUi94Jwvw0TtdyFKm3+P372h3Wsuks6WEQTtV5BnuY
+sPCkYGfjW5qTeovFYlVYNhOhRAPGXYKwwNfR+UaF1XqayrG7CTRDFyPbp4B/bK10NWzZsiV6uLzc
+ZJpKxOv1OdkM/B+Ybg6EQhuOhpuel8QRMemS/WCNiV0DaoMp3C2AK9O5zCK+5WJCKBsiUi4OBTOn
+TEopRxgENgG4FGCQKrIyM16f6wF97m98d6iSRiRsREmCr0tXhwDsrqgoQnt7H3CCwWCH3WQ6jwSP
+TrN7hSrUYiHxAMAP6Hc4A2hvbzcC6AOOwQAw42L9qQMBADEqKiqM7e3th46rxMnRNd/oD4anY4g+
+05SXV0Uifo+qHzpjiK1DwNFrh1xAMWYgbzgM0eCkfL2qnAARQ8wFoGWIvScEUcNE2xdjMfE1IjkR
+TCNBiBDQDqbNQqU3PWlspJyB47CWTeMcsz6kxDSgoKzBJHpz6lRDh7fpVwB/MVX68QEmOkiMUiLE
+mNFOwEfSgNdqd/vbcmm/oRqK3GzbDNBYBlgxyHM8TXtD+np1VeW3EYtrszS1rabFfzkANJjNI+Tw
+ok0ASjKIbX9NS+C85HFUK3Lzu+8DMCU8ImbmhbXewAsrnbYdIDLqDNMQiWHf8OzZsz/TgOqdjqdB
+PFWjLV6s8fp/kjQvp+NiEN8rVZwmiJ+UJB42lI7eAYSM8lDRlxm8RCpcV+ey/V7KoruuaG3dl7eq
+Yoic1Y8gGhBVNf2tt2I1Lb6FzNiF+OnvkY+gt2tb/HPneP0zSYilANmZ8CRUeOtdtpcaJla4+43T
+bLFPA+hMAC4CqmRMuTxdvdrmvcsY+F1C4iZ9GHhEnO3vyxD0hEKfCMEXgTmaUpfoT6J0bIrj4Fm1
+ShWlY87j+H0wCcJFc72BtQQwFHEjwOW6Ps9WZU/WXOUar+97kDyLwVYB+h89aFa67IuI+BUCTgPx
+7TUt/mvnNvs+8mzfHvFsD31S0+x/fbSh9AIQ7ybQQkWJ3lKgjSPzMHr5CwMpS1nIt7O4hezZ0/73
+OV7fHGa8GveCaYZU5eb6qoqzs08JNbqCTGdRXNPifxDglBubrCrLPauS4ySePYFWJnF/6lh5kyee
+KJZCnu3bIwQ0MeP+2mZ/X6S7Zo/vFYb4SZp516502bNmZNa0BrYy04eI0cs6aTRdAvcmJHdvpFum
+PVW/pKmpF1BuiFejTwoDDtMXcpdOed367F8JS5I5xBVYJam9ZD8GrD7/7OnW4WnV1OTJRuhubzJo
+6oqq9Nd+CZDM9FKKrjfIc9Ni0ijXQHdFB4xvZucbzlWM4kV9uXK270kGmlP6YPzv8gmOSf3wpRuj
+eiPJ/fAtdDgUQwhe1dFxMCP4WtrfBqgRhAKBk6ebbbebj7lbfrDM8R4za5hElcYDhnlp1dShrm8S
+aL2OyQpgmJ3FB21Ms3gXpKt6xceBMMBv6dqfkanpFZWVdgILz652X6oqg0rx+/NJG4gIIxSVV8Q3
+QW60GBBEfL4GrKbHp0wpyvYbRRE/F5IDeQPH6Rw9Bjk+ONDXcEwec5d8/pYtUSLyJS+sTB+MZL5c
+GOQNAILJ0i1z6oQSFRsAdOt2b5YXLUjRSRTXiirH6WlrGmIXQwfklDpEy9KIlLP4UNcdufLI7XaP
+AI4cTxCoZGRnYGa231TvbvvnHG+gLm/gxHoMeUsPlY9PIJB112IEIeU1iMdttlKAjJ6mvSFwchYj
+Eb66orLSntYOaW8/xOANOiniXu1KTWR/fvx4GzPO1EsJJYPUIaZLALEu29xKeuTdDH4jdQ9gUX2V
+PacnWSocjm5OueXKj/RrDxYSAEy41/nZJURTj0tQIiXEQCku6+hh4lLiuNphSklMF4oSm52FYS+l
+bhKRoq56RbSagRcZeE8nAb+tr/vhlClFYD7b6pz412xz6zQapVEWzWMglDIsxrMN7tQnU9J5qgC2
+JfOMyiDVd1a47HetdTrHDBhwCnSvXcdJ4pQl70belFJH8ozSCL8IAAfK7G8y8O9kZ4syqitVNbzM
+uhNFSbgwDWPngLAahDW6RfqS3gBvCu/9Kog+SCxqVprV2hoA03c59S6VTcboj5zD+SMRP5GmsFgA
+t/ZQtK3eaf/t8knjJ3xq4DDgPBGA0+AuNxOOqCZmRGCg5do6z7ndowiIXhYIdB+2iwDWX/s9t26i
+vTJdH3Pb2vwAtiarGXxdu2ANE2zjmenUXi76C6S6JpXnBl1ymLyECOtynWet17cOoAfTQGLGSpft
+uv5+/6/mwB8BaswgsUeAcJ2IxnbWOe2PLbfZTAUDJ0Eb8/0cc88qpuiMPF6sjyIXxQ59RyjJz5mw
+SH6lggBCDNVZ1OFLugLrqgkVp/VJJUkeEBqv9np7ar0dLawDmmCdncN0sRpT1uczVaV09K3MybdQ
+E3TvqgwG+GFaCshRhpLZYH4mm8onwnylmP7e4KpIMTvSHjmkvmvDSwtaSJXHaNvydXRuPFqYWT3B
+MSmm8u0ggJl7SdBttS2BB1KlJ39jwljbNcAR58swbPRrsrurS+s5EuAB8GDaaSncqKi0JAmzKl8I
+4O+H7WhiXqZZhTVgfFEjwb/xlNM57Gqvt6fOaXUxOJqQZDmTZ/v2SJ27shZRdSsIozRLPizGXPe4
+zXb2/IRUzRzcw/caqhyNkvkBAOMzVC2XUNfXVdm+WdsceCcrcJjpzaNnuw5UQ3TOSpftBzJ+KHdm
+TPJMJrQJxjMx4kfmNQe8+t8sP8lmogi6ztJk0PUtgtPeSIR5mg6+VOe0umq9qWmwc3cHtta7bD4C
+OY7YgXwBgF/XuSsnIqZ+TqjKq31STvLzMaI7tepgGGLTAawjoVzCnLuaSlJZTW27VzptCxi0Qsfk
+yaOM9CCABf0CsNm3+imns3E4oler4BuJKE1AkYYR48mGapxyOEpuwAlKzAgzi10G5gizXD96DC/4
+1keZI6AAoETELMG8ZXWaaKsq5WYGzUvGplKNNLc3CeB6ppdB+C9N8dcenzKliMJ7PUz8svZEebY3
+sKPeZf8XNPegiOS3AawD4xIQ/6pQPszxBurqXLYLCXSNLqwwv8FpezWXnNGrvd4eAI8uBh7/nMte
+Tcz3gUhv401SNznOB3wbT2jggHh3bYv/iOprzcXIl9NUYKeqpk9vJUI3kpPC5yDDtV9VoFHhJOCM
+HLvPf44KzJFSpAnI0RqAb9MUzGioqFgoIc8sH3/Se2gOFMyK6CF5vbFE+YoWmACgEv4ARs6PYiwF
+JFr8K9c6na/2IprynjXFzyszA4eIP3Opny+cXGnv6ZX+Gq9vSaY69S775wFcrpEsU+rclRNrm9p2
+6+sWRcXr0iCTgKZK/IiI3CMjMkX1KMzPqwQNcKhSKnwDiN/NxQ3PRld1dBxcUeWoIZYfUHJUeBwI
+47R1X3G7iyPKPuN3dnb+J1N7M73ergZ3uUfGRIt2fiyOPALeBxy7xfSmRg0cFbJbTH35ysc6L7mn
+R3oEeHU/UmwNmJIOPikqPYhfh0mJIte7bG9AcxuBQDXM3HBZGqO02uv/W53L3kxA1RFnim8lSdcP
+xPzmNvs+qnPabwLhkWz19kUPVhlixVcByPq0radpb6jeZX8fSNxRA8ASgXTG8TR8lon4vOoW/2+y
+BzpLGlXZEyHCkUNDSg+cuOoTLxE4ybUmITKBkwV4DYMWasqGR9mwfqCmWOv1P1rvsl+olZp6MoJK
+YowfNkyY8KtsiWAJ2p8c5yx6o5A4zglLq8ePn0BgL/XzcpVnz579RNigQ9wZdVX2tNd+lRjpo8jd
+kZGxVzICUyF9MHDbla2tgYGcqyoN14Lhzfh3hUuJMFrKnv7vrTNP1sSanqv1eltOKOAQCUMar6o0
+Z+ORolcJQbm5vEx/Self8hVpgdbe7iNNcI+BdVdl8ez+sdv/PjSvoRIoZzecQaPKiiMj+qt3RWvr
+PjZgrv4gUzO/kgT/FmU72Fw5oaIWRCcn6m4aNmzEj9MGABMvbQ06es7tHoXYweqUEBDj2vqqivU1
+ze2bM/22oRoKb7J5JNFPVZV6G6qxUZ+tp6+vbpJnkK4vBv2k3ulYV+P1vZ8KYG4koilxbYjV/Xkt
+K8EvMCj+Px2E7Bc4DZPNI9BtnCvBU7p7aXGDu/z2dHnRSSprt/+vK52OxUx8V4qqKsa23l78FsCV
+YLmh3um4W8DwlMfr3QsAz3zOXjash6+Vqno7EXoY9NiBCN9W693ZfVQCckeD4snqH9+UTbpIwntX
+tAReTfe3FVWO2STlaRoj5sPaZn9jRq+qqnwWS/p8eqlHzIQ6bVonANS5KyciGrsSAJThY+/3bN+e
+9R9w1E+oOI1VdTaI5A6nf9nSLP/YAwAaqmzXqRJ950VCiMicZt+y/iUURIPLfpNkHqEMH7tMn7La
+MHmykQ7uP1eF/AqAk0FUBGaFgVIQ2sC0WRZzYzwhbYiGaIiGaIiG6ISj/wddxNRWQujgngAAAABJ
+RU5ErkJggg==
 ]]
+ui.lockup2xPNG = [[
+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
+YII=
+]]
+ui.lockupHeight = 55 -- lockup.png&#39;s height: the header row is exactly the picture
 
 local function decodeBase64(data)
   local alphabet = &#34;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/&#34;
@@ -157,13 +452,18 @@ local function decodeBase64(data)
   for i = 1, #alphabet do
     lookup[alphabet:sub(i, i)] = i - 1
   end
-  local out, bits, count = {}, 0, 0
+  -- Decoded in runs of 1024 groups, so no single concat holds the image.
+  local parts, out, bits, count = {}, {}, 0, 0
   for char in data:gmatch(&#34;[%w+/]&#34;) do
     bits = bits * 64 + lookup[char]
     count = count + 1
     if count == 4 then
       out[#out + 1] = string.char(math.floor(bits / 65536) % 256, math.floor(bits / 256) % 256, bits % 256)
       bits, count = 0, 0
+      if #out == 1024 then
+        parts[#parts + 1] = table.concat(out)
+        out = {}
+      end
     end
   end
   if count == 3 then
@@ -171,18 +471,27 @@ local function decodeBase64(data)
   elseif count == 2 then
     out[#out + 1] = string.char(math.floor(bits / 16) % 256)
   end
-  return table.concat(out)
+  parts[#parts + 1] = table.concat(out)
+  return table.concat(parts)
 end
 ui.decodeBase64 = decodeBase64
 
-local function writePawn()
-  local path = getMudletHomeDir() .. &#34;/darkpawns-pawn.png&#34;
+local function writeImage(path, data)
   local file = io.open(path, &#34;wb&#34;)
   if not file then
+    return false
+  end
+  file:write(decodeBase64(data))
+  file:close()
+  return true
+end
+
+local function writeLockup()
+  local path = getMudletHomeDir() .. &#34;/darkpawns-lockup.png&#34;
+  if not writeImage(path, ui.lockupPNG) then
     return nil
   end
-  file:write(decodeBase64(ui.pawnPNG))
-  file:close()
+  writeImage(getMudletHomeDir() .. &#34;/darkpawns-lockup@2x.png&#34;, ui.lockup2xPNG)
   return path
 end
 
@@ -209,12 +518,13 @@ function ui.build()
   if ui.dock then
     ui.dock:show()
     ui.layout()
+    ui.map:raise()
     return
   end
 
   -- The chassis: Paper-Deep, an Ink rule on the edge facing the game text.
   ui.dock = Geyser.Label:new({
-    name = &#34;DarkPawns.dock&#34;,
+    name = id(&#34;dock&#34;),
     x = &#34;-&#34; .. ui.dockPercent .. &#34;%&#34;, y = 0,
     width = ui.dockPercent .. &#34;%&#34;, height = &#34;100%&#34;,
   })
@@ -222,24 +532,23 @@ function ui.build()
     &#34;background-color: %s; border-left: 1px solid %s;&#34;, ui.palette.paperDeep, ui.palette.ink))
 
   ui.box = Geyser.VBox:new({
-    name = &#34;DarkPawns.box&#34;, x = &#34;4%&#34;, y = &#34;1%&#34;, width = &#34;92%&#34;, height = &#34;98%&#34;,
+    name = id(&#34;box&#34;), x = &#34;4%&#34;, y = &#34;1%&#34;, width = &#34;92%&#34;, height = &#34;98%&#34;,
   }, ui.dock)
 
-  -- The lockup.
-  ui.header = Geyser.HBox:new({ name = &#34;DarkPawns.header&#34;, height = 56, v_policy = Geyser.Fixed }, ui.box)
-  ui.pawn = Geyser.Label:new({ name = &#34;DarkPawns.pawn&#34;, width = 33, h_policy = Geyser.Fixed }, ui.header)
-  transparent(ui.pawn)
-  local pawnFile = writePawn()
-  if pawnFile then
-    ui.pawn:setBackgroundImage(pawnFile)
+  -- The lockup, drawn at its own size from the left edge: never stretched.
+  ui.header = Geyser.Label:new({
+    name = id(&#34;header&#34;), height = ui.lockupHeight, v_policy = Geyser.Fixed,
+  }, ui.box)
+  local lockup = writeLockup()
+  if lockup then
+    ui.header:setStyleSheet(string.format(
+      [[background-color: transparent; background-image: url(&#34;%s&#34;); background-repeat: no-repeat; background-position: left center;]],
+      lockup))
+  else
+    transparent(ui.header)
   end
-  ui.wordmark = Geyser.Label:new({ name = &#34;DarkPawns.wordmark&#34; }, ui.header)
-  transparent(ui.wordmark)
-  ui.wordmark:echo(string.format(
-    [[&lt;div style=&#34;font-family: %s; font-size: 21px; line-height: 82%%; color: %s; padding-left: 8px;&#34;&gt;DARK&lt;br&gt;&lt;span class=&#34;accent&#34; style=&#34;color: %s;&#34;&gt;PAWNS&lt;/span&gt;&lt;/div&gt;]],
-    ui.fonts.display, ui.palette.ink, ui.palette.oxblood))
 
-  ui.status = Geyser.Label:new({ name = &#34;DarkPawns.status&#34;, height = 26, v_policy = Geyser.Fixed }, ui.box)
+  ui.status = Geyser.Label:new({ name = id(&#34;status&#34;), height = 26, v_policy = Geyser.Fixed }, ui.box)
   ui.status:setStyleSheet(string.format(
     &#34;background-color: transparent; border-top: 1px solid %s;&#34;, ui.palette.ink))
   ui.status:echo(string.format([[&lt;span style=&#34;font-family: %s; color: %s;&#34;&gt;Not in the game yet&lt;/span&gt;]],
@@ -254,14 +563,14 @@ function ui.build()
     { key = &#34;mv&#34;, label = &#34;MOVE&#34;, colour = ui.palette.inkMuted },
   }) do
     local reading = Geyser.Label:new({
-      name = &#34;DarkPawns.reading.&#34; .. spec.key, height = 20, v_policy = Geyser.Fixed,
+      name = id(&#34;reading.&#34; .. spec.key), height = 20, v_policy = Geyser.Fixed,
     }, ui.box)
     transparent(reading)
     reading.label = spec.label
     ui.readings[spec.key] = reading
 
     local gauge = Geyser.Gauge:new({
-      name = &#34;DarkPawns.gauge.&#34; .. spec.key, height = 8, v_policy = Geyser.Fixed,
+      name = id(&#34;gauge.&#34; .. spec.key), height = 8, v_policy = Geyser.Fixed,
     }, ui.box)
     gauge.front:setStyleSheet(string.format(&#34;background-color: %s; border: none;&#34;, spec.colour))
     gauge.back:setStyleSheet(string.format(
@@ -271,12 +580,12 @@ function ui.build()
     ui.gauges[spec.key] = gauge
   end
 
-  eyebrow(&#34;DarkPawns.mapLabel&#34;, &#34;MAP&#34;)
-  ui.map = Geyser.Mapper:new({ name = &#34;DarkPawns.map&#34;, v_stretch_factor = 3 }, ui.box)
+  eyebrow(id(&#34;mapLabel&#34;), &#34;MAP&#34;)
+  ui.map = Geyser.Mapper:new({ name = id(&#34;map&#34;), v_stretch_factor = 3 }, ui.box)
 
-  eyebrow(&#34;DarkPawns.chatLabel&#34;, &#34;CHAT&#34;)
+  eyebrow(id(&#34;chatLabel&#34;), &#34;CHAT&#34;)
   ui.chat = Geyser.MiniConsole:new({
-    name = &#34;DarkPawns.chat&#34;,
+    name = id(&#34;chat&#34;),
     v_stretch_factor = 2,
     color = ui.palette.canvas,
     fontSize = 10,
@@ -284,6 +593,10 @@ function ui.build()
     scrollBar = true,
   }, ui.box)
 
+  -- The profile has one map widget, made when the first dock was built.
+  -- Placing it doesn&#39;t raise it, and a dock built later (after an upgrade)
+  -- is drawn over it, so bring it back to the top.
+  ui.map:raise()
   ui.layout()
 end
 
@@ -486,14 +799,13 @@ function map.onRoomInfo()
   centerview(room)
 end
 
--- Mudlet calls doSpeedWalk when a map room is double-clicked; the game
--- understands the same one-letter and up/down directions getPath returns.
+-- Mudlet calls doSpeedWalk when a map room is double-clicked, after finding
+-- the path itself and leaving its steps in speedWalkDir (Host::startSpeedWalk;
+-- speedWalkFrom and speedWalkTo exist only in custom pathfinding mode, which
+-- this package does not use). When there is no path, Mudlet says so and does
+-- not call it. The game understands the same n/e/s/w/up/down the steps use.
 function doSpeedWalk()
-  if not getPath(speedWalkFrom, speedWalkTo) then
-    cecho(&#34;\n&lt;red&gt;[ Dark Pawns ] No mapped path to that room.&lt;reset&gt;\n&#34;)
-    return
-  end
-  for _, direction in ipairs(speedWalkDir) do
+  for _, direction in ipairs(speedWalkDir or {}) do
     send(direction, false)
   end
 end
@@ -510,11 +822,28 @@ local function loadedVersion()
   return version
 end
 
+-- The offer as the server last sent it. Mudlet keeps every GMCP message in
+-- the gmcp table, so an offer that arrived before this package loaded (the
+-- server offers the package and the map in the same breath, and the map
+-- offer lands while the package is still downloading) is still there.
+local function currentOffer()
+  local offer = gmcp and gmcp.Client and gmcp.Client.Map
+  if type(offer) == &#34;table&#34; and offer.url and offer.version then
+    return offer
+  end
+  return nil
+end
+
 function map.download()
+  map.offer = map.offer or currentOffer()
   if not map.offer then
     cecho(&#34;\n&lt;red&gt;[ Dark Pawns ] The server hasn&#39;t offered a map yet. Connect and try again.&lt;reset&gt;\n&#34;)
     return
   end
+  if map.downloading then
+    return
+  end
+  map.downloading = true
   map.file = getMudletHomeDir() .. &#34;/darkpawns-map.xml&#34;
   cecho(&#34;\n&lt;ansi_white&gt;[ Dark Pawns ] Downloading the world map...&lt;reset&gt;\n&#34;)
   downloadFile(map.file, map.offer.url)
@@ -522,8 +851,8 @@ end
 
 -- Client.Map: {&#34;url&#34;: ..., &#34;version&#34;: ...}
 function map.onClientMap()
-  local offer = gmcp.Client and gmcp.Client.Map
-  if not (offer and offer.url and offer.version) then
+  local offer = currentOffer()
+  if not offer then
     return
   end
   map.offer = offer
@@ -533,7 +862,9 @@ function map.onClientMap()
   end
   if have or next(getRooms()) == nil then
     map.download()
-  else
+  elseif map.announced ~= offer.version then
+    -- The load-time check and the Client.Map event can both see one offer.
+    map.announced = offer.version
     cecho(&#34;\n&lt;ansi_white&gt;[ Dark Pawns ] A map of the whole world is available. Type &lt;yellow&gt;dp map&lt;ansi_white&gt; to load it; it replaces this profile&#39;s map.&lt;reset&gt;\n&#34;)
   end
 end
@@ -542,6 +873,7 @@ function map.onDownloaded(_, file)
   if file ~= map.file then
     return
   end
+  map.downloading = false
   local ok, err = loadMap(file)
   if not ok then
     cecho(string.format(&#34;\n&lt;red&gt;[ Dark Pawns ] The map downloaded but didn&#39;t load: %s&lt;reset&gt;\n&#34;, tostring(err)))
@@ -560,6 +892,7 @@ function map.onDownloadError(_, message, file)
     return
   end
   if map.file then
+    map.downloading = false
     cecho(string.format(&#34;\n&lt;red&gt;[ Dark Pawns ] The world map didn&#39;t download: %s&lt;reset&gt;\n&#34;, tostring(message)))
   end
 end
@@ -569,6 +902,14 @@ DarkPawns.on(&#34;map.room&#34;, &#34;gmcp.Room.Info&#34;, map.onRoomInfo)
 DarkPawns.on(&#34;map.offer&#34;, &#34;gmcp.Client.Map&#34;, map.onClientMap)
 DarkPawns.on(&#34;map.downloaded&#34;, &#34;sysDownloadDone&#34;, map.onDownloaded)
 DarkPawns.on(&#34;map.downloadError&#34;, &#34;sysDownloadError&#34;, map.onDownloadError)
+
+-- Act on an offer that arrived before this package finished loading.
+do
+  local _, _, connected = getConnectionInfo()
+  if connected and currentOffer() then
+    map.onClientMap()
+  end
+end
 </script>
 				<eventHandlerList />
 			</Script>
@@ -612,7 +953,7 @@ DarkPawns.on(&#34;chat.text&#34;, &#34;gmcp.Comm.Channel.Text&#34;, chat.onText)
 -- package itself.
 
 function DarkPawns.command(argument)
-  argument = (argument or &#34;&#34;):lower()
+  argument = (argument or &#34;&#34;):lower():gsub(&#34;%s+&#34;, &#34; &#34;)
   if argument == &#34;hide&#34; then
     DarkPawns.ui.hide()
   elseif argument == &#34;show&#34; then
@@ -620,6 +961,10 @@ function DarkPawns.command(argument)
   elseif argument == &#34;map&#34; then
     DarkPawns.map.download()
   elseif argument == &#34;clear&#34; then
+    -- The game&#39;s own clear command sends the terminal&#39;s clear-screen codes,
+    -- which Mudlet&#39;s scrollback window does not act on.
+    clearWindow()
+  elseif argument == &#34;clear chat&#34; then
     if DarkPawns.ui.chat then
       DarkPawns.ui.chat:clear()
     end
@@ -627,7 +972,8 @@ function DarkPawns.command(argument)
     cecho(string.format(&#34;\n&lt;ansi_white&gt;[ Dark Pawns %s ]&lt;reset&gt;\n&#34;, DarkPawns.version))
     cecho(&#34;  &lt;yellow&gt;dp hide&lt;reset&gt;   - hide the dock\n&#34;)
     cecho(&#34;  &lt;yellow&gt;dp show&lt;reset&gt;   - bring it back\n&#34;)
-    cecho(&#34;  &lt;yellow&gt;dp clear&lt;reset&gt;  - clear the chat window\n&#34;)
+    cecho(&#34;  &lt;yellow&gt;dp clear&lt;reset&gt;  - clear the main window (the game&#39;s clear can&#39;t in Mudlet)\n&#34;)
+    cecho(&#34;  &lt;yellow&gt;dp clear chat&lt;reset&gt; - clear the chat window\n&#34;)
     cecho(&#34;  &lt;yellow&gt;dp map&lt;reset&gt;    - load the world map (replaces this profile&#39;s map)\n&#34;)
     cecho(&#34;  Double-click a room on the map to walk there.\n&#34;)
   end

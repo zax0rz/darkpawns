@@ -248,6 +248,18 @@ func TestGMCPClientGUIOffer(t *testing.T) {
 	if got := drainQueued(t, s); len(got) != 0 {
 		t.Fatalf("second EnableGMCP queued %+v", got)
 	}
+
+	// Entering the game offers it once more, so a client that lost an
+	// upgrade installs the package fresh; a session without GMCP gets nothing.
+	s.sendWelcome("")
+	if pkgs := gmcpPackages(drainQueued(t, s)); len(pkgs) == 0 || pkgs[0] != "Client.GUI" {
+		t.Fatalf("entering the game sent GMCP %v, want the Client.GUI offer again first", pkgs)
+	}
+	plain := newGMCPSession(t)
+	plain.reofferGMCPClientGUI()
+	if got := drainQueued(t, plain); len(got) != 0 {
+		t.Fatalf("a session without GMCP was offered %+v", got)
+	}
 }
 
 func TestGMCPCorePing(t *testing.T) {

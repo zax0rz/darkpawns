@@ -6,7 +6,7 @@
 -- package itself.
 
 function DarkPawns.command(argument)
-  argument = (argument or ""):lower()
+  argument = (argument or ""):lower():gsub("%s+", " ")
   if argument == "hide" then
     DarkPawns.ui.hide()
   elseif argument == "show" then
@@ -14,6 +14,10 @@ function DarkPawns.command(argument)
   elseif argument == "map" then
     DarkPawns.map.download()
   elseif argument == "clear" then
+    -- The game's own clear command sends the terminal's clear-screen codes,
+    -- which Mudlet's scrollback window does not act on.
+    clearWindow()
+  elseif argument == "clear chat" then
     if DarkPawns.ui.chat then
       DarkPawns.ui.chat:clear()
     end
@@ -21,7 +25,8 @@ function DarkPawns.command(argument)
     cecho(string.format("\n<ansi_white>[ Dark Pawns %s ]<reset>\n", DarkPawns.version))
     cecho("  <yellow>dp hide<reset>   - hide the dock\n")
     cecho("  <yellow>dp show<reset>   - bring it back\n")
-    cecho("  <yellow>dp clear<reset>  - clear the chat window\n")
+    cecho("  <yellow>dp clear<reset>  - clear the main window (the game's clear can't in Mudlet)\n")
+    cecho("  <yellow>dp clear chat<reset> - clear the chat window\n")
     cecho("  <yellow>dp map<reset>    - load the world map (replaces this profile's map)\n")
     cecho("  Double-click a room on the map to walk there.\n")
   end

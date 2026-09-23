@@ -23,6 +23,7 @@ func (s *Session) sendWelcome(token string) {
 	}
 
 	// A GMCP client learns who it is before the entry look reports the room.
+	s.reofferGMCPClientGUI()
 	s.gmcpSync()
 
 	// Welcome text — matches C WELC_MESSG (config.c:256).

@@ -128,14 +128,13 @@ function map.onRoomInfo()
   centerview(room)
 end
 
--- Mudlet calls doSpeedWalk when a map room is double-clicked; the game
--- understands the same one-letter and up/down directions getPath returns.
+-- Mudlet calls doSpeedWalk when a map room is double-clicked, after finding
+-- the path itself and leaving its steps in speedWalkDir (Host::startSpeedWalk;
+-- speedWalkFrom and speedWalkTo exist only in custom pathfinding mode, which
+-- this package does not use). When there is no path, Mudlet says so and does
+-- not call it. The game understands the same n/e/s/w/up/down the steps use.
 function doSpeedWalk()
-  if not getPath(speedWalkFrom, speedWalkTo) then
-    cecho("\n<red>[ Dark Pawns ] No mapped path to that room.<reset>\n")
-    return
-  end
-  for _, direction in ipairs(speedWalkDir) do
+  for _, direction in ipairs(speedWalkDir or {}) do
     send(direction, false)
   end
 end
@@ -152,11 +151,28 @@ local function loadedVersion()
   return version
 end
 
+-- The offer as the server last sent it. Mudlet keeps every GMCP message in
+-- the gmcp table, so an offer that arrived before this package loaded (the
+-- server offers the package and the map in the same breath, and the map
+-- offer lands while the package is still downloading) is still there.
+local function currentOffer()
+  local offer = gmcp and gmcp.Client and gmcp.Client.Map
+  if type(offer) == "table" and offer.url and offer.version then
+    return offer
+  end
+  return nil
+end
+
 function map.download()
+  map.offer = map.offer or currentOffer()
   if not map.offer then
     cecho("\n<red>[ Dark Pawns ] The server hasn't offered a map yet. Connect and try again.<reset>\n")
     return
   end
+  if map.downloading then
+    return
+  end
+  map.downloading = true
   map.file = getMudletHomeDir() .. "/darkpawns-map.xml"
   cecho("\n<ansi_white>[ Dark Pawns ] Downloading the world map...<reset>\n")
   downloadFile(map.file, map.offer.url)
@@ -164,8 +180,8 @@ end
 
 -- Client.Map: {"url": ..., "version": ...}
 function map.onClientMap()
-  local offer = gmcp.Client and gmcp.Client.Map
-  if not (offer and offer.url and offer.version) then
+  local offer = currentOffer()
+  if not offer then
     return
   end
   map.offer = offer
@@ -175,7 +191,9 @@ function map.onClientMap()
   end
   if have or next(getRooms()) == nil then
     map.download()
-  else
+  elseif map.announced ~= offer.version then
+    -- The load-time check and the Client.Map event can both see one offer.
+    map.announced = offer.version
     cecho("\n<ansi_white>[ Dark Pawns ] A map of the whole world is available. Type <yellow>dp map<ansi_white> to load it; it replaces this profile's map.<reset>\n")
   end
 end
@@ -184,6 +202,7 @@ function map.onDownloaded(_, file)
   if file ~= map.file then
     return
   end
+  map.downloading = false
   local ok, err = loadMap(file)
   if not ok then
     cecho(string.format("\n<red>[ Dark Pawns ] The map downloaded but didn't load: %s<reset>\n", tostring(err)))
@@ -202,6 +221,7 @@ function map.onDownloadError(_, message, file)
     return
   end
   if map.file then
+    map.downloading = false
     cecho(string.format("\n<red>[ Dark Pawns ] The world map didn't download: %s<reset>\n", tostring(message)))
   end
 end
@@ -211,3 +231,11 @@ DarkPawns.on("map.room", "gmcp.Room.Info", map.onRoomInfo)
 DarkPawns.on("map.offer", "gmcp.Client.Map", map.onClientMap)
 DarkPawns.on("map.downloaded", "sysDownloadDone", map.onDownloaded)
 DarkPawns.on("map.downloadError", "sysDownloadError", map.onDownloadError)
+
+-- Act on an offer that arrived before this package finished loading.
+do
+  local _, _, connected = getConnectionInfo()
+  if connected and currentOffer() then
+    map.onClientMap()
+  end
+end
