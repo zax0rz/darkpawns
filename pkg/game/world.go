@@ -960,9 +960,12 @@ func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
 }
 
 // IsRoomDark returns true if the given room VNum is dark.
-// Based on utils.h IS_DARK() macro:
+// Based on utils.h IS_DARK() macro (utils.h:254-259):
 //
-//	IS_DARK(room) = !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) || (outside && nighttime))
+//	IS_DARK(room) = !world[room].light && (ROOM_FLAGGED(room, ROOM_DARK) ||
+//	    (SECT(room) != SECT_INSIDE && SECT(room) != SECT_CITY && night))
+//
+// City streets are lit at night; only other outdoor sectors go dark.
 func (w *World) IsRoomDark(roomVNum int) bool {
 	room := w.GetRoomInWorld(roomVNum)
 	if room == nil {
@@ -976,9 +979,9 @@ func (w *World) IsRoomDark(roomVNum int) bool {
 	if room.HasFlag(0) {
 		return true
 	}
-	// Outdoor rooms are dark at night (SunDark or SunSet)
-	// SECT_INSIDE = 0 means indoors; anything else means outdoors
-	if room.Sector != 0 { // SECT_INSIDE
+	// Rooms that are neither inside nor city are dark at night (SunDark or
+	// SunSet).
+	if room.Sector != SECT_INSIDE && room.Sector != SECT_CITY {
 		sunlight := GetSunlight()
 		if sunlight == SunDark || sunlight == SunSet {
 			return true

@@ -135,23 +135,34 @@ func TestManager_SendToOutdoor(t *testing.T) {
 	m := makeTestManager(t)
 	m.world.GetRoomInWorld(1001).Sector = 1
 
+	// C's OUTSIDE(ch) is !ROOM_INDOORS || sector != SECT_INSIDE, so only an
+	// inside-sector room flagged INDOORS (bit 3) keeps the weather out.
+	indoors := m.world.GetRoomInWorld(1002)
+	indoors.Sector, indoors.Flags = 0, []string{"8"}
+
 	outdoor := makeTestSession(t, m, "Outdoor", 1001, true)
+	resting := makeTestSession(t, m, "Resting", 1001, true)
+	resting.player.SetPosition(combat.PosResting)
 	sleeping := makeTestSession(t, m, "Sleeping", 1001, true)
 	sleeping.player.SetPosition(combat.PosSleeping)
 	indoor := makeTestSession(t, m, "Indoor", 1002, true)
 
 	m.mu.Lock()
 	m.sessions["outdoor"] = outdoor
+	m.sessions["resting"] = resting
 	m.sessions["sleeping"] = sleeping
 	m.sessions["indoor"] = indoor
 	m.mu.Unlock()
 
 	m.SendToOutdoor("Weather changes.")
 
-	select {
-	case <-outdoor.send:
-	default:
-		t.Error("awake outdoor session did not receive message")
+	// AWAKE(ch) is GET_POS > POS_SLEEPING: resting players hear it too.
+	for _, name := range []string{"outdoor", "resting"} {
+		select {
+		case <-m.sessions[name].send:
+		default:
+			t.Errorf("awake outdoor session %s did not receive message", name)
+		}
 	}
 	for _, name := range []string{"sleeping", "indoor"} {
 		select {

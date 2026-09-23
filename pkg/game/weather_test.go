@@ -264,3 +264,39 @@ func TestWorldIsOutsideMatchesCMacro(t *testing.T) {
 		t.Error("missing room should not be outside")
 	}
 }
+
+// TestIsRoomDarkSparesCityStreets: C's IS_DARK (utils.h:254-259) darkens a
+// room at night only when its sector is neither SECT_INSIDE nor SECT_CITY, so
+// city streets stay lit after sunset.
+func TestIsRoomDarkSparesCityStreets(t *testing.T) {
+	world, err := NewWorld(&parser.World{Rooms: []parser.Room{
+		{VNum: 1001, Name: "Inside", Sector: SECT_INSIDE, Flags: []string{"0", "0", "0", "0"}},
+		{VNum: 1002, Name: "Street", Sector: SECT_CITY, Flags: []string{"0", "0", "0", "0"}},
+		{VNum: 1003, Name: "Field", Sector: SECT_FIELD, Flags: []string{"0", "0", "0", "0"}},
+		{VNum: 1004, Name: "Cellar", Sector: SECT_CITY, Flags: []string{"1", "0", "0", "0"}}, // ROOM_DARK
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(world.StopAITicker)
+	weatherMu.Lock()
+	saved := weatherInfo.Sunlight
+	weatherMu.Unlock()
+	t.Cleanup(func() {
+		weatherMu.Lock()
+		weatherInfo.Sunlight = saved
+		weatherMu.Unlock()
+	})
+
+	for _, sun := range []int{SunDark, SunSet, SunRise, SunLight} {
+		weatherMu.Lock()
+		weatherInfo.Sunlight = sun
+		weatherMu.Unlock()
+		night := sun == SunDark || sun == SunSet
+		for vnum, want := range map[int]bool{1001: false, 1002: false, 1003: night, 1004: true} {
+			if got := world.IsRoomDark(vnum); got != want {
+				t.Errorf("sunlight %d: room %d dark = %v, want %v", sun, vnum, got, want)
+			}
+		}
+	}
+}
