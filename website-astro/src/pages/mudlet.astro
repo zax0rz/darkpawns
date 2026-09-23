@@ -8,6 +8,10 @@ import Base from '../layouts/Base.astro';
     <h1>Playing in Mudlet</h1>
     <p class="lede">Mudlet is a free MUD client for Windows, macOS, and Linux. Connect it to Dark Pawns and it dresses itself for the game: a dock with your health, a map of the whole world, and a chat window. The game's text stays exactly what every other player sees.</p>
 
+    <figure class="shot">
+      <img src="/images/mudlet/dock.png" width="1232" height="781" alt="Mudlet playing Dark Pawns: the game text on the left; on the right, the cream dock with the Dark Pawns mark, the character line, hit point, mana and movement readings, a map of Kir Drax'in centred on the Temple Altar, and a chat window." />
+    </figure>
+
     <div class="prose">
       <h2 id="connect">Connect</h2>
       <ol>
@@ -53,4 +57,6 @@ import Base from '../layouts/Base.astro';
   .guide-page { max-width: 52rem; padding-block: var(--space-xl); }
   .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
   .lede { color: var(--ink-muted); font-size: 1.2rem; }
+  .shot { margin: var(--space-lg) 0; }
+  .shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); }
 </style>
