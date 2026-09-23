@@ -44,6 +44,12 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 	arg = strings.TrimLeft(arg, " \t")
 
 	if arg == "" {
+		// C builds this listing with sprintf(buf, "%s...", buf), overlapping
+		// source and destination (act.other.c:1308-1341): undefined behaviour.
+		// The original game printed the list; the Linux oracle build prints
+		// nothing. As with the earlier self-aliasing sprintf sites (make_prompt,
+		// exits), the port keeps the intended bytes and the oracle is the thing
+		// to patch; the case stays blocked until it is.
 		var result strings.Builder
 		result.WriteString("You have the following autos set:\r\n")
 		if ch.GetAutoExit() {

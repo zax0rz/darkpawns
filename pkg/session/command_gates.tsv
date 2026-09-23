@@ -28,7 +28,6 @@ at	38	0	C interpreter.c:323
 attack	0	7	Go alias for hit
 auction	0	4	C interpreter.c:339
 auto	0	0	C interpreter.c:340
-autoexit	0	0	Go-only: player display preference; safe in every position
 autoloot	0	0	Go-only: player loot preference; safe in every position
 backstab	1	8	C interpreter.c:343
 bah	0	5	C interpreter.c:344
