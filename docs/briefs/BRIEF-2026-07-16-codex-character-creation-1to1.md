@@ -9,13 +9,13 @@ The Go port must be **byte-for-byte 1:1 with original C Dark Pawns on the entire
 ## The gap (proven RED: `--scenario character-creation`)
 Creation was never differentially tested — it was only ever drained `[setup]`. Now diffed, the port re-skins `nanny()` heavily:
 1. **Two creation layers.** The port collects name+password in the **telnet transport auth layer** (`pkg/telnet/listener.go:291-421`, the DP-909 design) and the nanny port (`pkg/session/char_creation.go`) skips those prompts. C has **one** flow (`nanny()`), and the transport layer leaks non-C prompts (see list below).
-2. **Fabricated MOTD.** `lib/world/text/motd` ships an invented `Welcome to Dark Pawns MUD / Rules of the Realm: 1…4 / Enjoy your stay!` block. The real C motd is the `darkpawns.com` text. It's also **emitted twice**, and the **start room is displayed twice** on entry.
+2. **Fabricated MOTD.** `lib/text/motd` ships an invented `Welcome to Dark Pawns MUD / Rules of the Realm: 1…4 / Enjoy your stay!` block. The real C motd is the `darkpawns.com` text. It's also **emitted twice**, and the **start room is displayed twice** on entry.
 3. **Invented bracket menus** (`[Y] Yes/[N] No`, `[M] Male/[F] Female`) that C does not have — C's prompts are bare inline.
 4. **Wrong prompt wording**, missing lines (`New character.`, `WELC_MESSG`), and mis-ordered lines.
 
 ## Read-only source of truth
 C: `~/.openclaw/workspace/darkpawns-c-oracle/src/interpreter.c` `nanny()` (**1693-2210**, states `CON_GET_NAME`→`CON_MENU`); text constants in `src/config.c` (`MENU` :209, `WELC_MESSG` :258) and `src/class.c`/`src/constants.c` (race/class/hometown menus); the real motd at `~/.openclaw/workspace/darkpawns-c-oracle/lib/text/motd` (or wherever `motd` resolves under that lib). **Never edit the oracle tree.**
-Go: `pkg/telnet/listener.go` (transport auth prompts), `pkg/session/char_creation.go` (nanny port), `pkg/session/session_send.go`, `lib/world/text/motd` (data).
+Go: `pkg/telnet/listener.go` (transport auth prompts), `pkg/session/char_creation.go` (nanny port), `pkg/session/session_send.go`, `lib/text/motd` (data).
 
 ## The exact C new-character flow — reproduce byte-for-byte
 Every string below is fidelity, including punctuation/`\r\n`. Order is law.
@@ -44,7 +44,7 @@ Every string below is fidelity, including punctuation/`\r\n`. Order is law.
 The **player-visible transcript must equal C's `nanny()` output byte-for-byte.** How you reconcile the port's transport-auth layer (`listener.go`) with the nanny port (`char_creation.go`) is your call — either make the transport layer emit C's exact prompts in C's exact order, or move the creation dialogue wholly into the nanny and make transport transparent — but the oracle transcript is the judge. Concretely you must:
 - **Delete the transport-layer leaks / re-skins** in `listener.go`: `Character does not exist. Do you want to create a new character? (Y/N): `, `No database connection. Create new character? (Y/N): `, `Choose a password: `, `Confirm password: `, `Passwords do not match. Disconnecting.`, the non-C `Invalid name. Use 2-32 characters…`. Replace with C's wording + the `Did I get that right, <name> (Y/N)?` confirm step and C's password prompts, and make a password mismatch **re-prompt** (not disconnect).
 - **Remove every bracket menu** (`[Y] Yes/[N] No`, `[M] Male/[F] Female`, and any others) — C's confirm/sex/color prompts are bare inline text.
-- **Fix `lib/world/text/motd`** — replace the fabricated "Rules of the Realm" block with the real C motd content (copy from the oracle's `motd`, preserving its exact bytes including the `&c…&n` color codes). This is a **data** fix.
+- **Fix `lib/text/motd`** — replace the fabricated "Rules of the Realm" block with the real C motd content (copy from the oracle's `motd`, preserving its exact bytes including the `&c…&n` color codes). This is a **data** fix.
 - **De-duplicate**: the motd and the start-room description are each emitted twice on entry — emit once, matching C.
 - **Add the missing lines** in the right places: `New character.\r\n`, `WELC_MESSG`, and `Please remember to choose an appropriate fantasy-oriented name.\r\n` in C's position (right after the name prompt, before the confirm).
 - **Preserve stat-roll RNG faithfully** — the `<ROLLED_STATS>` normalizer masks the values, but the roll must still consume the same PRNG draws as C `roll_real_abils` (don't change draw counts; a prior campaign, DP-1063..1081, touched creation — verify you don't regress it).
