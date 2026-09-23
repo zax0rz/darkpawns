@@ -549,9 +549,9 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 		player := target.Player
 		raceLine := func() string {
 			if player.IsAffected(affFleshAlter) {
-				return fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), RaceNames[player.GetRace()], hshr(player), fleshAlterWeapon(player.GetLevel()))
+				return fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), PCRaceTypes[player.GetRace()], hshr(player), fleshAlterWeapon(player.GetLevel()))
 			}
-			return fmt.Sprintf("%s is %s.", persName(player, ch), RaceNames[player.GetRace()])
+			return fmt.Sprintf("%s is %s.", persName(player, ch), PCRaceTypes[player.GetRace()])
 		}
 		merged := false
 		if description := player.GetDescription(); description != "" {
@@ -1200,13 +1200,7 @@ func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string,
 
 func (w *World) playerPresenceLine(player, viewer *Player) string {
 	name := player.GetName()
-	title := strings.TrimSpace(player.GetTitle())
-	if title == "" {
-		title = "the " + ClassNames[player.GetClass()]
-	}
-	if title != "" {
-		name += " " + title
-	}
+	name += " " + strings.TrimSpace(player.GetTitle())
 	if player.IsAffected(affInvisible) {
 		name += " (invisible)"
 	}

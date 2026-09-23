@@ -1,0 +1,37 @@
+# depth-case: score.player-race-class.kender-thief
+# C do_score uses pc_class_types[] and races[] for these player identities.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scorekender
+Y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scorekender
+y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[probe]
+score
