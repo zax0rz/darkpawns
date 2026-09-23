@@ -205,22 +205,22 @@ func unescapeC(raw string) (string, bool) {
 			if j == i+1 {
 				return "", false
 			}
-			v, err := strconv.ParseUint(body[i+1:j], 16, 32)
+			v, err := strconv.ParseUint(body[i+1:j], 16, 8) // a char escape is one byte
 			if err != nil {
 				return "", false
 			}
-			b.WriteByte(byte(v))
+			b.WriteByte(byte(v & 0xff))
 			i = j
 		case '0', '1', '2', '3', '4', '5', '6', '7':
 			j := i
 			for j < len(body) && j < i+3 && body[j] >= '0' && body[j] <= '7' {
 				j++
 			}
-			v, err := strconv.ParseUint(body[i:j], 8, 16)
+			v, err := strconv.ParseUint(body[i:j], 8, 8) // \777 does not fit a char
 			if err != nil {
 				return "", false
 			}
-			b.WriteByte(byte(v))
+			b.WriteByte(byte(v & 0xff))
 			i = j
 		default:
 			b.WriteByte(c)

@@ -161,6 +161,11 @@ func Run(opts Options) (*Report, error) {
 // accepts, reporting paths relative to root.
 func readSourceFiles(root string, dirs []string, keep func(rel string, d fs.DirEntry) bool) ([]sourceFile, error) {
 	var out []sourceFile
+	scope, err := os.OpenRoot(root)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = scope.Close() }()
 	for _, dir := range dirs {
 		base := filepath.Join(root, filepath.FromSlash(dir))
 		err := filepath.WalkDir(base, func(p string, d fs.DirEntry, err error) error {
@@ -178,7 +183,10 @@ func readSourceFiles(root string, dirs []string, keep func(rel string, d fs.DirE
 			if !keep(rel, d) {
 				return nil
 			}
-			data, rerr := os.ReadFile(p) // #nosec G304 -- p is a file the walk just found under root
+			// Read through an os.Root scoped to the tree being walked, so a
+			// symlink swapped in after the walk saw the entry cannot lead
+			// outside it.
+			data, rerr := scope.ReadFile(filepath.ToSlash(rel))
 			if rerr != nil {
 				return rerr
 			}

@@ -42,7 +42,7 @@ func TestPatternSetVisitMatchesIsDeduplicable(t *testing.T) {
 	set := newPatternSet([]string{"a repeated line", "another repeated line"})
 	text := "a repeated line another repeated line a repeated line"
 	seen := make([]bool, 2)
-	set.trie.visitMatches(text, func(id int32) { seen[id] = true })
+	set.trie.visitMatches(text, func(id int) { seen[id] = true })
 	if !seen[0] || !seen[1] {
 		t.Fatalf("visitMatches saw %v, want both patterns", seen)
 	}

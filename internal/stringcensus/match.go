@@ -50,45 +50,45 @@ func (p *patternSet) hasPatternInside(s string) bool {
 // children are maps because the alphabet of normalized prose is small but
 // sparse.
 type patternTrie struct {
-	children []map[byte]int32
-	terminal []int32
+	children []map[byte]int
+	terminal []int
 }
 
 func buildPatternTrie(patterns []string) *patternTrie {
 	t := &patternTrie{
-		children: []map[byte]int32{nil},
-		terminal: []int32{-1},
+		children: []map[byte]int{nil},
+		terminal: []int{-1},
 	}
 	for id, p := range patterns {
-		node := int32(0)
+		node := int(0)
 		for i := 0; i < len(p); i++ {
 			c := p[i]
 			next, ok := t.children[node][c]
 			if !ok {
-				next = int32(len(t.children))
+				next = int(len(t.children))
 				t.children[node] = withChild(t.children[node], c, next)
 				t.children = append(t.children, nil)
 				t.terminal = append(t.terminal, -1)
 			}
 			node = next
 		}
-		t.terminal[node] = int32(id)
+		t.terminal[node] = int(id)
 	}
 	return t
 }
 
-func withChild(m map[byte]int32, c byte, node int32) map[byte]int32 {
+func withChild(m map[byte]int, c byte, node int) map[byte]int {
 	if m == nil {
-		m = make(map[byte]int32, 4)
+		m = make(map[byte]int, 4)
 	}
 	m[c] = node
 	return m
 }
 
 // firstMatch returns the id of any pattern that occurs inside s.
-func (t *patternTrie) firstMatch(s string) (int32, bool) {
+func (t *patternTrie) firstMatch(s string) (int, bool) {
 	for i := 0; i < len(s); i++ {
-		node := int32(0)
+		node := int(0)
 		for j := i; j < len(s); j++ {
 			next, ok := t.children[node][s[j]]
 			if !ok {
@@ -106,9 +106,9 @@ func (t *patternTrie) firstMatch(s string) (int32, bool) {
 // visitMatches reports every pattern id occurring inside s. The caller dedupes;
 // a repeated line in a 7 MB world tree would otherwise report the same id
 // thousands of times.
-func (t *patternTrie) visitMatches(s string, visit func(id int32)) {
+func (t *patternTrie) visitMatches(s string, visit func(id int)) {
 	for i := 0; i < len(s); i++ {
-		node := int32(0)
+		node := int(0)
 		for j := i; j < len(s); j++ {
 			next, ok := t.children[node][s[j]]
 			if !ok {

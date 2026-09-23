@@ -56,7 +56,7 @@ func buildReport(goSrc, cSrc, dataSrc []sourceFile, goCands, cCands []candidate,
 		patterns := loweredUniqueTexts(goOnly)
 		trie := buildPatternTrie(patterns)
 		found := make([]bool, len(patterns))
-		trie.visitMatches(dataCorpus(dataSrc), func(id int32) { found[id] = true })
+		trie.visitMatches(dataCorpus(dataSrc), func(id int) { found[id] = true })
 		kept := goOnly[:0]
 		seen := map[string]bool{}
 		for _, s := range goOnly {
