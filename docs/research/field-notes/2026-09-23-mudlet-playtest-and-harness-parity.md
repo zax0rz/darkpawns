@@ -107,3 +107,24 @@ rules). Mirrors Bun's cheap-implementer, strong-adversarial-reviewer split.
 Load stayed near 2 on 16 cores at 4 parallel jobs: scenarios mostly wait for
 quiescence. 4 jobs took over 3 h; 12 took 41 min; 24 took 20.8 min (PR #1586), each
 over all 970 scenarios.
+
+## 11. A scenario named "combat-death" in which nobody dies
+
+`combat-death` was written to drive a fight "to the death" and prove the
+death path. The character's default wimpy level makes them flee at low hit
+points first, identically on both servers, so the scenario has always been
+green and has never exercised a player death. Coincidence-green by name: the
+title stated an intent the transcript never reached. Found while building a
+death-to-menu vehicle for DP-1312 (the replacement uses a death-trap fixture,
+PR #1596).
+
+## 12. The oracle's own environment manufactured a divergence
+
+With the C oracle's lib copy missing `plrobjs/`, `Crash_rentsave` silently
+failed to open its file, so C never rented a quitter's objects and
+`extract_char` dropped them on the temple floor. That looked like a faithful C
+behaviour for the port to copy ("C leaves the newbie kit on the floor"). It
+was the harness. After the harness created C's per-player file trees, C
+rented and restored the kit (PR #1596). The judge needs parity with
+production on **both** sides: the Go side's dead database (PF-008) hid bugs;
+the C side's missing directories invented one.
