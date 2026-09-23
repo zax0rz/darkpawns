@@ -1,0 +1,66 @@
+# Lifecycle: the room a character logs back in to (DP-1310, DP-1315).
+# depth-case: login.room-after-unsafe-quit
+# depth-case: quit.unsafe-objects-drop
+# depth-case: save.relogin-login-transcript
+#
+# A mortal REALLYQUITs in the street south of the temple, which is not a safe
+# quit room, so C saves no load room (save_char(ch, NOWHERE)) and the next
+# login lands in the mortal start room. The port saves the room the character
+# stood in.
+
+[fixture]
+# The Temple Square citizen wanders; keep the rooms still so every run is
+# byte-identical and the divergence can be pinned.
+quiet-mobs
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[relogin:oracle]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[probe]
+south
+south
+reallyquit
+<RELOGIN>
+look
+inventory
+south
+south

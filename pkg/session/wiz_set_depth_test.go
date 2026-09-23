@@ -22,11 +22,11 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 		playerFlags   bool
 	}{
 		{field: "invstart", ackName: "Invstart", cBit: 14, goBit: 14, productionBit: game.PlrInvstart, playerFlags: true},
-		{field: "roomflag", ackName: "Roomflag", cBit: 21, goBit: 39, productionBit: game.PrfRoomFlags},
+		{field: "roomflag", ackName: "Roomflag", cBit: 21, goBit: 53, productionBit: game.PrfRoomFlags},
 		{field: "siteok", ackName: "Siteok", cBit: 7, goBit: 7, productionBit: game.PlrSiteok, playerFlags: true},
 		{field: "deleted", ackName: "Deleted", cBit: 10, goBit: 10, productionBit: game.PlrDeleted, playerFlags: true},
 		{field: "nowizlist", ackName: "Nowizlist", cBit: 12, goBit: 12, productionBit: game.PlrNowizlist, playerFlags: true},
-		{field: "quest", ackName: "Quest", cBit: 9, goBit: 49, productionBit: game.PrfQuest},
+		{field: "quest", ackName: "Quest", cBit: 9, goBit: 41, productionBit: game.PrfQuest},
 	}
 
 	const unrelatedPLR = game.PlrChosen
@@ -39,7 +39,7 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 			target.player.SetPlrFlag(unrelatedPRF, true)
 
 			initialFlags := target.player.GetFlags()
-			initialPlayerFlags := target.player.PlayerFlags
+			initialPlayerFlags := plrBits(target.player)
 			if tc.productionBit != tc.goBit {
 				t.Fatalf("Go %s production bit = %d, want independently pinned Go bit %d (C bit %d)", tc.field, tc.productionBit, tc.goBit, tc.cBit)
 			}
@@ -53,7 +53,7 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 				enabled bool
 			}{{word: "on", enabled: true}, {word: "off", enabled: false}} {
 				beforeFlags := target.player.GetFlags()
-				beforePlayerFlags := target.player.PlayerFlags
+				beforePlayerFlags := plrBits(target.player)
 				if err := ExecuteCommand(wiz, "set", []string{"Hero", tc.field, state.word}); err != nil {
 					t.Fatalf("ExecuteCommand(set %s %s): %v", tc.field, state.word, err)
 				}
@@ -73,7 +73,7 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 						wantPlayerFlags |= bit
 					}
 				}
-				if got := target.player.PlayerFlags; got != wantPlayerFlags {
+				if got := plrBits(target.player); got != wantPlayerFlags {
 					t.Fatalf("%s %s typed PLR flags = %#x, want %#x", tc.field, state.word, got, wantPlayerFlags)
 				}
 
@@ -83,8 +83,8 @@ func TestCmdSetDirectBinaryFieldsMatchCBits(t *testing.T) {
 				}
 			}
 
-			if target.player.GetFlags() != initialFlags || target.player.PlayerFlags != initialPlayerFlags {
-				t.Fatalf("%s on/off round trip changed unrelated state: flags %#x/%#x, typed PLR %#x/%#x", tc.field, target.player.GetFlags(), initialFlags, target.player.PlayerFlags, initialPlayerFlags)
+			if target.player.GetFlags() != initialFlags || plrBits(target.player) != initialPlayerFlags {
+				t.Fatalf("%s on/off round trip changed unrelated state: flags %#x/%#x, typed PLR %#x/%#x", tc.field, target.player.GetFlags(), initialFlags, plrBits(target.player), initialPlayerFlags)
 			}
 		})
 	}
@@ -98,7 +98,7 @@ func TestCmdSetNohassleAuthorityAndSelfTarget(t *testing.T) {
 	t.Run("self succeeds at field level", func(t *testing.T) {
 		wiz, _ := makeSetTestSession(t)
 		const cBit = 8   // src/structs.h:283, PRF_NOHASSLE
-		const goBit = 28 // pkg/game/other_helpers.go:30, combined Flags storage
+		const goBit = 40 // prfBase (32) + C bit, pkg/game/other_helpers.go
 		if game.PrfNohassle != goBit {
 			t.Fatalf("Go nohassle bit = %d, want independently pinned Go bit %d (C bit %d)", game.PrfNohassle, goBit, cBit)
 		}
@@ -196,4 +196,9 @@ func TestCmdSetFrozenAuthorityAndSelfTarget(t *testing.T) {
 			}
 		}
 	})
+}
+
+// plrBits is the PLR half of Player.Flags (below the PRF range).
+func plrBits(p *game.Player) uint64 {
+	return p.GetFlags() & (1<<uint(game.PrfBrief) - 1)
 }

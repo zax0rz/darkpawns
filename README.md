@@ -1,7 +1,8 @@
 [![CI](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml/badge.svg)](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml)
 [![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
 [![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
-[![License](https://img.shields.io/github/license/zax0rz/darkpawns)](LICENSE)
+![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ```
         (_____)           (_)    (_____)
@@ -14,7 +15,6 @@
                                  |||
                                  `.'
 ```
-
 # Dark Pawns MUD
 
 **CircleMUD 3.0, rewritten in Go.** Dark Pawns is a multiplayer text RPG in the

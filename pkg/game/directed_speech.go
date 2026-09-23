@@ -123,12 +123,12 @@ func (w *World) DoSay(ch *Player, argument string) {
 	case '.':
 		roomVerb, actorVerb = "states", "state"
 	}
-	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("$n %s, '%s'", roomVerb, roomMessage), "", ToRoom)
+	w.channelAct("say", false, ch, nil, fmt.Sprintf("$n %s, '%s'", roomVerb, roomMessage), ToRoom)
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		ch.SendMessage("Ok.\n\r")
 		return
 	}
-	communicationSend(ch, fmt.Sprintf("You %s '%s'", actorVerb, actorMessage))
+	w.channelSend("say", ch, fmt.Sprintf("You %s '%s'", actorVerb, actorMessage))
 }
 
 // drunkSyllables is speak_drunk's table verbatim (act.comm.c:1400-1435). The
@@ -312,14 +312,14 @@ func (w *World) DoReply(ch *Player, argument string) {
 
 func (w *World) performTell(ch, target *Player, message string) {
 	message = deleteANSIControls(message)
-	Act(nil, false, ch, target, nil, nil, fmt.Sprintf("$n tells you, '%s'", message), "", ToVict|ToSleep)
+	w.channelAct("tell", false, ch, target, fmt.Sprintf("$n tells you, '%s'", message), ToVict|ToSleep)
 	if target.GetAFK() {
 		Act(nil, false, ch, target, nil, nil, "$E is AFK right now, $E may not hear you.", "", ToChar|ToSleep)
 	}
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		communicationSend(ch, "Okay.")
 	} else {
-		Act(nil, false, ch, target, nil, nil, fmt.Sprintf("You tell $N, '%s'", message), "", ToChar|ToSleep)
+		w.channelAct("tell", false, ch, target, fmt.Sprintf("You tell $N, '%s'", message), ToChar|ToSleep)
 	}
 	target.SetLastTeller(ch.Name)
 }

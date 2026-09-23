@@ -39,7 +39,7 @@ which keys on the env var `DP_FRESH_MUD`.
    world copies). Minimal isolation is fine — the C server needs `world`, `text`,
    `misc`, `etc`, etc. from the real `oracleData`, but with `etc/players`
    truncated/removed so `top_of_p_table` boots at 0. Prefer symlinking the large
-   subtrees (world/text/misc) into a throwaway dir and providing only an empty
+   subtrees (`world`, `text`, `misc`) into a throwaway dir and providing only an empty
    `etc/players` (+ whatever `etc/` files boot requires) as real files, to avoid
    copying the whole tree. Verify the C server boots and the first created char is
    level 34+ (`LVL_IMPL`). When `EmptyPlayers` is false: pass `oracleData`

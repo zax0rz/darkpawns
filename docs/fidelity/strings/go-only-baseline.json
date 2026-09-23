@@ -1,0 +1,998 @@
+{
+  "description": "Known Go player-facing strings with no C source and no world-data source. make string-census fails when a new one appears; each reason starts unreviewed and is settled by a human (data-driven text, transport framing, deliberate post-C addition, or a bug).",
+  "generated": "2026-09-23",
+  "segments": {
+    "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!": {
+      "segment": "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!",
+      "file": "pkg/session/manager.go",
+      "line": 1942,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "A bat swoops down and attacks you!": {
+      "segment": "A bat swoops down and attacks you!",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1935,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "A magical force prevents you from casting here.": {
+      "segment": "A magical force prevents you from casting here.",
+      "file": "pkg/spells/call_magic.go",
+      "line": 48,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "A shimmering portal appears and sucks you in!": {
+      "segment": "A shimmering portal appears and sucks you in!",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1779,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "An error occurred. Please try again later.": {
+      "segment": "An error occurred. Please try again later.",
+      "file": "pkg/session/cmd_account.go",
+      "line": 65,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Auto-loot disabled.": {
+      "segment": "Auto-loot disabled.",
+      "file": "pkg/session/autoloot.go",
+      "line": 27,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Auto-loot enabled.": {
+      "segment": "Auto-loot enabled.",
+      "file": "pkg/session/autoloot.go",
+      "line": 25,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Broadcast what?": {
+      "segment": "Broadcast what?",
+      "file": "pkg/session/wiz_system.go",
+      "line": 757,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Built with:": {
+      "segment": "Built with:",
+      "file": "pkg/session/gen_ps_cmds.go",
+      "line": 245,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Cannot access manager state.": {
+      "segment": "Cannot access manager state.",
+      "file": "pkg/session/wiz_system.go",
+      "line": 213,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Could not save your data. Contact an admin!": {
+      "segment": "Could not save your data. Contact an admin!",
+      "file": "pkg/game/other_session.go",
+      "line": 15,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Description is too long; type @ or /s to save, /a to abort.": {
+      "segment": "Description is too long; type @ or /s to save, /a to abort.",
+      "file": "pkg/session/menu.go",
+      "line": 212,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Description not changed.": {
+      "segment": "Description not changed.",
+      "file": "pkg/session/menu.go",
+      "line": 185,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Description saved.": {
+      "segment": "Description saved.",
+      "file": "pkg/session/menu.go",
+      "line": 205,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Error looking up player.": {
+      "segment": "Error looking up player.",
+      "file": "pkg/session/cmd_info.go",
+      "line": 1200,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Error reading house file.": {
+      "segment": "Error reading house file.",
+      "file": "pkg/game/house_rent.go",
+      "line": 49,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Error saving aliases.": {
+      "segment": "Error saving aliases.",
+      "file": "pkg/session/act_social.go",
+      "line": 104,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Failed to save new password. Please try again later.": {
+      "segment": "Failed to save new password. Please try again later.",
+      "file": "pkg/session/cmd_account.go",
+      "line": 72,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Guest accounts are restricted from using this command.": {
+      "segment": "Guest accounts are restricted from using this command.",
+      "file": "pkg/session/commands.go",
+      "line": 697,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Heal whom?": {
+      "segment": "Heal whom?",
+      "file": "pkg/session/wiz_player.go",
+      "line": 20,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Invalid house vnum.": {
+      "segment": "Invalid house vnum.",
+      "file": "pkg/game/house_rent.go",
+      "line": 13,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Knock on what? Try north, south, east, west, up, or down.": {
+      "segment": "Knock on what? Try north, south, east, west, up, or down.",
+      "file": "pkg/session/door_cmds.go",
+      "line": 43,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Mail aborted (empty message).": {
+      "segment": "Mail aborted (empty message).",
+      "file": "pkg/game/mail.go",
+      "line": 594,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Mail sent.": {
+      "segment": "Mail sent.",
+      "file": "pkg/game/mail.go",
+      "line": 592,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "No objects found.": {
+      "segment": "No objects found.",
+      "file": "pkg/session/wiz_zone.go",
+      "line": 187,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "No one by that name online.": {
+      "segment": "No one by that name online.",
+      "file": "pkg/session/wiz_player.go",
+      "line": 26,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "No parsed world available.": {
+      "segment": "No parsed world available.",
+      "file": "pkg/session/wiz_zone.go",
+      "line": 205,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Note limit reached. Type '@' on a new line to save.": {
+      "segment": "Note limit reached. Type '@' on a new line to save.",
+      "file": "pkg/game/note_write.go",
+      "line": 86,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Note recorded.": {
+      "segment": "Note recorded.",
+      "file": "pkg/game/note_write.go",
+      "line": 67,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Nothing magical happens.": {
+      "segment": "Nothing magical happens.",
+      "file": "pkg/session/use_cmds.go",
+      "line": 53,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Objects stored for house #": {
+      "segment": "Objects stored for house #",
+      "file": "pkg/game/house_rent.go",
+      "line": 46,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Old password is incorrect.": {
+      "segment": "Old password is incorrect.",
+      "file": "pkg/session/cmd_account.go",
+      "line": 56,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Parsed world data not available.": {
+      "segment": "Parsed world data not available.",
+      "file": "pkg/session/wiz_stats.go",
+      "line": 670,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Password changed successfully.": {
+      "segment": "Password changed successfully.",
+      "file": "pkg/session/cmd_account.go",
+      "line": 76,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Password is too long (max 72 characters).": {
+      "segment": "Password is too long (max 72 characters).",
+      "file": "pkg/session/cmd_account.go",
+      "line": 37,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Player lookup not available.": {
+      "segment": "Player lookup not available.",
+      "file": "pkg/game/house_player.go",
+      "line": 148,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Player record not found.": {
+      "segment": "Player record not found.",
+      "file": "pkg/session/cmd_account.go",
+      "line": 49,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Room data not found.": {
+      "segment": "Room data not found.",
+      "file": "pkg/session/wiz_stats.go",
+      "line": 359,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Sell what?": {
+      "segment": "Sell what?",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 387,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Something went wrong.": {
+      "segment": "Something went wrong.",
+      "file": "pkg/game/spec_procs4.go",
+      "line": 246,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Something went wrong. Your gold was not donated.": {
+      "segment": "Something went wrong. Your gold was not donated.",
+      "file": "pkg/game/item_donate.go",
+      "line": 79,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Something went wrong. Your item was not donated.": {
+      "segment": "Something went wrong. Your item was not donated.",
+      "file": "pkg/game/item_donate.go",
+      "line": 38,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Starved and needing food to make more pillows, the couch attacks you!": {
+      "segment": "Starved and needing food to make more pillows, the couch attacks you!",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 296,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Summon who?": {
+      "segment": "Summon who?",
+      "file": "pkg/session/cmd_info.go",
+      "line": 1048,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "That information is not available right now.": {
+      "segment": "That information is not available right now.",
+      "file": "pkg/session/gen_ps_cmds.go",
+      "line": 132,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "That is not a wand or staff.": {
+      "segment": "That is not a wand or staff.",
+      "file": "pkg/game/spec_procs_missing.go",
+      "line": 83,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "That item is already fully charged.": {
+      "segment": "That item is already fully charged.",
+      "file": "pkg/game/spec_procs_missing.go",
+      "line": 92,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "That's the same as your old password!": {
+      "segment": "That's the same as your old password!",
+      "file": "pkg/session/cmd_account.go",
+      "line": 27,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "The bats swarm around you, blocking your escape!": {
+      "segment": "The bats swarm around you, blocking your escape!",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1913,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "The boy smiles and hands you a small note.": {
+      "segment": "The boy smiles and hands you a small note.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1504,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "The force of the blast knocks you off your feet!": {
+      "segment": "The force of the blast knocks you off your feet!",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 2793,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "The little boy runs off!": {
+      "segment": "The little boy runs off!",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1512,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "The recharger works their magic on": {
+      "segment": "The recharger works their magic on",
+      "file": "pkg/game/spec_procs_missing.go",
+      "line": 120,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "The shopkeeper doesn't want anything you have.": {
+      "segment": "The shopkeeper doesn't want anything you have.",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 453,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "The shopkeeper doesn't want that.": {
+      "segment": "The shopkeeper doesn't want that.",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 407,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "There's nowhere to flee!": {
+      "segment": "There's nowhere to flee!",
+      "file": "pkg/session/movement_cmds.go",
+      "line": 68,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Unable to save description.": {
+      "segment": "Unable to save description.",
+      "file": "pkg/session/menu.go",
+      "line": 198,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Unknown channel.": {
+      "segment": "Unknown channel.",
+      "file": "pkg/game/comm_channel.go",
+      "line": 97,
+      "sink": "communicationSend",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect": {
+      "segment": "Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect",
+      "file": "pkg/session/wiz_system.go",
+      "line": 463,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Unknown toggle.": {
+      "segment": "Unknown toggle.",
+      "file": "pkg/game/other_settings.go",
+      "line": 279,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Usage: checkload { obj | mob } \u003cnumber\u003e": {
+      "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
+      "file": "pkg/session/wiz_info.go",
+      "line": 386,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Usage: olist \u003ckeyword\u003e": {
+      "segment": "Usage: olist \u003ckeyword\u003e",
+      "file": "pkg/session/wiz_zone.go",
+      "line": 169,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Usage: password \u003cold\u003e \u003cnew\u003e": {
+      "segment": "Usage: password \u003cold\u003e \u003cnew\u003e",
+      "file": "pkg/session/cmd_account.go",
+      "line": 19,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Usage: poofset \u003cin|out\u003e [message]": {
+      "segment": "Usage: poofset \u003cin|out\u003e [message]",
+      "file": "pkg/session/wiz_info.go",
+      "line": 585,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect \u003cplayer\u003e": {
+      "segment": "Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect \u003cplayer\u003e",
+      "file": "pkg/session/wiz_system.go",
+      "line": 447,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Usage: unaffect \u003cplayer\u003e": {
+      "segment": "Usage: unaffect \u003cplayer\u003e",
+      "file": "pkg/session/wiz_system.go",
+      "line": 640,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Vis whom?": {
+      "segment": "Vis whom?",
+      "file": "pkg/session/wiz_player.go",
+      "line": 234,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "What is your question?": {
+      "segment": "What is your question?",
+      "file": "pkg/session/act_comm.go",
+      "line": 42,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "World not available.": {
+      "segment": "World not available.",
+      "file": "pkg/session/wiz_stats.go",
+      "line": 664,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You are Rank": {
+      "segment": "You are Rank",
+      "file": "pkg/game/clan_info.go",
+      "line": 33,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You are ignoring:": {
+      "segment": "You are ignoring:",
+      "file": "pkg/session/comm_cmds.go",
+      "line": 393,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You are incapacitated and will slowly die, if not aided.": {
+      "segment": "You are incapacitated and will slowly die, if not aided.",
+      "file": "pkg/combat/fight_core.go",
+      "line": 494,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You are not affected by any spells.": {
+      "segment": "You are not affected by any spells.",
+      "file": "pkg/session/affects_informative.go",
+      "line": 16,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You are not ignoring anyone.": {
+      "segment": "You are not ignoring anyone.",
+      "file": "pkg/session/comm_cmds.go",
+      "line": 390,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You are summoned by": {
+      "segment": "You are summoned by",
+      "file": "pkg/session/cmd_info.go",
+      "line": 1062,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You aren't holding that.": {
+      "segment": "You aren't holding that.",
+      "file": "pkg/session/use_cmds.go",
+      "line": 154,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You attempt to move silently.": {
+      "segment": "You attempt to move silently.",
+      "file": "pkg/session/movement_cmds.go",
+      "line": 171,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You autoloot the corpse but find nothing of value.": {
+      "segment": "You autoloot the corpse but find nothing of value.",
+      "file": "pkg/game/death.go",
+      "line": 455,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You autoloot:": {
+      "segment": "You autoloot:",
+      "file": "pkg/game/death.go",
+      "line": 453,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You feel your magic dissipate in the beholder's presence!": {
+      "segment": "You feel your magic dissipate in the beholder's presence!",
+      "file": "pkg/game/spec_procs_missing.go",
+      "line": 128,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You heal": {
+      "segment": "You heal",
+      "file": "pkg/session/wiz_player.go",
+      "line": 31,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You open the door.": {
+      "segment": "You open the door.",
+      "file": "pkg/game/graph.go",
+      "line": 316,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You see nothing but void.": {
+      "segment": "You see nothing but void.",
+      "file": "pkg/game/world.go",
+      "line": 1292,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You start following": {
+      "segment": "You start following",
+      "file": "pkg/session/cmd_group.go",
+      "line": 79,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You think: '": {
+      "segment": "You think: '",
+      "file": "pkg/game/comm_channel.go",
+      "line": 223,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You trade your key for": {
+      "segment": "You trade your key for",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1416,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You tumble out into a strange place...": {
+      "segment": "You tumble out into a strange place...",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1789,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You write '": {
+      "segment": "You write '",
+      "file": "pkg/session/comm_cmds.go",
+      "line": 256,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You're not fighting anyone!": {
+      "segment": "You're not fighting anyone!",
+      "file": "pkg/session/movement_cmds.go",
+      "line": 50,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "You've been demoted within your clan!": {
+      "segment": "You've been demoted within your clan!",
+      "file": "pkg/game/clan_membership.go",
+      "line": 253,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your color is now": {
+      "segment": "Your color is now",
+      "file": "pkg/session/act_informative.go",
+      "line": 40,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your group leader is not online.": {
+      "segment": "Your group leader is not online.",
+      "file": "pkg/session/cmd_group.go",
+      "line": 197,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your jail sentence is served. You are free!": {
+      "segment": "Your jail sentence is served. You are free!",
+      "file": "pkg/game/limits_condition.go",
+      "line": 133,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your light source flickers and sputters.": {
+      "segment": "Your light source flickers and sputters.",
+      "file": "pkg/game/char_mgmt.go",
+      "line": 59,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your light source has gone out.": {
+      "segment": "Your light source has gone out.",
+      "file": "pkg/game/char_mgmt.go",
+      "line": 61,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your message was blocked.": {
+      "segment": "Your message was blocked.",
+      "file": "pkg/session/comm_cmds.go",
+      "line": 364,
+      "sink": ".sendText",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your note was lost. (internal error)": {
+      "segment": "Your note was lost. (internal error)",
+      "file": "pkg/game/note_write.go",
+      "line": 58,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your tattoo fizzles...": {
+      "segment": "Your tattoo fizzles...",
+      "file": "pkg/game/other_economy.go",
+      "line": 140,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Your tattoo flickers but nothing happens.": {
+      "segment": "Your tattoo flickers but nothing happens.",
+      "file": "pkg/session/tattoo.go",
+      "line": 79,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "Zap who?": {
+      "segment": "Zap who?",
+      "file": "pkg/session/use_cmds.go",
+      "line": 133,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "[ FULL MOON RISES ] The full moon casts an eerie glow across the land.": {
+      "segment": "[ FULL MOON RISES ] The full moon casts an eerie glow across the land.",
+      "file": "pkg/game/weather.go",
+      "line": 570,
+      "sink": ".SendToAll",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!": {
+      "segment": "[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!",
+      "file": "pkg/game/weather.go",
+      "line": 622,
+      "sink": ".SendToAll",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "[ NIGHT GATE ] A shimmering gate materializes in the darkness...": {
+      "segment": "[ NIGHT GATE ] A shimmering gate materializes in the darkness...",
+      "file": "pkg/game/weather.go",
+      "line": 596,
+      "sink": ".SendToAll",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "[ NIGHT GATE ] The shimmering gate fades into nothingness.": {
+      "segment": "[ NIGHT GATE ] The shimmering gate fades into nothingness.",
+      "file": "pkg/game/weather.go",
+      "line": 609,
+      "sink": ".SendToAll",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "[Broadcast]": {
+      "segment": "[Broadcast]",
+      "file": "pkg/session/wiz_system.go",
+      "line": 780,
+      "sink": ".Send(via msg)",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "arrives through a shimmering moon gate!": {
+      "segment": "arrives through a shimmering moon gate!",
+      "file": "pkg/game/spec_procs_missing.go",
+      "line": 198,
+      "sink": ".actToRoom",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "attacks you for": {
+      "segment": "attacks you for",
+      "file": "pkg/game/mob.go",
+      "line": 364,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "auctions, '": {
+      "segment": "auctions, '",
+      "file": "pkg/game/graph.go",
+      "line": 267,
+      "sink": ".SendMessage(via text)",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "experience points for fleeing.": {
+      "segment": "experience points for fleeing.",
+      "file": "pkg/session/movement_cmds.go",
+      "line": 122,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "gold pieces.": {
+      "segment": "gold pieces.",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 460,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "gold to recharge that, which you cannot afford.": {
+      "segment": "gold to recharge that, which you cannot afford.",
+      "file": "pkg/game/spec_procs_missing.go",
+      "line": 104,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "has arrived.": {
+      "segment": "has arrived.",
+      "file": "pkg/game/graph.go",
+      "line": 343,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "has healed you!": {
+      "segment": "has healed you!",
+      "file": "pkg/session/wiz_player.go",
+      "line": 32,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "hits you for": {
+      "segment": "hits you for",
+      "file": "pkg/combat/engine.go",
+      "line": 971,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "hits you, but it doesn't hurt!": {
+      "segment": "hits you, but it doesn't hurt!",
+      "file": "pkg/game/damage_stubs.go",
+      "line": 256,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "is already visible.": {
+      "segment": "is already visible.",
+      "file": "pkg/session/wiz_player.go",
+      "line": 249,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "is disintegrated! Equipment lies scattered on the ground.": {
+      "segment": "is disintegrated! Equipment lies scattered on the ground.",
+      "file": "pkg/game/death.go",
+      "line": 1194,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "is ignoring you.": {
+      "segment": "is ignoring you.",
+      "file": "pkg/game/directed_speech.go",
+      "line": 307,
+      "sink": "communicationSend",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "is no longer ignored.": {
+      "segment": "is no longer ignored.",
+      "file": "pkg/session/comm_cmds.go",
+      "line": 408,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "is now ignored.": {
+      "segment": "is now ignored.",
+      "file": "pkg/session/comm_cmds.go",
+      "line": 411,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "is now visible to mortals.": {
+      "segment": "is now visible to mortals.",
+      "file": "pkg/session/wiz_player.go",
+      "line": 247,
+      "sink": ".Send",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "just tried to summon you but failed.": {
+      "segment": "just tried to summon you but failed.",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 3044,
+      "sink": ".SendMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "says 'I don't like you, and you'd better leave before I make you!'": {
+      "segment": "says 'I don't like you, and you'd better leave before I make you!'",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1546,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    },
+    "says 'You're an evil one! That won't be allowed here!'": {
+      "segment": "says 'You're an evil one! That won't be allowed here!'",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 1483,
+      "sink": "sendToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-09-23"
+    }
+  }
+}

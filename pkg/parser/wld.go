@@ -18,7 +18,7 @@ type Room struct {
 	Name            string
 	Description     string
 	Zone            int
-	Flags           []string // 4-element array of flag bitmask hex strings
+	Flags           []string // Four decimal 32-bit words from C's room_flags[4].
 	Sector          int
 	Exits           map[string]Exit
 	ExtraDescs      []ExtraDesc
@@ -33,22 +33,24 @@ type Room struct {
 }
 
 // HasFlag checks if a room flag bit is set.
-// Room flags are stored as 4 decimal strings representing bit positions 0-63.
+// C parse_room reads four decimal words; each word stores bit positions 0-31.
 // C defines: ROOM_PEACEFUL=4, ROOM_PRIVATE=9, ROOM_BFR=17, ROOM_NOMAGIC=7
 func (r *Room) HasFlag(bit int) bool {
-	if len(r.Flags) < 4 {
+	return r != nil && RoomHasFlagBit(r.Flags, bit)
+}
+
+// RoomHasFlagBit tests the C room_flags[] word and bit positions. Each
+// decimal .wld field is one 32-bit word; room flags 0-31 are in field zero.
+func RoomHasFlagBit(flags []string, bit int) bool {
+	if bit < 0 {
 		return false
 	}
-	word := bit / 16
-	if word < 0 || word >= len(r.Flags) {
+	word := bit / 32
+	if word >= len(flags) {
 		return false
 	}
-	bitPos := bit % 16
-	val, _ := strconv.ParseUint(r.Flags[word], 10, 32)
-	if bitPos < 0 || bitPos > 63 {
-		return false
-	}
-	return val&(1<<uint(bitPos)) != 0
+	value, err := strconv.ParseUint(flags[word], 10, 32)
+	return err == nil && value&(1<<uint(bit%32)) != 0
 }
 
 // IsLight returns true if the room has any active light source.

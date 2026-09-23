@@ -32,9 +32,11 @@ const (
 	DONT byte = 254
 	SB   byte = 250
 	SE   byte = 240
+	EOR  byte = 239
 
 	OPT_ECHO      byte = 1
 	OPT_SGA       byte = 3
+	OPT_EOR       byte = 25
 	OPT_MSSP      byte = 70
 	OPT_GMCP      byte = 201
 	OPT_COMPRESS2 byte = 86
@@ -43,8 +45,15 @@ const (
 	MSSP_VAL byte = 2
 )
 
+// maxConnsPerIP caps simultaneous telnet connections from one address
+// (TELNET_MAX_CONNS_PER_IP). The C server had no such cap; it is flood
+// protection, sized like webSocketMaxConnsPerIP for two players sharing a
+// home connection at the three-character multiplay allowance, plus room to
+// reconnect. At 3 it equalled one player's allowance, so a second player in
+// the house (or on a carrier that puts many phones behind one address) was
+// refused.
 var (
-	maxConnsPerIP    = 3
+	maxConnsPerIP    = 8
 	maxTotalConns    = 200
 	loginIdleTimeout = 120 * time.Second // DP-912: drop parked pre-auth connections
 )
@@ -112,6 +121,8 @@ const greetingsLogo = "\r\n\r\n" +
 var (
 	connMu   sync.Mutex
 	listener net.Listener
+	// tlsListener is the optional TLS telnet listener (ListenTLS).
+	tlsListener net.Listener
 )
 
 var (
@@ -132,6 +143,14 @@ func Listen(port int, manager *session.Manager) error {
 	listener = ln
 	connMu.Unlock()
 
+	serve(ln, manager)
+	return nil
+}
+
+// serve runs the accept loop for ln in the background. Plain and TLS
+// listeners share it, and with it the connection limits and ban checks: a
+// TLS connection is the same telnet session once its handshake is done.
+func serve(ln net.Listener, manager *session.Manager) {
 	go func() {
 		for {
 			conn, err := ln.Accept()
@@ -187,9 +206,16 @@ func Listen(port int, manager *session.Manager) error {
 
 			go func(ip string) {
 				banLevel := effectiveBanLevel(ip, banManager)
-				if banLevel == game.BanAll {
-					_ = conn.Close() //nolint:errcheck // best-effort cleanup
+				reject := banLevel == game.BanAll
+				if reject {
 					slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
+				} else if !completeTLSHandshake(conn) {
+					// A banned address is dropped before any TLS work; everyone
+					// else must finish the handshake before the banner is sent.
+					reject = true
+				}
+				if reject {
+					_ = conn.Close() //nolint:errcheck // best-effort cleanup
 					connMu.Lock()
 					connCount--
 					connPerIP[ip]--
@@ -210,7 +236,6 @@ func Listen(port int, manager *session.Manager) error {
 			}(remoteIP)
 		}
 	}()
-	return nil
 }
 
 func ipFromAddr(addr string) string {
@@ -272,10 +297,14 @@ func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
 
 type telnetConn struct {
 	net.Conn
-	br             *bufio.Reader
-	wmu            chan struct{} // buffered(1) acts as a write mutex
-	manager        *session.Manager
-	hasGMCP        atomic.Bool
+	br      *bufio.Reader
+	wmu     chan struct{} // buffered(1) acts as a write mutex
+	manager *session.Manager
+	hasGMCP atomic.Bool
+	// hasEOR is set once the client agrees (DO EOR) to have prompts marked
+	// with IAC EOR, which is how Mudlet and similar clients tell a prompt
+	// from a partial line. Clients that never agree see no EOR bytes.
+	hasEOR         atomic.Bool
 	sess           *session.Session
 	compressWriter *zlib.Writer
 }
@@ -314,6 +343,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	tc.write([]byte{IAC, WILL, OPT_MSSP})
 	tc.write([]byte{IAC, WILL, OPT_GMCP})
 	tc.write([]byte{IAC, WILL, OPT_COMPRESS2})
+	tc.write([]byte{IAC, WILL, OPT_EOR})
 
 	s := manager.NewSession()
 	tc.sess = s
@@ -330,6 +360,26 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// well-formed CRLF rather than carrying its legacy LFCR framing forward.
 	tc.writeLine("\r\nBy what name do you wish to be known? ")
 
+	// Start the output writer before the name prompt is answered. Login output
+	// must reach the client as it is generated (DP-591), and so must what a
+	// session queues before login: GMCP negotiation happens while the player
+	// is still at the name prompt, and Mudlet installs the offered package
+	// (Client.GUI) from that moment. Until the name is in, nothing but GMCP is
+	// queued, so the name dialogue's own bytes are unaffected. Every exit
+	// before login stops the writer.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		writeLoop(tc, s)
+	}()
+	stopWriter := func() {
+		// A client that stops reading cannot block writeLoop forever and leak
+		// this goroutine/file descriptor.
+		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		s.CloseSend()
+		<-done
+	}
+
 	// C's CON_GET_NAME keeps the connection open until it receives a valid
 	// fantasy name. Transport only owns this first read; new-character dialogue
 	// after it belongs entirely to the shared session nanny.
@@ -338,11 +388,13 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		var ok bool
 		name, ok = tc.readLinePreAuth()
 		if !ok {
+			stopWriter()
 			return
 		}
 		name = strings.TrimSpace(name)
 		if name == "" {
 			tc.writeLine("\r\nGoodbye.\r\n")
+			stopWriter()
 			return
 		}
 		if strings.HasPrefix(strings.ToLower(name), "guest") ||
@@ -352,23 +404,10 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		tc.writeLine("Invalid name, please try another.\r\nName: ")
 	}
 
-	// Start the output writer before login so everything login produces —
-	// prompts, rejection messages, and the success welcome/look — reaches the
-	// client as it is generated. (DP-591)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		writeLoop(tc, s)
-	}()
-
 	// Send login with password
 	if err := sendLoginWithPassword(s, name, "", false); err != nil {
 		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
-		// Set a write deadline so a client that stops reading cannot block
-		// writeLoop forever and leak this goroutine/file descriptor.
-		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		s.CloseSend()
-		<-done
+		stopWriter()
 		return
 	}
 
@@ -377,11 +416,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	// session output channel and called CloseSend. Flush writeLoop so the
 	// error message reaches the client before the raw connection closes. (DP-591)
 	if s.SendClosed() {
-		// Set a write deadline so a client that stops reading cannot block
-		// writeLoop forever and leak this goroutine/file descriptor.
-		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		s.CloseSend()
-		<-done
+		stopWriter()
 		return
 	}
 
@@ -569,7 +604,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 					prompt = text
 				}
 			}
-			tc.writeLine(prompt)
+			tc.writePrompt(prompt)
 		case "char_create":
 			if ed, ok := sm.Data.(map[string]interface{}); ok {
 				secret, _ := ed["secret"].(bool)
@@ -583,78 +618,24 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 					// Nanny prompts are already byte-exact C strings. In particular,
 					// MENU intentionally contains mixed LF/CR ordering, so bypass the
 					// general telnet newline normalizer here.
-					tc.write([]byte(prompt))
+					tc.write(tc.markPrompt([]byte(prompt)))
+				}
+			}
+		case "gmcp":
+			if !tc.hasGMCP.Load() {
+				continue
+			}
+			if ed, ok := sm.Data.(map[string]interface{}); ok {
+				pkg, _ := ed["package"].(string)
+				payload, _ := ed["json"].(string)
+				if pkg != "" {
+					tc.write(buildGMCPFrameRaw(pkg, payload))
 				}
 			}
 		case "vars":
-			if tc.hasGMCP.Load() {
-				if ed, ok := sm.Data.(map[string]interface{}); ok {
-					// Build all GMCP frames and send in a single write to minimize syscalls.
-					var buf []byte
-
-					vitals := make(map[string]interface{})
-					if hp, ok := ed["HEALTH"]; ok {
-						vitals["hp"] = hp
-					}
-					if maxhp, ok := ed["MAX_HEALTH"]; ok {
-						vitals["maxhp"] = maxhp
-					}
-					if mp, ok := ed["MANA"]; ok {
-						vitals["mp"] = mp
-					}
-					if maxmp, ok := ed["MAX_MANA"]; ok {
-						vitals["maxmp"] = maxmp
-					}
-					if mv, ok := ed["MOVE"]; ok {
-						vitals["mv"] = mv
-					}
-					if maxmv, ok := ed["MAX_MOVE"]; ok {
-						vitals["maxmv"] = maxmv
-					}
-					if len(vitals) > 0 {
-						buf = append(buf, buildGMCPFrame("Char.Vitals", vitals)...)
-					}
-
-					status := make(map[string]interface{})
-					if lvl, ok := ed["LEVEL"]; ok {
-						status["level"] = lvl
-					}
-					if gold, ok := ed["GOLD"]; ok {
-						status["gold"] = gold
-					}
-					if exp, ok := ed["EXP"]; ok {
-						status["exp"] = exp
-					}
-					if len(status) > 0 {
-						buf = append(buf, buildGMCPFrame("Char.Status", status)...)
-					}
-
-					room := make(map[string]interface{})
-					if num, ok := ed["ROOM_VNUM"]; ok {
-						room["num"] = num
-					}
-					if name, ok := ed["ROOM_NAME"]; ok {
-						room["name"] = name
-					}
-					if exits, ok := ed["ROOM_EXITS"]; ok {
-						room["exits"] = exits
-					}
-					if len(room) > 0 {
-						buf = append(buf, buildGMCPFrame("Room.Info", room)...)
-					}
-
-					if inv, ok := ed["INVENTORY"]; ok {
-						buf = append(buf, buildGMCPFrame("Char.Items", map[string]interface{}{"location": "inventory", "items": inv})...)
-					}
-					if equip, ok := ed["EQUIPMENT"]; ok {
-						buf = append(buf, buildGMCPFrame("Char.Items", map[string]interface{}{"location": "equipped", "items": equip})...)
-					}
-
-					if len(buf) > 0 {
-						tc.write(buf)
-					}
-				}
-			}
+			// Agent variable updates are a WebSocket protocol. A telnet session
+			// only receives them if something enables agent vars on it; they
+			// have no telnet rendering, so drop them rather than print JSON.
 		default:
 			tc.writeLine(fmt.Sprintf("[%s]\r\n", string(msg)))
 		}
@@ -720,10 +701,7 @@ func (tc *telnetConn) readLine() (string, bool) {
 					tc.write([]byte{IAC, DO, opt})
 				case OPT_GMCP:
 					tc.write([]byte{IAC, DO, OPT_GMCP})
-					tc.hasGMCP.Store(true)
-					if tc.sess != nil {
-						tc.sess.SetWantsStructuredData(true)
-					}
+					tc.enableGMCP()
 				default:
 					tc.write([]byte{IAC, DONT, opt})
 				}
@@ -746,11 +724,14 @@ func (tc *telnetConn) readLine() (string, bool) {
 					tc.write([]byte{IAC, WILL, OPT_MSSP})
 					tc.sendMSSP()
 				case OPT_GMCP:
-					tc.write([]byte{IAC, WILL, OPT_GMCP})
-					tc.hasGMCP.Store(true)
-					if tc.sess != nil {
-						tc.sess.SetWantsStructuredData(true)
+					// Answer only a DO the server has not already agreed to: the
+					// WILL sent at connect is the offer, and re-asserting it on the
+					// client's DO would start a negotiation loop.
+					if !tc.hasGMCP.Load() {
+						tc.enableGMCP()
 					}
+				case OPT_EOR:
+					tc.hasEOR.Store(true)
 				case OPT_COMPRESS2:
 					tc.enableCompression()
 				default:
@@ -760,6 +741,9 @@ func (tc *telnetConn) readLine() (string, bool) {
 				opt, _ := tc.br.ReadByte()
 				if opt == OPT_COMPRESS2 {
 					break
+				}
+				if opt == OPT_EOR {
+					tc.hasEOR.Store(false)
 				}
 				tc.write([]byte{IAC, WONT, opt})
 			case SB:
@@ -998,6 +982,17 @@ func (tc *telnetConn) sendMSSP() {
 	writeField("CREATED", "1997")
 	writeField("WEBSITE", "darkpawns.org")
 	writeField("PORT", "7777")
+	// TLS (with the certificate's HOSTNAME) is what Mudlet reads to offer a
+	// plaintext player the encrypted port; nothing is printed to the player.
+	if advert := tlsAdvert.Load(); advert != nil {
+		writeField("TLS", strconv.Itoa(advert.port))
+		if advert.hostname != "" {
+			writeField("HOSTNAME", advert.hostname)
+		}
+	}
+	writeField("ANSI", "1")
+	writeField("GMCP", "1")
+	writeField("MCCP", "1")
 	writeField("LANGUAGE", "English")
 	writeField("LOCATION", "US")
 
@@ -1006,54 +1001,65 @@ func (tc *telnetConn) sendMSSP() {
 	tc.writeLocked(payload)
 }
 
-// buildGMCPFrame builds the raw bytes for a single GMCP package without sending.
-// Returns nil on marshal error.
-func buildGMCPFrame(pkg string, data interface{}) []byte {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		slog.Error("buildGMCPFrame json marshal failed", "pkg", pkg, "error", err)
-		return nil
-	}
-	frame := make([]byte, 0, 4+len(pkg)+1+len(jsonData)+2)
+// buildGMCPFrameRaw frames an already-encoded GMCP message: IAC SB GMCP
+// "<package> <json>" IAC SE, with any 0xFF data byte doubled as telnet
+// requires. An empty payload sends the package name alone.
+func buildGMCPFrameRaw(pkg, payload string) []byte {
+	frame := make([]byte, 0, 3+len(pkg)+1+len(payload)+2)
 	frame = append(frame, IAC, SB, OPT_GMCP)
-	frame = append(frame, []byte(pkg)...)
-	if len(jsonData) > 0 {
+	frame = appendIACEscaped(frame, pkg)
+	if payload != "" {
 		frame = append(frame, ' ')
-		frame = append(frame, jsonData...)
+		frame = appendIACEscaped(frame, payload)
 	}
 	frame = append(frame, IAC, SE)
 	return frame
+}
+
+func appendIACEscaped(dst []byte, text string) []byte {
+	for i := 0; i < len(text); i++ {
+		if text[i] == IAC {
+			dst = append(dst, IAC)
+		}
+		dst = append(dst, text[i])
+	}
+	return dst
 }
 
 func (tc *telnetConn) handleIncomingGMCP(payload []byte) {
 	if len(payload) == 0 {
 		return
 	}
-	s := string(payload)
-	parts := strings.SplitN(s, " ", 2)
-	msgName := parts[0]
-	var jsonStr string
-	if len(parts) > 1 {
-		jsonStr = parts[1]
-	}
-
+	msgName, jsonStr, _ := strings.Cut(string(payload), " ")
 	slog.Debug("telnet: received GMCP", "message", msgName, "payload", jsonStr)
-
-	// Support basic hello handshake from client (like Mudlet)
-	if msgName == "Core.Hello" {
-		var hello struct {
-			Client  string `json:"client"`
-			Version string `json:"version"`
-		}
-		if err := json.Unmarshal([]byte(jsonStr), &hello); err == nil {
-			slog.Info("telnet: GMCP client identified", "client", hello.Client, "version", hello.Version)
-			if tc.sess != nil {
-				if strings.Contains(strings.ToLower(hello.Client), "brenda") || strings.Contains(strings.ToLower(hello.Client), "goat") || strings.Contains(strings.ToLower(hello.Client), "mudlet") {
-					tc.sess.SetWantsStructuredData(true)
-				}
-			}
-		}
+	if tc.sess != nil {
+		tc.sess.HandleGMCP(msgName, strings.TrimSpace(jsonStr))
 	}
+}
+
+// enableGMCP records that the client agreed to GMCP and turns it on for the
+// session. GMCP is framing only: it never changes what text the session is
+// sent (see session.EnableGMCP).
+func (tc *telnetConn) enableGMCP() {
+	tc.hasGMCP.Store(true)
+	if tc.sess != nil {
+		tc.sess.EnableGMCP()
+	}
+}
+
+// writePrompt writes the command prompt, marked with IAC EOR for clients that
+// asked for prompt marking.
+func (tc *telnetConn) writePrompt(prompt string) {
+	tc.write(tc.markPrompt([]byte(normalizeCRLF(prompt))))
+}
+
+// markPrompt appends IAC EOR to prompt bytes when the client negotiated EOR.
+// The marker is a telnet command, so it never reaches the player's screen.
+func (tc *telnetConn) markPrompt(prompt []byte) []byte {
+	if !tc.hasEOR.Load() || len(prompt) == 0 {
+		return prompt
+	}
+	return append(prompt, IAC, EOR)
 }
 
 func sendLoginWithPassword(s *session.Session, name string, password string, newChar bool) error {
@@ -1131,7 +1137,7 @@ func sendCommand(s *session.Session, cmd string, args []string, rawLine string) 
 	return s.HandleMessage(cmdMsg)
 }
 
-// Stop closes the TCP telnet listener.
+// Stop closes the TCP telnet listener and the TLS listener, if any.
 func Stop() {
 	connMu.Lock()
 	defer connMu.Unlock()
@@ -1139,4 +1145,9 @@ func Stop() {
 		_ = listener.Close()
 		listener = nil
 	}
+	if tlsListener != nil {
+		_ = tlsListener.Close()
+		tlsListener = nil
+	}
+	tlsAdvert.Store(nil)
 }

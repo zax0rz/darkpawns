@@ -5,6 +5,7 @@
 # depth-case: auto.argument-case
 # depth-case: auto.unknown
 # depth-case: auto.no-arg-listing-undefined
+# depth-case: autoexit.unregistered
 # Player state toggle fidelity: act.other.c::do_afk, do_auto, do_inactive.
 #
 # All three commands are mortal-accessible and deterministic. AFK broadcasts to
@@ -77,6 +78,7 @@ Y
 [probe]
 afk
 afk back soon
+auto
 auto exits
 auto loot
 auto gold
@@ -87,5 +89,6 @@ auto gold
 auto split
 auto EXIT
 auto nonsense
+autoexit
 inactive
 inactive

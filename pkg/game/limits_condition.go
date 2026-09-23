@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
@@ -85,6 +84,14 @@ func GainCondition(p *Player, condition int, value int) {
 // applies condition decay, regenerates HMV, processes poison/cutthroat
 // damage, memory clearing, idle checks, and object decay.
 func (w *World) PointUpdate() {
+	// Regeneration prints nothing, so structured clients learn of the new
+	// vitals only from this notice, sent once the whole tick has applied.
+	defer func() {
+		if observer := w.outOfBand(); observer != nil {
+			observer.PointUpdated()
+		}
+	}()
+
 	// Snapshot players under read lock, operate without lock
 	w.mu.RLock()
 	players := make([]*Player, 0, len(w.players))
@@ -313,39 +320,6 @@ func (w *World) PointUpdate() {
 // clearMemory clears a mob's memory — from handler.c
 func clearMemory(m *MobInstance) {
 	m.ClearMemory()
-}
-
-// ShowMOTD reads and returns the MOTD file content.
-// Source: comm.c nanny() CON_MOTD reads lib/text/motd
-func ShowMOTD(worldPath string) string {
-	paths := []string{
-		worldPath + "/text/motd",
-		worldPath + "/motd",
-	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err == nil {
-			return string(data)
-		}
-	}
-	return ""
-}
-
-// ShowBackground reads the setting's background story, falling back to a
-// short built-in introduction when an older world install has no text file.
-func ShowBackground(worldPath string) string {
-	paths := []string{
-		worldPath + "/text/background",
-		worldPath + "/background",
-	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err == nil {
-			return string(data)
-		}
-	}
-	return "Darkness has settled over the old kingdoms. From the ruins, rival powers " +
-		"move their pawns across a world of forgotten magick, ancient grudges, and dangerous ambition.\r\n"
 }
 
 // decayObjectsInRoom decays objects in the given room.

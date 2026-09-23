@@ -48,11 +48,13 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
+	"github.com/zax0rz/darkpawns/mudlet"
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
 	"github.com/zax0rz/darkpawns/pkg/audit"
@@ -200,6 +202,7 @@ func main() {
 		staticDir  = flag.String("static", "", "Static site directory served at /, takes precedence over -web")
 		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
+		telnetTLS  = flag.Int("telnet-tls-port", 0, "TLS telnet port (0 to disable); needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -340,6 +343,20 @@ func main() {
 	// need a token. Fail loud at startup instead, and name the command.
 	//   - production: refuse to start with the export line to paste.
 	//   - development: derive an ephemeral 32-byte secret so local boot works.
+	// Which reverse proxies may name the client in X-Forwarded-For. Without
+	// this, every browser behind a same-machine proxy appears as 127.0.0.1:
+	// one shared per-IP connection cap, one shared login rate limit, and IP
+	// bans that can't single anyone out. Unset means the loopback defaults;
+	// set but empty means trust no proxy.
+	proxies := auth.DefaultTrustedProxies
+	if value, set := os.LookupEnv("TRUSTED_PROXIES"); set {
+		proxies = strings.FieldsFunc(value, func(r rune) bool { return r == ',' || r == ' ' })
+	}
+	if err := auth.SetTrustedProxies(proxies); err != nil {
+		slog.Warn("TRUSTED_PROXIES has invalid entries; the valid ones apply", "error", err)
+	}
+	slog.Info("Trusted proxies for client addresses", "cidrs", proxies)
+
 	if err := auth.ValidateJWTSecret(); err != nil {
 		if os.Getenv("ENVIRONMENT") != "development" {
 			slog.Error("JWT_SECRET invalid; refusing to start outside development",
@@ -652,6 +669,10 @@ func main() {
 	apidoc.RegisterHealth(rootAPI)
 
 	rootMux.HandleFunc("/ws", manager.HandleWebSocket)
+	// The Mudlet world map, generated from the live world. Public on purpose:
+	// Mudlet downloads it before anyone logs in, and the site already
+	// publishes the same rooms and exits.
+	rootMux.Handle("/darkpawns-map.xml", manager.MudletMap())
 	// Gauges describe state, not events, so they are sampled rather than
 	// maintained. Tracking every mutation means finding every mutation, and one
 	// missed path leaves the gauge wrong until restart; re-reading the truth on
@@ -807,12 +828,44 @@ func main() {
 	slog.Info("Server listening", "address", addr)
 	slog.Info("WebSocket endpoint", "url", "ws://localhost"+addr+"/ws")
 
+	// Offer the Mudlet package over GMCP Client.GUI. Off unless configured:
+	// once on, every Mudlet player downloads from this URL, so it must be a
+	// public copy of mudlet/darkpawns.xml at the version this binary embeds.
+	if packageURL := os.Getenv("DP_MUDLET_PACKAGE_URL"); packageURL != "" {
+		session.SetGMCPClientGUI(packageURL, mudlet.Version)
+		slog.Info("Mudlet package offered over GMCP", "url", packageURL, "version", mudlet.Version)
+	}
+	// Offer the world map over GMCP Client.Map: the public URL through which
+	// this server's /darkpawns-map.xml is reached. Off unless configured.
+	if mapURL := os.Getenv("DP_MUDLET_MAP_URL"); mapURL != "" {
+		session.SetGMCPClientMap(mapURL)
+		slog.Info("Mudlet world map offered over GMCP", "url", mapURL)
+	}
+
 	// Start telnet listener
 	if *telnetPort > 0 {
 		if err := telnet.Listen(*telnetPort, manager); err != nil {
 			slog.Error("Telnet listener failed", "error", err)
 		} else {
 			slog.Info("Telnet listening", "port", *telnetPort)
+		}
+	}
+
+	// TLS telnet is opt-in, with its own certificate variables: TLS_CERT_FILE
+	// and TLS_KEY_FILE switch the HTTP server to HTTPS, which a deployment
+	// behind a TLS-terminating proxy must not do. Asking for the port without
+	// a certificate is a broken configuration, not a reason to serve plaintext.
+	if *telnetTLS > 0 {
+		certFile, keyFile := os.Getenv("TELNET_TLS_CERT_FILE"), os.Getenv("TELNET_TLS_KEY_FILE")
+		if certFile == "" || keyFile == "" {
+			slog.Error("-telnet-tls-port needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
+			gameLoop.Stop()
+			os.Exit(1) //nolint:gocritic // exitAfterDefer: gameLoop.Stop() called explicitly above
+		}
+		if err := telnet.ListenTLS(*telnetTLS, manager, certFile, keyFile); err != nil {
+			slog.Error("Telnet TLS listener failed", "error", err)
+			gameLoop.Stop()
+			os.Exit(1)
 		}
 	}
 

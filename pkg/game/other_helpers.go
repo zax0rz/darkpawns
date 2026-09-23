@@ -15,42 +15,51 @@ const (
 )
 
 // ---------------------------------------------------------------------------
-// PRF flag bit positions (from structs.h, shifted to avoid PLR collision)
+// PRF flag bit positions: C's PRF_* number (structs.h) plus prfBase.
+//
+// C keeps PLR flags (char_specials.saved.act) and PRF flags (player_specials
+// .saved.pref) in two separate arrays; the port keeps both in Player.Flags.
+// PLR bits run 0..21 (PLR_EXTRACT) plus the mob-program "calibrate" bit 22,
+// and PRF bits run 0..31, so PRF lives in the upper 32 bits. An earlier base
+// of 20 put PRF_BRIEF on PLR_REMORT and PRF_COMPACT on PLR_EXTRACT.
 // ---------------------------------------------------------------------------
 
+// prfBase is where PRF bit 0 sits in Player.Flags.
+const prfBase = 32
+
 const (
-	PrfBrief      = 20
-	PrfCompact    = 21
-	PrfDeaf       = 22
-	PrfNotell     = 23
-	PrfDisphp     = 24
-	PrfDispmmana  = 25
-	PrfDispmove   = 26
-	PrfAutoexit   = 27
-	PrfNohassle   = 28
-	PrfHolyLight  = 29
-	PrfNoRepeat   = 30
-	PrfColor1     = 31
-	PrfColor2     = 32
-	PrfNowiz      = 33
-	PrfLog1       = 34
-	PrfLog2       = 35
-	PrfNoAuctions = 36
-	PrfNoGossip   = 37
-	PrfNoGratz    = 38
-	PrfRoomFlags  = 39
-	PrfAFK        = 40
-	PrfAutoLoot   = 41
-	PrfAutoGold   = 42
-	PrfAutoSplit  = 43
-	PrfDispTank   = 44
-	PrfDispTarget = 45
-	PrfNoNewbie   = 46
-	PrfInactive   = 47
-	PrfSummonable = 48
-	PrfQuest      = 49
-	PrfNoCTell    = 50
-	PrfNoBroad    = 51
+	PrfBrief      = prfBase + 0
+	PrfCompact    = prfBase + 1
+	PrfDeaf       = prfBase + 2
+	PrfNotell     = prfBase + 3
+	PrfDisphp     = prfBase + 4
+	PrfDispmmana  = prfBase + 5
+	PrfDispmove   = prfBase + 6
+	PrfAutoexit   = prfBase + 7
+	PrfNohassle   = prfBase + 8
+	PrfQuest      = prfBase + 9
+	PrfSummonable = prfBase + 10
+	PrfNoRepeat   = prfBase + 11
+	PrfHolyLight  = prfBase + 12
+	PrfColor1     = prfBase + 13
+	PrfColor2     = prfBase + 14
+	PrfNowiz      = prfBase + 15
+	PrfLog1       = prfBase + 16
+	PrfLog2       = prfBase + 17
+	PrfNoAuctions = prfBase + 18
+	PrfNoGossip   = prfBase + 19
+	PrfNoGratz    = prfBase + 20
+	PrfRoomFlags  = prfBase + 21
+	PrfAFK        = prfBase + 22
+	PrfAutoLoot   = prfBase + 23
+	PrfAutoGold   = prfBase + 24
+	PrfAutoSplit  = prfBase + 25
+	PrfDispTank   = prfBase + 26
+	PrfDispTarget = prfBase + 27
+	PrfNoNewbie   = prfBase + 28
+	PrfInactive   = prfBase + 29
+	PrfNoCTell    = prfBase + 30
+	PrfNoBroad    = prfBase + 31
 )
 
 // ---------------------------------------------------------------------------

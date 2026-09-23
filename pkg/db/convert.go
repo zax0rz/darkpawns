@@ -19,41 +19,47 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 		return nil, fmt.Errorf("serialize equipment: %w", err)
 	}
 
+	charData, err := game.EncodeCharacterData(p)
+	if err != nil {
+		return nil, err
+	}
+
 	roomVNum := p.GetRoom()
 	if p.GetFlags()&(1<<uint(game.PlrLoadroom)) != 0 {
 		roomVNum = p.GetLoadRoom()
 	}
 
 	return &PlayerRecord{
-		ID:          p.ID,
-		Name:        p.Name,
-		Description: p.Description,
-		Title:       p.Title,
-		RoomVNum:    roomVNum,
-		Level:       p.Level,
-		Exp:         p.Exp,
-		Health:      p.Health,
-		MaxHealth:   p.MaxHealth,
-		Mana:        p.Mana,
-		MaxMana:     p.MaxMana,
-		Move:        p.Move,
-		MaxMove:     p.MaxMove,
-		Strength:    p.Strength,
-		Class:       p.Class,
-		Race:        p.Race,
-		StatStr:     p.Stats.Str,
-		StatStrAdd:  p.Stats.StrAdd,
-		StatInt:     p.Stats.Int,
-		StatWis:     p.Stats.Wis,
-		StatDex:     p.Stats.Dex,
-		StatCon:     p.Stats.Con,
-		StatCha:     p.Stats.Cha,
-		Hunger:      p.Hunger,
-		Thirst:      p.Thirst,
-		Drunk:       p.Drunk,
-		Hometown:    p.Hometown,
-		Inventory:   invBytes,
-		Equipment:   eqBytes,
+		ID:            p.ID,
+		Name:          p.Name,
+		Description:   p.Description,
+		Title:         p.Title,
+		RoomVNum:      roomVNum,
+		Level:         p.Level,
+		Exp:           p.Exp,
+		Health:        p.Health,
+		MaxHealth:     p.MaxHealth,
+		Mana:          p.Mana,
+		MaxMana:       p.MaxMana,
+		Move:          p.Move,
+		MaxMove:       p.MaxMove,
+		Strength:      p.Strength,
+		Class:         p.Class,
+		Race:          p.Race,
+		StatStr:       p.Stats.Str,
+		StatStrAdd:    p.Stats.StrAdd,
+		StatInt:       p.Stats.Int,
+		StatWis:       p.Stats.Wis,
+		StatDex:       p.Stats.Dex,
+		StatCon:       p.Stats.Con,
+		StatCha:       p.Stats.Cha,
+		Hunger:        p.Hunger,
+		Thirst:        p.Thirst,
+		Drunk:         p.Drunk,
+		Hometown:      p.Hometown,
+		Inventory:     invBytes,
+		Equipment:     eqBytes,
+		CharacterData: charData,
 	}, nil
 }
 
@@ -182,6 +188,12 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 		}
 	}
 
+	// Everything the columns above do not hold: sex, gold, bank gold,
+	// alignment, flags and preferences, skills, affects, practices and the
+	// rest of C's char_file_u (DP-1314).
+	if err := game.ApplyCharacterData(p, r.CharacterData); err != nil {
+		return nil, err
+	}
 	return p, nil
 }
 

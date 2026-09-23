@@ -38,7 +38,6 @@ var cRowPattern = regexp.MustCompile(`^\s*\{\s*"([^"]+)"\s*,\s*(POS_\w+|0)\s*,\s
 
 var goOnlyCommands = map[string]gate{
 	"affects":     {0, 4, "Go-only: read-only affect view; mortal-usable while sleeping"},
-	"autoexit":    {0, 0, "Go-only: player display preference; safe in every position"},
 	"autoloot":    {0, 0, "Go-only: player loot preference; safe in every position"},
 	"coins":       {0, 5, "Go spelling of C gold; same mortal/resting gate"},
 	"describe":    {0, 0, "Go character-profile setting; safe in every position"},

@@ -51,6 +51,9 @@ LOCKUP_SURFACES = [
     "web/public/index.html",
     "admin-ui/src/components/Wordmark.tsx",
 ]
+# The Mudlet dock shows the lockup as a picture, mudlet/lockup.png, rendered
+# from Header.astro by scripts/render_mudlet_lockup.py; cmd/mudlet-package's
+# tests hold its pawn to the header's five shapes.
 
 ATTR = re.compile(r'([a-zA-Z-]+)\s*=\s*"([^"]*)"')
 

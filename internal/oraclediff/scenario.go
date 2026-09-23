@@ -23,9 +23,13 @@ type Scenario struct {
 	Name        string
 	SetupOracle []string
 	SetupPort   []string
-	Warmup      []string
-	Probe       []string
-	ProbeActor  string
+	// ReloginOracle and ReloginPort are the login lines each server needs for
+	// a returning character, played by ReloginStep.
+	ReloginOracle []string
+	ReloginPort   []string
+	Warmup        []string
+	Probe         []string
+	ProbeActor    string
 	// PeerDrop names one passive peer whose TCP connection is closed after
 	// setup/warmup and before the compared probe. The character remains in the
 	// live-world lifecycle, which exposes C's linkless descriptor branches.
@@ -283,6 +287,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			case "[creation:port]", "[creation:go]":
 				section = &sc.SetupPort
 				sc.DiffSetup = true
+			case "[relogin:oracle]":
+				section = &sc.ReloginOracle
+			case "[relogin:port]", "[relogin:go]":
+				section = &sc.ReloginPort
 			case "[probe]":
 				section = &sc.Probe
 				sc.ProbeActor = ""
@@ -558,6 +566,14 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	if len(sc.Probe) == 0 && !sc.DiffSetup {
 		return Scenario{}, fmt.Errorf("scenario %q has no [probe] steps", name)
 	}
+	for _, step := range sc.Probe {
+		if step == ReloginStep && (len(sc.ReloginOracle) == 0 || len(sc.ReloginPort) == 0) {
+			return Scenario{}, fmt.Errorf("scenario %q uses %s without both [relogin:oracle] and [relogin:port]", name, ReloginStep)
+		}
+		if step == ReloginStep && sc.ProbeActor != "" {
+			return Scenario{}, fmt.Errorf("scenario %q: %s relogs the primary client, not probe actor %q", name, ReloginStep, sc.ProbeActor)
+		}
+	}
 	if sc.ProbeActor != "" {
 		if _, ok := sc.Peers[sc.ProbeActor]; !ok {
 			return Scenario{}, fmt.Errorf("scenario %q probe actor %q is not a configured peer", name, sc.ProbeActor)
@@ -630,16 +646,35 @@ func RunWarmup(primary Conn, peers map[string]Conn, steps []string, quiescence t
 func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration) ([]AudienceProbeBlock, error) {
 	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
 	for i, step := range probe {
-		target, targetName, audience, sendLine, err := resolveAudienceProbeTarget(primary, peers, step)
-		if err != nil {
-			return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
-		}
-		if err := target.Send(sendLine); err != nil {
-			return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
-		}
-		output, err := target.ReadUntilQuiescent(quiescence)
-		if err != nil && (i != len(probe)-1 || !errors.Is(err, io.EOF)) {
-			return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
+		// The connection may close at the last step, or just before a relogin
+		// (a quit that ends the session); either is the scenario's intent.
+		mayClose := i == len(probe)-1 || probe[i+1] == ReloginStep
+		var output string
+		target, targetName, audience := primary, "actor", peers
+		if step == ReloginStep {
+			relogger, ok := primary.(Relogger)
+			if !ok {
+				return blocks, fmt.Errorf("probe step %d: %w", i+1, errNoRelogin)
+			}
+			transcript, err := relogger.Relogin(quiescence)
+			if err != nil {
+				return blocks, fmt.Errorf("probe step %d relogin: %w\ntranscript so far:\n%s", i+1, err, transcript)
+			}
+			output = transcript
+		} else {
+			var sendLine string
+			var err error
+			target, targetName, audience, sendLine, err = resolveAudienceProbeTarget(primary, peers, step)
+			if err != nil {
+				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
+			}
+			if err := target.Send(sendLine); err != nil {
+				return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
+			}
+			output, err = target.ReadUntilQuiescent(quiescence)
+			if err != nil && (!mayClose || !errors.Is(err, io.EOF)) {
+				return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
+			}
 		}
 		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output})
 

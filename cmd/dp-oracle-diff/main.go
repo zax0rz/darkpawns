@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/oraclediff"
+	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
 const (
@@ -72,6 +73,7 @@ func run() int {
 		scenarioName = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
 		seed         = flag.String("seed", "1", "shared deterministic DP_SEED value")
 		showOracle   = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
+		dumpOracle   = flag.String("dump-oracle", "", "write each run's normalized C blocks to <dir>/<scenario>.txt")
 		showGoLog    = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
 		quiescence   = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout  = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
@@ -91,7 +93,7 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff: DP_ORACLE_BIN is unset; refusing to run without the C oracle (set it to the circle binary)")
 		return 2
 	}
-	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *showGoLog); err != nil {
+	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		if errors.Is(err, errDivergence) {
 			return 3
@@ -106,7 +108,7 @@ func run() int {
 // content divergence separately from crashes (exit 1).
 var errDivergence = errors.New("normalized divergence detected")
 
-func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle, showGoLog bool) error {
+func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool) error {
 	if quiescence <= 0 {
 		return errors.New("quiescence must be positive")
 	}
@@ -326,6 +328,15 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		"ENVIRONMENT=development",
 	)
 	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
+	// A relogin scenario reads the character back, so the port needs a store
+	// that persists; every other scenario keeps the unreachable one.
+	goDB := deadDBURL
+	if len(scenario.ReloginPort) > 0 {
+		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers)
+		if err != nil {
+			return err
+		}
+	}
 	// Release the Go-side reservations immediately before starting the port.
 	_ = goTelnetListener.Close()
 	_ = goHTTPListener.Close()
@@ -336,7 +347,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		"-world", goWorld,
 		"-port", fmt.Sprint(goHTTPPort),
 		"-telnet-port", fmt.Sprint(goTelnetPort),
-		"-db", deadDBURL,
+		"-db", goDB,
 	)
 	if err != nil {
 		return err
@@ -366,6 +377,36 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			return oraclediff.RunSetup(conn, setup, quiescence)
 		}
 		return oraclediff.RunSetupAndSettle(conn, setup, settlePulses, quiescence)
+	}
+
+	// A scenario that relogs its actor gets a primary that can reconnect to
+	// the same server and log the character in again.
+	var oraclePrimary, goPrimary oraclediff.Conn = oracleConn, goConn
+	if len(scenario.ReloginOracle) > 0 {
+		oraclePrimary = oraclediff.NewReloginConn(oracleConn,
+			func() (oraclediff.Conn, error) {
+				c, dialErr := dialWhenReady(oracleProc, oracleAddr, bootTimeout)
+				if dialErr != nil {
+					return nil, dialErr
+				}
+				return oraclediff.NewTCPConn(c), nil
+			},
+			func(c oraclediff.Conn) (string, error) { return runSetup(c, scenario.ReloginOracle) },
+			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
+		defer func() { _ = oraclePrimary.Close() }()
+	}
+	if len(scenario.ReloginPort) > 0 {
+		goPrimary = oraclediff.NewReloginConn(goConn,
+			func() (oraclediff.Conn, error) {
+				c, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
+				if dialErr != nil {
+					return nil, dialErr
+				}
+				return oraclediff.NewTCPConn(c), nil
+			},
+			func(c oraclediff.Conn) (string, error) { return runSetup(c, scenario.ReloginPort) },
+			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
+		defer func() { _ = goPrimary.Close() }()
 	}
 
 	oracleSetup, err := runSetup(oracleConn, scenario.SetupOracle)
@@ -444,8 +485,8 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		delete(goPeers, name)
 	}
 
-	oracleActor, oracleAudience := probeClients(oracleConn, oraclePeers, scenario.ProbeActor)
-	goActor, goAudience := probeClients(goConn, goPeers, scenario.ProbeActor)
+	oracleActor, oracleAudience := probeClients(oraclePrimary, oraclePeers, scenario.ProbeActor)
+	goActor, goAudience := probeClients(goPrimary, goPeers, scenario.ProbeActor)
 	oracleBlocks, err := oraclediff.RunAudienceProbe(oracleActor, oracleAudience, scenario.Probe, quiescence)
 	if err != nil {
 		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleProc.log.String())
@@ -513,9 +554,13 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		Seed:       seed,
 	}, diffs))
 	if showOracle {
-		fmt.Println("normalized C oracle blocks:")
-		for _, diff := range diffs {
-			fmt.Printf("--- [%s]\n%s", diff.Command, diff.Oracle)
+		fmt.Print(oracleBlocksText(diffs))
+	}
+	if dumpOracle != "" {
+		// Written before the divergence check on purpose: coverage is a claim
+		// about what C printed, and a divergent scenario still printed it.
+		if err := writeOracleDump(dumpOracle, scenario.Name, diffs); err != nil {
+			return err
 		}
 	}
 	if showGoLog {
@@ -551,9 +596,38 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	return nil
 }
 
+// oracleBlocksText renders the normalized C blocks exactly as --show-oracle
+// prints them, so a dump file is a verbatim copy of that output and a reader can
+// diff the two by eye.
+func oracleBlocksText(diffs []oraclediff.BlockDiff) string {
+	var b strings.Builder
+	b.WriteString("normalized C oracle blocks:\n")
+	for _, diff := range diffs {
+		fmt.Fprintf(&b, "--- [%s]\n%s", diff.Command, diff.Oracle)
+	}
+	return b.String()
+}
+
+// writeOracleDump leaves one scenario's normalized C blocks on disk for
+// cmd/dp-census-coverage. Default off: the census measures timing, and a full
+// corpus run writes one small file per scenario.
+func writeOracleDump(dir, scenario string, diffs []oraclediff.BlockDiff) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create oracle dump directory: %w", err)
+	}
+	path := filepath.Join(dir, scenario+".txt")
+	if err := os.WriteFile(path, []byte(oracleBlocksText(diffs)), 0o644); err != nil {
+		return fmt.Errorf("write oracle dump: %w", err)
+	}
+	return nil
+}
+
 func prepareOracleData(source, destination string, emptyPlayers bool) error {
 	if err := os.CopyFS(destination, os.DirFS(source)); err != nil {
 		return fmt.Errorf("copy C oracle lib to throwaway directory: %w", err)
+	}
+	if err := makeCPlayerFileDirs(destination); err != nil {
+		return err
 	}
 	if !emptyPlayers {
 		return nil
@@ -561,6 +635,27 @@ func prepareOracleData(source, destination string, emptyPlayers bool) error {
 	playersPath := filepath.Join(destination, "etc", "players")
 	if err := os.WriteFile(playersPath, nil, 0o600); err != nil {
 		return fmt.Errorf("empty disposable C oracle player file: %w", err)
+	}
+	return nil
+}
+
+// cPlayerFileDirs are the per-player file trees get_filename() writes into
+// (src/utils.c: plrpoof, plralias, plrobjs, plrtext, each split A-E .. ZZZ).
+// A production C lib has them; the checked-in oracle lib does not, and C's
+// writers fail silently without them: Crash_rentsave returns before taking a
+// quitter's objects, so extract_char dropped a legally-quitting player's gear
+// on the floor in the harness only.
+var cPlayerFileDirs = []string{"plrpoof", "plralias", "plrobjs", "plrtext"}
+
+var cPlayerFileBuckets = []string{"A-E", "F-J", "K-O", "P-T", "U-Z", "ZZZ"}
+
+func makeCPlayerFileDirs(lib string) error {
+	for _, dir := range cPlayerFileDirs {
+		for _, bucket := range cPlayerFileBuckets {
+			if err := os.MkdirAll(filepath.Join(lib, dir, bucket), 0o750); err != nil {
+				return fmt.Errorf("create C player file directory %s/%s: %w", dir, bucket, err)
+			}
+		}
 	}
 	return nil
 }
@@ -670,6 +765,29 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
+}
+
+// prepareGoReloginDB creates the port's throwaway SQLite store for a relogin
+// scenario. The C oracle's copied lib keeps its existing player file unless the
+// scenario empties it, so its new character is an ordinary mortal; an empty Go
+// store would crown that character God instead (init_char's first-player rule),
+// so the store is seeded with one placeholder player to match. An
+// empty-players scenario keeps the store empty on both sides.
+func prepareGoReloginDB(goWork string, emptyPlayers bool) (string, error) {
+	url := "sqlite://" + filepath.Join(goWork, "relogin.db")
+	if emptyPlayers {
+		return url, nil
+	}
+	store, err := db.New(url)
+	if err != nil {
+		return "", fmt.Errorf("create relogin store: %w", err)
+	}
+	defer func() { _ = store.Close() }()
+	placeholder := &db.PlayerRecord{Name: "Zzplaceholder", Password: "x", Level: 1, RoomVNum: 8004}
+	if err := store.CreatePlayer(placeholder); err != nil {
+		return "", fmt.Errorf("seed relogin store: %w", err)
+	}
+	return url, nil
 }
 
 func withFreshMUDEnv(env []string, enabled bool) []string {

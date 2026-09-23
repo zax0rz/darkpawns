@@ -1,0 +1,64 @@
+# Lifecycle: preferences survive quit and a fresh login (DP-1314, DP-1315).
+# depth-case: quit.menu-return
+# depth-case: quit.rent-carried-objects
+# depth-case: save.preferences-roundtrip
+# depth-case: save.relogin-login-transcript
+#
+# The character sets several preferences, quits at the Kir Drax'in temple
+# (8004, a legal quit, so C saves and records it as the load room), and logs
+# in again on a new connection. <RELOGIN> diffs the whole returning-player
+# login, then toggle prints every preference in one block. C reads the
+# character back from its player file; the port reads its database.
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[relogin:oracle]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[probe]
+brief
+compact
+toggle
+quit
+<RELOGIN>
+toggle
+look
+inventory
+equipment

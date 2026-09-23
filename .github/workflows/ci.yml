@@ -77,6 +77,14 @@ jobs:
     - name: Reachability ratchet
       run: python3 scripts/reachability_ci_gate.py
 
+    # String census ratchet (R1/R4): static, two-directional comparison of every
+    # player-facing string in both trees. It fails when Go grows a string with no
+    # C source and no world-data source — the class a scenario-triggered census
+    # cannot see (`[ GHOST SHIP ]`, `autoexit`). Runs in about a second; see
+    # docs/fidelity/strings/README.md.
+    - name: String census ratchet
+      run: make string-census
+
     - name: Verify all packages build
       run: go build ./...
     

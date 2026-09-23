@@ -154,6 +154,58 @@ expired partitions dropped automatically; without it the corpus is retained
 indefinitely. Until it is enabled, no connection to the research database is
 made beyond schema/partition setup.
 
+### TLS telnet (optional)
+
+Plain telnet sends passwords in the clear. To also serve telnet over TLS,
+point the server at a certificate and pick a port:
+
+```bash
+export TELNET_TLS_CERT_FILE=/path/to/fullchain.pem
+export TELNET_TLS_KEY_FILE=/path/to/privkey.pem
+./server -telnet-tls-port 7778
+```
+
+These are separate from `TLS_CERT_FILE`/`TLS_KEY_FILE`, which switch the HTTP
+server to HTTPS; behind a TLS-terminating proxy, set only the telnet pair. The
+server exits if the port is requested without a readable certificate. It
+re-reads the files when they change, so a renewal (for example a Let's Encrypt
+certificate the reverse proxy already manages) needs no restart; the server
+user must be able to read them. Only TLS 1.2 and newer are accepted.
+
+While the TLS port runs, MSSP advertises it (`TLS`, plus `HOSTNAME` from the
+certificate), and Mudlet offers the encrypted port to players who connect in
+plaintext. The login banner is unchanged.
+
+### The Mudlet package (optional)
+
+The telnet listener speaks GMCP (see [`docs/gmcp.md`](docs/gmcp.md)), so
+Mudlet players get gauges, a map, and a chat window from the package in
+[`mudlet/`](mudlet/). To have Mudlet install it automatically on connect,
+publish `mudlet/darkpawns.xml` at a public URL and set:
+
+```bash
+export DP_MUDLET_PACKAGE_URL='https://darkpawns.org/darkpawns.xml'
+```
+
+That is the URL Dark Pawns itself uses, serving the file from the game deploy
+next to the binary. A self-hosted server sets its own URL: pointing at another
+server's copy offers players a package built for that server's version.
+Keep the file name `darkpawns.xml`, since Mudlet names the installed package
+after it.
+
+The server also serves the whole world as a Mudlet map at
+`/darkpawns-map.xml`, generated from the live world. Proxy that path to the
+game from your front door, and set its public URL to have Mudlet load it:
+
+```bash
+export DP_MUDLET_MAP_URL='https://darkpawns.org/darkpawns-map.xml'
+```
+
+The server announces the package version compiled into it (`mudlet/VERSION`), and
+Mudlet reinstalls the package whenever that version changes, so publish the
+file from the same commit you deploy. Unset, nothing is offered and players
+can still import the file by hand.
+
 ## Run
 
 From the repository root, the defaults are already correct:
@@ -236,6 +288,21 @@ Terminate TLS at the proxy and forward the HTTP routes to `:4350`; expose telnet
 (`:7777`) directly since it isn't HTTP. A reference Caddyfile lives under
 [`website/deploy/`](website/deploy/). For a TLS telnet port, terminate TLS in front of
 the telnet listener (a dedicated port — not STARTTLS).
+
+The server learns each browser player's real address from the proxy's
+`X-Forwarded-For`, which it believes only from trusted proxies:
+`TRUSTED_PROXIES` (comma-separated CIDRs). Unset, it trusts loopback
+(`127.0.0.0/8`, `::1/128`), which covers a proxy on the same machine; set a
+proxy on another host explicitly, and set it empty to trust none. Without a
+trusted proxy, every web player looks like the proxy: one shared per-address
+connection limit, one shared login rate limit, and IP bans that can't tell
+players apart.
+
+Per-address connection caps are flood protection, not the multiplay rule
+(three characters per player, which immortals enforce, as in the original):
+`TELNET_MAX_CONNS_PER_IP` and `WEBSOCKET_MAX_CONNS_PER_IP`, 8 each by
+default, room for two players sharing a connection at three characters each.
+`TELNET_MAX_CONNS` (default 200) caps telnet overall.
 
 ## Entry-identity migration note
 

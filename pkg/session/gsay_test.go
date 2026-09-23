@@ -38,8 +38,10 @@ func TestGsayRawMessageAndNoRepeatMatchC(t *testing.T) {
 	leader := makeCommandTestSession(t, m, "Leader", 1, 1001)
 	member := makeCommandTestSession(t, m, "Member", 1, 1001)
 	leader.player.SetInGroup(true)
+	leader.player.SetAffect(game.AffGroup, true)
 	leader.player.SetPlrFlag(game.PrfNoRepeat, true)
 	member.player.SetInGroup(true)
+	member.player.SetAffect(game.AffGroup, true)
 	member.player.SetFollowing(leader.player.Name)
 	if err := m.world.AddPlayer(leader.player); err != nil {
 		t.Fatal(err)
@@ -53,7 +55,7 @@ func TestGsayRawMessageAndNoRepeatMatchC(t *testing.T) {
 	if err := cmdGtellText(leader, "multiple    &Rred&n"); err != nil {
 		t.Fatal(err)
 	}
-	if got := readMsgText(t, leader); got != "Okay." {
+	if got := readMsgText(t, leader); got != "Okay.\r\n" {
 		t.Fatalf("leader output = %q, want C no-repeat confirmation", got)
 	}
 	if got := readMsgText(t, member); got != "Leader tells the group, 'multiple    Rredn'\r\n" {

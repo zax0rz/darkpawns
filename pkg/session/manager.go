@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -23,6 +24,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
+	"github.com/zax0rz/darkpawns/pkg/mudletmap"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"golang.org/x/time/rate"
 )
@@ -43,6 +45,26 @@ const (
 	linkdeadVoidRoomVNum       = 1
 	linkdeadDisconnectRoomVNum = 3
 )
+
+// webSocketMaxConnsPerIP caps simultaneous WebSocket sessions from one client
+// address (WEBSOCKET_MAX_CONNS_PER_IP). The C server had no per-address cap
+// at all; this is flood protection, so it is sized for the game's own
+// multiplay allowance of three characters per player (help MULTIPLAY), for
+// two players sharing a home connection, with room to reconnect. The
+// three-character rule itself stays what it was in C: policy, enforced by
+// immortals, not code.
+var webSocketMaxConnsPerIP = 8
+
+func init() {
+	if v := os.Getenv("WEBSOCKET_MAX_CONNS_PER_IP"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			slog.Warn("WEBSOCKET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", webSocketMaxConnsPerIP)
+		} else {
+			webSocketMaxConnsPerIP = n
+		}
+	}
+}
 
 // allowedWebSocketOrigins lists the public origins that may connect without
 // presenting an agent key.
@@ -69,6 +91,10 @@ func init() {
 
 // Manager handles all active sessions.
 type Manager struct {
+	// mudletMap is the generated Mudlet world map (GMCP Client.Map and the
+	// /darkpawns-map.xml endpoint).
+	mudletMap *mudletmap.Cache
+
 	creationMu   sync.Mutex // Serializes first-player selection with persistence.
 	mu           sync.RWMutex
 	snoopMu      sync.RWMutex        // protects the bidirectional snoop links
@@ -161,14 +187,25 @@ func isLoopback(remoteAddr string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
+// forwardedForSomeoneElse reports whether a reverse proxy forwarded this
+// request on a client's behalf. Caddy's reverse_proxy always sets
+// X-Forwarded-For; a client cannot remove a header the proxy adds, so a
+// proxied request can never pass for a local one.
+func forwardedForSomeoneElse(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-For") != "" || r.Header.Get("Forwarded") != ""
+}
+
 // checkOrigin validates WebSocket origins. Public origins in the allowlist are
-// permitted without further credentials. Machine-local connections are always
-// trusted. Connections from private IPs with no Origin header must present a
-// valid agent API key (DP-594).
+// permitted without further credentials. Genuinely machine-local connections
+// are trusted. Connections with no Origin header from a private IP, or through
+// the reverse proxy, must present a valid agent API key (DP-594, DP-1302).
 func (m *Manager) checkOrigin(r *http.Request) bool {
-	// Machine-local connections are always trusted; this covers CI smoke tests
-	// and local agent harnesses regardless of what Origin header they send.
-	if isLoopback(r.RemoteAddr) {
+	// A proxied request arrives from loopback too, so loopback alone does not
+	// mean local: behind Caddy every WebSocket did, and the origin allowlist
+	// was never enforced in production (DP-1302). Only a loopback peer that
+	// names no forwarded client is local (CI smoke tests, local harnesses).
+	proxied := forwardedForSomeoneElse(r)
+	if isLoopback(r.RemoteAddr) && !proxied {
 		return true
 	}
 
@@ -176,12 +213,13 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 	if origin == "" {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
 		ip := net.ParseIP(host)
-		if ip == nil || !ip.IsPrivate() {
+		if !proxied && (ip == nil || !ip.IsPrivate()) {
 			slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
 			return false
 		}
 
-		// Private IP without Origin: require a valid agent key.
+		// Private IP, or a proxied client, without Origin: require a valid
+		// agent key.
 		key := findAgentKey(r)
 		if key == "" {
 			slog.Warn("rejected private WebSocket connection without agent key", "remote_addr", r.RemoteAddr)
@@ -381,6 +419,13 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		}
 	}
 
+	// Structured copies of room renders, channel lines, and regen ticks for
+	// GMCP clients. The observer only reads state; text delivery is untouched.
+	world.OutOfBand = gmcpObserver{m: m}
+	// The Mudlet world map is generated from the live world, so OLC edits
+	// reach it within the cache's lifetime.
+	m.mudletMap = mudletmap.NewCache(world, mudletMapTTL)
+
 	// Wire CloseConnection so game-layer close requests route through the session
 	world.CloseConn = func(playerName string) {
 		m.UnregisterAndClose(playerName)
@@ -578,7 +623,17 @@ func (m *Manager) ExtractPendingChars() {
 			}
 		}
 		m.mu.RUnlock()
-		if victim == nil || !victim.hasTransport() {
+		if victim == nil {
+			continue
+		}
+		// extract_char saves the character (handler.c:1162). A renter was
+		// saved with their objects when they quit; everyone else is saved as
+		// extraction left them (what they carried is on the floor or in a
+		// corpse).
+		if !player.RentedOut {
+			victim.saveCharacter("extraction")
+		}
+		if !victim.hasTransport() {
 			continue
 		}
 		victim.showMainMenu()
@@ -709,6 +764,7 @@ func (m *Manager) SetDamageFunc() {
 		if s, ok := m.GetSession(victimName); ok {
 			s.markDirty(VarHealth, VarMaxHealth)
 			s.flushDirtyVars()
+			s.gmcpVitals()
 		}
 
 		// Proactively find any player session fighting this victim to update their target display in real-time
@@ -1062,7 +1118,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	// Per-IP connection limit (C5)
 	m.ipConnMu.Lock()
-	if m.ipConnCount[ip] >= 5 {
+	if m.ipConnCount[ip] >= webSocketMaxConnsPerIP {
 		m.ipConnMu.Unlock()
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
 		_ = conn.Close()
@@ -1278,8 +1334,10 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 	s.textEditMu.Unlock()
 
-	// 4. Save player to DB
-	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest {
+	// 4. Save player to DB. A descriptor at the menu has no character in
+	// the game: C's close_socket saves only CON_PLAYING characters, and an
+	// extracted one was already saved by extract_char.
+	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest && !s.menuActive {
 		if rec, err := s.playerRecordForSave(s.player); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("DB save error", "player", playerName, "error", err)
@@ -1621,6 +1679,10 @@ type Session struct {
 	dirtyVars           map[string]bool // vars changed since last flush
 	pendingEvents       []interface{}   // queued EVENTS since last flush
 	wantsStructuredData bool
+	// gmcp is the telnet GMCP negotiation and change-tracking state; see
+	// gmcp.go. It is independent of wantsStructuredData, which also changes
+	// text delivery (the pager) and so must never follow from GMCP.
+	gmcp gmcpState
 
 	// Character creation state
 	creationSaved bool // New character persisted at accepted stats, not yet admitted.

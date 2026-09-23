@@ -38,6 +38,26 @@ The supported sections are:
 - `[probe]` or `[probe:name]` for the shared, diffed command stream
 - `[fixture]` for disposable world changes such as quieting mobs, spawning
   objects/mobs, replacing room exits, and toggling room flags
+- `[relogin:oracle]` and `[relogin:port]` for the login lines a returning
+  character needs, played by the `<RELOGIN>` probe step
+
+## Leaving and coming back (`<RELOGIN>`)
+
+A `<RELOGIN>` probe step settles the server on the actor's connection (C
+extracts a quitting character on the next pulse), closes it, dials the same
+server again, plays that server's `[relogin:*]` lines, and diffs the whole
+returning-player transcript as one block; later steps run on the new
+connection. Both servers then read the character back from their own
+persistence: the C player and rent files in the disposable lib copy, and a
+throwaway SQLite store the harness gives the port for these scenarios (seeded
+with one placeholder player, so the new character is a mortal on both sides
+unless the scenario empties the player file).
+
+A dropped C connection leaves the character linkdead and a login reattaches to
+it without reading the save, so a persistence scenario quits before it relogs.
+A connection that closes on the step just before `<RELOGIN>` is accepted.
+The `lifecycle-*` scenarios are the model vehicles: preferences and inventory
+across a quit, the login room after an unsafe quit, and idling into the void.
 
 Read `ParseScenario` in `internal/oraclediff/scenario.go` for the authoritative
 fixture grammar. Fixtures patch only throwaway C and Go world copies.

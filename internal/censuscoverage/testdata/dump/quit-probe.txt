@@ -1,0 +1,11 @@
+normalized C oracle blocks:
+--- [look]
+The temple is quiet.
+Frodo has left the game.
+
+--- [quit]
+Goodbye, friend.. Come back soon!
+Saving Frodo.
+You have 1234 gold pieces on hand.
+You are hungry.
+You are thirsty.
