@@ -67,6 +67,30 @@ func TestBaselineMergePreservesReasons(t *testing.T) {
 	}
 }
 
+func TestBaselineMergePreservesTriage(t *testing.T) {
+	base := &Baseline{Segments: map[string]BaselineEntry{
+		"a triaged segment": {
+			Segment:   "a triaged segment",
+			Reason:    ReasonBugParaphrase,
+			Evidence:  `src/act.other.c:1363 "You will no longer loot corpses.\r\n"`,
+			FirstSeen: "2026-09-23",
+		},
+	}}
+	merged := base.Merge(reportWithGoOnly(
+		seg("a triaged segment", "pkg/game/a.go", ".Send"),
+		seg("a fresh segment", "pkg/game/d.go", ".Send"),
+	), "2026-09-24")
+
+	// A regeneration must not throw away the triage: reason and evidence survive
+	// for a segment that is still go-only.
+	if got := merged.Segments["a triaged segment"]; got.Reason != ReasonBugParaphrase || got.Evidence == "" {
+		t.Fatalf("triaged entry = %+v, want reason and evidence preserved", got)
+	}
+	if got := merged.Segments["a fresh segment"]; got.Reason != Unreviewed || got.Evidence != "" {
+		t.Fatalf("fresh entry = %+v, want unreviewed with no evidence", got)
+	}
+}
+
 func TestBaselineSaveLoadRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, BaselineFile)

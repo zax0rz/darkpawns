@@ -158,6 +158,14 @@ string. The first baseline is entirely `unreviewed` on purpose — triaging 128
 strings is fidelity work, not tooling work, and pretending otherwise would hide
 the queue.
 
+Every row **has** since been triaged: [`triage.md`](triage.md) holds the
+classification and the evidence (`bug:invented`, `bug:paraphrase`,
+`census:composed`, `data`, `surface:no-c`, `unsure`), the reason and evidence
+travel in the baseline row itself, and
+`internal/stringcensus/baseline_vocabulary_test.go` rejects an unreviewed or
+evidence-free row. A new go-only string still starts `unreviewed` and needs a
+triage row of its own.
+
 ### Known limits
 
 - **Literals only.** A format string composed from variables
