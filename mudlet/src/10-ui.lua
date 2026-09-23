@@ -134,6 +134,7 @@ function ui.build()
   if ui.dock then
     ui.dock:show()
     ui.layout()
+    ui.map:raise()
     return
   end
 
@@ -208,6 +209,10 @@ function ui.build()
     scrollBar = true,
   }, ui.box)
 
+  -- The profile has one map widget, made when the first dock was built.
+  -- Placing it doesn't raise it, and a dock built later (after an upgrade)
+  -- is drawn over it, so bring it back to the top.
+  ui.map:raise()
   ui.layout()
 end
 

@@ -125,7 +125,7 @@ func Build(root string) ([]byte, error) {
 	writeElement(&b, 3, "script", "DarkPawns.command(matches[2])")
 	writeElement(&b, 3, "command", "")
 	writeElement(&b, 3, "packageName", "")
-	writeElement(&b, 3, "regex", `^dp(?:\s+(\w+))?$`)
+	writeElement(&b, 3, "regex", `^dp(?:\s+(.*\S))?\s*$`)
 	b.WriteString("\t\t</Alias>\n\t</AliasPackage>\n")
 	b.WriteString("\t<ActionPackage />\n\t<ScriptPackage>\n")
 	b.WriteString("\t\t<ScriptGroup isActive=\"yes\" isFolder=\"yes\">\n")

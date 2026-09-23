@@ -67,7 +67,7 @@ Cases 9 and 10 swap them: Warden in Mudlet, Tester in the plain client.
 | 21 | Watch the prompt in Mudlet. | Prompts render immediately, not after a pause, and never merge into the next line. |
 | **Lifecycle** | | |
 | 22 | Disconnect and reconnect. | No second dock, no duplicate chat lines (handlers did not stack). |
-| 23 | Bump `mudlet/VERSION` to `1.0.1`, add a changelog line, run `go run ./cmd/mudlet-package`, restart the server, reconnect. | Mudlet reports upgrading from `1.0.0` to `1.0.1` and reinstalls. `dp` shows `1.0.1`. Revert the bump afterwards. |
+| 23 | Bump `mudlet/VERSION` to `1.0.1`, add a changelog line, run `go run ./cmd/mudlet-package`, restart the server, reconnect. | Mudlet reports upgrading from `1.0.0` to `1.0.1` and reinstalls. `dp` shows `1.0.1`, and the dock is rebuilt, map included. Revert the bump afterwards. On Mudlet 5.0.1 against a local server, the upgrade can leave no package (`dp` answers `Huh?!?`): a Mudlet race between its profile save and the download (see the README). Reconnect; it must install fresh. Note it, but it is not a package failure. |
 | 24 | **Toolbox → Package Manager**, uninstall `darkpawns`. | The dock disappears and the window width is restored. Later GMCP produces no errors. |
 | 25 | Re-import `mudlet/darkpawns.xml` by hand with the server's package URL unset. | The package installs from the file and behaves as in cases 3–5. Mudlet's built-in starter UI stays hidden. |
 | 25a | New profile, map it by hand first: connect with the map URL unset, walk a few rooms, disconnect. Set `DP_MUDLET_MAP_URL` again, restart the server, reconnect. | Mudlet keeps the hand-made map and says a whole-world map is available via `dp map`. |

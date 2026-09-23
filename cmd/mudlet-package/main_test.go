@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -65,8 +66,24 @@ func TestPackageXMLRoundTrips(t *testing.T) {
 			t.Fatalf("script %q did not round-trip through XML", script.Name)
 		}
 	}
-	if len(pkg.Aliases) != 1 || pkg.Aliases[0].Regex != `^dp(?:\s+(\w+))?$` {
+	if len(pkg.Aliases) != 1 {
 		t.Fatalf("aliases = %+v", pkg.Aliases)
+	}
+	// The one alias takes "dp" and everything after it, and nothing else:
+	// a word that only starts with "dp" still goes to the game.
+	alias := regexp.MustCompile(pkg.Aliases[0].Regex)
+	for input, want := range map[string]string{
+		"dp": "", "dp map": "map", "dp clear chat": "clear chat", "dp  clear  ": "clear",
+	} {
+		match := alias.FindStringSubmatch(input)
+		if match == nil || match[1] != want {
+			t.Errorf("dp alias on %q = %q, want argument %q", input, match, want)
+		}
+	}
+	for _, input := range []string{"dpx", "d p", "look dp"} {
+		if alias.MatchString(input) {
+			t.Errorf("dp alias took %q, which belongs to the game", input)
+		}
 	}
 }
 
@@ -135,6 +152,7 @@ connected = true
 function getConnectionInfo() return "darkpawns.org", 7777, connected end
 function sendGMCP(msg) record("sendGMCP", msg) end
 function send(cmd, echo) record("send", cmd) end
+function clearWindow(name) record("clearWindow", name or "main") end
 function getMainWindowSize() return 1000, 700 end
 function getMudletHomeDir() return mudletHome end
 function setBorderRight(px) record("setBorderRight", px) end
@@ -142,8 +160,12 @@ function getTime() return "12:00" end
 function cecho(text) record("cecho", text) end
 function ansi2decho(text) return text end
 
+-- Qt draws a widget made later over one made earlier, until raised.
+stackTop = 0
 local function widget(kind, cons)
-  local w = {kind = kind, cons = cons, hidden = false, log = {}}
+  stackTop = stackTop + 1
+  local w = {kind = kind, cons = cons, hidden = false, log = {}, z = stackTop}
+  function w:raise() stackTop = stackTop + 1; self.z = stackTop end
   function w:setStyleSheet(css) self.css = css end
   function w:show() self.hidden = false end
   function w:hide() self.hidden = true end
@@ -163,6 +185,14 @@ for _, kind in ipairs({"VBox", "HBox", "Label", "Gauge", "Mapper", "MiniConsole"
       end
     end
     local w = widget(kind, cons)
+    if kind == "Mapper" then
+      -- One map widget per profile: a second Geyser.Mapper moves the first,
+      -- keeping its place in the stack.
+      theMapper = theMapper or w
+      w.z = theMapper.z
+      local raise = w.raise
+      function w:raise() raise(self); theMapper.z = self.z end
+    end
     if kind == "Gauge" then
       w.front, w.back, w.text = widget("Label"), widget("Label"), widget("Label")
     end
@@ -235,6 +265,7 @@ check(not sent("sendGMCP", 'Core.Supports.Add ["Char 1","Room 1","Comm.Channel 1
 fire("sysProtocolEnabled", "GMCP")
 check(sent("sendGMCP", 'Core.Supports.Add ["Char 1","Room 1","Comm.Channel 1"]'), "no Core.Supports.Add on GMCP enable")
 check(DarkPawns.ui.dock and not DarkPawns.ui.dock.hidden, "dock not built")
+check(DarkPawns.ui.map.z > DarkPawns.ui.dock.z, "the dock covers the map")
 
 gmcp.Char = {Vitals = {hp = 80, maxhp = 100, mp = 20, maxmp = 20, mv = 98, maxmv = 100},
              Status = {name = "Walker", level = 7, race = "Elven", class = "Magic User", gold = 12}}
@@ -283,6 +314,15 @@ check(sent("cecho", "\n<ansi_white>[ Dark Pawns ] A map of the whole world is av
 -- dp map downloads it; the download loads and records its version.
 DarkPawns.command("map")
 check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "dp map did not download")
+
+-- dp clear empties the main window, as the game's clear can't in Mudlet;
+-- dp clear chat empties only the chat.
+local chatLines = #DarkPawns.ui.chat.log
+DarkPawns.command("clear")
+check(sent("clearWindow", "main"), "dp clear did not clear the main window")
+check(#DarkPawns.ui.chat.log > 0 and #DarkPawns.ui.chat.log == chatLines, "dp clear touched the chat")
+DarkPawns.command("clear   Chat")
+check(#DarkPawns.ui.chat.log == 0, "dp clear chat did not clear the chat")
 fire("sysDownloadDone", mudletHome .. "/darkpawns-map.xml")
 check(sent("loadMap", mudletHome .. "/darkpawns-map.xml") and mapUserData["darkpawns.mapVersion"] == "aaa111", "downloaded map not loaded")
 
@@ -321,6 +361,7 @@ DarkPawns.ui.version = nil
 reload()
 check(DarkPawns.ui.dock ~= old and not DarkPawns.ui.dock.hidden and old.hidden, "an upgrade showed the old version's dock")
 check(DarkPawns.ui.header.css:find("darkpawns-lockup.png", 1, true), "the upgraded dock has no lockup")
+check(DarkPawns.ui.map.z > DarkPawns.ui.dock.z, "the upgraded dock covers the map")
 `
 
 // TestPackageLoadsAndDrives loads every script into a Lua 5.1 state with the

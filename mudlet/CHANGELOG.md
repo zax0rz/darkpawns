@@ -4,6 +4,17 @@ Every change to `src/` bumps `VERSION` and adds an entry here. The server
 announces the version through GMCP `Client.GUI`, and Mudlet reinstalls the
 package when it changes, so an unbumped change never reaches players.
 
+## 1.1.5 (2026-09-23)
+
+- The map shows after an upgrade. A profile has one map widget, made with
+  the first dock; the dock 1.1.4 builds after an upgrade was drawn over it,
+  leaving the map panel blank. The map is raised whenever the dock is built.
+- `dp clear` clears the main window. The game's `clear` sends terminal
+  clear-screen codes, which Mudlet's scrollback doesn't act on. `dp clear
+  chat` clears the chat window, which `dp clear` used to do.
+- `dp` takes more than one word after it, so `dp clear chat` reaches the
+  package instead of the game.
+
 ## 1.1.4 (2026-09-23)
 
 - An upgrade builds a new dock. Mudlet upgrades a package inside the running

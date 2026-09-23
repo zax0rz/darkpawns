@@ -9,13 +9,13 @@
 			<script>DarkPawns.command(matches[2])</script>
 			<command></command>
 			<packageName></packageName>
-			<regex>^dp(?:\s+(\w+))?$</regex>
+			<regex>^dp(?:\s+(.*\S))?\s*$</regex>
 		</Alias>
 	</AliasPackage>
 	<ActionPackage />
 	<ScriptPackage>
 		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>Dark Pawns 1.1.4</name>
+			<name>Dark Pawns 1.1.5</name>
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
@@ -30,7 +30,7 @@
 -- chat window are drawn from data the server already sent alongside the text.
 
 DarkPawns = DarkPawns or {}
-DarkPawns.version = &#34;1.1.4&#34;
+DarkPawns.version = &#34;1.1.5&#34;
 DarkPawns.packageName = &#34;darkpawns&#34;
 
 -- Mudlet preinstalls its generic text mapper in every profile for a game it
@@ -518,6 +518,7 @@ function ui.build()
   if ui.dock then
     ui.dock:show()
     ui.layout()
+    ui.map:raise()
     return
   end
 
@@ -592,6 +593,10 @@ function ui.build()
     scrollBar = true,
   }, ui.box)
 
+  -- The profile has one map widget, made when the first dock was built.
+  -- Placing it doesn&#39;t raise it, and a dock built later (after an upgrade)
+  -- is drawn over it, so bring it back to the top.
+  ui.map:raise()
   ui.layout()
 end
 
@@ -949,7 +954,7 @@ DarkPawns.on(&#34;chat.text&#34;, &#34;gmcp.Comm.Channel.Text&#34;, chat.onText)
 -- package itself.
 
 function DarkPawns.command(argument)
-  argument = (argument or &#34;&#34;):lower()
+  argument = (argument or &#34;&#34;):lower():gsub(&#34;%s+&#34;, &#34; &#34;)
   if argument == &#34;hide&#34; then
     DarkPawns.ui.hide()
   elseif argument == &#34;show&#34; then
@@ -957,6 +962,10 @@ function DarkPawns.command(argument)
   elseif argument == &#34;map&#34; then
     DarkPawns.map.download()
   elseif argument == &#34;clear&#34; then
+    -- The game&#39;s own clear command sends the terminal&#39;s clear-screen codes,
+    -- which Mudlet&#39;s scrollback window does not act on.
+    clearWindow()
+  elseif argument == &#34;clear chat&#34; then
     if DarkPawns.ui.chat then
       DarkPawns.ui.chat:clear()
     end
@@ -964,7 +973,8 @@ function DarkPawns.command(argument)
     cecho(string.format(&#34;\n&lt;ansi_white&gt;[ Dark Pawns %s ]&lt;reset&gt;\n&#34;, DarkPawns.version))
     cecho(&#34;  &lt;yellow&gt;dp hide&lt;reset&gt;   - hide the dock\n&#34;)
     cecho(&#34;  &lt;yellow&gt;dp show&lt;reset&gt;   - bring it back\n&#34;)
-    cecho(&#34;  &lt;yellow&gt;dp clear&lt;reset&gt;  - clear the chat window\n&#34;)
+    cecho(&#34;  &lt;yellow&gt;dp clear&lt;reset&gt;  - clear the main window (the game&#39;s clear can&#39;t in Mudlet)\n&#34;)
+    cecho(&#34;  &lt;yellow&gt;dp clear chat&lt;reset&gt; - clear the chat window\n&#34;)
     cecho(&#34;  &lt;yellow&gt;dp map&lt;reset&gt;    - load the world map (replaces this profile&#39;s map)\n&#34;)
     cecho(&#34;  Double-click a room on the map to walk there.\n&#34;)
   end
