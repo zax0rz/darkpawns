@@ -184,9 +184,17 @@ none of that, and every WebSocket session starts in agent mode, which also
 skips the pager. So combat lines run together, `AFK >` and the editor `]`
 never appear, argument spacing collapses, and `q` in a pager quaffs.
 
-The same run found two server bugs no telnet scenario could reach: a closed
-tab removes the character instead of leaving it linkless (DP-1323), and quitting
-to the menu before closing the tab comes back with an empty backpack (DP-1324).
+The same run found a server bug no telnet scenario could reach: a closed tab
+removes the character instead of leaving it linkless (DP-1323). It also seemed
+to find a second one, a backpack that came back empty after quitting over
+/play (DP-1324). That one turned out not to be web-only at all. Every player
+lost container contents on rent, because the database save wrote only
+top-level objects (PR #1609). The telnet census was green only because the
+symptom was already a pinned expected divergence, `quit.rent-object-weight`,
+whose note blamed C's container-weight bookkeeping. A pin stops a divergence
+from failing the census, and it also freezes whatever story was written down
+about it. The browser run looked at it fresh, from a transport the pin did not
+cover.
 
 The lesson for the method: a differential oracle certifies the path it drives.
 "The census is green" held for telnet only, and nothing in the census said so.
