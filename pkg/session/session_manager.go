@@ -105,20 +105,17 @@ func (m *Manager) SendToAll(message string) {
 }
 
 // SendToOutdoor sends a message to all playing sessions whose characters are
-// awake and in an outdoor room (Sector > 0, i.e. not SECT_INSIDE).
+// awake (AWAKE) and outside (OUTSIDE).
 // Ported from comm.c:send_to_outdoor().
 func (m *Manager) SendToOutdoor(message string) {
 	m.sendToPlaying(message, "outdoor", "SendToOutdoor", func(s *Session) bool {
-		// AWAKE check: position >= PosStanding
-		if s.player.GetPosition() < combat.PosStanding {
+		// AWAKE(ch): GET_POS(ch) > POS_SLEEPING (utils.h:450), so resting
+		// and sitting players hear the weather too.
+		if s.player.GetPosition() <= combat.PosSleeping {
 			return false
 		}
-		// OUTSIDE check: sector type != INSIDE (0)
-		roomVNum := s.player.GetRoom()
-		if room, ok := m.world.GetRoom(roomVNum); ok && room.Sector == 0 {
-			return false // SECT_INSIDE
-		}
-		return true
+		// OUTSIDE(ch): !ROOM_INDOORS || sector != SECT_INSIDE (utils.h:581).
+		return m.world.IsOutside(s.player.GetRoom())
 	})
 }
 
