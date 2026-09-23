@@ -17,6 +17,7 @@ import '@xterm/xterm/css/xterm.css';
           <span class="terminal-title">Dark Pawns // Web Client</span>
           <div class="terminal-actions">
             <span class="conn-status disconnected"><span class="dot"></span><span>Disconnected</span></span>
+            <button id="screen-reader-btn" type="button" aria-pressed="false" aria-label="Screen reader mode">Screen reader: off</button>
             <button id="reconnect-btn" type="button">Reconnect</button>
           </div>
         </div>
@@ -33,6 +34,7 @@ import '@xterm/xterm/css/xterm.css';
         <div id="sidebar-connect-panel">
           <h2>At the prompt</h2>
           <p>Enter an existing character name, create a new character, or type <strong>guest</strong> for an ephemeral visit.</p>
+          <p>Using a screen reader? Turn on <strong>Screen reader</strong> above the terminal and the game is read aloud as it arrives. The setting is remembered in this browser.</p>
           <p><a href="#desktop-client">Prefer Mudlet or TinTin++?</a></p>
         </div>
         <div id="minimap-container" class="sidebar-panel hidden"></div>
@@ -91,7 +93,29 @@ import '@xterm/xterm/css/xterm.css';
     import { FitAddon } from '@xterm/addon-fit';
     import { createMudClient } from '../../../web/public/mud-client.js';
 
+    // Screen reader mode makes xterm keep an accessible copy of the output and
+    // announce new lines. It costs rendering speed, so it is a choice rather
+    // than the default, and the choice is remembered per browser. Storage can
+    // be unavailable (private windows, blocked site data), so every access is
+    // guarded and the page works without it.
+    const SCREEN_READER_KEY = 'dp.play.screenReader';
+    const readScreenReaderPreference = () => {
+      try {
+        return window.localStorage.getItem(SCREEN_READER_KEY) === 'on';
+      } catch {
+        return false;
+      }
+    };
+    const saveScreenReaderPreference = (on: boolean) => {
+      try {
+        window.localStorage.setItem(SCREEN_READER_KEY, on ? 'on' : 'off');
+      } catch {
+        // Not remembered, but still switched for this visit.
+      }
+    };
+
     const term = new Terminal({
+      screenReaderMode: readScreenReaderPreference(),
       cursorBlink: true,
       // Game text (MOTD, room and help files) uses bare "\n" line endings.
       // Without convertEol, xterm treats a lone LF as line-feed-only: the
@@ -114,6 +138,20 @@ import '@xterm/xterm/css/xterm.css';
     fit.fit();
     window.addEventListener('resize', () => fit.fit());
 
+    const screenReaderButton = document.getElementById('screen-reader-btn');
+    const showScreenReaderState = (on: boolean) => {
+      if (!screenReaderButton) return;
+      screenReaderButton.setAttribute('aria-pressed', on ? 'true' : 'false');
+      screenReaderButton.textContent = on ? 'Screen reader: on' : 'Screen reader: off';
+    };
+    showScreenReaderState(term.options.screenReaderMode === true);
+    screenReaderButton?.addEventListener('click', () => {
+      const on = !term.options.screenReaderMode;
+      term.options.screenReaderMode = on;
+      saveScreenReaderPreference(on);
+      showScreenReaderState(on);
+    });
+
     createMudClient({ terminal: term });
   </script>
 </Base>
@@ -131,6 +169,9 @@ import '@xterm/xterm/css/xterm.css';
   .terminal-actions, .conn-status { display: flex; align-items: center; gap: .5rem; }
   .conn-status .dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--accent); }
   .conn-status.connected .dot { background: var(--online); }
+  #screen-reader-btn { border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; font: inherit; padding: .25rem .55rem; text-transform: uppercase; }
+  #screen-reader-btn[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  #screen-reader-btn:focus-visible, #reconnect-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   #reconnect-btn { display: none; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; font: inherit; padding: .25rem .55rem; text-transform: uppercase; }
   #reconnect-btn.visible { display: inline-block; }
   #terminal { flex: 1; min-height: 30rem; overflow: hidden; background: #0a0908; border: 2px solid var(--rule); padding: .5rem; }
