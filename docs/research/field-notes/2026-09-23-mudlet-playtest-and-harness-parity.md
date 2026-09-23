@@ -128,3 +128,27 @@ was the harness. After the harness created C's per-player file trees, C
 rented and restored the kit (PR #1596). The judge needs parity with
 production on **both** sides: the Go side's dead database (PF-008) hid bugs;
 the C side's missing directories invented one.
+
+## 13. Gating the first delegated batch (Codex and DeepSeek)
+
+Six delegated PRs (#1590 to #1595) were gated by reading each diff against its
+C call site rather than the implementer's summary. Three findings:
+
+- **A directive written as a comment.** `gsay-act-depth` declared `# keep-ansi`,
+  which the parser treats as a comment, so the scenario never compared colour
+  bytes and its `gsay.act-complete-color` case was green without proof. With
+  the directive in `[fixture]`, the raw comparison showed the speaker's colour
+  reset placed before the line ending (fixed) and two prompt divergences
+  belonging to DP-1307/DP-1308. Coincidence-green by a one-character typo.
+- **"Focused checks passed" missed a neighbour.** Routing gsay through act()
+  made a sleeping group member see "Someone" (the port's canSee treats sleep
+  as blindness; C's CAN_SEE has no AWAKE test, DP-1295). The PR's own new
+  scenario was green; the existing `gsay-depth` regressed. Only the census
+  over everything catches a change's effect on scenarios it didn't write.
+- **Undefined behaviour in the oracle.** C's `do_auto` builds its listing with
+  `sprintf(buf, "%s...", buf)`; the Linux oracle prints nothing. The delegate
+  matched the oracle and deleted the listing. The project's precedent
+  (make_prompt, exits) is the opposite: the oracle is patched to the intended
+  semantics the original game showed players, and the port keeps them. The
+  rulebook had never stated this; it is the gap that let a careful delegate
+  follow the oracle's letter over its purpose.
