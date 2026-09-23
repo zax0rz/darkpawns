@@ -50,10 +50,10 @@ LOCKUP_SURFACES = [
     "website-astro/src/components/Header.astro",
     "web/public/index.html",
     "admin-ui/src/components/Wordmark.tsx",
-    # The Mudlet dock. Its pawn has no SVG to check here: cmd/mudlet-package
-    # rasterizes it from Header.astro and its tests pin the five shapes.
-    "mudlet/src/10-ui.lua",
 ]
+# The Mudlet dock shows the lockup as a picture, mudlet/lockup.png, rendered
+# from Header.astro by scripts/render_mudlet_lockup.py; cmd/mudlet-package's
+# tests hold its pawn to the header's five shapes.
 
 ATTR = re.compile(r'([a-zA-Z-]+)\s*=\s*"([^"]*)"')
 

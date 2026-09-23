@@ -246,11 +246,10 @@ check(DarkPawns.ui.readings.hp.text:find("80 / 100", 1, true), "hp reading")
 check(DarkPawns.ui.readings.mv.text:find("98 / 100", 1, true) and DarkPawns.ui.readings.mv.text:find("MOVE", 1, true), "move reading")
 check(DarkPawns.ui.status.text:find("Walker", 1, true) and DarkPawns.ui.status.text:find("Magic User", 1, true), "status line")
 
--- The lockup: DARK over PAWNS, Oxblood on PAWNS alone, and the pawn image
--- installed from the file the package wrote.
-local mark = DarkPawns.ui.wordmark.text
-check(mark:find("DARK<br>", 1, true) and mark:find([[class="accent" style="color: #A8201A;">PAWNS]], 1, true), "wordmark lockup")
-check(DarkPawns.ui.pawn.image == mudletHome .. "/darkpawns-pawn.png", "pawn image not installed")
+-- The lockup: the picture the package wrote, unscaled, in a row its height.
+local header = DarkPawns.ui.header.css
+check(header:find('background-image: url("' .. mudletHome .. '/darkpawns-lockup.png")', 1, true)
+  and header:find("no-repeat", 1, true) and not header:find("border-image", 1, true), "lockup not shown unscaled")
 
 local function enter(num, name, area, exits)
   gmcp.Room = {Info = {num = num, name = name, area = area, environment = "Inside", exits = exits}}
@@ -347,29 +346,29 @@ func TestPackageLoadsAndDrives(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The PNG the Lua decoded and wrote is byte-for-byte the one the
-	// generator rendered from the site header.
-	written, err := os.ReadFile(filepath.Join(home, "darkpawns-pawn.png"))
-	if err != nil {
-		t.Fatalf("pawn not written: %v", err)
-	}
-	drawing, err := readPawn(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want, err := renderPawnPNG(drawing, pawnHeight)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(written, want) {
-		t.Fatalf("pawn PNG round-trip through the Lua base64 decoder changed it (%d bytes, want %d)", len(written), len(want))
+	// The PNGs the Lua decoded and wrote are byte-for-byte the committed
+	// renders.
+	for _, name := range []string{"lockup.png", "lockup@2x.png"} {
+		written, err := os.ReadFile(filepath.Join(home, "darkpawns-"+name))
+		if err != nil {
+			t.Fatalf("%s not written: %v", name, err)
+		}
+		want, err := os.ReadFile(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(written, want) {
+			t.Fatalf("%s changed in the round-trip through the Lua base64 decoder (%d bytes, want %d)", name, len(written), len(want))
+		}
 	}
 }
 
-// TestPawnIsTheCanonicalDrawing: the generator found the site header's five
-// shapes, in order, and draws them. check_wordmark.py holds the header to the
-// canonical coordinates; this holds the package to the header.
-func TestPawnIsTheCanonicalDrawing(t *testing.T) {
+// TestLockupPawnIsCanonical: the pawn in the committed lockup pictures is
+// the site header's five shapes, where the header's CSS puts them.
+// check_wordmark.py holds the header to the canonical coordinates; this
+// holds the pictures to the header, so a changed mark fails here until
+// scripts/render_mudlet_lockup.py is rerun.
+func TestLockupPawnIsCanonical(t *testing.T) {
 	drawing, err := readPawn(root)
 	if err != nil {
 		t.Fatal(err)
@@ -384,23 +383,53 @@ func TestPawnIsTheCanonicalDrawing(t *testing.T) {
 	if !reflect.DeepEqual(drawing.shapes, want) || drawing.viewBox != [4]float64{24, 8, 52, 88} {
 		t.Fatalf("pawn drawing = %+v viewBox %v", drawing.shapes, drawing.viewBox)
 	}
-	pngBytes, err := renderPawnPNG(drawing, pawnHeight)
-	if err != nil {
-		t.Fatal(err)
-	}
-	img, err := png.Decode(bytes.NewReader(pngBytes))
-	if err != nil {
-		t.Fatal(err)
-	}
-	// The head is solid ink, the gap between collar and body is empty, and
-	// the corners are transparent.
-	at := func(vx, vy float64) uint32 {
-		scale := float64(pawnHeight) / 88
-		_, _, _, a := img.At(int((vx-24)*scale), int((vy-8)*scale)).RGBA()
-		return a
-	}
-	if at(50, 23) != 0xffff || at(50, 44.5) != 0 || at(25, 9) != 0 || at(50, 88) != 0xffff {
-		t.Fatal("rendered pawn does not match its shapes")
+	for _, pic := range []struct {
+		name  string
+		scale float64
+	}{{"lockup.png", 1}, {"lockup@2x.png", 2}} {
+		raw, err := os.ReadFile(filepath.Join(root, pic.name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		img, err := png.Decode(bytes.NewReader(raw))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if bounds := img.Bounds(); bounds.Dx() != int(142*pic.scale) || bounds.Dy() != int(55*pic.scale) {
+			t.Fatalf("%s is %v, want 142x55 CSS pixels at %vx (ui.lockupHeight is 55)", pic.name, bounds, pic.scale)
+		}
+		// The render script's layout, in CSS pixels: a 1px margin, the pawn
+		// 51.2px tall and centred against the 52.48px wordmark.
+		const pad, pawnHeight, pawnTop = 1.0, 51.2, (52.48 - 51.2) / 2
+		scale := pawnHeight / 88 * pic.scale
+		originX, originY := pad*pic.scale, (pad+pawnTop)*pic.scale
+		// Edge pixels differ with antialiasing; a moved or redrawn shape
+		// leaves pixels that are ink in one and paper in the other.
+		wrong := 0
+		for py := 0; py < img.Bounds().Dy(); py++ {
+			for px := 0; px < int((pad+32)*pic.scale); px++ {
+				covered := 0
+				for sy := 0; sy < 4; sy++ {
+					for sx := 0; sx < 4; sx++ {
+						x := 24 + (float64(px)+(float64(sx)+0.5)/4-originX)/scale
+						y := 8 + (float64(py)+(float64(sy)+0.5)/4-originY)/scale
+						for _, shape := range drawing.shapes {
+							if shape.contains(x, y) {
+								covered++
+								break
+							}
+						}
+					}
+				}
+				_, _, _, a := img.At(px, py).RGBA()
+				if diff := int(a>>8) - covered*255/16; diff > 128 || diff < -128 {
+					wrong++
+				}
+			}
+		}
+		if wrong > 0 {
+			t.Errorf("%s: %d pawn pixels disagree with Header.astro; rerun scripts/render_mudlet_lockup.py", pic.name, wrong)
+		}
 	}
 }
 

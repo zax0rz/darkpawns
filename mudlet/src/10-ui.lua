@@ -2,7 +2,7 @@
 --
 -- The dock is the website's /play page brought into Mudlet: a Paper-Deep
 -- chassis around the game's dark canvas. The chassis carries the lockup (the
--- pawn, then DARK over PAWNS with Oxblood on PAWNS alone), the character
+-- site header's own, as a picture), the character
 -- line, and the gauges; the map and the chat window are game surfaces, so they
 -- keep the dark canvas, like the terminal on the site.
 --
@@ -23,21 +23,28 @@ ui.palette = {
 }
 
 -- DESIGN.md typography, with its own fallbacks: players rarely have the
--- site's fonts installed, and Georgia or the system serif stands in.
+-- site's fonts installed, and Georgia or the system serif stands in. The
+-- display face appears only in the lockup, which is a picture.
 ui.fonts = {
-  display = "'DM Serif Display', Georgia, serif",
   body = "'Source Serif 4', Georgia, serif",
   mono = "'JetBrains Mono', 'Fira Code', monospace",
 }
 
 ui.dockPercent = 32 -- share of the window width the dock takes
 
--- The pawn, rasterized from the site header's canonical drawing by
--- cmd/mudlet-package (Mudlet 5.0 labels cannot show SVG). Written to the
+-- The lockup, as the site header draws it: the pawn, then DARK over PAWNS in
+-- DM Serif Display. A package cannot install fonts and a label cannot draw
+-- SVG, so scripts/render_mudlet_lockup.py renders the header's own drawing
+-- and CSS to a picture, at the CSS size and at twice it. The dock shows it
+-- unscaled; Qt takes the @2x file on high-density screens. Written to the
 -- profile directory at load, because a label image has to be a file.
-ui.pawnPNG = [[
-{{PAWN_PNG_BASE64}}
+ui.lockupPNG = [[
+{{LOCKUP_PNG_BASE64}}
 ]]
+ui.lockup2xPNG = [[
+{{LOCKUP_2X_PNG_BASE64}}
+]]
+ui.lockupHeight = 55 -- lockup.png's height: the header row is exactly the picture
 
 local function decodeBase64(data)
   local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -45,13 +52,18 @@ local function decodeBase64(data)
   for i = 1, #alphabet do
     lookup[alphabet:sub(i, i)] = i - 1
   end
-  local out, bits, count = {}, 0, 0
+  -- Decoded in runs of 1024 groups, so no single concat holds the image.
+  local parts, out, bits, count = {}, {}, 0, 0
   for char in data:gmatch("[%w+/]") do
     bits = bits * 64 + lookup[char]
     count = count + 1
     if count == 4 then
       out[#out + 1] = string.char(math.floor(bits / 65536) % 256, math.floor(bits / 256) % 256, bits % 256)
       bits, count = 0, 0
+      if #out == 1024 then
+        parts[#parts + 1] = table.concat(out)
+        out = {}
+      end
     end
   end
   if count == 3 then
@@ -59,18 +71,27 @@ local function decodeBase64(data)
   elseif count == 2 then
     out[#out + 1] = string.char(math.floor(bits / 16) % 256)
   end
-  return table.concat(out)
+  parts[#parts + 1] = table.concat(out)
+  return table.concat(parts)
 end
 ui.decodeBase64 = decodeBase64
 
-local function writePawn()
-  local path = getMudletHomeDir() .. "/darkpawns-pawn.png"
+local function writeImage(path, data)
   local file = io.open(path, "wb")
   if not file then
+    return false
+  end
+  file:write(decodeBase64(data))
+  file:close()
+  return true
+end
+
+local function writeLockup()
+  local path = getMudletHomeDir() .. "/darkpawns-lockup.png"
+  if not writeImage(path, ui.lockupPNG) then
     return nil
   end
-  file:write(decodeBase64(ui.pawnPNG))
-  file:close()
+  writeImage(getMudletHomeDir() .. "/darkpawns-lockup@2x.png", ui.lockup2xPNG)
   return path
 end
 
@@ -113,19 +134,18 @@ function ui.build()
     name = "DarkPawns.box", x = "4%", y = "1%", width = "92%", height = "98%",
   }, ui.dock)
 
-  -- The lockup.
-  ui.header = Geyser.HBox:new({ name = "DarkPawns.header", height = 56, v_policy = Geyser.Fixed }, ui.box)
-  ui.pawn = Geyser.Label:new({ name = "DarkPawns.pawn", width = 33, h_policy = Geyser.Fixed }, ui.header)
-  transparent(ui.pawn)
-  local pawnFile = writePawn()
-  if pawnFile then
-    ui.pawn:setBackgroundImage(pawnFile)
+  -- The lockup, drawn at its own size from the left edge: never stretched.
+  ui.header = Geyser.Label:new({
+    name = "DarkPawns.header", height = ui.lockupHeight, v_policy = Geyser.Fixed,
+  }, ui.box)
+  local lockup = writeLockup()
+  if lockup then
+    ui.header:setStyleSheet(string.format(
+      [[background-color: transparent; background-image: url("%s"); background-repeat: no-repeat; background-position: left center;]],
+      lockup))
+  else
+    transparent(ui.header)
   end
-  ui.wordmark = Geyser.Label:new({ name = "DarkPawns.wordmark" }, ui.header)
-  transparent(ui.wordmark)
-  ui.wordmark:echo(string.format(
-    [[<div style="font-family: %s; font-size: 21px; line-height: 82%%; color: %s; padding-left: 8px;">DARK<br><span class="accent" style="color: %s;">PAWNS</span></div>]],
-    ui.fonts.display, ui.palette.ink, ui.palette.oxblood))
 
   ui.status = Geyser.Label:new({ name = "DarkPawns.status", height = 26, v_policy = Geyser.Fixed }, ui.box)
   ui.status:setStyleSheet(string.format(

@@ -4,6 +4,14 @@ Every change to `src/` bumps `VERSION` and adds an entry here. The server
 announces the version through GMCP `Client.GUI`, and Mudlet reinstalls the
 package when it changes, so an unbumped change never reaches players.
 
+## 1.1.3 (2026-09-23)
+
+- The dock's header is the site header's lockup, as a picture: the pawn,
+  then DARK over PAWNS in DM Serif Display. The package can't install fonts,
+  so the lettering had fallen back to a sans-serif, and the pawn, stretched to
+  fit its label, read as broken. The picture is drawn at its own size and
+  never scaled; high-density screens get a 2x copy.
+
 ## 1.1.2 (2026-09-23)
 
 - The world map offer is announced once, not twice: the load-time check
