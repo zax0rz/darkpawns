@@ -1,0 +1,89 @@
+# depth-case: idle.dusk-events-room-local
+# DP_FIXED_TIME pins day 17 (MoonThreeFull), so room 4004 receives the gate.
+# One player observes the primary dock and one the phase-matched gate. The
+# second dock remains unoccupied so the scenario follows C's idle audience path.
+# Four pulse blocks reach sunset and sunrise, each advances four, three, four,
+# then four MUD hours (630 pulses per hour).
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 19100 none
+replace-room-exits 19173 north 19100 0
+replace-room-exits 19174 none
+
+[setup:oracle]
+Duskactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Duskactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:gate]
+Duskobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:gate]
+Duskobserver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19173
+teleport Duskobserver 4004
+set Duskobserver level 31
+
+[probe]
+~dpclock pulse 2520
+send:gate look
+send:primary look
+~dpclock pulse 1890
+send:primary look
+send:gate look
+goto 4004
+~dpclock pulse 2520
+send:gate look
+send:primary look
+~dpclock pulse 2520
+send:primary look
+send:gate look

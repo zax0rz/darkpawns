@@ -22,12 +22,15 @@
 package game
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Sun state constants — from structs.h:571-575
@@ -360,7 +363,7 @@ func anotherHourLocked(mode bool, sendToOutdoor func(string), w *World) {
 				sendToOutdoor("The suns slowly disappear in the west and south.\r\n")
 			}
 			ghostShipAppearForWorld(w)
-			loadNightGateForWorld(w)
+			loadNightGateForWorld(w, timeInfo.Moon)
 			if timeInfo.Day+1 < 26 && timeInfo.Day+1 >= 22 {
 				fullMoonForWorld(w)
 				lunarHunterForWorld(w)
@@ -586,14 +589,36 @@ func lunarHunterForWorld(w *World) {
 // loadNightGate broadcasts the night gate appearance.
 // Called at hour 21 (sunset).
 func loadNightGate() {
-	loadNightGateForWorld(weatherWorldSnapshot())
+	weatherMu.RLock()
+	w, moon := weatherWorld, timeInfo.Moon
+	weatherMu.RUnlock()
+	loadNightGateForWorld(w, moon)
 }
 
-func loadNightGateForWorld(w *World) {
+func loadNightGateForWorld(w *World, moon int) {
 	if w == nil {
 		return
 	}
-	w.SendToAll("[ NIGHT GATE ] A shimmering gate materializes in the darkness...\r\n")
+	for _, gate := range gatePhases {
+		if gate.Phase == -1 || gate.Phase != moon {
+			continue
+		}
+		room := w.RealRoom(gate.Room)
+		if w.GetRoomInWorld(room) == nil {
+			continue
+		}
+		portal, err := w.SpawnObject(BluePortalVNum, -1)
+		if err != nil {
+			slog.Warn("load night gate: spawn blue portal", "room", room, "error", err)
+			continue
+		}
+		if err := w.MoveObjectToRoomFront(portal, room); err != nil {
+			w.ExtractObject(portal, -1)
+			slog.Warn("load night gate: place blue portal", "room", room, "error", err)
+			continue
+		}
+		sendWeatherRoom(w, room, "A shimmering portal of blue light suddenly appears in the darkness!")
+	}
 }
 
 // removeNightGate broadcasts the night gate removal.
@@ -606,7 +631,19 @@ func removeNightGateForWorld(w *World) {
 	if w == nil {
 		return
 	}
-	w.SendToAll("[ NIGHT GATE ] The shimmering gate fades into nothingness.\r\n")
+	for _, gate := range gatePhases {
+		if gate.Phase == -1 {
+			continue
+		}
+		room := w.RealRoom(gate.Room)
+		for _, obj := range w.GetItemsInRoom(room) {
+			if obj.GetVNum() != BluePortalVNum {
+				continue
+			}
+			w.ExtractObject(obj, room)
+			sendWeatherRoom(w, room, "The shimmering blue portal of light fades out of existence.")
+		}
+	}
 }
 
 // ghostShipAppear broadcasts the ghost ship sighting.
@@ -619,7 +656,19 @@ func ghostShipAppearForWorld(w *World) {
 	if w == nil {
 		return
 	}
-	w.SendToAll("[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!\r\n")
+	dock := w.RealRoom(19173)
+	ship := w.RealRoom(19100)
+	if dprng.Number(0, 1) == 0 {
+		dock = w.RealRoom(19174)
+	}
+	if dock == 0 || ship == 0 || w.GetRoomInWorld(dock) == nil || w.GetRoomInWorld(ship) == nil {
+		return
+	}
+	if !w.CreateRoomExit(dock, "north", ship) || !w.CreateRoomExit(ship, "south", dock) {
+		return
+	}
+	sendWeatherRoom(w, dock, "Suddenly a ghostly ship appears to the north!")
+	sendWeatherRoom(w, ship, "Suddenly a dock appears to the south!")
 }
 
 // ghostShipDisappear broadcasts the ghost ship departure.
@@ -632,7 +681,52 @@ func ghostShipDisappearForWorld(w *World) {
 	if w == nil {
 		return
 	}
-	w.SendToAll("[ GHOST SHIP ] The fog lifts... the ghost ship vanishes into the mists.\r\n")
+	dock := w.RealRoom(19173)
+	dock2 := w.RealRoom(19174)
+	ship := w.RealRoom(19100)
+	if dock == 0 || dock2 == 0 || ship == 0 ||
+		w.GetRoomInWorld(dock) == nil || w.GetRoomInWorld(dock2) == nil || w.GetRoomInWorld(ship) == nil {
+		return
+	}
+	for _, room := range []int{dock, dock2} {
+		removed := false
+		w.updateRoom(room, func(r *parser.Room) {
+			if r.Exits == nil {
+				return
+			}
+			if _, ok := r.Exits["north"]; ok {
+				delete(r.Exits, "north")
+				removed = true
+			}
+		})
+		if removed {
+			sendWeatherRoom(w, room, "Suddenly the ghostly ship to the north disappears!")
+		}
+	}
+	removed := false
+	w.updateRoom(ship, func(r *parser.Room) {
+		if r.Exits == nil {
+			return
+		}
+		if _, ok := r.Exits["south"]; ok {
+			delete(r.Exits, "south")
+			removed = true
+		}
+	})
+	if removed {
+		sendWeatherRoom(w, ship, "Suddenly the dock to the south disappears!")
+		sendWeatherRoom(w, ship, "The ghost ship has set sail!")
+	}
+}
+
+// sendWeatherRoom mirrors comm.c:send_to_room's awake-recipient gate for the
+// dusk events. World.SendToRoom does not filter players by position.
+func sendWeatherRoom(w *World, room int, message string) {
+	for _, player := range w.GetPlayersInRoom(room) {
+		if player.GetPosition() > combat.PosSleeping {
+			player.SendMessage(message + "\r\n")
+		}
+	}
 }
 
 // weatherWorldSnapshot preserves synchronized direct-helper entry points.
