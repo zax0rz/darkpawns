@@ -38,12 +38,16 @@ started with (`-telnet-tls-port`), and Mudlet learns it the same way.
 |---|---|---|
 | Character line | `Char.Status` | name, level, race, class, gold |
 | Gauges | `Char.Vitals` | update with the prompt, on damage, and on the regeneration tick |
-| Map | `Room.Info` | rooms keyed by the game's room numbers; double-click to walk |
+| Map | `Client.Map`, `Room.Info` | the whole world, downloaded on first connect; rooms added since are mapped as you walk; double-click to walk |
 | Chat | `Comm.Channel.Text` | each line exactly as the game printed it |
 
-The map only learns rooms you can see. In darkness or while blind the game
-names no room, and neither does GMCP; the map picks up again at the next lit
-room. Closed doors are left out of a room's exits for the same reason the
+The whole world map loads the first time you connect, if this profile has
+no map yet, and updates itself when the world changes. If you already mapped
+by hand, the package asks first: type `dp map` to swap in the full map.
+
+Your position on the map follows the rooms you can see. In darkness or while
+blind the game names no room, and neither does GMCP; the map picks up again
+at the next lit room. Closed doors are left out of a room's exits for the same reason the
 game's own exit list leaves them out.
 
 The package adds no game commands and no triggers on game text. Dark Pawns
@@ -57,6 +61,7 @@ already understands `n`/`e`/`s`/`w`/`u`/`d` and abbreviated commands such as
 | `dp` | show the version and these commands |
 | `dp hide` / `dp show` | hide or restore the dock |
 | `dp clear` | clear the chat window |
+| `dp map` | load the whole world map (replaces this profile's map) |
 
 ## For developers
 

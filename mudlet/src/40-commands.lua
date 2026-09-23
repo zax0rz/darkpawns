@@ -11,6 +11,8 @@ function DarkPawns.command(argument)
     DarkPawns.ui.hide()
   elseif argument == "show" then
     DarkPawns.ui.build()
+  elseif argument == "map" then
+    DarkPawns.map.download()
   elseif argument == "clear" then
     if DarkPawns.ui.chat then
       DarkPawns.ui.chat:clear()
@@ -20,6 +22,7 @@ function DarkPawns.command(argument)
     cecho("  <yellow>dp hide<reset>   - hide the dock\n")
     cecho("  <yellow>dp show<reset>   - bring it back\n")
     cecho("  <yellow>dp clear<reset>  - clear the chat window\n")
+    cecho("  <yellow>dp map<reset>    - load the world map (replaces this profile's map)\n")
     cecho("  Double-click a room on the map to walk there.\n")
   end
 end

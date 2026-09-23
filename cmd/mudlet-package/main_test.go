@@ -194,6 +194,22 @@ function setExitStub(id, dir, on) rooms[id].stubs[dir] = on or nil end
 function setCustomEnvColor(...) end
 function setRoomEnv(id, env) rooms[id].env = env end
 function centerview(id) centred = id end
+function getRooms()
+  local out = {}
+  for id, room in pairs(rooms) do out[id] = room.name or "" end
+  return out
+end
+mapUserData = {}
+function getMapUserData(key) return mapUserData[key] or "" end
+function setMapUserData(key, value) mapUserData[key] = value; return true end
+function downloadFile(path, url) record("downloadFile", path, url) end
+function loadMap(path)
+  record("loadMap", path)
+  -- the downloaded map replaces the profile's map
+  rooms = {[8004] = {exits = {}, stubs = {}, area = 1, xyz = {0, 0, 0}, name = "The Gate Hall"}}
+  return true
+end
+function roomExists(id) return rooms[id] ~= nil end
 speedWalkDir = {}
 function getPath(from, to) speedWalkDir = {"n", "up"}; return true end
 `
@@ -256,6 +272,34 @@ gmcp.Comm = {Channel = {Text = {channel = "gossip", talker = "Someone", text = "
 fire("gmcp.Comm.Channel.Text")
 local log = DarkPawns.ui.chat.log
 check(#log == 2 and log[2] == "Someone gossips, 'hi'\n", "chat line not captured")
+
+-- The world map. This profile already has rooms mapped by hand and no
+-- downloaded map, so the offer is only announced.
+local mapURL = "https://darkpawns.org/darkpawns-map.xml"
+gmcp.Client = {Map = {url = mapURL, version = "aaa111"}}
+fire("gmcp.Client.Map")
+check(not sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "replaced a hand-built map without asking")
+check(sent("cecho", "\n<ansi_white>[ Dark Pawns ] A map of the whole world is available. Type <yellow>dp map<ansi_white> to load it; it replaces this profile's map.<reset>\n"), "map offer not announced")
+
+-- dp map downloads it; the download loads and records its version.
+DarkPawns.command("map")
+check(sent("downloadFile", mudletHome .. "/darkpawns-map.xml"), "dp map did not download")
+fire("sysDownloadDone", mudletHome .. "/darkpawns-map.xml")
+check(sent("loadMap", mudletHome .. "/darkpawns-map.xml") and mapUserData["darkpawns.mapVersion"] == "aaa111", "downloaded map not loaded")
+
+-- The same version again changes nothing; a new one is taken automatically,
+-- because this profile is now using the downloaded map.
+local downloads = function()
+  local n = 0
+  for _, c in ipairs(calls) do if c.name == "downloadFile" then n = n + 1 end end
+  return n
+end
+local before = downloads()
+fire("gmcp.Client.Map")
+check(downloads() == before, "re-downloaded an unchanged map")
+gmcp.Client.Map.version = "bbb222"
+fire("gmcp.Client.Map")
+check(downloads() == before + 1, "a new map version was not taken")
 
 speedWalkFrom, speedWalkTo = 8004, 8005
 doSpeedWalk()

@@ -3,10 +3,13 @@ package session
 import (
 	"encoding/json"
 	"log/slog"
+	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/mudletmap"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -88,21 +91,22 @@ type (
 		Version string `json:"version"`
 		URL     string `json:"url"`
 	}
+	// gmcpClientMap is Mudlet's MMP map-location message. Mudlet reads
+	// "url"; the package also reads "version" to tell a new map from the one
+	// it loaded.
+	gmcpClientMap struct {
+		URL     string `json:"url"`
+		Version string `json:"version"`
+	}
 )
+
+// mudletMapTTL bounds how stale the generated map may be after an OLC edit.
+const mudletMapTTL = 5 * time.Minute
 
 // gmcpExitKeys are the direction abbreviations GMCP mappers key exits by, in
 // C's dirs[] order.
 var gmcpExitKeys = map[string]string{
 	"north": "n", "east": "e", "south": "s", "west": "w", "up": "u", "down": "d",
-}
-
-// gmcpEnvironments are the sector names C's look_at_room prints for
-// PRF_ROOMFLAGS; sectors it has no case for print "Unknown".
-// Source: act.informative.c look_at_room() sector switch.
-var gmcpEnvironments = []string{
-	"Inside", "City", "Field", "Forest", "Hills", "Mountain", "Water Swim",
-	"Water Noswim", "Underwater", "Flying", "Desert", "Fire", "Earth", "Wind",
-	"Water",
 }
 
 // gmcpState is a session's GMCP negotiation and change-tracking state.
@@ -133,6 +137,23 @@ var gmcpGUI struct {
 	version string
 }
 
+// gmcpMapURL is the public URL of the /darkpawns-map.xml endpoint, offered
+// through Client.Map. Empty until configured.
+var gmcpMapURL struct {
+	mu  sync.RWMutex
+	url string
+}
+
+// SetGMCPClientMap configures the Client.Map offer. An empty url disables it.
+func SetGMCPClientMap(url string) {
+	gmcpMapURL.mu.Lock()
+	defer gmcpMapURL.mu.Unlock()
+	gmcpMapURL.url = url
+}
+
+// MudletMap serves the generated Mudlet world map.
+func (m *Manager) MudletMap() http.Handler { return m.mudletMap }
+
 // SetGMCPClientGUI configures the Client.GUI offer: Mudlet downloads the
 // package at url and reinstalls it whenever version changes. An empty url
 // disables the offer.
@@ -153,6 +174,7 @@ func (s *Session) EnableGMCP() {
 		return
 	}
 	s.sendGMCPClientGUI()
+	s.sendGMCPClientMap()
 	if s.player != nil && s.IsAuthenticated() {
 		s.gmcpSync()
 	}
@@ -347,6 +369,26 @@ func (s *Session) sendGMCPClientGUI() {
 	s.sendGMCPRaw("Client.GUI", string(payload))
 }
 
+// sendGMCPClientMap offers the world map. Like Client.GUI it is a Mudlet
+// core message, not a negotiated module.
+func (s *Session) sendGMCPClientMap() {
+	gmcpMapURL.mu.RLock()
+	url := gmcpMapURL.url
+	gmcpMapURL.mu.RUnlock()
+	if url == "" {
+		return
+	}
+	_, version := s.manager.mudletMap.Map()
+	if version == "" {
+		return
+	}
+	payload, err := json.Marshal(gmcpClientMap{URL: url, Version: version})
+	if err != nil {
+		return
+	}
+	s.sendGMCPRaw("Client.Map", string(payload))
+}
+
 // gmcpSync sends the character state messages whose values changed since the
 // last send. It runs before every prompt, when a player enters the game, and
 // after the silent regeneration tick.
@@ -404,18 +446,13 @@ func (s *Session) gmcpRoomInfo(roomVNum int) {
 	if room == nil {
 		return
 	}
-	area := ""
-	if zone, ok := world.GetZone(room.Zone); ok && zone != nil {
-		area = zone.Name
-	}
-	environment := "Unknown"
-	if room.Sector >= 0 && room.Sector < len(gmcpEnvironments) {
-		environment = gmcpEnvironments[room.Sector]
-	}
+	// The area and environment names are the downloadable map's, so a room
+	// mapped live lands in the same Mudlet area as the downloaded one.
+	environment, _ := mudletmap.Environment(room.Sector)
 	s.sendGMCP("Room.Info", gmcpRoomInfo{
 		Num:         room.VNum,
 		Name:        room.Name,
-		Area:        area,
+		Area:        s.manager.mudletMap.AreaName(room.Zone),
 		Environment: environment,
 		Exits:       gmcpVisibleExits(room, s.player.GetLevel() >= game.LVL_IMMORT),
 	})

@@ -4,6 +4,16 @@ Every change to `src/` bumps `VERSION` and adds an entry here. The server
 announces the version through GMCP `Client.GUI`, and Mudlet reinstalls the
 package when it changes, so an unbumped change never reaches players.
 
+## 1.1.0 (2026-09-22)
+
+- The whole world as a map. When the server offers its world map (GMCP
+  `Client.Map`), a profile with no map loads it on first connect, and a
+  profile that loaded it takes each new version automatically. A map you
+  built by hand is never replaced without asking: `dp map` loads the full
+  one on request. Rooms the download doesn't have yet are still mapped as
+  you walk.
+- `dp map` command.
+
 ## 1.0.0 (2026-09-22)
 
 First release, built against Dark Pawns GMCP message set 1 (`docs/gmcp.md`).

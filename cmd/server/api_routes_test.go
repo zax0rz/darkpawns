@@ -18,6 +18,7 @@ var rootAllowlist = []struct {
 	reason string
 }{
 	{"/ws", "WebSocket upgrade endpoint; not a typed REST operation — whether and how to model it is a later decision"},
+	{"/darkpawns-map.xml", "Mudlet world map (XML file Mudlet imports, fetched via GMCP Client.Map); a file download, not a REST operation"},
 	{"/", "front door: static site, browser client, or plain-text index"},
 	{"/api/contact", "contact form handler (env-gated)"},
 	{"/api/", "JWT-protected API catch-all; 404s with the consult-openapi advice"},
