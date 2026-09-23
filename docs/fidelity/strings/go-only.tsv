@@ -12,11 +12,9 @@ You've been demoted within your clan!	pkg/game/clan_membership.go:253	.SendMessa
 Unknown channel.	pkg/game/comm_channel.go:97	communicationSend
 You think: '	pkg/game/comm_channel.go:223	sendToChar
 hits you, but it doesn't hurt!	pkg/game/damage_stubs.go:256	.SendMessage
-You autoloot:	pkg/game/death.go:464	.SendMessage
-You autoloot the corpse but find nothing of value.	pkg/game/death.go:466	.SendMessage
-You feel your soul wrenched from your body...	pkg/game/death.go:724	.SendMessage
-You awaken in the temple.	pkg/game/death.go:725	.SendMessage
-is disintegrated! Equipment lies scattered on the ground.	pkg/game/death.go:1206	.SendMessage
+You autoloot:	pkg/game/death.go:453	.SendMessage
+You autoloot the corpse but find nothing of value.	pkg/game/death.go:455	.SendMessage
+is disintegrated! Equipment lies scattered on the ground.	pkg/game/death.go:1194	.SendMessage
 is ignoring you.	pkg/game/directed_speech.go:249	communicationSend
 is ignoring you.	pkg/game/directed_speech.go:307	communicationSend
 auctions, '	pkg/game/graph.go:267	.SendMessage(via text)
@@ -103,11 +101,11 @@ That information is not available right now.	pkg/session/gen_ps_cmds.go:122	.Sen
 Built with:	pkg/session/gen_ps_cmds.go:235	.Send
 Autoexits enabled.	pkg/session/informative_cmds.go:26	.Send
 Autoexits disabled.	pkg/session/informative_cmds.go:28	.Send
-!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!	pkg/session/manager.go:1930	.sendText
-Description not changed.	pkg/session/menu.go:183	.sendText
-Unable to save description.	pkg/session/menu.go:196	.sendText
-Description saved.	pkg/session/menu.go:203	.sendText
-Description is too long; type @ or /s to save, /a to abort.	pkg/session/menu.go:210	.sendText
+!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!	pkg/session/manager.go:1942	.sendText
+Description not changed.	pkg/session/menu.go:184	.sendText
+Unable to save description.	pkg/session/menu.go:197	.sendText
+Description saved.	pkg/session/menu.go:204	.sendText
+Description is too long; type @ or /s to save, /a to abort.	pkg/session/menu.go:211	.sendText
 You're not fighting anyone!	pkg/session/movement_cmds.go:50	.Send
 There's nowhere to flee!	pkg/session/movement_cmds.go:68	.Send
 experience points for fleeing.	pkg/session/movement_cmds.go:122	.Send

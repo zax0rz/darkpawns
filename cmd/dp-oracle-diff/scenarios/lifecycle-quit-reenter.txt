@@ -1,0 +1,58 @@
+# Lifecycle: quit, then re-enter from the menu on the same connection
+# (DP-1312).
+# depth-case: quit.menu-reenter-rent
+# depth-case: quit.rent-object-weight
+#
+# A legal temple quit rents the newbie kit; the next heartbeat returns the
+# connection to the menu, and choice 1 re-enters with the kit back (C's
+# Crash_load; the port reloads the character from its store). The
+# [relogin:*] lines also give the port a real store for this scenario.
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[relogin:oracle]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[probe]
+quit
+~dpclock pulse 20
+1
+inventory
+equipment

@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+extract_char	move (death trap)	death.trap-extract-to-menu	D4	automatic-call	oracle-green	lifecycle-deathtrap-menu@1	act.movement.c:288-301; handler.c:1132-1174	A mortal entering a ROOM_DEATH room gets death_cry and extract_char: the next heartbeat returns the connection to the menu, what they carried stays in the trap room, and choice 1 re-enters at the start room. The port used to respawn them at the temple with their belongings and four invented lines. DP-1312 (R1/R4).

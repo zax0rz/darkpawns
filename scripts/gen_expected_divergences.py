@@ -58,10 +58,13 @@ def main() -> int:
                 if stability not in ("", "run-varying"):
                     print(f"unknown stability {stability!r} in {path.name}:{row['case_id']}", file=sys.stderr)
                     return 1
-                scenario = proof.split("@", 1)[0]
-                if not (SCENARIO_DIR / f"{scenario}.txt").exists():
-                    continue
-                rows.append((scenario, path.name, row["case_id"], status, stability))
+                # A case may cite several proofs separated by ";"; every
+                # scenario among them carries the expected divergence.
+                for part in proof.split(";"):
+                    scenario = part.strip().split("@", 1)[0]
+                    if not (SCENARIO_DIR / f"{scenario}.txt").exists():
+                        continue
+                    rows.append((scenario, path.name, row["case_id"], status, stability))
     rows.sort()
     kept_scenarios = sorted({r[0] for r in rows})
     no_proof = 0
@@ -76,9 +79,9 @@ def main() -> int:
                 if not proof or proof == "-":
                     no_proof += 1
                     continue
-                scenario = proof.split("@", 1)[0]
-                if not (SCENARIO_DIR / f"{scenario}.txt").exists():
-                    unresolved.append(f"{path.name}:{row['case_id']}:{scenario}")
+                scenarios = [part.strip().split("@", 1)[0] for part in proof.split(";")]
+                if not any((SCENARIO_DIR / f"{scenario}.txt").exists() for scenario in scenarios):
+                    unresolved.append(f"{path.name}:{row['case_id']}:{scenarios[0]}")
     print(f"expected_divergences: {len(rows)} rows across {len(kept_scenarios)} scenarios "
           f"({no_proof} blocked/excluded rows carry no scenario proof; "
           f"{len(unresolved)} proofs did not resolve to a scenario file)")

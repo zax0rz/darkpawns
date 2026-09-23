@@ -150,18 +150,7 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		player.Unmount()
 	}
 
-	// death_cry (fight.c:558-577): the room hears $n's cry (TO_ROOM — the
-	// victim does not), adjacent open rooms hear "someone's".
-	Act(w, false, player, nil, nil, nil,
-		"Your blood freezes as you hear $n's death cry.", "", ToRoom)
-	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
-		for _, dir := range dirs {
-			if exit, exists := room.Exits[dir]; exists && exit.ToRoom > 0 {
-				w.roomMessage(exit.ToRoom,
-					"Your blood freezes as you hear someone's death cry.")
-			}
-		}
-	}
+	w.deathCry(player)
 
 	// make_corpse: everything carried, worn, and the gold go into the corpse.
 	var inventoryItems []*ObjectInstance
@@ -694,35 +683,34 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	}
 }
 
-// deathTrap performs an immortal-exempt ROOM_DEATH extraction, faithful to
-// src/act.movement.c:288-301. Unlike handlePlayerDeath this is corpse-less and
-// penalty-free: no XP loss, no CON loss, no gold drop, no equipment/inventory
-// scatter — extract_char() removes the char and respawns them at the temple.
-// The player keeps everything they carried. Called from MovePlayer, OUTSIDE w.mu.
+// deathCry is fight.c death_cry (558-577): the room hears $n's cry (TO_ROOM,
+// so not the victim) and adjacent rooms hear "someone's".
+func (w *World) deathCry(player *Player) {
+	Act(w, false, player, nil, nil, nil,
+		"Your blood freezes as you hear $n's death cry.", "", ToRoom)
+	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
+		for _, dir := range dirs {
+			if exit, exists := room.Exits[dir]; exists && exit.ToRoom > 0 {
+				w.roomMessage(exit.ToRoom,
+					"Your blood freezes as you hear someone's death cry.")
+			}
+		}
+	}
+}
+
+// deathTrap is a mortal entering a ROOM_DEATH room (src/act.movement.c:288-301):
+// log_death_trap, death_cry, extract_char, and the same for a mount. No
+// corpse, no experience or CON loss; extract_char drops what the victim
+// carried in the trap room and returns the descriptor to the menu, as for
+// any extraction. Called from MovePlayer, OUTSIDE w.mu.
 func (w *World) deathTrap(player *Player) {
 	// log_death_trap (src/utils.c:141) — mudlog line only.
 	slog.Info("death trap", "player", player.GetName(), "room", player.GetRoom())
-
-	// death_cry to the room the player is dying in.
-	w.roomMessage(player.GetRoom(),
-		fmt.Sprintf("The sound of a death cry is heard as %s enters the room!\r\n", player.GetName()))
-	player.SendMessage("You have entered a death trap!\r\n")
-
-	// If mounted, the mount dies too (C extracts it identically). At minimum the
-	// player must be dismounted so they don't ride a ghost after respawn.
-	w.deathTrapMount(player)
-
-	// Respawn tail — the SAME machinery handlePlayerDeath uses at death.go:550-564,
-	// MINUS every penalty/corpse block.
-	player.SetRoom(LoginStartRoom(player))
-	player.SetPosition(combat.PosStanding)
-	player.Heal(9999)
 	player.StopFighting()
-	if player.IsAffected(affWerewolf) {
-		player.SetAffect(affWerewolf, false)
-	}
-	player.SendMessage("\r\nYou feel your soul wrenched from your body...\r\n")
-	player.SendMessage("\r\nYou awaken in the temple.\r\n\r\n")
+	w.deathCry(player)
+	// The mount dies with its rider (act.movement.c:296-300).
+	w.deathTrapMount(player)
+	w.QueuePlayerExtraction(player)
 }
 
 // deathTrapMount extracts a player's mount when the player hits a death trap.

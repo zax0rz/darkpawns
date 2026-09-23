@@ -611,7 +611,17 @@ func (m *Manager) ExtractPendingChars() {
 			}
 		}
 		m.mu.RUnlock()
-		if victim == nil || !victim.hasTransport() {
+		if victim == nil {
+			continue
+		}
+		// extract_char saves the character (handler.c:1162). A renter was
+		// saved with their objects when they quit; everyone else is saved as
+		// extraction left them (what they carried is on the floor or in a
+		// corpse).
+		if !player.RentedOut {
+			victim.saveCharacter("extraction")
+		}
+		if !victim.hasTransport() {
 			continue
 		}
 		victim.showMainMenu()
@@ -1312,8 +1322,10 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 	s.textEditMu.Unlock()
 
-	// 4. Save player to DB
-	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest {
+	// 4. Save player to DB. A descriptor at the menu has no character in
+	// the game: C's close_socket saves only CON_PLAYING characters, and an
+	// extracted one was already saved by extract_char.
+	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest && !s.menuActive {
 		if rec, err := s.playerRecordForSave(s.player); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("DB save error", "player", playerName, "error", err)

@@ -268,6 +268,11 @@ type Player struct {
 	// Used by dream.c for nightmare progression.
 	LastDeath int64
 
+	// RentedOut marks a character who legally quit: Crash_rentsave has
+	// taken their objects into the rent file, so extraction does not drop
+	// them. Runtime only.
+	RentedOut bool `json:"-"`
+
 	// FreezeLevel records the level of the God who froze this player
 	// (C GET_FREEZE_LEV; act.wizard.c:2149). Thaw consults it to stop a
 	// lower-level God from un-freezing a higher-level God's freeze. In-memory

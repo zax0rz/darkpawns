@@ -78,12 +78,49 @@ func execQuit(s *Session, reallyQuit bool) error {
 	// with the equipment fork applied — is the final state.
 	s.manager.closeDuplicateSessions(s)
 
-	// Unregister → cleanupSession performs the final save and world removal.
-	// Closing the send channel lets each transport flush the queued goodbye
-	// before its writer closes the underlying connection.
-	s.manager.Unregister(s.player.Name)
-
+	// Guests are a port-only convenience with no stored character and no
+	// menu of their own, so their quit still ends the connection.
+	if s.isGuest {
+		s.manager.Unregister(s.player.Name)
+		return nil
+	}
+	s.leaveGameToMenu(outcome == game.QuitLogoutKeepEQ)
 	return nil
+}
+
+// leaveGameToMenu is do_quit's tail (act.other.c:155-181). A legal quit
+// rents first: Crash_rentsave destroys what cannot be rented, writes the
+// rest with the character, and takes it out of the world. Then
+// extract_char queues the character; the next heartbeat's extraction drops
+// whatever is still carried and returns this descriptor to the menu
+// (Manager.ExtractPendingChars). The connection stays open: only menu
+// choice 0 closes it.
+func (s *Session) leaveGameToMenu(rent bool) {
+	w := s.manager.world
+	p := s.player
+	if rent {
+		w.RentOut(p)
+		p.RentedOut = true
+		s.saveCharacter("quit rent")
+	}
+	w.QueuePlayerExtraction(p)
+}
+
+// saveCharacter writes the session's character to the game store, if there
+// is one and the character is not a guest.
+func (s *Session) saveCharacter(why string) {
+	m := s.manager
+	if !m.hasDB || s.player == nil || s.player.ID <= 0 || s.isGuest {
+		return
+	}
+	rec, err := s.playerRecordForSave(s.player)
+	if err != nil {
+		slog.Error("character save: build record", "player", s.player.Name, "why", why, "error", err)
+		return
+	}
+	if err := m.db.SavePlayer(rec); err != nil {
+		slog.Error("character save", "player", s.player.Name, "why", why, "error", err)
+	}
 }
 
 // cmdInventory shows the player's inventory.
