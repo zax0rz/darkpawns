@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -44,6 +45,26 @@ const (
 	linkdeadVoidRoomVNum       = 1
 	linkdeadDisconnectRoomVNum = 3
 )
+
+// webSocketMaxConnsPerIP caps simultaneous WebSocket sessions from one client
+// address (WEBSOCKET_MAX_CONNS_PER_IP). The C server had no per-address cap
+// at all; this is flood protection, so it is sized for the game's own
+// multiplay allowance of three characters per player (help MULTIPLAY), for
+// two players sharing a home connection, with room to reconnect. The
+// three-character rule itself stays what it was in C: policy, enforced by
+// immortals, not code.
+var webSocketMaxConnsPerIP = 8
+
+func init() {
+	if v := os.Getenv("WEBSOCKET_MAX_CONNS_PER_IP"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			slog.Warn("WEBSOCKET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", webSocketMaxConnsPerIP)
+		} else {
+			webSocketMaxConnsPerIP = n
+		}
+	}
+}
 
 // allowedWebSocketOrigins lists the public origins that may connect without
 // presenting an agent key.
@@ -1075,7 +1096,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	// Per-IP connection limit (C5)
 	m.ipConnMu.Lock()
-	if m.ipConnCount[ip] >= 5 {
+	if m.ipConnCount[ip] >= webSocketMaxConnsPerIP {
 		m.ipConnMu.Unlock()
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
 		_ = conn.Close()

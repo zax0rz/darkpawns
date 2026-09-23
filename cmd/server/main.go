@@ -48,6 +48,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -342,6 +343,20 @@ func main() {
 	// need a token. Fail loud at startup instead, and name the command.
 	//   - production: refuse to start with the export line to paste.
 	//   - development: derive an ephemeral 32-byte secret so local boot works.
+	// Which reverse proxies may name the client in X-Forwarded-For. Without
+	// this, every browser behind a same-machine proxy appears as 127.0.0.1:
+	// one shared per-IP connection cap, one shared login rate limit, and IP
+	// bans that can't single anyone out. Unset means the loopback defaults;
+	// set but empty means trust no proxy.
+	proxies := auth.DefaultTrustedProxies
+	if value, set := os.LookupEnv("TRUSTED_PROXIES"); set {
+		proxies = strings.FieldsFunc(value, func(r rune) bool { return r == ',' || r == ' ' })
+	}
+	if err := auth.SetTrustedProxies(proxies); err != nil {
+		slog.Warn("TRUSTED_PROXIES has invalid entries; the valid ones apply", "error", err)
+	}
+	slog.Info("Trusted proxies for client addresses", "cidrs", proxies)
+
 	if err := auth.ValidateJWTSecret(); err != nil {
 		if os.Getenv("ENVIRONMENT") != "development" {
 			slog.Error("JWT_SECRET invalid; refusing to start outside development",

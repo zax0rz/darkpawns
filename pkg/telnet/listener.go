@@ -45,8 +45,15 @@ const (
 	MSSP_VAL byte = 2
 )
 
+// maxConnsPerIP caps simultaneous telnet connections from one address
+// (TELNET_MAX_CONNS_PER_IP). The C server had no such cap; it is flood
+// protection, sized like webSocketMaxConnsPerIP for two players sharing a
+// home connection at the three-character multiplay allowance, plus room to
+// reconnect. At 3 it equalled one player's allowance, so a second player in
+// the house (or on a carrier that puts many phones behind one address) was
+// refused.
 var (
-	maxConnsPerIP    = 3
+	maxConnsPerIP    = 8
 	maxTotalConns    = 200
 	loginIdleTimeout = 120 * time.Second // DP-912: drop parked pre-auth connections
 )
