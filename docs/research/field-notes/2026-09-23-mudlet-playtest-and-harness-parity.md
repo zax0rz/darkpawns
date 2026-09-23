@@ -152,3 +152,17 @@ C call site rather than the implementer's summary. Three findings:
   semantics the original game showed players, and the port keeps them. The
   rulebook had never stated this; it is the gap that let a careful delegate
   follow the oracle's letter over its purpose.
+
+## 14. First census coverage map
+
+The first full census with coverage dumps (976 scenarios, 8,672 C blocks, PR
+#1599 batch) makes the C server print 2,321 of 4,902 fixed player-facing text
+segments (47.3%); 1,336 C sites are too short to verify (under 8 characters)
+and are excluded. It is an upper bound: short common phrases ("the south") can
+match text a room description printed. The gaps line up with the day's bugs:
+`weather.c` and `gate.c` 0% (the invented dusk broadcasts, DP-1316),
+`handler.c` 8%, `objsave.c` 4% and `db.c` 5% (the lifecycle and persistence
+layer), `fight.c` 23%, `spells.c` 13.5%, `magic.c` 19%, `shop.c` 17%, and
+`mail.c`, `dream.c`, `scripts.c`, `tattoo.c` 0%. A green census had meant
+"everything the scenarios reach agrees"; this is the first measure of how much
+that is.
