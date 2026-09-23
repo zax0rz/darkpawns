@@ -607,3 +607,48 @@ func TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts(t *testing.T) {
 		t.Error("expected allowed origin to be accepted")
 	}
 }
+
+// TestCheckOriginBehindTheProxy: behind Caddy every WebSocket arrives from
+// loopback carrying X-Forwarded-For. The loopback shortcut must not apply to
+// it, or the origin allowlist is never enforced in production (DP-1302).
+func TestCheckOriginBehindTheProxy(t *testing.T) {
+	parsed := &parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Room A", Zone: 1}}}
+	w, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+	mgr := newTestManager(t, w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
+
+	request := func(forwarded, origin, key string) *http.Request {
+		req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+		req.RemoteAddr = "127.0.0.1:40000"
+		if forwarded != "" {
+			req.Header.Set("X-Forwarded-For", forwarded)
+		}
+		if origin != "" {
+			req.Header.Set("Origin", origin)
+		}
+		if key != "" {
+			req.Header.Set("X-Agent-Key", key)
+		}
+		return req
+	}
+	for _, tc := range []struct {
+		name                   string
+		forwarded, origin, key string
+		want                   bool
+	}{
+		{"local, no origin", "", "", "", true},
+		{"local, any origin", "", "https://elsewhere.example", "", true},
+		{"proxied, site origin", "203.0.113.9", "https://darkpawns.org", "", true},
+		{"proxied, another site", "203.0.113.9", "https://elsewhere.example", "", false},
+		{"proxied, no origin, no key", "203.0.113.9", "", "", false},
+		{"proxied, no origin, bad key", "203.0.113.9", "", "wrong", false},
+		{"proxied, no origin, agent key", "203.0.113.9", "", "dp_test_key_12345", true},
+	} {
+		if got := mgr.checkOrigin(request(tc.forwarded, tc.origin, tc.key)); got != tc.want {
+			t.Errorf("%s: checkOrigin = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}

@@ -187,14 +187,25 @@ func isLoopback(remoteAddr string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
+// forwardedForSomeoneElse reports whether a reverse proxy forwarded this
+// request on a client's behalf. Caddy's reverse_proxy always sets
+// X-Forwarded-For; a client cannot remove a header the proxy adds, so a
+// proxied request can never pass for a local one.
+func forwardedForSomeoneElse(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-For") != "" || r.Header.Get("Forwarded") != ""
+}
+
 // checkOrigin validates WebSocket origins. Public origins in the allowlist are
-// permitted without further credentials. Machine-local connections are always
-// trusted. Connections from private IPs with no Origin header must present a
-// valid agent API key (DP-594).
+// permitted without further credentials. Genuinely machine-local connections
+// are trusted. Connections with no Origin header from a private IP, or through
+// the reverse proxy, must present a valid agent API key (DP-594, DP-1302).
 func (m *Manager) checkOrigin(r *http.Request) bool {
-	// Machine-local connections are always trusted; this covers CI smoke tests
-	// and local agent harnesses regardless of what Origin header they send.
-	if isLoopback(r.RemoteAddr) {
+	// A proxied request arrives from loopback too, so loopback alone does not
+	// mean local: behind Caddy every WebSocket did, and the origin allowlist
+	// was never enforced in production (DP-1302). Only a loopback peer that
+	// names no forwarded client is local (CI smoke tests, local harnesses).
+	proxied := forwardedForSomeoneElse(r)
+	if isLoopback(r.RemoteAddr) && !proxied {
 		return true
 	}
 
@@ -202,12 +213,13 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 	if origin == "" {
 		host, _, _ := net.SplitHostPort(r.RemoteAddr)
 		ip := net.ParseIP(host)
-		if ip == nil || !ip.IsPrivate() {
+		if !proxied && (ip == nil || !ip.IsPrivate()) {
 			slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
 			return false
 		}
 
-		// Private IP without Origin: require a valid agent key.
+		// Private IP, or a proxied client, without Origin: require a valid
+		// agent key.
 		key := findAgentKey(r)
 		if key == "" {
 			slog.Warn("rejected private WebSocket connection without agent key", "remote_addr", r.RemoteAddr)
