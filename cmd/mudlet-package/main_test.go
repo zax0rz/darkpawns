@@ -240,8 +240,7 @@ function loadMap(path)
   return true
 end
 function roomExists(id) return rooms[id] ~= nil end
-speedWalkDir = {}
-function getPath(from, to) speedWalkDir = {"n", "up"}; return true end
+speedWalkDir = nil
 `
 
 // scenario drives the loaded package the way a session on the four-room keep
@@ -340,7 +339,10 @@ gmcp.Client.Map.version = "bbb222"
 fire("gmcp.Client.Map")
 check(downloads() == before + 1, "a new map version was not taken")
 
-speedWalkFrom, speedWalkTo = 8004, 8005
+-- As Mudlet 5.0.1 does in its default mode: it finds the path, sets
+-- speedWalkDir and speedWalkPath, and calls doSpeedWalk. speedWalkFrom and
+-- speedWalkTo stay unset (they belong to custom pathfinding mode).
+speedWalkDir, speedWalkPath = {"n", "up"}, {8005, 8006}
 doSpeedWalk()
 check(sent("send", "n") and sent("send", "up"), "speedwalk did not send the path")
 

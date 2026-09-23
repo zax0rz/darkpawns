@@ -15,7 +15,7 @@
 	<ActionPackage />
 	<ScriptPackage>
 		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>Dark Pawns 1.1.5</name>
+			<name>Dark Pawns 1.1.6</name>
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
@@ -30,7 +30,7 @@
 -- chat window are drawn from data the server already sent alongside the text.
 
 DarkPawns = DarkPawns or {}
-DarkPawns.version = &#34;1.1.5&#34;
+DarkPawns.version = &#34;1.1.6&#34;
 DarkPawns.packageName = &#34;darkpawns&#34;
 
 -- Mudlet preinstalls its generic text mapper in every profile for a game it
@@ -799,14 +799,13 @@ function map.onRoomInfo()
   centerview(room)
 end
 
--- Mudlet calls doSpeedWalk when a map room is double-clicked; the game
--- understands the same one-letter and up/down directions getPath returns.
+-- Mudlet calls doSpeedWalk when a map room is double-clicked, after finding
+-- the path itself and leaving its steps in speedWalkDir (Host::startSpeedWalk;
+-- speedWalkFrom and speedWalkTo exist only in custom pathfinding mode, which
+-- this package does not use). When there is no path, Mudlet says so and does
+-- not call it. The game understands the same n/e/s/w/up/down the steps use.
 function doSpeedWalk()
-  if not getPath(speedWalkFrom, speedWalkTo) then
-    cecho(&#34;\n&lt;red&gt;[ Dark Pawns ] No mapped path to that room.&lt;reset&gt;\n&#34;)
-    return
-  end
-  for _, direction in ipairs(speedWalkDir) do
+  for _, direction in ipairs(speedWalkDir or {}) do
     send(direction, false)
   end
 end

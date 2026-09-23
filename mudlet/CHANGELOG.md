@@ -4,6 +4,14 @@ Every change to `src/` bumps `VERSION` and adds an entry here. The server
 announces the version through GMCP `Client.GUI`, and Mudlet reinstalls the
 package when it changes, so an unbumped change never reaches players.
 
+## 1.1.6 (2026-09-23)
+
+- Double-clicking a room on the map walks there. The package read the path
+  from variables Mudlet only sets in its custom pathfinding mode, so in the
+  default mode every double-click was a Lua error and nothing moved. It now
+  sends the steps Mudlet has already found. Found in the Mudlet acceptance
+  run (case 11).
+
 ## 1.1.5 (2026-09-23)
 
 - The map shows after an upgrade. A profile has one map widget, made with
