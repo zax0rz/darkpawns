@@ -166,3 +166,30 @@ layer), `fight.c` 23%, `spells.c` 13.5%, `magic.c` 19%, `shop.c` 17%, and
 `mail.c`, `dream.c`, `scripts.c`, `tattoo.c` 0%. A green census had meant
 "everything the scenarios reach agrees"; this is the first measure of how much
 that is.
+
+## 15. The harness certified one transport; the other had its own renderer
+
+Every oracle scenario drove the Go port over telnet, the transport the C
+server has. Players also reach the game through `/play`, whose browser client
+renders the server's JSON frames itself. The owner's first `/play` session
+after cutover "felt different" (DP-1320). A headless driver that runs the real
+client under Node (PR #1606, `-go-transport ws`) put the whole census through
+that path: 976 scenarios, 860 pass, 104 fail, every failure web-only, while the
+telnet census stayed green.
+
+The cause is architectural, not a list of bugs. The telnet listener had become
+the port's byte renderer: it adds the line endings that game text omits, draws
+prompts, and routes pager and editor input. The browser client reimplements
+none of that, and every WebSocket session starts in agent mode, which also
+skips the pager. So combat lines run together, `AFK >` and the editor `]`
+never appear, argument spacing collapses, and `q` in a pager quaffs.
+
+The same run found two server bugs no telnet scenario could reach: a closed
+tab removes the character instead of leaving it linkless (DP-1323), and quitting
+to the menu before closing the tab comes back with an empty backpack (DP-1324).
+
+The lesson for the method: a differential oracle certifies the path it drives.
+"The census is green" held for telnet only, and nothing in the census said so.
+Where a system has two presentation paths, the second one needs its own driver.
+Better still, it should share the first one's renderer, so that one proof
+covers both.
