@@ -43,19 +43,7 @@ const (
 // The parser stores the C room flag words as decimal strings; each word is a
 // 32-bit bitvector, so the first word carries bits 0 through 31.
 func roomHasFlagBit(flags []string, flagBit int) bool {
-	if flagBit < 0 {
-		return false
-	}
-	word := flagBit / 32
-	bit := flagBit % 32
-	if word >= len(flags) {
-		return false
-	}
-	val, err := strconv.ParseUint(flags[word], 10, 32)
-	if err != nil {
-		return false
-	}
-	return val&(1<<uint(bit)) != 0
+	return parser.RoomHasFlagBit(flags, flagBit)
 }
 
 // setRoomFlagBit applies a runtime C ROOM_* bit to the parser's four 32-bit
