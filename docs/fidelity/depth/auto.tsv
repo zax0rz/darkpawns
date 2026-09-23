@@ -6,3 +6,4 @@ do_auto	auto	auto.gold-toggle	D3	state	oracle-green-multiseed	player-state-toggl
 do_auto	auto	auto.split-toggle	D3	state	oracle-green-multiseed	player-state-toggles@1,2,3,5,8	act.other.c:1402-1410	Split toggles group gold sharing and emits the exact on/off lines in both directions across the five-seed vehicle.
 do_auto	auto	auto.argument-case	D2	command	oracle-green-multiseed	player-state-toggles@1,2,3,5,8	act.other.c:1348-1412	C compares the post-skip-spaces argument literally; uppercase EXIT reaches the unknown-argument response rather than toggling exits.
 do_auto	auto	auto.unknown	D1	command	oracle-green-multiseed	player-state-toggles@1,2,3,5,8	act.other.c:1412	Unknown arguments emit What do you want to make automatic? without state change.
+dispatcher	autoexit	autoexit.unregistered	D1	command	oracle-green	player-state-toggles	interpreter.c:910-948	C has no autoexit row, so it falls through to Huh?!? after the Go-only registration is removed.

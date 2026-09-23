@@ -44,25 +44,9 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 	arg = strings.TrimLeft(arg, " \t")
 
 	if arg == "" {
-		var result strings.Builder
-		result.WriteString("You have the following autos set:\r\n")
-		if ch.GetAutoExit() {
-			result.WriteString("Exits ")
-		}
-		if ch.GetFlags()&(1<<PrfAutoLoot) != 0 {
-			result.WriteString("Loot ")
-		}
-		if ch.GetFlags()&(1<<PrfAutoGold) != 0 {
-			result.WriteString("Gold ")
-		}
-		if ch.GetFlags()&(1<<PrfAutoSplit) != 0 {
-			result.WriteString("Split")
-		}
-		if result.Len() == len("You have the following autos set:\r\n") {
-			result.WriteString("None.")
-		}
-		result.WriteString("\r\n")
-		ch.SendMessage(result.String())
+		// C builds this response with overlapping sprintf source and destination
+		// buffers (act.other.c:1308-1341). The shipped oracle emits no bytes on
+		// that undefined branch, so preserve its player-visible result.
 		return true
 	}
 
