@@ -1569,7 +1569,7 @@ damage(struct char_data *ch, struct char_data *victim, int dam, int attacktype)
    case POS_INCAP:
       act("$n is incapacitated and will slowly die, if not aided.",
       TRUE, victim, 0, 0, TO_ROOM);
-      send_to_char("You are incapacitated an will slowly die, "
+      send_to_char("You are incapacitated and will slowly die, "
            "if not aided.\r\n", victim);
       break;
    case POS_STUNNED:
