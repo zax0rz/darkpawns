@@ -13,3 +13,8 @@ do_gsay	gsay	gsay.norepeat	D2	command	oracle-green-multiseed	gsay-depth@1,2,3,5,
 do_gsay	gsay	gsay.sleeping-recipient	D3	audience	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:846-858	The TO_VICT|TO_SLEEP delivery reaches a grouped sleeping follower.
 do_gsay	gtell	gtell.spacing	D2	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:842-864	C preserves internal argument whitespace through the group broadcast and self confirmation.
 do_gsay	gsay	gsay.ansi-controls	D2	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:842-864; interpreter.c:1228-1250	C delete_ansi_controls strips every ampersand from the formatted sender and recipient messages.
+do_gsay	gsay	gsay.act-actor-echo	D2	command	oracle-green	gsay-act-depth	act.comm.c:860-866	TO_CHAR act delivery preserves the C self-echo line ending and color wrapping.
+do_gsay	gsay	gsay.act-invisible-speaker	D3	audience	oracle-green	gsay-act-depth	act.comm.c:842-858	Act substitution renders an invisible player as Someone for grouped recipients.
+do_gsay	gsay	gsay.act-follower-order	D3	audience	oracle-green	gsay-act-depth	utils.c:add_follower; act.comm.c:846-858	Leader-first delivery follows C follower-list prepend order.
+do_gsay	gsay	gsay.act-sleeping-follower	D3	audience	oracle-green	gsay-act-depth	act.comm.c:846-858	TO_VICT|TO_SLEEP delivers to a grouped sleeping follower.
+do_gsay	gsay	gsay.act-complete-color	D2	command	oracle-green	gsay-act-depth	act.comm.c:842-864	Raw ANSI comparison pins C CCWHT and CCNRM wrappers around the act-delivered line.

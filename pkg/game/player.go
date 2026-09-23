@@ -173,8 +173,9 @@ type Player struct {
 
 	// Group/follow state
 	// Source: act.movement.c (ch->master), structs.h AFF_GROUP flag
-	Following string // Name of player being followed (ch->master in original)
-	InGroup   bool   // Whether in a group (AFF_GROUP flag in original)
+	Following         string // Name of player being followed (ch->master in original)
+	InGroup           bool   // Whether in a group (AFF_GROUP flag in original)
+	followingSequence uint64
 
 	// Mount state — from src/utils.c
 	MountName string // Name of mount mob being ridden

@@ -1,6 +1,15 @@
 package game
 
-import "strings"
+import (
+	"strings"
+	"sync/atomic"
+)
+
+var followerSequenceCounter atomic.Uint64
+
+func nextFollowerSequence() uint64 {
+	return followerSequenceCounter.Add(1)
+}
 
 func (p *Player) GetHometown() int {
 	p.mu.RLock()
@@ -219,6 +228,17 @@ func (p *Player) SetFollowing(name string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Following = name
+	if name == "" {
+		p.followingSequence = 0
+	} else {
+		p.followingSequence = nextFollowerSequence()
+	}
+}
+
+func (p *Player) GetFollowingSequence() uint64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.followingSequence
 }
 
 // GetCha returns the player's charisma.
