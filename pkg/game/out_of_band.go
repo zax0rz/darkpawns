@@ -30,17 +30,109 @@ type OutOfBandObserver interface {
 // Act's; each player who received the line is then reported to the
 // out-of-band observer with that same line.
 func (w *World) channelAct(channel string, hideInvisible bool, ch, vict Actor, format string, actType int) {
+	w.channelActWrapped(channel, hideInvisible, ch, vict, format, actType, nil)
+}
+
+func (w *World) channelActWrapped(channel string, hideInvisible bool, ch, vict Actor, format string, actType int, wrap func(Actor, string) string) {
 	observer := w.outOfBand()
-	if observer == nil {
+	if observer == nil && wrap == nil {
 		Act(w, hideInvisible, ch, vict, nil, nil, format, "", actType)
 		return
 	}
 	actDeliver(w, hideInvisible, ch, vict, nil, nil, format, "", actType, func(to Actor, line string) {
+		if wrap != nil {
+			line = wrap(to, line)
+		}
 		to.SendMessage(line)
-		if p, ok := to.(*Player); ok && p != nil {
-			observer.ChannelLine(p, channel, channelTalker(ch, to), line)
+		if observer != nil {
+			if p, ok := to.(*Player); ok && p != nil {
+				observer.ChannelLine(p, channel, channelTalker(ch, to), line)
+			}
 		}
 	})
+}
+
+// GroupSay delivers one do_gsay line through act() to the grouped leader and
+// followers in the same order as C's prepended follower list.
+func (w *World) GroupSay(ch *Player, message string) {
+	if ch == nil {
+		return
+	}
+	if !ch.IsAffected(affGroup) {
+		ch.SendMessage("But you are not the member of a group!\r\n")
+		return
+	}
+	if message == "" {
+		ch.SendMessage("Yes, but WHAT do you want to group-say?\r\n")
+		return
+	}
+
+	leader := Actor(ch)
+	if following := ch.GetFollowing(); following != "" {
+		leader = w.followingActor(following)
+	}
+	if leader != nil {
+		leaderName := leader.GetName()
+		format := DeleteANSIControls("$n tells the group, '" + message + "'")
+		if leader != ch && actorInGroup(leader) {
+			w.channelActWrapped("group", false, ch, leader, format, ToVict|ToSleep,
+				wrapGroupColor(3, 3))
+		}
+		for _, follower := range w.GetFollowerActors(leaderName) {
+			if follower == ch || !actorInGroup(follower) {
+				continue
+			}
+			w.channelActWrapped("group", false, ch, follower, format, ToVict|ToSleep,
+				wrapGroupColor(3, 3))
+		}
+	}
+
+	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
+		ch.SendMessage("Okay.\r\n")
+		return
+	}
+	echo := DeleteANSIControls("You tell the group, '" + message + "'")
+	w.channelActWrapped("group", false, ch, nil, echo, ToChar|ToSleep,
+		wrapGroupColor(1, 2))
+}
+
+func actorInGroup(actor Actor) bool {
+	switch member := actor.(type) {
+	case *Player:
+		return member.IsAffected(affGroup)
+	case *MobInstance:
+		return member.IsAffected(affGroup)
+	default:
+		return false
+	}
+}
+
+// wrapGroupColor is do_gsay's send_to_char(CCWHT(k, open)) / act() /
+// send_to_char(CCNRM(k, reset)) sandwich: the reset follows act's whole line,
+// line ending included.
+func wrapGroupColor(openLevel, resetLevel int) func(Actor, string) string {
+	return func(to Actor, line string) string {
+		player, ok := to.(*Player)
+		if !ok || player == nil {
+			return line
+		}
+		flags := player.GetFlags()
+		level := 0
+		if flags&(1<<uint(PrfColor1)) != 0 {
+			level++
+		}
+		if flags&(1<<uint(PrfColor2)) != 0 {
+			level += 2
+		}
+		if level < openLevel {
+			return line
+		}
+		wrapped := "\x1b[37m" + line
+		if level >= resetLevel {
+			wrapped += "\x1b[0m"
+		}
+		return wrapped
+	}
 }
 
 // channelSend is communicationSend for a sender's own echo of a channel line
