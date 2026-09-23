@@ -157,12 +157,26 @@ end
 Geyser = {Fixed = "fixed", Dynamic = "dynamic"}
 for _, kind in ipairs({"VBox", "HBox", "Label", "Gauge", "Mapper", "MiniConsole"}) do
   Geyser[kind] = {new = function(self, cons, parent)
+    if kind == "Mapper" then
+      for _, pkg in ipairs(installedPackages) do
+        if pkg == "generic_mapper" then mapperOpenedWithGenericMapper = true end
+      end
+    end
     local w = widget(kind, cons)
     if kind == "Gauge" then
       w.front, w.back, w.text = widget("Label"), widget("Label"), widget("Label")
     end
     return w
   end}
+end
+
+installedPackages = {"generic_mapper", "run-lua-code"}
+function getPackages() return installedPackages end
+function uninstallPackage(name)
+  record("uninstallPackage", name)
+  for i, pkg in ipairs(installedPackages) do
+    if pkg == name then table.remove(installedPackages, i) end
+  end
 end
 
 rooms, areas, nextArea = {}, {}, 0
@@ -194,6 +208,11 @@ local function sent(name, value)
   end
   return false
 end
+
+-- The generic mapper is gone before the dock opens a map window: it answers
+-- mapOpenEvent by sending a blank line and "look" to the game.
+check(sent("uninstallPackage", "generic_mapper"), "generic mapper not removed")
+check(not mapperOpenedWithGenericMapper, "the map window opened while the generic mapper was still installed")
 
 -- Loading while connected with GMCP already up negotiates immediately.
 check(not sent("sendGMCP", 'Core.Supports.Add ["Char 1","Room 1","Comm.Channel 1"]'), "negotiated with an empty gmcp table")

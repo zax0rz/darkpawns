@@ -33,6 +33,23 @@ DarkPawns = DarkPawns or {}
 DarkPawns.version = &#34;1.0.0&#34;
 DarkPawns.packageName = &#34;darkpawns&#34;
 
+-- Mudlet preinstalls its generic text mapper in every profile for a game it
+-- doesn&#39;t recognise. On Dark Pawns it can only get in the way: the game sends
+-- map data over GMCP, and the generic mapper answers the first map window to
+-- open by sending a blank line and &#34;look&#34; to the game on its own, which at the
+-- name prompt ends the connection. Remove it before the dock opens its map.
+function DarkPawns.removeGenericMapper()
+  for _, name in ipairs(getPackages()) do
+    if name == &#34;generic_mapper&#34; then
+      uninstallPackage(&#34;generic_mapper&#34;)
+      cecho(&#34;\n&lt;ansi_white&gt;[ Dark Pawns ] Removed Mudlet&#39;s generic mapper: Dark Pawns draws the map itself, and the generic mapper sends commands that can end your login.&lt;reset&gt;\n&#34;)
+      return true
+    end
+  end
+  return false
+end
+DarkPawns.removeGenericMapper()
+
 -- The GMCP modules this package reads. Mudlet enables Char and Room on its
 -- own; Comm.Channel has to be asked for.
 DarkPawns.modules = { &#34;Char 1&#34;, &#34;Room 1&#34;, &#34;Comm.Channel 1&#34; }

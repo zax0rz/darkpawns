@@ -22,3 +22,6 @@ First release, built against Dark Pawns GMCP message set 1 (`docs/gmcp.md`).
 - `dp` command: `dp hide`, `dp show`, `dp clear`.
 - Asks Mudlet's built-in starter interface to stand aside, so gauges and
   chat are not drawn twice.
+- Removes Mudlet's preinstalled generic mapper, which scrapes room text and,
+  when a map window opens, sends a blank line and `look` to the game on its
+  own: at the name prompt that ended the connection.

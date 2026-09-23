@@ -37,7 +37,7 @@ Cases 9 and 10 swap them: Warden in Mudlet, Tester in the plain client.
 | # | Do | Expect |
 |---|---|---|
 | **Install** | | |
-| 1 | Connect Mudlet for the first time. | Mudlet prints that it is downloading and installing `darkpawns`. The dock appears on the right. No errors. |
+| 1 | Connect Mudlet for the first time, and stay at the name prompt. | Mudlet prints that it is downloading and installing `darkpawns`, then "Removed Mudlet's generic mapper". The dock appears on the right. The connection stays open at the name prompt: nothing is sent to the game on your behalf. No errors. |
 | 2 | `lua display(gmcp)` before logging in. | `Client` present. No `Char` or `Room` yet. |
 | 3 | Log in as Tester. | The dock matches the website: a cream (Paper-Deep) panel with the ink pawn and **DARK** over **PAWNS** (PAWNS in oxblood) at the top, then the character line, e.g. `Tester · level 1 Human Warrior · 0 gold`, then HP, MANA and MOVE readings (`20 / 20` style) over full bars, then MAP and CHAT on dark panels. Map shows the start room. |
 | 4 | Type `dp`. | Version `1.0.0` and the command list. |
