@@ -30,6 +30,16 @@ the C server exactly. Not "equivalent." Not "improved." Identical.
   strings verbatim — including grammar errors, spacing, and `\r\n` discipline.
   If a Go message has no C counterpart, it is a bug (see R4).
 - **Verify:** oracle scenario. No fix ships on "looks right" (oracle proof gate).
+- **R1a. C's undefined behaviour is not the game.** When the oracle's bytes
+  come from undefined behaviour in the C source (a `sprintf` whose source and
+  destination overlap, an uninitialised read, an out-of-bounds write), the
+  port reproduces the bytes the original build showed players, and the oracle
+  is patched to those same semantics, as `make_prompt` and the exits line were
+  for the Linux build. Until the oracle patch lands, the case is `blocked` and
+  its divergence pinned; it is never "fixed" by copying what one compiler
+  happened to emit. Taught by `do_auto` (PR #1595): C builds its no-argument
+  listing with `sprintf(buf, "%sExits ", buf)`, the Linux oracle printed
+  nothing, and a careful port deleted the listing to match.
 
 ## R2. The command surface is part of the game
 
@@ -144,3 +154,4 @@ cannot observe them.
 | 2026-07-23 | R5e added | DP-1198 dead-code false alarm + the obj-3117 misattribution — reachability of findings must be verified |
 | 2026-07-24 | R3d added; R5a refined | DP-1212 — God creation drew 2 phantom AdvanceLevel values (C gates do_start on !GET_LEVEL); +2 offset flipped bash/trip/headbutt, left kick/backstab green by coincidence |
 | 2026-09-08 | R5f added | Aiko entry incident: independent browser dialogue and persistence failures escaped creation oracle coverage |
+| 2026-09-23 | R1a added | `do_auto`'s self-aliasing `sprintf`: the oracle printed nothing, a delegated port deleted the listing to match; the precedent (patch the oracle, keep the intended bytes) had never been written down |
