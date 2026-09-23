@@ -311,6 +311,16 @@ check(handlerCount("gmcp.Room.Info") == before, "reload stacked a second Room.In
 
 fire("sysUninstallPackage", "darkpawns")
 check(DarkPawns.ui.dock.hidden and handlerCount("gmcp.Room.Info") == 0, "uninstall left the dock or handlers behind")
+
+-- An upgrade: the new version loads into the same Lua state, where the old
+-- version's hidden dock is still held. It builds its own dock rather than
+-- showing the old one again. (Clearing the version stamp stands in for an
+-- older version; 1.1.2 and earlier left none.)
+local old = DarkPawns.ui.dock
+DarkPawns.ui.version = nil
+reload()
+check(DarkPawns.ui.dock ~= old and not DarkPawns.ui.dock.hidden and old.hidden, "an upgrade showed the old version's dock")
+check(DarkPawns.ui.header.css:find("darkpawns-lockup.png", 1, true), "the upgraded dock has no lockup")
 `
 
 // TestPackageLoadsAndDrives loads every script into a Lua 5.1 state with the

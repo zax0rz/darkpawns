@@ -15,7 +15,7 @@
 	<ActionPackage />
 	<ScriptPackage>
 		<ScriptGroup isActive="yes" isFolder="yes">
-			<name>Dark Pawns 1.1.3</name>
+			<name>Dark Pawns 1.1.4</name>
 			<packageName></packageName>
 			<script></script>
 			<eventHandlerList />
@@ -30,7 +30,7 @@
 -- chat window are drawn from data the server already sent alongside the text.
 
 DarkPawns = DarkPawns or {}
-DarkPawns.version = &#34;1.1.3&#34;
+DarkPawns.version = &#34;1.1.4&#34;
 DarkPawns.packageName = &#34;darkpawns&#34;
 
 -- Mudlet preinstalls its generic text mapper in every profile for a game it
@@ -106,8 +106,24 @@ end
 -- text on paper beside a thin bar, so no reading depends on colour and every
 -- piece of text clears WCAG AA contrast.
 
-DarkPawns.ui = DarkPawns.ui or {}
+-- A dock belongs to one package version. Mudlet upgrades a package inside
+-- the running profile, so the new version loads into the Lua state that
+-- still holds the old version&#39;s dock (hidden by its uninstall). Reusing it
+-- would show the old dock again; instead the new version starts a fresh
+-- table and gives its widgets names of its own.
+if DarkPawns.ui and DarkPawns.ui.version ~= DarkPawns.version then
+  if DarkPawns.ui.hide then
+    DarkPawns.ui.hide()
+  end
+  DarkPawns.ui = nil
+end
+DarkPawns.ui = DarkPawns.ui or { version = DarkPawns.version }
 local ui = DarkPawns.ui
+
+-- A widget name unique to this version.
+local function id(name)
+  return &#34;DarkPawns-&#34; .. DarkPawns.version .. &#34;.&#34; .. name
+end
 
 ui.palette = {
   paper = &#34;#EFE7D6&#34;,
@@ -507,7 +523,7 @@ function ui.build()
 
   -- The chassis: Paper-Deep, an Ink rule on the edge facing the game text.
   ui.dock = Geyser.Label:new({
-    name = &#34;DarkPawns.dock&#34;,
+    name = id(&#34;dock&#34;),
     x = &#34;-&#34; .. ui.dockPercent .. &#34;%&#34;, y = 0,
     width = ui.dockPercent .. &#34;%&#34;, height = &#34;100%&#34;,
   })
@@ -515,12 +531,12 @@ function ui.build()
     &#34;background-color: %s; border-left: 1px solid %s;&#34;, ui.palette.paperDeep, ui.palette.ink))
 
   ui.box = Geyser.VBox:new({
-    name = &#34;DarkPawns.box&#34;, x = &#34;4%&#34;, y = &#34;1%&#34;, width = &#34;92%&#34;, height = &#34;98%&#34;,
+    name = id(&#34;box&#34;), x = &#34;4%&#34;, y = &#34;1%&#34;, width = &#34;92%&#34;, height = &#34;98%&#34;,
   }, ui.dock)
 
   -- The lockup, drawn at its own size from the left edge: never stretched.
   ui.header = Geyser.Label:new({
-    name = &#34;DarkPawns.header&#34;, height = ui.lockupHeight, v_policy = Geyser.Fixed,
+    name = id(&#34;header&#34;), height = ui.lockupHeight, v_policy = Geyser.Fixed,
   }, ui.box)
   local lockup = writeLockup()
   if lockup then
@@ -531,7 +547,7 @@ function ui.build()
     transparent(ui.header)
   end
 
-  ui.status = Geyser.Label:new({ name = &#34;DarkPawns.status&#34;, height = 26, v_policy = Geyser.Fixed }, ui.box)
+  ui.status = Geyser.Label:new({ name = id(&#34;status&#34;), height = 26, v_policy = Geyser.Fixed }, ui.box)
   ui.status:setStyleSheet(string.format(
     &#34;background-color: transparent; border-top: 1px solid %s;&#34;, ui.palette.ink))
   ui.status:echo(string.format([[&lt;span style=&#34;font-family: %s; color: %s;&#34;&gt;Not in the game yet&lt;/span&gt;]],
@@ -546,14 +562,14 @@ function ui.build()
     { key = &#34;mv&#34;, label = &#34;MOVE&#34;, colour = ui.palette.inkMuted },
   }) do
     local reading = Geyser.Label:new({
-      name = &#34;DarkPawns.reading.&#34; .. spec.key, height = 20, v_policy = Geyser.Fixed,
+      name = id(&#34;reading.&#34; .. spec.key), height = 20, v_policy = Geyser.Fixed,
     }, ui.box)
     transparent(reading)
     reading.label = spec.label
     ui.readings[spec.key] = reading
 
     local gauge = Geyser.Gauge:new({
-      name = &#34;DarkPawns.gauge.&#34; .. spec.key, height = 8, v_policy = Geyser.Fixed,
+      name = id(&#34;gauge.&#34; .. spec.key), height = 8, v_policy = Geyser.Fixed,
     }, ui.box)
     gauge.front:setStyleSheet(string.format(&#34;background-color: %s; border: none;&#34;, spec.colour))
     gauge.back:setStyleSheet(string.format(
@@ -563,12 +579,12 @@ function ui.build()
     ui.gauges[spec.key] = gauge
   end
 
-  eyebrow(&#34;DarkPawns.mapLabel&#34;, &#34;MAP&#34;)
-  ui.map = Geyser.Mapper:new({ name = &#34;DarkPawns.map&#34;, v_stretch_factor = 3 }, ui.box)
+  eyebrow(id(&#34;mapLabel&#34;), &#34;MAP&#34;)
+  ui.map = Geyser.Mapper:new({ name = id(&#34;map&#34;), v_stretch_factor = 3 }, ui.box)
 
-  eyebrow(&#34;DarkPawns.chatLabel&#34;, &#34;CHAT&#34;)
+  eyebrow(id(&#34;chatLabel&#34;), &#34;CHAT&#34;)
   ui.chat = Geyser.MiniConsole:new({
-    name = &#34;DarkPawns.chat&#34;,
+    name = id(&#34;chat&#34;),
     v_stretch_factor = 2,
     color = ui.palette.canvas,
     fontSize = 10,
