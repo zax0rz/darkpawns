@@ -5,7 +5,7 @@
     "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!": {
       "segment": "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!",
       "file": "pkg/session/manager.go",
-      "line": 1930,
+      "line": 1942,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -109,7 +109,7 @@
     "Description is too long; type @ or /s to save, /a to abort.": {
       "segment": "Description is too long; type @ or /s to save, /a to abort.",
       "file": "pkg/session/menu.go",
-      "line": 210,
+      "line": 211,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -117,7 +117,7 @@
     "Description not changed.": {
       "segment": "Description not changed.",
       "file": "pkg/session/menu.go",
-      "line": 183,
+      "line": 184,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -125,7 +125,7 @@
     "Description saved.": {
       "segment": "Description saved.",
       "file": "pkg/session/menu.go",
-      "line": 203,
+      "line": 204,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -469,7 +469,7 @@
     "Unable to save description.": {
       "segment": "Unable to save description.",
       "file": "pkg/session/menu.go",
-      "line": 196,
+      "line": 197,
       "sink": ".sendText",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -637,7 +637,7 @@
     "You autoloot the corpse but find nothing of value.": {
       "segment": "You autoloot the corpse but find nothing of value.",
       "file": "pkg/game/death.go",
-      "line": 466,
+      "line": 455,
       "sink": ".SendMessage",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -645,15 +645,7 @@
     "You autoloot:": {
       "segment": "You autoloot:",
       "file": "pkg/game/death.go",
-      "line": 464,
-      "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
-    "You awaken in the temple.": {
-      "segment": "You awaken in the temple.",
-      "file": "pkg/game/death.go",
-      "line": 725,
+      "line": 453,
       "sink": ".SendMessage",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -662,14 +654,6 @@
       "segment": "You feel your magic dissipate in the beholder's presence!",
       "file": "pkg/game/spec_procs_missing.go",
       "line": 128,
-      "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
-    "You feel your soul wrenched from your body...": {
-      "segment": "You feel your soul wrenched from your body...",
-      "file": "pkg/game/death.go",
-      "line": 724,
       "sink": ".SendMessage",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"
@@ -965,7 +949,7 @@
     "is disintegrated! Equipment lies scattered on the ground.": {
       "segment": "is disintegrated! Equipment lies scattered on the ground.",
       "file": "pkg/game/death.go",
-      "line": 1206,
+      "line": 1194,
       "sink": ".SendMessage",
       "reason": "unreviewed",
       "firstSeen": "2026-09-23"

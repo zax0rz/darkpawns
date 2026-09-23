@@ -73,11 +73,11 @@ func (w *World) DoQuit(ch *Player, reallyQuit bool) QuitOutcome {
 	ch.SendMessage("Goodbye, friend.. Come back soon!\r\n")
 
 	if !isokquit && !immort {
-		// C: free_rent && !(isokquit || immort) -> no Crash_rentsave; the
-		// equipment is not persisted. The Go port has no rent system, so the
-		// faithful minimal model is to strip carried objects before the save.
+		// C: free_rent && !(isokquit || immort) -> no Crash_rentsave, so
+		// nothing leaves with the character: extract_char drops everything
+		// worn and carried where they quit (handler.c:1133-1136), for anyone
+		// to pick up.
 		BasicMudLogf("LOSTEQ:%s has quit out of a save room.", ch.GetName())
-		w.stripAllCarriedObjects(ch)
 		if ch.IsMounted() {
 			Unmount(ch, w.GetMount(ch))
 		}
@@ -107,25 +107,50 @@ func (w *World) isSafeQuitRoom(ch *Player, roomVNum int) bool {
 	}
 }
 
-// stripAllCarriedObjects extracts every equipped and carried object so the
-// upcoming save persists the character with empty equipment and inventory —
-// the LOSTEQ half of C's rent fork. Objects vanish (as in C, where no rent
-// file is written); gold and other char-record fields are untouched.
-func (w *World) stripAllCarriedObjects(ch *Player) {
-	var carried []*ObjectInstance
-	if ch.Equipment != nil {
-		carried = append(carried, ch.Equipment.extractAll()...)
+// RentOut is Crash_rentsave's object pass for a legal quit (objsave.c:912):
+// unrentable objects (Crash_is_unrentable: NORENT, keys, negative vnum) are
+// destroyed wherever they are, worn, carried or inside a container
+// (Crash_extract_norents_from_equipped, Crash_extract_norents). What remains
+// is what the rent file keeps.
+func (w *World) RentOut(p *Player) {
+	held := heldObjects(p)
+	for _, obj := range held {
+		w.extractNorents(obj, p.GetRoom())
 	}
-	if ch.Inventory != nil {
-		carried = append(carried, ch.Inventory.extractAll()...)
+}
+
+func (w *World) extractNorents(obj *ObjectInstance, roomVNum int) {
+	if obj == nil {
+		return
 	}
-	for _, item := range carried {
-		if item == nil {
-			continue
+	for _, child := range append([]*ObjectInstance(nil), obj.Contains...) {
+		w.extractNorents(child, roomVNum)
+	}
+	if IsUnrentable(obj) {
+		w.ExtractObject(obj, roomVNum)
+	}
+}
+
+// ExtractRentedObjects is Crash_extract_objs after the rent file is written:
+// the rented objects leave the world with the character instead of dropping
+// at extraction. They come back from the store when the character re-enters.
+func (w *World) ExtractRentedObjects(p *Player) {
+	held := heldObjects(p)
+	for _, obj := range held {
+		w.ExtractObject(obj, p.GetRoom())
+	}
+}
+
+// heldObjects is everything a player wears and carries (top level only).
+func heldObjects(p *Player) []*ObjectInstance {
+	var held []*ObjectInstance
+	if p.Equipment != nil {
+		for _, obj := range p.Equipment.GetEquippedItems() {
+			held = append(held, obj)
 		}
-		// Detach first so ExtractObject does not try to move an equipped item
-		// through a potentially full inventory on this destructive path.
-		item.Location = LocNowhere()
-		w.ExtractObject(item, ch.GetRoom()) // recursive over contents
 	}
+	if p.Inventory != nil {
+		held = append(held, p.Inventory.FindItems("")...)
+	}
+	return held
 }

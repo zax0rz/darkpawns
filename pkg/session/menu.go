@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -277,6 +278,14 @@ func (s *Session) enterReturningPlayer() error {
 	if !s.authenticated || s.player == nil {
 		return ErrNotAuthenticated
 	}
+	// A character who rented comes back as the rent file left them: C's
+	// Crash_load on entering from the menu. The game store holds the record
+	// written when they quit, objects included.
+	if s.player.RentedOut && s.manager.hasDB {
+		if err := s.reloadCharacterFromStore(); err != nil {
+			return err
+		}
+	}
 	name := s.player.Name
 	// C's CON_MENU path calls reset_char() before re-adding an extracted
 	// player. In particular, a post-death player is still at NOWHERE with
@@ -325,6 +334,27 @@ func (s *Session) enterReturningPlayer() error {
 		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, name)
 	}
 	s.clearMenuState()
+	return nil
+}
+
+// reloadCharacterFromStore replaces the session's character with the one the
+// game store holds, as a fresh login would build it.
+func (s *Session) reloadCharacterFromStore() error {
+	rec, err := s.manager.db.GetPlayer(s.player.Name)
+	if err != nil {
+		return fmt.Errorf("reload %s: %w", s.player.Name, err)
+	}
+	if rec == nil {
+		return fmt.Errorf("reload %s: no stored character", s.player.Name)
+	}
+	p, err := db.RecordToPlayer(rec, s.manager.world)
+	if err != nil {
+		return fmt.Errorf("reload %s: %w", s.player.Name, err)
+	}
+	if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
+		p.Aliases = aliases
+	}
+	s.player = p
 	return nil
 }
 

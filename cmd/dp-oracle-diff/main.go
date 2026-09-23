@@ -595,12 +595,36 @@ func prepareOracleData(source, destination string, emptyPlayers bool) error {
 	if err := os.CopyFS(destination, os.DirFS(source)); err != nil {
 		return fmt.Errorf("copy C oracle lib to throwaway directory: %w", err)
 	}
+	if err := makeCPlayerFileDirs(destination); err != nil {
+		return err
+	}
 	if !emptyPlayers {
 		return nil
 	}
 	playersPath := filepath.Join(destination, "etc", "players")
 	if err := os.WriteFile(playersPath, nil, 0o600); err != nil {
 		return fmt.Errorf("empty disposable C oracle player file: %w", err)
+	}
+	return nil
+}
+
+// cPlayerFileDirs are the per-player file trees get_filename() writes into
+// (src/utils.c: plrpoof, plralias, plrobjs, plrtext, each split A-E .. ZZZ).
+// A production C lib has them; the checked-in oracle lib does not, and C's
+// writers fail silently without them: Crash_rentsave returns before taking a
+// quitter's objects, so extract_char dropped a legally-quitting player's gear
+// on the floor in the harness only.
+var cPlayerFileDirs = []string{"plrpoof", "plralias", "plrobjs", "plrtext"}
+
+var cPlayerFileBuckets = []string{"A-E", "F-J", "K-O", "P-T", "U-Z", "ZZZ"}
+
+func makeCPlayerFileDirs(lib string) error {
+	for _, dir := range cPlayerFileDirs {
+		for _, bucket := range cPlayerFileBuckets {
+			if err := os.MkdirAll(filepath.Join(lib, dir, bucket), 0o750); err != nil {
+				return fmt.Errorf("create C player file directory %s/%s: %w", dir, bucket, err)
+			}
+		}
 	}
 	return nil
 }

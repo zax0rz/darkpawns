@@ -161,15 +161,42 @@ func (w *World) ExtractPendingPlayers() []*Player {
 
 		roomVNum := p.RoomVNum
 
-		// Unequip ALL equipment, dropping each item to the room floor.
-		// Source: handler.c extract_pending_chars — obj_to_room for every item.
-		if p.Equipment != nil {
-			p.Equipment.mu.Lock()
-			for slot, item := range p.Equipment.Slots {
-				if isLitLightSource(item) {
-					w.adjustRoomLight(roomVNum, -1)
+		// extract_char drops what the character still holds where they are
+		// (handler.c:1132-1142): first the carried list from its head (the
+		// most recently obtained object, since obj_to_char prepends), then
+		// each worn slot in WEAR_* order. obj_to_room prepends and the room
+		// listing is built from the end of roomItems, so appending in C's
+		// drop order reproduces C's floor order. A character who rented has
+		// nothing left to drop: the rent file took it (Crash_rentsave then
+		// Crash_extract_objs).
+		if !p.RentedOut {
+			var drops []*ObjectInstance
+			if p.Inventory != nil {
+				p.Inventory.mu.Lock()
+				for i := len(p.Inventory.Items) - 1; i >= 0; i-- {
+					drops = append(drops, p.Inventory.Items[i])
 				}
-				delete(p.Equipment.Slots, slot)
+				p.Inventory.Items = p.Inventory.Items[:0]
+				p.Inventory.mu.Unlock()
+			}
+			if p.Equipment != nil {
+				p.Equipment.mu.Lock()
+				for cPos := 0; cPos < NumWears; cPos++ {
+					slot, ok := CWearPosToSlot(cPos)
+					if !ok {
+						continue
+					}
+					if item := p.Equipment.Slots[slot]; item != nil {
+						if isLitLightSource(item) {
+							w.adjustRoomLight(roomVNum, -1)
+						}
+						delete(p.Equipment.Slots, slot)
+						drops = append(drops, item)
+					}
+				}
+				p.Equipment.mu.Unlock()
+			}
+			for _, item := range drops {
 				if roomVNum >= 0 {
 					w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
 					item.Location = LocRoom(roomVNum)
@@ -182,24 +209,6 @@ func (w *World) ExtractPendingPlayers() []*Player {
 					item.RoomVNum = -1
 				}
 			}
-			p.Equipment.mu.Unlock()
-		}
-
-		// Drop all carried inventory items to the room floor.
-		if p.Inventory != nil {
-			p.Inventory.mu.Lock()
-			for _, item := range p.Inventory.Items {
-				if roomVNum >= 0 {
-					w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
-					item.Location = LocRoom(roomVNum)
-					item.RoomVNum = roomVNum
-				} else {
-					item.Location = LocNowhere()
-					item.RoomVNum = -1
-				}
-			}
-			p.Inventory.Items = p.Inventory.Items[:0]
-			p.Inventory.mu.Unlock()
 		}
 
 		// Stop fighting
