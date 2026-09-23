@@ -105,5 +105,5 @@ rules). Mirrors Bun's cheap-implementer, strong-adversarial-reviewer split.
 ## 10. The census was wall-bound, not CPU-bound
 
 Load stayed near 2 on 16 cores at 4 parallel jobs: scenarios mostly wait for
-quiescence. 4 jobs took over 3 h; 12 took 41 min; 24 is being measured on the
-PR #1586 census.
+quiescence. 4 jobs took over 3 h; 12 took 41 min; 24 took 20.8 min (PR #1586), each
+over all 970 scenarios.
