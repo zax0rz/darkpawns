@@ -201,6 +201,7 @@ func main() {
 		staticDir  = flag.String("static", "", "Static site directory served at /, takes precedence over -web")
 		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
+		telnetTLS  = flag.Int("telnet-tls-port", 0, "TLS telnet port (0 to disable); needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -822,6 +823,24 @@ func main() {
 			slog.Error("Telnet listener failed", "error", err)
 		} else {
 			slog.Info("Telnet listening", "port", *telnetPort)
+		}
+	}
+
+	// TLS telnet is opt-in, with its own certificate variables: TLS_CERT_FILE
+	// and TLS_KEY_FILE switch the HTTP server to HTTPS, which a deployment
+	// behind a TLS-terminating proxy must not do. Asking for the port without
+	// a certificate is a broken configuration, not a reason to serve plaintext.
+	if *telnetTLS > 0 {
+		certFile, keyFile := os.Getenv("TELNET_TLS_CERT_FILE"), os.Getenv("TELNET_TLS_KEY_FILE")
+		if certFile == "" || keyFile == "" {
+			slog.Error("-telnet-tls-port needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
+			gameLoop.Stop()
+			os.Exit(1) //nolint:gocritic // exitAfterDefer: gameLoop.Stop() called explicitly above
+		}
+		if err := telnet.ListenTLS(*telnetTLS, manager, certFile, keyFile); err != nil {
+			slog.Error("Telnet TLS listener failed", "error", err)
+			gameLoop.Stop()
+			os.Exit(1)
 		}
 	}
 

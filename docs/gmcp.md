@@ -155,3 +155,6 @@ that declines receives none.
 ## MSSP
 
 MSSP advertises `GMCP 1`, `MCCP 1` and `ANSI 1` alongside the existing fields.
+When the TLS telnet port runs (`-telnet-tls-port`), MSSP also carries
+`TLS <port>` and `HOSTNAME <certificate name>`; Mudlet reads them to offer the
+encrypted port to a player who connected in plaintext.

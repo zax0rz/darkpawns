@@ -162,6 +162,13 @@ func runTelnetScript(t *testing.T, port int, preamble []byte, name string, scrip
 	if err != nil {
 		t.Fatal(err)
 	}
+	return runTelnetScriptOn(t, conn, preamble, name, script)
+}
+
+// runTelnetScriptOn is runTelnetScript over an already-dialled connection
+// (a TLS client, for instance).
+func runTelnetScriptOn(t *testing.T, conn net.Conn, preamble []byte, name string, script []string) []byte {
+	t.Helper()
 	defer conn.Close()
 
 	output := make(chan []byte, 1)
