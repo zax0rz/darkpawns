@@ -1,4 +1,4 @@
-.PHONY: expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test
+.PHONY: expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -18,6 +18,17 @@ scenario-coverage:
 
 scenario-coverage-weekly:
 	python3 scripts/scenario_coverage_weekly.py --commit
+
+# Two-directional player-facing string census. Static: it compares every string
+# both trees can print, not only the ones a scenario triggers, and `--check` is
+# the ratchet — a new Go string with no C source and no world-data source fails
+# (R4), which is how `[ GHOST SHIP ]` and `autoexit` survived a green oracle
+# run. See docs/fidelity/strings/README.md.
+string-census:
+	go run ./cmd/dp-string-census --check
+
+string-census-update:
+	go run ./cmd/dp-string-census --update
 
 # Default world directory — resolve relative to this Makefile so it works
 # regardless of the checkout directory name.
