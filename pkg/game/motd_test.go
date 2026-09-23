@@ -11,7 +11,7 @@ func TestShippedMOTDMatchesCFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := os.ReadFile("../../lib/world/text/motd")
+	got, err := os.ReadFile("../../lib/text/motd")
 	if err != nil {
 		t.Fatal(err)
 	}

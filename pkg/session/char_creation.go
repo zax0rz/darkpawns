@@ -337,7 +337,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 				return s.abortEntry(err)
 			}
 			// Show MOTD and transition to PRESS RETURN state
-			motd := game.ShowMOTD(s.manager.world.WorldPath)
+			motd := loginTextForFile(s, "motd")
 			s.charStage = "motd"
 			s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 		case "N":

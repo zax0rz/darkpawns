@@ -38,7 +38,7 @@ func (s *Session) startReturningMenu(passwordHash string) {
 	s.menuActive = true
 	s.menuStage = "motd"
 	s.menuPasswordHash = passwordHash
-	motd := game.ShowMOTD(s.manager.world.WorldPath)
+	motd := loginTextForFile(s, "motd")
 	s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 }
 
@@ -51,7 +51,7 @@ func (s *Session) showMainMenu() {
 func (s *Session) resendCurrentMenuPrompt() {
 	switch s.menuStage {
 	case "motd":
-		motd := game.ShowMOTD(s.manager.world.WorldPath)
+		motd := loginTextForFile(s, "motd")
 		s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 	case "description":
 		s.sendCharCreatePrompt("description", "Enter description lines. Type @ or /s to save, /a to abort: ", nil)
@@ -161,7 +161,8 @@ func (s *Session) handleMenuChoice(choice string) error {
 		}
 		s.sendCharCreatePrompt("description", "Enter the new text you'd like others to see when they look at you.\r\nType @ or /s to save, /a to abort: ", nil)
 	case "3":
-		s.sendText(game.ShowBackground(s.manager.world.WorldPath) + "\r\n")
+		background := loginTextForFile(s, "background")
+		s.sendText(background + "\r\n")
 		s.showMainMenu()
 	case "4":
 		s.menuStage = "password_old"

@@ -494,7 +494,7 @@ func TestCmdCreditsMissingFileFailsGracefully(t *testing.T) {
 	s := makeTestSession(t, m, "Alice", 1001, true)
 
 	// go test's working directory is the package directory, not the repo
-	// root, so lib/world/text/credits won't resolve here — exercises the
+	// root, so lib/text/credits won't resolve here — exercises the
 	// graceful-failure branch of sendTextFile.
 	if err := cmdCredits(s, nil); err != nil {
 		t.Fatalf("cmdCredits: %v", err)

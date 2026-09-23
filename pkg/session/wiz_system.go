@@ -184,7 +184,7 @@ func cmdReload(s *Session, args []string) error {
 		return nil
 	}
 	if option == "all" || strings.HasPrefix(option, "*") {
-		reloadCachedText(s, "wizlist", "immlist", "news", "credits", "motd", "imotd", "info", "policies", "handbook", "future")
+		reloadCachedText(s, "wizlist", "immlist", "news", "credits", "motd", "imotd", "info", "policies", "handbook", "future", "background")
 		reloadHelpScreen(s)
 	} else {
 		switch option {
@@ -195,7 +195,7 @@ func cmdReload(s *Session, args []string) error {
 		case "help":
 			reloadHelpScreen(s)
 		case "background":
-			// Background text is read on demand by the Go port.
+			reloadCachedText(s, "background")
 		case "xhelp":
 			reloadHelpTable(s)
 		default:

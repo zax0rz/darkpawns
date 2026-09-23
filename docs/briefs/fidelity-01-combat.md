@@ -146,7 +146,7 @@ act(msg->die_msg.room_msg, ...)
 
 Same pattern for hit_msg, miss_msg, god_msg. Each message type has attacker/victim/room variants.
 
-**Check:** Does the Go code send all three variants for each message type? Are the messages loaded from `lib/world/text/fight.messages` or hardcoded?
+**Check:** Does the Go code send all three variants for each message type? Are the messages loaded from `lib/text/fight.messages` or hardcoded?
 
 ### 7. Offensive Commands
 
@@ -173,7 +173,7 @@ Same pattern for hit_msg, miss_msg, god_msg. Each message type has attacker/vict
 
 ## Implementation Notes
 
-- Fight messages may be loaded from `lib/world/text/fight.messages` — check if the Go server reads this file or has messages hardcoded
+- Fight messages may be loaded from `lib/text/fight.messages` — check if the Go server reads this file or has messages hardcoded
 - The `act()` function is the message system — it parses `$n`, `$N`, `$s`, `$S`, `$q`, `$Q` etc. Check that Go's equivalent handles all `$` codes
 - Damage types (TYPE_HIT through TYPE_SUFFERING) must map correctly
 - Weapon damage dice are stored on the weapon object — verify the Go code reads them correctly
