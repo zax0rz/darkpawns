@@ -23,11 +23,6 @@ import (
 // report in noise; the brief fixes the floor at 8 characters.
 const MinSegmentLen = 8
 
-// gap is the in-band separator used internally to mark a position where a
-// normalized segment ends: a line break, a colour escape, a format verb, or an
-// act code. It cannot appear in normalized text, so splitting on it is exact.
-const gap = byte(0x00)
-
 // actCodes is the union of the $-codes C's perform_act (src/comm.c:2408) and
 // Go's performAct (pkg/game/act.go:356) substitute. Go implements more codes
 // than C (t/T/r/R/q/Q are Go additions), so the union is the safe splitter for
@@ -50,32 +45,123 @@ const actCodes = "nNeEmMsSpPoOaAtTrRqQFT$"
 //  5. Whitespace inside a segment collapses to single spaces and is trimmed.
 //  6. A segment shorter than MinSegmentLen runes is dropped.
 //
-// The result is ordered and deduplicated.
+// The result is ordered and deduplicated; use NormalizeLines when the order of
+// printed lines matters.
 func Normalize(raw string) []string {
-	return splitSegments(blankGaps(raw))
+	var (
+		out  []string
+		seen = make(map[string]struct{})
+	)
+	for _, fragment := range NormalizeLines(raw) {
+		for _, seg := range fragment {
+			if _, dup := seen[seg]; dup {
+				continue
+			}
+			seen[seg] = struct{}{}
+			out = append(out, seg)
+		}
+	}
+	return out
 }
 
-// blankGaps replaces every position that ends a segment (colour escape, line
-// break) with the gap marker, so splitSegments has a single delimiter to work
-// with.
-func blankGaps(raw string) string {
-	if !strings.ContainsAny(raw, "\x1b\r\n") {
+// Boundaries inside a marked literal. gapSegment ends a segment (a colour
+// escape, a format conversion, an act code, a line break); gapLine ends a
+// printed line. Neither byte can appear in real player text, and both are
+// stripped from the input before marking, so a literal that somehow contains
+// them cannot forge a boundary.
+const (
+	gapSegment = byte(0x00)
+	gapLine    = byte(0x01)
+)
+
+// NormalizeLines splits one literal into the lines the server prints, each line
+// an ordered list of the fixed-text segments that survive normalization.
+// Fragment boundaries come only from line breaks; colour escapes, format
+// conversions and act codes end a segment inside a line. Duplicates are kept,
+// because a caller matching real output needs the order and the count.
+//
+// By the time a literal arrives here C's adjacent-literal concatenation and
+// Go's "+" have already joined their pieces, so one fragment is exactly one
+// printed line of fixed text.
+func NormalizeLines(raw string) [][]string {
+	var (
+		fragments [][]string
+		fragment  []string
+		cur       strings.Builder
+	)
+	flushSegment := func() {
+		if seg := collapseWhitespace(cur.String()); utf8.RuneCountInString(seg) >= MinSegmentLen {
+			fragment = append(fragment, seg)
+		}
+		cur.Reset()
+	}
+	flushLine := func() {
+		flushSegment()
+		if len(fragment) > 0 {
+			fragments = append(fragments, fragment)
+			fragment = nil
+		}
+	}
+	s := markBoundaries(raw)
+	for i := 0; i < len(s); {
+		switch c := s[i]; {
+		case c == gapLine:
+			flushLine()
+			i++
+		case c == gapSegment:
+			flushSegment()
+			i++
+		case c == '%':
+			n, literal := conversionLen(s[i:])
+			if n == 0 {
+				cur.WriteByte(c)
+				i++
+				continue
+			}
+			if literal {
+				cur.WriteByte('%')
+			} else {
+				flushSegment()
+			}
+			i += n
+		case c == '$' && i+1 < len(s) && strings.IndexByte(actCodes, s[i+1]) >= 0:
+			if s[i+1] == '$' {
+				cur.WriteByte('$')
+			} else {
+				flushSegment()
+			}
+			i += 2
+		default:
+			cur.WriteByte(c)
+			i++
+		}
+	}
+	flushLine()
+	return fragments
+}
+
+// markBoundaries replaces every position that ends a segment or a line with a
+// marker, so the splitter has one delimiter per rule to work with.
+func markBoundaries(raw string) string {
+	if !strings.ContainsAny(raw, "\x1b\r\n\x00\x01") {
 		return raw
 	}
 	var b strings.Builder
 	b.Grow(len(raw))
 	for i := 0; i < len(raw); {
 		switch c := raw[i]; c {
+		case gapSegment, gapLine:
+			i++ // reserved markers never reach the splitter
 		case 0x1b:
 			if n := ansiLen(raw[i:]); n > 0 {
-				b.WriteByte(gap)
+				b.WriteByte(gapSegment)
 				i += n
 				continue
 			}
-			b.WriteByte(gap)
+			b.WriteByte(gapSegment)
 			i++
 		case '\r', '\n':
-			b.WriteByte(gap)
+			b.WriteByte(gapLine)
 			i++
 		default:
 			b.WriteByte(c)
@@ -104,60 +190,6 @@ func ansiLen(s string) int {
 		}
 	}
 	return 0
-}
-
-// splitSegments walks the gap-blanked literal and emits one segment per run of
-// fixed text between gaps, format conversions and act codes.
-func splitSegments(s string) []string {
-	var (
-		out  []string
-		seen = make(map[string]struct{})
-		cur  strings.Builder
-	)
-	flush := func() {
-		seg := collapseWhitespace(cur.String())
-		cur.Reset()
-		if utf8.RuneCountInString(seg) < MinSegmentLen {
-			return
-		}
-		if _, dup := seen[seg]; dup {
-			return
-		}
-		seen[seg] = struct{}{}
-		out = append(out, seg)
-	}
-	for i := 0; i < len(s); {
-		switch c := s[i]; {
-		case c == gap:
-			flush()
-			i++
-		case c == '%':
-			n, literal := conversionLen(s[i:])
-			if n == 0 {
-				cur.WriteByte(c)
-				i++
-				continue
-			}
-			if literal {
-				cur.WriteByte('%')
-			} else {
-				flush()
-			}
-			i += n
-		case c == '$' && i+1 < len(s) && strings.IndexByte(actCodes, s[i+1]) >= 0:
-			if s[i+1] == '$' {
-				cur.WriteByte('$')
-			} else {
-				flush()
-			}
-			i += 2
-		default:
-			cur.WriteByte(c)
-			i++
-		}
-	}
-	flush()
-	return out
 }
 
 // conversionLen reports the byte length of the printf conversion at the start

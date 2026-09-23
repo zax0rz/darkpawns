@@ -28,6 +28,9 @@ make string-census-update  # regenerate the reports and the baseline
 go run ./cmd/dp-string-census --top 30   # report only, write nothing
 ```
 
+Coverage of the C surface by the scenarios that ran is a separate tool and a
+separate dump; see [Coverage](#coverage-which-c-strings-the-census-ever-makes-c-print).
+
 The tool runs over the real tree in under a second (257 Go files, 66 C files,
 630 world-data files).
 
@@ -173,6 +176,98 @@ the queue.
   never sent still enters the C corpus, which can only make a Go string
   *c-sourced* (never go-only). Over-inclusion on the C side is safe; the Go side
   is the strict one.
+
+## Coverage: which C strings the census ever makes C print
+
+A green census says the scenarios that ran matched. It says nothing about which
+parts of the game no scenario reaches: `quit.safe-logout` was green for months
+while the menu after the goodbye was missing, because the scenario stopped at
+the goodbye. Coverage by C output string is a cheap, honest map of what the
+judge actually sees.
+
+`cmd/dp-census-coverage` reads a **census dump** — one `<scenario>.txt` per
+scenario holding that run's normalized C blocks — and reports, for every C
+literal brief 07 extracts, which scenarios printed it.
+
+```bash
+# 1. leave a dump behind during a census (default off; results and timing unchanged)
+ORACLE_REGRESSION_DUMP=/tmp/dp-dump make oracle-regression
+
+# 2. report coverage of that dump
+make census-coverage CENSUS_DUMP=/tmp/dp-dump
+# or: ORACLE_REGRESSION_DUMP=/tmp/dp-dump make census-coverage
+```
+
+The coverage tool never starts its own census: coverage is a claim about the
+scenarios that ran, so the dump has to come from a real run. It errors out
+rather than reporting 0% if the directory is missing or empty.
+
+### How a C literal is matched
+
+`dp-oracle-diff --dump-oracle <dir>` writes exactly what `--show-oracle` prints
+today (`normalized C oracle blocks:` plus one `--- [label]` section per probe
+block), so a dump file is the terminal output on disk.
+
+Matching reuses brief 07's lexer and normalizer, then applies the wildcard rules
+the brief names:
+
+- a literal's fixed text is split into **fragments**, one per printed line;
+- inside a fragment, the segments must appear **in order on one line** with
+  arbitrary text between them — that gap is where printf verbs and act codes were
+  substituted (`You have %d gold pieces on hand.` matches
+  `You have 1234 gold pieces on hand.`);
+- a later fragment must match a **later line**, because a fragment boundary came
+  from a `\r\n` inside the C literal;
+- a site is covered when some block of some scenario matches it; the report
+  records the scenario names and the probe labels that did.
+
+Go output never counts. Coverage is measured against the C blocks in the dump,
+so a sentence the port prints and C never does cannot make a C site look
+covered (pinned by a unit test whose fixture sentence lives in the Go tree).
+
+### Outputs
+
+| File | Contents |
+|---|---|
+| `coverage.tsv` | one row per C segment: segment, file:line, sink, function, `covered` (`yes`/`no`/`unverifiable`), the scenarios that printed it, the probe labels that printed it |
+| `coverage-summary.txt` | totals, then per C file and per C function: sites covered/total, segments covered/total and percent, unverifiable sites, and the never-seen segment list |
+
+Both are **generated per dump and not committed** (`.gitignore`, like
+`docs/reports/scenario-coverage-*.tsv`): the dump is not in the repository, so a
+committed `coverage.tsv` would be an untraceable snapshot of one machine's run.
+Regenerate on demand; attach the report to a PR when it matters.
+
+### Unverifiable literals
+
+A literal whose fixed text is entirely below the census floor (`MinSegmentLen`,
+8 characters) has nothing to compare: `send_to_char("Ok.\r\n", ch)` cannot be
+proven printed by string matching. Those sites are reported as `unverifiable`,
+listed in `coverage.tsv` with a placeholder segment, and **excluded from the
+percentage** rather than counted as misses. On 2026-09-23 they are 1336 of 5454
+C sites (24.5%) — the single biggest lever for raising coverage precision is
+lowering that floor, which would also change brief 07's corpus, so it is a
+separate decision.
+
+### Known limits
+
+- **Coverage is an upper bound, because matching is substring-based.** A short,
+  generic segment can coincide with unrelated C output. The first real run gives
+  the worked example: `src/new_cmds2.c:896` (`flow_room`) stores `"the south"`
+  in a direction buffer, and the probe `look` in `look-start-room` printed a
+  room description containing the words "the south", so the site reads covered
+  without `flow_room` having run. The report names the probe label per row, so
+  such a row is checkable by hand; treat a single-coincidence row as a lead, not
+  a fact.
+- **Per-block, per-line, not per-print-order.** Multi-fragment sites only need
+  their fragments in order somewhere in one block; if a literal prints twice,
+  fragment 1 of the first print and fragment 2 of the second would satisfy it.
+- **Scenario granularity, not step granularity.** A site is covered by a
+  scenario when any of its blocks matched; the report names the probe label but
+  does not reconstruct the step sequence.
+- **Dumps are per-run artifacts.** Coverage answers "what did *this* dump
+  reach", so a filtered run (`ORACLE_REGRESSION_SCENARIOS=...`) produces a
+  filtered report. The summary prints the scenario and block counts at the top so
+  a partial dump is visible in the numbers themselves.
 
 ## First run, 2026-09-23
 

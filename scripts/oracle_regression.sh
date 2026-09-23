@@ -76,7 +76,19 @@ export repo_root go_bin oracle_bin scenario_timeout seed log_dir result_dir harn
 export EXPECTED_DIVERGENCES_FILE="$repo_root/cmd/dp-oracle-diff/expected_divergences.tsv"
 export EXPECTED_DIVERGENCE_PINS_FILE="$repo_root/cmd/dp-oracle-diff/expected_divergence_pins.tsv"
 
-printf 'oracle-regression: %d scenarios, seed=%s, timeout=%s, jobs=%s\n' "${#scenarios[@]}" "$seed" "$scenario_timeout" "$jobs"
+# Optional coverage dump: when ORACLE_REGRESSION_DUMP names a directory, every
+# scenario leaves its normalized C blocks behind (<dir>/<scenario>.txt) for
+# cmd/dp-census-coverage. Default off, so results and timing are unchanged. Run
+# `make census-coverage` against the directory afterwards.
+if [[ -n "${ORACLE_REGRESSION_DUMP:-}" ]]; then
+	mkdir -p -- "$ORACLE_REGRESSION_DUMP" || {
+		printf 'oracle-regression: cannot create dump directory: %s\n' "$ORACLE_REGRESSION_DUMP" >&2
+		exit 2
+	}
+	export ORACLE_REGRESSION_DUMP
+fi
+
+printf 'oracle-regression: %d scenarios, seed=%s, timeout=%s, jobs=%s%s\n' "${#scenarios[@]}" "$seed" "$scenario_timeout" "$jobs" "${ORACLE_REGRESSION_DUMP:+ dump=$ORACLE_REGRESSION_DUMP}"
 printf '%s\0' "${scenarios[@]}" | xargs -0 -n1 -P "$jobs" "$script_dir"/oracle_regression_worker.sh
 
 passed=0
