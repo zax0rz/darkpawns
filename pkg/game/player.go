@@ -71,10 +71,6 @@ type Player struct {
 	// Source: structs.h:321,335,341
 	Affects uint64
 
-	// Player flags bitmask — structs.h PLR_* constants
-	// Source: structs.h:221-244
-	PlayerFlags uint64
-
 	// InvisLevel is C's player_specials.saved.invis_level for immortal
 	// wizinvis. It is runtime-only until the player save format has a faithful
 	// representation for this field.

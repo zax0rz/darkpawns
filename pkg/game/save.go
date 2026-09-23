@@ -19,7 +19,8 @@ const (
 	// CurrentSaveVersion is the current save format version.
 	// Bump this when making a breaking change to the save format.
 	// Existing saves without a version field are treated as version 0.
-	CurrentSaveVersion = 1
+	// Version 2 moved PRF preferences to prfBase in Flags; see migrateFlagsV1.
+	CurrentSaveVersion = 2
 
 	saveDir = "./data/players"
 )
@@ -159,7 +160,9 @@ func LoadPlayer(name string) (*Player, error) {
 
 	// Version check: 0 means old format (pre-versioning), silently upgrade.
 	// Non-zero mismatch means a future or corrupted save — warn but still load.
-	if data.SaveVersion != 0 && data.SaveVersion != CurrentSaveVersion {
+	// Version 1 is migrated on load (migrateFlags); older than that is
+	// version 0, which shares version 1's layout.
+	if data.SaveVersion > CurrentSaveVersion {
 		slog.Warn("player save version mismatch",
 			"player", name,
 			"file_version", data.SaveVersion,
@@ -355,7 +358,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		Hunger:        data.Hunger,
 		Thirst:        data.Thirst,
 		Drunk:         data.Drunk,
-		Flags:         data.Flags,
+		Flags:         migrateFlags(data.SaveVersion, data.Flags),
 		AutoExit:      data.AutoExit,
 		Stats:         data.Stats,
 		OrigCon:       data.Stats.Con,
@@ -440,7 +443,7 @@ func DeserializePlayer(data string) (*Player, error) {
 		return nil, fmt.Errorf("unmarshal player: %w", err)
 	}
 
-	if sd.SaveVersion != 0 && sd.SaveVersion != CurrentSaveVersion {
+	if sd.SaveVersion > CurrentSaveVersion {
 		slog.Warn("player save version mismatch (deserialize)",
 			"player", sd.Name,
 			"file_version", sd.SaveVersion,
@@ -737,4 +740,34 @@ func sanitizeName(name string) string {
 		}
 	}
 	return string(safe)
+}
+
+// flagsV1PRF is where save versions 0 and 1 kept each PRF flag in Flags,
+// indexed by C's PRF number. PRF_QUEST and PRF_SUMMONABLE sat after the
+// rest.
+var flagsV1PRF = [32]int{
+	20, 21, 22, 23, 24, 25, 26, 27, 28, 49, 48, 30, 29, 31, 32, 33,
+	34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 50, 51,
+}
+
+// migrateFlags returns a save's Flags in the current layout.
+func migrateFlags(version int, flags uint64) uint64 {
+	if version < 2 {
+		return migrateFlagsV1(flags)
+	}
+	return flags
+}
+
+// migrateFlagsV1 moves a version 0/1 save's preferences from their old bits
+// to prfBase + C's PRF number. PLR bits below 20 are unchanged. Bits 20 and
+// 21 were shared by PRF_BRIEF/PLR_REMORT and PRF_COMPACT/PLR_EXTRACT; they are
+// read as the preferences, which is what nearly every save meant.
+func migrateFlagsV1(old uint64) uint64 {
+	out := old & (1<<20 - 1)
+	for prf, bit := range flagsV1PRF {
+		if old&(1<<uint(bit)) != 0 {
+			out |= 1 << uint(prfBase+prf)
+		}
+	}
+	return out
 }
