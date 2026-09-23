@@ -85,6 +85,14 @@ func GainCondition(p *Player, condition int, value int) {
 // applies condition decay, regenerates HMV, processes poison/cutthroat
 // damage, memory clearing, idle checks, and object decay.
 func (w *World) PointUpdate() {
+	// Regeneration prints nothing, so structured clients learn of the new
+	// vitals only from this notice, sent once the whole tick has applied.
+	defer func() {
+		if observer := w.outOfBand(); observer != nil {
+			observer.PointUpdated()
+		}
+	}()
+
 	// Snapshot players under read lock, operate without lock
 	w.mu.RLock()
 	players := make([]*Player, 0, len(w.players))

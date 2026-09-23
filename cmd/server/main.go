@@ -53,6 +53,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
+	"github.com/zax0rz/darkpawns/mudlet"
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
 	"github.com/zax0rz/darkpawns/pkg/audit"
@@ -806,6 +807,14 @@ func main() {
 	addr := ":" + *port
 	slog.Info("Server listening", "address", addr)
 	slog.Info("WebSocket endpoint", "url", "ws://localhost"+addr+"/ws")
+
+	// Offer the Mudlet package over GMCP Client.GUI. Off unless configured:
+	// once on, every Mudlet player downloads from this URL, so it must be a
+	// public copy of mudlet/darkpawns.xml at the version this binary embeds.
+	if packageURL := os.Getenv("DP_MUDLET_PACKAGE_URL"); packageURL != "" {
+		session.SetGMCPClientGUI(packageURL, mudlet.Version)
+		slog.Info("Mudlet package offered over GMCP", "url", packageURL, "version", mudlet.Version)
+	}
 
 	// Start telnet listener
 	if *telnetPort > 0 {

@@ -91,7 +91,8 @@ var communicationChannels = map[string]channelSpec{
 // directed speech's common eligibility snapshot with channel preference and
 // shout-zone gates.
 func (w *World) DoChannel(ch *Player, argument, subcmd string) {
-	spec, ok := communicationChannels[strings.ToLower(subcmd)]
+	channel := strings.ToLower(subcmd)
+	spec, ok := communicationChannels[channel]
 	if !ok {
 		communicationSend(ch, "Unknown channel.")
 		return
@@ -133,7 +134,7 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		communicationSend(ch, "Okay.")
 	} else {
-		communicationSend(ch, fmt.Sprintf("You %s, '%s'", spec.verb, argument))
+		w.channelSend(channel, ch, fmt.Sprintf("You %s, '%s'", spec.verb, argument))
 	}
 
 	senderRoom := w.GetRoomInWorld(ch.GetRoom())
@@ -151,7 +152,7 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 				continue
 			}
 		}
-		Act(nil, false, ch, target, nil, nil, fmt.Sprintf("$n %ss, '%s'", spec.verb, argument), "", ToVict|ToSleep)
+		w.channelAct(channel, false, ch, target, fmt.Sprintf("$n %ss, '%s'", spec.verb, argument), ToVict|ToSleep)
 	}
 
 	if spec.verb == "gossip" {
@@ -188,6 +189,7 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 			continue
 		}
 		player.SendMessage(message)
+		w.mirrorChannelLine(player, "gossip", mobName(me), message)
 	}
 	w.updateGossipHistory(mobName(me), argument, 0)
 }
@@ -292,7 +294,9 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		sendToChar(ch, "Okay.\r\n")
 	} else {
-		sendToChar(ch, fmt.Sprintf("You tell your clan%s, '%s'\r\n", levelString, arg))
+		echo := fmt.Sprintf("You tell your clan%s, '%s'\r\n", levelString, arg)
+		sendToChar(ch, echo)
+		w.mirrorChannelLine(ch, "clan", ch.Name, echo)
 	}
 
 	for _, p := range w.AllPlayers() {
@@ -306,7 +310,9 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 		if !canSeeSocialTarget(p, ch) {
 			senderName = "Someone"
 		}
-		p.SendMessage(fmt.Sprintf("%s tells your clan%s, '%s'\r\n", senderName, levelString, arg))
+		line := fmt.Sprintf("%s tells your clan%s, '%s'\r\n", senderName, levelString, arg)
+		p.SendMessage(line)
+		w.mirrorChannelLine(p, "clan", senderName, line)
 	}
 	return true
 }

@@ -16,6 +16,10 @@ type ObservationResult struct {
 	Messages []ObservationMessage
 	Room     *RoomView
 	Events   []SemanticEvent
+	// viewer is the player a room render (Room != nil) was built for; the
+	// renderer reports that room to the out-of-band observer once the text
+	// has been delivered.
+	viewer *Player
 }
 
 // ObservationMessage is a deferred act() call. Literal marks world-authored
@@ -114,6 +118,11 @@ func (w *World) RenderObservationMessages(result ObservationResult) {
 			ToChar,
 		)
 	}
+	if result.Room != nil && result.viewer != nil {
+		if observer := w.outOfBand(); observer != nil {
+			observer.RoomShown(result.viewer, result.Room.VNum)
+		}
+	}
 }
 
 // DoLook routes look/read syntax to the canonical observation operations.
@@ -208,6 +217,7 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 	view := w.buildRoomView(ch, room, showDescription)
 	if includeView {
 		result.Room = &view
+		result.viewer = ch
 	}
 
 	cyan, normal := observationColors(ch, "\x1b[36m"), observationColors(ch, "\x1b[0m")

@@ -166,6 +166,11 @@ type World struct {
 
 	// OnGossip is a callback triggered when a human player gossips.
 	OnGossip func(senderName string, message string)
+
+	// OutOfBand mirrors room renders, channel lines, and regen ticks to the
+	// session layer's structured-client protocols (GMCP). Set once by the
+	// session manager before the world starts ticking; nil disables it.
+	OutOfBand OutOfBandObserver
 }
 
 // SetCombatEngine sets the combat engine for AI to use.

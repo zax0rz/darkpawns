@@ -1,0 +1,66 @@
+-- Dark Pawns for Mudlet: core.
+--
+-- Everything this package shows comes from the game's GMCP messages
+-- (docs/gmcp.md in the Dark Pawns repository). The package never sends
+-- game commands on its own and never reads game text: the gauges, map and
+-- chat window are drawn from data the server already sent alongside the text.
+
+DarkPawns = DarkPawns or {}
+DarkPawns.version = "{{VERSION}}"
+DarkPawns.packageName = "darkpawns"
+
+-- Mudlet preinstalls its generic text mapper in every profile for a game it
+-- doesn't recognise. On Dark Pawns it can only get in the way: the game sends
+-- map data over GMCP, and the generic mapper answers the first map window to
+-- open by sending a blank line and "look" to the game on its own, which at the
+-- name prompt ends the connection. Remove it before the dock opens its map.
+function DarkPawns.removeGenericMapper()
+  for _, name in ipairs(getPackages()) do
+    if name == "generic_mapper" then
+      uninstallPackage("generic_mapper")
+      cecho("\n<ansi_white>[ Dark Pawns ] Removed Mudlet's generic mapper: Dark Pawns draws the map itself, and the generic mapper sends commands that can end your login.<reset>\n")
+      return true
+    end
+  end
+  return false
+end
+DarkPawns.removeGenericMapper()
+
+-- The GMCP modules this package reads. Mudlet enables Char and Room on its
+-- own; Comm.Channel has to be asked for.
+DarkPawns.modules = { "Char 1", "Room 1", "Comm.Channel 1" }
+
+-- Named anonymous event handlers, so reinstalling or reloading the package
+-- replaces its handlers instead of stacking a second copy of each.
+DarkPawns.handlers = DarkPawns.handlers or {}
+
+function DarkPawns.on(key, event, fn)
+  if DarkPawns.handlers[key] then
+    killAnonymousEventHandler(DarkPawns.handlers[key])
+  end
+  DarkPawns.handlers[key] = registerAnonymousEventHandler(event, fn)
+end
+
+function DarkPawns.offAll()
+  for key, id in pairs(DarkPawns.handlers) do
+    killAnonymousEventHandler(id)
+    DarkPawns.handlers[key] = nil
+  end
+end
+
+function DarkPawns.negotiate(_, protocol)
+  if protocol ~= "GMCP" then
+    return
+  end
+  sendGMCP("Core.Supports.Add " .. yajl.to_string(DarkPawns.modules))
+end
+
+DarkPawns.on("negotiate", "sysProtocolEnabled", DarkPawns.negotiate)
+
+-- A package installed mid-session (the server's Client.GUI offer arrives
+-- after GMCP is already up) has missed sysProtocolEnabled, so ask now. The
+-- gmcp table outlives a disconnect, so check the connection too.
+local _, _, connected = getConnectionInfo()
+if connected and type(gmcp) == "table" and next(gmcp) then
+  DarkPawns.negotiate(nil, "GMCP")
+end

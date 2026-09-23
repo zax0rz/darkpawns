@@ -333,6 +333,7 @@ func cmdGtellText(s *Session, text string) error {
 	if leaderName != s.player.Name {
 		if leader, ok := s.manager.world.GetPlayer(leaderName); ok && leader.InGroup {
 			leader.SendMessage(broadcastMsg)
+			s.manager.world.MirrorChannelLine(leader, "group", s.player.Name, broadcastMsg)
 		}
 	}
 
@@ -340,6 +341,7 @@ func cmdGtellText(s *Session, text string) error {
 	for _, f := range s.manager.world.GetFollowers(leaderName) {
 		if f.InGroup && f.Name != s.player.Name {
 			f.SendMessage(broadcastMsg)
+			s.manager.world.MirrorChannelLine(f, "group", s.player.Name, broadcastMsg)
 		}
 	}
 
@@ -348,7 +350,9 @@ func cmdGtellText(s *Session, text string) error {
 	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
 		s.sendText("Okay.")
 	} else {
-		s.sendText(fmt.Sprintf("You tell the group, '%s'", text))
+		echo := fmt.Sprintf("You tell the group, '%s'", text)
+		s.sendText(echo)
+		s.manager.world.MirrorChannelLine(s.player, "group", s.player.Name, echo+"\r\n")
 	}
 	return nil
 }

@@ -18,18 +18,31 @@ package game
 // PCClassTypes is the full display name for each PC class.
 // Source: class.c pc_class_types[]
 var PCClassTypes = []string{
-	"Mage",     // ClassMageUser = 0
-	"Cleric",   // ClassCleric   = 1
-	"Thief",    // ClassThief    = 2
-	"Warrior",  // ClassWarrior  = 3
-	"Magus",    // ClassMagus    = 4
-	"Avatar",   // ClassAvatar   = 5
-	"Assassin", // ClassAssassin = 6
-	"Paladin",  // ClassPaladin  = 7
-	"Ninja",    // ClassNinja    = 8
-	"Psionic",  // ClassPsionic  = 9
-	"Ranger",   // ClassRanger   = 10
-	"Mystic",   // ClassMystic   = 11
+	"Magic User", // ClassMageUser = 0
+	"Cleric",     // ClassCleric   = 1
+	"Thief",      // ClassThief    = 2
+	"Warrior",    // ClassWarrior  = 3
+	"Magus",      // ClassMagus    = 4
+	"Avatar",     // ClassAvatar   = 5
+	"Assassin",   // ClassAssassin = 6
+	"Paladin",    // ClassPaladin  = 7
+	"Ninja",      // ClassNinja    = 8
+	"Psionic",    // ClassPsionic  = 9
+	"Ranger",     // ClassRanger   = 10
+	"Mystic",     // ClassMystic   = 11
+}
+
+// PCRaceTypes is the player race name table do_score prints ("You are an
+// Elven ...").
+// Source: constants.c races[]
+var PCRaceTypes = []string{
+	"Human",      // RaceHuman    = 0
+	"Elven",      // RaceElf      = 1
+	"Dwarven",    // RaceDwarf    = 2
+	"Kenderkin",  // RaceKender   = 3
+	"Minotauran", // RaceMinotaur = 4
+	"Rakshasan",  // RaceRakshasa = 5
+	"Ssauran",    // RaceSsaur    = 6
 }
 
 // ClassMenu is the default class selection menu shown during character creation.

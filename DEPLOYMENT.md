@@ -154,6 +154,28 @@ expired partitions dropped automatically; without it the corpus is retained
 indefinitely. Until it is enabled, no connection to the research database is
 made beyond schema/partition setup.
 
+### The Mudlet package (optional)
+
+The telnet listener speaks GMCP (see [`docs/gmcp.md`](docs/gmcp.md)), so
+Mudlet players get gauges, a map, and a chat window from the package in
+[`mudlet/`](mudlet/). To have Mudlet install it automatically on connect,
+publish `mudlet/darkpawns.xml` at a public URL and set:
+
+```bash
+export DP_MUDLET_PACKAGE_URL='https://darkpawns.org/darkpawns.xml'
+```
+
+That is the URL Dark Pawns itself uses, serving the file from the game deploy
+next to the binary. A self-hosted server sets its own URL: pointing at another
+server's copy offers players a package built for that server's version.
+Keep the file name `darkpawns.xml`, since Mudlet names the installed package
+after it.
+
+The server announces the version compiled into it (`mudlet/VERSION`), and
+Mudlet reinstalls the package whenever that version changes, so publish the
+file from the same commit you deploy. Unset, nothing is offered and players
+can still import the file by hand.
+
 ## Run
 
 From the repository root, the defaults are already correct:

@@ -22,6 +22,9 @@ func (s *Session) sendWelcome(token string) {
 		}
 	}
 
+	// A GMCP client learns who it is before the entry look reports the room.
+	s.gmcpSync()
+
 	// Welcome text — matches C WELC_MESSG (config.c:256).
 	welcomeMsg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
@@ -263,6 +266,8 @@ func (s *Session) SendPrompt() {
 		return
 	}
 	cmdInfoBarUpdate(s)
+	// GMCP state rides ahead of the prompt it describes.
+	s.gmcpSync()
 	editing, playing := s.editorPromptState()
 	text := s.promptText()
 	// C's process_output appends "\r\n" whenever the descriptor is playing

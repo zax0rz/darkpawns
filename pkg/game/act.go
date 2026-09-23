@@ -499,6 +499,18 @@ func performAct(format string, ch, vict Actor, obj, victObj *ObjectInstance, arg
 // --------------------------------------------------------------------------
 
 func Act(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectInstance, format, arg2 string, actType int) {
+	actDeliver(world, hideInvisible, ch, vict, obj, victObj, format, arg2, actType, sendActLine)
+}
+
+// sendActLine is Act's delivery: the rendered line goes straight to the
+// recipient's transport.
+func sendActLine(to Actor, line string) { to.SendMessage(line) }
+
+// actDeliver is act()'s audience and rendering logic with the final write
+// supplied by the caller. Act delivers with sendActLine; channelAct also
+// mirrors the identical line out of band. Keeping one body means the text a
+// player receives cannot depend on which of the two called it.
+func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectInstance, format, arg2 string, actType int, deliver func(to Actor, line string)) {
 	if format == "" {
 		return
 	}
@@ -514,7 +526,7 @@ func Act(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectI
 	if actType == ToChar {
 		if ch != nil && sendOk(ch, toSleep) {
 			msg := performAct(format, ch, vict, obj, victObj, "", arg2, ch)
-			ch.SendMessage(cap(msg) + "\r\n")
+			deliver(ch, cap(msg)+"\r\n")
 		}
 		return
 	}
@@ -523,7 +535,7 @@ func Act(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectI
 	if actType == ToVict {
 		if vict != nil && sendOk(vict, toSleep) {
 			msg := performAct(format, ch, vict, obj, victObj, "", arg2, vict)
-			vict.SendMessage(cap(msg) + "\r\n")
+			deliver(vict, cap(msg)+"\r\n")
 		}
 		return
 	}
@@ -564,7 +576,7 @@ func Act(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectI
 			continue
 		}
 		msg := performAct(format, ch, vict, obj, victObj, "", arg2, to)
-		to.SendMessage(cap(msg) + "\r\n")
+		deliver(to, cap(msg)+"\r\n")
 	}
 }
 
