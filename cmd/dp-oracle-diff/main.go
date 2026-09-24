@@ -77,6 +77,7 @@ func run() int {
 		showGoLog    = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
 		quiescence   = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout  = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
+		goTransport  = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
 	)
 	flag.Parse()
 	if _, err := strconv.ParseUint(*seed, 10, 64); err != nil {
@@ -93,7 +94,11 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff: DP_ORACLE_BIN is unset; refusing to run without the C oracle (set it to the circle binary)")
 		return 2
 	}
-	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog); err != nil {
+	if *goTransport != "telnet" && *goTransport != "ws" {
+		fmt.Fprintln(os.Stderr, "dp-oracle-diff: -go-transport must be telnet or ws")
+		return 1
+	}
+	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		if errors.Is(err, errDivergence) {
 			return 3
@@ -103,12 +108,19 @@ func run() int {
 	return 0
 }
 
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
 // errDivergence is the sentinel for "the run completed and the normalized
 // transcripts differ." main maps it to exit code 3 so drivers can grade
 // content divergence separately from crashes (exit 1).
 var errDivergence = errors.New("normalized divergence detected")
 
-func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool) error {
+func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string) error {
 	if quiescence <= 0 {
 		return errors.New("quiescence must be positive")
 	}
@@ -362,14 +374,46 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	}
 	oracleConn := oraclediff.NewTCPConn(oracleNetConn)
 	defer func() { _ = oracleConn.Close() }()
-	goNetConn, err := dialWhenReady(goProc, goAddr, bootTimeout)
+	// Readiness is probed on the listener the scenario will use: a telnet
+	// connection takes a descriptor number, which would shift `users` and
+	// `dc <n>` for a WebSocket actor.
+	readyAddr := goAddr
+	if goTransport == "ws" {
+		readyAddr = fmt.Sprintf("127.0.0.1:%d", goHTTPPort)
+	}
+	goNetConn, err := dialWhenReady(goProc, readyAddr, bootTimeout)
 	if err != nil {
 		return err
 	}
 	if err := waitForLog(goProc, "World state restored", bootTimeout); err != nil {
 		return err
 	}
-	goConn := oraclediff.NewTCPConn(goNetConn)
+	// dialGo opens one more player connection to the Go port over the chosen
+	// transport. The telnet dial above still gates readiness either way.
+	goWSURL := fmt.Sprintf("ws://127.0.0.1:%d/ws", goHTTPPort)
+	dialGo := func() (oraclediff.Conn, error) {
+		if goTransport == "ws" {
+			return oraclediff.NewWSConn("node",
+				filepath.Join(repoRoot, "internal", "oraclediff", "wsdriver", "driver.mjs"),
+				filepath.Join(repoRoot, "web", "public", "mud-client.js"),
+				goWSURL)
+		}
+		c, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
+		if dialErr != nil {
+			return nil, dialErr
+		}
+		return oraclediff.NewTCPConn(c), nil
+	}
+	var goConn oraclediff.Conn
+	if goTransport == "ws" {
+		_ = goNetConn.Close()
+		if goConn, err = dialGo(); err != nil {
+			return err
+		}
+		goAddr = goWSURL + " (browser client)"
+	} else {
+		goConn = oraclediff.NewTCPConn(goNetConn)
+	}
 	defer func() { _ = goConn.Close() }()
 
 	runSetup := func(conn oraclediff.Conn, setup []string) (string, error) {
@@ -396,14 +440,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		defer func() { _ = oraclePrimary.Close() }()
 	}
 	if len(scenario.ReloginPort) > 0 {
-		goPrimary = oraclediff.NewReloginConn(goConn,
-			func() (oraclediff.Conn, error) {
-				c, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
-				if dialErr != nil {
-					return nil, dialErr
-				}
-				return oraclediff.NewTCPConn(c), nil
-			},
+		goPrimary = oraclediff.NewReloginConn(goConn, dialGo,
 			func(c oraclediff.Conn) (string, error) { return runSetup(c, scenario.ReloginPort) },
 			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
 		defer func() { _ = goPrimary.Close() }()
@@ -438,11 +475,10 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		oraclePeers[name] = oraclePeer
 
-		goPeerNet, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
+		goPeer, dialErr := dialGo()
 		if dialErr != nil {
 			return fmt.Errorf("dial Go port %s: %w", name, dialErr)
 		}
-		goPeer := oraclediff.NewTCPConn(goPeerNet)
 		defer func() { _ = goPeer.Close() }()
 		if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
 			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goProc.log.String())
