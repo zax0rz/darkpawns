@@ -61,3 +61,20 @@ The heal had survived the census because nothing checked current hit points
 straight after a level-up. `stat` shows maximums, and the normalizer hides
 the prompt. Writing the proof a fix asks for is itself a probe: the scenario
 has to reach states that no earlier scenario reached.
+
+## 4. A name passed as an argument
+
+The first census on the fix failed one scenario, `spec-proc-cityguard-breed`.
+A city guard attacks Kane the weaponsmith, a shopkeeper, and the port had
+Kane slap the guard. C's `ok_damage_shopkeeper` calls
+`do_action(victim, GET_NAME(ch), cmd_slap)`, which hands the attacker's name
+to the slap social as if someone had typed it. For a player that finds the
+player. For a mob named "a Kir-Oshi guard" it looks for someone called "a",
+finds nobody, and prints nothing. The port's first copy of the prelude only
+ran for player attackers, so this behaviour of C's never showed. Once the
+gate served mob attackers too, the port slapped the guard directly and the
+oracle caught it (PF-019).
+
+The rescuer special had already met the same shape (`mobRescueVictim`).
+When C passes a name through a command handler, the port has to reproduce
+the parse, not the intent.
