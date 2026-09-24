@@ -40,6 +40,27 @@ func NormalizeKeepANSI(raw string) string {
 	return normalize(raw, true)
 }
 
+// NormalizeKeepPrompts leaves every captured player-facing byte in place.
+// TCPConn has already removed telnet IAC negotiation. Focused prompt scenarios
+// use this mode because ordinary normalization erases prompt framing.
+func NormalizeKeepPrompts(raw string) string {
+	return raw
+}
+
+// TrailingSimplePromptFrame isolates the line breaks and default "> " prompt
+// after an entry look. The no-settle fixture captures the first CON_PLAYING
+// flush before a later clock pulse can hide a missing entry prompt.
+func TrailingSimplePromptFrame(raw string) string {
+	i := len(raw)
+	if strings.HasSuffix(raw, "> ") {
+		i -= 2
+	}
+	for i > 0 && (raw[i-1] == '\r' || raw[i-1] == '\n') {
+		i--
+	}
+	return raw[i:]
+}
+
 func normalize(raw string, keepANSI bool) string {
 	// 1. Strip ANSI CSI escapes: color capability is transport presentation, not game text.
 	if !keepANSI {

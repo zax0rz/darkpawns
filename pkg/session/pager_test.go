@@ -163,6 +163,7 @@ func TestPageStringLongEntersPagerMode(t *testing.T) {
 	if s.pagerPage != 1 {
 		t.Errorf("pagerPage = %d, want 1 (advanced past page 1)", s.pagerPage)
 	}
+	s.SendPrompt() // C writes make_prompt after flushing the command's output.
 	out := drainSendChannel(t, s)
 	// Page 1 + the pager prompt should have been sent. drainSendChannel returns
 	// raw JSON bytes (ANSI escapes appear as \u001b and split the prompt's color
@@ -173,6 +174,17 @@ func TestPageStringLongEntersPagerMode(t *testing.T) {
 	}
 	if !strings.Contains(out, "page number") {
 		t.Errorf("page 1 output missing prompt page-number text; got %q", out)
+	}
+}
+
+func TestPagerPromptUsesCompleteColorLevel(t *testing.T) {
+	plain := pagerPrompt(1, 2, false)
+	if strings.Contains(plain, "\x1b") || !strings.HasPrefix(plain, "\r[ Return") {
+		t.Fatalf("plain C pager prompt = %q", plain)
+	}
+	colored := pagerPrompt(1, 2, true)
+	if !strings.HasPrefix(colored, "\r\x1b[36m[ ") || !strings.HasSuffix(colored, "\x1b[0m") {
+		t.Fatalf("colored C pager prompt = %q", colored)
 	}
 }
 
@@ -239,6 +251,7 @@ func newPagerTestSession(t *testing.T) *Session {
 	if s.pagerCount != 4 {
 		t.Fatalf("setup: pagerCount = %d, want 4", s.pagerCount)
 	}
+	s.SendPrompt()
 	_ = drainSendChannel(t, s) // discard page 1 + prompt
 	return s
 }
@@ -391,6 +404,7 @@ func TestLevelsEntersPagerForLongOutput(t *testing.T) {
 	if !s.IsPaging() {
 		t.Error("levels (>22 lines) did not enter pager mode; want IsPaging()=true")
 	}
+	s.SendPrompt()
 	out := drainSendChannel(t, s)
 	// drainSendChannel returns raw JSON; ANSI escapes split the prompt's color
 	// tokens, so match a contiguous visible substring ("to continue").

@@ -532,12 +532,23 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goProc.log.String())
 	}
 	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks)+1)
+	normalize := oraclediff.Normalize
+	if scenario.KeepANSI {
+		normalize = oraclediff.NormalizeKeepANSI
+	}
+	if scenario.KeepPrompts {
+		normalize = oraclediff.NormalizeKeepPrompts
+	}
 	// Character-creation coverage: diff the whole normalized setup transcript
 	// (the nanny dialogue) as one block when the scenario opts in via
 	// [creation:oracle]/[creation:port].
 	if scenario.DiffSetup {
-		oracleCreation := oraclediff.Normalize(oracleSetup)
-		goCreation := oraclediff.Normalize(goSetup)
+		oracleCreation := normalize(oracleSetup)
+		goCreation := normalize(goSetup)
+		if scenario.EntryPromptOnly {
+			oracleCreation = oraclediff.TrailingSimplePromptFrame(oracleCreation)
+			goCreation = oraclediff.TrailingSimplePromptFrame(goCreation)
+		}
 		diffs = append(diffs, oraclediff.BlockDiff{
 			Command: "creation",
 			Oracle:  oracleCreation,
@@ -547,19 +558,9 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	}
 	for i, oracleResult := range oracleBlocks {
 		var oracleBlock, goBlock string
-		// keep-ansi scenarios compare probe blocks with ANSI intact: the raw
-		// proof mode for surfaces whose C colors are player-facing bytes.
-		if scenario.KeepANSI {
-			oracleBlock = oraclediff.NormalizeKeepANSI(oracleResult.Output)
-		} else {
-			oracleBlock = oraclediff.Normalize(oracleResult.Output)
-		}
+		oracleBlock = normalize(oracleResult.Output)
 		if i < len(goBlocks) {
-			if scenario.KeepANSI {
-				goBlock = oraclediff.NormalizeKeepANSI(goBlocks[i].Output)
-			} else {
-				goBlock = oraclediff.Normalize(goBlocks[i].Output)
-			}
+			goBlock = normalize(goBlocks[i].Output)
 		}
 		label := oracleResult.Command
 		if len(scenario.Peers) > 0 {
