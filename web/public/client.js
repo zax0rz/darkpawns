@@ -82,7 +82,12 @@ import { createMudClient } from './mud-client.js';
   term.loadAddon(fit);
   term.open(mount);
   fit.fit();
-  window.addEventListener('resize', () => fit.fit());
+  // Refit whenever the terminal's own box changes size, not only the window,
+  // and once web fonts finish loading. A terminal measured before its container
+  // is laid out gets xterm's two-column minimum, and output written then wraps
+  // at two columns; xterm reflows it once the fit is right.
+  new ResizeObserver(() => fit.fit()).observe(mount);
+  document.fonts?.ready.then(() => fit.fit());
 
   // No sidebar panels on this page, so the shared client renders the terminal
   // and the status bar and skips the rest. Nothing to configure for that.

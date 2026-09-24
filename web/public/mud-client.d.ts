@@ -24,13 +24,18 @@ export interface MudClientOptions {
     write(data: string): void;
     writeln(data: string): void;
     onData(handler: (data: string) => void): unknown;
+    /** xterm's column count and resize event. When present, server output is
+     *  held while the terminal is narrower than 20 columns (not yet fitted). */
+    cols?: number;
+    onResize?(handler: (size: { cols: number; rows: number }) => void): unknown;
   };
   /** Defaults to /ws on the current origin, or the `host` query parameter. */
   wsUrl?: string;
   /** Document queried for the optional panel elements. Defaults to `document`. */
   doc?: Document;
-  /** Log straight in as this character instead of asking for a name. The admin
-   *  console already knows who is signed in; nothing else should set this. */
+  /** Answer the name prompt with this character. The admin console already
+   *  knows who is signed in; the server still asks for the password. Nothing
+   *  else should set this. */
   autoLogin?: string;
   /** Connection state, for hosts that render their own indicator. */
   onStatus?(state: MudConnectionState): void;

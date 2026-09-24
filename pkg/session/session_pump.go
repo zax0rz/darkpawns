@@ -43,7 +43,11 @@ func (s *Session) readPump() {
 				s.manager.ipConnMu.Unlock()
 			}
 		}
-		s.manager.Unregister(s.playerName)
+		// A playing character whose connection drops stays in the world,
+		// linkdead, as C's close_socket leaves it and as telnet does
+		// (DP-1323); the linkdead reaper extracts it later. Anything else is
+		// cleaned up now.
+		s.finishWebSocketTransport()
 		s.Close()
 	}()
 
@@ -96,10 +100,10 @@ func (s *Session) writePump() {
 		}
 		ticker.Stop()
 		s.Close()
-		// NEW (DP-902): ensure session is cleaned up if writePump exits first.
-		// readPump also defers Unregister, so both pumps converge on the same
-		// idempotent cleanupSession path.
-		s.manager.Unregister(s.playerName)
+		// A failed ping can make the writer exit before the reader notices
+		// EOF. Decide linkdead retention here too, through the same once-only
+		// path, so the writer cannot remove a playing character first.
+		s.finishWebSocketTransport()
 	}()
 
 	for {
@@ -109,6 +113,12 @@ func (s *Session) writePump() {
 			if !ok {
 				_ = s.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
+			}
+			if s.browserTerminal.Load() {
+				var send bool
+				if message, send = renderForBrowserTerminal(message); !send {
+					continue
+				}
 			}
 
 			// Stamp a sequence number on every outbound message. Unmarshal into
@@ -127,6 +137,11 @@ func (s *Session) writePump() {
 
 			_ = s.conn.WriteMessage(websocket.TextMessage, message)
 
+		case <-s.TransportDone():
+			// The connection went linkdead; the session keeps its send channel
+			// for when the character is reattached or extracted.
+			return
+
 		case <-ticker.C:
 			_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := s.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -134,6 +149,14 @@ func (s *Session) writePump() {
 			}
 		}
 	}
+}
+
+func (s *Session) finishWebSocketTransport() {
+	s.transportCleanupOnce.Do(func() {
+		if !s.manager.HandleTransportDisconnect(s) {
+			s.manager.Unregister(s.playerName)
+		}
+	})
 }
 
 // handleMessage processes incoming WebSocket messages.
@@ -147,6 +170,11 @@ func (s *Session) handleMessage(data []byte) error {
 	}
 
 	switch msg.Type {
+	case MsgTerminal:
+		s.startBrowserTerminal()
+		return nil
+	case MsgLine:
+		return s.handleTerminalLine(msg.Data)
 	case MsgLogin:
 		return s.handleLogin(msg.Data)
 	case MsgCommand:

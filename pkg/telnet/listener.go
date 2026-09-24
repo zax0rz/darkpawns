@@ -4,7 +4,6 @@ package telnet
 import (
 	"bufio"
 	"compress/zlib"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -19,7 +18,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/session"
-	"github.com/zax0rz/darkpawns/pkg/validation"
 )
 
 // Telnet protocol bytes
@@ -98,22 +96,6 @@ var lookupAddr = net.LookupAddr
 var listenTCP = net.Listen
 
 var startTime = time.Now()
-
-const greetingsLogo = "\r\n\r\n" +
-	"         (_____)           (_)    (_____)\r\n" +
-	"   _     /  __ \\           | |    |  __ \\                            _\r\n" +
-	"  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\r\n" +
-	"   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\r\n" +
-	" .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\r\n" +
-	" ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\r\n" +
-	"                                  |||\r\n" +
-	"                                  |||\r\n" +
-	"                                  `.'\r\n\r\n" +
-	"             Based on CircleMUD 3.0 created by J. Elson and\r\n" +
-	"            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n" +
-	"                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n" +
-	"   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!\r\n" +
-	"\r\n\r\n"
 
 var (
 	connMu   sync.Mutex
@@ -351,11 +333,8 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		s.SetBanLevel(banLevel)
 	}
 
-	// Welcome + prompt
-	tc.writeLine(greetingsLogo)
-	// C emits one visible line break at the ident-to-name boundary. Use a
-	// well-formed CRLF rather than carrying its legacy LFCR framing forward.
-	tc.writeLine("\r\nBy what name do you wish to be known? ")
+	// Welcome + name prompt
+	tc.write([]byte(session.TerminalGreeting()))
 
 	// Start the output writer before the name prompt is answered. Login output
 	// must reach the client as it is generated (DP-591), and so must what a
@@ -377,140 +356,41 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 		<-done
 	}
 
-	// C's CON_GET_NAME keeps the connection open until it receives a valid
-	// fantasy name. Transport only owns this first read; new-character dialogue
-	// after it belongs entirely to the shared session nanny.
-	var name string
+	// The shared terminal owns the name dialogue and every line after it
+	// (session.TerminalLine). Telnet only reads lines: with the pre-login
+	// reader until a name is accepted, then the full one.
 	for {
+		var line string
 		var ok bool
-		name, ok = tc.readLinePreAuth()
-		if !ok {
-			stopWriter()
-			return
-		}
-		name = strings.TrimSpace(name)
-		if name == "" {
-			tc.writeLine("\r\nGoodbye.\r\n")
-			stopWriter()
-			return
-		}
-		if strings.HasPrefix(strings.ToLower(name), "guest") ||
-			(validation.IsValidPlayerName(name) && game.ValidNameNoActive(name)) {
-			break
-		}
-		tc.writeLine("Invalid name, please try another.\r\nName: ")
-	}
-
-	// Send login with password
-	if err := sendLoginWithPassword(s, name, "", false); err != nil {
-		tc.writeLine(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
-		stopWriter()
-		return
-	}
-
-	// handleLogin rejects bad credentials (wrong password, invalid name, banned)
-	// without returning an error — it has already queued the reason on the
-	// session output channel and called CloseSend. Flush writeLoop so the
-	// error message reaches the client before the raw connection closes. (DP-591)
-	if s.SendClosed() {
-		stopWriter()
-		return
-	}
-
-	_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-
-	// Input loop
-	for {
-		line, ok := tc.readLine()
-		if !ok {
-			// EOF or connection error — the client hung up.
-			break
-		}
-
-		rawLine := line
-		line = strings.TrimSpace(line)
-
-		_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-
-		// The oracle harness control is intercepted before player/session
-		// command handling so the trigger itself consumes no command RNG, wait
-		// state, or activity state. Only the pumped heartbeats may draw.
-		if s.HandleClockControl(line) {
-			continue
-		}
-
-		// DP-928: any inbound traffic proves the TCP socket is alive. Update the
-		// shared lastActive timestamp so the linkdead reaper also covers telnet.
-		s.OnInboundActivity()
-
-		if s.IsCharCreating() || s.IsMenuActive() {
-			// A blank line is meaningful during character creation (e.g. the
-			// "PRESS RETURN" step), so forward it as char_input rather than
-			// swallowing it. Forwarding "" disconnected new players otherwise.
-			if err := sendCharInput(s, rawLine); err != nil {
-				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
-			}
-		} else if s.IsPaging() {
-			// Output pager (DP-1195): while paging, every input line — including
-			// a bare RETURN (next page) — routes to the pager navigator, never
-			// to ExecuteCommand (C: comm.c:617 showstr_count routing). This
-			// branch sits above the `line == ""` refresh so RETURN reaches the
-			// pager. No "> " prompt: the pager prints its own prompt.
-			if err := sendPagerInput(s, line); err != nil {
-				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
-			}
-		} else if s.IsTextEditing() {
-			// CON_TEDIT owns every complete input line, including an empty or
-			// whitespace-only line. C's string_add appends that line to d->str;
-			// it is not the ordinary playing prompt refresh.
-			if err := sendCommand(s, "", nil, rawLine); err != nil {
-				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
-			}
-			if !s.SendClosed() {
-				s.SendPrompt()
-			}
-		} else if s.IsRoomEditing() || s.IsMeditEditing() || s.IsOeditEditing() || s.IsZoneEditing() || s.IsSeditEditing() {
-			// CON_REDIT, CON_MEDIT, CON_OEDIT, CON_ZEDIT and CON_SEDIT own every
-			// complete input
-			// line, including a bare <ENTER>. C's interpreter hands the OLC
-			// menu parsers every line (interpreter.c: CON_REDIT/CON_MEDIT/
-			// CON_OEDIT/CON_ZEDIT dispatch); an empty line at a numerical prompt must
-			// reach the gate ("Field must be numerical, try again : "), not
-			// die in prompt-refresh. This branch sits above the `line == ""`
-			// refresh like the TEDIT branch.
-			if err := sendCommand(s, "", nil, rawLine); err != nil {
-				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
-			}
-			if !s.SendClosed() {
-				s.SendPrompt()
-			}
-		} else if line == "" {
-			// Pressing Enter with no command just refreshes the prompt. Route it
-			// through the session's send channel so writeLoop renders it in FIFO
-			// order after any still-pending output (C: comm.c:643-648).
-			s.SendPrompt()
+		if s.TerminalNamed() {
+			line, ok = tc.readLine()
 		} else {
-			// C-faithful tokenization (interpreter.c:883-907): a non-letter
-			// first char is a one-char command, no separating space needed
-			// ("'hello"). Plain whitespace splitting broke those forms.
-			cmdWord, cmdArgs := session.SplitCommandInput(line)
-			if err := sendCommand(s, cmdWord, cmdArgs, rawLine); err != nil {
-				tc.writeLine(fmt.Sprintf("Error: %v\r\n", err))
-			}
-			// The prompt is enqueued after the command so writeLoop drains the
-			// command's output first, then prints "> " — matching C's flush-then-
-			// prompt order instead of racing the output writer goroutine.
-			if !s.SendClosed() {
-				s.SendPrompt()
-			}
+			line, ok = tc.readLinePreAuth()
 		}
-		if s.SendClosed() {
+		if !ok {
+			// EOF or connection error: the client hung up.
+			if !s.TerminalNamed() {
+				stopWriter()
+				return
+			}
 			break
+		}
+		if !s.TerminalLine(line) {
+			if !s.TerminalNamed() || !s.IsAuthenticated() {
+				stopWriter()
+				return
+			}
+			break
+		}
+		// Once named, an idle connection is dropped after five minutes
+		// without a line.
+		if s.TerminalNamed() {
+			_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 		}
 	}
 
 	// Cleanup
-	if !s.Manager().HandleTelnetDisconnect(s) {
+	if !s.Manager().HandleTransportDisconnect(s) {
 		s.Manager().Unregister(s.PlayerName())
 		s.CloseSend()
 	}
@@ -536,91 +416,30 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		case <-s.TransportDone():
 			return
 		}
-		var sm session.ServerMessage
-		if err := json.Unmarshal(msg, &sm); err != nil {
+		f, ok := session.RenderTerminalFrame(msg)
+		if !ok {
 			continue
 		}
-		switch sm.Type {
-		case "state":
-			// State is structured client data. Room text is emitted from the same
-			// game ObservationResult as act() messages, so telnet must not maintain
-			// a third room renderer here.
-			if stateText := formatState(sm); stateText != "" {
-				tc.writeLine(stateText)
+		switch f.Kind {
+		case session.FrameText:
+			tc.write([]byte(f.Text))
+		case session.FramePrompt:
+			tc.writePrompt(f.Text)
+		case session.FrameEntryPrompt:
+			if f.Secret {
+				tc.write([]byte{IAC, WILL, OPT_ECHO})
+			} else {
+				tc.write([]byte{IAC, WONT, OPT_ECHO})
 			}
-		case "event":
-			if ed, ok := sm.Data.(map[string]interface{}); ok {
-				if text, ok := ed["text"].(string); ok {
-					if eventType, _ := ed["type"].(string); eventType == "raw" {
-						tc.write([]byte(text))
-						continue
-					}
-					tc.writeLine(ensureLineEnded(text))
-				}
+			if f.Text != "" {
+				tc.write(tc.markPrompt([]byte(f.Text)))
 			}
-		case "error":
-			if ed, ok := sm.Data.(map[string]interface{}); ok {
-				if msg, ok := ed["message"].(string); ok {
-					tc.writeLine(fmt.Sprintf("\r\n!! %s\r\n", msg))
-				}
+		case session.FrameGMCP:
+			if tc.hasGMCP.Load() {
+				tc.write(buildGMCPFrameRaw(f.GMCPPackage, f.GMCPPayload))
 			}
-		case "text":
-			if ed, ok := sm.Data.(map[string]interface{}); ok {
-				if text, ok := ed["text"].(string); ok {
-					tc.writeLine(fmt.Sprintf("%s\r\n", text))
-				}
-			}
-		case "prompt":
-			// The command prompt travels through the session's send channel so
-			// it is written only after the command's queued output has been
-			// drained (C: comm.c:643-648 flush output, then prompt).
-			prompt := "> "
-			if data, ok := sm.Data.(map[string]interface{}); ok {
-				if text, ok := data["text"].(string); ok && text != "" {
-					prompt = text
-				}
-			}
-			tc.writePrompt(prompt)
-		case "char_create":
-			if ed, ok := sm.Data.(map[string]interface{}); ok {
-				secret, _ := ed["secret"].(bool)
-				if secret {
-					tc.write([]byte{IAC, WILL, OPT_ECHO})
-				} else {
-					tc.write([]byte{IAC, WONT, OPT_ECHO})
-				}
-				prompt, _ := ed["prompt"].(string)
-				if prompt != "" {
-					// Nanny prompts are already byte-exact C strings. In particular,
-					// MENU intentionally contains mixed LF/CR ordering, so bypass the
-					// general telnet newline normalizer here.
-					tc.write(tc.markPrompt([]byte(prompt)))
-				}
-			}
-		case "gmcp":
-			if !tc.hasGMCP.Load() {
-				continue
-			}
-			if ed, ok := sm.Data.(map[string]interface{}); ok {
-				pkg, _ := ed["package"].(string)
-				payload, _ := ed["json"].(string)
-				if pkg != "" {
-					tc.write(buildGMCPFrameRaw(pkg, payload))
-				}
-			}
-		case "vars":
-			// Agent variable updates are a WebSocket protocol. A telnet session
-			// only receives them if something enables agent vars on it; they
-			// have no telnet rendering, so drop them rather than print JSON.
-		default:
-			tc.writeLine(fmt.Sprintf("[%s]\r\n", string(msg)))
 		}
 	}
-}
-
-func formatState(sm session.ServerMessage) string {
-	_ = sm
-	return ""
 }
 
 // readLine reads a line, handling IAC negotiation and responding appropriately.
@@ -883,34 +702,7 @@ func (tc *telnetConn) writeLocked(data []byte) {
 // than the last. Canonicalizing to "\r\n" here fixes every text source at the
 // transport boundary. Idempotent: existing "\r\n" is preserved, not doubled.
 func (tc *telnetConn) writeLine(s string) {
-	tc.write([]byte(normalizeCRLF(s)))
-}
-
-// ensureLineEnded appends CRLF only to text that carries no line ending at all.
-// A trailing '\r' already ends the line: C's historical LFCR pair ("\n\r") ends
-// most handler output, and appending another CRLF after it injects a blank line
-// the oracle never wrote whenever one command emits two messages (do_string's
-// WARNING/Ok pair is the first vehicle that exposed it — modify.c:632,765).
-func ensureLineEnded(text string) string {
-	if strings.HasSuffix(text, "\n") || strings.HasSuffix(text, "\r") {
-		return text
-	}
-	return text + "\r\n"
-}
-
-// normalizeCRLF converts any mix of "\r\n", C's historical "\n\r", lone
-// "\r", and lone "\n" line endings into canonical "\r\n". Applied to all
-// text written to telnet clients. LFCR is a single C line ending, not two
-// lines; preserving that pair matters for handlers such as do_skillset that
-// build output from mixed-order strings.
-func normalizeCRLF(s string) string {
-	if !strings.ContainsAny(s, "\r\n") {
-		return s
-	}
-	s = strings.ReplaceAll(s, "\r\n", "\n")
-	s = strings.ReplaceAll(s, "\n\r", "\n")
-	s = strings.ReplaceAll(s, "\r", "\n")
-	return strings.ReplaceAll(s, "\n", "\r\n")
+	tc.write([]byte(session.NormalizeCRLF(s)))
 }
 
 // enableCompression starts MCCP2 compression. It sends the COMPRESS_START
@@ -1026,7 +818,7 @@ func (tc *telnetConn) enableGMCP() {
 // writePrompt writes the command prompt, marked with IAC EOR for clients that
 // asked for prompt marking.
 func (tc *telnetConn) writePrompt(prompt string) {
-	tc.write(tc.markPrompt([]byte(normalizeCRLF(prompt))))
+	tc.write(tc.markPrompt([]byte(session.NormalizeCRLF(prompt))))
 }
 
 // markPrompt appends IAC EOR to prompt bytes when the client negotiated EOR.
@@ -1036,81 +828,6 @@ func (tc *telnetConn) markPrompt(prompt []byte) []byte {
 		return prompt
 	}
 	return append(prompt, IAC, EOR)
-}
-
-func sendLoginWithPassword(s *session.Session, name string, password string, newChar bool) error {
-	loginData, err := json.Marshal(map[string]interface{}{
-		"player_name": name,
-		"password":    password,
-		"new_char":    newChar,
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	loginMsg, err := json.Marshal(session.ClientMessage{
-		Type: "login",
-		Data: loginData,
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	return s.HandleMessage(loginMsg)
-}
-
-func sendCharInput(s *session.Session, choice string) error {
-	choiceData, err := json.Marshal(map[string]interface{}{
-		"choice": choice,
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	choiceMsg, err := json.Marshal(session.ClientMessage{
-		Type: "char_input",
-		Data: choiceData,
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	return s.HandleMessage(choiceMsg)
-}
-
-// sendPagerInput forwards a pager navigation line (including "" for RETURN) to
-// the session's pager navigator. Mirrors sendCharInput's envelope shape.
-func sendPagerInput(s *session.Session, line string) error {
-	lineData, err := json.Marshal(map[string]interface{}{
-		"choice": line,
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	lineMsg, err := json.Marshal(session.ClientMessage{
-		Type: "pager_input",
-		Data: lineData,
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	return s.HandleMessage(lineMsg)
-}
-
-func sendCommand(s *session.Session, cmd string, args []string, rawLine string) error {
-	cmdData, err := json.Marshal(session.CommandData{
-		Command: cmd,
-		Args:    args,
-		RawLine: rawLine,
-		RawArgs: session.CommandArgumentText(rawLine),
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	cmdMsg, err := json.Marshal(session.ClientMessage{
-		Type: "command",
-		Data: cmdData,
-	})
-	if err != nil {
-		return fmt.Errorf("json.Marshal: %w", err)
-	}
-	return s.HandleMessage(cmdMsg)
 }
 
 // Stop closes the TCP telnet listener and the TLS listener, if any.

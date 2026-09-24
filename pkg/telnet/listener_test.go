@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
+	"encoding/json"
 	"io"
 	"net"
 	"os"
@@ -38,21 +39,6 @@ func drain(c net.Conn) {
 		if err != nil {
 			return
 		}
-	}
-}
-
-func cGreetingsFixture(t *testing.T) string {
-	t.Helper()
-	raw, err := os.ReadFile("testdata/c_greetings.txt")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return strings.ReplaceAll(string(raw), "\n", "\r\n")
-}
-
-func TestGreetingsLogoMatchesCFixture(t *testing.T) {
-	if want := cGreetingsFixture(t); greetingsLogo != want {
-		t.Fatalf("greetingsLogo differs from C fixture\ngot:  %q\nwant: %q", greetingsLogo, want)
 	}
 }
 
@@ -823,12 +809,15 @@ func TestObservationTelnetRenderingHasNoStateBoxAndGatesVNum(t *testing.T) {
 	}
 	t.Cleanup(world.StopAITicker)
 
-	state := session.ServerMessage{Type: session.MsgState, Data: map[string]interface{}{
+	state, err := json.Marshal(session.ServerMessage{Type: session.MsgState, Data: map[string]interface{}{
 		"player": map[string]interface{}{"name": "Viewer", "level": 1, "health": 10, "max_health": 10},
 		"room":   map[string]interface{}{"vnum": 1234, "name": "Viewer-Aware Hall"},
-	}}
-	if got := formatState(state); got != "" {
-		t.Fatalf("retired state renderer produced telnet text %q", got)
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f, ok := session.RenderTerminalFrame(state); ok {
+		t.Fatalf("state frame rendered as terminal text %+v", f)
 	}
 
 	mortal := game.NewPlayer(1, "Mortal", 1234)
@@ -1063,4 +1052,15 @@ func TestListenAcceptNotBlockedBySlowReverseDNS(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("no connection served within deadline: accept loop stalled on reverse-DNS")
 	}
+}
+
+// cGreetingsFixture is C's greeting, kept with the shared terminal in
+// pkg/session.
+func cGreetingsFixture(t *testing.T) string {
+	t.Helper()
+	raw, err := os.ReadFile("../session/testdata/c_greetings.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.ReplaceAll(string(raw), "\n", "\r\n")
 }

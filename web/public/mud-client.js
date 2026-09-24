@@ -420,26 +420,43 @@ export function createMudClient(options) {
     `;
   }
 
-  let loggedIn = false;
-  let inCharCreation = false;
+  // The server drives the terminal (DP-1320): it sends the greeting, every
+  // prompt and every line of output as the bytes telnet would write, and it
+  // routes each typed line the way telnet does. The client echoes what the
+  // player types, as a telnet client does, and never echoes a secret.
+  //
+  // inGame is true once a command prompt has arrived and false again at the
+  // next login or menu prompt. Outside the game, typeahead waits for the
+  // server's reply to each line, so a pasted name and password cannot echo
+  // the password before the server has asked for it without echo.
+  let inGame = false;
   let charInputSecret = false;
   let awaitingEntryReply = false;
   let queuedInput = '';
 
-  const greetingsLogo =
-    "\r\n\r\n" +
-    "         (_____)           (_)    (_____)\r\n" +
-    "   _     /  __ \\           | |    |  __ \\                            _\r\n" +
-    "  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\r\n" +
-    "   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\r\n" +
-    " .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\r\n" +
-    " ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\r\n" +
-    "                                  |||\r\n" +
-    "                                  |||\r\n" +
-    "                                  `.'\r\n\r\n" +
-    "             Based on CircleMUD 3.0 created by J. Elson and\r\n" +
-    "            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n" +
-    "                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n";
+  // Server output waits while the terminal is unfitted. A terminal measured
+  // before its box is laid out gets xterm's two-column minimum; text written
+  // then wraps two characters to a line, and xterm cannot reflow the cursor's
+  // line back when the fit arrives. Hosts refit on resize (ResizeObserver),
+  // and the held text is written at the real width.
+  const MIN_COLS = 20;
+  let heldOutput = '';
+  function writeOutput(text) {
+    if (typeof term.cols === 'number' && term.cols < MIN_COLS) {
+      heldOutput += text;
+      return;
+    }
+    if (heldOutput) {
+      term.write(heldOutput);
+      heldOutput = '';
+    }
+    term.write(text);
+  }
+  if (typeof term.onResize === 'function') {
+    term.onResize(function () {
+      if (heldOutput && term.cols >= MIN_COLS) writeOutput('');
+    });
+  }
 
   // handleStateRoom updates the sidebar from a state push. The terminal must
   // NOT render the room here: the server already delivers room text through
@@ -488,77 +505,45 @@ export function createMudClient(options) {
     ws.onopen = function () {
       setStatus('connected');
       term.writeln('\x1b[32mConnected.\x1b[0m\r\n');
-      // The admin console already knows who is signed in, so it names the
-      // character instead of asking. Everywhere else the server owns the
-      // question and the player answers it.
+      ws.send(JSON.stringify({ type: 'terminal' }));
+      // The admin console already knows who is signed in, so it answers the
+      // name prompt for them. The server still asks for the password.
       if (options.autoLogin) {
-        term.writeln('\x1b[2mSigning in as ' + options.autoLogin + '.\x1b[0m');
-        awaitingEntryReply = true;
-        ws.send(
-          JSON.stringify({ type: 'login', data: { player_name: options.autoLogin } })
-        );
-        return;
+        queuedInput += options.autoLogin + '\r';
+        drainInput();
       }
-      term.write(greetingsLogo);
-      term.write('By what name do you wish to be known? ');
     };
 
     ws.onmessage = function (evt) {
       try {
         const msg = JSON.parse(evt.data);
-        if (msg.type === 'event' || msg.type === 'text') {
-          // Standard in-game text stream
-          term.write(msg.data.text);
-        } else if (msg.type === 'vars') {
-          handleVarsMsg(msg.data);
-        } else if (msg.type === 'char_create') {
-          inCharCreation = true;
-          loggedIn = false;
-          charInputSecret = Boolean(msg.data.secret);
-          awaitingEntryReply = false;
-          term.write(msg.data.prompt);
-          drainInput();
-        } else if (msg.type === 'error') {
-          term.write('\r\n\x1b[31m' + msg.data.message + '\x1b[0m\r\n');
-          // Reset login flow on failure so they can try again
-          if (!loggedIn && !inCharCreation) {
-            term.write('\r\nBy what name do you wish to be known? ');
-            awaitingEntryReply = false;
-          }
-        } else if (msg.type === 'state') {
-          if (!loggedIn && msg.data && msg.data.player && msg.data.player.name) {
-            loggedIn = true;
-            inCharCreation = false;
+        if (msg.type === 'out') {
+          const out = msg.data || {};
+          writeOutput(out.text || '');
+          if (out.entry) {
+            inGame = false;
+            charInputSecret = Boolean(out.secret);
+          } else if (out.prompt) {
+            inGame = true;
             charInputSecret = false;
+          }
+          // Only a prompt identifies the next input state. The greeting or
+          // unrelated output can arrive after a pasted name but before the
+          // password prompt; releasing typeahead there would echo the secret.
+          if (out.entry || out.prompt) {
             awaitingEntryReply = false;
             drainInput();
           }
-          if (loggedIn && msg.data) {
+        } else if (msg.type === 'vars') {
+          handleVarsMsg(msg.data);
+        } else if (msg.type === 'state') {
+          if (msg.data) {
             handleStateMsg(msg.data);
             handleStateRoom(msg.data);
           }
-        } else if (msg.type === 'prompt') {
-          // Deliberately not rendered. pkg/session/session_send.go:246 states
-          // the contract: "Telnet renders it as the '> ' command prompt;
-          // WebSocket clients may ignore it." It reaches browsers for real —
-          // Manager.flushAsyncPrompts iterates every session, not just telnet
-          // ones, so an idle player who receives pulse output gets one — and
-          // before this branch existed it fell through and wrote its own JSON
-          // envelope into the terminal.
-        } else if (msg.type === 'token_refresh') {
-          // Only sessions issued a JWT receive these: maybeRefreshToken
-          // returns early unless tokenIssuedAt is set, and a browser that
-          // logs in by name never has one. Recognised so that an agent-shaped
-          // session driving this client cannot corrupt the terminal with it.
-        } else {
-          // Never write an unrecognised frame to the terminal. evt.data is the
-          // raw JSON envelope, so doing that prints protocol at the player
-          // instead of game text — which is exactly how `prompt` surfaced.
-          // Game text arrives as 'text' or 'event' and is handled above.
-          if (typeof console !== 'undefined' && console.debug) {
-            console.debug('mud-client: unhandled message type', msg.type);
-          }
         }
+        // Nothing else is ever written to the terminal: an unrecognised
+        // frame is protocol, not game text.
       } catch {
         // Not JSON at all. The server frames everything it sends, so this is
         // either a proxy injecting something or a protocol change; the raw
@@ -570,12 +555,12 @@ export function createMudClient(options) {
     ws.onclose = function () {
       setStatus('disconnected');
       term.writeln('\x1b[31m\r\n--- Connection lost ---\x1b[0m');
-      loggedIn = false;
-      inCharCreation = false;
+      inGame = false;
       charInputSecret = false;
       awaitingEntryReply = false;
       queuedInput = '';
       inputBuffer = '';
+      heldOutput = '';
       if (statusBar) statusBar.classList.add('hidden');
     };
 
@@ -606,23 +591,11 @@ export function createMudClient(options) {
       if (!charInputSecret) term.writeln('');
       const input = inputBuffer;
       inputBuffer = '';
-
-      if (!loggedIn && !inCharCreation) {
-        if (!awaitingEntryReply) {
-          awaitingEntryReply = true;
-          ws.send(JSON.stringify({ type: 'login', data: { player_name: input.trim() } }));
-        }
-        return;
-      }
-
-      if (inCharCreation) {
-        awaitingEntryReply = true;
-        ws.send(JSON.stringify({ type: 'char_input', data: { choice: input } }));
-        return;
-      }
-
-      // Normal command execution
-      ws.send(JSON.stringify({ type: 'command', data: { command: input } }));
+      // Outside the game, wait for the server's reply before sending more.
+      if (!inGame) awaitingEntryReply = true;
+      // The line goes as typed, spacing and all: the server tokenizes it the
+      // way C does.
+      ws.send(JSON.stringify({ type: 'line', data: { line: input } }));
     } else if (data === '\x7f' || data === '\b') {
       if (inputBuffer.length > 0) {
         inputBuffer = inputBuffer.slice(0, -1);
@@ -639,8 +612,7 @@ export function createMudClient(options) {
   }
 
   function resetSession() {
-    loggedIn = false;
-    inCharCreation = false;
+    inGame = false;
     charInputSecret = false;
     awaitingEntryReply = false;
     inputBuffer = '';

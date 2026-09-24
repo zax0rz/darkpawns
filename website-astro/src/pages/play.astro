@@ -136,9 +136,15 @@ import '@xterm/xterm/css/xterm.css';
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
-    term.open(document.getElementById('terminal'));
+    const mount = document.getElementById('terminal');
+    term.open(mount);
     fit.fit();
-    window.addEventListener('resize', () => fit.fit());
+    // Refit whenever the terminal's own box changes size, not only the window,
+    // and once web fonts finish loading. A terminal measured before its container
+    // is laid out gets xterm's two-column minimum, and output written then wraps
+    // at two columns; xterm reflows it once the fit is right.
+    if (mount) new ResizeObserver(() => fit.fit()).observe(mount);
+    document.fonts?.ready.then(() => fit.fit());
 
     const screenReaderButton = document.getElementById('screen-reader-btn');
     const showScreenReaderState = (on: boolean) => {

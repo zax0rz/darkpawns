@@ -123,9 +123,11 @@ func TestReapReturnFromVoid(t *testing.T) {
 	}
 }
 
-// TestWritePumpExitTriggersCleanup: closing the client socket without sending
-// quit causes writePump (and readPump) to exit and Unregister the session.
-func TestWritePumpExitTriggersCleanup(t *testing.T) {
+// TestAbruptCloseLeavesCharacterLinkdead: closing the client socket of a
+// playing character without quitting leaves the character in the world,
+// linkless and still registered, as C's close_socket does and as telnet does
+// (DP-1323). The linkdead reaper extracts it later.
+func TestAbruptCloseLeavesCharacterLinkdead(t *testing.T) {
 	m := makeTestManagerWithVoidRooms(t)
 
 	srv := httptest.NewServer(http.HandlerFunc(m.HandleWebSocket))
@@ -165,13 +167,41 @@ func TestWritePumpExitTriggersCleanup(t *testing.T) {
 	// Abruptly close the client socket without sending quit.
 	_ = client.Close()
 
-	// Wait for writePump/readPump to notice and clean up.
+	// Wait for the pumps to notice.
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
-		if _, ok := m.GetSession("WritePumpGhost"); !ok {
-			return // cleaned up
+		s, ok := m.GetSession("WritePumpGhost")
+		if !ok {
+			t.Fatal("a dropped connection removed the character; C leaves it linkdead")
+		}
+		if s.player != nil && s.player.IsLinkless() {
+			// Give the writer time to exit; the session must stay registered.
+			time.Sleep(200 * time.Millisecond)
+			if _, ok := m.GetSession("WritePumpGhost"); !ok {
+				t.Fatal("the linkdead session was unregistered after the writer exited")
+			}
+			return
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-	t.Fatal("session should have been unregistered after client disconnect")
+	t.Fatal("character never went linkless after the client disconnected")
+}
+
+// A failed writer ping can exit before readPump observes the closed socket.
+// Both pump defers must converge on linkdead retention regardless of order.
+func TestWriterFirstDisconnectLeavesCharacterLinkdead(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "WriterFirst", 1001, true)
+	s.transportDone = make(chan struct{})
+	registerTestSession(t, m, s, s.playerName)
+
+	s.finishWebSocketTransport() // writer exits first
+	s.finishWebSocketTransport() // reader exits later
+
+	if _, ok := m.GetSession(s.playerName); !ok {
+		t.Fatal("writer-first disconnect unregistered the playing character")
+	}
+	if !s.player.IsLinkless() {
+		t.Fatal("writer-first disconnect did not mark the character linkless")
+	}
 }

@@ -1202,13 +1202,13 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 }
 
-// HandleTelnetDisconnect preserves an authenticated playing character after
-// an unexpected TCP EOF. C close_socket() saves the character and clears its
+// HandleTransportDisconnect preserves an authenticated playing character after
+// an unexpected disconnect, telnet EOF or a closed browser tab (DP-1323). C close_socket() saves the character and clears its
 // descriptor, but leaves it in character_list so directed speech can report
 // that the target is linkless. The linkdead reaper later owns extraction.
 // It returns true when the session was retained as linkdead; orderly quits
 // and pre-auth disconnects return false and use normal cleanup.
-func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
+func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() {
 		return false
 	}
@@ -1524,16 +1524,27 @@ type Session struct {
 	// Character creation state
 	creationSaved bool // New character persisted at accepted stats, not yet admitted.
 	loginFailures atomic.Int32
-	charCreating  bool
-	charStage     string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
-	charName      string
-	charPassword  string // hashed password during creation
-	charColor     bool   // ANSI color preference
-	charSex       int
-	charRace      int
-	charClass     int
-	charHometown  int
-	charStats     game.CharStats
+	// terminalNamed is set once a terminal client's name line has been
+	// accepted and handed to the nanny (see TerminalLine).
+	terminalNamed bool
+	// browserTerminal marks a WebSocket session driven as a terminal: its
+	// queued frames are rendered to telnet's bytes before they are sent.
+	// Written by readPump, read by writePump.
+	browserTerminal atomic.Bool
+	// Both WebSocket pumps can discover a disconnect. Only one may decide
+	// whether to retain the playing character or unregister the session.
+	transportCleanupOnce sync.Once
+
+	charCreating bool
+	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
+	charName     string
+	charPassword string // hashed password during creation
+	charColor    bool   // ANSI color preference
+	charSex      int
+	charRace     int
+	charClass    int
+	charHometown int
+	charStats    game.CharStats
 
 	// Post-MOTD main menu state. This is separate from character creation
 	// because returning players pass through the same menu before world entry.
