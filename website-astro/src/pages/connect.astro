@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Connect a MUD Client | Dark Pawns" description="Connect to Dark Pawns with Mudlet, TinTin++, or a raw terminal, over TLS on port 7778.">
+  <section class="connection-guide container" aria-labelledby="desktop-client">
+    <div class="guide-heading">
+      <p class="eyebrow">Long-form play</p>
+      <h1 id="desktop-client">Connect with a MUD client</h1>
+      <p>A dedicated client gives you persistent scrollback, aliases, triggers, and mapping tools.</p>
+    </div>
+    <dl class="connection-card">
+      <div><dt>Host</dt><dd><code>darkpawns.org</code></dd></div>
+      <div><dt>Port</dt><dd><code>7778</code></dd></div>
+      <div><dt>Protocol</dt><dd>Telnet over TLS (secure)</dd></div>
+    </dl>
+    <p class="plaintext-note">Clients without TLS can use port <code>7777</code>, but everything you send there crosses the network in the clear, your password included. The <a href="/play/">browser client</a> always uses TLS.</p>
+    <div class="client-grid">
+      <article>
+        <h3>Mudlet</h3>
+        <p>The friendly graphical choice for Windows, macOS, and Linux. Create a profile with the host and port above and tick <strong>Secure</strong>. On first connect Mudlet installs the Dark Pawns package: health bars, a map that draws itself as you walk, and a chat window.</p>
+        <a href="/mudlet/">The Mudlet guide <span aria-hidden="true">→</span></a>
+      </article>
+      <article>
+        <h3>TinTin++</h3>
+        <p>A terminal-native client with scripting, aliases, triggers, and an automapper. Connect securely with:</p>
+        <pre><code>#ssl dp darkpawns.org 7778</code></pre>
+        <a href="https://tintin.mudhalla.net/download.php">Get TinTin++ <span aria-hidden="true">→</span></a>
+      </article>
+      <article>
+        <h3>Raw terminal</h3>
+        <p>Plain <code>telnet</code> has no TLS, so keep it for a quick look as a <strong>guest</strong> rather than logging in with your password:</p>
+        <pre><code>telnet darkpawns.org 7777</code></pre>
+      </article>
+    </div>
+    <div class="first-steps">
+      <h2>Once you are inside</h2>
+      <ol>
+        <li>Type <code>help</code> to browse the in-game help system.</li>
+        <li>Type <code>look</code> whenever you need to read the room again.</li>
+        <li>Type <code>commands</code> to see the command surface available to you.</li>
+      </ol>
+      <p>Need a reference outside the game? Visit the <a href="/help/">searchable help files</a> or read the <a href="/world/">world guide</a>.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .connection-guide { padding-block: var(--space-xl); }
+  .guide-heading { max-width: var(--content-width); margin-bottom: var(--space-lg); }
+  .guide-heading > p:last-child { color: var(--ink-muted); }
+  .connection-card { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 var(--space-sm); border: 1px solid var(--rule); }
+  .plaintext-note { max-width: var(--content-width); margin: 0 0 var(--space-lg); color: var(--ink-muted); font-size: .95rem; }
+  .connection-card div { padding: var(--space-md); }
+  .connection-card div + div { border-left: 1px solid var(--rule); }
+  .connection-card dt { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+  .connection-card dd { margin: .25rem 0 0; }
+  .client-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); }
+  .client-grid article { border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
+  .client-grid h3 { font-size: 1.25rem; }
+  .client-grid p { color: var(--ink-muted); font-size: .95rem; }
+  .client-grid pre { overflow-x: auto; font-size: .72rem; margin: 0 0 var(--space-sm); }
+  .first-steps { max-width: var(--content-width); margin-top: var(--space-xl); }
+  .first-steps li { margin-bottom: var(--space-sm); }
+  @media (max-width: 860px) {
+    .connection-card, .client-grid { grid-template-columns: 1fr; }
+    .connection-card div + div { border-left: 0; border-top: 1px solid var(--rule); }
+  }
+  @media (max-width: 520px) {
+    .connection-guide { padding-inline: var(--space-md); }
+  }
+</style>

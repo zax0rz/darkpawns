@@ -21,10 +21,9 @@ const helpRedirects = Object.fromEntries(
 const redirects = {
   ...helpRedirects,
   '/help/!': '/help/commands/bang-caret/',
-  '/connect': '/play/',
-  '/connect/client-downloads': '/play/#desktop-client',
-  '/connect/connection-instructions': '/play/#desktop-client',
-  '/connect/contact-info': '/play/',
+  '/connect/client-downloads': '/connect/',
+  '/connect/connection-instructions': '/connect/',
+  '/connect/contact-info': '/connect/',
   '/connect/external-links': '/archive/',
   '/changelog': '/',
   '/about/features': '/world/',
