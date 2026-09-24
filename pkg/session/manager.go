@@ -1527,16 +1527,21 @@ type Session struct {
 	// terminalNamed is set once a terminal client's name line has been
 	// accepted and handed to the nanny (see TerminalLine).
 	terminalNamed bool
-	charCreating  bool
-	charStage     string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
-	charName      string
-	charPassword  string // hashed password during creation
-	charColor     bool   // ANSI color preference
-	charSex       int
-	charRace      int
-	charClass     int
-	charHometown  int
-	charStats     game.CharStats
+	// browserTerminal marks a WebSocket session driven as a terminal: its
+	// queued frames are rendered to telnet's bytes before they are sent.
+	// Written by readPump, read by writePump.
+	browserTerminal atomic.Bool
+
+	charCreating bool
+	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
+	charName     string
+	charPassword string // hashed password during creation
+	charColor    bool   // ANSI color preference
+	charSex      int
+	charRace     int
+	charClass    int
+	charHometown int
+	charStats    game.CharStats
 
 	// Post-MOTD main menu state. This is separate from character creation
 	// because returning players pass through the same menu before world entry.

@@ -8,6 +8,8 @@ const (
 	MsgCommand    = "command"
 	MsgCharInput  = "char_input"  // client → server: answers during char creation
 	MsgPagerInput = "pager_input" // client → server: pager navigation while paging
+	MsgTerminal   = "terminal"    // client → server: drive this session as a terminal (browser client)
+	MsgLine       = "line"        // client → server: one input line, in terminal mode
 )
 
 // Server to Client message types
@@ -20,6 +22,7 @@ const (
 	MsgVars         = "vars"          // server → agent: variable state update
 	MsgPrompt       = "prompt"        // server → client: render the command prompt
 	MsgTokenRefresh = "token_refresh" // server → client: proactively rotated JWT
+	MsgOut          = "out"           // server → client: rendered terminal bytes, in terminal mode
 )
 
 // Client to Server message types (agent-specific)

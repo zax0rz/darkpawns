@@ -110,6 +110,12 @@ func (s *Session) writePump() {
 				_ = s.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
+			if s.browserTerminal.Load() {
+				var send bool
+				if message, send = renderForBrowserTerminal(message); !send {
+					continue
+				}
+			}
 
 			// Stamp a sequence number on every outbound message. Unmarshal into
 			// a generic map, add seq, re-marshal: raw JSON string injection was
@@ -147,6 +153,11 @@ func (s *Session) handleMessage(data []byte) error {
 	}
 
 	switch msg.Type {
+	case MsgTerminal:
+		s.startBrowserTerminal()
+		return nil
+	case MsgLine:
+		return s.handleTerminalLine(msg.Data)
 	case MsgLogin:
 		return s.handleLogin(msg.Data)
 	case MsgCommand:
