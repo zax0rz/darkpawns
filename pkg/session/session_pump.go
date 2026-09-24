@@ -28,7 +28,7 @@ func (s *Session) readPump() {
 				"stack", string(debug.Stack()),
 			)
 			s.sendError("An internal server error occurred. Your connection has been reset.")
-			s.manager.Unregister(s.playerName)
+			s.manager.UnregisterSession(s)
 		}
 		// Always decrement IP connection count (C5 leak fix)
 		if !s.connCountDecremented && (s.request != nil || s.remoteIP != "") {
@@ -167,7 +167,7 @@ func (s *Session) writePump() {
 func (s *Session) finishWebSocketTransport() {
 	s.transportCleanupOnce.Do(func() {
 		if !s.manager.HandleTransportDisconnect(s) {
-			s.manager.Unregister(s.playerName)
+			s.manager.UnregisterSession(s)
 		}
 	})
 }

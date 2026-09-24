@@ -391,7 +391,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 
 	// Cleanup
 	if !s.Manager().HandleTransportDisconnect(s) {
-		s.Manager().Unregister(s.PlayerName())
+		s.Manager().UnregisterSession(s)
 		s.CloseSend()
 	}
 	// A successful quit queues its goodbye immediately before Unregister closes
