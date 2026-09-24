@@ -8,7 +8,7 @@
 |--------|---------|--------|
 | Web client | [darkpawns.org/play](https://darkpawns.org/play) | Live |
 | MUD client, secure (recommended) | `darkpawns.org` port `7778`, TLS on | Live |
-| [Mudlet](https://darkpawns.org/mudlet/) | `darkpawns.org` port `7778`, Secure ticked; installs the Dark Pawns dock | Live |
+| [Mudlet](https://darkpawns.org/connect/#mudlet) | `darkpawns.org` port `7778`, Secure ticked; installs the Dark Pawns dock | Live |
 | Telnet, unencrypted | `telnet darkpawns.org 7777` (your password crosses the network in the clear; fine for a `guest` look) | Live |
 | WebSocket (agents) | `wss://darkpawns.org/ws`, with an agent key | Live |
 

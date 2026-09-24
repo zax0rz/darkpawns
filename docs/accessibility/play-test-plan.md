@@ -26,7 +26,8 @@ checks below on the built page before treating this surface as accessible.
 | Secret input | Enter a character name and password with the mode on | Password characters are neither drawn nor announced as ordinary terminal input; an early paste cannot expose the password before the secret prompt |
 | Play | As `guest` or a test character, type `look`, `help`, an invalid command, and RETURN | New game text is announced once, in order; the command prompt is usable; long output can be reviewed without losing the input |
 | Busy output | Receive several room or channel lines quickly; start reading older output while another line arrives | Announcements remain intelligible; no surprise focus jump or repeated whole-transcript announcement |
-| Dock | Navigate by headings/landmarks to Character, Map, In the Room, Inventory/Equipment, and Target when present | Vitals include numbers, not color alone; current room is named in text; decorative map dots do not flood the reading order |
+| Dock | Navigate by headings/landmarks to Character, Map, In the Room, Inventory/Equipment, Target, and Chat when present | Vitals include numbers, not color alone; current room is named in text; decorative map dots do not flood the reading order; chat lines can be read without a second live announcement |
+| Chat | Send and receive a channel line, then disconnect | The Chat panel copies the structured channel line once, without changing the terminal transcript; old lines clear on disconnect |
 | Inventory | Switch Inventory and Equipment with keyboard, then receive a state update | Pressed state and visible panel agree; focus stays on the chosen button; hidden items are absent from the reading order |
 | Disconnect | Disconnect or interrupt the socket, then use Reconnect | Status announces the loss and return; stale dock data disappears; Reconnect returns keyboard focus to Terminal input |
 | Layout | Repeat key actions at 200% zoom and a 375px viewport | No horizontal page scroll, clipped controls, overlapping text, or trapped focus; dock follows the terminal in reading order |
@@ -40,9 +41,22 @@ named screen reader; xterm's accessibility DOM and an automated audit are
 supporting evidence only. In particular, test speech around password prompts
 and rapid output manually before claiming the toggle is safe and useful.
 
-The browser dock currently shows vitals, a local map, room contents, inventory,
-equipment, and the current target when the server supplies those fields.
-Mudlet's separate chat window relies on GMCP channel messages; the browser
-WebSocket client does not receive that channel feed yet. Chat remains in the
-canonical game transcript until a structured channel feed can be wired in
-without parsing game prose (R1, R4).
+The browser dock shows, top to bottom, the character's vitals, the target
+during a fight, a local map, and a bounded channel history (the last 80
+lines, scrolling inside its own box) when the server supplies those fields.
+Room contents and inventory are left to `look` and `inv`, as in the Mudlet
+dock. Chat uses `Comm.Channel.Text` and also remains in the canonical
+game transcript (R1, R4). The dock history is deliberately not a second live
+region: screen reader mode announces the terminal text, and the Chat heading
+provides a place to review the recent lines on demand.
+
+## Results log
+
+| Date | Tester | Environment | Result |
+|---|---|---|---|
+| 2026-09-24 | Claude (automated, no speech) | Chromium, local preview | Pass: landmarks, headings, named terminal region, announced connection status; screen reader toggle sets `aria-pressed` and persists; real keystrokes reach the game and the room description reaches xterm's live region; keyboard order toggle, terminal, dock; Tab leaves the terminal (fixed: xterm trapped it); no horizontal scroll at 375px; text contrast 5.7:1 or better. Noted: xterm's live region is assertive, and one idle message was written to it twice. |
+| 2026-09-24 | Zach (sighted, first use of a screen reader) | Orca 49.4, Firefox, Pop!_OS COSMIC | Pass for the core loop: the page reads while browsing; the toggle is found by Tab and switches to terminal announcements; typed characters are echoed; after login the room description is read. Not yet tested: password prompt speech, busy output, dock navigation. |
+
+Still wanted: a run by an experienced screen reader user who plays MUDs,
+covering busy output (does the assertive region cut lines off?), the
+password prompt, and whether the dock is worth navigating at all.

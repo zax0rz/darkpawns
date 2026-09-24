@@ -3,12 +3,11 @@ import Base from '../layouts/Base.astro';
 import '@xterm/xterm/css/xterm.css';
 ---
 
-<Base title="Play Dark Pawns" description="Enter Dark Pawns in your browser or connect with a desktop MUD client.">
+<Base title="Play Dark Pawns" description="Play Dark Pawns in your browser." hideFooter>
   <section class="play-shell" aria-labelledby="play-heading">
     <div class="play-intro container">
-      <p class="eyebrow">The gates are open</p>
       <h1 id="play-heading">Enter Dark Pawns</h1>
-      <p>Play immediately in the browser, or use a dedicated MUD client for longer expeditions.</p>
+      <p>Play right here, or <a href="/connect/">connect a MUD client</a> for longer sessions.</p>
     </div>
 
     <div class="play-wrapper container">
@@ -21,24 +20,12 @@ import '@xterm/xterm/css/xterm.css';
             <button id="reconnect-btn" type="button">Reconnect</button>
           </div>
         </div>
-        <p class="terminal-hint" id="terminal-help">Tab into the game window to type. Use the Screen reader button to announce new game text.</p>
-        <div id="terminal" role="region" aria-label="Dark Pawns game terminal" aria-describedby="terminal-help"></div>
+        <p class="visually-hidden" id="terminal-help">Type in the terminal; press Tab to leave it. Screen reader mode announces new game text.</p>
+        <div id="terminal" role="region" aria-label="Dark Pawns game terminal" aria-describedby="terminal-help"><div id="terminal-screen"></div></div>
       </div>
 
       <aside class="play-sidebar" aria-labelledby="dock-heading">
         <h2 id="dock-heading" class="visually-hidden">Player dock</h2>
-        <div class="dock-brand" aria-hidden="true">
-          <svg class="dock-pawn" viewBox="24 8 52 88" focusable="false">
-            <g fill="currentColor">
-              <circle cx="50" cy="23" r="12" />
-              <rect x="37" y="38" width="26" height="5" />
-              <polygon points="43,46 57,46 62,75 38,75" />
-              <rect x="31" y="77" width="38" height="6" />
-              <rect x="26" y="85" width="48" height="7" />
-            </g>
-          </svg>
-          <span>DARK<br /><span>PAWNS</span></span>
-        </div>
         <div id="status-bar" class="status-bar hidden" role="group" aria-labelledby="character-heading">
           <h3 id="character-heading">Character</h3>
           <p id="character-identity" class="character-identity"></p>
@@ -52,57 +39,18 @@ import '@xterm/xterm/css/xterm.css';
         <div id="sidebar-connect-panel">
           <h3>At the prompt</h3>
           <p>Enter an existing character name, create a new character, or type <strong>guest</strong> for an ephemeral visit.</p>
-          <p>Screen reader mode announces new game text and remembers your choice in this browser.</p>
-          <p><a href="#desktop-client">Prefer Mudlet or TinTin++?</a></p>
         </div>
-        <div id="minimap-container" class="sidebar-panel hidden"></div>
         <div id="target-container" class="sidebar-panel hidden"></div>
-        <div id="room-contents-container" class="sidebar-panel hidden"></div>
-        <div id="inventory-equipment-container" class="sidebar-panel hidden"></div>
+        <div id="minimap-container" class="sidebar-panel hidden"></div>
+        <section id="chat-container" class="chat-panel" aria-labelledby="chat-heading">
+          <h3 id="chat-heading">Chat</h3>
+          <p id="chat-empty">Channel messages appear here during play.</p>
+          <ol id="chat-messages" tabindex="0" aria-label="Chat history" aria-live="off"></ol>
+        </section>
       </aside>
     </div>
   </section>
 
-  <section class="connection-guide container" aria-labelledby="desktop-client">
-    <div class="guide-heading">
-      <p class="eyebrow">Long-form play</p>
-      <h2 id="desktop-client">Connect with a MUD client</h2>
-      <p>A dedicated client gives you persistent scrollback, aliases, triggers, and mapping tools.</p>
-    </div>
-    <dl class="connection-card">
-      <div><dt>Host</dt><dd><code>darkpawns.org</code></dd></div>
-      <div><dt>Port</dt><dd><code>7778</code></dd></div>
-      <div><dt>Protocol</dt><dd>Telnet over TLS (secure)</dd></div>
-    </dl>
-    <p class="plaintext-note">Clients without TLS can use port <code>7777</code>, but everything you send there crosses the network in the clear, your password included. The browser client above always uses TLS.</p>
-    <div class="client-grid">
-      <article>
-        <h3>Mudlet</h3>
-        <p>The friendly graphical choice for Windows, macOS, and Linux. Create a profile with the host and port above and tick <strong>Secure</strong>. On first connect Mudlet installs the Dark Pawns package: health bars, a map that draws itself as you walk, and a chat window.</p>
-        <a href="/mudlet/">The Mudlet guide <span aria-hidden="true">→</span></a>
-      </article>
-      <article>
-        <h3>TinTin++</h3>
-        <p>A terminal-native client with scripting, aliases, triggers, and an automapper. Connect securely with:</p>
-        <pre><code>#ssl dp darkpawns.org 7778</code></pre>
-        <a href="https://tintin.mudhalla.net/download.php">Get TinTin++ <span aria-hidden="true">→</span></a>
-      </article>
-      <article>
-        <h3>Raw terminal</h3>
-        <p>Plain <code>telnet</code> has no TLS, so keep it for a quick look as a <strong>guest</strong> rather than logging in with your password:</p>
-        <pre><code>telnet darkpawns.org 7777</code></pre>
-      </article>
-    </div>
-    <div class="first-steps">
-      <h2>Once you are inside</h2>
-      <ol>
-        <li>Type <code>help</code> to browse the in-game help system.</li>
-        <li>Type <code>look</code> whenever you need to read the room again.</li>
-        <li>Type <code>commands</code> to see the command surface available to you.</li>
-      </ol>
-      <p>Need a reference outside the game? Visit the <a href="/help/">searchable help files</a> or read the <a href="/world/">world guide</a>.</p>
-    </div>
-  </section>
 
   <script>
     // The client itself lives in web/public so the self-host splash, which has
@@ -134,6 +82,15 @@ import '@xterm/xterm/css/xterm.css';
       }
     };
 
+    // The play area fills the window under the site header; the header's
+    // height changes with its wrapping, so it is measured, not assumed.
+    const masthead = document.querySelector('.masthead');
+    const setMastheadHeight = () => {
+      if (masthead) document.documentElement.style.setProperty('--masthead-h', `${masthead.getBoundingClientRect().height}px`);
+    };
+    setMastheadHeight();
+    if (masthead) new ResizeObserver(setMastheadHeight).observe(masthead);
+
     const term = new Terminal({
       screenReaderMode: readScreenReaderPreference(),
       cursorBlink: true,
@@ -154,7 +111,7 @@ import '@xterm/xterm/css/xterm.css';
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
-    const mount = document.getElementById('terminal');
+    const mount = document.getElementById('terminal-screen');
     term.open(mount);
     fit.fit();
     // Refit whenever the terminal's own box changes size, not only the window,
@@ -187,15 +144,22 @@ import '@xterm/xterm/css/xterm.css';
 </Base>
 
 <style>
-  .play-shell { border-bottom: 1px solid var(--rule); }
-  .play-intro { padding-block: var(--space-md); }
-  .play-intro h1 { margin: 0 0 var(--space-xs); }
-  .play-intro p:last-child { color: var(--ink-muted); margin: 0; }
-  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
-  .play-wrapper.container { max-width: 96rem; padding-inline: var(--space-md); }
-  .play-wrapper { display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, 22rem); min-height: clamp(38rem, 74vh, 54rem); border-top: 1px solid var(--rule); }
-  .terminal-frame { display: flex; flex-direction: column; min-width: 0; background: #0a0908; }
-  .terminal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); padding: .55rem var(--space-md); background: var(--paper); border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+  /* The play area is an app: intro, terminal and dock fill the window under
+     the site header (measured into --masthead-h), and nothing scrolls but the
+     terminal and the chat history. The client guide sits below the fold. */
+  .play-shell { display: flex; flex-direction: column; height: calc(100dvh - var(--masthead-h, 8rem)); min-height: 32rem; border-bottom: 1px solid var(--rule); }
+  .play-intro { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem var(--space-md); padding-block: var(--space-sm); }
+  .play-intro h1 { margin: 0; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.1; }
+  .play-intro p { color: var(--ink-muted); margin: 0; font-size: .95rem; }
+  /* Auto margins would shrink these flex items to their content. They keep
+     the site's own column (.container), so the intro, terminal and dock line
+     up with the wordmark and navigation above them. */
+  .play-wrapper.container, .play-intro.container { width: 100%; }
+  /* The dock stays narrow enough that the terminal keeps the 80 columns game
+     text is formatted for, inside the site column. */
+  .play-wrapper { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 19rem; min-height: 0; border-top: 1px solid var(--rule); }
+  .terminal-frame { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: #0a0908; }
+  .terminal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); padding: .55rem var(--space-md); background: var(--paper-deep); border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
   .terminal-title { color: var(--accent); font-weight: 700; }
   .terminal-actions, .conn-status { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
   .conn-status .dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--accent); }
@@ -205,21 +169,37 @@ import '@xterm/xterm/css/xterm.css';
   #screen-reader-btn:focus-visible, #reconnect-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   #reconnect-btn { display: none; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; font: inherit; padding: .25rem .55rem; text-transform: uppercase; }
   #reconnect-btn.visible { display: inline-block; }
-  .terminal-hint { margin: 0; padding: .2rem var(--space-sm); background: var(--paper-deep); color: var(--ink-muted); font-size: .82rem; max-width: none; }
-  #terminal { flex: 1; min-height: 32rem; overflow: hidden; background: #0a0908; border: 2px solid var(--rule); padding: .5rem; }
-  .play-sidebar { min-width: 0; padding: var(--space-md); background: var(--paper); border-left: 1px solid var(--rule); overflow-y: auto; }
-  .dock-brand { display: flex; align-items: center; gap: .4rem; padding-bottom: .45rem; margin-bottom: .6rem; border-bottom: 1px solid var(--rule); color: var(--ink); font-family: var(--font-display); font-size: 1.7rem; line-height: .83; text-align: left; }
-  .dock-brand span span { color: var(--accent); }
-  .dock-pawn { width: 2.5rem; height: 3.4rem; flex: none; }
+  /* xterm mounts in an unpadded inner box that the fit addon measures
+     exactly; the padding and frame live on the outer box. Padding on the
+     measured box made one row too many and clipped the prompt, and padding
+     on xterm's own element exposed its native scrollbar beside the styled
+     one. Space left under the last whole row shows the terminal background. */
+  #terminal { flex: 1; min-height: 0; overflow: hidden; padding: .5rem; background: #0a0908; box-shadow: inset 0 0 0 2px var(--rule); }
+  #terminal-screen { height: 100%; background: #0a0908; }
+  /* Dock: character, target (in a fight), map, then chat taking the rest. */
+  /* The dock never scrolls: Character and Target keep their height, and Map
+     and Chat share what is left, each with a floor. */
+  .play-sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: var(--space-sm) var(--space-md); background: var(--paper); border-left: 1px solid var(--rule); overflow: hidden; }
+  .play-sidebar > * { flex: none; }
+  .play-sidebar > #minimap-container { flex: 1 1 12rem; min-height: 7rem; max-height: 17rem; display: flex; flex-direction: column; }
+  .play-sidebar > .chat-panel { flex: 1 1 12rem; min-height: 7rem; display: flex; flex-direction: column; margin-top: var(--space-sm); border: 1px solid var(--rule); background: var(--paper-deep); }
+  .chat-panel h3 { margin: 0; padding: .35rem .6rem; border-bottom: 1px solid var(--rule); font-size: 1rem; }
+  #chat-empty { margin: 0; padding: .5rem .6rem; font-size: .85rem; }
+  #chat-messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: .35rem; margin: 0; padding: .5rem .6rem; list-style: none; font-family: var(--font-mono); font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere; }
+  #chat-messages:empty { display: none; }
+  #chat-messages:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  #chat-messages li { border-left: 2px solid var(--accent); padding-left: .5rem; }
+  #chat-messages small { color: var(--ink-muted); text-transform: uppercase; }
   .play-sidebar h3 { font-size: 1.2rem; margin: 0 0 var(--space-sm); }
   .play-sidebar p { color: var(--ink-muted); font-size: .9rem; }
   .hidden { display: none; }
-  .sidebar-panel { border-top: 1px solid var(--rule); padding-top: var(--space-sm); margin-top: var(--space-md); }
-  .status-bar { margin: 0 0 var(--space-md); font-family: var(--font-mono); font-size: .85rem; }
+  .sidebar-panel { border-top: 1px solid var(--rule); padding-top: var(--space-xs); margin-top: var(--space-sm); }
+  .sidebar-panel:empty { display: none; }
+  .status-bar { margin: 0; font-family: var(--font-mono); font-size: .85rem; }
   .status-bar h3 { font-family: var(--font-display); }
   .character-identity { margin: 0 0 var(--space-sm); color: var(--ink-muted); font-size: .85rem; }
   .vitals { margin: 0; }
-  .stat-group { margin: 0 0 .45rem; }
+  .stat-group { margin: 0 0 .3rem; }
   .stat-group dt, .stat-group dd { display: flex; justify-content: space-between; gap: var(--space-sm); margin: 0; }
   .stat-group dt { color: var(--ink-muted); text-transform: uppercase; font-size: .8rem; }
   .stat-group dd { flex-direction: column; align-items: stretch; font-variant-numeric: tabular-nums; text-align: right; }
@@ -237,33 +217,21 @@ import '@xterm/xterm/css/xterm.css';
   .play-sidebar :global(.target-hp-bar-container .bar-track) { background: var(--paper-deep); border: 1px solid var(--ink-muted); }
   .play-sidebar :global(.target-name) { font-family: var(--font-mono); font-size: .82rem; }
   .play-sidebar :global(.badge) { margin-left: .25rem; color: var(--accent); font: .8rem var(--font-mono); text-transform: uppercase; }
-  .play-sidebar :global(#minimap-container svg) { display: block; width: 100%; height: auto; max-height: 15rem; }
-  .connection-guide { padding-block: var(--space-xl); }
-  .guide-heading { max-width: var(--content-width); margin-bottom: var(--space-lg); }
-  .guide-heading > p:last-child { color: var(--ink-muted); }
-  .connection-card { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 var(--space-sm); border: 1px solid var(--rule); }
-  .plaintext-note { max-width: var(--content-width); margin: 0 0 var(--space-lg); color: var(--ink-muted); font-size: .95rem; }
-  .connection-card div { padding: var(--space-md); }
-  .connection-card div + div { border-left: 1px solid var(--rule); }
-  .connection-card dt { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
-  .connection-card dd { margin: .25rem 0 0; }
-  .client-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); }
-  .client-grid article { border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
-  .client-grid h3 { font-size: 1.25rem; }
-  .client-grid p { color: var(--ink-muted); font-size: .95rem; }
-  .client-grid pre { overflow-x: auto; font-size: .72rem; margin: 0 0 var(--space-sm); }
-  .first-steps { max-width: var(--content-width); margin-top: var(--space-xl); }
-  .first-steps li { margin-bottom: var(--space-sm); }
+  .play-sidebar :global(#minimap-container svg) { display: block; flex: 1; min-height: 0; width: 100%; height: auto; }
   @media (max-width: 860px) {
+    .play-shell { height: auto; }
     .play-wrapper { grid-template-columns: 1fr; }
+    .terminal-frame { height: clamp(27rem, 65dvh, 38rem); }
+    .play-sidebar { overflow: visible; }
+    .play-sidebar > #minimap-container { flex: none; max-height: none; }
+    .play-sidebar :global(#minimap-container svg) { height: 12rem; }
+    .play-sidebar > .chat-panel { flex: none; }
+    #chat-messages { max-height: 16rem; }
     .play-sidebar { border-left: 0; border-top: 1px solid var(--rule); }
-    .connection-card, .client-grid { grid-template-columns: 1fr; }
-    .connection-card div + div { border-left: 0; border-top: 1px solid var(--rule); }
   }
   @media (max-width: 520px) {
-    .play-intro, .connection-guide { padding-inline: var(--space-md); }
+    .play-intro { padding-inline: var(--space-md); }
     .play-wrapper.container { padding-inline: 0; }
     .terminal-header { align-items: flex-start; flex-direction: column; }
-    #terminal { min-height: 27rem; }
   }
 </style>

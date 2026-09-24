@@ -75,8 +75,44 @@ export function createMudClient(options) {
   const statusEl = doc.querySelector('.conn-status');
   const reconnectBtn = doc.getElementById('reconnect-btn');
   const statusBar = doc.getElementById('status-bar');
+  const chatMessages = doc.getElementById('chat-messages');
+  const chatEmpty = doc.getElementById('chat-empty');
   let inputBuffer = '';
   let ws;
+  let shownRoom = null;
+
+  function clearChat() {
+    if (chatMessages) chatMessages.replaceChildren();
+    if (chatEmpty) chatEmpty.classList.remove('hidden');
+  }
+
+  function handleGMCPMessage(data) {
+    if (data?.package === 'Room.Info') {
+      try {
+        const room = JSON.parse(data.json);
+        if (Number.isInteger(room?.num) && typeof room.name === 'string') {
+          shownRoom = room;
+          if (room.num === playerState.roomVnum) updateMinimap(room.num);
+        }
+      } catch { /* Ignore malformed out-of-band data. */ }
+      return;
+    }
+    if (!chatMessages || data?.package !== 'Comm.Channel.Text') return;
+    let line;
+    try { line = JSON.parse(data.json); } catch { return; }
+    if (!line || typeof line.text !== 'string' || typeof line.channel !== 'string') return;
+    const item = doc.createElement('li');
+    const label = doc.createElement('small');
+    label.textContent = line.channel;
+    item.append(label, doc.createTextNode(' ' + line.text));
+    // Follow new lines only when the reader is already at the bottom; someone
+    // scrolled up to read history keeps their place.
+    const following = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 24;
+    chatMessages.append(item);
+    while (chatMessages.childElementCount > 80) chatMessages.firstElementChild.remove();
+    if (following) chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (chatEmpty) chatEmpty.classList.add('hidden');
+  }
 
   // ── Status Bar State ──
   const playerState = {
@@ -286,7 +322,7 @@ export function createMudClient(options) {
     container.innerHTML = `
       <h3 class="sidebar-panel-title">Map</h3>
       <div style="font-size: 0.85rem; font-family: var(--font-display); text-transform: uppercase; color: var(--ink); margin-bottom: var(--space-xs); display:flex; justify-content:space-between; align-items:center;">
-        <span>Current room: ${escHtml(currentRoom.name || 'Unknown Room')}</span>
+        <span>Current room: ${escHtml(shownRoom?.num === currentVnum ? shownRoom.name : currentRoom.name || 'Unknown Room')}</span>
         <span style="font-family:var(--font-mono); color:var(--accent); font-weight:bold;">#${currentVnum}</span>
       </div>
       ${svgContent}
@@ -533,8 +569,17 @@ export function createMudClient(options) {
     };
 
     ws.onmessage = function (evt) {
+      let msg;
       try {
-        const msg = JSON.parse(evt.data);
+        msg = JSON.parse(evt.data);
+      } catch {
+        // Not JSON at all. The server frames everything it sends, so this is
+        // either a proxy injecting something or a protocol change; the raw
+        // text is the most useful thing to show and cannot be an envelope.
+        term.write(evt.data);
+        return;
+      }
+      try {
         if (msg.type === 'out') {
           const out = msg.data || {};
           writeOutput(out.text || '');
@@ -559,14 +604,17 @@ export function createMudClient(options) {
             handleStateMsg(msg.data);
             handleStateRoom(msg.data);
           }
+        } else if (msg.type === 'gmcp') {
+          handleGMCPMessage(msg.data);
         }
         // Nothing else is ever written to the terminal: an unrecognised
         // frame is protocol, not game text.
-      } catch {
-        // Not JSON at all. The server frames everything it sends, so this is
-        // either a proxy injecting something or a protocol change; the raw
-        // text is the most useful thing to show and cannot be an envelope.
-        term.write(evt.data);
+      } catch (err) {
+        // A failing dock or sidebar handler must never put protocol in front
+        // of the player: the envelope is not game text.
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('mud-client: message handler failed', msg && msg.type, err);
+        }
       }
     };
 
@@ -579,10 +627,14 @@ export function createMudClient(options) {
       queuedInput = '';
       inputBuffer = '';
       heldOutput = '';
+      shownRoom = null;
+      clearChat();
       if (statusBar) statusBar.classList.add('hidden');
       const connectPanel = doc.getElementById('sidebar-connect-panel');
       if (connectPanel) connectPanel.classList.remove('hidden');
-      doc.querySelectorAll('.sidebar-panel').forEach(p => p.classList.add('hidden'));
+      doc.querySelectorAll('.sidebar-panel').forEach(p => {
+        if (p.id !== 'chat-container') p.classList.add('hidden');
+      });
     };
 
     ws.onerror = function () {
@@ -592,6 +644,16 @@ export function createMudClient(options) {
 
   // Typeahead waits for each server-owned entry state before echoing. A paste
   // containing a name and password must not echo the password as part of the name.
+  // Tab and Shift+Tab move focus out of the terminal instead of reaching the
+  // game. xterm otherwise swallows Tab, which traps a keyboard-only player
+  // inside the terminal (WCAG 2.1.2); the game's input is line mode and has
+  // no use for a tab character.
+  if (typeof term.attachCustomKeyEventHandler === 'function') {
+    term.attachCustomKeyEventHandler(function (event) {
+      return !(event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey);
+    });
+  }
+
   term.onData(function (data) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     queuedInput += data.replace(/\r\n/g, '\r');
@@ -664,6 +726,8 @@ export function createMudClient(options) {
         ws = null;
       }
       resetSession();
+      shownRoom = null;
+      clearChat();
     },
   };
 }
