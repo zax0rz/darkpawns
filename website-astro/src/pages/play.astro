@@ -6,9 +6,8 @@ import '@xterm/xterm/css/xterm.css';
 <Base title="Play Dark Pawns" description="Enter Dark Pawns in your browser or connect with a desktop MUD client.">
   <section class="play-shell" aria-labelledby="play-heading">
     <div class="play-intro container">
-      <p class="eyebrow">The gates are open</p>
       <h1 id="play-heading">Enter Dark Pawns</h1>
-      <p>Play immediately in the browser, or use a dedicated MUD client for longer expeditions.</p>
+      <p>Play right here, or <a href="#desktop-client">connect a MUD client</a> for longer sessions.</p>
     </div>
 
     <div class="play-wrapper container">
@@ -21,7 +20,7 @@ import '@xterm/xterm/css/xterm.css';
             <button id="reconnect-btn" type="button">Reconnect</button>
           </div>
         </div>
-        <p class="terminal-hint" id="terminal-help">Tab into the game window to type. Use the Screen reader button to announce new game text.</p>
+        <p class="terminal-hint" id="terminal-help">Click or Tab into the terminal to type; Tab again to leave it. Screen reader mode announces new game text.</p>
         <div id="terminal" role="region" aria-label="Dark Pawns game terminal" aria-describedby="terminal-help"></div>
       </div>
 
@@ -40,18 +39,14 @@ import '@xterm/xterm/css/xterm.css';
         <div id="sidebar-connect-panel">
           <h3>At the prompt</h3>
           <p>Enter an existing character name, create a new character, or type <strong>guest</strong> for an ephemeral visit.</p>
-          <p>Screen reader mode announces new game text and remembers your choice in this browser.</p>
-          <p><a href="#desktop-client">Prefer Mudlet or TinTin++?</a></p>
         </div>
-        <section id="chat-container" class="sidebar-panel" aria-labelledby="chat-heading">
+        <div id="target-container" class="sidebar-panel hidden"></div>
+        <div id="minimap-container" class="sidebar-panel hidden"></div>
+        <section id="chat-container" class="chat-panel" aria-labelledby="chat-heading">
           <h3 id="chat-heading">Chat</h3>
           <p id="chat-empty">Channel messages appear here during play.</p>
-          <ol id="chat-messages" aria-live="off" aria-relevant="additions"></ol>
+          <ol id="chat-messages" tabindex="0" aria-label="Chat history" aria-live="off"></ol>
         </section>
-        <div id="minimap-container" class="sidebar-panel hidden"></div>
-        <div id="target-container" class="sidebar-panel hidden"></div>
-        <div id="room-contents-container" class="sidebar-panel hidden"></div>
-        <div id="inventory-equipment-container" class="sidebar-panel hidden"></div>
       </aside>
     </div>
   </section>
@@ -127,6 +122,15 @@ import '@xterm/xterm/css/xterm.css';
       }
     };
 
+    // The play area fills the window under the site header; the header's
+    // height changes with its wrapping, so it is measured, not assumed.
+    const masthead = document.querySelector('.masthead');
+    const setMastheadHeight = () => {
+      if (masthead) document.documentElement.style.setProperty('--masthead-h', `${masthead.getBoundingClientRect().height}px`);
+    };
+    setMastheadHeight();
+    if (masthead) new ResizeObserver(setMastheadHeight).observe(masthead);
+
     const term = new Terminal({
       screenReaderMode: readScreenReaderPreference(),
       cursorBlink: true,
@@ -180,13 +184,18 @@ import '@xterm/xterm/css/xterm.css';
 </Base>
 
 <style>
-  .play-shell { border-bottom: 1px solid var(--rule); }
-  .play-intro { padding-block: var(--space-md); }
-  .play-intro h1 { margin: 0 0 var(--space-xs); }
-  .play-intro p:last-child { color: var(--ink-muted); margin: 0; }
+  /* The play area is an app: intro, terminal and dock fill the window under
+     the site header (measured into --masthead-h), and nothing scrolls but the
+     terminal and the chat history. The client guide sits below the fold. */
+  .play-shell { display: flex; flex-direction: column; height: calc(100dvh - var(--masthead-h, 8rem)); min-height: 32rem; border-bottom: 1px solid var(--rule); }
+  .play-intro { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem var(--space-md); padding-block: var(--space-sm); }
+  .play-intro h1 { margin: 0; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.1; }
+  .play-intro p { color: var(--ink-muted); margin: 0; font-size: .95rem; }
   .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
-  .play-wrapper.container { max-width: 96rem; padding-inline: var(--space-md); }
-  .play-wrapper { display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, 22rem); height: clamp(34rem, 74dvh, 54rem); min-height: 0; border-top: 1px solid var(--rule); }
+  /* Auto margins would shrink these flex items to their content; they span
+     the same 96rem column so the intro lines up with the terminal. */
+  .play-wrapper.container, .play-intro.container { width: 100%; max-width: 96rem; padding-inline: var(--space-md); }
+  .play-wrapper { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, 22rem); min-height: 0; border-top: 1px solid var(--rule); }
   .terminal-frame { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: #0a0908; }
   .terminal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); padding: .55rem var(--space-md); background: var(--paper); border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
   .terminal-title { color: var(--accent); font-weight: 700; }
@@ -200,19 +209,30 @@ import '@xterm/xterm/css/xterm.css';
   #reconnect-btn.visible { display: inline-block; }
   .terminal-hint { margin: 0; padding: .2rem var(--space-sm); background: var(--paper-deep); color: var(--ink-muted); font-size: .82rem; max-width: none; }
   #terminal { flex: 1; min-height: 0; overflow: hidden; background: #0a0908; border: 2px solid var(--rule); padding: .5rem; }
-  .play-sidebar { min-width: 0; min-height: 0; padding: var(--space-md); background: var(--paper); border-left: 1px solid var(--rule); overflow-y: auto; }
-  #chat-messages { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: .82rem; overflow-wrap: anywhere; }
+  /* Dock: character, target (in a fight), map, then chat taking the rest. */
+  /* The dock never scrolls: Character and Target keep their height, and Map
+     and Chat share what is left, each with a floor. */
+  .play-sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: var(--space-sm) var(--space-md); background: var(--paper); border-left: 1px solid var(--rule); overflow: hidden; }
+  .play-sidebar > * { flex: none; }
+  .play-sidebar > #minimap-container { flex: 1 1 12rem; min-height: 7rem; max-height: 17rem; display: flex; flex-direction: column; }
+  .play-sidebar > .chat-panel { flex: 1 1 12rem; min-height: 7rem; display: flex; flex-direction: column; margin-top: var(--space-sm); border: 1px solid var(--rule); background: var(--paper-deep); }
+  .chat-panel h3 { margin: 0; padding: .35rem .6rem; border-bottom: 1px solid var(--rule); font-size: 1rem; }
+  #chat-empty { margin: 0; padding: .5rem .6rem; font-size: .85rem; }
+  #chat-messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: .35rem; margin: 0; padding: .5rem .6rem; list-style: none; font-family: var(--font-mono); font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere; }
+  #chat-messages:empty { display: none; }
+  #chat-messages:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   #chat-messages li { border-left: 2px solid var(--accent); padding-left: .5rem; }
   #chat-messages small { color: var(--ink-muted); text-transform: uppercase; }
   .play-sidebar h3 { font-size: 1.2rem; margin: 0 0 var(--space-sm); }
   .play-sidebar p { color: var(--ink-muted); font-size: .9rem; }
   .hidden { display: none; }
-  .sidebar-panel { border-top: 1px solid var(--rule); padding-top: var(--space-sm); margin-top: var(--space-md); }
-  .status-bar { margin: 0 0 var(--space-md); font-family: var(--font-mono); font-size: .85rem; }
+  .sidebar-panel { border-top: 1px solid var(--rule); padding-top: var(--space-xs); margin-top: var(--space-sm); }
+  .sidebar-panel:empty { display: none; }
+  .status-bar { margin: 0; font-family: var(--font-mono); font-size: .85rem; }
   .status-bar h3 { font-family: var(--font-display); }
   .character-identity { margin: 0 0 var(--space-sm); color: var(--ink-muted); font-size: .85rem; }
   .vitals { margin: 0; }
-  .stat-group { margin: 0 0 .45rem; }
+  .stat-group { margin: 0 0 .3rem; }
   .stat-group dt, .stat-group dd { display: flex; justify-content: space-between; gap: var(--space-sm); margin: 0; }
   .stat-group dt { color: var(--ink-muted); text-transform: uppercase; font-size: .8rem; }
   .stat-group dd { flex-direction: column; align-items: stretch; font-variant-numeric: tabular-nums; text-align: right; }
@@ -230,7 +250,7 @@ import '@xterm/xterm/css/xterm.css';
   .play-sidebar :global(.target-hp-bar-container .bar-track) { background: var(--paper-deep); border: 1px solid var(--ink-muted); }
   .play-sidebar :global(.target-name) { font-family: var(--font-mono); font-size: .82rem; }
   .play-sidebar :global(.badge) { margin-left: .25rem; color: var(--accent); font: .8rem var(--font-mono); text-transform: uppercase; }
-  .play-sidebar :global(#minimap-container svg) { display: block; width: 100%; height: auto; max-height: 15rem; }
+  .play-sidebar :global(#minimap-container svg) { display: block; flex: 1; min-height: 0; width: 100%; height: auto; }
   .connection-guide { padding-block: var(--space-xl); }
   .guide-heading { max-width: var(--content-width); margin-bottom: var(--space-lg); }
   .guide-heading > p:last-child { color: var(--ink-muted); }
@@ -248,8 +268,14 @@ import '@xterm/xterm/css/xterm.css';
   .first-steps { max-width: var(--content-width); margin-top: var(--space-xl); }
   .first-steps li { margin-bottom: var(--space-sm); }
   @media (max-width: 860px) {
-    .play-wrapper { grid-template-columns: 1fr; height: auto; }
+    .play-shell { height: auto; }
+    .play-wrapper { grid-template-columns: 1fr; }
     .terminal-frame { height: clamp(27rem, 65dvh, 38rem); }
+    .play-sidebar { overflow: visible; }
+    .play-sidebar > #minimap-container { flex: none; max-height: none; }
+    .play-sidebar :global(#minimap-container svg) { height: 12rem; }
+    .play-sidebar > .chat-panel { flex: none; }
+    #chat-messages { max-height: 16rem; }
     .play-sidebar { border-left: 0; border-top: 1px solid var(--rule); }
     .connection-card, .client-grid { grid-template-columns: 1fr; }
     .connection-card div + div { border-left: 0; border-top: 1px solid var(--rule); }

@@ -105,8 +105,12 @@ export function createMudClient(options) {
     const label = doc.createElement('small');
     label.textContent = line.channel;
     item.append(label, doc.createTextNode(' ' + line.text));
+    // Follow new lines only when the reader is already at the bottom; someone
+    // scrolled up to read history keeps their place.
+    const following = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 24;
     chatMessages.append(item);
     while (chatMessages.childElementCount > 80) chatMessages.firstElementChild.remove();
+    if (following) chatMessages.scrollTop = chatMessages.scrollHeight;
     if (chatEmpty) chatEmpty.classList.add('hidden');
   }
 
