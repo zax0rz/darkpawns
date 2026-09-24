@@ -26812,6 +26812,7 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /help/zreset,astro.config.mjs,redirect,redirect to /help/wizhelp/zreset/,5,no copy review,,,,
 /lore,astro.config.mjs,redirect,redirect to /world/lore/,5,no copy review,,,,
 /lore/world-creation,astro.config.mjs,redirect,redirect to /world/world-creation/,5,no copy review,,,,
+/mudlet,astro.config.mjs,redirect,redirect to /connect/#mudlet,5,no copy review,,,,
 /news,astro.config.mjs,redirect,redirect to /blog/,5,no copy review,,,,
 /news/historical-posts,astro.config.mjs,redirect,redirect to /blog/historical-posts/,5,no copy review,,,,
 /news/resurrection,astro.config.mjs,redirect,redirect to /blog/resurrection/,5,no copy review,,,,

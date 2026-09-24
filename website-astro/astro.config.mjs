@@ -21,6 +21,7 @@ const helpRedirects = Object.fromEntries(
 const redirects = {
   ...helpRedirects,
   '/help/!': '/help/commands/bang-caret/',
+  '/mudlet': '/connect/#mudlet',
   '/connect/client-downloads': '/connect/',
   '/connect/connection-instructions': '/connect/',
   '/connect/contact-info': '/connect/',

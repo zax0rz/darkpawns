@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="Connect a MUD Client | Dark Pawns" description="Connect to Dark Pawns with Mudlet, TinTin++, or a raw terminal, over TLS on port 7778.">
+<Base title="Connect a MUD Client | Dark Pawns" description="Connect to Dark Pawns over TLS on port 7778 with Mudlet, TinTin++, or a raw terminal, and set up the Mudlet dock, map, and dp commands.">
   <section class="connection-guide container" aria-labelledby="desktop-client">
     <div class="guide-heading">
       <p class="eyebrow">Long-form play</p>
@@ -15,11 +15,12 @@ import Base from '../layouts/Base.astro';
       <div><dt>Protocol</dt><dd>Telnet over TLS (secure)</dd></div>
     </dl>
     <p class="plaintext-note">Clients without TLS can use port <code>7777</code>, but everything you send there crosses the network in the clear, your password included. The <a href="/play/">browser client</a> always uses TLS.</p>
+    <h2 class="visually-hidden">Clients</h2>
     <div class="client-grid">
       <article>
         <h3>Mudlet</h3>
         <p>The friendly graphical choice for Windows, macOS, and Linux. Create a profile with the host and port above and tick <strong>Secure</strong>. On first connect Mudlet installs the Dark Pawns package: health bars, a map that draws itself as you walk, and a chat window.</p>
-        <a href="/mudlet/">The Mudlet guide <span aria-hidden="true">→</span></a>
+        <a href="#mudlet">Set up Mudlet <span aria-hidden="true">↓</span></a>
       </article>
       <article>
         <h3>TinTin++</h3>
@@ -33,6 +34,52 @@ import Base from '../layouts/Base.astro';
         <pre><code>telnet darkpawns.org 7777</code></pre>
       </article>
     </div>
+
+    <section class="mudlet-guide" aria-labelledby="mudlet">
+      <h2 id="mudlet">Playing in Mudlet</h2>
+      <p class="lede">Mudlet is a free MUD client for Windows, macOS, and Linux. Connect it to Dark Pawns and it dresses itself for the game: a dock with your health, a map of the whole world, and a chat window. The game's text stays exactly what every other player sees.</p>
+      <figure class="shot">
+      <img src="/images/mudlet/dock.png" width="1232" height="781" alt="Mudlet playing Dark Pawns: the game text on the left; on the right, the cream dock with the Dark Pawns mark, the character line, hit point, mana and movement readings, a map of Kir Drax'in centred on the Temple Altar, and a chat window." />
+      </figure>
+      <div class="prose">
+        <h3 id="mudlet-connect">Connect</h3>
+        <ol>
+          <li><a href="https://www.mudlet.org/download/">Download Mudlet</a>, then make a new profile with the server address <code>darkpawns.org</code>, port <code>7778</code>, and <strong>Secure</strong> ticked.</li>
+          <li>Connect. Before the name prompt, Mudlet downloads the Dark Pawns package, installs it, and opens the dock on the right.</li>
+        </ol>
+        <p>Port 7778 uses TLS, so your password stays between you and the game. Use the name <code>darkpawns.org</code> rather than an address, because the certificate belongs to the name. Port 7777 still answers in the clear; connect there and Mudlet offers to move you to the secure port, an offer worth taking.</p>
+
+        <h3 id="mudlet-dock">The dock</h3>
+        <p>From the top: the Dark Pawns mark, a line with your name, level, race, class, and gold, then your hit points, mana, and movement as numbers over thin bars. Below them sit the map and the chat window.</p>
+        <p>Everything in the dock comes from data the game sends beside its text, over Mudlet's GMCP channel. The package reads no game text, fires no triggers, and never sends a command you didn't type.</p>
+
+        <h3 id="mudlet-map">The map</h3>
+        <p>On your first connection the whole world map loads into the dock, and it refreshes itself when the builders change the world. If the profile already holds a map you drew by hand, the package asks before touching it: type <code>dp map</code> to swap in the world map.</p>
+        <p>Your marker follows you from lit room to lit room. In darkness, or blind, the game names no room, so the map waits for the next one you can see. Double-click a room to walk there.</p>
+
+        <h3 id="mudlet-commands">Commands</h3>
+        <p>The package adds one word, <code>dp</code>. Everything else you type goes to the game untouched.</p>
+        <table>
+          <thead><tr><th scope="col">Type</th><th scope="col">To</th></tr></thead>
+          <tbody>
+            <tr><td><code>dp</code></td><td>see the package version and these commands</td></tr>
+            <tr><td><code>dp hide</code>, <code>dp show</code></td><td>put the dock away, and bring it back</td></tr>
+            <tr><td><code>dp clear</code></td><td>clear the main window</td></tr>
+            <tr><td><code>dp clear chat</code></td><td>clear the chat window</td></tr>
+            <tr><td><code>dp map</code></td><td>load the world map, replacing this profile's map</td></tr>
+          </tbody>
+        </table>
+        <p>The game's own <code>clear</code> sends the escape codes that wipe a terminal. Mudlet's window is a scrollback, not a terminal, so they do nothing there. Use <code>dp clear</code>.</p>
+
+        <h3 id="mudlet-trouble">When something is off</h3>
+        <p><strong>No dock, and <code>dp</code> answers <code>Huh?!?</code>.</strong> The package isn't installed: disconnect and connect again, and Mudlet installs it fresh. Mudlet 5.0.1 occasionally loses an upgrade this way.</p>
+        <p><strong>No dock at all, ever.</strong> Install the package by hand: download <a href="/darkpawns.xml">darkpawns.xml</a>, then in Mudlet choose <strong>Toolbox → Package Manager → Install</strong> and pick the file.</p>
+        <p><strong>You want Mudlet plain.</strong> Uninstall <code>darkpawns</code> in the Package Manager. The dock goes with it, and the game plays the same.</p>
+
+        <h3 id="mudlet-scripting">For scripters</h3>
+        <p>The data behind the dock is yours to use in your own scripts. The messages and their fields are documented in <a href="https://github.com/zax0rz/darkpawns/blob/main/docs/gmcp.md">docs/gmcp.md</a>, and the package's source is in <a href="https://github.com/zax0rz/darkpawns/tree/main/mudlet">mudlet/</a>.</p>
+      </div>
+    </section>
     <div class="first-steps">
       <h2>Once you are inside</h2>
       <ol>
@@ -70,4 +117,8 @@ import Base from '../layouts/Base.astro';
   @media (max-width: 520px) {
     .connection-guide { padding-inline: var(--space-md); }
   }
+  .mudlet-guide { max-width: 52rem; margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: 1px solid var(--rule); }
+  .lede { color: var(--ink-muted); font-size: 1.2rem; }
+  .shot { margin: var(--space-lg) 0; }
+  .shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); }
 </style>
