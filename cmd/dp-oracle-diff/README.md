@@ -74,6 +74,19 @@ creation ANSI question Y/N respectively and keep every probe step inside the
 OLC menus, because the ordinary playing prompt and vitals masking expect
 ANSI-stripped text and are outside what the mode certifies.
 
+## Raw prompt proof mode (`keep-prompts`)
+
+The ordinary normalizer removes prompt-only lines, trailing spaces, ANSI, and
+line-ending distinctions. A focused scenario with `keep-prompts` compares the
+captured text bytes exactly after telnet IAC negotiation is removed. Keep its
+probe blocks limited to prompt states with deterministic output.
+`prompt-pager-depth`, `prompt-pager-color-depth`, and `prompt-playing-depth`
+cover the pager and playing prompts. For the first prompt after entering the
+game, use `keep-prompts`, `no-settle`, and `entry-prompt` together with
+`[creation:oracle]` and `[creation:port]`. This compares the trailing newline
+run and `> ` before any clock pulse can supply a later prompt; the full entry
+dialogue is covered by separate scenarios.
+
 For command-depth work, annotate scenarios with `# depth-case: <case-id>` and
 record the case in `docs/fidelity/depth/<command>.tsv`. Run `make fidelity-depth`
 to reject missing scenario or unit-test proof references. See

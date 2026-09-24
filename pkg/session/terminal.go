@@ -106,6 +106,9 @@ func RenderTerminalFrame(msg []byte) (TerminalFrame, bool) {
 		if text, ok := data["text"].(string); ok && text != "" {
 			prompt = text
 		}
+		if raw, _ := data["raw"].(bool); raw {
+			return TerminalFrame{Kind: FramePrompt, Text: prompt}, true
+		}
 		return TerminalFrame{Kind: FramePrompt, Text: NormalizeCRLF(prompt)}, true
 	case MsgCharCreate:
 		// Nanny prompts are already byte-exact C strings. MENU contains mixed
@@ -194,9 +197,12 @@ func (s *Session) TerminalLine(rawLine string) bool {
 		// Output pager (DP-1195): while paging, every input line, including a
 		// bare RETURN (next page), goes to the pager, never the interpreter
 		// (C: comm.c:617 showstr_count routing). It sits above the empty-line
-		// refresh so RETURN reaches the pager, and the pager prints its own
-		// prompt.
+		// refresh so RETURN reaches the pager; SendPrompt then selects C's
+		// pager or ordinary playing prompt from the resulting state.
 		s.terminalError(s.terminalPagerInput(line))
+		if !s.SendClosed() {
+			s.SendPrompt()
+		}
 	case s.IsTextEditing():
 		// CON_TEDIT owns every complete line, including an empty one: C's
 		// string_add appends it to d->str.

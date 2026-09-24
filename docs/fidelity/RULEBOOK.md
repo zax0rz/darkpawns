@@ -143,6 +143,11 @@ cannot observe them.
   extra-Y inputs in 932 scenarios. They silently enabled Go color while C
   received N, producing five downstream report failures. Align fixture intent;
   do not classify downstream differences as unrelated without tracing setup.
+  DP-1326 exposed the prompt boundary too: the ordinary oracle normalizer drops
+  prompt-only lines and trims their trailing spaces, so a green command block
+  does not certify the prompt. Use focused `keep-prompts` scenarios for prompt
+  bytes, and `no-settle` for the first prompt on game entry so a later pulse
+  cannot mask its absence.
 
 ---
 
@@ -154,4 +159,5 @@ cannot observe them.
 | 2026-07-23 | R5e added | DP-1198 dead-code false alarm + the obj-3117 misattribution — reachability of findings must be verified |
 | 2026-07-24 | R3d added; R5a refined | DP-1212 — God creation drew 2 phantom AdvanceLevel values (C gates do_start on !GET_LEVEL); +2 offset flipped bash/trip/headbutt, left kick/backstab green by coincidence |
 | 2026-09-08 | R5f added | Aiko entry incident: independent browser dialogue and persistence failures escaped creation oracle coverage |
+| 2026-09-24 | R5f prompt boundary clarified | DP-1326: dropped prompt lines hid pager framing and the first game-entry prompt |
 | 2026-09-23 | R1a added | `do_auto`'s self-aliasing `sprintf`: the oracle printed nothing, a delegated port deleted the listing to match; the precedent (patch the oracle, keep the intended bytes) had never been written down |

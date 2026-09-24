@@ -818,7 +818,9 @@ func (tc *telnetConn) enableGMCP() {
 // writePrompt writes the command prompt, marked with IAC EOR for clients that
 // asked for prompt marking.
 func (tc *telnetConn) writePrompt(prompt string) {
-	tc.write(tc.markPrompt([]byte(session.NormalizeCRLF(prompt))))
+	// RenderTerminalFrame has already normalized ordinary prompts. A pager
+	// prompt intentionally carries C's lone leading carriage return.
+	tc.write(tc.markPrompt([]byte(prompt)))
 }
 
 // markPrompt appends IAC EOR to prompt bytes when the client negotiated EOR.

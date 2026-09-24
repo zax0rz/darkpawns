@@ -35,6 +35,7 @@ func TestRenderTerminalFrame(t *testing.T) {
 		{"raw event is untouched", `{"type":"event","data":{"type":"raw","text":"\u001b[1;24r"}}`, TerminalFrame{Kind: FrameText, Text: "\x1b[1;24r"}, true},
 		{"prompt defaults", `{"type":"prompt","data":{}}`, TerminalFrame{Kind: FramePrompt, Text: "> "}, true},
 		{"prompt text", `{"type":"prompt","data":{"text":"\r\n<20hp 5m 30mv> "}}`, TerminalFrame{Kind: FramePrompt, Text: "\r\n<20hp 5m 30mv> "}, true},
+		{"raw pager prompt keeps lone carriage return", `{"type":"prompt","data":{"text":"\r[ Return to continue ]","raw":true}}`, TerminalFrame{Kind: FramePrompt, Text: "\r[ Return to continue ]"}, true},
 		{"entry prompt keeps its bytes", `{"type":"char_create","data":{"prompt":"\n\rMake your choice: ","secret":false}}`, TerminalFrame{Kind: FrameEntryPrompt, Text: "\n\rMake your choice: "}, true},
 		{"secret entry prompt", `{"type":"char_create","data":{"prompt":"Password: ","secret":true}}`, TerminalFrame{Kind: FrameEntryPrompt, Text: "Password: ", Secret: true}, true},
 		{"error", `{"type":"error","data":{"message":"nope"}}`, TerminalFrame{Kind: FrameText, Text: "\r\n!! nope\r\n"}, true},

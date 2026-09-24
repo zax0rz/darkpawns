@@ -470,6 +470,29 @@ func TestParseScenarioKeepANSIFixture(t *testing.T) {
 	}
 }
 
+func TestKeepPromptsRetainsFraming(t *testing.T) {
+	raw := "page\r\n\r[ Return to continue ]\x1b[0m> \r\n"
+	if got := NormalizeKeepPrompts(raw); got != raw {
+		t.Fatalf("prompt proof changed captured bytes: %q", got)
+	}
+	sc, err := ParseScenario("keep-prompts", strings.NewReader("[fixture]\nkeep-prompts\n[setup:oracle]\nname\n[probe]\nlook\n"))
+	if err != nil || !sc.KeepPrompts {
+		t.Fatalf("keep-prompts fixture = %+v, %v", sc, err)
+	}
+}
+
+func TestTrailingSimplePromptFrame(t *testing.T) {
+	if got := TrailingSimplePromptFrame("room line\r\n\r\n> "); got != "\r\n\r\n> " {
+		t.Fatalf("entry frame = %q", got)
+	}
+	if got := TrailingSimplePromptFrame("room line\r\n"); got != "\r\n" {
+		t.Fatalf("missing entry prompt frame = %q", got)
+	}
+	if _, err := ParseScenario("invalid-entry-prompt", strings.NewReader("[fixture]\nentry-prompt\n[probe]\nlook\n")); err == nil {
+		t.Fatal("entry-prompt accepted without a no-settle creation comparison")
+	}
+}
+
 // TestRunAudienceProbeRelogin: a quit that closes the connection is accepted
 // when the next step relogs, the relogin transcript is its own block, and the
 // steps after it run on the new connection.

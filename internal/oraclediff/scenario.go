@@ -68,6 +68,14 @@ type Scenario struct {
 	// inside that surface: colored prompts and vitals outside it are masked by
 	// rules that expect ANSI already stripped.
 	KeepANSI bool
+	// KeepPrompts compares the captured telnet text bytes without Tier-1
+	// normalization. Use only focused prompt scenarios: the ordinary normalizer
+	// discards prompt lines, trailing spaces, and line-ending distinctions.
+	KeepPrompts bool
+	// EntryPromptOnly compares the final newline run and simple command prompt
+	// of an un-settled creation transcript. Earlier entry text has separate
+	// coverage and can contain unrelated raw-byte gaps.
+	EntryPromptOnly bool
 	// DiffSetup diffs the primary client's whole setup transcript (the
 	// character-creation dialogue) as one normalized block, instead of
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
@@ -526,6 +534,14 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.KeepANSI = true
 				continue
 			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "keep-prompts") {
+				sc.KeepPrompts = true
+				continue
+			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "entry-prompt") {
+				sc.EntryPromptOnly = true
+				continue
+			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "strip-mob-script") {
 				mobVNum, mobErr := strconv.Atoi(fields[1])
 				if mobErr == nil && mobVNum > 0 {
@@ -565,6 +581,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	}
 	if len(sc.Probe) == 0 && !sc.DiffSetup {
 		return Scenario{}, fmt.Errorf("scenario %q has no [probe] steps", name)
+	}
+	if sc.EntryPromptOnly && (!sc.DiffSetup || !sc.SkipSetupSettle || !sc.KeepPrompts) {
+		return Scenario{}, fmt.Errorf("scenario %q: entry-prompt requires creation, no-settle, and keep-prompts", name)
 	}
 	for _, step := range sc.Probe {
 		if step == ReloginStep && (len(sc.ReloginOracle) == 0 || len(sc.ReloginPort) == 0) {

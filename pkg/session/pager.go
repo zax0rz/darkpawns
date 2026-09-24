@@ -105,8 +105,9 @@ func paginate(text string) [][]byte {
 //   - Otherwise, if the text is one page or less, it is sent whole with no
 //     prompt and the session does not enter pager mode (C: even for 1 page,
 //     show_string sees page+1>=count and frees without prompting).
-//   - Otherwise the pages are stored, pager mode is entered, page 0 is sent,
-//     and the pager prompt is printed.
+//   - Otherwise the pages are stored, pager mode is entered, and page 0 is
+//     sent. The terminal's command flush then calls SendPrompt for C's pager
+//     prompt (comm.c:643-648).
 func PageString(s *Session, text string) {
 	if text == "" {
 		s.Send("")
@@ -136,9 +137,9 @@ func PageString(s *Session, text string) {
 }
 
 // pagerPrompt returns the C pager prompt (comm.c:1042-1056), with current page
-// (1-based) and total. ANSI: cyan brackets/labels, red emphasis, per the C
-// CCCYN/CCRED/CCNRM constants.
-func pagerPrompt(current, total int) string {
+// (1-based) and total. At C_CMP=3, cyan brackets/labels and red emphasis come
+// from the C CCCYN/CCRED/CCNRM macros.
+func pagerPrompt(current, total int, color bool) string {
 	const (
 		cyan = "\x1b[36m"
 		red  = "\x1b[31m"
@@ -150,9 +151,13 @@ func pagerPrompt(current, total int) string {
 	// showstr_page AFTER sending, so make_prompt (which runs after) shows the
 	// page just displayed, 1-based.
 	// C make_prompt (comm.c:1044-1046): leading \r only, NO trailing newline —
-	// the player types on the prompt line. The blank line before the prompt
-	// comes from the output-flush cycle, which the caller supplies.
-	return cyan + "[ " + red + "Return" + cyan +
+	// the player types on the prompt line. SendPrompt supplies the flush
+	// newline and chooses whether the C_CMP colors appear.
+	if !color {
+		return "\r[ Return to continue, (q)uit, (r)efresh, (b)ack, or page number (" +
+			pageItoa(current) + "/" + pageItoa(total) + ") ]"
+	}
+	return "\r" + cyan + "[ " + red + "Return" + cyan +
 		" to continue, (" + red + "q" + cyan + ")uit, (" +
 		red + "r" + cyan + ")efresh, (" + red + "b" + cyan +
 		")ack, or page number (" + red + pageItoa(current) + cyan + "/" +
@@ -184,23 +189,17 @@ func pageItoa(n int) string {
 // displayPage shows the page at s.pagerPage (0-based "next to display" index),
 // matching C show_string's display tail (modify.c:506-526). If it is the last
 // page, the pager auto-exits (C frees the vector after the last page — no q
-// required). Otherwise pagerPage is advanced and the prompt is printed for the
-// page just shown (1-based = the old pagerPage + 1).
+// required). Otherwise pagerPage advances; the caller's SendPrompt prints the
+// page just shown (1-based = the advanced pagerPage).
 func (s *Session) displayPage() {
 	idx := s.pagerPage
-	shown := idx + 1 // 1-based number of the page being displayed
-	s.sendText(string(s.pagerPages[idx]))
+	s.Send(string(s.pagerPages[idx]))
 	if idx+1 >= s.pagerCount {
 		// Last page: auto-exit the pager (C:506-516).
 		s.exitPager()
 		return
 	}
 	s.pagerPage = idx + 1
-	// Line separation before the prompt comes from the message framing; the
-	// prompt carries neither C's leading \r (a same-line cursor return the Go
-	// write path doesn't need — oracle-verified parity without it) nor any
-	// trailing newline (the player types on the prompt line).
-	s.sendText(pagerPrompt(shown, s.pagerCount))
 }
 
 // exitPager clears all pager state (C: FREE(showstr_vector); showstr_count = 0).
@@ -283,10 +282,9 @@ func (s *Session) navigatePager(line string) {
 		// Non-empty, unrecognized input — print the exact line and do NOT
 		// advance or display (C:497-502 returns early). C's prompt cycle
 		// (make_prompt, comm.c:647) still reprints the pager prompt after the
-		// message: emit it without redisplaying the page. pagerPage is the
-		// next-to-display index, so the page on screen is pagerPage (1-based).
+		// message. The terminal calls SendPrompt without redisplaying the page;
+		// pagerPage is the page on screen (1-based).
 		s.sendText("Valid commands while paging are RETURN, Q, R, B, or a numeric value.\r\n")
-		s.sendText(pagerPrompt(s.pagerPage, s.pagerCount))
 		return
 	}
 	// Empty input (RETURN) and R/B/number all fall through to display the page

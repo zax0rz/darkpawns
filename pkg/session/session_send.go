@@ -41,6 +41,10 @@ func (s *Session) sendWelcome(token string) {
 	// The canonical room result now supplies both C-faithful text and the
 	// unchanged structured "you're in the world" state signal.
 	s.sendRoomObservation(roomVNum, false, token)
+	// C's first CON_PLAYING game-loop pass prints a prompt after the welcome
+	// and entry look. No command has arrived yet to trigger TerminalLine's
+	// ordinary SendPrompt path (comm.c:643-648).
+	s.SendPrompt()
 }
 
 // sendError sends an error message to the player.
@@ -255,6 +259,18 @@ func (s *Session) notePlayerOutput() {
 // bare game-loop prompt pass writes the prompt alone.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
+	if s.IsPaging() {
+		flags := s.player.GetFlags()
+		color := flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0
+		text := pagerPrompt(s.pagerPage, s.pagerCount, color)
+		if s.outputSincePrompt.Swap(0) > 0 && flags&(1<<uint(game.PrfCompact)) == 0 {
+			text = "\r\n" + text
+		}
+		// C make_prompt starts with a lone carriage return and has no
+		// trailing newline. Preserve it through the terminal renderer.
+		s.sendPromptTextRaw(text)
+		return
+	}
 	// CON_REDIT and CON_MEDIT menus own their trailing prompt. The telnet
 	// loop still calls SendPrompt after every line, but C's descriptor
 	// state does not append the ordinary playing prompt while an OLC menu
@@ -297,9 +313,21 @@ func (s *Session) editorPromptState() (editing, playing bool) {
 }
 
 func (s *Session) sendPromptText(text string) {
+	s.queuePromptText(text, false)
+}
+
+func (s *Session) sendPromptTextRaw(text string) {
+	s.queuePromptText(text, true)
+}
+
+func (s *Session) queuePromptText(text string, raw bool) {
+	data := map[string]interface{}{"text": text}
+	if raw {
+		data["raw"] = true
+	}
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgPrompt,
-		Data: map[string]interface{}{"text": text},
+		Data: data,
 	})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
