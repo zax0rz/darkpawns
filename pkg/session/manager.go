@@ -1017,6 +1017,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		sessionCtx:          ctx,
 		cancelFunc:          cancel,
 		transportDone:       make(chan struct{}),
+		writerDone:          make(chan struct{}),
 		connectionNumber:    m.allocateConnectionNumber(),
 	}
 
@@ -1400,11 +1401,13 @@ func (s *Session) extractLinkdead() {
 		}
 	}
 
-	// Close the underlying connection. For WebSocket this triggers the pump
-	// defers to run Unregister; for telnet and other transports there is no
-	// pump defer, so we Unregister directly after closing.
+	// Close the underlying connection. For a live WebSocket this triggers the
+	// pump defers to run Unregister. Telnet has no pump defer, and a linkdead
+	// WebSocket's pumps have already exited without unregistering (DP-1323),
+	// so both are unregistered here; otherwise the character never leaves and
+	// the reaper retries it every sweep.
 	s.Close()
-	if s.conn == nil {
+	if s.conn == nil || !s.hasTransport() {
 		s.manager.Unregister(playerName)
 	}
 }
@@ -1534,6 +1537,9 @@ type Session struct {
 	// Both WebSocket pumps can discover a disconnect. Only one may decide
 	// whether to retain the playing character or unregister the session.
 	transportCleanupOnce sync.Once
+	// writerDone is closed when the WebSocket writer exits, so an orderly
+	// close (goodbye, refused login) can let it flush before the socket goes.
+	writerDone chan struct{}
 
 	charCreating bool
 	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
