@@ -84,19 +84,28 @@ export function createMudClient(options) {
     mana: 0, maxMana: 0,
     move: 0, maxMove: 0,
     level: 0, gold: 0,
+    name: '', race: '', className: '',
     roomVnum: 0,
   };
 
   let worldMapData = null;
+  let mapLoadFailed = false;
   fetch('/map/world-map.json')
-    .then(r => r.json())
+    .then(r => {
+      if (r.ok === false) throw new Error(`Map request failed (${r.status})`);
+      return r.json();
+    })
     .then(data => {
       worldMapData = data;
       if (playerState.roomVnum) {
         updateMinimap(playerState.roomVnum);
       }
     })
-    .catch(err => console.warn('Failed to load world map for minimap:', err));
+    .catch(err => {
+      mapLoadFailed = true;
+      if (playerState.roomVnum) updateMinimap(playerState.roomVnum);
+      console.warn('Failed to load world map for minimap:', err);
+    });
 
   function updateBar(id, cur, max, colorFn) {
     const bar = doc.getElementById(id);
@@ -114,6 +123,8 @@ export function createMudClient(options) {
       options.onPlayerState(Object.assign({}, playerState));
     }
     if (!statusBar) return;
+    const identity = doc.getElementById('character-identity');
+    if (identity) identity.textContent = [playerState.name, playerState.race, playerState.className].filter(Boolean).join(' · ');
     updateBar('hp-bar', playerState.health, playerState.maxHealth, hpColor);
     const hpText = doc.getElementById('hp-text');
     if (hpText) hpText.textContent = playerState.maxHealth > 0 ? `${playerState.health}/${playerState.maxHealth}` : '—';
@@ -141,6 +152,9 @@ export function createMudClient(options) {
   function handleStateMsg(data) {
     if (!data || !data.player) return;
     const p = data.player;
+    if (p.name !== undefined) playerState.name = p.name;
+    if (p.race !== undefined) playerState.race = p.race;
+    if (p.class !== undefined) playerState.className = p.class;
     playerState.health = p.health || 0;
     playerState.maxHealth = p.max_health || 0;
     playerState.level = p.level || 0;
@@ -167,9 +181,6 @@ export function createMudClient(options) {
     const connectPanel = doc.getElementById('sidebar-connect-panel');
     if (connectPanel) connectPanel.classList.add('hidden');
 
-    const panels = doc.querySelectorAll('.sidebar-panel');
-    panels.forEach(p => p.classList.remove('hidden'));
-
     // Update player status state
     if (data.HEALTH !== undefined) playerState.health = data.HEALTH;
     if (data.MAX_HEALTH !== undefined) playerState.maxHealth = data.MAX_HEALTH;
@@ -184,16 +195,19 @@ export function createMudClient(options) {
     // Minimap update
     if (data.ROOM_VNUM !== undefined) {
       playerState.roomVnum = data.ROOM_VNUM;
+      doc.getElementById('minimap-container')?.classList.remove('hidden');
       updateMinimap(data.ROOM_VNUM);
     }
 
     // Room contents update (mobs/items)
     if (data.ROOM_MOBS !== undefined || data.ROOM_ITEMS !== undefined) {
+      doc.getElementById('room-contents-container')?.classList.remove('hidden');
       updateRoomContents(data.ROOM_MOBS, data.ROOM_ITEMS);
     }
 
     // Inventory & Equipment update
     if (data.INVENTORY !== undefined || data.EQUIPMENT !== undefined) {
+      doc.getElementById('inventory-equipment-container')?.classList.remove('hidden');
       updateInventoryEquipment(data.INVENTORY, data.EQUIPMENT);
     }
 
@@ -215,8 +229,8 @@ export function createMudClient(options) {
 
     if (!worldMapData) {
       container.innerHTML = `
-        <div class="sidebar-panel-title">Minimap</div>
-        <div style="font-size:0.75rem; font-style:italic; color:var(--ink-muted);">Loading map data...</div>
+        <h3 class="sidebar-panel-title">Map</h3>
+        <p class="sidebar-list-empty">${mapLoadFailed ? 'Map unavailable. Game text still describes your room.' : 'Loading map…'}</p>
       `;
       return;
     }
@@ -224,8 +238,8 @@ export function createMudClient(options) {
     const currentRoom = worldMapData.rooms.find(r => r.id === currentVnum);
     if (!currentRoom) {
       container.innerHTML = `
-        <div class="sidebar-panel-title">Minimap</div>
-        <div style="font-size:0.75rem; font-style:italic; color:var(--ink-muted);">Room #${currentVnum} not on map</div>
+        <h3 class="sidebar-panel-title">Map</h3>
+        <p class="sidebar-list-empty">Room #${currentVnum} is not on the map.</p>
       `;
       return;
     }
@@ -244,7 +258,7 @@ export function createMudClient(options) {
       return s && t;
     });
 
-    let svgContent = `<svg width="100%" height="150" viewBox="${minX} ${minY} ${size} ${size}" style="background:#050404; border:1px solid var(--rule); border-radius:4px;">`;
+    let svgContent = `<svg width="100%" height="220" viewBox="${minX} ${minY} ${size} ${size}" aria-hidden="true" focusable="false" style="background:#0a0908; border:1px solid var(--rule);">`;
 
     // Draw links
     links.forEach(l => {
@@ -270,10 +284,10 @@ export function createMudClient(options) {
     svgContent += `</svg>`;
 
     container.innerHTML = `
-      <div class="sidebar-panel-title">Minimap</div>
-      <div style="font-size: 0.75rem; font-family: var(--font-display); text-transform: uppercase; color: var(--ink); margin-bottom: var(--space-xs); display:flex; justify-content:space-between; align-items:center;">
-        <span>${escHtml(currentRoom.name || 'Unknown Room')}</span>
-        <span style="font-family:monospace; color:var(--oxblood); font-weight:bold;">#${currentVnum}</span>
+      <h3 class="sidebar-panel-title">Map</h3>
+      <div style="font-size: 0.85rem; font-family: var(--font-display); text-transform: uppercase; color: var(--ink); margin-bottom: var(--space-xs); display:flex; justify-content:space-between; align-items:center;">
+        <span>Current room: ${escHtml(currentRoom.name || 'Unknown Room')}</span>
+        <span style="font-family:var(--font-mono); color:var(--accent); font-weight:bold;">#${currentVnum}</span>
       </div>
       ${svgContent}
     `;
@@ -292,9 +306,9 @@ export function createMudClient(options) {
     let mobHtml = '';
     if (cachedMobs.length > 0) {
       mobHtml = cachedMobs.map(m => `
-        <div class="sidebar-list-item" style="border-left-color: var(--oxblood);">
-          <span style="color: var(--oxblood); font-weight: bold;">${escHtml(m.name)}</span>
-          ${m.fighting ? '<span style="font-size:0.65rem; color:#8b0000; font-family:var(--font-display); text-transform:uppercase;">[Fighting]</span>' : ''}
+        <div class="sidebar-list-item">
+          <span style="color: var(--accent); font-weight: bold;">${escHtml(m.name)}</span>
+          ${m.fighting ? '<span style="font-size:0.8rem; color:var(--accent); font-family:var(--font-display); text-transform:uppercase;">[Fighting]</span>' : ''}
         </div>
       `).join('');
     }
@@ -310,14 +324,14 @@ export function createMudClient(options) {
 
     if (cachedMobs.length === 0 && cachedItems.length === 0) {
       container.innerHTML = `
-        <div class="sidebar-panel-title">In the Room</div>
+        <h3 class="sidebar-panel-title">In the Room</h3>
         <div class="sidebar-list-empty">The room is empty.</div>
       `;
       return;
     }
 
     container.innerHTML = `
-      <div class="sidebar-panel-title">In the Room</div>
+      <h3 class="sidebar-panel-title">In the Room</h3>
       <div class="sidebar-list">
         ${mobHtml}
         ${itemHtml}
@@ -333,13 +347,15 @@ export function createMudClient(options) {
     const container = doc.getElementById('inventory-equipment-container');
     if (!container) return;
 
+    const focusedButton = container.contains(doc.activeElement) ? doc.activeElement?.id : null;
+
     if (inventory !== undefined) cachedInventory = inventory || [];
     if (equipment !== undefined) cachedEquipment = equipment || [];
 
     const tabsHtml = `
       <div class="sidebar-tabs">
-        <button class="sidebar-tab-btn ${activeTab === 'inventory' ? 'active' : ''}" id="tab-btn-inv">Inventory</button>
-        <button class="sidebar-tab-btn ${activeTab === 'equipment' ? 'active' : ''}" id="tab-btn-eq">Equipment</button>
+        <button type="button" class="sidebar-tab-btn ${activeTab === 'inventory' ? 'active' : ''}" id="tab-btn-inv" aria-pressed="${activeTab === 'inventory'}" aria-controls="sidebar-tab-inv-content">Inventory</button>
+        <button type="button" class="sidebar-tab-btn ${activeTab === 'equipment' ? 'active' : ''}" id="tab-btn-eq" aria-pressed="${activeTab === 'equipment'}" aria-controls="sidebar-tab-eq-content">Equipment</button>
       </div>
     `;
 
@@ -357,8 +373,8 @@ export function createMudClient(options) {
     let eqHtml = '';
     if (cachedEquipment.length > 0) {
       eqHtml = cachedEquipment.map(item => `
-        <div class="sidebar-list-item" style="border-left-color: var(--oxblood);">
-          <span style="font-weight: bold; font-family: var(--font-display); text-transform: uppercase; font-size: 0.65rem; color: var(--oxblood); margin-right: 8px;">
+        <div class="sidebar-list-item">
+          <span style="font-weight: bold; font-family: var(--font-display); text-transform: uppercase; font-size: 0.8rem; color: var(--accent); margin-right: 8px;">
             ${escHtml(item.slot || 'worn')}
           </span>
           <span>${escHtml(item.name || item)}</span>
@@ -370,10 +386,10 @@ export function createMudClient(options) {
 
     container.innerHTML = `
       ${tabsHtml}
-      <div id="sidebar-tab-inv-content" class="sidebar-tab-content ${activeTab === 'inventory' ? 'active' : ''}">
+      <div id="sidebar-tab-inv-content" class="sidebar-tab-content ${activeTab === 'inventory' ? 'active' : ''}" ${activeTab === 'inventory' ? '' : 'hidden'}>
         <div class="sidebar-list">${invHtml}</div>
       </div>
-      <div id="sidebar-tab-eq-content" class="sidebar-tab-content ${activeTab === 'equipment' ? 'active' : ''}">
+      <div id="sidebar-tab-eq-content" class="sidebar-tab-content ${activeTab === 'equipment' ? 'active' : ''}" ${activeTab === 'equipment' ? '' : 'hidden'}>
         <div class="sidebar-list">${eqHtml}</div>
       </div>
     `;
@@ -386,6 +402,7 @@ export function createMudClient(options) {
       activeTab = 'equipment';
       updateInventoryEquipment();
     });
+    if (focusedButton) doc.getElementById(focusedButton)?.focus();
   }
 
   function updateTargetDisplay(fightingData) {
@@ -409,13 +426,13 @@ export function createMudClient(options) {
     else if (pctHp <= 75) barColor = '#b8960a';
 
     container.innerHTML = `
-      <div class="sidebar-panel-title">Target <span class="badge" style="background:#8b0000; color:#fff;">COMBAT</span></div>
+      <h3 class="sidebar-panel-title">Target <span class="badge">Combat</span></h3>
       <div class="target-name">${escHtml(name)}</div>
       <div class="target-hp-bar-container">
-        <div class="bar-track" style="flex:1; height: 10px;">
-          <div class="bar-fill" style="width: ${pctHp}%; background-color: ${barColor}; height: 100%; transition: width 0.3s ease;"></div>
+        <div class="bar-track" aria-hidden="true" style="flex:1; height: 10px;">
+          <div class="bar-fill" style="width: ${pctHp}%; background-color: ${barColor}; height: 100%;"></div>
         </div>
-        <span style="font-size:0.75rem; font-family:monospace; color:var(--ink-muted);">${curHp}/${maxHp}</span>
+        <span style="font-size:0.85rem; font-family:var(--font-mono); color:var(--ink-muted);">${curHp}/${maxHp}</span>
       </div>
     `;
   }
@@ -467,12 +484,13 @@ export function createMudClient(options) {
     if (!r) return;
     const connectPanel = doc.getElementById('sidebar-connect-panel');
     if (connectPanel) connectPanel.classList.add('hidden');
-    doc.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('hidden'));
     if (r.vnum) {
       playerState.roomVnum = r.vnum;
+      doc.getElementById('minimap-container')?.classList.remove('hidden');
       updateMinimap(r.vnum);
     }
     if (r.mobs !== undefined || r.items !== undefined) {
+      doc.getElementById('room-contents-container')?.classList.remove('hidden');
       updateRoomContents(r.mobs, r.items);
     }
   }
@@ -562,6 +580,9 @@ export function createMudClient(options) {
       inputBuffer = '';
       heldOutput = '';
       if (statusBar) statusBar.classList.add('hidden');
+      const connectPanel = doc.getElementById('sidebar-connect-panel');
+      if (connectPanel) connectPanel.classList.remove('hidden');
+      doc.querySelectorAll('.sidebar-panel').forEach(p => p.classList.add('hidden'));
     };
 
     ws.onerror = function () {

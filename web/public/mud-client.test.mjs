@@ -64,3 +64,81 @@ test('a greeting cannot release a pasted password before the secret prompt', asy
     globalThis.location = previous.location;
   }
 });
+
+test('the dock reveals supplied data and clears stale panels on disconnect', async () => {
+  const previous = {
+    WebSocket: globalThis.WebSocket,
+    fetch: globalThis.fetch,
+    location: globalThis.location,
+  };
+  class FakeWebSocket {
+    static OPEN = 1;
+    constructor() {
+      this.readyState = FakeWebSocket.OPEN;
+      FakeWebSocket.latest = this;
+    }
+    send() {}
+    close() {}
+  }
+  const element = () => {
+    const classes = new Set(['hidden']);
+    return {
+      classList: {
+        add: name => classes.add(name),
+        remove: name => classes.delete(name),
+        contains: name => classes.has(name),
+      },
+      contains: () => false,
+      style: {},
+      innerHTML: '',
+      textContent: '',
+    };
+  };
+  const ids = Object.fromEntries([
+    'status-bar', 'character-identity', 'hp-bar', 'hp-text', 'mana-bar', 'mana-text', 'move-bar',
+    'move-text', 'level-info', 'gold-info', 'sidebar-connect-panel',
+    'minimap-container', 'target-container', 'room-contents-container',
+    'inventory-equipment-container',
+  ].map(id => [id, element()]));
+  const panels = ['minimap-container', 'target-container', 'room-contents-container', 'inventory-equipment-container'].map(id => ids[id]);
+  globalThis.WebSocket = FakeWebSocket;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ rooms: [{ id: 8004, name: 'At the Temple Altar', zone_id: 1, x: 0, y: 0, sector: 0 }], links: [] }),
+  });
+  globalThis.location = { search: '', protocol: 'https:', host: 'darkpawns.org' };
+  const doc = {
+    activeElement: null,
+    querySelector: () => null,
+    querySelectorAll: () => panels,
+    getElementById: id => ids[id] || null,
+  };
+  const terminal = { write() {}, writeln() {}, onData() {}, cols: 80 };
+
+  try {
+    createMudClient({ terminal, doc });
+    const socket = FakeWebSocket.latest;
+    await new Promise(resolve => setImmediate(resolve));
+    socket.onmessage({ data: JSON.stringify({ type: 'state', data: {
+      player: { name: 'Tester', race: 'Kenderkin', class: 'Thief', health: 23, max_health: 23 },
+      room: { vnum: 8004 },
+    } }) });
+    socket.onmessage({ data: JSON.stringify({ type: 'vars', data: {
+      HEALTH: 23, MAX_HEALTH: 23, ROOM_VNUM: 8004,
+    } }) });
+    assert.equal(ids['character-identity'].textContent, 'Tester · Kenderkin · Thief');
+    assert.equal(ids['hp-text'].textContent, '23/23');
+    assert.match(ids['minimap-container'].innerHTML, /Current room: At the Temple Altar/);
+    assert.match(ids['minimap-container'].innerHTML, /aria-hidden="true"/);
+    assert.equal(ids['minimap-container'].classList.contains('hidden'), false);
+    assert.equal(ids['inventory-equipment-container'].classList.contains('hidden'), true);
+    socket.onclose();
+    assert.equal(ids['status-bar'].classList.contains('hidden'), true);
+    assert.equal(ids['sidebar-connect-panel'].classList.contains('hidden'), false);
+    assert.ok(panels.every(panel => panel.classList.contains('hidden')));
+  } finally {
+    globalThis.WebSocket = previous.WebSocket;
+    globalThis.fetch = previous.fetch;
+    globalThis.location = previous.location;
+  }
+});

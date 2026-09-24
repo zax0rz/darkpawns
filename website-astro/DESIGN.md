@@ -231,7 +231,9 @@ two different lockups at once.
 - **Section card grid:** one shared card-grid pattern for all section indexes (title, description, meta count, oxblood hover) from a single partial and CSS block. **MUST** extend these shared patterns — no bespoke per-section nav, breadcrumbs, or index layouts.
 
 ### The Web Client (`/play`) — signature component
-A physical CRT console in a paper housing. Chassis `.terminal-frame` in Paper-Deep with Ink separators; inner `#terminal` locked to a dark CRT canvas (`#0a0908`) framed by a crisp 2px Ink border. Controls and connectivity dots in Oxblood and Ink, never arbitrary grays. This is the ONE legitimate "terminal UI" on the site (see Don'ts) because it is the actual game.
+A physical CRT console in a paper housing. The `.terminal-frame` places a Paper control bar above the dark CRT canvas (`#0a0908`), and `#terminal` keeps its crisp 2px Ink border. Controls and connectivity dots use Oxblood and Ink. This is the ONE legitimate "terminal UI" on the site (see Don'ts) because it is the actual game.
+
+The playable view borrows Mudlet's proportions: the game transcript dominates the left, and a narrow Paper dock holds the Dark Pawns mark, numeric vitals, the local map, and available room/character panels. The dock uses structured state beside the canonical text; it never paraphrases or reprints game output. At narrow widths it follows the terminal in document order. Screen reader mode is an explicit, remembered xterm setting; the dock's numbers and room name remain readable without its map or color bars.
 
 ### The Interactive Map (`/map`) — signature component
 Vintage ink-and-parchment cartography. Paper-Deep canvas, room nodes and connection lines stroked in Ink or Oxblood, brutalist `.btn-secondary` controls, cream inputs with oxblood focus.
