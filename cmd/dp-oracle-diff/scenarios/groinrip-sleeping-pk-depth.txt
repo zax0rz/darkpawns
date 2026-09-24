@@ -1,0 +1,86 @@
+# A sleeping male player above level 10 forces percent=0 after the skill gate;
+# damage() lets the hit through, so the victim receives the numbered set-174
+# message through the TO_VICT | TO_SLEEP path.
+
+# depth-case: groinrip.sleeping-target
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Groinrippkgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groinrippkgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+GripDozer
+Y
+dozepass
+dozepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:sleeper]
+GripDozer
+y
+dozepass
+dozepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport GripDozer 8105
+skillset Groinrippkgod 'groinrip' 75
+advance GripDozer 11
+force GripDozer sleep
+
+[probe]
+look
+groinrip GripDozer
+~dpclock pulse 1

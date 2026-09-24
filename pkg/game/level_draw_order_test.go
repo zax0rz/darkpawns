@@ -91,6 +91,29 @@ func TestAdvanceLevelWarriorMovementUsesSecondDraw(t *testing.T) {
 	}
 }
 
+// TestAdvanceLevelLeavesCurrentPoolsAlone is the DP-1329 regression: C
+// advance_level() raises max hit, mana and move but never refills the current
+// pools (class.c:698-702). Only do_start() refills, after its own call.
+func TestAdvanceLevelLeavesCurrentPoolsAlone(t *testing.T) {
+	t.Chdir(t.TempDir())
+	player := NewPlayer(1, "Leveler", MortalStartRoom)
+	player.Class = ClassWarrior
+	player.Level = 5
+	player.Stats = CharStats{Con: 10, Wis: 10}
+	player.MaxHealth, player.Health = 80, 20
+	player.MaxMana, player.Mana = 100, 30
+	player.MaxMove, player.Move = 90, 40
+
+	player.AdvanceLevel()
+
+	if player.MaxHealth <= 80 || player.MaxMove <= 90 {
+		t.Fatalf("maxima not raised: hit %d, move %d", player.MaxHealth, player.MaxMove)
+	}
+	if player.Health != 20 || player.Mana != 30 || player.Move != 40 {
+		t.Fatalf("current pools = %d/%d/%d, want 20/30/40 unchanged", player.Health, player.Mana, player.Move)
+	}
+}
+
 // TestNewCharacterConstructorConsumesZeroLevelDraws — DP-1212 regression: the
 // shared constructor (newCharacter → NewCharacterWithStats/NewCharacter) must
 // NOT call AdvanceLevel, because that consumed 2 phantom draws on the God path

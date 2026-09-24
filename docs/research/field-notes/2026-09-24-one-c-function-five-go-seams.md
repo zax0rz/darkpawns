@@ -78,3 +78,26 @@ oracle caught it (PF-019).
 The rescuer special had already met the same shape (`mobRescueVictim`).
 When C passes a name through a command handler, the port has to reproduce
 the parse, not the intent.
+
+## 5. The proof chain kept going
+
+With the level-up heal fixed (DP-1329), the level-11 victim died on both
+servers, and the victim's own view showed three more inventions on the
+player-death path. The victim was shown the room's "GripDozer is dead!
+R.I.P." line, which C's `TO_ROOM` never sends it. It also got "You lose N
+experience points." and a constitution-loss line, where C's penalties are
+silent. None of these had been caught, because no earlier scenario watched a
+player die from the victim's side (PF-020).
+
+The last difference is the prompt. C sends the dead victim a vitals prompt
+with negative hit points. The normalizer rewrites vitals to `<PROMPT>` and
+drops prompt-only lines, but the minus sign survived as `-<PROMPT>`. That's
+the first prompt in the census the normalizer failed to hide, and it
+exposed that the port sends no prompt after output caused by another
+player's command (DP-1307, which had been scoped to the DP_CLOCK pump
+alone). Section 2 of the browser-terminal note says a normalizer is part of
+the claim (RO-011). Here a negative number punched through it.
+
+One fix asked for one proof. Writing that proof turned up the level-up
+heal, then the death bytes, then a wider prompt gap. Each fix let the
+scenario reach a state that no scenario had reached before.

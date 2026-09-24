@@ -5,6 +5,7 @@ accuse-depth	accuse.tsv	accuse.target-success	blocked
 accuse-noarg-depth	accuse.tsv	accuse.no-argument	blocked	run-varying
 force-mob	force.tsv	force.npc-command-interpreter	blocked	
 force-mob	force.tsv	force.visible-npc-target	blocked	
+groinrip-sleeping-pk-depth	groinrip.tsv	groinrip.sleeping-target	blocked	
 gsay-act-depth	gsay.tsv	gsay.act-echo-prompt-spacing	blocked	
 gsay-act-depth	gsay.tsv	gsay.act-listener-prompt	blocked	
 gsay-depth	gsay.tsv	gsay.sleeping-recipient	blocked	

@@ -744,14 +744,9 @@ func remortPlayer(ch *Player) {
 	// Active affects are represented by getters in the current path, while
 	// legacy MasterAffects were removed above; this is the resulting
 	// affect_total state for a naked remort.
-	health, mana, move := ch.GetHP(), ch.GetMana(), ch.GetMove()
+	// C advance_level() raises maxima but does not heal the current pools;
+	// the remorter set them immediately before this call.
 	ch.AdvanceLevel()
-	// C advance_level() raises maxima but does not heal the current pools. The
-	// remorter set them immediately before advance_level(), so restore those
-	// pre-level-up values after the shared Go helper returns.
-	ch.SetHP(health)
-	ch.SetMana(mana)
-	ch.SetMove(move)
 }
 
 func clearRemortAffects(ch *Player) {

@@ -418,10 +418,9 @@ func (p *Player) AdvanceLevel() {
 	}
 	p.MaxMove += addMove
 
-	// Heal to new max, including move points
-	p.Health = p.MaxHealth
-	p.Mana = p.MaxMana
-	p.Move = p.MaxMove
+	// C advance_level() raises only the maxima; current hit, mana and move
+	// are untouched (class.c:698-702). do_start() refills them itself after
+	// its advance_level() call (DP-1329).
 
 	// Immortal perks
 	if p.Level >= LVL_IMMORT {

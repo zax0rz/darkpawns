@@ -701,3 +701,43 @@ func TestHandleDeath_KillingNeutralMobNoShift(t *testing.T) {
 		t.Errorf("killing neutral mob should not shift alignment, got %d", killer.GetAlignment())
 	}
 }
+
+// TestHandlePlayerDeathPenaltiesAreSilent is the death-byte regression found
+// while proving DP-1329: C's gain_exp(ch, -loss) and the constitution
+// decrements print nothing (fight.c:589-628, 600-608).
+func TestHandlePlayerDeathPenaltiesAreSilent(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Combat Arena", Zone: 1},
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 8},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(30)
+	victim.SetExp(100000)
+	victim.Stats.Con = 15
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+	var out strings.Builder
+	w.MessageSink = func(name string, msg []byte) {
+		if name == victim.Name {
+			out.Write(msg)
+		}
+	}
+	victim.SetHP(-11)
+	w.handlePlayerDeath(victim, true, 303, "Killer")
+
+	if victim.GetExp() >= 100000 {
+		t.Fatalf("exp = %d, want the death penalty applied", victim.GetExp())
+	}
+	if got := out.String(); strings.Contains(got, "You lose") {
+		t.Fatalf("victim output = %q, want no death-penalty line", got)
+	}
+}
