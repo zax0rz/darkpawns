@@ -126,6 +126,9 @@ test('the dock reveals supplied data and clears stale panels on disconnect', asy
     socket.onmessage({ data: JSON.stringify({ type: 'vars', data: {
       HEALTH: 23, MAX_HEALTH: 23, ROOM_VNUM: 8004,
     } }) });
+    socket.onmessage({ data: JSON.stringify({ type: 'gmcp', data: {
+      package: 'Room.Info', json: JSON.stringify({ num: 8004, name: 'At the Temple Altar' }),
+    } }) });
     assert.equal(ids['character-identity'].textContent, 'Tester · Kenderkin · Thief');
     assert.equal(ids['hp-text'].textContent, '23/23');
     assert.match(ids['minimap-container'].innerHTML, /Current room: At the Temple Altar/);
@@ -136,6 +139,67 @@ test('the dock reveals supplied data and clears stale panels on disconnect', asy
     assert.equal(ids['status-bar'].classList.contains('hidden'), true);
     assert.equal(ids['sidebar-connect-panel'].classList.contains('hidden'), false);
     assert.ok(panels.every(panel => panel.classList.contains('hidden')));
+  } finally {
+    globalThis.WebSocket = previous.WebSocket;
+    globalThis.fetch = previous.fetch;
+    globalThis.location = previous.location;
+  }
+});
+
+test('structured channel messages fill chat without changing terminal output', () => {
+  const previous = {
+    WebSocket: globalThis.WebSocket,
+    fetch: globalThis.fetch,
+    location: globalThis.location,
+  };
+  class FakeWebSocket {
+    static OPEN = 1;
+    constructor() { this.readyState = FakeWebSocket.OPEN; FakeWebSocket.latest = this; }
+    send() {}
+    close() {}
+  }
+  const children = [];
+  const chatMessages = {
+    append: node => children.push(node),
+    replaceChildren: () => { children.length = 0; },
+    get childElementCount() { return children.length; },
+    get firstElementChild() { return { remove: () => children.shift() }; },
+  };
+  const classes = new Set();
+  const chatEmpty = { classList: {
+    add: name => classes.add(name),
+    remove: name => classes.delete(name),
+  } };
+  const nodes = { 'chat-messages': chatMessages, 'chat-empty': chatEmpty };
+  const doc = {
+    getElementById: id => nodes[id] || null,
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    createElement: tag => ({ tag, append(...parts) { this.parts = parts; } }),
+    createTextNode: text => ({ text }),
+  };
+  const writes = [];
+  const terminal = { write: text => writes.push(text), writeln: text => writes.push(text), onData() {}, cols: 80 };
+  globalThis.WebSocket = FakeWebSocket;
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({}) });
+  globalThis.location = { search: '', protocol: 'https:', host: 'darkpawns.org' };
+  try {
+    const client = createMudClient({ terminal, doc });
+    const socket = FakeWebSocket.latest;
+    const before = writes.join('');
+    socket.onmessage({ data: JSON.stringify({ type: 'gmcp', data: {
+      package: 'Comm.Channel.Text',
+      json: JSON.stringify({ channel: 'say', talker: 'Walker', text: 'Walker says hi' }),
+    } }) });
+    assert.equal(children.length, 1);
+    assert.equal(children[0].parts[0].textContent, 'say');
+    assert.equal(children[0].parts[1].text, ' Walker says hi');
+    assert.equal(writes.join(''), before);
+    assert.equal(classes.has('hidden'), true);
+    socket.onclose();
+    assert.equal(children.length, 0);
+    assert.equal(classes.has('hidden'), false);
+    client.disconnect();
   } finally {
     globalThis.WebSocket = previous.WebSocket;
     globalThis.fetch = previous.fetch;

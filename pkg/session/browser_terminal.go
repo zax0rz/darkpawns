@@ -16,6 +16,9 @@ func (s *Session) startBrowserTerminal() {
 	if s.browserTerminal.Swap(true) {
 		return
 	}
+	// The browser uses the same out-of-band channel data as Mudlet. It still
+	// receives the canonical text stream independently (R1, R4).
+	s.EnableGMCP()
 	s.sendRawEvent(TerminalGreeting())
 }
 
@@ -69,8 +72,9 @@ func renderForBrowserTerminal(msg []byte) ([]byte, bool) {
 		out = terminalOut{Text: f.Text, Prompt: true}
 	case FrameEntryPrompt:
 		out = terminalOut{Text: f.Text, Entry: true, Secret: f.Secret}
+	case FrameGMCP:
+		return msg, true
 	default:
-		// GMCP is negotiated by telnet clients only.
 		return nil, false
 	}
 	b, err := json.Marshal(ServerMessage{Type: MsgOut, Data: out})

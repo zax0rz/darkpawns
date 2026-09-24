@@ -27,18 +27,6 @@ import '@xterm/xterm/css/xterm.css';
 
       <aside class="play-sidebar" aria-labelledby="dock-heading">
         <h2 id="dock-heading" class="visually-hidden">Player dock</h2>
-        <div class="dock-brand" aria-hidden="true">
-          <svg class="dock-pawn" viewBox="24 8 52 88" focusable="false">
-            <g fill="currentColor">
-              <circle cx="50" cy="23" r="12" />
-              <rect x="37" y="38" width="26" height="5" />
-              <polygon points="43,46 57,46 62,75 38,75" />
-              <rect x="31" y="77" width="38" height="6" />
-              <rect x="26" y="85" width="48" height="7" />
-            </g>
-          </svg>
-          <span>DARK<br /><span>PAWNS</span></span>
-        </div>
         <div id="status-bar" class="status-bar hidden" role="group" aria-labelledby="character-heading">
           <h3 id="character-heading">Character</h3>
           <p id="character-identity" class="character-identity"></p>
@@ -55,6 +43,11 @@ import '@xterm/xterm/css/xterm.css';
           <p>Screen reader mode announces new game text and remembers your choice in this browser.</p>
           <p><a href="#desktop-client">Prefer Mudlet or TinTin++?</a></p>
         </div>
+        <section id="chat-container" class="sidebar-panel" aria-labelledby="chat-heading">
+          <h3 id="chat-heading">Chat</h3>
+          <p id="chat-empty">Channel messages appear here during play.</p>
+          <ol id="chat-messages" aria-live="off" aria-relevant="additions"></ol>
+        </section>
         <div id="minimap-container" class="sidebar-panel hidden"></div>
         <div id="target-container" class="sidebar-panel hidden"></div>
         <div id="room-contents-container" class="sidebar-panel hidden"></div>
@@ -193,8 +186,8 @@ import '@xterm/xterm/css/xterm.css';
   .play-intro p:last-child { color: var(--ink-muted); margin: 0; }
   .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
   .play-wrapper.container { max-width: 96rem; padding-inline: var(--space-md); }
-  .play-wrapper { display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, 22rem); min-height: clamp(38rem, 74vh, 54rem); border-top: 1px solid var(--rule); }
-  .terminal-frame { display: flex; flex-direction: column; min-width: 0; background: #0a0908; }
+  .play-wrapper { display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, 22rem); height: clamp(34rem, 74dvh, 54rem); min-height: 0; border-top: 1px solid var(--rule); }
+  .terminal-frame { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: #0a0908; }
   .terminal-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); padding: .55rem var(--space-md); background: var(--paper); border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
   .terminal-title { color: var(--accent); font-weight: 700; }
   .terminal-actions, .conn-status { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
@@ -206,11 +199,11 @@ import '@xterm/xterm/css/xterm.css';
   #reconnect-btn { display: none; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; font: inherit; padding: .25rem .55rem; text-transform: uppercase; }
   #reconnect-btn.visible { display: inline-block; }
   .terminal-hint { margin: 0; padding: .2rem var(--space-sm); background: var(--paper-deep); color: var(--ink-muted); font-size: .82rem; max-width: none; }
-  #terminal { flex: 1; min-height: 32rem; overflow: hidden; background: #0a0908; border: 2px solid var(--rule); padding: .5rem; }
-  .play-sidebar { min-width: 0; padding: var(--space-md); background: var(--paper); border-left: 1px solid var(--rule); overflow-y: auto; }
-  .dock-brand { display: flex; align-items: center; gap: .4rem; padding-bottom: .45rem; margin-bottom: .6rem; border-bottom: 1px solid var(--rule); color: var(--ink); font-family: var(--font-display); font-size: 1.7rem; line-height: .83; text-align: left; }
-  .dock-brand span span { color: var(--accent); }
-  .dock-pawn { width: 2.5rem; height: 3.4rem; flex: none; }
+  #terminal { flex: 1; min-height: 0; overflow: hidden; background: #0a0908; border: 2px solid var(--rule); padding: .5rem; }
+  .play-sidebar { min-width: 0; min-height: 0; padding: var(--space-md); background: var(--paper); border-left: 1px solid var(--rule); overflow-y: auto; }
+  #chat-messages { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: .82rem; overflow-wrap: anywhere; }
+  #chat-messages li { border-left: 2px solid var(--accent); padding-left: .5rem; }
+  #chat-messages small { color: var(--ink-muted); text-transform: uppercase; }
   .play-sidebar h3 { font-size: 1.2rem; margin: 0 0 var(--space-sm); }
   .play-sidebar p { color: var(--ink-muted); font-size: .9rem; }
   .hidden { display: none; }
@@ -255,7 +248,8 @@ import '@xterm/xterm/css/xterm.css';
   .first-steps { max-width: var(--content-width); margin-top: var(--space-xl); }
   .first-steps li { margin-bottom: var(--space-sm); }
   @media (max-width: 860px) {
-    .play-wrapper { grid-template-columns: 1fr; }
+    .play-wrapper { grid-template-columns: 1fr; height: auto; }
+    .terminal-frame { height: clamp(27rem, 65dvh, 38rem); }
     .play-sidebar { border-left: 0; border-top: 1px solid var(--rule); }
     .connection-card, .client-grid { grid-template-columns: 1fr; }
     .connection-card div + div { border-left: 0; border-top: 1px solid var(--rule); }
@@ -264,6 +258,5 @@ import '@xterm/xterm/css/xterm.css';
     .play-intro, .connection-guide { padding-inline: var(--space-md); }
     .play-wrapper.container { padding-inline: 0; }
     .terminal-header { align-items: flex-start; flex-direction: column; }
-    #terminal { min-height: 27rem; }
   }
 </style>

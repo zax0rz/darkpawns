@@ -75,8 +75,40 @@ export function createMudClient(options) {
   const statusEl = doc.querySelector('.conn-status');
   const reconnectBtn = doc.getElementById('reconnect-btn');
   const statusBar = doc.getElementById('status-bar');
+  const chatMessages = doc.getElementById('chat-messages');
+  const chatEmpty = doc.getElementById('chat-empty');
   let inputBuffer = '';
   let ws;
+  let shownRoom = null;
+
+  function clearChat() {
+    if (chatMessages) chatMessages.replaceChildren();
+    if (chatEmpty) chatEmpty.classList.remove('hidden');
+  }
+
+  function handleGMCPMessage(data) {
+    if (data?.package === 'Room.Info') {
+      try {
+        const room = JSON.parse(data.json);
+        if (Number.isInteger(room?.num) && typeof room.name === 'string') {
+          shownRoom = room;
+          if (room.num === playerState.roomVnum) updateMinimap(room.num);
+        }
+      } catch { /* Ignore malformed out-of-band data. */ }
+      return;
+    }
+    if (!chatMessages || data?.package !== 'Comm.Channel.Text') return;
+    let line;
+    try { line = JSON.parse(data.json); } catch { return; }
+    if (!line || typeof line.text !== 'string' || typeof line.channel !== 'string') return;
+    const item = doc.createElement('li');
+    const label = doc.createElement('small');
+    label.textContent = line.channel;
+    item.append(label, doc.createTextNode(' ' + line.text));
+    chatMessages.append(item);
+    while (chatMessages.childElementCount > 80) chatMessages.firstElementChild.remove();
+    if (chatEmpty) chatEmpty.classList.add('hidden');
+  }
 
   // ── Status Bar State ──
   const playerState = {
@@ -286,7 +318,7 @@ export function createMudClient(options) {
     container.innerHTML = `
       <h3 class="sidebar-panel-title">Map</h3>
       <div style="font-size: 0.85rem; font-family: var(--font-display); text-transform: uppercase; color: var(--ink); margin-bottom: var(--space-xs); display:flex; justify-content:space-between; align-items:center;">
-        <span>Current room: ${escHtml(currentRoom.name || 'Unknown Room')}</span>
+        <span>Current room: ${escHtml(shownRoom?.num === currentVnum ? shownRoom.name : currentRoom.name || 'Unknown Room')}</span>
         <span style="font-family:var(--font-mono); color:var(--accent); font-weight:bold;">#${currentVnum}</span>
       </div>
       ${svgContent}
@@ -559,6 +591,8 @@ export function createMudClient(options) {
             handleStateMsg(msg.data);
             handleStateRoom(msg.data);
           }
+        } else if (msg.type === 'gmcp') {
+          handleGMCPMessage(msg.data);
         }
         // Nothing else is ever written to the terminal: an unrecognised
         // frame is protocol, not game text.
@@ -579,10 +613,14 @@ export function createMudClient(options) {
       queuedInput = '';
       inputBuffer = '';
       heldOutput = '';
+      shownRoom = null;
+      clearChat();
       if (statusBar) statusBar.classList.add('hidden');
       const connectPanel = doc.getElementById('sidebar-connect-panel');
       if (connectPanel) connectPanel.classList.remove('hidden');
-      doc.querySelectorAll('.sidebar-panel').forEach(p => p.classList.add('hidden'));
+      doc.querySelectorAll('.sidebar-panel').forEach(p => {
+        if (p.id !== 'chat-container') p.classList.add('hidden');
+      });
     };
 
     ws.onerror = function () {
@@ -664,6 +702,8 @@ export function createMudClient(options) {
         ws = null;
       }
       resetSession();
+      shownRoom = null;
+      clearChat();
     },
   };
 }
