@@ -98,7 +98,8 @@ type MobInstance struct {
 	Flags uint64
 
 	// Following — name of player this mob follows (for charmed pets, etc.)
-	Following string
+	Following         string
+	followingSequence uint64
 }
 
 // NewMob creates a new mob instance from a prototype.
@@ -320,6 +321,17 @@ func (m *MobInstance) SetFollowing(leader string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Following = leader
+	if leader == "" {
+		m.followingSequence = 0
+	} else {
+		m.followingSequence = nextFollowerSequence()
+	}
+}
+
+func (m *MobInstance) GetFollowingSequence() uint64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.followingSequence
 }
 
 // GetFollowing returns who the mob is following.

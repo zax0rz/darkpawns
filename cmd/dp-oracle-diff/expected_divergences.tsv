@@ -5,14 +5,15 @@ accuse-depth	accuse.tsv	accuse.target-success	blocked
 accuse-noarg-depth	accuse.tsv	accuse.no-argument	blocked	run-varying
 force-mob	force.tsv	force.npc-command-interpreter	blocked	
 force-mob	force.tsv	force.visible-npc-target	blocked	
+gsay-act-depth	gsay.tsv	gsay.act-echo-prompt-spacing	blocked	
+gsay-act-depth	gsay.tsv	gsay.act-listener-prompt	blocked	
+gsay-depth	gsay.tsv	gsay.sleeping-recipient	blocked	
 lifecycle-idle-void	idle.tsv	idle.dusk-events-room-local	blocked	
 lifecycle-idle-void	idle.tsv	idle.return-on-command	blocked	
 lifecycle-idle-void	idle.tsv	idle.void-ninth-tick	blocked	
-lifecycle-relogin-prefs	quit.tsv	quit.menu-return	blocked	
-lifecycle-relogin-prefs	quit.tsv	quit.rent-carried-objects	blocked	
-lifecycle-relogin-prefs	save.tsv	save.preferences-roundtrip	blocked	
 lifecycle-relogin-prefs	save.tsv	save.relogin-login-transcript	blocked	
-lifecycle-relogin-room	save.tsv	login.room-after-unsafe-quit	blocked	
+lifecycle-relogin-room	save.tsv	save.relogin-login-transcript	blocked	
+player-state-toggles	auto.tsv	auto.no-arg-listing-undefined	blocked	
 shoot-target-depth	shoot.tsv	shoot.mob-hit-miss	blocked	
 shoot-target-depth	shoot.tsv	shoot.pc-level-window	blocked	
 shoot-target-depth	shoot.tsv	shoot.player-hit-miss	blocked	

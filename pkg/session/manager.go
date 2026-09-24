@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -66,27 +65,9 @@ func init() {
 	}
 }
 
-// allowedWebSocketOrigins lists the public origins that may connect without
-// presenting an agent key.
+// allowedWebSocketOrigins lists the public origins that may connect.
 var allowedWebSocketOrigins = []string{
 	"https://darkpawns.org",
-}
-
-// agentKeyHeaderNames and agentKeyQueryParams name where an agent may present
-// its API key during the WebSocket handshake. These are configurable for
-// deployments where a reverse proxy strips or rewrites headers.
-var (
-	agentKeyHeaderNames = []string{"X-Agent-Key"}
-	agentKeyQueryParams = []string{"agent_key"}
-)
-
-func init() {
-	if v := os.Getenv("AGENT_KEY_HEADER"); v != "" {
-		agentKeyHeaderNames = strings.Split(v, ",")
-	}
-	if v := os.Getenv("AGENT_KEY_QUERY_PARAMS"); v != "" {
-		agentKeyQueryParams = strings.Split(v, ",")
-	}
 }
 
 // Manager handles all active sessions.
@@ -131,23 +112,6 @@ type Manager struct {
 	wizlocked    bool
 	wizlockLevel int
 
-	// dreamingDir is the path to the dreaming layer's output directory.
-	// Agent memory summaries are read from {dreamingDir}/{agent_id}/memory-summary.txt.
-	dreamingDir string
-
-	// decisionLog is the write buffer for decision capture (DP-213).
-	// nil when decision capture is disabled.
-	// Held atomically because it is swapped at runtime: decision capture can be
-	// turned on and off without a restart, while sessions read it concurrently.
-	// Readers must Load() once into a local — a Load-check-Load-use pair can see
-	// nil on the second read and panic.
-	decisionLog atomic.Pointer[db.DecisionLogWriter]
-
-	// decisionWriter is the writer capture uses when enabled. Set once at boot
-	// and never swapped, so it needs no synchronisation; decisionLog above is
-	// what actually gates recording.
-	decisionWriter *db.DecisionLogWriter
-
 	// godCrowned is the in-process latch for the first-player-God bootstrap
 	// (init_char, db.c:3016). Under DP_FRESH_MUD (the oracle harness path), the
 	// MUD is treated as fresh and exactly ONE character per process is crowned —
@@ -187,41 +151,34 @@ func isLoopback(remoteAddr string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
+// forwardedForSomeoneElse reports whether a reverse proxy forwarded this
+// request on a client's behalf. Caddy's reverse_proxy always sets
+// X-Forwarded-For; a client cannot remove a header the proxy adds, so a
+// proxied request can never pass for a local one.
+func forwardedForSomeoneElse(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-For") != "" || r.Header.Get("Forwarded") != ""
+}
+
 // checkOrigin validates WebSocket origins. Public origins in the allowlist are
-// permitted without further credentials. Machine-local connections are always
-// trusted. Connections from private IPs with no Origin header must present a
-// valid agent API key (DP-594).
+// permitted without further credentials. Genuinely machine-local connections
+// are trusted. Connections with no Origin header from a private IP, or through
+// the reverse proxy, must present a valid agent API key (DP-594, DP-1302).
 func (m *Manager) checkOrigin(r *http.Request) bool {
-	// Machine-local connections are always trusted; this covers CI smoke tests
-	// and local agent harnesses regardless of what Origin header they send.
-	if isLoopback(r.RemoteAddr) {
+	// A proxied request arrives from loopback too, so loopback alone does not
+	// mean local: behind Caddy every WebSocket did, and the origin allowlist
+	// was never enforced in production (DP-1302). Only a loopback peer that
+	// names no forwarded client is local (CI smoke tests, local harnesses).
+	proxied := forwardedForSomeoneElse(r)
+	if isLoopback(r.RemoteAddr) && !proxied {
 		return true
 	}
 
 	origin := r.Header.Get("Origin")
 	if origin == "" {
-		host, _, _ := net.SplitHostPort(r.RemoteAddr)
-		ip := net.ParseIP(host)
-		if ip == nil || !ip.IsPrivate() {
-			slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
-			return false
-		}
-
-		// Private IP without Origin: require a valid agent key.
-		key := findAgentKey(r)
-		if key == "" {
-			slog.Warn("rejected private WebSocket connection without agent key", "remote_addr", r.RemoteAddr)
-			return false
-		}
-		if m.db == nil {
-			slog.Warn("rejected private WebSocket connection: no database to validate agent key", "remote_addr", r.RemoteAddr)
-			return false
-		}
-		if _, _, valid := m.db.ValidateAgentKey(key); !valid {
-			slog.Warn("rejected private WebSocket connection: invalid agent key", "remote_addr", r.RemoteAddr)
-			return false
-		}
-		return true
+		// A browser always sends Origin; only a local harness may omit it,
+		// and that case returned above.
+		slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
+		return false
 	}
 
 	for _, allowed := range allowedWebSocketOrigins {
@@ -240,22 +197,6 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 
 	slog.Warn("rejected WebSocket connection from unauthorized origin", "origin", origin) // #nosec G706
 	return false
-}
-
-// findAgentKey returns the first non-empty agent key from configured headers
-// or query parameters.
-func findAgentKey(r *http.Request) string {
-	for _, h := range agentKeyHeaderNames {
-		if v := r.Header.Get(strings.TrimSpace(h)); v != "" {
-			return v
-		}
-	}
-	for _, p := range agentKeyQueryParams {
-		if v := r.URL.Query().Get(strings.TrimSpace(p)); v != "" {
-			return v
-		}
-	}
-	return ""
 }
 
 // ModerationChecker defines the moderation interface the session layer needs.
@@ -611,7 +552,17 @@ func (m *Manager) ExtractPendingChars() {
 			}
 		}
 		m.mu.RUnlock()
-		if victim == nil || !victim.hasTransport() {
+		if victim == nil {
+			continue
+		}
+		// extract_char saves the character (handler.c:1162). A renter was
+		// saved with their objects when they quit; everyone else is saved as
+		// extraction left them (what they carried is on the floor or in a
+		// corpse).
+		if !player.RentedOut {
+			victim.saveCharacter("extraction")
+		}
+		if !victim.hasTransport() {
 			continue
 		}
 		victim.showMainMenu()
@@ -749,7 +700,7 @@ func (m *Manager) SetDamageFunc() {
 		m.mu.RLock()
 		sessions := make([]*Session, 0, len(m.sessions))
 		for _, s := range m.sessions {
-			if s.wantsStructuredData || s.isAgent {
+			if s.wantsStructuredData {
 				sessions = append(sessions, s)
 			}
 		}
@@ -1018,60 +969,6 @@ func (m *Manager) SetFleeHooks() {
 	}
 }
 
-// SetDreamingDir sets the path to the dreaming layer's output directory.
-// Agent memory summaries are read from {dir}/{agent_id}/memory-summary.txt.
-func (m *Manager) SetDreamingDir(dir string) {
-	m.dreamingDir = dir
-}
-
-// SetDecisionLog installs the writer decision capture will use once enabled.
-// It does not enable capture: a writer being available and capture being on are
-// deliberately separate, so an operator who provisioned a research database has
-// not thereby started recording what players type.
-func (m *Manager) SetDecisionLog(dlw *db.DecisionLogWriter) {
-	m.decisionWriter = dlw
-}
-
-// EnableDecisionCapture starts recording. Returns false when no writer was
-// installed, which is the ordinary case: no DP_RESEARCH_URL, nothing to record
-// into.
-func (m *Manager) EnableDecisionCapture() bool {
-	if m.decisionWriter == nil {
-		return false
-	}
-	m.decisionLog.Store(m.decisionWriter)
-	return true
-}
-
-// DisableDecisionCapture stops recording and flushes what is buffered.
-//
-// The order matters. Clearing the pointer first means no session can add to the
-// buffer while it drains, and flushing second means the last second of a
-// research run lands rather than being dropped with the buffer — the writer
-// batches for up to flushInterval, so "disable" without a flush silently loses
-// the most recent records, which are the ones somebody just went to the trouble
-// of producing.
-//
-// The writer itself keeps running: Stop is one-way (stopOnce), so stopping here
-// would make capture un-re-enableable for the life of the process.
-func (m *Manager) DisableDecisionCapture() {
-	m.decisionLog.Store(nil)
-	if m.decisionWriter != nil {
-		m.decisionWriter.Flush()
-	}
-}
-
-// DecisionCaptureEnabled reports whether commands are being recorded right now.
-func (m *Manager) DecisionCaptureEnabled() bool {
-	return m.decisionLog.Load() != nil
-}
-
-// DecisionCaptureAvailable reports whether a research store was configured, so
-// callers can tell "off" from "impossible".
-func (m *Manager) DecisionCaptureAvailable() bool {
-	return m.decisionWriter != nil
-}
-
 // HandleWebSocket upgrades HTTP to WebSocket and manages the session.
 func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := m.upgrader.Upgrade(w, r, nil)
@@ -1115,7 +1012,6 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		limiter:             rate.NewLimiter(rate.Limit(10), 10),
 		subscribedVars:      make(map[string]bool),
 		dirtyVars:           make(map[string]bool),
-		pendingEvents:       nil,
 		connectedAt:         time.Now(),
 		wantsStructuredData: true,
 		sessionCtx:          ctx,
@@ -1158,35 +1054,6 @@ func (m *Manager) Register(playerName string, s *Session) error {
 		if oldSess == s {
 			m.mu.Unlock()
 			return nil
-		}
-		// DP-GOAT P0-3: Session handoff grace period
-		// Give the old session a brief window to prove it's alive before
-		// forcible takeover. During this window the old session's readPump
-		// can clear takeOverPending by handling an incoming message.
-		if s.isAgent && oldSess.isAgent {
-			// Agent-to-agent: wait for old session to respond or timeout
-			oldSess.takeOverPending.Store(true)
-			oldSess.takeOverAt = time.Now().Add(5 * time.Second)
-			select {
-			case oldSess.send <- []byte("\r\n*** New connection detected. Send any command within 5 seconds to keep this session. ***\r\n"):
-			default:
-			}
-
-			// Poll for old session to clear takeOverPending or timeout
-			for time.Now().Before(oldSess.takeOverAt) {
-				m.mu.Unlock()
-				time.Sleep(200 * time.Millisecond)
-				m.mu.Lock()
-				// Re-acquire oldSess reference (it may have been removed)
-				oldSess, exists = m.sessions[playerName]
-				if !exists || !oldSess.takeOverPending.Load() {
-					// Session responded or disconnected — cancel new login
-					m.mu.Unlock()
-					return fmt.Errorf("player %s is already online and active", playerName)
-				}
-			}
-			// Timeout — proceed with takeover
-			oldSess.takeOverPending.Store(false)
 		}
 
 		// Notify the old session that it's being taken over, then close it.
@@ -1312,8 +1179,10 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 	s.textEditMu.Unlock()
 
-	// 4. Save player to DB
-	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest {
+	// 4. Save player to DB. A descriptor at the menu has no character in
+	// the game: C's close_socket saves only CON_PLAYING characters, and an
+	// extracted one was already saved by extract_char.
+	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest && !s.menuActive {
 		if rec, err := s.playerRecordForSave(s.player); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("DB save error", "player", playerName, "error", err)
@@ -1633,13 +1502,6 @@ type Session struct {
 	// async prompt after pumped heartbeat output.
 	outputSincePrompt atomic.Int64
 
-	// Agent identity — set on login when is_agent=true.
-	// Harness+Model is the agent identity. Same combo = same agent across sessions.
-	isAgent          bool
-	agentHarness     string    // e.g. "openclaw", "claude-code"
-	agentModel       string    // e.g. "mimo-v2.5-base"
-	agentVersion     string    // harness version
-	agentKeyID       int64     // legacy: kept for backward compat, deprecated
 	connectedAt      time.Time // set on session creation, used for sessionID()
 	connectionNumber int       // C descriptor number, used by do_dc
 	olcZone          int       // C GET_OLC_ZONE; zero until an OLC zone is assigned
@@ -1653,7 +1515,6 @@ type Session struct {
 	agentMu             sync.Mutex
 	subscribedVars      map[string]bool // vars this session subscribed to
 	dirtyVars           map[string]bool // vars changed since last flush
-	pendingEvents       []interface{}   // queued EVENTS since last flush
 	wantsStructuredData bool
 	// gmcp is the telnet GMCP negotiation and change-tracking state; see
 	// gmcp.go. It is independent of wantsStructuredData, which also changes
@@ -1701,14 +1562,9 @@ type Session struct {
 	switchedMob           *game.MobInstance
 	switchedPlayer        *game.Player
 
-	// Rate limit: capacity=10, refill=10/sec (token bucket via golang.org/x/time/rate)
-	// This protects the server from command floods — it does NOT protect API costs.
-	// Agents must implement their own circuit breakers for LLM-level loop detection.
-	// See scripts/dp_bot.py for reference implementation.
+	// Rate limit: capacity=10, refill=10/sec (token bucket via golang.org/x/time/rate).
+	// This protects the server from command floods.
 	limiter *rate.Limiter
-
-	// Decision capture: incremented per command for turn_number in decision log
-	commandCount int
 
 	// C-faithful per-pulse command-drain queue (DP-1201; port of comm.c:603
 	// game_loop). A command issued while wait>0 is NOT rejected — it stays
@@ -1769,16 +1625,6 @@ type Session struct {
 	snooping *Session // Session being snooped (for wizard snoop)
 	snoopBy  *Session // Session that is snooping us
 
-	// DP-GOAT P0-3: Session handoff grace period
-	// When a new agent login arrives for a character that already has a session,
-	// takeOverPending is set to true and takeOverAt marks the deadline. The old
-	// session's readPump clears takeOverPending on any incoming message to prove
-	// it's still alive. If it doesn't respond in time, the new login takes over.
-	//
-	// Atomic to avoid data race between Register (m.mu) and readPump (no lock).
-	takeOverPending atomic.Bool
-	takeOverAt      time.Time
-
 	// lastActive is the Unix-nano timestamp of the most recent inbound message.
 	// Updated by readPump on every successful ReadMessage and used by the
 	// linkdead reaper to detect dead TCP sockets (DP-902).
@@ -1806,8 +1652,7 @@ type Session struct {
 	sendClosed bool
 
 	// msgSeq is a monotonically incrementing sequence number stamped on every
-	// outbound message. Used by the dp-goat daemon for event tracking and
-	// reconnection replay. Zero is never sent (first message gets seq=1).
+	// outbound WebSocket message. Zero is never sent (first message gets seq=1).
 	msgSeq uint64
 
 	// sessionCtx is the long-running connection context.
@@ -1825,34 +1670,6 @@ type Session struct {
 	// deliberately left open until the linkdead session is reaped.
 	transportDone chan struct{}
 	transportOnce sync.Once
-}
-
-// LiveAgentSession is already defined in admin package.
-// GetLiveAgentSessions returns info about all active agent sessions.
-// Implements admin.LiveSessionProvider interface.
-// Safe to call concurrently.
-func (m *Manager) GetLiveAgentSessions() []admin.LiveAgentSession {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	sessions := make([]admin.LiveAgentSession, 0)
-	for _, s := range m.sessions {
-		if s.isAgent {
-			info := admin.LiveAgentSession{
-				PlayerName:  s.playerName,
-				Harness:     s.agentHarness,
-				Model:       s.agentModel,
-				Version:     s.agentVersion,
-				ConnectedAt: s.connectedAt.Format(time.RFC3339),
-			}
-			if s.player != nil {
-				info.RoomVNum = s.player.GetRoom()
-				info.Level = s.player.GetLevel()
-			}
-			sessions = append(sessions, info)
-		}
-	}
-	return sessions
 }
 
 // GetOLCClaims returns the value snapshot consumed by the admin read surface.

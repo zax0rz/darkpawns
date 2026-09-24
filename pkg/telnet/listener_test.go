@@ -56,33 +56,6 @@ func TestGreetingsLogoMatchesCFixture(t *testing.T) {
 	}
 }
 
-func TestHandlePulseControlIsDPClockOnlyAndDrawNeutral(t *testing.T) {
-	manager, _ := newTestManager(t)
-	var pumped int
-	manager.SetPulsePump(func(n int) error {
-		pumped += n
-		return nil
-	})
-
-	if handlePulseControl(nil, manager, "~dpclock pulse 40") {
-		t.Fatal("control intercepted with DP_CLOCK unset")
-	}
-	if pumped != 0 {
-		t.Fatalf("pumped %d pulses with DP_CLOCK unset", pumped)
-	}
-
-	t.Setenv("DP_CLOCK", "1")
-	if !handlePulseControl(nil, manager, "~dpclock pulse 40") {
-		t.Fatal("valid control was not intercepted")
-	}
-	if pumped != 40 {
-		t.Fatalf("pumped %d pulses, want 40", pumped)
-	}
-	if handlePulseControl(nil, manager, "~dpclock pulse 0") {
-		t.Fatal("invalid pulse count was intercepted")
-	}
-}
-
 // TestHandleConnDisconnectDuringPasswordPrompt verifies that handleConn returns
 // when the client disconnects instead of proceeding with an empty password.
 func TestHandleConnDisconnectDuringPasswordPrompt(t *testing.T) {
@@ -215,6 +188,7 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 		t.Fatal(err)
 	}
 	world.WorldPath = "../../lib/world"
+	world.LibTextDir = "../../lib/text"
 	manager := session.NewManager(world, nil)
 	t.Cleanup(manager.Stop)
 
@@ -268,10 +242,11 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	visible := string(stripTelnetCommands(transcript))
 	statsPattern := regexp.MustCompile(`\r\nYour ability scores:\r\n  Str: .+ Dex: .+ Int: .+\r\n  Wis: .+ Con: .+ Cha: .+\r\n`)
 	visible = statsPattern.ReplaceAllString(visible, "<ROLLED_STATS>")
-	motd, err := os.ReadFile("../../lib/world/text/motd")
+	motd, err := os.ReadFile("../../lib/text/motd")
 	if err != nil {
 		t.Fatal(err)
 	}
+	cachedMOTD := strings.ReplaceAll(string(motd), "\n", "\r\n")
 	wantPrefix := cGreetingsFixture(t) +
 		"\r\nBy what name do you wish to be known? " +
 		"Invalid name, please try another.\r\nName: " +
@@ -285,7 +260,7 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 		session.HumanClassMenuText + "\r\nClass: " +
 		session.HometownMenuText + "\r\nSelect: " +
 		"<ROLLED_STATS>\r\nPress 'Y' to keep these stats, and 'N' to reroll:" +
-		string(motd) + "\r\n\n*** PRESS RETURN: " +
+		cachedMOTD + "\r\n\n*** PRESS RETURN: " +
 		"\n\rWelcome to Dark Pawns!\n\r0) Exit from Dark Pawns.\n\r1) Enter the game.\r\n" +
 		"2) Enter description.\r\n3) Read the background story.\r\n4) Change password.\r\n" +
 		"5) Delete this character.\r\n\r\n   Make your choice: " +

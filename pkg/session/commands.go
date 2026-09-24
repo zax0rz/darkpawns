@@ -308,7 +308,6 @@ func init() {
 	registerCommand("time", wrapArgs(cmdTime), "Show the current time.")
 	registerCommand("weather", wrapArgs(cmdWeather), "Show the current weather.")
 	registerCommand("affects", wrapArgs(cmdAffects), "Show active affects.")
-	registerCommand("autoexit", wrapArgs(cmdAutoExit), "Toggle auto-exit display.")
 	registerCommand("title", wrapArgs(cmdTitle), "Set your title.")
 
 	// Quit — two explicit entries mirroring C's SCMD_QUIT / SCMD_REALLY_QUIT
@@ -396,7 +395,7 @@ func init() {
 	registerCommand("roll", wrapArgs(cmdRoll), "Roll a random number.")
 	registerCommand("visible", wrapArgs(cmdVisible), "Make yourself visible again.")
 	registerCommand("inactive", wrapArgs(cmdInactive), "Toggle inactive status.")
-	registerCommand("auto", wrapArgs(cmdAuto), "Toggle auto-attack mode.")
+	registerCommand("auto", wrapArgs(cmdAuto), "Toggle automatic exits, looting, gold, and split.")
 	// Preference toggles (act.other.c do_gen_tog) — each is its own top-level
 	// command in the original C, not a unified dispatcher; src/interpreter.c
 	// lines 366-666.

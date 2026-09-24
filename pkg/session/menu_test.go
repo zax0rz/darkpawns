@@ -2,6 +2,8 @@ package session
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -63,6 +65,12 @@ func TestMenuExitExactPrompt(t *testing.T) {
 
 func TestMenuInvalidChoiceAndBackgroundReturnToMenu(t *testing.T) {
 	m := makeTestManager(t)
+	textDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(textDir, "background"), []byte("The old kingdoms\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	m.world.LibTextDir = textDir
+	setTeditTestCache(t, "background", "")
 	s := makeCharSession(t, m)
 	s.showMainMenu()
 	_ = drainMsg(t, s)

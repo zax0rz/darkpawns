@@ -2,10 +2,7 @@
 package db
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -119,6 +116,7 @@ type PlayerRecord struct {
 	OlcZone             int
 	Inventory           []byte // JSON encoded inventory
 	Equipment           []byte // JSON encoded equipment
+	CharacterData       []byte // JSON: the rest of the character (game.EncodeCharacterData)
 	FailedLoginAttempts int
 	LockedUntil         *time.Time
 }
@@ -181,27 +179,6 @@ func New(connString string) (*DB, error) {
 	if err := db.createTables(); err != nil {
 		return nil, fmt.Errorf("create tables: %w", err)
 	}
-	if err := db.InitNarrativeMemory(); err != nil {
-		return nil, fmt.Errorf("init narrative memory: %w", err)
-	}
-
-	// Decision capture tables (DP-213). These are PostgreSQL-only (PARTITION
-	// BY RANGE, pg_tables catalog queries, TEXT[]), so SQLite deployments skip
-	// them entirely; the ResearchStore interface is never satisfied there.
-	if dialect == DialectPostgres {
-		if err := db.createDecisionLogTables(); err != nil {
-			return nil, fmt.Errorf("create decision log tables: %w", err)
-		}
-		// Bootstrap the current/next-month partitions. decision_log and
-		// combat_log are PARTITION BY RANGE(ts) parents; without a matching
-		// partition every INSERT fails ("no partition of relation ... found
-		// for row"). Fail loudly here rather than only warning, since decision
-		// capture is unusable otherwise.
-		if err := db.EnsureDecisionLogPartitions(); err != nil {
-			return nil, fmt.Errorf("ensure decision log partitions: %w", err)
-		}
-	}
-
 	success = true
 	return db, nil
 }
@@ -252,6 +229,10 @@ var playersMigrationColumns = []string{
 	"locked_until TIMESTAMPTZ",
 	"description TEXT DEFAULT ''",
 	"title VARCHAR(80) DEFAULT ''",
+	// Everything else a character is (C's char_file_u beyond the columns
+	// above), as game.EncodeCharacterData writes it. JSON, not JSONB, so the
+	// record reads back byte for byte.
+	"character_data JSON DEFAULT '{}'",
 }
 
 // createTables creates the game-store tables if they don't exist.
@@ -298,14 +279,6 @@ func (db *DB) createTables() error {
 		`CREATE UNIQUE INDEX IF NOT EXISTS players_name_folded_key ON players (lower(name))`,
 		`CREATE INDEX IF NOT EXISTS idx_players_name ON players(name)`,
 		`CREATE INDEX IF NOT EXISTS idx_players_locked_until ON players(locked_until)`,
-
-		`CREATE TABLE IF NOT EXISTS agent_keys (
-			id             SERIAL PRIMARY KEY,
-			character_name VARCHAR(64) NOT NULL,
-			key_hash       VARCHAR(64) NOT NULL UNIQUE,
-			created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			revoked        BOOLEAN NOT NULL DEFAULT FALSE
-		)`,
 	}
 
 	for _, stmt := range stmts[:1] {
@@ -365,7 +338,6 @@ var gameStoreTimestamptzColumns = []string{
 	"players.locked_until",
 	"players.created_at",
 	"players.updated_at",
-	"agent_keys.created_at",
 }
 
 // migrateNaiveTimestamps converts the game store's own timestamp columns on
@@ -478,54 +450,6 @@ func (db *DB) convertColumns(columns []string, fromType, wantType string, using 
 	return nil
 }
 
-// CreateAgentKey generates a new agent API key for the given character.
-// Returns the raw key (shown once — never stored) and its DB row id.
-func (db *DB) CreateAgentKey(characterName string) (rawKey string, id int64, err error) {
-	// Generate 32 random bytes → 64 hex chars
-	buf := make([]byte, 32)
-	if _, err = rand.Read(buf); err != nil {
-		return "", 0, fmt.Errorf("generate key: %w", err)
-	}
-	rawKey = "dp_" + hex.EncodeToString(buf)
-
-	// SHA-256 hash — only the hash is stored
-	h := sha256.Sum256([]byte(rawKey))
-	keyHash := hex.EncodeToString(h[:])
-
-	err = db.queryRow(
-		`INSERT INTO agent_keys (character_name, key_hash) VALUES ($1, $2) RETURNING id`,
-		characterName, keyHash,
-	).Scan(&id)
-	if err != nil {
-		return "", 0, fmt.Errorf("insert agent key: %w", err)
-	}
-	return rawKey, id, nil
-}
-
-// ValidateAgentKey hashes rawKey and looks it up in agent_keys.
-// Returns the associated character name and row id if the key is valid and not revoked.
-func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
-	// Reject default/example keys for security
-	if rawKey == "br3nd4-69-ag3nt-k3y-d3f4ult" ||
-		strings.Contains(rawKey, "example") ||
-		strings.Contains(rawKey, "test") ||
-		strings.Contains(rawKey, "REPLACE_WITH") {
-		return "", 0, false
-	}
-
-	h := sha256.Sum256([]byte(rawKey))
-	keyHash := hex.EncodeToString(h[:])
-
-	err := db.queryRow(
-		`SELECT id, character_name FROM agent_keys WHERE key_hash = $1 AND revoked = FALSE`,
-		keyHash,
-	).Scan(&keyID, &characterName)
-	if err != nil {
-		return "", 0, false
-	}
-	return characterName, keyID, true
-}
-
 // GetPlayer retrieves a player by name. Returns nil, nil if not found.
 func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 	query := `
@@ -533,7 +457,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		       health, max_health, mana, max_mana, move, max_move, strength,
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		       hunger, thirst, drunk, hometown, COALESCE(olc_zone, 0),
-		       inventory, equipment,
+		       inventory, equipment, COALESCE(character_data, '{}'),
 		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COUNT(*) OVER ()
 		FROM players WHERE lower(name) = lower($1)
 	`
@@ -545,7 +469,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		&p.Health, &p.MaxHealth, &p.Mana, &p.MaxMana, &p.Move, &p.MaxMove, &p.Strength,
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
 		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown, &p.OlcZone,
-		&p.Inventory, &p.Equipment,
+		&p.Inventory, &p.Equipment, &p.CharacterData,
 		&p.FailedLoginAttempts, &lockedUntil, &p.Description, &p.Title, &matches,
 	)
 	if lockedUntil.Valid {
@@ -600,8 +524,8 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		   hunger, thirst, drunk, hometown,
-		   olc_zone, inventory, equipment, description, title)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)
+		   olc_zone, inventory, equipment, description, title, character_data)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)
 		RETURNING id
 	`
 	return db.queryRow(
@@ -609,7 +533,7 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
-		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title,
+		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData),
 	).Scan(&p.ID)
 }
 
@@ -707,8 +631,8 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  class=$11, race=$12,
 		  stat_str=$13, stat_str_add=$14, stat_int=$15, stat_wis=$16, stat_dex=$17, stat_con=$18, stat_cha=$19,
 		  hunger=$20, thirst=$21, drunk=$22, hometown=$23, olc_zone=$24,
-		  inventory=$25, equipment=$26, description=$27, title=$28, updated_at=CURRENT_TIMESTAMP
-		WHERE id=$29
+		  inventory=$25, equipment=$26, description=$27, title=$28, character_data=$29, updated_at=CURRENT_TIMESTAMP
+		WHERE id=$30
 	`
 	_, err := db.exec(
 		query,
@@ -717,7 +641,15 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown, p.OlcZone,
-		p.Inventory, p.Equipment, p.Description, p.Title, p.ID,
+		p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.ID,
 	)
 	return err
+}
+
+// characterDataOrEmpty stores an absent record as the column's default.
+func characterDataOrEmpty(data []byte) []byte {
+	if len(data) == 0 {
+		return []byte("{}")
+	}
+	return data
 }

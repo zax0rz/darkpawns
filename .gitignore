@@ -6,8 +6,6 @@
 /.hugo_build.lock
 *.exe
 load_test/loadtest
-cmd/dp-goat/dp-goat
-cmd/dp-goat/build/
 
 # Go
 vendor/
@@ -71,7 +69,8 @@ data/
 !website/data/**
 
 # Built binaries (anchored to repo root so they don't also exclude the
-# same-named cmd/ source dirs — cmd/test-race, cmd/dp-agent, cmd/dp-goatd).
+# same-named cmd/ source dirs, such as cmd/test-race). /dp-agent and /dp-goatd
+# were built from commands since removed; old checkouts may still hold them.
 /test-race
 /dp-agent
 .clawpatch/
@@ -116,6 +115,14 @@ darkpawns-server
 # it -> add/add conflicts -> a rebase per PR). It's reproducible on demand and
 # by the weekly cron; do NOT commit it. (Cron that wants a snapshot: `git add -f`.)
 docs/reports/scenario-coverage-*.tsv
+
+# Census coverage report — a derived artifact of one census dump
+# (`ORACLE_REGRESSION_DUMP=<dir> make oracle-regression` then
+# `make census-coverage`). The dump itself is not in the repository, so a
+# committed coverage.tsv would be an untraceable snapshot of one machine's run;
+# regenerate on demand instead. (Follows the scenario-coverage precedent above.)
+docs/fidelity/strings/coverage.tsv
+docs/fidelity/strings/coverage-summary.txt
 
 # impeccable design skill — vendored per-harness, not part of the app
 .github/agents/

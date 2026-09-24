@@ -5,1026 +5,1118 @@
     "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!": {
       "segment": "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!",
       "file": "pkg/session/manager.go",
-      "line": 1930,
+      "line": 1942,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:1099 \"Shutting down for maintenance.\\r\\n\" — OS SIGINT/SIGTERM path cmd/server/main.go:874,971; in-game shutdown uses C do_shutdown's own bytes; trigger is the OS SIGINT/SIGTERM path, but a telnet player reads the bytes, so R4 applies; C's only shutdown text is the in-game do_shutdown line quoted here"
     },
     "A bat swoops down and attacks you!": {
       "segment": "A bat swoops down and attacks you!",
       "file": "pkg/game/spec_procs2.go",
       "line": 1935,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1780 \"$n swoops down, narrowly missing your face.\" — C bat proc emotes this on random pulses; Go re-words it into an attack on look dripping"
     },
     "A magical force prevents you from casting here.": {
       "segment": "A magical force prevents you from casting here.",
       "file": "pkg/spells/call_magic.go",
       "line": 48,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spell_parser.c:419 \"Your magic fizzles out and dies.\\r\\n\" — NOMAGIC rejection slot of call_magic; Go invents wording and drops the psionic variant at :423"
     },
     "A shimmering portal appears and sucks you in!": {
       "segment": "A shimmering portal appears and sucks you in!",
       "file": "pkg/game/spec_procs2.go",
       "line": 1779,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1665 \"\\r\\nWith a blinding flash of light and a crack of thunder, you are\" — C portal_room tells the victim this on teleport; Go re-words it and teleports on movement"
     },
     "An error occurred. Please try again later.": {
       "segment": "An error occurred. Please try again later.",
       "file": "pkg/session/cmd_account.go",
       "line": 65,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:2291 — C nanny() already holds the loaded character; no DB load step and no error text"
     },
     "Auto-loot disabled.": {
       "segment": "Auto-loot disabled.",
       "file": "pkg/session/autoloot.go",
       "line": 27,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.other.c:1363 \"You will no longer loot corpses.\\r\\n\" — C toggle loot-off line; Go's port-only autoloot command rewords it"
     },
     "Auto-loot enabled.": {
       "segment": "Auto-loot enabled.",
       "file": "pkg/session/autoloot.go",
       "line": 25,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
-    "Autoexits disabled.": {
-      "segment": "Autoexits disabled.",
-      "file": "pkg/session/informative_cmds.go",
-      "line": 28,
-      "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
-    "Autoexits enabled.": {
-      "segment": "Autoexits enabled.",
-      "file": "pkg/session/informative_cmds.go",
-      "line": 26,
-      "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.other.c:1368 \"You will now automatically loot corpses.\\r\\n\" — C toggle loot-on line; Go's port-only autoloot command rewords it"
     },
     "Broadcast what?": {
       "segment": "Broadcast what?",
       "file": "pkg/session/wiz_system.go",
       "line": 757,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:1697 \"That must be a mistake...\\r\\n\" — C has no broadcast command; its global-message cmd do_gecho prints this for an empty argument"
     },
     "Built with:": {
       "segment": "Built with:",
       "file": "pkg/session/gen_ps_cmds.go",
-      "line": 235,
+      "line": 245,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.informative.c:2173 \"Compile Time: %s\\r\\n\" — same immort-only build-info slot; Go swaps label and datum for the Go runtime version"
     },
     "Cannot access manager state.": {
       "segment": "Cannot access manager state.",
       "file": "pkg/session/wiz_system.go",
       "line": 213,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:1788 \"The game is %s completely open.\\r\\n\" — C do_wizlock has no nil-manager guard; it prints the wizlock status line"
     },
     "Could not save your data. Contact an admin!": {
       "segment": "Could not save your data. Contact an admin!",
       "file": "pkg/game/other_session.go",
       "line": 15,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.other.c:198 — C do_save calls save_char with no failure text; Go adds a DB-failure line"
     },
     "Description is too long; type @ or /s to save, /a to abort.": {
       "segment": "Description is too long; type @ or /s to save, /a to abort.",
       "file": "pkg/session/menu.go",
-      "line": 210,
+      "line": 212,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/modify.c:147 \"String too long.  Last line skipped.\\r\\n\" — C string_add's over-length notice in the CON_EXDESC editor; Go rewords it"
     },
     "Description not changed.": {
       "segment": "Description not changed.",
       "file": "pkg/session/menu.go",
-      "line": 183,
+      "line": 185,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/modify.c:245 \"Description aborted.\\r\\n\" — C exdesc cleanup's abort line; Go rewords it as not changed"
     },
     "Description saved.": {
       "segment": "Description saved.",
       "file": "pkg/session/menu.go",
-      "line": 203,
+      "line": 205,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/modify.c:247 — C exdesc cleanup on save writes only MENU; there is no confirmation line"
     },
     "Error looking up player.": {
       "segment": "Error looking up player.",
       "file": "pkg/session/cmd_info.go",
       "line": 1200,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds.c:1415 \"There is no such player.\\r\\n\" — C do_whois loads the save file and prints this; the DB-error line is Go-only"
     },
     "Error reading house file.": {
       "segment": "Error reading house file.",
       "file": "pkg/game/house_rent.go",
       "line": 49,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/house.c:215 — C House_listrent returns silently on ferror; no read-error text"
     },
     "Error saving aliases.": {
       "segment": "Error saving aliases.",
       "file": "pkg/session/act_social.go",
       "line": 104,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:1013 — C do_alias prints only \"Alias deleted.\"/\"Alias added.\"; alias save errors are SYSERR-log only"
     },
     "Failed to save new password. Please try again later.": {
       "segment": "Failed to save new password. Please try again later.",
       "file": "pkg/session/cmd_account.go",
       "line": 72,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:1983 — C save_char after a password change has no failure text"
     },
     "Guest accounts are restricted from using this command.": {
       "segment": "Guest accounts are restricted from using this command.",
       "file": "pkg/session/commands.go",
-      "line": 698,
+      "line": 697,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:310 — Guest login is port-only (session_login.go:84); C cmd_info has no account gate"
     },
     "Heal whom?": {
       "segment": "Heal whom?",
       "file": "pkg/session/wiz_player.go",
       "line": 20,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:1591 \"Whom do you wish to restore?\\r\\n\" — Go heal duplicates do_restore (restores vitals) with a reworded no-argument prompt"
     },
     "Invalid house vnum.": {
       "segment": "Invalid house vnum.",
       "file": "pkg/game/house_rent.go",
       "line": 13,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/house.c:205 — C House_get_filename failure returns silently; no invalid-vnum text"
     },
     "Knock on what? Try north, south, east, west, up, or down.": {
       "segment": "Knock on what? Try north, south, east, west, up, or down.",
       "file": "pkg/session/door_cmds.go",
       "line": 43,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.movement.c:607 \"%s what?\\r\\n\" — No knock verb in C cmd_info; do_gen_door's no-argument branch prints \"<Verb> what?\"; do_gen_door's empty-argument branch; the \"north, south, east, west\" hint list is Go-only"
     },
     "Mail aborted (empty message).": {
       "segment": "Mail aborted (empty message).",
       "file": "pkg/game/mail.go",
       "line": 594,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/modify.c:225 \"Mail aborted.\\r\\n\" — playing_string_cleanup's mail-abort line; Go appends \"(empty message)\""
     },
     "Mail sent.": {
       "segment": "Mail sent.",
       "file": "pkg/game/mail.go",
       "line": 592,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/modify.c:223 \"Message sent!\\r\\n\" — C's mail-editor save line; Go says \"Mail sent.\""
     },
     "No objects found.": {
       "segment": "No objects found.",
       "file": "pkg/session/wiz_zone.go",
       "line": 187,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:3329 \"Sorry, there are no objs in that zone.\\r\\n\" — C do_olist's no-results line; Go rewords it"
     },
     "No one by that name online.": {
       "segment": "No one by that name online.",
       "file": "pkg/session/wiz_player.go",
       "line": 26,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/config.c:93 \"No-one by that name here.\\r\\n\" — NOPERSON, C's wizard target-not-found line, reworded"
     },
     "No parsed world available.": {
       "segment": "No parsed world available.",
       "file": "pkg/session/wiz_zone.go",
       "line": 205,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.wizard.c:3336 — Go nil-parsed-world guard in rlist/olist/mlist; C reads world data directly"
     },
     "Note limit reached. Type '@' on a new line to save.": {
       "segment": "Note limit reached. Type '@' on a new line to save.",
       "file": "pkg/game/note_write.go",
       "line": 86,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/modify.c:147 \"String too long.  Last line skipped.\\r\\n\" — C's note-editor over-length line; Go rewords it, calling C silent"
     },
     "Note recorded.": {
       "segment": "Note recorded.",
       "file": "pkg/game/note_write.go",
       "line": 67,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/modify.c:218 — C playing_string_cleanup speaks only for mail; a finished note prints nothing"
     },
     "Nothing magical happens.": {
       "segment": "Nothing magical happens.",
       "file": "pkg/session/use_cmds.go",
       "line": 53,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/spell_parser.c:660 — C's ITEM_SCROLL recite has no such pre-check; invalid spellnum is silently ignored (spell_parser.c:405)"
     },
     "Objects stored for house #": {
       "segment": "Objects stored for house #",
       "file": "pkg/game/house_rent.go",
       "line": 46,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/house.c:220 — C sends only concatenated per-item lines; it has no Objects-stored header"
     },
     "Old password is incorrect.": {
       "segment": "Old password is incorrect.",
       "file": "pkg/session/cmd_account.go",
       "line": 56,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/interpreter.c:2294 \"\\r\\nIncorrect password.\\r\\n\" — C nanny()'s wrong-old-password reply; Go rewords it"
     },
     "Parsed world data not available.": {
       "segment": "Parsed world data not available.",
       "file": "pkg/session/wiz_stats.go",
       "line": 670,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.wizard.c:395 — Go nil-parsed-world guard in vnum; C do_vnum reads mob/obj protos directly"
     },
     "Password changed successfully.": {
       "segment": "Password changed successfully.",
       "file": "pkg/session/cmd_account.go",
       "line": 76,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/interpreter.c:1985 \"\\r\\nDone.\\n\\r\" — C's password-change completion line; Go rewords it"
     },
     "Password is too long (max 72 characters).": {
       "segment": "Password is too long (max 72 characters).",
       "file": "pkg/session/cmd_account.go",
       "line": 37,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/interpreter.c:1946 \"\\r\\nIllegal password.\\r\\n\" — C rejects an over-long new password; its cap is MAX_PWD_LENGTH 10, not 72"
     },
     "Player lookup not available.": {
       "segment": "Player lookup not available.",
       "file": "pkg/game/house_player.go",
       "line": 148,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/house.c:652 — C get_id_by_name always answers; the unwired-lookup branch is port-only"
     },
     "Player record not found.": {
       "segment": "Player record not found.",
       "file": "pkg/session/cmd_account.go",
       "line": 49,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:2291 — C has already loaded the character; no record-not-found branch at this step"
     },
     "Room data not found.": {
       "segment": "Room data not found.",
       "file": "pkg/session/wiz_stats.go",
       "line": 359,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — C do_stat_room prints the report unconditionally; no room-not-found branch"
     },
     "Sell what?": {
       "segment": "Sell what?",
       "file": "pkg/session/shop_cmds.go",
       "line": 387,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/shop.c:753 \"%s What do you want to sell??\" — C tells \"<name> What do you want to sell??\" via the keeper; Go prints a bare fixed prompt"
     },
     "Something went wrong.": {
       "segment": "Something went wrong.",
       "file": "pkg/game/spec_procs4.go",
       "line": 246,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs.c:1901 \"May you enjoy your pet.\\r\\n\" — C pet_shops buys the pet unconditionally; the SpawnMob failure branch is Go-only"
     },
     "Something went wrong. Your gold was not donated.": {
       "segment": "Something went wrong. Your gold was not donated.",
       "file": "pkg/game/item_donate.go",
       "line": 79,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.item.c:453 — C perform_drop_gold moves the coins unconditionally; no failure line"
     },
     "Something went wrong. Your item was not donated.": {
       "segment": "Something went wrong. Your item was not donated.",
       "file": "pkg/game/item_donate.go",
       "line": 38,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.item.c:510 — C perform_drop moves the item unconditionally; no failure line"
     },
     "Starved and needing food to make more pillows, the couch attacks you!": {
       "segment": "Starved and needing food to make more pillows, the couch attacks you!",
       "file": "pkg/game/spec_procs2.go",
       "line": 296,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:304 \"Starved and needing food to make more pillows, the \" — C says the mimic attacks you with \\n\\r\\n\\r; Go says couch and \\r\\n\\r\\n"
     },
     "Summon who?": {
       "segment": "Summon who?",
       "file": "pkg/session/cmd_info.go",
       "line": 1048,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/spells.c:218 — C has no summon command (summon is a spell needing a cast target); no such prompt"
     },
     "That information is not available right now.": {
       "segment": "That information is not available right now.",
       "file": "pkg/session/gen_ps_cmds.go",
-      "line": 122,
+      "line": 132,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.informative.c:2137 — C do_gen_ps pages the boot-loaded file; an unreadable file prints nothing"
     },
     "That is not a wand or staff.": {
       "segment": "That is not a wand or staff.",
       "file": "pkg/game/spec_procs_missing.go",
       "line": 83,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds2.c:455 \"$n tells you, 'Ummm... does that look like a wand or staff to you?'\" — C recharger sends a $n-prefixed tell; Go prints a bare descriptive line"
     },
     "That item is already fully charged.": {
       "segment": "That item is already fully charged.",
       "file": "pkg/game/spec_procs_missing.go",
       "line": 92,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds2.c:481 \"$n tells you, 'The item does not need recharging, stop wasting \" — C refusal continues \"my time!\"; Go re-words it as already fully charged"
     },
     "That's the same as your old password!": {
       "segment": "That's the same as your old password!",
       "file": "pkg/session/cmd_account.go",
       "line": 27,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/interpreter.c:1946 \"\\r\\nIllegal password.\\r\\n\" — C rejects a new password equal to the character name; Go rejects equal-to-old"
     },
     "The bats swarm around you, blocking your escape!": {
       "segment": "The bats swarm around you, blocking your escape!",
       "file": "pkg/game/spec_procs2.go",
       "line": 1913,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/spec_procs2.c:1756 — C bat_room only wakes sleeping bats (Your movements wake up $n!); no blocking branch"
     },
     "The boy smiles and hands you a small note.": {
       "segment": "The boy smiles and hands you a small note.",
       "file": "pkg/game/spec_procs2.go",
       "line": 1504,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1398 \"$n exclaims, 'Don't let the bad man hurt me, mommy!\" — C little_boy only exclaims this at random; the give-flower-for-note exchange is Go-only"
     },
     "The force of the blast knocks you off your feet!": {
       "segment": "The force of the blast knocks you off your feet!",
       "file": "pkg/spells/affect_spells.go",
       "line": 2793,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spells.c:739 \"The fires of hell bring you to your knees!\\r\\n\" — spell_hellfire's DEX-knockdown TO_VICT line; Go rewords it as a blast"
     },
     "The little boy runs off!": {
       "segment": "The little boy runs off!",
       "file": "pkg/game/spec_procs2.go",
       "line": 1512,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1398 \"$n exclaims, 'Don't let the bad man hurt me, mommy!\" — C little_boy never gives a note or leaves; the runs-off line is Go-only"
     },
     "The recharger works their magic on": {
       "segment": "The recharger works their magic on",
       "file": "pkg/game/spec_procs_missing.go",
       "line": 120,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds2.c:476 \"The item now has %d charges remaining.\\r\\n\" — C sends only the charge count here; Go prepends invented works-their-magic/cost text"
     },
     "The shopkeeper doesn't want anything you have.": {
       "segment": "The shopkeeper doesn't want anything you have.",
       "file": "pkg/session/shop_cmds.go",
       "line": 453,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/shop.c:616 — C has no sell-all; its per-item refusal is the shop's data do_not_buy line told by the keeper"
     },
     "The shopkeeper doesn't want that.": {
       "segment": "The shopkeeper doesn't want that.",
       "file": "pkg/session/shop_cmds.go",
       "line": 407,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "lib/world/shp/42.shp:14 \"%s Hmmm, nah, I don't want one of those.~\" — C tells the shop's configured do_not_buy line (lib/world/shp/42.shp:14), not a fixed sentence; C prints the shop's do_not_buy line via src/shop.c:616 + do_tell, so the bytes are data-driven, not the fixed string Go prints"
     },
     "There's nowhere to flee!": {
       "segment": "There's nowhere to flee!",
       "file": "pkg/session/movement_cmds.go",
       "line": 68,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.offensive.c:415 \"PANIC!  You couldn't escape!\\r\\n\" — C's no-exit branch of do_flee prints the PANIC line; Go rewrote it; unreachable: cmdFleeMovement is not registered (only cmdFlee is, commands.go:94); the live path already prints C's PANIC line at combat_cmds.go:406"
     },
     "Unable to save description.": {
       "segment": "Unable to save description.",
       "file": "pkg/session/menu.go",
-      "line": 196,
+      "line": 198,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/modify.c:240 — C keeps the description in memory; no save-failure branch here"
     },
     "Unknown channel.": {
       "segment": "Unknown channel.",
       "file": "pkg/game/comm_channel.go",
       "line": 97,
       "sink": "communicationSend",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.comm.c:1146 — C do_gen_comm takes subcmd from cmd_info; no unknown-channel text (cmdChannel callers pass fixed names)"
     },
     "Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect": {
       "segment": "Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect",
       "file": "pkg/session/wiz_system.go",
       "line": 463,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.wizard.c:2214 — C has no wizutil command; the unknown-subcmd branch only logs, no player text"
     },
     "Unknown toggle.": {
       "segment": "Unknown toggle.",
       "file": "pkg/game/other_settings.go",
       "line": 279,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.other.c:1142 — C's toggles are separate cmd_info entries into do_gen_tog; no unknown-subcmd text"
     },
-    "Usage: checkload { obj | mob } \u003cnumber\u003e": {
-      "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
+    "Usage: checkload { obj | mob } <number>": {
+      "segment": "Usage: checkload { obj | mob } <number>",
       "file": "pkg/session/wiz_info.go",
       "line": 386,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "census:composed",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } <number>\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer"
     },
-    "Usage: olist \u003ckeyword\u003e": {
-      "segment": "Usage: olist \u003ckeyword\u003e",
+    "Usage: olist <keyword>": {
+      "segment": "Usage: olist <keyword>",
       "file": "pkg/session/wiz_zone.go",
       "line": 169,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.wizard.c:3304 — C do_olist has no usage line; its argument is a zone number, not a keyword"
     },
-    "Usage: password \u003cold\u003e \u003cnew\u003e": {
-      "segment": "Usage: password \u003cold\u003e \u003cnew\u003e",
+    "Usage: password <old> <new>": {
+      "segment": "Usage: password <old> <new>",
       "file": "pkg/session/cmd_account.go",
       "line": 19,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/interpreter.c:916 \"Huh?!?\\r\\n\" — No password verb in C cmd_info; the unknown command answers this"
     },
-    "Usage: poofset \u003cin|out\u003e [message]": {
-      "segment": "Usage: poofset \u003cin|out\u003e [message]",
+    "Usage: poofset <in|out> [message]": {
+      "segment": "Usage: poofset <in|out> [message]",
       "file": "pkg/session/wiz_info.go",
       "line": 585,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/config.c:92 \"Okay.\\r\\n\" — no C poofset command; do_poofset (poofin/poofout) only replies OK"
     },
-    "Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect \u003cplayer\u003e": {
-      "segment": "Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect \u003cplayer\u003e",
+    "Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect <player>": {
+      "segment": "Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect <player>",
       "file": "pkg/session/wiz_system.go",
       "line": 447,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:2091 \"Yes, but for whom?!?\\r\\n\" — C do_wizutil's missing-argument line for reroll/pardon/notitle/etc."
     },
-    "Usage: unaffect \u003cplayer\u003e": {
-      "segment": "Usage: unaffect \u003cplayer\u003e",
+    "Usage: unaffect <player>": {
+      "segment": "Usage: unaffect <player>",
       "file": "pkg/session/wiz_system.go",
       "line": 640,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:2091 \"Yes, but for whom?!?\\r\\n\" — C unaffect with no target prints this; Go prints a usage line instead"
     },
     "Vis whom?": {
       "segment": "Vis whom?",
       "file": "pkg/session/wiz_player.go",
       "line": 234,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.wizard.c:1663 — C vis/invis paths are self-only and take no player argument"
     },
     "What is your question?": {
       "segment": "What is your question?",
       "file": "pkg/session/act_comm.go",
       "line": 42,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.comm.c:1321 \"%s?  Yes, fine, %s we must, but WHAT??\\r\\n\" — Go already has qcommEmptyMsg (act_comm.go:139) for these bytes; cmdQcomm prints its own prompt"
     },
     "World not available.": {
       "segment": "World not available.",
       "file": "pkg/session/wiz_stats.go",
       "line": 664,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — Go nil-world guards in stat room/obj and vnum; C reads world[] and prints the report"
     },
     "You are Rank": {
       "segment": "You are Rank",
       "file": "pkg/game/clan_info.go",
       "line": 33,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/clan.c:677 \"You are %s (Rank %d) of %s\\r\\n\" — rank>0 with no clan: C indexes clan[-1] (UB); \"of a clan\" line has no C source"
     },
     "You are ignoring:": {
       "segment": "You are ignoring:",
       "file": "pkg/session/comm_cmds.go",
       "line": 393,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:310 — No ignore verb in C cmd_info; Go's player ignore list has no C lineage"
     },
     "You are incapacitated and will slowly die, if not aided.": {
       "segment": "You are incapacitated and will slowly die, if not aided.",
       "file": "pkg/combat/fight_core.go",
       "line": 494,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/fight.c:1572 \"You are incapacitated an will slowly die, if not aided.\\r\\n\" — C's POS_INCAP line (two adjacent literals) has typo \"an will\"; Go corrects it"
     },
     "You are not affected by any spells.": {
       "segment": "You are not affected by any spells.",
       "file": "pkg/session/affects_informative.go",
       "line": 16,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:310 — No affects verb in C cmd_info (do_abils is stats); comment cites a nonexistent do_affects"
     },
     "You are not ignoring anyone.": {
       "segment": "You are not ignoring anyone.",
       "file": "pkg/session/comm_cmds.go",
       "line": 390,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:310 — No ignore verb in C cmd_info; Go-only ignore list"
     },
     "You are summoned by": {
       "segment": "You are summoned by",
       "file": "pkg/session/cmd_info.go",
       "line": 1062,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spells.c:345 \"$n has summoned you!\" — C spell_summon's victim line; Go rewords it for its own teleport command"
     },
     "You aren't holding that.": {
       "segment": "You aren't holding that.",
       "file": "pkg/session/use_cmds.go",
       "line": 154,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.other.c:933 \"You don't seem to have %s %s.\\r\\n\" — No zap verb in C; do_use's not-found branch says this (\"holding\" variant commented out at :939)"
     },
     "You attempt to move silently.": {
       "segment": "You attempt to move silently.",
       "file": "pkg/session/movement_cmds.go",
       "line": 171,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.other.c:225 \"Okay, you'll try to move silently for a while.\\r\\n\" — Unwired movement stub rewrites C do_sneak's line; unreachable stub: the live sneaking path is the skill command; C's line is act.other.c:225"
     },
     "You autoloot the corpse but find nothing of value.": {
       "segment": "You autoloot the corpse but find nothing of value.",
       "file": "pkg/game/death.go",
-      "line": 466,
+      "line": 455,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.item.c:259 \"$p seems to be empty.\" — C autoloot runs do_get all corpse; its empty-container line reworded"
     },
     "You autoloot:": {
       "segment": "You autoloot:",
       "file": "pkg/game/death.go",
-      "line": 464,
+      "line": 453,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
-    "You awaken in the temple.": {
-      "segment": "You awaken in the temple.",
-      "file": "pkg/game/death.go",
-      "line": 725,
-      "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.item.c:208 \"You get $p from $P.\" — C autoloot prints this per item via do_get; Go says \"You autoloot: <names>.\""
     },
     "You feel your magic dissipate in the beholder's presence!": {
       "segment": "You feel your magic dissipate in the beholder's presence!",
       "file": "pkg/game/spec_procs_missing.go",
       "line": 128,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
-    },
-    "You feel your soul wrenched from your body...": {
-      "segment": "You feel your soul wrenched from your body...",
-      "file": "pkg/game/death.go",
-      "line": 724,
-      "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds2.c:338 \"A ray of light shoots out from one of $n's eyestalks, breaking\" — C beholder breaks the caster's concentration; Go re-words the spell-block line"
     },
     "You heal": {
       "segment": "You heal",
       "file": "pkg/session/wiz_player.go",
       "line": 31,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/config.c:92 \"Okay.\\r\\n\" — C do_restore replies OK to the healer; Go adds a You heal <name>. line instead"
     },
     "You open the door.": {
       "segment": "You open the door.",
       "file": "pkg/game/graph.go",
       "line": 316,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "surface:no-c",
+      "firstSeen": "2026-09-23",
+      "evidence": "surface: C do_doorcmd (reached from graph.c) sends OK to the actor; Go prints a descriptive line; no player can read it: MobInstance.SendMessage discards the text (pkg/game/mob.go:832), so this is a sink-table artefact, not a C gap; the room line C also prints is do_doorcmd's \"Okay.\""
     },
     "You see nothing but void.": {
       "segment": "You see nothing but void.",
       "file": "pkg/game/world.go",
       "line": 1292,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/spells.c:935 — spell_mindsight returns silently on a bad location; look_at_room (act.informative.c:725) has no void branch"
     },
     "You start following": {
       "segment": "You start following",
       "file": "pkg/session/cmd_group.go",
       "line": 79,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "surface:no-c",
+      "firstSeen": "2026-09-23",
+      "evidence": "surface: Sent only to agent sessions (cmd_group.go:75); is_agent comes from the WebSocket agent login (session_login.go:64)"
     },
     "You think: '": {
       "segment": "You think: '",
       "file": "pkg/game/comm_channel.go",
       "line": 223,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.comm.c:1380 \"You think . o O ( %s )\\n\\r\" — do_think's self line; Go prints \"You think: '%s'\""
     },
     "You trade your key for": {
       "segment": "You trade your key for",
       "file": "pkg/game/spec_procs2.go",
       "line": 1416,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1171 \"%s eneeswseswseswseswsesw\" — C eviltrade only answers a give of gold watch 13111 with this; Go invents trade/exp"
     },
     "You tumble out into a strange place...": {
       "segment": "You tumble out into a strange place...",
       "file": "pkg/game/spec_procs2.go",
       "line": 1789,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1672 \"\\r\\nWith a blinding flash of light and a crack of thunder, $n \" — C tells only the room $n appears and gives the victim do_look; tumble line is Go-only"
     },
     "You write '": {
       "segment": "You write '",
       "file": "pkg/session/comm_cmds.go",
       "line": 256,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.comm.c:1097 \"Write your note.  End with '@' on a new line.\\r\\n\" — C enters the string editor with this prompt; Go echoes the written text inline"
     },
     "You're not fighting anyone!": {
       "segment": "You're not fighting anyone!",
       "file": "pkg/session/movement_cmds.go",
       "line": 50,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.offensive.c:365 — C do_flee has no fighting gate and prints nothing; string lives in an unregistered stub; unreachable: same unregistered cmdFleeMovement stub; the live flee path is cmdFlee (pkg/session/combat_cmds.go:335)"
     },
     "You've been demoted within your clan!": {
       "segment": "You've been demoted within your clan!",
       "file": "pkg/game/clan_membership.go",
       "line": 253,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/clan.c:487 \"You've demoted within your clan!\\r\\n\" — C omits \"been\"; Go silently corrects the typo"
     },
     "Your color is now": {
       "segment": "Your color is now",
       "file": "pkg/session/act_informative.go",
       "line": 40,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.informative.c:2494 \"Your %scolor%s is now %s.\\r\\n\" — C wraps \"color\" in CCRED/CCNRM escapes; Go drops them"
     },
     "Your group leader is not online.": {
       "segment": "Your group leader is not online.",
       "file": "pkg/session/cmd_group.go",
       "line": 197,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.other.c:649 — C print_group uses ch->master directly; no online check and no message"
     },
     "Your jail sentence is served. You are free!": {
       "segment": "Your jail sentence is served. You are free!",
       "file": "pkg/game/limits_condition.go",
-      "line": 134,
+      "line": 133,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1485 \"The guard throws you out of the cell!\\r\\n\" — C limits.c tick only decrements; release text is SPECIAL(jail)'s, reworded by Go"
     },
     "Your light source flickers and sputters.": {
       "segment": "Your light source flickers and sputters.",
       "file": "pkg/game/char_mgmt.go",
       "line": 59,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/handler.c:1057 \"Your light begins to flicker and fade.\" — update_char_objects' value==1 line; Go rewrites it"
     },
     "Your light source has gone out.": {
       "segment": "Your light source has gone out.",
       "file": "pkg/game/char_mgmt.go",
       "line": 61,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/handler.c:1062 \"Your light sputters out and dies.\" — update_char_objects' value==0 line; Go rewrites it"
     },
     "Your message was blocked.": {
       "segment": "Your message was blocked.",
       "file": "pkg/session/comm_cmds.go",
       "line": 364,
       "sink": ".sendText",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.comm.c:901 — C do_tell has no word-filter gate; Go's moderation manager (pkg/moderation) is new"
     },
     "Your note was lost. (internal error)": {
       "segment": "Your note was lost. (internal error)",
       "file": "pkg/game/note_write.go",
       "line": 58,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/modify.c:173 — C's unknown-origin write abort is a SYSERR log, never player text"
     },
     "Your tattoo fizzles...": {
       "segment": "Your tattoo fizzles...",
       "file": "pkg/game/other_economy.go",
       "line": 140,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/tattoo.c:50 — use_tattoo's TATTOO_SKULL case has no failure branch; read_mobile always succeeds"
     },
     "Your tattoo flickers but nothing happens.": {
       "segment": "Your tattoo flickers but nothing happens.",
       "file": "pkg/session/tattoo.go",
       "line": 79,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/tattoo.c:50 — C's TATTOO_SKULL case always emits the glow act; only Go has this failure branch"
     },
     "Zap who?": {
       "segment": "Zap who?",
       "file": "pkg/session/use_cmds.go",
       "line": 133,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.other.c:903 \"What do you want to %s?\\r\\n\" — No zap verb in C; do_use's no-argument branch prints this with CMD_NAME"
     },
     "[ FULL MOON RISES ] The full moon casts an eerie glow across the land.": {
       "segment": "[ FULL MOON RISES ] The full moon casts an eerie glow across the land.",
       "file": "pkg/game/weather.go",
       "line": 570,
       "sink": ".SendToAll",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds.c:1322 \"The lunar light infuses your body, forcing you to \" — C full_moon only force-transforms flagged vampires/werewolves; the global broadcast is Go-only"
     },
     "[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!": {
       "segment": "[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!",
       "file": "pkg/game/weather.go",
       "line": 622,
       "sink": ".SendToAll",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds.c:2703 \"Suddenly a ghostly ship appears to the north!\\r\\n\" — C sends this to the dock room; Go re-words it as a global fog sighting"
     },
     "[ NIGHT GATE ] A shimmering gate materializes in the darkness...": {
       "segment": "[ NIGHT GATE ] A shimmering gate materializes in the darkness...",
       "file": "pkg/game/weather.go",
       "line": 596,
       "sink": ".SendToAll",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/gate.c:191 \"A shimmering portal of blue light suddenly appears in \" — C continues the darkness!; Go re-words it as a global [NIGHT GATE] broadcast"
     },
     "[ NIGHT GATE ] The shimmering gate fades into nothingness.": {
       "segment": "[ NIGHT GATE ] The shimmering gate fades into nothingness.",
       "file": "pkg/game/weather.go",
       "line": 609,
       "sink": ".SendToAll",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/gate.c:226 \"The shimmering blue portal of light \" — C continues fades out of existence.; Go says the gate fades into nothingness"
     },
     "[Broadcast]": {
       "segment": "[Broadcast]",
       "file": "pkg/session/wiz_system.go",
       "line": 780,
       "sink": ".Send(via msg)",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/comm.c:2545 \"&RBroadcast: %s&n\" — C's broadcast prefix is red Broadcast: ; Go writes [Broadcast]"
     },
     "arrives through a shimmering moon gate!": {
       "segment": "arrives through a shimmering moon gate!",
       "file": "pkg/game/spec_procs_missing.go",
       "line": 198,
       "sink": ".actToRoom",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/gate.c:283 \"With a sound like a raging river, a hole in space opens up \" — C continues and $n steps out.; Go re-words the gate arrival message"
     },
     "attacks you for": {
       "segment": "attacks you for",
       "file": "pkg/game/mob.go",
-      "line": 352,
+      "line": 364,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/fight.c:931 \"$n #W you hard.\" — C dam_message victim line for 7-10 damage, #W from attack type; Go prints a damage count"
     },
     "auctions, '": {
       "segment": "auctions, '",
       "file": "pkg/game/graph.go",
       "line": 267,
       "sink": ".SendMessage(via text)",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "census:composed",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.comm.c:1273 \"sprintf(buf, \"$n %ss, '%s'\", com_msgs[subcmd][1], argument);\" — C composes these bytes via this sprintf plus com_msgs[SCMD_AUCTION][1] = auction (line 1189)"
     },
     "experience points for fleeing.": {
       "segment": "experience points for fleeing.",
       "file": "pkg/session/movement_cmds.go",
       "line": 122,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.offensive.c:405 — C do_flee calls gain_exp silently; C has no flee XP-loss message; unreachable: same unregistered cmdFleeMovement stub"
     },
     "gold pieces.": {
       "segment": "gold pieces.",
       "file": "pkg/session/shop_cmds.go",
       "line": 460,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "lib/world/shp/42.shp:18 \"%s I'll give you %d coins for that.~\" — C's shop tells the keeper's coins line (lib/world/shp/42.shp:18); Go says \"gold pieces\"; C prints the shop's message_sell line via src/shop.c:800 + do_tell; Go says \"gold pieces\" where the data and C say \"coins\", at five sites"
     },
     "gold to recharge that, which you cannot afford.": {
       "segment": "gold to recharge that, which you cannot afford.",
       "file": "pkg/game/spec_procs_missing.go",
       "line": 104,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/new_cmds2.c:462 \"$n tells you, 'You don't have enough gold!'\" — C recharger affordability tell; Go re-words it as a computed cost you cannot afford"
     },
     "has arrived.": {
       "segment": "has arrived.",
       "file": "pkg/game/graph.go",
       "line": 343,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.movement.c:238 \"$n arrives from the %s.\" — C do_move direction-specific arrival line; Go substitutes a generic has-arrived line"
     },
     "has healed you!": {
       "segment": "has healed you!",
       "file": "pkg/session/wiz_player.go",
       "line": 32,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:1616 \"The hand of $N touches you, healing your wounds and leaving you \" — C do_restore's victim line (adjacent literals), reworded"
     },
     "hits you for": {
       "segment": "hits you for",
       "file": "pkg/combat/engine.go",
       "line": 971,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/fight.c:925 \"$n #W you.\" — C dam_message uses its weapon-verb table, never for-N-damage; MessageFunc already wired (main.go:561); C's damage text is the dam_message verb table (src/fight.c:919-960), banded by damage; it never prints a damage number, which is the invented part"
     },
     "hits you, but it doesn't hurt!": {
       "segment": "hits you, but it doesn't hurt!",
       "file": "pkg/game/damage_stubs.go",
       "line": 256,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/fight.c:907 \"$n tries to #w you, but misses.\" — C dam_message dam==0 victim line; Go re-words it as a hit that does not hurt"
     },
     "is already visible.": {
       "segment": "is already visible.",
       "file": "pkg/session/wiz_player.go",
       "line": 249,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:1629 \"You are already fully visible.\\r\\n\" — C perform_immort_vis self line; Go reports it about a target instead"
     },
     "is disintegrated! Equipment lies scattered on the ground.": {
       "segment": "is disintegrated! Equipment lies scattered on the ground.",
       "file": "pkg/game/death.go",
-      "line": 1206,
+      "line": 1194,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/fight.c:433 — C make_dust only moves gear and loads dust; there is no disintegrate room message"
     },
     "is ignoring you.": {
       "segment": "is ignoring you.",
       "file": "pkg/game/directed_speech.go",
       "line": 307,
       "sink": "communicationSend",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/act.comm.c:901 — C do_tell has no ignore list; Go-only ignore feature (commands.go:451)"
     },
     "is no longer ignored.": {
       "segment": "is no longer ignored.",
       "file": "pkg/session/comm_cmds.go",
       "line": 408,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:310 — No ignore verb in C cmd_info; Go-only ignore toggle"
     },
     "is now ignored.": {
       "segment": "is now ignored.",
       "file": "pkg/session/comm_cmds.go",
       "line": 411,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/interpreter.c:310 — No ignore verb in C cmd_info; Go-only ignore toggle"
     },
     "is now visible to mortals.": {
       "segment": "is now visible to mortals.",
       "file": "pkg/session/wiz_player.go",
       "line": 247,
       "sink": ".Send",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/act.wizard.c:1635 \"You are now fully visible.\\r\\n\" — C perform_immort_vis success line; Go says visible to mortals"
     },
     "just tried to summon you but failed.": {
       "segment": "just tried to summon you but failed.",
       "file": "pkg/spells/affect_spells.go",
       "line": 3044,
       "sink": ".SendMessage",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spells.c:246 \"%s just tried to summon you to: %s.\\r\\n%s failed.\\r\\n\" — spell_summon's victim line (adjacent literals); Go drops room name and failed line"
     },
     "says 'I don't like you, and you'd better leave before I make you!'": {
       "segment": "says 'I don't like you, and you'd better leave before I make you!'",
       "file": "pkg/game/spec_procs2.go",
       "line": 1546,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:paraphrase",
+      "firstSeen": "2026-09-23",
+      "evidence": "src/spec_procs2.c:1417 \"$n exclaims, 'Dirty Orange Scum!'\" — C ira exclaims this before hit(); Go substitutes a leave-or-I-attack line"
     },
     "says 'You're an evil one! That won't be allowed here!'": {
       "segment": "says 'You're an evil one! That won't be allowed here!'",
       "file": "pkg/game/spec_procs2.go",
       "line": 1483,
       "sink": "sendToChar",
-      "reason": "unreviewed",
-      "firstSeen": "2026-09-23"
+      "reason": "bug:invented",
+      "firstSeen": "2026-09-23",
+      "evidence": "no C text; nearest: src/spec_procs2.c:1342 — C evillead only handles a give of cheese 13100 and teleports the giver; no alignment attack"
     }
   }
 }

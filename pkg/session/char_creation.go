@@ -337,7 +337,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 				return s.abortEntry(err)
 			}
 			// Show MOTD and transition to PRESS RETURN state
-			motd := game.ShowMOTD(s.manager.world.WorldPath)
+			motd := loginTextForFile(s, "motd")
 			s.charStage = "motd"
 			s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 		case "N":
@@ -673,7 +673,7 @@ func (s *Session) completeCharCreation() error {
 	slog.InfoContext(s.sessionCtx, "completeCharCreation: state cleared", s.logAttrs()...)
 
 	// Generate JWT token
-	token, err := auth.GenerateJWT(s.player.Name, s.isAgent, s.agentKeyID, "")
+	token, err := auth.GenerateJWT(s.player.Name, "")
 	if err != nil {
 		slog.ErrorContext(s.sessionCtx, "failed to generate JWT token", s.logAttrs(slog.Any("error", err))...)
 	}
@@ -688,13 +688,9 @@ func (s *Session) completeCharCreation() error {
 	// the pulse delivers the message and the hometown relocation. Immortals
 	// never route through 8099 at all (interpreter.c:2191-2243).
 
-	// Mirror the agent initialization that handleLogin sends for returning players.
-	if s.isAgent || s.wantsStructuredData {
+	// Mirror the structured-data dump handleLogin sends for returning players.
+	if s.wantsStructuredData {
 		s.sendFullVarDump()
-		if s.isAgent {
-			s.SendMemoryBootstrap()
-			s.SendMemorySummary()
-		}
 	}
 
 	// Broadcast arrival

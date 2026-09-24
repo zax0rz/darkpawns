@@ -38,6 +38,18 @@ func observationMessageText(result ObservationResult) string {
 	return b.String()
 }
 
+func TestPlayerPresenceLineUsesTitleWithoutInventedClassFallback(t *testing.T) {
+	w := &World{}
+	viewer := NewPlayer(1, "Viewer", 1001)
+	player := NewPlayer(2, "Elvish", 1001)
+	player.Race = RaceElf
+	player.Class = ClassMageUser
+
+	if got, want := w.playerPresenceLine(player, viewer), "Elvish  is standing here."; got != want {
+		t.Fatalf("playerPresenceLine() = %q, want C title-based line %q", got, want)
+	}
+}
+
 // DP-1133: C show_obj_to_char (mode 5) colorizes the bless/magic/glow
 // annotations at complete color level.
 func TestDoLookTargetObjectColorizesObjectFlagsAtCompleteColor(t *testing.T) {

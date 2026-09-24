@@ -1,4 +1,4 @@
-.PHONY: expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update
+.PHONY: expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update census-coverage
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -29,6 +29,17 @@ string-census:
 
 string-census-update:
 	go run ./cmd/dp-string-census --update
+
+# Coverage of the C surface by the scenarios that ran. It reads an EXISTING
+# census dump and never starts its own census: coverage is a claim about the
+# scenarios in that dump. Produce one first, e.g.
+#   ORACLE_REGRESSION_DUMP=/tmp/dp-dump make oracle-regression
+#   make census-coverage CENSUS_DUMP=/tmp/dp-dump
+# See docs/fidelity/strings/README.md ("Coverage").
+CENSUS_DUMP ?= $(ORACLE_REGRESSION_DUMP)
+
+census-coverage:
+	go run ./cmd/dp-census-coverage --dump "$(CENSUS_DUMP)"
 
 # Default world directory — resolve relative to this Makefile so it works
 # regardless of the checkout directory name.

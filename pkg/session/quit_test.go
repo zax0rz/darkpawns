@@ -24,7 +24,7 @@ import (
 // captureSaveDB records every SavePlayer call so tests can inspect what the
 // quit teardown actually persisted (equipment kept vs lost).
 type captureSaveDB struct {
-	mockAgentKeyDB
+	mockGameStore
 	saved []*db.PlayerRecord
 }
 
@@ -146,6 +146,26 @@ func TestQuitFromUnsafeRoomRefusesAndKeepsSession(t *testing.T) {
 	}
 }
 
+// assertQuitToMenu: after a successful quit the character is queued, the
+// next heartbeat's extraction takes them out of the world, and the same
+// connection is back at the menu (extract_char, handler.c:1172-1174).
+func assertQuitToMenu(t *testing.T, m *Manager, s *Session, name string) {
+	t.Helper()
+	if s.player.GetFlags()&(1<<game.PlrExtract) == 0 {
+		t.Fatalf("%s was not queued for extraction", name)
+	}
+	m.ExtractPendingChars()
+	if _, inWorld := m.world.GetPlayer(name); inWorld {
+		t.Fatalf("%s is still in the world after extraction", name)
+	}
+	if !s.IsMenuActive() {
+		t.Fatalf("%s's connection did not return to the menu", name)
+	}
+	if _, ok := m.GetSession(name); !ok {
+		t.Fatalf("%s's connection was dropped; C keeps it open at the menu", name)
+	}
+}
+
 // C: quit from either temple logs out with the goodbye line, and the rent save
 // keeps equipment.
 func TestQuitFromSafeRoomLogsOutKeepingEquipment(t *testing.T) {
@@ -163,9 +183,7 @@ func TestQuitFromSafeRoomLogsOutKeepingEquipment(t *testing.T) {
 			if got := readMsgText(t, s); got != "Goodbye, friend.. Come back soon!\r\n" {
 				t.Fatalf("goodbye = %q, want %q", got, "Goodbye, friend.. Come back soon!\r\n")
 			}
-			if _, ok := m.GetSession("Keeper"); ok {
-				t.Fatal("session still registered after a successful quit")
-			}
+			assertQuitToMenu(t, m, s, "Keeper")
 			if len(database.saved) != 1 {
 				t.Fatalf("SavePlayer called %d times, want 1", len(database.saved))
 			}
@@ -206,7 +224,7 @@ func TestQuitHomeRoomGatesByHometown(t *testing.T) {
 				if got := readMsgText(t, s); got != "Goodbye, friend.. Come back soon!\r\n" {
 					t.Fatalf("safe hometown message = %q", got)
 				}
-				if _, ok := m.GetSession("Homesteader"); ok {
+				if s.player.GetFlags()&(1<<game.PlrExtract) == 0 {
 					t.Fatal("matching hometown did not permit quit")
 				}
 				return
@@ -262,15 +280,19 @@ func TestReallyQuitFromUnsafeRoomLosesEquipment(t *testing.T) {
 	if got := readMsgText(t, s); got != "Goodbye, friend.. Come back soon!\r\n" {
 		t.Fatalf("goodbye = %q, want %q", got, "Goodbye, friend.. Come back soon!\r\n")
 	}
-	if _, ok := m.GetSession("Risker"); ok {
-		t.Fatal("session still registered after reallyquit")
-	}
+	room := s.player.GetRoom()
+	assertQuitToMenu(t, m, s, "Risker")
 	if len(database.saved) != 1 {
 		t.Fatalf("SavePlayer called %d times, want 1", len(database.saved))
 	}
 	inventory, equipment := savedItemCounts(t, database.saved[0])
 	if equipment != 0 || inventory != 0 {
 		t.Fatalf("unsafe reallyquit saved inventory=%d equipment=%d, want 0/0 (LOSTEQ)", inventory, equipment)
+	}
+	// Nothing was rented, so extract_char dropped the sword and the bag
+	// where Risker quit (handler.c:1133-1136).
+	if got := len(m.world.GetItemsInRoom(room)); got != 2 {
+		t.Fatalf("%d items on the floor after LOSTEQ, want the sword and the bag", got)
 	}
 }
 
@@ -288,6 +310,7 @@ func TestReallyQuitClosesDuplicateIDBeforeFinalDestructiveSave(t *testing.T) {
 	if err := ExecuteCommand(quitter, "reallyquit", nil); err != nil {
 		t.Fatalf("ExecuteCommand reallyquit: %v", err)
 	}
+	m.ExtractPendingChars()
 	if _, ok := m.GetSession("Shadow"); ok {
 		t.Fatal("duplicate-ID session remains registered")
 	}

@@ -22,14 +22,14 @@ Dark Pawns is a dark-fantasy MUD (multi-user dungeon) first built in September 1
 
 ## Positioning
 
-A neighboring product cannot truthfully copy this: a specific, faithfully-ported 30-year-old MUD world (originally R.E. "Frontline" Paret's, ~9,590 rooms, 494 archived content files, its own lore and voice) rebuilt from the original C into an idiomatic Go engine, where humans and autonomous LLM agents coexist in real time, and where the port's fidelity to the original is itself verified by an oracle process. It is not a generic MUD framework, and it is emphatically not a SaaS product.
+A neighboring product cannot truthfully copy this: a specific, faithfully-ported 30-year-old MUD world (originally R.E. "Frontline" Paret's, ~9,590 rooms, 494 archived content files, its own lore and voice) rebuilt from the original C into an idiomatic Go engine, where humans and, once the port is complete, autonomous LLM agents share the world in real time, and where the port's fidelity to the original is itself verified by an oracle process. It is not a generic MUD framework, and it is emphatically not a SaaS product.
 
 ## Operating Context
 
-- **Play (humans):** telnet `darkpawns.org 7777`, or an in-browser CRT web client at `/play`.
-- **Play (agents):** WebSocket protocol; agents self-onboard via a skill (`pp-dp-goat`), `skill.md`, and `/.well-known/agent-skills/`.
+- **Play (humans):** an in-browser CRT web client at `/play`, or any MUD client on `darkpawns.org` port `7778` with TLS (Mudlet installs its own dock; guide at `/mudlet`). Unencrypted telnet on `7777` stays open for clients without TLS.
+- **Play (agents):** planned after the port is complete. The first agent surface (agent keys, a JSON protocol, narrative memory, skills) was removed in September 2026 to be rebuilt properly; agents will connect as ordinary clients.
 - **Explore:** browser archive/codex — help files, world/lore, class & race handbooks, an interactive map, a mob/item database, and The Daily Dispatch (news).
-- **Evaluate:** GitHub repo, developer and agent docs, research notes.
+- **Evaluate:** GitHub repo, developer docs, research notes.
 - Marketing is a someday intent, and when it happens it stays in the editorial/archival register of this site. Never a product-launch/SaaS surface.
 
 ## Capabilities and Constraints

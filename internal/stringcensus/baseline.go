@@ -17,6 +17,39 @@ const BaselineFile = "go-only-baseline.json"
 // Unreviewed is the reason a freshly recorded segment starts with.
 const Unreviewed = "unreviewed"
 
+// Reason vocabulary (brief 09). Every baseline row carries exactly one, plus an
+// Evidence string a reviewer can check in a minute. The vocabulary exists so
+// "why is this string allowed?" has an answer that outlives the triage PR.
+const (
+	// ReasonBugInvented: C prints nothing here, or something else (R4).
+	ReasonBugInvented = "bug:invented"
+	// ReasonBugParaphrase: C prints a similar but different string (R1).
+	ReasonBugParaphrase = "bug:paraphrase"
+	// ReasonCensusComposed: C prints the same bytes, built from pieces or a
+	// table the census cannot see.
+	ReasonCensusComposed = "census:composed"
+	// ReasonData: the text comes from world data or a script.
+	ReasonData = "data"
+	// ReasonSurfaceNoC: a surface C does not have (web client, webOLC, admin
+	// API, GMCP, TLS, Go server lifecycle). No telnet player can reach it.
+	ReasonSurfaceNoC = "surface:no-c"
+	// ReasonUnsure: the triager could not settle it.
+	ReasonUnsure = "unsure"
+)
+
+// Reasons lists the vocabulary for validation.
+func Reasons() []string {
+	return []string{
+		Unreviewed,
+		ReasonBugInvented,
+		ReasonBugParaphrase,
+		ReasonCensusComposed,
+		ReasonData,
+		ReasonSurfaceNoC,
+		ReasonUnsure,
+	}
+}
+
 // Baseline is the ratchet's key set.
 type Baseline struct {
 	Description string                   `json:"description"`
@@ -30,10 +63,13 @@ type BaselineEntry struct {
 	File    string `json:"file"`
 	Line    int    `json:"line"`
 	Sink    string `json:"sink"`
-	// Reason starts as Unreviewed. A reviewer replaces it with why the string
-	// has no C source (data-driven, transport framing, a deliberate R4-approved
-	// addition) or files the bug that removes it.
+	// Reason is one of the vocabulary above. It starts as Unreviewed; a triage
+	// pass replaces it with the classification and the evidence.
 	Reason string `json:"reason"`
+	// Evidence is the checkable proof for Reason: for bug:*/census:composed a C
+	// citation and the C text, for data the lib/ path, for surface:no-c which
+	// surface. Empty while Reason is Unreviewed.
+	Evidence string `json:"evidence,omitempty"`
 	// FirstSeen is the date the segment entered the baseline.
 	FirstSeen string `json:"firstSeen"`
 }
@@ -95,6 +131,7 @@ func (b *Baseline) Merge(r *Report, today string) *Baseline {
 		entry := BaselineEntry{Segment: s.Text, File: s.File, Line: s.Line, Sink: s.Sink}
 		if prev, ok := b.Segments[s.Text]; ok {
 			entry.Reason = prev.Reason
+			entry.Evidence = prev.Evidence
 			entry.FirstSeen = prev.FirstSeen
 		}
 		if entry.Reason == "" {

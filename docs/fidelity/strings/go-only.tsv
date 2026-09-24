@@ -12,11 +12,9 @@ You've been demoted within your clan!	pkg/game/clan_membership.go:253	.SendMessa
 Unknown channel.	pkg/game/comm_channel.go:97	communicationSend
 You think: '	pkg/game/comm_channel.go:223	sendToChar
 hits you, but it doesn't hurt!	pkg/game/damage_stubs.go:256	.SendMessage
-You autoloot:	pkg/game/death.go:464	.SendMessage
-You autoloot the corpse but find nothing of value.	pkg/game/death.go:466	.SendMessage
-You feel your soul wrenched from your body...	pkg/game/death.go:724	.SendMessage
-You awaken in the temple.	pkg/game/death.go:725	.SendMessage
-is disintegrated! Equipment lies scattered on the ground.	pkg/game/death.go:1206	.SendMessage
+You autoloot:	pkg/game/death.go:453	.SendMessage
+You autoloot the corpse but find nothing of value.	pkg/game/death.go:455	.SendMessage
+is disintegrated! Equipment lies scattered on the ground.	pkg/game/death.go:1194	.SendMessage
 is ignoring you.	pkg/game/directed_speech.go:249	communicationSend
 is ignoring you.	pkg/game/directed_speech.go:307	communicationSend
 auctions, '	pkg/game/graph.go:267	.SendMessage(via text)
@@ -30,10 +28,10 @@ Objects stored for house #	pkg/game/house_rent.go:46	sendToChar
 Error reading house file.	pkg/game/house_rent.go:49	sendToChar
 Something went wrong. Your item was not donated.	pkg/game/item_donate.go:38	.SendMessage
 Something went wrong. Your gold was not donated.	pkg/game/item_donate.go:79	.SendMessage
-Your jail sentence is served. You are free!	pkg/game/limits_condition.go:134	.SendMessage
+Your jail sentence is served. You are free!	pkg/game/limits_condition.go:133	.SendMessage
 Mail sent.	pkg/game/mail.go:592	.SendMessage
 Mail aborted (empty message).	pkg/game/mail.go:594	.SendMessage
-attacks you for	pkg/game/mob.go:352	.SendMessage
+attacks you for	pkg/game/mob.go:364	.SendMessage
 Your note was lost. (internal error)	pkg/game/note_write.go:58	sendToChar
 Note recorded.	pkg/game/note_write.go:67	sendToChar
 Note limit reached. Type '@' on a new line to save.	pkg/game/note_write.go:86	sendToChar
@@ -81,7 +79,7 @@ Failed to save new password. Please try again later.	pkg/session/cmd_account.go:
 Password changed successfully.	pkg/session/cmd_account.go:76	.Send
 You start following	pkg/session/cmd_group.go:79	.SendMessage
 Your group leader is not online.	pkg/session/cmd_group.go:197	.SendMessage
-Your message was blocked.	pkg/session/cmd_group.go:319	.sendText
+Your message was blocked.	pkg/session/cmd_group.go:315	.sendText
 Summon who?	pkg/session/cmd_info.go:1048	.sendText
 You are summoned by	pkg/session/cmd_info.go:1062	.sendText
 No one by that name online.	pkg/session/cmd_info.go:1067	.sendText
@@ -97,17 +95,15 @@ You are not ignoring anyone.	pkg/session/comm_cmds.go:390	.Send
 You are ignoring:	pkg/session/comm_cmds.go:393	.Send
 is no longer ignored.	pkg/session/comm_cmds.go:408	.Send
 is now ignored.	pkg/session/comm_cmds.go:411	.Send
-Guest accounts are restricted from using this command.	pkg/session/commands.go:698	.sendText
+Guest accounts are restricted from using this command.	pkg/session/commands.go:697	.sendText
 Knock on what? Try north, south, east, west, up, or down.	pkg/session/door_cmds.go:43	.Send
-That information is not available right now.	pkg/session/gen_ps_cmds.go:122	.Send
-Built with:	pkg/session/gen_ps_cmds.go:235	.Send
-Autoexits enabled.	pkg/session/informative_cmds.go:26	.Send
-Autoexits disabled.	pkg/session/informative_cmds.go:28	.Send
-!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!	pkg/session/manager.go:1930	.sendText
-Description not changed.	pkg/session/menu.go:183	.sendText
-Unable to save description.	pkg/session/menu.go:196	.sendText
-Description saved.	pkg/session/menu.go:203	.sendText
-Description is too long; type @ or /s to save, /a to abort.	pkg/session/menu.go:210	.sendText
+That information is not available right now.	pkg/session/gen_ps_cmds.go:132	.Send
+Built with:	pkg/session/gen_ps_cmds.go:245	.Send
+!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!	pkg/session/manager.go:1942	.sendText
+Description not changed.	pkg/session/menu.go:185	.sendText
+Unable to save description.	pkg/session/menu.go:198	.sendText
+Description saved.	pkg/session/menu.go:205	.sendText
+Description is too long; type @ or /s to save, /a to abort.	pkg/session/menu.go:212	.sendText
 You're not fighting anyone!	pkg/session/movement_cmds.go:50	.Send
 There's nowhere to flee!	pkg/session/movement_cmds.go:68	.Send
 experience points for fleeing.	pkg/session/movement_cmds.go:122	.Send

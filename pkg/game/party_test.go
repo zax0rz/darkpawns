@@ -22,6 +22,31 @@ func newXPTestWorld(t *testing.T) *World {
 	return w
 }
 
+func TestGetFollowerActorsUsesCPrependOrder(t *testing.T) {
+	w := newXPTestWorld(t)
+	leader := NewPlayer(1, "Leader", 1001)
+	first := NewPlayer(2, "First", 1001)
+	second := NewPlayer(3, "Second", 1001)
+	for _, player := range []*Player{leader, first, second} {
+		if err := w.AddPlayer(player); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", player.Name, err)
+		}
+	}
+
+	first.SetFollowing(leader.Name)
+	second.SetFollowing(leader.Name)
+	followers := w.GetFollowerActors(leader.Name)
+	if len(followers) != 2 {
+		t.Fatalf("follower count = %d, want 2", len(followers))
+	}
+	if got := followers[0].GetName(); got != second.Name {
+		t.Errorf("first follower = %q, want latest follower %q", got, second.Name)
+	}
+	if got := followers[1].GetName(); got != first.Name {
+		t.Errorf("second follower = %q, want earlier follower %q", got, first.Name)
+	}
+}
+
 func TestGainExpUsesCLimitsWithoutPerLevelCap(t *testing.T) {
 	w := newXPTestWorld(t)
 	p := NewPlayer(1, "Hero", 1001)

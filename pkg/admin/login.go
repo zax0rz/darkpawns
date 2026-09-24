@@ -117,7 +117,7 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 		role := auth.PanelRoleForLevel(rec.Level)
 
 		// Generate JWT
-		token, err := auth.GenerateJWT(req.PlayerName, false, 0, role)
+		token, err := auth.GenerateJWT(req.PlayerName, role)
 		if err != nil {
 			slog.Error("admin login JWT generation failed", "error", err)
 			http.Error(w, `{"error":"token generation failed"}`, http.StatusInternalServerError)

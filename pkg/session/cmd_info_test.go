@@ -318,11 +318,29 @@ func TestCmdScoreFixedFixtureGolden(t *testing.T) {
 		"You have been playing for 0 days and 0 hours.\r\n" +
 		"You are a citizen of Kir Drax'in.\r\n" +
 		"This ranks you as Scoretest the Warrior (level 1).\r\n" +
-		"You are a Human Warrior.\r\n" +
+		"You are a Human Warrior.\n\r" +
 		"Your pack is empty.\r\n" +
 		"You are standing.\r\n"
 	if got := readSessionText(t, s); got != want {
 		t.Fatalf("score output mismatch\n--- got ---\n%q\n--- want ---\n%q", got, want)
+	}
+}
+
+func TestCmdScoreUsesPlayerRaceAndClassNamesAndCLineEnding(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Racecheck", 1001, true)
+	s.player.Race = game.RaceElf
+	s.player.Class = game.ClassMageUser
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	got := readSessionText(t, s)
+	if !strings.Contains(got, "You are an Elven Magic User.\n\r") {
+		t.Fatalf("score did not use C player race/class names and LF-CR ending: %q", got)
+	}
+	if strings.Contains(got, "You are an Elf Mage.") {
+		t.Fatalf("score used generic race/class display names: %q", got)
 	}
 }
 

@@ -242,6 +242,20 @@ func TestRoom_HasFlagOutOfBounds(t *testing.T) {
 	}
 }
 
+func TestRoom_HasFlagUsesC32BitWords(t *testing.T) {
+	room := &Room{Flags: []string{"131072", "1", "0", "0"}}
+	for _, bit := range []int{17, 32} {
+		if !room.HasFlag(bit) {
+			t.Errorf("HasFlag(%d) = false, want set bit", bit)
+		}
+	}
+	for _, bit := range []int{16, 31, 33} {
+		if room.HasFlag(bit) {
+			t.Errorf("HasFlag(%d) = true, want clear bit", bit)
+		}
+	}
+}
+
 func TestReadTildeString_TrailingWhitespace(t *testing.T) {
 	input := "hello ~  "
 	scanner := bufio.NewScanner(strings.NewReader(input))

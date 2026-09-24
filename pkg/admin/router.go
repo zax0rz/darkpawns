@@ -47,9 +47,10 @@ type routerInternal struct {
 }
 
 // NewRouter creates an admin HTTP handler with role-protected endpoints.
-// liveSessions is the session manager (or nil to disable live session endpoints).
+// liveSessions is the session manager, or nil. The OLC endpoints use the
+// provider interfaces it implements (OLCReadStateProvider and the rest).
 // It returns an error if the agent store cannot be initialized (DP-1016).
-func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider, opts ...RouterOption) (http.Handler, error) {
+func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions any, opts ...RouterOption) (http.Handler, error) {
 	ri, err := newRouter(world, auditLogger, logBuffer, database, liveSessions, opts...)
 	if ri == nil {
 		return nil, err
@@ -57,7 +58,7 @@ func NewRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	return ri.handler, err
 }
 
-func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions LiveSessionProvider, opts ...RouterOption) (*routerInternal, error) {
+func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *LogBuffer, database *db.DB, liveSessions any, opts ...RouterOption) (*routerInternal, error) {
 	var cfg routerConfig
 	for _, opt := range opts {
 		opt(&cfg)
@@ -164,7 +165,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerRooms(ri.api, world)
 	registerMetrics(ri.api, world)
 	registerWorldCompletion(ri.api, world, auditLogger)
-	registerDatabaseCompletion(ri.api, database)
 	var olcState OLCReadStateProvider
 	if provider, ok := liveSessions.(OLCReadStateProvider); ok {
 		olcState = provider
@@ -275,20 +275,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	track("/admin/findings/{id}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	track("/admin/triage/summaries", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
-	// Live agent sessions and decision capture — requires builder role.
-	// Inside the guard because a nil provider means there is no session
-	// manager to ask. Tranche 1 of the Huma migration: these two routes are
-	// Huma operations now, registered on the router-wide Huma mux created
-	// above and mounted behind the exact same rate-limit/CORS/role chain the
-	// hand-rolled handlers sat behind.
-	if liveSessions != nil {
-		registerLiveAgentSessions(ri.api, liveSessions)
-		registerResearchCapture(ri.api, liveSessions, auditLogger)
-
-		track("/admin/sessions/agents", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
-		track("/admin/research/capture", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
-	}
-
 	// The handlers these routes replace answered wrong methods with a JSON
 	// 405; the Huma mux answers plain-text 405 on its own. Keep the old body
 	// for methods the operations do not define — the bare pattern loses to the
@@ -306,8 +292,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		"/admin/shops",
 		"/admin/rooms/{vnum}",
 		"/admin/metrics",
-		"/admin/sessions/agents",
-		"/admin/research/capture",
 		"/admin/login",
 		"/admin/save-world",
 		"/admin/reset-all-zones",
@@ -315,8 +299,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		"/admin/agents/status",
 		"/admin/findings",
 		"/admin/triage/summaries",
-		"/admin/decisions",
-		"/admin/narrative",
 	} {
 		humaMux.HandleFunc(p, methodNotAllowedJSON)
 	}
@@ -329,16 +311,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	humaMux.HandleFunc("/admin/players/{name}/kick", handlePlayerDetail(world, auditLogger))
 	humaMux.HandleFunc("/admin/shops/{keeper}", handleShopByKeeper(world, auditLogger))
 	humaMux.HandleFunc("/admin/findings/{id}", handleFindingByID(agentStore))
-
-	// Decision log — requires builder role
-	if database != nil {
-		track("/admin/decisions", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
-	}
-
-	// Narrative feed — requires builder role
-	if database != nil {
-		track("/admin/narrative", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
-	}
 
 	// SPA fallback — this MUST be registered last, after all API routes.
 	// Catches any /admin/* path that didn't match an API route above.

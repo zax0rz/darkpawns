@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -38,7 +39,7 @@ func (s *Session) startReturningMenu(passwordHash string) {
 	s.menuActive = true
 	s.menuStage = "motd"
 	s.menuPasswordHash = passwordHash
-	motd := game.ShowMOTD(s.manager.world.WorldPath)
+	motd := loginTextForFile(s, "motd")
 	s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 }
 
@@ -51,7 +52,7 @@ func (s *Session) showMainMenu() {
 func (s *Session) resendCurrentMenuPrompt() {
 	switch s.menuStage {
 	case "motd":
-		motd := game.ShowMOTD(s.manager.world.WorldPath)
+		motd := loginTextForFile(s, "motd")
 		s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 	case "description":
 		s.sendCharCreatePrompt("description", "Enter description lines. Type @ or /s to save, /a to abort: ", nil)
@@ -161,7 +162,8 @@ func (s *Session) handleMenuChoice(choice string) error {
 		}
 		s.sendCharCreatePrompt("description", "Enter the new text you'd like others to see when they look at you.\r\nType @ or /s to save, /a to abort: ", nil)
 	case "3":
-		s.sendText(game.ShowBackground(s.manager.world.WorldPath) + "\r\n")
+		background := loginTextForFile(s, "background")
+		s.sendText(background + "\r\n")
 		s.showMainMenu()
 	case "4":
 		s.menuStage = "password_old"
@@ -277,6 +279,14 @@ func (s *Session) enterReturningPlayer() error {
 	if !s.authenticated || s.player == nil {
 		return ErrNotAuthenticated
 	}
+	// A character who rented comes back as the rent file left them: C's
+	// Crash_load on entering from the menu. The game store holds the record
+	// written when they quit, objects included.
+	if s.player.RentedOut && s.manager.hasDB {
+		if err := s.reloadCharacterFromStore(); err != nil {
+			return err
+		}
+	}
 	name := s.player.Name
 	// C's CON_MENU path calls reset_char() before re-adding an extracted
 	// player. In particular, a post-death player is still at NOWHERE with
@@ -307,24 +317,41 @@ func (s *Session) enterReturningPlayer() error {
 	s.menuActive = false
 	s.menuStage = ""
 	s.playerName = name
-	token, err := auth.GenerateJWT(name, s.isAgent, s.agentKeyID, "")
+	token, err := auth.GenerateJWT(name, "")
 	if err != nil {
 		slog.ErrorContext(s.sessionCtx, "failed to generate JWT token", s.logAttrs(slog.Any("error", err))...)
 	}
 	s.tokenIssuedAt = time.Now()
 	s.sendWelcome(token)
-	if s.isAgent || s.wantsStructuredData {
+	if s.wantsStructuredData {
 		s.sendFullVarDump()
-		if s.isAgent {
-			s.SendMemoryBootstrap()
-			s.SendMemorySummary()
-		}
 	}
 	enterMsg, err := json.Marshal(ServerMessage{Type: MsgEvent, Data: EventData{Type: "enter", Text: name + " has arrived."}})
 	if err == nil {
 		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, name)
 	}
 	s.clearMenuState()
+	return nil
+}
+
+// reloadCharacterFromStore replaces the session's character with the one the
+// game store holds, as a fresh login would build it.
+func (s *Session) reloadCharacterFromStore() error {
+	rec, err := s.manager.db.GetPlayer(s.player.Name)
+	if err != nil {
+		return fmt.Errorf("reload %s: %w", s.player.Name, err)
+	}
+	if rec == nil {
+		return fmt.Errorf("reload %s: no stored character", s.player.Name)
+	}
+	p, err := db.RecordToPlayer(rec, s.manager.world)
+	if err != nil {
+		return fmt.Errorf("reload %s: %w", s.player.Name, err)
+	}
+	if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
+		p.Aliases = aliases
+	}
+	s.player = p
 	return nil
 }
 

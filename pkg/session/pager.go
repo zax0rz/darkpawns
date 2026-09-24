@@ -115,7 +115,7 @@ func PageString(s *Session, text string) {
 	// Structured-data / agent clients: whole text, no pager. (C has no analog —
 	// every descriptor is a terminal — but the brief requires gating these
 	// clients out, and they need the full payload.)
-	if s.wantsStructuredData || s.isAgent {
+	if s.wantsStructuredData {
 		s.Send(text)
 		return
 	}

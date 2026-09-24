@@ -1,0 +1,50 @@
+# Lifecycle: a death trap returns the victim to the menu (DP-1312, R5b).
+# depth-case: death.trap-extract-to-menu
+#
+# The Temple of the Cross (8008), south of the altar, is made a death trap in
+# the disposable world. C (act.movement.c:288-301): death_cry, extract_char;
+# the next heartbeat's extraction drops what the victim carried in the trap
+# room and returns the descriptor to the menu; choice 1 re-enters the game.
+# The port used to respawn the victim at the temple with their belongings and
+# two lines C never prints.
+
+[fixture]
+quiet-mobs
+set-room-flag 8008 1 on
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[probe]
+south
+~dpclock pulse 20
+1
+look
+inventory

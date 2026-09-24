@@ -1,0 +1,37 @@
+# depth-case: score.player-race-class.elven-mage
+# C do_score uses pc_class_types[] and races[] for these player identities.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scoresage
+Y
+oraclepass
+oraclepass
+N
+M
+E
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scoresage
+y
+oraclepass
+oraclepass
+N
+M
+E
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+score

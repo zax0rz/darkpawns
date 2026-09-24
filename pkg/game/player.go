@@ -71,10 +71,6 @@ type Player struct {
 	// Source: structs.h:321,335,341
 	Affects uint64
 
-	// Player flags bitmask — structs.h PLR_* constants
-	// Source: structs.h:221-244
-	PlayerFlags uint64
-
 	// InvisLevel is C's player_specials.saved.invis_level for immortal
 	// wizinvis. It is runtime-only until the player save format has a faithful
 	// representation for this field.
@@ -173,8 +169,9 @@ type Player struct {
 
 	// Group/follow state
 	// Source: act.movement.c (ch->master), structs.h AFF_GROUP flag
-	Following string // Name of player being followed (ch->master in original)
-	InGroup   bool   // Whether in a group (AFF_GROUP flag in original)
+	Following         string // Name of player being followed (ch->master in original)
+	InGroup           bool   // Whether in a group (AFF_GROUP flag in original)
+	followingSequence uint64
 
 	// Mount state — from src/utils.c
 	MountName string // Name of mount mob being ridden
@@ -271,6 +268,11 @@ type Player struct {
 	// LastDeath — timestamp of last death (unix time).
 	// Used by dream.c for nightmare progression.
 	LastDeath int64
+
+	// RentedOut marks a character who legally quit: Crash_rentsave has
+	// taken their objects into the rent file, so extraction does not drop
+	// them. Runtime only.
+	RentedOut bool `json:"-"`
 
 	// FreezeLevel records the level of the God who froze this player
 	// (C GET_FREEZE_LEV; act.wizard.c:2149). Thaw consults it to stop a

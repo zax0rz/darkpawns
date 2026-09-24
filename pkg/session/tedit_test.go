@@ -183,6 +183,34 @@ func TestTeditSaveUpdatesDiskCacheAndStaticCommand(t *testing.T) {
 	}
 }
 
+func TestTeditMOTDUpdateAppearsInReturningLoginMenu(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "Teditmotd", game.LVL_IMPL, 1001)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "motd")
+	if err := os.WriteFile(path, []byte("Old MOTD\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	m.world.LibTextDir = dir
+	setTeditTestCache(t, "motd", "")
+
+	if err := cmdTedit(s, []string{"motd"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, s)
+	s.handleTextEditInput("Edited MOTD")
+	s.handleTextEditInput("/s")
+	if got := readMsgText(t, s); got != "Saved.\r\n" {
+		t.Fatalf("tedit save output = %q", got)
+	}
+
+	s.startReturningMenu("")
+	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+	if prompt.Stage != "motd" || !strings.Contains(prompt.Prompt, "Edited MOTD") {
+		t.Fatalf("returning login MOTD prompt = (%q, %q), want edited cached text", prompt.Stage, prompt.Prompt)
+	}
+}
+
 func TestTeditRawLineRoutesSlashInputBeforeCommands(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCommandTestSession(t, m, "Teditgod", game.LVL_IMPL, 1001)

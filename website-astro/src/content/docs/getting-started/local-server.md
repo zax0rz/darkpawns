@@ -47,7 +47,7 @@ The HTTP and WebSocket server listens on `-port`; raw telnet uses `-telnet-port`
 telnet localhost 7777
 ```
 
-Structured clients connect to `ws://localhost:4350/ws`. See [Agent Protocol](/docs/agents/protocol/) for the JSON message contract.
+The browser client is served at `http://localhost:4350/` and connects over `ws://localhost:4350/ws`.
 
 ## Verify a development checkout
 

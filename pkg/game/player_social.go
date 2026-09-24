@@ -1,6 +1,15 @@
 package game
 
-import "strings"
+import (
+	"strings"
+	"sync/atomic"
+)
+
+var followerSequenceCounter atomic.Uint64
+
+func nextFollowerSequence() uint64 {
+	return followerSequenceCounter.Add(1)
+}
 
 func (p *Player) GetHometown() int {
 	p.mu.RLock()
@@ -219,6 +228,17 @@ func (p *Player) SetFollowing(name string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Following = name
+	if name == "" {
+		p.followingSequence = 0
+	} else {
+		p.followingSequence = nextFollowerSequence()
+	}
+}
+
+func (p *Player) GetFollowingSequence() uint64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.followingSequence
 }
 
 // GetCha returns the player's charisma.
@@ -259,14 +279,15 @@ func (p *Player) SetCondition(cond, val int) {
 	}
 }
 
-// HasPLRFlag returns true if PLR flag bit n is set.
+// HasPLRFlag returns true if PLR flag bit n is set. PLR and PRF flags share
+// Player.Flags (PRF from prfBase up); every accessor reads that one field.
 func (p *Player) HasPLRFlag(bit int) bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	if bit < 0 || bit >= 64 {
 		return false
 	}
-	return p.PlayerFlags&(1<<uint(bit)) != 0
+	return p.Flags&(1<<uint(bit)) != 0
 }
 
 // SetPLRFlag sets PLR flag bit n.
@@ -276,7 +297,7 @@ func (p *Player) SetPLRFlag(bit int) {
 	if bit < 0 || bit >= 64 {
 		return
 	}
-	p.PlayerFlags |= 1 << uint(bit)
+	p.Flags |= 1 << uint(bit)
 }
 
 // ClearPLRFlag clears PLR flag bit n.
@@ -286,7 +307,7 @@ func (p *Player) ClearPLRFlag(bit int) {
 	if bit < 0 || bit >= 64 {
 		return
 	}
-	p.PlayerFlags &= ^(1 << uint(bit))
+	p.Flags &^= 1 << uint(bit)
 }
 
 // IsAffected returns true if AFF flag bit n is set.

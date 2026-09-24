@@ -20,8 +20,6 @@ import { RoomEditorPage } from './pages/RoomEditorPage';
 import { MobEditorPage } from './pages/MobEditorPage';
 import { ObjectEditorPage } from './pages/ObjectEditorPage';
 import { AgentsPage } from './pages/AgentsPage';
-import { DecisionsPage } from './pages/DecisionsPage';
-import { MindReaderPage } from './pages/MindReaderPage';
 import { TerminalPage } from './pages/TerminalPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { WorkshopPage } from './pages/WorkshopPage';
@@ -58,8 +56,6 @@ export default function App() {
             <Route path="/admin/game/rooms/:vnum" element={<ErrorBoundary><RoomDetailPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum/edit" element={<ErrorBoundary><RoomEditorPage /></ErrorBoundary>} />
             <Route path="/admin/agents" element={<ErrorBoundary><AgentsPage /></ErrorBoundary>} />
-            <Route path="/admin/decisions" element={<ErrorBoundary><DecisionsPage /></ErrorBoundary>} />
-            <Route path="/admin/narrative" element={<ErrorBoundary><MindReaderPage /></ErrorBoundary>} />
             <Route path="/admin/operations" element={<ErrorBoundary><OperationsPage /></ErrorBoundary>} />
             <Route path="/admin/workshop" element={<ErrorBoundary><WorkshopPage /></ErrorBoundary>} />
             <Route path="/admin/workshop/help" element={<ErrorBoundary><OlcHelpPage /></ErrorBoundary>} />

@@ -15,6 +15,7 @@ states, '	src/act.comm.c:794	buffered:sprintf	do_say
 You exclaim '	src/act.comm.c:808	buffered:sprintf	do_say
 You state '	src/act.comm.c:812	buffered:sprintf	do_say
 You say '	src/act.comm.c:814	buffered:sprintf	do_say
+tells the group, '	src/act.comm.c:843	buffered:sprintf	do_gsay
 You cannot write anything!	src/act.comm.c:1039	send_to_char	do_write
 You have no	src/act.comm.c:1049	buffered:sprintf	do_write
 You have no	src/act.comm.c:1054	buffered:sprintf	do_write

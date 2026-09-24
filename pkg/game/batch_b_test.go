@@ -8,7 +8,6 @@ package game
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -123,17 +122,16 @@ func TestMovePlayer_DeathTrapExtractsMortal(t *testing.T) {
 		t.Fatalf("MovePlayer failed: %v", err)
 	}
 
-	if p.GetRoom() != MortalStartRoom {
-		t.Errorf("expected player extracted to MortalStartRoom (%d), got %d", MortalStartRoom, p.GetRoom())
+	// C act.movement.c:288-301: death_cry then extract_char. The victim is
+	// queued and leaves the world on the next heartbeat's extraction, with no
+	// experience or CON penalty and no corpse; the descriptor goes to the
+	// menu (the session layer's part).
+	if p.GetFlags()&(1<<PlrExtract) == 0 {
+		t.Fatal("death trap did not queue the victim for extraction")
 	}
-	if p.GetHP() <= 0 {
-		t.Errorf("expected player HP > 0 after DT respawn, got %d", p.GetHP())
-	}
-	if p.GetHP() != p.GetMaxHP() {
-		t.Errorf("expected player at full HP after DT respawn, got %d/%d", p.GetHP(), p.GetMaxHP())
-	}
-	if p.GetPosition() != combat.PosStanding {
-		t.Errorf("expected player standing after DT respawn, got position %d", p.GetPosition())
+	w.ExtractPendingChars()
+	if _, inWorld := w.GetPlayer("Victim"); inWorld {
+		t.Error("death trap victim still in the world after extraction")
 	}
 	if p.GetExp() != 50000 {
 		t.Errorf("expected penalty-free DT (exp unchanged), got %d", p.GetExp())
@@ -175,7 +173,7 @@ func TestMovePlayer_DeathTrapImmortalSurvives(t *testing.T) {
 	}
 }
 
-func TestMovePlayer_DeathTrapKeepsInventory(t *testing.T) {
+func TestMovePlayer_DeathTrapDropsInventory(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1001, Name: "Safe Room", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
@@ -211,15 +209,20 @@ func TestMovePlayer_DeathTrapKeepsInventory(t *testing.T) {
 		t.Fatalf("MovePlayer failed: %v", err)
 	}
 
-	if p.GetRoom() != MortalStartRoom {
-		t.Errorf("expected player extracted to MortalStartRoom (%d), got %d", MortalStartRoom, p.GetRoom())
+	// extract_char drops what the victim carried in the trap room
+	// (handler.c:1133-1136); nothing respawns with them.
+	w.ExtractPendingChars()
+	if _, ok := p.Inventory.FindItem("keepsake"); ok {
+		t.Error("death trap victim kept the keepsake")
 	}
-	found, ok := p.Inventory.FindItem("keepsake")
-	if !ok || found == nil {
-		t.Error("expected player to keep keepsake in inventory after DT respawn")
+	dropped := false
+	for _, item := range w.GetItemsInRoom(1002) {
+		if item == keepsake {
+			dropped = true
+		}
 	}
-	if items := w.GetItemsInRoom(1002); len(items) != 0 {
-		t.Errorf("expected no dropped corpse/items in DT room, got %d item(s)", len(items))
+	if !dropped {
+		t.Error("keepsake did not drop in the death trap room")
 	}
 }
 
@@ -267,10 +270,10 @@ func TestMovePlayer_DeathTrapMountDismounts(t *testing.T) {
 	}
 
 	if p.IsMounted() {
-		t.Error("expected player to be dismounted after DT respawn")
+		t.Error("expected player to be dismounted when the death trap takes the mount")
 	}
-	if p.GetRoom() != MortalStartRoom {
-		t.Errorf("expected player extracted to MortalStartRoom (%d), got %d", MortalStartRoom, p.GetRoom())
+	if p.GetFlags()&(1<<PlrExtract) == 0 {
+		t.Error("death trap did not queue the rider for extraction")
 	}
 }
 
