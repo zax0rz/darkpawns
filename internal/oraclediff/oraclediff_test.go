@@ -533,3 +533,15 @@ func TestSetupPasswordRefusal(t *testing.T) {
 		}
 	}
 }
+
+func TestRunSetupWithoutSettleRejectsPasswordRefusal(t *testing.T) {
+	conn := &scriptedConn{outputs: []string{
+		"greeting",
+		"Give me a password for Peer: ",
+		"Illegal password.\r\nPassword: ",
+	}}
+	_, err := RunSetup(conn, []string{"Peer", "overlongpassword"}, time.Millisecond)
+	if err == nil || !strings.Contains(err.Error(), "Illegal password.") {
+		t.Fatalf("RunSetup accepted a refused password: %v", err)
+	}
+}

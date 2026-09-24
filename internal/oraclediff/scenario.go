@@ -769,14 +769,7 @@ func RunSetupAndSettle(conn Conn, setup []string, pulses int, quiescence time.Du
 	if pulses <= 0 {
 		return "", errors.New("settle pulse count must be positive")
 	}
-	transcript, err := runSetup(conn, setup, entryIndex, pulses, quiescence)
-	if err != nil {
-		return transcript, err
-	}
-	if refusal := setupPasswordRefusal(transcript); refusal != "" {
-		return transcript, fmt.Errorf("setup never entered the game: the server answered %q (C refuses passwords over 10 characters, MAX_PWD_LENGTH in structs.h)\ntranscript:\n%s", refusal, transcript)
-	}
-	return transcript, nil
+	return runSetup(conn, setup, entryIndex, pulses, quiescence)
 }
 
 // setupPasswordRefusal reports the nanny's password refusal if a setup got
@@ -817,6 +810,9 @@ func runSetup(conn Conn, setup []string, settleAfter, pulses int, quiescence tim
 				return transcript.String(), fmt.Errorf("settle after setup step %d %q: %w\ntranscript so far:\n%s", i+1, step, settleErr, transcript.String())
 			}
 		}
+	}
+	if refusal := setupPasswordRefusal(transcript.String()); refusal != "" {
+		return transcript.String(), fmt.Errorf("setup never entered the game: the server answered %q (C refuses passwords over 10 characters, MAX_PWD_LENGTH in structs.h)\ntranscript:\n%s", refusal, transcript.String())
 	}
 	return transcript.String(), nil
 }
