@@ -518,3 +518,30 @@ func TestParseScenarioReloginNeedsBothServers(t *testing.T) {
 		t.Fatalf("scenario = %+v, err %v", sc, err)
 	}
 }
+
+func TestSetupPasswordRefusal(t *testing.T) {
+	for _, tc := range []struct {
+		transcript string
+		want       string
+	}{
+		{"Give me a password for X: \r\nPlease retype password: ", ""},
+		{"Give me a password for X: \r\nIllegal password.\r\nPassword: ", "Illegal password."},
+		{"Please retype password: \r\nPasswords don't match... start over.\r\n", "Passwords don't match"},
+	} {
+		if got := setupPasswordRefusal(tc.transcript); got != tc.want {
+			t.Errorf("setupPasswordRefusal(%q) = %q, want %q", tc.transcript, got, tc.want)
+		}
+	}
+}
+
+func TestRunSetupWithoutSettleRejectsPasswordRefusal(t *testing.T) {
+	conn := &scriptedConn{outputs: []string{
+		"greeting",
+		"Give me a password for Peer: ",
+		"Illegal password.\r\nPassword: ",
+	}}
+	_, err := RunSetup(conn, []string{"Peer", "overlongpassword"}, time.Millisecond)
+	if err == nil || !strings.Contains(err.Error(), "Illegal password.") {
+		t.Fatalf("RunSetup accepted a refused password: %v", err)
+	}
+}

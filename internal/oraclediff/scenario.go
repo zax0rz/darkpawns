@@ -772,6 +772,20 @@ func RunSetupAndSettle(conn Conn, setup []string, pulses int, quiescence time.Du
 	return runSetup(conn, setup, entryIndex, pulses, quiescence)
 }
 
+// setupPasswordRefusal reports the nanny's password refusal if a setup got
+// one. A setup that means to enter the game and is refused leaves its
+// character at a password prompt on both servers, and every later step then
+// compares two identical failures: six scenarios passed that way until
+// 2026-09-24, their observers never logged in.
+func setupPasswordRefusal(transcript string) string {
+	for _, refusal := range []string{"Illegal password.", "Passwords don't match"} {
+		if strings.Contains(transcript, refusal) {
+			return refusal
+		}
+	}
+	return ""
+}
+
 func runSetup(conn Conn, setup []string, settleAfter, pulses int, quiescence time.Duration) (string, error) {
 	var transcript strings.Builder
 	initial, err := conn.ReadUntilQuiescent(quiescence)
@@ -796,6 +810,9 @@ func runSetup(conn Conn, setup []string, settleAfter, pulses int, quiescence tim
 				return transcript.String(), fmt.Errorf("settle after setup step %d %q: %w\ntranscript so far:\n%s", i+1, step, settleErr, transcript.String())
 			}
 		}
+	}
+	if refusal := setupPasswordRefusal(transcript.String()); refusal != "" {
+		return transcript.String(), fmt.Errorf("setup never entered the game: the server answered %q (C refuses passwords over 10 characters, MAX_PWD_LENGTH in structs.h)\ntranscript:\n%s", refusal, transcript.String())
 	}
 	return transcript.String(), nil
 }

@@ -49,8 +49,8 @@ Y
 [setup:oracle:observer]
 Parryobserver
 Y
-observerpass
-observerpass
+obspass
+obspass
 N
 M
 H
@@ -67,8 +67,8 @@ east
 [setup:port:observer]
 Parryobserver
 y
-observerpass
-observerpass
+obspass
+obspass
 N
 M
 H
