@@ -178,7 +178,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 	dam := ch.GetDamroll() + dprng.Number(1, 6) + dprng.Number(1, 4)
 	improveSkill(ch, SkillShoot)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 1,
+		Success: true, Damage: dam, WaitCh: 1, NoDamageCall: true,
 		MessageToCh:   "You hear a roar of pain! Your shot hits!",
 		MessageToVict: "A projectile pierces you!",
 		MessageToRoom: fmt.Sprintf("%s fires a projectile that strikes %s!", ch.Name, target.GetName()),

@@ -338,7 +338,19 @@ func TakeDamageWithDeath(ch, victim Combatant, dam int, attackType int, onDeath 
 	return takeDamage(ch, victim, dam, attackType, onDeath)
 }
 
+// TakeDamageAfterGate is TakeDamageWithDeath for a caller that has already
+// asked damage()'s protection gate (World.DamageRefused) at the point C calls
+// damage(), such as the skill command tail. Asking twice would print the
+// refusal twice.
+func TakeDamageAfterGate(ch, victim Combatant, dam int, attackType int, onDeath func()) bool {
+	return takeDamageFrom(ch, victim, dam, attackType, onDeath, false)
+}
+
 func takeDamage(ch, victim Combatant, dam int, attackType int, onDeath func()) bool {
+	return takeDamageFrom(ch, victim, dam, attackType, onDeath, true)
+}
+
+func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(), gate bool) bool {
 	if victim.GetPosition() <= PosDead {
 		return false
 	}
@@ -346,37 +358,7 @@ func takeDamage(ch, victim Combatant, dam int, attackType int, onDeath func()) b
 	victimName := victim.GetName()
 	roomVNum := ch.GetRoom()
 
-	if ch.GetRoom() != victim.GetRoom() {
-		if !ch.IsNPC() || ch.GetLevel() >= LVL_IMMORT {
-			cbLog("Attempt to assign damage when ch and vict are in different rooms.",
-				"NRM", LVL_IMMORT, false)
-		}
-		return false
-	}
-
-	isOutlaw := cbHasPlrFlag(victimName, "PLR_OUTLAW")
-	if !isOutlaw && victim.GetFighting() != chName && chName != victimName {
-		if cbHasRoomFlag(roomVNum, "ROOM_PEACEFUL") {
-			return false
-		}
-	}
-
-	if victimName != chName && !ch.IsNPC() && !victim.IsNPC() {
-		if ch.GetLevel() <= 10 {
-			return false
-		}
-		if victim.GetLevel() <= 10 && !isOutlaw {
-			return false
-		}
-	}
-
-	if cbIsShopkeeper(victimName) {
-		if ch.GetFighting() != "" {
-			ch.StopFighting()
-		}
-		if victim.GetFighting() != "" {
-			victim.StopFighting()
-		}
+	if gate && cbDamageRefused(ch, victim) {
 		return false
 	}
 
@@ -1221,3 +1203,34 @@ func (n *namedCombatant) StopFighting()             {}
 func (n *namedCombatant) GetFighting() string       { return "" }
 func (n *namedCombatant) SendMessage(msg string)    {}
 func (n *namedCombatant) GetSendMessage(msg string) {}
+
+// defaultDamageRefused is the protection subset visible to the combat
+// package alone, used only when no game layer is wired (package tests). It
+// emits nothing; production goes through World.DamageRefused.
+func defaultDamageRefused(ch, victim Combatant) bool {
+	chName := ch.GetName()
+	victimName := victim.GetName()
+	if ch.GetRoom() != victim.GetRoom() && ch.GetLevel() < LVL_IMMORT {
+		return true
+	}
+	isOutlaw := !victim.IsNPC() && cbHasPlrFlag(victimName, "PLR_OUTLAW")
+	if !isOutlaw && victim.GetFighting() != chName && chName != victimName &&
+		cbHasRoomFlag(ch.GetRoom(), "ROOM_PEACEFUL") {
+		return true
+	}
+	if victimName != chName && !ch.IsNPC() && !victim.IsNPC() {
+		if ch.GetLevel() <= 10 || (victim.GetLevel() <= 10 && !isOutlaw) {
+			return true
+		}
+	}
+	if cbIsShopkeeper(victimName) {
+		if ch.GetFighting() != "" {
+			ch.StopFighting()
+		}
+		if victim.GetFighting() != "" {
+			victim.StopFighting()
+		}
+		return true
+	}
+	return false
+}

@@ -129,59 +129,16 @@ func cmdHit(s *Session, args []string) error {
 	// attacker the round, exactly like C.
 	s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
 
-	// --- Combat-entry gates (fight.c:1336-1357, DP-1045 partial) ---
-	// These mirror C's damage() pre-swing checks at the command layer — the
-	// faithful, non-spammy home for player-initiated melee in Go.
-
-	// Resolve victim facts uniformly across mob/player targets.
-	victimFighting := ""
-	victimIsOutlaw := false
-	victimIsPlayer := tgt.Player != nil
-	victimLevel := 0
-	switch {
-	case tgt.Player != nil:
-		victimFighting = tgt.Player.GetFighting()
-		victimIsOutlaw = tgt.Player.GetFlags()&(1<<uint(game.PlrOutlaw)) != 0
-		victimLevel = tgt.Player.GetLevel()
-	case tgt.Mob != nil:
-		victimFighting = tgt.Mob.GetFighting()
-		victimLevel = tgt.Mob.GetLevel()
+	// damage()'s protection block (fight.c:1318-1368): peaceful rooms, the
+	// level-10 PK protections and shopkeepers, with C's refusal bytes. The
+	// shared gate is the same one every other damage seam asks (DP-1327).
+	var victimCombatant combat.Combatant
+	if tgt.Player != nil {
+		victimCombatant = tgt.Player
+	} else if tgt.Mob != nil {
+		victimCombatant = tgt.Mob
 	}
-
-	// Peaceful room — fight.c:1336. Outlaws and already-engaged retaliation
-	// are exempt. Applies to both mob and player targets (mobs are never
-	// outlaws, so they're always protected here).
-	if !victimIsOutlaw && victimFighting != s.player.Name &&
-		s.manager.world.RoomHasFlag(s.player.GetRoom(), "peaceful") {
-		s.Send("This room just has such a peaceful, easy feeling...\r\n")
-		return nil
-	}
-
-	// Low-level PC protection — fight.c:1344 (PC vs PC only). The attacker is
-	// always a player here (cmdHit is a player command), so we only need the
-	// victim-is-PC test for the IS_NPC(victim) half of the C condition.
-	if victimIsPlayer {
-		if s.player.GetLevel() <= 10 {
-			game.Act(nil, false, s.player, victim, nil, nil,
-				"You are not experienced enough to attack $N!", "", game.ToChar)
-			return nil
-		}
-		if victimLevel <= 10 && !victimIsOutlaw {
-			game.Act(nil, false, s.player, victim, nil, nil,
-				"Ancient forces protect $N from your wrath!", "", game.ToChar)
-			return nil
-		}
-	}
-
-	// C's damage() protects shopkeepers after peaceful/newbie gates and stops
-	// any existing combat involving either participant. ok_damage_shopkeeper
-	// runs as the gate's first half (shop.c:1006): non-fighting keepers slap
-	// and warn the attacker first.
-	if tgt.Mob != nil && isShopkeeper(s.manager.world, tgt.Mob) {
-		shopkeeperDamagePrelude(s, tgt.Mob)
-		s.Send("Ha ha... Don't think so.\r\n")
-		s.manager.combatEngine.StopCombat(s.player.GetName())
-		s.manager.combatEngine.StopCombat(tgt.Mob.GetName())
+	if victimCombatant != nil && s.manager.world.DamageRefused(s.player, victimCombatant) {
 		return nil
 	}
 
@@ -278,55 +235,6 @@ func combatTargetActor(target game.CharTarget) game.Actor {
 		return target.Mob
 	}
 	return nil
-}
-
-func isShopkeeper(world *game.World, mob *game.MobInstance) bool {
-	if world == nil || mob == nil {
-		return false
-	}
-	// C is_shopkeeper (mobprog.c:473-507): the shop spec set (guild,
-	// guild_guard, butler, clerk — the shop spec itself is the .shp keeper
-	// membership below), plus the hardcoded protector vnums.
-	switch game.MobSpecAssign[mob.GetVNum()] {
-	case "guild", "guild_guard", "butler", "clerk":
-		return true
-	}
-	switch vnum := mob.GetVNum(); vnum {
-	case 8003, 8004, 8005, 8006, 8007, 8008, 8009, 8010, 8011, 8078:
-		return true
-	}
-	// Keepers of .shp shops — C's assign_the_shopkeepers gives them the
-	// shop spec at boot.
-	if _, ok := world.ShopBitvectorForKeeper(mob.GetVNum()); ok {
-		return true
-	}
-	manager := world.GetShopManager()
-	if manager == nil {
-		return false
-	}
-	_, ok := manager.GetShopByNPC(mob.GetVNum())
-	return ok
-}
-
-// shopkeeperDamagePrelude mirrors C ok_damage_shopkeeper (shop.c:1006-1023):
-// a shop's keeper that does not WILL_START_FIGHT slaps the attacker and
-// tells them off before damage()'s protection gate answers.
-func shopkeeperDamagePrelude(s *Session, mob *game.MobInstance) {
-	bits, ok := s.manager.world.ShopBitvectorForKeeper(mob.GetVNum())
-	if !ok || bits&1 != 0 { // not an .shp keeper, or WILL_START_FIGHT
-		return
-	}
-	keeper := game.Actor(mob)
-	// do_action(vict, GET_NAME(ch), cmd_slap, 0) — the slap social's
-	// vict/room lines (lib/misc/socials "slap").
-	game.Act(s.manager.world, false, keeper, s.player, nil, nil,
-		"$n slaps $N.", "", game.ToNotVict)
-	game.Act(nil, false, keeper, s.player, nil, nil,
-		"You are slapped by $n.", "", game.ToVict)
-	// do_tell(vict, "<name> Get out of here before I call the guards!") — the
-	// prepended name is the tell's target argument; the message is the rest.
-	game.Act(nil, false, keeper, s.player, nil, nil,
-		"$n tells you, 'Get out of here before I call the guards!'", "", game.ToVict)
 }
 
 // cmdFlee attempts to flee from combat.

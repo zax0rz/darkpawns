@@ -41,9 +41,13 @@ type GameCallbacks struct {
 	HasRoomFlag         func(roomVNum int, flag string) bool
 	HasScriptFlag       func(name string, flag string) bool
 	IsShopkeeper        func(name string) bool
-	GetRoomCombatants   func(roomVNum int) []Combatant
-	GetFollowing        func(name string) string
-	JailGuardSubdue     func(guardName, victimName string) bool
+	// DamageRefused is damage()'s protection block (fight.c:1318-1368),
+	// owned by the game layer so every damage seam emits the same refusal
+	// bytes. True means C's damage() returned FALSE before hurting victim.
+	DamageRefused     func(ch, victim Combatant) bool
+	GetRoomCombatants func(roomVNum int) []Combatant
+	GetFollowing      func(name string) string
+	JailGuardSubdue   func(guardName, victimName string) bool
 
 	// Equipment & mounts
 	IsMounted     func(name string) bool
@@ -354,6 +358,16 @@ func cbIsShopkeeper(name string) bool {
 		return cb.IsShopkeeper(name)
 	}
 	return false
+}
+
+// cbDamageRefused asks the game layer's damage() protection gate. Without a
+// game layer (package tests) it falls back to the silent subset the combat
+// package can see for itself.
+func cbDamageRefused(ch, victim Combatant) bool {
+	if cb := callbacks; cb != nil && cb.DamageRefused != nil {
+		return cb.DamageRefused(ch, victim)
+	}
+	return defaultDamageRefused(ch, victim)
 }
 
 func cbGetRoomCombatants(roomVNum int) []Combatant {
