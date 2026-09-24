@@ -434,6 +434,30 @@ export function createMudClient(options) {
   let awaitingEntryReply = false;
   let queuedInput = '';
 
+  // Server output waits while the terminal is unfitted. A terminal measured
+  // before its box is laid out gets xterm's two-column minimum; text written
+  // then wraps two characters to a line, and xterm cannot reflow the cursor's
+  // line back when the fit arrives. Hosts refit on resize (ResizeObserver),
+  // and the held text is written at the real width.
+  const MIN_COLS = 20;
+  let heldOutput = '';
+  function writeOutput(text) {
+    if (typeof term.cols === 'number' && term.cols < MIN_COLS) {
+      heldOutput += text;
+      return;
+    }
+    if (heldOutput) {
+      term.write(heldOutput);
+      heldOutput = '';
+    }
+    term.write(text);
+  }
+  if (typeof term.onResize === 'function') {
+    term.onResize(function () {
+      if (heldOutput && term.cols >= MIN_COLS) writeOutput('');
+    });
+  }
+
   // handleStateRoom updates the sidebar from a state push. The terminal must
   // NOT render the room here: the server already delivers room text through
   // the canonical act()/text stream, and state arrives on every look, room
@@ -495,7 +519,7 @@ export function createMudClient(options) {
         const msg = JSON.parse(evt.data);
         if (msg.type === 'out') {
           const out = msg.data || {};
-          term.write(out.text || '');
+          writeOutput(out.text || '');
           if (out.entry) {
             inGame = false;
             charInputSecret = Boolean(out.secret);
@@ -532,6 +556,7 @@ export function createMudClient(options) {
       awaitingEntryReply = false;
       queuedInput = '';
       inputBuffer = '';
+      heldOutput = '';
       if (statusBar) statusBar.classList.add('hidden');
     };
 

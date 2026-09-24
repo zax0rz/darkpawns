@@ -121,8 +121,14 @@ export function MudTerminal({ className = '' }: MudTerminalProps) {
     term.open(containerRef.current);
     fitAddon.fit();
 
+    // Refit when the terminal's own box changes size, not only the window,
+    // and once web fonts load: a terminal measured before layout gets xterm's
+    // two-column minimum, and output written then wraps at two columns.
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(containerRef.current);
+    document.fonts?.ready.then(handleResize);
 
     clientRef.current = createMudClient({
       terminal: term,
@@ -133,6 +139,7 @@ export function MudTerminal({ className = '' }: MudTerminalProps) {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      observer.disconnect();
       // Without this the socket outlives every navigation away from the page.
       clientRef.current?.disconnect();
       clientRef.current = null;

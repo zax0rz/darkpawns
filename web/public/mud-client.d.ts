@@ -24,6 +24,10 @@ export interface MudClientOptions {
     write(data: string): void;
     writeln(data: string): void;
     onData(handler: (data: string) => void): unknown;
+    /** xterm's column count and resize event. When present, server output is
+     *  held while the terminal is narrower than 20 columns (not yet fitted). */
+    cols?: number;
+    onResize?(handler: (size: { cols: number; rows: number }) => void): unknown;
   };
   /** Defaults to /ws on the current origin, or the `host` query parameter. */
   wsUrl?: string;
