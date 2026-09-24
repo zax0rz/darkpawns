@@ -1524,6 +1524,9 @@ type Session struct {
 	// Character creation state
 	creationSaved bool // New character persisted at accepted stats, not yet admitted.
 	loginFailures atomic.Int32
+	// terminalNamed is set once a terminal client's name line has been
+	// accepted and handed to the nanny (see TerminalLine).
+	terminalNamed bool
 	charCreating  bool
 	charStage     string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
 	charName      string

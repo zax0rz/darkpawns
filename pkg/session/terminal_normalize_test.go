@@ -1,16 +1,16 @@
-package telnet
+package session
 
 import "testing"
 
 func TestNormalizeCRLFTreatsCLineEndingsAsSingleBreaks(t *testing.T) {
 	for _, input := range []string{"a\n\rb", "a\r\nb", "a\nb", "a\rb"} {
-		if got, want := normalizeCRLF(input), "a\r\nb"; got != want {
-			t.Errorf("normalizeCRLF(%q) = %q, want %q", input, got, want)
+		if got, want := NormalizeCRLF(input), "a\r\nb"; got != want {
+			t.Errorf("NormalizeCRLF(%q) = %q, want %q", input, got, want)
 		}
 	}
 }
 
-// TestEnsureLineEndedKeepsCLineEndingsIntact guards the telnet write path for
+// TestEnsureLineEndedKeepsCLineEndingsIntact guards the terminal write path for
 // handler text that already ends a line. C's LFCR pair ("\n\r") ends most
 // handler output; treating the trailing '\r' as unterminated appended a second
 // CRLF, which showed up as an extra blank line between the two messages of one
