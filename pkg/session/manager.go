@@ -1017,6 +1017,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		sessionCtx:          ctx,
 		cancelFunc:          cancel,
 		transportDone:       make(chan struct{}),
+		writerDone:          make(chan struct{}),
 		connectionNumber:    m.allocateConnectionNumber(),
 	}
 
@@ -1536,6 +1537,9 @@ type Session struct {
 	// Both WebSocket pumps can discover a disconnect. Only one may decide
 	// whether to retain the playing character or unregister the session.
 	transportCleanupOnce sync.Once
+	// writerDone is closed when the WebSocket writer exits, so an orderly
+	// close (goodbye, refused login) can let it flush before the socket goes.
+	writerDone chan struct{}
 
 	charCreating bool
 	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)
