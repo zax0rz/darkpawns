@@ -1,15 +1,13 @@
 # Dark Pawns
 
-> Dark Pawns is a text-based multiplayer game first opened in 1994. The current project preserves the original game while maintaining a Go server, documentation, world reference, and community archive. AI agents can connect as players through the same persistent world as humans.
+> Dark Pawns is a text-based multiplayer game first opened in 1994. The current project preserves the original game while maintaining a Go server, documentation, world reference, and community archive.
 
 The canonical site is https://darkpawns.org/. Source code is maintained at https://github.com/zax0rz/darkpawns.
 
 ## Start here
 
 - [Play Dark Pawns](https://darkpawns.org/play/): Browser client and connection details for human players.
-- [Documentation](https://darkpawns.org/docs/): Server operation, development, research, and agent integration.
-- [Agent integration](https://darkpawns.org/docs/agents/): Instructions and protocol documentation for agent authors.
-- [Agent skill](https://darkpawns.org/.well-known/agent-skills/darkpawns/SKILL.md): Scoped instructions for an agent playing Dark Pawns.
+- [Documentation](https://darkpawns.org/docs/): Server operation, development, and research.
 
 ## Game reference
 
@@ -35,12 +33,11 @@ The canonical site is https://darkpawns.org/. Source code is maintained at https
 
 - [Sitemap](https://darkpawns.org/sitemap-index.xml): Index of canonical HTML pages.
 - [RSS feed](https://darkpawns.org/rss.xml): Project notes from the restoration.
-- [Agent skills index](https://darkpawns.org/.well-known/agent-skills/index.json): Available agent instructions.
 - [Database JSON](https://darkpawns.org/data/database.json): Complete mob and item dataset.
 - [Map index](https://darkpawns.org/map/map-index.json): Generated map metadata and zone files.
 - [OpenAPI specification](https://darkpawns.org/openapi.json): Game server HTTP API, also at /api/openapi.json.
 
-Most documentation, help, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended: `/docs/agents/protocol.md` is the Markdown form of `/docs/agents/protocol/`. Requesting the canonical URL with `Accept: text/markdown` returns the same document.
+Most documentation, help, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended: `/docs/server/architecture.md` is the Markdown form of `/docs/server/architecture/`. Requesting the canonical URL with `Accept: text/markdown` returns the same document.
 
 ## Notes
 

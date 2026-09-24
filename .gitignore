@@ -6,8 +6,6 @@
 /.hugo_build.lock
 *.exe
 load_test/loadtest
-cmd/dp-goat/dp-goat
-cmd/dp-goat/build/
 
 # Go
 vendor/
@@ -71,7 +69,8 @@ data/
 !website/data/**
 
 # Built binaries (anchored to repo root so they don't also exclude the
-# same-named cmd/ source dirs — cmd/test-race, cmd/dp-agent, cmd/dp-goatd).
+# same-named cmd/ source dirs, such as cmd/test-race). /dp-agent and /dp-goatd
+# were built from commands since removed; old checkouts may still hold them.
 /test-race
 /dp-agent
 .clawpatch/

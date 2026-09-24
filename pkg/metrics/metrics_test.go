@@ -38,10 +38,6 @@ func TestMetrics(t *testing.T) {
 	// Test database metrics
 	DBQuery(50 * time.Millisecond)
 
-	// Test memory metrics
-	MemoryWrite()
-	MemoryRead()
-
 	// Verify metric values, not just names (DP-578).
 	if got := testutil.ToFloat64(connectionsActive); got != 0 {
 		t.Errorf("connections_active = %v, want 0", got)
@@ -79,12 +75,6 @@ func TestMetrics(t *testing.T) {
 	if got := testutil.ToFloat64(dbQueriesTotal); got != 1 {
 		t.Errorf("db_queries_total = %v, want 1", got)
 	}
-	if got := testutil.ToFloat64(memoryWrites); got != 1 {
-		t.Errorf("memory_writes_total = %v, want 1", got)
-	}
-	if got := testutil.ToFloat64(memoryReads); got != 1 {
-		t.Errorf("memory_reads_total = %v, want 1", got)
-	}
 
 	// Test HTTP handler
 	req := httptest.NewRequest("GET", "/metrics", nil)
@@ -111,8 +101,6 @@ func TestMetrics(t *testing.T) {
 		"darkpawns_deaths_total",
 		"darkpawns_errors_total",
 		"darkpawns_db_queries_total",
-		"darkpawns_memory_writes_total",
-		"darkpawns_memory_reads_total",
 	}
 
 	for _, metric := range expectedMetrics {

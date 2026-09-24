@@ -13,7 +13,6 @@ Most consumers correspond directly to C `number()` or `dice()` sites. The
 following Go-only consumers also use this stream so they cannot introduce a
 second generator:
 
-- `pkg/agentcli/reconnect.go`: reconnect jitter
 - `pkg/engine/affect.go`: generated affect IDs
 - `pkg/engine/skill.go`: the temporary Go skill-progression model
 - `pkg/session/session_temp.go`: the session `RandomInt` helper

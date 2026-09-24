@@ -23,7 +23,6 @@ type fakeOLCReadStateProvider struct {
 }
 
 type fakeOLCWriteStateProvider struct {
-	fakeOLCReadStateProvider
 	registry *olc.Registry
 	saves    *olc.SaveList
 	presence []bool
@@ -79,16 +78,6 @@ func (testWebConflictOwner) Identity() string       { return "telnet-owner" }
 func (testWebConflictOwner) DisplayName() string    { return "TelnetBuilder" }
 func (testWebConflictOwner) Frontend() olc.Frontend { return olc.FrontendTelnet }
 
-func (f *fakeOLCReadStateProvider) GetLiveAgentSessions() []LiveAgentSession { return nil }
-
-func (f *fakeOLCReadStateProvider) EnableDecisionCapture() bool { return false }
-
-func (f *fakeOLCReadStateProvider) DisableDecisionCapture() {}
-
-func (f *fakeOLCReadStateProvider) DecisionCaptureEnabled() bool { return false }
-
-func (f *fakeOLCReadStateProvider) DecisionCaptureAvailable() bool { return false }
-
 func (f *fakeOLCReadStateProvider) GetOLCClaims() []olc.ClaimEntry { return f.claims }
 
 func (f *fakeOLCReadStateProvider) GetOLCDirtyZones() []olc.DirtyEntry { return f.dirty }
@@ -141,7 +130,7 @@ func newOLCTestWorld(t *testing.T) *game.World {
 	return world
 }
 
-func newOLCTestRouter(t *testing.T, level, zone int, state LiveSessionProvider) http.Handler {
+func newOLCTestRouter(t *testing.T, level, zone int, state any) http.Handler {
 	t.Helper()
 	setJWTSecret(t)
 	t.Setenv("ADMIN_STORE_PATH", filepath.Join(t.TempDir(), "admin-store.json"))

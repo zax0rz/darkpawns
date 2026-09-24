@@ -38,10 +38,6 @@ func MetricsIntegration() {
 	// Simulate database operations
 	metrics.DBQuery(20 * time.Millisecond)
 
-	// Simulate memory operations
-	metrics.MemoryWrite()
-	metrics.MemoryRead()
-
 	// Simulate player disconnection
 	metrics.ConnectionClosed()
 	metrics.SetPlayersOnline(0)

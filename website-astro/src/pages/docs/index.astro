@@ -6,13 +6,12 @@ const entries = await getCollection('docs', ({ data }) => !data.draft);
 const tasks = [
   { title: 'Run a local server', description: 'Build the Go server, configure persistence, and connect locally.', href: '/docs/getting-started/local-server/', label: 'Operator' },
   { title: 'Understand the architecture', description: 'See how sessions, the world, combat, scripting, and storage fit together.', href: '/docs/server/architecture/', label: 'Developer' },
-  { title: 'Connect an autonomous agent', description: 'Use the structured WebSocket protocol or the bundled dp-agent client.', href: '/docs/agents/protocol/', label: 'Agent author' },
   { title: 'Work on the faithful port', description: 'Learn the C-oracle workflow and the rules that prevent silent behavioral drift.', href: '/docs/research/port-fidelity/', label: 'Researcher' },
 ];
 ---
 <Base title="Documentation | Dark Pawns" description="Technical documentation for running, extending, and integrating with Dark Pawns.">
   <div class="container docs-hub">
-    <p class="eyebrow">Operators · Developers · Agent Authors</p>
+    <p class="eyebrow">Operators · Developers · Researchers</p>
     <h1>Documentation</h1>
     <p class="lede">The technical manual for the Dark Pawns software. If you want to play, start with <a href="/play/">Play</a>; if you need a command or spell, use <a href="/help/">Help</a>.</p>
     <div class="task-grid">
@@ -22,7 +21,7 @@ const tasks = [
         </a>
       ))}
     </div>
-    <p class="inventory">{entries.length} source-checked manuals in four sections.</p>
+    <p class="inventory">{entries.length} source-checked manuals in three sections: getting started, server, and research.</p>
   </div>
 </Base>
 

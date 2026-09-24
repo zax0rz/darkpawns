@@ -106,7 +106,7 @@ const docs = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    section: z.enum(['getting-started', 'server', 'agents', 'research']),
+    section: z.enum(['getting-started', 'server', 'research']),
     audience: z.enum(['operator', 'developer', 'agent-author', 'researcher']),
     order: z.number().int().nonnegative(),
     sourcePath: z.string(),

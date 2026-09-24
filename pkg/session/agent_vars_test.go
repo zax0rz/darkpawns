@@ -14,12 +14,12 @@ import (
 // Helpers: agent test sessions
 // ---------------------------------------------------------------------------
 
-// makeTestAgentSession creates a session with isAgent=true and a
+// makeTestAgentSession creates a session with structured data on and a
 // pre-populated subscribedVars map.
 func makeTestAgentSession(t *testing.T, m *Manager, name string, roomVNum int, vars []string) *Session {
 	t.Helper()
 	s := makeTestSession(t, m, name, roomVNum, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 	s.agentMu.Lock()
 	for _, v := range vars {
 		s.subscribedVars[v] = true
@@ -168,7 +168,7 @@ func recvJSONMaybe(t *testing.T, s *Session, target interface{}) bool {
 func TestHandleSubscribe(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Build a subscribe message
 	data := json.RawMessage(`{"variables":["HEALTH","MANA","ROOM_VNUM"]}`)
@@ -198,7 +198,7 @@ func TestHandleSubscribe(t *testing.T) {
 func TestHandleSubscribe_NonAgent(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = false
+	s.wantsStructuredData = false
 
 	data := json.RawMessage(`{"variables":["HEALTH"]}`)
 	if err := s.handleSubscribe(data); err != nil {
@@ -217,7 +217,7 @@ func TestHandleSubscribe_NonAgent(t *testing.T) {
 func TestHandleSubscribe_EmptyVariables(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	data := json.RawMessage(`{"variables":[]}`)
 	if err := s.handleSubscribe(data); err != nil {
@@ -235,7 +235,7 @@ func TestHandleSubscribe_EmptyVariables(t *testing.T) {
 func TestHandleSubscribe_MalformedJSON(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	data := json.RawMessage(`not json`)
 	if err := s.handleSubscribe(data); err == nil {
@@ -274,7 +274,7 @@ func TestMarkDirty(t *testing.T) {
 func TestMarkDirty_NonAgent(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = false
+	s.wantsStructuredData = false
 
 	s.markDirty("HEALTH", "MANA")
 
@@ -397,7 +397,7 @@ func TestFlushDirtyVars_DirtyCleared(t *testing.T) {
 func TestFlushDirtyVars_NonAgent(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = false
+	s.wantsStructuredData = false
 
 	s.flushDirtyVars()
 
@@ -464,7 +464,7 @@ func TestSendFullVarDump(t *testing.T) {
 func TestBuildVarValue_Basic(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	s.player.Health = 85
 	s.player.MaxHealth = 100
@@ -499,7 +499,7 @@ func TestBuildVarValue_Basic(t *testing.T) {
 func TestBuildVarValue_Room(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// ROOM_VNUM
 	roomVNum := s.buildVarValue(VarRoomVnum)
@@ -523,7 +523,7 @@ func TestBuildVarValue_Room(t *testing.T) {
 func TestBuildVarValue_UnknownRoom(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 9999, true) // room doesn't exist
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	roomName := s.buildVarValue(VarRoomName)
 	if roomName != "" {
@@ -544,7 +544,7 @@ func TestBuildVarValue_UnknownRoom(t *testing.T) {
 func TestBuildVarValue_Fighting(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Not fighting — combat engine has no entry for Alice
 	fighting := s.buildVarValue(VarFighting)
@@ -556,41 +556,20 @@ func TestBuildVarValue_Fighting(t *testing.T) {
 func TestBuildVarValue_Events(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
-	// No pending events
-	events := s.buildVarValue(VarEvents)
-	if events == nil {
-		t.Error("EVENTS should be empty slice, not nil")
-	}
-
-	// With pending events
-	s.agentMu.Lock()
-	s.pendingEvents = []interface{}{"event1", "event2"}
-	s.agentMu.Unlock()
-
-	events = s.buildVarValue(VarEvents)
-	evSlice, ok := events.([]interface{})
-	if !ok {
-		t.Fatalf("EVENTS type = %T, want []interface{}", events)
-	}
-	if len(evSlice) != 2 {
-		t.Errorf("EVENTS has %d entries, want 2", len(evSlice))
-	}
-
-	// After reading, pendingEvents should be cleared
-	s.agentMu.Lock()
-	remaining := s.pendingEvents
-	s.agentMu.Unlock()
-	if remaining != nil {
-		t.Error("pendingEvents should be nil after reading")
+	// Nothing queues events since the agent protocol was removed; the
+	// variable stays an empty list so a subscribed client never sees null.
+	events, ok := s.buildVarValue(VarEvents).([]interface{})
+	if !ok || events == nil || len(events) != 0 {
+		t.Fatalf("EVENTS = %#v, want an empty list", s.buildVarValue(VarEvents))
 	}
 }
 
 func TestBuildVarValue_UnknownVar(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	val := s.buildVarValue("NONEXISTENT_VAR")
 	if val != nil {
@@ -605,7 +584,7 @@ func TestBuildVarValue_UnknownVar(t *testing.T) {
 func TestBuildRoomMobs(t *testing.T) {
 	m := makeTestManagerWithMobs(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Spawn a couple mobs in room 1001
 	goblin := registerMob(t, m, 2001, 1001) // "goblin guard", "A goblin guard"
@@ -658,7 +637,7 @@ func TestBuildRoomMobs(t *testing.T) {
 func TestBuildRoomMobs_Empty(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1002, true) // Empty Vault — no mobs
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	mobs := s.buildRoomMobs()
 	if mobs == nil || len(mobs) != 0 {
@@ -669,7 +648,7 @@ func TestBuildRoomMobs_Empty(t *testing.T) {
 func TestBuildRoomMobs_KeywordDisambiguation(t *testing.T) {
 	m := makeTestManagerWithMobs(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Spawn two mobs with the same keyword ("goblin")
 	goblin1 := registerMob(t, m, 2001, 1001) // "goblin guard"
@@ -707,7 +686,7 @@ func TestBuildRoomMobs_KeywordDisambiguation(t *testing.T) {
 func TestBuildRoomMobs_DifferentKeywords(t *testing.T) {
 	m := makeTestManagerWithMobs(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// "the ancient dragon" → "ancient" (first meaningful keyword)
 	// "goblin guard" → "goblin"
@@ -740,7 +719,7 @@ func TestBuildRoomMobs_DifferentKeywords(t *testing.T) {
 func TestBuildRoomItems(t *testing.T) {
 	m := makeTestManagerWithMobs(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Add items to the room floor
 	sword := registerObject(t, m, 3001, 1001)
@@ -783,7 +762,7 @@ func TestBuildRoomItems(t *testing.T) {
 func TestBuildRoomItems_Empty(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1002, true) // Empty Vault
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	items := s.buildRoomItems()
 	if items == nil || len(items) != 0 {
@@ -794,7 +773,7 @@ func TestBuildRoomItems_Empty(t *testing.T) {
 func TestBuildRoomItems_KeywordDisambiguation(t *testing.T) {
 	m := makeTestManagerWithMobs(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Add two items that share a keyword by creating instances with the same proto
 	_ = registerObject(t, m, 3004, 1001)
@@ -833,7 +812,7 @@ func TestBuildRoomItems_KeywordDisambiguation(t *testing.T) {
 func TestBuildInventory(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Add items to player inventory
 	sword := makeObjInstance(3001, "An iron longsword", "sword long iron")
@@ -857,7 +836,7 @@ func TestBuildInventory(t *testing.T) {
 func TestBuildInventory_Empty(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	inv := s.buildInventory()
 	if inv == nil {
@@ -870,7 +849,7 @@ func TestBuildInventory_Empty(t *testing.T) {
 func TestBuildInventory_ItemFields(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	sword := makeObjInstance(3001, "An iron longsword", "sword long iron")
 	_ = s.player.Inventory.AddItem(sword)
@@ -900,7 +879,7 @@ func TestBuildInventory_ItemFields(t *testing.T) {
 func TestBuildEquipment(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Equip items
 	sword := makeObjInstance(3001, "An iron longsword", "sword long iron")
@@ -954,7 +933,7 @@ func TestBuildEquipment(t *testing.T) {
 func TestBuildEquipment_Empty(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	eq := s.buildEquipment()
 	if eq == nil {
@@ -1055,7 +1034,7 @@ func TestAgentVarFlow_E2E(t *testing.T) {
 func TestBuildVarValue_RoomExits(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	exits := s.buildVarValue(VarRoomExits)
 	exitList, ok := exits.([]string)
@@ -1075,7 +1054,7 @@ func TestBuildVarValue_RoomExits(t *testing.T) {
 func TestFlushDirtyVars_AgentUnsubscribed(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 	// No subscribedVars
 
 	s.markDirty("HEALTH") // should be a no-op since HEALTH is not subscribed
@@ -1093,7 +1072,7 @@ func TestFlushDirtyVars_AgentUnsubscribed(t *testing.T) {
 func TestBuildInventory_MultipleItems(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.isAgent = true
+	s.wantsStructuredData = true
 
 	// Add several items
 	items := []*game.ObjectInstance{

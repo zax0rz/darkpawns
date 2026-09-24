@@ -44,22 +44,12 @@ type ServerMessage struct {
 // For new characters, include class and race.
 // Class: 0=Mage 1=Cleric 2=Thief 3=Warrior 4=Magus 5=Avatar 6=Assassin 7=Paladin 8=Ninja 9=Psionic 10=Ranger 11=Mystic
 // Race:  0=Human 1=Elf 2=Dwarf 3=Kender 4=Minotaur 5=Rakshasa 6=Ssaur
-// Agents use the same login path as humans. Set IsAgent=true and provide
-// Harness/Model for research telemetry. Agents play by the same rules —
-// no special treatment.
 type LoginData struct {
 	PlayerName string `json:"player_name"`
 	Password   string `json:"password,omitempty"`
 	Class      int    `json:"class,omitempty"`    // 0-11, defaults to Warrior if omitted
 	Race       int    `json:"race,omitempty"`     // 0-6, defaults to Human if omitted
 	NewChar    bool   `json:"new_char,omitempty"` // true = create new character
-
-	// Agent identity fields — informational only, do not affect gameplay.
-	// Agents declare themselves; server tags the session for observation.
-	IsAgent bool   `json:"is_agent,omitempty"` // true = this is an AI agent
-	Harness string `json:"harness,omitempty"`  // e.g. "openclaw", "claude-code", "gemini-cli"
-	Model   string `json:"model,omitempty"`    // e.g. "mimo-v2.5-base", "claude-sonnet-4-6"
-	Version string `json:"version,omitempty"`  // harness version (optional)
 }
 
 // CommandData is a player command.

@@ -19,7 +19,7 @@ Dark Pawns is a Go server that loads the original Diku-format world, exposes tel
 2. Loads the world through `pkg/parser`.
 3. Constructs `pkg/game.World`.
 4. Opens PostgreSQL persistence.
-5. Creates `pkg/session.Manager` and wires combat, scripting, memory, and decision-log callbacks.
+5. Creates the session manager (`pkg/session.Manager`) and wires its combat and scripting callbacks.
 6. Registers HTTP, WebSocket, metrics, admin, and telnet surfaces.
 7. Starts reset/tick workers and waits for shutdown.
 
@@ -29,13 +29,11 @@ Dark Pawns is a Go server that loads the original Diku-format world, exposes tel
 | --- | --- |
 | `pkg/parser` | Reads rooms, mobs, objects, zones, and shops from the original files. |
 | `pkg/game` | Runtime world state, players, mob/object instances, resets, movement, shops, and skills. |
-| `pkg/session` | Login, character creation, connections, command dispatch, and agent variables. |
+| `pkg/session` | Login, character creation, connections, and command dispatch. |
 | `pkg/combat` | Shared tick-based combat calculations and combatant interfaces. |
 | `pkg/spells` | Spell metadata, saving throws, damage, affects, and spell execution. |
 | `pkg/scripting` | Sandboxed Lua triggers using a serialized VM. |
-| `pkg/db` | PostgreSQL-backed player, agent, decision, and narrative persistence. |
-| `pkg/agentcli` | Reusable structured client, FSM, logging, and daemon support. |
-| `pkg/dreaming` | Event extraction, memory graph consolidation, valence, and summaries. |
+| `pkg/db` | Player persistence on PostgreSQL or SQLite. |
 | `pkg/telnet` | Raw telnet listener translated into the shared session protocol. |
 
 ## Behavioral authority

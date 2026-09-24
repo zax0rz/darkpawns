@@ -35,7 +35,7 @@ func TestAdminRouteDriftGate(t *testing.T) {
 
 	// Force every conditional registration on, so the enumeration is the full
 	// route table: the console-static routes need an ADMIN_UI_DIR containing
-	// the files, and /admin/decisions + /admin/narrative need a database.
+	// the files.
 	uiDir := t.TempDir()
 	for _, f := range []string{"favicon.svg", "icons.svg", "index.html"} {
 		if err := os.WriteFile(filepath.Join(uiDir, f), []byte("x"), 0o600); err != nil {
@@ -54,7 +54,7 @@ func TestAdminRouteDriftGate(t *testing.T) {
 	}
 	defer database.Close()
 
-	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), database, &fakeCaptureProvider{available: true})
+	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), database, nil)
 	if err != nil {
 		t.Fatalf("newRouter: %v", err)
 	}
@@ -96,22 +96,6 @@ func TestAdminRouteDriftGate(t *testing.T) {
 	for p := range humaPaths {
 		if !registered[p] {
 			t.Errorf("Huma operation %q is not registered on the admin mux — mount it", p)
-		}
-	}
-}
-
-// TestAdminRouteDriftGate_NilProviderPreservesGuard pins tranche-1 semantics:
-// with a nil live-session provider the two migrated routes must not exist at
-// all — same as the pre-Huma guard.
-func TestAdminRouteDriftGate_NilProviderPreservesGuard(t *testing.T) {
-	setJWTSecret(t)
-	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), nil, nil)
-	if err != nil {
-		t.Fatalf("newRouter: %v", err)
-	}
-	for _, r := range ri.routes {
-		if r == "/admin/research/capture" || r == "/admin/sessions/agents" {
-			t.Errorf("route %q registered with a nil live-session provider; the guard must keep it unregistered", r)
 		}
 	}
 }

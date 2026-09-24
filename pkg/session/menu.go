@@ -317,18 +317,14 @@ func (s *Session) enterReturningPlayer() error {
 	s.menuActive = false
 	s.menuStage = ""
 	s.playerName = name
-	token, err := auth.GenerateJWT(name, s.isAgent, s.agentKeyID, "")
+	token, err := auth.GenerateJWT(name, "")
 	if err != nil {
 		slog.ErrorContext(s.sessionCtx, "failed to generate JWT token", s.logAttrs(slog.Any("error", err))...)
 	}
 	s.tokenIssuedAt = time.Now()
 	s.sendWelcome(token)
-	if s.isAgent || s.wantsStructuredData {
+	if s.wantsStructuredData {
 		s.sendFullVarDump()
-		if s.isAgent {
-			s.SendMemoryBootstrap()
-			s.SendMemorySummary()
-		}
 	}
 	enterMsg, err := json.Marshal(ServerMessage{Type: MsgEvent, Data: EventData{Type: "enter", Text: name + " has arrived."}})
 	if err == nil {

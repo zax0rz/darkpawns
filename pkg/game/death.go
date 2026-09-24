@@ -212,12 +212,8 @@ func changeAlignment(player *Player, victimAlign int) {
 func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 	// Capture killer info once for both branches and the shared kill-counter block.
 	killerName := ""
-	killerIsNPC := false
-	killerLevel := 0
 	if killer != nil {
 		killerName = killer.GetName()
-		killerIsNPC = killer.IsNPC()
-		killerLevel = killer.GetLevel()
 	}
 
 	if victim.IsNPC() {
@@ -244,20 +240,6 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			mobVNum = mob.Proto().VNum
 			mobLevel = mob.GetLevel()
 		}
-		roomName := ""
-		if room, ok := w.GetRoom(victim.GetRoom()); ok {
-			roomName = room.Name
-		}
-		fireMobKill(&MobKillEvent{
-			KillerName:  killerName,
-			KillerIsNPC: killerIsNPC,
-			KillerLevel: killerLevel,
-			VictimName:  victim.GetName(),
-			VictimVNum:  mobVNum,
-			VictimLevel: mobLevel,
-			RoomVNum:    victim.GetRoom(),
-			RoomName:    roomName,
-		})
 		w.handleMobDeath(victim, killer, attackType)
 		// Publish typed event bus event
 		if w.Events != nil {
@@ -280,19 +262,6 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		// fight.c group_gain() lines 708-830; change_alignment at line 704.
 		w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel, victimAlign)
 	} else {
-		// Fire player death hook
-		roomName := ""
-		if room, ok := w.GetRoom(victim.GetRoom()); ok {
-			roomName = room.Name
-		}
-		firePlayerDeath(&PlayerDeathEvent{
-			VictimName:  victim.GetName(),
-			KillerName:  killerName,
-			KillerIsNPC: killerIsNPC,
-			RoomVNum:    victim.GetRoom(),
-			RoomName:    roomName,
-			IsCombat:    true,
-		})
 		w.handlePlayerDeath(victim, true, attackType, killerName) // combat death with killer
 		if mobKiller, ok := killer.(*MobInstance); ok &&
 			killerName != victim.GetName() &&

@@ -52,11 +52,9 @@ func GetClaimsFromContext(ctx context.Context) (*Claims, bool) {
 	return claims, ok
 }
 
-// Claims holds the custom JWT payload for Dark Pawns: player identity, agent mode, and optional agent key ID.
+// Claims holds the custom JWT payload for Dark Pawns: player identity and role.
 type Claims struct {
 	PlayerName string `json:"player_name"`
-	IsAgent    bool   `json:"is_agent"`
-	AgentKeyID int64  `json:"agent_key_id,omitempty"`
 	Role       string `json:"role,omitempty"`
 	jwt.RegisteredClaims
 }
@@ -76,7 +74,7 @@ func (c *Claims) HasRole(required string) bool {
 
 // GenerateJWT creates a signed HS256 JWT valid for 24 hours. The JWT_SECRET environment variable must be set.
 // role is the optional RBAC role ("player", "research", "builder", "admin"); empty string defaults to "player".
-func GenerateJWT(playerName string, isAgent bool, agentKeyID int64, role string) (string, error) {
+func GenerateJWT(playerName, role string) (string, error) {
 	// JWT secret is REQUIRED — no fallback
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
@@ -96,8 +94,6 @@ func GenerateJWT(playerName string, isAgent bool, agentKeyID int64, role string)
 
 	claims := &Claims{
 		PlayerName: playerName,
-		IsAgent:    isAgent,
-		AgentKeyID: agentKeyID,
 		Role:       role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),

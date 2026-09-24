@@ -96,26 +96,15 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /credits/,src/pages/credits.astro,core,authored static page,1,full editorial review,,,,
 /database/,src/pages/database.astro,core,authored static page,1,full editorial review,,,,
 /docs/,src/pages/docs/index.astro,hub,authored collection framing,1,full editorial review,,,,
-/docs/agents/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
-/docs/agents/dp-agent.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,170,,,website-astro/src/content/docs/agents/dp-agent.md
-/docs/agents/dp-agent/,src/content/docs/agents/dp-agent.md,docs,authored technical documentation,3,technical accuracy review,170,,,website-astro/src/content/docs/agents/dp-agent.md
-/docs/agents/memory.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,183,,,website-astro/src/content/docs/agents/memory.md
-/docs/agents/memory/,src/content/docs/agents/memory.md,docs,authored technical documentation,3,technical accuracy review,183,,,website-astro/src/content/docs/agents/memory.md
-/docs/agents/overview.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,153,,,website-astro/src/content/docs/agents/overview.md
-/docs/agents/overview/,src/content/docs/agents/overview.md,docs,authored technical documentation,3,technical accuracy review,153,,,website-astro/src/content/docs/agents/overview.md
-/docs/agents/protocol.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,206,,,website-astro/src/content/docs/agents/protocol.md
-/docs/agents/protocol/,src/content/docs/agents/protocol.md,docs,authored technical documentation,3,technical accuracy review,206,,,website-astro/src/content/docs/agents/protocol.md
 /docs/getting-started/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
-/docs/getting-started/local-server.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,184,,,website-astro/src/content/docs/getting-started/local-server.md
-/docs/getting-started/local-server/,src/content/docs/getting-started/local-server.md,docs,authored technical documentation,3,technical accuracy review,184,,,website-astro/src/content/docs/getting-started/local-server.md
+/docs/getting-started/local-server.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,178,,,website-astro/src/content/docs/getting-started/local-server.md
+/docs/getting-started/local-server/,src/content/docs/getting-started/local-server.md,docs,authored technical documentation,3,technical accuracy review,178,,,website-astro/src/content/docs/getting-started/local-server.md
 /docs/research/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
-/docs/research/agent-memory.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,158,,,website-astro/src/content/docs/research/agent-memory.md
-/docs/research/agent-memory/,src/content/docs/research/agent-memory.md,docs,authored technical documentation,3,technical accuracy review,158,,,website-astro/src/content/docs/research/agent-memory.md
 /docs/research/port-fidelity.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,185,,,website-astro/src/content/docs/research/port-fidelity.md
 /docs/research/port-fidelity/,src/content/docs/research/port-fidelity.md,docs,authored technical documentation,3,technical accuracy review,185,,,website-astro/src/content/docs/research/port-fidelity.md
 /docs/server/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
-/docs/server/architecture.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,246,,,website-astro/src/content/docs/server/architecture.md
-/docs/server/architecture/,src/content/docs/server/architecture.md,docs,authored technical documentation,3,technical accuracy review,246,,,website-astro/src/content/docs/server/architecture.md
+/docs/server/architecture.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,225,,,website-astro/src/content/docs/server/architecture.md
+/docs/server/architecture/,src/content/docs/server/architecture.md,docs,authored technical documentation,3,technical accuracy review,225,,,website-astro/src/content/docs/server/architecture.md
 /docs/server/contributing.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,138,,,website-astro/src/content/docs/server/contributing.md
 /docs/server/contributing/,src/content/docs/server/contributing.md,docs,authored technical documentation,3,technical accuracy review,138,,,website-astro/src/content/docs/server/contributing.md
 /help/,src/pages/help/index.astro,hub,authored collection framing,1,full editorial review,,,,
@@ -26386,8 +26375,6 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /connect/external-links,astro.config.mjs,redirect,redirect to /archive/,5,no copy review,,,,
 /credits/player-roster,astro.config.mjs,redirect,redirect to /archive/,5,no copy review,,,,
 /credits/wizlist,astro.config.mjs,redirect,redirect to /credits/#archived-staff-list,5,no copy review,,,,
-/docs/agents/memory-system,astro.config.mjs,redirect,redirect to /docs/agents/memory,5,no copy review,,,,
-/docs/api,astro.config.mjs,redirect,redirect to /docs/agents/protocol,5,no copy review,,,,
 /docs/development,astro.config.mjs,redirect,redirect to /docs/server,5,no copy review,,,,
 /docs/development/architecture,astro.config.mjs,redirect,redirect to /docs/server/architecture,5,no copy review,,,,
 /docs/game,astro.config.mjs,redirect,redirect to /world/,5,no copy review,,,,
@@ -26397,8 +26384,6 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/game/zones,astro.config.mjs,redirect,redirect to /world/zones/,5,no copy review,,,,
 /docs/getting-started/installation,astro.config.mjs,redirect,redirect to /docs/getting-started/local-server,5,no copy review,,,,
 /docs/getting-started/quick-start,astro.config.mjs,redirect,redirect to /docs/getting-started/local-server,5,no copy review,,,,
-/docs/research/agent-protocols,astro.config.mjs,redirect,redirect to /docs/agents/protocol,5,no copy review,,,,
-/docs/research/narrative-memory,astro.config.mjs,redirect,redirect to /docs/agents/memory,5,no copy review,,,,
 /help/!,astro.config.mjs,redirect,redirect to /help/commands/bang-caret/,5,no copy review,,,,
 /help/abilities,astro.config.mjs,redirect,redirect to /help/commands/abilities/,5,no copy review,,,,
 /help/ac-armor,astro.config.mjs,redirect,redirect to /help/info/ac-armor/,5,no copy review,,,,
@@ -26834,8 +26819,6 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /news/website-launch,astro.config.mjs,redirect,redirect to /blog/resurrection/,5,no copy review,,,,
 /pawn-lab.html,astro.config.mjs,redirect,redirect to /docs/research/,5,no copy review,,,,
 /research,astro.config.mjs,redirect,redirect to /docs/research,5,no copy review,,,,
-/research/agent-protocols,astro.config.mjs,redirect,redirect to /docs/agents/protocol/,5,no copy review,,,,
-/research/narrative-memory,astro.config.mjs,redirect,redirect to /docs/agents/memory/,5,no copy review,,,,
 /research/port-fidelity,astro.config.mjs,redirect,redirect to /docs/research/port-fidelity/,5,no copy review,,,,
 /status,astro.config.mjs,redirect,redirect to /about/project/,5,no copy review,,,,
 /tags,astro.config.mjs,redirect,redirect to /blog/,5,no copy review,,,,

@@ -51,8 +51,7 @@ JWT_SECRET=$(openssl rand -base64 32)
 ```json
 {
   "player_name": "PlayerName",
-  "is_agent": false,
-  "agent_key_id": 0,
+  "role": "player",
   "exp": 1672531200,
   "iat": 1672444800,
   "iss": "darkpawns",

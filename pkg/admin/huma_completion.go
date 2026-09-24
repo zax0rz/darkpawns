@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
-	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -39,53 +37,6 @@ func registerLoginOperation(api huma.API, database loginPlayerDB, attempts *auth
 			}
 			return &output{Body: response}, nil
 		})
-}
-
-type databaseQueryInput struct {
-	SessionID    string `query:"session_id"`
-	PlayerName   string `query:"player_name"`
-	IsAgent      string `query:"is_agent"`
-	Command      string `query:"command"`
-	CommandClass string `query:"command_class"`
-	Outcome      string `query:"outcome"`
-	Harness      string `query:"harness"`
-	Room         string `query:"room"`
-	Limit        string `query:"limit"`
-	Offset       string `query:"offset"`
-	Start        string `query:"start"`
-	End          string `query:"end"`
-	AgentName    string `query:"agent_name"`
-}
-
-type rawJSONOutput struct{ Body json.RawMessage }
-
-func registerDatabaseCompletion(api huma.API, database *db.DB) {
-	register := func(operation huma.Operation, handler http.HandlerFunc, keys []string) {
-		huma.Register(api, operation, func(ctx context.Context, in *databaseQueryInput) (*rawJSONOutput, error) {
-			if database == nil {
-				return nil, apidoc.NewPlainError(http.StatusServiceUnavailable, `{"error":"database not available"}`)
-			}
-			values := url.Values{}
-			all := map[string]string{"session_id": in.SessionID, "player_name": in.PlayerName, "is_agent": in.IsAgent, "command": in.Command, "command_class": in.CommandClass, "outcome": in.Outcome, "harness": in.Harness, "room": in.Room, "limit": in.Limit, "offset": in.Offset, "start": in.Start, "end": in.End, "agent_name": in.AgentName}
-			for _, key := range keys {
-				if all[key] != "" {
-					values.Set(key, all[key])
-				}
-			}
-			rec := runLegacy(ctx, handler, http.MethodGet, operation.Path+"?"+values.Encode(), nil)
-			if rec.Code != http.StatusOK {
-				return nil, recorderError(rec)
-			}
-			return &rawJSONOutput{Body: json.RawMessage(bytes.TrimSpace(rec.Body.Bytes()))}, nil
-		})
-	}
-	var decisions, narrative http.HandlerFunc
-	if database != nil {
-		decisions = handleDecisionLog(database)
-		narrative = handleNarrativeFeed(database)
-	}
-	register(huma.Operation{OperationID: "list-decisions", Method: http.MethodGet, Path: "/admin/decisions", Summary: "Query the decision log"}, decisions, []string{"session_id", "player_name", "is_agent", "command", "command_class", "outcome", "harness", "room", "limit", "offset", "start", "end"})
-	register(huma.Operation{OperationID: "list-narrative-memory", Method: http.MethodGet, Path: "/admin/narrative", Summary: "Query agent narrative memory"}, narrative, []string{"agent_name", "limit", "offset"})
 }
 
 func runLegacy(ctx context.Context, handler http.HandlerFunc, method, target string, body []byte) *httptest.ResponseRecorder {
