@@ -1400,11 +1400,13 @@ func (s *Session) extractLinkdead() {
 		}
 	}
 
-	// Close the underlying connection. For WebSocket this triggers the pump
-	// defers to run Unregister; for telnet and other transports there is no
-	// pump defer, so we Unregister directly after closing.
+	// Close the underlying connection. For a live WebSocket this triggers the
+	// pump defers to run Unregister. Telnet has no pump defer, and a linkdead
+	// WebSocket's pumps have already exited without unregistering (DP-1323),
+	// so both are unregistered here; otherwise the character never leaves and
+	// the reaper retries it every sweep.
 	s.Close()
-	if s.conn == nil {
+	if s.conn == nil || !s.hasTransport() {
 		s.manager.Unregister(playerName)
 	}
 }

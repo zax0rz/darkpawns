@@ -180,6 +180,13 @@ func TestAbruptCloseLeavesCharacterLinkdead(t *testing.T) {
 			if _, ok := m.GetSession("WritePumpGhost"); !ok {
 				t.Fatal("the linkdead session was unregistered after the writer exited")
 			}
+			// Past the extract threshold the reaper must remove it: its pumps
+			// have exited, so closing the connection alone would do nothing.
+			s.lastActive.Store(time.Now().Add(-2 * linkdeadExtractThreshold).UnixNano())
+			s.extractLinkdead()
+			if _, ok := m.GetSession("WritePumpGhost"); ok {
+				t.Fatal("the reaper left a linkdead WebSocket session registered")
+			}
 			return
 		}
 		time.Sleep(50 * time.Millisecond)
