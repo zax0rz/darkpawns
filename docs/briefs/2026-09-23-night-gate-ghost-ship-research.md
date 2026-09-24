@@ -81,6 +81,12 @@ then `load_night_gate()`. At **hour 5** (sunrise) it calls
   overwrites them and `disappear()` frees them unconditionally. After the
   first dawn, the static exits are gone for good (until reboot). The
   dynamic sunset exits are the only way on and off from then on.
+- **A second quirk: the departure is announced on the wrong dock.** When the
+  ship leaves from 19174, C sends *"Suddenly the ghostly ship to the north
+  disappears!"* to **19173** (`new_cmds.c:2727-2732`, a copy-paste of the
+  first branch's room). A player on 19174 watches the exit vanish in silence,
+  and one on 19173 hears of a ship that was never there. The port first sent
+  it to 19174; gating #1610 caught the difference, and the port now matches C.
 - **Stranding is real**: at dawn the exits are destroyed. If you are aboard
   when the ship sets sail, your way back is gone until the next sunset
   (room 19100's static down exit to 19101 still works — you can explore the
