@@ -8,7 +8,6 @@ import '@xterm/xterm/css/xterm.css';
     <div class="play-intro container">
       <h1 id="play-heading">Enter Dark Pawns</h1>
       <p>Play right here, or <a href="/connect/">connect a MUD client</a> for longer sessions.</p>
-      <p class="play-feedback">Playing with a screen reader? <a href="/contact/">We want to hear how the web client works for you.</a></p>
     </div>
 
     <div class="play-wrapper container">
@@ -152,7 +151,6 @@ import '@xterm/xterm/css/xterm.css';
   .play-intro { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem var(--space-md); padding-block: var(--space-sm); }
   .play-intro h1 { margin: 0; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.1; }
   .play-intro p { color: var(--ink-muted); margin: 0; font-size: .95rem; }
-  .play-intro .play-feedback { margin-left: auto; font-size: .85rem; }
   /* Auto margins would shrink these flex items to their content. They keep
      the site's own column (.container), so the intro, terminal and dock line
      up with the wordmark and navigation above them. */
