@@ -468,80 +468,39 @@ func TestCmdQcomm_NonQuestPlayerFiltered(t *testing.T) {
 	}
 }
 
-// mockAgentKeyDB is a minimal db.GameStore implementation that validates a
-// single agent key for DP-594 tests.
-type mockAgentKeyDB struct {
-	validKey string
-}
+// mockGameStore is a minimal db.GameStore implementation.
+type mockGameStore struct{}
 
-func (m *mockAgentKeyDB) Close() error { return nil }
+func (m *mockGameStore) Close() error { return nil }
 
-func (m *mockAgentKeyDB) ListPlayerNames() ([]string, error)              { return nil, nil }
-func (m *mockAgentKeyDB) CountPlayers() (int, error)                      { return 0, nil }
-func (m *mockAgentKeyDB) GetPlayer(name string) (*db.PlayerRecord, error) { return nil, nil }
+func (m *mockGameStore) ListPlayerNames() ([]string, error)              { return nil, nil }
+func (m *mockGameStore) CountPlayers() (int, error)                      { return 0, nil }
+func (m *mockGameStore) GetPlayer(name string) (*db.PlayerRecord, error) { return nil, nil }
 
-func (m *mockAgentKeyDB) CreatePlayer(p *db.PlayerRecord) error { return nil }
+func (m *mockGameStore) CreatePlayer(p *db.PlayerRecord) error { return nil }
 
-func (m *mockAgentKeyDB) SavePlayer(p *db.PlayerRecord) error { return nil }
+func (m *mockGameStore) SavePlayer(p *db.PlayerRecord) error { return nil }
 
-func (m *mockAgentKeyDB) UpdatePassword(playerID int, hash string) error { return nil }
+func (m *mockGameStore) UpdatePassword(playerID int, hash string) error { return nil }
 
-func (m *mockAgentKeyDB) UpdateDescription(playerID int, description string) error { return nil }
+func (m *mockGameStore) UpdateDescription(playerID int, description string) error { return nil }
 
-func (m *mockAgentKeyDB) DeletePlayer(playerID int) error { return nil }
+func (m *mockGameStore) DeletePlayer(playerID int) error { return nil }
 
-func (m *mockAgentKeyDB) GetAccountLockout(name string) (int, *time.Time, error) { return 0, nil, nil }
+func (m *mockGameStore) GetAccountLockout(name string) (int, *time.Time, error) { return 0, nil, nil }
 
-func (m *mockAgentKeyDB) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
+func (m *mockGameStore) RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error) {
 	return false, nil
 }
 
-func (m *mockAgentKeyDB) RecordLoginSuccess(name string) error { return nil }
+func (m *mockGameStore) RecordLoginSuccess(name string) error { return nil }
 
-func (m *mockAgentKeyDB) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (m *mockGameStore) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return nil, nil
 }
-
-func (m *mockAgentKeyDB) CreateAgentKey(characterName string) (string, int64, error) {
-	return "", 0, nil
-}
-
-func (m *mockAgentKeyDB) ValidateAgentKey(rawKey string) (string, int64, bool) {
-	return "", 1, rawKey == m.validKey
-}
-
-func (m *mockAgentKeyDB) EnsureDecisionLogPartitions() error { return nil }
-
-func (m *mockAgentKeyDB) NewDecisionLogWriter() *db.DecisionLogWriter { return nil }
-
-func (m *mockAgentKeyDB) InitNarrativeMemory() error { return nil }
-
-func (m *mockAgentKeyDB) WriteNarrativeMemory(m2 *db.NarrativeMemory) (int64, error) { return 0, nil }
-
-func (m *mockAgentKeyDB) BootstrapMemories(agentName string, limit int) ([]*db.NarrativeMemory, error) {
-	return nil, nil
-}
-
-func (m *mockAgentKeyDB) RecentMemories(agentName, sessionID string) ([]*db.NarrativeMemory, error) {
-	return nil, nil
-}
-
-func (m *mockAgentKeyDB) SocialEventMemories(socialEventID string) ([]*db.NarrativeMemory, error) {
-	return nil, nil
-}
-
-func (m *mockAgentKeyDB) WriteSessionSummary(agentName, sessionID, summary string, eventCount int, start, end time.Time) error {
-	return nil
-}
-
-func (m *mockAgentKeyDB) GetSessionSummaries(agentName string, limit int) ([]string, error) {
-	return nil, nil
-}
-
-func (m *mockAgentKeyDB) DecayStaleMemories(cutoffDays int) (int, int, error) { return 0, 0, nil }
 
 // TestCheckOrigin_PrivateIPWithoutAgentKeyRejects verifies that a private-IP
-// connection without an Origin header or agent key is rejected (DP-594).
+// connection without an Origin header is rejected (DP-594).
 func TestCheckOrigin_PrivateIPWithoutAgentKeyRejects(t *testing.T) {
 	m := makeTestManager(t)
 	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
@@ -552,52 +511,8 @@ func TestCheckOrigin_PrivateIPWithoutAgentKeyRejects(t *testing.T) {
 	}
 }
 
-// TestCheckOrigin_PrivateIPWithValidAgentKeyAccepts verifies that a private-IP
-// connection with a valid agent key is accepted (DP-594).
-func TestCheckOrigin_PrivateIPWithValidAgentKeyAccepts(t *testing.T) {
-	parsed := &parser.World{
-		Rooms: []parser.Room{{VNum: 1001, Name: "Room A", Zone: 1}},
-	}
-	w, err := game.NewWorld(parsed)
-	if err != nil {
-		t.Fatalf("NewWorld failed: %v", err)
-	}
-	t.Cleanup(func() { w.StopAITicker() })
-
-	mgr := newTestManager(t, w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
-	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
-	req.RemoteAddr = "192.168.1.10:12345"
-	req.Header.Set("X-Agent-Key", "dp_test_key_12345")
-
-	if !mgr.checkOrigin(req) {
-		t.Error("expected private IP with valid agent key to be accepted")
-	}
-}
-
-// TestCheckOrigin_PrivateIPWithInvalidAgentKeyRejects verifies that a private-IP
-// connection with an invalid agent key is rejected (DP-594).
-func TestCheckOrigin_PrivateIPWithInvalidAgentKeyRejects(t *testing.T) {
-	parsed := &parser.World{
-		Rooms: []parser.Room{{VNum: 1001, Name: "Room A", Zone: 1}},
-	}
-	w, err := game.NewWorld(parsed)
-	if err != nil {
-		t.Fatalf("NewWorld failed: %v", err)
-	}
-	t.Cleanup(func() { w.StopAITicker() })
-
-	mgr := newTestManager(t, w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
-	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
-	req.RemoteAddr = "192.168.1.10:12345"
-	req.Header.Set("X-Agent-Key", "wrong_key")
-
-	if mgr.checkOrigin(req) {
-		t.Error("expected private IP with invalid agent key to be rejected")
-	}
-}
-
 // TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts verifies that a public
-// origin in the allowlist is accepted without an agent key (DP-594).
+// origin in the allowlist is accepted (DP-594).
 func TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts(t *testing.T) {
 	m := makeTestManager(t)
 	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
@@ -618,7 +533,7 @@ func TestCheckOriginBehindTheProxy(t *testing.T) {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	mgr := newTestManager(t, w, &mockAgentKeyDB{validKey: "dp_test_key_12345"})
+	mgr := newTestManager(t, w, &mockGameStore{})
 
 	request := func(forwarded, origin, key string) *http.Request {
 		req := httptest.NewRequest(http.MethodGet, "/ws", nil)
@@ -645,7 +560,8 @@ func TestCheckOriginBehindTheProxy(t *testing.T) {
 		{"proxied, another site", "203.0.113.9", "https://elsewhere.example", "", false},
 		{"proxied, no origin, no key", "203.0.113.9", "", "", false},
 		{"proxied, no origin, bad key", "203.0.113.9", "", "wrong", false},
-		{"proxied, no origin, agent key", "203.0.113.9", "", "dp_test_key_12345", true},
+		// Agent keys are gone: a presented key admits nothing.
+		{"proxied, no origin, former agent key header", "203.0.113.9", "", "dp_test_key_12345", false},
 	} {
 		if got := mgr.checkOrigin(request(tc.forwarded, tc.origin, tc.key)); got != tc.want {
 			t.Errorf("%s: checkOrigin = %v, want %v", tc.name, got, tc.want)

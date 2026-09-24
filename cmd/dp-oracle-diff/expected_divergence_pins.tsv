@@ -10,9 +10,7 @@ gsay-depth	gsay &Rred&n [peer]	4d36fdf213e008bf3b828a15c77f0510315174d474c3af7ec
 gsay-depth	gsay sleeping peer [peer]	00031c344f23e17d099fa697d1c40ea9f7b016a44573f0cf6ff0d3f5b912fbd7	gsay.tsv:gsay.sleeping-recipient:blocked
 gsay-depth	gtell multiple    spaces [peer]	e569293598032086af778c5fa06daa7bdc07b102a3b851f3a4ed4cefbd08cb01	gsay.tsv:gsay.sleeping-recipient:blocked
 lifecycle-idle-void	~dpclock pulse 630	c0f031329074f681a802a094b7102deee06efdc38aeffb3e6e7f1446312f384a	idle.tsv:idle.return-on-command:blocked;idle.tsv:idle.void-ninth-tick:blocked
-lifecycle-quit-reenter	inventory	30e1713884ff44627fbd29f5cb67d6fddb45c44f14394c93875944d82798f3fb	quit.tsv:quit.rent-object-weight:blocked
-lifecycle-relogin-prefs	<RELOGIN>	f59cee687d920bc45f52a2210fb50f973d3396b97f01da0989e9f6d445570aa2	quit.tsv:quit.rent-object-weight:blocked;save.tsv:save.relogin-login-transcript:blocked
-lifecycle-relogin-prefs	inventory	30e1713884ff44627fbd29f5cb67d6fddb45c44f14394c93875944d82798f3fb	quit.tsv:quit.rent-object-weight:blocked;save.tsv:save.relogin-login-transcript:blocked
+lifecycle-relogin-prefs	<RELOGIN>	f59cee687d920bc45f52a2210fb50f973d3396b97f01da0989e9f6d445570aa2	save.tsv:save.relogin-login-transcript:blocked
 lifecycle-relogin-room	<RELOGIN>	f59cee687d920bc45f52a2210fb50f973d3396b97f01da0989e9f6d445570aa2	save.tsv:save.relogin-login-transcript:blocked
 player-state-toggles	auto [actor]	ad28945974944aa6776860e0429b3530b83c3c3aa6bf559ff4d78b511322954f	auto.tsv:auto.no-arg-listing-undefined:blocked
 shoot-target-depth	shoot arrow north instructor	ac883792c2782e2660dfca34b30dc9aa2082f9a84060b25108a7b896778603ff	shoot.tsv:shoot.mob-hit-miss:blocked;shoot.tsv:shoot.pc-level-window:blocked;shoot.tsv:shoot.player-hit-miss:blocked;shoot.tsv:shoot.target-fallback:blocked;shoot.tsv:shoot.target-fighting:blocked;shoot.tsv:shoot.targeted-shot:blocked;shoot.tsv:shoot.targeted-shot-audience:blocked;shoot.tsv:shoot.wait-and-object-consumption:blocked

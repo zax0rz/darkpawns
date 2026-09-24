@@ -11,11 +11,11 @@ Dark Pawns is a Go MUD server faithful to ROM 2.4b / Dark Pawns C source. It rea
 ```
   ┌─────────────────────────────────────────────────────────────────────┐
   │                                                                     │
-  │  Client (Browser/Telnet/Agent)                                      │
-  │       │           │            │                                    │
-  │   WebSocket    TCP/Telnet    WebSocket                              │
-  │       │           │            │  (mode="agent", api_key auth)      │
-  │       ▼           ▼            ▼                                    │
+  │  Client (Browser/Telnet)                                            │
+  │       │           │                                                 │
+  │   WebSocket    TCP/Telnet                                           │
+  │       │           │                                                 │
+  │       ▼           ▼                                                 │
   │  ┌────────┐  ┌──────────────────────────────────┐                   │
   │  │/ws     │  │ pkg/telnet                       │                   │
   │  │handler │  │ Listen() → handleConn()          │                   │
@@ -67,7 +67,7 @@ Dark Pawns is a Go MUD server faithful to ROM 2.4b / Dark Pawns C source. It rea
 Entry point. Parses flags (`-world`, `-port`, `-db`), calls `parser.ParseWorld()`, constructs `game.World`, initializes `scripting.Engine`, connects to Postgres via `pkg/db`, creates `session.Manager`, wires callbacks (combat broadcast, death handler, memory hooks, fight scripts, damage tracking), registers HTTP routes (`/ws`, `/health`, `/metrics`), starts zone resets, and serves HTTP (with optional TLS). **Key types:** none exported. **Depends on:** `game`, `parser`, `scripting`, `session`, `db`, `metrics`, `web`.
 
 ### `pkg/session`
-WebSocket connection lifecycle and command dispatch. `Manager` holds all active sessions in a map keyed by player name, plus references to `game.World`, `combat.CombatEngine`, and `db.DB`. `Manager.mu` (`sync.RWMutex`) protects the sessions map — separate from world lock; sessions register/unregister independently of world state. Each WebSocket upgrade spawns two goroutines (`readPump`, `writePump`) with a buffered send channel. Handles login (new player creation, bcrypt password verify, DB load/save), agent auth (API key validation), character creation state machine, and command routing. Agent sessions get variable subscription/dirty-tracking for push-based state sync. **Key types:** `Manager`, `Session`. **Depends on:** `game`, `combat`, `db`, `auth`, `command`, `common`, `events`, `parser`, `validation`, `audit`.
+WebSocket connection lifecycle and command dispatch. `Manager` holds all active sessions in a map keyed by player name, plus references to `game.World`, `combat.CombatEngine`, and `db.DB`. `Manager.mu` (`sync.RWMutex`) protects the sessions map — separate from world lock; sessions register/unregister independently of world state. Each WebSocket upgrade spawns two goroutines (`readPump`, `writePump`) with a buffered send channel. Handles login (new player creation, bcrypt password verify, DB load/save), the character creation state machine, and command routing. Structured WebSocket sessions (the browser client) get variable subscription/dirty-tracking for push-based state sync. **Key types:** `Manager`, `Session`. **Depends on:** `game`, `combat`, `db`, `auth`, `command`, `common`, `events`, `parser`, `validation`, `audit`.
 
 ### `pkg/game`
 The game world: rooms, mobs (prototypes + instances), objects, zones, players, items on the ground, AI ticker, spawner/zone resets, point update ticker (regen/hunger). Single `sync.RWMutex` (`World.mu`) protects top-level world state. `SnapshotManager` provides lock-free room snapshots via atomic pointer swaps. `ZoneDispatcher` runs per-zone goroutines for reset processing. `MobInstance` uses mutex-protected getters/setters (18 methods: Get/SetTarget, Get/SetAffectFlags, Get/SetHuntingID, etc.) — direct field access only permitted under existing locks (save.go, deferred_fight_fns.go). Door and shop types (`Door`, `Shop`, `DoorManager`, `ShopManager`) live in `pkg/game/systems/`. **Key types:** `World`, `Player`, `MobInstance`, `ObjectInstance`, `Spawner`, `SnapshotManager`, `ZoneDispatcher`, `WorldScriptableAdapter`. **Depends on:** `parser`, `combat`, `events`, `scripting`, `common`.
@@ -103,11 +103,9 @@ Command registry and skill command handlers. `Registry` maps command names to `H
 Shared interfaces to break circular dependencies. `CommandSession` abstracts session for command handlers. `CommandManager` abstracts the session manager. `ShopManager` interface for shop operations. **Key types:** `CommandSession`, `CommandManager`, `ShopManager`. **Depends on:** none.
 
 ### `pkg/db`
-The store: player, agent-key and narrative-memory persistence on PostgreSQL or embedded SQLite, chosen by the DSN scheme (see Persistence below). Player records (stats, inventory, equipment) serialized to/from JSON columns. Agent API key validation. `New()` connects, `SavePlayer`/`GetPlayer`/`CreatePlayer` for CRUD. A store is only absent under `DP_ALLOW_NO_DB=1`; otherwise an empty DSN is a boot error. **Key types:** `DB`, `PlayerRecord`. **Depends on:** `game`.
+The store: player persistence on PostgreSQL or embedded SQLite, chosen by the DSN scheme (see Persistence below). Player records (stats, inventory, equipment) serialized to/from JSON columns. `New()` connects, `SavePlayer`/`GetPlayer`/`CreatePlayer` for CRUD. A store is only absent under `DP_ALLOW_NO_DB=1`; otherwise an empty DSN is a boot error. **Key types:** `DB`, `PlayerRecord`. **Depends on:** `game`.
 
 ### Other packages
-- **`pkg/ai`** — AI agent combat integration, AI ticker for NPC behavior
-- **`pkg/agent`** — Agent session variable protocol (subscribe/dirty/flush)
 - **`pkg/audit`** — Security event logging
 - **`pkg/metrics`** — Prometheus metrics endpoint
 - **`pkg/moderation`** — Content moderation hooks
@@ -193,7 +191,7 @@ ExecuteCommand(session, "kill", ["goblin"])
   ├─ 3. entry.Handler(&commandSession{s}, ["goblin"])
   │     → cmdHit() → find target → combat engine
   │
-  └─ 4. If agent session → flush dirty vars
+  └─ 4. If structured session → flush dirty vars
 ```
 
 Commands are registered in `init()` via `cmdRegistry.Register(name, handler, help, minLevel, minPos, aliases...)`. The registry supports aliases (e.g., "hit" also matches "attack", "kill"; "look" matches "l"). Social emotes are checked if no command matches. Wizard commands require `LVL_IMMORT` (31) or higher.
@@ -205,9 +203,6 @@ WebSocket connect → /ws
   │
   ▼
 handleLogin()
-  ├─ Agent path: mode="agent", api_key → db.ValidateAgentKey()
-  │     Sets isAgent=true, agentKeyID
-  │
   ├─ Returning player: db.GetPlayer() → bcrypt.CompareHashAndPassword()
   │     On failure → close connection, audit log
   │
@@ -217,12 +212,12 @@ handleLogin()
   └─ Success:
        manager.Register(name, session)
        world.AddPlayer(player)
-       auth.GenerateJWT(name, isAgent, agentKeyID)
+       auth.GenerateJWT(name, role)
        sendWelcome(jwt_token)
        BroadcastToRoom("X has arrived.")
 ```
 
-JWT tokens are 24-hour HMAC-SHA256, issued on login and sent in the welcome message. Agent sessions additionally get a full variable dump and memory bootstrap immediately after login.
+JWT tokens are 24-hour HMAC-SHA256, issued on login and sent in the welcome message. Structured sessions additionally get a full variable dump immediately after login.
 
 ## Event System
 
@@ -276,9 +271,8 @@ cmdRegistry.Use(RateLimitMiddleware(250 * time.Millisecond))
 
 `pkg/db` is the store: one connection, chosen by the DSN scheme. `postgres://` (or `postgresql://`) selects PostgreSQL via lib/pq; `sqlite://`, a bare file path or `:memory:` selects embedded SQLite via modernc.org/sqlite, the pure-Go driver that keeps the `CGO_ENABLED=0` build static (DEPLOYMENT.md). With no `-db` and no `DATABASE_URL`, boot defaults to an embedded SQLite file beside the world data.
 
-- **Game store (`GameStore`):** `players`, `agent_keys`, `agent_narrative_memory`, `agent_session_summaries`
+- **Game store (`GameStore`):** `players`
 - **Moderation (`pkg/moderation`):** `abuse_reports`, `admin_log`, `player_penalties`, `word_filters`, created and queried through the same connection
-- **Research corpus (`ResearchStore`):** `decision_log` and `combat_log` stay PostgreSQL-only (range partitioning, `pg_tables` catalog queries, `TEXT[]`), so decision capture is disabled on a SQLite deployment rather than writing player-typed input to the file
 - **World state** is not in the store: it is written to `data/world_state.json`
 
 **Status:** Both backends are live and covered by real-database tests (`pkg/db/backend_test.go`, `pkg/moderation/backend_test.go`): SQLite always, PostgreSQL when `DATABASE_URL` is set. The cgo-backed `pkg/storage` backend (mattn/go-sqlite3, never wired into `cmd/server/main.go`, and unable to work at all in the `CGO_ENABLED=0` build) has been deleted as superseded by `pkg/db`.

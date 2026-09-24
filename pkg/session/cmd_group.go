@@ -68,21 +68,10 @@ func cmdGroup(s *Session, args []string) error {
 	}
 
 	// Target must be following us — act.other.c line 721: vict->master != ch
-	// Agent exception: agents auto-follow and auto-accept the invite.
 	if !follows(victim, s.player) && victim != s.player {
-		targetPlayer, isPlayer := victim.(*game.Player)
-		targetSess, hasSess := s.manager.GetSession(victim.GetName())
-		if isPlayer && hasSess && targetSess.isAgent {
-			// Agent auto-follow — mirrors BRENDA accepting an invite
-			targetPlayer.SetFollowing(s.player.Name)
-			setGrouped(targetPlayer, false)
-			targetPlayer.SendMessage(fmt.Sprintf("You start following %s.\r\n", s.player.Name))
-			s.player.SendMessage(fmt.Sprintf("%s starts following you.\r\n", targetPlayer.Name))
-		} else {
-			game.Act(nil, false, s.player, victim, nil, nil,
-				"$N must follow you to enter your group.", "", game.ToChar)
-			return nil
-		}
+		game.Act(nil, false, s.player, victim, nil, nil,
+			"$N must follow you to enter your group.", "", game.ToChar)
+		return nil
 	}
 
 	// Toggle membership — perform_group() / kick-out path (act.other.c lines 726–738)

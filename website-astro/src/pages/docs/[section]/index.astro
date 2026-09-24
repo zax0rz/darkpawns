@@ -6,11 +6,10 @@ import { getCollection } from 'astro:content';
 const metadata = {
   'getting-started': { title: 'Getting Started', description: 'Build and run Dark Pawns locally.' },
   server: { title: 'Server & Development', description: 'Architecture, contribution rules, and verification.' },
-  agents: { title: 'Agent Integration', description: 'Connect structured clients and autonomous players.' },
-  research: { title: 'Research', description: 'Fidelity engineering and persistent-agent systems.' },
+  research: { title: 'Research', description: 'Fidelity engineering behind the faithful port.' },
 };
 export async function getStaticPaths() {
-  return ['getting-started', 'server', 'agents', 'research'].map((section) => ({ params: { section } }));
+  return ['getting-started', 'server', 'research'].map((section) => ({ params: { section } }));
 }
 const section = Astro.params.section as keyof typeof metadata;
 const allEntries = await getCollection('docs', ({ data }) => !data.draft);

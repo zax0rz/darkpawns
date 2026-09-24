@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime/debug"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -68,13 +67,6 @@ func (s *Session) readPump() {
 		// path calls the same helper from its input loop.
 		s.OnInboundActivity()
 
-		// DP-GOAT P0-3: Clear takeover probe — any incoming message proves
-		// this session is alive and should not be replaced.
-		if s.takeOverPending.Load() {
-			s.takeOverPending.Store(false)
-			slog.Info("takeover probe cleared: session is alive", "player", s.playerName)
-		}
-
 		if err := s.handleMessage(message); err != nil {
 			slog.Error("handle message error", "error", err)
 			s.sendErrorWithState(err)
@@ -119,20 +111,14 @@ func (s *Session) writePump() {
 				return
 			}
 
-			// DP-GOAT P0-1 + P0-2: Stamp sequence number + strip ANSI for agents.
-			// Unmarshal into generic map, transform, re-marshal. This avoids the
-			// fragility of raw JSON string injection (old P0-1) and the broken
-			// raw-byte ANSI strip (old P0-2 which couldn't match \u001b escapes).
+			// Stamp a sequence number on every outbound message. Unmarshal into
+			// a generic map, add seq, re-marshal: raw JSON string injection was
+			// fragile.
 			var raw map[string]interface{}
 			if err := json.Unmarshal(message, &raw); err == nil {
 				// P0-1: stamp sequence number on every outbound message
 				s.msgSeq++
 				raw["seq"] = s.msgSeq
-
-				// P0-2: strip ANSI from all string values for agent sessions
-				if s.isAgent {
-					stripANSIRecursive(raw)
-				}
 
 				if marshaled, err := json.Marshal(raw); err == nil {
 					message = marshaled
@@ -164,6 +150,12 @@ func (s *Session) handleMessage(data []byte) error {
 	case MsgLogin:
 		return s.handleLogin(msg.Data)
 	case MsgCommand:
+		// The DP_CLOCK harness control reaches a WebSocket session as an
+		// ordinary command line (the browser client sends every line that
+		// way); telnet consumes it before building the message.
+		if s.isClockControlMessage(msg.Data) {
+			return nil
+		}
 		if !s.authenticated || s.menuActive || s.charCreating || s.creationSaved {
 			return ErrNotAuthenticated
 		}
@@ -239,68 +231,6 @@ func (s *Session) maybeReturnFromVoid() {
 		return
 	}
 	s.manager.world.SendToRoom(wasIn, fmt.Sprintf("%s has returned.\r\n", p.Name))
-}
-
-// stripANSIRecursive walks a decoded JSON structure and strips ANSI escape
-// sequences from every string value. Operates on decoded Go strings (not raw
-// JSON bytes) so it correctly handles ESC bytes that json.Marshal encodes as
-// \u001b — the previous raw-byte stripANSI could never match those.
-//
-// There is a nearly identical function in pkg/game/act_comm.go
-// (deleteAnsiControls). That one operates on game-layer strings; this one
-// handles arbitrary JSON-decoded structures for the agent protocol layer.
-//
-// DP-GOAT P0-2: agent sessions receive clean text.
-func stripANSIRecursive(v interface{}) {
-	switch val := v.(type) {
-	case map[string]interface{}:
-		for k, child := range val {
-			if s, ok := child.(string); ok {
-				val[k] = stripANSIString(s)
-			} else {
-				stripANSIRecursive(child)
-			}
-		}
-	case []interface{}:
-		for i, child := range val {
-			if s, ok := child.(string); ok {
-				val[i] = stripANSIString(s)
-			} else {
-				stripANSIRecursive(child)
-			}
-		}
-	}
-}
-
-// stripANSIString removes ANSI escape sequences from a Go string.
-// Matches ESC[...{letter} sequences.
-func stripANSIString(s string) string {
-	var b strings.Builder
-	b.Grow(len(s))
-	i := 0
-	for i < len(s) {
-		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
-			// Skip past the escape sequence terminator (letter A-Z or a-z)
-			j := i + 2
-			for j < len(s) {
-				c := s[j]
-				if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') {
-					i = j + 1
-					break
-				}
-				j++
-			}
-			if j >= len(s) {
-				// Unterminated escape — skip the ESC
-				b.WriteByte(s[i])
-				i++
-			}
-			continue
-		}
-		b.WriteByte(s[i])
-		i++
-	}
-	return b.String()
 }
 
 // handleLogin authenticates a player.

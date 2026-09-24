@@ -3,7 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import DocsNav from '../../../components/DocsNav.astro';
 import { getCollection, render } from 'astro:content';
 
-const labels = { 'getting-started': 'Getting Started', server: 'Server & Development', agents: 'Agent Integration', research: 'Research' };
+const labels = { 'getting-started': 'Getting Started', server: 'Server & Development', research: 'Research' };
 export async function getStaticPaths() {
   const entries = await getCollection('docs', ({ data }) => !data.draft);
   return entries.map((entry) => { const [section, ...slug] = entry.id.split('/'); return { params: { section, slug: slug.join('/') }, props: { entry } }; });

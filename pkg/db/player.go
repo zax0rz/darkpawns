@@ -2,10 +2,7 @@
 package db
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -182,27 +179,6 @@ func New(connString string) (*DB, error) {
 	if err := db.createTables(); err != nil {
 		return nil, fmt.Errorf("create tables: %w", err)
 	}
-	if err := db.InitNarrativeMemory(); err != nil {
-		return nil, fmt.Errorf("init narrative memory: %w", err)
-	}
-
-	// Decision capture tables (DP-213). These are PostgreSQL-only (PARTITION
-	// BY RANGE, pg_tables catalog queries, TEXT[]), so SQLite deployments skip
-	// them entirely; the ResearchStore interface is never satisfied there.
-	if dialect == DialectPostgres {
-		if err := db.createDecisionLogTables(); err != nil {
-			return nil, fmt.Errorf("create decision log tables: %w", err)
-		}
-		// Bootstrap the current/next-month partitions. decision_log and
-		// combat_log are PARTITION BY RANGE(ts) parents; without a matching
-		// partition every INSERT fails ("no partition of relation ... found
-		// for row"). Fail loudly here rather than only warning, since decision
-		// capture is unusable otherwise.
-		if err := db.EnsureDecisionLogPartitions(); err != nil {
-			return nil, fmt.Errorf("ensure decision log partitions: %w", err)
-		}
-	}
-
 	success = true
 	return db, nil
 }
@@ -303,14 +279,6 @@ func (db *DB) createTables() error {
 		`CREATE UNIQUE INDEX IF NOT EXISTS players_name_folded_key ON players (lower(name))`,
 		`CREATE INDEX IF NOT EXISTS idx_players_name ON players(name)`,
 		`CREATE INDEX IF NOT EXISTS idx_players_locked_until ON players(locked_until)`,
-
-		`CREATE TABLE IF NOT EXISTS agent_keys (
-			id             SERIAL PRIMARY KEY,
-			character_name VARCHAR(64) NOT NULL,
-			key_hash       VARCHAR(64) NOT NULL UNIQUE,
-			created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			revoked        BOOLEAN NOT NULL DEFAULT FALSE
-		)`,
 	}
 
 	for _, stmt := range stmts[:1] {
@@ -370,7 +338,6 @@ var gameStoreTimestamptzColumns = []string{
 	"players.locked_until",
 	"players.created_at",
 	"players.updated_at",
-	"agent_keys.created_at",
 }
 
 // migrateNaiveTimestamps converts the game store's own timestamp columns on
@@ -481,54 +448,6 @@ func (db *DB) convertColumns(columns []string, fromType, wantType string, using 
 		slog.Info("converted game-store column to "+strings.ToLower(wantType), "column", target)
 	}
 	return nil
-}
-
-// CreateAgentKey generates a new agent API key for the given character.
-// Returns the raw key (shown once — never stored) and its DB row id.
-func (db *DB) CreateAgentKey(characterName string) (rawKey string, id int64, err error) {
-	// Generate 32 random bytes → 64 hex chars
-	buf := make([]byte, 32)
-	if _, err = rand.Read(buf); err != nil {
-		return "", 0, fmt.Errorf("generate key: %w", err)
-	}
-	rawKey = "dp_" + hex.EncodeToString(buf)
-
-	// SHA-256 hash — only the hash is stored
-	h := sha256.Sum256([]byte(rawKey))
-	keyHash := hex.EncodeToString(h[:])
-
-	err = db.queryRow(
-		`INSERT INTO agent_keys (character_name, key_hash) VALUES ($1, $2) RETURNING id`,
-		characterName, keyHash,
-	).Scan(&id)
-	if err != nil {
-		return "", 0, fmt.Errorf("insert agent key: %w", err)
-	}
-	return rawKey, id, nil
-}
-
-// ValidateAgentKey hashes rawKey and looks it up in agent_keys.
-// Returns the associated character name and row id if the key is valid and not revoked.
-func (db *DB) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
-	// Reject default/example keys for security
-	if rawKey == "br3nd4-69-ag3nt-k3y-d3f4ult" ||
-		strings.Contains(rawKey, "example") ||
-		strings.Contains(rawKey, "test") ||
-		strings.Contains(rawKey, "REPLACE_WITH") {
-		return "", 0, false
-	}
-
-	h := sha256.Sum256([]byte(rawKey))
-	keyHash := hex.EncodeToString(h[:])
-
-	err := db.queryRow(
-		`SELECT id, character_name FROM agent_keys WHERE key_hash = $1 AND revoked = FALSE`,
-		keyHash,
-	).Scan(&keyID, &characterName)
-	if err != nil {
-		return "", 0, false
-	}
-	return characterName, keyID, true
 }
 
 // GetPlayer retrieves a player by name. Returns nil, nil if not found.

@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"testing"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 )
@@ -61,49 +60,6 @@ func TestMockDatabase_PlayerOperations(t *testing.T) {
 	}
 }
 
-func TestMockDatabase_NarrativeMemory(t *testing.T) {
-	m := NewMockDatabase()
-
-	mem := &db.NarrativeMemory{
-		AgentName: "Brenda",
-		EventType: "mob_kill",
-		Summary:   "Killed a rat.",
-		Salience:  0.8,
-		SessionID: "session_123",
-	}
-
-	id, err := m.WriteNarrativeMemory(mem)
-	if err != nil {
-		t.Fatalf("failed to write memory: %v", err)
-	}
-	if id != 1 {
-		t.Errorf("expected memory ID 1, got %d", id)
-	}
-
-	// Bootstrap
-	bootstrap, err := m.BootstrapMemories("Brenda", 5)
-	if err != nil {
-		t.Fatalf("failed to bootstrap: %v", err)
-	}
-	if len(bootstrap) != 1 || bootstrap[0].Summary != "Killed a rat." {
-		t.Errorf("invalid bootstrap content: %+v", bootstrap)
-	}
-
-	// Session summary
-	err = m.WriteSessionSummary("Brenda", "session_123", "Consolidated play session.", 1, time.Now(), time.Now())
-	if err != nil {
-		t.Fatalf("failed to write summary: %v", err)
-	}
-
-	summaries, err := m.GetSessionSummaries("Brenda", 5)
-	if err != nil {
-		t.Fatalf("failed to get summaries: %v", err)
-	}
-	if len(summaries) != 1 || summaries[0] != "Consolidated play session." {
-		t.Errorf("invalid summaries content: %v", summaries)
-	}
-}
-
 func TestAssertBehaviorMatchesC(t *testing.T) {
 	fakeT := &testing.T{}
 
@@ -118,62 +74,4 @@ func TestAssertBehaviorMatchesC(t *testing.T) {
 	if !fakeT.Failed() {
 		t.Error("expected assertion to fail, but fakeT did not fail")
 	}
-}
-
-// TestMockDatabase_SessionSummaryIsolation guards the fidelity of the mock:
-// summaries must be scoped by (agentName, sessionID), so summaries from
-// different sessions never collapse into a single per-agent list.
-func TestMockDatabase_SessionSummaryIsolation(t *testing.T) {
-	m := NewMockDatabase()
-	now := time.Now()
-
-	// Two distinct sessions for the same agent must each be retrievable.
-	if err := m.WriteSessionSummary("Brenda", "session_a", "Summary A.", 1, now, now); err != nil {
-		t.Fatalf("failed to write session_a summary: %v", err)
-	}
-	if err := m.WriteSessionSummary("Brenda", "session_b", "Summary B.", 1, now, now); err != nil {
-		t.Fatalf("failed to write session_b summary: %v", err)
-	}
-
-	summaries, err := m.GetSessionSummaries("Brenda", 5)
-	if err != nil {
-		t.Fatalf("failed to get summaries: %v", err)
-	}
-	if len(summaries) != 2 {
-		t.Fatalf("expected 2 summaries (one per session), got %d: %v", len(summaries), summaries)
-	}
-
-	// Re-writing the same session must upsert, not append a duplicate.
-	if err := m.WriteSessionSummary("Brenda", "session_a", "Summary A v2.", 2, now, now); err != nil {
-		t.Fatalf("failed to rewrite session_a summary: %v", err)
-	}
-	summaries, err = m.GetSessionSummaries("Brenda", 5)
-	if err != nil {
-		t.Fatalf("failed to get summaries: %v", err)
-	}
-	if len(summaries) != 2 {
-		t.Fatalf("expected 2 summaries after upsert, got %d: %v", len(summaries), summaries)
-	}
-
-	// A different agent must see none of Brenda's summaries.
-	other, err := m.GetSessionSummaries("Zach", 5)
-	if err != nil {
-		t.Fatalf("failed to get other agent summaries: %v", err)
-	}
-	if other != nil {
-		t.Fatalf("expected no summaries for other agent, got %v", other)
-	}
-}
-
-// TestMockDatabase_NewDecisionLogWriter guards DP-1017: the mock previously
-// returned nil, so any test that called RecordDecision/Stop on the result
-// nil-panicked. The writer must be non-nil and safe for Stop.
-func TestMockDatabase_NewDecisionLogWriter(t *testing.T) {
-	m := NewMockDatabase()
-	w := m.NewDecisionLogWriter()
-	if w == nil {
-		t.Fatal("NewDecisionLogWriter returned nil")
-	}
-	// Stop on empty buffers must not panic.
-	w.Stop()
 }

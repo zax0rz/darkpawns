@@ -9,8 +9,7 @@ import (
 )
 
 // Dialect selects the SQL flavour for a connection. The game store supports
-// both; the research corpus (decision_log, combat_log) is PostgreSQL-only and
-// is never reached on the SQLite path.
+// both.
 //
 // Exported because pkg/moderation writes its own tables through the same
 // connection: one translator for both stores, or the two drift and only one of

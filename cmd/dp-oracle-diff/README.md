@@ -78,3 +78,24 @@ For command-depth work, annotate scenarios with `# depth-case: <case-id>` and
 record the case in `docs/fidelity/depth/<command>.tsv`. Run `make fidelity-depth`
 to reject missing scenario or unit-test proof references. See
 `docs/fidelity/DEPTH_TESTING.md` for the complete workflow.
+
+## Driving the browser client (`-go-transport ws`)
+
+By default the Go port is driven over telnet, the same transport as the C
+oracle. `-go-transport ws` (or `DP_ORACLE_GO_TRANSPORT=ws`, which
+`make oracle-regression` passes through) drives it through `/play` instead:
+`internal/oraclediff/wsdriver/driver.mjs` runs the real
+`web/public/mud-client.js` headless under Node 22+, types each scenario line
+into it, and the transcript is what the client writes to its terminal. The C
+side is unchanged, so every divergence in this mode is something a browser
+player sees and a telnet player does not.
+
+Two things are removed from the browser transcript because a telnet client has
+them too and the telnet transcript never holds them: the client's local echo
+of the line just typed, and its own connection messages ("Connecting to…",
+"Connected.", "--- Connection lost ---"). Everything else counts. The
+`~dpclock pulse N` control is handled by the session, so it works over either
+transport.
+
+This mode is a probe, not a gate yet: the expected-divergence ledger and pins
+describe the telnet transport.

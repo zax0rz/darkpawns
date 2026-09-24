@@ -252,3 +252,9 @@ func applyOLCClamp(value, low, high int) int {
 	})
 	return result
 }
+
+// sessionID returns a stable identifier for one connection. The connection
+// time keeps a reconnect distinct from the session it replaces.
+func (s *Session) sessionID() string {
+	return fmt.Sprintf("%s-%d", s.playerName, s.connectedAt.UnixNano())
+}

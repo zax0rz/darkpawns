@@ -402,3 +402,85 @@ func TestRecordToPlayer_OverCapacityInventoryNotDropped(t *testing.T) {
 		t.Errorf("restored inventory has %d items, want %d (items dropped on load)", got, itemCount)
 	}
 }
+
+// A rented container keeps what is inside it, nested containers included,
+// whether it is carried or worn (DP-1324; C Crash_save/Crash_load, objsave.c).
+func TestContainerContentsSurviveRecordRoundTrip(t *testing.T) {
+	world := newConversionWorld(t, []parser.Obj{
+		{VNum: 8032, ShortDesc: "a backpack", Keywords: "backpack", TypeFlag: game.ITEM_CONTAINER, Weight: 1},
+		{VNum: 8033, ShortDesc: "a small sack", Keywords: "sack", TypeFlag: game.ITEM_CONTAINER, Weight: 1},
+		{VNum: 8010, ShortDesc: "a loaf of bread", Keywords: "bread", TypeFlag: game.ITEM_FOOD, Weight: 2},
+		{VNum: 8063, ShortDesc: "a water skin", Keywords: "skin", TypeFlag: game.ITEM_OTHER, Weight: 10},
+		{VNum: 8040, ShortDesc: "a belt pouch", Keywords: "pouch", TypeFlag: game.ITEM_CONTAINER, Weight: 1},
+		{VNum: 8041, ShortDesc: "a copper ring", Keywords: "ring", TypeFlag: game.ITEM_OTHER, Weight: 1},
+	})
+	spawn := func(vnum int) *game.ObjectInstance {
+		t.Helper()
+		obj, err := world.SpawnObject(vnum, -1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return obj
+	}
+	p, err := RecordToPlayer(conversionRecord("[]"), world)
+	if err != nil {
+		t.Fatal(err)
+	}
+	backpack, sack := spawn(8032), spawn(8033)
+	sack.Contains = []*game.ObjectInstance{spawn(8010)}
+	backpack.Contains = []*game.ObjectInstance{sack, spawn(8063)}
+	p.Inventory.RestoreItem(backpack)
+	pouch := spawn(8040)
+	pouch.Contains = []*game.ObjectInstance{spawn(8041)}
+	p.Equipment.Slots[game.SlotAbout] = pouch
+
+	rec, err := PlayerToRecord(p, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	back, err := RecordToPlayer(rec, world)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	carried := back.Inventory.FindItems("")
+	if len(carried) != 1 || carried[0].VNum != 8032 {
+		t.Fatalf("carried = %v, want just the backpack", vnums(carried))
+	}
+	gotPack := carried[0]
+	if got := vnums(gotPack.Contains); len(got) != 2 || got[0] != 8033 || got[1] != 8063 {
+		t.Fatalf("backpack holds %v, want [8033 8063] in saved order", got)
+	}
+	gotSack := gotPack.Contains[0]
+	if got := vnums(gotSack.Contains); len(got) != 1 || got[0] != 8010 {
+		t.Fatalf("sack holds %v, want [8010]", got)
+	}
+	if gotPack.GetTotalWeight() != 14 {
+		t.Fatalf("backpack total weight = %d, want 14", gotPack.GetTotalWeight())
+	}
+	worn := back.Equipment.Slots[game.SlotAbout]
+	if worn == nil || worn.VNum != 8040 || len(worn.Contains) != 1 || worn.Contains[0].VNum != 8041 {
+		t.Fatalf("worn pouch = %+v, want pouch holding the ring", worn)
+	}
+
+	// Restored objects are world-registered, so a container can be found by
+	// the ID its contents point at.
+	for _, c := range []*game.ObjectInstance{gotPack, gotSack, worn} {
+		if c.ID == 0 {
+			t.Fatalf("restored container %d has no world ID", c.VNum)
+		}
+		for _, inside := range c.Contains {
+			if inside.Location != game.LocContainer(c.ID) {
+				t.Fatalf("object %d location = %+v, want inside container %d", inside.VNum, inside.Location, c.ID)
+			}
+		}
+	}
+}
+
+func vnums(objs []*game.ObjectInstance) []int {
+	out := make([]int, 0, len(objs))
+	for _, o := range objs {
+		out = append(out, o.VNum)
+	}
+	return out
+}

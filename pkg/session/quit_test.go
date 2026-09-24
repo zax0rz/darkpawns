@@ -24,7 +24,7 @@ import (
 // captureSaveDB records every SavePlayer call so tests can inspect what the
 // quit teardown actually persisted (equipment kept vs lost).
 type captureSaveDB struct {
-	mockAgentKeyDB
+	mockGameStore
 	saved []*db.PlayerRecord
 }
 

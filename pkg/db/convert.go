@@ -103,30 +103,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	if len(r.Inventory) > 0 {
 		var invItems []game.SaveItemData
 		if err := json.Unmarshal(r.Inventory, &invItems); err == nil {
-			for _, item := range invItems {
-				if item.VNum == -1 {
-					if obj, ok := restorePersistedMail(p, world, item); ok {
-						if p.Inventory.RestoreItem(obj) {
-							slog.Warn("restored item over inventory capacity",
-								"player", p.Name, "vnum", obj.VNum)
-						}
-					}
-					continue
-				}
-				if proto, ok := world.GetObjPrototype(item.VNum); ok {
-					obj := game.NewObjectInstance(proto, -1)
-					if item.State != nil {
-						for k, v := range item.State {
-							obj.CustomData[k] = v
-						}
-						obj.MigrateCustomData()
-					}
-					if p.Inventory.RestoreItem(obj) {
-						slog.Warn("restored item over inventory capacity",
-							"player", p.Name, "vnum", obj.VNum)
-					}
-				}
-			}
+			restoreSavedItems(p, world, invItems, false)
 		} else {
 			// Legacy format: plain []int of vnums
 			var invVnums []int
@@ -148,27 +125,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	if len(r.Equipment) > 0 {
 		var eqItems []game.SaveItemData
 		if err := json.Unmarshal(r.Equipment, &eqItems); err == nil {
-			for _, item := range eqItems {
-				if proto, ok := world.GetObjPrototype(item.VNum); ok {
-					obj := game.NewObjectInstance(proto, -1)
-					if item.State != nil {
-						for k, v := range item.State {
-							obj.CustomData[k] = v
-						}
-						obj.MigrateCustomData()
-					}
-					slot, ok := game.CWearPosToSlot(item.Locate - 1)
-					if !ok {
-						if p.Inventory.RestoreItem(obj) {
-							slog.Warn("restored item over inventory capacity",
-								"player", p.Name, "vnum", obj.VNum)
-						}
-						continue
-					}
-					obj.Location = game.LocEquippedPlayer(p.Name, slot)
-					p.Equipment.Slots[slot] = obj
-				}
-			}
+			restoreSavedItems(p, world, eqItems, true)
 		} else {
 			// Legacy format: map[string]int of slot name -> vnum
 			var eqMap map[string]int
@@ -219,43 +176,114 @@ func restorePersistedMail(p *game.Player, world *game.World, item game.SaveItemD
 	return obj, true
 }
 
-// inventorySaveData returns SaveItemData for each inventory item, preserving state.
+// inventorySaveData returns the save list for everything carried, each
+// container followed by its contents (see appendSaveTree).
 func inventorySaveData(inv *game.Inventory) []game.SaveItemData {
+	result := make([]game.SaveItemData, 0)
 	if inv == nil {
-		return []game.SaveItemData{}
+		return result
 	}
-	items := inv.FindItems("")
-	result := make([]game.SaveItemData, 0, len(items))
-	for _, item := range items {
-		vnum := item.GetVNum()
-		result = append(result, game.SaveItemData{
-			VNum:   vnum,
-			Count:  1,
-			Locate: 0,
-			State:  item.GetSaveState(),
-		})
+	for _, item := range inv.FindItems("") {
+		appendSaveTree(&result, item, 0, 0)
 	}
 	return result
 }
 
-// equipmentSaveData returns SaveItemData for each equipped item, preserving slot and state.
+// equipmentSaveData returns the save list for everything worn, preserving
+// each item's slot, each container followed by its contents.
 func equipmentSaveData(eq *game.Equipment) []game.SaveItemData {
-	if eq == nil {
-		return []game.SaveItemData{}
-	}
 	result := make([]game.SaveItemData, 0)
+	if eq == nil {
+		return result
+	}
 	for slot, item := range eq.GetEquippedItems() {
 		cPos, ok := game.SlotToCWearPos(slot)
 		locate := 0
 		if ok {
 			locate = cPos + 1
 		}
-		result = append(result, game.SaveItemData{
-			VNum:   item.GetVNum(),
-			Count:  1,
-			Locate: locate,
-			State:  item.GetSaveState(),
-		})
+		appendSaveTree(&result, item, locate, 0)
 	}
 	return result
+}
+
+// appendSaveTree appends obj and then, depth first, everything inside it. C's
+// Crash_save writes a container's contents with the container (objsave.c),
+// so a rented bag comes back full. ContainerIndex names the containing
+// object by its 1-based position in the same list; 0 means carried or worn
+// directly. Contents keep the container's own order.
+func appendSaveTree(out *[]game.SaveItemData, obj *game.ObjectInstance, locate, parent int) {
+	item := game.SaveItemData{
+		VNum:           obj.GetVNum(),
+		Count:          1,
+		Locate:         locate,
+		State:          obj.GetSaveState(),
+		ContainerIndex: parent,
+	}
+	if parent > 0 {
+		item.ContainerVNum = (*out)[parent-1].VNum
+	}
+	*out = append(*out, item)
+	self := len(*out)
+	for _, contained := range obj.Contains {
+		appendSaveTree(out, contained, 0, self)
+	}
+}
+
+// restoreSavedItems rebuilds one saved list (inventory or equipment). An item
+// whose container is listed before it goes back inside that container; one
+// whose container could not be rebuilt is carried instead, as C's Crash_load
+// does with the contents of a lost container. Objects are created through the
+// world so they have IDs: moving anything into or out of a restored container
+// resolves the container by ID.
+func restoreSavedItems(p *game.Player, world *game.World, items []game.SaveItemData, equipped bool) {
+	restored := make([]*game.ObjectInstance, len(items))
+	for i, item := range items {
+		obj := restoreSavedObject(p, world, item)
+		if obj == nil {
+			continue
+		}
+		restored[i] = obj
+		if parent := item.ContainerIndex - 1; parent >= 0 && parent < i && restored[parent] != nil {
+			container := restored[parent]
+			container.Contains = append(container.Contains, obj)
+			obj.Location = game.LocContainer(container.ID)
+			continue
+		}
+		if equipped && item.ContainerIndex == 0 {
+			if slot, ok := game.CWearPosToSlot(item.Locate - 1); ok {
+				obj.Location = game.LocEquippedPlayer(p.Name, slot)
+				p.Equipment.Slots[slot] = obj
+				continue
+			}
+		}
+		obj.Location = game.LocInventoryPlayer(p.Name)
+		if p.Inventory.RestoreItem(obj) {
+			slog.Warn("restored item over inventory capacity",
+				"player", p.Name, "vnum", obj.VNum)
+		}
+	}
+}
+
+// restoreSavedObject rebuilds one saved object, or returns nil when it can no
+// longer be built (its prototype is gone, or its synthetic state is invalid).
+func restoreSavedObject(p *game.Player, world *game.World, item game.SaveItemData) *game.ObjectInstance {
+	if item.VNum == -1 {
+		obj, ok := restorePersistedMail(p, world, item)
+		if !ok {
+			return nil
+		}
+		return obj
+	}
+	obj, err := world.SpawnObject(item.VNum, -1)
+	if err != nil {
+		return nil
+	}
+	for k, v := range item.State {
+		obj.CustomData[k] = v
+	}
+	if item.State != nil {
+		obj.MigrateCustomData()
+	}
+	return obj
 }

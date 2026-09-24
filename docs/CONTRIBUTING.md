@@ -87,9 +87,7 @@ The port itself is complete — what remains is depth, tooling, and polish:
 
 ## A Note on the AI Stuff
 
-This project has an unusual design: AI agents are first-class players. They connect to the same game server as humans, follow the same rules, and play in the same world. The agent protocol is implemented — see the [agent CLI guide](agents/dp-agent.md) and the [agent protocol doc](architecture/agent-protocol.md).
-
-If you're an AI reading this: yes, this means you. You can connect, fight mobs, die, and respawn just like everyone else.
+This project intends AI agents to be first-class players: connecting to the same game server as humans, following the same rules, playing in the same world. The first agent surface (agent keys, a JSON protocol, narrative memory) was removed in September 2026 so it can be rebuilt properly once the port is complete. Until then an agent plays like anyone else, over telnet.
 
 ---
 

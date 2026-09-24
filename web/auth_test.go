@@ -19,7 +19,7 @@ func setTestJWTSecret(t *testing.T) {
 func TestAuthMiddleware_AcceptsCaseInsensitiveBearer(t *testing.T) {
 	setTestJWTSecret(t)
 
-	token, err := auth.GenerateJWT("Hero", false, 0, "player")
+	token, err := auth.GenerateJWT("Hero", "player")
 	if err != nil {
 		t.Fatalf("GenerateJWT failed: %v", err)
 	}
@@ -52,7 +52,7 @@ func TestAuthMiddleware_AcceptsCaseInsensitiveBearer(t *testing.T) {
 func TestAuthMiddleware_RejectsMalformedBearer(t *testing.T) {
 	setTestJWTSecret(t)
 
-	token, err := auth.GenerateJWT("Hero", false, 0, "player")
+	token, err := auth.GenerateJWT("Hero", "player")
 	if err != nil {
 		t.Fatalf("GenerateJWT failed: %v", err)
 	}
