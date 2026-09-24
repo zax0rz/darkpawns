@@ -699,8 +699,12 @@ func ghostShipDisappearForWorld(w *World) {
 				removed = true
 			}
 		})
+		// C sends both removal messages to the first dock, 19173, including
+		// the one for 19174's exit (new_cmds.c:2727-2732). A player on 19174
+		// sees nothing; one on 19173 sees it even when the ship left from the
+		// other dock. The bytes are the game (R1).
 		if removed {
-			sendWeatherRoom(w, room, "Suddenly the ghostly ship to the north disappears!")
+			sendWeatherRoom(w, dock, "Suddenly the ghostly ship to the north disappears!")
 		}
 	}
 	removed := false

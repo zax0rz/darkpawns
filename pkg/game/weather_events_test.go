@@ -128,11 +128,14 @@ func TestGhostShipOpensAndClosesMatchingRuntimeExits(t *testing.T) {
 	if _, ok := w.GetRoomInWorld(otherDock).Exits["north"]; ok {
 		t.Fatalf("unselected dock %d retained a north exit after sunrise", otherDock)
 	}
-	if got := messages[dockName]; !slices.Equal(got, []string{
-		"Suddenly a ghostly ship appears to the north!\r\n",
-		"Suddenly the ghostly ship to the north disappears!\r\n",
-	}) {
-		t.Fatalf("selected dock messages after disappearance = %q", got)
+	// C announces the departure in 19173 whichever dock the ship used
+	// (new_cmds.c:2727-2732).
+	wantDockOne := []string{"Suddenly the ghostly ship to the north disappears!\r\n"}
+	if dock == 19173 {
+		wantDockOne = append([]string{"Suddenly a ghostly ship appears to the north!\r\n"}, wantDockOne...)
+	}
+	if got := messages["DockOne"]; !slices.Equal(got, wantDockOne) {
+		t.Fatalf("dock 19173 messages after disappearance = %q, want %q", got, wantDockOne)
 	}
 	if got := messages["Ship"]; !slices.Equal(got, []string{
 		"Suddenly a dock appears to the south!\r\n",
@@ -140,5 +143,39 @@ func TestGhostShipOpensAndClosesMatchingRuntimeExits(t *testing.T) {
 		"The ghost ship has set sail!\r\n",
 	}) {
 		t.Fatalf("ship messages after disappearance = %q", got)
+	}
+}
+
+// The second dock's departure message goes to the first dock, as in C
+// (new_cmds.c:2727-2732): the player standing on 19174 sees nothing.
+func TestGhostShipSecondDockDepartureAnnouncedOnFirstDock(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 19100}, {VNum: 19173}, {VNum: 19174}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	messages := make(map[string][]string)
+	w.MessageSink = func(name string, msg []byte) {
+		messages[name] = append(messages[name], string(msg))
+	}
+	for _, p := range []*Player{NewPlayer(2, "DockOne", 19173), NewPlayer(3, "DockTwo", 19174)} {
+		if err := w.AddPlayer(p); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", p.Name, err)
+		}
+	}
+	if !w.CreateRoomExit(19174, "north", 19100) || !w.CreateRoomExit(19100, "south", 19174) {
+		t.Fatal("could not open the second dock's exits")
+	}
+
+	ghostShipDisappearForWorld(w)
+
+	if got := messages["DockOne"]; !slices.Equal(got, []string{"Suddenly the ghostly ship to the north disappears!\r\n"}) {
+		t.Fatalf("dock 19173 messages = %q", got)
+	}
+	if got := messages["DockTwo"]; len(got) != 0 {
+		t.Fatalf("dock 19174 received %q; C sends it nothing", got)
+	}
+	if _, ok := w.GetRoomInWorld(19174).Exits["north"]; ok {
+		t.Fatal("dock 19174 kept its north exit")
 	}
 }
