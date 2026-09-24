@@ -186,3 +186,22 @@ func TestAbruptCloseLeavesCharacterLinkdead(t *testing.T) {
 	}
 	t.Fatal("character never went linkless after the client disconnected")
 }
+
+// A failed writer ping can exit before readPump observes the closed socket.
+// Both pump defers must converge on linkdead retention regardless of order.
+func TestWriterFirstDisconnectLeavesCharacterLinkdead(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "WriterFirst", 1001, true)
+	s.transportDone = make(chan struct{})
+	registerTestSession(t, m, s, s.playerName)
+
+	s.finishWebSocketTransport() // writer exits first
+	s.finishWebSocketTransport() // reader exits later
+
+	if _, ok := m.GetSession(s.playerName); !ok {
+		t.Fatal("writer-first disconnect unregistered the playing character")
+	}
+	if !s.player.IsLinkless() {
+		t.Fatal("writer-first disconnect did not mark the character linkless")
+	}
+}

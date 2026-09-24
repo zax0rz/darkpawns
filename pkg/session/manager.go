@@ -1531,6 +1531,9 @@ type Session struct {
 	// queued frames are rendered to telnet's bytes before they are sent.
 	// Written by readPump, read by writePump.
 	browserTerminal atomic.Bool
+	// Both WebSocket pumps can discover a disconnect. Only one may decide
+	// whether to retain the playing character or unregister the session.
+	transportCleanupOnce sync.Once
 
 	charCreating bool
 	charStage    string // current stage in creation flow (color, sex, race, class, hometown, stats_roll)

@@ -47,9 +47,7 @@ func (s *Session) readPump() {
 		// linkdead, as C's close_socket leaves it and as telnet does
 		// (DP-1323); the linkdead reaper extracts it later. Anything else is
 		// cleaned up now.
-		if !s.manager.HandleTransportDisconnect(s) {
-			s.manager.Unregister(s.playerName)
-		}
+		s.finishWebSocketTransport()
 		s.Close()
 	}()
 
@@ -102,13 +100,10 @@ func (s *Session) writePump() {
 		}
 		ticker.Stop()
 		s.Close()
-		// NEW (DP-902): ensure session is cleaned up if writePump exits first.
-		// readPump also defers Unregister, so both pumps converge on the same
-		// idempotent cleanupSession path. A linkdead session is not cleaned
-		// up: it stays registered until the linkdead reaper extracts it.
-		if s.hasTransport() {
-			s.manager.Unregister(s.playerName)
-		}
+		// A failed ping can make the writer exit before the reader notices
+		// EOF. Decide linkdead retention here too, through the same once-only
+		// path, so the writer cannot remove a playing character first.
+		s.finishWebSocketTransport()
 	}()
 
 	for {
@@ -154,6 +149,14 @@ func (s *Session) writePump() {
 			}
 		}
 	}
+}
+
+func (s *Session) finishWebSocketTransport() {
+	s.transportCleanupOnce.Do(func() {
+		if !s.manager.HandleTransportDisconnect(s) {
+			s.manager.Unregister(s.playerName)
+		}
+	})
 }
 
 // handleMessage processes incoming WebSocket messages.

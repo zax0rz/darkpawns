@@ -527,9 +527,13 @@ export function createMudClient(options) {
             inGame = true;
             charInputSecret = false;
           }
-          // Any reply from the server lets queued typeahead continue.
-          awaitingEntryReply = false;
-          drainInput();
+          // Only a prompt identifies the next input state. The greeting or
+          // unrelated output can arrive after a pasted name but before the
+          // password prompt; releasing typeahead there would echo the secret.
+          if (out.entry || out.prompt) {
+            awaitingEntryReply = false;
+            drainInput();
+          }
         } else if (msg.type === 'vars') {
           handleVarsMsg(msg.data);
         } else if (msg.type === 'state') {
