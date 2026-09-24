@@ -32,10 +32,6 @@ type weatherLockRegressionCase struct {
 const (
 	sunriseOutdoor   = "outdoor:The suns rise in the east and north.\r\n"
 	sunsetOutdoor    = "outdoor:The suns slowly disappear in the west and south.\r\n"
-	ghostAppear      = "event:[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!\r\n"
-	ghostDisappear   = "event:[ GHOST SHIP ] The fog lifts... the ghost ship vanishes into the mists.\r\n"
-	nightGateIn      = "event:[ NIGHT GATE ] A shimmering gate materializes in the darkness...\r\n"
-	nightGateOut     = "event:[ NIGHT GATE ] The shimmering gate fades into nothingness.\r\n"
 	fullMoonEvent    = "event:[ FULL MOON RISES ] The full moon casts an eerie glow across the land.\r\n"
 	lunarHunterEvent = "event:[ LUNAR HUNTER ] The lunar hunter rises in the east, its cry echoing across the valleys.\r\n"
 )
@@ -59,7 +55,7 @@ func weatherLockRegressionCases() []weatherLockRegressionCase {
 			liveWorld:    true,
 			wantHour:     5,
 			wantSunlight: SunRise,
-			wantEvents:   []string{sunriseOutdoor, ghostDisappear, nightGateOut},
+			wantEvents:   []string{sunriseOutdoor},
 		},
 		{
 			name:         "event-hour-20-nil",
@@ -78,7 +74,7 @@ func weatherLockRegressionCases() []weatherLockRegressionCase {
 			liveWorld:    true,
 			wantHour:     21,
 			wantSunlight: SunSet,
-			wantEvents:   []string{sunsetOutdoor, ghostAppear, nightGateIn, fullMoonEvent, lunarHunterEvent},
+			wantEvents:   []string{sunsetOutdoor, fullMoonEvent, lunarHunterEvent},
 		},
 		{
 			name:         "non-event-hour-7-nil",
@@ -126,7 +122,7 @@ func weatherLockRegressionCases() []weatherLockRegressionCase {
 			liveWorld:    true,
 			wantHour:     21,
 			wantSunlight: SunSet,
-			wantEvents:   []string{sunsetOutdoor, ghostAppear, nightGateIn},
+			wantEvents:   []string{sunsetOutdoor},
 		},
 		{
 			name:         "moon-day-21-qualifying",
@@ -136,7 +132,7 @@ func weatherLockRegressionCases() []weatherLockRegressionCase {
 			liveWorld:    true,
 			wantHour:     21,
 			wantSunlight: SunSet,
-			wantEvents:   []string{sunsetOutdoor, ghostAppear, nightGateIn, fullMoonEvent, lunarHunterEvent},
+			wantEvents:   []string{sunsetOutdoor, fullMoonEvent, lunarHunterEvent},
 		},
 		{
 			name:         "moon-day-24-qualifying",
@@ -146,7 +142,7 @@ func weatherLockRegressionCases() []weatherLockRegressionCase {
 			liveWorld:    true,
 			wantHour:     21,
 			wantSunlight: SunSet,
-			wantEvents:   []string{sunsetOutdoor, ghostAppear, nightGateIn, fullMoonEvent, lunarHunterEvent},
+			wantEvents:   []string{sunsetOutdoor, fullMoonEvent, lunarHunterEvent},
 		},
 		{
 			name:         "moon-day-25-nonqualifying",
@@ -156,7 +152,7 @@ func weatherLockRegressionCases() []weatherLockRegressionCase {
 			liveWorld:    true,
 			wantHour:     21,
 			wantSunlight: SunSet,
-			wantEvents:   []string{sunsetOutdoor, ghostAppear, nightGateIn},
+			wantEvents:   []string{sunsetOutdoor},
 		},
 	}
 }

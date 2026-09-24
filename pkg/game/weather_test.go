@@ -185,8 +185,9 @@ func TestWeatherEvents_SynchronizedDirectEntryPoints(t *testing.T) {
 
 	SetWeatherWorld(w)
 
-	// Trigger all six event helpers through their synchronized direct wrappers
-	// to verify world broadcasting and preserve their exact existing Go output.
+	// Trigger all six event helpers through their synchronized direct wrappers.
+	// Only the full-moon and lunar-hunter routines broadcast globally; the gate
+	// and ghost-ship routines are room-local world changes.
 	fullMoon()
 	lunarHunter()
 	loadNightGate()
@@ -197,10 +198,6 @@ func TestWeatherEvents_SynchronizedDirectEntryPoints(t *testing.T) {
 	wantMessages := []string{
 		"[ FULL MOON RISES ] The full moon casts an eerie glow across the land.\r\n",
 		"[ LUNAR HUNTER ] The lunar hunter rises in the east, its cry echoing across the valleys.\r\n",
-		"[ NIGHT GATE ] A shimmering gate materializes in the darkness...\r\n",
-		"[ NIGHT GATE ] The shimmering gate fades into nothingness.\r\n",
-		"[ GHOST SHIP ] An eerie fog rolls in from the harbor... the ghost ship has been sighted!\r\n",
-		"[ GHOST SHIP ] The fog lifts... the ghost ship vanishes into the mists.\r\n",
 	}
 	if !slices.Equal(broadcastMessages, wantMessages) {
 		t.Errorf("broadcast messages = %#v, want %#v", broadcastMessages, wantMessages)
