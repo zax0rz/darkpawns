@@ -47,6 +47,16 @@ func (s *Session) readPump() {
 		// linkdead, as C's close_socket leaves it and as telnet does
 		// (DP-1323); the linkdead reaper extracts it later. Anything else is
 		// cleaned up now.
+		// An orderly close (the server closed the send channel: goodbye, a
+		// refused login, quit) leaves the writer flushing the last message.
+		// Closing the socket now would drop it and end the connection with
+		// an abnormal close, so the reader waits for the writer first.
+		if s.SendClosed() && s.writerDone != nil {
+			select {
+			case <-s.writerDone:
+			case <-time.After(5 * time.Second):
+			}
+		}
 		s.finishWebSocketTransport()
 		s.Close()
 	}()
@@ -90,6 +100,9 @@ func (s *Session) readPump() {
 func (s *Session) writePump() {
 	ticker := time.NewTicker(54 * time.Second)
 	defer func() {
+		if s.writerDone != nil {
+			defer close(s.writerDone)
+		}
 		if r := recover(); r != nil {
 			slog.Error(
 				"CRITICAL PANIC RECOVERED in writePump",
