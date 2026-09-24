@@ -41,9 +41,22 @@ named screen reader; xterm's accessibility DOM and an automated audit are
 supporting evidence only. In particular, test speech around password prompts
 and rapid output manually before claiming the toggle is safe and useful.
 
-The browser dock shows vitals, a local map, room contents, inventory,
-equipment, target, and a bounded channel history when the server supplies
-those fields. Chat uses `Comm.Channel.Text` and also remains in the canonical
+The browser dock shows, top to bottom, the character's vitals, the target
+during a fight, a local map, and a bounded channel history (the last 80
+lines, scrolling inside its own box) when the server supplies those fields.
+Room contents and inventory are left to `look` and `inv`, as in the Mudlet
+dock. Chat uses `Comm.Channel.Text` and also remains in the canonical
 game transcript (R1, R4). The dock history is deliberately not a second live
 region: screen reader mode announces the terminal text, and the Chat heading
 provides a place to review the recent lines on demand.
+
+## Results log
+
+| Date | Tester | Environment | Result |
+|---|---|---|---|
+| 2026-09-24 | Claude (automated, no speech) | Chromium, local preview | Pass: landmarks, headings, named terminal region, announced connection status; screen reader toggle sets `aria-pressed` and persists; real keystrokes reach the game and the room description reaches xterm's live region; keyboard order toggle, terminal, dock; Tab leaves the terminal (fixed: xterm trapped it); no horizontal scroll at 375px; text contrast 5.7:1 or better. Noted: xterm's live region is assertive, and one idle message was written to it twice. |
+| 2026-09-24 | Zach (sighted, first use of a screen reader) | Orca 49.4, Firefox, Pop!_OS COSMIC | Pass for the core loop: the page reads while browsing; the toggle is found by Tab and switches to terminal announcements; typed characters are echoed; after login the room description is read. Not yet tested: password prompt speech, busy output, dock navigation. |
+
+Still wanted: a run by an experienced screen reader user who plays MUDs,
+covering busy output (does the assertive region cut lines off?), the
+password prompt, and whether the dock is worth navigating at all.
