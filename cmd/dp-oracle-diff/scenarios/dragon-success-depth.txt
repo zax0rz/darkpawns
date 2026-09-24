@@ -80,8 +80,8 @@ east
 [setup:oracle:Drakseer]
 Drakseer
 Y
-observerpass
-observerpass
+obspass
+obspass
 N
 F
 H
@@ -98,8 +98,8 @@ east
 [setup:port:Drakseer]
 Drakseer
 y
-observerpass
-observerpass
+obspass
+obspass
 N
 F
 H

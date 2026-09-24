@@ -39,8 +39,8 @@ Y
 [setup:oracle:sleeper]
 GripSleeper
 Y
-sleeperpass
-sleeperpass
+sleeppass
+sleeppass
 N
 M
 H
@@ -57,8 +57,8 @@ east
 [setup:port:sleeper]
 GripSleeper
 y
-sleeperpass
-sleeperpass
+sleeppass
+sleeppass
 N
 M
 H

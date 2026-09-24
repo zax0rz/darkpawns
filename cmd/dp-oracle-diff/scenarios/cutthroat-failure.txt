@@ -41,8 +41,8 @@ Y
 [setup:oracle:Cutthroatfailthief]
 Cutthroatfailthief
 Y
-cutthroatpass
-cutthroatpass
+cutpass
+cutpass
 N
 M
 H
@@ -60,8 +60,8 @@ wield dagger
 [setup:port:Cutthroatfailthief]
 Cutthroatfailthief
 y
-cutthroatpass
-cutthroatpass
+cutpass
+cutpass
 N
 M
 H

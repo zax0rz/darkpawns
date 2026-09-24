@@ -82,8 +82,8 @@ east
 [setup:oracle:Dragonobserver]
 Dragonobserver
 Y
-observerpass
-observerpass
+obspass
+obspass
 N
 F
 H
@@ -100,8 +100,8 @@ east
 [setup:port:Dragonobserver]
 Dragonobserver
 y
-observerpass
-observerpass
+obspass
+obspass
 N
 F
 H

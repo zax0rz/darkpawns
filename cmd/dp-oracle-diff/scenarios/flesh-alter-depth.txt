@@ -85,8 +85,8 @@ hit trainee
 [setup:oracle:fleshobserver]
 Fleshover
 Y
-observerpass
-observerpass
+obspass
+obspass
 N
 M
 H
@@ -103,8 +103,8 @@ east
 [setup:port:fleshobserver]
 Fleshover
 y
-observerpass
-observerpass
+obspass
+obspass
 N
 M
 H
