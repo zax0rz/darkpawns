@@ -702,34 +702,7 @@ func (tc *telnetConn) writeLocked(data []byte) {
 // than the last. Canonicalizing to "\r\n" here fixes every text source at the
 // transport boundary. Idempotent: existing "\r\n" is preserved, not doubled.
 func (tc *telnetConn) writeLine(s string) {
-	tc.write([]byte(normalizeCRLF(s)))
-}
-
-// ensureLineEnded appends CRLF only to text that carries no line ending at all.
-// A trailing '\r' already ends the line: C's historical LFCR pair ("\n\r") ends
-// most handler output, and appending another CRLF after it injects a blank line
-// the oracle never wrote whenever one command emits two messages (do_string's
-// WARNING/Ok pair is the first vehicle that exposed it — modify.c:632,765).
-func ensureLineEnded(text string) string {
-	if strings.HasSuffix(text, "\n") || strings.HasSuffix(text, "\r") {
-		return text
-	}
-	return text + "\r\n"
-}
-
-// normalizeCRLF converts any mix of "\r\n", C's historical "\n\r", lone
-// "\r", and lone "\n" line endings into canonical "\r\n". Applied to all
-// text written to telnet clients. LFCR is a single C line ending, not two
-// lines; preserving that pair matters for handlers such as do_skillset that
-// build output from mixed-order strings.
-func normalizeCRLF(s string) string {
-	if !strings.ContainsAny(s, "\r\n") {
-		return s
-	}
-	s = strings.ReplaceAll(s, "\r\n", "\n")
-	s = strings.ReplaceAll(s, "\n\r", "\n")
-	s = strings.ReplaceAll(s, "\r", "\n")
-	return strings.ReplaceAll(s, "\n", "\r\n")
+	tc.write([]byte(session.NormalizeCRLF(s)))
 }
 
 // enableCompression starts MCCP2 compression. It sends the COMPRESS_START
@@ -845,7 +818,7 @@ func (tc *telnetConn) enableGMCP() {
 // writePrompt writes the command prompt, marked with IAC EOR for clients that
 // asked for prompt marking.
 func (tc *telnetConn) writePrompt(prompt string) {
-	tc.write(tc.markPrompt([]byte(normalizeCRLF(prompt))))
+	tc.write(tc.markPrompt([]byte(session.NormalizeCRLF(prompt))))
 }
 
 // markPrompt appends IAC EOR to prompt bytes when the client negotiated EOR.
