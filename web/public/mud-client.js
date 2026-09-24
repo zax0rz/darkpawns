@@ -640,6 +640,16 @@ export function createMudClient(options) {
 
   // Typeahead waits for each server-owned entry state before echoing. A paste
   // containing a name and password must not echo the password as part of the name.
+  // Tab and Shift+Tab move focus out of the terminal instead of reaching the
+  // game. xterm otherwise swallows Tab, which traps a keyboard-only player
+  // inside the terminal (WCAG 2.1.2); the game's input is line mode and has
+  // no use for a tab character.
+  if (typeof term.attachCustomKeyEventHandler === 'function') {
+    term.attachCustomKeyEventHandler(function (event) {
+      return !(event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey);
+    });
+  }
+
   term.onData(function (data) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     queuedInput += data.replace(/\r\n/g, '\r');

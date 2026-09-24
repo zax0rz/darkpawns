@@ -261,3 +261,36 @@ test('a failing dock handler never writes the protocol envelope to the terminal'
     console.error = previous.consoleError;
   }
 });
+
+test('Tab leaves the terminal instead of reaching the game', async () => {
+  const previous = { WebSocket: globalThis.WebSocket, fetch: globalThis.fetch, location: globalThis.location };
+  class FakeWebSocket {
+    static OPEN = 1;
+    constructor() { this.readyState = FakeWebSocket.OPEN; FakeWebSocket.latest = this; }
+    send() {}
+    close() {}
+  }
+  globalThis.WebSocket = FakeWebSocket;
+  globalThis.fetch = async () => ({ json: async () => ({}) });
+  globalThis.location = { search: '', protocol: 'https:', host: 'darkpawns.org' };
+  let keyHandler;
+  const terminal = {
+    write() {}, writeln() {}, onData() {}, cols: 80,
+    attachCustomKeyEventHandler(handler) { keyHandler = handler; },
+  };
+  const doc = { querySelector: () => null, querySelectorAll: () => [], getElementById: () => null };
+  try {
+    const client = createMudClient({ terminal, doc });
+    assert.equal(typeof keyHandler, 'function');
+    // false: xterm leaves the event to the browser, which moves focus.
+    assert.equal(keyHandler({ key: 'Tab', shiftKey: false }), false);
+    assert.equal(keyHandler({ key: 'Tab', shiftKey: true }), false);
+    assert.equal(keyHandler({ key: 'a' }), true);
+    assert.equal(keyHandler({ key: 'Enter' }), true);
+    client.disconnect();
+  } finally {
+    globalThis.WebSocket = previous.WebSocket;
+    globalThis.fetch = previous.fetch;
+    globalThis.location = previous.location;
+  }
+});
