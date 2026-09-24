@@ -29,8 +29,9 @@ export interface MudClientOptions {
   wsUrl?: string;
   /** Document queried for the optional panel elements. Defaults to `document`. */
   doc?: Document;
-  /** Log straight in as this character instead of asking for a name. The admin
-   *  console already knows who is signed in; nothing else should set this. */
+  /** Answer the name prompt with this character. The admin console already
+   *  knows who is signed in; the server still asks for the password. Nothing
+   *  else should set this. */
   autoLogin?: string;
   /** Connection state, for hosts that render their own indicator. */
   onStatus?(state: MudConnectionState): void;
