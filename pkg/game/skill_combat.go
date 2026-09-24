@@ -226,15 +226,16 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 	dam := (ch.GetLevel() / 2) + 1
 
 	return SkillResult{
-		Success:         true,
-		Damage:          dam,
-		SkillMsgType:    SkillBashNum,
-		StartCombat:     true,
-		TargetFalls:     true,
-		StunTarget:      true, // see PR note: C sets only POS_SITTING; StunTarget may over-stun — separate finding
-		WaitCh:          2,
-		WaitTarget:      2, // PULSE_VIOLENCE * 2 (act.offensive.c:494)
-		DeferredImprove: []string{SkillBash},
+		Success:           true,
+		Damage:            dam,
+		SkillMsgType:      SkillBashNum,
+		StartCombat:       true,
+		TargetFalls:       true,
+		StunTarget:        true, // see PR note: C sets only POS_SITTING; StunTarget may over-stun — separate finding
+		WaitCh:            2,
+		WaitTarget:        2, // PULSE_VIOLENCE * 2 (act.offensive.c:494)
+		DeferredImprove:   []string{SkillBash},
+		EffectsNeedDamage: true,
 	}
 }
 
@@ -371,19 +372,20 @@ func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// player path (subcmd 0), AFTER damage() returns — i.e. after the
 	// skill_message dice (new_cmds.c:805-808) — so it is deferred to
 	// sendSkillResult (DP-1212 / R3b). damage() returns TRUE whenever dam>0
-	// (fight.c:1715-1718), and trip's success dam is always >= 1, so the C
-	// gate on damage()'s return always passes here. StartCombat mirrors C's
-	// damage(), which enrolls both combatants.
+	// (fight.c:1715-1718) unless its protection block refuses the hit, so
+	// EffectsNeedDamage ties the knockdown and improvement to that refusal.
+	// StartCombat mirrors C's damage(), which enrolls both combatants.
 	dam := (ch.GetLevel() / 2) + 1
 
 	return SkillResult{
-		Success:         true,
-		Damage:          dam,
-		SkillMsgType:    SkillTripNum,
-		StartCombat:     true,
-		TargetFalls:     true,
-		WaitTarget:      1,
-		DeferredImprove: []string{SkillTrip},
+		Success:           true,
+		Damage:            dam,
+		SkillMsgType:      SkillTripNum,
+		StartCombat:       true,
+		TargetFalls:       true,
+		WaitTarget:        1,
+		DeferredImprove:   []string{SkillTrip},
+		EffectsNeedDamage: true,
 	}
 }
 

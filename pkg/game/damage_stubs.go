@@ -82,8 +82,20 @@ func combatantFromInterface(attacker interface{}) combat.Combatant {
 }
 
 // DoSpellDamage applies damage to a player or mob, handling death.
-// Used by damage spells (hellfire, meteor_swarm, etc.) that need to hit any character type.
+// Used by damage spells (hellfire, meteor_swarm, etc.) that need to hit any
+// character type. It asks damage()'s protection gate first (DP-1327).
 func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill string) bool {
+	killer := combatantFromInterface(attacker)
+	if victimC := combatantFromInterface(victim); killer != nil && victimC != nil && w.DamageRefused(killer, victimC) {
+		return false
+	}
+	return w.ApplySkillDamage(attacker, victim, dam, skill)
+}
+
+// ApplySkillDamage is DoSpellDamage for a caller that has already asked
+// DamageRefused where C calls damage(): the skill command tail, which emits
+// skill_message itself between the gate and the damage.
+func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill string) bool {
 	attackerName := getAttackerName(attacker)
 	killer := combatantFromInterface(attacker)
 	attackType := skillToAttackType(skill)
@@ -140,6 +152,10 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 	}
 }
 
+// The Do*Damage seams below are called only by the skill command tail
+// (pkg/command sendSkillResult), which asks DamageRefused at the point C
+// calls damage(). They skip the gate so a refusal prints once (DP-1327).
+
 // DoDisembowelDamage preserves do_disembowel's damage() call path: damage
 // updates the victim position, emits skill_message after that update, and
 // runs death_cry/raw_kill only after the numbered message and death bytes.
@@ -147,7 +163,7 @@ func (w *World) DoDisembowelDamage(attacker, victim combat.Combatant, dam int) b
 	if attacker == nil || victim == nil {
 		return false
 	}
-	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillDisembowelNum, func() {
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillDisembowelNum, func() {
 		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillDisembowelNum)
 	})
@@ -160,7 +176,7 @@ func (w *World) DoGroinripDamage(attacker, victim combat.Combatant, dam int) boo
 	if attacker == nil || victim == nil {
 		return false
 	}
-	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillGroinripNum, func() {
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillGroinripNum, func() {
 		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillGroinripNum)
 	})
@@ -173,7 +189,7 @@ func (w *World) DoNeckbreakDamage(attacker, victim combat.Combatant, dam int) bo
 	if attacker == nil || victim == nil {
 		return false
 	}
-	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillNeckbreakNum, func() {
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillNeckbreakNum, func() {
 		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillNeckbreakNum)
 	})
@@ -187,7 +203,7 @@ func (w *World) DoSmackheadsDamage(attacker, victim combat.Combatant, dam int) b
 	if attacker == nil || victim == nil {
 		return false
 	}
-	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillSmackheadsNum, func() {
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillSmackheadsNum, func() {
 		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillSmackheadsNum)
 	})
@@ -221,7 +237,7 @@ func (w *World) DoCutthroatDamage(attacker, victim combat.Combatant, dam int) bo
 	if attacker == nil || victim == nil {
 		return false
 	}
-	return combat.TakeDamageWithDeath(attacker, victim, dam, SkillCutthroatNum, func() {
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillCutthroatNum, func() {
 		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillCutthroatNum)
 	})

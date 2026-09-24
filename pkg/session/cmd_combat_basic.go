@@ -105,26 +105,11 @@ func cmdAssist(s *Session, args []string) error {
 			"$n assists $N.", "", game.ToNotVict)
 	}
 
-	// do_assist calls hit() after its own audience messages. Preserve hit()'s
-	// PC-vs-PC protection gates here before enrolling the helper, so the
-	// immediate assist swing cannot bypass fight.c:1336-1357 when the opponent
-	// is a low-level player. The mob-helpee path is observable when its opponent
-	// is a player, even though the helpee itself receives no direct message.
-	if !opponent.IsNPC() {
-		if s.player.GetLevel() <= 10 {
-			game.Act(nil, false, s.player, opponent.(game.Actor), nil, nil,
-				"You are not experienced enough to attack $N!", "", game.ToChar)
-			return nil
-		}
-		victimOutlaw := false
-		if victim, ok := opponent.(*game.Player); ok {
-			victimOutlaw = victim.GetFlags()&(1<<uint(game.PlrOutlaw)) != 0
-		}
-		if opponent.GetLevel() <= 10 && !victimOutlaw {
-			game.Act(nil, false, s.player, opponent.(game.Actor), nil, nil,
-				"Ancient forces protect $N from your wrath!", "", game.ToChar)
-			return nil
-		}
+	// do_assist calls hit() after its own audience messages, and hit()
+	// reaches damage()'s protection block (fight.c:1318-1368) before the
+	// helper is enrolled.
+	if s.manager.world.DamageRefused(s.player, opponent) {
+		return nil
 	}
 	if err := s.manager.combatEngine.StartCombat(s.player, opponent); err != nil {
 		s.Send(err.Error())

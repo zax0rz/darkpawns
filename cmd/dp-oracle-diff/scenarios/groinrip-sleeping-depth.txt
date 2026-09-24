@@ -1,7 +1,8 @@
-# A sleeping male victim forces percent=0 after the skill gate and receives the
-# numbered victim message through C's TO_VICT | TO_SLEEP path.
+# A sleeping level-1 player forces percent=0, but damage()'s level protection
+# refuses the hit (fight.c:1350-1356): the actor gets 'Ancient forces protect',
+# and do_groinrip still prints its room message after damage() returns.
 
-# depth-case: groinrip.sleeping-target
+# depth-case: groinrip.newbie-protection
 
 [fixture]
 empty-players

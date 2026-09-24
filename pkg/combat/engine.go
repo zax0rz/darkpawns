@@ -524,14 +524,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	// every round; NPC dodge draws Number(0,100) if AFF_DODGE.
 	ce.prepareRoundDefense(attacker, defender)
 
-	// 3. Shopkeeper protection — C: fight.c:1359-1366.
-	if cbIsShopkeeper(defender.GetName()) {
-		ce.StopCombat(attacker.GetName())
-		ce.StopCombat(defender.GetName())
-		return
-	}
-
-	// 4. NPC stand-up (fight.c:1975-1988). C zeros attacks only for
+	// 3. NPC stand-up (fight.c:1975-1988). C zeros attacks only for
 	// GET_MOB_WAIT > 0, which only the Lua bridge writes (scripts.c:2017) —
 	// never WAIT_STATE (utils.h:462-464 writes ch->wait, a different field).
 	// Go's scripting layer writes no mob wait, so NPC attacks are NEVER zeroed
@@ -541,7 +534,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		ce.scrambleBroadcast(attacker)
 	}
 
-	// 5. PC stand-up (fight.c:1990-1998). C: !IS_NPC && GET_POS < POS_FIGHTING
+	// 4. PC stand-up (fight.c:1990-1998). C: !IS_NPC && GET_POS < POS_FIGHTING
 	// && !CHECK_WAIT (wait <= 1). PC wait drains in the heartbeat (manager.go
 	// OnDrainInput), NOT here — do not decrement (C drains in comm.c:597).
 	if !attacker.IsNPC() && attacker.GetPosition() < PosFighting {
@@ -555,7 +548,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 	}
 
-	// 6. IS_PARRIED adjustment (fight.c:1999-2007).
+	// 5. IS_PARRIED adjustment (fight.c:1999-2007).
 	defenseAction := ce.consumeParried(attacker.GetName())
 	if defenseAction != "" {
 		defenderDexDefense := dexApp[dexIndex(defender)].Defensive
@@ -569,7 +562,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		}
 	}
 
-	// 7. Attack loop (fight.c:2009-2025). Gated ONLY on AWAKE (GET_POS >
+	// 6. Attack loop (fight.c:2009-2025). Gated ONLY on AWAKE (GET_POS >
 	// POS_SLEEPING) and same-room — a sitting/resting attacker (downed but
 	// awake) still swings. NOT awake or different room → stop_fighting.
 	if attacker.GetPosition() <= PosSleeping {
@@ -722,14 +715,18 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return false
 	}
 
-	// C's damage() protects shopkeepers after hit() has consumed its
-	// to-hit/damage draws but before combat enrollment or messages. Mob specials
-	// use this same synchronous opener, so apply the boundary here as well as
-	// in the normal perform_violence path (fight.c:1359-1366).
-	if cbIsShopkeeper(defender.GetName()) {
-		ce.StopCombat(attacker.GetName())
-		ce.StopCombat(defender.GetName())
-		return true
+	// damage()'s protection block runs after hit() has consumed its to-hit
+	// and damage draws, before combat enrollment or messages (fight.c:1318-
+	// 1368). Shopkeeper protection stops both sides, which ends C's attack
+	// loop; the peaceful and level refusals leave FIGHTING set, so C's loop
+	// swings (and refuses) again on the next attack.
+	if cbDamageRefused(attacker, defender) {
+		if cbIsShopkeeper(defender.GetName()) {
+			ce.StopCombat(attacker.GetName())
+			ce.StopCombat(defender.GetName())
+			return true
+		}
+		return false
 	}
 
 	// fight.c reaches mob redirects from damage(), after hit() has consumed

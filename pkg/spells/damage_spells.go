@@ -1,8 +1,6 @@
 package spells
 
 import (
-	"fmt"
-
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -112,9 +110,14 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		}
 	}
 
-	// Inflict damage
+	// Inflict damage. mag_damage's noise and soul-leech effects run only
+	// when damage() returns TRUE (magic.c:826-848).
+	dealt := false
 	if dam > 0 {
-		inflictDamage(ch, victim, dam, spellNum, world)
+		dealt = inflictDamage(ch, victim, dam, spellNum, world)
+	}
+	if !dealt {
+		return
 	}
 
 	// Special post-damage effects
@@ -290,28 +293,16 @@ type spellDeathPipeline interface {
 // own award/DieWithKiller block became reachable on the spell path and
 // double-handled death alongside HandleSpellDeath. Routing straight to
 // HandleDeath keeps a single death authority across melee, skills, and spells.
-func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{}) {
+func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{}) bool {
 	// Type-assert to combat.Combatant to run the shared damage tail.
 	chCombat, chOk := ch.(combat.Combatant)
 	victCombat, victOk := victim.(combat.Combatant)
 	if chOk && victOk {
-		// C's damage() protects low-level player characters before it emits a
-		// damage/skill message (fight.c:1344-1357). Spoken spells reach that
-		// same damage() path through mag_damage(); keep the gate here rather
-		// than allowing the spell-only damage seam to bypass it.
-		if chCombat.GetName() != victCombat.GetName() && !chCombat.IsNPC() && !victCombat.IsNPC() {
-			if chCombat.GetLevel() <= 10 {
-				sendToCaster(ch, fmt.Sprintf("You are not experienced enough to attack %s!\r\n", victCombat.GetName()))
-				return
-			}
-			victimOutlaw := false
-			if flags, ok := victim.(interface{ GetFlags() uint64 }); ok {
-				victimOutlaw = flags.GetFlags()&(1<<0) != 0
-			}
-			if victCombat.GetLevel() <= 10 && !victimOutlaw {
-				sendToCaster(ch, fmt.Sprintf("Ancient forces protect %s from your wrath!\r\n", victCombat.GetName()))
-				return
-			}
+		// Spoken spells reach damage() through mag_damage(), so they answer to
+		// its protection block (fight.c:1318-1368) before any message: the
+		// world's shared gate emits C's refusal bytes (DP-1327).
+		if g, ok := world.(damageGate); ok && g.DamageRefused(chCombat, victCombat) {
+			return false
 		}
 
 		// The breath path reaches C damage(0), which enrolls both awake
@@ -352,7 +343,7 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		if dam <= 0 {
 			// Fully absorbed (immortal victim, or a clamped protection result):
 			// no state damage/death — matches damage() after the message path.
-			return
+			return false
 		}
 
 		victCombat.TakeDamage(dam)
@@ -371,7 +362,7 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 				dp.HandleDeath(victCombat, chCombat, attackType)
 			}
 		}
-		return
+		return true
 	}
 
 	// Fallback: if ch or victim doesn't implement Combatant, apply raw damage
@@ -382,13 +373,20 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 	}
 	d, ok := victim.(damager)
 	if !ok {
-		return
+		return false
 	}
 	newHP := d.GetHP() - dam
 	if newHP < 0 {
 		newHP = 0
 	}
 	d.SetHP(newHP)
+	return dam != 0
+}
+
+// damageGate is the world's port of damage()'s protection block
+// (game.World.DamageRefused).
+type damageGate interface {
+	DamageRefused(ch, victim combat.Combatant) bool
 }
 
 // --- character trait checks (used in damage formulas) ---

@@ -13,10 +13,15 @@ import (
 // matching fight.c:1308-1718. Unlike the player command path, there is no
 // command-layer result to defer the message or combat enrollment.
 func (w *World) mobSkillDamage(ch *MobInstance, vict combat.Combatant, dam, skillNum int) bool {
-	if ch == nil || vict == nil {
+	if ch == nil || vict == nil || w.DamageRefused(ch, vict) {
 		return false
 	}
+	return w.mobSkillDamageAfterGate(ch, vict, dam, skillNum)
+}
 
+// mobSkillDamageAfterGate is mobSkillDamage for a caller that has already
+// asked damage()'s protection gate.
+func (w *World) mobSkillDamageAfterGate(ch *MobInstance, vict combat.Combatant, dam, skillNum int) bool {
 	// Native damage() performs jail/charm/switcheroo redirects before applying
 	// the supplied amount. CombatEngine already owns that shared C seam for
 	// one_hit(); use it here too for direct mob-special damage (R3/R5b/R5c).
@@ -61,13 +66,8 @@ func (w *World) mobBackstabDamage(me *MobInstance, vict combat.Combatant, dam in
 		return false
 	}
 
-	// damage() refuses non-outlaws in peaceful rooms unless the victim is
-	// already fighting the attacker. Backstabber's target gate selects a
-	// non-fighting player, so this is the only reachable peaceful-room branch.
-	if player, ok := vict.(*Player); ok &&
-		w.roomHasFlag(me.GetRoom(), "peaceful") &&
-		player.GetFlags()&(1<<uint(PlrOutlaw)) == 0 &&
-		vict.GetFighting() != me.GetName() {
+	// damage()'s protections come before its set_fighting (fight.c:1318-1408).
+	if w.DamageRefused(me, vict) {
 		return false
 	}
 
@@ -90,7 +90,7 @@ func (w *World) mobBackstabDamage(me *MobInstance, vict combat.Combatant, dam in
 		vict.SetFighting(me.GetName())
 	}
 
-	return w.mobSkillDamage(me, vict, dam, SkillBackstabNum)
+	return w.mobSkillDamageAfterGate(me, vict, dam, SkillBackstabNum)
 }
 
 // mobBackstab ports hit(ch, vict, SKILL_BACKSTAB) as called by

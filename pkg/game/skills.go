@@ -500,6 +500,16 @@ type SkillResult struct {
 	// can emit the message (R1/R3; cutthroat's damage() call).
 	SkillMsgInDamage bool
 
+	// EffectsNeedDamage marks bash and trip, whose victim knockdown, victim
+	// WAIT_STATE and improve_skill sit inside C's `if (damage(...))`: when
+	// damage()'s protections refuse the hit, none of them happen
+	// (act.offensive.c:489-495, new_cmds.c:805-815; DP-1327).
+	EffectsNeedDamage bool
+	// NoDamageCall marks results whose C path changes hit points without
+	// calling damage() (do_shoot writes GET_HIT directly), so damage()'s
+	// protection block does not apply to them.
+	NoDamageCall bool
+
 	// DamageSkill selects the C skill/attack type used by the damage pipeline.
 	// Empty retains the legacy generic path; callers that pass a numbered skill
 	// through damage() should set its canonical name (for example, "bite").

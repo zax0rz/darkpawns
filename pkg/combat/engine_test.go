@@ -177,8 +177,10 @@ func TestPerformInitialAttackResolvesExactlyOneSynchronousHit(t *testing.T) {
 		name: "Attacker", room: 1, level: 1, hp: 20, maxHP: 20,
 		position: PosStanding, class: ClassWarrior, str: 10, dex: 10, intVal: 10, wis: 10,
 	}
+	// An NPC defender: two level-1 players would be refused by damage()'s
+	// level protection (fight.c:1344-1357) before any message.
 	defender := &mockCombatant{
-		name: "Defender", room: 1, level: 1, hp: 20, maxHP: 20,
+		name: "Defender", room: 1, level: 1, hp: 20, maxHP: 20, npc: true,
 		position: PosStanding, class: ClassWarrior, str: 10, dex: 10, intVal: 10, wis: 10,
 	}
 	if err := ce.StartCombat(attacker, defender); err != nil {
@@ -235,7 +237,7 @@ func TestPerformInitialAttack_ModifiersApplied(t *testing.T) {
 		damageRoll: DiceRoll{Num: 1, Sides: 1},
 	}
 	defender := &mockCombatant{
-		name: "Monster", room: 1, level: 1, hp: 20, maxHP: 20,
+		name: "Monster", room: 1, level: 1, hp: 20, maxHP: 20, npc: true,
 		position: PosStanding, ac: 100, dex: 13, intVal: 10, wis: 10,
 	}
 	if err := ce.StartCombat(attacker, defender); err != nil {
@@ -399,8 +401,8 @@ func TestShopkeeperProtection_RemovesCombatPair(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)
 
-	attacker := &mockCombatant{name: "Attacker", hp: 100, room: 1}
-	defender := &mockCombatant{name: "Shopkeeper", hp: 100, room: 1}
+	attacker := &mockCombatant{name: "Attacker", hp: 100, maxHP: 100, room: 1, level: 20, position: PosFighting}
+	defender := &mockCombatant{name: "Shopkeeper", hp: 100, maxHP: 100, room: 1, level: 20, npc: true, position: PosFighting}
 
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{

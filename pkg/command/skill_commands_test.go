@@ -135,8 +135,12 @@ func TestCmdHeadbuttFallsBackToFightingTarget(t *testing.T) {
 	session.player.SetPosition(combat.PosFighting)
 	session.player.SetSkill(game.SkillHeadbutt, 75)
 	session.player.SetFighting("Target")
+	// Both players above level 10, so damage()'s level protections
+	// (fight.c:1344-1357) let the headbutt land.
+	session.player.Level = 20
 
 	target := game.NewPlayer(2, "Target", 1001)
+	target.Level = 20
 	target.SetPosition(combat.PosSleeping)
 	if err := session.world.AddPlayer(target); err != nil {
 		t.Fatalf("AddPlayer target: %v", err)

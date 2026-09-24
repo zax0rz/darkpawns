@@ -143,55 +143,37 @@ func TestInflictDamage_NonLethalDoesNotDie(t *testing.T) {
 	}
 }
 
-func TestInflictDamageHonorsLowLevelPlayerProtection(t *testing.T) {
-	tests := []struct {
-		name       string
-		casterLvl  int
-		victimLvl  int
-		victimFlag uint64
-		wantHP     int
-		wantMsg    string
-	}{
-		{
-			name:      "experienced caster cannot hit protected newbie",
-			casterLvl: 30,
-			victimLvl: 1,
-			wantHP:    100,
-			wantMsg:   "Ancient forces protect Victim from your wrath!\r\n",
-		},
-		{
-			name:      "newbie caster cannot attack player",
-			casterLvl: 1,
-			victimLvl: 30,
-			wantHP:    100,
-			wantMsg:   "You are not experienced enough to attack Victim!\r\n",
-		},
-		{
-			name:       "outlaw newbie remains attackable",
-			casterLvl:  30,
-			victimLvl:  1,
-			victimFlag: 1,
-			wantHP:     50,
-		},
-	}
+// gatedSpellWorld refuses or allows damage the way World.DamageRefused does;
+// the refusal bytes themselves are covered in pkg/game (DP-1327).
+type gatedSpellWorld struct {
+	spellDeathWorld
+	refuse bool
+	asked  int
+}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			caster := &spellCombatant{name: "Caster", level: tc.casterLvl, hp: 100, maxHP: 100, pos: combat.PosStanding}
-			victim := &spellCombatant{name: "Victim", level: tc.victimLvl, flags: tc.victimFlag, hp: 100, maxHP: 100, pos: combat.PosStanding}
-			world := &spellDeathWorld{}
+func (w *gatedSpellWorld) DamageRefused(ch, victim combat.Combatant) bool {
+	w.asked++
+	return w.refuse
+}
 
-			inflictDamage(caster, victim, 50, testSpellNum, world)
+func TestInflictDamageAsksWorldDamageGate(t *testing.T) {
+	for _, refuse := range []bool{true, false} {
+		caster := &spellCombatant{name: "Caster", level: 30, hp: 100, maxHP: 100, pos: combat.PosStanding}
+		victim := &spellCombatant{name: "Victim", level: 1, hp: 100, maxHP: 100, pos: combat.PosStanding}
+		world := &gatedSpellWorld{refuse: refuse}
 
-			if victim.hp != tc.wantHP {
-				t.Errorf("victim HP = %d, want %d", victim.hp, tc.wantHP)
-			}
-			if tc.wantMsg != "" {
-				if len(caster.messages) != 1 || caster.messages[0] != tc.wantMsg {
-					t.Errorf("caster messages = %q, want %q", caster.messages, tc.wantMsg)
-				}
-			}
-		})
+		dealt := inflictDamage(caster, victim, 50, testSpellNum, world)
+
+		if world.asked != 1 {
+			t.Fatalf("refuse=%v: gate asked %d times, want 1", refuse, world.asked)
+		}
+		wantHP, wantDealt := 50, true
+		if refuse {
+			wantHP, wantDealt = 100, false
+		}
+		if victim.hp != wantHP || dealt != wantDealt {
+			t.Errorf("refuse=%v: victim HP = %d, dealt = %v; want %d, %v", refuse, victim.hp, dealt, wantHP, wantDealt)
+		}
 	}
 }
 
