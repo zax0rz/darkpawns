@@ -201,3 +201,18 @@ The lesson for the method: a differential oracle certifies the path it drives.
 Where a system has two presentation paths, the second one needs its own driver.
 Better still, it should share the first one's renderer, so that one proof
 covers both.
+
+## 16. Special cases for agents hid invented gameplay
+
+The agent-player surface was removed the same evening (PR #1611), to be rebuilt
+after the port is complete. Taking it out turned up an invented rule. `group`
+had an agent branch: if the target was an agent, it started following and
+joined the group without the invite C requires. C has no such path
+(`act.other.c`, the `vict->master != ch` check), and the project's own
+CONTRIBUTING.md says nothing in the engine should special-case agents.
+
+The oracle could never have caught it. Every scenario logs in as a human over
+telnet, so a branch that only fires for an agent session is outside the proof
+by construction, the same shape as the browser path in section 15. A
+fidelity process covers the identities and transports its scenarios use. An
+`if isAgent` in game code creates a second rulebook that the oracle cannot see.
