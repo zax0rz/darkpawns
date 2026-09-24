@@ -206,3 +206,58 @@ test('structured channel messages fill chat without changing terminal output', (
     globalThis.location = previous.location;
   }
 });
+
+test('a failing dock handler never writes the protocol envelope to the terminal', async () => {
+  const previous = {
+    WebSocket: globalThis.WebSocket,
+    fetch: globalThis.fetch,
+    location: globalThis.location,
+    consoleError: console.error,
+  };
+  class FakeWebSocket {
+    static OPEN = 1;
+    constructor() { this.readyState = FakeWebSocket.OPEN; FakeWebSocket.latest = this; }
+    send() {}
+    close() {}
+  }
+  globalThis.WebSocket = FakeWebSocket;
+  globalThis.fetch = async () => ({ json: async () => ({}) });
+  globalThis.location = { search: '', protocol: 'https:', host: 'darkpawns.org' };
+  console.error = () => {};
+
+  const writes = [];
+  const terminal = {
+    write: text => writes.push(text),
+    writeln: text => writes.push(text + '\n'),
+    onData: () => {},
+    cols: 80,
+  };
+  // A chat panel whose DOM throws, standing in for any handler bug.
+  const broken = { replaceChildren() {}, append() { throw new Error('boom'); } };
+  const doc = {
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    getElementById: id => (id === 'chat-messages' ? broken : null),
+    createElement: () => ({ append() {} }),
+    createTextNode: text => text,
+  };
+
+  try {
+    const client = createMudClient({ terminal, doc });
+    const socket = FakeWebSocket.latest;
+    socket.onopen();
+    const frame = JSON.stringify({ type: 'gmcp', data: {
+      package: 'Comm.Channel.Text',
+      json: JSON.stringify({ channel: 'say', talker: 'Aiko', text: "Aiko says, 'hi'" }),
+    } });
+    socket.onmessage({ data: frame });
+    assert.equal(writes.join('').includes('"type"'), false);
+    assert.equal(writes.join('').includes('Comm.Channel.Text'), false);
+    client.disconnect();
+  } finally {
+    globalThis.WebSocket = previous.WebSocket;
+    globalThis.fetch = previous.fetch;
+    globalThis.location = previous.location;
+    console.error = previous.consoleError;
+  }
+});

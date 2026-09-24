@@ -43,6 +43,7 @@ const doc = {
   querySelectorAll: () => [],
   getElementById: () => inertElement(),
   createElement: () => inertElement(),
+  createTextNode: () => inertElement(),
 };
 globalThis.document = doc;
 // The minimap fetch has nowhere to go; the client already tolerates failure.

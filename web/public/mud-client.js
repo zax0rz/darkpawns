@@ -565,8 +565,17 @@ export function createMudClient(options) {
     };
 
     ws.onmessage = function (evt) {
+      let msg;
       try {
-        const msg = JSON.parse(evt.data);
+        msg = JSON.parse(evt.data);
+      } catch {
+        // Not JSON at all. The server frames everything it sends, so this is
+        // either a proxy injecting something or a protocol change; the raw
+        // text is the most useful thing to show and cannot be an envelope.
+        term.write(evt.data);
+        return;
+      }
+      try {
         if (msg.type === 'out') {
           const out = msg.data || {};
           writeOutput(out.text || '');
@@ -596,11 +605,12 @@ export function createMudClient(options) {
         }
         // Nothing else is ever written to the terminal: an unrecognised
         // frame is protocol, not game text.
-      } catch {
-        // Not JSON at all. The server frames everything it sends, so this is
-        // either a proxy injecting something or a protocol change; the raw
-        // text is the most useful thing to show and cannot be an envelope.
-        term.write(evt.data);
+      } catch (err) {
+        // A failing dock or sidebar handler must never put protocol in front
+        // of the player: the envelope is not game text.
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('mud-client: message handler failed', msg && msg.type, err);
+        }
       }
     };
 
