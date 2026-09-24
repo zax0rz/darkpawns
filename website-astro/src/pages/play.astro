@@ -21,7 +21,7 @@ import '@xterm/xterm/css/xterm.css';
           </div>
         </div>
         <p class="visually-hidden" id="terminal-help">Type in the terminal; press Tab to leave it. Screen reader mode announces new game text.</p>
-        <div id="terminal" role="region" aria-label="Dark Pawns game terminal" aria-describedby="terminal-help"></div>
+        <div id="terminal" role="region" aria-label="Dark Pawns game terminal" aria-describedby="terminal-help"><div id="terminal-screen"></div></div>
       </div>
 
       <aside class="play-sidebar" aria-labelledby="dock-heading">
@@ -111,7 +111,7 @@ import '@xterm/xterm/css/xterm.css';
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
-    const mount = document.getElementById('terminal');
+    const mount = document.getElementById('terminal-screen');
     term.open(mount);
     fit.fit();
     // Refit whenever the terminal's own box changes size, not only the window,
@@ -166,12 +166,13 @@ import '@xterm/xterm/css/xterm.css';
   #screen-reader-btn:focus-visible, #reconnect-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   #reconnect-btn { display: none; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; font: inherit; padding: .25rem .55rem; text-transform: uppercase; }
   #reconnect-btn.visible { display: inline-block; }
-  /* The fit addon sizes rows from this box's height and subtracts padding only
-     on xterm's own element, so the padding lives there and the frame is an
-     inset shadow: padding or a border here made one row too many and clipped
-     the prompt below the bottom edge. */
-  #terminal { flex: 1; min-height: 0; overflow: hidden; background: #0a0908; box-shadow: inset 0 0 0 2px var(--rule); }
-  #terminal :global(.xterm) { padding: .5rem; height: 100%; }
+  /* xterm mounts in an unpadded inner box that the fit addon measures
+     exactly; the padding and frame live on the outer box. Padding on the
+     measured box made one row too many and clipped the prompt, and padding
+     on xterm's own element exposed its native scrollbar beside the styled
+     one. Space left under the last whole row shows the terminal background. */
+  #terminal { flex: 1; min-height: 0; overflow: hidden; padding: .5rem; background: #0a0908; box-shadow: inset 0 0 0 2px var(--rule); }
+  #terminal-screen { height: 100%; background: #0a0908; }
   /* Dock: character, target (in a fight), map, then chat taking the rest. */
   /* The dock never scrolls: Character and Target keep their height, and Map
      and Chat share what is left, each with a floor. */
