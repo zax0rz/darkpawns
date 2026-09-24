@@ -100,8 +100,8 @@ func TestOlcZoneSurvivesDisconnectAndReconnect(t *testing.T) {
 	// lifecycle channel; the real telnet constructor does. Supply that one
 	// transport-owned channel so this test can exercise the disconnect path.
 	builder.transportDone = make(chan struct{})
-	if !m.HandleTelnetDisconnect(builder) {
-		t.Fatal("HandleTelnetDisconnect did not retain the playing builder")
+	if !m.HandleTransportDisconnect(builder) {
+		t.Fatal("HandleTransportDisconnect did not retain the playing builder")
 	}
 	m.Unregister("Builder")
 	stored, err := database.GetPlayer("Builder")

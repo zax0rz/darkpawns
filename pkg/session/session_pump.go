@@ -43,7 +43,13 @@ func (s *Session) readPump() {
 				s.manager.ipConnMu.Unlock()
 			}
 		}
-		s.manager.Unregister(s.playerName)
+		// A playing character whose connection drops stays in the world,
+		// linkdead, as C's close_socket leaves it and as telnet does
+		// (DP-1323); the linkdead reaper extracts it later. Anything else is
+		// cleaned up now.
+		if !s.manager.HandleTransportDisconnect(s) {
+			s.manager.Unregister(s.playerName)
+		}
 		s.Close()
 	}()
 
@@ -98,8 +104,11 @@ func (s *Session) writePump() {
 		s.Close()
 		// NEW (DP-902): ensure session is cleaned up if writePump exits first.
 		// readPump also defers Unregister, so both pumps converge on the same
-		// idempotent cleanupSession path.
-		s.manager.Unregister(s.playerName)
+		// idempotent cleanupSession path. A linkdead session is not cleaned
+		// up: it stays registered until the linkdead reaper extracts it.
+		if s.hasTransport() {
+			s.manager.Unregister(s.playerName)
+		}
 	}()
 
 	for {
@@ -132,6 +141,11 @@ func (s *Session) writePump() {
 			}
 
 			_ = s.conn.WriteMessage(websocket.TextMessage, message)
+
+		case <-s.TransportDone():
+			// The connection went linkdead; the session keeps its send channel
+			// for when the character is reattached or extracted.
+			return
 
 		case <-ticker.C:
 			_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))

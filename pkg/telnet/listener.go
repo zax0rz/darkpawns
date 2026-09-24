@@ -390,7 +390,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	}
 
 	// Cleanup
-	if !s.Manager().HandleTelnetDisconnect(s) {
+	if !s.Manager().HandleTransportDisconnect(s) {
 		s.Manager().Unregister(s.PlayerName())
 		s.CloseSend()
 	}

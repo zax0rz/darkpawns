@@ -1202,13 +1202,13 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 }
 
-// HandleTelnetDisconnect preserves an authenticated playing character after
-// an unexpected TCP EOF. C close_socket() saves the character and clears its
+// HandleTransportDisconnect preserves an authenticated playing character after
+// an unexpected disconnect, telnet EOF or a closed browser tab (DP-1323). C close_socket() saves the character and clears its
 // descriptor, but leaves it in character_list so directed speech can report
 // that the target is linkless. The linkdead reaper later owns extraction.
 // It returns true when the session was retained as linkdead; orderly quits
 // and pre-auth disconnects return false and use normal cleanup.
-func (m *Manager) HandleTelnetDisconnect(s *Session) bool {
+func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() {
 		return false
 	}

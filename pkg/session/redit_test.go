@@ -425,7 +425,7 @@ func TestReditConcurrentEntryAdmitsExactlyOneEditor(t *testing.T) {
 		}
 	}
 	// A disconnect must release the reservation: the dropped editor's cleanup
-	// path (HandleTelnetDisconnect → cancelRoomEdit) frees the room.
+	// path (HandleTransportDisconnect → cancelRoomEdit) frees the room.
 	sessions[winner].cancelRoomEdit()
 	if err := ExecuteCommand(sessions[1], "redit", nil); err != nil {
 		t.Fatal(err)
