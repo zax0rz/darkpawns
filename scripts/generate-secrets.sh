@@ -73,28 +73,6 @@ generate_encryption_key() {
     fi
 }
 
-generate_api_key() {
-    echo "Generating API key..."
-    
-    # Generate 32-character hex string
-    API_KEY=$(openssl rand -hex 16 2>/dev/null || \
-              head -c 16 /dev/urandom | xxd -p)
-    
-    if [ -z "$API_KEY" ]; then
-        print_error "Failed to generate API key"
-        exit 1
-    fi
-    
-    echo "AI_API_KEY=$API_KEY"
-    print_success "API key generated"
-    
-    # Save to file if requested
-    if [ "$SAVE_TO_FILE" = "true" ]; then
-        echo "AI_API_KEY=$API_KEY" >> .env.generated
-        print_success "Saved to .env.generated"
-    fi
-}
-
 generate_db_password() {
     echo "Generating database password..."
     
@@ -123,7 +101,6 @@ show_usage() {
     echo "Commands:"
     echo "  jwt          Generate JWT secret only"
     echo "  encryption   Generate encryption key only"
-    echo "  api          Generate API key only"
     echo "  db           Generate database password only"
     echo "  all          Generate all secrets (default)"
     echo ""
@@ -152,7 +129,7 @@ while [[ $# -gt 0 ]]; do
             show_usage
             exit 0
             ;;
-        jwt|encryption|api|db|all)
+        jwt|encryption|db|all)
             COMMAND="$1"
             shift
             ;;
@@ -182,9 +159,6 @@ case $COMMAND in
     encryption)
         generate_encryption_key
         ;;
-    api)
-        generate_api_key
-        ;;
     db)
         generate_db_password
         ;;
@@ -192,8 +166,6 @@ case $COMMAND in
         generate_jwt_secret
         echo ""
         generate_encryption_key
-        echo ""
-        generate_api_key
         echo ""
         generate_db_password
         ;;

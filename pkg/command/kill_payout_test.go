@@ -17,7 +17,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/events"
@@ -795,31 +794,6 @@ func TestKillPayout_PlayerDeath_Idempotent(t *testing.T) {
 	// After respawn, victim is healed. Verify first death was processed correctly.
 	// The idempotent guard (dying atomic.Bool) prevents double-death within
 	// the same death sequence from concurrent goroutines.
-}
-
-func TestKillPayout_PlayerDeath_FiresPlayerDeathHook(t *testing.T) {
-	ktw := newKillTestWorld(t, 10, 500, 100, 3, "rat")
-	victim := ktw.addPlayer(t, 1, "Victim", 10, game.ClassWarrior, false)
-	killer := ktw.addPlayer(t, 2, "Killer", 10, game.ClassWarrior, false)
-
-	var gotHook atomic.Bool
-	ktw.world.SetPlayerDeathHook(func(evt *game.PlayerDeathEvent) {
-		if evt.VictimName == "Victim" && evt.KillerName == "Killer" {
-			gotHook.Store(true)
-		}
-	})
-
-	ktw.world.HandleDeath(victim, killer, game.TypeSlash)
-
-	// firePlayerDeath runs the hook in a goroutine — give it a moment.
-	deadline := time.Now().Add(time.Second)
-	for time.Now().Before(deadline) && !gotHook.Load() {
-		time.Sleep(time.Millisecond)
-	}
-
-	if !gotHook.Load() {
-		t.Error("expected PlayerDeathHook to fire on player death")
-	}
 }
 
 // ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@ A single Go binary (`cmd/server`) that serves three surfaces:
 | HTTP + WebSocket | `:4350` (`-port`) | Web client, `/ws`, `/api/*`, `/openapi.json`, `/admin/*`, `/health`, `/metrics` |
 | Telnet | `:7777` (`-telnet-port`, `0` disables) | Classic MUD access |
 | SQLite (embedded) | `lib/data/darkpawns.db` | Default game persistence — no setup, no external services |
-| PostgreSQL | `-db` / `DATABASE_URL` | Opt-in — agent/research sidecar corpus only |
+| PostgreSQL | `-db` / `DATABASE_URL` | Opt-in game persistence for scaled deployments |
 
 It also reads/writes on-disk state: the world/scripts tree (`-world`, `-scripts`) and a
 CWD-relative `data/` directory (shops, aliases, mail, admin store). With the checkout
@@ -59,9 +59,7 @@ is rejected at boot with the command to fix it. Connect with
   creates an embedded SQLite database at `<world>/../data/darkpawns.db` and
   boots against it.
 - PostgreSQL is the opt-in backend for scaled deployments: pass a
-  `postgres://` URL via `-db` or `DATABASE_URL`. The research corpus
-  (decision_log, combat_log) is a separate, separately-enabled database — see
-  [The research corpus](#the-research-corpus-optional) below.
+  `postgres://` URL via `-db` or `DATABASE_URL`.
 - Optionally a reverse proxy (Caddy, nginx, …) terminating TLS in front of `:4350`.
 
 ## Build
@@ -85,8 +83,7 @@ createdb --owner=darkpawns darkpawns
 ```
 
 The application creates and migrates its schema at startup. The role must own
-the database or have equivalent schema creation privileges. Do not load the
-legacy `scripts/init-db.sql` into a new native installation.
+the database or have equivalent schema creation privileges.
 
 Export your connection string and a signing secret:
 
@@ -104,8 +101,7 @@ no password and no role name.
 Replace `YOUR_PASSWORD` with the role's password (URL-encode special characters).
 Keep the signing secret private and stable across restarts. Startup
 rejects a missing or short `JWT_SECRET` unless `ENVIRONMENT=development`, which
-uses an ephemeral secret. The `AI_API_KEY` is for agent access, not human telnet
-login.
+uses an ephemeral secret.
 
 Alternatively, copy [`.env.example`](.env.example), edit it, and export it from
 your shell. The native binary **does not load `.env` automatically**:
@@ -115,44 +111,6 @@ set -a
 . ./.env
 set +a
 ```
-
-**Agent API keys:** generate real keys with `go run ./cmd/agentkeygen`. The server
-rejects the old example default and any key containing `example`/`test`/`REPLACE_WITH`
-(`pkg/db/player.go` → `ValidateAgentKey`), so a placeholder will not authenticate.
-
-### The research corpus (optional)
-
-Decision capture — the corpus behind the research tracks — has its own
-database, named by `DP_RESEARCH_URL`, and is **not** the game database:
-choosing PostgreSQL for the game does not record anything. The corpus uses
-PostgreSQL-native range partitioning, so the URL must be a `postgres://` one;
-provision it like the game database (own role and database recommended).
-
-```bash
-export DP_RESEARCH_URL='postgres://darkpawns:YOUR_PASSWORD@localhost:5432/darkpawns_research?sslmode=disable'
-```
-
-With `DP_RESEARCH_URL` set, capture is **available but off** at boot. It is
-turned on deliberately, per run, through the admin console:
-
-```bash
-curl -X POST -H 'Authorization: Bearer <builder-token>' \
-  -d '{"enabled": true}' http://localhost:4350/admin/research/capture
-```
-
-`GET` on the same endpoint reports the current state. The control names what
-it records because it should be said where it is operated: **the literal
-command text of every player, tells and says included**, written verbatim to
-`decision_log.raw_input` (player names are salted hashes; see the boot-time
-salt warning). Disabling flushes what is buffered, so the last second of a
-run lands; re-enabling works without a restart. An unreachable research
-database does not stop the game — boot logs an error and capture stays
-unavailable for that run.
-
-Retention is whole monthly partitions: set `DP_LOG_RETENTION_MONTHS` to have
-expired partitions dropped automatically; without it the corpus is retained
-indefinitely. Until it is enabled, no connection to the research database is
-made beyond schema/partition setup.
 
 ### TLS telnet (optional)
 
@@ -328,7 +286,7 @@ It happens on the same first boot, takes the same one-time table lock, and
 logs the same way (`converted game-store column to json column=players.inventory`).
 
 The game store's timestamp columns (`players.created_at`, `players.updated_at`,
-`players.locked_until`, `agent_keys.created_at`) are declared `timestamptz`. A
+`players.locked_until`) are declared `timestamptz`. A
 database created by an earlier build holds them as naive `timestamp`, which
 records a wall clock with no zone attached, so lockout and expiry comparisons
 land hours off on a host that is not UTC. **Restarting is the whole procedure.**

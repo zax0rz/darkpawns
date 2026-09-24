@@ -59,23 +59,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return nil
 	}
 
-	// Agent identity declaration — agents play by the same rules as humans.
-	// Server tags the session for observation, but gameplay is identical.
-	if login.IsAgent {
-		s.isAgent = true
-		s.agentHarness = login.Harness
-		s.agentModel = login.Model
-		s.agentVersion = login.Version
-		slog.InfoContext(
-			s.sessionCtx,
-			"agent identity declared",
-			s.logAttrs(
-				slog.String("harness", login.Harness),
-				slog.String("model", login.Model),
-			)...,
-		)
-	}
-
 	if login.PlayerName == "" {
 		s.CloseSend()
 		return ErrInvalidPlayerName
@@ -135,7 +118,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// rendered the room a second time on both transports.
 
 		// Generate a dummy JWT token for WebSocket client auth checks
-		token, err := auth.GenerateJWT(guestName, s.isAgent, s.agentKeyID, "")
+		token, err := auth.GenerateJWT(guestName, "")
 		if err != nil {
 			slog.ErrorContext(s.sessionCtx, "failed to generate JWT token for guest", s.logAttrs(slog.Any("error", err))...)
 		}
@@ -471,13 +454,6 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	// Token bucket rate limit: 10 cmd/sec per session
 	if !s.limiter.Allow() {
 		s.sendError("rate limit exceeded — slow down")
-		if s.isAgent {
-			s.agentMu.Lock()
-			s.pendingEvents = append(s.pendingEvents, map[string]interface{}{"type": "rate_limited", "command": cmd.Command})
-			s.agentMu.Unlock()
-			s.markDirty(VarEvents)
-			s.flushDirtyVars()
-		}
 		return nil
 	}
 
@@ -494,8 +470,6 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	cmdCtx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
-	// Capture pre-state for decision log
-	preState := s.capturePlayerState()
 	startTime := time.Now()
 
 	// C-faithful per-pulse command-drain gate (DP-1201; port of comm.c:603).
@@ -526,15 +500,12 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		)
 	}
 
-	// Log decision to database (DP-213)
-	s.captureAndLog(cmd.Command, cmd.Args, preState, startTime, err)
-
 	// H-25: Proactive JWT refresh — if token is within refresh window,
 	// generate a new one and push it to the client.
 	s.maybeRefreshToken()
 
-	// Flush dirty vars for agents and human structured sessions after every command dispatch
-	if s.isAgent || s.wantsStructuredData {
+	// Flush dirty vars for structured sessions after every command dispatch
+	if s.wantsStructuredData {
 		s.flushDirtyVars()
 	}
 	return err

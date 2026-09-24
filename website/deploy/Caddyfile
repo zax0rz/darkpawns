@@ -56,7 +56,7 @@
 	}
 
 	# Serve Markdown siblings for trailing-slash canonical URLs such as
-	# /docs/agents/protocol/ -> /docs/agents/protocol.md.
+	# /docs/server/architecture/ -> /docs/server/architecture.md.
 	@markdownTrailing {
 		header Accept *text/markdown*
 		path_regexp trailing ^(.+)/$
@@ -82,7 +82,7 @@
 	handle {
 		root * /srv/darkpawns/
 		# Discovery headers for agents and crawlers.
-		header Link "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", </sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\", </rss.xml>; rel=\"alternate\"; type=\"application/rss+xml\", </.well-known/agent-skills/index.json>; rel=\"alternate\"; type=\"application/json\""
+		header Link "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", </sitemap-index.xml>; rel=\"sitemap\"; type=\"application/xml\", </rss.xml>; rel=\"alternate\"; type=\"application/rss+xml\""
 		header Vary "Accept, Accept-Encoding"
 		try_files {path} {path}/index.html
 		file_server

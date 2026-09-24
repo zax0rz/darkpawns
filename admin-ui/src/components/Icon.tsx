@@ -11,8 +11,6 @@ export type IconName =
   | 'mobs'
   | 'objects'
   | 'agents'
-  | 'decisions'
-  | 'mindreader'
   | 'operations'
   | 'terminal'
   | 'search'
@@ -67,24 +65,6 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M8 11 L8 14" />
       <path d="M2 8 L5 8" />
       <path d="M11 8 L14 8" />
-    </>
-  ),
-  // A branch point.
-  decisions: (
-    <>
-      <path d="M3 13 L3 6 L13 6" />
-      <path d="M13 6 L10 3" />
-      <path d="M13 6 L10 9" />
-      <circle cx="3" cy="14" r="1" />
-    </>
-  ),
-  // Thought read off a subject: a head and what comes out of it.
-  mindreader: (
-    <>
-      <path d="M5 13 L5 10 A4 4 0 1 1 11 10 L11 13 Z" />
-      <path d="M7 7 L9 7" />
-      <path d="M13 3 L14 2" />
-      <path d="M13 6 L14.5 6" />
     </>
   ),
   // Control sliders, not the universal gear.

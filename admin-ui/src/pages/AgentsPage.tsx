@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, type AgentStatus, type Finding, type LiveAgentSession } from '../api/client';
+import { api, type AgentStatus, type Finding } from '../api/client';
 import { useToast } from '../hooks/useToast';
 import { AGENT_STATUSES, FINDING_SEVERITIES, FINDING_SOURCES, FINDING_STATUSES } from '../lib/agentVocabulary';
 
@@ -100,25 +100,6 @@ function FindingRow({ finding, onStatus }: { finding: Finding; onStatus: (id: nu
   );
 }
 
-function LiveAgentRow({ session }: { session: LiveAgentSession }) {
-  const connectedAgo = timeAgo(session.connected_at);
-  return (
-    <tr className="border-b border-rule hover:bg-paper transition-colors">
-      <td className="px-4 py-3 text-ink font-mono text-sm">{session.player_name}</td>
-      <td className="px-4 py-3">
-        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-paper-deep text-ink border border-rule">
-          connected
-        </span>
-      </td>
-      <td className="px-4 py-3 text-ink-muted font-mono text-xs">{session.harness}</td>
-      <td className="px-4 py-3 text-ink-muted font-mono text-xs">{session.model}</td>
-      <td className="px-4 py-3 text-ink-muted text-xs">{session.level > 0 ? `Lvl ${session.level}` : '—'}</td>
-      <td className="px-4 py-3 text-ink-muted text-xs">Room {session.room_vnum}</td>
-      <td className="px-4 py-3 text-ink-muted text-xs">{connectedAgo}</td>
-    </tr>
-  );
-}
-
 export function AgentsPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -164,12 +145,6 @@ export function AgentsPage() {
     refetchInterval: 30000,
   });
 
-  const { data: liveSessions, isLoading: liveLoading } = useQuery({
-    queryKey: ['liveAgentSessions'],
-    queryFn: api.liveAgentSessions,
-    refetchInterval: 5000,
-  });
-
   const { data: findings, isLoading: findingsLoading, error: findingsError } = useQuery({
     queryKey: ['findings', filterStatus, filterSeverity, filterSource],
     queryFn: () => api.findings({ status: filterStatus || undefined, severity: filterSeverity || undefined, source: filterSource || undefined }),
@@ -184,39 +159,6 @@ export function AgentsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-ink">AI Agents</h1>
-
-      {/* Live Game Agent Sessions */}
-      <div className="bg-paper-deep rounded-none border border-rule overflow-hidden">
-        <div className="px-4 py-3 border-b border-rule">
-          <h2 className="text-sm font-medium text-ink-muted">Live Game Sessions</h2>
-        </div>
-        {liveLoading ? (
-          <div className="p-6 text-center text-ink-muted animate-pulse">Loading live sessions...</div>
-        ) : liveSessions && liveSessions.length > 0 ? (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
-                <th className="text-left px-4 py-3">Player</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Harness</th>
-                <th className="text-left px-4 py-3">Model</th>
-                <th className="text-left px-4 py-3">Level</th>
-                <th className="text-left px-4 py-3">Room</th>
-                <th className="text-left px-4 py-3">Connected</th>
-              </tr>
-            </thead>
-            <tbody>
-              {liveSessions.map((session) => (
-                <LiveAgentRow key={session.player_name} session={session} />
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="p-6 text-center text-ink-muted text-sm">
-            No agents currently connected to the game server.
-          </div>
-        )}
-      </div>
 
       {/* Agent Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

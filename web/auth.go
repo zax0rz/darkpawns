@@ -15,9 +15,6 @@ const (
 	// ContextKeyPlayerName is the context key used to store the authenticated
 	// player name extracted from the JWT.
 	ContextKeyPlayerName contextKey = "player_name"
-	// ContextKeyIsAgent is the context key used to store whether the
-	// authenticated session is an agent.
-	ContextKeyIsAgent contextKey = "is_agent"
 )
 
 // AuthMiddleware protects HTTP endpoints with JWT bearer token authentication.
@@ -40,7 +37,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// Store claims on context for downstream handlers
 		ctx := context.WithValue(r.Context(), ContextKeyPlayerName, claims.PlayerName)
-		ctx = context.WithValue(ctx, ContextKeyIsAgent, claims.IsAgent)
 		ctx = auth.SetClaimsOnContext(ctx, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -54,14 +50,4 @@ func GetPlayerNameFromContext(r *http.Request) (string, bool) {
 	}
 	name, ok := v.(string)
 	return name, ok
-}
-
-// IsAgentFromContext retrieves the agent flag from a request context.
-func IsAgentFromContext(r *http.Request) bool {
-	v := r.Context().Value(ContextKeyIsAgent)
-	if v == nil {
-		return false
-	}
-	isAgent, ok := v.(bool)
-	return ok && isAgent
 }

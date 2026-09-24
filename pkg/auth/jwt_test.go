@@ -17,7 +17,7 @@ func setTestJWTSecret(t *testing.T) {
 func TestValidateJWT_AcceptsHS256(t *testing.T) {
 	setTestJWTSecret(t)
 
-	token, err := GenerateJWT("Hero", false, 0, "player")
+	token, err := GenerateJWT("Hero", "player")
 	if err != nil {
 		t.Fatalf("GenerateJWT failed: %v", err)
 	}
@@ -122,7 +122,7 @@ func TestValidateJWT_RejectsWrongIssuer(t *testing.T) {
 func TestValidateJWT_AcceptsCorrectIssuer(t *testing.T) {
 	setTestJWTSecret(t)
 
-	token, err := GenerateJWT("Hero", false, 0, "player")
+	token, err := GenerateJWT("Hero", "player")
 	if err != nil {
 		t.Fatalf("GenerateJWT failed: %v", err)
 	}

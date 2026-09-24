@@ -13,8 +13,8 @@ import (
 // TestGeneratedOpenAPISpec pins the contract for the generated document: it
 // parses, is OpenAPI 3.1, is served at both public URLs with identical
 // bytes, and documents exactly the migrated operations — nothing missing,
-// nothing extra. Tranche 1 migrated /health, /admin/research/capture and
-// /admin/sessions/agents; tranche 2 adds the eleven builder world reads.
+// nothing extra. Tranche 1 migrated /health; tranche 2 adds the eleven
+// builder world reads.
 // /ws and /onboarding are deliberately absent (a WebSocket upgrade and a
 // browser entry page are not typed REST operations; modeling them is a later
 // decision), as are the routes still on the plain mux per the drift gate's
@@ -28,7 +28,7 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 	apidoc.RegisterHealth(api)
 	root.HandleFunc("/api/openapi.json", doc.Handler())
 
-	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), nil, &fakeCaptureProvider{available: true}, WithSharedSpec(doc))
+	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), nil, nil, WithSharedSpec(doc))
 	if err != nil {
 		t.Fatalf("newRouter: %v", err)
 	}
@@ -37,10 +37,6 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 	wantPaths := map[string][]string{
 		"/health":                               {"get"},
 		"/admin/login":                          {"post"},
-		"/admin/decisions":                      {"get"},
-		"/admin/narrative":                      {"get"},
-		"/admin/research/capture":               {"get", "post"},
-		"/admin/sessions/agents":                {"get"},
 		"/admin/zones":                          {"get"},
 		"/admin/server":                         {"get"},
 		"/admin/logs":                           {"get"},

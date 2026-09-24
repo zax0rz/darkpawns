@@ -12,7 +12,6 @@ This is a release checklist, not a promise to implement every emerging protocol.
 - An HTML-only sitemap index at `/sitemap-index.xml`.
 - An accurate, curated `/llms.txt`.
 - Explicit crawler policy and AI crawler rules in `/robots.txt`.
-- Agent instructions at `/.well-known/agent-skills/`.
 - Predictable Markdown representations for docs, help, world, blog, and archive entries.
 - JSON representations for individual mob, item, and zone records.
 - JSON-LD for the site and database records; zone records add `BreadcrumbList` markup.

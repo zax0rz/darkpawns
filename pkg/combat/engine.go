@@ -82,11 +82,6 @@ type CombatEngine struct {
 	// OnRoundEnd is called after each combat round. Used for wait state decrement.
 	OnRoundEnd func()
 
-	// OnCombatAction is called after each attack in a combat round.
-	// Captures: attacker, defender, attack_type, damage, outcome, target state.
-	// Used by decision capture (DP-213) for the combat_log table.
-	OnCombatAction func(attacker Combatant, defender Combatant, attackType string, damage int, outcome string, targetCount int)
-
 	// Callbacks holds the game-layer bridge functions used by the legacy
 	// fight_core path. Populated during engine initialization.
 	Callbacks *GameCallbacks
@@ -656,9 +651,6 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 	}
 	if defenseAction != "" {
 		ce.setParried(opponent.GetName(), defenseAction)
-		if ce.OnCombatAction != nil {
-			ce.OnCombatAction(opponent, fighter, defenseAction, 0, defenseAction, 0)
-		}
 	}
 }
 
@@ -798,9 +790,6 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	}
 
 	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
-	if ce.OnCombatAction != nil {
-		ce.OnCombatAction(attacker, defender, "hit", damage, "hit", 0)
-	}
 
 	newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc)
 	if newPos != PosDead {
@@ -812,9 +801,6 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	EmitDeathPositionMessage(defender, ce.BroadcastFunc)
 	DeathCry(defender)
 	ce.handleDeath(defender, attacker)
-	if ce.OnCombatAction != nil {
-		ce.OnCombatAction(attacker, defender, "hit", damage, "killed", 0)
-	}
 	ce.StopCombat(attacker.GetName())
 	return true
 }

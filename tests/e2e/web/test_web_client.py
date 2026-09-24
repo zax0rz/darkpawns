@@ -45,36 +45,7 @@ class TestWebClientE2E:
         assert response.status_code == 200
         assert response.text.strip() == "OK"
     
-    def test_onboarding_content_negotiation(self, base_url):
-        """Test onboarding content negotiation."""
-        
-        # Test HTML response (default)
-        response = requests.get(f"{base_url}/onboarding")
-        assert response.status_code == 200
-        assert "text/html" in response.headers.get("Content-Type", "")
-        assert "<html>" in response.text.lower()
-        
-        # Test Markdown response
-        response = requests.get(
-            f"{base_url}/onboarding",
-            headers={"Accept": "text/markdown"}
-        )
-        assert response.status_code == 200
-        assert "text/markdown" in response.headers.get("Content-Type", "")
-        assert response.text.startswith("#")
-        
-        # Test JSON response
-        response = requests.get(
-            f"{base_url}/onboarding",
-            headers={"Accept": "application/json"}
-        )
-        assert response.status_code == 200
-        assert "application/json" in response.headers.get("Content-Type", "")
-        
-        data = json.loads(response.text)
-        assert "@context" in data
-        assert "messageTypes" in data
-    
+
     def test_openapi_spec(self, base_url):
         """Test OpenAPI specification endpoint."""
         

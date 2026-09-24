@@ -85,22 +85,13 @@ func catalog(t *testing.T, database *DB) (tables, indexes map[string]bool) {
 	return tables, indexes
 }
 
-var gameStoreTables = []string{"players", "agent_keys", "agent_narrative_memory", "agent_session_summaries"}
+var gameStoreTables = []string{"players"}
 
-// gameStoreIndexes is every index the game store creates. (The migration brief
-// said ten; the schema creates eleven, counted here by name.)
+// gameStoreIndexes is every index the game store creates, counted by name.
 var gameStoreIndexes = []string{
 	"players_name_folded_key",
 	"idx_players_name",
 	"idx_players_locked_until",
-	"idx_anm_agent_name",
-	"idx_anm_event_type",
-	"idx_anm_salience",
-	"idx_anm_social_event",
-	"idx_anm_agent_session",
-	"idx_anm_bootstrap",
-	"idx_ass_agent_name",
-	"idx_ass_session_id",
 }
 
 // TestGameStoreSchema is the delta-1 proof: it asserts on a real INSERT ...
@@ -137,27 +128,6 @@ func TestGameStoreSchema(t *testing.T) {
 			if p.ID == 0 {
 				t.Error("CreatePlayer returned id 0; SERIAL was not translated and the column never autoincrements")
 			}
-
-			_, keyID, err := database.CreateAgentKey(p.Name)
-			if err != nil {
-				t.Fatalf("CreateAgentKey: %v", err)
-			}
-			if keyID == 0 {
-				t.Error("CreateAgentKey returned id 0")
-			}
-
-			memID, err := database.WriteNarrativeMemory(&NarrativeMemory{
-				AgentName: p.Name,
-				EventType: NarrEventMobKill,
-				Summary:   "schema proof kill",
-				Salience:  1.0,
-			})
-			if err != nil {
-				t.Fatalf("WriteNarrativeMemory: %v", err)
-			}
-			if memID == 0 {
-				t.Error("WriteNarrativeMemory returned id 0")
-			}
 		})
 	}
 }
@@ -175,16 +145,14 @@ func postgresDSN(t *testing.T) string {
 }
 
 // wantGameStoreTimestamptz is every game-store column that must be zone-aware:
-// the four naive TIMESTAMP sites the DDL used to author (players.locked_until
-// via the migration-column list, players.created_at, players.updated_at,
-// agent_keys.created_at). Spelled out rather than derived from the production
+// the naive TIMESTAMP sites the DDL used to author (players.locked_until via
+// the migration-column list, players.created_at, players.updated_at). Spelled out rather than derived from the production
 // list, so a new naive column that never made it into that list fails here
 // instead of shipping.
 var wantGameStoreTimestamptz = []string{
 	"players.locked_until",
 	"players.created_at",
 	"players.updated_at",
-	"agent_keys.created_at",
 }
 
 // columnType reads a column's declared type through information_schema, the way
@@ -243,8 +211,7 @@ func TestMigrateNaiveTimestamptz(t *testing.T) {
 	})
 
 	// The shape an older build left behind: naive columns, one carrying the
-	// CURRENT_TIMESTAMP default the players table used and one the NOW()
-	// default agent_keys used.
+	// CURRENT_TIMESTAMP default the players table used.
 	if _, err := database.conn.Exec(`CREATE TABLE ` + probe + ` (
 		id           SERIAL PRIMARY KEY,
 		created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -556,142 +523,6 @@ func TestGameStoreAccountLockout(t *testing.T) {
 			}
 			if attempts != 0 || until != nil {
 				t.Errorf("lockout not cleared: attempts=%d until=%v", attempts, until)
-			}
-		})
-	}
-}
-
-// TestGameStoreSessionSummaryUpsert covers ON CONFLICT DO UPDATE and the
-// NULLS LAST ordering of GetSessionSummaries.
-func TestGameStoreSessionSummaryUpsert(t *testing.T) {
-	for _, be := range gameStoreBackends(t) {
-		t.Run(be.name, func(t *testing.T) {
-			database := openGameStore(t, be.dsn)
-			agent := uniqueName("agent")
-			now := time.Now()
-
-			if err := database.WriteSessionSummary(agent, "s1", "first draft", 3, now.Add(-2*time.Hour), now.Add(-time.Hour)); err != nil {
-				t.Fatalf("WriteSessionSummary: %v", err)
-			}
-			if err := database.WriteSessionSummary(agent, "s1", "revised", 5, now.Add(-2*time.Hour), now); err != nil {
-				t.Fatalf("WriteSessionSummary upsert: %v", err)
-			}
-			if err := database.WriteSessionSummary(agent, "s2", "second session", 2, now, now.Add(30*time.Minute)); err != nil {
-				t.Fatalf("WriteSessionSummary: %v", err)
-			}
-
-			summaries, err := database.GetSessionSummaries(agent, 10)
-			if err != nil {
-				t.Fatalf("GetSessionSummaries: %v", err)
-			}
-			if len(summaries) != 2 {
-				t.Fatalf("summaries = %v, want 2 entries (upsert collapsed s1)", summaries)
-			}
-			if summaries[0] != "second session" {
-				t.Errorf("most recent first: got %q", summaries[0])
-			}
-		})
-	}
-}
-
-// TestGameStoreBootstrapMemories covers the salience-ordered bootstrap query
-// and the partial-index social event filter.
-func TestGameStoreBootstrapMemories(t *testing.T) {
-	for _, be := range gameStoreBackends(t) {
-		t.Run(be.name, func(t *testing.T) {
-			database := openGameStore(t, be.dsn)
-			agent := uniqueName("agent")
-
-			faint := &NarrativeMemory{AgentName: agent, EventType: NarrEventRoomVisit, Summary: "faint", Salience: 0.2}
-			bright := &NarrativeMemory{AgentName: agent, EventType: NarrEventMobKill, Summary: "bright", Salience: 0.9}
-			social := &NarrativeMemory{AgentName: agent, EventType: NarrEventPlayerEncounter, Summary: "social", Salience: 0.5, SocialEventID: "evt-1"}
-			if _, err := database.WriteNarrativeMemory(faint); err != nil {
-				t.Fatalf("WriteNarrativeMemory: %v", err)
-			}
-			if _, err := database.WriteNarrativeMemory(bright); err != nil {
-				t.Fatalf("WriteNarrativeMemory: %v", err)
-			}
-			if _, err := database.WriteNarrativeMemory(social); err != nil {
-				t.Fatalf("WriteNarrativeMemory: %v", err)
-			}
-
-			memories, err := database.BootstrapMemories(agent, 10)
-			if err != nil {
-				t.Fatalf("BootstrapMemories: %v", err)
-			}
-			if len(memories) != 3 {
-				t.Fatalf("memories = %d, want 3", len(memories))
-			}
-			if memories[0].Summary != "bright" || memories[1].Summary != "social" {
-				t.Errorf("salience order wrong: %q then %q", memories[0].Summary, memories[1].Summary)
-			}
-			if memories[0].CreatedAt.IsZero() || memories[0].UpdatedAt.IsZero() {
-				t.Error("timestamps did not round-trip")
-			}
-
-			socialMemories, err := database.SocialEventMemories("evt-1")
-			if err != nil {
-				t.Fatalf("SocialEventMemories: %v", err)
-			}
-			if len(socialMemories) != 1 || socialMemories[0].Summary != "social" {
-				t.Errorf("social event memories = %+v", socialMemories)
-			}
-
-			recent, err := database.RecentMemories(agent, memories[0].SessionID)
-			if err != nil {
-				t.Fatalf("RecentMemories: %v", err)
-			}
-			_ = recent // empty session id is a valid query; just prove it runs
-		})
-	}
-}
-
-// TestGameStoreMemoryDecay covers the decay UPDATE, including its
-// CURRENT_TIMESTAMP assignment (delta: NOW() in DML is PostgreSQL-only), and
-// the prune pass. Old rows are seeded with an explicit created_at through the
-// package-internal exec so the rebind applies on both dialects.
-func TestGameStoreMemoryDecay(t *testing.T) {
-	for _, be := range gameStoreBackends(t) {
-		t.Run(be.name, func(t *testing.T) {
-			database := openGameStore(t, be.dsn)
-			agent := uniqueName("agent")
-			old := time.Now().AddDate(0, 0, -60)
-
-			seed := func(summary string, salience float64, valence int) {
-				t.Helper()
-				_, err := database.exec(
-					`INSERT INTO agent_narrative_memory
-						(agent_name, event_type, summary, valence, salience, created_at, updated_at)
-					VALUES ($1, $2, $3, $4, $5, $6, $6)`,
-					agent, NarrEventRoomVisit, summary, valence, salience, old, old,
-				)
-				if err != nil {
-					t.Fatalf("seed memory: %v", err)
-				}
-			}
-			seed("decays only", 0.5, 0)      // 0.5 * 0.5 = 0.25, survives prune
-			seed("decays to prune", 0.08, 0) // 0.08 * 0.5 = 0.04, pruned
-
-			decayed, pruned, err := database.DecayStaleMemories(30)
-			if err != nil {
-				t.Fatalf("DecayStaleMemories: %v", err)
-			}
-			if decayed != 2 {
-				t.Errorf("decayed = %d, want 2", decayed)
-			}
-			if pruned != 1 {
-				t.Errorf("pruned = %d, want 1", pruned)
-			}
-
-			var survivors int
-			if err := database.queryRow(
-				`SELECT COUNT(*) FROM agent_narrative_memory WHERE agent_name = $1 AND summary = 'decays only'`,
-				agent,
-			).Scan(&survivors); err != nil {
-				t.Fatalf("count survivors: %v", err)
-			}
-			if survivors != 1 {
-				t.Errorf("survivors = %d, want 1", survivors)
 			}
 		})
 	}
