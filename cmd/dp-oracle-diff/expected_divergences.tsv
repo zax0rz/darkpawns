@@ -11,8 +11,6 @@ gsay-depth	gsay.tsv	gsay.sleeping-recipient	blocked
 lifecycle-idle-void	idle.tsv	idle.dusk-events-room-local	blocked	
 lifecycle-idle-void	idle.tsv	idle.return-on-command	blocked	
 lifecycle-idle-void	idle.tsv	idle.void-ninth-tick	blocked	
-lifecycle-quit-reenter	quit.tsv	quit.rent-object-weight	blocked	
-lifecycle-relogin-prefs	quit.tsv	quit.rent-object-weight	blocked	
 lifecycle-relogin-prefs	save.tsv	save.relogin-login-transcript	blocked	
 lifecycle-relogin-room	save.tsv	save.relogin-login-transcript	blocked	
 player-state-toggles	auto.tsv	auto.no-arg-listing-undefined	blocked	
