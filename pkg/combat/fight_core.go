@@ -482,7 +482,8 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 			fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName), "")
 	case PosDead:
 		victim.SendMessage("You are dead!  Sorry...\r\n")
-		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), "")
+		// act(..., TO_ROOM) excludes the victim (fight.c:1582).
+		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), victimName)
 	default:
 		if dam > victim.GetMaxHP()/4 {
 			victim.SendMessage("That really did HURT!\r\n")

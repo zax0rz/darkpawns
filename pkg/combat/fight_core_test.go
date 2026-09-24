@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -386,4 +387,29 @@ func TestGetExpNilGuard_DieWithKiller(t *testing.T) {
 
 	// Should not panic even though GetExp is nil.
 	DieWithKiller(victim, killer, TYPE_UNDEFINED)
+}
+
+// TestTakeDamageDeathBroadcastExcludesVictim: C's act("$n is dead!  R.I.P.",
+// ..., TO_ROOM) never reaches the victim, who gets only "You are dead!"
+// (fight.c:1581-1584).
+func TestTakeDamageDeathBroadcastExcludesVictim(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	var excluded []string
+	SetCallbacks(&GameCallbacks{
+		Broadcast: func(roomVNum int, msg string, exclude string) {
+			if strings.Contains(msg, "R.I.P.") {
+				excluded = append(excluded, exclude)
+			}
+		},
+	})
+
+	ch := &mockCombatant{name: "Killer", level: 40, room: 100, position: PosStanding, hp: 100, maxHP: 100}
+	victim := &mockCombatant{name: "Victim", npc: true, level: 11, room: 100, position: PosSleeping, hp: 5, maxHP: 100}
+	TakeDamageWithDeath(ch, victim, 40, TYPE_HIT, func() {})
+
+	if len(excluded) != 1 || excluded[0] != "Victim" {
+		t.Fatalf("R.I.P. broadcast exclusions = %q, want [\"Victim\"]", excluded)
+	}
 }

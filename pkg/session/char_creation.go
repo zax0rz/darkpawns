@@ -599,6 +599,10 @@ func (s *Session) completeCharCreation() error {
 		s.player.MaxHealth = 10
 		s.player.MaxMana = 100
 		s.player.AdvanceLevel() // C do_start gate; never for the first-player God.
+		// do_start refills the pools after advance_level (class.c:574-576).
+		s.player.Health = s.player.MaxHealth
+		s.player.Mana = s.player.MaxMana
+		s.player.Move = s.player.MaxMove
 		game.GiveStartingSkills(s.player)
 		s.player.Hunger, s.player.Thirst = 36, 36
 		s.player.Conditions[game.CondFull], s.player.Conditions[game.CondThirst] = 36, 36

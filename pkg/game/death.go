@@ -561,7 +561,6 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	} else {
 		expLoss = player.GetExp() / 3
 	}
-	var conLossMessage string
 
 	// EXP loss
 	newExp := player.GetExp() - expLoss
@@ -589,10 +588,6 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 						player.Stats.Con = 1
 					}
 				}
-				conLossMessage = fmt.Sprintf(
-					"You lose some constitution! Your Constitution is now %d.\r\n",
-					player.Stats.Con,
-				)
 				player.mu.Unlock()
 			}
 		}
@@ -621,12 +616,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	playerGold := player.GetGold()
 	player.SetGold(0)
 
-	if expLoss > 0 {
-		player.SendMessage(fmt.Sprintf("You lose %d experience points.\r\n", expLoss))
-	}
-	if conLossMessage != "" {
-		player.SendMessage(conLossMessage)
-	}
+	// C's gain_exp(ch, -loss) and the real_abils.con decrements are silent
+	// (fight.c:589-628, 600-608): no death-penalty line reaches the player.
 
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
