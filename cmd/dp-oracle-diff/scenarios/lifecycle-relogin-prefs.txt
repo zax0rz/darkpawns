@@ -3,6 +3,7 @@
 # depth-case: quit.rent-carried-objects
 # depth-case: save.preferences-roundtrip
 # depth-case: save.relogin-login-transcript
+# depth-case: quit.rent-object-weight
 #
 # The character sets several preferences, quits at the Kir Drax'in temple
 # (8004, a legal quit, so C saves and records it as the load room), and logs
@@ -62,3 +63,5 @@ toggle
 look
 inventory
 equipment
+open backpack
+look in backpack

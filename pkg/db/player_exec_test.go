@@ -2,28 +2,7 @@ package db
 
 import (
 	"testing"
-	"time"
 )
-
-// TestValidateAgentKeyRejectsInsecureKeys verifies that known insecure or
-// example keys are rejected before any database lookup happens.
-func TestValidateAgentKeyRejectsInsecureKeys(t *testing.T) {
-	db := newFakeDB(t, false)
-
-	insecureKeys := []string{
-		"br3nd4-69-ag3nt-k3y-d3f4ult",
-		"my-example-key",
-		"test-key-123",
-		"REPLACE_WITH_REAL_KEY",
-	}
-
-	for _, key := range insecureKeys {
-		_, _, valid := db.ValidateAgentKey(key)
-		if valid {
-			t.Errorf("ValidateAgentKey(%q) returned valid=true, want false", key)
-		}
-	}
-}
 
 // TestRecordLoginSuccessClearsLockout verifies that RecordLoginSuccess executes
 // without error and clears the failed-login state.
@@ -99,29 +78,5 @@ func TestExecPassthrough(t *testing.T) {
 	db := newFakeDB(t, false)
 	if _, err := db.Exec("SELECT 1"); err != nil {
 		t.Fatalf("Exec error: %v", err)
-	}
-}
-
-// TestDecayStaleMemoriesExecutes verifies DecayStaleMemories runs its decay
-// and prune statements without error.
-func TestDecayStaleMemoriesExecutes(t *testing.T) {
-	db := newFakeDB(t, false)
-	decayed, pruned, err := db.DecayStaleMemories(30)
-	if err != nil {
-		t.Fatalf("DecayStaleMemories error: %v", err)
-	}
-	// The fake driver reports 0 rows affected for every Exec.
-	if decayed != 0 || pruned != 0 {
-		t.Errorf("expected 0/0 from fake driver, got %d/%d", decayed, pruned)
-	}
-}
-
-// TestWriteSessionSummaryExecutes verifies WriteSessionSummary runs its
-// insert-or-update statement without error.
-func TestWriteSessionSummaryExecutes(t *testing.T) {
-	db := newFakeDB(t, false)
-	now := time.Now()
-	if err := db.WriteSessionSummary("agent1", "session-1", "summary text", 5, now, now); err != nil {
-		t.Fatalf("WriteSessionSummary error: %v", err)
 	}
 }

@@ -115,9 +115,6 @@ repo; the public guide covers operating *your* instance.
   `/admin/olc/*`, sharing one editor core with the classic telnet OLC so both
   stay byte-identical. Under active development; see `pkg/olc/` and
   `admin-ui/src/components/olc/`.
-- **Agent tooling:** a command-line client and server-side hooks for AI agents
-  playing as full players under the same rules. Scope and status:
-  [agent CLI guide](docs/agents/dp-agent.md), [research notebook](docs/research/README.md).
 
 ## Repository layout
 
@@ -163,7 +160,6 @@ Start at the [documentation index](docs/README.md). Entry points:
 - [Fidelity rulebook](docs/fidelity/RULEBOOK.md) — the port contract
 - [Depth testing](docs/fidelity/DEPTH_TESTING.md) — evidence and remaining work
 - [Development setup](docs/DEV-SETUP.md) — toolchain and oracle
-- [Agent CLI](docs/agents/dp-agent.md) — agents as players
 - [Research notebook](docs/research/README.md) — the open research artifact
 
 Historical briefs and reports are preserved for context, not as a task queue.

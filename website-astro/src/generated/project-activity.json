@@ -1,15 +1,11 @@
 {
-  "generatedAt": "2026-09-17T12:16:23-04:00",
+  "generatedAt": "2026-09-23T18:21:13-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
     {
-      "week": "2026-06-29",
-      "commits": 50
-    },
-    {
       "week": "2026-07-06",
-      "commits": 90
+      "commits": 69
     },
     {
       "week": "2026-07-13",
@@ -49,39 +45,43 @@
     },
     {
       "week": "2026-09-14",
-      "commits": 23
+      "commits": 61
+    },
+    {
+      "week": "2026-09-21",
+      "commits": 32
     }
   ],
   "recentCommits": [
     {
-      "sha": "a4479a6eeb889612df9a5cda71dd1461d31bc2fc",
-      "date": "2026-09-17",
-      "title": "Merge pull request #1484 from zax0rz/admin/fix-ledger-gaps",
-      "url": "https://github.com/zax0rz/darkpawns/commit/a4479a6eeb889612df9a5cda71dd1461d31bc2fc"
+      "sha": "32bde4444d7564701db488ce890888c757f82fa0",
+      "date": "2026-09-23",
+      "title": "Merge pull request #1555 from zax0rz/feat/site-tls-connect",
+      "url": "https://github.com/zax0rz/darkpawns/commit/32bde4444d7564701db488ce890888c757f82fa0"
     },
     {
-      "sha": "66b4b1f4879628e4ff1039f69ea8c01675bc9f16",
-      "date": "2026-09-17",
-      "title": "Merge pull request #1483 from zax0rz/admin/fix-ledger-1",
-      "url": "https://github.com/zax0rz/darkpawns/commit/66b4b1f4879628e4ff1039f69ea8c01675bc9f16"
+      "sha": "4002c9cf946341003552d3e7220d744572f3224d",
+      "date": "2026-09-23",
+      "title": "Merge pull request #1600 from zax0rz/docs/go-only-triage",
+      "url": "https://github.com/zax0rz/darkpawns/commit/4002c9cf946341003552d3e7220d744572f3224d"
     },
     {
-      "sha": "dddfda4d127d3cf0e80a90e31f9a8427ea3871d6",
-      "date": "2026-09-17",
-      "title": "Merge pull request #1482 from zax0rz/zdgreene/command-fidelity-batch-1",
-      "url": "https://github.com/zax0rz/darkpawns/commit/dddfda4d127d3cf0e80a90e31f9a8427ea3871d6"
+      "sha": "2230f10c4eec45b5a0692c1d109efef202e27e5c",
+      "date": "2026-09-23",
+      "title": "Merge pull request #1598 from zax0rz/fix/ws-origin-behind-proxy",
+      "url": "https://github.com/zax0rz/darkpawns/commit/2230f10c4eec45b5a0692c1d109efef202e27e5c"
     },
     {
-      "sha": "6ee3948a9f35598152c3638fae82f06bfe96ca11",
-      "date": "2026-09-17",
-      "title": "Merge pull request #1481 from zax0rz/zdgreene/reek-med-batch-1281-1284",
-      "url": "https://github.com/zax0rz/darkpawns/commit/6ee3948a9f35598152c3638fae82f06bfe96ca11"
+      "sha": "592abf00f310392caa6bbd71cde83d5454290f0d",
+      "date": "2026-09-23",
+      "title": "Merge pull request #1599 from zax0rz/integrate/batch-0923",
+      "url": "https://github.com/zax0rz/darkpawns/commit/592abf00f310392caa6bbd71cde83d5454290f0d"
     },
     {
-      "sha": "b512f667750256539089c7763d4a7ff21693559b",
-      "date": "2026-09-17",
-      "title": "Merge pull request #1480 from zax0rz/zdgreene/reek-low-batch-1275-1280",
-      "url": "https://github.com/zax0rz/darkpawns/commit/b512f667750256539089c7763d4a7ff21693559b"
+      "sha": "597a6730c94beea3d2d6c927ae0d92d762fa6818",
+      "date": "2026-09-23",
+      "title": "Merge pull request #1597 from zax0rz/docs/rulebook-r1a",
+      "url": "https://github.com/zax0rz/darkpawns/commit/597a6730c94beea3d2d6c927ae0d92d762fa6818"
     }
   ],
   "pullRequests": [

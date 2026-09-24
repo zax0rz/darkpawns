@@ -882,8 +882,10 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 
 	ce := NewCombatEngine()
 	hits := 0
-	ce.OnCombatAction = func(attacker Combatant, defender Combatant, attackType string, damage int, outcome string, targetCount int) {
-		if outcome == "hit" {
+	// DamageFunc runs once for every landed hit, on the same path that
+	// applies the damage.
+	ce.DamageFunc = func(victimName string) {
+		if victimName == "parry_warrior" {
 			hits++
 		}
 	}

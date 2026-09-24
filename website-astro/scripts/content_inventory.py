@@ -143,7 +143,7 @@ def structural_entries() -> list[Entry]:
     }
     entries.extend(Entry(route, source, "agent-discovery", "machine-readable discovery", 3, "schema-and-link QA") for route, source in agent_resources.items())
 
-    for section in ("getting-started", "server", "agents", "research"):
+    for section in ("getting-started", "server", "research"):
         entries.append(Entry(f"/docs/{section}/", "src/pages/docs/[section]/index.astro", "docs-hub", "generated section index", 3, "template review"))
     for category in ("commands", "info", "socials", "spells", "wizhelp"):
         entries.append(Entry(f"/help/{category}/", "src/pages/help/[category]/index.astro", "help-hub", "generated section index", 3, "template review"))

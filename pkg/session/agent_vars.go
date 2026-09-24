@@ -64,7 +64,7 @@ type RoomItemVar struct {
 // {"type":"subscribe","data":{"variables":["HEALTH","ROOM_VNUM",...]}}
 func (s *Session) handleSubscribe(data json.RawMessage) error {
 	s.agentMu.Lock()
-	allowed := s.isAgent || s.wantsStructuredData
+	allowed := s.wantsStructuredData
 	s.agentMu.Unlock()
 	if !allowed {
 		s.sendError("subscribe is only available to agents or structured clients")
@@ -90,7 +90,7 @@ func (s *Session) handleSubscribe(data json.RawMessage) error {
 func (s *Session) markDirty(vars ...string) {
 	s.agentMu.Lock()
 	defer s.agentMu.Unlock()
-	if !s.isAgent && !s.wantsStructuredData {
+	if !s.wantsStructuredData {
 		return
 	}
 	for _, v := range vars {
@@ -104,7 +104,7 @@ func (s *Session) markDirty(vars ...string) {
 // {"type":"vars","data":{...}} message to the agent, then clears the set.
 func (s *Session) flushDirtyVars() {
 	s.agentMu.Lock()
-	if (!s.isAgent && !s.wantsStructuredData) || len(s.dirtyVars) == 0 {
+	if !s.wantsStructuredData || len(s.dirtyVars) == 0 {
 		s.agentMu.Unlock()
 		return
 	}
@@ -202,12 +202,6 @@ func (s *Session) buildVarValue(varName string) interface{} {
 		if !fighting {
 			return false
 		}
-		s.agentMu.Lock()
-		isAgent := s.isAgent
-		s.agentMu.Unlock()
-		if isAgent {
-			return true
-		}
 		return map[string]interface{}{
 			"fighting": true,
 			"target":   target.GetName(),
@@ -219,15 +213,7 @@ func (s *Session) buildVarValue(varName string) interface{} {
 	case VarEquipment:
 		return s.buildEquipment()
 	case VarEvents:
-		s.agentMu.Lock()
-		isAgent := s.isAgent
-		events := s.pendingEvents
-		s.pendingEvents = nil
-		s.agentMu.Unlock()
-		if !isAgent || events == nil {
-			return []interface{}{}
-		}
-		return events
+		return []interface{}{}
 	default:
 		return nil
 	}

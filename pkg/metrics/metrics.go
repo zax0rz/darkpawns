@@ -39,8 +39,6 @@ var (
 	dbQueryDuration prometheus.Histogram
 
 	// Memory metrics
-	memoryWrites prometheus.Counter
-	memoryReads  prometheus.Counter
 
 	// registerer is the registry metrics are collected into.
 	registerer prometheus.Registerer = prometheus.DefaultRegisterer
@@ -133,15 +131,6 @@ func Init(r prometheus.Registerer) {
 			Buckets: prometheus.DefBuckets,
 		})
 
-		memoryWrites = prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "darkpawns_memory_writes_total",
-			Help: "Total number of narrative memory writes",
-		})
-		memoryReads = prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "darkpawns_memory_reads_total",
-			Help: "Total number of narrative memory reads",
-		})
-
 		registerer.MustRegister(
 			connectionsActive,
 			connectionsTotal,
@@ -158,8 +147,6 @@ func Init(r prometheus.Registerer) {
 			errorsTotal,
 			dbQueriesTotal,
 			dbQueryDuration,
-			memoryWrites,
-			memoryReads,
 		)
 	})
 }
@@ -234,15 +221,6 @@ func ErrorOccurred(errorType string) {
 func DBQuery(duration time.Duration) {
 	dbQueriesTotal.Inc()
 	dbQueryDuration.Observe(duration.Seconds())
-}
-
-// Memory tracking
-func MemoryWrite() {
-	memoryWrites.Inc()
-}
-
-func MemoryRead() {
-	memoryReads.Inc()
 }
 
 // Handler returns the Prometheus metrics HTTP handler using the configured

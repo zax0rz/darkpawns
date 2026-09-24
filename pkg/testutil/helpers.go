@@ -1,9 +1,7 @@
 package testutil
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -85,42 +83,22 @@ func NewTestWorld() *game.World {
 }
 
 // MockDatabase is a thread-safe, memory-backed struct fully satisfying the
-// db.GameStore and db.ResearchStore interfaces.
+// db.GameStore interface.
 type MockDatabase struct {
 	mu           sync.RWMutex
 	players      map[string]*db.PlayerRecord
 	nextPlayerID int
-
-	agentKeys      map[string]string // rawKey -> characterName
-	agentKeysByID  map[int64]string  // keyID -> characterName
-	nextAgentKeyID int64
-
-	memories     []*db.NarrativeMemory
-	nextMemoryID int64
-
-	summaries    map[string]string // agentName+"\x00"+sessionID -> summary
-	summaryOrder []string          // compound keys in first-write order (deterministic reads)
 }
 
-// Compile-time proof that the mock covers both halves of the split store
-// interface, so a method added to either one fails here rather than in a
-// downstream package.
-var (
-	_ db.GameStore     = (*MockDatabase)(nil)
-	_ db.ResearchStore = (*MockDatabase)(nil)
-)
+// Compile-time proof that the mock covers the store interface, so a method
+// added to it fails here rather than in a downstream package.
+var _ db.GameStore = (*MockDatabase)(nil)
 
 // NewMockDatabase creates an initialized MockDatabase instance.
 func NewMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		players:        make(map[string]*db.PlayerRecord),
-		nextPlayerID:   1,
-		agentKeys:      make(map[string]string),
-		agentKeysByID:  make(map[int64]string),
-		nextAgentKeyID: 1,
-		memories:       make([]*db.NarrativeMemory, 0),
-		nextMemoryID:   1,
-		summaries:      make(map[string]string),
+		players:      make(map[string]*db.PlayerRecord),
+		nextPlayerID: 1,
 	}
 }
 
@@ -274,146 +252,5 @@ func (m *MockDatabase) Exec(query string, args ...interface{}) (sql.Result, erro
 	return nil, nil
 }
 
-// CreateAgentKey satisfies db.GameStore.
-func (m *MockDatabase) CreateAgentKey(characterName string) (rawKey string, id int64, err error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	buf := make([]byte, 32)
-	_, _ = rand.Read(buf)
-	rawKey = "dp_" + hex.EncodeToString(buf)
-
-	id = m.nextAgentKeyID
-	m.nextAgentKeyID++
-
-	m.agentKeys[rawKey] = characterName
-	m.agentKeysByID[id] = characterName
-	return rawKey, id, nil
-}
-
-// ValidateAgentKey satisfies db.GameStore.
-func (m *MockDatabase) ValidateAgentKey(rawKey string) (characterName string, keyID int64, valid bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	characterName, ok := m.agentKeys[rawKey]
-	if !ok {
-		return "", 0, false
-	}
-	for id, name := range m.agentKeysByID {
-		if name == characterName {
-			return characterName, id, true
-		}
-	}
-	return characterName, 1, true
-}
-
-// EnsureDecisionLogPartitions satisfies db.ResearchStore.
-func (m *MockDatabase) EnsureDecisionLogPartitions() error {
-	return nil
-}
-
-// NewDecisionLogWriter satisfies db.ResearchStore. It returns a non-persisting
-// writer so tests using RecordDecision/Stop do not nil-panic (DP-1017).
-func (m *MockDatabase) NewDecisionLogWriter() *db.DecisionLogWriter {
-	return db.NewMockDecisionLogWriter()
-}
-
-// InitNarrativeMemory satisfies db.GameStore.
-func (m *MockDatabase) InitNarrativeMemory() error {
-	return nil
-}
-
-// WriteNarrativeMemory satisfies db.GameStore.
-func (m *MockDatabase) WriteNarrativeMemory(mem *db.NarrativeMemory) (int64, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	mem.ID = m.nextMemoryID
-	m.nextMemoryID++
-	m.memories = append(m.memories, mem)
-	return mem.ID, nil
-}
-
-// BootstrapMemories satisfies db.GameStore.
-func (m *MockDatabase) BootstrapMemories(agentName string, limit int) ([]*db.NarrativeMemory, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	var out []*db.NarrativeMemory
-	count := 0
-	for i := len(m.memories) - 1; i >= 0; i-- {
-		mem := m.memories[i]
-		if mem.AgentName == agentName {
-			out = append(out, mem)
-			count++
-			if count >= limit {
-				break
-			}
-		}
-	}
-	return out, nil
-}
-
-// RecentMemories satisfies db.GameStore.
-func (m *MockDatabase) RecentMemories(agentName, sessionID string) ([]*db.NarrativeMemory, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	var out []*db.NarrativeMemory
-	for _, mem := range m.memories {
-		if mem.AgentName == agentName && mem.SessionID == sessionID {
-			out = append(out, mem)
-		}
-	}
-	return out, nil
-}
-
-// SocialEventMemories satisfies db.GameStore.
-func (m *MockDatabase) SocialEventMemories(socialEventID string) ([]*db.NarrativeMemory, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	var out []*db.NarrativeMemory
-	for _, mem := range m.memories {
-		if mem.SocialEventID == socialEventID {
-			out = append(out, mem)
-		}
-	}
-	return out, nil
-}
-
 // WriteSessionSummary satisfies db.GameStore. Summaries are keyed by
 // (agentName, sessionID) so distinct sessions never collapse into one list.
-// Re-writing the same session upserts, mirroring the real DB's
-// session_id UNIQUE + ON CONFLICT DO UPDATE behavior.
-func (m *MockDatabase) WriteSessionSummary(agentName, sessionID, summary string, eventCount int, start, end time.Time) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	key := agentName + "\x00" + sessionID
-	if _, ok := m.summaries[key]; !ok {
-		m.summaryOrder = append(m.summaryOrder, key)
-	}
-	m.summaries[key] = summary
-	return nil
-}
-
-// GetSessionSummaries satisfies db.GameStore. Returns the most recent `limit`
-// summaries for the agent across all sessions, in write order.
-func (m *MockDatabase) GetSessionSummaries(agentName string, limit int) ([]string, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	prefix := agentName + "\x00"
-	var sums []string
-	for _, key := range m.summaryOrder {
-		if strings.HasPrefix(key, prefix) {
-			sums = append(sums, m.summaries[key])
-		}
-	}
-	if len(sums) == 0 {
-		return nil, nil
-	}
-	if len(sums) > limit {
-		sums = sums[len(sums)-limit:]
-	}
-	return sums, nil
-}
-
-// DecayStaleMemories satisfies db.GameStore.
-func (m *MockDatabase) DecayStaleMemories(cutoffDays int) (decayed, pruned int, err error) {
-	return 0, 0, nil
-}
