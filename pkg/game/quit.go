@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 // ---------------------------------------------------------------------------
 // quit / reallyquit — C do_quit (src/act.other.c:72-181)
 //
@@ -69,7 +71,7 @@ func (w *World) DoQuit(ch *Player, reallyQuit bool) QuitOutcome {
 		return QuitRefused
 	}
 
-	BasicMudLogf("%s has quit the game.", ch.GetName())
+	MudLog(fmt.Sprintf("%s has quit the game.", ch.GetName()), MudlogNormal, max(lvlImmort, ch.GetInvisLevel()), true) // act.other.c:135-136
 	ch.SendMessage("Goodbye, friend.. Come back soon!\r\n")
 
 	if !isokquit && !immort {
@@ -77,7 +79,7 @@ func (w *World) DoQuit(ch *Player, reallyQuit bool) QuitOutcome {
 		// nothing leaves with the character: extract_char drops everything
 		// worn and carried where they quit (handler.c:1133-1136), for anyone
 		// to pick up.
-		BasicMudLogf("LOSTEQ:%s has quit out of a save room.", ch.GetName())
+		MudLog(fmt.Sprintf("LOSTEQ:%s has quit out of a save room.", ch.GetName()), MudlogNormal, max(lvlImmort, ch.GetInvisLevel()), true) // act.other.c:171-173
 		if ch.IsMounted() {
 			Unmount(ch, w.GetMount(ch))
 		}

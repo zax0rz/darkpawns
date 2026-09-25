@@ -1,0 +1,76 @@
+# mudlog (utils.c:242-272) reaches in-game immortals by syslog level.
+# The God sets syslog normal; the mortal's quit is logged at NRM with level
+# MAX(LVL_IMMORT, invis) (act.other.c:135-136), so the God sees
+# "[ Quitter has quit the game. ]" and, outside a save room, the LOSTEQ
+# line (act.other.c:171-173). The port's mudlog had no session
+# provider and reached no one (DP-1338).
+# depth-case: mudlog.broadcast-by-syslog-level
+# depth-case: mudlog.quit-line
+# depth-case: mudlog.losteq-line
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Syslogger
+Y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Syslogger
+y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Quitter
+Y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Quitter
+y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog
+syslog normal
+syslog
+
+[probe:peer]
+reallyquit

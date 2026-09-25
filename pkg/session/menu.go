@@ -266,8 +266,12 @@ func (s *Session) confirmDelete(choice string) error {
 			return fmt.Errorf("delete character: %w", err)
 		}
 	}
-	slog.InfoContext(s.sessionCtx, "character self-deleted", s.logAttrs(slog.String("character", name))...)
 	s.sendText(fmt.Sprintf("Character '%s' deleted!\r\nGoodbye.\r\n", name))
+	level := 0
+	if s.player != nil {
+		level = s.player.GetLevel()
+	}
+	game.MudLog(fmt.Sprintf("%s (lev %d) has self-deleted.", name, level), game.MudlogNormal, game.LVL_GOD, true) // interpreter.c:2344-2346
 	s.menuActive = false
 	s.player = nil
 	s.authenticated = false

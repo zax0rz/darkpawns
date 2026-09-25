@@ -268,7 +268,8 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 	}
 
 	chName := ch.GetName()
-	MudLog(fmt.Sprintf("Payment for house %d collected by %s.", vnum, chName), 0, LVL_IMMORT, true)
+	// house.c:569-570: the argument as typed; NRM, MAX(LVL_IMMORT, invis level).
+	MudLog(fmt.Sprintf("Payment for house %s collected by %s.", args[0], chName), MudlogNormal, max(LVL_IMMORT, ch.GetInvisLevel()), true)
 
 	w.HouseControl[i].LastPayment = time.Now().Unix()
 	w.mu.Unlock()

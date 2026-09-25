@@ -395,6 +395,8 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		return nil
 	})
 
+	// mudlog reaches in-game immortals through this manager (DP-1338).
+	game.SetImmortalSessionProvider(m)
 	return m
 }
 
@@ -633,6 +635,8 @@ func (m *Manager) FlushAsyncPrompts() {
 // cannot outlive their manager and race later package-global callback wiring.
 func (m *Manager) Stop() {
 	m.combatEngine.Stop()
+	// A stopped manager is no longer mudlog's session list.
+	game.ClearImmortalSessionProvider(m)
 }
 
 // RequestShutdown hands an accepted do_shutdown option to the process
@@ -1248,6 +1252,7 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	p := s.player
 	p.SetLinkless(true)
 	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
+	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true) // comm.c:2169-2170
 
 	if m.hasDB && p.ID > 0 && !s.isGuest {
 		if rec, err := s.playerRecordForSave(p); err == nil {
@@ -1460,6 +1465,31 @@ func (s *Session) extractLinkdead() {
 }
 
 // GetSession returns a session by player name.
+// EachSession is the descriptor list mudlog walks (game.ImmortalSessionProvider):
+// every connected session with a character in the game.
+func (m *Manager) EachSession(fn func(player interface{}, send func(msg string))) {
+	m.mu.RLock()
+	sessions := make([]*Session, 0, len(m.sessions))
+	for _, s := range m.sessions {
+		sessions = append(sessions, s)
+	}
+	m.mu.RUnlock()
+	for _, s := range sessions {
+		p := s.player
+		if p == nil {
+			continue
+		}
+		// !d->connected: only a character in the game, not one at the
+		// MOTD, menu or character creation. Session state only: mudlog is
+		// called with the world lock held (hcontrol pay), so this must not
+		// take it.
+		if s.charCreating || s.creationSaved || s.menuActive {
+			continue
+		}
+		fn(p, p.SendMessage)
+	}
+}
+
 func (m *Manager) GetSession(playerName string) (*Session, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

@@ -21,8 +21,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // ---------------------------------------------------------------------------
@@ -104,9 +102,12 @@ func Alogf(format string, args ...interface{}) {
 
 // ---------------------------------------------------------------------------
 // MudLog — broadcast to online immortals
-// mudlogBrief is C's BRF message type (utils.h:115; OFF 0, NRM 2, CMP 3): a
-// message reaches an immortal whose syslog level is at least its type.
-const mudlogBrief = 1
+// mudlog message types, C's BRF and NRM (utils.h:115-116; OFF is 0, CMP
+// 3): a message reaches an immortal whose syslog level is at least its type.
+const (
+	MudlogBrief  = 1
+	MudlogNormal = 2
+)
 
 // ---------------------------------------------------------------------------
 
@@ -124,82 +125,49 @@ type ImmortalSessionProvider interface {
 // SendFunc is a callback for sending a string message to a session.
 type SendFunc func(msg string)
 
-// MudLog logs a message to the stderr log file and optionally broadcasts it
-// to online immortals (based on level threshold and log-type preference).
+// MudLog is mudlog (utils.c:242-272): the message goes to the log when
+// toFile is set and, unless level is negative, to every player in the game
+// who is not writing, whose level is at least level and whose syslog level
+// (PRF_LOG1 counts 1, PRF_LOG2 counts 2) is at least typ, as green
+// "[ message ]" at the normal color level.
 //
-// Ported from mudlog() in src/utils.c.
-//
-// Parameters:
-//
-//	str    — the log message
-//	typ    — log type: 0 (normal), 1 (log1), 2 (log2); used as minimum type
-//	level  — minimum immortal level; if < 0, no immortal broadcast
-//	toFile — if true, also write to the stderr-style log
-//
-// C semantics: toFile → fprintf(stderr, ...). Then if level >= 0, iterate
-// descriptors and send colored "[ message ]\r\n" to immortals whose level
-// >= level and whose prf_log_type >= typ.
+// typ is C's OFF/BRF/NRM/CMP (0-3, utils.h:114-117).
 func MudLog(str string, typ int, level int, toFile bool) {
 	if toFile {
 		Alog(str)
 	}
-
 	if level < 0 {
 		return
 	}
-
-	formatted := fmt.Sprintf("[ %s ]\r\n", str)
-
-	// Colors from screen.h (in C): CCGRN(ch, C_NRM) / CCNRM(ch, C_NRM)
-	// We disable color in the Go version for simplicity; the message is
-	// sent as-is. If color is wanted, the caller can embed ANSI codes in str.
-	// Color support: embed ANSI codes in str if PRF_COLOR is tracked per-player.
-
-	// Try to iterate sessions if a provider is set.
-	// If no provider is registered, we just log to stderr.
 	provider := getImmortalSessionProvider()
-	if provider != nil {
-		provider.EachSession(func(player interface{}, send func(msg string)) {
-			p, ok := player.(*Player)
-			if !ok || p == nil {
-				return
-			}
-
-			// Skip unconnected or writing players
-			pos := p.GetPosition()
-			if pos == combat.PosDead {
-				return
-			}
-
-			// Compute the player's log-type preference from PRF flags.
-			// Flags bits: PrfLog1 = 34, PrfLog2 = 35
-			flags := p.GetFlags()
-			playerType := 0
-			if flags&(1<<PrfLog1) != 0 {
-				playerType = 1
-			}
-			if flags&(1<<PrfLog2) != 0 {
-				playerType = 2
-			}
-
-			// Minimum log type filter: only send if player's type >= required typ.
-			if playerType < typ {
-				return
-			}
-
-			// Level filter
-			if p.GetLevel() < level {
-				return
-			}
-
-			send(formatted)
-		})
-		// Also log to slog for non-immortal observers
-		slog.Debug("mudlog", "msg", str, "type", typ, "level", level)
-	} else {
-		// No session provider — still log via slog
+	if provider == nil {
 		slog.Info("mudlog (no session provider)", "msg", str, "type", typ, "level", level)
+		return
 	}
+	provider.EachSession(func(player interface{}, send func(msg string)) {
+		p, ok := player.(*Player)
+		if !ok || p == nil {
+			return
+		}
+		flags := p.GetFlags()
+		if flags&(1<<uint(PlrWriting)) != 0 {
+			return
+		}
+		logLevel := 0
+		if flags&(1<<uint(PrfLog1)) != 0 {
+			logLevel++
+		}
+		if flags&(1<<uint(PrfLog2)) != 0 {
+			logLevel += 2
+		}
+		if p.GetLevel() < level || logLevel < typ {
+			return
+		}
+		// send_to_char(CCGRN), buf, CCNRM. The session ends each message's
+		// line, so the color reset goes before the line's CRLF, not after.
+		green, normal := observationColors(p, "\x1b[32m"), observationColors(p, "\x1b[0m")
+		send(green + "[ " + str + " ]" + normal + "\r\n")
+	})
 }
 
 // ---------------------------------------------------------------------------
@@ -207,20 +175,34 @@ func MudLog(str string, typ int, level int, toFile bool) {
 // ---------------------------------------------------------------------------
 
 var (
-	immortalSessionProvider     ImmortalSessionProvider
-	immortalSessionProviderOnce sync.Once
+	immortalSessionProviderMu sync.RWMutex
+	immortalSessionProvider   ImmortalSessionProvider
 )
 
-// SetImmortalSessionProvider registers a session provider for MudLog broadcasts.
-// Called during server initialization to avoid circular imports.
-// Safe for concurrent use — only the first call wins; subsequent calls are no-ops.
+// SetImmortalSessionProvider registers the session list MudLog broadcasts to
+// (the session manager, which cannot be imported here). The last call wins,
+// so each manager a test creates receives its own broadcasts.
 func SetImmortalSessionProvider(provider ImmortalSessionProvider) {
-	immortalSessionProviderOnce.Do(func() {
-		immortalSessionProvider = provider
-	})
+	immortalSessionProviderMu.Lock()
+	immortalSessionProvider = provider
+	immortalSessionProviderMu.Unlock()
+}
+
+// ClearImmortalSessionProvider unregisters provider if it is still the
+// registered one; a newer registration is left alone. Providers are
+// compared by identity, so they must be comparable (the session manager is
+// a pointer).
+func ClearImmortalSessionProvider(provider ImmortalSessionProvider) {
+	immortalSessionProviderMu.Lock()
+	defer immortalSessionProviderMu.Unlock()
+	if immortalSessionProvider == provider {
+		immortalSessionProvider = nil
+	}
 }
 
 func getImmortalSessionProvider() ImmortalSessionProvider {
+	immortalSessionProviderMu.RLock()
+	defer immortalSessionProviderMu.RUnlock()
 	return immortalSessionProvider
 }
 
@@ -235,8 +217,7 @@ func getImmortalSessionProvider() ImmortalSessionProvider {
 // world[ch->in_room].name) then mudlog(buf, BRF, LVL_IMMORT, TRUE).
 func LogDeathTrap(playerName string, roomVNum int, roomName string) {
 	msg := fmt.Sprintf("%s hit death trap #%d (%s)", playerName, roomVNum, roomName)
-	// BRF = 0 (normal broadcast), LVL_IMMORT = maximum immortal level
-	MudLog(msg, 0, 999, true)
+	MudLog(msg, MudlogBrief, lvlImmort, true)
 }
 
 // ---------------------------------------------------------------------------

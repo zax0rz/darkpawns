@@ -464,7 +464,7 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 
 // Log is mudlog for a script.
 func (a *WorldScriptableAdapter) Log(msg string) {
-	MudLog(msg, mudlogBrief, lvlImmort, false)
+	MudLog(msg, MudlogBrief, lvlImmort, false)
 }
 
 // CanSee is CAN_SEE(me, vict).

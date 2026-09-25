@@ -1,7 +1,7 @@
 package session
 
 import (
-	"log/slog"
+	"fmt"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -121,20 +121,20 @@ func (s *Session) performDupeCheck() bool {
 	case unswitch:
 		// No line ending in C (interpreter.c:1650); the prompt follows.
 		s.sendRawEvent("Reconnecting to unswitched char.")
-		slog.Info("reconnected to unswitched char", "player", name, "ip", s.RemoteIP())
+		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.RemoteIP()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
 	case usurp:
 		s.Send("You take over your own body, already in use!\r\n")
 		game.Act(w, true, p, nil, nil, nil,
 			"$n suddenly keels over in pain, surrounded by a white aura...\r\n"+
 				"$n's body has been taken over by a new spirit!", "", game.ToRoom)
-		slog.Info("re-logged in; disconnecting old socket", "player", name)
+		game.MudLog(fmt.Sprintf("%s has re-logged in ... disconnecting old socket.", name), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
 	default:
 		s.Send("Reconnecting.\r\n")
 		if game.HasMail(int(p.GetID())) {
 			s.Send("You have mail waiting.\r\n")
 		}
 		game.Act(w, true, p, nil, nil, nil, "$n has reconnected.", "", game.ToRoom)
-		slog.Info("reconnected", "player", name, "ip", s.RemoteIP())
+		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.RemoteIP()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
 	}
 
 	// A GMCP client learns who it is again; the text bytes above are C's.
