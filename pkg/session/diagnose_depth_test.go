@@ -15,7 +15,7 @@ func TestDiagnoseRegistrationUsesCEntryGate(t *testing.T) {
 		t.Fatalf("diagnose gate = level %d position %d, want level 0 position %d", gate.MinLevel, gate.MinPosition, combat.PosResting)
 	}
 
-	for _, name := range []string{"diagnose", "diag", "glance"} {
+	for _, name := range []string{"diagnose", "glance"} {
 		entry, ok := cmdRegistry.Lookup(name)
 		if !ok {
 			t.Fatalf("%s command alias is not registered", name)

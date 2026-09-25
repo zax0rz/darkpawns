@@ -36,32 +36,11 @@ type orderRow struct {
 
 var cRowPattern = regexp.MustCompile(`^\s*\{\s*"([^"]+)"\s*,\s*(POS_\w+|0)\s*,\s*[^,]+,\s*([^,]+),`)
 
-var goOnlyCommands = map[string]gate{
-	"affects":     {0, 4, "Go-only: read-only affect view; mortal-usable while sleeping"},
-	"autoloot":    {0, 0, "Go-only: player loot preference; safe in every position"},
-	"coins":       {0, 5, "Go spelling of C gold; same mortal/resting gate"},
-	"describe":    {0, 0, "Go character-profile setting; safe in every position"},
-	"description": {0, 0, "Go character-profile setting; safe in every position"},
-	"detect":      {0, 8, "Go spelling of C search; same standing gate"},
-	"dragonkick":  {0, 7, "Go spelling of C dragon; same fighting gate"},
-	"heal":        {31, 0, "Go-only wizard heal; defense-in-depth handler requires immortal"},
-	"hiss":        {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
-	"kneel":       {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
-	"knock":       {0, 8, "Go-only physical door action; requires standing"},
-	"mutter":      {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
-	"newbiegive":  {31, 0, "Go spelling of C wnewbie; same immortal/dead gate"},
-	"password":    {0, 0, "Go account setting; safe in every position"},
-	"poofset":     {31, 0, "Go aggregate for C poofin/poofout; same immortal/dead gate"},
-	"qcomm":       {0, 4, "Go spelling of C qsay; same sleeping gate"},
-	"race_say":    {0, 5, "Go spelling of C rsay; same resting gate"},
-	"scan":        {0, 5, "Go-only read-only room scan; mortal-usable while resting"},
-	"skillinfo":   {0, 4, "Go skill-system information; mortal-usable while sleeping"},
-	"summon":      {31, 0, "Go-only wizard summon; defense-in-depth handler requires immortal"},
-	"tigerpunch":  {0, 7, "Go spelling of C tiger; same fighting gate"},
-	"vis":         {31, 0, "Go-only wizard reveal command; distinct from mortal C visible"},
-	"wizutil":     {31, 0, "Go aggregate for C wizutil subcommands; handler applies stricter subcommand gates"},
-	"zap":         {1, 6, "Go direct wand command; follows C use sitting gate"},
-}
+// goOnlyCommands documents any command the port registers that C's command
+// table does not have. It is empty: the command surface is C's (R2, R4;
+// DP-1339 removed the last 35 Go-only names). A new entry needs a decision
+// recorded with it, and a help file.
+var goOnlyCommands = map[string]gate{}
 
 func main() {
 	var oracleFile, repoRoot, outputFile, orderFile string

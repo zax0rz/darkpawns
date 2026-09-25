@@ -62,7 +62,6 @@ func TestReekCommandRegistrations(t *testing.T) {
 		minLevel    int
 		minPosition int
 	}{
-		{name: "detect", minLevel: 0, minPosition: combat.PosStanding},
 		{name: "mold", minLevel: LVL_IMMORT, minPosition: combat.PosResting},
 	}
 
@@ -269,15 +268,10 @@ func TestCommandRegistry_QABatch1(t *testing.T) {
 		t.Errorf("'search' MinPosition = %d, want PosStanding", search.MinPosition)
 	}
 
-	detect, ok := cmdRegistry.Lookup("detect")
-	if !ok {
-		t.Fatal("'detect' alias not found in registry — must remain resolvable (DP-1060)")
-	}
-	if detect.MinLevel != 0 {
-		t.Errorf("'detect' MinLevel = %d, want 0", detect.MinLevel)
-	}
-	if detect.MinPosition != combat.PosStanding {
-		t.Errorf("'detect' MinPosition = %d, want PosStanding", detect.MinPosition)
+	// "detect" was a Go-only spelling of C's search (DP-1060); C answers
+	// "Huh?!?" (R2, R4; removed by DP-1339).
+	if _, ok := cmdRegistry.Lookup("detect"); ok {
+		t.Error("'detect' is registered; C's command table has no such command (DP-1339)")
 	}
 
 	mold, ok := cmdRegistry.Lookup("mold")
