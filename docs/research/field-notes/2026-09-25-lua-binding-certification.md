@@ -85,3 +85,18 @@ Each comment described the space as C's observed "framing". Porting the rule
 once made the first two redundant, and the census caught the second when it
 doubled the space. The third still stands in for C's carry-over of an unsent
 space into the looker's next output, and its comment now says so.
+
+## The syslog nobody could turn on
+
+The Lua `log` binding was blocked for a reason outside Lua: the port's
+`mudlog` was complete except for one call. `SetImmortalSessionProvider` was
+defined and never called, so every `MudLog` reached the server log and no
+player. Zach had tried `syslog complete` as an immortal the day before and
+seen nothing. The command set the level correctly; the broadcast had no
+list of sessions to walk.
+
+Wiring it exposed the next layer. The port had four `MudLog` calls where C
+has about 140. The everyday lines (connect, quit, death, link loss) were
+server-log calls in the port, and two of them used the wrong message type
+or level. The level arithmetic was also wrong: with both log bits set, C
+counts 3 and the port counted 2.

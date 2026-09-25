@@ -186,6 +186,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return nil
 			}
 			if rec.Password != "" && bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)) != nil {
+				game.MudLog(fmt.Sprintf("Bad PW: %s [%s]", rec.Name, s.RemoteIP()), game.MudlogBrief, game.LVL_GOD, true) // interpreter.c:1878-1879
 				s.manager.loginAttempts.RecordFailure(ip)
 				if s.manager.accountLockouts != nil {
 					if newlyLocked := s.manager.accountLockouts.RecordFailure(rec.Name); newlyLocked {
@@ -279,6 +280,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if s.performDupeCheck() {
 			return nil
 		}
+		// interpreter.c:1924-1927, after the MOTD.
+		game.MudLog(fmt.Sprintf("%s [%s] has connected.", s.player.GetName(), s.RemoteIP()),
+			game.MudlogBrief, max(game.LVL_IMMORT, s.player.GetInvisLevel()), true)
 		s.startReturningMenu(s.menuPasswordHash)
 		return nil
 	}

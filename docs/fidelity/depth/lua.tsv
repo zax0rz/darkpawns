@@ -67,5 +67,5 @@ lua_save_obj	(script)	lua.bind-save-obj	D3	state	oracle-green	lua-bind-misc	src/
 lua_raw_kill	(script)	lua.bind-raw-kill	D3	audience	oracle-green	lua-bind-misc	src/scripts.c:1225-1258	raw_kill: death cry and corpse.
 lua_tport	(script)	lua.bind-tport	D3	audience	oracle-green	lua-bind-misc	src/scripts.c:1518-1562	char_from_room, char_to_room and the look.
 lua_mount	(script)	lua.bind-mount	D3	state	blocked	-	src/scripts.c:871-906	Player riders go through the port's do_ride/do_dismount/unmount; a mobile rider is not ported. No probe yet: no scenario has a mountable mobile beside a script.
-lua_log	(script)	lua.bind-log	D3	audience	blocked	-	src/scripts.c:780-793	mudlog(BRF, LVL_IMMORT): the bridge calls MudLog, whose session provider is never registered (DP-1338), so no immortal sees it yet.
+lua_log	(script)	lua.bind-log	D3	audience	oracle-green	lua-bind-misc	src/scripts.c:780-793	mudlog(text, BRF, LVL_IMMORT): an immortal with syslog brief sees '[ text ]'. Unblocked by DP-1338 wiring MudLog to sessions.
 lua_set_skill	(script)	lua.bind-set-skill	D4	state	blocked	-	src/scripts.c:1365-1383	SET_SKILL by spell number; affect_total changes nothing in the port. No probe: the visible readback (practice) would diff unrelated command output.
