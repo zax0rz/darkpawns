@@ -161,8 +161,9 @@ func (w *World) doHouseTransfer(ch *Player, houseIdx int, arg string) {
 
 	chName := ch.GetName()
 	ch.SendMessage("House transfered.\r\n")
+	// house.c:698-699: NRM, MAX(LVL_IMMORT, invis level).
 	MudLog(fmt.Sprintf("%s transfered %s house to %s.", chName, hshr(ch), toTitle(toLower(arg))),
-		0, LVL_IMMORT, true)
+		MudlogNormal, max(LVL_IMMORT, ch.GetInvisLevel()), true)
 }
 
 // ---------------------------------------------------------------------------

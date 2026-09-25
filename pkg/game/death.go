@@ -527,25 +527,23 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		return
 	}
 
-	// PK bookkeeping — fight.c:1671-1689
-	// Only fire player-vs-player bookkeeping when there is a distinct killer.
-	if killerName != "" && killerName != player.GetName() {
-		if killer, ok := w.GetPlayer(killerName); ok {
-			roomName := ""
-			if room, roomOK := w.GetRoom(roomVNum); roomOK {
-				roomName = room.Name
-			}
-			slog.Info("(PK) "+fmt.Sprintf("%s killed by %s at %s", player.GetName(), killerName, roomName),
-				"victim", player.GetName(), "killer", killerName, "room", roomVNum)
+	// fight.c:1671-1681: the death goes to the syslog (BRF, LVL_IMMORT), and
+	// a pkill flags the killer outlaw.
+	if killerName != "" {
+		roomName := ""
+		if room, roomOK := w.GetRoom(roomVNum); roomOK {
+			roomName = room.Name
+		}
+		line := fmt.Sprintf("%s killed by %s at %s", player.GetName(), killerName, roomName)
+		if killer, ok := w.GetPlayer(killerName); ok && killerName != player.GetName() {
+			line = "(PK) " + line
 			// Flag killer as outlaw if the victim wasn't already an outlaw.
 			if player.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
 				killer.SetPlrFlag(PlrOutlaw, true)
 			}
 			killer.PKs++
-		} else {
-			slog.Info(fmt.Sprintf("%s killed by %s at room %d", player.GetName(), killerName, roomVNum),
-				"victim", player.GetName(), "killer", killerName, "room", roomVNum)
 		}
+		MudLog(line, MudlogBrief, lvlImmort, true)
 	}
 
 	// Death counter — fight.c:1689. GET_DEATHS(victim)++ is unconditional.

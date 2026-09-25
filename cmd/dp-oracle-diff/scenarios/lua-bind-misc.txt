@@ -7,6 +7,7 @@
 # depth-case: lua.bind-save-obj
 # depth-case: lua.bind-raw-kill
 # depth-case: lua.bind-tport
+# depth-case: lua.bind-log
 
 [fixture]
 empty-players
@@ -39,6 +40,8 @@ elseif (what == "kill") then
 local m = mload(12204, 12296)
 raw_kill(m, me, TYPE_UNDEFINED)
 say("killed")
+elseif (what == "log") then
+log("Probe log line.")
 elseif (what == "tport") then
 tport(ch, 12281)
 else
@@ -77,6 +80,7 @@ Y
 
 [warmup]
 holylight
+syslog brief
 goto 12296
 load obj 11052
 
@@ -89,4 +93,5 @@ say saveobj
 inventory
 say kill
 look
+say log
 say tport

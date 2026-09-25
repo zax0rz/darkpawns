@@ -340,6 +340,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			motd := loginTextForFile(s, "motd")
 			s.charStage = "motd"
 			s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
+			game.MudLog(fmt.Sprintf("%s [%s] new player.", s.charName, s.RemoteIP()), game.MudlogNormal, game.LVL_IMMORT, true) // interpreter.c:2154-2155
 		case "N":
 			s.charStats = game.RollRealAbils(s.charClass, s.charRace)
 			s.sendStatsRollPrompt()
