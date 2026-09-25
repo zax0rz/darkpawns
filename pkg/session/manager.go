@@ -1478,8 +1478,10 @@ func (m *Manager) EachSession(fn func(player interface{}, send func(msg string))
 			continue
 		}
 		// !d->connected: only a character in the game, not one at the
-		// MOTD, menu or character creation.
-		if inWorld, ok := m.world.GetPlayer(p.GetName()); !ok || inWorld != p {
+		// MOTD, menu or character creation. Session state only: mudlog is
+		// called with the world lock held (hcontrol pay), so this must not
+		// take it.
+		if s.charCreating || s.creationSaved || s.menuActive {
 			continue
 		}
 		fn(p, p.SendMessage)
