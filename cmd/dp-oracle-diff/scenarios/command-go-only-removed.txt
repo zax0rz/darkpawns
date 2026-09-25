@@ -1,0 +1,53 @@
+# R2/R4: names the port answered that C's command table does not have (and
+# that prefix no C command), and socials the socials file defines without a
+# command row. C answers "Huh?!?" (interpreter.c:916) to each (DP-1339).
+# depth-case: commands.go-only-removed
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Surfacer
+Y
+surfpass
+surfpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Surfacer
+y
+surfpass
+surfpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+
+[probe]
+affects
+scan
+coins
+detect
+skillinfo
+knock north
+autoloot
+password
+bs
+tpunch
+dkick
+hiss
+kneel
+mutter

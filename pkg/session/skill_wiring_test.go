@@ -12,7 +12,7 @@ func TestBucketASkillsRegistered(t *testing.T) {
 		"bearhug", "behead", "bite", "carve", "compare", "cutthroat",
 		"disarm", "groinrip", "mindlink", "palm", "point", "scrounge",
 		"sharpen", "slug", "smackheads", "strike", "tag", "turn",
-		"aid", "alter", "flesh", "serpent", "scan",
+		"aid", "alter", "flesh", "serpent",
 		// martial-arts aliases mapped to their C command names
 		"dragon", "tiger",
 	}

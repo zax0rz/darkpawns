@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+command_interpreter	(any)	commands.go-only-removed	D2	command	oracle-green	command-go-only-removed	src/interpreter.c:916	Every name the port answered that C's table lacks (affects, scan, coins, detect, skillinfo, knock, autoloot, password, bs, tpunch, dkick, and the socials hiss/kneel/mutter with no command row) is Huh?!?, as in C. TestCommandGatesAreAllCRows keeps the registry to C rows. DP-1339.

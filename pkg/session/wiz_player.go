@@ -11,28 +11,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
-func cmdHeal(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
-	if len(args) == 0 {
-		s.Send("Heal whom?")
-		return nil
-	}
-	targetName := args[0]
-	targetSess := findSessionByName(s.manager, targetName)
-	if targetSess == nil || targetSess.player == nil {
-		s.Send("No one by that name online.")
-		return nil
-	}
-	targetSess.player.RestoreVitals()
-	slog.Warn("wizard heal", "by", s.player.Name, "target", targetSess.player.Name)
-	s.Send(fmt.Sprintf("You heal %s.", targetSess.player.Name))
-	targetSess.Send(fmt.Sprintf("%s has healed you!", s.player.Name))
-	return nil
-}
-
 // ---------------------------------------------------------------------------
 // restore — fully restore target (LVL_IMMORT)
 // ---------------------------------------------------------------------------
@@ -219,35 +197,6 @@ func cmdInvis(s *Session, args []string) error {
 		return nil
 	}
 	s.manager.world.DoInvis(s.player, strings.Join(args, " "))
-	return nil
-}
-
-// ---------------------------------------------------------------------------
-// vis — make invisible players visible (LVL_IMMORT)
-// ---------------------------------------------------------------------------
-func cmdVis(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
-	if len(args) == 0 {
-		s.Send("Vis whom?")
-		return nil
-	}
-	targetName := args[0]
-	target := findSessionByName(s.manager, targetName)
-	if target == nil || target.player == nil {
-		s.Send("There is no such player.")
-		return nil
-	}
-	// Clear their invisible flag to make them visible to lower-level players
-	if target.player.Flags&game.PLR_INVISIBLE != 0 {
-		target.player.Flags &^= game.PLR_INVISIBLE
-		target.Send("You have been revealed by a higher power!")
-		s.Send(fmt.Sprintf("%s is now visible to mortals.", target.player.Name))
-	} else {
-		s.Send(fmt.Sprintf("%s is already visible.", target.player.Name))
-	}
 	return nil
 }
 

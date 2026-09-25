@@ -250,5 +250,4 @@ func cmdZap(s *Session, args []string) error {
 
 func init() {
 	registerCommand("recite", wrapArgs(cmdRecite), "Read a scroll.")
-	registerCommand("zap", wrapArgs(cmdZap), "Zap with a wand or staff.")
 }

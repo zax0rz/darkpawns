@@ -49,7 +49,7 @@ func TestCommandGateGoldenCoversCGoRegistrationsAndSocials(t *testing.T) {
 		}
 	}
 	for name := range game.Socials {
-		if _, ok := commandGates[name]; !ok {
+		if _, ok := commandGates[name]; !ok && isCSocial(name) {
 			t.Errorf("social %q has no authoritative gate", name)
 		}
 	}
@@ -167,4 +167,14 @@ func TestCommandGateCascadeFrozenAndSwitchedBeforePosition(t *testing.T) {
 			t.Errorf("switched reply = %q", got)
 		}
 	})
+}
+
+// The command surface is C's (R2, R4): every registered name, primary or
+// alias, is a row of C's command table (DP-1339 removed the Go-only ones).
+func TestCommandGatesAreAllCRows(t *testing.T) {
+	for name, gate := range commandGates {
+		if !strings.HasPrefix(gate.Source, "C ") {
+			t.Errorf("command %q is not in C's command table (%s)", name, gate.Source)
+		}
+	}
 }
