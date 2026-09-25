@@ -39,6 +39,8 @@ Y
 
 [warmup]
 goto 14402
+load obj 8010
+drop bread
 load obj 9900
 
 [probe]

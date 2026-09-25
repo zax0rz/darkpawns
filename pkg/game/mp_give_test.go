@@ -102,6 +102,16 @@ func TestMpGiveObjectDogFoodExtracts(t *testing.T) {
 func TestMpGiveObjectDogJunkDropsInRoom(t *testing.T) {
 	w, _, lastMsg := newMpGiveTestWorld(t)
 	dog := spawnMpGiveTestMob(t, w, 1001, 8063)
+	// Seed the floor so the drop position is observable: C obj_to_room
+	// prepends, so the dog's toy must land ahead of the older object in the
+	// room's raw (newest-first) list.
+	bread := registerMpGiveObj(t, w, &parser.Obj{
+		VNum: 8010, Keywords: "bread", ShortDesc: "a loaf of bread",
+		WearFlags: [4]int{1}, Cost: 3,
+	})
+	if err := w.MoveObjectToRoomFront(bread, 1001); err != nil {
+		t.Fatalf("seed floor: %v", err)
+	}
 	sword := registerMpGiveObj(t, w, mpGiveSwordProto(8037, 30))
 
 	w.MpGiveObject(nil, dog, sword)
@@ -111,14 +121,9 @@ func TestMpGiveObjectDogJunkDropsInRoom(t *testing.T) {
 		!strings.Contains(got, "quickly loses interest") {
 		t.Fatalf("dog junk acts: got %q", got)
 	}
-	found := false
-	for _, item := range w.GetItemsInRoom(1001) {
-		if item == sword {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatal("dog junk should be dropped in the room, not destroyed")
+	items := w.GetItemsInRoom(1001)
+	if len(items) != 2 || items[0] != sword || items[1] != bread {
+		t.Fatalf("dog drop should prepend (C obj_to_room): got %v", items)
 	}
 }
 

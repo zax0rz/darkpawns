@@ -39,6 +39,7 @@ Y
 [warmup]
 goto 14402
 load obj 8010
+load obj 8037
 
 [probe]
 give bread gatekeeper

@@ -39,6 +39,8 @@ Y
 
 [warmup]
 goto 8059
+load obj 8010
+drop bread
 load obj 8037
 
 [probe]

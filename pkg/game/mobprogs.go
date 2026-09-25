@@ -168,7 +168,10 @@ func (w *World) MpGiveObject(ch Actor, mob *MobInstance, obj *ObjectInstance) {
 		w.ExtractObject(obj, mob.GetRoom())
 	} else if isDog(mob) {
 		Act(w, true, mob, nil, obj, nil, "$n sniffs around and plays with $p for a while.", "", ToRoom)
-		if err := w.MoveObjectToRoom(obj, mob.GetRoom()); err != nil {
+		// C obj_to_room prepends to world[room].contents; the port's room
+		// lists keep C's raw newest-first order and the look renderer
+		// reverses it (look.go roomObjectLines), same as inventory addItem.
+		if err := w.MoveObjectToRoomFront(obj, mob.GetRoom()); err != nil {
 			slog.Error("mp_give dog drop failed", "mob_vnum", mob.GetVNum(), "obj_vnum", obj.VNum, "error", err)
 		}
 		Act(w, true, mob, nil, nil, nil, "$n quickly loses interest.", "", ToRoom)
@@ -179,7 +182,10 @@ func (w *World) MpGiveObject(ch Actor, mob *MobInstance, obj *ObjectInstance) {
 			Act(w, true, mob, nil, obj, nil, "$n peers at $p closely, then hands it back.", "", ToRoom)
 			Act(w, true, mob, nil, nil, nil, "$n growls, 'Are you mocking me?'", "", ToRoom)
 			// C obj_to_char(obj, ch) returns the object to whichever
-			// character handed it over, prepending to their carrying.
+			// character handed it over, prepending to their carrying. Both
+			// port paths prepend too: Inventory.addItem inserts at the head
+			// of Items (inventory.go), and MoveObjectToMobInventoryFront
+			// reorders to the mob carrying head.
 			var err error
 			switch g := ch.(type) {
 			case *Player:
@@ -204,7 +210,8 @@ func (w *World) MpGiveObject(ch Actor, mob *MobInstance, obj *ObjectInstance) {
 			Act(w, true, mob, nil, nil, nil, "$n parts his gnarled hands and a shimmering black portal materializes before you!", "", ToRoom)
 			if portal != nil {
 				portal.SetValue(2, 2)
-				if err := w.MoveObjectToRoom(portal, ch.GetRoom()); err != nil {
+				// C obj_to_room prepends (see the dog-drop branch above).
+				if err := w.MoveObjectToRoomFront(portal, ch.GetRoom()); err != nil {
 					slog.Error("mp_give portal placement failed", "mob_vnum", mob.GetVNum(), "obj_vnum", portal.VNum, "error", err)
 				}
 			}
