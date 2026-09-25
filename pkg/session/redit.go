@@ -249,7 +249,7 @@ func (s *Session) cancelRoomEdit() {
 	if s.manager != nil {
 		s.manager.releaseRoomEdit(number, s)
 	}
-	if s.player != nil {
+	if s.olcActor() != nil {
 		s.player.SetPlrFlag(game.PlrWriting, false)
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,
 			"$n stops using OLC.", "", game.ToRoom)
@@ -308,7 +308,7 @@ func (s *Session) finishReditLocked(save bool) {
 	s.manager.releaseRoomEdit(state.number, s)
 	s.textEdit = nil
 	s.roomEdit = nil
-	if s.player != nil {
+	if s.olcActor() != nil {
 		s.player.SetPlrFlag(game.PlrWriting, false)
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,
 			"$n stops using OLC.", "", game.ToRoom)

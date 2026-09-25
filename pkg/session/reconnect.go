@@ -15,7 +15,8 @@ import (
 // affects and position included. It returns true when the login became a
 // reconnect, so the caller must not continue to the MOTD and menu.
 //
-// C's three modes, checked in its order:
+// C's three modes, checked in its order (an old session in an OLC editor is
+// not CON_PLAYING, so it is disconnected and the login is a RECON):
 //   - UNSWITCH: the old session is an immortal switched into another body
 //     (k->original). It is disconnected, and the new session takes the
 //     immortal's own body with "Reconnecting to unswitched char.".
@@ -50,7 +51,12 @@ func (s *Session) performDupeCheck() bool {
 		return false
 	}
 	unswitch := old.isSwitched
-	usurp := !unswitch && old.hasTransport() && !old.SendClosed()
+	connected := old.hasTransport() && !old.SendClosed()
+	// C usurps only a CON_PLAYING descriptor. One in an OLC editor state is
+	// just disconnected, and the login then finds the body descriptor-less
+	// and reconnects to it (interpreter.c:1552-1571, 1590-1604).
+	editing := !unswitch && connected && old.inOLCEditorState()
+	usurp := !unswitch && connected && !editing
 	// The old session's transport teardown must not treat the body as its own
 	// any more: it neither goes linkdead nor unregisters the new session.
 	old.superseded.Store(true)
@@ -65,6 +71,18 @@ func (s *Session) performDupeCheck() bool {
 	case usurp:
 		old.Send("\r\nThis body has been usurped!\r\n")
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		old.CloseSend()
+		old.Close()
+	case editing:
+		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		// close_socket's cleanup_olc frees the editor, and with d->character
+		// already NULL it neither clears WRITING nor tells the room
+		// (olc.c cleanup_olc); superseded makes olcActor nil for the same.
+		old.cancelTextEdit()
+		old.cancelRoomEdit()
+		old.cancelMedit()
+		old.cancelOedit()
+		old.cancelSedit()
 		old.CloseSend()
 		old.Close()
 	default:
@@ -127,4 +145,25 @@ func (s *Session) performDupeCheck() bool {
 	// C's next game-loop pass prints the prompt (comm.c:643-648).
 	s.SendPrompt()
 	return true
+}
+
+// olcActor is the character an OLC cleanup may name: nil once a new login
+// has taken the body (C's perform_dupe_check sets d->character = NULL before
+// close_socket runs cleanup_olc, so no "stops using OLC" line is sent).
+func (s *Session) olcActor() *game.Player {
+	if s.superseded.Load() {
+		return nil
+	}
+	return s.player
+}
+
+// inOLCEditorState reports whether an editor owns the descriptor in a CON_*
+// state other than CON_PLAYING: redit, medit, oedit, zedit, sedit, or a
+// tedit/luaedit buffer (do_string's editor stays in CON_PLAYING).
+func (s *Session) inOLCEditorState() bool {
+	if s.isRoomEditing() || s.isMobEditing() || s.isObjEditing() || s.isZoneEditing() || s.isSeditEditing() {
+		return true
+	}
+	editing, playing := s.editorPromptState()
+	return editing && !playing
 }

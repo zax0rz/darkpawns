@@ -115,6 +115,34 @@ func TestPerformDupeCheckUsurpsBodyInUse(t *testing.T) {
 	}
 }
 
+// An old session inside an OLC editor is not CON_PLAYING: C gives it only
+// "Multiple login detected", then finds the body descriptor-less and
+// reconnects (interpreter.c:1552-1571, 1590-1604). cleanup_olc runs with
+// d->character already NULL, so the room hears no "stops using OLC".
+func TestPerformDupeCheckFromEditorReconnects(t *testing.T) {
+	m, old, observer, fresh := dupeCheckFixture(t)
+	old.textEdit = &textEditState{} // a tedit buffer: CON_TEDIT
+
+	if !fresh.performDupeCheck() {
+		t.Fatal("performDupeCheck did not reconnect")
+	}
+	assertTookOver(t, m, old, fresh)
+	if old.textEdit != nil {
+		t.Fatal("the old session's editor was not freed")
+	}
+	oldOut := renderedOutput(old)
+	if !strings.Contains(oldOut, "\r\nMultiple login detected -- disconnecting.\r\n") || strings.Contains(oldOut, "usurped") {
+		t.Fatalf("old session output = %q, want only the multiple-login notice", oldOut)
+	}
+	if got := renderedOutput(fresh); !strings.Contains(got, "Reconnecting.\r\n") {
+		t.Fatalf("player output = %q, want Reconnecting.", got)
+	}
+	room := renderedOutput(observer)
+	if !strings.Contains(room, "Returner has reconnected.") || strings.Contains(room, "stops using OLC") {
+		t.Fatalf("room output = %q, want only the reconnect line", room)
+	}
+}
+
 // UNSWITCH (interpreter.c:1545-1556, 1650-1653): an immortal switched into
 // another body gets their own body back, with no room message.
 func TestPerformDupeCheckReturnsSwitchedImmortal(t *testing.T) {
