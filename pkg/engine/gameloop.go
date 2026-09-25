@@ -108,7 +108,7 @@ type GameLoopCallbacks struct {
 	OnExtractPending func()
 
 	// OnFlushOutput — called after every live heartbeat, as game_loop flushes
-	// each descriptor's output and prompt after its pass (comm.c:632-648).
+	// each descriptor's output and prompt after its pass (comm.c:626-642).
 	// PumpPulses (DP_CLOCK) leaves the flush to its caller, which does it once
 	// after the pumped pulses, as C's single pass would.
 	OnFlushOutput func()

@@ -694,7 +694,7 @@ func (a *WorldScriptableAdapter) LoadMob(vnum, roomVNum int) (scripting.CharRef,
 }
 
 // ExtractChar is lua_extchar's extract_char. C marks the character and
-// removes it at the next heartbeat (extract_pending_chars, comm.c:812); the
+// removes it at the next heartbeat (extract_pending_chars, comm.c:805); the
 // port extracts at once (lua.bind-extchar-deferred).
 func (a *WorldScriptableAdapter) ExtractChar(ref scripting.CharRef) {
 	switch _, p, m := a.resolveChar(ref); {

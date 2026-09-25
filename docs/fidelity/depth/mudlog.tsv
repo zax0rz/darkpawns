@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-mudlog	(syslog)	mudlog.broadcast-by-syslog-level	D3	audience	oracle-green	mudlog-quit-syslog	src/utils.c:242-272	In-game players not writing, level >= the message level, syslog (LOG1=1 + LOG2=2) >= its type, as green '[ text ]'. The port's MudLog had no session provider (DP-1338).
-mudlog	(syslog)	mudlog.syslog-level-arithmetic	D4	audience	unit-green	TestMudLogSyslogLevels	src/utils.c:262-265	LOG1 and LOG2 together are level 3 (complete); the port counted 2.
+mudlog	(syslog)	mudlog.broadcast-by-syslog-level	D3	audience	oracle-green	mudlog-quit-syslog	src/utils.c:212-242	In-game players not writing, level >= the message level, syslog (LOG1=1 + LOG2=2) >= its type, as green '[ text ]'. The port's MudLog had no session provider (DP-1338).
+mudlog	(syslog)	mudlog.syslog-level-arithmetic	D4	audience	unit-green	TestMudLogSyslogLevels	src/utils.c:232-235	LOG1 and LOG2 together are level 3 (complete); the port counted 2.
 do_quit	quit	mudlog.quit-line	D3	audience	oracle-green	mudlog-quit-syslog	src/act.other.c:135-136	'%s has quit the game.' at NRM, MAX(LVL_IMMORT, invis).
 do_quit	reallyquit	mudlog.losteq-line	D3	audience	oracle-green	mudlog-quit-syslog	src/act.other.c:171-173	'LOSTEQ:%s has quit out of a save room.' at NRM.
 mudlog	(syslog)	mudlog.unported-sites	D3	audience	blocked	-	src/*.c (about 120 mudlog calls; DP-1340)	Connect, reconnect, re-login, new player, self-delete, bad password, link loss, player death and house lines now broadcast at C's type and level; the other C mudlog sites (OLC saves, wizard actions, objsave, spec procs, stealing, looting, kill milestones) are not yet ported.

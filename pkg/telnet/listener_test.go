@@ -848,7 +848,7 @@ func observationFormats(result game.ObservationResult) string {
 // TestPromptAfterCommandOutput verifies the "> " prompt is written after the
 // command's response, never before it. The prompt now travels through the
 // session's send channel, so writeLoop drains the command output first and
-// prints the prompt after (C: comm.c:643-648 flush output, then prompt).
+// prints the prompt after (C: comm.c:637-642 flush output, then prompt).
 func TestPromptAfterCommandOutput(t *testing.T) {
 	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
 		VNum: game.MortalStartRoom,

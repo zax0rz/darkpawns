@@ -575,7 +575,7 @@ func (m *Manager) ExtractPendingChars() {
 // command interpreter. After the heartbeats return, every session that
 // received player-bound output during the pump gets its prompt — C's
 // process_output flushes every player every game-loop pass and each flush
-// carries the prompt at its tail (comm.c:632-648, 1624-1640).
+// carries the prompt at its tail (comm.c:626-642, 1624-1640).
 func (m *Manager) PumpPulses(n int) error {
 	return m.PumpPulsesFrom(nil, n)
 }
@@ -622,7 +622,7 @@ func (m *Manager) flushAsyncPrompts() {
 	}
 }
 
-// FlushAsyncPrompts is C's end-of-pass prompt sweep (comm.c:632-648): every
+// FlushAsyncPrompts is C's end-of-pass prompt sweep (comm.c:626-642): every
 // descriptor that received output this pass gets its prompt, whatever caused
 // the output. The live game loop calls it after each pulse; a session calls it
 // after each input line for everyone else its command reached (DP-1307).
@@ -1252,7 +1252,7 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	p := s.player
 	p.SetLinkless(true)
 	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
-	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true) // comm.c:2169-2170
+	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true) // comm.c:2132-2133
 
 	if m.hasDB && p.ID > 0 && !s.isGuest {
 		if rec, err := s.playerRecordForSave(p); err == nil {
