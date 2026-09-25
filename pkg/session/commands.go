@@ -448,7 +448,6 @@ func init() {
 	registerCommand(".", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
 	registerCommand("page", wrapArgs(cmdPage), "Page a player.")
-	registerCommand("ignore", wrapArgs(cmdIgnore), "Ignore or stop ignoring a player.")
 	registerCommand("race_say", wrapArgs(cmdRaceSay), "Say something in your racial language.", "rac")
 	registerCommand("whisper", wrapArgs(cmdWhisper), "Whisper to someone in your room.", "whis")
 	registerCommand("ask", wrapArgs(cmdAsk), "Ask someone a question.")

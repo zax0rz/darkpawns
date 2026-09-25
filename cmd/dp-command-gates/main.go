@@ -46,7 +46,6 @@ var goOnlyCommands = map[string]gate{
 	"dragonkick":  {0, 7, "Go spelling of C dragon; same fighting gate"},
 	"heal":        {31, 0, "Go-only wizard heal; defense-in-depth handler requires immortal"},
 	"hiss":        {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
-	"ignore":      {0, 0, "Go communication preference; safe in every position"},
 	"kneel":       {0, 5, "Go-only social; follows the standard mortal/resting social gate"},
 	"knock":       {0, 8, "Go-only physical door action; requires standing"},
 	"mutter":      {0, 5, "Go-only social; follows the standard mortal/resting social gate"},

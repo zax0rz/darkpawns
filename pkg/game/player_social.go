@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"sync/atomic"
 )
 
@@ -366,48 +365,4 @@ func (p *Player) SetPlrFlag(bit int, val bool) {
 	} else {
 		p.Flags &^= 1 << uint(bit)
 	}
-}
-
-// IsIgnoring returns true if this player is ignoring the given player name.
-func (p *Player) IsIgnoring(name string) bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	if p.IgnoredPlayers == nil {
-		return false
-	}
-	return p.IgnoredPlayers[strings.ToLower(name)]
-}
-
-// AddIgnore adds a player to the ignore list.
-func (p *Player) AddIgnore(name string) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.IgnoredPlayers == nil {
-		p.IgnoredPlayers = make(map[string]bool)
-	}
-	p.IgnoredPlayers[strings.ToLower(name)] = true
-}
-
-// RemoveIgnore removes a player from the ignore list.
-func (p *Player) RemoveIgnore(name string) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.IgnoredPlayers == nil {
-		return
-	}
-	delete(p.IgnoredPlayers, strings.ToLower(name))
-}
-
-// GetIgnoredPlayers returns a list of all ignored player names.
-func (p *Player) GetIgnoredPlayers() []string {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	if p.IgnoredPlayers == nil {
-		return nil
-	}
-	var names []string
-	for name := range p.IgnoredPlayers {
-		names = append(names, name)
-	}
-	return names
 }
