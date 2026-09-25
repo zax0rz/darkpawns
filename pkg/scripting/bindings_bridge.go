@@ -227,12 +227,17 @@ func (e *Engine) bridgeSaveObj(L *lua.LState, b Bridge) int {
 	return 0
 }
 
-// lua_save_room (scripts.c:1325-1339) calls table_to_room, which reads the
-// room from the table's "struct"; room_to_table never sets one, so in C this
-// dereferences NULL. That is undefined behaviour, not game behaviour (R1a):
-// the port logs and changes nothing.
+// lua_save_room (scripts.c:1325-1339): table_to_room (scripts.c:2096-2109)
+// writes the room table's sect back through its struct.
 func (e *Engine) bridgeSaveRoom(L *lua.LState, b Bridge) int {
-	b.Log("[Lua] save_room: room tables carry no struct (C dereferences NULL here); ignored.")
+	tbl, ok := L.Get(1).(*lua.LTable)
+	if !ok {
+		b.Log("[Lua] Invalid argument passed to lua_save_room.")
+		return 0
+	}
+	if ref, ok := roomRefOf(tbl); ok {
+		b.SetRoomSector(ref, int(lua.LVAsNumber(tbl.RawGetString("sect"))))
+	}
 	return 0
 }
 
@@ -309,4 +314,269 @@ func equalFoldASCII(a, b string) bool {
 // parseLuaNumber is Lua 4's string-to-number coercion for lua_isnumber.
 func parseLuaNumber(s string) (float64, error) {
 	return strconv.ParseFloat(strings.TrimSpace(s), 64)
+}
+
+// pushTrueOrNil is C's lua_pushnumber(L, TRUE) / lua_pushnil(L).
+func pushTrueOrNil(L *lua.LState, v bool) int {
+	if v {
+		L.Push(lua.LNumber(1))
+	} else {
+		L.Push(lua.LNil)
+	}
+	return 1
+}
+
+// lua_isnpc (scripts.c:697-715).
+func (e *Engine) bridgeIsNPC(L *lua.LState, b Bridge) int {
+	if _, ok := L.Get(1).(*lua.LTable); !ok {
+		b.Log("[Lua] Invalid argument to lua_isnpc.")
+		return 0
+	}
+	ref, _ := charRefOf(L.Get(1))
+	return pushTrueOrNil(L, ref.NPC)
+}
+
+// lua_round (scripts.c:1260-1269): (int)lua_tonumber, which truncates toward
+// zero; a non-numeric argument is 0.
+func luaRound4(L *lua.LState) int {
+	n, _ := argNumber(L, 1)
+	L.Push(lua.LNumber(n))
+	return 1
+}
+
+// lua_inworld (scripts.c:589-634): inworld("mob", vnum) or
+// inworld("char", name), the character's table or nil.
+func (e *Engine) bridgeInWorld(L *lua.LState, b Bridge) int {
+	kind, ok := argString(L, 1)
+	if !ok {
+		b.Log("[Lua] Invalid argument passed to lua_inworld.")
+		return 0
+	}
+	var ref CharRef
+	var found bool
+	switch strings.ToLower(kind) { // str_cmp
+	case "mob":
+		vnum, isNum := argNumber(L, 2)
+		if !isNum {
+			b.Log("[Lua] Invalid argument passed to lua_inworld.")
+			return 0
+		}
+		ref, found = b.InWorldMob(vnum)
+	case "char":
+		name, isStr := argString(L, 2)
+		if !isStr {
+			b.Log("[Lua] Invalid argument passed to lua_inworld.")
+			return 0
+		}
+		ref, found = b.InWorldChar(name)
+	default:
+		b.Log("[Lua] Invalid argument passed to lua_inworld.")
+		return 0
+	}
+	if !found {
+		L.Push(lua.LNil)
+		return 1
+	}
+	L.Push(e.charToTable(b, ref))
+	return 1
+}
+
+// lua_cansee (scripts.c:221-244): CAN_SEE(me, vict).
+func (e *Engine) bridgeCanSee(L *lua.LState, b Bridge) int {
+	me, _ := meRef(L)
+	vict, ok := charRefOf(L.Get(1))
+	if !ok {
+		b.Log("[Lua] Invalid argument to lua_cansee.")
+		return 0
+	}
+	return pushTrueOrNil(L, b.CanSee(me, vict))
+}
+
+// flagArgs reads the (table, number) pair the *_flagged bindings take.
+func flagArgs(L *lua.LState) (lua.LValue, int, bool) {
+	if _, ok := L.Get(1).(*lua.LTable); !ok {
+		return nil, 0, false
+	}
+	bit, ok := argNumber(L, 2)
+	return L.Get(1), bit, ok
+}
+
+// setFlagArgs reads the (table, "set"|"remove", number) triple of the flag
+// setters. valid is false for bad arguments; op is "" for an unknown verb.
+func setFlagArgs(L *lua.LState) (tbl lua.LValue, op string, bit int, valid bool) {
+	if _, ok := L.Get(1).(*lua.LTable); !ok {
+		return nil, "", 0, false
+	}
+	verb, okVerb := argString(L, 2)
+	bit, okBit := argNumber(L, 3)
+	if !okVerb || !okBit {
+		return nil, "", 0, false
+	}
+	if verb != "set" && verb != "remove" { // strcmp
+		verb = ""
+	}
+	return L.Get(1), verb, bit, true
+}
+
+// lua_aff_flagged (scripts.c:142-163).
+func (e *Engine) bridgeAffFlagged(L *lua.LState, b Bridge) int {
+	tbl, bit, ok := flagArgs(L)
+	if !ok {
+		b.Log("[Lua] Invalid argument passed to lua_aff_flagged.")
+		return 0
+	}
+	ref, _ := charRefOf(tbl)
+	return pushTrueOrNil(L, b.AffFlagged(ref, bit))
+}
+
+// lua_aff_flags (scripts.c:165-191).
+func (e *Engine) bridgeAffFlags(L *lua.LState, b Bridge) int {
+	tbl, op, bit, ok := setFlagArgs(L)
+	switch {
+	case !ok:
+		b.Log("[Lua] Invalid argument passed to lua_aff_flags.")
+	case op == "":
+		b.Log("[Lua] Invalid set/remove to lua_aff_flags.")
+	default:
+		ref, _ := charRefOf(tbl)
+		b.SetAffFlag(ref, bit, op == "set")
+	}
+	return 0
+}
+
+// lua_plr_flagged (scripts.c:1174-1195): PLR_FLAGGED is false for a mobile.
+func (e *Engine) bridgePlrFlagged(L *lua.LState, b Bridge) int {
+	tbl, bit, ok := flagArgs(L)
+	if !ok {
+		b.Log("[Lua] Invalid argument passed to lua_plr_flagged.")
+		return 0
+	}
+	ref, _ := charRefOf(tbl)
+	return pushTrueOrNil(L, !ref.NPC && b.ActFlagged(ref, bit))
+}
+
+// lua_mob_flagged (scripts.c:820-841): MOB_FLAGGED is false for a player.
+func (e *Engine) bridgeMobFlagged(L *lua.LState, b Bridge) int {
+	tbl, bit, ok := flagArgs(L)
+	if !ok {
+		b.Log("[Lua] Invalid argument passed to lua_mob_flagged.")
+		return 0
+	}
+	ref, _ := charRefOf(tbl)
+	return pushTrueOrNil(L, ref.NPC && b.ActFlagged(ref, bit))
+}
+
+// actFlagsBinding is lua_plr_flags (scripts.c:1197-1223) and lua_mob_flags
+// (scripts.c:843-869): both SET_BIT_AR the shared act field, whatever kind
+// of character the table is.
+func (e *Engine) actFlagsBinding(name string) func(*lua.LState, Bridge) int {
+	return func(L *lua.LState, b Bridge) int {
+		tbl, op, bit, ok := setFlagArgs(L)
+		switch {
+		case !ok:
+			b.Log("[Lua] Invalid argument passed to lua_" + name + ".")
+		case op == "":
+			b.Log("[Lua] Invalid set/remove to lua_" + name + ".")
+		default:
+			ref, _ := charRefOf(tbl)
+			b.SetActFlag(ref, bit, op == "set")
+		}
+		return 0
+	}
+}
+
+// lua_obj_flagged (scripts.c:951-972).
+func (e *Engine) bridgeObjFlagged(L *lua.LState, b Bridge) int {
+	tbl, bit, ok := flagArgs(L)
+	if !ok {
+		b.Log("[Lua] Invalid argument passed to lua_obj_flagged.")
+		return 0
+	}
+	ref, _ := objRefOf(tbl)
+	return pushTrueOrNil(L, b.ObjFlagged(ref, bit))
+}
+
+// lua_obj_extra (scripts.c:923-949).
+func (e *Engine) bridgeObjExtra(L *lua.LState, b Bridge) int {
+	tbl, op, bit, ok := setFlagArgs(L)
+	switch {
+	case !ok:
+		b.Log("[Lua] Invalid argument passed to lua_obj_extra.")
+	case op == "":
+		b.Log("[Lua] Invalid set/remove to lua_obj_extra.")
+	default:
+		ref, _ := objRefOf(tbl)
+		b.SetObjExtra(ref, bit, op == "set")
+	}
+	return 0
+}
+
+// lua_exit_flagged (scripts.c:456-478): EXIT_FLAGGED(room->dir_option[door],
+// flag), where flag is an EX_* mask. C dereferences a missing exit; the port
+// answers nil and logs (R1a).
+func (e *Engine) bridgeExitFlagged(L *lua.LState, b Bridge) int {
+	room, okRoom := roomRefOf(L.Get(1))
+	door, okDoor := argNumber(L, 2)
+	mask, okMask := argNumber(L, 3)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okDoor || !okMask {
+		b.Log("[Lua] Invalid argument passed to lua_exit_flagged.")
+		return 0
+	}
+	info, ok := b.RoomExitInfo(room, door)
+	if !okRoom || !ok {
+		b.Log("[Lua] exit_flagged: no such exit (C dereferences NULL here).")
+		L.Push(lua.LNil)
+		return 1
+	}
+	return pushTrueOrNil(L, info&mask != 0)
+}
+
+// lua_exit_flags (scripts.c:427-454): SET_BIT/REMOVE_BIT of an EX_* mask.
+func (e *Engine) bridgeExitFlags(L *lua.LState, b Bridge) int {
+	room, okRoom := roomRefOf(L.Get(1))
+	door, okDoor := argNumber(L, 2)
+	verb, okVerb := argString(L, 3)
+	mask, okMask := argNumber(L, 4)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okDoor || !okVerb || !okMask {
+		b.Log("[Lua] Invalid argument passed to lua_exit_flags.")
+		return 0
+	}
+	if verb != "set" && verb != "remove" {
+		b.Log("[Lua] Invalid set/remove to lua_exit_flags.")
+		return 0
+	}
+	info, ok := b.RoomExitInfo(room, door)
+	if !okRoom || !ok {
+		b.Log("[Lua] exit_flags: no such exit (C dereferences NULL here).")
+		return 0
+	}
+	if verb == "set" {
+		info |= mask
+	} else {
+		info &^= mask
+	}
+	b.SetRoomExitInfo(room, door, info)
+	return 0
+}
+
+// lua_load_room (scripts.c:758-778): room_to_table for the vnum, with me
+// left out of its people. C indexes world[] with real_room's -1 for a
+// missing vnum; the port answers nil and logs (R1a).
+func (e *Engine) bridgeLoadRoom(L *lua.LState, b Bridge) int {
+	vnum, ok := argNumber(L, 1)
+	if !ok {
+		b.Log("[Lua] Invalid argument passed to lua_load_room.")
+		return 0
+	}
+	me, hasMe := meRef(L)
+	var mePtr *CharRef
+	if hasMe {
+		mePtr = &me
+	}
+	t := e.roomToTable(b, vnum, mePtr)
+	if t == lua.LNil {
+		b.Log("[Lua] load_room: no such room (C indexes world[-1] here).")
+	}
+	L.Push(t)
+	return 1
 }

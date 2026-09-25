@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"sort"
 
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -459,5 +460,154 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 
 // Log is mudlog for a script.
 func (a *WorldScriptableAdapter) Log(msg string) {
-	slog.Info("lua", "message", msg)
+	MudLog(msg, mudlogBrief, lvlImmort, false)
+}
+
+// CanSee is CAN_SEE(me, vict).
+func (a *WorldScriptableAdapter) CanSee(me, vict scripting.CharRef) bool {
+	observer, subject := a.actorFor(&me), a.actorFor(&vict)
+	if observer == nil || subject == nil {
+		return false
+	}
+	return canSee(observer, subject)
+}
+
+// InWorldMob is lua_inworld("mob", vnum): C keeps the last match in
+// character_list, and read_mobile pushes each new mobile on the front, so
+// the oldest instance wins. Mobile IDs are allocated in spawn order.
+func (a *WorldScriptableAdapter) InWorldMob(vnum int) (scripting.CharRef, bool) {
+	var oldest *MobInstance
+	for _, m := range a.world.GetAllMobs() {
+		if m.GetVNum() == vnum && (oldest == nil || m.GetID() < oldest.GetID()) {
+			oldest = m
+		}
+	}
+	if oldest == nil {
+		return scripting.CharRef{}, false
+	}
+	return *charRefFor(oldest), true
+}
+
+// InWorldChar is lua_inworld("char", name): strcmp on GET_NAME, a player's
+// name or a mobile's short description. The oldest mobile wins among
+// mobiles, as in InWorldMob; players have no creation order the port
+// shares with mobiles, so an exact mobile match is preferred to a player,
+// which only matters when a mobile's short description is a player's name.
+func (a *WorldScriptableAdapter) InWorldChar(name string) (scripting.CharRef, bool) {
+	var oldest *MobInstance
+	for _, m := range a.world.GetAllMobs() {
+		if m.GetName() == name && (oldest == nil || m.GetID() < oldest.GetID()) {
+			oldest = m
+		}
+	}
+	if oldest != nil {
+		return *charRefFor(oldest), true
+	}
+	for _, p := range a.world.GetAllPlayers() {
+		if p.GetName() == name {
+			return *charRefFor(p), true
+		}
+	}
+	return scripting.CharRef{}, false
+}
+
+// AffFlagged is AFF_FLAGGED(ch, bit).
+func (a *WorldScriptableAdapter) AffFlagged(ref scripting.CharRef, bit int) bool {
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		return p.IsAffected(bit)
+	case m != nil:
+		return bit >= 0 && bit < 64 && m.IsAffected(bit)
+	}
+	return false
+}
+
+// SetAffFlag is SET_BIT_AR / REMOVE_BIT_AR on AFF_FLAGS(ch).
+func (a *WorldScriptableAdapter) SetAffFlag(ref scripting.CharRef, bit int, on bool) {
+	if bit < 0 || bit >= 64 {
+		return
+	}
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		p.SetAffect(bit, on)
+	case m != nil && on:
+		m.SetAffected(bit)
+	case m != nil:
+		m.RemoveAffected(bit)
+	}
+}
+
+// ActFlagged reads char_specials.saved.act: MOB_FLAGS for a mobile and
+// PLR_FLAGS for a player are the same field.
+func (a *WorldScriptableAdapter) ActFlagged(ref scripting.CharRef, bit int) bool {
+	if bit < 0 || bit >= 64 {
+		return false
+	}
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		return p.GetFlags()&(1<<uint(bit)) != 0
+	case m != nil:
+		return m.HasMobFlag(bit)
+	}
+	return false
+}
+
+// SetActFlag sets or clears a bit of the shared act field.
+func (a *WorldScriptableAdapter) SetActFlag(ref scripting.CharRef, bit int, on bool) {
+	if bit < 0 || bit >= 64 {
+		return
+	}
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		p.SetPlrFlag(bit, on)
+	case m != nil && on:
+		m.SetMobFlag(bit)
+	case m != nil:
+		m.ClearMobFlag(bit)
+	}
+}
+
+// ObjFlagged is OBJ_FLAGGED(obj, bit): bit indexes the extra-flag array.
+func (a *WorldScriptableAdapter) ObjFlagged(ref scripting.ObjRef, bit int) bool {
+	obj := a.resolveObj(ref)
+	return obj != nil && bit >= 0 && obj.HasExtraFlag(bit/32, bit%32)
+}
+
+// SetObjExtra is SET_BIT_AR / REMOVE_BIT_AR on GET_OBJ_EXTRA(obj).
+func (a *WorldScriptableAdapter) SetObjExtra(ref scripting.ObjRef, bit int, on bool) {
+	obj := a.resolveObj(ref)
+	if obj == nil || bit < 0 {
+		return
+	}
+	if on {
+		obj.SetExtraFlag(bit/32, bit%32)
+	} else {
+		obj.RemoveExtraFlag(bit/32, bit%32)
+	}
+}
+
+// RoomExitInfo is dir_option[dir]->exit_info.
+func (a *WorldScriptableAdapter) RoomExitInfo(room scripting.RoomRef, dir int) (int, bool) {
+	r := a.world.GetRoomInWorld(room.VNum)
+	if r == nil || dir < 0 || dir >= len(dirKeys) {
+		return 0, false
+	}
+	exit, ok := r.Exits[dirKeys[dir]]
+	return exit.ExitInfo, ok
+}
+
+// SetRoomExitInfo replaces dir_option[dir]->exit_info.
+func (a *WorldScriptableAdapter) SetRoomExitInfo(room scripting.RoomRef, dir int, info int) bool {
+	if dir < 0 || dir >= len(dirKeys) {
+		return false
+	}
+	return a.world.SetExitInfo(room.VNum, dirKeys[dir], info)
+}
+
+// SetRoomSector is table_to_room's sector_type write.
+func (a *WorldScriptableAdapter) SetRoomSector(room scripting.RoomRef, sect int) {
+	a.world.mutateRoom(room.VNum, func(r *parser.Room) bool {
+		r.Sector = sect
+		return true
+	})
 }

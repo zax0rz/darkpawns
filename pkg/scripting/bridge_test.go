@@ -78,6 +78,24 @@ func (f *fakeBridge) Teleport(CharRef, int) bool                { return false }
 func (f *fakeBridge) RawKill(CharRef, *CharRef, int)            {}
 func (f *fakeBridge) Log(msg string)                            { f.logs = append(f.logs, msg) }
 
+func (f *fakeBridge) CanSee(CharRef, CharRef) bool           { return true }
+func (f *fakeBridge) InWorldMob(int) (CharRef, bool)         { return CharRef{}, false }
+func (f *fakeBridge) InWorldChar(string) (CharRef, bool)     { return CharRef{}, false }
+func (f *fakeBridge) AffFlagged(CharRef, int) bool           { return false }
+func (f *fakeBridge) SetAffFlag(CharRef, int, bool)          {}
+func (f *fakeBridge) ActFlagged(CharRef, int) bool           { return false }
+func (f *fakeBridge) SetActFlag(CharRef, int, bool)          {}
+func (f *fakeBridge) ObjFlagged(ObjRef, int) bool            { return false }
+func (f *fakeBridge) SetObjExtra(ObjRef, int, bool)          {}
+func (f *fakeBridge) RoomExitInfo(RoomRef, int) (int, bool)  { return 0, false }
+func (f *fakeBridge) SetRoomExitInfo(RoomRef, int, int) bool { return false }
+func (f *fakeBridge) SetRoomSector(RoomRef, int)             {}
+
+// The engine finds the bridge by a runtime type assertion; this keeps the
+// fake a Bridge at compile time, so a new method cannot silently turn these
+// tests into legacy-path tests.
+var _ Bridge = (*fakeBridge)(nil)
+
 var (
 	player = CharRef{ID: 7}
 	healer = CharRef{NPC: true, ID: 1001}

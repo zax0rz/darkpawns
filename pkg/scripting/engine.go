@@ -730,26 +730,26 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 
 	// Additional functions needed for combat AI scripts
 	L.SetGlobal("isfighting", L.NewFunction(e.luaIsFighting))
-	L.SetGlobal("round", L.NewFunction(e.luaRound))
+	L.SetGlobal("round", L.NewFunction(luaRound4))
 
 	// Functions needed for RESTORE scripts
 	L.SetGlobal("objfrom", L.NewFunction(e.luaObjFrom))
 	L.SetGlobal("objto", L.NewFunction(e.luaObjTo))
-	L.SetGlobal("obj_extra", L.NewFunction(e.luaObjExtra))
+	L.SetGlobal("obj_extra", L.NewFunction(e.bridged(e.bridgeObjExtra, e.luaObjExtra)))
 	L.SetGlobal("tell", L.NewFunction(e.bridged(e.bridgeTell, e.luaTell)))
-	L.SetGlobal("plr_flagged", L.NewFunction(e.luaPlrFlagged))
-	L.SetGlobal("cansee", L.NewFunction(e.luaCanSee))
-	L.SetGlobal("isnpc", L.NewFunction(e.luaIsNPC))
-	L.SetGlobal("aff_flagged", L.NewFunction(e.luaAffFlagged))
-	L.SetGlobal("plr_flags", L.NewFunction(e.luaPlrFlags))
+	L.SetGlobal("plr_flagged", L.NewFunction(e.bridged(e.bridgePlrFlagged, e.luaPlrFlagged)))
+	L.SetGlobal("cansee", L.NewFunction(e.bridged(e.bridgeCanSee, e.luaCanSee)))
+	L.SetGlobal("isnpc", L.NewFunction(e.bridged(e.bridgeIsNPC, e.luaIsNPC)))
+	L.SetGlobal("aff_flagged", L.NewFunction(e.bridged(e.bridgeAffFlagged, e.luaAffFlagged)))
+	L.SetGlobal("plr_flags", L.NewFunction(e.bridged(e.actFlagsBinding("plr_flags"), e.luaPlrFlags)))
 	L.SetGlobal("obj_list", L.NewFunction(e.luaObjList))
 
 	// Stubs needed by Tier 3 Economy scripts
 	L.SetGlobal("item_check", L.NewFunction(e.luaItemCheck))
-	L.SetGlobal("load_room", L.NewFunction(e.luaLoadRoom))
-	L.SetGlobal("inworld", L.NewFunction(e.luaInworld))
-	L.SetGlobal("mob_flagged", L.NewFunction(e.luaMobFlagged))
-	L.SetGlobal("aff_flags", L.NewFunction(e.luaAffFlags))
+	L.SetGlobal("load_room", L.NewFunction(e.bridged(e.bridgeLoadRoom, e.luaLoadRoom)))
+	L.SetGlobal("inworld", L.NewFunction(e.bridged(e.bridgeInWorld, e.luaInworld)))
+	L.SetGlobal("mob_flagged", L.NewFunction(e.bridged(e.bridgeMobFlagged, e.luaMobFlagged)))
+	L.SetGlobal("aff_flags", L.NewFunction(e.bridged(e.bridgeAffFlags, e.luaAffFlags)))
 	L.SetGlobal("follow", L.NewFunction(e.luaFollow))
 	L.SetGlobal("mount", L.NewFunction(e.luaMount))
 	L.SetGlobal("direction", L.NewFunction(e.luaDirection))
@@ -757,10 +757,10 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("ishunt", L.NewFunction(e.bridged(e.bridgeIsHunt, e.luaIshunt)))
 	L.SetGlobal("skip_spaces", L.NewFunction(e.luaSkipSpaces))
 	L.SetGlobal("social", L.NewFunction(e.luaSocial))
-	L.SetGlobal("obj_flagged", L.NewFunction(e.luaObjFlagged))
-	L.SetGlobal("mob_flags", L.NewFunction(e.luaMobFlags))
-	L.SetGlobal("exit_flagged", L.NewFunction(e.luaExitFlagged))
-	L.SetGlobal("exit_flags", L.NewFunction(e.luaExitFlags))
+	L.SetGlobal("obj_flagged", L.NewFunction(e.bridged(e.bridgeObjFlagged, e.luaObjFlagged)))
+	L.SetGlobal("mob_flags", L.NewFunction(e.bridged(e.actFlagsBinding("mob_flags"), e.luaMobFlags)))
+	L.SetGlobal("exit_flagged", L.NewFunction(e.bridged(e.bridgeExitFlagged, e.luaExitFlagged)))
+	L.SetGlobal("exit_flags", L.NewFunction(e.bridged(e.bridgeExitFlags, e.luaExitFlags)))
 	L.SetGlobal("unaffect", L.NewFunction(e.luaUnaffect))
 	L.SetGlobal("equip_char", L.NewFunction(e.luaEquipChar))
 	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
@@ -1942,15 +1942,6 @@ func (e *Engine) luaCall(L *lua.LState) int {
 		slog.Debug("call error", "error", err)
 	}
 	return 0
-}
-
-func (e *Engine) luaRound(L *lua.LState) int {
-	// round(n) - rounds a number to nearest integer
-	// Lua 4 compat function used in combat AI scripts
-	n := L.ToNumber(1)
-	rounded := int(n + 0.5)
-	L.Push(lua.LNumber(rounded))
-	return 1
 }
 
 func (e *Engine) luaObjFrom(L *lua.LState) int {

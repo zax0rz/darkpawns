@@ -344,13 +344,24 @@ func (m *MobInstance) GetFollowing() string {
 	return m.Following
 }
 
-// HasFlag checks if the mob has a specific flag.
+// HasFlag reports MOB_FLAGGED(m, flag) by name. A MOB_* action flag reads the
+// instance's own bitmask, which read_mobile copies from the prototype and
+// which the game and scripts may change for one mobile (mob_flags,
+// SET_BIT_AR(MOB_FLAGS)). A name that is not an action bit falls back to
+// the prototype's flag list.
 func (m *MobInstance) HasFlag(flag string) bool {
-	if m == nil || m.Proto() == nil || len(m.Proto().ActionFlags) == 0 {
+	if m == nil {
+		return false
+	}
+	name := strings.ToUpper(strings.TrimPrefix(strings.ToUpper(flag), "MOB_"))
+	if bit, ok := actionFlagBitIndex[name]; ok {
+		return m.HasMobFlag(bit)
+	}
+	if m.Proto() == nil {
 		return false
 	}
 	for _, f := range m.Proto().ActionFlags {
-		if strings.EqualFold(strings.TrimPrefix(f, "MOB_"), strings.TrimPrefix(flag, "MOB_")) {
+		if strings.EqualFold(strings.TrimPrefix(f, "MOB_"), name) {
 			return true
 		}
 	}
@@ -721,20 +732,23 @@ func (m *MobInstance) GetPosition() int {
 	}
 }
 
-// actionFlagBitNames mirrors the parser's complete act-flag name table
-// (parser/mob.go); index = C MOB_* bit. Reuse the canonical game table so
-// extended flags such as AGGR24 and LOOTS are carried onto mob instances.
-var actionFlagBitNames = ActionBitNames
+// actionFlagBitIndex maps an action flag name to its MOB_* bit, from the
+// canonical ActionBitNames table (index = C MOB_* bit), so extended flags
+// such as AGGR24 and LOOTS are carried onto mob instances.
+var actionFlagBitIndex = func() map[string]int {
+	index := make(map[string]int, len(ActionBitNames))
+	for i, n := range ActionBitNames {
+		index[n] = i
+	}
+	return index
+}()
 
 // actionFlagBits converts parsed act-flag names to the C MOB_* bitmask.
 func actionFlagBits(names []string) uint64 {
-	index := make(map[string]int, len(actionFlagBitNames))
-	for i, n := range actionFlagBitNames {
-		index[n] = i
-	}
 	var bits uint64
 	for _, n := range names {
-		if bit, ok := index[n]; ok {
+		name := strings.TrimPrefix(strings.ToUpper(n), "MOB_")
+		if bit, ok := actionFlagBitIndex[name]; ok {
 			bits |= 1 << uint(bit)
 		}
 	}

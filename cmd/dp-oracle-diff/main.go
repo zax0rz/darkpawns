@@ -289,6 +289,17 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			return fmt.Errorf("apply Go port room fixtures: %w", err)
 		}
 	}
+	for _, target := range []struct{ scripts, world string }{
+		{filepath.Join(oracleData, "scripts"), filepath.Join(oracleData, "world")},
+		{filepath.Join(goWorld, "scripts"), goWorld},
+	} {
+		if err := applyLuaScriptFixtures(target.scripts, scenario.LuaScripts); err != nil {
+			return err
+		}
+		if err := applyMobScriptFixtures(target.world, scenario.MobScripts); err != nil {
+			return err
+		}
+	}
 	if err := applyOracleHouseControlFixtures(oracleData, scenario.HouseControls); err != nil {
 		return fmt.Errorf("apply C oracle house-control fixtures: %w", err)
 	}
@@ -1575,4 +1586,74 @@ func findOracleRoot(bin string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("could not find C oracle lib/world above DP_ORACLE_BIN %q", absBin)
+}
+
+// applyLuaScriptFixtures writes each [lua-script] section into a server's
+// script tree (C: lib/scripts, the port: lib/world/scripts).
+func applyLuaScriptFixtures(scriptsDir string, scripts []oraclediff.LuaScriptFixture) error {
+	for _, script := range scripts {
+		path := filepath.Join(scriptsDir, filepath.FromSlash(script.Path))
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			return fmt.Errorf("create script dir for %s: %w", script.Path, err)
+		}
+		body := strings.Join(script.Lines, "\n") + "\n"
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a scenario-validated relative .lua path under the throwaway scripts dir
+			return fmt.Errorf("write lua-script %s: %w", script.Path, err)
+		}
+	}
+	return nil
+}
+
+// applyMobScriptFixtures sets a mobile's "Script: <path> <flags>" line in a
+// world's mob file: it replaces an existing one or adds one before the E
+// that ends the mobile's E-spec block. The mobile must use the E format.
+func applyMobScriptFixtures(worldDir string, fixtures []oraclediff.MobScriptFixture) error {
+	for _, fixture := range fixtures {
+		path := filepath.Join(worldDir, "mob", fmt.Sprintf("%d.mob", fixture.MobVNum/100))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		lines := strings.Split(string(data), "\n")
+		scriptLine := fmt.Sprintf("Script: %s %d", fixture.Path, fixture.Flags)
+		header := fmt.Sprintf("#%d", fixture.MobVNum)
+		start := -1
+		for index, line := range lines {
+			if strings.TrimSpace(line) == header {
+				start = index
+				break
+			}
+		}
+		if start < 0 {
+			return fmt.Errorf("mob %d not found in %s", fixture.MobVNum, path)
+		}
+		patched := false
+		for index := start + 1; index < len(lines); index++ {
+			trimmed := strings.TrimSpace(lines[index])
+			if strings.HasPrefix(trimmed, "#") || trimmed == "$" {
+				break
+			}
+			if strings.HasPrefix(trimmed, "Script:") {
+				lines[index] = scriptLine
+				patched = true
+				break
+			}
+			if trimmed == "E" {
+				lines = append(lines[:index], append([]string{scriptLine}, lines[index:]...)...)
+				patched = true
+				break
+			}
+		}
+		if !patched {
+			return fmt.Errorf("mob %d in %s has no E-spec block to attach a script to", fixture.MobVNum, path)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and an integer vnum, not request-derived
+			return fmt.Errorf("write mob file for vnum %d: %w", fixture.MobVNum, err)
+		}
+	}
+	return nil
 }

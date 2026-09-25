@@ -1087,7 +1087,9 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 	_ = world
 
 	// Object interfaces for flag manipulation
-	type extraFlagGetter interface{ GetExtraFlags() int }
+	// The object's own extra flags, word 0 (GET_OBJ_EXTRA): the base the
+	// spell's SET_BIT/REMOVE_BIT starts from.
+	type extraFlagGetter interface{ ExtraFlagWord(word int) int }
 	type extraFlagSetter interface{ SetExtraFlags(int) }
 	type objTypeGetter interface{ GetObjType() int }
 	type objValGetter interface{ GetObjVal(idx int) int }
@@ -1096,7 +1098,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 
 	getExtraFlags := func(o interface{}) int {
 		if f, ok := o.(extraFlagGetter); ok {
-			return f.GetExtraFlags()
+			return f.ExtraFlagWord(0)
 		}
 		return 0
 	}

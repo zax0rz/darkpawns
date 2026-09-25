@@ -1,0 +1,109 @@
+# Lua binding certification: flag bindings and room handles, run from a
+# probe oncmd script on the healer (mob 12220). MOB_FLAGS and PLR_FLAGS are
+# one field in C (utils.h:224-225): the *_flagged readers check IS_NPC, the
+# setters do not. Exit flags are EX_* masks (utils.h:223). Visible effects
+# (a humming object, a closed door) prove the writes, not just readback.
+# depth-case: lua.bind-aff-flags
+# depth-case: lua.bind-act-flags-shared
+# depth-case: lua.bind-obj-extra
+# depth-case: lua.bind-exit-flags
+# depth-case: lua.bind-room-struct
+# depth-case: lua.bind-load-room
+# depth-case: lua.bind-save-room
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say") then
+return FALSE
+end
+if (what == "aff") then
+local before = tostring(aff_flagged(ch, 7))
+aff_flags(ch, "set", 7)
+say("aff before=" .. before .. " after=" .. tostring(aff_flagged(ch, 7)) .. " me=" .. tostring(aff_flagged(me, 7)))
+aff_flags(ch, "remove", 7)
+say("aff removed=" .. tostring(aff_flagged(ch, 7)))
+elseif (what == "act") then
+say("isnpc bit mob(me)=" .. tostring(mob_flagged(me, 3)) .. " plr(me)=" .. tostring(plr_flagged(me, 3)) .. " mob(ch)=" .. tostring(mob_flagged(ch, 3)))
+mob_flags(me, "set", 4)
+plr_flags(me, "set", 12)
+say("me mob4=" .. tostring(mob_flagged(me, 4)) .. " mob12=" .. tostring(mob_flagged(me, 12)) .. " plr12=" .. tostring(plr_flagged(me, 12)))
+mob_flags(ch, "set", 13)
+say("ch plr13=" .. tostring(plr_flagged(ch, 13)) .. " mob13=" .. tostring(mob_flagged(ch, 13)))
+plr_flags(ch, "remove", 13)
+say("ch plr13 removed=" .. tostring(plr_flagged(ch, 13)))
+elseif (what == "obj") then
+local o = ch.objs[1]
+local before = tostring(obj_flagged(o, 1))
+obj_extra(o, "set", 1)
+say("obj hum before=" .. before .. " after=" .. tostring(obj_flagged(o, 1)) .. " glow=" .. tostring(obj_flagged(o, 0)))
+elseif (what == "exit") then
+say("exit down door=" .. tostring(exit_flagged(room, 5, 1)) .. " closed=" .. tostring(exit_flagged(room, 5, 2)) .. " east door=" .. tostring(exit_flagged(room, 1, 1)))
+exit_flags(room, 5, "set", 2)
+say("exit down closed now=" .. tostring(exit_flagged(room, 5, 2)))
+elseif (what == "room") then
+local r = load_room(12281)
+say("load_room vnum=" .. r.vnum .. " sect=" .. r.sect .. " north=" .. tostring(r.exit[0]) .. " people=" .. getn(r.char))
+local here = load_room(12296)
+say("here people=" .. getn(here.char) .. " first=" .. here.char[1].name)
+room.sect = 2
+save_room(room)
+say("save_room sect=" .. load_room(12296).sect)
+elseif (what == "bad") then
+aff_flags(ch, "bogus", 1)
+mob_flags(me, "bogus", 1)
+say("after bad verbs")
+else
+return FALSE
+end
+return TRUE
+end
+
+[setup:oracle]
+Probeflags
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Probeflags
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+load obj 11052
+
+[probe]
+say aff
+say act
+say obj
+inventory
+say exit
+down
+say room
+say bad

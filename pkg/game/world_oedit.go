@@ -116,7 +116,7 @@ func (w *World) RefreshLiveObjInstances(vnum int, obj parser.Obj) {
 		}
 		clone := CloneObj(obj)
 		inst.Prototype = &clone
-		inst.ExtraFlagsOverride = [4]int{}
+		inst.ResetExtraFlags()
 		inst.AffectsOverride = nil
 		inst.ValuesOverride = nil
 		inst.TypeFlagOverride = nil

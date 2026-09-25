@@ -14,7 +14,7 @@ func conjuredTestMob(t *testing.T, w *World, vnum int, room int) *MobInstance {
 	{
 		p := *mob.Proto()
 		p.VNum = vnum
-		mob.SetProto(&p)
+		setProtoWithFlags(mob, &p)
 	}
 	{
 		p := *mob.Proto()
@@ -22,7 +22,7 @@ func conjuredTestMob(t *testing.T, w *World, vnum int, room int) *MobInstance {
 			81: "an earth elemental",
 			85: "a Dominion Angel",
 		}[vnum]
-		mob.SetProto(&p)
+		setProtoWithFlags(mob, &p)
 	}
 	return mob
 }
@@ -122,7 +122,7 @@ func TestSpecConjured_AutonomousRegisteredDispatch(t *testing.T) {
 	{
 		p := *mob.Proto()
 		p.ActionFlags = []string{"SPEC"}
-		mob.SetProto(&p)
+		setProtoWithFlags(mob, &p)
 	}
 	oldName, hadName := MobSpecAssign[mob.GetVNum()]
 	MobSpecAssign[mob.GetVNum()] = "conjured"

@@ -1,0 +1,94 @@
+# Lua binding certification: query bindings, run from a probe oncmd
+# script attached to the healer (mob 12220) in both worlds. "say <group>"
+# runs one group and says each result.
+# depth-case: lua.bind-isnpc
+# depth-case: lua.bind-round
+# depth-case: lua.bind-skip-spaces
+# depth-case: lua.bind-inworld
+# depth-case: lua.bind-cansee
+# depth-case: lua.bind-isfighting
+# depth-case: lua.bind-direction
+# depth-case: lua.bind-iscorpse
+# depth-case: lua.bind-canget
+# depth-case: lua.bind-item-check
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say") then
+return FALSE
+end
+if (what == "npc") then
+say("isnpc me=" .. tostring(isnpc(me)) .. " ch=" .. tostring(isnpc(ch)))
+elseif (what == "round") then
+say("round " .. round(2.7) .. " " .. round(-2.7) .. " " .. round("3.9"))
+elseif (what == "skip") then
+say("skip [" .. skip_spaces("   hi  there ") .. "]")
+elseif (what == "world") then
+local m = inworld("mob", 12220)
+local c = inworld("char", ch.name)
+say("inworld mob=" .. m.name .. " char=" .. c.name .. " none=" .. tostring(inworld("mob", 1)) .. " nobody=" .. tostring(inworld("char", "nobody")))
+elseif (what == "see") then
+say("cansee ch=" .. tostring(cansee(ch)))
+elseif (what == "fight") then
+say("isfighting ch=" .. tostring(isfighting(ch)) .. " me=" .. tostring(isfighting(me)))
+elseif (what == "dir") then
+say("direction n=" .. direction(12296, 12281) .. " far=" .. direction(12296, 12297) .. " same=" .. direction(12296, 12296))
+elseif (what == "obj") then
+local o = ch.objs[1]
+say("obj " .. o.name .. " corpse=" .. tostring(iscorpse(o)) .. " canget=" .. tostring(canget(o)) .. " shop=" .. tostring(item_check(o)))
+else
+return FALSE
+end
+return TRUE
+end
+
+[setup:oracle]
+Probequery
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Probequery
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+load obj 11052
+
+[probe]
+say npc
+say round
+say skip
+say world
+say see
+say fight
+say dir
+say obj
+say plain words

@@ -53,6 +53,11 @@ type Scenario struct {
 	RoomSectors       []RoomSectorFixture
 	HouseControls     []HouseControlFixture
 	ScriptTwin        *ScriptTwinFixture
+	// LuaScripts are files written into both servers' script trees, and
+	// MobScripts attach a script to a mobile prototype in both worlds. With
+	// them a scenario certifies a Lua binding that no script C ships calls.
+	LuaScripts []LuaScriptFixture
+	MobScripts []MobScriptFixture
 	// SkipSetupSettle leaves the frozen clock untouched after character
 	// creation. Focused vehicles use this when a spawned autonomous mob must
 	// survive until a later warmup command places the actor beside it.
@@ -94,6 +99,24 @@ type PeerSetup struct {
 type ScriptTwinFixture struct {
 	Path   string
 	Append string
+}
+
+// LuaScriptFixture is a "[lua-script <path>]" section: the section's lines
+// (trimmed; blank and #-comment lines dropped) written to <scripts>/<path>
+// in both disposable trees. Path is relative to the scripts root, e.g.
+// mob/oracle/probe.lua.
+type LuaScriptFixture struct {
+	Path  string
+	Lines []string
+}
+
+// MobScriptFixture is "mob-script <vnum> <path> <flags>": the mobile's
+// "Script: <path> <flags>" line, which both servers read relative to
+// scripts/mob/ with C's MS_* flag mask.
+type MobScriptFixture struct {
+	MobVNum int
+	Path    string
+	Flags   int
 }
 
 // ObjectFixture identifies an object prototype to turn into an inert scroll in
@@ -265,6 +288,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	var section *[]string
 	fixtureSection := false
 	scriptTwinSection := false
+	var luaScript *LuaScriptFixture
 	peerDropSection := false
 	lineNo := 0
 	for scanner.Scan() {
@@ -277,7 +301,18 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			fixtureSection = false
 			scriptTwinSection = false
 			peerDropSection = false
+			luaScript = nil
 			lower := strings.ToLower(line)
+			if strings.HasPrefix(lower, "[lua-script ") {
+				path := strings.TrimSpace(line[len("[lua-script ") : len(line)-1])
+				if !safeScriptPath(path) {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: unsafe lua-script path %q", name, lineNo, path)
+				}
+				sc.LuaScripts = append(sc.LuaScripts, LuaScriptFixture{Path: path})
+				luaScript = &sc.LuaScripts[len(sc.LuaScripts)-1]
+				section = nil
+				continue
+			}
 			switch lower {
 			case "[setup:oracle]":
 				section = &sc.SetupOracle
@@ -333,6 +368,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					return Scenario{}, fmt.Errorf("scenario %q line %d: unknown section %q", name, lineNo, line)
 				}
 			}
+			continue
+		}
+		if luaScript != nil {
+			luaScript.Lines = append(luaScript.Lines, line)
 			continue
 		}
 		if scriptTwinSection {
@@ -532,6 +571,15 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "entry-prompt") {
 				sc.EntryPromptOnly = true
+				continue
+			}
+			if len(fields) == 4 && strings.EqualFold(fields[0], "mob-script") {
+				mobVNum, vnumErr := strconv.Atoi(fields[1])
+				flags, flagErr := strconv.Atoi(fields[3])
+				if vnumErr != nil || flagErr != nil || mobVNum <= 0 || flags <= 0 || !safeScriptPath(fields[2]) {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid mob-script %q", name, lineNo, line)
+				}
+				sc.MobScripts = append(sc.MobScripts, MobScriptFixture{MobVNum: mobVNum, Path: fields[2], Flags: flags})
 				continue
 			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "strip-mob-script") {
@@ -879,4 +927,11 @@ func RunProbe(conn Conn, probe []string, quiescence time.Duration) ([]ProbeBlock
 		blocks = append(blocks, ProbeBlock{Command: step, Output: output})
 	}
 	return blocks, nil
+}
+
+// safeScriptPath reports whether a fixture script path is a relative .lua
+// path that stays inside the scripts tree.
+func safeScriptPath(path string) bool {
+	return path != "" && !strings.HasPrefix(path, "/") && !strings.Contains(path, "..") &&
+		!strings.Contains(path, "\\") && strings.HasSuffix(path, ".lua")
 }

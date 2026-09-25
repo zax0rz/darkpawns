@@ -95,7 +95,7 @@ func TestDoRideDirectGates(t *testing.T) {
 		{
 			p := *mount.Proto()
 			p.ActionFlags = nil
-			mount.SetProto(&p)
+			setProtoWithFlags(mount, &p)
 		}
 
 		w.doRide(rider, nil, "mount", "horse")
