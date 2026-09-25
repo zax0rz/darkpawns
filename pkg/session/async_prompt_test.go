@@ -77,3 +77,44 @@ func TestAsyncPromptSweepSkipsBusySession(t *testing.T) {
 		t.Fatal("idle session with pending output was not prompted")
 	}
 }
+
+// TestAliasedLineKeepsPromptState: C clears has_prompt when it takes a line
+// (comm.c:613) but sets it again for a line from an alias expansion
+// (comm.c:621-623), so that line's output starts on a new line.
+func TestAliasedLineKeepsPromptState(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "Aliaser", 1001, true)
+
+	render := func() []TerminalFrame {
+		var frames []TerminalFrame
+		for {
+			select {
+			case msg := <-s.send:
+				if f, ok := RenderTerminalFrame(msg); ok {
+					frames = append(frames, s.TrackPrompt(f))
+				}
+			default:
+				return frames
+			}
+		}
+	}
+	textAfter := func(mark func()) string {
+		s.promptShown.Store(false)
+		s.SendPrompt()
+		mark()
+		s.Send("output\r\n")
+		for _, f := range render() {
+			if f.Kind == FrameText {
+				return f.Text
+			}
+		}
+		return ""
+	}
+
+	if got := textAfter(s.ClearPromptShown); got != "output\r\n" {
+		t.Fatalf("ordinary line output = %q, want no interruption CR LF", got)
+	}
+	if got := textAfter(s.MarkAliasedInput); got != "\r\noutput\r\n" {
+		t.Fatalf("aliased line output = %q, want the interruption CR LF", got)
+	}
+}

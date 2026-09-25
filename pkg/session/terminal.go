@@ -58,6 +58,9 @@ const (
 	// FrameInputMark is the internal line-read marker (ClearPromptShown); a
 	// writer applies it to the prompt state and writes nothing.
 	FrameInputMark
+	// FrameAliasedInputMark is the marker for a line taken from an alias
+	// expansion, which leaves the prompt state set.
+	FrameAliasedInputMark
 )
 
 // TerminalFrame is one queued session message rendered for a terminal.
@@ -128,6 +131,9 @@ func RenderTerminalFrame(msg []byte) (TerminalFrame, bool) {
 		}
 		return TerminalFrame{Kind: FrameGMCP, GMCPPackage: pkg, GMCPPayload: payload}, true
 	case "input_mark":
+		if aliased, _ := data["aliased"].(bool); aliased {
+			return TerminalFrame{Kind: FrameAliasedInputMark}, true
+		}
 		return TerminalFrame{Kind: FrameInputMark}, true
 	case MsgState, MsgVars, MsgTokenRefresh:
 		// Structured client data and credentials; the text stream carries
@@ -149,6 +155,8 @@ func (s *Session) TrackPrompt(f TerminalFrame) TerminalFrame {
 	switch f.Kind {
 	case FrameInputMark:
 		s.promptShown.Store(false)
+	case FrameAliasedInputMark:
+		s.promptShown.Store(true)
 	case FramePrompt:
 		s.promptShown.Store(true)
 	case FrameText:
@@ -166,6 +174,12 @@ func (s *Session) TrackPrompt(f TerminalFrame) TerminalFrame {
 // a typed-ahead line could be read before the previous prompt was written.
 var inputMarkFrame = []byte(`{"type":"input_mark"}`)
 
+// inputMarkAliasedFrame marks a line taken from an alias expansion. C sets
+// has_prompt = 1 for such a line in the playing branch (comm.c:621-623,
+// "to prevent recursive aliases"), so its output carries the interruption
+// CR LF.
+var inputMarkAliasedFrame = []byte(`{"type":"input_mark","data":{"aliased":true}}`)
+
 // ClearPromptShown is C's d->has_prompt = 0 when a line is taken from the
 // descriptor's input queue (comm.c:613), placed in the output stream.
 func (s *Session) ClearPromptShown() {
@@ -180,10 +194,24 @@ func (s *Session) ClearPromptShown() {
 	}
 }
 
-// IsInputMarkFrame reports whether a queued message is the internal
-// line-read marker, which no client ever receives.
+// MarkAliasedInput is ClearPromptShown for a line taken from an alias
+// expansion: C leaves has_prompt set for it (comm.c:621-623).
+func (s *Session) MarkAliasedInput() {
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	if s.sendClosed || s.send == nil {
+		return
+	}
+	select {
+	case s.send <- inputMarkAliasedFrame:
+	default:
+	}
+}
+
+// IsInputMarkFrame reports whether a queued message is one of the internal
+// line-read markers, which no client ever receives.
 func IsInputMarkFrame(msg []byte) bool {
-	return bytes.Equal(msg, inputMarkFrame)
+	return bytes.Equal(msg, inputMarkFrame) || bytes.Equal(msg, inputMarkAliasedFrame)
 }
 
 // ensureLineEnded appends CRLF only to text that carries no line ending at all.

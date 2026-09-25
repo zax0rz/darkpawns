@@ -948,8 +948,13 @@ func (m *Manager) DrainInputQueues() {
 	m.mu.RUnlock()
 
 	for _, job := range jobs {
-		// Taking the queued line clears has_prompt (comm.c:613).
-		job.s.ClearPromptShown()
+		// Taking the queued line clears has_prompt (comm.c:613); a line from
+		// an alias expansion sets it again (comm.c:621-623).
+		if job.aliased {
+			job.s.MarkAliasedInput()
+		} else {
+			job.s.ClearPromptShown()
+		}
 		if err := executeCommandRaw(job.s, job.cmd, job.args, !job.aliased, job.rawArgs); err != nil {
 			slog.Error("drained command failed",
 				"player", job.s.playerName, "command", job.cmd, "error", err)

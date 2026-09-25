@@ -129,7 +129,9 @@ func (s *Session) writePump() {
 			}
 			if IsInputMarkFrame(message) {
 				if s.browserTerminal.Load() {
-					s.TrackPrompt(TerminalFrame{Kind: FrameInputMark})
+					if f, ok := RenderTerminalFrame(message); ok {
+						s.TrackPrompt(f)
+					}
 				}
 				continue
 			}
