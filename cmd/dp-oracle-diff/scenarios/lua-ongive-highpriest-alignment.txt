@@ -1,0 +1,53 @@
+# Lua ongive: the high priest (mob 21221, Script: 212/highpriest.lua 24)
+# judges the giver by ch.align. A neutral giver has "not yet found
+# salvation" and gets the object back; a good one bringing the holy sword
+# (7915, one of two pieces) hears the priest gasp and is told about the oils.
+# depth-case: lua.ongive-dispatch
+# depth-case: lua.bridge-tables
+# depth-case: lua.bridge-tell
+# depth-case: lua.bridge-act
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21221 999 21202 212
+
+[setup:oracle]
+Swordbringer
+Y
+swordpass
+swordpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Swordbringer
+y
+swordpass
+swordpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 21202
+load obj 7915
+set Swordbringer align 0
+
+[probe]
+give sword priest
+set Swordbringer align 900
+give sword priest
+inventory

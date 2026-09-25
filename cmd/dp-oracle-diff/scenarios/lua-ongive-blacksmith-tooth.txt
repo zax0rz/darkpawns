@@ -1,0 +1,57 @@
+# Lua ongive: the blacksmith (mob 21210, Script: 212/blacksmith.lua 24)
+# forges a dragon's tooth (11052) into 11021 for 2000 coins
+# (assembler.lua assemble_one).
+# depth-case: lua.ongive-dispatch
+# depth-case: lua.format-unsigned
+# depth-case: lua.bridge-extobj-oload
+# depth-case: lua.bridge-save-char
+#
+# Without the gold, return_obj says "That will cost 2000 coins ..." (Lua 4
+# format's %u) and gives the tooth back. With it, the tooth is extracted,
+# 11021 is loaded to the giver, and ch.gold is written back by save_char.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21210 999 21267 212
+
+[setup:oracle]
+Toothbringer
+Y
+toothpass
+toothpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Toothbringer
+y
+toothpass
+toothpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 21267
+load obj 11052
+set Toothbringer gold 100
+
+[probe]
+give tooth blacksmith
+set Toothbringer gold 2500
+give tooth blacksmith
+inventory
+score

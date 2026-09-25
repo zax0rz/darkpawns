@@ -2,8 +2,6 @@
 package game
 
 import (
-	"log/slog"
-
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -71,16 +69,9 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 		ctx.Me = m
 	}
 
-	// Run the script
-	handled, err := ScriptEngine.RunScript(ctx, m.Proto().ScriptName, trigger)
-
-	// If ongive returns false/nil, send default message (matches C: "You can't give that here.")
-	if trigger == "ongive" && !handled && err == nil && ctx.Ch != nil {
-		ctx.Ch.SendMessage("You can't give that here.\r\n")
-		slog.Debug("ongive returned false", "mob_vnum", m.GetVNum(), "player", ctx.Ch.GetName())
-	}
-
-	return handled, err
+	// run_script's result is the script's return value; perform_give
+	// ignores ongive's, and C has no fallback line for it.
+	return ScriptEngine.RunScript(ctx, m.Proto().ScriptName, trigger)
 }
 
 // Helper to create script context for mob events
@@ -99,6 +90,24 @@ func (m *MobInstance) CreateScriptContext(ch *Player, obj *ObjectInstance, argum
 	if obj != nil {
 		ctx.Obj = obj
 	}
+	// run_script's ch, me and obj as C passes them, for the bridge
+	// (pkg/scripting/bridge.go).
+	ctx.MeRef = &scripting.CharRef{NPC: true, ID: m.GetID()}
+	if ch != nil {
+		ctx.ChRef = &scripting.CharRef{ID: ch.ID}
+	}
+	if obj != nil {
+		ctx.ObjRef = &scripting.ObjRef{ID: obj.ID}
+	}
+	return ctx
+}
+
+// CreateSelfScriptContext is the context of the pulse triggers (sound,
+// onpulse_all, onpulse_pc), which C runs as run_script(ch, ch, ...): the
+// mobile is both ch and me (mobact.c:157, 173, 192).
+func (m *MobInstance) CreateSelfScriptContext() *ScriptContext {
+	ctx := m.CreateScriptContext(nil, nil, "")
+	ctx.ChRef = ctx.MeRef
 	return ctx
 }
 

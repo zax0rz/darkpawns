@@ -100,6 +100,9 @@ type MobInstance struct {
 	// Following — name of player this mob follows (for charmed pets, etc.)
 	Following         string
 	followingSequence uint64
+	// scriptWait is GET_MOB_WAIT, which only a script's write-back sets in
+	// C (table_to_char's "timer", scripts.c:2016-2021).
+	scriptWait int
 }
 
 // NewMob creates a new mob instance from a prototype.
@@ -1369,4 +1372,25 @@ func (m *MobInstance) HitModifiers() combat.HitModifiers {
 	return combat.HitModifiers{
 		WeaponBlessed: blessed,
 	}
+}
+
+// GetScriptWait returns GET_MOB_WAIT.
+func (m *MobInstance) GetScriptWait() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.scriptWait
+}
+
+// SetScriptWait sets GET_MOB_WAIT.
+func (m *MobInstance) SetScriptWait(wait int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.scriptWait = wait
+}
+
+// SetAlignment sets GET_ALIGNMENT on this instance.
+func (m *MobInstance) SetAlignment(align int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.AlignmentOverride = &align
 }

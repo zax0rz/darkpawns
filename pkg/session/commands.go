@@ -589,6 +589,22 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 // executeCommandRaw is the transport-aware command path. rawArgs is retained
 // only for command handlers whose C implementation consumes the original
 // argument remainder instead of tokenized words.
+// specialCommandName is CMD_NAME for the command a typed word resolves to:
+// the C table's prefix match, else a Go-registered or social name typed in
+// full. ok is false for a word C would answer with "Huh?!?".
+func specialCommandName(typed string, level int) (string, bool) {
+	if canonical, ok := resolveCommandPrefix(typed, level); ok {
+		return canonical, true
+	}
+	if _, ok := cmdRegistry.Lookup(typed); ok {
+		return typed, true
+	}
+	if _, ok := game.Socials[typed]; ok {
+		return typed, true
+	}
+	return "", false
+}
+
 func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool, rawArgs string) error {
 	// Moderation pre-check: mute, ban
 	if s.manager.modChecker != nil && s.player != nil {
@@ -699,29 +715,30 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		}
 	}
 
-	// Check for mob scripts with oncmd trigger before processing
-	// Based on the original MUD's script handling
+	// Mob oncmd scripts: special() (interpreter.c:1457-1460) runs each
+	// mobile's script with buf = CMD_NAME + arg, the resolved command name
+	// and the raw rest of the line, so a typed "s" reaches the script as
+	// "south". A word that resolves to no command never reaches special()
+	// in C ("Huh?!?"). Where special() runs relative to resolution, the
+	// position check and the other specials is DP-1336.
 	if s.player != nil && s.player.GetRoomVNum() > 0 {
-		// Get mobs in the room
-		mobs := s.manager.world.GetMobsInRoom(s.player.GetRoomVNum())
-		fullCommand := cmdStr
-		if len(args) > 0 {
-			fullCommand = cmdStr + " " + strings.Join(args, " ")
-		}
-
-		// Check each mob for oncmd script
-		for _, mob := range mobs {
-			if mob.HasScript("oncmd") {
-				// Create script context
+		if cmdName, ok := specialCommandName(cmd, getEffectiveLevel(s)); ok {
+			fullCommand := cmdName
+			if rawArgs != "" {
+				fullCommand += " " + rawArgs
+			} else if len(args) > 0 {
+				fullCommand += " " + strings.Join(args, " ")
+			}
+			for _, mob := range s.manager.world.GetMobsInRoom(s.player.GetRoomVNum()) {
+				if !mob.HasScript("oncmd") {
+					continue
+				}
 				ctx := mob.CreateScriptContext(s.player, nil, fullCommand)
-				// Run the script
 				handled, err := mob.RunScript("oncmd", ctx)
 				if err != nil {
-					// Log error but continue
 					slog.Error("error running oncmd script", "mob_vnum", mob.GetVNum(), "error", err)
 				}
 				if handled {
-					// Script handled the command, don't process further
 					return nil
 				}
 			}

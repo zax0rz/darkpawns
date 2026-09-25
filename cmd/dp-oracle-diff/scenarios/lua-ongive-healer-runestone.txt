@@ -1,0 +1,58 @@
+# Lua ongive: the healer (mob 12220, Script: 122/healer.lua 24) and the
+# runestone pieces, through scripts/mob/assembler.lua.
+# depth-case: lua.ongive-dispatch
+# depth-case: lua.bridge-tables
+# depth-case: lua.bridge-tell
+# depth-case: lua.bridge-action-give
+# depth-case: lua.string-functions
+#
+# perform_give moves the stone and runs ongive (act.item.c:696-704). The
+# first stone is one piece of eighteen: assemble_list returns 2 and the
+# healer keeps it without a word. The second is a duplicate: count_piece
+# sees two in me.objs, return_obj tells the giver and gives the stone back
+# through action(me, "give <alias> <name>"), which needs strfind's capture,
+# and assemble_list's 3 draws number(0,3) for the healer's remark.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+
+[setup:oracle]
+Stonebearer
+Y
+stonepass
+stonepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stonebearer
+y
+stonepass
+stonepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+load obj 4600
+load obj 4600
+
+[probe]
+give stone healer
+give stone healer
+inventory

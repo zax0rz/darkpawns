@@ -45,6 +45,9 @@ type ObjectInstance struct {
 	ExtraFlagsOverride [4]int
 	AffectsOverride    []parser.ObjAffect
 	ValuesOverride     *[4]int // copy-on-write override of prototype Values
+	// CostOverride is a per-instance GET_OBJ_COST, written by a script's
+	// save_obj (table_to_obj); nil means the prototype's cost.
+	CostOverride *int
 
 	// TypeFlagOverride allows synthetic objects (corpses, money) with nil Prototype
 	// to carry a type flag. When non-nil, overrides Prototype.TypeFlag.
@@ -132,6 +135,9 @@ func (o *ObjectInstance) SetWeight(weight int) {
 
 // GetCost returns the object's cost.
 func (o *ObjectInstance) GetCost() int {
+	if o.CostOverride != nil {
+		return *o.CostOverride
+	}
 	if o.Prototype != nil {
 		return o.Prototype.Cost
 	}

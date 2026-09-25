@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -25,11 +26,20 @@ import (
 // Engine manages the Lua VM.
 // Based on boot_lua() in scripts.c lines 1703-1716.
 type Engine struct {
-	scriptsDir   string
-	l            *lua.LState
-	mu           sync.Mutex
-	world        ScriptableWorld
-	transitItems map[int]*transitEntry // in-flight items moved by objfrom/objto (key = instance ID)
+	scriptsDir string
+	l          *lua.LState
+	mu         sync.Mutex
+	world      ScriptableWorld
+	// activeBridge is the game bridge for the script now running, set by
+	// RunScript for the length of a bridged run (see bridge.go).
+	activeBridge Bridge
+	// owner is the goroutine now running a script (0 when none), so a nested
+	// run from inside a binding is recognised instead of deadlocking on mu.
+	owner atomic.Uint64
+	// recreatePending is set when a nested run crashes the Lua state; the
+	// outermost run replaces the state once the outer script has returned.
+	recreatePending bool
+	transitItems    map[int]*transitEntry // in-flight items moved by objfrom/objto (key = instance ID)
 	// failedScripts is a negative cache of scripts that failed to load
 	// (file-not-found, Lua parse/compile errors, load timeouts). The first
 	// failure is logged at slog.Error; subsequent RunScript calls for the
@@ -341,8 +351,22 @@ func ResolveScriptPath(scriptsDir, cleanName string) string {
 // Returns true if the script handled the event (returned TRUE), false otherwise.
 // Based on run_script() in scripts.c lines 1718-1810.
 func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string) (handled bool, err error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
+	// C's run_script nests: a script's action(), raw_kill() or give can reach
+	// another script (ongive, death) while the first is still running, on the
+	// same Lua state. A RunScript from the goroutine already running a script
+	// is that nested call. It runs on the outer run's lock, deadline and
+	// state, and leaves the globals it set behind for the outer script, as
+	// C does.
+	gid := goroutineID()
+	nested := e.owner.Load() == gid
+	if !nested {
+		e.mu.Lock()
+		e.owner.Store(gid)
+		defer func() {
+			e.owner.Store(0)
+			e.mu.Unlock()
+		}()
+	}
 
 	// Measure how long this script holds the engine. Because scripting is
 	// single-threaded, this duration is exactly how long every other script was
@@ -367,6 +391,16 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			needsRecreate = true
 			err = fmt.Errorf("lua script panic: %v", r)
 		}
+		if needsRecreate && nested {
+			// The outer script is still running on this state; the outermost
+			// run replaces it when it returns.
+			e.recreatePending = true
+			needsRecreate = false
+		}
+		if !nested && e.recreatePending {
+			e.recreatePending = false
+			needsRecreate = true
+		}
 		if needsRecreate {
 			slog.Info("recreating Lua state after script crash", "file", fname)
 			e.l.Close()
@@ -376,9 +410,25 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 	L := e.l
 
+	// A run with C-level references goes through the game bridge: C's tables
+	// for ch, me, room and obj (run_script, scripts.c:1727-1746) and C's
+	// write-back afterwards.
+	var bridge Bridge
+	if ctx.MeRef != nil {
+		if b, ok := ctx.World.(Bridge); ok && ctx.World != nil {
+			bridge = b
+		} else if b, ok := e.world.(Bridge); ok {
+			bridge = b
+		}
+	}
 	// Clear any per-run globals left over from a previous script execution so
-	// stale context and trigger functions cannot leak into this run.
+	// stale context and trigger functions cannot leak into this run. C's
+	// run_script sets ch, me, room, obj and argument only when it has them
+	// and never clears them, so a bridged run leaves them alone.
 	clearGlobals := []string{"ch", "me", "obj", "argument", "room"}
+	if bridge != nil {
+		clearGlobals = nil
+	}
 	if triggerName != "" {
 		clearGlobals = append(clearGlobals, triggerName)
 	}
@@ -386,26 +436,45 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		L.SetGlobal(name, lua.LNil)
 	}
 
+	outerBridge := e.activeBridge
+	e.activeBridge = bridge
+	defer func() { e.activeBridge = outerBridge }()
+	if bridge != nil {
+		if ctx.ChRef != nil {
+			L.SetGlobal("ch", e.charToTable(bridge, *ctx.ChRef))
+		}
+		L.SetGlobal("me", e.charToTable(bridge, *ctx.MeRef))
+		if ctx.RoomVNum > 0 {
+			L.SetGlobal("room", e.roomToTable(bridge, ctx.RoomVNum, ctx.MeRef))
+		}
+		if ctx.ObjRef != nil {
+			L.SetGlobal("obj", e.cObjToTable(bridge, *ctx.ObjRef))
+		}
+		if ctx.Argument != "" {
+			L.SetGlobal("argument", lua.LString(ctx.Argument))
+		}
+	}
+
 	// Set globals based on context
 	// Based on run_script() lines 1732-1761
-	if ctx.Ch != nil {
+	if bridge == nil && ctx.Ch != nil {
 		e.charToTableLocked(ctx.Ch, "ch")
 		slog.Debug("set ch global", "player", ctx.Ch.GetName())
 	} else {
 		slog.Debug("ctx.Ch is nil")
 	}
-	if ctx.Me != nil {
+	if bridge == nil && ctx.Me != nil {
 		e.mobToTableLocked(ctx.Me, "me")
 	}
-	if ctx.Obj != nil {
+	if bridge == nil && ctx.Obj != nil {
 		e.objToTableLocked(ctx.Obj, "obj")
 	}
-	if ctx.Argument != "" {
+	if bridge == nil && ctx.Argument != "" {
 		L.SetGlobal("argument", lua.LString(ctx.Argument))
 	}
 
 	// Set room global if we have room vnum
-	if ctx.RoomVNum > 0 {
+	if bridge == nil && ctx.RoomVNum > 0 {
 		// Create a room table with vnum and char array
 		roomTbl := e.l.NewTable()
 		roomTbl.RawSetString("vnum", lua.LNumber(ctx.RoomVNum))
@@ -481,12 +550,25 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	}
 
 	// Load and execute the script file
-	// Based on open_lua_file() in scripts.c lines 1641-1701
+	// Based on open_lua_file() in scripts.c lines 1666-1699
 	// Execution timeout prevents tight loops from hanging the server indefinitely.
 
-	scriptCtx, scriptCancel := context.WithTimeout(context.Background(), e.scriptTimeout)
+	// A nested run keeps the outer run's deadline and stack frame.
+	scriptCancel := context.CancelFunc(func() {})
+	if !nested {
+		var scriptCtx context.Context
+		scriptCtx, scriptCancel = context.WithTimeout(context.Background(), e.scriptTimeout)
+		L.SetContext(scriptCtx)
+	}
 	defer scriptCancel()
-	L.SetContext(scriptCtx)
+	baseTop := L.GetTop()
+	releaseContext := func() {
+		L.SetTop(baseTop)
+		if !nested {
+			L.RemoveContext()
+		}
+		scriptCancel()
+	}
 
 	if err := L.DoFile(scriptPath); err != nil {
 		// Negative-cache the script so subsequent pulses skip the disk hit
@@ -500,13 +582,13 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			slog.Error("error loading script", "file", fname, "error", err)
 		}
 		e.cleanupScriptGlobalsLocked(L, knownGlobals)
-		L.RemoveContext()
-		scriptCancel()
+		releaseContext()
 		return false, err
 	}
 
 	// Call the trigger function
 	// Based on run_script() lines 1780-1795
+	L.SetTop(baseTop) // lua_settop(L, top_of_stack): drop what the file returned
 	fn := L.GetGlobal(triggerName)
 	slog.Debug("calling function", "trigger", triggerName, "type", fn.Type())
 	L.Push(fn)
@@ -514,25 +596,24 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		// Function doesn't exist
 		L.Pop(1)
 		e.cleanupScriptGlobalsLocked(L, knownGlobals)
-		L.RemoveContext()
-		scriptCancel()
+		releaseContext()
 		slog.Debug("function not found in script", "trigger", triggerName, "file", fname)
 		return false, nil
 	}
 
 	if err := L.PCall(0, 1, nil); err != nil {
+		if bridge != nil {
+			// C logs the failed call and still writes back (scripts.c:1788-1816).
+			e.bridgeWriteBack(bridge, ctx)
+		}
 		if errors.Is(err, context.DeadlineExceeded) {
 			slog.Error("script timed out during execution", "trigger", triggerName, "file", fname, "error", err)
 			needsRecreate = true
 		} else {
 			slog.Error("error calling function", "trigger", triggerName, "file", fname, "error", err)
 		}
-		if L.GetTop() > 0 {
-			L.Pop(1)
-		}
 		e.cleanupScriptGlobalsLocked(L, knownGlobals)
-		L.RemoveContext()
-		scriptCancel()
+		releaseContext()
 		return false, err
 	}
 
@@ -541,13 +622,24 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	slog.Debug("stack top after PCall", "top", stackTop)
 
 	var ret lua.LValue = lua.LFalse
-	if stackTop > 0 {
+	if stackTop > baseTop {
 		ret = L.Get(-1)
 		slog.Debug("function returned", "type", ret.Type(), "value", ret)
 		L.Pop(1)
 	}
 
-	// Read back changes from tables
+	if bridge != nil {
+		e.bridgeWriteBack(bridge, ctx)
+		e.cleanupScriptGlobalsLocked(L, knownGlobals)
+		releaseContext()
+		// retval = (int)lua_tonumber(L, -1): any nonzero number is handled.
+		return int(lua.LVAsNumber(ret)) != 0, nil
+	}
+
+	// Legacy write-back, reached only without a bridge: engine tests that build
+	// a world without one. Every server run bridges (cmd/server passes the
+	// WorldScriptableAdapter), and C's write-back is bridgeWriteBack's (ch
+	// only). Do not route a live path here.
 	if ctx.Ch != nil {
 		slog.Debug("reading back ch changes", "stack_top", L.GetTop())
 		chVal := L.GetGlobal("ch")
@@ -576,8 +668,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 	e.cleanupScriptGlobalsLocked(L, knownGlobals)
 
-	L.RemoveContext()
-	scriptCancel()
+	releaseContext()
 
 	// Check return value. Both numeric 1 and boolean true mean "handled".
 	if ret.Type() == lua.LTNumber {
@@ -596,55 +687,56 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 // after a timeout-induced recreation.
 func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	// Core functions mentioned in the task
-	L.SetGlobal("act", L.NewFunction(e.luaAct))
-	L.SetGlobal("do_damage", L.NewFunction(e.luaDoDamage))
-	L.SetGlobal("say", L.NewFunction(e.luaSay))
+	L.SetGlobal("act", L.NewFunction(e.bridged(e.bridgeAct, e.luaAct)))
+	L.SetGlobal("say", L.NewFunction(e.bridged(e.bridgeSay, e.luaSay)))
 	L.SetGlobal("gossip", L.NewFunction(e.luaGossip))
-	L.SetGlobal("emote", L.NewFunction(e.luaEmote))
-	L.SetGlobal("action", L.NewFunction(e.luaAction))
-	L.SetGlobal("oload", L.NewFunction(e.luaOload))
+	L.SetGlobal("emote", L.NewFunction(e.bridged(e.bridgeEmote, e.luaEmote)))
+	L.SetGlobal("action", L.NewFunction(e.bridged(e.bridgeAction, e.luaAction)))
+	L.SetGlobal("oload", L.NewFunction(e.bridged(e.bridgeOLoad, e.luaOload)))
 	L.SetGlobal("mload", L.NewFunction(e.luaMload))
-	L.SetGlobal("extobj", L.NewFunction(e.luaExtobj))
+	L.SetGlobal("extobj", L.NewFunction(e.bridged(e.bridgeExtObj, e.luaExtobj)))
 	L.SetGlobal("extchar", L.NewFunction(e.luaExtchar))
 	L.SetGlobal("number", L.NewFunction(e.luaNumber))
-	L.SetGlobal("send_to_room", L.NewFunction(e.luaSendToRoom))
 	L.SetGlobal("strlower", L.NewFunction(e.luaStrlower))
-	L.SetGlobal("strfind", L.NewFunction(e.luaStrfind))
-	L.SetGlobal("strsub", L.NewFunction(e.luaStrsub))
-	L.SetGlobal("gsub", L.NewFunction(e.luaGsub))
+	// Lua 4's strfind, strsub and gsub are Lua 5.1's string.find, string.sub
+	// and string.gsub: same arguments, same (multiple) results. tonumber is
+	// the base library's own.
+	stringLib, _ := L.GetGlobal("string").(*lua.LTable)
+	for global, field := range map[string]string{"strfind": "find", "strsub": "sub", "gsub": "gsub"} {
+		if stringLib != nil {
+			L.SetGlobal(global, stringLib.RawGetString(field))
+		}
+	}
+	L.SetGlobal("format", L.NewFunction(luaFormat))
 	L.SetGlobal("getn", L.NewFunction(e.luaGetn))
-	L.SetGlobal("tonumber", L.NewFunction(e.luaTonumber))
 	// Don't override tostring - it's a Lua built-in
 	// L.SetGlobal("tostring", L.NewFunction(e.luaTostring))
 
 	// Additional functions from cmdlib that might be needed
-	L.SetGlobal("log", L.NewFunction(e.luaLog))
-	L.SetGlobal("raw_kill", L.NewFunction(e.luaRawKill))
-	L.SetGlobal("save_char", L.NewFunction(e.luaSaveChar))
-	L.SetGlobal("save_obj", L.NewFunction(e.luaSaveObj))
+	L.SetGlobal("log", L.NewFunction(e.bridged(e.bridgeLog, e.luaLog)))
+	L.SetGlobal("raw_kill", L.NewFunction(e.bridged(e.bridgeRawKill, e.luaRawKill)))
+	L.SetGlobal("save_char", L.NewFunction(e.bridged(e.bridgeSaveChar, e.luaSaveChar)))
+	L.SetGlobal("save_obj", L.NewFunction(e.bridged(e.bridgeSaveObj, e.luaSaveObj)))
 	// dofile/call: shared-script delegation pattern used by cityguard, breed_killer, etc.
 	// NOTE: dofile is re-registered below after being nilled in newSafeLState().
 	// This is intentional — each script file is loaded into its own sandboxed Lua state,
 	// so re-registration is expected behavior.
 	L.SetGlobal("dofile", L.NewFunction(e.luaDofile))
 	L.SetGlobal("call", L.NewFunction(e.luaCall))
-	L.SetGlobal("save_room", L.NewFunction(e.luaSaveRoom))
-	L.SetGlobal("set_skill", L.NewFunction(e.luaSetSkill))
+	L.SetGlobal("save_room", L.NewFunction(e.bridged(e.bridgeSaveRoom, e.luaSaveRoom)))
+	L.SetGlobal("set_skill", L.NewFunction(e.bridged(e.bridgeSetSkill, e.luaSetSkill)))
 	L.SetGlobal("spell", L.NewFunction(e.luaSpell))
-	L.SetGlobal("tport", L.NewFunction(e.luaTport))
+	L.SetGlobal("tport", L.NewFunction(e.bridged(e.bridgeTport, e.luaTport)))
 
 	// Additional functions needed for combat AI scripts
 	L.SetGlobal("isfighting", L.NewFunction(e.luaIsFighting))
 	L.SetGlobal("round", L.NewFunction(e.luaRound))
 
 	// Functions needed for RESTORE scripts
-	L.SetGlobal("has_item", L.NewFunction(e.luaHasItem))
-	L.SetGlobal("obj_in_room", L.NewFunction(e.luaObjInRoom))
 	L.SetGlobal("objfrom", L.NewFunction(e.luaObjFrom))
 	L.SetGlobal("objto", L.NewFunction(e.luaObjTo))
 	L.SetGlobal("obj_extra", L.NewFunction(e.luaObjExtra))
-	L.SetGlobal("create_event", L.NewFunction(e.luaCreateEvent))
-	L.SetGlobal("tell", L.NewFunction(e.luaTell))
+	L.SetGlobal("tell", L.NewFunction(e.bridged(e.bridgeTell, e.luaTell)))
 	L.SetGlobal("plr_flagged", L.NewFunction(e.luaPlrFlagged))
 	L.SetGlobal("cansee", L.NewFunction(e.luaCanSee))
 	L.SetGlobal("isnpc", L.NewFunction(e.luaIsNPC))
@@ -662,17 +754,13 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("mount", L.NewFunction(e.luaMount))
 	L.SetGlobal("direction", L.NewFunction(e.luaDirection))
 	L.SetGlobal("set_hunt", L.NewFunction(e.luaSetHunt))
-	L.SetGlobal("ishunt", L.NewFunction(e.luaIshunt))
-	L.SetGlobal("mxp", L.NewFunction(e.luaMxp))
+	L.SetGlobal("ishunt", L.NewFunction(e.bridged(e.bridgeIsHunt, e.luaIshunt)))
 	L.SetGlobal("skip_spaces", L.NewFunction(e.luaSkipSpaces))
 	L.SetGlobal("social", L.NewFunction(e.luaSocial))
 	L.SetGlobal("obj_flagged", L.NewFunction(e.luaObjFlagged))
 	L.SetGlobal("mob_flags", L.NewFunction(e.luaMobFlags))
 	L.SetGlobal("exit_flagged", L.NewFunction(e.luaExitFlagged))
 	L.SetGlobal("exit_flags", L.NewFunction(e.luaExitFlags))
-	L.SetGlobal("get_group_lvl", L.NewFunction(e.luaGetGroupLvl))
-	L.SetGlobal("get_group_pts", L.NewFunction(e.luaGetGroupPts))
-	L.SetGlobal("skill_group", L.NewFunction(e.luaSkillGroup))
 	L.SetGlobal("unaffect", L.NewFunction(e.luaUnaffect))
 	L.SetGlobal("equip_char", L.NewFunction(e.luaEquipChar))
 	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
@@ -825,10 +913,6 @@ func (e *Engine) setupBasicConstantsOn(L *lua.LState) {
 	L.SetGlobal("SPELL_FLAMESTRIKE", lua.LNumber(96))
 	L.SetGlobal("SPELL_PSIBLAST", lua.LNumber(100))
 	L.SetGlobal("SPELL_PETRIFY", lua.LNumber(104))
-	// SPELL_PARALYSE: not in original globals.lua; assigned 105 as next available value.
-	// SPELL_PARALYSE: Dark Pawns custom spell, not in original C spells.h.
-	// Used by paralyse.lua and head_shrinker.lua. Verified: no C source equivalent.
-	L.SetGlobal("SPELL_PARALYSE", lua.LNumber(105))
 
 	// Dragon Breath spells
 	L.SetGlobal("SPELL_FIRE_BREATH", lua.LNumber(202))
@@ -842,8 +926,6 @@ func (e *Engine) setupBasicConstantsOn(L *lua.LState) {
 	L.SetGlobal("SKILL_HEADBUTT", lua.LNumber(141))
 	L.SetGlobal("SKILL_BERSERK", lua.LNumber(171))
 	L.SetGlobal("SKILL_PARRY", lua.LNumber(172))
-	L.SetGlobal("SKILL_KICK", lua.LNumber(134))
-	L.SetGlobal("SKILL_TRIP", lua.LNumber(144))
 
 	// Raw kill types
 	L.SetGlobal("TYPE_UNDEFINED", lua.LNumber(-1))
@@ -1112,43 +1194,6 @@ func (e *Engine) luaAct(L *lua.LState) int {
 	return 0
 }
 
-func (e *Engine) luaDoDamage(L *lua.LState) int {
-	// do_damage(amount)
-	// Based on pattern_dmg.lua example
-	amount := L.ToInt(1)
-
-	// Get ch from global
-	L.GetGlobal("ch")
-	if L.Get(-1).Type() == lua.LTTable {
-		// Apply damage to ch
-		L.GetField(L.Get(-1), "hp")
-		if L.Get(-1).Type() == lua.LTNumber {
-			currentHP := int(L.ToNumber(-1))
-			newHP := currentHP - amount
-			if newHP < 0 {
-				newHP = 0
-			}
-			L.Pop(1) // pop hp value
-
-			// Update hp in table
-			L.Push(lua.LNumber(newHP))
-			L.SetField(L.Get(-2), "hp", lua.LNumber(newHP))
-
-			// Check for death
-			if newHP <= 0 && e.world != nil {
-				// Get the actual player object from the world
-				// For now, just log
-				slog.Debug("do_damage: player would die", "damage", amount)
-			}
-		} else {
-			L.Pop(1)
-		}
-	}
-	L.Pop(1)
-
-	return 0
-}
-
 func (e *Engine) luaSay(L *lua.LState) int {
 	// say(msg)
 	// Based on lua_say() (not shown in snippets but referenced)
@@ -1389,66 +1434,11 @@ func (e *Engine) luaNumber(L *lua.LState) int {
 	return 1
 }
 
-func (e *Engine) luaSendToRoom(L *lua.LState) int {
-	// send_to_room(msg, room_vnum)
-	// Based on lua_echo() with type="room" in scripts.c lines 308-345
-	msg := L.ToString(1)
-	roomVNum := L.ToInt(2)
-
-	if e.world == nil {
-		slog.Debug("send_to_room: no world context", "room_vnum", roomVNum, "msg", msg)
-		return 0
-	}
-
-	players := e.world.GetPlayersInRoom(roomVNum)
-	for _, player := range players {
-		player.SendMessage(msg + "\r\n")
-	}
-
-	return 0
-}
-
 func (e *Engine) luaStrlower(L *lua.LState) int {
 	// strlower(s)
 	// Lua 4 compat function
 	s := L.ToString(1)
 	L.Push(lua.LString(strings.ToLower(s)))
-	return 1
-}
-
-func (e *Engine) luaStrfind(L *lua.LState) int {
-	// strfind(s, pattern)
-	// Already in Lua 5.1 as string.find, expose as global
-	// Just call the built-in
-	L.GetGlobal("string")
-	L.GetField(L.Get(-1), "find")
-	L.Push(L.Get(1))
-	L.Push(L.Get(2))
-	L.Call(2, 1)
-	return 1
-}
-
-func (e *Engine) luaStrsub(L *lua.LState) int {
-	// strsub(s, i, j)
-	// Already in Lua 5.1 as string.sub, expose as global
-	L.GetGlobal("string")
-	L.GetField(L.Get(-1), "sub")
-	L.Push(L.Get(1))
-	L.Push(L.Get(2))
-	L.Push(L.Get(3))
-	L.Call(3, 1)
-	return 1
-}
-
-func (e *Engine) luaGsub(L *lua.LState) int {
-	// gsub(s, pattern, repl)
-	// Already in Lua 5.1 as string.gsub, expose as global
-	L.GetGlobal("string")
-	L.GetField(L.Get(-1), "gsub")
-	L.Push(L.Get(1))
-	L.Push(L.Get(2))
-	L.Push(L.Get(3))
-	L.Call(3, 1)
 	return 1
 }
 
@@ -1462,15 +1452,6 @@ func (e *Engine) luaGetn(L *lua.LState) int {
 	}
 
 	L.Push(lua.LNumber(L.ObjLen(tbl)))
-	return 1
-}
-
-func (e *Engine) luaTonumber(L *lua.LState) int {
-	// tonumber(s)
-	// Already in Lua 5.1, expose as global
-	L.GetGlobal("tonumber")
-	L.Push(L.Get(1))
-	L.Call(1, 1)
 	return 1
 }
 
@@ -1972,58 +1953,6 @@ func (e *Engine) luaRound(L *lua.LState) int {
 	return 1
 }
 
-func (e *Engine) luaHasItem(L *lua.LState) int {
-	// has_item(ch, vnum) - returns true if ch has an item with vnum in inventory.
-	// Source: scripts.c lua_has_item() — searches char inventory for matching vnum.
-	chTbl := L.Get(1)
-	vnum := L.ToInt(2)
-
-	if e.world == nil || chTbl.Type() != lua.LTTable {
-		L.Push(lua.LBool(false))
-		return 1
-	}
-
-	nameVal := L.GetField(chTbl, "name")
-	if nameVal.Type() != lua.LTString {
-		L.Push(lua.LBool(false))
-		return 1
-	}
-	charName := string(nameVal.(lua.LString))
-
-	L.Push(lua.LBool(e.world.HasItemByVNum(charName, vnum)))
-	return 1
-}
-
-func (e *Engine) luaObjInRoom(L *lua.LState) int {
-	// obj_in_room(room_vnum, obj_vnum) - returns item table if obj_vnum is in room, else nil.
-	// Source: scripts.c lua_obj_in_room().
-	roomVNum := L.ToInt(1)
-	objVNum := L.ToInt(2)
-
-	if e.world == nil {
-		L.Push(lua.LNil)
-		return 1
-	}
-
-	for _, item := range e.world.GetItemsInRoom(roomVNum) {
-		if item.GetVNum() == objVNum {
-			tbl := L.NewTable()
-			tbl.RawSetString("vnum", lua.LNumber(item.GetVNum()))
-			tbl.RawSetString("name", lua.LString(item.GetShortDesc()))
-			tbl.RawSetString("alias", lua.LString(item.GetKeywords()))
-			tbl.RawSetString("cost", lua.LNumber(item.GetCost()))
-			tbl.RawSetString("timer", lua.LNumber(item.GetTimer()))
-			// _src_room lets objfrom know which room to remove from
-			tbl.RawSetString("_src_room", lua.LNumber(roomVNum))
-			L.Push(tbl)
-			return 1
-		}
-	}
-
-	L.Push(lua.LNil)
-	return 1
-}
-
 func (e *Engine) luaObjFrom(L *lua.LState) int {
 	// objfrom(item, location) - remove item from location ('char' or 'room').
 	// Removed item is held in e.transitItems until objto places it.
@@ -2172,102 +2101,6 @@ func (e *Engine) luaObjTo(L *lua.LState) int {
 	}
 
 	return 0
-}
-
-func (e *Engine) luaCreateEvent(L *lua.LState) int {
-	// create_event(source, target, obj, argument, trigger, delay, type)
-	// Source: scripts.c lua_create_event() lines 247-316 (commented out in original)
-	//
-	// Arguments:
-	//   source  — me (mob table) or NIL
-	//   target  — ch (player/mob table) or NIL
-	//   obj     — obj (object table) or NIL
-	//   argument — numeric argument or string (stored as int if numeric)
-	//   trigger — Lua function name to call when event fires (e.g., "port", "jail")
-	//   delay   — delay in PULSE_VIOLENCE units (1 = 2 seconds, 6 = 12 seconds)
-	//   type    — event type: LT_MOB (1), LT_OBJ (2), LT_ROOM (3)
-	//
-	// In the original C code, delay was multiplied by PULSE_VIOLENCE (20 pulses)
-	// to get the actual pulse count. The Go implementation does the same
-	// conversion in WorldScriptableAdapter.CreateEvent().
-
-	if e.world == nil {
-		slog.Debug("create_event: no world available")
-		return 0
-	}
-
-	// Parse source (arg 1) — extract mob instance ID from table
-	sourceID := 0
-	if srcTbl, ok := L.Get(1).(*lua.LTable); ok {
-		// Try to get the "id" field (instance ID) or "vnum" field
-		if idVal := srcTbl.RawGetString("id"); idVal.Type() == lua.LTNumber {
-			sourceID = int(lua.LVAsNumber(idVal))
-		} else if vnumVal := srcTbl.RawGetString("vnum"); vnumVal.Type() == lua.LTNumber {
-			// Fallback: use vnum (less precise but works for simple cases)
-			sourceID = int(lua.LVAsNumber(vnumVal))
-		}
-	}
-
-	// Parse target (arg 2) — extract target ID from table
-	targetID := 0
-	if tgtTbl, ok := L.Get(2).(*lua.LTable); ok {
-		if idVal := tgtTbl.RawGetString("id"); idVal.Type() == lua.LTNumber {
-			targetID = int(lua.LVAsNumber(idVal))
-		} else if vnumVal := tgtTbl.RawGetString("vnum"); vnumVal.Type() == lua.LTNumber {
-			targetID = int(lua.LVAsNumber(vnumVal))
-		}
-	}
-
-	// Parse obj (arg 3) — extract object vnum from table
-	objVNum := 0
-	if objTbl, ok := L.Get(3).(*lua.LTable); ok {
-		if vnumVal := objTbl.RawGetString("vnum"); vnumVal.Type() == lua.LTNumber {
-			objVNum = int(lua.LVAsNumber(vnumVal))
-		}
-	}
-
-	// Parse argument (arg 4) — can be number or string
-	argValue := 0
-	if L.Get(4).Type() == lua.LTNumber {
-		argValue = int(lua.LVAsNumber(L.Get(4)))
-	}
-
-	// Parse trigger (arg 5)
-	trigger := ""
-	if L.Get(5).Type() == lua.LTString {
-		trigger = L.Get(5).String()
-	}
-	if trigger == "" {
-		slog.Debug("create_event: no trigger specified")
-		return 0
-	}
-
-	// Parse delay (arg 6) — in PULSE_VIOLENCE units
-	delay := 1
-	if L.Get(6).Type() == lua.LTNumber {
-		delay = int(lua.LVAsNumber(L.Get(6)))
-	}
-	if delay < 1 {
-		delay = 1 // events.c: "make sure its in the future"
-	}
-
-	// Parse event type (arg 7) — LT_MOB (1), LT_OBJ (2), LT_ROOM (3)
-	eventType := 1 // default to LT_MOB
-	if L.Get(7).Type() == lua.LTNumber {
-		eventType = int(lua.LVAsNumber(L.Get(7)))
-	}
-
-	// Schedule the event
-	eventID := e.world.CreateEvent(delay, sourceID, targetID, objVNum, argValue, trigger, eventType)
-	if eventID > 0 {
-		slog.Debug("created event", "event_id", eventID, "trigger", trigger, "delay", delay, "event_type", eventType, "source_id", sourceID)
-	} else {
-		slog.Debug("failed to create event", "trigger", trigger, "delay", delay, "event_type", eventType, "source_id", sourceID)
-	}
-
-	// Return the event ID to Lua (allows scripts to cancel events if needed)
-	L.Push(lua.LNumber(eventID))
-	return 1
 }
 
 // luaTell sends a private message to a named player.
@@ -2549,17 +2382,6 @@ func (e *Engine) luaSetHunt(L *lua.LState) int {
 	return 0
 }
 
-func (e *Engine) luaMxp(L *lua.LState) int {
-	// mxp(text, command) - returns MXP-enabled link text. Falls back to plain text.
-	// Source: merchant_inn.lua — creates clickable "interested?" link.
-	if L.GetTop() >= 1 {
-		L.Push(L.Get(1)) // Return the display text as-is
-	} else {
-		L.Push(lua.LString(""))
-	}
-	return 1
-}
-
 func (e *Engine) luaSkipSpaces(L *lua.LState) int {
 	// skip_spaces(s) - trim leading spaces from a string.
 	// Source: merchant_inn.lua — strips leading space from say argument.
@@ -2789,36 +2611,6 @@ func (e *Engine) luaSocial(L *lua.LState) int {
 	// Source: remove_curse.lua — performs "cough" social.
 	// social: perform social emote (remove_curse archived script)
 	return 0
-}
-
-func (e *Engine) luaGetGroupLvl(L *lua.LState) int {
-	// get_group_lvl(ch, group[, newval]) - get or set character's skill group level.
-	// Source: teacher.lua — reads and writes group level for skill training.
-	// get_group_lvl: skill group level (teacher.lua archived)
-	if L.GetTop() >= 3 {
-		return 0
-	}
-	L.Push(lua.LNumber(0))
-	return 1
-}
-
-func (e *Engine) luaGetGroupPts(L *lua.LState) int {
-	// get_group_pts(ch[, newval]) - get or set character's available group points.
-	// Source: teacher.lua — reads and writes group points for skill training.
-	// get_group_pts: skill group points (teacher.lua archived)
-	if L.GetTop() >= 2 {
-		return 0
-	}
-	L.Push(lua.LNumber(0))
-	return 1
-}
-
-func (e *Engine) luaSkillGroup(L *lua.LState) int {
-	// skill_group(name) - converts skill group name to numeric ID.
-	// Source: teacher.lua — maps group names like "Rejuvenation" to IDs.
-	// skill_group: group name to ID (teacher.lua archived)
-	L.Push(lua.LNumber(0))
-	return 1
 }
 
 // Flag check/set functions (ported from src/scripts.c).
