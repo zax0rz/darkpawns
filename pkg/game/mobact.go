@@ -9,7 +9,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
@@ -26,15 +25,7 @@ var mobactNumber = dprng.Number
 // ---------------------------------------------------------------------------
 
 func hasMobFlag(mob *MobInstance, flag string) bool {
-	if mob == nil || mob.Proto() == nil {
-		return false
-	}
-	for _, f := range mob.Proto().ActionFlags {
-		if strings.EqualFold(f, flag) {
-			return true
-		}
-	}
-	return false
+	return mob.HasFlag(flag)
 }
 
 func roomHasFlag(room *parser.Room, flag string) bool {

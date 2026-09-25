@@ -100,9 +100,6 @@ type MobInstance struct {
 	// Following — name of player this mob follows (for charmed pets, etc.)
 	Following         string
 	followingSequence uint64
-	// scriptWait is GET_MOB_WAIT, which only a script's write-back sets in
-	// C (table_to_char's "timer", scripts.c:2016-2021).
-	scriptWait int
 }
 
 // NewMob creates a new mob instance from a prototype.
@@ -344,13 +341,24 @@ func (m *MobInstance) GetFollowing() string {
 	return m.Following
 }
 
-// HasFlag checks if the mob has a specific flag.
+// HasFlag reports MOB_FLAGGED(m, flag) by name. A MOB_* action flag reads the
+// instance's own bitmask, which read_mobile copies from the prototype and
+// which the game and scripts may change for one mobile (mob_flags,
+// SET_BIT_AR(MOB_FLAGS)). A name that is not an action bit falls back to
+// the prototype's flag list.
 func (m *MobInstance) HasFlag(flag string) bool {
-	if m == nil || m.Proto() == nil || len(m.Proto().ActionFlags) == 0 {
+	if m == nil {
+		return false
+	}
+	name := strings.ToUpper(strings.TrimPrefix(strings.ToUpper(flag), "MOB_"))
+	if bit, ok := actionFlagBitIndex[name]; ok {
+		return m.HasMobFlag(bit)
+	}
+	if m.Proto() == nil {
 		return false
 	}
 	for _, f := range m.Proto().ActionFlags {
-		if strings.EqualFold(strings.TrimPrefix(f, "MOB_"), strings.TrimPrefix(flag, "MOB_")) {
+		if strings.EqualFold(strings.TrimPrefix(f, "MOB_"), name) {
 			return true
 		}
 	}
@@ -721,20 +729,23 @@ func (m *MobInstance) GetPosition() int {
 	}
 }
 
-// actionFlagBitNames mirrors the parser's complete act-flag name table
-// (parser/mob.go); index = C MOB_* bit. Reuse the canonical game table so
-// extended flags such as AGGR24 and LOOTS are carried onto mob instances.
-var actionFlagBitNames = ActionBitNames
+// actionFlagBitIndex maps an action flag name to its MOB_* bit, from the
+// canonical ActionBitNames table (index = C MOB_* bit), so extended flags
+// such as AGGR24 and LOOTS are carried onto mob instances.
+var actionFlagBitIndex = func() map[string]int {
+	index := make(map[string]int, len(ActionBitNames))
+	for i, n := range ActionBitNames {
+		index[n] = i
+	}
+	return index
+}()
 
 // actionFlagBits converts parsed act-flag names to the C MOB_* bitmask.
 func actionFlagBits(names []string) uint64 {
-	index := make(map[string]int, len(actionFlagBitNames))
-	for i, n := range actionFlagBitNames {
-		index[n] = i
-	}
 	var bits uint64
 	for _, n := range names {
-		if bit, ok := index[n]; ok {
+		name := strings.TrimPrefix(strings.ToUpper(n), "MOB_")
+		if bit, ok := actionFlagBitIndex[name]; ok {
 			bits |= 1 << uint(bit)
 		}
 	}
@@ -1372,20 +1383,6 @@ func (m *MobInstance) HitModifiers() combat.HitModifiers {
 	return combat.HitModifiers{
 		WeaponBlessed: blessed,
 	}
-}
-
-// GetScriptWait returns GET_MOB_WAIT.
-func (m *MobInstance) GetScriptWait() int {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.scriptWait
-}
-
-// SetScriptWait sets GET_MOB_WAIT.
-func (m *MobInstance) SetScriptWait(wait int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.scriptWait = wait
 }
 
 // SetAlignment sets GET_ALIGNMENT on this instance.

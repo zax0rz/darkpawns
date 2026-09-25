@@ -1,0 +1,104 @@
+# Lua binding certification: action bindings, from a probe oncmd script
+# on the healer (mob 12220): echo, gossip, social, follow, set_hunt, spell,
+# unaffect. Their effects are the output the player sees.
+# depth-case: lua.bind-echo
+# depth-case: lua.bind-gossip
+# depth-case: lua.bind-social
+# depth-case: lua.bind-follow
+# depth-case: lua.bind-set-hunt
+# depth-case: lua.bind-spell
+# depth-case: lua.bind-unaffect
+# depth-case: lua.npc-command-stand
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say") then
+return FALSE
+end
+if (what == "echoroom") then
+echo(room, "room", "The ground trembles.\r\n")
+elseif (what == "echolocal") then
+echo(ch, "local", "A voice echoes.")
+elseif (what == "echozone") then
+echo(ch, "zone", "A zone-wide rumble.\r\n")
+elseif (what == "gossip") then
+gossip("Hear ye, hear ye!")
+elseif (what == "social") then
+social(ch, "bow")
+elseif (what == "follow") then
+local r = follow(ch, 0)
+say("follow returned " .. type(r))
+elseif (what == "hunt") then
+set_hunt(me, ch)
+local a = tostring(ishunt(me))
+set_hunt(me, nil)
+say("hunt set=" .. a .. " cleared=" .. tostring(ishunt(me)))
+elseif (what == "stand") then
+action(me, "stand")
+elseif (what == "sanct") then
+spell(ch, nil, SPELL_SANCTUARY, 0)
+elseif (what == "cure") then
+local r = spell(ch, nil, SPELL_CURE_LIGHT, 1)
+say("spell returned " .. type(r))
+elseif (what == "unaffect") then
+unaffect(ch)
+say("unaffected")
+else
+return FALSE
+end
+return TRUE
+end
+
+[setup:oracle]
+Probeacts
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Probeacts
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+
+[probe]
+say echoroom
+say echolocal
+say echozone
+say gossip
+say social
+say follow
+say hunt
+say stand
+say sanct
+score
+say cure
+say unaffect
+score

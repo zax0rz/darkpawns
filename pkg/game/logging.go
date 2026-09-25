@@ -104,6 +104,10 @@ func Alogf(format string, args ...interface{}) {
 
 // ---------------------------------------------------------------------------
 // MudLog — broadcast to online immortals
+// mudlogBrief is C's BRF message type (utils.h:115; OFF 0, NRM 2, CMP 3): a
+// message reaches an immortal whose syslog level is at least its type.
+const mudlogBrief = 1
+
 // ---------------------------------------------------------------------------
 
 // ImmortalSessionProvider is the duck-typed interface for mudlog to iterate

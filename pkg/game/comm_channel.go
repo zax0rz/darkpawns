@@ -181,7 +181,8 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 		return
 	}
 	argument = deleteANSIControls(argument)
-	message := fmt.Sprintf("%s gossips, '%s'\r\n", mobName(me), argument)
+	// act("$n gossips, '%s'", ..., TO_VICT) capitalizes the line (act.comm.c:1273, 1293).
+	message := capitalize(fmt.Sprintf("%s gossips, '%s'\r\n", mobName(me), argument))
 	for _, player := range w.GetAllPlayers() {
 		if player.GetFlags()&(1<<uint(PrfNoGossip)) != 0 ||
 			player.GetFlags()&(1<<uint(PlrWriting)) != 0 ||

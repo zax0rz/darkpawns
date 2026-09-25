@@ -31,7 +31,7 @@ func TestMobFlagComparisonCaseInsensitive(t *testing.T) {
 func TestMobStayZonePreventsWander(t *testing.T) {
 	// A STAY_ZONE mob should be recognized by hasMobFlag regardless of case.
 	mob := &MobInstance{}
-	mob.SetProto(&parser.Mob{ActionFlags: []string{"STAY_ZONE"}})
+	setProtoWithFlags(mob, &parser.Mob{ActionFlags: []string{"STAY_ZONE"}})
 	if !hasMobFlag(mob, "stay_zone") {
 		t.Fatal("STAY_ZONE flag not found with case-insensitive hasMobFlag")
 	}
@@ -39,7 +39,7 @@ func TestMobStayZonePreventsWander(t *testing.T) {
 
 func TestHasMobFlagCaseInsensitive(t *testing.T) {
 	mob := &MobInstance{}
-	mob.SetProto(&parser.Mob{ActionFlags: []string{"AGGRESSIVE", "SENTINEL", "STAY_ZONE"}})
+	setProtoWithFlags(mob, &parser.Mob{ActionFlags: []string{"AGGRESSIVE", "SENTINEL", "STAY_ZONE"}})
 
 	if !hasMobFlag(mob, "aggressive") {
 		t.Error("hasMobFlag failed for lowercase 'aggressive' against uppercase 'AGGRESSIVE'")

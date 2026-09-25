@@ -1466,9 +1466,13 @@ func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string,
 		transferLog: "elements master column player transfer failed",
 		lookAfterMove: func(ppl *Player) {
 			w.lookAtRoom(ppl, false)
-			// The C room-look path leaves one literal spacer when the destination
-			// has no visible occupants; the following act() therefore begins with
-			// that byte for the next observer (spec_procs3.c:998-1002).
+			// The space before the arrival act is do_description's (the
+			// destination rooms have extra descriptions): with nothing listed
+			// after the description, C's trailing space is still unsent, so
+			// the next act the looker receives begins with it (spec_procs3.c:
+			// 998-1002, act.informative.c:2779). The render drops an unused
+			// prefix, so this act carries it; a general carry-over of the
+			// pending space into the player's next output is not modelled.
 		},
 	})
 	return true
@@ -1666,36 +1670,11 @@ func specElementsGaleruAlive(w *World, ch *Player, me *MobInstance, cmd string, 
 			continue
 		}
 		if player, ok := target.(*Player); ok {
-			w.lookAtRoomWithGaleruAliveFraming(player)
+			w.lookAtRoom(player, false) // look_at_room(ch, 0)
 		}
 		Act(w, true, target, nil, nil, nil, "$n appears in a brilliant flash of light.", "", ToNotVict)
 	}
 	return true
-}
-
-// lookAtRoomWithGaleruAliveFraming preserves the C room-list byte framing
-// observed after this procedure's char_to_room/look_at_room sequence. The C
-// list_char_to_char path leaves one literal spacer before visible player
-// entries; the ordinary Go look path intentionally does not use that framing.
-func (w *World) lookAtRoomWithGaleruAliveFraming(ch *Player) {
-	result := w.DoLookRoom(ch, false)
-	players := w.GetPlayersInRoom(ch.GetRoom())
-	for i := range result.Messages {
-		if !result.Messages[i].Literal {
-			continue
-		}
-		for _, player := range players {
-			if player == nil || player == ch {
-				continue
-			}
-			line := w.playerPresenceLine(player, ch)
-			if line != "" && strings.Contains(result.Messages[i].Format, line) {
-				result.Messages[i].Format = strings.Replace(result.Messages[i].Format, line, " "+line, 1)
-				break
-			}
-		}
-	}
-	w.RenderObservationMessages(result)
 }
 
 // specElementsMinion mirrors SPECIAL(elements_minion) in

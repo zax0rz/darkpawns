@@ -28,6 +28,11 @@ type ObjRef struct {
 	ID int
 }
 
+// RoomRef names one room by vnum: room_to_table's "struct" (scripts.c:1971).
+type RoomRef struct {
+	VNum int
+}
+
 // CharFields is what char_to_table reads from a character.
 type CharFields struct {
 	Name   string // GET_NAME
@@ -143,14 +148,102 @@ type Bridge interface {
 	// RawKill is raw_kill(vict, killer, type), with lua_raw_kill's mudlog for
 	// a player victim.
 	RawKill(vict CharRef, killer *CharRef, attackType int)
-	// Log writes to the server log (mudlog / log).
+	// Log is mudlog(msg, BRF, LVL_IMMORT, FALSE): immortals with a brief or
+	// fuller syslog see it.
 	Log(msg string)
+
+	// CanSee is CAN_SEE(me, vict).
+	CanSee(me, vict CharRef) bool
+	// InWorldMob and InWorldChar are lua_inworld's character_list scans:
+	// the last match in C's list, which is the oldest (new characters are
+	// pushed on the front). InWorldChar compares GET_NAME exactly.
+	InWorldMob(vnum int) (CharRef, bool)
+	InWorldChar(name string) (CharRef, bool)
+	// AffFlagged and SetAffFlag are AFF_FLAGS bit tests and edits.
+	AffFlagged(ref CharRef, bit int) bool
+	SetAffFlag(ref CharRef, bit int, on bool)
+	// ActFlagged and SetActFlag read and edit char_specials.saved.act, the
+	// one field behind both MOB_FLAGS and PLR_FLAGS.
+	ActFlagged(ref CharRef, bit int) bool
+	SetActFlag(ref CharRef, bit int, on bool)
+	// ObjFlagged and SetObjExtra are GET_OBJ_EXTRA bit tests and edits.
+	ObjFlagged(ref ObjRef, bit int) bool
+	SetObjExtra(ref ObjRef, bit int, on bool)
+	// RoomExitInfo and SetRoomExitInfo read and replace dir_option[dir]->exit_info;
+	// ok is false when the room or the exit does not exist.
+	RoomExitInfo(room RoomRef, dir int) (int, bool)
+	SetRoomExitInfo(room RoomRef, dir int, info int) bool
+	// SetRoomSector is table_to_room: the table's sect written back.
+	SetRoomSector(room RoomRef, sect int)
+
+	// LoadMob is lua_mload's read_mobile + char_to_room; ok is false for a
+	// missing vnum or room.
+	LoadMob(vnum, roomVNum int) (CharRef, bool)
+	// ExtractChar is lua_extchar's extract_char.
+	ExtractChar(ref CharRef)
+	// ObjList is lua_obj_list's search: the object found and, for "vict",
+	// the character that held it.
+	ObjList(me CharRef, arg, where string) (ObjRef, *CharRef, bool)
+	// ObjFrom is obj_from_room/char/obj; ObjToRoom (false for a missing
+	// room), ObjToChar and ObjToObj are obj_to_room/char/obj.
+	ObjFrom(ref ObjRef, from string)
+	ObjToRoom(ref ObjRef, roomVNum int) bool
+	ObjToChar(ref ObjRef, to CharRef)
+	ObjToObj(ref ObjRef, into ObjRef)
+	// Steal is lua_steal: the object moves from its carrier to me.
+	Steal(me CharRef, obj ObjRef)
+	// EquipCharObj is lua_equip_char: obj_from_char, then equip_char at
+	// find_eq_pos.
+	EquipCharObj(ch CharRef, obj ObjRef)
+	// AppendExtraDescs is lua_extra: text appended to every extra
+	// description, the list rebuilt in reverse.
+	AppendExtraDescs(obj ObjRef, text string)
+
+	// Echo is lua_echo: "room" (room), "outdoor", "zone" (ch), "local" and
+	// "global" (as ch).
+	Echo(kind string, room *RoomRef, ch *CharRef, text string)
+	// Gossip is do_gen_comm(me, text, SCMD_GOSSIP).
+	Gossip(me CharRef, text string)
+	// Social is do_action(me, GET_NAME(vict), social); false when the name
+	// is no social.
+	Social(me, vict CharRef, social string) bool
+	// Follow is do_follow(me, leader's name), and AFF_CHARM when charm.
+	Follow(me, leader CharRef, charm bool)
+	// SetHunt is set_hunting(hunter, vict); vict nil stops the hunt.
+	SetHunt(hunter CharRef, vict *CharRef)
+	// Spell is cast_spell (vocal) or call_magic as me.
+	Spell(me CharRef, vict *CharRef, obj *ObjRef, spell int, vocal bool)
+	// Unaffect is affect_remove for every affect on the character.
+	Unaffect(ref CharRef)
+	// Mount is do_ride, do_dismount or unmount for the rider.
+	Mount(rider CharRef, mount *CharRef, how string)
 }
 
 type (
 	charHandle struct{ ref CharRef }
 	objHandle  struct{ ref ObjRef }
+	roomHandle struct{ ref RoomRef }
 )
+
+func (e *Engine) newRoomHandle(ref RoomRef) *lua.LUserData {
+	ud := e.l.NewUserData()
+	ud.Value = roomHandle{ref: ref}
+	return ud
+}
+
+// roomRefOf returns the room a table stands for (its "struct").
+func roomRefOf(v lua.LValue) (RoomRef, bool) {
+	tbl, ok := v.(*lua.LTable)
+	if !ok {
+		return RoomRef{}, false
+	}
+	ud, ok := tbl.RawGetString("struct").(*lua.LUserData)
+	if !ok {
+		return RoomRef{}, false
+	}
+	h, ok := ud.Value.(roomHandle)
+	return h.ref, ok
+}
 
 func (e *Engine) newCharHandle(ref CharRef) *lua.LUserData {
 	ud := e.l.NewUserData()
@@ -282,7 +375,7 @@ func (e *Engine) cObjToTable(b Bridge, ref ObjRef) lua.LValue {
 	return t
 }
 
-// roomToTable is room_to_table (scripts.c:1928-1970): "char" lists the room's
+// roomToTable is room_to_table (scripts.c:1928-1972): "char" lists the room's
 // people except me, "objs" its contents.
 func (e *Engine) roomToTable(b Bridge, vnum int, me *CharRef) lua.LValue {
 	f, ok := b.RoomFields(vnum)
@@ -317,6 +410,7 @@ func (e *Engine) roomToTable(b Bridge, vnum int, me *CharRef) lua.LValue {
 		}
 		t.RawSetString("objs", objs)
 	}
+	t.RawSetString("struct", e.newRoomHandle(RoomRef{VNum: f.VNum}))
 	return t
 }
 

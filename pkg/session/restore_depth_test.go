@@ -76,7 +76,6 @@ func TestCmdRestoreRestoresVisibleMob(t *testing.T) {
 	actor := makeCommandTestSession(t, m, "Restoregod", LVL_IMPL, 1001)
 	registerInWorld(t, actor)
 	mob := registerMob(t, m, 2001, 1001)
-	_ = readMsgText(t, actor) // discard C/Go mob-arrival setup output
 	mob.SetHealth(1)
 	mob.SetMana(2)
 	mob.SetMove(3)

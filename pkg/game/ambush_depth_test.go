@@ -105,7 +105,7 @@ func TestAmbushAwareForcesFailureAndStartsCombat(t *testing.T) {
 	{
 		p := *target.Proto()
 		p.ActionFlags = []string{"AWARE"}
-		target.SetProto(&p)
+		setProtoWithFlags(target, &p)
 	}
 	startHP := target.GetHP()
 

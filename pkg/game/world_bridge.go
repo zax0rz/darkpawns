@@ -3,7 +3,12 @@ package game
 import (
 	"log/slog"
 	"sort"
+	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -126,7 +131,7 @@ func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.Ch
 			Evil:  m.GetAlignment() <= -350,
 			NPC:   true,
 			VNum:  m.GetVNum(),
-			Timer: m.GetScriptWait(),
+			Timer: m.GetWaitState(), // GET_MOB_WAIT
 		}
 		m.mu.RLock()
 		f.Carry = objRefs(m.Inventory)
@@ -167,7 +172,7 @@ func (a *WorldScriptableAdapter) ObjFields(ref scripting.ObjRef) (scripting.ObjF
 	return f, true
 }
 
-// RoomFields is room_to_table's view of a room (scripts.c:1928-1970). People
+// RoomFields is room_to_table's view of a room (scripts.c:1928-1972). People
 // are in C's people-list order: most recent arrival first.
 func (a *WorldScriptableAdapter) RoomFields(vnum int) (scripting.RoomFields, bool) {
 	room := a.world.GetRoomInWorld(vnum)
@@ -237,7 +242,7 @@ func (a *WorldScriptableAdapter) ApplyChar(ref scripting.CharRef, w scripting.Ch
 		m.SetLevel(w.Level)
 		m.SetHealth(w.HP)
 		m.SetPosition(w.Pos)
-		m.SetScriptWait(w.Timer)
+		m.SetWaitState(w.Timer)
 	}
 }
 
@@ -459,5 +464,695 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 
 // Log is mudlog for a script.
 func (a *WorldScriptableAdapter) Log(msg string) {
-	slog.Info("lua", "message", msg)
+	MudLog(msg, mudlogBrief, lvlImmort, false)
+}
+
+// CanSee is CAN_SEE(me, vict).
+func (a *WorldScriptableAdapter) CanSee(me, vict scripting.CharRef) bool {
+	observer, subject := a.actorFor(&me), a.actorFor(&vict)
+	if observer == nil || subject == nil {
+		return false
+	}
+	return canSee(observer, subject)
+}
+
+// InWorldMob is lua_inworld("mob", vnum): C keeps the last match in
+// character_list, and read_mobile pushes each new mobile on the front, so
+// the oldest instance wins. Mobile IDs are allocated in spawn order.
+func (a *WorldScriptableAdapter) InWorldMob(vnum int) (scripting.CharRef, bool) {
+	var oldest *MobInstance
+	for _, m := range a.world.GetAllMobs() {
+		if m.GetVNum() == vnum && (oldest == nil || m.GetID() < oldest.GetID()) {
+			oldest = m
+		}
+	}
+	if oldest == nil {
+		return scripting.CharRef{}, false
+	}
+	return *charRefFor(oldest), true
+}
+
+// InWorldChar is lua_inworld("char", name): strcmp on GET_NAME, a player's
+// name or a mobile's short description. The oldest mobile wins among
+// mobiles, as in InWorldMob; players have no creation order the port
+// shares with mobiles, so an exact mobile match is preferred to a player,
+// which only matters when a mobile's short description is a player's name.
+func (a *WorldScriptableAdapter) InWorldChar(name string) (scripting.CharRef, bool) {
+	var oldest *MobInstance
+	for _, m := range a.world.GetAllMobs() {
+		if m.GetName() == name && (oldest == nil || m.GetID() < oldest.GetID()) {
+			oldest = m
+		}
+	}
+	if oldest != nil {
+		return *charRefFor(oldest), true
+	}
+	for _, p := range a.world.GetAllPlayers() {
+		if p.GetName() == name {
+			return *charRefFor(p), true
+		}
+	}
+	return scripting.CharRef{}, false
+}
+
+// AffFlagged is AFF_FLAGGED(ch, bit).
+func (a *WorldScriptableAdapter) AffFlagged(ref scripting.CharRef, bit int) bool {
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		return p.IsAffected(bit)
+	case m != nil:
+		return bit >= 0 && bit < 64 && m.IsAffected(bit)
+	}
+	return false
+}
+
+// SetAffFlag is SET_BIT_AR / REMOVE_BIT_AR on AFF_FLAGS(ch).
+func (a *WorldScriptableAdapter) SetAffFlag(ref scripting.CharRef, bit int, on bool) {
+	if bit < 0 || bit >= 64 {
+		return
+	}
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		p.SetAffect(bit, on)
+	case m != nil && on:
+		m.SetAffected(bit)
+	case m != nil:
+		m.RemoveAffected(bit)
+	}
+}
+
+// ActFlagged reads char_specials.saved.act: MOB_FLAGS for a mobile and
+// PLR_FLAGS for a player are the same field.
+func (a *WorldScriptableAdapter) ActFlagged(ref scripting.CharRef, bit int) bool {
+	if bit < 0 || bit >= 64 {
+		return false
+	}
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		return p.GetFlags()&(1<<uint(bit)) != 0
+	case m != nil:
+		return m.HasMobFlag(bit)
+	}
+	return false
+}
+
+// SetActFlag sets or clears a bit of the shared act field.
+func (a *WorldScriptableAdapter) SetActFlag(ref scripting.CharRef, bit int, on bool) {
+	if bit < 0 || bit >= 64 {
+		return
+	}
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		p.SetPlrFlag(bit, on)
+	case m != nil && on:
+		m.SetMobFlag(bit)
+	case m != nil:
+		m.ClearMobFlag(bit)
+	}
+}
+
+// ObjFlagged is OBJ_FLAGGED(obj, bit): bit indexes the extra-flag array.
+func (a *WorldScriptableAdapter) ObjFlagged(ref scripting.ObjRef, bit int) bool {
+	obj := a.resolveObj(ref)
+	return obj != nil && bit >= 0 && obj.HasExtraFlag(bit/32, bit%32)
+}
+
+// SetObjExtra is SET_BIT_AR / REMOVE_BIT_AR on GET_OBJ_EXTRA(obj).
+func (a *WorldScriptableAdapter) SetObjExtra(ref scripting.ObjRef, bit int, on bool) {
+	obj := a.resolveObj(ref)
+	if obj == nil || bit < 0 {
+		return
+	}
+	if on {
+		obj.SetExtraFlag(bit/32, bit%32)
+	} else {
+		obj.RemoveExtraFlag(bit/32, bit%32)
+	}
+}
+
+// RoomExitInfo is dir_option[dir]->exit_info.
+func (a *WorldScriptableAdapter) RoomExitInfo(room scripting.RoomRef, dir int) (int, bool) {
+	r := a.world.GetRoomInWorld(room.VNum)
+	if r == nil || dir < 0 || dir >= len(dirKeys) {
+		return 0, false
+	}
+	exit, ok := r.Exits[dirKeys[dir]]
+	return exit.ExitInfo, ok
+}
+
+// SetRoomExitInfo replaces dir_option[dir]->exit_info.
+func (a *WorldScriptableAdapter) SetRoomExitInfo(room scripting.RoomRef, dir int, info int) bool {
+	if dir < 0 || dir >= len(dirKeys) {
+		return false
+	}
+	return a.world.SetExitInfo(room.VNum, dirKeys[dir], info)
+}
+
+// SetRoomSector is table_to_room's sector_type write.
+func (a *WorldScriptableAdapter) SetRoomSector(room scripting.RoomRef, sect int) {
+	a.world.mutateRoom(room.VNum, func(r *parser.Room) bool {
+		r.Sector = sect
+		return true
+	})
+}
+
+// cIsCorpse is IS_CORPSE (utils.h:490-491).
+func cIsCorpse(o *ObjectInstance) bool {
+	return o.GetTypeFlag() == ITEM_CONTAINER && o.GetValue(3) == 1
+}
+
+// objInListVis is get_obj_in_list_vis (handler.c): the number-th object in
+// list, in list order, whose keywords the name abbreviates and that the
+// viewer can see (a light always counts).
+func objInListVis(viewer Actor, name string, list []*ObjectInstance) *ObjectInstance {
+	arg := strings.TrimSpace(name)
+	number := GetNumber(&arg)
+	if number <= 0 || arg == "" {
+		return nil
+	}
+	found := 0
+	for _, obj := range list {
+		if !isnameWithAbbrevs(arg, obj.GetKeywords()) {
+			continue
+		}
+		if !canSeeObject(viewer, obj) && obj.GetTypeFlag() != ITEM_LIGHT {
+			continue
+		}
+		found++
+		if found == number {
+			return obj
+		}
+	}
+	return nil
+}
+
+// carriedList and wornBySlot are ch->carrying and GET_EQ(ch, 0..NUM_WEARS-1)
+// in C's order.
+func (a *WorldScriptableAdapter) carriedList(ref scripting.CharRef) []*ObjectInstance {
+	var out []*ObjectInstance
+	f, ok := a.CharFields(ref)
+	if !ok {
+		return nil
+	}
+	for _, r := range f.Carry {
+		if o := a.resolveObj(r); o != nil {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+func (a *WorldScriptableAdapter) wornBySlot(ref scripting.CharRef) []*ObjectInstance {
+	var out []*ObjectInstance
+	f, ok := a.CharFields(ref)
+	if !ok {
+		return nil
+	}
+	for _, r := range f.Worn {
+		if o := a.resolveObj(r); o != nil {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+// LoadMob is lua_mload's read_mobile + char_to_room.
+func (a *WorldScriptableAdapter) LoadMob(vnum, roomVNum int) (scripting.CharRef, bool) {
+	if _, ok := a.world.GetMobPrototype(vnum); !ok {
+		return scripting.CharRef{}, false
+	}
+	if a.world.GetRoomInWorld(roomVNum) == nil {
+		slog.Error("lua mload: no such room (C's char_to_room gets NOWHERE)", "vnum", vnum, "room", roomVNum)
+		return scripting.CharRef{}, false
+	}
+	mob, err := a.world.SpawnMob(vnum, roomVNum)
+	if err != nil || mob == nil {
+		slog.Error("lua mload failed", "vnum", vnum, "room", roomVNum, "error", err)
+		return scripting.CharRef{}, false
+	}
+	return *charRefFor(mob), true
+}
+
+// ExtractChar is lua_extchar's extract_char. C marks the character and
+// removes it at the next heartbeat (extract_pending_chars, comm.c:812); the
+// port extracts at once (lua.bind-extchar-deferred).
+func (a *WorldScriptableAdapter) ExtractChar(ref scripting.CharRef) {
+	switch _, p, m := a.resolveChar(ref); {
+	case m != nil:
+		a.world.ExtractMob(m)
+	case p != nil:
+		slog.Warn("lua extchar on a player is not ported; ignored", "player", p.GetName())
+	}
+}
+
+// ObjList is lua_obj_list's search (scripts.c:1040-1126). vict is the
+// character whose carrying list or equipment held the object, which the
+// binding makes the ch global.
+func (a *WorldScriptableAdapter) ObjList(me scripting.CharRef, arg, where string) (scripting.ObjRef, *scripting.CharRef, bool) {
+	viewer := a.actorFor(&me)
+	room, ok := a.CharRoom(me)
+	if viewer == nil || !ok {
+		return scripting.ObjRef{}, nil, false
+	}
+	var list []*ObjectInstance
+	var vict *scripting.CharRef
+	switch where {
+	case "room":
+		list = a.world.GetItemsInRoom(room)
+	case "char":
+		for _, obj := range a.wornBySlot(me) {
+			if isnameWithAbbrevs(arg, obj.GetKeywords()) {
+				return scripting.ObjRef{ID: obj.ID}, nil, true
+			}
+		}
+		list = a.carriedList(me)
+	case "vict":
+		people, _ := a.RoomFields(room)
+		for _, p := range people.People {
+			p := p
+			carried := a.carriedList(p)
+			if objInListVis(viewer, arg, carried) != nil {
+				list, vict = carried, &p
+				break
+			}
+			for _, obj := range a.wornBySlot(p) {
+				if isnameWithAbbrevs(arg, obj.GetKeywords()) {
+					return scripting.ObjRef{ID: obj.ID}, &p, true
+				}
+			}
+		}
+	case "cont", "corpse":
+		for _, holder := range a.world.GetItemsInRoom(room) {
+			if len(holder.Contains) == 0 || (where == "corpse" && !cIsCorpse(holder)) {
+				continue
+			}
+			if objInListVis(viewer, arg, holder.Contains) != nil {
+				list = holder.Contains
+				break
+			}
+		}
+	}
+	if obj := objInListVis(viewer, arg, list); obj != nil {
+		return scripting.ObjRef{ID: obj.ID}, vict, true
+	}
+	return scripting.ObjRef{}, nil, false
+}
+
+// ObjFrom is obj_from_room / obj_from_char / obj_from_obj: the object leaves
+// where it is, when it is there.
+func (a *WorldScriptableAdapter) ObjFrom(ref scripting.ObjRef, from string) {
+	obj := a.resolveObj(ref)
+	if obj == nil {
+		return
+	}
+	loc := obj.Location
+	var there bool
+	switch from {
+	case "room":
+		there = loc.Kind == ObjInRoom
+	case "char":
+		there = loc.Kind == ObjInInventory
+	case "obj":
+		there = loc.Kind == ObjInContainer
+	default:
+		return
+	}
+	if !there {
+		slog.Error("lua objfrom: object is not there", "obj_vnum", obj.VNum, "from", from)
+		return
+	}
+	if err := a.world.MoveObjectToNowhere(obj); err != nil {
+		slog.Error("lua objfrom failed", "obj_vnum", obj.VNum, "error", err)
+	}
+}
+
+// ObjToRoom is obj_to_room.
+func (a *WorldScriptableAdapter) ObjToRoom(ref scripting.ObjRef, roomVNum int) bool {
+	obj := a.resolveObj(ref)
+	if a.world.GetRoomInWorld(roomVNum) == nil {
+		return false
+	}
+	if obj != nil {
+		if err := a.world.MoveObjectToRoomFront(obj, roomVNum); err != nil {
+			slog.Error("lua objto room failed", "obj_vnum", obj.VNum, "error", err)
+		}
+	}
+	return true
+}
+
+// ObjToChar is obj_to_char, which prepends to the carrying list.
+func (a *WorldScriptableAdapter) ObjToChar(ref scripting.ObjRef, to scripting.CharRef) {
+	obj := a.resolveObj(ref)
+	if obj == nil {
+		return
+	}
+	var err error
+	switch _, p, m := a.resolveChar(to); {
+	case p != nil:
+		err = a.world.PlaceWizardLoadedObjectInInventory(obj, p)
+	case m != nil:
+		err = a.world.MoveObjectToMobInventoryFront(obj, m)
+	default:
+		return
+	}
+	if err != nil {
+		slog.Error("lua objto char failed", "obj_vnum", obj.VNum, "error", err)
+	}
+}
+
+// ObjToObj is obj_to_obj.
+func (a *WorldScriptableAdapter) ObjToObj(ref, into scripting.ObjRef) {
+	obj, container := a.resolveObj(ref), a.resolveObj(into)
+	if obj == nil || container == nil {
+		return
+	}
+	if err := a.world.MoveObjectToContainer(obj, container); err != nil {
+		slog.Error("lua objto obj failed", "obj_vnum", obj.VNum, "error", err)
+	}
+}
+
+// Steal is lua_steal: obj_from_char(obj), obj_to_char(obj, me).
+func (a *WorldScriptableAdapter) Steal(me scripting.CharRef, ref scripting.ObjRef) {
+	a.ObjFrom(ref, "char")
+	a.ObjToChar(ref, me)
+}
+
+// EquipCharObj is lua_equip_char: obj_from_char(obj), then equip_char(ch, obj,
+// find_eq_pos(ch, obj, NULL)) (handler.c:679-747).
+func (a *WorldScriptableAdapter) EquipCharObj(ref scripting.CharRef, objRef scripting.ObjRef) {
+	obj := a.resolveObj(objRef)
+	actor, p, m := a.resolveChar(ref)
+	if obj == nil || actor == nil {
+		return
+	}
+	pos := findEqPos(obj, "")
+	if pos < 0 {
+		// equip_char asserts pos >= 0 (handler.c:685): C aborts (R1a).
+		slog.Error("lua equip_char: no wear position (C asserts)", "obj_vnum", obj.VNum)
+		return
+	}
+	a.ObjFrom(objRef, "char")
+	occupied := false
+	if p != nil {
+		occupied = a.world.IsEquipped(p, pos)
+	} else if m != nil {
+		m.mu.RLock()
+		occupied = m.Equipment[pos] != nil
+		m.mu.RUnlock()
+	}
+	if occupied {
+		// "SYSERR: Char is already equipped": the object, already taken
+		// from the carrier, is in no list.
+		slog.Error("lua equip_char: char is already equipped", "char", actor.GetName(), "obj_vnum", obj.VNum)
+		return
+	}
+	align := 0
+	if p != nil {
+		align = p.GetAlignment()
+	} else {
+		align = m.GetAlignment()
+	}
+	flags := obj.GetExtraFlags()[0]
+	if flags&FlagAntiEvil != 0 && align <= -350 || flags&FlagAntiGood != 0 && align >= 350 ||
+		flags&FlagAntiNeutral != 0 && align > -350 && align < 350 {
+		Act(nil, false, actor, nil, obj, nil, "You are zapped by $p and instantly let go of it.", "", ToChar)
+		Act(a.world, false, actor, nil, obj, nil, "$n is zapped by $p and instantly lets go of it.", "", ToRoom)
+		a.ObjToChar(objRef, ref)
+		return
+	}
+	if p != nil && objInvalidClass(p, obj) {
+		Act(nil, false, actor, nil, obj, nil, "You cannot use $p.", "", ToChar)
+		a.ObjToChar(objRef, ref)
+		return
+	}
+	switch {
+	case p != nil:
+		if err := a.world.EquipItem(p, obj, pos); err != nil {
+			slog.Error("lua equip_char failed", "player", p.GetName(), "obj_vnum", obj.VNum, "error", err)
+		}
+	case m != nil:
+		m.mu.Lock()
+		if m.Equipment == nil {
+			m.Equipment = make(map[int]*ObjectInstance)
+		}
+		m.mu.Unlock()
+		m.EquipItem(obj, pos)
+	}
+}
+
+// AppendExtraDescs is lua_extra (scripts.c:512-540): every extra
+// description gets the text appended, and the rebuilt list is in reverse
+// order (each new entry is pushed on the front).
+func (a *WorldScriptableAdapter) AppendExtraDescs(ref scripting.ObjRef, text string) {
+	obj := a.resolveObj(ref)
+	if obj == nil {
+		return
+	}
+	descs := obj.LiveExtraDescs()
+	out := make([]parser.ExtraDesc, 0, len(descs))
+	for i := len(descs) - 1; i >= 0; i-- {
+		d := descs[i]
+		d.Description += text
+		out = append(out, d)
+	}
+	obj.SetLiveExtraDescs(out)
+}
+
+// Echo is lua_echo (scripts.c:342-383): "room" is send_to_room, "outdoor"
+// send_to_outdoor, "zone" send_to_zone for ch, "local" do_echo and "global"
+// do_gecho as ch.
+func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *scripting.CharRef, text string) {
+	w := a.world
+	switch kind {
+	case "room":
+		if room != nil {
+			for _, p := range w.GetPlayersInRoom(room.VNum) {
+				p.SendMessage(text)
+			}
+		}
+	case "outdoor":
+		if text == "" {
+			return
+		}
+		for _, p := range w.GetAllPlayers() {
+			if p.GetPosition() > combat.PosSleeping && w.IsOutside(p.GetRoomVNum()) {
+				p.SendMessage(text)
+			}
+		}
+	case "zone":
+		if roomVNum, ok := a.CharRoom(*ch); ok && text != "" {
+			w.sendToZoneExceptRoom(roomVNum, text)
+		}
+	case "local", "global":
+		actor, p, _ := a.resolveChar(*ch)
+		if actor == nil {
+			return
+		}
+		text = strings.TrimLeft(text, " \t\r\n\v\f") // skip_spaces
+		if text == "" {
+			if p != nil {
+				if kind == "local" {
+					p.SendMessage("Yes.. but what?\r\n")
+				} else {
+					p.SendMessage("That must be a mistake...\r\n")
+				}
+			}
+			return
+		}
+		noRepeat := p != nil && p.GetFlags()&(1<<uint(PrfNoRepeat)) != 0
+		if kind == "local" {
+			// do_echo, SCMD_ECHO (act.wizard.c): act to the room, then to ch.
+			Act(w, false, actor, nil, nil, nil, text, "", ToRoom)
+			if noRepeat {
+				p.SendMessage("Okay.\r\n") // OK (config.c:92)
+			} else {
+				Act(nil, false, actor, nil, nil, nil, text, "", ToChar)
+			}
+			return
+		}
+		// do_gecho: every other player, then ch.
+		line := text + "\r\n"
+		for _, other := range w.GetAllPlayers() {
+			if other != p {
+				other.SendMessage(line)
+			}
+		}
+		if p != nil {
+			if noRepeat {
+				p.SendMessage("Okay.\r\n") // OK (config.c:92)
+			} else {
+				p.SendMessage(line)
+			}
+		}
+	}
+}
+
+// Gossip is lua_gossip's do_gen_comm(me, text, SCMD_GOSSIP).
+func (a *WorldScriptableAdapter) Gossip(me scripting.CharRef, text string) {
+	if m := a.mobFor(me); m != nil {
+		a.world.mobGlobalGossip(m, text)
+	}
+}
+
+// Social is lua_social: do_action(me, GET_NAME(vict), social). ok is false
+// when the name is no social (C's find_command fails, or do_action finds no
+// action for the command).
+func (a *WorldScriptableAdapter) Social(me, vict scripting.CharRef, social string) bool {
+	m := a.mobFor(me)
+	target := a.actorFor(&vict)
+	if m == nil || target == nil {
+		return false
+	}
+	if _, ok := socialMinPosition[social]; !ok {
+		return false
+	}
+	a.world.npcSocial(m, social, target.GetName())
+	return true
+}
+
+// Follow is lua_follow: do_follow(me, leader->player.name), and AFF_CHARM on
+// me when charm is set.
+func (a *WorldScriptableAdapter) Follow(me, leader scripting.CharRef, charm bool) {
+	m := a.mobFor(me)
+	if m == nil {
+		return
+	}
+	_, lp, lm := a.resolveChar(leader)
+	switch {
+	case lp != nil:
+		// do_follow's get_char_room_vis on the leader's name.
+		if lp.GetRoomVNum() == m.GetRoomVNum() && canSee(m, lp) && !strings.EqualFold(m.GetFollowing(), lp.GetName()) {
+			AddFollowerMob(a.world, m, lp)
+		}
+	case lm != nil:
+		slog.Warn("lua follow of a mobile leader is not ported; ignored", "mob_vnum", m.GetVNum(), "leader_vnum", lm.GetVNum())
+	}
+	if charm {
+		m.SetAffected(affCharm)
+	}
+}
+
+// SetHunt is lua_set_hunt's set_hunting(hunter, vict).
+func (a *WorldScriptableAdapter) SetHunt(hunter scripting.CharRef, vict *scripting.CharRef) {
+	m := a.mobFor(hunter)
+	if m == nil {
+		slog.Warn("lua set_hunt for a player is not ported; ignored")
+		return
+	}
+	prey := ""
+	if vict != nil {
+		if target := a.actorFor(vict); target != nil {
+			prey = target.GetName()
+		}
+	}
+	m.SetHunting(prey)
+}
+
+// Spell is lua_spell: cast_spell(me, vict, obj, spell) when vocal, else
+// call_magic(me, vict, obj, spell, GET_LEVEL(me), CAST_SPELL).
+func (a *WorldScriptableAdapter) Spell(me scripting.CharRef, vict *scripting.CharRef, obj *scripting.ObjRef, spellNum int, vocal bool) {
+	m := a.mobFor(me)
+	if m == nil {
+		return
+	}
+	if obj != nil {
+		slog.Warn("lua spell on an object is not ported; ignored", "mob_vnum", m.GetVNum(), "spell", spellNum)
+		return
+	}
+	var target combat.Combatant
+	if vict != nil {
+		if actor := a.actorFor(vict); actor != nil {
+			target, _ = actor.(combat.Combatant)
+		}
+	}
+	if vocal {
+		castSpellC(a.world, m, target, spellNum)
+		return
+	}
+	spells.CastFromSpecial(m, target, spellNum, m.GetLevel(), a.world)
+}
+
+// castSpellC is cast_spell (spell_parser.c) for a mobile caster: its gates
+// answer only the mobile, so a refusal shows nothing; otherwise the verbal
+// component and call_magic.
+func castSpellC(w *World, me *MobInstance, tch combat.Combatant, spellNum int) bool {
+	if spellNum < 0 || spellNum > 299 { // TOP_SPELL_DEFINE (spells.h:260)
+		return false
+	}
+	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+		return false
+	}
+	info := spells.GetSpellInfo(spellNum)
+	if info == nil || me.GetPosition() < int(info.MinPosition) {
+		return false
+	}
+	if me.IsAffected(affCharm) && tch != nil && strings.EqualFold(me.GetFollowing(), tch.GetName()) {
+		return false
+	}
+	self := tch != nil && tch.GetName() == me.GetName()
+	if (!self && info.HasTarget(spells.TarSelfOnly)) || (self && info.HasTarget(spells.TarNotSelf)) {
+		return false
+	}
+	if info.HasRoutine(spells.RoutineGroups) && !me.IsAffected(affGroup) {
+		return false
+	}
+	spells.SaySpell(me, spellNum, tch, nil, w)
+	return spells.Cast(me, tch, spellNum, me.GetLevel(), w)
+}
+
+// Unaffect is lua_unaffect: affect_remove for every affect on vict.
+func (a *WorldScriptableAdapter) Unaffect(ref scripting.CharRef) {
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		p.mu.Lock()
+		affects := p.ActiveAffects
+		p.ActiveAffects = nil
+		p.mu.Unlock()
+		for _, af := range affects {
+			engine.AffectFromChar(p, af.SpellID)
+		}
+	case m != nil:
+		m.mu.Lock()
+		var removed []*engine.Affect
+		for key, value := range m.CustomData {
+			if af, ok := value.(*engine.Affect); ok && strings.HasPrefix(key, "affect_") {
+				removed = append(removed, af)
+				delete(m.CustomData, key)
+			}
+		}
+		m.mu.Unlock()
+		for _, af := range removed {
+			for engFlag, cBit := range EngineFlagToAffBit {
+				if af.Flags&engFlag != 0 {
+					m.RemoveAffected(cBit)
+				}
+			}
+		}
+	}
+}
+
+// Mount is lua_mount: do_ride(rider, GET_NAME(mount)), do_dismount(rider)
+// or unmount(rider, get_mount(rider)). Only player riders are ported.
+func (a *WorldScriptableAdapter) Mount(rider scripting.CharRef, mount *scripting.CharRef, how string) {
+	_, p, _ := a.resolveChar(rider)
+	if p == nil {
+		slog.Warn("lua mount for a mobile rider is not ported; ignored", "how", how)
+		return
+	}
+	switch how {
+	case "ride":
+		name := ""
+		if mount != nil {
+			if actor := a.actorFor(mount); actor != nil {
+				name = actor.GetName()
+			}
+		}
+		a.world.doRide(p, nil, "ride", name)
+	case "dismount":
+		a.world.doDismount(p, nil, "dismount", "")
+	case "unmount":
+		if m := a.world.riddenMount(p); m != nil {
+			a.world.clearMountedPair(p, m)
+		}
+	}
 }

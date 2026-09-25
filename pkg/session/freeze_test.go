@@ -64,7 +64,6 @@ func TestCmdFreezeResolvesCCharacterTargets(t *testing.T) {
 		actor := makeCommandTestSession(t, m, "Actor", LVL_GRGOD, 1001)
 		registerInWorld(t, actor)
 		registerMob(t, m, 2001, 1001)
-		_ = readMsgText(t, actor) // mob-entry announcement
 
 		if err := cmdFreeze(actor, []string{"guard"}); err != nil {
 			t.Fatal(err)

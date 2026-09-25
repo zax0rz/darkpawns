@@ -43,8 +43,14 @@ type ObjectInstance struct {
 	// When non-nil, these override the prototype values.
 	// Source: src/spells.c spell_enchant_weapon/armor, spell_silken_missile.
 	ExtraFlagsOverride [4]int
-	AffectsOverride    []parser.ObjAffect
-	ValuesOverride     *[4]int // copy-on-write override of prototype Values
+	// extraFlagsOverridden says ExtraFlagsOverride holds this object's own
+	// extra flags. C's read_object copies the prototype's flags into each
+	// object (GET_OBJ_EXTRA is per object), so the first change starts from
+	// the prototype's and later ones build on it; a zero override can then
+	// mean "no flags" rather than "unchanged".
+	extraFlagsOverridden bool
+	AffectsOverride      []parser.ObjAffect
+	ValuesOverride       *[4]int // copy-on-write override of prototype Values
 	// CostOverride is a per-instance GET_OBJ_COST, written by a script's
 	// save_obj (table_to_obj); nil means the prototype's cost.
 	CostOverride *int
@@ -517,7 +523,7 @@ func (o *ObjectInstance) GetInstanceID() int {
 // GetExtraFlags returns the effective extra flags, preferring instance overrides.
 // Returns all 4 flag words as a slice.
 func (o *ObjectInstance) GetExtraFlags() [4]int {
-	if o.ExtraFlagsOverride != [4]int{} {
+	if o.extraFlagsOverridden {
 		return o.ExtraFlagsOverride
 	}
 	if o.Prototype != nil {
@@ -532,7 +538,36 @@ func (o *ObjectInstance) SetExtraFlag(word, bit int) {
 	if word < 0 || word >= len(o.ExtraFlagsOverride) || bit < 0 || bit >= 32 {
 		return
 	}
+	o.ownExtraFlags()
 	o.ExtraFlagsOverride[word] |= (1 << uint(bit))
+}
+
+// ownExtraFlags gives the object its own copy of the prototype's extra
+// flags before the first change to them.
+func (o *ObjectInstance) ownExtraFlags() {
+	if o.extraFlagsOverridden {
+		return
+	}
+	if o.Prototype != nil {
+		o.ExtraFlagsOverride = o.Prototype.ExtraFlags
+	}
+	o.extraFlagsOverridden = true
+}
+
+// ResetExtraFlags drops the object's own extra flags, so it reads its
+// prototype's again (an OLC prototype save refreshing live objects).
+func (o *ObjectInstance) ResetExtraFlags() {
+	o.ExtraFlagsOverride = [4]int{}
+	o.extraFlagsOverridden = false
+}
+
+// ExtraFlagWord is one word of the object's effective extra flags.
+func (o *ObjectInstance) ExtraFlagWord(word int) int {
+	flags := o.GetExtraFlags()
+	if word < 0 || word >= len(flags) {
+		return 0
+	}
+	return flags[word]
 }
 
 // HasExtraFlag checks if a bit is set in the effective extra flags.
@@ -549,6 +584,7 @@ func (o *ObjectInstance) RemoveExtraFlag(word, bit int) {
 	if word < 0 || word >= len(o.ExtraFlagsOverride) || bit < 0 || bit >= 32 {
 		return
 	}
+	o.ownExtraFlags()
 	o.ExtraFlagsOverride[word] &^= (1 << uint(bit))
 }
 
@@ -599,7 +635,7 @@ func (o *ObjectInstance) SetObjVal(idx, val int) {
 // Note: internally extra flags are [4]int; this packs into word 0.
 // For full compatibility, consider using SetExtraFlag(word, bit) instead.
 func (o *ObjectInstance) SetExtraFlags(flags int) {
-	// Store in word 0 of the override array
+	o.ownExtraFlags()
 	o.ExtraFlagsOverride[0] = flags
 }
 

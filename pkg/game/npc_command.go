@@ -62,6 +62,10 @@ func (w *World) NPCCommand(me *MobInstance, line string) {
 		if position >= combat.PosResting {
 			w.npcGive(me, rest)
 		}
+	case "stand":
+		if position >= combat.PosResting {
+			w.npcStand(me)
+		}
 	default:
 		minimum, isSocial := socialMinPosition[word]
 		if !isSocial {
@@ -87,6 +91,22 @@ func anyOneArg(line string) (string, string) {
 		return line, ""
 	}
 	return line[:end], line[end:]
+}
+
+// npcStand is do_stand (act.movement.c:696-731) for a mobile: only the
+// room's lines are visible. A mounted mobile's dismount is not ported.
+func (w *World) npcStand(me *MobInstance) {
+	switch me.GetPosition() {
+	case combat.PosStanding, combat.PosSleeping, combat.PosFighting:
+		return // TO_CHAR only (a standing mobile's dismount is not ported)
+	case combat.PosSitting:
+		Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
+	case combat.PosResting:
+		Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
+	default:
+		Act(w, true, me, nil, nil, nil, "$n stops floating around, and puts $s feet on the ground.", "", ToRoom)
+	}
+	me.SetPosition(combat.PosStanding)
 }
 
 // npcSay is do_say (act.comm.c) for a mobile: the room hears
