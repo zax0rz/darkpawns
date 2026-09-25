@@ -71,7 +71,16 @@ func ApplyCharacterData(p *Player, raw []byte) error {
 
 // restoreSkills sets each saved skill's learned percentage.
 func restoreSkills(p *Player, skills map[string]int) {
+	restored := make(map[string]int, len(skills))
 	for name, level := range skills {
+		// A save may hold one skill under both its old catalog name and its
+		// handler key (practised before and after DP-1342); keep the higher.
+		key := canonicalSkillKey(name)
+		if level > restored[key] {
+			restored[key] = level
+		}
+	}
+	for name, level := range restored {
 		p.SetSkill(name, level)
 	}
 }

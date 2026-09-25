@@ -444,26 +444,8 @@ func cmdSkillset(s *Session, args []string) error {
 	// Step 10: SET_SKILL(vict, skill, value). Go stores skills by name string;
 	// use the canonical spells[] display name (lowercased, matching how callers
 	// key GetSkill/SetSkill — see spec_procs.go practice).
+	// SkillStorageName carries C's catalog-to-key translations (DP-1342).
 	canonicalName := game.SkillStorageName(skillNum)
-	// C's spells[] display name is "pick lock", while the door command's
-	// gameplay lookup uses the Go storage key pick_lock. First aid is likewise
-	// displayed as C's "aid" but stored under the Go key first_aid.
-	switch canonicalName {
-	case "search":
-		// C's spells[SKILL_DETECT] display name is "search", while
-		// do_detect's gameplay lookup uses the command-facing SkillDetect key.
-		canonicalName = game.SkillDetect
-	case "pick lock":
-		canonicalName = game.SkillPickLock
-	case "aid":
-		canonicalName = game.SkillFirstAid
-	case "flesh alter":
-		canonicalName = game.SkillFleshAlter
-	case "dragon kick":
-		canonicalName = game.SkillDragonKick
-	case "serpent kick":
-		canonicalName = game.SkillSerpentKick
-	}
 	vict.SetSkill(canonicalName, value)
 
 	// Step 11: confirmation to the actor. spells[skill] is the display name.

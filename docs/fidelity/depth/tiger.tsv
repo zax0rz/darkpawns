@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_tiger_punch	tiger	tiger.no-target	D2	command	oracle-green	god-skill-keys	src/act.offensive.c:693-719	Skill, then bare hands, then the victim (the argument, else FIGHTING), else 'Hit who?'; the port said 'Tiger punch whom?' and checked the weapon after the target. dragon kick now also falls back to FIGHTING when the argument names no one.
