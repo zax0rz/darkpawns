@@ -252,9 +252,6 @@ type Player struct {
 	IdleTimer int // ticks of inactivity — limits.c check_idling()
 	WasInRoom int // previous room before void pull — limits.c GET_WAS_IN()
 
-	// Ignore list: map of player names the player is ignoring
-	IgnoredPlayers map[string]bool
-
 	// Aliases — from src/alias.c
 	// Per-player command aliases stored in data/aliases/
 	Aliases []Alias

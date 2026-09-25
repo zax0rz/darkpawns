@@ -1,0 +1,41 @@
+# R2/R4: C's command table has no "ignore" and no command it prefixes, so
+# command_interpreter answers "Huh?!?" (interpreter.c:916). The port had a
+# Go-only ignore list whose tell/reply refusal ("X is ignoring you.") C
+# never sends; mute is C's tool for silencing a player.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Ignorer
+Y
+ignpass
+ignpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ignorer
+y
+ignpass
+ignpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+
+[probe]
+ignore
+ignore someone

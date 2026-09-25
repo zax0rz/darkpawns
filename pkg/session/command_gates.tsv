@@ -209,7 +209,6 @@ i	0	0	Go alias for inventory
 idea	0	0	C interpreter.c:510
 ident	39	0	C interpreter.c:511
 idlist	38	0	C interpreter.c:512
-ignore	0	0	Go communication preference; safe in every position
 immlist	0	0	C interpreter.c:514
 imotd	31	0	C interpreter.c:513
 inactive	0	4	C interpreter.c:515

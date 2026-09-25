@@ -376,39 +376,3 @@ func cmdCTell(s *Session, args []string) error {
 // ---------------------------------------------------------------------------
 // AFK
 // ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Ignore
-// ---------------------------------------------------------------------------
-
-// cmdIgnore toggles ignore status for a player.
-func cmdIgnore(s *Session, args []string) error {
-	if len(args) == 0 {
-		// List ignored players
-		ignored := s.player.GetIgnoredPlayers()
-		if len(ignored) == 0 {
-			s.Send("You are not ignoring anyone.")
-			return nil
-		}
-		s.Send("You are ignoring:\n" + strings.Join(ignored, "\n"))
-		return nil
-	}
-
-	targetName := args[0]
-
-	// Can't ignore self
-	if strings.EqualFold(targetName, s.player.Name) {
-		s.Send("You can't ignore yourself.")
-		return nil
-	}
-
-	// Toggle ignore
-	if s.player.IsIgnoring(targetName) {
-		s.player.RemoveIgnore(targetName)
-		s.Send(fmt.Sprintf("%s is no longer ignored.", targetName))
-	} else {
-		s.player.AddIgnore(targetName)
-		s.Send(fmt.Sprintf("%s is now ignored.", targetName))
-	}
-	return nil
-}

@@ -245,10 +245,6 @@ func (w *World) DoTell(ch *Player, argument string) {
 		Act(nil, false, ch, target, nil, nil, "$E can't hear you.", "", ToChar|ToSleep)
 		return
 	}
-	if target.IsIgnoring(ch.Name) {
-		communicationSend(ch, target.Name+" is ignoring you.")
-		return
-	}
 	w.performTell(ch, target, message)
 }
 
@@ -301,10 +297,6 @@ func (w *World) DoReply(ch *Player, argument string) {
 	}
 	if state.targetSoundproof {
 		Act(nil, false, ch, target, nil, nil, "$E can't hear you.", "", ToChar|ToSleep)
-		return
-	}
-	if target.IsIgnoring(ch.Name) {
-		communicationSend(ch, target.Name+" is ignoring you.")
 		return
 	}
 	w.performTell(ch, target, argument)
