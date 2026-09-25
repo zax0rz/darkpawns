@@ -1220,7 +1220,7 @@ func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string,
 
 func (w *World) playerPresenceLine(player, viewer *Player) string {
 	// list_one_char's general branch for a player (act.informative.c:546-611).
-	buf := player.GetName() + " " + player.GetTitle()
+	buf := player.GetName() + " " + strings.TrimSpace(player.GetTitle())
 	buf += presenceTags(player)
 	if player.IsLinkless() {
 		buf += " (linkless)"

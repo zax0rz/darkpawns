@@ -69,3 +69,19 @@ on both sides. The healer was sitting, and both C's and the port's
 stood, cast sanctuary and cured; the port's could not stand at all
 (`stand` was not an NPC command). The fix and the proof came from making
 the effect visible, not from the first green result.
+
+## One C rule, three hand-fitted spacers
+
+Before `do_description` was ported, the port had already reproduced its
+trailing space in three places, each fitted to the one scenario where it
+first diverged:
+
+- a space before autoexits on the command path only;
+- a function that re-rendered the elements_galeru look and inserted a space
+  before the first player's line;
+- an arrival act hard-coded as `" $n appears in a brilliant flash of light."`.
+
+Each comment described the space as C's observed "framing". Porting the rule
+once made the first two redundant, and the census caught the second when it
+doubled the space. The third still stands in for C's carry-over of an unsent
+space into the looker's next output, and its comment now says so.
