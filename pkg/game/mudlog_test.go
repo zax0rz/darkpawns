@@ -4,8 +4,8 @@ import "testing"
 
 type testSessions []*Player
 
-func (s testSessions) EachSession(fn func(player interface{}, send func(msg string))) {
-	for _, p := range s {
+func (s *testSessions) EachSession(fn func(player interface{}, send func(msg string))) {
+	for _, p := range *s {
 		p := p
 		fn(p, p.SendMessage)
 	}
@@ -31,7 +31,7 @@ func TestMudLogSyslogLevels(t *testing.T) {
 	mortal := mk("Mortal", 10, true, true, false)
 
 	prev := getImmortalSessionProvider()
-	SetImmortalSessionProvider(testSessions{complete, normal, brief, writer, mortal})
+	SetImmortalSessionProvider(&testSessions{complete, normal, brief, writer, mortal})
 	defer SetImmortalSessionProvider(prev)
 
 	MudLog("cmp line", 3, lvlImmort, false)
@@ -49,5 +49,22 @@ func TestMudLogSyslogLevels(t *testing.T) {
 		if got := channelOutput(output, name); got != w {
 			t.Errorf("%s saw %q, want %q", name, got, w)
 		}
+	}
+}
+
+// Clearing unregisters only the provider that is still registered.
+func TestClearImmortalSessionProvider(t *testing.T) {
+	prev := getImmortalSessionProvider()
+	defer SetImmortalSessionProvider(prev)
+	older, newer := &testSessions{}, &testSessions{}
+	SetImmortalSessionProvider(older)
+	SetImmortalSessionProvider(newer)
+	ClearImmortalSessionProvider(older)
+	if getImmortalSessionProvider() == nil {
+		t.Fatal("clearing a replaced provider unregistered the current one")
+	}
+	ClearImmortalSessionProvider(newer)
+	if getImmortalSessionProvider() != nil {
+		t.Fatal("clearing the current provider left it registered")
 	}
 }

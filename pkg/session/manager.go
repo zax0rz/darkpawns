@@ -635,6 +635,8 @@ func (m *Manager) FlushAsyncPrompts() {
 // cannot outlive their manager and race later package-global callback wiring.
 func (m *Manager) Stop() {
 	m.combatEngine.Stop()
+	// A stopped manager is no longer mudlog's session list.
+	game.ClearImmortalSessionProvider(m)
 }
 
 // RequestShutdown hands an accepted do_shutdown option to the process

@@ -188,6 +188,18 @@ func SetImmortalSessionProvider(provider ImmortalSessionProvider) {
 	immortalSessionProviderMu.Unlock()
 }
 
+// ClearImmortalSessionProvider unregisters provider if it is still the
+// registered one; a newer registration is left alone. Providers are
+// compared by identity, so they must be comparable (the session manager is
+// a pointer).
+func ClearImmortalSessionProvider(provider ImmortalSessionProvider) {
+	immortalSessionProviderMu.Lock()
+	defer immortalSessionProviderMu.Unlock()
+	if immortalSessionProvider == provider {
+		immortalSessionProvider = nil
+	}
+}
+
 func getImmortalSessionProvider() ImmortalSessionProvider {
 	immortalSessionProviderMu.RLock()
 	defer immortalSessionProviderMu.RUnlock()
