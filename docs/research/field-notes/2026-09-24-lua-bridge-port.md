@@ -83,3 +83,23 @@ pulses matches with weather messages interleaved, which pins where its
 duplicate runestone tells the giver, remarks, then falls through to
 `return_obj()` a second time and hands back the stone it had kept. That is
 C's script, and the port now does it too.
+
+## Citations written from memory
+
+GLM's review of the PR found that two C line citations were wrong. A
+grep-backed recheck of every citation the PR added found nine wrong, in
+three kinds:
+
+- interpreter.c ranges written from memory. `command_interpreter` was
+  cited as 1270-1349 when it is 883-949, the hide draw as 1283-1284 when
+  it is 889-890, and the mobile oncmd block as 1447-1453 when it is
+  1457-1460.
+- table-function and `open_lua_file` bounds off by a few lines.
+- One pre-existing comment (`open_lua_file` at 1641-1701) that had been
+  wrong before this work began.
+
+Every binding citation, each taken from a line that was read, was right.
+The wrong numbers had also spread into a filed issue (DP-1336).
+
+The manifests treat `c_site` as load-bearing, but nothing checks it. A
+citation written from memory reads exactly like one that was grepped.
