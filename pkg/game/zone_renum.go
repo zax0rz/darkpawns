@@ -42,7 +42,7 @@ func (w *World) renumZoneCommand(zone *parser.Zone, index int) {
 	mob := func(vnum int) bool { _, ok := w.mobs[vnum]; return ok }
 	obj := func(vnum int) bool { _, ok := w.objs[vnum]; return ok }
 
-	valid := true
+	var valid bool
 	switch cmd.Command {
 	case "M":
 		valid = mob(cmd.Arg1) && room(cmd.Arg3)
