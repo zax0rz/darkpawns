@@ -1,0 +1,48 @@
+# Lua ongive: the healer (mob 12220) refuses an object that is not a
+# runestone piece: assemble_list returns nil, return_obj says so and gives
+# the object back with action(me, "give <first alias> <giver>").
+# depth-case: lua.ongive-dispatch
+# depth-case: lua.bridge-say
+# depth-case: lua.bridge-action-give
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+
+[setup:oracle]
+Rubbishgiver
+Y
+trashpass
+trashpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rubbishgiver
+y
+trashpass
+trashpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+load obj 11052
+
+[probe]
+give tooth healer
+inventory

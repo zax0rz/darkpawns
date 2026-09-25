@@ -264,6 +264,30 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// #nosec G404 — game RNG, not cryptographic
 	if mobactNumber(0, 15) == 0 {
 		w.MpSound(ch)
+		// mobact.c:148-158: the sound script, with the mobile as ch and me,
+		// only when a player (a non-mobile) is in the room.
+		if ch.HasScript("sound") && w.roomHasOtherOccupant(ch, true) {
+			w.runPulseScript(ch, "sound")
+		}
+	}
+
+	// mobact.c:161-175: onpulse_all when anyone else is in the room; a TRUE
+	// return ends this mobile's turn.
+	if ch.HasScript("onpulse_all") && w.roomHasOtherOccupant(ch, false) {
+		if w.runPulseScript(ch, "onpulse_all") {
+			return
+		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 { // check_dead
+		return
+	}
+
+	// mobact.c:180-193: onpulse_pc when a player is in the room.
+	if ch.HasScript("onpulse_pc") && w.roomHasOtherOccupant(ch, true) {
+		w.runPulseScript(ch, "onpulse_pc")
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 { // check_dead
+		return
 	}
 
 	// -- Aggressive Mobs --
@@ -488,27 +512,37 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 		}
 	}
+}
 
-	// Lua onpulse triggers — fired every tick for mobs with the script
-	if ScriptEngine != nil {
-		if ch.HasScript("onpulse_all") {
-			ctx := ch.CreateScriptContext(nil, nil, "")
-			ctx.World = NewWorldScriptableAdapter(w)
-			ctx.RoomVNum = ch.RoomVNum
-			if _, err := ch.RunScript("onpulse_all", ctx); err != nil {
-				slog.Warn("onpulse_all script error", "mob_vnum", ch.GetVNum(), "error", err)
-			}
-		}
-		if ch.HasScript("onpulse_pc") {
-			players := w.GetPlayersInRoom(ch.RoomVNum)
-			if len(players) > 0 {
-				ctx := ch.CreateScriptContext(players[0], nil, "")
-				ctx.World = NewWorldScriptableAdapter(w)
-				ctx.RoomVNum = ch.RoomVNum
-				if _, err := ch.RunScript("onpulse_pc", ctx); err != nil {
-					slog.Warn("onpulse_pc script error", "mob_vnum", ch.GetVNum(), "error", err)
-				}
-			}
+// roomHasOtherOccupant is mobact.c's people scan for the pulse triggers:
+// anyone in ch's room other than ch, or with playersOnly, anyone who is not
+// a mobile.
+func (w *World) roomHasOtherOccupant(ch *MobInstance, playersOnly bool) bool {
+	if len(w.GetPlayersInRoom(ch.RoomVNum)) > 0 {
+		return true
+	}
+	if playersOnly {
+		return false
+	}
+	for _, other := range w.GetMobsInRoom(ch.RoomVNum) {
+		if other != ch {
+			return true
 		}
 	}
+	return false
+}
+
+// runPulseScript is run_script(ch, ch, NULL, room, NULL, trigger, LT_MOB)
+// for the pulse triggers, and returns the script's result.
+func (w *World) runPulseScript(ch *MobInstance, trigger string) bool {
+	if ScriptEngine == nil {
+		return false
+	}
+	ctx := ch.CreateSelfScriptContext()
+	ctx.World = NewWorldScriptableAdapter(w)
+	handled, err := ch.RunScript(trigger, ctx)
+	if err != nil {
+		slog.Warn("mob pulse script error", "trigger", trigger, "mob_vnum", ch.GetVNum(), "error", err)
+	}
+	return handled
 }

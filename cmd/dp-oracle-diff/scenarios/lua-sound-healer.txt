@@ -1,0 +1,49 @@
+# Lua sound: the healer (mob 12220, Script: 122/healer.lua 24, MS_SOUND).
+# depth-case: lua.sound-dispatch
+# depth-case: lua.sound-draw-order
+# depth-case: lua.bridge-action-social
+#
+# mobile_activity draws number(0,15) per mobile; on 0 it runs mp_sound and
+# then the sound script, when a non-mobile is in the room (mobact.c:145-159).
+# The healer's lament ends in action(me, "sigh"), a social run through
+# command_interpreter. The port never ran sound scripts at all.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+
+[setup:oracle]
+Soundlistener
+Y
+soundpass
+soundpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Soundlistener
+y
+soundpass
+soundpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+
+[probe]
+~dpclock pulse 8000

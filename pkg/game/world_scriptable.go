@@ -1,7 +1,6 @@
 package game
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 
@@ -224,32 +223,6 @@ func (a *WorldScriptableAdapter) IsRoomDark(roomVNum int) bool {
 // GetRoomZone returns the zone number for a given room VNum.
 func (a *WorldScriptableAdapter) GetRoomZone(roomVNum int) int {
 	return a.world.GetRoomZone(roomVNum)
-}
-
-// CreateEvent schedules a timed event on the world's event queue.
-// Source: scripts.c lua_create_event() — create_event(source, target, obj, argument, trigger, delay, type)
-func (a *WorldScriptableAdapter) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 {
-	if a.world.EventQueue == nil {
-		slog.Error("cannot create event: EventQueue is nil")
-		return 0
-	}
-
-	// In the original C code, delay is in PULSE_VIOLENCE units (2 seconds = 20 pulses).
-	// The Lua scripts pass small integers like 1, 6, 10 meaning "N * PULSE_VIOLENCE".
-	// We convert to pulses: 1 delay unit = 20 pulses = 2 seconds.
-	// Source: scripts.c line 306: event->count = PULSE_VIOLENCE * time
-	// Source: structs.h: PULSE_VIOLENCE = (2 RL_SEC) = 20 pulses
-	pulseDelay := int64(delay) * 20
-
-	return a.world.EventQueue.Create(pulseDelay, source, target, obj, argument, trigger, eventType,
-		func(ctx context.Context, src, tgt, o, arg int, trig string, et int) int64 {
-			// When the event fires, dispatch the Lua trigger on the mob.
-			// Source: events.c event_process() — calls the_event->func(event_obj)
-			// The original lua_create_event stored a script_event struct with
-			// me, obj, room, fname, type and called run_script() when fired.
-			a.world.dispatchScriptEvent(src, tgt, o, arg, trig, et)
-			return 0
-		})
 }
 
 // ---------------------------------------------------------------------------
@@ -594,58 +567,5 @@ func (w *World) fireMobScript(trigger, mobName, actorName string, roomVNum int) 
 
 	if _, err := mob.RunScript(trigger, ctx); err != nil {
 		slog.Warn(trigger+" script error", "mob_vnum", mob.GetVNum(), "mob_name", mob.GetName(), "error", err)
-	}
-}
-
-// dispatchScriptEvent dispatches a Lua trigger when a scheduled event fires.
-// This is the callback registered with EventQueue.Create() for script events.
-// Based on the original lua_create_event() in scripts.c lines 247-316.
-//
-// The original stored: me, ch, obj, room, fname (trigger), type
-// and called run_script() when the event fired.
-func (w *World) dispatchScriptEvent(source, target, objVNum, argument int, trigger string, eventType int) {
-	if ScriptEngine == nil {
-		return
-	}
-
-	// Find the mob by instance ID (source)
-	w.mu.RLock()
-	var mob *MobInstance
-	if source > 0 {
-		mob = w.activeMobs[source]
-	}
-	w.mu.RUnlock()
-
-	if mob == nil {
-		// Mob may have died or been extracted — event is a no-op
-		// This matches original behavior where extract_char cleans up events
-		return
-	}
-
-	// Build script context
-	ctx := mob.CreateScriptContext(nil, nil, "")
-	ctx.World = NewWorldScriptableAdapter(w)
-	ctx.RoomVNum = mob.GetRoom()
-
-	// Target resolution for cross-entity script triggers.
-	// In the original C code, target was a char_data pointer directly.
-	// Our Go version stores target as a numeric int that may be a player ID,
-	// mob instance ID, or 0 (no target). For now we only support events
-	// where the mob is its own target (target == source). When an entity
-	// lookup by ID is added (e.g., GetPlayerByID, GetMobByID), resolve
-	// target here and pass the resulting entity name into ctx as needed.
-
-	// Run the trigger function in the mob's script
-	// The trigger name is the Lua function to call (e.g., "port", "jail", "bane_one")
-	if mob.HasScript(trigger) {
-		if _, err := mob.RunScript(trigger, ctx); err != nil {
-			slog.Error("script error", "mob_vnum", mob.GetVNum(), "trigger", trigger, "error", err)
-		}
-	} else {
-		// The mob's prototype may not have the trigger bit set, but the
-		// function might still exist in the Lua file — try anyway
-		if _, err := ScriptEngine.RunScript(ctx, mob.Proto().ScriptName, trigger); err != nil {
-			slog.Error("script error", "mob_vnum", mob.GetVNum(), "trigger", trigger, "error", err)
-		}
 	}
 }

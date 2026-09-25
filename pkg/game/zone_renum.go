@@ -96,3 +96,13 @@ func (w *World) destroyMobPossessions(mob *MobInstance) {
 		w.ExtractObject(obj, -1)
 	}
 }
+
+// RoomRNum is real_room: the room's index in the vnum-ordered world table,
+// or -1 when there is no such room.
+func (w *World) RoomRNum(vnum int) int {
+	i := sort.SearchInts(w.sortedRoomVNums, vnum)
+	if i < len(w.sortedRoomVNums) && w.sortedRoomVNums[i] == vnum {
+		return i
+	}
+	return -1
+}

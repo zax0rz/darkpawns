@@ -1,0 +1,55 @@
+# Lua oncmd: Hisczdrezzez (mob 14412, Script: 144/hisc.lua 512) blocks south.
+# depth-case: lua.oncmd-dispatch
+# depth-case: lua.oncmd-command-name
+# depth-case: lua.bridge-act
+# depth-case: lua.bridge-say
+#
+# special() (interpreter.c:1447-1453) runs the mobile's oncmd script with
+# buf = CMD_NAME + arg, so every spelling that resolves to "south" reaches
+# no_move() (scripts/mob/no_move.lua) as "south" and is blocked: two act()
+# lines and a say. "north" resolves to another command and passes through.
+# The port used to hand oncmd the typed word, so "s" and "sou" walked past.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14412 999 14447 144
+
+[setup:oracle]
+Hiscvisitor
+Y
+hiscpass
+hiscpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hiscvisitor
+y
+hiscpass
+hiscpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 14447
+
+[probe]
+south
+s
+sou
+south please
+north

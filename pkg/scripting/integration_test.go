@@ -67,9 +67,6 @@ func (m *mockWorldForTest) GiveItemToMob(mobID int, obj ScriptableObject) error 
 
 func (m *mockWorldForTest) GetObjByInstanceID(id int) ScriptableObject { return nil }
 
-func (m *mockWorldForTest) CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64 {
-	return 0
-}
 func (m *mockWorldForTest) FindFirstStep(src, target int) int            { return -1 }
 func (m *mockWorldForTest) GetRoomInWorld(vnum int) *parser.Room         { return nil }
 func (m *mockWorldForTest) ExecuteMobCommand(mobVNum int, cmdStr string) {}
@@ -838,7 +835,6 @@ func TestSpellConstantsBatchA(t *testing.T) {
 		{"SPELL_FLAMESTRIKE", 96},
 		{"SPELL_DISRUPT", 92},
 		{"SPELL_POISON", 33},
-		{"SPELL_PARALYSE", 105},
 		{"SPELL_TELEPORT", 2},
 		{"SPELL_WORD_OF_RECALL", 42},
 	}

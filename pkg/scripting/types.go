@@ -128,13 +128,6 @@ type ScriptableWorld interface {
 	// FindFirstStep returns direction (0-5) from src room to target room.
 	// Returns -1 on error, -2 if already there, -3 if no path.
 	FindFirstStep(src, target int) int
-	// CreateEvent schedules a timed event on the world's event queue.
-	// delay is in game pulses (1 pulse = 1/10 second in original C).
-	// trigger is the Lua function name to call when the event fires.
-	// eventType is LT_MOB (1), LT_OBJ (2), or LT_ROOM (3) from structs.h.
-	// Returns the event ID, or 0 if the event could not be scheduled.
-	// Source: scripts.c lua_create_event() — create_event(source, target, obj, argument, trigger, delay, type)
-	CreateEvent(delay int, source, target, obj, argument int, trigger string, eventType int) uint64
 
 	// --- STATE MUTATIONS & LOOKUPS (lua_batch2_mutations.go) ---
 
@@ -210,4 +203,11 @@ type ScriptContext struct {
 	RoomVNum int
 	Argument string
 	World    ScriptableWorld
+	// ChRef, MeRef and ObjRef are run_script's ch, me and obj as C passes
+	// them (ch may be a mobile: the pulse triggers pass the mobile as both).
+	// When MeRef is set and the world implements Bridge, the run uses C's
+	// tables and write-back (bridge.go).
+	ChRef  *CharRef
+	MeRef  *CharRef
+	ObjRef *ObjRef
 }
