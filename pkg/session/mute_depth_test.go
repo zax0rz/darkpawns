@@ -60,7 +60,6 @@ func TestCmdMuteRejectsVisibleMob(t *testing.T) {
 	actor := makeCommandTestSession(t, m, "Mutegod", LVL_IMPL, 1001)
 	registerInWorld(t, actor)
 	registerMob(t, m, 2001, 1001)
-	_ = readMsgText(t, actor) // mob-entry announcement
 
 	if err := cmdMute(actor, []string{"guard"}); err != nil {
 		t.Fatal(err)

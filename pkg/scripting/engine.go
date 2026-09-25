@@ -693,9 +693,9 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("emote", L.NewFunction(e.bridged(e.bridgeEmote, e.luaEmote)))
 	L.SetGlobal("action", L.NewFunction(e.bridged(e.bridgeAction, e.luaAction)))
 	L.SetGlobal("oload", L.NewFunction(e.bridged(e.bridgeOLoad, e.luaOload)))
-	L.SetGlobal("mload", L.NewFunction(e.luaMload))
+	L.SetGlobal("mload", L.NewFunction(e.bridged(e.bridgeMLoad, e.luaMload)))
 	L.SetGlobal("extobj", L.NewFunction(e.bridged(e.bridgeExtObj, e.luaExtobj)))
-	L.SetGlobal("extchar", L.NewFunction(e.luaExtchar))
+	L.SetGlobal("extchar", L.NewFunction(e.bridged(e.bridgeExtChar, e.luaExtchar)))
 	L.SetGlobal("number", L.NewFunction(e.luaNumber))
 	L.SetGlobal("strlower", L.NewFunction(e.luaStrlower))
 	// Lua 4's strfind, strsub and gsub are Lua 5.1's string.find, string.sub
@@ -733,8 +733,8 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("round", L.NewFunction(luaRound4))
 
 	// Functions needed for RESTORE scripts
-	L.SetGlobal("objfrom", L.NewFunction(e.luaObjFrom))
-	L.SetGlobal("objto", L.NewFunction(e.luaObjTo))
+	L.SetGlobal("objfrom", L.NewFunction(e.bridged(e.bridgeObjFrom, e.luaObjFrom)))
+	L.SetGlobal("objto", L.NewFunction(e.bridged(e.bridgeObjTo, e.luaObjTo)))
 	L.SetGlobal("obj_extra", L.NewFunction(e.bridged(e.bridgeObjExtra, e.luaObjExtra)))
 	L.SetGlobal("tell", L.NewFunction(e.bridged(e.bridgeTell, e.luaTell)))
 	L.SetGlobal("plr_flagged", L.NewFunction(e.bridged(e.bridgePlrFlagged, e.luaPlrFlagged)))
@@ -742,7 +742,7 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("isnpc", L.NewFunction(e.bridged(e.bridgeIsNPC, e.luaIsNPC)))
 	L.SetGlobal("aff_flagged", L.NewFunction(e.bridged(e.bridgeAffFlagged, e.luaAffFlagged)))
 	L.SetGlobal("plr_flags", L.NewFunction(e.bridged(e.actFlagsBinding("plr_flags"), e.luaPlrFlags)))
-	L.SetGlobal("obj_list", L.NewFunction(e.luaObjList))
+	L.SetGlobal("obj_list", L.NewFunction(e.bridged(e.bridgeObjList, e.luaObjList)))
 
 	// Stubs needed by Tier 3 Economy scripts
 	L.SetGlobal("item_check", L.NewFunction(e.luaItemCheck))
@@ -762,16 +762,16 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("exit_flagged", L.NewFunction(e.bridged(e.bridgeExitFlagged, e.luaExitFlagged)))
 	L.SetGlobal("exit_flags", L.NewFunction(e.bridged(e.bridgeExitFlags, e.luaExitFlags)))
 	L.SetGlobal("unaffect", L.NewFunction(e.luaUnaffect))
-	L.SetGlobal("equip_char", L.NewFunction(e.luaEquipChar))
+	L.SetGlobal("equip_char", L.NewFunction(e.bridged(e.bridgeEquipChar, e.luaEquipChar)))
 	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
 	L.SetGlobal("echo", L.NewFunction(e.luaEcho))
 
 	// Stubs needed by Batch C Quest/Mechanic NPC scripts
-	L.SetGlobal("extra", L.NewFunction(e.luaExtra))
+	L.SetGlobal("extra", L.NewFunction(e.bridged(e.bridgeExtra, e.luaExtra)))
 	L.SetGlobal("strlen", L.NewFunction(e.luaStrlen))
 	L.SetGlobal("iscorpse", L.NewFunction(e.luaIsCorpse))
 	L.SetGlobal("canget", L.NewFunction(e.luaCanGet))
-	L.SetGlobal("steal", L.NewFunction(e.luaSteal))
+	L.SetGlobal("steal", L.NewFunction(e.bridged(e.bridgeSteal, e.luaSteal)))
 }
 
 // loadGlobals loads the globals.lua file.
@@ -1443,15 +1443,23 @@ func (e *Engine) luaStrlower(L *lua.LState) int {
 }
 
 func (e *Engine) luaGetn(L *lua.LState) int {
-	// getn(t)
-	// Lua 4 compat for table length
-	tbl := L.Get(1)
-	if tbl.Type() != lua.LTTable {
-		L.Push(lua.LNumber(0))
+	// Lua 4.0's getn (lbuiltin.c luaB_getn, ltable.c luaA_getn): the table's
+	// "n" field when it is a number, otherwise its largest numeric key. A
+	// non-table argument is an error, as in Lua 4 ("table expected"), which
+	// ends the script: C's assembler.lua relies on getn(me.objs) raising
+	// when the mobile carries nothing and me.objs is nil.
+	tbl := L.CheckTable(1)
+	if n, ok := tbl.RawGetString("n").(lua.LNumber); ok {
+		L.Push(lua.LNumber(int(n)))
 		return 1
 	}
-
-	L.Push(lua.LNumber(L.ObjLen(tbl)))
+	maxKey := 0.0
+	tbl.ForEach(func(k, _ lua.LValue) {
+		if n, ok := k.(lua.LNumber); ok && float64(n) > maxKey {
+			maxKey = float64(n)
+		}
+	})
+	L.Push(lua.LNumber(int(maxKey)))
 	return 1
 }
 

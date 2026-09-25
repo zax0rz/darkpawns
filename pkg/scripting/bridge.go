@@ -175,6 +175,29 @@ type Bridge interface {
 	SetRoomExitInfo(room RoomRef, dir int, info int) bool
 	// SetRoomSector is table_to_room: the table's sect written back.
 	SetRoomSector(room RoomRef, sect int)
+
+	// LoadMob is lua_mload's read_mobile + char_to_room; ok is false for a
+	// missing vnum or room.
+	LoadMob(vnum, roomVNum int) (CharRef, bool)
+	// ExtractChar is lua_extchar's extract_char.
+	ExtractChar(ref CharRef)
+	// ObjList is lua_obj_list's search: the object found and, for "vict",
+	// the character that held it.
+	ObjList(me CharRef, arg, where string) (ObjRef, *CharRef, bool)
+	// ObjFrom is obj_from_room/char/obj; ObjToRoom (false for a missing
+	// room), ObjToChar and ObjToObj are obj_to_room/char/obj.
+	ObjFrom(ref ObjRef, from string)
+	ObjToRoom(ref ObjRef, roomVNum int) bool
+	ObjToChar(ref ObjRef, to CharRef)
+	ObjToObj(ref ObjRef, into ObjRef)
+	// Steal is lua_steal: the object moves from its carrier to me.
+	Steal(me CharRef, obj ObjRef)
+	// EquipCharObj is lua_equip_char: obj_from_char, then equip_char at
+	// find_eq_pos.
+	EquipCharObj(ch CharRef, obj ObjRef)
+	// AppendExtraDescs is lua_extra: text appended to every extra
+	// description, the list rebuilt in reverse.
+	AppendExtraDescs(obj ObjRef, text string)
 }
 
 type (
@@ -333,7 +356,7 @@ func (e *Engine) cObjToTable(b Bridge, ref ObjRef) lua.LValue {
 	return t
 }
 
-// roomToTable is room_to_table (scripts.c:1928-1970): "char" lists the room's
+// roomToTable is room_to_table (scripts.c:1928-1972): "char" lists the room's
 // people except me, "objs" its contents.
 func (e *Engine) roomToTable(b Bridge, vnum int, me *CharRef) lua.LValue {
 	f, ok := b.RoomFields(vnum)

@@ -109,7 +109,7 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	w.mu.Lock()
 	w.mobs[guardProto.VNum] = guardProto
 	w.mu.Unlock()
-	guard, err := w.spawnMob(guardProto.VNum, 1001, false)
+	guard, err := w.spawnMob(guardProto.VNum, 1001)
 	if err != nil {
 		t.Fatalf("spawn guard: %v", err)
 	}

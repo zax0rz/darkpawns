@@ -1205,26 +1205,21 @@ func (w *World) StopAITicker() {
 
 // SpawnMob spawns a mob in the world.
 func (w *World) SpawnMob(vnum int, roomVNum int) (*MobInstance, error) {
-	return w.spawnMob(vnum, roomVNum, true)
+	return w.spawnMob(vnum, roomVNum)
 }
 
-// spawnMob creates a mob, optionally emitting the ordinary world-spawn
-// message. C read_mobile + char_to_room callers (such as stableboy) do not
-// emit that message, while regular world spawns do.
-func (w *World) spawnMob(vnum int, roomVNum int, announce bool) (*MobInstance, error) {
-	// H-11: Split into two phases to avoid blocking SendMessage while holding the write lock.
-
-	// Phase 1: Create mob under write lock.
+// spawnMob is read_mobile followed by char_to_room, both silent in C: a
+// zone reset, do_load or a special procedure that loads a mobile prints
+// whatever its own code prints. (The port used to tell everyone in the
+// room "<mob> appears." on a zone reset; C has no such line, R4.)
+func (w *World) spawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	w.mu.Lock()
+	defer w.mu.Unlock()
 	proto, ok := w.mobs[vnum]
 	if !ok {
-		w.mu.Unlock()
 		return nil, fmt.Errorf("mob prototype %d not found", vnum)
 	}
-
-	_, ok = w.rooms[roomVNum]
-	if !ok {
-		w.mu.Unlock()
+	if _, ok := w.rooms[roomVNum]; !ok {
 		return nil, fmt.Errorf("room %d not found", roomVNum)
 	}
 
@@ -1235,34 +1230,17 @@ func (w *World) spawnMob(vnum int, roomVNum int, announce bool) (*MobInstance, e
 	w.activeMobs[w.nextMobID] = mob
 	w.nextMobID++
 	w.flagSpecRoomForMob(mob)
-
-	// Copy players in the room while holding the lock.
-	var targets []*Player
-	for _, player := range w.players {
-		if player.GetRoom() == roomVNum {
-			targets = append(targets, player)
-		}
-	}
-	w.mu.Unlock()
-
-	// Phase 2: Notify outside the lock (SendMessage may block on channel buffer).
-	if announce {
-		for _, player := range targets {
-			player.SendMessage(fmt.Sprintf("%s appears.\n", mob.GetShortDesc()))
-		}
-	}
-
 	return mob, nil
 }
 
-// spawnMobQuiet matches C read_mobile followed by char_to_room.
+// spawnMobQuiet is spawnMob; kept for its callers.
 func (w *World) spawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
-	return w.spawnMob(vnum, roomVNum, false)
+	return w.spawnMob(vnum, roomVNum)
 }
 
-// SpawnMobQuiet creates a mob without the ordinary world-spawn announcement.
-// C do_load uses read_mobile followed by char_to_room, so its caller supplies
-// the command-specific narration instead (act.wizard.c:1315-1321).
+// SpawnMobQuiet is SpawnMob. C do_load uses read_mobile followed by
+// char_to_room, and its caller supplies the command's narration
+// (act.wizard.c:1315-1321).
 func (w *World) SpawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.spawnMobQuiet(vnum, roomVNum)
 }

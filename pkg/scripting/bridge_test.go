@@ -90,6 +90,18 @@ func (f *fakeBridge) SetObjExtra(ObjRef, int, bool)          {}
 func (f *fakeBridge) RoomExitInfo(RoomRef, int) (int, bool)  { return 0, false }
 func (f *fakeBridge) SetRoomExitInfo(RoomRef, int, int) bool { return false }
 func (f *fakeBridge) SetRoomSector(RoomRef, int)             {}
+func (f *fakeBridge) LoadMob(int, int) (CharRef, bool)       { return CharRef{}, false }
+func (f *fakeBridge) ExtractChar(CharRef)                    {}
+func (f *fakeBridge) ObjList(CharRef, string, string) (ObjRef, *CharRef, bool) {
+	return ObjRef{}, nil, false
+}
+func (f *fakeBridge) ObjFrom(ObjRef, string)          {}
+func (f *fakeBridge) ObjToRoom(ObjRef, int) bool      { return false }
+func (f *fakeBridge) ObjToChar(ObjRef, CharRef)       {}
+func (f *fakeBridge) ObjToObj(ObjRef, ObjRef)         {}
+func (f *fakeBridge) Steal(CharRef, ObjRef)           {}
+func (f *fakeBridge) EquipCharObj(CharRef, ObjRef)    {}
+func (f *fakeBridge) AppendExtraDescs(ObjRef, string) {}
 
 // The engine finds the bridge by a runtime type assertion; this keeps the
 // fake a Bridge at compile time, so a new method cannot silently turn these

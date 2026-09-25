@@ -1,0 +1,108 @@
+# Lua binding certification: object and mobile bindings, from a probe
+# oncmd script on the healer (mob 12220). Each world change is shown by the
+# player's own look, inventory or equipment.
+# depth-case: lua.bind-mload
+# depth-case: lua.bind-obj-list
+# depth-case: lua.bind-steal
+# depth-case: lua.bind-objfrom-objto
+# depth-case: lua.bind-equip-char
+# depth-case: lua.bind-extra
+# depth-case: look.list-one-char-auras
+# depth-case: look.do-description-space
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say") then
+return FALSE
+end
+if (what == "mload") then
+local m = mload(12204, 12296)
+local none = mload(99999, 12296)
+say("mload " .. m.name .. " vnum=" .. m.vnum .. " none=" .. tostring(none))
+elseif (what == "list") then
+local mine = obj_list("tooth", "char")
+local theirs = obj_list("tooth", "vict")
+say("obj_list char=" .. tostring(mine) .. " vict=" .. tostring(theirs) .. " obj=" .. obj.name .. " ch=" .. ch.name)
+elseif (what == "steal") then
+obj_list("tooth", "vict")
+steal(ch, obj)
+say("steal me has " .. getn(me.objs))
+elseif (what == "back") then
+local o = me.objs[1]
+local r = objfrom(o, "char")
+local r2 = objto(o, "char", ch)
+say("objfrom/objto " .. type(r) .. " " .. type(r2))
+elseif (what == "drop") then
+local o = ch.objs[1]
+objfrom(o, "char")
+objto(o, "room", 12296)
+say("dropped " .. o.name)
+elseif (what == "equip") then
+equip_char(ch, ch.objs[1])
+say("equipped")
+elseif (what == "extra") then
+local r = extra(ch.objs[1], " Now with more hops.")
+say("extra returned " .. type(r))
+else
+return FALSE
+end
+return TRUE
+end
+
+[setup:oracle]
+Probeobjs
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Probeobjs
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+load obj 11052
+
+[probe]
+say mload
+look
+say list
+say steal
+inventory
+say back
+inventory
+say drop
+look
+get tooth
+load obj 12104
+say equip
+equipment
+load obj 1232
+say extra
+look hop

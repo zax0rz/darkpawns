@@ -58,7 +58,7 @@ func TestSpecTeleporter_EntryGates(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			w, player, mob, lastMsg := prepareTeleporter(t)
-			lastMsg() // discard the mob-arrival act from SpawnMob
+			lastMsg() // start from an empty transcript
 			if got := tc.call(w, player, mob); got {
 				t.Fatal("specTeleporter handled a gated invocation")
 			}
@@ -71,7 +71,7 @@ func TestSpecTeleporter_EntryGates(t *testing.T) {
 
 func TestSpecTeleporter_LowHealthTeleportsMobAndUsesRoomActs(t *testing.T) {
 	w, _, mob, lastMsg := prepareTeleporter(t)
-	lastMsg() // discard the mob-arrival act from SpawnMob
+	lastMsg() // start from an empty transcript
 
 	w.mu.Lock()
 	w.rooms[1002] = &parser.Room{VNum: 1002, Name: "Destination", Zone: 1}
@@ -110,7 +110,7 @@ func TestSpecTeleporter_LowHealthTeleportsMobAndUsesRoomActs(t *testing.T) {
 
 func TestSpecTeleporter_RestingMobUsesNativeCallMagicPositionGate(t *testing.T) {
 	w, _, mob, lastMsg := prepareTeleporter(t)
-	lastMsg() // discard the mob-arrival act from SpawnMob
+	lastMsg() // start from an empty transcript
 	mob.SetPosition(combat.PosResting)
 
 	w.mu.Lock()
@@ -129,7 +129,7 @@ func TestSpecTeleporter_RestingMobUsesNativeCallMagicPositionGate(t *testing.T) 
 
 func TestSpecTeleporter_SittingMobStopsAtNativeCallMagicGate(t *testing.T) {
 	w, _, mob, lastMsg := prepareTeleporter(t)
-	lastMsg() // discard the mob-arrival act from SpawnMob
+	lastMsg() // start from an empty transcript
 	mob.SetPosition(combat.PosSitting)
 
 	w.mu.Lock()

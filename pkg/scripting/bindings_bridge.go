@@ -580,3 +580,153 @@ func (e *Engine) bridgeLoadRoom(L *lua.LState, b Bridge) int {
 	L.Push(t)
 	return 1
 }
+
+// lua_mload (scripts.c:795-818).
+func (e *Engine) bridgeMLoad(L *lua.LState, b Bridge) int {
+	vnum, okVnum := argNumber(L, 1)
+	room, okRoom := argNumber(L, 2)
+	if !okVnum || !okRoom {
+		b.Log("[Lua] Invalid arguments passed to lua_mload.")
+		return 0
+	}
+	ref, ok := b.LoadMob(vnum, room)
+	if !ok {
+		b.Log("[Lua] Invalid mobile vnum passed to lua_mload.")
+		return 0
+	}
+	L.Push(e.charToTable(b, ref))
+	return 1
+}
+
+// lua_extchar (scripts.c:480-494).
+func (e *Engine) bridgeExtChar(L *lua.LState, b Bridge) int {
+	ref, ok := charRefOf(L.Get(1))
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable {
+		b.Log("[Lua] Invalid char passed to lua_extchar")
+		return 0
+	}
+	if ok {
+		b.ExtractChar(ref)
+	}
+	return 0
+}
+
+// lua_obj_list (scripts.c:1040-1126): the object found becomes the obj
+// global and, when a character held it, that character the ch global.
+func (e *Engine) bridgeObjList(L *lua.LState, b Bridge) int {
+	arg, okArg := argString(L, 1)
+	where, okWhere := argString(L, 2)
+	if !okArg || !okWhere {
+		b.Log("[Lua] Invalid argument passed to lua_obj_list.")
+		return 0
+	}
+	switch where {
+	case "room", "char", "vict", "cont", "corpse":
+	default:
+		b.Log("[Lua] Invalid location to search in lua_obj_list.")
+		return 0
+	}
+	me, _ := meRef(L)
+	obj, vict, found := b.ObjList(me, arg, where)
+	if !found {
+		L.Push(lua.LNil)
+		return 1
+	}
+	L.SetGlobal("obj", e.cObjToTable(b, obj))
+	if vict != nil {
+		L.SetGlobal("ch", e.charToTable(b, *vict))
+	}
+	L.Push(lua.LNumber(1))
+	return 1
+}
+
+// lua_objfrom (scripts.c:1013-1038): returns the object as userdata.
+func (e *Engine) bridgeObjFrom(L *lua.LState, b Bridge) int {
+	ref, okObj := objRefOf(L.Get(1))
+	from, okFrom := argString(L, 2)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okFrom {
+		b.Log("[Lua] Invalid argument passed to lua_objfrom.")
+		return 0
+	}
+	if okObj {
+		b.ObjFrom(ref, from)
+	}
+	L.Push(e.newObjHandle(ref))
+	return 1
+}
+
+// lua_objto (scripts.c:1128-1172): returns the object as userdata. For a
+// missing room C returns -1 results, which Lua 4 does not define (R1a):
+// the port returns none and logs.
+func (e *Engine) bridgeObjTo(L *lua.LState, b Bridge) int {
+	ref, okObj := objRefOf(L.Get(1))
+	to, okTo := argString(L, 2)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okTo {
+		b.Log("[Lua] Invalid argument passed to lua_objto.")
+		return 0
+	}
+	switch to {
+	case "room":
+		vnum := int(lua.LVAsNumber(L.Get(3)))
+		if !b.ObjToRoom(ref, vnum) {
+			b.Log("[Lua] objto: no such room (C returns -1 here).")
+			return 0
+		}
+	case "char":
+		if ch, ok := charRefOf(L.Get(3)); ok && okObj {
+			b.ObjToChar(ref, ch)
+		}
+	case "obj":
+		if into, ok := objRefOf(L.Get(3)); ok && okObj {
+			b.ObjToObj(ref, into)
+		}
+	}
+	L.Push(e.newObjHandle(ref))
+	return 1
+}
+
+// lua_steal (scripts.c:1491-1516).
+func (e *Engine) bridgeSteal(L *lua.LState, b Bridge) int {
+	_, isVict := L.Get(1).(*lua.LTable)
+	obj, okObj := objRefOf(L.Get(2))
+	if _, isTable := L.Get(2).(*lua.LTable); !isVict || !isTable {
+		b.Log("[Lua] Invalid argument passed to lua_steal.")
+		return 0
+	}
+	if me, ok := meRef(L); ok && okObj {
+		b.Steal(me, obj)
+	}
+	return 0
+}
+
+// lua_equip_char (scripts.c:403-425).
+func (e *Engine) bridgeEquipChar(L *lua.LState, b Bridge) int {
+	ch, okCh := charRefOf(L.Get(1))
+	obj, okObj := objRefOf(L.Get(2))
+	_, isCh := L.Get(1).(*lua.LTable)
+	_, isObj := L.Get(2).(*lua.LTable)
+	if !isCh || !isObj {
+		b.Log("[Lua] Invalid arguments passed to lua_equip_char.")
+		return 0
+	}
+	if okCh && okObj {
+		b.EquipCharObj(ch, obj)
+	}
+	return 0
+}
+
+// lua_extra (scripts.c:512-540). C returns 1 without pushing, so the script
+// gets the value on top of the stack: the object's struct userdata.
+func (e *Engine) bridgeExtra(L *lua.LState, b Bridge) int {
+	ref, okObj := objRefOf(L.Get(1))
+	text, okText := argString(L, 2)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okText {
+		b.Log("[Lua] Invalid argument passed to lua_extra.")
+		return 0
+	}
+	if okObj {
+		b.AppendExtraDescs(ref, text)
+	}
+	L.Push(e.newObjHandle(ref))
+	return 1
+}

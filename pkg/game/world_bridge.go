@@ -3,6 +3,7 @@ package game
 import (
 	"log/slog"
 	"sort"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -168,7 +169,7 @@ func (a *WorldScriptableAdapter) ObjFields(ref scripting.ObjRef) (scripting.ObjF
 	return f, true
 }
 
-// RoomFields is room_to_table's view of a room (scripts.c:1928-1970). People
+// RoomFields is room_to_table's view of a room (scripts.c:1928-1972). People
 // are in C's people-list order: most recent arrival first.
 func (a *WorldScriptableAdapter) RoomFields(vnum int) (scripting.RoomFields, bool) {
 	room := a.world.GetRoomInWorld(vnum)
@@ -610,4 +611,306 @@ func (a *WorldScriptableAdapter) SetRoomSector(room scripting.RoomRef, sect int)
 		r.Sector = sect
 		return true
 	})
+}
+
+// cIsCorpse is IS_CORPSE (utils.h:490-491).
+func cIsCorpse(o *ObjectInstance) bool {
+	return o.GetTypeFlag() == ITEM_CONTAINER && o.GetValue(3) == 1
+}
+
+// objInListVis is get_obj_in_list_vis (handler.c): the number-th object in
+// list, in list order, whose keywords the name abbreviates and that the
+// viewer can see (a light always counts).
+func objInListVis(viewer Actor, name string, list []*ObjectInstance) *ObjectInstance {
+	arg := strings.TrimSpace(name)
+	number := GetNumber(&arg)
+	if number <= 0 || arg == "" {
+		return nil
+	}
+	found := 0
+	for _, obj := range list {
+		if !isnameWithAbbrevs(arg, obj.GetKeywords()) {
+			continue
+		}
+		if !canSeeObject(viewer, obj) && obj.GetTypeFlag() != ITEM_LIGHT {
+			continue
+		}
+		found++
+		if found == number {
+			return obj
+		}
+	}
+	return nil
+}
+
+// carriedList and wornBySlot are ch->carrying and GET_EQ(ch, 0..NUM_WEARS-1)
+// in C's order.
+func (a *WorldScriptableAdapter) carriedList(ref scripting.CharRef) []*ObjectInstance {
+	var out []*ObjectInstance
+	f, ok := a.CharFields(ref)
+	if !ok {
+		return nil
+	}
+	for _, r := range f.Carry {
+		if o := a.resolveObj(r); o != nil {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+func (a *WorldScriptableAdapter) wornBySlot(ref scripting.CharRef) []*ObjectInstance {
+	var out []*ObjectInstance
+	f, ok := a.CharFields(ref)
+	if !ok {
+		return nil
+	}
+	for _, r := range f.Worn {
+		if o := a.resolveObj(r); o != nil {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+// LoadMob is lua_mload's read_mobile + char_to_room.
+func (a *WorldScriptableAdapter) LoadMob(vnum, roomVNum int) (scripting.CharRef, bool) {
+	if _, ok := a.world.GetMobPrototype(vnum); !ok {
+		return scripting.CharRef{}, false
+	}
+	if a.world.GetRoomInWorld(roomVNum) == nil {
+		slog.Error("lua mload: no such room (C's char_to_room gets NOWHERE)", "vnum", vnum, "room", roomVNum)
+		return scripting.CharRef{}, false
+	}
+	mob, err := a.world.SpawnMob(vnum, roomVNum)
+	if err != nil || mob == nil {
+		slog.Error("lua mload failed", "vnum", vnum, "room", roomVNum, "error", err)
+		return scripting.CharRef{}, false
+	}
+	return *charRefFor(mob), true
+}
+
+// ExtractChar is lua_extchar's extract_char. C marks the character and
+// removes it at the next heartbeat (extract_pending_chars, comm.c:812); the
+// port extracts at once (lua.bind-extchar-deferred).
+func (a *WorldScriptableAdapter) ExtractChar(ref scripting.CharRef) {
+	switch _, p, m := a.resolveChar(ref); {
+	case m != nil:
+		a.world.ExtractMob(m)
+	case p != nil:
+		slog.Warn("lua extchar on a player is not ported; ignored", "player", p.GetName())
+	}
+}
+
+// ObjList is lua_obj_list's search (scripts.c:1040-1126). vict is the
+// character whose carrying list or equipment held the object, which the
+// binding makes the ch global.
+func (a *WorldScriptableAdapter) ObjList(me scripting.CharRef, arg, where string) (scripting.ObjRef, *scripting.CharRef, bool) {
+	viewer := a.actorFor(&me)
+	room, ok := a.CharRoom(me)
+	if viewer == nil || !ok {
+		return scripting.ObjRef{}, nil, false
+	}
+	var list []*ObjectInstance
+	var vict *scripting.CharRef
+	switch where {
+	case "room":
+		list = a.world.GetItemsInRoom(room)
+	case "char":
+		for _, obj := range a.wornBySlot(me) {
+			if isnameWithAbbrevs(arg, obj.GetKeywords()) {
+				return scripting.ObjRef{ID: obj.ID}, nil, true
+			}
+		}
+		list = a.carriedList(me)
+	case "vict":
+		people, _ := a.RoomFields(room)
+		for _, p := range people.People {
+			p := p
+			carried := a.carriedList(p)
+			if objInListVis(viewer, arg, carried) != nil {
+				list, vict = carried, &p
+				break
+			}
+			for _, obj := range a.wornBySlot(p) {
+				if isnameWithAbbrevs(arg, obj.GetKeywords()) {
+					return scripting.ObjRef{ID: obj.ID}, &p, true
+				}
+			}
+		}
+	case "cont", "corpse":
+		for _, holder := range a.world.GetItemsInRoom(room) {
+			if len(holder.Contains) == 0 || (where == "corpse" && !cIsCorpse(holder)) {
+				continue
+			}
+			if objInListVis(viewer, arg, holder.Contains) != nil {
+				list = holder.Contains
+				break
+			}
+		}
+	}
+	if obj := objInListVis(viewer, arg, list); obj != nil {
+		return scripting.ObjRef{ID: obj.ID}, vict, true
+	}
+	return scripting.ObjRef{}, nil, false
+}
+
+// ObjFrom is obj_from_room / obj_from_char / obj_from_obj: the object leaves
+// where it is, when it is there.
+func (a *WorldScriptableAdapter) ObjFrom(ref scripting.ObjRef, from string) {
+	obj := a.resolveObj(ref)
+	if obj == nil {
+		return
+	}
+	loc := obj.Location
+	var there bool
+	switch from {
+	case "room":
+		there = loc.Kind == ObjInRoom
+	case "char":
+		there = loc.Kind == ObjInInventory
+	case "obj":
+		there = loc.Kind == ObjInContainer
+	default:
+		return
+	}
+	if !there {
+		slog.Error("lua objfrom: object is not there", "obj_vnum", obj.VNum, "from", from)
+		return
+	}
+	if err := a.world.MoveObjectToNowhere(obj); err != nil {
+		slog.Error("lua objfrom failed", "obj_vnum", obj.VNum, "error", err)
+	}
+}
+
+// ObjToRoom is obj_to_room.
+func (a *WorldScriptableAdapter) ObjToRoom(ref scripting.ObjRef, roomVNum int) bool {
+	obj := a.resolveObj(ref)
+	if a.world.GetRoomInWorld(roomVNum) == nil {
+		return false
+	}
+	if obj != nil {
+		if err := a.world.MoveObjectToRoomFront(obj, roomVNum); err != nil {
+			slog.Error("lua objto room failed", "obj_vnum", obj.VNum, "error", err)
+		}
+	}
+	return true
+}
+
+// ObjToChar is obj_to_char, which prepends to the carrying list.
+func (a *WorldScriptableAdapter) ObjToChar(ref scripting.ObjRef, to scripting.CharRef) {
+	obj := a.resolveObj(ref)
+	if obj == nil {
+		return
+	}
+	var err error
+	switch _, p, m := a.resolveChar(to); {
+	case p != nil:
+		err = a.world.PlaceWizardLoadedObjectInInventory(obj, p)
+	case m != nil:
+		err = a.world.MoveObjectToMobInventoryFront(obj, m)
+	default:
+		return
+	}
+	if err != nil {
+		slog.Error("lua objto char failed", "obj_vnum", obj.VNum, "error", err)
+	}
+}
+
+// ObjToObj is obj_to_obj.
+func (a *WorldScriptableAdapter) ObjToObj(ref, into scripting.ObjRef) {
+	obj, container := a.resolveObj(ref), a.resolveObj(into)
+	if obj == nil || container == nil {
+		return
+	}
+	if err := a.world.MoveObjectToContainer(obj, container); err != nil {
+		slog.Error("lua objto obj failed", "obj_vnum", obj.VNum, "error", err)
+	}
+}
+
+// Steal is lua_steal: obj_from_char(obj), obj_to_char(obj, me).
+func (a *WorldScriptableAdapter) Steal(me scripting.CharRef, ref scripting.ObjRef) {
+	a.ObjFrom(ref, "char")
+	a.ObjToChar(ref, me)
+}
+
+// EquipCharObj is lua_equip_char: obj_from_char(obj), then equip_char(ch, obj,
+// find_eq_pos(ch, obj, NULL)) (handler.c:679-747).
+func (a *WorldScriptableAdapter) EquipCharObj(ref scripting.CharRef, objRef scripting.ObjRef) {
+	obj := a.resolveObj(objRef)
+	actor, p, m := a.resolveChar(ref)
+	if obj == nil || actor == nil {
+		return
+	}
+	pos := findEqPos(obj, "")
+	if pos < 0 {
+		// equip_char asserts pos >= 0 (handler.c:685): C aborts (R1a).
+		slog.Error("lua equip_char: no wear position (C asserts)", "obj_vnum", obj.VNum)
+		return
+	}
+	a.ObjFrom(objRef, "char")
+	occupied := false
+	if p != nil {
+		occupied = a.world.IsEquipped(p, pos)
+	} else if m != nil {
+		m.mu.RLock()
+		occupied = m.Equipment[pos] != nil
+		m.mu.RUnlock()
+	}
+	if occupied {
+		// "SYSERR: Char is already equipped": the object, already taken
+		// from the carrier, is in no list.
+		slog.Error("lua equip_char: char is already equipped", "char", actor.GetName(), "obj_vnum", obj.VNum)
+		return
+	}
+	align := 0
+	if p != nil {
+		align = p.GetAlignment()
+	} else {
+		align = m.GetAlignment()
+	}
+	flags := obj.GetExtraFlags()[0]
+	if flags&FlagAntiEvil != 0 && align <= -350 || flags&FlagAntiGood != 0 && align >= 350 ||
+		flags&FlagAntiNeutral != 0 && align > -350 && align < 350 {
+		Act(nil, false, actor, nil, obj, nil, "You are zapped by $p and instantly let go of it.", "", ToChar)
+		Act(a.world, false, actor, nil, obj, nil, "$n is zapped by $p and instantly lets go of it.", "", ToRoom)
+		a.ObjToChar(objRef, ref)
+		return
+	}
+	if p != nil && objInvalidClass(p, obj) {
+		Act(nil, false, actor, nil, obj, nil, "You cannot use $p.", "", ToChar)
+		a.ObjToChar(objRef, ref)
+		return
+	}
+	switch {
+	case p != nil:
+		if err := a.world.EquipItem(p, obj, pos); err != nil {
+			slog.Error("lua equip_char failed", "player", p.GetName(), "obj_vnum", obj.VNum, "error", err)
+		}
+	case m != nil:
+		m.mu.Lock()
+		if m.Equipment == nil {
+			m.Equipment = make(map[int]*ObjectInstance)
+		}
+		m.mu.Unlock()
+		m.EquipItem(obj, pos)
+	}
+}
+
+// AppendExtraDescs is lua_extra (scripts.c:512-540): every extra
+// description gets the text appended, and the rebuilt list is in reverse
+// order (each new entry is pushed on the front).
+func (a *WorldScriptableAdapter) AppendExtraDescs(ref scripting.ObjRef, text string) {
+	obj := a.resolveObj(ref)
+	if obj == nil {
+		return
+	}
+	descs := obj.LiveExtraDescs()
+	out := make([]parser.ExtraDesc, 0, len(descs))
+	for i := len(descs) - 1; i >= 0; i-- {
+		d := descs[i]
+		d.Description += text
+		out = append(out, d)
+	}
+	obj.SetLiveExtraDescs(out)
 }

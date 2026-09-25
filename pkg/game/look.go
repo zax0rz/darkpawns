@@ -20,6 +20,17 @@ type ObservationResult struct {
 	// renderer reports that room to the out-of-band observer once the text
 	// has been delivered.
 	viewer *Player
+	// linePrefix is text C sent without ending the line (do_description's
+	// trailing space). The session ends every message's line, so it is
+	// carried onto the start of the next message instead.
+	linePrefix string
+}
+
+// takeLinePrefix returns and clears the pending line prefix.
+func (r *ObservationResult) takeLinePrefix() string {
+	prefix := r.linePrefix
+	r.linePrefix = ""
+	return prefix
 }
 
 // ObservationMessage is a deferred act() call. Literal marks world-authored
@@ -65,7 +76,7 @@ type DoorView struct {
 
 func (r *ObservationResult) literal(ch *Player, text string) {
 	r.Messages = append(r.Messages, ObservationMessage{
-		Format:  normalizeObservationText(text),
+		Format:  r.takeLinePrefix() + normalizeObservationText(text),
 		Literal: true,
 		Actor:   ch,
 	})
@@ -76,7 +87,7 @@ func (r *ObservationResult) literal(ch *Player, text string) {
 // (inventory / look-in container). Ordering is preserved with other messages.
 func (r *ObservationResult) raw(ch *Player, text string) {
 	r.Messages = append(r.Messages, ObservationMessage{
-		Format: text,
+		Format: r.takeLinePrefix() + text,
 		Raw:    true,
 		Actor:  ch,
 	})
@@ -84,7 +95,7 @@ func (r *ObservationResult) raw(ch *Player, text string) {
 
 func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, format string) {
 	r.Messages = append(r.Messages, ObservationMessage{
-		Format: format,
+		Format: r.takeLinePrefix() + format,
 		Actor:  ch,
 		Target: target,
 		Object: obj,
@@ -227,16 +238,14 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 	}
 	result.literal(ch, cyan+roomName+normal)
 	if showDescription && room.Description != "" {
-		result.literal(ch, room.Description)
+		desc, spaced := doDescription(room.Description, room.ExtraDescs, colorLevel(ch) > 0)
+		result.literal(ch, desc)
+		if spaced {
+			result.linePrefix = " "
+		}
 	}
 	if ch.GetAutoExit() {
-		autoExits := w.autoExitsText(ch, room)
-		// The C command path's ignore_brief room render carries one leading
-		// spacer before autoexits; directional/movement room renders do not.
-		if ignoreBrief && !ch.GetRoomFlags() {
-			autoExits = " " + autoExits
-		}
-		result.literal(ch, autoExits)
+		result.literal(ch, w.autoExitsText(ch, room))
 	}
 
 	green, yellow := observationColors(ch, "\x1b[32m"), observationColors(ch, "\x1b[33m")
@@ -395,6 +404,7 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 		actor Actor
 		seq   uint64
 		line  string
+		auras []string
 	}
 	characters := make([]character, 0)
 	var lines []string
@@ -410,11 +420,17 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 			}
 			continue
 		}
+		if mob.HasMobFlag(MobFlagExtract) {
+			continue // list_one_char skips a mobile pending extraction
+		}
 		line := mobPresenceLine(mob, ch)
 		if line == "" {
 			continue
 		}
-		characters = append(characters, character{actor: mob, seq: mob.GetRoomEntrySequence(), line: line})
+		characters = append(characters, character{
+			actor: mob, seq: mob.GetRoomEntrySequence(), line: line,
+			auras: presenceAuras(mob, mob.Proto() != nil && mob.Proto().LongDesc != "" && mob.GetPosition() == mob.Proto().DefaultPos),
+		})
 	}
 	players := w.GetPlayersInRoom(room.VNum)
 	for _, player := range players {
@@ -428,7 +444,10 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 			continue
 		}
 		line := w.playerPresenceLine(player, ch)
-		characters = append(characters, character{actor: player, seq: player.GetRoomEntrySequence(), line: line})
+		characters = append(characters, character{
+			actor: player, seq: player.GetRoomEntrySequence(), line: line,
+			auras: presenceAuras(player, false),
+		})
 	}
 	sort.SliceStable(characters, func(i, j int) bool {
 		if characters[i].seq != characters[j].seq {
@@ -438,6 +457,7 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 	})
 	for _, entry := range characters {
 		lines = append(lines, entry.line)
+		lines = append(lines, entry.auras...)
 		switch entry.actor.(type) {
 		case *MobInstance:
 			view.Mobs = append(view.Mobs, entry.line)
@@ -1199,57 +1219,129 @@ func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string,
 }
 
 func (w *World) playerPresenceLine(player, viewer *Player) string {
-	name := player.GetName()
-	name += " " + strings.TrimSpace(player.GetTitle())
-	if player.IsAffected(affInvisible) {
-		name += " (invisible)"
+	// list_one_char's general branch for a player (act.informative.c:546-611).
+	buf := player.GetName() + " " + player.GetTitle()
+	buf += presenceTags(player)
+	if player.IsLinkless() {
+		buf += " (linkless)"
 	}
-	if player.IsAffected(affHide) {
-		name += " (hidden)"
+	flags := player.GetFlags()
+	if flags&(1<<uint(PlrWriting)) != 0 {
+		buf += " (writing)"
 	}
-	if player.IsMounted() {
-		mountName := "thin air"
+	if flags&(1<<uint(PlrIt)) != 0 {
+		buf += " (IT)"
+	}
+	switch {
+	case player.IsMounted():
+		buf += " is here, mounted on "
 		if mount := w.riddenMount(player); mount != nil {
-			mountName = mount.GetShortDesc()
-		}
-		return name + " is here, mounted on " + mountName + "."
-	}
-	if player.GetPosition() == posFighting {
-		target := player.GetFighting()
-		if target == "" {
-			return name + " is here struggling with thin air."
-		}
-		if strings.EqualFold(target, viewer.GetName()) {
-			target = "YOU!"
+			buf += persName(mount, viewer) + "."
 		} else {
-			target += "!"
+			buf += "thin air."
 		}
-		return name + " is here, fighting " + target
+	case player.GetPosition() == posFighting:
+		buf += fightingPresence(player.GetFighting(), viewer)
+	default:
+		buf += positionPresence(player.GetPosition())
 	}
-	return name + positionPresence(player.GetPosition())
+	buf += alignAuraTag(player, viewer)
+	if player.GetAFK() {
+		buf += " (AFK)"
+	}
+	return buf
 }
 
 func mobPresenceLine(mob *MobInstance, viewer *Player) string {
 	if mob.Proto() != nil && mob.Proto().LongDesc != "" && mob.GetPosition() == mob.Proto().DefaultPos {
-		return normalizeObservationText(mob.Proto().LongDesc)
+		// list_one_char's default-position branch (act.informative.c:511-526).
+		prefix := ""
+		if mob.IsAffected(affInvisible) {
+			prefix = "*"
+		}
+		if viewer.IsAffected(affDetectAlign) {
+			switch align := mob.GetAlignment(); {
+			case align <= -350:
+				prefix += "(Red Aura) "
+			case align >= 350:
+				prefix += "(Blue Aura) "
+			}
+		}
+		return prefix + normalizeObservationText(mob.Proto().LongDesc)
 	}
-	name := mob.GetShortDesc()
-	if mob.IsAffected(affInvisible) {
-		name = "*" + name
-	}
+	// The general branch (act.informative.c:546-611): CAP(short_descr).
+	buf := capitalize(mob.GetShortDesc()) + presenceTags(mob)
 	if mob.GetPosition() == posFighting {
-		if mob.FightingTarget == "" {
-			return name + " is here struggling with thin air."
-		}
-		target := mob.FightingTarget
-		if strings.EqualFold(target, viewer.GetName()) {
-			target = "YOU!"
-		} else {
-			target += "!"
-		}
-		return name + " is here, fighting " + target
+		buf += fightingPresence(mob.FightingTarget, viewer)
+	} else {
+		buf += positionPresence(mob.GetPosition())
 	}
-	return name + positionPresence(mob.GetPosition())
+	return buf + alignAuraTag(mob, viewer)
+}
+
+// presenceTags are list_one_char's " (invisible)" and " (hidden)".
+func presenceTags(i interface{ IsAffected(int) bool }) string {
+	tags := ""
+	if i.IsAffected(affInvisible) {
+		tags += " (invisible)"
+	}
+	if i.IsAffected(affHide) {
+		tags += " (hidden)"
+	}
+	return tags
+}
+
+// fightingPresence is list_one_char's fighting text.
+func fightingPresence(target string, viewer *Player) string {
+	switch {
+	case target == "":
+		return " is here struggling with thin air."
+	case strings.EqualFold(target, viewer.GetName()):
+		return " is here, fighting YOU!"
+	default:
+		return " is here, fighting " + target + "!"
+	}
+}
+
+// alignAuraTag is " (Red Aura)" / " (Blue Aura)" for a viewer with
+// AFF_DETECT_ALIGN.
+func alignAuraTag(i interface{ GetAlignment() int }, viewer *Player) string {
+	if !viewer.IsAffected(affDetectAlign) {
+		return ""
+	}
+	switch align := i.GetAlignment(); {
+	case align <= -350:
+		return " (Red Aura)"
+	case align >= 350:
+		return " (Blue Aura)"
+	}
+	return ""
+}
+
+// presenceAuras are the act() lines list_one_char sends after a
+// character's line (act.informative.c:527-541, 612-625). BLIND is shown
+// only on the default-position branch.
+func presenceAuras(i Actor, defaultBranch bool) []string {
+	affected := i.(interface{ IsAffected(int) bool })
+	align := i.(interface{ GetAlignment() int }).GetAlignment()
+	var lines []string
+	if affected.IsAffected(affSanctuary) {
+		if align <= -350 {
+			lines = append(lines, "..."+hssh(i)+" is surrounded by a black aura!")
+		} else {
+			lines = append(lines, "..."+hssh(i)+" glows with a bright light!")
+		}
+	}
+	if defaultBranch && affected.IsAffected(affBlind) {
+		lines = append(lines, "..."+hssh(i)+" is groping around blindly!")
+	}
+	if affected.IsAffected(affInvuln) {
+		lines = append(lines, "..."+hssh(i)+" is surrounded by a glowing sphere!")
+	}
+	if affected.IsAffected(affFlaming) {
+		lines = append(lines, "..."+hssh(i)+" is engulfed in flames!")
+	}
+	return lines
 }
 
 func positionPresence(position int) string {
@@ -1300,6 +1392,14 @@ func formatRoomFlags(room *parser.Room) string {
 }
 
 func observationColors(ch *Player, code string) string {
+	if colorLevel(ch) < 2 {
+		return ""
+	}
+	return code
+}
+
+// colorLevel is COLOR_LEV(ch): PRF_COLOR_1 counts 1 and PRF_COLOR_2 counts 2.
+func colorLevel(ch *Player) int {
 	flags := ch.GetFlags()
 	level := 0
 	if flags&(1<<uint(PrfColor1)) != 0 {
@@ -1308,10 +1408,53 @@ func observationColors(ch *Player, code string) string {
 	if flags&(1<<uint(PrfColor2)) != 0 {
 		level += 2
 	}
-	if level < 2 {
-		return ""
+	return level
+}
+
+// doDescription is do_description (act.informative.c:2757-2803), which
+// look_at_room sends the room description through. A room with no extra
+// descriptions sends its description as it is. Otherwise C sends
+// sprintf("%s ", description), so a space follows the description's last
+// newline and starts whatever look_at_room prints next; and for a viewer
+// with any color level it bolds each extra-description keyword where it
+// first appears (strstr, so inside a longer word too), taking in the
+// character before the match and the whitespace after it.
+//
+// It returns the description to send and whether C's trailing space
+// follows it.
+func doDescription(description string, extras []parser.ExtraDesc, color bool) (string, bool) {
+	var keywords []string
+	for _, ed := range extras {
+		keywords = append(keywords, strings.Fields(ed.Keywords)...)
 	}
-	return code
+	if len(keywords) == 0 {
+		return description, false
+	}
+	buf := description + " "
+	if !color {
+		return description, true
+	}
+	const bold, normal = "\x1b[0;1m", "\x1b[0m" // VT_BOLDTEX, VT_NORMALT (vt100.h:43-44)
+	for _, keyword := range keywords {
+		begin := strings.Index(buf, keyword)
+		if begin <= 0 { // C steps back one byte; at the buffer's start that is outside it
+			continue
+		}
+		end := begin
+		for end < len(buf) && !isCSpace(buf[end]) {
+			end++
+		}
+		if end >= len(buf) {
+			continue // the "%s " space guarantees whitespace; stay defensive
+		}
+		buf = buf[:begin-1] + bold + buf[begin-1:begin] + buf[begin:end] + buf[end:end+1] + normal + buf[end+1:]
+	}
+	return strings.TrimSuffix(buf, " "), true
+}
+
+// isCSpace is isspace in the C locale.
+func isCSpace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r'
 }
 
 func directionIndex(name string) int {
