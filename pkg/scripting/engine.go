@@ -689,7 +689,7 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	// Core functions mentioned in the task
 	L.SetGlobal("act", L.NewFunction(e.bridged(e.bridgeAct, e.luaAct)))
 	L.SetGlobal("say", L.NewFunction(e.bridged(e.bridgeSay, e.luaSay)))
-	L.SetGlobal("gossip", L.NewFunction(e.luaGossip))
+	L.SetGlobal("gossip", L.NewFunction(e.bridged(e.bridgeGossip, e.luaGossip)))
 	L.SetGlobal("emote", L.NewFunction(e.bridged(e.bridgeEmote, e.luaEmote)))
 	L.SetGlobal("action", L.NewFunction(e.bridged(e.bridgeAction, e.luaAction)))
 	L.SetGlobal("oload", L.NewFunction(e.bridged(e.bridgeOLoad, e.luaOload)))
@@ -725,7 +725,7 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("call", L.NewFunction(e.luaCall))
 	L.SetGlobal("save_room", L.NewFunction(e.bridged(e.bridgeSaveRoom, e.luaSaveRoom)))
 	L.SetGlobal("set_skill", L.NewFunction(e.bridged(e.bridgeSetSkill, e.luaSetSkill)))
-	L.SetGlobal("spell", L.NewFunction(e.luaSpell))
+	L.SetGlobal("spell", L.NewFunction(e.bridged(e.bridgeSpell, e.luaSpell)))
 	L.SetGlobal("tport", L.NewFunction(e.bridged(e.bridgeTport, e.luaTport)))
 
 	// Additional functions needed for combat AI scripts
@@ -750,21 +750,21 @@ func (e *Engine) registerFunctionsOn(L *lua.LState) {
 	L.SetGlobal("inworld", L.NewFunction(e.bridged(e.bridgeInWorld, e.luaInworld)))
 	L.SetGlobal("mob_flagged", L.NewFunction(e.bridged(e.bridgeMobFlagged, e.luaMobFlagged)))
 	L.SetGlobal("aff_flags", L.NewFunction(e.bridged(e.bridgeAffFlags, e.luaAffFlags)))
-	L.SetGlobal("follow", L.NewFunction(e.luaFollow))
-	L.SetGlobal("mount", L.NewFunction(e.luaMount))
+	L.SetGlobal("follow", L.NewFunction(e.bridged(e.bridgeFollow, e.luaFollow)))
+	L.SetGlobal("mount", L.NewFunction(e.bridged(e.bridgeMount, e.luaMount)))
 	L.SetGlobal("direction", L.NewFunction(e.luaDirection))
-	L.SetGlobal("set_hunt", L.NewFunction(e.luaSetHunt))
+	L.SetGlobal("set_hunt", L.NewFunction(e.bridged(e.bridgeSetHunt, e.luaSetHunt)))
 	L.SetGlobal("ishunt", L.NewFunction(e.bridged(e.bridgeIsHunt, e.luaIshunt)))
 	L.SetGlobal("skip_spaces", L.NewFunction(e.luaSkipSpaces))
-	L.SetGlobal("social", L.NewFunction(e.luaSocial))
+	L.SetGlobal("social", L.NewFunction(e.bridged(e.bridgeSocial, e.luaSocial)))
 	L.SetGlobal("obj_flagged", L.NewFunction(e.bridged(e.bridgeObjFlagged, e.luaObjFlagged)))
 	L.SetGlobal("mob_flags", L.NewFunction(e.bridged(e.actFlagsBinding("mob_flags"), e.luaMobFlags)))
 	L.SetGlobal("exit_flagged", L.NewFunction(e.bridged(e.bridgeExitFlagged, e.luaExitFlagged)))
 	L.SetGlobal("exit_flags", L.NewFunction(e.bridged(e.bridgeExitFlags, e.luaExitFlags)))
-	L.SetGlobal("unaffect", L.NewFunction(e.luaUnaffect))
+	L.SetGlobal("unaffect", L.NewFunction(e.bridged(e.bridgeUnaffect, e.luaUnaffect)))
 	L.SetGlobal("equip_char", L.NewFunction(e.bridged(e.bridgeEquipChar, e.luaEquipChar)))
 	// echo(ch, type, msg) — zone-wide sound broadcast. Used by werewolf.lua.
-	L.SetGlobal("echo", L.NewFunction(e.luaEcho))
+	L.SetGlobal("echo", L.NewFunction(e.bridged(e.bridgeEcho, e.luaEcho)))
 
 	// Stubs needed by Batch C Quest/Mechanic NPC scripts
 	L.SetGlobal("extra", L.NewFunction(e.bridged(e.bridgeExtra, e.luaExtra)))

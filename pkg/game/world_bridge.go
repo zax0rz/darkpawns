@@ -5,6 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
+
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/spells"
@@ -128,7 +131,7 @@ func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.Ch
 			Evil:  m.GetAlignment() <= -350,
 			NPC:   true,
 			VNum:  m.GetVNum(),
-			Timer: m.GetScriptWait(),
+			Timer: m.GetWaitState(), // GET_MOB_WAIT
 		}
 		m.mu.RLock()
 		f.Carry = objRefs(m.Inventory)
@@ -239,7 +242,7 @@ func (a *WorldScriptableAdapter) ApplyChar(ref scripting.CharRef, w scripting.Ch
 		m.SetLevel(w.Level)
 		m.SetHealth(w.HP)
 		m.SetPosition(w.Pos)
-		m.SetScriptWait(w.Timer)
+		m.SetWaitState(w.Timer)
 	}
 }
 
@@ -913,4 +916,243 @@ func (a *WorldScriptableAdapter) AppendExtraDescs(ref scripting.ObjRef, text str
 		out = append(out, d)
 	}
 	obj.SetLiveExtraDescs(out)
+}
+
+// Echo is lua_echo (scripts.c:342-383): "room" is send_to_room, "outdoor"
+// send_to_outdoor, "zone" send_to_zone for ch, "local" do_echo and "global"
+// do_gecho as ch.
+func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *scripting.CharRef, text string) {
+	w := a.world
+	switch kind {
+	case "room":
+		if room != nil {
+			for _, p := range w.GetPlayersInRoom(room.VNum) {
+				p.SendMessage(text)
+			}
+		}
+	case "outdoor":
+		if text == "" {
+			return
+		}
+		for _, p := range w.GetAllPlayers() {
+			if p.GetPosition() > combat.PosSleeping && w.IsOutside(p.GetRoomVNum()) {
+				p.SendMessage(text)
+			}
+		}
+	case "zone":
+		if roomVNum, ok := a.CharRoom(*ch); ok && text != "" {
+			w.sendToZoneExceptRoom(roomVNum, text)
+		}
+	case "local", "global":
+		actor, p, _ := a.resolveChar(*ch)
+		if actor == nil {
+			return
+		}
+		text = strings.TrimLeft(text, " \t\r\n\v\f") // skip_spaces
+		if text == "" {
+			if p != nil {
+				if kind == "local" {
+					p.SendMessage("Yes.. but what?\r\n")
+				} else {
+					p.SendMessage("That must be a mistake...\r\n")
+				}
+			}
+			return
+		}
+		noRepeat := p != nil && p.GetFlags()&(1<<uint(PrfNoRepeat)) != 0
+		if kind == "local" {
+			// do_echo, SCMD_ECHO (act.wizard.c): act to the room, then to ch.
+			Act(w, false, actor, nil, nil, nil, text, "", ToRoom)
+			if noRepeat {
+				p.SendMessage("Okay.\r\n") // OK (config.c:92)
+			} else {
+				Act(nil, false, actor, nil, nil, nil, text, "", ToChar)
+			}
+			return
+		}
+		// do_gecho: every other player, then ch.
+		line := text + "\r\n"
+		for _, other := range w.GetAllPlayers() {
+			if other != p {
+				other.SendMessage(line)
+			}
+		}
+		if p != nil {
+			if noRepeat {
+				p.SendMessage("Okay.\r\n") // OK (config.c:92)
+			} else {
+				p.SendMessage(line)
+			}
+		}
+	}
+}
+
+// Gossip is lua_gossip's do_gen_comm(me, text, SCMD_GOSSIP).
+func (a *WorldScriptableAdapter) Gossip(me scripting.CharRef, text string) {
+	if m := a.mobFor(me); m != nil {
+		a.world.mobGlobalGossip(m, text)
+	}
+}
+
+// Social is lua_social: do_action(me, GET_NAME(vict), social). ok is false
+// when the name is no social (C's find_command fails, or do_action finds no
+// action for the command).
+func (a *WorldScriptableAdapter) Social(me, vict scripting.CharRef, social string) bool {
+	m := a.mobFor(me)
+	target := a.actorFor(&vict)
+	if m == nil || target == nil {
+		return false
+	}
+	if _, ok := socialMinPosition[social]; !ok {
+		return false
+	}
+	a.world.npcSocial(m, social, target.GetName())
+	return true
+}
+
+// Follow is lua_follow: do_follow(me, leader->player.name), and AFF_CHARM on
+// me when charm is set.
+func (a *WorldScriptableAdapter) Follow(me, leader scripting.CharRef, charm bool) {
+	m := a.mobFor(me)
+	if m == nil {
+		return
+	}
+	_, lp, lm := a.resolveChar(leader)
+	switch {
+	case lp != nil:
+		// do_follow's get_char_room_vis on the leader's name.
+		if lp.GetRoomVNum() == m.GetRoomVNum() && canSee(m, lp) && !strings.EqualFold(m.GetFollowing(), lp.GetName()) {
+			AddFollowerMob(a.world, m, lp)
+		}
+	case lm != nil:
+		slog.Warn("lua follow of a mobile leader is not ported; ignored", "mob_vnum", m.GetVNum(), "leader_vnum", lm.GetVNum())
+	}
+	if charm {
+		m.SetAffected(affCharm)
+	}
+}
+
+// SetHunt is lua_set_hunt's set_hunting(hunter, vict).
+func (a *WorldScriptableAdapter) SetHunt(hunter scripting.CharRef, vict *scripting.CharRef) {
+	m := a.mobFor(hunter)
+	if m == nil {
+		slog.Warn("lua set_hunt for a player is not ported; ignored")
+		return
+	}
+	prey := ""
+	if vict != nil {
+		if target := a.actorFor(vict); target != nil {
+			prey = target.GetName()
+		}
+	}
+	m.SetHunting(prey)
+}
+
+// Spell is lua_spell: cast_spell(me, vict, obj, spell) when vocal, else
+// call_magic(me, vict, obj, spell, GET_LEVEL(me), CAST_SPELL).
+func (a *WorldScriptableAdapter) Spell(me scripting.CharRef, vict *scripting.CharRef, obj *scripting.ObjRef, spellNum int, vocal bool) {
+	m := a.mobFor(me)
+	if m == nil {
+		return
+	}
+	if obj != nil {
+		slog.Warn("lua spell on an object is not ported; ignored", "mob_vnum", m.GetVNum(), "spell", spellNum)
+		return
+	}
+	var target combat.Combatant
+	if vict != nil {
+		if actor := a.actorFor(vict); actor != nil {
+			target, _ = actor.(combat.Combatant)
+		}
+	}
+	if vocal {
+		castSpellC(a.world, m, target, spellNum)
+		return
+	}
+	spells.CastFromSpecial(m, target, spellNum, m.GetLevel(), a.world)
+}
+
+// castSpellC is cast_spell (spell_parser.c) for a mobile caster: its gates
+// answer only the mobile, so a refusal shows nothing; otherwise the verbal
+// component and call_magic.
+func castSpellC(w *World, me *MobInstance, tch combat.Combatant, spellNum int) bool {
+	if spellNum < 0 || spellNum > 299 { // TOP_SPELL_DEFINE (spells.h:260)
+		return false
+	}
+	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+		return false
+	}
+	info := spells.GetSpellInfo(spellNum)
+	if info == nil || me.GetPosition() < int(info.MinPosition) {
+		return false
+	}
+	if me.IsAffected(affCharm) && tch != nil && strings.EqualFold(me.GetFollowing(), tch.GetName()) {
+		return false
+	}
+	self := tch != nil && tch.GetName() == me.GetName()
+	if (!self && info.HasTarget(spells.TarSelfOnly)) || (self && info.HasTarget(spells.TarNotSelf)) {
+		return false
+	}
+	if info.HasRoutine(spells.RoutineGroups) && !me.IsAffected(affGroup) {
+		return false
+	}
+	spells.SaySpell(me, spellNum, tch, nil, w)
+	return spells.Cast(me, tch, spellNum, me.GetLevel(), w)
+}
+
+// Unaffect is lua_unaffect: affect_remove for every affect on vict.
+func (a *WorldScriptableAdapter) Unaffect(ref scripting.CharRef) {
+	switch _, p, m := a.resolveChar(ref); {
+	case p != nil:
+		p.mu.Lock()
+		affects := p.ActiveAffects
+		p.ActiveAffects = nil
+		p.mu.Unlock()
+		for _, af := range affects {
+			engine.AffectFromChar(p, af.SpellID)
+		}
+	case m != nil:
+		m.mu.Lock()
+		var removed []*engine.Affect
+		for key, value := range m.CustomData {
+			if af, ok := value.(*engine.Affect); ok && strings.HasPrefix(key, "affect_") {
+				removed = append(removed, af)
+				delete(m.CustomData, key)
+			}
+		}
+		m.mu.Unlock()
+		for _, af := range removed {
+			for engFlag, cBit := range EngineFlagToAffBit {
+				if af.Flags&engFlag != 0 {
+					m.RemoveAffected(cBit)
+				}
+			}
+		}
+	}
+}
+
+// Mount is lua_mount: do_ride(rider, GET_NAME(mount)), do_dismount(rider)
+// or unmount(rider, get_mount(rider)). Only player riders are ported.
+func (a *WorldScriptableAdapter) Mount(rider scripting.CharRef, mount *scripting.CharRef, how string) {
+	_, p, _ := a.resolveChar(rider)
+	if p == nil {
+		slog.Warn("lua mount for a mobile rider is not ported; ignored", "how", how)
+		return
+	}
+	switch how {
+	case "ride":
+		name := ""
+		if mount != nil {
+			if actor := a.actorFor(mount); actor != nil {
+				name = actor.GetName()
+			}
+		}
+		a.world.doRide(p, nil, "ride", name)
+	case "dismount":
+		a.world.doDismount(p, nil, "dismount", "")
+	case "unmount":
+		if m := a.world.riddenMount(p); m != nil {
+			a.world.clearMountedPair(p, m)
+		}
+	}
 }

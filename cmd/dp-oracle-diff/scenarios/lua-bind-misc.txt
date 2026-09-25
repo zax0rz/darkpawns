@@ -1,0 +1,92 @@
+# Lua binding certification: the remaining bindings, from a probe oncmd
+# script on the healer (mob 12220): emote, number, echo outdoor/global,
+# save_obj, set_skill, raw_kill and tport.
+# depth-case: lua.bind-emote
+# depth-case: lua.bind-number
+# depth-case: lua.bind-echo-outdoor-global
+# depth-case: lua.bind-save-obj
+# depth-case: lua.bind-raw-kill
+# depth-case: lua.bind-tport
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say") then
+return FALSE
+end
+if (what == "emote") then
+emote("smiles warmly.")
+elseif (what == "number") then
+say("numbers " .. number(1, 100) .. " " .. number(1, 6) .. " " .. number(5, 5))
+elseif (what == "outdoor") then
+echo(ch, "outdoor", "Thunder rolls across the sky.\r\n")
+elseif (what == "global") then
+echo(ch, "global", "The heavens rumble.")
+elseif (what == "saveobj") then
+local o = ch.objs[1]
+o.name = "a polished dragon's tooth"
+o.cost = 5
+o.weight = 0
+save_obj(o)
+say("saved")
+elseif (what == "kill") then
+local m = mload(12204, 12296)
+raw_kill(m, me, TYPE_UNDEFINED)
+say("killed")
+elseif (what == "tport") then
+tport(ch, 12281)
+else
+return FALSE
+end
+return TRUE
+end
+
+[setup:oracle]
+Probelast
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Probelast
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+load obj 11052
+
+[probe]
+say emote
+say number
+say outdoor
+say global
+say saveobj
+inventory
+say kill
+look
+say tport

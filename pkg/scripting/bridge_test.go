@@ -95,13 +95,21 @@ func (f *fakeBridge) ExtractChar(CharRef)                    {}
 func (f *fakeBridge) ObjList(CharRef, string, string) (ObjRef, *CharRef, bool) {
 	return ObjRef{}, nil, false
 }
-func (f *fakeBridge) ObjFrom(ObjRef, string)          {}
-func (f *fakeBridge) ObjToRoom(ObjRef, int) bool      { return false }
-func (f *fakeBridge) ObjToChar(ObjRef, CharRef)       {}
-func (f *fakeBridge) ObjToObj(ObjRef, ObjRef)         {}
-func (f *fakeBridge) Steal(CharRef, ObjRef)           {}
-func (f *fakeBridge) EquipCharObj(CharRef, ObjRef)    {}
-func (f *fakeBridge) AppendExtraDescs(ObjRef, string) {}
+func (f *fakeBridge) ObjFrom(ObjRef, string)                      {}
+func (f *fakeBridge) ObjToRoom(ObjRef, int) bool                  { return false }
+func (f *fakeBridge) ObjToChar(ObjRef, CharRef)                   {}
+func (f *fakeBridge) ObjToObj(ObjRef, ObjRef)                     {}
+func (f *fakeBridge) Steal(CharRef, ObjRef)                       {}
+func (f *fakeBridge) EquipCharObj(CharRef, ObjRef)                {}
+func (f *fakeBridge) AppendExtraDescs(ObjRef, string)             {}
+func (f *fakeBridge) Echo(string, *RoomRef, *CharRef, string)     {}
+func (f *fakeBridge) Gossip(CharRef, string)                      {}
+func (f *fakeBridge) Social(CharRef, CharRef, string) bool        { return true }
+func (f *fakeBridge) Follow(CharRef, CharRef, bool)               {}
+func (f *fakeBridge) SetHunt(CharRef, *CharRef)                   {}
+func (f *fakeBridge) Spell(CharRef, *CharRef, *ObjRef, int, bool) {}
+func (f *fakeBridge) Unaffect(CharRef)                            {}
+func (f *fakeBridge) Mount(CharRef, *CharRef, string)             {}
 
 // The engine finds the bridge by a runtime type assertion; this keeps the
 // fake a Bridge at compile time, so a new method cannot silently turn these

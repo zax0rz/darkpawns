@@ -730,3 +730,185 @@ func (e *Engine) bridgeExtra(L *lua.LState, b Bridge) int {
 	L.Push(e.newObjHandle(ref))
 	return 1
 }
+
+// lua_echo (scripts.c:342-383).
+func (e *Engine) bridgeEcho(L *lua.LState, b Bridge) int {
+	kind, okKind := argString(L, 2)
+	text, okText := argString(L, 3)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okKind || !okText {
+		b.Log("[Lua] Invalid arguments passed to lua_echo.")
+		return 0
+	}
+	switch kind {
+	case "room":
+		if room, ok := roomRefOf(L.Get(1)); ok {
+			b.Echo(kind, &room, nil, text)
+		} else {
+			// C reads a room pointer out of whatever table it was given (R1a).
+			b.Log("[Lua] echo 'room' needs a room table; ignored.")
+		}
+	case "outdoor":
+		b.Echo(kind, nil, nil, text)
+	default: // "zone", "local", "global"; any other kind does nothing
+		if ch, ok := charRefOf(L.Get(1)); ok && (kind == "zone" || kind == "local" || kind == "global") {
+			b.Echo(kind, nil, &ch, text)
+		}
+	}
+	return 0
+}
+
+// lua_gossip (scripts.c:571-587).
+func (e *Engine) bridgeGossip(L *lua.LState, b Bridge) int {
+	me, ok := meRef(L)
+	if !ok {
+		return 0
+	}
+	text, _ := argString(L, 1)
+	b.Gossip(me, text)
+	return 0
+}
+
+// lua_social (scripts.c:1399-1426).
+func (e *Engine) bridgeSocial(L *lua.LState, b Bridge) int {
+	vict, okVict := charRefOf(L.Get(1))
+	social, okSocial := argString(L, 2)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okSocial {
+		b.Log("[Lua] Invalid argument passed to lua_social.")
+		return 0
+	}
+	me, okMe := meRef(L)
+	if okMe && okVict && !b.Social(me, vict, social) {
+		b.Log("[Lua] Unknown command passed to lua_social.")
+	}
+	return 0
+}
+
+// lua_follow (scripts.c:542-569). C returns 1 without pushing: the script
+// gets the leader table's struct, the last value lua_follow pushed.
+func (e *Engine) bridgeFollow(L *lua.LState, b Bridge) int {
+	leader, okLeader := charRefOf(L.Get(1))
+	charm, okCharm := argNumber(L, 2)
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable || !okCharm {
+		b.Log("[Lua] Invalid argument passed to lua_follow.")
+		return 0
+	}
+	if me, ok := meRef(L); ok && okLeader {
+		b.Follow(me, leader, charm != 0)
+	}
+	L.Push(L.Get(1).(*lua.LTable).RawGetString("struct"))
+	return 1
+}
+
+// lua_set_hunt (scripts.c:1341-1363).
+func (e *Engine) bridgeSetHunt(L *lua.LState, b Bridge) int {
+	hunter, okHunter := charRefOf(L.Get(1))
+	_, isTable := L.Get(1).(*lua.LTable)
+	if !isTable || !tableOrNil(L, 2) {
+		b.Log("[Lua] Invalid arguments passed to lua_set_hunt.")
+		return 0
+	}
+	var vict *CharRef
+	if ref, ok := charRefOf(L.Get(2)); ok {
+		vict = &ref
+	}
+	if okHunter {
+		b.SetHunt(hunter, vict)
+	}
+	return 0
+}
+
+// lua_spell (scripts.c:1428-1489). C returns 1 without a final push, so the
+// script gets the top of lua_spell's stack: the victim's new table when it
+// is neither me nor ch, else the object's struct, else the victim's struct,
+// else ch's struct.
+func (e *Engine) bridgeSpell(L *lua.LState, b Bridge) int {
+	_, victTable := L.Get(1).(*lua.LTable)
+	_, objTable := L.Get(2).(*lua.LTable)
+	spell, okSpell := argNumber(L, 3)
+	vocal, okVocal := argNumber(L, 4)
+	if !tableOrNil(L, 1) || !tableOrNil(L, 2) || !okSpell || !okVocal {
+		b.Log("[Lua] Invalid argument passed to lua_spell.")
+		return 0
+	}
+	if spell == 0 {
+		b.Log("[Lua] No spell passed to lua_spell.")
+		return 0
+	}
+	me, _ := meRef(L)
+	var vict *CharRef
+	if ref, ok := charRefOf(L.Get(1)); ok {
+		vict = &ref
+	}
+	var obj *ObjRef
+	if ref, ok := objRefOf(L.Get(2)); ok {
+		obj = &ref
+	}
+	b.Spell(me, vict, obj, spell, vocal != 0)
+	top := lua.LValue(lua.LNil)
+	if chTable, ok := L.GetGlobal("ch").(*lua.LTable); ok {
+		top = chTable.RawGetString("struct")
+	}
+	if victTable {
+		top = L.Get(1).(*lua.LTable).RawGetString("struct")
+	}
+	if objTable {
+		top = L.Get(2).(*lua.LTable).RawGetString("struct")
+	}
+	if vict != nil {
+		// "Now save the char in case damage/healing was done."
+		table := e.charToTable(b, *vict)
+		chRef, chOK := charRefOf(L.GetGlobal("ch"))
+		switch {
+		case *vict == me:
+			L.SetGlobal("me", table)
+		case chOK && *vict == chRef:
+			L.SetGlobal("ch", table)
+		default:
+			top = table
+		}
+	}
+	L.Push(top)
+	return 1
+}
+
+// lua_unaffect (scripts.c:1591-1607).
+func (e *Engine) bridgeUnaffect(L *lua.LState, b Bridge) int {
+	ref, ok := charRefOf(L.Get(1))
+	if _, isTable := L.Get(1).(*lua.LTable); !isTable {
+		b.Log("[Lua] Invalid argument passed to lua_unaffect.")
+		return 0
+	}
+	if ok {
+		b.Unaffect(ref)
+	}
+	return 0
+}
+
+// lua_mount (scripts.c:871-906).
+func (e *Engine) bridgeMount(L *lua.LState, b Bridge) int {
+	rider, okRider := charRefOf(L.Get(1))
+	_, riderTable := L.Get(1).(*lua.LTable)
+	how, okHow := argString(L, 3)
+	if !riderTable || !tableOrNil(L, 2) || !okHow {
+		b.Log("[Lua] Invalid argument passed to lua_mount.")
+		return 0
+	}
+	if how != "ride" && how != "dismount" && how != "unmount" {
+		b.Log("[Lua] Invalid position to lua_mount.")
+		return 0
+	}
+	var mount *CharRef
+	if ref, ok := charRefOf(L.Get(2)); ok {
+		mount = &ref
+	}
+	if okRider {
+		b.Mount(rider, mount, how)
+	}
+	return 0
+}
+
+// tableOrNil is C's (lua_istable(L, n) || lua_isnil(L, n)).
+func tableOrNil(L *lua.LState, n int) bool {
+	_, isTable := L.Get(n).(*lua.LTable)
+	return isTable || L.Get(n) == lua.LNil
+}

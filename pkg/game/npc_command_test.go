@@ -135,3 +135,18 @@ func TestRoomHasOtherOccupant(t *testing.T) {
 		t.Fatal("another mobile satisfies onpulse_all's scan but not the player-only one")
 	}
 }
+
+// table_to_char writes a mobile's timer to GET_MOB_WAIT, the field combat
+// reads (the port once kept a separate copy only scripts saw).
+func TestWorldBridgeTimerIsMobWait(t *testing.T) {
+	w, _, mob, _ := newNPCCommandWorld(t)
+	b := NewWorldScriptableAdapter(w)
+	ref := scripting.CharRef{NPC: true, ID: mob.GetID()}
+	b.ApplyChar(ref, scripting.CharWrite{Level: mob.GetLevel(), HP: mob.GetHP(), Pos: mob.GetPosition(), Timer: 3, Align: mob.GetAlignment()})
+	if got := mob.GetWaitState(); got != 3 {
+		t.Fatalf("GET_MOB_WAIT after a script's timer write = %d, want 3", got)
+	}
+	if f, _ := b.CharFields(ref); f.Timer != 3 {
+		t.Fatalf("me.timer reads %d, want 3", f.Timer)
+	}
+}

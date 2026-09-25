@@ -198,6 +198,25 @@ type Bridge interface {
 	// AppendExtraDescs is lua_extra: text appended to every extra
 	// description, the list rebuilt in reverse.
 	AppendExtraDescs(obj ObjRef, text string)
+
+	// Echo is lua_echo: "room" (room), "outdoor", "zone" (ch), "local" and
+	// "global" (as ch).
+	Echo(kind string, room *RoomRef, ch *CharRef, text string)
+	// Gossip is do_gen_comm(me, text, SCMD_GOSSIP).
+	Gossip(me CharRef, text string)
+	// Social is do_action(me, GET_NAME(vict), social); false when the name
+	// is no social.
+	Social(me, vict CharRef, social string) bool
+	// Follow is do_follow(me, leader's name), and AFF_CHARM when charm.
+	Follow(me, leader CharRef, charm bool)
+	// SetHunt is set_hunting(hunter, vict); vict nil stops the hunt.
+	SetHunt(hunter CharRef, vict *CharRef)
+	// Spell is cast_spell (vocal) or call_magic as me.
+	Spell(me CharRef, vict *CharRef, obj *ObjRef, spell int, vocal bool)
+	// Unaffect is affect_remove for every affect on the character.
+	Unaffect(ref CharRef)
+	// Mount is do_ride, do_dismount or unmount for the rider.
+	Mount(rider CharRef, mount *CharRef, how string)
 }
 
 type (
