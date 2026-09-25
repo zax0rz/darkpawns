@@ -1,0 +1,49 @@
+# init_char gives the first player every skill at 100 (src/db.c:3059-3064).
+# The port stored some under their C display name ("tiger punch") while the
+# handlers read another key (tiger_punch), so its God answered "What's that,
+# idiot-san?" where C's reaches the target lookup (DP-1342).
+# depth-case: skills.god-handler-keys
+# depth-case: tiger.no-target
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Skillgod
+Y
+skillpass
+skillpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Skillgod
+y
+skillpass
+skillpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+
+[probe]
+tiger
+dragon
+serpent
+strike
+pick
+aid
+flesh
+search

@@ -870,21 +870,9 @@ func CmdDragonKick(s SessionInterface, args []string) error {
 	if ch == nil {
 		return nil
 	}
-	var target combat.Combatant
-	var found bool
-	world := s.GetWorld()
-	if len(args) > 0 {
-		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoom())
-		if !found {
-			return s.SendMessage("Kick who?\r\n")
-		}
-	} else if ch.GetFighting() != "" {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
-		if !found {
-			return s.SendMessage("Kick who?\r\n")
-		}
-	} else {
-		return s.SendMessage("Kick who?\r\n")
+	target, found := martialArtsVictim(s, ch, args)
+	if !found {
+		return s.SendMessage("Kick who?\r\n") // act.offensive.c:655
 	}
 	if target.GetName() == ch.Name {
 		return s.SendMessage("Aren't we funny today...\r\n")
@@ -892,7 +880,8 @@ func CmdDragonKick(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, game.DoDragonKick(ch, target))
 }
 
-// CmdTigerPunch handles the tiger punch command (C-10).
+// CmdTigerPunch is do_tiger_punch (act.offensive.c:693-744): the skill,
+// then bare hands, then the target, then self and mount.
 func CmdTigerPunch(s SessionInterface, args []string) error {
 	ch, err := skillContext(s, game.SkillTigerPunch)
 	if err != nil {
@@ -901,26 +890,39 @@ func CmdTigerPunch(s SessionInterface, args []string) error {
 	if ch == nil {
 		return nil
 	}
-	var target combat.Combatant
-	var found bool
-	world := s.GetWorld()
-	if len(args) > 0 {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
-		if !found {
-			return s.SendMessage("Tiger punch whom?\r\n")
-		}
-	} else if ch.GetFighting() != "" {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
-		if !found {
-			return s.SendMessage("Tiger punch whom?\r\n")
-		}
-	} else {
-		return s.SendMessage("Tiger punch whom?\r\n")
+	if _, wielding := ch.Equipment.GetItemInSlot(game.SlotWield); wielding {
+		return s.SendMessage("That's pretty tough to do while wielding a weapon.\r\n")
+	}
+	target, found := martialArtsVictim(s, ch, args)
+	if !found {
+		return s.SendMessage("Hit who?\r\n") // act.offensive.c:717
 	}
 	if target.GetName() == ch.Name {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
+	if ch.IsMounted() {
+		return s.SendMessage("Dismount first!\r\n")
+	}
 	return sendSkillResult(s, ch, target, game.DoTigerPunch(ch, target))
+}
+
+// martialArtsVictim is the dragon kick / tiger punch victim lookup: C's
+// get_char_room_vis on one_argument, and when that finds no one, FIGHTING(ch)
+// (act.offensive.c:647-657, 709-719).
+func martialArtsVictim(s SessionInterface, ch *game.Player, args []string) (combat.Combatant, bool) {
+	world := s.GetWorld()
+	if len(args) > 0 {
+		if target, found := oneArgumentSkillTarget(world, ch, args, ch.GetRoom()); found {
+			return target, true
+		}
+	}
+	if ch.GetFighting() == "" {
+		return nil, false
+	}
+	if target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch); found {
+		return target, true
+	}
+	return game.FindFightingTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 }
 
 // CmdShoot handles the shoot command (C-10).
