@@ -568,3 +568,12 @@ func TestRunSetupWithoutSettleRejectsPasswordRefusal(t *testing.T) {
 		t.Fatalf("RunSetup accepted a refused password: %v", err)
 	}
 }
+
+func TestHasEnterGameStep(t *testing.T) {
+	if !HasEnterGameStep([]string{"Name", "pass", "<ENTER>", "1"}) {
+		t.Fatal("menu relogin not recognised")
+	}
+	if HasEnterGameStep([]string{"Name", "pass"}) {
+		t.Fatal("reconnect relogin reported a menu choice")
+	}
+}

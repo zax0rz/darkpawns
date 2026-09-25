@@ -203,7 +203,7 @@ func (s *Session) finishZeditLocked(save bool) {
 	}
 	s.flushZeditOutputLocked()
 	s.setPlayerWritingLocked(false)
-	if s.player != nil {
+	if s.olcActor() != nil {
 		game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n stops using OLC.", "", game.ToRoom)
 	}
 	s.zedit = nil

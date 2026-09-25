@@ -270,7 +270,7 @@ func (s *Session) setPlayerWritingLocked(writing bool) {
 // mirroring C's act(..., TO_ROOM, ...) around the OLC transitions. Act
 // resolves the room from the actor, exactly as the C calls do.
 func (s *Session) meditActLocked(actType int, format string) {
-	if s.manager == nil || s.manager.world == nil || s.player == nil {
+	if s.manager == nil || s.manager.world == nil || s.olcActor() == nil {
 		return
 	}
 	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", actType)

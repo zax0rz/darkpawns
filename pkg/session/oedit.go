@@ -366,7 +366,7 @@ func (s *Session) flushOeditOutputLocked() {
 // oeditActLocked runs a room-audience message with $n substitution, mirroring
 // C's act(..., TO_ROOM, ...) around the OLC transitions.
 func (s *Session) oeditActLocked(format string) {
-	if s.manager == nil || s.manager.world == nil || s.player == nil {
+	if s.manager == nil || s.manager.world == nil || s.olcActor() == nil {
 		return
 	}
 	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", game.ToRoom)

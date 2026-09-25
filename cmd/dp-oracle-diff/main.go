@@ -422,6 +422,14 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		return oraclediff.RunSetupAndSettle(conn, setup, settlePulses, quiescence)
 	}
+	// A relogin without a menu choice is a reconnect to a linkdead body; its
+	// lines are played as-is, with no entry settle.
+	runRelogin := func(conn oraclediff.Conn, setup []string) (string, error) {
+		if !oraclediff.HasEnterGameStep(setup) {
+			return oraclediff.RunSetup(conn, setup, quiescence)
+		}
+		return runSetup(conn, setup)
+	}
 
 	// A scenario that relogs its actor gets a primary that can reconnect to
 	// the same server and log the character in again.
@@ -435,13 +443,13 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 				}
 				return oraclediff.NewTCPConn(c), nil
 			},
-			func(c oraclediff.Conn) (string, error) { return runSetup(c, scenario.ReloginOracle) },
+			func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginOracle) },
 			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
 		defer func() { _ = oraclePrimary.Close() }()
 	}
 	if len(scenario.ReloginPort) > 0 {
 		goPrimary = oraclediff.NewReloginConn(goConn, dialGo,
-			func(c oraclediff.Conn) (string, error) { return runSetup(c, scenario.ReloginPort) },
+			func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginPort) },
 			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
 		defer func() { _ = goPrimary.Close() }()
 	}

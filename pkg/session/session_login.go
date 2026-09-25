@@ -274,6 +274,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if s.manager.accountLockouts != nil {
 			s.manager.accountLockouts.RecordSuccess(login.PlayerName)
 		}
+		// C checks for another copy of the character before the MOTD
+		// (interpreter.c:1914-1916).
+		if s.performDupeCheck() {
+			return nil
+		}
 		s.startReturningMenu(s.menuPasswordHash)
 		return nil
 	}

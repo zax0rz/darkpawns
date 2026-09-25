@@ -1210,7 +1210,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 // It returns true when the session was retained as linkdead; orderly quits
 // and pre-auth disconnects return false and use normal cleanup.
 func (m *Manager) HandleTransportDisconnect(s *Session) bool {
-	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() {
+	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() || s.superseded.Load() {
 		return false
 	}
 	// C close_socket (comm.c:2129) retains only CON_PLAYING. Authentication
@@ -1238,6 +1238,29 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 
 	s.DetachTransport()
 	return true
+}
+
+// UnregisterSession is Unregister for a transport tearing down its own
+// session. It removes the name only while this session still holds it: a
+// session superseded by a new login (performDupeCheck) must not unregister
+// or clean up the character the new session now plays.
+func (m *Manager) UnregisterSession(s *Session) {
+	if s == nil {
+		return
+	}
+	m.mu.Lock()
+	current, ok := m.sessions[s.playerName]
+	if ok && current == s {
+		delete(m.sessions, s.playerName)
+	}
+	m.mu.Unlock()
+	if ok && current == s {
+		m.cleanupSession(s, s.playerName)
+		return
+	}
+	if s.cancelFunc != nil {
+		s.cancelFunc()
+	}
 }
 
 func (m *Manager) Unregister(playerName string) {
@@ -1408,7 +1431,7 @@ func (s *Session) extractLinkdead() {
 	// the reaper retries it every sweep.
 	s.Close()
 	if s.conn == nil || !s.hasTransport() {
-		s.manager.Unregister(playerName)
+		s.manager.UnregisterSession(s)
 	}
 }
 
@@ -1537,6 +1560,10 @@ type Session struct {
 	// Both WebSocket pumps can discover a disconnect. Only one may decide
 	// whether to retain the playing character or unregister the session.
 	transportCleanupOnce sync.Once
+	// superseded is set when a new login takes over this session's character
+	// (performDupeCheck). Its transport teardown then leaves the character
+	// and the name's registration to the new session.
+	superseded atomic.Bool
 	// writerDone is closed when the WebSocket writer exits, so an orderly
 	// close (goodbye, refused login) can let it flush before the socket goes.
 	writerDone chan struct{}

@@ -1,0 +1,84 @@
+# Lifecycle: logging back in to a linkdead character (DP-1325).
+# depth-case: entry.reconnect-linkdead
+#
+# The actor's connection drops without quitting, which leaves the character in
+# the room, linkdead (close_socket; the observer sees "has lost his link.").
+# Logging in again finds that live body in perform_dupe_check
+# (interpreter.c:1528-1659): no MOTD or menu, "Reconnecting." to the player,
+# "$n has reconnected." to the room, and play resumes in place.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Reconnector
+Y
+reconpass
+reconpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port]
+Reconnector
+y
+reconpass
+reconpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:oracle:observer]
+Reconwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port:observer]
+Reconwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[relogin:oracle]
+Reconnector
+reconpass
+
+[relogin:port]
+Reconnector
+reconpass
+
+[probe]
+look
+<RELOGIN>
+look

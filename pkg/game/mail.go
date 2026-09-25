@@ -312,6 +312,9 @@ func scanFile() bool {
 // Core mail operations
 // ---------------------------------------------------------------------------
 
+// HasMail is has_mail for the session layer's reconnect notice.
+func HasMail(recipient int) bool { return hasMail(recipient) }
+
 func hasMail(recipient int) bool {
 	return findCharInIndex(recipient) != nil
 }

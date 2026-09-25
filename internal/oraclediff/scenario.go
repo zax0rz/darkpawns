@@ -766,6 +766,19 @@ func RunSetup(conn Conn, setup []string, quiescence time.Duration) (string, erro
 	return runSetup(conn, setup, -1, 0, quiescence)
 }
 
+// HasEnterGameStep reports whether a login script chooses "1" at the menu. A
+// relogin that reconnects to a linkdead body has no such step: C's
+// perform_dupe_check puts the descriptor straight back in the game, with no
+// MOTD or menu and no newbie start-room transition to settle.
+func HasEnterGameStep(setup []string) bool {
+	for _, step := range setup {
+		if step == enterGameStep {
+			return true
+		}
+	}
+	return false
+}
+
 // RunSetupAndSettle plays setup and advances a frozen DP_CLOCK immediately
 // after the final "1" menu choice enters the game. C's newbie start-room
 // transition is pulse-driven, so post-entry setup commands must not run before

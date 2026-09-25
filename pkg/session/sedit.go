@@ -261,7 +261,7 @@ func (s *Session) finishSeditLocked(save bool) {
 	}
 	s.flushSeditOutputLocked()
 	s.setPlayerWritingLocked(false)
-	if s.player != nil {
+	if s.olcActor() != nil {
 		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n stops using OLC.", "", game.ToRoom)
 	}
 	s.sedit = nil
