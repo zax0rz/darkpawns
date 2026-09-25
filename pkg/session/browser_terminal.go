@@ -54,7 +54,16 @@ type terminalOut struct {
 // browser receives: an "out" frame with telnet's bytes, the message itself if
 // it is sidebar data, or nothing.
 func renderForBrowserTerminal(msg []byte) ([]byte, bool) {
+	return renderForBrowserTerminalTracked(nil, msg)
+}
+
+// renderForBrowserTerminalTracked renders one frame for the browser terminal,
+// applying the session's prompt state when there is one.
+func renderForBrowserTerminalTracked(s *Session, msg []byte) ([]byte, bool) {
 	f, ok := RenderTerminalFrame(msg)
+	if ok && s != nil {
+		f = s.TrackPrompt(f)
+	}
 	if !ok {
 		var sm struct {
 			Type string `json:"type"`

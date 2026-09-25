@@ -3,7 +3,6 @@ accuse-depth	accuse Ragnar [actor]	9242b15c4e3726f2eefede496829fb154b99a39e69138
 accuse-depth	accuse the Ragnar trailing words are ignored [actor]	9242b15c4e3726f2eefede496829fb154b99a39e6913820c453f23773deb75f6	accuse.tsv:accuse.one-argument:blocked;accuse.tsv:accuse.target-audience:blocked;accuse.tsv:accuse.target-success:blocked
 force-mob	force trainee sit	1ad72fbba7d667612f4659ae072470bbb2c2450c64b972ed3364ea4ee46b7aca	force.tsv:force.npc-command-interpreter:blocked;force.tsv:force.visible-npc-target:blocked
 force-mob	force trainee stand	bf0860b9ed3d932a6e6e316b0cdf0fa69c25f9df5f435068480edf379e801da5	force.tsv:force.npc-command-interpreter:blocked;force.tsv:force.visible-npc-target:blocked
-groinrip-sleeping-pk-depth	groinrip GripDozer [sleeper]	8d0876d6b8bd96451e29c2c60917fe26e97979d39ddef7a5e4e8f764ee201868	groinrip.tsv:groinrip.sleeping-target:blocked
 gsay-act-depth	gsay testing group act [actor]	7b7ecc70202759a5fa539d0cb1628abc1baa9033926087ec2dcb80bc72e9c5cc	gsay.tsv:gsay.act-echo-prompt-spacing:blocked;gsay.tsv:gsay.act-listener-prompt:blocked
 gsay-act-depth	gsay testing group act [awake]	577b73f9ae0da6548b37e72091489fb019ffc8f7379deb2567082ac7bbab1445	gsay.tsv:gsay.act-echo-prompt-spacing:blocked;gsay.tsv:gsay.act-listener-prompt:blocked
 gsay-act-depth	gsay testing group act [sleeper]	156516d57fc62ec0f779d8f99943db74de529b222eb0cbbb44d5882e426fd3ef	gsay.tsv:gsay.act-echo-prompt-spacing:blocked;gsay.tsv:gsay.act-listener-prompt:blocked
@@ -11,7 +10,6 @@ gsay-depth	gsay &Rred&n [peer]	4d36fdf213e008bf3b828a15c77f0510315174d474c3af7ec
 gsay-depth	gsay sleeping peer [peer]	00031c344f23e17d099fa697d1c40ea9f7b016a44573f0cf6ff0d3f5b912fbd7	gsay.tsv:gsay.sleeping-recipient:blocked
 gsay-depth	gtell multiple    spaces [peer]	e569293598032086af778c5fa06daa7bdc07b102a3b851f3a4ed4cefbd08cb01	gsay.tsv:gsay.sleeping-recipient:blocked
 lifecycle-idle-void	~dpclock pulse 630	c0f031329074f681a802a094b7102deee06efdc38aeffb3e6e7f1446312f384a	idle.tsv:idle.return-on-command:blocked;idle.tsv:idle.void-ninth-tick:blocked
-lifecycle-reconnect-linkdead	<RELOGIN> [observer]	8cdb291056ec5af2ccdc7466d1ad84e61825dc405146d3eaae625c546543f4e4	entry.tsv:entry.reconnect-linkdead:blocked
 lifecycle-relogin-prefs	<RELOGIN>	f59cee687d920bc45f52a2210fb50f973d3396b97f01da0989e9f6d445570aa2	save.tsv:save.relogin-login-transcript:blocked
 lifecycle-relogin-room	<RELOGIN>	f59cee687d920bc45f52a2210fb50f973d3396b97f01da0989e9f6d445570aa2	save.tsv:save.relogin-login-transcript:blocked
 player-state-toggles	auto [actor]	ad28945974944aa6776860e0429b3530b83c3c3aa6bf559ff4d78b511322954f	auto.tsv:auto.no-arg-listing-undefined:blocked

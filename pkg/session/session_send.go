@@ -277,6 +277,10 @@ func (s *Session) SendPrompt() {
 	// owns the input. While the descriptor string editor runs (d->str set),
 	// C's make_prompt writes "] ".
 	if s.isRoomEditing() || s.isMobEditing() || s.isObjEditing() || s.isZoneEditing() || s.isSeditEditing() {
+		// This flush is the prompt pass for the pending output, even when the
+		// OLC menu owns the prompt; otherwise every later sweep would prompt
+		// again (DP-1307).
+		s.outputSincePrompt.Store(0)
 		if s.isTextEditing() {
 			s.sendPromptText("] ")
 		}

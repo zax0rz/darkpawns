@@ -42,7 +42,9 @@ func TestSpecStartRoom_BirthTransitionAndImmortalGate(t *testing.T) {
 			level:       1,
 			wantHandled: true,
 			wantRoom:    8162,
-			wantPrefix:  "\r\n   'Startroom, now is not your time to die,' speaks the figure.",
+			// The CR LF before the speech is process_output's interruption of
+			// the showing prompt, added by the terminal writer (DP-1307).
+			wantPrefix: "   'Startroom, now is not your time to die,' speaks the figure.",
 		},
 		{
 			name:        "immortal",

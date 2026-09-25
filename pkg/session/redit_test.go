@@ -636,6 +636,9 @@ func readMsgTextOrEmpty(t *testing.T, s *Session) string {
 	t.Helper()
 	select {
 	case msg := <-s.send:
+		if IsInputMarkFrame(msg) {
+			return readMsgTextOrEmpty(t, s) // the internal line-read marker writes nothing
+		}
 		var sm ServerMessage
 		if err := json.Unmarshal(msg, &sm); err != nil {
 			t.Fatal(err)

@@ -555,6 +555,11 @@ func main() {
 		OnReapLinkdeadSessions: func() {
 			manager.ReapLinkdeadSessions()
 		},
+		// DP-1307: output that arrived without the player typing (combat
+		// rounds, mobs, weather, another player's say) gets its prompt.
+		OnFlushOutput: func() {
+			manager.FlushAsyncPrompts()
+		},
 	})
 	manager.SetPulsePump(gameLoop.PumpPulses)
 	// loopCtx ties the heartbeat to the server lifetime: canceling it drains the

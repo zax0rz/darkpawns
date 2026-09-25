@@ -108,6 +108,9 @@ func readMsgText(t *testing.T, s *Session) string {
 	t.Helper()
 	select {
 	case msg := <-s.send:
+		if IsInputMarkFrame(msg) {
+			return readMsgText(t, s) // the internal line-read marker writes nothing
+		}
 		var sm ServerMessage
 		if err := json.Unmarshal(msg, &sm); err != nil {
 			t.Fatalf("failed to unmarshal ServerMessage: %v", err)

@@ -127,9 +127,17 @@ func (s *Session) writePump() {
 				_ = s.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
+			if IsInputMarkFrame(message) {
+				if s.browserTerminal.Load() {
+					if f, ok := RenderTerminalFrame(message); ok {
+						s.TrackPrompt(f)
+					}
+				}
+				continue
+			}
 			if s.browserTerminal.Load() {
 				var send bool
-				if message, send = renderForBrowserTerminal(message); !send {
+				if message, send = renderForBrowserTerminalTracked(s, message); !send {
 					continue
 				}
 			}

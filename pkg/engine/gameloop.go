@@ -106,6 +106,12 @@ type GameLoopCallbacks struct {
 	// OnExtractPending — called every heartbeat tick (100ms).
 	// Ported from extract_pending_chars().
 	OnExtractPending func()
+
+	// OnFlushOutput — called after every live heartbeat, as game_loop flushes
+	// each descriptor's output and prompt after its pass (comm.c:632-648).
+	// PumpPulses (DP_CLOCK) leaves the flush to its caller, which does it once
+	// after the pumped pulses, as C's single pass would.
+	OnFlushOutput func()
 }
 
 // ---------------------------------------------------------------------------
@@ -254,6 +260,7 @@ func (gl *GameLoop) run(ctx context.Context) {
 		case <-ticker.C:
 			pulse := gl.Pulse.Add(1)
 			gl.heartbeat(pulse)
+			gl.safeInvoke("OnFlushOutput", pulse, gl.callbacks.OnFlushOutput)
 		}
 	}
 }
