@@ -76,6 +76,24 @@ async def cmd(ws, command, args=None, wait=1.5):
     return await recv_until(ws, wait)
 
 
+async def quit_game(ws):
+    """Leave the game with C's do_quit and prove it happened.
+
+    Mortals may only QUIT in a quit room (the temple, 8004/8008, hometown
+    temples, owned houses; act.other.c do_quit); anywhere else the server
+    answers "Type REALLYQUIT..." and the character stays in the world. A
+    socket closed after that leaves the character linkdead, and the next login
+    reconnects to the live body instead of reading the store (DP-1325), which
+    would not test persistence at all. So recall to the temple first, and fail
+    loudly unless the server says goodbye.
+    """
+    recalled = find_text(await cmd(ws, "recall", wait=1.0))
+    text = find_text(await cmd(ws, "quit", wait=1.0))
+    if "Goodbye, friend" not in text:
+        raise RuntimeError(
+            f"quit did not leave the game: recall said {recalled[:160]!r}, quit said {text[:120]!r}")
+
+
 def find_text(msgs):
     texts = []
     for m in msgs:
@@ -191,6 +209,11 @@ async def run_test(ws_url):
             "new_char": True,
         })
         await create_character(ws)
+        # Not quit_game: on a database that already has players this throwaway
+        # is a mortal still in the newbie start room, where any command (recall
+        # included) plays the birth dream and moves it to the infirmary, which
+        # is not a quit room. It only exists to take the first-player God slot;
+        # left linkdead, it affects nothing below.
         await cmd(ws, "quit", wait=1.0)
         print("  [bootstrap god created + logged out]")
     await asyncio.sleep(1.0)  # let the DB write land before Session 1
@@ -258,8 +281,8 @@ async def run_test(ws_url):
         eq_text = find_text(eq_msgs)
         check("Equipment shows wielded weapon", weapon_word in eq_text.lower() if weapon_word else False, eq_text[:80])
 
-        # Quit
-        await cmd(ws, "quit", wait=1.0)
+        # Quit (from a quit room, so the character is saved and extracted)
+        await quit_game(ws)
         print("  [logged out]")
 
     # Brief pause for DB write
@@ -286,7 +309,7 @@ async def run_test(ws_url):
         inv3_text = find_text(inv3_msgs)
         check("Inventory persisted", "nothing" not in inv3_text.lower(), inv3_text[:80])
 
-        await cmd(ws, "quit", wait=0.5)
+        await quit_game(ws)
 
     print()
     passed = sum(1 for s, _, _ in results if s == PASS)
