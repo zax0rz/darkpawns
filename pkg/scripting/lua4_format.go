@@ -42,8 +42,8 @@ func luaFormat(L *lua.LState) int {
 		value := L.Get(arg)
 		switch conv {
 		case 'u', 'o', 'x', 'X':
-			n := uint32(int64(L.CheckNumber(arg)))
-			value = lua.LNumber(n)
+			// (unsigned int)n: the low 32 bits, as a non-negative value.
+			value = lua.LNumber(int64(L.CheckNumber(arg)) & 0xFFFFFFFF)
 			if conv == 'u' {
 				conv = 'd'
 			}
