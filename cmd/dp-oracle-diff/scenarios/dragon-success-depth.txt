@@ -11,7 +11,6 @@
 empty-players
 quiet-mobs
 spawn-mob 10029 1 8105 100
-strip-mob-script 10029
 
 [setup:oracle]
 Draklord

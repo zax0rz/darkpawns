@@ -155,7 +155,6 @@ Looking at this bear, you wonder where he got his fish.
 1 1500
 8 8 1
 Race: 22
-Script: bearcub.lua 64
 E
 #9112
 bear grizzly female carve_meat~
@@ -311,7 +310,6 @@ Satyr's have the torso, head, and arms of a man, and the hind legs of a goat.
 1 6000
 8 8 1
 Race: 28
-Script: tyr.lua 16
 E
 #9123
 skunk giant~
@@ -543,7 +541,6 @@ An ancient druid. He is the most beautiful man you've ever seen.
 1 25000
 8 8 1
 Race: 0
-Script: caerroil.lua
 E
 #9139
 brownie~
@@ -572,7 +569,6 @@ and head of a human being, and the lower body of a large, powerful horse.
 1 4500
 8 8 1
 Race: 4
-Script: mount.lua 64
 E
 #9141
 spider large~
@@ -657,7 +653,6 @@ is pinkish. The creature's eyes are a glistening black.
 8 8 0
 BareHandAttack: 4
 Race: 21
-Script: anhkheg.lua
 E
 #9147
 golden gorger aurumvorax animal~
@@ -677,7 +672,6 @@ teeth.
 8 8 0
 BareHandAttack: 8
 Race: 22
-Script: aurumvorax.lua 64
 E
 #9148
 centaur leader~

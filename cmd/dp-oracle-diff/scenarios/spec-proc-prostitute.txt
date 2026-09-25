@@ -1,6 +1,6 @@
 # C-first vehicle for SPECIAL(prostitute), src/spec_procs3.c:670-705,
-# registered as mob vnum 8023 in src/spec_assign.c:283. The authored
-# elven_prostitute.lua script is stripped so this vehicle isolates the native
+# registered as mob vnum 8023 in src/spec_assign.c:283. C attaches no script
+# to it (DP-1333), so this vehicle isolates the native
 # special. The visible vehicle keeps setup and movement warmup-only so the
 # compared probe contains only native-procedure output.
 
@@ -9,7 +9,6 @@ empty-players
 quiet-mobs
 spawn-mob 8023 1 8021 80
 clear-mob-flag 8023 RANDZON
-strip-mob-script 8023
 replace-room-exits 8021 none
 
 [setup:oracle]

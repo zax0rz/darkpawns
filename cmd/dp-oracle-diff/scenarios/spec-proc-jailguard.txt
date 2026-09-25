@@ -13,7 +13,6 @@
 empty-players
 quiet-mobs
 spawn-mob 8088 1 8118 80
-strip-mob-script 8088
 
 [setup:oracle]
 Jailguardgod

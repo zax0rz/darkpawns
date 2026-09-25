@@ -1,0 +1,13 @@
+# Intended differences between lib/world and the C oracle's world data.
+# kind: differs (both have it, bytes differ) | missing (C has it, we do not) | extra (we have it, C does not)
+# status: accepted (reviewed, stays) | pending (awaiting a decision; still passes the gate)
+path	kind	status	issue	reason
+lib/world/wld/150.wld	missing	accepted	DP-1333	Zone 150 (stock CircleMUD King's Castle) is not in C's boot index, so C never loads it; removed in 1ee29d924.
+lib/world/zon/150.zon	missing	accepted	DP-1333	Not in C's boot index; see wld/150.wld.
+lib/world/wld/165.wld	missing	accepted	DP-1333	Zone 165 (unfinished builder zone) is not in C's boot index, so C never loads it; removed in 1ee29d924.
+lib/world/obj/165.obj	missing	accepted	DP-1333	Not in C's boot index; see wld/165.wld.
+lib/world/mob/165.mob	missing	accepted	DP-1333	Not in C's boot index; see wld/165.wld.
+lib/world/zon/165.zon	missing	accepted	DP-1333	Not in C's boot index; see wld/165.wld.
+lib/world/wld/196.wld.bak	missing	accepted	DP-1333	A builder's backup file in C's data directory; never read.
+lib/world/scripts/mob/30/.gitkeep	extra	accepted	DP-1333	C's scripts/mob/30 is an empty directory (it holds only SVN metadata) and luaedit lists it; git cannot store an empty directory, so this placeholder keeps it. luaedit hides dotfiles, as C's listing does.
+lib/world/scripts/obj/30/.gitkeep	extra	accepted	DP-1333	C's scripts/obj/30 is an empty directory; see scripts/mob/30/.gitkeep.

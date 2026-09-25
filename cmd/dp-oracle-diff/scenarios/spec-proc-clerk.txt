@@ -1,13 +1,11 @@
 # C-first vehicle for SPECIAL(clerk), registered for mob vnum 18228 at
-# src/spec_assign.c:407 and defined in src/spec_procs3.c:75-138. The authored
-# mob carries clerk.lua, so the fixture strips it to isolate the native C
-# procedure. A same-room peer proves that do_tell is direct to the actor.
+# src/spec_assign.c:407 and defined in src/spec_procs3.c:75-138. C attaches
+# no script to the mob (DP-1333), so only the native C procedure runs. A same-room peer proves that do_tell is direct to the actor.
 
 [fixture]
 empty-players
 quiet-mobs
 spawn-mob 18228 1 18228 182
-strip-mob-script 18228
 replace-room-exits 18228 none
 
 [setup:oracle]

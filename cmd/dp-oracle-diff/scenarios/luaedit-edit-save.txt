@@ -5,7 +5,6 @@
 [fixture]
 empty-players
 quiet-mobs
-mirror-oracle-scripts
 
 [script-twin]
 mob/dog.lua luaedit fidelity save

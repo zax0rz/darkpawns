@@ -1,7 +1,3 @@
--- no_move.lua - Prevent player movement based on mob's gold
--- Based on original no_move.lua from Dark Pawns MUD
--- Ported for Phase 3 restoration
-
 function no_move(dir)
 -- Prevent a player from moving in a specific direction as determined by the
 -- amount of gold the mobile possesses:

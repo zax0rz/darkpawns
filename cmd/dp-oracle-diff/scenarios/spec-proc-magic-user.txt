@@ -21,7 +21,6 @@
 empty-players
 quiet-mobs
 spawn-mob 20014 1 8105 80
-strip-mob-script 20014
 
 [setup:oracle]
 Magicgod

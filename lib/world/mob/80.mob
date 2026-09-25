@@ -10,7 +10,6 @@ Hans looks a tad constipated.
 20 30000
 8 8 1
 Race: 0
-Script: take_jail.lua 384
 E
 #8002
 Franz guard gateguard~
@@ -24,7 +23,6 @@ Looking as strong and stupid as ever!
 20 30000
 8 8 1
 Race: 0
-Script: take_jail.lua 384
 E
 #8003
 Darek weaponsmith~
@@ -94,7 +92,6 @@ rather attractive in a hairy kinda way.
 45955 270000
 8 8 2
 Race: 0
-Script: banker.lua
 E
 #8008
 Telf baker~
@@ -111,7 +108,6 @@ has had to put his hands.
 100000 270000
 8 8 1
 Race: 0
-Script: baker_dough.lua
 E
 #8009
 Emmet~
@@ -185,7 +181,6 @@ the appearance of a beggar.
 1001 180000
 8 8 2
 Race: 0
-Script: thief.lua 128
 E
 #8014
 Le Tal cleric guildmaster master~
@@ -200,7 +195,6 @@ a peaceful, loving look.  You notice that he is surrounded by a white aura.
 117 180000
 8 8 1
 Race: 0
-Script: cleric.lua 256
 E
 #8015
 Eldrich guildmaster mage master~
@@ -216,7 +210,6 @@ and you notice that she is surrounded by a blue shimmering aura.
 108 180000
 8 8 2
 Race: 0
-Script: baker_flour.lua
 E
 #8016
 sorcerer guildguard~
@@ -232,7 +225,6 @@ well as defensive spells make him a deadly opponent.
 147 0
 8 8 1
 Race: 0
-Script: magic_user.lua 256
 E
 #8017
 knight templar guild guard~
@@ -267,7 +259,6 @@ studying you closely, even though he appears not to be at all.
 181 0
 8 8 1
 Race: 0
-Script: merchant_inn.lua 672
 E
 #8019
 warrior guildguard~
@@ -300,7 +291,6 @@ glance.
 10 25000
 8 8 1
 Race: 0
-Script: take_jail.lua 384
 E
 #8021
 horse carve_meat~
@@ -316,7 +306,6 @@ long-distance travel.
 8 8 0
 BareHandAttack: 9
 Race: 12
-Script: mount.lua 64
 E
 #8022
 stable stablehand~
@@ -332,7 +321,6 @@ stench about him that definitely reflects his commitment to the job.
 1 180000
 8 8 1
 Race: 0
-Script: stable.lua
 E
 #8023
 hooker whore prostitute elf~
@@ -349,7 +337,6 @@ circus performer.
 2 100
 8 8 2
 Race: 1
-Script: elven_prostitute.lua 18
 E
 #8024
 psionist guildmaster muntara~
@@ -407,7 +394,6 @@ or gate duty.
 0 16000
 8 8 1
 Race: 0
-Script: cityguard.lua 128
 E
 #8059
 Aversin captain guard~
@@ -425,7 +411,6 @@ has for him and his position.
 90 90000
 8 8 1
 Race: 0
-Script: aversin.lua
 E
 #8060
 cityguard guard guard_ns~
@@ -454,7 +439,6 @@ than spend a day in the stockades.
 3 100
 8 8 1
 Race: 3
-Script: janitor.lua 74
 E
 #8062
 citizen~
@@ -470,7 +454,6 @@ guards.
 10 100
 8 8 1
 Race: 0
-Script: citizen.lua
 E
 #8063
 warg hybrid fido dog carve_meat~
@@ -486,7 +469,6 @@ has a foul smell and pieces of rotten meat hanging around his teeth.
 8 8 1
 BareHandAttack: 4
 Race: 22
-Script: warg.lua
 E
 #8066
 petitioner~
@@ -501,7 +483,6 @@ nose, babbling on about signing this form to outlaw weapons in the city.
 4 100
 8 8 1
 Race: 0
-Script: petitioner.lua
 E
 #8067
 carpenter~
@@ -516,7 +497,6 @@ he's in town to help with the building of new shops and such.
 6 100
 8 8 1
 Race: 0
-Script: carpenter.lua
 E
 #8068
 town crier~
@@ -531,7 +511,6 @@ for him.
 10 100
 8 8 1
 Race: 0
-Script: towncrier.lua
 E
 #8069
 zealot~
@@ -547,7 +526,6 @@ from the book of the Cross.
 10 100
 8 8 1
 Race: 0
-Script: zealot.lua
 E
 #8070
 street urchin~
@@ -576,7 +554,6 @@ a twinge of pity. Almost.
 3 100
 8 8 1
 Race: 0
-Script: beggar.lua
 E
 #8072
 drunk~
@@ -590,7 +567,6 @@ He looks like he had a few too many bottles of ale for breakfast this morning.
 5 100
 8 8 1
 Race: 0
-Script: singingdrunk.lua
 E
 #8074
 wandering minstrel~
@@ -605,7 +581,6 @@ perfect ballad.
 10 100
 8 8 1
 Race: 1
-Script: minstrel.lua
 E
 #8076
 harga~
@@ -650,7 +625,6 @@ God have mercy on us all, please kill it!
 8 8 1
 BareHandAttack: 13
 Race: 0
-Script: mime.lua
 E
 #8080
 acolyte priestess~
@@ -679,7 +653,6 @@ his purse.
 10 100
 8 8 1
 Race: 0
-Script: magic_user.lua 256
 E
 #8083
 psionic psionist guildguard~
@@ -710,7 +683,6 @@ it, it returns to normal.
 5000 0
 6 6 1
 Race: 0
-Script: tattoo.lua 516
 E
 #8087
 identifier Ferrenx~
@@ -725,7 +697,6 @@ and bushy eyebrows.
 1 0
 8 8 1
 Race: 0
-Script: identifier.lua
 E
 #8088
 guard jail jailguard~
@@ -739,7 +710,6 @@ He's fat, ugly, and willing to take a bribe.
 20 55000
 6 6 1
 Race: 0
-Script: jailguard.lua 146
 E
 #8089
 guard~
@@ -787,7 +757,6 @@ break up -- or finish -- a bar fight.
 8 8 1
 Race: 0
 Noise: You hear the clinking of bottles from the pub to the east.
-Script: tyr.lua
 E
 #8095
 mortician undertaker~

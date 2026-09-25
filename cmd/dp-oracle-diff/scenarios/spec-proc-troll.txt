@@ -1,7 +1,7 @@
 # C-first vehicle for SPECIAL(troll), defined at src/spec_procs3.c:347-370
 # and registered for mob vnums 10029, 14100, 14311, 14312, 19900, and 19901.
 # Targ (10029) is the first active registration in assignment-table order.
-# The fixture keeps the disposable mob in room 10049, strips its Lua script,
+# The fixture keeps the disposable mob in room 10049 (no script in C; DP-1333),
 # and removes exits so the native pulse special is the only source of the glow
 # Act. The warmup aligns both disposable players as evil, outside the authored
 # AGGR_NEUTRAL target range.
@@ -10,7 +10,6 @@
 empty-players
 quiet-mobs
 spawn-mob 10029 1 10049 100
-strip-mob-script 10029
 set-mob-flag 10029 SPEC
 set-room-flag 10049 4 on
 replace-room-exits 10049 none

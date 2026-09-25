@@ -237,6 +237,9 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		zone := &parsed.Zones[i]
 		w.zones[zone.Number] = zone
 	}
+	// boot_db's renum_zone_table: legacy R commands take C's form and
+	// commands naming a missing room, mobile or object are disabled.
+	w.renumZoneTable()
 
 	// Index shops by keeper vnum — C's assign_the_shopkeepers (shop.c:1232-1243)
 	// gives every shop's keeper the shop_keeper spec, which is what

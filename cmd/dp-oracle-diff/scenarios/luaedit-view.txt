@@ -6,7 +6,6 @@
 [fixture]
 empty-players
 quiet-mobs
-mirror-oracle-scripts
 
 [setup:oracle]
 Luaeditview

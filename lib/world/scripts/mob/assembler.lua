@@ -1,7 +1,3 @@
--- assembler.lua - Item assembly/forging system
--- Based on original assembler.lua from Dark Pawns MUD
--- Ported for Phase 3 restoration (simplified version)
-
 function assemble_one(singles, giveback, trade)
   -- { original object, cost, taken object name, final object }
   -- checks for single forging items

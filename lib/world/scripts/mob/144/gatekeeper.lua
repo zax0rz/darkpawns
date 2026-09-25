@@ -1,4 +1,3 @@
-
 function sound()
 local case = number(0, 10)
   if (case == 1 or case == 3) then
@@ -29,5 +28,4 @@ else
     say("Enter the portal quickly! It will not last long!")
 end
 end
-
 

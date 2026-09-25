@@ -8,7 +8,6 @@ empty-players
 quiet-mobs
 add-obj-index 162.obj
 spawn-mob 1314 999 8105 80
-strip-mob-script 1314
 set-mob-flag 1314 SPEC
 replace-room-exits 8105 none
 

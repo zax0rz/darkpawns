@@ -1,4 +1,4 @@
-.PHONY: expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update census-coverage
+.PHONY: world-fidelity world-manifest expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update census-coverage
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -114,6 +114,15 @@ fidelity-depth:
 # Full C-vs-Go scenario regression. The per-scenario timeout is deliberately
 # generous for loaded boxes; timeout-kills are reported separately from
 # content failures so infrastructure cannot masquerade as a fidelity diff.
+# lib/world must be the C oracle's world data byte for byte, except rows in
+# docs/fidelity/world-exceptions.tsv (DP-1333). world-manifest regenerates the
+# hash manifest from a local C oracle checkout.
+world-fidelity:
+	python3 scripts/world_fidelity.py
+
+world-manifest:
+	DP_ORACLE_ROOT=$${DP_ORACLE_ROOT:-/home/zach/darkpawns-c-oracle} python3 scripts/world_fidelity.py --write
+
 expected-divergences:
 	python3 scripts/gen_expected_divergences.py
 

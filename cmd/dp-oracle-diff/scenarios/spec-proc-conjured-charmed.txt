@@ -11,7 +11,6 @@ quiet-mobs
 no-settle
 spawn-mob 81 1 8106 80
 set-mob-flag 81 SPEC
-strip-mob-script 81
 set-mob-aff 81 2097152
 
 [setup:oracle]

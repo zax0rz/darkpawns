@@ -427,11 +427,9 @@ func checkloadMobReport(w *game.World, vnum int, name string) string {
 				found = true
 				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         %d Max\r\n", cmd.Arg3, roomName, cmd.Arg2)
 			case "R":
-				if cmd.Arg3 == -1 {
-					if cmd.Arg2 != vnum {
-						continue
-					}
-				} else if cmd.Arg3 != 0 || cmd.Arg2 != vnum {
+				// After renum_zone_table, R is Arg2 = kind (0 mobile) and
+				// Arg3 = vnum (act.wizard.c:3709-3718).
+				if cmd.Arg2 != 0 || cmd.Arg3 != vnum {
 					continue
 				}
 				roomName, ok := checkloadRoomName(w, cmd.Arg1)
@@ -520,11 +518,11 @@ func checkloadObjectReport(w *game.World, vnum int, name string) string {
 				found = true
 				_, _ = fmt.Fprintf(&report, " [%5d] %s\r\n         Given to %s [%d]\r\n         %.2f%% Load, %d Max\r\n", lastRoomVNum, roomName, lastMobName, lastMobVNum, mustCheckloadObjectPercent(w, lastObjectVNum), cmd.Arg2)
 			case "R":
-				if cmd.Arg3 == -1 {
-					if cmd.Arg2 != vnum {
-						continue
-					}
-				} else if cmd.Arg3 != 1 || cmd.Arg2 != vnum {
+				// Every R moves the report's last room, matched or not, so a
+				// following G/E/P names it; an object row is Arg2 nonzero
+				// with Arg3 = vnum (act.wizard.c:3798-3807).
+				lastRoomVNum = cmd.Arg1
+				if cmd.Arg2 == 0 || cmd.Arg3 != vnum {
 					continue
 				}
 				roomName, ok := checkloadRoomName(w, cmd.Arg1)

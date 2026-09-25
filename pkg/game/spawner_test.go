@@ -52,7 +52,8 @@ func TestZoneResetFailedRemoveDoesNotEnableDependentCommand(t *testing.T) {
 				targetVNum = 200
 			}
 			zone := &parser.Zone{Commands: []parser.ZoneCommand{
-				{Command: "R", Arg1: 100, Arg2: targetVNum, Arg3: removeType},
+				// C's form after renum_zone_table: Arg2 kind, Arg3 vnum.
+				{Command: "R", Arg1: 100, Arg2: removeType, Arg3: targetVNum},
 				{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
 			}}
 
@@ -72,7 +73,7 @@ func TestZoneResetSuccessfulRemoveEnablesDependentCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 	zone := &parser.Zone{Commands: []parser.ZoneCommand{
-		{Command: "R", Arg1: 100, Arg2: 200, Arg3: 1},
+		{Command: "R", Arg1: 100, Arg2: 1, Arg3: 200},
 		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
 	}}
 

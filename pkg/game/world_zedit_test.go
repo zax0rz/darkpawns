@@ -13,14 +13,18 @@ func TestCommitEditedZoneRebucketsRoomCommands(t *testing.T) {
 			{VNum: 1002},
 			{VNum: 1003},
 		},
+		// Every command names a real prototype: renum_zone_table disables
+		// commands naming missing ones at boot.
+		Mobs: []parser.Mob{{VNum: 2001}, {VNum: 2002}},
+		Objs: []parser.Obj{{VNum: 3001}, {VNum: 3002}, {VNum: 3003}},
 		Zones: []parser.Zone{{
 			Number:  1,
 			TopRoom: 1099,
 			Commands: []parser.ZoneCommand{
-				{Command: "M", Arg3: 1001},
+				{Command: "M", Arg1: 2001, Arg3: 1001},
 				{Command: "G", Arg1: 3001},
 				{Command: "D", Arg1: 1001},
-				{Command: "M", Arg3: 1002},
+				{Command: "M", Arg1: 2001, Arg3: 1002},
 				{Command: "G", Arg1: 3002},
 				{Command: "D", Arg1: 1003},
 			},

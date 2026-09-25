@@ -127,7 +127,6 @@ this town.
 34 -14 -24 34d5+2746 22d4+22
 10000 270000
 8 8 2
-Script: clerk.lua
 E
 #18211
 attack guard~
@@ -169,7 +168,6 @@ him from head to toe.
 50 55000
 8 8 1
 Race: 0
-Script: tattoo.lua
 E
 #18214
 man cloaked lao tse lao-tse~
@@ -200,7 +198,6 @@ well.
 2 18000
 8 8 1
 Race: 0
-Script: take_jail.lua 384
 E
 #18216
 lou ching~
@@ -258,7 +255,6 @@ another reality completely.  He has found the inner peace.
 0 60000
 8 8 1
 Race: 0
-Script: zen_master.lua
 E
 #18220
 shaolin monk~
@@ -290,7 +286,6 @@ the tong in some way.  Better hope he's not looking for you.
 8 8 1
 BareHandAttack: 13
 Race: 0
-Script: backstabber.lua
 E
 #18222
 sailor~
@@ -318,7 +313,6 @@ He's nothing but a hired thug.
 0 14000
 8 8 1
 Race: 0
-Script: take_jail.lua 384
 E
 #18224
 harbor master~
@@ -333,7 +327,6 @@ He looks pretty burly though, better not mess with him.
 100 25000
 8 8 1
 Race: 0
-Script: take_jail.lua 384
 E
 #18225
 wu chien wu'chien~
@@ -390,6 +383,5 @@ He obviously works for the home office.
 0 270000
 8 8 1
 Race: 0
-Script: clerk.lua
 E
 $

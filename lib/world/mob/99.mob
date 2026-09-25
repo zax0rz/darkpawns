@@ -42,7 +42,6 @@ Her skin glows slightly in the darkness. She looks rather pissed.
 8 8 2
 BareHandAttack: 8
 Race: 11
-Script: magic_user.lua 256
 E
 #9904
 larva~
@@ -57,7 +56,6 @@ Half man, half worm, the larva is about to hatch into something unspeakable.
 8 8 0
 BareHandAttack: 10
 Race: 11
-Script: sorcery.lua 256
 E
 #9905
 aleister crowley man~
@@ -71,7 +69,6 @@ He's bald, with the number '666' tattooed on his forehead.
 666 180000
 8 8 1
 Race: 0
-Script: sorcery.lua 256
 E
 #9906
 imp~
@@ -147,7 +144,6 @@ shapen body.
 8 8 1
 BareHandAttack: 8
 Race: 11
-Script: magic_user.lua 256
 E
 #9911
 evil~
@@ -162,7 +158,6 @@ It looks very... black.
 8 8 0
 BareHandAttack: 2
 Race: 9
-Script: magic_user.lua 256
 E
 #9912
 dispater devil~
@@ -313,7 +308,6 @@ step it takes, the earth shakes.
 BareHandAttack: 10
 Race: 11
 Noise: The ground shakes so violently you nearly lose your footing.
-Script: souleater.lua 8
 E
 #9922
 incubus demon~

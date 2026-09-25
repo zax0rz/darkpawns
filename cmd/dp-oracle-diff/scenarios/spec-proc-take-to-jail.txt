@@ -5,8 +5,8 @@
 # depth-case: mob.take-to-jail-return-contract
 # C-first vehicle for SPECIAL(take_to_jail), defined at
 # src/spec_procs2.c:1427-1468 and registered for mob vnum 8001 at
-# src/spec_assign.c:289. The 8001 prototype is scriptless for this disposable
-# run after strip-mob-script; its authored action flags retain MOB_SPEC.
+# src/spec_assign.c:289. The 8001 prototype has no script (C attaches none;
+# DP-1333), and its authored action flags retain MOB_SPEC.
 # mobile_activity() calls the special as (ch, ch, 0, "") only for an awake,
 # non-fighting MOB_SPEC mob (src/mobact.c:68-93). The special scans room people
 # for a visible PLR_OUTLAW, emits its room warning, calls hit(), and returns
@@ -20,7 +20,6 @@
 empty-players
 quiet-mobs
 spawn-mob 8001 1 8105 80
-strip-mob-script 8001
 replace-room-exits 8105 none
 
 [setup:oracle]

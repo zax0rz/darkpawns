@@ -697,18 +697,17 @@ func (e *Engine) loadGlobalsOn(L *lua.LState) {
 	} else {
 		slog.Debug("globals.lua loaded successfully")
 	}
-	// Load shared utility scripts separately to avoid re-entrant DoFile crash (DP-600).
-	// globals.lua used to call Lua dofile("mob/no_move.lua") but gopher-lua's DoFile
-	// is not re-entrant — calling e.l.DoFile from inside a DoFile execution nil-pointers.
-	sharedScripts := []string{"mob/no_move.lua"}
-	for _, script := range sharedScripts {
-		fullPath := filepath.Join(e.scriptsDir, script)
-		if err := L.DoFile(fullPath); err != nil {
-			slog.Warn("could not load shared script", "path", script, "error", err)
+	e.setupBasicConstantsOn(L)
+	// boot_lua() then calls default() (scripts.c:1713-1714), which defines
+	// the constants and dofile()s scripts/mob/no_move.lua. It runs after the
+	// engine's own constants so C's definitions are the ones scripts see. The
+	// call happens after DoFile returns, so the dofile inside it is not the
+	// re-entrant DoFile that crashed (DP-600).
+	if fn, ok := L.GetGlobal("default").(*lua.LFunction); ok {
+		if err := L.CallByParam(lua.P{Fn: fn, NRet: 0, Protect: true}); err != nil {
+			slog.Warn("globals.lua default() failed", "error", err)
 		}
 	}
-	// Always set up basic constants
-	e.setupBasicConstantsOn(L)
 }
 
 // setupBasicConstantsOn sets up essential constants on the given LState.
@@ -1916,6 +1915,9 @@ func (e *Engine) luaDofile(L *lua.LState) int {
 	if path == "" {
 		return 0
 	}
+	// C runs with lib/ as its working directory and SCRIPT_DIR "scripts"
+	// (db.h:79), so C scripts name shared files "scripts/mob/no_move.lua".
+	path = strings.TrimPrefix(filepath.ToSlash(path), "scripts/")
 	fullPath := filepath.Clean(filepath.Join(e.scriptsDir, path))
 	rel, err := filepath.Rel(e.scriptsDir, fullPath)
 	if err != nil || strings.HasPrefix(rel, "..") || strings.HasPrefix(rel, "/") {

@@ -1,5 +1,5 @@
-# C-first vehicle for SPECIAL(prostitute)'s CAN_SEE failure arm. The authored
-# elven_prostitute.lua script is stripped, and RANDZON is cleared so the real
+# C-first vehicle for SPECIAL(prostitute)'s CAN_SEE failure arm. C attaches no
+# script to the mob (DP-1333), and RANDZON is cleared so the real
 # registered mob vnum 8023 stays in room 8021. Velvet is briefly immortal only
 # to cast the real invisibility spell, then is lowered to mortal before probe.
 
@@ -8,7 +8,6 @@ empty-players
 quiet-mobs
 spawn-mob 8023 1 8021 80
 clear-mob-flag 8023 RANDZON
-strip-mob-script 8023
 replace-room-exits 8021 none
 
 [setup:oracle]

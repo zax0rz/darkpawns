@@ -1,13 +1,12 @@
 # C-first vehicle for SPECIAL(con_seller), defined at src/spec_procs3.c:239-312
-# and registered for mob vnum 21246 at src/spec_assign.c:508. The authored
-# shadowmage carries a native script, so the disposable fixture strips it and
-# isolates the con-seller dispatch in the unlit shop (room 21234).
+# and registered for mob vnum 21246 at src/spec_assign.c:508. C attaches no
+# script to the shadowmage (DP-1333); the vehicle isolates the con-seller
+# dispatch in the unlit shop (room 21234).
 
 [fixture]
 empty-players
 quiet-mobs
 spawn-mob 21246 1 21234 212
-strip-mob-script 21246
 replace-room-exits 21234 none
 
 [setup:oracle]

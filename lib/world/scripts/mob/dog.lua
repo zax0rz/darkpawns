@@ -1,4 +1,3 @@
-
 function sound()
   if (number(0,25) == 0) then
     local obj = oload(me, 20, "room")
@@ -35,5 +34,4 @@ function ongive()
   end
   return (TRUE)
 end
-
 

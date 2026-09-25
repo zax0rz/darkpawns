@@ -95,6 +95,9 @@ jobs:
       run: |
         python -m pytest tests/ -k "not e2e" -v || echo "No pytest tests found"
 
+    - name: World data matches the C oracle (DP-1333)
+      run: make world-fidelity
+
     - name: Build Go binary
       run: go build -o server ./cmd/server
 

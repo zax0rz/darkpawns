@@ -66,7 +66,6 @@ illusion?
 8 8 0
 BareHandAttack: 8
 Race: 24
-Script: phoenix.lua 288
 E
 #16104
 coatyl winged snake~
@@ -84,7 +83,6 @@ tell of a divine goodness belittling it's evil visage.
 8 8 0
 BareHandAttack: 4
 Race: 24
-Script: snake.lua 256
 E
 #16105
 cockatrice~
@@ -120,7 +118,6 @@ him to hover in the air.
 300 45000
 8 8 1
 Race: 12
-Script: mount.lua 64
 E
 #16107
 pixie~

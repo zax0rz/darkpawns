@@ -15,7 +15,6 @@
 empty-players
 quiet-mobs
 spawn-mob 18305 1 8162 183
-strip-mob-script 18305
 
 [setup:oracle]
 Setallgod

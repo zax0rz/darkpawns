@@ -10,7 +10,6 @@
 empty-players
 quiet-mobs
 spawn-mob 18305 1 8004 183
-strip-mob-script 18305
 spawn-obj 8010 1 8004 80
 
 [setup:oracle]

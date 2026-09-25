@@ -28,7 +28,6 @@ and you wonder if maybe you should leave.
 123 25000
 8 8 1
 Race: 0
-Script: magic_user.lua 256
 E
 #4203
 fisherman bhyroga~
@@ -75,7 +74,6 @@ almost feel sorry for him - almost.
 8 8 1
 Race: 0
 Noise: You hear the harsh voice of a fishmonger hawking his wares.
-Script: shopkeeper.lua 4
 E
 #4206
 vendor bhyroga~
@@ -90,7 +88,6 @@ genuine vendor. Heck, he might actually have something you want!
 2000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua 4
 E
 #4207
 warrior bhyroga~
@@ -137,7 +134,6 @@ he is out here somewhere, and dread his return.
 8 8 1
 BareHandAttack: 8
 Race: 10
-Script: dragon_breath.lua
 E
 #4210
 rabbit white~
@@ -168,7 +164,6 @@ sorry for him.... almost.
 2000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua 4
 E
 #4212
 vendor bhyroga~
@@ -183,7 +178,6 @@ genuine vendor. Heck, he might actually have something you want!
 2000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua 4
 E
 #4213
 giant ice~
