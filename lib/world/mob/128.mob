@@ -32,7 +32,6 @@ The Demon Knight grins at you with a satanic grin.
 228 40000
 8 8 1
 Race: 11
-Script: magic_user.lua 256
 E
 #12850
 indiana indy jones~
@@ -52,7 +51,6 @@ say anything.
 264 120000
 8 8 1
 Race: 0
-Script: fighter.lua 256
 E
 #12868
 crypt keeper cryptkeeper~
@@ -83,7 +81,6 @@ He is a little upset that you are coming after his treasure.
 108 27500
 8 8 1
 Race: 0
-Script: backstabber.lua
 E
 #12876
 guardian guard statue~
@@ -116,6 +113,5 @@ many years.  He looks as though he is still alive.
 2317 360000
 8 8 1
 Race: 19
-Script: cleric.lua 256
 E
 $

@@ -29,7 +29,6 @@ brother.
 400 180000
 8 8 1
 Race: 1
-Script: fighter.lua 256
 E
 #7902
 dag barbarian~
@@ -44,7 +43,6 @@ snorts loudly, disgusted by your sophistication.
 200 363000
 8 8 1
 Race: 0
-Script: fighter.lua 256
 E
 #7903
 Dracula figure~
@@ -59,7 +57,6 @@ feel mesmerized.
 50 120000
 8 8 1
 Race: 8
-Script: dracula.lua
 E
 #7904
 War man~
@@ -148,7 +145,6 @@ you've ever seen.
 120 60000
 8 8 1
 Race: 1
-Script: rescuer.lua
 E
 #7910
 killer hunter nightbreed~
@@ -242,8 +238,6 @@ of him.
 100 120000
 8 8 1
 Race: 0
-Script: paladin.lua 256
-Script: paladin.lua
 E
 #7916
 barnstad dwarf old ancient~
@@ -277,7 +271,6 @@ his gaze out towards the horizon.
 8 8 1
 BareHandAttack: 10
 Race: 0
-Script: dragon_forger.lua 512
 E
 #7920
 pyros daemon lord~
@@ -294,7 +287,6 @@ destroying you in this world.
 8 8 0
 BareHandAttack: 10
 Race: 11
-Script: head_shrinker.lua 512
 E
 #7969
 black cloaked wanderer mysterious man~
@@ -310,7 +302,6 @@ of exactly what he is doing.
 50 180000
 8 8 1
 Race: 19
-Script: sorcery.lua 256
 E
 #7970
 unicorn~
@@ -326,7 +317,6 @@ religions.  There is rumored to be only a single one in the entire world.
 8 8 2
 BareHandAttack: 9
 Race: 12
-Script: cleric.lua 256
 E
 #7971
 Eric Draven Crow~
@@ -356,7 +346,6 @@ much experience.
 0 16000
 8 8 1
 Race: 3
-Script: thief.lua 128
 E
 #7980
 xena princess warrior~

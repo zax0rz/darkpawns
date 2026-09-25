@@ -12,7 +12,6 @@ spawn-mob 14405 1 8105 144
 # already-blocked shared combat defense transcript; the special still runs
 # from the registered mob's ordinary combat pulse.
 set-mob-aff 14405 1082504
-strip-mob-script 14405
 replace-room-exits 8105 none
 
 [setup:oracle]

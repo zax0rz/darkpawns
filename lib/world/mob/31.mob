@@ -57,7 +57,6 @@ Duchy of Glyndwr.
 70 55000
 8 8 1
 Race: 0
-Script: magic_user.lua 256
 E
 #3104
 Twitch bandit~
@@ -182,7 +181,6 @@ Brioch's will.
 10 18000
 8 8 1
 Race: 0
-Script: magic_user.lua 256
 E
 #3113
 Meredydd Sorceress  woman~
@@ -198,7 +196,6 @@ because of her beauty have learned.
 150 40000
 8 8 2
 Race: 0
-Script: magic_user.lua 256
 E
 #3114
 creeper vine~
@@ -226,7 +223,6 @@ is overshadowed by the girth of his shoulders.
 50 35000
 8 8 1
 Race: 0
-Script: merchant_inn.lua 672
 E
 #3116
 monk~
@@ -253,7 +249,6 @@ Tell me what to look at and I'll tell you what it looks like...
 0 35000
 8 8 1
 Race: 25
-Script: magic_user.lua 256
 E
 #3118
 Kyllikki woman ~
@@ -267,7 +262,6 @@ You can't see much, but the figure is definitely female.
 50 37500
 8 8 2
 Race: 0
-Script: magic_user.lua 256
 E
 #3119
 cutthroat~

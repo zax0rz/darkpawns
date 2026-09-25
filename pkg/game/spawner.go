@@ -419,13 +419,15 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 			s.world.SetExitInfo(cmd.Arg1, roomDirNames[cmd.Arg2], ext.ExitInfo)
 			lastCmd = 1
 
-		case "R": // Remove obj/mob from room
-			// Go parser convention: Arg2=vnum, Arg3=type (1=obj, 0=mob)
+		case "R": // Remove obj/mob from room (db.c:2220-2244)
+			// C's form after renum_zone_table: Arg2 is the kind (nonzero
+			// object, zero mobile) and Arg3 its vnum. The legacy "-1" form
+			// was converted at boot (renumZoneTable).
 			removed := false
-			if cmd.Arg3 == 1 { // Remove object
-				removed = s.removeObjectFromRoom(cmd.Arg1, cmd.Arg2)
-			} else { // Remove mob
-				removed = s.removeMobFromRoom(cmd.Arg1, cmd.Arg2)
+			if cmd.Arg2 != 0 {
+				removed = s.removeObjectFromRoom(cmd.Arg1, cmd.Arg3)
+			} else {
+				removed = s.removeMobFromRoom(cmd.Arg1, cmd.Arg3)
 			}
 			if removed {
 				lastCmd = 1
@@ -606,45 +608,68 @@ func (s *Spawner) extractSpawnedObject(obj *ObjectInstance) {
 
 // removeObjectFromRoom removes an object instance from a room.
 func (s *Spawner) removeObjectFromRoom(roomVNum, objVNum int) bool {
+	// get_obj_in_list_num(vnum, world[room].contents): the first object of
+	// that vnum in the room, whoever put it there, in C's contents order.
+	var target *ObjectInstance
+	for _, obj := range s.world.GetItemsInRoom(roomVNum) {
+		if obj != nil && obj.VNum == objVNum {
+			target = obj
+			break
+		}
+	}
+	if target == nil {
+		return false
+	}
+	s.forgetObjectInstance(roomVNum, target)
+	// obj_from_room + extract_obj — db.c zone reset 'R' (DP-373)
+	s.world.ExtractObject(target, roomVNum)
+	return true
+}
+
+// forgetObjectInstance drops a removed object from the spawner's own
+// max-in-world bookkeeping, if the spawner placed it.
+func (s *Spawner) forgetObjectInstance(roomVNum int, obj *ObjectInstance) {
 	if instances, ok := s.roomObjects[roomVNum]; ok {
-		for i, obj := range instances {
-			if obj.VNum == objVNum {
+		for i, candidate := range instances {
+			if candidate == obj {
 				s.roomObjects[roomVNum] = append(instances[:i], instances[i+1:]...)
-				if objInstances, ok2 := s.objInstances[objVNum]; ok2 {
-					for j, obj2 := range objInstances {
-						if obj2 == obj {
-							s.objInstances[objVNum] = append(objInstances[:j], objInstances[j+1:]...)
-							break
-						}
-					}
-				}
-				// Clean up global state — db.c zone reset 'R' (DP-373)
-				s.world.ExtractObject(obj, roomVNum)
-				return true
+				break
 			}
 		}
 	}
-	return false
+	if instances, ok := s.objInstances[obj.VNum]; ok {
+		for i, candidate := range instances {
+			if candidate == obj {
+				s.objInstances[obj.VNum] = append(instances[:i], instances[i+1:]...)
+				break
+			}
+		}
+	}
 }
 
-// removeMobFromRoom removes a mob instance from a room.
+// removeMobFromRoom removes the first mobile of the vnum in the room that is
+// not fighting, destroying what it wears and carries first (db.c:2228-2242).
+// No world file uses this branch; the port does not keep C's people-list
+// order, so with two eligible copies the one chosen may differ from C's.
 func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) bool {
 	if instances, ok := s.roomMobs[roomVNum]; ok {
 		for i, mob := range instances {
-			if mob.VNum == mobVNum {
-				s.roomMobs[roomVNum] = append(instances[:i], instances[i+1:]...)
-				if mobInstances, ok2 := s.mobInstances[mobVNum]; ok2 {
-					for j, mob2 := range mobInstances {
-						if mob2 == mob {
-							s.mobInstances[mobVNum] = append(mobInstances[:j], mobInstances[j+1:]...)
-							break
-						}
+			if mob.VNum != mobVNum || mob.GetFighting() != "" {
+				continue
+			}
+			s.roomMobs[roomVNum] = append(instances[:i], instances[i+1:]...)
+			if mobInstances, ok2 := s.mobInstances[mobVNum]; ok2 {
+				for j, mob2 := range mobInstances {
+					if mob2 == mob {
+						s.mobInstances[mobVNum] = append(mobInstances[:j], mobInstances[j+1:]...)
+						break
 					}
 				}
-				// Clean up global state — db.c zone reset 'R' (DP-373)
-				s.world.ExtractMob(mob)
-				return true
 			}
+			s.world.destroyMobPossessions(mob)
+			// Clean up global state — db.c zone reset 'R' (DP-373)
+			s.world.ExtractMob(mob)
+			return true
 		}
 	}
 	return false

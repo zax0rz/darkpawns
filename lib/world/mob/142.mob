@@ -43,7 +43,6 @@ fight.
 0 40000
 8 8 1
 Race: 2
-Script: cleric.lua 256
 E
 #14203
 skarash~
@@ -106,7 +105,6 @@ eyes grow large in fear.
 0 27500
 8 8 1
 Race: 0
-Script: cleric.lua 256
 E
 #14207
 nonesuch~
@@ -297,7 +295,6 @@ his eyes flash with anger, and he begins to chant an incantation.
 0 27500
 8 8 1
 Race: 1
-Script: magic_user.lua 256
 E
 #14220
 chalkara~
@@ -312,7 +309,6 @@ immortality, luring men to their deaths with her lustful ways.
 20 37500
 8 8 2
 Race: 19
-Script: cleric.lua 256
 E
 #14221
 xavier~
@@ -326,7 +322,6 @@ Although he is a powerful mage, he seems to actually be stupid...strange...
 0 25000
 8 8 1
 Race: 0
-Script: magic_user.lua 256
 E
 #14222
 silk~
@@ -356,7 +351,6 @@ better watch out.
 0 32500
 8 8 0
 Race: 0
-Script: eq_thief.lua
 E
 #14224
 tranquility~

@@ -48,7 +48,6 @@ bad.
 0 0
 4 4 1
 Race: 0
-Script: beggar.lua
 E
 #19604
 babe francine~
@@ -344,7 +343,6 @@ friar seems friendly and ready to assist you with all of your financial needs.
 8 8 1
 BareHandAttack: 13
 Race: 0
-Script: donation.lua
 E
 #19642
 waitress dainty sylph~

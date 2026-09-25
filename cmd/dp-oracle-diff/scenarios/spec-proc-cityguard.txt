@@ -5,7 +5,7 @@
 # depth-case: mob.cityguard-pulse-dispatch
 # C-first vehicle for SPECIAL(cityguard). Registration 2747 is first but its
 # prototype lacks MOB_SPEC, so the native autonomous loop cannot call it. This
-# vehicle uses the next registration, mob 18215, whose Lua script is stripped;
+# vehicle uses the next registration, mob 18215 (no script in C; DP-1333);
 # room exits are removed and a mortal peer is marked PLR_OUTLAW so the native
 # pulse reaches the first intervention branch. The same vehicle is retained
 # for the non-executing protection and shared breed_killer branches, which
@@ -18,7 +18,6 @@
 empty-players
 quiet-mobs
 spawn-mob 18215 1 8105 80
-strip-mob-script 18215
 replace-room-exits 8105 none
 
 [setup:oracle]

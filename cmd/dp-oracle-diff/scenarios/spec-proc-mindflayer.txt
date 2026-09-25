@@ -7,7 +7,7 @@
 # depth-case: mob.mindflayer-psiblast-state
 # C-first vehicle for SPECIAL(mindflayer), assigned to mob 14414 by
 # src/spec_assign.c:383 and defined in src/spec_procs2.c:1972-2000.
-# The mob is stripped of its separate Lua fight trigger so the vehicle reaches
+# C attaches no Lua script to the mob (DP-1333), so the vehicle reaches
 # only the native procedure. The mortal peer opens combat; the combat engine
 # then calls the native MOB_SPEC after the mob's ordinary combat turn, matching
 # fight.c:2030-2031 (mobile_activity() skips fighting mobs).
@@ -21,7 +21,6 @@
 empty-players
 quiet-mobs
 spawn-mob 14414 1 8105 144
-strip-mob-script 14414
 replace-room-exits 8105 none
 
 [setup:oracle]

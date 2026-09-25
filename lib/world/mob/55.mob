@@ -55,7 +55,6 @@ his kind.
 20 3500
 8 8 1
 Race: 18
-Script: magic_user.lua 256
 E
 #5504
 taltos female~
@@ -112,7 +111,6 @@ clanmother is revered by all living Taltos.
 70 6000
 8 8 2
 Race: 18
-Script: magic_user.lua 256
 E
 #5508
 lump~
@@ -155,6 +153,5 @@ inch of his skin is covered in thick, bristly hair... he's a werewolf!
 8 8 1
 BareHandAttack: 8
 Race: 7
-Script: werewolf.lua 256
 E
 $

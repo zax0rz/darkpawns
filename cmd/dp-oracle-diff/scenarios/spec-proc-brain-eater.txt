@@ -19,7 +19,6 @@ quiet-mobs
 spawn-mob 14420 1 8105 144
 spawn-mob 16303 1 8105 80
 clear-mob-flag 14420 AGGRESSIVE
-strip-mob-script 14420
 replace-room-exits 8105 none
 
 [setup:oracle]

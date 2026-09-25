@@ -6,7 +6,6 @@
 empty-players
 quiet-mobs
 spawn-mob 18213 1 18252 182
-strip-mob-script 18213
 replace-room-exits 18252 none
 
 [setup:oracle]

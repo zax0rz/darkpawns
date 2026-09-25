@@ -1,38 +1,43 @@
--- blacksmith.lua - Hashkar the blacksmith (zone 212, mob 21210)
--- Forges weapons and armor when given materials. Ambient chatter.
--- Trigger flags: sound(16) + ongive(8) = 24
-
 function sound()
-  local lines = {
-    "Hashkar hammers a glowing piece of iron on the anvil.",
-    "Hashkar quenches a red-hot blade in the water trough.",
-    "Hashkar says, 'Bring me the right materials and I can forge anything.'",
-    "Hashkar wipes the sweat from his brow and eyes your equipment.",
-  }
-  act(lines[number(1, getn(lines))], TRUE, me, NIL, NIL, TO_ROOM)
+  if (number(0, 2) == 0) then
+    if (number(0, 1) == 0) then
+      say("I seek the humming black armor; a complete set is my life's goal.")
+    else
+      say("There are twenty-two pieces and I fear they shall never be found.")
+    end
+  end
 end
 
 function ongive()
-  if (obj.vnum == 0) then
+  -- singles = vnum old, cost, descriptive, vnum new
+  local singles = { 
+    { 11052, 2000, "tooth", 11021 },  -- stone of seripis
+    { 21401, 10000, "scale", 21400 }  -- shield of the sea dragon
+  }
+  
+  local sba = {
+    { 14201, 14202, 14203, 14204, 14205, 14206, 14207, 14208, 14209, 14210, 14211,
+      14212, 14213, 14214, 14215, 14216, 14217, 14218, 14219, 14220, 14221, 14222 },
+    14223, 0
+  }
+  
+  dofile("scripts/mob/assembler.lua")
+  
+  if (assemble_one(singles, FALSE, FALSE) == TRUE) then
     return
   end
-
-  -- Simple forge: give iron ore + 500 gold = steel sword (vnum 21200 placeholder)
-  if (obj.vnum == 21250) then
-    if (ch.gold >= 500) then
-      act("$n takes $p and begins working the forge.", TRUE, me, obj, NIL, TO_NOTVICT)
-      extobj(obj)
-      ch.gold = ch.gold - 500
-      local item = oload(me, 21201, "char")
-      act("$n gives $N $p.", TRUE, me, item, ch, TO_NOTVICT)
-      act("$n gives you $p.", TRUE, me, item, ch, TO_VICT)
-      save_char(ch)
-    else
-      act("$n says, 'I need 500 gold for my work.'", TRUE, me, NIL, ch, TO_VICT)
-      return_obj(obj)
-    end
-  else
-    act("$n says, 'I don't know what to do with this.'", TRUE, me, NIL, ch, TO_VICT)
-    return_obj(obj)
+  
+  local assembled = assemble_list(sba[1], sba[2], sba[3])
+  
+  if (assembled == 1) then
+    act("\r\nTaking the pieces, $n forges them together.\r\nMagick rumbles through the smithy, and finally "
+	.."the armor is done.\r\n", TRUE, me, NIL, NIL, TO_ROOM)
+    act("The blacksmith hands you a nearly weightless suit of armor.\r\n", TRUE, me, NIL, ch, TO_VICT)
+    act("$n hands $p to $N.", TRUE, me, obj, ch, TO_NOTVICT)
+    return
+  elseif ((assembled == 2) or (assembled == 3)) then
+    return
   end
+  
+  return_obj("I don't need this.", FALSE)
 end

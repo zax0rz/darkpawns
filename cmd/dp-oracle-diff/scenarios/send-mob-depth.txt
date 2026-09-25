@@ -8,7 +8,6 @@
 empty-players
 quiet-mobs
 spawn-mob 8021 1 8162 80
-strip-mob-script 8021
 
 [setup:oracle]
 Sendmob

@@ -1,0 +1,57 @@
+# Zone reset R: a legacy remove replaces a looted container (DP-1333).
+# depth-case: zone-reset.remove-object-legacy
+#
+# The Haven Lighthouse (zone 158) resets its crystal chests with
+# "R 0 <room> <chest> -1" / "O 0 <chest> 1 <room>" / "P 1 <loot> 100 <chest>".
+# renum_zone_table turns the legacy R into an object removal (db.c:1001-1015),
+# so each reset extracts the looted chest and loads a stocked one. The port
+# used to read legacy R as a mobile removal: the chest was never removed, the
+# O hit its max, the P was skipped, and a looted chest never refilled.
+#
+# The chest is locked, so the vehicle cannot loot it. Instead the God loads a
+# second chest, which goes to inventory. zreset's R then removes the room's
+# chest, and the O finds one already in the world (max 1) and loads nothing:
+# the room is left empty. A port that ignores the R leaves the chest there.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zonereseter
+Y
+resetpass
+resetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zonereseter
+y
+resetpass
+resetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 15896
+
+[probe]
+look
+load obj 15823
+look
+zreset 158
+look

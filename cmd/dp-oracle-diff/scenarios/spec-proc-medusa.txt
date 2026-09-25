@@ -15,7 +15,6 @@
 empty-players
 quiet-mobs
 spawn-mob 14101 1 14112 80
-strip-mob-script 14101
 
 [setup:oracle]
 Gazeprobe

@@ -185,15 +185,6 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 		return fmt.Errorf("copy Go world to throwaway directory: %w", err)
 	}
-	if scenario.MirrorOracleScripts {
-		goScripts := filepath.Join(goWorld, "scripts")
-		if err := os.RemoveAll(goScripts); err != nil {
-			return fmt.Errorf("clear disposable Go script tree: %w", err)
-		}
-		if err := os.CopyFS(goScripts, os.DirFS(filepath.Join(oracleData, "scripts"))); err != nil {
-			return fmt.Errorf("mirror C oracle script tree into Go fixture: %w", err)
-		}
-	}
 	var scriptTwinPath string
 	if scenario.ScriptTwin != nil {
 		sourcePath := filepath.Join(oracleData, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))

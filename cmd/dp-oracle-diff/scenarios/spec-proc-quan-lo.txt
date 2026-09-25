@@ -1,6 +1,6 @@
 # C-first vehicle for SPECIAL(quan_lo), defined at src/spec_procs3.c:372-392
 # and registered first for mob vnum 19405 at src/spec_assign.c:444. The
-# authored Quan Lo mob carries quanlo.lua, so the fixture strips that script,
+# Quan Lo mob has no script (C attaches none; DP-1333); the fixture
 # sets the native SPEC bit, and places the mob in room 19424. A remote peer
 # distinguishes C's global NPC gossip from a same-room-only implementation.
 # C command path: interpreter.c:889-947 and 1407-1456; C's final command is
@@ -10,7 +10,6 @@
 empty-players
 quiet-mobs
 spawn-mob 19405 1 19424 194
-strip-mob-script 19405
 set-mob-flag 19405 SPEC
 replace-room-exits 19424 none
 

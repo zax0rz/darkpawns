@@ -2,7 +2,7 @@
 # C-first vehicle for SPECIAL(fighter).  mobile_activity() skips fighting
 # mobs, so the registered fighter special is reached only from
 # perform_violence() after the NPC's ordinary attack loop.  Mob 20020 is an
-# active fighter assignment; its Lua fight script is stripped so this vehicle
+# active fighter assignment with no script (C attaches none; DP-1333), so this vehicle
 # observes the native special alone.  The God opens combat explicitly and the
 # padded violence pulse captures the selected subcommand's player-visible
 # skill/parry bytes and state.
@@ -17,7 +17,6 @@
 empty-players
 quiet-mobs
 spawn-mob 20020 1 8105 80
-strip-mob-script 20020
 replace-room-exits 8105 none
 
 [setup:oracle]

@@ -8,7 +8,6 @@
 empty-players
 quiet-mobs
 spawn-mob 1313 999 8105 80
-strip-mob-script 1313
 set-mob-flag 1313 SPEC
 replace-room-exits 8105 none
 

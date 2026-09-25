@@ -38,7 +38,7 @@ func TestCheckloadReportsMobAndObjectResetBranches(t *testing.T) {
 				{Command: "O", Arg1: 300, Arg2: 1, Arg3: 1002},
 				{Command: "P", Arg1: 301, Arg2: 2, Arg3: 300},
 				{Command: "R", Arg1: 1002, Arg2: 301, Arg3: -1},
-				{Command: "R", Arg1: 1002, Arg2: 200, Arg3: 0},
+				{Command: "R", Arg1: 1002, Arg2: 0, Arg3: 200}, // C form: kind 0 (mobile), vnum
 			},
 		}},
 	})

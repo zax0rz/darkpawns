@@ -12,7 +12,6 @@
 empty-players
 quiet-mobs
 spawn-mob 7909 1 21210 79
-strip-mob-script 7909
 spawn-mob 4610 1 21210 46
 spawn-obj 8037 1 21210 80
 replace-room-exits 21210 none

@@ -1,8 +1,12 @@
--- hisc.lua — mob script (DP-180: debug prints removed)
-oncmd = function()
-    return 1  -- TRUE
+function fight()
+-- Perform cleric spells during battle.
+
+  dofile("scripts/mob/cleric.lua")
+  call(fight, ch, "x")
 end
 
-sound = function()
-    -- placeholder
+function oncmd()
+-- Prevent the player from moving south.
+
+  return no_move(SOUTH)
 end

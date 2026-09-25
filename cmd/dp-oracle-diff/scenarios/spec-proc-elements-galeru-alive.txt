@@ -6,7 +6,6 @@
 empty-players
 quiet-mobs
 spawn-mob 1315 1 1394 80
-strip-mob-script 1315
 
 [setup:oracle]
 GaleruAliveProbe

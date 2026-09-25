@@ -14,7 +14,6 @@ him and he smiles, showing off a set of sharp, yellowed teeth.
 8 8 1
 BareHandAttack: 8
 Race: 11
-Script: 144/gatekeeper.lua 24
 E
 #14402
 demon butler~
@@ -83,7 +82,6 @@ which to him, you are.
 BareHandAttack: 13
 Race: 19
 Noise: Waves of evil wash over you.
-Script: teleport_vict.lua
 E
 #14406
 Nimos~
@@ -100,7 +98,6 @@ faithfully obeying orders.
 0 270000
 6 6 1
 Race: 0
-Script: sorcery.lua 256
 E
 #14407
 Lady Amber~
@@ -119,7 +116,6 @@ form.
 BareHandAttack: 13
 Race: 0
 Noise: You hear a soft moan from nearby.
-Script: fighter.lua 256
 E
 #14408
 fiothas cook~
@@ -184,7 +180,6 @@ it's back.
 450 120000
 8 8 0
 BareHandAttack: 8
-Script: teleporter.lua
 E
 #14412
 abomination hisczdrezzez yuan-ti~
@@ -239,7 +234,6 @@ three fingers and a thumb on each hand.
 0 120000
 8 8 1
 Race: 9
-Script: mindflayer.lua 256
 E
 #14415
 shadow asp~
@@ -274,7 +268,6 @@ venom.
 8 8 1
 BareHandAttack: 4
 Race: 13
-Script: no_get.lua
 E
 #14417
 killer grass~
@@ -340,7 +333,6 @@ them.
 0 30000
 8 8 0
 BareHandAttack: 8
-Script: brain_eater.lua
 E
 #14421
 golem ebonstone~
@@ -499,7 +491,6 @@ them so that they'd attack anyone who entered his treasury.
 8 8 0
 BareHandAttack: 4
 Race: 14
-Script: brain_eater.lua
 E
 #14431
 skull rider~
@@ -539,7 +530,6 @@ head.
 8 8 0
 BareHandAttack: 4
 Race: 21
-Script: brain_eater.lua
 E
 #14433
 moonbeast~
@@ -580,7 +570,6 @@ life.
 8 8 1
 BareHandAttack: 12
 Race: 9
-Script: sorcery.lua 256
 E
 #14435
 yuk-shaar~
@@ -601,7 +590,6 @@ locked it up in the second dungeon, never to bother anyone again.
 0 90000
 8 8 1
 Race: 9
-Script: sorcery.lua 256
 E
 #14436
 nightmare beast~

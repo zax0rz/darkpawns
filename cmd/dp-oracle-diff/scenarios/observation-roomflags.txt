@@ -5,7 +5,6 @@
 [fixture]
 quiet-mobs
 spawn-mob 18306 1 8162 80
-strip-mob-script 18306
 
 [setup:oracle]
 Orodreth

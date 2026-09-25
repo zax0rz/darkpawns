@@ -11,7 +11,6 @@ wears the navy and grey uniform of a sergeant. He looks brave and trustworthy.
 45 16000
 8 8 1
 Race: 0
-Script: cityguard.lua
 E
 #21201
 cityguard guard~
@@ -26,7 +25,6 @@ sergeant. She has short, dark hair. She looks brave and trustworthy.
 45 16000
 8 8 2
 Race: 0
-Script: cityguard.lua
 E
 #21202
 guard captain kharzed~
@@ -43,7 +41,6 @@ very young to be an officer. He must have a bright future indeed.
 45 90000
 8 8 1
 Race: 0
-Script: guard_captain.lua 128
 E
 #21203
 guard gate~
@@ -87,7 +84,6 @@ glasses on his face and his clothes are neat and dapper.
 10000 270000
 8 8 1
 Race: 0
-Script: shopkeeper.lua 4
 E
 #21206
 mage abernathanorial~
@@ -104,7 +100,6 @@ cloak and a funny looking hat.
 10000 270000
 8 8 1
 Race: 0
-Script: magic_user.lua 256
 E
 #21207
 al bartender~
@@ -285,7 +280,6 @@ ways to the next generations.
 15 60000
 8 8 2
 Race: 0
-Script: thief.lua 128
 E
 #21218
 rackhir shoe maker cobbler~
@@ -317,7 +311,6 @@ by the High Priest to guard the bank from would-be theives.
 8 8 2
 BareHandAttack: 10
 Race: 13
-Script: snake.lua 256
 E
 #21220
 tailor~
@@ -331,7 +324,6 @@ you in a crowd.
 34 -14 -24 34d5+2746 22d4+22
 15 270000
 8 8 1
-Script: dog.lua 30
 E
 #21221
 priest high alaozar~
@@ -348,7 +340,7 @@ not understand.
 15 60000
 8 8 1
 Race: 0
-Script: cleric.lua 256
+Script: 212/highpriest.lua 24
 E
 #21222
 ab grocer~
@@ -433,7 +425,6 @@ Just seeing the large, silver sphere triples your sense of security.
 8 8 0
 BareHandAttack: 3
 Race: 0
-Script: take_jail.lua 384
 E
 #21228
 watchman guard man~
@@ -461,7 +452,6 @@ He looks like a Phil.
 10 350
 8 8 1
 Race: 0
-Script: janitor.lua 74
 E
 #21230
 stray dog~
@@ -639,7 +629,6 @@ The thief is sneaky and cunning... he enjoys his work.
 652 2500
 8 8 1
 Race: 3
-Script: backstabber.lua
 E
 #21243
 alaozarian noble~
@@ -667,7 +656,6 @@ aura of magic radiates from many of his tattoos.
 29 -9 -19 29d5+391 19d4+19
 550 55000
 8 8 1
-Script: tattoo.lua
 E
 #21245
 attendant girl~
@@ -681,7 +669,6 @@ with blonde, seeming to glitter in the meager light.
 25 -5 -15 25d5+299 16d4+16
 0 0
 8 8 2
-Script: pet_store.lua
 E
 #21246
 shadow mage shadowmage~
@@ -697,6 +684,5 @@ magical spell was hiding his true appearance from you.
 8 8 1
 BareHandAttack: 12
 Race: 0
-Script: magic_user.lua 256
 E
 $

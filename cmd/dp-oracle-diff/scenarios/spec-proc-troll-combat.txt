@@ -10,7 +10,6 @@
 empty-players
 quiet-mobs
 spawn-mob 10029 1 10049 100
-strip-mob-script 10029
 set-mob-flag 10029 SPEC
 replace-room-exits 10049 none
 
