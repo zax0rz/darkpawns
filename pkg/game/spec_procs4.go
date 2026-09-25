@@ -506,9 +506,11 @@ func startRoomBirthMessage(name string) string {
 	msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
 	msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"
 	msg += "   'Your life begins now...' it says, then fades -- just as the world around\r\nyou does the same.\r\n\r\n"
-	// The overlapping sprintf/strcat buffer in C leaves the discarded opening
-	// paragraph's final CRLF immediately before the surviving figure speech.
-	return "\r\n" + msg
+	// The CR LF the oracle shows before the speech is not part of this buffer:
+	// the message arrives on a pulse while the player's prompt is showing, and
+	// process_output prefixes that interruption with CR LF (comm.c:1620-1643),
+	// which the terminal writer now reproduces for all output (DP-1307).
+	return msg
 }
 
 func specNewbieZoneEntrance(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {

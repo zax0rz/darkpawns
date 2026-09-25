@@ -420,6 +420,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		if !ok {
 			continue
 		}
+		f = s.TrackPrompt(f)
 		switch f.Kind {
 		case session.FrameText:
 			tc.write([]byte(f.Text))

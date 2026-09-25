@@ -608,10 +608,24 @@ func (m *Manager) flushAsyncPrompts() {
 	}
 	m.mu.RUnlock()
 	for _, s := range sessions {
+		// A session running its own input line prompts itself when the line
+		// is done; a prompt now would land in the middle of its output. A
+		// linkdead session has nobody to prompt.
+		if s.inputBusy.Load() || !s.hasTransport() || s.SendClosed() {
+			continue
+		}
 		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() && !s.IsPaging() {
 			s.SendPrompt()
 		}
 	}
+}
+
+// FlushAsyncPrompts is C's end-of-pass prompt sweep (comm.c:632-648): every
+// descriptor that received output this pass gets its prompt, whatever caused
+// the output. The live game loop calls it after each pulse; a session calls it
+// after each input line for everyone else its command reached (DP-1307).
+func (m *Manager) FlushAsyncPrompts() {
+	m.flushAsyncPrompts()
 }
 
 // Stop halts the manager's background workers and waits for them to exit.
@@ -934,6 +948,8 @@ func (m *Manager) DrainInputQueues() {
 	m.mu.RUnlock()
 
 	for _, job := range jobs {
+		// Taking the queued line clears has_prompt (comm.c:613).
+		job.s.ClearPromptShown()
 		if err := executeCommandRaw(job.s, job.cmd, job.args, !job.aliased, job.rawArgs); err != nil {
 			slog.Error("drained command failed",
 				"player", job.s.playerName, "command", job.cmd, "error", err)
@@ -1237,6 +1253,9 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	}
 
 	s.DetachTransport()
+	// C notices the dead socket in a game-loop pass, and that pass flushes the
+	// room's "has lost his link." with each listener's prompt (DP-1307).
+	m.flushAsyncPrompts()
 	return true
 }
 
@@ -1564,6 +1583,12 @@ type Session struct {
 	// (performDupeCheck). Its transport teardown then leaves the character
 	// and the name's registration to the new session.
 	superseded atomic.Bool
+	// inputBusy is set while this session runs one of its own input lines
+	// (TerminalLine). The end-of-pass prompt sweep skips it (DP-1307).
+	inputBusy atomic.Bool
+	// promptShown is C's d->has_prompt: a playing prompt was written and no
+	// line has been read since (TrackPrompt, DP-1307).
+	promptShown atomic.Bool
 	// writerDone is closed when the WebSocket writer exits, so an orderly
 	// close (goodbye, refused login) can let it flush before the socket goes.
 	writerDone chan struct{}

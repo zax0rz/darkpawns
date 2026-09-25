@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -54,6 +55,9 @@ const (
 	FrameEntryPrompt
 	// FrameGMCP is out-of-band data for clients that asked for it.
 	FrameGMCP
+	// FrameInputMark is the internal line-read marker (ClearPromptShown); a
+	// writer applies it to the prompt state and writes nothing.
+	FrameInputMark
 )
 
 // TerminalFrame is one queued session message rendered for a terminal.
@@ -123,6 +127,8 @@ func RenderTerminalFrame(msg []byte) (TerminalFrame, bool) {
 			return TerminalFrame{}, false
 		}
 		return TerminalFrame{Kind: FrameGMCP, GMCPPackage: pkg, GMCPPayload: payload}, true
+	case "input_mark":
+		return TerminalFrame{Kind: FrameInputMark}, true
 	case MsgState, MsgVars, MsgTokenRefresh:
 		// Structured client data and credentials; the text stream carries
 		// everything a terminal shows. (A rotated token used to fall through
@@ -131,6 +137,53 @@ func RenderTerminalFrame(msg []byte) (TerminalFrame, bool) {
 	default:
 		return TerminalFrame{Kind: FrameText, Text: NormalizeCRLF(fmt.Sprintf("[%s]\r\n", string(msg)))}, true
 	}
+}
+
+// TrackPrompt applies C's has_prompt to a frame on its way to the player
+// (comm.c:1620-1643). A written playing prompt marks the prompt as showing;
+// text that then arrives before the player sends a line interrupts it, so
+// process_output writes it with a leading CR LF. Reading a line clears the
+// state (ClearPromptShown), so a command's own output starts on the line the
+// player typed. Both transport writers call this in write order.
+func (s *Session) TrackPrompt(f TerminalFrame) TerminalFrame {
+	switch f.Kind {
+	case FrameInputMark:
+		s.promptShown.Store(false)
+	case FramePrompt:
+		s.promptShown.Store(true)
+	case FrameText:
+		if f.Text != "" && s.promptShown.Swap(false) {
+			f.Text = "\r\n" + f.Text
+		}
+	}
+	return f
+}
+
+// inputMarkFrame is an internal frame that travels the send channel in order
+// with the output. It carries nothing to the player; the writer uses it to
+// clear the prompt state at exactly the point in the stream where the line was
+// read. Clearing it from the reading goroutine instead would race the writer:
+// a typed-ahead line could be read before the previous prompt was written.
+var inputMarkFrame = []byte(`{"type":"input_mark"}`)
+
+// ClearPromptShown is C's d->has_prompt = 0 when a line is taken from the
+// descriptor's input queue (comm.c:613), placed in the output stream.
+func (s *Session) ClearPromptShown() {
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	if s.sendClosed || s.send == nil {
+		return
+	}
+	select {
+	case s.send <- inputMarkFrame:
+	default:
+	}
+}
+
+// IsInputMarkFrame reports whether a queued message is the internal
+// line-read marker, which no client ever receives.
+func IsInputMarkFrame(msg []byte) bool {
+	return bytes.Equal(msg, inputMarkFrame)
 }
 
 // ensureLineEnded appends CRLF only to text that carries no line ending at all.
@@ -187,6 +240,19 @@ func (s *Session) TerminalLine(rawLine string) bool {
 	// DP-928: any inbound traffic proves the connection is alive, so the
 	// linkdead reaper sees it.
 	s.OnInboundActivity()
+
+	// C reads one line per descriptor, then flushes every descriptor's output
+	// with its prompt in the same pass (comm.c:632-648). This line's own
+	// prompt is queued below; the others its command reached (a say, an
+	// attack, a death) get theirs when it is done (DP-1307).
+	s.ClearPromptShown()
+	s.inputBusy.Store(true)
+	defer func() {
+		s.inputBusy.Store(false)
+		if s.manager != nil {
+			s.manager.flushAsyncPrompts()
+		}
+	}()
 
 	switch {
 	case s.IsCharCreating() || s.IsMenuActive():
