@@ -11,7 +11,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
-// NPCCommand is command_interpreter (interpreter.c:1270-1349) run by a
+// NPCCommand is command_interpreter (interpreter.c:883-949) run by a
 // mobile, as lua_action does for a script's action(me, "...") (scripts.c:
 // 122-140). A mobile has no descriptor, so every refusal C would send it
 // ("Huh?!?", the position messages, a command's own error lines) reaches no

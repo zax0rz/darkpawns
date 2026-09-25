@@ -4,7 +4,7 @@
 # depth-case: lua.bridge-act
 # depth-case: lua.bridge-say
 #
-# special() (interpreter.c:1447-1453) runs the mobile's oncmd script with
+# special() (interpreter.c:1457-1460) runs the mobile's oncmd script with
 # buf = CMD_NAME + arg, so every spelling that resolves to "south" reaches
 # no_move() (scripts/mob/no_move.lua) as "south" and is blocked: two act()
 # lines and a say. "north" resolves to another command and passes through.

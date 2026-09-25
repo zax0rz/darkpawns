@@ -715,7 +715,7 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		}
 	}
 
-	// Mob oncmd scripts: special() (interpreter.c:1447-1453) runs each
+	// Mob oncmd scripts: special() (interpreter.c:1457-1460) runs each
 	// mobile's script with buf = CMD_NAME + arg, the resolved command name
 	// and the raw rest of the line, so a typed "s" reaches the script as
 	// "south". A word that resolves to no command never reaches special()

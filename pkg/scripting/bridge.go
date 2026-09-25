@@ -6,7 +6,7 @@ import (
 
 // This file ports the C<->Lua bridge of scripts.c: the tables a script sees
 // for a character, object and room (char_to_table, obj_to_table,
-// room_to_table, scripts.c:1823-1970), the write-back after a script runs
+// room_to_table, scripts.c:1823-1972), the write-back after a script runs
 // (table_to_char, scripts.c:1975-2052), and the "struct" field that ties a
 // table back to the live game thing it describes.
 //
@@ -250,7 +250,7 @@ func (e *Engine) charToTableDepth(b Bridge, ref CharRef, depth int) lua.LValue {
 	return t
 }
 
-// cObjToTable is obj_to_table (scripts.c:1893-1926).
+// cObjToTable is obj_to_table (scripts.c:1894-1925).
 func (e *Engine) cObjToTable(b Bridge, ref ObjRef) lua.LValue {
 	f, ok := b.ObjFields(ref)
 	if !ok {

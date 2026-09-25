@@ -550,7 +550,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	}
 
 	// Load and execute the script file
-	// Based on open_lua_file() in scripts.c lines 1641-1701
+	// Based on open_lua_file() in scripts.c lines 1666-1699
 	// Execution timeout prevents tight loops from hanging the server indefinitely.
 
 	// A nested run keeps the outer run's deadline and stack frame.
@@ -636,7 +636,10 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		return int(lua.LVAsNumber(ret)) != 0, nil
 	}
 
-	// Read back changes from tables
+	// Legacy write-back, reached only without a bridge: engine tests that build
+	// a world without one. Every server run bridges (cmd/server passes the
+	// WorldScriptableAdapter), and C's write-back is bridgeWriteBack's (ch
+	// only). Do not route a live path here.
 	if ctx.Ch != nil {
 		slog.Debug("reading back ch changes", "stack_top", L.GetTop())
 		chVal := L.GetGlobal("ch")

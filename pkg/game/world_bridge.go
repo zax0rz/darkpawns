@@ -142,7 +142,7 @@ func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.Ch
 	return scripting.CharFields{}, false
 }
 
-// ObjFields is obj_to_table's view of an object (scripts.c:1893-1926).
+// ObjFields is obj_to_table's view of an object (scripts.c:1894-1925).
 func (a *WorldScriptableAdapter) ObjFields(ref scripting.ObjRef) (scripting.ObjFields, bool) {
 	o := a.resolveObj(ref)
 	if o == nil {
