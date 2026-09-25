@@ -1,0 +1,46 @@
+# mp_give: soul eater + soul stone (vnum 9900) is the portal quest
+# (src/mobprog.c:142-160). Three acts, the soul is extracted, portal 19611
+# (value[2] set to 2) loads in the giver's room, and the mob exclaims
+# (C do_say on a '!'-terminated string -> "$n exclaims, '...'").
+# depth-case: mp_give.demon-soul
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14401 1 14402 144
+
+[setup:oracle]
+Soulbearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Soulbearer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14402
+load obj 9900
+
+[probe]
+give stone gatekeeper
+look

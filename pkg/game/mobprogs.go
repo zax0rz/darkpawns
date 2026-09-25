@@ -19,8 +19,9 @@ import (
 // IS_* checks from mobprog.h
 // ---------------------------------------------------------------------------
 
-func isDog(mob *MobInstance) bool   { v := mob.GetVNum(); return v == 8063 || v == 8065 }
-func isDemon(mob *MobInstance) bool { return mob.GetVNum() == 14401 }
+func isDog(mob *MobInstance) bool     { v := mob.GetVNum(); return v == 8063 || v == 8065 }
+func isJanitor(mob *MobInstance) bool { return mob.GetVNum() == 8061 }
+func isDemon(mob *MobInstance) bool   { return mob.GetVNum() == 14401 }
 
 func isWhore(mob *MobInstance) bool {
 	specName, ok := MobSpecAssign[mob.GetVNum()]
@@ -148,6 +149,84 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 // MpBribe is an alias for MpGive.
 func (w *World) MpBribe(mob *MobInstance, ch *Player, amount int) {
 	w.MpGive(mob, ch, amount)
+}
+
+// ---------------------------------------------------------------------------
+// MpGiveObject — port of mp_give() (the object-give trigger)
+// ---------------------------------------------------------------------------
+
+// MpGiveObject ports C's mp_give(ch, mob, obj) (src/mobprog.c:112-170): the
+// mob's reaction to being handed an object. C's perform_give calls it for NPC
+// victims after the three give acts and before the MS_ONGIVE script; the Go
+// callers are performGiveToMob (player giver) and npcPerformGive (mobile
+// giver, the scripted action(me, "give ...") path via command_interpreter).
+// The MpGive/MpBribe pair above ports C's mp_bribe (the gold-give trigger),
+// not mp_give.
+func (w *World) MpGiveObject(ch Actor, mob *MobInstance, obj *ObjectInstance) {
+	if isDog(mob) && obj.GetTypeFlag() == ITEM_FOOD {
+		Act(w, true, mob, nil, obj, nil, "$n devours $p and wags $s tail happily.", "", ToRoom)
+		w.ExtractObject(obj, mob.GetRoom())
+	} else if isDog(mob) {
+		Act(w, true, mob, nil, obj, nil, "$n sniffs around and plays with $p for a while.", "", ToRoom)
+		if err := w.MoveObjectToRoom(obj, mob.GetRoom()); err != nil {
+			slog.Error("mp_give dog drop failed", "mob_vnum", mob.GetVNum(), "obj_vnum", obj.VNum, "error", err)
+		}
+		Act(w, true, mob, nil, nil, nil, "$n quickly loses interest.", "", ToRoom)
+	}
+
+	if isDemon(mob) {
+		if obj.VNum != 9900 {
+			Act(w, true, mob, nil, obj, nil, "$n peers at $p closely, then hands it back.", "", ToRoom)
+			Act(w, true, mob, nil, nil, nil, "$n growls, 'Are you mocking me?'", "", ToRoom)
+			// C obj_to_char(obj, ch) returns the object to whichever
+			// character handed it over, prepending to their carrying.
+			var err error
+			switch g := ch.(type) {
+			case *Player:
+				err = w.MoveObjectToPlayerInventory(obj, g)
+			case *MobInstance:
+				err = w.MoveObjectToMobInventoryFront(obj, g)
+			}
+			if err != nil {
+				slog.Error("mp_give demon return failed", "mob_vnum", mob.GetVNum(), "obj_vnum", obj.VNum, "error", err)
+			}
+		} else {
+			// C read_object(19611, VIRTUAL) creates the portal up front; it
+			// enters the giver's room only after the soul is extracted.
+			portal, portalErr := w.SpawnObject(19611, -1)
+			if portalErr != nil {
+				slog.Error("mp_give portal load failed", "mob_vnum", mob.GetVNum(), "error", portalErr)
+			}
+			Act(w, true, mob, nil, nil, nil, "$n peers at the soul, then licks $s lips.", "", ToRoom)
+			Act(w, true, mob, nil, nil, nil, "$n says, 'This will do nicely.. you may enter!'", "", ToRoom)
+			Act(w, true, mob, nil, nil, nil, "$n pops the soul into his mouth and swallows it, as a hideous\r\n screaming rings in your ears...", "", ToRoom)
+			w.ExtractObject(obj, mob.GetRoom())
+			Act(w, true, mob, nil, nil, nil, "$n parts his gnarled hands and a shimmering black portal materializes before you!", "", ToRoom)
+			if portal != nil {
+				portal.SetValue(2, 2)
+				if err := w.MoveObjectToRoom(portal, ch.GetRoom()); err != nil {
+					slog.Error("mp_give portal placement failed", "mob_vnum", mob.GetVNum(), "obj_vnum", portal.VNum, "error", err)
+				}
+			}
+			// C do_say(mob, "Enter the portal quickly! It will not last long!"):
+			// the '!' ending renders through do_say as "$n exclaims, '...'"
+			// (src/act.comm.c:786-801).
+			Act(w, false, mob, nil, nil, nil, "$n exclaims, 'Enter the portal quickly! It will not last long!'", "", ToRoom)
+		}
+	}
+
+	if isJanitor(mob) {
+		if isJunk(obj) {
+			Act(w, true, mob, nil, nil, nil, "$n says, 'Thanks for helping clean this place up...'", "", ToRoom)
+		} else {
+			Act(w, true, mob, nil, nil, nil, "$n says, 'Wow, this is pretty neat, thanks.'", "", ToRoom)
+		}
+	}
+}
+
+// isJunk ports is_junk() (src/mobprog.c:462-470).
+func isJunk(obj *ObjectInstance) bool {
+	return obj.IsTakeable() && (obj.IsDrinkContainer() || obj.GetCost() <= 10)
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,46 @@
+# mp_give: dog + non-food is played with then dropped in the room
+# (src/mobprog.c:123-129). The object survives on the ground (C obj_to_room,
+# not extract), so look must show it.
+# depth-case: mp_give.dog-junk
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8063 1 8059 80
+replace-room-exits 8059 none
+
+[setup:oracle]
+Harpole
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Harpole
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8059
+load obj 8037
+
+[probe]
+give sword warg
+look

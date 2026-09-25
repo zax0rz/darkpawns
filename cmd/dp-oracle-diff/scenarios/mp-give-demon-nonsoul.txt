@@ -1,0 +1,45 @@
+# mp_give: soul eater + non-soul is handed back with the mockery acts
+# (src/mobprog.c:131-141). The Gatekeeper (mob 14401) holds room 14402 and
+# has MOB_OKGIVE; the object returns to the giver's inventory.
+# depth-case: mp_give.demon-nonsoul
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14401 1 14402 144
+
+[setup:oracle]
+Mocker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mocker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14402
+load obj 8010
+
+[probe]
+give bread gatekeeper
+inventory

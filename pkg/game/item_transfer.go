@@ -473,6 +473,10 @@ func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInsta
 	Act(nil, false, ch, vict, obj, nil, "$n gives you $p.", "", ToVict)
 	Act(w, true, ch, vict, obj, nil, "$n gives $p to $N.", "", ToNotVict)
 
+	// C perform_give (src/act.item.c:700-701): the mp_give mob reaction runs
+	// after the give acts and before the ongive script.
+	w.MpGiveObject(ch, vict, obj)
+
 	// C runs the mob's ongive behavior only after the object has moved.
 	if ScriptEngine != nil && vict.HasScript("ongive") {
 		ctx := vict.CreateScriptContext(ch, obj, "")
