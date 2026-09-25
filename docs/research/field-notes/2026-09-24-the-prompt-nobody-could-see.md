@@ -6,7 +6,7 @@ backed by PF-023.
 ## One rule in C, three gaps in the port
 
 C's game loop has one rule. On each pass, every descriptor with pending
-output gets it flushed with its prompt (`comm.c:632-648`, `process_output`),
+output gets it flushed with its prompt (`comm.c:626-642`, `process_output`),
 whatever caused the output. If the player's prompt was already showing, the
 output is an interruption and starts with a CR LF (`has_prompt`). The port
 had a prompt sweep, but only the DP_CLOCK test pump called it. So three

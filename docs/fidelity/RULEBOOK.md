@@ -149,6 +149,16 @@ cannot observe them.
   bytes, and `no-settle` for the first prompt on game entry so a later pulse
   cannot mask its absence.
 
+- **R5g. Cite C from `src/`, from a line you read.** Every C line citation (code
+  comments, depth-manifest `c_site`, research notes, Linear) names
+  `src/<file>:<line>` in this repository, taken from a grep or read done while
+  writing it. Never cite from memory. `darkpawns-c-oracle/` is the runnable
+  oracle: its `utils.c`, `comm.c`, `db.c` and `act.social.c` carry harness
+  instrumentation, so their line numbers drift from `src/` (`mudlog` is
+  `utils.c:212` in `src/` and 242 in the oracle). Taught by PF-032 (nine recalled
+  citations in PR #1637, spread into a filed issue) and the #1644 review, which
+  followed an oracle line number into `src/`'s `sprintbit`.
+
 ---
 
 ## Amendment log
@@ -161,3 +171,4 @@ cannot observe them.
 | 2026-09-08 | R5f added | Aiko entry incident: independent browser dialogue and persistence failures escaped creation oracle coverage |
 | 2026-09-24 | R5f prompt boundary clarified | DP-1326: dropped prompt lines hid pager framing and the first game-entry prompt |
 | 2026-09-23 | R1a added | `do_auto`'s self-aliasing `sprintf`: the oracle printed nothing, a delegated port deleted the listing to match; the precedent (patch the oracle, keep the intended bytes) had never been written down |
+| 2026-09-25 | R5g added | PF-032 recalled citations; #1644 review hit the src/ vs oracle line drift in utils.c. Canonical citation target is `src/` |

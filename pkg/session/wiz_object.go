@@ -226,7 +226,7 @@ func cmdPurge(s *Session, args []string) error {
 				// "has left" cleanup broadcast so only C's line is visible.
 				if victimSession, ok := s.manager.GetSession(victim.GetName()); ok {
 					game.Act(s.manager.world, true, victim, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
-					game.MudLog(fmt.Sprintf("Closing link to: %s.", victim.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, victim.GetInvisLevel()), true) // comm.c:2169-2170
+					game.MudLog(fmt.Sprintf("Closing link to: %s.", victim.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, victim.GetInvisLevel()), true) // comm.c:2132-2133
 					victimSession.leaveBroadcastHandled = true
 					s.manager.UnregisterAndClose(victim.GetName())
 				} else {

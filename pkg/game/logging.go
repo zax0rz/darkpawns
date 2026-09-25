@@ -125,7 +125,7 @@ type ImmortalSessionProvider interface {
 // SendFunc is a callback for sending a string message to a session.
 type SendFunc func(msg string)
 
-// MudLog is mudlog (utils.c:242-272): the message goes to the log when
+// MudLog is mudlog (utils.c:212-242): the message goes to the log when
 // toFile is set and, unless level is negative, to every player in the game
 // who is not writing, whose level is at least level and whose syslog level
 // (PRF_LOG1 counts 1, PRF_LOG2 counts 2) is at least typ, as green
