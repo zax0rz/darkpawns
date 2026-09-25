@@ -272,6 +272,9 @@ func (w *World) npcPerformGive(me *MobInstance, vict interface{}, obj *ObjectIns
 			return
 		}
 		Act(w, true, me, v, obj, nil, "$n gives $p to $N.", "", ToNotVict)
+		// C perform_give (src/act.item.c:700-701) runs mp_give for the NPC
+		// victim here, before the ongive script.
+		w.MpGiveObject(me, v, obj)
 		// perform_give runs the receiving mobile's ongive with the giver as ch.
 		if ScriptEngine != nil && v.HasScript("ongive") {
 			ctx := v.CreateScriptContext(nil, obj, "")

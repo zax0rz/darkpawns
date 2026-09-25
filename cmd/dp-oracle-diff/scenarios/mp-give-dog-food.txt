@@ -1,0 +1,46 @@
+# mp_give: dog + food is devoured (src/mobprog.c:112-122). The hybrid warg
+# (mob 8063) holds Mud School room 8059 and has MOB_OKGIVE, so the three give
+# acts run and then mp_give devours the food.
+# depth-case: mp_give.dog-food
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8063 1 8059 80
+replace-room-exits 8059 none
+
+[setup:oracle]
+Bristow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bristow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8059
+load obj 8010
+
+[probe]
+give bread warg
+look

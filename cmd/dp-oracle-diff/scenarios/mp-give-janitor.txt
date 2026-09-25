@@ -1,0 +1,50 @@
+# mp_give: janitor thanks for junk vs non-junk (src/mobprog.c:162-169,
+# is_junk at src/mobprog.c:462-470). Junk = takeable && (drinkcon ||
+# cost <= 10): bread 8010 (cost 3) thanks for the cleanup; short sword 8037
+# (cost 30) is "pretty neat". The janitor keeps nothing either way.
+# depth-case: mp_give.janitor-junk
+# depth-case: mp_give.janitor-nonjunk
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8061 99 8105 80
+clear-mob-flag 8061 RANDZON
+replace-room-exits 8105 none
+
+[setup:oracle]
+Tidyhelper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tidyhelper
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 8010
+load obj 8037
+
+[probe]
+give bread janitor
+give sword janitor
