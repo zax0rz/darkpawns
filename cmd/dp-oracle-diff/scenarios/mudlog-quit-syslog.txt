@@ -1,4 +1,4 @@
-# mudlog (utils.c:242-272) reaches in-game immortals by syslog level.
+# mudlog (utils.c:212-242) reaches in-game immortals by syslog level.
 # The God sets syslog normal; the mortal's quit is logged at NRM with level
 # MAX(LVL_IMMORT, invis) (act.other.c:135-136), so the God sees
 # "[ Quitter has quit the game. ]" and, outside a save room, the LOSTEQ

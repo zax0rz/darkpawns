@@ -43,7 +43,7 @@ func (s *Session) sendWelcome(token string) {
 	s.sendRoomObservation(roomVNum, false, token)
 	// C's first CON_PLAYING game-loop pass prints a prompt after the welcome
 	// and entry look. No command has arrived yet to trigger TerminalLine's
-	// ordinary SendPrompt path (comm.c:643-648).
+	// ordinary SendPrompt path (comm.c:637-642).
 	s.SendPrompt()
 }
 
@@ -253,7 +253,7 @@ func (s *Session) notePlayerOutput() {
 // transport writes the prompt only after all earlier output (FIFO ordering).
 // Telnet renders it as the "> " command prompt; WebSocket clients may ignore
 // it. Sharing the channel with command output guarantees C's game-loop order
-// (comm.c:643-648): output is flushed first, the prompt is written after.
+// (comm.c:637-642): output is flushed first, the prompt is written after.
 // When player output was flushed since the previous prompt, C's flush frame
 // is "\r\n" + prompt (non-compact process_output); without pending output the
 // bare game-loop prompt pass writes the prompt alone.

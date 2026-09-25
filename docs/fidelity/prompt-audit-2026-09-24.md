@@ -3,7 +3,7 @@
 DP-1326 showed that the ordinary oracle normalizer removes prompt-only lines
 and trims their trailing spaces. Its green command blocks therefore cannot
 prove `make_prompt` bytes (R1, R5f). This audit follows the reachable C paths
-in `src/comm.c:643-648,1028-1185,1620-1646` and the Go paths in
+in `src/comm.c:637-642,1028-1185,1620-1646` and the Go paths in
 `pkg/session/session_send.go`, `pkg/session/terminal.go`, and
 `pkg/telnet/listener.go` (R5c, R5e).
 

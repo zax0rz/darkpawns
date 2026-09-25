@@ -27,7 +27,7 @@ func drainFrames(s *Session) string {
 
 // TestInputLinePromptsOthersItReached is the DP-1307 regression. C reads one
 // line, then flushes every descriptor's pending output with its prompt in the
-// same pass (comm.c:632-648). A player who hears another player's say gets a
+// same pass (comm.c:626-642). A player who hears another player's say gets a
 // prompt after it; a player who heard nothing gets none.
 func TestInputLinePromptsOthersItReached(t *testing.T) {
 	m := makeTestManagerWithVoidRooms(t)

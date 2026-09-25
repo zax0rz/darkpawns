@@ -107,7 +107,7 @@ func RenderTerminalFrame(msg []byte) (TerminalFrame, bool) {
 		return TerminalFrame{Kind: FrameText, Text: NormalizeCRLF(text + "\r\n")}, true
 	case MsgPrompt:
 		// The prompt travels through the send channel so it is written only
-		// after the command's queued output (C: comm.c:643-648 flush output,
+		// after the command's queued output (C: comm.c:637-642 flush output,
 		// then prompt).
 		prompt := "> "
 		if text, ok := data["text"].(string); ok && text != "" {
@@ -270,7 +270,7 @@ func (s *Session) TerminalLine(rawLine string) bool {
 	s.OnInboundActivity()
 
 	// C reads one line per descriptor, then flushes every descriptor's output
-	// with its prompt in the same pass (comm.c:632-648). This line's own
+	// with its prompt in the same pass (comm.c:626-642). This line's own
 	// prompt is queued below; the others its command reached (a say, an
 	// attack, a death) get theirs when it is done (DP-1307).
 	s.ClearPromptShown()
@@ -314,7 +314,7 @@ func (s *Session) TerminalLine(rawLine string) bool {
 		}
 	case line == "":
 		// RETURN with no command refreshes the prompt, queued after any
-		// pending output (C: comm.c:643-648).
+		// pending output (C: comm.c:637-642).
 		s.SendPrompt()
 	default:
 		// C tokenization (interpreter.c:883-907): a non-letter first character

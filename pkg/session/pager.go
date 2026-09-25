@@ -107,7 +107,7 @@ func paginate(text string) [][]byte {
 //     show_string sees page+1>=count and frees without prompting).
 //   - Otherwise the pages are stored, pager mode is entered, and page 0 is
 //     sent. The terminal's command flush then calls SendPrompt for C's pager
-//     prompt (comm.c:643-648).
+//     prompt (comm.c:637-642).
 func PageString(s *Session, text string) {
 	if text == "" {
 		s.Send("")

@@ -142,7 +142,7 @@ func (s *Session) performDupeCheck() bool {
 	if s.wantsStructuredData {
 		s.sendFullVarDump()
 	}
-	// C's next game-loop pass prints the prompt (comm.c:643-648).
+	// C's next game-loop pass prints the prompt (comm.c:637-642).
 	s.SendPrompt()
 	return true
 }
