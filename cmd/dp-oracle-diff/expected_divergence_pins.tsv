@@ -13,4 +13,10 @@ lifecycle-idle-void	~dpclock pulse 630	c0f031329074f681a802a094b7102deee06efdc38
 lifecycle-relogin-prefs	<RELOGIN>	f59cee687d920bc45f52a2210fb50f973d3396b97f01da0989e9f6d445570aa2	save.tsv:save.relogin-login-transcript:blocked
 lifecycle-relogin-room	<RELOGIN>	f59cee687d920bc45f52a2210fb50f973d3396b97f01da0989e9f6d445570aa2	save.tsv:save.relogin-login-transcript:blocked
 player-state-toggles	auto [actor]	ad28945974944aa6776860e0429b3530b83c3c3aa6bf559ff4d78b511322954f	auto.tsv:auto.no-arg-listing-undefined:blocked
+restart-door-state	<RESTART>	478637c56e39f73a24866800779c760ad509a84a2eae14dfc642fcff123873bb	save.tsv:save.relogin-login-transcript:blocked
+restart-dropped-object	<RESTART>	478637c56e39f73a24866800779c760ad509a84a2eae14dfc642fcff123873bb	save.tsv:save.relogin-login-transcript:blocked
+restart-durable-player-boundary	<RESTART>	478637c56e39f73a24866800779c760ad509a84a2eae14dfc642fcff123873bb	save.tsv:save.relogin-login-transcript:blocked
+restart-gossip-review	<RESTART>	478637c56e39f73a24866800779c760ad509a84a2eae14dfc642fcff123873bb	save.tsv:save.relogin-login-transcript:blocked
+restart-mob-state	<RESTART>	478637c56e39f73a24866800779c760ad509a84a2eae14dfc642fcff123873bb	save.tsv:save.relogin-login-transcript:blocked
+restart-reset-object-duplication	<RESTART>	478637c56e39f73a24866800779c760ad509a84a2eae14dfc642fcff123873bb	save.tsv:save.relogin-login-transcript:blocked
 shoot-target-depth	shoot arrow north instructor	ac883792c2782e2660dfca34b30dc9aa2082f9a84060b25108a7b896778603ff	shoot.tsv:shoot.mob-hit-miss:blocked;shoot.tsv:shoot.pc-level-window:blocked;shoot.tsv:shoot.player-hit-miss:blocked;shoot.tsv:shoot.target-fallback:blocked;shoot.tsv:shoot.target-fighting:blocked;shoot.tsv:shoot.targeted-shot:blocked;shoot.tsv:shoot.targeted-shot-audience:blocked;shoot.tsv:shoot.wait-and-object-consumption:blocked

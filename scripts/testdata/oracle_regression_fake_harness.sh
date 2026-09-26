@@ -23,6 +23,10 @@ I)
 	printf 'fake harness: connection reset before readiness\n' >&2
 	exit 1
 	;;
+R)
+	printf 'fake harness: Go port did not accept connections on 127.0.0.1:43221 within 30s: dial tcp 127.0.0.1:43221: connect: connection refused\n' >&2
+	exit 1
+	;;
 T)
 	printf 'fake harness timeout attempt %d\n' "$attempt" >&2
 	exit 124

@@ -13,6 +13,12 @@ lifecycle-idle-void	idle.tsv	idle.void-ninth-tick	blocked
 lifecycle-relogin-prefs	save.tsv	save.relogin-login-transcript	blocked	
 lifecycle-relogin-room	save.tsv	save.relogin-login-transcript	blocked	
 player-state-toggles	auto.tsv	auto.no-arg-listing-undefined	blocked	
+restart-door-state	save.tsv	save.relogin-login-transcript	blocked	
+restart-dropped-object	save.tsv	save.relogin-login-transcript	blocked	
+restart-durable-player-boundary	save.tsv	save.relogin-login-transcript	blocked	
+restart-gossip-review	save.tsv	save.relogin-login-transcript	blocked	
+restart-mob-state	save.tsv	save.relogin-login-transcript	blocked	
+restart-reset-object-duplication	save.tsv	save.relogin-login-transcript	blocked	
 shoot-target-depth	shoot.tsv	shoot.mob-hit-miss	blocked	
 shoot-target-depth	shoot.tsv	shoot.pc-level-window	blocked	
 shoot-target-depth	shoot.tsv	shoot.player-hit-miss	blocked	

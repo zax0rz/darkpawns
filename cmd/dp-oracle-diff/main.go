@@ -213,6 +213,12 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		goBin = abs
 	} else {
+		// #nosec G702 -- dev oracle-diff harness. argv is the fixed `go build`
+		// invocation plus the toolchain's own output path: goBin is either a
+		// process-local temp file (os.MkdirTemp above) or the prebuilt server
+		// binary scripts/oracle_regression.sh handed in through
+		// ORACLE_REGRESSION_SERVER. No shell, and nothing request- or
+		// network-derived reaches argv.
 		build := exec.Command("go", "build", "-o", goBin, "./cmd/server")
 		build.Dir = repoRoot
 		if output, buildErr := build.CombinedOutput(); buildErr != nil {
@@ -1575,6 +1581,16 @@ func startProcess(ctx context.Context, name, dir string, env []string, command s
 	return p, nil
 }
 
+// stop signals the engine and waits for it to exit, escalating to SIGKILL after
+// three seconds.
+//
+// The escalation is silent: a restart whose process had to be killed is
+// reported exactly like a clean one, so a "graceful restart" proof can
+// unknowingly become a crash-recovery proof. That is acceptable for the
+// <RESTART> vehicles today — they quit their actor first, so what the step
+// proves is the boot-plus-relogin contract, not the engine's own shutdown path
+// — but a future vehicle that means to prove a graceful stop must not inherit
+// this silence: have stop() report the escalation and assert on it.
 func (p *process) stop() {
 	if p == nil || p.cmd.Process == nil {
 		return
