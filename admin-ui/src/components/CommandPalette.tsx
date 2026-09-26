@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from './Icon';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { api, type WorldSearchHit } from '../api/client';
 
 interface CommandItem {
   id: string;
@@ -37,6 +39,11 @@ function fuzzyMatch(query: string, text: string): boolean {
   return qi === q.length;
 }
 
+function editorPath(hit: WorldSearchHit): string {
+  if (hit.kind === 'zone') return `/admin/game/zones/${hit.vnum}/edit`;
+  return `/admin/game/${hit.kind === 'object' ? 'objects' : hit.kind === 'mob' ? 'mobs' : hit.kind === 'shop' ? 'shops' : 'rooms'}/${hit.vnum}/edit`;
+}
+
 export function CommandPalette({
   open,
   onClose,
@@ -46,8 +53,21 @@ export function CommandPalette({
 }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(query.trim()), 180);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const worldSearch = useQuery({
+    queryKey: ['world-search', searchQuery],
+    queryFn: () => api.searchWorld(searchQuery),
+    enabled: open && searchQuery.length >= 2,
+    staleTime: 10000,
+  });
 
   const commands: CommandItem[] = [
     { id: 'nav-dashboard', label: 'Go to Dashboard', icon: 'dashboard', group: 'Navigation', action: () => navigate('/admin/') },
@@ -56,8 +76,6 @@ export function CommandPalette({
     { id: 'nav-objects', label: 'Go to Objects', icon: 'objects', group: 'Navigation', action: () => navigate('/admin/game/objects') },
     { id: 'nav-terminal', label: 'Go to Terminal', icon: 'terminal', group: 'Navigation', action: () => navigate('/admin/webclient') },
     { id: 'nav-operations', label: 'Go to Operations', icon: 'operations', group: 'Navigation', action: () => navigate('/admin/operations') },
-    { id: 'nav-agents', label: 'Go to Agents', icon: 'agents', group: 'Navigation', action: () => navigate('/admin/agents') },
-    { id: 'action-reek', label: 'Trigger Reek Crawl', icon: 'search', group: 'Actions', action: () => { /* placeholder */ } },
     { id: 'action-refresh', label: 'Refresh Server Status', icon: 'refresh', group: 'Actions', action: () => window.location.reload() },
   ];
 
@@ -73,11 +91,21 @@ export function CommandPalette({
 
   // Deduplicate
   const seen = new Set<string>();
-  const items = filtered.filter((c) => {
+  const navigationItems = filtered.filter((c) => {
     if (seen.has(c.id)) return false;
     seen.add(c.id);
     return true;
   });
+  const searchHits = query.trim().length >= 2 ? worldSearch.data?.results ?? [] : [];
+  const items: CommandItem[] = [
+    ...navigationItems,
+    ...searchHits.map((hit) => ({
+      id: `world-${hit.kind}-${hit.vnum}`,
+      label: hit.name || `${hit.kind} #${hit.vnum}`,
+      group: `${hit.kind[0].toUpperCase()}${hit.kind.slice(1)} · #${hit.vnum}`,
+      action: () => navigate(editorPath(hit)),
+    })),
+  ];
 
   useEffect(() => {
     if (open) {
@@ -92,7 +120,7 @@ export function CommandPalette({
   };
 
   const execute = (item: CommandItem) => {
-    addRecent(item.id);
+    if (!item.id.startsWith('world-')) addRecent(item.id);
     handleClose();
     item.action();
   };
@@ -117,12 +145,12 @@ export function CommandPalette({
   const groups: { name: string; items: CommandItem[] }[] = [];
   const groupMap = new Map<string, CommandItem[]>();
   for (const item of items) {
-    const g = query ? 'Results' : (item.id.startsWith('nav-') || recentIds.includes(item.id) ? (recentIds.includes(item.id) ? 'Recently Visited' : item.group) : item.group);
+    const g = item.id.startsWith('world-') ? 'World' : query ? 'Navigation' : (item.id.startsWith('nav-') || recentIds.includes(item.id) ? (recentIds.includes(item.id) ? 'Recently Visited' : item.group) : item.group);
     if (!groupMap.has(g)) groupMap.set(g, []);
     groupMap.get(g)!.push(item);
   }
   // Order: Recently Visited first, then Results, then others
-  const groupOrder = ['Recently Visited', 'Results', 'Navigation', 'Actions'];
+  const groupOrder = ['Recently Visited', 'Navigation', 'World', 'Actions'];
   for (const name of groupOrder) {
     const g = groupMap.get(name);
     if (g) groups.push({ name, items: g });
@@ -152,7 +180,7 @@ export function CommandPalette({
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Type a command..."
+            placeholder="Search the world or jump to a page..."
             className="flex-1 bg-transparent py-3 text-sm text-ink placeholder-slate-400 focus:outline-none"
           />
           <kbd className="text-[10px] text-ink-muted bg-paper px-1.5 py-0.5 rounded border border-rule">
@@ -164,7 +192,7 @@ export function CommandPalette({
         <div className="max-h-72 overflow-y-auto py-2">
           {items.length === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-ink-muted">
-              No results found
+              {worldSearch.isFetching ? 'Searching the world…' : 'No matches found'}
             </div>
           ) : (
             groups.map((group) => (
@@ -187,7 +215,8 @@ export function CommandPalette({
                       }`}
                     >
                       {item.icon && <Icon name={item.icon} className="h-4 w-4 shrink-0 text-ink-muted" />}
-                      <span>{item.label}</span>
+                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      {item.id.startsWith('world-') && <span className="shrink-0 text-[10px] uppercase tracking-wider opacity-70">{item.group}</span>}
                     </button>
                   );
                 })}
@@ -201,7 +230,8 @@ export function CommandPalette({
           <span>↑↓ Navigate</span>
           <span>↵ Select</span>
           <span>Esc Close</span>
-          <span className="ml-auto">Ctrl+K</span>
+          {worldSearch.isError && query.trim().length >= 2 && <span className="text-accent">World search unavailable</span>}
+          {worldSearch.data && query.trim().length >= 2 && <span className="ml-auto">{worldSearch.data.total} world matches{worldSearch.data.total > 100 ? ' · first 100 shown' : ''}</span>}
         </div>
       </div>
     </div>

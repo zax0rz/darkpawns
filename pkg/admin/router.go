@@ -163,6 +163,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerObjects(ri.api, world)
 	registerShops(ri.api, world)
 	registerRooms(ri.api, world)
+	registerWorldSearch(ri.api, world)
 	registerMetrics(ri.api, world)
 	registerWorldCompletion(ri.api, world, auditLogger)
 	var olcState OLCReadStateProvider
@@ -215,6 +216,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Rooms — read/write, requires builder role
 	track("/admin/rooms/{vnum}", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	track("/admin/search", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 
 	// Server metrics — requires builder role
 	track("/admin/metrics", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))

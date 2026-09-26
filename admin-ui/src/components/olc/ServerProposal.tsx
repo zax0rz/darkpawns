@@ -26,8 +26,9 @@ export function ServerProposal({
       'w-full border border-rule bg-paper px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50',
     defaultValue: value,
     key: `${identity}:${value}`,
-    onBlur: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      onCommit(event.currentTarget.value),
+    onBlur: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      if (event.currentTarget.value !== String(value)) onCommit(event.currentTarget.value);
+    },
   };
 
   if (multiline) return <textarea {...commonProps} rows={6} />;

@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# Dark Pawns admin and webOLC
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The React app in this directory is served by the Go server at `/admin/`. The
+builder-facing guide is available at `/admin/workshop/help` after sign-in.
 
-Currently, two official plugins are available:
+The header search (or Ctrl/⌘ K) searches loaded zones, rooms, mob prototypes,
+object prototypes, and shops across VNUMs, names, keywords, descriptions, and
+script names where present. A result opens its editor. List-page filters stay
+useful for narrowing one entity type after browsing to that section. Search
+uses committed live definitions, so an uncommitted draft appears only after
+**Commit draft**. Results from outside a builder's assigned zone may be visible,
+but the editor still enforces the server's OLC permissions.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Give a zone-assigned builder access
 
-## React Compiler
+Staff must give the character the appropriate in-game builder level and assign
+its OLC zone. The web role shown under the character name is a navigation aid;
+the OLC API checks the character's in-game level and assigned zone for each
+resource. Builders below level 35 can edit only their assigned zone. Confirm
+the zone assignment before sharing access. See `pkg/olc/authorization.go` and
+`pkg/admin/olc.go` for the server rules.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Send the builder the `/admin/` URL and their character credentials through an
+appropriate private channel. The app uses those credentials to obtain an admin
+session. Do not include a password in issue reports or screenshots.
 
-## Expanding the ESLint configuration
+## First room edit
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Sign in at `/admin/` and choose **Zones & rooms**.
+2. Open the assigned zone. Its **Builder workshop** shows existing room VNUMs
+   and a suggested free VNUM when room creation is permitted.
+3. Open an existing room, then choose **Edit room**. To make a room, choose the
+   suggested new-room action from the zone workshop.
+4. Edit the draft. The editor claims the room while it is open; another web or
+   in-game OLC editor may temporarily block the same resource.
+5. Choose **Commit draft** to apply the changes to the live world. Choose
+   **Discard** to leave it unchanged.
+6. Choose **Save zone file** after committing. This writes the canonical world
+   file. Confirm that the zone is absent from **Workshop & saves** → **Pending
+   zone saves** before finishing.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Committing and saving are separate. A committed zone marked dirty has live
+changes that still need a file save. The workshop lists held claims and pending
+saves. If an action is refused, report the resource VNUM and exact error to
+staff. The **Builder guide** page shows additional actions and access
+requirements reported by the server schema for the signed-in character.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Development
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd admin-ui
+npm ci
+npm run dev
+npm run lint
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Vite serves the UI at `http://127.0.0.1:5173/admin/` in development. API
+requests need a Go server on port 4350; without one, the login page still
+renders but authenticated editor work is unavailable. The Go admin router serves the production
+build from `admin-ui/dist`; see `pkg/admin/router.go` and the root Makefile for
+the build integration. The editor API is implemented in `pkg/admin/olc*.go`,
+with shared OLC behavior in `pkg/olc/`.

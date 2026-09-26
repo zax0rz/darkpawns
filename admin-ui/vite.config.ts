@@ -10,6 +10,13 @@ export default defineConfig({
       '/admin': {
         target: 'http://localhost:4350',
         changeOrigin: true,
+        // Browser navigation belongs to Vite's SPA fallback. Fetch requests
+        // for /admin/* still reach the Go API on port 4350.
+        bypass(req) {
+          if (req.method === 'GET' && req.headers.accept?.includes('text/html')) {
+            return req.url || '/admin/';
+          }
+        },
       },
       '/ws': {
         target: 'ws://localhost:4350',

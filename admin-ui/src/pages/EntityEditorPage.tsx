@@ -158,7 +158,7 @@ export function EntityEditorPage({ kind }: EntityEditorPageProps) {
   };
 
   if (!Number.isInteger(vnum)) return <EditorError message={`The ${kind} VNUM is invalid.`} />;
-  if (schemaQuery.isLoading || previewQuery.isLoading || openMutation.isPending || (claimed && !currentDraft)) return <EditorLoading />;
+  if (schemaQuery.isLoading || previewQuery.isLoading || (openMutation.isPending && !currentDraft) || (claimed && !currentDraft)) return <EditorLoading />;
   if (openMutation.error && !currentDraft) {
     return (
       <div className="space-y-5">
