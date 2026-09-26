@@ -147,6 +147,55 @@ func TestMenuPasswordChangeForNewCharacter(t *testing.T) {
 	}
 }
 
+// TestReturningLoginMOTDSelectsByLevel pins C's login MOTD selection
+// (src/interpreter.c:1919-1921): a returning immortal reads imotd, a mortal
+// reads motd. The port sent motd to everyone, so a returning immortal read the
+// wrong file's bytes — invisible to every existing scenario, because the
+// corpus had no immortal relogin/restart vehicle until <RESTART>.
+func TestReturningLoginMOTDSelectsByLevel(t *testing.T) {
+	cases := []struct {
+		name     string
+		level    int
+		wantFile string
+		wantText string
+	}{
+		{name: "mortal", level: game.LVL_IMMORT - 1, wantFile: "motd", wantText: "mortal banner"},
+		{name: "immortal", level: game.LVL_IMMORT, wantFile: "imotd", wantText: "immortal banner"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := makeTestManager(t)
+			textDir := t.TempDir()
+			files := map[string]string{"motd": "mortal banner\n", "imotd": "immortal banner\n"}
+			for file, text := range files {
+				if err := os.WriteFile(filepath.Join(textDir, file), []byte(text), 0o644); err != nil {
+					t.Fatal(err)
+				}
+				setTeditTestCache(t, file, "")
+			}
+			m.world.LibTextDir = textDir
+
+			s := makeCharSession(t, m)
+			s.player = game.NewPlayer(1, "MotdCase", game.MortalStartRoom)
+			s.player.SetLevel(tc.level)
+			if got := s.loginMOTDFile(); got != tc.wantFile {
+				t.Fatalf("loginMOTDFile() at level %d = %q, want %q", tc.level, got, tc.wantFile)
+			}
+
+			s.startReturningMenu("")
+			_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
+			if prompt.Stage != "motd" {
+				t.Fatalf("returning prompt stage = %q, want motd", prompt.Stage)
+			}
+			if !strings.Contains(prompt.Prompt, tc.wantText) {
+				t.Fatalf("%s login prompt = %q, want it to contain %q", tc.name, prompt.Prompt, tc.wantText)
+			}
+		})
+	}
+}
+
+// TestReturningPlayerStopsAtMenuThenEntersWorld seeds a returning character and
+// proves the menu holds it out of the world until option 1.
 func TestReturningPlayerStopsAtMenuThenEntersWorld(t *testing.T) {
 	database := testutil.NewMockDatabase()
 	world := testutil.NewTestWorld()

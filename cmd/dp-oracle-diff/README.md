@@ -62,6 +62,41 @@ across a quit, the login room after an unsafe quit, and idling into the void.
 Read `ParseScenario` in `internal/oraclediff/scenario.go` for the authoritative
 fixture grammar. Fixtures patch only throwaway C and Go world copies.
 
+## Restart vehicles (`<RESTART>`)
+
+`<RESTART>` is the lifecycle probe step that stops the engine behind the actor's
+connection, starts it again on the same disposable data directory and ports, and
+logs the character back in. The whole login transcript is the step's diffed
+block, so one vehicle compares the reboot's boot side and the login side
+together.
+
+Only the engine being probed is bounced. A probe is played twice — once against
+C, once against Go — and each pass drives one engine while the other engine's
+connection sits idle, so bouncing the peer would kill that idle connection and
+desynchronise the two passes. Each engine therefore gets its own genuine
+stop/start, in its own pass, on its own disposable data directory.
+
+`ParseScenario` enforces three rules:
+
+- both `[relogin:oracle]` and `[relogin:port]` are required, because the step
+  relogs the actor;
+- one `<RESTART>` per scenario — a second would replay the durable effects of
+  the first pass's post-restart commands;
+- no passive peers, because a bounce closes every connection to that engine.
+
+What survives a restart is the engine's durable data — C's copied lib (player,
+rent, board, mail, house and clan files) and the Go port's world copy, runtime
+directory and store. What does not survive is transient world state: dropped
+objects, corpses, loose money, ash, mob positions and HP, door state, room
+secret marks, recent gossip and zone ages (RULEBOOK R4). A scenario that means to
+prove a save survived should `quit` before the step: C saves on quit, and the C
+shutdown path itself saves nothing but the clan table, the whod file, the mud
+date and the closed player file (`src/comm.c:288-293`).
+
+`scenarios/restart-*.txt` are the vehicles for that contract. The fan-out's
+per-worker isolation (ports, data directories, databases, process cleanup) is
+proven by `make oracle-regression-isolation`.
+
 ## Raw ANSI proof mode (`keep-ansi`)
 
 Normalization rule 1 strips ANSI CSI escapes, which hides any surface where C

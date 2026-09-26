@@ -183,18 +183,25 @@ func TestTeditSaveUpdatesDiskCacheAndStaticCommand(t *testing.T) {
 	}
 }
 
+// TestTeditMOTDUpdateAppearsInReturningLoginMenu: a tedit save of the login MOTD
+// shows up in the returning login menu. C selects that file by level
+// (src/interpreter.c:1919-1921), and tedit itself needs level 38 (C
+// interpreter.c:764), so this vehicle runs at LVL_IMPL and edits imotd. Before
+// the selection existed the test asserted an LVL_IMPL session saw the edited
+// motd, which was the bug; the mortal half of the selection is pinned by
+// TestReturningLoginMOTDSelectsByLevel.
 func TestTeditMOTDUpdateAppearsInReturningLoginMenu(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCommandTestSession(t, m, "Teditmotd", game.LVL_IMPL, 1001)
 	dir := t.TempDir()
-	path := filepath.Join(dir, "motd")
+	path := filepath.Join(dir, "imotd")
 	if err := os.WriteFile(path, []byte("Old MOTD\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	m.world.LibTextDir = dir
-	setTeditTestCache(t, "motd", "")
+	setTeditTestCache(t, "imotd", "")
 
-	if err := cmdTedit(s, []string{"motd"}); err != nil {
+	if err := cmdTedit(s, []string{"imotd"}); err != nil {
 		t.Fatal(err)
 	}
 	_ = readMsgText(t, s)
@@ -207,7 +214,7 @@ func TestTeditMOTDUpdateAppearsInReturningLoginMenu(t *testing.T) {
 	s.startReturningMenu("")
 	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
 	if prompt.Stage != "motd" || !strings.Contains(prompt.Prompt, "Edited MOTD") {
-		t.Fatalf("returning login MOTD prompt = (%q, %q), want edited cached text", prompt.Stage, prompt.Prompt)
+		t.Fatalf("returning login imotd prompt = (%q, %q), want edited cached text", prompt.Stage, prompt.Prompt)
 	}
 }
 

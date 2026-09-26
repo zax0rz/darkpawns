@@ -145,6 +145,17 @@ oracle-regression:
 oracle-regression-worker-test:
 	scripts/test_oracle_regression_worker.sh
 
+# Prove the fan-out's per-worker isolation before raising --workers. Runs N
+# harness processes concurrently and checks, from /proc, that every worker has
+# its own ports, disposable C lib copy, Go world copy and database, and that no
+# engine process or scratch directory survives. See
+# scripts/oracle_regression_isolation.sh.
+ORACLE_ISOLATION_WORKERS ?= 36
+oracle-regression-isolation:
+	ORACLE_REGRESSION_GO=$${ORACLE_REGRESSION_GO:-/usr/local/go/bin/go} \
+	DP_ORACLE_BIN=$${DP_ORACLE_BIN:-/home/zach/darkpawns-c-oracle/bin/circle} \
+		scripts/oracle_regression_isolation.sh --workers $(ORACLE_ISOLATION_WORKERS)
+
 vet:
 	go vet ./...
 

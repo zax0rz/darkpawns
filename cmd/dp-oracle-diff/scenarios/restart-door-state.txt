@@ -1,0 +1,77 @@
+# Harness parity: server restart / crash recovery (docs/fidelity/HARNESS_PARITY.md).
+#
+# Door state does not survive a restart.
+#
+# C evidence: the rooms are re-read from the .wld files and reset_zone() then
+# forces the reset table's door byte for every 'D' command it declares
+# (src/db.c:2247-2281); the shutdown path writes nothing about doors
+# (src/comm.c:288-293). A door a player opened is therefore closed again after a
+# reboot. The Go port used to persist the open/closed/locked byte in
+# data/world_state.json (RULEBOOK R4).
+#
+# The vehicle opens a door that starts closed, looks at the exit line, then
+# restarts and looks again: the exit must read as closed once more.
+
+# The actor returns to the immortal start room (1204) before quitting so the
+# login room is one both engines already agree on: C records no load room above
+# LVL_IMMORT (src/act.other.c do_quit) and falls back to r_immort_start_room
+# (src/interpreter.c:2195-2199). Quitting anywhere else would exercise
+# DP-1310's still-open load-room path (docs/fidelity/depth/save.tsv).
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 1 gate
+
+[setup:oracle]
+Restartdoor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartdoor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartdoor
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartdoor
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+look
+open gate
+look
+goto 1204
+quit
+<RESTART>
+goto 8162
+look

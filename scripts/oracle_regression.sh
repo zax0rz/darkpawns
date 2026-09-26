@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# oracle_regression.sh — full C-vs-Go scenario corpus.
+#
+# Usage: oracle_regression.sh [--workers N]
+#
+# --workers N (or ORACLE_REGRESSION_JOBS=N) sets how many scenarios run at once.
+# Every worker is a separate dp-oracle-diff process on its own free ports, its
+# own throwaway runtime directory, its own disposable C lib copy and its own
+# Go world copy + database; scripts/oracle_regression_isolation.sh proves that
+# holds before the fan-out is raised.
 set -uo pipefail
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
@@ -7,6 +16,31 @@ oracle_bin=${DP_ORACLE_BIN:-/home/zach/darkpawns-c-oracle/bin/circle}
 scenario_timeout=${ORACLE_REGRESSION_TIMEOUT:-240s}
 seed=${ORACLE_REGRESSION_SEED:-1}
 jobs=${ORACLE_REGRESSION_JOBS:-4}
+
+while (($# > 0)); do
+	case $1 in
+	--workers)
+		if (($# < 2)); then
+			printf 'oracle-regression: --workers needs a count\n' >&2
+			exit 2
+		fi
+		jobs=$2
+		shift 2
+		;;
+	--workers=*)
+		jobs=${1#--workers=}
+		shift
+		;;
+	-h | --help)
+		printf 'usage: %s [--workers N]\n' "$(basename "$0")"
+		exit 0
+		;;
+	*)
+		printf 'oracle-regression: unknown argument: %s\n' "$1" >&2
+		exit 2
+		;;
+	esac
+done
 
 if [[ ! -x "$go_bin" ]]; then
 	printf 'oracle-regression: go binary is not executable: %s\n' "$go_bin" >&2

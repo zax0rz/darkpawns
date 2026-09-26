@@ -23,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/bootmarker"
 	"github.com/zax0rz/darkpawns/internal/oraclediff"
 	"github.com/zax0rz/darkpawns/pkg/db"
 )
@@ -62,6 +63,56 @@ func (b *safeBuffer) String() string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return b.b.String()
+}
+
+// engine owns the process currently running one side of the comparison, so a
+// <RESTART> probe step can replace it while readiness gates, dialers and the
+// deferred cleanup keep pointing at the process that is actually running.
+// Every start gets a fresh log buffer, which is what makes a post-restart
+// wait-for-marker a real wait instead of a match on the first boot's line.
+type engine struct {
+	name  string
+	start func() (*process, error)
+	proc  *process
+}
+
+// ensure returns the running process, starting it on first use.
+func (e *engine) ensure() (*process, error) {
+	if e.proc != nil {
+		return e.proc, nil
+	}
+	proc, err := e.start()
+	if err != nil {
+		return nil, err
+	}
+	e.proc = proc
+	return proc, nil
+}
+
+// bounce stops the engine and starts it again on the same disposable data
+// directory and the same ports, returning the fresh process.
+func (e *engine) bounce() (*process, error) {
+	e.stop()
+	return e.ensure()
+}
+
+// stop signals the running process and waits for it to exit. It is safe to call
+// more than once and after a failed start.
+func (e *engine) stop() {
+	if e.proc == nil {
+		return
+	}
+	e.proc.stop()
+	e.proc = nil
+}
+
+// log returns the running process's output, or a placeholder when no process is
+// running, so error messages can be built without nil checks.
+func (e *engine) log() string {
+	if e.proc == nil {
+		return e.name + " is not running"
+	}
+	return e.proc.log.String()
 }
 
 func main() {
@@ -327,14 +378,42 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// Go port starts below.
 	_ = oracleListener.Close()
 	_ = whodListener.Close()
-	oracleProc, err := startProcess(ctx, "C oracle", oracleRoot,
-		append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
-	if err != nil {
+
+	// goEnv and goDB are filled in below, before the Go port first starts. The
+	// engine closures read them lazily, so a <RESTART> step reuses the same
+	// environment and the same durable store as the first boot.
+	var goEnv []string
+	goDB := deadDBURL
+
+	oracleEngine := &engine{
+		name: "C oracle",
+		start: func() (*process, error) {
+			return startProcess(ctx, "C oracle", oracleRoot,
+				append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+		},
+	}
+	goEngine := &engine{
+		name: "Go port",
+		start: func() (*process, error) {
+			return startProcess(ctx, "Go port", goWork, goEnv, goBin,
+				"-world", goWorld,
+				"-port", fmt.Sprint(goHTTPPort),
+				"-telnet-port", fmt.Sprint(goTelnetPort),
+				"-db", goDB)
+		},
+	}
+	// One cleanup for both engines, evaluated on the way out so it stops
+	// whichever process a <RESTART> step left running.
+	defer func() {
+		goEngine.stop()
+		oracleEngine.stop()
+	}()
+
+	if _, err := oracleEngine.ensure(); err != nil {
 		return err
 	}
-	defer oracleProc.stop()
 
-	goEnv := append(
+	goEnv = append(
 		os.Environ(),
 		"DP_SEED="+seed,
 		"DP_CLOCK=1",
@@ -343,9 +422,8 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		"ENVIRONMENT=development",
 	)
 	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
-	// A relogin scenario reads the character back, so the port needs a store
-	// that persists; every other scenario keeps the unreachable one.
-	goDB := deadDBURL
+	// A scenario that reads the character back — relogin or restart — needs a
+	// store that persists; every other scenario keeps the unreachable one.
 	if len(scenario.ReloginPort) > 0 {
 		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers)
 		if err != nil {
@@ -355,23 +433,51 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// Release the Go-side reservations immediately before starting the port.
 	_ = goTelnetListener.Close()
 	_ = goHTTPListener.Close()
-	goProc, err := startProcess(
-		ctx, "Go port", goWork,
-		goEnv,
-		goBin,
-		"-world", goWorld,
-		"-port", fmt.Sprint(goHTTPPort),
-		"-telnet-port", fmt.Sprint(goTelnetPort),
-		"-db", goDB,
-	)
-	if err != nil {
+	if _, err := goEngine.ensure(); err != nil {
 		return err
 	}
-	defer goProc.stop()
 
 	oracleAddr := fmt.Sprintf("127.0.0.1:%d", oraclePort)
 	goAddr := fmt.Sprintf("127.0.0.1:%d", goTelnetPort)
-	oracleNetConn, err := dialWhenReady(oracleProc, oracleAddr, bootTimeout)
+	// awaitOracle blocks until the C listener accepts a connection, which C
+	// cannot do before boot_db() has finished (src/comm.c init_game boots the
+	// world first and opens the mother connection second). The probe connection
+	// is closed immediately; the descriptor number it took is reused by the
+	// login that follows.
+	awaitOracle := func() error {
+		c, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
+		if dialErr != nil {
+			return dialErr
+		}
+		return c.Close()
+	}
+	// awaitGo blocks on the port's readiness marker. Every start gets a fresh
+	// log buffer, so this waits for the new process's boot rather than matching
+	// the line the previous process printed.
+	awaitGo := func() error {
+		return waitForLog(goEngine.proc, bootmarker.Ready, bootTimeout)
+	}
+	// restartOracle stops the C oracle and starts it again on the same
+	// disposable lib tree and the same port: the copied lib's player, rent,
+	// board, mail, house and clan files are what must survive, and the world
+	// files + reset tables are what must not.
+	restartOracle := func() error {
+		if _, bounceErr := oracleEngine.bounce(); bounceErr != nil {
+			return bounceErr
+		}
+		return awaitOracle()
+	}
+	// restartGo stops the Go port and starts it again on the same throwaway
+	// world copy, runtime directory and database, all of which live under the
+	// scenario's temporary directory rather than in the checkout.
+	restartGo := func() error {
+		if _, bounceErr := goEngine.bounce(); bounceErr != nil {
+			return bounceErr
+		}
+		return awaitGo()
+	}
+
+	oracleNetConn, err := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
 	if err != nil {
 		return err
 	}
@@ -384,11 +490,11 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if goTransport == "ws" {
 		readyAddr = fmt.Sprintf("127.0.0.1:%d", goHTTPPort)
 	}
-	goNetConn, err := dialWhenReady(goProc, readyAddr, bootTimeout)
+	goNetConn, err := dialWhenReady(goEngine.proc, readyAddr, bootTimeout)
 	if err != nil {
 		return err
 	}
-	if err := waitForLog(goProc, "World state restored", bootTimeout); err != nil {
+	if err := awaitGo(); err != nil {
 		return err
 	}
 	// dialGo opens one more player connection to the Go port over the chosen
@@ -401,7 +507,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 				filepath.Join(repoRoot, "web", "public", "mud-client.js"),
 				goWSURL)
 		}
-		c, dialErr := dialWhenReady(goProc, goAddr, bootTimeout)
+		c, dialErr := dialWhenReady(goEngine.proc, goAddr, bootTimeout)
 		if dialErr != nil {
 			return nil, dialErr
 		}
@@ -434,36 +540,48 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		return runSetup(conn, setup)
 	}
 
-	// A scenario that relogs its actor gets a primary that can reconnect to
-	// the same server and log the character in again.
+	// A scenario whose actor relogs gets a primary that can reconnect to the
+	// same server and log the character in again. A scenario that restarts
+	// additionally gets a primary that stops and starts its engine first: the
+	// engine behind this connection, not the peer's, so the peer pass keeps its
+	// live connection and the block alignment stays intact.
+	restartsActor := slices.Contains(scenario.Probe, oraclediff.RestartStep)
 	var oraclePrimary, goPrimary oraclediff.Conn = oracleConn, goConn
 	if len(scenario.ReloginOracle) > 0 {
-		oraclePrimary = oraclediff.NewReloginConn(oracleConn,
-			func() (oraclediff.Conn, error) {
-				c, dialErr := dialWhenReady(oracleProc, oracleAddr, bootTimeout)
-				if dialErr != nil {
-					return nil, dialErr
-				}
-				return oraclediff.NewTCPConn(c), nil
-			},
-			func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginOracle) },
-			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
+		oracleDial := func() (oraclediff.Conn, error) {
+			c, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
+			if dialErr != nil {
+				return nil, dialErr
+			}
+			return oraclediff.NewTCPConn(c), nil
+		}
+		oracleLogin := func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginOracle) }
+		oracleSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) }
+		if restartsActor {
+			oraclePrimary = oraclediff.NewRestartConn(oracleConn, oracleDial, oracleLogin, oracleSettle, restartOracle)
+		} else {
+			oraclePrimary = oraclediff.NewReloginConn(oracleConn, oracleDial, oracleLogin, oracleSettle)
+		}
 		defer func() { _ = oraclePrimary.Close() }()
 	}
 	if len(scenario.ReloginPort) > 0 {
-		goPrimary = oraclediff.NewReloginConn(goConn, dialGo,
-			func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginPort) },
-			func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) })
+		goLogin := func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginPort) }
+		goSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) }
+		if restartsActor {
+			goPrimary = oraclediff.NewRestartConn(goConn, dialGo, goLogin, goSettle, restartGo)
+		} else {
+			goPrimary = oraclediff.NewReloginConn(goConn, dialGo, goLogin, goSettle)
+		}
 		defer func() { _ = goPrimary.Close() }()
 	}
 
 	oracleSetup, err := runSetup(oracleConn, scenario.SetupOracle)
 	if err != nil {
-		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleProc.log.String())
+		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleEngine.log())
 	}
 	goSetup, err := runSetup(goConn, scenario.SetupPort)
 	if err != nil {
-		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goProc.log.String())
+		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goEngine.log())
 	}
 
 	oraclePeers := make(map[string]oraclediff.Conn, len(scenario.Peers))
@@ -475,14 +593,14 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	sort.Strings(peerNames)
 	for _, name := range peerNames {
 		peer := scenario.Peers[name]
-		oraclePeerNet, dialErr := dialWhenReady(oracleProc, oracleAddr, bootTimeout)
+		oraclePeerNet, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
 		if dialErr != nil {
 			return fmt.Errorf("dial C oracle %s: %w", name, dialErr)
 		}
 		oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
 		defer func() { _ = oraclePeer.Close() }()
 		if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
-			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleProc.log.String())
+			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleEngine.log())
 		}
 		oraclePeers[name] = oraclePeer
 
@@ -492,7 +610,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		defer func() { _ = goPeer.Close() }()
 		if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
-			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goProc.log.String())
+			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goEngine.log())
 		}
 		goPeers[name] = goPeer
 	}
@@ -536,11 +654,11 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	goActor, goAudience := probeClients(goPrimary, goPeers, scenario.ProbeActor)
 	oracleBlocks, err := oraclediff.RunAudienceProbe(oracleActor, oracleAudience, scenario.Probe, quiescence)
 	if err != nil {
-		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleProc.log.String())
+		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleEngine.log())
 	}
 	goBlocks, err := oraclediff.RunAudienceProbe(goActor, goAudience, scenario.Probe, quiescence)
 	if err != nil {
-		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goProc.log.String())
+		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goEngine.log())
 	}
 	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks)+1)
 	normalize := oraclediff.Normalize
@@ -613,7 +731,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	}
 	if showGoLog {
 		fmt.Println("go port server log:")
-		fmt.Print(goProc.log.String())
+		fmt.Print(goEngine.log())
 	}
 	if scriptTwinPath != "" {
 		expected, err := os.ReadFile(scriptTwinPath)

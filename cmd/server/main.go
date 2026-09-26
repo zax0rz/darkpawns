@@ -52,6 +52,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/bootmarker"
 	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/mudlet"
 	"github.com/zax0rz/darkpawns/pkg/admin"
@@ -722,6 +723,11 @@ func main() {
 		gameWorld.RebuildSpecRooms()
 
 		gameWorld.StartPeriodicResets(60 * time.Second)
+
+		// Readiness marker, shared with cmd/dp-oracle-diff through
+		// internal/bootmarker so the two cannot drift. The differential harness
+		// holds every scenario here, and holds a restarted engine here again.
+		slog.Info(bootmarker.Ready, "world", "area files and zone resets")
 	}
 	if dpclock.Frozen() {
 		initializeWorld()

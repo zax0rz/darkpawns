@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/bootmarker"
 	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
 
@@ -192,6 +193,31 @@ func TestServerBootRejectsParentOfWorldDir(t *testing.T) {
 // TestServerBootDefaultsToSQLite replaces the old database-URL refusal: with
 // no -db and no DATABASE_URL, boot must default to an embedded SQLite file
 // beside the world data and get on with starting.
+// TestServerBootLogsReadinessMarker pins the producer side of the readiness
+// gate the oracle differential harness uses (internal/bootmarker).
+//
+// The marker used to be a literal duplicated between cmd/server and
+// cmd/dp-oracle-diff. When the server's line was reworded, nothing failed in
+// unit tests; every scenario in the census failed instead, at the harness's
+// readiness gate, with "Go port did not log ... within 30s". Importing one
+// constant removes the drift, and this test catches the remaining failure mode:
+// the constant staying defined while the boot path stops logging it.
+func TestServerBootLogsReadinessMarker(t *testing.T) {
+	worldDir := parseableWorld(t)
+	_, out := bootServerContext(t, []string{
+		"-world", worldDir,
+		"-port", "0",
+		"-telnet-port", "0",
+	}, 5*time.Second,
+		"ENVIRONMENT=development",
+		"DATABASE_URL=",
+		"DP_CLOCK=1",
+	)
+	if !strings.Contains(out, bootmarker.Ready) {
+		t.Fatalf("boot never logged the readiness marker %q the oracle harness waits for:\n%s", bootmarker.Ready, out)
+	}
+}
+
 func TestServerBootDefaultsToSQLite(t *testing.T) {
 	worldDir := parseableWorld(t) // .../lib/world
 	_, out := bootServerContext(t, []string{"-world", worldDir}, 5*time.Second,
