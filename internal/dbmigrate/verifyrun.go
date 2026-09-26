@@ -9,7 +9,12 @@ import (
 // Verify compares every planned table between a source and a destination and
 // returns the independent result. Both sides are read through their own
 // connection and digested separately; nothing here consults the copy log.
-func Verify(ctx context.Context, source, destination queryer, plans []*Table) (*Verification, error) {
+//
+// allow carries the proofs a caller has for source tables and columns the
+// destination cannot hold. It is the only thing that can keep a table's OK true
+// while part of its source has nowhere to go, and it never affects a value that
+// does have a destination column.
+func Verify(ctx context.Context, source, destination queryer, plans []*Table, allow *Allowances) (*Verification, error) {
 	result := &Verification{}
 	for _, plan := range plans {
 		sourceScan, err := scanTable(ctx, source, plan, plan.PrimaryKey)
@@ -20,7 +25,7 @@ func Verify(ctx context.Context, source, destination queryer, plans []*Table) (*
 		if err != nil {
 			return nil, fmt.Errorf("scan destination %s: %w", plan.Name, err)
 		}
-		result.Tables = append(result.Tables, compareScans(plan, sourceScan, destinationScan))
+		result.Tables = append(result.Tables, compareScans(plan, sourceScan, destinationScan, allow))
 	}
 
 	collisions, err := foldedNameCollisions(ctx, destination)
@@ -66,22 +71,33 @@ func FailureSummary(verification *Verification) string {
 	if verification == nil {
 		return "no verification was run"
 	}
+	// Reported as a list rather than one problem per table: a table can be both
+	// missing data and carrying a column with no destination, and an operator
+	// needs to see the kind of problem that a receipt has to prove away.
 	var problems []string
 	for i := range verification.Tables {
 		table := &verification.Tables[i]
-		switch {
-		case !table.RowsMatch:
+		if !table.RowsMatch {
 			problems = append(problems, fmt.Sprintf("%s: %d source row(s) vs %d destination row(s)",
 				table.Table, table.SourceRows, table.DestinationRows))
-		case !table.PrimaryKeyMatches:
+		}
+		if !table.PrimaryKeyMatches {
 			problems = append(problems, fmt.Sprintf("%s: primary-key sets differ", table.Table))
-		case len(table.MismatchedColumns) > 0:
+		}
+		if len(table.MismatchedColumns) > 0 {
 			problems = append(problems, fmt.Sprintf("%s: column(s) %s differ",
 				table.Table, strings.Join(table.MismatchedColumns, ", ")))
-		case !table.NullShapeMatches:
+		}
+		if !table.NullShapeMatches {
 			problems = append(problems, fmt.Sprintf("%s: null shape differs", table.Table))
-		case !table.MaxIDMatches:
+		}
+		if !table.MaxIDMatches {
 			problems = append(problems, fmt.Sprintf("%s: highest migrated id differs", table.Table))
+		}
+		if len(table.UnexpectedExtraColumns) > 0 {
+			problems = append(problems, fmt.Sprintf(
+				"%s: source column(s) %s have no destination column and no proof they were dropped deliberately",
+				table.Table, strings.Join(table.UnexpectedExtraColumns, ", ")))
 		}
 	}
 	if !verification.UniqueFoldedNamesHolds {

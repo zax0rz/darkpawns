@@ -18,10 +18,19 @@ import (
 // happened even when it fails, so a failed run is diagnosable; the error is what
 // the caller turns into a nonzero exit.
 //
-// Failure contract: on any error the destination is untouched. The database is
-// built at a temporary sibling path, so a run that dies during the copy, the
-// integrity check or the verification leaves no file where a successful result
-// would be.
+// Failure contract. Every failure before the rename leaves the destination
+// exactly as it was: the database is built at a temporary sibling path, so a run
+// that dies during the copy, the integrity check, the verification or the
+// finalization leaves no file where a successful result would be, and the
+// temporary file is removed.
+//
+// The one failure that is not "nothing happened" is a failure after the rename
+// has landed. If the destination directory cannot be synced, the destination
+// already holds the verified database, and the receipt reports that plainly --
+// Destination.Installed, Destination.DurabilityUncertain and the
+// install-durability phase -- instead of claiming an install that never
+// happened. A caller must read those fields rather than the error alone;
+// --verify-only writes nothing at all.
 func Run(ctx context.Context, options Options) (*Receipt, error) {
 	started := time.Now()
 	mode := ModeConvert
@@ -134,13 +143,55 @@ func runVerifyOnly(
 	}
 	defer func() { _ = destinationConn.Close() }()
 
+	// The same source-schema inventory a conversion performs. A verification
+	// answers "is this destination a complete and faithful copy of this source",
+	// and it cannot answer that while part of the source has nowhere to go: a
+	// comparison that quietly narrowed its own scope would answer a question
+	// nobody asked and report it as OK.
+	tables, err := SourceTables(ctx, sourceTx)
+	if err != nil {
+		return fail(PhasePreflight, err)
+	}
+	receipt.Source.Tables = tables
+	unknown := UnknownTables(tables)
+	receipt.Source.UnknownTables = unknown
+
+	// An allowance here is only real if the receipt of the conversion that left
+	// the table or column behind proves it. ValidateOptions refuses the
+	// --drop-extra-* flags in this mode, so nothing on this command line can
+	// widen the comparison.
+	allow := &Allowances{}
+	if options.ConversionReceipt != "" {
+		proof, err := loadConversionReceipt(options.ConversionReceipt)
+		if err != nil {
+			return fail(PhaseValidate, err)
+		}
+		allow, err = receiptAllowances(proof, options.ConversionReceipt)
+		if err != nil {
+			return fail(PhaseValidate, err)
+		}
+	}
+	receipt.Allowances = allow.record()
+
+	if unexpected := UnexpectedTables(unknown, allow); len(unexpected) > 0 {
+		return fail(PhasePreflight, fmt.Errorf(
+			"source has %d table(s) outside the migrated set: %v; verification covers the five migrated tables, so this run stops rather than report a partial result (if an earlier conversion was explicitly told to leave them behind, prove it with --conversion-receipt <path>)",
+			len(unexpected), unexpected))
+	}
+
 	plans, err := reconcileAll(ctx, sourceTx, destinationConn)
 	if err != nil {
 		return fail(PhaseSchema, err)
 	}
 	receipt.Schema = describeSchemas(plans)
 
-	verification, err := Verify(ctx, sourceTx, destinationConn, plans)
+	if unexpected := UnexpectedColumns(plans, allow); len(unexpected) > 0 {
+		return fail(PhaseSchema, fmt.Errorf(
+			"source has column(s) with no destination column: %s; verification cannot cover data that has nowhere to go (if an earlier conversion was explicitly told to drop them, prove it with --conversion-receipt <path>)",
+			describeUnexpectedColumns(unexpected)))
+	}
+
+	verification, err := Verify(ctx, sourceTx, destinationConn, plans, allow)
 	receipt.Verification = verification
 	if err != nil {
 		return fail(PhaseVerify, err)
@@ -173,16 +224,25 @@ func runConvert(
 	receipt.Source.Tables = tables
 	unknown := UnknownTables(tables)
 	receipt.Source.UnknownTables = unknown
-	if len(unknown) > 0 && !options.DropExtraTables {
+	// The table half of this run's allowances is known before the destination
+	// exists, so the refusal happens before a temporary file is created. The
+	// column half is filled in after the reconciliation, which is where the real
+	// set of source-only columns is known.
+	tableAllowances := conversionAllowances(nil, unknown, options)
+	if unexpected := UnexpectedTables(unknown, tableAllowances); len(unexpected) > 0 {
 		return fail(PhasePreflight, fmt.Errorf(
 			"source has %d table(s) outside the migrated set: %v; they have no SQLite destination, so this run stops rather than leaving them behind (pass --drop-extra-tables only if you have decided they are obsolete)",
-			len(unknown), unknown))
+			len(unexpected), unexpected))
 	}
 
 	temporary := temporaryPath(destinationPath)
 	removeDatabase(temporary)
+	// installed flips when the rename lands. The cleanup is guarded on it so that a
+	// later failure can never delete the file that is now the destination's
+	// content.
+	var installed bool
 	defer func() {
-		if returnErr != nil {
+		if returnErr != nil && !installed {
 			removeDatabase(temporary)
 		}
 	}()
@@ -209,12 +269,17 @@ func runConvert(
 		return fail(PhaseSchema, err)
 	}
 	receipt.Schema = describeSchemas(plans)
+	// A conversion earns its allowances from this command line, and the receipt
+	// records exactly which ones, so a later verification can be told to accept
+	// them and nothing else.
+	allowances := conversionAllowances(plans, unknown, options)
+	receipt.Allowances = allowances.record()
+	if unexpected := UnexpectedColumns(plans, allowances); len(unexpected) > 0 {
+		return fail(PhaseSchema, fmt.Errorf(
+			"source has column(s) with no destination column: %s (pass --drop-extra-columns to drop them, or extend the runtime schema)",
+			describeUnexpectedColumns(unexpected)))
+	}
 	for _, plan := range plans {
-		if len(plan.ExtraInSource) > 0 && !options.DropExtraColumns {
-			return fail(PhaseSchema, fmt.Errorf(
-				"source table %s has column(s) with no destination column: %v (pass --drop-extra-columns to drop them, or extend the runtime schema)",
-				plan.Name, plan.ExtraInSource))
-		}
 		if len(plan.MissingInSource) > 0 {
 			options.logf("note: %s is missing %d source column(s); the schema default applies: %v",
 				plan.Name, len(plan.MissingInSource), plan.MissingInSource)
@@ -262,7 +327,7 @@ func runConvert(
 	}
 
 	if options.Verify {
-		verification, err := Verify(ctx, sourceTx, destinationConn, plans)
+		verification, err := Verify(ctx, sourceTx, destinationConn, plans, allowances)
 		receipt.Verification = verification
 		if err != nil {
 			return fail(PhaseVerify, err)
@@ -301,11 +366,24 @@ func runConvert(
 		return fail(PhaseFinalize, returnErr)
 	}
 
-	if err := installFile(temporary, destinationPath); err != nil {
-		return fail(PhaseInstall, err)
+	installed, installErr := installVerifiedDatabase(temporary, destinationPath)
+	if installed {
+		receipt.Destination.Installed = true
+		if info, statErr := os.Stat(destinationPath); statErr == nil {
+			receipt.Destination.Bytes = info.Size()
+		}
 	}
-	if info, err := os.Stat(destinationPath); err == nil {
-		receipt.Destination.Bytes = info.Size()
+	if installErr != nil {
+		if !installed {
+			return fail(PhaseInstall, installErr)
+		}
+		// The rename landed: the destination holds the verified database. Calling
+		// this an ordinary install failure would tell an operator that nothing
+		// happened when the opposite is true, so it is reported as its own state.
+		receipt.Destination.DurabilityUncertain = true
+		return fail(PhaseInstallDurability, fmt.Errorf(
+			"%s now holds the verified database, but its directory entry could not be synced, so the rename may not survive a crash: %w; check the file rather than re-running blindly (a re-run needs --replace)",
+			destinationPath, installErr))
 	}
 	return finish(nil)
 }

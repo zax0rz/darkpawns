@@ -38,23 +38,26 @@ func run(args []string) int {
 	flags := flag.NewFlagSet("dp-db-migrate", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	var (
-		from             = flags.String("from", "", "PostgreSQL source DSN (env DP_MIGRATE_FROM, then DATABASE_URL)")
-		to               = flags.String("to", "", "SQLite destination path or sqlite:// DSN (env DP_MIGRATE_TO)")
-		verify           = flags.Bool("verify", true, "run the independent comparison after copying (use --verify=false to skip; not recommended)")
-		verifyOnly       = flags.Bool("verify-only", false, "compare an existing pair and write nothing")
-		replace          = flags.Bool("replace", false, "replace a non-empty destination through a temporary file and an atomic rename")
-		dropExtraTables  = flags.Bool("drop-extra-tables", false, "leave source tables outside the migrated five behind instead of refusing")
-		dropExtraColumns = flags.Bool("drop-extra-columns", false, "drop source columns with no destination column instead of refusing")
-		batch            = flags.Int("batch", dbmigrate.DefaultBatchSize, "rows per INSERT statement")
-		reportPath       = flags.String("report", "", "write the JSON receipt to this path")
-		asJSON           = flags.Bool("json", false, "print the JSON receipt to stdout")
-		quiet            = flags.Bool("quiet", false, "suppress progress lines")
-		timeout          = flags.Duration("timeout", 30*time.Minute, "overall deadline")
+		from              = flags.String("from", "", "PostgreSQL source DSN (env DP_MIGRATE_FROM, then DATABASE_URL)")
+		to                = flags.String("to", "", "SQLite destination path or sqlite:// DSN (env DP_MIGRATE_TO)")
+		verify            = flags.Bool("verify", true, "run the independent comparison after copying (use --verify=false to skip; not recommended)")
+		verifyOnly        = flags.Bool("verify-only", false, "compare an existing pair and write nothing")
+		replace           = flags.Bool("replace", false, "replace a non-empty destination through a temporary file and an atomic rename")
+		dropExtraTables   = flags.Bool("drop-extra-tables", false, "leave source tables outside the migrated five behind instead of refusing")
+		dropExtraColumns  = flags.Bool("drop-extra-columns", false, "drop source columns with no destination column instead of refusing")
+		conversionReceipt = flags.String("conversion-receipt", "", "verify-only: the JSON receipt of the conversion that produced this destination; the only proof verify-only accepts that source tables or columns were deliberately left behind")
+		batch             = flags.Int("batch", dbmigrate.DefaultBatchSize, "rows per INSERT statement")
+		reportPath        = flags.String("report", "", "write the JSON receipt to this path")
+		asJSON            = flags.Bool("json", false, "print the JSON receipt to stdout")
+		quiet             = flags.Bool("quiet", false, "suppress progress lines")
+		timeout           = flags.Duration("timeout", 30*time.Minute, "overall deadline")
 	)
 	flags.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s --from <postgres-dsn> --to <sqlite-path> [--verify]\n\n", filepath.Base(os.Args[0]))
 		fmt.Fprintf(os.Stderr, "  convert:     %s --from postgres://... --to /path/darkpawns.db --verify\n", filepath.Base(os.Args[0]))
-		fmt.Fprintf(os.Stderr, "  verify only: %s --from postgres://... --to /path/darkpawns.db --verify-only\n\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "  verify only: %s --from postgres://... --to /path/darkpawns.db --verify-only\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "               %s --from postgres://... --to /path/darkpawns.db --verify-only \\\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "                 --conversion-receipt /path/migration-receipt.json   # only if that conversion was told to leave a table or column behind\n\n")
 		flags.PrintDefaults()
 	}
 	if err := flags.Parse(args); err != nil {
@@ -62,14 +65,15 @@ func run(args []string) int {
 	}
 
 	options := dbmigrate.Options{
-		Source:           firstNonEmpty(*from, os.Getenv("DP_MIGRATE_FROM"), os.Getenv("DATABASE_URL")),
-		Destination:      firstNonEmpty(*to, os.Getenv("DP_MIGRATE_TO")),
-		Verify:           *verify,
-		VerifyOnly:       *verifyOnly,
-		Replace:          *replace,
-		DropExtraTables:  *dropExtraTables,
-		DropExtraColumns: *dropExtraColumns,
-		BatchSize:        *batch,
+		Source:            firstNonEmpty(*from, os.Getenv("DP_MIGRATE_FROM"), os.Getenv("DATABASE_URL")),
+		Destination:       firstNonEmpty(*to, os.Getenv("DP_MIGRATE_TO")),
+		Verify:            *verify,
+		VerifyOnly:        *verifyOnly,
+		Replace:           *replace,
+		DropExtraTables:   *dropExtraTables,
+		DropExtraColumns:  *dropExtraColumns,
+		ConversionReceipt: *conversionReceipt,
+		BatchSize:         *batch,
 	}
 	if !*quiet {
 		options.Logf = func(format string, args ...any) {

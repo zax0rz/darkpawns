@@ -101,11 +101,36 @@ Understanding four behaviours makes the procedure below readable.
 **Atomicity.** The database is built at a temporary sibling path
 (`.<name>.migrating-<pid>` next to the destination), verified there, and only
 then renamed over the destination. The destination path is never partially
-written: a run that dies in the copy, the integrity check or the verification
-leaves no file where a result should be, and the temporary file is removed. The
-rename is followed by an `fsync` of the file and of the directory, so a crash
-cannot lose the installed database. The file is `0600` and the directory holding
-it should be operator-only.
+written: a run that dies in the copy, the integrity check, the verification or
+the finalization leaves no file where a result should be, and the temporary file
+is removed. The file is `0600` and the directory holding it should be
+operator-only.
+
+**The rename is the point of no return, and the receipt says which side of it a
+run ended on.** The file is fsynced before the rename and the destination
+directory is fsynced after it, because a rename is only durable once its
+directory entry is. If that last sync fails, the destination **already holds the
+verified database**; that is a different fact from an install that never landed,
+and it is reported as one:
+
+```
+"destination": { "installed": true, "durability_uncertain": true }
+"failure":     { "phase": "install-durability", ... }
+```
+
+and the summary prints it on its own line:
+
+```
+  destination: /var/lib/darkpawns/darkpawns.db
+    state:     installed, directory entry NOT synced (a crash could lose the rename)
+```
+
+Read that state rather than the exit status alone. The file in place is the
+verified database — check it, then re-run with `--replace` if you want a fresh
+install — but a crash before the next successful sync could still lose the
+rename. Every failure **before** the rename genuinely leaves the destination
+untouched, and the receipt records `"installed": false` with the summary line
+`state: unchanged (nothing was renamed into place)`.
 
 **Transaction.** All five tables are copied inside one SQLite transaction, and
 the destination is opened through the production schema initialisation first.
@@ -146,10 +171,34 @@ following agree:
   collide when folded to lower case.
 
 `--verify-only` runs exactly this comparison against two existing databases and
-writes nothing, which is how you re-check a conversion later. Both modes emit a
-JSON receipt (`--report path.json`) and a terminal summary. The receipt carries
-counts, column names, digests and timings — never a password hash, a character's
-payload or a DSN credential.
+writes nothing, which is how you re-check a conversion later. It performs the
+same source-schema inventory a conversion performs, because a comparison that
+quietly narrowed its own scope would report a partial result as OK:
+
+- a source table outside the migrated five stops it, unless the receipt of the
+  conversion being verified proves that conversion was explicitly told to leave
+  that exact table behind;
+- a source column with no destination column stops it, on the same terms — a
+  table is not "verified" while part of its data has nowhere to go;
+- `--drop-extra-tables` and `--drop-extra-columns` are **refused** in this mode.
+  A verification and a conversion are different commands with different
+  authority, so a verification must not be able to widen what it ignores with an
+  argument on its own command line. The only proof it accepts is
+  `--conversion-receipt <path>`;
+- a receipt proves something only when it is the receipt of a **successful
+  conversion** that records the flag granting the allowance. A verification
+  receipt, a failed conversion, a conversion that left nothing behind and a file
+  that is not a receipt at all each prove nothing, and each is refused.
+
+```bash
+./dp-db-migrate --from "$DP_MIGRATE_FROM" --to /var/lib/darkpawns/darkpawns.db   --verify-only --conversion-receipt /var/lib/darkpawns/migration-receipt.json
+```
+
+Both modes emit a JSON receipt (`--report path.json`) and a terminal summary. The
+receipt carries counts, column names, digests, install state and timings — never
+a password hash, a character's payload or a DSN credential. The receipt also
+records which allowances the run used and what proved them, so a later reader can
+follow the chain from an explicit decision to a passing verification.
 
 ### Generated ids
 
@@ -235,14 +284,19 @@ prefer the environment:
 
 ```bash
 # export DP_MIGRATE_FROM='postgres://...'   # or DATABASE_URL
-# export DP_MIGRATE_TO='/path/to/darkpawns.db'
+# export DP_MIGRATE_TO='/var/lib/darkpawns/darkpawns.db'
 
 ./dp-db-migrate \
   --from "$DP_MIGRATE_FROM" \
   --to   "$DP_MIGRATE_TO" \
   --verify \
-  --report /tmp/migration-receipt.json
+  --report /var/lib/darkpawns/migration-receipt.json
 ```
+
+**Keep the receipt.** It is not a log: it is the artifact that proves what this
+conversion was explicitly allowed to leave behind, and a later `--verify-only`
+needs it if the source holds a table or column the destination cannot hold. Store
+it beside the database and keep it with the backups.
 
 `--verify` is on by default; it is written out here so the command reads as what
 it does. Read the summary before doing anything else. You want `result: OK`, the
@@ -332,7 +386,8 @@ that the next deploy reverts is how an instance silently returns to PostgreSQL
 
    ```bash
    ./dp-db-migrate --from "$DP_MIGRATE_FROM" --to /var/lib/darkpawns/darkpawns.db \
-     --verify-only --report /tmp/verify-receipt.json
+     --verify-only --report /tmp/verify-receipt.json \
+     --conversion-receipt /var/lib/darkpawns/migration-receipt.json   # only if that conversion dropped something
    ```
 
    Run this **before** the first post-cutover save if you want a strict result:
@@ -373,6 +428,9 @@ The tool refuses, and you should too, when:
 - a source table is missing entirely, which means PostgreSQL never had it
   created — boot the current binary once against PostgreSQL and retry;
 - two characters' names collide when folded to lower case;
+- a verification refuses because the source has grown a table or column with no
+  destination column, and no conversion receipt proves the decision — that is a
+  question for you, not a flag to add;
 - timestamp or JSON data cannot be compared without transformation the receipt
   does not describe;
 - the migration would need to run while the instance is live;

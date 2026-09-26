@@ -255,14 +255,17 @@ func TestValidateOptionsRefusesDangerousShapes(t *testing.T) {
 	}
 
 	cases := map[string]Options{
-		"no source":                {Destination: sqlite},
-		"no destination":           {Source: pg},
-		"reversed":                 {Source: sqlite, Destination: pg},
-		"sqlite source":            {Source: "sqlite:///tmp/a.db", Destination: sqlite},
-		"postgres destination":     {Source: pg, Destination: pg},
-		"in-memory destination":    {Source: pg, Destination: ":memory:"},
-		"same file":                {Source: sqlite, Destination: sqlite},
-		"verify-only with replace": {Source: pg, Destination: sqlite, VerifyOnly: true, Replace: true},
+		"no source":                     {Destination: sqlite},
+		"no destination":                {Source: pg},
+		"reversed":                      {Source: sqlite, Destination: pg},
+		"sqlite source":                 {Source: "sqlite:///tmp/a.db", Destination: sqlite},
+		"postgres destination":          {Source: pg, Destination: pg},
+		"in-memory destination":         {Source: pg, Destination: ":memory:"},
+		"same file":                     {Source: sqlite, Destination: sqlite},
+		"verify-only with replace":      {Source: pg, Destination: sqlite, VerifyOnly: true, Replace: true},
+		"verify-only with drop tables":  {Source: pg, Destination: sqlite, VerifyOnly: true, DropExtraTables: true},
+		"verify-only with drop columns": {Source: pg, Destination: sqlite, VerifyOnly: true, DropExtraColumns: true},
+		"conversion with a receipt":     {Source: pg, Destination: sqlite, ConversionReceipt: "/tmp/receipt.json"},
 	}
 	for name, options := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -306,5 +309,47 @@ func TestUnknownTables(t *testing.T) {
 		if got[i] != want[i] {
 			t.Errorf("UnknownTables[%d] = %q, want %q", i, got[i], want[i])
 		}
+	}
+}
+
+// TestVerifyOnlyNeverInheritsTheConversionFlags pins the contract the follow-up
+// asks for: the escape hatches that let a conversion leave data behind are not
+// accepted in verify-only at all, so a verification cannot be talked out of
+// checking something by an argument on its own command line. Its only proof is
+// the receipt of the conversion that made the decision.
+func TestVerifyOnlyNeverInheritsTheConversionFlags(t *testing.T) {
+	pg := "postgres://user:pw@localhost:5432/darkpawns"
+	sqlite := "sqlite:///tmp/darkpawns.db"
+
+	for _, options := range []Options{
+		{Source: pg, Destination: sqlite, VerifyOnly: true, DropExtraTables: true},
+		{Source: pg, Destination: sqlite, VerifyOnly: true, DropExtraColumns: true},
+		{Source: pg, Destination: sqlite, VerifyOnly: true, DropExtraTables: true, DropExtraColumns: true},
+	} {
+		err := ValidateOptions(options)
+		if err == nil {
+			t.Fatalf("verify-only accepted a conversion allowance flag: %+v", options)
+		}
+		if !strings.Contains(err.Error(), "--conversion-receipt") {
+			t.Errorf("refusal does not point at the only proof verify-only accepts: %v", err)
+		}
+	}
+
+	// The same flags on a conversion are exactly what they look like, and the
+	// receipt of that conversion is accepted by a later verification.
+	conversion := Options{Source: pg, Destination: sqlite, DropExtraTables: true, DropExtraColumns: true}
+	if err := ValidateOptions(conversion); err != nil {
+		t.Fatalf("a conversion was refused its own flags: %v", err)
+	}
+	verification := Options{Source: pg, Destination: sqlite, VerifyOnly: true, ConversionReceipt: "/tmp/receipt.json"}
+	if err := ValidateOptions(verification); err != nil {
+		t.Fatalf("a verification was refused a receipt: %v", err)
+	}
+
+	// A conversion has nothing to inherit, so a receipt on one is refused rather
+	// than silently ignored.
+	err := ValidateOptions(Options{Source: pg, Destination: sqlite, ConversionReceipt: "/tmp/receipt.json"})
+	if err == nil || !strings.Contains(err.Error(), "--verify-only") {
+		t.Fatalf("a conversion accepted a receipt: %v", err)
 	}
 }

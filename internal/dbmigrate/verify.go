@@ -3,6 +3,7 @@ package dbmigrate
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -40,7 +41,13 @@ type TableVerification struct {
 	MaxIDMatches     bool   `json:"max_id_matches"`
 
 	MissingInSource []string `json:"missing_in_source,omitempty"`
-	ExtraInSource   []string `json:"extra_in_source,omitempty"`
+	// ExtraInSource is every source column with no destination column.
+	ExtraInSource []string `json:"extra_in_source,omitempty"`
+	// UnexpectedExtraColumns is the subset of those that no allowance covers.
+	// Verification of a table is a claim about all of that table's data, so a
+	// source column with nowhere to go breaks the claim: OK is false for it unless
+	// a receipt proves an earlier conversion was explicitly told to drop it.
+	UnexpectedExtraColumns []string `json:"unexpected_extra_columns,omitempty"`
 
 	// JSONReformattedColumns names JSON columns whose bytes changed while their
 	// value did not. That is a dialect re-spacing, not a loss, and it is reported
@@ -172,7 +179,7 @@ func scanTable(ctx context.Context, conn queryer, plan *Table, keyColumns []stri
 }
 
 // compareScans turns two scans into the verification record.
-func compareScans(plan *Table, source, destination *tableScan) TableVerification {
+func compareScans(plan *Table, source, destination *tableScan, allow *Allowances) TableVerification {
 	result := TableVerification{
 		Table:                       plan.Name,
 		ColumnsCopied:               plan.ColumnNames(),
@@ -218,17 +225,26 @@ func compareScans(plan *Table, source, destination *tableScan) TableVerification
 		}
 	}
 
+	for _, column := range plan.ExtraInSource {
+		if !allow.ColumnAllowed(plan.Name, column) {
+			result.UnexpectedExtraColumns = append(result.UnexpectedExtraColumns, column)
+		}
+	}
+	sort.Strings(result.UnexpectedExtraColumns)
+
 	result.OK = result.RowsMatch && result.PrimaryKeyMatches && result.ContentMatches &&
-		result.NullShapeMatches && result.MaxIDMatches && len(result.MismatchedColumns) == 0
+		result.NullShapeMatches && result.MaxIDMatches && len(result.MismatchedColumns) == 0 &&
+		len(result.UnexpectedExtraColumns) == 0
 	if len(result.MissingInSource) > 0 {
 		result.Notes = append(result.Notes, fmt.Sprintf(
 			"%d destination column(s) absent from the source took their schema default: %s",
 			len(result.MissingInSource), strings.Join(result.MissingInSource, ", ")))
 	}
 	if len(result.ExtraInSource) > 0 {
+		covered := len(result.ExtraInSource) - len(result.UnexpectedExtraColumns)
 		result.Notes = append(result.Notes, fmt.Sprintf(
-			"%d source column(s) have no destination column and were not copied: %s",
-			len(result.ExtraInSource), strings.Join(result.ExtraInSource, ", ")))
+			"%d source column(s) have no destination column and were not copied: %s (%d covered by an explicit allowance)",
+			len(result.ExtraInSource), strings.Join(result.ExtraInSource, ", "), covered))
 	}
 	if len(result.JSONReformattedColumns) > 0 {
 		result.Notes = append(result.Notes, fmt.Sprintf(

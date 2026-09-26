@@ -168,30 +168,49 @@ func finalizeDatabase(ctx context.Context, conn queryer) error {
 	return mode.Close()
 }
 
-// installFile moves the verified database into place. Both paths are operator
-// supplied; the temporary file is a sibling of the destination so the rename is
-// within one filesystem and therefore atomic.
-func installFile(temporary, destination string) error {
-	file, err := os.OpenFile(filepath.Clean(temporary), os.O_RDWR, 0o600)
+// installVerifiedDatabase replaces the destination with the verified database.
+//
+// The return value is whether the destination was replaced, which is a different
+// fact from whether the installation completed. The rename is the point of no
+// return; the directory sync after it is what makes the rename survive a crash. A
+// caller that reports an error without saying which side of that line it fell on
+// tells the operator the wrong thing.
+//
+// Both paths are operator supplied and the temporary file is a sibling of the
+// destination, so the rename stays within one filesystem and is therefore atomic.
+func installVerifiedDatabase(temporary, destination string) (installed bool, err error) {
+	temporary = filepath.Clean(temporary)
+	destination = filepath.Clean(destination)
+	file, err := os.OpenFile(temporary, os.O_RDWR, 0o600)
 	if err != nil {
-		return fmt.Errorf("open temporary database: %w", err)
+		return false, fmt.Errorf("open temporary database: %w", err)
 	}
 	if err := file.Sync(); err != nil {
 		_ = file.Close()
-		return fmt.Errorf("sync temporary database: %w", err)
+		return false, fmt.Errorf("sync temporary database: %w", err)
 	}
 	if err := file.Close(); err != nil {
-		return fmt.Errorf("close temporary database: %w", err)
+		return false, fmt.Errorf("close temporary database: %w", err)
 	}
-	if err := os.Chmod(filepath.Clean(temporary), 0o600); err != nil {
-		return fmt.Errorf("set destination permissions: %w", err)
+	if err := os.Chmod(temporary, 0o600); err != nil {
+		return false, fmt.Errorf("set destination permissions: %w", err)
 	}
-	if err := os.Rename(filepath.Clean(temporary), filepath.Clean(destination)); err != nil {
-		return fmt.Errorf("install destination: %w", err)
+	if err := os.Rename(temporary, destination); err != nil {
+		return false, fmt.Errorf("rename verified database into place: %w", err)
 	}
-	// A directory entry rename is only durable once the directory is synced; a
-	// crash after the rename but before the sync can lose it.
-	dir, err := os.Open(filepath.Dir(filepath.Clean(destination)))
+	// Past this line the destination holds the verified database.
+	if err := syncDirectory(filepath.Dir(destination)); err != nil {
+		return true, err
+	}
+	return true, nil
+}
+
+// syncDirectory makes a directory entry durable. A rename is only durable once
+// the directory holding the new name is synced; a crash after the rename but
+// before the sync can lose it, which is why this is a separate step with a
+// separate outcome.
+func syncDirectory(path string) error {
+	dir, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return fmt.Errorf("open destination directory: %w", err)
 	}

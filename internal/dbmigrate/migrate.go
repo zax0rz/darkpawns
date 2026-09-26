@@ -39,6 +39,12 @@ type Options struct {
 	// DropExtraColumns allows source columns with no destination column to be
 	// dropped.
 	DropExtraColumns bool
+	// ConversionReceipt is the path to a JSON receipt written by an earlier
+	// conversion. It is only meaningful with VerifyOnly, where it is the sole
+	// proof that the source tables and columns the destination cannot hold were
+	// explicitly allowed when the conversion ran: verification accepts an
+	// allowance from a conversion receipt and from nowhere else.
+	ConversionReceipt string
 	// BatchSize overrides DefaultBatchSize.
 	BatchSize int
 	// Logf receives progress lines. Nil discards them.
@@ -103,6 +109,18 @@ func ValidateOptions(options Options) error {
 	}
 	if options.VerifyOnly && options.Replace {
 		return errors.New("--verify-only writes nothing, so --replace has no meaning")
+	}
+	if options.VerifyOnly && (options.DropExtraTables || options.DropExtraColumns) {
+		// The refusal is deliberate: verify-only must not be talked out of checking
+		// something by an argument that exists to let a conversion leave it behind.
+		// The only proof it accepts is the conversion receipt that records the
+		// decision that was actually made.
+		return errors.New(
+			"--drop-extra-tables and --drop-extra-columns are conversion flags, and verify-only takes no allowances from this command line: pass the receipt of the conversion that made the decision instead (--conversion-receipt <path>)")
+	}
+	if !options.VerifyOnly && options.ConversionReceipt != "" {
+		return errors.New(
+			"--conversion-receipt is only meaningful with --verify-only: a conversion records the allowances this command line gives it rather than inheriting an earlier run's")
 	}
 	return nil
 }
