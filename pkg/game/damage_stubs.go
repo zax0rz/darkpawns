@@ -195,6 +195,54 @@ func (w *World) DoNeckbreakDamage(attacker, victim combat.Combatant, dam int) bo
 	})
 }
 
+// DoTigerPunchDamage preserves do_tiger_punch's damage() boundary
+// (act.offensive.c:736-739): damage() applies HP and the position update,
+// emits numbered skill_message set 189 (die/hit/miss chosen from the
+// post-damage position), and only then runs death_cry/raw_kill. Selecting the
+// message before the HP change would always read the hit variant.
+func (w *World) DoTigerPunchDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillTigerPunchNum, func() {
+		// C's die_with_killer awards the mob XP before raw_kill emits the death
+		// cry, and make_corpse announces nothing (fight.c:1638-1660, 257-283).
+		// HandleDeath owns the Go extraction/XP seam (ambush.go:76-85).
+		w.HandleDeath(victim, attacker, SkillTigerPunchNum)
+		combat.DeathCry(victim)
+	})
+}
+
+// DoStrikeDamage preserves do_strike's damage() boundary (new_cmds.c:1494-1497):
+// damage() applies HP and the position update, emits numbered skill_message set
+// 155, then returns so the command can run improve_skill and WAIT_STATE.
+func (w *World) DoStrikeDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillStrikeNum, func() {
+		// die_with_killer awards XP before raw_kill's death cry; make_corpse is
+		// silent (fight.c:1638-1660, 257-283).
+		w.HandleDeath(victim, attacker, SkillStrikeNum)
+		combat.DeathCry(victim)
+	})
+}
+
+// DoDragonKickDamage preserves do_dragon_kick's damage() boundary
+// (act.offensive.c:683-686): the numbered set-188 message is selected after the
+// HP/position update, then death_cry/raw_kill run for a killing blow.
+func (w *World) DoDragonKickDamage(attacker, victim combat.Combatant, dam int) bool {
+	if attacker == nil || victim == nil {
+		return false
+	}
+	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillDragonKickNum, func() {
+		// die_with_killer awards XP before raw_kill's death cry; make_corpse is
+		// silent (fight.c:1638-1660, 257-283).
+		w.HandleDeath(victim, attacker, SkillDragonKickNum)
+		combat.DeathCry(victim)
+	})
+}
+
 // DoSmackheadsDamage preserves do_smackheads' damage() boundary: the two
 // ordered damage calls must use the C skill attack type and complete death
 // path, including the authored death bytes and death cry before game-layer

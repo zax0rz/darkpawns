@@ -1,0 +1,128 @@
+# C-first miss arm for do_tiger_punch (src/act.offensive.c:693-744) plus the
+# command's target refusals. A learned value of 1 can never beat
+# percent = ((7 - AC/10) << 1) + number(1,101) >= 15, so the final step always
+# runs damage(ch, vict, 0, SKILL_TIGER_PUNCH) and the three lines come from
+# lib/misc/messages set 189 through skill_message (fight.c:1023-1092) rather
+# than from Go literal strings. The named observer captures the room audience.
+#
+# depth-case: tiger.miss
+# depth-case: tiger.no-argument
+# depth-case: tiger.self
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Tigergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tigergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Tigeratt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Tigeratt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Tigerobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Tigerobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Tigeratt 8105
+teleport Tigerobs 8105
+set Tigeratt level 20
+skillset Tigeratt 'tiger punch' 1
+
+[probe:attacker]
+tiger
+tiger nobody
+tiger Tigeratt
+tiger trainee

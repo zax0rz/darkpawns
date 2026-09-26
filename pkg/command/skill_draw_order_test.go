@@ -24,6 +24,7 @@ package command
 // on the pre-fix order (GLM.md "test the test"; R5a).
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -421,6 +422,74 @@ func TestSendSkillResult_BashSuccess_DrawOrderMatchesC(t *testing.T) {
 			t.Helper()
 			if ktw.mob.GetFighting() != p.Name {
 				t.Errorf("bash success should enroll the victim on the attacker: fighting=%q want %q",
+					ktw.mob.GetFighting(), p.Name)
+			}
+		},
+	)
+}
+
+// TestCmdStrike_DrawsPercentBeforeSkillGate — C evaluates number(1,101) in
+// do_strike's declaration list, before one_argument and before the GET_SKILL
+// refusal (new_cmds.c:1435-1446), so even a refused strike consumes one shared
+// draw. The port used to draw nothing on that path (and to draw number(1,level)
+// on the hit path), which desynced every later combat roll in the same session.
+func TestCmdStrike_DrawsPercentBeforeSkillGate(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetSkill(game.SkillStrike, 0)
+	session.player.SetPosition(combat.PosStanding)
+
+	dprng.ResetStream(17)
+	if err := CmdStrike(session, nil); err != nil {
+		t.Fatalf("CmdStrike: %v", err)
+	}
+	afterRefusal := dprng.Number(0, 999)
+
+	dprng.ResetStream(17)
+	dprng.Number(1, 101) // the draw C makes in do_strike's declaration list
+	if got := dprng.Number(0, 999); got != afterRefusal {
+		t.Errorf("stream after refused strike = %d, want %d — number(1,101) must be consumed first (R3a)",
+			got, afterRefusal)
+	}
+
+	if got := strings.Join(session.messages, ""); got != "Yeah, right.\r\n" {
+		t.Errorf("unskilled strike bytes = %q, want C's refusal", got)
+	}
+}
+
+// TestSendSkillResult_TigerPunchSuccess_DrawOrderMatchesC — tiger punch hit:
+// number(1,101) [tiger percent roll, act.offensive.c:735] → dice(1,1)
+// [skill_message set 189, drawn inside the damage() boundary]
+// → number(1,200) [+ number(1,3)] [deferred improve_skill, act.offensive.c:739].
+// The pre-fix port emitted an invented literal and called improve_skill before
+// any message dice, so this vehicle fails on that ordering (R3b/R5a).
+func TestSendSkillResult_TigerPunchSuccess_DrawOrderMatchesC(t *testing.T) {
+	ktw := newKillTestWorld(t, 500, 0, 0, 1, "rat")
+	ktw.world.StopAITicker()
+	p := ktw.addPlayer(t, 1, "Tigris", 20, game.ClassWarrior, false)
+	p.SetSkill(game.SkillTigerPunch, 50)
+	p.Stats.Int = 100
+	p.Stats.Wis = 100
+
+	rig := newDrawOrderRig(t, p.Name)
+	defer rig.teardown()
+	sess := &killPayoutSession{player: p, world: ktw.world, combatEngine: rig.engine}
+
+	assertPipelineDrawOrder(
+		t, rig, sess, p, ktw.mob, game.SkillTigerPunchNum, game.SkillTigerPunch, 1,
+		func(s uint32) (game.SkillResult, bool) {
+			ktw.mob.SetPosition(combat.PosFighting)
+			ktw.mob.SetHealth(500)
+			dprng.ResetStream(s)
+			res := game.DoTigerPunch(p, ktw.mob)
+			return res, res.Success && res.Damage > 0
+		},
+		func() {
+			dprng.Number(1, 101) // tiger percent roll (act.offensive.c:735)
+		},
+		func(t *testing.T) {
+			t.Helper()
+			if ktw.mob.GetFighting() != p.Name {
+				t.Errorf("tiger punch success should enroll the victim on the attacker: fighting=%q want %q",
 					ktw.mob.GetFighting(), p.Name)
 			}
 		},

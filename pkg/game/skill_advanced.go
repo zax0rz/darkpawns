@@ -211,23 +211,43 @@ func applyCutthroatAffect(target combat.Combatant, duration int) {
 	}
 }
 
-// DoStrike implements do_strike() — quick attack.
-func DoStrike(ch *Player, target combat.Combatant) SkillResult {
-	if ch.GetSkill(SkillStrike) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You don't know how!"}
+// DoStrike implements do_strike() (src/new_cmds.c:1433-1502). percent is C's
+// `number(1,101)` draw, which do_strike evaluates at declaration — before the
+// GET_SKILL gate and before one_argument — so CmdStrike draws it even when the
+// command is refused (R3a). The skill gate, target resolution, self, charm and
+// mount refusals all happen in the command wrapper in C's order; this function
+// is the roll tail: prob=GET_SKILL, a sleeping victim raises prob to 100, and
+// both arms call damage(ch, vict, dam, SKILL_STRIKE) so the numbered set-155
+// message (lib/misc/messages:1079-1092) comes from the shared skill_message
+// path. improve_skill runs after damage() returns (new_cmds.c:1496), so it is
+// deferred past the message dice (R3b).
+func DoStrike(ch *Player, target combat.Combatant, percent int) SkillResult {
+	prob := ch.GetSkill(SkillStrike)
+	if target.GetPosition() <= combat.PosSleeping {
+		prob = 100
 	}
-
-	// Simple damage based on level
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	damage := dprng.Number(1, ch.GetLevel())
-
+	if percent < prob {
+		// C passes GET_LEVEL(ch)*.65, a float truncated by damage()'s int
+		// parameter.
+		dam := int(float64(ch.GetLevel()) * 0.65)
+		return SkillResult{
+			Success:          true,
+			Damage:           dam,
+			SkillMsgType:     SkillStrikeNum,
+			SkillMsgInDamage: true,
+			DamageSkill:      SkillStrike,
+			StartCombat:      true,
+			WaitCh:           3,
+			DeferredImprove:  []string{SkillStrike},
+		}
+	}
 	return SkillResult{
-		Success:       true,
-		Damage:        damage,
-		MessageToCh:   fmt.Sprintf("You strike %s!", target.GetName()),
-		MessageToVict: fmt.Sprintf("%s strikes you!", ch.Name),
-		MessageToRoom: fmt.Sprintf("%s strikes %s!", ch.Name, target.GetName()),
+		Success:          false,
+		SkillMsgType:     SkillStrikeNum,
+		SkillMsgInDamage: true,
+		DamageSkill:      SkillStrike,
+		StartCombat:      true,
+		WaitCh:           3,
 	}
 }
 

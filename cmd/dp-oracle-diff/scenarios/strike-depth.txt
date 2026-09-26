@@ -1,0 +1,128 @@
+# C-first miss arm for do_strike (src/new_cmds.c:1433-1502) plus the command's
+# target refusals. A learned value of 1 can never beat percent = number(1,101)
+# (the draw C evaluates in do_strike's declaration list, before one_argument and
+# the skill gate), so the final step always runs damage(ch, vict, 0,
+# SKILL_STRIKE) and set 155's miss_msg comes from lib/misc/messages rather than
+# a Go literal string. The named observer captures the room audience.
+#
+# depth-case: strike.miss
+# depth-case: strike.no-target
+# depth-case: strike.self
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Strikegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Strikegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Strikeatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Strikeatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Strikeobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Strikeobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Strikeatt 8105
+teleport Strikeobs 8105
+set Strikeatt level 20
+skillset Strikeatt 'strike' 1
+
+[probe:attacker]
+strike
+strike nobody
+strike Strikeatt
+strike trainee

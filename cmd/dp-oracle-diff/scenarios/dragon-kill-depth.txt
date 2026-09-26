@@ -1,0 +1,125 @@
+# C-first killing-blow arm for do_dragon_kick (src/act.offensive.c:636-690).
+# dragon-success-depth proves the non-lethal set-188 hit bytes; this vehicle
+# leaves the trainee at 1 hit point so the level-20 kick (30 damage) drives it
+# to POS_DEAD before skill_message runs, selecting set 188's die_msg. The
+# observer captures the room audience and the corpse.
+#
+# depth-case: dragon.killing-blow
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Draklord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Draklord
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Drakblade
+Y
+dragonpass
+dragonpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Drakblade
+y
+dragonpass
+dragonpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Drakseer
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Drakseer
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Drakblade 8105
+teleport Drakseer 8105
+set Drakblade level 20
+skillset Drakblade 'dragon kick' 100
+set trainee ac 80
+set trainee maxhit 500
+set trainee hit 1
+
+[probe:attacker]
+dragon trainee
