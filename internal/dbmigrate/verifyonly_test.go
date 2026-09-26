@@ -456,3 +456,53 @@ func verifyOnlyWithReceipt(t *testing.T, sourceDSN, destination, receiptPath str
 		Source: sourceDSN, Destination: destination, VerifyOnly: true, ConversionReceipt: receiptPath,
 	})
 }
+
+// TestVerifyOnlyRecordsOnlyWhatItActuallyWaived covers a receipt that proves more
+// than the source still needs: it names a table that existed when it was written
+// and is gone now. The proof is still recorded, because a reader must be able to
+// see which receipt the run accepted, but the run must not report having waived
+// anything — nobody should read "tables left behind" out of a run that left
+// nothing.
+func TestVerifyOnlyRecordsOnlyWhatItActuallyWaived(t *testing.T) {
+	sourceDSN, sourceConn := sourceWithExtraTable(t)
+	dir := t.TempDir()
+	destination := filepath.Join(dir, "darkpawns.db")
+	receiptPath := filepath.Join(dir, "migration-receipt.json")
+
+	converted, err := Run(context.Background(), Options{
+		Source: sourceDSN, Destination: destination, Verify: true, DropExtraTables: true,
+	})
+	if err != nil {
+		t.Fatalf("convert: %v", err)
+	}
+	if converted.Allowances == nil || len(converted.Allowances.Tables) != 1 {
+		t.Fatalf("conversion allowances = %+v", converted.Allowances)
+	}
+	writeReceipt(t, receiptPath, converted)
+
+	// The table the receipt names is no longer there: the decision it records is
+	// now moot.
+	if _, err := sourceConn.Exec(`DROP TABLE chat_logs`); err != nil {
+		t.Fatalf("drop the extra table: %v", err)
+	}
+
+	verified, err := verifyOnlyWithReceipt(t, sourceDSN, destination, receiptPath)
+	if err != nil {
+		t.Fatalf("verify-only: %v", err)
+	}
+	if !verified.OK {
+		t.Fatalf("receipt = %s", verified.Render())
+	}
+	if verified.Allowances == nil {
+		t.Fatal("the accepted proof is not recorded at all")
+	}
+	if !strings.Contains(verified.Allowances.Proof, receiptPath) {
+		t.Errorf("allowance proof = %q", verified.Allowances.Proof)
+	}
+	if len(verified.Allowances.Tables) != 0 || len(verified.Allowances.Columns) != 0 {
+		t.Errorf("a run that waived nothing recorded waivers: %+v", verified.Allowances)
+	}
+	if strings.Contains(verified.Render(), "left behind") {
+		t.Errorf("summary claims something was left behind:\n%s", verified.Render())
+	}
+}

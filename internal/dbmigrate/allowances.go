@@ -110,6 +110,42 @@ func (a *Allowances) columnList() map[string][]string {
 	return columns
 }
 
+// exercisedRecord renders what a run actually waived: the proof it accepted and
+// the allowances it needed. A receipt may prove more than the source needs (it
+// names the tables that existed when it was written), and a receipt that waived
+// nothing must not read as a decision about tables that are no longer there. The
+// proof is recorded either way, so a reader can always see which receipt a run
+// accepted.
+func exercisedRecord(allow *Allowances, unknownTables []string, plans []*Table) *AllowanceRecord {
+	if allow.Empty() {
+		return nil
+	}
+	record := &AllowanceRecord{Proof: allow.proof}
+	for _, table := range unknownTables {
+		if allow.TableAllowed(table) {
+			record.Tables = append(record.Tables, table)
+		}
+	}
+	sort.Strings(record.Tables)
+	for _, plan := range plans {
+		var columns []string
+		for _, column := range plan.ExtraInSource {
+			if allow.ColumnAllowed(plan.Name, column) {
+				columns = append(columns, column)
+			}
+		}
+		if len(columns) == 0 {
+			continue
+		}
+		sort.Strings(columns)
+		if record.Columns == nil {
+			record.Columns = make(map[string][]string)
+		}
+		record.Columns[plan.Name] = columns
+	}
+	return record
+}
+
 // conversionAllowances is what a converting run may leave behind: exactly what the
 // operator waved through on this command line. Called after the reconciliation so
 // the column half is the real set, and never consulted for a table or column the

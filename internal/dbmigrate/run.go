@@ -171,7 +171,8 @@ func runVerifyOnly(
 			return fail(PhaseValidate, err)
 		}
 	}
-	receipt.Allowances = allow.record()
+	// Recorded after the reconciliation, below, so the record is exactly what
+	// this verification waived rather than everything the receipt permits.
 
 	if unexpected := UnexpectedTables(unknown, allow); len(unexpected) > 0 {
 		return fail(PhasePreflight, fmt.Errorf(
@@ -184,6 +185,7 @@ func runVerifyOnly(
 		return fail(PhaseSchema, err)
 	}
 	receipt.Schema = describeSchemas(plans)
+	receipt.Allowances = exercisedRecord(allow, unknown, plans)
 
 	if unexpected := UnexpectedColumns(plans, allow); len(unexpected) > 0 {
 		return fail(PhaseSchema, fmt.Errorf(
@@ -273,7 +275,7 @@ func runConvert(
 	// records exactly which ones, so a later verification can be told to accept
 	// them and nothing else.
 	allowances := conversionAllowances(plans, unknown, options)
-	receipt.Allowances = allowances.record()
+	receipt.Allowances = exercisedRecord(allowances, unknown, plans)
 	if unexpected := UnexpectedColumns(plans, allowances); len(unexpected) > 0 {
 		return fail(PhaseSchema, fmt.Errorf(
 			"source has column(s) with no destination column: %s (pass --drop-extra-columns to drop them, or extend the runtime schema)",
