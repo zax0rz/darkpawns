@@ -53,7 +53,22 @@ jobs:
       run: go mod download
 
     - name: Run Go tests with race detector
-      run: go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 120s
+      # DATABASE_URL is deliberately not set here: pkg/db's PostgreSQL lane
+      # leaves rows behind, so it is only green on a first run against a fresh
+      # database, and re-running this step would fail for reasons unrelated to
+      # the code under test.
+      #
+      # DP_MIGRATE_TEST_DB_URL is set, because the PostgreSQL -> SQLite
+      # conversion is the one thing this workflow has to prove against a real
+      # PostgreSQL. It gets its own database: a conversion tests the five
+      # production table names, and information_schema is per database, so a
+      # shared database makes those tables visible to other packages' tests.
+      env:
+        PGPASSWORD: postgres
+        DP_MIGRATE_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns_migrate_test?sslmode=disable"
+      run: |
+        psql -h localhost -U postgres -d postgres -c 'CREATE DATABASE darkpawns_migrate_test' || true
+        go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 120s
 
     - name: Coverage report + ratchet
       run: |
