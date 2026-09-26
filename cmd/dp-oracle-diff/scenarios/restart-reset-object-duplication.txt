@@ -1,0 +1,81 @@
+# Harness parity: server restart / crash recovery (docs/fidelity/HARNESS_PARITY.md).
+#
+# A restart must not duplicate the objects the zone reset table places.
+#
+# C evidence: boot_db() rebuilds the object list from the area files and then
+# runs reset_zone() for every zone (src/db.c:304-392); the 'O' command loads its
+# copy only while obj_index[].number is below the reset table's maximum
+# (src/db.c:2149-2171). A reboot therefore produces exactly one copy, never the
+# old floor instance plus a fresh one. That is the DP-1313 class (duplicating
+# world content across boots) which the removed Go snapshot caused by restoring
+# ground objects on top of the reset.
+#
+# The actor picks the reset-placed loaf up and puts it back down before the
+# restart, so the compared `look` blocks are about a live, moved instance rather
+# than a prototype listing: one loaf before, one loaf after.
+
+# The actor returns to the immortal start room (1204) before quitting so the
+# login room is one both engines already agree on: C records no load room above
+# LVL_IMMORT (src/act.other.c do_quit) and falls back to r_immort_start_room
+# (src/interpreter.c:2195-2199). Quitting anywhere else would exercise
+# DP-1310's still-open load-room path (docs/fidelity/depth/save.tsv).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Restartdup
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartdup
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartdup
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartdup
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+look
+get bread
+inventory
+drop bread
+look
+goto 1204
+quit
+<RESTART>
+goto 8162
+look

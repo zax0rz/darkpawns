@@ -1,0 +1,84 @@
+# Harness parity: server restart / crash recovery (docs/fidelity/HARNESS_PARITY.md,
+# the "<RESTART> step" row). Not a command-depth vehicle: these cases belong to
+# the restart contract, so they carry no depth-case annotations.
+#
+# Dropped room objects do not survive a restart.
+#
+# C evidence: boot_db() re-reads the area files and runs reset_zone() for every
+# zone (src/db.c:304-392), and nothing in the shutdown path writes world state
+# (src/comm.c:288-293 saves the clan table, the whod file and the mud date, and
+# closes the player file). A loft of bread on the floor of the temple therefore
+# disappears. The Go port used to persist it in data/world_state.json; that
+# invented snapshot was removed (RULEBOOK R4) — see
+# docs/fidelity/audit-reports/world_state_persistence_audit.md.
+#
+# The same vehicle proves the other half of the boundary: the loaf the actor is
+# still CARRYING comes back, because C rents a quitting immortal's gear
+# (src/act.other.c do_quit -> Crash_rentsave) and the port stores carried objects
+# with the character. Dropped is transient; carried is durable.
+
+# The actor returns to the immortal start room (1204) before quitting so the
+# login room is one both engines already agree on: C records no load room above
+# LVL_IMMORT (src/act.other.c do_quit) and falls back to r_immort_start_room
+# (src/interpreter.c:2195-2199). Quitting anywhere else would exercise
+# DP-1310's still-open load-room path (docs/fidelity/depth/save.tsv).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Restartdrop
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartdrop
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartdrop
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartdrop
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+load obj 8010
+load obj 8010
+drop bread
+look
+inventory
+goto 1204
+quit
+<RESTART>
+goto 8162
+look
+inventory

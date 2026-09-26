@@ -1,6 +1,7 @@
 package oraclediff
 
 import (
+	"errors"
 	"io"
 	"net"
 	"strings"
@@ -531,6 +532,97 @@ func TestRunAudienceProbeCloseMidProbeStillFails(t *testing.T) {
 	}
 }
 
+// TestRunAudienceProbeRestart: the engine is stopped and started exactly once,
+// the restart's login transcript is its own block, and the steps after it run
+// on the connection dialled after the restart.
+func TestRunAudienceProbeRestart(t *testing.T) {
+	first := &scriptedConn{outputs: []string{"Goodbye, friend.. Come back soon!\r\n"}, readErr: io.EOF}
+	second := &scriptedConn{outputs: []string{
+		"greeting\r\n", "Password: ", "PRESS RETURN", "menu", "Temple Square\r\n", "You have 12 gold.\r\n",
+	}}
+	dials, restarts := 0, 0
+	actor := NewRestartConn(first,
+		func() (Conn, error) { dials++; return second, nil },
+		func(c Conn) (string, error) {
+			return RunSetup(c, []string{"Tester", "pass", "", "1"}, time.Millisecond)
+		},
+		nil,
+		func() error { restarts++; return nil })
+
+	blocks, err := RunAudienceProbe(actor, nil, []string{"quit", RestartStep, "gold"}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if restarts != 1 || dials != 1 {
+		t.Fatalf("restarts = %d, dials = %d, want one of each", restarts, dials)
+	}
+	if len(blocks) != 3 {
+		t.Fatalf("blocks = %#v, want three", blocks)
+	}
+	if blocks[1].Command != RestartStep || blocks[1].Output != "greeting\r\nPassword: PRESS RETURNmenuTemple Square\r\n" {
+		t.Fatalf("restart block = %#v", blocks[1])
+	}
+	if blocks[2].Output != "You have 12 gold.\r\n" || len(second.sent) != 5 || second.sent[4] != "gold" {
+		t.Fatalf("after restart: block %#v, sent %v", blocks[2], second.sent)
+	}
+}
+
+// TestRunAudienceProbeRestartPropagatesEngineFailure: a restart that cannot
+// bring the engine back is a harness failure, never a short scenario.
+func TestRunAudienceProbeRestartPropagatesEngineFailure(t *testing.T) {
+	first := &scriptedConn{outputs: []string{""}, readErr: io.EOF}
+	actor := NewRestartConn(first,
+		func() (Conn, error) { return &scriptedConn{}, nil },
+		func(c Conn) (string, error) { return "", nil },
+		nil,
+		func() error { return errRestartFailed })
+	if _, err := RunAudienceProbe(actor, nil, []string{RestartStep}, time.Millisecond); !errors.Is(err, errRestartFailed) {
+		t.Fatalf("restart failure error = %v, want %v", err, errRestartFailed)
+	}
+}
+
+// TestRunAudienceProbeRestartNeedsRestarter: the step on a connection that
+// cannot restart its engine is a clear error, as <RELOGIN> is.
+func TestRunAudienceProbeRestartNeedsRestarter(t *testing.T) {
+	actor := &scriptedConn{outputs: []string{""}}
+	if _, err := RunAudienceProbe(actor, nil, []string{RestartStep}, time.Millisecond); !errors.Is(err, errNoRestart) {
+		t.Fatalf("error = %v, want %v", err, errNoRestart)
+	}
+}
+
+var errRestartFailed = errors.New("engine would not come back")
+
+// TestParseScenarioRestartGuards pins the structural guards: a restart needs
+// both login line sets, may appear once, and cannot be combined with passive
+// peers (which a bounce would disconnect).
+func TestParseScenarioRestartGuards(t *testing.T) {
+	login := "[relogin:oracle]\nA\n[relogin:port]\nA\n"
+	valid := "[setup:oracle]\nA\n[setup:port]\nA\n" + login + "[probe]\nquit\n<RESTART>\nlook\n"
+	sc, err := ParseScenario("valid", strings.NewReader(valid))
+	if err != nil {
+		t.Fatalf("a well-formed restart scenario was rejected: %v", err)
+	}
+	if len(sc.Probe) != 3 || sc.Probe[1] != RestartStep {
+		t.Fatalf("probe = %v, want the step in place", sc.Probe)
+	}
+
+	cases := map[string]string{
+		"no relogin sections": "[setup:oracle]\nA\n[setup:port]\nA\n[probe]\nquit\n<RESTART>\n",
+		"two restarts":        "[setup:oracle]\nA\n[setup:port]\nA\n" + login + "[probe]\nquit\n<RESTART>\nlook\n<RESTART>\n",
+		"with a peer":         "[setup:oracle]\nA\n[setup:port]\nA\n[setup:oracle:peer]\nA\n[setup:port:peer]\nA\n" + login + "[probe]\nquit\n<RESTART>\n",
+		"with a probe actor":  "[setup:oracle]\nA\n[setup:port]\nA\n[setup:oracle:peer]\nA\n[setup:port:peer]\n" + login + "[probe:peer]\nquit\n<RESTART>\n",
+	}
+	for name, src := range cases {
+		t.Run(name, func(t *testing.T) {
+			if _, err := ParseScenario(name, strings.NewReader(src)); err == nil {
+				t.Fatalf("%s: scenario parsed", name)
+			}
+		})
+	}
+}
+
+// TestParseScenarioReloginNeedsBothServers verifies a relogin requires both
+// servers' login lines.
 func TestParseScenarioReloginNeedsBothServers(t *testing.T) {
 	src := "[setup:oracle]\nA\n[setup:port]\nA\n[relogin:oracle]\nA\n[probe]\nquit\n<RELOGIN>\n"
 	if _, err := ParseScenario("half", strings.NewReader(src)); err == nil {

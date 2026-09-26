@@ -1,0 +1,82 @@
+# Harness parity: server restart / crash recovery (docs/fidelity/HARNESS_PARITY.md).
+#
+# Mobile runtime state does not survive a restart: the mobile comes back with its
+# prototype's hit points, in its reset room.
+#
+# C evidence: reset_zone() re-reads mobiles with the 'M' command (src/db.c:2107)
+# through read_mobile(), which builds the instance from the prototype, and no
+# shutdown path writes a mobile's hit points (src/comm.c:288-293). The Go port
+# used to persist vnum/id/room_vnum/current_hp/max_hp per mobile in
+# data/world_state.json (RULEBOOK R4).
+#
+# `set horse hit 1` wounds the spawned horse (do_set, src/act.wizard.c:2550:
+# {"hit", LVL_GRGOD, BOTH, NUMBER}); do_consider's hit-difference clause is
+# dice-free (src/act.informative.c:2380) and its target clause is not, so the
+# blocks also consume C's damage draws — the restart claim is the physical-shape
+# clause, and a draw-order divergence surfaces here as a real finding (R3).
+
+# The actor returns to the immortal start room (1204) before quitting so the
+# login room is one both engines already agree on: C records no load room above
+# LVL_IMMORT (src/act.other.c do_quit) and falls back to r_immort_start_room
+# (src/interpreter.c:2195-2199). Quitting anywhere else would exercise
+# DP-1310's still-open load-room path (docs/fidelity/depth/save.tsv).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Restartmob
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartmob
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartmob
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartmob
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+look
+consider horse
+set horse hit 1
+consider horse
+goto 1204
+quit
+<RESTART>
+goto 8162
+look
+consider horse

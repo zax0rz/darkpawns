@@ -35,11 +35,30 @@ var menuOptions = charOpts(
 	"5", "Delete this character",
 )
 
+// loginMOTDFile returns the login message-of-the-day file C selects for this
+// character: the immortal MOTD at LVL_IMMORT and above, the mortal one below.
+// Source: src/interpreter.c:1919-1921
+//
+//	if (GET_LEVEL(d->character) >= LVL_IMMORT)
+//	  SEND_TO_Q(imotd, d);
+//	else
+//	  SEND_TO_Q(motd, d);
+//
+// The port sent the mortal MOTD to everyone, so a returning immortal read the
+// wrong file's bytes. The game-login path is the only place this is visible;
+// the `imotd` command has its own LVL_IMMORT gate (interpreter.c:513).
+func (s *Session) loginMOTDFile() string {
+	if s.player != nil && s.player.GetLevel() >= game.LVL_IMMORT {
+		return "imotd"
+	}
+	return "motd"
+}
+
 func (s *Session) startReturningMenu(passwordHash string) {
 	s.menuActive = true
 	s.menuStage = "motd"
 	s.menuPasswordHash = passwordHash
-	motd := loginTextForFile(s, "motd")
+	motd := loginTextForFile(s, s.loginMOTDFile())
 	s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 }
 
@@ -52,7 +71,7 @@ func (s *Session) showMainMenu() {
 func (s *Session) resendCurrentMenuPrompt() {
 	switch s.menuStage {
 	case "motd":
-		motd := loginTextForFile(s, "motd")
+		motd := loginTextForFile(s, s.loginMOTDFile())
 		s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 	case "description":
 		s.sendCharCreatePrompt("description", "Enter description lines. Type @ or /s to save, /a to abort: ", nil)

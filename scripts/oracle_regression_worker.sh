@@ -51,7 +51,11 @@ main() {
 	}
 
 	has_infra_signature() {
-		grep -Eq 'exited before readiness|did not log .*within|: EOF|connection (reset|closed)' "$1"
+		# Infrastructure-shaped attempts are retried, never recorded as content.
+		# "did not accept connections ... within" is dialWhenReady's readiness
+		# timeout: under a wide fan-out a server can lose the port race with 35
+		# other boots, and that is a scheduling accident, not a transcript diff.
+		grep -Eq 'exited before readiness|did not log .*within|did not accept connections .* within|: EOF|connection (reset|closed)' "$1"
 	}
 
 	run_attempt() {

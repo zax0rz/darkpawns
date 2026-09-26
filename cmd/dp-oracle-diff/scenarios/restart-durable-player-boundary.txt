@@ -1,0 +1,90 @@
+# Harness parity: server restart / crash recovery (docs/fidelity/HARNESS_PARITY.md).
+#
+# The durable-player boundary: a restart resets the world and keeps the
+# character.
+#
+# C evidence splits cleanly in two. World side: boot_db() rebuilds everything
+# transient (src/db.c:304-392) and shutdown writes no world state
+# (src/comm.c:288-293). Player side: do_quit rents a quitting immortal's gear and
+# extract_char saves the character (src/act.other.c do_quit -> Crash_rentsave ->
+# extract_char -> save_char), and boot_db() reads the player index at startup
+# (src/db.c:335). So after a restart the title, gold, practices and carried
+# objects are the same characters' and the room is not.
+#
+# The actor sets three durable fields it can read back, carries one object,
+# quits, and restarts. `score` prints all three fields plus the restored
+# level/class/race, and `inventory` prints the rented object; `look` shows the
+# floor the restart emptied. A Go port that saved the world but not the player —
+# or the reverse — diverges in one half or the other.
+
+# The actor returns to the immortal start room (1204) before quitting so the
+# login room is one both engines already agree on: C records no load room above
+# LVL_IMMORT (src/act.other.c do_quit) and falls back to r_immort_start_room
+# (src/interpreter.c:2195-2199). Quitting anywhere else would exercise
+# DP-1310's still-open load-room path (docs/fidelity/depth/save.tsv).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Restartbnd
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartbnd
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartbnd
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartbnd
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+title The Boundary Holds
+set Restartbnd gold 4242
+set Restartbnd practices 77
+load obj 8010
+load obj 8010
+drop bread
+gold
+inventory
+score
+goto 1204
+quit
+<RESTART>
+goto 8162
+look
+gold
+inventory
+score

@@ -625,13 +625,25 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	if sc.EntryPromptOnly && (!sc.DiffSetup || !sc.SkipSetupSettle || !sc.KeepPrompts) {
 		return Scenario{}, fmt.Errorf("scenario %q: entry-prompt requires creation, no-settle, and keep-prompts", name)
 	}
+	restartCount := 0
 	for _, step := range sc.Probe {
-		if step == ReloginStep && (len(sc.ReloginOracle) == 0 || len(sc.ReloginPort) == 0) {
-			return Scenario{}, fmt.Errorf("scenario %q uses %s without both [relogin:oracle] and [relogin:port]", name, ReloginStep)
+		if step == ReloginStep || step == RestartStep {
+			if len(sc.ReloginOracle) == 0 || len(sc.ReloginPort) == 0 {
+				return Scenario{}, fmt.Errorf("scenario %q uses %s without both [relogin:oracle] and [relogin:port]", name, step)
+			}
+			if sc.ProbeActor != "" {
+				return Scenario{}, fmt.Errorf("scenario %q: %s relogs the primary client, not probe actor %q", name, step, sc.ProbeActor)
+			}
 		}
-		if step == ReloginStep && sc.ProbeActor != "" {
-			return Scenario{}, fmt.Errorf("scenario %q: %s relogs the primary client, not probe actor %q", name, ReloginStep, sc.ProbeActor)
+		if step == RestartStep {
+			restartCount++
 		}
+	}
+	if restartCount > 1 {
+		return Scenario{}, fmt.Errorf("scenario %q uses %s %d times; a probe may restart once, because each engine is bounced inside its own pass and a second restart would replay the durable effects of the first pass's post-restart commands", name, RestartStep, restartCount)
+	}
+	if restartCount > 0 && len(sc.Peers) > 0 {
+		return Scenario{}, fmt.Errorf("scenario %q combines %s with passive peers; restarting an engine closes every connection to it, so a peer's later audience blocks could not be captured", name, RestartStep)
 	}
 	if sc.ProbeActor != "" {
 		if _, ok := sc.Peers[sc.ProbeActor]; !ok {
@@ -706,11 +718,13 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
 	for i, step := range probe {
 		// The connection may close at the last step, or just before a relogin
-		// (a quit that ends the session); either is the scenario's intent.
-		mayClose := i == len(probe)-1 || probe[i+1] == ReloginStep
+		// or restart (a quit that ends the session); either is the scenario's
+		// intent.
+		mayClose := i == len(probe)-1 || probe[i+1] == ReloginStep || probe[i+1] == RestartStep
 		var output string
 		target, targetName, audience := primary, "actor", peers
-		if step == ReloginStep {
+		switch step {
+		case ReloginStep:
 			relogger, ok := primary.(Relogger)
 			if !ok {
 				return blocks, fmt.Errorf("probe step %d: %w", i+1, errNoRelogin)
@@ -720,7 +734,17 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 				return blocks, fmt.Errorf("probe step %d relogin: %w\ntranscript so far:\n%s", i+1, err, transcript)
 			}
 			output = transcript
-		} else {
+		case RestartStep:
+			restarter, ok := primary.(Restarter)
+			if !ok {
+				return blocks, fmt.Errorf("probe step %d: %w", i+1, errNoRestart)
+			}
+			transcript, err := restarter.Restart(quiescence)
+			if err != nil {
+				return blocks, fmt.Errorf("probe step %d restart: %w\ntranscript so far:\n%s", i+1, err, transcript)
+			}
+			output = transcript
+		default:
 			var sendLine string
 			var err error
 			target, targetName, audience, sendLine, err = resolveAudienceProbeTarget(primary, peers, step)

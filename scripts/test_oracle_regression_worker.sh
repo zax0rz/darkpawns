@@ -160,6 +160,10 @@ run_case unstable-divergence "D:cast:$one_a|D:cast:$one_b" yes "$(pin_one "$one_
 run_case unstable-confirmed "D:cast:$one_a|D:cast:$one_b" yes "" $'EXPECTED_UNSTABLE\tfake' 2 2 run-varying
 run_case divergence-infra-confirmed "D:cast:$one_a|I|D:cast:$one_a" yes "$(pin_one "$one_a" divergence-infra-confirmed)" $'EXPECTED\tfake' 3 3
 run_case repeated-infra "I|I|I" no "" $'INFRA\tfake\t1' 3 3
+# A readiness-dial timeout is infrastructure, not content: it retries and can
+# still pass, and a persistent one is INFRA rather than a false content FAIL.
+run_case infra-readiness-retry "R|P" no "" $'PASS\tfake' 2 2
+run_case infra-readiness-exhausted "R|R|R" no "" $'INFRA\tfake\t1' 3 3
 run_case timeout T no "" $'TIMEOUT\tfake\t124' 1 1
 run_case infra-timeout "I|T" no "" $'TIMEOUT\tfake\t124' 2 2
 run_case missing-fingerprints M no "" $'FAIL\tfake\t3' 1 1
