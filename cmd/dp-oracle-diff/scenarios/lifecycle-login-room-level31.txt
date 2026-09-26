@@ -1,0 +1,68 @@
+# DP-1310's level boundary from below: exactly LVL_IMMORT keeps the quit room.
+# depth-case: login.level-boundary-quit-room
+#
+# C's do_quit records the quit room for GET_LEVEL(ch) <= LVL_IMMORT
+# (src/act.other.c:167-169) — mortals and exact LVL_IMMORT alike — so an
+# exact-level-31 character who legally quits outside the start rooms reloads
+# where they quit (the saved load room wins over the start-room fallback,
+# src/interpreter.c:2191-2194). One level higher the load room is never
+# recorded and the start room wins; that side is restart-login-room-immort.
+#
+# The first-player God drops to exactly 31, quits at 8162, and relogs without
+# a restart: the <RELOGIN> transcript's entry look must show 8162 on both
+# engines.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Restartbex
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartbex
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartbex
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartbex
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+look
+set Restartbex level 31
+look
+quit
+<RELOGIN>
+look

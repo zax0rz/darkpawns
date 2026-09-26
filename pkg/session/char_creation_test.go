@@ -458,7 +458,7 @@ func TestCompleteCharCreation_WithNilDB(t *testing.T) {
 	}
 }
 
-func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
+func TestCompleteCharCreation_PersistsHometownField(t *testing.T) {
 	database := testutil.NewMockDatabase()
 	// Seed one player so CountPlayers() > 0 and shouldCrownFirstPlayer
 	// returns false — this test covers mortal routing, not God routing.
@@ -481,7 +481,6 @@ func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
 		t.Fatalf("completeCharCreation: %v", err)
 	}
 
-	want := game.NewbieHometownRoom(3)
 	record, err := database.GetPlayer("Alaozarnewbie")
 	if err != nil {
 		t.Fatalf("GetPlayer: %v", err)
@@ -489,11 +488,18 @@ func TestCompleteCharCreation_PersistsHometownRoom(t *testing.T) {
 	if record == nil {
 		t.Fatal("created player record not found")
 	}
-	if record.RoomVNum != want {
-		t.Errorf("persisted room = %d, want hometown room %d", record.RoomVNum, want)
+	// The hometown rides its own column: the pulse-time start_room dispatch
+	// reads GetHometown to relocate the newbie (spec_procs.c birth path). The
+	// room column is C's load-room seam and carries the entry save's NOWHERE
+	// (interpreter.c:2186), not the live position.
+	if record.Hometown != 3 {
+		t.Errorf("persisted hometown = %d, want 3", record.Hometown)
+	}
+	if record.RoomVNum != game.LoadRoomNowhere {
+		t.Errorf("persisted load room = %d, want NOWHERE (-1)", record.RoomVNum)
 	}
 	// The live room stays in the Burning Hut until the pulse-time birth
-	// transition; only the persisted record carries the hometown room.
+	// transition moves the newbie to the hometown room.
 	if got := s.player.GetRoom(); got != game.NewbieStartRoom {
 		t.Errorf("live player room = %d, want newbie start room %d", got, game.NewbieStartRoom)
 	}

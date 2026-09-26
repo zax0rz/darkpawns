@@ -16,10 +16,11 @@
 # clause, and a draw-order divergence surfaces here as a real finding (R3).
 
 # The actor returns to the immortal start room (1204) before quitting so the
-# login room is one both engines already agree on: C records no load room above
+# login room stays out of this vehicle's diff: C records no load room above
 # LVL_IMMORT (src/act.other.c do_quit) and falls back to r_immort_start_room
-# (src/interpreter.c:2195-2199). Quitting anywhere else would exercise
-# DP-1310's still-open load-room path (docs/fidelity/depth/save.tsv).
+# (src/interpreter.c:2195-2199). That quit-room rule is ported and proven by
+# restart-login-room-immort (DP-1310); quitting elsewhere here would only
+# re-prove it.
 
 [fixture]
 empty-players

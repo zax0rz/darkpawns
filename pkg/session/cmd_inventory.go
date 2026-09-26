@@ -101,19 +101,24 @@ func (s *Session) leaveGameToMenu(rent bool) {
 	if rent {
 		w.RentOut(p)
 		p.RentedOut = true
-		s.saveCharacter("quit rent")
+		// The rent save is also the extraction save (handler.c:1162): the
+		// record carries the in-memory load room DoQuit just updated.
+		s.saveCharacter("quit rent", p.GetLoadRoom())
 	}
 	w.QueuePlayerExtraction(p)
 }
 
 // saveCharacter writes the session's character to the game store, if there
-// is one and the character is not a guest.
-func (s *Session) saveCharacter(why string) {
+// is one and the character is not a guest. loadRoom is C's save_char
+// parameter — the room the record carries for a character without
+// PLR_LOADROOM (extraction saves: the in-memory load room; entry saves:
+// NOWHERE).
+func (s *Session) saveCharacter(why string, loadRoom int) {
 	m := s.manager
 	if !m.hasDB || s.player == nil || s.player.ID <= 0 || s.isGuest {
 		return
 	}
-	rec, err := s.playerRecordForSave(s.player)
+	rec, err := s.playerRecordForSave(s.player, loadRoom)
 	if err != nil {
 		slog.Error("character save: build record", "player", s.player.Name, "why", why, "error", err)
 		return

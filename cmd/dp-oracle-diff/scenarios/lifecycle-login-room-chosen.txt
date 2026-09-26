@@ -1,0 +1,70 @@
+# DP-1310's chosen-loadroom row: a set load room beats the start rooms.
+# depth-case: login.chosen-loadroom
+#
+# `set <name> loadroom <vnum>` sets PLR_LOADROOM and GET_LOADROOM
+# (src/act.wizard.c set loadroom). For a flagged character every save_char
+# keeps the chosen room (src/db.c:2387 skips the load-room override), and
+# above LVL_IMMORT do_quit never reassigns GET_LOADROOM anyway
+# (src/act.other.c:167-169), so the next login resolves the saved load room
+# first and enters it (src/interpreter.c:2191-2194) — even for a level-40
+# implementor quitting elsewhere.
+#
+# The first-player God chooses 8162, walks to the immortal start room 1204,
+# quits there, and relogs: the entry look must show 8162 on both engines —
+# the chosen load room, not the quit room and not the start room.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Restartlch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartlch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartlch
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartlch
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+set Restartlch loadroom 8162
+look
+goto 1204
+look
+quit
+<RELOGIN>
+look

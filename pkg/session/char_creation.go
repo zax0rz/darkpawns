@@ -560,7 +560,9 @@ func (s *Session) persistAcceptedCharacter() error {
 		game.BootstrapFirstPlayerGod(p)
 	}
 	if s.manager.hasDB {
-		r, err := s.playerRecordForSave(p)
+		// C's create_entry writes the file as init_char leaves the character:
+		// GET_LOADROOM is NOWHERE (db.c:3078).
+		r, err := s.playerRecordForSave(p, game.LoadRoomNowhere)
 		if err != nil {
 			return err
 		}
@@ -614,7 +616,9 @@ func (s *Session) completeCharCreation() error {
 		s.player.SetRoom(game.NewbieHometownRoom(s.player.Hometown))
 	}
 	if s.manager.hasDB {
-		r, err := s.playerRecordForSave(s.player)
+		// The new character's game entry runs C's entry save with load_room
+		// NOWHERE (interpreter.c:2186).
+		r, err := s.playerRecordForSave(s.player, game.LoadRoomNowhere)
 		if err != nil {
 			return s.abortEntry(err)
 		}

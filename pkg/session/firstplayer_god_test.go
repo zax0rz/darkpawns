@@ -108,9 +108,12 @@ func TestCompleteCharCreation_FreshGodThenMortal(t *testing.T) {
 	}
 }
 
-// TestCompleteCharCreation_GodRoomWithDB — the first-player God's live room and
-// persisted RoomVNum must both be ImmortStartRoom (1204). No 8099, no
-// NewbieHometownRoom anywhere on the God path (DP-1205).
+// TestCompleteCharCreation_GodRoomWithDB — the first-player God's live room
+// must be ImmortStartRoom (1204). No 8099, no NewbieHometownRoom anywhere on
+// the God path (DP-1205). The persisted record carries the C entry save's
+// load_room NOWHERE (interpreter.c:2186); above LVL_IMMORT a quit records no
+// load room either (act.other.c:167-169), so the God's next login returns to
+// 1204 through SelectLoginRoom's immortal fallback — DP-1310's rule.
 func TestCompleteCharCreation_GodRoomWithDB(t *testing.T) {
 	t.Setenv("DP_FRESH_MUD", "1")
 	database := testutil.NewMockDatabase()
@@ -141,7 +144,7 @@ func TestCompleteCharCreation_GodRoomWithDB(t *testing.T) {
 		t.Errorf("God live room = %d, want ImmortStartRoom (%d)", got, game.ImmortStartRoom)
 	}
 
-	// Persisted RoomVNum must also be ImmortStartRoom.
+	// Persisted load room is the C entry save's NOWHERE (interpreter.c:2186).
 	record, err := database.GetPlayer("TestGod")
 	if err != nil {
 		t.Fatalf("GetPlayer: %v", err)
@@ -149,12 +152,12 @@ func TestCompleteCharCreation_GodRoomWithDB(t *testing.T) {
 	if record == nil {
 		t.Fatal("created player record not found")
 	}
-	if record.RoomVNum != game.ImmortStartRoom {
-		t.Errorf("God persisted room = %d, want ImmortStartRoom (%d)", record.RoomVNum, game.ImmortStartRoom)
+	if record.RoomVNum != game.LoadRoomNowhere {
+		t.Errorf("God persisted load room = %d, want NOWHERE (-1; the immortal start-room fallback owns 1204)", record.RoomVNum)
 	}
 
 	// The Burning Hut (8099) must not appear anywhere on the God path.
 	if record.RoomVNum == game.NewbieStartRoom {
-		t.Error("God persisted room is NewbieStartRoom (8099); should be ImmortStartRoom")
+		t.Error("God persisted room is NewbieStartRoom (8099); should be the entry save's NOWHERE")
 	}
 }

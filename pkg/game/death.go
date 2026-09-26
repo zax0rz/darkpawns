@@ -70,6 +70,11 @@ var counterProcsHealMilestones = map[int]bool{
 	5000: true, 15000: true, 25000: true, 35000: true, 45000: true,
 }
 
+// LoadRoomNowhere is C's NOWHERE (-1, structs.h) as a saved load-room value:
+// a character whose record carries it falls back to the start rooms at the
+// next login (interpreter.c:2194-2201).
+const LoadRoomNowhere = -1
+
 // MortalStartRoom is the vnum of the mortal start room (config.c: mortal_start_room = 8004)
 const MortalStartRoom = 8004
 
@@ -115,6 +120,41 @@ func IsDonationRoom(vnum int) bool {
 func LoginStartRoom(p *Player) int {
 	if (p.GetFlags() & (1 << uint(PlrFrozen))) != 0 {
 		return FrozenStartRoom
+	}
+	if p.GetLevel() >= LVL_IMMORT {
+		return ImmortStartRoom
+	}
+	return MortalStartRoom
+}
+
+// SelectLoginRoom ports the load-room selection every main-menu entry runs
+// (src/interpreter.c:2191-2210):
+//
+//	if ((load_room = GET_LOADROOM(ch)) != NOWHERE)
+//	  load_room = real_room(load_room);
+//	if (load_room == NOWHERE) {          /* saved NOWHERE, or bad vnum */
+//	  if (GET_LEVEL(ch) >= LVL_IMMORT) load_room = r_immort_start_room;
+//	  else                              load_room = r_mortal_start_room;
+//	}
+//	if (PLR_FLAGGED(ch, PLR_FROZEN))     load_room = r_frozen_start_room;
+//	if (load_room < 0)                   load_room = r_mortal_start_room;
+//
+// A valid saved load room wins over the start rooms; PLR_FROZEN overrides both
+// (2203-2204); a load room whose vnum no longer resolves falls back to the
+// level-based start room exactly like real_room's failure. The final < 0 belt
+// (2207-2208) is subsumed by the resolution check.
+func (w *World) SelectLoginRoom(p *Player) int {
+	room := p.GetLoadRoom()
+	if room != roomNowhere {
+		if _, ok := w.GetRoom(room); !ok {
+			room = roomNowhere
+		}
+	}
+	if (p.GetFlags() & (1 << uint(PlrFrozen))) != 0 {
+		return FrozenStartRoom
+	}
+	if room != roomNowhere {
+		return room
 	}
 	if p.GetLevel() >= LVL_IMMORT {
 		return ImmortStartRoom

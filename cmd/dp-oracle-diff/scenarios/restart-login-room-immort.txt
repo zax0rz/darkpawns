@@ -1,0 +1,70 @@
+# DP-1310, directly: the room an immortal re-enters after a restart.
+# depth-case: login.immort-restart-room
+#
+# C's do_quit records the quit room only through LVL_IMMORT
+# (src/act.other.c:167-169: GET_LEVEL(ch) <= LVL_IMMORT sets GET_LOADROOM);
+# above that the load room keeps its previous value — NOWHERE from init_char
+# (src/db.c:3078) — so the next login falls back to r_immort_start_room
+# (src/interpreter.c:2195-2199). The port used to persist the quit room for
+# every legal quitter, returning immortals to where they quit.
+#
+# The first-player God drops to exactly LVL_IMMORT+1, quits outside the
+# immortal start room, and the server restarts. The <RESTART> block's login
+# transcript carries the entry look: both engines must land in 1204, not the
+# quit room (8162). The pre-restart look pins the actor outside 1204, so the
+# vehicle cannot pass by scoping the quit back into the start room.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Restartlri
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restartlri
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Restartlri
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Restartlri
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+look
+set Restartlri level 32
+look
+quit
+<RESTART>
+look

@@ -314,9 +314,8 @@ func (s *Session) enterReturningPlayer() error {
 	// C's CON_MENU path calls reset_char() before re-adding an extracted
 	// player. In particular, a post-death player is still at NOWHERE with
 	// non-positive H/MV; reset_char supplies the minimal playable state and
-	// the normal level-based start room is selected below.
+	// the load-room rule below selects the entry room.
 	if s.player.GetRoom() < 0 {
-		s.player.SetRoom(game.LoginStartRoom(s.player))
 		s.player.SetPosition(game.PosStanding)
 		if s.player.GetHP() <= 0 {
 			s.player.SetHP(1)
@@ -328,6 +327,14 @@ func (s *Session) enterReturningPlayer() error {
 			s.player.SetMana(1)
 		}
 	}
+	// C saves the character with load_room NOWHERE at every game entry
+	// (interpreter.c:2186), so a character whose process dies mid-session
+	// restarts at a start room rather than their last legal quit room.
+	s.saveCharacter("menu entry", game.LoadRoomNowhere)
+	// The entry room is C's load-room selection (interpreter.c:2191-2210),
+	// run on every menu entry: the saved load room when its vnum resolves,
+	// else the frozen/immortal/mortal start room.
+	s.player.SetRoom(s.manager.world.SelectLoginRoom(s.player))
 	grantClassSpells(s.player)
 	if err := s.manager.Register(name, s); err != nil {
 		return err
