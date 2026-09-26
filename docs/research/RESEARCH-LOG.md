@@ -2,6 +2,16 @@
 
 Living document. Updated per session by Daeron.
 
+## [SESSION] 2026-09-26 — Restart Oracle and SQLite Cutover Evidence
+
+The differential oracle now crosses a real process boundary. Six restart vehicles prove transient world reset and durable player behavior against the C executable, while a 36-worker isolation test records 1,019 scenarios in 887.190 seconds without shared runtime resources or surviving engine processes.
+
+The session also preserved two useful correction chains. Raw-byte analysis refuted the first explanation for returning-login CRLF differences and located the actual greeting-loop and malformed echo-restoration mechanisms. Review of the PostgreSQL-to-SQLite tool found that verify-only could ignore unknown schema; the corrected tool now inventories completely and reports post-rename durability uncertainty honestly.
+
+**Field note:** `docs/research/field-notes/2026-09-26-restart-oracle-and-sqlite-cutover.md`
+
+**Ledger:** PF-046, PF-047, MA-011.
+
 ## [SESSION] 2026-07-12 — C Oracle Built + Differential Harness Landed (PR #243)
 
 **The original C Dark Pawns server boots on macOS Apple Silicon.** No source modifications. Just compiler flags and `make`. The C oracle is live at `/Users/zach/.openclaw/workspace/darkpawns-c-oracle/bin/circle`. This is the ground truth for port fidelity — not source code we read and guess about, but a running game we can ask questions.
