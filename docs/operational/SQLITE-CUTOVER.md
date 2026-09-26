@@ -96,12 +96,11 @@ levels, experience, statistics, conditions and counters are compared exactly.
 EXISTS`, so a table created by an older build keeps its older shape. Two of
 those shapes are known:
 
-- `scripts/init-moderation-db.sql` is a legacy script (no longer referenced by
-  anything) that defines extra columns the runtime never reads —
-  `abuse_reports.severity`, `abuse_reports.evidence`, `admin_log.details`,
-  `word_filters.is_active` — plus three tables the runtime does not own
-  (`admin_users`, `chat_logs`, `player_notes`). An installation that loaded it
-  will hit both stop conditions above.
+- A legacy `scripts/init-moderation-db.sql` (since deleted) defined extra columns
+  the runtime never reads — `abuse_reports.severity`, `abuse_reports.evidence`,
+  `admin_log.details`, `word_filters.is_active` — plus three tables the runtime
+  does not own (`admin_users`, `chat_logs`, `player_notes`). An installation that
+  loaded it will hit both stop conditions above.
 ## How the tool works
 
 Understanding four behaviours makes the procedure below readable.

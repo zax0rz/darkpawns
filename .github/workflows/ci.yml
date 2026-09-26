@@ -10,32 +10,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Disposable test dependencies only; Dark Pawns is deployed natively.
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: darkpawns
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
+    # No services. The runtime keeps its state in an embedded SQLite file, so
+    # this job starts no database and no cache: what CI runs is what a fresh
+    # installation runs. The one component that still speaks PostgreSQL, the
+    # operator conversion bridge, is a separate module with its own workflow
+    # (.github/workflows/db-migrate.yml) so it never becomes a tax on every
+    # application PR or a service this job has to wait for.
     steps:
     - uses: actions/checkout@v4
 
@@ -53,22 +33,12 @@ jobs:
       run: go mod download
 
     - name: Run Go tests with race detector
-      # DATABASE_URL is deliberately not set here: pkg/db's PostgreSQL lane
-      # leaves rows behind, so it is only green on a first run against a fresh
-      # database, and re-running this step would fail for reasons unrelated to
-      # the code under test.
-      #
-      # DP_MIGRATE_TEST_DB_URL is set, because the PostgreSQL -> SQLite
-      # conversion is the one thing this workflow has to prove against a real
-      # PostgreSQL. It gets its own database: a conversion tests the five
-      # production table names, and information_schema is per database, so a
-      # shared database makes those tables visible to other packages' tests.
-      env:
-        PGPASSWORD: postgres
-        DP_MIGRATE_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns_migrate_test?sslmode=disable"
-      run: |
-        psql -h localhost -U postgres -d postgres -c 'CREATE DATABASE darkpawns_migrate_test' || true
-        go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 120s
+      # Nothing to configure. Every package under test opens its own SQLite file
+      # in a temp directory, including the persistence e2e, so an empty
+      # environment is the tested one. The race detector stays: it is the gate
+      # that catches the concurrent-save and session-teardown bugs this store's
+      # single writer makes possible.
+      run: go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 120s
 
     - name: Coverage report + ratchet
       run: |
@@ -103,12 +73,12 @@ jobs:
     - name: Verify all packages build
       run: go build ./...
     
+    # The Python that remains is the WebSocket smoke test below and the fidelity
+    # gates above (stdlib only). The retired AI/agent requirements and the lane
+    # that installed them to discover zero applicable tests are gone with the
+    # subsystem they served: a step that passes by finding nothing is not a gate.
     - name: Install Python dependencies
       run: pip install -r requirements.txt
-
-    - name: Run Python tests
-      run: |
-        python -m pytest tests/ -k "not e2e" -v || echo "No pytest tests found"
 
     - name: World data matches the C oracle (DP-1333)
       run: make world-fidelity
@@ -116,32 +86,49 @@ jobs:
     - name: Build Go binary
       run: go build -o server ./cmd/server
 
-    - name: Run e2e persistence smoke test (telnet + DB)
+    # Persistence, end to end, on the database the server ships with: a new
+    # character is saved, a wrong password is rejected without taking the server
+    # down (DP-591), and a second connection loads the character back. The test
+    # creates its own SQLite file, so this needs no service and no environment.
+    - name: Run e2e persistence smoke test (telnet + SQLite)
       env:
-        DP_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns?sslmode=disable"
         JWT_SECRET: "ci-smoke-test-secret-at-least-32-characters-long"
       run: |
         go test -race ./tests/e2e/ -run TestTelnetSmoke_PersistenceRoundTrip -v -timeout 120s
 
+    # The WebSocket smoke test drives the real HTTP/WS surface against a real
+    # server with a disposable SQLite database. Health is asserted, not printed:
+    # the loop fails the step if the port never answers, because a startup check
+    # that continues after its own failed health result is not a check.
     - name: Start server for Python smoke test
       env:
-        DP_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns?sslmode=disable"
         JWT_SECRET: "ci-smoke-test-secret-at-least-32-characters-long"
+        DP_SMOKE_DB: "${{ runner.temp }}/darkpawns-ws-smoke.db"
       run: |
-        ./server -world lib/world -port 4350 -telnet-port 0 -db "$DP_TEST_DB_URL" > server.log 2>&1 &
+        ./server -world lib/world -port 4350 -telnet-port 0 -db "$DP_SMOKE_DB" > server.log 2>&1 &
         SERVER_PID=$!
+        healthy=0
         for i in $(seq 1 30); do
           if curl -sf http://localhost:4350/health > /dev/null 2>&1; then
+            healthy=1
             break
+          fi
+          if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+            echo "::error::server exited during startup"
+            cat server.log
+            exit 1
           fi
           sleep 1
         done
+        if [ "$healthy" -ne 1 ]; then
+          echo "::error::server never answered /health"
+          cat server.log
+          exit 1
+        fi
         echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
 
     - name: Run Python e2e smoke test
-      run: |
-        pip install websockets
-        python3 scripts/smoke_test_2b.py --ws-url ws://localhost:4350/ws
+      run: python3 scripts/smoke_test_2b.py --ws-url ws://localhost:4350/ws
 
     - name: Stop Python smoke server
       if: always()
@@ -152,12 +139,6 @@ jobs:
       run: |
         echo "--- server.log ---"
         cat server.log 2>/dev/null || true
-
-    - name: Test server startup
-      run: |
-        timeout 10s ./server -port 9999 &
-        sleep 3
-        curl -f http://localhost:9999/health || echo "Health check failed but continuing"
 
   lint:
     runs-on: ubuntu-latest
