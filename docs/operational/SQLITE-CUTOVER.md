@@ -9,10 +9,18 @@ repository. It reads PostgreSQL, writes a SQLite file, verifies the copy
 independently, and installs the result atomically. It never writes to the
 PostgreSQL database, and it never connects anywhere you did not name.
 
+The tool lives in its own Go module, [`tools/db-migrate`](../tools/db-migrate/README.md),
+because it needs a PostgreSQL driver and the shipped game runtime no longer has
+one. That is what moved the invocation: the command below is run from the module
+directory, and the repository root's `go build ./...` does not build the tool.
+
 ```bash
+cd tools/db-migrate
 go build -o dp-db-migrate ./cmd/dp-db-migrate
 ./dp-db-migrate --help
 ```
+
+From the repository root, `make db-migrate-build` does the same thing.
 
 **Do not run the tool on a live instance without reading the preflight section.**
 The tool is safe to run repeatedly, but the cutover itself is a service change.
@@ -274,7 +282,7 @@ Do all of this before stopping anything.
    directory that a deploy step prunes. Decide its mode (`0600`, owner = the
    service account) and its directory (`0700`).
 8. **Build the tool from the revision you are deploying** and record its
-   revision: `go build -o dp-db-migrate ./cmd/dp-db-migrate`.
+   revision: `cd tools/db-migrate && go build -o dp-db-migrate ./cmd/dp-db-migrate`.
 
 ## Conversion
 

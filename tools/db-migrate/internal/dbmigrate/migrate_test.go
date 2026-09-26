@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
-	"github.com/zax0rz/darkpawns/pkg/moderation"
 )
 
 // These tests run against a real PostgreSQL database, and they need one to
@@ -76,19 +75,20 @@ func newSourceSchema(t *testing.T) (string, *sql.DB) {
 	return dsn, conn
 }
 
-// buildSourceSchema creates the production schema in the source schema by running
-// the same two constructors the server runs at boot.
+// buildSourceSchema creates the PostgreSQL source schema from the frozen fixture.
+//
+// It deliberately does not go through the runtime: the runtime is SQLite-only and
+// no longer knows how to create a PostgreSQL schema, and the fixture has to be the
+// schema as it actually was when production was converted, not whatever the
+// current code would create today.
 func buildSourceSchema(t *testing.T, dsn string) {
 	t.Helper()
-	database, err := db.New(dsn)
+	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
-		t.Fatalf("create source schema: %v", err)
+		t.Fatalf("open source: %v", err)
 	}
-	manager := moderation.NewManager(database.SQLDB(), database.Dialect())
-	manager.Close()
-	if err := database.Close(); err != nil {
-		t.Fatalf("close source: %v", err)
-	}
+	defer func() { _ = conn.Close() }()
+	applySourceSchema(t, conn)
 }
 
 // fixturePlayers are the player rows every populated fixture carries. They are

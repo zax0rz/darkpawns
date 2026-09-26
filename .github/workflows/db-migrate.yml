@@ -1,0 +1,128 @@
+name: DB migration tool
+
+# The PostgreSQL -> SQLite bridge is a separate Go module and the only thing in
+# this repository that needs PostgreSQL. It is proven here: on demand, and when
+# its own files change. Ordinary application CI (.github/workflows/ci.yml)
+# requires no external service at all and never runs this job.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'tools/db-migrate/**'
+      - '.github/workflows/db-migrate.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'tools/db-migrate/**'
+      - '.github/workflows/db-migrate.yml'
+      # The bridge builds its destination with the runtime's schema
+      # initialisation and its application-level proof uses the runtime's codec,
+      # so a change to either can break it.
+      - 'pkg/db/**'
+      - 'pkg/moderation/**'
+      - 'pkg/game/character_data.go'
+      - 'go.mod'
+      - 'go.sum'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    # Isolated PostgreSQL for this job only. The runtime, its tests and ordinary
+    # CI need no database service.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26.6'
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    # One database for the suite (the tests create their own schemas inside it)
+    # and one for the end-to-end CLI proof, so a test that leaves something
+    # behind cannot change what the smoke conversion sees.
+    - name: Create the isolated databases
+      env:
+        PGPASSWORD: postgres
+      run: |
+        psql -h localhost -U postgres -d postgres -c 'CREATE DATABASE darkpawns_migrate_test'
+        psql -h localhost -U postgres -d postgres -c 'CREATE DATABASE darkpawns_cli_test'
+
+    - name: Build
+      working-directory: tools/db-migrate
+      run: go build ./... && go vet ./...
+
+    # The whole converter suite: unit, canonicalization, schema refusal,
+    # allowance-receipt, atomic-install, durability-state, verify-only, and the
+    # application-level proof that the migrated file opens and mutates through
+    # the real runtime. DATABASE_URL is deliberately NOT set: the suite takes its
+    # source from DP_MIGRATE_TEST_DB_URL and nothing else.
+    - name: Converter integration suite (PostgreSQL -> SQLite)
+      working-directory: tools/db-migrate
+      env:
+        DP_MIGRATE_TEST_DB_URL: "postgres://postgres:postgres@localhost:5432/darkpawns_migrate_test?sslmode=disable"
+      run: go test -race ./... -count=1 -timeout 300s
+
+    - name: Formatting
+      working-directory: tools/db-migrate
+      run: |
+        go install mvdan.cc/gofumpt@latest
+        files=$(gofumpt -l .)
+        if [ -n "$files" ]; then
+          echo "::error::gofumpt found unformatted files:"
+          echo "$files"
+          gofumpt -d .
+          exit 1
+        fi
+
+    # End to end through the shipped binary: the frozen PostgreSQL source schema,
+    # a real conversion, the receipt, and a read-only re-verification of the
+    # installed file. A library test cannot prove the operator's command line.
+    - name: Conversion smoke through the built binary
+      working-directory: tools/db-migrate
+      env:
+        PGPASSWORD: postgres
+        DP_MIGRATE_FROM: "postgres://postgres:postgres@localhost:5432/darkpawns_cli_test?sslmode=disable"
+      run: |
+        set -euo pipefail
+        psql -h localhost -U postgres -d darkpawns_cli_test -q -f internal/dbmigrate/testdata/pgschema_players.sql
+        psql -h localhost -U postgres -d darkpawns_cli_test -q -f internal/dbmigrate/testdata/pgschema_moderation.sql
+        go build -o /tmp/dp-db-migrate ./cmd/dp-db-migrate
+        /tmp/dp-db-migrate --from "$DP_MIGRATE_FROM" --to /tmp/cli-smoke.db --verify --report /tmp/cli-smoke.json
+        python3 scripts/check_receipt.py /tmp/cli-smoke.json --expect-mode convert
+        # A second run must refuse to overwrite what it just installed...
+        if /tmp/dp-db-migrate --from "$DP_MIGRATE_FROM" --to /tmp/cli-smoke.db --verify; then
+          echo "::error::a conversion over a non-empty destination was accepted"
+          exit 1
+        fi
+        # ...and verify-only must accept the pair without writing anything.
+        /tmp/dp-db-migrate --from "$DP_MIGRATE_FROM" --to /tmp/cli-smoke.db --verify-only --report /tmp/cli-verify.json
+        python3 scripts/check_receipt.py /tmp/cli-verify.json --expect-mode verify-only
+
+    - name: Print receipts on failure
+      if: failure()
+      run: |
+        for receipt in /tmp/cli-smoke.json /tmp/cli-verify.json; do
+          echo "--- $receipt ---"
+          cat "$receipt" 2>/dev/null || true
+        done
