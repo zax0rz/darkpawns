@@ -186,6 +186,15 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return nil
 			}
 			if rec.Password != "" && bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)) != nil {
+				// C's nanny turned echo back on as the password line was
+				// dispatched (interpreter.c:1871). echo_on's telnet string is
+				// malformed — TELOPT_NAOFFD and TELOPT_NAOCRD are 13 and 10
+				// without IAC prefixes (comm.c:954-967) — so it leaks two
+				// visible bytes before every password outcome. Raw event: the
+				// bytes are exact, no line ending added. The correct-password
+				// paths emit it below; the reconnect branch already carries
+				// its own (reconnect.go).
+				s.sendRawEvent("\r\n")
 				game.MudLog(fmt.Sprintf("Bad PW: %s [%s]", rec.Name, s.RemoteIP()), game.MudlogBrief, game.LVL_GOD, true) // interpreter.c:1878-1879
 				s.manager.loginAttempts.RecordFailure(ip)
 				if s.manager.accountLockouts != nil {
@@ -276,10 +285,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			s.manager.accountLockouts.RecordSuccess(login.PlayerName)
 		}
 		// C checks for another copy of the character before the MOTD
-		// (interpreter.c:1914-1916).
+		// (interpreter.c:1914-1916). The reconnect branch ports
+		// CON_PASSWORD's echo_on bytes itself; a fresh login emits them here,
+		// after the dupe check, so the MOTD path opens with C's bare CRLF
+		// (interpreter.c:1871, comm.c:954-967).
 		if s.performDupeCheck() {
 			return nil
 		}
+		s.sendRawEvent("\r\n")
 		// interpreter.c:1924-1927, after the MOTD.
 		game.MudLog(fmt.Sprintf("%s [%s] has connected.", s.player.GetName(), s.RemoteIP()),
 			game.MudlogBrief, max(game.LVL_IMMORT, s.player.GetInvisLevel()), true)

@@ -86,8 +86,14 @@ func (w *World) DoQuit(ch *Player, reallyQuit bool) QuitOutcome {
 		return QuitLogoutLoseEQ
 	}
 
-	// Safe path: C sets GET_LOADROOM to this room so the player reloads where
-	// they legally quit; the Go save already persists the current room.
+	// Safe path: a legal quitter through LVL_IMMORT reloads where they legally
+	// quit (act.other.c:167-169 sets GET_LOADROOM only for GET_LEVEL(ch) <=
+	// LVL_IMMORT). Above LVL_IMMORT the load room keeps its previous value —
+	// typically NOWHERE from init_char (db.c:3078) — so the next login falls
+	// back to the immortal start room. DP-1310.
+	if ch.GetLevel() <= LVL_IMMORT {
+		ch.SetLoadRoom(roomVNum)
+	}
 	if ch.IsMounted() {
 		Unmount(ch, w.GetMount(ch))
 	}

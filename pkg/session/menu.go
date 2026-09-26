@@ -109,7 +109,10 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 		s.handleDescriptionLine(input.Choice)
 	case "password_old":
 		if !s.passwordMatches(choice) {
-			s.sendText("\r\nIncorrect password.\r\n")
+			// C's echo_on stray CRLF precedes the refusal (interpreter.c:2293;
+			// see session_login.go for the echo_on byte story). Raw event:
+			// exact bytes, no added line ending.
+			s.sendRawEvent("\r\n\r\nIncorrect password.\r\n")
 			s.showMainMenu()
 			return nil
 		}
@@ -137,11 +140,17 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 		if err := s.persistChangedPassword(); err != nil {
 			return err
 		}
-		s.sendText("Done.\r\n")
+		// C runs echo_on twice here (interpreter.c:1974 and 1984), so two
+		// stray CRLFs precede "\r\nDone.\n\r" (see session_login.go for
+		// the echo_on byte story). Raw event: exact bytes.
+		s.sendRawEvent("\r\n\r\n\r\nDone.\n\r")
 		s.showMainMenu()
 	case "delete_password":
+		// C's echo_on stray CRLF opens the verification outcome either way
+		// (interpreter.c:2306; see session_login.go for the byte story).
+		// Raw event: exact bytes, no added line ending.
 		if !s.passwordMatches(choice) {
-			s.sendText("\r\nIncorrect password.\r\n")
+			s.sendRawEvent("\r\n\r\nIncorrect password.\r\n")
 			s.showMainMenu()
 			return nil
 		}
@@ -263,7 +272,8 @@ func (s *Session) pendingPlayerName() string {
 }
 
 func (s *Session) deleteConfirmationPrompt() string {
-	return fmt.Sprintf("%s:\r\nYOU ARE ABOUT TO DELETE THIS CHARACTER PERMANENTLY.\r\n"+
+	// interpreter.c:2312-2316 sends a CRLF, the name, then the warning block.
+	return fmt.Sprintf("\r\n%s:\r\nYOU ARE ABOUT TO DELETE THIS CHARACTER PERMANENTLY.\r\n"+
 		"ARE YOU ABSOLUTELY SURE?\r\n\r\nPlease type \"yes\" to confirm: ", s.pendingPlayerName())
 }
 
@@ -314,9 +324,8 @@ func (s *Session) enterReturningPlayer() error {
 	// C's CON_MENU path calls reset_char() before re-adding an extracted
 	// player. In particular, a post-death player is still at NOWHERE with
 	// non-positive H/MV; reset_char supplies the minimal playable state and
-	// the normal level-based start room is selected below.
+	// the load-room rule below selects the entry room.
 	if s.player.GetRoom() < 0 {
-		s.player.SetRoom(game.LoginStartRoom(s.player))
 		s.player.SetPosition(game.PosStanding)
 		if s.player.GetHP() <= 0 {
 			s.player.SetHP(1)
@@ -328,6 +337,14 @@ func (s *Session) enterReturningPlayer() error {
 			s.player.SetMana(1)
 		}
 	}
+	// C saves the character with load_room NOWHERE at every game entry
+	// (interpreter.c:2186), so a character whose process dies mid-session
+	// restarts at a start room rather than their last legal quit room.
+	s.saveCharacter("menu entry", game.LoadRoomNowhere)
+	// The entry room is C's load-room selection (interpreter.c:2191-2210),
+	// run on every menu entry: the saved load room when its vnum resolves,
+	// else the frozen/immortal/mortal start room.
+	s.player.SetRoom(s.manager.world.SelectLoginRoom(s.player))
 	grantClassSpells(s.player)
 	if err := s.manager.Register(name, s); err != nil {
 		return err

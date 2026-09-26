@@ -378,11 +378,22 @@ func TestHandleLogin_NewlyLockedClosesImmediately(t *testing.T) {
 		t.Fatal("expected newly locked account to close session immediately")
 	}
 
+	// The first frame is C's echo_on stray CRLF (interpreter.c:1871; the
+	// malformed telnet string leaks two visible bytes), then the port's
+	// lockout error.
 	msg, ok := drainSend(s)
+	if !ok {
+		t.Fatal("expected echo_on CRLF then lockout error on send channel")
+	}
+	srv := unmarshalServerMsg(t, msg)
+	if srv.Type != MsgEvent {
+		t.Fatalf("message type = %q, want %q (echo_on stray CRLF)", srv.Type, MsgEvent)
+	}
+	msg, ok = drainSend(s)
 	if !ok {
 		t.Fatal("expected lockout error message on send channel")
 	}
-	srv := unmarshalServerMsg(t, msg)
+	srv = unmarshalServerMsg(t, msg)
 	if srv.Type != MsgError {
 		t.Fatalf("message type = %q, want %q", srv.Type, MsgError)
 	}

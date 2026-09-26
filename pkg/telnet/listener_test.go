@@ -233,24 +233,27 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 		t.Fatal(err)
 	}
 	cachedMOTD := strings.ReplaceAll(string(motd), "\n", "\r\n")
-	wantPrefix := cGreetingsFixture(t) +
-		"\r\nBy what name do you wish to be known? " +
-		"Invalid name, please try another.\r\nName: " +
-		"Please remember to choose an appropriate fantasy-oriented name.\r\n" +
-		"Did I get that right, Transcript (Y/N)? " +
-		"New character.\r\nGive me a password for Transcript: " +
-		"\r\nPlease retype password: " +
-		"\r\nDo you want ANSI color (Y/N)? " +
-		"What is your sex (M/F)? " +
-		session.RaceMenuText + "\r\nRace: " +
-		session.HumanClassMenuText + "\r\nClass: " +
-		session.HometownMenuText + "\r\nSelect: " +
-		"<ROLLED_STATS>\r\nPress 'Y' to keep these stats, and 'N' to reroll:" +
-		cachedMOTD + "\r\n\n*** PRESS RETURN: " +
-		"\n\rWelcome to Dark Pawns!\n\r0) Exit from Dark Pawns.\n\r1) Enter the game.\r\n" +
-		"2) Enter description.\r\n3) Read the background story.\r\n4) Change password.\r\n" +
-		"5) Delete this character.\r\n\r\n   Make your choice: " +
-		"\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n"
+	wantPrefix := // C's first flush carries process_output's prepended
+		// interruption CRLF (comm.c:1621,1641; the prompt loop marks the
+		// fresh descriptor before the greeting is flushed, comm.c:645-648).
+		"\r\n" + cGreetingsFixture(t) +
+			"\r\nBy what name do you wish to be known? " +
+			"Invalid name, please try another.\r\nName: " +
+			"Please remember to choose an appropriate fantasy-oriented name.\r\n" +
+			"Did I get that right, Transcript (Y/N)? " +
+			"New character.\r\nGive me a password for Transcript: " +
+			"\r\nPlease retype password: " +
+			"\r\nDo you want ANSI color (Y/N)? " +
+			"What is your sex (M/F)? " +
+			session.RaceMenuText + "\r\nRace: " +
+			session.HumanClassMenuText + "\r\nClass: " +
+			session.HometownMenuText + "\r\nSelect: " +
+			"<ROLLED_STATS>\r\nPress 'Y' to keep these stats, and 'N' to reroll:" +
+			cachedMOTD + "\r\n\n*** PRESS RETURN: " +
+			"\n\rWelcome to Dark Pawns!\n\r0) Exit from Dark Pawns.\n\r1) Enter the game.\r\n" +
+			"2) Enter description.\r\n3) Read the background story.\r\n4) Change password.\r\n" +
+			"5) Delete this character.\r\n\r\n   Make your choice: " +
+			"\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n"
 	if !strings.HasPrefix(visible, wantPrefix) {
 		t.Fatalf("creation transcript prefix differs from C\ngot:  %q\nwant: %q", visible, wantPrefix)
 	}

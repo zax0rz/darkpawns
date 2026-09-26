@@ -570,9 +570,10 @@ func (m *Manager) ExtractPendingChars() {
 		// extract_char saves the character (handler.c:1162). A renter was
 		// saved with their objects when they quit; everyone else is saved as
 		// extraction left them (what they carried is on the floor or in a
-		// corpse).
+		// corpse). Both carry the in-memory load room — C's extract pass
+		// saves GET_LOADROOM, not the (now NOWHERE) position.
 		if !player.RentedOut {
-			victim.saveCharacter("extraction")
+			victim.saveCharacter("extraction", player.GetLoadRoom())
 		}
 		if !victim.hasTransport() {
 			continue
@@ -1219,7 +1220,9 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	// the game: C's close_socket saves only CON_PLAYING characters, and an
 	// extracted one was already saved by extract_char.
 	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest && !s.menuActive {
-		if rec, err := s.playerRecordForSave(s.player); err == nil {
+		// C's close_socket saves a playing character with load_room NOWHERE
+		// (comm.c:2130).
+		if rec, err := s.playerRecordForSave(s.player, game.LoadRoomNowhere); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("DB save error", "player", playerName, "error", err)
 			}
@@ -1265,7 +1268,8 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true) // comm.c:2132-2133
 
 	if m.hasDB && p.ID > 0 && !s.isGuest {
-		if rec, err := s.playerRecordForSave(p); err == nil {
+		// Lost-link save: load_room NOWHERE (comm.c:2130).
+		if rec, err := s.playerRecordForSave(p, game.LoadRoomNowhere); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("linkdead save error", "player", s.playerName, "error", err)
 			}
@@ -1454,9 +1458,11 @@ func (s *Session) extractLinkdead() {
 		slog.Warn("linkdead reaper: PlayerTransfer to disconnect room failed", "player", playerName, "error", err)
 	}
 
-	// Save before closing the connection.
+	// Save before closing the connection. The idle-disconnect close runs
+	// close_socket's playing save with load_room NOWHERE (limits.c:434-444,
+	// comm.c:2130).
 	if s.manager.hasDB && p.ID > 0 && !s.isGuest {
-		if rec, err := s.playerRecordForSave(p); err == nil {
+		if rec, err := s.playerRecordForSave(p, game.LoadRoomNowhere); err == nil {
 			if err := s.manager.db.SavePlayer(rec); err != nil {
 				slog.Error("linkdead reaper: DB save error", "player", playerName, "error", err)
 			}

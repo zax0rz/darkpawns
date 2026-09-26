@@ -303,6 +303,18 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 	mustWrite(t, c1, "quit\r\n")
 	_ = c1.Close()
 
+	// Prove the first session wrote this exact character independently of the
+	// room text used below to prove login placement. Creation and game entry
+	// both call save_char(..., NOWHERE) in C, so the durable load-room seam must
+	// contain -1 rather than the live Burning Hut position.
+	saved := loadPersistedPlayerState(t, dbURL, name)
+	if saved.Name != name || saved.Level != 1 {
+		t.Fatalf("persisted character identity = name %q level %d, want %q level 1", saved.Name, saved.Level, name)
+	}
+	if saved.RoomVNum != -1 {
+		t.Fatalf("persisted load room = %d, want NOWHERE (-1)", saved.RoomVNum)
+	}
+
 	// --- Connection 2: wrong password must be rejected, NOT crash (DP-591). ---
 	c2, r2 := launchAndDialDB(t, dbURL)
 	if got := readUntil(t, c2, r2, "By what name", 10*time.Second); got == "" {
@@ -339,9 +351,15 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 		t.Fatal("conn3: returning player did not get menu")
 	}
 	mustWrite(t, c3, "1\r\n")
-	loaded := readUntil(t, c3, r3, "Temple Infirmary", 10*time.Second)
-	if loaded == "" {
-		t.Fatal("conn3: persisted character did not load back into the world")
+	loaded, matched := readUntilAnyCaptured(c3, r3, []string{"Exits:"}, 10*time.Second)
+	if !matched {
+		t.Fatalf("conn3: persisted character did not enter the world; stored room_vnum=%d\n--- post-entry transcript ---\n%s", saved.RoomVNum, loaded)
+	}
+	// With a persisted load room of NOWHERE, canonical C selects the mortal
+	// start room (vnum 8004), whose authored name is "At the Temple Altar".
+	// This must not regress to the live creation room (Temple Infirmary, 8162).
+	if !strings.Contains(loaded, "At the Temple Altar") {
+		t.Fatalf("conn3: entry room did not match C's mortal-start fallback; stored room_vnum=%d\n--- post-entry transcript ---\n%s", saved.RoomVNum, loaded)
 	}
 	if strings.Contains(loaded, "Lvl ") {
 		t.Errorf("conn3: loaded room output included the retired player-status line\n---\n%s", loaded)
@@ -382,6 +400,30 @@ func deleteTestPlayer(t *testing.T, dbURL, name string) {
 	if _, err := conn.Exec("DELETE FROM players WHERE name = $1", name); err != nil {
 		t.Logf("cleanup: delete %s: %v", name, err)
 	}
+}
+
+type persistedPlayerState struct {
+	Name     string
+	RoomVNum int
+	Level    int
+}
+
+func loadPersistedPlayerState(t *testing.T, dbURL, name string) persistedPlayerState {
+	t.Helper()
+	conn, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		t.Fatalf("persisted player: open db: %v", err)
+	}
+	defer conn.Close()
+
+	var state persistedPlayerState
+	if err := conn.QueryRow(
+		"SELECT name, room_vnum, level FROM players WHERE name = $1",
+		name,
+	).Scan(&state.Name, &state.RoomVNum, &state.Level); err != nil {
+		t.Fatalf("persisted player %q: %v", name, err)
+	}
+	return state
 }
 
 // launchAndDial builds the server once (cached across tests), starts a fresh
@@ -684,6 +726,17 @@ func readUntil(t *testing.T, conn net.Conn, r *bufio.Reader, marker string, time
 // accumulated text once a marker is found, or "" if none arrive in time.
 func readUntilAny(t *testing.T, conn net.Conn, r *bufio.Reader, markers []string, timeout time.Duration) string {
 	t.Helper()
+	out, matched := readUntilAnyCaptured(conn, r, markers, timeout)
+	if !matched {
+		return ""
+	}
+	return out
+}
+
+// readUntilAnyCaptured is readUntilAny's diagnostic form: it preserves the
+// complete transcript on timeout so callers can report what the server sent
+// instead of collapsing every failure to an empty string.
+func readUntilAnyCaptured(conn net.Conn, r *bufio.Reader, markers []string, timeout time.Duration) (string, bool) {
 	deadline := time.Now().Add(timeout)
 	var out strings.Builder
 	matched := func() bool {
@@ -701,7 +754,7 @@ func readUntilAny(t *testing.T, conn net.Conn, r *bufio.Reader, markers []string
 		if err != nil {
 			if ne, ok := err.(net.Error); ok && ne.Timeout() {
 				if matched() {
-					return out.String()
+					return out.String(), true
 				}
 				continue
 			}
@@ -713,13 +766,13 @@ func readUntilAny(t *testing.T, conn net.Conn, r *bufio.Reader, markers []string
 		}
 		out.WriteByte(b)
 		if matched() {
-			return out.String()
+			return out.String(), true
 		}
 	}
 	if matched() {
-		return out.String()
+		return out.String(), true
 	}
-	return ""
+	return out.String(), false
 }
 
 // consumeIAC reads the bytes following an IAC (0xFF) byte: a 3-byte
