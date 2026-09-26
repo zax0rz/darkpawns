@@ -70,6 +70,33 @@ func TestUpdatePositionAfterDamage_WoundedBand(t *testing.T) {
 	}
 }
 
+// TestUpdatePositionAfterDamage_IncapExactStrings is the DP-1318 regression: C's
+// victim-facing incap message contains the typo "an will slowly die" while the
+// room-facing message reads "and will slowly die". R1 — player-facing bytes are law.
+func TestUpdatePositionAfterDamage_IncapExactStrings(t *testing.T) {
+	v := &msgMockCombatant{
+		mockCombatant: mockCombatant{name: "Victim", hp: -4, position: PosFighting, fighting: "Attacker"},
+	}
+	var broadcasts []string
+	UpdatePositionAfterDamage(v, func(_ int, msg, _ string) {
+		broadcasts = append(broadcasts, msg)
+	})
+	if len(v.messages) != 1 {
+		t.Fatalf("expected 1 personal message, got %d", len(v.messages))
+	}
+	wantVictim := "You are incapacitated an will slowly die, if not aided.\r\n"
+	if v.messages[0] != wantVictim {
+		t.Errorf("victim message = %q, want %q", v.messages[0], wantVictim)
+	}
+	if len(broadcasts) != 1 {
+		t.Fatalf("expected 1 room broadcast, got %d", len(broadcasts))
+	}
+	wantRoom := "Victim is incapacitated and will slowly die, if not aided."
+	if broadcasts[0] != wantRoom {
+		t.Errorf("room broadcast = %q, want %q", broadcasts[0], wantRoom)
+	}
+}
+
 // TestUpdatePositionAfterDamage_NilBroadcast verifies the room broadcast is
 // optional (personal message still fires).
 func TestUpdatePositionAfterDamage_NilBroadcast(t *testing.T) {

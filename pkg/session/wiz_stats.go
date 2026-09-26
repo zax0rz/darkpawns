@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -192,7 +193,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 		line += ", Connected: Playing"
 	}
 	s.Send(line + "\r\n")
-	s.Send(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]\r\n", position, p.GetIdleTimer()))
+	s.Send(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]\r\n", wizardPositionName(combat.PosStanding), p.GetIdleTimer()))
 	s.Send("PLR: " + wizardPlayerFlags(p, flags) + "\r\n")
 	preferenceFlags := flags
 	autoExit := p.GetAutoExit()

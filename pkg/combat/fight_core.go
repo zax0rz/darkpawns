@@ -177,7 +177,7 @@ func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, me
 			broadcast(room, fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", name), name)
 		}
 	case PosIncap:
-		victim.SendMessage("You are incapacitated and will slowly die, if not aided.\r\n")
+		victim.SendMessage("You are incapacitated an will slowly die, if not aided.\r\n")
 		if broadcast != nil {
 			broadcast(room, fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", name), name)
 		}
@@ -473,7 +473,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		cbBroadcast(ch.GetRoom(),
 			fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName), "")
 	case PosIncap:
-		victim.SendMessage("You are incapacitated and will slowly die, if not aided.\r\n")
+		victim.SendMessage("You are incapacitated an will slowly die, if not aided.\r\n")
 		cbBroadcast(ch.GetRoom(),
 			fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName), "")
 	case PosStunned:
