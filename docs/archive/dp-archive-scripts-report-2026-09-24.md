@@ -208,7 +208,7 @@ Lua 4.0 and are fine; `mxp`, `msp`, `create_event`, `get_*` are not.
 
 Object scripts can only be reached through `OS_ONCMD` and `OS_ONPULSE`; `run_script` is called for
 objects only from `src/interpreter.c` (equipment, inventory and room contents) and
-`src/comm.c:798-800` (pulse).
+`src/comm.c:789-795` (pulse).
 
 | path | what it does in play | triggers | target vnum → name (zone) | C special on target | missing | notes |
 |---|---|---|---|---|---|---|

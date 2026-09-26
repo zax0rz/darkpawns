@@ -1623,7 +1623,7 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // jail — registered room special; its commandless pulse body is not yet ported
 // ================================================================
 func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// C's commandless timer body is reached by room_activity (comm.c:690-756),
+	// C's commandless timer body is reached by room_activity (comm.c:691-756),
 	// while the command path still returns FALSE at the `cmd || mini_mud` gate.
 	// The timer body is intentionally left unimplemented until it has a depth
 	// vehicle; inventing a command substitute would violate R1/R2/R5e.

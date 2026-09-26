@@ -25,7 +25,7 @@ R5 tracing establishes the existing PostgreSQL player row as the Go
 name↔ID authority: `pkg/db/player.go:270-324` supplies case-insensitive
 `GetPlayer` plus `ListPlayerNames`, while `pkg/session/session_login.go:164-172`
 loads and preserves the row's stable ID/canonical name. The C call path is
-`src/db.c:470-528` (`player_table`) and `src/db.c:2313-2337`
+`src/db.c:468-528` (`player_table`) and `src/db.c:2313-2337`
 (`get_id_by_name`/`get_name_by_id`).
 
 `cmd/server/mail_identity.go:11-119` builds a validated reverse map from

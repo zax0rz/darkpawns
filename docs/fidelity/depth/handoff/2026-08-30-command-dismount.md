@@ -19,7 +19,7 @@ The handler ignores its argument, sends the unmounted refusal when
 `IS_MOUNTED(ch)` is false, and otherwise sends `You hop off your mount.` to
 the actor first. It then resolves `get_mount(ch)`, sends the room act
 `$n dismounts from the back of $N.`, sends the non-player mount notification,
-and calls `unmount(ch, get_mount(ch))`. The actual `src/utils.c:401-414`
+and calls `unmount(ch, get_mount(ch))`. The actual `src/utils.c:397-443`
 helper only clears `AFF_MOUNT` on the rider and mount; it does not clear the
 ordinary follower/master relation.
 

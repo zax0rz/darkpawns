@@ -65,7 +65,7 @@ prompt frame that pulse-time output requires.
    (`nohassle` + `goto 8161`) stands with the mortal peer when the pulse
    lands; pre-fix Go pulled the God, desyncing the draw stream.
 
-5. **room_activity port (comm.c:690-756) into the `OnRoomActivity` seam.**
+5. **room_activity port (comm.c:691-756) into the `OnRoomActivity` seam.**
    New `pkg/game/room_activity.go` + wiring in `cmd/server/main.go`: AFF_FLAMING
    → 15 SPELL_FLAMESTRIKE; SECT_UNDERWATER without WATERBREATHE → 25
    SPELL_DROWNING; SECT_WATER_NOSWIM without WATERWALK/FLY/boat → 25

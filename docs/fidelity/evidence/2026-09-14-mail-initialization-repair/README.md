@@ -29,7 +29,7 @@ production/test-input identical to the corrected checkpoint.
 The persistent name↔ID authority was established from the actual call paths:
 
 - C boot builds `player_table` from persisted player records at
-  `src/db.c:470-528`; `get_id_by_name` and `get_name_by_id` read that table at
+  `src/db.c:468-528`; `get_id_by_name` and `get_name_by_id` read that table at
   `src/db.c:2313-2337`.
 - Go returning-player login reads the authoritative PostgreSQL row through
   `pkg/db/player.go:270-304` and preserves its `id`/canonical `name` through

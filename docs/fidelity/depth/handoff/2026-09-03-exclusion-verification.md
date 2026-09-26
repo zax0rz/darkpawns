@@ -55,7 +55,7 @@ evidence is the C call path and the Go dispatch path; `src/` and
   It lacks an independent depth vehicle, so it is `blocked`, not proven.
 - `room.jail-commandless-body` is a reachable pulse path. C
   `room_activity()` invokes the room special for every player with command 0
-  (`src/comm.c:690-756`), and `SPECIAL(jail)` contains the timer, audience,
+  (`src/comm.c:691-756`), and `SPECIAL(jail)` contains the timer, audience,
   relocation, and look sequence (`src/spec_procs2.c:1470-1493`). Go already
   dispatches room activity with an empty command, but `specJail` is currently a
   no-op. The row is therefore `blocked`, pending a dedicated pulse vehicle;
