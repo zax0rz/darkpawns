@@ -28,7 +28,7 @@ export function ExitEditor({ schema, room, dirty, disabled = false, onOperation 
     <section className="border-t border-rule pt-5">
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="text-lg text-ink">Exits</h2>
-        <span className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">six directions</span>
+        <span className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">{directions.length} directions</span>
       </div>
       <div className="space-y-2">
         {directions.map((direction) => {

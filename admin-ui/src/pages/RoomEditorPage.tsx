@@ -137,8 +137,9 @@ export function RoomEditorPage() {
   };
 
   if (!Number.isInteger(vnum)) return <EditorError message="The room VNUM is invalid." />;
-  if (schemaQuery.isLoading || previewQuery.isLoading || openMutation.isPending || (claimed && !currentDraft)) {
-    return <EditorLoading />;
+  if (schemaQuery.isLoading || previewQuery.isLoading || (openMutation.isPending && !currentDraft) || (claimed && !currentDraft)) {
+    const step = schemaQuery.isLoading ? 'Loading room controls' : previewQuery.isLoading ? 'Loading room preview' : openMutation.isPending ? 'Opening room draft' : 'Restoring room draft';
+    return <EditorLoading step={step} />;
   }
   if (openMutation.error && !currentDraft) {
     return (
@@ -221,9 +222,10 @@ export function RoomEditorPage() {
   );
 }
 
-function EditorLoading() {
+function EditorLoading({ step }: { step: string }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" role="status">
+      <p className="text-sm text-ink-muted">{step}…</p>
       <Skeleton className="h-4 w-28" />
       <Skeleton className="h-28 w-full" />
       <Skeleton className="h-96 w-full" />

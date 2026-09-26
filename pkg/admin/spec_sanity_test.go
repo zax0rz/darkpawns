@@ -47,6 +47,7 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/objects/{vnum}":                 {"get"},
 		"/admin/shops":                          {"get"},
 		"/admin/rooms/{vnum}":                   {"get"},
+		"/admin/search":                         {"get"},
 		"/admin/metrics":                        {"get"},
 		"/admin/zones/{number}":                 {"get"},
 		"/admin/zones/reset":                    {"post"},

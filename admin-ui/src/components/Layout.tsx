@@ -12,18 +12,19 @@ interface NavItem {
   label: string;
   icon: IconName;
   role: string;
+  group: 'Overview' | 'Build the world' | 'Staff tools';
 }
 
 const navItems: NavItem[] = [
-  { to: '/admin/', label: 'Dashboard', icon: 'dashboard', role: 'player' },
-  { to: '/admin/game/zones', label: 'Zones', icon: 'zones', role: 'player' },
-  { to: '/admin/game/shops', label: 'Shops', icon: 'objects', role: 'player' },
-  { to: '/admin/game/mobs', label: 'Mobs', icon: 'mobs', role: 'player' },
-  { to: '/admin/game/objects', label: 'Objects', icon: 'objects', role: 'player' },
-  { to: '/admin/agents', label: 'Agents', icon: 'agents', role: 'builder' },
-  { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder' },
-  { to: '/admin/workshop', label: 'Workshop', icon: 'operations', role: 'builder' },
-  { to: '/admin/webclient', label: 'Terminal', icon: 'terminal', role: 'player' },
+  { to: '/admin/', label: 'Dashboard', icon: 'dashboard', role: 'player', group: 'Overview' },
+  { to: '/admin/webclient', label: 'Terminal', icon: 'terminal', role: 'player', group: 'Overview' },
+  { to: '/admin/game/zones', label: 'Zones & rooms', icon: 'zones', role: 'player', group: 'Build the world' },
+  { to: '/admin/game/mobs', label: 'Mobs', icon: 'mobs', role: 'player', group: 'Build the world' },
+  { to: '/admin/game/objects', label: 'Objects', icon: 'objects', role: 'player', group: 'Build the world' },
+  { to: '/admin/game/shops', label: 'Shops', icon: 'objects', role: 'player', group: 'Build the world' },
+  { to: '/admin/workshop', label: 'Workshop & saves', icon: 'operations', role: 'builder', group: 'Build the world' },
+  { to: '/admin/workshop/help', label: 'Builder guide', icon: 'info', role: 'builder', group: 'Build the world' },
+  { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder', group: 'Staff tools' },
 ];
 
 // Bottom tab items for mobile
@@ -74,9 +75,9 @@ export function Layout() {
   const visibleNavItems = navItems.filter((item) => hasRole(item.role));
 
   const connectionIndicator = {
-    connected: { color: 'bg-accent', label: 'ONLINE' },
-    disconnected: { color: 'bg-ink-muted animate-pulse', label: 'OFFLINE' },
-    reconnecting: { color: 'bg-accent animate-pulse', label: 'RECONNECTING' },
+    connected: { color: 'bg-online', label: 'ONLINE' },
+    disconnected: { color: 'bg-accent', label: 'OFFLINE' },
+    reconnecting: { color: 'bg-ink-muted animate-pulse', label: 'RECONNECTING' },
   }[connectionStatus];
 
   const isMobile = breakpoint === 'mobile';
@@ -210,6 +211,7 @@ function SidebarContent({
   onClose?: () => void;
   onNavigate?: () => void;
 }) {
+  const [accountOpen, setAccountOpen] = useState(false);
   return (
     <>
       {/* Logo / Title */}
@@ -228,34 +230,41 @@ function SidebarContent({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto bg-paper">
-        {navItems.map((item) => (
+      <nav className="flex-1 p-3 overflow-y-auto bg-paper" aria-label="Admin navigation">
+        {(['Overview', 'Build the world', 'Staff tools'] as const).map((group) => {
+          const items = navItems.filter((item) => item.group === group);
+          if (items.length === 0) return null;
+          return <div key={group} className="mb-5 last:mb-0">
+            <p className="px-3.5 pb-2 font-serif text-xs font-semibold uppercase tracking-wider text-ink-muted">{group}</p>
+            <div className="space-y-0.5">{items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === '/admin/'}
             onClick={onNavigate}
             className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3.5 py-2.5 rounded-none text-xs uppercase tracking-wider font-mono border transition-all ${
+              `flex items-center gap-2.5 px-3.5 py-2 rounded-none text-sm border transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
                 // Hover used to reproduce the whole active treatment, which
                 // made the current page indistinguishable from whatever the
                 // cursor was resting on. Hover is now the tonal shift alone;
                 // the accent and the rule belong to the active item.
                 isActive
-                  ? 'bg-paper-deep text-accent border-rule font-extrabold'
-                  : 'text-ink border-transparent hover:bg-paper-deep/60'
+                  ? 'bg-paper-deep text-accent border-rule font-semibold'
+                  : 'text-ink border-transparent hover:bg-paper-deep'
               }`
             }
           >
             <Icon name={item.icon} className="h-4 w-4 shrink-0" />
             <span>{item.label}</span>
           </NavLink>
-        ))}
+            ))}</div>
+          </div>;
+        })}
       </nav>
 
       {/* User info */}
       <div className="p-3 border-t border-rule bg-paper-deep/30">
-        <div className="flex items-center justify-between gap-2">
+        <button type="button" aria-expanded={accountOpen} aria-controls="admin-account-actions" onClick={() => setAccountOpen((value) => !value)} className="flex w-full items-center justify-between gap-2 p-1 text-left hover:bg-paper-deep focus-visible:outline-2 focus-visible:outline-accent">
           <div className="min-w-0">
             <div className="text-xs font-extrabold text-ink font-mono truncate uppercase tracking-wider">
               {playerName || 'Unknown Operator'}
@@ -276,13 +285,12 @@ function SidebarContent({
               </span>
             </div>
           </div>
-          <button
-            onClick={onLogout}
-            className="text-[10px] uppercase font-mono tracking-wider text-ink hover:text-accent border border-rule hover:bg-paper-deep px-2 py-1 transition-all shrink-0"
-          >
-            Logout
-          </button>
-        </div>
+          <span className="text-xs text-ink-muted" aria-hidden="true">{accountOpen ? '−' : '+'}</span>
+        </button>
+        {accountOpen && <div id="admin-account-actions" className="mt-2 border-t border-rule pt-2 space-y-1">
+          <NavLink to="/admin/workshop/help" onClick={onNavigate} className="block px-2 py-1 text-sm text-ink hover:text-accent">Builder guide</NavLink>
+          <button type="button" onClick={onLogout} className="w-full px-2 py-1 text-left text-sm text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Sign out</button>
+        </div>}
       </div>
     </>
   );

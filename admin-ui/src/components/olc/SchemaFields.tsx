@@ -97,7 +97,7 @@ export function SchemaFields({ schema, room, dirty, disabled = false, onOperatio
           if (field.control === 'checkbox_group') {
             return (
               <fieldset key={field.key} className="lg:col-span-2">
-                <FieldLabel field={field} dirty={dirty.includes(field.key)} />
+                <legend className="mb-2 text-sm font-semibold text-ink">{field.label}{dirty.includes(field.key) && <span className="ml-3 font-mono text-[10px] uppercase tracking-wider text-accent">changed</span>}</legend>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   {(field.options || []).map((option) => (
                     <label

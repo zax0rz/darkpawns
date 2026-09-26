@@ -223,6 +223,18 @@ export interface Shop {
   profit_sell: number;
 }
 
+export interface WorldSearchHit {
+  kind: 'zone' | 'room' | 'mob' | 'object' | 'shop';
+  vnum: number;
+  name: string;
+  zone: number;
+}
+
+export interface WorldSearchResponse {
+  total: number;
+  results: WorldSearchHit[];
+}
+
 export const api = {
   health: () => request<Health>('/health'),
   zones: () => request<Zone[]>('/zones'),
@@ -233,6 +245,8 @@ export const api = {
   objects: () => request<Obj[]>('/objects'),
   object: (vnum: number) => request<Obj>(`/objects/${vnum}`),
   room: (vnum: number) => request<Room>(`/rooms/${vnum}`),
+
+  searchWorld: (query: string) => request<WorldSearchResponse>(`/search?q=${encodeURIComponent(query)}`),
 
 
 
@@ -269,6 +283,7 @@ export const api = {
   savePlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/save`, { method: 'POST' }),
   kickPlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/kick`, { method: 'POST' }),
   metrics: () => request<ServerMetrics>('/metrics'),
+  prometheus: async () => (await requestResponse('/prometheus')).text(),
   saveWorld: () => request<{ status: string }>('/save-world', { method: 'POST' }),
   resetAllZones: () => request<{ status: string; zones_reset: number; zones_total: number; errors?: string[] }>('/reset-all-zones', { method: 'POST' }),
 };

@@ -135,7 +135,7 @@ export function ZoneEditorPage() {
 
   if (!Number.isInteger(zoneNumber)) return <EditorError message="The zone number is invalid." />;
   if (invalidAnchor) return <EditorError message="The room anchor is invalid." />;
-  if (schemaQuery.isLoading || overviewQuery.isLoading || openMutation.isPending || (claimed && !currentDraft)) return <EditorLoading />;
+  if (schemaQuery.isLoading || overviewQuery.isLoading || (openMutation.isPending && !currentDraft) || (claimed && !currentDraft)) return <EditorLoading />;
   if (openMutation.error && !currentDraft) {
     return (
       <div className="space-y-5">

@@ -50,7 +50,7 @@ export function ShopEditorPage() {
   const retryClaim = () => { openedRef.current = false; openMutation.reset(); setClaimed(false); };
 
   if (!Number.isInteger(vnum)) return <EditorError message="The shop VNUM is invalid." />;
-  if (schemaQuery.isLoading || previewQuery.isLoading || openMutation.isPending || (claimed && !currentDraft)) return <EditorLoading />;
+  if (schemaQuery.isLoading || previewQuery.isLoading || (openMutation.isPending && !currentDraft) || (claimed && !currentDraft)) return <EditorLoading />;
   if (openMutation.error && !currentDraft) return <div className="space-y-5"><Link to="/admin/game/shops" className="text-sm text-accent">← Back to shops</Link><div className="border border-accent bg-paper-deep px-5 py-5" role="alert"><h1 className="text-xl text-ink">Shop unavailable</h1><p className="mt-2 text-sm text-ink">{conflictSummary(openMutation.error)}</p><button type="button" onClick={retryClaim} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper">Try again</button></div></div>;
   const loadError = schemaQuery.error || previewQuery.error || draftQuery.error;
   if (loadError || !currentDraft || !shop || !schemaQuery.data || !previewQuery.data?.zoneNumber) return <EditorError message={(loadError as Error)?.message || 'The shop editor could not load.'} />;

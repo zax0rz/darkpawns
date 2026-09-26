@@ -1,7 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { Icon } from '../components/Icon';
-import { api, type AgentStatus, type Finding } from '../api/client';
+import { api } from '../api/client';
 import { StatCardSkeleton } from '../components/Skeleton';
+import { Link } from 'react-router-dom';
+import { olcApi } from '../api/olc';
+
+function counterTotal(exposition: string | undefined, name: string): number | null {
+  if (!exposition) return null;
+  let total = 0;
+  for (const line of exposition.split('\n')) {
+    if (!line.startsWith(name + ' ') && !line.startsWith(name + '{')) continue;
+    const value = Number(line.slice(line.lastIndexOf(' ') + 1));
+    if (Number.isFinite(value)) total += value;
+  }
+  return total;
+}
 
 
 export function DashboardPage() {
@@ -23,37 +35,20 @@ export function DashboardPage() {
     refetchInterval: 30000,
   });
 
-  const {
-    data: agents,
-    isLoading: agentsLoading,
-  } = useQuery({
-    queryKey: ['agents'],
-    queryFn: api.agents,
-    refetchInterval: 30000,
-  });
-
-  const {
-    data: findings,
-    isLoading: findingsLoading,
-  } = useQuery({
-    queryKey: ['findings'],
-    queryFn: () => api.findings(),
-    refetchInterval: 30000,
-  });
-
-  // Compute stats from findings
-  const totalFindings = findings?.length || 0;
-  const openCount = findings?.filter(f => f.status === 'open').length || 0;
-  const confirmedCount = findings?.filter(f => f.status === 'confirmed').length || 0;
-  const fixedCount = findings?.filter(f => f.status === 'fixed').length || 0;
-  const criticalHighCount = findings?.filter(f => f.severity === 'critical' || f.severity === 'high').length || 0;
-
-  // Limit to latest 5 findings for the card
-  const latestFindings = findings?.slice(-5).reverse() || [];
+  const { data: metrics, error: metricsError } = useQuery({ queryKey: ['metrics'], queryFn: api.metrics, refetchInterval: 15000 });
+  const { data: exposition, error: prometheusError } = useQuery({ queryKey: ['prometheus'], queryFn: api.prometheus, refetchInterval: 15000 });
+  const { data: logs, error: logsError } = useQuery({ queryKey: ['dashboard-logs'], queryFn: () => api.logs(25), refetchInterval: 10000 });
+  const { data: pending } = useQuery({ queryKey: ['olc-pending'], queryFn: olcApi.pending, refetchInterval: 30000, retry: false });
+  const pendingZones = Array.from(new Set((pending || []).map((entry) => entry.zone)));
+  const recentLog = logs?.slice(-3).reverse() || [];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
+      <div>
+        <p className="font-mono text-xs uppercase tracking-widest text-accent">World desk</p>
+        <h1 className="mt-1 text-2xl font-bold text-ink">Dashboard</h1>
+        <p className="mt-2 text-sm text-ink-muted">Find what needs attention, then open the world search to jump straight into an editor.</p>
+      </div>
 
       {/* Server Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -84,7 +79,7 @@ export function DashboardPage() {
               error={!!serverError}
             />
             <StatCard
-              label="Players"
+              label="Players online"
               value={server?.player_count?.toString() || '...'}
               error={!!serverError}
             />
@@ -92,109 +87,43 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* Only once there are findings: five pills reading zero say nothing the
-          "No findings yet" panel below does not already say. */}
-      {totalFindings > 0 && (
-      <div className="flex flex-wrap gap-2">
-        <StatPill label="Total" value={totalFindings} color="slate" />
-        <StatPill label="Open" value={openCount} color="blue" />
-        <StatPill label="Confirmed" value={confirmedCount} color="orange" />
-        <StatPill label="Fixed" value={fixedCount} color="green" />
-        <StatPill label="Critical/High" value={criticalHighCount} color="red" />
-      </div>
-      )}
-
-      {/* Live Data Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Agent Status Card */}
-        <div className="bg-paper-deep rounded-none border border-rule p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Icon name="agents" className="h-4 w-4 text-ink-muted" />
-            <h3 className="text-sm font-medium text-ink-muted">Agent Status</h3>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="border border-rule bg-paper-deep p-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-lg text-ink">Builder work</h2>
+            <Link to="/admin/workshop" className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Open workshop →</Link>
           </div>
-          {agentsLoading ? (
-            <div className="text-xs text-ink-muted animate-pulse">Loading agents...</div>
-          ) : !agents || agents.length === 0 ? (
-            <div className="text-xs text-ink-muted">No agents reporting</div>
-          ) : (
-            <div className="space-y-2">
-              {agents.map((agent) => (
-                <AgentRow key={agent.agent_id} agent={agent} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Findings Card */}
-        <div className="bg-paper-deep rounded-none border border-rule p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Icon name="search" className="h-4 w-4 text-ink-muted" />
-            <h3 className="text-sm font-medium text-ink-muted">Recent Findings</h3>
+          <p className="mt-2 text-sm text-ink-muted">Committed edits waiting for their zone files to be saved.</p>
+          <div className="mt-4 font-mono text-3xl text-ink">{pending ? pendingZones.length : '—'}<span className="ml-2 text-sm text-ink-muted">zones pending</span></div>
+          {pendingZones.length > 0 && <p className="mt-2 text-xs text-accent">Zones {pendingZones.slice(0, 6).join(', ')}{pendingZones.length > 6 ? '…' : ''}</p>}
+        </section>
+        <section className="border border-rule bg-paper-deep p-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-lg text-ink">Server pulse</h2>
+            <Link to="/admin/operations" className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Operations →</Link>
           </div>
-          {findingsLoading ? (
-            <div className="text-xs text-ink-muted animate-pulse">Loading findings...</div>
-          ) : latestFindings.length === 0 ? (
-            <div className="text-xs text-ink-muted">No findings yet</div>
-          ) : (
-            <div className="space-y-1">
-              {latestFindings.map((finding) => (
-                <FindingRow key={finding.id} finding={finding} />
-              ))}
-            </div>
-          )}
-        </div>
+          {metricsError ? <p className="mt-4 text-sm text-accent">Metrics unavailable</p> : <div className="mt-4 grid grid-cols-2 gap-4 text-sm"><div><span className="block text-xs text-ink-muted">Heap</span><strong className="font-mono font-normal text-ink">{metrics ? `${(metrics.memory_heap / 1048576).toFixed(1)} MB` : '—'}</strong></div><div><span className="block text-xs text-ink-muted">Goroutines</span><strong className="font-mono font-normal text-ink">{metrics?.goroutines ?? '—'}</strong></div></div>}
+          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-rule pt-3 text-sm">
+            <div><span className="block text-xs text-ink-muted">Combat rounds</span><strong className="font-mono font-normal text-ink">{counterTotal(exposition, 'darkpawns_combat_rounds_total') ?? '—'}</strong></div>
+            <div><span className="block text-xs text-ink-muted">Deaths</span><strong className="font-mono font-normal text-ink">{counterTotal(exposition, 'darkpawns_deaths_total') ?? '—'}</strong></div>
+            <div><span className="block text-xs text-ink-muted">Commands</span><strong className="font-mono font-normal text-ink">{counterTotal(exposition, 'darkpawns_commands_processed_total') ?? '—'}</strong></div>
+            <div><span className="block text-xs text-ink-muted">Connection errors</span><strong className="font-mono font-normal text-ink">{counterTotal(exposition, 'darkpawns_connection_errors_total') ?? '—'}</strong></div>
+          </div>
+          <p className="mt-3 text-xs text-ink-muted">Prometheus counters since server start{prometheusError ? ' · telemetry unavailable' : ''}.</p>
+        </section>
       </div>
+
+      <section className="border border-rule bg-paper-deep p-4">
+        <div className="flex items-baseline justify-between gap-3"><h2 className="text-lg text-ink">Recent server log</h2><Link to="/admin/operations" className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Full log →</Link></div>
+        {logsError ? <p className="mt-3 text-sm text-accent">Log unavailable</p> : recentLog.length === 0 ? <p className="mt-3 text-sm text-ink-muted">No entries yet.</p> : <div className="mt-3 space-y-1">{recentLog.map((line, index) => <p key={`${index}-${line}`} className="truncate border-t border-rule pt-2 font-mono text-xs text-ink-muted" title={line}>{line}</p>)}</div>}
+      </section>
+
       {serverError && (
         <div className="bg-paper-deep border border-accent p-4 text-sm text-ink" role="status">
           The game server is not answering on port 4350. Figures above are the
           last values it reported.
         </div>
       )}
-    </div>
-  );
-}
-
-function AgentRow({ agent }: { agent: AgentStatus }) {
-  const dotColor = agent.status === 'active'
-    ? 'bg-online'
-    : agent.status === 'error'
-      ? 'bg-accent'
-      : 'bg-paper-deep';
-
-  return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-rule last:border-0">
-      <span className={`w-2 h-2 rounded-none ${dotColor} shrink-0`} />
-      <span className="text-sm text-ink font-medium">{agent.name}</span>
-      <span className="text-xs text-ink-muted capitalize">{agent.status}</span>
-      <span className="text-xs text-ink-muted ml-auto font-mono truncate max-w-[120px]">{agent.model}</span>
-    </div>
-  );
-}
-
-const severityBadgeColors: Record<string, string> = {
-  critical: 'bg-paper-deep text-accent',
-  high: 'bg-paper-deep text-ink-muted',
-  medium: 'bg-paper-deep text-ink-muted',
-  low: 'bg-paper text-ink-muted',
-};
-
-const statusBadgeColors: Record<string, string> = {
-  open: 'bg-paper-deep text-ink-muted',
-  confirmed: 'bg-paper-deep text-ink-muted',
-  rejected: 'bg-paper text-ink-muted',
-  fixed: 'bg-paper-deep text-ink',
-};
-
-function FindingRow({ finding }: { finding: Finding }) {
-  return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-rule last:border-0">
-      <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${severityBadgeColors[finding.severity] || severityBadgeColors.low}`}>
-        {finding.severity.toUpperCase()}
-      </span>
-      <span className="text-sm text-ink truncate flex-1 min-w-0">{finding.title}</span>
-      <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight shrink-0 ${statusBadgeColors[finding.status] || statusBadgeColors.open}`}>
-        {finding.status}
-      </span>
     </div>
   );
 }
@@ -229,31 +158,6 @@ function StatCard({
       {detail && !error && (
         <div className="text-xs text-ink-muted font-mono mt-1">{detail}</div>
       )}
-    </div>
-  );
-}
-
-function StatPill({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: 'slate' | 'blue' | 'orange' | 'green' | 'red';
-}) {
-  const colorClasses: Record<string, string> = {
-    slate: 'bg-paper text-ink-muted border-rule',
-    blue: 'bg-paper-deep text-ink-muted border-rule',
-    orange: 'bg-paper-deep text-ink-muted border-rule',
-    green: 'bg-paper-deep text-ink border-rule',
-    red: 'bg-paper-deep text-accent border-accent',
-  };
-
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-xs font-medium ${colorClasses[color]}`}>
-      <span>{label}:</span>
-      <span className="font-bold">{value}</span>
     </div>
   );
 }

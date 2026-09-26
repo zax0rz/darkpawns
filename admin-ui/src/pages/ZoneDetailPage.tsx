@@ -166,6 +166,10 @@ function VNumWorkshop({ map, schemas, loading }: { map?: { kinds: { kind: string
             return (
               <div key={entry.kind} className="border border-rule bg-paper p-4">
                 <div className="flex items-baseline justify-between gap-2"><h3 className="text-sm font-semibold text-ink">{labels[entry.kind] || entry.kind}</h3><span className="font-mono text-xs text-ink-muted">{entry.used.length} used</span></div>
+                {entry.kind === 'room' && entry.used.length > 0 && <div className="mt-3 max-h-36 overflow-y-auto border-y border-rule py-2" aria-label="Existing rooms in this zone">
+                  <p className="mb-2 text-xs text-ink-muted">Existing rooms</p>
+                  <div className="flex flex-wrap gap-1.5">{entry.used.map((vnum) => <Link key={vnum} to={`/admin/game/rooms/${vnum}`} className="border border-rule bg-paper-deep px-2 py-1 font-mono text-xs text-ink hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">{vnum}</Link>)}</div>
+                </div>}
                 <p className="mt-2 text-xs text-ink-muted">Free: {entry.free.length ? entry.free.map((range) => range.start === range.end ? String(range.start) : range.start + '–' + range.end).join(', ') : 'none'}</p>
                 {suggested > 0 && action?.allowed ? <Link to={(routes[entry.kind] || '/') + suggested + '/edit'} className="mt-3 inline-block border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">{action.label} · #{suggested}</Link> : <p className="mt-3 text-xs text-ink-muted">{action && !action.allowed ? 'Requires ' + action.requiredLabel + ' (level ' + action.requiredLevel + ').' : 'No free VNUM is available.'}</p>}
               </div>
