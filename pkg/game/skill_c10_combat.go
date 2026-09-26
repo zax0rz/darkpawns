@@ -104,27 +104,40 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	// C: WAIT_STATE(ch, PULSE_VIOLENCE+2) sits outside the if/else — both
 	// branches get WaitCh=3 — act.offensive.c:689.
 	if percent > prob {
+		// damage(ch, vict, 0, SKILL_DRAGON_KICK): damage() owns the gate, the
+		// numbered set-188 miss_msg, and set_fighting (act.offensive.c:683).
 		return SkillResult{
-			Success:      false,
-			SkillMsgType: SkillDragonKickNum,
-			StartCombat:  true,
-			WaitCh:       3,
+			Success:          false,
+			SkillMsgType:     SkillDragonKickNum,
+			SkillMsgInDamage: true,
+			DamageSkill:      SkillDragonKick,
+			StartCombat:      true,
+			WaitCh:           3,
 		}
 	}
 	dam := int(float64(ch.GetLevel()) * 1.5)
 	return SkillResult{
-		Success:         true,
-		Damage:          dam,
-		SkillMsgType:    SkillDragonKickNum,
-		DamageSkill:     SkillDragonKick,
-		StartCombat:     true,
-		WaitCh:          3,
-		DeferredImprove: []string{SkillDragonKick},
+		Success:          true,
+		Damage:           dam,
+		SkillMsgType:     SkillDragonKickNum,
+		SkillMsgInDamage: true,
+		DamageSkill:      SkillDragonKick,
+		StartCombat:      true,
+		WaitCh:           3,
+		DeferredImprove:  []string{SkillDragonKick},
 	}
 }
 
 // DoTigerPunch implements do_tiger_punch() from act.offensive.c lines 693-744.
 // Requires bare hands. Damage: level * 2.5.
+//
+// Both arms call C's damage(ch, vict, dam, SKILL_TIGER_PUNCH): the miss arm with
+// dam 0 and the hit arm with GET_LEVEL(ch)*2.5. damage() owns the numbered
+// skill_message set 189 (lib/misc/messages:1284-1298), the damage() gate, the
+// HP/position update, and set_fighting, so the result carries SkillMsgInDamage +
+// DamageSkill and the command tail runs DoTigerPunchDamage at that boundary
+// (R1/R3/R5e). set_fighting means both arms enroll combat; improve_skill runs
+// after damage() returns, so it is deferred past the message dice (R3b).
 func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillTigerPunch) == 0 {
 		return SkillResult{Success: false, MessageToCh: "What's that, idiot-san?"}
@@ -132,31 +145,46 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	if func() bool { _, ok := ch.Equipment.GetItemInSlot(SlotWield); return ok }() {
 		return SkillResult{Success: false, MessageToCh: "That's pretty tough to do while wielding a weapon."}
 	}
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := ((7 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillTigerPunch)
 	if percent > prob {
 		return SkillResult{
-			Success: false, WaitCh: 2,
-			MessageToCh:   ActMessage("You snap a tiger punch at $N but miss!", chPronouns, &victPronouns, ""),
-			MessageToVict: ActMessage("$n snaps a tiger punch at you but misses!", chPronouns, &victPronouns, ""),
-			MessageToRoom: ActMessage("$n tries to tiger punch $N but misses!", chPronouns, &victPronouns, ""),
+			Success:          false,
+			SkillMsgType:     SkillTigerPunchNum,
+			SkillMsgInDamage: true,
+			DamageSkill:      SkillTigerPunch,
+			StartCombat:      true,
+			WaitCh:           2,
 		}
 	}
 	dam := int(float64(ch.GetLevel()) * 2.5)
-	improveSkill(ch, SkillTigerPunch)
 	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 2,
-		MessageToCh:   ActMessage("You snap a lightning-fast tiger punch into $N!", chPronouns, &victPronouns, ""),
-		MessageToVict: ActMessage("$n snaps a lightning-fast tiger punch into you!", chPronouns, &victPronouns, ""),
-		MessageToRoom: ActMessage("$n tiger punches $N!", chPronouns, &victPronouns, ""),
+		Success:          true,
+		Damage:           dam,
+		SkillMsgType:     SkillTigerPunchNum,
+		SkillMsgInDamage: true,
+		DamageSkill:      SkillTigerPunch,
+		StartCombat:      true,
+		WaitCh:           2,
+		DeferredImprove:  []string{SkillTigerPunch},
 	}
 }
 
 // DoShoot implements do_shoot() from act.offensive.c lines 746-980.
 // Cannot shoot while fighting. Simplified for same-room targets.
+//
+// TODO(port): C's do_shoot never calls damage()/skill_message — it hand-rolls
+// its own literal actor/room bytes ("You hear a roar of pain!", "Some kind of
+// %s streaks in from %s ...") and lib/misc/messages has no M record for
+// SKILL_SHOOT (148) in either tree. The literal strings below are therefore
+// NOT from the messages file, and they are not now C's bytes either: the actor
+// pre-roll pair ("$n fires <arg1> with <bow>." + "Twang... your projectile
+// flies into the distance."), the dex-adjusted prob, the projectile/bow dice,
+// the direct GET_HIT update, the target relocation and the synchronous
+// retaliation are all missing. See docs/fidelity/depth/shoot.tsv
+// (shoot.no-skill-message-path and the blocked target-path rows) before
+// touching this function; a partial rewrite would drop bytes C emits.
 func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillShoot) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}

@@ -1289,8 +1289,14 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
-// CmdStrike handles the strike command.
+// CmdStrike handles the strike command (do_strike, src/new_cmds.c:1433-1502).
 func CmdStrike(s SessionInterface, args []string) error {
+	// C evaluates number(1,101) in do_strike's declaration list, before
+	// one_argument and before the GET_SKILL gate, so every invocation consumes
+	// this shared draw — including the unskilled and no-target refusals (R3a).
+	// #nosec G404 — game RNG
+	percent := dprng.Number(1, 101)
+
 	ch, err := skillContext(s, game.SkillStrike)
 	if err != nil {
 		return err
@@ -1299,25 +1305,28 @@ func CmdStrike(s SessionInterface, args []string) error {
 		return nil
 	}
 
-	// Determine target
+	// C target resolution order (new_cmds.c:1440-1449): a bare `strike` takes
+	// FIGHTING(ch); a bare strike with no opponent is "Strike who?"; a named
+	// target is looked up with one_argument, and a miss is "They don't seem to
+	// be here.".
+	world := s.GetWorld()
 	var target combat.Combatant
-	var found bool
-
 	if len(args) == 0 {
-		// Try to strike whoever we're fighting
-		fighting := ch.GetFighting()
-		if fighting == "" {
+		if ch.GetFighting() == "" {
 			return s.SendMessage("Strike who?\r\n")
 		}
-		// Find fighter by name
-		world := s.GetWorld()
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), fighting, ch)
-		if !found {
+		target, _, _ = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		if target == nil {
+			target, _ = game.FindFightingTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		}
+		if target == nil {
 			return s.SendMessage("They don't seem to be here.\r\n")
 		}
 	} else {
-		targetName := strings.Join(args, " ")
-		world := s.GetWorld()
+		// C one_argument() runs before get_char_room_vis(), so only the first
+		// whitespace-delimited target token participates in the lookup.
+		targetName, _ := game.OneArgument(strings.Join(args, " "))
+		var found bool
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
 		if !found {
 			return s.SendMessage("They don't seem to be here.\r\n")
@@ -1326,11 +1335,8 @@ func CmdStrike(s SessionInterface, args []string) error {
 
 	if target.GetName() == ch.Name {
 		ch.SendMessage("You beat yourself about the face and neck.\r\n")
-		// Send room act
-		roomVNum := ch.GetRoom()
-		world := s.GetWorld()
-		players := world.GetPlayersInRoom(roomVNum)
-		for _, p := range players {
+		// act("$n slaps $mself around a little.", FALSE, ch, 0, vict, TO_ROOM)
+		for _, p := range world.GetPlayersInRoom(ch.GetRoom()) {
 			if p.Name != ch.Name {
 				p.SendMessage(fmt.Sprintf("%s slaps %s around a little.\r\n",
 					ch.Name, genderPronoun(ch.Sex)))
@@ -1339,7 +1345,14 @@ func CmdStrike(s SessionInterface, args []string) error {
 		return nil
 	}
 
-	result := game.DoStrike(ch, target)
+	// new_cmds.c:1466-1470 — the mount refusal precedes the roll and WAIT_STATE.
+	// C's AFF_CHARM arm cannot be reached for a player (charm is mob-only in
+	// this tree), so the port has no player master link to test.
+	if ch.IsMounted() {
+		return s.SendMessage("Dismount first!\r\n")
+	}
+
+	result := game.DoStrike(ch, target, percent)
 	return sendSkillResult(s, ch, target, result)
 }
 
@@ -1777,6 +1790,12 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			s.GetWorld().DoGroinripDamage(ch, target, result.Damage)
 		case result.DamageSkill == game.SkillNeckbreak:
 			s.GetWorld().DoNeckbreakDamage(ch, target, result.Damage)
+		case result.DamageSkill == game.SkillTigerPunch:
+			s.GetWorld().DoTigerPunchDamage(ch, target, result.Damage)
+		case result.DamageSkill == game.SkillStrike:
+			s.GetWorld().DoStrikeDamage(ch, target, result.Damage)
+		case result.DamageSkill == game.SkillDragonKick:
+			s.GetWorld().DoDragonKickDamage(ch, target, result.Damage)
 		}
 	} else if result.Damage > 0 && len(targets) > 0 {
 		// Route through DoSpellDamage so skill damage uses the same death

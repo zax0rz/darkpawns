@@ -1,0 +1,125 @@
+# C-first damage arm for do_strike (src/new_cmds.c:1433-1502). With a learned
+# value of 100 the roll only fails on percent 100 or 101, so most frozen seeds
+# reach damage(ch, vict, GET_LEVEL(ch)*.65, SKILL_STRIKE) and set 155's hit_msg.
+# The 1/101 refusal is why the miss arm is carried by strike-depth (skill 1,
+# deterministic) and this vehicle is validated with --show-oracle per seed.
+# The observer captures the room audience.
+#
+# depth-case: strike.hit
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Strikegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Strikegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Strikeatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Strikeatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Strikeobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Strikeobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Strikeatt 8105
+teleport Strikeobs 8105
+set Strikeatt level 20
+skillset Strikeatt 'strike' 100
+set trainee maxhit 500
+set trainee hit 500
+
+[probe:attacker]
+strike trainee

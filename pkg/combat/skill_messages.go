@@ -616,6 +616,17 @@ func InitEmbeddedFightMessages(cb *GameCallbacks) error {
 	return nil
 }
 
+// C_CMP (screen.h:46) is the complete-color level: both PRF_COLOR bits set.
+// skill_message brackets the attacker line with CCYEL/CCNRM and the victim
+// line with CCRED/CCNRM at that level; the room act() carries no color, and
+// the god_msg arm is uncolored in C.
+const (
+	skillColorCMP    = 3
+	skillColorYellow = "\x1b[33m" // CCYEL (screen.h:28)
+	skillColorRed    = "\x1b[31m" // CCRED (screen.h:27)
+	skillColorReset  = "\x1b[0m"  // CCNRM (screen.h:26)
+)
+
 // InitFightMessages wires a parsed C fight_messages table into cb. Selection
 // uses dice(1, N), consuming exactly one shared RNG draw even when N is one.
 func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
@@ -635,16 +646,30 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 		}
 
 		variant := variants[selection]
+
+		// fight.c:1039-1090 branch order: god_msg is tested first, then a
+		// non-zero dam splits into die (POS_DEAD) and hit, and a zero-damage
+		// strike only reaches miss_msg when ch != vict. When dam is zero and
+		// ch == vict C falls through with no message at all — after the dice
+		// draw above has already consumed its RNG value.
 		var action FightMessageAction
+		colored := false
 		switch {
 		case !cbIsNPC(victimName) && cbGetLevel(victimName) >= LVL_IMMORT:
 			action = variant.God
-		case cbGetHP(victimName) <= -11:
-			action = variant.Die
-		case dam == 0:
+		case dam != 0:
+			// update_pos sets POS_DEAD at GET_HIT <= -11 (fight.c:193).
+			if cbGetHP(victimName) <= -11 {
+				action = variant.Die
+			} else {
+				action = variant.Hit
+			}
+			colored = true
+		case chName != victimName:
 			action = variant.Miss
+			colored = true
 		default:
-			action = variant.Hit
+			return true
 		}
 
 		chSex := cbGetSex(chName)
@@ -653,16 +678,27 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 			rendered := replaceMessageTokens(message, chName, victimName, "", "", chSex, victimSex)
 			return strings.ReplaceAll(rendered, "$p", cbWeaponDescription(chName))
 		}
+		sendColored := func(name, code, message string) {
+			if message == "" || cb.SendToChar == nil {
+				return
+			}
+			if colored && cbGetColorLevel(name) >= skillColorCMP && cb.SendRaw != nil {
+				cbSendRaw(name, code)
+				cb.SendToChar(name, message)
+				cbSendRaw(name, skillColorReset)
+				return
+			}
+			// C always calls send_to_char for the color codes; below the gate
+			// CCNRM/CCYEL/CCRED expand to the empty string, so the message is
+			// the only visible byte.
+			cb.SendToChar(name, message)
+		}
 
 		if action.Room != "" && cb.Broadcast != nil {
 			cb.Broadcast(roomVNum, render(action.Room), chName+" "+victimName)
 		}
-		if action.Attacker != "" && cb.SendToChar != nil {
-			cb.SendToChar(chName, render(action.Attacker))
-		}
-		if action.Victim != "" && cb.SendToChar != nil {
-			cb.SendToChar(victimName, render(action.Victim))
-		}
+		sendColored(chName, skillColorYellow, render(action.Attacker))
+		sendColored(victimName, skillColorRed, render(action.Victim))
 		return true
 	}
 }

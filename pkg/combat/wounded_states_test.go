@@ -108,3 +108,40 @@ func TestUpdatePositionAfterDamage_NilBroadcast(t *testing.T) {
 		t.Errorf("expected the personal wounded message even with nil broadcast, got %q", v.messages)
 	}
 }
+
+// TestWoundedBandBroadcastsCapitalizeAndExcludeVictim is the DP-1330 class fix:
+// C's act() CAPitalizes the assembled line (comm.c:2477) and TO_ROOM excludes
+// the victim, who already received the "You are ..." form (fight.c:1560-1582).
+// A lowercase mob name is the sharp case: before the fix the room saw
+// "a guard trainee is mortally wounded...", and the victim saw its own room line.
+func TestWoundedBandBroadcastsCapitalizeAndExcludeVictim(t *testing.T) {
+	cases := []struct {
+		name     string
+		hp       int
+		wantPos  int
+		wantRoom string
+	}{
+		{"mortally", -6, PosMortally, "A guard trainee is mortally wounded, and will die soon, if not aided."},
+		{"incap", -4, PosIncap, "A guard trainee is incapacitated and will slowly die, if not aided."},
+		{"stunned", -1, PosStunned, "A guard trainee is stunned, but will probably regain consciousness again."},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			v := &msgMockCombatant{
+				mockCombatant: mockCombatant{name: "a guard trainee", hp: tc.hp, position: PosFighting},
+			}
+			var roomMsg, exclude string
+			if got := UpdatePositionAfterDamage(v, func(_ int, msg, ex string) {
+				roomMsg, exclude = msg, ex
+			}); got != tc.wantPos {
+				t.Fatalf("pos = %d, want %d", got, tc.wantPos)
+			}
+			if roomMsg != tc.wantRoom {
+				t.Errorf("room broadcast = %q, want %q (act CAP)", roomMsg, tc.wantRoom)
+			}
+			if exclude != "a guard trainee" {
+				t.Errorf("room broadcast excluded %q, want the victim (TO_ROOM excludes ch)", exclude)
+			}
+		})
+	}
+}

@@ -11,8 +11,13 @@ type GameCallbacks struct {
 	Broadcast    func(roomVNum int, msg string, exclude string)
 	SendToChar   func(name string, msg string)
 	SkillMessage func(dam int, ch, vict string, attackType int, roomVNum int) bool
-	BroadChat    func(chName string, msg string)
-	Log          func(msg string, level string, minLevel int, toLog bool)
+	// SendRaw delivers control bytes (a bare color code) with no line ending,
+	// matching C's send_to_char(CCYEL(...)) which writes the escape and stops.
+	// skill_message brackets its attacker/victim lines with these at C_CMP
+	// (fight.c:1049-1054, 1064-1069, 1080-1085).
+	SendRaw   func(name string, msg string)
+	BroadChat func(chName string, msg string)
+	Log       func(msg string, level string, minLevel int, toLog bool)
 
 	// Character identity
 	GetRace      func(name string) int
@@ -24,6 +29,10 @@ type GameCallbacks struct {
 	GetLevel     func(name string) int
 	IsNPC        func(name string) bool
 	GetSkill     func(name string, skillNum int) int
+	// GetColorLevel returns COLOR_LEV(ch) (screen.h:44): PRF_COLOR_1 counts 1
+	// and PRF_COLOR_2 counts 2. C's C_CMP color gate needs level 3. NPCs have
+	// no player_specials preferences and always report 0 (db.c:1281 dummy_mob).
+	GetColorLevel func(name string) int
 
 	// Affects
 	HasAffect        func(name string, aff int) bool
@@ -147,6 +156,27 @@ func cbSendToChar(name string, msg string) {
 	if cb := callbacks; cb != nil && cb.SendToChar != nil {
 		cb.SendToChar(name, msg)
 	}
+}
+
+// cbSendRaw delivers control bytes with no line ending (C's bare color
+// send_to_char calls). An empty message writes nothing, matching
+// send_to_char("") when the recipient's color level is below the gate.
+func cbSendRaw(name string, msg string) {
+	if msg == "" {
+		return
+	}
+	if cb := callbacks; cb != nil && cb.SendRaw != nil {
+		cb.SendRaw(name, msg)
+	}
+}
+
+// cbGetColorLevel returns COLOR_LEV(name); unwired or unknown names report 0,
+// which is also what C's shared dummy_mob preferences report for every NPC.
+func cbGetColorLevel(name string) int {
+	if cb := callbacks; cb != nil && cb.GetColorLevel != nil {
+		return cb.GetColorLevel(name)
+	}
+	return 0
 }
 
 func cbSkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool {

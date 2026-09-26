@@ -1,0 +1,130 @@
+# C-first vehicle for damage()'s wounded-band broadcast (src/fight.c:1560-1582).
+# One deterministic tiger-punch hit (AC 80 with skill 100) drops a mob victim to
+# POS_MORTALLYW. C's act() CAPitalises the assembled room line (comm.c:2477), so
+# the actor and both observers must read "A guard trainee ..." where the old
+# port printed the lower-case mob name. The victim-exclusion half of the same
+# act() (TO_ROOM drops the victim, who gets the "You are mortally wounded..."
+# form) is unit-covered by TestWoundedBandBroadcastsCapitalizeAndExcludeVictim:
+# a second strike in this vehicle is swallowed by the actor's post-strike wait
+# state, which only drains on a clock pulse, and pulsing here would drag in the
+# separate pre-existing following-round divergence.
+#
+# depth-case: damage.wounded-band-broadcast
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Woundgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Woundgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Woundatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Woundatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Woundsee
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Woundsee
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Woundatt 8105
+teleport Woundsee 8105
+set Woundatt level 20
+skillset Woundatt 'tiger punch' 100
+set trainee ac 80
+set trainee maxhit 500
+set trainee hit 42
+
+[probe:attacker]
+tiger trainee

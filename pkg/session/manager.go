@@ -500,6 +500,15 @@ func (m *Manager) SetCombatMessageFunc() {
 		}
 	}
 
+	// sendRaw carries C's bare color writes (CCYEL/CCRED/CCNRM around a
+	// skill_message line) with no line ending appended, so the escape bytes a
+	// keep-ansi oracle sees match C's send_to_char stream exactly.
+	sendRaw := func(name string, message string) {
+		if s, ok := m.GetSession(name); ok && s != nil {
+			s.sendRawEvent(message)
+		}
+	}
+
 	// Reuse the callbacks struct wired by WireCombatCallbacks so PR2 character
 	// state hooks are preserved. If no struct exists yet, create one.
 	cb := m.combatEngine.Callbacks
@@ -508,6 +517,7 @@ func (m *Manager) SetCombatMessageFunc() {
 	}
 	cb.Broadcast = broadcast
 	cb.SendToChar = sendToChar
+	cb.SendRaw = sendRaw
 	if err := combat.InitEmbeddedFightMessages(cb); err != nil {
 		slog.Error("loading combat messages", "error", err)
 		combat.InitSkillMessages(cb)

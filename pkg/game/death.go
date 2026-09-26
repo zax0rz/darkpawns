@@ -432,8 +432,13 @@ func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer c
 	// The legacy C raw_kill path does not announce corpse creation. Keep the
 	// general Go notification for existing callers, but suppress it for the
 	// skill_message-backed ambush damage path (fight.c:1407-1450), whose room
-	// transcript is already proven byte-for-byte.
-	if announceCorpse && attackType != 191 && attackType != SkillCutthroatNum && attackType != SkillDisembowelNum && attackType != SkillSmackheadsNum {
+	// transcript is already proven byte-for-byte, and for the numbered
+	// skill_message attack types tiger punch (189), strike (155) and dragon
+	// kick (188), whose damage() boundaries are carried by TakeDamageAfterGate.
+	if announceCorpse && attackType != 191 && attackType != SkillCutthroatNum &&
+		attackType != SkillDisembowelNum && attackType != SkillSmackheadsNum &&
+		attackType != SkillTigerPunchNum && attackType != SkillStrikeNum &&
+		attackType != SkillDragonKickNum {
 		players := w.GetPlayersInRoom(roomVNum)
 		for _, p := range players {
 			p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
@@ -759,7 +764,11 @@ const (
 	SkillSleeperNum     = 187
 	SkillNeckbreakNum   = 190
 	SkillDragonKickNum  = 188
-	SkillTigerPunchNum  = 223
+	SkillStrikeNum      = 155
+	// SkillTigerPunchNum is C's SKILL_TIGER_PUNCH (spells.h:237) and the
+	// lib/misc/messages set key the skill_message path looks up. It is also the
+	// value fight.c:321 maps to the bruised corpse wording.
+	SkillTigerPunchNum = 189
 )
 
 // CorpseAttackType describes what killed the victim, for corpse descriptions.

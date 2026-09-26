@@ -1,0 +1,124 @@
+# C-first god_msg arm for do_tiger_punch (src/act.offensive.c:693-744,
+# fight.c:1039-1044). The victim is the connected first-player God, so
+# damage()'s immortal clamp turns the damage to 0 — but skill_message tests
+# !IS_NPC(vict) && GET_LEVEL(vict) >= LVL_IMMORT FIRST, before the dam != 0
+# split. A learned value of 1 keeps the roll on the miss arm, so an
+# implementation that selects miss_msg (or hit_msg) for a zero-damage God
+# diverges here. All three audiences see set 189's god_msg.
+#
+# depth-case: tiger.god
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Tigergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tigergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Tigeratt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Tigeratt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Tigerobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Tigerobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Tigeratt 8105
+teleport Tigerobs 8105
+set Tigeratt level 20
+skillset Tigeratt 'tiger punch' 1
+
+[probe:attacker]
+tiger Tigergod

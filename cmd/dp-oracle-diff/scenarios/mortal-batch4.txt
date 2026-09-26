@@ -1,6 +1,8 @@
 # Mortal no-arg/no-target rejection batch (batch 4).
 # Probed from a fresh Human Warrior. Groinrip (peaceful-room check) and roll
 # (RNG draw-parity) deferred.
+#
+# depth-case: strike.no-skill
 
 [fixture]
 quiet-mobs

@@ -103,6 +103,15 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return 0
 	}
 
+	// COLOR_LEV(ch): PRF_COLOR_1 counts 1, PRF_COLOR_2 counts 2. NPCs have no
+	// player_specials prefs, so C's shared dummy_mob reports 0 (db.c:1281).
+	cb.GetColorLevel = func(name string) int {
+		if p, ok := w.GetPlayer(name); ok {
+			return colorLevel(p)
+		}
+		return 0
+	}
+
 	// -------------------------------------------------------------------------
 	// Affects
 	// -------------------------------------------------------------------------

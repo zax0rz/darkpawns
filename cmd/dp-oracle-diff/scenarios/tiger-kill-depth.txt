@@ -1,0 +1,125 @@
+# C-first killing-blow arm for do_tiger_punch (src/act.offensive.c:693-744).
+# The trainee is left at 1 hit point and the level-20 attacker always lands
+# (AC 80), so damage() updates the position to POS_DEAD before skill_message
+# runs: set 189's die_msg is selected, which a pre-damage message selection can
+# never reach. The observer captures the room audience and the corpse.
+#
+# depth-case: tiger.killing-blow
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Tigergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tigergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Tigeratt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Tigeratt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Tigerobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Tigerobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Tigeratt 8105
+teleport Tigerobs 8105
+set Tigeratt level 20
+skillset Tigeratt 'tiger punch' 100
+set trainee ac 80
+set trainee maxhit 500
+set trainee hit 1
+
+[probe:attacker]
+tiger trainee
