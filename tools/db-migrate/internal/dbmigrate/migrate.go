@@ -3,7 +3,6 @@ package dbmigrate
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	_ "github.com/lib/pq"
@@ -65,21 +64,28 @@ func (o Options) batchSize() int {
 }
 
 // DestinationPath resolves a destination string to a filesystem path.
+//
+// The runtime owns what a SQLite setting looks like (pkg/db.SQLitePath), and it
+// refuses a PostgreSQL URL, an empty setting and an in-memory database. The
+// refusal is wrapped rather than replaced so the caller sees which side of the
+// migration was wrong.
 func DestinationPath(destination string) (string, error) {
-	dialect, dsn, err := db.SplitDSN(destination)
+	path, err := db.SQLitePath(destination)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("destination must be a SQLite file: %w", err)
 	}
-	if dialect != db.DialectSQLite {
-		return "", fmt.Errorf("destination must be SQLite, not PostgreSQL: %q", RedactDSN(destination))
-	}
-	if strings.TrimSpace(dsn) == "" {
-		return "", errors.New("destination SQLite path is empty")
-	}
-	if dsn == ":memory:" || strings.HasPrefix(dsn, "file::memory:") {
-		return "", errors.New("destination cannot be an in-memory database: a migration writes a file")
-	}
-	return filepath.Clean(dsn), nil
+	return path, nil
+}
+
+// IsPostgresDSN reports whether a setting names a PostgreSQL server.
+//
+// The check lives here rather than in the runtime, and deliberately: the runtime
+// is SQLite-only and no longer knows what a PostgreSQL URL looks like, while
+// this module is the only thing in the repository that speaks PostgreSQL. It is
+// also the only thing that would ever need to say yes.
+func IsPostgresDSN(setting string) bool {
+	lower := strings.ToLower(strings.TrimSpace(setting))
+	return strings.HasPrefix(lower, "postgres://") || strings.HasPrefix(lower, "postgresql://")
 }
 
 // ValidateOptions refuses ambiguous or reversed configurations before anything
@@ -92,20 +98,19 @@ func ValidateOptions(options Options) error {
 	if strings.TrimSpace(options.Destination) == "" {
 		return errors.New("no SQLite destination configured")
 	}
-	sourceDialect, _, err := db.SplitDSN(options.Source)
-	if err != nil {
-		return fmt.Errorf("source: %w", err)
-	}
-	if sourceDialect != db.DialectPostgres {
-		return fmt.Errorf("source must be PostgreSQL: %q is not a postgres:// DSN", RedactDSN(options.Source))
+	if !IsPostgresDSN(options.Source) {
+		return fmt.Errorf("source must be a PostgreSQL DSN: %q is not a postgres:// or postgresql:// URL",
+			RedactDSN(options.Source))
 	}
 	destinationPath, err := DestinationPath(options.Destination)
 	if err != nil {
 		return err
 	}
-	sourcePath, sourceIsPath := sourceLikePath(options.Source)
-	if sourceIsPath && filepath.Clean(sourcePath) == destinationPath {
-		return fmt.Errorf("source and destination are the same path: %s", destinationPath)
+	// A source that is not a PostgreSQL URL cannot be the destination's path, so
+	// the reversed invocation is already refused above. This catch is for the
+	// case a caller passes the same string to both flags.
+	if strings.TrimSpace(options.Source) == options.Destination {
+		return fmt.Errorf("source and destination are the same setting: %s", destinationPath)
 	}
 	if options.VerifyOnly && options.Replace {
 		return errors.New("--verify-only writes nothing, so --replace has no meaning")
@@ -125,25 +130,18 @@ func ValidateOptions(options Options) error {
 	return nil
 }
 
-// sourceLikePath reports the source as a filesystem path when it is not a
-// postgres:// DSN, which is how a reversed invocation looks in practice.
-func sourceLikePath(source string) (string, bool) {
-	if strings.HasPrefix(source, "postgres://") || strings.HasPrefix(source, "postgresql://") {
-		return "", false
-	}
-	return strings.TrimPrefix(source, "sqlite://"), true
-}
-
 // RedactDSN removes credentials and query parameters so a DSN can appear in a
 // receipt or a log line. PostgreSQL passwords live in the userinfo of the URL and
 // in a password= parameter; both are dropped, and only the scheme, host, port and
-// database name remain.
+// database name remain. The runtime has its own redactor for the setting it
+// accepts; this module needs one that also understands a PostgreSQL URL, because
+// that is the only DSN it is ever handed.
 func RedactDSN(dsn string) string {
 	trimmed := strings.TrimSpace(dsn)
 	if trimmed == "" {
 		return ""
 	}
-	if !strings.HasPrefix(trimmed, "postgres://") && !strings.HasPrefix(trimmed, "postgresql://") {
+	if !IsPostgresDSN(trimmed) {
 		if _, rest, found := strings.Cut(trimmed, "://"); found {
 			return "sqlite://" + rest
 		}
