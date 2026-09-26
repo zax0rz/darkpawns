@@ -37,9 +37,12 @@ const GreetingsLogo = "\r\n\r\n" +
 // TerminalGreeting is what a terminal client receives on connect: the
 // greeting, then the name prompt. C emits one visible line break at the
 // ident-to-name boundary; it is sent as a well-formed CRLF rather than C's
-// legacy LFCR.
+// legacy LFCR. The leading CRLF is C's too: a connection is accepted after
+// the game loop's fd sets are built, so the prompt loop marks the fresh
+// descriptor before its first flush and process_output sends that first
+// flush with its prepended interruption CRLF (comm.c:645-648, 1621, 1641).
 func TerminalGreeting() string {
-	return NormalizeCRLF(GreetingsLogo) + NormalizeCRLF("\r\nBy what name do you wish to be known? ")
+	return "\r\n" + NormalizeCRLF(GreetingsLogo) + NormalizeCRLF("\r\nBy what name do you wish to be known? ")
 }
 
 // TerminalFrameKind says how a transport frames rendered output.

@@ -109,7 +109,10 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 		s.handleDescriptionLine(input.Choice)
 	case "password_old":
 		if !s.passwordMatches(choice) {
-			s.sendText("\r\nIncorrect password.\r\n")
+			// C's echo_on stray CRLF precedes the refusal (interpreter.c:2293;
+			// see session_login.go for the echo_on byte story). Raw event:
+			// exact bytes, no added line ending.
+			s.sendRawEvent("\r\n\r\nIncorrect password.\r\n")
 			s.showMainMenu()
 			return nil
 		}
@@ -137,11 +140,17 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 		if err := s.persistChangedPassword(); err != nil {
 			return err
 		}
-		s.sendText("Done.\r\n")
+		// C runs echo_on twice here (interpreter.c:1974 and 1984), so two
+		// stray CRLFs precede "\r\nDone.\n\r" (see session_login.go for
+		// the echo_on byte story). Raw event: exact bytes.
+		s.sendRawEvent("\r\n\r\n\r\nDone.\n\r")
 		s.showMainMenu()
 	case "delete_password":
+		// C's echo_on stray CRLF opens the verification outcome either way
+		// (interpreter.c:2306; see session_login.go for the byte story).
+		// Raw event: exact bytes, no added line ending.
 		if !s.passwordMatches(choice) {
-			s.sendText("\r\nIncorrect password.\r\n")
+			s.sendRawEvent("\r\n\r\nIncorrect password.\r\n")
 			s.showMainMenu()
 			return nil
 		}
@@ -263,7 +272,8 @@ func (s *Session) pendingPlayerName() string {
 }
 
 func (s *Session) deleteConfirmationPrompt() string {
-	return fmt.Sprintf("%s:\r\nYOU ARE ABOUT TO DELETE THIS CHARACTER PERMANENTLY.\r\n"+
+	// interpreter.c:2312-2316 sends a CRLF, the name, then the warning block.
+	return fmt.Sprintf("\r\n%s:\r\nYOU ARE ABOUT TO DELETE THIS CHARACTER PERMANENTLY.\r\n"+
 		"ARE YOU ABSOLUTELY SURE?\r\n\r\nPlease type \"yes\" to confirm: ", s.pendingPlayerName())
 }
 
