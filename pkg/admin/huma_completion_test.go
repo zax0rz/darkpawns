@@ -51,9 +51,6 @@ func TestHumaCompletionRoutesPreserveGatesAndSpecificity(t *testing.T) {
 	if got := request(http.MethodPost, "/admin/zones/30/reset", "builder", ""); got.Code != http.StatusForbidden {
 		t.Errorf("builder zone reset = %d, want 403", got.Code)
 	}
-	if got := request(http.MethodPost, "/admin/save-world", "builder", ""); got.Code != http.StatusForbidden {
-		t.Errorf("builder save-world = %d, want 403", got.Code)
-	}
 	if got := request(http.MethodGet, "/admin/findings/not-a-number", "builder", ""); got.Code != http.StatusMethodNotAllowed {
 		t.Errorf("wrong-method finding detail = %d, want legacy 405", got.Code)
 	}

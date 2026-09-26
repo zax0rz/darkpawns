@@ -273,7 +273,7 @@ cmdRegistry.Use(RateLimitMiddleware(250 * time.Millisecond))
 
 - **Game store (`GameStore`):** `players`
 - **Moderation (`pkg/moderation`):** `abuse_reports`, `admin_log`, `player_penalties`, `word_filters`, created and queried through the same connection
-- **World state** is not in the store: it is written to `data/world_state.json`
+- **World state is not persisted.** Transient world state (ground objects, corpses, money, ash, mob positions and HP, door state, room secret marks, recent gossip, zone ages) is rebuilt from the area files and zone reset tables on every boot, exactly as C's `boot_db()` does. An earlier build wrote a `data/world_state.json` snapshot and replayed it at startup; that invented persistence was removed (RULEBOOK R4) — see `docs/fidelity/audit-reports/world_state_persistence_audit.md`. A leftover file from that build is ignored and reported once per boot.
 
 **Status:** Both backends are live and covered by real-database tests (`pkg/db/backend_test.go`, `pkg/moderation/backend_test.go`): SQLite always, PostgreSQL when `DATABASE_URL` is set. The cgo-backed `pkg/storage` backend (mattn/go-sqlite3, never wired into `cmd/server/main.go`, and unable to work at all in the `CGO_ENABLED=0` build) has been deleted as superseded by `pkg/db`.
 

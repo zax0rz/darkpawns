@@ -711,13 +711,12 @@ func main() {
 			slog.Info("Zone resets complete")
 		}
 
-		// Restore dynamic world state (door states, mob positions, room items, gossip)
-		// AFTER zone resets have spawned mobs.
-		if err := game.LoadWorld(gameWorld); err != nil {
-			slog.Error("Failed to load world state", "error", err)
-		} else {
-			slog.Info("World state restored")
-		}
+		// C's boot_db() rebuilds the world from the static area files and the
+		// zone reset tables and restores no transient state: dropped objects,
+		// corpses, loose money, ash, mob positions, door state and recent
+		// gossip all disappear on restart. A world snapshot written by an older
+		// Go build is ignored, reported once, and never replayed (RULEBOOK R4).
+		game.IgnoreLegacyWorldState()
 
 		// Build initial spec-room cache now that mobs/items are in place.
 		gameWorld.RebuildSpecRooms()
@@ -860,9 +859,8 @@ func main() {
 	heartbeatCtx, heartbeatCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	heartbeatErr := gameLoop.StopContext(heartbeatCtx)
 	heartbeatCancel()
-	heartbeatStopped := heartbeatErr == nil
 	if heartbeatErr != nil {
-		slog.Error("Heartbeat did not stop before shutdown deadline; world snapshot will be skipped", "error", heartbeatErr)
+		slog.Error("Heartbeat did not stop before shutdown deadline", "error", heartbeatErr)
 	}
 
 	// 2. Stop telnet listener (accepting new TCP connections)
@@ -882,18 +880,14 @@ func main() {
 		manager.ShutdownGracefully(5 * time.Second)
 	}
 
-	// Wait for zone resets to finish before saving — prevents concurrent
-	// writes to world state from corrupting the save file.
+	// Wait for the boot/zone-reset goroutine to finish so nothing is still
+	// mutating the world while sessions close.
 	wg.Wait()
 
-	// Save dynamic world state only after the heartbeat is proven quiescent.
-	// Saving concurrently with a stuck callback risks a corrupt snapshot; player
-	// profiles have already been drained independently above.
-	if heartbeatStopped {
-		if err := game.SaveWorld(gameWorld); err != nil {
-			slog.Error("Failed to save world state", "error", err)
-		}
-	}
+	// C's init_game() saves nothing here beyond the clan table, the in-game
+	// date and the player file (src/comm.c:289-291). Player profiles were
+	// drained above; transient world state is rebuilt from the area files on
+	// the next boot. Do not reintroduce a world snapshot (RULEBOOK R4).
 	slog.Info("Shutdown complete. Farewell.")
 }
 

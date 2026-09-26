@@ -588,40 +588,8 @@ func TestHandleMetrics_WrongMethod(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// handleSaveWorld, handleResetAllZones
+// handleResetAllZones
 // ---------------------------------------------------------------------------
-
-func TestHandleSaveWorld_Post(t *testing.T) {
-	w := testWorld(t)
-	handler := handleSaveWorld(w, nil)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/save-world", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	// SaveWorld tries to write to disk, so it might succeed or fail
-	// Based on test environment
-	if rec.Code != http.StatusInternalServerError && rec.Code != http.StatusOK {
-		t.Errorf("unexpected status %d, want 200 or 500; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleSaveWorld_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleSaveWorld(w, nil)
-
-	for _, method := range []string{http.MethodGet, http.MethodPut} {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/admin/save-world", nil)
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
-
-			if rec.Code != http.StatusMethodNotAllowed {
-				t.Errorf("%s returned %d, want 405", method, rec.Code)
-			}
-		})
-	}
-}
 
 func TestHandleResetAllZones_Post(t *testing.T) {
 	w := testWorld(t)
@@ -1336,7 +1304,6 @@ func TestNewRouter_Unauthenticated_Returns401(t *testing.T) {
 		"/admin/mobs",
 		"/admin/objects",
 		"/admin/metrics",
-		"/admin/save-world",
 		"/admin/reset-all-zones",
 		"/admin/agents",
 		"/admin/findings",
@@ -1374,17 +1341,6 @@ func TestNewRouter_Forbidden_BuilderAccess(t *testing.T) {
 	token := generateTestToken(t, "player")
 
 	// Admin-only endpoints should return 403 for player role
-	t.Run("save-world", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/admin/save-world", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
-		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
-
-		if rec.Code != http.StatusForbidden {
-			t.Errorf("status = %d, want 403; body: %s", rec.Code, rec.Body.String())
-		}
-	})
-
 	t.Run("reset-all-zones", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/admin/reset-all-zones", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -1431,13 +1387,13 @@ func TestNewRouter_AuthenticatedAdmin_SuccessOnAdminEndpoints(t *testing.T) {
 	handler := authMiddlewareForTest(router)
 	token := generateTestToken(t, "admin")
 
-	t.Run("save-world", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/admin/save-world", nil)
+	t.Run("reset-all-zones", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/admin/reset-all-zones", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
-		// May succeed or fail based on disk write, but shouldn't be 401/403
+		// May succeed or fail based on zone state, but shouldn't be 401/403
 		if rec.Code == http.StatusUnauthorized || rec.Code == http.StatusForbidden {
 			t.Errorf("unexpected status %d for admin", rec.Code)
 		}

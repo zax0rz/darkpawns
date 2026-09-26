@@ -275,16 +275,18 @@ func TestHasSpecInRoom_AfterRefresh(t *testing.T) {
 	}
 }
 
-// TestShutdown_NoMutationAfterSaveBegins verifies that the shutdown sequence
+// TestShutdown_NoMutationAfterWorldStops verifies that the shutdown sequence
 // (StopAITicker + StopPeriodicResets) stops world-mutating goroutines before
-// SaveWorld would run (COV-3 / DP-964).
+// sessions drain (COV-3 / DP-964). C's init_game() saves no world state on the
+// way out — only the clan table, the in-game date and the player file — so the
+// guarantee here is that nothing keeps mutating while sessions close.
 //
 // Pre-shutdown: manual AITick proves mobs CAN wander (mutation mechanism works).
 // Shutdown: StopAITicker closes the shared done channel; StopPeriodicResets
 // closes the spawner done channel.
-// Post-shutdown: World is still usable (SaveWorld calls GetRoom, etc.) and
-// AITick is safe to call (no corrupted state). Both methods are idempotent.
-func TestShutdown_NoMutationAfterSaveBegins(t *testing.T) {
+// Post-shutdown: World is still readable (GetRoom etc. still work) and AITick
+// is safe to call (no corrupted state). Both methods are idempotent.
+func TestShutdown_NoMutationAfterWorldStops(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1001, Name: "Room 1", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
@@ -331,7 +333,7 @@ func TestShutdown_NoMutationAfterSaveBegins(t *testing.T) {
 	w.StopPeriodicResets()
 
 	// ── Post-shutdown: verify world is still usable ────────────────────
-	// SaveWorld will call GetRoom, GetMob, etc. — they must still work.
+	// Readers (GetRoom, GetMob, …) must still work after shutdown.
 	if _, ok := w.GetRoom(1001); !ok {
 		t.Error("GetRoom(1001) should work after shutdown")
 	}

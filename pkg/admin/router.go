@@ -255,9 +255,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// a second listener bound to localhost, not loosening this.
 	track("/admin/prometheus", wrap(corsMiddleware(requireRole("builder", metrics.Handler().ServeHTTP))))
 
-	// Save world — requires admin role
-	track("/admin/save-world", wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
-
 	// Reset all zones — requires admin role
 	track("/admin/reset-all-zones", wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
 
@@ -295,7 +292,6 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		"/admin/rooms/{vnum}",
 		"/admin/metrics",
 		"/admin/login",
-		"/admin/save-world",
 		"/admin/reset-all-zones",
 		"/admin/agents",
 		"/admin/agents/status",

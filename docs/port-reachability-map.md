@@ -287,9 +287,11 @@ intercepts mob/obj/room specs before registry lookup.
 **Do not port the OLC commands.** The building toolchain was rebuilt as the web
 admin and is already mounted in the server:
 - `pkg/admin` (router + handlers): full CRUD on zones/rooms/mobs/objects/shops
-  (GET + PUT), `/admin/save-world` persistence, role-gated `builder`/`admin`,
-  audit-logged. `admin-ui/` is the built React front-end, served from `main.go`
-  (`http.Handle("/admin/", adminRouter)`).
+  (GET + PUT), `POST /admin/reset-all-zones` → `reset_zone()`, role-gated
+  `builder`/`admin`, audit-logged. `admin-ui/` is the built React front-end,
+  served from `main.go` (`http.Handle("/admin/", adminRouter)`).
+  (An older `POST /admin/save-world` persisted an invented world snapshot;
+  it was removed — see `docs/fidelity/audit-reports/world_state_persistence_audit.md`.)
 - So `olc` `medit` `oedit` `redit` `sedit` `tedit` `zedit` `luaedit` `string`
   are **superseded** — drop them from the port.
 

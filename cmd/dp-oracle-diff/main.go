@@ -178,9 +178,10 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		return err
 	}
 	// Keep the Go world disposable for every scenario, not only fixture cases.
-	// The server anchors relative runtime state (./data/world_state.json) to the
-	// world directory's parent; sharing repoRoot/lib lets one scenario's quit
-	// save poison later scenarios and makes a clean oracle comparison flaky.
+	// The server anchors relative runtime state (player saves and the instance
+	// data directory) to the world directory's parent; sharing repoRoot/lib lets
+	// one scenario's quit save poison later scenarios and makes a clean oracle
+	// comparison flaky.
 	goWorld := filepath.Join(tmp, "go-world")
 	if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 		return fmt.Errorf("copy Go world to throwaway directory: %w", err)

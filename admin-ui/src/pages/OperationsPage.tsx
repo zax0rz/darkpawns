@@ -51,16 +51,6 @@ export function OperationsPage() {
     refetchInterval: 10000,
   });
 
-  const saveWorldMutation = useMutation({
-    mutationFn: () => api.saveWorld(),
-    onSuccess: (data) => {
-      showToast(`World state saved: ${data.status}`, 'success');
-    },
-    onError: (err: Error) => {
-      showToast(`Save failed: ${err.message}`, 'error');
-    },
-  });
-
   const resetZonesMutation = useMutation({
     mutationFn: () => api.resetAllZones(),
     onSuccess: (data) => {
@@ -71,12 +61,6 @@ export function OperationsPage() {
       showToast(`Zone reset failed: ${err.message}`, 'error');
     },
   });
-
-  const handleSaveWorld = () => {
-    if (window.confirm('Save the entire world state? This may take a moment.')) {
-      saveWorldMutation.mutate();
-    }
-  };
 
   const handleResetZones = () => {
     if (window.confirm('Reset all zones? This will respawn all mobs and objects.')) {
@@ -202,13 +186,6 @@ export function OperationsPage() {
             className="bg-accent hover:bg-accent disabled:bg-paper disabled:text-ink-muted text-ink text-sm rounded px-4 py-2 border border-accent disabled:border-rule transition-colors"
           >
             {resetZonesMutation.isPending ? 'Resetting...' : 'Zone Reset All'}
-          </button>
-          <button
-            onClick={handleSaveWorld}
-            disabled={saveWorldMutation.isPending}
-            className="bg-paper-deep hover:bg-paper-deep disabled:bg-paper disabled:text-ink-muted text-ink text-sm rounded px-4 py-2 border border-rule disabled:border-rule transition-colors"
-          >
-            {saveWorldMutation.isPending ? 'Saving...' : 'Save World State'}
           </button>
         </div>
       </div>

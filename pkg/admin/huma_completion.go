@@ -293,18 +293,6 @@ func registerWorldCompletion(api huma.API, world *game.World, auditLogger *audit
 			return &shopOutput{Body: shopResponse{VNum: s.VNum, KeeperVNum: s.KeeperVNum, BuyTypes: s.BuyTypes, SellTypes: s.SellTypes, ProfitBuy: s.ProfitBuy, ProfitSell: s.ProfitSell, KeeperName: s.KeeperName, RoomVNum: s.RoomVNum}}, nil
 		})
 
-	huma.Register(api, huma.Operation{OperationID: "save-world", Method: http.MethodPost, Path: "/admin/save-world", Summary: "Save world state"},
-		func(ctx context.Context, in *struct{}) (*statusOutput, error) {
-			if err := game.SaveWorld(world); err != nil {
-				slog.Error("admin save world failed", "error", err)
-				return nil, &jsonResponseError{status: http.StatusInternalServerError, body: map[string]string{"error": fmt.Sprintf("save failed: %v", err)}}
-			}
-			auditAdmin(ctx, auditLogger, "admin_save_world", "saved world state", true)
-			out := &statusOutput{}
-			out.Body.Status = "saved"
-			return out, nil
-		})
-
 	type resetAllOutput struct {
 		Body struct {
 			Errors     []string `json:"errors,omitempty"`

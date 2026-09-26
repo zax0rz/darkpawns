@@ -56,7 +56,8 @@ This audit examines the port fidelity between the legacy C source file `src/circ
 ## 3. Go Improvements Over C
 
 ### 1. Robust Lifecycle Signals
-- **Fidelity Improvement**: Legacy C handled shutdowns brutally or required custom signal piping in `comm.c` which could crash thread states. Go's `main.go` cleanly registers signal listening (`signal.Notify` for SIGINT/SIGTERM) and triggers a thread-safe graceful session save (`manager.ShutdownGracefully`) and dynamic world dump (`game.SaveWorld`) before closing files.
+- **Fidelity Improvement**: Legacy C handled shutdowns brutally or required custom signal piping in `comm.c` which could crash thread states. Go's `main.go` cleanly registers signal listening (`signal.Notify` for SIGINT/SIGTERM) and drains sessions thread-safely (`manager.ShutdownGracefully`) before closing files.
+- **Corrected 2026-09-26**: this paragraph previously credited the shutdown path with a "dynamic world dump (`game.SaveWorld`)". C's `init_game()` saves no world state on the way out (`src/comm.c:288-293` — `save_clans`, `close_whod`, `write_mud_date_to_file`, player file), so that dump was an invention and has been removed (RULEBOOK R4). See [`world_state_persistence_audit.md`](world_state_persistence_audit.md).
 
 ### 2. Type-Safe Heartbeat Registry
 - **Fidelity Improvement**: C's heartbeat loop mixed low-level network I/O select loops directly with game ticks in a single massive while loop in `comm.c`. Go decouples this cleanly: `gameloop.go` manages only the timing and delegates business logic cleanly via Go interfaces (`GameLoopCallbacks`).

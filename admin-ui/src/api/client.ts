@@ -284,6 +284,5 @@ export const api = {
   kickPlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/kick`, { method: 'POST' }),
   metrics: () => request<ServerMetrics>('/metrics'),
   prometheus: async () => (await requestResponse('/prometheus')).text(),
-  saveWorld: () => request<{ status: string }>('/save-world', { method: 'POST' }),
   resetAllZones: () => request<{ status: string; zones_reset: number; zones_total: number; errors?: string[] }>('/reset-all-zones', { method: 'POST' }),
 };

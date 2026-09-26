@@ -663,44 +663,6 @@ func handleMetrics(world *game.World) http.HandlerFunc {
 	}
 }
 
-// handleSaveWorld triggers a world state save.
-func handleSaveWorld(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
-			return
-		}
-
-		if err := game.SaveWorld(world); err != nil {
-			slog.Error("admin save world failed", "error", err)
-			resp := map[string]string{"error": fmt.Sprintf("save failed: %v", err)}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(resp) //nolint:errcheck
-			return
-		}
-
-		if auditLogger != nil {
-			claims, ok := auth.GetClaimsFromContext(r.Context())
-			adminName := ""
-			if ok {
-				adminName = claims.PlayerName
-			}
-			auditLogger.Log(audit.AuditEvent{
-				IPAddress: auth.GetIPFromRequest(r),
-				EventType: "administration",
-				User:      adminName,
-				Action:    "admin_save_world",
-				Details:   "saved world state",
-				Success:   true,
-			})
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"status": "saved"}) //nolint:errcheck
-	}
-}
-
 // handleResetAllZones triggers a reset on all zones.
 func handleResetAllZones(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

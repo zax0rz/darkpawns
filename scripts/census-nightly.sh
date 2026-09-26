@@ -2,8 +2,9 @@
 set -uo pipefail
 
 # Run the complete real-oracle census from a disposable checkout of origin/main.
-# This keeps generated lib/data/world_state.json and other runtime files out of
-# the developer checkout, which is important for scenarios without fixtures.
+# This keeps generated runtime files (player saves, the instance data directory)
+# out of the developer checkout, which is important for scenarios without
+# fixtures.
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 results_root=${DP_NIGHTLY_RESULTS_DIR:-/home/zach/dp-census-nightly}

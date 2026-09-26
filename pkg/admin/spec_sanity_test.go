@@ -56,7 +56,6 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/players/{name}/save":            {"post"},
 		"/admin/players/{name}/kick":            {"post"},
 		"/admin/shops/{keeper}":                 {"get"},
-		"/admin/save-world":                     {"post"},
 		"/admin/reset-all-zones":                {"post"},
 		"/admin/agents":                         {"get"},
 		"/admin/agents/status":                  {"post"},
