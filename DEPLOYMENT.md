@@ -103,6 +103,10 @@ Keep the signing secret private and stable across restarts. Startup
 rejects a missing or short `JWT_SECRET` unless `ENVIRONMENT=development`, which
 uses an ephemeral secret.
 
+Moving an existing PostgreSQL installation to SQLite is a one-time operator
+procedure with its own preflight, verification and rollback steps:
+[docs/operational/SQLITE-CUTOVER.md](docs/operational/SQLITE-CUTOVER.md).
+
 Alternatively, copy [`.env.example`](.env.example), edit it, and export it from
 your shell. The native binary **does not load `.env` automatically**:
 
