@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/errlog"
-
-	_ "github.com/lib/pq"
 )
 
 // QueryOptimizer provides database query optimization.
@@ -129,49 +127,46 @@ func NewIndexAnalyzer(db *sql.DB) *IndexAnalyzer {
 	return &IndexAnalyzer{db: db}
 }
 
-// AnalyzeTable analyzes a table for missing indexes.
+// AnalyzeTable reports the indexes a table already has, so a caller can see
+// whether a column it queries by is covered.
+//
+// It used to read PostgreSQL's pg_stats for correlation estimates. That query is
+// gone with the PostgreSQL runtime: the store is SQLite, which has no pg_stats,
+// and guessing at a recommendation from a catalog that does not exist would be
+// inventing analysis rather than performing it. What SQLite can answer exactly is
+// which indexes exist and what they cover.
 func (ia *IndexAnalyzer) AnalyzeTable(tableName string) ([]IndexRecommendation, error) {
-	query := `
-		SELECT 
-			attname,
-			most_common_vals,
-			most_common_freqs,
-			histogram_bounds,
-			correlation
-		FROM pg_stats 
-		WHERE tablename = $1
-	`
-
-	rows, err := ia.db.Query(query, tableName)
+	rows, err := ia.db.Query(`
+		SELECT il.name, ii.name
+		FROM pragma_index_list(?) AS il
+		JOIN pragma_index_info(il.name) AS ii
+		ORDER BY il.name, ii.seqno
+	`, tableName)
 	if err != nil {
-		return nil, fmt.Errorf("query pg_stats: %w", err)
+		return nil, fmt.Errorf("read sqlite indexes for %s: %w", tableName, err)
 	}
 	defer errlog.Close(rows, "close query-analysis rows")
 
 	var recommendations []IndexRecommendation
-
+	seen := make(map[string]bool)
 	for rows.Next() {
-		var columnName string
-		var mostCommonVals, mostCommonFreqs, histogramBounds sql.NullString
-		var correlation sql.NullFloat64
-
-		if err := rows.Scan(&columnName, &mostCommonVals, &mostCommonFreqs, &histogramBounds, &correlation); err != nil {
+		var indexName, columnName string
+		if err := rows.Scan(&indexName, &columnName); err != nil {
 			return nil, fmt.Errorf("scan row: %w", err)
 		}
-
-		// Simple heuristic: recommend index for low-correlation columns
-		if correlation.Valid && correlation.Float64 < 0.3 {
-			recommendations = append(recommendations, IndexRecommendation{
-				TableName:  tableName,
-				ColumnName: columnName,
-				Reason:     fmt.Sprintf("Low correlation (%.2f) suggests index would help", correlation.Float64),
-				Priority:   "MEDIUM",
-			})
+		if seen[columnName] {
+			continue
 		}
+		seen[columnName] = true
+		recommendations = append(recommendations, IndexRecommendation{
+			TableName:  tableName,
+			ColumnName: columnName,
+			Reason:     fmt.Sprintf("already covered by index %s", indexName),
+			Priority:   "COVERED",
+		})
 	}
-
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterating pg_stats rows: %w", err)
+		return nil, fmt.Errorf("iterating sqlite index rows: %w", err)
 	}
 
 	return recommendations, nil
@@ -398,47 +393,22 @@ func (cm *ConnectionMonitor) checkHealth() {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
-	// Get connection stats from PostgreSQL
-	var stats struct {
-		NumBackends  int
-		XactCommit   int64
-		XactRollback int64
-		BlksRead     int64
-		BlksHit      int64
-	}
-
-	err := cm.db.QueryRow(`
-		SELECT 
-			(SELECT count(*) FROM pg_stat_activity) as num_backends,
-			(SELECT sum(xact_commit) FROM pg_stat_database) as xact_commit,
-			(SELECT sum(xact_rollback) FROM pg_stat_database) as xact_rollback,
-			(SELECT sum(blks_read) FROM pg_stat_database) as blks_read,
-			(SELECT sum(blks_hit) FROM pg_stat_database) as blks_hit
-	`).Scan(&stats.NumBackends, &stats.XactCommit, &stats.XactRollback, &stats.BlksRead, &stats.BlksHit)
-	if err != nil {
-		cm.stats.Healthy = false
-		return
-	}
-
-	cm.stats.OpenConnections = stats.NumBackends
-	cm.stats.LastCheck = time.Now()
-	cm.stats.Healthy = true
-
-	// Populate Go sql.DB stats (InUse/Idle/WaitCount/WaitDuration) from the
-	// connection pool itself.
+	// Every number here comes from the database/sql pool, which is what a SQLite
+	// store has: the former pg_stat_activity/pg_stat_database query went with the
+	// PostgreSQL runtime, and there is no SQLite equivalent to substitute for it.
 	dbStats := cm.db.Stats()
+	cm.stats.OpenConnections = dbStats.OpenConnections
 	cm.stats.InUse = dbStats.InUse
 	cm.stats.Idle = dbStats.Idle
 	cm.stats.WaitCount = dbStats.WaitCount
 	cm.stats.WaitDuration = dbStats.WaitDuration
+	cm.stats.LastCheck = time.Now()
 
-	// Simple health check: ping the database
+	// Health is whether the file is still answerable.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := cm.db.PingContext(ctx); err != nil {
-		cm.stats.Healthy = false
-	}
+	cm.stats.Healthy = cm.db.PingContext(ctx) == nil
 }
 
 // GetStats returns current connection statistics.

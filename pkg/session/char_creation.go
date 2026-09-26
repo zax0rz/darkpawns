@@ -2,13 +2,14 @@ package session
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
 
-	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
+	"modernc.org/sqlite"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -781,13 +782,35 @@ func charOpts(pairs ...string) []CharCreateOption {
 	return opts
 }
 
-// isUniqueConstraintError checks if a DB error is a PostgreSQL unique constraint violation.
+// isUniqueConstraintError reports whether err is a uniqueness violation from the
+// game store. Character creation depends on it to tell "that name is taken" from
+// a real failure.
+//
+// The store is SQLite, which reports a collision on the unique index over
+// lower(name) as SQLITE_CONSTRAINT_UNIQUE (2067) — the code SQLite's own
+// documentation names for a violated UNIQUE constraint, and the one the
+// duplicate-name path must recognise. The extended constraint codes are checked
+// alongside it, and the text fallback is matched case-insensitively because
+// SQLite spells the message "UNIQUE constraint failed: players.name" while other
+// drivers spell it "unique constraint".
 func isUniqueConstraintError(err error) bool {
-	if pqErr, ok := err.(*pq.Error); ok {
-		return pqErr.Code == "23505"
+	if err == nil {
+		return false
 	}
-	return strings.Contains(err.Error(), "unique constraint") ||
-		strings.Contains(err.Error(), "duplicate key")
+	const (
+		sqliteConstraint           = 19   // SQLITE_CONSTRAINT
+		sqliteConstraintUnique     = 2067 // SQLITE_CONSTRAINT_UNIQUE
+		sqliteConstraintPrimaryKey = 1555 // SQLITE_CONSTRAINT_PRIMARYKEY
+	)
+	var sqliteErr *sqlite.Error
+	if errors.As(err, &sqliteErr) {
+		switch sqliteErr.Code() {
+		case sqliteConstraint, sqliteConstraintUnique, sqliteConstraintPrimaryKey:
+			return true
+		}
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "unique constraint") || strings.Contains(message, "duplicate key")
 }
 
 // expandEntryColors follows comm.c color_expansion. Unknown markers and a lone

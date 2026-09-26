@@ -33,8 +33,14 @@ const (
 	// orthogonal to DP_CLOCK's pulse freeze). 1770838461 => 2pm/daytime,
 	// {hours:14,day:17,month:8,year:1245}; both derive an identical calendar.
 	fixedTime    = "1770838461"
-	settlePulses = 40                                                                  // C PULSE_MOBILE: births a newbie exactly once.
-	deadDBURL    = "postgres://x:x@127.0.0.1:1/nope?sslmode=disable&connect_timeout=1" // #nosec G101 -- deliberately unreachable placeholder DSN (dev oracle-diff harness), not a real credential
+	settlePulses = 40 // C PULSE_MOBILE: births a newbie exactly once.
+	// deadStorePath names a database under a directory that does not exist, so the
+	// store cannot be opened. Scenarios that do not read persistence boot with it
+	// and DP_ALLOW_NO_DB=1 (withFreshMUDEnv): the same intent as the unreachable
+	// PostgreSQL server this used to name, expressed in a runtime that has one
+	// store and it is a file. Relogin and restart scenarios replace it with a real
+	// store (prepareGoReloginDB).
+	deadStorePath = "/nonexistent-darkpawns-oracle-diff/relogin.db"
 )
 
 //go:embed scenarios/*.txt
@@ -389,7 +395,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// engine closures read them lazily, so a <RESTART> step reuses the same
 	// environment and the same durable store as the first boot.
 	var goEnv []string
-	goDB := deadDBURL
+	goDB := deadStorePath
 
 	oracleEngine := &engine{
 		name: "C oracle",

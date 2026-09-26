@@ -28,13 +28,14 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	_ "github.com/lib/pq"
 )
 
-// deadDBURL points at a closed port so db.New fails fast, forcing the
-// no-database boot path — the exact configuration that used to panic.
-const deadDBURL = "postgres://x:x@127.0.0.1:1/nope?sslmode=disable&connect_timeout=1"
+// deadSQLitePath names a database under a directory that does not exist, so
+// db.New fails fast and the server takes the no-database boot path — the exact
+// configuration that used to panic. It stands in for the unreachable PostgreSQL
+// the store used to be, and is deliberately per-process so no earlier run can
+// have created it.
+var deadSQLitePath = filepath.Join(os.TempDir(), fmt.Sprintf("dp-e2e-absent-%d", os.Getpid()), "darkpawns.db")
 
 func TestTelnetSmoke_GuestEntersWorld(t *testing.T) {
 	if testing.Short() {
@@ -269,17 +270,13 @@ func TestTelnetSmoke_CastEligibility(t *testing.T) {
 // then on a fresh connection the returning-player login loads it back. It also
 // guards DP-591 (a wrong password used to panic and crash the whole server).
 //
-// Gated on DP_TEST_DB_URL so the default `go test` (and CI without a database)
-// stays green. Point it at a throwaway/local database — the test creates and
-// then deletes a uniquely-named character.
+// The database is a disposable SQLite file this test creates, so the round trip
+// needs no service of any kind: the shipped configuration is the tested one.
 func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e: builds and launches the server binary; skipped in -short")
 	}
-	dbURL := os.Getenv("DP_TEST_DB_URL")
-	if dbURL == "" {
-		t.Skip("set DP_TEST_DB_URL to a test database to run the persistence round-trip")
-	}
+	dbURL := filepath.Join(t.TempDir(), "darkpawns.db")
 
 	// game.ValidName caps names at 20 chars, so keep this short and unique.
 	name := fmt.Sprintf("Rt%d", time.Now().UnixNano()%100000000)
@@ -377,12 +374,12 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 // idempotent on a possibly shared database.
 func seedTestPlayer(t *testing.T, dbURL, name string) {
 	t.Helper()
-	conn, err := sql.Open("postgres", dbURL)
+	conn, err := sql.Open("sqlite", dbURL)
 	if err != nil {
 		t.Fatalf("seed: open db: %v", err)
 	}
 	defer conn.Close()
-	if _, err := conn.Exec("INSERT INTO players (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", name); err != nil {
+	if _, err := conn.Exec("INSERT INTO players (name) VALUES (?) ON CONFLICT (name) DO NOTHING", name); err != nil {
 		t.Fatalf("seed: insert %s: %v", name, err)
 	}
 }
@@ -391,13 +388,13 @@ func seedTestPlayer(t *testing.T, dbURL, name string) {
 // (possibly shared) database is left as it was found.
 func deleteTestPlayer(t *testing.T, dbURL, name string) {
 	t.Helper()
-	conn, err := sql.Open("postgres", dbURL)
+	conn, err := sql.Open("sqlite", dbURL)
 	if err != nil {
 		t.Logf("cleanup: open db: %v", err)
 		return
 	}
 	defer conn.Close()
-	if _, err := conn.Exec("DELETE FROM players WHERE name = $1", name); err != nil {
+	if _, err := conn.Exec("DELETE FROM players WHERE name = ?", name); err != nil {
 		t.Logf("cleanup: delete %s: %v", name, err)
 	}
 }
@@ -410,7 +407,7 @@ type persistedPlayerState struct {
 
 func loadPersistedPlayerState(t *testing.T, dbURL, name string) persistedPlayerState {
 	t.Helper()
-	conn, err := sql.Open("postgres", dbURL)
+	conn, err := sql.Open("sqlite", dbURL)
 	if err != nil {
 		t.Fatalf("persisted player: open db: %v", err)
 	}
@@ -418,7 +415,7 @@ func loadPersistedPlayerState(t *testing.T, dbURL, name string) persistedPlayerS
 
 	var state persistedPlayerState
 	if err := conn.QueryRow(
-		"SELECT name, room_vnum, level FROM players WHERE name = $1",
+		"SELECT name, room_vnum, level FROM players WHERE name = ?",
 		name,
 	).Scan(&state.Name, &state.RoomVNum, &state.Level); err != nil {
 		t.Fatalf("persisted player %q: %v", name, err)
@@ -431,7 +428,7 @@ func loadPersistedPlayerState(t *testing.T, dbURL, name string) persistedPlayerS
 // returns a connected client. Cleanup (process kill, log dump on failure) is
 // registered on t.
 func launchAndDial(t *testing.T) (net.Conn, *bufio.Reader) {
-	return launchAndDialDB(t, deadDBURL)
+	return launchAndDialDB(t, deadSQLitePath)
 }
 
 // launchAndDialDB is launchAndDial with an explicit database URL, used by the
@@ -469,7 +466,7 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	// This vehicle deliberately exercises ephemeral play. Keep real-database
 	// tests fail-closed even if the parent shell opted into no-DB operation.
 	allowNoDB := "0"
-	if dbURL == deadDBURL {
+	if dbURL == deadSQLitePath {
 		allowNoDB = "1"
 	}
 	cmd.Env = append(

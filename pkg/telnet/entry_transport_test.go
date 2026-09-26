@@ -2,11 +2,9 @@ package telnet
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"net"
-	"net/url"
-	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -19,38 +17,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// listenerEntryDatabase is a private SQLite store per test: the database the
+// server actually runs, with no service to start and no shared schema to clean
+// up. A file per test gives the same isolation the PostgreSQL harness got from a
+// private schema.
 func listenerEntryDatabase(t *testing.T) *db.DB {
 	t.Helper()
-	dsn := os.Getenv("DP_ENTRY_TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("set DP_ENTRY_TEST_DATABASE_URL to run PostgreSQL entry transport tests")
-	}
-	u, err := url.Parse(dsn)
-	if err != nil || (u.Hostname() != "127.0.0.1" && u.Hostname() != "localhost") {
-		t.Fatal("entry transport tests require a local PostgreSQL URL")
-	}
-	admin, err := sql.Open("postgres", dsn)
+	path := filepath.Join(t.TempDir(), "entry-transport.db")
+	database, err := db.New("sqlite://" + path)
 	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = admin.Close() })
-	schema := fmt.Sprintf("entry_transport_test_%d", time.Now().UnixNano())
-	if _, err := admin.Exec("CREATE SCHEMA " + schema); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if _, err := admin.Exec("DROP SCHEMA " + schema + " CASCADE"); err != nil {
-			t.Errorf("drop isolated entry transport schema: %v", err)
-		}
-	})
-	q := u.Query()
-	// Use a lib/pq startup option so every pooled connection, including the
-	// cleanup save path, resolves the isolated schema.
-	q.Set("options", "-csearch_path="+schema)
-	u.RawQuery = q.Encode()
-	database, err := db.New(u.String())
-	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("open entry transport database at %s: %v", path, err)
 	}
 	t.Cleanup(func() { _ = database.Close() })
 	return database

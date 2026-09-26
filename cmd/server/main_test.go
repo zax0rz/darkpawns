@@ -313,7 +313,7 @@ func TestAllowNoDBHonouredWhenURLIsMissing(t *testing.T) {
 
 func TestServerBootRejectsShortJWTSecretOutsideDevelopment(t *testing.T) {
 	code, out := bootServer(t,
-		[]string{"-world", fakeWorld(t), "-db", "postgres://unused"},
+		[]string{"-world", fakeWorld(t), "-db", filepath.Join(t.TempDir(), "darkpawns.db")},
 		"ENVIRONMENT=production",
 		"JWT_SECRET=tooshort",
 	)
@@ -333,7 +333,7 @@ func TestServerBootRejectsShortJWTSecretOutsideDevelopment(t *testing.T) {
 // sentinel: a rejected -static would have exited before "Loading world".
 func TestStaticSiteFlagReachesBoot(t *testing.T) {
 	code, out := bootServer(t,
-		[]string{"-static", t.TempDir(), "-world", fakeWorld(t), "-db", "postgres://unused"},
+		[]string{"-static", t.TempDir(), "-world", fakeWorld(t), "-db", filepath.Join(t.TempDir(), "darkpawns.db")},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
 	)
@@ -352,7 +352,7 @@ func TestStaticSiteFlagReachesBoot(t *testing.T) {
 // pre-rename spelling: it must work, and it must say it is on the way out.
 func TestHugoFlagStillWorksAndWarns(t *testing.T) {
 	code, out := bootServer(t,
-		[]string{"-hugo", t.TempDir(), "-world", fakeWorld(t), "-db", "postgres://unused"},
+		[]string{"-hugo", t.TempDir(), "-world", fakeWorld(t), "-db", filepath.Join(t.TempDir(), "darkpawns.db")},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
 	)
@@ -387,10 +387,16 @@ func TestUnusableStaticDirRefusesBeforeParse(t *testing.T) {
 	}
 }
 
-func TestServerBootFailsCleanlyOnUnreachableDatabase(t *testing.T) {
+// TestServerBootFailsCleanlyOnAnUnopenableDatabase is the persistence gate: a
+// database path that cannot be opened must fail the boot loudly, after the world
+// parse, without panicking or hanging. It used to point at an unreachable
+// PostgreSQL server; the store is a SQLite file now, so the equivalent
+// misconfiguration is a path whose directory does not exist.
+func TestServerBootFailsCleanlyOnAnUnopenableDatabase(t *testing.T) {
 	worldDir := repoWorld(t)
+	unopenable := filepath.Join(t.TempDir(), "absent", "darkpawns.db")
 	code, out := bootServer(t,
-		[]string{"-world", worldDir, "-db", "postgres://127.0.0.1:1/unreachable"},
+		[]string{"-world", worldDir, "-db", unopenable},
 		"ENVIRONMENT=development",
 		"DATABASE_URL=",
 		"DP_ALLOW_NO_DB=",
@@ -402,6 +408,75 @@ func TestServerBootFailsCleanlyOnUnreachableDatabase(t *testing.T) {
 	// not panic or hang.
 	if !strings.Contains(out, "Database initialization failed") {
 		t.Errorf("expected database initialization error, got:\n%s", out)
+	}
+	if !strings.Contains(out, filepath.Dir(unopenable)) {
+		t.Errorf("refusal does not name the directory it could not use:\n%s", out)
+	}
+}
+
+// TestServerBootRefusesAPostgresDSN is the architecture gate at the binary: a
+// PostgreSQL DSN is a configuration for a runtime that no longer exists, so it
+// must stop the boot with a message that says so. Ignoring it would start the
+// server against a fresh empty SQLite file — healthy-looking, and holding none
+// of the characters that were migrated.
+func TestServerBootRefusesAPostgresDSN(t *testing.T) {
+	for _, setting := range []string{
+		"postgres://darkpawns:secret@127.0.0.1:5432/darkpawns?sslmode=disable",
+		"postgresql:///darkpawns?host=/var/run/postgresql",
+	} {
+		code, out := bootServer(t,
+			[]string{"-world", fakeWorld(t), "-db", setting},
+			"ENVIRONMENT=development",
+			"DATABASE_URL=",
+			"DP_ALLOW_NO_DB=",
+		)
+		if code != 1 {
+			t.Fatalf("exit code = %d for %q, want 1\n%s", code, setting, out)
+		}
+		if !strings.Contains(out, "no longer a runtime database") {
+			t.Errorf("refusal does not explain the architecture, got:\n%s", out)
+		}
+		if !strings.Contains(out, "tools/db-migrate") {
+			t.Errorf("refusal does not name the conversion tool, got:\n%s", out)
+		}
+		if strings.Contains(out, "secret") {
+			t.Errorf("refusal leaked the password it was handed, got:\n%s", out)
+		}
+	}
+}
+
+// TestServerBootRefusesAPostgresDATABASEURLLegacyVar covers the unit file left
+// over from the PostgreSQL era: DATABASE_URL is still read (so it cannot be
+// ignored), and a PostgreSQL value in it is refused exactly like -db.
+func TestServerBootRefusesAPostgresDATABASEURLLegacyVar(t *testing.T) {
+	code, out := bootServer(t,
+		[]string{"-world", fakeWorld(t)},
+		"ENVIRONMENT=development",
+		"DATABASE_URL=postgres://darkpawns@127.0.0.1:5432/darkpawns?sslmode=disable",
+		"DP_ALLOW_NO_DB=",
+	)
+	if code != 1 {
+		t.Fatalf("exit code = %d, want 1\n%s", code, out)
+	}
+	if !strings.Contains(out, "no longer a runtime database") {
+		t.Errorf("legacy DATABASE_URL was not refused, got:\n%s", out)
+	}
+}
+
+// TestServerBootUsesADatabaseURLThatNamesASQLiteFile is the compatibility half:
+// an environment that already carries DATABASE_URL keeps working when its value
+// is a SQLite path, so the setting did not become ambiguous, only narrower.
+func TestServerBootUsesADatabaseURLThatNamesASQLiteFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "darkpawns.db")
+	code, out := bootServerContext(t, []string{"-world", parseableWorld(t), "-port", "0", "-telnet-port", "0"}, 5*time.Second,
+		"ENVIRONMENT=development",
+		"DATABASE_URL="+path,
+	)
+	if code != -1 && code != 0 {
+		t.Fatalf("exit code = %d, want a running boot (-1) or a clean stop\n%s", code, out)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Errorf("DATABASE_URL naming a SQLite file was not used: %v\n%s", err, out)
 	}
 }
 

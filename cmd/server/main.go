@@ -85,9 +85,8 @@ const (
 
 // usage is the operator's first stop after a boot refusal, so it leads with a
 // command that works in a fresh checkout and only then lists the flags. The
-// checkout command needs nothing external: the server boots against an
-// embedded SQLite database by default, and DATABASE_URL only matters when the
-// operator opts into PostgreSQL.
+// checkout command needs nothing external: the server boots against an embedded
+// SQLite database by default, and SQLite is the only runtime database there is.
 func usage() {
 	out := flag.CommandLine.Output()
 	// Header and footer are checked separately because flag.PrintDefaults has to
@@ -97,8 +96,9 @@ func usage() {
 		"In a checkout, from the repository root:\n\n"+
 		"  export JWT_SECRET=\"$(openssl rand -hex 32)\"\n"+
 		"  ./server\n\n"+
-		"Boots against an embedded SQLite database in data/ by default. Set\n"+
-		"DATABASE_URL (or pass -db) to use PostgreSQL instead.\n\n"+
+		"Boots against an embedded SQLite database in data/ by default. Pass -db\n"+
+		"(or set DP_SQLITE_PATH) to name a different SQLite file. PostgreSQL is\n"+
+		"not a runtime database: a postgres:// DSN is refused, not ignored.\n\n"+
 		"Flags:\n"); err != nil {
 		slog.Warn("writing usage failed", "error", err)
 		return
@@ -197,7 +197,7 @@ func main() {
 		worldDir   = flag.String("world", defaultWorldDir, "World data directory: the one holding wld/, mob/, obj/, zon/ and shp/")
 		scriptsDir = flag.String("scripts", "", "Lua script directory (defaults to <world>/scripts)")
 		port       = flag.String("port", "4350", "HTTP and WebSocket port")
-		dbURL      = flag.String("db", "", "Database URL or SQLite path (falls back to DATABASE_URL env var; default: embedded SQLite beside the world data)")
+		dbURL      = flag.String("db", "", "SQLite database path (or sqlite:// URL); falls back to DP_SQLITE_PATH, then to the embedded default beside the world data")
 		webDir     = flag.String("web", defaultWebDir, "Browser client directory served at / (index.html, client.js, style.css)")
 		staticDir  = flag.String("static", "", "Static site directory served at /, takes precedence over -web")
 		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
@@ -308,31 +308,53 @@ func main() {
 		slog.Error("failed to set persistence data directory", "error", err)
 		os.Exit(1)
 	}
+	// The one runtime database setting, resolved in one place. Order: the -db
+	// flag, then DP_SQLITE_PATH, then the legacy DATABASE_URL (which is only ever
+	// honoured for a SQLite path), then the embedded default beside the world
+	// data. A PostgreSQL DSN is refused below rather than ignored: being ignored
+	// would boot the server against a fresh empty SQLite file and look healthy
+	// while holding none of the characters that were migrated.
 	if *dbURL == "" {
-		*dbURL = os.Getenv("DATABASE_URL")
+		*dbURL = os.Getenv("DP_SQLITE_PATH")
+	}
+	if *dbURL == "" {
+		if legacy := os.Getenv("DATABASE_URL"); legacy != "" {
+			*dbURL = legacy
+			slog.Warn("DATABASE_URL is a legacy spelling and is only honoured for a SQLite path; prefer -db or DP_SQLITE_PATH",
+				"value", db.RedactDSN(legacy))
+		}
 	}
 	if *dbURL == "" {
 		if os.Getenv("DP_ALLOW_NO_DB") == "1" {
-			// The explicitly allowed no-persistence path: the empty DSN falls
+			// The explicitly allowed no-persistence path: the empty setting falls
 			// through to db.New below, which fails, and boot continues without
 			// a store. cmd/dp-oracle-diff sets this and does not guarantee a
-			// DATABASE_URL in the environment it builds. Honoured here and not
-			// only on connection failure so the defaulting branch cannot
-			// resurrect persistence against the operator's stated intent.
+			// database in the environment it builds. Honoured here and not only
+			// on connection failure so the defaulting branch cannot resurrect
+			// persistence against the operator's stated intent.
 		} else {
 			// Boot with no external services: default to embedded SQLite beside
 			// the world data. The path is anchored the same way as
 			// DARKPAWNS_DATA_DIR (DP-1193): the directory holding the world
-			// dir's sibling data. PostgreSQL remains the documented choice for
-			// scaled deployments, not a requirement to start.
+			// dir's sibling data.
 			defaultPath := filepath.Clean(filepath.Join(*worldDir, "..", "data", "darkpawns.db"))
 			if err := os.MkdirAll(filepath.Dir(defaultPath), 0o755); err != nil {
 				slog.Error("default database directory unusable; refusing to start",
 					"dir", filepath.Dir(defaultPath), "error", err)
 				os.Exit(1)
 			}
-			*dbURL = "sqlite://" + defaultPath
-			slog.Info("no database configured; defaulting to embedded SQLite", "path", defaultPath)
+			*dbURL = defaultPath
+			slog.Info("no database configured; defaulting to embedded SQLite beside the world data",
+				"path", defaultPath)
+		}
+	}
+	if *dbURL != "" {
+		// Validated before the world is loaded so a misconfiguration fails in
+		// milliseconds with a message about the configuration, not later with one
+		// about a table.
+		if _, err := db.SQLitePath(*dbURL); err != nil {
+			slog.Error("database configuration refused", "error", err)
+			os.Exit(1)
 		}
 	}
 
@@ -422,7 +444,16 @@ func main() {
 				slog.Error("database close failed during server shutdown", "error", err)
 			}
 		}()
-		slog.Info("Database connected.")
+		slog.Info("Database connected.", "path", *dbURL)
+		// A first boot and a boot against an existing database otherwise look
+		// identical in the log, and the difference matters: an operator who
+		// expects the migrated database wants to see that it was opened, not that
+		// a new empty one was created beside it. The line is additional, never a
+		// replacement for "connected", which other tooling reads.
+		if database.Created() {
+			slog.Warn("database file did not exist and was created (fresh install); it holds no characters yet",
+				"path", *dbURL)
+		}
 	}
 
 	// Set ban/xnames file paths relative to world directory (DP-421)
@@ -493,7 +524,7 @@ func main() {
 
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
-		modManager := moderation.NewManager(database.SQLDB(), database.Dialect())
+		modManager := moderation.NewManager(database.SQLDB())
 		modAdapter := session.NewModerationAdapter(modManager)
 		manager.SetModerationChecker(modAdapter)
 		slog.Info("Moderation manager wired with database backend")
