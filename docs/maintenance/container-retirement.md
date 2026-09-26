@@ -1,7 +1,7 @@
 # Container deployment retirement — 2026-09-09
 
-The maintained installation path is a native Go binary with PostgreSQL, as
-documented in [Running Dark Pawns](../../DEPLOYMENT.md). The inherited container
+The maintained installation path is a native Go binary with an embedded SQLite
+database, as documented in [Running Dark Pawns](../../DEPLOYMENT.md). The inherited container
 setup did not have a verified build-to-login workflow, and maintaining a second
 installation path is not a current project requirement.
 
@@ -25,7 +25,9 @@ from Git history, including revision `0505c87b7` before this cleanup.
 
 ## Retained
 
-- CI's disposable PostgreSQL and Redis service containers, used only for tests.
+- CI's disposable service containers, used only for tests. (Both are gone: the
+  runtime needs no service, and the converter that still reads PostgreSQL has
+  its own workflow with its own isolated database.)
 - The native server, database migrations, moderation/privacy integrations, and
   `/metrics` endpoint. Gameplay behavior is unchanged (R1/R4).
 - The optional Python privacy API, Prometheus/Grafana reference assets, and Caddy

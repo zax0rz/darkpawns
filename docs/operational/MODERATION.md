@@ -12,7 +12,7 @@ The Dark Pawns moderation system provides tools for managing player behavior, ha
 
 1. **Moderation Manager** (`pkg/moderation/`) - Core moderation logic
 2. **Admin Commands** (`pkg/command/admin_commands.go`) - In-game admin commands
-3. **Database Schema** - PostgreSQL tables for persistence
+3. **Database Schema** - tables in the game store (SQLite) for persistence
 4. **Admin Web Interface** (Optional) - Web-based moderation dashboard
 
 ### Data Flow
@@ -225,14 +225,14 @@ See `pkg/moderation/types.go` for data structures and `pkg/moderation/manager.go
 ### Common Issues
 
 1. **Commands not working**: Check admin permissions in `isAdmin()` function
-2. **Database errors**: Verify PostgreSQL connection and schema
+2. **Database errors**: Verify the SQLite file is openable and its schema current (a boot failure names the path)
 3. **Word filters not applying**: Check pattern matching and regex flags
 4. **Spam detection too sensitive**: Adjust `spamconfig` settings
 
 ### Logs
 
 - Moderation actions: Check server logs for `ADMIN:` prefix
-- Database errors: PostgreSQL error logs
+- Database errors: the store logs the SQLite error verbatim
 - System errors: Application logs
 
 ## Security Considerations
