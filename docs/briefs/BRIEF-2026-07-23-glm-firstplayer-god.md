@@ -10,7 +10,7 @@ NOT merge. Sized to one PR (S).
 player-observable fidelity gap (R1). It's also the enabler for oracle-gating the
 combat skill layer: a bootstrapped God can run `skillset` to grant a fixture
 mortal a skill (see the `skillset` brief), all through faithful game code.
-**Cite:** `src/db.c:3030-3090` (`init_char`, the `top_of_p_table == 0` block);
+**Cite:** `src/db.c:3016-3077` (`init_char`, the `top_of_p_table == 0` block);
 `pkg/game/limits.go:23` (`LVL_IMPL = 40`); rules **R1**, **R3**
 (`docs/fidelity/RULEBOOK.md`).
 

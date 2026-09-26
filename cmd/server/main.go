@@ -535,7 +535,7 @@ func main() {
 		OnMobileActivity: func() {
 			gameWorld.MobileActivity()
 		},
-		// comm.c:690 room_activity — FLAMING/UNDERWATER/WATER_NOSWIM fixed
+		// comm.c:710-720 room_activity — FLAMING/UNDERWATER/WATER_NOSWIM fixed
 		// self-damage, pulse-time room specs, and FLYING-sector falls, in C's
 		// heartbeat position right after mobile_activity.
 		OnRoomActivity: func() {

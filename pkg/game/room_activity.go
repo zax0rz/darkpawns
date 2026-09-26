@@ -1,6 +1,6 @@
 package game
 
-// room_activity.go — port of C room_activity() (src/comm.c:690-756), invoked
+// room_activity.go — port of C room_activity() (src/comm.c:691-756), invoked
 // by the game loop every PULSE_MOBILE immediately after mobile_activity
 // (heartbeat order: mobile_activity, room_activity, object_activity).
 //

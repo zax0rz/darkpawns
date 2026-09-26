@@ -83,7 +83,7 @@ Modified:
   `SYSERR: string_add: Aborting write from unknown origin.`
 - Transport: C's `process_output` frames a CON_PLAYING flush with an extra CRLF
   before the prompt, so the `string` editor's output carries a blank line that
-  the CON_* editors' output does not (comm.c:1633-1636).
+  the CON_* editors' output does not (comm.c:1630-1632).
 
 ## Findings reported, not silently fixed
 

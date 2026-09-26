@@ -94,7 +94,7 @@ type textEditState struct {
 	// playingEditor marks the one editor that runs with STATE(d) still
 	// CON_PLAYING: do_string hands the improved editor a live pointer without
 	// calling string_write. C's process_output frames CON_PLAYING flushes with
-	// an extra "\r\n" before the prompt (comm.c:1633-1634), so this editor's
+	// an extra "\r\n" before the prompt (comm.c:1630-1632), so this editor's
 	// flush carries a blank line that every CON_* editor's does not.
 	playingEditor bool
 }

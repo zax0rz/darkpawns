@@ -687,7 +687,7 @@ func (s *Session) completeCharCreation() error {
 	s.sendWelcome(token)
 
 	// C's start_room special emits the newbie birth transition on the first
-	// PULSE_MOBILE after entry (spec_procs.c:2204-2263 via comm.c:690
+	// PULSE_MOBILE after entry (spec_procs.c:2204-2263 via comm.c:691-756
 	// room_activity); the ported World.RoomActivity dispatches it the same
 	// way, so creation leaves the new mortal in the Burning Hut (8099) and
 	// the pulse delivers the message and the hometown relocation. Immortals

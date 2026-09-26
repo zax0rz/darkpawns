@@ -292,7 +292,7 @@ func (s *Session) SendPrompt() {
 	editing, playing := s.editorPromptState()
 	text := s.promptText()
 	// C's process_output appends "\r\n" whenever the descriptor is playing
-	// normally and the player is not compact (comm.c:1633-1634). Editors that
+	// normally and the player is not compact (comm.c:1630-1632). Editors that
 	// own a CON_* state (tedit/luaedit and the OLC string fields) take their
 	// flush without that frame; do_string's editor stays in CON_PLAYING, so its
 	// "New field." / "Ok." flushes do get it — that blank line before "] " is

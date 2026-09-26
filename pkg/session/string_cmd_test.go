@@ -670,7 +670,7 @@ func TestStringEditorTruncationMessagesMatchStringAdd(t *testing.T) {
 // TestStringEditorPromptMatchesMakePrompt pins C's prompt while the live-string
 // editor is active: make_prompt returns a bare "] " whenever d->str is set
 // (comm.c:1038-1039), and process_output frames a CON_PLAYING flush with an
-// extra "\r\n" (comm.c:1633-1636) — so the first prompt after editor output
+// extra "\r\n" (comm.c:1630-1632) — so the first prompt after editor output
 // carries that blank line and a later bare prompt does not.
 func TestStringEditorPromptMatchesMakePrompt(t *testing.T) {
 	s, m := newStringTestSession(t, LVL_IMPL)
