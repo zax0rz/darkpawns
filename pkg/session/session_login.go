@@ -185,10 +185,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				s.CloseSend()
 				return nil
 			}
-			if login.Password == "" {
-				s.CloseSend()
-				return nil
-			}
 			if rec.Password != "" && bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)) != nil {
 				// C's nanny turned echo back on as the password line was
 				// dispatched (interpreter.c:1871). echo_on's telnet string is
