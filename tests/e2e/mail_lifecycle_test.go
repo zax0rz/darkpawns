@@ -80,7 +80,12 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	// so the test was skipped rather than red and rotted unnoticed. The two earlier
 	// phases (send, and deliver across a real restart) do pass here, and they are
 	// what the mail store's durability claim rests on.
-	t.Skip("pre-existing: reload phase fails at base too; see the comment above")
+	// Tracked as DP-1346: repair the mail lifecycle reload phase ("persistent
+	// player did not enter the world"). It records this failure, the base-commit
+	// evidence and the required diagnosis, so this skip has a target rather than
+	// becoming permanent.
+	// https://linear.app/labz0rz/issue/DP-1346
+	t.Skip("pre-existing, tracked as DP-1346: reload phase fails at base too; see the comment above")
 	if testing.Short() {
 		t.Skip("e2e: builds and launches the server binary; skipped in -short")
 	}

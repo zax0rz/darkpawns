@@ -140,7 +140,12 @@ func TestEntryWebSocketSavedIdentityAndMenuResume(t *testing.T) {
 	// existed. The harness was gated on DP_ENTRY_TEST_DATABASE_URL, which CI never
 	// set, so these tests were skipped rather than red and rotted unnoticed.
 	// Repairing them needs a journey helper for the superseded/reconnect path.
-	t.Skip("pre-existing: asserts pre-DP-1323 teardown semantics; see the comment above")
+	// Tracked as DP-1347: repair the two WebSocket entry tests that assert
+	// pre-DP-1323 teardown semantics. It records this failure, the base-commit
+	// evidence and the required repair (a journey helper for the superseded /
+	// reconnect path), so this skip has a target rather than becoming permanent.
+	// https://linear.app/labz0rz/issue/DP-1347
+	t.Skip("pre-existing, tracked as DP-1347: asserts pre-DP-1323 teardown semantics; see the comment above")
 	t.Setenv("JWT_SECRET", "entry-transport-test-jwt-secret-at-least-32")
 	database := entryDatabase(t)
 	want := entrySeed(t, database, "Aiko")
@@ -190,7 +195,12 @@ func TestEntryWebSocketNewCharacterPersistsAtMenu(t *testing.T) {
 	// existed. The harness was gated on DP_ENTRY_TEST_DATABASE_URL, which CI never
 	// set, so these tests were skipped rather than red and rotted unnoticed.
 	// Repairing them needs a journey helper for the superseded/reconnect path.
-	t.Skip("pre-existing: asserts pre-DP-1323 teardown semantics; see the comment above")
+	// Tracked as DP-1347: repair the two WebSocket entry tests that assert
+	// pre-DP-1323 teardown semantics. It records this failure, the base-commit
+	// evidence and the required repair (a journey helper for the superseded /
+	// reconnect path), so this skip has a target rather than becoming permanent.
+	// https://linear.app/labz0rz/issue/DP-1347
+	t.Skip("pre-existing, tracked as DP-1347: asserts pre-DP-1323 teardown semantics; see the comment above")
 	t.Setenv("JWT_SECRET", "entry-transport-test-jwt-secret-at-least-32")
 	database := entryDatabase(t)
 	entrySeed(t, database, "Founder")
