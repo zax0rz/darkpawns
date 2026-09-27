@@ -53,7 +53,7 @@ That 2002 ad is one of eighteen Usenet records we just added to [the archive](ht
 <text x="100" y="399" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="600" fill="var(--accent, #A8201A)">darkpawns.org 7777</text>
 <text x="100" y="418" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">telnet in, or play in a browser</text>
 </svg>
-<figcaption>Where the game lived, dated by the first recovered ad that gives each address. The game itself goes back to September 1994, on knight.ufp.org.</figcaption>
+<figcaption style="margin-top:var(--space-md, 1rem);">Where the game lived, dated by the first recovered ad that gives each address. The game itself goes back to September 1994, on knight.ufp.org.</figcaption>
 </figure>
 
 The earliest is from December 3, 1996. Oddity announced "Dark Pawns - knight.ufp.org 4000" with "over 5,000 rooms (not bad for being new :)" and closed on "we have the coolest gods around! (Hmm, maybe I should change my handle to Modesty :)". The only reply came two days later and reads, in full: "Where & How?" (In 1999 Frontline, by then one of the game's two implementors, [wrote](https://darkpawns.org/archive/usenet-1999-02-11-license-dispute/) that a 1994 ad from knight.ufp.org was still archived. We haven't found it.)
