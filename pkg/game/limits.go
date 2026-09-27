@@ -25,9 +25,9 @@ const (
 	LVL_HIGOD  = 36
 	LVL_IMPL   = 40
 
-	// Idle time limits — from limits.c
-	IDLE_TO_VOID     = 20 // cycles before being pulled into void
-	IDLE_DISCONNECT  = 30 // cycles before forced disconnect
+	// Idle time limits — from src/utils.h:131-132
+	IDLE_TO_VOID     = 8  // point_update ticks before being pulled into void
+	IDLE_DISCONNECT  = 30 // ticks before forced disconnect/extract
 	MAX_TITLE_LENGTH = 80 // from structs.h
 )
 

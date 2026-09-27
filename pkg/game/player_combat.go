@@ -5,7 +5,25 @@ import "github.com/zax0rz/darkpawns/pkg/combat"
 func (p *Player) StopFighting() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if p.Fighting == "" {
+		return
+	}
 	p.Fighting = ""
+	// C's stop_fighting resets POS_FIGHTING to standing, then update_pos
+	// re-derives the wounded band from hit points (fight.c). MobInstance does
+	// the same; players must not remain command-gated as fighting after their
+	// opponent leaves or they are pulled into the void.
+	if p.Health > 0 {
+		p.Position = combat.PosStanding
+	} else if p.Health <= -11 {
+		p.Position = combat.PosDead
+	} else if p.Health <= -6 {
+		p.Position = combat.PosMortally
+	} else if p.Health <= -3 {
+		p.Position = combat.PosIncap
+	} else {
+		p.Position = combat.PosStunned
+	}
 }
 
 // IsFighting returns true if the player is in combat.

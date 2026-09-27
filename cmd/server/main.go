@@ -581,11 +581,19 @@ func main() {
 		OnAffectUpdate: func() {
 			gameWorld.AffectUpdate()
 		},
+		// point_update's production driver is World's standalone 63s ticker
+		// (DP-947); under the frozen DP_CLOCK oracle that ticker never starts,
+		// so the pumped heartbeat must carry point_update (comm.c:825-828) or
+		// pumped silence can never advance the tick-driven idle lifecycle
+		// (check_idling, limits.c:521-526). The Frozen gate keeps production's
+		// single-driver invariant intact.
+		OnPointUpdate: func() {
+			if dpclock.Frozen() {
+				gameWorld.PointUpdate()
+			}
+		},
 		OnCheckIdlePasswords: func() {
 			manager.CheckIdlePasswords()
-		},
-		OnReapLinkdeadSessions: func() {
-			manager.ReapLinkdeadSessions()
 		},
 		// DP-1307: output that arrived without the player typing (combat
 		// rounds, mobs, weather, another player's say) gets its prompt.

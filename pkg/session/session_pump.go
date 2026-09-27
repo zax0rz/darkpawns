@@ -3,13 +3,13 @@ package session
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"runtime/debug"
 	"time"
 
 	"github.com/gorilla/websocket"
 
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
@@ -236,15 +236,14 @@ func (s *Session) handleMessage(data []byte) error {
 	}
 }
 
-// OnInboundActivity records that the session received inbound traffic and
-// performs idle-timer / void-return housekeeping. Called by both the WebSocket
-// readPump and the telnet input loop so both protocols share the same linkdead
-// detection state (DP-902, DP-928).
+// OnInboundActivity records that the session received inbound traffic. Called
+// by both the WebSocket readPump and the telnet input loop so both protocols
+// share the same transport-liveness bookkeeping (DP-902, DP-928). It performs
+// no idle-lifecycle work: C resets char_specials.timer only when a command
+// line is dequeued for dispatch (comm.c:600-601), never for raw transport
+// chatter — see resetIdleOnCommand.
 func (s *Session) OnInboundActivity() {
 	s.lastActive.Store(time.Now().UnixNano())
-	if s.authenticated && s.player != nil {
-		s.maybeReturnFromVoid()
-	}
 }
 
 // SetLastActiveForTest allows tests in other packages to manipulate the
@@ -253,8 +252,26 @@ func (s *Session) SetLastActiveForTest(ts int64) {
 	s.lastActive.Store(ts)
 }
 
+// resetIdleOnCommand mirrors comm.c:600-608: a command line dequeued for
+// dispatch resets the character's idle timer and returns a voided character
+// to their previous room BEFORE routing/dispatch. This is the shared
+// command-consumption seam: Telnet reaches it via TerminalLine →
+// handleCommand and WebSocket via handleMessage(MsgCommand) → handleCommand
+// on the immediate path, and via Manager.DrainInputQueues when the command
+// was deferred behind wait state — matching C's game-loop dequeue point in
+// both cases.
+func (s *Session) resetIdleOnCommand() {
+	if !s.authenticated || s.player == nil {
+		return
+	}
+	s.player.SetIdleTimer(0)
+	s.maybeReturnFromVoid()
+}
+
 // maybeReturnFromVoid returns a player from the void room to their previous
-// room when they send any command. Matches comm.c:600-608.
+// room before their command dispatches, exactly the state/room half of
+// comm.c:602-608. The idle-timer reset is resetIdleOnCommand's job and no
+// longer depends on WasInRoom being set.
 func (s *Session) maybeReturnFromVoid() {
 	p := s.player
 	if p == nil {
@@ -268,7 +285,6 @@ func (s *Session) maybeReturnFromVoid() {
 		return
 	}
 
-	p.SetIdleTimer(0)
 	p.SetWasInRoom(0)
 
 	if roomVNum == wasIn {
@@ -279,7 +295,10 @@ func (s *Session) maybeReturnFromVoid() {
 		slog.Warn("return from void failed", "player", s.playerName, "error", err)
 		return
 	}
-	s.manager.world.SendToRoom(wasIn, fmt.Sprintf("%s has returned.\r\n", p.Name))
+	// act("$n has returned.", TRUE, ch, 0, 0, TO_ROOM) — comm.c:607. Act,
+	// not SendToRoom: the returnee is back in wasIn and must not receive
+	// their own return line, and hidden viewers follow C's can-see gate.
+	game.Act(s.manager.world, true, p, nil, nil, nil, "$n has returned.", "", game.ToRoom)
 }
 
 // handleLogin authenticates a player.

@@ -733,10 +733,13 @@ func TestConfigurableConnectionLimits(t *testing.T) {
 	}
 }
 
-// TestTelnetLinkdeadReaperCleanup verifies that inbound telnet traffic updates
-// the session's shared lastActive timestamp and that the linkdead reaper can
-// extract an idle telnet session (DP-928).
-func TestTelnetLinkdeadReaperCleanup(t *testing.T) {
+// TestTelnetQuietSessionNotReaped verifies that a quiet-but-connected telnet
+// session is never voided or extracted by wall-clock silence (DP-1311): the
+// only retained session cleanup runs after the world's tick-driven
+// extraction pass, and a connected player with an arbitrarily old lastActive
+// timestamp is untouched by it. Only point_update ticks (via
+// World.CheckIdling) move the idle lifecycle.
+func TestTelnetQuietSessionNotReaped(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1, Name: "Limbo", Zone: 0},
@@ -767,7 +770,7 @@ func TestTelnetLinkdeadReaperCleanup(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Use a non-generic guest name so we can look up the session deterministically.
-	playerName := "guest_telnet_reaper"
+	playerName := "guest_telnet_quiet"
 	_, _ = client.Write([]byte(playerName + "\r\n"))
 
 	// Wait for guest login to complete and enter the input loop.
@@ -781,13 +784,18 @@ func TestTelnetLinkdeadReaperCleanup(t *testing.T) {
 		t.Fatal("telnet guest session not authenticated")
 	}
 
-	// Simulate idle linkdead: set last active to 10 minutes ago.
-	s.SetLastActiveForTest(time.Now().Add(-10 * time.Minute).UnixNano())
+	// Simulate arbitrary transport silence: no inbound traffic for an age.
+	// No wall-clock sweep may touch this session (DP-1311).
+	s.SetLastActiveForTest(time.Now().Add(-24 * time.Hour).UnixNano())
+	manager.ExtractPendingChars()
 
-	manager.ReapLinkdeadSessions()
-
-	if _, ok := manager.GetSession(playerName); ok {
-		t.Error("idle telnet session should have been reaped")
+	if _, ok := manager.GetSession(playerName); !ok {
+		t.Error("quiet connected telnet session must stay registered")
+	}
+	if s.GetPlayer() != nil {
+		if _, ok := world.GetPlayer(playerName); !ok {
+			t.Error("quiet connected telnet player must stay in the world")
+		}
 	}
 
 	// Closing the client lets the handleConn goroutine exit cleanly.
