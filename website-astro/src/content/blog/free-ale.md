@@ -16,9 +16,49 @@ That 2002 ad is one of eighteen Usenet records we just added to [the archive](ht
 
 ## Where the game lived
 
+<figure class="chart" style="margin:var(--space-lg, 2rem) 0;">
+<svg viewBox="0 0 340 424" width="100%" role="img" aria-label="Timeline of Dark Pawns hosts, dated by the first recovered ad for each: Dec 1996, knight.ufp.org 4000; Dec 1996, www.augusta.net 4000; May 1997, pawns.guru.org 4000; Aug 1997, darkrune.guru.org 4000; Sep 1998, mud.darkrune.org 4000; Dec 1998, pawns.wolfpaw.net 4300; Dec 2002, darkpawns.com 4300; Today, darkpawns.org 7777." xmlns="http://www.w3.org/2000/svg" style="display:block;max-width:24rem;margin:0 auto;">
+<line x1="84" y1="16" x2="84" y2="340" stroke="var(--ink, #1A1614)" stroke-width="1.5"/>
+<line x1="84" y1="340" x2="84" y2="394" stroke="var(--ink-muted, #56504A)" stroke-width="1.5" stroke-dasharray="3 5"/>
+<rect x="80.0" y="12.0" width="8" height="8" fill="var(--ink, #1A1614)"/>
+<text x="70" y="21" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--ink-muted, #56504A)">Dec 1996</text>
+<text x="100" y="21" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="400" fill="var(--ink, #1A1614)">knight.ufp.org 4000</text>
+<text x="100" y="40" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">first recovered ad</text>
+<rect x="80.0" y="66.0" width="8" height="8" fill="var(--ink, #1A1614)"/>
+<text x="70" y="75" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--ink-muted, #56504A)">Dec 1996</text>
+<text x="100" y="75" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="400" fill="var(--ink, #1A1614)">www.augusta.net 4000</text>
+<text x="100" y="94" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">final beta</text>
+<rect x="80.0" y="120.0" width="8" height="8" fill="var(--ink, #1A1614)"/>
+<text x="70" y="129" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--ink-muted, #56504A)">May 1997</text>
+<text x="100" y="129" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="400" fill="var(--ink, #1A1614)">pawns.guru.org 4000</text>
+<text x="100" y="148" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">grand opening, May 21</text>
+<rect x="80.0" y="174.0" width="8" height="8" fill="var(--ink, #1A1614)"/>
+<text x="70" y="183" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--ink-muted, #56504A)">Aug 1997</text>
+<text x="100" y="183" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="400" fill="var(--ink, #1A1614)">darkrune.guru.org 4000</text>
+<text x="100" y="202" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">moved Monday, August 4</text>
+<rect x="80.0" y="228.0" width="8" height="8" fill="var(--ink, #1A1614)"/>
+<text x="70" y="237" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--ink-muted, #56504A)">Sep 1998</text>
+<text x="100" y="237" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="400" fill="var(--ink, #1A1614)">mud.darkrune.org 4000</text>
+<text x="100" y="256" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">back after an outage</text>
+<rect x="80.0" y="282.0" width="8" height="8" fill="var(--ink, #1A1614)"/>
+<text x="70" y="291" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--ink-muted, #56504A)">Dec 1998</text>
+<text x="100" y="291" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="400" fill="var(--ink, #1A1614)">pawns.wolfpaw.net 4300</text>
+<text x="100" y="310" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">new host, new port</text>
+<rect x="80.0" y="336.0" width="8" height="8" fill="var(--ink, #1A1614)"/>
+<text x="70" y="345" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--ink-muted, #56504A)">Dec 2002</text>
+<text x="100" y="345" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="400" fill="var(--ink, #1A1614)">darkpawns.com 4300</text>
+<text x="100" y="364" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">my ad</text>
+<rect x="78.5" y="388.5" width="11" height="11" fill="var(--accent, #A8201A)"/>
+<text x="70" y="399" text-anchor="end" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="13" fill="var(--accent, #A8201A)">Today</text>
+<text x="100" y="399" font-family="var(--font-mono, ui-monospace, 'JetBrains Mono', monospace)" font-size="15" font-weight="600" fill="var(--accent, #A8201A)">darkpawns.org 7777</text>
+<text x="100" y="418" font-family="var(--font-body, 'Source Serif 4', Georgia, serif)" font-style="italic" font-size="13.5" fill="var(--ink-muted, #56504A)">telnet in, or play in a browser</text>
+</svg>
+<figcaption>Where the game lived, dated by the first recovered ad that gives each address. The game itself goes back to September 1994, on knight.ufp.org.</figcaption>
+</figure>
+
 The earliest is from December 3, 1996. Oddity announced "Dark Pawns - knight.ufp.org 4000" with "over 5,000 rooms (not bad for being new :)" and closed on "we have the coolest gods around! (Hmm, maybe I should change my handle to Modesty :)". The only reply came two days later and reads, in full: "Where & How?" (In 1999 Frontline, by then one of the game's two implementors, [wrote](https://darkpawns.org/archive/usenet-1999-02-11-license-dispute/) that a 1994 ad from knight.ufp.org was still archived. We haven't found it.)
 
-Three weeks after that, Serapis was advertising the final beta from a new host, www.augusta.net, promising "5 classes, 6 races, vampires and werewolves for all..." Two days before Christmas, he signed off with ["Free ale through \<insert your favorite winter holiday here\>"](https://darkpawns.org/archive/usenet-1996-12-23-beta-ad/). (Our first copy of this ad just said "Free ale through" and stopped. The archive we recovered it from had read the angle brackets as code and thrown away the joke. It's back now.)
+Three weeks after that, Serapis was advertising the final beta from a new host, www.augusta.net, promising "5 classes, 6 races, vampires and werewolves for all..." Two days before Christmas, he signed off with ["Free ale through \<insert your favorite winter holiday here\>"](https://darkpawns.org/archive/usenet-1996-12-23-beta-ad/).
 
 After that the ads mostly track the moving vans. pawns.guru.org in May 1997, opening "after 2 years of testing and development (and drinking beer...)". darkrune.guru.org in August (the ad announcing the move is dated August 5, 1997; Frontline's timeline says October). mud.darkrune.org in September 1998, after an outage the ad answers in advance: "Yes, we were down for some time. No, we did not really go away." Then pawns.wolfpaw.net in December 1998, on port 4300 for the first time ("Both the hostname AND port number have changed"). Frontline's [history of the game](https://darkpawns.org/archive/history/) says Wolfpaw hosted us free "in exchange for some advertising", which explains a few of these. By my ad it was darkpawns.com 4300. Today it's `telnet darkpawns.org 7777`.
 

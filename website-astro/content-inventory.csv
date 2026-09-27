@@ -118,8 +118,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /archive/wizlist.md,src/pages/archive/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,78,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /archive/wizlist/,src/content/archive/wizlist.md,archive,preserved community artifact,2,verify against capture,78,verbatim,mythic-admin,Wayback capture identified by captureUrl
 /blog/,src/pages/blog/index.astro,hub,authored collection framing,1,full editorial review,,,,
-/blog/free-ale.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1068,original,mythic-admin,"The Usenet records under src/content/archive/ (UsenetArchives captures, Message-IDs in each record), Frontline"
-/blog/free-ale/,src/content/blog/free-ale.md,blog,authored editorial,1,rewrite and source review,1068,original,mythic-admin,"The Usenet records under src/content/archive/ (UsenetArchives captures, Message-IDs in each record), Frontline"
+/blog/free-ale.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1135,original,mythic-admin,"The Usenet records under src/content/archive/ (UsenetArchives captures, Message-IDs in each record), Frontline"
+/blog/free-ale/,src/content/blog/free-ale.md,blog,authored editorial,1,rewrite and source review,1135,original,mythic-admin,"The Usenet records under src/content/archive/ (UsenetArchives captures, Message-IDs in each record), Frontline"
 /blog/historical-posts.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/historical-posts/,src/content/blog/historical-posts.md,blog,authored editorial,1,replace or remove,197,transcription,frontline,https://web.archive.org/web/*/http://darkpawns.com/main.html
 /blog/resurrection.md,src/pages/blog/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,388,original,mythic-admin,Dark Pawns repository and Zach

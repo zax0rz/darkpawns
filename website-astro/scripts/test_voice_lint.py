@@ -83,6 +83,28 @@ class VoiceLintTest(unittest.TestCase):
         self.assertEqual([finding.rule for finding in findings], ["dash-ban"])
         self.assertEqual(findings[0].severity, "error")
 
+    def test_svg_and_fenced_code_skip_prose_heuristics(self):
+        findings = self.lint(
+            "---\ntextKind: original\nsource: test\nvoiceLayer: mythic-admin\n---\n"
+            "<svg viewBox=\"0 0 10 10\">\n"
+            "<text>Dec 1996. knight.ufp.org 4000. first ad.</text>\n"
+            "</svg>\n"
+            "```\n"
+            "Based on CircleMUD 3.0. By J. Elson. And K. Nyboe.\n"
+            "```\n"
+            "A lost world. A dead server. One final resurrection.\n"
+        )
+        self.assertEqual([(finding.rule, finding.line) for finding in findings], [("trailer-rhythm", 12)])
+
+    def test_hard_rules_still_run_inside_svg(self):
+        findings = self.lint(
+            "---\ntextKind: original\nsource: test\nvoiceLayer: mythic-admin\n---\n"
+            "<svg viewBox=\"0 0 10 10\">\n"
+            "<text>1996 — today</text>\n"
+            "</svg>\n"
+        )
+        self.assertEqual([finding.rule for finding in findings], ["dash-ban"])
+
     def test_prose_outside_a_style_block_is_still_linted(self):
         findings = self.lint(
             "<p>A lost world. A dead server. One final resurrection.</p>\n"

@@ -196,7 +196,7 @@ test-parse:
 DEPLOY_PATH ?= /srv/darkpawns/
 
 # Website commands
-.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint content-inventory check-content-inventory check-wordmark generate-caddy-redirects site-check
+.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint test-markdown content-inventory check-content-inventory check-wordmark generate-caddy-redirects site-check
 
 voice-lint:
 	python3 website-astro/scripts/voice_lint.py
@@ -219,7 +219,10 @@ check-palette:
 generate-caddy-redirects:
 	python3 website-astro/scripts/caddy_redirects.py
 
-site-check: voice-lint test-voice-lint check-content-inventory check-wordmark check-palette
+test-markdown:
+	cd website-astro && npm run test:markdown
+
+site-check: voice-lint test-voice-lint test-markdown check-content-inventory check-wordmark check-palette
 	cd website-astro && npm run build
 
 parse-world-json:
