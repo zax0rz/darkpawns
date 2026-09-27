@@ -13,6 +13,26 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+func TestWithCloseMarkerRendersObservedServerClose(t *testing.T) {
+	if got := withCloseMarker("", false); got != "" {
+		t.Errorf("withCloseMarker(\"\", false) = %q, want empty", got)
+	}
+	// An observed close on an otherwise silent transport must still render a
+	// compared line: that is the whole point of the marker.
+	if got := withCloseMarker("", true); got != oraclediff.CloseMarker+"\n" {
+		t.Errorf("empty closed block = %q, want the marker alone", got)
+	}
+	// Bytes before the close are kept in place, terminated, marker last.
+	got := withCloseMarker("You have been idle, and are pulled into a void.\r\n", true)
+	want := "You have been idle, and are pulled into a void.\r\n" + oraclediff.CloseMarker + "\n"
+	if got != want {
+		t.Errorf("withCloseMarker = %q, want %q", got, want)
+	}
+	if got := withCloseMarker("open", false); got != "open" {
+		t.Errorf("open block = %q, want unchanged", got)
+	}
+}
+
 func TestApplyObjectFixturesPreparesDisposableWorlds(t *testing.T) {
 	repoRoot, err := findRepoRoot()
 	if err != nil {

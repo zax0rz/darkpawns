@@ -1,0 +1,108 @@
+# Lifecycle: an accepted command resets the idle timer, so the ninth hour after
+# it (not the ninth hour of silence in total) voids the player (DP-1311).
+# depth-case: idle.command-resets-timer
+# depth-case: idle.command-reset-holds-eight-hours
+#
+# C resets char_specials.timer and returns a voided character at the game-loop
+# dequeue point, before dispatch (src/comm.c:600-608). The ~dpclock control line
+# is consumed before C's input queue (src/comm.c:2027), so pumping the clock is
+# silence that must NOT reset the timer, while an ordinary command must.
+#
+# Eight hours of silence (timer 8, IDLE_TO_VOID is 8) leave the actor in the
+# room; an accepted command resets the counter; eight more silent hours then
+# still leave the actor in the room, which the immortal watcher proves without
+# touching the actor's counter; one more hour voids them. A port that never
+# resets the timer voids during the second block, and a port that resets for
+# clock-control input never voids at all.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Commandreset
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Commandreset
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:watch]
+Voidwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Voidwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Voidwitness level 31
+teleport Voidwitness 8004
+set player Commandreset level 1
+send:watch look
+
+# The command in the middle is a real command on the actor's own connection,
+# taken from the same input queue the harness probe uses.
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+look
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+send:watch look
+~dpclock pulse 630
+send:watch look

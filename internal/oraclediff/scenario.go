@@ -82,6 +82,11 @@ type Scenario struct {
 	// draining it. Set by the [creation:oracle]/[creation:port] sections,
 	// whose keystrokes still feed the ordinary setup machinery.
 	DiffSetup bool
+	// CompareClose renders CloseMarker into every probe block whose read
+	// observed the server closing that transport. A server-initiated
+	// disconnect is otherwise invisible to the diff: an empty block and a
+	// closed block look identical. Opt in with the `compare-close` fixture.
+	CompareClose bool
 }
 
 // PeerSetup describes a passive client that remains connected while the
@@ -239,6 +244,9 @@ type AudienceProbeBlock struct {
 	Command  string
 	Audience string
 	Output   string
+	// Closed is true when this block's read observed the server closing that
+	// transport. Scenario.CompareClose turns it into a CloseMarker line.
+	Closed bool
 }
 
 // ParseScenario reads a sectioned scenario file:
@@ -262,6 +270,7 @@ type AudienceProbeBlock struct {
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	strip-mob-script 18306    # force native special dispatch in both copies
+//	compare-close             # render a <CLOSE> marker where the server closed the transport
 //	force-load 4903           # rewrite the prototype load percent to 500% in both copies
 //	replace-room-exits 8162 none
 //	replace-room-exits 8162 all 8161 0
@@ -569,6 +578,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.KeepPrompts = true
 				continue
 			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "compare-close") {
+				sc.CompareClose = true
+				continue
+			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "entry-prompt") {
 				sc.EntryPromptOnly = true
 				continue
@@ -759,7 +772,7 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 				return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
 			}
 		}
-		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output})
+		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output, Closed: connObservedClose(target)})
 
 		peerNames := make([]string, 0, len(audience))
 		for name := range audience {
@@ -768,16 +781,18 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 		sort.Strings(peerNames)
 		for _, name := range peerNames {
 			peerOutput, peerErr := audience[name].ReadUntilQuiescent(quiescence)
-			// A final command may intentionally close an audience connection
-			// (for example, the C do_dc lower-level target). Preserve the
-			// output captured before EOF instead of turning that expected
-			// terminal state into a harness failure.
+			// The connection may close at the last step, or just before a
+			// relogin or restart, for every connected client — not only for
+			// the step's target. That is the same rule the target read above
+			// uses: a server that ends a descriptor (the C idle force-rent
+			// closes the actor's socket) is compared by its bytes, and the
+			// scenario's CompareClose marker records the disconnect itself.
 			if peerErr != nil {
-				if i != len(probe)-1 || !errors.Is(peerErr, io.EOF) {
+				if !mayClose || !errors.Is(peerErr, io.EOF) {
 					return blocks, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", i+1, name, step, peerErr, peerOutput)
 				}
 			}
-			blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: name, Output: peerOutput})
+			blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: name, Output: peerOutput, Closed: connObservedClose(audience[name])})
 		}
 	}
 	return blocks, nil

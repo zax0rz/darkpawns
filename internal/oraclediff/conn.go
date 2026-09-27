@@ -15,15 +15,45 @@ type Conn interface {
 	Close() error
 }
 
+// CloseReporter is implemented by transports that can report whether the
+// server closed the connection. A scenario that declares the `compare-close`
+// fixture renders CloseMarker into the block whose read observed the close, so
+// a server-initiated disconnect is part of the compared transcript instead of
+// an invisible end-of-data.
+type CloseReporter interface {
+	ObservedClose() bool
+}
+
+// CloseMarker is the canonical transcript line for a server-closed connection.
+// It cannot be produced by either game engine's own output, so a block that
+// carries it and a block that does not can never be a false match.
+const CloseMarker = "<CLOSE>"
+
+// connObservedClose reports whether a connection (or a wrapper around one) has
+// observed the server closing its transport.
+func connObservedClose(c Conn) bool {
+	if reporter, ok := c.(CloseReporter); ok {
+		return reporter.ObservedClose()
+	}
+	return false
+}
+
 // TCPConn drives either server over its telnet TCP listener.
 type TCPConn struct {
 	conn   net.Conn
 	reader *bufio.Reader
+	// closed records a server-side EOF seen by ReadUntilQuiescent. It is only
+	// read after the read that set it, so the harness's single-threaded
+	// per-connection driving needs no lock.
+	closed bool
 }
 
 func NewTCPConn(conn net.Conn) *TCPConn {
 	return &TCPConn{conn: conn, reader: bufio.NewReader(conn)}
 }
+
+// ObservedClose reports whether the server closed this transport.
+func (c *TCPConn) ObservedClose() bool { return c.closed }
 
 func (c *TCPConn) Send(line string) error {
 	if err := c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
@@ -48,8 +78,13 @@ func (c *TCPConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 			if errors.As(err, &netErr) && netErr.Timeout() {
 				return string(out), nil
 			}
-			if errors.Is(err, io.EOF) && len(out) > 0 {
-				return string(out), nil
+			if errors.Is(err, io.EOF) {
+				// The server closed this transport. Remember it so an opted-in
+				// scenario can compare the disconnect itself (CloseMarker).
+				c.closed = true
+				if len(out) > 0 {
+					return string(out), nil
+				}
 			}
 			return string(out), err
 		}
