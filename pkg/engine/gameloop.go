@@ -65,10 +65,6 @@ type GameLoopCallbacks struct {
 	// Ported from check_idle_passwords() in comm.c.
 	OnCheckIdlePasswords func()
 
-	// OnReapLinkdeadSessions — called every 15 * PASSES_PER_SEC (15s).
-	// Detects dead TCP sockets and extracts ghost players (DP-902).
-	OnReapLinkdeadSessions func()
-
 	// OnMobileActivity — called every PULSE_MOBILE (4s). Ported from mobile_activity().
 	OnMobileActivity func()
 	// OnRoomActivity — called every PULSE_MOBILE (4s). Ported from room_activity().
@@ -316,7 +312,6 @@ func (gl *GameLoop) heartbeat(pulse int64) {
 	// 15 * PASSES_PER_SEC → every 15 seconds
 	if pulse%(15*PASSES_PER_SEC) == 0 {
 		gl.safeInvoke("CheckIdlePasswords", pulse, cb.OnCheckIdlePasswords)
-		gl.safeInvoke("ReapLinkdeadSessions", pulse, cb.OnReapLinkdeadSessions)
 	}
 
 	// PULSE_MOBILE → every 4 seconds

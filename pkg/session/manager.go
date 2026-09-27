@@ -35,14 +35,6 @@ import (
 const (
 	jwtEffectiveLifetime = 1 * time.Hour
 	jwtRefreshWindow     = 15 * time.Minute
-
-	// Linkdead reaper thresholds. Structurally faithful to C check_idling()
-	// (limits.c IDLE_TO_VOID / IDLE_DISCONNECT), but using wall-clock time
-	// so dead TCP sockets are detected and cleaned up quickly.
-	linkdeadVoidThreshold      = 60 * time.Second
-	linkdeadExtractThreshold   = 5 * time.Minute
-	linkdeadVoidRoomVNum       = 1
-	linkdeadDisconnectRoomVNum = 3
 )
 
 // webSocketMaxConnsPerIP caps simultaneous WebSocket sessions from one client
@@ -572,6 +564,17 @@ func (m *Manager) ExtractPendingChars() {
 			victim.saveCharacter("extraction", player.GetLoadRoom())
 		}
 		if !victim.hasTransport() {
+			// The character was extracted by the tick-driven lifecycle
+			// (World.CheckIdling's IDLE_DISCONNECT branch, limits.c:438-451)
+			// after its transport died (DP-1323): the linkdead session stayed
+			// registered only so the character could finish the C lifecycle
+			// in the world. Extraction is that end — retire the session now,
+			// or the sessions map leaks a stale entry for a character that no
+			// longer exists. The world's extraction pass already saved the
+			// character (char_mgmt.go extract pass); UnregisterSession runs
+			// the normal cleanup (combat stop, snoop/edit release, channel
+			// close) with no live transport left to race.
+			m.UnregisterSession(victim)
 			continue
 		}
 		victim.showMainMenu()
@@ -966,6 +969,10 @@ func (m *Manager) DrainInputQueues() {
 		} else {
 			job.s.ClearPromptShown()
 		}
+		// comm.c:600-601: the dequeue from d->input is the idle-reset point,
+		// so a command deferred here resets and void-returns at execution,
+		// same as the immediate path through handleCommand.
+		job.s.resetIdleOnCommand()
 		if err := executeCommandRaw(job.s, job.cmd, job.args, !job.aliased, job.rawArgs); err != nil {
 			slog.Error("drained command failed",
 				"player", job.s.playerName, "command", job.cmd, "error", err)
@@ -1352,129 +1359,14 @@ func (m *Manager) closeDuplicateSessions(quitting *Session) {
 	}
 }
 
-// ReapLinkdeadSessions checks for authenticated sessions that have not sent an
-// inbound message in linkdeadVoidThreshold or linkdeadExtractThreshold. It
-// mirrors the C check_idling() two-stage behaviour, but uses wall-clock time
-// so dead TCP sockets are cleaned up quickly (DP-902).
-//
-// Stage 1 (>60s): move the player to the void room (vnum 1) and remember the
-// original room in WasInRoom.
-// Stage 2 (>5m): move the player to the disconnect room (vnum 3), save, and
-// close the WebSocket — this triggers readPump/writePump exit → Unregister.
-func (m *Manager) ReapLinkdeadSessions() {
-	m.mu.RLock()
-	var toVoid []*Session
-	var toExtract []*Session
-	now := time.Now().UnixNano()
-	for _, s := range m.sessions {
-		if !s.authenticated || s.player == nil {
-			continue
-		}
-		last := s.lastActive.Load()
-		if last == 0 {
-			continue
-		}
-		elapsed := time.Duration(now - last)
-		if elapsed > linkdeadExtractThreshold {
-			toExtract = append(toExtract, s)
-		} else if elapsed > linkdeadVoidThreshold {
-			toVoid = append(toVoid, s)
-		}
-	}
-	m.mu.RUnlock()
-
-	for _, s := range toVoid {
-		s.moveToVoid()
-	}
-	for _, s := range toExtract {
-		s.extractLinkdead()
-	}
-}
-
-// moveToVoid moves a linkdead player to the void room (vnum 1), remembering
-// the original room so they can be returned when they send a command.
-// Equivalent to the first branch of C check_idling() (limits.c:426-437).
-func (s *Session) moveToVoid() {
-	p := s.player
-	if p == nil {
-		return
-	}
-
-	// Re-check activity: the session may have become active while we were
-	// iterating under the read lock.
-	if time.Since(time.Unix(0, s.lastActive.Load())) <= linkdeadVoidThreshold {
-		return
-	}
-
-	wasIn := p.GetWasInRoom()
-	roomVNum := p.GetRoom()
-	level := p.GetLevel()
-
-	// Only mortal players who are not already voided.
-	if level >= game.LVL_IMMORT || wasIn != 0 || roomVNum <= 0 || roomVNum == linkdeadVoidRoomVNum {
-		return
-	}
-
-	p.SetWasInRoom(roomVNum)
-
-	if err := s.manager.world.PlayerTransfer(p, linkdeadVoidRoomVNum); err != nil {
-		slog.Warn("linkdead reaper: PlayerTransfer to void failed", "player", s.playerName, "error", err)
-		return
-	}
-
-	s.sendText("You have been idle, and are pulled into a void.\r\n")
-	s.manager.world.SendToRoom(roomVNum, fmt.Sprintf("%s disappears into the void.\r\n", p.Name))
-	slog.Info("linkdead reaper: moved to void", "player", s.playerName, "room", roomVNum)
-}
-
-// extractLinkdead moves a long-idle player to the disconnect room (vnum 3),
-// saves them, and closes the WebSocket so the pump defers run Unregister.
-// Equivalent to the second branch of C check_idling() (limits.c:438-451).
-func (s *Session) extractLinkdead() {
-	p := s.player
-	playerName := s.playerName
-	if p == nil || playerName == "" {
-		return
-	}
-
-	// Re-check activity: the session may have become active while we were
-	// iterating under the read lock.
-	if time.Since(time.Unix(0, s.lastActive.Load())) <= linkdeadExtractThreshold {
-		return
-	}
-
-	elapsed := time.Since(time.Unix(0, s.lastActive.Load()))
-	slog.Warn(
-		"reaping linkdead session",
-		"player", playerName,
-		"idle", elapsed.Round(time.Second),
-	)
-
-	if err := s.manager.world.PlayerTransfer(p, linkdeadDisconnectRoomVNum); err != nil {
-		slog.Warn("linkdead reaper: PlayerTransfer to disconnect room failed", "player", playerName, "error", err)
-	}
-
-	// Save before closing the connection. The idle-disconnect close runs
-	// close_socket's playing save with load_room NOWHERE (limits.c:434-444,
-	// comm.c:2130).
-	if s.manager.hasDB && p.ID > 0 && !s.isGuest {
-		if rec, err := s.playerRecordForSave(p, game.LoadRoomNowhere); err == nil {
-			if err := s.manager.db.SavePlayer(rec); err != nil {
-				slog.Error("linkdead reaper: DB save error", "player", playerName, "error", err)
-			}
-		}
-	}
-
-	// Close the underlying connection. For a live WebSocket this triggers the
-	// pump defers to run Unregister. Telnet has no pump defer, and a linkdead
-	// WebSocket's pumps have already exited without unregistering (DP-1323),
-	// so both are unregistered here; otherwise the character never leaves and
-	// the reaper retries it every sweep.
-	s.Close()
-	if s.conn == nil || !s.hasTransport() {
-		s.manager.UnregisterSession(s)
-	}
-}
+// Idle lifecycle policy (DP-1311): C decides idling purely on
+// char_specials.timer ticks advanced by point_update's check_idling
+// (limits.c:419-454); elapsed wall-clock silence is never proof of anything.
+// A quiet live socket is alive; a dead socket is proven only by a read error /
+// close or ping timeout, which already marks the player linkless via
+// HandleTransportDisconnect. The tick-driven World.CheckIdling owns void and
+// extract; Manager.ExtractPendingChars retires the session afterwards,
+// including a linkdead session whose transport is already gone (DP-1323).
 
 // GetSession returns a session by player name.
 // EachSession is the descriptor list mudlog walks (game.ImmortalSessionProvider):

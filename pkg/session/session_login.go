@@ -316,6 +316,12 @@ func isHeavyCommand(cmd string) bool {
 
 // handleCommand processes game commands.
 func (s *Session) handleCommand(data json.RawMessage) error {
+	// comm.c:600-608: an accepted command line resets the idle timer and
+	// returns a voided character before any routing or dispatch. Both Telnet
+	// (TerminalLine → terminalCommand) and WebSocket (handleMessage MsgCommand)
+	// converge here; deferred drain-queue commands reset again at dequeue.
+	s.resetIdleOnCommand()
+
 	var cmd CommandData
 	if err := json.Unmarshal(data, &cmd); err != nil {
 		return err

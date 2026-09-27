@@ -259,5 +259,5 @@ func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
 }
 
 // ---------------------------------------------------------------------------
-// CheckIdling — from limits.c check_idling() (lines 419-441)
+// CheckIdling — from limits.c check_idling() (lines 419-454)
 // Tracks idle time, pulls idle players to void, disconnects after extended idle.

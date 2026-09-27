@@ -138,6 +138,30 @@ func TestGameLoopRepeatedStopDoesNotPanic(t *testing.T) {
 	gl.Stop()
 }
 
+// TestGameLoopPumpPulsesFiresPointUpdateOncePerMudHour pins the DP_CLOCK seam
+// the lifecycle-idle oracle scenario depends on: a pumped mud hour
+// (SECS_PER_MUD_HOUR * PASSES_PER_SEC pulses, comm.c:825-828) dispatches
+// OnPointUpdate exactly once, in C's heartbeat order after weather and
+// affects. Production's live driver is World's 63s ticker (DP-947); the
+// frozen-clock pump is the only point_update the oracle can see.
+func TestGameLoopPumpPulsesFiresPointUpdateOncePerMudHour(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	var calls []string
+	gl := NewGameLoop(GameLoopCallbacks{
+		OnWeatherAndTime: func() { calls = append(calls, "weather") },
+		OnAffectUpdate:   func() { calls = append(calls, "affect") },
+		OnPointUpdate:    func() { calls = append(calls, "point") },
+	})
+
+	if err := gl.PumpPulses(SECS_PER_MUD_HOUR * PASSES_PER_SEC); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"weather", "affect", "point"}
+	if !slices.Equal(calls, want) {
+		t.Fatalf("mud-hour callbacks = %v, want %v", calls, want)
+	}
+}
+
 func TestGameLoopStopContextTimesOutDuringBlockedCallback(t *testing.T) {
 	callbackStarted := make(chan struct{})
 	releaseCallback := make(chan struct{})

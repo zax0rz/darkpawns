@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"log/slog"
 )
 
@@ -31,7 +30,7 @@ func (w *World) CheckIdling(p *Player) {
 		p.mu.Unlock()
 
 		if wasIn == 0 && roomVNum > 0 {
-			// First idle threshold — pull to void room (vnum 1)
+			// First idle threshold — pull to void room (vnum 1).
 			p.mu.Lock()
 			p.WasInRoom = roomVNum
 			if fighting != "" {
@@ -39,11 +38,16 @@ func (w *World) CheckIdling(p *Player) {
 			}
 			p.mu.Unlock()
 
+			// C acts before the transfer, while the player still stands in
+			// the room: act("$n disappears into the void.", TRUE, ch, 0, 0,
+			// TO_ROOM) (limits.c:432-437). Act excludes the actor and gates
+			// hidden viewers; SendToRoom-by-vnum would hand the actor their
+			// own line whenever the transfer lands first.
+			Act(w, true, p, nil, nil, nil, "$n disappears into the void.", "", ToRoom)
+			p.SendMessage("You have been idle, and are pulled into a void.\r\n")
 			if err := w.PlayerTransfer(p, 1); err != nil {
 				slog.Warn("PlayerTransfer failed in idle check", "player", p.Name, "error", err)
 			}
-			p.SendMessage("You have been idle, and are pulled into a void.\r\n")
-			w.SendToRoom(roomVNum, fmt.Sprintf("%s disappears into the void.\r\n", p.Name))
 		} else if timer > IDLE_DISCONNECT {
 			// Second threshold — force rent and disconnect
 			p.mu.Lock()
