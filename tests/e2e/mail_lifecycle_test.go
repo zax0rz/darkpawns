@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -72,20 +74,6 @@ func TestMailProductionBootBoundary(t *testing.T) {
 // existing offline recipient, actual telnet composition, a real process
 // shutdown/restart, and one-time receipt through the postmaster.
 func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
-	// PRE-EXISTING FAILURE, recorded rather than repaired: the third phase (the
-	// reload server) never gets the recipient into the world, at
-	// "persistent player did not enter the world". Verified failing identically at
-	// fcd75a606 against PostgreSQL, i.e. before this branch existed and before the
-	// store changed. The harness was gated on DP_TEST_DB_URL, which CI never set,
-	// so the test was skipped rather than red and rotted unnoticed. The two earlier
-	// phases (send, and deliver across a real restart) do pass here, and they are
-	// what the mail store's durability claim rests on.
-	// Tracked as DP-1346: repair the mail lifecycle reload phase ("persistent
-	// player did not enter the world"). It records this failure, the base-commit
-	// evidence and the required diagnosis, so this skip has a target rather than
-	// becoming permanent.
-	// https://linear.app/labz0rz/issue/DP-1346
-	t.Skip("pre-existing, tracked as DP-1346: reload phase fails at base too; see the comment above")
 	if testing.Short() {
 		t.Skip("e2e: builds and launches the server binary; skipped in -short")
 	}
@@ -246,25 +234,39 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	}
 	t.Logf("production_delivered_note verified=true sender=%q body=%q inventory_items=1", sender.Name, actualBody)
 
+	// The recipient quits from the board room, which is not one of C's safe quit
+	// rooms (act.other.c:87-112), as a mortal: C refuses the quit and keeps them in
+	// the world (act.other.c:159-166). No rent runs, which is why the delivered mail
+	// object is still theirs to carry into the next process. The socket then drops,
+	// and DP-1323 leaves the playing character linkdead for the reaper.
 	mustWrite(t, recipientConn, "quit\r\n")
-	_ = readFor(t, recipientConn, recipientReader, time.Second)
+	refused := readFor(t, recipientConn, recipientReader, time.Second)
+	if !strings.Contains(refused, "Type REALLYQUIT to quit the game and lose your eq.") {
+		t.Fatalf("recipient quit from the board room was not refused: %q", refused)
+	}
 	_ = recipientConn.Close()
 	serverTwo.stop(t)
 	assertMailServerSaveLogClean(t, serverTwo)
 
-	persistedRecipient, err := database.GetPlayer(recipientName)
-	if err != nil || persistedRecipient == nil {
-		t.Fatalf("recipient identity after receipt save: record=%+v err=%v", persistedRecipient, err)
-	}
+	// The drop's lost-link save is what persists the queued receipt, so wait for the
+	// row to settle rather than for a clock to pass.
+	persistedRecipient := waitForReceiptSave(t, database, recipientName, productionMailBody)
 	persistedMailText := assertPersistedMailObject(t, persistedRecipient.Inventory, sender.Name, recipient.Name, productionMailBody)
 	preserveMailLifecycleArtifact(t, "recipient-inventory.json", persistedRecipient.Inventory)
 	t.Logf("production_recipient_save completed=true inventory_items=1 mail_text_bytes=%d", len(persistedMailText))
 
+	logRedactedPlayerState(t, database, "before-reload-login", recipientName)
 	serverThree, reloadedConn, reloadedReader := launchMailServer(t, root, dbURL, fixtureRoot, "reload")
 	reloadedEntered := loginMailPlayer(t, reloadedConn, reloadedReader, recipientName, password)
-	if !strings.Contains(strings.ToLower(reloadedEntered), "postman") {
-		t.Fatalf("recipient did not enter the postmaster room on reload: %q", reloadedEntered)
+	// The recipient is a level-1 mortal and the row now carries load_room NOWHERE:
+	// every entry save writes it (interpreter.c:2186), and the refused quit that
+	// followed left it there through the lost-link save (comm.c:2130). C sends that
+	// character to the mortal start room, vnum 8004, not to the room the fixture
+	// seed originally placed them in.
+	if !strings.Contains(reloadedEntered, "At the Temple Altar") {
+		t.Fatalf("reloaded recipient did not enter the mortal start room: %q", reloadedEntered)
 	}
+	logRedactedPlayerState(t, database, "after-reload-login", recipientName)
 	mustWrite(t, reloadedConn, "inventory\r\n")
 	reloadedInventory := readFor(t, reloadedConn, reloadedReader, 3*time.Second)
 	if got := strings.Count(reloadedInventory, "a piece of mail"); got != 1 {
@@ -285,23 +287,80 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 		t.Fatalf("reloaded note body = %q, want %q", reloadedBody, productionMailBody)
 	}
 
-	mustWrite(t, reloadedConn, "check\r\n")
-	reloadedCheck := readUntil(t, reloadedConn, reloadedReader, "Sorry, you don't have any mail waiting.", 5*time.Second)
-	if reloadedCheck == "" {
-		t.Fatal("reloaded recipient check did not report an empty mailbox")
+	// The postmaster's MAIL/CHECK/RECEIVE are a room-bound special procedure
+	// (postmaster.go), and the room C returns this character to holds no postmaster,
+	// so the reload phase reads the mailbox from the store itself: the delivered
+	// block is still marked deleted and the reload server reports nothing pending.
+	// The pre-restart phase already took the postmaster's own word for the empty
+	// mailbox, in the room that has one.
+	reloadedHeader := readGoMailHeader(t, mailPath)
+	if reloadedHeader.blockType != 2 || reloadedHeader.from != sender.ID || reloadedHeader.to != recipient.ID {
+		t.Fatalf("reloaded mail header = %+v, want the deleted marker still 2 with from/to %d/%d",
+			reloadedHeader, sender.ID, recipient.ID)
 	}
-	mustWrite(t, reloadedConn, "receive\r\n")
-	reloadedReceive := readUntil(t, reloadedConn, reloadedReader, "Sorry, you don't have any mail waiting.", 5*time.Second)
-	if reloadedReceive == "" {
-		t.Fatal("reloaded recipient receive did not report an empty mailbox")
+	if reloadedHeader.text != productionMailBody {
+		t.Fatalf("reloaded mail header body = %q, want %q", reloadedHeader.text, productionMailBody)
 	}
-	t.Logf("production_relogin completed=true inventory_items=1 sender=%q body=%q check=%q receive=%q", sender.Name, reloadedBody, reloadedCheck, reloadedReceive)
+	t.Logf("production_relogin completed=true inventory_items=1 sender=%q body=%q mail_block_type=%d",
+		sender.Name, reloadedBody, reloadedHeader.blockType)
 
 	mustWrite(t, reloadedConn, "quit\r\n")
 	_ = readFor(t, reloadedConn, reloadedReader, time.Second)
 	_ = reloadedConn.Close()
 	serverThree.stop(t)
 	assertMailServerSaveLogClean(t, serverThree)
+	// The reload server read the mail store on the way up and found nothing
+	// pending: the delivered message is not waiting for the recipient a second
+	// time after a process restart.
+	if reloadLog := serverThree.logBuffer.String(); !strings.Contains(reloadLog, "Mail file read -- 0 messages.") {
+		t.Fatalf("reload server did not report an empty pending mailbox; log:\n%s", reloadLog)
+	}
+}
+
+// waitForReceiptSave waits for the dropped transport's save to persist what the
+// receipt added: the row carries the delivered mail object and C's lost-link load
+// room, NOWHERE (comm.c:2130). It reads the row rather than trusting a clock, so
+// the reload phase asserts on state the store has actually settled.
+func waitForReceiptSave(t *testing.T, database *db.DB, name, mailBody string) *db.PlayerRecord {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		record, err := database.GetPlayer(name)
+		if err != nil {
+			t.Fatalf("read %q while waiting for the receipt save: %v", name, err)
+		}
+		if record != nil && record.RoomVNum == game.LoadRoomNowhere && strings.Contains(string(record.Inventory), mailBody) {
+			return record
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("the receipt save for %q never landed: no delivered %q in the row with load room NOWHERE", name, mailBody)
+	return nil
+}
+
+// logRedactedPlayerState prints the persisted facts a restart has to restore, with
+// the password hash and the bulk blob columns reduced to sizes. A failing restart
+// phase reports the row it was handed, not just the transcript that stalled.
+func logRedactedPlayerState(t *testing.T, database *db.DB, stage, name string) {
+	t.Helper()
+	record, err := database.GetPlayer(name)
+	if err != nil || record == nil {
+		t.Fatalf("%s: player %q: record=%+v err=%v", stage, name, record, err)
+	}
+	var items []game.SaveItemData
+	if err := json.Unmarshal(record.Inventory, &items); err != nil {
+		t.Fatalf("%s: decode persisted inventory for %q: %v", stage, name, err)
+	}
+	mailText := ""
+	for _, item := range items {
+		if text, ok := item.State["mail_text"].(string); ok {
+			mailText = text
+		}
+	}
+	t.Logf("persisted_player_state stage=%s name=%q id=%d level=%d exp=%d stored_load_room=%d health=%d/%d mana=%d/%d inventory_items=%d mail_text_bytes=%d character_data_bytes=%d equipment_bytes=%d",
+		stage, record.Name, record.ID, record.Level, record.Exp, record.RoomVNum,
+		record.Health, record.MaxHealth, record.Mana, record.MaxMana,
+		len(items), len(mailText), len(record.CharacterData), len(record.Equipment))
 }
 
 func assertMailServerSaveLogClean(t *testing.T, process *mailServerProcess) {
@@ -392,27 +451,36 @@ func (p *mailServerProcess) stop(t *testing.T) {
 	}
 }
 
+// loginMailPlayer walks the real returning-player login: name, password, MOTD,
+// menu, and world entry. The entry wait is room-agnostic -- C's load-room rule
+// decides the room from the saved row (interpreter.c:2191-2210), so a helper that
+// waited for one hardcoded room name would report "did not enter the world" for a
+// character C had placed correctly somewhere else. Every wait is recorded, so a
+// failure reports the whole login transcript rather than only the stalled step.
 func loginMailPlayer(t *testing.T, conn net.Conn, reader *bufio.Reader, name, password string) string {
 	t.Helper()
-	if readUntil(t, conn, reader, "By what name", 10*time.Second) == "" {
-		t.Fatal("returning player never received the name prompt")
+	transcript := ""
+	step := func(marker, stepName string) {
+		t.Helper()
+		chunk := readUntil(t, conn, reader, marker, 10*time.Second)
+		transcript += chunk
+		if chunk == "" {
+			t.Fatalf("%s: never saw %q; login transcript=%q", stepName, marker, transcript)
+		}
 	}
+	step("By what name", "returning player never received the name prompt")
 	mustWrite(t, conn, name+"\r\n")
-	if readUntil(t, conn, reader, "Password", 10*time.Second) == "" {
-		t.Fatal("persistent player was not prompted for a password")
-	}
+	step("Password", "persistent player was not prompted for a password")
 	mustWrite(t, conn, password+"\r\n")
-	if readUntil(t, conn, reader, "PRESS RETURN", 10*time.Second) == "" {
-		t.Fatal("persistent player did not receive the MOTD")
-	}
+	step("PRESS RETURN", "persistent player did not receive the MOTD")
 	mustWrite(t, conn, "\r\n")
-	if readUntil(t, conn, reader, "Make your choice", 10*time.Second) == "" {
-		t.Fatal("persistent player did not receive the main menu")
-	}
+	step("Make your choice", "persistent player did not receive the main menu")
 	mustWrite(t, conn, "1\r\n")
-	entered := readUntil(t, conn, reader, "The Board Room Of The Immortals", 10*time.Second)
+	// Every room look ends with C's exits line (look.go), which is what "in the
+	// world" looks like from the client side whatever room that is.
+	entered := readUntil(t, conn, reader, "[ Exits: ", 10*time.Second)
 	if entered == "" {
-		t.Fatal("persistent player did not enter the world")
+		t.Fatalf("persistent player %q did not enter the world: no room text after menu choice 1; transcript=%q", name, transcript)
 	}
 	return entered + readFor(t, conn, reader, time.Second)
 }
