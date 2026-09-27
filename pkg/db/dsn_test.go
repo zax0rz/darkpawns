@@ -315,3 +315,93 @@ func TestReopenPersistsCharacters(t *testing.T) {
 		t.Errorf("id after reopen = %d, want above %d", third.ID, player.ID)
 	}
 }
+
+// TestSQLitePathRefusesUriSettingsOtherThanSQLite pins the rule that a URI is not
+// a filename. Every one of these used to be taken literally, so a wrong DSN
+// produced a file named after it in the working directory ("mysql:/host/db")
+// and a server that booted happily against an empty database.
+func TestSQLitePathRefusesUriSettingsOtherThanSQLite(t *testing.T) {
+	cases := map[string]string{
+		"mysql://user:pw@localhost:3306/darkpawns": "mysql",
+		"https://example.com/darkpawns.db":         "https",
+		"redis://localhost:6379/0":                 "redis",
+		"sqlite+foo://localhost/darkpawns.db":      "sqlite+foo",
+		"foo:bar":                                  "foo",
+		"file:/var/lib/darkpawns/darkpawns.db":     "file",
+		"FTP://host/darkpawns.db":                  "FTP",
+	}
+	for setting, scheme := range cases {
+		path, err := SQLitePath(setting)
+		if err == nil {
+			t.Errorf("SQLitePath(%q) = %q, want a refusal naming scheme %q", setting, path, scheme)
+			continue
+		}
+		if path != "" {
+			t.Errorf("SQLitePath(%q) returned %q alongside an error", setting, path)
+		}
+		if !errors.Is(err, ErrUnsupportedScheme) {
+			t.Errorf("SQLitePath(%q) = %v, want ErrUnsupportedScheme", setting, err)
+		}
+		if !strings.Contains(err.Error(), scheme) {
+			t.Errorf("refusal for %q does not name the scheme %q: %v", setting, scheme, err)
+		}
+		if strings.Contains(err.Error(), "pw") {
+			t.Errorf("refusal for %q leaks the credentials it was handed: %v", setting, err)
+		}
+		// A refusal must still say what is supported, or an operator's next move
+		// is a guess.
+		if !strings.Contains(err.Error(), "sqlite://") {
+			t.Errorf("refusal for %q does not say what is supported: %v", setting, err)
+		}
+	}
+}
+
+// TestUriSettingsAreRefusedWithoutCreatingFiles is the consequence that matters,
+// and the reason the rule exists: New() must not leave a file named after a URI
+// anywhere, least of all in the working directory of a server that then looks
+// healthy. The test runs each case from a private directory so a relative
+// creation cannot hide outside it.
+func TestUriSettingsAreRefusedWithoutCreatingFiles(t *testing.T) {
+	for _, setting := range []string{
+		"mysql://user:pw@localhost:3306/darkpawns",
+		"redis://localhost:6379/0",
+		"https://example.com/darkpawns.db",
+		"sqlite+foo://localhost/darkpawns.db",
+		"foo:bar",
+		":memory:",
+		"postgres://user:pw@localhost:5432/darkpawns",
+	} {
+		t.Run(setting, func(t *testing.T) {
+			dir := t.TempDir()
+			t.Chdir(dir)
+			database, err := New(setting)
+			if err == nil {
+				_ = database.Close()
+				t.Fatalf("New(%q) was accepted", setting)
+			}
+			entries, readErr := os.ReadDir(dir)
+			if readErr != nil {
+				t.Fatal(readErr)
+			}
+			if len(entries) != 0 {
+				t.Errorf("New(%q) left files behind: %v", setting, entries)
+			}
+		})
+	}
+}
+
+// TestSQLitePathTreatsASingleLetterSchemeAsADriveLetter documents the one
+// deliberate exception: C:/data/darkpawns.db is a Windows path, not an
+// unsupported URI.
+func TestSQLitePathTreatsASingleLetterSchemeAsADriveLetter(t *testing.T) {
+	for _, setting := range []string{"C:/data/darkpawns.db", `C:\\data\\darkpawns.db`} {
+		path, err := SQLitePath(setting)
+		if err != nil {
+			t.Errorf("SQLitePath(%q) was refused: %v", setting, err)
+			continue
+		}
+		if !strings.Contains(path, "data") {
+			t.Errorf("SQLitePath(%q) = %q, want the path itself", setting, path)
+		}
+	}
+}
