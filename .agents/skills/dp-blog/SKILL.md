@@ -308,12 +308,12 @@ Confirm three things:
    The archive formatters have always passed `timeZone: 'UTC'`; the three blog
    formatters did not until 2026-09-16, and a post shipped a day early because
    of it. Check any new formatter for the same omission.
-2. **Every link resolves**, including links you did not write. The site
-   renders GFM, which turns any bare `www.` hostname into a live link, so an
-   old host named in plain text ("www.augusta.net") ships as a link to
-   whatever owns that domain now. Put historical hostnames in inline code
-   (`` `www.augusta.net` ``); a backslash escape does not stop it. This
-   shipped on "Free Ale" and was caught by the check below.
+2. **Every link resolves**, including links you did not write. GFM turns bare
+   URLs and `www.` hostnames into live links; the site strips those in
+   `src/lib/no-literal-autolinks.mjs` (added after "Free Ale" shipped
+   `www.augusta.net` as a live link to an unrelated domain), so plain-text
+   hostnames are safe. Still grep the rendered page for `href`, because a
+   renderer or config change could bring the autolinks back.
    Verify each target returns 200 before deploying, not
    after. Links into the archive need the record's real slug, which is the
    filename under `src/content/archive/` (for example `map-kir-draxin`), not a
