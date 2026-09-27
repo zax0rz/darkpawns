@@ -699,9 +699,20 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	}
 	for i, oracleResult := range oracleBlocks {
 		var oracleBlock, goBlock string
-		oracleBlock = normalize(oracleResult.Output)
+		oracleRaw := oracleResult.Output
+		var goRaw string
+		goClosed := false
 		if i < len(goBlocks) {
-			goBlock = normalize(goBlocks[i].Output)
+			goRaw = goBlocks[i].Output
+			goClosed = goBlocks[i].Closed
+		}
+		if scenario.CompareClose {
+			oracleRaw = withCloseMarker(oracleRaw, oracleResult.Closed)
+			goRaw = withCloseMarker(goRaw, goClosed)
+		}
+		oracleBlock = normalize(oracleRaw)
+		if i < len(goBlocks) {
+			goBlock = normalize(goRaw)
 		}
 		label := oracleResult.Command
 		if len(scenario.Peers) > 0 {
@@ -772,6 +783,21 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 	}
 	return nil
+}
+
+// withCloseMarker appends the canonical closed-transport marker to a captured
+// block when the server closed that connection during the block's read. Only
+// scenarios that declare the `compare-close` fixture use it: the marker turns
+// an invisible end-of-data into a compared line, so a port that leaves the
+// connection open can never match a C oracle that closed it.
+func withCloseMarker(raw string, closed bool) string {
+	if !closed {
+		return raw
+	}
+	if raw != "" && !strings.HasSuffix(raw, "\n") {
+		raw += "\n"
+	}
+	return raw + oraclediff.CloseMarker + "\n"
 }
 
 // oracleBlocksText renders the normalized C blocks exactly as --show-oracle

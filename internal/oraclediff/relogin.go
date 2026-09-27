@@ -52,6 +52,11 @@ func (c *ReloginConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 
 func (c *ReloginConn) Close() error { return c.current.Close() }
 
+// ObservedClose forwards the current transport's server-close observation, so a
+// `compare-close` scenario still records the disconnect that happened before a
+// relogin replaced the transport.
+func (c *ReloginConn) ObservedClose() bool { return connObservedClose(c.current) }
+
 // Relogin settles the server on the current transport, closes it, lets the
 // server finish with it, and logs in again. Output still queued on the old
 // transport (the tail of a quit, say) is kept at the head of the transcript,

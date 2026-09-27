@@ -72,6 +72,10 @@ func (c *RestartConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 
 func (c *RestartConn) Close() error { return c.current.Close() }
 
+// ObservedClose forwards the current transport's server-close observation, the
+// same way ReloginConn does.
+func (c *RestartConn) ObservedClose() bool { return connObservedClose(c.current) }
+
 // Restart settles and closes the current transport, stops and starts the engine
 // behind it, then dials and logs in again. Output still queued on the old
 // transport (the tail of a quit, say) is kept at the head of the transcript, so

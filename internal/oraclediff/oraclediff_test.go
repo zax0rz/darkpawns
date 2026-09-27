@@ -292,10 +292,162 @@ func TestRunAudienceProbeAllowsFinalAudienceEOF(t *testing.T) {
 	}
 }
 
+// TestRunAudienceProbeAllowsAudienceEOFBeforeRelogin: a server that ends an
+// audience's transport on the step before a relogin (the C idle force-rent
+// closes the actor's socket, and the probe then relogs) is compared by its
+// bytes instead of failing the run. The target read has always accepted that
+// position; the audience reads must too, or a closed actor on a driver-sent
+// step can never be probed.
+func TestRunAudienceProbeAllowsAudienceEOFBeforeRelogin(t *testing.T) {
+	primary := &reloginScriptedConn{
+		scriptedConn: scriptedConn{outputs: []string{"weather line"}, readErr: io.EOF},
+		transcript:   "welcome back",
+	}
+	driver := &scriptedConn{outputs: []string{"driver"}}
+	other := &scriptedConn{outputs: []string{"other"}}
+
+	blocks, err := RunAudienceProbe(primary, map[string]Conn{
+		"driver": driver,
+		"other":  other,
+	}, []string{"send:driver ~dpclock pulse 630", ReloginStep}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Step 1's blocks are the target (driver) then its audience in name order
+	// (other, primary); the relogin step's are the primary then both peers.
+	if len(blocks) != 6 {
+		t.Fatalf("blocks = %#v, want six", blocks)
+	}
+	if blocks[2].Audience != "primary" || blocks[2].Output != "weather line" {
+		t.Fatalf("closed audience block = %#v, want its final bytes preserved", blocks[2])
+	}
+	if blocks[3].Audience != "actor" || blocks[3].Output != "welcome back" {
+		t.Fatalf("relogin block = %#v, want the transcript", blocks[3])
+	}
+}
+
+// TestRunAudienceProbeRejectsAudienceEOFMidProbe keeps the loosened position
+// honest: a close that no relogin or restart follows is still a failure.
+func TestRunAudienceProbeRejectsAudienceEOFMidProbe(t *testing.T) {
+	driver := &scriptedConn{outputs: []string{"driver"}}
+	other := &scriptedConn{readErr: io.EOF}
+
+	_, err := RunAudienceProbe(&scriptedConn{outputs: []string{"actor"}}, map[string]Conn{
+		"driver": driver,
+		"other":  other,
+	}, []string{"send:driver ~dpclock pulse 630", "look"}, time.Millisecond)
+	if err == nil || !strings.Contains(err.Error(), "read other after") {
+		t.Fatalf("expected the mid-probe audience close to fail, got %v", err)
+	}
+}
+
+// TestRunAudienceProbeReportsObservedClose: the block whose read saw the
+// server close that transport carries Closed, so a compare-close scenario can
+// render the disconnect instead of an invisible end-of-data.
+func TestRunAudienceProbeReportsObservedClose(t *testing.T) {
+	primary := &closeReportingConn{scriptedConn: scriptedConn{outputs: []string{"actor"}}}
+	closed := &closeReportingConn{scriptedConn: scriptedConn{readErr: io.EOF}, closed: true}
+	open := &closeReportingConn{scriptedConn: scriptedConn{outputs: []string{"peer"}}}
+
+	blocks, err := RunAudienceProbe(primary, map[string]Conn{
+		"closed": closed,
+		"open":   open,
+	}, []string{"look"}, time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(blocks) != 3 {
+		t.Fatalf("blocks = %#v, want three", blocks)
+	}
+	if blocks[0].Closed || blocks[2].Closed {
+		t.Errorf("only the closed transport may report Closed: %#v", blocks)
+	}
+	if !blocks[1].Closed {
+		t.Errorf("closed audience block = %#v, want Closed", blocks[1])
+	}
+}
+
+func TestTCPConnObservedCloseTracksServerEOF(t *testing.T) {
+	server, client := net.Pipe()
+	conn := NewTCPConn(client)
+	if conn.ObservedClose() {
+		t.Fatal("a fresh transport must not report a close")
+	}
+	if _, err := conn.ReadUntilQuiescent(20 * time.Millisecond); err != nil {
+		t.Fatalf("quiet read: %v", err)
+	}
+	if conn.ObservedClose() {
+		t.Fatal("a quiet transport must not report a close")
+	}
+	// net.Pipe is synchronous, so the server side writes and closes from its
+	// own goroutine while the client reads.
+	go func() {
+		_, _ = server.Write([]byte("parting words\r\n"))
+		_ = server.Close()
+	}()
+	got, err := conn.ReadUntilQuiescent(time.Second)
+	if err != nil {
+		t.Fatalf("read before EOF: %v", err)
+	}
+	if got != "parting words\r\n" {
+		t.Fatalf("read %q, want the bytes before EOF", got)
+	}
+	if !conn.ObservedClose() {
+		t.Fatal("server EOF must be reported as an observed close")
+	}
+}
+
+func TestReloginConnForwardsObservedClose(t *testing.T) {
+	first := &closeReportingConn{scriptedConn: scriptedConn{readErr: io.EOF}, closed: true}
+	conn := NewReloginConn(first, nil, nil, nil)
+	if !conn.ObservedClose() {
+		t.Fatal("ReloginConn must forward the current transport's close")
+	}
+}
+
+// TestParseScenarioCompareCloseFixture pins the opt-in that turns an observed
+// server close into a compared CloseMarker line.
+func TestParseScenarioCompareCloseFixture(t *testing.T) {
+	sc, err := ParseScenario("closer", strings.NewReader("[fixture]\ncompare-close\n[probe]\nlook\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !sc.CompareClose {
+		t.Fatal("compare-close fixture did not set CompareClose")
+	}
+	plain, err := ParseScenario("plain", strings.NewReader("[fixture]\nquiet-mobs\n[probe]\nlook\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plain.CompareClose {
+		t.Fatal("CompareClose must stay off unless the scenario asks for it")
+	}
+}
+
 type scriptedConn struct {
 	outputs []string
 	sent    []string
 	readErr error
+}
+
+// closeReportingConn is a scriptedConn that can also report an observed
+// server-side close, like TCPConn does.
+type closeReportingConn struct {
+	scriptedConn
+	closed bool
+}
+
+func (c *closeReportingConn) ObservedClose() bool { return c.closed }
+
+// reloginScriptedConn can replace its transport, like the actor connection of a
+// scenario that uses <RELOGIN>.
+type reloginScriptedConn struct {
+	scriptedConn
+	transcript string
+}
+
+func (c *reloginScriptedConn) Relogin(time.Duration) (string, error) {
+	return c.transcript, nil
 }
 
 func (c *scriptedConn) Send(line string) error {

@@ -1,0 +1,108 @@
+# Lifecycle: the void transition and the return are room-visible, and each
+# audience receives only its own line (DP-1311, DP-1315).
+# depth-case: idle.void-no-departure-before-ninth
+# depth-case: idle.void-departure-act
+# depth-case: idle.void-return-act
+# depth-case: idle.void-return-audiences
+#
+# C voids a mortal whose idle timer passes IDLE_TO_VOID (8) on the ninth MUD
+# hour: act("$n disappears into the void.", TO_ROOM) in the room they are
+# leaving, then "You have been idle, and are pulled into a void." to the actor,
+# then the move to Limbo (src/limits.c:419-437). The act precedes the transfer,
+# and TO_ROOM excludes the actor, so the voided player never sees their own
+# departure line.
+#
+# A second, immortal player stands in the same room as the observer. The God is
+# the first character on this fixture (empty-players), so the actor is demoted
+# to a mortal and the watcher is promoted to LVL_IMMORT: an immortal's timer
+# still ticks (src/limits.c:424-425) but check_idling's thresholds are gated on
+# level, so the watcher can stay in the room for the whole run. `teleport` is
+# the God's placement command (src/act.wizard.c:365-391).
+#
+# The <send:watch look> steps are the watcher's own commands: they reset the
+# watcher's timer and never touch the actor's, so the actor's idle count is
+# true silence from the ~dpclock control line.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Idlesilent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Idlesilent
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:watch]
+Voidwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Voidwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Voidwitness level 31
+teleport Voidwitness 8004
+set player Idlesilent level 1
+send:watch look
+look
+
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+send:watch look
+~dpclock pulse 630
+send:watch look
+look
+send:watch look
