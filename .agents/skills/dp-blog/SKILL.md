@@ -1,6 +1,6 @@
 ---
 name: dp-blog
-description: Co-author Dark Pawns blog posts in the site's brand voice, from topic selection through drafting, voice gates, and a social blurb. Use whenever the user wants to write, draft, revise, or publish a blog post for darkpawns.com, mentions "blog post", "write about" a game/tech topic, or wants a tweet-style blurb for a new post.
+description: Co-author Dark Pawns blog posts in the site's brand voice, from topic selection through drafting, voice gates, and a social blurb. Use whenever the user wants to write, draft, revise, or publish a blog post for darkpawns.org, mentions "blog post", "write about" a game/tech topic, or wants a tweet-style blurb for a new post.
 ---
 
 # Dark Pawns blog co-authoring
@@ -31,9 +31,39 @@ mechanical gates.
   preserved Wayback captures, and Zach's own account are sources. Model
   confidence is not.
 - **People:** the original community was real people. Write about them the way
-  you would want a stranger writing about you. Nameddeveloper in-jokes (BFT,
+  you would want a stranger writing about you. Named-developer in-jokes (BFT,
   PAW, the socials file) stay out of public blog copy per the brand voice
-  guide; historical anecdotes need Zach's explicit sign-off.
+  guide; historical anecdotes need Zach's explicit sign-off. Quoting what a
+  developer posted publicly (a Usenet ad, a news post) is archive material,
+  not an in-joke, but still ask.
+- **Disputes between real people:** the archive holds public fights (the 1999
+  license thread, the 2000 "Hall of Shame" list). A post may cover them with
+  Zach's sign-off. Quote both sides from the record, carry the record's own
+  `contentWarning` framing ("a disputed public record, not an editorial
+  verdict"), and deliver no verdict of your own. Where a later source bears on
+  the argument, set it beside the quote and let the reader weigh it. Never
+  claim a cause the record cannot date.
+
+## Before you start: where the post lives
+
+Write the post in a fresh worktree off `origin/main`, not in whatever
+checkout the session opened in. The main worktree is usually on an unrelated
+branch with uncommitted work, and content the post depends on (a newly merged
+archive, a new page) may exist only on `origin/main`:
+
+```bash
+git fetch origin
+git worktree add -b blog/<slug> ../dp-blog-<slug> origin/main
+cd ../dp-blog-<slug>/website-astro && npm ci
+```
+
+This is the same trap as the stale-tree deploy described under Publishing,
+caught at the start instead of the end. `make new-post TITLE=<slug>` scaffolds
+the draft with the required frontmatter.
+
+The gitignored `.claude/skills/dp-blog` symlink exists only in the main
+worktree. Edits to this skill go in `.agents/skills/dp-blog/` on the post's
+branch.
 
 ## The workflow
 
@@ -60,6 +90,32 @@ Collect before drafting:
 - numbers with their source (line counts from the repo, dates from the archive
   or Wayback, dates Zach states firsthand)
 - links the post will use, and where they go
+- when the post names a command or game topic (CREDITS, RENT, REMORT), link
+  the site's help page for it: `https://darkpawns.org/help/<category>/<topic>/`
+  (e.g. `/help/info/circlemud/`). The short form `/help/<topic>/` works but
+  redirects, so use the full path. The world database (`/rooms/`, `/mobs/`,
+  `/items/`) and the map can be linked the same way
+- when the post makes a claim about code, link it on GitHub pinned to a
+  commit (`https://github.com/zax0rz/darkpawns/blob/<sha>/src/config.c#L249`)
+  so line numbers cannot drift
+
+For archive-based posts, read the records themselves under
+`website-astro/src/content/archive/`, not their `description` lines. The
+frontmatter carries what a post needs to cite: `sourceUrl`, `captureUrl`,
+`messageId`, `dateLabel`, and `contentWarning`. Frontline's timeline
+(`history.md`) dates most eras and hosts; check claims against it, and check
+it against the primary record, because the two do not always agree.
+
+A published record is itself a copy. If a quote looks truncated or odd, check
+the raw capture under `~/dp-community-revival/` before writing about the
+oddity. UsenetArchives parsed `<text in angle brackets>` as HTML and dropped
+it, so Serapis's "Free ale through <insert your favorite winter holiday
+here>" was published as "Free ale through" until 2026-09-27. A draft built a
+joke on the truncation before the raw file showed the line was complete.
+
+Check Zach's memory against the record the same way. A remembered cause
+("that ad came out of the forum thread") can be disproved by a date. Say so
+kindly and use the true order.
 
 Where sources disagree, surface the disagreement instead of smoothing it over.
 If a fact cannot be sourced, mark it `[unsourced: ask Zach or cut]` in the
@@ -68,7 +124,7 @@ draft so it cannot silently survive to publication.
 ### Stage 3: Outline approval
 
 Propose a short outline: working title, the reader's question each section
-answers, and where the post ends. Every section earns its place; no sections
+answers, and where the post ends. Every section earns its place; no section
 exists to hit a length. Zach approves or redirects before prose begins.
 
 ### Stage 4: Co-author section by section
@@ -83,9 +139,44 @@ Draft one or two sections at a time. At each step:
   unless asked.
 
 Voice reminders for drafting: "magick" with a k; "players" and "mortals", not
-"users"; second person; consequences are punchlines and the punchline is "the
-game killed you"; parentheticals carry the personality; a missing comma is
-fine, a corporate sentence is not.
+"users"; first person as Zach, second person when speaking to the reader;
+consequences are punchlines and the punchline is "the game killed you";
+parentheticals carry the personality; a missing comma is fine, a corporate
+sentence is not.
+Keep developer talk out of history, world and onboarding posts: "byte for
+byte", "LGPL", "C output", "the harness". Say what the player sees ("shows
+that screen exactly as the old one did"). Build-lane posts may use the terms
+after defining them.
+
+The house example of an archive post is
+`website-astro/src/content/blog/what-the-wayback-machine-kept.md`: a plain
+first-person question, the numbers early, long verbatim quotes with the
+speaker named, a section on what is still missing, and a closing ask for
+anyone holding old backups. Read it before drafting a history-lane post.
+
+#### Model tells voice-lint cannot catch
+
+The lint catches dashes and launch phrases. Check these by eye on every
+paragraph, because they are what a model reaches for after the dashes are
+gone:
+
+- **"Not X, but Y" reveals** and their cousins ("It wasn't X. It was Y.").
+  State Y.
+- **Teaser sentences** that exist only to set up the next one ("Some context
+  the thread doesn't give you." "Here's the thing."). Cut them and start
+  with the context.
+- **Stacked sets of three**: three adjectives, three clauses, three short
+  sentences in a row. One pair or one list is fine; a post full of triads
+  is a cadence generator.
+- **A kicker on every section.** One closing line with a turn is allowed per
+  post. If every section ends on an aphorism, rewrite all but the best one
+  as plain fact.
+- **Tidy moral endings** ("and it credits everyone"). If the evidence
+  already made the point, stop one sentence earlier.
+- **Smoothed quotes.** Quotes are verbatim, typos included; paraphrase
+  outside the quotation marks. Nested quotes switch to single marks.
+
+After drafting, reread the whole post once looking only for these.
 
 ### Stage 5: Fresh-reader pass
 
@@ -97,8 +188,15 @@ Read the finished draft as someone who has never seen Dark Pawns. Check:
 - nothing assumes context only Zach has
 - nothing threatens the reader; the world is hostile, the developers are not
 
-If a subagent is available, give it only the draft and the question "what is
-this post about and would you play this game?", not the intended answer.
+Get a blind read from a reader with no context: a subagent, another model,
+or a fresh session Zach opens. Give it only the rendered draft text (not the
+frontmatter, not this conversation) and ask:
+
+> What is this post about? Which sentence would you cut first? Is there any
+> claim you would not believe without a link? Would you play this game?
+
+Do not state the intended answer. Treat the reply as data: a claim the
+reader doubts either gets a link or gets cut.
 
 ### Stage 6: Mechanical gates
 
@@ -107,9 +205,18 @@ commands; no harness-specific tooling required:
 
 ```bash
 make voice-lint      # hard-fails on dashes, launch copy, missing provenance
-make site-check      # voice-lint + tests + content inventory
-cd website-astro && npx astro build   # frontmatter schema enforced at build
+make site-check      # voice-lint + tests + content inventory + Astro build
 ```
+
+A new post makes `check-content-inventory` fail as stale until you run
+`make content-inventory` and commit the regenerated `CONTENT-INVENTORY.md`
+and `content-inventory.csv`. The build also rewrites
+`src/generated/project-activity.json`; restore it (`git checkout`) rather than
+committing unrelated churn.
+
+Voice-lint warnings are editorial, not failures. Read each one. Known false
+positives: a banned word inside a verbatim quote, and `trailer-rhythm` on
+lines of a fenced code block.
 
 Frontmatter contract for `website-astro/src/content/blog/<slug>.md` (enforced
 by `src/content.config.ts`): `title`, `date`, `description`, `draft`,
@@ -123,7 +230,12 @@ Every post ships with a blurb Zach can paste to Twitter: one to three
 sentences plus the post URL, under 280 characters without the link. Layer 3
 compressed: gallows humor, concrete detail, no hashtags, no dashes, no
 synthetic-importance words. Offer two variants with different angles (e.g.
-lore hook vs. terminal-grime hook) and character counts.
+lore hook vs. terminal-grime hook) and character counts. Count exactly rather
+than estimating:
+
+```bash
+printf '%s' 'the blurb text' | wc -m
+```
 
 ### Technical articles mode
 

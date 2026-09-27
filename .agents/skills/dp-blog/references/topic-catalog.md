@@ -18,6 +18,10 @@ two posts.
   memories and archive material; see `website-astro/src/content/archive/`)
 - CircleMUD and the DikuMUD lineage: where this code comes from
 - Frontline's original website as a time capsule
+- The Usenet record, 1996 to 2002: ads, host moves, and the 1999 license
+  dispute (`src/content/archive/usenet-*`; the ads and the dispute were
+  covered in "Free Ale Through"; still open: the missing 1994 knight.ufp.org
+  ad Frontline mentioned in 1999)
 - Whatever happened to MUDs: the current state of text games
 
 ## Build lane (reader: developer)
