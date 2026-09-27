@@ -179,7 +179,8 @@ def split_frontmatter(lines: list[str]) -> tuple[set[int], set[int]]:
 
 
 def code_region_lines(lines: list[str]) -> set[int]:
-    """Line numbers inside <style> or <script> elements.
+    """Line numbers inside <style>, <script> or <svg> elements, or a fenced
+    code block.
 
     The prose heuristics read a line as a sentence. CSS selector chains and JS
     property access split on '.' into short fragments, so `.status.online` and
@@ -187,14 +188,27 @@ def code_region_lines(lines: list[str]) -> set[int]:
     forever. Component files under src/components and src/pages are code with
     prose in them, not prose with code in it.
 
+    An inline <svg> chart is the same: one <text> label per line, each read as
+    a short sentence, so a timeline in a blog post trips trailer-rhythm on every
+    row. A fenced code block holds terminal output (the login screen quoted in
+    "Free Ale"), which is verbatim, not prose.
+
     Hard rules still run in here: a <script> can hold user-facing strings, and a
     banned dash in one of those ships to a reader like any other copy.
     """
     inside: set[int] = set()
     open_tag: str | None = None
+    in_fence = False
     for number, line in enumerate(lines, start=1):
+        if open_tag is None and re.match(r"\s*(```|~~~)", line):
+            inside.add(number)
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            inside.add(number)
+            continue
         if open_tag is None:
-            match = re.search(r"<\s*(style|script)\b[^>]*>", line, re.IGNORECASE)
+            match = re.search(r"<\s*(style|script|svg)\b[^>]*>", line, re.IGNORECASE)
             if match:
                 open_tag = match.group(1).lower()
                 inside.add(number)
