@@ -74,6 +74,11 @@ func (w *World) CheckIdling(p *Player) {
 				slog.Warn("PlayerTransfer failed in idle disconnect", "player", p.Name, "error", err)
 			}
 
+			// C close_socket emits these after char_to_room(3) and before
+			// Crash_rentsave/extract_char (comm.c:2131-2133).
+			Act(w, true, p, nil, nil, nil, "$n has lost $s link.", "", ToRoom)
+			MudLog(fmt.Sprintf("Closing link to: %s.", p.Name), MudlogNormal, max(LVL_IMMORT, p.GetInvisLevel()), true)
+
 			w.RentOut(p)
 			p.RentedOut = true
 

@@ -62,7 +62,13 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 	case ObjEquipped:
 		if obj.Location.OwnerKind == OwnerPlayer {
 			if p, ok := w.players[obj.Location.PlayerName]; ok && p.Equipment != nil {
-				p.Equipment.UnequipItem(obj, p.Inventory)
+				// UnequipItem transfers the object into inventory. Extraction
+				// must remove that transferred reference too; otherwise an
+				// equipped NORENT object survives Crash_rentsave in the saved
+				// inventory even though its world registration was deleted.
+				if p.Equipment.UnequipItem(obj, p.Inventory) && p.Inventory != nil {
+					p.Inventory.removeItem(obj)
+				}
 			}
 		} else if obj.Location.OwnerKind == OwnerMob {
 			if m, ok := w.activeMobs[obj.Location.MobID]; ok {

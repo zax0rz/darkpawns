@@ -264,6 +264,9 @@ func TestNinthTickVoidsMortalAndStopsCombat(t *testing.T) {
 	if err := m.combatEngine.StartCombat(idler.player, opponent.player); err != nil {
 		t.Fatalf("StartCombat: %v", err)
 	}
+	// C stop_fighting calls update_pos after leaving combat. Exercise a
+	// wounded band rather than only the healthy -> standing case.
+	idler.player.Health = -4
 	if !m.combatEngine.IsFighting("Idler") {
 		t.Fatal("precondition: combat pair was not enrolled")
 	}
@@ -281,8 +284,8 @@ func TestNinthTickVoidsMortalAndStopsCombat(t *testing.T) {
 	if m.combatEngine.IsFighting("Idler") || m.combatEngine.IsFighting("Opponent") {
 		t.Error("combat-engine pair remains after void transition")
 	}
-	if got := idler.player.GetPosition(); got != combat.PosStanding {
-		t.Errorf("idler position = %d, want standing", got)
+	if got := idler.player.GetPosition(); got != combat.PosIncap {
+		t.Errorf("idler position = %d, want incapacitated", got)
 	}
 	if got := opponent.player.GetPosition(); got != combat.PosStanding {
 		t.Errorf("opponent position = %d, want standing", got)
@@ -292,8 +295,8 @@ func TestNinthTickVoidsMortalAndStopsCombat(t *testing.T) {
 	if got := idler.player.GetRoom(); got != 1001 {
 		t.Errorf("room after return = %d, want 1001", got)
 	}
-	if got := idler.player.GetPosition(); got != combat.PosStanding {
-		t.Errorf("position after return = %d, want standing", got)
+	if got := idler.player.GetPosition(); got != combat.PosIncap {
+		t.Errorf("position after return = %d, want incapacitated", got)
 	}
 }
 
@@ -331,8 +334,10 @@ func TestImmortalIdleImmunity(t *testing.T) {
 func TestConnectedIdleDisconnectClosesSession(t *testing.T) {
 	m := makeTestManagerWithVoidRooms(t)
 	s := makeTestSession(t, m, "IdleLink", 1001, true)
+	observer := makeTestSession(t, m, "Observer", 3, true)
 	// transportDone nil ⇒ hasTransport() true: this player is CONNECTED.
 	registerTestSession(t, m, s, "IdleLink")
+	registerTestSession(t, m, observer, "Observer")
 
 	for tick := 0; tick < 31; tick++ {
 		m.world.CheckIdling(s.player)
@@ -347,6 +352,9 @@ func TestConnectedIdleDisconnectClosesSession(t *testing.T) {
 	}
 	if !s.SendClosed() {
 		t.Error("connected idle-disconnect must close the session's send channel")
+	}
+	if got := drainFrames(observer); !strings.Contains(got, "IdleLink has lost") {
+		t.Errorf("disconnect-room observer output = %q, want lost-link act", got)
 	}
 }
 
@@ -369,6 +377,18 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 	}, 0)
 	norent.Location = game.LocInventoryPlayer(s.player.Name)
 	s.player.Inventory.Items = append(s.player.Inventory.Items, norent)
+	wornKeep := game.NewObjectInstance(&parser.Obj{VNum: 4301, ShortDesc: "a silver helm"}, 0)
+	wornKeep.Location = game.LocEquippedPlayer(s.player.Name, game.SlotHead)
+	if err := s.player.Equipment.SetSlot(game.SlotHead, wornKeep); err != nil {
+		t.Fatalf("equip rentable item: %v", err)
+	}
+	wornNoRent := game.NewObjectInstance(&parser.Obj{
+		VNum: 4302, ShortDesc: "a fading badge", ExtraFlags: [4]int{game.FlagNoRent},
+	}, 0)
+	wornNoRent.Location = game.LocEquippedPlayer(s.player.Name, game.SlotBody)
+	if err := s.player.Equipment.SetSlot(game.SlotBody, wornNoRent); err != nil {
+		t.Fatalf("equip NORENT item: %v", err)
+	}
 
 	for tick := 0; tick < 31; tick++ {
 		m.world.CheckIdling(s.player)
@@ -388,8 +408,8 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 		t.Fatalf("SavePlayer called %d times, want 1", len(database.saved))
 	}
 	inventory, equipment := savedItemCounts(t, database.saved[0])
-	if inventory != 1 || equipment != 0 {
-		t.Errorf("saved inventory=%d equipment=%d, want 1/0 (rent keeps rentable, excludes NORENT)", inventory, equipment)
+	if inventory != 1 || equipment != 1 {
+		t.Errorf("saved inventory=%d equipment=%d, want 1/1 (rent keeps rentable, excludes NORENT)", inventory, equipment)
 	}
 }
 
