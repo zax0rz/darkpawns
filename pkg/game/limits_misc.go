@@ -34,10 +34,19 @@ func (w *World) CheckIdling(p *Player) {
 			// First idle threshold — pull to void room (vnum 1).
 			p.mu.Lock()
 			p.WasInRoom = roomVNum
-			if fighting != "" {
-				p.Fighting = ""
-			}
 			p.mu.Unlock()
+
+			// C tears down both sides through stop_fighting before moving the
+			// idler (limits.c:428-431). Stop the engine pair as well as the
+			// character fields; otherwise the round list can retain a combatant
+			// who has already moved to room 1.
+			if fighting != "" {
+				if stopper, ok := w.combatEngine.(interface{ StopCombat(string) }); ok {
+					stopper.StopCombat(p.Name)
+				} else {
+					p.StopFighting()
+				}
+			}
 
 			// C acts before the transfer, while the player still stands in
 			// the room: act("$n disappears into the void.", TRUE, ch, 0, 0,

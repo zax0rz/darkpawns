@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/time/rate"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -19,6 +21,10 @@ import (
 // void room (vnum 1), disconnect room (vnum 3), and a mortal room, so idle
 // lifecycle tests can drive the C thresholds deterministically.
 func makeTestManagerWithVoidRooms(t *testing.T) *Manager {
+	return makeTestManagerWithVoidRoomsAndDB(t, nil)
+}
+
+func makeTestManagerWithVoidRoomsAndDB(t *testing.T, database db.GameStore) *Manager {
 	t.Helper()
 	parsed := &parser.World{
 		Rooms: []parser.Room{
@@ -35,7 +41,7 @@ func makeTestManagerWithVoidRooms(t *testing.T) *Manager {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return newTestManager(t, w, nil)
+	return newTestManager(t, w, database)
 }
 
 // registerTestSession adds a test session to the manager and its player to the
@@ -247,6 +253,50 @@ func TestNinthTickVoidsMortal(t *testing.T) {
 	}
 }
 
+func TestNinthTickVoidsMortalAndStopsCombat(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	m.world.SetCombatEngine(m.combatEngine)
+	idler := makeTestSession(t, m, "Idler", 1001, true)
+	opponent := makeTestSession(t, m, "Opponent", 1001, true)
+	registerTestSession(t, m, idler, "Idler")
+	registerTestSession(t, m, opponent, "Opponent")
+
+	if err := m.combatEngine.StartCombat(idler.player, opponent.player); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+	if !m.combatEngine.IsFighting("Idler") {
+		t.Fatal("precondition: combat pair was not enrolled")
+	}
+
+	for tick := 1; tick <= 9; tick++ {
+		m.world.CheckIdling(idler.player)
+	}
+
+	if got := idler.player.GetFighting(); got != "" {
+		t.Errorf("idler fighting = %q, want empty", got)
+	}
+	if got := opponent.player.GetFighting(); got != "" {
+		t.Errorf("opponent fighting = %q, want empty", got)
+	}
+	if m.combatEngine.IsFighting("Idler") || m.combatEngine.IsFighting("Opponent") {
+		t.Error("combat-engine pair remains after void transition")
+	}
+	if got := idler.player.GetPosition(); got != combat.PosStanding {
+		t.Errorf("idler position = %d, want standing", got)
+	}
+	if got := opponent.player.GetPosition(); got != combat.PosStanding {
+		t.Errorf("opponent position = %d, want standing", got)
+	}
+
+	idler.resetIdleOnCommand()
+	if got := idler.player.GetRoom(); got != 1001 {
+		t.Errorf("room after return = %d, want 1001", got)
+	}
+	if got := idler.player.GetPosition(); got != combat.PosStanding {
+		t.Errorf("position after return = %d, want standing", got)
+	}
+}
+
 // TestImmortalIdleImmunity: check_idling only voids/disconnects mortals
 // (limits.c:424-425 gates the thresholds on GET_LEVEL < LVL_IMMORT), but the
 // timer increment itself is unconditional — the users idle column ticks for
@@ -306,13 +356,19 @@ func TestConnectedIdleDisconnectClosesSession(t *testing.T) {
 // dropped in room 3. Extraction must not scatter an idler's inventory on the
 // disconnect-room floor.
 func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
-	m := makeTestManagerWithVoidRooms(t)
+	database := &captureSaveDB{}
+	m := makeTestManagerWithVoidRoomsAndDB(t, database)
 	s := makeTestSession(t, m, "PackMule", 1001, true)
 	registerTestSession(t, m, s, "PackMule")
 
 	keepsake := game.NewObjectInstance(&parser.Obj{VNum: 4299, ShortDesc: "a worn locket"}, 0)
 	keepsake.Location = game.LocInventoryPlayer(s.player.Name)
 	s.player.Inventory.Items = append(s.player.Inventory.Items, keepsake)
+	norent := game.NewObjectInstance(&parser.Obj{
+		VNum: 4300, ShortDesc: "a melting token", ExtraFlags: [4]int{game.FlagNoRent},
+	}, 0)
+	norent.Location = game.LocInventoryPlayer(s.player.Name)
+	s.player.Inventory.Items = append(s.player.Inventory.Items, norent)
 
 	for tick := 0; tick < 31; tick++ {
 		m.world.CheckIdling(s.player)
@@ -327,6 +383,13 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 	}
 	if len(s.player.Inventory.Items) != 1 {
 		t.Errorf("idle-disconnected inventory = %d items, want 1 (leaves with the character)", len(s.player.Inventory.Items))
+	}
+	if len(database.saved) != 1 {
+		t.Fatalf("SavePlayer called %d times, want 1", len(database.saved))
+	}
+	inventory, equipment := savedItemCounts(t, database.saved[0])
+	if inventory != 1 || equipment != 0 {
+		t.Errorf("saved inventory=%d equipment=%d, want 1/0 (rent keeps rentable, excludes NORENT)", inventory, equipment)
 	}
 }
 
