@@ -1,5 +1,13 @@
 # Native installation check — 2026-09-09
 
+> **Superseded architecture:** this receipt records the old PostgreSQL-capable
+> server at commit `0505c87b7`. Current releases are SQLite-only, use
+> `-world ./lib/world`, default to `lib/data/darkpawns.db`, and require no
+> database or cache service. The SQLite startup, first-player immortal flow,
+> save/reload behavior, moderation persistence, and protocol smoke paths are now
+> enforced in normal CI. Keep the results below as historical evidence, not as
+> current installation instructions; use [`../../DEPLOYMENT.md`](../../DEPLOYMENT.md).
+
 Verified source: `0505c87b7` (`origin/main`, including PR #1428). The check ran
 in a detached worktree with PostgreSQL 16 databases created just for this test.
 No production database, player, service, or deployment was used.

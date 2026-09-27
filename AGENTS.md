@@ -64,7 +64,7 @@ Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K l
 - `pkg/combat/` — Combat formulas and damage calculation
 - `pkg/spells/` — Spell system (saving throws, damage, affect spells)
 - `pkg/telnet/` — Telnet protocol handling
-- `pkg/db/` — Player persistence (SQLite by default, PostgreSQL opt-in)
+- `pkg/db/` — Player persistence (SQLite only; the legacy PostgreSQL converter is isolated under `tools/db-migrate/`)
 
 ### Key Conventions
 
