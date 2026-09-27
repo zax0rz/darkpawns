@@ -8,22 +8,24 @@ on:
   workflow_dispatch:
   push:
     branches: [ main, master ]
-    paths:
+    paths: &bridge-paths
+      # The bridge imports the runtime, so the trigger is its whole dependency
+      # closure rather than the packages it happens to name in an import block.
+      # As of this commit `cd tools/db-migrate && go list -deps ./...` reaches
+      # internal/dpclock, lib/misc, and pkg/{boards,combat,common,db,dprng,
+      # engine,errlog,events,game,metrics,moderation,parser,scripting,spells}.
+      # Listing those by hand is how the list goes stale the first time a runtime
+      # package grows an import, so it is the trees, not the packages.
       - 'tools/db-migrate/**'
       - '.github/workflows/db-migrate.yml'
-  pull_request:
-    branches: [ main, master ]
-    paths:
-      - 'tools/db-migrate/**'
-      - '.github/workflows/db-migrate.yml'
-      # The bridge builds its destination with the runtime's schema
-      # initialisation and its application-level proof uses the runtime's codec,
-      # so a change to either can break it.
-      - 'pkg/db/**'
-      - 'pkg/moderation/**'
-      - 'pkg/game/character_data.go'
+      - 'pkg/**'
+      - 'internal/**'
+      - 'lib/misc/**'
       - 'go.mod'
       - 'go.sum'
+  pull_request:
+    branches: [ main, master ]
+    paths: *bridge-paths
 
 jobs:
   convert:

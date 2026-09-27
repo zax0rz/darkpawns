@@ -72,6 +72,22 @@ jobs:
 
     - name: Verify all packages build
       run: go build ./...
+
+    # The conversion bridge is a separate module, so every step above is blind to
+    # it: a change to a package it imports can break it without failing anything
+    # here, and the bridge is the rollback path if the SQLite store ever has to be
+    # re-proven against the PostgreSQL it came from. This step compiles, vets and
+    # unit-tests it with no service of any kind (its PostgreSQL integration suite
+    # skips without DP_MIGRATE_TEST_DB_URL), so "silently broken" is not a state
+    # this repository can reach. The full suite, against a real PostgreSQL, runs
+    # in .github/workflows/db-migrate.yml when the paths above change.
+    - name: Migration module builds and unit tests
+      run: |
+        cd tools/db-migrate
+        go mod download
+        go build ./...
+        go vet ./...
+        go test ./... -count=1
     
     # The Python that remains is the WebSocket smoke test below and the fidelity
     # gates above (stdlib only). The retired AI/agent requirements and the lane
