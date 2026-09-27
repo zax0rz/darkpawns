@@ -105,8 +105,9 @@ func Alogf(format string, args ...interface{}) {
 // mudlog message types, C's BRF and NRM (utils.h:115-116; OFF is 0, CMP
 // 3): a message reaches an immortal whose syslog level is at least its type.
 const (
-	MudlogBrief  = 1
-	MudlogNormal = 2
+	MudlogBrief    = 1
+	MudlogNormal   = 2
+	MudlogComplete = 3 // CMP (utils.h:114-117)
 )
 
 // ---------------------------------------------------------------------------

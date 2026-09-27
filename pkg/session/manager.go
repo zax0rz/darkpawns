@@ -536,10 +536,11 @@ func (m *Manager) SetPulsePump(pump func(int) error) {
 }
 
 // ExtractPendingChars drains the world's C-style deferred extraction pass and
-// returns connected victims to the main menu. C does this from heartbeat(),
-// after raw_kill() has finished its synchronous death bytes; a linkless
-// descriptor receives no menu because extract_char_final() has nothing to
-// write to.
+// routes each victim's descriptor the way extract_char_final does: a live
+// descriptor (death, legal quit) returns to the menu; a NULL descriptor
+// receives nothing. C NULLs the descriptor before extract on two paths —
+// check_idling's idle disconnect (limits.c:442-444) and a linkdead
+// close_socket (comm.c:2129) — and both must retire the session here instead.
 func (m *Manager) ExtractPendingChars() {
 	extracted := m.world.ExtractPendingPlayers()
 	for _, player := range extracted {
@@ -556,12 +557,24 @@ func (m *Manager) ExtractPendingChars() {
 			continue
 		}
 		// extract_char saves the character (handler.c:1162). A renter was
-		// saved with their objects when they quit; everyone else is saved as
-		// extraction left them (what they carried is on the floor or in a
-		// corpse). Both carry the in-memory load room — C's extract pass
-		// saves GET_LOADROOM, not the (now NOWHERE) position.
+		// saved with their objects when they quit or were idle-disconnected;
+		// everyone else is saved as extraction left them (what they carried is
+		// on the floor or in a corpse). Both carry the in-memory load room —
+		// C's extract pass saves GET_LOADROOM, not the (now NOWHERE) position.
 		if !player.RentedOut {
 			victim.saveCharacter("extraction", player.GetLoadRoom())
+		}
+		if player.IdleDisconnect {
+			// limits.c:438-451: close_socket(ch->desc) ran and ch->desc is
+			// NULL before extract_char (handler.c:1172-1175), so an
+			// idle-disconnected player is force-rented and dropped — never
+			// returned to the menu. Retire the session and close the
+			// transport; leaveBroadcastHandled suppresses the invented
+			// "has left the game." broadcast, which C never sends here.
+			victim.leaveBroadcastHandled = true
+			m.UnregisterSession(victim)
+			victim.Close()
+			continue
 		}
 		if !victim.hasTransport() {
 			// The character was extracted by the tick-driven lifecycle

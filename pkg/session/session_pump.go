@@ -252,13 +252,14 @@ func (s *Session) SetLastActiveForTest(ts int64) {
 	s.lastActive.Store(ts)
 }
 
-// resetIdleOnCommand mirrors comm.c:600-608: every command line accepted for
+// resetIdleOnCommand mirrors comm.c:600-608: a command line dequeued for
 // dispatch resets the character's idle timer and returns a voided character
 // to their previous room BEFORE routing/dispatch. This is the shared
-// command-consumption seam: Telnet reaches it via TerminalLine → handleCommand
-// and WebSocket via handleMessage(MsgCommand) → handleCommand, with deferred
-// commands reset again when the drain queue dequeues them
-// (Manager.DrainInputQueues), matching C's game-loop dequeue point.
+// command-consumption seam: Telnet reaches it via TerminalLine →
+// handleCommand and WebSocket via handleMessage(MsgCommand) → handleCommand
+// on the immediate path, and via Manager.DrainInputQueues when the command
+// was deferred behind wait state — matching C's game-loop dequeue point in
+// both cases.
 func (s *Session) resetIdleOnCommand() {
 	if !s.authenticated || s.player == nil {
 		return

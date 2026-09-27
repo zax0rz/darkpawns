@@ -1,26 +1,27 @@
 package game
 
 import (
+	"fmt"
 	"log/slog"
 )
 
 func (w *World) CheckIdling(p *Player) {
-	if p == nil {
-		return
-	}
-
-	p.mu.RLock()
-	level := p.Level
-	p.mu.RUnlock()
-
-	if level >= LVL_IMMORT || p.IsNPC() {
-		return
+	if p == nil || p.IsNPC() {
+		return // point_update calls check_idling for PCs only (limits.c:521-525)
 	}
 
 	p.mu.Lock()
 	p.IdleTimer++
 	timer := p.IdleTimer
+	level := p.Level
 	p.mu.Unlock()
+
+	// C increments the timer for immortals too and gates only the
+	// void/disconnect on level (limits.c:424-425) — the users idle column
+	// ticks for everyone.
+	if level >= LVL_IMMORT {
+		return
+	}
 
 	if timer > IDLE_TO_VOID {
 		p.mu.Lock()
@@ -49,16 +50,25 @@ func (w *World) CheckIdling(p *Player) {
 				slog.Warn("PlayerTransfer failed in idle check", "player", p.Name, "error", err)
 			}
 		} else if timer > IDLE_DISCONNECT {
-			// Second threshold — force rent and disconnect
+			// Second threshold — limits.c:438-451: char_to_room(3),
+			// close_socket + desc = NULL, free_rent's Crash_rentsave(ch, 0),
+			// mudlog, extract_char. free_rent is YES (src/config.c:106), so
+			// the object pass is the legal-quit rent pass: norent objects are
+			// destroyed, the rent file keeps the rest, and extraction does
+			// not drop anything in room 3.
 			p.mu.Lock()
 			p.WasInRoom = 0
+			p.IdleDisconnect = true
 			p.mu.Unlock()
 
 			if err := w.PlayerTransfer(p, 3); err != nil {
 				slog.Warn("PlayerTransfer failed in idle disconnect", "player", p.Name, "error", err)
 			}
 
-			slog.Info("player idle extracted", "name", p.Name)
+			w.RentOut(p)
+			p.RentedOut = true
+
+			MudLog(fmt.Sprintf("%s force-rented and extracted (idle).", p.Name), MudlogComplete, LVL_GOD, true) // limits.c:449-450
 			ExtractChar(p)
 		}
 	}

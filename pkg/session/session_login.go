@@ -316,12 +316,6 @@ func isHeavyCommand(cmd string) bool {
 
 // handleCommand processes game commands.
 func (s *Session) handleCommand(data json.RawMessage) error {
-	// comm.c:600-608: an accepted command line resets the idle timer and
-	// returns a voided character before any routing or dispatch. Both Telnet
-	// (TerminalLine → terminalCommand) and WebSocket (handleMessage MsgCommand)
-	// converge here; deferred drain-queue commands reset again at dequeue.
-	s.resetIdleOnCommand()
-
 	var cmd CommandData
 	if err := json.Unmarshal(data, &cmd); err != nil {
 		return err
@@ -512,8 +506,18 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 	// Internal ExecuteCommand callers (order/force) bypass handleCommand and
 	// stay immediate.
 	if s.player != nil && s.tryExecuteNow(cmd.Command, cmd.Args, cmd.RawArgs) {
+		// Deferred, exactly like a line waiting in C's d->input: comm.c:600-601
+		// resets the idle timer when the line is DEQUEUED, so the reset for
+		// this command runs at its drain-time dequeue
+		// (Manager.DrainInputQueues), not at enqueue.
 		return nil
 	}
+
+	// comm.c:600-608: the line is dequeued now — before dispatch, reset the
+	// idle timer and return a voided character to their room. Both Telnet
+	// (TerminalLine → terminalCommand) and WebSocket (handleMessage
+	// MsgCommand) converge here.
+	s.resetIdleOnCommand()
 
 	err := executeCommandRaw(s, cmd.Command, cmd.Args, true, cmd.RawArgs)
 

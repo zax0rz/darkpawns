@@ -247,8 +247,10 @@ func TestNinthTickVoidsMortal(t *testing.T) {
 	}
 }
 
-// TestImmortalIdleImmunity: check_idling only touches mortals
-// (limits.c:425 GET_LEVEL < LVL_IMMORT). Immunity is unchanged by DP-1311.
+// TestImmortalIdleImmunity: check_idling only voids/disconnects mortals
+// (limits.c:424-425 gates the thresholds on GET_LEVEL < LVL_IMMORT), but the
+// timer increment itself is unconditional — the users idle column ticks for
+// immortals too. DP-1311 review F5.
 func TestImmortalIdleImmunity(t *testing.T) {
 	m := makeTestManagerWithVoidRooms(t)
 	s := makeTestSession(t, m, "Wizzen", 1001, true)
@@ -264,6 +266,67 @@ func TestImmortalIdleImmunity(t *testing.T) {
 	}
 	if got := s.player.GetWasInRoom(); got != 0 {
 		t.Errorf("immortal WasInRoom = %d, want 0", got)
+	}
+	if got := s.player.GetIdleTimer(); got != 12 {
+		t.Errorf("immortal IdleTimer = %d, want 12 (C increments unconditionally)", got)
+	}
+}
+
+// TestConnectedIdleDisconnectClosesSession: review finding F1 — a
+// still-connected player past IDLE_DISCONNECT is force-rented and
+// DISCONNECTED (limits.c:438-451: close_socket, desc = NULL, extract_char).
+// Go must retire the session and close the transport, never show the main
+// menu the way a death or legal quit does (extract_char_final only sends
+// CON_MENU when desc is still set, handler.c:1172-1175).
+func TestConnectedIdleDisconnectClosesSession(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "IdleLink", 1001, true)
+	// transportDone nil ⇒ hasTransport() true: this player is CONNECTED.
+	registerTestSession(t, m, s, "IdleLink")
+
+	for tick := 0; tick < 31; tick++ {
+		m.world.CheckIdling(s.player)
+	}
+	m.ExtractPendingChars()
+
+	if _, ok := m.GetSession("IdleLink"); ok {
+		t.Error("connected idle-disconnect must unregister the session (no menu)")
+	}
+	if _, ok := m.world.GetPlayer("IdleLink"); ok {
+		t.Error("connected idle-disconnect must extract the character")
+	}
+	if !s.SendClosed() {
+		t.Error("connected idle-disconnect must close the session's send channel")
+	}
+}
+
+// TestIdleDisconnectKeepsObjectsRentStyle: free_rent is YES (src/config.c:106),
+// so C's idle disconnect runs Crash_rentsave(ch, 0) (limits.c:445-446): norent
+// objects are destroyed, the rest leave with the character — nothing is
+// dropped in room 3. Extraction must not scatter an idler's inventory on the
+// disconnect-room floor.
+func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "PackMule", 1001, true)
+	registerTestSession(t, m, s, "PackMule")
+
+	keepsake := game.NewObjectInstance(&parser.Obj{VNum: 4299, ShortDesc: "a worn locket"}, 0)
+	keepsake.Location = game.LocInventoryPlayer(s.player.Name)
+	s.player.Inventory.Items = append(s.player.Inventory.Items, keepsake)
+
+	for tick := 0; tick < 31; tick++ {
+		m.world.CheckIdling(s.player)
+	}
+	m.ExtractPendingChars()
+
+	if got := len(m.world.GetItemsInRoom(3)); got != 0 {
+		t.Errorf("room 3 has %d items after idle disconnect, want 0 (rent file keeps them)", got)
+	}
+	if !s.player.RentedOut {
+		t.Error("idle-disconnected character must be marked RentedOut (Crash_rentsave)")
+	}
+	if len(s.player.Inventory.Items) != 1 {
+		t.Errorf("idle-disconnected inventory = %d items, want 1 (leaves with the character)", len(s.player.Inventory.Items))
 	}
 }
 

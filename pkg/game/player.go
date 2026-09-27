@@ -266,10 +266,19 @@ type Player struct {
 	// Used by dream.c for nightmare progression.
 	LastDeath int64
 
-	// RentedOut marks a character who legally quit: Crash_rentsave has
-	// taken their objects into the rent file, so extraction does not drop
-	// them. Runtime only.
+	// RentedOut marks a character whose objects went into the rent file, so
+	// extraction does not drop them: a legal quitter (Crash_rentsave,
+	// act.other.c:155-181) or an idle-disconnected one (free_rent's
+	// Crash_rentsave(ch, 0), limits.c:445-446 — src/config.c:106 has
+	// free_rent = YES). Runtime only.
 	RentedOut bool `json:"-"`
+
+	// IdleDisconnect marks a character extracted by check_idling's
+	// IDLE_DISCONNECT branch (limits.c:438-451). C closes the socket and
+	// NULLs the descriptor before extract_char, so the session layer must
+	// close the transport and skip the menu when this extraction drains.
+	// Runtime only.
+	IdleDisconnect bool `json:"-"`
 
 	// FreezeLevel records the level of the God who froze this player
 	// (C GET_FREEZE_LEV; act.wizard.c:2149). Thaw consults it to stop a
