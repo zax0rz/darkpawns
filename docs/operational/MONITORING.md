@@ -42,10 +42,6 @@ Dark Pawns server exposes Prometheus metrics at `/metrics` endpoint:
 - `darkpawns_db_queries_total` - Database queries
 - `darkpawns_db_query_duration_seconds` - Query latency
 
-### Memory Metrics
-- `darkpawns_memory_writes_total` - Narrative memory writes
-- `darkpawns_memory_reads_total` - Narrative memory reads
-
 ## Getting Started
 
 Use the [native monitoring quick start](QUICKSTART-MONITORING.md). The Compose

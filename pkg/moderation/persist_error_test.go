@@ -2,16 +2,18 @@ package moderation
 
 import (
 	"database/sql"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
 // newClosedDBManager returns a Manager whose DB is open but closed, so every
 // Exec fails with "sql: database is closed". This exercises the persistence
-// error path without a live database. The pq driver is registered package-wide.
+// error path without a live database; the SQLite driver is registered
+// package-wide by pkg/db, which this package shares a connection with.
 func newClosedDBManager(t *testing.T) *Manager {
 	t.Helper()
-	db, err := sql.Open("postgres", "")
+	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "closed.db"))
 	if err != nil {
 		t.Fatalf("sql.Open: %v", err)
 	}

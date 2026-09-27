@@ -12,8 +12,6 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/errlog"
-
-	_ "github.com/lib/pq"
 )
 
 // Manager handles all moderation operations.
@@ -21,12 +19,7 @@ type Manager struct {
 	mu sync.RWMutex
 	db *sql.DB
 
-	// dialect is the flavour of the connection above. The statements in this
-	// package are written PostgreSQL-first and are translated by pkg/db's one
-	// dialect value rather than by a private copy that could drift: the table
-	// DDL alone has three constructs SQLite will not run as written.
-	dialect db.Dialect
-	hasDB   bool
+	hasDB bool
 
 	// In-memory caches for performance
 	activePenalties map[string][]PlayerPenalty // player -> penalties
@@ -43,13 +36,12 @@ type Manager struct {
 	closeOnce sync.Once
 }
 
-// NewManager creates a new moderation manager. conn is the shared game-store
-// handle and dialect is the SQL flavour it was opened for; a nil conn selects
-// the memory-only manager, and the dialect is then never consulted.
-func NewManager(conn *sql.DB, dialect db.Dialect) *Manager {
+// NewManager creates a new moderation manager over the shared game-store handle,
+// which is SQLite. A nil conn selects the memory-only manager, which is what the
+// server uses when no database is configured at all.
+func NewManager(conn *sql.DB) *Manager {
 	m := &Manager{
 		db:              conn,
-		dialect:         dialect,
 		hasDB:           conn != nil,
 		activePenalties: make(map[string][]PlayerPenalty),
 		wordFilters:     make([]WordFilterEntry, 0),
@@ -77,25 +69,24 @@ func NewManager(conn *sql.DB, dialect db.Dialect) *Manager {
 }
 
 // exec, query and queryRow are the statement choke points for moderation, the
-// same shape as pkg/db's: they rebind $N placeholders when the connection is
-// SQLite. Schema statements go through execDDL instead.
+// same shape as pkg/db's. SQLite binds positionally, so arguments are passed in
+// the order their `?` markers appear. Schema statements go through execDDL.
 func (m *Manager) exec(query string, args ...interface{}) (sql.Result, error) {
-	return m.db.Exec(m.dialect.Rebind(query), args...)
+	return m.db.Exec(query, args...)
 }
 
 func (m *Manager) query(query string, args ...interface{}) (*sql.Rows, error) {
-	return m.db.Query(m.dialect.Rebind(query), args...)
+	return m.db.Query(query, args...)
 }
 
 func (m *Manager) queryRow(query string, args ...interface{}) *sql.Row {
-	return m.db.QueryRow(m.dialect.Rebind(query), args...)
+	return m.db.QueryRow(query, args...)
 }
 
-// execDDL runs one schema statement through the shared schema translator.
-// SQLite accepts SERIAL PRIMARY KEY without complaint and the column then never
-// autoincrements, so this translation is the difference between an id and null.
+// execDDL runs one schema statement. Statements are written in SQLite's own
+// syntax: there is no translation layer, because there is no second dialect.
 func (m *Manager) execDDL(stmt string) error {
-	_, err := m.db.Exec(m.dialect.DDL(stmt))
+	_, err := m.db.Exec(stmt)
 	return err
 }
 
@@ -103,7 +94,7 @@ func (m *Manager) execDDL(stmt string) error {
 func (m *Manager) createTables() error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS abuse_reports (
-			id SERIAL PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			reporter VARCHAR(32) NOT NULL,
 			target VARCHAR(32) NOT NULL,
 			report_type VARCHAR(32) NOT NULL,
@@ -117,7 +108,7 @@ func (m *Manager) createTables() error {
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS admin_log (
-			id SERIAL PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			admin VARCHAR(32) NOT NULL,
 			action VARCHAR(32) NOT NULL,
 			target VARCHAR(32) NOT NULL,
@@ -140,7 +131,7 @@ func (m *Manager) createTables() error {
 		)`,
 
 		`CREATE TABLE IF NOT EXISTS word_filters (
-			id SERIAL PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			pattern VARCHAR(255) NOT NULL,
 			is_regex BOOLEAN DEFAULT false,
 			action VARCHAR(32) NOT NULL,
@@ -157,14 +148,13 @@ func (m *Manager) createTables() error {
 		}
 	}
 
-	// Installs older than these two columns reach them by migration.
-	// PostgreSQL has ADD COLUMN IF NOT EXISTS; SQLite needs the shared
-	// pragma_table_info guard.
+	// Installs older than these two columns reach them by migration, through the
+	// shared pragma_table_info guard: SQLite's ALTER TABLE has no IF NOT EXISTS.
 	for _, col := range []string{
 		"expired_at TIMESTAMP",
 		"status VARCHAR(32) DEFAULT 'active'",
 	} {
-		if err := db.AddColumnIfNotExists(m.db, m.dialect, "player_penalties", col); err != nil {
+		if err := db.AddColumnIfNotExists(m.db, "player_penalties", col); err != nil {
 			return fmt.Errorf("add player_penalties column %s: %w", strings.Fields(col)[0], err)
 		}
 	}
@@ -183,7 +173,7 @@ func (m *Manager) loadActivePenalties() {
 	rows, err := m.query(`
 		SELECT player_name, penalty_type, issued_at, expires_at, reason, issued_by
 		FROM player_penalties
-		WHERE status = 'active' AND (expires_at IS NULL OR expires_at > $1)
+		WHERE status = 'active' AND (expires_at IS NULL OR expires_at > ?)
 	`, time.Now())
 	if err != nil {
 		slog.Error("Failed to load penalties", "error", err)
@@ -306,8 +296,8 @@ func (m *Manager) cleanupExpiredPenalties() {
 		// passed twice (and numbered in order) to bind correctly on both.
 		_, err := m.exec(`
 			UPDATE player_penalties
-			SET status = 'expired', expired_at = $1
-			WHERE expires_at IS NOT NULL AND expires_at <= $2
+			SET status = 'expired', expired_at = ?
+			WHERE expires_at IS NOT NULL AND expires_at <= ?
 			  AND status != 'expired'
 		`, now, now)
 		if err != nil {
@@ -494,7 +484,7 @@ func (m *Manager) AddReport(r AbuseReport) error {
 		_, err := m.exec(
 			`
 			INSERT INTO abuse_reports (reporter, target, report_type, description, room_vnum, timestamp, status)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			VALUES (?, ?, ?, ?, ?, ?, ?)`,
 			r.Reporter, r.Target, string(r.ReportType), r.Description, r.RoomVNum, r.Timestamp, string(r.Status),
 		)
 		if err != nil {
@@ -591,7 +581,7 @@ func (m *Manager) AddPenalty(p PlayerPenalty) error {
 		_, err := m.exec(
 			`
 			INSERT INTO player_penalties (player_name, penalty_type, issued_at, expires_at, reason, issued_by)
-			VALUES ($1, $2, $3, $4, $5, $6)`,
+			VALUES (?, ?, ?, ?, ?, ?)`,
 			playerName, p.PenaltyType, p.IssuedAt, expiresAt, p.Reason, p.IssuedBy,
 		)
 		if err != nil {
@@ -692,7 +682,7 @@ func (m *Manager) AddWordFilter(pattern string, isRegex bool, actionStr, created
 		// the correct row regardless of how loadWordFilters ordered the slice.
 		row := m.queryRow(
 			`INSERT INTO word_filters (pattern, is_regex, action, created_by)
-			 VALUES ($1, $2, $3, $4) RETURNING id`,
+			 VALUES (?, ?, ?, ?) RETURNING id`,
 			pattern, isRegex, action, createdBy,
 		)
 		if err := row.Scan(&entry.ID); err != nil {
@@ -721,7 +711,7 @@ func (m *Manager) RemoveWordFilter(filterID int) {
 	defer m.mu.Unlock()
 
 	if m.hasDB {
-		_, err := m.exec(`DELETE FROM word_filters WHERE id = $1`, filterID)
+		_, err := m.exec(`DELETE FROM word_filters WHERE id = ?`, filterID)
 		if err != nil {
 			slog.Error("failed to delete word filter", "error", err)
 			return

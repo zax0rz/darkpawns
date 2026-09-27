@@ -15,8 +15,7 @@ A single Go binary (`cmd/server`) that serves three surfaces:
 |---|---|---|
 | HTTP + WebSocket | `:4350` (`-port`) | Web client, `/ws`, `/api/*`, `/openapi.json`, `/admin/*`, `/health`, `/metrics` |
 | Telnet | `:7777` (`-telnet-port`, `0` disables) | Classic MUD access |
-| SQLite (embedded) | `lib/data/darkpawns.db` | Default game persistence — no setup, no external services |
-| PostgreSQL | `-db` / `DATABASE_URL` | Opt-in game persistence for scaled deployments |
+| SQLite (embedded) | `lib/data/darkpawns.db` | The game database — one file, no setup, no external services |
 
 It also reads/writes on-disk state: the world/scripts tree (`-world`, `-scripts`) and a
 CWD-relative `data/` directory (shops, aliases, mail, admin store). With the checkout
@@ -24,7 +23,8 @@ layout below, the server changes its working directory to `lib/`, so that state
 is in **`lib/data/`**, not the repository-root `data/`. The admin audit trail follows
 the same rule: the log is **`lib/logs/audit.log`** (mode `600`, in a `750` directory it
 creates on first boot). Back up the SQLite database and the instance's `lib/` tree, including any
-edited world files (plus Postgres if you run the research sidecar).
+edited world files. There is no database server to back up: the game state is that
+one SQLite file.
 
 ## Quickstart
 
@@ -55,11 +55,11 @@ is rejected at boot with the command to fix it. Connect with
 ## Prerequisites
 
 - Go (see `go.mod` for the version); a C toolchain is not required (`CGO_ENABLED=0`).
-- No database server: with no `-db` flag and no `DATABASE_URL`, the server
-  creates an embedded SQLite database at `<world>/../data/darkpawns.db` and
-  boots against it.
-- PostgreSQL is the opt-in backend for scaled deployments: pass a
-  `postgres://` URL via `-db` or `DATABASE_URL`.
+- No database server and no cache: with no `-db` flag and no `DP_SQLITE_PATH`,
+  the server creates an embedded SQLite database at
+  `<world>/../data/darkpawns.db` and boots against it. PostgreSQL is not a
+  runtime backend of this build: a `postgres://` value stops the boot with a
+  message naming the conversion tool, rather than being ignored.
 - Optionally a reverse proxy (Caddy, nginx, …) terminating TLS in front of `:4350`.
 
 ## Build
@@ -73,35 +73,26 @@ Drop `GOOS`/`GOARCH` to build natively for your own platform.
 
 ## Configure
 
-PostgreSQL is opt-in. To use it, provision a role and database; for example, run
-these as a PostgreSQL administrator (the commands prompt for the new role's
-password):
+There is nothing to provision. The database is a file the server creates on
+first boot at `lib/data/darkpawns.db` (beside the world data, from the `-world`
+directory's parent), and the schema is created with it. Export a signing secret,
+and name a different database path only if you want one:
 
 ```bash
-createuser --pwprompt darkpawns
-createdb --owner=darkpawns darkpawns
-```
-
-The application creates and migrates its schema at startup. The role must own
-the database or have equivalent schema creation privileges.
-
-Export your connection string and a signing secret:
-
-```bash
-export DATABASE_URL='postgres://darkpawns:YOUR_PASSWORD@localhost:5432/darkpawns?sslmode=disable'
 export JWT_SECRET="$(openssl rand -hex 32)"
+# Optional: put the database somewhere owned by the service account.
+export DP_SQLITE_PATH=/var/lib/darkpawns/darkpawns.db
 ```
 
-`postgres://user:password@localhost:5432/darkpawns` connects over TCP and asks
-for the role's password; the three-slash form with `host=/var/run/postgresql`
-connects over the Unix socket, where the server trusts your operating-system
-identity instead. If you created the database as yourself, the socket form needs
-no password and no role name.
+The file is the whole state of the game. Put it on local durable storage — not
+NFS, not a container layer, not a directory a deploy step prunes — with the
+directory at mode `700` and the file at `600`, owned by the service account.
+Back it up by copying the file while the server is stopped, or with SQLite's
+own online backup (`VACUUM INTO`).
 
-Replace `YOUR_PASSWORD` with the role's password (URL-encode special characters).
-Keep the signing secret private and stable across restarts. Startup
-rejects a missing or short `JWT_SECRET` unless `ENVIRONMENT=development`, which
-uses an ephemeral secret.
+Keep the signing secret private and stable across restarts. Startup rejects a
+missing or short `JWT_SECRET` unless `ENVIRONMENT=development`, which uses an
+ephemeral secret.
 
 Moving an existing PostgreSQL installation to SQLite is a one-time operator
 procedure with its own preflight, verification and rollback steps:
@@ -184,7 +175,7 @@ unit that prefers every path spelled out:
   -world ./lib/world \
   -web ./web/public \
   -telnet-port 7777
-# DATABASE_URL is read from the environment (or pass -db).
+# -db (or DP_SQLITE_PATH) names the SQLite database; the default is lib/data/darkpawns.db.
 ```
 
 The `-world` directory must contain `wld/`, `mob/`, `obj/`, `zon/`, and `shp/`.
@@ -192,8 +183,10 @@ In this checkout that is `lib/world/`; passing `lib/` is rejected at boot with
 the reason, instead of failing later as a parser error about `lib/wld`. The
 default script directory is `<world>/scripts`, that is `lib/world/scripts/`. The
 process anchors its working directory to the parent of `-world` (`lib/`).
-Confirm the startup logs show a successful DB connection —
-a healthy `/health` alone does not prove persistence is available.
+Confirm the startup logs show a successful DB connection — a healthy `/health`
+alone does not prove persistence is available. A boot that had to *create* the
+database file logs a warning saying so, which is how a fresh install is told
+apart from the database you expected it to open.
 
 Two flag notes: `-static <dir>` serves a built static site at `/` and takes
 precedence over `-web`, and `-hugo` is a deprecated alias for it that still
@@ -236,10 +229,11 @@ authentication and operations are outside the installation check.
 
 ## Supported deployment model
 
-Run the native binary with PostgreSQL, using a service manager such as systemd
-for an unattended instance. Docker, Compose, Kubernetes manifests, and image
-publishing are retired; they are not maintained installation options. CI still
-uses disposable service containers to test database-backed behavior.
+Run the native binary with its state in a local SQLite file, using a service
+manager such as systemd for an unattended instance. Docker, Compose, Kubernetes
+manifests, and image publishing are retired; they are not maintained
+installation options, and CI starts no service containers either: the tests run
+against the same embedded SQLite database a fresh installation creates.
 
 Official host-specific service definitions and deploy/rollback procedures belong
 in the private ops repository. See the [retirement record](docs/maintenance/container-retirement.md).

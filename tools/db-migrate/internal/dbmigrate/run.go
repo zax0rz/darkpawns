@@ -417,7 +417,7 @@ func initDestinationSchema(ctx context.Context, dsn string) (*destinationSchema,
 	if err != nil {
 		return nil, fmt.Errorf("create destination game-store schema: %w", err)
 	}
-	manager := moderation.NewManager(database.SQLDB(), database.Dialect())
+	manager := moderation.NewManager(database.SQLDB())
 	schema := &destinationSchema{database: database, moderation: manager}
 	if err := schema.confirmTables(ctx); err != nil {
 		_ = schema.Close()

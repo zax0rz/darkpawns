@@ -103,7 +103,7 @@ Command registry and skill command handlers. `Registry` maps command names to `H
 Shared interfaces to break circular dependencies. `CommandSession` abstracts session for command handlers. `CommandManager` abstracts the session manager. `ShopManager` interface for shop operations. **Key types:** `CommandSession`, `CommandManager`, `ShopManager`. **Depends on:** none.
 
 ### `pkg/db`
-The store: player persistence on PostgreSQL or embedded SQLite, chosen by the DSN scheme (see Persistence below). Player records (stats, inventory, equipment) serialized to/from JSON columns. `New()` connects, `SavePlayer`/`GetPlayer`/`CreatePlayer` for CRUD. A store is only absent under `DP_ALLOW_NO_DB=1`; otherwise an empty DSN is a boot error. **Key types:** `DB`, `PlayerRecord`. **Depends on:** `game`.
+The store: player persistence in one embedded SQLite file, named by `-db` or `DP_SQLITE_PATH` and defaulting to `lib/data/darkpawns.db`. Player records (stats, inventory, equipment) serialized to/from JSON columns. `New()` opens the file (creating it on a first boot), `SavePlayer`/`GetPlayer`/`CreatePlayer` for CRUD, one connection with WAL and a busy timeout so concurrent saves queue rather than fail. A store is only absent under `DP_ALLOW_NO_DB=1`; otherwise an empty setting or an unopenable path is a boot error, and a `postgres://` DSN is refused because this build has no PostgreSQL driver. The one component that still reads PostgreSQL is the operator conversion bridge, in its own module (`tools/db-migrate`). **Key types:** `DB`, `PlayerRecord`. **Depends on:** `game`.
 
 ### Other packages
 - **`pkg/audit`** — Security event logging

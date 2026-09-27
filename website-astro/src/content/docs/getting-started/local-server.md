@@ -12,7 +12,7 @@ draft: false
 ## Requirements
 
 - Go at the version declared in [`go.mod`](https://github.com/zax0rz/darkpawns/blob/main/go.mod).
-- PostgreSQL and a database URL. The current server requires `-db` or `DATABASE_URL` at startup, and stops if the database cannot be reached. `DP_ALLOW_NO_DB=1` is the explicit dev and oracle bypass.
+- No database service. The server keeps everything in one embedded SQLite file, which it creates on first boot (by default `lib/data/darkpawns.db`, beside the world data). Pass `-db` or set `DP_SQLITE_PATH` to put it somewhere else. PostgreSQL is not a runtime backend: a `postgres://` value stops the boot with a message rather than being ignored. `DP_ALLOW_NO_DB=1` is the explicit development and oracle bypass.
 - The repository's `lib/world/` directory, which contains the original world files.
 
 ## Build
@@ -29,15 +29,21 @@ Development mode can generate a temporary JWT secret. Provide a stable secret fo
 
 ```bash
 export ENVIRONMENT=development
-export DATABASE_URL='postgres:///darkpawns?host=/var/run/postgresql'
 ./server
 ```
 
-Run from the repository root, no flags are needed: the world is read from
-`lib/world` and the browser client is served from `web/public`. The local
-database URL above uses the PostgreSQL Unix socket, which authenticates by your
-operating-system identity; the TCP form
-`postgres://postgres:postgres@localhost/darkpawns` asks for a password instead.
+Run from the repository root and no flags are needed: the world is read from
+`lib/world`, the browser client is served from `web/public`, and the database is
+created at `lib/data/darkpawns.db`. Name it explicitly to keep the database
+somewhere else, which is the usual choice for an installed instance:
+
+```bash
+./server -db /var/lib/darkpawns/darkpawns.db
+# or: export DP_SQLITE_PATH=/var/lib/darkpawns/darkpawns.db
+```
+
+A boot that had to create the database file logs a warning saying so, so a fresh
+install is easy to tell apart from the database you expected it to open.
 
 The HTTP and WebSocket server listens on `-port`; raw telnet uses `-telnet-port`. Pass `0` to disable the telnet listener.
 

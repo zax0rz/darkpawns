@@ -116,8 +116,8 @@ func TestAnalyzeTable_RowsError(t *testing.T) {
 	if err == nil {
 		t.Fatal("AnalyzeTable expected error, got nil")
 	}
-	if !strings.Contains(err.Error(), "iterating pg_stats rows") {
-		t.Errorf("expected error to mention 'iterating pg_stats rows', got: %v", err)
+	if !strings.Contains(err.Error(), "iterating sqlite index rows") {
+		t.Errorf("expected error to mention 'iterating sqlite index rows', got: %v", err)
 	}
 }
 

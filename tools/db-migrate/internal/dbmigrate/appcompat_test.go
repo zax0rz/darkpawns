@@ -177,7 +177,7 @@ func TestApplicationOpensAndMutatesMigratedDatabase(t *testing.T) {
 	}
 
 	// Moderation reads and writes against the migrated tables.
-	manager := moderation.NewManager(database.SQLDB(), database.Dialect())
+	manager := moderation.NewManager(database.SQLDB())
 	defer manager.Close()
 	reports, err := manager.ListReports()
 	if err != nil {

@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
 // migrateFixture is the common setup for the safety tests: a populated source in
@@ -243,11 +241,12 @@ func TestMigrateRefusesExtraSourceColumn(t *testing.T) {
 func TestMigrateRefusesSourceMissingADestinationTable(t *testing.T) {
 	sourceDSN, _ := newSourceSchema(t)
 	// Only the game store: the moderation tables were never created.
-	database, err := db.New(sourceDSN)
+	conn, err := sql.Open("postgres", sourceDSN)
 	if err != nil {
-		t.Fatalf("create players-only source: %v", err)
+		t.Fatalf("open players-only source: %v", err)
 	}
-	if err := database.Close(); err != nil {
+	applyPlayersOnlySchema(t, conn)
+	if err := conn.Close(); err != nil {
 		t.Fatal(err)
 	}
 	destination := filepath.Join(t.TempDir(), "darkpawns.db")

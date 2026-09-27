@@ -21,7 +21,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zax0rz/darkpawns/internal/dbmigrate"
+	"github.com/zax0rz/darkpawns/tools/db-migrate/internal/dbmigrate"
 )
 
 const (

@@ -1,10 +1,16 @@
-# Direct dependencies for the Dark Pawns Python tooling/scripts.
-# Ranges are bounded at the next major version for reproducibility; pin exact
-# versions in requirements-lock.txt (regenerate with: pip freeze > requirements-lock.txt).
-openai>=2.34.0,<3.0.0
-anthropic>=0.100.0,<1.0.0
-litellm>=1.83.0,<2.0.0
-mem0ai>=2.0.0,<3.0.0
-requests>=2.32.3,<3.0.0
-websocket-client>=1.9.0,<2.0.0
-redis>=8.0.1,<9.0.0
+# Python dependencies for the scripts this repository actually runs.
+#
+# CI and the site build invoke exactly two third-party imports between them:
+#   numpy      website/scripts/precompute_{sphere,graph}.py  (make build-site)
+#   websockets scripts/smoke_test_2b.py                      (the WebSocket smoke gate)
+# Everything else in scripts/ is standard library.
+#
+# The agent-era requirements (openai, anthropic, litellm, mem0ai), the Redis
+# client and the PostgreSQL driver were removed with the subsystems that used
+# them: none of them had an importer left anywhere in the tree. A hand-run tool
+# that needs something else (PIL and fontTools for scripts/render_mudlet_lockup.py,
+# for example) should install it itself rather than widening CI's surface.
+#
+# Bounds are set at the next major version for reproducibility.
+numpy>=1.26.4,<3.0.0
+websockets>=12.0,<16.0

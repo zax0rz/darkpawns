@@ -1,4 +1,4 @@
-.PHONY: world-fidelity world-manifest expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update census-coverage
+.PHONY: world-fidelity world-manifest expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update census-coverage db-migrate-build db-migrate-test
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -155,6 +155,21 @@ oracle-regression-isolation:
 	ORACLE_REGRESSION_GO=$${ORACLE_REGRESSION_GO:-/usr/local/go/bin/go} \
 	DP_ORACLE_BIN=$${DP_ORACLE_BIN:-/home/zach/darkpawns-c-oracle/bin/circle} \
 		scripts/oracle_regression_isolation.sh --workers $(ORACLE_ISOLATION_WORKERS)
+
+# ---------------------------------------------------------------------------
+# tools/db-migrate — the operator-only PostgreSQL -> SQLite conversion bridge.
+#
+# It is a separate Go module, on purpose: it needs lib/pq while production
+# PostgreSQL stays the rollback authority, and the shipped runtime must not. The
+# root module's `go build ./...` and `go test ./...` never see it, so these two
+# targets are how it is built and proven. `make db-migrate-test` needs a
+# disposable PostgreSQL database; see tools/db-migrate/README.md.
+# ---------------------------------------------------------------------------
+db-migrate-build:
+	cd tools/db-migrate && go build ./...
+
+db-migrate-test:
+	cd tools/db-migrate && go vet ./... && go test ./... -count=1
 
 vet:
 	go vet ./...

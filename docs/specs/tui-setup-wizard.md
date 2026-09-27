@@ -84,14 +84,17 @@ NOT embed it and reads from a filesystem path at runtime.
 
 ### Database
 
-PostgreSQL is required for normal operation. Database initialization failure stops
-startup unless the explicit dev/oracle bypass is enabled. Redis is not a core
-server installation requirement.
+No database service is required. The server keeps its state in one embedded
+SQLite file, created on first boot; an unopenable path stops startup, and the
+explicit `DP_ALLOW_NO_DB=1` bypass is for development and the oracle harness.
+Redis is not part of the server at all. (This section described the PostgreSQL
+architecture; the wizard's database step below should ask where the SQLite file
+goes rather than for a connection string.)
 
 ### Build Artifacts
 
 - Binary: `go build -o darkpawns ./cmd/server`
-- Installation target: native binary plus an operator-provisioned PostgreSQL database.
+- Installation target: native binary; its state is one SQLite file it creates itself.
 
 ---
 
@@ -222,7 +225,7 @@ Runs before the TUI renders. Checks:
 ```
   Database Configuration
 
-  PostgreSQL provides player saves, moderation, and mail.
+  One SQLite file provides player saves, moderation, and mail.
 
   > Enable database?  [Yes] / No
 

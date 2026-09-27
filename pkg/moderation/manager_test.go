@@ -3,16 +3,12 @@ package moderation
 import (
 	"testing"
 	"time"
-
-	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
 // newMemoryManager builds the manager the no-database boot path builds: no
-// connection, so no statement is ever issued and the dialect is never read.
-// The zero value is passed because it is the pass-through dialect, the one
-// under which both translators are the identity function.
+// connection at all, so no statement is ever issued.
 func newMemoryManager() *Manager {
-	return NewManager(nil, db.DialectPostgres)
+	return NewManager(nil)
 }
 
 func TestWordFilterCensor(t *testing.T) {

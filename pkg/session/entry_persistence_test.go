@@ -1,15 +1,13 @@
 package session
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
-	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
@@ -19,42 +17,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// These contract tests intentionally use PostgreSQL, not MockDatabase: name
+// These contract tests intentionally use a real store, not MockDatabase: name
 // equality, uniqueness, and persistence timing are part of this regression.
-// Set DP_ENTRY_TEST_DATABASE_URL to a disposable local PostgreSQL database.
-// Each test owns an isolated schema; no production data or passwords are used.
+//
+// The store is a private SQLite file per test, which is the database the server
+// actually runs: an isolated file is the closest thing SQLite has to the
+// isolated schema this harness used to create in PostgreSQL, and it means these
+// tests need no service. Falls back to MockDatabase only if a caller swaps the
+// helper out; nothing here does.
 func entryDatabase(t *testing.T) *db.DB {
 	t.Helper()
-	dsn := os.Getenv("DP_ENTRY_TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("set DP_ENTRY_TEST_DATABASE_URL to run PostgreSQL entry contract tests")
-	}
-	u, err := url.Parse(dsn)
-	if err != nil || (u.Hostname() != "127.0.0.1" && u.Hostname() != "localhost") {
-		t.Fatal("entry tests require a local PostgreSQL URL")
-	}
-	admin, err := sql.Open("postgres", dsn)
+	path := filepath.Join(t.TempDir(), "entry.db")
+	database, err := db.New("sqlite://" + path)
 	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = admin.Close() })
-	schema := fmt.Sprintf("entry_test_%d", time.Now().UnixNano())
-	if _, err := admin.Exec("CREATE SCHEMA " + schema); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if _, err := admin.Exec("DROP SCHEMA " + schema + " CASCADE"); err != nil {
-			t.Errorf("drop isolated entry schema: %v", err)
-		}
-	})
-	q := u.Query()
-	// Use a lib/pq startup option so every pooled connection, including the
-	// cleanup save path, resolves the isolated schema.
-	q.Set("options", "-csearch_path="+schema)
-	u.RawQuery = q.Encode()
-	database, err := db.New(u.String())
-	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("open entry database at %s: %v", path, err)
 	}
 	t.Cleanup(func() { _ = database.Close() })
 	return database
@@ -448,6 +424,12 @@ func TestEntryDatabasePersistsGodAndMortalEntry(t *testing.T) {
 	}
 }
 
+// TestEntryPasswordRetries pins C's three-strikes password loop, including the
+// bytes that precede each outcome. The nanny turns echo back on as the password
+// line is dispatched and echo_on's telnet string is malformed, so a visible
+// "\r\n" raw event precedes every wrong-password outcome (interpreter.c:1871,
+// comm.c:954-967). The stream is therefore two messages per attempt: the raw
+// event, then the prompt.
 func TestEntryPasswordRetries(t *testing.T) {
 	database := entryDatabase(t)
 	entrySeed(t, database, "Aiko")
@@ -459,6 +441,9 @@ func TestEntryPasswordRetries(t *testing.T) {
 	for attempt := 1; attempt <= 3; attempt++ {
 		if err := entryInput(s, "wrongpass"); err != nil {
 			t.Fatal(err)
+		}
+		if raw := drainMsg(t, s); !strings.Contains(string(raw), `"type":"raw"`) {
+			t.Fatalf("attempt %d: expected the echo_on raw event first, got %q", attempt, raw)
 		}
 		_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
 		want := "Wrong password.\r\nPassword: "

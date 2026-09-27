@@ -3,7 +3,6 @@ package moderation
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -12,27 +11,22 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
-// These tests run the moderation store against real databases: SQLite always
-// (it is the dependency-free default), PostgreSQL when DATABASE_URL points at a
-// disposable database. The fake-driver tests elsewhere in this package prove
-// that statements are issued; these prove the statements are valid SQL on both
-// dialects, that ids autoincrement, and that the schema is idempotent. Without
-// them the four tables the previous SQLite pass missed rot straight back into
-// "no such function: NOW" and "no such table: word_filters" on every boot.
+// These tests run the moderation store against a real SQLite database, which is
+// the only backend there is. The fake-driver tests elsewhere in this package
+// prove that statements are issued; these prove the statements are valid SQL,
+// that ids autoincrement, and that the schema is idempotent. Without them the
+// four tables the previous SQLite pass missed rot straight back into "no such
+// table: word_filters" on every boot.
 //
 // A note on timestamps, because it shapes what these tests can assert. The
-// moderation schema declares TIMESTAMP (without time zone) on all four tables.
-// PostgreSQL drops the offset on write, and lib/pq reads a naive TIMESTAMP back
-// as UTC, so on a host whose zone is not UTC the instant of a stored value
-// shifts by the host's offset. That is pre-existing behaviour and not something
-// this port introduces: pkg/db's locked_until has the same shape and its backend
-// test fails identically on a non-UTC host, and pkg/command renders "expires in"
-// from the same instants. These tests therefore assert the wall-clock value,
-// which is what a timezone-naive column does store, and only assert instants
-// where the backend preserves them.
+// moderation schema declares TIMESTAMP on all four tables, and SQLite keeps the
+// text it was given: a value written with an offset reads back with that offset.
+// These tests therefore assert the wall-clock value and the instant separately,
+// so a change to either is visible.
 
-// moderationBackends lists the backends for one test run. Same shape as
-// pkg/db's gameStoreBackends.
+// moderationBackends lists the backends for one test run: the embedded SQLite
+// file, which is the only database there is. The slice stays because the tests
+// below iterate it.
 type moderationBackend struct {
 	name string
 	dsn  string
@@ -40,20 +34,16 @@ type moderationBackend struct {
 
 func moderationBackends(t *testing.T) []moderationBackend {
 	t.Helper()
-	backends := []moderationBackend{{"sqlite", "sqlite://" + filepath.Join(t.TempDir(), "moderation.db")}}
-	if pg := os.Getenv("DATABASE_URL"); pg != "" {
-		backends = append(backends, moderationBackend{"postgres", pg})
-	}
-	return backends
+	return []moderationBackend{{"sqlite", "sqlite://" + filepath.Join(t.TempDir(), "moderation.db")}}
 }
 
 // moderationTables is every table this package owns. The tables are created and
-// queried by this package, through the connection pkg/db opened: that shared
-// connection is why the dialect has to be threaded in rather than re-derived.
+// queried by this package over the connection pkg/db opened, so the schema has
+// one owner and the boot path has one place to fail.
 var moderationTables = []string{"abuse_reports", "admin_log", "player_penalties", "word_filters"}
 
 // newModerationManager opens a real connection through pkg/db and builds the
-// manager exactly as cmd/server does, handle and dialect together.
+// manager exactly as cmd/server does.
 func newModerationManager(t *testing.T, dsn string) *Manager {
 	t.Helper()
 	store, err := db.New(dsn)
@@ -61,24 +51,17 @@ func newModerationManager(t *testing.T, dsn string) *Manager {
 		t.Fatalf("db.New(%q): %v", dsn, err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	m := NewManager(store.SQLDB(), store.Dialect())
+	m := NewManager(store.SQLDB())
 	t.Cleanup(m.Close)
 	return m
 }
 
-// tableExists and columnExists read each dialect's catalog so the schema
-// assertions stay exact: SQLite answers through sqlite_master and
-// pragma_table_info, PostgreSQL through pg_tables and information_schema.
+// tableExists and columnExists read SQLite's catalog through the manager's own
+// connection, so the schema assertions stay exact.
 func tableExists(t *testing.T, m *Manager, table string) bool {
 	t.Helper()
 	var n int
-	var err error
-	if m.dialect == db.DialectSQLite {
-		err = m.queryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $1`, table).Scan(&n)
-	} else {
-		err = m.queryRow(`SELECT COUNT(*) FROM pg_tables WHERE schemaname = current_schema() AND tablename = $1`, table).Scan(&n)
-	}
-	if err != nil {
+	if err := m.queryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, table).Scan(&n); err != nil {
 		t.Fatalf("look up table %s: %v", table, err)
 	}
 	return n > 0
@@ -87,13 +70,7 @@ func tableExists(t *testing.T, m *Manager, table string) bool {
 func columnExists(t *testing.T, m *Manager, table, column string) bool {
 	t.Helper()
 	var n int
-	var err error
-	if m.dialect == db.DialectSQLite {
-		err = m.queryRow(`SELECT COUNT(*) FROM pragma_table_info($1) WHERE name = $2`, table, column).Scan(&n)
-	} else {
-		err = m.queryRow(`SELECT COUNT(*) FROM information_schema.columns WHERE table_name = $1 AND column_name = $2`, table, column).Scan(&n)
-	}
-	if err != nil {
+	if err := m.queryRow(`SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?`, table, column).Scan(&n); err != nil {
 		t.Fatalf("look up column %s.%s: %v", table, column, err)
 	}
 	return n > 0
@@ -163,7 +140,7 @@ func TestModerationSchema(t *testing.T) {
 			// created but nothing writes to it), so its id is proven directly.
 			var logID int
 			if err := m.queryRow(
-				`INSERT INTO admin_log (admin, action, target, reason) VALUES ($1, $2, $3, $4) RETURNING id`,
+				`INSERT INTO admin_log (admin, action, target, reason) VALUES (?, ?, ?, ?) RETURNING id`,
 				"admin", string(ActionWarn), "target", "schema proof",
 			).Scan(&logID); err != nil {
 				t.Fatalf("insert admin_log: %v", err)
@@ -185,7 +162,7 @@ func TestModerationSchema(t *testing.T) {
 				t.Fatalf("AddPenalty: %v", err)
 			}
 			var rows int
-			if err := m.queryRow(`SELECT COUNT(*) FROM player_penalties WHERE player_name = $1`, penaltyPlayer).Scan(&rows); err != nil {
+			if err := m.queryRow(`SELECT COUNT(*) FROM player_penalties WHERE player_name = ?`, penaltyPlayer).Scan(&rows); err != nil {
 				t.Fatalf("count player_penalties: %v", err)
 			}
 			if rows != 1 {
@@ -203,13 +180,13 @@ func TestModerationSchema(t *testing.T) {
 	}
 }
 
-// uniqueModerationName returns a name unique to this test process so PostgreSQL
-// runs (which share one disposable database) do not collide across tests, and
-// short enough for the VARCHAR(32) columns.
+// uniqueModerationName returns a name unique to this test process so two runs
+// that share a database file do not collide across tests, and short enough for
+// the VARCHAR(32) columns.
 // TestModerationSchemaRestoresMigratedColumns covers the other half of delta 3:
-// ADD COLUMN IF NOT EXISTS has no SQLite spelling, so the guard looks the column
-// up first. Dropping the columns on an existing install and re-running the
-// schema has to put them back on both dialects.
+// SQLite's ALTER TABLE has no IF NOT EXISTS, so the guard looks the column up
+// first. Dropping the columns on an existing install and re-running the schema
+// has to put them back.
 func TestModerationSchemaRestoresMigratedColumns(t *testing.T) {
 	for _, be := range moderationBackends(t) {
 		t.Run(be.name, func(t *testing.T) {
@@ -219,9 +196,6 @@ func TestModerationSchemaRestoresMigratedColumns(t *testing.T) {
 			drop := []string{
 				`ALTER TABLE player_penalties DROP COLUMN expired_at`,
 				`ALTER TABLE player_penalties DROP COLUMN status`,
-			}
-			if m.dialect == db.DialectPostgres {
-				drop = []string{`ALTER TABLE player_penalties DROP COLUMN expired_at, DROP COLUMN status`}
 			}
 			for _, stmt := range drop {
 				if _, err := m.db.Exec(stmt); err != nil {
@@ -301,15 +275,13 @@ func TestModerationPenaltyRoundTrip(t *testing.T) {
 				t.Errorf("reloaded expires_at wall clock = %s, want %s", got, want)
 			}
 
-			// The instant only survives where the backend keeps the offset,
-			// which is what the in-memory expiry filter compares against.
-			if m.dialect == db.DialectSQLite {
-				if !reopened.IsMuted(player) {
-					t.Error("IsMuted = false after reload, want true")
-				}
-				if reopened.IsBanned(player) {
-					t.Error("IsBanned = true after reload, want false: the expired ban was treated as active")
-				}
+			// The in-memory expiry filter compares instants, which is what SQLite
+			// preserves: a stored value keeps the offset it was written with.
+			if !reopened.IsMuted(player) {
+				t.Error("IsMuted = false after reload, want true")
+			}
+			if reopened.IsBanned(player) {
+				t.Error("IsBanned = true after reload, want false: the expired ban was treated as active")
 			}
 
 			// The cleanup pass marks instead of deleting, so the audit trail
@@ -318,7 +290,7 @@ func TestModerationPenaltyRoundTrip(t *testing.T) {
 			var status string
 			var expiredAt sql.NullTime
 			if err := reopened.queryRow(
-				`SELECT status, expired_at FROM player_penalties WHERE player_name = $1 AND penalty_type = $2`,
+				`SELECT status, expired_at FROM player_penalties WHERE player_name = ? AND penalty_type = ?`,
 				player, string(ActionBan),
 			).Scan(&status, &expiredAt); err != nil {
 				t.Fatalf("read expired penalty: %v", err)
@@ -327,7 +299,7 @@ func TestModerationPenaltyRoundTrip(t *testing.T) {
 				t.Errorf("expired penalty status = %q, want expired", status)
 			}
 			if !expiredAt.Valid {
-				t.Error("expired_at is null; the UPDATE did not run on this dialect")
+				t.Error("expired_at is null; the cleanup UPDATE did not run")
 			}
 		})
 	}
@@ -340,8 +312,7 @@ func uniqueModerationName(prefix string) string {
 
 // TestModerationWordFilterRoundTrip covers the word_filters statements end to
 // end: INSERT ... RETURNING id, the created_at timestamp scan, and the DELETE by
-// id. All three carry $N placeholders and a timestamp, so all three are
-// dialect-sensitive.
+// id. All three carry bound placeholders and a timestamp.
 func TestModerationWordFilterRoundTrip(t *testing.T) {
 	for _, be := range moderationBackends(t) {
 		t.Run(be.name, func(t *testing.T) {
@@ -398,7 +369,7 @@ func TestModerationWordFilterRoundTrip(t *testing.T) {
 			// Delete by id must reach the same row the reload found.
 			reopened.RemoveWordFilter(found.ID)
 			var remaining int
-			if err := reopened.queryRow(`SELECT COUNT(*) FROM word_filters WHERE id = $1`, found.ID).Scan(&remaining); err != nil {
+			if err := reopened.queryRow(`SELECT COUNT(*) FROM word_filters WHERE id = ?`, found.ID).Scan(&remaining); err != nil {
 				t.Fatalf("count word_filters: %v", err)
 			}
 			if remaining != 0 {

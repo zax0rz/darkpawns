@@ -18,7 +18,7 @@ Dark Pawns is a Go server that loads the original Diku-format world, exposes tel
 1. Parses flags and deterministic clock/RNG settings.
 2. Loads the world through `pkg/parser`.
 3. Constructs `pkg/game.World`.
-4. Opens PostgreSQL persistence.
+4. Opens the SQLite store (creating the file and schema on a first boot).
 5. Creates the session manager (`pkg/session.Manager`) and wires its combat and scripting callbacks.
 6. Registers HTTP, WebSocket, metrics, admin, and telnet surfaces.
 7. Starts reset/tick workers and waits for shutdown.
@@ -33,7 +33,7 @@ Dark Pawns is a Go server that loads the original Diku-format world, exposes tel
 | `pkg/combat` | Shared tick-based combat calculations and combatant interfaces. |
 | `pkg/spells` | Spell metadata, saving throws, damage, affects, and spell execution. |
 | `pkg/scripting` | Sandboxed Lua triggers using a serialized VM. |
-| `pkg/db` | Player persistence on PostgreSQL or SQLite. |
+| `pkg/db` | Player persistence in an embedded SQLite file. |
 | `pkg/telnet` | Raw telnet listener translated into the shared session protocol. |
 
 ## Behavioral authority

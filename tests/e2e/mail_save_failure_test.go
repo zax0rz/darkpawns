@@ -16,18 +16,16 @@ import (
 const mailSaveFailureBody = "proof-mail-body"
 
 // TestMailProductionRecipientSave proves the repaired fixed-block
-// conversion through the real server path and a disposable PostgreSQL
-// database. The recipient is saved by the server's shutdown cleanup after
+// conversion through the real server path and a disposable SQLite database. The recipient is saved by the server's shutdown cleanup after
 // receiving the live note; the persisted row is inspected directly so the
 // proof never reconstructs or sanitizes a replacement object.
 func TestMailProductionRecipientSave(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e: builds and launches the server binary; skipped in -short")
 	}
-	dbURL := os.Getenv("DP_TEST_DB_URL")
-	if dbURL == "" {
-		t.Skip("DP_TEST_DB_URL is required for the disposable PostgreSQL proof; a skip is not proof")
-	}
+	// A disposable SQLite file: the proof runs against the database the server
+	// ships with, and a skip is not proof, so there is nothing to skip on.
+	dbURL := filepath.Join(t.TempDir(), "darkpawns.db")
 
 	fixtureRoot := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(fixtureRoot, "lib", "data"), 0o700); err != nil {

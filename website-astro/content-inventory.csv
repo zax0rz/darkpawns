@@ -97,14 +97,14 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /database/,src/pages/database.astro,core,authored static page,1,full editorial review,,,,
 /docs/,src/pages/docs/index.astro,hub,authored collection framing,1,full editorial review,,,,
 /docs/getting-started/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
-/docs/getting-started/local-server.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,178,,,website-astro/src/content/docs/getting-started/local-server.md
-/docs/getting-started/local-server/,src/content/docs/getting-started/local-server.md,docs,authored technical documentation,3,technical accuracy review,178,,,website-astro/src/content/docs/getting-started/local-server.md
+/docs/getting-started/local-server.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,244,,,website-astro/src/content/docs/getting-started/local-server.md
+/docs/getting-started/local-server/,src/content/docs/getting-started/local-server.md,docs,authored technical documentation,3,technical accuracy review,244,,,website-astro/src/content/docs/getting-started/local-server.md
 /docs/research/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
 /docs/research/port-fidelity.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,185,,,website-astro/src/content/docs/research/port-fidelity.md
 /docs/research/port-fidelity/,src/content/docs/research/port-fidelity.md,docs,authored technical documentation,3,technical accuracy review,185,,,website-astro/src/content/docs/research/port-fidelity.md
 /docs/server/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
-/docs/server/architecture.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,225,,,website-astro/src/content/docs/server/architecture.md
-/docs/server/architecture/,src/content/docs/server/architecture.md,docs,authored technical documentation,3,technical accuracy review,225,,,website-astro/src/content/docs/server/architecture.md
+/docs/server/architecture.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,236,,,website-astro/src/content/docs/server/architecture.md
+/docs/server/architecture/,src/content/docs/server/architecture.md,docs,authored technical documentation,3,technical accuracy review,236,,,website-astro/src/content/docs/server/architecture.md
 /docs/server/contributing.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,138,,,website-astro/src/content/docs/server/contributing.md
 /docs/server/contributing/,src/content/docs/server/contributing.md,docs,authored technical documentation,3,technical accuracy review,138,,,website-astro/src/content/docs/server/contributing.md
 /help/,src/pages/help/index.astro,hub,authored collection framing,1,full editorial review,,,,
