@@ -41,7 +41,7 @@ mounts, ranged weapons, fast-paced combat in a world designed to be
 contiguous and sensical.. not just some random zones thrown together.
 No stock areas. Not for the wimpy, but newbie-friendly.
 
-Free ale through
+Free ale through &lt;insert your favorite winter holiday here&gt;
 
 -Serapis
 [email redacted]
