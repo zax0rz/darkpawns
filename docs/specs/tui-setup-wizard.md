@@ -5,10 +5,17 @@
 **Date:** 2026-05-09
 **Type:** First feature — medium lift
 
-**2026-09-09 scope update:** target native Go installation with PostgreSQL.
-Container deployment is retired. This is still a draft; configuration-file and
-wizard interfaces below are proposals and must be reconciled with the current
-[running guide](../../DEPLOYMENT.md) before implementation.
+**2026-09-26 product direction:** Linux and macOS get a one-command download of
+signed release artifacts, followed by this one-shot TUI. The wizard starts the
+server and opens the existing browser splash page, whose play surface is the same
+client as `/play`; the first successfully created character becomes the
+immortal/operator. Windows gets a signed native installer backed by the same
+bootstrap logic. Nothing compiles on the user's machine.
+
+Container deployment is retired. SQLite is the sole runtime database. This is
+still a draft; configuration-file, packaging, signing, service installation,
+browser-launch, and wizard interfaces below are proposals and must be reconciled
+with the current [running guide](../../DEPLOYMENT.md) before implementation.
 
 ---
 
@@ -27,14 +34,14 @@ A setup wizard for Dark Pawns that runs in the terminal, generates a config file
 **2026-09-17:** corrected against the source during the startup-surface pass. The
 table describes the running binary, including its default paths.
 
-The server takes 7 CLI flags:
+The core startup flags relevant to the wizard are:
 
 | Flag | Default | Required | Description |
 |------|---------|----------|-------------|
 | `-world` | `lib/world` | No (default) | World data directory: the one holding `wld/`, `mob/`, `obj/`, `zon/`, `shp/` |
 | `-scripts` | `<world>/scripts` | No | Path to Lua scripts |
 | `-port` | `"4350"` | No | HTTP and WebSocket listen port |
-| `-db` | `""` | **Yes**, via `-db` or `DATABASE_URL` | PostgreSQL URL |
+| `-db` | `""` | No (embedded default) | SQLite path or `sqlite://` URL |
 | `-web` | `web/public` | No | Browser client files served at `/` |
 | `-static` | `""` | No | Static site served at `/`, takes precedence over `-web`; `-hugo` is a deprecated alias |
 | `-telnet-port` | `7777` | No | Telnet port (`0` disables) |
@@ -44,12 +51,13 @@ starts a checkout instance. Startup refuses, naming the fix in the message, when
 
 - `-world` does not exist, or exists without a `wld/` subdirectory. Passing
   `lib/` instead of `lib/world` is called out by name.
-- neither `-db` nor `DATABASE_URL` is set.
+- the selected SQLite path is invalid, unsupported, or not writable.
 - `JWT_SECRET` is missing or shorter than 32 characters, unless
   `ENVIRONMENT=development`, which mints an ephemeral secret for the process.
 
 Additional env vars read at runtime:
-- `DATABASE_URL` — PostgreSQL URL when `-db` is absent
+- `DP_SQLITE_PATH` — SQLite path when `-db` is absent
+- `DATABASE_URL` — legacy SQLite-only spelling; unsupported schemes, including PostgreSQL, are rejected
 - `ENVIRONMENT` — `development` relaxes the `JWT_SECRET` requirement
 - `JWT_SECRET` — signing key (validated at boot; read in `pkg/auth/jwt.go`)
 - `DP_ALLOW_NO_DB=1` — continue after a failed database connection (dev and oracle only)
@@ -109,14 +117,13 @@ server:
   host: "0.0.0.0"          # optional, default 0.0.0.0
 
 world:
-  path: "./lib"             # path to world lib directory
+  path: "./lib/world"       # directory containing wld/, mob/, obj/, zon/, shp/
 
 scripts:
-  path: "./lib/scripts"     # path to Lua scripts (default: world.path/scripts)
+  path: "./lib/world/scripts" # default: world.path/scripts
 
 database:
-  url: "postgres://postgres:postgres@localhost/darkpawns?sslmode=disable"
-  enabled: true             # false = run without persistence
+  path: "./lib/data/darkpawns.db"
 
 tls:
   enabled: false
@@ -124,8 +131,8 @@ tls:
   key_file: ""
 
 web:
-  enabled: false
-  path: ""                  # path to web client files
+  enabled: true
+  path: "./web/public"      # splash page and the same client exposed at /play
 
 auth:
   jwt_secret: ""            # auto-generated if empty
@@ -227,34 +234,33 @@ Runs before the TUI renders. Checks:
 
   One SQLite file provides player saves, moderation, and mail.
 
-  > Enable database?  [Yes] / No
-
-  Connection URL:
-  > postgres://postgres:postgres@localhost/darkpawns?sslmode=disable
-                                                          [_______________]
+  Database file:
+  > ./lib/data/darkpawns.db
+                                         [____________________________]
 
   [Enter] Continue    [Esc] Back
 
-  ✓ Connection successful — database "darkpawns" ready
+  ✓ Parent directory writable — SQLite database ready
   OR
-  ✗ Connection failed — server will run without persistence
+  ✗ Path cannot be used — choose another location
 ```
 
 **Validation:**
-- If enabled, attempt `sql.Open("postgres", url)` with a 3-second timeout
-- Show success/failure immediately
-- If failure: offer to continue without DB (server supports this), or go back and fix the URL
-- Default: enabled, with the current default URL
-- If the user chooses "No database": set `database.enabled: false` in the config
+- Require a local filesystem path or supported `sqlite://` spelling.
+- Reject every other URI scheme before creating a file.
+- Verify the parent directory exists or can be created and is writable.
+- Default to the installation's durable data directory.
+- Persistence is mandatory for an installed server. The development/oracle
+  no-database bypass is not exposed by the wizard.
 
-### Screen 5: Optional Services
+### Screen 5: Network and Service
 
 ```
-  Optional Services
+  Network and Service
 
-  Web Client:
-  > Enable web client?  Yes / [No]
-  Path to web files: [_______________]
+  Browser client: enabled (splash page + /play)
+  Start automatically at login/boot? [Yes] / No
+  Open browser after setup?          [Yes] / No
 
   TLS:
   > Enable TLS?  Yes / [No]
@@ -266,17 +272,19 @@ Runs before the TUI renders. Checks:
   These can be configured later in darkpawns.yaml
 ```
 
-**Defaults:** all disabled. This screen is mostly "press Enter to skip." The point is to let power users set these up now if they want to, without needing to edit YAML later.
+**Defaults:** browser client and browser launch enabled; service startup enabled
+for installed builds; TLS disabled unless certificate paths are supplied. The
+web client ships with the release and is not a separate feature to locate.
 
 ### Screen 6: Review & Generate
 
 ```
   Configuration Summary
 
-  World:    /Users/zach/darkpawns/lib (10,057 rooms)
+  World:    /Users/zach/darkpawns/lib/world (10,057 rooms)
   Port:     4350
-  Database: postgres://localhost/darkpawns ✓ connected
-  Web:      disabled
+  Database: /Users/zach/.local/share/darkpawns/darkpawns.db ✓ writable
+  Browser:  enabled — splash page and /play
   TLS:      disabled
 
   Config file: ./darkpawns.yaml
@@ -289,6 +297,9 @@ Runs before the TUI renders. Checks:
 - Generate a random JWT secret if none was provided (32-byte hex string)
 - If "Generate & Start": immediately start the server using the generated config
 - If "Save only": write the config and exit with a success message
+- After a successful start, open the local splash page in the default browser.
+- Tell the operator that the first successfully created character becomes the
+  immortal account and should be created before exposing the instance publicly.
 
 ### Screen 7: Execution
 
@@ -550,10 +561,10 @@ This is backward compatible. If no config file exists, the server works exactly 
 | Config file exists, wizard rerun | Rehydrate forms with current values. Offer "edit" or "overwrite." |
 | Config file exists, server started without flags | Server reads config. Works. |
 | Config file exists, server started WITH flags | Flags override config. Works. |
-| No config file, no flags | Starts a checkout instance from the built-in defaults once `DATABASE_URL` and `JWT_SECRET` are set; otherwise refuses and names the variable to set |
+| No config file, no flags | Starts a checkout instance from built-in paths, creates SQLite beside the world data, and requires a stable `JWT_SECRET` outside development |
 | World path is one level too high (`lib/` instead of `lib/world`) | Refused at boot with the missing `wld/` explained, before any parse |
 | World path is valid but wrong format | Parser returns error, wizard shows it. |
-| Database URL is wrong | Connection test fails, wizard shows error, offers "continue without DB." |
+| Database path is invalid or unwritable | Path check fails before launch; wizard shows the exact error and does not create a fallback database |
 | Port is in use | Bind test fails, wizard shows which process is using it (if possible). |
 | Terminal too narrow | Drop ASCII art, use single-line title, simplify layout. |
 | Wizard interrupted (Ctrl+C) | Write partial config? No — don't write until Screen 6 confirmation. |
@@ -581,8 +592,10 @@ config: build
 
 ### Native installation
 
-The wizard targets the native Go binary and PostgreSQL. Container deployment
-is retired and is not a wizard requirement. Config-file support elsewhere in
+The wizard targets prebuilt native release artifacts and embedded SQLite.
+Container deployment is retired and is not a wizard requirement. Linux and
+macOS use a one-command bootstrap into the TUI; Windows uses a signed installer
+which calls the same setup/bootstrap package. Config-file support elsewhere in
 this draft remains a proposal, not an implemented server interface.
 
 ---
@@ -619,11 +632,15 @@ this draft remains a proposal, not an implemented server interface.
 ## 11. Testing Strategy
 
 - **Unit tests:** `pkg/config/` — YAML round-trip, defaults, override precedence
-- **Unit tests:** `pkg/setup/validate.go` — port bind, world path, DB connection
+- **Unit tests:** `pkg/setup/validate.go` — port bind, world path, SQLite path and permissions
 - **Integration test:** `cmd/setup/main.go` in plain mode — pipe inputs to stdin, verify config output
 - **Manual test:** TUI flow in various terminal sizes
 - **Manual test:** Server reads generated config, starts correctly
 - **Manual test:** Backward compatibility — server with flags, no config file
+- **Cold-install tests:** Linux container/VM, macOS arm64, and a clean Windows VM
+- **Journey test:** install from nothing, complete the wizard, browser opens the
+  splash client, first character becomes immortal, second character remains mortal,
+  save, restart, and log back in
 
 ---
 
@@ -633,11 +650,13 @@ The wizard is the foundation for everything else:
 
 - **Config file** → centralizes native server configuration
 - **`pkg/config/`** → every future feature reads config from one place
-- **`cmd/setup/`** → can be extended with post-install steps (create admin account, import legacy data)
+- **`cmd/setup/`** → shared bootstrap engine for the Unix TUI and Windows installer
 - **Non-TUI fallback** → scriptable, CI/CD friendly
 - **TUI framework** → Bubble Tea + Lip Gloss skills transfer to future TUIs (log viewer, player dashboard)
 
-But those are later. Right now: config file, wizard, server reads config. Ship it.
+The milestone is complete only when a new operator can install signed artifacts
+without a compiler, finish setup once, reach the browser client, create the first
+immortal, restart, and retain the world.
 
 ---
 
@@ -645,7 +664,9 @@ But those are later. Right now: config file, wizard, server reads config. Ship i
 
 1. **Config file location:** Should the server search multiple paths (`./darkpawns.yaml`, `~/.config/darkpawns/config.yaml`, `/etc/darkpawns/config.yaml`)? Or just `./darkpawns.yaml`? Recommendation: start with CWD only. Add search paths later.
 
-2. **Admin account creation:** Should the wizard create the first admin/wizard account? The server has character creation via the game, but there's no bootstrap mechanism for admin access. This would be useful but might be scope creep for the first version.
+2. **Admin account creation:** Resolved 2026-09-26: the wizard does not create a
+   separate account. The first successfully created character becomes the
+   immortal/operator, and the browser launch leads directly to that flow.
 
 3. **`darkpawns.yaml` in the repo:** Should we ship a `darkpawns.example.yaml` in the repo root? Yes — it serves as documentation for manual setup.
 

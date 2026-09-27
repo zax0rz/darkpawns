@@ -197,9 +197,9 @@ database, the first character becomes the administrator; create that character
 before opening access to other players. A second new character follows the normal
 mortal entry flow. Save, restart the server, and log back in to verify persistence.
 
-`DP_ALLOW_NO_DB=1` permits a failed database connection for ephemeral/dev/oracle
-use only; a nonempty database URL is still required. Never use this bypass in
-production. Database initialization failure otherwise stops startup by design.
+`DP_ALLOW_NO_DB=1` suppresses the embedded default and permits startup without
+persistence for ephemeral development and oracle use only. Never use this bypass
+in production. Database initialization failure otherwise stops startup by design.
 
 The native build, first-character creation, mortal creation, and saved login after
 a full restart were checked on a clean checkout. See the

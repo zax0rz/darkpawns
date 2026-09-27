@@ -68,8 +68,8 @@ creation, and how to connect.
 ## Run your own
 
 This is the point of the project: live MUDs out there running Dark Pawns. One
-Go binary, no external services required — persistence is an embedded SQLite
-database by default (PostgreSQL is optional).
+Go binary, no external services required — persistence is one embedded SQLite
+database. PostgreSQL is not a runtime backend.
 
 ```sh
 git clone https://github.com/zax0rz/darkpawns.git
@@ -91,8 +91,10 @@ WebSocket (`-port`, default 4350, serving the browser client and a
 [Huma](https://huma.rocks)-powered JSON API with OpenAPI at `/openapi.json`),
 and an embedded database. `./server -h` lists every flag.
 
-For everything beyond the quickstart — PostgreSQL, reverse proxies, backups,
-the admin frontend — see [Running Dark Pawns](DEPLOYMENT.md). Official host
+For everything beyond the quickstart — database paths, reverse proxies,
+backups, and the admin frontend — see [Running Dark Pawns](DEPLOYMENT.md). An
+operator-only PostgreSQL-to-SQLite bridge remains available for old instances;
+it is not part of the shipped server. Official host
 access and deploy procedures for `darkpawns.org` itself live in a private ops
 repo; the public guide covers operating *your* instance.
 

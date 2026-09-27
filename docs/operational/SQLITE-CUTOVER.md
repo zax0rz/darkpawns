@@ -4,6 +4,11 @@ SQLite is Dark Pawns' sole long-term database: a fresh installation needs no
 external service. This document is the one-time conversion procedure for an
 existing PostgreSQL installation that already holds live characters.
 
+> **Runtime boundary:** current Dark Pawns releases are SQLite-only. The bridge
+> can still read a legacy PostgreSQL database, but the current server cannot boot
+> against one. Keep the old server binary and service unit until the rollback
+> confidence window ends.
+
 The conversion is performed by `dp-db-migrate`, an operator tool in this
 repository. It reads PostgreSQL, writes a SQLite file, verifies the copy
 independently, and installs the result atomically. It never writes to the
@@ -241,10 +246,10 @@ stopped** so that no write lands between the snapshot and the cutover.
   in PostgreSQL first — that is a player-visible decision.
 
 If the source holds a **naive** timestamp column (`timestamp without time zone`)
-rather than `timestamptz`, boot the current binary once against PostgreSQL before
-converting. The server's own startup migration converts those columns in place,
-and it knows the database's timezone while the converter can only see wall-clock
-text.
+rather than `timestamptz`, stop and use a compatible pre-SQLite-only server
+revision to run the legacy startup migration before converting. Current releases
+cannot open PostgreSQL. Record that old binary's revision; it knows the database's
+timezone while the converter can only see wall-clock text.
 
 ## Preflight
 
@@ -273,9 +278,10 @@ Do all of this before stopping anything.
    rollback does.
 5. **Check free disk space.** Budget three times the source size on the
    destination filesystem: the new SQLite file, its temporary copy, and a spare.
-6. **Confirm the source schema is current.** Boot the *current* binary once
-   against PostgreSQL (that converts older timestamp and JSON columns in place),
-   then stop it. Pass `-telnet-port 0` if you want to be certain nobody logs in.
+6. **Confirm the source schema is current.** If legacy timestamp or JSON columns
+   still need conversion, use the last compatible pre-SQLite-only binary with
+   `-telnet-port 0`, then stop it. Current releases intentionally reject
+   PostgreSQL and cannot perform this preparation.
 7. **Choose the destination path and ownership.** The file must live on local,
    durable storage — not on NFS, not in a container's ephemeral layer, not in a
    directory that a deploy step prunes. Decide its mode (`0600`, owner = the
@@ -332,8 +338,9 @@ chmod 600 /var/lib/darkpawns/darkpawns.db
 ### Point the service at SQLite
 
 Point the service at the file you just verified, and at nothing else. The
-supported spellings are the `-db` flag and `DATABASE_URL`; the value may be a
-bare path or a `sqlite://` URL:
+supported spellings are the `-db` flag and `DP_SQLITE_PATH`; the value may be
+a bare path or a `sqlite://` URL. `DATABASE_URL` is accepted only as a legacy
+spelling when it names SQLite and logs a warning:
 
 ```
 ExecStart=/opt/darkpawns/darkpawns-server -world /opt/darkpawns/lib/world \
@@ -341,16 +348,15 @@ ExecStart=/opt/darkpawns/darkpawns-server -world /opt/darkpawns/lib/world \
 ```
 
 ```
-Environment=DATABASE_URL=sqlite:///var/lib/darkpawns/darkpawns.db
+Environment=DP_SQLITE_PATH=/var/lib/darkpawns/darkpawns.db
 ```
 
 Do not rely on the default path (an embedded SQLite file created beside the
-world data): it makes the converted file a second database nobody looks at. And
-remove the `postgres://` URL — while a `postgres://` value is present, the
-service uses PostgreSQL and your conversion is simply not in use. If the unit is
-templated or generated, change the generator and record the change; a hand-edit
-that the next deploy reverts is how an instance silently returns to PostgreSQL
-(with the characters created in the meantime missing).
+world data): it can make the converted file a second database nobody looks at.
+Remove every stale `postgres://` value before starting the current binary: it is
+rejected loudly and cannot be used as a fallback. If the unit is templated or
+generated, change the generator and record the change so the next deploy cannot
+restore obsolete configuration.
 
 ## Post-cutover verification
 
@@ -404,12 +410,14 @@ that the next deploy reverts is how an instance silently returns to PostgreSQL
 
 ## Rollback
 
-The conversion does not modify PostgreSQL, so rollback is a configuration
-change, not a data restore.
+The conversion does not modify PostgreSQL, but a current SQLite-only binary
+cannot use it. Rollback requires the pre-cutover binary and service unit as well
+as the preserved source database.
 
 1. Stop the service.
-2. Restore the previous binary and the previous service unit from the preflight
-   backup, including the PostgreSQL DSN.
+2. Restore the pre-SQLite-only binary and service unit from the preflight backup,
+   including the PostgreSQL DSN. Do not point the current binary at PostgreSQL;
+   it will refuse to boot.
 3. **Do not restore the PostgreSQL dump.** The source was never written: it holds
    exactly the characters it held before the cutover. Restoring the dump would
    roll back anything that happened between the dump and the cutover for no
@@ -433,7 +441,8 @@ The tool refuses, and you should too, when:
 - a source column has no destination column (the tool names it; extending the
   runtime schema is a code change, not an operator decision);
 - a source table is missing entirely, which means PostgreSQL never had it
-  created — boot the current binary once against PostgreSQL and retry;
+  created — stop and prepare the source with a compatible pre-SQLite-only binary
+  or an explicitly reviewed schema migration; do not use the current server;
 - two characters' names collide when folded to lower case;
 - a verification refuses because the source has grown a table or column with no
   destination column, and no conversion receipt proves the decision — that is a

@@ -12,7 +12,7 @@ The `moderation` package provides comprehensive tools for managing player behavi
 - **Word Filtering**: Automatic detection and handling of inappropriate content
 - **Spam Detection**: Rate limiting and duplicate message detection
 - **Player Penalties**: Temporary and permanent restrictions
-- **Database Integration**: persistence for all moderation data, on PostgreSQL or embedded SQLite
+- **Database Integration**: persistence for all moderation data in the embedded SQLite game store
 
 ## Quick Start
 
@@ -21,10 +21,8 @@ The `moderation` package provides comprehensive tools for managing player behavi
 ```go
 import "github.com/zax0rz/darkpawns/pkg/moderation"
 
-// Initialize moderation system. The dialect travels with the handle: these
-// tables are created and queried through the connection pkg/db opened, so they
-// are translated by the same dialect value.
-database, _ := db.New("sqlite:///data/darkpawns.db") // or a postgres:// DSN
+// Initialize moderation system from the same SQLite store as player data.
+database, _ := db.New("sqlite:///data/darkpawns.db")
 modManager := moderation.NewManager(database.SQLDB(), database.Dialect())
 
 // Check messages for filtered content
@@ -40,17 +38,16 @@ modManager.RecordMessage(playerName)
 
 ### Database Schema
 
-The package automatically creates the following tables, on either backend:
+The package automatically creates the following SQLite tables:
 
 1. `abuse_reports` - Player-submitted reports
 2. `admin_log` - Audit trail of admin actions
 3. `player_penalties` - Active player restrictions
 4. `word_filters` - Filtered words and phrases
 
-On SQLite the schema is translated by `pkg/db`'s dialect support: `SERIAL`
-becomes `INTEGER PRIMARY KEY AUTOINCREMENT`, `ADD COLUMN IF NOT EXISTS` becomes a
-`pragma_table_info` guard, and `NOW()` in a query body is computed in Go and
-bound, because SQLite has no such function.
+The schema uses SQLite-native autoincrement keys. Compatibility helpers in
+`pkg/db` keep schema upgrades idempotent and timestamps are computed in Go when
+they must be bound consistently.
 
 ## API Reference
 
@@ -157,7 +154,7 @@ config := SpamDetectionConfig{
 
 ```go
 // Setup
-database, _ := db.New("postgres://user:pass@localhost/db")
+database, _ := db.New("sqlite:///data/darkpawns.db")
 mod := moderation.NewManager(database.SQLDB(), database.Dialect())
 
 // In your message handler
@@ -209,13 +206,12 @@ Tests cover:
 - Regex pattern matching
 - Spam detection logic
 - Message checking workflow
-- The four tables against a real database: SQLite always, PostgreSQL when
-  `DATABASE_URL` points at a disposable database (`backend_test.go`)
+- The four tables against a real disposable SQLite database (`backend_test.go`)
 
 ## Dependencies
 
 - `github.com/zax0rz/darkpawns/pkg/db` for the connection and its dialect
-- Standard Go libraries only, plus the `pkg/db` drivers (lib/pq, modernc.org/sqlite)
+- Standard Go libraries plus the SQLite driver used by `pkg/db`
 
 ## License
 
