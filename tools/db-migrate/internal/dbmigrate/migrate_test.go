@@ -91,6 +91,19 @@ func buildSourceSchema(t *testing.T, dsn string) {
 	applySourceSchema(t, conn)
 }
 
+// fixtureLockout is the lockout deadline the fixture carries: two hours ahead of
+// the run, written in a fixed non-UTC zone so the offset is part of what gets
+// migrated and compared.
+//
+// Relative, not a literal date. A hardcoded future timestamp makes the suite pass
+// on the day it is written and fail the next one, which is exactly what happened
+// here: the migration workflow went red the morning after it was green, on a
+// fixture whose lockout had quietly expired.
+var (
+	fixtureLockout     = time.Now().Add(2 * time.Hour).Round(time.Millisecond)
+	fixtureLockoutText = fixtureLockout.In(time.FixedZone("FIXTURE", -4*3600)).Format("2006-01-02 15:04:05.999-07:00")
+)
+
 // fixturePlayers are the player rows every populated fixture carries. They are
 // inserted with explicit ids, some non-contiguous, the way a production database
 // looks after deletions: ids are what the application keys on.
@@ -119,7 +132,7 @@ var fixturePlayers = []struct {
 		Equipment:     `{"slots":{"wield":{"vnum":8023}},"unicode":"日本語"}`,
 		CharacterData: `{"played":3600,"prefs":{"brief":true,"nested":{"deep":[1,2,3]}},"title":"a 日本語 title"}`,
 		Description:   "A weathered immortal.", Title: "the Portwright", IsAdmin: true, Failures: 3,
-		LockedUntil: "2026-09-26 20:05:00.5-04",
+		LockedUntil: fixtureLockoutText,
 		CreatedAt:   "2026-03-01 12:30:45.123456+00",
 		UpdatedAt:   "2026-03-02 08:00:00+00",
 	},
@@ -435,8 +448,10 @@ func TestMigratePreservesEveryPlayerValue(t *testing.T) {
 		t.Errorf("unicode in inventory was mangled: %s", inventory)
 	}
 
-	// Timestamps keep their instant, including the one written with an offset.
-	lockedWant := time.Date(2026, 9, 27, 0, 5, 0, 500000000, time.UTC)
+	// Timestamps keep their instant, including the fixture's offset-bearing
+	// lockout, which is the one the application reads to decide whether an account
+	// is still locked.
+	lockedWant := fixtureLockout.UTC()
 	if !lockedUntil.Valid || !lockedUntil.Time.UTC().Equal(lockedWant) {
 		t.Errorf("locked_until = %v, want %v", lockedUntil, lockedWant)
 	}
