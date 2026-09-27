@@ -55,11 +55,11 @@ const archive = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    kind: z.enum(['forum-thread', 'history', 'guide', 'quote', 'roster', 'site-page', 'map', 'board-index']),
+    kind: z.enum(['forum-thread', 'usenet-thread', 'history', 'guide', 'quote', 'roster', 'site-page', 'map', 'board-index']),
     sortDate: z.coerce.date(),
     dateLabel: z.string(),
     publishedAt: z.coerce.date().optional(),
-    sourceSite: z.enum(['dp-players.com', 'darkpawns.com']),
+    sourceSite: z.enum(['dp-players.com', 'darkpawns.com', 'Usenet']),
     sourceUrl: z.string().url(),
     captureUrl: z.string().url(),
     recoveredAt: z.coerce.date(),
@@ -72,6 +72,12 @@ const archive = defineCollection({
     // Forum threads only: which board the conversation lived on, how many posts
     // the capture holds, and who spoke. Ranks are the public forum ranks.
     board: z.string().optional(),
+    messageId: z.string().optional(),
+    crossposts: z.array(z.object({
+      newsgroup: z.string(),
+      messageId: z.string(),
+      captureUrl: z.string().url(),
+    })).optional(),
     // phpBB topic number. It is what links a recovered thread back to the row
     // for it on the board index, so the index can show what survived.
     topicId: z.number().int().positive().optional(),
