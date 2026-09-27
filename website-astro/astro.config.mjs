@@ -1,5 +1,7 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { satteri } from '@astrojs/markdown-satteri';
+import { noLiteralAutolinks } from './src/lib/no-literal-autolinks.mjs';
 import { readdirSync } from 'node:fs';
 
 const helpRoot = new URL('./src/content/help/', import.meta.url);
@@ -92,7 +94,13 @@ export default defineConfig({
     // an apostrophe that a player typed straight in 2004, or turning their
     // "..." into an ellipsis, edits the record. The three original blog posts
     // lose typographic quotes, which is the cheaper loss.
-    smartypants: false,
+    //
+    // Bare URLs stay plain text for the same reason: see
+    // src/lib/no-literal-autolinks.mjs.
+    processor: satteri({
+      features: { smartPunctuation: false },
+      mdastPlugins: [noLiteralAutolinks],
+    }),
   },
   integrations: [
     sitemap({
