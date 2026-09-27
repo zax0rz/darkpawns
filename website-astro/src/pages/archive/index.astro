@@ -6,8 +6,11 @@ const entries = (await getCollection('archive', ({ data }) => !data.draft))
   .sort((a, b) => a.data.sortDate.getTime() - b.data.sortDate.getTime());
 const byId = new Map(entries.map((entry) => [entry.id, entry]));
 
-const isThread = (entry) => entry.data.kind === 'forum-thread';
-const threads = entries.filter(isThread);
+const isForumThread = (entry) => entry.data.kind === 'forum-thread';
+const isUsenetThread = (entry) => entry.data.kind === 'usenet-thread';
+const threads = entries.filter(isForumThread);
+const usenet = entries.filter(isUsenetThread);
+const conversations = entries.filter((entry) => isForumThread(entry) || isUsenetThread(entry));
 
 // One axis: the site a record was published on. The forum was part of
 // dp-players.com, so it is a subsection there rather than a third peer.
@@ -22,14 +25,22 @@ const sections = [
     id: 'player-page',
     site: 'dp-players.com',
     note: 'The player page I ran in 2004, and the board attached to it.',
-    entries: entries.filter((entry) => entry.data.sourceSite === 'dp-players.com' && !isThread(entry)),
+    entries: entries.filter((entry) => entry.data.sourceSite === 'dp-players.com' && !isForumThread(entry)),
     threads,
+  },
+  {
+    id: 'usenet',
+    site: 'Usenet',
+    note: 'Advertisements, move notices and public arguments recovered from rec.games.mud between 1996 and 2002. Crossposts are folded into one record and retained in its provenance.',
+    entries: usenet,
   },
 ];
 
-// A shortlist, because thirty-seven equal rows is a directory, not an archive.
+// A shortlist, because dozens of equal rows make a directory, not an archive.
 // Each one says why it is worth the click.
 const shortlist = [
+  { id: 'usenet-1996-12-03-looking-for-players', why: 'The earliest recovered advertisement: Dark Pawns at knight.ufp.org in December 1996.' },
+  { id: 'usenet-1999-02-11-license-dispute', why: 'A seventeen-post advertisement thread becomes a public fight over DikuMUD credits and lineage.' },
   { id: 'topic-t38', why: 'Orodreth, who holds player number two, explains where parts of the world came from.' },
   { id: 'board-index-general', why: 'Every topic the board held in July 2004, with the reply count on each. Most of them are gone.' },
   { id: 'map-kir-draxin', why: 'The starting city drawn in characters, the way you would have kept it beside the keyboard.' },
@@ -39,24 +50,24 @@ const shortlist = [
 
 const tally = {
   records: entries.length,
-  threads: threads.length,
-  posts: threads.reduce((sum, entry) => sum + (entry.data.postCount ?? 0), 0),
+  threads: conversations.length,
+  posts: conversations.reduce((sum, entry) => sum + (entry.data.postCount ?? 0), 0),
   // Handles are counted case-insensitively. The board rendered the same person
   // as both "Aidan" and "aidan"; the display names stay as captured, but a
   // headline that says "people" has to mean people, not spellings.
   people: new Set(
-    threads.flatMap((entry) => (entry.data.participants ?? []).map((p) => p.name.toLowerCase())),
+    conversations.flatMap((entry) => (entry.data.participants ?? []).map((p) => p.name.toLowerCase())),
   ).size,
 };
 // The tally is a provenance claim. If any thread cannot contribute a count, the
 // posts figure would understate the corpus, so it is withheld rather than shown
 // wrong. Same rule as the rest of the archive: sourced or silent.
-const postsComplete = threads.every((entry) => typeof entry.data.postCount === 'number');
+const postsComplete = conversations.every((entry) => typeof entry.data.postCount === 'number');
 
 const contentsDate = (label) => (label === 'Date not recorded' ? '' : label);
 
 const KIND_LABEL = {
-  'forum-thread': 'thread', 'board-index': 'board index', 'site-page': 'page',
+  'forum-thread': 'thread', 'usenet-thread': 'Usenet thread', 'board-index': 'board index', 'site-page': 'page',
   map: 'map', guide: 'guide', history: 'history', quote: 'quotes', roster: 'staff',
 };
 
@@ -67,12 +78,12 @@ const collectionLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'CollectionPage',
   name: 'The Dark Pawns Archive',
-  description: 'Records recovered from archived copies of dp-players.com and darkpawns.com.',
+  description: 'Records recovered from dp-players.com, darkpawns.com and public Usenet discussions.',
   url: `${site}/archive/`,
   inLanguage: 'en',
   isPartOf: { '@type': 'WebSite', name: 'Dark Pawns', url: site },
   hasPart: entries.map((entry) => ({
-    '@type': entry.data.kind === 'forum-thread' ? 'DiscussionForumPosting' : 'Article',
+    '@type': ['forum-thread', 'usenet-thread'].includes(entry.data.kind) ? 'DiscussionForumPosting' : 'Article',
     name: entry.data.title,
     url: `${site}/archive/${entry.id}/`,
     ...(entry.data.dateLabel === 'Date not recorded'
@@ -95,9 +106,9 @@ const missing = [
   <div class="container archive-hub">
     <h1>The Archive</h1>
     <p class="lede">
-      These records were recovered from archived copies of my old player page, dp-players.com, and
-      the official Dark Pawns site, darkpawns.com. Every one of them names where it came from and
-      which archived copy it was taken from.
+      These records were recovered from my old player page, the official Dark Pawns site, and
+      public Usenet discussions from 1996 to 2002. Every one names where it came from and the copy
+      used to recover it.
     </p>
 
     <dl class="tally">
@@ -143,6 +154,8 @@ const missing = [
                   {KIND_LABEL[entry.data.kind] ?? entry.data.kind}
                   {entry.data.kind === 'board-index' && entry.data.topics &&
                     `, ${entry.data.topics.length} topics`}
+                  {entry.data.kind === 'usenet-thread' && entry.data.postCount &&
+                    `, ${entry.data.postCount} ${entry.data.postCount === 1 ? 'post' : 'posts'}`}
                   {entry.data.completeness === 'partial' && ', partial'}
                 </span>
               </a>

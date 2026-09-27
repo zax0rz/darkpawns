@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-09-23T18:21:13-04:00",
+  "generatedAt": "2026-09-26T22:02:02-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
     {
       "week": "2026-07-06",
-      "commits": 69
+      "commits": 89
     },
     {
       "week": "2026-07-13",
@@ -49,39 +49,39 @@
     },
     {
       "week": "2026-09-21",
-      "commits": 32
+      "commits": 71
     }
   ],
   "recentCommits": [
     {
-      "sha": "32bde4444d7564701db488ce890888c757f82fa0",
-      "date": "2026-09-23",
-      "title": "Merge pull request #1555 from zax0rz/feat/site-tls-connect",
-      "url": "https://github.com/zax0rz/darkpawns/commit/32bde4444d7564701db488ce890888c757f82fa0"
+      "sha": "826cfea1b576cae04c373f7367013d555f75387f",
+      "date": "2026-09-26",
+      "title": "Merge pull request #1666 from zax0rz/docs/sqlite-production-state",
+      "url": "https://github.com/zax0rz/darkpawns/commit/826cfea1b576cae04c373f7367013d555f75387f"
     },
     {
-      "sha": "4002c9cf946341003552d3e7220d744572f3224d",
-      "date": "2026-09-23",
-      "title": "Merge pull request #1600 from zax0rz/docs/go-only-triage",
-      "url": "https://github.com/zax0rz/darkpawns/commit/4002c9cf946341003552d3e7220d744572f3224d"
+      "sha": "4364c40db5c5a5701fb5ce5b0fd460dee9423171",
+      "date": "2026-09-26",
+      "title": "Merge pull request #1665 from zax0rz/fix/lifecycle-restart-coverage",
+      "url": "https://github.com/zax0rz/darkpawns/commit/4364c40db5c5a5701fb5ce5b0fd460dee9423171"
     },
     {
-      "sha": "2230f10c4eec45b5a0692c1d109efef202e27e5c",
-      "date": "2026-09-23",
-      "title": "Merge pull request #1598 from zax0rz/fix/ws-origin-behind-proxy",
-      "url": "https://github.com/zax0rz/darkpawns/commit/2230f10c4eec45b5a0692c1d109efef202e27e5c"
+      "sha": "79197a20512291a7388b7522cd83467907d53b14",
+      "date": "2026-09-26",
+      "title": "Merge pull request #1662 from zax0rz/feat/sqlite-only-runtime",
+      "url": "https://github.com/zax0rz/darkpawns/commit/79197a20512291a7388b7522cd83467907d53b14"
     },
     {
-      "sha": "592abf00f310392caa6bbd71cde83d5454290f0d",
-      "date": "2026-09-23",
-      "title": "Merge pull request #1599 from zax0rz/integrate/batch-0923",
-      "url": "https://github.com/zax0rz/darkpawns/commit/592abf00f310392caa6bbd71cde83d5454290f0d"
+      "sha": "fcd75a6069a93ab7d634a84a3d6f49ad40c20130",
+      "date": "2026-09-26",
+      "title": "Merge pull request #1661 from zax0rz/docs/research-20260926",
+      "url": "https://github.com/zax0rz/darkpawns/commit/fcd75a6069a93ab7d634a84a3d6f49ad40c20130"
     },
     {
-      "sha": "597a6730c94beea3d2d6c927ae0d92d762fa6818",
-      "date": "2026-09-23",
-      "title": "Merge pull request #1597 from zax0rz/docs/rulebook-r1a",
-      "url": "https://github.com/zax0rz/darkpawns/commit/597a6730c94beea3d2d6c927ae0d92d762fa6818"
+      "sha": "f700f724932100064aecf1df5e542a4c357f621a",
+      "date": "2026-09-26",
+      "title": "Merge pull request #1660 from zax0rz/feat/db-sqlite-migration",
+      "url": "https://github.com/zax0rz/darkpawns/commit/f700f724932100064aecf1df5e542a4c357f621a"
     }
   ],
   "pullRequests": [

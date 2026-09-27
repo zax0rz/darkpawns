@@ -1,8 +1,8 @@
 # Dark Pawns Archive publication policy
 
-The Archive preserves public community history recovered from `dp-players.com`
-and `darkpawns.com`. Recovery files and contact research live outside this
-repository in `~/dp-community-revival/`.
+The Archive preserves public community history recovered from `dp-players.com`,
+`darkpawns.com`, and public Usenet groups. Recovery files and contact research
+live outside this repository in `~/dp-community-revival/`.
 
 ## May be published
 
@@ -13,6 +13,9 @@ repository in `~/dp-community-revival/`.
   historical record and were intentionally posted by that person.
 - Material with a verifiable original URL and Wayback capture. Every Astro
   archive entry records both.
+- Public Usenet posts with a preserved Message-ID, newsgroup, date and reviewed
+  recovery copy. Crossposts should be represented once with every captured
+  Message-ID retained in provenance.
 
 ## Must remain private
 
@@ -20,6 +23,8 @@ repository in `~/dp-community-revival/`.
   and other direct contact details.
 - Contact leads inferred or assembled from multiple sources.
 - Raw recovery data that has not been reviewed for personal information.
+- Usenet signatures and quoted headers containing email addresses or personal
+  contact URLs. Message-IDs remain because they identify the public record.
 
 ## Editorial rules
 

@@ -13,10 +13,11 @@ const { Content } = await render(entry);
 const all = (await getCollection('archive', ({ data }) => !data.draft))
   .sort((a, b) => a.data.sortDate.getTime() - b.data.sortDate.getTime());
 
-// A thread is one turn in a four-month conversation, so it offers the turns on
-// either side of it rather than sending the reader back through the hub.
-const siblings = entry.data.kind === 'forum-thread'
-  ? all.filter((item) => item.data.kind === 'forum-thread' && item.data.board === entry.data.board)
+// Each record is one turn in a larger conversation, so offer the turns on
+// either side instead of pretending that one captured page is the whole story.
+const isConversation = ['forum-thread', 'usenet-thread'].includes(entry.data.kind);
+const siblings = isConversation
+  ? all.filter((item) => item.data.kind === entry.data.kind && item.data.board === entry.data.board)
   : [];
 const index = siblings.findIndex((item) => item.id === entry.id);
 const previous = index > 0 ? siblings[index - 1] : null;
@@ -45,7 +46,7 @@ const held = topics.filter((topic) => recovered.has(topic.id)).length;
 const site = 'https://darkpawns.org';
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
-  '@type': entry.data.kind === 'forum-thread' ? 'DiscussionForumPosting' : 'Article',
+  '@type': isConversation ? 'DiscussionForumPosting' : 'Article',
   headline: entry.data.title,
   description: entry.data.description,
   // sortDate exists to order the list. For records whose capture carries no
@@ -67,7 +68,7 @@ const jsonLd = JSON.stringify({
 });
 
 const KIND_LABEL = {
-  'forum-thread': 'Forum thread', 'board-index': 'Board index', 'site-page': 'Site page',
+  'forum-thread': 'Forum thread', 'usenet-thread': 'Usenet thread', 'board-index': 'Board index', 'site-page': 'Site page',
   map: 'Map', guide: 'Guide', history: 'History', quote: 'Quotes', roster: 'Staff list',
 };
 ---
@@ -81,7 +82,7 @@ const KIND_LABEL = {
     <p class="dateline">
       {entry.data.dateLabel}
       {entry.data.board && (
-        <> on <a href="/archive/#forum">{entry.data.board}</a></>
+        <> on <a href={entry.data.kind === 'usenet-thread' ? '/archive/#usenet' : '/archive/#forum'}>{entry.data.board}</a></>
       )}
       <span class="dateline-site"> · {entry.data.sourceSite}</span>
     </p>
@@ -165,6 +166,7 @@ const KIND_LABEL = {
         {archivedOn && <div><dt>Archived</dt><dd>{archivedOn}</dd></div>}
         <div><dt>Recovered</dt><dd>{recoveredOn}</dd></div>
         <div><dt>Record type</dt><dd>{KIND_LABEL[entry.data.kind] ?? entry.data.kind}</dd></div>
+        {entry.data.messageId && <div><dt>Message-ID</dt><dd>{entry.data.messageId}</dd></div>}
         {entry.data.postCount && (
           <div>
             <dt>Length</dt>
@@ -177,10 +179,20 @@ const KIND_LABEL = {
             <dd>{entry.data.usedIn.map((use, i) => (<>{i > 0 && ', '}<a href={use.href}>{use.label}</a></>))}</dd>
           </div>
         )}
+        {entry.data.crossposts && entry.data.crossposts.length > 0 && (
+          <div>
+            <dt>Crossposted</dt>
+            <dd>
+              {entry.data.crossposts.map((post, i) => (
+                <>{i > 0 && ', '}<a href={post.captureUrl}>{post.newsgroup}</a></>
+              ))}
+            </dd>
+          </div>
+        )}
         <div>
           <dt>Source</dt>
           <dd>
-            <a href={entry.data.captureUrl}>Wayback capture</a>
+            <a href={entry.data.captureUrl}>{entry.data.kind === 'usenet-thread' ? 'Recovered copy' : 'Wayback capture'}</a>
             {' · '}<a href={`/archive/${entry.id}.md`}>Markdown</a>
           </dd>
         </div>
@@ -237,6 +249,7 @@ const KIND_LABEL = {
   .archive-copy :global(blockquote p) { margin: 0 0 var(--space-xs); }
   .archive-copy :global(blockquote p:last-child) { margin-bottom: 0; }
   .archive-copy :global(blockquote strong) { display: block; font-family: var(--font-mono); font-size: var(--t-label); font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; }
+  .archive-copy :global(.usenet-transcript) { overflow-wrap: anywhere; white-space: pre-wrap; font-family: var(--font-body); font-size: var(--t-body); line-height: 1.6; }
 
   .around { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-top: var(--space-xl); border-top: 2px solid var(--ink); padding-top: var(--space-md); }
   .around a { color: var(--ink); }
