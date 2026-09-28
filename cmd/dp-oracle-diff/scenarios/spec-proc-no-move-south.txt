@@ -3,6 +3,9 @@
 # C assigns mob 16308 to no_move_south (src/spec_assign.c:399); the mob
 # intercepts a mortal south command before do_move and emits a victim line plus
 # two room-audience lines.
+# The abbreviated probes are the DP-1336 proof: C resolves the typed word first
+# and hands special() CMD_NAME (src/interpreter.c:905-949), so `s` and `sou`
+# reach no_move_south as "south" and are blocked exactly like the full word.
 
 [fixture]
 quiet-mobs
@@ -67,3 +70,5 @@ Y
 
 [probe]
 south
+s
+sou

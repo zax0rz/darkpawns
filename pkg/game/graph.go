@@ -336,7 +336,6 @@ func (w *World) mobPerformMove(m *MobInstance, dir int) {
 	}
 
 	m.SetRoom(toRoomVNum)
-	w.flagSpecRoomForMob(m)
 
 	// Notify new room
 	for _, p := range w.GetPlayersInRoom(toRoomVNum) {

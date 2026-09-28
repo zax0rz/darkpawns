@@ -1,0 +1,55 @@
+# depth-case: mob.spec-unknown-word
+# C answers a word that resolves to no command with "Huh?!?" and never reaches
+# special() (src/interpreter.c:914-916 then 948-949). The whirlpool mob (12200,
+# src/spec_assign.c:342) ignores its cmd argument entirely (src/spec_procs2.c:244
+# -275), so before DP-1336 the port ran it on the unknown word, pulled the
+# actor, and consumed draw-stream entries C never consumes.
+#
+# The actor is the empty-players IMPL, teleported to the mortal hometown
+# infirmary and then walking north into 8161 where the mob waits. `no-settle`
+# leaves the frozen clock untouched, so no pulse can pull him first: both
+# unknown words are typed in the whirlpool's room, one step after the walk.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12200 999 8161 80
+clear-mob-flag 12200 RANDZON
+replace-room-exits 8161 none
+
+[setup:oracle]
+Unknowword
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Unknowword
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+north
+zzzz
+southx

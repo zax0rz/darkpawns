@@ -246,6 +246,15 @@ func TestTelnetSmoke_CastEligibility(t *testing.T) {
 	name := fmt.Sprintf("Mage%d", time.Now().UnixNano()%100000)
 	createChar(t, conn, r, name, "magepw", "M")
 
+	// C's SPECIAL(start_room) has no CMD_IS gate (src/spec_procs.c:2204-2263),
+	// so the first command in the Burning Hut runs it: the birth speech, the
+	// relocation to the hometown room, and do_look. Consume that transition the
+	// way a player must before the cast probes below.
+	mustWrite(t, conn, "look\r\n")
+	if readUntil(t, conn, r, "Your life begins now", 5*time.Second) == "" {
+		t.Fatal("start_room did not run on the first command in the Burning Hut")
+	}
+
 	mustWrite(t, conn, "cast infravision\r\n")
 	if readUntil(t, conn, r, "Spell names must be enclosed in the magick symbols: '", 3*time.Second) == "" {
 		t.Error("unquoted cast did not receive the C quote gate")
