@@ -92,6 +92,8 @@ func init() {
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
 	registerCommand("escape", wrapNoArgs(cmdRetreat), "Attempt to escape from combat.")
+	// C maps both "escape" and "retreat" to do_retreat (src/interpreter.c:434, 652).
+	registerCommand("retreat", wrapNoArgs(cmdRetreat), "Attempt to retreat from combat.")
 
 	// Position / Movement
 	registerCommand("stand", wrapNoArgs(cmdStand), "Stand up.")
