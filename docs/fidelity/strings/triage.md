@@ -11,15 +11,15 @@ the counts below in step with the baseline).
 
 | reason | count |
 |---|---|
-| `bug:invented` | 64 |
-| `bug:paraphrase` | 56 |
-| `census:composed` | 2 |
+| `bug:invented` | 51 |
+| `bug:paraphrase` | 44 |
+| `census:composed` | 5 |
 | `data` | 0 |
-| `surface:no-c` | 2 |
+| `surface:no-c` | 1 |
 | `unsure` | 0 |
-| **total** | **124** |
+| **total** | **101** |
 
-`unsure` is 0/124 (0.0%).
+`unsure` is 0/101 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
@@ -413,10 +413,13 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 - `bug:invented` — Go `pkg/game/other_economy.go:140` — “Your tattoo fizzles...” — C src/tattoo.c:50: nothing — use_tattoo's TATTOO_SKULL case has no failure branch; read_mobile always succeeds
 - `bug:invented` — Go `pkg/session/tattoo.go:79` — “Your tattoo flickers but nothing happens.” — C src/tattoo.c:50: nothing — C's TATTOO_SKULL case always emits the glow act; only Go has this failure branch
 
-## census:composed (2)
+## census:composed (5)
 
 - Go `pkg/session/wiz_info.go:386` — “Usage: checkload { obj | mob } <number>” — src/act.wizard.c:3825: "Usage: checkload { obj | mob } <number>\r\n" — C holds it in a local const char* usage, invisible to the census sink lexer
 - Go `pkg/game/graph.go:267` — “auctions, '” — src/act.comm.c:1273: sprintf(buf, "$n %ss, '%s'", com_msgs[subcmd][1], argument); — C composes these bytes via this sprintf plus com_msgs[SCMD_AUCTION][1] = auction (line 1189)
+- Go `pkg/session/wiz_info.go:20` — “zones player rent stats errors” — src/act.wizard.c:2246-2259,2279-2288 — C defines the five show fields separately and formats them into a five-column row at runtime
+- Go `pkg/session/wiz_info.go:20` — “death godrooms shops houses tattoos” — src/act.wizard.c:2251-2264,2279-2288 — C defines the five show fields separately and formats them into a five-column row at runtime
+- Go `pkg/session/wiz_info.go:20` — “aggr reagents hooks neutral” — src/act.wizard.c:2256-2269,2279-2288 — C defines the four show fields separately and formats them into the final row at runtime
 
 ## surface:no-c (2)
 
