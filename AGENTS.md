@@ -55,7 +55,8 @@ run manifest.
 ### Reference Oracle Binary
 
 The shared `DP_ORACLE_BIN` (`~/darkpawns-c-oracle/bin/circle`) is built
-`-g -O0 -fcommon` from `dp-oracle-seam`. Optimization level changes transcript
+`-g -O0 -fcommon -ffile-prefix-map=$PWD=.` from `dp-oracle-seam` (the prefix map
+makes any checkout build identical bytes). Optimization level changes transcript
 bytes through the C source's undefined behaviour (R1a), so a binary built any
 other way is not the reference. Never replace the shared binary except by
 [`docs/DEV-SETUP.md`](docs/DEV-SETUP.md) → *Promoting a rebuilt reference

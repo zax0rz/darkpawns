@@ -55,12 +55,15 @@ cd ..
 gh repo clone zax0rz/darkpawns-c-oracle
 cd darkpawns-c-oracle
 
-# Native build on Linux. Two CFLAGS are load-bearing (notes below):
+# Native build on Linux. Three CFLAGS are load-bearing (notes below):
 #   -fcommon : the vintage C has duplicate tentative globals (e.g. buf2) that
 #              GNU ld rejects by default; macOS ld coalesces them, so this is
 #              only needed on Linux.
 #   -O0      : deliberate — build the fixture oracle unoptimized. See below.
-./configure CFLAGS="-g -O0 -fcommon"
+#   -ffile-prefix-map=$PWD=. : -g otherwise records the checkout's absolute
+#              path, so each directory builds a different SHA-256. With it,
+#              any checkout of a commit builds identical bytes.
+./configure CFLAGS="-g -O0 -fcommon -ffile-prefix-map=$PWD=."
 make
 file bin/circle       # expect: ELF 64-bit LSB executable, x86-64
 ```
