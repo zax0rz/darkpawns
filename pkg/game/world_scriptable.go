@@ -49,7 +49,8 @@ func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum
 		}
 		item = NewObjectInstance(proto, roomVNum)
 	}
-	return w.MoveObjectToRoom(item, roomVNum)
+	// C lua_oload's "room" arm is obj_to_room (scripts.c:1144-1147).
+	return w.MoveObjectToRoomFront(item, roomVNum)
 }
 
 // HandleNonCombatDeathScriptable handles player death from non-combat damage.

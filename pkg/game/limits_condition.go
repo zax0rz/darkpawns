@@ -344,7 +344,8 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 				for _, contained := range obj.GetContents() {
 					obj.RemoveFromContainer(contained)
 					contained.SetRoomVNum(roomVNum)
-					if err := w.MoveObjectToRoom(contained, roomVNum); err != nil {
+					// C's rotted-container spill is obj_to_room (limits.c:644/646).
+					if err := w.MoveObjectToRoomFront(contained, roomVNum); err != nil {
 						slog.Warn("MoveObjectToRoom failed in decay", "obj_vnum", contained.GetVNum(), "room", roomVNum, "error", err)
 					}
 				}
@@ -413,8 +414,9 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
 							spawned := NewObjectInstance(proto, roomVNum)
 							spawned.SetTimer(2)
-							if err := w.MoveObjectToRoom(spawned, roomVNum); err != nil {
-								slog.Warn("MoveObjectToRoom failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
+							// C's field wear-off spawn is obj_to_room (limits.c:674).
+							if err := w.MoveObjectToRoomFront(spawned, roomVNum); err != nil {
+								slog.Warn("MoveObjectToRoomFront failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
 							}
 						}
 					}

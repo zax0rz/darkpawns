@@ -1010,7 +1010,9 @@ func CmdShoot(s SessionInterface, args []string) error {
 	// hit/miss state machine remains a separate depth case.
 	targetInfo, found := world.ResolveCharInRoomAt(ch, exit.ToRoom, targetName)
 	if !found {
-		if err := world.MoveObjectToRoom(projectile, exit.ToRoom); err != nil {
+		// C do_shoot's no-target branch drops the projectile with
+		// obj_to_room (act.offensive.c:870), which prepends.
+		if err := world.MoveObjectToRoomFront(projectile, exit.ToRoom); err != nil {
 			return fmt.Errorf("drop projectile in destination room: %w", err)
 		}
 		return s.SendMessage("Twang...\r\n")

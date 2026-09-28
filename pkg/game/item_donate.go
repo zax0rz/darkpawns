@@ -32,7 +32,8 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 
 	switch mode {
 	case scmdDonate:
-		if err := w.MoveObjectToRoom(obj, donationRoom); err != nil {
+		// C perform_drop's SCMD_DONATE arm is obj_to_room (act.item.c:510).
+		if err := w.MoveObjectToRoomFront(obj, donationRoom); err != nil {
 			slog.Error("donation move failed",
 				"player", ch.GetName(), "item_vnum", obj.VNum, "error", err)
 			ch.SendMessage("Something went wrong. Your item was not donated.\r\n")
@@ -73,7 +74,8 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 		ch.SendMessage("You throw some gold into the air where it disappears in a puff of smoke!\r\n")
 		w.actToRoom(ch, "$n throws some gold into the air where it disappears in a puff of smoke!", nil, nil)
 		moneyObj := w.createMoneyObject(amount)
-		if err := w.MoveObjectToRoom(moneyObj, donationRoom); err != nil {
+		// C perform_drop_gold's donate arm is obj_to_room (act.item.c:452).
+		if err := w.MoveObjectToRoomFront(moneyObj, donationRoom); err != nil {
 			slog.Error("donation gold move failed",
 				"player", ch.GetName(), "error", err)
 			ch.SendMessage("Something went wrong. Your gold was not donated.\r\n")

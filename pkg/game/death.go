@@ -215,8 +215,9 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
 		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
-		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
-			slog.Warn("MoveObjectToRoom failed in instakill", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
+		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
+		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
+			slog.Warn("MoveObjectToRoomFront failed in instakill", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		}
 	}
 
@@ -441,8 +442,9 @@ func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer c
 			corpseKeywords = deadMob.Proto().Keywords
 		}
 		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true, corpseKeywords)
-		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
-			slog.Warn("MoveObjectToRoom failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
+		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
+		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
+			slog.Warn("MoveObjectToRoomFront failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		} else {
 			// Autoloot: if killer is a player with PRF_AUTOLOOT, loot all takeable items
 			if killer != nil && !killer.IsNPC() {
@@ -667,8 +669,9 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
 		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
-		if err := w.MoveObjectToRoom(corpse, roomVNum); err != nil {
-			slog.Warn("MoveObjectToRoom failed in player death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
+		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
+		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
+			slog.Warn("MoveObjectToRoomFront failed in player death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		}
 	}
 
@@ -1141,7 +1144,8 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 	// Scatter ALL inventory items directly to room floor
 	for _, item := range inventory {
 		if item != nil {
-			if err := w.MoveObjectToRoom(item, roomVNum); err != nil {
+			// C make_dust scatters with obj_to_room (fight.c:446).
+			if err := w.MoveObjectToRoomFront(item, roomVNum); err != nil {
 				slog.Error("failed to scatter inventory item to room in makeDust",
 					"item_vnum", item.VNum, "room", roomVNum, "error", err)
 			}
@@ -1151,7 +1155,8 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 	// Scatter ALL equipment directly to room floor
 	for _, item := range equipment {
 		if item != nil {
-			if err := w.MoveObjectToRoom(item, roomVNum); err != nil {
+			// C make_dust scatters with obj_to_room (fight.c:452).
+			if err := w.MoveObjectToRoomFront(item, roomVNum); err != nil {
 				slog.Error("failed to scatter equipped item to room in makeDust",
 					"item_vnum", item.VNum, "room", roomVNum, "error", err)
 			}
@@ -1161,7 +1166,8 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 	// Scatter gold as money objects to room floor (original make_dust also drops gold)
 	if gold > 0 {
 		moneyObj := w.createMoneyObject(gold)
-		if err := w.MoveObjectToRoom(moneyObj, roomVNum); err != nil {
+		// C make_dust drops gold with obj_to_room (fight.c:461).
+		if err := w.MoveObjectToRoomFront(moneyObj, roomVNum); err != nil {
 			slog.Error("failed to scatter gold to room in makeDust",
 				"room", roomVNum, "error", err)
 		}
@@ -1182,8 +1188,9 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 			LongDesc:  "A small pile of ash is all that remains.",
 		},
 	}
-	if err := w.MoveObjectToRoom(ash, roomVNum); err != nil {
-		slog.Warn("MoveObjectToRoom failed in makeDust", "room", roomVNum, "error", err)
+	// C make_dust places the dust with obj_to_room (fight.c:480).
+	if err := w.MoveObjectToRoomFront(ash, roomVNum); err != nil {
+		slog.Warn("MoveObjectToRoomFront failed in makeDust", "room", roomVNum, "error", err)
 	}
 
 	// Send room message

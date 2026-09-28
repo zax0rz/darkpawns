@@ -176,12 +176,13 @@ func TestSpecButler_GetRoutingAudienceAndClose(t *testing.T) {
 	w, actor, peer, mob, messages := newButlerTestWorld(t)
 	cas, cabinet, chest := setupButlerContainers(t, w)
 
-	// Add in the opposite order of C's prepended room list. The handler's
-	// reverse snapshot traversal must therefore reproduce C's scan order.
-	tunic := spawnButlerTestObject(t, w, 3003)
-	sword := spawnButlerTestObject(t, w, 3004)
-	bread1 := spawnButlerTestObject(t, w, 3005)
+	// spawnButlerTestObject appends, so seed in reverse: the room list is
+	// stored in C's obj_to_room prepend order (newest first), and the
+	// handler's forward traversal must reproduce C's head-first scan.
 	bread2 := spawnButlerTestObject(t, w, 3005)
+	bread1 := spawnButlerTestObject(t, w, 3005)
+	sword := spawnButlerTestObject(t, w, 3004)
+	tunic := spawnButlerTestObject(t, w, 3003)
 
 	if got := specButler(w, actor, mob, "", ""); !got {
 		t.Fatal("eligible butler invocation was not handled")
@@ -314,7 +315,10 @@ func TestSpecButler_CanGetPredicateAndFourItemCap(t *testing.T) {
 		if got := len(w.GetItemsInRoom(butlerTestRoom)); got != 4 {
 			t.Fatalf("room items after four-item cap = %d, want 3 containers plus one skipped item", got)
 		}
-		if got := objects[0].Location.Kind; got != ObjInRoom {
+		// The room list is stored in C's prepend order and the handler walks
+		// it head-first, so the first four spawned items are taken and the
+		// last one is the fifth scanned.
+		if got := objects[4].Location.Kind; got != ObjInRoom {
 			t.Fatalf("fifth scanned item location = %v, want room", got)
 		}
 	})

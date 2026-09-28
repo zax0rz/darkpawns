@@ -460,8 +460,9 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	got := 0
-	for i := len(items) - 1; i >= 0; i-- {
-		obj := items[i]
+	// C walks world[room].contents from the head (newest first; obj_to_room
+	// prepends). Room lists are stored in that order, so walk forward.
+	for _, obj := range items {
 		if got >= 4 {
 			break
 		}
