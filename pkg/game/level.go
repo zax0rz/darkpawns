@@ -122,6 +122,28 @@ var wisApp = []wisAppType{
 	{7}, // wis = 25
 }
 
+// IntAppLearn returns C int_app[score].learn with bounds clamping.
+func IntAppLearn(score int) int {
+	if score < 0 {
+		score = 0
+	}
+	if score >= len(intApp) {
+		score = len(intApp) - 1
+	}
+	return intApp[score].Learn
+}
+
+// WisAppBonus returns C wis_app[score].bonus with bounds clamping.
+func WisAppBonus(score int) int {
+	if score < 0 {
+		score = 0
+	}
+	if score >= len(wisApp) {
+		score = len(wisApp) - 1
+	}
+	return wisApp[score].Bonus
+}
+
 // levelNumber is the C number() seam used by advance_level. Production uses
 // the one process-wide stream; tests replace it to assert exact draw order.
 var levelNumber = dprng.Number

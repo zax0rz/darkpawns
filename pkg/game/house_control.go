@@ -51,6 +51,8 @@ func (w *World) HcontrolListHouses(ch *Player) {
 	}
 
 	var b strings.Builder
+	b.WriteString("Address  Atrium  Build Date  Guests  Owner        Last Paymt Key\r\n")
+	b.WriteString("-------  ------  ----------  ------  ------------ ---------- ---\r\n")
 
 	for i := range control {
 		h := &control[i]

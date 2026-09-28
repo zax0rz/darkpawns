@@ -47,9 +47,7 @@ const (
 
 // infobarSeparator draws the separator line in the infobar.
 func infobarSeparator(ch *infobarState) string {
-	// C's overlapping sprintf in IB_Seperator produces this five-cell
-	// string on the oracle's libc; preserve the observed player-facing bytes.
-	return fmt.Sprintf(vtCurSp+"+-----+-----+-----+-----+-----+", ch.screenSize-4, 1)
+	return fmt.Sprintf(vtCurSp+"+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+", ch.screenSize-4, 1)
 }
 
 // infobarHitPointsStr draws the "Hit Pts:" label.

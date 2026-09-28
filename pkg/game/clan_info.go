@@ -88,7 +88,7 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 	if arg == "" {
 		// Show all clans
 		var msg strings.Builder
-		msg.WriteString("\r")
+		msg.WriteString("\r\t\t\tooO Clans of Dark Pawns Ooo\r\n")
 		visible := false
 		for i := 0; i < w.Clans.ClanCount(); i++ {
 			c := w.Clans.GetClanByIndex(i)
@@ -119,7 +119,23 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 	}
 
 	var msg strings.Builder
-	fmt.Fprintf(&msg, "Info for the clan %s :\r\n\r\n\r\nDescription:\r\n", c.Name)
+	fmt.Fprintf(&msg, "Info for the clan %s :\r\n", c.Name)
+	fmt.Fprintf(&msg, "Ranks      : %d\r\nTitles     : ", c.Ranks)
+	for j := 0; j < c.Ranks; j++ {
+		fmt.Fprintf(&msg, "%s ", c.RankName[j])
+	}
+	fmt.Fprintf(&msg, "\r\nMembers    : %d\r\nPower      : %d\t\nTreasure   : %d\r\nSpells     : ",
+		c.Members, c.Power, c.Treasure)
+	for _, spell := range c.Spells {
+		if spell != 0 {
+			fmt.Fprintf(&msg, "%d ", spell)
+		}
+	}
+	msg.WriteString("\r\nClan privileges:\r\n")
+	for j := 0; j < NumCP; j++ {
+		fmt.Fprintf(&msg, "   %-10s: %d\r\n", clanPrivileges[j], c.Privilege[j])
+	}
+	msg.WriteString("\r\nDescription:\r\n")
 	if c.Plan == "" {
 		msg.WriteString("(null)")
 	} else {

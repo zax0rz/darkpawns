@@ -219,10 +219,13 @@ func cmdMlist(s *Session, args []string) error {
 	if count == 0 {
 		result.WriteString("Sorry, there are no mobs in that zone.\r\n")
 	} else {
-		// The C loop builds each row with sprintf(buf, "%s...", buf, ...),
-		// overlapping the destination and source (src/act.wizard.c:3396-3401).
-		// The oracle's compiled behavior retains only this final footer; the
-		// port must reproduce those player-facing bytes (R1/R5e).
+		item := 0
+		for i := range pw.Mobs {
+			if pw.Mobs[i].VNum >= start && pw.Mobs[i].VNum <= end {
+				item++
+				fmt.Fprintf(&result, "%3d. [%5d] %s\r\n", item, pw.Mobs[i].VNum, pw.Mobs[i].ShortDesc)
+			}
+		}
 		fmt.Fprintf(&result, " %d Mobiles found in Zone %d\r\n", count, zoneNumber)
 	}
 	PageString(s, result.String())

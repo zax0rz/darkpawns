@@ -94,4 +94,3 @@ git apply --check /path/to/darkpawns/tools/oracle-seam/dp-determinism.patch
 Rebuild after any change here: the harness runs whatever binary
 `DP_ORACLE_BIN` points at, and a stale binary reintroduces the force-rent
 abort above.
-

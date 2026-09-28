@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -118,6 +119,13 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	}
 	s.sendStatMobLine(fmt.Sprintf("Race: [%d] %s", race, wizardMobRaceName(race)))
 	s.sendStatMobLine("*************-------------*************-------------*************")
+	s.sendStatMobLine(fmt.Sprintf("Str: [%d/%d]\tInt: [%d]\t*\tHit p.:  [%d/%d+%d]",
+		mob.GetStr(), mob.GetStrAdd(), mob.GetInt(), mob.GetHP(), mob.GetMaxHP(), game.MobHitGain(mob)))
+	s.sendStatMobLine(fmt.Sprintf("Dex: [%d]\tWis: [%d]\t*\tMana p.: [%d/%d+%d]",
+		mob.GetDex(), mob.GetWis(), mob.GetMana(), mob.GetMaxMana(), game.ManaGainNPC(mob)))
+	s.sendStatMobLine(fmt.Sprintf("Con: [%d/%d]\tCha: [%d]\t*\tMove p.: [%d/%d+%d]",
+		mob.GetCon(), mob.GetCon(), mob.GetCha(), mob.GetMove(), mob.GetMaxMove(), game.MoveGainNPC(mob)))
+	s.sendStatMobLine("*************-------------*************-------------*************")
 	s.sendStatMobLine(fmt.Sprintf("Coins: [%9d], Bank: [%9d] (Total: %d)", mob.GetGold(), 0, mob.GetGold()))
 	s.sendStatMobLine(fmt.Sprintf("AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [0/0/0/0/0]",
 		mob.GetAC(), mob.GetHitroll(), proto.Damage.Plus))
@@ -127,7 +135,12 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 		wizardPositionName(proto.DefaultPos), 0))
 	s.sendStatMobLine("NPC flags: " + wizardMobFlags(mob.GetMobFlags()))
 	s.sendStatMobLine(fmt.Sprintf("Mob Spec-Proc: None, NPC Bare Hand Dam: %dd%d", proto.Damage.Num, proto.Damage.Sides))
-	s.sendStatMobLine(fmt.Sprintf("Items in: inventory: %d, eq: %d", len(mob.Inventory), len(mob.Equipment)))
+	carriedWeight := 0
+	for _, item := range mob.Inventory {
+		carriedWeight += item.GetTotalWeight()
+	}
+	s.sendStatMobLine(fmt.Sprintf("Carried: weight: %d, items: %d; Items in: inventory: %d, eq: %d",
+		carriedWeight, len(mob.Inventory), len(mob.Inventory), len(mob.Equipment)))
 	s.sendStatMobLine("Master is: <none>, Followers are:")
 	s.sendStatMobLine("AFF: " + wizardAffectFlags(mob.GetAffects()))
 }
@@ -177,10 +190,42 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 	if file && p.Birth == 0 {
 		age = 17
 	}
+	created := time.Unix(p.Birth, 0).Format("Mon Jan _2 15:04:05 2006")
+	lastLogon := p.ConnectedAt.Format("Mon Jan _2 15:04:05 2006")
+	s.Send(fmt.Sprintf("Created: [%s], Last Logon: [%s]\r\n", created, lastLogon))
 	s.Send(fmt.Sprintf("Played [%dd %dh], Age [%d]\r\n", pt.Day, pt.Hours, age))
-	if p.GetLastDeath() == 0 {
-		s.Send("Last Death: [NONE]\r\n")
+	xpToLevel := 0
+	if p.GetLevel() < LVL_IMMORT {
+		xpToLevel = game.ExpNeededForLevel(p) - p.GetExp()
 	}
+	raceName := "Undefined"
+	if race := p.GetRace(); race >= 0 && race < len(game.PCRaceTypes) {
+		raceName = game.PCRaceTypes[race]
+	}
+	lastDeath := "NONE"
+	if death := p.GetLastDeath(); death != 0 {
+		lastDeath = time.Unix(death, 0).Format("Mon Jan _2 15:04")
+	}
+	hometown, practices := p.GetHometown(), p.GetPractices()
+	hitPoints, originalCon := p.GetHP(), p.GetOrigCon()
+	if file {
+		// C loads the persisted creation record into a clear_char() temporary:
+		// hometown is the first hometown, the pre-advance practice count is 2,
+		// current hit points are 1, and orig_con remains zero.
+		hometown, practices = 1, 2
+		hitPoints, originalCon = 1, 0
+	}
+	s.Send(fmt.Sprintf("Hometown: [%d], Speaks: [0/0/0], (STL[%d]/per[%d]/NSTL[%d])\r\n",
+		hometown, practices, game.IntAppLearn(p.GetInt()), game.WisAppBonus(p.GetWis())))
+	s.Send(fmt.Sprintf("Race: [%d] %s  XP to level: [%d]  Last Death: [%s]\r\n",
+		p.GetRace(), raceName, xpToLevel, lastDeath))
+	s.Send("*************-------------*************-------------*************\r\n")
+	s.Send(fmt.Sprintf("Str: [%d/%d]\tInt: [%d]\t*\tHit p.:  [%d/%d+%d]\r\n",
+		p.GetStr(), p.GetStrAdd(), p.GetInt(), hitPoints, p.GetMaxHP(), s.manager.world.HitGain(p)))
+	s.Send(fmt.Sprintf("Dex: [%d]\tWis: [%d]\t*\tMana p.: [%d/%d+%d]\r\n",
+		p.GetDex(), p.GetWis(), p.GetMana(), p.GetMaxMana(), s.manager.world.ManaGain(p)))
+	s.Send(fmt.Sprintf("Con: [%d/%d]\tCha: [%d]\t*\tMove p.: [%d/%d+%d]\r\n",
+		p.GetCon(), originalCon, p.GetCha(), p.GetMove(), p.GetMaxMove(), s.manager.world.MoveGain(p)))
 	s.Send("*************-------------*************-------------*************\r\n")
 	s.Send(fmt.Sprintf("Kills: [%9d], PKills: [%9d], Deaths: [%9d]\r\n", p.Kills, p.PKs, p.Deaths))
 	s.Send(fmt.Sprintf("Coins: [%9d], Bank: [%9d] (Total: %d)\r\n", p.GetGold(), p.GetBankGold(), p.GetGold()+p.GetBankGold()))
@@ -215,7 +260,8 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 		}
 	}
 	invCount := len(p.GetInventory())
-	s.Send(fmt.Sprintf("Items in: inventory: %d, eq: %d\r\n", invCount, eqCount))
+	s.Send(fmt.Sprintf("Carried: weight: %d, items: %d; Items in: inventory: %d, eq: %d\r\n",
+		p.CarriedWeight(), invCount, invCount, eqCount))
 	full := p.GetCondition(game.CondFull)
 	thirst := p.GetCondition(game.CondThirst)
 	drunk := p.GetCondition(game.CondDrunk)

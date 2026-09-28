@@ -462,9 +462,7 @@ func cmdHome(s *Session, args []string) error {
 		s.Send("Error in your home room. Now set to Limbo.\n")
 	}
 
-	// The C source builds this line with overlapping sprintf(buf, "%s ...",
-	// buf); the oracle's actual libc result is the suffix only.
-	s.Send(" pulled into a different reality.\r\n")
+	s.Send("You feel your soul wrenched as you are pulled into a different reality.\r\n")
 	// The telnet transport canonicalizes a message ending in LF to one CRLF;
 	// using LF here preserves C's single blank line without triggering the
 	// transport's implicit terminator for a message ending in CR.

@@ -17,10 +17,10 @@ func cmdShow(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		// C's overlapping sprintf in do_show currently leaves this fresh-world
-		// response as the final visible field name. R1 follows the observed C
-		// bytes, not the source author's apparent intent.
-		s.Send("neutral")
+		s.Send("Show options:\r\n" +
+			"zones          player         rent           stats          errors         \r\n" +
+			"death          godrooms       shops          houses         tattoos        \r\n" +
+			"aggr           reagents       hooks          neutral        \r\n")
 		return nil
 	}
 
@@ -99,15 +99,32 @@ func cmdShow(s *Session, args []string) error {
 			s.Send(fmt.Sprintf("%s has no rent file.\r\n", strings.ToLower(value)))
 		}
 	case "stats":
-		// The current C oracle's overlapping sprintf chain exposes only this
-		// final line in the fresh empty-player vehicle.
-		s.Send("      0 buf switches         0 overflows\r\n")
+		parsed := s.manager.world.GetParsedWorld()
+		mobPrototypes, objectPrototypes := 0, 0
+		if parsed != nil {
+			mobPrototypes = len(parsed.Mobs)
+			objectPrototypes = len(parsed.Objs)
+		}
+		players := s.manager.world.GetPlayerCount()
+		s.Send(fmt.Sprintf("Current stats:\r\n"+
+			"  %5d players in game  %5d connected\r\n"+
+			"  %5d registered\r\n"+
+			"  %5d mobiles          %5d prototypes\r\n"+
+			"  %5d objects          %5d prototypes\r\n"+
+			"  %5d rooms            %5d zones\r\n"+
+			"  %5d large bufs\r\n"+
+			"  %5d buf switches     %5d overflows\r\n",
+			players, players, players,
+			len(s.manager.world.GetAllMobs()), mobPrototypes,
+			len(s.manager.world.GetAllObjects()), objectPrototypes,
+			len(s.manager.world.Rooms()), len(s.manager.world.GetAllZones()),
+			0, 0, 0))
 	case "errors":
-		s.Send(showLastErrantRoom(s.manager.world))
+		s.Send(showErrantRooms(s.manager.world))
 	case "death":
-		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_DEATH"))
+		s.Send(showFlaggedRooms(s.manager.world, "ROOM_DEATH", "Death Traps\r\n-----------\r\n"))
 	case "godrooms":
-		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_GODROOM"))
+		s.Send(showFlaggedRooms(s.manager.world, "ROOM_GODROOM", "Godrooms\r\n--------------------------\r\n"))
 	case "shops":
 		// C's show_shops() consumes the complete parsed .shp database. The Go
 		// world currently indexes only shopkeepers, so this branch remains
@@ -149,42 +166,41 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("That is not a valid zone.\r\n")
 		}
 	case "neutral":
-		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_NEUTRAL"))
+		s.Send(showFlaggedRooms(s.manager.world, "ROOM_NEUTRAL", "Neutral Rooms\r\n-------------\r\n"))
 	}
 	return nil
 }
 
-// showLastErrantRoom mirrors the visible tail of C's errant-room report in
-// the current world. C appends one row per bad exit; the overlapping sprintf
-// leaves the final row as the player-facing bytes observed by the oracle.
-func showLastErrantRoom(w *game.World) string {
+func showErrantRooms(w *game.World) string {
 	count := 0
-	lastRoom := ""
+	var result strings.Builder
+	result.WriteString("Errant Rooms\r\n------------\r\n")
 	rooms := w.Rooms()
 	for i := range rooms {
 		room := &rooms[i]
 		for _, exit := range room.Exits {
 			if exit.ToRoom == 0 {
 				count++
-				lastRoom = fmt.Sprintf("%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
+				fmt.Fprintf(&result, "%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
 			}
 		}
 	}
-	return lastRoom
+	return result.String()
 }
 
-func showLastFlaggedRoom(w *game.World, flag string) string {
+func showFlaggedRooms(w *game.World, flag, header string) string {
 	count := 0
-	lastRoom := ""
+	var result strings.Builder
+	result.WriteString(header)
 	rooms := w.Rooms()
 	for i := range rooms {
 		room := &rooms[i]
 		if game.HasRoomFlag(room, flag) {
 			count++
-			lastRoom = fmt.Sprintf("%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
+			fmt.Fprintf(&result, "%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
 		}
 	}
-	return lastRoom
+	return result.String()
 }
 
 func showTattooListing() string {
