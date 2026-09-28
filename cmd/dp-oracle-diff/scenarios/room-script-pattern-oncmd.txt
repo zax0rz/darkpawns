@@ -1,0 +1,48 @@
+# Room oncmd: the Center of the Pattern (room 3065, scripts/room/30/
+# pattern_3065.lua, RS_ONCMD). special()'s room arm (interpreter.c:1418-1422)
+# runs the script on every command; pattern_3065 dofiles scripts/room/
+# pattern_tport.lua and moves "say <keyword>" actors to the keyword's room.
+# "say nowhere" is the control: the script declines it and the ordinary say
+# bytes must survive on both sides.
+# depth-case: scripts.pattern-room-oncmd-teleport
+# depth-case: scripts.pattern-room-oncmd-decline
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Patterncmd
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Patterncmd
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 3065
+
+[probe]
+say nowhere
+say haven
+look
