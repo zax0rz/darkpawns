@@ -1,0 +1,77 @@
+# depth-case: mob.spec-position-gate-before-special
+# C's command_interpreter refuses on position BEFORE it calls special()
+# (src/interpreter.c:939-947 then 948-949): a mortal who is sitting or sleeping
+# and types a movement command gets the position message and the room's
+# no_move_south mob (16308, src/spec_assign.c:399) never runs. The pre-DP-1336
+# port ran every special first, so the mob blocked the command instead.
+# `stand` restores the standing case, where the mob does block. A `sleep` variant
+# is not part of this vehicle: a sleep step leaves the harness waiting for
+# quiescence on the frozen clock and times the scenario out, so the sitting case
+# carries the gate proof.
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 16308 1 8162 80
+
+[setup:oracle]
+Specactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Specactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Specpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Specpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+sit
+south
+stand
+south

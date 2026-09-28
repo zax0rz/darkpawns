@@ -65,6 +65,44 @@ func wsReadUntilType(t *testing.T, c *websocket.Conn, wantType string) map[strin
 	}
 }
 
+// wsCollectText reads messages for d and returns the concatenated text of every
+// MsgText seen, so a spec's multi-message output can be asserted in one place.
+func wsCollectText(c *websocket.Conn, d time.Duration) string {
+	var b strings.Builder
+	deadline := time.Now().Add(d)
+	for {
+		if err := c.SetReadDeadline(deadline); err != nil {
+			return b.String()
+		}
+		_, raw, err := c.ReadMessage()
+		if err != nil {
+			return b.String()
+		}
+		var msg map[string]interface{}
+		if jsonErr := json.Unmarshal(raw, &msg); jsonErr != nil {
+			continue
+		}
+		data, _ := json.Marshal(msg["data"])
+		switch msg["type"] {
+		case MsgText:
+			var text TextData
+			if jsonErr := json.Unmarshal(data, &text); jsonErr != nil {
+				continue
+			}
+			b.WriteString(text.Text)
+		case MsgEvent:
+			// The world's MessageSink wraps player messages as text events.
+			var event EventData
+			if jsonErr := json.Unmarshal(data, &event); jsonErr != nil {
+				continue
+			}
+			if event.Type == "text" {
+				b.WriteString(event.Text)
+			}
+		}
+	}
+}
+
 // wsWrite sends a JSON message over the WebSocket connection.
 func wsWrite(t *testing.T, c *websocket.Conn, msgType string, data interface{}) {
 	t.Helper()
@@ -165,34 +203,22 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 		t.Errorf("intro: room.name = %q, want A Burning Hut", intro.Room.Name)
 	}
 
-	// ── 4. Send "look", verify room description arrives ───────────────────────
-	// handleCommand (session_login.go:249) → ExecuteCommand → cmdLook
-	// (cmd_look.go:101) → s.send <- state_msg (BLOCKING direct send).
-	// writePump writes it; ReadMessage must return it.
+	// ── 4. Send "look" and verify start_room's C bytes ────────────────────────
 	wsWrite(t, c, MsgCommand, map[string]interface{}{
 		"command": "look",
 		"args":    []string{},
 	})
 
-	lookRaw := wsReadUntilType(t, c, MsgState)
-
-	lookBytes, _ := json.Marshal(lookRaw["data"])
-	var look StateData
-	if err := json.Unmarshal(lookBytes, &look); err != nil {
-		t.Fatalf("unmarshal look StateData: %v", err)
+	// C's start_room has no CMD_IS gate (src/spec_procs.c:2204-2263), so the
+	// first command in the Burning Hut is what runs it: the birth speech, the
+	// move to the hometown infirmary/altar, and do_look of that room. The spec
+	// consumes the command, so the rendered room arrives as text (the same bytes
+	// the pulse produces a few seconds later) and not as a look state.
+	output := wsCollectText(c, 2*time.Second)
+	if !strings.Contains(output, "now is not your time to die") {
+		t.Errorf("look: start_room birth speech missing, got %q", output)
 	}
-	// C keeps the new mortal in the Burning Hut until the first PULSE_MOBILE
-	// (start_room); the look state reflects that pre-birth room.
-	if want := game.NewbieStartRoom; look.Room.VNum != want {
-		t.Errorf("look: room.vnum = %d, want %d", look.Room.VNum, want)
-	}
-	if look.Room.Name != "A Burning Hut" {
-		t.Errorf("look: room.name = %q, want A Burning Hut", look.Room.Name)
-	}
-	if look.Player.Name != "Testchar" {
-		t.Errorf("look: player.name = %q, want Testchar", look.Player.Name)
-	}
-	if look.Room.Description == "" {
-		t.Error("look: room.description must not be empty")
+	if !strings.Contains(output, "A quiet infirmary tended by the temple healers.") {
+		t.Errorf("look: start_room did not render the hometown room, got %q", output)
 	}
 }

@@ -57,8 +57,11 @@ func TestSpecGuildGuard_EntryGatesAndAudiences(t *testing.T) {
 	}
 
 	resetMessages()
-	if !specGuildGuard(w, player, mob, "n", "") {
-		t.Fatal("the north alias should resolve to C's SCMD_NORTH")
+	// The dispatcher resolves the typed word before it calls a special and hands
+	// it CMD_NAME (src/interpreter.c:905-949), so an unresolved abbreviation
+	// never reaches this helper; only the full direction name does.
+	if specGuildGuard(w, player, mob, "n", "") {
+		t.Fatal("an unresolved abbreviation must not reach the guard")
 	}
 
 	resetMessages()

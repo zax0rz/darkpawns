@@ -92,6 +92,8 @@ func init() {
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
 	registerCommand("escape", wrapNoArgs(cmdRetreat), "Attempt to escape from combat.")
+	// C maps both "escape" and "retreat" to do_retreat (src/interpreter.c:434, 652).
+	registerCommand("retreat", wrapNoArgs(cmdRetreat), "Attempt to retreat from combat.")
 
 	// Position / Movement
 	registerCommand("stand", wrapNoArgs(cmdStand), "Stand up.")
@@ -570,22 +572,6 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 // executeCommandRaw is the transport-aware command path. rawArgs is retained
 // only for command handlers whose C implementation consumes the original
 // argument remainder instead of tokenized words.
-// specialCommandName is CMD_NAME for the command a typed word resolves to:
-// the C table's prefix match, else a Go-registered or social name typed in
-// full. ok is false for a word C would answer with "Huh?!?".
-func specialCommandName(typed string, level int) (string, bool) {
-	if canonical, ok := resolveCommandPrefix(typed, level); ok {
-		return canonical, true
-	}
-	if _, ok := cmdRegistry.Lookup(typed); ok {
-		return typed, true
-	}
-	if _, ok := game.Socials[typed]; ok {
-		return typed, true
-	}
-	return "", false
-}
-
 func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool, rawArgs string) error {
 	// Moderation pre-check: mute, ban
 	if s.manager.modChecker != nil && s.player != nil {
@@ -696,106 +682,6 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		}
 	}
 
-	// Mob oncmd scripts: special() (interpreter.c:1457-1460) runs each
-	// mobile's script with buf = CMD_NAME + arg, the resolved command name
-	// and the raw rest of the line, so a typed "s" reaches the script as
-	// "south". A word that resolves to no command never reaches special()
-	// in C ("Huh?!?"). Where special() runs relative to resolution, the
-	// position check and the other specials is DP-1336.
-	if s.player != nil && s.player.GetRoomVNum() > 0 {
-		if cmdName, ok := specialCommandName(cmd, getEffectiveLevel(s)); ok {
-			fullCommand := cmdName
-			if rawArgs != "" {
-				fullCommand += " " + rawArgs
-			} else if len(args) > 0 {
-				fullCommand += " " + strings.Join(args, " ")
-			}
-			for _, mob := range s.manager.world.GetMobsInRoom(s.player.GetRoomVNum()) {
-				if !mob.HasScript("oncmd") {
-					continue
-				}
-				ctx := mob.CreateScriptContext(s.player, nil, fullCommand)
-				handled, err := mob.RunScript("oncmd", ctx)
-				if err != nil {
-					slog.Error("error running oncmd script", "mob_vnum", mob.GetVNum(), "error", err)
-				}
-				if handled {
-					return nil
-				}
-			}
-		}
-	}
-
-	// Spec procedure command interception — fast path skips room-bearing scans
-	// when the room is known to contain no spec-bearing entities. Equipment and
-	// inventory scans are unconditional: they iterate the player's own items and
-	// were unconditional before the fast path was introduced.
-	if s.player != nil && s.player.GetRoomVNum() > 0 {
-		roomVNum := s.player.GetRoomVNum()
-		argStr := strings.Join(args, " ")
-
-		if s.manager.world.HasSpecInRoom(roomVNum) {
-			// 1. Mob spec procedures
-			mobs := s.manager.world.GetMobsInRoom(roomVNum)
-			for _, mob := range mobs {
-				if mob != nil {
-					if mobSpec := game.GetMobSpec(mob.VNum); mobSpec != nil {
-						if mobSpec(s.manager.world, s.player, mob, cmd, argStr) {
-							return nil
-						}
-					}
-				}
-			}
-
-			// 2. Room spec procedure
-			if roomSpec := game.GetRoomSpec(roomVNum); roomSpec != nil {
-				if roomSpec(s.manager.world, s.player, nil, cmd, argStr) {
-					return nil
-				}
-			}
-
-			// 3. Room items
-			roomItems := s.manager.world.GetItemsInRoom(roomVNum)
-			for _, item := range roomItems {
-				if item != nil {
-					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
-							return nil
-						}
-					}
-				}
-			}
-		}
-
-		// 4. Equipped item spec procedures
-		if s.player.Equipment != nil {
-			equipped := s.player.Equipment.GetEquippedItems()
-			for _, item := range equipped {
-				if item != nil {
-					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
-							return nil
-						}
-					}
-				}
-			}
-		}
-
-		// 5. Inventory item spec procedures
-		if s.player.Inventory != nil {
-			invItems := s.player.Inventory.FindItems("")
-			for _, item := range invItems {
-				if item != nil {
-					if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
-						if objSpec(s.manager.world, s.player, item, cmd, argStr) {
-							return nil
-						}
-					}
-				}
-			}
-		}
-	}
-
 	// R2d: C prefix/abbreviation resolution. Scan the ordered C table (law 2:
 	// table order wins), level-filter DURING the scan (law 3 — load-bearing: a
 	// mortal typing `go` must resolve to gossip, not the earlier goto which is
@@ -816,6 +702,9 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 			if commandGateRejected(s, mustCommandGate(cmd)) {
 				return nil
 			}
+			if runSpecials(s, cmd, args, rawArgs) {
+				return nil
+			}
 			game.DoAction(s.manager.world, s.player, cmd, strings.Join(args, " "))
 			return nil
 		}
@@ -825,6 +714,13 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	}
 
 	if commandGateRejected(s, commandGate{MinLevel: entry.MinLevel, MinPosition: entry.MinPosition}) {
+		return nil
+	}
+	// C runs special() only after the command resolves and clears its refusal
+	// ladder (interpreter.c:910-949), and it passes CMD_NAME — the resolved
+	// name, never the typed abbreviation — so a typed "s" reaches no_move_south
+	// as "south". A word C answers with "Huh?!?" never reaches a special.
+	if runSpecials(s, cmd, args, rawArgs) {
 		return nil
 	}
 	if cmd == "send" {
@@ -909,6 +805,118 @@ func commandGateRejected(s *Session, gate commandGate) bool {
 		s.sendText(positionFailMessage(playerPos))
 		return true
 	}
+	return false
+}
+
+// specialScriptText is C's sprintf(buf, "%s%s", CMD_NAME, arg) for oncmd
+// scripts (src/interpreter.c:1419, 1440, 1459): the resolved command name
+// followed by the argument text as typed. A one-character non-alphabetic
+// command has no separating space, because C's line starts at the character
+// right after it ("'hi" reaches the script as "'hi").
+func specialScriptText(name string, args []string, rawArgs string) string {
+	if rawArgs != "" {
+		if len(name) == 1 && !isASCIICommandLetter(name[0]) {
+			return name + rawArgs
+		}
+		return name + " " + rawArgs
+	}
+	return commandInputLine(name, args)
+}
+
+// runSpecials mirrors C's special() (src/interpreter.c:1407-1481) for one
+// resolved command and reports whether it consumed the command. name is
+// CMD_NAME — the resolved command name — and arg is the tokenized remainder,
+// which is what the port's specials have always been given.
+//
+// C's order, first TRUE wins: room special; room oncmd; worn objects in WEAR_
+// order; carried objects; the room's mobiles in people-list order, skipping
+// MOB_EXTRACT; the room's objects. Every oncmd script is gated on !IS_NPC(ch)
+// except the room-object one, so a session switched into a mobile runs only the
+// specials and the room-object script.
+func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
+	if s.player == nil || s.manager == nil || s.manager.world == nil {
+		return false
+	}
+	w := s.manager.world
+	roomVNum := s.player.GetRoomVNum()
+	arg := strings.Join(args, " ")
+	scriptText := specialScriptText(name, args, rawArgs)
+	// IS_NPC(ch) for the script gates: a switched session acts as its mobile.
+	actorIsNPC := s.isSwitched && s.switchedMob != nil
+
+	if roomVNum > 0 {
+		// 1. special in room?
+		if roomSpec := game.GetRoomSpec(roomVNum); roomSpec != nil {
+			if roomSpec(w, s.player, nil, name, arg) {
+				return true
+			}
+		}
+		// TODO(port): DP-1360 room oncmd (interpreter.c:1418-1422)
+	}
+
+	// 3. special in equipment list? C walks WEAR_ 0..NUM_WEARS-1, playing each
+	// worn object's special and then its oncmd script.
+	for _, item := range game.COrderedWorn(s.player) {
+		if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+			if objSpec(w, s.player, item, name, arg) {
+				return true
+			}
+		}
+		// TODO(port): DP-1360 worn object oncmd (interpreter.c:1431-1436)
+	}
+
+	// 4. special in inventory? ch->carrying order, special then oncmd.
+	for _, item := range game.COrderedCarrying(s.player) {
+		if item == nil {
+			continue
+		}
+		if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+			if objSpec(w, s.player, item, name, arg) {
+				return true
+			}
+		}
+		// TODO(port): DP-1360 carried object oncmd (interpreter.c:1445-1449)
+	}
+
+	if roomVNum > 0 {
+		// 5. special in mobile present? People-list order, MOB_EXTRACT skipped,
+		// each mobile's special before its oncmd script.
+		for _, mob := range w.COrderedRoomMobs(roomVNum) {
+			if mob == nil || mob.HasMobFlag(game.MobFlagExtract) {
+				continue
+			}
+			if mobSpec := game.GetMobSpec(mob.VNum); mobSpec != nil {
+				if mobSpec(w, s.player, mob, name, arg) {
+					return true
+				}
+			}
+			if !actorIsNPC && mob.HasScript("oncmd") {
+				ctx := mob.CreateScriptContext(s.player, nil, scriptText)
+				handled, err := mob.RunScript("oncmd", ctx)
+				if err != nil {
+					slog.Error("error running oncmd script", "mob_vnum", mob.GetVNum(), "error", err)
+				}
+				if handled {
+					return true
+				}
+			}
+		}
+
+		// 6. special in object present? Room contents order; the oncmd script
+		// here has no IS_NPC gate in C.
+		for _, item := range w.GetItemsInRoom(roomVNum) {
+			if item == nil {
+				continue
+			}
+			if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
+				if objSpec(w, s.player, item, name, arg) {
+					return true
+				}
+			}
+			// TODO(port): DP-1360 room object oncmd (interpreter.c:1472-1476)
+		}
+	}
+
 	return false
 }
 

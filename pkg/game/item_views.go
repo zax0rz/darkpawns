@@ -45,6 +45,39 @@ func cWearSlot(where int) (EquipmentSlot, bool) {
 	return slot, true
 }
 
+// COrderedWorn returns the character's equipped objects in C's WEAR_ order
+// (src/structs.h:390-411: WEAR_LIGHT 0 .. WEAR_HOVER 21, NUM_WEARS 22), with
+// empty slots skipped. Go's EquipmentSlot numbering is its own (DP-1157), so
+// the C order comes from cWearToGoSlot — the same table the Lua bridge uses
+// when it builds ch->equipment for scripts — and never from iterating the
+// Slots map. C's special() walks this order looking for an object special
+// (src/interpreter.c:1427-1440).
+func COrderedWorn(ch *Player) []*ObjectInstance {
+	if ch == nil || ch.Equipment == nil {
+		return nil
+	}
+	out := make([]*ObjectInstance, 0, len(cWearToGoSlot))
+	for i := 0; i < len(cWearToGoSlot); i++ {
+		item, ok := ch.Equipment.GetItemInSlot(cWearToGoSlot[i])
+		if !ok || item == nil {
+			continue
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
+// COrderedCarrying returns ch->carrying in C's order: the head of the carried
+// list first, which is the order the inventory view and the Lua bridge's
+// f.Carry already use. C's special() walks it for object specials
+// (src/interpreter.c:1444-1452).
+func COrderedCarrying(ch *Player) []*ObjectInstance {
+	if ch == nil || ch.Inventory == nil {
+		return nil
+	}
+	return ch.Inventory.FindItems("")
+}
+
 // cWearWhere is the fixed-width label printed by C's do_equipment().
 // Trailing spaces are load-bearing and copied from src/constants.c.
 var cWearWhere = []string{

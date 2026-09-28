@@ -82,11 +82,6 @@ type World struct {
 	// All live object instances: instance ID -> ObjectInstance
 	objectInstances map[int]*ObjectInstance
 
-	// specRooms tracks room VNums that contain at least one entity with a spec.
-	// Used by the session dispatch fast path to skip spec scanning.
-	specRooms   map[int]bool
-	specRoomsMu sync.RWMutex
-
 	// AI combat engine (CRIT-006: moved from global to World field)
 	combatEngine CombatEngine
 
@@ -195,7 +190,6 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		roomItems:                make(map[int][]*ObjectInstance),
 		nextObjID:                1,
 		objectInstances:          make(map[int]*ObjectInstance),
-		specRooms:                make(map[int]bool),
 		done:                     make(chan bool),
 		shopManager:              shopManager,
 		parsedData:               parsed, // Keep reference for door loading etc.
@@ -1026,66 +1020,6 @@ func (w *World) RoomEcho(roomVNum int, message string, excludeName string) {
 	actToRoom(w, roomVNum, message, excludeName)
 }
 
-// HasSpecInRoom returns true if the room may contain at least one entity with
-// a special procedure. This is the fast-path guard for spec dispatch. A false
-// positive is safe (causes one extra scan); a false negative would skip spec
-// behavior, so callers must ensure the cache is never stale-negative.
-func (w *World) HasSpecInRoom(roomVNum int) bool {
-	w.specRoomsMu.RLock()
-	defer w.specRoomsMu.RUnlock()
-	return w.specRooms[roomVNum]
-}
-
-// flagSpecRoomForMob flags a mob's current room in the spec-room cache if the
-// mob has a special procedure. Call after any mob room change (wander, hunt,
-// teleport, spawn, etc.) to avoid stale-negative entries.
-func (w *World) flagSpecRoomForMob(mob *MobInstance) {
-	if GetMobSpec(mob.VNum) != nil {
-		w.specRoomsMu.Lock()
-		w.specRooms[mob.GetRoom()] = true
-		w.specRoomsMu.Unlock()
-	}
-}
-
-// RebuildSpecRooms recomputes the specRooms cache from current world state.
-// Call once after zone resets and then periodically to keep the fast path
-// safe. Stale-positive is acceptable; stale-negative is not.
-func (w *World) RebuildSpecRooms() {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	w.rebuildSpecRoomsLocked()
-}
-
-// rebuildSpecRoomsLocked rebuilds specRooms under w.mu and specRoomsMu.
-// Caller must hold w.mu (read lock is sufficient since the scanned maps are
-// only mutated under w.mu).
-func (w *World) rebuildSpecRoomsLocked() {
-	newSet := make(map[int]bool, len(w.specRooms))
-
-	for _, mob := range w.activeMobs {
-		if GetMobSpec(mob.VNum) != nil {
-			newSet[mob.GetRoom()] = true
-		}
-	}
-
-	for roomVNum, items := range w.roomItems {
-		for _, item := range items {
-			if GetObjSpec(item.VNum) != nil {
-				newSet[roomVNum] = true
-				break
-			}
-		}
-	}
-
-	for roomVNum := range RoomSpecAssign {
-		newSet[roomVNum] = true
-	}
-
-	w.specRoomsMu.Lock()
-	defer w.specRoomsMu.Unlock()
-	w.specRooms = newSet
-}
-
 // MovePlayer moves a player to a new room if the exit exists and doors permit.
 func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	// H-11: Split into two phases — collect results under lock, send messages after.
@@ -1229,7 +1163,6 @@ func (w *World) spawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	mob.RoomEntrySequence = w.nextRoomEntrySequence
 	w.activeMobs[w.nextMobID] = mob
 	w.nextMobID++
-	w.flagSpecRoomForMob(mob)
 	return mob, nil
 }
 
@@ -1395,6 +1328,25 @@ func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
 			mobs = append(mobs, mob)
 		}
 	}
+	return mobs
+}
+
+// COrderedRoomMobs returns the room's mobiles in C's world[room].people order:
+// the most recent arrival first, because char_to_room() prepends to the list.
+// Ties fall back to name so the order is deterministic for two mobs that
+// entered in the same tick (R3). C's special() walks exactly this list for
+// mobile specials and mobile oncmd scripts (src/interpreter.c:1452-1466);
+// GetMobsInRoom walks a map and must not be used where the order is
+// observable.
+func (w *World) COrderedRoomMobs(roomVNum int) []*MobInstance {
+	mobs := w.GetMobsInRoom(roomVNum)
+	sort.SliceStable(mobs, func(i, j int) bool {
+		si, sj := mobs[i].GetRoomEntrySequence(), mobs[j].GetRoomEntrySequence()
+		if si != sj {
+			return si > sj
+		}
+		return mobs[i].GetName() < mobs[j].GetName()
+	})
 	return mobs
 }
 

@@ -86,10 +86,13 @@ func sendToChar(ch *Player, msg string) {
 	ch.SendMessage(msg + "\r\n")
 }
 
+// isMoveCmd is C's IS_MOVE(cmd) (src/interpreter.h:36): cmd 1..6, the six
+// movement commands. C tests the resolved command number, so only the full
+// direction names reach here — the command interpreter hands special() the
+// resolved name (CMD_NAME), never the typed abbreviation.
 func isMoveCmd(cmd string) bool {
 	switch cmd {
-	case "north", "south", "east", "west", "up", "down",
-		"n", "s", "e", "w", "u", "d":
+	case "north", "south", "east", "west", "up", "down":
 		return true
 	}
 	return false
@@ -527,19 +530,24 @@ func specGuildGuard(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	return false
 }
 
+// guildGuardDirection maps a resolved movement command to guild_info's
+// direction index. C compares cmd_info's command number against
+// guild_info[i][2] after IS_MOVE(cmd) (src/spec_procs.c:585-599); the resolved
+// name is the port's handle on that number, so the typed abbreviations no
+// longer appear.
 func guildGuardDirection(cmd string) (int, bool) {
 	switch cmd {
-	case "north", "n":
+	case "north":
 		return 0, true
-	case "east", "e":
+	case "east":
 		return 1, true
-	case "south", "s":
+	case "south":
 		return 2, true
-	case "west", "w":
+	case "west":
 		return 3, true
-	case "up", "u":
+	case "up":
 		return 4, true
-	case "down", "d":
+	case "down":
 		return 5, true
 	default:
 		return -1, false
