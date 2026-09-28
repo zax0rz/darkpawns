@@ -368,8 +368,29 @@ func TestRunAudienceProbeReportsObservedClose(t *testing.T) {
 }
 
 func TestTCPConnObservedCloseTracksServerEOF(t *testing.T) {
-	server, client := net.Pipe()
-	conn := NewTCPConn(client)
+	// A real socket, like the harness uses: a queued write followed by a close
+	// always delivers the bytes and then EOF. net.Pipe can surface the close as
+	// ErrClosedPipe instead, which would make this test racy.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = listener.Close() }()
+	accepted := make(chan net.Conn, 1)
+	go func() {
+		c, acceptErr := listener.Accept()
+		if acceptErr != nil {
+			return
+		}
+		accepted <- c
+	}()
+	dialed, err := net.Dial("tcp", listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := <-accepted
+	defer func() { _ = server.Close() }()
+	conn := NewTCPConn(dialed)
 	if conn.ObservedClose() {
 		t.Fatal("a fresh transport must not report a close")
 	}
@@ -379,12 +400,12 @@ func TestTCPConnObservedCloseTracksServerEOF(t *testing.T) {
 	if conn.ObservedClose() {
 		t.Fatal("a quiet transport must not report a close")
 	}
-	// net.Pipe is synchronous, so the server side writes and closes from its
-	// own goroutine while the client reads.
-	go func() {
-		_, _ = server.Write([]byte("parting words\r\n"))
-		_ = server.Close()
-	}()
+	if _, err := server.Write([]byte("parting words\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.Close(); err != nil {
+		t.Fatal(err)
+	}
 	got, err := conn.ReadUntilQuiescent(time.Second)
 	if err != nil {
 		t.Fatalf("read before EOF: %v", err)

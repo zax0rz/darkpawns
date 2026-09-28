@@ -87,6 +87,16 @@ rent pass takes the objects instead of dropping them in the room).
 
 ## F2 — the disconnect pulse delivers a byte C drops
 
+> **Update 2026-09-27 (same day, next round):** the *harness* half of this is
+> fixed. `tools/oracle-seam/dp-determinism.patch` now queues `~dpclock` pulses
+> and the game loop drains them at its heartbeat phase, so the pumped
+> force-rent no longer frees the descriptor `process_input()` owns (the
+> `FD_SETSIZE` abort), and `lifecycle-idle-force-rent-close` proves the close
+> byte-for-byte. **F2 itself is unchanged and still open**: at a weather
+> broadcast hour, C's `close_socket` still discards the queued line while the
+> port flushes it first. See
+> [`2026-09-27-dpclock-deferred-heartbeats.md`](2026-09-27-dpclock-deferred-heartbeats.md).
+
 At the pulse where the idle timer passes `IDLE_DISCONNECT`, both engines run
 `weather_and_time` before `point_update`. C's `close_socket` then closes the
 descriptor inside `check_idling` (`src/comm.c:2092`), and the C game loop's
