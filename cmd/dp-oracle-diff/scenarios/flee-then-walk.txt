@@ -1,0 +1,101 @@
+# depth-case: flee.then-walk-position
+# A mortal fights the wharf rat, flees successfully, then walks and looks.
+# The post-combat position reset (stop_fighting → POS_STANDING → update_pos,
+# fight.c:230-252) is what lets the move through; without it the port
+# answered "No way! You're fighting for your life!" (DP-1321).
+#
+# Shape notes: the primary is the God (empty-players) so the warmup can
+# teleport the mortal out of the peaceful infirmary to Kir-Oshi's 18201; all
+# six exits of 18201 and 18202 lead to the other room, so every flee
+# succeeds on the first direction draw for every seed. C decrements a
+# player's wait once per real game-loop pass (~10/s), not per pumped pulse,
+# so the murder's WAIT_STATE (PULSE_VIOLENCE + 2 = 2.2 s) is drained by the
+# ten pump steps' quiescence windows before the flee is sent; the single
+# pump after the flee lets C's next violence pass run the fleer's
+# stop_fighting before the move. The bare-fisted mortal drops to its wimpy
+# level (5) during the ten rounds and auto-flees from live combat — the rat
+# cannot kill it first (1d4 damage against a wimpy threshold of 5).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 18203 1 18201 182
+replace-room-exits 18201 all 18202 0
+replace-room-exits 18202 all 18201 0
+
+[setup:oracle]
+Fleegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Fleewalk
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Fleewalk
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Fleewalk 18201
+
+[probe:mortal]
+murder rat
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+flee
+~dpclock pulse 20
+north
+look
