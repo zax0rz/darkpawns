@@ -841,14 +841,16 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 		// Mob drops item(s) to the room. "drop all" drops everything.
 		if args == "all" {
 			for _, obj := range mob.Inventory {
-				w.AddItemToRoom(obj, mob.GetRoomVNum())
+				// The action() drop reaches C's perform_drop, whose room
+				// placement is obj_to_room (act.item.c:504) — prepend.
+				w.AddItemToRoomFront(obj, mob.GetRoomVNum())
 			}
 			mob.Inventory = mob.Inventory[:0]
 		} else {
 			for i, obj := range mob.Inventory {
 				if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(args)) {
 					mob.Inventory = append(mob.Inventory[:i], mob.Inventory[i+1:]...)
-					w.AddItemToRoom(obj, mob.GetRoomVNum())
+					w.AddItemToRoomFront(obj, mob.GetRoomVNum())
 					break
 				}
 			}

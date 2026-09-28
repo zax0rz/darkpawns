@@ -32,6 +32,20 @@ func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
 	item.SetRoomVNum(roomVNum)
 }
 
+// AddItemToRoomFront is the raw-placement twin of AddItemToRoom for callers
+// that port C obj_to_room (handler.c:897-910), which prepends to the room's
+// contents: zone O resets (db.c:2155), house loads (house.c:100), and mob
+// drops driven by the action() command path (perform_drop, act.item.c:504).
+func (w *World) AddItemToRoomFront(item *ObjectInstance, roomVNum int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	items := w.roomItems[roomVNum]
+	w.roomItems[roomVNum] = append(items, nil)
+	copy(w.roomItems[roomVNum][1:], items)
+	w.roomItems[roomVNum][0] = item
+	item.SetRoomVNum(roomVNum)
+}
+
 // extractObjectLocked removes an object (and its contained children) from the world.
 // Caller MUST hold w.mu. — handler.c:1006-1025
 func (w *World) extractObjectLocked(obj *ObjectInstance) {

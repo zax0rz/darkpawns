@@ -325,7 +325,13 @@ func clearMemory(m *MobInstance) {
 // decayObjectsInRoom decays objects in the given room.
 // Ported from limits.c point_update() object section (lines 527-686).
 func (w *World) decayObjectsInRoom(roomVNum int) {
-	items := w.GetItemsInRoom(roomVNum)
+	// GetItemsInRoom returns the live backing slice; a rotted container's
+	// spill prepends into it, which would shift already-visited objects into
+	// unvisited positions and tick them twice in one pass (R3b). Snapshot
+	// the pass's work list — like C's object_list walk, each object decays
+	// at most once per pass; items spilled during the pass tick on the next
+	// one.
+	items := append([]*ObjectInstance(nil), w.GetItemsInRoom(roomVNum)...)
 	for _, obj := range items {
 		// Allow corpses (IsCorpse=true) through even with nil Prototype so the
 		// corpse decay block below can fire. All other nil-prototype objects skip.
