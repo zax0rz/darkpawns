@@ -84,6 +84,23 @@ opt level cannot affect parity. Building at `-O0` reproduces arm64's UB-toleranc
 across all sites at once. Hot paths still get real source fixes as they surface
 (belt and suspenders); `-O0` is the blanket mitigation, not a cure.
 
+### Promoting a rebuilt reference binary
+
+The shared `DP_ORACLE_BIN` is a tested fixture, not an ordinary build output.
+Before replacing it:
+
+1. Build from a clean `dp-oracle-seam` checkout with the exact flags above.
+2. Record the source revision and SHA-256 of both the old and candidate binary.
+3. Keep the old binary in the run's evidence archive.
+4. Point the census at the candidate explicitly; do not overwrite the shared
+   path yet.
+5. Promote the candidate only after the full Oracle census is green with no
+   new failures, stale pins, unexplained infrastructure results, or timeouts.
+
+If a fresh build changes transcript bytes, stop and fix the C undefined
+behavior or the documented build contract. A historical compiler accident is
+not a stable specification.
+
 ### If `make` fails wanting `aclocal-1.14`
 
 git checkout can set the autotools file mtimes so `make` tries to regenerate
