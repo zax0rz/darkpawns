@@ -77,30 +77,15 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 // run_script(ch, ch, obj, room, "onget", LT_ROOM) when the room carries the
 // RS_ONGET flag (1<<4).
 func (w *World) fireOnGet(ch *Player, obj *ObjectInstance) {
-	w.fireRoomObjTrigger(ch, obj, 1<<4, "onget") // RS_ONGET
+	w.RunRoomObjTriggerScript(ch, obj, rsOnGet, "onget")
 }
 
 // fireOnDrop runs the room's ondrop trigger after a successful drop, mirroring
-// C perform_drop (act.item.c:495): run_script(..., "ondrop", LT_ROOM) when the
-// room carries RS_ONDROP (1<<3).
+// C perform_drop (act.item.c:505-506): run_script(..., "ondrop", LT_ROOM) when
+// the room carries RS_ONDROP (1<<3), on the drop path only (junk and donate
+// never reach it).
 func (w *World) fireOnDrop(ch *Player, obj *ObjectInstance) {
-	w.fireRoomObjTrigger(ch, obj, 1<<3, "ondrop") // RS_ONDROP
-}
-
-// fireRoomObjTrigger runs a room script trigger keyed by an RS_* bit, passing
-// the acting player and object, mirroring C run_script(..., LT_ROOM).
-func (w *World) fireRoomObjTrigger(ch *Player, obj *ObjectInstance, bit int, trigger string) {
-	if ScriptEngine == nil {
-		return
-	}
-	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room == nil || room.ScriptName == "" || room.ScriptFunctions&bit == 0 {
-		return
-	}
-	ctx := &ScriptContext{Ch: ch, Obj: obj, RoomVNum: room.VNum, World: NewWorldScriptableAdapter(w)}
-	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, trigger); err != nil {
-		slog.Warn("room object script error", "trigger", trigger, "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
-	}
+	w.RunRoomObjTriggerScript(ch, obj, rsOnDrop, "ondrop")
 }
 
 // getFromContainer implements C get_from_container() for individual, all,

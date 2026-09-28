@@ -573,8 +573,11 @@ func main() {
 		OnRoomActivity: func() {
 			gameWorld.RoomActivity()
 		},
-		// object_activity remains an explicit no-op seam.
-		OnObjectActivity: func() {},
+		// comm.c:758-797 object_activity — OS_ONPULSE object scripts, in C's
+		// heartbeat position after room_activity.
+		OnObjectActivity: func() {
+			gameWorld.ObjectActivity()
+		},
 		OnWeatherAndTime: func() {
 			game.WeatherAndTime(true, manager.SendToOutdoor)
 		},

@@ -5,6 +5,9 @@ package game
 // (heartbeat order: mobile_activity, room_activity, object_activity).
 //
 // Ported arms, in C's per-character order:
+//   - PC-only, room flagged RS_ONPULSE → the room's onpulse Lua script
+//     (comm.c:706-708), which can draw number(); its first-in-body position
+//     is draw-order-sensitive (R3)
 //   - AFF_FLAMING without PRF_NOHASSLE → damage(ch, ch, 15, SPELL_FLAMESTRIKE)
 //   - SECT_UNDERWATER without AFF_WATERBREATHE (no-hassle exempt) →
 //     damage(ch, ch, 25, SPELL_DROWNING)
@@ -16,9 +19,10 @@ package game
 //     possible, otherwise relocate to real_room(5) and abort the pass
 //
 // Deliberately NOT ported here (pre-existing gaps, documented in the round
-// handoff): DG room scripts with RS_ONPULSE, flow_room (no room in the stock
-// world carries a ROOM_FLOW_* flag, so C's gated number(0,1) draw never
-// fires), loud_mobs, and the CON<=0 croak. The fixed damage calls ride the
+// handoff): flow_room (no room in the stock world carries a ROOM_FLOW_* flag,
+// so C's gated number(0,1) draw never fires), loud_mobs, and the CON<=0
+// croak. Room scripts with RS_ONPULSE (comm.c:706-708) run through
+// RunRoomPulseScript in room_obj_scripts.go. The fixed damage calls ride the
 // shared fight.c damage() machinery: modifiers, position update, the M-103 /
 // M-96 skill_message blocks from lib/misc/messages, the wounded/stunned/dead
 // position bytes, and HandleDeath for the corpse's SPELL_DROWNING wording.
@@ -94,6 +98,11 @@ func (w *World) roomActivityForPlayer(p *Player) bool {
 	if room == nil {
 		return false
 	}
+
+	// C comm.c:706-708 — the room's RS_ONPULSE script runs FIRST in the
+	// per-character body, before the damage arms; pattern_dmg.lua draws
+	// number() here, so this position is draw-order-sensitive (R3).
+	w.RunRoomPulseScript(p)
 
 	w.roomActivityDamageArms(p)
 

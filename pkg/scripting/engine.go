@@ -345,6 +345,22 @@ func ResolveScriptPath(scriptsDir, cleanName string) string {
 	return "" // not found
 }
 
+// ResolveOwnerScriptPath is run_script's strict owner-typed lookup
+// (scripts.c:1775): C builds SCRIPT_DIR/type/script_name, so a room owner
+// loads only scripts/room/<name> and an object owner only scripts/obj/<name>,
+// never the mob/room/obj search the legacy mob call sites use. It returns ""
+// when the file does not exist.
+func ResolveOwnerScriptPath(scriptsDir, ownerType, cleanName string) string {
+	if ownerType != "room" && ownerType != "obj" {
+		return ""
+	}
+	path := filepath.Join(scriptsDir, ownerType, cleanName)
+	if _, err := os.Stat(path); err != nil {
+		return ""
+	}
+	return path
+}
+
 // RunScript loads and executes a named trigger function in a script file.
 // fname is relative to scriptsDir (e.g. "mob/144/hisc.lua").
 // triggerName is the function to call (e.g. "oncmd", "sound", "fight").
@@ -412,9 +428,11 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 	// A run with C-level references goes through the game bridge: C's tables
 	// for ch, me, room and obj (run_script, scripts.c:1727-1746) and C's
-	// write-back afterwards.
+	// write-back afterwards. Owner-typed runs bridge too: an object's onpulse
+	// passes ch = me = NULL (comm.c:789-793), so the bridge cannot hinge on
+	// MeRef alone.
 	var bridge Bridge
-	if ctx.MeRef != nil {
+	if ctx.MeRef != nil || ctx.OwnerType != "" {
 		if b, ok := ctx.World.(Bridge); ok && ctx.World != nil {
 			bridge = b
 		} else if b, ok := e.world.(Bridge); ok {
@@ -443,7 +461,12 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		if ctx.ChRef != nil {
 			L.SetGlobal("ch", e.charToTable(bridge, *ctx.ChRef))
 		}
-		L.SetGlobal("me", e.charToTable(bridge, *ctx.MeRef))
+		// run_script sets me only when non-NULL (scripts.c:1733-1736); the
+		// object onpulse site passes NULL and C leaves the previous run's me
+		// global in place.
+		if ctx.MeRef != nil {
+			L.SetGlobal("me", e.charToTable(bridge, *ctx.MeRef))
+		}
 		if ctx.RoomVNum > 0 {
 			L.SetGlobal("room", e.roomToTable(bridge, ctx.RoomVNum, ctx.MeRef))
 		}
@@ -522,17 +545,29 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		return false, fmt.Errorf("path traversal blocked: %s", fname)
 	}
 
+	// Owner-typed runs resolve strictly as SCRIPT_DIR/type/script_name
+	// (scripts.c:1775); the mob-era search stays below for mob call sites.
+	// The negative-cache key carries the owner type because one name can
+	// exist for one owner and be missing for another.
+	cacheKey := cleanName
+	var scriptPath string
+	if ctx.OwnerType == "room" || ctx.OwnerType == "obj" {
+		cacheKey = ctx.OwnerType + "/" + cleanName
+		scriptPath = ResolveOwnerScriptPath(e.scriptsDir, ctx.OwnerType, cleanName)
+	} else {
+		scriptPath = e.resolveScriptPath(cleanName)
+	}
+
 	// Negative cache: if this script previously failed to load (file-not-found,
 	// parse error, load timeout), skip the disk hit and log entirely. The first
 	// failure was already logged when it was added to failedScripts. Per-pulse
 	// retries on a missing script would otherwise flood the log (DP-903).
-	if _, failed := e.failedScripts[cleanName]; failed {
-		return false, fmt.Errorf("script %s previously failed to load", cleanName)
+	if _, failed := e.failedScripts[cacheKey]; failed {
+		return false, fmt.Errorf("script %s previously failed to load", fname)
 	}
 
-	scriptPath := e.resolveScriptPath(cleanName)
 	if scriptPath == "" {
-		e.failedScripts[cleanName] = struct{}{}
+		e.failedScripts[cacheKey] = struct{}{}
 		slog.Error("error loading script", "file", fname, "error", "script not found")
 		return false, fmt.Errorf("script not found: %s", fname)
 	}
@@ -574,7 +609,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		// Negative-cache the script so subsequent pulses skip the disk hit
 		// and the error log. Both timeout and file-not-found/parse errors are
 		// stable per file — they won't fix themselves between pulses (DP-903).
-		e.failedScripts[cleanName] = struct{}{}
+		e.failedScripts[cacheKey] = struct{}{}
 		if errors.Is(err, context.DeadlineExceeded) {
 			slog.Error("script timed out during load", "file", fname, "error", err)
 			needsRecreate = true
