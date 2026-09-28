@@ -2,6 +2,9 @@ package oraclediff
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -59,6 +62,16 @@ func repoRoot(t *testing.T) string {
 	}
 }
 
+// fileSHA256 names the exact artifact in skip/failure messages.
+func fileSHA256(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "unreadable: " + err.Error()
+	}
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
 // TestOracleSeamSelftest executes the shipped seam against the built oracle.
 // The seam prints its own observations under DP_SEAM_SELFTEST=1 and exits
 // before booting, so this is a real run of the patched C, not a text match: a
@@ -74,7 +87,20 @@ func TestOracleSeamSelftest(t *testing.T) {
 	cmd.Env = append(os.Environ(), "DP_SEAM_SELFTEST=1")
 	out, err := cmd.CombinedOutput()
 	if ctx.Err() != nil {
-		t.Fatalf("the oracle did not exit for DP_SEAM_SELFTEST: a binary without the deferred seam boots instead; rebuild it from tools/oracle-seam/dp-determinism.patch\noutput:\n%s", out)
+		t.Fatalf("the oracle did not exit for DP_SEAM_SELFTEST: the seam is not draining the self-test\noutput:\n%s", out)
+	}
+	if !strings.Contains(string(out), "dp-seam-selftest:") {
+		// A binary without the hook boots the game instead of self-testing. The
+		// default path is whatever build happens to sit in the shared checkout,
+		// so name it, hash it and skip; an explicitly named DP_ORACLE_BIN is the
+		// checkout the caller means to certify, so that one must carry the hook.
+		message := fmt.Sprintf(
+			"oracle at %s (sha256 %s) has no DP_SEAM_SELFTEST hook; rebuild it from tools/oracle-seam/dp-determinism.patch",
+			bin, fileSHA256(bin))
+		if os.Getenv("DP_ORACLE_BIN") != "" {
+			t.Fatalf("%s\noutput:\n%s", message, out)
+		}
+		t.Skip(message)
 	}
 	if err != nil {
 		t.Fatalf("oracle seam self-test failed: %v\noutput:\n%s", err, out)

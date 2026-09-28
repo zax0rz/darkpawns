@@ -248,7 +248,7 @@
     "Parsed world data not available.": {
       "segment": "Parsed world data not available.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 717,
+      "line": 734,
       "sink": ".Send",
       "reason": "bug:invented",
       "evidence": "no C text; nearest: src/act.wizard.c:395 — Go nil-parsed-world guard in vnum; C do_vnum reads mob/obj protos directly",
@@ -266,7 +266,7 @@
     "Room data not found.": {
       "segment": "Room data not found.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 406,
+      "line": 423,
       "sink": ".Send",
       "reason": "bug:invented",
       "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — C do_stat_room prints the report unconditionally; no room-not-found branch",
@@ -464,7 +464,7 @@
     "Usage: checkload { obj | mob } \u003cnumber\u003e": {
       "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
       "file": "pkg/session/wiz_info.go",
-      "line": 402,
+      "line": 445,
       "sink": ".Send",
       "reason": "census:composed",
       "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } \u003cnumber\u003e\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
@@ -482,7 +482,7 @@
     "Usage: poofset \u003cin|out\u003e [message]": {
       "segment": "Usage: poofset \u003cin|out\u003e [message]",
       "file": "pkg/session/wiz_info.go",
-      "line": 599,
+      "line": 642,
       "sink": ".Send",
       "reason": "bug:invented",
       "evidence": "src/config.c:92 \"Okay.\\r\\n\" — no C poofset command; do_poofset (poofin/poofout) only replies OK",
@@ -518,7 +518,7 @@
     "World not available.": {
       "segment": "World not available.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 711,
+      "line": 728,
       "sink": ".Send",
       "reason": "bug:invented",
       "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — Go nil-world guards in stat room/obj and vnum; C reads world[] and prints the report",
@@ -767,15 +767,6 @@
       "evidence": "src/comm.c:2545 \"\u0026RBroadcast: %s\u0026n\" — C's broadcast prefix is red Broadcast: ; Go writes [Broadcast]",
       "firstSeen": "2026-09-23"
     },
-    "aggr reagents hooks neutral": {
-      "segment": "aggr reagents hooks neutral",
-      "file": "pkg/session/wiz_info.go",
-      "line": 20,
-      "sink": ".Send",
-      "reason": "census:composed",
-      "firstSeen": "2026-09-28",
-      "evidence": "src/act.wizard.c:2256-2269 defines the show fields through aggr/reagents/hooks/neutral; do_show at :2279-2288 formats the table into five-column rows, so the C census sees the field literals but cannot reconstruct this composed line"
-    },
     "arrives through a shimmering moon gate!": {
       "segment": "arrives through a shimmering moon gate!",
       "file": "pkg/game/spec_procs_missing.go",
@@ -802,15 +793,6 @@
       "reason": "census:composed",
       "evidence": "src/act.comm.c:1273 \"sprintf(buf, \"$n %ss, '%s'\", com_msgs[subcmd][1], argument);\" — C composes these bytes via this sprintf plus com_msgs[SCMD_AUCTION][1] = auction (line 1189)",
       "firstSeen": "2026-09-23"
-    },
-    "death godrooms shops houses tattoos": {
-      "segment": "death godrooms shops houses tattoos",
-      "file": "pkg/session/wiz_info.go",
-      "line": 20,
-      "sink": ".Send",
-      "reason": "census:composed",
-      "firstSeen": "2026-09-28",
-      "evidence": "src/act.wizard.c:2251-2264 defines the show fields through death/godrooms/shops/houses/tattoos; do_show at :2279-2288 formats the table into five-column rows, so the C census sees the field literals but cannot reconstruct this composed line"
     },
     "experience points for fleeing.": {
       "segment": "experience points for fleeing.",
@@ -901,15 +883,6 @@
       "reason": "bug:invented",
       "evidence": "no C text; nearest: src/spec_procs2.c:1342 — C evillead only handles a give of cheese 13100 and teleports the giver; no alignment attack",
       "firstSeen": "2026-09-23"
-    },
-    "zones player rent stats errors": {
-      "segment": "zones player rent stats errors",
-      "file": "pkg/session/wiz_info.go",
-      "line": 20,
-      "sink": ".Send",
-      "reason": "census:composed",
-      "firstSeen": "2026-09-28",
-      "evidence": "src/act.wizard.c:2246-2259 defines the show fields zones/player/rent/stats/errors; do_show at :2279-2288 formats the table into five-column rows, so the C census sees the field literals but cannot reconstruct this composed line"
     }
   }
 }

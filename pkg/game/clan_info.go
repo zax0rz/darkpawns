@@ -86,10 +86,10 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 	}
 
 	if arg == "" {
-		// Show all clans
+		// Show all clans. C (clan.c:736-737) builds "\r" and then overwrites
+		// it with the heading, so the stray \r never reaches the player.
 		var msg strings.Builder
-		msg.WriteString("\r\t\t\tooO Clans of Dark Pawns Ooo\r\n")
-		visible := false
+		msg.WriteString("\t\t\tooO Clans of Dark Pawns Ooo\r\n")
 		for i := 0; i < w.Clans.ClanCount(); i++ {
 			c := w.Clans.GetClanByIndex(i)
 			if c == nil {
@@ -99,14 +99,9 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 				fmt.Fprintf(&msg, "[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.ID, c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			} else if c.Private == 0 {
-				visible = true
 				fmt.Fprintf(&msg, "%-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			}
-		}
-		if ch.GetLevel() < LVL_IMMORT && !visible {
-			msg.Reset()
-			msg.WriteString("\r\t\t\tooO Clans of Dark Pawns Ooo\r\n")
 		}
 		ch.SendMessage(msg.String())
 		return

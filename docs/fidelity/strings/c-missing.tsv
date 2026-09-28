@@ -671,6 +671,7 @@ You're no longer a creature of the night!	src/act.wizard.c:2197	send_to_char	do_
 There is a brief flash of light!	src/act.wizard.c:2203	send_to_char	do_wizutil
 You feel slightly different.	src/act.wizard.c:2203	send_to_char	do_wizutil
 ; Reset:	src/act.wizard.c:2227	buffered:sprintf	print_zone_to_buf
+Show options:	src/act.wizard.c:2274	buffered:strcpy	do_show
 Lessons:	src/act.wizard.c:2337	buffered:sprintf	do_show
 Started:	src/act.wizard.c:2344	buffered:sprintf	do_show
 ------------	src/act.wizard.c:2389	buffered:strcpy	do_show

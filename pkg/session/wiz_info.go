@@ -11,45 +11,66 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
+// showFields is C's show subcommand table (src/act.wizard.c:2251-2267): the
+// `show options` listing and the subcommand lookup read the same rows in this
+// order, and levels gate both. C's sentinel row ("\n", 0) and its leading
+// "nothing" row are not represented because neither reaches the listing loop
+// (which starts at index 1) and the lookup below matches names directly.
+var showFields = []struct {
+	name  string
+	level int
+}{
+	{name: "zones", level: LVL_IMMORT},
+	{name: "player", level: LVL_GOD},
+	{name: "rent", level: LVL_GOD},
+	{name: "stats", level: LVL_IMMORT},
+	{name: "errors", level: LVL_IMPL - 1},
+	{name: "death", level: LVL_GOD},
+	{name: "godrooms", level: LVL_GOD},
+	{name: "shops", level: LVL_IMMORT},
+	{name: "houses", level: LVL_GOD},
+	{name: "tattoos", level: LVL_IMMORT},
+	{name: "aggr", level: LVL_IMPL - 1},
+	{name: "reagents", level: LVL_IMMORT},
+	{name: "hooks", level: LVL_IMMORT},
+	{name: "neutral", level: LVL_IMMORT},
+}
+
 func cmdShow(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Show options:\r\n" +
-			"zones          player         rent           stats          errors         \r\n" +
-			"death          godrooms       shops          houses         tattoos        \r\n" +
-			"aggr           reagents       hooks          neutral        \r\n")
+		// C (act.wizard.c:2271-2277) prints the rows this character may use,
+		// five per line, then one trailing CRLF; a shown count that is a
+		// multiple of five therefore ends the output with a blank line.
+		var b strings.Builder
+		b.WriteString("Show options:\r\n")
+		shown := 0
+		for _, f := range showFields {
+			if f.level > getEffectiveLevel(s) {
+				continue
+			}
+			shown++
+			fmt.Fprintf(&b, "%-15s", f.name)
+			if shown%5 == 0 {
+				b.WriteString("\r\n")
+			}
+		}
+		b.WriteString("\r\n")
+		s.Send(b.String())
 		return nil
 	}
 
-	// This table is the field table in src/act.wizard.c:2250-2265. C uses a
-	// case-sensitive prefix comparison, so preserve the raw first argument.
+	// The lookup below keeps C's raw first argument: C compares it with
+	// str_cmp semantics, while this port matches by prefix.
 	field := args[0]
 	value := ""
 	if len(args) > 1 {
 		value = args[1]
 	}
-	fields := []struct {
-		name  string
-		level int
-	}{
-		{name: "zones", level: LVL_IMMORT},
-		{name: "player", level: LVL_GOD},
-		{name: "rent", level: LVL_GOD},
-		{name: "stats", level: LVL_IMMORT},
-		{name: "errors", level: LVL_IMPL - 1},
-		{name: "death", level: LVL_GOD},
-		{name: "godrooms", level: LVL_GOD},
-		{name: "shops", level: LVL_IMMORT},
-		{name: "houses", level: LVL_GOD},
-		{name: "tattoos", level: LVL_IMMORT},
-		{name: "aggr", level: LVL_IMPL - 1},
-		{name: "reagents", level: LVL_IMMORT},
-		{name: "hooks", level: LVL_IMMORT},
-		{name: "neutral", level: LVL_IMMORT},
-	}
+	fields := showFields
 	fieldIndex := -1
 	for i, candidate := range fields {
 		if strings.HasPrefix(candidate.name, field) {
@@ -105,7 +126,27 @@ func cmdShow(s *Session, args []string) error {
 			mobPrototypes = len(parsed.Mobs)
 			objectPrototypes = len(parsed.Objs)
 		}
-		players := s.manager.world.GetPlayerCount()
+		// C walks character_list (act.wizard.c:2356-2378): non-NPC characters
+		// the caller can see, and of those the ones holding a descriptor — a
+		// linkdead player counts in the first number only. `registered` is the
+		// player-file index size (top_of_p_table + 1), which the port reads from
+		// the player store.
+		playersInGame, connected := 0, 0
+		for _, p := range s.manager.world.GetAllPlayers() {
+			if !game.CanSee(s.player, p) {
+				continue
+			}
+			playersInGame++
+			if live := findSessionByName(s.manager, p.GetName()); live != nil && live.hasTransport() {
+				connected++
+			}
+		}
+		registered := 0
+		if s.manager.hasDB && s.manager.db != nil {
+			if n, err := s.manager.db.CountPlayers(); err == nil {
+				registered = n
+			}
+		}
 		s.Send(fmt.Sprintf("Current stats:\r\n"+
 			"  %5d players in game  %5d connected\r\n"+
 			"  %5d registered\r\n"+
@@ -114,10 +155,12 @@ func cmdShow(s *Session, args []string) error {
 			"  %5d rooms            %5d zones\r\n"+
 			"  %5d large bufs\r\n"+
 			"  %5d buf switches     %5d overflows\r\n",
-			players, players, players,
+			playersInGame, connected, registered,
 			len(s.manager.world.GetAllMobs()), mobPrototypes,
 			len(s.manager.world.GetAllObjects()), objectPrototypes,
 			len(s.manager.world.Rooms()), len(s.manager.world.GetAllZones()),
+			// large bufs, buf switches and overflows are C's output-buffer
+			// counters; the port has no counterpart, so they stay zero.
 			0, 0, 0))
 	case "errors":
 		s.Send(showErrantRooms(s.manager.world))

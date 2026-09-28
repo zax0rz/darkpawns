@@ -84,15 +84,26 @@ func howGood(percent int) string {
 // RenderSkillList ports the player-visible list_skills() result from
 // spec_procs.c: every skill/spell the class can learn at its level (from
 // ClassSpells = init_spell_levels), alpha-sorted by display name, with
-// how_good(GET_SKILL). The oracle source now uses defined append semantics, so
-// the practice-count prelude is stable across builds. Mana rendering for
+// how_good(GET_SKILL). The practice-count prelude follows
+// spec_procs.c:164-168 exactly: no sessions, one session, or a plural count.
+// list_skills was not patched in the oracle; the reference oracle is simply
+// built at -O0, where the prelude survives its own appends. Mana rendering for
 // spells is a follow-on (DP-1166 spell-name/number work).
 func RenderSkillList(p *Player) string {
 	class := p.GetClass()
 	level := p.GetLevel()
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "You have %d practice sessions remaining.\r\n", p.GetPractices())
+	practices := p.GetPractices()
+	if practices == 0 {
+		b.WriteString("You have no practice sessions remaining.\r\n")
+	} else {
+		suffix := "s"
+		if practices == 1 {
+			suffix = ""
+		}
+		fmt.Fprintf(&b, "You have %d practice session%s remaining.\r\n", practices, suffix)
+	}
 	fmt.Fprintf(&b, "You know of the following %ss:\r\n", SplSkl(class))
 
 	type entry struct {

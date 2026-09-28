@@ -97,17 +97,14 @@ Your tattoo flickers but nothing happens.	pkg/session/tattoo.go:79	.Send
 Nothing magical happens.	pkg/session/use_cmds.go:53	.Send
 Zap who?	pkg/session/use_cmds.go:133	.Send
 You aren't holding that.	pkg/session/use_cmds.go:154	.Send
-aggr reagents hooks neutral	pkg/session/wiz_info.go:20	.Send
-death godrooms shops houses tattoos	pkg/session/wiz_info.go:20	.Send
-zones player rent stats errors	pkg/session/wiz_info.go:20	.Send
-Usage: checkload { obj | mob } <number>	pkg/session/wiz_info.go:402	.Send
-Usage: poofset <in|out> [message]	pkg/session/wiz_info.go:594	.Send
-Usage: poofset <in|out> [message]	pkg/session/wiz_info.go:599	.Send
-World not available.	pkg/session/wiz_stats.go:400	.Send
-Room data not found.	pkg/session/wiz_stats.go:406	.Send
-World not available.	pkg/session/wiz_stats.go:532	.Send
-World not available.	pkg/session/wiz_stats.go:711	.Send
-Parsed world data not available.	pkg/session/wiz_stats.go:717	.Send
+Usage: checkload { obj | mob } <number>	pkg/session/wiz_info.go:445	.Send
+Usage: poofset <in|out> [message]	pkg/session/wiz_info.go:637	.Send
+Usage: poofset <in|out> [message]	pkg/session/wiz_info.go:642	.Send
+World not available.	pkg/session/wiz_stats.go:417	.Send
+Room data not found.	pkg/session/wiz_stats.go:423	.Send
+World not available.	pkg/session/wiz_stats.go:549	.Send
+World not available.	pkg/session/wiz_stats.go:728	.Send
+Parsed world data not available.	pkg/session/wiz_stats.go:734	.Send
 Cannot access manager state.	pkg/session/wiz_system.go:213	.Send
 Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect <player>	pkg/session/wiz_system.go:447	.Send
 Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect	pkg/session/wiz_system.go:463	.Send

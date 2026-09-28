@@ -3,19 +3,19 @@
 go files scanned	264
 c files scanned	66
 data files scanned	653
-go candidates (literal at a sink)	1813
+go candidates (literal at a sink)	1812
 c candidates (literal in a sink call)	5547
-go segments	1806
+go segments	1802
 c segments	4902
-go-only segments	122
-c-missing segments	3057
+go-only segments	119
+c-missing segments	3058
 data-sourced segments	29
-unresolved go sink arguments	537
+unresolved go sink arguments	538
 
 [go sink table]
 Act	329	pkg/game Act(): the act()-style primitive (427 call sites)
 BroadcastToRoom	0	SessionManager.BroadcastToRoom, socket-level room broadcast (22 call sites)
-Send	578	Session.Send and wrapper sessions (679 call sites)
+Send	577	Session.Send and wrapper sessions (679 call sites)
 SendMessage	593	Player/MobInstance.SendMessage (599 call sites)
 SendToAll	2	World.SendToAll and SessionManager.SendToAll (10 call sites)
 SendToChar	2	act.go:600 SendToChar(): one-line Act(ToChar) wrapper
@@ -53,7 +53,7 @@ write_to_output	72	descriptor output queue (107 call sites)
 [go candidates by package]
 pkg/combat	29
 pkg/game	1127
-pkg/session	644
+pkg/session	643
 pkg/spells	13
 
 [c candidates by file]
@@ -158,7 +158,7 @@ pkg/session/movement_cmds.go	4
 pkg/session/shop_cmds.go	8
 pkg/session/tattoo.go	1
 pkg/session/use_cmds.go	3
-pkg/session/wiz_info.go	6
+pkg/session/wiz_info.go	3
 pkg/session/wiz_stats.go	5
 pkg/session/wiz_system.go	6
 pkg/session/wiz_zone.go	5
@@ -174,7 +174,7 @@ src/act.movement.c	36
 src/act.offensive.c	128
 src/act.other.c	57
 src/act.social.c	9
-src/act.wizard.c	164
+src/act.wizard.c	165
 src/ban.c	16
 src/boards.c	30
 src/clan.c	19

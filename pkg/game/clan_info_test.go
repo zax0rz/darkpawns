@@ -82,7 +82,11 @@ func TestDoClanInfoListIncludesDefinedCHeading(t *testing.T) {
 
 	w.doClanInfo(p, "")
 
-	if got := output.String(); !strings.HasPrefix(got, "\r\t\t\tooO Clans of Dark Pawns Ooo\r\n") {
-		t.Fatalf("clan list heading missing: %q", got)
+	if got := output.String(); !strings.HasPrefix(got, "\t\t\tooO Clans of Dark Pawns Ooo\r\n") {
+		t.Fatalf("clan list heading missing the C bytes: %q", got)
+	} else if got[0] != '\t' {
+		// C writes "\r" and then overwrites that buffer with the heading
+		// (clan.c:736-737), so the first byte a player sees is the first tab.
+		t.Fatalf("clan list heading starts with %q, want a tab", got[0])
 	}
 }

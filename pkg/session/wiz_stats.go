@@ -153,6 +153,25 @@ func (s *Session) sendStatPlayerFile(player *game.Player) {
 	s.sendStatPlayerReport(player, -1, false, true)
 }
 
+// statOlcZone resolves C's GET_OLC_ZONE for a `stat` report target: the live
+// session's saved olc_zone for an online character (C reads the character in
+// memory), or the player record's value for `stat file` (C's load_char +
+// store_to_char copy it out of the player file). Zero when neither exists.
+func (s *Session) statOlcZone(name string, file bool) int {
+	if !file {
+		if live := findSessionByName(s.manager, name); live != nil {
+			return live.olcZone
+		}
+		return 0
+	}
+	if s.manager != nil && s.manager.hasDB && s.manager.db != nil {
+		if rec, err := s.manager.db.GetPlayer(name); err == nil && rec != nil {
+			return rec.OlcZone
+		}
+	}
+	return 0
+}
+
 func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file bool) {
 	if p == nil {
 		return
@@ -208,15 +227,13 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 	}
 	hometown, practices := p.GetHometown(), p.GetPractices()
 	hitPoints, originalCon := p.GetHP(), p.GetOrigCon()
-	if file {
-		// C loads the persisted creation record into a clear_char() temporary:
-		// hometown is the first hometown, the pre-advance practice count is 2,
-		// current hit points are 1, and orig_con remains zero.
-		hometown, practices = 1, 2
-		hitPoints, originalCon = 1, 0
+	olc := ""
+	if p.GetLevel() >= LVL_IMMORT {
+		// C appends the OLC zone for immortals only (act.wizard.c:767-776).
+		olc = fmt.Sprintf(", OLC[%d]", s.statOlcZone(p.GetName(), file))
 	}
-	s.Send(fmt.Sprintf("Hometown: [%d], Speaks: [0/0/0], (STL[%d]/per[%d]/NSTL[%d])\r\n",
-		hometown, practices, game.IntAppLearn(p.GetInt()), game.WisAppBonus(p.GetWis())))
+	s.Send(fmt.Sprintf("Hometown: [%d], Speaks: [0/0/0], (STL[%d]/per[%d]/NSTL[%d])%s\r\n",
+		hometown, practices, game.IntAppLearn(p.GetInt()), game.WisAppBonus(p.GetWis()), olc))
 	s.Send(fmt.Sprintf("Race: [%d] %s  XP to level: [%d]  Last Death: [%s]\r\n",
 		p.GetRace(), raceName, xpToLevel, lastDeath))
 	s.Send("*************-------------*************-------------*************\r\n")
