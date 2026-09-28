@@ -429,12 +429,10 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 		return false
 	}
 
-	if ScriptEngine != nil && toRoom.ScriptName != "" && toRoom.ScriptFunctions&(1<<1) != 0 {
-		ctx := &ScriptContext{Ch: ch, RoomVNum: toRoom.VNum, World: NewWorldScriptableAdapter(w)}
-		if _, err := ScriptEngine.RunScript(ctx, toRoom.ScriptName, "enter"); err != nil {
-			slog.Warn("room enter script error", "room_vnum", toRoom.VNum, "script", toRoom.ScriptName, "error", err)
-		}
-	}
+	// C act.movement.c:304-305 — run_script(ch, ch, NULL, &world[ch->in_room],
+	// NULL, "enter", LT_ROOM) after a successful move; the return value is
+	// ignored.
+	w.RunRoomEnterScript(ch)
 
 	return true
 }

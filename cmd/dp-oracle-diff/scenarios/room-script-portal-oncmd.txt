@@ -1,0 +1,47 @@
+# Room-object oncmd: the golden portal (obj 19593, scripts/obj/portal.lua,
+# OS_ONCMD). special()'s room-contents arm (interpreter.c:1468-1476) runs the
+# script on "enter golden"; portal.lua matches obj.alias "portal golden" and
+# tports the actor to obj.cost (8008, the Temple) with its three act lines.
+# In the unfixed port do_enter's "There is no golden here." shows instead.
+# depth-case: scripts.portal-room-obj-oncmd
+
+[fixture]
+empty-players
+quiet-mobs
+force-load 19593
+spawn-obj 19593 1 19501 195
+
+[setup:oracle]
+Portalprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Portalprobe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19501
+
+[probe]
+enter golden
+look

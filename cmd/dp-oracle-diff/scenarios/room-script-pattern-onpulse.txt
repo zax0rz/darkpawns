@@ -1,0 +1,85 @@
+# Room onpulse: a Pattern walk room (room 22500, scripts/room/30/
+# pattern_dmg.lua, RS_ONPULSE). room_activity runs the script first in the
+# per-character body for every PC in a flagged room (comm.c:706-708), before
+# the flaming/underwater arms. Two audiences share the room so the shared RNG
+# stream is drawn in C's character_list order: the mortal peer (created last,
+# so listed first) draws before the immortal. The mortal probe actor sees the
+# toll lines and a lowered score HP; the immortal primary's audience block
+# sees "The pattern has no effect on you.".
+# RNG-driven (pattern_dmg calls number()): prove at several seeds (R5a).
+# ORDER CAVEAT (R5h): the peer is named Aapulsed so its name sorts before
+# Zedpulse. The port walks players by name, while C walks character_list
+# newest first, and here the two orders agree only because of that naming.
+# This scenario cannot detect the walk-order divergence; that is DP-1364.
+# depth-case: scripts.pattern-room-onpulse-mortal
+# depth-case: scripts.pattern-room-onpulse-immortal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zedpulse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedpulse
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Aapulsed
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Aapulsed
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 22500
+teleport Aapulsed 22500
+
+[probe:peer]
+~dpclock pulse 120
+score
+~dpclock pulse 120
+score

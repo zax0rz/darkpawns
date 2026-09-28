@@ -471,8 +471,7 @@ An object lies here.
 1 0 0 0 0 0 0 0 0
 0 0 0 0
 1 10 100.0
-S
-myscript 3
+S myscript 3
 $
 `
 	f := writeObjFile(t, tmpDir, "test.obj", content)
@@ -759,8 +758,7 @@ A golden eagle emblem is etched into the surface.
 ~
 A
 19 2
-S
-shieldscript 1
+S shieldscript 1
 $
 `
 	f := writeObjFile(t, tmpDir, "test.obj", content)

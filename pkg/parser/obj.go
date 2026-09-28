@@ -225,18 +225,18 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 			obj.ExtraDescs = append(obj.ExtraDescs, ed)
 		}
 
-		if line == "S" {
-			// Script line: S <name> <lua_functions>
-			// Matching C behavior in parse_object (case 'S')
-			if lb.Scan() {
-				scriptLine := strings.TrimSpace(lb.Text())
-				scriptFields := strings.Fields(scriptLine)
-				if len(scriptFields) >= 1 {
-					obj.ScriptName = scriptFields[0]
-				}
-				if len(scriptFields) >= 2 {
-					obj.LuaFunctions, _ = strconv.Atoi(scriptFields[1])
-				}
+		if line == "S" || strings.HasPrefix(line, "S ") {
+			// Script line: S <name> <lua_functions>, all on this line.
+			// C's parse_object reads it with sscanf(line + 1, " %s %d", ...)
+			// from the same get_line (db.c:1464-1468); the object file's S is
+			// the script attach, not a terminator (unlike the room file's S).
+			scriptLine := strings.TrimSpace(strings.TrimPrefix(line, "S"))
+			scriptFields := strings.Fields(scriptLine)
+			if len(scriptFields) >= 1 {
+				obj.ScriptName = scriptFields[0]
+			}
+			if len(scriptFields) >= 2 {
+				obj.LuaFunctions, _ = strconv.Atoi(scriptFields[1])
 			}
 		}
 

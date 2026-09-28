@@ -11,8 +11,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
-
 	"github.com/zax0rz/darkpawns/pkg/metrics"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
 // commandNumber is a test seam for verifying command_interpreter draw parity.
@@ -843,6 +843,18 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 	scriptText := specialScriptText(name, args, rawArgs)
 	// IS_NPC(ch) for the script gates: a switched session acts as its mobile.
 	actorIsNPC := s.isSwitched && s.switchedMob != nil
+	// run_script's ch and me for the object oncmd sites: the player, or the
+	// switched mobile when the session acts through one (C passes the acting
+	// character both times, interpreter.c:1433, 1446, 1473). The legacy
+	// non-bridged Ch is nil for a switched actor, whose ch is the mobile.
+	var actorRef *scripting.CharRef
+	actorPC := s.player
+	if actorIsNPC {
+		actorRef = &scripting.CharRef{NPC: true, ID: s.switchedMob.GetID()}
+		actorPC = nil
+	} else {
+		actorRef = &scripting.CharRef{ID: s.player.ID}
+	}
 
 	if roomVNum > 0 {
 		// 1. special in room?
@@ -851,7 +863,13 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 				return true
 			}
 		}
-		// TODO(port): DP-1360 room oncmd (interpreter.c:1418-1422)
+		// 2. script in room? C interpreter.c:1419-1423 — !IS_NPC(ch), the
+		// room flagged RS_ONCMD; a TRUE return consumes the command.
+		if !actorIsNPC {
+			if handled := w.RunRoomOnCmdScript(s.player, scriptText); handled {
+				return true
+			}
+		}
 	}
 
 	// 3. special in equipment list? C walks WEAR_ 0..NUM_WEARS-1, playing each
@@ -862,7 +880,13 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 				return true
 			}
 		}
-		// TODO(port): DP-1360 worn object oncmd (interpreter.c:1431-1436)
+		// C interpreter.c:1430-1435 — RNUM != NOTHING, the object's script
+		// flagged OS_ONCMD, !IS_NPC(ch).
+		if !actorIsNPC {
+			if handled := w.RunObjOnCmdScript(actorRef, actorPC, item, roomVNum, scriptText); handled {
+				return true
+			}
+		}
 	}
 
 	// 4. special in inventory? ch->carrying order, special then oncmd.
@@ -875,7 +899,13 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 				return true
 			}
 		}
-		// TODO(port): DP-1360 carried object oncmd (interpreter.c:1445-1449)
+		// C interpreter.c:1443-1448 — RNUM != NOTHING, the object's script
+		// flagged OS_ONCMD, !IS_NPC(ch).
+		if !actorIsNPC {
+			if handled := w.RunObjOnCmdScript(actorRef, actorPC, item, roomVNum, scriptText); handled {
+				return true
+			}
+		}
 	}
 
 	if roomVNum > 0 {
@@ -913,7 +943,12 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 					return true
 				}
 			}
-			// TODO(port): DP-1360 room object oncmd (interpreter.c:1472-1476)
+			// C interpreter.c:1470-1476 — RNUM != NOTHING, the object's
+			// script flagged OS_ONCMD. No IS_NPC gate: a switched mobile's
+			// session runs this one, with the mobile as ch and me.
+			if handled := w.RunObjOnCmdScript(actorRef, actorPC, item, roomVNum, scriptText); handled {
+				return true
+			}
 		}
 	}
 

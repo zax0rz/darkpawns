@@ -210,4 +210,12 @@ type ScriptContext struct {
 	ChRef  *CharRef
 	MeRef  *CharRef
 	ObjRef *ObjRef
+	// OwnerType is run_script's type directory: C builds the path strictly as
+	// SCRIPT_DIR "/" type "/" script_name (scripts.c:1775), so a room owner
+	// loads only scripts/room/<name> and an object owner only
+	// scripts/obj/<name>. "room" and "obj" select that strict lookup; the
+	// empty string keeps the mob-era resolution (direct, then mob/, room/,
+	// obj/), which only the mob call sites use. A non-empty OwnerType also
+	// bridges the run, because object onpulse passes me = NULL (comm.c:791).
+	OwnerType string
 }
