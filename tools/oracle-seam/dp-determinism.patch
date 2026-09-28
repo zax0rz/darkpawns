@@ -1,24 +1,41 @@
 diff --git a/src/comm.c b/src/comm.c
-index 5d8df96..8be02f0 100644
+index 5d8df96..4d54243 100644
 --- a/src/comm.c
 +++ b/src/comm.c
-@@ -93,6 +93,7 @@ extern int autosave_time;   /* see config.c */
+@@ -93,6 +93,12 @@ extern int autosave_time;   /* see config.c */
  struct timeval null_time;   /* zero-valued time structure */
  int port;           /* port mud is running on */
  unsigned long pulse = 0;        /* number of pulses since game began */
 +int dp_clock = 0;       /* deterministic heartbeat gate */
++/* Pulses queued by ~dpclock controls. They run at the game loop's heartbeat
++   phase, never inside process_input(); the ceiling is both the documented
++   per-control maximum and the queue bound, so a queued total cannot wrap. */
++#define DP_CLOCK_MAX_PENDING 100000UL
++unsigned long dp_pending_pulses = 0;
  FILE *logfile = NULL;           /* where to send the log messages. */
  
  /* functions in this file */
-@@ -115,6 +116,7 @@ void flush_queues(struct descriptor_data *d);
+@@ -115,6 +121,9 @@ void flush_queues(struct descriptor_data *d);
  void nonblock(int s);
  int perform_subst(struct descriptor_data *t, char *orig, char *subst);
  int perform_alias(struct descriptor_data *d, char *orig);
 +int process_dpclock_control(char *input);
++int dp_seam_take(void);
++int dp_seam_selftest(void);
  void record_usage(void);
  char *make_prompt(struct descriptor_data *point);
  void check_idle_passwords(void);
-@@ -259,8 +261,12 @@ int dp_main(int argc, char *argv[])
+@@ -240,6 +249,9 @@ int dp_main(int argc, char *argv[])
+   sprintf(buf, "Using %s as data directory.", dir);
+   log("%s", buf);
+ 
++  /* Dispatch the seam self-test before anything boots (DP_SEAM_SELFTEST=1). */
++  (void) dp_seam_selftest();
++
+   if (scheck) {
+     boot_world();
+     log("Done.");
+@@ -259,8 +271,12 @@ int dp_main(int argc, char *argv[])
  void init_game(int port)
  {
    int mother_desc;
@@ -32,19 +49,29 @@ index 5d8df96..8be02f0 100644
  
    log("Finding player limit.");
    max_players = get_max_players();
-@@ -675,8 +681,9 @@ void game_loop(int mother_desc)
+@@ -675,8 +691,19 @@ void game_loop(int mother_desc)
      }
  
      /* Now execute the heartbeat functions */
 -    while (missed_pulses--)
 -      heartbeat(++pulse);
-+    if (!dp_clock)
++    if (dp_clock) {
++      /*
++       * Deterministic-clock mode: run the pulses the ~dpclock controls queued.
++       * They run here, the game loop's heartbeat phase, after descriptor input,
++       * command, output, prompt and CON_CLOSE processing, so a pumped heartbeat
++       * can never close a descriptor that process_input() still owns.
++       */
++      while (dp_seam_take())
++        heartbeat(++pulse);
++    } else {
 +      while (missed_pulses--)
 +        heartbeat(++pulse);
++    }
  
  
      /* Roll pulse over after 10 hours */
-@@ -1821,6 +1828,34 @@ int write_to_descriptor(int desc, const char *txt, struct compr *comp)
+@@ -1821,6 +1848,148 @@ int write_to_descriptor(int desc, const char *txt, struct compr *comp)
    return (write_total);
  }
  
@@ -52,6 +79,11 @@ index 5d8df96..8be02f0 100644
 + * Handle the deterministic-clock control line before normal command queuing.
 + * This keeps the primitive draw-neutral and avoids command history, aliases,
 + * wait-state, and command_interpreter side effects.
++ *
++ * The control only QUEUES its pulses. The game loop runs them at its normal
++ * heartbeat phase (see game_loop), never here: a pumped heartbeat can close a
++ * descriptor (an idle force-rent), and process_input() must not still own the
++ * iterator that describes it when that happens.
 + */
 +int process_dpclock_control(char *input)
 +{
@@ -66,20 +98,129 @@ index 5d8df96..8be02f0 100644
 +    return 0;
 +  if (strcmp(command, "~dpclock") || strcmp(action, "pulse"))
 +    return 0;
-+  if (count == 0 || count > 100000)
++  if (count == 0 || count > DP_CLOCK_MAX_PENDING)
 +    return 0;
++  if (count > DP_CLOCK_MAX_PENDING - dp_pending_pulses)
++    return 0;           /* the queue is full: refuse it, never wrap */
 +
-+  while (count--)
-+    heartbeat(++pulse);
++  dp_pending_pulses += count;
 +
 +  return 1;
++}
++
++/*
++ * Take one queued pulse, if any. The game loop's heartbeat phase drains the
++ * queue through this, exactly once per queued pulse.
++ */
++int dp_seam_take(void)
++{
++  if (!dp_pending_pulses)
++    return 0;
++
++  dp_pending_pulses--;
++
++  return 1;
++}
++
++/*
++ * Self-test for the deterministic-clock seam. DP_SEAM_SELFTEST=1 makes the
++ * binary print a fixed set of observations and exit before booting, so the
++ * queue contract is exercised against the shipped code without a world or a
++ * game loop:
++ *
++ *   control-queues      a valid control queues exactly its count and leaves
++ *                       `pulse` untouched, which is only possible if no
++ *                       heartbeat ran inside input processing;
++ *   drain-once          the drain primitive yields the queued count exactly
++ *                       once and empties the queue;
++ *   overflow-rejected   a control that would push the queue past
++ *                       DP_CLOCK_MAX_PENDING is refused and the total never
++ *                       wraps;
++ *   normal-mode-refused without DP_CLOCK the same line is ordinary input and
++ *                       the queue stays empty;
++ *   invalid-refused     malformed and out-of-range controls are ordinary
++ *                       input too.
++ *
++ * Returns 0 when the self-test was not requested (the process keeps booting).
++ */
++int dp_seam_selftest(void)
++{
++  static const char *invalid[] = {
++    "~dpclock pulse 0",
++    "~dpclock pulse 100001",
++    "~dpclock pulse",
++    "~dpclock pulse 630 extra",
++    "dpclock pulse 630",
++    "~dpclock pause 630",
++    "~dpclock pulse 12x",
++  };
++  unsigned long start_pulse, queued, drained;
++  unsigned int i, accepted = 0;
++  int failed = 0;
++
++  if (!getenv("DP_SEAM_SELFTEST"))
++    return 0;
++
++  /* init_game owns this flag in a real run; the self-test runs before it. */
++  dp_clock = 1;
++  start_pulse = pulse;
++
++  /* Two controls in one input pass accumulate; neither pumps a heartbeat. */
++  if (!process_dpclock_control("~dpclock pulse 630") ||
++      !process_dpclock_control("~dpclock pulse 630"))
++    failed = 1;
++  queued = dp_pending_pulses;
++  if (pulse != start_pulse || queued != 1260)
++    failed = 1;
++  printf("dp-seam-selftest: control-queues queued=%lu heartbeats=%lu\n",
++      queued, pulse - start_pulse);
++
++  /* The drain primitive the game loop uses yields the queue once. */
++  drained = 0;
++  while (dp_seam_take()) {
++    pulse++;
++    drained++;
++  }
++  if (drained != queued || dp_pending_pulses != 0 || dp_seam_take())
++    failed = 1;
++  printf("dp-seam-selftest: drain-once drained=%lu pending=%lu\n",
++      drained, dp_pending_pulses);
++  pulse = start_pulse;
++
++  /* Filling the queue, then refusing the control that would overflow it. */
++  if (!process_dpclock_control("~dpclock pulse 100000") ||
++      process_dpclock_control("~dpclock pulse 1") ||
++      dp_pending_pulses != DP_CLOCK_MAX_PENDING)
++    failed = 1;
++  printf("dp-seam-selftest: overflow-rejected pending=%lu\n",
++      dp_pending_pulses);
++  dp_pending_pulses = 0;
++
++  /* Without DP_CLOCK the control line is ordinary input. */
++  dp_clock = 0;
++  if (process_dpclock_control("~dpclock pulse 630") || dp_pending_pulses != 0)
++    failed = 1;
++  printf("dp-seam-selftest: normal-mode-refused pending=%lu\n",
++      dp_pending_pulses);
++  dp_clock = 1;
++
++  /* Malformed and out-of-range controls are ordinary input as well. */
++  for (i = 0; i < sizeof(invalid) / sizeof(invalid[0]); i++)
++    if (process_dpclock_control((char *) invalid[i]))
++      accepted++;
++  if (accepted != 0 || dp_pending_pulses != 0 || pulse != start_pulse)
++    failed = 1;
++  printf("dp-seam-selftest: invalid-refused accepted=%u\n", accepted);
++
++  printf("dp-seam-selftest: result=%s\n", failed ? "fail" : "ok");
++  exit(failed ? 1 : 0);
 +}
 +
 +
  /*
   * ASSUMPTION: There will be no newlines in the raw input buffer when this
   * function is called.  We must maintain that before returning.
-@@ -1989,23 +2024,25 @@ int process_input(struct descriptor_data *t)
+@@ -1989,23 +2158,25 @@ int process_input(struct descriptor_data *t)
        if (write_to_descriptor(t->descriptor, buffer, t->comp) < 0)
      return -1;
      }

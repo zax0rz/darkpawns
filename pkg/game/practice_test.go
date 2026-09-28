@@ -1,6 +1,9 @@
 package game
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // how_good bands from src/spec_procs.c:108 — every string carries a LEADING space.
 func TestHowGoodBands(t *testing.T) {
@@ -90,4 +93,34 @@ func TestClassSkillMinLevel(t *testing.T) {
 	if got := ClassSkillMinLevel(ClassWarrior, 9999); got != 999 { // not in the catalog
 		t.Errorf("unknown skill min level = %d, want 999", got)
 	}
+}
+
+// TestRenderSkillListPracticeHeader pins C's spec_procs.c:164-168 prelude: no
+// sessions, exactly one session (singular), and the plural count. Reverting to
+// the old single plural line fails the 0 and 1 cases.
+func TestRenderSkillListPracticeHeader(t *testing.T) {
+	cases := []struct {
+		practices int
+		want      string
+	}{
+		{0, "You have no practice sessions remaining.\r\n"},
+		{1, "You have 1 practice session remaining.\r\n"},
+		{2, "You have 2 practice sessions remaining.\r\n"},
+	}
+	for _, tc := range cases {
+		p := NewPlayer(1, "Practiceheader", 8004)
+		p.SetPractices(tc.practices)
+		got := RenderSkillList(p)
+		if !strings.HasPrefix(got, tc.want) {
+			t.Errorf("practices=%d first line = %q, want prefix %q", tc.practices, firstLine(got), tc.want)
+		}
+	}
+}
+
+// firstLine returns the first CRLF-terminated line for failure messages.
+func firstLine(s string) string {
+	if i := strings.Index(s, "\r\n"); i >= 0 {
+		return s[:i+2]
+	}
+	return s
 }

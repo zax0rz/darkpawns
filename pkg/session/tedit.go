@@ -685,21 +685,14 @@ func (s *Session) listTextEditor(actions string, numbered bool) {
 		fmt.Fprintf(&out, "Current buffer range [%d - %d]:\r\n", low, high)
 	}
 	if numbered {
-		// improved-edit.c's numbered path uses sprintf(buf, "%s...", buf,
-		// ...), with overlapping source and destination. On the oracle libc a
-		// multi-line range retains only its final numbered line; preserve that
-		// observed C behavior instead of silently presenting a cleaner list.
 		lastActual := len(starts)
 		if strings.HasSuffix(s.textEdit.buffer, "\n") {
 			lastActual--
 		}
-		target := low
-		if high > low && high < lastActual {
-			target = high
-		} else if high > low && high >= lastActual {
-			target = lastActual
+		if high > lastActual {
+			high = lastActual
 		}
-		if target >= low && target >= 1 && target <= len(starts) {
+		for target := low; target <= high; target++ {
 			start := starts[target-1]
 			end := editorLineEnd(s.textEdit.buffer, starts, target-1)
 			line := s.textEdit.buffer[start:end]

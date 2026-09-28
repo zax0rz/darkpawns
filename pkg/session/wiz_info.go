@@ -11,45 +11,70 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
+// showFields is C's show subcommand table (src/act.wizard.c:2251-2267): the
+// `show options` listing and the subcommand lookup read the same rows in this
+// order, and levels gate both. Row 0 is C's "nothing": the listing loop skips
+// it (it starts at index 1), but the lookup does not, so a prefix such as
+// `show n` resolves to it and falls through to C's default reply. C's "\n"
+// sentinel is the no-match case, which reaches the same reply.
+var showFields = []struct {
+	name  string
+	level int
+}{
+	{name: "nothing", level: 0},
+	{name: "zones", level: LVL_IMMORT},
+	{name: "player", level: LVL_GOD},
+	{name: "rent", level: LVL_GOD},
+	{name: "stats", level: LVL_IMMORT},
+	{name: "errors", level: LVL_IMPL - 1},
+	{name: "death", level: LVL_GOD},
+	{name: "godrooms", level: LVL_GOD},
+	{name: "shops", level: LVL_IMMORT},
+	{name: "houses", level: LVL_GOD},
+	{name: "tattoos", level: LVL_IMMORT},
+	{name: "aggr", level: LVL_IMPL - 1},
+	{name: "reagents", level: LVL_IMMORT},
+	{name: "hooks", level: LVL_IMMORT},
+	{name: "neutral", level: LVL_IMMORT},
+}
+
 func cmdShow(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
 		return nil
 	}
 	if len(args) == 0 {
-		// C's overlapping sprintf in do_show currently leaves this fresh-world
-		// response as the final visible field name. R1 follows the observed C
-		// bytes, not the source author's apparent intent.
-		s.Send("neutral")
+		// C (act.wizard.c:2271-2277) prints the rows this character may use,
+		// five per line, then one trailing CRLF; a shown count that is a
+		// multiple of five therefore ends the output with a blank line.
+		var b strings.Builder
+		b.WriteString("Show options:\r\n")
+		shown := 0
+		for _, f := range showFields[1:] {
+			if f.level > getEffectiveLevel(s) {
+				continue
+			}
+			shown++
+			fmt.Fprintf(&b, "%-15s", f.name)
+			if shown%5 == 0 {
+				b.WriteString("\r\n")
+			}
+		}
+		b.WriteString("\r\n")
+		s.Send(b.String())
 		return nil
 	}
 
-	// This table is the field table in src/act.wizard.c:2250-2265. C uses a
-	// case-sensitive prefix comparison, so preserve the raw first argument.
+	// This is C's case-sensitive prefix lookup (act.wizard.c:2285-2287:
+	// strncmp over strlen(field)), so preserve the raw first argument. It
+	// scans from row 0, so "nothing" wins every prefix it shares with a later
+	// row ("n", "no" beat "neutral").
 	field := args[0]
 	value := ""
 	if len(args) > 1 {
 		value = args[1]
 	}
-	fields := []struct {
-		name  string
-		level int
-	}{
-		{name: "zones", level: LVL_IMMORT},
-		{name: "player", level: LVL_GOD},
-		{name: "rent", level: LVL_GOD},
-		{name: "stats", level: LVL_IMMORT},
-		{name: "errors", level: LVL_IMPL - 1},
-		{name: "death", level: LVL_GOD},
-		{name: "godrooms", level: LVL_GOD},
-		{name: "shops", level: LVL_IMMORT},
-		{name: "houses", level: LVL_GOD},
-		{name: "tattoos", level: LVL_IMMORT},
-		{name: "aggr", level: LVL_IMPL - 1},
-		{name: "reagents", level: LVL_IMMORT},
-		{name: "hooks", level: LVL_IMMORT},
-		{name: "neutral", level: LVL_IMMORT},
-	}
+	fields := showFields
 	fieldIndex := -1
 	for i, candidate := range fields {
 		if strings.HasPrefix(candidate.name, field) {
@@ -63,6 +88,11 @@ func cmdShow(s *Session, args []string) error {
 	}
 	if !checkLevel(s, fields[fieldIndex].level) {
 		s.Send("You are not godly enough for that!\r\n")
+		return nil
+	}
+	if fieldIndex == 0 {
+		// Row 0 has no case in C's switch; its default replies.
+		s.Send("Sorry, I don't understand that.")
 		return nil
 	}
 
@@ -99,15 +129,54 @@ func cmdShow(s *Session, args []string) error {
 			s.Send(fmt.Sprintf("%s has no rent file.\r\n", strings.ToLower(value)))
 		}
 	case "stats":
-		// The current C oracle's overlapping sprintf chain exposes only this
-		// final line in the fresh empty-player vehicle.
-		s.Send("      0 buf switches         0 overflows\r\n")
+		parsed := s.manager.world.GetParsedWorld()
+		mobPrototypes, objectPrototypes := 0, 0
+		if parsed != nil {
+			mobPrototypes = len(parsed.Mobs)
+			objectPrototypes = len(parsed.Objs)
+		}
+		// C walks character_list (act.wizard.c:2356-2378): non-NPC characters
+		// the caller can see, and of those the ones holding a descriptor — a
+		// linkdead player counts in the first number only. `registered` is the
+		// player-file index size (top_of_p_table + 1), which the port reads from
+		// the player store.
+		playersInGame, connected := 0, 0
+		for _, p := range s.manager.world.GetAllPlayers() {
+			if !game.CanSee(s.player, p) {
+				continue
+			}
+			playersInGame++
+			if live := findSessionByName(s.manager, p.GetName()); live != nil && live.hasTransport() {
+				connected++
+			}
+		}
+		registered := 0
+		if s.manager.hasDB && s.manager.db != nil {
+			if n, err := s.manager.db.CountPlayers(); err == nil {
+				registered = n
+			}
+		}
+		s.Send(fmt.Sprintf("Current stats:\r\n"+
+			"  %5d players in game  %5d connected\r\n"+
+			"  %5d registered\r\n"+
+			"  %5d mobiles          %5d prototypes\r\n"+
+			"  %5d objects          %5d prototypes\r\n"+
+			"  %5d rooms            %5d zones\r\n"+
+			"  %5d large bufs\r\n"+
+			"  %5d buf switches     %5d overflows\r\n",
+			playersInGame, connected, registered,
+			len(s.manager.world.GetAllMobs()), mobPrototypes,
+			len(s.manager.world.GetAllObjects()), objectPrototypes,
+			len(s.manager.world.Rooms()), len(s.manager.world.GetAllZones()),
+			// large bufs, buf switches and overflows are C's output-buffer
+			// counters; the port has no counterpart, so they stay zero.
+			0, 0, 0))
 	case "errors":
-		s.Send(showLastErrantRoom(s.manager.world))
+		s.Send(showErrantRooms(s.manager.world))
 	case "death":
-		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_DEATH"))
+		s.Send(showFlaggedRooms(s.manager.world, "ROOM_DEATH", "Death Traps\r\n-----------\r\n"))
 	case "godrooms":
-		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_GODROOM"))
+		s.Send(showFlaggedRooms(s.manager.world, "ROOM_GODROOM", "Godrooms\r\n--------------------------\r\n"))
 	case "shops":
 		// C's show_shops() consumes the complete parsed .shp database. The Go
 		// world currently indexes only shopkeepers, so this branch remains
@@ -149,42 +218,41 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("That is not a valid zone.\r\n")
 		}
 	case "neutral":
-		s.Send(showLastFlaggedRoom(s.manager.world, "ROOM_NEUTRAL"))
+		s.Send(showFlaggedRooms(s.manager.world, "ROOM_NEUTRAL", "Neutral Rooms\r\n-------------\r\n"))
 	}
 	return nil
 }
 
-// showLastErrantRoom mirrors the visible tail of C's errant-room report in
-// the current world. C appends one row per bad exit; the overlapping sprintf
-// leaves the final row as the player-facing bytes observed by the oracle.
-func showLastErrantRoom(w *game.World) string {
+func showErrantRooms(w *game.World) string {
 	count := 0
-	lastRoom := ""
+	var result strings.Builder
+	result.WriteString("Errant Rooms\r\n------------\r\n")
 	rooms := w.Rooms()
 	for i := range rooms {
 		room := &rooms[i]
 		for _, exit := range room.Exits {
 			if exit.ToRoom == 0 {
 				count++
-				lastRoom = fmt.Sprintf("%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
+				fmt.Fprintf(&result, "%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
 			}
 		}
 	}
-	return lastRoom
+	return result.String()
 }
 
-func showLastFlaggedRoom(w *game.World, flag string) string {
+func showFlaggedRooms(w *game.World, flag, header string) string {
 	count := 0
-	lastRoom := ""
+	var result strings.Builder
+	result.WriteString(header)
 	rooms := w.Rooms()
 	for i := range rooms {
 		room := &rooms[i]
 		if game.HasRoomFlag(room, flag) {
 			count++
-			lastRoom = fmt.Sprintf("%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
+			fmt.Fprintf(&result, "%2d: [%5d] %s\r\n", count, room.VNum, room.Name)
 		}
 	}
-	return lastRoom
+	return result.String()
 }
 
 func showTattooListing() string {

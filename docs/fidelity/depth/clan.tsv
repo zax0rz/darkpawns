@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_clan	clan	clan.immortal-format	D1	command	oracle-green	clan-depth	interpreter.c:383; clan.c:63-121	Immortal no-argument format and command surface.
-do_clan	clan	clan.immortal-info-list	D3	state	oracle-green	clan-depth	clan.c:723-750	Immortal list exposes the authored clan row and exact C page bytes.
+do_clan	clan	clan.immortal-info-list	D3	state	oracle-green	clan-depth	clan.c:723-750	Immortal list exposes the authored clan row and exact C page bytes. The heading carries no leading CR: C overwrites the CR it writes with the tabbed heading (clan.c:736-737), which the oracle normalizes away, so TestDoClanInfoListIncludesDefinedCHeading pins both the bytes and the first byte (R1).
 do_clan	clan	clan.immortal-info-detail	D3	state	oracle-green	clan-depth	clan.c:752-785	Detail output follows C's actual overlapping-buffer bytes, including the null plan.
 do_clan	clan	clan.immortal-status-gate	D1	command	oracle-green	clan-depth	clan.c:651-683	Immortals receive the cannot-join status refusal.
 do_clan	clan	clan.immortal-apply-gate	D1	command	oracle-green	clan-depth	clan.c:685-720	Immortals cannot apply.

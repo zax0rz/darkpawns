@@ -8,7 +8,6 @@ force-mob	force.tsv	force.visible-npc-target	blocked
 gsay-act-depth	gsay.tsv	gsay.act-echo-prompt-spacing	blocked	
 gsay-act-depth	gsay.tsv	gsay.act-listener-prompt	blocked	
 gsay-depth	gsay.tsv	gsay.sleeping-recipient	blocked	
-player-state-toggles	auto.tsv	auto.no-arg-listing-undefined	blocked	
 shoot-target-depth	shoot.tsv	shoot.mob-hit-miss	blocked	
 shoot-target-depth	shoot.tsv	shoot.pc-level-window	blocked	
 shoot-target-depth	shoot.tsv	shoot.player-hit-miss	blocked	
@@ -17,3 +16,4 @@ shoot-target-depth	shoot.tsv	shoot.target-fighting	blocked
 shoot-target-depth	shoot.tsv	shoot.targeted-shot	blocked	
 shoot-target-depth	shoot.tsv	shoot.targeted-shot-audience	blocked	
 shoot-target-depth	shoot.tsv	shoot.wait-and-object-consumption	blocked	
+wizard-valid-reports-depth	wizard.tsv	stat.file-success	blocked	

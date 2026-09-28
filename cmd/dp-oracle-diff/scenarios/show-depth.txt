@@ -4,6 +4,7 @@
 
 # depth-case: show.no-argument
 # depth-case: show.unknown-option
+# depth-case: show.nothing-row
 # depth-case: show.prefix-zone-invalid
 # depth-case: show.player-no-name
 # depth-case: show.player-missing
@@ -52,6 +53,24 @@ Y
 <ENTER>
 1
 
+# `show stats` prints C's player-file index size, which C always has (the
+# emptied lib/etc/players plus the character's entry save). The port renders
+# the same number from its player store, so this scenario must give it one:
+# declaring [relogin:*] is the harness contract for "this character reads back
+# from persistence". The lines are never played — the probe has no <RELOGIN>
+# step — and `empty-players` keeps both engines starting with no records.
+[relogin:oracle]
+Showdepth
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Showdepth
+oraclepass
+<ENTER>
+1
+
 [probe]
 show
 show nonsense
@@ -70,3 +89,4 @@ show reagents
 show hooks
 show hooks 999999
 show neutral
+show n

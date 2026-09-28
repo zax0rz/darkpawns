@@ -86,10 +86,10 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 	}
 
 	if arg == "" {
-		// Show all clans
+		// Show all clans. C (clan.c:736-737) builds "\r" and then overwrites
+		// it with the heading, so the stray \r never reaches the player.
 		var msg strings.Builder
-		msg.WriteString("\r")
-		visible := false
+		msg.WriteString("\t\t\tooO Clans of Dark Pawns Ooo\r\n")
 		for i := 0; i < w.Clans.ClanCount(); i++ {
 			c := w.Clans.GetClanByIndex(i)
 			if c == nil {
@@ -99,14 +99,9 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 				fmt.Fprintf(&msg, "[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.ID, c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			} else if c.Private == 0 {
-				visible = true
 				fmt.Fprintf(&msg, "%-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			}
-		}
-		if ch.GetLevel() < LVL_IMMORT && !visible {
-			msg.Reset()
-			msg.WriteString("\r\t\t\tooO Clans of Dark Pawns Ooo\r\n")
 		}
 		ch.SendMessage(msg.String())
 		return
@@ -119,7 +114,23 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 	}
 
 	var msg strings.Builder
-	fmt.Fprintf(&msg, "Info for the clan %s :\r\n\r\n\r\nDescription:\r\n", c.Name)
+	fmt.Fprintf(&msg, "Info for the clan %s :\r\n", c.Name)
+	fmt.Fprintf(&msg, "Ranks      : %d\r\nTitles     : ", c.Ranks)
+	for j := 0; j < c.Ranks; j++ {
+		fmt.Fprintf(&msg, "%s ", c.RankName[j])
+	}
+	fmt.Fprintf(&msg, "\r\nMembers    : %d\r\nPower      : %d\t\nTreasure   : %d\r\nSpells     : ",
+		c.Members, c.Power, c.Treasure)
+	for _, spell := range c.Spells {
+		if spell != 0 {
+			fmt.Fprintf(&msg, "%d ", spell)
+		}
+	}
+	msg.WriteString("\r\nClan privileges:\r\n")
+	for j := 0; j < NumCP; j++ {
+		fmt.Fprintf(&msg, "   %-10s: %d\r\n", clanPrivileges[j], c.Privilege[j])
+	}
+	msg.WriteString("\r\nDescription:\r\n")
 	if c.Plan == "" {
 		msg.WriteString("(null)")
 	} else {

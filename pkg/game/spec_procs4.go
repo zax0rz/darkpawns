@@ -498,10 +498,13 @@ func specStartRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 func startRoomBirthMessage(name string) string {
-	// The C body builds the first three lines, then passes the same buffer as
-	// both sprintf source and destination. The oracle's libc result drops
-	// those lines; preserve the player-facing bytes observed on that path.
-	msg := fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", name)
+	// The C body intends to retain this introduction before the figure speaks.
+	// Its former overlapping sprintf made those bytes compiler-dependent; the
+	// reference oracle now appends without aliasing its source and destination.
+	msg := "   Suddenly the hairs on the back of your neck stand up as if lightning had\n\r"
+	msg += "struck nearby. A keen wailing fills the air, and an ethereal image appears\n"
+	msg += "before you.\n\r"
+	msg += fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", name)
 	msg += "   'Prove your worth and I may well grant you eternal life.'\r\n"
 	msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
 	msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"

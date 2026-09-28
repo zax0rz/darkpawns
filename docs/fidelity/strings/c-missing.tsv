@@ -254,9 +254,7 @@ Num Class Name State Idl Login@ Site	src/act.informative.c:2018	buffered:strcpy	
 Switched	src/act.informative.c:2066	buffered:strcpy	do_users
 UNDEFINED	src/act.informative.c:2090	buffered:sprintf	do_users
 [Hostname unknown]	src/act.informative.c:2096	buffered:strcat	do_users
-visible sockets connected.	src/act.informative.c:2110	buffered:sprintf	do_users
 Compile Time:	src/act.informative.c:2173	buffered:sprintf	do_gen_ps
-A list of registered players:	src/act.informative.c:2182	send_to_char	do_gen_ps
 carried by	src/act.informative.c:2220	buffered:sprintf	print_object_location
 , which is	src/act.informative.c:2231	buffered:sprintf	print_object_location
 in an unknown location	src/act.informative.c:2237	buffered:sprintf	print_object_location
@@ -495,7 +493,6 @@ You can type RECALL to return to your temple.	src/act.other.c:130	send_to_char	d
 has left the game.	src/act.other.c:134	act	do_quit
 has quit the game.	src/act.other.c:135	buffered:sprintf	do_quit
 has quit out of a save room.	src/act.other.c:171	buffered:sprintf	do_quit
-Okay, you'll try to move silently for a while.	src/act.other.c:225	send_to_char	do_sneak
 Hide in the water? Don't think so.	src/act.other.c:271	send_to_char	do_hide
 You are completely exposed here, nowhere to hide!	src/act.other.c:277	send_to_char	do_hide
 You attempt to practice the art of kabuki.	src/act.other.c:284	send_to_char	do_hide
@@ -546,7 +543,6 @@ You yank	src/act.other.c:1656	act	do_yank
 yanks you to your feet.	src/act.other.c:1657	act	do_yank
 Your skill in	src/act.other.c:1721	buffered:sprintf	improve_skill
 improves.	src/act.other.c:1721	buffered:sprintf	improve_skill
-Okay, you'll try to move silently for a while.	src/act.other.c:1762	send_to_char	do_stealth
 With a toss of the dice,	src/act.other.c:1945	buffered:sprintf	do_roll
 accuses you of fighting like a woman!	src/act.social.c:171	act	do_insult
 says that women can't fight.	src/act.social.c:173	act	do_insult
@@ -596,19 +592,10 @@ NEUTRAL-SEX	src/act.wizard.c:710	buffered:strcpy	do_stat_character
 ILLEGAL-SEX!!	src/act.wizard.c:713	buffered:strcpy	do_stat_character
 , VNum: [	src/act.wizard.c:722	buffered:sprintf	do_stat_character
 Monster Class:	src/act.wizard.c:737	buffered:strcpy	do_stat_character
-Created: [	src/act.wizard.c:758	buffered:sprintf	do_stat_character
-], Last Logon: [	src/act.wizard.c:758	buffered:sprintf	do_stat_character
-Hometown: [	src/act.wizard.c:768	buffered:sprintf	do_stat_character
 ], (STL[	src/act.wizard.c:768	buffered:sprintf	do_stat_character
 ], Speaks: [	src/act.wizard.c:768	buffered:sprintf	do_stat_character
-XP to level: [	src/act.wizard.c:777	buffered:sprintf	do_stat_character
 Last Death: [	src/act.wizard.c:784	buffered:sprintf	do_stat_character
-] * Hit p.: [	src/act.wizard.c:798	buffered:sprintf	do_stat_character
-] Int: [	src/act.wizard.c:798	buffered:sprintf	do_stat_character
-] * Mana p.: [	src/act.wizard.c:807	buffered:sprintf	do_stat_character
-] Wis: [	src/act.wizard.c:807	buffered:sprintf	do_stat_character
-] * Move p.: [	src/act.wizard.c:816	buffered:sprintf	do_stat_character
-] Cha: [	src/act.wizard.c:816	buffered:sprintf	do_stat_character
+Last Death: [NONE]	src/act.wizard.c:786	buffered:sprintf	do_stat_character
 , Fighting:	src/act.wizard.c:849	buffered:sprintf	do_stat_character
 , Attack type:	src/act.wizard.c:853	buffered:strcat	do_stat_character
 , Connected:	src/act.wizard.c:858	buffered:strcat	do_stat_character
@@ -617,8 +604,7 @@ Racial Hatreds:	src/act.wizard.c:894	buffered:sprintf	do_stat_character
 Poofout:	src/act.wizard.c:902	buffered:sprintf	do_stat_character
 , NPC Bare Hand Dam:	src/act.wizard.c:908	buffered:sprintf	do_stat_character
 Mob Spec-Proc:	src/act.wizard.c:908	buffered:sprintf	do_stat_character
-, items:	src/act.wizard.c:913	buffered:sprintf	do_stat_character
-Carried: weight:	src/act.wizard.c:913	buffered:sprintf	do_stat_character
+Items in: inventory:	src/act.wizard.c:917	buffered:sprintf	do_stat_character
 , Tattoo:	src/act.wizard.c:928	buffered:sprintf	do_stat_character
 Hunting:	src/act.wizard.c:936	buffered:sprintf	do_stat_character
 , Followers are:	src/act.wizard.c:948	buffered:sprintf	do_stat_character
@@ -688,15 +674,6 @@ You feel slightly different.	src/act.wizard.c:2203	send_to_char	do_wizutil
 Show options:	src/act.wizard.c:2274	buffered:strcpy	do_show
 Lessons:	src/act.wizard.c:2337	buffered:sprintf	do_show
 Started:	src/act.wizard.c:2344	buffered:sprintf	do_show
-Current stats:	src/act.wizard.c:2374	buffered:sprintf	do_show
-connected	src/act.wizard.c:2375	buffered:sprintf	do_show
-players in game	src/act.wizard.c:2375	buffered:sprintf	do_show
-registered	src/act.wizard.c:2376	buffered:sprintf	do_show
-prototypes	src/act.wizard.c:2377	buffered:sprintf	do_show
-prototypes	src/act.wizard.c:2379	buffered:sprintf	do_show
-large bufs	src/act.wizard.c:2383	buffered:sprintf	do_show
-buf switches	src/act.wizard.c:2384	buffered:sprintf	do_show
-overflows	src/act.wizard.c:2384	buffered:sprintf	do_show
 ------------	src/act.wizard.c:2389	buffered:strcpy	do_show
 Errant Rooms	src/act.wizard.c:2389	buffered:strcpy	do_show
 -----------	src/act.wizard.c:2398	buffered:strcpy	do_show
@@ -725,6 +702,7 @@ That is not a race.	src/act.wizard.c:3007	send_to_char	do_set
 IP Address Host Name	src/act.wizard.c:3172	buffered:sprintf	do_dns
 stops the senseless violence in the room with a wave of	src/act.wizard.c:3233	act	do_dark
 You feel your soul wrenched as you are	src/act.wizard.c:3255	buffered:sprintf	do_home
+pulled into a different reality.	src/act.wizard.c:3256	buffered:sprintf	do_home
 disappears in a blaze of hellfire!	src/act.wizard.c:3262	buffered:sprintf	do_home
 You're not godly enough for that room.	src/act.wizard.c:3287	send_to_char	do_home
 Sorry, there are no objs in that zone.	src/act.wizard.c:3329	buffered:sprintf	do_olist
@@ -843,11 +821,11 @@ as data directory.	src/comm.c:240	buffered:sprintf	dp_main
 Running game on port	src/comm.c:248	buffered:sprintf	dp_main
 SYSERR: Non-positive max player limit! (Set at	src/comm.c:439	buffered:sprintf	get_max_players
 Setting player limit to	src/comm.c:444	buffered:sprintf	get_max_players
+has returned.	src/comm.c:607	act	game_loop
 You are too unhealthy to live!	src/comm.c:750	send_to_char	room_activity
 croaks before your very eyes!	src/comm.c:751	act	room_activity
 ' weight incorrect, location '	src/comm.c:783	buffered:sprintf	object_activity
 SYSERR: Object '	src/comm.c:783	buffered:sprintf	object_activity
-sockets connected,	src/comm.c:915	buffered:sprintf	record_usage
 sockets playing	src/comm.c:915	buffered:sprintf	record_usage
 rusage: user time:	src/comm.c:924	buffered:sprintf	record_usage
 sec, max res size:	src/comm.c:924	buffered:sprintf	record_usage
@@ -864,7 +842,6 @@ Line too long. Truncated to:	src/comm.c:1988	buffered:sprintf	process_input
 Invalid substitution.	src/comm.c:2051	SEND_TO_Q	perform_subst
 Invalid substitution.	src/comm.c:2060	SEND_TO_Q	perform_subst
 Your victim is no longer among us.	src/comm.c:2103	SEND_TO_Q	close_socket
-has lost	src/comm.c:2131	act	close_socket
 Closing link to:	src/comm.c:2132	buffered:sprintf	close_socket
 Losing player:	src/comm.c:2136	buffered:sprintf	close_socket
 Timed out... goodbye.	src/comm.c:2183	SEND_TO_Q	check_idle_passwords
@@ -1482,9 +1459,6 @@ You are too dumb to do much of anything!	src/handler.c:660	send_to_char	check_fo
 The world hates you!	src/handler.c:663	send_to_char	check_for_bad_stats
 You trip over your own feet and hit your head!	src/handler.c:668	send_to_char	check_for_bad_stats
 SYSERR: Char is already equipped:	src/handler.c:688	buffered:sprintf	equip_char
-You are zapped by	src/handler.c:705	act	equip_char
-and instantly let go of it.	src/handler.c:705	act	equip_char
-You cannot use	src/handler.c:715	act	equip_char
 Your light begins to flicker and fade.	src/handler.c:1057	act	update_char_objects
 's light begins to flicker and fade.	src/handler.c:1059	act	update_char_objects
 Your light sputters out and dies.	src/handler.c:1062	act	update_char_objects
@@ -1598,19 +1572,10 @@ All you can do right now is think about the stars!	src/interpreter.c:933	send_to
 In your dreams, or what?	src/interpreter.c:936	send_to_char	command_interpreter
 Nah... You feel too relaxed to do that..	src/interpreter.c:939	send_to_char	command_interpreter
 Maybe you should get on your feet first?	src/interpreter.c:942	send_to_char	command_interpreter
-Multiple login detected -- disconnecting.	src/interpreter.c:1550	SEND_TO_Q	perform_dupe_check
-This body has been usurped!	src/interpreter.c:1566	SEND_TO_Q	perform_dupe_check
-Multiple login detected -- disconnecting.	src/interpreter.c:1573	SEND_TO_Q	perform_dupe_check
-Reconnecting.	src/interpreter.c:1636	SEND_TO_Q	perform_dupe_check
-You have mail waiting.	src/interpreter.c:1638	send_to_char	perform_dupe_check
-has reconnected.	src/interpreter.c:1639	act	perform_dupe_check
-] has reconnected.	src/interpreter.c:1640	buffered:sprintf	perform_dupe_check
-You take over your own body, already in use!	src/interpreter.c:1644	SEND_TO_Q	perform_dupe_check
 's body has been taken over by a new spirit!	src/interpreter.c:1645	act	perform_dupe_check
 suddenly keels over in pain, surrounded by a white aura...	src/interpreter.c:1645	act	perform_dupe_check
 has re-logged in ... disconnecting old socket.	src/interpreter.c:1648	buffered:sprintf	perform_dupe_check
 Reconnecting to unswitched char.	src/interpreter.c:1653	SEND_TO_Q	perform_dupe_check
-] has reconnected.	src/interpreter.c:1654	buffered:sprintf	perform_dupe_check
 Invalid name, please try another.	src/interpreter.c:1758	SEND_TO_Q	nanny
 Please remember to choose an appropriate fantasy-oriented name.	src/interpreter.c:1781	SEND_TO_Q	nanny
 Did I get that right,	src/interpreter.c:1782	buffered:sprintf	nanny
@@ -1638,7 +1603,6 @@ Connection attempt for	src/interpreter.c:1901	buffered:sprintf	nanny
 denied from	src/interpreter.c:1901	buffered:sprintf	nanny
 Request for login denied for	src/interpreter.c:1910	buffered:sprintf	nanny
 ] (wizlock)	src/interpreter.c:1910	buffered:sprintf	nanny
-] has connected.	src/interpreter.c:1924	buffered:sprintf	nanny
 LOGIN FAILURE	src/interpreter.c:1930	buffered:sprintf	nanny
 SINCE LAST SUCCESSFUL LOGIN.	src/interpreter.c:1930	buffered:sprintf	nanny
 *** PRESS RETURN:	src/interpreter.c:1937	SEND_TO_Q	nanny
@@ -1667,13 +1631,14 @@ Invalid choice! Select 'Y' or 'N':	src/interpreter.c:2150	SEND_TO_Q	nanny
 ] new player.	src/interpreter.c:2154	buffered:sprintf	nanny
 You are too unhealthy to play!	src/interpreter.c:2178	SEND_TO_Q	nanny
 has entered the game.	src/interpreter.c:2211	act	nanny
-You have mail waiting.	src/interpreter.c:2225	send_to_char	nanny
 You could not afford your rent!	src/interpreter.c:2227	send_to_char	nanny
 Your possesions have been donated to the Salvation Army!	src/interpreter.c:2227	send_to_char	nanny
 Enter the new text you'd like others to see when they look at you.	src/interpreter.c:2259	write_to_output	nanny
 Enter your old password:	src/interpreter.c:2272	SEND_TO_Q	nanny
 Enter your password for verification:	src/interpreter.c:2278	SEND_TO_Q	nanny
+Incorrect password.	src/interpreter.c:2294	SEND_TO_Q	nanny
 Enter a new password:	src/interpreter.c:2299	SEND_TO_Q	nanny
+Incorrect password.	src/interpreter.c:2308	SEND_TO_Q	nanny
 ARE YOU ABSOLUTELY SURE?	src/interpreter.c:2314	SEND_TO_Q	nanny
 Please type "yes" to confirm:	src/interpreter.c:2314	SEND_TO_Q	nanny
 YOU ARE ABOUT TO DELETE THIS CHARACTER PERMANENTLY.	src/interpreter.c:2314	SEND_TO_Q	nanny
@@ -1840,21 +1805,6 @@ says, 'I can fix that.'	src/mobact.c:318	act	mobile_activity
 grins evilly.	src/mobact.c:333	act	mobile_activity
 mutters something about filthy animals in	src/mobprog.c:83	act	mp_greet
 says, 'Have a seat there! Stay a while, rest your bones and warm your feet by the fire!'	src/mobprog.c:89	act	mp_greet
-and wags	src/mobprog.c:119	act	mp_give
-tail happily.	src/mobprog.c:119	act	mp_give
-for a while.	src/mobprog.c:124	act	mp_give
-sniffs around and plays with	src/mobprog.c:124	act	mp_give
-quickly loses interest.	src/mobprog.c:128	act	mp_give
-closely, then hands it back.	src/mobprog.c:135	act	mp_give
-peers at	src/mobprog.c:135	act	mp_give
-growls, 'Are you mocking me?'	src/mobprog.c:137	act	mp_give
-peers at the soul, then licks	src/mobprog.c:145	act	mp_give
-says, 'This will do nicely.. you may enter!'	src/mobprog.c:147	act	mp_give
-pops the soul into his mouth and swallows it, as a hideous	src/mobprog.c:149	act	mp_give
-screaming rings in your ears...	src/mobprog.c:149	act	mp_give
-parts his gnarled hands and a shimmering black portal materializes before you!	src/mobprog.c:155	act	mp_give
-says, 'Thanks for helping clean this place up...'	src/mobprog.c:164	act	mp_give
-says, 'Wow, this is pretty neat, thanks.'	src/mobprog.c:167	act	mp_give
 sniffs the coins and proceeds to eat them.	src/mobprog.c:180	act	mp_bribe
 tips his hat and smiles a thank you.	src/mobprog.c:184	act	mp_bribe
 The mercenary counts the coins then secrets them away.	src/mobprog.c:189	send_to_char	mp_bribe
@@ -2828,7 +2778,6 @@ You can only cast this spell upon yourself!	src/spell_parser.c:881	send_to_char	
 You can only will this power upon yourself!	src/spell_parser.c:883	send_to_char	cast_spell
 You cannot cast this spell upon yourself!	src/spell_parser.c:889	send_to_char	cast_spell
 You cannot will this power upon yourself!	src/spell_parser.c:891	send_to_char	cast_spell
-You cannot use this power if you are not in a group!	src/spell_parser.c:899	send_to_char	cast_spell
 Cast what where?	src/spell_parser.c:937	send_to_char	do_cast
 Will what?	src/spell_parser.c:939	send_to_char	do_cast
 Spell names must be enclosed in the magick symbols: '	src/spell_parser.c:945	send_to_char	do_cast
