@@ -34,6 +34,29 @@ values and make the chosen draw player-visible where possible.
 The harness skips successfully when `DP_ORACLE_BIN` is unset so normal CI does
 not require the external C checkout. Such a skip is not oracle proof (R5a).
 
+## Retaining Run Evidence
+
+Keep the actual Oracle evidence, not only a summary. Retained output includes:
+
+- `ORACLE_REGRESSION_DUMP` contents and per-scenario transcripts/diffs;
+- census logs and summaries;
+- failure artifacts and expected-divergence evidence; and
+- a manifest containing the Git revision, exact command, seed, scenario
+  selection, final status, and file sizes.
+
+On the canonical workstation, use:
+
+```bash
+run_dir="/home/zach/Archives/darkpawns/oracle-runs/$(date +%F)/<issue-or-run>"
+mkdir -p "$run_dir"
+ORACLE_REGRESSION_DUMP="$run_dir/dump" scripts/oracle_regression.sh
+```
+
+Store the run log and manifest beside `dump/`. Temporary harness binaries and
+disposable runtime world copies may remain in `/tmp` and be cleaned by the
+runner. Retained evidence must not depend on `/tmp` surviving a reboot and must
+not be written as loose files in the home-directory root.
+
 ## Scenario Model
 
 Scenarios can have different C/Go login setup, named passive peers for recipient

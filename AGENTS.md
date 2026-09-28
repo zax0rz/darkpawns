@@ -11,6 +11,7 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 | Doc | Governs |
 |---|---|
 | [`docs/fidelity/RULEBOOK.md`](docs/fidelity/RULEBOOK.md) | C→Go port fidelity law (R1–R5) |
+| [`docs/fidelity/oracle-differential-testing.md`](docs/fidelity/oracle-differential-testing.md) | Oracle execution, evidence retention, and artifact handling |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Server topology, systemd, deploy procedure |
 | [`docs/brand-voice.md`](docs/brand-voice.md) | Site prose voice — three-layer framework; public site uses Layer 3 |
 | [`website-astro/DESIGN.md`](website-astro/DESIGN.md) | Site design system ("Haunted Paperback"); machine-readable twin in `website-astro/.impeccable/design.json` |
@@ -19,7 +20,7 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 | [`website-astro/CONTENT-AUDIT.md`](website-astro/CONTENT-AUDIT.md) | Post-migration content review queue |
 | [`website-astro/SPEC-AUDIT.md`](website-astro/SPEC-AUDIT.md) | specification.website release checklist status |
 
-- **R1** player-facing bytes are law · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path; cite C from `src/`, R5g).
+- **R1** player-facing bytes are law · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path; cite C from `src/`, R5g; a green must be able to fail, R5h).
 - **Cite rules by number** in commits, PRs, reviews, and Linear — "violates R4" is a complete verdict.
 - `src/` and `darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
 - When a byte is in question, **the C source wins** (R5e — verify the actual call path, don't trust a summary). A repeated failure indicts the rule, not the file: amend the rulebook + audit the whole class (R5b/R5c).
@@ -30,6 +31,38 @@ Before extending oracle coverage or declaring a command complete, read
 **[`docs/fidelity/DEPTH_TESTING.md`](docs/fidelity/DEPTH_TESTING.md)**. It explains the current
 breadth-to-depth strategy, proof levels, scenario fixtures, manifests, and the dated handoff frontier.
 Breadth coverage proves that a command can match once; it does **not** prove the port is complete.
+
+### Oracle Evidence Retention
+
+Oracle transcripts, per-scenario diffs, census logs, summaries, and failure
+artifacts are retained research evidence. On the workstation, write them
+directly under:
+
+```text
+/home/zach/Archives/darkpawns/oracle-runs/YYYY-MM-DD/<issue-or-run>/
+```
+
+Set `ORACLE_REGRESSION_DUMP` to that run directory when using
+`scripts/oracle_regression.sh`. Include a manifest recording the Git revision,
+exact command, seed, scenario selection, final status, and file sizes. Keep
+disposable harness binaries and runtime copies in `/tmp`; do not leave retained
+Oracle output loose in `$HOME` or dependent on `/tmp` surviving a reboot.
+
+For a full Oracle census, use `ORACLE_REGRESSION_JOBS=36`. Focused and
+diagnostic runs may use fewer workers. Record the actual worker count in the
+run manifest.
+
+### Reference Oracle Binary
+
+The shared `DP_ORACLE_BIN` (`~/darkpawns-c-oracle/bin/circle`) is built
+`-g -O0 -fcommon` from `dp-oracle-seam`. Optimization level changes transcript
+bytes through the C source's undefined behaviour (R1a), so a binary built any
+other way is not the reference. Never replace the shared binary except by
+[`docs/DEV-SETUP.md`](docs/DEV-SETUP.md) → *Promoting a rebuilt reference
+binary*: keep the old binary and both SHA-256s in the run's evidence, and run
+the full census green against the candidate first. Taught 2026-09-28: the
+reference had silently been an `-O2` build, and the port had copied its
+truncated reports.
 
 ### Research Continuity
 
@@ -50,6 +83,10 @@ golangci-lint run ./... # Full lint (uses .golangci.yml)
 ```
 
 **NEVER commit without running all four.** Subagents that self-report passing builds have lied before.
+
+Run each gate on its own and check its exit status. Never chain them with `;` or
+end a chain with `; echo "passed"`: the line reports success when a gate failed,
+and that has hidden real breakage twice.
 
 ## Project Overview
 

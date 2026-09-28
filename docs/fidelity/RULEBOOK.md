@@ -40,6 +40,14 @@ the C server exactly. Not "equivalent." Not "improved." Identical.
   happened to emit. Taught by `do_auto` (PR #1595): C builds its no-argument
   listing with `sprintf(buf, "%sExits ", buf)`, the Linux oracle printed
   nothing, and a careful port deleted the listing to match.
+  The reference oracle is therefore built at `-O0`
+  (`docs/DEV-SETUP.md`), where these overlaps keep the source-intended bytes.
+  Bytes that change with the optimization level are undefined behaviour, never
+  a specification. PR #1682 found the shared reference had been an `-O2` build
+  and the port had copied its truncations into more than a dozen outputs
+  (`show`, `stat`, `mlist`, `home`, `hcontrol`, clan info, the practice list,
+  the start-room vision, the editor's numbered listing, the infobar); all
+  were restored to the intended bytes against the `-O0` build.
 
 ## R2. The command surface is part of the game
 
@@ -159,6 +167,22 @@ cannot observe them.
   citations in PR #1637, spread into a filed issue) and the #1644 review, which
   followed an oracle line number into `src/`'s `sprintbit`.
 
+- **R5h. A green must be able to fail.** Before counting a green as proof, ask
+  whether the scenario would fail if the fix were reverted. A fixture that hits
+  the one input where old and new code agree proves agreement, not fidelity.
+  Every change to player-facing output therefore carries a test that fails
+  when the change is reverted, covering the inputs the scenario does not reach
+  (zero, one and many; each level gate; live and saved paths). Check it by
+  reverting the fix and watching the test fail. Constants that reproduce what a
+  fixture happens to contain are R4. R5a is the RNG-outcome case of this rule.
+  Taught by PR #1682, where five restored reports ran green while wrong: the
+  practice header always used the plural (the fixture had 2 or more
+  practices), `show` listed every option (the fixture was an implementor),
+  `show stats` printed the online count three times (one player was both
+  online and the only one registered), `stat` on an immortal dropped
+  `, OLC[n]`, and `stat file` hardcoded the fresh character's hometown,
+  practices, hit points and `orig_con`.
+
 ---
 
 ## Amendment log
@@ -172,3 +196,4 @@ cannot observe them.
 | 2026-09-24 | R5f prompt boundary clarified | DP-1326: dropped prompt lines hid pager framing and the first game-entry prompt |
 | 2026-09-23 | R1a added | `do_auto`'s self-aliasing `sprintf`: the oracle printed nothing, a delegated port deleted the listing to match; the precedent (patch the oracle, keep the intended bytes) had never been written down |
 | 2026-09-25 | R5g added | PF-032 recalled citations; #1644 review hit the src/ vs oracle line drift in utils.c. Canonical citation target is `src/` |
+| 2026-09-28 | R5h added; R1a extended | PR #1682: the shared reference oracle was an `-O2` build and the port had copied its truncations; restored reports then went green on fixtures that could not fail (second instance after DP-1212's coincidence greens, so R5b) |

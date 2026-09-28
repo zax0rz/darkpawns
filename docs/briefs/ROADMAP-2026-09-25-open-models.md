@@ -87,8 +87,8 @@ bash -c 'set -euo pipefail
 - **One scenario:**
   `DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle go run ./cmd/dp-oracle-diff --scenario <name> --seed 1`
   (add `--show-oracle` to see C's output).
-- **Census before every PR:** `ORACLE_REGRESSION_JOBS=24 make oracle-regression`
-  (up to 36 jobs is fine; about 15 minutes). An `INFRA` or exit-1 result is
+- **Census before every PR:** `ORACLE_REGRESSION_JOBS=36 make oracle-regression`
+  (about 15 minutes). An `INFRA` or exit-1 result is
   usually a flake: rerun that scenario alone before believing it.
 - Work in a **git worktree off `origin/main`**, never in `~/darkpawns` (it
   holds uncommitted webOLC work).
