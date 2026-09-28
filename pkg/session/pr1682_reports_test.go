@@ -149,3 +149,29 @@ func TestShowStatsCountsVisibleConnectedAndRegistered(t *testing.T) {
 		t.Errorf("registered line wrong (want the store count):\n%q", block)
 	}
 }
+
+// TestShowLookupResolvesNothingRowFirst pins C's lookup order
+// (src/act.wizard.c:2285-2287): the prefix scan starts at row 0, "nothing",
+// which has no switch case, so "n", "no" and "nothing" get C's default reply
+// instead of the neutral-room report; "ne" still reaches "neutral".
+func TestShowLookupResolvesNothingRowFirst(t *testing.T) {
+	const sorry = "Sorry, I don't understand that."
+	for _, field := range []string{"n", "no", "nothing"} {
+		m := makeTestManager(t)
+		s := makeCommandTestSession(t, m, "Showgod", 40, 1001)
+		if err := cmdShow(s, []string{field}); err != nil {
+			t.Fatalf("show %s: %v", field, err)
+		}
+		if got := readSendText(t, s); got != sorry {
+			t.Errorf("show %s = %q, want %q", field, got, sorry)
+		}
+	}
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "Showgod", 40, 1001)
+	if err := cmdShow(s, []string{"ne"}); err != nil {
+		t.Fatalf("show ne: %v", err)
+	}
+	if got := readSendText(t, s); !strings.HasPrefix(got, "Neutral Rooms\r\n") {
+		t.Errorf("show ne = %q, want the neutral-room report", got)
+	}
+}

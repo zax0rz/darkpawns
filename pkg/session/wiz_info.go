@@ -13,13 +13,15 @@ import (
 
 // showFields is C's show subcommand table (src/act.wizard.c:2251-2267): the
 // `show options` listing and the subcommand lookup read the same rows in this
-// order, and levels gate both. C's sentinel row ("\n", 0) and its leading
-// "nothing" row are not represented because neither reaches the listing loop
-// (which starts at index 1) and the lookup below matches names directly.
+// order, and levels gate both. Row 0 is C's "nothing": the listing loop skips
+// it (it starts at index 1), but the lookup does not, so a prefix such as
+// `show n` resolves to it and falls through to C's default reply. C's "\n"
+// sentinel is the no-match case, which reaches the same reply.
 var showFields = []struct {
 	name  string
 	level int
 }{
+	{name: "nothing", level: 0},
 	{name: "zones", level: LVL_IMMORT},
 	{name: "player", level: LVL_GOD},
 	{name: "rent", level: LVL_GOD},
@@ -48,7 +50,7 @@ func cmdShow(s *Session, args []string) error {
 		var b strings.Builder
 		b.WriteString("Show options:\r\n")
 		shown := 0
-		for _, f := range showFields {
+		for _, f := range showFields[1:] {
 			if f.level > getEffectiveLevel(s) {
 				continue
 			}
@@ -63,8 +65,10 @@ func cmdShow(s *Session, args []string) error {
 		return nil
 	}
 
-	// The lookup below keeps C's raw first argument: C compares it with
-	// str_cmp semantics, while this port matches by prefix.
+	// This is C's case-sensitive prefix lookup (act.wizard.c:2285-2287:
+	// strncmp over strlen(field)), so preserve the raw first argument. It
+	// scans from row 0, so "nothing" wins every prefix it shares with a later
+	// row ("n", "no" beat "neutral").
 	field := args[0]
 	value := ""
 	if len(args) > 1 {
@@ -84,6 +88,11 @@ func cmdShow(s *Session, args []string) error {
 	}
 	if !checkLevel(s, fields[fieldIndex].level) {
 		s.Send("You are not godly enough for that!\r\n")
+		return nil
+	}
+	if fieldIndex == 0 {
+		// Row 0 has no case in C's switch; its default replies.
+		s.Send("Sorry, I don't understand that.")
 		return nil
 	}
 

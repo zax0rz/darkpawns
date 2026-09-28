@@ -4,6 +4,7 @@
 
 # depth-case: show.no-argument
 # depth-case: show.unknown-option
+# depth-case: show.nothing-row
 # depth-case: show.prefix-zone-invalid
 # depth-case: show.player-no-name
 # depth-case: show.player-missing
@@ -88,3 +89,4 @@ show reagents
 show hooks
 show hooks 999999
 show neutral
+show n
