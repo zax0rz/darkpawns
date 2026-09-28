@@ -1,7 +1,7 @@
 # Go-only string triage (the R4 review queue)
 
 Every go-only segment in [`go-only.tsv`](go-only.tsv) classified, each with evidence a
-reviewer can check in a minute. Generated from the census at `592abf00f`. Segments are the
+reviewer can check in a minute. Generated from the census at `b75852523`. Segments are the
 key, not file:line, because lines move.
 
 Reproduce the queue with `make string-census-update`; the ratchet baseline
@@ -13,13 +13,13 @@ the counts below in step with the baseline).
 |---|---|
 | `bug:invented` | 51 |
 | `bug:paraphrase` | 44 |
-| `census:composed` | 5 |
+| `census:composed` | 2 |
 | `data` | 0 |
 | `surface:no-c` | 1 |
 | `unsure` | 0 |
-| **total** | **101** |
+| **total** | **98** |
 
-`unsure` is 0/101 (0.0%).
+`unsure` is 0/98 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
