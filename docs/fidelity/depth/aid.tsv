@@ -7,5 +7,5 @@ do_first_aid	aid	aid.immortal-success	D4	state	oracle-green	aid-depth	new_cmds2.
 do_first_aid	aid	aid.failure-audience	D3	command	oracle-green	aid-failure-depth	new_cmds2.c:182-184	Failure actor text and TO_ROOM text to both target and observer match.
 do_first_aid	aid	aid.failure-wait	D4	state	oracle-green	aid-failure-depth	new_cmds2.c:187	Two 20-pulse pads leave the second failure command symmetric under the frozen-clock vehicle; unit proof asserts the source-exact 23-pulse result.
 do_first_aid	aid	aid.skill-gate-order	D1	command	unit-green	TestCmdFirstAid_NoArgs	new_cmds2.c:146-151	Existing command test proves the no-skill gate fires before the no-argument branch.
-do_first_aid	aid	aid.success-state	D4	state	unit-green	TestDoFirstAidDepthSuccessState	new_cmds2.c:166-181	Focused state test covers HP=1, update_pos, target wait, and deferred improvement.
+do_first_aid	aid	aid.success-state	D4	state	unit-green	TestDoFirstAidDepthSuccessState	new_cmds2.c:166-187	Focused state test covers HP=1, update_pos, target wait, actor wait=23 raw pulses on success (new_cmds2.c:187), and deferred improvement; the actor-wait assertion fails when the DP-1368 fix is reverted.
 do_first_aid	aid	aid.failure-state	D4	state	unit-green	TestDoFirstAidDepthFailureState	new_cmds2.c:166-187	Focused state test covers guaranteed failure, unchanged HP, exact wait, and TO_ROOM audience.
