@@ -104,6 +104,11 @@ If a fresh build changes transcript bytes, stop and fix the C undefined
 behavior or the documented build contract. A historical compiler accident is
 not a stable specification.
 
+Promoting a candidate also updates
+`cmd/dp-oracle-diff/reference-oracle.sha256` (the promoted binary's
+SHA-256): `scripts/census.sh start` refuses to run a census against any
+other binary unless `CENSUS_ALLOW_NONREFERENCE=1` is set.
+
 ### If `make` fails wanting `aclocal-1.14`
 
 git checkout can set the autotools file mtimes so `make` tries to regenerate

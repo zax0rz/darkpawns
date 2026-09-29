@@ -1,4 +1,4 @@
-.PHONY: world-fidelity world-manifest expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test string-census string-census-update census-coverage db-migrate-build db-migrate-test
+.PHONY: world-fidelity world-manifest expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update census-coverage db-migrate-build db-migrate-test
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -54,6 +54,7 @@ test:
 
 test-all:
 	./test.sh all
+	scripts/test_census.sh
 
 test-unit:
 	./test.sh unit
@@ -144,6 +145,20 @@ oracle-regression:
 
 oracle-regression-worker-test:
 	scripts/test_oracle_regression_worker.sh
+
+# Census tooling: start (returns at once), wait (blocks <=9 min, one line),
+# status (immediate). See scripts/census.sh.
+census-start:
+	scripts/census.sh start --name $${CENSUS_NAME:?CENSUS_NAME=<run-name> is required}
+
+census-wait:
+	scripts/census.sh wait
+
+census-status:
+	scripts/census.sh status
+
+census-tool-test:
+	scripts/test_census.sh
 
 # Prove the fan-out's per-worker isolation before raising --workers. Runs N
 # harness processes concurrently and checks, from /proc, that every worker has
