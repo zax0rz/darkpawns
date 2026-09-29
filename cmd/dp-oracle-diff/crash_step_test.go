@@ -18,9 +18,12 @@ import (
 // the grandchild's lifetime.
 func crashTestChild(t *testing.T) {
 	dir := os.Getenv("DP_KILLTEST_DIR")
-	if err := os.WriteFile(filepath.Join(dir, "ready"), []byte("1"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	// Install the SIGINT recorder BEFORE announcing readiness: a parent that
+	// sees the marker and signals immediately must hit a registered handler,
+	// or a SIGINT-first mutation could kill the child unrecorded and pass
+	// the test on scheduling luck. The channel is buffered, so a signal
+	// arriving between Notify and the recorder goroutine's first drain is
+	// still captured and written.
 	sigs := make(chan os.Signal, 4)
 	signal.Notify(sigs, syscall.SIGINT)
 	go func() {
@@ -33,6 +36,9 @@ func crashTestChild(t *testing.T) {
 			_ = f.Close()
 		}
 	}()
+	if err := os.WriteFile(filepath.Join(dir, "ready"), []byte("1"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	time.Sleep(time.Minute)
 	os.Exit(0)
 }
