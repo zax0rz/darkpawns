@@ -128,10 +128,16 @@ fi
 # holds it, so the kernel frees it the moment the runner dies and a killed
 # census can never leave an orphan holding the lock. (Redirections are
 # literal in bash; census.sh always passes CENSUS_LOCK_FD=9.)
-if ! "${regression_env[@]}" "$runner" >>"$run_dir/census.log" 2>&1 9>&-; then
-	# Non-zero exit alone doesn't decide the verdict: the summary counts do.
-	:
-fi
+# Backgrounded + waited (not foreground): bash defers a trap while a
+# foreground child runs, so a TERM would do nothing until the census
+# finished — up to 15 minutes. wait returns when the trap fires, letting
+# the killed() handler act immediately. The 9>&- stays (decision from the
+# PR 1 review): only this runner holds the lock FD.
+"${regression_env[@]}" "$runner" >>"$run_dir/census.log" 2>&1 9>&- &
+child=$!
+wait "$child"
+# Non-zero exit alone doesn't decide the verdict: the summary counts do.
+:
 
 [[ -s "$run_dir/results.tsv" ]] || printf 'FAIL\t(no results file)\n' >"$run_dir/results.tsv"
 
@@ -168,9 +174,11 @@ recheck_env=(
 	ORACLE_REGRESSION_RESULTS="$run_dir/recheck-results.tsv"
 	ORACLE_REGRESSION_SCENARIOS="$recheck_names"
 )
-if ! "${recheck_env[@]}" "$runner" >"$run_dir/recheck.log" 2>&1 9>&-; then
-	:
-fi
+# Same background+wait discipline as the main invocation.
+"${recheck_env[@]}" "$runner" >"$run_dir/recheck.log" 2>&1 9>&- &
+child=$!
+wait "$child"
+:
 if [[ ! -s "$run_dir/recheck-results.tsv" ]]; then
 	finish NOT_CLEAN 1
 fi

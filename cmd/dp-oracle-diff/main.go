@@ -643,91 +643,133 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		defer func() { _ = goPrimary.Close() }()
 	}
 
-	oracleSetup, err := runSetup(oracleConn, scenario.SetupOracle)
-	if err != nil {
-		return fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", err, oracleEngine.log())
-	}
-	goSetup, err := runSetup(goConn, scenario.SetupPort)
-	if err != nil {
-		return fmt.Errorf("run Go port setup: %w\nserver log:\n%s", err, goEngine.log())
-	}
-
-	oraclePeers := make(map[string]oraclediff.Conn, len(scenario.Peers))
-	goPeers := make(map[string]oraclediff.Conn, len(scenario.Peers))
 	peerNames := make([]string, 0, len(scenario.Peers))
 	for name := range scenario.Peers {
 		peerNames = append(peerNames, name)
 	}
 	sort.Strings(peerNames)
-	for _, name := range peerNames {
-		peer := scenario.Peers[name]
-		oraclePeerNet, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
-		if dialErr != nil {
-			return fmt.Errorf("dial C oracle %s: %w", name, dialErr)
-		}
-		oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
-		defer func() { _ = oraclePeer.Close() }()
-		if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
-			return fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleEngine.log())
-		}
-		oraclePeers[name] = oraclePeer
 
-		goPeer, dialErr := dialGo()
-		if dialErr != nil {
-			return fmt.Errorf("dial Go port %s: %w", name, dialErr)
-		}
-		defer func() { _ = goPeer.Close() }()
-		if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
-			return fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goEngine.log())
-		}
-		goPeers[name] = goPeer
+	// Each engine's whole sequence — setup, peer setup, drains, warmup,
+	// peer-drop, probe — runs in its own goroutine, in exactly the order it
+	// runs today; the two engines only overlap in wall-clock time. Nothing
+	// one side touches belongs to the other: connections, peer maps, the
+	// restart/crash closures and the engines are all per-side, and the
+	// shared helpers (runSetup/runRelogin) read only the scenario. The
+	// comparison below runs after both finish; if a side errors, returning
+	// cancels both engines through the deferred stop (the "cancel"), and the
+	// oracle error wins a tie because today the oracle's step always ran
+	// first and its error surfaced first.
+	type sideResult struct {
+		setup  string
+		blocks []oraclediff.AudienceProbeBlock
 	}
+	runOracleSide := func() (res sideResult, sideErr error) {
+		res.setup, sideErr = runSetup(oracleConn, scenario.SetupOracle)
+		if sideErr != nil {
+			return res, fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", sideErr, oracleEngine.log())
+		}
+		peers := make(map[string]oraclediff.Conn, len(scenario.Peers))
+		for _, name := range peerNames {
+			peer := scenario.Peers[name]
+			oraclePeerNet, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
+			if dialErr != nil {
+				return res, fmt.Errorf("dial C oracle %s: %w", name, dialErr)
+			}
+			oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
+			defer func() { _ = oraclePeer.Close() }()
+			if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
+				return res, fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleEngine.log())
+			}
+			peers[name] = oraclePeer
+		}
+		if err := drainClients(quiescence, oracleConn, peers); err != nil {
+			return res, fmt.Errorf("drain C oracle setup output: %w", err)
+		}
+		if err := oraclediff.RunWarmup(oracleConn, peers, scenario.Warmup, quiescence); err != nil {
+			return res, fmt.Errorf("run C oracle warmup: %w", err)
+		}
+		if scenario.PeerDrop != "" {
+			oraclePeer, ok := peers[scenario.PeerDrop]
+			if !ok {
+				return res, fmt.Errorf("c oracle peer-drop target %q is not connected", scenario.PeerDrop)
+			}
+			if err := oraclePeer.Close(); err != nil {
+				return res, fmt.Errorf("close C oracle peer %q: %w", scenario.PeerDrop, err)
+			}
+			delete(peers, scenario.PeerDrop)
+		}
+		actor, audience := probeClients(oraclePrimary, peers, scenario.ProbeActor)
+		blocks, probeErr := oraclediff.RunAudienceProbe(actor, audience, scenario.Probe, quiescence)
+		if probeErr != nil {
+			return res, fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, oracleEngine.log())
+		}
+		res.blocks = blocks
+		return res, nil
+	}
+	runGoSide := func() (res sideResult, sideErr error) {
+		res.setup, sideErr = runSetup(goConn, scenario.SetupPort)
+		if sideErr != nil {
+			return res, fmt.Errorf("run Go port setup: %w\nserver log:\n%s", sideErr, goEngine.log())
+		}
+		peers := make(map[string]oraclediff.Conn, len(scenario.Peers))
+		for _, name := range peerNames {
+			peer := scenario.Peers[name]
+			goPeer, dialErr := dialGo()
+			if dialErr != nil {
+				return res, fmt.Errorf("dial Go port %s: %w", name, dialErr)
+			}
+			defer func() { _ = goPeer.Close() }()
+			if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
+				return res, fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goEngine.log())
+			}
+			peers[name] = goPeer
+		}
+		if err := drainClients(quiescence, goConn, peers); err != nil {
+			return res, fmt.Errorf("drain Go port setup output: %w", err)
+		}
+		if err := oraclediff.RunWarmup(goConn, peers, scenario.Warmup, quiescence); err != nil {
+			return res, fmt.Errorf("run Go port warmup: %w", err)
+		}
+		if scenario.PeerDrop != "" {
+			goPeer, ok := peers[scenario.PeerDrop]
+			if !ok {
+				return res, fmt.Errorf("go port peer-drop target %q is not connected", scenario.PeerDrop)
+			}
+			if err := goPeer.Close(); err != nil {
+				return res, fmt.Errorf("close Go port peer %q: %w", scenario.PeerDrop, err)
+			}
+			delete(peers, scenario.PeerDrop)
+		}
+		actor, audience := probeClients(goPrimary, peers, scenario.ProbeActor)
+		blocks, probeErr := oraclediff.RunAudienceProbe(actor, audience, scenario.Probe, quiescence)
+		if probeErr != nil {
+			return res, fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, goEngine.log())
+		}
+		res.blocks = blocks
+		return res, nil
+	}
+	var oracleResult, goResult sideResult
+	var oracleSideErr, goSideErr error
+	done := make(chan struct{}, 2)
+	go func() {
+		defer func() { done <- struct{}{} }()
+		oracleResult, oracleSideErr = runOracleSide()
+	}()
+	go func() {
+		defer func() { done <- struct{}{} }()
+		goResult, goSideErr = runGoSide()
+	}()
+	<-done
+	<-done
+	if oracleSideErr != nil {
+		return oracleSideErr
+	}
+	if goSideErr != nil {
+		return goSideErr
+	}
+	oracleSetup, goSetup := oracleResult.setup, goResult.setup
+	oracleBlocks, goBlocks := oracleResult.blocks, goResult.blocks
 
-	// Peer arrivals can emit room text to clients that completed setup earlier.
-	// Clear that non-probe output so each compared block starts at its command.
-	if err := drainClients(quiescence, oracleConn, oraclePeers); err != nil {
-		return fmt.Errorf("drain C oracle setup output: %w", err)
-	}
-	if err := drainClients(quiescence, goConn, goPeers); err != nil {
-		return fmt.Errorf("drain Go port setup output: %w", err)
-	}
-	if err := oraclediff.RunWarmup(oracleConn, oraclePeers, scenario.Warmup, quiescence); err != nil {
-		return fmt.Errorf("run C oracle warmup: %w", err)
-	}
-	if err := oraclediff.RunWarmup(goConn, goPeers, scenario.Warmup, quiescence); err != nil {
-		return fmt.Errorf("run Go port warmup: %w", err)
-	}
-	if scenario.PeerDrop != "" {
-		name := scenario.PeerDrop
-		oraclePeer, ok := oraclePeers[name]
-		if !ok {
-			return fmt.Errorf("c oracle peer-drop target %q is not connected", name)
-		}
-		if err := oraclePeer.Close(); err != nil {
-			return fmt.Errorf("close C oracle peer %q: %w", name, err)
-		}
-		delete(oraclePeers, name)
-
-		goPeer, ok := goPeers[name]
-		if !ok {
-			return fmt.Errorf("go port peer-drop target %q is not connected", name)
-		}
-		if err := goPeer.Close(); err != nil {
-			return fmt.Errorf("close Go port peer %q: %w", name, err)
-		}
-		delete(goPeers, name)
-	}
-
-	oracleActor, oracleAudience := probeClients(oraclePrimary, oraclePeers, scenario.ProbeActor)
-	goActor, goAudience := probeClients(goPrimary, goPeers, scenario.ProbeActor)
-	oracleBlocks, err := oraclediff.RunAudienceProbe(oracleActor, oracleAudience, scenario.Probe, quiescence)
-	if err != nil {
-		return fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", err, oracleEngine.log())
-	}
-	goBlocks, err := oraclediff.RunAudienceProbe(goActor, goAudience, scenario.Probe, quiescence)
-	if err != nil {
-		return fmt.Errorf("run Go port probe: %w\nserver log:\n%s", err, goEngine.log())
-	}
 	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks)+1)
 	normalize := oraclediff.Normalize
 	if scenario.KeepANSI {
@@ -1081,12 +1123,27 @@ func drainClients(quiescence time.Duration, primary oraclediff.Conn, peers map[s
 	if _, err := primary.ReadUntilQuiescent(quiescence); err != nil {
 		return fmt.Errorf("actor: %w", err)
 	}
+	// Peers drain concurrently — each keeps its own quiescence window —
+	// with per-connection errors reported under the same "name: err" text
+	// the sequential loop produced (the actor keeps first-error precedence).
+	var mu sync.Mutex
+	firstErr := error(nil)
+	var wg sync.WaitGroup
 	for name, conn := range peers {
-		if _, err := conn.ReadUntilQuiescent(quiescence); err != nil {
-			return fmt.Errorf("%s: %w", name, err)
-		}
+		wg.Add(1)
+		go func(name string, conn oraclediff.Conn) {
+			defer wg.Done()
+			if _, err := conn.ReadUntilQuiescent(quiescence); err != nil {
+				mu.Lock()
+				defer mu.Unlock()
+				if firstErr == nil {
+					firstErr = fmt.Errorf("%s: %w", name, err)
+				}
+			}
+		}(name, conn)
 	}
-	return nil
+	wg.Wait()
+	return firstErr
 }
 
 func applyObjectFixtures(worldDir string, fixtures []oraclediff.ObjectFixture) error {
