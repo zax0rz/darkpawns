@@ -413,5 +413,41 @@ check "test9c: held lock with dead PID exits 5" 5 "$held_rc"
 grep -q 'pid 999999 died' "$work/held.err" && ok "test9c: holder list printed" || not_ok "test9c: stderr was: $(head -2 "$work/held.err")"
 
 fi
+# --- Test 10 (decision 6): SIGTERM on the runner acts immediately ---------
+# A foreground regression child would defer bash's TERM trap until the
+# census finishes; the runner backgrounds + waits, so the trap fires at
+# once. Kill TERM to ONLY the runner PID (not the group); within 2s the
+# runner, its stub and the stub's sleeping child must all be gone and
+# status must exit 4.
+cat >"$work/runner-sigterm" <<'SSTUB'
+#!/usr/bin/env bash
+set -u
+printf 'oracle-regression: stub sigterm line\n'
+sleep 30 &
+sleep 30 &
+printf 'PASS\talpha\n' >"${ORACLE_REGRESSION_RESULTS:?}"
+wait
+SSTUB
+chmod +x "$work/runner-sigterm"
+start_run test-sigterm "$work/runner-sigterm" >/dev/null
+st_pid=$(cat "$ORACLE_RUNS_ROOT/$(date +%F)/test-sigterm/pid")
+sleep 1
+alive_after_start=$(kill -0 "$st_pid" 2>/dev/null && printf yes || printf no)
+kill -TERM "$st_pid" 2>/dev/null
+sleep 2
+runner_alive=$(kill -0 "$st_pid" 2>/dev/null && printf yes || printf no)
+stub_alive=$(pgrep -g "$st_pid" 2>/dev/null | head -1)
+[[ -n "$stub_alive" ]] && stub_alive=yes || stub_alive=no
+line=$("$census" status --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-sigterm")
+rc=$?
+check "test10: runner was alive before TERM" yes "$alive_after_start"
+check "test10: runner gone within 2s" no "$runner_alive"
+check "test10: no stub child survived" no "$stub_alive"
+check "test10: status exit 4" 4 "$rc"
+case "$line" in
+died*) ok "test10: died line" ;;
+*) not_ok "test10: line was: $line" ;;
+esac
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 ((fail == 0))

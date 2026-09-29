@@ -72,7 +72,12 @@ run_case() {
 	set -e
 	assert_eq 0 "$status" "$name worker exit"
 
-	result=$(<"$result_dir/fake")
+	# Column 3 is the worker's wall seconds (timing, not classification):
+	# assert it is a whole number, then compare the rest of the row.
+	local elapsed
+	elapsed=$(cut -f3 "$result_dir/fake")
+	[[ "$elapsed" =~ ^[0-9]+$ ]] || fail "$name result file: elapsed column $(printf '%q' "$elapsed") is not whole seconds"
+	result=$(cut -f1,2,4- "$result_dir/fake")
 	assert_eq "$want_result" "$result" "$name result file"
 	attempts=$(<"$case_dir/state/attempt-count")
 	assert_eq "$want_attempts" "$attempts" "$name attempt count"

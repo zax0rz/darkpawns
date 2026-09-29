@@ -55,7 +55,26 @@ if ! command -v timeout >/dev/null 2>&1; then
 	exit 2
 fi
 
-mapfile -t scenarios < <(find "$repo_root/cmd/dp-oracle-diff/scenarios" -maxdepth 1 -type f -name '*.txt' -printf '%f\n' | sort)
+# Static scheduling cost, computed from the scenario file only (no stored
+# state): steps x (1 + peers) + 20 x (restart/crash steps). Steps are the
+# non-comment, non-blank lines that are not [section] headers; peers are
+# the distinct named-peer setup sections. Highest cost first (the long
+# scenarios start first, so the tail cannot dominate wall time), ties by
+# name for determinism.
+scenario_cost() {
+	local file=$1
+	local steps peers bounces
+	steps=$(grep -vE '^[[:space:]]*(#|$|\[)' "$file" | wc -l)
+	# Each peer has an oracle and a port setup section; count the name once.
+	peers=$(grep -oE '^\[setup:(oracle|port):[^]]+\]' "$file" | sed -E 's/^\[setup:(oracle|port):/[/' | sort -u | wc -l)
+	bounces=$(grep -cE '^<(RESTART|CRASH)>' "$file")
+	echo $(( steps * (1 + peers) + 20 * bounces ))
+}
+mapfile -t scenarios < <(
+	for f in "$repo_root"/cmd/dp-oracle-diff/scenarios/*.txt; do
+		printf '%d\t%s\n' "$(scenario_cost "$f")" "${f##*/}"
+	done | sort -t$'\t' -k1,1nr -k2,2 | cut -f2-
+)
 if [[ -n "${ORACLE_REGRESSION_SCENARIOS:-}" ]]; then
 	IFS=',' read -r -a requested_scenarios <<<"$ORACLE_REGRESSION_SCENARIOS"
 	scenarios=()
@@ -135,7 +154,9 @@ if [[ -n "${ORACLE_REGRESSION_RESULTS:-}" ]]; then
 		scenario=${scenario_file%.txt}
 		result_file="$result_dir/$scenario"
 		if [[ -s "$result_file" ]]; then
-			printf '%s\t%s\n' "$(cut -f1 "$result_file")" "$scenario"
+			# kind, scenario, and the worker's wall-seconds column (when the
+			# worker wrote one); a missing result keeps its FAIL row.
+			awk -F '\t' -v s="$scenario" '{ if (NF >= 3) printf "%s\t%s\t%s\n", $1, s, $3; else printf "%s\t%s\n", $1, s }' "$result_file"
 		else
 			printf 'FAIL\t%s\n' "$scenario"
 		fi

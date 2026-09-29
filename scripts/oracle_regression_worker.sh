@@ -13,6 +13,8 @@ main() {
 	local attempt=0
 	local attempt_status=0
 	local attempt_log
+	local started_at
+	started_at=$(date +%s)
 	local in_baseline=0
 	local declared_unstable=0
 	local pins_file=${EXPECTED_DIVERGENCE_PINS_FILE:-}
@@ -36,10 +38,14 @@ main() {
 	write_result() {
 		local kind=$1
 		local status=${2:-}
+		# The third column is this worker's wall seconds (status, when
+		# present, keeps its place as column 4): census.sh persists it for
+		# later scheduling tuning.
+		local elapsed=$(( $(date +%s) - started_at ))
 		if [[ -n "$status" ]]; then
-			printf '%s\t%s\t%s\n' "$kind" "$scenario" "$status" >"$result_dir/$scenario"
+			printf '%s\t%s\t%s\t%s\n' "$kind" "$scenario" "$elapsed" "$status" >"$result_dir/$scenario"
 		else
-			printf '%s\t%s\n' "$kind" "$scenario" >"$result_dir/$scenario"
+			printf '%s\t%s\t%s\n' "$kind" "$scenario" "$elapsed" >"$result_dir/$scenario"
 		fi
 	}
 
