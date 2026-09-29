@@ -10,6 +10,21 @@ census=$repo_root/scripts/census.sh
 work=$(mktemp -d "${TMPDIR:-/tmp}/dp-census-test.XXXXXX")
 export ORACLE_RUNS_ROOT=$work/runs
 export XDG_RUNTIME_DIR=$work/rt
+# Fast polling: wait's 15s default would dominate the suite's runtime.
+export CENSUS_POLL_SECONDS=${CENSUS_POLL_SECONDS:-0.2}
+# Optional single-test selector: scripts/test_census.sh test9c [test2 ...]
+only=()
+if [[ ${1:-} != '' && ${1:-} != --* ]]; then
+	only=("$@")
+fi
+want_test() {
+	((${#only[@]} == 0)) && return 0
+	local name
+	for name in "${only[@]}"; do
+		[[ "$name" == "$1" ]] && return 0
+	done
+	return 1
+}
 mkdir -p "$ORACLE_RUNS_ROOT" "$XDG_RUNTIME_DIR"
 
 # A stub oracle binary (never executed; only hashed). Its hash differs from
@@ -61,7 +76,7 @@ STUB
 		;;
 	long)
 		cat >>"$file" <<'STUB'
-sleep 120
+sleep 5
 printf 'PASS	alpha
 ' >"$results"
 STUB
@@ -122,13 +137,16 @@ cleanup() {
 
 start_run() {
 	local name=$1 runner=$2 extra=${3:-}
-	CENSUS_RUNNER="$runner" CENSUS_ALLOW_NONREFERENCE=1 \
+	CENSUS_RUNNER="$runner" CENSUS_ALLOW_NONREFERENCE=1 CENSUS_TEST_WORK="${CENSUS_TEST_WORK:-}" \
 		"$census" start --name "$name" $extra 2>"$work/err"
 }
 
 # --- Test 1: start returns fast; wait exits 0 with the summary line -------
+# Shared quick stub (used by test1's assertions and later blocks).
 stub=$work/runner-quick
 make_stub_runner "$stub" quick
+
+if want_test test1; then
 t0=$SECONDS
 out=$(start_run test-quick "$stub")
 rc=$?
@@ -141,7 +159,9 @@ rc=$?
 check "test1: wait exit 0" 0 "$rc"
 check "test1: wait line" "oracle-regression: stub quick line verdict=CLEAN" "$line"
 
+fi
 # --- Test 2: second start exits 5; stale lock takeover -------------------
+if want_test test2; then
 stub2=$work/runner-long
 make_stub_runner "$stub2" long
 start_run test-long "$stub2" >/dev/null
@@ -167,7 +187,9 @@ check "test2: stale-lock takeover exit 0" 0 "$rc"
 grep -q 'stale lock' "$work/err" && ok "test2: takeover says stale" || not_ok "test2: stderr was: $(cat "$work/err")"
 "$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-takeover" --max-seconds 60 >/dev/null
 
+fi
 # --- Test 3: reference mismatch exits 6; allow=1 proceeds -----------------
+if want_test test3; then
 # Temporarily make the stub's hash match nothing and the reference real.
 ref_backup=$work/reference.bak
 cp "$repo_root/cmd/dp-oracle-diff/reference-oracle.sha256" "$ref_backup"
@@ -188,7 +210,9 @@ manifest=$ORACLE_RUNS_ROOT/$(date +%F)/test-allowed/MANIFEST.md
 grep -q 'NOT THE REFERENCE ORACLE' "$manifest" && ok "test3: manifest marked" || not_ok "test3: manifest missing mark"
 cp "$ref_backup" "$repo_root/cmd/dp-oracle-diff/reference-oracle.sha256"
 
+fi
 # --- Test 4: INFRA recheck verdicts; FAIL never rechecked -----------------
+if want_test test4; then
 stub_infra=$work/runner-infra
 make_stub_runner "$stub_infra" infra
 start_run test-infra "$stub_infra" >/dev/null
@@ -221,7 +245,9 @@ rc=$?
 check "test4: FAIL exit 1" 1 "$rc"
 [[ $(grep -c . "$work/recheck-invocations") -eq 0 ]] && ok "test4: FAIL never rechecked" || not_ok "test4: FAIL was rechecked"
 
+fi
 # --- Test 5: wait --max-seconds 2 on a long stub exits 3 -------------------
+if want_test test5; then
 stub_long=$work/runner-long2
 make_stub_runner "$stub_long" long
 start_run test-wait3 "$stub_long" >/dev/null
@@ -237,7 +263,9 @@ long_pid=$(cat "$ORACLE_RUNS_ROOT/$(date +%F)/test-wait3/pid")
 kill -- "-$long_pid" 2>/dev/null || kill "$long_pid" 2>/dev/null
 wait "$long_pid" 2>/dev/null
 
+fi
 # --- Test 6: killing the runner → status exits 4 with died ----------------
+if want_test test6; then
 stub_long3=$work/runner-long3
 make_stub_runner "$stub_long3" long
 start_run test-died "$stub_long3" >/dev/null
@@ -252,7 +280,9 @@ died*) ok "test6: died line" ;;
 *) not_ok "test6: line was: $line" ;;
 esac
 
+fi
 # --- Test 7: MANIFEST.md holds the HEAD captured at start ------------------
+if want_test test7; then
 stub7=$work/runner-head
 make_stub_runner "$stub7" quick
 start_run test-head "$stub7" >/dev/null
@@ -267,5 +297,121 @@ grep -q -- "Go HEAD (captured before the run): \`$head_at_start\`" "$manifest7" 
 	&& ok "test7: manifest HEAD matches start" \
 	|| not_ok "test7: manifest HEAD differs from $head_at_start"
 
+fi
+# --- Test 8: after both runs finish, wait reports the LAST one started --
+if want_test test8; then
+# The reviewer's repro: start zeta, then alpha; both finish; wait with no
+# --run must report alpha (the last-run pointer), not zeta (the
+# alphabetically-last directory). Alphabetical resolution is a false green
+# when the two verdicts differ.
+stub_q=$work/runner-rq
+make_stub_runner "$stub_q" quick
+cat >"$work/runner-zeta" <<ZSTUB
+#!/usr/bin/env bash
+set -u
+printf 'oracle-regression: stub zeta line\n'
+printf 'PASS\tzeta-only\n' >"\${ORACLE_REGRESSION_RESULTS:?}"
+ZSTUB
+chmod +x "$work/runner-zeta"
+start_run zeta "$work/runner-zeta" >/dev/null
+"$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/zeta" --max-seconds 60 >/dev/null
+start_run alpha "$stub_q" >/dev/null
+"$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/alpha" --max-seconds 60 >/dev/null
+# Both finished; the lock is free. wait must resolve through the pointer.
+line=$("$census" wait --max-seconds 60)
+rc=$?
+check "test8: wait exit 0" 0 "$rc"
+case "$line" in
+*"stub quick line"*) ok "test8: reports alpha (last started)" ;;
+*"stub zeta line"*) not_ok "test8: reported zeta (alphabetical false pick)" ;;
+*) not_ok "test8: line was: $line" ;;
+esac
+
+fi
+# --- Test 9: killed runner + orphaned lock holder --------------------------
+if want_test test9; then
+# The orphan stub's child inherits FD 9 when the runner doesn't close it;
+# a killed census must not hang the next start. The runner closes the FD
+# for the regression child, so killing the runner's group frees the lock
+# at once; the start after must succeed, not block.
+cat >"$work/runner-orphan" <<'ORPHAN'
+#!/usr/bin/env bash
+set -u
+printf 'oracle-regression: stub orphan line
+'
+# A grandchild that outlives a plain kill of the runner PID.
+sleep 30 &
+printf 'PASS	alpha
+' >"${ORACLE_REGRESSION_RESULTS:?}"
+wait
+ORPHAN
+chmod +x "$work/runner-orphan"
+start_run test-orphan "$work/runner-orphan" >/dev/null
+orphan_pid=$(cat "$ORACLE_RUNS_ROOT/$(date +%F)/test-orphan/pid")
+# Kill ONLY the runner PID — the orphaned sleep survives it (it is in the
+# same process group, but the point is the FD test below).
+kill "$orphan_pid" 2>/dev/null
+wait "$orphan_pid" 2>/dev/null
+line=$("$census" status --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-orphan")
+rc=$?
+check "test9: orphan run reports died" 4 "$rc"
+# The next start must not hang: bounded wait, then a clean exit path. The
+# timeout guard turns an unbounded-flock regression into a test failure
+# instead of a hung suite.
+t0=$SECONDS
+out=$(timeout 15 bash -c 'CENSUS_RUNNER="$0" CENSUS_ALLOW_NONREFERENCE=1 "$1" start --name test-after-orphan' "$stub_q" "$census" 2>"$work/orphan-start.err")
+rc=$?
+elapsed=$((SECONDS - t0))
+check "test9: start after kill exits 0" 0 "$rc"
+((elapsed < 10)) && ok "test9: start returned within 10s (${elapsed}s)" || not_ok "test9: start took ${elapsed}s (hang?)"
+# Kill the orphaned stub's whole process group by its recorded PID — never
+# pkill -f (it would match any process on the machine).
+orphan_group=$(cat "$ORACLE_RUNS_ROOT/$(date +%F)/test-orphan/pid" 2>/dev/null)
+[[ -n "$orphan_group" ]] && kill -- "-$orphan_group" 2>/dev/null
+"$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-after-orphan" --max-seconds 60 >/dev/null
+
+fi
+# --- Test 9b: the regression child never inherits the lock FD --------------
+if want_test test9b; then
+# The orphan-hang fix's core: census_runner.sh closes FD 9 on both
+# invocations of the runner, so no worker or server can hold the lock
+# after the runner dies. The stub records what its own /proc shows at
+# runtime (quoted heredoc: nothing expands at creation).
+cat >"$work/runner-fdprobe" <<'FSTUB'
+#!/usr/bin/env bash
+set -u
+out="${CENSUS_TEST_WORK:?}/fd9-seen"
+readlink /proc/self/fd/9 >"$out" 2>/dev/null || printf 'closed\n' >"$out"
+printf 'PASS\talpha\n' >"${ORACLE_REGRESSION_RESULTS:?}"
+FSTUB
+chmod +x "$work/runner-fdprobe"
+rm -f "$work/fd9-seen"
+CENSUS_TEST_WORK="$work" start_run test-fdprobe "$work/runner-fdprobe" >/dev/null
+"$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-fdprobe" --max-seconds 60 >/dev/null
+check "test9b: regression child FD 9 closed" closed "$(cat "$work/fd9-seen" 2>/dev/null || printf missing)"
+
+fi
+# --- Test 9c: dead PID + foreign lock holder → bounded refusal, no hang ----
+if want_test test9c; then
+# The reviewer's second repro: a killed runner whose child still holds the
+# lock. Simulated directly (a live flock holder + a body naming a dead PID):
+# start must wait at most ~5s, then exit 5 listing the holder — never hang.
+# The timeout guard turns an unbounded-flock regression into a failure.
+flock -x "$XDG_RUNTIME_DIR/dp-census.lock" -c 'sleep 6' &
+holder_pid=$!
+sleep 0.3
+printf '999999: %s\n' "$ORACLE_RUNS_ROOT/$(date +%F)/nowhere" >"$XDG_RUNTIME_DIR/dp-census.lock"
+t0=$SECONDS
+timeout 15 env CENSUS_RUNNER="$stub" CENSUS_ALLOW_NONREFERENCE=1 \
+	"$census" start --name test-heldlock 2>"$work/held.err"
+held_rc=$?
+held_elapsed=$((SECONDS - t0))
+kill "$holder_pid" 2>/dev/null
+wait "$holder_pid" 2>/dev/null
+check "test9c: held lock with dead PID exits 5" 5 "$held_rc"
+((held_elapsed <= 10)) && ok "test9c: refused within 10s (${held_elapsed}s)" || not_ok "test9c: took ${held_elapsed}s (hang?)"
+grep -q 'pid 999999 died' "$work/held.err" && ok "test9c: holder list printed" || not_ok "test9c: stderr was: $(head -2 "$work/held.err")"
+
+fi
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 ((fail == 0))

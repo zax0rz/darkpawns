@@ -16,11 +16,33 @@ scenarios=${CENSUS_SCENARIOS:-}
 jobs=${CENSUS_JOBS:-36}
 seed=${CENSUS_SEED:-1}
 lock_fd=${CENSUS_LOCK_FD:-9}
+# The regression invocations close FD 9 literally; refuse a mismatched
+# CENSUS_LOCK_FD rather than silently leaving the lock inheritable.
+[[ "$lock_fd" == 9 ]] || {
+	printf 'census-runner: CENSUS_LOCK_FD must be 9 (got %s)\n' "$lock_fd" >&2
+	exit 2
+}
 lock_file=${XDG_RUNTIME_DIR:-/tmp}/dp-census.lock
 
 pid=$$
 started_iso=$(date '+%Y-%m-%dT%H:%M:%S%z')
 started_s=$(date +%s)
+
+# A killed census must not leave workers running (or holding anything).
+# The runner is its own process-group leader (setsid), so killing the
+# group takes the regression script, xargs, the workers and both servers
+# with it. The EXIT arm also releases the lock for the die-without-trap
+# case.
+killed() {
+	trap - TERM INT EXIT
+	kill -- "-$pid" 2>/dev/null || true
+	printf 'done verdict=KILLED\n' >"$run_dir/state"
+	flock -u "$lock_fd" 2>/dev/null || true
+	: >"$lock_file" 2>/dev/null || true
+	exit 4
+}
+trap killed TERM INT
+trap 'flock -u "$lock_fd" 2>/dev/null || true; : >"$lock_file" 2>/dev/null || true' EXIT
 
 finish() {
 	local verdict=$1 exit_code=$2
@@ -29,7 +51,13 @@ finish() {
 	finished_iso=$(date '+%Y-%m-%dT%H:%M:%S%z')
 	local summary_line
 	summary_line=$(grep '^oracle-regression: ' "$run_dir/census.log" | tail -1)
-	printf '%s verdict=%s\n' "$summary_line" "$verdict" >"$run_dir/summary.txt"
+	{
+		printf '%s verdict=%s' "$summary_line" "$verdict"
+		if [[ -s "$run_dir/recheck-results.tsv" ]]; then
+			printf ' rechecked=%s' "$(awk -F '\t' '{ printf "%s%s", sep, $2; sep="," }' "$run_dir/recheck-results.tsv")"
+		fi
+		printf '\n'
+	} >"$run_dir/summary.txt"
 	printf '%s\n' "$exit_code" >"$run_dir/exit-code"
 	printf 'done verdict=%s\n' "$verdict" >"$run_dir/state"
 	write_manifest "$verdict" "$started_iso" "$finished_iso" "$summary_line"
@@ -96,7 +124,11 @@ regression_env=(
 if [[ -n "$scenarios" ]]; then
 	regression_env+=("ORACLE_REGRESSION_SCENARIOS=$scenarios")
 fi
-if ! "${regression_env[@]}" "$runner" >>"$run_dir/census.log" 2>&1; then
+# The regression script must not inherit the lock FD: only the runner
+# holds it, so the kernel frees it the moment the runner dies and a killed
+# census can never leave an orphan holding the lock. (Redirections are
+# literal in bash; census.sh always passes CENSUS_LOCK_FD=9.)
+if ! "${regression_env[@]}" "$runner" >>"$run_dir/census.log" 2>&1 9>&-; then
 	# Non-zero exit alone doesn't decide the verdict: the summary counts do.
 	:
 fi
@@ -136,7 +168,7 @@ recheck_env=(
 	ORACLE_REGRESSION_RESULTS="$run_dir/recheck-results.tsv"
 	ORACLE_REGRESSION_SCENARIOS="$recheck_names"
 )
-if ! "${recheck_env[@]}" "$runner" >"$run_dir/recheck.log" 2>&1; then
+if ! "${recheck_env[@]}" "$runner" >"$run_dir/recheck.log" 2>&1 9>&-; then
 	:
 fi
 if [[ ! -s "$run_dir/recheck-results.tsv" ]]; then

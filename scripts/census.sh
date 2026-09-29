@@ -20,6 +20,8 @@ set -u
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 lock_file="${XDG_RUNTIME_DIR:-/tmp}/dp-census.lock"
+poll_seconds=${CENSUS_POLL_SECONDS:-15}
+last_run_file="${XDG_RUNTIME_DIR:-/tmp}/dp-census.last"
 runs_root=${ORACLE_RUNS_ROOT:-$HOME/Archives/darkpawns/oracle-runs}
 runner=${CENSUS_RUNNER:-$repo_root/scripts/oracle_regression.sh}
 reference_file=$repo_root/cmd/dp-oracle-diff/reference-oracle.sha256
@@ -86,7 +88,7 @@ report_run() {
 			printf 'died %s\n' "$run_dir"
 			return 4
 		fi
-		sleep 15
+		sleep "$poll_seconds"
 	done
 	# One final check after the deadline.
 	if [[ -s "$run_dir/summary.txt" ]]; then
@@ -111,9 +113,13 @@ resolve_run() {
 		printf '%s\n' "$requested"
 		return
 	fi
-	# The run holding the lock, else the newest run dir. A lock body names
-	# the active run; after the runner finishes it is emptied, so a stale
-	# non-empty body with a dead PID falls through to the newest dir.
+	# The run holding the lock, else the last one started, else the newest
+	# run dir. The lock body names the active run; after the runner
+	# finishes it is emptied. The last-run pointer is written by start, so
+	# a finished run resolves even after its lock is gone — alphabetical
+	# order would report a *different* run's result. The mtime fallback
+	# covers a pointer lost to a reboot and ignores hand-made directories
+	# without a state file.
 	if [[ -s "$lock_file" ]]; then
 		local lock_run
 		lock_run=$(sed -n 's/^[0-9]*: //p' "$lock_file")
@@ -122,7 +128,23 @@ resolve_run() {
 			return
 		fi
 	fi
-	find "$runs_root" -mindepth 2 -maxdepth 2 -type d -name '*' 2>/dev/null | sort | tail -1
+	if [[ -s "$last_run_file" ]]; then
+		local last_run
+		last_run=$(cat -- "$last_run_file")
+		if [[ -d "$last_run" ]]; then
+			printf '%s\n' "$last_run"
+			return
+		fi
+	fi
+	local best best_mtime=-1 mtime
+	while IFS= read -r -d '' state; do
+		mtime=$(stat -c %Y -- "$state" 2>/dev/null) || continue
+		if ((mtime > best_mtime)); then
+			best_mtime=$mtime
+			best=$(dirname -- "$state")
+		fi
+	done < <(find "$runs_root" -mindepth 3 -maxdepth 3 -name state -type f -print0 2>/dev/null)
+	[[ -n "${best:-}" ]] && printf '%s\n' "$best"
 }
 
 # ---------------------------------------------------------------------------
@@ -154,10 +176,16 @@ do_start() {
 		lock_pid=$(sed -n 's/^\([0-9]*\):.*/\1/p' "$lock_file")
 		lock_run=$(sed -n 's/^[0-9]*: //p' "$lock_file")
 		if [[ -n "$lock_pid" ]] && ! kill -0 "$lock_pid" 2>/dev/null; then
-			# Contended flock with a dead PID can only mean a foreign holder
-			# (another FD); treat it as stale and wait for our turn below.
-			printf 'census: stale lock (pid %s dead) — taking over\n' "$lock_pid" >&2
-			flock 9
+			# The named holder is dead but the flock is still taken: an FD
+			# inherited by an orphaned child. Wait at most 5s for it, then
+			# refuse — never block without a limit.
+			if flock -w 5 9; then
+				printf 'census: stale lock (pid %s dead) — taken over\n' "$lock_pid" >&2
+			else
+				printf 'census: lock still held after the pid %s died; holders:\n' "$lock_pid" >&2
+				"$repo_root/scripts/census_lock_holders.sh" >&2 || true
+				exit 5
+			fi
 		else
 			printf 'census: another census is running: %s\n' "$lock_run"
 			exit 5
@@ -229,13 +257,16 @@ do_start() {
 		CENSUS_JOBS="$effective_jobs" \
 		CENSUS_SEED="$seed" \
 		CENSUS_LOCK_FD=9 \
+		CENSUS_TEST_WORK="${CENSUS_TEST_WORK:-}" \
 		bash "$repo_root/scripts/census_runner.sh" </dev/null >"$run_dir/census.log" 2>&1 &
 	pid=$!
 	printf '%s\n' "$pid" >"$run_dir/pid"
 
-	# 5. State + lock body.
+	# 5. State + lock body + last-run pointer (wait/status resolve the
+	# finished run through it once the lock is gone).
 	printf 'running pid=%s started=%s\n' "$pid" "$(date '+%Y-%m-%dT%H:%M:%S%z')" >"$run_dir/state"
 	printf '%s: %s\n' "$pid" "$run_dir" >"$lock_file"
+	printf '%s\n' "$run_dir" >"$last_run_file"
 
 	printf 'census started: %s\n' "$run_dir"
 	exit 0
