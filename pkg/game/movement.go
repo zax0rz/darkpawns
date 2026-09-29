@@ -34,6 +34,9 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 		case OwnerPlayer:
 			if p, ok := w.players[old.PlayerName]; ok {
 				p.Inventory.removeItem(obj)
+				// C obj_from_char sets PLR_CRASH after the removal
+				// (handler.c:596-598).
+				p.MarkCrashNeeded()
 			}
 		case OwnerMob:
 			if m, ok := w.activeMobs[old.MobID]; ok {
@@ -52,6 +55,10 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				if err := p.Equipment.unequip(old.Slot, p.Inventory); err != nil {
 					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
 				}
+				// The object returns to the player's carrying list; C's
+				// obj_to_char sets PLR_CRASH for exactly this entry
+				// (handler.c:569-571).
+				p.MarkCrashNeeded()
 			}
 		case OwnerMob:
 			if m, ok := w.activeMobs[old.MobID]; ok {
@@ -96,6 +103,9 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 				if err := p.Inventory.addItem(obj); err != nil {
 					return fmt.Errorf("attach to player %s inventory: %w", dst.PlayerName, err)
 				}
+				// C obj_to_char sets PLR_CRASH after the attach
+				// (handler.c:569-571).
+				p.MarkCrashNeeded()
 			}
 		case OwnerMob:
 			if m, ok := w.activeMobs[dst.MobID]; ok {

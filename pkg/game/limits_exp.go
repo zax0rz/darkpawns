@@ -185,6 +185,11 @@ func (w *World) GainExp(p *Player, gain int) {
 				p.mu.Unlock()
 			}
 			sendToChar(p, fmt.Sprintf("You advance to level %d!\r\n", p.Level))
+			// C advance_level ends with save_char(ch, NOWHERE)
+			// (class.c:712).
+			if res := w.SavePlayerRecord(p, "advance level", LoadRoomNowhere, SaveCharOnly); res == SaveFailed {
+				slog.Error("store-of-record save failed on level advance", "player", p.GetName())
+			}
 		}
 	} else if gain < 0 {
 		if gain < -maxExpLoss {

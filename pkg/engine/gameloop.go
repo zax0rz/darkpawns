@@ -87,6 +87,13 @@ type GameLoopCallbacks struct {
 	// OnFlushPlayerFile — called every Mud hour. Ported from fflush(player_fl).
 	OnFlushPlayerFile func()
 
+	// OnAutosave — called every 60 * PASSES_PER_SEC (60s), the auto_save
+	// minute slot. Ported from the mins_since_crashsave block of C's
+	// heartbeat (comm.c:832-837), which sits after the mud-hour block and
+	// before record_usage; the 10-minute counter and the save pass live in
+	// the manager (Crash_save_all, objsave.c:1211-1223).
+	OnAutosave func()
+
 	// OnRecordUsage — called every 5 * 60 * PASSES_PER_SEC (5 min).
 	// Ported from record_usage() in comm.c.
 	OnRecordUsage func()
@@ -333,6 +340,12 @@ func (gl *GameLoop) heartbeat(pulse int64) {
 		gl.safeInvoke("PointUpdate", pulse, cb.OnPointUpdate)
 		gl.safeInvoke("HuntItems", pulse, cb.OnHuntItems)
 		gl.safeInvoke("FlushPlayerFile", pulse, cb.OnFlushPlayerFile)
+	}
+
+	// auto_save — every 60 seconds (comm.c:832-837), after the mud-hour
+	// block and before record_usage, as in C's heartbeat.
+	if pulse%(60*PASSES_PER_SEC) == 0 {
+		gl.safeInvoke("Autosave", pulse, cb.OnAutosave)
 	}
 
 	// Record usage every 5 minutes

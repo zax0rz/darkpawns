@@ -364,6 +364,11 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		ch.SetGold(ch.GetGold() - 2000)
 		hName := HometownName(homet)
 		tellFromMob(me, ch, fmt.Sprintf("You are now a citizen of %s.", hName))
+		// C's clerk saves after the citizenship purchase
+		// (spec_procs3.c:139).
+		if res := w.SavePlayerRecord(ch, "clerk citizenship", LoadRoomNowhere, SaveCharOnly); res == SaveFailed {
+			slog.Error("store-of-record save failed on citizenship", "player", ch.GetName())
+		}
 		return true
 	}
 	if cmd == "list" {

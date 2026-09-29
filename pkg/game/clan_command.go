@@ -1,5 +1,20 @@
 package game
 
+import "log/slog"
+
+// saveCharSiteInRoom is C's save_char(vict, vict->in_room) at the clan
+// command sites (clan.c:233,266,378,431,486,539,627,718,983,1138): a
+// character-only store-of-record write whose record carries the character's
+// current room as the load room.
+func (w *World) saveCharSiteInRoom(p *Player, why string) {
+	if p == nil {
+		return
+	}
+	if res := w.SavePlayerRecord(p, why, p.GetRoomVNum(), SaveCharOnly); res == SaveFailed {
+		slog.Error("store-of-record save failed", "player", p.GetName(), "why", why)
+	}
+}
+
 func (w *World) ExecClanCommand(ch *Player, argument string) {
 	arg1, arg2 := halfChop(argument)
 

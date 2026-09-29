@@ -55,6 +55,12 @@ func (w *World) CheckIdling(p *Player) {
 			// own line whenever the transfer lands first.
 			Act(w, true, p, nil, nil, nil, "$n disappears into the void.", "", ToRoom)
 			p.SendMessage("You have been idle, and are pulled into a void.\r\n")
+			// C saves before the transfer, while the character still stands
+			// in the room: save_char(ch, NOWHERE) + Crash_crashsave
+			// (limits.c:434-435, DP-1353).
+			if res := w.SavePlayerRecord(p, "void pull", LoadRoomNowhere, SaveCrash); res == SaveFailed {
+				slog.Error("store-of-record save failed on void pull", "player", p.Name)
+			}
 			if err := w.PlayerTransfer(p, 1); err != nil {
 				slog.Warn("PlayerTransfer failed in idle check", "player", p.Name, "error", err)
 			}

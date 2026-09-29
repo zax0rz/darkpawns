@@ -318,6 +318,8 @@ func cmdAdvance(s *Session, args []string) error {
 	if err := game.SavePlayer(victim); err != nil {
 		slog.Error("advance: save player failed", "player", victim.Name, "error", err)
 	}
+	// C do_advance ends with save_char(victim, NOWHERE) (act.wizard.c:1579).
+	s.manager.SaveCharSite(victim, "advance")
 	return nil
 }
 

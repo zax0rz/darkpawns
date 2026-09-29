@@ -189,6 +189,10 @@ type Player struct {
 	// Bit N corresponds to PLR flag N (e.g. PLR_WEREWOLF=16, PLR_VAMPIRE=17).
 	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
 	Flags uint64
+	// crashSeq is the inventory-dirty generation behind PLR_CRASH
+	// (persistence_seam.go): every MarkCrashNeeded bumps it, so a save can
+	// tell whether inventory changed after its snapshot.
+	crashSeq uint64
 
 	// worldRef holds a reference to the World this player belongs to.
 	// Used by SendMessage to route through the session layer's MessageSink.

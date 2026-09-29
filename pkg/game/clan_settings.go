@@ -140,6 +140,8 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 			if p.ClanRank == c.Ranks {
 				p.ClanRank = newRanks
 			}
+			// C saves each adjusted member (clan.c:1138).
+			w.saveCharSiteInRoom(p, "clan ranks")
 		}
 	}
 

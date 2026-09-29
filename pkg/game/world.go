@@ -65,6 +65,10 @@ type World struct {
 	// the in-game luaedit command. It is normally <WorldPath>/scripts, but the
 	// server's -scripts override may point elsewhere.
 	ScriptsDir string
+	// PlayerSaver, when set by the server, writes a player's record to the
+	// store of record (the database login reads). nil means saves are
+	// skipped — never treated as successful. See persistence_seam.go.
+	PlayerSaver PlayerSaver
 
 	// Runtime state
 	players               map[string]*Player   // keyed by player name
