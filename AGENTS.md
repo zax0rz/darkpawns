@@ -34,23 +34,43 @@ Breadth coverage proves that a command can match once; it does **not** prove the
 
 ### Oracle Evidence Retention
 
-Oracle transcripts, per-scenario diffs, census logs, summaries, and failure
-artifacts are retained research evidence. On the workstation, write them
-directly under:
+Oracle transcripts, census logs, summaries and manifests are retained research
+evidence. Run every census through `scripts/census.sh`; it writes them to
+`$ORACLE_RUNS_ROOT/YYYY-MM-DD/<run-name>/` (default
+`~/Archives/darkpawns/oracle-runs/`), captures Go HEAD before running, checks
+the reference oracle's sha256, and writes `MANIFEST.md` itself.
 
-```text
-/home/zach/Archives/darkpawns/oracle-runs/YYYY-MM-DD/<issue-or-run>/
+```bash
+scripts/census.sh start --name <issue-or-run>            # full census, returns at once
+scripts/census.sh start --name <run> --scenarios a,b,c   # targeted
+scripts/census.sh wait                                   # blocks <=9 min, prints ONE line
 ```
 
-Set `ORACLE_REGRESSION_DUMP` to that run directory when using
-`scripts/oracle_regression.sh`. Include a manifest recording the Git revision,
-exact command, seed, scenario selection, final status, and file sizes. Keep
-disposable harness binaries and runtime copies in `/tmp`; do not leave retained
-Oracle output loose in `$HOME` or dependent on `/tmp` surviving a reboot.
+`wait` exits 0 (clean), 1 (not clean), 3 (still running: call `wait` again),
+or 4 (died / nothing running). Its one line is the whole result.
 
-For a full Oracle census, use `ORACLE_REGRESSION_JOBS=36`. Focused and
-diagnostic runs may use fewer workers. Record the actual worker count in the
-run manifest.
+**Waiting costs tokens; the census does not.** While a census runs:
+- Do not poll in a loop, `sleep`-and-check, or re-run `status` repeatedly. Call
+  `wait` (each call blocks up to 9 minutes), or end your turn and say the census
+  is running; Zach gets a desktop notification when it finishes.
+- Never `cat`, `tail` or `grep` a running `census.log`. When it has finished, read
+  `summary.txt`, and read `results.tsv` only for the rows you need.
+- Don't start a second census. `start` refuses if one is running.
+
+**Choose the smallest census that can fail on your change** (R5h):
+- **Full census**: any change to player-facing output or game behaviour
+  (`pkg/`, `cmd/server/`, `lib/world`), to the harness, or to the scenario corpus
+  as a whole.
+- **Targeted** (`--scenarios`): changes that touch only tests, comments, docs,
+  or one statement whose effect a named set of scenarios covers. Name the
+  scenarios and why they cover it. A brief can require more.
+- **None**: docs-only or website-only changes.
+
+**Infrastructure rows.** The tool re-runs `INFRA`/`TIMEOUT` rows alone once;
+`CLEAN_AFTER_RECHECK` counts as clean. Don't re-run the whole census for them.
+A `FAIL`, `STALE` or `UNPINNABLE` is never retried: investigate it.
+Scenarios listed `EXPECTED` are known divergences with ledger rows
+(`cmd/dp-oracle-diff/expected_divergences.tsv`); they are not new findings.
 
 ### Reference Oracle Binary
 

@@ -125,6 +125,23 @@ fi
 printf 'oracle-regression: %d scenarios, seed=%s, timeout=%s, jobs=%s%s\n' "${#scenarios[@]}" "$seed" "$scenario_timeout" "$jobs" "${ORACLE_REGRESSION_DUMP:+ dump=$ORACLE_REGRESSION_DUMP}"
 printf '%s\0' "${scenarios[@]}" | xargs -0 -n1 -P "$jobs" "$script_dir"/oracle_regression_worker.sh
 
+# Persist the per-scenario classifications when ORACLE_REGRESSION_RESULTS
+# names a file: sorted "kind<TAB>scenario" rows, so census.sh can keep them
+# in the run directory (the result_dir above is inside the throwaway
+# log_dir and vanishes with the trap below).
+if [[ -n "${ORACLE_REGRESSION_RESULTS:-}" ]]; then
+	: >"$ORACLE_REGRESSION_RESULTS"
+	for scenario_file in "${scenarios[@]}"; do
+		scenario=${scenario_file%.txt}
+		result_file="$result_dir/$scenario"
+		if [[ -s "$result_file" ]]; then
+			printf '%s\t%s\n' "$(cut -f1 "$result_file")" "$scenario"
+		else
+			printf 'FAIL\t%s\n' "$scenario"
+		fi
+	done | sort >"$ORACLE_REGRESSION_RESULTS"
+fi
+
 passed=0
 expected=0
 unstable=0
