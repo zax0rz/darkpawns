@@ -65,7 +65,8 @@ scenario_cost() {
 	local file=$1
 	local steps peers bounces
 	steps=$(grep -vE '^[[:space:]]*(#|$|\[)' "$file" | wc -l)
-	peers=$(grep -oE '^\[setup:(oracle|port):[^]]+\]' "$file" | sort -u | wc -l)
+	# Each peer has an oracle and a port setup section; count the name once.
+	peers=$(grep -oE '^\[setup:(oracle|port):[^]]+\]' "$file" | sed -E 's/^\[setup:(oracle|port):/[/' | sort -u | wc -l)
 	bounces=$(grep -cE '^<(RESTART|CRASH)>' "$file")
 	echo $(( steps * (1 + peers) + 20 * bounces ))
 }
