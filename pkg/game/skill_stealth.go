@@ -246,12 +246,21 @@ func stealInventoryItem(ch *Player, target combat.Combatant, item *ObjectInstanc
 	if !removeCarriedItem(target, item) {
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
+	// C's steal takes a carried object with obj_from_char(obj) — the victim
+	// is flagged (act.other.c:472ish; handler.c:596-598), and the flag
+	// survives even the port's rollback below, as in C.
+	if targetPlayer, ok := target.(*Player); ok {
+		targetPlayer.MarkCrashNeeded()
+	}
 	if err := ch.Inventory.AddItem(item); err != nil {
 		if !restoreCarriedItem(target, item) {
 			slog.Error("DoSteal rollback failed", "target", target.GetName(), "item", item.GetShortDesc(), "error", err)
 		}
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
+	// ... and hands it to the thief with obj_to_char(obj, ch): the thief is
+	// flagged too (handler.c:569-571).
+	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
 	applyRobbedAffect(target)
 	message := appendImprovementMessage("Got it!", improveSkillMessage(ch, SkillSteal))
@@ -282,6 +291,9 @@ func stealEquippedItem(ch *Player, target combat.Combatant, item *ObjectInstance
 		}
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
+	// C's equipment steal is obj_to_char(unequip_char(vict, eq_pos), ch):
+	// only the thief is flagged — unequip_char never sets PLR_CRASH.
+	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
 	applyRobbedAffect(target)
 	message := appendImprovementMessage(

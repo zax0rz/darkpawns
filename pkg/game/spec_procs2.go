@@ -1406,6 +1406,9 @@ func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			}
 			for _, item := range toRemove {
 				ch.Inventory.removeItem(item)
+				// C's spec takes the traded object with obj_from_char
+				// (spec_procs2.c:1171): PLR_CRASH is set (handler.c:596-598).
+				ch.MarkCrashNeeded()
 			}
 			if len(toRemove) > 0 {
 				sendToChar(ch, fmt.Sprintf("You trade your key for %d experience.\r\n", ch.GetLevel()*200*len(toRemove)))

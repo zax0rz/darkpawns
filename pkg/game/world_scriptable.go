@@ -442,7 +442,13 @@ func (w *World) GiveItemToCharScriptable(charName string, obj scripting.Scriptab
 	if item == nil {
 		return fmt.Errorf("GiveItemToChar: object is not an ObjectInstance")
 	}
-	return p.Inventory.addItem(item)
+	if err := p.Inventory.addItem(item); err != nil {
+		return err
+	}
+	// The lua objto/oload "char" path is C's obj_to_char: PLR_CRASH is set
+	// (handler.c:569-571).
+	p.MarkCrashNeeded()
+	return nil
 }
 
 // RemoveObjByInstanceID removes an object by its unique instance ID from its current

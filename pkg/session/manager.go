@@ -1485,6 +1485,13 @@ func (m *Manager) WirePlayerSaver(w *game.World) {
 		if !ok {
 			return game.SaveSkipped
 		}
+		// The wizard `set file` path edits a *separate* Player loaded from
+		// JSON; saving the live session player under that edit's name must
+		// never be reported as the edit's success (and must not write the
+		// un-edited live record over the store).
+		if s.player != p {
+			return game.SaveSkipped
+		}
 		return s.SaveToStore(p, why, loadRoom)
 	}
 }

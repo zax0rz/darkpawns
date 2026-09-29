@@ -68,6 +68,24 @@ func (w *World) SavePlayerRecord(p *Player, why string, loadRoom int, kind SaveK
 // Crash_save_all, objsave.c:1218).
 // -----------------------------------------------------------------------
 
+// RestoreCrashFlagAfterCorpse restores the PLR_CRASH state captured before
+// the corpse transfer. C's make_corpse moves the inventory by pointer
+// assignment and the equipment through obj_to_obj(unequip_char(ch, i),
+// corpse) (fight.c:399, 406-407): neither obj_to_char nor obj_from_char
+// runs, so the flag keeps whatever it held before death. The port's
+// makeCorpse moves both through the container move plumbing, whose
+// inventory detach arm sets the flag; this helper restores C's outcome.
+// Player corpse paths only — the mob path never flags.
+func (p *Player) RestoreCrashFlagAfterCorpse(was bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if was {
+		p.Flags |= 1 << uint(PlrCrash)
+	} else {
+		p.Flags &^= 1 << uint(PlrCrash)
+	}
+}
+
 // MarkCrashNeeded sets PLR_CRASH and bumps the inventory-dirty generation.
 // C sets the flag wherever an object enters or leaves a player's carrying
 // list, for non-NPCs; the port's central points are the ObjectLocation

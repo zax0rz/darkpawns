@@ -55,10 +55,14 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				if err := p.Equipment.unequip(old.Slot, p.Inventory); err != nil {
 					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
 				}
-				// The object returns to the player's carrying list; C's
-				// obj_to_char sets PLR_CRASH for exactly this entry
-				// (handler.c:569-571).
-				p.MarkCrashNeeded()
+				// No PLR_CRASH here: C's unequip_char only clears the eq
+				// link (handler.c:754-783); the flag is obj_to_char's /
+				// obj_from_char's alone. An object that continues into the
+				// inventory is flagged by the attach arm below (C's
+				// obj_to_char, handler.c:569-571); corpse and extract paths
+				// never reach this arm's inventory (fight.c:406-407 uses
+				// obj_to_obj, extract_obj uses unequip_char only,
+				// handler.c:1010-1012).
 			}
 		case OwnerMob:
 			if m, ok := w.activeMobs[old.MobID]; ok {

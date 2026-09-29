@@ -265,7 +265,14 @@ func (w *World) UnequipItem(ch *Player, slot int) error {
 		keywords := obj.GetKeywords()
 		obj.Runtime.ShortDescOverride = an(keywords) + " " + keywords
 	}
-	return ch.Equipment.Unequip(goSlot, ch.Inventory)
+	if err := ch.Equipment.Unequip(goSlot, ch.Inventory); err != nil {
+		return err
+	}
+	// The remove command's unequip is C's obj_to_char(unequip_char(ch, pos),
+	// ch) (act.item.c:1725): the object re-entered the player's carrying, so
+	// PLR_CRASH is set (handler.c:569-571).
+	ch.MarkCrashNeeded()
+	return nil
 }
 
 // FindEquippedVis resolves an EQUIPPED object by keyword, mirroring C do_use's

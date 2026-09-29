@@ -101,6 +101,13 @@ func cmdQuaff(s *Session, args []string) error {
 		s.markDirty(VarEquipment)
 	}
 	s.player.Inventory.RemoveItem(item)
+	// C's mag_objectmagic consumes the item with extract_obj
+	// (spell_parser.c:697): a carried item leaves through obj_from_char and
+	// sets PLR_CRASH (handler.c:596-598, 1016-1017); a held one leaves
+	// through unequip_char, which does not.
+	if !fromHold {
+		s.player.MarkCrashNeeded()
+	}
 	s.markDirty(VarInventory)
 
 	return nil

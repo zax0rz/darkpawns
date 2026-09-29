@@ -830,6 +830,10 @@ func DoFleshAlter(ch *Player) SkillResult {
 		if err := ch.Equipment.Unequip(SlotWield, ch.Inventory); err != nil {
 			slog.Error("flesh alter could not unequip wielded item", "player", ch.Name, "item", wielded.GetShortDesc(), "error", err)
 		} else {
+			// C's do_flesh_alter returns the weapon with
+			// obj_to_char(unequip_char(ch, WEAR_WIELD), ch) (new_cmds.c:1929):
+			// PLR_CRASH is set (handler.c:569-571).
+			ch.MarkCrashNeeded()
 			message = fmt.Sprintf("You stop using %s.\r\n%s", wielded.GetShortDesc(), message)
 			roomMessage = fmt.Sprintf("%s stops using %s.\r\n%s", ch.Name, wielded.GetShortDesc(), roomMessage)
 		}
