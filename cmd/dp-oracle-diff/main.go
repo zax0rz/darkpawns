@@ -125,10 +125,29 @@ func (e *engine) crashKill() {
 }
 
 // restartAfterCrash starts the engine again after crashKill, on the same
-// disposable data directory and ports.
+// disposable data directory and ports. It does not wait for readiness; the
+// crashRestart composition does.
 func (e *engine) restartAfterCrash() error {
 	_, err := e.ensure()
 	return err
+}
+
+// crashRestart composes the <CRASH> step's engine side: an immediate
+// SIGKILL, then a restart that blocks on the fresh process's readiness
+// marker before the step dials. The readiness wait is not optional — the
+// WebSocket dialer launches its client without dial retries, so an unbound
+// listener would fail the crash step spuriously — and it must observe the
+// fresh process: await closures read the engine's current process, whose
+// log buffer is new for every start.
+func crashRestart(e *engine, await func() error) (kill func() error, restart func() error) {
+	kill = func() error { e.crashKill(); return nil }
+	restart = func() error {
+		if err := e.restartAfterCrash(); err != nil {
+			return err
+		}
+		return await()
+	}
+	return kill, restart
 }
 
 // log returns the running process's output, or a placeholder when no process is
@@ -595,10 +614,10 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		case crashesActor:
 			// The crash callbacks kill and restart this engine only: the C
 			// oracle's own process, never the Go port's, and no settle or
-			// close runs before the kill.
-			oraclePrimary = oraclediff.NewCrashConn(oracleConn, oracleDial, oracleLogin,
-				func() error { oracleEngine.crashKill(); return nil },
-				oracleEngine.restartAfterCrash)
+			// close runs before the kill. The restart gates on the fresh
+			// boot's readiness marker, like restartOracle does.
+			crashKillOracle, crashRestartOracle := crashRestart(oracleEngine, awaitOracle)
+			oraclePrimary = oraclediff.NewCrashConn(oracleConn, oracleDial, oracleLogin, crashKillOracle, crashRestartOracle)
 		default:
 			oraclePrimary = oraclediff.NewReloginConn(oracleConn, oracleDial, oracleLogin, oracleSettle)
 		}
@@ -613,10 +632,11 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		case crashesActor:
 			// Mirror of the oracle side: only the Go port's process is
 			// killed, in this pass, after which it restarts on the same
-			// throwaway world copy, runtime directory and database.
-			goPrimary = oraclediff.NewCrashConn(goConn, dialGo, goLogin,
-				func() error { goEngine.crashKill(); return nil },
-				goEngine.restartAfterCrash)
+			// throwaway world copy, runtime directory and database, and the
+			// restart gates on the fresh boot's readiness marker (awaitGo),
+			// like restartGo does.
+			crashKillGo, crashRestartGo := crashRestart(goEngine, awaitGo)
+			goPrimary = oraclediff.NewCrashConn(goConn, dialGo, goLogin, crashKillGo, crashRestartGo)
 		default:
 			goPrimary = oraclediff.NewReloginConn(goConn, dialGo, goLogin, goSettle)
 		}
