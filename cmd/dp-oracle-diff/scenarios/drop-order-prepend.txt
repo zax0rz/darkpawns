@@ -1,0 +1,44 @@
+# depth-case: drop.prepend-order
+# C perform_drop's SCMD_DROP arm is obj_to_room (act.item.c:504-507), which
+# prepends to the room's contents. The floor is seeded with a tunic first,
+# then the actor drops the pack's bread, then look: the two floor lines must
+# come out in C's prepend order (the appending move showed the other order).
+
+[fixture]
+quiet-mobs
+force-load 8019
+spawn-obj 8019 1 8162 80
+
+[setup:oracle]
+Dropseed
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dropseed
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+open pack
+get bread pack
+drop bread
+look

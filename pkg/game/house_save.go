@@ -105,7 +105,9 @@ func (w *World) houseLoad(vnum int) bool {
 			}
 			continue
 		}
-		w.AddItemToRoom(obj, vnum)
+		// C's house load places objects with obj_to_room (house.c:100),
+		// which prepends.
+		w.AddItemToRoomFront(obj, vnum)
 	}
 
 	return true

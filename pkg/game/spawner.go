@@ -507,9 +507,9 @@ func (s *Spawner) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	}
 	if roomVNum >= 0 {
 		// World.SpawnObject registers runtime identity and location but leaves
-		// room indexing to its caller. Zone O commands are obj_to_room calls in
-		// C, so the spawner must also make the object visible in room contents.
-		s.world.AddItemToRoom(obj, roomVNum)
+		// room indexing to its caller. Zone O commands are obj_to_room calls
+		// in C (db.c:2155), which prepends — so must the spawner.
+		s.world.AddItemToRoomFront(obj, roomVNum)
 	}
 
 	// Apply ITEM_RARE affect variance — db.c:1899-1925 init_rare() (DP-376)

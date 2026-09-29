@@ -299,8 +299,10 @@ func (w *World) performDropNamed(ch *Player, obj *ObjectInstance, sname string) 
 		w.actToChar(ch, fmt.Sprintf("You can't %s $p, it must be CURSED!", sname), obj, nil)
 		return
 	}
-	if err := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err != nil {
-		slog.Error("drop failed: MoveObjectToRoom", "player", ch.Name, "obj_vnum", obj.VNum, "error", err)
+	// C perform_drop's SCMD_DROP arm is obj_to_room (act.item.c:504),
+	// which prepends to the room's contents.
+	if err := w.MoveObjectToRoomFront(obj, ch.GetRoomVNum()); err != nil {
+		slog.Error("drop failed: MoveObjectToRoomFront", "player", ch.Name, "obj_vnum", obj.VNum, "error", err)
 		w.actToChar(ch, "You can't drop that right now.\n", nil, nil)
 		return
 	}
@@ -324,7 +326,8 @@ func (w *World) performDropGold(ch *Player, amount int) {
 	}
 
 	money := w.createMoneyObject(amount)
-	if err := w.MoveObjectToRoom(money, ch.GetRoomVNum()); err != nil {
+	// C perform_drop_gold's drop arm is obj_to_room (act.item.c:461).
+	if err := w.MoveObjectToRoomFront(money, ch.GetRoomVNum()); err != nil {
 		slog.Error("drop gold failed", "player", ch.Name, "amount", amount, "error", err)
 		ch.SendMessage("You can't drop that right now.\r\n")
 		return

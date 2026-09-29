@@ -1,0 +1,79 @@
+# depth-case: donate.prepend-order
+# C perform_drop's SCMD_DONATE arm is obj_to_room(obj, RDR) (act.item.c:
+# 509-512), which prepends in the donation room. The God primary stands in
+# donation room 8053 (warmed up with goto) while the mortal peer donates its
+# bread; the room is pre-seeded with a tunic so the God's look shows the
+# order. C rolls number(0,3) for RDR (junk / 8053 / 8053 / 18204) — the seed
+# is chosen so the draw routes the bread to 8053, where the look can see it.
+
+[fixture]
+empty-players
+quiet-mobs
+force-load 8019
+spawn-obj 8019 1 8053 80
+
+[setup:oracle]
+Donagod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Donagod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Donopeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Donopeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8053
+
+[probe]
+send:peer open pack
+send:peer get bread pack
+send:peer donate bread
+look
+look

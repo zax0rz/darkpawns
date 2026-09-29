@@ -435,7 +435,8 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 				slog.Error("pray_for_items failed to read object", "obj_vnum", tmpObj.GetVNum(), "error", err)
 				continue
 			}
-			if err := w.MoveObjectToRoom(obj, ch.GetRoomVNum()); err != nil {
+			// C pray_for_items places with obj_to_room (spec_procs.c:2152).
+			if err := w.MoveObjectToRoomFront(obj, ch.GetRoomVNum()); err != nil {
 				slog.Error("pray_for_items failed to place object", "obj_vnum", tmpObj.GetVNum(), "room", ch.GetRoomVNum(), "error", err)
 				w.ExtractObject(obj, ch.GetRoomVNum())
 				continue

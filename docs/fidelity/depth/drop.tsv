@@ -16,3 +16,4 @@ perform_drop_gold	drop	drop.gold-insufficient	D2	command	oracle-green	drop-gold	
 perform_drop_gold	drop	drop.gold-success	D3	command	unit-green	TestPerformDropGoldSuccess	act.item.c:456-463	Actor "You drop some gold." and room "$n drops <money_desc>."; WAIT_STATE.
 get_obj_in_list_vis	drop	drop.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get; proven under the get manifest.
 find_all_dots	drop	drop.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get; proven under the get manifest.
+perform_drop	drop	drop.prepend-order	D3	command	oracle-green-multiseed	drop-order-prepend@1,2	act.item.c:504-507	Floor seeded first, bread dropped second: the two floor lines come out in C's obj_to_room prepend order. Unit: TestDropPlacementsPrependInCOrder (fails on the appending move).

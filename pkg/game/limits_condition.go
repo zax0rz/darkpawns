@@ -325,7 +325,13 @@ func clearMemory(m *MobInstance) {
 // decayObjectsInRoom decays objects in the given room.
 // Ported from limits.c point_update() object section (lines 527-686).
 func (w *World) decayObjectsInRoom(roomVNum int) {
-	items := w.GetItemsInRoom(roomVNum)
+	// GetItemsInRoom returns the live backing slice; a rotted container's
+	// spill prepends into it, which would shift already-visited objects into
+	// unvisited positions and tick them twice in one pass (R3b). Snapshot
+	// the pass's work list — like C's object_list walk, each object decays
+	// at most once per pass; items spilled during the pass tick on the next
+	// one.
+	items := append([]*ObjectInstance(nil), w.GetItemsInRoom(roomVNum)...)
 	for _, obj := range items {
 		// Allow corpses (IsCorpse=true) through even with nil Prototype so the
 		// corpse decay block below can fire. All other nil-prototype objects skip.
@@ -344,7 +350,8 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 				for _, contained := range obj.GetContents() {
 					obj.RemoveFromContainer(contained)
 					contained.SetRoomVNum(roomVNum)
-					if err := w.MoveObjectToRoom(contained, roomVNum); err != nil {
+					// C's rotted-container spill is obj_to_room (limits.c:644/646).
+					if err := w.MoveObjectToRoomFront(contained, roomVNum); err != nil {
 						slog.Warn("MoveObjectToRoom failed in decay", "obj_vnum", contained.GetVNum(), "room", roomVNum, "error", err)
 					}
 				}
@@ -413,8 +420,9 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
 							spawned := NewObjectInstance(proto, roomVNum)
 							spawned.SetTimer(2)
-							if err := w.MoveObjectToRoom(spawned, roomVNum); err != nil {
-								slog.Warn("MoveObjectToRoom failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
+							// C's field wear-off spawn is obj_to_room (limits.c:674).
+							if err := w.MoveObjectToRoomFront(spawned, roomVNum); err != nil {
+								slog.Warn("MoveObjectToRoomFront failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
 							}
 						}
 					}
