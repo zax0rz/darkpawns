@@ -246,20 +246,22 @@ func stealInventoryItem(ch *Player, target combat.Combatant, item *ObjectInstanc
 	if !removeCarriedItem(target, item) {
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
-	// C's steal takes a carried object with obj_from_char(obj) — the victim
-	// is flagged (act.other.c:472ish; handler.c:596-598), and the flag
-	// survives even the port's rollback below, as in C.
-	if targetPlayer, ok := target.(*Player); ok {
-		targetPlayer.MarkCrashNeeded()
-	}
 	if err := ch.Inventory.AddItem(item); err != nil {
 		if !restoreCarriedItem(target, item) {
 			slog.Error("DoSteal rollback failed", "target", target.GetName(), "item", item.GetShortDesc(), "error", err)
 		}
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
-	// ... and hands it to the thief with obj_to_char(obj, ch): the thief is
-	// flagged too (handler.c:569-571).
+	// C's carried steal is obj_from_char(obj) (src/act.other.c:471), which
+	// flags the victim (handler.c:596-598), then obj_to_char(obj, ch)
+	// (src/act.other.c:472), which flags the thief (handler.c:569-571). C
+	// checks the thief's capacity BEFORE obj_from_char (act.other.c:468-470);
+	// the port checks it after the removal, so both flags go after the
+	// AddItem succeeds — the port's failure path, like C's capacity refusal,
+	// flags nobody.
+	if targetPlayer, ok := target.(*Player); ok {
+		targetPlayer.MarkCrashNeeded()
+	}
 	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
 	applyRobbedAffect(target)
@@ -291,8 +293,9 @@ func stealEquippedItem(ch *Player, target combat.Combatant, item *ObjectInstance
 		}
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
-	// C's equipment steal is obj_to_char(unequip_char(vict, eq_pos), ch):
-	// only the thief is flagged — unequip_char never sets PLR_CRASH.
+	// C's equipment steal is obj_to_char(unequip_char(vict, eq_pos), ch)
+	// (src/act.other.c:429): only the thief is flagged — unequip_char never
+	// sets PLR_CRASH.
 	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
 	applyRobbedAffect(target)

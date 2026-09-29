@@ -161,7 +161,6 @@ func TestKenderStealSetsFlag(t *testing.T) {
 	}
 }
 
-// TestStealCarriedFlagsBoth: C's carried steal is obj_from_char(obj) +
 // obj_to_char(obj, ch) — victim and thief are both flagged.
 func TestStealCarriedFlagsBoth(t *testing.T) {
 	w, thief := newFlagWorld(t)

@@ -894,9 +894,10 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 							if err := target.Inventory.AddItem(obj); err != nil {
 								slog.Debug("give: AddItem error", "error", err)
 							} else {
-								// C's give ends in obj_to_char(obj, vict)
-								// (act.item.c): the recipient is flagged
-								// (handler.c:569-571).
+								// C's perform_give ends in
+								// obj_to_char(obj, vict)
+								// (src/act.item.c:696): the recipient is
+								// flagged (handler.c:569-571).
 								target.MarkCrashNeeded()
 							}
 						}

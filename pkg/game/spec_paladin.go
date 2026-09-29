@@ -75,8 +75,9 @@ func mobDisarm(w *World, me *MobInstance, vict combat.Combatant) {
 			if err := target.Equipment.Unequip(SlotWield, target.Inventory); err != nil {
 				return
 			}
-			// C's paladin spec disarms through do_disarm (spec_procs.c:565),
-			// whose obj_to_char flags the victim (new_cmds2.c:236).
+			// C's paladin spec disarms through do_disarm
+			// (src/spec_procs.c:562), whose obj_to_char flags the victim
+			// (new_cmds2.c:236).
 			target.MarkCrashNeeded()
 		}
 		Act(w, true, me, vict, weapon, nil,
