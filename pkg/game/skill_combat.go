@@ -802,9 +802,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	weaponNum, weaponSides := ch.Equipment.GetWeaponDamage()
 	weaponDam := combat.RollDice(weaponNum, weaponSides)
 	dam := weaponDam + ch.GetDamroll() + ch.GetStrToDam()
-	if target.GetPosition() < combat.PosFighting {
-		dam *= 1 + (combat.PosFighting-target.GetPosition())/3
-	}
+	dam = combat.ApplyPositionDamageMultiplier(dam, target.GetPosition())
 	if dam < 1 {
 		dam = 1
 	}

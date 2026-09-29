@@ -116,9 +116,8 @@ func (w *World) mobBackstab(me *MobInstance, vict combat.Combatant) {
 	damRoll := me.GetDamageRoll()
 	dam := combat.StrAppToDam(me) + me.GetDamroll()
 	dam += dprng.Dice(damRoll.Num, damRoll.Sides) + damRoll.Plus
-	if vict.GetPosition() < combat.PosFighting {
-		dam = int(float64(dam) * (1.0 + float64(combat.PosFighting-vict.GetPosition())/3.0))
-	}
+	// src/fight.c:1854-1855 applies this before backstab_mult at :1867.
+	dam = combat.ApplyPositionDamageMultiplier(dam, vict.GetPosition())
 	if dam < 1 {
 		dam = 1
 	}

@@ -6,8 +6,7 @@ import (
 
 // TestPositionDamageMultiplier verifies that CalculateDamage correctly applies
 // position-based damage multipliers.
-// NOTE: Go uses float64 division (intentional deviation from C's integer division
-// in fight.c:1854) to preserve the design intent of fractional multipliers.
+// C uses integer division in src/fight.c:1854-1855.
 func TestPositionDamageMultiplier(t *testing.T) {
 	tests := []struct {
 		position int
@@ -15,13 +14,13 @@ func TestPositionDamageMultiplier(t *testing.T) {
 	}{
 		{position: PosStanding, wantDam: 100},
 		{position: PosFighting, wantDam: 100},
-		{position: PosSitting, wantDam: 133},
-		{position: PosResting, wantDam: 166},
+		{position: PosSitting, wantDam: 100},
+		{position: PosResting, wantDam: 100},
 		{position: PosSleeping, wantDam: 200},
-		{position: PosStunned, wantDam: 233},
-		{position: PosIncap, wantDam: 266},
+		{position: PosStunned, wantDam: 200},
+		{position: PosIncap, wantDam: 200},
 		{position: PosMortally, wantDam: 300},
-		{position: PosDead, wantDam: 333},
+		{position: PosDead, wantDam: 300},
 	}
 
 	for _, tt := range tests {

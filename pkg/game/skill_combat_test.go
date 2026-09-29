@@ -1749,3 +1749,38 @@ func TestDoDragonKick_MissDrawOrder(t *testing.T) {
 		t.Fatalf("dragon-kick miss draw order wrong: next=%d want=%d; expected percent then set-%d dice", got, wantNext, SkillDragonKickNum)
 	}
 }
+
+func TestDoCircle_PositionMultiplier(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		position, want int
+	}{
+		{"dead", combat.PosDead, 36},
+		{"mortally", combat.PosMortally, 36},
+		{"incap", combat.PosIncap, 24},
+		{"stunned", combat.PosStunned, 24},
+		{"sleeping", combat.PosSleeping, 24},
+		{"resting", combat.PosResting, 12},
+		{"sitting", combat.PosSitting, 12},
+		{"fighting", combat.PosFighting, 12},
+		{"standing", combat.PosStanding, 12},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, ch := newCircleTestWorld(t)
+			ch.Level = 10
+			ch.Damroll = 11
+			ch.SetSkill(SkillCircle, 101)
+			target := NewPlayer(2, "Victim", 1001)
+			target.SetPosition(tc.position)
+			weapon := makeCircleWeapon()
+			weapon.Prototype.Values[2] = 1
+			equipWeapon(t, ch, weapon)
+			dprng.ResetStream(1)
+			var result SkillResult
+			combat.WithRoller(combat.NewScriptedRoller([]int{20, 1}), func() { result = DoCircle(ch, target) })
+			if !result.Success || result.Damage != tc.want {
+				t.Fatalf("circle = %#v, want damage %d", result, tc.want)
+			}
+		})
+	}
+}
