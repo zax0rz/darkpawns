@@ -289,6 +289,15 @@ type AudienceProbeBlock struct {
 //	quit
 //	[probe:victim]      # alternatively, send and diff from a named peer
 //
+// The probe may also use the <RELOGIN>, <RESTART> and <CRASH> control steps
+// (each at most once, none combinable with passive peers): <RELOGIN> closes
+// the actor's transport and logs in again; <RESTART> settles, closes, stops
+// the engine with SIGINT (escalating to SIGKILL), and starts it again;
+// <CRASH> SIGKILLs the engine immediately — no settle, no close, no grace
+// window — waits for the exit, restarts it, and logs in again. All three
+// need the scenario's [relogin:oracle]/[relogin:port] lines and relog the
+// primary client.
+//
 // Blank lines and lines beginning with # are comments; <ENTER> represents an
 // intentional empty command.
 func ParseScenario(name string, r io.Reader) (Scenario, error) {
@@ -639,8 +648,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		return Scenario{}, fmt.Errorf("scenario %q: entry-prompt requires creation, no-settle, and keep-prompts", name)
 	}
 	restartCount := 0
+	crashCount := 0
 	for _, step := range sc.Probe {
-		if step == ReloginStep || step == RestartStep {
+		if step == ReloginStep || step == RestartStep || step == CrashStep {
 			if len(sc.ReloginOracle) == 0 || len(sc.ReloginPort) == 0 {
 				return Scenario{}, fmt.Errorf("scenario %q uses %s without both [relogin:oracle] and [relogin:port]", name, step)
 			}
@@ -651,12 +661,21 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		if step == RestartStep {
 			restartCount++
 		}
+		if step == CrashStep {
+			crashCount++
+		}
+	}
+	if restartCount > 0 && crashCount > 0 {
+		return Scenario{}, fmt.Errorf("scenario %q uses both %s and %s; the actor connection wraps either a restarter or a crasher, not both", name, RestartStep, CrashStep)
 	}
 	if restartCount > 1 {
 		return Scenario{}, fmt.Errorf("scenario %q uses %s %d times; a probe may restart once, because each engine is bounced inside its own pass and a second restart would replay the durable effects of the first pass's post-restart commands", name, RestartStep, restartCount)
 	}
-	if restartCount > 0 && len(sc.Peers) > 0 {
-		return Scenario{}, fmt.Errorf("scenario %q combines %s with passive peers; restarting an engine closes every connection to it, so a peer's later audience blocks could not be captured", name, RestartStep)
+	if crashCount > 1 {
+		return Scenario{}, fmt.Errorf("scenario %q uses %s %d times; a probe may crash once, because each engine is killed inside its own pass and a second crash would replay the durable effects of the first pass's post-crash commands", name, CrashStep, crashCount)
+	}
+	if (restartCount > 0 || crashCount > 0) && len(sc.Peers) > 0 {
+		return Scenario{}, fmt.Errorf("scenario %q combines %s/%s with passive peers; bouncing an engine closes every connection to it, so a peer's later audience blocks could not be captured", name, RestartStep, CrashStep)
 	}
 	if sc.ProbeActor != "" {
 		if _, ok := sc.Peers[sc.ProbeActor]; !ok {
@@ -733,7 +752,7 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 		// The connection may close at the last step, or just before a relogin
 		// or restart (a quit that ends the session); either is the scenario's
 		// intent.
-		mayClose := i == len(probe)-1 || probe[i+1] == ReloginStep || probe[i+1] == RestartStep
+		mayClose := i == len(probe)-1 || probe[i+1] == ReloginStep || probe[i+1] == RestartStep || probe[i+1] == CrashStep
 		var output string
 		target, targetName, audience := primary, "actor", peers
 		switch step {
@@ -755,6 +774,16 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 			transcript, err := restarter.Restart(quiescence)
 			if err != nil {
 				return blocks, fmt.Errorf("probe step %d restart: %w\ntranscript so far:\n%s", i+1, err, transcript)
+			}
+			output = transcript
+		case CrashStep:
+			crasher, ok := primary.(Crasher)
+			if !ok {
+				return blocks, fmt.Errorf("probe step %d: %w", i+1, errNoCrash)
+			}
+			transcript, err := crasher.Crash(quiescence)
+			if err != nil {
+				return blocks, fmt.Errorf("probe step %d crash: %w\ntranscript so far:\n%s", i+1, err, transcript)
 			}
 			output = transcript
 		default:

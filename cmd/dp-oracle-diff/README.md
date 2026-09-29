@@ -97,6 +97,30 @@ date and the closed player file (`src/comm.c:288-293`).
 per-worker isolation (ports, data directories, databases, process cleanup) is
 proven by `make oracle-regression-isolation`.
 
+## Crash vehicles (`<CRASH>`)
+
+`<CRASH>` is the lifecycle probe step that SIGKILLs the engine behind the
+actor's connection — immediately, with no settle pump, no transport close and
+no disconnect-processing window before the signal — waits for the process to
+exit, disposes of the dead transport, restarts that engine on the same
+disposable data directory and ports, and logs the actor back in with the
+scenario's `[relogin:*]` lines. The whole relogin transcript is the step's
+diffed block, exactly as `<RESTART>`'s is.
+
+The ordering is the contract: everything `<RESTART>` does before it signals
+the process is a chance for the engine to save, and each such step masks what
+a crash vehicle exists to observe — the engine's durable state at the moment
+of the kill. `RestartConn.Restart`'s pre-stop sequence is therefore not
+reused. As with `<RESTART>`, only the engine being probed is killed (in its
+own pass, on its own disposable data), the step requires both `[relogin:*]`
+sections, it relogs the primary client, and it cannot be combined with
+passive peers or with `<RESTART>`.
+
+C's own crash loses character-record fields written by the unflushed `fwrite`
+in `save_char` (src/db.c:2404-2405) while the `fclose`d crash-rent objects
+survive (src/objsave.c), so crash vehicles compare objects; character-record
+parity is Go-test territory (R5f).
+
 ## Raw ANSI proof mode (`keep-ansi`)
 
 Normalization rule 1 strips ANSI CSI escapes, which hides any surface where C

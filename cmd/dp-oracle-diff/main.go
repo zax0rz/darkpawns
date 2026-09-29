@@ -112,6 +112,44 @@ func (e *engine) stop() {
 	e.proc = nil
 }
 
+// crashKill stops the running process with an immediate SIGKILL — no SIGINT,
+// no grace window — and waits for the exit. It is safe to call more than once
+// and after a failed start. Restarting afterwards is a plain ensure(), so the
+// engine comes back on the same disposable data directory and ports.
+func (e *engine) crashKill() {
+	if e.proc == nil {
+		return
+	}
+	e.proc.kill()
+	e.proc = nil
+}
+
+// restartAfterCrash starts the engine again after crashKill, on the same
+// disposable data directory and ports. It does not wait for readiness; the
+// crashRestart composition does.
+func (e *engine) restartAfterCrash() error {
+	_, err := e.ensure()
+	return err
+}
+
+// crashRestart composes the <CRASH> step's engine side: an immediate
+// SIGKILL, then a restart that blocks on the fresh process's readiness
+// marker before the step dials. The readiness wait is not optional — the
+// WebSocket dialer launches its client without dial retries, so an unbound
+// listener would fail the crash step spuriously — and it must observe the
+// fresh process: await closures read the engine's current process, whose
+// log buffer is new for every start.
+func crashRestart(e *engine, await func() error) (kill func() error, restart func() error) {
+	kill = func() error { e.crashKill(); return nil }
+	restart = func() error {
+		if err := e.restartAfterCrash(); err != nil {
+			return err
+		}
+		return await()
+	}
+	return kill, restart
+}
+
 // log returns the running process's output, or a placeholder when no process is
 // running, so error messages can be built without nil checks.
 func (e *engine) log() string {
@@ -558,6 +596,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	// engine behind this connection, not the peer's, so the peer pass keeps its
 	// live connection and the block alignment stays intact.
 	restartsActor := slices.Contains(scenario.Probe, oraclediff.RestartStep)
+	crashesActor := slices.Contains(scenario.Probe, oraclediff.CrashStep)
 	var oraclePrimary, goPrimary oraclediff.Conn = oracleConn, goConn
 	if len(scenario.ReloginOracle) > 0 {
 		oracleDial := func() (oraclediff.Conn, error) {
@@ -569,9 +608,17 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		oracleLogin := func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginOracle) }
 		oracleSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) }
-		if restartsActor {
+		switch {
+		case restartsActor:
 			oraclePrimary = oraclediff.NewRestartConn(oracleConn, oracleDial, oracleLogin, oracleSettle, restartOracle)
-		} else {
+		case crashesActor:
+			// The crash callbacks kill and restart this engine only: the C
+			// oracle's own process, never the Go port's, and no settle or
+			// close runs before the kill. The restart gates on the fresh
+			// boot's readiness marker, like restartOracle does.
+			crashKillOracle, crashRestartOracle := crashRestart(oracleEngine, awaitOracle)
+			oraclePrimary = oraclediff.NewCrashConn(oracleConn, oracleDial, oracleLogin, crashKillOracle, crashRestartOracle)
+		default:
 			oraclePrimary = oraclediff.NewReloginConn(oracleConn, oracleDial, oracleLogin, oracleSettle)
 		}
 		defer func() { _ = oraclePrimary.Close() }()
@@ -579,9 +626,18 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if len(scenario.ReloginPort) > 0 {
 		goLogin := func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginPort) }
 		goSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) }
-		if restartsActor {
+		switch {
+		case restartsActor:
 			goPrimary = oraclediff.NewRestartConn(goConn, dialGo, goLogin, goSettle, restartGo)
-		} else {
+		case crashesActor:
+			// Mirror of the oracle side: only the Go port's process is
+			// killed, in this pass, after which it restarts on the same
+			// throwaway world copy, runtime directory and database, and the
+			// restart gates on the fresh boot's readiness marker (awaitGo),
+			// like restartGo does.
+			crashKillGo, crashRestartGo := crashRestart(goEngine, awaitGo)
+			goPrimary = oraclediff.NewCrashConn(goConn, dialGo, goLogin, crashKillGo, crashRestartGo)
+		default:
 			goPrimary = oraclediff.NewReloginConn(goConn, dialGo, goLogin, goSettle)
 		}
 		defer func() { _ = goPrimary.Close() }()
@@ -1634,6 +1690,19 @@ func (p *process) stop() {
 		_ = p.cmd.Process.Kill()
 		<-p.done
 	}
+}
+
+// kill SIGKILLs the process immediately and waits for it to exit. Unlike
+// stop, no signal is sent first and no grace window is allowed, so no
+// shutdown, disconnect or save path can run: this is the crash behind the
+// <CRASH> probe step. A process that ignored SIGINT would survive stop()'s
+// first signal but cannot survive this one.
+func (p *process) kill() {
+	if p == nil || p.cmd.Process == nil {
+		return
+	}
+	_ = p.cmd.Process.Kill()
+	<-p.done
 }
 
 func dialWhenReady(p *process, addr string, timeout time.Duration) (net.Conn, error) {
