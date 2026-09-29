@@ -8,6 +8,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -126,8 +127,8 @@ func cmdHit(s *Session, args []string) error {
 	// unconditionally on this branch — even when damage()'s peaceful/newbie/
 	// shopkeeper gates block the swing inside hit() (act.offensive.c:126-127).
 	// Set the wait before those gates so every blocked swing still costs the
-	// attacker the round, exactly like C.
-	s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
+	// attacker 22 pulses, exactly like C.
+	s.player.SetWaitStatePulses(engine.PULSE_VIOLENCE + 2) // src/act.offensive.c:127.
 
 	// damage()'s protection block (fight.c:1318-1368): peaceful rooms, the
 	// level-10 PK protections and shopkeepers, with C's refusal bytes. The
