@@ -359,7 +359,7 @@ func cmdRetreat(s *Session) error {
 	if dprng.Number(1, 101) > s.player.GetSkill(skill) {
 		game.ImproveSkill(s.player, skill)
 		s.Send(fmt.Sprintf("You try to %s but get cornered in the process!\r\n", lowmsg))
-		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE+2)
+		s.player.SetWaitStatePulses(engine.PULSE_VIOLENCE + 2) // src/act.offensive.c:1052.
 		return nil
 	}
 

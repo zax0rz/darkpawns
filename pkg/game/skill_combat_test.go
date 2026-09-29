@@ -6,6 +6,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -362,8 +363,8 @@ func TestDoCircle_Success(t *testing.T) {
 	if result.Damage <= 0 || result.SkillMsgType != SkillCircleNum || !result.SkillMsgAfterDamage {
 		t.Errorf("circle hit result = %#v; want positive set-173 after-damage result", result)
 	}
-	if result.WaitCh != 3 {
-		t.Errorf("expected wait 3, got %d", result.WaitCh)
+	if result.WaitChPulses != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("expected wait 22 pulses, got %d", result.WaitChPulses)
 	}
 }
 
@@ -1113,9 +1114,9 @@ func TestDoKick_BlocksMounted(t *testing.T) {
 	}
 }
 
-// TestDoKick_WaitStateAlwaysThree: C's WAIT_STATE(ch, PULSE_VIOLENCE+2) sits
-// outside the hit/miss if/else, so WaitCh must be 3 on both outcomes.
-func TestDoKick_WaitStateAlwaysThree(t *testing.T) {
+// TestDoKick_WaitStateAlways22Pulses: C's WAIT_STATE(ch, PULSE_VIOLENCE+2) sits
+// outside the hit/miss if/else, so both outcomes wait 22 raw pulses.
+func TestDoKick_WaitStateAlways22Pulses(t *testing.T) {
 	w, ch := newKickTestWorld(t)
 	mob := spawnTargetMob(t, w)
 
@@ -1133,8 +1134,8 @@ func TestDoKick_WaitStateAlwaysThree(t *testing.T) {
 	if !hit {
 		t.Fatalf("expected kick success with skill 100 vs AC 0 within 20 tries, last msg %q", result.MessageToCh)
 	}
-	if result.WaitCh != 3 {
-		t.Errorf("expected WaitCh 3 on hit, got %d", result.WaitCh)
+	if result.WaitChPulses != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("expected WaitChPulses 22 on hit, got %d", result.WaitChPulses)
 	}
 
 	ch.SetSkill(SkillKick, 1)
@@ -1150,8 +1151,8 @@ func TestDoKick_WaitStateAlwaysThree(t *testing.T) {
 	if !missed {
 		t.Skip("no miss observed in 50 tries (RNG)")
 	}
-	if missResult.WaitCh != 3 {
-		t.Errorf("expected WaitCh 3 on miss, got %d", missResult.WaitCh)
+	if missResult.WaitChPulses != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("expected WaitChPulses 22 on miss, got %d", missResult.WaitChPulses)
 	}
 }
 
@@ -1633,7 +1634,7 @@ func TestDoDragonKick_BlocksMounted(t *testing.T) {
 	}
 }
 
-func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
+func TestDoDragonKick_WaitStateAlways22Pulses(t *testing.T) {
 	w, ch := newDragonKickTestWorld(t)
 	mob := spawnTargetMob(t, w)
 
@@ -1652,8 +1653,8 @@ func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
 	if !hit {
 		t.Fatalf("expected dragon kick success with skill 100 vs AC 0 within 20 tries, last msg %q", result.MessageToCh)
 	}
-	if result.WaitCh != 3 {
-		t.Errorf("expected WaitCh 3 on hit, got %d", result.WaitCh)
+	if result.WaitChPulses != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("expected WaitChPulses 22 on hit, got %d", result.WaitChPulses)
 	}
 	if result.SkillMsgType != SkillDragonKickNum {
 		t.Errorf("hit SkillMsgType = %d, want C dragon-kick set %d", result.SkillMsgType, SkillDragonKickNum)
@@ -1685,8 +1686,8 @@ func TestDoDragonKick_WaitStateAlwaysThree(t *testing.T) {
 	if !missed {
 		t.Skip("no miss observed in 50 tries (RNG)")
 	}
-	if missResult.WaitCh != 3 {
-		t.Errorf("expected WaitCh 3 on miss, got %d", missResult.WaitCh)
+	if missResult.WaitChPulses != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("expected WaitChPulses 22 on miss, got %d", missResult.WaitChPulses)
 	}
 	if missResult.SkillMsgType != SkillDragonKickNum || !missResult.StartCombat {
 		t.Errorf("miss damage contract = set %d, StartCombat %v; want set %d, true", missResult.SkillMsgType, missResult.StartCombat, SkillDragonKickNum)

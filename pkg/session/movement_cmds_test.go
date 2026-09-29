@@ -164,7 +164,7 @@ func TestCmdRetreat_PreservesCombatStateAfterSuccess(t *testing.T) {
 	}
 }
 
-func TestCmdRetreat_FailureSetsThreeRoundWait(t *testing.T) {
+func TestCmdRetreat_FailureSets22PulseWait(t *testing.T) {
 	m := makeFleeTestManager(t)
 	mob, err := m.world.SpawnMob(5000, 1001)
 	if err != nil {
@@ -185,7 +185,7 @@ func TestCmdRetreat_FailureSetsThreeRoundWait(t *testing.T) {
 	if err := cmdRetreat(s); err != nil {
 		t.Fatalf("cmdRetreat: %v", err)
 	}
-	if got, want := s.player.GetWaitState(), 3*engine.PULSE_VIOLENCE; got != want {
+	if got, want := s.player.GetWaitState(), engine.PULSE_VIOLENCE+2; got != want {
 		t.Fatalf("wait state = %d, want %d", got, want)
 	}
 	if output := drainSendChannel(t, s); !strings.Contains(output, "You try to retreat but get cornered in the process!") {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -102,7 +103,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	percent := ((5 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillDragonKick)
 	// C: WAIT_STATE(ch, PULSE_VIOLENCE+2) sits outside the if/else — both
-	// branches get WaitCh=3 — act.offensive.c:689.
+	// branches get 22 raw pulses — act.offensive.c:689.
 	if percent > prob {
 		// damage(ch, vict, 0, SKILL_DRAGON_KICK): damage() owns the gate, the
 		// numbered set-188 miss_msg, and set_fighting (act.offensive.c:683).
@@ -112,7 +113,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 			SkillMsgInDamage: true,
 			DamageSkill:      SkillDragonKick,
 			StartCombat:      true,
-			WaitCh:           3,
+			WaitChPulses:     engine.PULSE_VIOLENCE + 2, // src/act.offensive.c:689.
 		}
 	}
 	dam := int(float64(ch.GetLevel()) * 1.5)
@@ -123,7 +124,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 		SkillMsgInDamage: true,
 		DamageSkill:      SkillDragonKick,
 		StartCombat:      true,
-		WaitCh:           3,
+		WaitChPulses:     engine.PULSE_VIOLENCE + 2, // src/act.offensive.c:689.
 		DeferredImprove:  []string{SkillDragonKick},
 	}
 }

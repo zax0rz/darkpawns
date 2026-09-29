@@ -159,6 +159,7 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 			MessageToVict:   ActMessage("$n applies some bandaging to your wounds.", chPronouns, &victPronouns, ""),
 			MessageToRoom:   ActMessage("$n applies some bandaging to $N's wounds.", chPronouns, &victPronouns, ""),
 			WaitTarget:      1,
+			WaitChPulses:    engine.PULSE_VIOLENCE + 3, // src/new_cmds2.c:187, both outcomes.
 			DeferredImprove: []string{SkillFirstAid},
 		}
 	}

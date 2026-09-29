@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -263,7 +264,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	prob := ch.GetSkill(SkillKick)
 
 	// C: WAIT_STATE(ch, PULSE_VIOLENCE+2) sits outside the if/else, so both
-	// branches get WaitCh=3 — act.offensive.c:633.
+	// branches get 22 raw pulses — act.offensive.c:633.
 	if percent > prob {
 		// Miss — C calls damage(ch, vict, 0, SKILL_KICK), which routes the
 		// message through skill_message (fight.c) — the Kick set (134) from
@@ -276,7 +277,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 			Success:      false,
 			SkillMsgType: SkillKickNum, // 134 — lib/misc/messages Kick set
 			StartCombat:  true,
-			WaitCh:       3, // PULSE_VIOLENCE + 2
+			WaitChPulses: engine.PULSE_VIOLENCE + 2, // src/act.offensive.c:633.
 		}
 	}
 
@@ -296,7 +297,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 		Damage:          dam,
 		SkillMsgType:    SkillKickNum,
 		StartCombat:     true,
-		WaitCh:          3, // PULSE_VIOLENCE + 2
+		WaitChPulses:    engine.PULSE_VIOLENCE + 2, // src/act.offensive.c:633.
 		DeferredImprove: []string{SkillKick},
 	}
 }
@@ -776,7 +777,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 			Success:                        false,
 			SkillMsgType:                   SkillCircleNum,
 			StartCombat:                    true,
-			WaitCh:                         3, // PULSE_VIOLENCE + 2
+			WaitChPulses:                   engine.PULSE_VIOLENCE + 2, // src/new_cmds.c:2466.
 			RetaliateHit:                   retaliate,
 			RetaliateHitBeforeSkillMessage: retaliate,
 		}
@@ -793,7 +794,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 			SkillMsgType:        SkillCircleNum,
 			SkillMsgAfterDamage: true,
 			StartCombat:         true,
-			WaitCh:              3,
+			WaitChPulses:        engine.PULSE_VIOLENCE + 2, // src/new_cmds.c:2466.
 			DeferredImprove:     []string{SkillCircle},
 		}
 	}
@@ -817,7 +818,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		SkillMsgAfterDamage: true,
 		DamageSkill:         SkillCircle,
 		StartCombat:         true,
-		WaitCh:              3, // PULSE_VIOLENCE + 2
+		WaitChPulses:        engine.PULSE_VIOLENCE + 2, // src/new_cmds.c:2466.
 		DeferredImprove:     []string{SkillCircle},
 	}
 }

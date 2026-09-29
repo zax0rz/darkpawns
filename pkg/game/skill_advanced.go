@@ -237,7 +237,7 @@ func DoStrike(ch *Player, target combat.Combatant, percent int) SkillResult {
 			SkillMsgInDamage: true,
 			DamageSkill:      SkillStrike,
 			StartCombat:      true,
-			WaitCh:           3,
+			WaitChPulses:     engine.PULSE_VIOLENCE + 2, // src/new_cmds.c:1488.
 			DeferredImprove:  []string{SkillStrike},
 		}
 	}
@@ -247,7 +247,7 @@ func DoStrike(ch *Player, target combat.Combatant, percent int) SkillResult {
 		SkillMsgInDamage: true,
 		DamageSkill:      SkillStrike,
 		StartCombat:      true,
-		WaitCh:           3,
+		WaitChPulses:     engine.PULSE_VIOLENCE + 2, // src/new_cmds.c:1488.
 	}
 }
 

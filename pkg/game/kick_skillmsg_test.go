@@ -6,6 +6,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // wireKickMessages loads lib/misc/messages into the combat callbacks so the
@@ -68,8 +69,8 @@ func TestDoKick_Miss_ReroutesThroughSkillMessage(t *testing.T) {
 	if !result.StartCombat {
 		t.Error("miss should set StartCombat (C: damage(ch,vict,0,SKILL_KICK) starts combat via set_fighting)")
 	}
-	if result.WaitCh != 3 {
-		t.Errorf("miss WaitCh = %d, want 3 (PULSE_VIOLENCE+2)", result.WaitCh)
+	if result.WaitChPulses != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("miss WaitCh = %d, want 22 pulses (PULSE_VIOLENCE+2)", result.WaitChPulses)
 	}
 	// R4: no hardcoded strings on the rerouted branch.
 	if result.MessageToCh != "" || result.MessageToVict != "" || result.MessageToRoom != "" {
@@ -115,8 +116,8 @@ func TestDoKick_Hit_ReroutesThroughSkillMessage(t *testing.T) {
 	if !result.Success {
 		t.Error("hit should be Success")
 	}
-	if result.WaitCh != 3 {
-		t.Errorf("hit WaitCh = %d, want 3 (PULSE_VIOLENCE+2)", result.WaitCh)
+	if result.WaitChPulses != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("hit WaitCh = %d, want 22 pulses (PULSE_VIOLENCE+2)", result.WaitChPulses)
 	}
 	if result.MessageToCh != "" || result.MessageToVict != "" || result.MessageToRoom != "" {
 		t.Errorf("hit should carry no hardcoded messages (R4), got ch=%q", result.MessageToCh)
