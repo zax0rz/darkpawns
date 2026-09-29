@@ -74,6 +74,8 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		ch.SendMessage("You add to the clan's treasure.\r\n")
 	}
 
+	// C saves the banker after the subcmd block (clan.c:983).
+	w.saveCharSiteInRoom(ch, "clan bank")
 	w.SaveClans()
 }
 

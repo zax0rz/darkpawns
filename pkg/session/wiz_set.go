@@ -215,6 +215,13 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 	ack = setCap(ack)
 	s.Send(ack)
 
+	// C do_set ends with save_char(vict, NOWHERE) for every successful
+	// live set (act.wizard.c:3064) and for the file path (2895); the JSON
+	// write below is the port's file side, the store of record is what
+	// login reads.
+	if target.player != nil {
+		s.manager.SaveCharSite(target.player, "set")
+	}
 	if target.file && target.player != nil {
 		if err := game.SavePlayer(target.player); err != nil {
 			slog.Error("set file: save failed", "target", target.player.Name, "error", err)

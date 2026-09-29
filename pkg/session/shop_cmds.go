@@ -355,6 +355,9 @@ func cmdBuy(s *Session, args []string) error {
 		if err := s.player.Inventory.AddItem(item); err != nil {
 			break
 		}
+		// C shopping_buy hands the object over with obj_to_char
+		// (shop.c:545): PLR_CRASH is set (handler.c:569-571).
+		s.player.MarkCrashNeeded()
 		s.player.Gold -= pricePerItem
 		bought++
 	}
@@ -413,6 +416,9 @@ func cmdSell(s *Session, args []string) error {
 
 	// Remove item from player, add gold
 	if s.player.Inventory.RemoveItem(item) {
+		// C shopping_sell takes the object with obj_from_char (shop.c:776):
+		// PLR_CRASH is set (handler.c:596-598).
+		s.player.MarkCrashNeeded()
 		s.player.Gold += price
 		s.Send(fmt.Sprintf("You sell %s for %d gold pieces.", item.GetShortDesc(), price))
 		s.markDirty(VarInventory)
@@ -442,6 +448,8 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string) error {
 
 		price := shop.SellPrice(item.GetCost(), s.player.GetCha())
 		if s.player.Inventory.RemoveItem(item) {
+			// C shopping_sell's obj_from_char per sold object (shop.c:776).
+			s.player.MarkCrashNeeded()
 			s.player.Gold += price
 			totalGold += price
 			sold++

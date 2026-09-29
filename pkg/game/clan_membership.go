@@ -86,6 +86,8 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 	victim.ClanRank++
 	c.Power += victim.GetLevel()
 	c.Members++
+	// C saves the enrolled member (clan.c:378).
+	w.saveCharSiteInRoom(victim, "clan enroll")
 
 	victim.SendMessage("You've been enrolled in the clan you chose!\r\n")
 	ch.SendMessage("Done.\r\n")
@@ -137,6 +139,8 @@ func (w *World) doClanExpel(ch *Player, arg string) {
 
 	victim.ClanID = 0
 	victim.ClanRank = 0
+	// C saves the expelled member (clan.c:431).
+	w.saveCharSiteInRoom(victim, "clan expel")
 	c.Members--
 	c.Power -= victim.GetLevel()
 
@@ -197,6 +201,8 @@ func (w *World) doClanPromote(ch *Player, arg string) {
 	}
 
 	victim.ClanRank++
+	// C saves the promoted member (clan.c:539).
+	w.saveCharSiteInRoom(victim, "clan promote")
 	victim.SendMessage("You've been promoted within your clan!\r\n")
 	ch.SendMessage("Done.\r\n")
 	w.SaveClans()
@@ -250,6 +256,8 @@ func (w *World) doClanDemote(ch *Player, arg string) {
 	}
 
 	victim.ClanRank--
+	// C saves the demoted member (clan.c:486).
+	w.saveCharSiteInRoom(victim, "clan demote")
 	victim.SendMessage("You've been demoted within your clan!\r\n")
 	ch.SendMessage("Done.\r\n")
 	w.SaveClans()
@@ -355,6 +363,8 @@ func (w *World) doClanQuit(ch *Player) {
 
 	ch.ClanID = 0
 	ch.ClanRank = 0
+	// C saves the quitter (clan.c:627).
+	w.saveCharSiteInRoom(ch, "clan quit")
 	c.Members--
 	c.Power -= ch.GetLevel()
 

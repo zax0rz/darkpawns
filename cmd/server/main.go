@@ -517,6 +517,13 @@ func main() {
 	defer scriptEngine.Close()
 	game.ScriptEngine = scriptEngine
 
+	// The store-of-record save seam (DP-1365): every game-layer save point
+	// (the save command, autosave, the void pull) writes the database login
+	// reads, through the player's session so session-owned record fields
+	// survive. A missing session reports a skipped save, never a successful
+	// one.
+	manager.WirePlayerSaver(gameWorld)
+
 	// Initialize and start Grapevine WebSocket Client in background
 	gvClient := grapevine.NewClient(gameWorld)
 	gvClient.Start()
@@ -602,6 +609,12 @@ func main() {
 		// rounds, mobs, weather, another player's say) gets its prompt.
 		OnFlushOutput: func() {
 			manager.FlushAsyncPrompts()
+		},
+		// comm.c:832-837 auto_save — the one-minute slot whose tenth pass
+		// runs Crash_save_all (objsave.c:1211-1223) over connected, playing,
+		// PLR_CRASH-flagged characters.
+		OnAutosave: func() {
+			manager.AutosaveTick()
 		},
 	})
 	manager.SetPulsePump(gameLoop.PumpPulses)

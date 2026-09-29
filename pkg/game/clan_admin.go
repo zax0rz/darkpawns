@@ -106,7 +106,8 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 	// Assign leader
 	leader.ClanID = newClan.ID
 	leader.ClanRank = newClan.Ranks
-	// Save player state (simplified)
+	// C saves the leader after the assignment (clan.c:233).
+	w.saveCharSiteInRoom(leader, "clan create")
 }
 
 // ---------------------------------------------------------------------------
@@ -134,6 +135,8 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 		if p.ClanID == c.ID {
 			p.ClanID = 0
 			p.ClanRank = 0
+			// C saves each cleared member (clan.c:266).
+			w.saveCharSiteInRoom(p, "clan destroy")
 		}
 	}
 

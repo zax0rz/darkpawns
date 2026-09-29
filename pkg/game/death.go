@@ -214,11 +214,16 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
+		// C's make_corpse never calls obj_to_char/obj_from_char (fight.c:399,
+		// 406-407), so PLR_CRASH keeps its pre-death state across the corpse
+		// transfer; the port's container moves would set it.
+		wasCrash := player.NeedsCrashSave()
 		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
 		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
 		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoomFront failed in instakill", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		}
+		player.RestoreCrashFlagAfterCorpse(wasCrash)
 	}
 
 	// C extract_char only queues the victim; extract_pending_chars drains it on
@@ -668,11 +673,16 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	if attackType == 93 { // SPELL_DISINTEGRATE
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
 	} else {
+		// C's make_corpse never calls obj_to_char/obj_from_char (fight.c:399,
+		// 406-407), so PLR_CRASH keeps its pre-death state across the corpse
+		// transfer; the port's container moves would set it.
+		wasCrash := player.NeedsCrashSave()
 		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
 		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
 		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoomFront failed in player death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
 		}
+		player.RestoreCrashFlagAfterCorpse(wasCrash)
 	}
 
 	// raw_kill() queues extract_char(); it does not synchronously respawn a

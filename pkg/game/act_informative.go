@@ -262,6 +262,9 @@ func (w *World) kenderStealItem(ch *Player, mob *MobInstance, obj *ObjectInstanc
 		return
 	}
 	obj.Location = LocInventoryPlayer(ch.Name)
+	// C's kender_steal hands the object over with obj_to_char(tmp_obj, ch)
+	// (spec_procs2.c:631): PLR_CRASH is set (handler.c:569-571).
+	ch.MarkCrashNeeded()
 	Act(w, true, ch, nil, obj, nil, "Somehow $p makes it's way into your pack.", "", ToChar)
 	ImproveSkill(ch, SkillSteal)
 	ch.SetWaitState(1)

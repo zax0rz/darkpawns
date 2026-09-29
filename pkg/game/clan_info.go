@@ -72,6 +72,8 @@ func (w *World) doClanApply(ch *Player, arg string) {
 	w.SaveClans()
 
 	ch.ClanID = c.ID
+	// C saves the applicant (clan.c:718).
+	w.saveCharSiteInRoom(ch, "clan apply")
 	ch.SendMessage("You've applied to the clan!\r\n")
 }
 

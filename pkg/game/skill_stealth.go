@@ -252,6 +252,17 @@ func stealInventoryItem(ch *Player, target combat.Combatant, item *ObjectInstanc
 		}
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
+	// C's carried steal is obj_from_char(obj) (src/act.other.c:471), which
+	// flags the victim (handler.c:596-598), then obj_to_char(obj, ch)
+	// (src/act.other.c:472), which flags the thief (handler.c:569-571). C
+	// checks the thief's capacity BEFORE obj_from_char (act.other.c:468-470);
+	// the port checks it after the removal, so both flags go after the
+	// AddItem succeeds — the port's failure path, like C's capacity refusal,
+	// flags nobody.
+	if targetPlayer, ok := target.(*Player); ok {
+		targetPlayer.MarkCrashNeeded()
+	}
+	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
 	applyRobbedAffect(target)
 	message := appendImprovementMessage("Got it!", improveSkillMessage(ch, SkillSteal))
@@ -282,6 +293,10 @@ func stealEquippedItem(ch *Player, target combat.Combatant, item *ObjectInstance
 		}
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
+	// C's equipment steal is obj_to_char(unequip_char(vict, eq_pos), ch)
+	// (src/act.other.c:429): only the thief is flagged — unequip_char never
+	// sets PLR_CRASH.
+	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
 	applyRobbedAffect(target)
 	message := appendImprovementMessage(

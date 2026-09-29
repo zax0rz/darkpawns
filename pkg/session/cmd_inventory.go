@@ -113,19 +113,33 @@ func (s *Session) leaveGameToMenu(rent bool) {
 // parameter — the room the record carries for a character without
 // PLR_LOADROOM (extraction saves: the in-memory load room; entry saves:
 // NOWHERE).
-func (s *Session) saveCharacter(why string, loadRoom int) {
+//
+// The result distinguishes a successful write, a skipped write (no store,
+// no character, guest) and a failure: the DP-1365 save seam reports it back
+// to the game layer, whose crash-save sites keep PLR_CRASH set on anything
+// but success so the next autosave retries. A skipped save is never a
+// successful one.
+func (s *Session) saveCharacter(why string, loadRoom int) game.SaveResult {
 	m := s.manager
 	if !m.hasDB || s.player == nil || s.player.ID <= 0 || s.isGuest {
-		return
+		return game.SaveSkipped
 	}
 	rec, err := s.playerRecordForSave(s.player, loadRoom)
 	if err != nil {
 		slog.Error("character save: build record", "player", s.player.Name, "why", why, "error", err)
-		return
+		return game.SaveFailed
 	}
 	if err := m.db.SavePlayer(rec); err != nil {
 		slog.Error("character save", "player", s.player.Name, "why", why, "error", err)
+		return game.SaveFailed
 	}
+	return game.SaveSucceeded
+}
+
+// SaveToStore is saveCharacter exported for the server's World.PlayerSaver
+// wiring: the game layer's save seam reaches the session through it.
+func (s *Session) SaveToStore(_ *game.Player, why string, loadRoom int) game.SaveResult {
+	return s.saveCharacter(why, loadRoom)
 }
 
 // cmdInventory shows the player's inventory.

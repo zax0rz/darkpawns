@@ -86,6 +86,12 @@ type Manager struct {
 	ipConnCount map[string]int
 	ipConnMu    sync.Mutex
 
+	// Autosave bookkeeping: C's heartbeat-local mins_since_crashsave
+	// (comm.c:832-837), guarded separately so the autosave slot never
+	// contends the session map lock.
+	autosaveMu         sync.Mutex
+	minsSinceCrashsave int
+
 	// Login attempt lockout tracker (H-15)
 	loginAttempts *auth.LoginAttemptTracker
 
@@ -1404,6 +1410,89 @@ func (m *Manager) EachSession(fn func(player interface{}, send func(msg string))
 			continue
 		}
 		fn(p, p.SendMessage)
+	}
+}
+
+// autosaveTime is C's autosave_time (config.c:125): ten minutes between
+// Crash_save_all passes.
+const autosaveTime = 10
+
+// AutosaveTick is the game loop's one-minute autosave slot (C comm.c:832-
+// 837: ++mins_since_crashsave >= autosave_time). The counter advances every
+// slot; the tenth fires the save pass and resets it.
+func (m *Manager) AutosaveTick() {
+	m.autosaveMu.Lock()
+	m.minsSinceCrashsave++
+	fire := m.minsSinceCrashsave >= autosaveTime
+	if fire {
+		m.minsSinceCrashsave = 0
+	}
+	m.autosaveMu.Unlock()
+	if !fire {
+		return
+	}
+	m.CrashSaveAll("autosave")
+}
+
+// CrashSaveAll ports Crash_save_all (objsave.c:1211-1223): every connected,
+// playing, non-guest character flagged PLR_CRASH is written to the store of
+// record. The flag clears only after a successful write (the seam's
+// policy); failed or skipped saves keep it for the next pass. C walks
+// descriptor_list, so a retained link-dead session — no live descriptor —
+// is not eligible, and neither are menu or creation states (not
+// CON_PLAYING).
+func (m *Manager) CrashSaveAll(why string) {
+	m.mu.RLock()
+	sessions := make([]*Session, 0, len(m.sessions))
+	for _, s := range m.sessions {
+		sessions = append(sessions, s)
+	}
+	m.mu.RUnlock()
+	for _, s := range sessions {
+		if s == nil || s.player == nil || !s.authenticated || s.isGuest {
+			continue
+		}
+		if s.charCreating || s.creationSaved || s.menuActive {
+			continue
+		}
+		if s.player.IsLinkless() {
+			continue
+		}
+		if !s.player.NeedsCrashSave() {
+			continue
+		}
+		if res := m.world.SavePlayerRecord(s.player, why, game.LoadRoomNowhere, game.SaveCrash); res == game.SaveFailed {
+			slog.Error("autosave failed", "player", s.player.Name)
+		}
+	}
+}
+
+// SaveCharSite writes the store of record for a character at a bare C
+// save_char(vict, NOWHERE) site — character-only, so PLR_CRASH is left
+// alone. The wizard paths whose C counterparts end in save_char use it.
+func (m *Manager) SaveCharSite(p *game.Player, why string) {
+	if res := m.world.SavePlayerRecord(p, why, game.LoadRoomNowhere, game.SaveCharOnly); res == game.SaveFailed {
+		slog.Error("store-of-record save failed", "player", p.GetName(), "why", why)
+	}
+}
+
+// WirePlayerSaver connects the game layer's store-of-record save seam
+// (World.PlayerSaver) to this manager's sessions: the server calls it at
+// boot, and the persistence tests call it to exercise the same wiring.
+func (m *Manager) WirePlayerSaver(w *game.World) {
+	w.PlayerSaver = func(p *game.Player, why string, loadRoom int) game.SaveResult {
+		s, ok := m.GetSession(p.GetName())
+		if !ok {
+			return game.SaveSkipped
+		}
+		// The wizard `set file` path edits a *separate* Player loaded from
+		// JSON; saving the live session player under that edit's name must
+		// never be reported as the edit's success (and must not write the
+		// un-edited live record over the store).
+		if s.player != p {
+			return game.SaveSkipped
+		}
+		return s.SaveToStore(p, why, loadRoom)
 	}
 }
 

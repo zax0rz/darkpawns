@@ -577,6 +577,11 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 			s.Send("Your victim does not have any affections!")
 		}
 	}
+	// C do_wizutil ends its subcmd block with save_char(vict, NOWHERE)
+	// (act.wizard.c:2217).
+	if target.player != nil {
+		s.manager.SaveCharSite(target.player, "wizutil")
+	}
 	return nil
 }
 

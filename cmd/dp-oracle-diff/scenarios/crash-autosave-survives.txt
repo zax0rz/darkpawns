@@ -1,0 +1,68 @@
+# depth-case: persist.autosave-crash-vehicle
+# A mortal acquires an object and 10+ minutes of pumped clock pass, with a
+# look every four MUD hours so the idle timer stays below the void
+# threshold: the only save that can run is C's 10-minute Crash_save_all
+# (comm.c:832-837, objsave.c:1211-1223). Then <CRASH> and relogin: C
+# restores the object from the crash rent; the unfixed port has no autosave.
+
+[fixture]
+quiet-mobs
+force-load 8010
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Crashauto
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Crashauto
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Crashauto
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Crashauto
+oraclepass
+<ENTER>
+1
+
+[probe]
+get bread
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+look
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+look
+~dpclock pulse 630
+~dpclock pulse 630
+<CRASH>
+inventory

@@ -92,6 +92,9 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		if err := ch.Inventory.AddItem(obj); err != nil {
 			return SkillResult{MessageToRoom: roomMessage}
 		}
+		// C's do_scrounge hands the found object over with obj_to_char
+		// (src/new_cmds2.c:119): PLR_CRASH is set (handler.c:569-571).
+		ch.MarkCrashNeeded()
 
 		message := "You capture and kill %s.\r\n"
 		if find {
@@ -234,6 +237,10 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 				slog.Error("disarm failed to move weapon to player inventory", "actor", ch.GetName(), "target", target.GetName(), "error", err)
 				return SkillResult{Success: false}
 			}
+			// C's disarm hands the weapon back to the victim —
+			// obj_to_char(unequip_char(vict, WEAR_WIELD), vict) flags the
+			// victim, not the actor (new_cmds2.c:236, handler.c:569-571).
+			targetPlayer.MarkCrashNeeded()
 		}
 
 		return SkillResult{

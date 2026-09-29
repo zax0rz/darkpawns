@@ -1,0 +1,64 @@
+# depth-case: persist.void-pull-crash-vehicle
+# A mortal acquires an object and idles into the void (nine pumped MUD
+# hours, lifecycle-idle-void's shape): C's check_idling saves before the
+# transfer (limits.c:434-435). Then <CRASH> and relogin: C restores the
+# object; the unfixed port saves nothing on the void pull.
+
+[fixture]
+quiet-mobs
+force-load 8010
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Crashvoid
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Crashvoid
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Crashvoid
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Crashvoid
+oraclepass
+<ENTER>
+1
+
+[probe]
+get bread
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+<CRASH>
+inventory

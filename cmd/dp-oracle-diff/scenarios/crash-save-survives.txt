@@ -1,0 +1,56 @@
+# depth-case: persist.save-crash-vehicle
+# A mortal acquires an object, saves, and the engine is SIGKILLed (PR 1's
+# <CRASH>): only the store of record can restore it. C restores it from the
+# crash rent file (do_save = save_char + Crash_crashsave, act.other.c:
+# 186-203); the unfixed port's save wrote JSON the login never reads.
+
+[fixture]
+quiet-mobs
+force-load 8010
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Crashsave
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Crashsave
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Crashsave
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Crashsave
+oraclepass
+<ENTER>
+1
+
+[probe]
+get bread
+save
+<CRASH>
+inventory
