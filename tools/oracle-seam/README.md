@@ -47,21 +47,19 @@ the same 100,000. A control that would push the queued total past the cap is
 refused the same way a malformed control is — it is not consumed as a control,
 so the line stays ordinary player input — instead of wrapping the counter.
 
-## Build flags: match the reference binary, not just the docs
+## Wait states under DP_CLOCK
 
-The lap-top reference oracle on the workstation is a **`-g -O2 -fcommon`**
-build (DWARF `DW_AT_producer`), while `docs/DEV-SETUP.md` mandates `-O0` for the
-UB tolerance it buys. The two disagree today, and the difference is observable:
-the DikuMUD C carries latent undefined behavior (here a self-overlapping
-`sprintf` in `SPECIAL(start_room)`, `src/spec_procs.c:2219`, that appends the
-vision text to its own buffer). At `-O0` the oracle emits the full vision; at
-`-O2` the optimizer drops the first three lines — the bytes the Go port was
-calibrated against. A `-O0` rebuild therefore turns
-`character-creation` and `character-creation-name-retry` red without any port
-change. Until the oracle is patched to the intended semantics and the port
-follows (R1a), rebuild a reference oracle at the same optimization level as the
-one the corpus was calibrated against, and say which one it is in the run
-manifest.
+Player waits count pumped pulses only (R3c). Idle passes may dispatch ready
+commands without decrementing wait. Each pumped pulse decrements player wait,
+dispatches at most one queued command per descriptor through the shared command
+body, then runs `heartbeat()`, preserving command-before-heartbeat order (R3b).
+The production post-command `wait = 1` applies only without DP_CLOCK. Output
+and prompts still flush once per real pass; controls never execute commands
+inside `process_input()`.
+
+Build candidates in isolated worktrees using `-g -O0 -fcommon
+-ffile-prefix-map=$PWD=.` as required by `docs/DEV-SETUP.md` (R1a). Never build
+in the shared oracle checkout or replace its reference binary during testing.
 
 ## Rebuild
 
@@ -69,7 +67,7 @@ From a clean C-oracle checkout at `d2cb13e`:
 
 ```bash
 git apply /path/to/darkpawns/tools/oracle-seam/dp-determinism.patch
-cd src
+./configure CFLAGS="-g -O0 -fcommon -ffile-prefix-map=$PWD=."
 make
 ```
 
@@ -77,7 +75,7 @@ With `patch`:
 
 ```bash
 patch -p1 < /path/to/darkpawns/tools/oracle-seam/dp-determinism.patch
-cd src
+./configure CFLAGS="-g -O0 -fcommon -ffile-prefix-map=$PWD=."
 make
 ```
 

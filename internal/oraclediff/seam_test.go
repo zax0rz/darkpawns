@@ -111,6 +111,7 @@ func TestOracleSeamSelftest(t *testing.T) {
 		"dp-seam-selftest: overflow-rejected pending=100000",
 		"dp-seam-selftest: normal-mode-refused pending=0",
 		"dp-seam-selftest: invalid-refused accepted=0",
+		"dp-seam-selftest: wait-counts-pulses idle=2 pumped=0 released=1",
 		"dp-seam-selftest: result=ok",
 	} {
 		if !strings.Contains(string(out), want) {
@@ -177,8 +178,34 @@ func TestSeamPatchDefersPulsesOutOfInputProcessing(t *testing.T) {
 	if drain := cFunctionBody(t, source, "int dp_seam_take(void)\n{"); !strings.Contains(drain, "dp_pending_pulses--;") {
 		t.Errorf("the drain primitive does not consume one queued pulse:\n%s", drain)
 	}
-	if !strings.Contains(source, "while (dp_seam_take())\n        heartbeat(++pulse);") {
+	if !strings.Contains(source, "while (dp_seam_take()) {\n        dp_command_phase(1);\n        heartbeat(++pulse);\n      }") {
 		t.Error("the game loop does not drain the queued pulses at its heartbeat slot")
+	}
+	ready := cFunctionBody(t, source, "static int dp_command_ready(struct descriptor_data *d, int pumped)\n{")
+	if !strings.Contains(ready, "if (pumped && d->character)\n    --(d->character->wait);") {
+		t.Error("idle deterministic passes must not decrement wait")
+	}
+	dispatch := cFunctionBody(t, source, "static void process_descriptor_command(struct descriptor_data *d, char *comm,\n    int aliased)\n{")
+	if !strings.Contains(dispatch, "if (d->character && !dp_clock) {\n      d->character->wait = 1;") {
+		t.Error("post-command wait must be limited to production mode")
+	}
+	// Factoring dispatch must preserve every original operation in production.
+	baseSource := string(base)
+	originalStart := strings.Index(baseSource, "    if (d->character) {\n      /* reset the idle timer")
+	if originalStart < 0 {
+		t.Fatal("pristine command body not found")
+	}
+	originalTail := baseSource[originalStart:]
+	originalEnd := strings.Index(originalTail, "\n      }\n    }\n\n    /* send queued output")
+	if originalEnd < 0 {
+		t.Fatal("pristine command body end not found")
+	}
+	productionDispatch := strings.ReplaceAll(dispatch, "d->character && !dp_clock", "d->character")
+	if strings.TrimSpace(productionDispatch[1:len(productionDispatch)-1]) != strings.TrimSpace(originalTail[:originalEnd]) {
+		t.Error("shared dispatch changes the original production command body (R3b)")
+	}
+	if !strings.Contains(source, "if (!waiting_for_ident(d) && ((d->character ? --(d->character->wait) : 0) <= 0) &&") {
+		t.Error("production wait gate changed")
 	}
 	if !strings.Contains(source, "    } else {\n      while (missed_pulses--)\n        heartbeat(++pulse);\n    }") {
 		t.Error("the production (non-DP_CLOCK) heartbeat loop is not preserved verbatim")

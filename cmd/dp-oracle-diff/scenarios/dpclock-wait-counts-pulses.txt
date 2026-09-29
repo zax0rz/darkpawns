@@ -1,0 +1,42 @@
+# depth-case: dpclock.wait-counts-pulses
+# D5 vehicle: look remains queued through pulse N-1 and releases on pulse N.
+# do_gen_tog sets nosummon wait (src/act.other.c:1210), with no RNG or peers.
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aidfail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aidfail
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+nosummon
+look
+# src/act.other.c:1210: WAIT_STATE(ch, PULSE_VIOLENCE * 2) = 40.
+# src/structs.h:630,634: RL_SEC uses 10 passes/sec, PULSE_VIOLENCE = 20.
+~dpclock pulse 39
+~dpclock pulse 1
