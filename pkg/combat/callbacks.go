@@ -39,6 +39,9 @@ type GameCallbacks struct {
 	HasAffectStr     func(name string, aff string) bool
 	RemoveAffect     func(name string, skillNum int)
 	RemoveAllAffects func(name string)
+	RemoveTattoo     func(name string)
+	ClearNightbreed  func(name string)
+	ForgetVictim     func(name string)
 
 	// Player/Mob/Room flags
 	HasPlrFlag          func(name string, flag string) bool
@@ -87,6 +90,7 @@ type GameCallbacks struct {
 	SetConstitution func(name string, val int)
 
 	// Corpse & extraction
+	RawKillNPC     func(victim Combatant, attackType int)
 	MakeCorpse     func(victim string, attackType int)
 	MakeDust       func(victim string, attackType int)
 	ExtractChar    func(name string)

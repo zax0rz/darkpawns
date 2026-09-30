@@ -963,6 +963,10 @@ func GroupGain(ch, victim Combatant) {
 // **********************************
 
 func RawKill(ch Combatant, attackType int) {
+	if cb := GetCallbacks(); ch.IsNPC() && cb != nil && cb.RawKillNPC != nil {
+		cb.RawKillNPC(ch, attackType)
+		return
+	}
 	chName := ch.GetName()
 	if ch.GetRoom() < 0 {
 		return
@@ -971,7 +975,18 @@ func RawKill(ch Combatant, attackType int) {
 		ch.StopFighting()
 	}
 	cbRemoveAllAffects(chName)
+	if cb := GetCallbacks(); cb != nil {
+		if cb.RemoveTattoo != nil {
+			cb.RemoveTattoo(chName)
+		}
+		if cb.ClearNightbreed != nil {
+			cb.ClearNightbreed(chName)
+		}
+	}
 	cbUnmount(chName)
+	if cb := GetCallbacks(); cb != nil && cb.ForgetVictim != nil {
+		cb.ForgetVictim(chName)
+	}
 	DeathCry(ch)
 
 	// Default to corpse unless GetRace tells us the victim is undead/vampire.

@@ -1,0 +1,85 @@
+# RawKill backfire: C magic.c:1143-1148, fight.c:534-581.
+# C and Go kill the caster without die()/XP/counter penalties. A peer sees
+# the death cry and can inspect the TYPE_BLAST corpse and its possessions.
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 7905 1 8105 79
+
+[setup:oracle]
+Backfire
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Backfire
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Witness
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+advance Witness 31
+skillset Witness 'protection from evil' 100
+set Witness align -1000
+set Witness mana 300
+force Witness get spike
+
+[probe]
+force Witness cast 'protection from evil'
+~dpclock pulse 1
+look
+look in corpse

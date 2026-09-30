@@ -54,6 +54,10 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				}
 				if err := p.Equipment.unequip(old.Slot, p.Inventory); err != nil {
 					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
+				} else {
+					// unequip adds to inventory; this move owns the next destination.
+					// C unequip_char returns the object without obj_to_char (:754-783).
+					p.Inventory.removeItem(obj)
 				}
 				// No PLR_CRASH here: C's unequip_char only clears the eq
 				// link (handler.c:754-783); the flag is obj_to_char's /
@@ -67,7 +71,6 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 		case OwnerMob:
 			if m, ok := w.activeMobs[old.MobID]; ok {
 				delete(m.Equipment, int(old.Slot))
-				m.AddToInventory(obj) // return to inventory on unequip
 			}
 		}
 

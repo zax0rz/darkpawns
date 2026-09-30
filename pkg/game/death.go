@@ -212,7 +212,7 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 
 	roomVNum := player.GetRoom()
 	if attackType == 93 { // SPELL_DISINTEGRATE
-		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
+		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold, attackType)
 	} else {
 		// C's make_corpse never calls obj_to_char/obj_from_char (fight.c:399,
 		// 406-407), so PLR_CRASH keeps its pre-death state across the corpse
@@ -462,8 +462,8 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	}
 
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
-	if attackType == 93 { // SPELL_DISINTEGRATE
-		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, corpseGold)
+	if attackType == 93 || rawKillRace(deadMob) == combat.RACE_UNDEAD || rawKillRace(deadMob) == combat.RACE_VAMPIRE {
+		w.makeDust(deadMob, inventoryItems, equipmentItems, roomVNum, corpseGold, attackType)
 	} else {
 		corpseKeywords := deadMob.GetName()
 		if deadMob.Proto() != nil && deadMob.Proto().Keywords != "" {
@@ -523,11 +523,26 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 // bridge; NPCs use the game death path so their corpse and active-mob removal
 // are performed without combat XP/kills bookkeeping (R1/R3/R5e).
 func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
-	if victim == nil {
+	if victim == nil || victim.GetRoom() < 0 {
 		return
 	}
 	if victim.IsNPC() {
 		victim.StopFighting()
+		if m, ok := victim.(*MobInstance); ok {
+			m.removeRawKillAffects()
+			m.RemoveAffected(affWerewolf)
+			if m.IsAffected(affVampire) {
+				m.RemoveAffected(affVampire)
+				if m.GetMana() > m.GetMaxMana() {
+					m.SetMana(m.GetMaxMana())
+				}
+			}
+			if rider, ok := w.GetPlayer(m.GetMountRider()); ok {
+				w.clearMountedPair(rider, m)
+				m.RemoveAffected(affMounted)
+			}
+			w.forgetRawKillVictim(m.GetName())
+		}
 		w.handleMobDeath(victim, nil, attackType)
 		return
 	}
@@ -679,7 +694,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 
 	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
 	if attackType == 93 { // SPELL_DISINTEGRATE
-		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold)
+		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold, attackType)
 	} else {
 		// C's make_corpse never calls obj_to_char/obj_from_char (fight.c:399,
 		// 406-407), so PLR_CRASH keeps its pre-death state across the corpse
@@ -864,7 +879,7 @@ func attackTypeToCorpseAttack(attackType int) CorpseAttackType {
 		return AttackFire
 	case 8: // SPELL_CHILL_TOUCH
 		return AttackCold
-	case 10, 92: // SPELL_COLOR_SPRAY, SPELL_DISRUPT
+	case 10, 92, combat.TYPE_BLAST: // src/fight.c:296-302: COLOR_SPRAY, DISRUPT, TYPE_BLAST
 		return AttackBlast
 	case 21, 83: // SPELL_ENERGY_DRAIN, SPELL_SOUL_LEECH (was incorrectly 94 before fix)
 		return AttackEnergyDrain
@@ -1097,7 +1112,7 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	if len(keywordLists) > 0 && keywordLists[0] != "" {
 		corpseKeywords = keywordLists[0]
 	}
-	corpse.Runtime.Keywords = strings.ToLower(fmt.Sprintf("%s corpse", corpseKeywords))
+	corpse.Runtime.Keywords = fmt.Sprintf("%s corpse", corpseKeywords)
 	corpse.Runtime.Name = fmt.Sprintf("%s corpse", corpseKeywords)
 	corpse.Runtime.ShortDesc = fmt.Sprintf("the corpse of %s", name)
 	// Convert attack type to corpse description
@@ -1119,8 +1134,10 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	equipCopy := make([]*ObjectInstance, len(equipment))
 	copy(equipCopy, equipment)
 
-	// Transfer inventory into corpse (obj_to_obj in original)
-	for _, item := range invCopy {
+	// C transfers the carrying list intact (src/fight.c:399-402).
+	// MoveObjectToContainer prepends, so visit the snapshot from its tail.
+	for i := len(invCopy) - 1; i >= 0; i-- {
+		item := invCopy[i]
 		if item != nil {
 			if err := w.MoveObjectToContainer(item, corpse); err != nil {
 				slog.Error("failed to move item to corpse",
@@ -1158,7 +1175,7 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 
 // makeDust implements make_dust() for SPELL_DISINTEGRATE
 // Source: fight.c lines 433-480
-func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, gold int) {
+func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, gold int, attackType int) {
 	// Scatter ALL inventory items directly to room floor
 	for _, item := range inventory {
 		if item != nil {
@@ -1191,40 +1208,23 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 		}
 	}
 
-	// Create ash object
-	ash := &ObjectInstance{
-		Prototype: nil, // synthetic object
-		VNum:      -1,
-		RoomVNum:  roomVNum,
-		Contains:  make([]*ObjectInstance, 0),
-		CustomData: map[string]interface{}{
-			"is_ash": true,
-		},
-		Runtime: ObjectRuntimeState{
-			Name:      "a pile of ash",
-			ShortDesc: "a pile of ash",
-			LongDesc:  "A small pile of ash is all that remains.",
-		},
+	// src/fight.c:468-480 uses the actual dust prototypes and emits no act.
+	vnum := 18
+	if race := rawKillRace(victim); race == combat.RACE_VAMPIRE && attackType != 93 {
+		vnum = 1230
 	}
-	// C make_dust places the dust with obj_to_room (fight.c:480).
+	ash, err := w.SpawnObject(vnum, -1)
+	if err != nil {
+		slog.Error("makeDust prototype unavailable", "vnum", vnum, "error", err)
+		return
+	}
+	if vnum == 18 {
+		ash.Timer = MaxNPCCorpseTime
+	}
+	ash.SetValue(0, 0)
+	ash.SetValue(3, 1)
 	if err := w.MoveObjectToRoomFront(ash, roomVNum); err != nil {
-		slog.Warn("MoveObjectToRoomFront failed in makeDust", "room", roomVNum, "error", err)
-	}
-
-	// Send room message
-	victimName := ""
-	switch v := victim.(type) {
-	case *Player:
-		victimName = v.Name
-	case *MobInstance:
-		victimName = v.GetShortDesc()
-	}
-
-	if victimName != "" {
-		players := w.GetPlayersInRoom(roomVNum)
-		for _, p := range players {
-			p.SendMessage(fmt.Sprintf("%s is disintegrated! Equipment lies scattered on the ground.\r\n", victimName))
-		}
+		slog.Error("place dust", "vnum", vnum, "room", roomVNum, "error", err)
 	}
 }
 
