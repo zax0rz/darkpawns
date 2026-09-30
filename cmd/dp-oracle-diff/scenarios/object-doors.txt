@@ -1,14 +1,17 @@
 # Unified container/exit door handling. Object 19121 is a real pickproof old
 # chest keyed by 19122. Room 11186's up exit is a real locked door keyed by
-# 11017 and reset by zone 110. Cuchi promotes canonical actor Orodreth so the
-# shared warmup can load the real fixtures and teleport without editing data.
+# 11017 and reset by zone 110. The actor is the first player on an empty
+# player file, so both servers create the first-player implementor (C
+# init_char, Go BootstrapFirstPlayerGod) and the shared warmup can load the
+# real fixtures and teleport without editing data. (It used Orodreth's Cuchi
+# promotion until DP-1373 closed that backdoor.)
 
 [fixture]
+empty-players
 quiet-mobs
-spawn-mob 18306 1 8004 80
 
 [setup:oracle]
-Orodreth
+Warden
 Y
 oraclepass
 oraclepass
@@ -24,7 +27,7 @@ look
 recall
 
 [setup:port]
-Orodreth
+Warden
 y
 oraclepass
 oraclepass
@@ -39,7 +42,6 @@ Y
 recall
 
 [warmup]
-pat Cuchi
 holylight
 load obj 19121
 load obj 19122
