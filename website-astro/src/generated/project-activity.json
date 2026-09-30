@@ -1,15 +1,11 @@
 {
-  "generatedAt": "2026-09-26T22:02:02-04:00",
+  "generatedAt": "2026-09-30T14:39:30-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
     {
-      "week": "2026-07-06",
-      "commits": 89
-    },
-    {
       "week": "2026-07-13",
-      "commits": 78
+      "commits": 72
     },
     {
       "week": "2026-07-20",
@@ -49,39 +45,43 @@
     },
     {
       "week": "2026-09-21",
-      "commits": 71
+      "commits": 77
+    },
+    {
+      "week": "2026-09-28",
+      "commits": 24
     }
   ],
   "recentCommits": [
     {
-      "sha": "826cfea1b576cae04c373f7367013d555f75387f",
-      "date": "2026-09-26",
-      "title": "Merge pull request #1666 from zax0rz/docs/sqlite-production-state",
-      "url": "https://github.com/zax0rz/darkpawns/commit/826cfea1b576cae04c373f7367013d555f75387f"
+      "sha": "46e14c48fcbfe48d5139b6530daa180145bfe3fc",
+      "date": "2026-09-30",
+      "title": "Merge pull request #1720 from zax0rz/claude/remove-name-backdoors",
+      "url": "https://github.com/zax0rz/darkpawns/commit/46e14c48fcbfe48d5139b6530daa180145bfe3fc"
     },
     {
-      "sha": "4364c40db5c5a5701fb5ce5b0fd460dee9423171",
-      "date": "2026-09-26",
-      "title": "Merge pull request #1665 from zax0rz/fix/lifecycle-restart-coverage",
-      "url": "https://github.com/zax0rz/darkpawns/commit/4364c40db5c5a5701fb5ce5b0fd460dee9423171"
+      "sha": "dfe9328c610f8299404319b65ba5dd71e604dd59",
+      "date": "2026-09-30",
+      "title": "Merge pull request #1718 from zax0rz/claude/research-pf050-clean-claims",
+      "url": "https://github.com/zax0rz/darkpawns/commit/dfe9328c610f8299404319b65ba5dd71e604dd59"
     },
     {
-      "sha": "79197a20512291a7388b7522cd83467907d53b14",
-      "date": "2026-09-26",
-      "title": "Merge pull request #1662 from zax0rz/feat/sqlite-only-runtime",
-      "url": "https://github.com/zax0rz/darkpawns/commit/79197a20512291a7388b7522cd83467907d53b14"
+      "sha": "015eddfa9494689ea995010bab5f4b8e416d4561",
+      "date": "2026-09-30",
+      "title": "Merge pull request #1717 from zax0rz/sol/integrity-3b",
+      "url": "https://github.com/zax0rz/darkpawns/commit/015eddfa9494689ea995010bab5f4b8e416d4561"
     },
     {
-      "sha": "fcd75a6069a93ab7d634a84a3d6f49ad40c20130",
-      "date": "2026-09-26",
-      "title": "Merge pull request #1661 from zax0rz/docs/research-20260926",
-      "url": "https://github.com/zax0rz/darkpawns/commit/fcd75a6069a93ab7d634a84a3d6f49ad40c20130"
+      "sha": "c26caab37bc52d762527eee481af49723511b941",
+      "date": "2026-09-30",
+      "title": "Merge pull request #1716 from zax0rz/glm/security-guarded-sends",
+      "url": "https://github.com/zax0rz/darkpawns/commit/c26caab37bc52d762527eee481af49723511b941"
     },
     {
-      "sha": "f700f724932100064aecf1df5e542a4c357f621a",
-      "date": "2026-09-26",
-      "title": "Merge pull request #1660 from zax0rz/feat/db-sqlite-migration",
-      "url": "https://github.com/zax0rz/darkpawns/commit/f700f724932100064aecf1df5e542a4c357f621a"
+      "sha": "793c20358681b5de3d505f163a8306aad005695c",
+      "date": "2026-09-30",
+      "title": "Merge pull request #1715 from zax0rz/glm/security-mob-socials",
+      "url": "https://github.com/zax0rz/darkpawns/commit/793c20358681b5de3d505f163a8306aad005695c"
     }
   ],
   "pullRequests": [
