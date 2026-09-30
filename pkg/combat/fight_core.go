@@ -193,7 +193,7 @@ func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, me
 
 	// fight.c:1500 — a downed victim can no longer fight back. The attacker
 	// keeps its FIGHTING reference and finishes the victim off next round.
-	if newPos < PosSleeping && victim.GetFighting() != "" {
+	if newPos <= PosSleeping && victim.GetFighting() != "" {
 		victim.StopFighting()
 	}
 	return newPos
@@ -341,6 +341,23 @@ func TakeDamageWithDeath(ch, victim Combatant, dam int, attackType int, onDeath 
 	return takeDamage(ch, victim, dam, attackType, onDeath)
 }
 
+// EnterDamageFighting mirrors damage()'s gated set_fighting calls, including
+// their position change, for damage seams that emit their own skill message
+// (src/fight.c:1400-1408, 1443-1445, 222-223).
+func EnterDamageFighting(ch, victim Combatant) {
+	if ch == nil || victim == nil || ch.GetName() == victim.GetName() || ch.GetPosition() <= PosStunned {
+		return
+	}
+	if ch.GetFighting() == "" {
+		ch.SetFighting(victim.GetName())
+		ch.SetPosition(PosFighting)
+	}
+	if victim.GetPosition() > PosStunned && victim.GetFighting() == "" {
+		victim.SetFighting(ch.GetName())
+		victim.SetPosition(PosFighting)
+	}
+}
+
 // TakeDamageAfterGate is TakeDamageWithDeath for a caller that has already
 // asked damage()'s protection gate (World.DamageRefused) at the point C calls
 // damage(), such as the skill command tail. Asking twice would print the
@@ -384,6 +401,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 	if victimName != chName && ch.GetPosition() > PosStunned {
 		if ch.GetFighting() == "" {
 			ch.SetFighting(victimName)
+			ch.SetPosition(PosFighting) // src/fight.c:222-223
 		}
 
 		// charm retarget (fight.c:1410): charmed NPC attacking their master's friend
@@ -398,6 +416,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 
 		if victim.GetPosition() > PosStunned && victim.GetFighting() == "" {
 			victim.SetFighting(chName)
+			victim.SetPosition(PosFighting) // src/fight.c:222-223
 			// MOB_MEMORY: NPC remembers PC attacker (fight.c:1445)
 			if cbHasMobFlag(victimName, "MOB_MEMORY") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
 				cbPerformCommand(victimName, fmt.Sprintf("remember %s", chName))
@@ -523,7 +542,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		}
 	}
 
-	if newPos < PosSleeping && victim.GetFighting() != "" {
+	if newPos <= PosSleeping && victim.GetFighting() != "" {
 		victim.StopFighting()
 	}
 

@@ -213,7 +213,8 @@ func TestInflictDamage_ImmortalVictimAbsorbs(t *testing.T) {
 	if victim.GetHP() != 50 {
 		t.Errorf("immortal victim HP = %d, want 50 (damage absorbed)", victim.GetHP())
 	}
-	if victim.GetFighting() != "" {
-		t.Errorf("immortal victim fighting = %q, want empty (absorbed hit engages nothing)", victim.GetFighting())
+	// damage() enrolls before immortal absorption (src/fight.c:1443-1445, 1473-1480).
+	if victim.GetFighting() != caster.GetName() {
+		t.Errorf("immortal victim fighting = %q, want %q even when damage is absorbed", victim.GetFighting(), caster.GetName())
 	}
 }
