@@ -59,7 +59,9 @@ def invoke(run, runner, seed, names, jobs, recheck=False):
                 seen.add(match[2])
                 if not recheck:
                     atomic(run / "claims-progress", f"{seed}\t{len(seen)}\t{len(names)}\n")
-        process.wait()
+        status = process.wait()
+    if status and not results.exists():
+        raise RuntimeError(f"seed {seed}: runner exited {status} before writing results; see {directory / (suffix + '.log')}")
     return read_results(results, names)
 
 

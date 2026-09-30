@@ -509,5 +509,39 @@ STUB
 	esac
 done
 
+if want_test claims_aborted; then
+ printf '#!/bin/sh\nexit 2\n' >"$work/claims-aborted"
+ chmod +x "$work/claims-aborted"
+ CENSUS_MANIFEST_DIR="$claims_fixture" start_run test-claims-aborted "$work/claims-aborted" --claims >/dev/null
+ line=$("$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-claims-aborted" --max-seconds 10)
+ rc=$?
+ check "claims_aborted: exit" 1 "$rc"
+ check "claims_aborted: driver failure is not a false claim" 'oracle-claims: driver failed verdict=NOT_CLEAN' "$line"
+fi
+
+if want_test claims_progress; then
+ cat >"$work/claims-progress" <<'STUB'
+#!/usr/bin/env bash
+set -u
+if [[ "$ORACLE_REGRESSION_SEED" == 1 ]]; then
+ printf 'PASS alpha\n'
+ sleep 3
+fi
+IFS=',' read -r -a names <<<"$ORACLE_REGRESSION_SCENARIOS"
+: >"$ORACLE_REGRESSION_RESULTS"
+for name in "${names[@]}"; do
+ printf 'PASS\t%s\t3\n' "$name" >>"$ORACLE_REGRESSION_RESULTS"
+done
+STUB
+ chmod +x "$work/claims-progress"
+ CENSUS_MANIFEST_DIR="$claims_fixture" start_run test-claims-progress "$work/claims-progress" --claims >/dev/null
+ run=$ORACLE_RUNS_ROOT/$(date +%F)/test-claims-progress
+ line=$("$census" wait --run "$run" --max-seconds 1)
+ rc=$?
+ check "claims_progress: exit" 3 "$rc"
+ [[ "$line" == *' seed 1 1/1' ]] && ok "claims_progress: seed and progress" || not_ok "claims_progress: $line"
+ "$census" wait --run "$run" --max-seconds 10 >/dev/null
+fi
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 ((fail == 0))

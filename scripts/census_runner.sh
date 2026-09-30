@@ -108,6 +108,7 @@ write_manifest() {
 		[[ -n "$recheck_note" ]] && printf -- '- Rechecked: %s\n' "$recheck_note"
 		if [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
 			printf '\n## Claims\n\n'
+			printf -- '- Go build flags: `%s`\n' "${GOFLAGS:-default}"
 			printf -- '- Manifest HEAD: `%s`\n' "$(cat "$run_dir/manifests-head.txt")"
 			printf -- '- Enumeration: `claims.tsv`; command: `census.sh start --claims --name %s`\n' "${run_dir##*/}"
 			awk -F '\t' '{n[$1]++} END {for (s in n) printf "seed %s: %d pairs\n", s, n[s]}' "$run_dir/claims.tsv" | sort -k2,2n
