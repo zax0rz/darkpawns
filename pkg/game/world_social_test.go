@@ -7,14 +7,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// A mob executing a short social must render like the guarded player path:
-// blush carries three messages (char/others no-arg, then "#"), so a targeted
-// blush has no target-found or not-found message at all. The unguarded mob
-// path indexed past the table and killed the whole process on the
-// recover-less telnet input goroutine (order <pet> blush <word>).
-func TestExecMobCommandShortSocialDoesNotPanic(t *testing.T) {
-	w, actor, local, _, output := newChannelWorld(t)
-
+func spawnSocialTestMob(t *testing.T, w *World) *MobInstance {
+	t.Helper()
 	proto := &parser.Mob{VNum: 9701, Race: 7, Level: 1, HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 10}}
 	w.mu.Lock()
 	w.mobs[9701] = proto
@@ -23,19 +17,50 @@ func TestExecMobCommandShortSocialDoesNotPanic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob: %v", err)
 	}
+	return mob
+}
 
-	// Target not found: socNotFound (index 5) does not exist for blush.
+// A mob executing a short social must stay inside the message table: blush
+// carries three messages (char/others no-arg, then "#"), so the unguarded
+// mob path indexed past the table on both target shapes and killed the whole
+// process on the recover-less telnet input goroutine (order <pet> blush
+// <word>). The unified npcSocial path renders it like C's do_action instead.
+func TestExecMobCommandShortSocialDoesNotPanic(t *testing.T) {
+	w, actor, local, _, output := newChannelWorld(t)
+	mob := spawnSocialTestMob(t, w)
+
+	// Target not found, target found, and the explicit "social" form —
+	// all three routes on a three-message social.
 	w.ExecMobCommand(mob.GetVNum(), "blush nobodyhere")
-	// Target found: socOthersFound (index 3) does not exist for blush.
 	w.ExecMobCommand(mob.GetVNum(), "blush "+local.Name)
+	w.ExecMobCommand(mob.GetVNum(), "social blush "+local.Name)
 
-	if got := channelOutput(output, actor.Name); got != "" {
-		t.Fatalf("actor output after short socials = %q, want none", got)
+	for _, name := range []string{actor.Name, local.Name} {
+		if got := channelOutput(output, name); strings.Contains(got, "#") {
+			t.Fatalf("%s output = %q, want no raw # slot marker", name, got)
+		}
 	}
 
-	// Positive control: a full social still renders to the target.
+	// grin carries all slots: the targeted form still reaches the target.
 	w.ExecMobCommand(mob.GetVNum(), "grin "+actor.Name)
 	if got := channelOutput(output, actor.Name); !strings.Contains(got, "grins at you") {
 		t.Fatalf("actor output after grin = %q, want the ToVict grin message", got)
+	}
+}
+
+// C's do_action ignores the argument when a social has no targeted form and
+// plays the no-arg version (src/act.social.c:120-130): ordering a mob to
+// blush at anyone shows the room the plain no-arg blush line, not nothing.
+func TestMobSocialNoTargetedFormPlaysNoArgRoomLine(t *testing.T) {
+	w, actor, local, _, output := newChannelWorld(t)
+	mob := spawnSocialTestMob(t, w)
+
+	w.ExecMobCommand(mob.GetVNum(), "blush "+local.Name)
+
+	if got := channelOutput(output, actor.Name); !strings.Contains(got, "blushes.") {
+		t.Fatalf("actor output for targeted blush = %q, want the no-arg room line", got)
+	}
+	if got := channelOutput(output, local.Name); !strings.Contains(got, "blushes.") {
+		t.Fatalf("local output for targeted blush = %q, want the no-arg room line", got)
 	}
 }

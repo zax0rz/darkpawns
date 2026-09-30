@@ -925,59 +925,15 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	case "social":
 		if len(parts) > 1 {
 			socialName := strings.ToLower(parts[1])
-			w.doMobSocial(mob, socialName, strings.Join(parts[2:], " "))
+			w.npcSocial(mob, socialName, strings.Join(parts[2:], " "))
 		}
 
 	default:
 		// Check if the command itself is a social
-		if social, found := Socials[cmd]; found {
-			w.doMobSocial(mob, cmd, args)
-			_ = social
+		if _, found := Socials[cmd]; found {
+			w.npcSocial(mob, cmd, args)
 		} else {
 			slog.Debug("executeMobCommand: unknown command", "command", cmd)
-		}
-	}
-}
-
-// doMobSocial performs a social emote on behalf of a mob. An ordered command
-// runs through C's command_interpreter (act.offensive.c:332), so the mob's
-// social renders like do_action: a slot the social does not carry (unused
-// slots are "#" or absent — many socials ship with only three messages)
-// emits nothing, never an index past the table.
-func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
-	social, found := Socials[cmd]
-	if !found {
-		return
-	}
-
-	var target *Player
-	if targetName != "" {
-		target = w.findPlayerByName(targetName)
-	}
-
-	if target != nil {
-		// Social with target
-		if message, ok := socialMessage(social, socCharFound); ok {
-			Act(nil, false, mob, target, nil, nil, message, "", ToChar)
-		}
-		if message, ok := socialMessage(social, socOthersFound); ok {
-			Act(w, true, mob, target, nil, nil, message, "", ToNotVict)
-		}
-		if message, ok := socialMessage(social, socVictFound); ok {
-			Act(nil, false, mob, target, nil, nil, message, "", ToVict)
-		}
-	} else if targetName != "" {
-		// Target not found
-		if message, ok := socialMessage(social, socNotFound); ok {
-			mob.SendMessage(message)
-		}
-	} else {
-		// Social without target
-		if message, ok := socialMessage(social, socCharNoArg); ok {
-			Act(nil, false, mob, nil, nil, nil, message, "", ToChar)
-		}
-		if message, ok := socialMessage(social, socOthersNoArg); ok {
-			Act(w, true, mob, nil, nil, nil, message, "", ToRoom)
 		}
 	}
 }
