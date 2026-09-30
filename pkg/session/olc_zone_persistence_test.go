@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -46,8 +48,13 @@ func TestOlcZoneSurvivesDisconnectAndReconnect(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = database.Close() })
 
+	builderHash, err := bcrypt.GenerateFromPassword([]byte("builder-password"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash: %v", err)
+	}
 	record := &db.PlayerRecord{
 		Name:      "Builder",
+		Password:  string(builderHash),
 		RoomVNum:  8004,
 		Level:     31,
 		Health:    20,
@@ -74,7 +81,7 @@ func TestOlcZoneSurvivesDisconnectAndReconnect(t *testing.T) {
 	world := newOlcZonePersistenceWorld(t)
 	m := newTestManager(t, world, database)
 	builder := makeCharSession(t, m)
-	if err := builder.handleLogin(loginMsg("Builder", "unused")); err != nil {
+	if err := builder.handleLogin(loginMsg("Builder", "builder-password")); err != nil {
 		t.Fatalf("login: %v", err)
 	}
 	_ = drainMsg(t, builder) // MOTD prompt.
@@ -113,7 +120,7 @@ func TestOlcZoneSurvivesDisconnectAndReconnect(t *testing.T) {
 	}
 
 	reconnected := makeCharSession(t, m)
-	if err := reconnected.handleLogin(loginMsg("Builder", "unused")); err != nil {
+	if err := reconnected.handleLogin(loginMsg("Builder", "builder-password")); err != nil {
 		t.Fatalf("reconnect: %v", err)
 	}
 	_ = drainMsg(t, reconnected)

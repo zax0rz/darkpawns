@@ -315,3 +315,20 @@ finishes the remaining columns on the next boot. If the database role lacks
 of starting against a schema it cannot trust — grant `ALTER` and restart.
 SQLite needs none of this: it has no zone-aware type, and the DDL translation
 already folds `TIMESTAMPTZ` back to `TIMESTAMP` there.
+
+## Empty password hashes
+
+Rows created before password hashing was persisted — and any `NULL` carried
+across a migration — can hold an empty `password_hash`. Login answers such a
+row exactly like a wrong password — same reply bytes, same failure counting
+and lockout — so the state cannot be probed from outside and the row can
+never authenticate.
+
+Find how many rows are affected, and repair one with an operator-set bcrypt
+hash (`$2a$`/`$2b$`, cost 10 or higher):
+
+```sql
+SELECT count(*) FROM players WHERE password_hash IS NULL OR password_hash = '';
+UPDATE players SET password_hash = '<bcrypt hash>' WHERE name = '<name>';
+```
+

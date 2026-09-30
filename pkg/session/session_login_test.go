@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -455,5 +456,81 @@ func TestHandleLogin_SessionDisconnectsAfterThreeBadPasswords(t *testing.T) {
 	}
 	if s.loginFailures.Load() != 3 {
 		t.Fatalf("loginFailures = %d, want 3", s.loginFailures.Load())
+	}
+}
+
+// An empty stored password hash must be indistinguishable from a wrong
+// password on the wire — same bytes, same failure counting — or the reply
+// shape becomes an oracle for which accounts are legacy empty-hash rows
+// (and the pre-fix code failed open instead: any password authenticated).
+func TestHandleLogin_EmptyStoredHashMatchesWrongPasswordBytes(t *testing.T) {
+	database := testutil.NewMockDatabase()
+	world := testutil.NewTestWorld()
+	t.Cleanup(world.StopAITicker)
+	m := newTestManager(t, world, database)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("secret123"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	emptyRow := &db.PlayerRecord{
+		Name: "LegacyEmpty", Password: "", RoomVNum: game.MortalStartRoom,
+		Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
+		Move: 100, MaxMove: 100, Class: game.ClassWarrior, Race: game.RaceHuman,
+		StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
+		Inventory: []byte("[]"), Equipment: []byte("{}"),
+	}
+	hashedRow := &db.PlayerRecord{
+		Name: "HashedUser", Password: string(hash), RoomVNum: game.MortalStartRoom,
+		Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
+		Move: 100, MaxMove: 100, Class: game.ClassWarrior, Race: game.RaceHuman,
+		StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
+		Inventory: []byte("[]"), Equipment: []byte("{}"),
+	}
+	for _, record := range []*db.PlayerRecord{emptyRow, hashedRow} {
+		if err := database.CreatePlayer(record); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	empty := makeCharSession(t, m)
+	err, panicked := callHandleLogin(empty, loginMsg("LegacyEmpty", "attacker-guessed"))
+	if panicked || err != nil {
+		t.Fatalf("callHandleLogin(empty) = (%v, panicked=%v), want nil", err, panicked)
+	}
+	hashed := makeCharSession(t, m)
+	err, panicked = callHandleLogin(hashed, loginMsg("HashedUser", "also-wrong"))
+	if panicked || err != nil {
+		t.Fatalf("callHandleLogin(hashed) = (%v, panicked=%v), want nil", err, panicked)
+	}
+
+	emptyFrames := drainAllFrames(t, empty)
+	hashedFrames := drainAllFrames(t, hashed)
+	if len(emptyFrames) != len(hashedFrames) {
+		t.Fatalf("frame counts differ: empty-hash=%d wrong-password=%d, want equal", len(emptyFrames), len(hashedFrames))
+	}
+	for i := range emptyFrames {
+		if !bytes.Equal(emptyFrames[i], hashedFrames[i]) {
+			t.Fatalf("frame %d differs between empty-hash and wrong-password replies:\n empty: %q\n hashed: %q", i, emptyFrames[i], hashedFrames[i])
+		}
+	}
+
+	if empty.authenticated || hashed.authenticated {
+		t.Fatal("neither reply may authenticate")
+	}
+	if empty.loginFailures.Load() != 1 || hashed.loginFailures.Load() != 1 {
+		t.Fatalf("failure counts: empty-hash=%d wrong-password=%d, want 1 and 1", empty.loginFailures.Load(), hashed.loginFailures.Load())
+	}
+}
+
+func drainAllFrames(t *testing.T, s *Session) [][]byte {
+	t.Helper()
+	var frames [][]byte
+	for {
+		msg, ok := drainSend(s)
+		if !ok {
+			return frames
+		}
+		frames = append(frames, msg)
 	}
 }
