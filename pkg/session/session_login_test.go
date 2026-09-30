@@ -457,3 +457,52 @@ func TestHandleLogin_SessionDisconnectsAfterThreeBadPasswords(t *testing.T) {
 		t.Fatalf("loginFailures = %d, want 3", s.loginFailures.Load())
 	}
 }
+
+// A NULL/empty stored password hash must fail closed: the login compare used
+// to be skipped entirely on such rows, so any submitted password — no
+// knowledge of any real credential required — authenticated the account.
+func TestHandleLogin_EmptyStoredHashFailsClosed(t *testing.T) {
+	database := testutil.NewMockDatabase()
+	world := testutil.NewTestWorld()
+	t.Cleanup(world.StopAITicker)
+	m := newTestManager(t, world, database)
+
+	record := &db.PlayerRecord{
+		Name: "LegacyEmpty", Password: "", RoomVNum: game.MortalStartRoom,
+		Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
+		Move: 100, MaxMove: 100, Class: game.ClassWarrior, Race: game.RaceHuman,
+		StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
+		Inventory: []byte("[]"), Equipment: []byte("{}"),
+	}
+	if err := database.CreatePlayer(record); err != nil {
+		t.Fatal(err)
+	}
+
+	s := makeCharSession(t, m)
+	err, panicked := callHandleLogin(s, loginMsg("LegacyEmpty", "attacker-guessed"))
+	if panicked || err != nil {
+		t.Fatalf("callHandleLogin = (%v, panicked=%v), want nil", err, panicked)
+	}
+
+	if !s.SendClosed() {
+		t.Fatal("expected empty-hash login to close the session")
+	}
+	if s.authenticated {
+		t.Fatal("empty stored hash must not authenticate")
+	}
+
+	msg, ok := drainSend(s)
+	if !ok {
+		t.Fatal("expected error message on send channel")
+	}
+	srv := unmarshalServerMsg(t, msg)
+	if srv.Type != MsgError {
+		t.Fatalf("message type = %q, want %q", srv.Type, MsgError)
+	}
+	var ed ErrorData
+	b, _ := json.Marshal(srv.Data)
+	_ = json.Unmarshal(b, &ed)
+	if !strings.Contains(ed.Message, "No password is set") {
+		t.Fatalf("error message = %q, want it to contain 'No password is set'", ed.Message)
+	}
+}
