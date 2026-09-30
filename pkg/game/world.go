@@ -939,7 +939,11 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	}
 }
 
-// doMobSocial performs a social emote on behalf of a mob.
+// doMobSocial performs a social emote on behalf of a mob. An ordered command
+// runs through C's command_interpreter (act.offensive.c:332), so the mob's
+// social renders like do_action: a slot the social does not carry (unused
+// slots are "#" or absent — many socials ship with only three messages)
+// emits nothing, never an index past the table.
 func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
 	social, found := Socials[cmd]
 	if !found {
@@ -953,18 +957,28 @@ func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
 
 	if target != nil {
 		// Social with target
-		Act(nil, false, mob, target, nil, nil, social.Messages[2], "", ToChar)
-		Act(w, true, mob, target, nil, nil, social.Messages[3], "", ToNotVict)
-		if len(social.Messages) > 4 {
-			Act(nil, false, mob, target, nil, nil, social.Messages[4], "", ToVict)
+		if message, ok := socialMessage(social, socCharFound); ok {
+			Act(nil, false, mob, target, nil, nil, message, "", ToChar)
+		}
+		if message, ok := socialMessage(social, socOthersFound); ok {
+			Act(w, true, mob, target, nil, nil, message, "", ToNotVict)
+		}
+		if message, ok := socialMessage(social, socVictFound); ok {
+			Act(nil, false, mob, target, nil, nil, message, "", ToVict)
 		}
 	} else if targetName != "" {
 		// Target not found
-		mob.SendMessage(social.Messages[5])
+		if message, ok := socialMessage(social, socNotFound); ok {
+			mob.SendMessage(message)
+		}
 	} else {
 		// Social without target
-		Act(nil, false, mob, nil, nil, nil, social.Messages[0], "", ToChar)
-		Act(w, true, mob, nil, nil, nil, social.Messages[1], "", ToRoom)
+		if message, ok := socialMessage(social, socCharNoArg); ok {
+			Act(nil, false, mob, nil, nil, nil, message, "", ToChar)
+		}
+		if message, ok := socialMessage(social, socOthersNoArg); ok {
+			Act(w, true, mob, nil, nil, nil, message, "", ToRoom)
+		}
 	}
 }
 
