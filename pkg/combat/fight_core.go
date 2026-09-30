@@ -158,11 +158,12 @@ func GetPositionFromHP(hp, currentPos int) int {
 // current HP (POS_STUNNED / POS_INCAP / POS_MORTALLYW / POS_DEAD), sets it,
 // emits the matching wounded-state message to the victim and its room, and
 // drops the victim's FIGHTING reference once it can no longer fight
-// (pos < POS_SLEEPING). It returns the new position; callers must invoke the
+// (pos <= POS_SLEEPING). It returns the new position; callers must invoke the
 // death pipeline when the return value is PosDead (HP <= -11). Death messaging
 // is intentionally left to the death handler, so PosDead emits no message here.
 //
-// Mirrors the update_pos + wound-message block of fight.c:1484-1512. broadcast
+// Mirrors update_pos, wound messages and !AWAKE stop (src/fight.c:1489,
+// 1546-1632). broadcast
 // may be nil to suppress the third-person room message.
 func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, message, exclude string)) int {
 	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
@@ -191,7 +192,7 @@ func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, me
 		}
 	}
 
-	// fight.c:1500 — a downed victim can no longer fight back. The attacker
+	// src/fight.c:1630-1632 — !AWAKE victims can no longer fight back. The attacker
 	// keeps its FIGHTING reference and finishes the victim off next round.
 	if newPos <= PosSleeping && victim.GetFighting() != "" {
 		victim.StopFighting()
