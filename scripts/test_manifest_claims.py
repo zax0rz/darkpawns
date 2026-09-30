@@ -15,7 +15,7 @@ class ManifestClaimsTest(unittest.TestCase):
         expected = "1\talpha\tC1,C2\n2\talpha\tC2\n3\tbeta\tC5\n5\tgamma\tC5\n8\talpha\tC2\n"
         output = subprocess.check_output([sys.executable, str(pathlib.Path(__file__).parent / "manifest_claims.py"), "--manifest-dir", str(root), "--root", str(root)], text=True)
         self.assertEqual(output, expected)
-        self.assertEqual(len(claimed_pairs(rows)), 5)
+        self.assertEqual("".join("\t".join(map(str, pair)) + "\n" for pair in claimed_pairs(rows)), expected)
 
 if __name__ == "__main__":
     unittest.main()
