@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -803,28 +804,58 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 		}
 		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output, Closed: connObservedClose(target)})
 
-		peerNames := make([]string, 0, len(audience))
-		for name := range audience {
-			peerNames = append(peerNames, name)
-		}
-		sort.Strings(peerNames)
-		for _, name := range peerNames {
-			peerOutput, peerErr := audience[name].ReadUntilQuiescent(quiescence)
-			// The connection may close at the last step, or just before a
-			// relogin or restart, for every connected client — not only for
-			// the step's target. That is the same rule the target read above
-			// uses: a server that ends a descriptor (the C idle force-rent
-			// closes the actor's socket) is compared by its bytes, and the
-			// scenario's CompareClose marker records the disconnect itself.
-			if peerErr != nil {
-				if !mayClose || !errors.Is(peerErr, io.EOF) {
-					return blocks, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", i+1, name, step, peerErr, peerOutput)
-				}
-			}
-			blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: name, Output: peerOutput, Closed: connObservedClose(audience[name])})
+		peerBlocks, peerErr := readAudiencePeers(audience, step, i, quiescence, mayClose)
+		blocks = append(blocks, peerBlocks...)
+		if peerErr != nil {
+			return blocks, peerErr
 		}
 	}
 	return blocks, nil
+}
+
+// readAudiencePeers drains every audience connection after one probe step,
+// concurrently — each connection gets its own ReadUntilQuiescent(quiescence),
+// and the per-connection wall clocks overlap instead of stacking. The
+// collected blocks come back in the sorted-name order the sequential loop
+// produced, so block content and ordering are byte-identical. The
+// connection may close at the last step, or just before a relogin or
+// restart, for every connected client — not only for the step's target:
+// a server that ends a descriptor is compared by its bytes, and the
+// scenario's CompareClose marker records the disconnect itself.
+func readAudiencePeers(audience map[string]Conn, step string, stepIdx int, quiescence time.Duration, mayClose bool) ([]AudienceProbeBlock, error) {
+	peerNames := make([]string, 0, len(audience))
+	for name := range audience {
+		peerNames = append(peerNames, name)
+	}
+	sort.Strings(peerNames)
+	type peerRead struct {
+		output string
+		err    error
+		closed bool
+	}
+	reads := make([]peerRead, len(peerNames))
+	var wg sync.WaitGroup
+	for i, name := range peerNames {
+		wg.Add(1)
+		go func(i int, conn Conn) {
+			defer wg.Done()
+			output, err := conn.ReadUntilQuiescent(quiescence)
+			reads[i] = peerRead{output: output, err: err, closed: connObservedClose(conn)}
+		}(i, audience[name])
+	}
+	wg.Wait()
+	var out []AudienceProbeBlock
+	for i, name := range peerNames {
+		if reads[i].err != nil {
+			if !mayClose || !errors.Is(reads[i].err, io.EOF) {
+				// Match the sequential loop's error text, including the
+				// partial output of the failing connection.
+				return out, fmt.Errorf("probe step %d read %s after %q: %w\noutput so far:\n%s", stepIdx+1, name, step, reads[i].err, reads[i].output)
+			}
+		}
+		out = append(out, AudienceProbeBlock{Command: step, Audience: name, Output: reads[i].output, Closed: reads[i].closed})
+	}
+	return out, nil
 }
 
 func resolveAudienceProbeTarget(primary Conn, peers map[string]Conn, step string) (target Conn, targetName string, audience map[string]Conn, sendLine string, err error) {
