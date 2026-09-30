@@ -1,13 +1,17 @@
-# Immortal observation path. A disposable zone reset places Cuchi in the
-# Temple Infirmary; her canonical Orodreth-only special promotes the actor on
-# both servers. No source world or player database is modified.
+# Immortal observation path. The actor is the first player on an empty player
+# file, so both servers create the first-player implementor (C init_char, Go
+# BootstrapFirstPlayerGod). No source world or player database is modified.
+# The first-player God starts in room 1204, so the warmup goes to the Temple
+# Infirmary (8162), where the old actor walked to (w, s from the temple), and
+# turns autoexit on with `auto exit`: C's init_char skips PRF_AUTOEXIT for the first player.
+# (It used Orodreth's Cuchi promotion until DP-1373 closed that backdoor.)
 
 [fixture]
+empty-players
 quiet-mobs
-spawn-mob 18306 1 8162 80
 
 [setup:oracle]
-Orodreth
+Warden
 Y
 oraclepass
 oraclepass
@@ -22,7 +26,7 @@ Y
 look
 
 [setup:port]
-Orodreth
+Warden
 y
 oraclepass
 oraclepass
@@ -34,11 +38,10 @@ K
 Y
 <ENTER>
 1
-w
-s
 
 [warmup]
-pat Cuchi
+goto 8162
+auto exit
 roomflags
 brief
 
