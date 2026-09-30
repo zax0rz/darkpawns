@@ -147,3 +147,31 @@ frame and all outcomes, including survivors. Use its measured design cost and
 shared-cause findings to propose batches for the full audit. Do not call the
 remaining rows R5h-verified based on a sample. No mutation campaign or governing
 rule change is implemented in this PR.
+
+## Review fix-up (reviewer: Claude, 2026-09-30)
+
+Three changes on top of the phase 2 PR, made at review so that merging leaves
+no gate red on main.
+
+- **Security CI.** gosec flagged `scripts/fidelitytests/main.go`: G703, path
+  traversal via taint on the root argument, and G122, a race-prone
+  `os.ReadFile` inside a `filepath.WalkDir` callback. The scan now opens the
+  root with `os.OpenRoot` and walks and reads through `root.FS()`, so no
+  access can leave the repository root. The Close error is checked (errcheck).
+  On the same tree, the old and new tools emit a byte-identical index. gosec
+  exits 0.
+- **The two prefix-only proofs.** Leaving them would have made
+  `make fidelity-depth`, a gate in every brief, red on main until phase 3.
+  - `dns.add-three-octet-entry` now names
+    `TestExecDNSAddDeletePrefixAndPersistenceState`, which asserts the
+    three-octet entry's fourth octet is `-1`. That's the claim exactly.
+  - `room.carrion-spawn-state` now names
+    `TestSpecCarrion_SuccessfulSpawnStateAndAudience`. That test covered
+    identity, placement, level and damroll, but **not** the claim's "without
+    mutating the shared prototype". An assertion was added (prototype 14308
+    keeps level 12 and damage 8d4+8). Proof it can fail (R5h): making the spawn
+    write `Proto().Level` fails it with
+    `shared prototype mutated: level 17 …`; restored, it passes.
+- After the fix-up: `make fidelity-depth` exits 0,
+  `make fidelity-units` reports `PASS=1144` of 1,144, and every repository gate
+  passes separately (fmt, build, vet, test, golangci-lint, diff check).

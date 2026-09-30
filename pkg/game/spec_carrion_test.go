@@ -128,6 +128,15 @@ func TestSpecCarrion_SuccessfulSpawnStateAndAudience(t *testing.T) {
 	if got := stalker.GetDamageRoll().Plus; got != 0 {
 		t.Fatalf("overridden damage-roll plus = %d, want 0 (no prototype double count)", got)
 	}
+	// The overrides are instance-local: the shared prototype read_mobile
+	// copied from keeps its own level and damage dice.
+	proto, ok := w.GetMobPrototype(14308)
+	if !ok {
+		t.Fatal("prototype 14308 missing")
+	}
+	if proto.Level != 12 || proto.Damage != (parser.DiceRoll{Num: 8, Sides: 4, Plus: 8}) {
+		t.Fatalf("shared prototype mutated: level %d damage %+v, want 12 and 8d4+8", proto.Level, proto.Damage)
+	}
 
 	want := "Suddenly a carrion stalker skitters from out of a corpse!\r\n"
 	if transcript[actor.Name] != want || transcript[observer.Name] != want {

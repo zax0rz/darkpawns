@@ -164,30 +164,33 @@ func subtests(body *ast.BlockStmt, param, prefix string, names *[]string, empty 
 func scan(root string) (index, error) {
 	result := index{Tests: []testDecl{}, Files: map[string]string{}}
 	fset := token.NewFileSet()
-	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+	// Walk and read through an os.Root so every access stays inside the
+	// repository root, even if a symlink or a concurrent rename points
+	// elsewhere (gosec G703/G122).
+	dir, err := os.OpenRoot(root)
+	if err != nil {
+		return result, err
+	}
+	fsys := dir.FS()
+	err = fs.WalkDir(fsys, ".", func(rel string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if entry.IsDir() {
-			if path != root && (entry.Name() == ".git" || entry.Name() == "vendor" || entry.Name() == "node_modules" || entry.Name() == "testdata") {
-				return filepath.SkipDir
+			if rel != "." && (entry.Name() == ".git" || entry.Name() == "vendor" || entry.Name() == "node_modules" || entry.Name() == "testdata") {
+				return fs.SkipDir
 			}
 			return nil
 		}
-		if !strings.HasSuffix(path, "_test.go") {
+		if !strings.HasSuffix(rel, "_test.go") {
 			return nil
 		}
-		data, err := os.ReadFile(path)
+		data, err := fs.ReadFile(fsys, rel)
 		if err != nil {
 			return err
 		}
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
-		}
-		rel = filepath.ToSlash(rel)
 		result.Files[rel] = string(data)
-		file, err := parser.ParseFile(fset, path, data, 0)
+		file, err := parser.ParseFile(fset, filepath.Join(root, filepath.FromSlash(rel)), data, 0)
 		if err != nil {
 			return err
 		}
@@ -239,6 +242,9 @@ func scan(root string) (index, error) {
 		}
 		return nil
 	})
+	if closeErr := dir.Close(); closeErr != nil && err == nil {
+		err = closeErr
+	}
 	return result, err
 }
 
