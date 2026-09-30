@@ -35,7 +35,7 @@ func (s *Session) sendWelcome(token string) {
 		},
 	})
 	if err == nil {
-		s.send <- welcomeMsg
+		s.sendGuarded(welcomeMsg)
 	}
 
 	// The canonical room result now supplies both C-faithful text and the
@@ -48,13 +48,9 @@ func (s *Session) sendWelcome(token string) {
 }
 
 // sendError sends an error message to the player.
-// Safe to call after session takeover — uses recover to handle closed channel.
+// Safe to call after session takeover — the guarded send no-ops on a closed
+// channel.
 func (s *Session) sendError(text string) {
-	defer func() {
-		if r := recover(); r != nil {
-			slog.Debug("sendError: channel closed (session takeover)", "player", s.playerName)
-		}
-	}()
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgError,
 		Data: ErrorData{Message: text},
@@ -63,7 +59,7 @@ func (s *Session) sendError(text string) {
 		slog.Error("json.Marshal error", "error", err)
 		return
 	}
-	s.send <- msg
+	s.sendGuarded(msg)
 }
 
 // sendErrorWithState sends an error message, then re-sends the current expected prompt.
@@ -170,6 +166,25 @@ func (s *Session) SendMessage(message string) error {
 		slog.Warn("session send channel full — dropping message", "player", s.playerName)
 	}
 	return nil
+}
+
+// sendGuarded delivers a pre-marshaled message under the same
+// sendMu/sendClosed discipline as SendMessage. A bare blocking send parked on
+// a full channel is woken by CloseSend (the link-dead takeover) into a "send
+// on closed channel" panic — fatal on the recover-less telnet input
+// goroutine. Drops when full (SendMessage's backpressure policy) and no-ops
+// when closed.
+func (s *Session) sendGuarded(message []byte) {
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	if s.sendClosed {
+		return
+	}
+	select {
+	case s.send <- message:
+	default:
+		slog.Warn("session send channel full — dropping message", "player", s.playerName)
+	}
 }
 
 // forwardSnoopOutput mirrors comm.c:1646-1651. C forwards the target's

@@ -428,7 +428,7 @@ func (s *Session) sendStatsRollPrompt() {
 		slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
 		return
 	}
-	s.send <- msg
+	s.sendGuarded(msg)
 }
 
 // startCharCreation begins the character creation flow for a new player.
@@ -493,7 +493,7 @@ func (s *Session) sendCharCreatePromptWithSecret(stage, prompt string, options [
 		return
 	}
 
-	s.send <- msg
+	s.sendGuarded(msg)
 }
 
 // abortEntry fails closed: an unavailable store is never an unknown name,
