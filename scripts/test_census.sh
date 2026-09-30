@@ -419,6 +419,7 @@ fi
 # once. Kill TERM to ONLY the runner PID (not the group); within 2s the
 # runner, its stub and the stub's sleeping child must all be gone and
 # status must exit 4.
+if want_test test10; then
 cat >"$work/runner-sigterm" <<'SSTUB'
 #!/usr/bin/env bash
 set -u
@@ -448,6 +449,99 @@ case "$line" in
 died*) ok "test10: died line" ;;
 *) not_ok "test10: line was: $line" ;;
 esac
+
+fi
+
+# Claims tests run independently by name, with the same two-seed fixture.
+claims_fixture=$work/claims-fixture
+mkdir -p "$claims_fixture"
+printf 'handler\tcommand\tcase_id\tdepth\tscope\tstatus\tproof\tc_site\tnotes\nh\tc\tA\tD1\ta\toracle-green-multiseed\talpha@1,2\tsrc/x:1\t\nh\tc\tB\tD1\ta\toracle-green\tbeta@2\tsrc/x:1\t\n' >"$claims_fixture/test.tsv"
+for test_name in claims_groups claims_merge claims_recheck claims_no_fail_retry claims_verdict; do
+	want_test "$test_name" || continue
+	calls=$work/$test_name.calls
+	export CLAIMS_TEST_CALLS="$calls" CLAIMS_TEST_MODE="$test_name"
+	cat >"$work/claims-stub" <<'STUB'
+#!/usr/bin/env bash
+set -u
+printf '%s\t%s\t%s\n' "$ORACLE_REGRESSION_SEED" "$ORACLE_REGRESSION_SCENARIOS" "$ORACLE_REGRESSION_JOBS" >>"$CLAIMS_TEST_CALLS"
+IFS=',' read -r -a names <<<"$ORACLE_REGRESSION_SCENARIOS"
+: >"$ORACLE_REGRESSION_RESULTS"
+for name in "${names[@]}"; do
+	kind=PASS
+	if [[ "$ORACLE_REGRESSION_SEED" == 2 && "$name" == beta ]]; then
+		case "$CLAIMS_TEST_MODE" in
+			claims_recheck) [[ "$ORACLE_REGRESSION_JOBS" == 1 ]] || kind=INFRA ;;
+			claims_no_fail_retry|claims_verdict) kind=FAIL ;;
+		esac
+	fi
+	printf '%s\t%s\t7\n' "$kind" "$name" >>"$ORACLE_REGRESSION_RESULTS"
+	printf '%s %s\n' "$kind" "$name"
+done
+printf 'oracle-regression: stub claims\n'
+STUB
+	chmod +x "$work/claims-stub"
+	CENSUS_MANIFEST_DIR="$claims_fixture" start_run "test-$test_name" "$work/claims-stub" --claims >/dev/null
+	run=$ORACLE_RUNS_ROOT/$(date +%F)/test-$test_name
+	line=$("$census" wait --run "$run" --max-seconds 10)
+	rc=$?
+	case "$test_name" in
+	claims_groups)
+		check "$test_name: seed/list/jobs" $'1\talpha\t1\n2\talpha,beta\t2' "$(cat "$calls")"
+		grep -q 'seed 2: 2 pairs' "$run/MANIFEST.md" && ok "$test_name: manifest seeds" || not_ok "$test_name: missing claims manifest"
+		;;
+	claims_merge)
+		check "$test_name: pair/seed/seconds" $'PASS\talpha\t1\t7\nPASS\talpha\t2\t7\nPASS\tbeta\t2\t7' "$(cat "$run/claims-results.tsv")"
+		[[ ! -e "$run/results.tsv" ]] && ok "$test_name: no normal results" || not_ok "$test_name: normal results overwritten"
+		;;
+	claims_recheck)
+		check "$test_name: only seed-2 beta rechecked" $'1\talpha\t1\n2\talpha,beta\t2\n2\tbeta\t1' "$(cat "$calls")"
+		check "$test_name: recheck row" $'PASS\tbeta\t2\t7' "$(cat "$run/claims-recheck-results.tsv")"
+		check "$test_name: exit" 0 "$rc"
+		[[ "$line" == *verdict=CLEAN_AFTER_RECHECK ]] && ok "$test_name: verdict" || not_ok "$test_name: $line"
+		;;
+	claims_no_fail_retry)
+		check "$test_name: FAIL not rechecked" 2 "$(wc -l <"$calls")"
+		;;
+	claims_verdict)
+		check "$test_name: exit" 1 "$rc"
+		[[ "$line" == *verdict=NOT_CLEAN ]] && ok "$test_name: verdict" || not_ok "$test_name: $line"
+		;;
+	esac
+done
+
+if want_test claims_aborted; then
+ printf '#!/bin/sh\nexit 2\n' >"$work/claims-aborted"
+ chmod +x "$work/claims-aborted"
+ CENSUS_MANIFEST_DIR="$claims_fixture" start_run test-claims-aborted "$work/claims-aborted" --claims >/dev/null
+ line=$("$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-claims-aborted" --max-seconds 10)
+ rc=$?
+ check "claims_aborted: exit" 1 "$rc"
+ check "claims_aborted: driver failure is not a false claim" 'oracle-claims: driver failed verdict=NOT_CLEAN' "$line"
+fi
+
+if want_test claims_progress; then
+ cat >"$work/claims-progress" <<'STUB'
+#!/usr/bin/env bash
+set -u
+if [[ "$ORACLE_REGRESSION_SEED" == 1 ]]; then
+ printf 'PASS alpha\n'
+ sleep 3
+fi
+IFS=',' read -r -a names <<<"$ORACLE_REGRESSION_SCENARIOS"
+: >"$ORACLE_REGRESSION_RESULTS"
+for name in "${names[@]}"; do
+ printf 'PASS\t%s\t3\n' "$name" >>"$ORACLE_REGRESSION_RESULTS"
+done
+STUB
+ chmod +x "$work/claims-progress"
+ CENSUS_MANIFEST_DIR="$claims_fixture" start_run test-claims-progress "$work/claims-progress" --claims >/dev/null
+ run=$ORACLE_RUNS_ROOT/$(date +%F)/test-claims-progress
+ line=$("$census" wait --run "$run" --max-seconds 1)
+ rc=$?
+ check "claims_progress: exit" 3 "$rc"
+ [[ "$line" == *' seed 1 1/1' ]] && ok "claims_progress: seed and progress" || not_ok "claims_progress: $line"
+ "$census" wait --run "$run" --max-seconds 10 >/dev/null
+fi
 
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 ((fail == 0))

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # census.sh — start a census, leave it running, and read one line.
 #
-#   scripts/census.sh start --name <run-name> [--scenarios a,b,c] [--jobs N]
+#   scripts/census.sh start --name <run-name> [--claims | --scenarios a,b,c] [--jobs N]
 #   scripts/census.sh wait   [--run <dir>] [--max-seconds N]
 #   scripts/census.sh status [--run <dir>]
 #
@@ -34,7 +34,7 @@ die() {
 }
 
 usage() {
-	printf 'usage: census.sh start --name <run> [--scenarios a,b,c] [--jobs N]\n' \
+	printf 'usage: census.sh start --name <run> [--claims | --scenarios a,b,c] [--jobs N]\n' \
 		'       census.sh wait [--run <dir>] [--max-seconds N]\n' \
 		'       census.sh status [--run <dir>]\n' "${0##*/}" >&2
 	exit 2
@@ -72,9 +72,15 @@ report_run() {
 	if ((max_seconds <= 0)); then
 		started=$(printf '%s\n' "$state" | sed -n 's/.*started=\(.*\)$/\1/p')
 		elapsed=$(( $(date +%s) - $(date -d "$started" +%s) ))
-		done=$(grep -cE '^(PASS|FAIL|EXPECTED|EXPECTED_UNSTABLE|UNPINNABLE|STALE|TIMEOUT|INFRA|RETRY) ' "$run_dir/census.log" 2>/dev/null || printf 0)
 		total=$(cat -- "$run_dir/total" 2>/dev/null || printf '?')
+		if [[ -s "$run_dir/claims.tsv" ]]; then
+			local claim_seed claim_done claim_total
+			IFS=$'\t' read -r claim_seed claim_done claim_total <"$run_dir/claims-progress" 2>/dev/null || true
+			printf 'running %ss seed %s %s/%s\n' "$elapsed" "${claim_seed:-pending}" "${claim_done:-0}" "${claim_total:-$total}"
+		else
+		done=$(grep -cE '^(PASS|FAIL|EXPECTED|EXPECTED_UNSTABLE|UNPINNABLE|STALE|TIMEOUT|INFRA|RETRY) ' "$run_dir/census.log" 2>/dev/null || printf 0)
 		printf 'running %ss %s/%s\n' "$elapsed" "$done" "$total"
+		fi
 		return 3
 	fi
 	local deadline=$(( $(date +%s) + max_seconds ))
@@ -99,11 +105,7 @@ report_run() {
 		printf 'died %s\n' "$run_dir"
 		return 4
 	fi
-	started=$(sed -n 's/^running pid=[0-9]* started=\(.*\)$/\1/p' "$run_dir/state" 2>/dev/null)
-	elapsed=$(( $(date +%s) - $(date -d "$started" +%s) ))
-	done=$(grep -cE '^(PASS|FAIL|EXPECTED|EXPECTED_UNSTABLE|UNPINNABLE|STALE|TIMEOUT|INFRA|RETRY) ' "$run_dir/census.log" 2>/dev/null || printf 0)
-	total=$(cat -- "$run_dir/total" 2>/dev/null || printf '?')
-	printf 'running %ss %s/%s\n' "$elapsed" "$done" "$total"
+	report_run "$run_dir" 0
 	return 3
 }
 
@@ -151,9 +153,10 @@ resolve_run() {
 # start
 # ---------------------------------------------------------------------------
 do_start() {
-	local name= scenarios= jobs=36
+	local name= scenarios= jobs=36 claims=0
 	while (($# > 0)); do
 		case $1 in
+		--claims) claims=1; shift ;;
 		--name) (($# >= 2)) || usage; name=$2; shift 2 ;;
 		--name=*) name=${1#--name=}; shift ;;
 		--scenarios) (($# >= 2)) || usage; scenarios=$2; shift 2 ;;
@@ -164,6 +167,7 @@ do_start() {
 		esac
 	done
 	[[ -n "$name" ]] || usage
+	[[ "$claims" == 0 || -z "$scenarios" ]] || die "--claims and --scenarios are mutually exclusive"
 	[[ "$name" != */* ]] || die "run name must not contain '/': $name"
 	command -v flock >/dev/null 2>&1 || die "flock(1) is required"
 	command -v setsid >/dev/null 2>&1 || die "setsid(1) is required"
@@ -231,6 +235,14 @@ do_start() {
 	git -C "$repo_root" rev-parse HEAD >"$run_dir/go-head.txt" 2>/dev/null || printf 'unknown\n' >"$run_dir/go-head.txt"
 	git -C "$repo_root" status --porcelain >"$run_dir/git-status.txt" 2>/dev/null || printf 'unknown\n' >"$run_dir/git-status.txt"
 
+	if [[ "$claims" == 1 ]]; then
+		local claims_args=()
+		[[ -z "${CENSUS_MANIFEST_DIR:-}" ]] || claims_args+=(--manifest-dir "$CENSUS_MANIFEST_DIR" --root "$CENSUS_MANIFEST_DIR")
+		python3 "$repo_root/scripts/manifest_claims.py" "${claims_args[@]}" >"$run_dir/claims.tsv" || die "cannot enumerate manifest claims"
+		[[ -s "$run_dir/claims.tsv" ]] || die "no oracle claims"
+		cp "$run_dir/go-head.txt" "$run_dir/manifests-head.txt"
+	fi
+
 	# Worker count for a targeted run: the smaller of 36 and the count.
 	local effective_jobs=$jobs
 	if [[ -n "$scenarios" ]]; then
@@ -241,6 +253,7 @@ do_start() {
 	local total
 	total=$(printf '%s\n' "$scenarios" | tr ',' '\n' | grep -c .)
 	[[ -n "$scenarios" ]] || total=$(find "$repo_root/cmd/dp-oracle-diff/scenarios" -maxdepth 1 -type f -name '*.txt' | wc -l)
+	[[ "$claims" == 0 ]] || total=$(wc -l <"$run_dir/claims.tsv")
 	printf '%s\n' "$total" >"$run_dir/total"
 
 	# 4. Launch detached. The runner keeps FD 9 (the lock) and releases it in
@@ -256,6 +269,7 @@ do_start() {
 		CENSUS_SCENARIOS="$scenarios" \
 		CENSUS_JOBS="$effective_jobs" \
 		CENSUS_SEED="$seed" \
+		CENSUS_CLAIMS="$claims" \
 		CENSUS_LOCK_FD=9 \
 		CENSUS_TEST_WORK="${CENSUS_TEST_WORK:-}" \
 		bash "$repo_root/scripts/census_runner.sh" </dev/null >"$run_dir/census.log" 2>&1 &
