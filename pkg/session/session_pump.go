@@ -3,8 +3,12 @@ package session
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
+	"net"
+	"os"
 	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -12,6 +16,34 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
+
+// preAuthIdleTimeout mirrors the telnet listener's DP-912 login idle timeout
+// on the WebSocket path: an unauthenticated socket that stops sending data is
+// dropped, because writePump's pings would otherwise keep it alive forever
+// (browsers answer pings automatically). Data frames refresh it; pong control
+// frames do not — a live socket is not a live login attempt. The
+// LOGIN_IDLE_TIMEOUT override (seconds) governs both transports.
+var preAuthIdleTimeout = 120 * time.Second
+
+func init() {
+	if v := os.Getenv("LOGIN_IDLE_TIMEOUT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			preAuthIdleTimeout = time.Duration(n) * time.Second
+		} else {
+			slog.Warn("LOGIN_IDLE_TIMEOUT invalid, using default", "value", v, "default", preAuthIdleTimeout.String())
+		}
+	}
+}
+
+// readDeadline is the read deadline for the WebSocket pump: 60 s refreshed by
+// pongs once authenticated, the DP-912 login idle timeout (refreshed only by
+// data frames) before that.
+func (s *Session) readDeadline() time.Duration {
+	if s.authenticated {
+		return 60 * time.Second
+	}
+	return preAuthIdleTimeout
+}
 
 func (s *Session) readPump() {
 	// The WebSocket connection's life is this function, not HandleWebSocket,
@@ -62,15 +94,24 @@ func (s *Session) readPump() {
 	}()
 
 	s.conn.SetReadLimit(16384) // 16KB max message size (C4)
-	_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = s.conn.SetReadDeadline(time.Now().Add(s.readDeadline()))
 	s.conn.SetPongHandler(func(string) error {
-		_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		// Pongs prove a live socket, not a live login attempt: before
+		// authentication they must not extend the deadline, or a parked
+		// client holds a connection slot forever by answering pings.
+		if s.authenticated {
+			_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		}
 		return nil
 	})
 
 	for {
 		_, message, err := s.conn.ReadMessage()
 		if err != nil {
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Timeout() && !s.authenticated {
+				slog.Info("WebSocket pre-auth idle timeout, disconnecting", "ip", s.RemoteIP())
+			}
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				slog.Error("WebSocket error", "error", err)
 			}
@@ -85,6 +126,12 @@ func (s *Session) readPump() {
 			slog.Error("handle message error", "error", err)
 			s.sendErrorWithState(err)
 		}
+
+		// A data frame is real client activity: refresh the deadline (this is
+		// what keeps an interactive login or char-creation flow alive past the
+		// pre-auth idle timeout), at the clock the post-handleMessage
+		// authentication state calls for.
+		_ = s.conn.SetReadDeadline(time.Now().Add(s.readDeadline()))
 
 		// If handleLogin rejected the client (wrong password, invalid name,
 		// banned, rate-limited, etc.), it calls CloseSend instead of Close so
