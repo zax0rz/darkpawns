@@ -2,42 +2,36 @@ package game
 
 import "testing"
 
-func TestSpecPrayForItems_ImmortalityBranches(t *testing.T) {
+// TestSpecPrayForItems_StaffNamesPatched pins the DP-1373 security
+// divergence: C's pray immortality made Serapis/Orodreth level 40 and
+// Frontline 39 (spec_procs.c:2081-2126). The port refuses with "Nice try."
+// and changes nothing; every other name keeps C's silent TRUE.
+func TestSpecPrayForItems_StaffNamesPatched(t *testing.T) {
 	tests := []struct {
 		name       string
-		wantLevel  int
 		wantOutput string
 	}{
-		{name: "Serapis", wantLevel: 40},
-		{name: "Orodreth", wantLevel: 40},
-		{name: "Frontline", wantLevel: 39},
-		{name: "neither is this", wantLevel: 36},
-		{name: "this is not here", wantLevel: 31},
-		{name: "no entry here", wantLevel: 31},
-		{name: "neither here", wantLevel: 31},
-		{name: "Unlisted", wantLevel: 5},
+		{name: "Serapis", wantOutput: "Nice try.\r\n"},
+		{name: "Orodreth", wantOutput: "Nice try.\r\n"},
+		{name: "Frontline", wantOutput: "Nice try.\r\n"},
+		{name: "Unlisted", wantOutput: ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			w, player, lastMsg := newSpecProcTestWorld(t)
 			player.Name = tt.name
+			startLevel := player.GetLevel()
 			_ = lastMsg() // discard setup output
 
 			if got := specPrayForItems(w, player, nil, "pray", "immortality"); !got {
 				t.Fatal("immortality should be intercepted")
 			}
-			if got := player.GetLevel(); got != tt.wantLevel {
-				t.Errorf("level = %d, want %d", got, tt.wantLevel)
+			if got := player.GetLevel(); got != startLevel {
+				t.Errorf("level = %d, want unchanged %d", got, startLevel)
 			}
-
-			want := ""
-			if tt.wantLevel != 5 {
-				want = "Welcome back " + tt.name + ".\r\n" +
-					"You feel the power pulse through your veins again!\r\n"
-			}
-			if got := lastMsg(); got != want {
-				t.Errorf("output = %q, want %q", got, want)
+			if got := lastMsg(); got != tt.wantOutput {
+				t.Errorf("output = %q, want %q", got, tt.wantOutput)
 			}
 		})
 	}

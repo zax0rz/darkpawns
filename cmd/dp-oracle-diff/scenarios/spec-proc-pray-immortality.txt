@@ -1,16 +1,19 @@
-# C-first vehicle for the hard-coded pray immortality branch in the assigned
-# room SPECIAL(pray_for_items).  The character name is the exact C key
-# "Serapis", so the procedure raises the level to 40 and emits both welcome
-# lines before returning TRUE.  A score probe exposes the silent level state.
-# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2071-2145 ->
-# src/act.informative.c score rendering.
+# C-first vehicle for the pray immortality branch of the assigned room
+# SPECIAL(pray_for_items).  The character name "Pilgrim" is not one of C's
+# hard-coded staff keys, so C's immortality branch intercepts the pray and
+# returns TRUE with no output and no level change; a score probe shows the
+# unchanged state.  C's staff-name arm (Serapis/Orodreth -> 40, Frontline ->
+# 39) is a name-based backdoor the port deliberately does not reproduce
+# (DP-1373, approved by Zach 2026-09-30); its "Nice try." replacement is
+# unit-proven (TestSpecPrayForItems_StaffNamesPatched), not oracle-compared.
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2071-2127.
 
 [fixture]
 empty-players
 quiet-mobs
 
 [setup:oracle]
-Serapis
+Pilgrim
 Y
 oraclepass
 oraclepass
@@ -24,7 +27,7 @@ Y
 1
 
 [setup:port]
-Serapis
+Pilgrim
 y
 oraclepass
 oraclepass
@@ -44,5 +47,4 @@ goto 8008
 pray immortality
 score
 
-# depth-case: room.pray-immortality-serapis
-# depth-case: room.pray-immortality-level-state
+# depth-case: room.pray-immortality-unlisted
