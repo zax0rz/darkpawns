@@ -472,13 +472,19 @@ type metricsResponse struct {
 	ZoneCount    int    `json:"zone_count"`
 }
 
+// sessionKicker disconnects a live player session. Satisfied by the session
+// manager; kept narrow so this package needs no session import.
+type sessionKicker interface {
+	Kick(playerName string, notice string) bool
+}
+
 // handlePlayerDetail returns full info for a specific player.
 // Supports:
 //
 //	GET /admin/players/{name} — full player detail
 //	POST /admin/players/{name}/save — force save
-//	POST /admin/players/{name}/kick — disconnect (501 not implemented)
-func handlePlayerDetail(world *game.World, auditLogger *audit.AuditLogger) http.HandlerFunc {
+//	POST /admin/players/{name}/kick — disconnect
+func handlePlayerDetail(world *game.World, auditLogger *audit.AuditLogger, kicker sessionKicker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse path: /admin/players/{name} or /admin/players/{name}/save or /admin/players/{name}/kick
 		path := strings.TrimPrefix(r.URL.Path, "/admin/players/")
@@ -558,11 +564,36 @@ func handlePlayerDetail(world *game.World, auditLogger *audit.AuditLogger) http.
 				http.Error(w, `{"error":"forbidden","required":"admin"}`, http.StatusForbidden)
 				return
 			}
-
-			// POST /kick — not yet implemented
+			if kicker == nil {
+				http.Error(w, `{"error":"session manager unavailable"}`, http.StatusServiceUnavailable)
+				return
+			}
+			// Best-effort save before the disconnect so a kicked player keeps
+			// their progress; the kick proceeds regardless of the store's
+			// answer (the /save endpoint exists for strict saves).
+			if res := world.SavePlayerRecord(player, "admin kick", game.LoadRoomNowhere, game.SaveCrash); res != game.SaveSucceeded {
+				slog.Warn("admin kick: pre-kick save failed", "name", playerName, "result", res)
+			}
+			if !kicker.Kick(playerName, "\r\nYou have been disconnected by an administrator.\r\n") {
+				http.Error(w, `{"error":"player not online"}`, http.StatusNotFound)
+				return
+			}
+			if auditLogger != nil {
+				adminName := ""
+				if claimsOk {
+					adminName = claims.PlayerName
+				}
+				auditLogger.Log(audit.AuditEvent{
+					IPAddress: auth.GetIPFromRequest(r),
+					EventType: "administration",
+					User:      adminName,
+					Action:    "admin_kick",
+					Details:   fmt.Sprintf("kicked player %s", playerName),
+					Success:   true,
+				})
+			}
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotImplemented)
-			json.NewEncoder(w).Encode(map[string]string{"error": "kick not yet implemented"}) //nolint:errcheck
+			json.NewEncoder(w).Encode(map[string]string{"status": "kicked"}) //nolint:errcheck
 
 		default:
 			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)

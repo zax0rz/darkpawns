@@ -426,7 +426,7 @@ func TestHandlePlayers_WrongMethod(t *testing.T) {
 
 func TestHandlePlayerDetail_GET_Valid(t *testing.T) {
 	w := testWorld(t)
-	handler := handlePlayerDetail(w, nil)
+	handler := handlePlayerDetail(w, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/players/TestPlayer", nil)
 	rec := httptest.NewRecorder()
@@ -448,7 +448,7 @@ func TestHandlePlayerDetail_GET_Valid(t *testing.T) {
 
 func TestHandlePlayerDetail_GET_NotFound(t *testing.T) {
 	w := testWorld(t)
-	handler := handlePlayerDetail(w, nil)
+	handler := handlePlayerDetail(w, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/players/Nonexistent", nil)
 	rec := httptest.NewRecorder()
@@ -461,7 +461,7 @@ func TestHandlePlayerDetail_GET_NotFound(t *testing.T) {
 
 func TestHandlePlayerDetail_GET_EmptyName(t *testing.T) {
 	w := testWorld(t)
-	handler := handlePlayerDetail(w, nil)
+	handler := handlePlayerDetail(w, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/players/", nil)
 	rec := httptest.NewRecorder()
@@ -474,7 +474,7 @@ func TestHandlePlayerDetail_GET_EmptyName(t *testing.T) {
 
 func TestHandlePlayerDetail_Save_RequiresAdmin(t *testing.T) {
 	w := testWorld(t)
-	handler := handlePlayerDetail(w, nil)
+	handler := handlePlayerDetail(w, nil, nil)
 
 	// Test without claims
 	req := httptest.NewRequest(http.MethodPost, "/admin/players/TestPlayer/save", nil)
@@ -498,7 +498,7 @@ func TestHandlePlayerDetail_Save_WithAdminClaims(t *testing.T) {
 		t.Fatalf("AddPlayer save player: %v", err)
 	}
 
-	handler := handlePlayerDetail(w, nil)
+	handler := handlePlayerDetail(w, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/admin/players/"+savePlayerName+"/save", nil)
 	req = contextWithClaims(req, "admin")
@@ -519,7 +519,7 @@ func TestHandlePlayerDetail_Save_WithAdminClaims(t *testing.T) {
 
 func TestHandlePlayerDetail_Save_BuilderRejected(t *testing.T) {
 	w := testWorld(t)
-	handler := handlePlayerDetail(w, nil)
+	handler := handlePlayerDetail(w, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/admin/players/TestPlayer/save", nil)
 	req = contextWithClaims(req, "builder")
@@ -528,20 +528,6 @@ func TestHandlePlayerDetail_Save_BuilderRejected(t *testing.T) {
 
 	if rec.Code != http.StatusForbidden {
 		t.Errorf("status = %d, want 403", rec.Code)
-	}
-}
-
-func TestHandlePlayerDetail_Kick_NotImplemented(t *testing.T) {
-	w := testWorld(t)
-	handler := handlePlayerDetail(w, nil)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/players/TestPlayer/kick", nil)
-	req = contextWithClaims(req, "admin")
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotImplemented {
-		t.Errorf("status = %d, want 501; body: %s", rec.Code, rec.Body.String())
 	}
 }
 
