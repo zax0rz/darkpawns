@@ -133,7 +133,7 @@ pass. Focused RawKill/command/combat tests also pass under the race detector.
 `make fidelity-units`: 1,144/1,144 PASS (925 symbols, nine packages).
 `make fidelity-depth`: 5,188 cases; 98.6% actionable completion; unchanged manifests.
 
-Final full census: **NOT_CLEAN**, so the claims census and PR are not started.
+Initial full census: **NOT_CLEAN**; this caused the retained stop below.
 Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-09-30/dp-1371-3c1-full`
 (HEAD `ff3ea8d7c`): 1,038 scenarios, 1,027 passed, five expected, three failed,
 two infrastructure rows, one expected unstable; 493.027 seconds.
@@ -166,3 +166,25 @@ governing-document edits had been made. The unsettled infrastructure rows were
 `goto-private-depth` and `recall-depth`. Addendum C.1 authorizes the looter fix;
 #1726 repairs the two fixtures on main. Fresh final census results follow below.
 Phase 3c remains paused until this production PR merges.
+
+## Final verification after Addendum C.1
+
+Final source/test HEAD: `4685e789c2305242329ea85d5e85ecc2e60dcf6a` (clean tree).
+Reference oracle SHA-256: `49a0799cd7bb107ea846bdd2768a85c100a75803fa2d9d8ded9337aa427bb76b`.
+
+- Full: **CLEAN_AFTER_RECHECK**, 1,038 scenarios; 1,030 PASS, five EXPECTED,
+  one EXPECTED_UNSTABLE, zero content failures. The two infrastructure rows,
+  `shoot-item-gates-depth` and `smackheads-mounted-depth`, both PASS on the
+  tool's automatic isolated recheck. Main sweep: 490.430 seconds.
+  Evidence: `/home/zach/Archives/darkpawns/oracle-runs/2026-09-30/dp-1371-3c1-final-full/`.
+  `object-doors`, `observation-roomflags`, `spec-proc-dragon-breath-combat` and
+  `raw-kill-protection-backfire` all PASS.
+- Claims: **CLEAN_AFTER_RECHECK**, 2,929 scenario/seed pairs at seeds 1, 2, 3,
+  5 and 8; 2,918 PASS, 11 EXPECTED, zero FAIL/INFRA/TIMEOUT/STALE/UNPINNABLE
+  after automatic infrastructure rechecks. Elapsed: 1,695.006 seconds.
+  Evidence: `/home/zach/Archives/darkpawns/oracle-runs/2026-09-30/dp-1371-3c1-final-claims/`.
+
+Build, vet, all tests and lint were re-run separately after the looter fix and
+main merge, each exit 0. Focused RawKill/spike/looter race tests pass.
+Unit proofs remain 1,144 PASS; depth remains 98.6%. Nineteen assertion revert
+triples pass. No governing documents, pins or expected ledgers changed.
