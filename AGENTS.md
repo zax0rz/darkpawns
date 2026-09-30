@@ -22,8 +22,9 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 
 - **R1** player-facing bytes are law · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path; cite C from `src/`, R5g; a green must be able to fail, R5h).
 - **Cite rules by number** in commits, PRs, reviews, and Linear — "violates R4" is a complete verdict.
+- **Governing documents are Zach's to change.** Never edit `docs/fidelity/RULEBOOK.md`, `docs/fidelity/north-star-1to1.md`, or this file on your own initiative, even to add a correct rule. Stop and propose the exact text, with the incident that motivates it, in your report or PR description; Zach approves the specific text before it lands. Rule text in a brief Zach approved counts as approval for that text only. A PR that changes them without that approval is rejected on process.
 - `src/` and `darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
-- When a byte is in question, **the C source wins** (R5e — verify the actual call path, don't trust a summary). A repeated failure indicts the rule, not the file: amend the rulebook + audit the whole class (R5b/R5c).
+- When a byte is in question, **the C source wins** (R5e — verify the actual call path, don't trust a summary). A repeated failure indicts the rule, not the file: **propose** a rulebook amendment to Zach + audit the whole class (R5b/R5c).
 
 ### Fidelity Work: Start Here
 

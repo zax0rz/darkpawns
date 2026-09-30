@@ -16,6 +16,16 @@ typo) gets a rule entry with the incident that taught it. Then audit the class
 — one confirmed instance means siblings exist (cf. the DP-597 → seven more
 0o644 sites sweep). A rule without an incident citation is a guess; don't add it.
 
+**Who amends: Zach, only.** Agents never edit this file on their own
+initiative, even when the rule they would write is correct. An agent that finds
+a pattern stops and **proposes** the amendment: the exact rule text, the
+incident citation, and the class audit, in its report or PR description. Zach
+approves the specific text before it lands. A brief that carries rule text Zach
+has approved counts as approval for that text only. A PR that changes this file
+without that approval is rejected on process, however right the rule is. The
+same holds for the other governing documents: `north-star-1to1.md` and
+`AGENTS.md`.
+
 ---
 
 ## R1. Player-facing bytes are law
@@ -124,7 +134,8 @@ cannot observe them.
   samples) before trusting green for an RNG-outcome fix; message/state greens
   remain proof.
 - **R5b. Repeat reds indict rules.** The second time a red has the same root
-  cause, stop fixing files: amend this rulebook and audit the class.
+  cause, stop fixing files: propose an amendment to Zach (see *Who amends*
+  above) and audit the class.
 - **R5c. Find one, find the class.** Every confirmed finding triggers the
   question "what else is in this class?" — answered with a grep/script, not a
   feeling. Prefer making the audit deterministic and rerunnable
@@ -200,3 +211,5 @@ cannot observe them.
 | 2026-09-23 | R1a added | `do_auto`'s self-aliasing `sprintf`: the oracle printed nothing, a delegated port deleted the listing to match; the precedent (patch the oracle, keep the intended bytes) had never been written down |
 | 2026-09-25 | R5g added | PF-032 recalled citations; #1644 review hit the src/ vs oracle line drift in utils.c. Canonical citation target is `src/` |
 | 2026-09-28 | R5h added; R1a extended | PR #1682: the shared reference oracle was an `-O2` build and the port had copied its truncations; restored reports then went green on fixtures that could not fail (second instance after DP-1212's coincidence greens, so R5b) |
+| 2026-09-29 | R3c extended (raw-pulse `WAIT_STATE`) | DP-1368 / PR #1705: `PULSE_VIOLENCE + N` waits stored as whole rounds (hit 60 vs C's 22 pulses, plus kick, circle, strike and retreat's failure arm). An agent added this text without being asked; Zach kept it after review |
+| 2026-09-29 | *Who amends* added; R5b reworded | The R3c edit above: correct, but a unilateral change to the port's law by an agent. From now on agents propose and Zach approves the text |
