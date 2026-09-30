@@ -1569,6 +1569,33 @@ func (m *Manager) GetSession(playerName string) (*Session, bool) {
 	return s, ok
 }
 
+// Kick disconnects a live session by player name, mirroring the link-dead
+// takeover close: an optional notice is queued, then CloseSend lets the
+// pumps' deferred cleanup do the rest (linkdead retention for a playing
+// character, otherwise unregistration). Lookup is case-insensitive like
+// GetSession. Returns false when no session is registered under that name.
+func (m *Manager) Kick(playerName string, notice string) bool {
+	m.mu.RLock()
+	s, ok := m.sessions[playerName]
+	if !ok {
+		for name, candidate := range m.sessions {
+			if strings.EqualFold(name, playerName) {
+				s, ok = candidate, true
+				break
+			}
+		}
+	}
+	m.mu.RUnlock()
+	if !ok || s == nil {
+		return false
+	}
+	if notice != "" {
+		s.Send(notice)
+	}
+	s.CloseSend()
+	return true
+}
+
 // allocateEphemeralPlayerID returns the process-local idnum used by the
 // no-database runtime. C assigns every newly created character an idnum even
 // before the pfile is written; keeping the same small seam lets commands that

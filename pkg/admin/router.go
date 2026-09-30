@@ -178,6 +178,10 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if provider, ok := liveSessions.(OLCPresenceProvider); ok {
 		olcPresence = provider
 	}
+	var kicker sessionKicker
+	if ks, ok := liveSessions.(sessionKicker); ok {
+		kicker = ks
+	}
 	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
 	registerFileEdit(ri.api, world, database, auditLogger)
 
@@ -304,9 +308,9 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// methods. Besides preserving the JSON 405, this retains the historical
 	// path parsing and validation order. Method-qualified Huma patterns still win for the
 	// operations documented in OpenAPI.
-	humaMux.HandleFunc("/admin/players/{name}", handlePlayerDetail(world, auditLogger))
-	humaMux.HandleFunc("/admin/players/{name}/save", handlePlayerDetail(world, auditLogger))
-	humaMux.HandleFunc("/admin/players/{name}/kick", handlePlayerDetail(world, auditLogger))
+	humaMux.HandleFunc("/admin/players/{name}", handlePlayerDetail(world, auditLogger, kicker))
+	humaMux.HandleFunc("/admin/players/{name}/save", handlePlayerDetail(world, auditLogger, kicker))
+	humaMux.HandleFunc("/admin/players/{name}/kick", handlePlayerDetail(world, auditLogger, kicker))
 	humaMux.HandleFunc("/admin/shops/{keeper}", handleShopByKeeper(world, auditLogger))
 	humaMux.HandleFunc("/admin/findings/{id}", handleFindingByID(agentStore))
 
