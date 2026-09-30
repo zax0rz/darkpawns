@@ -96,9 +96,9 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 // DamageRefused where C calls damage(): the skill command tail, which emits
 // skill_message itself between the gate and the damage.
 func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill string) bool {
-	attackerName := getAttackerName(attacker)
 	killer := combatantFromInterface(attacker)
 	attackType := skillToAttackType(skill)
+	combat.EnterDamageFighting(killer, combatantFromInterface(victim))
 
 	// Route the computed damage through the shared damage() modifier block
 	// (sanctuary, protect evil/good, race-hate, immortal immunity, 3000 cap)
@@ -114,7 +114,6 @@ func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill st
 	switch v := victim.(type) {
 	case *Player:
 		v.TakeDamage(dam)
-		v.SetFighting(attackerName)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
@@ -126,13 +125,12 @@ func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill st
 		}
 		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
-			combat.DeathCry(v)
+
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
 	case *MobInstance:
 		v.TakeDamage(dam)
-		v.SetFighting(attackerName)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
@@ -143,7 +141,7 @@ func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill st
 		}
 		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
-			combat.DeathCry(v)
+
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -164,7 +162,6 @@ func (w *World) DoDisembowelDamage(attacker, victim combat.Combatant, dam int) b
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillDisembowelNum, func() {
-		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillDisembowelNum)
 	})
 }
@@ -177,7 +174,6 @@ func (w *World) DoGroinripDamage(attacker, victim combat.Combatant, dam int) boo
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillGroinripNum, func() {
-		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillGroinripNum)
 	})
 }
@@ -190,7 +186,6 @@ func (w *World) DoNeckbreakDamage(attacker, victim combat.Combatant, dam int) bo
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillNeckbreakNum, func() {
-		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillNeckbreakNum)
 	})
 }
@@ -205,15 +200,14 @@ func (w *World) DoTigerPunchDamage(attacker, victim combat.Combatant, dam int) b
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillTigerPunchNum, func() {
-		// C's die_with_killer awards the mob XP before raw_kill emits the death
+		// C's damage() awards the mob XP before raw_kill emits the death
 		// cry, and make_corpse announces nothing (fight.c:1638-1660, 257-283).
 		// HandleDeath owns the Go extraction/XP seam (ambush.go:76-85).
 		w.HandleDeath(victim, attacker, SkillTigerPunchNum)
-		combat.DeathCry(victim)
 	})
 }
 
-// DoStrikeDamage preserves do_strike's damage() boundary (new_cmds.c:1494-1497):
+// DoStrikeDamage preserves do_strike's damage() boundary (src/new_cmds.c:1482-1486):
 // damage() applies HP and the position update, emits numbered skill_message set
 // 155, then returns so the command can run improve_skill and WAIT_STATE.
 func (w *World) DoStrikeDamage(attacker, victim combat.Combatant, dam int) bool {
@@ -221,10 +215,9 @@ func (w *World) DoStrikeDamage(attacker, victim combat.Combatant, dam int) bool 
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillStrikeNum, func() {
-		// die_with_killer awards XP before raw_kill's death cry; make_corpse is
+		// damage() awards XP before raw_kill's death cry; make_corpse is
 		// silent (fight.c:1638-1660, 257-283).
 		w.HandleDeath(victim, attacker, SkillStrikeNum)
-		combat.DeathCry(victim)
 	})
 }
 
@@ -236,23 +229,21 @@ func (w *World) DoDragonKickDamage(attacker, victim combat.Combatant, dam int) b
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillDragonKickNum, func() {
-		// die_with_killer awards XP before raw_kill's death cry; make_corpse is
+		// damage() awards XP before raw_kill's death cry; make_corpse is
 		// silent (fight.c:1638-1660, 257-283).
 		w.HandleDeath(victim, attacker, SkillDragonKickNum)
-		combat.DeathCry(victim)
 	})
 }
 
 // DoSmackheadsDamage preserves do_smackheads' damage() boundary: the two
 // ordered damage calls must use the C skill attack type and complete death
-// path, including the authored death bytes and death cry before game-layer
-// removal/XP bookkeeping (new_cmds.c:1090-1102; R1/R5e).
+// path, including the authored death bytes and XP/autogold before the death cry and corpse (src/new_cmds.c:1080-1081;
+// src/fight.c:1644-1691, 573-578; R1/R5e).
 func (w *World) DoSmackheadsDamage(attacker, victim combat.Combatant, dam int) bool {
 	if attacker == nil || victim == nil {
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillSmackheadsNum, func() {
-		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillSmackheadsNum)
 	})
 }
@@ -286,7 +277,6 @@ func (w *World) DoCutthroatDamage(attacker, victim combat.Combatant, dam int) bo
 		return false
 	}
 	return combat.TakeDamageAfterGate(attacker, victim, dam, SkillCutthroatNum, func() {
-		combat.DeathCry(victim)
 		w.HandleDeath(victim, attacker, SkillCutthroatNum)
 	})
 }

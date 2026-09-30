@@ -77,10 +77,9 @@ func (w *World) applyAmbushDamage(ch *Player, target combat.Combatant, dam int) 
 	var onDeath func()
 	if target.IsNPC() {
 		onDeath = func() {
-			// C's die_with_killer awards the mob XP before raw_kill emits the
+			// C's damage() awards the mob XP before raw_kill emits the
 			// death cry. HandleDeath owns the Go mob extraction/XP seam.
 			w.HandleDeath(target, ch, ambushAttackType)
-			combat.DeathCry(target)
 		}
 	}
 	if onDeath != nil {
@@ -89,10 +88,10 @@ func (w *World) applyAmbushDamage(ch *Player, target combat.Combatant, dam int) 
 		combat.TakeDamage(ch, target, dam, ambushAttackType)
 	}
 
-	// damage() enrolls both combatants even on a miss. The death callback has
+	// damage() gates victim enrollment and stops an unconscious victim. The callback has
 	// already removed a lethal mob, so only surviving targets enter combat.
 	if target.GetPosition() != combat.PosDead && w.combatEngine != nil && ch.GetFighting() == target.GetName() {
-		if err := w.combatEngine.StartCombat(ch, target); err != nil {
+		if err := combat.EnrollAfterDamage(w.combatEngine, ch, target); err != nil {
 			return
 		}
 	}

@@ -275,18 +275,17 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		}
 
 		// Capture mob vnum/exp/gold before the mob is removed from the world.
-		// Source: fight.c die_with_killer() line 1638 — group_gain(ch, victim)
+		// Source: src/fight.c:1634-1667 — damage() awards the victim's XP/gold.
 		mobExp := 0
 		mobGold := 0
 		mobVNum := 0
 		mobLevel := 0
 		if mob, ok := victim.(*MobInstance); ok && mob.Proto() != nil {
 			mobExp = mob.GetExp()
-			mobGold = mob.Proto().Gold
+			mobGold = mob.GetGold()
 			mobVNum = mob.Proto().VNum
 			mobLevel = mob.GetLevel()
 		}
-		w.handleMobDeath(victim, killer, attackType)
 		// Publish typed event bus event
 		if w.Events != nil {
 			if err := w.Events.Publish(context.Background(), events.MobKilledEvent{
@@ -306,8 +305,21 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 
 		// Award XP, gold, and alignment shift to killer and party members.
 		// fight.c group_gain() lines 708-830; change_alignment at line 704.
-		w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel, victimAlign)
+		if killer != nil {
+			w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel, victimAlign)
+			if kp, ok := killer.(*Player); ok && kp.AutoGold && mobGold != 0 && len(w.GetGroupMembers(killerName)) == 0 {
+				if mob, ok := victim.(*MobInstance); ok {
+					Act(w, false, kp, mob, nil, nil, "$n loots some gold from the corpse of $N.", "", ToRoom)
+					mob.SetGold(0)
+				}
+			}
+		}
+		// damage() awards XP/autogold before raw_kill's cry and corpse
+		// (src/fight.c:1644-1667, 1691, 573-578).
+		w.recordKill(killerName)
+		w.handleMobDeath(victim, killer, attackType)
 	} else {
+		w.recordKill(killerName)
 		w.handlePlayerDeath(victim, true, attackType, killerName) // combat death with killer
 		if mobKiller, ok := killer.(*MobInstance); ok &&
 			killerName != victim.GetName() &&
@@ -330,7 +342,11 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			}
 		}
 	}
+}
 
+// recordKill preserves damage()'s bookkeeping before die_with_killer
+// (src/fight.c:1689-1691), without changing counter_procs reward logic.
+func (w *World) recordKill(killerName string) {
 	// Increment kill counter and check milestone blessings — fight.c:1689-1690.
 	// C fires GET_KILLS(ch)++ and counter_procs(ch) for ALL kills, including PK.
 	// DP-963: guard Kills++ with player.mu to prevent data race under concurrent
@@ -365,13 +381,9 @@ func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
 // handleMobDeath implements the normal NPC death path.
 // Original: make_corpse (transfers inventory+equipment+gold), extract_char.
 func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant, attackType int) {
-	w.handleMobDeathWithAnnouncement(victim, killer, attackType, true)
-}
-
-// handleMobDeathWithAnnouncement is the shared NPC extraction/corpse path.
-// C raw_kill does not announce corpse creation; ordinary combat death keeps
-// the existing Go notification for its already-audited callers.
-func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer combat.Combatant, attackType int, announceCorpse bool) {
+	// raw_kill cries while the victim is still in the room, then silently
+	// builds the corpse (src/fight.c:573-578, 258-427; R1/R4).
+	combat.DeathCry(victim)
 	metrics.Death()
 	roomVNum := victim.GetRoom()
 
@@ -406,6 +418,17 @@ func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer c
 
 	if deadMob == nil {
 		return
+	}
+	// extract_char stops everyone fighting the victim (src/handler.c:1145-1150).
+	for _, player := range w.GetAllPlayers() {
+		if player.GetFighting() == victim.GetName() {
+			player.StopFighting()
+		}
+	}
+	for _, mob := range w.GetAllMobs() {
+		if mob.GetFighting() == victim.GetName() {
+			mob.StopFighting()
+		}
 	}
 
 	// Cancel all pending events for this mob.
@@ -476,22 +499,6 @@ func (w *World) handleMobDeathWithAnnouncement(victim combat.Combatant, killer c
 		}
 	}
 
-	// The legacy C raw_kill path does not announce corpse creation. Keep the
-	// general Go notification for existing callers, but suppress it for the
-	// skill_message-backed ambush damage path (fight.c:1407-1450), whose room
-	// transcript is already proven byte-for-byte, and for the numbered
-	// skill_message attack types tiger punch (189), strike (155) and dragon
-	// kick (188), whose damage() boundaries are carried by TakeDamageAfterGate.
-	if announceCorpse && attackType != 191 && attackType != SkillCutthroatNum &&
-		attackType != SkillDisembowelNum && attackType != SkillSmackheadsNum &&
-		attackType != SkillTigerPunchNum && attackType != SkillStrikeNum &&
-		attackType != SkillDragonKickNum {
-		players := w.GetPlayersInRoom(roomVNum)
-		for _, p := range players {
-			p.SendMessage(fmt.Sprintf("The corpse of %s falls to the ground.\r\n", deadMob.GetShortDesc()))
-		}
-	}
-
 	// Decrement spawner instance count so the mob can respawn on next zone reset.
 	// Without this, zone max-in-world checks stay saturated for killed mob vnums.
 	if w.spawner != nil {
@@ -521,8 +528,7 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 	}
 	if victim.IsNPC() {
 		victim.StopFighting()
-		combat.DeathCry(victim)
-		w.handleMobDeathWithAnnouncement(victim, nil, attackType, false)
+		w.handleMobDeath(victim, nil, attackType)
 		return
 	}
 	combat.RawKill(victim, attackType)
@@ -544,7 +550,7 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 // extract_pending_chars() in handler.c. The session layer then returns the
 // descriptor to the login menu.
 func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string) {
-	// Player half of deaths_total; the mob half is handleMobDeathWithAnnouncement
+	// Player half of deaths_total; the mob half is handleMobDeath
 	// below. The two split by species and never call each other, so a death is
 	// counted exactly once no matter which of the raw_kill paths reached it.
 	metrics.Death()
@@ -642,6 +648,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 			}
 		}
 	}
+
+	combat.DeathCry(player) // src/fight.c:573, before make_corpse
 
 	// Inventory & Equipment — still needs manual lock (no getters for Inventory/Equipment)
 	var inventoryItems []*ObjectInstance

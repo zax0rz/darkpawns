@@ -305,11 +305,12 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 			return false
 		}
 
+		combat.EnterDamageFighting(chCombat, victCombat)
+
 		// The breath path reaches C damage(0), which enrolls both awake
 		// participants before applying the zero amount (fight.c:1367-1395).
-		// Keep this scoped to breath attack types: the existing spell damage
-		// seam intentionally preserves its established immortal-absorption
-		// behavior for non-breath spells.
+		// The breath bridge also registers those fields with the engine; the
+		// common entry above preserves C's gates before damage absorption.
 		if isBreathSpell(attackType) && chCombat.GetName() != victCombat.GetName() && chCombat.GetPosition() > combat.PosStunned {
 			if chCombat.GetFighting() == "" {
 				chCombat.SetFighting(victCombat.GetName())
@@ -347,7 +348,6 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		}
 
 		victCombat.TakeDamage(dam)
-		victCombat.SetFighting(chCombat.GetName())
 
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
@@ -355,9 +355,10 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		if b, ok := world.(woundBroadcaster); ok {
 			wb = b.WoundBroadcast
 		}
-		if combat.UpdatePositionAfterDamage(victCombat, wb) == combat.PosDead {
+		newPos := combat.UpdatePositionAfterDamage(victCombat, wb)
+		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(victCombat, wb)
-			combat.DeathCry(victCombat)
+
 			if dp, ok := world.(spellDeathPipeline); ok {
 				dp.HandleDeath(victCombat, chCombat, attackType)
 			}

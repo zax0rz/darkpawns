@@ -231,7 +231,40 @@ func (ce *CombatEngine) Stop() {
 
 // StartCombat initiates combat between two combatants
 func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
-	return ce.startCombat(attacker, defender, false)
+	return ce.startCombat(attacker, defender, false, false)
+}
+
+// StartCombatAfterDamage enrolls the command's attacker without undoing
+// damage()'s !AWAKE victim stop (src/fight.c:1443-1445, 1630-1632).
+// The ordinary opener must still defer its position check until its hit.
+func (ce *CombatEngine) StartCombatAfterDamage(attacker, defender Combatant) error {
+	if attacker.GetName() == defender.GetName() || defender.GetPosition() == PosDead {
+		return nil
+	}
+	if attacker.GetPosition() <= PosStunned || attacker.GetFighting() != defender.GetName() {
+		if defender.GetFighting() == attacker.GetName() && defender.GetPosition() > PosSleeping {
+			return ce.startCombat(defender, attacker, attacker.GetPosition() <= PosSleeping, true)
+		}
+		return nil
+	}
+	return ce.startCombat(attacker, defender, defender.GetPosition() <= PosSleeping || defender.GetFighting() != attacker.GetName(), true)
+}
+
+// EnrollAfterDamage bridges command/world engines to the post-damage entry.
+// Older test engines can use ordinary entry only for an awake victim.
+func EnrollAfterDamage(engine interface {
+	StartCombat(Combatant, Combatant) error
+}, attacker, defender Combatant,
+) error {
+	if starter, ok := engine.(interface {
+		StartCombatAfterDamage(Combatant, Combatant) error
+	}); ok {
+		return starter.StartCombatAfterDamage(attacker, defender)
+	}
+	if defender.GetPosition() <= PosSleeping || attacker.GetPosition() <= PosStunned || attacker.GetName() == defender.GetName() {
+		return nil
+	}
+	return engine.StartCombat(attacker, defender)
 }
 
 // StartCombatFromMob starts the synchronous combat opener used by a C mobile
@@ -239,7 +272,7 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 // after hit() has consumed its to-hit and damage draws and after the C
 // high-level switcheroo scan, rather than at the StartCombat boundary.
 func (ce *CombatEngine) StartCombatFromMob(attacker, defender Combatant) error {
-	return ce.startCombat(attacker, defender, true)
+	return ce.startCombat(attacker, defender, true, false)
 }
 
 // ApplyMobDamageRedirects exposes the damage() redirect seam to native mob
@@ -251,7 +284,7 @@ func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bo
 	return ce.applyMobCombatRedirects(attacker, defender)
 }
 
-func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment bool) error {
+func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment, afterDamage bool) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -288,7 +321,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 	// it initiates (do_hit gates on position), so this is observably equal to
 	// C's set_fighting(ch)-in-damage() and keeps do_hit's swing-branch check
 	// (GET_POS == POS_STANDING) refusing a second target once fighting.
-	if attacker.GetPosition() > PosStunned {
+	if !afterDamage && attacker.GetPosition() > PosStunned {
 		attacker.SetPosition(PosFighting)
 	}
 	ce.prependFighterLocked(attacker)
@@ -802,10 +835,10 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return ce.handleSurvivingVictimState(attacker, defender, damage, newPos)
 	}
 
-	// damage() emits its POS_DEAD bytes, then raw_kill() emits death_cry
-	// before the game-layer corpse/extraction bookkeeping (fight.c:1514-1534).
+	// damage() emits its POS_DEAD bytes, then the death callback owns XP,
+	// autogold, death_cry and the silent corpse (src/fight.c:1644-1691, 573-578).
 	EmitDeathPositionMessage(defender, ce.BroadcastFunc)
-	DeathCry(defender)
+	// The death callback owns XP/autogold before raw_kill's cry/corpse.
 	ce.handleDeath(defender, attacker)
 	ce.StopCombat(attacker.GetName())
 	return true

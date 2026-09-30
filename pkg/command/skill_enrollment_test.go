@@ -1,7 +1,7 @@
 package command
 
 // DP-1213: positive-damage skill hits must enroll BOTH combatants in engine
-// combat (C: damage() calls set_fighting unconditionally), and a killing hit
+// combat when C's position gate permits it, and a killing hit
 // must not enroll a corpse. These tests drive the REAL sendSkillResult path.
 
 import (
