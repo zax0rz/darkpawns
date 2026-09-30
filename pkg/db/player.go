@@ -482,7 +482,7 @@ func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
 }
 
 // SavePlayer persists a player's current state.
-func (db *DB) SavePlayer(p *PlayerRecord) error {
+func playerUpdate(p *PlayerRecord) (string, []any) {
 	query := `
 		UPDATE players SET
 		  room_vnum=?, level=?, exp=?, health=?, max_health=?,
@@ -493,16 +493,66 @@ func (db *DB) SavePlayer(p *PlayerRecord) error {
 		  inventory=?, equipment=?, description=?, title=?, character_data=?, updated_at=CURRENT_TIMESTAMP
 		WHERE id=?
 	`
-	_, err := db.exec(
-		query,
+	args := []any{
 		p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth,
 		p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown, p.OlcZone,
 		p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.ID,
-	)
+	}
+	return query, args
+}
+
+func (db *DB) SavePlayer(p *PlayerRecord) error {
+	query, args := playerUpdate(p)
+	_, err := db.exec(query, args...)
 	return err
+}
+
+// ErrPlayerRecordChanged prevents an offline editor from overwriting a save
+// made after its read. No timestamp or new save-format field is required.
+var ErrPlayerRecordChanged = errors.New("player record changed during offline edit")
+
+// SavePlayerIfCurrent performs an atomic compare-and-save against every
+// field SavePlayer replaces. Session-owned OLC and all other untouched values
+// are retained by the caller's conversion, and a concurrent newer save wins.
+func SavePlayerIfCurrent(store GameStore, updated, original *PlayerRecord) error {
+	query, args := playerUpdate(updated)
+	_, oldArgs := playerUpdate(original)
+	if updated.Name != original.Name {
+		// C set's name field updates the player index (act.wizard.c:2889-2895).
+		query = strings.Replace(query, "UPDATE players SET", "UPDATE players SET name=?,", 1)
+		args = append([]any{updated.Name}, args...)
+	}
+	query += " AND name IS ?"
+	args = append(args, original.Name)
+	columns := []string{"room_vnum", "level", "exp", "health", "max_health", "mana", "max_mana", "move", "max_move", "strength", "class", "race", "stat_str", "stat_str_add", "stat_int", "stat_wis", "stat_dex", "stat_con", "stat_cha", "hunger", "thirst", "drunk", "hometown", "olc_zone", "inventory", "equipment", "description", "title", "character_data"}
+	for i, column := range columns {
+		expression := column
+		switch column {
+		case "olc_zone":
+			expression = "COALESCE(olc_zone,0)"
+		case "description", "title":
+			expression = "COALESCE(" + column + ",'')"
+		case "character_data":
+			expression = "COALESCE(character_data,'{}')"
+		}
+		query += " AND " + expression + " IS ?"
+		args = append(args, oldArgs[i])
+	}
+	result, err := store.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrPlayerRecordChanged
+	}
+	return nil
 }
 
 // characterDataOrEmpty stores an absent record as the column's default.

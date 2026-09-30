@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // setField is the ordered table from src/act.wizard.c:2537-2596. The order is
@@ -98,6 +100,7 @@ type setTarget struct {
 	mob     *game.MobInstance
 	session *Session
 	file    bool
+	record  *db.PlayerRecord
 }
 
 // cmdSet is the tokenized entry point retained for direct callers and tests.
@@ -120,10 +123,17 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 	target, ok := resolveSetTarget(s, name, playerOnly)
 	if isFile {
 		var err error
-		target.player, err = game.LoadPlayer(name)
+		target.player, target.record, err = s.storedPlayer(name)
+		target.session = nil
 		target.file = true
-		if err != nil {
+		if err != nil || target.player == nil {
 			s.Send("There is no such player.\r\n")
+			return nil
+		}
+		// C's file admission gate precedes the general do_set safety check
+		// (act.wizard.c:2656-2664).
+		if target.player.GetLevel() >= getEffectiveLevel(s) && !strings.EqualFold(s.player.Name, "Orodreth") && !strings.EqualFold(s.player.Name, "Serapis") {
+			s.Send("Sorry, you can't do that.\r\n")
 			return nil
 		}
 		ok = true
@@ -145,7 +155,7 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 
 	actorLevel := getEffectiveLevel(s)
 	// C's safety check runs before field lookup and before the field-specific
-	// privilege/type checks (act.wizard.c:2612-2621).
+	// privilege/type checks (act.wizard.c:2674-2680).
 	if target.player != nil && actorLevel != LVL_IMPL && target.player != s.player && target.player.GetLevel() >= actorLevel {
 		s.Send("Maybe that's not such a great idea...\r\n")
 		return nil
@@ -184,6 +194,11 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 	if field.typ == setNumber {
 		valueInt = clampSetValue(field.name, valueInt, target.player, target.mob)
 	}
+	var original *db.PlayerRecord
+	if target.record != nil {
+		snapshot := *target.record
+		original = &snapshot
+	}
 	ack, changed, early := applySetField(s, target, field, value, valueInt, on)
 	if early {
 		if ack != "" {
@@ -215,19 +230,26 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 	ack = setCap(ack)
 	s.Send(ack)
 
-	// C do_set ends with save_char(vict, NOWHERE) for every successful
-	// live set (act.wizard.c:3064) and for the file path (2895); the JSON
-	// write below is the port's file side, the store of record is what
-	// login reads.
-	if target.player != nil {
-		s.manager.SaveCharSite(target.player, "set")
-	}
 	if target.file && target.player != nil {
-		if err := game.SavePlayer(target.player); err != nil {
-			slog.Error("set file: save failed", "target", target.player.Name, "error", err)
+		// C's file path uses char_to_store directly, retaining load_room
+		// and saved olc_zone (act.wizard.c:3066-3069).
+		// char_to_store saves these base combat scalars, regardless of the
+		// set acknowledgement (db.c:2608-2610). The offline object is separate.
+		target.player.AC, target.player.Hitroll, target.player.Damroll = 100, 0, 0
+		r, err := db.PlayerToRecord(target.player, nil)
+		if err == nil {
+			r.OlcZone = target.record.OlcZone
+			// char_to_store edits the playerfile, not C’s crash object file.
+			r.Inventory, r.Equipment = original.Inventory, original.Equipment
+			err = db.SavePlayerIfCurrent(s.manager.db, r, original)
+		}
+		if err != nil {
+			slog.Error("set file: save failed", "target", name, "error", err)
 		} else {
 			s.Send("Saved in file.\r\n")
 		}
+	} else if target.player != nil {
+		s.manager.SaveCharSite(target.player, "set") // act.wizard.c:3064.
 	}
 	slog.Warn("wizard set", "by", s.player.Name, "target", setTargetName(target), "field", field.name, "value", value)
 	return nil
@@ -650,8 +672,21 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		if !target.file {
 			return "You must use set file with this command.\r\nThe player *must* not be logged in when this command is run.\r\n", false, true
 		}
-		return "Assuming the player is not logged in, this will not take effect if they are.\r\n", false, true
+		s.Send("Assuming the player is not logged in, this will not take effect if they are.\r\n")
+		hash, err := bcrypt.GenerateFromPassword([]byte(value), bcrypt.DefaultCost)
+		if err != nil {
+			slog.Error("set file password hash", "error", err)
+			return "", false, true
+		}
+		if err := s.manager.db.UpdatePassword(p.ID, string(hash)); err != nil {
+			slog.Error("set file password write", "error", err)
+			return "", false, true
+		}
+		ack = fmt.Sprintf("Password changed to '%s'.", value)
 	case "olc":
+		if target.record != nil {
+			target.record.OlcZone = valueInt
+		}
 		if target.session != nil {
 			target.session.olcZone = valueInt
 		}

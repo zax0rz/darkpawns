@@ -259,7 +259,8 @@ func registerWorldCompletion(api huma.API, world *game.World, auditLogger *audit
 			if !ok {
 				return nil, apidoc.NewPlainError(http.StatusNotFound, `{"error":"player not found"}`)
 			}
-			if err := game.SavePlayer(p); err != nil {
+			if res := world.SavePlayerRecord(p, "admin save", game.LoadRoomNowhere, game.SaveCrash); res != game.SaveSucceeded {
+				err := fmt.Errorf("store save result: %d", res)
 				slog.Error("admin player save failed", "name", in.Name, "error", err)
 				return nil, &jsonResponseError{status: http.StatusInternalServerError, body: map[string]string{"error": fmt.Sprintf("save failed: %v", err)}}
 			}

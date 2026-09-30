@@ -315,9 +315,6 @@ func cmdAdvance(s *Session, args []string) error {
 
 	s.Send("Okay.\r\n")
 	slog.Info("(GC) player advanced", "by", s.player.Name, "target", victim.Name, "old", oldLevel, "new", newLevel)
-	if err := game.SavePlayer(victim); err != nil {
-		slog.Error("advance: save player failed", "player", victim.Name, "error", err)
-	}
 	// C do_advance ends with save_char(victim, NOWHERE) (act.wizard.c:1579).
 	s.manager.SaveCharSite(victim, "advance")
 	return nil

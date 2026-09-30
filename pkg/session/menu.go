@@ -341,6 +341,10 @@ func (s *Session) enterReturningPlayer() error {
 	// (interpreter.c:2186), so a character whose process dies mid-session
 	// restarts at a start room rather than their last legal quit room.
 	s.saveCharacter("menu entry", game.LoadRoomNowhere)
+	// C performs this sanity assignment after the entry save (interpreter.c:2232-2233).
+	if s.player.GetOrigCon() < 1 {
+		s.player.SetOrigCon(s.player.Stats.Con)
+	}
 	// The entry room is C's load-room selection (interpreter.c:2191-2210),
 	// run on every menu entry: the saved load room when its vnum resolves,
 	// else the frozen/immortal/mortal start room.

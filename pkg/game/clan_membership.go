@@ -2,8 +2,6 @@ package game
 
 import (
 	"fmt"
-	"os"
-	"strings"
 )
 
 func (w *World) doClanEnroll(ch *Player, arg string) {
@@ -32,22 +30,13 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 				ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
 			}
 		}
-		// Scan saved player files for offline applicants
-		files, _ := os.ReadDir(saveDir)
-		for _, f := range files {
-			if strings.HasSuffix(f.Name(), ".json") {
-				playerName := strings.TrimSuffix(f.Name(), ".json")
-				// Skip if already listed (online)
-				if _, ok := w.players[playerName]; ok {
-					continue
-				}
-				p, err := LoadPlayer(playerName)
-				if err != nil {
-					continue
-				}
-				if p.ClanID == c.ID && p.ClanRank == 0 {
-					ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
-				}
+		players, err := w.StoredPlayers()
+		if err != nil {
+			BasicMudLogf("SYSERR: clan applicants: %v", err)
+		}
+		for _, p := range players {
+			if _, online := w.players[p.Name]; !online && p.ClanID == c.ID && p.ClanRank == 0 {
+				ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
 			}
 		}
 		return
@@ -321,27 +310,19 @@ func (w *World) doClanMembers(ch *Player) {
 			ch.SendMessage(fmt.Sprintf("%s %s\r\n", rankName, p.Name))
 		}
 	}
-	// Scan saved player files for offline members
-	files, _ := os.ReadDir(saveDir)
-	for _, f := range files {
-		if strings.HasSuffix(f.Name(), ".json") {
-			playerName := strings.TrimSuffix(f.Name(), ".json")
-			// Skip if already listed (online)
-			if _, ok := w.players[playerName]; ok {
-				continue
-			}
-			p, err := LoadPlayer(playerName)
-			if err != nil {
-				continue
-			}
-			if p.ClanID == ch.ClanID && p.ClanRank != 0 {
-				rankName := ""
-				if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {
-					rankName = c.RankName[p.ClanRank-1]
-				}
-				ch.SendMessage(fmt.Sprintf("%s %s \r\n", rankName, p.Name))
-			}
+	players, err := w.StoredPlayers()
+	if err != nil {
+		BasicMudLogf("SYSERR: clan members: %v", err)
+	}
+	for _, p := range players {
+		if _, online := w.players[p.Name]; online || p.ClanID != ch.ClanID || p.ClanRank == 0 {
+			continue
 		}
+		rankName := ""
+		if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {
+			rankName = c.RankName[p.ClanRank-1]
+		}
+		ch.SendMessage(fmt.Sprintf("%s %s \r\n", rankName, p.Name))
 	}
 }
 

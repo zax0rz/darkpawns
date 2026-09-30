@@ -16,18 +16,9 @@ func (w *World) doSave(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	jsonErr := SavePlayer(ch)
-	// The store of record is what login reads, so the save command must
-	// write it: C's do_save is save_char(ch, NOWHERE) + Crash_crashsave
-	// (act.other.c:198-199). The JSON file stays for the wizard paths that
-	// read it (DP-1359); neither write substitutes for the other, and a
-	// JSON failure must not prevent the store write.
+	// C do_save: save_char + Crash_crashsave (act.other.c:198-199).
 	if res := w.SavePlayerRecord(ch, "save", LoadRoomNowhere, SaveCrash); res == SaveFailed {
 		slog.Error("store-of-record save failed for save command", "player", ch.Name)
-	}
-	if jsonErr != nil {
-		ch.SendMessage("Could not save your data. Contact an admin!\r\n")
-		return true
 	}
 
 	// C do_save (act.other.c): "Saving %s.\r\n" with GET_NAME(ch).

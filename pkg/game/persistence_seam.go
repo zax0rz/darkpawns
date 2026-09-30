@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 // persistence_seam.go — the store-of-record save seam (DP-1365). Login
 // reads the character from the database (pkg/session/session_login.go →
 // db.GetPlayer), so every C save_char + Crash_crashsave point must write
@@ -120,4 +122,20 @@ func (p *Player) ClearCrashFlagIfUnchanged(seq uint64) {
 	if p.crashSeq == seq {
 		p.Flags &^= 1 << uint(PlrCrash)
 	}
+}
+
+// StoredPlayers and EditStoredPlayer are wired to the same SQLite store as
+// login. Offline consumers never inspect the retired JSON sidecar directory.
+func (w *World) StoredPlayers() ([]*Player, error) {
+	if w.PlayerStoreList == nil {
+		return nil, nil
+	}
+	return w.PlayerStoreList()
+}
+
+func (w *World) EditStoredPlayer(name string, change func(*Player)) error {
+	if w.PlayerStoreEdit == nil {
+		return fmt.Errorf("player store unavailable")
+	}
+	return w.PlayerStoreEdit(name, change)
 }

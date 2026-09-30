@@ -54,16 +54,16 @@ func cmdStat(s *Session, args []string) error {
 			s.Send("Stats on which player?\r\n")
 			return nil
 		}
-		if !game.PlayerSaveExists(args[1]) {
+		player, record, err := s.storedPlayer(args[1])
+		if err != nil || player == nil {
 			s.Send("There is no such player.\r\n")
 			return nil
 		}
-		player, err := game.LoadPlayer(args[1])
-		if err != nil {
-			s.Send("There is no such player.\r\n")
+		if player.GetLevel() > getEffectiveLevel(s) {
+			s.Send("Sorry, you can't do that.\r\n") // act.wizard.c:1036-1037.
 			return nil
 		}
-		s.sendStatPlayerFile(player)
+		s.sendStatPlayerFile(player, record.OlcZone)
 		return nil
 	case "obj", "object":
 		if len(args) == 1 {
@@ -149,30 +149,25 @@ func (s *Session) sendStatMobLine(line string) {
 	s.Send(line + "\r\n")
 }
 
-func (s *Session) sendStatPlayerFile(player *game.Player) {
-	s.sendStatPlayerReport(player, -1, false, true)
+func (s *Session) sendStatPlayerFile(player *game.Player, olcZone int) {
+	// store_to_char clears carried objects and resets combat scalars
+	// (db.c:2452-2463); Crash_load does not run for stat file.
+	player.Inventory = game.NewInventory()
+	player.Equipment = game.NewEquipment()
+	player.AC, player.Hitroll, player.Damroll = 100, 0, 0
+	s.sendStatPlayerReport(player, -1, false, olcZone)
 }
 
-// statOlcZone resolves C's GET_OLC_ZONE for a `stat` report target: the live
-// session's saved olc_zone for an online character (C reads the character in
-// memory), or the player record's value for `stat file` (C's load_char +
-// store_to_char copy it out of the player file). Zero when neither exists.
-func (s *Session) statOlcZone(name string, file bool) int {
-	if !file {
-		if live := findSessionByName(s.manager, name); live != nil {
-			return live.olcZone
-		}
-		return 0
-	}
-	if s.manager != nil && s.manager.hasDB && s.manager.db != nil {
-		if rec, err := s.manager.db.GetPlayer(name); err == nil && rec != nil {
-			return rec.OlcZone
-		}
+// statOlcZone is the live descriptor-owned representation of C's saved
+// olc_zone. File reports receive the zone from their original SQLite read.
+func (s *Session) statOlcZone(name string) int {
+	if live := findSessionByName(s.manager, name); live != nil {
+		return live.olcZone
 	}
 	return 0
 }
 
-func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file bool) {
+func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool, olcZone int) {
 	if p == nil {
 		return
 	}
@@ -182,14 +177,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 	// one-based idnum sequence (manager.go:1422-1427). Do not add another
 	// offset when rendering the C-facing report.
 	id := p.GetID()
-	if file {
-		// The temporary C char_data is populated from the saved player record.
-		// Go's disk snapshot may predate the runtime ID field, so prefer the
-		// matching live session's C-facing ID when that session is available.
-		if live := findSessionByName(s.manager, p.GetName()); live != nil && live.player != nil {
-			id = live.player.GetID()
-		}
-	}
+
 	s.Send(fmt.Sprintf("%s PC '%s'  IDNum: [%5d], In room [%5d]\r\n",
 		wizardSexName(p.GetSex()), p.GetName(), id, room))
 	title := p.GetTitle()
@@ -206,9 +194,6 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 		wizardClassName(p.GetClass()), p.GetLevel(), p.GetExp(), p.GetAlignment()))
 	pt := game.PlayingTime(p.ConnectedAt, p.PlayedDuration)
 	age := game.Age(p.Birth).Year
-	if file && p.Birth == 0 {
-		age = 17
-	}
 	created := time.Unix(p.Birth, 0).Format("Mon Jan _2 15:04:05 2006")
 	lastLogon := p.ConnectedAt.Format("Mon Jan _2 15:04:05 2006")
 	s.Send(fmt.Sprintf("Created: [%s], Last Logon: [%s]\r\n", created, lastLogon))
@@ -230,7 +215,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 	olc := ""
 	if p.GetLevel() >= LVL_IMMORT {
 		// C appends the OLC zone for immortals only (act.wizard.c:767-776).
-		olc = fmt.Sprintf(", OLC[%d]", s.statOlcZone(p.GetName(), file))
+		olc = fmt.Sprintf(", OLC[%d]", olcZone)
 	}
 	s.Send(fmt.Sprintf("Hometown: [%d], Speaks: [0/0/0], (STL[%d]/per[%d]/NSTL[%d])%s\r\n",
 		hometown, practices, game.IntAppLearn(p.GetInt()), game.WisAppBonus(p.GetWis()), olc))
@@ -259,13 +244,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 	s.Send("PLR: " + wizardPlayerFlags(p, flags) + "\r\n")
 	preferenceFlags := flags
 	autoExit := p.GetAutoExit()
-	if file {
-		// C's file path materializes a freshly loaded char_data with no runtime
-		// preference bits. Go's save record stores the shifted preference mask,
-		// so do not leak that implementation detail into the C report.
-		preferenceFlags = 0
-		autoExit = false
-	}
+
 	s.Send("PRF: " + wizardPreferenceFlags(preferenceFlags, autoExit) + "\r\n")
 	s.Send("Racial Hatreds: None None None None None\r\n")
 	eqCount := 0
@@ -282,12 +261,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected, file
 	full := p.GetCondition(game.CondFull)
 	thirst := p.GetCondition(game.CondThirst)
 	drunk := p.GetCondition(game.CondDrunk)
-	if file {
-		// load_char() initializes the transient condition slots to 24 on the
-		// file-stat path; those values are not the active character's runtime
-		// conditions.
-		full, thirst, drunk = 24, 24, 24
-	}
+
 	s.Send(fmt.Sprintf("Hunger: %d, Thirst: %d, Drunk: %d, Tattoo: None (%d)\r\n", full, thirst, drunk, p.TatTimer))
 	s.Send("Master is: <none>, Followers are:\r\n")
 	s.Send("AFF: " + wizardAffectFlags(p.GetAffectBitVector()) + "\r\n")
@@ -540,7 +514,7 @@ func wizardNameMatches(query, names string) bool {
 
 func (s *Session) sendStatPlayer(p *game.Player) {
 	if p != nil {
-		s.sendStatPlayerReport(p, p.GetRoom(), true, false)
+		s.sendStatPlayerReport(p, p.GetRoom(), true, s.statOlcZone(p.GetName()))
 	}
 }
 

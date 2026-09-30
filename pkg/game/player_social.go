@@ -31,15 +31,12 @@ func (p *Player) GetCon() int {
 }
 
 // GetOrigCon returns the base constitution recorded before constitution loss.
-// C's login sanity check initializes a missing GET_ORIG_CON from real_abils.con;
-// mirror that fallback for players created by older saves and focused tests.
+// Zero is a real saved value before do_start finishes. The login sanity
+// assignment belongs at world entry (interpreter.c:2232-2233), not here.
 func (p *Player) GetOrigCon() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	if p.OrigCon > 0 {
-		return p.OrigCon
-	}
-	return p.Stats.Con
+	return p.OrigCon
 }
 
 // SetOrigCon sets the constitution baseline used by constitution-selling

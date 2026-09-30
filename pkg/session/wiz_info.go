@@ -117,7 +117,7 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("A name would help.\r\n")
 			return nil
 		}
-		if _, online := s.manager.world.GetPlayer(value); !online && !game.PlayerSaveExists(value) {
+		if _, online := s.manager.world.GetPlayer(value); !online && !s.storedPlayerExists(value) {
 			s.Send("There is no such player.\r\n")
 		}
 	case "rent":
@@ -125,7 +125,7 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("A name would help.\r\n")
 			return nil
 		}
-		if !game.PlayerSaveExists(value) {
+		if !s.storedPlayerExists(value) {
 			s.Send(fmt.Sprintf("%s has no rent file.\r\n", strings.ToLower(value)))
 		}
 	case "stats":

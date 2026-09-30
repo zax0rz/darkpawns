@@ -283,3 +283,15 @@ func TestAllocatePortsHoldsReservationsOpen(t *testing.T) {
 		}
 	}
 }
+
+func TestFileCommandsRequireSQLiteStore(t *testing.T) {
+	for _, command := range []string{"stat file Peer", "set file Peer gold 7"} {
+		s := &oraclediff.Scenario{Probe: []string{command}}
+		if !needsPlayerStore(s) {
+			t.Fatalf("%q lacks durable fixture", command)
+		}
+	}
+	if needsPlayerStore(&oraclediff.Scenario{Probe: []string{"stat Peer"}}) {
+		t.Fatal("live stat unexpectedly needs store")
+	}
+}

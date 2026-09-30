@@ -220,16 +220,7 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		// Remove from world
 		delete(w.players, name)
 
-		// Save to disk. The player has already been removed from the world
-		// and can't be messaged, so a failure here is logged with character
-		// context rather than swallowed — DP-911.
-		if err := SavePlayer(p); err != nil {
-			slog.Error(
-				"failed to save player on extract",
-				"name", name,
-				"error", err,
-			)
-		}
+		// The session extraction callback writes SQLite (handler.c:1162).
 
 		// Clear flag
 		p.Flags &^= extractMask

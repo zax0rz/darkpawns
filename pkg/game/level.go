@@ -470,9 +470,10 @@ func (p *Player) AdvanceLevel() {
 		p.Inventory.SetCapacity(str, strAdd, dex, level)
 	}
 
-	// Save after leveling up (outside lock to avoid deadlock with playerToSaveData's RLock)
-	if err := SavePlayer(p); err != nil {
-		slog.Error("Failed to save player after leveling up", "name", name, "error", err)
+	// C advance_level saves at this point (class.c:712). Creation has no
+	// world reference yet; its session writes the same boundary explicitly.
+	if p.worldRef != nil {
+		p.worldRef.SavePlayerRecord(p, "advance level", LoadRoomNowhere, SaveCharOnly)
 	}
 
 	slog.Info("advanced to level", "name", name, "level", level)
