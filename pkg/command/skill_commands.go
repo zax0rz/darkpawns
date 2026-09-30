@@ -1845,7 +1845,15 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			// DoCutthroatDamage uses the complete C damage() seam, which sets
 			// FIGHTING before returning but does not own the command engine's
 			// combat-pair enrollment. The C command's damage() call does both.
-			if err := combat.EnrollAfterDamage(engine, ch, target); err != nil && ch.GetFighting() != target.GetName() {
+			var err error
+			if damageCall {
+				err = combat.EnrollAfterDamage(engine, ch, target)
+			} else {
+				// Failed steal and other opener results have not run damage().
+				// Preserve their existing entry rather than requiring its fields.
+				err = engine.StartCombat(ch, target)
+			}
+			if err != nil && ch.GetFighting() != target.GetName() {
 				slog.Error("skill combat start failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
 			}
 		}
