@@ -8,6 +8,12 @@ this PR merges. The six Phase 2b outcomes and their original evidence are unchan
 
 Base: `4958c781f` (fresh origin/main, #1725 merged).
 Production/test commit: `ff3ea8d7c`.
+Addendum C.1: merged `origin/main` at `efae3853f` (#1726 fixture repairs),
+then fixed the mob looter's forward traversal. `TestAttitudeLootCorpseOrder`
+pins the shared builder's backpack/tunic/sword contents and the exact get/junk
+transcript. Restoring the reversed looter fails on the transcript assertion:
+`0 → 1 → 0`, retained as `looter-{clean,broken,restored}.jsonl` and
+`looter-revert.json` in the same proof archive. This is the nineteenth revert proof.
 
 ## C step audit (R5c, R5g)
 
@@ -132,7 +138,7 @@ Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-09-30/dp-1371-3c1-
 (HEAD `ff3ea8d7c`): 1,038 scenarios, 1,027 passed, five expected, three failed,
 two infrastructure rows, one expected unstable; 493.027 seconds.
 
-## Stop findings
+## Prior stop findings (resolved by Addendum C.1)
 
 The main baseline at `4958c781f` ran the three failed scenarios through
 `census.sh`, with a blocking wait. Evidence:
@@ -155,8 +161,8 @@ sword, tunic, backpack, and its subsequent junk messages change order too.
 Diagnostic retained at
 `/home/zach/Archives/darkpawns/proof-integrity/2026-09-30/dp-1371-3c1/dragon-diagnostic.txt`.
 
-No looter fix, fixture edits, expected-divergence changes or governing-document
-edits have been made. The unsettled infrastructure rows are `goto-private-depth`
-and `recall-depth`; they are not the content stop finding. This branch cannot
-meet Addendum C's clean final census gate without resolving the looter scope and
-the two baseline fixture failures. Phase 3c remains paused.
+At that stop no looter fix, fixture edits, expected-divergence changes or
+governing-document edits had been made. The unsettled infrastructure rows were
+`goto-private-depth` and `recall-depth`. Addendum C.1 authorizes the looter fix;
+#1726 repairs the two fixtures on main. Fresh final census results follow below.
+Phase 3c remains paused until this production PR merges.

@@ -17,3 +17,4 @@ npc-mount	TestRawKillNPCUsesFullTeardown	0	1	0
 dust-prototype	TestRawKillRaceDust	0	1	0
 npc	TestRawKillNPCUsesFullTeardown	0	1	0
 spike	TestCmdSpike_PlayerRawKillContract	0	1	0
+looter-order	TestAttitudeLootCorpseOrder	0	1	0
