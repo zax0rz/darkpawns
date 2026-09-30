@@ -185,17 +185,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				s.CloseSend()
 				return nil
 			}
-			// A NULL/empty stored hash is a legacy row on which no credential
-			// was ever set (pre-audit rows, migrated NULLs): nothing can be
-			// verified against it, so fail closed rather than skipping the
-			// compare entirely.
-			if rec.Password == "" {
-				s.sendError("No password is set for this account. Contact an administrator for a reset.")
-				s.CloseSend()
-				audit.LogSecurityEvent("login_failed", "no password set for account", rec.Name, ip)
-				return nil
-			}
-			if bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)) != nil {
+			if rec.Password == "" || bcrypt.CompareHashAndPassword([]byte(rec.Password), []byte(login.Password)) != nil {
 				// C's nanny turned echo back on as the password line was
 				// dispatched (interpreter.c:1871). echo_on's telnet string is
 				// malformed — TELOPT_NAOFFD and TELOPT_NAOCRD are 13 and 10
@@ -206,6 +196,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				// its own (reconnect.go).
 				s.sendRawEvent("\r\n")
 				game.MudLog(fmt.Sprintf("Bad PW: %s [%s]", rec.Name, s.RemoteIP()), game.MudlogBrief, game.LVL_GOD, true) // interpreter.c:1878-1879
+				if rec.Password == "" {
+					// Legacy NULL-hash row: identical wire treatment as a wrong
+					// password; only the audit log names the state.
+					audit.LogSecurityEvent("login_failed", "no stored password hash - counted as wrong password", rec.Name, ip)
+				}
 				s.manager.loginAttempts.RecordFailure(ip)
 				if s.manager.accountLockouts != nil {
 					if newlyLocked := s.manager.accountLockouts.RecordFailure(rec.Name); newlyLocked {

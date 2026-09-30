@@ -319,9 +319,10 @@ already folds `TIMESTAMPTZ` back to `TIMESTAMP` there.
 ## Empty password hashes
 
 Rows created before password hashing was persisted — and any `NULL` carried
-across a migration — can hold an empty `password_hash`. Login fails closed on
-them: no credential was ever set on the row, so there is nothing to verify a
-submitted password against, and skipping the check would let any attacker in.
+across a migration — can hold an empty `password_hash`. Login answers such a
+row exactly like a wrong password — same reply bytes, same failure counting
+and lockout — so the state cannot be probed from outside and the row can
+never authenticate.
 
 Find how many rows are affected, and repair one with an operator-set bcrypt
 hash (`$2a$`/`$2b$`, cost 10 or higher):
