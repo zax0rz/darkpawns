@@ -345,10 +345,10 @@ func TakeDamageWithDeath(ch, victim Combatant, dam int, attackType int, onDeath 
 // their position change, for damage seams that emit their own skill message
 // (src/fight.c:1400-1408, 1443-1445, 222-223).
 func EnterDamageFighting(ch, victim Combatant) {
-	if ch == nil || victim == nil || ch.GetName() == victim.GetName() || ch.GetPosition() <= PosStunned {
+	if ch == nil || victim == nil || ch.GetName() == victim.GetName() {
 		return
 	}
-	if ch.GetFighting() == "" {
+	if ch.GetPosition() > PosStunned && ch.GetFighting() == "" {
 		ch.SetFighting(victim.GetName())
 		ch.SetPosition(PosFighting)
 	}
@@ -398,8 +398,8 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		}
 	}
 
-	if victimName != chName && ch.GetPosition() > PosStunned {
-		if ch.GetFighting() == "" {
+	if victimName != chName {
+		if ch.GetPosition() > PosStunned && ch.GetFighting() == "" {
 			ch.SetFighting(victimName)
 			ch.SetPosition(PosFighting) // src/fight.c:222-223
 		}

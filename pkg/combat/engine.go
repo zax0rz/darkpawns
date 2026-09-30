@@ -238,10 +238,10 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 // damage()'s !AWAKE victim stop (src/fight.c:1443-1445, 1630-1632).
 // The ordinary opener must still defer its position check until its hit.
 func (ce *CombatEngine) StartCombatAfterDamage(attacker, defender Combatant) error {
-	if attacker.GetName() == defender.GetName() || attacker.GetPosition() <= PosStunned || defender.GetPosition() == PosDead {
+	if attacker.GetName() == defender.GetName() || defender.GetPosition() == PosDead {
 		return nil
 	}
-	if attacker.GetFighting() != defender.GetName() {
+	if attacker.GetPosition() <= PosStunned || attacker.GetFighting() != defender.GetName() {
 		if defender.GetFighting() == attacker.GetName() && defender.GetPosition() > PosSleeping {
 			return ce.startCombat(defender, attacker, attacker.GetPosition() <= PosSleeping, true)
 		}
