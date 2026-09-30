@@ -696,7 +696,6 @@ That room does not exist!	src/act.wizard.c:2958	buffered:sprintf	do_set
 Must be 'off' or a room's virtual number.	src/act.wizard.c:2961	buffered:strcpy	do_set
 You must use set file with this command.	src/act.wizard.c:2975	send_to_char	do_set
 The player *must* not be logged in when this command is run.	src/act.wizard.c:2976	send_to_char	do_set
-Assuming the player is not logged in, this will not take effect if they are.	src/act.wizard.c:2985	send_to_char	do_set
 Password changed to '	src/act.wizard.c:2989	buffered:sprintf	do_set
 That is not a race.	src/act.wizard.c:3007	send_to_char	do_set
 IP Address Host Name	src/act.wizard.c:3172	buffered:sprintf	do_dns
@@ -1339,6 +1338,7 @@ You find yourself wide awake!	src/dream.c:179	send_to_char	dream
 You have a dream	src/dream.c:196	buffered:sprintf	dream_travel
 You have a dream	src/dream.c:209	buffered:sprintf	dream_travel
 Error reading combat message file	src/fight.c:134	buffered:sprintf	load_messages
+The corpse of	src/fight.c:284	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:284	buffered:sprintf	make_corpse
 The charred corpse of	src/fight.c:290	buffered:sprintf	make_corpse
 is lying here, still smoking.	src/fight.c:290	buffered:sprintf	make_corpse
@@ -1348,12 +1348,15 @@ A blasted corpse lies here in pieces.	src/fight.c:301	buffered:sprintf	make_corp
 A dried up husk of a corpse is lying here.	src/fight.c:305	buffered:sprintf	make_corpse
 The shocked looking corpse of	src/fight.c:310	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:310	buffered:sprintf	make_corpse
+The corpse of	src/fight.c:314	buffered:sprintf	make_corpse
 is lying here, brains exploded everywhere.	src/fight.c:314	buffered:sprintf	make_corpse
 The bruised, battered corpse of	src/fight.c:330	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:330	buffered:sprintf	make_corpse
 The hacked up, bloody corpse of	src/fight.c:339	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:339	buffered:sprintf	make_corpse
+The corpse of	src/fight.c:343	buffered:sprintf	make_corpse
 is lying here, guts spilled everywhere.	src/fight.c:343	buffered:sprintf	make_corpse
+The corpse of	src/fight.c:347	buffered:sprintf	make_corpse
 is lying here,	src/fight.c:347	buffered:sprintf	make_corpse
 neck snapped in two.	src/fight.c:347	buffered:sprintf	make_corpse
 The crushed, barely recognizable corpse of	src/fight.c:353	buffered:sprintf	make_corpse
@@ -1362,17 +1365,17 @@ The well-ventilated corpse of	src/fight.c:358	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:358	buffered:sprintf	make_corpse
 The bloated, waterlogged corpse of	src/fight.c:362	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:362	buffered:sprintf	make_corpse
+The corpse of	src/fight.c:366	buffered:sprintf	make_corpse
 is here, frozen in stone.	src/fight.c:366	buffered:sprintf	make_corpse
+The corpse of	src/fight.c:370	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:370	buffered:sprintf	make_corpse
 the corpse of	src/fight.c:376	buffered:sprintf	make_corpse
 death_cry() in fight.c called with ch->in_room = NOWHERE	src/fight.c:512	buffered:sprintf	death_cry
-loots some gold from the corpse of	src/fight.c:761	buffered:sprintf	group_gain
 , but there	src/fight.c:803	buffered:sprintf	group_gain
 was none to split!	src/fight.c:805	buffered:sprintf	group_gain
 but there was none to split!	src/fight.c:809	buffered:sprintf	group_gain
 You keep	src/fight.c:828	buffered:sprintf	group_gain
 gold leftover.	src/fight.c:828	buffered:sprintf	group_gain
-loots some gold from the corpse of	src/fight.c:841	buffered:sprintf	group_gain
 attitude looted	src/fight.c:1157	buffered:sprintf	attitude_loot
 I killed	src/fight.c:1179	buffered:sprintf	attitude_loot
 and looted	src/fight.c:1179	buffered:sprintf	attitude_loot
@@ -1403,7 +1406,6 @@ The hit knocks you off of your mount!	src/fight.c:1549	act	damage
 gets knocked off of his mount.	src/fight.c:1550	act	damage
 You land on your feet!	src/fight.c:1553	send_to_char	damage
 You hit the ground with a thud.	src/fight.c:1555	send_to_char	damage
-loots some gold from the corpse of	src/fight.c:1661	buffered:sprintf	damage
 killed by	src/fight.c:1673	buffered:sprintf	damage
 killed by	src/fight.c:1678	buffered:sprintf	damage
 has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?	src/fight.c:1702	buffered:sprintf	damage
@@ -2611,10 +2613,15 @@ The forces of nature slowly rip	src/spec_procs.c:2054	act	elemental_room
 to shreds.	src/spec_procs.c:2054	act	elemental_room
 You ignore the elements that barrage you.	src/spec_procs.c:2061	send_to_char	elemental_room
 Welcome back	src/spec_procs.c:2089	send_to_char	pray_for_items
+You feel the power pulse through your veins again!	src/spec_procs.c:2092	send_to_char	pray_for_items
 Welcome back	src/spec_procs.c:2097	send_to_char	pray_for_items
+You feel the power pulse through your veins again!	src/spec_procs.c:2100	send_to_char	pray_for_items
 Welcome back	src/spec_procs.c:2106	send_to_char	pray_for_items
+You feel the power pulse through your veins again!	src/spec_procs.c:2109	send_to_char	pray_for_items
 Welcome back	src/spec_procs.c:2114	send_to_char	pray_for_items
+You feel the power pulse through your veins again!	src/spec_procs.c:2117	send_to_char	pray_for_items
 Welcome back	src/spec_procs.c:2125	send_to_char	pray_for_items
+You feel the power pulse through your veins again!	src/spec_procs.c:2128	send_to_char	pray_for_items
 item_for_	src/spec_procs.c:2135	buffered:strcpy	pray_for_items
 kneels and at the altar and chants a prayer to Odin.	src/spec_procs.c:2146	act	pray_for_items
 , who panics in fear!	src/spec_procs.c:2191	act	fearface

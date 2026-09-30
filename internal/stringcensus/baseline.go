@@ -35,6 +35,10 @@ const (
 	ReasonSurfaceNoC = "surface:no-c"
 	// ReasonUnsure: the triager could not settle it.
 	ReasonUnsure = "unsure"
+	// ReasonDivergenceApproved: a deliberate departure from C that Zach has
+	// approved (security or durability). Evidence names the approval and the
+	// issue, so the exception stays visible rather than passing as parity.
+	ReasonDivergenceApproved = "divergence:approved"
 )
 
 // Reasons lists the vocabulary for validation.
@@ -47,6 +51,7 @@ func Reasons() []string {
 		ReasonData,
 		ReasonSurfaceNoC,
 		ReasonUnsure,
+		ReasonDivergenceApproved,
 	}
 }
 

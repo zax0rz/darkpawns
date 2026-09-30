@@ -11,12 +11,13 @@ the counts below in step with the baseline).
 
 | reason | count |
 |---|---|
-| `bug:invented` | 51 |
+| `bug:invented` | 50 |
 | `bug:paraphrase` | 44 |
 | `census:composed` | 2 |
 | `data` | 0 |
 | `surface:no-c` | 1 |
 | `unsure` | 0 |
+| `divergence:approved` | 1 |
 | **total** | **98** |
 
 `unsure` is 0/98 (0.0%).
@@ -192,7 +193,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.other.c` — `do_save` (1)
 
-- `bug:invented` — Go `pkg/game/other_session.go:15` — “Could not save your data. Contact an admin!” — C src/act.other.c:198: nothing — C do_save calls save_char with no failure text; Go adds a DB-failure line
 
 ### `src/act.other.c` — `do_sneak` (1)
 
@@ -425,3 +425,12 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 - Go `pkg/game/graph.go:316` — “You open the door.” — src/config.c:92: "Okay.\r\n" — C do_doorcmd (reached from graph.c) sends OK to the actor; Go prints a descriptive line; no player can read it: MobInstance.SendMessage discards the text (pkg/game/mob.go:832), so this is a sink-table artefact, not a C gap; the room line C also prints is do_doorcmd's "Okay."
 - Go `pkg/session/cmd_group.go:79` — “You start following” — n/a: - — Sent only to agent sessions (cmd_group.go:75); is_agent comes from the WebSocket agent login (session_login.go:64)
+
+## divergence:approved (1)
+
+A deliberate departure from C that Zach has approved, for security or durability. The row stays in the
+baseline so the exception is visible, not passed off as parity.
+
+- Go `pkg/game/spec_procs4.go` — “Nice try.” — C src/spec_procs.c:2081-2126 grants Serapis/Orodreth level 40
+  and Frontline 39 on `pray immortality`, a name-based backdoor any new player could claim; the port refuses
+  those names with this line and changes nothing (DP-1373, approved by Zach 2026-09-30).
