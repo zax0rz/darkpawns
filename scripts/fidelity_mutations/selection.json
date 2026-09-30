@@ -1,0 +1,1008 @@
+{
+  "created_utc": "2026-09-30T19:50:52.284416+00:00",
+  "frame_sha256": "8d4bcbeae99868a34ee1cf1ead47d67510a25fd1494c9ea5f1e9724095f77bf1",
+  "head": "0fadb33c6b9f8e1e31886ed0a027f45dd2bacc8e",
+  "seed": 20260930,
+  "selected": [
+    {
+      "anchor": {
+        "case_id": "boards.remove-author-level-rejection-state",
+        "line": "13",
+        "manifest": "docs/fidelity/depth/boards.tsv"
+      },
+      "id": "M001",
+      "package": "./pkg/boards",
+      "symbol": "TestBoardSystem_RemoveMsg_AuthorLevelBoundary"
+    },
+    {
+      "anchor": {
+        "case_id": "damage.wounded-band-bytes",
+        "line": "46",
+        "manifest": "docs/fidelity/depth/combat-entry.tsv"
+      },
+      "id": "M002",
+      "package": "./pkg/combat",
+      "symbol": "TestWoundedBandBroadcastsCapitalizeAndExcludeVictim"
+    },
+    {
+      "anchor": {
+        "case_id": "update_pos.incap-victim-typo",
+        "line": "42",
+        "manifest": "docs/fidelity/depth/position.tsv"
+      },
+      "id": "M003",
+      "package": "./pkg/combat",
+      "symbol": "TestUpdatePositionAfterDamage_IncapExactStrings"
+    },
+    {
+      "anchor": {
+        "case_id": "circle.fighting-target-fallback",
+        "line": "5",
+        "manifest": "docs/fidelity/depth/circle.tsv"
+      },
+      "id": "M004",
+      "package": "./pkg/command",
+      "symbol": "TestCmdCircle_FightingTargetFallback"
+    },
+    {
+      "anchor": {
+        "case_id": "backstab.draw-order-hit",
+        "line": "16",
+        "manifest": "docs/fidelity/depth/backstab.tsv"
+      },
+      "id": "M005",
+      "package": "./pkg/command",
+      "symbol": "TestSendSkillResult_BackstabSuccess_DrawOrderMatchesC"
+    },
+    {
+      "anchor": {
+        "case_id": "compare.blind-gate",
+        "line": "9",
+        "manifest": "docs/fidelity/depth/compare.tsv"
+      },
+      "id": "M006",
+      "package": "./pkg/command",
+      "symbol": "TestCmdCompare_Blind"
+    },
+    {
+      "anchor": {
+        "case_id": "serpent.training-mobile",
+        "line": "15",
+        "manifest": "docs/fidelity/depth/serpent.tsv"
+      },
+      "id": "M007",
+      "package": "./pkg/command",
+      "symbol": "TestCmdSerpentKickTrainingMobileMatchesC"
+    },
+    {
+      "anchor": {
+        "case_id": "backstab.no-weapon",
+        "line": "7",
+        "manifest": "docs/fidelity/depth/backstab.tsv"
+      },
+      "id": "M008",
+      "package": "./pkg/game",
+      "symbol": "TestDoBackstab_NoWeapon"
+    },
+    {
+      "anchor": {
+        "case_id": "kick.mounted",
+        "line": "10",
+        "manifest": "docs/fidelity/depth/kick.tsv"
+      },
+      "id": "M009",
+      "package": "./pkg/game",
+      "symbol": "TestDoKick_BlocksMounted"
+    },
+    {
+      "anchor": {
+        "case_id": "kick.message-source",
+        "line": "15",
+        "manifest": "docs/fidelity/depth/kick.tsv"
+      },
+      "id": "M010",
+      "package": "./pkg/game",
+      "symbol": "TestDoKick_MissMessageFromSkillMessages"
+    },
+    {
+      "anchor": {
+        "case_id": "smackheads.miss-result-contract",
+        "line": "19",
+        "manifest": "docs/fidelity/depth/smackheads.tsv"
+      },
+      "id": "M011",
+      "package": "./pkg/game",
+      "symbol": "TestDoSmackheads_ResultContract"
+    },
+    {
+      "anchor": {
+        "case_id": "follow.circle-rejection",
+        "line": "14",
+        "manifest": "docs/fidelity/depth/follow.tsv"
+      },
+      "id": "M012",
+      "package": "./pkg/game",
+      "symbol": "TestDoFollowGuardsAndMessages"
+    },
+    {
+      "anchor": {
+        "case_id": "get.money-single",
+        "line": "29",
+        "manifest": "docs/fidelity/depth/get.tsv"
+      },
+      "id": "M013",
+      "package": "./pkg/game",
+      "symbol": "TestGetCheckMoneyMultiAndSingle"
+    },
+    {
+      "anchor": {
+        "case_id": "drop.gold-success",
+        "line": "16",
+        "manifest": "docs/fidelity/depth/drop.tsv"
+      },
+      "id": "M014",
+      "package": "./pkg/game",
+      "symbol": "TestPerformDropGoldSuccess"
+    },
+    {
+      "anchor": {
+        "case_id": "give.weight",
+        "line": "16",
+        "manifest": "docs/fidelity/depth/give.tsv"
+      },
+      "id": "M015",
+      "package": "./pkg/game",
+      "symbol": "TestPerformGiveHandsFullAndWeight"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.dragon-breath-spell-selection",
+        "line": "79",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M016",
+      "package": "./pkg/game",
+      "symbol": "TestDragonBreathSpellSelection"
+    },
+    {
+      "anchor": {
+        "case_id": "lua.npc-command-hide-draw",
+        "line": "22",
+        "manifest": "docs/fidelity/depth/lua.tsv"
+      },
+      "id": "M017",
+      "package": "./pkg/game",
+      "symbol": "TestNPCCommandDrawsHideRollFirst"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.butler-can-get-predicate",
+        "line": "382",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M018",
+      "package": "./pkg/game",
+      "symbol": "TestSpecButler_CanGetPredicateAndFourItemCap"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.cleric-earthquake-room-message",
+        "line": "102",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M019",
+      "package": "./pkg/game",
+      "symbol": "TestSpecCleric_EarthquakeUsesNPCRoomMessage"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.conjured-fizzle-master",
+        "line": "403",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M020",
+      "package": "./pkg/game",
+      "symbol": "TestSpecConjured_FizzleAudienceAndExtraction"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.dragon-breath-combat-roll",
+        "line": "83",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M021",
+      "package": "./pkg/game",
+      "symbol": "TestSpecDragonBreath_CombatRollAndSharedReturn"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.elements-guardian-pair-branch",
+        "line": "451",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M022",
+      "package": "./pkg/game",
+      "symbol": "TestSpecElementsGuardian_PairUsesRoomOrderAudienceAndHit"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.fido-content-transfer",
+        "line": "60",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M023",
+      "package": "./pkg/game",
+      "symbol": "TestSpecFido_CorpsePredicateAndTransfer"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.jailguard-audience",
+        "line": "111",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M024",
+      "package": "./pkg/game",
+      "symbol": "TestSpecJailGuard_Audience"
+    },
+    {
+      "anchor": {
+        "case_id": "room.pray-command-gate",
+        "line": "114",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M025",
+      "package": "./pkg/game",
+      "symbol": "TestSpecPrayForItems_FallsThroughOrdinarySocial"
+    },
+    {
+      "anchor": {
+        "case_id": "room.pray-immortality-staff-names",
+        "line": "118",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M026",
+      "package": "./pkg/game",
+      "symbol": "TestSpecPrayForItems_StaffNamesPatched"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.stableboy-collect-state",
+        "line": "196",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M027",
+      "package": "./pkg/game",
+      "symbol": "TestSpecStableboy"
+    },
+    {
+      "anchor": {
+        "case_id": "room.suck-in-argument-gate",
+        "line": "150",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M028",
+      "package": "./pkg/game",
+      "symbol": "TestSpecSuckIn_LookGateAudienceAndRelocation"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.tattoo4-success-state",
+        "line": "273",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M029",
+      "package": "./pkg/game",
+      "symbol": "TestSpecTattoo4SuccessAudienceAndState"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.teleport-victim-combatant-resolution",
+        "line": "335",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M030",
+      "package": "./pkg/game",
+      "symbol": "TestSpecTeleportVictim_ResolvesMobCombatTarget"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.troll-fighting-glow",
+        "line": "480",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M031",
+      "package": "./pkg/game",
+      "symbol": "TestSpecTroll_FightingUsesCombatNumberArm"
+    },
+    {
+      "anchor": {
+        "case_id": "skills.catalog-handler-keys",
+        "line": "3",
+        "manifest": "docs/fidelity/depth/skill-storage.tsv"
+      },
+      "id": "M032",
+      "package": "./pkg/game",
+      "symbol": "TestCSkillsStoreUnderHandlerKeys"
+    },
+    {
+      "anchor": {
+        "case_id": "cast.multiword-token-abbreviation",
+        "line": "12",
+        "manifest": "docs/fidelity/depth/cast.tsv"
+      },
+      "id": "M033",
+      "package": "./pkg/game",
+      "symbol": "TestFindSkillNum"
+    },
+    {
+      "anchor": {
+        "case_id": "ban.literal-asterisk",
+        "line": "11",
+        "manifest": "docs/fidelity/depth/ban.tsv"
+      },
+      "id": "M034",
+      "package": "./pkg/game",
+      "symbol": "TestIsBannedLiteralAsterisk"
+    },
+    {
+      "anchor": {
+        "case_id": "charge.mounted",
+        "line": "10",
+        "manifest": "docs/fidelity/depth/charge.tsv"
+      },
+      "id": "M035",
+      "package": "./pkg/game",
+      "symbol": "TestDoCharge_MountedBonusDamage"
+    },
+    {
+      "anchor": {
+        "case_id": "search.blind",
+        "line": "12",
+        "manifest": "docs/fidelity/depth/search.tsv"
+      },
+      "id": "M036",
+      "package": "./pkg/game",
+      "symbol": "TestDoDetectDepthGatesAndOutput"
+    },
+    {
+      "anchor": {
+        "case_id": "equipment.covered-positions",
+        "line": "4",
+        "manifest": "docs/fidelity/depth/equipment.tsv"
+      },
+      "id": "M037",
+      "package": "./pkg/game",
+      "symbol": "TestDoEquipmentMarksCoveredPositions"
+    },
+    {
+      "anchor": {
+        "case_id": "headbutt.recoil-helm",
+        "line": "20",
+        "manifest": "docs/fidelity/depth/headbutt.tsv"
+      },
+      "id": "M038",
+      "package": "./pkg/game",
+      "symbol": "TestDoHeadbutt_SelfRecoilWithHelm"
+    },
+    {
+      "anchor": {
+        "case_id": "hide.affect-clear-reroll",
+        "line": "21",
+        "manifest": "docs/fidelity/depth/hide.tsv"
+      },
+      "id": "M039",
+      "package": "./pkg/game",
+      "symbol": "TestDoHideDexBonusToggleAndImprove"
+    },
+    {
+      "anchor": {
+        "case_id": "mount.indoors",
+        "line": "5",
+        "manifest": "docs/fidelity/depth/mount.tsv"
+      },
+      "id": "M040",
+      "package": "./pkg/game",
+      "symbol": "TestDoRideDirectGates"
+    },
+    {
+      "anchor": {
+        "case_id": "sneak.affect-failure-clears",
+        "line": "8",
+        "manifest": "docs/fidelity/depth/sneak.tsv"
+      },
+      "id": "M041",
+      "package": "./pkg/game",
+      "symbol": "TestDoSneakFailedRerollClearsSneakAndStealthAffects"
+    },
+    {
+      "anchor": {
+        "case_id": "spike.success-player-state",
+        "line": "17",
+        "manifest": "docs/fidelity/depth/spike.tsv"
+      },
+      "id": "M042",
+      "package": "./pkg/game",
+      "symbol": "TestDoSpike_KillsWerewolf"
+    },
+    {
+      "anchor": {
+        "case_id": "spike.target-affect",
+        "line": "10",
+        "manifest": "docs/fidelity/depth/spike.tsv"
+      },
+      "id": "M043",
+      "package": "./pkg/game",
+      "symbol": "TestDoSpike_RequiresCorrectAffect"
+    },
+    {
+      "anchor": {
+        "case_id": "yank.success-audience",
+        "line": "42",
+        "manifest": "docs/fidelity/depth/other.tsv"
+      },
+      "id": "M044",
+      "package": "./pkg/game",
+      "symbol": "TestDoYank_Success"
+    },
+    {
+      "anchor": {
+        "case_id": "yank.female-pronouns",
+        "line": "43",
+        "manifest": "docs/fidelity/depth/other.tsv"
+      },
+      "id": "M045",
+      "package": "./pkg/game",
+      "symbol": "TestDoYank_Success_FemalePronouns"
+    },
+    {
+      "anchor": {
+        "case_id": "alter.weapon-level-bands",
+        "line": "9",
+        "manifest": "docs/fidelity/depth/flesh-alter.tsv"
+      },
+      "id": "M046",
+      "package": "./pkg/game",
+      "symbol": "TestFleshAlterWeaponBands"
+    },
+    {
+      "anchor": {
+        "case_id": "junk.nodrop-gate",
+        "line": "13",
+        "manifest": "docs/fidelity/depth/disposal.tsv"
+      },
+      "id": "M047",
+      "package": "./pkg/game",
+      "symbol": "TestPerformDispose"
+    },
+    {
+      "anchor": {
+        "case_id": "wake.target-bad-shape",
+        "line": "41",
+        "manifest": "docs/fidelity/depth/position.tsv"
+      },
+      "id": "M048",
+      "package": "./pkg/game",
+      "symbol": "TestPositionCommandsMountAndWake"
+    },
+    {
+      "anchor": {
+        "case_id": "review.invisible-speaker",
+        "line": "6",
+        "manifest": "docs/fidelity/depth/review.tsv"
+      },
+      "id": "M049",
+      "package": "./pkg/game",
+      "symbol": "TestReviewGossipHidesHigherInvisibility"
+    },
+    {
+      "anchor": {
+        "case_id": "scripts.room-ondrop-drop-only",
+        "line": "11",
+        "manifest": "docs/fidelity/depth/scripts.tsv"
+      },
+      "id": "M050",
+      "package": "./pkg/game",
+      "symbol": "TestRoomOnDropFiresOnlyOnDrop"
+    },
+    {
+      "anchor": {
+        "case_id": "scripts.room-onpulse-before-damage",
+        "line": "14",
+        "manifest": "docs/fidelity/depth/scripts.tsv"
+      },
+      "id": "M051",
+      "package": "./pkg/game",
+      "symbol": "TestRoomOnPulseRunsBeforeFlamingDamage"
+    },
+    {
+      "anchor": {
+        "case_id": "scripts.obj-parse-script-line",
+        "line": "9",
+        "manifest": "docs/fidelity/depth/scripts.tsv"
+      },
+      "id": "M052",
+      "package": "./pkg/parser",
+      "symbol": "TestParseObjectScriptLine"
+    },
+    {
+      "anchor": {
+        "case_id": "lua.retval-nonzero",
+        "line": "19",
+        "manifest": "docs/fidelity/depth/lua.tsv"
+      },
+      "id": "M053",
+      "package": "./pkg/scripting",
+      "symbol": "TestBridgeReturnValue"
+    },
+    {
+      "anchor": {
+        "case_id": "scripts.dofile-scripts-prefix",
+        "line": "15",
+        "manifest": "docs/fidelity/depth/scripts.tsv"
+      },
+      "id": "M054",
+      "package": "./pkg/scripting",
+      "symbol": "TestDofileScriptsPrefixResolvesInsideSandbox"
+    },
+    {
+      "anchor": {
+        "case_id": "shoot.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/shoot.tsv"
+      },
+      "id": "M055",
+      "package": "./pkg/session",
+      "symbol": "TestShootRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "smackheads.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/smackheads.tsv"
+      },
+      "id": "M056",
+      "package": "./pkg/session",
+      "symbol": "TestSmackheadsRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "order.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/order.tsv"
+      },
+      "id": "M057",
+      "package": "./pkg/session",
+      "symbol": "TestOrderRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "shadow.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/shadow.tsv"
+      },
+      "id": "M058",
+      "package": "./pkg/session",
+      "symbol": "TestShadowRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "entry.browser-json-boundary",
+        "line": "6",
+        "manifest": "docs/fidelity/depth/entry.tsv"
+      },
+      "id": "M059",
+      "package": "./pkg/session",
+      "symbol": "TestEntryWebSocketSavedIdentityAndMenuResume"
+    },
+    {
+      "anchor": {
+        "case_id": "save.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/save.tsv"
+      },
+      "id": "M060",
+      "package": "./pkg/session",
+      "symbol": "TestSaveRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "fill.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/fill.tsv"
+      },
+      "id": "M061",
+      "package": "./pkg/session",
+      "symbol": "TestFillRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "cast.concentration-failure",
+        "line": "20",
+        "manifest": "docs/fidelity/depth/cast.tsv"
+      },
+      "id": "M062",
+      "package": "./pkg/session",
+      "symbol": "TestCastFailureConsumesOneDrawHalfManaAndNoIncantation"
+    },
+    {
+      "anchor": {
+        "case_id": "cast.target-order",
+        "line": "18",
+        "manifest": "docs/fidelity/depth/cast.tsv"
+      },
+      "id": "M063",
+      "package": "./pkg/session",
+      "symbol": "TestResolveCastTargetOrderAndEmptyDefaults"
+    },
+    {
+      "anchor": {
+        "case_id": "advance.actor-newlevel-gate",
+        "line": "13",
+        "manifest": "docs/fidelity/depth/advance.tsv"
+      },
+      "id": "M064",
+      "package": "./pkg/session",
+      "symbol": "TestCmdAdvanceAuthorityBranches"
+    },
+    {
+      "anchor": {
+        "case_id": "restore.high-immortal-state",
+        "line": "10",
+        "manifest": "docs/fidelity/depth/restore.tsv"
+      },
+      "id": "M065",
+      "package": "./pkg/session",
+      "symbol": "TestCmdRestoreMatchesCHighImmortalStateBranch"
+    },
+    {
+      "anchor": {
+        "case_id": "set.direct.state-bits",
+        "line": "18",
+        "manifest": "docs/fidelity/depth/set.tsv"
+      },
+      "id": "M066",
+      "package": "./pkg/session",
+      "symbol": "TestCmdSetDirectBinaryFieldsMatchCBits"
+    },
+    {
+      "anchor": {
+        "case_id": "oedit.live-instances",
+        "line": "24",
+        "manifest": "docs/fidelity/depth/oedit.tsv"
+      },
+      "id": "M067",
+      "package": "./pkg/session",
+      "symbol": "TestOeditRefreshLiveInstancesPreservesRuntimePlacement"
+    },
+    {
+      "anchor": {
+        "case_id": "tedit.boot-line-ending-state",
+        "line": "36",
+        "manifest": "docs/fidelity/depth/tedit.tsv"
+      },
+      "id": "M068",
+      "package": "./pkg/session",
+      "symbol": "TestReadCTextFileUsesBootCRLFRepresentation"
+    },
+    {
+      "anchor": {
+        "case_id": "zedit.entry-gate",
+        "line": "17",
+        "manifest": "docs/fidelity/depth/zedit.tsv"
+      },
+      "id": "M069",
+      "package": "./pkg/session",
+      "symbol": "TestZeditRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "boggle.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/boggle.tsv"
+      },
+      "id": "M070",
+      "package": "./pkg/session",
+      "symbol": "TestBoggleRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "prompt.letter-mask-ack",
+        "line": "7",
+        "manifest": "docs/fidelity/depth/prompt.tsv"
+      },
+      "id": "M071",
+      "package": "./pkg/session",
+      "symbol": "TestCmdPromptMatchesCDoDisplay"
+    },
+    {
+      "anchor": {
+        "case_id": "reroll.state",
+        "line": "10",
+        "manifest": "docs/fidelity/depth/reroll.tsv"
+      },
+      "id": "M072",
+      "package": "./pkg/session",
+      "symbol": "TestCmdRerollMatchesCStatRollAndState"
+    },
+    {
+      "anchor": {
+        "case_id": "escape.failure-wait",
+        "line": "15",
+        "manifest": "docs/fidelity/depth/escape.tsv"
+      },
+      "id": "M073",
+      "package": "./pkg/session",
+      "symbol": "TestCmdRetreat_FailureSets22PulseWait"
+    },
+    {
+      "anchor": {
+        "case_id": "score.state-variants.affect-flags",
+        "line": "8",
+        "manifest": "docs/fidelity/depth/info.tsv"
+      },
+      "id": "M074",
+      "package": "./pkg/session",
+      "symbol": "TestCmdScoreStateVariants"
+    },
+    {
+      "anchor": {
+        "case_id": "score.player-race-class.line-ending",
+        "line": "26",
+        "manifest": "docs/fidelity/depth/info.tsv"
+      },
+      "id": "M075",
+      "package": "./pkg/session",
+      "symbol": "TestCmdScoreUsesPlayerRaceAndClassNamesAndCLineEnding"
+    },
+    {
+      "anchor": {
+        "case_id": "flex.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/flex.tsv"
+      },
+      "id": "M076",
+      "package": "./pkg/session",
+      "symbol": "TestFlexRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "fondle.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/fondle.tsv"
+      },
+      "id": "M077",
+      "package": "./pkg/session",
+      "symbol": "TestFondleRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "french.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/french.tsv"
+      },
+      "id": "M078",
+      "package": "./pkg/session",
+      "symbol": "TestFrenchRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "infobar.unknown-state-reset",
+        "line": "11",
+        "manifest": "docs/fidelity/depth/infobar.tsv"
+      },
+      "id": "M079",
+      "package": "./pkg/session",
+      "symbol": "TestInfobarUnknownStateResetsToOff"
+    },
+    {
+      "anchor": {
+        "case_id": "kyo.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/kyo.tsv"
+      },
+      "id": "M080",
+      "package": "./pkg/session",
+      "symbol": "TestKyoRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "mount.alias-gate",
+        "line": "3",
+        "manifest": "docs/fidelity/depth/mount.tsv"
+      },
+      "id": "M081",
+      "package": "./pkg/session",
+      "symbol": "TestMountAndRideRegistrationUseCEntryGates"
+    },
+    {
+      "anchor": {
+        "case_id": "nod.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/nod.tsv"
+      },
+      "id": "M082",
+      "package": "./pkg/session",
+      "symbol": "TestNodRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "pinch.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/pinch.tsv"
+      },
+      "id": "M083",
+      "package": "./pkg/session",
+      "symbol": "TestPinchRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "prompt.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/prompt.tsv"
+      },
+      "id": "M084",
+      "package": "./pkg/session",
+      "symbol": "TestPromptRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "redit.duplicate-gate-race",
+        "line": "23",
+        "manifest": "docs/fidelity/depth/redit.tsv"
+      },
+      "id": "M085",
+      "package": "./pkg/session",
+      "symbol": "TestReditConcurrentEntryAdmitsExactlyOneEditor"
+    },
+    {
+      "anchor": {
+        "case_id": "reel.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/reel.tsv"
+      },
+      "id": "M086",
+      "package": "./pkg/session",
+      "symbol": "TestReelRegistrationUsesCEntryGateAndRecord"
+    },
+    {
+      "anchor": {
+        "case_id": "scripts.room-oncmd-npc-gates",
+        "line": "8",
+        "manifest": "docs/fidelity/depth/scripts.tsv"
+      },
+      "id": "M087",
+      "package": "./pkg/session",
+      "symbol": "TestRunSpecialsRoomObjScriptNPCGates"
+    },
+    {
+      "anchor": {
+        "case_id": "sedit.empty-numeric",
+        "line": "13",
+        "manifest": "docs/fidelity/depth/sedit.tsv"
+      },
+      "id": "M088",
+      "package": "./pkg/session",
+      "symbol": "TestSeditEmptyNumericInputAndMessages"
+    },
+    {
+      "anchor": {
+        "case_id": "sedit.keeper-validation",
+        "line": "14",
+        "manifest": "docs/fidelity/depth/sedit.tsv"
+      },
+      "id": "M089",
+      "package": "./pkg/session",
+      "symbol": "TestSeditKeeperValidationKeepsPrompt"
+    },
+    {
+      "anchor": {
+        "case_id": "shame.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/shame.tsv"
+      },
+      "id": "M090",
+      "package": "./pkg/session",
+      "symbol": "TestShameRegistrationUsesCEntryGate"
+    },
+    {
+      "anchor": {
+        "case_id": "sing.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/sing.tsv"
+      },
+      "id": "M091",
+      "package": "./pkg/session",
+      "symbol": "TestSingRegistrationUsesCEntryGateAndRecord"
+    },
+    {
+      "anchor": {
+        "case_id": "skillset.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/skillset.tsv"
+      },
+      "id": "M092",
+      "package": "./pkg/session",
+      "symbol": "TestSkillsetRegistrationUsesCEntryGates"
+    },
+    {
+      "anchor": {
+        "case_id": "snowball.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/snowball.tsv"
+      },
+      "id": "M093",
+      "package": "./pkg/session",
+      "symbol": "TestSnowballRegistrationUsesCEntryGateAndRecord"
+    },
+    {
+      "anchor": {
+        "case_id": "squeeze.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/squeeze.tsv"
+      },
+      "id": "M094",
+      "package": "./pkg/session",
+      "symbol": "TestSqueezeRegistrationUsesCEntryGateAndRecord"
+    },
+    {
+      "anchor": {
+        "case_id": "tap.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/tap.tsv"
+      },
+      "id": "M095",
+      "package": "./pkg/session",
+      "symbol": "TestTapRegistrationUsesCEntryGateAndRecord"
+    },
+    {
+      "anchor": {
+        "case_id": "thumbsup.entry-gate",
+        "line": "2",
+        "manifest": "docs/fidelity/depth/thumbsup.tsv"
+      },
+      "id": "M096",
+      "package": "./pkg/session",
+      "symbol": "TestThumbsupRegistrationUsesCEntryGateAndRecord"
+    },
+    {
+      "anchor": {
+        "case_id": "objmagic.sanctuary.evil-variant",
+        "line": "12",
+        "manifest": "docs/fidelity/depth/object-magic.tsv"
+      },
+      "id": "M097",
+      "package": "./pkg/spells",
+      "symbol": "TestMagAffectsMessages_SanctuaryAlignment"
+    },
+    {
+      "anchor": {
+        "case_id": "objmagic.sleep.messages",
+        "line": "48",
+        "manifest": "docs/fidelity/depth/object-magic.tsv"
+      },
+      "id": "M098",
+      "package": "./pkg/spells",
+      "symbol": "TestMagAffectsMessages_SaveBranches"
+    },
+    {
+      "anchor": {
+        "case_id": "mob.dragon-breath-call-magic",
+        "line": "84",
+        "manifest": "docs/fidelity/depth/spec-procs.tsv"
+      },
+      "id": "M099",
+      "package": "./pkg/spells",
+      "symbol": "TestMagAreas_BreathUsesCImmortalGateAndZeroDamageTail"
+    },
+    {
+      "anchor": {
+        "case_id": "entry.telnet-boundary",
+        "line": "7",
+        "manifest": "docs/fidelity/depth/entry.tsv"
+      },
+      "id": "M100",
+      "package": "./pkg/telnet",
+      "symbol": "TestEntryTelnetSavedIdentityEntersWorld"
+    }
+  ]
+}

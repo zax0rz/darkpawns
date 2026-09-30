@@ -1,0 +1,902 @@
+{
+  "M001": {
+    "after": "eople's messages.\\r\\n\")\n\t\treturn true\n\t}\n\tif ch.GetLevel() < mi.Level && ch.GetLevel() < boardRemoveAuthorityBypassLevel - 1",
+    "assertion": "level-38 actor output|rejected removal",
+    "before": "eople's messages.\\r\\n\")\n\t\treturn true\n\t}\n\tif ch.GetLevel() < mi.Level && ch.GetLevel() < boardRemoveAuthorityBypassLevel",
+    "behavior_changed": "Permit level 38 to remove the level-40 author post; rejection must preserve state.",
+    "call_path": "func (bs *BoardSystem) RemoveMsg",
+    "path": "pkg/boards/boards.go",
+    "planned_utc": "2026-09-30T19:59:54.250628+00:00"
+  },
+  "M002": {
+    "after": "endMessage(\"You are mortally wounded, and will die soon, if not aided.\\r\\n\")\n\t\tif broadcast != nil {\n\t\t\tbroadcast(room, fmt.Sprintf(\"%s is mortally wounded, and will die soon, if not aided.\", name)",
+    "assertion": "room broadcast",
+    "before": "endMessage(\"You are mortally wounded, and will die soon, if not aided.\\r\\n\")\n\t\tif broadcast != nil {\n\t\t\tbroadcast(room, capitalizeFightMessage(fmt.Sprintf(\"%s is mortally wounded, and will die soon, if not aided.\", name))",
+    "behavior_changed": "Remove capitalization of the mortal wound room message.",
+    "call_path": "func UpdatePositionAfterDamage",
+    "path": "pkg/combat/fight_core.go",
+    "planned_utc": "2026-09-30T19:59:54.250754+00:00"
+  },
+  "M003": {
+    "after": "ded, and will die soon, if not aided.\", name)), name)\n\t\t}\n\tcase PosIncap:\n\t\tvictim.SendMessage(\"You are incapacitated and will slowly die",
+    "assertion": "victim message",
+    "before": "ded, and will die soon, if not aided.\", name)), name)\n\t\t}\n\tcase PosIncap:\n\t\tvictim.SendMessage(\"You are incapacitated an will slowly die",
+    "behavior_changed": "Grammar-correct the intentional incap victim typo.",
+    "call_path": "func UpdatePositionAfterDamage",
+    "path": "pkg/combat/fight_core.go",
+    "planned_utc": "2026-09-30T19:59:54.250853+00:00"
+  },
+  "M004": {
+    "after": "umentSkillTarget(world, ch, args, ch.GetRoom())\n\t\tif !found {\n\t\t\treturn s.SendMessage(\"Circle who?\\r\\n\")\n\t\t}\n\t} else if false && ch.GetFighting() != \"\" {",
+    "assertion": "expected circle to target fighting opponent",
+    "before": "umentSkillTarget(world, ch, args, ch.GetRoom())\n\t\tif !found {\n\t\t\treturn s.SendMessage(\"Circle who?\\r\\n\")\n\t\t}\n\t} else if ch.GetFighting() != \"\" {",
+    "behavior_changed": "Disable fallback to the fighting target on an empty argument.",
+    "call_path": "func CmdCircle",
+    "path": "pkg/command/skill_commands.go",
+    "planned_utc": "2026-09-30T19:59:54.251040+00:00"
+  },
+  "M005": {
+    "after": "or success \u2014 act.offensive.c:220\n\t// #nosec G404 \u2014 game RNG, not cryptographic\n\tpercent := dprng.Number(1, 101) // 1-101\n\t_ = dprng.Number(1, 20)",
+    "assertion": "draw count mismatch|wrong stream values",
+    "before": "or success \u2014 act.offensive.c:220\n\t// #nosec G404 \u2014 game RNG, not cryptographic\n\tpercent := dprng.Number(1, 101) // 1-101",
+    "behavior_changed": "Consume an extra d20 between backstab skill roll and hit() to shift the claimed RNG order.",
+    "call_path": "func DoBackstab",
+    "path": "pkg/game/skill_combat.go",
+    "planned_utc": "2026-09-30T19:59:54.251130+00:00"
+  },
+  "M006": {
+    "after": "e 20 + level. C sets prob only.\n\tprob := ch.GetSkill(SkillAppraise)\n\tif prob == 0 {\n\t\tprob = 20 + ch.GetLevel()\n\t}\n\n\tif false && ch.IsAffected(affBlind) {",
+    "assertion": "blind compare message",
+    "before": "e 20 + level. C sets prob only.\n\tprob := ch.GetSkill(SkillAppraise)\n\tif prob == 0 {\n\t\tprob = 20 + ch.GetLevel()\n\t}\n\n\tif ch.IsAffected(affBlind) {",
+    "behavior_changed": "Bypass compare blindness gate before inventory resolution.",
+    "call_path": "func DoCompare",
+    "path": "pkg/game/skill_advanced.go",
+    "planned_utc": "2026-09-30T19:59:54.251188+00:00"
+  },
+  "M007": {
+    "after": "consumes it before DeferredImprove.\n\t\tSpawnMobVNum:    18221,\n\t\tSpawnMobLevel:   ch.GetLevel() + 3,\n\t\tSpawnMobRoom:    1001,",
+    "assertion": "did not create mob 18221 in room 18201",
+    "before": "consumes it before DeferredImprove.\n\t\tSpawnMobVNum:    18221,\n\t\tSpawnMobLevel:   ch.GetLevel() + 3,\n\t\tSpawnMobRoom:    18201,",
+    "behavior_changed": "Spawn the training mobile in the arena instead of the required temple.",
+    "call_path": "func DoSerpentKick",
+    "path": "pkg/game/skills2.go",
+    "planned_utc": "2026-09-30T19:59:54.251250+00:00"
+  },
+  "M008": {
+    "after": "ToCh: \"How can you sneak up on yourself?\"}\n\t}\n\n\t// 3. Must wield a piercing weapon \u2014 act.offensive.c:189,194\n\tweapon, ok := ch.Equipment.GetItemInSlot(SlotWield)\n\tif !ok || weapon == nil {\n\t\treturn SkillResult{Success: false, MessageToCh: \"Backstab who?",
+    "assertion": "expected wield requirement message",
+    "before": "ToCh: \"How can you sneak up on yourself?\"}\n\t}\n\n\t// 3. Must wield a piercing weapon \u2014 act.offensive.c:189,194\n\tweapon, ok := ch.Equipment.GetItemInSlot(SlotWield)\n\tif !ok || weapon == nil {\n\t\treturn SkillResult{Success: false, MessageToCh: \"You need to wield a weapon to make it a success.",
+    "behavior_changed": "Replace the unarmed backstab weapon-gate bytes with a wrong refusal.",
+    "call_path": "func DoBackstab",
+    "path": "pkg/game/skill_combat.go",
+    "planned_utc": "2026-09-30T19:59:54.251312+00:00"
+  },
+  "M009": {
+    "after": "r\\n\"}\n\t}\n\n\t// Mounted \u2014 act.offensive.c:615-619\n\tif ch.IsMounted() {\n\t\treturn SkillResult{Success: false, MessageToCh: \"Back off!",
+    "assertion": "expected mount message",
+    "before": "r\\n\"}\n\t}\n\n\t// Mounted \u2014 act.offensive.c:615-619\n\tif ch.IsMounted() {\n\t\treturn SkillResult{Success: false, MessageToCh: \"Dismount first!",
+    "behavior_changed": "Replace kick mounted refusal with unrelated bytes.",
+    "call_path": "func DoKick",
+    "path": "pkg/game/skill_combat.go",
+    "planned_utc": "2026-09-30T19:59:54.251406+00:00"
+  },
+  "M010": {
+    "after": "= nil {\n\t\treturn\n\t}\n\n\tcb.SkillMessage = func(dam int, chName, victimName string, attackType int, roomVNum int) bool {\n\t\tif attackType == 134 { attackType = 131 }\n\t\tvariants, ok := messages.Variants(attackType)",
+    "assertion": "miss attacker message|OLD invented kick string",
+    "before": "= nil {\n\t\treturn\n\t}\n\n\tcb.SkillMessage = func(dam int, chName, victimName string, attackType int, roomVNum int) bool {\n\t\tvariants, ok := messages.Variants(attackType)",
+    "behavior_changed": "Route the file-backed Kick set 134 to Backstab set 131, preserving nonempty corpus messages. wireKickMessages calls InitFightMessages.",
+    "call_path": "func InitFightMessages",
+    "path": "pkg/combat/skill_messages.go",
+    "planned_utc": "2026-09-30T20:00:46.673510+00:00"
+  },
+  "M011": {
+    "after": "targets,\n\t\t\tStartCombat:         true,\n\t\t\tWaitCh:              3,\n\t\t\tSkillMsgAfterDamage: true,\n\t\t\tPreDamageImprove:    nil,",
+    "assertion": "miss pre-damage improvement",
+    "before": "targets,\n\t\t\tStartCombat:         true,\n\t\t\tWaitCh:              3,\n\t\t\tSkillMsgAfterDamage: true,\n\t\t\tPreDamageImprove:    []string{SkillSmackheads},",
+    "behavior_changed": "Omit the smackheads miss pre-damage improvement contract.",
+    "call_path": "func DoSmackheads",
+    "path": "pkg/game/skill_special.go",
+    "planned_utc": "2026-09-30T19:59:54.251530+00:00"
+  },
+  "M012": {
+    "after": " \"You are already following yourself.\\r\\n\")\n\t\t\treturn\n\t\t}\n\t\tStopFollower(w, ch)\n\t\treturn\n\t}\n\n\tif leaderPlayer != nil && false && CircleFollow(w, ch, leaderPlayer)",
+    "assertion": "second following|second output",
+    "before": " \"You are already following yourself.\\r\\n\")\n\t\t\treturn\n\t\t}\n\t\tStopFollower(w, ch)\n\t\treturn\n\t}\n\n\tif leaderPlayer != nil && CircleFollow(w, ch, leaderPlayer)",
+    "behavior_changed": "Allow following loops rather than reject before changing relation.",
+    "call_path": "func (w *World) DoFollow",
+    "path": "pkg/game/movement_commands.go",
+    "planned_utc": "2026-09-30T19:59:54.251581+00:00"
+  },
+  "M013": {
+    "after": "j.GetValue(0)\n\tif obj.GetTypeFlag() == ITEM_MONEY && amount > 0 {\n\t\tw.ExtractObject(obj, ch.GetRoomVNum())\n\t\tif amount >= 1 {",
+    "assertion": "single coin must be silent",
+    "before": "j.GetValue(0)\n\tif obj.GetTypeFlag() == ITEM_MONEY && amount > 0 {\n\t\tw.ExtractObject(obj, ch.GetRoomVNum())\n\t\tif amount > 1 {",
+    "behavior_changed": "Emit the multi-coin message for one coin, violating the silent single case.",
+    "call_path": "func (w *World) getCheckMoney",
+    "path": "pkg/game/item_transfer.go",
+    "planned_utc": "2026-09-30T19:59:54.251627+00:00"
+  },
+  "M014": {
+    "after": "me, \"amount\", amount, \"error\", err)\n\t\tch.SendMessage(\"You can't drop that right now.\\r\\n\")\n\t\treturn\n\t}\n\tch.SetWaitState(0)",
+    "assertion": "dropping gold should set a wait state",
+    "before": "me, \"amount\", amount, \"error\", err)\n\t\tch.SendMessage(\"You can't drop that right now.\\r\\n\")\n\t\treturn\n\t}\n\tch.SetWaitState(1)",
+    "behavior_changed": "Remove the gold-drop coin-bomb wait.",
+    "call_path": "func (w *World) performDropGold",
+    "path": "pkg/game/item_transfer.go",
+    "planned_utc": "2026-09-30T19:59:54.251675+00:00"
+  },
+  "M015": {
+    "after": "return\n\t}\n\tif vict.Inventory.IsFull() {\n\t\tw.actToChar(ch, \"$N seems to have $S hands full.\", vict, obj)\n\t\treturn\n\t}\n\tif false && obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.GetCapacity()*10",
+    "assertion": "weight byte",
+    "before": "return\n\t}\n\tif vict.Inventory.IsFull() {\n\t\tw.actToChar(ch, \"$N seems to have $S hands full.\", vict, obj)\n\t\treturn\n\t}\n\tif obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.GetCapacity()*10",
+    "behavior_changed": "Bypass recipient carry-weight refusal.",
+    "call_path": "func (w *World) performGive",
+    "path": "pkg/game/item_transfer.go",
+    "planned_utc": "2026-09-30T19:59:54.251726+00:00"
+  },
+  "M016": {
+    "after": "ell(vnum int) int {\n\tswitch vnum {\n\tcase 4209, 4705:\n\t\treturn spells.SpellFrostBreath\n\tcase 11000:\n\t\treturn spells.SpellFireBreath",
+    "assertion": "dragonBreathSpell",
+    "before": "ell(vnum int) int {\n\tswitch vnum {\n\tcase 4209, 4705:\n\t\treturn spells.SpellFrostBreath\n\tcase 11000:\n\t\treturn spells.SpellAcidBreath",
+    "behavior_changed": "Choose fire rather than acid breath for dragon 11000.",
+    "call_path": "func dragonBreathSpell",
+    "path": "pkg/game/spec_procs.go",
+    "planned_utc": "2026-09-30T19:59:54.251823+00:00"
+  },
+  "M017": {
+    "after": "), AFF_HIDE): drawn for\n\t// every command, before anything else (R3).\n\t// #nosec G404 \u2014 game RNG, not cryptographic\n\tif false && dprng.Number(0, 3) == 0 {",
+    "assertion": "consumed the wrong number of draws",
+    "before": "), AFF_HIDE): drawn for\n\t// every command, before anything else (R3).\n\t// #nosec G404 \u2014 game RNG, not cryptographic\n\tif dprng.Number(0, 3) == 0 {",
+    "behavior_changed": "Omit the first per-command hide roll, including unknown and empty lines.",
+    "call_path": "func (w *World) NPCCommand",
+    "path": "pkg/game/npc_command.go",
+    "planned_utc": "2026-09-30T20:04:05.840189+00:00"
+  },
+  "M018": {
+    "after": " || cabinet == nil || chest == nil {\n\t\treturn false\n\t}\n\n\tcanGet := func(obj *ObjectInstance) bool {\n\t\tif obj == nil || !canSeeObject(me, obj)",
+    "assertion": "CAN_GET_OBJ-rejected item was handled|rejected item",
+    "before": " || cabinet == nil || chest == nil {\n\t\treturn false\n\t}\n\n\tcanGet := func(obj *ObjectInstance) bool {\n\t\tif obj == nil || !obj.IsTakeable() || !canSeeObject(me, obj)",
+    "behavior_changed": "Bypass the butler takeable-bit component of CAN_GET_OBJ.",
+    "call_path": "func specButler",
+    "path": "pkg/game/spec_procs3.go",
+    "planned_utc": "2026-09-30T20:04:05.840454+00:00"
+  },
+  "M019": {
+    "after": "icSpell(w, me, vict, spells.SpellPoison)\n\tcase lspell >= 17 && lspell <= 19:\n\t\tcastClericSpell(w, me, vict, spells.SpellPoison)",
+    "assertion": "NPC earthquake room output",
+    "before": "icSpell(w, me, vict, spells.SpellPoison)\n\tcase lspell >= 17 && lspell <= 19:\n\t\tcastClericSpell(w, me, vict, spells.SpellEarthquake)",
+    "behavior_changed": "Select poison rather than earthquake for the scripted lspell 17 arm.",
+    "call_path": "func specCleric",
+    "path": "pkg/game/spec_procs3.go",
+    "planned_utc": "2026-09-30T20:04:05.840695+00:00"
+  },
+  "M020": {
+    "after": " leader, ok := w.followingActor(leaderName).(*Player); ok {\n\t\t\t\tleader.SendMessage(fmt.Sprintf(\"You lose control and %s disappears!",
+    "assertion": "master fizzle output",
+    "before": " leader, ok := w.followingActor(leaderName).(*Player); ok {\n\t\t\t\tleader.SendMessage(fmt.Sprintf(\"You lose control and %s fizzles away!",
+    "behavior_changed": "Alter the master-only fizzle notice while retaining room notice/extraction.",
+    "call_path": "func specConjured",
+    "path": "pkg/game/spec_procs3.go",
+    "planned_utc": "2026-09-30T20:04:05.840873+00:00"
+  },
+  "M021": {
+    "after": "ing around, and puts $s feet on the ground.\", \"\", ToRoom)\n\t\t\t}\n\t\t\tme.SetPosition(combat.PosStanding)\n\t\t} else if number(1, 3) == 0",
+    "assertion": "failed combat breath|successful combat breath|combat breath invented output",
+    "before": "ing around, and puts $s feet on the ground.\", \"\", ToRoom)\n\t\t\t}\n\t\t\tme.SetPosition(combat.PosStanding)\n\t\t} else if number(0, 3) == 0",
+    "behavior_changed": "Make the combat breath roll never succeed, so the direct magic call is unreachable.",
+    "call_path": "func specDragonBreath",
+    "path": "pkg/game/spec_procs.go",
+    "planned_utc": "2026-09-30T20:04:05.841001+00:00"
+  },
+  "M022": {
+    "after": "!ok || ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFighting() != \"\" {\n\t\t\tcontinue\n\t\t}\n\n\t\tvar next Actor\n\t\tif i+2 < len(people) {\n\t\t\tnext = people[i+2]",
+    "assertion": "combat starts|combat pair|initial attacks",
+    "before": "!ok || ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFighting() != \"\" {\n\t\t\tcontinue\n\t\t}\n\n\t\tvar next Actor\n\t\tif i+1 < len(people) {\n\t\t\tnext = people[i+1]",
+    "behavior_changed": "Skip the adjacent eligible victim when selecting the first room-order combat pair.",
+    "call_path": "func specElementsGuardian",
+    "path": "pkg/game/spec_procs3.go",
+    "planned_utc": "2026-09-30T20:04:05.841204+00:00"
+  },
+  "M023": {
+    "after": "cting the corpse.\n\t\t\t// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room.\n\t\t\tfor len(obj.GetContents()) > 1 {",
+    "assertion": "room contents after fido|content location|corpse contents",
+    "before": "cting the corpse.\n\t\t\t// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room.\n\t\t\tfor len(obj.GetContents()) > 0 {",
+    "behavior_changed": "Leave the last corpse object untransferred before extracting the corpse.",
+    "call_path": "func specFido",
+    "path": "pkg/game/spec_procs.go",
+    "planned_utc": "2026-09-30T20:04:05.841327+00:00"
+  },
+  "M024": {
+    "after": "mVNum() == 8118 && cmd == \"north\" {\n\t\tAct(w, false, ch, nil, nil, nil,\n\t\t\t\"The guard grabs $n with one hand and throws $s back in the room.",
+    "assertion": "observer output",
+    "before": "mVNum() == 8118 && cmd == \"north\" {\n\t\tAct(w, false, ch, nil, nil, nil,\n\t\t\t\"The guard grabs $n with one hand and throws $m back in the room.",
+    "behavior_changed": "Use the possessive rather than object pronoun in jailguard observer output.",
+    "call_path": "func specJailGuard",
+    "path": "pkg/game/spec_procs4.go",
+    "planned_utc": "2026-09-30T20:04:05.841442+00:00"
+  },
+  "M025": {
+    "after": "func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {\n\tif false && cmd != \"pray\" {",
+    "assertion": "non-pray commands|non-pray output",
+    "before": "func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {\n\tif cmd != \"pray\" {",
+    "behavior_changed": "Remove the command gate; look immortality would now be intercepted. The selected non-pray fixture uses an empty argument.",
+    "call_path": "func specPrayForItems",
+    "path": "pkg/game/spec_procs4.go",
+    "planned_utc": "2026-09-30T20:04:05.841533+00:00"
+  },
+  "M026": {
+    "after": "s, so no character can hold them.\n\t\tswitch ch.GetName() {\n\t\tcase \"Serapis\", \"Orodreth\", \"Frontline\":\n\t\t\tsendToChar(ch, \"Welcome.\")",
+    "assertion": "output =",
+    "before": "s, so no character can hold them.\n\t\tswitch ch.GetName() {\n\t\tcase \"Serapis\", \"Orodreth\", \"Frontline\":\n\t\t\tsendToChar(ch, \"Nice try.\")",
+    "behavior_changed": "Remove the approved security refusal bytes for the named staff identities.",
+    "call_path": "func specPrayForItems",
+    "path": "pkg/game/spec_procs4.go",
+    "planned_utc": "2026-09-30T20:04:05.841625+00:00"
+  },
+  "M027": {
+    "after": "\t\ttellFromMob(me, ch, \"Sorry, we are unable to gather your mount, try back later.\")\n\t\t\treturn true\n\t\t}\n\t\tch.MountVNum = horseVnum",
+    "assertion": "mount state should be cleared",
+    "before": "\t\ttellFromMob(me, ch, \"Sorry, we are unable to gather your mount, try back later.\")\n\t\t\treturn true\n\t\t}\n\t\tch.MountVNum = 0",
+    "behavior_changed": "Keep the stored mount vnum after successful collection.",
+    "call_path": "func specStableboy",
+    "path": "pkg/game/spec_procs2.go",
+    "planned_utc": "2026-09-30T20:04:05.841791+00:00"
+  },
+  "M028": {
+    "after": "d string, arg string) bool {\n\tif cmd != \"look\" {\n\t\treturn false\n\t}\n\n\twhat, _ := oneArgument(arg)\n\tif what != \"painting\" && what != \"picture\" {",
+    "assertion": "picture alias should not trigger",
+    "before": "d string, arg string) bool {\n\tif cmd != \"look\" {\n\t\treturn false\n\t}\n\n\twhat, _ := oneArgument(arg)\n\tif what != \"painting\" {",
+    "behavior_changed": "Admit picture as an alias despite the exact painting argument gate.",
+    "call_path": "func specSuckIn",
+    "path": "pkg/game/spec_procs4.go",
+    "planned_utc": "2026-09-30T20:04:05.841883+00:00"
+  },
+  "M029": {
+    "after": "func giveTattoo(w *World, ch *Player, me *MobInstance, offer tattooOffer) {\n\tch.SetGold(ch.GetGold())",
+    "assertion": "success state",
+    "before": "func giveTattoo(w *World, ch *Player, me *MobInstance, offer tattooOffer) {\n\tch.SetGold(ch.GetGold() - offer.price)",
+    "behavior_changed": "Give the purchased tattoo without deducting its gold price.",
+    "call_path": "func giveTattoo",
+    "path": "pkg/game/spec_procs2.go",
+    "planned_utc": "2026-09-30T20:04:05.842114+00:00"
+  },
+  "M030": {
+    "after": "func mobFightingTarget(w *World, me *MobInstance) combat.Combatant {\n\tif me.GetTarget() != nil { return nil }\n",
+    "assertion": "target|mob",
+    "before": "func mobFightingTarget(w *World, me *MobInstance) combat.Combatant {\n",
+    "behavior_changed": "Reject mob targets while resolving a special-procedure fighting target",
+    "call_path": "func mobFightingTarget(",
+    "path": "pkg/game/spec_procs.go",
+    "planned_utc": "2026-09-30T20:15:17.206326+00:00"
+  },
+  "M031": {
+    "after": "\t} else if me.GetFighting() != \"\" {\n\t\t// #nosec G404 \u2014 game RNG, not cryptographic\n\t\t// #nosec G404\n\t\tif trollNumber(0, 20)",
+    "assertion": "troll draw",
+    "before": "\t} else if me.GetFighting() != \"\" {\n\t\t// #nosec G404 \u2014 game RNG, not cryptographic\n\t\t// #nosec G404\n\t\tif trollNumber(0, 10)",
+    "behavior_changed": "Use the idle 0..20 draw range for the fighting regeneration arm.",
+    "call_path": "func specTroll",
+    "path": "pkg/game/spec_procs3.go",
+    "planned_utc": "2026-09-30T20:04:05.842366+00:00"
+  },
+  "M032": {
+    "after": "StorageName(num int) string {\n\tname := strings.ToLower(SkillCatalogName(num))\n\tif key, ok := catalogSkillKeys[name]; ok && false {",
+    "assertion": "stores under",
+    "before": "StorageName(num int) string {\n\tname := strings.ToLower(SkillCatalogName(num))\n\tif key, ok := catalogSkillKeys[name]; ok {",
+    "behavior_changed": "Bypass catalog display-name translation to handler storage keys.",
+    "call_path": "func SkillStorageName",
+    "path": "pkg/game/skill_catalog_names.go",
+    "planned_utc": "2026-09-30T20:06:58.974240+00:00"
+  },
+  "M033": {
+    "after": " range queryWords {\n\t\t\tif !strings.HasPrefix(canonicalWords[i], word) {\n\t\t\t\tmatch = false\n\t\t\t\tbreak\n\t\t\t}\n\t\t}\n\t\tif match && len(queryWords) == 1 {",
+    "assertion": "FindSkillNum",
+    "before": " range queryWords {\n\t\t\tif !strings.HasPrefix(canonicalWords[i], word) {\n\t\t\t\tmatch = false\n\t\t\t\tbreak\n\t\t\t}\n\t\t}\n\t\tif match {",
+    "behavior_changed": "Disable per-token abbreviation matching for multiword spell names.",
+    "call_path": "func FindSkillNum",
+    "path": "pkg/game/practice.go",
+    "planned_utc": "2026-09-30T20:06:58.974302+00:00"
+  },
+  "M034": {
+    "after": "ame, ban_node->site), so '*' is literal rather\n\t\t// than a wildcard (ban.c:99-101).\n\t\tmatched = strings.Contains(lower, strings.TrimSuffix(entry.Site, \"*\"))",
+    "assertion": "IsBanned",
+    "before": "ame, ban_node->site), so '*' is literal rather\n\t\t// than a wildcard (ban.c:99-101).\n\t\tmatched = strings.Contains(lower, entry.Site)",
+    "behavior_changed": "Treat a trailing literal asterisk as a site-prefix wildcard.",
+    "call_path": "func (bm *BanManager) IsBanned",
+    "path": "pkg/game/bans.go",
+    "planned_utc": "2026-09-30T20:06:58.974361+00:00"
+  },
+  "M035": {
+    "after": "des := ch.Equipment.GetWeaponDamage()\n\tdam := 2 * combat.RollDice(weaponNum, weaponSides)\n\tif ch.IsMounted() {\n\t\tdam += 49",
+    "assertion": "expected mounted bonus damage",
+    "before": "des := ch.Equipment.GetWeaponDamage()\n\tdam := 2 * combat.RollDice(weaponNum, weaponSides)\n\tif ch.IsMounted() {\n\t\tdam += 50",
+    "behavior_changed": "Reduce mounted charge bonus from exactly 50 to 49, leaving total damage above the weak lower-bound assertion.",
+    "call_path": "func DoCharge",
+    "path": "pkg/game/skill_combat.go",
+    "planned_utc": "2026-09-30T20:06:58.974467+00:00"
+  },
+  "M036": {
+    "after": "lDetect) == 0 && ch.GetRace() != RaceElf {\n\t\treturn SkillResult{Success: false, MessageToCh: \"Yeah, right.\\r\\n\"}\n\t}\n\tif false && ch.IsAffected(affBlind) {",
+    "assertion": "blind result|blind gate consumed",
+    "before": "lDetect) == 0 && ch.GetRace() != RaceElf {\n\t\treturn SkillResult{Success: false, MessageToCh: \"Yeah, right.\\r\\n\"}\n\t}\n\tif ch.IsAffected(affBlind) {",
+    "behavior_changed": "Bypass the search/detect blindness refusal before room-check and RNG.",
+    "call_path": "func DoDetect",
+    "path": "pkg/game/skills2.go",
+    "planned_utc": "2026-09-30T20:06:58.974528+00:00"
+  },
+  "M037": {
+    "after": "ectInstance, cPos int) string {\n\tflags := coloredObjectVisibleFlags(ch, object)\n\tif !equipmentPositionCovered(ch, cPos) || true {",
+    "assertion": "missing covered equipment line",
+    "before": "ectInstance, cPos int) string {\n\tflags := coloredObjectVisibleFlags(ch, object)\n\tif !equipmentPositionCovered(ch, cPos) {",
+    "behavior_changed": "Remove covered annotations even when another equipped slot hides the item.",
+    "call_path": "func coloredEquipmentObjectFlags",
+    "path": "pkg/game/item_views.go",
+    "planned_utc": "2026-09-30T20:06:58.974573+00:00"
+  },
+  "M038": {
+    "after": " ch.GetLevel() / 4\n\tif _, wearingHelm := ch.Equipment.GetItemInSlot(SlotHead); wearingHelm {\n\t\trecoil = ch.GetLevel() / 4",
+    "assertion": "expected caster HP",
+    "before": " ch.GetLevel() / 4\n\tif _, wearingHelm := ch.Equipment.GetItemInSlot(SlotHead); wearingHelm {\n\t\trecoil = ch.GetLevel() / 3",
+    "behavior_changed": "Change successful helmed headbutt recoil from level/3 to level/4.",
+    "call_path": "func DoHeadbutt",
+    "path": "pkg/game/skill_combat.go",
+    "planned_utc": "2026-09-30T20:06:58.974670+00:00"
+  },
+  "M039": {
+    "after": "immediately rerolls; it does not toggle out with a\n\t// separate message or return early.\n\tif ch.IsAffected(affHide) {\n\t\t// retain prior hide affect on reroll",
+    "assertion": "rerolled hide should fail and clear old bit",
+    "before": "immediately rerolls; it does not toggle out with a\n\t// separate message or return early.\n\tif ch.IsAffected(affHide) {\n\t\tch.SetAffect(affHide, false)",
+    "behavior_changed": "Leave the old hide bit set through a failed reroll.",
+    "call_path": "func doHide",
+    "path": "pkg/game/skill_stealth.go",
+    "planned_utc": "2026-09-30T20:06:58.974721+00:00"
+  },
+  "M040": {
+    "after": "ssage(\"You're too busy fighting!\\n\\r\")\n\t\treturn true\n\t}\n\n\troom := w.GetRoomInWorld(ch.GetRoomVNum())\n\tif room == nil || (false && !isOutdoors(room)) {",
+    "assertion": "indoors output",
+    "before": "ssage(\"You're too busy fighting!\\n\\r\")\n\t\treturn true\n\t}\n\n\troom := w.GetRoomInWorld(ch.GetRoomVNum())\n\tif room == nil || !isOutdoors(room) {",
+    "behavior_changed": "Bypass the indoor riding refusal for a valid indoor room.",
+    "call_path": "func (w *World) doRide",
+    "path": "pkg/game/other_mount.go",
+    "planned_utc": "2026-09-30T20:06:58.974760+00:00"
+  },
+  "M041": {
+    "after": " Reissuing sneak is not a toggle-off operation.\n\tif ch.IsAffected(affSneak) {\n\t\tch.RemoveAffectBySpell(skillNumSneak)\n\t\t// retain ninja stealth affect on failed sneak reroll",
+    "assertion": "failed sneak left active affects|failed sneak left AFF_SNEAK",
+    "before": " Reissuing sneak is not a toggle-off operation.\n\tif ch.IsAffected(affSneak) {\n\t\tch.RemoveAffectBySpell(skillNumSneak)\n\t\tch.RemoveAffectBySpell(skillNumStealth)",
+    "behavior_changed": "Leave the old stealth affect in the active list after failed sneak.",
+    "call_path": "func doSneak",
+    "path": "pkg/game/skill_stealth.go",
+    "planned_utc": "2026-09-30T20:06:58.974805+00:00"
+  },
+  "M042": {
+    "after": "es $p into the chest of $N!\", chPronouns, &victPronouns, weapon.GetShortDesc()),\n\t\t\tWaitCh:        2,\n\t\t\tRawKill:       false,",
+    "assertion": "expected spike success|expected success message",
+    "before": "es $p into the chest of $N!\", chPronouns, &victPronouns, weapon.GetShortDesc()),\n\t\t\tWaitCh:        2,\n\t\t\tRawKill:       true,",
+    "behavior_changed": "Remove the raw-kill contract flag from a successful spike while preserving success and authored messages.",
+    "call_path": "func DoSpike",
+    "path": "pkg/game/skill_combat.go",
+    "planned_utc": "2026-09-30T20:06:58.974894+00:00"
+  },
+  "M043": {
+    "after": "\n\tdefault:\n\t\treturn SkillResult{Success: false, MessageToCh: fmt.Sprintf(\"You can't %s that!\\r\\n\", weaponName)}\n\t}\n\n\tif false && subcmd == 0 && !targetIsAffected(affWerewolf)",
+    "assertion": "expected spike to fail|expected werewolf-only message",
+    "before": "\n\tdefault:\n\t\treturn SkillResult{Success: false, MessageToCh: fmt.Sprintf(\"You can't %s that!\\r\\n\", weaponName)}\n\t}\n\n\tif subcmd == 0 && !targetIsAffected(affWerewolf)",
+    "behavior_changed": "Bypass the AFF_WEREWOLF target gate in spike mode.",
+    "call_path": "func DoSpike",
+    "path": "pkg/game/skill_combat.go",
+    "planned_utc": "2026-09-30T20:07:52.562914+00:00"
+  },
+  "M044": {
+    "after": "ctim's objective/possessive pronouns (him/her/it,\n\t// his/her/its), NOT the name.\n\tch.SendMessage(ActMessage(\"You yank $N to $S feet.\"",
+    "assertion": "success actor msg missing",
+    "before": "ctim's objective/possessive pronouns (him/her/it,\n\t// his/her/its), NOT the name.\n\tch.SendMessage(ActMessage(\"You yank $M to $S feet.\"",
+    "behavior_changed": "Use victim name rather than objective pronoun in the male actor line.",
+    "call_path": "func (w *World) doYank",
+    "path": "pkg/game/other_mount.go",
+    "planned_utc": "2026-09-30T20:07:52.562991+00:00"
+  },
+  "M045": {
+    "after": "s objective/possessive pronouns (him/her/it,\n\t// his/her/its), NOT the name.\n\tch.SendMessage(ActMessage(\"You yank $M to his feet.\"",
+    "assertion": "female success actor msg missing",
+    "before": "s objective/possessive pronouns (him/her/it,\n\t// his/her/its), NOT the name.\n\tch.SendMessage(ActMessage(\"You yank $M to $S feet.\"",
+    "behavior_changed": "Hard-code male possessive in the female actor line.",
+    "call_path": "func (w *World) doYank",
+    "path": "pkg/game/other_mount.go",
+    "planned_utc": "2026-09-30T20:07:52.563045+00:00"
+  },
+  "M046": {
+    "after": "func fleshAlterWeapon(level int) string {\n\tswitch {\n\tcase level <= 4:",
+    "assertion": "fleshAlterWeapon",
+    "before": "func fleshAlterWeapon(level int) string {\n\tswitch {\n\tcase level <= 3:",
+    "behavior_changed": "Extend club band through level 4, displacing dagger",
+    "call_path": "func fleshAlterWeapon(",
+    "path": "pkg/game/skill_special.go",
+    "planned_utc": "2026-09-30T20:15:17.206412+00:00"
+  },
+  "M047": {
+    "after": "func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname string, donationRoom int) int {\n\tif false && obj.HasExtraFlag(0, extraFlagNoDrop) &&",
+    "assertion": "NODROP",
+    "before": "func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname string, donationRoom int) int {\n\tif obj.HasExtraFlag(0, extraFlagNoDrop) &&",
+    "behavior_changed": "Allow mortal disposal of NODROP items",
+    "call_path": "func (w *World) performDispose(",
+    "path": "pkg/game/item_donate.go",
+    "planned_utc": "2026-09-30T20:15:17.206459+00:00"
+  },
+  "M048": {
+    "after": "\t\t\tAct(nil, false, ch, target, nil, nil, \"You can't wake $M up!\", \"\", ToChar)\n\t\t\tcase target.GetPosition() < combat.PosStunned:",
+    "assertion": "target position|actor output",
+    "before": "\t\t\tAct(nil, false, ch, target, nil, nil, \"You can't wake $M up!\", \"\", ToChar)\n\t\t\tcase target.GetPosition() < combat.PosSleeping:",
+    "behavior_changed": "Allow waking stunned victims instead of bad-shape refusal",
+    "call_path": "func (w *World) DoWake(",
+    "path": "pkg/game/movement_commands.go",
+    "planned_utc": "2026-09-30T20:15:17.206515+00:00"
+  },
+  "M049": {
+    "after": "-- {\n\t\tentry := w.gossipHistory[index]\n\t\t// Hide invisible players below viewer's level\n\t\tif entry.Invis > ch.GetLevel()+1",
+    "assertion": "review =",
+    "before": "-- {\n\t\tentry := w.gossipHistory[index]\n\t\t// Hide invisible players below viewer's level\n\t\tif entry.Invis > ch.GetLevel()",
+    "behavior_changed": "Expose a speaker invisible one level above viewer",
+    "call_path": "func (w *World) ReviewGossip(",
+    "path": "pkg/game/comm_channel.go",
+    "planned_utc": "2026-09-30T20:15:17.206560+00:00"
+  },
+  "M050": {
+    "after": "func (w *World) fireOnDrop(ch *Player, obj *ObjectInstance) {\n\tw.RunRoomObjTriggerScript(ch, obj, rsOnDrop, \"onget\"",
+    "assertion": "ondrop calls",
+    "before": "func (w *World) fireOnDrop(ch *Player, obj *ObjectInstance) {\n\tw.RunRoomObjTriggerScript(ch, obj, rsOnDrop, \"ondrop\"",
+    "behavior_changed": "Dispatch onget rather than ondrop after dropping",
+    "call_path": "func (w *World) fireOnDrop(",
+    "path": "pkg/game/item_transfer.go",
+    "planned_utc": "2026-09-30T20:15:17.206607+00:00"
+  },
+  "M051": {
+    "after": "ody, before the damage arms; pattern_dmg.lua draws\n\t// number() here, so this position is draw-order-sensitive (R3).\n\tw.roomActivityDamageArms(p)\n\n\tw.RunRoomPulseScript(p)",
+    "assertion": "onpulse saw HP",
+    "before": "ody, before the damage arms; pattern_dmg.lua draws\n\t// number() here, so this position is draw-order-sensitive (R3).\n\tw.RunRoomPulseScript(p)\n\n\tw.roomActivityDamageArms(p)",
+    "behavior_changed": "Run room pulse script after damage arms",
+    "call_path": "func (w *World) roomActivityForPlayer(",
+    "path": "pkg/game/room_activity.go",
+    "planned_utc": "2026-09-30T20:15:17.206649+00:00"
+  },
+  "M052": {
+    "after": " >= 1 {\n\t\t\t\tobj.ScriptName = scriptFields[0]\n\t\t\t}\n\t\t\tif len(scriptFields) >= 2 {\n\t\t\t\tobj.LuaFunctions, _ = strconv.Atoi(\"0\")",
+    "assertion": "script attach",
+    "before": " >= 1 {\n\t\t\t\tobj.ScriptName = scriptFields[0]\n\t\t\t}\n\t\t\tif len(scriptFields) >= 2 {\n\t\t\t\tobj.LuaFunctions, _ = strconv.Atoi(scriptFields[1])",
+    "behavior_changed": "Discard script flags parsed from object S line",
+    "call_path": "pkg/parser/obj.go",
+    "path": "pkg/parser/obj.go",
+    "planned_utc": "2026-09-30T20:15:17.206705+00:00"
+  },
+  "M053": {
+    "after": "leaseContext()\n\t\t// retval = (int)lua_tonumber(L, -1): any nonzero number is handled.\n\t\treturn int(lua.LVAsNumber(ret)) == 1, nil",
+    "assertion": "return 2:|return -1:",
+    "before": "leaseContext()\n\t\t// retval = (int)lua_tonumber(L, -1): any nonzero number is handled.\n\t\treturn int(lua.LVAsNumber(ret)) != 0, nil",
+    "behavior_changed": "Only integer 1 handles event instead of every nonzero integer",
+    "call_path": "pkg/scripting/engine.go",
+    "path": "pkg/scripting/engine.go",
+    "planned_utc": "2026-09-30T20:15:17.206953+00:00"
+  },
+  "M054": {
+    "after": "db.h:79), so C scripts name shared files \"scripts/mob/no_move.lua\".\n\tpath = strings.TrimPrefix(filepath.ToSlash(path), \"wrong-prefix/\")",
+    "assertion": "oncmd did not return",
+    "before": "db.h:79), so C scripts name shared files \"scripts/mob/no_move.lua\".\n\tpath = strings.TrimPrefix(filepath.ToSlash(path), \"scripts/\")",
+    "behavior_changed": "Do not resolve scripts/ relative to sandbox root",
+    "call_path": "func (e *Engine) luaDofile(",
+    "path": "pkg/scripting/engine.go",
+    "planned_utc": "2026-09-30T20:15:17.207160+00:00"
+  },
+  "M055": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"shoot\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise shoot minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:15:17.207203+00:00"
+  },
+  "M056": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"smackheads\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise smackheads minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:15:17.207239+00:00"
+  },
+  "M057": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"order\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise order minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:15:17.207272+00:00"
+  },
+  "M058": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"shadow\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise shadow minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:15:17.207305+00:00"
+  },
+  "M059": {
+    "after": "erState {\n\tif player == nil {\n\t\treturn PlayerState{}\n\t}\n\tv := player.VitalsSnapshot()\n\treturn PlayerState{\n\t\tName:      strings.ToLower(player.Name),",
+    "assertion": "first WebSocket entry",
+    "before": "erState {\n\tif player == nil {\n\t\treturn PlayerState{}\n\t}\n\tv := player.VitalsSnapshot()\n\treturn PlayerState{\n\t\tName:      player.Name,",
+    "behavior_changed": "Lowercase canonical stored identity in WebSocket JSON player state",
+    "call_path": "func observationPlayerState(",
+    "path": "pkg/session/observation.go",
+    "planned_utc": "2026-09-30T20:17:12.098293+00:00"
+  },
+  "M060": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"save\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise save minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:17:12.098358+00:00"
+  },
+  "M061": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"fill\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise fill minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:17:12.098402+00:00"
+  },
+  "M062": {
+    "after": "WaitState(1)\n\t\ts.Send(\"You lost your concentration!\\r\\n\")\n\t\tif cost > 0 {\n\t\t\ts.player.SetMana(max(0, s.player.GetMana()-cost",
+    "assertion": "failure mana",
+    "before": "WaitState(1)\n\t\ts.Send(\"You lost your concentration!\\r\\n\")\n\t\tif cost > 0 {\n\t\t\ts.player.SetMana(max(0, s.player.GetMana()-(cost>>1)",
+    "behavior_changed": "Charge full mana on concentration failure",
+    "call_path": "pkg/session/cast_cmds.go",
+    "path": "pkg/session/cast_cmds.go",
+    "planned_utc": "2026-09-30T20:17:12.098737+00:00"
+  },
+  "M063": {
+    "after": "CharWorld(s.player, targetName); ok {\n\t\t\t\treturn castTarget{character: target.Combatant, found: true}, \"\"\n\t\t\t}\n\t\t}\n\t\tif false && info.HasTarget(spells.TarObjInv) {",
+    "assertion": "inventory object target|object scope order target",
+    "before": "CharWorld(s.player, targetName); ok {\n\t\t\t\treturn castTarget{character: target.Combatant, found: true}, \"\"\n\t\t\t}\n\t\t}\n\t\tif info.HasTarget(spells.TarObjInv) {",
+    "behavior_changed": "Skip inventory object target scope and prefer later scopes",
+    "call_path": "func resolveCastTargetForCommand(",
+    "path": "pkg/session/cast_cmds.go",
+    "planned_utc": "2026-09-30T20:17:12.098790+00:00"
+  },
+  "M064": {
+    "after": "\n\tif newLevel > LVL_IMPL {\n\t\ts.Send(fmt.Sprintf(\"%d is the highest possible level.\\r\\n\", LVL_IMPL))\n\t\treturn nil\n\t}\n\tif false && newLevel > actorLevel {",
+    "assertion": "message =|target level changed",
+    "before": "\n\tif newLevel > LVL_IMPL {\n\t\ts.Send(fmt.Sprintf(\"%d is the highest possible level.\\r\\n\", LVL_IMPL))\n\t\treturn nil\n\t}\n\tif newLevel > actorLevel {",
+    "behavior_changed": "Allow promotion above actor level",
+    "call_path": "func cmdAdvance(",
+    "path": "pkg/session/wiz_player.go",
+    "planned_utc": "2026-09-30T20:17:12.098842+00:00"
+  },
+  "M065": {
+    "after": "t.SkillManager != nil {\n\t\t\t\tfor _, skill := range target.SkillManager.GetAllSkills() {\n\t\t\t\t\ttarget.SetSkill(skill.Name, 99)",
+    "assertion": "restored skill",
+    "before": "t.SkillManager != nil {\n\t\t\t\tfor _, skill := range target.SkillManager.GetAllSkills() {\n\t\t\t\t\ttarget.SetSkill(skill.Name, 100)",
+    "behavior_changed": "Restore learned skills to 99 rather than 100",
+    "call_path": "func cmdRestore(",
+    "path": "pkg/session/wiz_player.go",
+    "planned_utc": "2026-09-30T20:17:12.098893+00:00"
+  },
+  "M066": {
+    "after": "s: []int{game.PrfSummonable}},\n\t\"outlaw\":    {playerBits: []int{game.PlrOutlaw}},\n\t\"roomflag\":  {prfBits: []int{game.PrfQuest}},",
+    "assertion": "roomflag on flags",
+    "before": "s: []int{game.PrfSummonable}},\n\t\"outlaw\":    {playerBits: []int{game.PlrOutlaw}},\n\t\"roomflag\":  {prfBits: []int{game.PrfRoomFlags}},",
+    "behavior_changed": "Set quest flag instead of room flags for roomflag field",
+    "call_path": "pkg/session/wiz_set.go",
+    "path": "pkg/session/wiz_set.go",
+    "planned_utc": "2026-09-30T20:17:12.098964+00:00"
+  },
+  "M067": {
+    "after": "continue\n\t\t}\n\t\tclone := CloneObj(obj)\n\t\tinst.Prototype = &clone\n\t\tinst.ResetExtraFlags()\n\t\tinst.AffectsOverride = nil\n\t\t// mutant: preserve stale ValuesOverride",
+    "assertion": "instance overrides survived",
+    "before": "continue\n\t\t}\n\t\tclone := CloneObj(obj)\n\t\tinst.Prototype = &clone\n\t\tinst.ResetExtraFlags()\n\t\tinst.AffectsOverride = nil\n\t\tinst.ValuesOverride = nil",
+    "behavior_changed": "Retain instance value overrides across full-struct refresh",
+    "call_path": "func (w *World) RefreshLiveObjInstances(",
+    "path": "pkg/game/world_oedit.go",
+    "planned_utc": "2026-09-30T20:17:12.099001+00:00"
+  },
+  "M068": {
+    "after": "dFileSize {\n\t\t\treturn \"\", fmt.Errorf(\"file too large for C string buffer\")\n\t\t}\n\t\ttext.Write(chunk)\n\t\ttext.WriteString(\"\\n\")",
+    "assertion": "readCTextFile =",
+    "before": "dFileSize {\n\t\t\treturn \"\", fmt.Errorf(\"file too large for C string buffer\")\n\t\t}\n\t\ttext.Write(chunk)\n\t\ttext.WriteString(\"\\r\\n\")",
+    "behavior_changed": "Store LF rather than C boot CRLF representation",
+    "call_path": "func readCTextFile(",
+    "path": "pkg/session/gen_ps_cmds.go",
+    "planned_utc": "2026-09-30T20:17:12.099044+00:00"
+  },
+  "M069": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"zedit\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise zedit minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:17:12.098438+00:00"
+  },
+  "M070": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"boggle\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise boggle minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:17:12.098471+00:00"
+  },
+  "M071": {
+    "after": "n.\n\tif strings.EqualFold(arg, \"off\") {\n\t\treturn true\n\t}\n\n\tfor _, c := range strings.ToLower(arg) {\n\t\tswitch c {\n\t\tcase 'x':",
+    "assertion": "hmv: display bit",
+    "before": "n.\n\tif strings.EqualFold(arg, \"off\") {\n\t\treturn true\n\t}\n\n\tfor _, c := range strings.ToLower(arg) {\n\t\tswitch c {\n\t\tcase 'h':",
+    "behavior_changed": "Ignore h in explicit display letter mask",
+    "call_path": "func (w *World) doDisplay(",
+    "path": "pkg/game/other_settings.go",
+    "planned_utc": "2026-09-30T20:17:27.946796+00:00"
+  },
+  "M072": {
+    "after": "ce)\n\t\ttarget.player.Lock()\n\t\ttarget.player.Stats = stats\n\t\ttarget.player.Strength = stats.Str\n\t\ttarget.player.OrigCon = 0",
+    "assertion": "target original constitution",
+    "before": "ce)\n\t\ttarget.player.Lock()\n\t\ttarget.player.Stats = stats\n\t\ttarget.player.Strength = stats.Str\n\t\ttarget.player.OrigCon = stats.Con",
+    "behavior_changed": "Fail to carry rerolled constitution into original constitution",
+    "call_path": "func wizutilDispatch(",
+    "path": "pkg/session/wiz_system.go",
+    "planned_utc": "2026-09-30T20:17:27.946967+00:00"
+  },
+  "M073": {
+    "after": "tf(\"You try to %s but get cornered in the process!\\r\\n\", lowmsg))\n\t\ts.player.SetWaitStatePulses(engine.PULSE_VIOLENCE + 1)",
+    "assertion": "wait state =",
+    "before": "tf(\"You try to %s but get cornered in the process!\\r\\n\", lowmsg))\n\t\ts.player.SetWaitStatePulses(engine.PULSE_VIOLENCE + 2)",
+    "behavior_changed": "Retreat failure waits 21 rather than 22 pulses",
+    "call_path": "func cmdRetreat(",
+    "path": "pkg/session/combat_cmds.go",
+    "planned_utc": "2026-09-30T20:17:12.099096+00:00"
+  },
+  "M074": {
+    "after": "}\n\tif p.Thirst == 0 {\n\t\tbuf.WriteString(\"You are thirsty.\\r\\n\")\n\t}\n\n\t// 18. Active affects (from C lines 1349-1369)\n\tif false && p.IsAffected(game.AffBlind) {",
+    "assertion": "score output missing",
+    "before": "}\n\tif p.Thirst == 0 {\n\t\tbuf.WriteString(\"You are thirsty.\\r\\n\")\n\t}\n\n\t// 18. Active affects (from C lines 1349-1369)\n\tif p.IsAffected(game.AffBlind) {",
+    "behavior_changed": "Omit blind affect score flag",
+    "call_path": "func cmdScore(",
+    "path": "pkg/session/cmd_info.go",
+    "planned_utc": "2026-09-30T20:17:12.099207+00:00"
+  },
+  "M075": {
+    "after": "8)\n\traceName := game.PCRaceTypes[p.Race]\n\tclassName := game.PCClassTypes[p.Class]\n\tfmt.Fprintf(&buf, \"You are %s %s %s.\\r\\n",
+    "assertion": "score did not use",
+    "before": "8)\n\traceName := game.PCRaceTypes[p.Race]\n\tclassName := game.PCClassTypes[p.Class]\n\tfmt.Fprintf(&buf, \"You are %s %s %s.\\n\\r",
+    "behavior_changed": "Render score race/class line with CRLF instead of C LFCR",
+    "call_path": "func cmdScore(",
+    "path": "pkg/session/cmd_info.go",
+    "planned_utc": "2026-09-30T20:17:12.099300+00:00"
+  },
+  "M076": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"flex\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise flex minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:17:12.098504+00:00"
+  },
+  "M077": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"fondle\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise fondle minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:17:12.098535+00:00"
+  },
+  "M078": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"french\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise french minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:17:12.098566+00:00"
+  },
+  "M079": {
+    "after": "\t\ts.Send(\"You had an unknown infobar setting.\\r\\n\")\n\t\t\ts.Send(\"It is being set to OFF.\\r\\n\")\n\t\t\ts.infobarMode = InfobarOn",
+    "assertion": "infobar mode =",
+    "before": "\t\ts.Send(\"You had an unknown infobar setting.\\r\\n\")\n\t\t\ts.Send(\"It is being set to OFF.\\r\\n\")\n\t\t\ts.infobarMode = InfobarOff",
+    "behavior_changed": "Reset unknown infobar state to on despite OFF text",
+    "call_path": "func cmdInfoBar(",
+    "path": "pkg/session/display_cmds.go",
+    "planned_utc": "2026-09-30T20:17:12.099355+00:00"
+  },
+  "M080": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"kyo\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise kyo minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.918796+00:00"
+  },
+  "M081": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"ride\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise ride minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.918869+00:00"
+  },
+  "M082": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"nod\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise nod minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.918919+00:00"
+  },
+  "M083": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"pinch\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise pinch minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.918967+00:00"
+  },
+  "M084": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"prompt\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise prompt minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919012+00:00"
+  },
+  "M085": {
+    "after": ". Every refusal\n\t// and failure path below releases the claim.\n\tif other, ok := s.manager.claimRoomEdit(number, s); !ok && false {",
+    "assertion": "concurrent redit admitted",
+    "before": ". Every refusal\n\t// and failure path below releases the claim.\n\tif other, ok := s.manager.claimRoomEdit(number, s); !ok {",
+    "behavior_changed": "Admit contenders despite failed atomic room reservation",
+    "call_path": "func cmdRedit(",
+    "path": "pkg/session/redit.go",
+    "planned_utc": "2026-09-30T20:18:58.919437+00:00"
+  },
+  "M086": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"reel\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise reel minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919063+00:00"
+  },
+  "M087": {
+    "after": "room? C interpreter.c:1419-1423 \u2014 !IS_NPC(ch), the\n\t\t// room flagged RS_ONCMD; a TRUE return consumes the command.\n\t\tif true {",
+    "assertion": "switched oncmd calls",
+    "before": "room? C interpreter.c:1419-1423 \u2014 !IS_NPC(ch), the\n\t\t// room flagged RS_ONCMD; a TRUE return consumes the command.\n\t\tif !actorIsNPC {",
+    "behavior_changed": "Run PC-only room oncmd even while switched to NPC",
+    "call_path": "func runSpecials(",
+    "path": "pkg/session/commands.go",
+    "planned_utc": "2026-09-30T20:19:16.408942+00:00"
+  },
+  "M088": {
+    "after": "\n\t// editors it has no !*arg clause, so an empty line reaches atoi(\"\") == 0.\n\tif state.mode > seditNumericalResponse && (arg == \"\" || (!isASCIIDigit(firstByte(arg)) && firstByte(arg) == '-' && !isASCIIDigit(seditByteAt(arg, 1)))) {",
+    "assertion": "empty numeric input",
+    "before": "\n\t// editors it has no !*arg clause, so an empty line reaches atoi(\"\") == 0.\n\tif state.mode > seditNumericalResponse && !isASCIIDigit(firstByte(arg)) && firstByte(arg) == '-' && !isASCIIDigit(seditByteAt(arg, 1)) {",
+    "behavior_changed": "Reject empty numeric input instead of atoi empty yielding zero",
+    "call_path": "pkg/session/sedit.go",
+    "path": "pkg/session/sedit.go",
+    "planned_utc": "2026-09-30T20:18:58.919504+00:00"
+  },
+  "M089": {
+    "after": "cked(arg string) bool {\n\tnumber := atoiC(arg)\n\tif number != -1 {\n\t\tif _, ok := s.manager.world.SnapshotMob(number); !ok && false {",
+    "assertion": "invalid keeper =",
+    "before": "cked(arg string) bool {\n\tnumber := atoiC(arg)\n\tif number != -1 {\n\t\tif _, ok := s.manager.world.SnapshotMob(number); !ok {",
+    "behavior_changed": "Accept keeper VNUM absent from world and leave prompt",
+    "call_path": "pkg/session/sedit.go",
+    "path": "pkg/session/sedit.go",
+    "planned_utc": "2026-09-30T20:18:58.919593+00:00"
+  },
+  "M090": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"shame\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise shame minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919111+00:00"
+  },
+  "M091": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"sing\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise sing minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919148+00:00"
+  },
+  "M092": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"skillset\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise skillset minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919185+00:00"
+  },
+  "M093": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"snowball\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise snowball minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919227+00:00"
+  },
+  "M094": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"squeeze\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise squeeze minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919271+00:00"
+  },
+  "M095": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"tap\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise tap minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919315+00:00"
+  },
+  "M096": {
+    "after": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tif name == \"thumbsup\" { level++ }\n\t\tgates[name] = commandGate",
+    "assertion": "gate =|gate:|gate.*level|minimum level|MinLevel",
+    "before": "= gates[name]; duplicate {\n\t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n\t\t}\n\t\tgates[name] = commandGate",
+    "behavior_changed": "Raise thumbsup minimum entry level by one",
+    "call_path": "func mustParseCommandGates(",
+    "path": "pkg/session/command_gates.go",
+    "planned_utc": "2026-09-30T20:18:58.919359+00:00"
+  },
+  "M097": {
+    "after": "anctuary:\n\t\taff = engine.NewAffectDirect(SpellSanctuary, engine.ApplyNone, 4, 0, engine.AFFSanctuary, \"sanctuary\")\n\t\tif false && isEvil(victim) {",
+    "assertion": "evil sanctuary to_vict",
+    "before": "anctuary:\n\t\taff = engine.NewAffectDirect(SpellSanctuary, engine.ApplyNone, 4, 0, engine.AFFSanctuary, \"sanctuary\")\n\t\tif isEvil(victim) {",
+    "behavior_changed": "Give evil sanctuary recipient white aura instead of black",
+    "call_path": "pkg/spells/affect_spells.go",
+    "path": "pkg/spells/affect_spells.go",
+    "planned_utc": "2026-09-30T20:18:58.919849+00:00"
+  },
+  "M098": {
+    "after": "only\n\t\t// happen to a victim still above POS_SLEEPING.\n\t\tif getPos(victim) > int(PosSleeping) {\n\t\t\ttoVictim = \"You feel sleepy.\\r\\n\"",
+    "assertion": "sleep victim =",
+    "before": "only\n\t\t// happen to a victim still above POS_SLEEPING.\n\t\tif getPos(victim) > int(PosSleeping) {\n\t\t\ttoVictim = \"You feel very sleepy...  Zzzz......\\r\\n\"",
+    "behavior_changed": "Change unsaved sleep victim bytes",
+    "call_path": "pkg/spells/affect_spells.go",
+    "path": "pkg/spells/affect_spells.go",
+    "planned_utc": "2026-09-30T20:18:58.920114+00:00"
+  },
+  "M099": {
+    "after": "\t}\n\t\t// Skip immortals\n\t\tif nc, ok := c.(npcChecker); ok && !nc.IsNPC() {\n\t\t\tif l, ok := c.(lever); ok && l.GetLevel() > lvlImmort",
+    "assertion": "breath area spell enrolled immortal",
+    "before": "\t}\n\t\t// Skip immortals\n\t\tif nc, ok := c.(npcChecker); ok && !nc.IsNPC() {\n\t\t\tif l, ok := c.(lever); ok && l.GetLevel() >= lvlImmort",
+    "behavior_changed": "Enroll level-31 immortals in breath zero-damage tail",
+    "call_path": "func MagAreas(",
+    "path": "pkg/spells/affect_spells.go",
+    "planned_utc": "2026-09-30T20:18:58.920292+00:00"
+  },
+  "M100": {
+    "after": "login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COUNT(*) OVER ()\n\t\tFROM players WHERE name = ?",
+    "assertion": "saved identity after telnet entry",
+    "before": "login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COUNT(*) OVER ()\n\t\tFROM players WHERE lower(name) = lower(?)",
+    "behavior_changed": "Require case-sensitive saved identity at real telnet login",
+    "call_path": "func (db *DB) GetPlayer(",
+    "path": "pkg/db/player.go",
+    "planned_utc": "2026-09-30T20:18:58.920364+00:00"
+  }
+}

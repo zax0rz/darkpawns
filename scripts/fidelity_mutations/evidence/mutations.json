@@ -1,0 +1,602 @@
+[
+  {
+    "id": "M001",
+    "claim": "boards.remove-author-level-rejection-state",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/boards/boards.go b/pkg/boards/boards.go\nindex 2c87c78ba..224980dac 100644\n--- a/pkg/boards/boards.go\n+++ b/pkg/boards/boards.go\n@@ -547,7 +547,7 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool\n \t\tch.SendMessage(\"You are not holy enough to remove other people's messages.\\r\\n\")\n \t\treturn true\n \t}\n-\tif ch.GetLevel() < mi.Level && ch.GetLevel() < boardRemoveAuthorityBypassLevel {\n+\tif ch.GetLevel() < mi.Level && ch.GetLevel() < boardRemoveAuthorityBypassLevel - 1 {\n \t\tch.SendMessage(\"You can't remove a message holier than yourself.\\r\\n\")\n \t\treturn true\n \t}\n"
+  },
+  {
+    "id": "M002",
+    "claim": "damage.wounded-band-bytes",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/combat/fight_core.go b/pkg/combat/fight_core.go\nindex 28ae06569..0c8f7f92a 100644\n--- a/pkg/combat/fight_core.go\n+++ b/pkg/combat/fight_core.go\n@@ -178,7 +178,7 @@ func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, me\n \tcase PosMortally:\n \t\tvictim.SendMessage(\"You are mortally wounded, and will die soon, if not aided.\\r\\n\")\n \t\tif broadcast != nil {\n-\t\t\tbroadcast(room, capitalizeFightMessage(fmt.Sprintf(\"%s is mortally wounded, and will die soon, if not aided.\", name)), name)\n+\t\t\tbroadcast(room, fmt.Sprintf(\"%s is mortally wounded, and will die soon, if not aided.\", name), name)\n \t\t}\n \tcase PosIncap:\n \t\tvictim.SendMessage(\"You are incapacitated an will slowly die, if not aided.\\r\\n\")\n"
+  },
+  {
+    "id": "M003",
+    "claim": "update_pos.incap-victim-typo",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/combat/fight_core.go b/pkg/combat/fight_core.go\nindex 28ae06569..8df7a8789 100644\n--- a/pkg/combat/fight_core.go\n+++ b/pkg/combat/fight_core.go\n@@ -181,7 +181,7 @@ func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, me\n \t\t\tbroadcast(room, capitalizeFightMessage(fmt.Sprintf(\"%s is mortally wounded, and will die soon, if not aided.\", name)), name)\n \t\t}\n \tcase PosIncap:\n-\t\tvictim.SendMessage(\"You are incapacitated an will slowly die, if not aided.\\r\\n\")\n+\t\tvictim.SendMessage(\"You are incapacitated and will slowly die, if not aided.\\r\\n\")\n \t\tif broadcast != nil {\n \t\t\tbroadcast(room, capitalizeFightMessage(fmt.Sprintf(\"%s is incapacitated and will slowly die, if not aided.\", name)), name)\n \t\t}\n"
+  },
+  {
+    "id": "M004",
+    "claim": "circle.fighting-target-fallback",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/command/skill_commands.go b/pkg/command/skill_commands.go\nindex 69835a3b0..5e673bf91 100644\n--- a/pkg/command/skill_commands.go\n+++ b/pkg/command/skill_commands.go\n@@ -2386,7 +2386,7 @@ func CmdCircle(s SessionInterface, args []string) error {\n \t\tif !found {\n \t\t\treturn s.SendMessage(\"Circle who?\\r\\n\")\n \t\t}\n-\t} else if ch.GetFighting() != \"\" {\n+\t} else if false && ch.GetFighting() != \"\" {\n \t\t// Default to current fighting target.\n \t\ttarget, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)\n \t\tif !found {\n"
+  },
+  {
+    "id": "M005",
+    "claim": "backstab.draw-order-hit",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_combat.go b/pkg/game/skill_combat.go\nindex 4f3abd972..ff44c3e6e 100644\n--- a/pkg/game/skill_combat.go\n+++ b/pkg/game/skill_combat.go\n@@ -80,6 +80,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {\n \t// 7. Roll for success \u2014 act.offensive.c:220\n \t// #nosec G404 \u2014 game RNG, not cryptographic\n \tpercent := dprng.Number(1, 101) // 1-101\n+\t_ = dprng.Number(1, 20)\n \tskillLevel := ch.GetSkill(SkillBackstab)\n \tprob := skillLevel\n \n"
+  },
+  {
+    "id": "M006",
+    "claim": "compare.blind-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_advanced.go b/pkg/game/skill_advanced.go\nindex 17cea128c..9cced72b5 100644\n--- a/pkg/game/skill_advanced.go\n+++ b/pkg/game/skill_advanced.go\n@@ -265,7 +265,7 @@ func DoCompare(ch *Player, objName1, objName2 string) SkillResult {\n \t\tprob = 20 + ch.GetLevel()\n \t}\n \n-\tif ch.IsAffected(affBlind) {\n+\tif false && ch.IsAffected(affBlind) {\n \t\treturn SkillResult{MessageToCh: \"You can't see a damned thing!\\r\\n\"}\n \t}\n \n"
+  },
+  {
+    "id": "M007",
+    "claim": "serpent.training-mobile",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skills2.go b/pkg/game/skills2.go\nindex a4765f7ac..1cd6a1a6e 100644\n--- a/pkg/game/skills2.go\n+++ b/pkg/game/skills2.go\n@@ -471,7 +471,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul\n \t\t// level > 18. The wrapper consumes it before DeferredImprove.\n \t\tSpawnMobVNum:    18221,\n \t\tSpawnMobLevel:   ch.GetLevel() + 3,\n-\t\tSpawnMobRoom:    18201,\n+\t\tSpawnMobRoom:    1001,\n \t\tSpawnMobHunting: true,\n \t}\n }\n"
+  },
+  {
+    "id": "M008",
+    "claim": "backstab.no-weapon",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_combat.go b/pkg/game/skill_combat.go\nindex 4f3abd972..9f0caca3a 100644\n--- a/pkg/game/skill_combat.go\n+++ b/pkg/game/skill_combat.go\n@@ -41,7 +41,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {\n \t// 3. Must wield a piercing weapon \u2014 act.offensive.c:189,194\n \tweapon, ok := ch.Equipment.GetItemInSlot(SlotWield)\n \tif !ok || weapon == nil {\n-\t\treturn SkillResult{Success: false, MessageToCh: \"You need to wield a weapon to make it a success.\"}\n+\t\treturn SkillResult{Success: false, MessageToCh: \"Backstab who?\"}\n \t}\n \tif weapon.Prototype.Values[3] != 11 { // TYPE_PIERCE - TYPE_HIT\n \t\treturn SkillResult{Success: false, MessageToCh: \"Only piercing weapons can be used for backstabbing.\"}\n"
+  },
+  {
+    "id": "M009",
+    "claim": "kick.mounted",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_combat.go b/pkg/game/skill_combat.go\nindex 4f3abd972..20c4eb960 100644\n--- a/pkg/game/skill_combat.go\n+++ b/pkg/game/skill_combat.go\n@@ -254,7 +254,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {\n \n \t// Mounted \u2014 act.offensive.c:615-619\n \tif ch.IsMounted() {\n-\t\treturn SkillResult{Success: false, MessageToCh: \"Dismount first!\"}\n+\t\treturn SkillResult{Success: false, MessageToCh: \"Back off!\"}\n \t}\n \n \t// Formula: percent = ((7 - (GET_AC(vict)/10)) << 1) + number(1,101)\n"
+  },
+  {
+    "id": "M010",
+    "claim": "kick.message-source",
+    "outcome": "survived",
+    "diff": "diff --git a/pkg/combat/skill_messages.go b/pkg/combat/skill_messages.go\nindex 08a35f8b9..d35d7aede 100644\n--- a/pkg/combat/skill_messages.go\n+++ b/pkg/combat/skill_messages.go\n@@ -635,6 +635,7 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {\n \t}\n \n \tcb.SkillMessage = func(dam int, chName, victimName string, attackType int, roomVNum int) bool {\n+\t\tif attackType == 134 { attackType = 131 }\n \t\tvariants, ok := messages.Variants(attackType)\n \t\tif !ok || len(variants) == 0 {\n \t\t\treturn false\n"
+  },
+  {
+    "id": "M011",
+    "claim": "smackheads.miss-result-contract",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_special.go b/pkg/game/skill_special.go\nindex d58ce2907..9cc15dab3 100644\n--- a/pkg/game/skill_special.go\n+++ b/pkg/game/skill_special.go\n@@ -362,7 +362,7 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski\n \t\t\tStartCombat:         true,\n \t\t\tWaitCh:              3,\n \t\t\tSkillMsgAfterDamage: true,\n-\t\t\tPreDamageImprove:    []string{SkillSmackheads},\n+\t\t\tPreDamageImprove:    nil,\n \t\t}\n \t}\n \n"
+  },
+  {
+    "id": "M012",
+    "claim": "follow.circle-rejection",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/movement_commands.go b/pkg/game/movement_commands.go\nindex fe59fefbe..8fbb75228 100644\n--- a/pkg/game/movement_commands.go\n+++ b/pkg/game/movement_commands.go\n@@ -258,7 +258,7 @@ func (w *World) DoFollow(ch *Player, argument string, quiet bool) {\n \t\treturn\n \t}\n \n-\tif leaderPlayer != nil && CircleFollow(w, ch, leaderPlayer) {\n+\tif leaderPlayer != nil && false && CircleFollow(w, ch, leaderPlayer) {\n \t\tmovementSendToChar(ch, \"Sorry, but following in loops is not allowed.\\r\\n\")\n \t\treturn\n \t}\n"
+  },
+  {
+    "id": "M013",
+    "claim": "get.money-single",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/item_transfer.go b/pkg/game/item_transfer.go\nindex 72cdd4381..fda04252d 100644\n--- a/pkg/game/item_transfer.go\n+++ b/pkg/game/item_transfer.go\n@@ -41,7 +41,7 @@ func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {\n \tamount := obj.GetValue(0)\n \tif obj.GetTypeFlag() == ITEM_MONEY && amount > 0 {\n \t\tw.ExtractObject(obj, ch.GetRoomVNum())\n-\t\tif amount > 1 {\n+\t\tif amount >= 1 {\n \t\t\tch.SendMessage(fmt.Sprintf(\"There were %d coins.\\r\\n\", amount))\n \t\t}\n \t\tch.SetGold(ch.GetGold() + amount)\n"
+  },
+  {
+    "id": "M014",
+    "claim": "drop.gold-success",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/item_transfer.go b/pkg/game/item_transfer.go\nindex 72cdd4381..8e28bdc0d 100644\n--- a/pkg/game/item_transfer.go\n+++ b/pkg/game/item_transfer.go\n@@ -332,7 +332,7 @@ func (w *World) performDropGold(ch *Player, amount int) {\n \t\tch.SendMessage(\"You can't drop that right now.\\r\\n\")\n \t\treturn\n \t}\n-\tch.SetWaitState(1)\n+\tch.SetWaitState(0)\n \tch.SetGold(ch.GetGold() - amount)\n \tch.SendMessage(\"You drop some gold.\\r\\n\")\n \tw.actToRoom(ch, fmt.Sprintf(\"$n drops %s.\", createMoneyDesc(amount)), nil, nil)\n"
+  },
+  {
+    "id": "M015",
+    "claim": "give.weight",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/item_transfer.go b/pkg/game/item_transfer.go\nindex 72cdd4381..7cdddf3d6 100644\n--- a/pkg/game/item_transfer.go\n+++ b/pkg/game/item_transfer.go\n@@ -421,7 +421,7 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {\n \t\tw.actToChar(ch, \"$N seems to have $S hands full.\", vict, obj)\n \t\treturn\n \t}\n-\tif obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.GetCapacity()*10 {\n+\tif false && obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.GetCapacity()*10 {\n \t\tw.actToChar(ch, \"$E can't carry that much weight.\", vict, nil)\n \t\treturn\n \t}\n"
+  },
+  {
+    "id": "M016",
+    "claim": "mob.dragon-breath-spell-selection",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs.go b/pkg/game/spec_procs.go\nindex d8c4e9c74..fd65f9ebd 100644\n--- a/pkg/game/spec_procs.go\n+++ b/pkg/game/spec_procs.go\n@@ -992,7 +992,7 @@ func dragonBreathSpell(vnum int) int {\n \tcase 4209, 4705:\n \t\treturn spells.SpellFrostBreath\n \tcase 11000:\n-\t\treturn spells.SpellAcidBreath\n+\t\treturn spells.SpellFireBreath\n \tcase 11001, 20027:\n \t\treturn spells.SpellLightningBreath\n \tcase 11002:\n"
+  },
+  {
+    "id": "M017",
+    "claim": "lua.npc-command-hide-draw",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/npc_command.go b/pkg/game/npc_command.go\nindex cea0f57a0..7f6b1e1a3 100644\n--- a/pkg/game/npc_command.go\n+++ b/pkg/game/npc_command.go\n@@ -29,7 +29,7 @@ func (w *World) NPCCommand(me *MobInstance, line string) {\n \t// if (!number(0,3)) REMOVE_BIT_AR(AFF_FLAGS(ch), AFF_HIDE): drawn for\n \t// every command, before anything else (R3).\n \t// #nosec G404 \u2014 game RNG, not cryptographic\n-\tif dprng.Number(0, 3) == 0 {\n+\tif false && dprng.Number(0, 3) == 0 {\n \t\tme.RemoveAffected(affHide)\n \t}\n \tline = strings.TrimLeft(line, \" \")\n"
+  },
+  {
+    "id": "M018",
+    "claim": "mob.butler-can-get-predicate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs3.go b/pkg/game/spec_procs3.go\nindex d222f6b61..0de104243 100644\n--- a/pkg/game/spec_procs3.go\n+++ b/pkg/game/spec_procs3.go\n@@ -457,7 +457,7 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b\n \t}\n \n \tcanGet := func(obj *ObjectInstance) bool {\n-\t\tif obj == nil || !obj.IsTakeable() || !canSeeObject(me, obj) {\n+\t\tif obj == nil || !canSeeObject(me, obj) {\n \t\t\treturn false\n \t\t}\n \t\treturn mobCarriedWeight(me)+obj.GetWeight() <= mobMaxCarryWeight(me) &&\n"
+  },
+  {
+    "id": "M019",
+    "claim": "mob.cleric-earthquake-room-message",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs3.go b/pkg/game/spec_procs3.go\nindex d222f6b61..202c266c1 100644\n--- a/pkg/game/spec_procs3.go\n+++ b/pkg/game/spec_procs3.go\n@@ -292,7 +292,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b\n \tcase lspell <= 11, lspell >= 13 && lspell <= 16:\n \t\tcastClericSpell(w, me, vict, spells.SpellPoison)\n \tcase lspell >= 17 && lspell <= 19:\n-\t\tcastClericSpell(w, me, vict, spells.SpellEarthquake)\n+\t\tcastClericSpell(w, me, vict, spells.SpellPoison)\n \tcase lspell <= 24:\n \t\t// Intentionally do nothing (matches C: cases 20-24 break)\n \tdefault:\n"
+  },
+  {
+    "id": "M020",
+    "claim": "mob.conjured-fizzle-master",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs3.go b/pkg/game/spec_procs3.go\nindex d222f6b61..2f9789f43 100644\n--- a/pkg/game/spec_procs3.go\n+++ b/pkg/game/spec_procs3.go\n@@ -1308,7 +1308,7 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)\n \t\t// narrowed to *Player here.\n \t\tif leaderName := me.GetFollowing(); leaderName != \"\" {\n \t\t\tif leader, ok := w.followingActor(leaderName).(*Player); ok {\n-\t\t\t\tleader.SendMessage(fmt.Sprintf(\"You lose control and %s fizzles away!\\r\\n\", me.GetName()))\n+\t\t\t\tleader.SendMessage(fmt.Sprintf(\"You lose control and %s disappears!\\r\\n\", me.GetName()))\n \t\t\t}\n \t\t}\n \t\tAct(w, true, me, nil, nil, nil, \"$n returns to its own plane of existence.\", \"\", ToRoom)\n"
+  },
+  {
+    "id": "M021",
+    "claim": "mob.dragon-breath-combat-roll",
+    "outcome": "survived",
+    "diff": "diff --git a/pkg/game/spec_procs.go b/pkg/game/spec_procs.go\nindex d8c4e9c74..dd524d27d 100644\n--- a/pkg/game/spec_procs.go\n+++ b/pkg/game/spec_procs.go\n@@ -1026,7 +1026,7 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str\n \t\t\t\tAct(w, true, me, nil, nil, nil, \"$n stops floating around, and puts $s feet on the ground.\", \"\", ToRoom)\n \t\t\t}\n \t\t\tme.SetPosition(combat.PosStanding)\n-\t\t} else if number(0, 3) == 0 {\n+\t\t} else if number(1, 3) == 0 {\n \t\t\tspells.CallMagic(me, fighting, nil, spell, me.GetLevel(), spells.CastBreath, w)\n \t\t\treturn specMagicUser(w, nil, me, \"\", \"\")\n \t\t}\n"
+  },
+  {
+    "id": "M022",
+    "claim": "mob.elements-guardian-pair-branch",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs3.go b/pkg/game/spec_procs3.go\nindex d222f6b61..9b9dc7469 100644\n--- a/pkg/game/spec_procs3.go\n+++ b/pkg/game/spec_procs3.go\n@@ -1799,8 +1799,8 @@ func specElementsGuardian(w *World, ch *Player, me *MobInstance, cmd string, arg\n \t\t}\n \n \t\tvar next Actor\n-\t\tif i+1 < len(people) {\n-\t\t\tnext = people[i+1]\n+\t\tif i+2 < len(people) {\n+\t\t\tnext = people[i+2]\n \t\t}\n \t\tnextPlayer, nextIsPlayer := next.(*Player)\n \t\tif !nextIsPlayer || nextPlayer.GetLevel() > LVL_IMMORT || nextPlayer.GetFighting() != \"\" {\n"
+  },
+  {
+    "id": "M023",
+    "claim": "mob.fido-content-transfer",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs.go b/pkg/game/spec_procs.go\nindex d8c4e9c74..c2238244c 100644\n--- a/pkg/game/spec_procs.go\n+++ b/pkg/game/spec_procs.go\n@@ -663,7 +663,7 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo\n \t\t\tAct(w, false, me, nil, nil, nil, \"$n savagely devours a corpse.\", \"\", ToRoom)\n \t\t\t// Spill corpse contents to the room before extracting the corpse.\n \t\t\t// Matches C src/spec_procs.c:735-741: obj_from_obj + obj_to_room.\n-\t\t\tfor len(obj.GetContents()) > 0 {\n+\t\t\tfor len(obj.GetContents()) > 1 {\n \t\t\t\tcontent := obj.GetContents()[0]\n \t\t\t\tif err := w.MoveObjectToRoomFront(content, me.RoomVNum); err != nil {\n \t\t\t\t\tslog.Error(\"MoveObjectToRoom failed in fido spec\", \"obj_vnum\", content.GetVNum(), \"room\", me.RoomVNum, \"error\", err)\n"
+  },
+  {
+    "id": "M024",
+    "claim": "mob.jailguard-audience",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs4.go b/pkg/game/spec_procs4.go\nindex 3bd052109..35944b982 100644\n--- a/pkg/game/spec_procs4.go\n+++ b/pkg/game/spec_procs4.go\n@@ -145,7 +145,7 @@ func specJailGuard(w *World, ch *Player, me *MobInstance, cmd string, arg string\n \t// all non-direction commands before this exact comparison.\n \tif ch.GetRoomVNum() == 8118 && cmd == \"north\" {\n \t\tAct(w, false, ch, nil, nil, nil,\n-\t\t\t\"The guard grabs $n with one hand and throws $m back in the room.\", \"\", ToRoom)\n+\t\t\t\"The guard grabs $n with one hand and throws $s back in the room.\", \"\", ToRoom)\n \t\tsendToChar(ch, \"The guard stops you from leaving with one flabby hand.\")\n \t\treturn true\n \t}\n"
+  },
+  {
+    "id": "M025",
+    "claim": "room.pray-command-gate",
+    "outcome": "survived",
+    "diff": "diff --git a/pkg/game/spec_procs4.go b/pkg/game/spec_procs4.go\nindex 3bd052109..a3e6adaee 100644\n--- a/pkg/game/spec_procs4.go\n+++ b/pkg/game/spec_procs4.go\n@@ -381,7 +381,7 @@ func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg st\n }\n \n func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {\n-\tif cmd != \"pray\" {\n+\tif false && cmd != \"pray\" {\n \t\treturn false\n \t}\n \n"
+  },
+  {
+    "id": "M026",
+    "claim": "room.pray-immortality-staff-names",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs4.go b/pkg/game/spec_procs4.go\nindex 3bd052109..92b6b8b89 100644\n--- a/pkg/game/spec_procs4.go\n+++ b/pkg/game/spec_procs4.go\n@@ -396,7 +396,7 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str\n \t\t// names in this branch contain spaces, so no character can hold them.\n \t\tswitch ch.GetName() {\n \t\tcase \"Serapis\", \"Orodreth\", \"Frontline\":\n-\t\t\tsendToChar(ch, \"Nice try.\")\n+\t\t\tsendToChar(ch, \"Welcome.\")\n \t\t}\n \t\t// C's immortality branch returns TRUE for every other name, silently.\n \t\treturn true\n"
+  },
+  {
+    "id": "M027",
+    "claim": "mob.stableboy-collect-state",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs2.go b/pkg/game/spec_procs2.go\nindex aa56d853b..a0ee4e970 100644\n--- a/pkg/game/spec_procs2.go\n+++ b/pkg/game/spec_procs2.go\n@@ -406,7 +406,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string\n \t\t\ttellFromMob(me, ch, \"Sorry, we are unable to gather your mount, try back later.\")\n \t\t\treturn true\n \t\t}\n-\t\tch.MountVNum = 0\n+\t\tch.MountVNum = horseVnum\n \t\tch.MountCostDay = 0\n \t\tch.MountRentTime = 0\n \t\thorse.SetAffected(affCharm)\n"
+  },
+  {
+    "id": "M028",
+    "claim": "room.suck-in-argument-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs4.go b/pkg/game/spec_procs4.go\nindex 3bd052109..0f68c45c6 100644\n--- a/pkg/game/spec_procs4.go\n+++ b/pkg/game/spec_procs4.go\n@@ -525,7 +525,7 @@ func specSuckIn(w *World, ch *Player, me *MobInstance, cmd string, arg string) b\n \t}\n \n \twhat, _ := oneArgument(arg)\n-\tif what != \"painting\" {\n+\tif what != \"painting\" && what != \"picture\" {\n \t\treturn false\n \t}\n \n"
+  },
+  {
+    "id": "M029",
+    "claim": "mob.tattoo4-success-state",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs2.go b/pkg/game/spec_procs2.go\nindex aa56d853b..a5d973bc3 100644\n--- a/pkg/game/spec_procs2.go\n+++ b/pkg/game/spec_procs2.go\n@@ -1187,7 +1187,7 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string)\n // The position assignment followed by update_pos is intentional: a healthy\n // player ends standing even though give_tat briefly assigns POS_STUNNED.\n func giveTattoo(w *World, ch *Player, me *MobInstance, offer tattooOffer) {\n-\tch.SetGold(ch.GetGold() - offer.price)\n+\tch.SetGold(ch.GetGold())\n \tch.Tattoo = offer.number\n \tAct(w, true, me, ch, nil, nil, \"$n starts to work on $N's tattoo...\", \"\", ToNotVict)\n \tAct(w, true, me, ch, nil, nil, \"A ghastly scream is ripped from $N's lips just before $E blacks out.\", \"\", ToNotVict)\n"
+  },
+  {
+    "id": "M030",
+    "claim": "mob.teleport-victim-combatant-resolution",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs.go b/pkg/game/spec_procs.go\nindex d8c4e9c74..b1a73eec4 100644\n--- a/pkg/game/spec_procs.go\n+++ b/pkg/game/spec_procs.go\n@@ -135,6 +135,7 @@ func mobMeleeTarget(me *MobInstance) *MobInstance {\n // Go's mob instance retains that pointer only for mob-to-mob scripting, so\n // the combat pair is the authoritative source for player opponents.\n func mobFightingTarget(w *World, me *MobInstance) combat.Combatant {\n+\tif me.GetTarget() != nil { return nil }\n \tif w != nil && w.combatEngine != nil {\n \t\tif target, ok := w.combatEngine.GetCombatTarget(me.GetName()); ok && target != nil {\n \t\t\treturn target\n"
+  },
+  {
+    "id": "M031",
+    "claim": "mob.troll-fighting-glow",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/spec_procs3.go b/pkg/game/spec_procs3.go\nindex d222f6b61..66bcd8859 100644\n--- a/pkg/game/spec_procs3.go\n+++ b/pkg/game/spec_procs3.go\n@@ -755,7 +755,7 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo\n \t} else if me.GetFighting() != \"\" {\n \t\t// #nosec G404 \u2014 game RNG, not cryptographic\n \t\t// #nosec G404\n-\t\tif trollNumber(0, 10) == 0 {\n+\t\tif trollNumber(0, 20) == 0 {\n \t\t\tregenRate := 2\n \t\t\tnewHP := me.GetHP() + me.GetLevel()*regenRate\n \t\t\tif newHP > me.GetMaxHP() {\n"
+  },
+  {
+    "id": "M032",
+    "claim": "skills.catalog-handler-keys",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_catalog_names.go b/pkg/game/skill_catalog_names.go\nindex f3454d0a8..155106376 100644\n--- a/pkg/game/skill_catalog_names.go\n+++ b/pkg/game/skill_catalog_names.go\n@@ -45,7 +45,7 @@ var catalogSkillKeys = map[string]string{\n // lowercased catalog name, or the key in catalogSkillKeys.\n func SkillStorageName(num int) string {\n \tname := strings.ToLower(SkillCatalogName(num))\n-\tif key, ok := catalogSkillKeys[name]; ok {\n+\tif key, ok := catalogSkillKeys[name]; ok && false {\n \t\treturn key\n \t}\n \treturn name\n"
+  },
+  {
+    "id": "M033",
+    "claim": "cast.multiword-token-abbreviation",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/practice.go b/pkg/game/practice.go\nindex 8273655f7..d534005e9 100644\n--- a/pkg/game/practice.go\n+++ b/pkg/game/practice.go\n@@ -166,7 +166,7 @@ func FindSkillNum(name string) int {\n \t\t\t\tbreak\n \t\t\t}\n \t\t}\n-\t\tif match {\n+\t\tif match && len(queryWords) == 1 {\n \t\t\treturn num\n \t\t}\n \t}\n"
+  },
+  {
+    "id": "M034",
+    "claim": "ban.literal-asterisk",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/bans.go b/pkg/game/bans.go\nindex 3b62849f6..b5de24c0a 100644\n--- a/pkg/game/bans.go\n+++ b/pkg/game/bans.go\n@@ -173,7 +173,7 @@ func (bm *BanManager) IsBanned(hostname string) int {\n \t\tmatched := false\n \t\t// C uses strstr(hostname, ban_node->site), so '*' is literal rather\n \t\t// than a wildcard (ban.c:99-101).\n-\t\tmatched = strings.Contains(lower, entry.Site)\n+\t\tmatched = strings.Contains(lower, strings.TrimSuffix(entry.Site, \"*\"))\n \t\tif matched && entry.BanType > maxLevel {\n \t\t\tmaxLevel = entry.BanType\n \t\t}\n"
+  },
+  {
+    "id": "M035",
+    "claim": "charge.mounted",
+    "outcome": "survived",
+    "diff": "diff --git a/pkg/game/skill_combat.go b/pkg/game/skill_combat.go\nindex 4f3abd972..64c92983e 100644\n--- a/pkg/game/skill_combat.go\n+++ b/pkg/game/skill_combat.go\n@@ -873,7 +873,7 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {\n \tweaponNum, weaponSides := ch.Equipment.GetWeaponDamage()\n \tdam := 2 * combat.RollDice(weaponNum, weaponSides)\n \tif ch.IsMounted() {\n-\t\tdam += 50\n+\t\tdam += 49\n \t}\n \n \treturn SkillResult{\n"
+  },
+  {
+    "id": "M036",
+    "claim": "search.blind",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skills2.go b/pkg/game/skills2.go\nindex a4765f7ac..8cf1499e8 100644\n--- a/pkg/game/skills2.go\n+++ b/pkg/game/skills2.go\n@@ -364,7 +364,7 @@ func DoDetect(ch *Player, world *World) SkillResult {\n \tif ch.GetSkill(SkillDetect) == 0 && ch.GetRace() != RaceElf {\n \t\treturn SkillResult{Success: false, MessageToCh: \"Yeah, right.\\r\\n\"}\n \t}\n-\tif ch.IsAffected(affBlind) {\n+\tif false && ch.IsAffected(affBlind) {\n \t\treturn SkillResult{Success: false, MessageToCh: \"You're fucking blind, you can't find anything!!\\r\\n\"}\n \t}\n \n"
+  },
+  {
+    "id": "M037",
+    "claim": "equipment.covered-positions",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/item_views.go b/pkg/game/item_views.go\nindex f6355c2de..530d1fd41 100644\n--- a/pkg/game/item_views.go\n+++ b/pkg/game/item_views.go\n@@ -140,7 +140,7 @@ func (w *World) DoEquipment(ch *Player) {\n // item covered when another equipped item hides that position.\n func coloredEquipmentObjectFlags(ch *Player, object *ObjectInstance, cPos int) string {\n \tflags := coloredObjectVisibleFlags(ch, object)\n-\tif !equipmentPositionCovered(ch, cPos) {\n+\tif !equipmentPositionCovered(ch, cPos) || true {\n \t\treturn flags\n \t}\n \tif flags == \"\" {\n"
+  },
+  {
+    "id": "M038",
+    "claim": "headbutt.recoil-helm",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_combat.go b/pkg/game/skill_combat.go\nindex 4f3abd972..886675f29 100644\n--- a/pkg/game/skill_combat.go\n+++ b/pkg/game/skill_combat.go\n@@ -462,7 +462,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {\n \t// victim, victim sits (not stunned) if above POS_STUNNED \u2014 new_cmds.c:438-455.\n \trecoil := ch.GetLevel() / 4\n \tif _, wearingHelm := ch.Equipment.GetItemInSlot(SlotHead); wearingHelm {\n-\t\trecoil = ch.GetLevel() / 3\n+\t\trecoil = ch.GetLevel() / 4\n \t}\n \tch.TakeDamage(recoil)\n \n"
+  },
+  {
+    "id": "M039",
+    "claim": "hide.affect-clear-reroll",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_stealth.go b/pkg/game/skill_stealth.go\nindex 8e4f17e89..40bbe7e42 100644\n--- a/pkg/game/skill_stealth.go\n+++ b/pkg/game/skill_stealth.go\n@@ -104,7 +104,7 @@ func doHide(ch *Player, world *World, kabuki bool) SkillResult {\n \t// C clears AFF_HIDE and immediately rerolls; it does not toggle out with a\n \t// separate message or return early.\n \tif ch.IsAffected(affHide) {\n-\t\tch.SetAffect(affHide, false)\n+\t\t// retain prior hide affect on reroll\n \t}\n \n \t// #nosec G404 \u2014 game RNG, not cryptographic\n"
+  },
+  {
+    "id": "M040",
+    "claim": "mount.indoors",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/other_mount.go b/pkg/game/other_mount.go\nindex a9829c43e..f6bc39fab 100644\n--- a/pkg/game/other_mount.go\n+++ b/pkg/game/other_mount.go\n@@ -21,7 +21,7 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool\n \t}\n \n \troom := w.GetRoomInWorld(ch.GetRoomVNum())\n-\tif room == nil || !isOutdoors(room) {\n+\tif room == nil || (false && !isOutdoors(room)) {\n \t\tch.SendMessage(\"Go outside if you want to ride!\\r\\n\")\n \t\treturn true\n \t}\n"
+  },
+  {
+    "id": "M041",
+    "claim": "sneak.affect-failure-clears",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_stealth.go b/pkg/game/skill_stealth.go\nindex 8e4f17e89..1612a8752 100644\n--- a/pkg/game/skill_stealth.go\n+++ b/pkg/game/skill_stealth.go\n@@ -37,7 +37,7 @@ func doSneak(ch *Player, skill string, spell int) SkillResult {\n \t// bit, and then rerolls. Reissuing sneak is not a toggle-off operation.\n \tif ch.IsAffected(affSneak) {\n \t\tch.RemoveAffectBySpell(skillNumSneak)\n-\t\tch.RemoveAffectBySpell(skillNumStealth)\n+\t\t// retain ninja stealth affect on failed sneak reroll\n \t\tch.SetAffect(affSneak, false)\n \t}\n \n"
+  },
+  {
+    "id": "M042",
+    "claim": "spike.success-player-state",
+    "outcome": "survived",
+    "diff": "diff --git a/pkg/game/skill_combat.go b/pkg/game/skill_combat.go\nindex 4f3abd972..f1ad59def 100644\n--- a/pkg/game/skill_combat.go\n+++ b/pkg/game/skill_combat.go\n@@ -699,7 +699,7 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil\n \t\t\tMessageToVict: ActMessage(\"$n drives $p into your chest with a solid blow!\", chPronouns, &victPronouns, weapon.GetShortDesc()),\n \t\t\tMessageToRoom: ActMessage(\"$n drives $p into the chest of $N!\", chPronouns, &victPronouns, weapon.GetShortDesc()),\n \t\t\tWaitCh:        2,\n-\t\t\tRawKill:       true,\n+\t\t\tRawKill:       false,\n \t\t}\n \t}\n \n"
+  },
+  {
+    "id": "M043",
+    "claim": "spike.target-affect",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_combat.go b/pkg/game/skill_combat.go\nindex 4f3abd972..6ab7753be 100644\n--- a/pkg/game/skill_combat.go\n+++ b/pkg/game/skill_combat.go\n@@ -657,7 +657,7 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil\n \t\treturn SkillResult{Success: false, MessageToCh: fmt.Sprintf(\"You can't %s that!\\r\\n\", weaponName)}\n \t}\n \n-\tif subcmd == 0 && !targetIsAffected(affWerewolf) {\n+\tif false && subcmd == 0 && !targetIsAffected(affWerewolf) {\n \t\treturn SkillResult{Success: false, MessageToCh: \"Spiking is only for werewolves..\\r\\n\"}\n \t}\n \tif subcmd == 1 && !targetIsAffected(affVampire) {\n"
+  },
+  {
+    "id": "M044",
+    "claim": "yank.success-audience",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/other_mount.go b/pkg/game/other_mount.go\nindex a9829c43e..5cacfbccf 100644\n--- a/pkg/game/other_mount.go\n+++ b/pkg/game/other_mount.go\n@@ -207,7 +207,7 @@ func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool\n \t// Success \u2014 act.other.c:1656-1659. The three act() lines, then POS_STANDING.\n \t// $M/$S expand to the victim's objective/possessive pronouns (him/her/it,\n \t// his/her/its), NOT the name.\n-\tch.SendMessage(ActMessage(\"You yank $M to $S feet.\", chPronouns, &victPronouns, \"\") + \"\\r\\n\")\n+\tch.SendMessage(ActMessage(\"You yank $N to $S feet.\", chPronouns, &victPronouns, \"\") + \"\\r\\n\")\n \ttellVictim(ActMessage(\"$n yanks you to your feet.\", chPronouns, &victPronouns, \"\") + \"\\r\\n\")\n \tactToRoom(w, ch.GetRoomVNum(), ActMessage(\"$n yanks $N to $S feet.\", chPronouns, &victPronouns, \"\")+\"\\r\\n\", ch.Name)\n \tsetVictimPos(combat.PosStanding)\n"
+  },
+  {
+    "id": "M045",
+    "claim": "yank.female-pronouns",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/other_mount.go b/pkg/game/other_mount.go\nindex a9829c43e..0e901cb95 100644\n--- a/pkg/game/other_mount.go\n+++ b/pkg/game/other_mount.go\n@@ -207,7 +207,7 @@ func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool\n \t// Success \u2014 act.other.c:1656-1659. The three act() lines, then POS_STANDING.\n \t// $M/$S expand to the victim's objective/possessive pronouns (him/her/it,\n \t// his/her/its), NOT the name.\n-\tch.SendMessage(ActMessage(\"You yank $M to $S feet.\", chPronouns, &victPronouns, \"\") + \"\\r\\n\")\n+\tch.SendMessage(ActMessage(\"You yank $M to his feet.\", chPronouns, &victPronouns, \"\") + \"\\r\\n\")\n \ttellVictim(ActMessage(\"$n yanks you to your feet.\", chPronouns, &victPronouns, \"\") + \"\\r\\n\")\n \tactToRoom(w, ch.GetRoomVNum(), ActMessage(\"$n yanks $N to $S feet.\", chPronouns, &victPronouns, \"\")+\"\\r\\n\", ch.Name)\n \tsetVictimPos(combat.PosStanding)\n"
+  },
+  {
+    "id": "M046",
+    "claim": "alter.weapon-level-bands",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/skill_special.go b/pkg/game/skill_special.go\nindex d58ce2907..a5f6b3d2e 100644\n--- a/pkg/game/skill_special.go\n+++ b/pkg/game/skill_special.go\n@@ -760,7 +760,7 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {\n // fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.\n func fleshAlterWeapon(level int) string {\n \tswitch {\n-\tcase level <= 3:\n+\tcase level <= 4:\n \t\treturn \"studded wooden club\"\n \tcase level <= 6:\n \t\treturn \"razor-sharp dagger\"\n"
+  },
+  {
+    "id": "M047",
+    "claim": "junk.nodrop-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/item_donate.go b/pkg/game/item_donate.go\nindex a7534b396..abe715df5 100644\n--- a/pkg/game/item_donate.go\n+++ b/pkg/game/item_donate.go\n@@ -13,7 +13,7 @@ import (\n // Returns the junk-value reward (0 for a successful donate, or when the\n // item couldn't be disposed of at all).\n func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname string, donationRoom int) int {\n-\tif obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {\n+\tif false && obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {\n \t\tw.actToChar(ch, fmt.Sprintf(\"You can't %s $p, it must be CURSED!\", sname), obj, nil)\n \t\treturn 0\n \t}\n"
+  },
+  {
+    "id": "M048",
+    "claim": "wake.target-bad-shape",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/movement_commands.go b/pkg/game/movement_commands.go\nindex fe59fefbe..af21d14da 100644\n--- a/pkg/game/movement_commands.go\n+++ b/pkg/game/movement_commands.go\n@@ -167,7 +167,7 @@ func (w *World) DoWake(ch *Player, argument string) {\n \t\t\t\tAct(nil, false, ch, target, nil, nil, \"$E is already awake.\", \"\", ToChar)\n \t\t\tcase actorIsAffected(target, affSleep):\n \t\t\t\tAct(nil, false, ch, target, nil, nil, \"You can't wake $M up!\", \"\", ToChar)\n-\t\t\tcase target.GetPosition() < combat.PosSleeping:\n+\t\t\tcase target.GetPosition() < combat.PosStunned:\n \t\t\t\tAct(nil, false, ch, target, nil, nil, \"$E's in pretty bad shape!\", \"\", ToChar)\n \t\t\tdefault:\n \t\t\t\tAct(nil, false, ch, target, nil, nil, \"You wake $M up.\", \"\", ToChar)\n"
+  },
+  {
+    "id": "M049",
+    "claim": "review.invisible-speaker",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/comm_channel.go b/pkg/game/comm_channel.go\nindex de5092e36..823f48cb2 100644\n--- a/pkg/game/comm_channel.go\n+++ b/pkg/game/comm_channel.go\n@@ -347,7 +347,7 @@ func (w *World) ReviewGossip(ch *Player) string {\n \tfor index := len(w.gossipHistory) - 1; index >= 0; index-- {\n \t\tentry := w.gossipHistory[index]\n \t\t// Hide invisible players below viewer's level\n-\t\tif entry.Invis > ch.GetLevel() {\n+\t\tif entry.Invis > ch.GetLevel()+1 {\n \t\t\tbuf.WriteString(\"Someone invisible: \")\n \t\t} else {\n \t\t\tbuf.WriteString(entry.Name)\n"
+  },
+  {
+    "id": "M050",
+    "claim": "scripts.room-ondrop-drop-only",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/item_transfer.go b/pkg/game/item_transfer.go\nindex 72cdd4381..571e0953e 100644\n--- a/pkg/game/item_transfer.go\n+++ b/pkg/game/item_transfer.go\n@@ -85,7 +85,7 @@ func (w *World) fireOnGet(ch *Player, obj *ObjectInstance) {\n // the room carries RS_ONDROP (1<<3), on the drop path only (junk and donate\n // never reach it).\n func (w *World) fireOnDrop(ch *Player, obj *ObjectInstance) {\n-\tw.RunRoomObjTriggerScript(ch, obj, rsOnDrop, \"ondrop\")\n+\tw.RunRoomObjTriggerScript(ch, obj, rsOnDrop, \"onget\")\n }\n \n // getFromContainer implements C get_from_container() for individual, all,\n"
+  },
+  {
+    "id": "M051",
+    "claim": "scripts.room-onpulse-before-damage",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/room_activity.go b/pkg/game/room_activity.go\nindex 4bdb1e28b..5fe9b2cb3 100644\n--- a/pkg/game/room_activity.go\n+++ b/pkg/game/room_activity.go\n@@ -102,10 +102,10 @@ func (w *World) roomActivityForPlayer(p *Player) bool {\n \t// C comm.c:706-708 \u2014 the room's RS_ONPULSE script runs FIRST in the\n \t// per-character body, before the damage arms; pattern_dmg.lua draws\n \t// number() here, so this position is draw-order-sensitive (R3).\n-\tw.RunRoomPulseScript(p)\n-\n \tw.roomActivityDamageArms(p)\n \n+\tw.RunRoomPulseScript(p)\n+\n \t// C: GET_ROOM_SPEC(ch->in_room)(ch, world + ch->in_room, 0, 0) \u2014 cmd 0 /\n \t// no argument, so \"\" mirrors the pulse-time call.\n \tif spec := GetRoomSpec(roomVNum); spec != nil {\n"
+  },
+  {
+    "id": "M052",
+    "claim": "scripts.obj-parse-script-line",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/parser/obj.go b/pkg/parser/obj.go\nindex 477cf78fa..2631a2e15 100644\n--- a/pkg/parser/obj.go\n+++ b/pkg/parser/obj.go\n@@ -236,7 +236,7 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {\n \t\t\t\tobj.ScriptName = scriptFields[0]\n \t\t\t}\n \t\t\tif len(scriptFields) >= 2 {\n-\t\t\t\tobj.LuaFunctions, _ = strconv.Atoi(scriptFields[1])\n+\t\t\t\tobj.LuaFunctions, _ = strconv.Atoi(\"0\")\n \t\t\t}\n \t\t}\n \n"
+  },
+  {
+    "id": "M053",
+    "claim": "lua.retval-nonzero",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/scripting/engine.go b/pkg/scripting/engine.go\nindex f18dba074..d3d9f4235 100644\n--- a/pkg/scripting/engine.go\n+++ b/pkg/scripting/engine.go\n@@ -668,7 +668,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)\n \t\te.cleanupScriptGlobalsLocked(L, knownGlobals)\n \t\treleaseContext()\n \t\t// retval = (int)lua_tonumber(L, -1): any nonzero number is handled.\n-\t\treturn int(lua.LVAsNumber(ret)) != 0, nil\n+\t\treturn int(lua.LVAsNumber(ret)) == 1, nil\n \t}\n \n \t// Legacy write-back, reached only without a bridge: engine tests that build\n"
+  },
+  {
+    "id": "M054",
+    "claim": "scripts.dofile-scripts-prefix",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/scripting/engine.go b/pkg/scripting/engine.go\nindex f18dba074..730183ff7 100644\n--- a/pkg/scripting/engine.go\n+++ b/pkg/scripting/engine.go\n@@ -1941,7 +1941,7 @@ func (e *Engine) luaDofile(L *lua.LState) int {\n \t}\n \t// C runs with lib/ as its working directory and SCRIPT_DIR \"scripts\"\n \t// (db.h:79), so C scripts name shared files \"scripts/mob/no_move.lua\".\n-\tpath = strings.TrimPrefix(filepath.ToSlash(path), \"scripts/\")\n+\tpath = strings.TrimPrefix(filepath.ToSlash(path), \"wrong-prefix/\")\n \tfullPath := filepath.Clean(filepath.Join(e.scriptsDir, path))\n \trel, err := filepath.Rel(e.scriptsDir, fullPath)\n \tif err != nil || strings.HasPrefix(rel, \"..\") || strings.HasPrefix(rel, \"/\") {\n"
+  },
+  {
+    "id": "M055",
+    "claim": "shoot.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..4b017748f 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"shoot\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M056",
+    "claim": "smackheads.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..5da62a5ca 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"smackheads\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M057",
+    "claim": "order.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..2614eb828 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"order\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M058",
+    "claim": "shadow.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..df40c2788 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"shadow\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M059",
+    "claim": "entry.browser-json-boundary",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/observation.go b/pkg/session/observation.go\nindex 949c765dc..d09b7853d 100644\n--- a/pkg/session/observation.go\n+++ b/pkg/session/observation.go\n@@ -81,7 +81,7 @@ func observationPlayerState(player *game.Player) PlayerState {\n \t}\n \tv := player.VitalsSnapshot()\n \treturn PlayerState{\n-\t\tName:      player.Name,\n+\t\tName:      strings.ToLower(player.Name),\n \t\tHealth:    v.Health,\n \t\tMaxHealth: v.MaxHealth,\n \t\tMana:      v.Mana,\n"
+  },
+  {
+    "id": "M060",
+    "claim": "save.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..d96d09b90 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"save\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M061",
+    "claim": "fill.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..20053b02c 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"fill\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M062",
+    "claim": "cast.concentration-failure",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/cast_cmds.go b/pkg/session/cast_cmds.go\nindex 30f2b6ccd..3f50ade5f 100644\n--- a/pkg/session/cast_cmds.go\n+++ b/pkg/session/cast_cmds.go\n@@ -407,7 +407,7 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {\n \t\ts.player.SetWaitState(1)\n \t\ts.Send(\"You lost your concentration!\\r\\n\")\n \t\tif cost > 0 {\n-\t\t\ts.player.SetMana(max(0, s.player.GetMana()-(cost>>1)))\n+\t\t\ts.player.SetMana(max(0, s.player.GetMana()-cost))\n \t\t}\n \t\tif info.IsViolent() {\n \t\t\tif mob, ok := target.character.(*game.MobInstance); ok && mob.GetFighting() == \"\" && s.manager.combatEngine != nil {\n"
+  },
+  {
+    "id": "M063",
+    "claim": "cast.target-order",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/cast_cmds.go b/pkg/session/cast_cmds.go\nindex 30f2b6ccd..1a943b3e8 100644\n--- a/pkg/session/cast_cmds.go\n+++ b/pkg/session/cast_cmds.go\n@@ -219,7 +219,7 @@ func resolveCastTargetForCommand(s *Session, info *spells.SpellInfo, targetName\n \t\t\t\treturn castTarget{character: target.Combatant, found: true}, \"\"\n \t\t\t}\n \t\t}\n-\t\tif info.HasTarget(spells.TarObjInv) {\n+\t\tif false && info.HasTarget(spells.TarObjInv) {\n \t\t\tif target, ok := s.manager.world.ResolveObjectInInventory(s.player, targetName); ok {\n \t\t\t\treturn castTarget{object: target, found: true}, \"\"\n \t\t\t}\n"
+  },
+  {
+    "id": "M064",
+    "claim": "advance.actor-newlevel-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/wiz_player.go b/pkg/session/wiz_player.go\nindex 803199f8b..9a0d6ca5f 100644\n--- a/pkg/session/wiz_player.go\n+++ b/pkg/session/wiz_player.go\n@@ -237,7 +237,7 @@ func cmdAdvance(s *Session, args []string) error {\n \t\ts.Send(fmt.Sprintf(\"%d is the highest possible level.\\r\\n\", LVL_IMPL))\n \t\treturn nil\n \t}\n-\tif newLevel > actorLevel {\n+\tif false && newLevel > actorLevel {\n \t\ts.Send(\"Yeah, right.\\r\\n\")\n \t\treturn nil\n \t}\n"
+  },
+  {
+    "id": "M065",
+    "claim": "restore.high-immortal-state",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/wiz_player.go b/pkg/session/wiz_player.go\nindex 803199f8b..aad497661 100644\n--- a/pkg/session/wiz_player.go\n+++ b/pkg/session/wiz_player.go\n@@ -49,7 +49,7 @@ func cmdRestore(s *Session, args []string) error {\n \t\tif getEffectiveLevel(s) >= LVL_GRGOD && target.GetLevel() >= LVL_IMMORT {\n \t\t\tif target.SkillManager != nil {\n \t\t\t\tfor _, skill := range target.SkillManager.GetAllSkills() {\n-\t\t\t\t\ttarget.SetSkill(skill.Name, 100)\n+\t\t\t\t\ttarget.SetSkill(skill.Name, 99)\n \t\t\t\t}\n \t\t\t}\n \t\t\tif target.GetLevel() >= LVL_GRGOD {\n"
+  },
+  {
+    "id": "M066",
+    "claim": "set.direct.state-bits",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/wiz_set.go b/pkg/session/wiz_set.go\nindex d8bcfe4e8..044c5d672 100644\n--- a/pkg/session/wiz_set.go\n+++ b/pkg/session/wiz_set.go\n@@ -425,7 +425,7 @@ var setBinaryFieldTable = map[string]setBinaryFieldFlags{\n \t\"invstart\":  {playerBits: []int{game.PlrInvstart}},\n \t\"nosummon\":  {prfBits: []int{game.PrfSummonable}},\n \t\"outlaw\":    {playerBits: []int{game.PlrOutlaw}},\n-\t\"roomflag\":  {prfBits: []int{game.PrfRoomFlags}},\n+\t\"roomflag\":  {prfBits: []int{game.PrfQuest}},\n \t\"siteok\":    {playerBits: []int{game.PlrSiteok}},\n \t\"deleted\":   {playerBits: []int{game.PlrDeleted}},\n \t\"nowizlist\": {playerBits: []int{game.PlrNowizlist}},\n"
+  },
+  {
+    "id": "M067",
+    "claim": "oedit.live-instances",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/world_oedit.go b/pkg/game/world_oedit.go\nindex 46b134ea0..8655f03c8 100644\n--- a/pkg/game/world_oedit.go\n+++ b/pkg/game/world_oedit.go\n@@ -118,7 +118,7 @@ func (w *World) RefreshLiveObjInstances(vnum int, obj parser.Obj) {\n \t\tinst.Prototype = &clone\n \t\tinst.ResetExtraFlags()\n \t\tinst.AffectsOverride = nil\n-\t\tinst.ValuesOverride = nil\n+\t\t// mutant: preserve stale ValuesOverride\n \t\tinst.TypeFlagOverride = nil\n \t\tinst.WeightOverride = nil\n \t}\n"
+  },
+  {
+    "id": "M068",
+    "claim": "tedit.boot-line-ending-state",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/gen_ps_cmds.go b/pkg/session/gen_ps_cmds.go\nindex b93f12d43..bbd491ed5 100644\n--- a/pkg/session/gen_ps_cmds.go\n+++ b/pkg/session/gen_ps_cmds.go\n@@ -85,7 +85,7 @@ func readCTextFile(path string) (string, error) {\n \t\t\treturn \"\", fmt.Errorf(\"file too large for C string buffer\")\n \t\t}\n \t\ttext.Write(chunk)\n-\t\ttext.WriteString(\"\\r\\n\")\n+\t\ttext.WriteString(\"\\n\")\n \t\tstart = end\n \t}\n \treturn text.String(), nil\n"
+  },
+  {
+    "id": "M069",
+    "claim": "zedit.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..f19cc97fe 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"zedit\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M070",
+    "claim": "boggle.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..6fd58c585 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"boggle\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M071",
+    "claim": "prompt.letter-mask-ack",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/game/other_settings.go b/pkg/game/other_settings.go\nindex 134990949..8b92df6eb 100644\n--- a/pkg/game/other_settings.go\n+++ b/pkg/game/other_settings.go\n@@ -95,7 +95,7 @@ func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) b\n \n \tfor _, c := range strings.ToLower(arg) {\n \t\tswitch c {\n-\t\tcase 'h':\n+\t\tcase 'x':\n \t\t\tch.SetPlrFlag(PrfDisphp, true)\n \t\tcase 'f':\n \t\t\tch.SetPlrFlag(PrfDispTarget, true)\n"
+  },
+  {
+    "id": "M072",
+    "claim": "reroll.state",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/wiz_system.go b/pkg/session/wiz_system.go\nindex c00bd4367..df309e983 100644\n--- a/pkg/session/wiz_system.go\n+++ b/pkg/session/wiz_system.go\n@@ -509,7 +509,7 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error\n \t\ttarget.player.Lock()\n \t\ttarget.player.Stats = stats\n \t\ttarget.player.Strength = stats.Str\n-\t\ttarget.player.OrigCon = stats.Con\n+\t\ttarget.player.OrigCon = 0\n \t\ttarget.player.Unlock()\n \t\ts.Send(\"Rerolled...\\r\\n\")\n \t\ts.Send(fmt.Sprintf(\"New stats: Str %d/%d, Int %d, Wis %d, Dex %d, Con %d, Cha %d\\r\\n\",\n"
+  },
+  {
+    "id": "M073",
+    "claim": "escape.failure-wait",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/combat_cmds.go b/pkg/session/combat_cmds.go\nindex cf2eaf002..6f55dede9 100644\n--- a/pkg/session/combat_cmds.go\n+++ b/pkg/session/combat_cmds.go\n@@ -359,7 +359,7 @@ func cmdRetreat(s *Session) error {\n \tif dprng.Number(1, 101) > s.player.GetSkill(skill) {\n \t\tgame.ImproveSkill(s.player, skill)\n \t\ts.Send(fmt.Sprintf(\"You try to %s but get cornered in the process!\\r\\n\", lowmsg))\n-\t\ts.player.SetWaitStatePulses(engine.PULSE_VIOLENCE + 2) // src/act.offensive.c:1052.\n+\t\ts.player.SetWaitStatePulses(engine.PULSE_VIOLENCE + 1) // src/act.offensive.c:1052.\n \t\treturn nil\n \t}\n \n"
+  },
+  {
+    "id": "M074",
+    "claim": "score.state-variants.affect-flags",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/cmd_info.go b/pkg/session/cmd_info.go\nindex 42c1d7f82..771ebd2ae 100644\n--- a/pkg/session/cmd_info.go\n+++ b/pkg/session/cmd_info.go\n@@ -295,7 +295,7 @@ func cmdScore(s *Session) error {\n \t}\n \n \t// 18. Active affects (from C lines 1349-1369)\n-\tif p.IsAffected(game.AffBlind) {\n+\tif false && p.IsAffected(game.AffBlind) {\n \t\tbuf.WriteString(\"You have been blinded!\\r\\n\")\n \t}\n \t// Check PRF_SUMMONABLE flag on Player.Flags (PRF bit 48)\n"
+  },
+  {
+    "id": "M075",
+    "claim": "score.player-race-class.line-ending",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/cmd_info.go b/pkg/session/cmd_info.go\nindex 42c1d7f82..c409bb4d4 100644\n--- a/pkg/session/cmd_info.go\n+++ b/pkg/session/cmd_info.go\n@@ -238,7 +238,7 @@ func cmdScore(s *Session) error {\n \t// 14. Race + Class (from C lines 1295-1298)\n \traceName := game.PCRaceTypes[p.Race]\n \tclassName := game.PCClassTypes[p.Class]\n-\tfmt.Fprintf(&buf, \"You are %s %s %s.\\n\\r\", articleFor(raceName), raceName, className)\n+\tfmt.Fprintf(&buf, \"You are %s %s %s.\\r\\n\", articleFor(raceName), raceName, className)\n \n \t// 15. Pack weight (from C lines 1304-1315)\n \tcarriedW := p.CarriedWeight()\n"
+  },
+  {
+    "id": "M076",
+    "claim": "flex.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..910ba4e18 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"flex\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M077",
+    "claim": "fondle.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..eaf6d3dad 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"fondle\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M078",
+    "claim": "french.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..647e112b4 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"french\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M079",
+    "claim": "infobar.unknown-state-reset",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/display_cmds.go b/pkg/session/display_cmds.go\nindex b5d5e6741..1dee8b2b4 100644\n--- a/pkg/session/display_cmds.go\n+++ b/pkg/session/display_cmds.go\n@@ -386,7 +386,7 @@ func cmdInfoBar(s *Session, args []string) error {\n \t\tdefault:\n \t\t\ts.Send(\"You had an unknown infobar setting.\\r\\n\")\n \t\t\ts.Send(\"It is being set to OFF.\\r\\n\")\n-\t\t\ts.infobarMode = InfobarOff\n+\t\t\ts.infobarMode = InfobarOn\n \t\t}\n \t\treturn nil\n \t}\n"
+  },
+  {
+    "id": "M080",
+    "claim": "kyo.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..c5002e64d 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"kyo\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M081",
+    "claim": "mount.alias-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..5f10dcf65 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"ride\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M082",
+    "claim": "nod.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..a391a3ef3 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"nod\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M083",
+    "claim": "pinch.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..67b512dc2 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"pinch\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M084",
+    "claim": "prompt.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..17080995c 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"prompt\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M085",
+    "claim": "redit.duplicate-gate-race",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/redit.go b/pkg/session/redit.go\nindex 459b3cd6a..2be75b235 100644\n--- a/pkg/session/redit.go\n+++ b/pkg/session/redit.go\n@@ -121,7 +121,7 @@ func cmdRedit(s *Session, args []string) error {\n \t// interpreter for atomicity; here the claim itself is the check, so two\n \t// sessions racing through cmdRedit cannot both be admitted. Every refusal\n \t// and failure path below releases the claim.\n-\tif other, ok := s.manager.claimRoomEdit(number, s); !ok {\n+\tif other, ok := s.manager.claimRoomEdit(number, s); !ok && false {\n \t\ts.reditSend(fmt.Sprintf(\"That room is currently being edited by %s.\\r\\n\", other))\n \t\treturn nil\n \t}\n"
+  },
+  {
+    "id": "M086",
+    "claim": "reel.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..3ae6c21e7 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"reel\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M087",
+    "claim": "scripts.room-oncmd-npc-gates",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/commands.go b/pkg/session/commands.go\nindex b91aca488..fc91e917d 100644\n--- a/pkg/session/commands.go\n+++ b/pkg/session/commands.go\n@@ -865,7 +865,7 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {\n \t\t}\n \t\t// 2. script in room? C interpreter.c:1419-1423 \u2014 !IS_NPC(ch), the\n \t\t// room flagged RS_ONCMD; a TRUE return consumes the command.\n-\t\tif !actorIsNPC {\n+\t\tif true {\n \t\t\tif handled := w.RunRoomOnCmdScript(s.player, scriptText); handled {\n \t\t\t\treturn true\n \t\t\t}\n"
+  },
+  {
+    "id": "M088",
+    "claim": "sedit.empty-numeric",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/sedit.go b/pkg/session/sedit.go\nindex 3fa8887c7..a24f197e0 100644\n--- a/pkg/session/sedit.go\n+++ b/pkg/session/sedit.go\n@@ -482,7 +482,7 @@ func (s *Session) parseSeditLocked(arg string) {\n \t}\n \t// This is deliberately the C typo at sedit.c:820-825. Unlike the sibling\n \t// editors it has no !*arg clause, so an empty line reaches atoi(\"\") == 0.\n-\tif state.mode > seditNumericalResponse && !isASCIIDigit(firstByte(arg)) && firstByte(arg) == '-' && !isASCIIDigit(seditByteAt(arg, 1)) {\n+\tif state.mode > seditNumericalResponse && (arg == \"\" || (!isASCIIDigit(firstByte(arg)) && firstByte(arg) == '-' && !isASCIIDigit(seditByteAt(arg, 1)))) {\n \t\ts.seditSend(\"Field must be numerical, try again : \")\n \t\treturn\n \t}\n"
+  },
+  {
+    "id": "M089",
+    "claim": "sedit.keeper-validation",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/sedit.go b/pkg/session/sedit.go\nindex 3fa8887c7..63cb84058 100644\n--- a/pkg/session/sedit.go\n+++ b/pkg/session/sedit.go\n@@ -725,7 +725,7 @@ func (s *Session) parseSeditRoomsMenuLocked(arg string) {\n func (s *Session) parseSeditKeeperLocked(arg string) bool {\n \tnumber := atoiC(arg)\n \tif number != -1 {\n-\t\tif _, ok := s.manager.world.SnapshotMob(number); !ok {\n+\t\tif _, ok := s.manager.world.SnapshotMob(number); !ok && false {\n \t\t\ts.seditSend(\"That mobile does not exist, try again : \")\n \t\t\treturn false\n \t\t}\n"
+  },
+  {
+    "id": "M090",
+    "claim": "shame.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..f7497d8ba 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"shame\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M091",
+    "claim": "sing.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..75b933b1e 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"sing\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M092",
+    "claim": "skillset.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..a0f7c1770 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"skillset\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M093",
+    "claim": "snowball.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..6d8832213 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"snowball\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M094",
+    "claim": "squeeze.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..e361560e9 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"squeeze\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M095",
+    "claim": "tap.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..33cfd9601 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"tap\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M096",
+    "claim": "thumbsup.entry-gate",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/session/command_gates.go b/pkg/session/command_gates.go\nindex b1e61abe1..372c28ef8 100644\n--- a/pkg/session/command_gates.go\n+++ b/pkg/session/command_gates.go\n@@ -75,6 +75,7 @@ func mustParseCommandGates(raw string) map[string]commandGate {\n \t\tif _, duplicate := gates[name]; duplicate {\n \t\t\tpanic(fmt.Sprintf(\"command_gates.tsv line %d: duplicate command %q\", lineNo, name))\n \t\t}\n+\t\tif name == \"thumbsup\" { level++ }\n \t\tgates[name] = commandGate{MinLevel: level, MinPosition: position, Source: fields[3]}\n \t}\n \tif err := scanner.Err(); err != nil {\n"
+  },
+  {
+    "id": "M097",
+    "claim": "objmagic.sanctuary.evil-variant",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/spells/affect_spells.go b/pkg/spells/affect_spells.go\nindex 1dc47edf1..29f0ebbd3 100644\n--- a/pkg/spells/affect_spells.go\n+++ b/pkg/spells/affect_spells.go\n@@ -163,7 +163,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool\n \t\ttoRoom = \"$n slowly fades out of existence.\\r\\n\"\n \tcase SpellSanctuary:\n \t\taff = engine.NewAffectDirect(SpellSanctuary, engine.ApplyNone, 4, 0, engine.AFFSanctuary, \"sanctuary\")\n-\t\tif isEvil(victim) {\n+\t\tif false && isEvil(victim) {\n \t\t\ttoVictim = \"A black aura momentarily surrounds you.\\r\\n\"\n \t\t\ttoRoom = \"$n is surrounded by a black aura.\\r\\n\"\n \t\t} else {\n"
+  },
+  {
+    "id": "M098",
+    "claim": "objmagic.sleep.messages",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/spells/affect_spells.go b/pkg/spells/affect_spells.go\nindex 1dc47edf1..9d5eb1e79 100644\n--- a/pkg/spells/affect_spells.go\n+++ b/pkg/spells/affect_spells.go\n@@ -191,7 +191,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool\n \t\t// C magic.c:1241-1247 \u2014 the sleepy lines and the position drop only\n \t\t// happen to a victim still above POS_SLEEPING.\n \t\tif getPos(victim) > int(PosSleeping) {\n-\t\t\ttoVictim = \"You feel very sleepy...  Zzzz......\\r\\n\"\n+\t\t\ttoVictim = \"You feel sleepy.\\r\\n\"\n \t\t\ttoRoom = \"$n goes to sleep.\\r\\n\"\n \t\t\ttype poserSleep interface{ SetPosition(int) }\n \t\t\tif p, ok := victim.(poserSleep); ok {\n"
+  },
+  {
+    "id": "M099",
+    "claim": "mob.dragon-breath-call-magic",
+    "outcome": "killed",
+    "diff": "diff --git a/pkg/spells/affect_spells.go b/pkg/spells/affect_spells.go\nindex 1dc47edf1..26a449325 100644\n--- a/pkg/spells/affect_spells.go\n+++ b/pkg/spells/affect_spells.go\n@@ -908,7 +908,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface\n \t\t}\n \t\t// Skip immortals\n \t\tif nc, ok := c.(npcChecker); ok && !nc.IsNPC() {\n-\t\t\tif l, ok := c.(lever); ok && l.GetLevel() >= lvlImmort {\n+\t\t\tif l, ok := c.(lever); ok && l.GetLevel() > lvlImmort {\n \t\t\t\tcontinue\n \t\t\t}\n \t\t}\n"
+  },
+  {
+    "id": "M100",
+    "claim": "entry.telnet-boundary",
+    "outcome": "timeout",
+    "diff": "diff --git a/pkg/db/player.go b/pkg/db/player.go\nindex 63942792e..71275d868 100644\n--- a/pkg/db/player.go\n+++ b/pkg/db/player.go\n@@ -318,7 +318,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {\n \t\t       hunger, thirst, drunk, hometown, COALESCE(olc_zone, 0),\n \t\t       inventory, equipment, COALESCE(character_data, '{}'),\n \t\t       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COUNT(*) OVER ()\n-\t\tFROM players WHERE lower(name) = lower(?)\n+\t\tFROM players WHERE name = ?\n \t`\n \tvar p PlayerRecord\n \tvar matches int\n"
+  }
+]
