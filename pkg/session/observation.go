@@ -71,7 +71,7 @@ func (s *Session) sendObservation(result game.ObservationResult, token string) e
 	if err != nil {
 		return fmt.Errorf("marshal observation state: %w", err)
 	}
-	s.send <- message
+	s.sendGuarded(message)
 	return nil
 }
 
