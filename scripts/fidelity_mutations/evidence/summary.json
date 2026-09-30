@@ -1,0 +1,23 @@
+{
+  "campaign_wall_seconds_from_lock": 1819.939471,
+  "evidence_root": "/home/zach/Archives/darkpawns/proof-integrity/2026-09-30/dp-1371-2b",
+  "execution_seconds_mean": 4.857141216883901,
+  "execution_seconds_median": 4.605301756499102,
+  "execution_seconds_p95_nearest_rank": 6.635205827944446,
+  "execution_seconds_sum": 485.71412168839015,
+  "first_execution_utc": "2026-09-30T20:00:47.148223+00:00",
+  "head": "0fadb33c6b9f8e1e31886ed0a027f45dd2bacc8e",
+  "last_restored_event_utc": "2026-09-30T16:21:12.223887-04:00",
+  "mapped_anchors": 94,
+  "other_references_not_certified": 28,
+  "outcomes": {
+    "killed": 94,
+    "survived": 5,
+    "timeout": 1
+  },
+  "population": 925,
+  "sample_sha256": "8d4bcbeae99868a34ee1cf1ead47d67510a25fd1494c9ea5f1e9724095f77bf1",
+  "selected": 100,
+  "serial_seconds_projected_population": 4492.855625617609,
+  "serial_seconds_projected_remaining": 4007.1415039292187
+}
