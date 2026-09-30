@@ -925,46 +925,16 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	case "social":
 		if len(parts) > 1 {
 			socialName := strings.ToLower(parts[1])
-			w.doMobSocial(mob, socialName, strings.Join(parts[2:], " "))
+			w.npcSocial(mob, socialName, strings.Join(parts[2:], " "))
 		}
 
 	default:
 		// Check if the command itself is a social
-		if social, found := Socials[cmd]; found {
-			w.doMobSocial(mob, cmd, args)
-			_ = social
+		if _, found := Socials[cmd]; found {
+			w.npcSocial(mob, cmd, args)
 		} else {
 			slog.Debug("executeMobCommand: unknown command", "command", cmd)
 		}
-	}
-}
-
-// doMobSocial performs a social emote on behalf of a mob.
-func (w *World) doMobSocial(mob *MobInstance, cmd string, targetName string) {
-	social, found := Socials[cmd]
-	if !found {
-		return
-	}
-
-	var target *Player
-	if targetName != "" {
-		target = w.findPlayerByName(targetName)
-	}
-
-	if target != nil {
-		// Social with target
-		Act(nil, false, mob, target, nil, nil, social.Messages[2], "", ToChar)
-		Act(w, true, mob, target, nil, nil, social.Messages[3], "", ToNotVict)
-		if len(social.Messages) > 4 {
-			Act(nil, false, mob, target, nil, nil, social.Messages[4], "", ToVict)
-		}
-	} else if targetName != "" {
-		// Target not found
-		mob.SendMessage(social.Messages[5])
-	} else {
-		// Social without target
-		Act(nil, false, mob, nil, nil, nil, social.Messages[0], "", ToChar)
-		Act(w, true, mob, nil, nil, nil, social.Messages[1], "", ToRoom)
 	}
 }
 
