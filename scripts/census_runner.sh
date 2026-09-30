@@ -50,7 +50,11 @@ finish() {
 	finished_s=$(date +%s)
 	finished_iso=$(date '+%Y-%m-%dT%H:%M:%S%z')
 	local summary_line
-	summary_line=$(grep '^oracle-regression: ' "$run_dir/census.log" | tail -1)
+	if [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
+		summary_line=$(cat "$run_dir/claims-summary.txt")
+	else
+		summary_line=$(grep '^oracle-regression: ' "$run_dir/census.log" | tail -1)
+	fi
 	{
 		printf '%s verdict=%s' "$summary_line" "$verdict"
 		if [[ -s "$run_dir/recheck-results.tsv" ]]; then
@@ -102,6 +106,12 @@ write_manifest() {
 		printf -- '- Summary: `%s`\n' "$summary_line"
 		printf -- '- Verdict: **%s**\n' "$verdict"
 		[[ -n "$recheck_note" ]] && printf -- '- Rechecked: %s\n' "$recheck_note"
+		if [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
+			printf '\n## Claims\n\n'
+			printf -- '- Manifest HEAD: `%s`\n' "$(cat "$run_dir/manifests-head.txt")"
+			printf -- '- Enumeration: `claims.tsv`; command: `census.sh start --claims --name %s`\n' "${run_dir##*/}"
+			awk -F '\t' '{n[$1]++} END {for (s in n) printf "seed %s: %d pairs\n", s, n[s]}' "$run_dir/claims.tsv" | sort -k2,2n
+		fi
 		printf -- '\n## File sizes (du -b)\n\n'
 		du -b -- "$run_dir"/* 2>/dev/null | sort -k2
 		if [[ -d "$run_dir/census-dump" ]]; then
@@ -110,6 +120,19 @@ write_manifest() {
 		fi
 	} >"$run_dir/MANIFEST.md"
 }
+
+if [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
+	python3 "$repo_root/scripts/claims_census.py" >>"$run_dir/census.log" 2>&1 9>&- &
+	child=$!
+	wait "$child"
+	if [[ ! -s "$run_dir/claims-verdict" ]]; then
+		printf 'oracle-claims: driver failed\n' >"$run_dir/claims-summary.txt"
+		finish NOT_CLEAN 1
+	fi
+	verdict=$(cat "$run_dir/claims-verdict")
+	[[ "$verdict" == NOT_CLEAN ]] && finish "$verdict" 1
+	finish "$verdict" 0
+fi
 
 # ---------------------------------------------------------------------------
 # 1. The census itself.

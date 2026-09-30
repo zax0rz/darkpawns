@@ -99,11 +99,17 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 run_started=$(date +%s)
 run_started_ns=$(date +%s%N)
-log_dir=$(mktemp -d "${TMPDIR:-/tmp}/dp-oracle-regression.XXXXXX")
+# Claims runs retain every attempt, including content diffs, per seed.
+if [[ -n "${ORACLE_REGRESSION_LOG_ROOT:-}" ]]; then
+	mkdir -p -- "$ORACLE_REGRESSION_LOG_ROOT"
+	log_dir=$(mktemp -d "$ORACLE_REGRESSION_LOG_ROOT/attempt.XXXXXX")
+else
+	log_dir=$(mktemp -d "${TMPDIR:-/tmp}/dp-oracle-regression.XXXXXX")
+fi
 result_dir="$log_dir/results"
 mkdir -p -- "$result_dir"
 cleanup() {
-	rm -rf -- "$log_dir"
+	[[ -n "${ORACLE_REGRESSION_LOG_ROOT:-}" ]] || rm -rf -- "$log_dir"
 }
 trap cleanup EXIT
 

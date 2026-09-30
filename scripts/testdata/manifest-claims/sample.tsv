@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+h	c	C1	D1	actor	oracle-green	alpha	src/x:1	
+h	c	C2	D2	actor	oracle-green-multiseed	alpha@1,2,8	src/x:1	
+h	c	C3	D4	state	unit-green	TestAlpha	src/x:1	
+h	c	C4	D2	actor	blocked	beta@3	src/x:1	
+h	c	C5	D2	actor	oracle-green	beta@3;gamma@5; TestSupplement	src/x:1	
