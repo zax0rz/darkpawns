@@ -55,6 +55,7 @@ test:
 test-all:
 	./test.sh all
 	scripts/test_census.sh
+	python3 -m unittest discover -s scripts -p 'test_*.py'
 
 test-unit:
 	./test.sh unit
@@ -108,6 +109,11 @@ fmt:
 
 check-fmt:
 	@test -z "$$(gofumpt -l .)" || (echo "Files need gofumpt. Run: gofumpt -w ." && gofumpt -l . && exit 1)
+
+.PHONY: fidelity-depth fidelity-units
+UNIT_OUT ?= $(HOME)/Archives/darkpawns/oracle-runs/$(shell date +%F)/dp-1371-units-$(shell date +%H%M%S)
+fidelity-units:
+	python3 scripts/fidelity_units.py --out "$(if $(OUT),$(OUT),$(UNIT_OUT))" $(if $(UNIT_ROOT),--root "$(UNIT_ROOT)")
 
 fidelity-depth:
 	python3 scripts/gen_fidelity_depth.py

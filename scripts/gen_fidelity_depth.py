@@ -15,6 +15,7 @@ MANIFEST_DIR = ROOT / "docs" / "fidelity" / "depth"
 SCENARIO_DIR = ROOT / "cmd" / "dp-oracle-diff" / "scenarios"
 CASE_RE = re.compile(r"^\s*#\s*depth-case:\s*(\S+)\s*$", re.MULTILINE)
 from fidelity_manifest import load_rows
+from unit_proofs import validate_unit_rows
 
 PROVEN = {"oracle-green", "oracle-green-multiseed", "unit-green", "delegated"}
 
@@ -40,14 +41,11 @@ def validate(rows: list[dict[str, str]], annotations: dict[str, set[str]]) -> li
                 errors.append(f"{case_id}: missing scenario {scenario}")
             elif case_id not in annotations[scenario]:
                 errors.append(f"{case_id}: scenario {scenario} lacks depth-case annotation")
-        if row["status"] == "unit-green":
-            symbol = row["proof"]
-            if not symbol or not any(symbol in path.read_text(encoding="utf-8", errors="ignore") for path in ROOT.rglob("*_test.go")):
-                errors.append(f"{case_id}: unit proof symbol {symbol!r} not found")
     declared = {row["case_id"] for row in rows}
     for scenario, cases in annotations.items():
         for case_id in cases - declared:
             errors.append(f"{scenario}: annotated case {case_id} is absent from manifests")
+    errors.extend(validate_unit_rows(rows))
     return errors
 
 
