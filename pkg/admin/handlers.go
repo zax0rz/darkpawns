@@ -525,7 +525,8 @@ func handlePlayerDetail(world *game.World, auditLogger *audit.AuditLogger) http.
 				return
 			}
 
-			if err := game.SavePlayer(player); err != nil {
+			if res := world.SavePlayerRecord(player, "admin save", game.LoadRoomNowhere, game.SaveCrash); res != game.SaveSucceeded {
+				err := fmt.Errorf("store save result: %d", res)
 				slog.Error("admin player save failed", "name", playerName, "error", err)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)

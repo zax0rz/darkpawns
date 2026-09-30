@@ -472,9 +472,9 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		"ENVIRONMENT=development",
 	)
 	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
-	// A scenario that reads the character back — relogin or restart — needs a
-	// store that persists; every other scenario keeps the unreachable one.
-	if len(scenario.ReloginPort) > 0 {
+	// Record consumers need the same real SQLite store as login, including
+	// stat file now that the JSON sidecar is retired.
+	if needsPlayerStore(&scenario) {
 		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers)
 		if err != nil {
 			return err
@@ -1949,4 +1949,23 @@ func applyMobScriptFixtures(worldDir string, fixtures []oraclediff.MobScriptFixt
 		}
 	}
 	return nil
+}
+
+func needsPlayerStore(s *oraclediff.Scenario) bool {
+	if len(s.ReloginPort) > 0 {
+		return true
+	}
+	groups := [][]string{s.SetupPort, s.Warmup, s.Probe}
+	for _, peer := range s.Peers {
+		groups = append(groups, peer.SetupPort)
+	}
+	for _, steps := range groups {
+		for _, step := range steps {
+			fields := strings.Fields(strings.ToLower(step))
+			if len(fields) >= 2 && (fields[0] == "stat" || fields[0] == "set") && fields[1] == "file" {
+				return true
+			}
+		}
+	}
+	return false
 }

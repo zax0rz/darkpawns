@@ -2,9 +2,7 @@ package game
 
 import (
 	"log/slog"
-	"os"
 	"strconv"
-	"strings"
 )
 
 func (w *World) doClanRename(ch *Player, arg string) {
@@ -140,37 +138,21 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 		}
 	}
 
-	// Clear clan from offline members
-	files, err := os.ReadDir(saveDir)
+	// C walks the player store as well as live members (clan.c:266).
+	players, err := w.StoredPlayers()
 	if err != nil {
-		slog.Error("clan destroy: cannot read save dir to clear offline members",
-			"clan", c.ID, "error", err)
-	} else {
-		for _, f := range files {
-			if !strings.HasSuffix(f.Name(), ".json") {
-				continue
+		slog.Error("clan destroy: read players", "error", err)
+	}
+	for _, p := range players {
+		if _, online := w.players[p.Name]; online || p.ClanID != c.ID {
+			continue
+		}
+		if err := w.EditStoredPlayer(p.Name, func(current *Player) {
+			if current.ClanID == c.ID {
+				current.ClanID, current.ClanRank = 0, 0
 			}
-			name := strings.TrimSuffix(f.Name(), ".json")
-			// Skip if currently online
-			if _, ok := w.players[name]; ok {
-				continue
-			}
-			p, lerr := LoadPlayer(name)
-			if lerr != nil {
-				slog.Warn("clan destroy: skipping unloadable player file",
-					"name", name, "error", lerr)
-				continue
-			}
-			if p.ClanID == c.ID {
-				p.ClanID = 0
-				p.ClanRank = 0
-				// Offline member; log the failure with context rather than swallow.
-				// DP-911.
-				if serr := SavePlayer(p); serr != nil {
-					slog.Error("failed to save offline player after clan destroy",
-						"name", name, "clan", c.ID, "error", serr)
-				}
-			}
+		}); err != nil {
+			slog.Error("clan destroy: save offline member", "name", p.Name, "error", err)
 		}
 	}
 

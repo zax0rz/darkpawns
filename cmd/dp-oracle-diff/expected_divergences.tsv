@@ -16,4 +16,3 @@ shoot-target-depth	shoot.tsv	shoot.target-fighting	blocked
 shoot-target-depth	shoot.tsv	shoot.targeted-shot	blocked	
 shoot-target-depth	shoot.tsv	shoot.targeted-shot-audience	blocked	
 shoot-target-depth	shoot.tsv	shoot.wait-and-object-consumption	blocked	
-wizard-valid-reports-depth	wizard.tsv	stat.file-success	blocked	

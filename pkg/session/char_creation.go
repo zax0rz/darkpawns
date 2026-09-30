@@ -563,7 +563,7 @@ func (s *Session) persistAcceptedCharacter() error {
 	if s.manager.hasDB {
 		// C's create_entry writes the file as init_char leaves the character:
 		// GET_LOADROOM is NOWHERE (db.c:3078).
-		r, err := s.playerRecordForSave(p, game.LoadRoomNowhere)
+		r, err := s.creationRecord(p, false, false)
 		if err != nil {
 			return err
 		}
@@ -595,19 +595,41 @@ func (s *Session) completeCharCreation() error {
 			return s.abortEntry(err)
 		}
 	}
+	restoreLiveDefaults := resumingCreation && !s.creationSaved
 	s.charName = s.player.Name
 	isGod := s.player.GetLevel() >= game.LVL_IMMORT
+	// C's menu entry save precedes do_start (interpreter.c:2186).
+	if err := s.saveCreationRecord(false); err != nil {
+		return s.abortEntry(fmt.Errorf("save character entry: %w", err))
+	}
 	if s.player.Level == 0 {
 		s.player.Level = 1
 		s.player.Exp = 1
 		s.player.MaxHealth = 10
 		s.player.MaxMana = 100
-		s.player.AdvanceLevel() // C do_start gate; never for the first-player God.
+		if restoreLiveDefaults {
+			// A login from the accepted record has not inherited the constructor's
+			// pre-applied do_start defaults. Restore only the live defaults here;
+			// creationRecord still writes C's intermediate phase below.
+			s.player.Practices += 2
+			s.player.OrigCon = s.player.Stats.Con
+			s.player.AutoExit = true
+			s.player.WimpLevel = 5
+			for _, bit := range []int{game.PrfDisphp, game.PrfDispmmana, game.PrfDispmove} {
+				s.player.SetPlrFlag(bit, true)
+			}
+		}
+		game.GiveStartingSkills(s.player) // class.c:542-570, before advance_level.
+		s.player.AdvanceLevel()           // C do_start gate; never for the first-player God.
+		// advance_level's save precedes every final do_start effect (class.c:712).
+		if err := s.saveCreationRecord(true); err != nil {
+			return s.abortEntry(fmt.Errorf("save initial advance level: %w", err))
+		}
 		// do_start refills the pools after advance_level (class.c:574-576).
 		s.player.Health = s.player.MaxHealth
 		s.player.Mana = s.player.MaxMana
 		s.player.Move = s.player.MaxMove
-		game.GiveStartingSkills(s.player)
+		s.player.Drunk, s.player.Conditions[game.CondDrunk] = 0, 0
 		s.player.Hunger, s.player.Thirst = 36, 36
 		s.player.Conditions[game.CondFull], s.player.Conditions[game.CondThirst] = 36, 36
 	}
@@ -615,17 +637,6 @@ func (s *Session) completeCharCreation() error {
 		s.player.SetRoom(game.ImmortStartRoom)
 	} else {
 		s.player.SetRoom(game.NewbieHometownRoom(s.player.Hometown))
-	}
-	if s.manager.hasDB {
-		// The new character's game entry runs C's entry save with load_room
-		// NOWHERE (interpreter.c:2186).
-		r, err := s.playerRecordForSave(s.player, game.LoadRoomNowhere)
-		if err != nil {
-			return s.abortEntry(err)
-		}
-		if err := s.manager.db.SavePlayer(r); err != nil {
-			return s.abortEntry(fmt.Errorf("save character entry: %w", err))
-		}
 	}
 
 	// Populate legacy spell-catalog metadata; proficiency still requires practice.

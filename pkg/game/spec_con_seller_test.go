@@ -118,8 +118,8 @@ func TestSpecConSeller_DirectTellVisibilityAndOriginalCon(t *testing.T) {
 		t.Fatalf("original constitution = %d, want 14", got)
 	}
 	actor.SetOrigCon(0)
-	if got := actor.GetOrigCon(); got != actor.Stats.Con {
-		t.Fatalf("zero original constitution fallback = %d, want current %d", got, actor.Stats.Con)
+	if got := actor.GetOrigCon(); got != 0 {
+		t.Fatalf("zero saved original constitution = %d, want 0", got)
 	}
 	actor.SetOrigCon(14)
 }

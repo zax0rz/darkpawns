@@ -16,7 +16,7 @@ func TestStatPlayer_DefaultPositionStanding(t *testing.T) {
 	s := makeTestSession(t, m, "Alice", 1001, true)
 	s.player.SetPosition(combat.PosResting)
 
-	s.sendStatPlayerReport(s.player, 1001, true, false)
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
 
 	var texts []string
 	for {

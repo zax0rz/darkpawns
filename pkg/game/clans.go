@@ -189,32 +189,6 @@ func InitClans(filePath string) *ClanManager {
 		}
 	}
 
-	// Reset cached member counts and recalculate from player DB
-	for _, c := range m.Clans {
-		c.Members = 0
-		c.Power = 0
-	}
-	clanMap := make(map[int]*Clan)
-	for _, c := range m.Clans {
-		clanMap[c.ID] = c
-	}
-	files, _ := os.ReadDir(saveDir)
-	for _, f := range files {
-		if strings.HasSuffix(f.Name(), ".json") {
-			name := strings.TrimSuffix(f.Name(), ".json")
-			p, err := LoadPlayer(name)
-			if err != nil {
-				continue
-			}
-			if p.ClanID != 0 {
-				if c, ok := clanMap[p.ClanID]; ok {
-					c.Members++
-					c.Power += p.Level
-				}
-			}
-		}
-	}
-
 	BasicMudLogf("   Loaded %d clans.", len(m.Clans))
 	return m
 }
@@ -433,3 +407,18 @@ func (w *World) resolveClanForImmortal(ch *Player, argument string) (int, *Clan,
 // ---------------------------------------------------------------------------
 // Sub-command: do_clan_rename
 // ---------------------------------------------------------------------------
+
+// RecountMembers runs after the server wires the SQLite reader.
+func (m *ClanManager) RecountMembers(players []*Player) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, c := range m.Clans {
+		c.Members, c.Power = 0, 0
+		for _, p := range players {
+			if p.ClanID == c.ID && p.ClanRank != 0 {
+				c.Members++
+				c.Power += p.Level
+			}
+		}
+	}
+}

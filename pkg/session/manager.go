@@ -1480,13 +1480,72 @@ func (m *Manager) SaveCharSite(p *game.Player, why string) {
 // (World.PlayerSaver) to this manager's sessions: the server calls it at
 // boot, and the persistence tests call it to exercise the same wiring.
 func (m *Manager) WirePlayerSaver(w *game.World) {
+	w.PlayerStoreList = func() ([]*game.Player, error) {
+		if !m.hasDB {
+			return nil, nil
+		}
+		names, err := m.db.ListPlayerNames()
+		if err != nil {
+			return nil, err
+		}
+		var players []*game.Player
+		for _, name := range names {
+			r, err := m.db.GetPlayer(name)
+			if err != nil {
+				return nil, err
+			}
+			if r == nil {
+				continue
+			}
+			metadata := *r
+			metadata.Inventory, metadata.Equipment = nil, nil
+			p, err := db.RecordToPlayer(&metadata, nil)
+			if err != nil {
+				return nil, err
+			}
+			players = append(players, p)
+		}
+		return players, nil
+	}
+	w.PlayerStoreEdit = func(name string, change func(*game.Player)) error {
+		if !m.hasDB {
+			return fmt.Errorf("player store unavailable")
+		}
+		r, err := m.db.GetPlayer(name)
+		if err != nil {
+			return err
+		}
+		if r == nil {
+			return fmt.Errorf("no such player: %s", name)
+		}
+		p, err := db.RecordToPlayer(r, w)
+		if err != nil {
+			return err
+		}
+		change(p)
+		updated, err := db.PlayerToRecord(p, nil)
+		if err != nil {
+			return err
+		}
+		updated.OlcZone = r.OlcZone
+		// Offline playerfile edits do not write C’s separate crash objects.
+		updated.Inventory, updated.Equipment = r.Inventory, r.Equipment
+		return db.SavePlayerIfCurrent(m.db, updated, r)
+	}
+	if w.Clans != nil && w.Clans.ClanCount() > 0 {
+		if players, err := w.StoredPlayers(); err != nil {
+			slog.Error("clan member census failed", "error", err)
+		} else {
+			w.Clans.RecountMembers(players)
+		}
+	}
 	w.PlayerSaver = func(p *game.Player, why string, loadRoom int) game.SaveResult {
 		s, ok := m.GetSession(p.GetName())
 		if !ok {
 			return game.SaveSkipped
 		}
 		// The wizard `set file` path edits a *separate* Player loaded from
-		// JSON; saving the live session player under that edit's name must
+		// the store; saving the live session player under that edit's name must
 		// never be reported as the edit's success (and must not write the
 		// un-edited live record over the store).
 		if s.player != p {

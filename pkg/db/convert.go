@@ -87,6 +87,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	p.Hunger = r.Hunger
 	p.Thirst = r.Thirst
 	p.Drunk = r.Drunk
+	p.Conditions[game.CondFull], p.Conditions[game.CondThirst], p.Conditions[game.CondDrunk] = r.Hunger, r.Thirst, r.Drunk
 	p.Hometown = r.Hometown
 	p.SetRoom(r.RoomVNum)
 	// The DB schema's existing room_vnum column is the compatible persistence
