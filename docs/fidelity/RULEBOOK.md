@@ -85,7 +85,10 @@ port consumes randomness and time in exactly C's order.
 - **R3c. Time flows through the seam.** Real-time pulses go through DP_CLOCK
   (and DP_FIXED_TIME for the game clock) so scenarios are reproducible. New
   time-dependent code must respect the seam or it breaks the oracle for
-  everyone.
+  everyone. `WAIT_STATE` takes pulses: `PULSE_VIOLENCE + N` uses
+  `SetWaitStatePulses(PULSE_VIOLENCE + N)`, never a rounded count passed to
+  `SetWaitState`. Preserve assignments on both success and failure branches
+  (DP-1368; `src/act.offensive.c:633`, `src/new_cmds2.c:187`).
 - **R3d. Conditional draws are gated draws.** A `number()`/`dice()` call C
   makes only under a condition — or *skips* under one — must be gated
   identically in Go. Special-cased creation paths are the trap: C sets the

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // TestDoStrike_MissRoutesThroughSkillMessage — C's do_strike miss arm calls
@@ -33,9 +34,9 @@ func TestDoStrike_MissRoutesThroughSkillMessage(t *testing.T) {
 		t.Errorf("miss emitted invented literals ch=%q vict=%q room=%q (R4)",
 			result.MessageToCh, result.MessageToVict, result.MessageToRoom)
 	}
-	if !result.StartCombat || result.WaitCh != 3 {
+	if !result.StartCombat || result.WaitChPulses != engine.PULSE_VIOLENCE+2 {
 		t.Errorf("miss combat contract = start %v wait %d, want true/3 (PULSE_VIOLENCE+2)",
-			result.StartCombat, result.WaitCh)
+			result.StartCombat, result.WaitChPulses)
 	}
 }
 

@@ -28,6 +28,9 @@ func TestDoFirstAidDepthSuccessState(t *testing.T) {
 	if got := target.GetPosition(); got != combat.PosStanding {
 		t.Fatalf("target position = %d, want standing", got)
 	}
+	if result.WaitCh != 0 || result.WaitChPulses != engine.PULSE_VIOLENCE+3 {
+		t.Fatalf("actor wait = %d rounds / %d pulses, want 23 raw pulses (src/new_cmds2.c:187)", result.WaitCh, result.WaitChPulses)
+	}
 	if got := result.WaitTarget; got != 1 {
 		t.Fatalf("target wait rounds = %d, want 1", got)
 	}

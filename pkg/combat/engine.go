@@ -27,6 +27,9 @@ type CombatPair struct {
 	// damage() sets the victim's FIGHTING field after the NPC switcheroo scan;
 	// ordinary command entry keeps the historical eager enrollment.
 	DeferDefenderEnrollment bool
+	// DefenderNeedsStand retains the pending posture half of an eager initial
+	// enrollment. C performs both halves in damage(), src/fight.c:1443-1445.
+	DefenderNeedsStand bool
 }
 
 // CombatEngine manages all active combat in the game
@@ -297,7 +300,8 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 	// point (performOneHit), gated on > POS_STUNNED like C. Only the fighting
 	// flag/target is set at entry so the round loop enrolls it. Mobile-special
 	// entry defers both operations until the damage-side path below.
-	if !deferDefenderEnrollment && defender.GetFighting() == "" {
+	defenderNeedsStand := !deferDefenderEnrollment && defender.GetFighting() == ""
+	if defenderNeedsStand {
 		defender.SetFighting(attackerName)
 	}
 	// The defender must be in combatOrder (C's combat_list) whenever it is
@@ -316,6 +320,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 		Defender:                defender,
 		Started:                 time.Now(),
 		DeferDefenderEnrollment: deferDefenderEnrollment,
+		DefenderNeedsStand:      defenderNeedsStand,
 	}
 
 	return nil
@@ -744,6 +749,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		ce.prependFighterLocked(defender)
 		ce.mu.Unlock()
 		pair.DeferDefenderEnrollment = false
+		pair.DefenderNeedsStand = true
 	}
 
 	// C set_fighting(victim) — which sets POS_FIGHTING — runs INSIDE damage(),
@@ -753,10 +759,13 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// So the victim must keep its pre-combat position through BOTH the to-hit
 	// AWAKE check and the damage multiplier, and only stand at the damage point.
 	// Miss path: C still calls damage(ch,victim,0,...), so the victim stands on
-	// a miss too. Gate on > POS_STUNNED (fight.c:1443): a dying victim stays prone.
+	// a miss too. Gate on > POS_STUNNED and !FIGHTING (src/fight.c:1443):
+	// a dying victim stays prone, and an existing fighter keeps its posture.
+	// DefenderNeedsStand is the pending posture half of initial Go enrollment.
 	standVictim := func() {
-		if defender.GetPosition() > PosStunned && defender.GetPosition() != PosFighting {
+		if defender.GetPosition() > PosStunned && (pair.DefenderNeedsStand || defender.GetFighting() == "") {
 			defender.SetPosition(PosFighting)
+			pair.DefenderNeedsStand = false
 		}
 	}
 

@@ -232,3 +232,46 @@ func TestSpecBackstabber_RngArmsAndCombatState(t *testing.T) {
 		}
 	})
 }
+
+func TestMobBackstab_PositionMultiplier(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		position, want int
+	}{
+		{"dead", combat.PosDead, 36},
+		{"mortally", combat.PosMortally, 36},
+		{"incap", combat.PosIncap, 24},
+		{"stunned", combat.PosStunned, 24},
+		{"sleeping", combat.PosSleeping, 24},
+		{"resting", combat.PosResting, 12},
+		{"sitting", combat.PosSitting, 12},
+		{"fighting", combat.PosFighting, 12},
+		{"standing", combat.PosStanding, 12},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w, player, mob, _ := prepareBackstabber(t, true)
+			mob.Str = 10
+			proto := *mob.Proto()
+			proto.Damage = parser.DiceRoll{Num: 1, Sides: 1, Plus: 11}
+			mob.SetProto(&proto)
+			player.SetHP(1000)
+			player.SetPosition(tc.position)
+			dprng.ResetStream(backstabberSeed(t, true))
+			var got int
+			previous := combat.GetCallbacks()
+			combat.SetCallbacks(&combat.GameCallbacks{SkillMessage: func(dam int, _ string, _ string, _ int, _ int) bool { got = dam; return true }})
+			t.Cleanup(func() { combat.SetCallbacks(previous) })
+			w.mobBackstab(mob, player)
+			if scaled := combat.ApplyPositionDamageMultiplier(12, tc.position); scaled != tc.want {
+				t.Fatalf("position multiplier = %d, want %d", scaled, tc.want)
+			}
+			want := tc.want * int(combat.BackstabMult(mob.GetLevel()))
+			if tc.position == combat.PosDead {
+				want = 0
+			} // damage() rejects an already dead victim.
+			if got != want {
+				t.Fatalf("backstab damage = %d, want %d", got, want)
+			}
+		})
+	}
+}

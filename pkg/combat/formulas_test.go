@@ -882,24 +882,31 @@ func TestCalculateDamage_AttackerDeadStr(t *testing.T) {
 }
 
 func TestCalculateDamage_VictimPositionMultiplier(t *testing.T) {
-	// Sleeping/incapacitated targets take more damage.
-	// Use fixed dice (1d1) + high AC to skip getMinusDam reduction
-	// so the position multiplier is the dominant effect.
-	attacker := &mockCombatant{npc: true, level: 1, str: 10, strAdd: 0, damroll: 0, damageRoll: DiceRoll{Num: 1, Sides: 1}}
-	standing := &mockCombatant{position: PosStanding, ac: 100}
-	sleeping := &mockCombatant{position: PosSleeping, ac: 100}
-
-	weapon := DiceRoll{}
-	for i := 0; i < 50; i++ {
-		dStand := CalculateDamage(attacker, standing, weapon, AttackNormal)
-		dSleep := CalculateDamage(attacker, sleeping, weapon, AttackNormal)
-		// Base damage: strApp[10].ToDam(0) + RollDice(1,1)(1) = 1
-		// Sleeping: 1 * (1 + (7-4)/3) = 1 * 2 = 2
-		// AC 100: getMinusDam drops out (ac>90 returns dam)
-		if dSleep < dStand {
-			t.Errorf("sleeping victim should take >= damage of standing, got standing=%d sleeping=%d", dStand, dSleep)
-			return
-		}
+	// src/fight.c:1854-1855 divides integers before multiplication. Base12
+	// and neutral AC expose fractional replacements that sleeping alone misses.
+	for _, tc := range []struct {
+		name           string
+		position, want int
+	}{
+		{"dead", PosDead, 36},
+		{"mortally-wounded", PosMortally, 36},
+		{"incapacitated", PosIncap, 24},
+		{"stunned", PosStunned, 24},
+		{"sleeping", PosSleeping, 24},
+		{"resting", PosResting, 12},
+		{"sitting", PosSitting, 12},
+		{"fighting", PosFighting, 12},
+		{"standing", PosStanding, 12},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			attacker := &mockCombatant{npc: true, level: 1, str: 10, damageRoll: DiceRoll{Num: 1, Sides: 1, Plus: 11}}
+			defender := &mockCombatant{position: tc.position, ac: 100}
+			var got int
+			WithRoller(NewScriptedRoller([]int{1}), func() { got = CalculateDamage(attacker, defender, DiceRoll{}, AttackNormal) })
+			if got != tc.want {
+				t.Fatalf("damage=%d, want C integer result %d", got, tc.want)
+			}
+		})
 	}
 }
 

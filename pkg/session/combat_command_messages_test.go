@@ -155,8 +155,8 @@ func TestCmdHitResolvesFirstSwingSynchronouslyWithoutInventedAttackLine(t *testi
 	if got, want := readSendText(t, s), "You try to hit a test target who easily avoids the blow."; got != want {
 		t.Fatalf("synchronous first-swing message = %q, want %q", got, want)
 	}
-	if got := s.player.GetWaitState(); got != 3*engine.PULSE_VIOLENCE {
-		t.Fatalf("post-hit wait state = %d, want %d (3 rounds → 3*PULSE_VIOLENCE pulses)", got, 3*engine.PULSE_VIOLENCE)
+	if got := s.player.GetWaitState(); got != engine.PULSE_VIOLENCE+2 {
+		t.Fatalf("post-hit wait state = %d, want %d pulses", got, engine.PULSE_VIOLENCE+2)
 	}
 	if got := roller.Index; got != 2 {
 		t.Fatalf("first-swing draws = %d, want 2 (to-hit + message selection)", got)
@@ -310,5 +310,38 @@ func TestCmdAssistMobHelpeeUsesPersAndHitGates(t *testing.T) {
 	}
 	if m.combatEngine.IsFighting(helper.player.Name) {
 		t.Error("low-level helper should not be enrolled after hit() gate")
+	}
+}
+
+// src/act.offensive.c:127 assigns PULSE_VIOLENCE+2 even when damage is blocked.
+func TestCmdHitWaitReleasesQueuedCommandOnPulse22(t *testing.T) {
+	m := makeGateTestManager(t, true)
+	if _, err := m.world.SpawnMob(5000, 1001); err != nil {
+		t.Fatal(err)
+	}
+	s := makeGateSession(t, m, 1, "Hero", 20)
+	if err := cmdHit(s, []string{"target"}); err != nil {
+		t.Fatal(err)
+	}
+	drainSendChannel(t, s)
+	if got := s.player.GetWaitState(); got != engine.PULSE_VIOLENCE+2 {
+		t.Fatalf("hit wait = %d, want 22 pulses", got)
+	}
+	if !s.tryExecuteNow("whoami", nil) {
+		t.Fatal("command was not queued during hit wait")
+	}
+	for pulse := 1; pulse <= 21; pulse++ {
+		m.DrainInputQueues()
+		if didCommandExecute(t, s) {
+			t.Fatalf("queued command released early on pulse %d", pulse)
+		}
+	}
+	m.DrainInputQueues()
+	if !didCommandExecute(t, s) {
+		t.Fatal("queued command did not release on pulse 22")
+	}
+	m.DrainInputQueues()
+	if didCommandExecute(t, s) {
+		t.Fatal("queued command executed again on pulse 23")
 	}
 }

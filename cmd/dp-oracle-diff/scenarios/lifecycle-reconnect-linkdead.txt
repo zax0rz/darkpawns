@@ -72,10 +72,14 @@ recall
 
 [relogin:oracle]
 Reconnector
+# src/interpreter.c:1766: saved-name nanny load assigns wait=1, not WAIT_STATE.
+~dpclock pulse 1
 reconpass
 
 [relogin:port]
 Reconnector
+# src/interpreter.c:1766: saved-name nanny load assigns wait=1, not WAIT_STATE.
+~dpclock pulse 1
 reconpass
 
 [probe]

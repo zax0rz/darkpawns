@@ -529,17 +529,7 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 		dam += GetRoller().Number(0, attacker.GetLevel()/3)
 	}
 
-	// Position multiplier — from fight.c comment:
-	//   sitting  x1.33, resting x1.66, sleeping x2.00,
-	//   stunned  x2.33, incap   x2.66, mortally  x3.00
-	// Source: fight.c line 1859: dam *= 1 + (POS_FIGHTING - GET_POS(victim)) / 3
-	// FIX: C source had integer truncation bug — developer comments say 1.33x/1.66x
-	// but integer math produced 1x for sitting/resting. Go port uses float math
-	// to restore developer intent. See: DP-515, src/fight.c:1855-1860
-	defPos := defender.GetPosition()
-	if defPos < PosFighting {
-		dam = int(float64(dam) * (1.0 + float64(PosFighting-defPos)/3.0))
-	}
+	dam = ApplyPositionDamageMultiplier(dam, defender.GetPosition())
 
 	// C establishes a one-point floor before attack-specific handling. Normal
 	// weapon attacks can then be reduced back to zero by get_minusdam.
@@ -709,4 +699,13 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 // RollDice rolls num d-sides dice and returns the sum.
 func RollDice(num, sides int) int {
 	return GetRoller().Dice(num, sides)
+}
+
+// ApplyPositionDamageMultiplier preserves src/fight.c:1854-1855's deliberate
+// integer division: sitting and resting multiply damage by 1. It consumes no RNG.
+func ApplyPositionDamageMultiplier(dam, position int) int {
+	if position < PosFighting {
+		dam *= 1 + (PosFighting-position)/3
+	}
+	return dam
 }
