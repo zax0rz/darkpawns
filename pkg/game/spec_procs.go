@@ -1120,7 +1120,9 @@ func specCuchi(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	Act(w, false, ch, nil, nil, nil, "$n pats Cuchi on the head and rubs around her ears.", "", ToRoom)
 
 	if ch.GetName() == "Orodreth" {
-		ch.SetLevel(LVL_IMPL)
+		// C also sets GET_LEVEL(ch) = LVL_IMPL here (spec_procs.c:1049), a
+		// name-based backdoor. Deliberate security divergence, approved by
+		// Zach (DP-1373): the purr flavour stays, the promotion does not.
 		sendToChar(ch, "Cuchi purrs at you contently.")
 		Act(w, false, ch, nil, nil, nil, "Cuchi purrs contently at $n.", "", ToRoom)
 	} else {

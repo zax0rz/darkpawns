@@ -388,28 +388,17 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	what, _ := oneArgument(arg)
 
 	if what == "immortality" {
-		level := 0
+		// C grants a hard-coded staff name immortal level here (Serapis and
+		// Orodreth 40, Frontline 39; spec_procs.c:2081-2126): a name-based
+		// backdoor any new player could claim by creating that character.
+		// Deliberate security divergence, approved by Zach (DP-1373): those
+		// names are told the door is closed and nothing changes. C's other
+		// names in this branch contain spaces, so no character can hold them.
 		switch ch.GetName() {
-		case "Serapis", "Orodreth":
-			level = 40
-		case "Frontline":
-			level = 39
-		case "this is not here":
-			// C evaluates these independent if statements in order; the
-			// later level-31 assignment is the final value for this name.
-			level = 31
-		case "neither is this":
-			level = 36
-		case "no entry here", "neither here":
-			level = 31
+		case "Serapis", "Orodreth", "Frontline":
+			sendToChar(ch, "Nice try.")
 		}
-		if level > 0 {
-			ch.SetLevel(level)
-			sendToChar(ch, "Welcome back "+ch.GetName()+".")
-			sendToChar(ch, "You feel the power pulse through your veins again!")
-		}
-		// C's immortality branch returns TRUE even when the player's name
-		// matches none of its hard-coded resurrection entries.
+		// C's immortality branch returns TRUE for every other name, silently.
 		return true
 	}
 

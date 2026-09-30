@@ -54,7 +54,7 @@ func TestSpecCuchi_OrdinaryPat(t *testing.T) {
 	}
 }
 
-func TestSpecCuchi_OrodrethPromotion(t *testing.T) {
+func TestSpecCuchi_OrodrethNoPromotion(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	observer := NewPlayer(2, "Observer", 1001)
 	if err := w.AddPlayer(observer); err != nil {
@@ -65,11 +65,14 @@ func TestSpecCuchi_OrodrethPromotion(t *testing.T) {
 
 	player.Name = "Orodreth"
 	startGold := player.Gold
+	startLevel := player.GetLevel()
 	if !specCuchi(w, player, mob, "pat", "ignored") {
 		t.Fatal("Orodreth pat should return true")
 	}
-	if got := player.GetLevel(); got != LVL_IMPL {
-		t.Errorf("Orodreth level = %d, want LVL_IMPL (%d)", got, LVL_IMPL)
+	// DP-1373: C promotes Orodreth to LVL_IMPL here; the port keeps the purr
+	// flavour but not the name-based promotion.
+	if got := player.GetLevel(); got != startLevel {
+		t.Errorf("Orodreth level = %d, want unchanged %d", got, startLevel)
 	}
 	if got := player.Gold; got != startGold {
 		t.Errorf("Orodreth gold = %d, want unchanged %d", got, startGold)
