@@ -55,3 +55,15 @@ is an entry-code PR: open it and stop for Zach. The next independent E1 batch
 is deleted-name handling after this merge.
 
 Guest handoff also releases the descriptor's prior name reservation. Its new assertion failed before the repair, passes after it, and has a dedicated revert triple; guest capabilities remain unchanged. Real transport close assertions require actual orderly closure rather than accepting a read timeout. The earlier full runs and interrupted claims run are preliminary; the handoff-full and handoff-claims runs certify the final source.
+
+Final full census (source hashes match commit 818a1b9fb; run began with this source uncommitted atop 7ab6d11dd):
+
+```
+oracle-regression: scenarios=1056 passed=1050 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=501.510s started=2026-10-01T15:26:42-0400 finished=2026-10-01T15:35:04-0400 verdict=CLEAN
+```
+
+Final claims census on 818a1b9fb (all five new name-gate C captures inspected; see live-seed-inspection.tsv):
+
+```
+oracle-claims: seed=all pairs=3010 expected=11 expected_unstable=0 fail=0 infra=0 pass=2999 stale=0 timeout=0 unpinnable=0 elapsed=1724.461s verdict=CLEAN_AFTER_RECHECK
+```
