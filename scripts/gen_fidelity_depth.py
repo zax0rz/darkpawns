@@ -18,6 +18,7 @@ from fidelity_manifest import load_rows
 from unit_proofs import validate_unit_rows
 
 PROVEN = {"oracle-green", "oracle-green-multiseed", "unit-green", "delegated"}
+NOT_ACTIONABLE = {"excluded", "divergent-approved"}
 
 
 def scenario_cases() -> dict[str, set[str]]:
@@ -55,11 +56,13 @@ def render(rows: list[dict[str, str]]) -> str:
     for row in rows:
         by_handler[row["handler"]].append(row)
     proven = sum(row["status"] in PROVEN for row in rows)
-    actionable = sum(row["status"] not in {"excluded"} for row in rows)
+    # Completion measures C parity: excluded cases are unreachable, and
+    # divergent-approved cases are deliberately not C, so neither counts.
+    actionable = sum(row["status"] not in NOT_ACTIONABLE for row in rows)
     output = [
         "FIDELITY DEPTH REPORT",
         "=====================",
-        f"Cases: {len(rows)} total, {proven} proven/delegated, {status_counts['blocked']} blocked, {status_counts['excluded']} excluded",
+        f"Cases: {len(rows)} total, {proven} proven/delegated, {status_counts['blocked']} blocked, {status_counts['excluded']} excluded, {status_counts['divergent-approved']} divergent-approved",
         f"Actionable completion: {proven}/{actionable} = {(100 * proven / actionable if actionable else 100):.1f}%",
         "",
     ]
