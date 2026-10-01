@@ -1,0 +1,9 @@
+contract	selector	green	reverted	restored
+valid-return	TestLuaSetSkillDepthValid	0	1	0
+valid-identity	TestLuaSetSkillDepthValid	0	1	0
+invalid-stack-top	TestLuaSetSkillDepthInvalid	0	1	0
+invalid-no-write	TestLuaSetSkillDepthInvalid	0	1	0
+numeric-coercion	TestLuaSetSkillDepthValid/numeric_strings	0	1	0
+number-mapping	TestLuaSetSkillDepthValid/kick	0	1	0
+pc-total	TestLuaSetSkillDepthValid/kick	0	1	0
+npc-total	TestLuaSetSkillDepthModifiers	0	1	0
