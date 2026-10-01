@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -186,28 +185,25 @@ func TestDoKick_MissMessageFromSkillMessages(t *testing.T) {
 	cb, attMsg, _, teardown := wireKickMessages(t, ch.Name)
 	defer teardown()
 
-	var missed bool
-	for i := 0; i < 100; i++ {
-		result := DoKick(ch, mob)
-		if !result.Success && result.Damage == 0 && result.SkillMsgType == SkillKickNum {
-			cb.SkillMessage(0, ch.Name, mob.GetName(), SkillKickNum, ch.GetRoom())
-			missed = true
-			break
-		}
+	// lib/misc/messages:264,278: both Kick miss variants, exact rendered bytes.
+	wants := []string{
+		"You miss your kick at " + mob.GetName() + "'s groin, much to his relief...",
+		"Your beautiful full-circle kick misses " + mob.GetName() + " by a mile.",
 	}
-	if !missed {
-		t.Skip("no miss observed in 100 tries (RNG); message-source not exercised")
-	}
-
-	got := *attMsg
-	// The invented strings must be gone (R4).
-	if strings.Contains(got, "try to kick") || strings.Contains(got, "square in the chest") {
-		t.Errorf("miss emitted an OLD invented kick string (R4 violation): %q", got)
-	}
-	// Set 134's miss variants all reference "kick" or "balletstep"; assert the
-	// message came from the file (not empty, mentions kick/foot).
-	if got == "" {
-		t.Errorf("miss attacker message is empty — SkillMessage(134) did not emit")
+	for i, want := range wants {
+		combat.WithRoller(combat.NewScriptedRoller([]int{i + 1}), func() {
+			dprng.ResetStream(1)
+			result := DoKick(ch, mob)
+			if result.Success || result.Damage != 0 || result.SkillMsgType != SkillKickNum {
+				t.Fatalf("kick miss result = %+v", result)
+			}
+			if !cb.SkillMessage(0, ch.Name, mob.GetName(), SkillKickNum, ch.GetRoom()) {
+				t.Fatal("Kick message lookup failed")
+			}
+			if got := *attMsg; got != want {
+				t.Errorf("Kick miss variant %d = %q, want %q", i, got, want)
+			}
+		})
 	}
 }
 

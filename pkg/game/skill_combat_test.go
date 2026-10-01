@@ -169,6 +169,9 @@ func TestDoSpike_KillsWerewolf(t *testing.T) {
 	if !result.Success {
 		t.Errorf("expected spike success, got %q", result.MessageToCh)
 	}
+	if !result.RawKill {
+		t.Error("successful spike must request RawKill")
+	}
 	if !strings.Contains(result.MessageToCh, "drive") {
 		t.Errorf("expected success message, got %q", result.MessageToCh)
 	}
@@ -763,18 +766,12 @@ func TestDoCharge_MountedBonusDamage(t *testing.T) {
 	weapon := makeChargeWeapon(12) // lance
 	equipWeapon(t, ch, weapon)
 
-	// Deterministic RNG: success roll (low) + weapon die (low). Wrapped so the
-	// global math/rand/v2 source (unseedable) can't flake the test under -race.
-	combat.WithRoller(combat.NewScriptedRoller([]int{1, 1}), func() {
+	// Seed 1: number(1,101)=44, dice(1,8)=8. C new_cmds.c:939-952
+	// computes exactly 50 + 2*8, not merely a lower bound of 50.
+	combat.WithRoller(combat.NewSeededRoller(1), func() {
 		result := DoCharge(ch, mob)
-		if !result.Success {
-			t.Errorf("expected mounted charge success, got %q", result.MessageToCh)
-		}
-		if result.Damage < 50 {
-			t.Errorf("expected mounted bonus damage >= 50, got %d", result.Damage)
-		}
-		if result.SelfStumble {
-			t.Error("mounted charge should not stumble")
+		if !result.Success || result.Damage != 66 || result.SelfStumble {
+			t.Fatalf("mounted charge = %+v; want success, damage 66, no stumble", result)
 		}
 	})
 }

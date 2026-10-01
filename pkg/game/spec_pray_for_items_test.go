@@ -38,21 +38,43 @@ func TestSpecPrayForItems_StaffNamesPatched(t *testing.T) {
 }
 
 func TestSpecPrayForItems_FallsThroughOrdinarySocial(t *testing.T) {
+	// spec_procs.c:2077 gates before either immortality or item rewards.
+	for _, arg := range []string{"immortality", ""} {
+		t.Run("look/"+arg, func(t *testing.T) {
+			w, player, lastMsg := newSpecProcTestWorld(t)
+			player.Name = "Serapis"
+			player.SetGold(50)
+			altar, err := w.SpawnObject(3001, -1)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := w.MoveObjectToRoom(altar, 1001); err != nil {
+				t.Fatal(err)
+			}
+			if !w.SetObjectExtraDesc(3001, "item_for_Serapis", "a test reward") {
+				t.Fatal("missing altar")
+			}
+			level, exp, flags := player.GetLevel(), player.GetExp(), player.GetFlags()
+			_ = lastMsg()
+			if got := specPrayForItems(w, player, nil, "look", arg); got {
+				t.Error("non-pray commands should not be intercepted")
+			}
+			if got := lastMsg(); got != "" {
+				t.Errorf("non-pray output = %q, want empty", got)
+			}
+			items := w.GetItemsInRoom(1001)
+			if player.GetLevel() != level || player.GetExp() != exp || player.GetFlags() != flags || player.GetGold() != 50 || len(items) != 1 || items[0] != altar || len(player.Inventory.Items) != 0 {
+				t.Error("non-pray command changed player or room state")
+			}
+		})
+	}
 	w, player, lastMsg := newSpecProcTestWorld(t)
-	_ = lastMsg() // discard setup output
-
-	if got := specPrayForItems(w, player, nil, "look", ""); got {
-		t.Fatal("non-pray commands should not be intercepted")
+	_ = lastMsg()
+	if specPrayForItems(w, player, nil, "pray", "nobody") {
+		t.Fatal("unmatched pray should fall through")
 	}
 	if got := lastMsg(); got != "" {
-		t.Errorf("non-pray output = %q, want empty output", got)
-	}
-
-	if got := specPrayForItems(w, player, nil, "pray", "nobody"); got {
-		t.Fatal("pray without a matching item should fall through")
-	}
-	if got := lastMsg(); got != "" {
-		t.Errorf("output = %q, want empty output", got)
+		t.Errorf("unmatched pray output = %q", got)
 	}
 }
 
