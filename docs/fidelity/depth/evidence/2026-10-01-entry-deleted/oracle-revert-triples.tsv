@@ -1,0 +1,2 @@
+mutation	before	mutant	after	failure
+deleted-fold	PASS	FAIL	PASS	Reclaim-versus-RECLAIM confirmation/password prompt bytes; zero infrastructure/timeouts
