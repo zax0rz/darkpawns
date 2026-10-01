@@ -1,0 +1,2 @@
+scenario	before	mutant	after	failure
+entry-name-gates	0	1	0	transcript

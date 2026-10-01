@@ -360,6 +360,7 @@ func (s *Session) enterReturningPlayer() error {
 
 	s.menuActive = false
 	s.menuStage = ""
+	s.releaseEntryName()
 	s.playerName = name
 	token, err := auth.GenerateJWT(name, "")
 	if err != nil {

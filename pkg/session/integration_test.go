@@ -23,7 +23,7 @@ func TestConcurrentCharCreation(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 
-			name := fmt.Sprintf("TestCharUser%d", id)
+			name := fmt.Sprintf("TestCharUser%c", 'A'+id)
 			s := makeTestSession(t, m, name, 1001, false)
 
 			// Login — nil DB path requires a password and enters char creation.

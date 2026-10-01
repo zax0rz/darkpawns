@@ -103,6 +103,7 @@ func (s *Session) performDupeCheck() bool {
 	s.charStage = ""
 	s.charPassword = ""
 	s.clearMenuState()
+	s.releaseEntryName()
 	s.lastActive.Store(time.Now().UnixNano())
 	p.SetLinkless(false)
 	p.SetIdleTimer(0)

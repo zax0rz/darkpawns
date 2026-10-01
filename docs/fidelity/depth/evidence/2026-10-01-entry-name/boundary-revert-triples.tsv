@@ -1,0 +1,4 @@
+proof	before	mutant	after	failure
+concurrent-claim	0	1	0	assertion
+security-list	0	1	0	assertion
+telnet-boundary	0	1	0	assertion

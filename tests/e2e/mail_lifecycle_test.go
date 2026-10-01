@@ -35,7 +35,7 @@ func TestMailProductionBootBoundary(t *testing.T) {
 	conn, reader := launchAndDial(t)
 	defer conn.Close()
 
-	name := fmt.Sprintf("MailBoot%d", time.Now().UnixNano()%100000)
+	name := entryFixtureName("MailBoot", time.Now().UnixNano()%100000)
 	createCrownedWarrior(t, conn, reader, name, "mailbootpw")
 
 	// The fresh crowned character enters room 1204, which the native zone
@@ -107,8 +107,8 @@ func TestMailProductionLifecycleAcrossRestart(t *testing.T) {
 	})
 
 	suffix := time.Now().UnixNano() % 1000000000
-	senderName := fmt.Sprintf("MailSender%d", suffix)
-	recipientName := fmt.Sprintf("MailRcpt%d", suffix)
+	senderName := entryFixtureName("MailSender", suffix)
+	recipientName := entryFixtureName("MailRcpt", suffix)
 	const password = "mailproof"
 	sender := seedMailPlayer(t, database, senderName, password, 34)
 	seededIDs = append(seededIDs, sender.ID)

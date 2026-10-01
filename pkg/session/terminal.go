@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/validation"
 )
 
 // The terminal: what a line-oriented client sees and how its input lines are
@@ -258,7 +255,7 @@ func (s *Session) TerminalNamed() bool {
 func (s *Session) TerminalLine(rawLine string) bool {
 	line := strings.TrimSpace(rawLine)
 	if !s.terminalNamed {
-		return s.terminalName(line)
+		return s.terminalName(rawLine)
 	}
 
 	// The oracle harness control is intercepted before player/session command
@@ -336,21 +333,16 @@ func (s *Session) TerminalLine(rawLine string) bool {
 // terminalName is C's CON_GET_NAME: the connection stays open until it
 // receives a usable name, and an empty line ends it.
 func (s *Session) terminalName(name string) bool {
-	if name == "" {
-		s.sendTerminalText("\r\nGoodbye.\r\n")
-		return false
-	}
-	if !strings.HasPrefix(strings.ToLower(name), "guest") &&
-		(!validation.IsValidPlayerName(name) || !game.ValidNameNoActive(name)) {
-		s.sendTerminalText("Invalid name, please try another.\r\nName: ")
-		return true
+	// Preserve the approved guest-prefix transport routing (DP-1379).
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(name)), "guest") {
+		name = strings.TrimSpace(name)
 	}
 	s.terminalNamed = true
 	data, err := json.Marshal(LoginData{PlayerName: name})
 	if err == nil {
 		err = s.sendClientMessage(MsgLogin, data)
 	}
-	if err != nil {
+	if err != nil && !s.SendClosed() {
 		s.sendTerminalText(fmt.Sprintf("\r\nLogin failed: %v\r\n", err))
 		return false
 	}
