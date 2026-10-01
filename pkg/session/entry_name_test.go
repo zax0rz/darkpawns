@@ -333,3 +333,29 @@ func TestEntryNamePasswordKeepsDescriptorIdentity(t *testing.T) {
 		t.Fatalf("password changed descriptor identity: lookups=%v player=%v", d.names, s.player)
 	}
 }
+
+func TestEntryGuestHandoffReleasesName(t *testing.T) {
+	database := entryDatabase(t)
+	m := entryTransportManager(t, database)
+	t.Setenv("JWT_SECRET", "entry-guest-handoff-secret-at-least-32-characters")
+	s := makeCharSession(t, m)
+	if err := s.handleLogin(loginMsg("Freedname", "")); err != nil {
+		t.Fatal(err)
+	}
+	if s.charStage != "confirm_name" {
+		t.Fatal("C entry name was not held")
+	}
+	if err := s.handleLogin(loginMsg("guest", "")); err != nil {
+		t.Fatal(err)
+	}
+	if !s.authenticated || !s.isGuest {
+		t.Fatal("approved guest path did not enter")
+	}
+	next := makeCharSession(t, m)
+	if err := next.handleLogin(loginMsg("Freedname", "")); err != nil {
+		t.Fatal(err)
+	}
+	if next.charStage != "confirm_name" {
+		t.Fatal("guest world entry left the former C name held")
+	}
+}

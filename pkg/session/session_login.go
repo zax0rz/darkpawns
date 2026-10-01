@@ -64,6 +64,8 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	}
 
 	if strings.HasPrefix(strings.ToLower(login.PlayerName), "guest") {
+		// DP-1379 guest entry replaces any character being named on this descriptor.
+		s.releaseEntryName()
 		// Bypasses DB password authentication & character creation completely!
 		guestName := login.PlayerName
 		if strings.EqualFold(guestName, "guest") {

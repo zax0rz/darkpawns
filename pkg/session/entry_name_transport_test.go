@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"golang.org/x/time/rate"
 )
 
@@ -46,7 +47,7 @@ func TestEntryNameWebSocketBoundary(t *testing.T) {
 	if err := blank.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := blank.ReadMessage(); err == nil {
-		t.Fatal("all-space initial name did not close")
+	if _, _, err := blank.ReadMessage(); !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
+		t.Fatalf("all-space initial name did not close normally: %v", err)
 	}
 }

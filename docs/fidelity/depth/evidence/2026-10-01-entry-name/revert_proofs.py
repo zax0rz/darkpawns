@@ -35,9 +35,10 @@ mutations = [
  ('world-release', 'pkg/session/char_creation.go', '// Clear char creation state\n\ts.releaseEntryName()', '// Clear char creation state'),
  ('security-overlay', 'pkg/session/entry_name.go', 'validation.IsReservedPlayerName(name)', '(false && validation.IsReservedPlayerName(name))'),
  ('password-identity', 'pkg/session/session_login.go', 'login.PlayerName = s.charName', 'login.PlayerName = strings.TrimSpace(login.PlayerName)'),
+ ('guest-handoff', 'pkg/session/session_login.go', 's.releaseEntryName()', '// omit guest handoff release'),
  ('guest-prefix', 'pkg/session/session_login.go', 'if strings.HasPrefix(strings.ToLower(login.PlayerName), "guest")', 'if false && strings.HasPrefix(strings.ToLower(login.PlayerName), "guest")'),
 ]
-pattern = '^(TestEntryName|TestEntryGuestPrefixApproved|TestEntrySecurityReservedNames)'
+pattern = '^(TestEntryName|TestEntryGuestPrefixApproved|TestEntryGuestHandoffReleasesName|TestEntrySecurityReservedNames)'
 
 def run(name, stage):
     result = subprocess.run(['go', 'test', './pkg/session', '-run', pattern, '-count=1'], cwd=proof, capture_output=True, text=True)

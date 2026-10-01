@@ -1,0 +1,6 @@
+dp-1371-p4-entry-name-targeted	oracle-regression: scenarios=2 passed=2 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=14.827s started=2026-10-01T14:24:28-0400 finished=2026-10-01T14:24:43-0400 verdict=CLEAN
+dp-1371-p4-entry-name-oracle-mutant	oracle-regression: scenario not found: entry-name-gates verdict=NOT_CLEAN
+dp-1371-p4-entry-name-oracle-mutant-2	oracle-regression: scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=1 infra=0 timed_out=0 unstable=0 elapsed=31.075s started=2026-10-01T14:29:34-0400 finished=2026-10-01T14:30:05-0400 verdict=NOT_CLEAN
+dp-1371-p4-entry-name-oracle-restored	oracle-regression: scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=14.636s started=2026-10-01T14:32:29-0400 finished=2026-10-01T14:32:44-0400 verdict=CLEAN
+dp-1371-p4-entry-name-full	oracle-regression: scenarios=1056 passed=1050 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=501.560s started=2026-10-01T14:33:46-0400 finished=2026-10-01T14:42:07-0400 verdict=CLEAN
+dp-1371-p4-entry-name-full-final-default	oracle-regression: scenarios=1056 passed=1050 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=498.539s started=2026-10-01T14:53:22-0400 finished=2026-10-01T15:01:40-0400 verdict=CLEAN

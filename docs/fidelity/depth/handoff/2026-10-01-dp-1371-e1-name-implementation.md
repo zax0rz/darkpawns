@@ -29,7 +29,7 @@ state, persistence bypass and capabilities remain unchanged; command/channel
 scope belongs to Zach's separate DP-1379 review.
 
 Proofs: 87 input/route matrix cases; real SQLite and WebSocket/TCP assertions;
-19 broad unit mutations plus three focused boundary mutations all pass 0/1/0.
+20 broad unit mutations plus three focused boundary mutations all pass 0/1/0.
 The live parser bypass gives a content FAIL, not a timeout/build failure, then
 restores to PASS. Retained scripts, tables and final source hashes are in
 ../evidence/2026-10-01-entry-name/. Complete logs/manifests/captures are under
@@ -53,3 +53,5 @@ is included here.
 Final validation and census summaries are retained beside the evidence. This
 is an entry-code PR: open it and stop for Zach. The next independent E1 batch
 is deleted-name handling after this merge.
+
+Guest handoff also releases the descriptor's prior name reservation. Its new assertion failed before the repair, passes after it, and has a dedicated revert triple; guest capabilities remain unchanged. Real transport close assertions require actual orderly closure rather than accepting a read timeout. The earlier full runs and interrupted claims run are preliminary; the handoff-full and handoff-claims runs certify the final source.

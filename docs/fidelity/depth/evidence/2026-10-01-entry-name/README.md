@@ -22,7 +22,7 @@ concurrent claims, canonical password identity, and real WebSocket/TCP boundarie
 Browser-authored rendering stays owned by entry.browser-name-routing.
 
 `revert_proofs.py` copies the candidate Go sources/tests into isolated
-`~/dp-p4-entry-name-proof`, then applies/restores 19 production mutations.
+`~/dp-p4-entry-name-proof`, then applies/restores 20 production mutations.
 `revert-triples.tsv` records assertion-only 0/1/0 results. The focused boundary
 runner records three more 0/1/0 triples: concurrent ownership, the exact reserved
 list (including zax0rz, independently of C's syntax rejection), and TCP initial
@@ -59,4 +59,7 @@ are not claimed complete here.
 
 The eight-worker full-final attempt was explicitly stopped through the runner's
 TERM cleanup trap after discovering that the wrapper default is 36 workers.
-It remains retained as KILLED and is not evidence of a clean census.
+The wrapper reports that attempt as died; it is retained and is not evidence
+of a clean census.
+
+Guest handoff also releases the descriptor's prior name reservation. Its new assertion failed before the repair, passes after it, and has a dedicated revert triple; guest capabilities remain unchanged. Real transport close assertions require actual orderly closure rather than accepting a read timeout. The earlier full runs and interrupted claims run are preliminary; the handoff-full and handoff-claims runs certify the final source.

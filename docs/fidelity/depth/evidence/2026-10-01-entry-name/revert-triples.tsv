@@ -17,4 +17,5 @@ close-release	0	1	0	assertion
 world-release	0	1	0	assertion
 security-overlay	0	1	0	assertion
 password-identity	0	1	0	assertion
+guest-handoff	0	1	0	assertion
 guest-prefix	0	1	0	assertion

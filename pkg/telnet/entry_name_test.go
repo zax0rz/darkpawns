@@ -1,7 +1,9 @@
 package telnet
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -28,7 +30,7 @@ func TestEntryNameTelnetBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() { _ = conn.Close() }()
-	readTelnetUntil(t, conn, "By what name do you wish to be known?")
+	readTelnetUntil(t, conn, "By what name do you wish to be known? ")
 	for _, name := range []string{"Aiko ", "Fighter123", "the"} {
 		if _, err := fmt.Fprintf(conn, "%s\r\n", name); err != nil {
 			t.Fatal(err)
@@ -51,7 +53,7 @@ func TestEntryNameTelnetBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() { _ = blank.Close() }()
-	readTelnetUntil(t, blank, "By what name do you wish to be known?")
+	readTelnetUntil(t, blank, "By what name do you wish to be known? ")
 	if _, err := fmt.Fprint(blank, "   \r\n"); err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +61,7 @@ func TestEntryNameTelnetBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	var one [1]byte
-	if n, err := blank.Read(one[:]); n != 0 || err == nil {
+	if n, err := blank.Read(one[:]); n != 0 || !errors.Is(err, io.EOF) {
 		t.Fatalf("empty-name close emitted text: n=%d err=%v byte=%q", n, err, one)
 	}
 }
