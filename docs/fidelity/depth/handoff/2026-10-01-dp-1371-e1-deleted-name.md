@@ -30,10 +30,12 @@ entry.lookup-load-failure. This changes game code: open the PR and stop for Zach
 
 The quit-to-menu password finding reproduces on untouched origin/main 9fa21c7e8 with the reference oracle (dp-1371-p4-entry-deleted-menu-baseline). Go remains on the old Password route at relogin after the menu verification sequence; retained attempt logs show three Wrong password outcomes and EOF. The runner classifies the early close as INFRA, so this is a retained pre-existing finding, not a clean vehicle or revert proof. The final no-settle vehicle and the full census are clean.
 
-Final full census (production/scenario hashes unchanged through 46ff60924; run captured dirty 9fa21c7e8 before the implementation commit):
+Preliminary full census before the sole-deleted-record bootstrap repair (production/scenario hashes matched 46ff60924; run captured dirty 9fa21c7e8 before the implementation commit):
 
 ```
 oracle-regression: scenarios=1057 passed=1050 expected=5 unpinnable=0 stale=0 failed=0 infra=1 timed_out=0 unstable=1 elapsed=499.461s started=2026-10-01T17:22:18-0400 finished=2026-10-01T17:30:37-0400 verdict=CLEAN_AFTER_RECHECK rechecked=informative-residual-depth
 ```
 
 Live folding revert: targeted PASS → content FAIL (Reclaim vs RECLAIM in confirmation/password prompts, zero infrastructure/timeouts) → restored PASS.
+
+The sole deleted-slot replacement retains C's index-zero God initialization (`src/db.c:3016-3024`), even after the fresh-mud crown has been consumed. Its unit gate has a revert triple; entry-deleted-sole-record@1,2,3,5,8 drives the real wizard flag, quit/relogin, new world entry and score exposing God level/health. General bootstrap/RNG matrix ownership remains separate. The original full run and stopped claims run are preliminary; full-final/claims-final certify the completed source.

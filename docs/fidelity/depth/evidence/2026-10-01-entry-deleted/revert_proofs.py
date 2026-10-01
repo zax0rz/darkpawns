@@ -12,6 +12,7 @@ for f in files:
 mutations=[
  ('deleted-gate','pkg/session/session_login.go','&& game.CharacterDataDeleted(rec.CharacterData)','&& false && game.CharacterDataDeleted(rec.CharacterData)','./pkg/session','TestEntryDeletedRecordStartsFresh|TestEntryDeletedWebSocketBoundary'),
  ('deleted-fold','pkg/session/session_login.go','s.startNewCharFlow(strings.ToLower(login.PlayerName))','s.startNewCharFlow(login.PlayerName)','./pkg/session','TestEntryDeletedRecordStartsFresh'),
+ ('sole-bootstrap','pkg/session/char_creation.go','count == 1 && s.creationReplacement != nil','false','./pkg/session','TestEntryDeletedSoleRecordBootstrap'),
  ('replacement-save','pkg/session/char_creation.go','if s.creationReplacement != nil {','if false && s.creationReplacement != nil {','./pkg/session','TestEntryDeletedReplacementLifecycle'),
  ('N-reset','pkg/session/char_creation.go','case "N":\n\t\t\ts.creationReplacement = nil','case "N":','./pkg/session','TestEntryDeletedAbandonKeepsRecord'),
  ('save-failure','pkg/session/char_creation.go','if saveErr != nil {','if false && saveErr != nil {','./pkg/session','TestEntryDeletedReplacementFailureCloses'),

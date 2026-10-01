@@ -1,6 +1,7 @@
 mutation	before	mutant	after	failure
 deleted-gate	0	1	0	assertion
 deleted-fold	0	1	0	assertion
+sole-bootstrap	0	1	0	assertion
 replacement-save	0	1	0	assertion
 N-reset	0	1	0	assertion
 save-failure	0	1	0	assertion

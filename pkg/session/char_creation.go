@@ -542,15 +542,17 @@ func (s *Session) persistAcceptedCharacter() error {
 		return ErrInvalidPlayerName
 	}
 	isGod := false
+	firstDeletedReplacement := false
 	if s.manager.hasDB {
 		count, err := s.manager.db.CountPlayers()
 		if err != nil {
 			return fmt.Errorf("check character store: %w", err)
 		}
-		isGod = count == 0
+		firstDeletedReplacement = count == 1 && s.creationReplacement != nil
+		isGod = count == 0 || firstDeletedReplacement
 	}
 	if os.Getenv("DP_FRESH_MUD") != "" {
-		isGod = s.manager.shouldCrownFirstPlayer()
+		isGod = s.manager.shouldCrownFirstPlayer() || firstDeletedReplacement
 	}
 	p := game.NewCharacterWithStats(0, s.charName, s.charClass, s.charRace, s.charSex, s.charStats)
 	p.Description = s.menuDescription

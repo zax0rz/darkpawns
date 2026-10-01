@@ -257,3 +257,38 @@ func TestEntryDeletedMenuLevelGate(t *testing.T) {
 		}
 	}
 }
+
+// src/db.c:3016-3024: reusing the sole player-file slot still has index zero.
+func TestEntryDeletedSoleRecordBootstrap(t *testing.T) {
+	for _, freshMud := range []string{"", "1"} {
+		t.Setenv("DP_FRESH_MUD", freshMud)
+		database := entryDatabase(t)
+		old := entrySeed(t, database, "Reclaim")
+		p := game.NewCharacter(old.ID, old.Name, game.ClassThief, game.RaceKender)
+		p.SetPlrFlag(game.PlrDeleted, true)
+		raw, err := game.EncodeCharacterData(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		old.CharacterData = raw
+		if err := database.SavePlayer(old); err != nil {
+			t.Fatal(err)
+		}
+		s := entrySession(t, database)
+		if freshMud != "" {
+			s.manager.shouldCrownFirstPlayer()
+		}
+		if err := s.handleLogin(loginMsg("RECLAIM", "")); err != nil {
+			t.Fatal(err)
+		}
+		for _, input := range []string{"Y", "freshpass", "freshpass", "N", "F", "H", "W", "K", "Y"} {
+			if err := entryInput(s, input); err != nil {
+				t.Fatal(err)
+			}
+		}
+		got, err := database.GetPlayer("Reclaim")
+		if err != nil || got == nil || got.Level != game.LVL_IMPL || got.MaxHealth != 500 || got.ID <= old.ID {
+			t.Fatalf("sole deleted replacement was not C's first-player God: record=%+v err=%v", got, err)
+		}
+	}
+}
