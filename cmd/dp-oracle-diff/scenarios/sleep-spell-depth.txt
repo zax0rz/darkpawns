@@ -8,9 +8,9 @@
 # between C's room-only shake-head arm and magical sleep; the latter reaches
 # both the victim's sleepy text and the targeted AFF_SLEEP wake gate.
 # Multi-seed is required because magic.c:1229 calls mag_savingthrow(victim,
-# SAVING_SPELL). The reagent/outlaw/level checks are on the cast surface here;
-# the original mag_affects/quaff row remains blocked because TAR_NOT_SELF makes
-# object-magic sleep unreachable.
+# SAVING_SPELL). This proves the direct cast surface; the independent
+# item-sleep vehicles prove potion self-targets through call_magic, which
+# does not apply cast_spell's TAR_NOT_SELF check (src/spell_parser.c:886).
 
 [fixture]
 empty-players

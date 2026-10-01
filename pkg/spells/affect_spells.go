@@ -62,10 +62,10 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 		}
 	}
 
-	// C magic.c:1212-1227 applies these cast-surface gates after the reagent
-	// narration and before mag_savingthrow. Object-magic sleep remains
-	// unreachable because the spell is TAR_NOT_SELF; this is the direct cast
-	// vehicle for the same shared mag_affects arms.
+	// C src/magic.c:1212-1227 applies these gates after reagent narration
+	// and before mag_savingthrow. They also apply to potion self-targets:
+	// src/spell_parser.c:699-718 enters call_magic without cast_spell's
+	// TAR_NOT_SELF check at src/spell_parser.c:886.
 	if spellNum == SpellSleep && !isNPC(victim) {
 		if !hasOutlawFlag(ch) {
 			sendToCaster(ch, "Your spell fails to affect them because you are not an Outlaw!\r\n")

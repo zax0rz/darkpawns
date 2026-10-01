@@ -1,0 +1,17 @@
+mutation	before	mutant	after	failure
+self-target	0	1	0	assertion
+potion-save-type	0	1	0	assertion
+outlaw-refusal	0	1	0	assertion
+outlaw-success	0	1	0	assertion
+reagent-vnum	0	1	0	assertion
+reagent-before-outlaw	0	1	0	assertion
+reagent-narration	0	1	0	assertion
+self-refusal-message	0	1	0	assertion
+save-draw	0	1	0	assertion
+duration-caster	0	1	0	assertion
+duration-reagent	0	1	0	assertion
+sleep-flag	0	1	0	assertion
+position	0	1	0	assertion
+sleep-message	0	1	0	assertion
+wait-pulses	0	1	0	assertion
+potion-consumption	0	1	0	assertion
