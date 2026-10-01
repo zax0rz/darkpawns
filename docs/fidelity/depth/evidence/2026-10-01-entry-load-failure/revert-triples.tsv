@@ -1,0 +1,7 @@
+mutation	before	mutant	after	failure
+object-preflight	0	1	0	assertion
+typed-schema	0	1	0	assertion
+restore-abort	0	1	0	assertion
+missing-password-record	0	1	0	assertion
+legacy-control	0	1	0	assertion
+transport-error	0	1	0	assertion

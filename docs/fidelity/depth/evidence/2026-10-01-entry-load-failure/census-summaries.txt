@@ -1,0 +1,1 @@
+dp-1371-p4-entry-load-failure-targeted	oracle-regression: scenarios=4 passed=4 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=18.391s started=2026-10-01T19:51:36-0400 finished=2026-10-01T19:51:55-0400 verdict=CLEAN
