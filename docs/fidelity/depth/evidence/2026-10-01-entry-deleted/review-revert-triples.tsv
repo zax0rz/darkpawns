@@ -1,0 +1,4 @@
+mutation	before	mutant	after	failure
+admin-readers	0	1	0	assertion
+clan-clear	0	1	0	assertion
+alias-delete	0	1	0	assertion

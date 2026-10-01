@@ -24,7 +24,7 @@ are in ../evidence/2026-10-01-entry-deleted/. Complete retained outputs are unde
 ~/Archives/darkpawns/oracle-runs/2026-10-01/dp-1371-p4-entry-deleted-*.
 
 Proposed menu-actions follow-ups: verification after returning from world entry,
-clan removal/alias cleanup (src/interpreter.c:2331-2340), and the remaining menu
+the remaining menu
 rejection/frozen/confirmation matrix. That row stays blocked. The next batch is
 entry.lookup-load-failure. This changes game code: open the PR and stop for Zach.
 
@@ -57,3 +57,5 @@ oracle-claims: seed=all pairs=3020 expected=11 expected_unstable=0 fail=0 infra=
 ```
 
 Both final live vehicles pass at seeds 1,2,3,5,8. Retained C captures were inspected for deletion, folded fresh-name confirmation/password and replacement menu; the sole-record vehicle also exposes world entry, health 500 and rank level 40. See live-seed-inspection.tsv. Production source is unchanged since the completed-source full census.
+
+PR #1749 review repair: deleted records now take the existing missing-record path in admin login (identical 401 body, bcrypt timing decoy) and all OLC/schema/new-zone/file-edit saved-record checks. Clan membership and alias cleanup are implemented in this batch: src/interpreter.c:2331-2340, clan.c:789-796, objsave.c:1227-1251. C excludes clan table index zero; tests preserve that boundary, and test both ordinary deleted players and LVL_GRGOD. Durable character save precedes live clan total adjustment; failed save restores the in-memory clan fields and marker. Alias removal treats missing files as harmless and logs real failures as C does. Three additional assertion-only revert triples are retained by review_revert_proofs.py and review-revert-triples.tsv. Earlier census summaries certify the original PR; new review-full/review-claims runs certify these changes.

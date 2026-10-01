@@ -2,6 +2,7 @@ package session
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -289,6 +290,68 @@ func TestEntryDeletedSoleRecordBootstrap(t *testing.T) {
 		got, err := database.GetPlayer("Reclaim")
 		if err != nil || got == nil || got.Level != game.LVL_IMPL || got.MaxHealth != 500 || got.ID <= old.ID {
 			t.Fatalf("sole deleted replacement was not C's first-player God: record=%+v err=%v", got, err)
+		}
+	}
+}
+
+// C interpreter.c:2331-2340: clan index > 0 is cleared before save;
+// alias deletion applies even to gods who keep their deleted flag clear.
+func TestEntryDeletedMenuClanAndAliases(t *testing.T) {
+	for _, level := range []int{game.LVL_GOD, game.LVL_GRGOD} {
+		for _, index := range []int{0, 1} {
+			t.Run(fmt.Sprintf("level%d/index%d", level, index), func(t *testing.T) {
+				t.Chdir(t.TempDir())
+				database := entryDatabase(t)
+				old := entrySeed(t, database, "Reclaim")
+				old.Level = level
+				p := game.NewCharacter(old.ID, old.Name, game.ClassWarrior, game.RaceHuman)
+				p.ClanID, p.ClanRank = index+1, 2
+				raw, err := game.EncodeCharacterData(p)
+				if err != nil {
+					t.Fatal(err)
+				}
+				old.CharacterData = raw
+				if err := database.SavePlayer(old); err != nil {
+					t.Fatal(err)
+				}
+				s := entrySession(t, database)
+				s.manager.world.Clans = game.NewClanManager()
+				if index == 1 {
+					s.manager.world.Clans.AddClan(&game.Clan{ID: 3, Name: "First"})
+				}
+				clan := &game.Clan{ID: 7, Name: "Wolves", Members: 4, Power: 200}
+				s.manager.world.Clans.AddClan(clan)
+				if err := game.WriteAliases("Reclaim", []game.Alias{{Alias: "oldalias", Replacement: " score"}}); err != nil {
+					t.Fatal(err)
+				}
+				if err := s.handleLogin(loginMsg("Reclaim", "oraclepass")); err != nil {
+					t.Fatal(err)
+				}
+				for _, input := range []string{"", "5", "oraclepass", "yes"} {
+					if err := entryInput(s, input); err != nil {
+						t.Fatal(err)
+					}
+				}
+				rec, err := database.GetPlayer("Reclaim")
+				if err != nil || rec == nil {
+					t.Fatal("missing retained record")
+				}
+				restored := game.NewCharacter(rec.ID, rec.Name, game.ClassWarrior, game.RaceHuman)
+				if err := game.ApplyCharacterData(restored, rec.CharacterData); err != nil {
+					t.Fatal(err)
+				}
+				if index == 1 {
+					if restored.ClanID != 0 || restored.ClanRank != 0 || clan.Members != 3 || clan.Power != 200-level {
+						t.Fatalf("clan retained: player=%d/%d members=%d power=%d", restored.ClanID, restored.ClanRank, clan.Members, clan.Power)
+					}
+				} else if restored.ClanID != index+1 || restored.ClanRank != 2 || clan.Members != 4 || clan.Power != 200 {
+					t.Fatal("C index-zero boundary changed")
+				}
+				aliases, err := game.ReadAliases("RECLAIM")
+				if err != nil || len(aliases) != 0 {
+					t.Fatalf("deleted name inherited aliases: %v %v", aliases, err)
+				}
+			})
 		}
 	}
 }
