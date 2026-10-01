@@ -152,6 +152,24 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		}
 	}
 
+	// src/fight.c:544-571: remove affects, tattoo, nightbreed, then memories.
+	cb.RemoveAllAffects = func(name string) {
+		if p, ok := w.GetPlayer(name); ok {
+			p.removeRawKillAffects()
+		}
+	}
+	cb.RemoveTattoo = func(name string) {
+		if p, ok := w.GetPlayer(name); ok {
+			removeRawKillTattoo(p)
+		}
+	}
+	cb.ClearNightbreed = func(name string) {
+		if p, ok := w.GetPlayer(name); ok {
+			clearRawKillNightbreed(p)
+		}
+	}
+	cb.ForgetVictim = w.forgetRawKillVictim
+
 	// -------------------------------------------------------------------------
 	// Player/Mob/Room flags
 	// -------------------------------------------------------------------------
@@ -345,7 +363,11 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	cb.Unmount = func(name string) {
 		if p, ok := w.GetPlayer(name); ok {
-			p.Unmount()
+			mount := w.riddenMount(p)
+			w.clearMountedPair(p, mount)
+			if mount != nil {
+				mount.RemoveAffected(affMounted)
+			}
 		}
 	}
 
@@ -494,9 +516,16 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// Corpse & extraction — wired to game-layer helpers for the legacy RawKill
 	// path. The active engine path still uses CombatEngine.DeathFunc.
 	// -------------------------------------------------------------------------
+	cb.RawKillNPC = w.RawKillCombatant
 	cb.MakeCorpse = func(victim string, attackType int) {
 		if p, ok := w.GetPlayer(victim); ok {
-			_ = MakeCorpse(p)
+			w.makeRawKillBody(p, attackType, false)
+		}
+	}
+
+	cb.MakeDust = func(name string, attackType int) {
+		if p, ok := w.GetPlayer(name); ok {
+			w.makeRawKillBody(p, attackType, true)
 		}
 	}
 

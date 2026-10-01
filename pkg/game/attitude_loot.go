@@ -19,8 +19,8 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 		corpse := w.findAttitudeLootCorpse(killer.GetRoom(), victim.GetName())
 		if corpse != nil {
 			items := append([]*ObjectInstance(nil), corpse.Contains...)
-			for i := len(items) - 1; i >= 0; i-- {
-				item := items[i]
+			// C get_from_container walks contains forward (act.item.c:246-253).
+			for _, item := range items {
 				if item == nil || !item.IsTakeable() {
 					continue
 				}
