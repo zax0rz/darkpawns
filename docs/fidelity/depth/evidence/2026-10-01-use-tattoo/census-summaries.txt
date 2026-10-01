@@ -1,0 +1,2 @@
+oracle-regression: scenarios=1048 passed=1042 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=494.254s started=2026-10-01T11:07:44-0400 finished=2026-10-01T11:15:58-0400 verdict=CLEAN
+oracle-claims: seed=all pairs=2970 expected=11 expected_unstable=0 fail=0 infra=0 pass=2959 stale=0 timeout=0 unpinnable=0 elapsed=1737.191s verdict=CLEAN_AFTER_RECHECK
