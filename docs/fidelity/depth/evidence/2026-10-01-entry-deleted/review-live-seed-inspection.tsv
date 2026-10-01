@@ -1,0 +1,11 @@
+seed	vehicle	result	C_capture_inspection
+1	entry-deleted-menu-reuse	PASS	Deletion; folded-name confirmation; fresh password; replacement menu
+1	entry-deleted-sole-record	PASS	Wizard deleted flag; fresh creation; replacement world/score; health 500; rank level 40
+2	entry-deleted-menu-reuse	PASS	Deletion; folded-name confirmation; fresh password; replacement menu
+2	entry-deleted-sole-record	PASS	Wizard deleted flag; fresh creation; replacement world/score; health 500; rank level 40
+3	entry-deleted-menu-reuse	PASS	Deletion; folded-name confirmation; fresh password; replacement menu
+3	entry-deleted-sole-record	PASS	Wizard deleted flag; fresh creation; replacement world/score; health 500; rank level 40
+5	entry-deleted-menu-reuse	PASS	Deletion; folded-name confirmation; fresh password; replacement menu
+5	entry-deleted-sole-record	PASS	Wizard deleted flag; fresh creation; replacement world/score; health 500; rank level 40
+8	entry-deleted-menu-reuse	PASS	Deletion; folded-name confirmation; fresh password; replacement menu
+8	entry-deleted-sole-record	PASS	Wizard deleted flag; fresh creation; replacement world/score; health 500; rank level 40

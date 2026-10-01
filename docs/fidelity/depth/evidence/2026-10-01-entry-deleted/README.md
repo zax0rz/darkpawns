@@ -81,3 +81,11 @@ Review full census on completed production source f7f1f4e10:
 ```
 oracle-regression: scenarios=1058 passed=1052 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=500.307s started=2026-10-01T18:47:54-0400 finished=2026-10-01T18:56:15-0400 verdict=CLEAN
 ```
+
+Review claims census (Go HEAD 2acd706ff9148de7885c7e8eabfd0dc435906d5a; completed production source f7f1f4e10):
+
+```
+oracle-claims: seed=all pairs=3020 expected=11 expected_unstable=0 fail=0 infra=0 pass=3009 stale=0 timeout=0 unpinnable=0 elapsed=1692.392s verdict=CLEAN
+```
+
+All ten new vehicle/seed pairs pass. C captures confirm the deletion/fresh-name/password/menu paths and sole-slot world/score health 500/rank level 40. See review-live-seed-inspection.tsv. Final production and test hashes match review-source-sha256.tsv; the full and claims runs certify the same production source. Focused review race tests also pass.
