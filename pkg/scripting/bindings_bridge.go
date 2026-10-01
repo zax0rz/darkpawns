@@ -248,8 +248,11 @@ func (e *Engine) bridgeSetSkill(L *lua.LState, b Bridge) int {
 	level, ok3 := argNumber(L, 3)
 	if ok && ok2 && ok3 {
 		b.SetSkill(ref, skill, level)
+		// C leaves lua_gettable's struct userdata on top (src/scripts.c:1372-1382).
+		L.Push(L.Get(1).(*lua.LTable).RawGetString("struct"))
 	}
-	return 1 // C returns 1 without pushing: the script sees its own last argument
+	// Invalid arguments leave the original stack top as the single result.
+	return 1
 }
 
 // lua_tport (scripts.c:1518-1562): move vict to the room and look, then

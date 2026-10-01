@@ -1,0 +1,100 @@
+# Lua set_skill state and return proof. Skill readback and affect_total
+# arithmetic are also certified by TestLuaSetSkillDepthValid/Invalid/Modifiers.
+# depth-case: lua.bind-set-skill
+# depth-case: lua.bind-set-skill-return
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+if (argument == "say valid") then
+local r = set_skill(ch, 134, 37)
+if (type(r) == "userdata" and r == ch.struct) then
+say("valid player struct")
+else
+say("valid player result " .. type(r))
+end
+elseif (argument == "say numeric") then
+local r = set_skill(ch, "132", "83")
+if (type(r) == "userdata" and r == ch.struct) then
+say("numeric player struct")
+else
+say("numeric player result " .. type(r))
+end
+elseif (argument == "say mobile") then
+local r = set_skill(me, 134, 37)
+if (type(r) == "userdata" and r == me.struct) then
+say("valid mobile struct")
+else
+say("valid mobile result " .. type(r))
+end
+elseif (argument == "say badchar") then
+local r = set_skill("not a table", 134, 37)
+say("invalid character top " .. r)
+elseif (argument == "say badskill") then
+local r = set_skill(ch, "not a number", 37, "top")
+say("invalid skill top " .. r)
+elseif (argument == "say badlevel") then
+local r = set_skill(ch, 134, "not a number")
+say("invalid level top " .. r)
+elseif (argument == "say nil") then
+local r = set_skill(ch, 134, nil)
+say("invalid nil top " .. type(r))
+elseif (argument == "say table") then
+local r = set_skill(ch, 134, ch)
+if (r == ch) then
+say("invalid table top unchanged")
+else
+say("invalid table changed")
+end
+else
+return FALSE
+end
+return TRUE
+end
+
+[setup:oracle]
+Probelast
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Probelast
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+
+[probe]
+say valid
+say numeric
+say mobile
+say badchar
+say badskill
+say badlevel
+say nil
+say table
