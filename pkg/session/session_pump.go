@@ -221,6 +221,10 @@ func (s *Session) writePump() {
 
 func (s *Session) finishWebSocketTransport() {
 	s.transportCleanupOnce.Do(func() {
+		// C close_socket frees the descriptor, so a name held during entry is
+		// free again (ban.c:266-268). A pre-login session is not registered,
+		// so UnregisterSession below does not release it.
+		s.releaseEntryName()
 		if !s.manager.HandleTransportDisconnect(s) {
 			s.manager.UnregisterSession(s)
 		}

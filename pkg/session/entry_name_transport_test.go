@@ -51,3 +51,36 @@ func TestEntryNameWebSocketBoundary(t *testing.T) {
 		t.Fatalf("all-space initial name did not close normally: %v", err)
 	}
 }
+
+// A dropped WebSocket must free the name it held at the password prompt, or
+// one closed browser tab locks that character out until restart.
+func TestEntryNameWebSocketDropReleasesName(t *testing.T) {
+	database := entryDatabase(t)
+	entrySeed(t, database, "Aiko")
+	m := entryTransportManager(t, database)
+	m.loginLimiter.GetLimiter("127.0.0.1").SetLimit(rate.Inf)
+	server := httptest.NewServer(http.HandlerFunc(m.HandleWebSocket))
+	defer server.Close()
+	stage := func() string {
+		conn := entryWebSocketDial(t, server.URL)
+		defer func() { _ = conn.Close() }()
+		wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "Aiko"})
+		var prompt CharCreateData
+		entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
+		return prompt.Stage
+	}
+	if got := stage(); got != "login_password" {
+		t.Fatalf("first connection: %s", got)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		got := stage()
+		if got == "login_password" {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("name still held after the WebSocket dropped: %s", got)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
