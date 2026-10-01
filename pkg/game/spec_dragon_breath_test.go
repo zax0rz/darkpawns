@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -87,49 +86,85 @@ func TestSpecDragonBreath_EntryGatesAndRoomThreat(t *testing.T) {
 
 func TestSpecDragonBreath_CombatRollAndSharedReturn(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
-	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	w.StopAITicker()
+	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 24)
+	mob.VNum = 4209     // C's frost-breath arm.
+	player.SetLevel(10) // no low-level damage protection
 	mob.SetPosition(combat.PosFighting)
 	mob.SetFighting(player.GetName())
-	player.SetFighting(mob.GetName())
 	lastMsg()
 
-	var failSeed uint32
-	for seed := uint32(1); seed < 10000; seed++ {
-		rng := dprng.New(seed)
-		if rng.Number(0, 3) != 0 {
-			failSeed = seed
-			break
+	old := combat.GetCallbacks()
+	t.Cleanup(func() { combat.SetCallbacks(old) })
+	cb := w.WireCombatCallbacks()
+	messages := loadMessagesFile(t)
+	combat.InitFightMessages(cb, messages)
+	combat.SetCallbacks(cb)
+	variants, ok := messages.Variants(spells.SpellFrostBreath)
+	if !ok || len(variants) == 0 {
+		t.Fatal("frost breath messages missing")
+	}
+	message := cb.SkillMessage
+	breaths := 0
+	cb.SkillMessage = func(dam int, attacker, victim string, attackType, room int) bool {
+		if attackType == spells.SpellFrostBreath {
+			breaths++
+			if dam != 0 || attacker != mob.GetName() || victim != player.Name || room != 1001 {
+				t.Errorf("breath boundary: %d %q %q %d", dam, attacker, victim, room)
+			}
 		}
+		return message(dam, attacker, victim, attackType, room)
 	}
-	if failSeed == 0 {
-		t.Fatal("could not find a seed for dragon breath's failed combat roll")
+	// A failed breath roll consumes only number(0,3).
+	failSeed := uint32(1)
+	failRNG := dprng.New(failSeed)
+	if failRNG.Number(0, 3) == 0 {
+		t.Fatal("failed seed no longer rejects breath")
 	}
+	wantFailNext := failRNG.Number(0, 999)
 	dprng.ResetStream(failSeed)
-	if !specDragonBreath(w, nil, mob, "", "") {
-		t.Fatal("failed combat breath roll should still consume the special")
+	if !specDragonBreath(w, nil, mob, "", "") || breaths != 0 || lastMsg() != "" || player.GetFighting() != "" {
+		t.Fatal("failed breath roll changed state/output or shared return")
 	}
-	if got := lastMsg(); got != "" {
-		t.Fatalf("failed combat breath invented output = %q", got)
+	if got := dprng.Number(0, 999); got != wantFailNext {
+		t.Fatalf("failed breath next draw = %d want %d", got, wantFailNext)
 	}
 
-	var successSeed uint32
-	for seed := uint32(1); seed < 10000; seed++ {
-		rng := dprng.New(seed)
-		if rng.Number(0, 3) == 0 {
-			successSeed = seed
-			break
+	// Seed the success arm, then choose magic_user roll 12 with neutral
+	// alignment, so the shared tail returns TRUE without another spell.
+	// C draws: breath roll; mag_areas SAVING_SPELL; message selector;
+	// magic_user victim choice; magic_user spell choice (spec_procs.c:418-452).
+	var seed uint32
+	var wantNext int
+	for candidate := uint32(1); candidate < 10000; candidate++ {
+		rng := dprng.New(candidate)
+		if rng.Number(0, 3) != 0 {
+			continue
 		}
+		rng.Number(0, 99)
+		rng.Dice(1, len(variants))
+		rng.Number(0, 4)
+		if rng.Number(0, 12)+12 != 12 {
+			continue
+		}
+		seed, wantNext = candidate, rng.Number(0, 999)
+		break
 	}
-	if successSeed == 0 {
-		t.Fatal("could not find a seed for dragon breath's successful combat roll")
+	if seed == 0 {
+		t.Fatal("no success seed")
 	}
-	dprng.ResetStream(successSeed)
+	hp := player.GetHP()
+	dprng.ResetStream(seed)
 	if !specDragonBreath(w, nil, mob, "", "") {
-		t.Fatal("successful combat breath should return the shared magic_user result")
+		t.Fatal("successful breath must return shared magic_user result")
 	}
-	if got := lastMsg(); strings.Contains(got, "breathes") {
-		t.Fatalf("combat breath invented output = %q", got)
+	if breaths != 1 || player.GetFighting() != mob.GetName() || player.GetHP() != hp {
+		t.Fatalf("breath effect: calls=%d fighting=%q HP=%d want one zero-damage breath and combat enrollment", breaths, player.GetFighting(), player.GetHP())
 	}
+	if got := dprng.Number(0, 999); got != wantNext {
+		t.Fatalf("successful breath draw sequence: next=%d want=%d seed=%d", got, wantNext, seed)
+	}
+	t.Logf("breath success seed=%d next=%d", seed, wantNext)
 }
 
 func TestSpecDragonBreath_StandingRecovery(t *testing.T) {

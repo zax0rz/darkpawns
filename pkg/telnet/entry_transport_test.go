@@ -80,8 +80,32 @@ func readTelnetUntil(t *testing.T, conn net.Conn, needle string) string {
 	}
 }
 
+// readNextLoginPrompt is bounded by bytes and an I/O safety deadline. Both
+// valid saved-login and wrong new-character prompts terminate the observation.
+func readNextLoginPrompt(t *testing.T, conn net.Conn) string {
+	t.Helper()
+	if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	var raw bytes.Buffer
+	var one [1]byte
+	for raw.Len() < 512 {
+		n, err := conn.Read(one[:])
+		if err != nil {
+			t.Fatalf("next login prompt read: %v; bytes=%q", err, stripTelnetCommands(raw.Bytes()))
+		}
+		raw.Write(one[:n])
+		visible := string(stripTelnetCommands(raw.Bytes()))
+		if strings.HasSuffix(visible, ": ") || strings.HasSuffix(visible, "(Y/N)? ") {
+			return visible
+		}
+	}
+	t.Fatalf("next login prompt exceeds 512 bytes: %q", stripTelnetCommands(raw.Bytes()))
+	return ""
+}
+
 // TestEntryTelnetSavedIdentityEntersWorld proves the real TCP listener
-// against PostgreSQL, including case-insensitive lookup and post-MOTD entry.
+// against SQLite, including case-insensitive lookup and post-MOTD entry.
 func TestEntryTelnetSavedIdentityEntersWorld(t *testing.T) {
 	t.Setenv("JWT_SECRET", "entry-telnet-test-jwt-secret-at-least-32")
 	database := listenerEntryDatabase(t)
@@ -106,7 +130,11 @@ func TestEntryTelnetSavedIdentityEntersWorld(t *testing.T) {
 	if _, err := conn.Write([]byte("aiko\r\n")); err != nil {
 		t.Fatal(err)
 	}
-	readTelnetUntil(t, conn, "Password: ")
+	// Observe whichever prompt arrived; a new-character prompt must fail
+	// immediately on bytes, rather than waiting five seconds for Password.
+	if got := readNextLoginPrompt(t, conn); got != "Password: " {
+		t.Fatalf("next login prompt = %q, want %q", got, "Password: ")
+	}
 	if _, err := conn.Write([]byte("oraclepass\r\n")); err != nil {
 		t.Fatal(err)
 	}
