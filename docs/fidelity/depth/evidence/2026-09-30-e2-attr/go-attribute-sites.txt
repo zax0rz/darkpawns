@@ -1,0 +1,276 @@
+pkg/parser/mob.go:369:	// Stats line: level thac0 ac hpdice damagedice
+pkg/parser/parser.go:35:// Stats returns statistics about the parsed world.
+pkg/parser/parser.go:36:func (w *World) Stats() string {
+pkg/parser/parser.go:38:		"World Stats:\n"+
+pkg/spells/damage_spells.go:406:		return a.GetAlignment() < 0
+pkg/spells/damage_spells.go:414:		return a.GetAlignment() > 0
+pkg/command/skill_commands.go:154:		str := player.GetStr()
+pkg/command/skill_commands.go:155:		dex := player.GetDex()
+pkg/command/skill_commands.go:163:		intel := player.GetInt()
+pkg/command/skill_commands.go:164:		wis := player.GetWis()
+pkg/command/skill_commands.go:172:		dex := player.GetDex()
+pkg/command/skill_commands.go:173:		intel := player.GetInt()
+pkg/command/skill_commands.go:229:		stat = player.GetStr()
+pkg/command/skill_commands.go:231:		stat = player.GetInt()
+pkg/command/skill_commands.go:233:		stat = player.GetDex()
+pkg/command/skill_commands.go:335:						stat = player.GetStr()
+pkg/command/skill_commands.go:337:						stat = player.GetInt()
+pkg/command/skill_commands.go:339:						stat = player.GetDex()
+pkg/command/skill_commands.go:481:		stat = player.GetStr()
+pkg/command/skill_commands.go:483:		stat = player.GetInt()
+pkg/command/skill_commands.go:485:		stat = player.GetDex()
+pkg/command/skill_commands.go:565:			stat = player.GetStr()
+pkg/command/skill_commands.go:567:			stat = player.GetInt()
+pkg/command/skill_commands.go:569:			stat = player.GetDex()
+pkg/db/convert.go:49:		StatStr:       p.Stats.Str,
+pkg/db/convert.go:50:		StatStrAdd:    p.Stats.StrAdd,
+pkg/db/convert.go:51:		StatInt:       p.Stats.Int,
+pkg/db/convert.go:52:		StatWis:       p.Stats.Wis,
+pkg/db/convert.go:53:		StatDex:       p.Stats.Dex,
+pkg/db/convert.go:54:		StatCon:       p.Stats.Con,
+pkg/db/convert.go:55:		StatCha:       p.Stats.Cha,
+pkg/db/convert.go:101:	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+pkg/spells/affect_spells.go:2013:		case a.GetAlignment() > 0:
+pkg/spells/affect_spells.go:2016:		case a.GetAlignment() < 0:
+pkg/spells/affect_spells.go:2080:		case a.GetAlignment() > 0:
+pkg/spells/affect_spells.go:2083:		case a.GetAlignment() < 0:
+pkg/spells/affect_spells.go:2409:		str, strAdd := sg.GetStr(), sg.GetStrAdd()
+pkg/spells/affect_spells.go:2419:			line += fmt.Sprintf(", Int: %d", ig.GetInt())
+pkg/spells/affect_spells.go:2422:			line += fmt.Sprintf(", Wis: %d", wg.GetWis())
+pkg/spells/affect_spells.go:2425:			line += fmt.Sprintf(", Dex: %d", dg.GetDex())
+pkg/spells/affect_spells.go:2428:			line += fmt.Sprintf(", Con: %d", cg.GetCon())
+pkg/spells/affect_spells.go:2431:			line += fmt.Sprintf(", Cha: %d", chg.GetCha())
+pkg/spells/affect_spells.go:2792:			if dprng.Number(0, 25) > cn.GetDex() {
+pkg/spells/affect_spells.go:2871:			chCha = ci.GetInt()
+pkg/spells/affect_spells.go:2897:	if vi, ok := cvict.(intGetter); ok && vi.GetInt() > 0 {
+pkg/spells/affect_spells.go:2898:		dur = dur / vi.GetInt()
+pkg/spells/affect_spells.go:3087:		alignment = a.GetAlignment()
+pkg/combat/combatant.go:40:	// Stats
+pkg/combat/formulas.go:224:	return StrengthIndex(c.GetStr(), c.GetStrAdd())
+pkg/combat/formulas.go:281:	dex := c.GetDex()
+pkg/combat/formulas.go:362:	intBonus := int(float64(attacker.GetInt()-13) / 1.5)
+pkg/combat/formulas.go:363:	wisBonus := int(float64(attacker.GetWis()-13) / 1.5)
+pkg/combat/formulas.go:545:	if attacker.GetStr() == 0 {
+pkg/optimization/object_pool.go:189:// Stats returns pool statistics
+pkg/optimization/object_pool.go:190:func (op *ObjectPool) Stats() map[string]interface{} {
+pkg/scripting/engine.go:514:				pt.RawSetString("evil", lua.LBool(p.GetAlignment() < -350))
+pkg/scripting/engine.go:526:				alignment := m.GetPrototype().GetAlignment()
+pkg/scripting/engine.go:1003:	tbl.RawSetString("alignment", lua.LNumber(player.GetAlignment()))
+pkg/scripting/engine.go:1008:	alignment := player.GetAlignment()
+pkg/scripting/engine.go:1062:	alignment := proto.GetAlignment()
+pkg/optimization/python_ai.go:317:// Stats returns cache statistics.
+pkg/optimization/python_ai.go:318:func (ac *AICache) Stats() map[string]interface{} {
+pkg/optimization/pool.go:186:// Stats returns current pool statistics.
+pkg/optimization/pool.go:187:func (p *ConnectionPool) Stats() ConnectionPoolStats {
+pkg/optimization/cache.go:94:// Stats returns cache statistics
+pkg/optimization/cache.go:95:func (c *Cache) Stats() map[string]interface{} {
+pkg/optimization/database.go:399:	dbStats := cm.db.Stats()
+pkg/combat/callbacks.go:79:	// Kill/Death/Stats
+pkg/combat/callbacks.go:270:		return cb.GetAlignment(name)
+pkg/admin/handlers.go:452:	Stats       map[string]int       `json:"stats"`
+pkg/admin/handlers.go:607:		"str": p.Stats.Str,
+pkg/admin/handlers.go:608:		"int": p.Stats.Int,
+pkg/admin/handlers.go:609:		"wis": p.Stats.Wis,
+pkg/admin/handlers.go:610:		"dex": p.Stats.Dex,
+pkg/admin/handlers.go:611:		"con": p.Stats.Con,
+pkg/admin/handlers.go:612:		"cha": p.Stats.Cha,
+pkg/admin/handlers.go:669:		Stats:       stats,
+pkg/game/mobact.go:51:	return combat.CarryWeight(m.GetStr(), m.GetStrAdd())
+pkg/game/mobact.go:58:	return 5 + (m.GetDex() >> 1) + (m.GetLevel() >> 1)
+pkg/game/mobact.go:329:				vAlign := vict.GetAlignment()
+pkg/game/combat_wire.go:48:			return p.GetAlignment()
+pkg/game/combat_wire.go:51:			return m.GetAlignment()
+pkg/game/combat_wire.go:440:	// Kill/Death/Stats
+pkg/game/combat_wire.go:502:			return p.GetCon()
+pkg/game/combat_wire.go:510:			p.Stats.Con = val
+pkg/game/level.go:162:	con := p.Stats.Con
+pkg/game/level.go:191:		wis := p.Stats.Wis
+pkg/game/level.go:222:		wis := p.Stats.Wis
+pkg/game/level.go:249:		wis := p.Stats.Wis
+pkg/game/level.go:273:		wis := p.Stats.Wis
+pkg/game/level.go:303:		wis := p.Stats.Wis
+pkg/game/level.go:327:		wis := p.Stats.Wis
+pkg/game/level.go:351:		wis := p.Stats.Wis
+pkg/game/level.go:381:		wis := p.Stats.Wis
+pkg/game/level.go:415:		wis := p.Stats.Wis
+pkg/game/level.go:465:	str := p.Stats.Str
+pkg/game/level.go:466:	strAdd := p.Stats.StrAdd
+pkg/game/level.go:467:	dex := p.Stats.Dex
+pkg/engine/affect_helpers.go:82:			sm.SetStat("STR", sm.GetStat("STR")+mod)
+pkg/engine/affect_helpers.go:84:			sm.SetStat("DEX", sm.GetStat("DEX")+mod)
+pkg/engine/affect_helpers.go:86:			sm.SetStat("INT", sm.GetStat("INT")+mod)
+pkg/engine/affect_helpers.go:88:			sm.SetStat("WIS", sm.GetStat("WIS")+mod)
+pkg/engine/affect_helpers.go:90:			sm.SetStat("CON", sm.GetStat("CON")+mod)
+pkg/engine/affect_helpers.go:92:			sm.SetStat("CHA", sm.GetStat("CHA")+mod)
+pkg/engine/affect_helpers.go:100:			sm.SetStat("AC", sm.GetStat("AC")-mod)
+pkg/engine/affect_helpers.go:102:			sm.SetStat("Hitroll", sm.GetStat("Hitroll")+mod)
+pkg/engine/affect_helpers.go:104:			sm.SetStat("Damroll", sm.GetStat("Damroll")+mod)
+pkg/engine/affect_helpers.go:202:		v := sm.GetStat(s)
+pkg/engine/affect_helpers.go:210:	str := sm.GetStat("STR")
+pkg/engine/affect_helpers.go:214:		strAdd := sm.GetStat("StrAdd")
+pkg/engine/affect_helpers.go:225:	align := sm.GetStat("Alignment")
+pkg/session/wiz_system.go:510:		target.player.Stats = stats
+pkg/game/player_social.go:30:	return p.Stats.Con + p.sumAffectModsLocked(ApplyCon) + p.sumEquipAffectModsLocked(ApplyCon)
+pkg/game/player_social.go:244:	return p.Stats.Cha + p.sumAffectModsLocked(ApplyCha) + p.sumEquipAffectModsLocked(ApplyCha)
+pkg/session/menu.go:346:		s.player.SetOrigCon(s.player.Stats.Con)
+pkg/game/player.go:94:	Stats CharStats
+pkg/game/player.go:384:	p.Stats = stats
+pkg/game/player.go:454:	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+pkg/game/player.go:512:	return combat.CarryWeight(p.GetStr(), p.GetStrAdd())
+pkg/game/player.go:518:	return 5 + (p.GetDex() >> 1) + (p.GetLevel() >> 1)
+pkg/game/skill_stealth.go:47:	prob := ch.GetSkill(skill) + dexAppSkill(ch.GetDex()).Sneak
+pkg/game/skill_stealth.go:112:	prob := ch.GetSkill(skill) + dexAppSkill(ch.GetDex()).Hide
+pkg/game/skill_stealth.go:191:	percent := dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+pkg/game/animate_dead.go:52:	if count >= c.GetCha()/2 {
+pkg/game/player_combat.go:56:	return p.Stats.Str + p.sumAffectModsLocked(ApplyStr) + p.sumEquipAffectModsLocked(ApplyStr)
+pkg/game/player_combat.go:64:	return p.Stats.Dex + p.sumAffectModsLocked(ApplyDex) + p.sumEquipAffectModsLocked(ApplyDex)
+pkg/game/player_combat.go:72:	return p.Stats.Int + p.sumAffectModsLocked(ApplyInt) + p.sumEquipAffectModsLocked(ApplyInt)
+pkg/game/player_combat.go:80:	return p.Stats.Wis + p.sumAffectModsLocked(ApplyWis) + p.sumEquipAffectModsLocked(ApplyWis)
+pkg/game/player_combat.go:138:	return p.Stats.StrAdd
+pkg/game/player_stats.go:333:		"STR":       &p.Stats.Str,
+pkg/game/player_stats.go:334:		"DEX":       &p.Stats.Dex,
+pkg/game/player_stats.go:335:		"INT":       &p.Stats.Int,
+pkg/game/player_stats.go:336:		"WIS":       &p.Stats.Wis,
+pkg/game/player_stats.go:337:		"CON":       &p.Stats.Con,
+pkg/game/player_stats.go:338:		"CHA":       &p.Stats.Cha,
+pkg/game/player_stats.go:347:		"StrAdd":    &p.Stats.StrAdd,
+pkg/game/player_stats.go:381:	return p.GetStat(name)
+pkg/game/character.go:270:	// Stats will be properly rolled — for now return zeroed
+pkg/game/save.go:55:	Stats       CharStats      `json:"stats"`
+pkg/game/save.go:151:	stats := p.Stats
+pkg/game/save.go:196:		Alignment:   p.GetAlignment(),
+pkg/game/save.go:204:		Strength:    p.GetStrength(),
+pkg/game/save.go:211:		Stats:       stats,
+pkg/game/save.go:325:		Stats:         data.Stats,
+pkg/game/save.go:326:		OrigCon:       data.Stats.Con,
+pkg/game/save.go:345:	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+pkg/session/wiz_player.go:57:				target.Stats.StrAdd = 100
+pkg/session/wiz_player.go:58:				target.Stats.Int = 25
+pkg/session/wiz_player.go:59:				target.Stats.Wis = 25
+pkg/session/wiz_player.go:60:				target.Stats.Dex = 25
+pkg/session/wiz_player.go:61:				target.Stats.Str = 25
+pkg/session/wiz_player.go:62:				target.Stats.Con = 25
+pkg/session/wiz_player.go:63:				target.Stats.Cha = 25
+pkg/session/wiz_player.go:261:		// the real abilities intact. Go stores real abilities directly in Stats;
+pkg/session/protocol.go:142:	Stats   *CharStatsDisplay  `json:"stats,omitempty"`   // only on rollstats/confirm stage
+pkg/game/constants.go:346:	"Roll Stats",
+pkg/game/world_player.go:106:// Stats returns world statistics.
+pkg/game/world_player.go:107:func (w *World) Stats() string {
+pkg/game/spec_procs.go:203:	gain := intAppLearn(ch.GetInt())
+pkg/game/spec_procs.go:359:	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+pkg/game/spec_procs.go:401:		if !mobIsEvil(me) && vict.GetAlignment() <= -350 {
+pkg/game/spec_procs.go:403:		} else if mobIsEvil(me) && vict.GetAlignment() >= 350 {
+pkg/game/spec_procs.go:761:		align := tch.GetAlignment()
+pkg/game/spec_procs.go:771:	if evil != nil && evilTarget.GetAlignment() >= 0 {
+pkg/game/player_affects.go:187:func (p *Player) IsGood() bool { return p.GetAlignment() >= 350 }
+pkg/game/player_affects.go:190:func (p *Player) IsEvil() bool { return p.GetAlignment() <= -350 }
+pkg/session/wiz_stats.go:20:		s.Send("Stats on who or what?\r\n")
+pkg/session/wiz_stats.go:32:			s.Send("Stats on which mobile?\r\n")
+pkg/session/wiz_stats.go:43:			s.Send("Stats on which player?\r\n")
+pkg/session/wiz_stats.go:54:			s.Send("Stats on which player?\r\n")
+pkg/session/wiz_stats.go:70:			s.Send("Stats on which object?\r\n")
+pkg/session/wiz_stats.go:123:		mob.GetStr(), mob.GetStrAdd(), mob.GetInt(), mob.GetHP(), mob.GetMaxHP(), game.MobHitGain(mob)))
+pkg/session/wiz_stats.go:125:		mob.GetDex(), mob.GetWis(), mob.GetMana(), mob.GetMaxMana(), game.ManaGainNPC(mob)))
+pkg/session/wiz_stats.go:127:		mob.GetCon(), mob.GetCon(), mob.GetCha(), mob.GetMove(), mob.GetMaxMove(), game.MoveGainNPC(mob)))
+pkg/session/wiz_stats.go:194:		wizardClassName(p.GetClass()), p.GetLevel(), p.GetExp(), p.GetAlignment()))
+pkg/session/wiz_stats.go:221:		hometown, practices, game.IntAppLearn(p.GetInt()), game.WisAppBonus(p.GetWis()), olc))
+pkg/session/wiz_stats.go:226:		p.GetStr(), p.GetStrAdd(), p.GetInt(), hitPoints, p.GetMaxHP(), s.manager.world.HitGain(p)))
+pkg/session/wiz_stats.go:228:		p.GetDex(), p.GetWis(), p.GetMana(), p.GetMaxMana(), s.manager.world.ManaGain(p)))
+pkg/session/wiz_stats.go:230:		p.GetCon(), originalCon, p.GetCha(), p.GetMove(), p.GetMaxMove(), s.manager.world.MoveGain(p)))
+pkg/game/look.go:1263:			switch align := mob.GetAlignment(); {
+pkg/game/look.go:1312:	switch align := i.GetAlignment(); {
+pkg/game/look.go:1326:	align := i.(interface{ GetAlignment() int }).GetAlignment()
+pkg/session/tattoo.go:198:		p.Stats.Str += modifier
+pkg/session/tattoo.go:200:		p.Stats.Int += modifier
+pkg/session/tattoo.go:202:		p.Stats.Dex += modifier
+pkg/session/tattoo.go:204:		p.Stats.Wis += modifier
+pkg/game/death.go:244:	newAlign := player.GetAlignment() + (-victimAlign-player.GetAlignment())>>4
+pkg/game/death.go:303:			victimAlign = al.GetAlignment()
+pkg/game/death.go:651:				player.Stats.Con--
+pkg/game/death.go:652:				if player.Stats.Con < 1 {
+pkg/game/death.go:653:					player.Stats.Con = 1
+pkg/game/death.go:657:					player.Stats.Con--
+pkg/game/death.go:658:					if player.Stats.Con < 1 {
+pkg/game/death.go:659:						player.Stats.Con = 1
+pkg/game/world_bridge.go:90:			Align: p.GetAlignment(),
+pkg/game/world_bridge.go:96:			Evil:  p.GetAlignment() <= -350,
+pkg/game/world_bridge.go:102:			Cha:   p.Stats.Cha,
+pkg/game/world_bridge.go:125:			Align: m.GetAlignment(),
+pkg/game/world_bridge.go:131:			Evil:  m.GetAlignment() <= -350,
+pkg/game/world_bridge.go:871:		align = p.GetAlignment()
+pkg/game/world_bridge.go:873:		align = m.GetAlignment()
+pkg/game/world_bridge.go:1082:	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+pkg/game/spec_procs3.go:629:	availCon := ch.GetOrigCon() - ch.Stats.Con
+pkg/game/spec_procs3.go:679:	if ch.Stats.Con < 18 {
+pkg/game/spec_procs3.go:680:		ch.Stats.Con++
+pkg/game/act_informative.go:196:		_ = dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+pkg/game/act_informative.go:220:	percent := dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+pkg/session/cast_cmds.go:270:	if s.player.GetWis() == 0 || s.player.GetInt() == 0 {
+pkg/session/char_creation.go:420:		Stats:   stats,
+pkg/session/char_creation.go:615:			s.player.OrigCon = s.player.Stats.Con
+pkg/session/observation.go:95:		Str:       player.Stats.Str,
+pkg/session/observation.go:96:		Int:       player.Stats.Int,
+pkg/session/observation.go:97:		Wis:       player.Stats.Wis,
+pkg/session/observation.go:98:		Dex:       player.Stats.Dex,
+pkg/session/observation.go:99:		Con:       player.Stats.Con,
+pkg/session/observation.go:100:		Cha:       player.Stats.Cha,
+pkg/session/comm_cmds.go:111:	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+pkg/session/comm_cmds.go:178:	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+pkg/session/cmd_info.go:41:	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(cDisplayAbility(p.GetStr()))))
+pkg/session/cmd_info.go:42:	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(cDisplayAbility(p.GetDex()))))
+pkg/session/cmd_info.go:43:	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetInt()))))
+pkg/session/cmd_info.go:44:	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(cDisplayAbility(p.GetWis()))))
+pkg/session/cmd_info.go:45:	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetCon()))))
+pkg/session/cmd_info.go:46:	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(p.GetCha())))
+pkg/game/player_identity.go:104:	return p.Stats.Str
+pkg/game/player_identity.go:111:	p.Stats.Str = v
+pkg/game/act_comm.go:864:	return ch.GetWis() == 0 || ch.GetInt() == 0
+pkg/game/deferred_fight_fns.go:399:			p.Stats.Str += delta
+pkg/game/deferred_fight_fns.go:401:			p.Stats.Dex += delta
+pkg/game/deferred_fight_fns.go:403:			p.Stats.Int += delta
+pkg/game/deferred_fight_fns.go:405:			p.Stats.Wis += delta
+pkg/game/deferred_fight_fns.go:407:			p.Stats.Con += delta
+pkg/game/combat_helpers.go:65:	if dprng.Number(1, 200) > ch.GetWis()+ch.GetInt() {
+pkg/session/session_login.go:86:		s.player.Stats = game.RollRealAbils(game.ClassWarrior, game.RaceHuman)
+pkg/session/shop_cmds.go:198:	return fmt.Sprintf(" %2d)  %s%-48s %6d\r\n", index, available, description, shop.BuyPrice(obj.GetCost(), s.player.GetCha()))
+pkg/session/shop_cmds.go:324:	pricePerItem := shop.BuyPrice(matchedProto.Cost, s.player.GetCha())
+pkg/session/shop_cmds.go:415:	price := shop.SellPrice(item.GetCost(), s.player.GetCha())
+pkg/session/shop_cmds.go:449:		price := shop.SellPrice(item.GetCost(), s.player.GetCha())
+pkg/game/spec_procs2.go:332:		if w.NumFollowers(ch.Name) >= ch.GetCha()/2 {
+pkg/game/spec_procs2.go:761:			ch.Stats.Str -= affect.Modifier
+pkg/game/spec_procs2.go:763:			ch.Stats.Dex -= affect.Modifier
+pkg/game/spec_procs2.go:765:			ch.Stats.Int -= affect.Modifier
+pkg/game/spec_procs2.go:767:			ch.Stats.Wis -= affect.Modifier
+pkg/game/spec_procs2.go:769:			ch.Stats.Con -= affect.Modifier
+pkg/game/spec_procs2.go:771:			ch.Stats.Cha -= affect.Modifier
+pkg/game/spec_procs2.go:830:	if ch.Stats.Con < 17 {
+pkg/game/spec_procs2.go:831:		ch.Stats.Con += 2
+pkg/game/spec_procs2.go:834:	if ch.Stats.Str < 17 {
+pkg/game/spec_procs2.go:835:		ch.Stats.Str += 2
+pkg/game/spec_procs2.go:838:	if ch.Stats.Wis < 17 {
+pkg/game/spec_procs2.go:839:		ch.Stats.Wis += 2
+pkg/game/spec_procs2.go:842:	if ch.Stats.Int < 17 {
+pkg/game/spec_procs2.go:843:		ch.Stats.Int += 2
+pkg/game/spec_procs2.go:846:	if ch.Stats.Dex < 17 {
+pkg/game/spec_procs2.go:847:		ch.Stats.Dex += 2
+pkg/game/spec_procs2.go:850:	if ch.Stats.Cha < 17 {
+pkg/game/spec_procs2.go:851:		ch.Stats.Cha += 2
+pkg/game/spec_procs2.go:860:	if ch.Stats.Str == 18 && adjusted != remortStatStr && ch.Stats.StrAdd < 100 {
+pkg/game/spec_procs2.go:861:		if ch.Stats.StrAdd != 0 {
+pkg/game/spec_procs2.go:862:			ch.Stats.StrAdd += 20
+pkg/game/spec_procs2.go:864:			ch.Stats.StrAdd = 20
+pkg/game/spec_procs2.go:871:	if ch.Stats.Con < 18 && adjusted != remortStatCon {
+pkg/game/spec_procs2.go:874:	if ch.Stats.Str < 18 && adjusted != remortStatStr {
+pkg/game/spec_procs2.go:875:		ch.Stats.Str++
+pkg/game/spec_procs2.go:878:	if ch.Stats.Wis < 18 && adjusted != remortStatWis {
+pkg/game/spec_procs2.go:879:		ch.Stats.Wis++
+pkg/game/spec_procs2.go:882:	if ch.Stats.Int < 18 && adjusted != remortStatInt {
+pkg/game/spec_procs2.go:883:		ch.Stats.Int++
+pkg/game/spec_procs2.go:886:	if ch.Stats.Dex < 18 && adjusted != remortStatDex {
+pkg/game/spec_procs2.go:887:		ch.Stats.Dex++
+pkg/game/spec_procs2.go:890:	if ch.Stats.Cha < 18 && adjusted != remortStatCha {
+pkg/game/spec_procs2.go:891:		ch.Stats.Cha++
+pkg/game/spec_procs2.go:1480:		if !pl.IsNPC() && pl.GetAlignment() < 0 {
+pkg/game/spec_procs2.go:1605:		if !ok || targetAligned == nil || tch.GetAlignment() >= maxEvil ||
+pkg/game/spec_procs2.go:1609:		maxEvil = tch.GetAlignment()
+pkg/game/spec_procs2.go:1613:	if evil != nil && evilTarget.GetAlignment() >= 0 {

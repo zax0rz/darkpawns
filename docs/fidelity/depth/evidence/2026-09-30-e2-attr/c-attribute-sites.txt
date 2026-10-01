@@ -1,0 +1,194 @@
+src/class.c:380:roll_real_abils(struct char_data * ch)
+src/class.c:406:  ch->real_abils.str_add = 0;
+src/class.c:407:  ch->real_abils.str = 0;
+src/class.c:408:  ch->real_abils.intel = 0;
+src/class.c:409:  ch->real_abils.wis = 0;
+src/class.c:410:  ch->real_abils.dex = 0;
+src/class.c:411:  ch->real_abils.con = 0;
+src/class.c:412:  ch->real_abils.cha = 0;
+src/class.c:420:      ch->real_abils.intel = table[0];
+src/class.c:421:      ch->real_abils.wis = table[1];
+src/class.c:422:      ch->real_abils.dex = table[2];
+src/class.c:423:      ch->real_abils.str = table[3];
+src/class.c:424:      ch->real_abils.con = table[4];
+src/class.c:425:      ch->real_abils.cha = table[5];
+src/class.c:429:      ch->real_abils.wis = table[0];
+src/class.c:430:      ch->real_abils.intel = table[1];
+src/class.c:431:      ch->real_abils.str = table[2];
+src/class.c:432:      ch->real_abils.dex = table[3];
+src/class.c:433:      ch->real_abils.con = table[4];
+src/class.c:434:      ch->real_abils.cha = table[5];
+src/class.c:439:      ch->real_abils.dex = table[0];
+src/class.c:440:      ch->real_abils.str = table[1];
+src/class.c:441:      ch->real_abils.con = table[2];
+src/class.c:442:      ch->real_abils.intel = table[3];
+src/class.c:443:      ch->real_abils.wis = table[4];
+src/class.c:444:      ch->real_abils.cha = table[5];
+src/class.c:449:      ch->real_abils.str = table[0];
+src/class.c:450:      ch->real_abils.dex = table[1];
+src/class.c:451:      ch->real_abils.con = table[2];
+src/class.c:452:      ch->real_abils.wis = table[3];
+src/class.c:453:      ch->real_abils.intel = table[4];
+src/class.c:454:      ch->real_abils.cha = table[5];
+src/class.c:455:      if (ch->real_abils.str == 18)
+src/class.c:456:    ch->real_abils.str_add = number(0, 100);
+src/class.c:462:    ch->real_abils.cha = MIN(ch->real_abils.cha+1, 18);
+src/class.c:465:    ch->real_abils.intel = MIN(ch->real_abils.intel+1, 18);
+src/class.c:466:    ch->real_abils.str = MIN(ch->real_abils.str, 18);
+src/class.c:467:    if (ch->real_abils.str==18)
+src/class.c:468:      ch->real_abils.str_add = 0;
+src/class.c:471:    ch->real_abils.wis = MIN(ch->real_abils.wis+1, 18);
+src/class.c:474:    ch->real_abils.dex = MIN(ch->real_abils.dex+1, 18);
+src/class.c:475:    ch->real_abils.str = MIN(ch->real_abils.str, 18);
+src/class.c:476:    if (ch->real_abils.str==18)
+src/class.c:477:      ch->real_abils.str_add = 0;
+src/class.c:480:    ch->real_abils.str = MIN(ch->real_abils.str+1, 18);
+src/class.c:481:        if (ch->real_abils.str == 18 && (GET_CLASS(ch) == CLASS_WARRIOR))
+src/class.c:482:        ch->real_abils.str_add = number(0, 100);
+src/class.c:485:    ch->real_abils.str = MIN(ch->real_abils.str+1, 18);
+src/class.c:486:        if (ch->real_abils.str == 18  && (GET_CLASS(ch) == CLASS_WARRIOR))
+src/class.c:487:        ch->real_abils.str_add = number(0, 100);
+src/class.c:490:    ch->real_abils.con = MIN(ch->real_abils.con+1, 18);
+src/class.c:491:    ch->real_abils.wis = MIN(ch->real_abils.wis, 16);
+src/class.c:495:  ch->aff_abils = ch->real_abils;
+src/class.c:538:  /* roll_real_abils used to be here, but now its in nanny() */
+src/class.c:578:  GET_COND(ch, THIRST) = 36;
+src/class.c:579:  GET_COND(ch, FULL)   = 36;
+src/class.c:580:  GET_COND(ch, DRUNK)  = 0;
+src/class.c:591:  GET_ORIG_CON(ch) = GET_CON(ch);
+src/class.c:607:  add_hp = con_app[GET_CON(ch)].hitp;
+src/class.c:616:      GET_PRACTICES(ch) += MAX(2, wis_app[GET_WIS(ch)].bonus);
+src/class.c:624:      GET_PRACTICES(ch) += MAX(2, wis_app[GET_WIS(ch)].bonus);
+src/class.c:632:      GET_PRACTICES(ch) += MAX(2, wis_app[GET_WIS(ch)].bonus);
+src/class.c:640:      GET_PRACTICES(ch) += MAX(2, wis_app[GET_WIS(ch)].bonus);
+src/class.c:648:      GET_PRACTICES(ch) += MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus));
+src/class.c:654:      GET_PRACTICES(ch) += MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus));
+src/class.c:662:      GET_PRACTICES(ch) += MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus));
+src/class.c:667:      GET_PRACTICES(ch) += MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus));
+src/class.c:672:      GET_PRACTICES(ch) += MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus));
+src/class.c:680:      GET_PRACTICES(ch) += MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus));
+src/class.c:688:      GET_PRACTICES(ch) += MAX(2, wis_app[GET_WIS(ch)].bonus);
+src/class.c:695:     GET_PRACTICES(ch) += MAX(2, wis_app[GET_WIS(ch)].bonus);
+src/class.c:708:    GET_COND(ch, i) = (char) -1;
+src/db.c:1033:  mob_proto[i].real_abils.str = 11;
+src/db.c:1034:  mob_proto[i].real_abils.intel = 11;
+src/db.c:1035:  mob_proto[i].real_abils.wis = 11;
+src/db.c:1036:  mob_proto[i].real_abils.dex = 11;
+src/db.c:1037:  mob_proto[i].real_abils.con = 11;
+src/db.c:1038:  mob_proto[i].real_abils.cha = 11;
+src/db.c:1056:     mob_proto[i].real_abils.str += MIN(number(0,statmod), 7);
+src/db.c:1057:     mob_proto[i].real_abils.intel += MIN(number(0,statmod), 7);
+src/db.c:1058:     mob_proto[i].real_abils.wis += MIN(number(0,statmod), 7);
+src/db.c:1059:     mob_proto[i].real_abils.dex += MIN(number(0,statmod), 7);
+src/db.c:1060:     mob_proto[i].real_abils.con += MIN(number(0,statmod), 7);
+src/db.c:1061:     mob_proto[i].real_abils.cha += MIN(number(0,statmod), 7);
+src/db.c:1101:    GET_COND(mob_proto + i, j) = -1;
+src/db.c:1150:      mob_proto[i].real_abils.str = num_arg;
+src/db.c:1156:      mob_proto[i].real_abils.str_add = num_arg;
+src/db.c:1162:      mob_proto[i].real_abils.intel = num_arg;
+src/db.c:1168:      mob_proto[i].real_abils.wis = num_arg;
+src/db.c:1174:      mob_proto[i].real_abils.dex = num_arg;
+src/db.c:1180:      mob_proto[i].real_abils.con = num_arg;
+src/db.c:1186:      mob_proto[i].real_abils.cha = num_arg;
+src/db.c:1339:  mob_proto[i].aff_abils = mob_proto[i].real_abils;
+src/db.c:2441:  ch->real_abils = st->abilities;
+src/db.c:2442:  ch->aff_abils = st->abilities;
+src/db.c:2587:  ch->aff_abils = ch->real_abils;
+src/db.c:2603:  st->abilities = ch->real_abils;
+src/db.c:2638:/*   affect_total(ch); unnecessary, I think !?! */
+src/db.c:3074:    GET_COND(ch, i) = (GET_LEVEL(ch) == LVL_IMPL ? -1 : 24);
+src/handler.c:144:     case APPLY_STR:    GET_STR(ch) += mod;
+src/handler.c:146:     case APPLY_DEX:    GET_DEX(ch) += mod;
+src/handler.c:148:     case APPLY_INT:    GET_INT(ch) += mod;
+src/handler.c:150:     case APPLY_WIS:    GET_WIS(ch) += mod;
+src/handler.c:152:     case APPLY_CON:    GET_CON(ch) += mod;
+src/handler.c:154:     case APPLY_CHA:    GET_CHA(ch) += mod;
+src/handler.c:314:void affect_total(struct char_data * ch)
+src/handler.c:332:  ch->aff_abils = ch->real_abils;
+src/handler.c:353:  GET_DEX(ch) = MAX(0, MIN(GET_DEX(ch), i));
+src/handler.c:354:  GET_INT(ch) = MAX(0, MIN(GET_INT(ch), i));
+src/handler.c:355:  GET_WIS(ch) = MAX(0, MIN(GET_WIS(ch), i));
+src/handler.c:356:  GET_CON(ch) = MAX(0, MIN(GET_CON(ch), i));
+src/handler.c:357:  GET_STR(ch) = MAX(0, GET_STR(ch));
+src/handler.c:360:    GET_STR(ch) = MIN(GET_STR(ch), i);
+src/handler.c:362:    if (GET_STR(ch) > 18) {
+src/handler.c:363:      i = GET_ADD(ch) + ((GET_STR(ch) - 18) * 10);
+src/handler.c:364:      GET_ADD(ch) = MIN(i, 100);
+src/handler.c:365:      GET_STR(ch) = 18;
+src/handler.c:395:  affect_total(ch);
+src/handler.c:419:  affect_total(ch);
+src/handler.c:437:  affect_total(ch);
+src/handler.c:644:  if (GET_STR(ch) == 0) bad_char = 's';
+src/handler.c:645:  if (GET_INT(ch) == 0) bad_char = 'i';
+src/handler.c:646:  if (GET_WIS(ch) == 0) bad_char = 'w';
+src/handler.c:647:  if (GET_CHA(ch) == 0) bad_char = 'c';
+src/handler.c:648:  if (GET_DEX(ch) == 0) bad_char = 'd';
+src/handler.c:748:  affect_total(ch);
+src/handler.c:792:  affect_total(ch);
+src/act.wizard.c:139:      if (PLR_FLAGGED(ch, PLR_NOSHOUT) || GET_INT(ch) == 0)
+src/act.wizard.c:771:          GET_PRACTICES(k), int_app[GET_INT(k)].learn,
+src/act.wizard.c:772:          wis_app[GET_WIS(k)].bonus);
+src/act.wizard.c:800:           CCCYN(ch, C_NRM), GET_STR(k), GET_ADD(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:801:       CCCYN(ch, C_NRM), GET_INT(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:809:       CCCYN(ch, C_NRM), GET_DEX(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:810:       CCCYN(ch, C_NRM), GET_WIS(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:818:       CCCYN(ch, C_NRM), GET_CON(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:819:       IS_NPC(k)?GET_CON(k):GET_ORIG_CON(k),
+src/act.wizard.c:820:       CCCYN(ch, C_NRM), GET_CHA(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:929:      GET_COND(k, FULL), GET_COND(k, THIRST), GET_COND(k, DRUNK),
+src/act.wizard.c:1533:    str = victim->real_abils.str;
+src/act.wizard.c:1534:    add = victim->real_abils.str_add;
+src/act.wizard.c:1535:    dex = victim->real_abils.dex;
+src/act.wizard.c:1536:    intel = victim->real_abils.intel ;
+src/act.wizard.c:1537:    con = victim->real_abils.con;
+src/act.wizard.c:1538:    cha = victim->real_abils.cha;
+src/act.wizard.c:1539:    wis = victim->real_abils.wis;
+src/act.wizard.c:1548:    victim->real_abils.str_add = add;
+src/act.wizard.c:1549:    victim->real_abils.intel =  intel;
+src/act.wizard.c:1550:    victim->real_abils.wis =  wis;
+src/act.wizard.c:1551:    victim->real_abils.dex =  dex;
+src/act.wizard.c:1552:    victim->real_abils.str =  str;
+src/act.wizard.c:1553:    victim->real_abils.con =  con;
+src/act.wizard.c:1554:    victim->real_abils.cha = cha;
+src/act.wizard.c:1604:    vict->real_abils.str_add = 100;
+src/act.wizard.c:1605:    vict->real_abils.intel = 25;
+src/act.wizard.c:1606:    vict->real_abils.wis = 25;
+src/act.wizard.c:1607:    vict->real_abils.dex = 25;
+src/act.wizard.c:1608:    vict->real_abils.str = 25;
+src/act.wizard.c:1609:    vict->real_abils.con = 25;
+src/act.wizard.c:1610:    vict->real_abils.cha = 25;
+src/act.wizard.c:1612:      vict->aff_abils = vict->real_abils;
+src/act.wizard.c:2081:  void roll_real_abils(struct char_data *ch);
+src/act.wizard.c:2103:      roll_real_abils(vict);
+src/act.wizard.c:2104:      GET_ORIG_CON(vict) = GET_CON(vict);
+src/act.wizard.c:2108:          GET_STR(vict), GET_ADD(vict), GET_INT(vict), GET_WIS(vict),
+src/act.wizard.c:2109:          GET_DEX(vict), GET_CON(vict), GET_CHA(vict));
+src/act.wizard.c:2737:      affect_total(vict);
+src/act.wizard.c:2741:      affect_total(vict);
+src/act.wizard.c:2745:      affect_total(vict);
+src/act.wizard.c:2749:      affect_total(vict);
+src/act.wizard.c:2753:      affect_total(vict);
+src/act.wizard.c:2757:      affect_total(vict);
+src/act.wizard.c:2761:      affect_total(vict);
+src/act.wizard.c:2768:      vict->real_abils.str = value;
+src/act.wizard.c:2769:      vict->real_abils.str_add = 0;
+src/act.wizard.c:2770:      affect_total(vict);
+src/act.wizard.c:2773:      vict->real_abils.str_add = RANGE(0, 100);
+src/act.wizard.c:2775:    vict->real_abils.str = 18;
+src/act.wizard.c:2776:      affect_total(vict);
+src/act.wizard.c:2783:      vict->real_abils.intel = value;
+src/act.wizard.c:2784:      affect_total(vict);
+src/act.wizard.c:2791:      vict->real_abils.wis = value;
+src/act.wizard.c:2792:      affect_total(vict);
+src/act.wizard.c:2799:      vict->real_abils.dex = value;
+src/act.wizard.c:2800:      affect_total(vict);
+src/act.wizard.c:2807:      vict->real_abils.con = value;
+src/act.wizard.c:2808:      affect_total(vict);
+src/act.wizard.c:2824:      affect_total(vict);
+src/act.wizard.c:2837:      affect_total(vict);
+src/act.wizard.c:2841:      affect_total(vict);
+src/act.wizard.c:2872:    GET_COND(vict, (l - 29)) = (char) -1;
+src/act.wizard.c:2877:    GET_COND(vict, (l - 29)) = (char) value;
+src/act.wizard.c:2999:      vict->real_abils.cha = value;
+src/act.wizard.c:3000:      affect_total(vict);
+src/act.wizard.c:3030:      affect_total(vict);
