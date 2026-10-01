@@ -44,8 +44,7 @@ no-settle control to test deletion directly at the accepted-character menu.
 No harness/oracle/tooling or governing document edits are involved.
 
 Proposed follow-ups for entry.menu-actions: post-world-entry menu password
-verification, the C clan removal and alias-file cleanup in self-deletion
-(src/interpreter.c:2331-2340), and the complete rejection/frozen/delete-confirm
+verification and the complete rejection/frozen/delete-confirm
 matrix. They are not claimed complete here. Guest capabilities and approved
 security overlays are untouched. Full and claims censuses certify this entry
 code batch; exact summaries, source hashes and seed inspections are retained
@@ -76,3 +75,9 @@ Both final live vehicles pass at seeds 1,2,3,5,8. Retained C captures were inspe
 PR #1749 review repair: deleted records now take the existing missing-record path in admin login (identical 401 body, bcrypt timing decoy) and all OLC/schema/new-zone/file-edit saved-record checks. Clan membership and alias cleanup are implemented in this batch: src/interpreter.c:2331-2340, clan.c:789-796, objsave.c:1227-1251. C excludes clan table index zero; tests preserve that boundary, and test both ordinary deleted players and LVL_GRGOD. Durable character save precedes live clan total adjustment; failed save restores the in-memory clan fields and marker. Alias removal treats missing files as harmless and logs real failures as C does. Three additional assertion-only revert triples are retained by review_revert_proofs.py and review-revert-triples.tsv. Earlier census summaries certify the original PR; new review-full/review-claims runs certify these changes.
 
 Review repair gates: make fmt, go build ./..., go vet ./..., go test ./..., cache-clean/lint (0 issues), diff check, fidelity-depth (5230 total / 5109 proven / 64 blocked), fidelity-units (1183/1183; 1173 rows, 962 symbols, 11 packages), string census all pass. review-source-sha256.tsv captures completed repair source; source-sha256.tsv retains original PR evidence.
+
+Review full census on completed production source f7f1f4e10:
+
+```
+oracle-regression: scenarios=1058 passed=1052 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=500.307s started=2026-10-01T18:47:54-0400 finished=2026-10-01T18:56:15-0400 verdict=CLEAN
+```
