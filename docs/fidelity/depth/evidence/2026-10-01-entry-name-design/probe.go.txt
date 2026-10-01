@@ -1,0 +1,13 @@
+package session
+
+import "testing"
+
+func TestEntryNameDesignProbe(t *testing.T) {
+ for _, name := range []string{"Fighter123", "a_b", "the", "self"} {
+  t.Run(name, func(t *testing.T) {
+   s := makeCharSession(t, makeTestManager(t))
+   if err := s.handleLogin(loginMsg(name, "")); err != nil { t.Fatal(err) }
+   if s.charStage != "get_name" { t.Fatalf("C rejects %q; Go reached stage %q", name, s.charStage) }
+  })
+ }
+}
