@@ -1,0 +1,82 @@
+# depth-case: use.tattoo-skull
+# C tattoo.c:31-91, reached through act.other.c:906-924.
+# Independent disposable activation; actor and peer captures include repeat-use cooldown.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+set-room-flag 8162 7 off
+
+[setup:oracle]
+Tattoogod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tattoogod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:audience]
+Tattoopeer
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:audience]
+Tattoopeer
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8162
+teleport Tattoopeer 8162
+set Tattoogod tattoo 3
+
+[probe]
+use tattoo
+use tattoo

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -119,11 +120,21 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	// Handle tattoo use — from src/tattoo.c use_tattoo()
-	if strings.EqualFold(itemArg, "tattoo") {
-		if ch.TatTimer > 0 {
+	// C checks WEAR_HOLD with exact isname before the innate tattoo
+	// branch, without CAN_SEE_OBJ (src/act.other.c:906-924). Resolve this
+	// tattoo shadow here; other keywords retain their existing item lookup.
+	var held *ObjectInstance
+	if strings.EqualFold(itemArg, "tattoo") && ch.Equipment != nil {
+		candidate, _ := ch.Equipment.GetItemInSlot(SlotHold)
+		if candidate != nil && useHeldNameMatches(itemArg, candidate.GetKeywords()) {
+			held = candidate
+		}
+	}
+	// Handle tattoo use — from src/tattoo.c use_tattoo().
+	if held == nil && strings.EqualFold(itemArg, "tattoo") {
+		if ch.TatTimer != 0 {
 			suffix := "s"
-			if ch.TatTimer == 1 {
+			if ch.TatTimer <= 1 {
 				suffix = ""
 			}
 			ch.SendMessage(fmt.Sprintf("You can't use your tattoo's magick for %d more hour%s.\r\n",
@@ -137,28 +148,26 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 			// Summon mob vnum 9 (skull), charm it, make it follow
 			mob, err := w.SpawnMob(9, ch.GetRoom())
 			if err != nil {
-				ch.SendMessage("Your tattoo fizzles...\r\n")
+				slog.Error("SpawnMob failed for tattoo skull", "error", err)
 				break
 			}
-			if err := w.SetFollower(mob.GetName(), ch.GetName(), true); err != nil {
-				slog.Error("SetFollower failed for tattoo skull", "mob", mob.GetName(), "leader", ch.GetName(), "error", err)
-			}
+			AddFollowerQuietMob(mob, ch)
 			// Apply charm affect (duration 20)
 			mob.AddAffect(&engine.Affect{
 				SpellID:   spells.SpellCharm,
 				Type:      spells.SpellCharm, // backward compat
 				Duration:  20,
 				Magnitude: 0,
-				Flags:     1 << 3, // AFF_CHARM
+				Flags:     engine.AFFCharm, // C AFF_CHARM (structs.h:331), translated by AddAffect
 			})
-			w.roomMessage(ch.GetRoom(), fmt.Sprintf("%s's tattoo glows brightly for a second, and %s appears!", ch.Name, mob.Proto().ShortDesc))
-			ch.SendMessage(fmt.Sprintf("Your tattoo glows brightly for a second, and %s appears!\r\n", mob.Proto().ShortDesc))
+			w.tattooRoomAct(ch, mob, "$n's tattoo glows brightly for a second, and $N appears!")
+			Act(w, true, ch, mob, nil, nil, "Your tattoo glows brightly for a second, and $N appears!", "", ToChar)
 		case TattooEye:
-			spells.Cast(ch, ch, spells.SpellGreatPercept, ch.GetLevel(), w)
+			w.castTattoo(ch, spells.SpellGreatPercept)
 		case TattooShip:
-			spells.Cast(ch, ch, spells.SpellChangeDensity, ch.GetLevel(), w)
+			w.castTattoo(ch, spells.SpellChangeDensity)
 		case TattooAngel:
-			spells.Cast(ch, ch, spells.SpellBless, ch.GetLevel(), w)
+			w.castTattoo(ch, spells.SpellBless)
 		default:
 			ch.SendMessage("Your tattoo can't be 'use'd.\r\n")
 			return true
@@ -168,10 +177,13 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 	}
 
 	// C do_use (act.other.c:897-936) searches equipped objects only, with
-	// WEAR_HOLD checked before the remaining wear positions. FindEquippedVis
-	// preserves that lookup and CAN_SEE_OBJ gate; inventory and room objects
-	// are not valid `use` targets.
-	item := w.FindEquippedVis(ch, itemArg)
+	// WEAR_HOLD is resolved above without a visibility gate; the remaining
+	// slots use the existing visible lookup. Inventory and room objects are
+	// not valid `use` targets.
+	item := held
+	if item == nil {
+		item = w.FindEquippedVis(ch, itemArg)
+	}
 
 	if item == nil {
 		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(itemArg), itemArg))
@@ -196,6 +208,108 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 }
 
 const defaultMagicItemLevel = 12 // C spells.h: DEFAULT_WAND_LVL/DEFAULT_STAFF_LVL
+
+// useHeldNameMatches is C isname (src/handler.c:81-112), used by
+// do_use's WEAR_HOLD probe. A completed argument ends at a non-alpha
+// boundary; prefixes inside an alphabetic name do not match.
+func useHeldNameMatches(arg, names string) bool {
+	for n := 0; ; {
+		for a := 0; ; a, n = a+1, n+1 {
+			if a == len(arg) && (n == len(names) || !isASCIIAlpha(names[n])) {
+				return true
+			}
+			if n == len(names) {
+				return false
+			}
+			if a == len(arg) || names[n] == ' ' || !strings.EqualFold(arg[a:a+1], names[n:n+1]) {
+				break
+			}
+		}
+		for n < len(names) && isASCIIAlpha(names[n]) {
+			n++
+		}
+		if n == len(names) {
+			return false
+		}
+		n++
+	}
+}
+
+const tattooRoomNoMagic = 7 // C structs.h: ROOM_NOMAGIC
+
+// castTattoo enters C call_magic directly at DEFAULT_WAND_LVL/CAST_WAND
+// (src/tattoo.c:66-74; spell_parser.c:419-439). Keep these direct-entry gates
+// local: command-facing and native-special dispatch have separate callers.
+func (w *World) castTattoo(ch *Player, spell int) {
+	if room := w.GetRoomInWorld(ch.GetRoom()); room != nil && room.HasFlag(tattooRoomNoMagic) && ch.GetLevel() < combat.LVL_IMMORT {
+		if ch.GetClass() == ClassPsionic || ch.GetClass() == ClassMystic {
+			ch.SendMessage("Your will fades, disturbed by an unseen force.\r\n")
+			w.tattooNoMagicRoom(ch, "$n's will fades, disturbed by an unseen force.")
+		} else {
+			ch.SendMessage("Your magic fizzles out and dies.\r\n")
+			w.tattooNoMagicRoom(ch, "$n's magic fizzles out and dies.")
+		}
+		return
+	}
+	if ch.GetPosition() == combat.PosSitting {
+		ch.SendMessage("You cannot do this sitting!\r\n")
+		return
+	}
+	spells.CastFromTattoo(ch, spell, tattooSpellWorld{World: w, caster: ch})
+}
+
+// tattooCanSee applies C CAN_SEE, including world light, without the
+// generic room-listing AFF_HIDE extension (src/utils.h:515-530).
+func (w *World) tattooCanSee(observer, caster *Player) bool {
+	if observer == caster {
+		return true
+	}
+	if observer.GetLevel() < caster.GetInvisLevel() {
+		return false
+	}
+	lightOK := !observer.IsAffected(affBlind) && (!w.IsRoomDark(observer.GetRoom()) || observer.IsAffected(affInfravision))
+	invisOK := !caster.IsAffected(affInvisible) || observer.IsAffected(affDetectInvisible)
+	return observer.GetHolyLight() || (lightOK && invisOK)
+}
+
+func (w *World) tattooRoomAct(ch *Player, skull *MobInstance, format string) {
+	actDeliver(w, false, ch, skull, nil, nil, format, "", ToRoom, func(to Actor, line string) {
+		if player, ok := to.(*Player); ok && w.tattooCanSee(player, ch) {
+			player.SendMessage(line)
+		}
+	})
+}
+
+// NOMAGIC uses act with hide_invisible FALSE; unseen casters are still
+// announced as "someone" (spell_parser.c:424-432; utils.h:515-530).
+func (w *World) tattooNoMagicRoom(ch *Player, format string) {
+	for _, player := range w.GetPlayersInRoom(ch.GetRoom()) {
+		if player == ch || !sendOk(player, false) {
+			continue
+		}
+		name := ch.Name
+		if !w.tattooCanSee(player, ch) {
+			name = "someone"
+		}
+		player.SendMessage(cap(strings.ReplaceAll(format, "$n", name)) + "\r\n")
+	}
+}
+
+// tattooSpellWorld restricts benign self-spell room messages to C act's
+// awake, visible audience (magic.c:1418-1421; utils.h:515-530). Only the tattoo dispatcher
+// receives this adapter; the shared spell helper's other callers are unchanged.
+type tattooSpellWorld struct {
+	*World
+	caster *Player
+}
+
+func (w tattooSpellWorld) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
+	for _, player := range w.GetPlayersInRoom(room) {
+		if sendOk(player, false) && w.tattooCanSee(player, w.caster) {
+			fn(player)
+		}
+	}
+}
 
 // useWand is the castable-equipment branch of mag_objectmagic
 // (src/spell_parser.c:754-783). In C, equipd is compared against the second

@@ -24,7 +24,7 @@ const lvlImmort = combat.LVL_IMMORT
 //
 // Returns true if the spell was executed.
 func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}) bool {
-	return callMagic(caster, cvict, ovict, spellNum, level, castType, world, false)
+	return callMagic(caster, cvict, ovict, spellNum, level, castType, world, false, false)
 }
 
 // CastFromSpecial dispatches a spell from a native special-procedure call.
@@ -32,17 +32,23 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 // position; it only rejects POS_SITTING (spell_parser.c:434-439). The normal
 // CallMagic path retains the parser-facing position check used by commands.
 func CastFromSpecial(caster, cvict interface{}, spellNum, level int, world interface{}) bool {
-	return callMagic(caster, cvict, nil, spellNum, level, CastSpell, world, true)
+	return callMagic(caster, cvict, nil, spellNum, level, CastSpell, world, true, false)
 }
 
-func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, fromSpecial bool) bool {
+// CastFromTattoo dispatches the level-12 CAST_WAND self cast from tattoo.c.
+// The game tattoo entry point has already applied C's room and sitting gates.
+func CastFromTattoo(caster interface{}, spellNum int, world interface{}) bool {
+	return callMagic(caster, caster, nil, spellNum, 12, CastWand, world, true, true)
+}
+
+func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, fromSpecial, fromTattoo bool) bool {
 	si := GetSpellInfo(spellNum)
 	if si == nil {
 		return false
 	}
 
 	// Check room for NOMAGIC flag
-	if roomHasNoMagic(caster, world) {
+	if !fromTattoo && roomHasNoMagic(caster, world) {
 		type sender interface{ SendMessage(string) }
 		if s, ok := caster.(sender); ok {
 			s.SendMessage("A magical force prevents you from casting here.\r\n")
