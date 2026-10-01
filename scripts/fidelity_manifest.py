@@ -18,7 +18,13 @@ VALID_STATUSES = {
     "blocked",
     "excluded",
     "delegated",
+    # A deliberate departure from C that Zach approved (security, durability).
+    # Proven by unit tests of the approved behaviour; the notes cite the issue.
+    # Not C parity, so the depth report counts it apart from completion.
+    "divergent-approved",
 }
+# Statuses whose proof field names Go test symbols that must exist and pass.
+UNIT_PROOF_STATUSES = {"unit-green", "divergent-approved"}
 
 def load_rows(manifest_dir: pathlib.Path = MANIFEST_DIR, root: pathlib.Path = ROOT) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []

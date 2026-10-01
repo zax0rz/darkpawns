@@ -68,5 +68,19 @@ class UnitProofTests(unittest.TestCase):
         self.assertEqual(len(errors),1)
         self.assertIn("missing",errors[0])
 
+    def test_divergent_approved_is_unit_proven_and_cites_its_approval(self):
+        row = {"status":"divergent-approved", "proof":"TestSub/real_name", "manifest":"fixture.tsv",
+               "line":"3", "case_id":"fixture-divergence", "notes":"Approved by Zach (DP-1373)."}
+        self.assertEqual(validate_unit_rows([row], self.root, self.index), [])
+        row["proof"] = "TestSub/unreachable"
+        errors = validate_unit_rows([row], self.root, self.index)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("missing", errors[0])
+        row["proof"] = "TestSub/real_name"
+        row["notes"] = "Approved, no issue cited."
+        errors = validate_unit_rows([row], self.root, self.index)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("must cite its approving issue", errors[0])
+
 if __name__ == "__main__":
     unittest.main()

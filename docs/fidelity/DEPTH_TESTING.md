@@ -56,6 +56,11 @@ Manifest statuses are deliberately explicit:
 - `delegated`: shared callee behavior owned by another named manifest.
 - `excluded`: unreachable from this surface; state the owning surface.
 - `blocked`: a real proof gap. Do not relabel inconvenience as exclusion.
+- `divergent-approved`: a deliberate departure from C that Zach approved (security or
+  durability). The proof names the unit tests of the approved behaviour, which
+  `make fidelity-units` runs; the notes must cite the approving issue (`DP-nnnn`). These
+  cases are counted separately and left out of the completion percentage, which
+  measures C parity only. Only Zach approves a divergence; an agent proposes it.
 
 `scripts/gen_fidelity_depth.py` validates scenario annotations and unit-test
 symbols, then prints the actionable completion report. The manifest is the

@@ -1,4 +1,5 @@
-"""Exact Go test declaration and execution evidence for unit-green manifests."""
+"""Exact Go test declaration and execution evidence for unit-proven manifests
+(unit-green and divergent-approved)."""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -8,6 +9,8 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+
+from fidelity_manifest import UNIT_PROOF_STATUSES
 
 TOOL_ROOT = Path(__file__).resolve().parents[1]
 
@@ -101,10 +104,12 @@ def validate_unit_rows(rows, root=TOOL_ROOT, index=None):
     errors = []
     subclaims = []
     for row in rows:
-        if row["status"] != "unit-green":
+        if row["status"] not in UNIT_PROOF_STATUSES:
             continue
         symbols = proof_symbols(row["proof"])
         location = f"{row['manifest']}:{row['line']} ({row['case_id']})"
+        if row["status"] == "divergent-approved" and not re.search(r"\bDP-\d+\b", row.get("notes", "")):
+            errors.append(f"{location}: divergent-approved row must cite its approving issue (DP-nnnn) in notes")
         if not symbols:
             errors.append(f"{location}: empty unit proof")
         for symbol in symbols:

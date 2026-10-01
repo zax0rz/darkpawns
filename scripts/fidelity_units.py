@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 
-from fidelity_manifest import ROOT, load_rows
+from fidelity_manifest import ROOT, UNIT_PROOF_STATUSES, load_rows
 from unit_proofs import test_index, proof_symbols, resolve, execution_batches, outcome
 
 
@@ -33,7 +33,7 @@ def main():
     go_version = subprocess.check_output(["go", "version"], text=True).strip()
     index = test_index(root)
     (out / "test-index.json").write_text(json.dumps(index, sort_keys=True))
-    rows = [row for row in load_rows(root / "docs/fidelity/depth", root) if row["status"] == "unit-green"]
+    rows = [row for row in load_rows(root / "docs/fidelity/depth", root) if row["status"] in UNIT_PROOF_STATUSES]
     requests = []
     resolved = {}
     for row in rows:
