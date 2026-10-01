@@ -1,0 +1,100 @@
+# depth-case: objmagic.sleep-refusal-sand
+# Potion self-target path; paired disposable OLC changes 4399 to level-40 sleep only.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+set-room-flag 8162 7 off
+force-load 4399
+force-load 1226
+
+[setup:oracle]
+Sleeplab
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleeplab
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:drinker]
+Sleepdrink
+Y
+drinkpass
+drinkpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:drinker]
+Sleepdrink
+Y
+drinkpass
+drinkpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+oedit 4399
+d
+40
+38
+-1
+-1
+q
+y
+goto 8162
+teleport Sleepdrink 8162
+load obj 4399
+get powder
+give powder Sleepdrink
+load obj 1226
+get sand
+give sand Sleepdrink
+set Sleepdrink level 8
+set Sleepdrink outlaw off
+
+[probe:drinker]
+inventory
+quaff powder
+~dpclock pulse 20
+inventory
+wake
