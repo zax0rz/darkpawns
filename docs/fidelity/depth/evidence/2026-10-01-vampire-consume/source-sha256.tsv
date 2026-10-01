@@ -1,0 +1,6 @@
+path	sha256
+pkg/game/item_consumable.go	f6eb1faac44938a32f149b16bf47235969122825732ab88893a2108ec30907ff
+pkg/game/vampire_consumable_depth_test.go	dcd4c6894940d47a8c0cb5c65782f26214711bae1e466400efa2d69c011a1f4f
+cmd/dp-oracle-diff/scenarios/vampire-consume-dark.txt	35e55e88390090348378e90d476dfd4103af769a4a0db7084c84bc50b081d1ab
+cmd/dp-oracle-diff/scenarios/vampire-consume-day.txt	8eca135eeaaf67ee3700ddcc0d6cac391245a8679724cd11163d923975a48fa0
+cmd/dp-oracle-diff/scenarios/vampire-consume-sunset.txt	d773a561463a9743061b9e0a989a75e1971ffcbd8dc6fc0ad3c0bad24634078e

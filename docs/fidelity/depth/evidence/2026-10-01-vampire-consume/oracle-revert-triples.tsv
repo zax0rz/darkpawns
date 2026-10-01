@@ -1,0 +1,4 @@
+scenario	before	mutant	after	mutation
+vampire-consume-sunset	0	1	0	night-gate
+vampire-consume-dark	0	1	0	night-gate
+vampire-consume-day	0	1	0	day-gate

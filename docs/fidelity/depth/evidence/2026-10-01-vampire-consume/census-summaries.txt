@@ -1,0 +1,9 @@
+oracle-regression: scenarios=3 passed=3 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=30.010s started=2026-10-01T12:35:28-0400 finished=2026-10-01T12:35:58-0400 verdict=CLEAN
+oracle-regression: scenarios=3 passed=3 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=29.858s started=2026-10-01T12:36:35-0400 finished=2026-10-01T12:37:05-0400 verdict=CLEAN
+oracle-regression: scenarios=3 passed=3 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=29.876s started=2026-10-01T12:37:21-0400 finished=2026-10-01T12:37:51-0400 verdict=CLEAN
+oracle-regression: scenarios=3 passed=3 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=29.812s started=2026-10-01T12:38:06-0400 finished=2026-10-01T12:38:35-0400 verdict=CLEAN
+oracle-regression: scenarios=3 passed=3 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=29.897s started=2026-10-01T12:38:51-0400 finished=2026-10-01T12:39:21-0400 verdict=CLEAN
+night-mutant (intentional): oracle-regression: scenarios=3 passed=1 expected=0 unpinnable=0 stale=0 failed=2 infra=0 timed_out=0 unstable=0 elapsed=62.393s started=2026-10-01T12:39:36-0400 finished=2026-10-01T12:40:38-0400 verdict=NOT_CLEAN
+night-restored: oracle-regression: scenarios=3 passed=3 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=29.702s started=2026-10-01T12:40:51-0400 finished=2026-10-01T12:41:21-0400 verdict=CLEAN
+day-mutant (intentional): oracle-regression: scenarios=3 passed=2 expected=0 unpinnable=0 stale=0 failed=1 infra=0 timed_out=0 unstable=0 elapsed=62.201s started=2026-10-01T12:41:36-0400 finished=2026-10-01T12:42:38-0400 verdict=NOT_CLEAN
+day-restored: oracle-regression: scenarios=3 passed=3 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=29.776s started=2026-10-01T12:42:51-0400 finished=2026-10-01T12:43:21-0400 verdict=CLEAN
