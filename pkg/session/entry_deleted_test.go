@@ -147,6 +147,10 @@ func TestEntryDeletedMenuReuse(t *testing.T) {
 	database := entryDatabase(t)
 	entrySeed(t, database, "Keeper")
 	old := entrySeed(t, database, "Reclaim")
+	old.Inventory, old.Equipment = []byte("[14425]"), []byte(`{"body":14425}`)
+	if err := database.SavePlayer(old); err != nil {
+		t.Fatal(err)
+	}
 	s := entrySession(t, database)
 	if err := s.handleLogin(loginMsg("Reclaim", "oraclepass")); err != nil {
 		t.Fatal(err)
@@ -161,6 +165,8 @@ func TestEntryDeletedMenuReuse(t *testing.T) {
 	}
 	if rec, err := database.GetPlayer("Reclaim"); err != nil || (rec == nil || !game.CharacterDataDeleted(rec.CharacterData)) {
 		t.Fatal("menu deletion did not retain C deleted marker")
+	} else if string(rec.Inventory) != "[]" || string(rec.Equipment) != "{}" {
+		t.Fatal("menu deletion retained crash objects")
 	}
 	next := entrySession(t, database)
 	if err := next.handleLogin(loginMsg("RECLAIM", "")); err != nil {

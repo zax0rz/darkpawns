@@ -27,3 +27,5 @@ Proposed menu-actions follow-ups: verification after returning from world entry,
 clan removal/alias cleanup (src/interpreter.c:2331-2340), and the remaining menu
 rejection/frozen/confirmation matrix. That row stays blocked. The next batch is
 entry.lookup-load-failure. This changes game code: open the PR and stop for Zach.
+
+The quit-to-menu password finding reproduces on untouched origin/main 9fa21c7e8 with the reference oracle (dp-1371-p4-entry-deleted-menu-baseline). Go remains on the old Password route at relogin after the menu verification sequence; retained attempt logs show three Wrong password outcomes and EOF. The runner classifies the early close as INFRA, so this is a retained pre-existing finding, not a clean vehicle or revert proof. The final no-settle vehicle and the full census are clean.

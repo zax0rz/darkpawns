@@ -50,3 +50,5 @@ matrix. They are not claimed complete here. Guest capabilities and approved
 security overlays are untouched. Full and claims censuses certify this entry
 code batch; exact summaries, source hashes and seed inspections are retained
 beside this note after completion.
+
+The quit-to-menu password finding reproduces on untouched origin/main 9fa21c7e8 with the reference oracle (dp-1371-p4-entry-deleted-menu-baseline). Go remains on the old Password route at relogin after the menu verification sequence; retained attempt logs show three Wrong password outcomes and EOF. The runner classifies the early close as INFRA, so this is a retained pre-existing finding, not a clean vehicle or revert proof. The final no-settle vehicle and the full census are clean.
