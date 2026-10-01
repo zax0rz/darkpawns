@@ -64,3 +64,11 @@ oracle-regression: scenarios=1058 passed=1052 expected=5 unpinnable=0 stale=0 fa
 The full run captured the sole-record vehicle before its test-only world/score refinement. The final targeted sole-record revert/restoration and claims run exercise the refined vehicle. Game code is unchanged; no general bootstrap/RNG claim is inferred from the precursor menu-only block.
 
 The final refined sole-record live proof is PASS → content FAIL → PASS: dp-1371-p4-entry-deleted-sole-restored, sole-mutant-2, sole-restored-2. Removing the sole-slot God predicate changes the replacement world/score; C shows 500 hit points and rank level 40. Both mutation/restoration runs have zero infrastructure errors/timeouts. The earlier sole-mutant run was discovery evidence, not the before leg of this triple.
+
+Final claims census on Go source 2a7da8aadc0cb99114e24dc39623ef06511f88a6:
+
+```
+oracle-claims: seed=all pairs=3020 expected=11 expected_unstable=0 fail=0 infra=0 pass=3009 stale=0 timeout=0 unpinnable=0 elapsed=1696.527s verdict=CLEAN
+```
+
+Both final live vehicles pass at seeds 1,2,3,5,8. Retained C captures were inspected for deletion, folded fresh-name confirmation/password and replacement menu; the sole-record vehicle also exposes world entry, health 500 and rank level 40. See live-seed-inspection.tsv. Production source is unchanged since the completed-source full census.
