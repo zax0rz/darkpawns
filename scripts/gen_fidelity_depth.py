@@ -16,6 +16,7 @@ SCENARIO_DIR = ROOT / "cmd" / "dp-oracle-diff" / "scenarios"
 CASE_RE = re.compile(r"^\s*#\s*depth-case:\s*(\S+)\s*$", re.MULTILINE)
 from fidelity_manifest import load_rows
 from unit_proofs import validate_unit_rows
+from manifest_claims import claimed_pairs
 
 PROVEN = {"oracle-green", "oracle-green-multiseed", "unit-green", "delegated"}
 NOT_ACTIONABLE = {"excluded", "divergent-approved"}
@@ -37,6 +38,12 @@ def validate(rows: list[dict[str, str]], annotations: dict[str, set[str]]) -> li
             errors.append(f"duplicate case_id: {case_id}")
         seen.add(case_id)
         if row["status"].startswith("oracle-green"):
+            # Parse the proof exactly as the claims census does, so a seed list
+            # it would reject fails this gate before review.
+            try:
+                claimed_pairs([row])
+            except ValueError as error:
+                errors.append(f"{case_id}: {error}")
             scenario = row["proof"].split("@", 1)[0]
             if scenario not in annotations:
                 errors.append(f"{case_id}: missing scenario {scenario}")
