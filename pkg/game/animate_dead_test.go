@@ -26,6 +26,7 @@ func newAnimatePlayer(t *testing.T, w *World, name string, cha int) *Player {
 	t.Helper()
 	p := NewPlayer(1, name, 1001)
 	p.Stats.Cha = cha
+	p.CopyBaseAttributes()
 	if err := w.AddPlayer(p); err != nil {
 		t.Fatalf("AddPlayer(%s) failed: %v", name, err)
 	}

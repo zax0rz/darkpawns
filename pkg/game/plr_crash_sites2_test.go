@@ -47,6 +47,7 @@ func driveCarriedSteal(t *testing.T, w *World, thief, victim *Player, itemName s
 	thief.SetSkill(SkillSteal, 100)
 	thief.SetPlrFlag(PlrOutlaw, true) // the command path reserves player-stealing for outlaws
 	thief.Stats.Str = 15              // real strength so the strict carry gates pass
+	thief.CopyBaseAttributes()
 	for seed := uint32(1); seed < 5000; seed++ {
 		dprng.ResetStream(seed)
 		thief.SetPlrFlag(PlrCrash, false)
@@ -136,6 +137,8 @@ func TestStealFullInventoryFlagsNobody(t *testing.T) {
 	thief.SetSkill(SkillSteal, 100)
 	thief.SetPlrFlag(PlrOutlaw, true)
 	thief.Stats.Str = 15
+	thief.CopyBaseAttributes()
+	thief.Inventory.SetCapacity(15, 0, 0, 1) // preserve this capacity-refusal fixture
 	thief.SetPlrFlag(PlrCrash, false)
 	victim.SetPlrFlag(PlrCrash, false)
 
@@ -176,6 +179,7 @@ func TestStealEquippedFlagsThiefOnly(t *testing.T) {
 	thief.SetSkill(SkillSteal, 100)
 	thief.SetPlrFlag(PlrOutlaw, true)
 	thief.Stats.Str = 15
+	thief.CopyBaseAttributes()
 
 	for seed := uint32(1); seed < 5000; seed++ {
 		dprng.ResetStream(seed)

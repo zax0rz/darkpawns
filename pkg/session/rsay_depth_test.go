@@ -22,6 +22,7 @@ func TestCmdRaceSayRunsCPrechecksForEmptyArguments(t *testing.T) {
 	s := makeCommandTestSession(t, m, "Rsaystupid", 1, 1001)
 	s.player.Stats.Int = 0
 	s.player.Stats.Wis = 10
+	s.player.CopyBaseAttributes()
 	registerInWorld(t, s)
 
 	if err := cmdRaceSay(s, nil); err != nil {
@@ -32,6 +33,7 @@ func TestCmdRaceSayRunsCPrechecksForEmptyArguments(t *testing.T) {
 	}
 
 	s.player.Stats.Int = 10
+	s.player.CopyBaseAttributes()
 	s.player.SetPlrFlag(game.PlrNoshout, true)
 	if err := cmdRaceSay(s, nil); err != nil {
 		t.Fatalf("cmdRaceSay noshout: %v", err)

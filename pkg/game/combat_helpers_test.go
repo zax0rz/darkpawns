@@ -31,6 +31,7 @@ func TestImproveSkill_DrawParity(t *testing.T) {
 	// stat gate passes or fails, the function must return after exactly one draw.
 	player.Stats.Int = 12
 	player.Stats.Wis = 12
+	player.CopyBaseAttributes()
 	player.SetSkill("backstab", 99)
 
 	dprng.ResetStream(1)
@@ -55,6 +56,7 @@ func TestImproveSkill_DrawParity(t *testing.T) {
 	// increment from the stream itself.
 	player.Stats.Int = 100
 	player.Stats.Wis = 100
+	player.CopyBaseAttributes()
 	dprng.ResetStream(1)
 	dprng.Number(1, 200)      // gate draw (passes)
 	inc := dprng.Number(1, 3) // the increment C would roll

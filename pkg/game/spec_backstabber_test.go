@@ -32,6 +32,7 @@ func prepareBackstabber(t *testing.T, wield bool) (*World, *Player, *MobInstance
 	mob.Intel = 11
 	mob.Wis = 11
 	mob.Dex = 11
+	mob.CopyBaseAttributes()
 	{
 		p := *mob.Proto()
 		p.Damage = parser.DiceRoll{Num: 1, Sides: 1, Plus: 2}
@@ -251,6 +252,7 @@ func TestMobBackstab_PositionMultiplier(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			w, player, mob, _ := prepareBackstabber(t, true)
 			mob.Str = 10
+			mob.CopyBaseAttributes()
 			proto := *mob.Proto()
 			proto.Damage = parser.DiceRoll{Num: 1, Sides: 1, Plus: 11}
 			mob.SetProto(&proto)

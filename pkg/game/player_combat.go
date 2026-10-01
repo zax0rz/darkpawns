@@ -53,7 +53,7 @@ func (p *Player) SetClass(v int) {
 func (p *Player) GetStr() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Str + p.sumAffectModsLocked(ApplyStr) + p.sumEquipAffectModsLocked(ApplyStr)
+	return p.effectiveAttributesLocked().Str
 }
 
 // GetDex returns the player's dexterity (Phase 2c addition)
@@ -61,7 +61,7 @@ func (p *Player) GetStr() int {
 func (p *Player) GetDex() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Dex + p.sumAffectModsLocked(ApplyDex) + p.sumEquipAffectModsLocked(ApplyDex)
+	return p.effectiveAttributesLocked().Dex
 }
 
 // GetInt returns the player's intelligence (Phase 2c addition)
@@ -69,7 +69,7 @@ func (p *Player) GetDex() int {
 func (p *Player) GetInt() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Int + p.sumAffectModsLocked(ApplyInt) + p.sumEquipAffectModsLocked(ApplyInt)
+	return p.effectiveAttributesLocked().Int
 }
 
 // GetWis returns the player's wisdom (Phase 2c addition)
@@ -77,7 +77,7 @@ func (p *Player) GetInt() int {
 func (p *Player) GetWis() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Wis + p.sumAffectModsLocked(ApplyWis) + p.sumEquipAffectModsLocked(ApplyWis)
+	return p.effectiveAttributesLocked().Wis
 }
 
 // GetHitroll returns the player's hitroll bonus (Phase 2c addition)
@@ -135,7 +135,7 @@ func (p *Player) AdjustDamroll(delta int) {
 func (p *Player) GetStrAdd() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.StrAdd
+	return p.effectiveAttributesLocked().StrAdd
 }
 
 // GetStrToDam returns the strength to-damage bonus.

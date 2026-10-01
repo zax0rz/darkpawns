@@ -35,6 +35,7 @@ func TestInputLinePromptsOthersItReached(t *testing.T) {
 	speaker.terminalNamed = true
 	speaker.limiter = rate.NewLimiter(rate.Inf, 1000)
 	speaker.player.Stats.Int, speaker.player.Stats.Wis = 13, 13 // C refuses speech at 0
+	speaker.player.CopyBaseAttributes()
 	registerTestSession(t, m, speaker, "Speaker")
 	listener := makeTestSession(t, m, "Listener", 1001, true)
 	listener.player.ID = 2

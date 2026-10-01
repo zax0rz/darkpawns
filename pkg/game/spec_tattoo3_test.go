@@ -32,6 +32,7 @@ func newTattoo3TestWorld(t *testing.T, withPeer bool) (*World, *Player, *MobInst
 	actor.SetLevel(levelCanShout)
 	actor.Stats.Int = 10
 	actor.Stats.Wis = 10
+	actor.CopyBaseAttributes()
 	if err := w.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer actor: %v", err)
 	}
@@ -182,7 +183,7 @@ func TestSpecTattoo3AppliesEveryOfferedTattoo(t *testing.T) {
 			if actor.Tattoo != offer.number {
 				t.Errorf("tattoo = %d, want %d", actor.Tattoo, offer.number)
 			}
-			if actor.Stats.Wis != baseStats.Wis+test.wisDelta || actor.Stats.Str != baseStats.Str || actor.Stats.Dex != baseStats.Dex || actor.Stats.Int != baseStats.Int {
+			if actor.GetWis() != baseStats.Wis+test.wisDelta || actor.GetStr() != baseStats.Str || actor.GetDex() != baseStats.Dex || actor.GetInt() != baseStats.Int {
 				t.Errorf("stat effects = %+v, base %+v, want wis delta %d", actor.Stats, baseStats, test.wisDelta)
 			}
 			if actor.Hitroll != baseHitroll+test.hitroll || actor.Damroll != baseDamroll+test.damroll {

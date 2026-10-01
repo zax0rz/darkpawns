@@ -84,6 +84,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 
 		s.player = game.NewCharacter(0, guestName, game.ClassWarrior, game.RaceHuman)
 		s.player.Stats = game.RollRealAbils(game.ClassWarrior, game.RaceHuman)
+		s.player.CopyBaseAttributes()
 		s.player.Sex = 0 // Male
 		s.player.Hometown = 1
 		s.player.RoomVNum = game.MortalStartRoom // 8004

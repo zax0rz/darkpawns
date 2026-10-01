@@ -64,6 +64,7 @@ func cmdRestore(s *Session, args []string) error {
 				target.Strength = 25
 				target.Unlock()
 			}
+			target.CopyBaseAttributes() // src/act.wizard.c:1612; no total
 		}
 	} else if targetMob != nil {
 		targetMob.SetHealth(targetMob.GetMaxHP())

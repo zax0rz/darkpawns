@@ -99,7 +99,7 @@ func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.Ch
 			Bank:  p.GetBankGold(),
 			Mana:  p.GetMana(),
 			Move:  p.GetMove(),
-			Cha:   p.Stats.Cha,
+			Cha:   p.GetCha(),
 		}
 		p.mu.RLock()
 		f.Jail = p.JailTimer
@@ -233,6 +233,7 @@ func (a *WorldScriptableAdapter) ApplyChar(ref scripting.CharRef, w scripting.Ch
 		p.JailTimer = w.Jail
 		p.Tattoo = w.Tattoo
 		p.mu.Unlock()
+		p.AffectTotal() // scripts.c:1302, lua_save_char
 	case m != nil:
 		if !m.IsAlive() {
 			return
@@ -243,6 +244,7 @@ func (a *WorldScriptableAdapter) ApplyChar(ref scripting.CharRef, w scripting.Ch
 		m.SetHealth(w.HP)
 		m.SetPosition(w.Pos)
 		m.SetWaitState(w.Timer)
+		m.AffectTotal()
 	}
 }
 
@@ -410,13 +412,16 @@ func (a *WorldScriptableAdapter) LoadObjToRoom(vnum int, roomVNum int) (scriptin
 	return scripting.ObjRef{ID: obj.ID}, true
 }
 
-// SetSkill is lua_set_skill's SET_SKILL. Its affect_total changes nothing
-// in the port, which applies modifiers incrementally (see bridgeSaveChar).
+// SetSkill mirrors SET_SKILL and affect_total (src/scripts.c:1379).
 func (a *WorldScriptableAdapter) SetSkill(ref scripting.CharRef, skill, level int) {
-	if _, p, _ := a.resolveChar(ref); p != nil {
+	_, p, m := a.resolveChar(ref)
+	if p != nil {
 		if name := spells.GetSpellName(skill); name != "" {
 			p.SetSkill(name, level)
 		}
+		p.AffectTotal()
+	} else if m != nil {
+		m.AffectTotal()
 	}
 }
 
@@ -1111,6 +1116,9 @@ func (a *WorldScriptableAdapter) Unaffect(ref scripting.CharRef) {
 		for _, af := range affects {
 			engine.AffectFromChar(p, af.SpellID)
 		}
+		if len(affects) > 0 {
+			p.AffectTotal()
+		}
 	case m != nil:
 		m.mu.Lock()
 		var removed []*engine.Affect
@@ -1118,6 +1126,7 @@ func (a *WorldScriptableAdapter) Unaffect(ref scripting.CharRef) {
 			if af, ok := value.(*engine.Affect); ok && strings.HasPrefix(key, "affect_") {
 				removed = append(removed, af)
 				delete(m.CustomData, key)
+				delete(m.affectOrder, key)
 			}
 		}
 		m.mu.Unlock()
@@ -1127,6 +1136,9 @@ func (a *WorldScriptableAdapter) Unaffect(ref scripting.CharRef) {
 					m.RemoveAffected(cBit)
 				}
 			}
+		}
+		if len(removed) > 0 {
+			m.AffectTotal()
 		}
 	}
 }

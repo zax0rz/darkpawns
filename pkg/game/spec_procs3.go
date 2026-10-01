@@ -170,12 +170,12 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// Prevent dispel-self if same alignment as victim (lspell < 3)
 	if lspell < 3 {
-		casterAlign := me.Proto().Alignment
+		casterAlign := me.GetAlignment()
 		// Check mobs in room for target
 		for _, m := range w.GetMobsInRoom(me.GetRoomVNum()) {
 			if m.GetName() == victName {
-				if (casterAlign <= -350 && m.Proto().Alignment <= -350) ||
-					(casterAlign >= 350 && m.Proto().Alignment >= 350) {
+				if (casterAlign <= -350 && m.GetAlignment() <= -350) ||
+					(casterAlign >= 350 && m.GetAlignment() >= 350) {
 					lspell = 4
 				}
 				break
@@ -280,7 +280,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Offensive spells by lspell
 	switch {
 	case lspell <= 3:
-		if me.Proto().Alignment <= -350 {
+		if me.GetAlignment() <= -350 {
 			castClericSpell(w, me, vict, spells.SpellDispelGood)
 		} else {
 			castClericSpell(w, me, vict, spells.SpellDispelEvil)
@@ -679,6 +679,7 @@ func specConSeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	if ch.Stats.Con < 18 {
 		ch.Stats.Con++
 	}
+	ch.AffectTotal() // src/spec_procs3.c:308
 	ch.SetPosition(combat.PosStunned)
 
 	return true

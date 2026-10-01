@@ -204,9 +204,14 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		for _, item := range player.Equipment.GetEquippedItems() {
 			equipmentItems = append(equipmentItems, item)
 		}
+		player.Equipment.mu.Lock()
 		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+		player.Equipment.mu.Unlock()
 	}
 	player.mu.Unlock()
+	if len(equipmentItems) > 0 {
+		player.AffectTotal()
+	}
 	playerGold := player.GetGold()
 	player.SetGold(0)
 
@@ -660,6 +665,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 					}
 				}
 				player.mu.Unlock()
+				player.AffectTotal() // src/fight.c:608
 			}
 		}
 	}
@@ -684,6 +690,9 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		player.Equipment.mu.Unlock()
 	}
 	player.mu.Unlock()
+	if len(equipmentItems) > 0 {
+		player.AffectTotal()
+	} // make_corpse unequips each worn item
 
 	// Gold
 	playerGold := player.GetGold()

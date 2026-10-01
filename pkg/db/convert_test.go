@@ -190,6 +190,7 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	p.Stats.Dex = 15
 	p.Stats.Con = 13
 	p.Stats.Cha = 11
+	p.CopyBaseAttributes()
 	p.Hunger = 20
 	p.Thirst = 24
 	p.Title = "the Champion of Light"

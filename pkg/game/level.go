@@ -159,7 +159,7 @@ func (p *Player) AdvanceLevel() {
 	addMove := 0
 
 	// Base HP gain from constitution
-	con := p.Stats.Con
+	con := p.effectiveAttributesLocked().Con
 	if con < 0 {
 		con = 0
 	}
@@ -188,7 +188,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 3) // number(1, 3)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -219,7 +219,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 3) // number(1, 3)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -246,7 +246,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -270,7 +270,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -300,7 +300,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -324,7 +324,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(2, 4) // number(2, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -348,7 +348,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -378,7 +378,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MIN(2, MAX(1, wis_app[GET_WIS(ch)].bonus))
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -412,7 +412,7 @@ func (p *Player) AdvanceLevel() {
 		// #nosec G404
 		addMove = levelNumber(1, 4) // number(1, 4)
 		// Practices: MAX(2, wis_app[GET_WIS(ch)].bonus)
-		wis := p.Stats.Wis
+		wis := p.effectiveAttributesLocked().Wis
 		if wis < 0 {
 			wis = 0
 		}
@@ -462,9 +462,9 @@ func (p *Player) AdvanceLevel() {
 	// Release lock before I/O — SavePlayer acquires RLock via playerToSaveData.
 	level := p.Level
 	name := p.Name
-	str := p.Stats.Str
-	strAdd := p.Stats.StrAdd
-	dex := p.Stats.Dex
+	str := p.effectiveAttributesLocked().Str
+	strAdd := p.effectiveAttributesLocked().StrAdd
+	dex := p.effectiveAttributesLocked().Dex
 	p.mu.Unlock()
 	if p.Inventory != nil {
 		p.Inventory.SetCapacity(str, strAdd, dex, level)

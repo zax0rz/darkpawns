@@ -378,6 +378,7 @@ func newSkillCommandSession(t *testing.T) *skillCommandSession {
 	player := game.NewPlayer(1, "Tester", 1001)
 	player.SetLevel(10)
 	player.Stats = game.CharStats{Str: 18, Dex: 16, Int: 14, Wis: 12, Con: 12, Cha: 10}
+	player.CopyBaseAttributes()
 	if err := world.AddPlayer(player); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}
@@ -431,6 +432,7 @@ func TestNewbieThiefUtilityCommandsBypassGuildMinimumLevels(t *testing.T) {
 	thief.SetPosition(combat.PosStanding)
 	thief.Stats.Str = 25
 	thief.Stats.Dex = 25
+	thief.CopyBaseAttributes()
 	thief.SetSkill(game.SkillSteal, 1000)
 	if err := world.AddPlayer(thief); err != nil {
 		t.Fatalf("AddPlayer thief: %v", err)
@@ -590,6 +592,7 @@ func TestCmdLearn(t *testing.T) {
 		session := newSkillCommandSession(t)
 		session.player.SetLevel(1)
 		session.player.Stats = game.CharStats{}
+		session.player.CopyBaseAttributes()
 		sm := engine.NewSkillManager()
 		sm.RegisterSkill(&engine.Skill{Name: "bash", DisplayName: "Bash", Type: engine.SkillTypeCombat, Level: 0, Difficulty: 5, MaxLevel: 100, Learned: false})
 		session.player.SkillManager = sm

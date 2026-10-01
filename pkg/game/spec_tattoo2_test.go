@@ -32,6 +32,7 @@ func newTattoo2TestWorld(t *testing.T, withPeer bool) (*World, *Player, *MobInst
 	actor.SetLevel(levelCanShout)
 	actor.Stats.Int = 10
 	actor.Stats.Wis = 10
+	actor.CopyBaseAttributes()
 	if err := w.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer actor: %v", err)
 	}
@@ -151,7 +152,7 @@ func TestSpecTattoo2PriceAndSuccessAudience(t *testing.T) {
 	if actor.GetPosition() != combat.PosStanding {
 		t.Fatalf("success position = %d, want standing", actor.GetPosition())
 	}
-	if actor.Stats.Str != baseStats.Str || actor.Stats.Dex != baseStats.Dex+1 || actor.Stats.Int != baseStats.Int || actor.Stats.Wis != baseStats.Wis || actor.GetMaxMove() != baseMove+10 {
+	if actor.GetStr() != baseStats.Str || actor.GetDex() != baseStats.Dex+1 || actor.GetInt() != baseStats.Int || actor.GetWis() != baseStats.Wis || actor.GetMaxMove() != baseMove+10 {
 		t.Fatalf("tiger effects = stats %+v max move %d, want base dex+1 and max move+10", actor.Stats, actor.GetMaxMove())
 	}
 }
@@ -188,7 +189,7 @@ func TestSpecTattoo2AppliesEveryOfferedTattoo(t *testing.T) {
 			if actor.Tattoo != offer.number {
 				t.Errorf("tattoo = %d, want %d", actor.Tattoo, offer.number)
 			}
-			if actor.Stats.Str != baseStats.Str+test.strDelta || actor.Stats.Dex != baseStats.Dex+test.dexDelta || actor.Stats.Int != baseStats.Int+test.intDelta || actor.Stats.Wis != baseStats.Wis+test.wisDelta {
+			if actor.GetStr() != baseStats.Str+test.strDelta || actor.GetDex() != baseStats.Dex+test.dexDelta || actor.GetInt() != baseStats.Int+test.intDelta || actor.GetWis() != baseStats.Wis+test.wisDelta {
 				t.Errorf("stat effects = %+v, base %+v, want deltas str=%d dex=%d int=%d wis=%d", actor.Stats, baseStats, test.strDelta, test.dexDelta, test.intDelta, test.wisDelta)
 			}
 			if actor.GetMaxHP() != baseHealth+test.maxHealth || actor.GetMaxMana() != baseMana+test.maxMana || actor.GetMaxMove() != baseMove+test.maxMove || actor.Damroll != test.damroll {

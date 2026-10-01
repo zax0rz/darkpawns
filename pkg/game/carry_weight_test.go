@@ -6,6 +6,7 @@ func TestMaxCarryWeightUsesLiveExceptionalStrength(t *testing.T) {
 	p := NewPlayer(1, "Strongarm", MortalStartRoom)
 	p.Stats.Str = 18
 	p.Stats.StrAdd = 50
+	p.CopyBaseAttributes()
 	p.Inventory.MaxWeight = 3
 
 	if got := p.MaxCarryWeight(); got != 280 {
@@ -19,6 +20,7 @@ func TestAdvanceLevelRefreshesCarryCapacity(t *testing.T) {
 	p.Class = ClassWarrior
 	p.Level = 20
 	p.Stats = CharStats{Str: 18, StrAdd: 100, Dex: 18, Con: 10, Wis: 10}
+	p.CopyBaseAttributes()
 	p.Inventory.SetCapacity(1, 0, 1, 1)
 
 	p.AdvanceLevel()

@@ -39,6 +39,7 @@ func newStealTestThief(skill int) *Player {
 	thief := NewPlayer(1, "Thief", 1001)
 	thief.Class = ClassThief
 	thief.Stats = CharStats{Str: 25, Dex: 25, Int: 10, Wis: 10, Con: 10, Cha: 10}
+	thief.CopyBaseAttributes()
 	thief.SetSkill(SkillSteal, skill)
 	return thief
 }
@@ -48,6 +49,7 @@ func TestDoHideDexBonusToggleAndImprove(t *testing.T) {
 
 	ch := NewPlayer(1, "Thief", 1001)
 	ch.Stats = CharStats{Dex: 25}
+	ch.CopyBaseAttributes()
 	ch.SetSkill(SkillHide, 5)
 	dprng.ResetStream(seed)
 	result := DoHide(ch)
@@ -61,6 +63,7 @@ func TestDoHideDexBonusToggleAndImprove(t *testing.T) {
 	// The same roll fails without the dex bonus. Starting hidden verifies that C
 	// clears the old bit and rerolls instead of treating hide as a toggle.
 	ch.Stats.Dex = 15
+	ch.CopyBaseAttributes()
 	ch.SetAffect(affHide, true)
 	dprng.ResetStream(seed)
 	result = DoHide(ch)
@@ -75,8 +78,10 @@ func TestDoHideDexBonusToggleAndImprove(t *testing.T) {
 	// increment draws.
 	ch.Stats.Int = 100
 	ch.Stats.Wis = 100
+	ch.CopyBaseAttributes()
 	ch.SetSkill(SkillHide, 50)
 	ch.Stats.Dex = 25
+	ch.CopyBaseAttributes()
 	dprng.ResetStream(1)
 	dprng.Number(1, 101)
 	dprng.Number(1, 200)
@@ -153,6 +158,7 @@ func TestDoSneakTimedAffectAndReroll(t *testing.T) {
 	ch := NewPlayer(1, "Thief", 1001)
 	ch.SetLevel(7)
 	ch.Stats.Dex = 25
+	ch.CopyBaseAttributes()
 	ch.SetSkill(SkillSneak, 1000)
 	ch.SetAffect(affSneak, true)
 	ch.AddAffect(engine.NewAffectDirect(skillNumStealth, engine.ApplyNone, 3, 0, engine.AFFSneak, SkillStealth))
@@ -195,6 +201,7 @@ func TestDoSneakFailedRerollClearsSneakAndStealthAffects(t *testing.T) {
 	ch := NewPlayer(1, "Failing", 1001)
 	ch.SetLevel(9)
 	ch.Stats.Dex = 1
+	ch.CopyBaseAttributes()
 	ch.SetSkill(SkillSneak, 0)
 	ch.SetAffect(affSneak, true)
 	ch.AddAffect(engine.NewAffectDirect(skillNumSneak, engine.ApplyNone, 3, 0, engine.AFFSneak, SkillSneak))
@@ -217,6 +224,7 @@ func TestDoStealCoinsDrawOrderGoldAndImprove(t *testing.T) {
 	thief := newStealTestThief(50)
 	thief.Stats.Int = 100
 	thief.Stats.Wis = 100
+	thief.CopyBaseAttributes()
 	mob := newStealTestMob(1000)
 
 	// C draw order: initial percent, coin percentage, improve gate, increment.
@@ -270,6 +278,7 @@ func TestDoStealCoinsZeroGoldDoesNotImprove(t *testing.T) {
 func TestDoStealFailureAggrosAwakeMob(t *testing.T) {
 	thief := newStealTestThief(0)
 	thief.Stats.Dex = 15
+	thief.CopyBaseAttributes()
 	mob := newStealTestMob(1000)
 
 	dprng.ResetStream(1)

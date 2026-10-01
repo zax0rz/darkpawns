@@ -75,7 +75,13 @@ func (w *World) AffectUpdate() {
 
 		p.mu.Lock()
 		p.ActiveAffects = remaining
+		if len(remaining) != len(affects) {
+			p.affectTotalLocked()
+		}
 		p.mu.Unlock()
+		if len(remaining) != len(affects) {
+			p.refreshAttributeCapacity()
+		}
 	}
 
 	// Mob affect expiration — magic.c:431-457

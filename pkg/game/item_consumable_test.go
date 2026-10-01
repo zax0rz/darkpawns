@@ -30,6 +30,8 @@ func newConsumableTestWorld(t *testing.T, protos ...*parser.Obj) (*World, *Playe
 	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
 
 	ch := NewPlayer(1, "Tester", 1001)
+	ch.Stats = CharStats{Str: 18, Dex: 18}
+	ch.CopyBaseAttributes()
 	if err := w.AddPlayer(ch); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}

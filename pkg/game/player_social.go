@@ -27,7 +27,7 @@ func (p *Player) GetMountName() string {
 func (p *Player) GetCon() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Con + p.sumAffectModsLocked(ApplyCon) + p.sumEquipAffectModsLocked(ApplyCon)
+	return p.effectiveAttributesLocked().Con
 }
 
 // GetOrigCon returns the base constitution recorded before constitution loss.
@@ -241,7 +241,7 @@ func (p *Player) GetFollowingSequence() uint64 {
 func (p *Player) GetCha() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Stats.Cha + p.sumAffectModsLocked(ApplyCha) + p.sumEquipAffectModsLocked(ApplyCha)
+	return p.effectiveAttributesLocked().Cha
 }
 
 // GetCondition returns the value of condition cond (CondDrunk=0, CondFull=1, CondThirst=2).

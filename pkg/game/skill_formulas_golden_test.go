@@ -33,6 +33,7 @@ func newFidelityTestWorld(t *testing.T) (*World, *Player) {
 	ch.Stats.Int = 18
 	ch.Stats.Wis = 18
 	ch.Stats.Con = 18
+	ch.CopyBaseAttributes()
 	ch.SetDamroll(2)
 	ch.Move = 100
 

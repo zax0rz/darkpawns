@@ -159,6 +159,7 @@ func TestCmdAbils(t *testing.T) {
 	s.player.Stats.Wis = 10
 	s.player.Stats.Con = 10
 	s.player.Stats.Cha = 10
+	s.player.CopyBaseAttributes()
 	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyStr, 6, 2, 0, "strength"))
 	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyDex, 6, -1, 0, "clumsy"))
 	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyInt, 6, 1, 0, "intellect"))
@@ -191,6 +192,7 @@ func TestCmdAbilsClampsCEffectiveStatCeilings(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
 	s.player.Stats = game.CharStats{Str: 18, Dex: 18, Int: 18, Wis: 18, Con: 18, Cha: 18}
+	s.player.CopyBaseAttributes()
 	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyStr, 6, 2, 0, "strength"))
 	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyDex, 6, 2, 0, "dexterity"))
 	s.player.AddAffect(engine.NewAffectDirect(0, game.ApplyInt, 6, 2, 0, "intelligence"))
@@ -279,6 +281,7 @@ func TestCmdScoreFixedFixtureGolden(t *testing.T) {
 	p.Race = game.RaceHuman
 	p.Stats.Str = 10
 	p.Stats.Dex = 10
+	p.CopyBaseAttributes()
 	p.Title = "the Warrior"
 	p.Hometown = 1
 	p.Level = 1
@@ -416,6 +419,7 @@ func TestCmdSaySelfEcho(t *testing.T) {
 			s := makeTestSession(t, m, "Alice", 1001, true)
 			s.player.Stats.Int = 10
 			s.player.Stats.Wis = 10
+			s.player.CopyBaseAttributes()
 			registerInWorld(t, s)
 
 			if err := cmdSay(s, []string{tc.text}); err != nil {

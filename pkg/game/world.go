@@ -1402,8 +1402,9 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 			if p.Equipment == nil {
 				p.Equipment = NewEquipment()
 				p.Equipment.OwnerName = p.Name
+				p.Equipment.afterChange = p.AffectTotal
 			}
-			err := p.Equipment.equip(item, p.Inventory)
+			err := p.Equipment.Equip(item, p.Inventory)
 			return err == nil
 		}
 	}
@@ -1428,6 +1429,7 @@ func (w *World) EquipMobByVNum(mobVNum, roomVNum, objVNum int) bool {
 						slot := wearFlagToIntSlot(obj.Prototype.WearFlags)
 						if slot >= 0 {
 							m.Equipment[slot] = obj
+							m.AffectTotal()
 							return true
 						}
 					}
@@ -1514,10 +1516,14 @@ func (w *World) ClearAffects(charName string, isMob bool) {
 	} else {
 		if p, ok := w.players[charName]; ok {
 			p.mu.Lock()
+			hadAffects := len(p.ActiveAffects) > 0 || len(p.MasterAffects) > 0
 			p.MasterAffects = nil
 			p.ActiveAffects = nil
 			p.Affects = 0
 			p.mu.Unlock()
+			if hadAffects {
+				p.AffectTotal()
+			}
 			return
 		}
 	}

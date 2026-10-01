@@ -60,6 +60,7 @@ func TestAmbushDamageFormulaAndHiddenClear(t *testing.T) {
 
 	ch.Level = 10
 	ch.Stats.Str = 18
+	ch.CopyBaseAttributes()
 	ch.SetDamroll(5)
 	ch.SetAffect(affHide, true)
 	weapon := NewObjectInstance(&parser.Obj{

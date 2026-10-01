@@ -180,6 +180,7 @@ func (w *World) ExtractPendingPlayers() []*Player {
 				p.Inventory.mu.Unlock()
 			}
 			if p.Equipment != nil {
+				hadEquipment := len(p.Equipment.Snapshot()) > 0
 				p.Equipment.mu.Lock()
 				for cPos := 0; cPos < NumWears; cPos++ {
 					slot, ok := CWearPosToSlot(cPos)
@@ -195,6 +196,9 @@ func (w *World) ExtractPendingPlayers() []*Player {
 					}
 				}
 				p.Equipment.mu.Unlock()
+				if hadEquipment {
+					p.AffectTotal()
+				}
 			}
 			for _, item := range drops {
 				if roomVNum >= 0 {
@@ -239,6 +243,7 @@ func (w *World) ExtractPendingPlayers() []*Player {
 			continue
 		}
 		mobRoom := m.RoomVNum
+		hadEquipment := len(m.Equipment) > 0
 
 		// Drop equipment to room floor.
 		for slot, item := range m.Equipment {
@@ -272,6 +277,9 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		}
 		m.Inventory = m.Inventory[:0]
 		m.mu.Unlock()
+		if hadEquipment {
+			m.AffectTotal()
+		}
 
 		slog.Debug("mob extracted", "id", id)
 		delete(w.activeMobs, id)

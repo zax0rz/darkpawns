@@ -10,8 +10,8 @@ import (
 // TestActiveAffectsModifyStats is the foundational guard for the timed-affect →
 // stat pipeline. Buff/debuff spells and skills (bless, armor, curse, berserk,
 // kuji-kiri, …) store their effect in ActiveAffects with a Location + Magnitude
-// via AddAffect, but never touch base stats. The stat getters must fold those in
-// at read time, or every such buff is silently inert. Mirrors the engine
+// via AddAffect, but never touch base stats. Abilities are recomputed at
+// that boundary; non-abilities are summed by getters. Mirrors the engine
 // APPLY_* / magnitude conventions used by MagAffects.
 func TestActiveAffectsModifyStats(t *testing.T) {
 	p := NewPlayer(1, "Caster", 3001)
@@ -75,6 +75,7 @@ func TestActiveAffectsStackAndExpire(t *testing.T) {
 func TestActiveAffectsModifyCoreStats(t *testing.T) {
 	p := NewPlayer(1, "Caster", 3001)
 	p.Stats.Str, p.Stats.Dex, p.Stats.Int, p.Stats.Wis, p.Stats.Con, p.Stats.Cha = 10, 10, 10, 10, 10, 10
+	p.CopyBaseAttributes()
 	p.MaxHealth, p.MaxMana, p.MaxMove = 50, 50, 50
 	p.SavingThrows = [5]int{0, 0, 0, 0, 0}
 

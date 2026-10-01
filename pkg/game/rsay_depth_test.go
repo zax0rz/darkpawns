@@ -45,6 +45,7 @@ func TestRaceSayUsesCControlBytesAndGateOrder(t *testing.T) {
 	t.Run("stupid precedes empty", func(t *testing.T) {
 		w, actor, _, output := newDirectedSpeechWorld(t)
 		actor.Stats.Int = 0
+		actor.CopyBaseAttributes()
 		w.doRaceSay(actor, nil, "rsay", "")
 		if got, want := directedOutput(output, actor.Name), "You are too stupid to communicate with language!\r\n"; got != want {
 			t.Fatalf("stupid output = %q, want %q", got, want)

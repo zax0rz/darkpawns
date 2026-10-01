@@ -24,8 +24,8 @@ func (p *Player) HasSpellAffect(spellID int) bool {
 // given APPLY_* location. This is how timed buffs/debuffs (bless, armor, curse,
 // berserk, kuji-kiri, …) reach the stat getters: MagAffects stores them in
 // ActiveAffects with a Location and Magnitude but does not touch base stats, so
-// the getters must fold them in at read time — exactly as equipment affects are
-// already summed. Caller must hold p.mu (read or write lock).
+// non-ability getters fold these modifiers in at read time. Abilities use
+// the effective view recomputed at affect boundaries. Caller must hold p.mu (read or write lock).
 func (p *Player) sumAffectModsLocked(location int) int {
 	total := 0
 	for _, af := range p.ActiveAffects {
@@ -316,7 +316,11 @@ func (p *Player) GetInventoryItems() []scripting.ScriptableObject {
 // Called by the spell system (applyAffect) to apply spell effects.
 func (p *Player) AddAffect(aff *engine.Affect) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	defer func() {
+		p.affectTotalLocked()
+		p.mu.Unlock()
+		p.refreshAttributeCapacity()
+	}()
 	p.ActiveAffects = append(p.ActiveAffects, aff)
 }
 
@@ -324,7 +328,11 @@ func (p *Player) AddAffect(aff *engine.Affect) {
 // APPLY location. Infravision uses addDuration=true on every recast.
 func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	defer func() {
+		p.affectTotalLocked()
+		p.mu.Unlock()
+		p.refreshAttributeCapacity()
+	}()
 	for i, current := range p.ActiveAffects {
 		if current == nil || current.SpellID != aff.SpellID || current.Location != aff.Location {
 			continue
@@ -346,12 +354,20 @@ func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) 
 // Called by the spell system (removeAffect / MagUnaffects) to strip spell effects.
 func (p *Player) RemoveAffectBySpell(spellNum int) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	oldLen := len(p.ActiveAffects)
 	filtered := p.ActiveAffects[:0]
 	for _, aff := range p.ActiveAffects {
-		if aff.SpellID != spellNum {
+		if aff == nil || aff.SpellID != spellNum {
 			filtered = append(filtered, aff)
 		}
 	}
 	p.ActiveAffects = filtered
+	removed := len(filtered) != oldLen
+	if removed {
+		p.affectTotalLocked()
+	}
+	p.mu.Unlock()
+	if removed {
+		p.refreshAttributeCapacity()
+	}
 }

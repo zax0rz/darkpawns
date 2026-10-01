@@ -101,6 +101,7 @@ func TestStatFileSQLiteUsesDurableValues(t *testing.T) {
 	e.s.player.Level = game.LVL_IMMORT
 	e.s.player.Practices, e.s.player.OrigCon = 9, 0
 	e.s.player.Stats.Con = 14
+	e.s.player.CopyBaseAttributes()
 	e.s.player.SetPlrFlag(game.PrfBrief, true)
 	e.s.player.SetCondition(game.CondFull, 11)
 	e.s.player.SetCondition(game.CondThirst, 12)

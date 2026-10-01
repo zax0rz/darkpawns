@@ -58,6 +58,7 @@ func newFlagShopHarnessWithStore(t *testing.T, store db.GameStore) *flagShopHarn
 	m.sessions["Shopper"] = s
 	m.mu.Unlock()
 	s.player.Stats.Str = 15
+	s.player.CopyBaseAttributes()
 	// The world must know the player: the ObjectLocation attach arms key
 	// player inventory through w.players.
 	if err := w.AddPlayer(s.player); err != nil {

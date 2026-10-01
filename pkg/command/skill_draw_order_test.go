@@ -96,14 +96,15 @@ func assertPipelineDrawOrder(t *testing.T, rig *drawOrderRig, sess *killPayoutSe
 	}
 
 	// Reference players: skill 50 (in (0,97) → the number(1,3) increment draw
-	// fires) and WIS+INT=200 (the number(1,200) gate always passes), so each
-	// improve consumes exactly number(1,200) then number(1,3) and the gain is
-	// directly observable.
+	// fires when its gate passes), with the same effective WIS/INT as the
+	// actor. Equipping a weapon now correctly applies C's PC bound to the
+	// fixture's high base values; seed search still distinguishes draw order.
 	mkRef := func(name string, id int) *game.Player {
 		r := game.NewPlayer(id, name, testRoomVNum)
 		r.SetSkill(skillName, 50)
-		r.Stats.Int = 100
-		r.Stats.Wis = 100
+		r.Stats.Int = p.GetInt()
+		r.Stats.Wis = p.GetWis()
+		r.CopyBaseAttributes()
 		return r
 	}
 
@@ -209,6 +210,7 @@ func TestSendSkillResult_KickSuccess_DrawOrderMatchesC(t *testing.T) {
 	p.SetSkill(game.SkillKick, 50)
 	p.Stats.Int = 100
 	p.Stats.Wis = 100
+	p.CopyBaseAttributes()
 
 	rig := newDrawOrderRig(t, p.Name)
 	defer rig.teardown()
@@ -245,6 +247,7 @@ func TestSendSkillResult_TripSuccess_DrawOrderMatchesC(t *testing.T) {
 	p.SetSkill(game.SkillTrip, 50)
 	p.Stats.Int = 100
 	p.Stats.Wis = 100
+	p.CopyBaseAttributes()
 
 	rig := newDrawOrderRig(t, p.Name)
 	defer rig.teardown()
@@ -281,6 +284,7 @@ func TestSendSkillResult_HeadbuttSuccess_DrawOrderMatchesC(t *testing.T) {
 	p.SetSkill(game.SkillHeadbutt, 50)
 	p.Stats.Int = 100
 	p.Stats.Wis = 100
+	p.CopyBaseAttributes()
 
 	rig := newDrawOrderRig(t, p.Name)
 	defer rig.teardown()
@@ -319,6 +323,7 @@ func TestSendSkillResult_BackstabSuccess_DrawOrderMatchesC(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 50)
 	p.Stats.Int = 100
 	p.Stats.Wis = 100
+	p.CopyBaseAttributes()
 	equipPiercingWeapon(t, p)
 
 	rig := newDrawOrderRig(t, p.Name)
@@ -360,6 +365,7 @@ func TestSendSkillResult_CircleSuccess_DrawOrderMatchesC(t *testing.T) {
 	p.SetSkill(game.SkillCircle, 50)
 	p.Stats.Int = 100
 	p.Stats.Wis = 100
+	p.CopyBaseAttributes()
 	equipPiercingWeapon(t, p)
 
 	rig := newDrawOrderRig(t, p.Name)
@@ -401,6 +407,7 @@ func TestSendSkillResult_BashSuccess_DrawOrderMatchesC(t *testing.T) {
 	p.SetSkill(game.SkillBash, 50)
 	p.Stats.Int = 100
 	p.Stats.Wis = 100
+	p.CopyBaseAttributes()
 
 	rig := newDrawOrderRig(t, p.Name)
 	defer rig.teardown()
@@ -469,6 +476,7 @@ func TestSendSkillResult_TigerPunchSuccess_DrawOrderMatchesC(t *testing.T) {
 	p.SetSkill(game.SkillTigerPunch, 50)
 	p.Stats.Int = 100
 	p.Stats.Wis = 100
+	p.CopyBaseAttributes()
 
 	rig := newDrawOrderRig(t, p.Name)
 	defer rig.teardown()

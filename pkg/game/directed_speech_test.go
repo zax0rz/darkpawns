@@ -37,6 +37,7 @@ func directedSpeechPlayer(t *testing.T, w *World, id int, name string, room int)
 	player := NewPlayer(id, name, room)
 	player.Stats.Int = 10
 	player.Stats.Wis = 10
+	player.CopyBaseAttributes()
 	if err := w.AddPlayer(player); err != nil {
 		t.Fatal(err)
 	}
@@ -54,6 +55,7 @@ func TestDoSayCBehavior(t *testing.T) {
 	t.Run("mute", func(t *testing.T) {
 		w, actor, _, output := newDirectedSpeechWorld(t)
 		actor.Stats.Int = 0
+		actor.CopyBaseAttributes()
 		w.DoSay(actor, "hello")
 		if got := directedOutput(output, actor.Name); got != "You are too stupid to communicate with language!\r\n" {
 			t.Fatalf("output = %q", got)
