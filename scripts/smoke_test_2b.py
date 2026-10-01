@@ -186,10 +186,22 @@ async def login_existing(ws, player_name, password):
             await send(ws, "char_input", {"choice": choices[stage]})
 
 
+def unique_suffix():
+    # C _parse_name accepts letters only (interpreter.c:1505-1520), so spell the
+    # time in letters: five base-26 digits.
+    n = int(time.time()) % (26 ** 5)
+    letters = ""
+    for _ in range(5):
+        n, r = divmod(n, 26)
+        letters += chr(ord("a") + r)
+    return letters
+
+
 async def run_test(ws_url):
     # Use a unique suffix so repeated local runs don't collide with a character
-    # left behind by a previous test run.
-    char_name = f"SmokeTest2B{int(time.time()) % 100000}"
+    # left behind by a previous test run. Names must pass the C name gate:
+    # letters only, 2-20 characters.
+    char_name = f"SmokeTestB{unique_suffix()}"
     print(f"\n=== Phase 2b Smoke Test ===")
     print(f"Server: {ws_url}\n")
 
@@ -200,7 +212,7 @@ async def run_test(ws_url):
     # God (level 40, all skills 100). Create + quit a throwaway bootstrap char
     # first so the warrior under test is character #2 — an ordinary mortal —
     # exactly as on a real server that already has an admin.
-    bootstrap_name = f"SmokeBoot{int(time.time()) % 100000}"
+    bootstrap_name = f"SmokeBoot{unique_suffix()}"
     print("[ Session 0: consume first-player-God crown (throwaway bootstrap char) ]")
     async with websockets.connect(ws_url) as ws:
         await send(ws, "login", {
