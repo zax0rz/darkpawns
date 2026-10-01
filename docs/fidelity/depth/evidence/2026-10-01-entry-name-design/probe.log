@@ -1,0 +1,12 @@
+--- FAIL: TestEntryNameDesignProbe (0.00s)
+    --- FAIL: TestEntryNameDesignProbe/Fighter123 (0.00s)
+        entry_name_design_probe_test.go:10: C rejects "Fighter123"; Go reached stage "confirm_name"
+    --- FAIL: TestEntryNameDesignProbe/a_b (0.00s)
+        entry_name_design_probe_test.go:10: C rejects "a_b"; Go reached stage "confirm_name"
+    --- FAIL: TestEntryNameDesignProbe/the (0.00s)
+        entry_name_design_probe_test.go:10: C rejects "the"; Go reached stage "confirm_name"
+    --- FAIL: TestEntryNameDesignProbe/self (0.00s)
+        entry_name_design_probe_test.go:10: C rejects "self"; Go reached stage "confirm_name"
+FAIL
+FAIL	github.com/zax0rz/darkpawns/pkg/session	0.006s
+FAIL
