@@ -103,3 +103,30 @@ case-insensitive reboot probe racing the comparison. PR #1736 removes that
 terminating probe and corrects its depth row. The branch merged origin/main
 550cf6da3 before resuming validation. The previous stop and its evidence are
 retained above; fresh full and claims censuses will validate the final source.
+
+## Final validation (2026-10-01)
+
+Implementation commit `bbb60e5544bce4a9830997ae608cfb70d87e8a9e`, including
+origin/main's #1736, passed both required censuses against the unchanged
+reference oracle. No game source changed after that commit. The claims run
+records only an untracked documentation proof table in its tree status.
+The subsequent evidence commit adds documentation only.
+
+```text
+oracle-regression: scenarios=1039 passed=1033 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=489.853s started=2026-10-01T07:22:07-0400 finished=2026-10-01T07:30:17-0400 verdict=CLEAN
+oracle-claims: seed=all pairs=2929 expected=11 expected_unstable=0 fail=0 infra=0 pass=2918 stale=0 timeout=0 unpinnable=0 elapsed=1655.394s verdict=CLEAN
+```
+
+Full run: `~/Archives/darkpawns/oracle-runs/2026-10-01/dp-1371-p4-e2-attr-merged-full/`.
+Claims run: `~/Archives/darkpawns/oracle-runs/2026-10-01/dp-1371-p4-e2-attr-merged-claims/`.
+Both retain wrapper-written manifests and Go HEAD. `shutdown-depth` passes;
+the full run's one unstable row is known `accuse-noarg-depth`.
+
+All local gates passed after merging #1736: formatting, build, vet, all Go
+tests, clean lint cache/lint, diff check, fidelity depth (5188 cases; 71
+blocked), fidelity units (1151 claims) and string census. The compact
+37-contract revert table is checked in at
+`docs/fidelity/depth/evidence/2026-09-30-e2-attr/revert-triples.tsv`; the full
+assertion logs and source hashes remain in the retained proof directory.
+The mortal vest DEX block moves toward C as documented above. No depth row
+is reclassified by E2-attr; `lua.bind-set-skill` remains its own blocked batch.
