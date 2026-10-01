@@ -54,3 +54,13 @@ beside this note after completion.
 The quit-to-menu password finding reproduces on untouched origin/main 9fa21c7e8 with the reference oracle (dp-1371-p4-entry-deleted-menu-baseline). Go remains on the old Password route at relogin after the menu verification sequence; retained attempt logs show three Wrong password outcomes and EOF. The runner classifies the early close as INFRA, so this is a retained pre-existing finding, not a clean vehicle or revert proof. The final no-settle vehicle and the full census are clean.
 
 The sole deleted-slot replacement retains C's index-zero God initialization (`src/db.c:3016-3024`), even after the fresh-mud crown has been consumed. Its unit gate has a revert triple; entry-deleted-sole-record@1,2,3,5,8 drives the real wizard flag, quit/relogin, new world entry and score exposing God level/health. General bootstrap/RNG matrix ownership remains separate. The original full run and stopped claims run are preliminary; full-final/claims-final certify the completed source.
+
+Final full census on completed game source (matches 2a7da8aad):
+
+```
+oracle-regression: scenarios=1058 passed=1052 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=500.512s started=2026-10-01T17:42:38-0400 finished=2026-10-01T17:50:58-0400 verdict=CLEAN
+```
+
+The full run captured the sole-record vehicle before its test-only world/score refinement. The final targeted sole-record revert/restoration and claims run exercise the refined vehicle. Game code is unchanged; no general bootstrap/RNG claim is inferred from the precursor menu-only block.
+
+The final refined sole-record live proof is PASS → content FAIL → PASS: dp-1371-p4-entry-deleted-sole-restored, sole-mutant-2, sole-restored-2. Removing the sole-slot God predicate changes the replacement world/score; C shows 500 hit points and rank level 40. Both mutation/restoration runs have zero infrastructure errors/timeouts. The earlier sole-mutant run was discovery evidence, not the before leg of this triple.
