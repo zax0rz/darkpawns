@@ -1,0 +1,54 @@
+# C src/interpreter.c:1505-1520,1721,1743-1759,853-876.
+# Initial invalid names and retry invalid names reach CON_GET_NAME repeatedly.
+# Raw leading/trailing spaces are unit/transport proven: scenario parser trims.
+# depth-case: entry.name-validation.live
+[fixture]
+quiet-mobs
+
+[creation:oracle]
+Fighter123
+a_b
+x
+xxxxxxxxxxxxxxxxxxxxx
+THE
+SELF
+Aiko
+N
+from
+someone
+Biko
+Y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[creation:port]
+Fighter123
+a_b
+x
+xxxxxxxxxxxxxxxxxxxxx
+THE
+SELF
+Aiko
+N
+from
+someone
+Biko
+Y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1

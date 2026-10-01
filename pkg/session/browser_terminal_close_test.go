@@ -11,11 +11,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// An empty name ends the connection with C's goodbye. Over the browser
-// terminal the goodbye must arrive before the close, and the close must be an
-// orderly one: the reader used to close the socket while the writer was still
-// flushing, dropping the message and ending with an abnormal close (1006).
-func TestBrowserTerminalGoodbyeArrivesBeforeClose(t *testing.T) {
+// C src/interpreter.c:1721,1751-1752 closes an empty name without goodbye.
+// Browser terminal framing must preserve that and close in an orderly way.
+func TestBrowserTerminalEmptyNameClosesWithoutText(t *testing.T) {
 	m := makeTestManagerWithVoidRooms(t)
 	srv := httptest.NewServer(http.HandlerFunc(m.HandleWebSocket))
 	t.Cleanup(srv.Close)
@@ -38,7 +36,7 @@ func TestBrowserTerminalGoodbyeArrivesBeforeClose(t *testing.T) {
 		_, data, err := client.ReadMessage()
 		if err != nil {
 			if !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
-				t.Fatalf("connection ended with %v, want an orderly close after the goodbye (got %q)", err, got.String())
+				t.Fatalf("connection ended with %v, want an orderly empty-name close (got %q)", err, got.String())
 			}
 			break
 		}
@@ -52,7 +50,7 @@ func TestBrowserTerminalGoodbyeArrivesBeforeClose(t *testing.T) {
 			got.WriteString(frame.Data.Text)
 		}
 	}
-	if !strings.Contains(got.String(), "Goodbye.") {
-		t.Fatalf("goodbye never arrived; got %q", got.String())
+	if got.Len() != 0 {
+		t.Fatalf("empty-name close invented text: %q", got.String())
 	}
 }

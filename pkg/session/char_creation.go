@@ -143,15 +143,14 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	}
 
 	choice := strings.TrimSpace(input.Choice)
-	if s.charStage == "create_password" || s.charStage == "confirm_password" || s.charStage == "login_password" {
-		choice = input.Choice // C passwords are byte strings, including whitespace.
+	if s.charStage == "get_name" || s.charStage == "create_password" || s.charStage == "confirm_password" || s.charStage == "login_password" {
+		choice = input.Choice // Name/password gates own their input bytes.
 	}
 
 	switch s.charStage {
 	case "get_name":
-		if choice == "" {
-			s.CloseSend()
-			return nil
+		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(choice)), "guest") {
+			choice = strings.TrimSpace(choice) // Preserve DP-1379 guest routing.
 		}
 		login, err := json.Marshal(LoginData{PlayerName: choice})
 		if err != nil {
@@ -171,6 +170,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.charStage = "create_password"
 			s.sendCharCreatePromptWithSecret("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil, true)
 		case "N":
+			s.releaseEntryName()
 			s.charStage = "get_name"
 			s.charName = ""
 			s.sendCharCreatePrompt("get_name", "Okay, what IS it, then? ", nil)
@@ -452,6 +452,7 @@ func (s *Session) startNewCharFlow(playerName string) {
 }
 
 func (s *Session) restartNameEntry() {
+	s.releaseEntryName()
 	s.charCreating = true
 	s.charStage = "get_name"
 	s.charName = ""
@@ -679,6 +680,7 @@ func (s *Session) completeCharCreation() error {
 	}()
 
 	// Clear char creation state
+	s.releaseEntryName()
 	s.creationSaved = false
 	s.charCreating = false
 	s.charStage = ""

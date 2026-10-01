@@ -104,7 +104,7 @@ func TestTelnetSmoke_CharacterCreation(t *testing.T) {
 	conn, r := launchAndDial(t)
 	defer conn.Close()
 
-	entered := createWarrior(t, conn, r, "Smoke_Newbie", "secretpw")
+	entered := createWarrior(t, conn, r, "Smokenewbie", "secretpw")
 	if !strings.Contains(entered, "A Burning Hut") || strings.Contains(entered, "Lvl ") {
 		t.Errorf("entry output is not the canonical room-only render\n---\n%s", entered)
 	}
@@ -126,7 +126,7 @@ func TestTelnetSmoke_Combat(t *testing.T) {
 	conn, r := launchAndDial(t)
 	defer conn.Close()
 
-	name := fmt.Sprintf("Brawl%d", time.Now().UnixNano()%100000)
+	name := entryFixtureName("Brawl", time.Now().UnixNano()%100000)
 	createWarrior(t, conn, r, name, "brawlpw")
 	walkToTempleSquare(t, conn, r)
 
@@ -194,7 +194,7 @@ func TestTelnetSmoke_SkillKick(t *testing.T) {
 	conn, r := launchAndDial(t)
 	defer conn.Close()
 
-	name := fmt.Sprintf("Kick%d", time.Now().UnixNano()%100000)
+	name := entryFixtureName("Kick", time.Now().UnixNano()%100000)
 	createWarrior(t, conn, r, name, "kickpw")
 	walkToTempleSquare(t, conn, r)
 
@@ -243,7 +243,7 @@ func TestTelnetSmoke_CastEligibility(t *testing.T) {
 	conn, r := launchAndDial(t)
 	defer conn.Close()
 
-	name := fmt.Sprintf("Mage%d", time.Now().UnixNano()%100000)
+	name := entryFixtureName("Mage", time.Now().UnixNano()%100000)
 	createChar(t, conn, r, name, "magepw", "M")
 
 	// C's SPECIAL(start_room) has no CMD_IS gate (src/spec_procs.c:2204-2263),
@@ -288,7 +288,7 @@ func TestTelnetSmoke_PersistenceRoundTrip(t *testing.T) {
 	dbURL := filepath.Join(t.TempDir(), "darkpawns.db")
 
 	// game.ValidName caps names at 20 chars, so keep this short and unique.
-	name := fmt.Sprintf("Rt%d", time.Now().UnixNano()%100000000)
+	name := entryFixtureName("Rt", time.Now().UnixNano()%100000000)
 	const password = "roundtrip"
 	t.Cleanup(func() { deleteTestPlayer(t, dbURL, name) })
 
@@ -812,4 +812,17 @@ func mustWrite(t *testing.T, conn net.Conn, s string) {
 	if _, err := conn.Write([]byte(s)); err != nil {
 		t.Fatalf("write %q: %v", strings.TrimSpace(s), err)
 	}
+}
+
+// Use alphabetic identities at the C entry gate; numeric suffixes are invalid.
+func entryFixtureName(prefix string, value int64) string {
+	var suffix strings.Builder
+	for {
+		suffix.WriteByte(byte('a' + value%26))
+		value /= 26
+		if value == 0 {
+			break
+		}
+	}
+	return prefix + suffix.String()
 }

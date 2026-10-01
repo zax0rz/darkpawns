@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,8 +60,8 @@ func TestMailProductionRecipientSave(t *testing.T) {
 	})
 
 	suffix := time.Now().UnixNano() % 1000000000
-	senderName := fmt.Sprintf("SaveSender%d", suffix)
-	recipientName := fmt.Sprintf("SaveRcpt%d", suffix)
+	senderName := entryFixtureName("SaveSender", suffix)
+	recipientName := entryFixtureName("SaveRcpt", suffix)
 	const password = "mailproof"
 	sender := seedMailPlayer(t, database, senderName, password, 34)
 	seededIDs = append(seededIDs, sender.ID)

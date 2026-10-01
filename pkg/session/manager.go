@@ -68,6 +68,8 @@ type Manager struct {
 	// /darkpawns-map.xml endpoint).
 	mudletMap *mudletmap.Cache
 
+	entryNameMu  sync.Mutex // Protects names held by non-playing descriptors.
+	entryNames   map[*Session]string
 	creationMu   sync.Mutex // Serializes first-player selection with persistence.
 	mu           sync.RWMutex
 	snoopMu      sync.RWMutex        // protects the bidirectional snoop links

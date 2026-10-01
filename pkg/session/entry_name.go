@@ -1,0 +1,91 @@
+package session
+
+import (
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/validation"
+)
+
+// parseEntryName follows src/interpreter.c:1721,1505-1520,1743-1759.
+// C nanny skips leading spaces before checking for the empty-name close.
+func parseEntryName(raw string) (name string, valid bool) {
+	name = strings.TrimLeft(raw, " \t\n\r\v\f")
+	if len(name) < 2 || len(name) > 20 {
+		return name, false
+	}
+	for i := 0; i < len(name); i++ {
+		letter := name[i]
+		if (letter < 'a' || letter > 'z') && (letter < 'A' || letter > 'Z') {
+			return name, false
+		}
+	}
+	switch strings.ToLower(name) {
+	// C src/interpreter.c:853-876, fill_word/reserved_word exact matches.
+	case "in", "from", "with", "the", "on", "at", "to", "a", "an", "self", "me", "all", "room", "someone", "something":
+		return name, false
+	}
+	return name, true
+}
+
+// claimEntryName mirrors src/ban.c:257-291 before saved lookup. Entry names
+// remain descriptor-owned through the menu; a playing descriptor can reconnect.
+// Keep its lock separate from m.mu: Register may close an old descriptor.
+func (s *Session) claimEntryName(name string) bool {
+	m := s.manager
+	m.mu.RLock()
+	active := make([]*Session, 0, len(m.sessions))
+	for _, candidate := range m.sessions {
+		active = append(active, candidate)
+	}
+	m.mu.RUnlock()
+
+	m.entryNameMu.Lock()
+	defer m.entryNameMu.Unlock()
+	for owner, held := range m.entryNames {
+		if owner != s && strings.EqualFold(held, name) {
+			return false
+		}
+	}
+	allowed := false
+	for _, candidate := range active {
+		if candidate == s || candidate.player == nil || !candidate.hasTransport() || candidate.SendClosed() || !strings.EqualFold(candidate.player.Name, name) {
+			continue
+		}
+		if candidate.charCreating || candidate.menuActive || candidate.inOLCEditorState() {
+			return false
+		}
+		allowed = true
+	}
+	// A playing descriptor wins before invalid_list in C Valid_Name.
+	if !allowed && !game.ValidNameNoActive(name) {
+		return false
+	}
+	if m.entryNames == nil {
+		m.entryNames = make(map[*Session]string)
+	}
+	m.entryNames[s] = name
+	return true
+}
+
+func (s *Session) releaseEntryName() {
+	if s.manager == nil {
+		return
+	}
+	s.manager.entryNameMu.Lock()
+	delete(s.manager.entryNames, s)
+	s.manager.entryNameMu.Unlock()
+}
+
+func (s *Session) acceptEntryName(raw string) (string, bool) {
+	name, valid := parseEntryName(raw)
+	if name == "" {
+		s.CloseSend()
+		return name, false
+	}
+	if !valid || validation.IsReservedPlayerName(name) || !s.claimEntryName(name) {
+		s.restartNameEntry()
+		return name, false
+	}
+	return name, true
+}

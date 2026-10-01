@@ -24,20 +24,23 @@ func IsValidPlayerName(name string) bool {
 		return false
 	}
 
-	// Check for reserved names
+	return !IsReservedPlayerName(name)
+}
+
+// IsReservedPlayerName is the Go-only security overlay approved in DP-1378.
+// Entry applies it after the C name gate, independently of character syntax.
+func IsReservedPlayerName(name string) bool {
 	reservedNames := []string{
 		"admin", "system", "root", "server", "null", "undefined",
 		"gm", "moderator", "god", "implementor", "imp", "staff", "dev", "bot", "agent",
 		"zax0rz",
 	}
-	lowerName := strings.ToLower(name)
 	for _, reserved := range reservedNames {
-		if lowerName == reserved {
-			return false
+		if strings.EqualFold(name, reserved) {
+			return true
 		}
 	}
-
-	return true
+	return false
 }
 
 func SanitizePlayerName(name string) string {

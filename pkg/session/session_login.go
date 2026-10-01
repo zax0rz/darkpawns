@@ -15,7 +15,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/validation"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -142,11 +141,19 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return nil
 	}
 
-	// Validate player name
-	if !validation.IsValidPlayerName(login.PlayerName) {
-		s.restartNameEntry()
-		audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
-		return nil
+	// CON_PASSWORD already has a descriptor name; only CON_GET_NAME parses it.
+	if s.charStage != "login_password" {
+		name, accepted := s.acceptEntryName(login.PlayerName)
+		if !accepted {
+			if !s.SendClosed() {
+				audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
+			}
+			return nil
+		}
+		login.PlayerName = name
+	} else {
+		// src/interpreter.c:1876-1879 uses the descriptor's named character.
+		login.PlayerName = s.charName
 	}
 
 	// Load from DB if available
@@ -253,22 +260,12 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return nil
 			}
 
-			// Validate player name for character creation (checks format, profanity, and online duplicates)
-			if !game.ValidName(login.PlayerName) {
-				s.restartNameEntry()
-				return nil
-			}
-
 			s.startNewCharFlow(login.PlayerName)
 			return nil
 		}
 	} else {
-		// No DB - start creation flow statefully
-		// Validate player name for character creation without active check (to allow no-DB test takeover)
-		if !game.ValidNameNoActive(login.PlayerName) {
-			s.restartNameEntry()
-			return nil
-		}
+		// The same entry gate applies with or without a durable store.
+
 		s.startNewCharFlow(login.PlayerName)
 		return nil
 	}
