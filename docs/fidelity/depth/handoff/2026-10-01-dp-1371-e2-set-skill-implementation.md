@@ -68,5 +68,20 @@ skill indices are not used as fixtures. No RNG call is added by this binding.
 
 All local gates pass individually: formatting, build, vet, all tests,
 clean lint cache/lint, diff check, fidelity depth (5189 cases, 70 blocked),
-fidelity units (1154 claims), string census. Full and claims census verdicts
-will be recorded after the final source is committed and validated.
+fidelity units (1154 claims), string census. Both censuses ran against implementation commit
+`02b74e5bde3e5f8a3565af09b7b6e578dfc74e51` with clean trees and the unchanged
+reference oracle. Both verdicts are CLEAN_AFTER_RECHECK.
+
+```text
+oracle-regression: scenarios=1040 passed=1033 expected=5 unpinnable=0 stale=0 failed=0 infra=1 timed_out=0 unstable=1 elapsed=489.897s started=2026-10-01T09:01:07-0400 finished=2026-10-01T09:09:17-0400 verdict=CLEAN_AFTER_RECHECK rechecked=informative-residual-depth
+oracle-claims: seed=all pairs=2930 expected=11 expected_unstable=0 fail=0 infra=0 pass=2919 stale=0 timeout=0 unpinnable=0 elapsed=1704.733s verdict=CLEAN_AFTER_RECHECK
+```
+
+Full evidence: `~/Archives/darkpawns/oracle-runs/2026-10-01/dp-1371-p4-set-skill-full/`.
+Claims evidence: sibling `dp-1371-p4-set-skill-claims/`.
+The full runner rechecked informative-residual-depth infrastructure alone.
+The known accuse-noarg-depth unstable row remains recorded. Claims retain
+per-seed evidence for 1,2,3,5,8 and their infrastructure rechecks.
+The new lua-set-skill-depth scenario passes in both full and seed-1 claims.
+No FAIL was retried to obtain a green. Source hashes match the retained proof
+files; the subsequent evidence commit changes documentation only.
