@@ -1,0 +1,68 @@
+# Resolution and position gates precede mobile oncmd; resolved CMD_NAME is
+# supplied to Lua. The handled say suppresses ordinary output; decline survives.
+# Full native/Lua tier matrix is TestSpecialOrderDepth.
+# depth-case: lua.special-order
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/order.lua 512
+
+[lua-script mob/oracle/order.lua]
+function oncmd()
+if argument == "south" then
+say("resolved south")
+return TRUE
+end
+if argument == "look" then
+say("standing look")
+return TRUE
+end
+if argument == "say handled" then
+say("handled say")
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+Orderprobe
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Orderprobe
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12296
+
+[probe]
+zzinvalid
+sleep
+look
+wake
+stand
+look
+s
+say handled
+say declined
