@@ -12,6 +12,7 @@ import (
 	"modernc.org/sqlite"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -170,6 +171,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 			s.charStage = "create_password"
 			s.sendCharCreatePromptWithSecret("create_password", fmt.Sprintf("New character.\r\nGive me a password for %s: ", s.charName), nil, true)
 		case "N":
+			s.creationReplacement = nil
 			s.releaseEntryName()
 			s.charStage = "get_name"
 			s.charName = ""
@@ -441,6 +443,7 @@ func (s *Session) startCharCreation(playerName string) {
 // startNewCharFlow begins the C nanny flow at name confirmation. Passwords for
 // new characters are always collected here, never by a transport auth shim.
 func (s *Session) startNewCharFlow(playerName string) {
+	s.creationReplacement = nil
 	if playerName != "" {
 		playerName = strings.ToUpper(playerName[:1]) + playerName[1:] // C CAP, not title-case.
 	}
@@ -452,6 +455,7 @@ func (s *Session) startNewCharFlow(playerName string) {
 }
 
 func (s *Session) restartNameEntry() {
+	s.creationReplacement = nil
 	s.releaseEntryName()
 	s.charCreating = true
 	s.charStage = "get_name"
@@ -538,15 +542,17 @@ func (s *Session) persistAcceptedCharacter() error {
 		return ErrInvalidPlayerName
 	}
 	isGod := false
+	firstDeletedReplacement := false
 	if s.manager.hasDB {
 		count, err := s.manager.db.CountPlayers()
 		if err != nil {
 			return fmt.Errorf("check character store: %w", err)
 		}
-		isGod = count == 0
+		firstDeletedReplacement = count == 1 && s.creationReplacement != nil
+		isGod = count == 0 || firstDeletedReplacement
 	}
 	if os.Getenv("DP_FRESH_MUD") != "" {
-		isGod = s.manager.shouldCrownFirstPlayer()
+		isGod = s.manager.shouldCrownFirstPlayer() || firstDeletedReplacement
 	}
 	p := game.NewCharacterWithStats(0, s.charName, s.charClass, s.charRace, s.charSex, s.charStats)
 	p.Description = s.menuDescription
@@ -569,9 +575,16 @@ func (s *Session) persistAcceptedCharacter() error {
 			return err
 		}
 		r.Password = s.charPassword
-		if err := s.manager.db.CreatePlayer(r); err != nil {
-			return fmt.Errorf("save new character: %w", err)
+		var saveErr error
+		if s.creationReplacement != nil {
+			saveErr = db.ReplaceDeletedPlayer(s.manager.db, r, s.creationReplacement)
+		} else {
+			saveErr = s.manager.db.CreatePlayer(r)
 		}
+		if saveErr != nil {
+			return fmt.Errorf("save new character: %w", saveErr)
+		}
+		s.creationReplacement = nil
 		p.ID = r.ID
 	} else {
 		p.ID = s.manager.allocateEphemeralPlayerID()

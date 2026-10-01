@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/errlog"
+	"github.com/zax0rz/darkpawns/pkg/game"
 
 	// modernc.org/sqlite is the pure-Go SQLite driver and the only driver this
 	// package opens: the static CGO_ENABLED=0 build in DEPLOYMENT.md depends on
@@ -376,8 +377,8 @@ func (db *DB) CountPlayers() (int, error) {
 	return n, nil
 }
 
-// CreatePlayer inserts a new player record.
-func (db *DB) CreatePlayer(p *PlayerRecord) error {
+// playerInsert shares the insert columns with atomic deleted replacement.
+func playerInsert(p *PlayerRecord) (string, []any) {
 	query := `
 		INSERT INTO players
 		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
@@ -387,13 +388,18 @@ func (db *DB) CreatePlayer(p *PlayerRecord) error {
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		RETURNING id
 	`
-	return db.queryRow(
-		query,
+	return query, []any{
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
 		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData),
-	).Scan(&p.ID)
+	}
+}
+
+// CreatePlayer inserts a new player record.
+func (db *DB) CreatePlayer(p *PlayerRecord) error {
+	query, args := playerInsert(p)
+	return db.queryRow(query, args...).Scan(&p.ID)
 }
 
 // UpdatePassword updates a player's password hash.
@@ -561,4 +567,53 @@ func characterDataOrEmpty(data []byte) []byte {
 		return []byte("{}")
 	}
 	return data
+}
+
+// ReplaceDeletedPlayer keeps a deleted name durable until accepted creation,
+// then replaces its row and allocates a fresh identity (src/db.c:3057).
+// Stores without this atomic capability fail closed rather than delete early.
+func ReplaceDeletedPlayer(store GameStore, replacement, original *PlayerRecord) error {
+	atomicStore, ok := store.(interface {
+		ReplaceDeletedPlayer(*PlayerRecord, *PlayerRecord) error
+	})
+	if !ok {
+		return fmt.Errorf("store cannot atomically replace a deleted character")
+	}
+	return atomicStore.ReplaceDeletedPlayer(replacement, original)
+}
+
+func (db *DB) ReplaceDeletedPlayer(replacement, original *PlayerRecord) error {
+	if !game.CharacterDataDeleted(original.CharacterData) || !strings.EqualFold(replacement.Name, original.Name) {
+		return ErrPlayerRecordChanged
+	}
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
+			slog.Error("rollback deleted character replacement", "error", rollbackErr)
+		}
+	}()
+	result, err := tx.Exec("DELETE FROM players WHERE id=? AND name IS ? AND COALESCE(character_data,'{}') IS ?", original.ID, original.Name, characterDataOrEmpty(original.CharacterData))
+	if err != nil {
+		return err
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrPlayerRecordChanged
+	}
+	query, args := playerInsert(replacement)
+	var newID int
+	if err := tx.QueryRow(query, args...).Scan(&newID); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	replacement.ID = newID
+	return nil
 }

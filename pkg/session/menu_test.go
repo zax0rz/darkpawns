@@ -248,7 +248,7 @@ func TestReturningPlayerStopsAtMenuThenEntersWorld(t *testing.T) {
 }
 
 func TestMenuDeleteReturningPlayer(t *testing.T) {
-	database := testutil.NewMockDatabase()
+	database := entryDatabase(t)
 	world := testutil.NewTestWorld()
 	t.Cleanup(world.StopAITicker)
 	m := newTestManager(t, world, database)
@@ -273,7 +273,7 @@ func TestMenuDeleteReturningPlayer(t *testing.T) {
 	_ = drainMsg(t, s)
 	sendMenuInput(t, s, "yes")
 
-	if got, err := database.GetPlayer("Doomed"); err != nil || got != nil {
+	if got, err := database.GetPlayer("Doomed"); err != nil || got == nil || !game.CharacterDataDeleted(got.CharacterData) {
 		t.Fatalf("deleted player = %#v, err %v", got, err)
 	}
 	if !s.SendClosed() {

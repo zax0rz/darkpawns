@@ -117,7 +117,7 @@ func registerOLC(api huma.API, world *game.World, database *db.DB, state OLCRead
 		}
 		claims, _ := auth.GetClaimsFromContext(ctx)
 		if claims != nil && database != nil {
-			if record, err := database.GetPlayer(claims.PlayerName); err == nil && record != nil {
+			if record, err := database.GetPlayer(claims.PlayerName); err == nil && record != nil && !game.CharacterDataDeleted(record.CharacterData) {
 				for i := range schema.Actions {
 					schema.Actions[i].Allowed = record.Level >= schema.Actions[i].RequiredLevel
 				}
@@ -324,7 +324,7 @@ func olcGateWithZone(world *game.World, database *db.DB, zoneScoped bool) func(h
 		}
 
 		record, err := database.GetPlayer(claims.PlayerName)
-		if err != nil || record == nil {
+		if err != nil || record == nil || game.CharacterDataDeleted(record.CharacterData) {
 			writeOLCError(ctx, http.StatusUnauthorized, olcMiddlewareError{Error: "unauthorized"})
 			return
 		}

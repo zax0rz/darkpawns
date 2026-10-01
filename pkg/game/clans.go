@@ -422,3 +422,19 @@ func (m *ClanManager) RecountMembers(players []*Player) {
 		}
 	}
 }
+
+// RemoveDeletedMember adjusts the in-memory clan totals after character save.
+// C interpreter.c:2331-2337 deliberately excludes clan table index zero.
+func (m *ClanManager) RemoveDeletedMember(id, level int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, c := range m.Clans {
+		if c.ID == id {
+			if i > 0 {
+				c.Members--
+				c.Power -= level
+			}
+			return
+		}
+	}
+}

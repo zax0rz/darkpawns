@@ -44,6 +44,19 @@ func aliasFilePath(playerName string) string {
 	return filepath.Join(aliasDir, initial, strings.ToLower(playerName)+".alias")
 }
 
+// DeleteAliases removes the saved aliases for a deleted character.
+// Source: src/objsave.c:1227-1251, Alias_delete_file (ENOENT is harmless).
+func DeleteAliases(playerName string) error {
+	path := aliasFilePath(playerName)
+	if path == "" {
+		return nil
+	}
+	if err := os.Remove(filepath.Clean(path)); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("delete aliases: %w", err)
+	}
+	return nil
+}
+
 // WriteAliases writes a player's alias list to disk.
 // Source: alias.c write_aliases() lines 41–71
 //

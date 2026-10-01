@@ -9,6 +9,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -79,6 +80,9 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 		// character names one request at a time, and a character name is the
 		// public half of a player's credentials.
 		rec, err := database.GetPlayer(req.PlayerName)
+		if rec != nil && game.CharacterDataDeleted(rec.CharacterData) {
+			rec = nil
+		}
 
 		// The comparison runs even when there is no player, against a fixed
 		// hash, so a missing account costs the same time as a wrong password.

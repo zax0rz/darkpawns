@@ -282,7 +282,7 @@ func fileEditGate(database *db.DB, write bool) func(huma.Context, func(huma.Cont
 			return
 		}
 		record, err := database.GetPlayer(claims.PlayerName)
-		if err != nil || record == nil {
+		if err != nil || record == nil || game.CharacterDataDeleted(record.CharacterData) {
 			writeOLCError(ctx, http.StatusUnauthorized, olcMiddlewareError{Error: "unauthorized"})
 			return
 		}

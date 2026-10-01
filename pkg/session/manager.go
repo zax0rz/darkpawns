@@ -1696,8 +1696,9 @@ type Session struct {
 	gmcp gmcpState
 
 	// Character creation state
-	creationSaved bool // New character persisted at accepted stats, not yet admitted.
-	loginFailures atomic.Int32
+	creationReplacement *db.PlayerRecord // Deleted record retained until accepted stats.
+	creationSaved       bool             // New character persisted at accepted stats, not yet admitted.
+	loginFailures       atomic.Int32
 	// terminalNamed is set once a terminal client's name line has been
 	// accepted and handed to the nanny (see TerminalLine).
 	terminalNamed bool

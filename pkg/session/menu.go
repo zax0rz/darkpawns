@@ -291,9 +291,46 @@ func (s *Session) confirmDelete(choice string) error {
 	}
 	name := s.pendingPlayerName()
 	if s.player != nil && s.manager.hasDB && s.player.ID > 0 {
-		if err := s.manager.db.DeletePlayer(s.player.ID); err != nil {
+		// src/interpreter.c:2329-2340 retains a saved PLR_DELETED record;
+		// highest gods keep their flag clear. Object files are deleted separately.
+		record, err := s.manager.db.GetPlayer(name)
+		if err != nil {
+			return fmt.Errorf("load character for deletion: %w", err)
+		}
+		if record == nil || record.ID != s.player.ID {
+			return fmt.Errorf("character changed before deletion")
+		}
+		original := *record
+		deleted := game.CharacterDataDeleted(record.CharacterData)
+		s.player.SetPlrFlag(game.PlrDeleted, s.player.GetLevel() < game.LVL_GRGOD || deleted)
+		clanID, clanRank := s.player.ClanID, s.player.ClanRank
+		clearClan := false
+		if s.manager.world != nil && s.manager.world.Clans != nil {
+			index, _ := s.manager.world.Clans.FindClanByID(clanID)
+			clearClan = index > 0
+		}
+		if clearClan {
+			s.player.ClanID, s.player.ClanRank = 0, 0
+		}
+		data, err := game.EncodeCharacterData(s.player)
+		if err != nil {
+			s.player.ClanID, s.player.ClanRank = clanID, clanRank
+			s.player.SetPlrFlag(game.PlrDeleted, deleted)
+			return fmt.Errorf("encode deleted character: %w", err)
+		}
+		record.CharacterData = data
+		record.Inventory, record.Equipment = []byte("[]"), []byte("{}")
+		if err := db.SavePlayerIfCurrent(s.manager.db, record, &original); err != nil {
+			s.player.SetPlrFlag(game.PlrDeleted, deleted)
+			s.player.ClanID, s.player.ClanRank = clanID, clanRank
 			return fmt.Errorf("delete character: %w", err)
 		}
+		if clearClan {
+			s.manager.world.Clans.RemoveDeletedMember(clanID, s.player.GetLevel())
+		}
+	}
+	if err := game.DeleteAliases(name); err != nil {
+		slog.ErrorContext(s.sessionCtx, "delete aliases failed", s.logAttrs(slog.Any("error", err))...)
 	}
 	s.sendText(fmt.Sprintf("Character '%s' deleted!\r\nGoodbye.\r\n", name))
 	level := 0
