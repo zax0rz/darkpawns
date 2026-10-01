@@ -1,12 +1,14 @@
 # depth-case: shutdown.shutdow-guard
 # depth-case: shutdown.shutdow-arguments-ignored
 # depth-case: shutdown.unknown-option
-# depth-case: shutdown.unknown-option-case
 #
 # C-first safe vehicle for do_shutdown (src/act.wizard.c:1074-1118).  The
 # valid shutdown/reboot/die/pause arms terminate the isolated C process, so
 # their exact global messages and shutdown request state are pinned by the
 # focused Go tests; this live vehicle exercises both non-terminating branches.
+# C's str_cmp ignores case, so a mixed-case option such as ReBoOt IS reboot and
+# terminates the server; it is unit-proven, never probed live (a terminating
+# final step made this vehicle race the process exit).
 
 [fixture]
 empty-players
@@ -44,4 +46,3 @@ Y
 shutdow
 shutdow reboot
 shutdown nonsense
-shutdown ReBoOt
