@@ -1,0 +1,16 @@
+scenario	seed	status	bite	vampire_messages
+vampire-consume-day	1	PASS	verified	0
+vampire-consume-sunset	1	PASS	verified	4
+vampire-consume-dark	1	PASS	verified	4
+vampire-consume-day	2	PASS	verified	0
+vampire-consume-sunset	2	PASS	verified	4
+vampire-consume-dark	2	PASS	verified	4
+vampire-consume-day	3	PASS	verified	0
+vampire-consume-sunset	3	PASS	verified	4
+vampire-consume-dark	3	PASS	verified	4
+vampire-consume-day	5	PASS	verified	0
+vampire-consume-sunset	5	PASS	verified	4
+vampire-consume-dark	5	PASS	verified	4
+vampire-consume-day	8	PASS	verified	0
+vampire-consume-sunset	8	PASS	verified	4
+vampire-consume-dark	8	PASS	verified	4

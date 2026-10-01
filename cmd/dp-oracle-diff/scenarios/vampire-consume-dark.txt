@@ -1,0 +1,101 @@
+# depth-case: drink.vampire-dark
+# depth-case: eat.vampire-dark
+# Real Dracula look/bite sets PLR_VAMPIRE; no AFF_VAMPIRE transform is required.
+# Shipped beer glass 4104 has one serving; alcoholic amount is arithmetic, not RNG.
+# Clock starts at 14h, 630 pulses/hour. Setup pulses are discarded.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14110 1 8105 80
+replace-room-exits 8105 none
+set-room-flag 8105 0 off
+
+[setup:oracle]
+Bloodactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+~dpclock pulse 5040
+
+[setup:port]
+Bloodactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+~dpclock pulse 5040
+
+[setup:oracle:observer]
+Bloodpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Bloodpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Bloodpeer 8105
+load obj 8010
+get bread
+load obj 4104
+get glass
+set Bloodactor hunger 10
+set Bloodactor thirst 10
+set Bloodactor level 1
+
+[probe]
+sip glass
+taste bread
+look lothar
+sip glass
+taste bread
+drink glass
+eat bread
+eat bread
+drink glass
