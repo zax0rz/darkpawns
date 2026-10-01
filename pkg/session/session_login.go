@@ -166,6 +166,13 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		}
 
 		if rec != nil {
+			if s.charStage != "login_password" && game.CharacterDataDeleted(rec.CharacterData) {
+				// src/interpreter.c:1768-1787 clears the loaded character,
+				// folds the replacement name and starts CON_NAME_CNFRM.
+				s.startNewCharFlow(strings.ToLower(login.PlayerName))
+				s.creationReplacement = rec
+				return nil
+			}
 			login.PlayerName = rec.Name // Identity lookup and all subsequent accounting use the stored name.
 			// DP-592: Account-level lockout check for returning players.
 			if s.manager.accountLockouts != nil {

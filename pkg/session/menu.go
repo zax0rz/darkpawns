@@ -291,7 +291,26 @@ func (s *Session) confirmDelete(choice string) error {
 	}
 	name := s.pendingPlayerName()
 	if s.player != nil && s.manager.hasDB && s.player.ID > 0 {
-		if err := s.manager.db.DeletePlayer(s.player.ID); err != nil {
+		// src/interpreter.c:2329-2340 retains a saved PLR_DELETED record;
+		// highest gods keep their flag clear. Object files are deleted separately.
+		record, err := s.manager.db.GetPlayer(name)
+		if err != nil {
+			return fmt.Errorf("load character for deletion: %w", err)
+		}
+		if record == nil || record.ID != s.player.ID {
+			return fmt.Errorf("character changed before deletion")
+		}
+		original := *record
+		deleted := game.CharacterDataDeleted(record.CharacterData)
+		s.player.SetPlrFlag(game.PlrDeleted, s.player.GetLevel() < game.LVL_GRGOD || deleted)
+		data, err := game.EncodeCharacterData(s.player)
+		if err != nil {
+			return fmt.Errorf("encode deleted character: %w", err)
+		}
+		record.CharacterData = data
+		record.Inventory, record.Equipment = []byte("[]"), []byte("{}")
+		if err := db.SavePlayerIfCurrent(s.manager.db, record, &original); err != nil {
+			s.player.SetPlrFlag(game.PlrDeleted, deleted)
 			return fmt.Errorf("delete character: %w", err)
 		}
 	}

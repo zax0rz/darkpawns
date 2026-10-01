@@ -85,3 +85,13 @@ func restoreSkills(p *Player, skills map[string]int) {
 		p.SetSkill(name, level)
 	}
 }
+
+// CharacterDataDeleted reads C's PLR_DELETED entry gate without restoring a
+// character before authentication. Malformed data remains owned by restoration.
+func CharacterDataDeleted(raw []byte) bool {
+	var data savePlayerData
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return false
+	}
+	return migrateFlags(data.SaveVersion, data.Flags)&(1<<uint(PlrDeleted)) != 0
+}

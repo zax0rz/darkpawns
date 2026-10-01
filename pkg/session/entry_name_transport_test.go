@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/time/rate"
 )
 
@@ -82,5 +83,31 @@ func TestEntryNameWebSocketDropReleasesName(t *testing.T) {
 			t.Fatalf("name still held after the WebSocket dropped: %s", got)
 		}
 		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func TestEntryDeletedWebSocketBoundary(t *testing.T) {
+	database := entryDatabase(t)
+	old := entrySeed(t, database, "Reclaim")
+	p := game.NewCharacter(old.ID, old.Name, game.ClassThief, game.RaceKender)
+	p.SetPlrFlag(game.PlrDeleted, true)
+	raw, err := game.EncodeCharacterData(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	old.CharacterData = raw
+	if err := database.SavePlayer(old); err != nil {
+		t.Fatal(err)
+	}
+	m := entryTransportManager(t, database)
+	server := httptest.NewServer(http.HandlerFunc(m.HandleWebSocket))
+	defer server.Close()
+	conn := entryWebSocketDial(t, server.URL)
+	defer func() { _ = conn.Close() }()
+	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "RECLAIM"})
+	var prompt CharCreateData
+	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
+	if prompt.Stage != "confirm_name" || prompt.Secret || prompt.Prompt != "Please remember to choose an appropriate fantasy-oriented name.\r\nDid I get that right, Reclaim (Y/N)? " {
+		t.Fatalf("deleted WebSocket name: %+v", prompt)
 	}
 }
