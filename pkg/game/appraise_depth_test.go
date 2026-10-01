@@ -16,6 +16,7 @@ func TestDoAppraiseLowCostAndImproveDraws(t *testing.T) {
 	ch.worldRef = w
 	ch.Stats.Wis = 100
 	ch.Stats.Int = 100
+	ch.CopyBaseAttributes()
 	ch.SetSkill(SkillAppraise, 50)
 	item := NewObjectInstance(&parser.Obj{
 		VNum:      8010,

@@ -342,7 +342,8 @@ func saveDataToPlayer(data savePlayerData) *Player {
 	p.Conditions[CondFull] = p.Hunger
 	p.Conditions[CondThirst] = p.Thirst
 	p.Conditions[CondDrunk] = p.Drunk
-	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+	p.Equipment.afterChange = p.AffectTotal
+	p.CopyBaseAttributes()
 	if data.SaveVersion >= 2 {
 		p.Practices, p.Height, p.Weight = data.Practices, data.Height, data.Weight
 		p.Birth, p.PlayedDuration = data.Birth, data.Played
@@ -354,6 +355,7 @@ func saveDataToPlayer(data savePlayerData) *Player {
 	}
 	// The skills were saved and never read back.
 	restoreSkills(p, data.Skills)
+	p.RestoreEffectiveAttributes()
 	return p
 }
 

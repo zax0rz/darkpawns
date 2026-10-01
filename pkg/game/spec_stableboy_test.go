@@ -31,6 +31,7 @@ func TestSpecStableboy(t *testing.T) {
 
 	ch := NewPlayer(1, "Tester", 1001)
 	ch.Stats.Cha = 10
+	ch.CopyBaseAttributes()
 	if err := w.AddPlayer(ch); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}
@@ -66,6 +67,7 @@ func TestSpecStableboy(t *testing.T) {
 	// C checks the follower cap before gold. With CHA 2, one existing follower
 	// is already enough to block the purchase at GET_CHA(ch)/2.
 	ch.Stats.Cha = 2
+	ch.CopyBaseAttributes()
 	follower := NewPlayer(2, "Follower", 1001)
 	if err := w.AddPlayer(follower); err != nil {
 		t.Fatalf("AddPlayer follower: %v", err)
@@ -78,6 +80,7 @@ func TestSpecStableboy(t *testing.T) {
 	}
 	follower.SetFollowing("")
 	ch.Stats.Cha = 10
+	ch.CopyBaseAttributes()
 
 	// buy with enough gold: 300 deducted, charmed horse follows.
 	ch.SetGold(300)
@@ -205,6 +208,7 @@ func newStableboyBranchWorld(t *testing.T) (*World, *Player, *MobInstance, *stri
 
 	ch := NewPlayer(1, "Tester", 1001)
 	ch.Stats.Cha = 10
+	ch.CopyBaseAttributes()
 	if err := w.AddPlayer(ch); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}

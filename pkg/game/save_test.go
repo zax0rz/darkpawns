@@ -27,6 +27,7 @@ func TestPlayerSerializationRoundTrip(t *testing.T) {
 	player.Stats.Str = 18
 	player.Stats.StrAdd = 100
 	player.Stats.Dex = 16
+	player.CopyBaseAttributes()
 
 	// Round-trip serialize
 	serialized, err := SerializePlayer(player)

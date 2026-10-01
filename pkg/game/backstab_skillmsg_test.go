@@ -193,6 +193,7 @@ func TestBackstab_HitAppliesDamageOnce(t *testing.T) {
 	equipWeapon(t, ch, weapon)
 
 	ch.Stats.Str = 25 // high str → meaningful damage
+	ch.CopyBaseAttributes()
 
 	// A sleeping target auto-succeeds the skill roll (percent>prob only fails
 	// when AWAKE), then the to-hit roll runs. Retry until a hit lands.

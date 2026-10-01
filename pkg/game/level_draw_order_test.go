@@ -47,6 +47,7 @@ func TestAdvanceLevelDrawOrderByClass(t *testing.T) {
 			player.Class = test.class
 			player.Level = level
 			player.Stats = CharStats{Con: 10, Wis: 10}
+			player.CopyBaseAttributes()
 			player.MaxHealth = 10
 			player.MaxMana = 100
 			player.MaxMove = 82
@@ -78,6 +79,7 @@ func TestAdvanceLevelWarriorMovementUsesSecondDraw(t *testing.T) {
 	player.Class = ClassWarrior
 	player.Level = 1
 	player.Stats = CharStats{Con: 10, Wis: 10}
+	player.CopyBaseAttributes()
 	player.MaxHealth = 10
 	player.MaxMana = 100
 	player.MaxMove = 82
@@ -100,6 +102,7 @@ func TestAdvanceLevelLeavesCurrentPoolsAlone(t *testing.T) {
 	player.Class = ClassWarrior
 	player.Level = 5
 	player.Stats = CharStats{Con: 10, Wis: 10}
+	player.CopyBaseAttributes()
 	player.MaxHealth, player.Health = 80, 20
 	player.MaxMana, player.Mana = 100, 30
 	player.MaxMove, player.Move = 90, 40

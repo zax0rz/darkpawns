@@ -41,6 +41,7 @@ func TestDoBehead_ContainerValueSuccessAndTransformation(t *testing.T) {
 	w, ch := newTestWorld(t)
 	ch.Stats.Str = 10
 	ch.Stats.Dex = 10
+	ch.CopyBaseAttributes()
 	registerBeheadPrototypes(t, w)
 
 	original := registerBeheadObject(t, w, &parser.Obj{
@@ -203,6 +204,7 @@ func TestDoBehead_SlashWeaponMessages(t *testing.T) {
 	w, ch := newTestWorld(t)
 	ch.Stats.Str = 10
 	ch.Stats.Dex = 10
+	ch.CopyBaseAttributes()
 	registerBeheadPrototypes(t, w)
 	registerBeheadObject(t, w, &parser.Obj{
 		VNum: 4014, Keywords: "box", ShortDesc: "a box", TypeFlag: ITEM_CONTAINER,

@@ -39,6 +39,7 @@ func channelPlayer(t *testing.T, w *World, id int, name string, room int) *Playe
 	player.Level = levelCanShout
 	player.Stats.Int = 10
 	player.Stats.Wis = 10
+	player.CopyBaseAttributes()
 	player.SetPosition(combat.PosStanding)
 	if err := w.AddPlayer(player); err != nil {
 		t.Fatal(err)

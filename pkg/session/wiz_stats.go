@@ -109,7 +109,7 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	}
 	s.sendStatMobLine("L-Des: " + longDesc)
 	s.sendStatMobLine(fmt.Sprintf("Monster Class: Normal, Lev: [%2d], XP: [%7d], Align: [%4d]",
-		mob.GetLevel(), proto.Exp, proto.Alignment))
+		mob.GetLevel(), proto.Exp, mob.GetAlignment()))
 	race := proto.Race
 	if proto.RaceStr == "" {
 		// The C parser's absent Race: extra field means RACE_OTHER, which is
@@ -155,6 +155,7 @@ func (s *Session) sendStatPlayerFile(player *game.Player, olcZone int) {
 	player.Inventory = game.NewInventory()
 	player.Equipment = game.NewEquipment()
 	player.AC, player.Hitroll, player.Damroll = 100, 0, 0
+	player.RestoreEffectiveAttributes() // store_to_char, without Crash_load equipment
 	s.sendStatPlayerReport(player, -1, false, olcZone)
 }
 

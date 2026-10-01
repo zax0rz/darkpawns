@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -103,6 +104,7 @@ func TestCmdRestoreMatchesCHighImmortalStateBranch(t *testing.T) {
 	registerInWorld(t, target)
 
 	target.player.Stats = game.CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	target.player.CopyBaseAttributes()
 	target.player.Strength = 10
 	target.player.SetSkill("kick", 7)
 	target.player.SetHP(1)
@@ -126,6 +128,14 @@ func TestCmdRestoreMatchesCHighImmortalStateBranch(t *testing.T) {
 	if target.player.Stats != wantStats {
 		t.Fatalf("restored stats = %+v, want %+v", target.player.Stats, wantStats)
 	}
+	// src/act.wizard.c:1612 copies aff_abils without total.
+	if target.player.GetDex() != 25 || target.player.GetStr() != 25 {
+		t.Fatal("restore must copy unbounded effective abilities")
+	}
+	target.player.AffectTotal()
+	if target.player.GetDex() != 18 || target.player.GetStr() != 18 || target.player.GetStrAdd() != 100 || target.player.Stats != wantStats {
+		t.Fatal("next total must clamp the PC without rewriting restored base")
+	}
 	if target.player.Strength != 25 {
 		t.Fatalf("restored inventory strength = %d, want 25", target.player.Strength)
 	}
@@ -140,5 +150,25 @@ func assertRestoreNoMessage(t *testing.T, s *Session) {
 	case msg := <-s.send:
 		t.Fatalf("unexpected restore audience message: %s", msg)
 	case <-time.After(50 * time.Millisecond):
+	}
+}
+
+func TestE2AttrWizardUnaffectBoundary(t *testing.T) {
+	m := makeTestManager(t)
+	actor := makeCommandTestSession(t, m, "Attrgod", LVL_IMPL, 1001)
+	target := makeCommandTestSession(t, m, "Attrvictim", 1, 1001)
+	registerInWorld(t, actor)
+	registerInWorld(t, target)
+	target.player.Stats.Dex = 18
+	target.player.CopyBaseAttributes()
+	target.player.AddAffect(engine.NewAffectDirect(1, game.ApplyDex, 2, -30, 0, "test"))
+	if target.player.GetDex() != 0 {
+		t.Fatal("fixture did not floor")
+	}
+	if err := wizutilDispatch(actor, wizutilUnaffect, target.player.Name); err != nil {
+		t.Fatal(err)
+	}
+	if target.player.GetDex() != 18 || target.player.Stats.Dex != 18 {
+		t.Fatal("wizard unaffect left stale effective dex")
 	}
 }

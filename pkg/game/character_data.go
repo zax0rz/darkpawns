@@ -66,6 +66,7 @@ func ApplyCharacterData(p *Player, raw []byte) error {
 	p.HolyLight, p.AutoGold, p.AutoSplit, p.NoBroadcast = data.HolyLight, data.AutoGold, data.AutoSplit, data.NoBroadcast
 	p.mu.Unlock()
 	restoreSkills(p, data.Skills)
+	p.RestoreEffectiveAttributes()
 	return nil
 }
 

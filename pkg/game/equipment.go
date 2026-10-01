@@ -111,9 +111,10 @@ func ParseEquipmentSlot(s string) (EquipmentSlot, bool) {
 
 // Equipment represents a player's equipped items.
 type Equipment struct {
-	mu        sync.RWMutex
-	Slots     map[EquipmentSlot]*ObjectInstance
-	OwnerName string
+	mu          sync.RWMutex
+	Slots       map[EquipmentSlot]*ObjectInstance
+	OwnerName   string
+	afterChange func()
 }
 
 // NewEquipment creates a new empty equipment set.
@@ -139,13 +140,18 @@ func (eq *Equipment) Snapshot() map[EquipmentSlot]*ObjectInstance {
 // SetSlot places an item in one exact equipment slot without deriving a slot
 // from its wear flags. Callers remain responsible for moving the item out of
 // its previous location and updating its ObjectLocation.
-func (eq *Equipment) SetSlot(slot EquipmentSlot, item *ObjectInstance) error {
+func (eq *Equipment) SetSlot(slot EquipmentSlot, item *ObjectInstance) (err error) {
 	if item == nil {
 		return fmt.Errorf("cannot equip a nil item")
 	}
 
 	eq.mu.Lock()
-	defer eq.mu.Unlock()
+	defer func() {
+		eq.mu.Unlock()
+		if err == nil && eq.afterChange != nil {
+			eq.afterChange()
+		}
+	}()
 	if eq.Slots == nil {
 		eq.Slots = make(map[EquipmentSlot]*ObjectInstance)
 	}
@@ -157,16 +163,21 @@ func (eq *Equipment) SetSlot(slot EquipmentSlot, item *ObjectInstance) error {
 }
 
 // Equip attempts to equip an item in the appropriate slot(s).
-func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) error {
+func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) (err error) {
 	eq.mu.Lock()
-	defer eq.mu.Unlock()
+	defer func() {
+		eq.mu.Unlock()
+		if err == nil && eq.afterChange != nil {
+			eq.afterChange()
+		}
+	}()
 	return eq.equip(item, inv)
 }
 
 // EquipForPlayer equips an item with anti-alignment and anti-class validation.
 // Returns (zapped bool, err error). If zapped is true the item stays in inventory.
 // Source: handler.c equip_char() lines 701-720 (DP-369)
-func (eq *Equipment) EquipForPlayer(item *ObjectInstance, inv *Inventory, alignment int, class int) (bool, error) {
+func (eq *Equipment) EquipForPlayer(item *ObjectInstance, inv *Inventory, alignment int, class int) (zapped bool, err error) {
 	if item != nil && item.Prototype != nil {
 		xf := item.Prototype.ExtraFlags[0]
 		isEvil := alignment <= -350
@@ -199,7 +210,12 @@ func (eq *Equipment) EquipForPlayer(item *ObjectInstance, inv *Inventory, alignm
 		}
 	}
 	eq.mu.Lock()
-	defer eq.mu.Unlock()
+	defer func() {
+		eq.mu.Unlock()
+		if err == nil && eq.afterChange != nil {
+			eq.afterChange()
+		}
+	}()
 	return false, eq.equip(item, inv)
 }
 
@@ -266,9 +282,14 @@ func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 }
 
 // Unequip removes an item from a slot and returns it to inventory.
-func (eq *Equipment) Unequip(slot EquipmentSlot, inv *Inventory) error {
+func (eq *Equipment) Unequip(slot EquipmentSlot, inv *Inventory) (err error) {
 	eq.mu.Lock()
-	defer eq.mu.Unlock()
+	defer func() {
+		eq.mu.Unlock()
+		if err == nil && eq.afterChange != nil {
+			eq.afterChange()
+		}
+	}()
 	return eq.unequip(slot, inv)
 }
 
@@ -296,9 +317,14 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 }
 
 // UnequipItem removes a specific item from equipment.
-func (eq *Equipment) UnequipItem(item *ObjectInstance, inv *Inventory) bool {
+func (eq *Equipment) UnequipItem(item *ObjectInstance, inv *Inventory) (removed bool) {
 	eq.mu.Lock()
-	defer eq.mu.Unlock()
+	defer func() {
+		eq.mu.Unlock()
+		if removed && eq.afterChange != nil {
+			eq.afterChange()
+		}
+	}()
 
 	for slot, eqItem := range eq.Slots {
 		if eqItem == item {

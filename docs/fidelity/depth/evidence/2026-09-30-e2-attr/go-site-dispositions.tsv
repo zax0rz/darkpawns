@@ -1,0 +1,415 @@
+site	disposition	source
+pkg/parser/mob.go:369	prototype/editor/base data (no effective actor read)	// Stats line: level thac0 ac hpdice damagedice
+pkg/parser/parser.go:35	unrelated parser/cache/pool/string/log statistics; no actor abilities	// Stats returns statistics about the parsed world.
+pkg/parser/parser.go:36	unrelated parser/cache/pool/string/log statistics; no actor abilities	func (w *World) Stats() string {
+pkg/parser/parser.go:38	unrelated parser/cache/pool/string/log statistics; no actor abilities	"World Stats:\n"+
+pkg/spells/damage_spells.go:406	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return a.GetAlignment() < 0
+pkg/spells/damage_spells.go:414	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return a.GetAlignment() > 0
+pkg/command/skill_commands.go:154	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	str := player.GetStr()
+pkg/command/skill_commands.go:155	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	dex := player.GetDex()
+pkg/command/skill_commands.go:163	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	intel := player.GetInt()
+pkg/command/skill_commands.go:164	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	wis := player.GetWis()
+pkg/command/skill_commands.go:172	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	dex := player.GetDex()
+pkg/command/skill_commands.go:173	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	intel := player.GetInt()
+pkg/command/skill_commands.go:229	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetStr()
+pkg/command/skill_commands.go:231	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetInt()
+pkg/command/skill_commands.go:233	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetDex()
+pkg/command/skill_commands.go:335	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetStr()
+pkg/command/skill_commands.go:337	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetInt()
+pkg/command/skill_commands.go:339	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetDex()
+pkg/command/skill_commands.go:481	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetStr()
+pkg/command/skill_commands.go:483	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetInt()
+pkg/command/skill_commands.go:485	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetDex()
+pkg/command/skill_commands.go:565	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetStr()
+pkg/command/skill_commands.go:567	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetInt()
+pkg/command/skill_commands.go:569	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	stat = player.GetDex()
+pkg/db/convert.go:49	base serialization/creation; copy on roll/init, recompute after load affects/equipment	StatStr:       p.Stats.Str,
+pkg/db/convert.go:50	base serialization/creation; copy on roll/init, recompute after load affects/equipment	StatStrAdd:    p.Stats.StrAdd,
+pkg/db/convert.go:51	base serialization/creation; copy on roll/init, recompute after load affects/equipment	StatInt:       p.Stats.Int,
+pkg/db/convert.go:52	base serialization/creation; copy on roll/init, recompute after load affects/equipment	StatWis:       p.Stats.Wis,
+pkg/db/convert.go:53	base serialization/creation; copy on roll/init, recompute after load affects/equipment	StatDex:       p.Stats.Dex,
+pkg/db/convert.go:54	base serialization/creation; copy on roll/init, recompute after load affects/equipment	StatCon:       p.Stats.Con,
+pkg/db/convert.go:55	base serialization/creation; copy on roll/init, recompute after load affects/equipment	StatCha:       p.Stats.Cha,
+pkg/db/convert.go:101	base serialization/creation; copy on roll/init, recompute after load affects/equipment	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+pkg/spells/affect_spells.go:2013	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	case a.GetAlignment() > 0:
+pkg/spells/affect_spells.go:2016	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	case a.GetAlignment() < 0:
+pkg/spells/affect_spells.go:2080	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	case a.GetAlignment() > 0:
+pkg/spells/affect_spells.go:2083	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	case a.GetAlignment() < 0:
+pkg/spells/affect_spells.go:2409	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	str, strAdd := sg.GetStr(), sg.GetStrAdd()
+pkg/spells/affect_spells.go:2419	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	line += fmt.Sprintf(", Int: %d", ig.GetInt())
+pkg/spells/affect_spells.go:2422	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	line += fmt.Sprintf(", Wis: %d", wg.GetWis())
+pkg/spells/affect_spells.go:2425	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	line += fmt.Sprintf(", Dex: %d", dg.GetDex())
+pkg/spells/affect_spells.go:2428	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	line += fmt.Sprintf(", Con: %d", cg.GetCon())
+pkg/spells/affect_spells.go:2431	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	line += fmt.Sprintf(", Cha: %d", chg.GetCha())
+pkg/spells/affect_spells.go:2792	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if dprng.Number(0, 25) > cn.GetDex() {
+pkg/spells/affect_spells.go:2871	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	chCha = ci.GetInt()
+pkg/spells/affect_spells.go:2897	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if vi, ok := cvict.(intGetter); ok && vi.GetInt() > 0 {
+pkg/spells/affect_spells.go:2898	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	dur = dur / vi.GetInt()
+pkg/spells/affect_spells.go:3087	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	alignment = a.GetAlignment()
+pkg/combat/combatant.go:40	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	// Stats
+pkg/combat/formulas.go:224	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return StrengthIndex(c.GetStr(), c.GetStrAdd())
+pkg/combat/formulas.go:281	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	dex := c.GetDex()
+pkg/combat/formulas.go:362	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	intBonus := int(float64(attacker.GetInt()-13) / 1.5)
+pkg/combat/formulas.go:363	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	wisBonus := int(float64(attacker.GetWis()-13) / 1.5)
+pkg/combat/formulas.go:545	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if attacker.GetStr() == 0 {
+pkg/optimization/object_pool.go:189	unrelated parser/cache/pool/string/log statistics; no actor abilities	// Stats returns pool statistics
+pkg/optimization/object_pool.go:190	unrelated parser/cache/pool/string/log statistics; no actor abilities	func (op *ObjectPool) Stats() map[string]interface{} {
+pkg/scripting/engine.go:514	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	pt.RawSetString("evil", lua.LBool(p.GetAlignment() < -350))
+pkg/scripting/engine.go:526	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	alignment := m.GetPrototype().GetAlignment()
+pkg/scripting/engine.go:1003	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	tbl.RawSetString("alignment", lua.LNumber(player.GetAlignment()))
+pkg/scripting/engine.go:1008	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	alignment := player.GetAlignment()
+pkg/scripting/engine.go:1062	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	alignment := proto.GetAlignment()
+pkg/optimization/python_ai.go:317	unrelated parser/cache/pool/string/log statistics; no actor abilities	// Stats returns cache statistics.
+pkg/optimization/python_ai.go:318	unrelated parser/cache/pool/string/log statistics; no actor abilities	func (ac *AICache) Stats() map[string]interface{} {
+pkg/optimization/pool.go:186	unrelated parser/cache/pool/string/log statistics; no actor abilities	// Stats returns current pool statistics.
+pkg/optimization/pool.go:187	unrelated parser/cache/pool/string/log statistics; no actor abilities	func (p *ConnectionPool) Stats() ConnectionPoolStats {
+pkg/optimization/cache.go:94	unrelated parser/cache/pool/string/log statistics; no actor abilities	// Stats returns cache statistics
+pkg/optimization/cache.go:95	unrelated parser/cache/pool/string/log statistics; no actor abilities	func (c *Cache) Stats() map[string]interface{} {
+pkg/optimization/database.go:399	unrelated parser/cache/pool/string/log statistics; no actor abilities	dbStats := cm.db.Stats()
+pkg/combat/callbacks.go:79	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	// Kill/Death/Stats
+pkg/combat/callbacks.go:270	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return cb.GetAlignment(name)
+pkg/admin/handlers.go:452	prototype/editor/base data (no effective actor read)	Stats       map[string]int       `json:"stats"`
+pkg/admin/handlers.go:607	prototype/editor/base data (no effective actor read)	"str": p.Stats.Str,
+pkg/admin/handlers.go:608	prototype/editor/base data (no effective actor read)	"int": p.Stats.Int,
+pkg/admin/handlers.go:609	prototype/editor/base data (no effective actor read)	"wis": p.Stats.Wis,
+pkg/admin/handlers.go:610	prototype/editor/base data (no effective actor read)	"dex": p.Stats.Dex,
+pkg/admin/handlers.go:611	prototype/editor/base data (no effective actor read)	"con": p.Stats.Con,
+pkg/admin/handlers.go:612	prototype/editor/base data (no effective actor read)	"cha": p.Stats.Cha,
+pkg/admin/handlers.go:669	prototype/editor/base data (no effective actor read)	Stats:       stats,
+pkg/game/mobact.go:51	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return combat.CarryWeight(m.GetStr(), m.GetStrAdd())
+pkg/game/mobact.go:58	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return 5 + (m.GetDex() >> 1) + (m.GetLevel() >> 1)
+pkg/game/mobact.go:329	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	vAlign := vict.GetAlignment()
+pkg/game/combat_wire.go:48	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	return p.GetAlignment()
+pkg/game/combat_wire.go:51	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	return m.GetAlignment()
+pkg/game/combat_wire.go:440	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	// Kill/Death/Stats
+pkg/game/combat_wire.go:502	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	return p.GetCon()
+pkg/game/combat_wire.go:510	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	p.Stats.Con = val
+pkg/game/level.go:162	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	con := p.Stats.Con
+pkg/game/level.go:191	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:222	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:249	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:273	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:303	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:327	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:351	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:381	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:415	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	wis := p.Stats.Wis
+pkg/game/level.go:465	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	str := p.Stats.Str
+pkg/game/level.go:466	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	strAdd := p.Stats.StrAdd
+pkg/game/level.go:467	effective CON/WIS level gains and effective STR/ADD/DEX capacity under existing player lock	dex := p.Stats.Dex
+pkg/engine/affect_helpers.go:82	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("STR", sm.GetStat("STR")+mod)
+pkg/engine/affect_helpers.go:84	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("DEX", sm.GetStat("DEX")+mod)
+pkg/engine/affect_helpers.go:86	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("INT", sm.GetStat("INT")+mod)
+pkg/engine/affect_helpers.go:88	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("WIS", sm.GetStat("WIS")+mod)
+pkg/engine/affect_helpers.go:90	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("CON", sm.GetStat("CON")+mod)
+pkg/engine/affect_helpers.go:92	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("CHA", sm.GetStat("CHA")+mod)
+pkg/engine/affect_helpers.go:100	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("AC", sm.GetStat("AC")-mod)
+pkg/engine/affect_helpers.go:102	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("Hitroll", sm.GetStat("Hitroll")+mod)
+pkg/engine/affect_helpers.go:104	deprecated base GetStat/SetStat adapter; not activated for live effective totals	sm.SetStat("Damroll", sm.GetStat("Damroll")+mod)
+pkg/engine/affect_helpers.go:202	deprecated base GetStat/SetStat adapter; not activated for live effective totals	v := sm.GetStat(s)
+pkg/engine/affect_helpers.go:210	deprecated base GetStat/SetStat adapter; not activated for live effective totals	str := sm.GetStat("STR")
+pkg/engine/affect_helpers.go:214	deprecated base GetStat/SetStat adapter; not activated for live effective totals	strAdd := sm.GetStat("StrAdd")
+pkg/engine/affect_helpers.go:225	deprecated base GetStat/SetStat adapter; not activated for live effective totals	align := sm.GetStat("Alignment")
+pkg/session/wiz_system.go:510	base serialization/creation; copy on roll/init, recompute after load affects/equipment	target.player.Stats = stats
+pkg/game/player_social.go:30	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return p.Stats.Con + p.sumAffectModsLocked(ApplyCon) + p.sumEquipAffectModsLocked(ApplyCon)
+pkg/game/player_social.go:244	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return p.Stats.Cha + p.sumAffectModsLocked(ApplyCha) + p.sumEquipAffectModsLocked(ApplyCha)
+pkg/session/menu.go:346	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.player.SetOrigCon(s.player.Stats.Con)
+pkg/game/player.go:94	base creation/init copy; orig_con and legacy strength remain base; initial carry capacity uses identical just-copied base	Stats CharStats
+pkg/game/player.go:384	base creation/init copy; orig_con and legacy strength remain base; initial carry capacity uses identical just-copied base	p.Stats = stats
+pkg/game/player.go:454	base creation/init copy; orig_con and legacy strength remain base; initial carry capacity uses identical just-copied base	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+pkg/game/player.go:512	base creation/init copy; orig_con and legacy strength remain base; initial carry capacity uses identical just-copied base	return combat.CarryWeight(p.GetStr(), p.GetStrAdd())
+pkg/game/player.go:518	base creation/init copy; orig_con and legacy strength remain base; initial carry capacity uses identical just-copied base	return 5 + (p.GetDex() >> 1) + (p.GetLevel() >> 1)
+pkg/game/skill_stealth.go:47	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	prob := ch.GetSkill(skill) + dexAppSkill(ch.GetDex()).Sneak
+pkg/game/skill_stealth.go:112	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	prob := ch.GetSkill(skill) + dexAppSkill(ch.GetDex()).Hide
+pkg/game/skill_stealth.go:191	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	percent := dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+pkg/game/animate_dead.go:52	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if count >= c.GetCha()/2 {
+pkg/game/player_combat.go:56	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return p.Stats.Str + p.sumAffectModsLocked(ApplyStr) + p.sumEquipAffectModsLocked(ApplyStr)
+pkg/game/player_combat.go:64	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return p.Stats.Dex + p.sumAffectModsLocked(ApplyDex) + p.sumEquipAffectModsLocked(ApplyDex)
+pkg/game/player_combat.go:72	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return p.Stats.Int + p.sumAffectModsLocked(ApplyInt) + p.sumEquipAffectModsLocked(ApplyInt)
+pkg/game/player_combat.go:80	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return p.Stats.Wis + p.sumAffectModsLocked(ApplyWis) + p.sumEquipAffectModsLocked(ApplyWis)
+pkg/game/player_combat.go:138	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return p.Stats.StrAdd
+pkg/game/player_stats.go:333	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"STR":       &p.Stats.Str,
+pkg/game/player_stats.go:334	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"DEX":       &p.Stats.Dex,
+pkg/game/player_stats.go:335	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"INT":       &p.Stats.Int,
+pkg/game/player_stats.go:336	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"WIS":       &p.Stats.Wis,
+pkg/game/player_stats.go:337	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"CON":       &p.Stats.Con,
+pkg/game/player_stats.go:338	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"CHA":       &p.Stats.Cha,
+pkg/game/player_stats.go:347	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"StrAdd":    &p.Stats.StrAdd,
+pkg/game/player_stats.go:381	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	return p.GetStat(name)
+pkg/game/character.go:270	base serialization/creation; copy on roll/init, recompute after load affects/equipment	// Stats will be properly rolled — for now return zeroed
+pkg/game/save.go:55	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Stats       CharStats      `json:"stats"`
+pkg/game/save.go:151	base serialization/creation; copy on roll/init, recompute after load affects/equipment	stats := p.Stats
+pkg/game/save.go:196	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Alignment:   p.GetAlignment(),
+pkg/game/save.go:204	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Strength:    p.GetStrength(),
+pkg/game/save.go:211	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Stats:       stats,
+pkg/game/save.go:325	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Stats:         data.Stats,
+pkg/game/save.go:326	base serialization/creation; copy on roll/init, recompute after load affects/equipment	OrigCon:       data.Stats.Con,
+pkg/game/save.go:345	base serialization/creation; copy on roll/init, recompute after load affects/equipment	p.Inventory.SetCapacity(p.Stats.Str, p.Stats.StrAdd, p.Stats.Dex, p.Level)
+pkg/session/wiz_player.go:57	restore real base writes followed by unbounded copy; advance preserves real base	target.Stats.StrAdd = 100
+pkg/session/wiz_player.go:58	restore real base writes followed by unbounded copy; advance preserves real base	target.Stats.Int = 25
+pkg/session/wiz_player.go:59	restore real base writes followed by unbounded copy; advance preserves real base	target.Stats.Wis = 25
+pkg/session/wiz_player.go:60	restore real base writes followed by unbounded copy; advance preserves real base	target.Stats.Dex = 25
+pkg/session/wiz_player.go:61	restore real base writes followed by unbounded copy; advance preserves real base	target.Stats.Str = 25
+pkg/session/wiz_player.go:62	restore real base writes followed by unbounded copy; advance preserves real base	target.Stats.Con = 25
+pkg/session/wiz_player.go:63	restore real base writes followed by unbounded copy; advance preserves real base	target.Stats.Cha = 25
+pkg/session/wiz_player.go:261	restore real base writes followed by unbounded copy; advance preserves real base	// the real abilities intact. Go stores real abilities directly in Stats;
+pkg/session/protocol.go:142	rolled creation stats DTO, base copy display rather than live actor abilities	Stats   *CharStatsDisplay  `json:"stats,omitempty"`   // only on rollstats/confirm stage
+pkg/game/constants.go:346	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	"Roll Stats",
+pkg/game/world_player.go:106	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	// Stats returns world statistics.
+pkg/game/world_player.go:107	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	func (w *World) Stats() string {
+pkg/game/spec_procs.go:203	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	gain := intAppLearn(ch.GetInt())
+pkg/game/spec_procs.go:359	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+pkg/game/spec_procs.go:401	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if !mobIsEvil(me) && vict.GetAlignment() <= -350 {
+pkg/game/spec_procs.go:403	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	} else if mobIsEvil(me) && vict.GetAlignment() >= 350 {
+pkg/game/spec_procs.go:761	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	align := tch.GetAlignment()
+pkg/game/spec_procs.go:771	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if evil != nil && evilTarget.GetAlignment() >= 0 {
+pkg/game/player_affects.go:187	alignment storage and spell mutations; total only on actual add/join/removal	func (p *Player) IsGood() bool { return p.GetAlignment() >= 350 }
+pkg/game/player_affects.go:190	alignment storage and spell mutations; total only on actual add/join/removal	func (p *Player) IsEvil() bool { return p.GetAlignment() <= -350 }
+pkg/session/wiz_stats.go:20	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send("Stats on who or what?\r\n")
+pkg/session/wiz_stats.go:32	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send("Stats on which mobile?\r\n")
+pkg/session/wiz_stats.go:43	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send("Stats on which player?\r\n")
+pkg/session/wiz_stats.go:54	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send("Stats on which player?\r\n")
+pkg/session/wiz_stats.go:70	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send("Stats on which object?\r\n")
+pkg/session/wiz_stats.go:123	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	mob.GetStr(), mob.GetStrAdd(), mob.GetInt(), mob.GetHP(), mob.GetMaxHP(), game.MobHitGain(mob)))
+pkg/session/wiz_stats.go:125	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	mob.GetDex(), mob.GetWis(), mob.GetMana(), mob.GetMaxMana(), game.ManaGainNPC(mob)))
+pkg/session/wiz_stats.go:127	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	mob.GetCon(), mob.GetCon(), mob.GetCha(), mob.GetMove(), mob.GetMaxMove(), game.MoveGainNPC(mob)))
+pkg/session/wiz_stats.go:194	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	wizardClassName(p.GetClass()), p.GetLevel(), p.GetExp(), p.GetAlignment()))
+pkg/session/wiz_stats.go:221	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	hometown, practices, game.IntAppLearn(p.GetInt()), game.WisAppBonus(p.GetWis()), olc))
+pkg/session/wiz_stats.go:226	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	p.GetStr(), p.GetStrAdd(), p.GetInt(), hitPoints, p.GetMaxHP(), s.manager.world.HitGain(p)))
+pkg/session/wiz_stats.go:228	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	p.GetDex(), p.GetWis(), p.GetMana(), p.GetMaxMana(), s.manager.world.ManaGain(p)))
+pkg/session/wiz_stats.go:230	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	p.GetCon(), originalCon, p.GetCha(), p.GetMove(), p.GetMaxMove(), s.manager.world.MoveGain(p)))
+pkg/game/look.go:1263	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	switch align := mob.GetAlignment(); {
+pkg/game/look.go:1312	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	switch align := i.GetAlignment(); {
+pkg/game/look.go:1326	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	align := i.(interface{ GetAlignment() int }).GetAlignment()
+pkg/session/tattoo.go:198	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Str += modifier
+pkg/session/tattoo.go:200	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Int += modifier
+pkg/session/tattoo.go:202	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Dex += modifier
+pkg/session/tattoo.go:204	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Wis += modifier
+pkg/game/death.go:244	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	newAlign := player.GetAlignment() + (-victimAlign-player.GetAlignment())>>4
+pkg/game/death.go:303	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	victimAlign = al.GetAlignment()
+pkg/game/death.go:651	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	player.Stats.Con--
+pkg/game/death.go:652	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if player.Stats.Con < 1 {
+pkg/game/death.go:653	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	player.Stats.Con = 1
+pkg/game/death.go:657	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	player.Stats.Con--
+pkg/game/death.go:658	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if player.Stats.Con < 1 {
+pkg/game/death.go:659	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	player.Stats.Con = 1
+pkg/game/world_bridge.go:90	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Align: p.GetAlignment(),
+pkg/game/world_bridge.go:96	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Evil:  p.GetAlignment() <= -350,
+pkg/game/world_bridge.go:102	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Cha:   p.Stats.Cha,
+pkg/game/world_bridge.go:125	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Align: m.GetAlignment(),
+pkg/game/world_bridge.go:131	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Evil:  m.GetAlignment() <= -350,
+pkg/game/world_bridge.go:871	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	align = p.GetAlignment()
+pkg/game/world_bridge.go:873	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	align = m.GetAlignment()
+pkg/game/world_bridge.go:1082	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+pkg/game/spec_procs3.go:629	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	availCon := ch.GetOrigCon() - ch.Stats.Con
+pkg/game/spec_procs3.go:679	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Con < 18 {
+pkg/game/spec_procs3.go:680	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Con++
+pkg/game/act_informative.go:196	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	_ = dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+pkg/game/act_informative.go:220	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	percent := dprng.Number(1, 101) - dexAppSkill(ch.GetDex()).PPocket
+pkg/session/cast_cmds.go:270	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if s.player.GetWis() == 0 || s.player.GetInt() == 0 {
+pkg/session/char_creation.go:420	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Stats:   stats,
+pkg/session/char_creation.go:615	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.player.OrigCon = s.player.Stats.Con
+pkg/session/observation.go:95	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Str:       player.Stats.Str,
+pkg/session/observation.go:96	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Int:       player.Stats.Int,
+pkg/session/observation.go:97	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Wis:       player.Stats.Wis,
+pkg/session/observation.go:98	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Dex:       player.Stats.Dex,
+pkg/session/observation.go:99	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Con:       player.Stats.Con,
+pkg/session/observation.go:100	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	Cha:       player.Stats.Cha,
+pkg/session/comm_cmds.go:111	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+pkg/session/comm_cmds.go:178	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+pkg/session/cmd_info.go:41	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(cDisplayAbility(p.GetStr()))))
+pkg/session/cmd_info.go:42	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(cDisplayAbility(p.GetDex()))))
+pkg/session/cmd_info.go:43	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetInt()))))
+pkg/session/cmd_info.go:44	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(cDisplayAbility(p.GetWis()))))
+pkg/session/cmd_info.go:45	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetCon()))))
+pkg/session/cmd_info.go:46	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(p.GetCha())))
+pkg/game/player_identity.go:104	base mutation/legacy stat API; keep base aliases; gameplay uses typed effective getters	return p.Stats.Str
+pkg/game/player_identity.go:111	base mutation/legacy stat API; keep base aliases; gameplay uses typed effective getters	p.Stats.Str = v
+pkg/game/act_comm.go:864	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return ch.GetWis() == 0 || ch.GetInt() == 0
+pkg/game/deferred_fight_fns.go:399	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Str += delta
+pkg/game/deferred_fight_fns.go:401	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Dex += delta
+pkg/game/deferred_fight_fns.go:403	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Int += delta
+pkg/game/deferred_fight_fns.go:405	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Wis += delta
+pkg/game/deferred_fight_fns.go:407	tattoo effective-only modifier; base preserved; shared table; no bound until total	p.Stats.Con += delta
+pkg/game/combat_helpers.go:65	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	if dprng.Number(1, 200) > ch.GetWis()+ch.GetInt() {
+pkg/session/session_login.go:86	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.player.Stats = game.RollRealAbils(game.ClassWarrior, game.RaceHuman)
+pkg/session/shop_cmds.go:198	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return fmt.Sprintf(" %2d)  %s%-48s %6d\r\n", index, available, description, shop.BuyPrice(obj.GetCost(), s.player.GetCha()))
+pkg/session/shop_cmds.go:324	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	pricePerItem := shop.BuyPrice(matchedProto.Cost, s.player.GetCha())
+pkg/session/shop_cmds.go:415	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	price := shop.SellPrice(item.GetCost(), s.player.GetCha())
+pkg/session/shop_cmds.go:449	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	price := shop.SellPrice(item.GetCost(), s.player.GetCha())
+pkg/game/spec_procs2.go:332	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if w.NumFollowers(ch.Name) >= ch.GetCha()/2 {
+pkg/game/spec_procs2.go:761	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Str -= affect.Modifier
+pkg/game/spec_procs2.go:763	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Dex -= affect.Modifier
+pkg/game/spec_procs2.go:765	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Int -= affect.Modifier
+pkg/game/spec_procs2.go:767	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Wis -= affect.Modifier
+pkg/game/spec_procs2.go:769	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Con -= affect.Modifier
+pkg/game/spec_procs2.go:771	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Cha -= affect.Modifier
+pkg/game/spec_procs2.go:830	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Con < 17 {
+pkg/game/spec_procs2.go:831	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Con += 2
+pkg/game/spec_procs2.go:834	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Str < 17 {
+pkg/game/spec_procs2.go:835	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Str += 2
+pkg/game/spec_procs2.go:838	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Wis < 17 {
+pkg/game/spec_procs2.go:839	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Wis += 2
+pkg/game/spec_procs2.go:842	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Int < 17 {
+pkg/game/spec_procs2.go:843	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Int += 2
+pkg/game/spec_procs2.go:846	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Dex < 17 {
+pkg/game/spec_procs2.go:847	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Dex += 2
+pkg/game/spec_procs2.go:850	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Cha < 17 {
+pkg/game/spec_procs2.go:851	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Cha += 2
+pkg/game/spec_procs2.go:860	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Str == 18 && adjusted != remortStatStr && ch.Stats.StrAdd < 100 {
+pkg/game/spec_procs2.go:861	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.StrAdd != 0 {
+pkg/game/spec_procs2.go:862	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.StrAdd += 20
+pkg/game/spec_procs2.go:864	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.StrAdd = 20
+pkg/game/spec_procs2.go:871	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Con < 18 && adjusted != remortStatCon {
+pkg/game/spec_procs2.go:874	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Str < 18 && adjusted != remortStatStr {
+pkg/game/spec_procs2.go:875	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Str++
+pkg/game/spec_procs2.go:878	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Wis < 18 && adjusted != remortStatWis {
+pkg/game/spec_procs2.go:879	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Wis++
+pkg/game/spec_procs2.go:882	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Int < 18 && adjusted != remortStatInt {
+pkg/game/spec_procs2.go:883	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Int++
+pkg/game/spec_procs2.go:886	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Dex < 18 && adjusted != remortStatDex {
+pkg/game/spec_procs2.go:887	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Dex++
+pkg/game/spec_procs2.go:890	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if ch.Stats.Cha < 18 && adjusted != remortStatCha {
+pkg/game/spec_procs2.go:891	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	ch.Stats.Cha++
+pkg/game/spec_procs2.go:1480	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if !pl.IsNPC() && pl.GetAlignment() < 0 {
+pkg/game/spec_procs2.go:1605	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if !ok || targetAligned == nil || tch.GetAlignment() >= maxEvil ||
+pkg/game/spec_procs2.go:1609	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	maxEvil = tch.GetAlignment()
+pkg/game/spec_procs2.go:1613	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if evil != nil && evilTarget.GetAlignment() >= 0 {
+pkg/parser/mob.go:338	prototype/editor/base data (no effective actor read)	mob.Alignment, _ = strconv.Atoi(fields[8])
+pkg/parser/mob.go:418	prototype/editor/base data (no effective actor read)	mob.Str = 11
+pkg/parser/mob.go:419	prototype/editor/base data (no effective actor read)	mob.Int = 11
+pkg/parser/mob.go:420	prototype/editor/base data (no effective actor read)	mob.Wis = 11
+pkg/parser/mob.go:421	prototype/editor/base data (no effective actor read)	mob.Dex = 11
+pkg/parser/mob.go:422	prototype/editor/base data (no effective actor read)	mob.Con = 11
+pkg/parser/mob.go:423	prototype/editor/base data (no effective actor read)	mob.Cha = 11
+pkg/parser/mob.go:438	prototype/editor/base data (no effective actor read)	mob.Str += add()
+pkg/parser/mob.go:439	prototype/editor/base data (no effective actor read)	mob.Int += add()
+pkg/parser/mob.go:440	prototype/editor/base data (no effective actor read)	mob.Wis += add()
+pkg/parser/mob.go:441	prototype/editor/base data (no effective actor read)	mob.Dex += add()
+pkg/parser/mob.go:442	prototype/editor/base data (no effective actor read)	mob.Con += add()
+pkg/parser/mob.go:443	prototype/editor/base data (no effective actor read)	mob.Cha += add()
+pkg/parser/mob.go:509	prototype/editor/base data (no effective actor read)	mob.Str = v
+pkg/parser/mob.go:523	prototype/editor/base data (no effective actor read)	mob.StrAdd = v
+pkg/parser/mob.go:537	prototype/editor/base data (no effective actor read)	mob.Int = v
+pkg/parser/mob.go:551	prototype/editor/base data (no effective actor read)	mob.Wis = v
+pkg/parser/mob.go:565	prototype/editor/base data (no effective actor read)	mob.Dex = v
+pkg/parser/mob.go:579	prototype/editor/base data (no effective actor read)	mob.Con = v
+pkg/parser/mob.go:593	prototype/editor/base data (no effective actor read)	mob.Cha = v
+pkg/parser/mob.go:822	prototype/editor/base data (no effective actor read)	return m.Alignment
+pkg/scripting/bridge.go:334	Lua char table consumes effective CHA from WorldScriptableAdapter; no base mutation	t.RawSetString("cha", lua.LNumber(f.Cha))
+pkg/session/wiz_system.go:511	base serialization/creation; copy on roll/init, recompute after load affects/equipment	target.player.Strength = stats.Str
+pkg/session/wiz_system.go:512	base serialization/creation; copy on roll/init, recompute after load affects/equipment	target.player.OrigCon = stats.Con
+pkg/session/wiz_system.go:516	base serialization/creation; copy on roll/init, recompute after load affects/equipment	stats.Str, stats.StrAdd, stats.Int, stats.Wis, stats.Dex, stats.Con, stats.Cha))
+pkg/olc/apply.go:479	prototype/editor/base data (no effective actor read)	op.Mob.Alignment = clampInt(op.Value, MobAlignmentMin, MobAlignmentMax)
+pkg/session/wiz_stats.go:112	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	mob.GetLevel(), proto.Exp, proto.Alignment))
+pkg/game/mobact.go:84	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return mob.Proto().Alignment <= -350
+pkg/game/mobact.go:91	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	return mob.Proto().Alignment >= 350
+pkg/game/player.go:385	base creation/init copy; orig_con and legacy strength remain base; initial carry capacity uses identical just-copied base	p.OrigCon = stats.Con
+pkg/game/player.go:386	base creation/init copy; orig_con and legacy strength remain base; initial carry capacity uses identical just-copied base	p.Strength = stats.Str
+pkg/admin/handlers.go:660	prototype/editor/base data (no effective actor read)	Alignment:   p.Alignment,
+pkg/session/session_helpers.go:21	unrelated parser/cache/pool/string/log statistics; no actor abilities	attrs = append(attrs, slog.Int("room", s.player.GetRoom()))
+pkg/admin/huma.go:213	prototype/editor/base data (no effective actor read)	Alignment:   m.Alignment,
+pkg/admin/huma.go:225	prototype/editor/base data (no effective actor read)	Str:         m.Str,
+pkg/admin/huma.go:226	prototype/editor/base data (no effective actor read)	Int:         m.Int,
+pkg/admin/huma.go:227	prototype/editor/base data (no effective actor read)	Wis:         m.Wis,
+pkg/admin/huma.go:228	prototype/editor/base data (no effective actor read)	Dex:         m.Dex,
+pkg/admin/huma.go:229	prototype/editor/base data (no effective actor read)	Con:         m.Con,
+pkg/admin/huma.go:230	prototype/editor/base data (no effective actor read)	Cha:         m.Cha,
+pkg/session/wiz_set.go:539	wizard real base writes followed by total for C cases; tattoo remove-old/add-new/total	m.Str = 18
+pkg/session/wiz_set.go:799	wizard real base writes followed by total for C cases; tattoo remove-old/add-new/total	m.Str = value
+pkg/session/wiz_set.go:801	wizard real base writes followed by total for C cases; tattoo remove-old/add-new/total	m.Intel = value
+pkg/session/wiz_set.go:803	wizard real base writes followed by total for C cases; tattoo remove-old/add-new/total	m.Wis = value
+pkg/session/wiz_set.go:805	wizard real base writes followed by total for C cases; tattoo remove-old/add-new/total	m.Dex = value
+pkg/session/wiz_set.go:807	wizard real base writes followed by total for C cases; tattoo remove-old/add-new/total	m.Con = value
+pkg/session/wiz_set.go:809	wizard real base writes followed by total for C cases; tattoo remove-old/add-new/total	m.Cha = value
+pkg/session/char_creation.go:404	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Str: s.charStats.Str,
+pkg/session/char_creation.go:405	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Int: s.charStats.Int,
+pkg/session/char_creation.go:406	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Wis: s.charStats.Wis,
+pkg/session/char_creation.go:407	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Dex: s.charStats.Dex,
+pkg/session/char_creation.go:408	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Con: s.charStats.Con,
+pkg/session/char_creation.go:409	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Cha: s.charStats.Cha,
+pkg/session/char_creation.go:413	base serialization/creation; copy on roll/init, recompute after load affects/equipment	getAbilName(stats.Str), getAbilName(stats.Dex), getAbilName(stats.Int),
+pkg/session/char_creation.go:414	base serialization/creation; copy on roll/init, recompute after load affects/equipment	getAbilName(stats.Wis), getAbilName(stats.Con), getAbilName(stats.Cha),
+pkg/game/save.go:309	base serialization/creation; copy on roll/init, recompute after load affects/equipment	Alignment:     data.Alignment,
+pkg/session/string_cmd.go:149	unrelated parser/cache/pool/string/log statistics; no actor abilities	qa.Str = strings.TrimLeft(rest, cCommandWhitespace)
+pkg/session/string_cmd.go:238	unrelated parser/cache/pool/string/log statistics; no actor abilities	qa.Str += "\r\n"
+pkg/session/string_cmd.go:277	unrelated parser/cache/pool/string/log statistics; no actor abilities	return s.stringObjExtraDescEditor(obj, qa.Str)
+pkg/session/string_cmd.go:279	unrelated parser/cache/pool/string/log statistics; no actor abilities	return s.stringObjDeleteExtraDesc(obj, qa.Str)
+pkg/session/string_cmd.go:382	unrelated parser/cache/pool/string/log statistics; no actor abilities	if qa.Str != "" {
+pkg/session/string_cmd.go:383	unrelated parser/cache/pool/string/log statistics; no actor abilities	if maxBytes > 0 && len(qa.Str) > maxBytes {
+pkg/session/string_cmd.go:385	unrelated parser/cache/pool/string/log statistics; no actor abilities	qa.Str = qa.Str[:maxBytes]
+pkg/session/string_cmd.go:387	unrelated parser/cache/pool/string/log statistics; no actor abilities	apply(qa.Str)
+pkg/session/cmd_info.go:188	effective gameplay consumer via typed getters (or interface); unchanged getter call now returns cached aff_abils	buf.WriteString(alignmentText(p.Alignment))
+pkg/session/medit.go:313	prototype/editor/base data (no effective actor read)	grn, nrm, cyn, mob.Alignment, nrm)
+pkg/session/medit.go:1068	prototype/editor/base data (no effective actor read)	fmt.Fprintf(sb, " %d E\n", mob.Alignment)
+pkg/game/character.go:106	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Int = table[0]
+pkg/game/character.go:107	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = table[1]
+pkg/game/character.go:108	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Dex = table[2]
+pkg/game/character.go:109	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Str = table[3]
+pkg/game/character.go:110	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Con = table[4]
+pkg/game/character.go:111	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Cha = table[5]
+pkg/game/character.go:113	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = table[0]
+pkg/game/character.go:114	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Int = table[1]
+pkg/game/character.go:115	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Str = table[2]
+pkg/game/character.go:116	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Dex = table[3]
+pkg/game/character.go:117	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Con = table[4]
+pkg/game/character.go:118	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Cha = table[5]
+pkg/game/character.go:120	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Dex = table[0]
+pkg/game/character.go:121	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Str = table[1]
+pkg/game/character.go:122	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Con = table[2]
+pkg/game/character.go:123	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Int = table[3]
+pkg/game/character.go:124	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = table[4]
+pkg/game/character.go:125	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Cha = table[5]
+pkg/game/character.go:127	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Str = table[0]
+pkg/game/character.go:128	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Dex = table[1]
+pkg/game/character.go:129	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Con = table[2]
+pkg/game/character.go:130	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = table[3]
+pkg/game/character.go:131	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Int = table[4]
+pkg/game/character.go:132	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Cha = table[5]
+pkg/game/character.go:133	base serialization/creation; copy on roll/init, recompute after load affects/equipment	if s.Str == 18 {
+pkg/game/character.go:136	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.StrAdd = dprng.Number(0, 100) // 0-100
+pkg/game/character.go:139	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Str = table[0]
+pkg/game/character.go:140	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Dex = table[1]
+pkg/game/character.go:141	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Con = table[2]
+pkg/game/character.go:142	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = table[3]
+pkg/game/character.go:143	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Int = table[4]
+pkg/game/character.go:144	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Cha = table[5]
+pkg/game/character.go:150	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Cha = min18(s.Cha + 1)
+pkg/game/character.go:152	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Int = min18(s.Int + 1)
+pkg/game/character.go:153	base serialization/creation; copy on roll/init, recompute after load affects/equipment	if s.Str == 18 {
+pkg/game/character.go:154	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.StrAdd = 0
+pkg/game/character.go:157	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = min18(s.Wis + 1)
+pkg/game/character.go:159	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Dex = min18(s.Dex + 1)
+pkg/game/character.go:160	base serialization/creation; copy on roll/init, recompute after load affects/equipment	if s.Str == 18 {
+pkg/game/character.go:161	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.StrAdd = 0
+pkg/game/character.go:164	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Str = min18(s.Str + 1)
+pkg/game/character.go:165	base serialization/creation; copy on roll/init, recompute after load affects/equipment	if s.Str == 18 && class == ClassWarrior {
+pkg/game/character.go:168	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.StrAdd = dprng.Number(0, 100)
+pkg/game/character.go:171	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Str = min18(s.Str + 1)
+pkg/game/character.go:172	base serialization/creation; copy on roll/init, recompute after load affects/equipment	if s.Str == 18 && class == ClassWarrior {
+pkg/game/character.go:175	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.StrAdd = dprng.Number(0, 100)
+pkg/game/character.go:178	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Con = min18(s.Con + 1)
+pkg/game/character.go:179	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = min18(s.Wis) // CAP wis at 16 (handled by min18)
+pkg/game/character.go:180	base serialization/creation; copy on roll/init, recompute after load affects/equipment	if s.Wis > 16 {
+pkg/game/character.go:181	base serialization/creation; copy on roll/init, recompute after load affects/equipment	s.Wis = 16
+pkg/game/player_affects.go:176	alignment storage and spell mutations; total only on actual add/join/removal	return p.Alignment
+pkg/game/player_affects.go:183	alignment storage and spell mutations; total only on actual add/join/removal	p.Alignment = v
+pkg/game/spec_procs3.go:173	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	casterAlign := me.Proto().Alignment
+pkg/game/spec_procs3.go:177	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if (casterAlign <= -350 && m.Proto().Alignment <= -350) ||
+pkg/game/spec_procs3.go:178	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	(casterAlign >= 350 && m.Proto().Alignment >= 350) {
+pkg/game/spec_procs3.go:283	effective typed reads; real_abils writes remain base, followed by traced total; legacy MasterAffects unwind retained	if me.Proto().Alignment <= -350 {
+pkg/game/player_stats.go:346	base legacy statMapping mutation API; max-pool/combat getters still sum non-ability modifiers	"Alignment": &p.Alignment,
+pkg/game/character_data.go:47	base serialization/creation; copy on roll/init, recompute after load affects/equipment	p.Sex, p.Gold, p.BankGold, p.Alignment = data.Sex, data.Gold, data.BankGold, data.Alignment
+pkg/game/mob.go:126	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	str := proto.Str
+pkg/game/mob.go:127	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	intel := proto.Int
+pkg/game/mob.go:128	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	wis := proto.Wis
+pkg/game/mob.go:129	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	dex := proto.Dex
+pkg/game/mob.go:130	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	con := proto.Con
+pkg/game/mob.go:131	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	cha := proto.Cha
+pkg/game/mob.go:943	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return m.Str
+pkg/game/mob.go:950	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return m.Dex
+pkg/game/mob.go:957	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return m.Intel
+pkg/game/mob.go:964	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return m.Wis
+pkg/game/mob.go:971	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return m.Con
+pkg/game/mob.go:978	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return m.Cha
+pkg/game/mob.go:1291	typed ability getters use cached effective view; prototype/instance fields remain real base; explicit initial copy	return m.Proto().Alignment

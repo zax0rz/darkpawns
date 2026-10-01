@@ -91,7 +91,8 @@ type Player struct {
 	// Initialized to -1 for all slots; matching a mob's race triggers aggression.
 	RaceHates [5]int
 
-	Stats CharStats
+	Stats               CharStats
+	effectiveAttributes *CharStats
 
 	// OrigCon is the character's constitution before constitution loss, from
 	// GET_ORIG_CON in structs.h. It is runtime-only because the existing Go
@@ -337,6 +338,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 	player.Inventory = NewInventory()
 	player.Equipment = NewEquipment()
 	player.Equipment.OwnerName = player.Name
+	player.Equipment.afterChange = player.AffectTotal
 	// Set default capacity (will be updated when stats are set)
 	player.Inventory.SetCapacity(10, 0, 10, 1) // Default STR=10, DEX=10, level=1
 
@@ -349,6 +351,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 	player.Conditions[CondThirst] = 36
 	player.Conditions[CondDrunk] = 0
 
+	player.CopyBaseAttributes()
 	return player
 }
 
@@ -382,6 +385,7 @@ func newCharacter(id int, name string, class, race, sex int, stats CharStats, ro
 		SetTitle(p, "the Adventurer")
 	}
 	p.Stats = stats
+	p.CopyBaseAttributes()
 	p.OrigCon = stats.Con
 	p.Strength = stats.Str
 

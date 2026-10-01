@@ -14,6 +14,7 @@ func prepareBrainEaterTest(t *testing.T, level int) (*World, *Player, *MobInstan
 	registerBeheadPrototypes(t, w)
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), level)
 	mob.Str = 11
+	mob.CopyBaseAttributes()
 	mob.SetPosition(combat.PosStanding)
 	corpse := registerBeheadObject(t, w, &parser.Obj{
 		VNum: 4017, Keywords: "corpse guard trainee", ShortDesc: "the corpse of a guard trainee",
@@ -124,6 +125,7 @@ func TestSpecBrainEater_SkipsNonQualifyingObjects(t *testing.T) {
 			registerBeheadPrototypes(t, w)
 			mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 22)
 			mob.Str = 11
+			mob.CopyBaseAttributes()
 			mob.SetPosition(combat.PosStanding)
 			registerBeheadObject(t, w, tt.proto)
 			transcript()

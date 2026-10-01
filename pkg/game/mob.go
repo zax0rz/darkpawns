@@ -77,12 +77,15 @@ type MobInstance struct {
 
 	// Ability scores — instance-level values initialized from prototype + level boosts
 	// db.c:1053-1062 applies random bonuses for mobs above level 15
-	Str   int
-	Intel int
-	Wis   int
-	Dex   int
-	Con   int
-	Cha   int
+	effectiveAttributes *CharStats
+	affectSequence      uint64
+	affectOrder         map[string]uint64
+	Str                 int
+	Intel               int
+	Wis                 int
+	Dex                 int
+	Con                 int
+	Cha                 int
 
 	// Gold — instance-level with +/-20% variance from prototype (db.c:1766-1775)
 	Gold int
@@ -195,6 +198,9 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Gold:           gold,
 	}
 	mob.SetProto(proto)
+	strAdd := proto.StrAdd
+	mob.Runtime.StrAddOverride = &strAdd
+	mob.CopyBaseAttributes()
 
 	mob.alive.Store(true)
 
@@ -507,6 +513,7 @@ func (m *MobInstance) EquipItem(obj *ObjectInstance, position int) bool {
 
 	obj.Location = LocEquippedMob(m.GetID(), EquipmentSlot(position))
 	m.Equipment[position] = obj
+	m.AffectTotal()
 	return true
 }
 
@@ -516,6 +523,7 @@ func (m *MobInstance) UnequipItem(position int) *ObjectInstance {
 		delete(m.Equipment, position)
 		obj.Location = LocNowhere()
 		m.AddToInventory(obj)
+		m.AffectTotal()
 		return obj
 	}
 	return nil
@@ -940,42 +948,42 @@ func (m *MobInstance) GetClass() int {
 func (m *MobInstance) GetStr() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.Str
+	return m.effectiveAttributesLocked().Str
 }
 
 // GetDex returns the mob's dexterity (instance-level, includes level boosts).
 func (m *MobInstance) GetDex() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.Dex
+	return m.effectiveAttributesLocked().Dex
 }
 
 // GetInt returns the mob's intelligence (instance-level, includes level boosts).
 func (m *MobInstance) GetInt() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.Intel
+	return m.effectiveAttributesLocked().Int
 }
 
 // GetWis returns the mob's wisdom (instance-level, includes level boosts).
 func (m *MobInstance) GetWis() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.Wis
+	return m.effectiveAttributesLocked().Wis
 }
 
 // GetCon returns the mob's constitution (instance-level, includes level boosts).
 func (m *MobInstance) GetCon() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.Con
+	return m.effectiveAttributesLocked().Con
 }
 
 // GetCha returns the mob's charisma (instance-level, includes level boosts).
 func (m *MobInstance) GetCha() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return m.Cha
+	return m.effectiveAttributesLocked().Cha
 }
 
 // GetHitroll returns the mob's file-derived hitroll plus equipment bonuses.
@@ -1029,10 +1037,9 @@ func (m *MobInstance) GetDamroll() int {
 
 // GetStrAdd returns the mob's strength add
 func (m *MobInstance) GetStrAdd() int {
-	if m.Runtime.StrAddOverride != nil {
-		return *m.Runtime.StrAddOverride
-	}
-	return 0
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.effectiveAttributesLocked().StrAdd
 }
 
 // Scripting interface implementations
@@ -1284,6 +1291,10 @@ func (m *MobInstance) GetFightingTarget() string {
 
 // GetAlignment returns the mob's alignment from its prototype.
 func (m *MobInstance) GetAlignment() int {
+	return m.alignmentLocked()
+}
+
+func (m *MobInstance) alignmentLocked() int {
 	if m.Runtime.AlignmentOverride != nil {
 		return *m.Runtime.AlignmentOverride
 	}
@@ -1319,58 +1330,98 @@ func (m *MobInstance) SetName(name string) {
 // AddAffect adds an engine.Affect to the mob's affect flags.
 // For mobs, affects are tracked as bitmask flags on AffectFlags.
 func (m *MobInstance) AddAffect(aff *engine.Affect) {
-	// Mobs use affect flags (bitmask) rather than a list.
-	// Map AffectType to the corresponding AFF_* bit and set it.
-	// Store in CustomData for tracking; the affect tick system
-	// will handle duration-based removal.
+	m.mu.Lock()
 	if m.CustomData == nil {
 		m.CustomData = make(map[string]interface{})
 	}
+	if m.affectOrder == nil {
+		m.affectOrder = make(map[string]uint64)
+	}
 	key := fmt.Sprintf("affect_%d", aff.SpellID)
+	for n := 1; m.CustomData[key] != nil; n++ {
+		key = fmt.Sprintf("affect_%d_%d", aff.SpellID, n)
+	}
+	m.affectSequence++
 	m.CustomData[key] = aff
-
-	// Set AFF_* bitmask bits from the affect's Flags field.
-	if aff.Flags != 0 {
-		for engFlag, cBit := range EngineFlagToAffBit {
-			if aff.Flags&engFlag != 0 {
-				m.SetAffected(cBit)
-			}
+	m.affectOrder[key] = m.affectSequence
+	m.mu.Unlock()
+	for engFlag, cBit := range EngineFlagToAffBit {
+		if aff.Flags&engFlag != 0 {
+			m.SetAffected(cBit)
 		}
 	}
+	m.AffectTotal()
 }
 
-// JoinAffect mirrors C affect_join for mob spell affects.
+// JoinAffect chooses the newest matching record, C's affected-list head
+// (src/handler.c:476-495), without depending on Go map iteration order.
 func (m *MobInstance) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) {
-	if m.CustomData == nil {
-		m.CustomData = make(map[string]interface{})
+	m.mu.Lock()
+	var current *engine.Affect
+	var selected string
+	var sequence uint64
+	for key, value := range m.CustomData {
+		candidate, ok := value.(*engine.Affect)
+		if !ok || candidate.SpellID != aff.SpellID || candidate.Location != aff.Location {
+			continue
+		}
+		order := m.affectOrder[key]
+		if current == nil || order > sequence || (order == sequence && key > selected) {
+			current = candidate
+			selected = key
+			sequence = order
+		}
 	}
-	key := fmt.Sprintf("affect_%d", aff.SpellID)
-	if current, ok := m.CustomData[key].(*engine.Affect); ok && current.Location == aff.Location {
+	if current != nil {
 		if addDuration {
 			aff.Duration += current.Duration
 		}
 		if addMagnitude {
 			aff.Magnitude += current.Magnitude
 		}
+		delete(m.CustomData, selected)
+		delete(m.affectOrder, selected)
 	}
+	m.mu.Unlock()
 	aff.ExpiresAt = time.Now().Add(time.Duration(aff.Duration) * engine.TickDuration)
 	m.AddAffect(aff)
 }
 
-// RemoveAffectBySpell removes affects matching the given spell number from the mob.
+// RemoveAffectBySpell removes every location for this spell, as affect_from_char
+// does in src/handler.c:449-456. A missing spell does not run affect_total.
 func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
-	if m.CustomData == nil {
-		return
+	m.mu.Lock()
+	var removed []*engine.Affect
+	var remainingFlags uint64
+	for key, value := range m.CustomData {
+		aff, ok := value.(*engine.Affect)
+		if !ok {
+			continue
+		}
+		if aff.SpellID != spellNum {
+			remainingFlags |= aff.Flags
+			continue
+		}
+		removed = append(removed, aff)
+		delete(m.CustomData, key)
+		delete(m.affectOrder, key)
 	}
-	key := fmt.Sprintf("affect_%d", spellNum)
-	if aff, ok := m.CustomData[key].(*engine.Affect); ok && aff.Flags != 0 {
+	m.mu.Unlock()
+	for _, aff := range removed {
 		for engFlag, cBit := range EngineFlagToAffBit {
 			if aff.Flags&engFlag != 0 {
 				m.RemoveAffected(cBit)
 			}
 		}
 	}
-	delete(m.CustomData, key)
+	if len(removed) > 0 {
+		for engFlag, cBit := range EngineFlagToAffBit {
+			if remainingFlags&engFlag != 0 {
+				m.SetAffected(cBit)
+			}
+		}
+		m.AffectTotal()
+	}
 }
 
 // HitModifiers returns combat modifiers for the mob's equipped weapon.

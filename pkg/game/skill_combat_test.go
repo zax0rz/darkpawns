@@ -223,6 +223,7 @@ func newCircleTestWorld(t *testing.T) (*World, *Player) {
 	ch.Level = 20
 	ch.Class = ClassThief
 	ch.Stats.Str = 12 // str_app[12].ToDam == 0; avoids skewing damage assertions
+	ch.CopyBaseAttributes()
 	ch.SetSkill(SkillCircle, 100)
 	w.AddPlayer(ch)
 	return w, ch
@@ -428,6 +429,7 @@ func TestDoCircle_HitIncludesStrToDam(t *testing.T) {
 	// at level 20 mult = (20*0.2+1)/3 = 5/3 = 1. The str-to-dam term adds 14*1.
 	// Without the fix the floor is weapon(1d6=1)+damroll(0) = 1; with it, ≥15.
 	ch.Stats.Str = 25
+	ch.CopyBaseAttributes()
 
 	var hit bool
 	for i := 0; i < 20; i++ {
@@ -594,6 +596,7 @@ func TestDoBackstab_HitIncludesStrToDam(t *testing.T) {
 	// Force a high strength so StrAppToDam is meaningfully positive. Str 25 →
 	// str_app[25].todam == 14 (see pkg/combat/formulas.go strApp table).
 	ch.Stats.Str = 25
+	ch.CopyBaseAttributes()
 
 	// Backstab a sleeping mob so the skill roll auto-succeeds (percent > prob
 	// only fails when AWAKE). Run a few attempts to absorb RNG variance.
@@ -1517,7 +1520,8 @@ func TestDoHeadbutt_ImprovesSkillTwice(t *testing.T) {
 	w, ch := newHeadbuttTestWorld(t) // level 40 → percent=0 → guaranteed hit
 	w.StopAITicker()                 // quiesce the shared stream during draw-count assertions
 	ch.Stats.Int = 100
-	ch.Stats.Wis = 100          // WIS+INT=200 >= any number(1,200): improve gate always passes
+	ch.Stats.Wis = 100 // WIS+INT=200 >= any number(1,200): improve gate always passes
+	ch.CopyBaseAttributes()
 	mob := spawnTargetMob(t, w) // mob 2001 has no HP dice → spawn draws nothing
 	mob.SetPosition(combat.PosFighting)
 

@@ -81,14 +81,14 @@ func mobIsEvil(mob *MobInstance) bool {
 	if mob == nil || mob.Proto() == nil {
 		return false
 	}
-	return mob.Proto().Alignment <= -350
+	return mob.GetAlignment() <= -350
 }
 
 func mobIsGood(mob *MobInstance) bool {
 	if mob == nil || mob.Proto() == nil {
 		return false
 	}
-	return mob.Proto().Alignment >= 350
+	return mob.GetAlignment() >= 350
 }
 
 // getMobVNumSpec looks up a mob's registered spec proc by its VNum.

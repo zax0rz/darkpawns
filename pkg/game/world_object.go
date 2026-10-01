@@ -93,6 +93,7 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 				for pos, eqItem := range m.Equipment {
 					if eqItem == obj {
 						delete(m.Equipment, pos)
+						m.AffectTotal()
 						m.RemoveFromInventory(obj)
 						break
 					}

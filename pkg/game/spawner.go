@@ -369,6 +369,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 				lastMob.Equipment = make(map[int]*ObjectInstance)
 			}
 			lastMob.Equipment[cmd.Arg3] = obj // Arg3 = equip position
+			lastMob.AffectTotal()
 			lastCmd = 1
 
 		case "P": // Put object in container

@@ -263,6 +263,7 @@ func TestSpecButler_CanGetPredicateAndFourItemCap(t *testing.T) {
 			name: "overweight",
 			setup: func(_ *World, mob *MobInstance, obj *ObjectInstance) {
 				mob.Str = 3
+				mob.CopyBaseAttributes()
 				obj.SetWeight(100)
 			},
 		},
@@ -270,6 +271,7 @@ func TestSpecButler_CanGetPredicateAndFourItemCap(t *testing.T) {
 			name: "over item count",
 			setup: func(w *World, mob *MobInstance, _ *ObjectInstance) {
 				mob.Dex = 0
+				mob.CopyBaseAttributes()
 				mob.SetLevel(1)
 				for i := 0; i < mobMaxCarryCount(mob); i++ {
 					filler := spawnButlerTestObject(t, w, 3006)

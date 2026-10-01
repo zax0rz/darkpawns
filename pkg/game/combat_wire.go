@@ -499,7 +499,9 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	cb.GetConstitution = func(name string) int {
 		if p, ok := w.GetPlayer(name); ok {
-			return p.GetCon()
+			p.mu.RLock()
+			defer p.mu.RUnlock()
+			return p.Stats.Con
 		}
 		return 0
 	}
@@ -509,6 +511,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			p.mu.Lock()
 			p.Stats.Con = val
 			p.mu.Unlock()
+			p.AffectTotal()
 		}
 	}
 

@@ -139,7 +139,9 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 					if proto, ok := world.GetObjPrototype(vnum); ok {
 						obj := game.NewObjectInstance(proto, -1)
 						obj.Location = game.LocEquippedPlayer(p.Name, slot)
-						p.Equipment.Slots[slot] = obj
+						if err := p.Equipment.SetSlot(slot, obj); err != nil {
+							slog.Warn("restore equipment slot", "player", p.Name, "error", err)
+						}
 					}
 				}
 			}
@@ -254,7 +256,9 @@ func restoreSavedItems(p *game.Player, world *game.World, items []game.SaveItemD
 		if equipped && item.ContainerIndex == 0 {
 			if slot, ok := game.CWearPosToSlot(item.Locate - 1); ok {
 				obj.Location = game.LocEquippedPlayer(p.Name, slot)
-				p.Equipment.Slots[slot] = obj
+				if err := p.Equipment.SetSlot(slot, obj); err != nil {
+					slog.Warn("restore equipment slot", "player", p.Name, "error", err)
+				}
 				continue
 			}
 		}

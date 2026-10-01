@@ -32,6 +32,7 @@ func newPortalToTempleTestWorld(t *testing.T) portalToTempleTestWorld {
 	actor.SetPosition(combat.PosStanding)
 	actor.Stats.Int = 10
 	actor.Stats.Wis = 10
+	actor.CopyBaseAttributes()
 	if err := w.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer actor: %v", err)
 	}

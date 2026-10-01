@@ -20,6 +20,7 @@ func TestSpecDracula_EntryGatesAndDelegation(t *testing.T) {
 	}
 	player.Stats.Int = 10
 	player.Stats.Wis = 10
+	player.CopyBaseAttributes()
 	lastMsg() // discard the spawn announcement
 
 	tests := []struct {
@@ -69,6 +70,7 @@ func TestSpecDracula_LookBiteAudienceAndVampireState(t *testing.T) {
 	observer := NewPlayer(2, "Observer", player.GetRoomVNum())
 	observer.Stats.Int = 10
 	observer.Stats.Wis = 10
+	observer.CopyBaseAttributes()
 	if err := w.AddPlayer(observer); err != nil {
 		t.Fatalf("AddPlayer observer: %v", err)
 	}
@@ -85,6 +87,7 @@ func TestSpecDracula_LookBiteAudienceAndVampireState(t *testing.T) {
 	}
 	player.Stats.Int = 10
 	player.Stats.Wis = 10
+	player.CopyBaseAttributes()
 	lastMsg() // discard the spawn announcement
 
 	transcript := make(map[string]string)
@@ -131,6 +134,7 @@ func TestSpecDracula_ExistingVampireOrWerewolfSkipsTransformation(t *testing.T) 
 			lastMsg()
 			player.Stats.Int = 10
 			player.Stats.Wis = 10
+			player.CopyBaseAttributes()
 			player.SetPlrFlag(flag, true)
 
 			if !specDracula(w, player, mob, "look", "lothar") {

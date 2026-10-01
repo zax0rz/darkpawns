@@ -1,0 +1,27 @@
+pkg/session/wiz_system.go:572:			target.player.ActiveAffects = nil
+pkg/game/world_object.go:95:						delete(m.Equipment, pos)
+pkg/game/combat_wire.go:394:			if weapon, wielded := m.Equipment[int(SlotWield)]; wielded && weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
+pkg/game/affect_update.go:77:		p.ActiveAffects = remaining
+pkg/game/mob.go:513:	m.Equipment[position] = obj
+pkg/game/mob.go:521:		delete(m.Equipment, position)
+pkg/game/mob.go:1401:	if weapon, wielded := m.Equipment[int(SlotWield)]; wielded && weapon != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
+pkg/game/zone_renum.go:89:		if obj := mob.Equipment[slot]; obj != nil {
+pkg/game/death.go:208:		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+pkg/game/death.go:689:		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+pkg/game/follow.go:313:			ch.ActiveAffects = append(ch.ActiveAffects[:i], ch.ActiveAffects[i+1:]...)
+pkg/game/follow.go:322:			ch.ActiveAffects = append(ch.ActiveAffects[:i], ch.ActiveAffects[i+1:]...)
+pkg/game/world_bridge.go:139:			if item := m.Equipment[where]; item != nil {
+pkg/game/world_bridge.go:865:		occupied = m.Equipment[pos] != nil
+pkg/game/world_bridge.go:1114:		p.ActiveAffects = nil
+pkg/game/spec_procs2.go:792:	ch.ActiveAffects = nil
+pkg/game/player_affects.go:324:	p.ActiveAffects = append(p.ActiveAffects, aff)
+pkg/game/player_affects.go:350:	p.ActiveAffects = append(p.ActiveAffects, aff)
+pkg/game/player_affects.go:364:	p.ActiveAffects = filtered
+pkg/game/char_mgmt.go:194:						delete(p.Equipment.Slots, slot)
+pkg/game/char_mgmt.go:253:			delete(m.Equipment, slot)
+pkg/game/spawner.go:371:			lastMob.Equipment[cmd.Arg3] = obj // Arg3 = equip position
+pkg/game/movement.go:73:				delete(m.Equipment, int(old.Slot))
+pkg/game/movement.go:142:					m.Equipment[int(dst.Slot)] = obj
+pkg/game/character_data.go:56:	p.ActiveAffects = restoreAffects(data.Affects)
+pkg/game/world.go:1431:							m.Equipment[slot] = obj
+pkg/game/world.go:1521:			p.ActiveAffects = nil

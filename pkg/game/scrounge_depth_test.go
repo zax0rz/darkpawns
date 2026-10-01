@@ -135,6 +135,7 @@ func TestDoScroungeDepthDeferredImprovePreservesDrawOrder(t *testing.T) {
 	w, ch := newScroungeDepthWorld(t, SECT_FOREST)
 	ch.Stats.Wis = 100
 	ch.Stats.Int = 100
+	ch.CopyBaseAttributes()
 	dprng.ResetStream(1)
 	result := DoScrounge(ch, w)
 	if !result.Success || len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillScrounge {

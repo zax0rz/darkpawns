@@ -31,6 +31,7 @@ func newTattoo4TestWorld(t *testing.T, withPeer bool) (*World, *Player, *MobInst
 	actor.SetLevel(levelCanShout)
 	actor.Stats.Int = 10
 	actor.Stats.Wis = 10
+	actor.CopyBaseAttributes()
 	if err := w.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer actor: %v", err)
 	}
@@ -174,7 +175,7 @@ func TestSpecTattoo4AppliesEveryOfferedTattoo(t *testing.T) {
 			if !specTattoo4(w, actor, tattooist, "buy", string(rune('0'+test.offerIndex))) {
 				t.Fatal("purchase should be consumed")
 			}
-			if actor.Tattoo != test.tattoo || actor.Stats.Str != baseStats.Str+test.strDelta || actor.Damroll != test.damroll {
+			if actor.Tattoo != test.tattoo || actor.GetStr() != baseStats.Str+test.strDelta || actor.Damroll != test.damroll {
 				t.Fatalf("offer state = tattoo %d stats %+v damroll %d", actor.Tattoo, actor.Stats, actor.Damroll)
 			}
 		})

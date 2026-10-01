@@ -258,6 +258,7 @@ func TestCmdThinkWithArgsSendsPrivateThought(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
 	s.player.Stats.Int = 13
+	s.player.CopyBaseAttributes()
 
 	if err := cmdThink(s, []string{"about", "tulips"}); err != nil {
 		t.Fatalf("cmdThink: %v", err)
@@ -271,6 +272,7 @@ func TestCmdThinkNoRepeatSendsOk(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
 	s.player.Stats.Int = 13
+	s.player.CopyBaseAttributes()
 	s.player.Flags |= 1 << game.PrfNoRepeat
 
 	if err := cmdThink(s, []string{"about", "tulips"}); err != nil {

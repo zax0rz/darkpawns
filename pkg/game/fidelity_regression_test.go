@@ -129,6 +129,7 @@ func TestFidelityStealMobRestrictions(t *testing.T) {
 	thief := NewPlayer(1, "Thief", 1001)
 	thief.SetSkill(SkillSteal, 1000) // extremely high skill to guarantee success
 	thief.Stats.Str = 10
+	thief.CopyBaseAttributes()
 
 	// Construct a mob target
 	mobProto := &parser.Mob{

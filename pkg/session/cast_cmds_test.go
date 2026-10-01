@@ -26,6 +26,7 @@ func prepareCaster(s *Session, class int, spellName string, proficiency int) {
 	s.player.Class = class
 	s.player.Stats.Int = 10
 	s.player.Stats.Wis = 10
+	s.player.CopyBaseAttributes()
 	s.player.SetLevel(1)
 	s.player.SetMana(100)
 	s.player.SetSkill(spellName, proficiency)
@@ -375,6 +376,7 @@ func TestCastSpellContractSmartnessGate(t *testing.T) {
 	s := makeTestSession(t, makeTestManager(t), "Caster", 1001, true)
 	prepareCaster(s, game.ClassCleric, "cure light", 100)
 	s.player.Stats.Int = 0
+	s.player.CopyBaseAttributes()
 
 	original := castNumber
 	castNumber = func(minVal, maxVal int) int { return minVal }
@@ -472,6 +474,7 @@ func TestCastWeightPenaltyMatchesCThresholds(t *testing.T) {
 			p := game.NewPlayer(1, "Caster", 1001)
 			p.Stats.Str = 18
 			p.Stats.StrAdd = 50
+			p.CopyBaseAttributes()
 			p.Inventory.SetCapacity(p.GetStr(), p.GetStrAdd(), p.GetDex(), p.GetLevel())
 			if tc.weight > 0 {
 				weight := tc.weight

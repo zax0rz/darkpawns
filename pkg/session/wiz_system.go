@@ -511,6 +511,7 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		target.player.Strength = stats.Str
 		target.player.OrigCon = stats.Con
 		target.player.Unlock()
+		target.player.CopyBaseAttributes()
 		s.Send("Rerolled...\r\n")
 		s.Send(fmt.Sprintf("New stats: Str %d/%d, Int %d, Wis %d, Dex %d, Con %d, Cha %d\r\n",
 			stats.Str, stats.StrAdd, stats.Int, stats.Wis, stats.Dex, stats.Con, stats.Cha))
@@ -570,6 +571,7 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		if target.player.ActiveAffects != nil {
 			target.player.ActiveAffects = nil
 			target.player.Unlock()
+			target.player.AffectTotal()
 			target.Send("There is a brief flash of light! You feel slightly different.")
 			s.Send("All spells removed.")
 		} else {

@@ -150,6 +150,7 @@ func TestKenderStealSetsFlag(t *testing.T) {
 	p.Level = LVL_IMPL
 	p.SetSkill(SkillSteal, 100)
 	p.Stats.Str = 15
+	p.CopyBaseAttributes()
 
 	w.kenderStealItem(p, mob, obj)
 

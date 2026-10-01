@@ -92,12 +92,12 @@ func observationPlayerState(player *game.Player) PlayerState {
 		Level:     v.Level,
 		Class:     game.ClassNames[v.Class],
 		Race:      game.RaceNames[player.Race],
-		Str:       player.Stats.Str,
-		Int:       player.Stats.Int,
-		Wis:       player.Stats.Wis,
-		Dex:       player.Stats.Dex,
-		Con:       player.Stats.Con,
-		Cha:       player.Stats.Cha,
+		Str:       player.GetStr(),
+		Int:       player.GetInt(),
+		Wis:       player.GetWis(),
+		Dex:       player.GetDex(),
+		Con:       player.GetCon(),
+		Cha:       player.GetCha(),
 	}
 }
 

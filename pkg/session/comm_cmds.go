@@ -108,7 +108,7 @@ func cmdEmote(s *Session, args []string) error {
 	// C do_echo's SCMD_EMOTE branch (act.wizard.c:135-141): a muted (PLR_NOSHOUT)
 	// or INT-0 actor cannot express themselves. Fires after the empty-argument
 	// gate, before any bytes reach the room.
-	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.GetInt() == 0 {
 		s.Send("You try to express yourself but cannot!")
 		return nil
 	}
@@ -175,7 +175,7 @@ func cmdThink(s *Session, args []string) error {
 		return nil
 	}
 
-	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.Stats.Int == 0 {
+	if s.player.GetFlags()&(1<<game.PlrNoshout) != 0 || s.player.GetInt() == 0 {
 		s.Send("You try to think aloud, but cannot!")
 		return nil
 	}

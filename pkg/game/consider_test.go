@@ -28,6 +28,7 @@ func addConsiderPlayer(t *testing.T, world *World, id int, name string) *Player 
 	t.Helper()
 	player := NewPlayer(id, name, 1001)
 	player.Stats.Str = 10
+	player.CopyBaseAttributes()
 	if err := world.AddPlayer(player); err != nil {
 		t.Fatalf("AddPlayer(%s): %v", name, err)
 	}
@@ -178,6 +179,7 @@ func TestDoConsiderUsesCanonicalVictimPronouns(t *testing.T) {
 			target := addConsiderPlayer(t, world, 2, "Target")
 			target.SetLevel(16)
 			target.Stats.Str = 19 // str_app todam 7: selects the $E damage band
+			target.CopyBaseAttributes()
 			target.Sex = test.sex
 
 			combat.WithRoller(combat.NewScriptedRoller([]int{0, 0}), func() {

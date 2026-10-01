@@ -374,8 +374,8 @@ func GetTattooBonuses(tattoo int) []TattooBonus {
 
 // TattooAf applies or removes tattoo stat effects on a player.
 // Source: src/tattoo.c:104 (tattoo_af struct char_data *ch, bool add).
-// In C, tattoo_af calls affect_join() to add/remove struct affected_type entries.
-// In Go we directly modify the player's stat fields under mu.Lock.
+// C calls affect_modify without bounds (src/tattoo.c:193-195). Abilities
+// change only aff_abils; the next affect_total rebuilds from base and Tattoo.
 func TattooAf(p *Player, add bool) {
 	if p == nil || p.Tattoo == 0 {
 		return
@@ -391,20 +391,21 @@ func TattooAf(p *Player, add bool) {
 	}
 
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	stats := p.effectiveAttributesLocked()
+	defer func() { p.effectiveAttributes = &stats; p.mu.Unlock(); p.refreshAttributeCapacity() }()
 	for _, b := range bonuses {
 		delta := b.Modifier * sign
 		switch b.Location {
 		case ApplyStr:
-			p.Stats.Str += delta
+			stats.Str += delta
 		case ApplyDex:
-			p.Stats.Dex += delta
+			stats.Dex += delta
 		case ApplyInt:
-			p.Stats.Int += delta
+			stats.Int += delta
 		case ApplyWis:
-			p.Stats.Wis += delta
+			stats.Wis += delta
 		case ApplyCon:
-			p.Stats.Con += delta
+			stats.Con += delta
 		case ApplyMana:
 			p.MaxMana += delta
 		case ApplyHit:

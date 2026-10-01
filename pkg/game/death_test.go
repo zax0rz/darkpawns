@@ -242,6 +242,7 @@ func TestHandleDeath_Player(t *testing.T) {
 	victim.SetLevel(10)
 	victim.SetExp(10000)
 	victim.Stats.Con = 15
+	victim.CopyBaseAttributes()
 	if err := w.AddPlayer(victim); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
@@ -310,6 +311,7 @@ func TestHandlePlayerDeathIdempotent(t *testing.T) {
 	victim.SetLevel(10)
 	victim.SetExp(10000)
 	victim.Stats.Con = 15
+	victim.CopyBaseAttributes()
 	if err := w.AddPlayer(victim); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
@@ -722,6 +724,7 @@ func TestHandlePlayerDeathPenaltiesAreSilent(t *testing.T) {
 	victim.SetLevel(30)
 	victim.SetExp(100000)
 	victim.Stats.Con = 15
+	victim.CopyBaseAttributes()
 	if err := w.AddPlayer(victim); err != nil {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}

@@ -186,6 +186,7 @@ func TestSpecGuild_Golden(t *testing.T) {
 	player.SetLevel(5)
 	player.SetPractices(5)
 	player.Stats.Int = 13 // int_app[13].learn = 25 → full gain (thief MAXGAIN = 25)
+	player.CopyBaseAttributes()
 
 	mob := newSpecProcTestMob(t, w, 1001, 10)
 
@@ -229,6 +230,7 @@ func TestSpecGuild_Gates(t *testing.T) {
 	player.Class = ClassThief
 	player.SetLevel(5)
 	player.Stats.Int = 13
+	player.CopyBaseAttributes()
 	mob := newSpecProcTestMob(t, w, 1001, 10)
 	_ = lastMsg() // discard the mob's spawn announcement
 
@@ -507,6 +509,7 @@ func TestSpecMagicUser_SelfTargetAndDispelGate(t *testing.T) {
 		w, player, _ := newSpecProcTestWorld(t)
 		mob := newSpecProcTestMob(t, w, 1001, 34)
 		mob.Intel, mob.Wis = 10, 10
+		mob.CopyBaseAttributes()
 		mob.SetPosition(combat.PosFighting)
 		mob.SetFighting(player.Name)
 		player.SetFighting(mob.GetName())
@@ -528,6 +531,7 @@ func TestSpecMagicUser_SelfTargetAndDispelGate(t *testing.T) {
 		w, player, lastMsg := newSpecProcTestWorld(t)
 		mob := newSpecProcTestMob(t, w, 1001, 24)
 		mob.Intel, mob.Wis = 10, 10
+		mob.CopyBaseAttributes()
 		mob.SetPosition(combat.PosFighting)
 		mob.SetFighting(player.Name)
 		player.SetFighting(mob.GetName())
@@ -551,6 +555,7 @@ func TestSpecMagicUser_OutsideGate(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, 1001, 38)
 	mob.Intel, mob.Wis = 10, 10
+	mob.CopyBaseAttributes()
 	mob.SetPosition(combat.PosFighting)
 	mob.SetFighting(player.Name)
 	player.SetFighting(mob.GetName())

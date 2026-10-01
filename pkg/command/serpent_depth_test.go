@@ -55,6 +55,7 @@ func TestCmdSerpentKickTrainingMobileMatchesC(t *testing.T) {
 	actor.SetSkill(game.SkillSerpentKick, 50)
 	actor.Stats.Int = 100
 	actor.Stats.Wis = 100
+	actor.CopyBaseAttributes()
 	if err := world.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}

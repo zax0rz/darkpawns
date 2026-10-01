@@ -79,6 +79,7 @@ func TestDoDropAllDotAndCoins(t *testing.T) {
 	w, ch, lastMsg := newDonateTestWorld(t)
 	ch.Stats.Str = 10
 	ch.Stats.Dex = 10
+	ch.CopyBaseAttributes()
 	for i := 0; i < 2; i++ {
 		obj := newTransferItem(5200+i, "a short sword", "short sword", 1|(1<<13))
 		registerTransferObject(w, obj)

@@ -164,6 +164,7 @@ func TestExecuteCommandAcceptsAttachedAndSeparatedSayShorthand(t *testing.T) {
 			s := makeTestSession(t, m, "Alice", 1001, true)
 			s.player.Stats.Int = 10
 			s.player.Stats.Wis = 10
+			s.player.CopyBaseAttributes()
 			registerInWorld(t, s)
 
 			if err := ExecuteCommand(s, input, nil); err != nil {

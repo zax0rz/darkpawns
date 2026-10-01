@@ -35,6 +35,7 @@ func prepareClericTestCombat(t *testing.T, w *World, player *Player, level int) 
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), level)
 	mob.Intel = 8
 	mob.Wis = 8
+	mob.CopyBaseAttributes()
 	mob.SetMaxHP(100)
 	mob.SetHealth(100)
 	mob.SetPosition(combat.PosFighting)

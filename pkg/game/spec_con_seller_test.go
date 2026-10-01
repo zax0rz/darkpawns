@@ -36,6 +36,7 @@ func newConSellerTestWorld(t *testing.T, dark bool) (*World, *Player, *Player, *
 	actor := NewPlayer(1, "ConSellerActor", 21234)
 	actor.SetPosition(combat.PosStanding)
 	actor.Stats.Con = 10
+	actor.CopyBaseAttributes()
 	actor.SetOrigCon(14)
 	if err := w.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer actor: %v", err)

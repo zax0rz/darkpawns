@@ -741,11 +741,11 @@ func remortPlayer(ch *Player) {
 	ch.SetPractices(10)
 
 	TattooAf(ch, true)
-	// Active affects are represented by getters in the current path, while
-	// legacy MasterAffects were removed above; this is the resulting
-	// affect_total state for a naked remort.
+	// Rebuild effective abilities after base remort adjustments and the
+	// old-tattoo removal/new-tattoo application (src/spec_procs2.c:942).
 	// C advance_level() raises maxima but does not heal the current pools;
 	// the remorter set them immediately before this call.
+	ch.AffectTotal() // src/spec_procs2.c:942
 	ch.AdvanceLevel()
 }
 

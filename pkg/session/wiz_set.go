@@ -733,6 +733,15 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		return "Can't set that!", false, false
 	}
 
+	switch field.name {
+	case "maxhit", "maxmana", "maxmove", "hit", "mana", "move", "align", "str", "stradd", "int", "wis", "dex", "con", "cha", "ac", "hitroll", "damroll", "tattoo":
+		if p != nil {
+			p.AffectTotal()
+		} else if m != nil {
+			m.AffectTotal()
+		}
+	}
+
 	if field.typ == setNumber {
 		return "", true, false
 	}

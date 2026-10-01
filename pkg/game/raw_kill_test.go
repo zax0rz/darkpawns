@@ -45,6 +45,7 @@ func rawKillWorld(t *testing.T) (*World, *Player) {
 func TestRawKillClearsEverySpellAffect(t *testing.T) {
 	w, p := rawKillWorld(t)
 	p.Stats.Str = 12
+	p.CopyBaseAttributes()
 	p.AddAffect(engine.NewAffectDirect(spells.SpellStrength, engine.ApplyStr, -1, 3, 0, "strength"))
 	p.AddAffect(engine.NewAffectDirect(spells.SpellBlindness, engine.ApplyNone, 20, 0, engine.AFFBlind, "blindness"))
 	p.SetAffect(affBlind, true)
@@ -78,6 +79,7 @@ func TestRawKillVampireManaClamp(t *testing.T) {
 func TestRawKillRemovesTattoo(t *testing.T) {
 	w, p := rawKillWorld(t)
 	p.Stats.Str = 12
+	p.CopyBaseAttributes()
 	p.Tattoo = TattooDragon
 	p.TatTimer = 8
 	TattooAf(p, true)

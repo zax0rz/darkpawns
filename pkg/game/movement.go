@@ -52,7 +52,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				if isLitLightSource(obj) {
 					w.adjustRoomLight(p.RoomVNum, -1)
 				}
-				if err := p.Equipment.unequip(old.Slot, p.Inventory); err != nil {
+				if err := p.Equipment.Unequip(old.Slot, p.Inventory); err != nil {
 					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
 				} else {
 					// unequip adds to inventory; this move owns the next destination.
@@ -71,6 +71,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 		case OwnerMob:
 			if m, ok := w.activeMobs[old.MobID]; ok {
 				delete(m.Equipment, int(old.Slot))
+				m.AffectTotal()
 			}
 		}
 
@@ -130,7 +131,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 				}
 				// Remove from inventory first if it's there
 				p.Inventory.removeItem(obj)
-				if err := p.Equipment.equip(obj, p.Inventory); err != nil {
+				if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
 					return fmt.Errorf("equip on player %s: %w", dst.PlayerName, err)
 				}
 			}
@@ -141,6 +142,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 					m.Equipment[int(dst.Slot)] = obj
 					// Remove from inventory since it's now equipped
 					m.RemoveFromInventory(obj)
+					m.AffectTotal()
 				}
 			}
 		}

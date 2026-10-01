@@ -34,7 +34,7 @@ func TestDoNewbieChannelDepthGatesAndFanout(t *testing.T) {
 			{name: "noshout", setup: func(p *Player) { p.SetPlrFlag(PlrNoshout, true) }, want: "You cannot newbie!\r\n"},
 			{name: "channel off", setup: func(p *Player) { p.SetPlrFlag(PrfNoNewbie, true) }, want: "You aren't even on the channel!\r\n"},
 			{name: "soundproof", setup: func(p *Player) { p.SetRoom(1002) }, want: "The walls seem to absorb your words.\r\n"},
-			{name: "stupid", setup: func(p *Player) { p.Stats.Int = 0 }, want: "You are too stupid to communicate with language!\r\n"},
+			{name: "stupid", setup: func(p *Player) { p.Stats.Int = 0; p.CopyBaseAttributes() }, want: "You are too stupid to communicate with language!\r\n"},
 		} {
 			t.Run(test.name, func(t *testing.T) {
 				w, actor, _, _, output := newChannelWorld(t)
