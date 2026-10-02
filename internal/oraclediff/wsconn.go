@@ -30,8 +30,9 @@ type WSConn struct {
 	// client echoes typed input too, and the telnet transcript never holds
 	// it, so it is dropped here to keep the two transports comparable. The
 	// client does not echo secret input (passwords); nothing is dropped then.
-	pendingEcho   string
-	firstByteWait time.Duration
+	pendingEcho      string
+	firstByteWait    time.Duration
+	awaitingResponse bool
 	// chrome strips what the client writes about its own socket (see
 	// clientChrome); it names the URL, so it is built per connection.
 	chrome *strings.Replacer
@@ -88,10 +89,12 @@ func (c *WSConn) pump(r io.Reader) {
 func (c *WSConn) Send(line string) error {
 	c.pendingEcho = line + "\r\n"
 	_, err := io.WriteString(c.stdin, line+"\n")
+	c.awaitingResponse = err == nil
 	return err
 }
 
-// SetFirstByteWait separates response latency from trailing silence.
+// SetFirstByteWait separates response latency after Send from trailing silence.
+// Reads without a preceding Send (passive peers and drains) keep plain quiescence.
 func (c *WSConn) SetFirstByteWait(d time.Duration) { c.firstByteWait = d }
 
 // hasGameOutput ignores local echo and transport chrome when deciding whether
@@ -104,7 +107,12 @@ func (c *WSConn) hasGameOutput() bool {
 
 // ReadUntilQuiescent returns after the client has written nothing for d.
 func (c *WSConn) ReadUntilQuiescent(d time.Duration) (string, error) {
-	firstDeadline := time.Now().Add(max(d, c.firstByteWait))
+	firstWait := d
+	if c.awaitingResponse {
+		firstWait = max(d, c.firstByteWait)
+	}
+	c.awaitingResponse = false
+	firstDeadline := time.Now().Add(firstWait)
 	wait := time.Until(firstDeadline)
 	if c.hasGameOutput() {
 		wait = d

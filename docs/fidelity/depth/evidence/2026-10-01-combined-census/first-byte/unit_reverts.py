@@ -1,7 +1,7 @@
 from pathlib import Path
 import subprocess,sys
 repo=Path(sys.argv[1]).resolve(); logs=Path(sys.argv[2]).resolve();logs.mkdir(parents=True,exist_ok=True)
-cases=[('tcp-cpu','internal/oraclediff/conn.go','firstDeadline := time.Now().Add(max(d, c.firstByteWait))','firstDeadline := time.Now().Add(d)','TestTCPFirstByteWaitUnderCPULoad'),('ws-cpu-echo','internal/oraclediff/wsconn.go','firstDeadline := time.Now().Add(max(d, c.firstByteWait))','firstDeadline := time.Now().Add(d)','TestWSFirstByteWaitUnderCPULoadIgnoresLocalEcho'),('trailing-silence','internal/oraclediff/conn.go','deadline = time.Now().Add(d)','deadline = time.Now().Add(max(d, c.firstByteWait))','TestTCPFirstByteWaitKeepsTrailingSilence')]
+cases=[('tcp-cpu','internal/oraclediff/conn.go','firstWait = max(d, c.firstByteWait)','firstWait = d','TestTCPFirstByteWaitUnderCPULoad'),('ws-cpu-echo','internal/oraclediff/wsconn.go','firstWait = max(d, c.firstByteWait)','firstWait = d','TestWSFirstByteWaitUnderCPULoadIgnoresLocalEcho'),('trailing-silence','internal/oraclediff/conn.go','deadline = time.Now().Add(d)','deadline = time.Now().Add(max(d, c.firstByteWait))','TestTCPFirstByteWaitKeepsTrailingSilence')]
 rows=[]
 for name,file,before,after,test in cases:
  p=repo/file; original=p.read_text(); assert before in original

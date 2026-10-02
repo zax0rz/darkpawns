@@ -170,7 +170,7 @@ func run() int {
 		showOracle    = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
 		dumpOracle    = flag.String("dump-oracle", "", "write each run's normalized C blocks to <dir>/<scenario>.txt")
 		showGoLog     = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
-		firstByteWait = flag.Duration("first-byte-wait", 2*time.Second, "maximum wait for the first response byte; 0 uses the quiescence window")
+		firstByteWait = flag.Duration("first-byte-wait", 2*time.Second, "maximum wait for the first response byte after issuing a command; 0 uses the quiescence window")
 		quiescence    = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout   = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
 		goTransport   = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")

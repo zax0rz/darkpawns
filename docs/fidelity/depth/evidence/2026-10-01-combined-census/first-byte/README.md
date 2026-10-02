@@ -13,7 +13,9 @@ therefore return an empty block before the command finishes.
 
 The harness now defaults to a two-second first-byte wait while retaining 300ms
 trailing silence. `-first-byte-wait=0` is the explicit legacy timing control.
-The allowance applies to every initial connection, peer, reconnect and transport.
+The allowance is configured on every transport and reconnect, but is armed only
+by a successful Send and consumed by that connection's next read. Passive peers,
+initial greeting reads, and drains without a command keep plain quiescence.
 TCP ignores telnet framing for the first game byte. The browser reader ignores
 client chrome and local echo before starting the trailing-silence window.
 No output is invented; legitimate silence remains bounded by the first-byte wait.
@@ -60,3 +62,33 @@ Replay the CPU oracle fixture with `CPU_PROOF_FIRST_WAIT=0` (legacy) or `2s`
 and `census.sh start --name <unique-name> --scenarios wizard-zreset-depth --jobs 1`.
 Then use census.sh wait. The legacy run must be NOT_CLEAN with the stated content
 fingerprint; no infrastructure timeout or build failure counts as this proof.
+
+
+## Actor-only review revision
+
+RunAudienceProbe resolves the issuing target (including send:peer), sends its
+command, completes that target's ReadUntilQuiescent, and only then calls
+readAudiencePeers. Passive peers are read concurrently with one another, never
+concurrently with the target's capture. Their blocks remain in sorted-name order.
+SetFirstByteWait is now a per-command allowance, armed by successful Send and
+consumed by the next read. Thus a named peer issuing a command gets two seconds;
+the usual primary becomes its passive audience and keeps 300ms. No static
+actor/peer designation can misclassify send:peer.
+
+Outside probe capture, drainClients first drains the primary and then drains
+peers concurrently. Those drains issue no command and use 300ms. Initial
+connection/greeting reads likewise issue no command. During peer setup, each
+peer issues its own login/setup commands and gets the allowance for the read
+following its own Send; these reads need no preceding primary capture. Warmup
+uses the same RunAudienceProbe order. Pulse commands and relogin setup arm the
+allowance on the connection that actually issues them.
+
+TestSlowIssuingConnectionCapturesPeerAfterActor uses 650ms of CPU work before
+the issuing response and peer output. It proves both normal actor and send:peer
+routing with real pipe transports. Moving passive reads before issuing capture
+loses peer output and fails an assertion; restoring the order passes. Replay
+with peer_reverts.py CHECKOUT LOG-DIRECTORY. TestPassivePeerUsesShortQuiescence
+also proves the configured allowance does not extend a silent passive read.
+The original zreset CPU-contention oracle triple is retained and rerun for this
+revision. The new 36-worker run is captured at a fixed revision; prior measurements
+remain historical rather than overwritten.
