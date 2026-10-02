@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -131,6 +132,10 @@ type killTestWorld struct {
 func newKillTestWorld(t *testing.T, mobHP, mobExp, mobGold, mobLevel int, mobKeywords string) *killTestWorld {
 	t.Helper()
 
+	// These payout tests share C's process-wide RNG and do not run in parallel.
+	// Reset both generator state and carry so earlier tests cannot select a miss.
+	dprng.ResetStream(42)
+
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: testRoomVNum, Name: "Test Combat Arena", Zone: 1},
@@ -156,6 +161,8 @@ func newKillTestWorld(t *testing.T, mobHP, mobExp, mobGold, mobLevel int, mobKey
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
 	}
+	// Quiesce AI before spawning: background draws must not perturb the seed.
+	w.StopAITicker()
 	t.Cleanup(func() { w.StopAITicker() })
 	w.Events = events.NewInProcessBus()
 
@@ -245,11 +252,7 @@ func TestKillPayout_Backstab_AwardsXP(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
-	// A sleeping target is a guaranteed backstab hit (DP-1033 added a THAC0
-	// to-hit roll; sleeping victims can't dodge it — faithful to C). We still
-	// retry a bounded number of times because the skill roll has a 1-in-101
-	// auto-fail that fires regardless of position (global RNG ordering across
-	// the full suite can land it on any attempt).
+	// Sleeping bypasses the skill failure gate; seed the remaining hit/damage rolls.
 	ktw.mob.SetPosition(combat.PosSleeping)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
@@ -257,15 +260,9 @@ func TestKillPayout_Backstab_AwardsXP(t *testing.T) {
 	preExp := p.GetExp()
 	preKills := p.Kills
 
-	// Bounded retry: the skill auto-fails ~1% of the time even on a sleeping
-	// victim; retry until the kill lands.
-	for attempt := 0; attempt < 50; attempt++ {
-		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
-			t.Fatalf("CmdBackstab: %v", err)
-		}
-		if p.Kills > preKills {
-			break
-		}
+	dprng.ResetStream(42)
+	if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+		t.Fatalf("CmdBackstab: %v", err)
 	}
 
 	postExp := p.GetExp()
@@ -283,7 +280,7 @@ func TestKillPayout_Backstab_MobRemovedFromActiveMobs(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
-	// Sleeping target → guaranteed backstab hit (DP-1033 to-hit roll).
+	// Sleeping bypasses the skill failure gate; seed the remaining hit/damage rolls.
 	ktw.mob.SetPosition(combat.PosSleeping)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
@@ -292,14 +289,9 @@ func TestKillPayout_Backstab_MobRemovedFromActiveMobs(t *testing.T) {
 		t.Fatal("expected mob in room before kill")
 	}
 
-	// Bounded retry for the ~1% skill auto-fail (global RNG ordering).
-	for attempt := 0; attempt < 50; attempt++ {
-		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
-			t.Fatalf("CmdBackstab: %v", err)
-		}
-		if ktw.findMob() == nil {
-			break
-		}
+	dprng.ResetStream(42)
+	if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+		t.Fatalf("CmdBackstab: %v", err)
 	}
 
 	if ktw.findMob() != nil {
@@ -313,7 +305,7 @@ func TestKillPayout_Backstab_FiresMobKilledEvent(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
-	// Sleeping target → guaranteed backstab hit (DP-1033 to-hit roll).
+	// Sleeping bypasses the skill failure gate; seed the remaining hit/damage rolls.
 	ktw.mob.SetPosition(combat.PosSleeping)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
@@ -328,14 +320,9 @@ func TestKillPayout_Backstab_FiresMobKilledEvent(t *testing.T) {
 	})
 	defer unsub()
 
-	// Bounded retry for the ~1% skill auto-fail (global RNG ordering).
-	for attempt := 0; attempt < 50; attempt++ {
-		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
-			t.Fatalf("CmdBackstab: %v", err)
-		}
-		if gotEvent.Load() {
-			break
-		}
+	dprng.ResetStream(42)
+	if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+		t.Fatalf("CmdBackstab: %v", err)
 	}
 
 	if !gotEvent.Load() {
@@ -350,21 +337,14 @@ func TestKillPayout_Backstab_CorpseCreated(t *testing.T) {
 	p.SetSkill(game.SkillBackstab, 100)
 	equipPiercingWeapon(t, p)
 
-	// A sleeping target is a guaranteed backstab hit (DP-1033 to-hit roll;
-	// sleeping victims can't dodge). The skill roll still auto-fails ~1% of
-	// the time (percent == 101), so retry until the kill lands.
+	// Sleeping bypasses the skill failure gate; seed the remaining hit/damage rolls.
 	ktw.mob.SetPosition(combat.PosSleeping)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
-	// Bounded retry for the ~1% skill auto-fail (global RNG ordering).
-	for attempt := 0; attempt < 50; attempt++ {
-		if err := CmdBackstab(sess, []string{"rat"}); err != nil {
-			t.Fatalf("CmdBackstab: %v", err)
-		}
-		if ktw.findMob() == nil {
-			break
-		}
+	dprng.ResetStream(42)
+	if err := CmdBackstab(sess, []string{"rat"}); err != nil {
+		t.Fatalf("CmdBackstab: %v", err)
 	}
 
 	// Mob must be dead
@@ -388,10 +368,10 @@ func TestKillPayout_Backstab_CorpseCreated(t *testing.T) {
 }
 
 func TestKillPayout_Kick_AwardsXP(t *testing.T) {
-	// Mob has 1 HP so any kick hit kills it.
-	// Kick has ~14% random failure rate; set mob HP to 1 and retry if miss.
+	// Mob has 1 HP; a level-30 kick crosses the -11 HP death threshold.
+	// Seed 5 selects a successful kick against this target.
 	ktw := newKillTestWorld(t, 1, 500, 100, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Warrior", 10, game.ClassWarrior, false)
+	p := ktw.addPlayer(t, 1, "Warrior", 30, game.ClassWarrior, false)
 	p.SetSkill(game.SkillKick, 100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
@@ -401,6 +381,7 @@ func TestKillPayout_Kick_AwardsXP(t *testing.T) {
 	preExp := p.GetExp()
 	preKills := p.Kills
 
+	dprng.ResetStream(5)
 	err := CmdKick(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdKick: %v", err)
@@ -408,8 +389,7 @@ func TestKillPayout_Kick_AwardsXP(t *testing.T) {
 
 	postExp := p.GetExp()
 	if postExp <= preExp {
-		t.Logf("kick missed random, pre=%d post=%d", preExp, postExp)
-		return
+		t.Fatalf("expected XP after seeded kick kill, pre=%d post=%d", preExp, postExp)
 	}
 	if p.Kills <= preKills {
 		t.Errorf("expected kill counter increment after kick kill: pre=%d post=%d", preKills, p.Kills)
@@ -417,11 +397,12 @@ func TestKillPayout_Kick_AwardsXP(t *testing.T) {
 }
 
 func TestKillPayout_Bash_AwardsXP(t *testing.T) {
-	// Mob has 1 HP so any bash hit kills it.
-	// Bash has ~10% random failure rate at skill 100 vs AC 0.
+	// Mob has 1 HP; a level-30 bash crosses the -11 HP death threshold.
+	// Seed 5 selects a successful bash against this target.
 	ktw := newKillTestWorld(t, 1, 500, 100, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Basher", 10, game.ClassWarrior, false)
+	p := ktw.addPlayer(t, 1, "Basher", 30, game.ClassWarrior, false)
 	p.SetSkill(game.SkillBash, 100)
+	p.SetMove(100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
 
@@ -430,6 +411,7 @@ func TestKillPayout_Bash_AwardsXP(t *testing.T) {
 	preExp := p.GetExp()
 	preKills := p.Kills
 
+	dprng.ResetStream(5)
 	err := CmdBash(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdBash: %v", err)
@@ -437,8 +419,7 @@ func TestKillPayout_Bash_AwardsXP(t *testing.T) {
 
 	postExp := p.GetExp()
 	if postExp <= preExp {
-		t.Logf("bash missed random, pre=%d post=%d", preExp, postExp)
-		return
+		t.Fatalf("expected XP after seeded bash kill, pre=%d post=%d", preExp, postExp)
 	}
 	if p.Kills <= preKills {
 		t.Errorf("expected kill counter increment after bash kill: pre=%d post=%d", preKills, p.Kills)
@@ -447,20 +428,21 @@ func TestKillPayout_Bash_AwardsXP(t *testing.T) {
 
 func TestKillPayout_Bash_RemovesMobFromWorld(t *testing.T) {
 	ktw := newKillTestWorld(t, 1, 500, 100, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Basher", 10, game.ClassWarrior, false)
+	p := ktw.addPlayer(t, 1, "Basher", 30, game.ClassWarrior, false)
 	p.SetSkill(game.SkillBash, 100)
+	p.SetMove(100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
+	dprng.ResetStream(5)
 	err := CmdBash(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdBash: %v", err)
 	}
 
-	// Only check mob removal if the bash hit (random miss possible)
-	if ktw.findMob() != nil && p.Kills > 0 {
+	if ktw.findMob() != nil {
 		t.Error("killed mob should be removed from activeMobs after bash kill")
 	}
 }
@@ -471,7 +453,7 @@ func TestKillPayout_Bash_RemovesMobFromWorld(t *testing.T) {
 
 func TestKillPayout_AutoGold_AwardsGoldToPlayer(t *testing.T) {
 	ktw := newKillTestWorld(t, 1, 500, 250, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Greedy", 10, game.ClassWarrior, true) // AutoGold = true
+	p := ktw.addPlayer(t, 1, "Greedy", 30, game.ClassWarrior, true) // AutoGold = true
 	p.SetSkill(game.SkillKick, 100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
@@ -480,6 +462,7 @@ func TestKillPayout_AutoGold_AwardsGoldToPlayer(t *testing.T) {
 
 	preGold := p.GetGold()
 
+	dprng.ResetStream(5)
 	err := CmdKick(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdKick: %v", err)
@@ -487,14 +470,13 @@ func TestKillPayout_AutoGold_AwardsGoldToPlayer(t *testing.T) {
 
 	postGold := p.GetGold()
 	if postGold <= preGold {
-		t.Logf("kick missed random, no gold, pre=%d post=%d", preGold, postGold)
-		return
+		t.Fatalf("expected gold after seeded kick kill, pre=%d post=%d", preGold, postGold)
 	}
 }
 
 func TestKillPayout_NoAutoGold_GoldStaysInCorpse(t *testing.T) {
 	ktw := newKillTestWorld(t, 1, 500, 250, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Honest", 10, game.ClassWarrior, false) // AutoGold = false
+	p := ktw.addPlayer(t, 1, "Honest", 30, game.ClassWarrior, false) // AutoGold = false
 	p.SetSkill(game.SkillKick, 100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
@@ -503,6 +485,7 @@ func TestKillPayout_NoAutoGold_GoldStaysInCorpse(t *testing.T) {
 
 	preGold := p.GetGold()
 
+	dprng.ResetStream(5)
 	err := CmdKick(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdKick: %v", err)
@@ -828,6 +811,7 @@ func TestKillPayout_NonExistentTarget_SkillError(t *testing.T) {
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
+	dprng.ResetStream(5)
 	err := CmdBackstab(sess, []string{"nonexistent"})
 	if err != nil {
 		t.Fatalf("CmdBackstab should not return error for missing target: %v", err)
@@ -844,7 +828,7 @@ func TestKillPayout_NonExistentTarget_SkillError(t *testing.T) {
 
 func TestKillPayout_Trip_AwardsXP(t *testing.T) {
 	ktw := newKillTestWorld(t, 1, 500, 100, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Tripper", 10, game.ClassThief, false)
+	p := ktw.addPlayer(t, 1, "Tripper", 30, game.ClassThief, false)
 	p.SetSkill(game.SkillTrip, 100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
@@ -854,6 +838,7 @@ func TestKillPayout_Trip_AwardsXP(t *testing.T) {
 	preExp := p.GetExp()
 	preKills := p.Kills
 
+	dprng.ResetStream(5)
 	err := CmdTrip(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdTrip: %v", err)
@@ -861,8 +846,7 @@ func TestKillPayout_Trip_AwardsXP(t *testing.T) {
 
 	postExp := p.GetExp()
 	if postExp <= preExp {
-		t.Logf("trip missed random, pre=%d post=%d", preExp, postExp)
-		return
+		t.Fatalf("expected XP after seeded trip kill, pre=%d post=%d", preExp, postExp)
 	}
 	if p.Kills <= preKills {
 		t.Errorf("expected kill counter after trip kill: pre=%d post=%d", preKills, p.Kills)
@@ -875,7 +859,7 @@ func TestKillPayout_Trip_AwardsXP(t *testing.T) {
 
 func TestKillPayout_Headbutt_AwardsXP(t *testing.T) {
 	ktw := newKillTestWorld(t, 1, 500, 100, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Headbutter", 10, game.ClassWarrior, false)
+	p := ktw.addPlayer(t, 1, "Headbutter", 30, game.ClassWarrior, false)
 	p.SetSkill(game.SkillHeadbutt, 100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
@@ -885,6 +869,7 @@ func TestKillPayout_Headbutt_AwardsXP(t *testing.T) {
 	preExp := p.GetExp()
 	preKills := p.Kills
 
+	dprng.ResetStream(5)
 	err := CmdHeadbutt(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdHeadbutt: %v", err)
@@ -892,8 +877,7 @@ func TestKillPayout_Headbutt_AwardsXP(t *testing.T) {
 
 	postExp := p.GetExp()
 	if postExp <= preExp {
-		t.Logf("headbutt missed random, pre=%d post=%d", preExp, postExp)
-		return
+		t.Fatalf("expected XP after seeded headbutt kill, pre=%d post=%d", preExp, postExp)
 	}
 	if p.Kills <= preKills {
 		t.Errorf("expected kill counter after headbutt kill: pre=%d post=%d", preKills, p.Kills)
@@ -906,17 +890,19 @@ func TestKillPayout_Headbutt_AwardsXP(t *testing.T) {
 
 func TestKillPayout_Circle_AwardsXP(t *testing.T) {
 	ktw := newKillTestWorld(t, 1, 500, 100, 3, "rat")
-	p := ktw.addPlayer(t, 1, "Circler", 10, game.ClassThief, false)
+	p := ktw.addPlayer(t, 1, "Circler", 30, game.ClassThief, false)
 	p.SetSkill(game.SkillCircle, 100)
 	p.SetPosition(combat.PosFighting)
 	p.SetFighting("a test mob")
 	equipPiercingWeapon(t, p)
+	ktw.mob.SetPosition(combat.PosSleeping)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
 	preExp := p.GetExp()
 	preKills := p.Kills
 
+	dprng.ResetStream(42)
 	err := CmdCircle(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdCircle: %v", err)
@@ -924,8 +910,7 @@ func TestKillPayout_Circle_AwardsXP(t *testing.T) {
 
 	postExp := p.GetExp()
 	if postExp <= preExp {
-		t.Logf("circle missed random, pre=%d post=%d", preExp, postExp)
-		return
+		t.Fatalf("expected XP after seeded circle kill, pre=%d post=%d", preExp, postExp)
 	}
 	if p.Kills <= preKills {
 		t.Errorf("expected kill counter after circle kill: pre=%d post=%d", preKills, p.Kills)
@@ -949,6 +934,7 @@ func TestKillPayout_Charge_AwardsXP(t *testing.T) {
 	preExp := p.GetExp()
 	preKills := p.Kills
 
+	dprng.ResetStream(5)
 	err := CmdCharge(sess, []string{"rat"})
 	if err != nil {
 		t.Fatalf("CmdCharge: %v", err)
@@ -956,8 +942,7 @@ func TestKillPayout_Charge_AwardsXP(t *testing.T) {
 
 	postExp := p.GetExp()
 	if postExp <= preExp {
-		t.Logf("charge missed random, pre=%d post=%d", preExp, postExp)
-		return
+		t.Fatalf("expected XP after seeded charge kill, pre=%d post=%d", preExp, postExp)
 	}
 	if p.Kills <= preKills {
 		t.Errorf("expected kill counter after charge kill: pre=%d post=%d", preKills, p.Kills)
