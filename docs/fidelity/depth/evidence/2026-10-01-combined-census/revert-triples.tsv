@@ -1,0 +1,8 @@
+mutation	test	before	reverted	restored
+deduplicate	test_union	0	1	0
+global-limit	test_global_pool	0	1	0
+slowest-first	test_order	0	1	0
+verdict	test_rechecks_only_infrastructure_once	0	1	0
+retry-content	test_rechecks_only_infrastructure_once	0	1	0
+projection	test_projection_and_independent_recheck	0	1	0
+seed-isolation	test_worker_retention_and_seed_isolation	0	1	0

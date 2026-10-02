@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # census.sh — start a census, leave it running, and read one line.
 #
-#   scripts/census.sh start --name <run-name> [--claims | --scenarios a,b,c] [--jobs N]
+#   scripts/census.sh start --name <run-name> [--combined | --claims | --scenarios a,b,c] [--jobs N]
 #   scripts/census.sh wait   [--run <dir>] [--max-seconds N]
 #   scripts/census.sh status [--run <dir>]
 #
@@ -34,7 +34,7 @@ die() {
 }
 
 usage() {
-	printf 'usage: census.sh start --name <run> [--claims | --scenarios a,b,c] [--jobs N]\n' \
+	printf 'usage: census.sh start --name <run> [--combined | --claims | --scenarios a,b,c] [--jobs N]\n' \
 		'       census.sh wait [--run <dir>] [--max-seconds N]\n' \
 		'       census.sh status [--run <dir>]\n' "${0##*/}" >&2
 	exit 2
@@ -153,10 +153,11 @@ resolve_run() {
 # start
 # ---------------------------------------------------------------------------
 do_start() {
-	local name= scenarios= jobs=36 claims=0
+	local name= scenarios= jobs=36 claims=0 combined=0
 	while (($# > 0)); do
 		case $1 in
 		--claims) claims=1; shift ;;
+		--combined) combined=1; shift ;;
 		--name) (($# >= 2)) || usage; name=$2; shift 2 ;;
 		--name=*) name=${1#--name=}; shift ;;
 		--scenarios) (($# >= 2)) || usage; scenarios=$2; shift 2 ;;
@@ -167,7 +168,10 @@ do_start() {
 		esac
 	done
 	[[ -n "$name" ]] || usage
+	[[ "$combined" == 0 || ( "$claims" == 0 && -z "$scenarios" ) ]] || die "--combined cannot be combined with --claims or --scenarios"
 	[[ "$claims" == 0 || -z "$scenarios" ]] || die "--claims and --scenarios are mutually exclusive"
+	[[ "$jobs" =~ ^[1-9][0-9]*$ ]] || die "--jobs needs a positive integer"
+	[[ "$combined" == 0 || "$seed" == 1 ]] || die "--combined requires seed 1 for the full census"
 	[[ "$name" != */* ]] || die "run name must not contain '/': $name"
 	command -v flock >/dev/null 2>&1 || die "flock(1) is required"
 	command -v setsid >/dev/null 2>&1 || die "setsid(1) is required"
@@ -235,7 +239,7 @@ do_start() {
 	git -C "$repo_root" rev-parse HEAD >"$run_dir/go-head.txt" 2>/dev/null || printf 'unknown\n' >"$run_dir/go-head.txt"
 	git -C "$repo_root" status --porcelain >"$run_dir/git-status.txt" 2>/dev/null || printf 'unknown\n' >"$run_dir/git-status.txt"
 
-	if [[ "$claims" == 1 ]]; then
+	if [[ "$claims" == 1 || "$combined" == 1 ]]; then
 		local claims_args=()
 		[[ -z "${CENSUS_MANIFEST_DIR:-}" ]] || claims_args+=(--manifest-dir "$CENSUS_MANIFEST_DIR" --root "$CENSUS_MANIFEST_DIR")
 		python3 "$repo_root/scripts/manifest_claims.py" "${claims_args[@]}" >"$run_dir/claims.tsv" || die "cannot enumerate manifest claims"
@@ -254,6 +258,18 @@ do_start() {
 	total=$(printf '%s\n' "$scenarios" | tr ',' '\n' | grep -c .)
 	[[ -n "$scenarios" ]] || total=$(find "$repo_root/cmd/dp-oracle-diff/scenarios" -maxdepth 1 -type f -name '*.txt' | wc -l)
 	[[ "$claims" == 0 ]] || total=$(wc -l <"$run_dir/claims.tsv")
+	if [[ "$combined" == 1 ]]; then
+		total=$(python3 - "$run_dir/claims.tsv" "$repo_root" <<'PYCOUNT'
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[2]) / "scripts"))
+from combined_census import enumerate_pairs
+claims = {(int(s), n) for s, n, _ in (line.split("\t") for line in Path(sys.argv[1]).read_text().splitlines())}
+full = {p.stem for p in (Path(sys.argv[2]) / "cmd/dp-oracle-diff/scenarios").glob("*.txt")}
+print(len(enumerate_pairs(full, claims)))
+PYCOUNT
+) || die "cannot enumerate combined pairs"
+	fi
 	printf '%s\n' "$total" >"$run_dir/total"
 
 	# 4. Launch detached. The runner keeps FD 9 (the lock) and releases it in
@@ -270,6 +286,7 @@ do_start() {
 		CENSUS_JOBS="$effective_jobs" \
 		CENSUS_SEED="$seed" \
 		CENSUS_CLAIMS="$claims" \
+		CENSUS_COMBINED="$combined" \
 		CENSUS_LOCK_FD=9 \
 		CENSUS_TEST_WORK="${CENSUS_TEST_WORK:-}" \
 		bash "$repo_root/scripts/census_runner.sh" </dev/null >"$run_dir/census.log" 2>&1 &

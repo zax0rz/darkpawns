@@ -30,7 +30,9 @@ type WSConn struct {
 	// client echoes typed input too, and the telnet transcript never holds
 	// it, so it is dropped here to keep the two transports comparable. The
 	// client does not echo secret input (passwords); nothing is dropped then.
-	pendingEcho string
+	pendingEcho      string
+	firstByteWait    time.Duration
+	awaitingResponse bool
 	// chrome strips what the client writes about its own socket (see
 	// clientChrome); it names the URL, so it is built per connection.
 	chrome *strings.Replacer
@@ -87,12 +89,35 @@ func (c *WSConn) pump(r io.Reader) {
 func (c *WSConn) Send(line string) error {
 	c.pendingEcho = line + "\r\n"
 	_, err := io.WriteString(c.stdin, line+"\n")
+	c.awaitingResponse = err == nil
 	return err
+}
+
+// SetFirstByteWait separates response latency after Send from trailing silence.
+// Reads without a preceding Send (passive peers and drains) keep plain quiescence.
+func (c *WSConn) SetFirstByteWait(d time.Duration) { c.firstByteWait = d }
+
+// hasGameOutput ignores local echo and transport chrome when deciding whether
+// the first response arrived; neither is server game output.
+func (c *WSConn) hasGameOutput() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.chrome.Replace(strings.TrimPrefix(c.buf.String(), c.pendingEcho)) != ""
 }
 
 // ReadUntilQuiescent returns after the client has written nothing for d.
 func (c *WSConn) ReadUntilQuiescent(d time.Duration) (string, error) {
-	timer := time.NewTimer(d)
+	firstWait := d
+	if c.awaitingResponse {
+		firstWait = max(d, c.firstByteWait)
+	}
+	c.awaitingResponse = false
+	firstDeadline := time.Now().Add(firstWait)
+	wait := time.Until(firstDeadline)
+	if c.hasGameOutput() {
+		wait = d
+	}
+	timer := time.NewTimer(wait)
 	defer timer.Stop()
 	for {
 		select {
@@ -100,7 +125,11 @@ func (c *WSConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 			if !timer.Stop() {
 				<-timer.C
 			}
-			timer.Reset(d)
+			wait = time.Until(firstDeadline)
+			if c.hasGameOutput() {
+				wait = d
+			}
+			timer.Reset(max(wait, 0))
 		case <-c.done:
 			out := c.take()
 			if out == "" {

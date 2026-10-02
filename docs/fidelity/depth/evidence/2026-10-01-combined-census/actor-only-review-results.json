@@ -1,0 +1,47 @@
+{
+  "head": "a9a6ea47c2fc3d148dca137b1229a8428b20ba5a",
+  "records": [
+    {
+      "head": "a9a6ea47c2fc3d148dca137b1229a8428b20ba5a",
+      "name": "dp-1371-actor-only-cpu-fixed",
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-02/dp-1371-actor-only-cpu-fixed",
+      "wrapper_wall": 15.066597465018276,
+      "summary": "oracle-regression: CPU-contention proof kind=PASS verdict=CLEAN"
+    },
+    {
+      "head": "a9a6ea47c2fc3d148dca137b1229a8428b20ba5a",
+      "name": "dp-1371-actor-only-cpu-legacy",
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-02/dp-1371-actor-only-cpu-legacy",
+      "wrapper_wall": 30.09270016301889,
+      "summary": "oracle-regression: CPU-contention proof kind=FAIL verdict=NOT_CLEAN"
+    },
+    {
+      "head": "a9a6ea47c2fc3d148dca137b1229a8428b20ba5a",
+      "name": "dp-1371-actor-only-cpu-restored",
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-02/dp-1371-actor-only-cpu-restored",
+      "wrapper_wall": 15.120206934050657,
+      "summary": "oracle-regression: CPU-contention proof kind=PASS verdict=CLEAN"
+    },
+    {
+      "head": "a9a6ea47c2fc3d148dca137b1229a8428b20ba5a",
+      "name": "dp-1371-actor-only-combined-36",
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-02/dp-1371-actor-only-combined-36",
+      "wrapper_wall": 1831.407245820039,
+      "summary": "oracle-combined: pairs=3132 deduplicated=946 full=CLEAN_AFTER_RECHECK claims=CLEAN_AFTER_RECHECK elapsed=1822.332s verdict=CLEAN_AFTER_RECHECK rechecked=retsu-failure-depth"
+    }
+  ],
+  "comparisons": [
+    {
+      "projection": "full",
+      "pairs": 1058,
+      "differences": [],
+      "verdict": "CLEAN_AFTER_RECHECK"
+    },
+    {
+      "projection": "claims",
+      "pairs": 3020,
+      "differences": [],
+      "verdict": "CLEAN_AFTER_RECHECK"
+    }
+  ]
+}

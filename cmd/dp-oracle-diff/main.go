@@ -165,14 +165,15 @@ func main() {
 
 func run() int {
 	var (
-		scenarioName = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
-		seed         = flag.String("seed", "1", "shared deterministic DP_SEED value")
-		showOracle   = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
-		dumpOracle   = flag.String("dump-oracle", "", "write each run's normalized C blocks to <dir>/<scenario>.txt")
-		showGoLog    = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
-		quiescence   = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
-		bootTimeout  = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
-		goTransport  = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
+		scenarioName  = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
+		seed          = flag.String("seed", "1", "shared deterministic DP_SEED value")
+		showOracle    = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
+		dumpOracle    = flag.String("dump-oracle", "", "write each run's normalized C blocks to <dir>/<scenario>.txt")
+		showGoLog     = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
+		firstByteWait = flag.Duration("first-byte-wait", 2*time.Second, "maximum wait for the first response byte after issuing a command; 0 uses the quiescence window")
+		quiescence    = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
+		bootTimeout   = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
+		goTransport   = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
 	)
 	flag.Parse()
 	if _, err := strconv.ParseUint(*seed, 10, 64); err != nil {
@@ -193,7 +194,7 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff: -go-transport must be telnet or ws")
 		return 1
 	}
-	if err := execute(*scenarioName, *quiescence, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport); err != nil {
+	if err := execute(*scenarioName, *quiescence, *firstByteWait, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		if errors.Is(err, errDivergence) {
 			return 3
@@ -215,7 +216,10 @@ func envOr(key, fallback string) string {
 // content divergence separately from crashes (exit 1).
 var errDivergence = errors.New("normalized divergence detected")
 
-func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string) error {
+func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string) error {
+	if firstByteWait < 0 {
+		return errors.New("first-byte-wait must be nonnegative")
+	}
 	if quiescence <= 0 {
 		return errors.New("quiescence must be positive")
 	}
@@ -531,7 +535,13 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	if err != nil {
 		return err
 	}
-	oracleConn := oraclediff.NewTCPConn(oracleNetConn)
+	newTCPConn := func(conn net.Conn) *oraclediff.TCPConn {
+		c := oraclediff.NewTCPConn(conn)
+		c.SetFirstByteWait(firstByteWait)
+		return c
+	}
+
+	oracleConn := newTCPConn(oracleNetConn)
 	defer func() { _ = oracleConn.Close() }()
 	// Readiness is probed on the listener the scenario will use: a telnet
 	// connection takes a descriptor number, which would shift `users` and
@@ -552,16 +562,20 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 	goWSURL := fmt.Sprintf("ws://127.0.0.1:%d/ws", goHTTPPort)
 	dialGo := func() (oraclediff.Conn, error) {
 		if goTransport == "ws" {
-			return oraclediff.NewWSConn("node",
+			c, err := oraclediff.NewWSConn("node",
 				filepath.Join(repoRoot, "internal", "oraclediff", "wsdriver", "driver.mjs"),
 				filepath.Join(repoRoot, "web", "public", "mud-client.js"),
 				goWSURL)
+			if err == nil {
+				c.SetFirstByteWait(firstByteWait)
+			}
+			return c, err
 		}
 		c, dialErr := dialWhenReady(goEngine.proc, goAddr, bootTimeout)
 		if dialErr != nil {
 			return nil, dialErr
 		}
-		return oraclediff.NewTCPConn(c), nil
+		return newTCPConn(c), nil
 	}
 	var goConn oraclediff.Conn
 	if goTransport == "ws" {
@@ -571,7 +585,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		}
 		goAddr = goWSURL + " (browser client)"
 	} else {
-		goConn = oraclediff.NewTCPConn(goNetConn)
+		goConn = newTCPConn(goNetConn)
 	}
 	defer func() { _ = goConn.Close() }()
 
@@ -604,7 +618,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			if dialErr != nil {
 				return nil, dialErr
 			}
-			return oraclediff.NewTCPConn(c), nil
+			return newTCPConn(c), nil
 		}
 		oracleLogin := func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginOracle) }
 		oracleSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) }
@@ -675,7 +689,7 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 			if dialErr != nil {
 				return res, fmt.Errorf("dial C oracle %s: %w", name, dialErr)
 			}
-			oraclePeer := oraclediff.NewTCPConn(oraclePeerNet)
+			oraclePeer := newTCPConn(oraclePeerNet)
 			defer func() { _ = oraclePeer.Close() }()
 			if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
 				return res, fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleEngine.log())
@@ -703,6 +717,17 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if probeErr != nil {
 			return res, fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, oracleEngine.log())
 		}
+		empty, closedEmpty := 0, 0
+		for _, block := range blocks {
+			if block.Output == "" {
+				if block.Closed {
+					closedEmpty++
+				} else {
+					empty++
+				}
+			}
+		}
+		fmt.Printf("capture-statistics\tblocks=%d\tempty-open=%d\tempty-closed=%d\n", len(blocks), empty, closedEmpty)
 		res.blocks = blocks
 		return res, nil
 	}
@@ -745,6 +770,17 @@ func execute(scenarioName string, quiescence, bootTimeout time.Duration, oracleB
 		if probeErr != nil {
 			return res, fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, goEngine.log())
 		}
+		empty, closedEmpty := 0, 0
+		for _, block := range blocks {
+			if block.Output == "" {
+				if block.Closed {
+					closedEmpty++
+				} else {
+					empty++
+				}
+			}
+		}
+		fmt.Printf("capture-statistics\tblocks=%d\tempty-open=%d\tempty-closed=%d\n", len(blocks), empty, closedEmpty)
 		res.blocks = blocks
 		return res, nil
 	}

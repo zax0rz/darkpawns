@@ -1,0 +1,103 @@
+{
+  "head": "59e523f123ded0dec45b749cd7cc5b6eeebfb671",
+  "runs": {
+    "baseline-full": {
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-01/dp-1371-combined-firstbyte-baseline-full",
+      "elapsed": 757.87,
+      "wrapper_wall": 825.4869450209662,
+      "summary": "oracle-regression: scenarios=1058 passed=1050 expected=5 unpinnable=0 stale=0 failed=0 infra=2 timed_out=0 unstable=1 elapsed=757.870s started=2026-10-01T23:51:51-0400 finished=2026-10-02T00:04:29-0400 verdict=CLEAN_AFTER_RECHECK rechecked=informative-residual-depth,invisibility-assist-depth",
+      "head": "59e523f123ded0dec45b749cd7cc5b6eeebfb671",
+      "command": [
+        "/home/zach/dp-p4-census-combined/scripts/census.sh",
+        "start",
+        "--name",
+        "dp-1371-combined-firstbyte-baseline-full",
+        "--jobs",
+        "36"
+      ]
+    },
+    "baseline-claims": {
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-02/dp-1371-combined-firstbyte-baseline-claims",
+      "elapsed": 2601.176,
+      "wrapper_wall": 2611.9935089169885,
+      "summary": "oracle-claims: seed=all pairs=3020 expected=11 expected_unstable=0 fail=0 infra=0 pass=3009 stale=0 timeout=0 unpinnable=0 elapsed=2601.176s verdict=CLEAN_AFTER_RECHECK",
+      "head": "59e523f123ded0dec45b749cd7cc5b6eeebfb671",
+      "command": [
+        "/home/zach/dp-p4-census-combined/scripts/census.sh",
+        "start",
+        "--name",
+        "dp-1371-combined-firstbyte-baseline-claims",
+        "--jobs",
+        "36",
+        "--claims"
+      ]
+    },
+    "workers-24": {
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-02/dp-1371-combined-firstbyte-workers-24",
+      "elapsed": 3634.741,
+      "wrapper_wall": 3648.4105430650525,
+      "summary": "oracle-combined: pairs=3132 deduplicated=946 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=3634.741s verdict=CLEAN_AFTER_RECHECK",
+      "head": "59e523f123ded0dec45b749cd7cc5b6eeebfb671",
+      "command": [
+        "/home/zach/dp-p4-census-combined/scripts/census.sh",
+        "start",
+        "--name",
+        "dp-1371-combined-firstbyte-workers-24",
+        "--jobs",
+        "24",
+        "--combined"
+      ]
+    },
+    "workers-36": {
+      "path": "/home/zach/Archives/darkpawns/oracle-runs/2026-10-02/dp-1371-combined-firstbyte-workers-36",
+      "elapsed": 2418.592,
+      "wrapper_wall": 2432.3585268030292,
+      "summary": "oracle-combined: pairs=3132 deduplicated=946 full=CLEAN claims=CLEAN elapsed=2418.592s verdict=CLEAN",
+      "head": "59e523f123ded0dec45b749cd7cc5b6eeebfb671",
+      "command": [
+        "/home/zach/dp-p4-census-combined/scripts/census.sh",
+        "start",
+        "--name",
+        "dp-1371-combined-firstbyte-workers-36",
+        "--jobs",
+        "36",
+        "--combined"
+      ]
+    },
+    "baseline-total": 3359.046
+  },
+  "comparisons": [
+    {
+      "workers": 24,
+      "projection": "full",
+      "pairs": 1058,
+      "differences": [],
+      "baseline_verdict": "CLEAN_AFTER_RECHECK",
+      "combined_verdict": "CLEAN"
+    },
+    {
+      "workers": 24,
+      "projection": "claims",
+      "pairs": 3020,
+      "differences": [],
+      "baseline_verdict": "CLEAN_AFTER_RECHECK",
+      "combined_verdict": "CLEAN_AFTER_RECHECK"
+    },
+    {
+      "workers": 36,
+      "projection": "full",
+      "pairs": 1058,
+      "differences": [],
+      "baseline_verdict": "CLEAN_AFTER_RECHECK",
+      "combined_verdict": "CLEAN"
+    },
+    {
+      "workers": 36,
+      "projection": "claims",
+      "pairs": 3020,
+      "differences": [],
+      "baseline_verdict": "CLEAN_AFTER_RECHECK",
+      "combined_verdict": "CLEAN"
+    }
+  ]
+}
