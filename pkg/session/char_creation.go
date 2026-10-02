@@ -148,6 +148,16 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		choice = input.Choice // Name/password gates own their input bytes.
 	}
 
+	// src/interpreter.c:1721,1841-1858,1988-2105: choices use the
+	// first byte after leading C whitespace, preserving trailing input.
+	switch s.charStage {
+	case "confirm_name", "color", "sex", "race", "class", "hometown":
+		choice = strings.TrimLeft(input.Choice, " \t\n\r\v\f")
+		if s.charStage != "race" && len(choice) > 0 {
+			choice = choice[:1]
+		}
+	}
+
 	switch s.charStage {
 	case "get_name":
 		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(choice)), "guest") {
@@ -181,6 +191,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 
 	case "create_password":
+		choice = strings.TrimLeft(choice, " \t\n\r\v\f") // src/interpreter.c:1187-1190,1721
 		if len(choice) < 3 || len(choice) > maxCreationPasswordLength || strings.EqualFold(choice, s.charName) {
 			s.sendCharCreatePromptWithSecret("create_password", "\r\nIllegal password.\r\nPassword: ", nil, true)
 			return nil
@@ -190,6 +201,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		s.sendCharCreatePromptWithSecret("confirm_password", "\r\nPlease retype password: ", nil, true)
 
 	case "confirm_password":
+		choice = strings.TrimLeft(choice, " \t\n\r\v\f") // nanny skip_spaces, trailing bytes remain significant.
 		if choice != s.charPassword {
 			s.sendCharCreatePromptWithSecret("create_password", "\r\nPasswords don't match... start over.\r\nPassword: ", nil, true)
 			s.charStage = "create_password"
@@ -246,7 +258,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 				case "S":
 					help = HelpSsaur
 				default:
-					help = "\r\nThat is not a race..\r\n"
+					help = "That is not a race..\r\n"
 				}
 			} else {
 				help = RaceHelpText
@@ -256,7 +268,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 
 		var race int
-		switch upperChoice {
+		switch firstCreationByte(upperChoice) {
 		case "H":
 			race = game.RaceHuman
 		case "E":
@@ -334,6 +346,8 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		s.sendStatsRollPrompt()
 
 	case "stats_roll":
+		// src/interpreter.c:1721,2120-2151: accept/reroll uses the first byte.
+		choice = firstCreationByte(strings.TrimLeft(input.Choice, " \t\n\r\v\f"))
 		switch strings.ToUpper(choice) {
 		case "Y":
 			if err := s.persistAcceptedCharacter(); err != nil {
@@ -609,6 +623,9 @@ func (s *Session) completeCharCreation() error {
 			return s.abortEntry(err)
 		}
 	}
+	if !s.prepareWorldEntry() {
+		return nil
+	}
 	restoreLiveDefaults := resumingCreation && !s.creationSaved
 	s.charName = s.player.Name
 	isGod := s.player.GetLevel() >= game.LVL_IMMORT
@@ -676,6 +693,14 @@ func (s *Session) completeCharCreation() error {
 		return err
 	}
 
+	// C announces in the selected load room before moving a new mortal
+	// into 8099 (interpreter.c:2191-2243). The creation body already has
+	// do_start defaults here, but the room audience belongs to the earlier room.
+	finalRoom := s.player.GetRoom()
+	s.player.SetRoom(s.manager.world.SelectLoginRoom(s.player))
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n has entered the game.", "", game.ToRoom)
+	s.player.SetRoom(finalRoom)
+
 	// C skips do_start() for the first-player God because init_char already
 	// assigned a nonzero level (interpreter.c:2214). That means the God gets
 	// no mortal starter gear; only a newly created mortal receives it.
@@ -728,20 +753,6 @@ func (s *Session) completeCharCreation() error {
 	if s.wantsStructuredData {
 		s.sendFullVarDump()
 	}
-
-	// Broadcast arrival
-	enterMsg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "enter",
-			Text: s.player.Name + " has arrived.",
-		},
-	})
-	if err != nil {
-		slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
-		return nil
-	}
-	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
 	return nil
 }
@@ -856,4 +867,11 @@ func expandEntryColors(text string) string {
 		out.WriteByte(text[i])
 	}
 	return out.String()
+}
+
+func firstCreationByte(choice string) string {
+	if len(choice) == 0 {
+		return ""
+	}
+	return choice[:1]
 }

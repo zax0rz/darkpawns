@@ -1,0 +1,20 @@
+package session
+import ("testing"; "github.com/zax0rz/darkpawns/pkg/game")
+// Negative design evidence only; not a proven manifest case.
+func TestEntryDuplicateIdentityExperimental(t *testing.T) {
+ t.Run("same-name-different-ID",func(t *testing.T){
+  _,_,_,fresh:=dupeCheckFixture(t);fresh.player.ID=99
+  if fresh.performDupeCheck() {t.Fatal("C compares IDNUM; same name with a different ID must not adopt old body")}
+ })
+ t.Run("same-ID-folded-key",func(t *testing.T){
+  m,old,_,fresh:=dupeCheckFixture(t)
+  m.mu.Lock();delete(m.sessions,"Returner");m.sessions["returner"]=old;m.mu.Unlock()
+  if !fresh.performDupeCheck() {t.Fatal("C's IDNUM match must not depend on map-key case")}
+ })
+ t.Run("world-body-without-session",func(t *testing.T){
+  m:=makeTestManagerWithVoidRooms(t);p:=game.NewPlayer(7,"Orphan",1001);p.SetLinkless(true)
+  if err:=m.world.AddPlayer(p);err!=nil {t.Fatal(err)}
+  fresh:=makeCharSession(t,m);fresh.player=game.NewPlayer(7,"Orphan",1001)
+  if !fresh.performDupeCheck() || fresh.player!=p {t.Fatal("C's character-list pass must reconnect the orphan world body")}
+ })
+}

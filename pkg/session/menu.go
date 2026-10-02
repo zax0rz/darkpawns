@@ -54,12 +54,25 @@ func (s *Session) loginMOTDFile() string {
 	return "motd"
 }
 
-func (s *Session) startReturningMenu(passwordHash string) {
+func (s *Session) startReturningMenu(passwordHash string, failedPasswords ...int) {
 	s.menuActive = true
 	s.menuStage = "motd"
 	s.menuPasswordHash = passwordHash
 	motd := loginTextForFile(s, s.loginMOTDFile())
-	s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
+	warning := ""
+	if len(failedPasswords) > 0 && failedPasswords[0] > 0 {
+		// src/interpreter.c:1929-1937: after MOTD, before PRESS RETURN.
+		plural := ""
+		if failedPasswords[0] > 1 {
+			plural = "S"
+		}
+		red, reset := "", ""
+		if whoColorEnabled(s.player) {
+			red, reset = helpRed, helpNormal
+		}
+		warning = fmt.Sprintf("\r\n\r\n\007\007\007%s%d LOGIN FAILURE%s SINCE LAST SUCCESSFUL LOGIN.%s\r\n", red, failedPasswords[0], plural, reset)
+	}
+	s.sendCharCreatePrompt("motd", motd+warning+"\r\n\n*** PRESS RETURN: ", nil)
 }
 
 func (s *Session) showMainMenu() {
@@ -76,13 +89,13 @@ func (s *Session) resendCurrentMenuPrompt() {
 	case "description":
 		s.sendCharCreatePrompt("description", "Enter description lines. Type @ or /s to save, /a to abort: ", nil)
 	case "password_old":
-		s.sendCharCreatePromptWithSecret("menu_password", "Enter your old password: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nEnter your old password: ", nil, true)
 	case "password_new":
-		s.sendCharCreatePromptWithSecret("menu_password", "Enter a new password: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nEnter a new password: ", nil, true)
 	case "password_confirm":
-		s.sendCharCreatePromptWithSecret("menu_password", "Please retype password: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nPlease retype password: ", nil, true)
 	case "delete_password":
-		s.sendCharCreatePromptWithSecret("menu_password", "Enter your password for verification: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nEnter your password for verification: ", nil, true)
 	case "delete_confirm":
 		s.sendCharCreatePrompt("delete_confirm", s.deleteConfirmationPrompt(), charOpts("yes", "Permanently delete character"))
 	default:
@@ -95,13 +108,17 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 	if err := json.Unmarshal(data, &input); err != nil {
 		return err
 	}
-	choice := strings.TrimSpace(input.Choice)
-	if s.menuStage == "password_old" || s.menuStage == "password_new" || s.menuStage == "password_confirm" || s.menuStage == "delete_password" {
-		choice = input.Choice
+	// C nanny skips only leading whitespace; menu arms inspect arg[0].
+	// src/interpreter.c:1721,2165-2350. Editor lines remain raw.
+	choice := strings.TrimLeft(input.Choice, " \t\n\r\v\f")
+	if s.IsPaging() {
+		s.navigatePager(input.Choice)
+
+		return nil
 	}
 
 	switch s.menuStage {
-	case "motd":
+	case "motd", "background":
 		s.showMainMenu()
 	case "menu":
 		return s.handleMenuChoice(choice)
@@ -117,10 +134,10 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 			return nil
 		}
 		s.menuStage = "password_new"
-		s.sendCharCreatePromptWithSecret("menu_password", "Enter a new password: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nEnter a new password: ", nil, true)
 	case "password_new":
 		if len(choice) < 3 || len(choice) > maxMenuPasswordLength || strings.EqualFold(choice, s.pendingPlayerName()) {
-			s.sendCharCreatePromptWithSecret("menu_password", "\r\nIllegal password. Use 3-10 characters and do not use your character name.\r\nPassword: ", nil, true)
+			s.sendCharCreatePromptWithSecret("menu_password", "\r\nIllegal password.\r\nPassword: ", nil, true)
 			return nil
 		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(choice), bcrypt.DefaultCost)
@@ -129,7 +146,7 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 		}
 		s.menuNewPasswordHash = string(hash)
 		s.menuStage = "password_confirm"
-		s.sendCharCreatePromptWithSecret("menu_password", "Please retype password: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nPlease retype password: ", nil, true)
 	case "password_confirm":
 		if bcrypt.CompareHashAndPassword([]byte(s.menuNewPasswordHash), []byte(choice)) != nil {
 			s.menuNewPasswordHash = ""
@@ -155,7 +172,7 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 			return nil
 		}
 		s.menuStage = "delete_confirm"
-		s.sendCharCreatePrompt("delete_confirm", s.deleteConfirmationPrompt(), charOpts("yes", "Permanently delete character"))
+		s.sendCharCreatePrompt("delete_confirm", "\r\n"+s.deleteConfirmationPrompt(), charOpts("yes", "Permanently delete character"))
 	case "delete_confirm":
 		return s.confirmDelete(choice)
 	default:
@@ -165,7 +182,7 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 }
 
 func (s *Session) handleMenuChoice(choice string) error {
-	switch choice {
+	switch firstCreationByte(choice) {
 	case "0":
 		s.sendCharCreatePrompt("closing", "Goodbye.\r\n", nil)
 		s.menuActive = false
@@ -191,16 +208,17 @@ func (s *Session) handleMenuChoice(choice string) error {
 		s.sendCharCreatePrompt("description", "Enter the new text you'd like others to see when they look at you.\r\nType @ or /s to save, /a to abort: ", nil)
 	case "3":
 		background := loginTextForFile(s, "background")
-		s.sendText(background + "\r\n")
-		s.showMainMenu()
+		s.menuStage = "background"
+		PageString(s, background)
+
 	case "4":
 		s.menuStage = "password_old"
-		s.sendCharCreatePromptWithSecret("menu_password", "Enter your old password: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nEnter your old password: ", nil, true)
 	case "5":
 		s.menuStage = "delete_password"
-		s.sendCharCreatePromptWithSecret("menu_password", "Enter your password for verification: ", nil, true)
+		s.sendCharCreatePromptWithSecret("menu_password", "\r\nEnter your password for verification: ", nil, true)
 	default:
-		s.sendText("\r\nThat's not a menu choice!\r\n")
+		s.sendRawEvent("\r\nThat's not a menu choice!\r\n")
 		s.showMainMenu()
 	}
 	return nil
@@ -278,8 +296,8 @@ func (s *Session) deleteConfirmationPrompt() string {
 }
 
 func (s *Session) confirmDelete(choice string) error {
-	if !strings.EqualFold(choice, "yes") {
-		s.sendText("\r\nCharacter not deleted.\r\n")
+	if choice != "yes" && choice != "YES" {
+		s.sendRawEvent("\r\nCharacter not deleted.\r\n")
 		s.showMainMenu()
 		return nil
 	}
@@ -357,23 +375,10 @@ func (s *Session) enterReturningPlayer() error {
 			return err
 		}
 	}
-	name := s.player.Name
-	// C's CON_MENU path calls reset_char() before re-adding an extracted
-	// player. In particular, a post-death player is still at NOWHERE with
-	// non-positive H/MV; reset_char supplies the minimal playable state and
-	// the load-room rule below selects the entry room.
-	if s.player.GetRoom() < 0 {
-		s.player.SetPosition(game.PosStanding)
-		if s.player.GetHP() <= 0 {
-			s.player.SetHP(1)
-		}
-		if s.player.GetMove() <= 0 {
-			s.player.SetMove(1)
-		}
-		if s.player.GetMana() <= 0 {
-			s.player.SetMana(1)
-		}
+	if !s.prepareWorldEntry() {
+		return nil
 	}
+	name := s.player.Name
 	// C saves the character with load_room NOWHERE at every game entry
 	// (interpreter.c:2186), so a character whose process dies mid-session
 	// restarts at a start room rather than their last legal quit room.
@@ -408,10 +413,7 @@ func (s *Session) enterReturningPlayer() error {
 	if s.wantsStructuredData {
 		s.sendFullVarDump()
 	}
-	enterMsg, err := json.Marshal(ServerMessage{Type: MsgEvent, Data: EventData{Type: "enter", Text: name + " has arrived."}})
-	if err == nil {
-		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, name)
-	}
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n has entered the game.", "", game.ToRoom)
 	s.clearMenuState()
 	return nil
 }
@@ -444,4 +446,40 @@ func (s *Session) clearMenuState() {
 	s.menuDescriptionDraft = nil
 	s.menuPasswordHash = ""
 	s.menuNewPasswordHash = ""
+}
+
+// prepareWorldEntry ports reset_char followed by the unhealthy/INVSTART gates.
+// src/db.c:2936-2961; src/interpreter.c:2174-2184.
+func (s *Session) prepareWorldEntry() bool {
+	p := s.player
+	p.SetPosition(game.PosStanding)
+	if p.GetHP() <= 0 {
+		p.SetHP(1)
+	}
+	if p.GetMove() <= 0 {
+		p.SetMove(1)
+	}
+	if p.GetMana() <= 0 {
+		p.SetMana(1)
+	}
+	if p.LoginConstitution() == 0 {
+		s.sendRawEvent("You are too unhealthy to play!\r\n")
+		// C closes before saving or admitting the character. Discard Go's
+		// earlier restored objects and candidate so transport cleanup cannot save.
+		s.manager.world.ExtractRentedObjects(p)
+		s.authenticated = false
+		s.player = nil
+		s.creationSaved = false
+		s.charCreating = false
+		s.charPassword = ""
+		s.releaseEntryName()
+		s.clearMenuState()
+		s.manager.UnregisterSession(s)
+		s.CloseSend()
+		return false
+	}
+	if p.GetFlags()&(1<<uint(game.PlrInvstart)) != 0 {
+		p.SetInvisLevel(p.GetLevel())
+	}
+	return true
 }

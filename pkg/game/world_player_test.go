@@ -366,3 +366,21 @@ func containerVNums(container *ObjectInstance) []int {
 	}
 	return vnums
 }
+
+// Wizard demotion also calls do_start. Remort kits use C's default arm,
+// although assassin skills are separately granted (src/class.c:508-562).
+func TestEntryBootstrapRemortKits(t *testing.T) {
+	for _, class := range []int{ClassMagus, ClassAvatar, ClassAssassin, ClassPaladin, ClassRanger, ClassMystic} {
+		t.Run(ClassNames[class], func(t *testing.T) {
+			w, p := newStartingItemsWorld(t)
+			p.Class = class
+			w.GiveStartingItems(p)
+			if got := collectInventoryVNums(p); !slices.Equal(got, []int{8038, 8019, 8023}) {
+				t.Fatalf("remort kit=%v, want C default club", got)
+			}
+			if got := containerVNums(findItemByVNum(p, 8038)); !slices.Equal(got, []int{8063, 8010}) {
+				t.Fatalf("remort pack=%v, want water/bread", got)
+			}
+		})
+	}
+}

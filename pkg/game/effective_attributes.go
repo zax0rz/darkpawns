@@ -159,3 +159,26 @@ func (p *Player) RestoreEffectiveAttributes() {
 	p.mu.Unlock()
 	p.refreshAttributeCapacity()
 }
+
+// LoginConstitution is CON_MENU's pre-Crash_load check. Go restores objects
+// before its menu; C has only store_to_char's tattoos/spells at this point.
+// src/db.c:2441-2481; src/interpreter.c:2174-2184.
+func (p *Player) LoginConstitution() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	con := p.Stats.Con
+	for _, af := range GetTattooBonuses(p.Tattoo) {
+		if af.Location == ApplyCon {
+			con += af.Modifier
+		}
+	}
+	for _, af := range p.ActiveAffects {
+		if af != nil && af.Location == ApplyCon {
+			con += af.Magnitude
+		}
+	}
+	if len(p.ActiveAffects) > 0 {
+		con = max(0, min(con, 18))
+	}
+	return con
+}
