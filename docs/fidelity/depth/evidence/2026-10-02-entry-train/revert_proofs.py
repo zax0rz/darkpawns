@@ -4,6 +4,12 @@ import argparse,json,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('case');p.add_argument('output',type=Path);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 mutations={
+ 'menu-choice':('pkg/session/menu.go','switch firstCreationByte(choice) {','switch choice {','./pkg/session','^TestEntryMenuMatrix$'),
+ 'menu-secret':('pkg/session/menu.go', 'choice := strings.TrimLeft(input.Choice, " \\t\\n\\r\\v\\f")', 'choice := input.Choice', './pkg/session', '^TestEntryMenuMatrix$'),
+ 'menu-delete':('pkg/session/menu.go','if choice != "yes" && choice != "YES" {','if !strings.EqualFold(choice, "yes") {','./pkg/session','^TestEntryMenuMatrix$'),
+ 'menu-background':('pkg/session/menu.go','s.menuStage = "background"','s.menuStage = "menu"','./pkg/session','^TestEntryMenuBackgroundPager$'),
+ 'menu-stored':('pkg/session/menu.go','s.manager.db.UpdatePassword(s.player.ID, s.menuNewPasswordHash)','s.manager.db.UpdatePassword(s.player.ID, s.menuPasswordHash)','./pkg/session','^TestEntryMenuStoredPassword$'),
+
  'bootstrap-remort':('pkg/game/world_player.go','case ClassThief:', 'case ClassThief, ClassAssassin:', './pkg/game', '^TestEntryBootstrapRemortKits$'),
  'bootstrap-practices':('pkg/game/character.go','p.SetPractices(0) // src/db.c','p.SetPractices(2) // src/db.c','./pkg/session','^TestEntryBootstrapMatrix$'),
  'bootstrap-pack':('pkg/game/world_player.go','w.giveStartingPackItem(p, pack, picks)','_ = picks // omit starting picks','./pkg/session','^TestEntryBootstrapMatrix$'),

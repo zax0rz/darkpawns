@@ -87,6 +87,10 @@ func TestMenuInvalidChoiceAndBackgroundReturnToMenu(t *testing.T) {
 	if !strings.Contains(background, "old kingdoms") {
 		t.Fatalf("background response = %s", background)
 	}
+	if s.menuStage != "background" {
+		t.Fatalf("background did not wait for RETURN: %s", s.menuStage)
+	}
+	sendMenuInput(t, s, "")
 	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
 	if prompt.Stage != "menu" {
 		t.Fatalf("stage after background = %q, want menu", prompt.Stage)
