@@ -15,21 +15,23 @@ objects (`src/objsave.c:912-956`). Re-entry loads and auto-equips the saved tree
 owner's ITEM_TAKE_NAME description (`src/handler.c:720-728`). These source lines
 were read while writing this proof.
 
-Two reachable defects were repaired. The idle retirement saved the objects but
+Three reachable defects were repaired. The idle retirement saved the objects but
 left their old instances registered, so reload doubled the world object count.
 After the save, cleanup now detaches and frees the concrete retired body's tree.
 The store restore also bypassed the live equipment naming step; both modern
 item lists and legacy equipment maps now share that step. The existing save
-format and its TAKE_NAME override omission are unchanged: auto-equipping
-reconstructs the name. An old test expecting the prototype description on an
-equipped reload was incorrect and is replaced by the C-backed expectation.
+format is unchanged. Carried TAKE_NAME overrides now use the already-supported
+short_desc_override state key, matching Obj_to_store/Obj_from_store_to
+(src/objsave.c:85,132-135). Auto-equipping recomputes the worn owner name.
+An old test expecting the prototype description on an equipped reload was incorrect and is replaced by the C-backed expectation.
 
 The real SQLite test carries a bag with bread and wears a TAKE_NAME tunic,
 force-rents, removes the body, returns through the real menu reload, and checks
 the restored topology, slot, exact description and world count. It avoids
 name-based object ownership by using canonical object moves in its setup. The
-live vehicle retains C's nested inventory and named equipment blocks; an inside
-void room isolates D5 weather. The manifest's status reflects the stronger
+live inventory vehicle removes the tunic before rent and retains C's nested
+inventory plus carried tunic description; the NORENT vehicle owns the worn
+owner-name block. Both use an inside void room to isolate D5 weather. The manifest's status reflects the stronger
 hidden-state unit proof, rather than claiming that transcript equality proves
 absence of leaked objects.
 
@@ -38,9 +40,14 @@ Evidence root:
 - Cleanup: `inventory-before.log`, `inventory-reverted.log`,
   `inventory-restored.log`: 0 → 1 → 0. Reverting cleanup fails on six world
   objects where the three restored objects are required.
-- Naming: `taken-name-before.log`, `taken-name-reverted.log`,
-  `taken-name-restored.log`: 0 → 1 → 0. Disabling the restore naming calls fails
+- Carried naming: `carried-name-final-before.log`, `carried-name-final-reverted.log`,
+  `carried-name-final-restored.log`: 0 → 1 → 0. Omitting the existing override state
+  key fails on the carried tunic description.
+- Naming: `taken-name-final-before.log`, `taken-name-final-reverted.log`,
+  `taken-name-final-restored.log`: 0 → 1 → 0. Disabling the restore naming calls fails
   on the equipped owner description in both the store and roundtrip tests.
+- Legacy naming separately: `legacy-name-before.log`, `legacy-name-reverted.log`,
+  `legacy-name-restored.log`: 0 → 1 → 0, failing only the legacy restore assertion.
 - Baseline live output: `rent-baseline.txt` shows the tunic description red.
   The fixed two-vehicle run is `dp-1371-rent-repaired`: 2/2 CLEAN.
 
@@ -75,3 +82,8 @@ API, while nested contents are retained through the existing store tree format.
 The preserved tunic guards against filtering all equipment; the inventory case
 owns nested restore and the TAKE_NAME boundary. This commit adds proof only,
 and changes neither the rental policy nor the oracle/harness.
+
+The initial combined run `dp-1371-switch-idle-tip` was aborted when the carried
+TAKE_NAME class audit found its omission. Its source/artifacts and ABORTED.md
+are retained without a CLEAN claim. The final combined gate uses the repaired
+source; the earlier two-vehicle CLEAN does not certify this additional branch.
