@@ -97,54 +97,38 @@ func cmdSwitch(s *Session, args []string) error {
 		s.Send("Switch with who?\r\n")
 		return nil
 	}
-	targetName := strings.ToLower(args[0])
-	roomVNum := s.player.GetRoom()
-
-	// Store original wizard state for permission gating and return
-	origLevel := s.player.Level
-	origPlayer := s.player
-
-	// Look for a mob in the room
-	mobs := s.manager.world.GetMobsInRoom(roomVNum)
-	for _, mob := range mobs {
-		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-			s.switchedOriginal = origPlayer
-			s.switchedOriginalLevel = origLevel
-			s.switchedMob = mob
-			s.isSwitched = true
-			s.switchedStartTime = time.Now()
-			s.Send("Okay.\r\n")
-			return nil
-		}
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
+		s.Send("Switch with who?\r\n")
+		return nil
 	}
-
-	// Look for a player in the room
-	players := s.manager.world.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		if strings.ToLower(p.GetName()) == targetName {
-			if p == s.player {
-				s.Send("Hee hee... we are jolly funny today, eh?\r\n")
-				return nil
-			}
-			if findSessionByName(s.manager, p.GetName()) != nil {
-				s.Send("You can't do that, the body is already in use!\r\n")
-				return nil
-			}
-			if s.player.Level < LVL_IMPL {
-				s.Send("You aren't holy enough to use a mortal's body.\r\n")
-				return nil
-			}
-
-			s.switchedOriginal = origPlayer
-			s.switchedOriginalLevel = origLevel
-			s.switchedPlayer = p
-			s.isSwitched = true
-			s.switchedStartTime = time.Now()
-			s.Send("Okay.\r\n")
-			return nil
-		}
+	m := s.manager
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	target, ok := m.world.ResolveCharWorld(s.player, targetName)
+	if !ok {
+		s.Send("No such character.\r\n")
+		return nil
 	}
-	s.Send("No such character.\r\n")
+	if target.Combatant == s.player {
+		s.Send("Hee hee... we are jolly funny today, eh?\r\n")
+		return nil
+	}
+	if target.Player != nil && m.attachedBody(target.Player) != nil {
+		s.Send("You can't do that, the body is already in use!\r\n")
+		return nil
+	}
+	if target.Player != nil && s.player.GetLevel() < LVL_IMPL {
+		s.Send("You aren't holy enough to use a mortal's body.\r\n")
+		return nil
+	}
+	s.switchedOriginal = s.player
+	s.switchedOriginalLevel = s.player.GetLevel()
+	s.switchedPlayer = target.Player
+	s.switchedMob = target.Mob
+	s.isSwitched = true
+	s.switchedStartTime = time.Now()
+	s.Send("Okay.\r\n")
 	return nil
 }
 
