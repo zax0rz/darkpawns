@@ -1172,7 +1172,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	m.combatEngine.StopCombat(playerName)
 
 	// 2. Broadcast leave message
-	if s.player != nil && !s.leaveBroadcastHandled {
+	if s.player != nil && !s.menuActive && !s.charCreating && !s.leaveBroadcastHandled {
 		leaveMsg, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
 			Data: EventData{

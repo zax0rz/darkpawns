@@ -4,6 +4,11 @@ import argparse,json,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('case');p.add_argument('output',type=Path);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 mutations={
+ 'world-con-view':('pkg/game/effective_attributes.go','con := p.Stats.Con','con := p.effectiveAttributesLocked().Con','./pkg/game','^TestEntryPreEquipmentConstitution$'),
+ 'duplicate-menu':('pkg/session/manager.go','!s.menuActive && !s.charCreating && !s.leaveBroadcastHandled','!s.leaveBroadcastHandled','./pkg/session','^TestEntryDuplicateMenuClose$'),
+ 'duplicate-flags':('pkg/session/reconnect.go','p.SetPlrFlag(game.PlrWriting, false)','p.SetPlrFlag(game.PlrWriting, true)','./pkg/session','^TestEntryDuplicateCleanupMatrix$'),
+ 'duplicate-idle':('pkg/session/reconnect.go','p.SetIdleTimer(0)','p.SetIdleTimer(9)','./pkg/session','^TestEntryDuplicateCleanupMatrix$'),
+
  'world-unhealthy':('pkg/session/menu.go','if p.LoginConstitution() == 0 {','if false {','./pkg/session','^TestEntryWorldUnhealthy$'),
  'world-equipment':('pkg/session/menu.go','p.LoginConstitution() == 0','p.GetCon() == 0','./pkg/session','^TestEntryWorldUnhealthy$'),
  'world-cleanup':('pkg/session/menu.go','s.manager.world.ExtractRentedObjects(p)','// omit restored-object cleanup','./pkg/session','^TestEntryWorldUnhealthy$'),
