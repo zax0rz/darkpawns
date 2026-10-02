@@ -1,0 +1,128 @@
+# depth-case: idle.rent-roundtrip-equipped-norent
+[fixture]
+empty-players
+quiet-mobs
+compare-close
+set-room-sector 1 0
+spawn-obj 4291 1 8004 80
+spawn-obj 4320 1 8004 80
+spawn-obj 8019 1 8004 80
+
+[setup:oracle]
+Idleforcerent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Idleforcerent
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:driver]
+Clockdriver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:driver]
+Clockdriver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Idleforcerent
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Idleforcerent
+oraclepass
+<ENTER>
+1
+
+[warmup]
+get cloak
+wear cloak
+get fruit
+get tunic
+wear tunic
+set player Clockdriver level 31
+set player Idleforcerent level 1
+
+# One probe step per MUD hour: 31 hours carry the actor through the ninth-hour
+# void into the force-rent/extract branch (timer > IDLE_DISCONNECT) that closes
+# its descriptor. The clock is pumped from the second connection.
+[probe]
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+send:driver ~dpclock pulse 630
+<RELOGIN>
+look
+inventory
+equipment

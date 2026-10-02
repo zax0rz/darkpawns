@@ -105,3 +105,19 @@ func TestIdleRentRoundtripInventory(t *testing.T) {
 		t.Fatalf("restored TAKE_NAME description=%q", tunic.GetShortDesc())
 	}
 }
+
+func TestIdleRentRoundtripEquippedNoRent(t *testing.T) {
+	s := idleRentRoundtrip(t, true)
+	if _, ok := s.player.Equipment.GetItemInSlot(game.SlotAbout); ok {
+		t.Fatal("equipped NORENT cloak returned")
+	}
+	for _, obj := range s.manager.world.GetAllObjects() {
+		if obj.GetVNum() == 4291 || obj.GetVNum() == 4320 {
+			t.Fatalf("NORENT object %d survived rent/restore", obj.GetVNum())
+		}
+	}
+	tunic, ok := s.player.Equipment.GetItemInSlot(game.SlotBody)
+	if !ok || tunic.GetVNum() != 8019 {
+		t.Fatal("rentable equipment control was lost")
+	}
+}

@@ -53,3 +53,25 @@ The D5 room-index/weather differences are still held separately. The legal-quit
 path (`pkg/session/cmd_inventory.go:101-107`) also saves a rented tree without
 calling `ExtractRentedObjects`; its transient objects need the same ownership
 audit in a follow-up. This train claims the forced-rent path only.
+
+## Equipped NORENT roundtrip
+
+`idle.rent-roundtrip-equipped-norent` is unit-green. The separate live vehicle
+`lifecycle-idle-rent-norent` matches C at seed 1. Its warmup wears shipped NORENT
+cloak 4291 and carries NORENT fruit 4320; after forced-rent and relogin, C has
+empty inventory and only the retained named tunic. The SQLite proof also keeps
+a rentable nested bag as a control and requires exactly the three rentable
+instances in the restored world. This prevents a zero-object fixture from
+passing a destructive "fix" that discards everything.
+
+`norent-before.log`, `norent-reverted.log`, `norent-restored.log` retain 0 → 1 → 0:
+the negative control keeps NORENT objects through the filter and fails the
+restored count (five instead of three). The failure is an assertion, not a
+build error or timeout. C filters worn objects through the carried-list
+extraction (`src/objsave.c:730-760`) before writing the rent file (:912-956).
+
+Other readers: equipped and carried object locations use the same extraction
+API, while nested contents are retained through the existing store tree format.
+The preserved tunic guards against filtering all equipment; the inventory case
+owns nested restore and the TAKE_NAME boundary. This commit adds proof only,
+and changes neither the rental policy nor the oracle/harness.
