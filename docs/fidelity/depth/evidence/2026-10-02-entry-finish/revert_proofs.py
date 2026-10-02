@@ -2,6 +2,11 @@
 import json, subprocess, sys
 from pathlib import Path
 MUTATIONS = {
+ "rename-guest-id": ("pkg/session/wiz_set.go", "release, allowed := s.manager.reserveOfflineRename(target.record.Name, value)", "for _, p := range s.manager.world.GetAllPlayers() { if p.GetID() == target.player.GetID() { s.Send(\"Sorry, you can't do that.\\r\\n\"); return nil } }; release, allowed := s.manager.reserveOfflineRename(target.record.Name, value)", "^TestEntryOfflineRenameGuard/offline-with-guests$"),
+ "orphan-selector": ("pkg/session/reconnect.go", "m.playerLifecycleMu.Lock()\n\tdefer m.playerLifecycleMu.Unlock()", "// Deliberately omit lifecycle serialization.", "^TestEntryDuplicateTeardownSerialization$"),
+ "orphan-admission": ("pkg/session/manager.go", "func (m *Manager) enterWorld(name string, s *Session) error {\n\tm.playerLifecycleMu.Lock()\n\tdefer m.playerLifecycleMu.Unlock()", "func (m *Manager) enterWorld(name string, s *Session) error {", "^TestEntryDuplicateTeardownSerialization/admission$"),
+ "orphan-retirement": ("pkg/session/manager.go", "func (m *Manager) UnregisterSession(s *Session) {\n\tm.playerLifecycleMu.Lock()\n\tdefer m.playerLifecycleMu.Unlock()", "func (m *Manager) UnregisterSession(s *Session) {", "^TestEntryDuplicateTeardownSerialization/transport$"),
+
  "rename-guard": ("pkg/session/wiz_set.go", 'if target.file && field.name == "name" {', 'if false && target.file && field.name == "name" {', "^TestEntry(OfflineRenameGuard|DuplicateRenameTopologyExclusions)$"),
  "candidate-skip": ("pkg/session/reconnect.go", "m.world.DiscardLoadedPlayerObjects(s.player)", "_ = s.player", "^TestEntryDuplicateCandidateObjects$"),
  "candidate-owner": ("pkg/session/reconnect.go", "m.world.DiscardLoadedPlayerObjects(s.player)", "m.world.ExtractRentedObjects(s.player)", "^TestEntryDuplicateCandidateObjects$"),

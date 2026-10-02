@@ -400,11 +400,7 @@ func (s *Session) enterReturningPlayer() error {
 	// else the frozen/immortal/mortal start room.
 	s.player.SetRoom(s.manager.world.SelectLoginRoom(s.player))
 	grantClassSpells(s.player)
-	if err := s.manager.Register(name, s); err != nil {
-		return err
-	}
-	if err := s.manager.world.AddPlayer(s.player); err != nil {
-		s.manager.Unregister(name)
+	if err := s.manager.enterWorld(name, s); err != nil {
 		return err
 	}
 

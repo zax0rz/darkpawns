@@ -677,10 +677,6 @@ func (s *Session) completeCharCreation() error {
 	s.authenticated = true
 	s.playerName = s.charName
 
-	if err := s.manager.Register(s.charName, s); err != nil {
-		return err
-	}
-
 	// C source intro: brand-new mortals first appear in the Burning Hut (8099);
 	// immortals enter ImmortStartRoom (1204) and skip the intro entirely.
 	if s.player.GetLevel() >= game.LVL_IMMORT {
@@ -688,8 +684,7 @@ func (s *Session) completeCharCreation() error {
 	} else {
 		s.player.SetRoom(game.NewbieStartRoom)
 	}
-	if err := s.manager.world.AddPlayer(s.player); err != nil {
-		s.manager.Unregister(s.charName)
+	if err := s.manager.enterWorld(s.charName, s); err != nil {
 		return err
 	}
 

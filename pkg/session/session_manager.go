@@ -46,6 +46,8 @@ func (m *Manager) Mu() interface{} {
 //   - Removing from the sessions map
 //   - Freeing compression/showstr state (not applicable in Go version)
 func (m *Manager) UnregisterAndClose(playerName string) {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
 	m.mu.Lock()
 	s, ok := m.sessions[playerName]
 	if ok {

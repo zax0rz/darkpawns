@@ -49,8 +49,8 @@ func TestEntryDuplicateMenuClose(t *testing.T) {
 }
 
 // Existing supported single-body modes: src/interpreter.c:1618-1653.
-// The parent case retains its ID-sweep design blocker; this matrix does not
-// claim arbitrary duplicate ID/name topology.
+// Reachability and DP-1381 exclusions live in the parent/subrows; this matrix
+// proves the supported modes without manually fabricated ID/name topology.
 func TestEntryDuplicateCleanupMatrix(t *testing.T) {
 	for _, mode := range []string{"reconnect", "usurp", "unswitch", "editor"} {
 		t.Run(mode, func(t *testing.T) {
