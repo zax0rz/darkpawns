@@ -33,6 +33,10 @@ func (s *Session) performDupeCheck() bool {
 		return false
 	}
 	m := s.manager
+	// The descriptorless interval inside retirement is not a reconnect target.
+	// C cannot interleave nanny with close_socket (src/comm.c:2086-2156).
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
 	name := s.player.Name
 
 	m.mu.Lock()
@@ -45,7 +49,7 @@ func (s *Session) performDupeCheck() bool {
 		m.mu.Unlock()
 		// Not CON_PLAYING: disconnected, and no target (interpreter.c:1561-1571).
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
-		m.Unregister(name)
+		m.unregister(name)
 		old.CloseSend()
 		old.Close()
 		return false
@@ -91,6 +95,12 @@ func (s *Session) performDupeCheck() bool {
 		if old.cancelFunc != nil {
 			old.cancelFunc()
 		}
+	}
+
+	// Free only the loaded candidate before adopting the live body. The
+	// candidate is not registered, and its location names overlap the target.
+	if s.player != old.player {
+		m.world.DiscardLoadedPlayerObjects(s.player)
 	}
 
 	// Connect this descriptor to the live body (interpreter.c:1618-1628).

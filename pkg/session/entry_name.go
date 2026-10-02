@@ -101,3 +101,49 @@ func (s *Session) acceptEntryName(raw string) (string, bool) {
 	}
 	return name, true
 }
+
+// reserveOfflineRename implements DP-1381. The entry-name lock serializes
+// the availability check and file edit against claimEntryName. Retained keys
+// catch live wizard renames whose stored and displayed names differ. Guest
+// numeric IDs are process-local and cannot identify an offline store record.
+func (m *Manager) reserveOfflineRename(oldName, newName string) (release func(), allowed bool) {
+	m.entryNameMu.Lock()
+	release = m.entryNameMu.Unlock
+	held := func(name string) bool { return strings.EqualFold(name, oldName) || strings.EqualFold(name, newName) }
+	for _, name := range m.entryNames {
+		if held(name) {
+			release()
+			return nil, false
+		}
+	}
+	m.mu.RLock()
+	blocked := false
+	for key, s := range m.sessions {
+		if held(key) || held(s.playerName) || (s.player != nil && held(s.player.GetName())) ||
+			(s.switchedOriginal != nil && held(s.switchedOriginal.GetName())) {
+			blocked = true
+			break
+		}
+	}
+	m.mu.RUnlock()
+	// Preserve retained/linkdead bodies too; renaming their stored identity
+	// would otherwise invalidate the next reconnect just like a live socket.
+	if !blocked && m.world != nil {
+		// Live edits leave the world's original entry key intact. Check the
+		// stored spelling too, even during the transient teardown interval.
+		if _, present := m.world.GetPlayer(oldName); present {
+			blocked = true
+		}
+		for _, p := range m.world.GetAllPlayers() {
+			if held(p.GetName()) {
+				blocked = true
+				break
+			}
+		}
+	}
+	if blocked {
+		release()
+		return nil, false
+	}
+	return release, true
+}

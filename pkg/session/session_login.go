@@ -107,12 +107,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		s.playerName = guestName
 
 		s.manager.loginAttempts.RecordSuccess(ip)
-		if err := s.manager.Register(guestName, s); err != nil {
-			return err
-		}
-
-		if err := s.manager.world.AddPlayer(s.player); err != nil {
-			s.manager.Unregister(guestName)
+		if err := s.manager.enterWorld(guestName, s); err != nil {
 			return err
 		}
 

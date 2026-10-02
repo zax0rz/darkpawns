@@ -105,15 +105,16 @@ func TestMenuDescriptionEditorForNewCharacter(t *testing.T) {
 	_ = drainMsg(t, s)
 
 	sendMenuInput(t, s, "2")
-	_ = drainMsg(t, s)
+	drainAllFrames(t, s)
 	sendMenuInput(t, s, "A weathered traveler.")
+	drainAllFrames(t, s)
 	sendMenuInput(t, s, "Eyes fixed on the horizon.")
+	drainAllFrames(t, s)
 	sendMenuInput(t, s, "/s")
 
-	if got := s.menuDescription; got != "A weathered traveler.\r\nEyes fixed on the horizon." {
+	if got := s.menuDescription; got != "A weathered traveler.\r\nEyes fixed on the horizon.\r\n" {
 		t.Fatalf("description = %q", got)
 	}
-	_ = drainMsg(t, s)
 	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
 	if prompt.Stage != "menu" {
 		t.Fatalf("stage after save = %q", prompt.Stage)

@@ -194,6 +194,17 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 	if field.typ == setNumber {
 		valueInt = clampSetValue(field.name, valueInt, target.player, target.mob)
 	}
+	// DP-1381: preserve online and entering identity bindings. Keep the name
+	// reservation lock through the compare-and-save, so a descriptor cannot
+	// claim either name between this guard and the durable rename.
+	if target.file && field.name == "name" {
+		release, allowed := s.manager.reserveOfflineRename(target.record.Name, value)
+		if !allowed {
+			s.Send("Sorry, you can't do that.\r\n") // existing C refusal, src/act.wizard.c:2661
+			return nil
+		}
+		defer release()
+	}
 	var original *db.PlayerRecord
 	if target.record != nil {
 		snapshot := *target.record

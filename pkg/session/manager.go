@@ -68,6 +68,11 @@ type Manager struct {
 	// /darkpawns-map.xml endpoint).
 	mudletMap *mudletmap.Cache
 
+	// Serializes body admission, duplicate adoption and retirement. C performs
+	// these operations sequentially (comm.c game_loop / close_socket).
+	// Never acquire this while holding mu or a world lock.
+	playerLifecycleMu sync.Mutex
+
 	entryNameMu  sync.Mutex // Protects names held by non-playing descriptors.
 	entryNames   map[*Session]string
 	creationMu   sync.Mutex // Serializes first-player selection with persistence.
@@ -1104,6 +1109,13 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 //
 // If you need both locks, always acquire w.mu first.
 func (m *Manager) Register(playerName string, s *Session) error {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	return m.register(playerName, s)
+}
+
+// register requires playerLifecycleMu, but never nests manager/world locks.
+func (m *Manager) register(playerName string, s *Session) error {
 	// RemovePlayer (called below for takeover) acquires w.mu. To avoid the
 	// m.mu → w.mu lock ordering that caused a deadlock during char creation,
 	// we record whether removal is needed under m.mu, release m.mu, then call
@@ -1154,6 +1166,21 @@ func (m *Manager) Register(playerName string, s *Session) error {
 		sendDiscordNotification(fmt.Sprintf("_**%s has stepped into the shadows of the world.**_", playerName))
 	}
 
+	return nil
+}
+
+// enterWorld keeps descriptor registration and body admission in one lifecycle
+// operation. Otherwise a transport can retire the descriptor before AddPlayer.
+func (m *Manager) enterWorld(name string, s *Session) error {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	if err := m.register(name, s); err != nil {
+		return err
+	}
+	if err := m.world.AddPlayer(s.player); err != nil {
+		m.unregister(name)
+		return err
+	}
 	return nil
 }
 
@@ -1272,6 +1299,8 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 // It returns true when the session was retained as linkdead; orderly quits
 // and pre-auth disconnects return false and use normal cleanup.
 func (m *Manager) HandleTransportDisconnect(s *Session) bool {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
 	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() || s.superseded.Load() {
 		return false
 	}
@@ -1312,17 +1341,28 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 // session superseded by a new login (performDupeCheck) must not unregister
 // or clean up the character the new session now plays.
 func (m *Manager) UnregisterSession(s *Session) {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	if s == nil {
+		return
+	}
+	m.unregisterSession(s, s.playerName)
+}
+
+// unregisterSession requires playerLifecycleMu; the key lets shutdown retire
+// its captured descriptor without assuming a mutable display name is a key.
+func (m *Manager) unregisterSession(s *Session, key string) {
 	if s == nil {
 		return
 	}
 	m.mu.Lock()
-	current, ok := m.sessions[s.playerName]
+	current, ok := m.sessions[key]
 	if ok && current == s {
-		delete(m.sessions, s.playerName)
+		delete(m.sessions, key)
 	}
 	m.mu.Unlock()
 	if ok && current == s {
-		m.cleanupSession(s, s.playerName)
+		m.cleanupSession(s, key)
 		return
 	}
 	if s.cancelFunc != nil {
@@ -1331,6 +1371,13 @@ func (m *Manager) UnregisterSession(s *Session) {
 }
 
 func (m *Manager) Unregister(playerName string) {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	m.unregister(playerName)
+}
+
+// unregister requires playerLifecycleMu (also called by duplicate menu close).
+func (m *Manager) unregister(playerName string) {
 	m.mu.Lock()
 	s, ok := m.sessions[playerName]
 	if ok {
@@ -1347,6 +1394,8 @@ func (m *Manager) Unregister(playerName string) {
 // duplicate is fully cleaned up (including its save) before the quitting
 // session performs its final save, so the selected quit equipment policy wins.
 func (m *Manager) closeDuplicateSessions(quitting *Session) {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
 	if quitting == nil || quitting.player == nil || quitting.player.GetID() <= 0 {
 		return
 	}
@@ -1736,12 +1785,13 @@ type Session struct {
 
 	// Post-MOTD main menu state. This is separate from character creation
 	// because returning players pass through the same menu before world entry.
-	menuActive           bool
-	menuStage            string
-	menuDescription      string
-	menuDescriptionDraft []string
-	menuPasswordHash     string
-	menuNewPasswordHash  string
+	menuActive             bool
+	menuStage              string
+	menuDescription        string
+	menuDescriptionPresent bool
+	menuDescriptionKnown   bool
+	menuPasswordHash       string
+	menuNewPasswordHash    string
 
 	// Output pager state (DP-1195; port of the Buselli pager, modify.c:346-527).
 	// While pagerCount > 0, every input line routes to handlePagerInput instead
@@ -1929,7 +1979,6 @@ func (m *Manager) shutdownGracefully(timeout time.Duration, notify bool) {
 	sessions := make(map[string]*Session)
 	for name, s := range m.sessions {
 		sessions[name] = s
-		delete(m.sessions, name)
 	}
 	m.mu.Unlock()
 
@@ -1963,7 +2012,9 @@ func (m *Manager) shutdownGracefully(timeout time.Duration, notify bool) {
 				}
 				close(done)
 			}()
-			m.cleanupSession(s, name)
+			m.playerLifecycleMu.Lock()
+			defer m.playerLifecycleMu.Unlock()
+			m.unregisterSession(s, name)
 		}()
 
 		select {

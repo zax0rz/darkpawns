@@ -1,0 +1,9 @@
+# Duplicate login candidate cleanup
+
+R5e/R5g: C frees d->character at src/interpreter.c:1619 before adopting target; Crash_load happens only later on ordinary entry (2184-2194). Go RecordToPlayer has already spawned the candidate's objects. All four supported takeover modes leaked that separate tree before this repair.
+
+DiscardLoadedPlayerObjects detaches the candidate's equipment through UnequipItem into a temporary inventory with room for every worn item, clears the concrete candidate inventory, assigns LocNowhere to its top-level objects, then uses normal recursive world extraction. This avoids name-based carrier resolution against the retained body. No registered body's locations or flags are used as cleanup ownership. The only caller is actual candidate adoption in performDupeCheck; no-target/menu closure retains the candidate for ordinary entry.
+
+TestEntryDuplicateCandidateObjects restores two independent carried/worn/nested trees through RecordToPlayer and real SQLite data, sets the candidate's inventory capacity to zero, and covers reconnect/usurp/unswitch/editor. It fails before the fix with eight live objects instead of four. After the fix it verifies no candidate references or registrations, exact retained pointers/locations and PLR_CRASH unchanged, unchanged durable object payload and stale teardown ownership. R5h triples candidate-skip and candidate-owner (naive ExtractRentedObjects) both 0/1/0; the owner mutation fails the retained body's crash-flag assertion.
+
+Other readers: global object-instance lookup, containers, equipment callbacks/effective attributes, autosave PLR_CRASH generation, rental and SQLite object payloads, old transport teardown, room object lists and later object commands. The new helper is not used by rent/quit or general extraction, whose C carrier dirty-flag behavior stays intact. Only the disposable candidate is detached; retained objects and save state remain unchanged.

@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 // ---------------------------------------------------------------------------
 // quit / reallyquit — C do_quit (src/act.other.c:72-181)
@@ -161,4 +164,31 @@ func heldObjects(p *Player) []*ObjectInstance {
 		held = append(held, p.Inventory.FindItems("")...)
 	}
 	return held
+}
+
+// DiscardLoadedPlayerObjects frees only a disposable login candidate's object
+// tree. C perform_dupe_check frees the unloaded candidate before Crash_load
+// (src/interpreter.c:1619,2184-2194). Go has already restored its objects.
+// Detach from the concrete candidate before extraction: name-based locations
+// may resolve to a different retained body with the same name.
+func (w *World) DiscardLoadedPlayerObjects(p *Player) {
+	held := heldObjects(p)
+	// An independent unbounded-weight inventory avoids a full candidate's
+	// carry limits while using the normal equipment removal API.
+	scratch := NewInventory()
+	scratch.Capacity = len(held) + 1
+	if p.Equipment != nil {
+		for _, obj := range p.Equipment.GetEquippedItems() {
+			if !p.Equipment.UnequipItem(obj, scratch) {
+				slog.Error("could not detach disposable login equipment", "player", p.Name, "object", obj.ID)
+			}
+		}
+	}
+	if p.Inventory != nil {
+		p.Inventory.Clear()
+	}
+	for _, obj := range held {
+		obj.Location = LocNowhere()
+		w.ExtractObject(obj, p.GetRoom())
+	}
 }
