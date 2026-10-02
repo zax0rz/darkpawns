@@ -126,6 +126,10 @@ func cmdSnoop(s *Session, args []string) error {
 		return nil
 	}
 
+	targetLevel := getEffectiveLevel(targetSession)
+	if targetSession.isSwitched && targetSession.switchedOriginal != nil {
+		targetLevel = targetSession.switchedOriginal.GetLevel() // src/act.wizard.c:1154-1159
+	}
 	s.manager.snoopMu.Lock()
 	switch {
 	case targetSession == s:
@@ -144,7 +148,7 @@ func cmdSnoop(s *Session, args []string) error {
 		s.manager.snoopMu.Unlock()
 		s.Send("Don't be stupid.\r\n")
 		return nil
-	case getEffectiveLevel(targetSession) >= getEffectiveLevel(s):
+	case targetLevel >= getEffectiveLevel(s):
 		s.manager.snoopMu.Unlock()
 		s.Send("You can't.\r\n")
 		return nil

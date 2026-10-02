@@ -120,17 +120,26 @@ func (s *Session) leaveGameToMenu(rent bool) {
 // but success so the next autosave retries. A skipped save is never a
 // successful one.
 func (s *Session) saveCharacter(why string, loadRoom int) game.SaveResult {
+	if s.activePCSwitch() {
+		if owner, ok := s.manager.GetSession(s.player.GetName()); ok && owner != s && owner.player == s.player {
+			return owner.savePlayer(s.player, why, loadRoom)
+		}
+	}
+	return s.savePlayer(s.player, why, loadRoom)
+}
+
+func (s *Session) savePlayer(p *game.Player, why string, loadRoom int) game.SaveResult {
 	m := s.manager
-	if !m.hasDB || s.player == nil || s.player.ID <= 0 || s.isGuest {
+	if !m.hasDB || p == nil || p.ID <= 0 || s.isGuest {
 		return game.SaveSkipped
 	}
-	rec, err := s.playerRecordForSave(s.player, loadRoom)
+	rec, err := s.playerRecordForSave(p, loadRoom)
 	if err != nil {
-		slog.Error("character save: build record", "player", s.player.Name, "why", why, "error", err)
+		slog.Error("character save: build record", "player", p.Name, "why", why, "error", err)
 		return game.SaveFailed
 	}
 	if err := m.db.SavePlayer(rec); err != nil {
-		slog.Error("character save", "player", s.player.Name, "why", why, "error", err)
+		slog.Error("character save", "player", p.Name, "why", why, "error", err)
 		return game.SaveFailed
 	}
 	return game.SaveSucceeded
@@ -138,8 +147,10 @@ func (s *Session) saveCharacter(why string, loadRoom int) game.SaveResult {
 
 // SaveToStore is saveCharacter exported for the server's World.PlayerSaver
 // wiring: the game layer's save seam reaches the session through it.
-func (s *Session) SaveToStore(_ *game.Player, why string, loadRoom int) game.SaveResult {
-	return s.saveCharacter(why, loadRoom)
+func (s *Session) SaveToStore(p *game.Player, why string, loadRoom int) game.SaveResult {
+	// The caller has checked concrete ownership. Snapshot/save this body rather
+	// than rereading a descriptor that may attach to another PC concurrently.
+	return s.savePlayer(p, why, loadRoom)
 }
 
 // cmdInventory shows the player's inventory.

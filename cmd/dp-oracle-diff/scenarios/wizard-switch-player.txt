@@ -1,0 +1,77 @@
+# depth-case: switch.player-success
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Switchwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchwizard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Switchpeer 3001
+set player Switchpeer level 39
+
+# The dropped body is remote: its lost-link room act cannot straddle
+# the actor's first probe. switch itself uses C get_char_vis world lookup.
+[peer-drop]
+peer
+
+[probe]
+switch Switchpeer
+score
+return
+score

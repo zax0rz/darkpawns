@@ -312,7 +312,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 
 	// Wire MessageSink so that Player.SendMessage routes through Session.send
 	world.MessageSink = func(playerName string, msg []byte) {
-		s, ok := m.GetSession(playerName)
+		s, ok := m.bodySessionByName(playerName)
 		if !ok || s == nil {
 			return
 		}
@@ -330,17 +330,15 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			slog.Error("MessageSink marshal error", "error", err)
 			return
 		}
-		select {
-		case s.send <- wrapped:
-		default:
-			slog.Warn("MessageSink channel full — dropping message", "player", playerName)
-		}
+		s.sendGuarded(wrapped)
 	}
 
 	// C's do_simple_move calls look_at_room before follower recursion. Keep the
 	// renderer in session while letting the game transaction own that ordering.
 	world.MovementLook = func(player *game.Player) {
-		s, ok := m.GetSession(player.Name)
+		m.playerLifecycleMu.Lock()
+		defer m.playerLifecycleMu.Unlock()
+		s, ok := m.bodySessionByName(player.Name)
 		if !ok || s == nil {
 			return
 		}
@@ -496,7 +494,7 @@ func (m *Manager) SetCombatMessageFunc() {
 	}
 
 	sendToChar := func(name string, message string) {
-		if s, ok := m.GetSession(name); ok {
+		if s, ok := m.bodySessionByName(name); ok {
 			enqueueCombatMessage(s, message)
 		}
 	}
@@ -505,7 +503,7 @@ func (m *Manager) SetCombatMessageFunc() {
 	// skill_message line) with no line ending appended, so the escape bytes a
 	// keep-ansi oracle sees match C's send_to_char stream exactly.
 	sendRaw := func(name string, message string) {
-		if s, ok := m.GetSession(name); ok && s != nil {
+		if s, ok := m.bodySessionByName(name); ok && s != nil {
 			s.sendRawEvent(message)
 		}
 	}
@@ -707,7 +705,7 @@ func (m *Manager) SetDeathFunc() {
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
 			isGuest := false
-			if s, ok := m.GetSession(victim.GetName()); ok {
+			if s, ok := m.bodySessionByName(victim.GetName()); ok {
 				isGuest = s.isGuest
 				if err := cmdLook(s, nil); err != nil {
 					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
@@ -735,7 +733,7 @@ func (m *Manager) SetDeathFunc() {
 					}
 				}
 				// Refresh killer's UI
-				if s, ok := m.GetSession(killer.GetName()); ok {
+				if s, ok := m.bodySessionByName(killer.GetName()); ok {
 					s.markDirty(VarInventory, VarRoomItems)
 				}
 			}
@@ -748,7 +746,7 @@ func (m *Manager) SetDeathFunc() {
 // marked dirty so the next flushDirtyVars call will push the update.
 func (m *Manager) SetDamageFunc() {
 	m.combatEngine.DamageFunc = func(victimName string) {
-		if s, ok := m.GetSession(victimName); ok {
+		if s, ok := m.bodySessionByName(victimName); ok {
 			s.markDirty(VarHealth, VarMaxHealth)
 			s.flushDirtyVars()
 			s.gmcpVitals()
@@ -823,7 +821,7 @@ func (m *Manager) SetOnRoundEnd() {
 // world so that doOrder can execute commands on charmed followers.
 func (m *Manager) SetCommandExecFunc() {
 	m.world.CommandExecFunc = func(ch *game.Player, command string) bool {
-		sess, ok := m.GetSession(ch.GetName())
+		sess, ok := m.bodySessionByName(ch.GetName())
 		if !ok || sess == nil {
 			return false
 		}
@@ -980,6 +978,9 @@ func (m *Manager) DrainInputQueues() {
 		if s.player == nil {
 			continue
 		}
+		if attached, involved := m.switchDescriptorLocked(s.player); involved && attached != s {
+			continue
+		}
 		// Fact 2: wait decrements once per pulse.
 		s.player.DecrementWaitState()
 		// Fact 3: one command drains per pulse (if, not while).
@@ -1019,7 +1020,7 @@ func (m *Manager) SetFleeHooks() {
 		m.combatEngine.SetCallbacks(cb)
 	}
 	cb.DoFlee = func(name string) {
-		s, ok := m.GetSession(name)
+		s, ok := m.bodySessionByName(name)
 		if !ok || s == nil {
 			return
 		}
@@ -1028,7 +1029,7 @@ func (m *Manager) SetFleeHooks() {
 		}
 	}
 	cb.DoRetreat = func(name string) {
-		s, ok := m.GetSession(name)
+		s, ok := m.bodySessionByName(name)
 		if !ok || s == nil {
 			return
 		}
@@ -1453,7 +1454,12 @@ func (m *Manager) EachSession(fn func(player interface{}, send func(msg string))
 	}
 	m.mu.RUnlock()
 	for _, s := range sessions {
+		m.mu.RLock()
 		p := s.player
+		m.mu.RUnlock()
+		if attached, involved := m.switchDescriptor(p); involved && attached != s {
+			continue
+		}
 		if p == nil {
 			continue
 		}
@@ -1603,7 +1609,10 @@ func (m *Manager) WirePlayerSaver(w *game.World) {
 		// the store; saving the live session player under that edit's name must
 		// never be reported as the edit's success (and must not write the
 		// un-edited live record over the store).
-		if s.player != p {
+		m.mu.RLock()
+		owned := s.player == p || (s.activePCSwitch() && s.switchedOriginal == p)
+		m.mu.RUnlock()
+		if !owned {
 			return game.SaveSkipped
 		}
 		return s.SaveToStore(p, why, loadRoom)

@@ -502,13 +502,13 @@ func (s *Session) gmcpChannelText(channel, talker, line string) {
 type gmcpObserver struct{ m *Manager }
 
 func (o gmcpObserver) RoomShown(p *game.Player, roomVNum int) {
-	if s, ok := o.m.GetSession(p.Name); ok && s != nil && s.player == p {
+	if s, ok := o.m.bodySessionByName(p.Name); ok && s != nil && s.player == p {
 		s.gmcpRoomInfo(roomVNum)
 	}
 }
 
 func (o gmcpObserver) ChannelLine(p *game.Player, channel, talker, line string) {
-	if s, ok := o.m.GetSession(p.Name); ok && s != nil && s.player == p {
+	if s, ok := o.m.bodySessionByName(p.Name); ok && s != nil && s.player == p {
 		s.gmcpChannelText(channel, talker, line)
 	}
 }

@@ -122,12 +122,21 @@ func cmdSwitch(s *Session, args []string) error {
 		s.Send("You aren't holy enough to use a mortal's body.\r\n")
 		return nil
 	}
+	m.mu.Lock()
 	s.switchedOriginal = s.player
 	s.switchedOriginalLevel = s.player.GetLevel()
 	s.switchedPlayer = target.Player
 	s.switchedMob = target.Mob
 	s.isSwitched = true
 	s.switchedStartTime = time.Now()
+	if target.Player != nil {
+		s.player = target.Player
+	}
+	m.mu.Unlock()
+	if target.Player != nil {
+		s.switchedOriginal.SetLinkless(true)
+		target.Player.SetLinkless(false)
+	}
 	s.Send("Okay.\r\n")
 	return nil
 }
@@ -140,6 +149,14 @@ func cmdSwitch(s *Session, args []string) error {
 // - Detach the wizard's session from the switched character
 // - Re-attach to the wizard's original character
 func cmdReturn(s *Session, args []string) error {
+	m := s.manager
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	return m.returnSwitch(s)
+}
+
+// returnSwitch requires playerLifecycleMu (also used by deferred extraction).
+func (m *Manager) returnSwitch(s *Session) error {
 	// C do_return has no handler-level authorization gate and is silent unless
 	// the descriptor is attached to a switched body. Its arguments are ignored.
 	if !s.isSwitched || s.switchedOriginal == nil {
@@ -163,13 +180,8 @@ func cmdReturn(s *Session, args []string) error {
 		)
 	}
 
-	s.player = s.switchedOriginal
-	s.isSwitched = false
-	s.switchedOriginal = nil
-	s.switchedOriginalLevel = 0
-	s.switchedMob = nil
-	s.switchedPlayer = nil
 	s.Send("You return to your original body.\r\n")
+	m.detachPCSwitch(s, true)
 	return nil
 }
 

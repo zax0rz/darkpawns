@@ -344,6 +344,9 @@ func findSessionForPlayer(m *Manager, p *game.Player) *Session {
 	if m == nil || p == nil {
 		return nil
 	}
+	if attached, involved := m.switchDescriptor(p); involved {
+		return attached
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, sess := range m.sessions {
