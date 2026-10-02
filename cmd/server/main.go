@@ -716,7 +716,14 @@ func main() {
 		// game over an admin-only log would be disproportionate: telnet, /ws,
 		// /health and the world do not need it. Name what stops being recorded,
 		// because a silent audit trail is indistinguishable from a clean one.
-		slog.Warn("Admin audit trail disabled: world edits through /admin/ will not be recorded",
+		slog.Warn("Audit trail disabled: world edits through /admin/ and security events (LogSecurityEvent) will not be recorded",
+			"error", err, "path", auditLogPath)
+	} else if err := audit.Init(auditLogPath); err != nil {
+		// The panel holds its own logger above; Init wires the package-global
+		// one that LogSecurityEvent (lockouts, bad-password probes, name
+		// validation rejections) writes through. Without it every security
+		// event is dropped while the admin trail looks healthy.
+		slog.Warn("Security audit trail disabled: LogSecurityEvent calls will not be recorded",
 			"error", err, "path", auditLogPath)
 	}
 
