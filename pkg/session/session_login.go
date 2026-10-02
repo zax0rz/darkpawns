@@ -40,6 +40,10 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return err
 	}
 
+	// src/interpreter.c:1187-1190,1721: nanny skips leading C whitespace.
+	login.Password = strings.TrimLeft(login.Password, " \t\n\r\v\f")
+	failedPasswords := 0
+
 	// Apply IP-based rate limiting for login attempts
 	ip := s.RemoteIP()
 	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
@@ -199,6 +203,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return nil
 			}
 			if login.Password == "" {
+				s.sendRawEvent("\r\n") // src/interpreter.c:1871: echo_on precedes empty close.
 				s.CloseSend()
 				return nil
 			}
@@ -229,6 +234,12 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 						return nil
 					}
 				}
+				if s.manager.accountLockouts == nil {
+					// Count C bad_pws even when the Go security overlay is disabled.
+					if _, err := s.manager.db.RecordLoginFailure(rec.Name, int(^uint(0)>>1), 0); err != nil {
+						return s.abortEntry(fmt.Errorf("record wrong password: %w", err))
+					}
+				}
 				if s.loginFailures.Add(1) >= 3 { // C config.c max_bad_pws.
 					s.sendCharCreatePrompt("closing", "Wrong password... disconnecting.\r\n", nil)
 					s.CloseSend()
@@ -240,6 +251,8 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				}
 				return nil
 			}
+			// C bad_pws is ubyte; keep the approved security counter unbounded (src/structs.h:978).
+			failedPasswords = rec.FailedLoginAttempts & 0xff // src/interpreter.c:1890,1929-1937
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
 				return s.abortEntry(fmt.Errorf("restore character: %w", err))
@@ -296,6 +309,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if s.manager.accountLockouts != nil {
 			s.manager.accountLockouts.RecordSuccess(login.PlayerName)
 		}
+		if s.manager.accountLockouts == nil {
+			if err := s.manager.db.RecordLoginSuccess(login.PlayerName); err != nil {
+				return s.abortEntry(fmt.Errorf("clear wrong passwords: %w", err))
+			}
+		}
 		// C checks for another copy of the character before the MOTD
 		// (interpreter.c:1914-1916). The reconnect branch ports
 		// CON_PASSWORD's echo_on bytes itself; a fresh login emits them here,
@@ -308,7 +326,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// interpreter.c:1924-1927, after the MOTD.
 		game.MudLog(fmt.Sprintf("%s [%s] has connected.", s.player.GetName(), s.RemoteIP()),
 			game.MudlogBrief, max(game.LVL_IMMORT, s.player.GetInvisLevel()), true)
-		s.startReturningMenu(s.menuPasswordHash)
+		s.startReturningMenu(s.menuPasswordHash, failedPasswords)
 		return nil
 	}
 

@@ -54,12 +54,25 @@ func (s *Session) loginMOTDFile() string {
 	return "motd"
 }
 
-func (s *Session) startReturningMenu(passwordHash string) {
+func (s *Session) startReturningMenu(passwordHash string, failedPasswords ...int) {
 	s.menuActive = true
 	s.menuStage = "motd"
 	s.menuPasswordHash = passwordHash
 	motd := loginTextForFile(s, s.loginMOTDFile())
-	s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
+	warning := ""
+	if len(failedPasswords) > 0 && failedPasswords[0] > 0 {
+		// src/interpreter.c:1929-1937: after MOTD, before PRESS RETURN.
+		plural := ""
+		if failedPasswords[0] > 1 {
+			plural = "S"
+		}
+		red, reset := "", ""
+		if whoColorEnabled(s.player) {
+			red, reset = helpRed, helpNormal
+		}
+		warning = fmt.Sprintf("\r\n\r\n\007\007\007%s%d LOGIN FAILURE%s SINCE LAST SUCCESSFUL LOGIN.%s\r\n", red, failedPasswords[0], plural, reset)
+	}
+	s.sendCharCreatePrompt("motd", motd+warning+"\r\n\n*** PRESS RETURN: ", nil)
 }
 
 func (s *Session) showMainMenu() {
