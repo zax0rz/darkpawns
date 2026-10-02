@@ -4,6 +4,11 @@ import argparse,json,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('case');p.add_argument('output',type=Path);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 mutations={
+ 'bootstrap-remort':('pkg/game/world_player.go','case ClassThief:', 'case ClassThief, ClassAssassin:', './pkg/game', '^TestEntryBootstrapRemortKits$'),
+ 'bootstrap-practices':('pkg/game/character.go','p.SetPractices(0) // src/db.c','p.SetPractices(2) // src/db.c','./pkg/session','^TestEntryBootstrapMatrix$'),
+ 'bootstrap-pack':('pkg/game/world_player.go','w.giveStartingPackItem(p, pack, picks)','_ = picks // omit starting picks','./pkg/session','^TestEntryBootstrapMatrix$'),
+ 'bootstrap-kit':('pkg/session/char_creation.go','s.manager.world.GiveStartingItems(s.player)','// omit starting kit','./pkg/session','^TestEntryBootstrapMatrix$'),
+
  'stats-choice':('pkg/session/char_creation.go', 'choice = firstCreationByte(strings.TrimLeft(input.Choice, " \\t\\n\\r\\v\\f"))', 'choice = strings.TrimSpace(input.Choice)', './pkg/session', '^TestEntryStatsRerollMatrix$'),
  'stats-draw':('pkg/session/char_creation.go', 's.charStats = game.RollRealAbils(s.charClass, s.charRace)', '_ = game.RollRealAbils(s.charClass, s.charRace); s.charStats = game.RollRealAbils(s.charClass, s.charRace)', './pkg/session', '^TestEntryStatsRerollMatrix$'),
  'stats-accept':('pkg/session/char_creation.go', 's.charSex, s.charStats)', 's.charSex, game.CharStats{})', './pkg/session', '^TestEntryStatsRerollMatrix$'),

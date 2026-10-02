@@ -1,0 +1,65 @@
+# C src/db.c:2976-2989,3006-3078; src/class.c:501-591.
+# depth-case: entry.god-mortal-bootstrap.warrior-live
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+[setup:oracle]
+Bootgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Bootgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:mortal]
+Bootmortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:mortal]
+Bootmortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+score
+inventory
+stat Bootmortal
+send:mortal inventory
+send:mortal open pack
+send:mortal look in pack

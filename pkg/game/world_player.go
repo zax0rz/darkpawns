@@ -33,52 +33,41 @@ func (w *World) GiveStartingItems(p *Player) {
 	// Pack (8038) is created first, filled with bread (8010) + waterskin (8063)
 	// then given to player
 
-	packProto, packOK := w.GetObjPrototype(8038)
-
-	// Class-specific items (given directly to player)
-	switch p.Class {
-	case ClassThief, ClassAssassin:
-		w.giveItem(p, 8036) // dagger
-		if packOK {
-			// lockpicks (8027) go INTO the pack — handled after pack creation
-			_ = packProto // suppress unused warning, used below
-		}
-	case ClassMageUser, ClassMagus:
-		w.giveItem(p, 8036) // dagger
-		w.giveItem(p, 1239) // obsidian
-		w.giveItem(p, 1239) // obsidian (2x)
-	case ClassNinja:
-		w.giveItem(p, 8036) // dagger
-	case ClassWarrior, ClassPsionic:
-		w.giveItem(p, 8037) // small sword
-	default:
-		w.giveItem(p, 8023) // club
+	// src/class.c:506-533: allocate the pack before class objects, and
+	// insert thief picks before bread/water. obj_to_obj prepends (handler.c:948).
+	var pack *ObjectInstance
+	if proto, ok := w.GetObjPrototype(8038); ok {
+		pack = w.newObjectInstance(proto, -1)
 	}
-
-	w.giveItem(p, 8019) // tunic (all classes)
-
-	// Create pack and fill it
-	if packOK {
-		pack := w.newObjectInstance(packProto, -1)
-		pack.Contains = make([]*ObjectInstance, 0)
-
-		// bread + waterskin always in pack
+	switch p.Class {
+	case ClassThief:
+		if pack != nil {
+			if picks, ok := w.GetObjPrototype(8027); ok {
+				w.giveStartingPackItem(p, pack, picks)
+			}
+		}
+		w.giveItem(p, 8036)
+	case ClassMageUser:
+		w.giveItem(p, 8036)
+		w.giveItem(p, 1239)
+		w.giveItem(p, 1239)
+	case ClassNinja:
+		w.giveItem(p, 8036)
+	case ClassWarrior, ClassPsionic:
+		w.giveItem(p, 8037)
+	default:
+		w.giveItem(p, 8023)
+	}
+	w.giveItem(p, 8019)
+	if pack != nil {
 		if bread, ok := w.GetObjPrototype(8010); ok {
 			w.giveStartingPackItem(p, pack, bread)
 		}
 		if water, ok := w.GetObjPrototype(8063); ok {
 			w.giveStartingPackItem(p, pack, water)
 		}
-		// lockpicks in pack for thieves/assassins
-		if p.Class == ClassThief || p.Class == ClassAssassin {
-			if picks, ok := w.GetObjPrototype(8027); ok {
-				w.giveStartingPackItem(p, pack, picks)
-			}
-		}
-
 		if err := w.MoveObjectToPlayerInventory(pack, p); err != nil {
 			slog.Warn("starting pack failed", "player", p.Name, "error", err)
-			return
 		}
 	}
 }
