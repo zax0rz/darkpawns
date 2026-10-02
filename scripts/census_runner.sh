@@ -50,7 +50,9 @@ finish() {
 	finished_s=$(date +%s)
 	finished_iso=$(date '+%Y-%m-%dT%H:%M:%S%z')
 	local summary_line
-	if [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
+	if [[ "${CENSUS_COMBINED:-0}" == 1 ]]; then
+		summary_line=$(cat "$run_dir/combined-summary.txt")
+	elif [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
 		summary_line=$(cat "$run_dir/claims-summary.txt")
 	else
 		summary_line=$(grep '^oracle-regression: ' "$run_dir/census.log" | tail -1)
@@ -106,12 +108,19 @@ write_manifest() {
 		printf -- '- Summary: `%s`\n' "$summary_line"
 		printf -- '- Verdict: **%s**\n' "$verdict"
 		[[ -n "$recheck_note" ]] && printf -- '- Rechecked: %s\n' "$recheck_note"
-		if [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
+		if [[ "${CENSUS_CLAIMS:-0}" == 1 || "${CENSUS_COMBINED:-0}" == 1 ]]; then
 			printf '\n## Claims\n\n'
 			printf -- '- Go build flags: `%s`\n' "${GOFLAGS:-default}"
 			printf -- '- Manifest HEAD: `%s`\n' "$(cat "$run_dir/manifests-head.txt")"
-			printf -- '- Enumeration: `claims.tsv`; command: `census.sh start --claims --name %s`\n' "${run_dir##*/}"
+			printf -- '- Enumeration: `claims.tsv` (manifest claims, unchanged across modes)\n'
 			awk -F '\t' '{n[$1]++} END {for (s in n) printf "seed %s: %d pairs\n", s, n[s]}' "$run_dir/claims.tsv" | sort -k2,2n
+		fi
+		if [[ "${CENSUS_COMBINED:-0}" == 1 ]]; then
+			printf '\n## Combined gate\n\n'
+			printf -- '- Command: `census.sh start --combined --name %s --jobs %s`\n' "${run_dir##*/}" "$jobs"
+			printf -- '- Pair schedule: `pairs.tsv`; worker artifacts: `seed*/initial-logs/`, `seed*/recheck-logs/`\n'
+			printf -- '- Full: `%s` verdict=%s\n' "$(cat "$run_dir/full-summary.txt")" "$(cat "$run_dir/full-verdict")"
+			printf -- '- Claims: `%s` verdict=%s\n' "$(cat "$run_dir/claims-summary.txt")" "$(cat "$run_dir/claims-verdict")"
 		fi
 		printf -- '\n## File sizes (du -b)\n\n'
 		du -b -- "$run_dir"/* 2>/dev/null | sort -k2
@@ -121,6 +130,19 @@ write_manifest() {
 		fi
 	} >"$run_dir/MANIFEST.md"
 }
+
+if [[ "${CENSUS_COMBINED:-0}" == 1 ]]; then
+	python3 "$repo_root/scripts/combined_census.py" >>"$run_dir/census.log" 2>&1 9>&- &
+	child=$!
+	wait "$child"
+	if [[ ! -s "$run_dir/combined-verdict" ]]; then
+		printf 'oracle-combined: driver failed\n' >"$run_dir/combined-summary.txt"
+		finish NOT_CLEAN 1
+	fi
+	verdict=$(cat "$run_dir/combined-verdict")
+	[[ "$verdict" == NOT_CLEAN ]] && finish "$verdict" 1
+	finish "$verdict" 0
+fi
 
 if [[ "${CENSUS_CLAIMS:-0}" == 1 ]]; then
 	python3 "$repo_root/scripts/claims_census.py" >>"$run_dir/census.log" 2>&1 9>&- &
