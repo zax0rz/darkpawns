@@ -7,7 +7,7 @@ import (
 )
 
 // DP-1380 approves full-secret comparison, unlike C DES's first eight bytes
-// (src/interpreter.c:1873,1964,2292,2305). Both positive and suffix controls
+// (src/interpreter.c:1876,1964,2292,2307). Both positive and suffix controls
 // run through each actual entry comparison, not a bcrypt-only assertion.
 func TestEntryFullPasswordComparison(t *testing.T) {
 	const secret = "12345678ab"

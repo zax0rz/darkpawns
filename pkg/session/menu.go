@@ -23,7 +23,7 @@ const (
 		"5) Delete this character.\r\n\r\n" +
 		"   Make your choice: "
 	maxMenuPasswordLength = 10
-	maxDescriptionLength  = 4096
+	maxDescriptionLength  = 240 // src/structs.h:652 (EXDSCR_LENGTH)
 )
 
 var menuOptions = charOpts(
@@ -87,7 +87,7 @@ func (s *Session) resendCurrentMenuPrompt() {
 		motd := loginTextForFile(s, s.loginMOTDFile())
 		s.sendCharCreatePrompt("motd", motd+"\r\n\n*** PRESS RETURN: ", nil)
 	case "description":
-		s.sendCharCreatePrompt("description", "Enter description lines. Type @ or /s to save, /a to abort: ", nil)
+		s.sendCharCreatePrompt("description", "Instructions: /s or @ to save, /h for more options.\r\n", nil)
 	case "password_old":
 		s.sendCharCreatePromptWithSecret("menu_password", "\r\nEnter your old password: ", nil, true)
 	case "password_new":
@@ -123,7 +123,12 @@ func (s *Session) handleMenuInput(data json.RawMessage) error {
 	case "menu":
 		return s.handleMenuChoice(choice)
 	case "description":
-		s.handleDescriptionLine(input.Choice)
+		// process_input doubles dollars before string_add removes the pairs
+		// (src/comm.c:1975-1981; src/modify.c:122). Preserve raw entry text.
+		s.handleTextEditInput(strings.ReplaceAll(input.Choice, "$", "$$"))
+		if s.IsTextEditing() {
+			s.sendPromptText("] ")
+		}
 	case "password_old":
 		if !s.passwordMatches(choice) {
 			// C's echo_on stray CRLF precedes the refusal (interpreter.c:2293;
@@ -196,16 +201,7 @@ func (s *Session) handleMenuChoice(choice string) error {
 		}
 		return s.enterReturningPlayer()
 	case "2":
-		s.menuStage = "description"
-		s.menuDescriptionDraft = nil
-		current := s.menuDescription
-		if s.player != nil {
-			current = s.player.Description
-		}
-		if current != "" {
-			s.sendText("Current description:\r\n" + current + "\r\n")
-		}
-		s.sendCharCreatePrompt("description", "Enter the new text you'd like others to see when they look at you.\r\nType @ or /s to save, /a to abort: ", nil)
+		s.startMenuDescriptionEditor()
 	case "3":
 		background := loginTextForFile(s, "background")
 		s.menuStage = "background"
@@ -224,41 +220,53 @@ func (s *Session) handleMenuChoice(choice string) error {
 	return nil
 }
 
-func (s *Session) handleDescriptionLine(line string) {
-	command := strings.ToLower(strings.TrimSpace(line))
-	if command == "/a" {
-		s.menuDescriptionDraft = nil
-		s.sendText("Description not changed.\r\n")
-		s.showMainMenu()
-		return
+// CON_EXDESC uses the same live string_add engine as do_string, but retains
+// the old field for abort and returns to CON_MENU. src/interpreter.c:2247-2266;
+// src/modify.c:155-210,240-249. It does not save_char until game entry.
+func (s *Session) startMenuDescriptionEditor() {
+	s.menuStage = "description"
+	current := s.menuDescription
+	if s.player != nil {
+		current = s.player.Description
 	}
-	if command == "@" || command == "/s" {
-		description := strings.Join(s.menuDescriptionDraft, "\r\n")
-		s.menuDescriptionDraft = nil
-		if s.player == nil {
-			s.menuDescription = description
-		} else {
-			if s.manager.hasDB && s.player.ID > 0 {
-				if err := s.manager.db.UpdateDescription(s.player.ID, description); err != nil {
-					slog.ErrorContext(s.sessionCtx, "description update failed", s.logAttrs(slog.Any("error", err))...)
-					s.sendText("Unable to save description.\r\n")
-					s.showMainMenu()
-					return
-				}
-			}
-			s.player.Description = description
+	if !s.menuDescriptionKnown {
+		// store_to_char always str_dup's the saved field, even when empty
+		// (src/db.c:2431). A new character has a NULL description until edited.
+		s.menuDescriptionPresent = current != "" || (s.player != nil && !s.creationSaved)
+		s.menuDescriptionKnown = true
+	}
+	present := s.menuDescriptionPresent
+	apply := func(value string) {
+		s.menuDescriptionPresent = value != ""
+		s.menuDescription = value
+		if s.player != nil {
+			s.player.Description = value
 		}
-		s.sendText("Description saved.\r\n")
+	}
+	text := ""
+	if s.menuDescriptionPresent {
+		text = "Current description:\r\n" + current
+	}
+	text += "Enter the new text you'd like others to see when they look at you.\r\nInstructions: /s or @ to save, /h for more options.\r\n"
+	s.startLiveStringEditor(apply, maxDescriptionLength)
+	s.textEditMu.Lock()
+	s.textEdit.buffer, s.textEdit.original = current, current
+	s.textEdit.playingEditor = false
+	s.textEdit.onComplete = func(action textEditAction, _, original string) {
+		if action == textEditAbort {
+			apply(original)
+			s.menuDescriptionPresent = present
+			s.sendTextEditor("Description aborted.\r\n")
+		}
+		if s.player != nil {
+			s.player.SetPlrFlag(game.PlrMailing, false)
+			s.player.SetPlrFlag(game.PlrWriting, false)
+		}
 		s.showMainMenu()
-		return
 	}
-
-	currentLength := len(strings.Join(s.menuDescriptionDraft, "\r\n"))
-	if currentLength+len(line)+2 > maxDescriptionLength {
-		s.sendText("Description is too long; type @ or /s to save, /a to abort.\r\n")
-		return
-	}
-	s.menuDescriptionDraft = append(s.menuDescriptionDraft, line)
+	s.textEditMu.Unlock()
+	s.sendCharCreatePrompt("description", text, nil)
+	s.sendPromptText("] ")
 }
 
 func (s *Session) passwordMatches(password string) bool {
@@ -443,7 +451,8 @@ func (s *Session) clearMenuState() {
 	s.menuActive = false
 	s.menuStage = ""
 	s.menuDescription = ""
-	s.menuDescriptionDraft = nil
+	s.menuDescriptionKnown = false
+	s.menuDescriptionPresent = false
 	s.menuPasswordHash = ""
 	s.menuNewPasswordHash = ""
 }

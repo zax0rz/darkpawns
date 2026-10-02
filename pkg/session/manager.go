@@ -1736,12 +1736,13 @@ type Session struct {
 
 	// Post-MOTD main menu state. This is separate from character creation
 	// because returning players pass through the same menu before world entry.
-	menuActive           bool
-	menuStage            string
-	menuDescription      string
-	menuDescriptionDraft []string
-	menuPasswordHash     string
-	menuNewPasswordHash  string
+	menuActive             bool
+	menuStage              string
+	menuDescription        string
+	menuDescriptionPresent bool
+	menuDescriptionKnown   bool
+	menuPasswordHash       string
+	menuNewPasswordHash    string
 
 	// Output pager state (DP-1195; port of the Buselli pager, modify.c:346-527).
 	// While pagerCount > 0, every input line routes to handlePagerInput instead

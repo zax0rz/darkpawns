@@ -1,0 +1,72 @@
+# src/interpreter.c:2247-2266; src/modify.c:155-210,240-249; src/structs.h:652.
+# depth-case: entry.menu-actions.description-returning
+[fixture]
+quiet-mobs
+no-settle
+empty-players
+[setup:oracle]
+Aiko
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+[setup:port]
+Aiko
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+[probe]
+<RELOGIN>
+2
+Old text.
+/s
+2
+/l
+Added $$line~
+/n
+/a
+2
+/l
+/c
+First line.
+Second line.
+/e2 Changed line.
+/i2 Middle line.
+/d1
+/r 'line' 'entry'
+/n
+/f
+/l
+/h
+/s
+2
+/c
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+next
+@suffix
+2
+/l
+/a
+[relogin:oracle]
+Aiko
+~dpclock pulse 1
+oraclepass
+<ENTER>
+[relogin:port]
+Aiko
+~dpclock pulse 1
+oraclepass
+<ENTER>
