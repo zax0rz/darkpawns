@@ -4,6 +4,13 @@ import argparse,json,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('case');p.add_argument('output',type=Path);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 mutations={
+ 'world-unhealthy':('pkg/session/menu.go','if p.LoginConstitution() == 0 {','if false {','./pkg/session','^TestEntryWorldUnhealthy$'),
+ 'world-equipment':('pkg/session/menu.go','p.LoginConstitution() == 0','p.GetCon() == 0','./pkg/session','^TestEntryWorldUnhealthy$'),
+ 'world-cleanup':('pkg/session/menu.go','s.manager.world.ExtractRentedObjects(p)','// omit restored-object cleanup','./pkg/session','^TestEntryWorldUnhealthy$'),
+ 'world-audience':('pkg/session/char_creation.go','s.player.SetRoom(s.manager.world.SelectLoginRoom(s.player))','s.player.SetRoom(finalRoom)','./pkg/session','^TestEntryWorldNewMortalAudience$'),
+ 'world-return':('pkg/session/menu.go','"$n has entered the game."','"$n has arrived."','./pkg/session','^TestEntryWorldMatrix$'),
+ 'world-reset':('pkg/session/menu.go','p.SetPosition(game.PosStanding)','p.SetPosition(game.PosSleeping)','./pkg/session','^TestEntryWorldMatrix$'),
+
  'menu-choice':('pkg/session/menu.go','switch firstCreationByte(choice) {','switch choice {','./pkg/session','^TestEntryMenuMatrix$'),
  'menu-secret':('pkg/session/menu.go', 'choice := strings.TrimLeft(input.Choice, " \\t\\n\\r\\v\\f")', 'choice := input.Choice', './pkg/session', '^TestEntryMenuMatrix$'),
  'menu-delete':('pkg/session/menu.go','if choice != "yes" && choice != "YES" {','if !strings.EqualFold(choice, "yes") {','./pkg/session','^TestEntryMenuMatrix$'),

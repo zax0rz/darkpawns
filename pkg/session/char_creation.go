@@ -623,6 +623,9 @@ func (s *Session) completeCharCreation() error {
 			return s.abortEntry(err)
 		}
 	}
+	if !s.prepareWorldEntry() {
+		return nil
+	}
 	restoreLiveDefaults := resumingCreation && !s.creationSaved
 	s.charName = s.player.Name
 	isGod := s.player.GetLevel() >= game.LVL_IMMORT
@@ -690,6 +693,14 @@ func (s *Session) completeCharCreation() error {
 		return err
 	}
 
+	// C announces in the selected load room before moving a new mortal
+	// into 8099 (interpreter.c:2191-2243). The creation body already has
+	// do_start defaults here, but the room audience belongs to the earlier room.
+	finalRoom := s.player.GetRoom()
+	s.player.SetRoom(s.manager.world.SelectLoginRoom(s.player))
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n has entered the game.", "", game.ToRoom)
+	s.player.SetRoom(finalRoom)
+
 	// C skips do_start() for the first-player God because init_char already
 	// assigned a nonzero level (interpreter.c:2214). That means the God gets
 	// no mortal starter gear; only a newly created mortal receives it.
@@ -742,20 +753,6 @@ func (s *Session) completeCharCreation() error {
 	if s.wantsStructuredData {
 		s.sendFullVarDump()
 	}
-
-	// Broadcast arrival
-	enterMsg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "enter",
-			Text: s.player.Name + " has arrived.",
-		},
-	})
-	if err != nil {
-		slog.ErrorContext(s.sessionCtx, "json.Marshal error", s.logAttrs(slog.Any("error", err))...)
-		return nil
-	}
-	s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
 
 	return nil
 }

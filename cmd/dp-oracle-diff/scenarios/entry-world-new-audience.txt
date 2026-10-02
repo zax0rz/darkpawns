@@ -1,0 +1,61 @@
+# src/interpreter.c:2191-2243: announce in selected room before moving into 8099.
+# depth-case: entry.world-entry.new-live
+[fixture]
+quiet-mobs
+empty-players
+no-settle
+[setup:oracle]
+Entrygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+[setup:port]
+Entrygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+[setup:oracle:mortal]
+Entrymortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+[setup:port:mortal]
+Entrymortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+[probe]
+send:mortal 1
+stat Entrymortal

@@ -1,0 +1,15 @@
+# entry.world-entry
+
+R1/R5g: src/interpreter.c:2174-2243; src/db.c:2441-2481,2936-2961; src/comm.c:2480-2538.
+
+Shared creation/returning preparation now resets position and nonpositive pools, closes zero-CON characters before save/admission, and applies INVSTART. The check preserves C's store_to_char tattoo/spell constitution before Crash_load equipment; the Go store restores equipment before the menu, so a separate read-only LoginConstitution calculation excludes gear without perturbing the live attributes. Rejection extracts earlier restored objects, drops the candidate and registration, and cannot write the durable row during teardown.
+
+Both entry paths use C act text and audience selection. A new mortal is announced in the selected initial load room before moving into 8099. The God stays in its immortal load room. Returning entries honor saved/frozen/fallback rooms and announce to awake, non-writing observers who can see them. The independent matrix checks visible/invisible, sleeping/writing, self/other room suppression and one registration. Existing saved/new real-transport proofs remain delegated to entry.world-entry-saved-transport.
+
+TestEntryWorldUnhealthy uses real SQLite records at level 0/1/40 with inventory and CON-boosting equipment: the loaded gameplay CON is positive, but C's pre-equipment CON is zero; rejection must close, leave the record identical and leave no registered objects/character/session. TestEntryPreEquipmentConstitution separately checks gear rescue/rejection, spell rescue/rejection, bounded spell totals versus unbounded base copy, and unchanged effective gameplay attributes. TestEntryWorldMatrix, TestEntryWorldAudience, TestEntryWorldNewMortalAudience and TestSelectLoginRoom own the remaining state matrix. entry-world-new-audience passed in dp-1371-entry-world.
+
+R5h triples [0,1,0]: world-unhealthy, world-equipment, world-cleanup, world-audience, world-return, world-reset. Retained under entry-train-proofs; mandatory gates in world-gates-final.
+
+Other readers: creation and resumed level-zero menu entry share the gate; returning rental reload precedes it without a save. Discard-before-cleanup prevents session teardown, autosave and future reconnect from treating rejected state as a playing body. Inventory/equipment extraction uses shared APIs. INVSTART affects visibility, act, score and future saves; it uses the shared setter. Go admin authentication still treats a nondeleted zero-CON record as an account (C's unhealthy rule concerns game entry, not web permissions); no admin policy is inferred. Both transports receive the exact rejection, and room acts use the existing MessageSink. Welcome/JWT and structured room payloads still describe the final room. No security or logging policy changes.
+
+The first full local test run hit TestEntryTelnetNewCharacterDisconnectResumes/menu=false at name-claim teardown. Three focused repeats passed and the subsequent full required gates passed; both attempt logs remain retained. No retry was used to clear an oracle verdict.

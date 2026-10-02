@@ -419,3 +419,26 @@ func TestE2AttrNPCJoinOrder(t *testing.T) {
 		}
 	}
 }
+
+// The menu gate precedes Crash_load equipment. Saved spells/tattoos apply;
+// equipment may neither rescue a zero-CON character nor reject a healthy one.
+func TestEntryPreEquipmentConstitution(t *testing.T) {
+	for _, tc := range []struct{ base, gear, spell, want int }{{0, 2, 0, 0}, {1, -2, 0, 1}, {0, 2, 1, 1}, {1, 2, -1, 0}, {25, 1, 0, 25}, {25, 1, 1, 18}, {-1, 2, 0, -1}} {
+		p := attrPlayer()
+		p.Stats.Con = tc.base
+		p.CopyBaseAttributes()
+		if err := p.Equipment.Equip(attrItem(ApplyCon, tc.gear), p.Inventory); err != nil {
+			t.Fatal(err)
+		}
+		if tc.spell != 0 {
+			p.AddAffect(engine.NewAffectDirect(1, ApplyCon, 1, tc.spell, 0, "test"))
+		}
+		before := attrSnapshot(p)
+		if got := p.LoginConstitution(); got != tc.want {
+			t.Fatalf("base/gear/spell=%d/%d/%d: con=%d want %d", tc.base, tc.gear, tc.spell, got, tc.want)
+		}
+		if attrSnapshot(p) != before {
+			t.Fatal("gate changed effective gameplay attributes")
+		}
+	}
+}

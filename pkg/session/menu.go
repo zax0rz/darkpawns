@@ -375,23 +375,10 @@ func (s *Session) enterReturningPlayer() error {
 			return err
 		}
 	}
-	name := s.player.Name
-	// C's CON_MENU path calls reset_char() before re-adding an extracted
-	// player. In particular, a post-death player is still at NOWHERE with
-	// non-positive H/MV; reset_char supplies the minimal playable state and
-	// the load-room rule below selects the entry room.
-	if s.player.GetRoom() < 0 {
-		s.player.SetPosition(game.PosStanding)
-		if s.player.GetHP() <= 0 {
-			s.player.SetHP(1)
-		}
-		if s.player.GetMove() <= 0 {
-			s.player.SetMove(1)
-		}
-		if s.player.GetMana() <= 0 {
-			s.player.SetMana(1)
-		}
+	if !s.prepareWorldEntry() {
+		return nil
 	}
+	name := s.player.Name
 	// C saves the character with load_room NOWHERE at every game entry
 	// (interpreter.c:2186), so a character whose process dies mid-session
 	// restarts at a start room rather than their last legal quit room.
@@ -426,10 +413,7 @@ func (s *Session) enterReturningPlayer() error {
 	if s.wantsStructuredData {
 		s.sendFullVarDump()
 	}
-	enterMsg, err := json.Marshal(ServerMessage{Type: MsgEvent, Data: EventData{Type: "enter", Text: name + " has arrived."}})
-	if err == nil {
-		s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, name)
-	}
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n has entered the game.", "", game.ToRoom)
 	s.clearMenuState()
 	return nil
 }
@@ -462,4 +446,40 @@ func (s *Session) clearMenuState() {
 	s.menuDescriptionDraft = nil
 	s.menuPasswordHash = ""
 	s.menuNewPasswordHash = ""
+}
+
+// prepareWorldEntry ports reset_char followed by the unhealthy/INVSTART gates.
+// src/db.c:2936-2961; src/interpreter.c:2174-2184.
+func (s *Session) prepareWorldEntry() bool {
+	p := s.player
+	p.SetPosition(game.PosStanding)
+	if p.GetHP() <= 0 {
+		p.SetHP(1)
+	}
+	if p.GetMove() <= 0 {
+		p.SetMove(1)
+	}
+	if p.GetMana() <= 0 {
+		p.SetMana(1)
+	}
+	if p.LoginConstitution() == 0 {
+		s.sendRawEvent("You are too unhealthy to play!\r\n")
+		// C closes before saving or admitting the character. Discard Go's
+		// earlier restored objects and candidate so transport cleanup cannot save.
+		s.manager.world.ExtractRentedObjects(p)
+		s.authenticated = false
+		s.player = nil
+		s.creationSaved = false
+		s.charCreating = false
+		s.charPassword = ""
+		s.releaseEntryName()
+		s.clearMenuState()
+		s.manager.UnregisterSession(s)
+		s.CloseSend()
+		return false
+	}
+	if p.GetFlags()&(1<<uint(game.PlrInvstart)) != 0 {
+		p.SetInvisLevel(p.GetLevel())
+	}
+	return true
 }
