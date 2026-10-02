@@ -45,12 +45,17 @@ type TCPConn struct {
 	// closed records a server-side EOF seen by ReadUntilQuiescent. It is only
 	// read after the read that set it, so the harness's single-threaded
 	// per-connection driving needs no lock.
-	closed bool
+	closed        bool
+	firstByteWait time.Duration
 }
 
 func NewTCPConn(conn net.Conn) *TCPConn {
 	return &TCPConn{conn: conn, reader: bufio.NewReader(conn)}
 }
+
+// SetFirstByteWait separates response latency from trailing silence. A zero
+// value preserves the legacy one-window reader for explicit timing controls.
+func (c *TCPConn) SetFirstByteWait(d time.Duration) { c.firstByteWait = d }
 
 // ObservedClose reports whether the server closed this transport.
 func (c *TCPConn) ObservedClose() bool { return c.closed }
@@ -68,8 +73,13 @@ func (c *TCPConn) Send(line string) error {
 // the transcript normalizer.
 func (c *TCPConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 	var out []byte
+	firstDeadline := time.Now().Add(max(d, c.firstByteWait))
 	for {
-		if err := c.conn.SetReadDeadline(time.Now().Add(d)); err != nil {
+		deadline := firstDeadline
+		if len(out) > 0 {
+			deadline = time.Now().Add(d)
+		}
+		if err := c.conn.SetReadDeadline(deadline); err != nil {
 			return string(out), err
 		}
 		b, err := c.reader.ReadByte()

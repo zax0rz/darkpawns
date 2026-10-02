@@ -16,7 +16,11 @@ repo = Path(sys.argv[1]).resolve()
 evidence = Path(sys.argv[2]).resolve()
 evidence.mkdir(parents=True, exist_ok=True)
 def command(args, **kwargs):
-    return subprocess.run(args, cwd=repo, check=True, text=True, capture_output=True, **kwargs).stdout.strip()
+    p = subprocess.run(args, cwd=repo, text=True, capture_output=True, **kwargs)
+    if p.returncode:
+        print(p.stdout + p.stderr, flush=True)
+        p.check_returncode()
+    return p.stdout.strip()
 head = command(['git', 'rev-parse', 'HEAD'])
 assert not command(['git', 'status', '--porcelain']), 'benchmark needs a clean tree'
 records = {}
@@ -26,10 +30,16 @@ def run(label, flags, jobs, timings=None):
     assert not command(['git', 'status', '--porcelain'])
     env = dict(os.environ)
     env.pop('CENSUS_TIMINGS_FILE', None)
+    if label == 'baseline-full':
+        # Retain successful full-run attempt logs too, for raw empty-read counts.
+        env['ORACLE_REGRESSION_LOG_ROOT'] = str(evidence/'baseline-full-worker-logs')
     if timings:
         env['CENSUS_TIMINGS_FILE'] = str(timings)
     before = time.monotonic()
-    args = [str(repo/'scripts/census.sh'), 'start', '--name', f'dp-1371-combined-fixed-{label}', '--jobs', str(jobs)] + flags
+    args = [str(repo/'scripts/census.sh'), 'start', '--name', f'dp-1371-combined-firstbyte-{label}', '--jobs', str(jobs)] + flags
+    # summary.txt precedes final manifest writing and lock release. Wait on
+    # the kernel lock between measured runs rather than polling or retrying.
+    subprocess.run(['flock', '-w', '60', str(Path(env.get('XDG_RUNTIME_DIR', '/tmp'))/'dp-census.lock'), 'true'], check=True)
     out = command(args, env=env)
     print(out, flush=True)
     directory = Path(out.removeprefix('census started: '))

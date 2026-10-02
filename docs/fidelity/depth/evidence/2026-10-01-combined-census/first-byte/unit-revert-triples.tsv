@@ -1,0 +1,4 @@
+mutation	test	before	reverted	restored
+tcp-cpu	TestTCPFirstByteWaitUnderCPULoad	0	1	0
+ws-cpu-echo	TestWSFirstByteWaitUnderCPULoadIgnoresLocalEcho	0	1	0
+trailing-silence	TestTCPFirstByteWaitKeepsTrailingSilence	0	1	0

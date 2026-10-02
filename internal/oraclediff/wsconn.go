@@ -30,7 +30,8 @@ type WSConn struct {
 	// client echoes typed input too, and the telnet transcript never holds
 	// it, so it is dropped here to keep the two transports comparable. The
 	// client does not echo secret input (passwords); nothing is dropped then.
-	pendingEcho string
+	pendingEcho   string
+	firstByteWait time.Duration
 	// chrome strips what the client writes about its own socket (see
 	// clientChrome); it names the URL, so it is built per connection.
 	chrome *strings.Replacer
@@ -90,9 +91,25 @@ func (c *WSConn) Send(line string) error {
 	return err
 }
 
+// SetFirstByteWait separates response latency from trailing silence.
+func (c *WSConn) SetFirstByteWait(d time.Duration) { c.firstByteWait = d }
+
+// hasGameOutput ignores local echo and transport chrome when deciding whether
+// the first response arrived; neither is server game output.
+func (c *WSConn) hasGameOutput() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.chrome.Replace(strings.TrimPrefix(c.buf.String(), c.pendingEcho)) != ""
+}
+
 // ReadUntilQuiescent returns after the client has written nothing for d.
 func (c *WSConn) ReadUntilQuiescent(d time.Duration) (string, error) {
-	timer := time.NewTimer(d)
+	firstDeadline := time.Now().Add(max(d, c.firstByteWait))
+	wait := time.Until(firstDeadline)
+	if c.hasGameOutput() {
+		wait = d
+	}
+	timer := time.NewTimer(wait)
 	defer timer.Stop()
 	for {
 		select {
@@ -100,7 +117,11 @@ func (c *WSConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 			if !timer.Stop() {
 				<-timer.C
 			}
-			timer.Reset(d)
+			wait = time.Until(firstDeadline)
+			if c.hasGameOutput() {
+				wait = d
+			}
+			timer.Reset(max(wait, 0))
 		case <-c.done:
 			out := c.take()
 			if out == "" {
