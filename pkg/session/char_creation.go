@@ -346,6 +346,8 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		s.sendStatsRollPrompt()
 
 	case "stats_roll":
+		// src/interpreter.c:1721,2120-2151: accept/reroll uses the first byte.
+		choice = firstCreationByte(strings.TrimLeft(input.Choice, " \t\n\r\v\f"))
 		switch strings.ToUpper(choice) {
 		case "Y":
 			if err := s.persistAcceptedCharacter(); err != nil {

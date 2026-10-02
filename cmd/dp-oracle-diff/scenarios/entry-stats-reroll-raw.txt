@@ -1,0 +1,31 @@
+# C src/interpreter.c:2106-2151; src/class.c:380-497.
+# Raw reroll displays retain all six ability adjectives and prompt framing.
+# depth-case: entry.stats-reroll.raw
+[fixture]
+quiet-mobs
+no-settle
+keep-prompts
+[setup:oracle]
+Rerollraw
+Y
+oraclepass
+oraclepass
+N
+M
+M
+W
+K
+[setup:port]
+Rerollraw
+Y
+oraclepass
+oraclepass
+N
+M
+M
+W
+K
+[probe]
+x
+no again
+N

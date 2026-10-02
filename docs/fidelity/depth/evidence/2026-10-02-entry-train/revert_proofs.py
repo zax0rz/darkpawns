@@ -4,6 +4,10 @@ import argparse,json,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('case');p.add_argument('output',type=Path);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 mutations={
+ 'stats-choice':('pkg/session/char_creation.go', 'choice = firstCreationByte(strings.TrimLeft(input.Choice, " \\t\\n\\r\\v\\f"))', 'choice = strings.TrimSpace(input.Choice)', './pkg/session', '^TestEntryStatsRerollMatrix$'),
+ 'stats-draw':('pkg/session/char_creation.go', 's.charStats = game.RollRealAbils(s.charClass, s.charRace)', '_ = game.RollRealAbils(s.charClass, s.charRace); s.charStats = game.RollRealAbils(s.charClass, s.charRace)', './pkg/session', '^TestEntryStatsRerollMatrix$'),
+ 'stats-accept':('pkg/session/char_creation.go', 's.charSex, s.charStats)', 's.charSex, game.CharStats{})', './pkg/session', '^TestEntryStatsRerollMatrix$'),
+
  'race-choice':('pkg/session/char_creation.go','switch firstCreationByte(upperChoice) {','switch upperChoice {','./pkg/session','^TestEntryCreationChoiceMatrix$'),
  'creation-choices':('pkg/session/char_creation.go','if s.charStage != "race" && len(choice) > 0 {','if false && s.charStage != "race" && len(choice) > 0 {','./pkg/session','^TestEntryCreationChoiceMatrix$'),
  'race-help':('pkg/session/char_creation.go','help = "That is not a race..\\r\\n"','help = "\\r\\nThat is not a race..\\r\\n"','./pkg/session','^TestEntryRaceHelpMatrix$'),

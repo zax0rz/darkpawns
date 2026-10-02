@@ -1,0 +1,71 @@
+# C src/interpreter.c:2106-2157; src/class.c:380-497.
+# Numeric mortal stat report exposes accepted rolls after two rerolls; God scores/draws are unit proven.
+# depth-case: entry.stats-reroll.live
+[fixture]
+quiet-mobs
+empty-players
+no-settle
+[creation:oracle]
+Rerollgod
+Y
+oraclepass
+oraclepass
+N
+M
+M
+W
+K
+x
+no again
+N
+yes please
+<ENTER>
+1
+[creation:port]
+Rerollgod
+Y
+oraclepass
+oraclepass
+N
+M
+M
+W
+K
+x
+no again
+N
+yes please
+<ENTER>
+1
+[setup:oracle:mortal]
+Rerollmortal
+Y
+oraclepass
+oraclepass
+N
+F
+E
+M
+K
+N
+N
+Y
+<ENTER>
+1
+[setup:port:mortal]
+Rerollmortal
+Y
+oraclepass
+oraclepass
+N
+F
+E
+M
+K
+N
+N
+Y
+<ENTER>
+1
+[probe]
+stat Rerollmortal
