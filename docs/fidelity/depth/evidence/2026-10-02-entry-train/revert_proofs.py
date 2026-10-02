@@ -4,6 +4,9 @@ import argparse,json,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('case');p.add_argument('output',type=Path);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 mutations={
+ 'race-choice':('pkg/session/char_creation.go','switch firstCreationByte(upperChoice) {','switch upperChoice {','./pkg/session','^TestEntryCreationChoiceMatrix$'),
+ 'creation-choices':('pkg/session/char_creation.go','if s.charStage != "race" && len(choice) > 0 {','if false && s.charStage != "race" && len(choice) > 0 {','./pkg/session','^TestEntryCreationChoiceMatrix$'),
+ 'race-help':('pkg/session/char_creation.go','help = "That is not a race..\\r\\n"','help = "\\r\\nThat is not a race..\\r\\n"','./pkg/session','^TestEntryRaceHelpMatrix$'),
  'password-security':('pkg/session/session_login.go','if s.manager.accountLockouts != nil {','if false && s.manager.accountLockouts != nil {','./pkg/session','^TestHandleLogin_(LockedAccountReturnsErrorAndCloses|NewlyLockedClosesImmediately)$'),
  'password-durable':('pkg/session/session_login.go','if s.manager.accountLockouts == nil {','if false && s.manager.accountLockouts == nil {','./pkg/session','^TestEntryPasswordAccounting$'),
  'password-leading':('pkg/session/session_login.go','login.Password = strings.TrimLeft(login.Password, " \\t\\n\\r\\v\\f")','login.Password = login.Password','./pkg/session','^TestEntryPasswordAccounting$'),

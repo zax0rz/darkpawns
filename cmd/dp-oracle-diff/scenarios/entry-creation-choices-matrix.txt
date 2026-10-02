@@ -1,0 +1,34 @@
+# C src/interpreter.c:1841-1858,1988-2105.
+# depth-case: entry.creation-choices.live
+[fixture]
+quiet-mobs
+no-settle
+[setup:oracle]
+Aiko
+[setup:port]
+Aiko
+[probe]
+maybe
+yes
+abc
+abc
+x
+yes
+x
+male
+?
+?h
+?e
+?d
+?k
+?m
+?r
+?s
+?x
+x
+kender
+ninja
+avatar
+thief
+x
+kir

@@ -148,6 +148,16 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		choice = input.Choice // Name/password gates own their input bytes.
 	}
 
+	// src/interpreter.c:1721,1841-1858,1988-2105: choices use the
+	// first byte after leading C whitespace, preserving trailing input.
+	switch s.charStage {
+	case "confirm_name", "color", "sex", "race", "class", "hometown":
+		choice = strings.TrimLeft(input.Choice, " \t\n\r\v\f")
+		if s.charStage != "race" && len(choice) > 0 {
+			choice = choice[:1]
+		}
+	}
+
 	switch s.charStage {
 	case "get_name":
 		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(choice)), "guest") {
@@ -248,7 +258,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 				case "S":
 					help = HelpSsaur
 				default:
-					help = "\r\nThat is not a race..\r\n"
+					help = "That is not a race..\r\n"
 				}
 			} else {
 				help = RaceHelpText
@@ -258,7 +268,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 
 		var race int
-		switch upperChoice {
+		switch firstCreationByte(upperChoice) {
 		case "H":
 			race = game.RaceHuman
 		case "E":
@@ -858,4 +868,11 @@ func expandEntryColors(text string) string {
 		out.WriteByte(text[i])
 	}
 	return out.String()
+}
+
+func firstCreationByte(choice string) string {
+	if len(choice) == 0 {
+		return ""
+	}
+	return choice[:1]
 }
