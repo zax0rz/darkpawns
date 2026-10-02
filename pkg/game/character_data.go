@@ -32,17 +32,34 @@ func EncodeCharacterData(p *Player) ([]byte, error) {
 	return out, nil
 }
 
+// decodeCharacterData is shared by restoration and its side-effect-free preflight.
+func decodeCharacterData(raw []byte) (*savePlayerData, error) {
+	if len(raw) == 0 || string(raw) == "{}" || string(raw) == "null" {
+		return nil, nil
+	}
+	var data savePlayerData
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return nil, fmt.Errorf("decode character data: %w", err)
+	}
+	return &data, nil
+}
+
+// ValidateCharacterData checks the same saved-data schema as ApplyCharacterData,
+// before a database restore allocates world-owned objects.
+func ValidateCharacterData(raw []byte) error {
+	_, err := decodeCharacterData(raw)
+	return err
+}
+
 // ApplyCharacterData restores what EncodeCharacterData wrote onto a player
 // rebuilt from the game store's columns. An empty record (a character saved
 // before the column existed) leaves the player as the columns made them.
 func ApplyCharacterData(p *Player, raw []byte) error {
-	if len(raw) == 0 || string(raw) == "{}" || string(raw) == "null" {
-		return nil
+	data, err := decodeCharacterData(raw)
+	if err != nil || data == nil {
+		return err
 	}
-	var data savePlayerData
-	if err := json.Unmarshal(raw, &data); err != nil {
-		return fmt.Errorf("decode character data: %w", err)
-	}
+
 	p.mu.Lock()
 	p.Sex, p.Gold, p.BankGold, p.Alignment = data.Sex, data.Gold, data.BankGold, data.Alignment
 	p.Flags = migrateFlags(data.SaveVersion, data.Flags)

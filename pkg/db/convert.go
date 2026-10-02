@@ -65,6 +65,11 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 
 // RecordToPlayer restores a *game.Player from a *PlayerRecord.
 func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
+	// Validate before restoreSavedItems creates live world objects. Retain the
+	// existing post-equipment ApplyCharacterData ordering on successful loads.
+	if err := game.ValidateCharacterData(r.CharacterData); err != nil {
+		return nil, err
+	}
 	stats := game.CharStats{
 		Str:    r.StatStr,
 		StrAdd: r.StatStrAdd,
