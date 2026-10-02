@@ -58,3 +58,15 @@ are retained alongside this note. This changes game code: open one PR and stop
 for Zach. Next batch is entry.new-password, then entry.password-retries.
 
 Completed-source gates pass: fmt, build, vet, all tests, cache-clean/lint (0 issues), diff check, fidelity-depth (5233 total; 5113 proven/delegated; 63 blocked), fidelity-units (1189/1189; 1177 rows, 968 symbols, 11 packages), string census, and focused race tests.
+
+dp-1371-p4-entry-load-failure-full (captured Go HEAD 9c2608db22ddf33be4b7106f6a4f4f0cee0fd657):
+
+```
+oracle-regression: scenarios=1058 passed=1052 expected=5 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1 elapsed=499.176s started=2026-10-01T19:55:53-0400 finished=2026-10-01T20:04:12-0400 verdict=CLEAN
+```
+
+dp-1371-p4-entry-load-failure-claims (captured Go HEAD 9c2608db22ddf33be4b7106f6a4f4f0cee0fd657):
+
+```
+oracle-claims: seed=all pairs=3020 expected=11 expected_unstable=0 fail=0 infra=0 pass=3009 stale=0 timeout=0 unpinnable=0 elapsed=1748.924s verdict=CLEAN_AFTER_RECHECK
+```
