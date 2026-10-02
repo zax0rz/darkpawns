@@ -44,8 +44,16 @@ the reference oracle's sha256, and writes `MANIFEST.md` itself.
 ```bash
 scripts/census.sh start --name <issue-or-run>            # full census, returns at once
 scripts/census.sh start --name <run> --scenarios a,b,c   # targeted
+scripts/census.sh start --combined --name <run>          # full seed-1 corpus plus all claimed pairs, deduplicated
 scripts/census.sh wait                                   # blocks <=9 min, prints ONE line
 ```
+
+When a brief requires both a full census and a claims census, use `--combined`.
+It executes their union once, retains the existing full and claims result files
+and separate verdicts, and is clean only when both verdicts are CLEAN or
+CLEAN_AFTER_RECHECK. Use `--jobs N` to set the global worker limit across all
+seeds. Separate full and `--claims` runs remain available for diagnosis and
+comparisons.
 
 `wait` exits 0 (clean), 1 (not clean), 3 (still running: call `wait` again),
 or 4 (died / nothing running). Its one line is the whole result.
