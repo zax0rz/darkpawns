@@ -451,7 +451,11 @@ func gmcpTableName(table []string, index int) string {
 
 // gmcpRoomInfo reports a room the player was just shown.
 func (s *Session) gmcpRoomInfo(roomVNum int) {
-	if s.player == nil || !s.gmcpWants("Room.Info") {
+	s.gmcpRoomInfoForPlayer(roomVNum, s.player)
+}
+
+func (s *Session) gmcpRoomInfoForPlayer(roomVNum int, player *game.Player) {
+	if player == nil || !s.gmcpWants("Room.Info") {
 		return
 	}
 	world := s.manager.world
@@ -467,7 +471,7 @@ func (s *Session) gmcpRoomInfo(roomVNum int) {
 		Name:        room.Name,
 		Area:        s.manager.mudletMap.AreaName(room.Zone),
 		Environment: environment,
-		Exits:       gmcpVisibleExits(room, s.player.GetLevel() >= game.LVL_IMMORT),
+		Exits:       gmcpVisibleExits(room, player.GetLevel() >= game.LVL_IMMORT),
 	})
 }
 
@@ -502,14 +506,24 @@ func (s *Session) gmcpChannelText(channel, talker, line string) {
 type gmcpObserver struct{ m *Manager }
 
 func (o gmcpObserver) RoomShown(p *game.Player, roomVNum int) {
-	if s, ok := o.m.bodySessionByName(p.Name); ok && s != nil && s.player == p {
-		s.gmcpRoomInfo(roomVNum)
+	if s, ok := o.m.bodySessionByName(p.Name); ok && s != nil {
+		o.m.mu.RLock()
+		matches := s.player == p
+		o.m.mu.RUnlock()
+		if matches {
+			s.gmcpRoomInfoForPlayer(roomVNum, p)
+		}
 	}
 }
 
 func (o gmcpObserver) ChannelLine(p *game.Player, channel, talker, line string) {
-	if s, ok := o.m.bodySessionByName(p.Name); ok && s != nil && s.player == p {
-		s.gmcpChannelText(channel, talker, line)
+	if s, ok := o.m.bodySessionByName(p.Name); ok && s != nil {
+		o.m.mu.RLock()
+		matches := s.player == p
+		o.m.mu.RUnlock()
+		if matches {
+			s.gmcpChannelText(channel, talker, line)
+		}
 	}
 }
 

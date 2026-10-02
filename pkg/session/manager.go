@@ -352,8 +352,6 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 	// C's do_simple_move calls look_at_room before follower recursion. Keep the
 	// renderer in session while letting the game transaction own that ordering.
 	world.MovementLook = func(player *game.Player) {
-		m.playerLifecycleMu.Lock()
-		defer m.playerLifecycleMu.Unlock()
 		s, ok := m.bodySessionByName(player.Name)
 		if !ok || s == nil {
 			return
@@ -569,6 +567,20 @@ func (m *Manager) SetPulsePump(pump func(int) error) {
 // check_idling's idle disconnect (limits.c:442-444) and a linkdead
 // close_socket (comm.c:2129) — and both must retire the session here instead.
 func (m *Manager) ExtractPendingChars() {
+	work := m.world.HasPendingExtractions()
+	if !work {
+		for _, p := range m.world.GetAllPlayers() {
+			if p.IdleDisconnect {
+				if attached, involved := m.switchDescriptor(p); involved && attached != nil {
+					work = true
+					break
+				}
+			}
+		}
+	}
+	if !work {
+		return
+	}
 	m.playerLifecycleMu.Lock()
 	defer m.playerLifecycleMu.Unlock()
 	// check_idling closes the acting descriptor before extraction, even if it

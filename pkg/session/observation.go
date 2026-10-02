@@ -19,10 +19,13 @@ func cmdLook(s *Session, args []string) error {
 // cmdMovementLook is the one allowed observation/movement cross-cut: C room
 // entry honors BRIEF, while an explicit look always ignores it.
 func cmdMovementLook(s *Session) error {
-	if s.player == nil {
+	s.manager.mu.RLock()
+	player := s.player
+	s.manager.mu.RUnlock()
+	if player == nil {
 		return fmt.Errorf("not logged in")
 	}
-	return s.sendObservation(s.manager.world.DoLookRoom(s.player, false), "")
+	return s.sendObservationForPlayer(s.manager.world.DoLookRoom(player, false), "", player)
 }
 
 func cmdRead(s *Session, args []string) error {
@@ -57,13 +60,17 @@ func cmdDiagnose(s *Session, args []string) error {
 // through act(), while RoomView is translated to the unchanged WebSocket
 // StateData/RoomState schema. Non-room observations only emit text.
 func (s *Session) sendObservation(result game.ObservationResult, token string) error {
+	return s.sendObservationForPlayer(result, token, s.player)
+}
+
+func (s *Session) sendObservationForPlayer(result game.ObservationResult, token string, player *game.Player) error {
 	s.manager.world.RenderObservationMessages(result)
 	if result.Room == nil {
 		return nil
 	}
 
 	state := StateData{
-		Player: observationPlayerState(s.player),
+		Player: observationPlayerState(player),
 		Room:   observationRoomState(result.Room),
 		Token:  token,
 	}

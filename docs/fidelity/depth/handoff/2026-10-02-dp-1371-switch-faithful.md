@@ -111,10 +111,10 @@ public lifecycle acquisition from internal calls, avoiding recursive lifecycle l
 | attached/body/name lookup | `m.mu.RLock`; descriptor checks use `sendMu.RLock`; body name getters use player read locks; manager released before delivery |
 | switch attach | lifecycle → world resolver's world/player read locks (released) → `m.mu.Lock` for pointers (released) → player linkless locks; Send uses snoop read/send read locks |
 | return | lifecycle → attached lookup (released) → optional internal disconnect below → `m.mu.Lock` for detach (released) → player linkless locks; no second lifecycle acquisition |
-| MovementLook | lifecycle → body lookup (manager released) → existing world/player render locks → existing observation/snoop/send locks |
+| MovementLook | body lookup (manager released) → existing world/player render locks → existing observation/snoop/send locks |
 | output routing | body lookup (manager released) → snoop read lock (released) → send read lock; no lifecycle/world lock in the sink |
 | PlayerSaver | identity lookup, then manager read lock for concrete ownership (released) → existing PlayerToRecord player/inventory/equipment snapshots and SQLite save; **no lifecycle acquisition**, including callers under a world lock |
-| deferred extraction | lifecycle → world extraction lock (released) → manager read snapshot (released) → internal return/retirement; editor, snoop, player, inventory/equipment, world removal and send locks remain in their existing cleanup order, never nested under manager |
+| deferred extraction | world pending-work read check (released), active-switch idle check (manager released); return immediately if no work; otherwise lifecycle → world extraction lock (released) → manager read snapshot (released) → internal return/retirement; editor, snoop, player, inventory/equipment, world removal and send locks remain in their existing cleanup order, never nested under manager |
 | disconnect | lifecycle → existing editor cleanup locks/world transitions (released) → player linkless lock → world act/output → saved-record snapshot/SQLite → transport detach → manager detach (released) → player locks; prompt flush after detach |
 | both reconnect identities | lifecycle → manager decision (released) → manager detach (released) → player linkless locks → optional NewSession connection-number manager lock (released) → manager registry/attachment publication (released) → entry-name/send close locks and socket close → world concrete-candidate discard → manager-guarded finish pointer assignment (released) → player setters/entry release/world audience/send |
 | OLC grant/set/stat | manager read snapshot and concrete body metadata selection; setter uses manager write lock for the identity owner; no lifecycle/world lock in the selection |
@@ -155,3 +155,13 @@ raced a moved **test** file; it failed typecheck and was fully rerun clean befor
 the helper commit. No production mutation or malformed red is a proof.
 Final combined results are retained at the train tip and reported in the PR.
 Zach will playtest switch live before deploy; this task accesses no production.
+
+## #1758 review correction
+
+MovementLook takes only the manager-locked body lookup before rendering, never
+playerLifecycleMu. A concurrent detach may deliver one final look to the old
+descriptor. Empty extraction ticks likewise avoid the lifecycle lock; pending
+player or mob extraction (including legacy flags), or an idle-disconnected acting
+body in an active switch, enters the serialized pass. The test
+TestOrdinaryMovementAndEmptyExtractionAvoidLifecycleLock holds the lifecycle
+lock and requires both ordinary paths to finish, preserving the main invariant.

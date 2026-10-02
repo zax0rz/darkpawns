@@ -3,6 +3,7 @@ package session
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -222,5 +223,35 @@ func TestSwitchOLCBodyMetadata(t *testing.T) {
 	}
 	if got, _ := m.GetSession("Borrowed"); got.olcZone != 23 {
 		t.Fatal("borrowed holder metadata changed")
+	}
+}
+
+func TestOrdinaryMovementAndEmptyExtractionAvoidLifecycleLock(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Ordinary", 1001, true)
+	registerTestSession(t, m, s, "Ordinary")
+	for _, tc := range []struct {
+		name string
+		run  func()
+	}{
+		{"movement", func() { m.world.MovementLook(s.player) }},
+		{"empty extraction", m.ExtractPendingChars},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m.playerLifecycleMu.Lock()
+			done := make(chan struct{})
+			go func() { tc.run(); close(done) }()
+			select {
+			case <-done:
+				m.playerLifecycleMu.Unlock()
+			case <-time.After(time.Second):
+				m.playerLifecycleMu.Unlock()
+				<-done
+				t.Fatal("ordinary path acquired the lifecycle lock")
+			}
+		})
+	}
+	if got := renderedOutput(s); !strings.Contains(got, "Room A") {
+		t.Fatalf("ordinary movement look missing: %q", got)
 	}
 }

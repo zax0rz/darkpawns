@@ -121,6 +121,31 @@ func (w *World) ExtractPendingChars() {
 	_ = w.ExtractPendingPlayers()
 }
 
+// HasPendingExtractions reports queued players or legacy-flagged character work without
+// draining it. The session pass can leave an ordinary empty tick alone.
+func (w *World) HasPendingExtractions() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	if len(w.pendingPlayerExtractions) > 0 {
+		return true
+	}
+	extractMask := uint64(1 << uint(plrExtractBit))
+	for _, p := range w.players {
+		if p.Flags&extractMask != 0 {
+			return true
+		}
+	}
+	for _, mob := range w.activeMobs {
+		mob.mu.RLock()
+		pending := mob.Flags&(1<<uint(MobFlagExtract)) != 0
+		mob.mu.RUnlock()
+		if pending {
+			return true
+		}
+	}
+	return false
+}
+
 // ExtractPendingPlayers drains the C-style extraction pass and returns the
 // players removed in this heartbeat. The session layer uses that result to
 // reproduce extract_char_final()'s descriptor-to-CON_MENU transition.
