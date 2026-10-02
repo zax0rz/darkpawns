@@ -404,10 +404,10 @@ func (o *ObjectInstance) MigrateCustomData() {
 // on save, GetSaveState puts them back so the JSON state map is complete.
 // Returns nil when there is no custom state to persist.
 func (o *ObjectInstance) GetSaveState() map[string]interface{} {
-	// C ITEM_TAKE_NAME rewrites short_description only for the live object;
-	// reboot reconstructs it from the prototype. Other short-description
-	// overrides remain persistent object state.
-	persistShortDescOverride := o.Runtime.ShortDescOverride != "" && !o.HasExtraFlag(0, extraFlagTakeName)
+	// Obj_to_store saves every short description (src/objsave.c:132-135).
+	// Carried overrides survive reload; auto_equip recomputes ITEM_TAKE_NAME
+	// for equipped objects (src/objsave.c:440,447-448).
+	persistShortDescOverride := o.Runtime.ShortDescOverride != ""
 	hasRuntime := o.Runtime.Name != "" || o.Runtime.ShortDesc != "" ||
 		o.Runtime.LongDesc != "" || persistShortDescOverride ||
 		o.Runtime.MoldName != "" || o.Runtime.MoldDesc != "" ||

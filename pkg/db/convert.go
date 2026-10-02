@@ -146,6 +146,8 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 						obj.Location = game.LocEquippedPlayer(p.Name, slot)
 						if err := p.Equipment.SetSlot(slot, obj); err != nil {
 							slog.Warn("restore equipment slot", "player", p.Name, "error", err)
+						} else {
+							game.NameEquippedObject(p, obj)
 						}
 					}
 				}
@@ -263,6 +265,8 @@ func restoreSavedItems(p *game.Player, world *game.World, items []game.SaveItemD
 				obj.Location = game.LocEquippedPlayer(p.Name, slot)
 				if err := p.Equipment.SetSlot(slot, obj); err != nil {
 					slog.Warn("restore equipment slot", "player", p.Name, "error", err)
+				} else {
+					game.NameEquippedObject(p, obj)
 				}
 				continue
 			}

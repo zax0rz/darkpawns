@@ -401,8 +401,8 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 	if !s.player.RentedOut {
 		t.Error("idle-disconnected character must be marked RentedOut (Crash_rentsave)")
 	}
-	if len(s.player.Inventory.Items) != 1 {
-		t.Errorf("idle-disconnected inventory = %d items, want 1 (leaves with the character)", len(s.player.Inventory.Items))
+	if len(s.player.Inventory.Items) != 0 {
+		t.Errorf("idle-disconnected inventory = %d items, want 0 (saved objects leave the world)", len(s.player.Inventory.Items))
 	}
 	if len(database.saved) != 1 {
 		t.Fatalf("SavePlayer called %d times, want 1", len(database.saved))
