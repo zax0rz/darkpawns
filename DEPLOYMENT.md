@@ -207,9 +207,12 @@ a full restart were checked on a clean checkout. See the
 
 ## Audit trail
 
-`<game root>/logs/audit.log` is the append-only (0600, IP-hashed) record of
-admin world edits and security events — lockouts, bad-password probes, name
-validation rejections. Boot logs loudly if it cannot be opened; nothing is
+`<game root>/logs/audit.log` is the append-only (0600) record of admin
+world edits and security events — lockouts, bad-password probes, name
+validation rejections. Rejected or unvalidated name input is never written
+(players often type a password at the name prompt). The IP address is stored
+pseudonymously — a truncated, unsalted SHA-256 — which is pseudonymous, not
+anonymous. Boot logs loudly if the file cannot be opened; nothing is
 silently unrecorded. Back up this file with the game data.
 
 ## Optional admin interface

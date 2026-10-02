@@ -718,13 +718,11 @@ func main() {
 		// because a silent audit trail is indistinguishable from a clean one.
 		slog.Warn("Audit trail disabled: world edits through /admin/ and security events (LogSecurityEvent) will not be recorded",
 			"error", err, "path", auditLogPath)
-	} else if err := audit.Init(auditLogPath); err != nil {
-		// The panel holds its own logger above; Init wires the package-global
-		// one that LogSecurityEvent (lockouts, bad-password probes, name
-		// validation rejections) writes through. Without it every security
-		// event is dropped while the admin trail looks healthy.
-		slog.Warn("Security audit trail disabled: LogSecurityEvent calls will not be recorded",
-			"error", err, "path", auditLogPath)
+	} else {
+		// Reuse the panel's logger for the package-global one that
+		// LogSecurityEvent (lockouts, bad-password probes, name validation
+		// rejections) writes through — one append handle on the file, not two.
+		audit.Use(auditLogger)
 	}
 
 	// Log buffer for admin operations panel — captures slog output in-memory
