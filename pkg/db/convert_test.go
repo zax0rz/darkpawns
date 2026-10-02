@@ -290,7 +290,7 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	}
 }
 
-func TestTakeNameOverrideDoesNotPersistAcrossRecordReload(t *testing.T) {
+func TestTakeNameRestoreReappliesEquippedOwner(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Spawn Room", Zone: 1}},
 		Objs: []parser.Obj{
@@ -316,14 +316,16 @@ func TestTakeNameOverrideDoesNotPersistAcrossRecordReload(t *testing.T) {
 		t.Fatal("expected tunic prototype")
 	}
 	tunic := game.NewObjectInstance(tunicProto, -1)
-	tunic.Runtime.ShortDescOverride = "Rebooter's tunic"
+	// A saved file rename can change the owner while crash-object state
+	// still carries the former name; C auto_equip must recompute it.
+	tunic.Runtime.ShortDescOverride = "Formerowner's tunic"
 	tunic.Location = game.LocEquippedPlayer(p.Name, game.SlotBody)
 	if err := p.Equipment.SetSlot(game.SlotBody, tunic); err != nil {
 		t.Fatalf("SetSlot tunic: %v", err)
 	}
 
-	// A non-take-name override remains persistent; the exclusion must be
-	// specific to C's runtime-only ITEM_TAKE_NAME rename.
+	// An ordinary override remains persistent; TAKE_NAME equipment also
+	// recomputes its owner at the auto_equip boundary.
 	tokenProto, ok := world.GetObjPrototype(8020)
 	if !ok {
 		t.Fatal("expected token prototype")
@@ -333,6 +335,13 @@ func TestTakeNameOverrideDoesNotPersistAcrossRecordReload(t *testing.T) {
 	token.Location = game.LocInventoryPlayer(p.Name)
 	if err := p.Inventory.AddItem(token); err != nil {
 		t.Fatalf("AddItem token: %v", err)
+	}
+
+	carriedTunic := game.NewObjectInstance(tunicProto, -1)
+	carriedTunic.Runtime.ShortDescOverride = "a tunic"
+	carriedTunic.Location = game.LocInventoryPlayer(p.Name)
+	if err := p.Inventory.AddItem(carriedTunic); err != nil {
+		t.Fatal(err)
 	}
 
 	rec, err := PlayerToRecord(p, nil)
@@ -348,8 +357,8 @@ func TestTakeNameOverrideDoesNotPersistAcrossRecordReload(t *testing.T) {
 	if !found {
 		t.Fatal("restored take-name tunic is not equipped")
 	}
-	if got, want := restoredTunic.GetShortDesc(), "a frayed tunic"; got != want {
-		t.Fatalf("take-name description after reload = %q, want prototype %q", got, want)
+	if got, want := restoredTunic.GetShortDesc(), "Rebooter's tunic"; got != want {
+		t.Fatalf("take-name description after reload = %q, want equipped owner %q", got, want)
 	}
 	restoredToken, found := restored.Inventory.FindItem("token")
 	if !found {
@@ -357,6 +366,21 @@ func TestTakeNameOverrideDoesNotPersistAcrossRecordReload(t *testing.T) {
 	}
 	if got, want := restoredToken.GetShortDesc(), "a personalized token"; got != want {
 		t.Fatalf("ordinary description override after reload = %q, want %q", got, want)
+	}
+	carried, found := restored.Inventory.FindItem("tunic")
+	if !found || carried.GetShortDesc() != "a tunic" {
+		t.Fatal("carried TAKE_NAME description was not preserved")
+	}
+
+	// Legacy equipment maps use the same auto_equip owner naming boundary.
+	rec.Equipment = []byte(`{"body":8019}`)
+	legacy, err := RecordToPlayer(rec, world)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyTunic, found := legacy.Equipment.GetItemInSlot(game.SlotBody)
+	if !found || legacyTunic.GetShortDesc() != "Rebooter's tunic" {
+		t.Fatal("legacy restore did not apply equipped owner")
 	}
 }
 

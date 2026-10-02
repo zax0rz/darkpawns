@@ -586,6 +586,10 @@ func (m *Manager) ExtractPendingChars() {
 			// "has left the game." broadcast, which C never sends here.
 			victim.leaveBroadcastHandled = true
 			m.UnregisterSession(victim)
+			// Unregister saved the rent objects. C then frees them with
+			// Crash_extract_objs (src/objsave.c:947-955); detach from this
+			// retired body rather than resolving its now-unregistered name.
+			m.world.DiscardLoadedPlayerObjects(player)
 			victim.Close()
 			continue
 		}

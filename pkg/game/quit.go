@@ -166,11 +166,11 @@ func heldObjects(p *Player) []*ObjectInstance {
 	return held
 }
 
-// DiscardLoadedPlayerObjects frees only a disposable login candidate's object
-// tree. C perform_dupe_check frees the unloaded candidate before Crash_load
-// (src/interpreter.c:1619,2184-2194). Go has already restored its objects.
-// Detach from the concrete candidate before extraction: name-based locations
-// may resolve to a different retained body with the same name.
+// DiscardLoadedPlayerObjects frees an unregistered player's object tree.
+// C frees a duplicate login candidate before Crash_load (src/interpreter.c:1624,
+// 2184-2194), and Crash_rentsave frees a renter's objects after saving them
+// (src/objsave.c:947-955). Detach from the concrete owner before extraction:
+// name-based locations may resolve to a different retained body with that name.
 func (w *World) DiscardLoadedPlayerObjects(p *Player) {
 	held := heldObjects(p)
 	// An independent unbounded-weight inventory avoids a full candidate's

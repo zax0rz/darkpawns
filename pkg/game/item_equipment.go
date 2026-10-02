@@ -246,9 +246,7 @@ func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) error {
 		return err
 	}
 	obj.Location = LocEquippedPlayer(ch.Name, goSlot)
-	if obj.HasExtraFlag(0, extraFlagTakeName) {
-		obj.Runtime.ShortDescOverride = fmt.Sprintf("%s's %s", ch.Name, obj.GetKeywords())
-	}
+	NameEquippedObject(ch, obj)
 	return nil
 }
 
@@ -564,4 +562,12 @@ func (w *World) DoRemove(ch *Player, arg string) {
 		return
 	}
 	w.performRemove(ch, where)
+}
+
+// NameEquippedObject applies equip_char's ITEM_TAKE_NAME description, including
+// equipment restored by Crash_load (src/handler.c:720-728; src/objsave.c:440,557).
+func NameEquippedObject(ch *Player, obj *ObjectInstance) {
+	if obj.HasExtraFlag(0, extraFlagTakeName) {
+		obj.Runtime.ShortDescOverride = fmt.Sprintf("%s's %s", ch.Name, obj.GetKeywords())
+	}
 }

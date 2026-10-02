@@ -1,0 +1,74 @@
+# depth-case: switch.already-switched
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Switchwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchwizard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Switchpeer 8162
+set player Switchpeer level 39
+
+[peer-drop]
+peer
+
+[probe]
+switch Switchpeer
+switch Nobody
+return
