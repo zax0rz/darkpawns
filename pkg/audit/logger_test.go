@@ -223,3 +223,31 @@ func TestAuditLogger_LogAndClose(t *testing.T) {
 		t.Error("expected audit log to contain data after Log and Close")
 	}
 }
+
+// Init wires LogSecurityEvent (and every other package-level helper) to a
+// real file. Production boot never called it until 2026-10, so security
+// events were dropped while the admin panel's own logger looked healthy —
+// this pins the global path end to end.
+func TestInitRoutesGlobalSecurityEventsToFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "audit.log")
+	if err := Init(path); err != nil {
+		t.Fatalf("Init: %v", err)
+	}
+	t.Cleanup(func() { globalLogger = nil })
+
+	LogSecurityEvent("login_failed", "no stored password hash", "Tester", "10.0.0.1")
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read audit log: %v", err)
+	}
+	if !strings.Contains(string(data), `"action":"login_failed"`) {
+		t.Fatalf("event = %s, want a login_failed record", data)
+	}
+	if !strings.Contains(string(data), `"event_type":"security"`) {
+		t.Fatalf("event = %s, want event_type security", data)
+	}
+	if strings.Contains(string(data), "10.0.0.1") {
+		t.Fatalf("event = %s, want the IP hashed, not stored in the clear", data)
+	}
+}

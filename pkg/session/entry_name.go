@@ -77,6 +77,18 @@ func (s *Session) releaseEntryName() {
 	s.manager.entryNameMu.Unlock()
 }
 
+// auditSafeName returns the typed login name for audit records only when it
+// passes the entry gate's parse and staff-reserved checks. Raw prompt input
+// is frequently a mistyped password, and rejected input must never reach the
+// audit file.
+func auditSafeName(raw string) string {
+	name, valid := parseEntryName(raw)
+	if !valid || validation.IsReservedPlayerName(name) {
+		return ""
+	}
+	return name
+}
+
 func (s *Session) acceptEntryName(raw string) (string, bool) {
 	name, valid := parseEntryName(raw)
 	if name == "" {

@@ -53,7 +53,8 @@ func NewAuditLogger(filename string) (*AuditLogger, error) {
 	return &AuditLogger{file: file}, nil
 }
 
-// Log writes an AuditEvent to the log file, hashing the IP address for privacy.
+// Log writes an AuditEvent to the log file, pseudonymising the IP address: a
+// truncated, unsalted SHA-256 is pseudonymous, not anonymous.
 func (a *AuditLogger) Log(event AuditEvent) {
 	event.Timestamp = time.Now()
 
@@ -127,6 +128,15 @@ func Init(filename string) error {
 	}
 	globalLogger = logger
 	return nil
+}
+
+// Use installs an existing AuditLogger as the package-global logger — the
+// handle-sharing counterpart to Init for callers that already constructed
+// their own logger.
+func Use(logger *AuditLogger) {
+	loggerMu.Lock()
+	defer loggerMu.Unlock()
+	globalLogger = logger
 }
 
 // LogEvent logs an event using the global logger

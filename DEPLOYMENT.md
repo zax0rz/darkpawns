@@ -205,6 +205,16 @@ The native build, first-character creation, mortal creation, and saved login aft
 a full restart were checked on a clean checkout. See the
 [verification record](docs/maintenance/native-install-check.md) for scope and commands.
 
+## Audit trail
+
+`<game root>/logs/audit.log` is the append-only (0600) record of admin
+world edits and security events — lockouts, bad-password probes, name
+validation rejections. Rejected or unvalidated name input is never written
+(players often type a password at the name prompt). The IP address is stored
+pseudonymously — a truncated, unsalted SHA-256 — which is pseudonymous, not
+anonymous. Boot logs loudly if the file cannot be opened; nothing is
+silently unrecorded. Back up this file with the game data.
+
 ## Optional admin interface
 
 Human telnet and browser play do not require Node.js. To include the React admin

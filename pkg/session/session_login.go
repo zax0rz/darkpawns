@@ -45,7 +45,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if !s.manager.loginLimiter.GetLimiter(ip).Allow() {
 		s.sendError("Too many login attempts. Please try again later.")
 		s.CloseSend()
-		audit.LogSecurityEvent("rate_limit_exceeded", "Login rate limit exceeded", login.PlayerName, ip)
+		audit.LogSecurityEvent("rate_limit_exceeded", "Login rate limit exceeded", auditSafeName(login.PlayerName), ip)
 		return nil
 	}
 
@@ -54,7 +54,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		mins := int(remaining.Minutes()) + 1
 		s.sendError(fmt.Sprintf("Too many failed login attempts. Try again in %d minutes.", mins))
 		s.CloseSend()
-		audit.LogSecurityEvent("login_locked_out", "Login locked out due to repeated failures", login.PlayerName, ip)
+		audit.LogSecurityEvent("login_locked_out", "Login locked out due to repeated failures", auditSafeName(login.PlayerName), ip)
 		return nil
 	}
 
@@ -148,7 +148,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		name, accepted := s.acceptEntryName(login.PlayerName)
 		if !accepted {
 			if !s.SendClosed() {
-				audit.LogSecurityEvent("invalid_player_name", "Invalid player name format", login.PlayerName, ip)
+				audit.LogSecurityEvent("invalid_player_name", fmt.Sprintf("Invalid player name format (input length %d)", len(login.PlayerName)), "", ip)
 			}
 			return nil
 		}
