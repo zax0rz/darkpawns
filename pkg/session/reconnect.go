@@ -93,6 +93,12 @@ func (s *Session) performDupeCheck() bool {
 		}
 	}
 
+	// Free only the loaded candidate before adopting the live body. The
+	// candidate is not registered, and its location names overlap the target.
+	if s.player != old.player {
+		m.world.DiscardLoadedPlayerObjects(s.player)
+	}
+
 	// Connect this descriptor to the live body (interpreter.c:1618-1628).
 	p := old.player
 	s.player = p

@@ -2,6 +2,8 @@
 import json, subprocess, sys
 from pathlib import Path
 MUTATIONS = {
+ "candidate-skip": ("pkg/session/reconnect.go", "m.world.DiscardLoadedPlayerObjects(s.player)", "_ = s.player", "^TestEntryDuplicateCandidateObjects$"),
+ "candidate-owner": ("pkg/session/reconnect.go", "m.world.DiscardLoadedPlayerObjects(s.player)", "m.world.ExtractRentedObjects(s.player)", "^TestEntryDuplicateCandidateObjects$"),
  "password-prefix": ("pkg/session/char_creation.go", "if choice != s.charPassword {", "if choice[:min(8,len(choice))] != s.charPassword[:min(8,len(s.charPassword))] {", "^TestEntryFullPasswordComparison$"),
  "editor-buffer": ("pkg/session/menu.go", "s.textEdit.buffer, s.textEdit.original = current, current", "s.textEdit.buffer, s.textEdit.original = \"\", current", "^TestEntryDescriptionEditor$"),
  "editor-abort": ("pkg/session/menu.go", "apply(original)", "apply(\"\")", "^TestEntryDescriptionEditor$"),
