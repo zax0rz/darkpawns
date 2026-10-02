@@ -23,6 +23,10 @@ const (
 // The existing NPC adapter remains C1's separate frontier.
 // When a player is under a forced command, their own level is used (force safety).
 func getEffectiveLevel(s *Session) int {
+	if s.manager != nil {
+		s.manager.mu.RLock()
+		defer s.manager.mu.RUnlock()
+	}
 	if s.player == nil {
 		return 0
 	}

@@ -84,6 +84,9 @@ func cmdRestore(s *Session, args []string) error {
 
 // clamp restricts v to the [min, max] range.
 func cmdSwitch(s *Session, args []string) error {
+	m := s.manager
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
 	// The command-table level gate is authoritative. If the descriptor is
 	// already attached to a switched body, do_switch reports this before any
 	// target parsing; the interpreter's switched-NPC gate normally intercepts
@@ -102,9 +105,6 @@ func cmdSwitch(s *Session, args []string) error {
 		s.Send("Switch with who?\r\n")
 		return nil
 	}
-	m := s.manager
-	m.playerLifecycleMu.Lock()
-	defer m.playerLifecycleMu.Unlock()
 	target, ok := m.world.ResolveCharWorld(s.player, targetName)
 	if !ok {
 		s.Send("No such character.\r\n")
@@ -181,6 +181,10 @@ func (m *Manager) returnSwitch(s *Session) error {
 	}
 
 	s.Send("You return to your original body.\r\n")
+	if other := m.attachedBody(s.switchedOriginal); other != nil && other != s {
+		m.handleTransportDisconnect(other) // src/act.wizard.c:1211-1213
+		other.Close()
+	}
 	m.detachPCSwitch(s, true)
 	return nil
 }

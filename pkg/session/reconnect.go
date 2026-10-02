@@ -45,6 +45,19 @@ func (s *Session) performDupeCheck() bool {
 		m.mu.Unlock()
 		return false
 	}
+	// Only active switching enters this branch. Ordinary RECON/USURP retains
+	// main's lookup and decisions exactly.
+	var switched *Session
+	unswitchOriginal := false
+	if old.activePCSwitch() && old.switchedOriginal.GetID() == s.player.GetID() {
+		switched, unswitchOriginal = old, true
+	} else if attached := m.attachedBodyLocked(old.player); attached != nil && attached.activePCSwitch() {
+		switched = attached
+	}
+	if switched != nil {
+		m.mu.Unlock()
+		return s.reconnectSwitched(old, switched, unswitchOriginal)
+	}
 	if old.menuActive || old.charCreating {
 		m.mu.Unlock()
 		// Not CON_PLAYING: disconnected, and no target (interpreter.c:1561-1571).
@@ -103,12 +116,18 @@ func (s *Session) performDupeCheck() bool {
 		m.world.DiscardLoadedPlayerObjects(s.player)
 	}
 
-	// Connect this descriptor to the live body (interpreter.c:1618-1628).
-	p := old.player
+	return s.finishDupeCheck(old.player, name, old.olcZone, unswitch, usurp)
+}
+
+func (s *Session) finishDupeCheck(p *game.Player, name string, olcZone int, unswitch, usurp bool) bool {
+	m := s.manager
+	// Connect this descriptor to the live body (src/interpreter.c:1625-1631).
+	m.mu.Lock()
 	s.player = p
 	s.playerName = name
 	s.authenticated = true
-	s.olcZone = old.olcZone
+	s.olcZone = olcZone
+	m.mu.Unlock()
 	s.charCreating = false
 	s.charStage = ""
 	s.charPassword = ""
@@ -177,4 +196,57 @@ func (s *Session) inOLCEditorState() bool {
 	}
 	editing, playing := s.editorPromptState()
 	return editing && !playing
+}
+
+// reconnectSwitched requires playerLifecycleMu, without m.mu. C prioritizes
+// original identity (UNSWITCH), then attached identity (USURP).
+func (s *Session) reconnectSwitched(owner, descriptor *Session, unswitch bool) bool {
+	m := s.manager
+	original, body := descriptor.switchedOriginal, descriptor.switchedPlayer
+	candidate := s.player
+	target := body
+	if unswitch {
+		target = original
+	} else {
+		descriptor.Send("\r\nThis body has been usurped!\r\n")
+	}
+	descriptor.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+	m.detachPCSwitch(descriptor, false)
+	descriptor.superseded.Store(true)
+	var retained *Session
+	if !unswitch {
+		// Preserve original's world lifecycle after its descriptor is stolen.
+		retained = m.NewSession()
+		retained.player, retained.playerName = original, descriptor.playerName
+		retained.authenticated, retained.isGuest = true, descriptor.isGuest
+		retained.olcZone = descriptor.olcZone
+		retained.DetachTransport()
+	}
+	m.mu.Lock()
+	if retained != nil {
+		for key, old := range m.sessions {
+			if old == descriptor {
+				m.sessions[key] = retained
+			}
+		}
+	}
+	name := s.player.Name
+	for key, old := range m.sessions {
+		if old == owner || (unswitch && old == descriptor) {
+			delete(m.sessions, key)
+		}
+	}
+	s.player = target // publish the concrete attachment with its registry entry
+	m.sessions[name] = s
+	m.mu.Unlock()
+	if owner != descriptor {
+		owner.superseded.Store(true)
+		owner.CloseSend()
+	}
+	descriptor.CloseSend()
+	descriptor.Close()
+	if candidate != target {
+		m.world.DiscardLoadedPlayerObjects(candidate)
+	}
+	return s.finishDupeCheck(target, name, owner.olcZone, unswitch, !unswitch)
 }

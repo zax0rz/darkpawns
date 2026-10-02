@@ -120,12 +120,21 @@ func (s *Session) leaveGameToMenu(rent bool) {
 // but success so the next autosave retries. A skipped save is never a
 // successful one.
 func (s *Session) saveCharacter(why string, loadRoom int) game.SaveResult {
-	if s.activePCSwitch() {
-		if owner, ok := s.manager.GetSession(s.player.GetName()); ok && owner != s && owner.player == s.player {
-			return owner.savePlayer(s.player, why, loadRoom)
+	m := s.manager
+	m.mu.RLock()
+	p, switched := s.player, s.activePCSwitch()
+	m.mu.RUnlock()
+	if switched {
+		if owner, ok := m.GetSession(p.GetName()); ok && owner != s {
+			m.mu.RLock()
+			owned := owner.player == p || (owner.activePCSwitch() && owner.switchedOriginal == p)
+			m.mu.RUnlock()
+			if owned {
+				return owner.savePlayer(p, why, loadRoom)
+			}
 		}
 	}
-	return s.savePlayer(s.player, why, loadRoom)
+	return s.savePlayer(p, why, loadRoom)
 }
 
 func (s *Session) savePlayer(p *game.Player, why string, loadRoom int) game.SaveResult {

@@ -312,8 +312,15 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 
 	// Wire MessageSink so that Player.SendMessage routes through Session.send
 	world.MessageSink = func(playerName string, msg []byte) {
-		s, ok := m.bodySessionByName(playerName)
-		if !ok || s == nil {
+		s, switched := m.switchDescriptorByName(playerName)
+		if !switched {
+			var ok bool
+			s, ok = m.GetSession(playerName)
+			if !ok {
+				return
+			}
+		}
+		if s == nil {
 			return
 		}
 		s.notePlayerOutput()
@@ -330,7 +337,16 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			slog.Error("MessageSink marshal error", "error", err)
 			return
 		}
-		s.sendGuarded(wrapped)
+		if switched {
+			s.sendGuarded(wrapped)
+			return
+		}
+		// Preserve main's ordinary queue path exactly outside active switching.
+		select {
+		case s.send <- wrapped:
+		default:
+			slog.Warn("MessageSink channel full — dropping message", "player", playerName)
+		}
 	}
 
 	// C's do_simple_move calls look_at_room before follower recursion. Keep the
@@ -553,8 +569,39 @@ func (m *Manager) SetPulsePump(pump func(int) error) {
 // check_idling's idle disconnect (limits.c:442-444) and a linkdead
 // close_socket (comm.c:2129) — and both must retire the session here instead.
 func (m *Manager) ExtractPendingChars() {
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	// check_idling closes the acting descriptor before extraction, even if it
+	// was switched (src/limits.c:442-444). Original bodies have no descriptor.
+	for _, p := range m.world.GetAllPlayers() {
+		if !p.IdleDisconnect {
+			continue
+		}
+		if attached, involved := m.switchDescriptor(p); involved && attached != nil {
+			m.handleTransportDisconnect(attached)
+			attached.Close()
+		}
+	}
 	extracted := m.world.ExtractPendingPlayers()
 	for _, player := range extracted {
+		// C returns a descriptor whose original or attached body is extracted
+		// (src/handler.c:1107-1110,1158-1159), before the menu decision.
+		m.mu.RLock()
+		switched := make([]*Session, 0)
+		original := false
+		for _, s := range m.sessions {
+			if s.activePCSwitch() && (s.switchedOriginal == player || s.switchedPlayer == player) {
+				switched = append(switched, s)
+				original = original || s.switchedOriginal == player
+			}
+		}
+		m.mu.RUnlock()
+		for _, s := range switched {
+			_ = m.returnSwitch(s)
+		}
+		if original {
+			player.IdleDisconnect = false
+		}
 		m.mu.RLock()
 		var victim *Session
 		for _, s := range m.sessions {
@@ -565,6 +612,15 @@ func (m *Manager) ExtractPendingChars() {
 		}
 		m.mu.RUnlock()
 		if victim == nil {
+			continue
+		}
+		if len(switched) > 0 && !original && !victim.hasTransport() {
+			if !player.RentedOut {
+				victim.savePlayer(player, "switched extraction", player.GetLoadRoom())
+			}
+			victim.menuActive = true // no second close_socket save: C frees this body
+			victim.leaveBroadcastHandled = true
+			m.unregisterSession(victim, victim.playerName)
 			continue
 		}
 		// extract_char saves the character (handler.c:1162). A renter was
@@ -583,7 +639,7 @@ func (m *Manager) ExtractPendingChars() {
 			// transport; leaveBroadcastHandled suppresses the invented
 			// "has left the game." broadcast, which C never sends here.
 			victim.leaveBroadcastHandled = true
-			m.UnregisterSession(victim)
+			m.unregisterSession(victim, victim.playerName)
 			// Unregister saved the rent objects. C then frees them with
 			// Crash_extract_objs (src/objsave.c:947-955); detach from this
 			// retired body rather than resolving its now-unregistered name.
@@ -602,7 +658,7 @@ func (m *Manager) ExtractPendingChars() {
 			// character (char_mgmt.go extract pass); UnregisterSession runs
 			// the normal cleanup (combat stop, snoop/edit release, channel
 			// close) with no live transport left to race.
-			m.UnregisterSession(victim)
+			m.unregisterSession(victim, victim.playerName)
 			continue
 		}
 		victim.showMainMenu()
@@ -1194,6 +1250,9 @@ func (m *Manager) enterWorld(name string, s *Session) error {
 // multiple times for the same session. Both Unregister and UnregisterAndClose
 // delegate here to guarantee consistent cleanup ordering.
 func (m *Manager) cleanupSession(s *Session, playerName string) {
+	if s.activePCSwitch() {
+		m.detachPCSwitch(s, false)
+	}
 	// C close_socket clears CON_TEDIT through cleanup_olc before it handles the
 	// character's departure. Preserve the editor's in-memory cache (without a
 	// disk commit) and emit the shared OLC room transition first.
@@ -1306,7 +1365,12 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	m.playerLifecycleMu.Lock()
 	defer m.playerLifecycleMu.Unlock()
-	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() || s.superseded.Load() {
+	return m.handleTransportDisconnect(s)
+}
+
+// handleTransportDisconnect requires playerLifecycleMu.
+func (m *Manager) handleTransportDisconnect(s *Session) bool {
+	if s == nil || !s.authenticated || s.player == nil || (s.SendClosed() && !s.activePCSwitch()) || s.superseded.Load() {
 		return false
 	}
 	// C close_socket (comm.c:2129) retains only CON_PLAYING. Authentication
@@ -1325,7 +1389,9 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
 	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true) // comm.c:2132-2133
 
-	if m.hasDB && p.ID > 0 && !s.isGuest {
+	if s.activePCSwitch() {
+		s.saveCharacter("switched lost link", game.LoadRoomNowhere)
+	} else if m.hasDB && p.ID > 0 && !s.isGuest {
 		// Lost-link save: load_room NOWHERE (comm.c:2130).
 		if rec, err := s.playerRecordForSave(p, game.LoadRoomNowhere); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
@@ -1335,6 +1401,10 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	}
 
 	s.DetachTransport()
+	if s.activePCSwitch() {
+		// close_socket leaves both characters descriptor-less; no do_return byte.
+		m.detachPCSwitch(s, false)
+	}
 	// C notices the dead socket in a game-loop pass, and that pass flushes the
 	// room's "has lost his link." with each listener's prompt (DP-1307).
 	m.flushAsyncPrompts()

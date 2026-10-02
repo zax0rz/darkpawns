@@ -701,7 +701,11 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		if target.record != nil {
 			target.record.OlcZone = valueInt
 		}
-		if target.session != nil {
+		if owner, involved := s.manager.switchedIdentityOwner(p); involved && owner != nil {
+			s.manager.mu.Lock()
+			owner.olcZone = valueInt
+			s.manager.mu.Unlock()
+		} else if target.session != nil {
 			target.session.olcZone = valueInt
 		}
 	case "race":

@@ -5,11 +5,20 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 func switchGateFixture(t *testing.T) (*Manager, *Session, *Session) {
 	t.Helper()
-	m := makeTestManager(t)
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room A"}, {VNum: 1002, Name: "Room B"}},
+		Objs:  []parser.Obj{{VNum: 8023, Keywords: "club", ShortDesc: "a club", WearFlags: [4]int{1}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	m := newTestManager(t, w, nil)
 	wizard := makeTestSession(t, m, "Wizard", 1001, true)
 	wizard.player.SetLevel(LVL_IMPL)
 	wizard.transportDone = make(chan struct{})

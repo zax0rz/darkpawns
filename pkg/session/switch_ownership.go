@@ -106,3 +106,46 @@ func (m *Manager) switchDescriptorByName(name string) (*Session, bool) {
 	}
 	return nil, original
 }
+
+// switchedIdentityOwner is the holder of character-owned session metadata.
+// Only active switching enters this selection; false retains main's reader.
+func (m *Manager) switchedIdentityOwner(p *game.Player) (*Session, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	involved := false
+	for _, s := range m.sessions {
+		if !s.activePCSwitch() {
+			continue
+		}
+		if s.switchedOriginal == p {
+			return s, true
+		}
+		involved = involved || s.switchedPlayer == p
+	}
+	if involved {
+		for _, s := range m.sessions {
+			if s.player == p && !s.activePCSwitch() {
+				return s, true
+			}
+		}
+	}
+	return nil, involved
+}
+
+func (s *Session) actingOLCZone() int {
+	if s.manager == nil {
+		return s.olcZone
+	}
+	m := s.manager
+	m.mu.RLock()
+	p, zone, switched := s.player, s.olcZone, s.activePCSwitch()
+	m.mu.RUnlock()
+	if switched {
+		if owner, involved := m.switchedIdentityOwner(p); involved && owner != nil {
+			m.mu.RLock()
+			zone = owner.olcZone
+			m.mu.RUnlock()
+		}
+	}
+	return zone
+}

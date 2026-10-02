@@ -191,3 +191,36 @@ func TestSwitchOrdinaryReadersMatchMain(t *testing.T) {
 		t.Fatal("no-switch lookup changed")
 	}
 }
+
+func TestSwitchOLCBodyMetadata(t *testing.T) {
+	m, s, h := switchGateFixture(t)
+	s.olcZone = 11
+	h.olcZone = 22
+	h.player.SetLevel(LVL_IMMORT)
+	if err := cmdSwitch(s, []string{"Borrowed"}); err != nil {
+		t.Fatal(err)
+	}
+	if !olcAuthorized(s, 22) || olcAuthorized(s, 11) {
+		t.Fatal("acting OLC grant uses original zone")
+	}
+	other := makeTestSession(t, m, "Otherwizard", 1001, true)
+	other.player.SetLevel(LVL_IMPL)
+	if err := cmdSet(other, []string{"player", "Borrowed", "olc", "23"}); err != nil {
+		t.Fatal(err)
+	}
+	if h.olcZone != 23 || !olcAuthorized(s, 23) || olcAuthorized(s, 22) {
+		t.Fatal("set olc modified descriptor instead of body owner")
+	}
+	if s.statOlcZone("Borrowed") != 23 || s.statOlcZone("Wizard") != 11 {
+		t.Fatal("stat olc crossed body metadata")
+	}
+	if err := cmdReturn(s, nil); err != nil {
+		t.Fatal(err)
+	}
+	if s.olcZone != 11 {
+		t.Fatal("return lost original OLC zone")
+	}
+	if got, _ := m.GetSession("Borrowed"); got.olcZone != 23 {
+		t.Fatal("borrowed holder metadata changed")
+	}
+}
