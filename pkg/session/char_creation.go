@@ -181,6 +181,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		}
 
 	case "create_password":
+		choice = strings.TrimLeft(choice, " \t\n\r\v\f") // src/interpreter.c:1187-1190,1721
 		if len(choice) < 3 || len(choice) > maxCreationPasswordLength || strings.EqualFold(choice, s.charName) {
 			s.sendCharCreatePromptWithSecret("create_password", "\r\nIllegal password.\r\nPassword: ", nil, true)
 			return nil
@@ -190,6 +191,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 		s.sendCharCreatePromptWithSecret("confirm_password", "\r\nPlease retype password: ", nil, true)
 
 	case "confirm_password":
+		choice = strings.TrimLeft(choice, " \t\n\r\v\f") // nanny skip_spaces, trailing bytes remain significant.
 		if choice != s.charPassword {
 			s.sendCharCreatePromptWithSecret("create_password", "\r\nPasswords don't match... start over.\r\nPassword: ", nil, true)
 			s.charStage = "create_password"
