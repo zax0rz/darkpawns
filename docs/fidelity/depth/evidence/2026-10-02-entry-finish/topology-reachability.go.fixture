@@ -1,0 +1,49 @@
+package session
+
+import (
+ "testing"
+ "github.com/zax0rz/darkpawns/pkg/db"
+ "github.com/zax0rz/darkpawns/pkg/game"
+)
+
+// Diagnostic topology proof only: real SQLite and actual wizard/entry calls.
+// This deliberately asserts the observed bug, not completed C fidelity.
+func TestEntryDuplicateTopologyReachabilityDiagnostic(t *testing.T) {
+ t.Run("same-name-different-ID",func(t *testing.T){
+  database:=entryDatabase(t);first:=entrySeed(t,database,"Returner");second:=entrySeed(t,database,"Other")
+  m:=entryWorldManager(t,database)
+  old:=makeCharSession(t,m);if err:=old.handleLogin(loginMsg("Returner","oraclepass"));err!=nil {t.Fatal(err)};renderedOutput(old)
+  sendMenuInput(t,old,"");renderedOutput(old);sendMenuInput(t,old,"1");renderedOutput(old)
+  wizard:=makeCommandTestSession(t,m,"Wizard",game.LVL_IMPL,1001)
+  for _,args:=range [][]string{{"file","Returner","name","Archived"},{"file","Other","name","Returner"}} {
+   if err:=cmdSet(wizard,args);err!=nil {t.Fatal(err)}
+   t.Log("wizard output",renderedOutput(wizard))
+  }
+  rec,err:=database.GetPlayer("Returner");if err!=nil || rec==nil || rec.ID!=second.ID {t.Fatal("real file rename did not free/reuse the stored name",rec,err)}
+  archived,err:=database.GetPlayer("Archived");if err!=nil || archived.ID!=first.ID {t.Fatal("original identity not uniquely retained",archived,err)}
+  if old.player.Name!=rec.Name || old.player.ID==rec.ID {t.Fatal("same-name/different-ID topology not reached")}
+  t.Logf("reachable through set file: retained name=%s ID=%d; stored login name=%s ID=%d",old.player.Name,old.player.ID,rec.Name,rec.ID)
+  candidate,err:=db.RecordToPlayer(rec,m.world);if err!=nil {t.Fatal(err)}
+  // Model only the proposed narrow ID guard: it would correctly decline
+  // adoption and proceed to the existing ordinary menu/world-entry path.
+  fresh:=makeCharSession(t,m);fresh.player=candidate;fresh.authenticated=true
+  fresh.startReturningMenu(rec.Password);renderedOutput(fresh)
+  sendMenuInput(t,fresh,"");renderedOutput(fresh);sendMenuInput(t,fresh,"1");renderedOutput(fresh)
+  if _,ok:=m.world.GetPlayer("Returner");!ok {t.Fatal("new body not admitted")}
+  if got:=m.world.GetPlayerCount();got!=1 {t.Fatal("diagnostic expected the existing Register replacement",got)}
+  if fresh.player.ID!=second.ID {t.Fatal("narrow guard model did not enter new ID")}
+  for _,p:=range m.world.GetAllPlayers(){if p==old.player {t.Fatal("diagnostic expected old body loss")}}
+  t.Log("ID guard alone is insufficient: Register removed the different-ID live body; C preserves it and permits both same-name bodies")
+ })
+ t.Run("same-ID-folded-registry-key",func(t *testing.T){
+  database:=entryDatabase(t);record:=entrySeed(t,database,"Returner");m:=entryWorldManager(t,database)
+  old:=makeCharSession(t,m);if err:=old.handleLogin(loginMsg("Returner","oraclepass"));err!=nil {t.Fatal(err)};renderedOutput(old)
+  sendMenuInput(t,old,"");renderedOutput(old);sendMenuInput(t,old,"1");renderedOutput(old)
+  wizard:=makeCommandTestSession(t,m,"Wizard",game.LVL_IMPL,1001)
+  if err:=cmdSet(wizard,[]string{"file","Returner","name","returner"});err!=nil {t.Fatal(err)}
+  rec,err:=database.GetPlayer("Returner");if err!=nil || rec.Name!="returner" || rec.ID!=record.ID {t.Fatal("real case-only rename did not retain ID",rec,err)}
+  fresh:=makeCharSession(t,m);if err:=fresh.handleLogin(loginMsg("RETURNER","oraclepass"));err!=nil {t.Fatal(err)}
+  if fresh.menuStage!="motd" || fresh.player==old.player {t.Fatal("diagnostic expected current exact-key lookup to miss the live body")}
+  t.Log("reachable through case-only set file: same ID, stored lowercase name, live uppercase registry key; current lookup misses adoption")
+ })
+}
