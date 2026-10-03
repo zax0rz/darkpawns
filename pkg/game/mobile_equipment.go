@@ -200,9 +200,7 @@ func (m *MobInstance) modifyMobileEquipmentLocked(obj *ObjectInstance, add bool)
 
 func (w *World) finishMobileEquipment(m *MobInstance, obj *ObjectInstance, effects mobileEquipmentEffects) {
 	if effects.zapped {
-		if w.MobileMessageSink != nil && sendOk(m, false) {
-			w.MobileMessageSink(m, []byte(performAct("You are zapped by $p and instantly let go of it.", m, nil, obj, nil, "", "", m)))
-		}
+		w.mobileEquipmentAct(m, obj, "You are zapped by $p and instantly let go of it.")
 		Act(w, false, m, nil, obj, nil, "$n is zapped by $p and instantly lets go of it.", "", ToRoom)
 		return
 	}
@@ -345,4 +343,14 @@ func (w *World) dropMobilePossessionsLocked(m *MobInstance) {
 			drop(obj)
 		}
 	}
+}
+
+// mobileEquipmentAct preserves act's position gate, capitalization and CRLF,
+// delivering only to the descriptor of the concrete NPC body.
+func (w *World) mobileEquipmentAct(m *MobInstance, obj *ObjectInstance, format string) {
+	actDeliver(w, false, m, nil, obj, nil, format, "", ToChar, func(_ Actor, line string) {
+		if w.MobileMessageSink != nil {
+			w.MobileMessageSink(m, []byte(line))
+		}
+	})
 }

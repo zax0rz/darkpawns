@@ -78,7 +78,7 @@ complete.
 * Death: World.mu -> Mob.mu; pending work recorded under World.mu. Drain:
   World.mu -> Mob.mu. Existing session drain takes playerLifecycleMu only
   when there is pending work, then enters World; no new lifecycle acquisition.
-* Reset serialization remains World.resetMu outside the existing reset path;
+* Reset serialization remains World.zoneResetMu outside the existing reset path;
   Spawner.mu is not held across ExecuteZoneReset or deferred effects.
   Admin ResetZone uses that same existing serialized reset entry.
 * Effects release World/Mob before room Act, hunting, self-damage or output.
@@ -89,3 +89,33 @@ complete.
 
 Final normal gates, oracle revert triple, multiseed vehicle and combined census
 results are recorded in the PR and retained evidence manifest.
+
+## Pre-review follow-up
+
+Combined census at 916d206ff: 3186 pairs, 970 deduplicated; full and claims
+CLEAN_AFTER_RECHECK, 1866.675 seconds. Only informative-residual-depth and
+sweat-depth required infrastructure rechecks.
+
+The loot do_wear caller now explicitly uses its World and prints room/actor
+wear acts before equip_char and its zap/bad-stat follow-up. This also supplies
+world effects for directly constructed mobile bodies; ordinary spawned
+mobiles already retained World ownership in EquipItem. The actor act helper
+preserves capitalization, position gating and CRLF, including alignment zap.
+The effective-attribute fixture now uses C body slot5 rather than Go SlotBody1.
+
+Fresh C perform_wear read (act.item.c:1416-1517): valid wear bit, occupied slot
+and paired-slot fallback, flesh-alter, wield weight and two-handed conflicts
+all apply to NPCs. Only invalid_class exempts NPCs (class.c:737-764). Tests
+exercise these gates and prove two loot passes each emit wear then zap while
+preserving rejected inventory and unchanged AC. Reverting the loot caller
+causes an assertion failure; restoring it passes. No new locks: gating reads
+Mob accessors, acts run before World-aware equip, and deferred effects still
+run after World/Mob release.
+
+Zach authorized a targeted follow-up census: combat-zone-equipped-mobile,
+equipment, equipment-takename, equipment-fillword, wear-basic, lua-bind-objects,
+spec-proc-remorter-equipment, combat-death and spec-proc-dragon-breath-combat.
+These cover shared attach/removal and actual armed combat, equipment messages,
+Lua and corpse/dragon consumers. The new anti-alignment loot branch is proven
+by the focused transcript/state test above; no existing oracle vehicle claims
+that exact branch. Final normal gates/race and targeted verdict are in the PR.
