@@ -560,6 +560,7 @@ func main() {
 		OnEventProcess: func() {
 			gameWorld.EventQueue.Process(context.Background())
 		},
+		OnZoneUpdate: gameWorld.ZoneUpdate,
 		OnExtractPending: func() {
 			manager.ExtractPendingChars()
 		},
@@ -781,8 +782,6 @@ func main() {
 
 		// Build initial spec-room cache now that mobs/items are in place.
 
-		gameWorld.StartPeriodicResets(60 * time.Second)
-
 		// Readiness marker, shared with cmd/dp-oracle-diff through
 		// internal/bootmarker so the two cannot drift. The differential harness
 		// holds every scenario here, and holds a restarted engine here again.
@@ -916,10 +915,8 @@ func main() {
 	// heartbeat callback can be doing slow world work, so bound the wait well
 	// below systemd's stop timeout instead of allowing SIGKILL to decide.
 	// The AI ticker and point update ticker share the World's done channel;
-	// StopAITicker closes it and stops both. StopPeriodicResets ends the
-	// zone-reset goroutine started in the boot goroutine below.
+	// StopAITicker closes it and stops both. Zone resets use this heartbeat.
 	gameWorld.StopAITicker()
-	gameWorld.StopPeriodicResets()
 	loopCancel()
 	heartbeatCtx, heartbeatCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	heartbeatErr := gameLoop.StopContext(heartbeatCtx)

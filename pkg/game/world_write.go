@@ -78,6 +78,8 @@ func (w *World) AdjustMobPrototypes() int {
 
 // ResetZone triggers a manual zone reset. Returns an error if the zone or spawner is unavailable.
 func (w *World) ResetZone(number int) error {
+	w.zoneResetMu.Lock()
+	defer w.zoneResetMu.Unlock()
 	w.mu.RLock()
 	zone, ok := w.zones[number]
 	w.mu.RUnlock()
@@ -87,7 +89,7 @@ func (w *World) ResetZone(number int) error {
 	if w.spawner == nil {
 		return fmt.Errorf("spawner not initialized")
 	}
-	return w.spawner.ExecuteZoneReset(zone)
+	return w.spawner.executeZoneResetLocked(zone)
 }
 
 // The three setters below outlived the HTTP write path that was their only

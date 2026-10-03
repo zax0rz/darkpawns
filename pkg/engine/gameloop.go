@@ -6,7 +6,7 @@
 // Pulse constants:
 //
 //	PASSES_PER_SEC  = 10   → 100ms ticker interval
-//	PULSE_ZONE      = 600  → every 60 seconds
+//	PULSE_ZONE      = 100  → every 10 seconds
 //	PULSE_MOBILE    = 40   → every 4 seconds
 //	PULSE_VIOLENCE  = 20   → every 2 seconds
 //	PULSE_TICK      = 300  → every 30 seconds
@@ -29,7 +29,7 @@ import (
 // Pulse constants — matching comm.c PASSES_PER_SEC = 10.
 const (
 	PASSES_PER_SEC    = 10                  // 100ms ticker intervals per second
-	PULSE_ZONE        = 60 * PASSES_PER_SEC // 600 → 60s
+	PULSE_ZONE        = 10 * PASSES_PER_SEC // 100 → 10s
 	PULSE_MOBILE      = 4 * PASSES_PER_SEC  // 40  → 4s
 	PULSE_VIOLENCE    = 2 * PASSES_PER_SEC  // 20  → 2s
 	PULSE_TICK        = 30 * PASSES_PER_SEC // 300 → 30s
@@ -58,7 +58,7 @@ type GameLoopCallbacks struct {
 	// drains one queued command per session when wait reaches 0 (DP-1201).
 	OnDrainInput func()
 
-	// OnZoneUpdate — called every PULSE_ZONE (60s). Ported from zone_update().
+	// OnZoneUpdate — called every PULSE_ZONE (10s). Ported from zone_update().
 	OnZoneUpdate func()
 
 	// OnCheckIdlePasswords — called every 15 * PASSES_PER_SEC (15s).

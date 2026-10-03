@@ -424,7 +424,6 @@ func TestBootAndShutdownWriteNoWorldSnapshot(t *testing.T) {
 		t.Fatalf("SpawnObject: %v", err)
 	}
 	w.StopAITicker()
-	w.StopPeriodicResets()
 
 	if _, err := os.Stat(filepath.Clean(worldStateFile)); !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("a world snapshot was written: stat err = %v", err)
