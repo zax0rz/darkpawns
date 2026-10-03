@@ -280,9 +280,8 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			}
 
 			// MOB_RANDZON: random room within the same zone
-			spawnRoom := s.world.GetRoomInWorld(cmd.Arg3)
-			if spawnRoom != nil && mob.HasFlag("RANDZON") {
-				randRoom := s.pickRandomZoneRoom(spawnRoom.Zone)
+			if mob.HasFlag("RANDZON") {
+				randRoom := s.pickRandomZoneRoom(zone.Number)
 				if randRoom != nil {
 					s.moveMobToRoom(mob, randRoom.VNum)
 				}

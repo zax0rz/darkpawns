@@ -358,7 +358,7 @@ func TestZoneResetRelocatesUppercaseRandZonMob(t *testing.T) {
 	spawner := NewSpawner(world)
 	calls := installZoneRoomNumbers(t, 1)
 
-	if err := spawner.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{
+	if err := spawner.ExecuteZoneReset(&parser.Zone{Number: 1, Commands: []parser.ZoneCommand{{
 		Command: "M",
 		Arg1:    300,
 		Arg2:    1,
