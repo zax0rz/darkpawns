@@ -264,8 +264,9 @@ func TestDoActionSleepingActorReceivesMessages(t *testing.T) {
 		actor.SetPosition(combat.PosSleeping)
 		target.SetPosition(combat.PosSleeping)
 		DoAction(w, actor, "dance", target.Name)
-		// Sleeping actor cannot see the target, so $N resolves to "someone".
-		if got := channelOutput(output, actor.Name); got != "Someone is not in a proper position for that.\r\n" {
+		// src/utils.h:515-549: sleeping is not blindness; TO_SLEEP
+		// delivers the proper-position act with the visible target name.
+		if got := channelOutput(output, actor.Name); got != "Local is not in a proper position for that.\r\n" {
 			t.Fatalf("actor output = %q, want position-fail message", got)
 		}
 	})
@@ -274,7 +275,7 @@ func TestDoActionSleepingActorReceivesMessages(t *testing.T) {
 		w, actor, target, _, output := newChannelWorld(t)
 		actor.SetPosition(combat.PosSleeping)
 		DoAction(w, actor, "dance", target.Name)
-		// Sleeping actor cannot see the target, so $M resolves to "him".
+		// C $M uses the target gender; TO_SLEEP preserves actor delivery.
 		if got := channelOutput(output, actor.Name); got != "You lead him to the dancefloor.\r\n" {
 			t.Fatalf("actor output = %q, want char-found message", got)
 		}

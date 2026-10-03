@@ -197,7 +197,7 @@ func TestActAudienceRouting(t *testing.T) {
 		t.Fatalf("sleeping victim received without ToSleep: %v", received)
 	}
 	Act(w, false, actor, victim, nil, nil, "$n wakes you.", "", ToVict|ToSleep)
-	if got := received[victim.Name]; len(got) != 1 || got[0] != "Someone wakes you.\r\n" {
+	if got := received[victim.Name]; len(got) != 1 || got[0] != "Hero wakes you.\r\n" {
 		t.Fatalf("ToSleep delivery = %v, want one substituted message", got)
 	}
 }
@@ -270,4 +270,25 @@ func containsName(names []string, name string) bool {
 		}
 	}
 	return false
+}
+
+// src/utils.h:515-549: character/object visibility has no AWAKE gate.
+// SENDOK independently controls whether an act reaches a sleeping descriptor.
+func TestSleepingVisibilityNamesCharactersAndObjects(t *testing.T) {
+	_, actor, sleeper, _, _ := newActTestWorld(t)
+	sleeper.SetPosition(combat.PosSleeping)
+	obj := NewObjectInstance(&parser.Obj{Keywords: "apple fruit", ShortDesc: "an apple"}, -1)
+	if !CanSee(sleeper, actor) || !CanSeeObject(sleeper, obj) {
+		t.Fatal("sleeping observer lost character/object visibility")
+	}
+	if got := persName(actor, sleeper); got != "Hero" {
+		t.Fatalf("sleeping PERS = %q", got)
+	}
+	if got := objShortDesc(obj, sleeper); got != "an apple" {
+		t.Fatalf("sleeping object substitution = %q", got)
+	}
+	sleeper.SetAffect(affBlind, true)
+	if CanSee(sleeper, actor) || CanSeeObject(sleeper, obj) {
+		t.Fatal("blind observer gained visibility")
+	}
 }

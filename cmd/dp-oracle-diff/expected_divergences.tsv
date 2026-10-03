@@ -7,7 +7,6 @@ force-mob	force.tsv	force.npc-command-interpreter	blocked
 force-mob	force.tsv	force.visible-npc-target	blocked	
 gsay-act-depth	gsay.tsv	gsay.act-echo-prompt-spacing	blocked	
 gsay-act-depth	gsay.tsv	gsay.act-listener-prompt	blocked	
-gsay-depth	gsay.tsv	gsay.sleeping-recipient	blocked	
 shoot-target-depth	shoot.tsv	shoot.mob-hit-miss	blocked	
 shoot-target-depth	shoot.tsv	shoot.pc-level-window	blocked	
 shoot-target-depth	shoot.tsv	shoot.player-hit-miss	blocked	
