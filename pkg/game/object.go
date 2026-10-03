@@ -49,6 +49,7 @@ type ObjectInstance struct {
 	// the prototype's and later ones build on it; a zero override can then
 	// mean "no flags" rather than "unchanged".
 	extraFlagsOverridden bool
+	AffectFlags          [4]uint32 // live C obj_flags.bitvector (zero on ordinary read_object)
 	AffectsOverride      []parser.ObjAffect
 	ValuesOverride       *[4]int // copy-on-write override of prototype Values
 	// CostOverride is a per-instance GET_OBJ_COST, written by a script's

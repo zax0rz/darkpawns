@@ -1264,6 +1264,22 @@ func applyMobObjectFixtures(worldDir string, fixtures []oraclediff.MobObjectFixt
 			return fmt.Errorf("zone %d has no preceding mob fixture for mob %d", fixture.ZoneNumber, fixture.MobVNum)
 		}
 		command := fmt.Sprintf("\nG 1 %d %d -1", fixture.ObjectVNum, fixture.MaxExisting)
+		if fixture.WearPosition != nil {
+			if *fixture.WearPosition < 0 || *fixture.WearPosition >= 22 {
+				return fmt.Errorf("invalid equipment position %d", *fixture.WearPosition)
+			}
+			lastMob := 0
+			for _, line := range strings.Split(string(data[:index]), "\n") {
+				fields := strings.Fields(line)
+				if len(fields) >= 3 && fields[0] == "M" {
+					lastMob, _ = strconv.Atoi(fields[2])
+				}
+			}
+			if lastMob != fixture.MobVNum {
+				return fmt.Errorf("equipment fixture mob %d is not last M (%d)", fixture.MobVNum, lastMob)
+			}
+			command = fmt.Sprintf("\nE 1 %d %d %d", fixture.ObjectVNum, fixture.MaxExisting, *fixture.WearPosition)
+		}
 		updated := make([]byte, 0, len(data)+len(command))
 		updated = append(updated, data[:index]...)
 		updated = append(updated, command...)

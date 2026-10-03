@@ -396,6 +396,8 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	w.mu.Lock()
 	var deadMob *MobInstance
 	var deadMobID int
+	var equipmentItems []*ObjectInstance
+	var inventoryItems []*ObjectInstance
 	for id, mob := range w.activeMobs {
 		if mob == victim {
 			deadMob = mob
@@ -407,6 +409,22 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	// Prevents two combat rounds from targeting the same mob.
 	if deadMob != nil {
 		deadMob.SetAlive(false)
+		// Unequip before retiring the owner: later corpse transfers cannot
+		// resolve an owner that has already left activeMobs (R5e).
+		deadMob.mu.Lock()
+		inventoryItems = append(inventoryItems, deadMob.Inventory...)
+		deadMob.Inventory = nil
+		deadMob.Flags |= 1 << uint(MobFlagExtract)
+		for _, item := range inventoryItems {
+			item.Location = LocNowhere()
+		}
+		for slot := 0; slot < NumWears; slot++ {
+			if item := deadMob.unequipMobileLocked(w, slot); item != nil {
+				equipmentItems = append(equipmentItems, item)
+			}
+		}
+		deadMob.mu.Unlock()
+		w.pendingMobileExtractions[deadMob] = struct{}{}
 		delete(w.activeMobs, deadMobID)
 	}
 	w.mu.Unlock()
@@ -446,12 +464,6 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	// make_corpse: create a container object in the room
 	// Transfer BOTH inventory items AND all equipped slots into the corpse container
 	// Source: fight.c:make_corpse() lines ~383-410
-	var inventoryItems []*ObjectInstance
-	inventoryItems = append(inventoryItems, deadMob.Inventory...)
-	var equipmentItems []*ObjectInstance
-	for _, item := range deadMob.Equipment {
-		equipmentItems = append(equipmentItems, item)
-	}
 
 	// Transfer gold into corpse (as money objects)
 	mobGold := deadMob.GetGold()

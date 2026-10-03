@@ -842,3 +842,20 @@ func TestHasEnterGameStep(t *testing.T) {
 		t.Fatal("reconnect relogin reported a menu choice")
 	}
 }
+
+func TestParseMobileEquipmentFixture(t *testing.T) {
+	for _, slot := range []string{"0", "16", "21"} {
+		sc, err := ParseScenario("mobile-equipment", strings.NewReader("[fixture]\nequip-object 18301 12120 1 "+slot+" 80\n[probe]\nlook\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(sc.MobObjectFixtures) != 1 || sc.MobObjectFixtures[0].WearPosition == nil {
+			t.Fatal("equipment fixture lost its E position")
+		}
+	}
+	for _, slot := range []string{"-1", "22", "bad"} {
+		if _, err := ParseScenario("mobile-equipment", strings.NewReader("[fixture]\nequip-object 18301 12120 1 "+slot+" 80\n[probe]\nlook\n")); err == nil {
+			t.Fatalf("accepted invalid C equipment slot %q", slot)
+		}
+	}
+}

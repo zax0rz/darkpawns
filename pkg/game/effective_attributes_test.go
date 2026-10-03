@@ -180,11 +180,11 @@ func TestE2AttrAffectBoundaries(t *testing.T) {
 		t.Fatal("NPC remove didn't restore")
 	}
 	item := attrItem(ApplyDex, 2)
-	m.EquipItem(item, int(SlotBody))
+	m.EquipItem(item, mobWearBody)
 	if m.GetDex() != 25 {
 		t.Fatal("NPC equip didn't bound")
 	}
-	if m.UnequipItem(int(SlotBody)) != item || m.GetDex() != 24 {
+	if m.UnequipItem(mobWearBody) != item || m.GetDex() != 24 {
 		t.Fatal("NPC unequip didn't restore")
 	}
 }

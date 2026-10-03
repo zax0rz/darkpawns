@@ -2107,8 +2107,8 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		// player who is already fighting; do_backstab() owns that later gate
 		// and returns TRUE without consuming the skill rolls.
 		if pl.GetFlags()&(1<<uint(PrfNohassle)) == 0 && canSee(me, pl) {
-			weapon, wielded := me.Equipment[int(SlotWield)]
-			if !wielded || weapon == nil || weapon.Prototype == nil || weapon.Prototype.Values[3] != 11 {
+			weapon := me.Equipped(mobWearWield)
+			if weapon == nil || weapon.Prototype == nil || weapon.GetValue(3) != 11 {
 				// do_backstab(..., subcmd=1) emits only to the NPC descriptor,
 				// so this failed weapon gate is player-silent and draw-free.
 				return true

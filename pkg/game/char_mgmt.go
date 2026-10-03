@@ -126,7 +126,7 @@ func (w *World) ExtractPendingChars() {
 func (w *World) HasPendingExtractions() bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	if len(w.pendingPlayerExtractions) > 0 {
+	if len(w.pendingPlayerExtractions) > 0 || len(w.pendingMobileExtractions) > 0 {
 		return true
 	}
 	extractMask := uint64(1 << uint(plrExtractBit))
@@ -267,47 +267,15 @@ func (w *World) ExtractPendingPlayers() []*Player {
 			m.mu.Unlock()
 			continue
 		}
-		mobRoom := m.RoomVNum
-		hadEquipment := len(m.Equipment) > 0
-
-		// Drop equipment to room floor.
-		for slot, item := range m.Equipment {
-			if isLitLightSource(item) && mobRoom >= 0 {
-				w.adjustRoomLight(mobRoom, -1)
-			}
-			delete(m.Equipment, slot)
-			if mobRoom >= 0 {
-				w.roomItems[mobRoom] = append(w.roomItems[mobRoom], item)
-				item.Location = LocRoom(mobRoom)
-				item.RoomVNum = mobRoom
-				if isLitLightSource(item) {
-					w.adjustRoomLight(mobRoom, 1)
-				}
-			} else {
-				item.Location = LocNowhere()
-				item.RoomVNum = -1
-			}
-		}
-
-		// Drop inventory to room floor.
-		for _, item := range m.Inventory {
-			if mobRoom >= 0 {
-				w.roomItems[mobRoom] = append(w.roomItems[mobRoom], item)
-				item.Location = LocRoom(mobRoom)
-				item.RoomVNum = mobRoom
-			} else {
-				item.Location = LocNowhere()
-				item.RoomVNum = -1
-			}
-		}
-		m.Inventory = m.Inventory[:0]
 		m.mu.Unlock()
-		if hadEquipment {
-			m.AffectTotal()
-		}
+		w.dropMobilePossessionsLocked(m)
 
 		slog.Debug("mob extracted", "id", id)
 		delete(w.activeMobs, id)
+	}
+	for m := range w.pendingMobileExtractions {
+		w.dropMobilePossessionsLocked(m)
+		delete(w.pendingMobileExtractions, m)
 	}
 	return extracted
 }

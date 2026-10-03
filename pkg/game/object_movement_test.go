@@ -650,7 +650,7 @@ func TestMobEquipInEquipmentNotInventory(t *testing.T) {
 	}
 
 	// Equip via MoveObject
-	if err := w.MoveObject(obj, LocEquippedMob(mob.GetID(), SlotWield)); err != nil {
+	if err := w.MoveObject(obj, LocEquippedMob(mob.GetID(), EquipmentSlot(mobWearWield))); err != nil {
 		t.Fatalf("MoveObject equip failed: %v", err)
 	}
 
@@ -658,7 +658,7 @@ func TestMobEquipInEquipmentNotInventory(t *testing.T) {
 	if !obj.Location.IsEquipped() {
 		t.Errorf("Location.Kind = %v, want ObjEquipped", obj.Location.Kind)
 	}
-	if _, ok := mob.Equipment[int(SlotWield)]; !ok {
+	if _, ok := mob.Equipment[mobWearWield]; !ok {
 		t.Error("item missing from Equipment map after equip")
 	}
 
@@ -689,8 +689,8 @@ func TestMobUnequipToInventory(t *testing.T) {
 	}
 
 	// Equip directly via mob method (bypasses MoveObject, item in Equipment only)
-	obj.Location = LocEquippedMob(mob.GetID(), SlotWield)
-	mob.Equipment[int(SlotWield)] = obj
+	obj.Location = LocEquippedMob(mob.GetID(), EquipmentSlot(mobWearWield))
+	mob.Equipment[mobWearWield] = obj
 
 	// Unequip: move to mob inventory via MoveObject
 	if err := w.MoveObjectToMobInventory(obj, mob); err != nil {
@@ -698,7 +698,7 @@ func TestMobUnequipToInventory(t *testing.T) {
 	}
 
 	// Equipment slot must be empty
-	if _, ok := mob.Equipment[int(SlotWield)]; ok {
+	if _, ok := mob.Equipment[mobWearWield]; ok {
 		t.Error("item still in Equipment map after unequip to inventory")
 	}
 
@@ -875,17 +875,17 @@ func TestExtractObjectFromMobEquipment(t *testing.T) {
 	mob, _ := w.SpawnMob(2001, 1001)
 	obj, _ := w.SpawnObject(3002, 1001) // wieldable
 
-	if err := w.MoveObject(obj, LocEquippedMob(mob.GetID(), SlotWield)); err != nil {
+	if err := w.MoveObject(obj, LocEquippedMob(mob.GetID(), EquipmentSlot(mobWearWield))); err != nil {
 		t.Fatalf("MoveObject to mob equip failed: %v", err)
 	}
 
-	if _, ok := mob.Equipment[int(SlotWield)]; !ok {
+	if _, ok := mob.Equipment[mobWearWield]; !ok {
 		t.Fatal("expected item in mob Equipment before extract")
 	}
 
 	w.ExtractObject(obj, 1001)
 
-	if _, ok := mob.Equipment[int(SlotWield)]; ok {
+	if _, ok := mob.Equipment[mobWearWield]; ok {
 		t.Error("BUG: equipped item still in mob Equipment map after ExtractObject")
 	}
 

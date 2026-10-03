@@ -295,3 +295,39 @@ func TestFileCommandsRequireSQLiteStore(t *testing.T) {
 		t.Fatal("live stat unexpectedly needs store")
 	}
 }
+
+func TestMobileEquipmentFixtureWritesEForLastMob(t *testing.T) {
+	for _, target := range []string{"oracle", "port"} {
+		t.Run(target, func(t *testing.T) {
+			worldDir := t.TempDir()
+			zoneDir := filepath.Join(worldDir, "zon")
+			if err := os.MkdirAll(zoneDir, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(zoneDir, "80.zon")
+			zone := "#80\nfixture~\n8199 30 2\nM 0 18301 1 8105\nS\n$\n"
+			if err := os.WriteFile(path, []byte(zone), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			pos := 16
+			fixture := oraclediff.MobObjectFixture{MobVNum: 18301, ObjectVNum: 12120, MaxExisting: 1, ZoneNumber: 80, WearPosition: &pos}
+			if err := applyMobObjectFixtures(worldDir, []oraclediff.MobObjectFixture{fixture}); err != nil {
+				t.Fatal(err)
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(data), "M 0 18301 1 8105\nE 1 12120 1 16\nS") {
+				t.Fatalf("fixture failed to append exact M/E reset: %s", data)
+			}
+			zone = strings.Replace(zone, "\nS", "\nM 0 18302 1 8105\nS", 1)
+			if err := os.WriteFile(path, []byte(zone), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := applyMobObjectFixtures(worldDir, []oraclediff.MobObjectFixture{fixture}); err == nil {
+				t.Fatal("equipment fixture accepted a different last M")
+			}
+		})
+	}
+}

@@ -334,7 +334,8 @@ func TestDoStealInventoryAndEquipmentBranches(t *testing.T) {
 		mob := newStealTestMob(0)
 		mob.SetPosition(combat.PosSleeping)
 		item := NewObjectInstance(&parser.Obj{VNum: 3002, Keywords: "ring silver", ShortDesc: "a silver ring", Weight: 1}, 1001)
-		mob.EquipItem(item, int(SlotFingerR))
+		item.Location = LocNowhere()
+		mob.EquipItem(item, 1)
 
 		dprng.ResetStream(1)
 		result := DoSteal(thief, mob, "ring", nil)
@@ -350,7 +351,8 @@ func TestDoStealInventoryAndEquipmentBranches(t *testing.T) {
 		thief := newStealTestThief(1000)
 		mob := newStealTestMob(0)
 		item := NewObjectInstance(&parser.Obj{VNum: 3003, Keywords: "ring gold", ShortDesc: "a gold ring", Weight: 1}, 1001)
-		mob.EquipItem(item, int(SlotFingerR))
+		item.Location = LocNowhere()
+		mob.EquipItem(item, 1)
 
 		dprng.ResetStream(1)
 		result := DoSteal(thief, mob, "ring", nil)

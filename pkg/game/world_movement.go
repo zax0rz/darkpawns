@@ -9,7 +9,7 @@ func mobHasLight(m *MobInstance) bool {
 	if m == nil {
 		return false
 	}
-	for _, item := range m.Equipment {
+	for _, item := range m.EquipmentSnapshot() {
 		if isLitLightSource(item) {
 			return true
 		}
@@ -96,18 +96,11 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 	if isMob {
 		for _, m := range w.activeMobs {
 			if m.GetName() == charName {
-				hasLight := mobHasLight(m)
-				if hasLight && fromRoomVNum >= 0 {
-					w.adjustRoomLight(fromRoomVNum, -1)
-				}
-				m.SetRoom(toRoomVNum)
+				m.moveRoomLocked(w, toRoomVNum)
 				m.mu.Lock()
 				w.nextRoomEntrySequence++
 				m.RoomEntrySequence = w.nextRoomEntrySequence
 				m.mu.Unlock()
-				if hasLight {
-					w.adjustRoomLight(toRoomVNum, 1)
-				}
 				break
 			}
 		}
@@ -131,7 +124,7 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 			if p.MountName != "" {
 				for _, m := range w.activeMobs {
 					if m.GetName() == p.MountName && m.GetRoom() == fromRoomVNum {
-						m.SetRoom(toRoomVNum)
+						m.moveRoomLocked(w, toRoomVNum)
 						m.mu.Lock()
 						w.nextRoomEntrySequence++
 						m.RoomEntrySequence = w.nextRoomEntrySequence

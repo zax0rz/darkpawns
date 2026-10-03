@@ -332,7 +332,7 @@ func TestMobInstance_HitModifiers(t *testing.T) {
 			ExtraFlags: [4]int{1 << itemExtraBless, 0, 0, 0},
 		},
 	}
-	mob.Equipment[int(SlotWield)] = blessedWeapon
+	mob.Equipment[mobWearWield] = blessedWeapon
 	mods = mob.HitModifiers()
 	if !mods.WeaponBlessed {
 		t.Fatalf("armed mob with blessed weapon HitModifiers.WeaponBlessed = false, want true")

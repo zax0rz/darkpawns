@@ -200,7 +200,7 @@ func roomActivityHasBoat(ch roomActivityChar) bool {
 				return true
 			}
 		}
-		for _, obj := range c.Equipment {
+		for _, obj := range c.EquipmentSnapshot() {
 			if obj != nil && obj.Prototype != nil && obj.Prototype.TypeFlag == ITEM_BOAT {
 				return true
 			}

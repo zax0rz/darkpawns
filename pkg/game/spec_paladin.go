@@ -11,12 +11,12 @@ const skillChargeNum = 147 // src/spells.h: SKILL_CHARGE
 // prelude is suppressed for an NPC, but damage() still emits the native charge
 // skill message and applies the same weapon-dice arithmetic.
 func mobCharge(w *World, me *MobInstance, vict combat.Combatant) {
-	weapon, wielded := me.Equipment[int(SlotWield)]
-	if !wielded || weapon == nil || weapon.Prototype == nil {
+	weapon := me.Equipped(mobWearWield)
+	if weapon == nil || weapon.Prototype == nil {
 		return
 	}
 
-	weaponType := weapon.Prototype.Values[3]
+	weaponType := weapon.GetValue(3)
 	if weaponType != 3 && weaponType != 12 {
 		return
 	}
@@ -38,7 +38,7 @@ func mobCharge(w *World, me *MobInstance, vict combat.Combatant) {
 		return
 	}
 
-	dam := 2 * dprng.Dice(weapon.Prototype.Values[1], weapon.Prototype.Values[2])
+	dam := 2 * dprng.Dice(weapon.GetValue(1), weapon.GetValue(2))
 	if mounted {
 		dam += 50
 	}
@@ -57,7 +57,7 @@ func mobDisarm(w *World, me *MobInstance, vict combat.Combatant) {
 	var weapon *ObjectInstance
 	switch target := vict.(type) {
 	case *MobInstance:
-		weapon = target.Equipment[int(SlotWield)]
+		weapon = target.Equipped(mobWearWield)
 	case *Player:
 		weapon, _ = target.Equipment.GetItemInSlot(SlotWield)
 	default:
@@ -70,7 +70,7 @@ func mobDisarm(w *World, me *MobInstance, vict combat.Combatant) {
 	percent := dprng.Number(1, 101+vict.GetLevel())
 	if percent < 200 {
 		if target, ok := vict.(*MobInstance); ok {
-			target.UnequipItem(int(SlotWield))
+			target.UnequipItem(mobWearWield)
 		} else if target, ok := vict.(*Player); ok {
 			if err := target.Equipment.Unequip(SlotWield, target.Inventory); err != nil {
 				return

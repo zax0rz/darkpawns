@@ -1,0 +1,51 @@
+# depth-case: combat.zone-equipped-mobile-weapon
+# R1/R3/R5h: native normal_checker attacks with a weapon equipped by
+# the same appended M/E reset in both disposable worlds. C WEAR_WIELD=16.
+# Mob 18301's bare attack is 9; cutlass 12120's value[3]=3 must emit slash.
+# C: src/db.c E; src/spec_procs2.c:162-185; src/fight.c one_hit.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18301 1 8105 80
+equip-object 18301 12120 1 16 80
+force-load 12120
+replace-room-exits 8105 none
+
+[setup:oracle]
+Eqfighter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Eqfighter
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob checker damroll 100
+set mob checker hitroll 100
+set Eqfighter maxhit 5000
+set Eqfighter hit 5000
+set Eqfighter level 1
+
+[probe]
+~dpclock pulse 40

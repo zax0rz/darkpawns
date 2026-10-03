@@ -715,7 +715,7 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnObject failed: %v", err)
 	}
-	mob.Equipment[int(SlotWield)] = weapon
+	mob.Equipment[mobWearWield] = weapon
 	parryEngine := &specParryCombatEngine{}
 	w.SetCombatEngine(parryEngine)
 	seed = fighterSeed(t, 1, 101, 50, 100, true)

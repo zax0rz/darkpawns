@@ -114,6 +114,11 @@ func (w *World) countMobInstances(vnum int) int {
 			count++
 		}
 	}
+	for mob := range w.pendingMobileExtractions {
+		if mob.VNum == vnum {
+			count++
+		}
+	}
 	return count
 }
 

@@ -52,17 +52,13 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 			if item == nil || item.Prototype == nil {
 				continue
 			}
+			if !CanSeeObject(killer, item) {
+				continue
+			}
 			where := findEqPos(item, "")
-			if where < 0 || where >= len(wearMessages) {
-				continue
+			if where >= 0 {
+				w.performMobileWear(killer, item, where)
 			}
-			if _, occupied := killer.Equipment[where]; occupied {
-				continue
-			}
-			if !killer.EquipItem(item, where) {
-				continue
-			}
-			Act(w, false, killer, nil, item, nil, wearMessages[where][0], "", ToRoom)
 		}
 	}
 }
@@ -78,4 +74,61 @@ func (w *World) findAttitudeLootCorpse(roomVNum int, victimName string) *ObjectI
 		}
 	}
 	return nil
+}
+
+// performMobileWear mirrors perform_wear for NPC do_wear("all") callers.
+// Every gate applies to NPCs; invalid_class alone always permits NPCs.
+// C act.item.c:1416-1517: wear_message BEFORE obj_from_char/equip_char.
+func (w *World) performMobileWear(m *MobInstance, obj *ObjectInstance, where int) {
+	if where < 0 || where >= NumWears {
+		return
+	}
+	actorAct := func(text string) { w.mobileEquipmentAct(m, obj, text) }
+	actorText := func(text string) {
+		if w.MobileMessageSink != nil {
+			w.MobileMessageSink(m, []byte(text))
+		}
+	}
+	if !canWearAtPosition(obj, where) || where == eqWearLight {
+		actorAct("You can't wear $p there.")
+		return
+	}
+	if where == eqWearFingerR || where == eqWearNeck1 || where == eqWearWristR {
+		if m.Equipped(where) != nil {
+			where++
+		}
+	}
+	if m.Equipped(where) != nil {
+		actorText(alreadyWearing[where])
+		return
+	}
+	switch where {
+	case eqWearWield:
+		if !canWearObject(obj, eqWearWield) {
+			actorText("You can't wield that.\r\n")
+			return
+		}
+		if m.IsAffected(affFleshAlter) {
+			actorText("Your flesh is altered, you can't wield anything!\r\n")
+			return
+		}
+		// constants.c str_app[].wield_w, indexed by live STRENGTH_APPLY_INDEX.
+		weights := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 40, 40, 40, 40, 40, 40, 40, 22, 24, 26, 28, 30}
+		if obj.GetWeight() > weights[combat.StrengthIndex(m.GetStr(), m.GetStrAdd())] {
+			actorText("It is too heavy for you to use.\r\n")
+			return
+		}
+		if obj.HasExtraFlag(0, extraFlagTwoHanded) && (m.Equipped(eqWearHold) != nil || m.Equipped(eqWearShield) != nil) {
+			actorText("Both hands must be free to wield that.\r\n")
+			return
+		}
+	case eqWearHold, eqWearShield:
+		if weapon := m.Equipped(eqWearWield); weapon != nil && weapon.HasExtraFlag(0, extraFlagTwoHanded) {
+			actorText("Both your hands are occupied with your weapon at the moment.\r\n")
+			return
+		}
+	}
+	Act(w, true, m, nil, obj, nil, wearMessages[where][0], "", ToRoom)
+	actorAct(wearMessages[where][1])
+	w.equipMobileFromInventory(m, obj, where)
 }

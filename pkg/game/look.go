@@ -1128,17 +1128,18 @@ func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
 }
 
 func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstance) {
-	if len(target.Equipment) == 0 {
+	equipment := target.EquipmentSnapshot()
+	if len(equipment) == 0 {
 		return
 	}
 	result.act(ch, target, nil, "\r\n$N is using:")
-	positions := make([]int, 0, len(target.Equipment))
-	for position := range target.Equipment {
+	positions := make([]int, 0, len(equipment))
+	for position := range equipment {
 		positions = append(positions, position)
 	}
 	sort.Ints(positions)
 	for _, position := range positions {
-		item := target.Equipment[position]
+		item := equipment[position]
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}

@@ -74,12 +74,13 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 				p.MarkCrashNeeded()
 			}
 		case OwnerMob:
-			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
+			if m := w.mobileObjectOwnerLocked(obj.Location.MobID); m != nil {
 				m.RemoveFromInventory(obj)
 			}
 		}
 	case ObjEquipped:
-		if obj.Location.OwnerKind == OwnerPlayer {
+		switch obj.Location.OwnerKind {
+		case OwnerPlayer:
 			if p, ok := w.players[obj.Location.PlayerName]; ok && p.Equipment != nil {
 				// UnequipItem transfers the object into inventory. Extraction
 				// must remove that transferred reference too; otherwise an
@@ -89,16 +90,11 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 					p.Inventory.removeItem(obj)
 				}
 			}
-		} else if obj.Location.OwnerKind == OwnerMob {
-			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
-				for pos, eqItem := range m.Equipment {
-					if eqItem == obj {
-						delete(m.Equipment, pos)
-						m.AffectTotal()
-						m.RemoveFromInventory(obj)
-						break
-					}
-				}
+		case OwnerMob:
+			if m := w.mobileObjectOwnerLocked(obj.Location.MobID); m != nil {
+				m.mu.Lock()
+				m.unequipMobileLocked(w, int(obj.Location.Slot))
+				m.mu.Unlock()
 			}
 		}
 	}

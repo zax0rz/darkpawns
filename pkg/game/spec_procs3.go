@@ -538,7 +538,7 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		}
 	}
 	if target != nil && target.GetTypeFlag() == ITEM_CONTAINER && target.GetValue(3) != 0 && !strings.Contains(target.GetKeywords(), "headless") {
-		wielded := me.Equipment[int(SlotWield)]
+		wielded := me.Equipped(mobWearWield)
 		slashWeapon := wielded != nil && wielded.GetValue(3) == 3
 		result := performBehead(w, me, target, wielded != nil, slashWeapon,
 			func(headObj *ObjectInstance) bool {
