@@ -1,0 +1,45 @@
+# Reconnect is warmup; only successful password-to-imotd bytes are compared.
+# depth-case: entry.motd-immortal-color-on-raw
+# Raw MOTD bytes: src/interpreter.c:1919-1922,2123-2132.
+[fixture]
+quiet-mobs
+no-settle
+keep-prompts
+empty-players
+[setup:oracle]
+Motdraw
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Motdraw
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[warmup]
+quit
+<RELOGIN>
+[probe]
+oraclepass
+[relogin:oracle]
+Motdraw
+~dpclock pulse 1
+[relogin:port]
+Motdraw
+~dpclock pulse 1

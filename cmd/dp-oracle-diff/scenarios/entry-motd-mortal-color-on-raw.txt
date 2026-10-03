@@ -1,0 +1,28 @@
+# depth-case: entry.motd-mortal-color-on-raw
+# Raw MOTD bytes: src/interpreter.c:1919-1922,2123-2132.
+[fixture]
+quiet-mobs
+no-settle
+keep-prompts
+[setup:oracle]
+Motdraw
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+[setup:port]
+Motdraw
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+[probe]
+Y

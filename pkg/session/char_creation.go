@@ -499,7 +499,13 @@ func (s *Session) sendCharCreatePrompt(stage, prompt string, options []CharCreat
 }
 
 func (s *Session) sendCharCreatePromptWithSecret(stage, prompt string, options []CharCreateOption, secret bool) {
-	if s.charColor {
+	// src/comm.c:1285-1286,1376-1378: returning entry uses the saved
+	// character preference; creation has only the pending preference.
+	color := s.charColor
+	if s.player != nil {
+		color = whoColorEnabled(s.player)
+	}
+	if color {
 		prompt = expandEntryColors(prompt)
 	}
 	data := CharCreateData{
