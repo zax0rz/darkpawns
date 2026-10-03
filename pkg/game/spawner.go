@@ -280,9 +280,8 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			}
 
 			// MOB_RANDZON: random room within the same zone
-			spawnRoom := s.world.GetRoomInWorld(cmd.Arg3)
-			if spawnRoom != nil && mob.HasFlag("RANDZON") {
-				randRoom := s.pickRandomZoneRoom(spawnRoom.Zone)
+			if mob.HasFlag("RANDZON") {
+				randRoom := s.pickRandomZoneRoom(zone.Number)
 				if randRoom != nil {
 					s.moveMobToRoom(mob, randRoom.VNum)
 				}
@@ -380,7 +379,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				slog.Error("error spawning object for container", "obj_vnum", cmd.Arg1, "error", err, "context", "container")
 				continue
 			}
-			container := s.findObjectInstance(cmd.Arg3)
+			container := s.world.GetObjNum(cmd.Arg3)
 			if container == nil {
 				// C leaves the newly read object floating and counted when the
 				// target container is missing, without calling percent_load.
@@ -392,7 +391,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				s.extractSpawnedObject(obj)
 				continue
 			}
-			if err := s.world.MoveObjectToContainer(obj, container); err != nil {
+			if err := s.world.putResetObject(obj, container); err != nil {
 				slog.Warn("MoveObjectToContainer failed in spawner", "obj_vnum", obj.GetVNum(), "error", err)
 			}
 			lastCmd = 1
@@ -402,19 +401,10 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				slog.Warn("Invalid door direction", "dir", cmd.Arg2, "room", cmd.Arg1)
 				continue
 			}
-			room := s.world.GetRoomInWorld(cmd.Arg1)
-			if room == nil {
-				slog.Warn("Door command: room not found", "room", cmd.Arg1)
+			if !s.world.resetDoor(cmd.Arg1, roomDirNames[cmd.Arg2], cmd.Arg3) {
+				slog.Warn("Door command: room or exit not found", "room", cmd.Arg1, "dir", roomDirNames[cmd.Arg2])
 				continue
 			}
-			ext, ok := room.Exits[roomDirNames[cmd.Arg2]]
-			if !ok {
-				slog.Warn("Door command: exit not found", "room", cmd.Arg1, "dir", roomDirNames[cmd.Arg2])
-				continue
-			}
-			// Arg3 is runtime state: 0=open, 1=closed, 2=closed+locked.
-			ext.ExitInfo = parser.ApplyDoorReset(ext.ExitInfo, cmd.Arg3)
-			s.world.SetExitInfo(cmd.Arg1, roomDirNames[cmd.Arg2], ext.ExitInfo)
 			lastCmd = 1
 
 		case "R": // Remove obj/mob from room (db.c:2220-2244)
@@ -425,7 +415,8 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			if cmd.Arg2 != 0 {
 				removed = s.removeObjectFromRoom(cmd.Arg1, cmd.Arg3)
 			} else {
-				removed = s.removeMobFromRoom(cmd.Arg1, cmd.Arg3)
+				lastMob = s.removeMobFromRoom(cmd.Arg1, cmd.Arg3)
+				removed = lastMob != nil
 			}
 			if removed {
 				lastCmd = 1
@@ -650,40 +641,25 @@ func (s *Spawner) forgetObjectInstance(roomVNum int, obj *ObjectInstance) {
 	}
 }
 
-// removeMobFromRoom removes the first mobile of the vnum in the room that is
-// not fighting, destroying what it wears and carries first (db.c:2228-2242).
-// No world file uses this branch; the port does not keep C's people-list
-// order, so with two eligible copies the one chosen may differ from C's.
-func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) bool {
-	mob := s.takeResetMobFromRoom(roomVNum, mobVNum)
-	if mob == nil {
-		return false
-	}
-	// Release Spawner.mu before world cleanup; that cleanup has its own locks.
-	s.world.destroyMobPossessions(mob)
-	s.world.ExtractMob(mob)
-	return true
-}
-
-func (s *Spawner) takeResetMobFromRoom(roomVNum, mobVNum int) *MobInstance {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if instances, ok := s.roomMobs[roomVNum]; ok {
-		for i, mob := range instances {
-			if mob.VNum != mobVNum || mob.GetFighting() != "" {
-				continue
-			}
-			s.roomMobs[roomVNum] = append(instances[:i], instances[i+1:]...)
-			if mobInstances, ok2 := s.mobInstances[mobVNum]; ok2 {
-				for j, mob2 := range mobInstances {
-					if mob2 == mob {
-						s.mobInstances[mobVNum] = append(mobInstances[:j], mobInstances[j+1:]...)
-						break
-					}
-				}
-			}
-			return mob
+// removeMobFromRoom mirrors reset_zone's people-list walk (db.c:2228-2242).
+// It returns the loop's final mob pointer, including nil on a failed search.
+// Canonical global counts retain a marked mob until the extraction heartbeat.
+func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) *MobInstance {
+	for _, mob := range s.world.COrderedRoomMobs(roomVNum) {
+		mob.mu.RLock()
+		eligible := mob.VNum == mobVNum && mob.Flags&(1<<uint(MobFlagExtract)) == 0 && mob.FightingTarget == ""
+		mob.mu.RUnlock()
+		if !eligible {
+			continue
 		}
+		s.world.destroyMobPossessions(mob)
+		mob.mu.Lock()
+		mob.Flags |= 1 << uint(MobFlagExtract)
+		mob.mu.Unlock()
+		// Private placement caches are not C's global counts. Release their
+		// references now; World retains the marked body until the existing drain.
+		s.RemoveMobInstance(mobVNum, mob)
+		return mob
 	}
 	return nil
 }

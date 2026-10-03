@@ -245,16 +245,19 @@ func GetNumber(name *string) int {
 	return n
 }
 
-// GetObjNum finds an object instance by its prototype rnum.
-// C: struct obj_data *get_obj_num(int nr) — linear search of object_list.
-// Go: search World's objectInstances by prototype index.
-func (w *World) GetObjNum(rnum int) *ObjectInstance {
+// GetObjNum finds the newest live object with this prototype vnum.
+// C get_obj_num walks object_list, where read_object prepends each instance
+// (handler.c:851-860; db.c:1892-1893). World assigns increasing IDs at creation.
+func (w *World) GetObjNum(vnum int) *ObjectInstance {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	var newest *ObjectInstance
 	for _, obj := range w.objectInstances {
-		if obj.Prototype != nil && obj.Prototype.VNum == rnum {
-			return obj
+		if obj.GetVNum() == vnum && (newest == nil || obj.ID > newest.ID) {
+			newest = obj
 		}
 	}
-	return nil
+	return newest
 }
 
 // GetCharNum finds a mob instance by its prototype rnum.
