@@ -1,0 +1,47 @@
+# depth-case: sysfile.read-page
+# src/act.wizard.c:3412-3443; src/db.c:2874-2932; src/modify.c:430-452.
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+misc-file bugs 55 Sysfile paging evidence.
+misc-file ideas 1 BoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundaryBoundary
+
+[setup:oracle]
+Sysfiledepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sysfiledepth
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+sysfile bugs
+<ENTER>
+r
+b
+3
+q
+sysfile BUGS trailing words
+q
+sysfile ideas
