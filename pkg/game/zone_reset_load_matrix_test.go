@@ -135,3 +135,47 @@ func TestZoneResetObjectRoomOrderAndOwnership(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneResetGiveWithoutLastMob(t *testing.T) {
+	w, s := newZoneResetTestSpawner(t)
+	mob, err := w.SpawnMob(300, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "G", Arg1: 200, Arg2: 1}}}); err != nil {
+		t.Fatal(err)
+	}
+	if w.countObjectInstances(200) != 0 || len(mob.Inventory) != 0 {
+		t.Fatal("G invented a last mob from the world registry")
+	}
+}
+
+func TestZoneResetGiveGlobalCapAndConditionalFailure(t *testing.T) {
+	w, s := newZoneResetTestSpawner(t)
+	if _, err := w.SpawnObject(200, -1); err != nil {
+		t.Fatal(err)
+	}
+	calls := installZoneObjectOrderHooks(t, true)
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
+		{Command: "G", Arg1: 200, Arg2: 1},
+		{Command: "G", Arg1: 201, Arg2: 1},
+		{Command: "G", IfFlag: 1, Arg1: 201, Arg2: 1},
+		{Command: "G", IfFlag: 1, Arg1: 204, Arg2: 1},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	mobs := w.GetMobsInRoom(100)
+	if len(mobs) != 1 {
+		t.Fatalf("mob count=%d, want 1", len(mobs))
+	}
+	if got := mobInventoryVNums(mobs[0]); !slices.Equal(got, []int{204, 201}) {
+		t.Fatalf("G inventory=%v, want [204 201] after global cap and failed conditional", got)
+	}
+	for _, obj := range mobs[0].Inventory {
+		if obj.Location != LocInventoryMob(mobs[0].ID) {
+			t.Fatal("G did not establish canonical mobile ownership")
+		}
+	}
+	assertZoneObjectCalls(t, calls, "percent", "percent")
+}
