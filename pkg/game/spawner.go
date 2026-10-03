@@ -5,9 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 	"sync"
-	"time"
 
-	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -50,13 +48,6 @@ type Spawner struct {
 	objInstances map[int][]*ObjectInstance // key: obj vnum
 	roomMobs     map[int][]*MobInstance    // key: room vnum
 	roomObjects  map[int][]*ObjectInstance // key: room vnum
-
-	// Zone reset timers
-	zoneTimers map[int]*time.Timer // key: zone number
-
-	// done signals the periodic reset goroutine to stop.
-	done     chan struct{}
-	doneOnce sync.Once
 }
 
 // NewSpawner creates a new spawner for the given world.
@@ -67,7 +58,6 @@ func NewSpawner(world *World) *Spawner {
 		objInstances: make(map[int][]*ObjectInstance),
 		roomMobs:     make(map[int][]*MobInstance),
 		roomObjects:  make(map[int][]*ObjectInstance),
-		zoneTimers:   make(map[int]*time.Timer),
 	}
 }
 
@@ -208,6 +198,13 @@ var (
 // Matches C's reset_zone() semantics including if_flag, loop, percent_load,
 // MOB_RANDZON, zone79, door-state, and remove commands.
 func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
+	s.world.zoneResetMu.Lock()
+	defer s.world.zoneResetMu.Unlock()
+	return s.executeZoneResetLocked(zone)
+}
+
+// executeZoneResetLocked requires World.zoneResetMu, never World.mu.
+func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 	// Do NOT hold s.mu — spawn and global-count helpers lock internally.
 	// Holding s.mu causes a deadlock.
 
@@ -436,6 +433,7 @@ func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
 		}
 	}
 
+	s.world.setZoneAgeLocked(zone.Number, 0)
 	return nil
 }
 
@@ -570,6 +568,8 @@ func (s *Spawner) GetObjectsInRoom(roomVNum int) []*ObjectInstance {
 
 // findObjectInstance finds an object instance by vnum (simple implementation).
 func (s *Spawner) findObjectInstance(objVNum int) *ObjectInstance {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	if instances, ok := s.objInstances[objVNum]; ok && len(instances) > 0 {
 		return instances[0]
 	}
@@ -630,6 +630,8 @@ func (s *Spawner) removeObjectFromRoom(roomVNum, objVNum int) bool {
 // forgetObjectInstance drops a removed object from the spawner's own
 // max-in-world bookkeeping, if the spawner placed it.
 func (s *Spawner) forgetObjectInstance(roomVNum int, obj *ObjectInstance) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if instances, ok := s.roomObjects[roomVNum]; ok {
 		for i, candidate := range instances {
 			if candidate == obj {
@@ -653,6 +655,19 @@ func (s *Spawner) forgetObjectInstance(roomVNum int, obj *ObjectInstance) {
 // No world file uses this branch; the port does not keep C's people-list
 // order, so with two eligible copies the one chosen may differ from C's.
 func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) bool {
+	mob := s.takeResetMobFromRoom(roomVNum, mobVNum)
+	if mob == nil {
+		return false
+	}
+	// Release Spawner.mu before world cleanup; that cleanup has its own locks.
+	s.world.destroyMobPossessions(mob)
+	s.world.ExtractMob(mob)
+	return true
+}
+
+func (s *Spawner) takeResetMobFromRoom(roomVNum, mobVNum int) *MobInstance {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if instances, ok := s.roomMobs[roomVNum]; ok {
 		for i, mob := range instances {
 			if mob.VNum != mobVNum || mob.GetFighting() != "" {
@@ -667,13 +682,10 @@ func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) bool {
 					}
 				}
 			}
-			s.world.destroyMobPossessions(mob)
-			// Clean up global state — db.c zone reset 'R' (DP-373)
-			s.world.ExtractMob(mob)
-			return true
+			return mob
 		}
 	}
-	return false
+	return nil
 }
 
 // RegisterObjectInstance adds a deserialized object to the spawner's tracking.
@@ -713,62 +725,4 @@ func (s *Spawner) RemoveMobInstance(mobVNum int, mob *MobInstance) {
 			}
 		}
 	}
-}
-
-// StartPeriodicResets starts the periodic zone reset timer.
-func (s *Spawner) StartPeriodicResets(interval time.Duration) {
-	if dpclock.Frozen() {
-		return
-	}
-	s.done = make(chan struct{})
-	ticker := time.NewTicker(interval)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				s.resetEmptyZones()
-			case <-s.done:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
-}
-
-// StopPeriodicResets signals the periodic reset goroutine to exit cleanly.
-// Safe to call multiple times.
-func (s *Spawner) StopPeriodicResets() {
-	if s.done == nil {
-		return
-	}
-	s.doneOnce.Do(func() {
-		close(s.done)
-	})
-}
-
-// resetEmptyZones resets zones that have no active players in them.
-// Matches C behavior: db.c's zone_point_update() resets a zone when its
-// timer fires AND no PCs are present (is_zone_empty check).
-func (s *Spawner) resetEmptyZones() {
-	// Do NOT hold s.mu here — ExecuteZoneReset handles its own locking internally.
-	// Also need to check player rooms which requires world lock.
-
-	zones := s.world.GetAllZones()
-	for _, zone := range zones {
-		if s.zoneHasPlayers(zone.Number) {
-			continue
-		}
-		if err := s.ExecuteZoneReset(zone); err != nil {
-			slog.Warn("periodic zone reset failed", "zone", zone.Number, "error", err)
-		}
-	}
-}
-
-// zoneHasPlayers returns true if any player is in a room belonging to the given zone.
-func (s *Spawner) zoneHasPlayers(zoneNum int) bool {
-	hasPlayer := false
-	s.world.ForEachPlayerInZone(zoneNum, func(p *Player) {
-		hasPlayer = true
-	})
-	return hasPlayer
 }

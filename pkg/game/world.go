@@ -42,6 +42,17 @@ type CommandExecFunc func(ch *Player, command string) bool
 // certain they don't acquire m.mu. See Manager.Register() comment for
 // details.
 type World struct {
+	// zoneResetMu serializes boot, manual, admin and heartbeat resets.
+	// It precedes brief World/Spawner locks; no lifecycle lock is acquired.
+	zoneResetMu      sync.Mutex
+	zoneClockStarted bool
+	zoneAges         map[int]int
+	zoneMinuteTicks  int
+	zoneResetQueue   []int
+	// OccupiedZoneRooms snapshots playing descriptors, not retained bodies.
+	// Installed before heartbeat starts; called without World.mu.
+	OccupiedZoneRooms func() []int
+
 	mu sync.RWMutex
 
 	// Snapshot manager for lock-free reads
@@ -329,6 +340,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		w.HelpScreen = screen
 	}
 
+	w.spawner = NewSpawner(w)
 	return w, nil
 }
 

@@ -128,7 +128,9 @@ func (s *Session) finishDupeCheck(p *game.Player, name string, olcZone int, unsw
 	s.authenticated = true
 	s.olcZone = olcZone
 	m.mu.Unlock()
+	m.mu.Lock()
 	s.charCreating = false
+	m.mu.Unlock()
 	s.charStage = ""
 	s.charPassword = ""
 	s.clearMenuState()

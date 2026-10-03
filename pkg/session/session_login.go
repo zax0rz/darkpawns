@@ -87,7 +87,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 		}
 
+		s.manager.mu.Lock()
+
 		s.player = game.NewCharacter(0, guestName, game.ClassWarrior, game.RaceHuman)
+
+		s.manager.mu.Unlock()
 		s.player.Stats = game.RollRealAbils(game.ClassWarrior, game.RaceHuman)
 		s.player.CopyBaseAttributes()
 		s.player.Sex = 0 // Male
@@ -102,7 +106,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		game.GiveStartingSkills(s.player)
 		grantClassSpells(s.player)
 
+		s.manager.mu.Lock()
+
 		s.authenticated = true
+
+		s.manager.mu.Unlock()
 		s.isGuest = true
 		s.playerName = guestName
 
@@ -191,7 +199,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			// C CON_GET_NAME selects the password state. Legacy structured clients
 			// may supply a password with login; interactive transports send only a name.
 			if login.Password == "" && s.charStage != "login_password" {
+				s.manager.mu.Lock()
 				s.charCreating = true
+				s.manager.mu.Unlock()
 				s.charStage = "login_password"
 				s.charName = rec.Name
 				s.sendCharCreatePromptWithSecret("login_password", "Password: ", nil, true)
@@ -239,7 +249,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 					s.sendCharCreatePrompt("closing", "Wrong password... disconnecting.\r\n", nil)
 					s.CloseSend()
 				} else {
+					s.manager.mu.Lock()
 					s.charCreating = true
+					s.manager.mu.Unlock()
 					s.charStage = "login_password"
 					s.charName = rec.Name
 					s.sendCharCreatePromptWithSecret("login_password", "Wrong password.\r\nPassword: ", nil, true)
@@ -255,13 +267,19 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
 				p.Aliases = aliases
 			}
+			s.manager.mu.Lock()
 			s.charCreating = false
+			s.manager.mu.Unlock()
 			s.charStage = ""
 			s.charPassword = ""
 			s.loginFailures.Store(0)
+			s.manager.mu.Lock()
 			s.player = p
+			s.manager.mu.Unlock()
 			s.olcZone = rec.OlcZone
+			s.manager.mu.Lock()
 			s.authenticated = true
+			s.manager.mu.Unlock()
 			s.menuPasswordHash = rec.Password
 		} else {
 			// A record removed during password entry must never become creation.

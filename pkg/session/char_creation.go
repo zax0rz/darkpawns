@@ -367,7 +367,9 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 
 	case "motd":
 		// Both new and returning characters choose what to do after the MOTD.
+		s.manager.mu.Lock()
 		s.charCreating = false
+		s.manager.mu.Unlock()
 		s.showMainMenu()
 
 	default:
@@ -461,7 +463,9 @@ func (s *Session) startNewCharFlow(playerName string) {
 	if playerName != "" {
 		playerName = strings.ToUpper(playerName[:1]) + playerName[1:] // C CAP, not title-case.
 	}
+	s.manager.mu.Lock()
 	s.charCreating = true
+	s.manager.mu.Unlock()
 	s.charName = playerName
 	s.charPassword = ""
 	s.charStage = "confirm_name"
@@ -471,7 +475,9 @@ func (s *Session) startNewCharFlow(playerName string) {
 func (s *Session) restartNameEntry() {
 	s.creationReplacement = nil
 	s.releaseEntryName()
+	s.manager.mu.Lock()
 	s.charCreating = true
+	s.manager.mu.Unlock()
 	s.charStage = "get_name"
 	s.charName = ""
 	s.charPassword = ""
@@ -529,13 +535,19 @@ func (s *Session) abortEntry(err error) error {
 	// Discard the failed candidate before cleanup: cleanupSession normally
 	// saves its player, which would retry an aborted do_start after a transient
 	// entry-save failure and overwrite the durable level-zero character.
+	s.manager.mu.Lock()
 	s.authenticated = false
+	s.manager.mu.Unlock()
+	s.manager.mu.Lock()
 	s.player = nil
+	s.manager.mu.Unlock()
 	if registered {
 		s.manager.Unregister(s.playerName)
 	}
 	s.creationSaved = false
+	s.manager.mu.Lock()
 	s.charCreating = false
+	s.manager.mu.Unlock()
 	s.charStage = ""
 	s.charPassword = ""
 	s.clearMenuState()
@@ -603,8 +615,12 @@ func (s *Session) persistAcceptedCharacter() error {
 	} else {
 		p.ID = s.manager.allocateEphemeralPlayerID()
 	}
+	s.manager.mu.Lock()
 	s.player = p
+	s.manager.mu.Unlock()
+	s.manager.mu.Lock()
 	s.authenticated = true
+	s.manager.mu.Unlock()
 	s.creationSaved = true
 	s.playerName = s.charName
 	s.menuPasswordHash = s.charPassword
@@ -674,7 +690,9 @@ func (s *Session) completeCharCreation() error {
 	grantClassSpells(s.player)
 
 	// Register and add to world
+	s.manager.mu.Lock()
 	s.authenticated = true
+	s.manager.mu.Unlock()
 	s.playerName = s.charName
 
 	// C source intro: brand-new mortals first appear in the Burning Hut (8099);
@@ -715,7 +733,9 @@ func (s *Session) completeCharCreation() error {
 	// Clear char creation state
 	s.releaseEntryName()
 	s.creationSaved = false
+	s.manager.mu.Lock()
 	s.charCreating = false
+	s.manager.mu.Unlock()
 	s.charStage = ""
 	s.charName = ""
 	s.charPassword = ""

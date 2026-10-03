@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -135,32 +134,20 @@ func (w *World) GetAllZones() []*parser.Zone {
 
 // StartZoneResets starts all zone resets.
 func (w *World) StartZoneResets() error {
+	w.zoneResetMu.Lock()
+	defer w.zoneResetMu.Unlock()
 	if w.spawner == nil {
 		w.spawner = NewSpawner(w)
 	}
 
 	zones := w.GetAllZones()
 	for _, zone := range zones {
-		if err := w.spawner.ExecuteZoneReset(zone); err != nil {
+		if err := w.spawner.executeZoneResetLocked(zone); err != nil {
 			return fmt.Errorf("zone %d reset failed: %w", zone.Number, err)
 		}
 	}
+	w.zoneClockStarted = true
 	return nil
-}
-
-// StartPeriodicResets starts periodic zone reset checks.
-func (w *World) StartPeriodicResets(interval time.Duration) {
-	if w.spawner == nil {
-		w.spawner = NewSpawner(w)
-	}
-	w.spawner.StartPeriodicResets(interval)
-}
-
-// StopPeriodicResets signals the periodic zone reset goroutine to exit cleanly.
-func (w *World) StopPeriodicResets() {
-	if w.spawner != nil {
-		w.spawner.StopPeriodicResets()
-	}
 }
 
 // GetSpawner returns the world's spawner.
