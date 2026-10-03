@@ -112,3 +112,26 @@ func TestZoneResetRandZonUsesResetZone(t *testing.T) {
 		t.Fatalf("RANDZON used spawn room's zone: draws=%d zone2 mobs=%d", *draws, len(w.GetMobsInRoom(200)))
 	}
 }
+
+func TestZoneResetObjectRoomOrderAndOwnership(t *testing.T) {
+	w, s := newZoneResetTestSpawner(t)
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "O", Arg1: 200, Arg2: 2, Arg3: 100},
+		{Command: "O", Arg1: 201, Arg2: 1, Arg3: 100},
+		{Command: "O", Arg1: 200, Arg2: 2, Arg3: 100},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	items := w.GetItemsInRoom(100)
+	if len(items) != 3 {
+		t.Fatalf("room contents=%d, want 3", len(items))
+	}
+	if items[0].GetVNum() != 200 || items[1].GetVNum() != 201 || items[2].GetVNum() != 200 || items[0].ID < items[2].ID {
+		t.Fatal("O did not prepend in C room-list order")
+	}
+	for _, item := range items {
+		if item.Location != LocRoom(100) {
+			t.Fatal("O did not establish canonical room ownership")
+		}
+	}
+}
