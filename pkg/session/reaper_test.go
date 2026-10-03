@@ -18,7 +18,7 @@ import (
 )
 
 // makeTestManagerWithVoidRooms builds a Manager whose world contains the
-// void room (vnum 1), disconnect room (vnum 3), and a mortal room, so idle
+// void room (vnum 1), disconnect room (RNUM 3 / VNUM 4), and a mortal room, so idle
 // lifecycle tests can drive the C thresholds deterministically.
 func makeTestManagerWithVoidRooms(t *testing.T) *Manager {
 	return makeTestManagerWithVoidRoomsAndDB(t, nil)
@@ -28,8 +28,10 @@ func makeTestManagerWithVoidRoomsAndDB(t *testing.T, database db.GameStore) *Man
 	t.Helper()
 	parsed := &parser.World{
 		Rooms: []parser.Room{
+			{VNum: 0, Name: "The Void", Zone: 0},
 			{VNum: 1, Name: "Limbo", Zone: 0},
 			{VNum: 3, Name: "A Totally Empty Room", Zone: 0},
+			{VNum: 4, Name: "Frontline's Sphere", Zone: 0},
 			{VNum: 1001, Name: "Room A", Zone: 1},
 			{VNum: game.MortalStartRoom, Name: "The Adventurers Guild", Zone: 80},
 		},
@@ -334,7 +336,7 @@ func TestImmortalIdleImmunity(t *testing.T) {
 func TestConnectedIdleDisconnectClosesSession(t *testing.T) {
 	m := makeTestManagerWithVoidRooms(t)
 	s := makeTestSession(t, m, "IdleLink", 1001, true)
-	observer := makeTestSession(t, m, "Observer", 3, true)
+	observer := makeTestSession(t, m, "Observer", 4, true)
 	// transportDone nil ⇒ hasTransport() true: this player is CONNECTED.
 	registerTestSession(t, m, s, "IdleLink")
 	registerTestSession(t, m, observer, "Observer")
@@ -361,7 +363,7 @@ func TestConnectedIdleDisconnectClosesSession(t *testing.T) {
 // TestIdleDisconnectKeepsObjectsRentStyle: free_rent is YES (src/config.c:106),
 // so C's idle disconnect runs Crash_rentsave(ch, 0) (limits.c:445-446): norent
 // objects are destroyed, the rest leave with the character — nothing is
-// dropped in room 3. Extraction must not scatter an idler's inventory on the
+// dropped in world[3] (VNUM 4). Extraction must not scatter an idler's inventory on the
 // disconnect-room floor.
 func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 	database := &captureSaveDB{}
@@ -395,8 +397,8 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 	}
 	m.ExtractPendingChars()
 
-	if got := len(m.world.GetItemsInRoom(3)); got != 0 {
-		t.Errorf("room 3 has %d items after idle disconnect, want 0 (rent file keeps them)", got)
+	if got := len(m.world.GetItemsInRoom(4)); got != 0 {
+		t.Errorf("RNUM 3 (VNUM 4) has %d items after idle disconnect, want 0 (rent file keeps them)", got)
 	}
 	if !s.player.RentedOut {
 		t.Error("idle-disconnected character must be marked RentedOut (Crash_rentsave)")

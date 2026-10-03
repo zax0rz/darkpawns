@@ -70,14 +70,20 @@ func (w *World) CheckIdling(p *Player) {
 			// mudlog, extract_char. free_rent is YES (src/config.c:106), so
 			// the object pass is the legal-quit rent pass: norent objects are
 			// destroyed, the rent file keeps the rest, and extraction does
-			// not drop anything in room 3.
+			// not drop anything in world[3].
 			p.mu.Lock()
 			p.WasInRoom = 0
 			p.IdleDisconnect = true
 			p.mu.Unlock()
 
-			if err := w.PlayerTransfer(p, 3); err != nil {
-				slog.Warn("PlayerTransfer failed in idle disconnect", "player", p.Name, "error", err)
+			// char_to_room takes an RNUM, not a VNUM (src/limits.c:441).
+			// Translate through C's vnum-ordered world table (src/db.c:3083-3097).
+			if destination, ok := w.RoomVNumByIndex(3); ok {
+				if err := w.PlayerTransfer(p, destination); err != nil {
+					slog.Warn("PlayerTransfer failed in idle disconnect", "player", p.Name, "error", err)
+				}
+			} else {
+				slog.Error("idle disconnect room index missing", "index", 3, "player", p.Name)
 			}
 
 			// C close_socket emits these after char_to_room(3) and before
