@@ -84,6 +84,9 @@ func cmdRestore(s *Session, args []string) error {
 
 // clamp restricts v to the [min, max] range.
 func cmdSwitch(s *Session, args []string) error {
+	m := s.manager
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
 	// The command-table level gate is authoritative. If the descriptor is
 	// already attached to a switched body, do_switch reports this before any
 	// target parsing; the interpreter's switched-NPC gate normally intercepts
@@ -97,54 +100,44 @@ func cmdSwitch(s *Session, args []string) error {
 		s.Send("Switch with who?\r\n")
 		return nil
 	}
-	targetName := strings.ToLower(args[0])
-	roomVNum := s.player.GetRoom()
-
-	// Store original wizard state for permission gating and return
-	origLevel := s.player.Level
-	origPlayer := s.player
-
-	// Look for a mob in the room
-	mobs := s.manager.world.GetMobsInRoom(roomVNum)
-	for _, mob := range mobs {
-		if strings.Contains(strings.ToLower(mob.GetShortDesc()), targetName) {
-			s.switchedOriginal = origPlayer
-			s.switchedOriginalLevel = origLevel
-			s.switchedMob = mob
-			s.isSwitched = true
-			s.switchedStartTime = time.Now()
-			s.Send("Okay.\r\n")
-			return nil
-		}
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
+	if targetName == "" {
+		s.Send("Switch with who?\r\n")
+		return nil
 	}
-
-	// Look for a player in the room
-	players := s.manager.world.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		if strings.ToLower(p.GetName()) == targetName {
-			if p == s.player {
-				s.Send("Hee hee... we are jolly funny today, eh?\r\n")
-				return nil
-			}
-			if findSessionByName(s.manager, p.GetName()) != nil {
-				s.Send("You can't do that, the body is already in use!\r\n")
-				return nil
-			}
-			if s.player.Level < LVL_IMPL {
-				s.Send("You aren't holy enough to use a mortal's body.\r\n")
-				return nil
-			}
-
-			s.switchedOriginal = origPlayer
-			s.switchedOriginalLevel = origLevel
-			s.switchedPlayer = p
-			s.isSwitched = true
-			s.switchedStartTime = time.Now()
-			s.Send("Okay.\r\n")
-			return nil
-		}
+	target, ok := m.world.ResolveCharWorld(s.player, targetName)
+	if !ok {
+		s.Send("No such character.\r\n")
+		return nil
 	}
-	s.Send("No such character.\r\n")
+	if target.Combatant == s.player {
+		s.Send("Hee hee... we are jolly funny today, eh?\r\n")
+		return nil
+	}
+	if target.Player != nil && m.attachedBody(target.Player) != nil {
+		s.Send("You can't do that, the body is already in use!\r\n")
+		return nil
+	}
+	if target.Player != nil && s.player.GetLevel() < LVL_IMPL {
+		s.Send("You aren't holy enough to use a mortal's body.\r\n")
+		return nil
+	}
+	m.mu.Lock()
+	s.switchedOriginal = s.player
+	s.switchedOriginalLevel = s.player.GetLevel()
+	s.switchedPlayer = target.Player
+	s.switchedMob = target.Mob
+	s.isSwitched = true
+	s.switchedStartTime = time.Now()
+	if target.Player != nil {
+		s.player = target.Player
+	}
+	m.mu.Unlock()
+	if target.Player != nil {
+		s.switchedOriginal.SetLinkless(true)
+		target.Player.SetLinkless(false)
+	}
+	s.Send("Okay.\r\n")
 	return nil
 }
 
@@ -156,6 +149,14 @@ func cmdSwitch(s *Session, args []string) error {
 // - Detach the wizard's session from the switched character
 // - Re-attach to the wizard's original character
 func cmdReturn(s *Session, args []string) error {
+	m := s.manager
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	return m.returnSwitch(s)
+}
+
+// returnSwitch requires playerLifecycleMu (also used by deferred extraction).
+func (m *Manager) returnSwitch(s *Session) error {
 	// C do_return has no handler-level authorization gate and is silent unless
 	// the descriptor is attached to a switched body. Its arguments are ignored.
 	if !s.isSwitched || s.switchedOriginal == nil {
@@ -179,13 +180,12 @@ func cmdReturn(s *Session, args []string) error {
 		)
 	}
 
-	s.player = s.switchedOriginal
-	s.isSwitched = false
-	s.switchedOriginal = nil
-	s.switchedOriginalLevel = 0
-	s.switchedMob = nil
-	s.switchedPlayer = nil
 	s.Send("You return to your original body.\r\n")
+	if other := m.attachedBody(s.switchedOriginal); other != nil && other != s {
+		m.handleTransportDisconnect(other) // src/act.wizard.c:1211-1213
+		other.Close()
+	}
+	m.detachPCSwitch(s, true)
 	return nil
 }
 

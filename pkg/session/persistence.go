@@ -22,7 +22,13 @@ func (s *Session) playerRecordForSave(p *game.Player, loadRoom int) (*db.PlayerR
 	if err != nil {
 		return nil, err
 	}
-	record.OlcZone = s.olcZone
+	if s.manager != nil {
+		s.manager.mu.RLock()
+		record.OlcZone = s.olcZone
+		s.manager.mu.RUnlock()
+	} else {
+		record.OlcZone = s.olcZone
+	}
 	if p.GetFlags()&(1<<uint(game.PlrLoadroom)) == 0 {
 		record.RoomVNum = loadRoom
 	}

@@ -52,7 +52,7 @@ func isASCIIDigit(b byte) bool {
 // olcAuthorized keeps the descriptor-owned editor call sites on their existing
 // shape while the rule itself lives in pkg/olc for all frontends.
 func olcAuthorized(s *Session, zoneNumber int) bool {
-	return olc.Authorized(getEffectiveLevel(s), s.olcZone, zoneNumber)
+	return olc.Authorized(getEffectiveLevel(s), s.actingOLCZone(), zoneNumber)
 }
 
 // olcZoneForVNum adapts the world-owned zone snapshot for the shared parser-

@@ -121,16 +121,34 @@ func (s *Session) leaveGameToMenu(rent bool) {
 // successful one.
 func (s *Session) saveCharacter(why string, loadRoom int) game.SaveResult {
 	m := s.manager
-	if !m.hasDB || s.player == nil || s.player.ID <= 0 || s.isGuest {
+	m.mu.RLock()
+	p, switched := s.player, s.activePCSwitch()
+	m.mu.RUnlock()
+	if switched {
+		if owner, ok := m.GetSession(p.GetName()); ok && owner != s {
+			m.mu.RLock()
+			owned := owner.player == p || (owner.activePCSwitch() && owner.switchedOriginal == p)
+			m.mu.RUnlock()
+			if owned {
+				return owner.savePlayer(p, why, loadRoom)
+			}
+		}
+	}
+	return s.savePlayer(p, why, loadRoom)
+}
+
+func (s *Session) savePlayer(p *game.Player, why string, loadRoom int) game.SaveResult {
+	m := s.manager
+	if !m.hasDB || p == nil || p.ID <= 0 || s.isGuest {
 		return game.SaveSkipped
 	}
-	rec, err := s.playerRecordForSave(s.player, loadRoom)
+	rec, err := s.playerRecordForSave(p, loadRoom)
 	if err != nil {
-		slog.Error("character save: build record", "player", s.player.Name, "why", why, "error", err)
+		slog.Error("character save: build record", "player", p.Name, "why", why, "error", err)
 		return game.SaveFailed
 	}
 	if err := m.db.SavePlayer(rec); err != nil {
-		slog.Error("character save", "player", s.player.Name, "why", why, "error", err)
+		slog.Error("character save", "player", p.Name, "why", why, "error", err)
 		return game.SaveFailed
 	}
 	return game.SaveSucceeded
@@ -138,8 +156,10 @@ func (s *Session) saveCharacter(why string, loadRoom int) game.SaveResult {
 
 // SaveToStore is saveCharacter exported for the server's World.PlayerSaver
 // wiring: the game layer's save seam reaches the session through it.
-func (s *Session) SaveToStore(_ *game.Player, why string, loadRoom int) game.SaveResult {
-	return s.saveCharacter(why, loadRoom)
+func (s *Session) SaveToStore(p *game.Player, why string, loadRoom int) game.SaveResult {
+	// The caller has checked concrete ownership. Snapshot/save this body rather
+	// than rereading a descriptor that may attach to another PC concurrently.
+	return s.savePlayer(p, why, loadRoom)
 }
 
 // cmdInventory shows the player's inventory.

@@ -162,6 +162,14 @@ func (s *Session) sendStatPlayerFile(player *game.Player, olcZone int) {
 // statOlcZone is the live descriptor-owned representation of C's saved
 // olc_zone. File reports receive the zone from their original SQLite read.
 func (s *Session) statOlcZone(name string) int {
+	if _, involved := s.manager.switchDescriptorByName(name); involved {
+		if owner, ok := s.manager.GetSession(name); ok {
+			s.manager.mu.RLock()
+			zone := owner.olcZone
+			s.manager.mu.RUnlock()
+			return zone
+		}
+	}
 	if live := findSessionByName(s.manager, name); live != nil {
 		return live.olcZone
 	}

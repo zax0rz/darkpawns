@@ -344,6 +344,9 @@ func findSessionForPlayer(m *Manager, p *game.Player) *Session {
 	if m == nil || p == nil {
 		return nil
 	}
+	if attached, involved := m.switchDescriptor(p); involved {
+		return attached
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, sess := range m.sessions {
@@ -698,7 +701,11 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		if target.record != nil {
 			target.record.OlcZone = valueInt
 		}
-		if target.session != nil {
+		if owner, involved := s.manager.switchedIdentityOwner(p); involved && owner != nil {
+			s.manager.mu.Lock()
+			owner.olcZone = valueInt
+			s.manager.mu.Unlock()
+		} else if target.session != nil {
 			target.session.olcZone = valueInt
 		}
 	case "race":

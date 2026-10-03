@@ -19,12 +19,19 @@ const (
 )
 
 // getEffectiveLevel returns the level that should be used for permission checks.
-// When a wizard is switched into another body, their original wizard level is used
-// so they cannot escalate beyond their own authority. (M-16)
+// PC switch commands use the acting body's level (src/interpreter.c:909-914).
+// The existing NPC adapter remains C1's separate frontier.
 // When a player is under a forced command, their own level is used (force safety).
 func getEffectiveLevel(s *Session) int {
+	if s.manager != nil {
+		s.manager.mu.RLock()
+		defer s.manager.mu.RUnlock()
+	}
 	if s.player == nil {
 		return 0
+	}
+	if s.isSwitched && s.switchedPlayer != nil {
+		return s.player.GetLevel()
 	}
 	if s.isSwitched && s.switchedOriginalLevel > 0 {
 		return s.switchedOriginalLevel
@@ -36,13 +43,16 @@ func getEffectiveLevel(s *Session) int {
 }
 
 // checkLevel checks if a session's player has at least the required level.
-// Uses getEffectiveLevel to ensure switched wizards are gated by their original level.
+// Uses the acting PC level; explicit original-level consumers (snoop) stay separate.
 func checkLevel(s *Session, level int) bool {
 	return getEffectiveLevel(s) >= level
 }
 
 // findSessionByName searches all sessions for a player by name (case-insensitive).
 func findSessionByName(m *Manager, name string) *Session {
+	if attached, involved := m.switchDescriptorByName(name); involved {
+		return attached
+	}
 	name = strings.ToLower(name)
 	m.mu.RLock()
 	defer m.mu.RUnlock()

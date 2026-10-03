@@ -312,8 +312,15 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 
 	// Wire MessageSink so that Player.SendMessage routes through Session.send
 	world.MessageSink = func(playerName string, msg []byte) {
-		s, ok := m.GetSession(playerName)
-		if !ok || s == nil {
+		s, switched := m.switchDescriptorByName(playerName)
+		if !switched {
+			var ok bool
+			s, ok = m.GetSession(playerName)
+			if !ok {
+				return
+			}
+		}
+		if s == nil {
 			return
 		}
 		s.notePlayerOutput()
@@ -330,6 +337,11 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			slog.Error("MessageSink marshal error", "error", err)
 			return
 		}
+		if switched {
+			s.sendGuarded(wrapped)
+			return
+		}
+		// Preserve main's ordinary queue path exactly outside active switching.
 		select {
 		case s.send <- wrapped:
 		default:
@@ -340,7 +352,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 	// C's do_simple_move calls look_at_room before follower recursion. Keep the
 	// renderer in session while letting the game transaction own that ordering.
 	world.MovementLook = func(player *game.Player) {
-		s, ok := m.GetSession(player.Name)
+		s, ok := m.bodySessionByName(player.Name)
 		if !ok || s == nil {
 			return
 		}
@@ -496,7 +508,7 @@ func (m *Manager) SetCombatMessageFunc() {
 	}
 
 	sendToChar := func(name string, message string) {
-		if s, ok := m.GetSession(name); ok {
+		if s, ok := m.bodySessionByName(name); ok {
 			enqueueCombatMessage(s, message)
 		}
 	}
@@ -505,7 +517,7 @@ func (m *Manager) SetCombatMessageFunc() {
 	// skill_message line) with no line ending appended, so the escape bytes a
 	// keep-ansi oracle sees match C's send_to_char stream exactly.
 	sendRaw := func(name string, message string) {
-		if s, ok := m.GetSession(name); ok && s != nil {
+		if s, ok := m.bodySessionByName(name); ok && s != nil {
 			s.sendRawEvent(message)
 		}
 	}
@@ -555,8 +567,53 @@ func (m *Manager) SetPulsePump(pump func(int) error) {
 // check_idling's idle disconnect (limits.c:442-444) and a linkdead
 // close_socket (comm.c:2129) — and both must retire the session here instead.
 func (m *Manager) ExtractPendingChars() {
+	work := m.world.HasPendingExtractions()
+	if !work {
+		for _, p := range m.world.GetAllPlayers() {
+			if p.IdleDisconnect {
+				if attached, involved := m.switchDescriptor(p); involved && attached != nil {
+					work = true
+					break
+				}
+			}
+		}
+	}
+	if !work {
+		return
+	}
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	// check_idling closes the acting descriptor before extraction, even if it
+	// was switched (src/limits.c:442-444). Original bodies have no descriptor.
+	for _, p := range m.world.GetAllPlayers() {
+		if !p.IdleDisconnect {
+			continue
+		}
+		if attached, involved := m.switchDescriptor(p); involved && attached != nil {
+			m.handleTransportDisconnect(attached)
+			attached.Close()
+		}
+	}
 	extracted := m.world.ExtractPendingPlayers()
 	for _, player := range extracted {
+		// C returns a descriptor whose original or attached body is extracted
+		// (src/handler.c:1107-1110,1158-1159), before the menu decision.
+		m.mu.RLock()
+		switched := make([]*Session, 0)
+		original := false
+		for _, s := range m.sessions {
+			if s.activePCSwitch() && (s.switchedOriginal == player || s.switchedPlayer == player) {
+				switched = append(switched, s)
+				original = original || s.switchedOriginal == player
+			}
+		}
+		m.mu.RUnlock()
+		for _, s := range switched {
+			_ = m.returnSwitch(s)
+		}
+		if original {
+			player.IdleDisconnect = false
+		}
 		m.mu.RLock()
 		var victim *Session
 		for _, s := range m.sessions {
@@ -567,6 +624,15 @@ func (m *Manager) ExtractPendingChars() {
 		}
 		m.mu.RUnlock()
 		if victim == nil {
+			continue
+		}
+		if len(switched) > 0 && !original && !victim.hasTransport() {
+			if !player.RentedOut {
+				victim.savePlayer(player, "switched extraction", player.GetLoadRoom())
+			}
+			victim.menuActive = true // no second close_socket save: C frees this body
+			victim.leaveBroadcastHandled = true
+			m.unregisterSession(victim, victim.playerName)
 			continue
 		}
 		// extract_char saves the character (handler.c:1162). A renter was
@@ -585,7 +651,7 @@ func (m *Manager) ExtractPendingChars() {
 			// transport; leaveBroadcastHandled suppresses the invented
 			// "has left the game." broadcast, which C never sends here.
 			victim.leaveBroadcastHandled = true
-			m.UnregisterSession(victim)
+			m.unregisterSession(victim, victim.playerName)
 			// Unregister saved the rent objects. C then frees them with
 			// Crash_extract_objs (src/objsave.c:947-955); detach from this
 			// retired body rather than resolving its now-unregistered name.
@@ -604,7 +670,7 @@ func (m *Manager) ExtractPendingChars() {
 			// character (char_mgmt.go extract pass); UnregisterSession runs
 			// the normal cleanup (combat stop, snoop/edit release, channel
 			// close) with no live transport left to race.
-			m.UnregisterSession(victim)
+			m.unregisterSession(victim, victim.playerName)
 			continue
 		}
 		victim.showMainMenu()
@@ -707,7 +773,7 @@ func (m *Manager) SetDeathFunc() {
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
 			isGuest := false
-			if s, ok := m.GetSession(victim.GetName()); ok {
+			if s, ok := m.bodySessionByName(victim.GetName()); ok {
 				isGuest = s.isGuest
 				if err := cmdLook(s, nil); err != nil {
 					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
@@ -735,7 +801,7 @@ func (m *Manager) SetDeathFunc() {
 					}
 				}
 				// Refresh killer's UI
-				if s, ok := m.GetSession(killer.GetName()); ok {
+				if s, ok := m.bodySessionByName(killer.GetName()); ok {
 					s.markDirty(VarInventory, VarRoomItems)
 				}
 			}
@@ -748,7 +814,7 @@ func (m *Manager) SetDeathFunc() {
 // marked dirty so the next flushDirtyVars call will push the update.
 func (m *Manager) SetDamageFunc() {
 	m.combatEngine.DamageFunc = func(victimName string) {
-		if s, ok := m.GetSession(victimName); ok {
+		if s, ok := m.bodySessionByName(victimName); ok {
 			s.markDirty(VarHealth, VarMaxHealth)
 			s.flushDirtyVars()
 			s.gmcpVitals()
@@ -823,7 +889,7 @@ func (m *Manager) SetOnRoundEnd() {
 // world so that doOrder can execute commands on charmed followers.
 func (m *Manager) SetCommandExecFunc() {
 	m.world.CommandExecFunc = func(ch *game.Player, command string) bool {
-		sess, ok := m.GetSession(ch.GetName())
+		sess, ok := m.bodySessionByName(ch.GetName())
 		if !ok || sess == nil {
 			return false
 		}
@@ -980,6 +1046,9 @@ func (m *Manager) DrainInputQueues() {
 		if s.player == nil {
 			continue
 		}
+		if attached, involved := m.switchDescriptorLocked(s.player); involved && attached != s {
+			continue
+		}
 		// Fact 2: wait decrements once per pulse.
 		s.player.DecrementWaitState()
 		// Fact 3: one command drains per pulse (if, not while).
@@ -1019,7 +1088,7 @@ func (m *Manager) SetFleeHooks() {
 		m.combatEngine.SetCallbacks(cb)
 	}
 	cb.DoFlee = func(name string) {
-		s, ok := m.GetSession(name)
+		s, ok := m.bodySessionByName(name)
 		if !ok || s == nil {
 			return
 		}
@@ -1028,7 +1097,7 @@ func (m *Manager) SetFleeHooks() {
 		}
 	}
 	cb.DoRetreat = func(name string) {
-		s, ok := m.GetSession(name)
+		s, ok := m.bodySessionByName(name)
 		if !ok || s == nil {
 			return
 		}
@@ -1193,6 +1262,9 @@ func (m *Manager) enterWorld(name string, s *Session) error {
 // multiple times for the same session. Both Unregister and UnregisterAndClose
 // delegate here to guarantee consistent cleanup ordering.
 func (m *Manager) cleanupSession(s *Session, playerName string) {
+	if s.activePCSwitch() {
+		m.detachPCSwitch(s, false)
+	}
 	// C close_socket clears CON_TEDIT through cleanup_olc before it handles the
 	// character's departure. Preserve the editor's in-memory cache (without a
 	// disk commit) and emit the shared OLC room transition first.
@@ -1305,7 +1377,12 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	m.playerLifecycleMu.Lock()
 	defer m.playerLifecycleMu.Unlock()
-	if s == nil || !s.authenticated || s.player == nil || s.SendClosed() || s.superseded.Load() {
+	return m.handleTransportDisconnect(s)
+}
+
+// handleTransportDisconnect requires playerLifecycleMu.
+func (m *Manager) handleTransportDisconnect(s *Session) bool {
+	if s == nil || !s.authenticated || s.player == nil || (s.SendClosed() && !s.activePCSwitch()) || s.superseded.Load() {
 		return false
 	}
 	// C close_socket (comm.c:2129) retains only CON_PLAYING. Authentication
@@ -1324,7 +1401,9 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
 	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true) // comm.c:2132-2133
 
-	if m.hasDB && p.ID > 0 && !s.isGuest {
+	if s.activePCSwitch() {
+		s.saveCharacter("switched lost link", game.LoadRoomNowhere)
+	} else if m.hasDB && p.ID > 0 && !s.isGuest {
 		// Lost-link save: load_room NOWHERE (comm.c:2130).
 		if rec, err := s.playerRecordForSave(p, game.LoadRoomNowhere); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
@@ -1334,6 +1413,10 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 	}
 
 	s.DetachTransport()
+	if s.activePCSwitch() {
+		// close_socket leaves both characters descriptor-less; no do_return byte.
+		m.detachPCSwitch(s, false)
+	}
 	// C notices the dead socket in a game-loop pass, and that pass flushes the
 	// room's "has lost his link." with each listener's prompt (DP-1307).
 	m.flushAsyncPrompts()
@@ -1453,7 +1536,12 @@ func (m *Manager) EachSession(fn func(player interface{}, send func(msg string))
 	}
 	m.mu.RUnlock()
 	for _, s := range sessions {
+		m.mu.RLock()
 		p := s.player
+		m.mu.RUnlock()
+		if attached, involved := m.switchDescriptor(p); involved && attached != s {
+			continue
+		}
 		if p == nil {
 			continue
 		}
@@ -1603,7 +1691,10 @@ func (m *Manager) WirePlayerSaver(w *game.World) {
 		// the store; saving the live session player under that edit's name must
 		// never be reported as the edit's success (and must not write the
 		// un-edited live record over the store).
-		if s.player != p {
+		m.mu.RLock()
+		owned := s.player == p || (s.activePCSwitch() && s.switchedOriginal == p)
+		m.mu.RUnlock()
+		if !owned {
 			return game.SaveSkipped
 		}
 		return s.SaveToStore(p, why, loadRoom)
