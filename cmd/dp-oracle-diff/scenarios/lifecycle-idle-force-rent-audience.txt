@@ -1,0 +1,123 @@
+# RNUM 3 is shipped VNUM 4, not VNUM 3. Independent peers expose both audiences.
+# depth-case: idle.force-rent-lost-link
+# src/limits.c:438-443; src/comm.c:2131-2133. Interior void isolates terminal weather.
+[fixture]
+empty-players
+quiet-mobs
+compare-close
+set-room-sector 1 0
+
+[setup:oracle]
+Idleforcerent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Idleforcerent
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:driver]
+Clockdriver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:driver]
+Clockdriver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wrong]
+Wrongroom
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wrong]
+Wrongroom
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Idleforcerent
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Idleforcerent
+oraclepass
+<ENTER>
+1
+
+[warmup]
+set player Clockdriver level 31
+set player Wrongroom level 31
+teleport Clockdriver 4
+teleport Wrongroom 3
+set player Idleforcerent level 1
+
+# The driver pumps 30 hours through the void, then one terminal hour.
+# The terminal block independently compares both room audiences and close.
+[probe]
+send:driver ~dpclock pulse 18900
+send:driver ~dpclock pulse 630
+<RELOGIN>
+look
+inventory
+equipment
