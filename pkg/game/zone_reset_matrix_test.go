@@ -124,3 +124,116 @@ func TestZoneResetPAllowsNonContainerTarget(t *testing.T) {
 		t.Fatal("P rejected non-container target accepted by C obj_to_obj")
 	}
 }
+
+func TestZoneResetMobileRemovalIsDeferredAndGlobal(t *testing.T) {
+	w, s := newZoneResetTestSpawner(t)
+	old, err := s.SpawnMob(300, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newest, err := w.SpawnMob(300, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := w.SpawnObject(200, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.MoveObjectToMobInventoryFront(item, newest); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "R", Arg1: 100, Arg2: 0, Arg3: 300},
+		{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	if newest.Flags&(1<<uint(MobFlagExtract)) == 0 {
+		t.Fatal("R did not mark newest global room mob")
+	}
+	if old.Flags&(1<<uint(MobFlagExtract)) != 0 {
+		t.Fatal("R selected older room mob")
+	}
+	if got := w.countMobInstances(300); got != 2 {
+		t.Fatalf("R changed live mob count before drain: %d, want 2", got)
+	}
+	if got := w.countObjectInstances(200); got != 0 || len(newest.Inventory) != 0 {
+		t.Fatal("R retained mobile possessions")
+	}
+	if !w.HasPendingExtractions() {
+		t.Fatal("R did not enqueue heartbeat work")
+	}
+	w.ExtractPendingChars()
+	if got := w.countMobInstances(300); got != 1 {
+		t.Fatalf("drained mob count=%d, want 1", got)
+	}
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100}}}); err != nil {
+		t.Fatal(err)
+	}
+	if got := w.countMobInstances(300); got != 2 {
+		t.Fatalf("post-drain reset count=%d, want 2", got)
+	}
+}
+
+func TestZoneResetMobileRemovalSkipsFightingAndMarked(t *testing.T) {
+	w, s := newZoneResetTestSpawner(t)
+	eligible, err := s.SpawnMob(300, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	marked, err := s.SpawnMob(300, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	marked.Flags |= 1 << uint(MobFlagExtract)
+	fighting, err := s.SpawnMob(300, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fighting.SetFighting("opponent")
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "R", Arg1: 100, Arg2: 0, Arg3: 300}}}); err != nil {
+		t.Fatal(err)
+	}
+	if eligible.Flags&(1<<uint(MobFlagExtract)) == 0 {
+		t.Fatal("R did not skip fighting and already-marked candidates")
+	}
+	if fighting.Flags&(1<<uint(MobFlagExtract)) != 0 {
+		t.Fatal("R marked fighting mob")
+	}
+	if got := w.countMobInstances(300); got != 3 {
+		t.Fatalf("pre-drain count=%d, want 3", got)
+	}
+}
+
+func TestZoneResetMobileRemovalReplacesLastMob(t *testing.T) {
+	for _, found := range []bool{false, true} {
+		t.Run(strconv.FormatBool(found), func(t *testing.T) {
+			w, s := newZoneResetTestSpawner(t)
+			proto := *w.mobs[300]
+			proto.VNum = 301
+			w.mobs[301] = &proto
+			var target *MobInstance
+			var err error
+			if found {
+				target, err = w.SpawnMob(301, 100)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+				{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
+				{Command: "R", Arg1: 100, Arg2: 0, Arg3: 301},
+				{Command: "G", Arg1: 200, Arg2: 1},
+			}}); err != nil {
+				t.Fatal(err)
+			}
+			if found {
+				if len(target.Inventory) != 1 {
+					t.Fatal("G did not use R's selected last-mob pointer")
+				}
+			} else if w.countObjectInstances(200) != 0 {
+				t.Fatal("missing R target retained prior last-mob pointer")
+			}
+		})
+	}
+}

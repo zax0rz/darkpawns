@@ -416,7 +416,8 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			if cmd.Arg2 != 0 {
 				removed = s.removeObjectFromRoom(cmd.Arg1, cmd.Arg3)
 			} else {
-				removed = s.removeMobFromRoom(cmd.Arg1, cmd.Arg3)
+				lastMob = s.removeMobFromRoom(cmd.Arg1, cmd.Arg3)
+				removed = lastMob != nil
 			}
 			if removed {
 				lastCmd = 1
@@ -641,40 +642,25 @@ func (s *Spawner) forgetObjectInstance(roomVNum int, obj *ObjectInstance) {
 	}
 }
 
-// removeMobFromRoom removes the first mobile of the vnum in the room that is
-// not fighting, destroying what it wears and carries first (db.c:2228-2242).
-// No world file uses this branch; the port does not keep C's people-list
-// order, so with two eligible copies the one chosen may differ from C's.
-func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) bool {
-	mob := s.takeResetMobFromRoom(roomVNum, mobVNum)
-	if mob == nil {
-		return false
-	}
-	// Release Spawner.mu before world cleanup; that cleanup has its own locks.
-	s.world.destroyMobPossessions(mob)
-	s.world.ExtractMob(mob)
-	return true
-}
-
-func (s *Spawner) takeResetMobFromRoom(roomVNum, mobVNum int) *MobInstance {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if instances, ok := s.roomMobs[roomVNum]; ok {
-		for i, mob := range instances {
-			if mob.VNum != mobVNum || mob.GetFighting() != "" {
-				continue
-			}
-			s.roomMobs[roomVNum] = append(instances[:i], instances[i+1:]...)
-			if mobInstances, ok2 := s.mobInstances[mobVNum]; ok2 {
-				for j, mob2 := range mobInstances {
-					if mob2 == mob {
-						s.mobInstances[mobVNum] = append(mobInstances[:j], mobInstances[j+1:]...)
-						break
-					}
-				}
-			}
-			return mob
+// removeMobFromRoom mirrors reset_zone's people-list walk (db.c:2228-2242).
+// It returns the loop's final mob pointer, including nil on a failed search.
+// Canonical global counts retain a marked mob until the extraction heartbeat.
+func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) *MobInstance {
+	for _, mob := range s.world.COrderedRoomMobs(roomVNum) {
+		mob.mu.RLock()
+		eligible := mob.VNum == mobVNum && mob.Flags&(1<<uint(MobFlagExtract)) == 0 && mob.FightingTarget == ""
+		mob.mu.RUnlock()
+		if !eligible {
+			continue
 		}
+		s.world.destroyMobPossessions(mob)
+		mob.mu.Lock()
+		mob.Flags |= 1 << uint(MobFlagExtract)
+		mob.mu.Unlock()
+		// Private placement caches are not C's global counts. Release their
+		// references now; World retains the marked body until the existing drain.
+		s.RemoveMobInstance(mobVNum, mob)
+		return mob
 	}
 	return nil
 }
