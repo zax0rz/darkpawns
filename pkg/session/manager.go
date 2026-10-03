@@ -277,6 +277,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		olcRegistry:           olc.NewRegistry(),
 		nextEphemeralPlayerID: 1,
 	}
+	world.OccupiedZoneRooms = m.occupiedZoneRooms
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
 	// db.GameStore interface is itself non-nil. Normalize it to a real nil so
 	// the no-database path below is taken instead of dereferencing nil. (DP-589)
@@ -630,7 +631,9 @@ func (m *Manager) ExtractPendingChars() {
 			if !player.RentedOut {
 				victim.savePlayer(player, "switched extraction", player.GetLoadRoom())
 			}
+			m.mu.Lock()
 			victim.menuActive = true // no second close_socket save: C frees this body
+			m.mu.Unlock()
 			victim.leaveBroadcastHandled = true
 			m.unregisterSession(victim, victim.playerName)
 			continue

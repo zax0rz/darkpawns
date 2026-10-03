@@ -55,7 +55,9 @@ func (s *Session) loginMOTDFile() string {
 }
 
 func (s *Session) startReturningMenu(passwordHash string, failedPasswords ...int) {
+	s.manager.mu.Lock()
 	s.menuActive = true
+	s.manager.mu.Unlock()
 	s.menuStage = "motd"
 	s.menuPasswordHash = passwordHash
 	motd := loginTextForFile(s, s.loginMOTDFile())
@@ -76,7 +78,9 @@ func (s *Session) startReturningMenu(passwordHash string, failedPasswords ...int
 }
 
 func (s *Session) showMainMenu() {
+	s.manager.mu.Lock()
 	s.menuActive = true
+	s.manager.mu.Unlock()
 	s.menuStage = "menu"
 	s.sendCharCreatePrompt("menu", menuText, menuOptions)
 }
@@ -190,7 +194,9 @@ func (s *Session) handleMenuChoice(choice string) error {
 	switch firstCreationByte(choice) {
 	case "0":
 		s.sendCharCreatePrompt("closing", "Goodbye.\r\n", nil)
+		s.manager.mu.Lock()
 		s.menuActive = false
+		s.manager.mu.Unlock()
 		s.CloseSend()
 	case "1":
 		if !s.authenticated || s.player == nil {
@@ -311,7 +317,9 @@ func (s *Session) confirmDelete(choice string) error {
 	}
 	if s.player != nil && s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 {
 		s.sendText("You try to kill yourself, but the ice stops you.\r\nCharacter not deleted.\r\n")
+		s.manager.mu.Lock()
 		s.menuActive = false
+		s.manager.mu.Unlock()
 		s.CloseSend()
 		return nil
 	}
@@ -364,9 +372,15 @@ func (s *Session) confirmDelete(choice string) error {
 		level = s.player.GetLevel()
 	}
 	game.MudLog(fmt.Sprintf("%s (lev %d) has self-deleted.", name, level), game.MudlogNormal, game.LVL_GOD, true) // interpreter.c:2344-2346
+	s.manager.mu.Lock()
 	s.menuActive = false
+	s.manager.mu.Unlock()
+	s.manager.mu.Lock()
 	s.player = nil
+	s.manager.mu.Unlock()
+	s.manager.mu.Lock()
 	s.authenticated = false
+	s.manager.mu.Unlock()
 	s.CloseSend()
 	return nil
 }
@@ -404,7 +418,11 @@ func (s *Session) enterReturningPlayer() error {
 		return err
 	}
 
+	s.manager.mu.Lock()
+
 	s.menuActive = false
+
+	s.manager.mu.Unlock()
 	s.menuStage = ""
 	s.releaseEntryName()
 	s.playerName = name
@@ -439,12 +457,16 @@ func (s *Session) reloadCharacterFromStore() error {
 	if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
 		p.Aliases = aliases
 	}
+	s.manager.mu.Lock()
 	s.player = p
+	s.manager.mu.Unlock()
 	return nil
 }
 
 func (s *Session) clearMenuState() {
+	s.manager.mu.Lock()
 	s.menuActive = false
+	s.manager.mu.Unlock()
 	s.menuStage = ""
 	s.menuDescription = ""
 	s.menuDescriptionKnown = false
@@ -472,10 +494,16 @@ func (s *Session) prepareWorldEntry() bool {
 		// C closes before saving or admitting the character. Discard Go's
 		// earlier restored objects and candidate so transport cleanup cannot save.
 		s.manager.world.ExtractRentedObjects(p)
+		s.manager.mu.Lock()
 		s.authenticated = false
+		s.manager.mu.Unlock()
+		s.manager.mu.Lock()
 		s.player = nil
+		s.manager.mu.Unlock()
 		s.creationSaved = false
+		s.manager.mu.Lock()
 		s.charCreating = false
+		s.manager.mu.Unlock()
 		s.charPassword = ""
 		s.releaseEntryName()
 		s.clearMenuState()
