@@ -146,6 +146,13 @@ game, use `keep-prompts`, `no-settle`, and `entry-prompt` together with
 run and `> ` before any clock pulse can supply a later prompt; the full entry
 dialogue is covered by separate scenarios.
 
+`<RELOGIN>` may also appear in `[warmup]`: the existing relogin wrapper
+reconnects using `[relogin:oracle]`/`[relogin:port]`, and the warmup transcript
+is discarded. The raw returning-MOTD vehicles stop relogin at the password
+prompt, then compare the successful password response in `[probe]`. This
+keeps reconnect greeting framing outside the MOTD proof without changing
+normalization.
+
 For command-depth work, annotate scenarios with `# depth-case: <case-id>` and
 record the case in `docs/fidelity/depth/<command>.tsv`. Run `make fidelity-depth`
 to reject missing scenario or unit-test proof references. See
