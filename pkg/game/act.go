@@ -140,10 +140,7 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 		return true
 	}
 
-	// Observer must be awake
-	if observer.GetPosition() <= combat.PosSleeping {
-		return false
-	}
+	// src/utils.h:515-530: visibility does not require AWAKE.
 
 	// Check if observer is a Player or MobInstance (both implement visibilitySubject)
 	obsSub, ok := observer.(visibilitySubject)
@@ -292,10 +289,7 @@ func canSeeObject(to Actor, obj *ObjectInstance) bool {
 		return true
 	}
 
-	// Observer must be awake
-	if to.GetPosition() <= combat.PosSleeping {
-		return false
-	}
+	// src/utils.h:535-542: object visibility does not require AWAKE.
 
 	// Check if observer is a Player or MobInstance (both implement visibilitySubject)
 	sub, ok := to.(visibilitySubject)

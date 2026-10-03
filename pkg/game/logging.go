@@ -164,10 +164,10 @@ func MudLog(str string, typ int, level int, toFile bool) {
 		if p.GetLevel() < level || logLevel < typ {
 			return
 		}
-		// send_to_char(CCGRN), buf, CCNRM. The session ends each message's
-		// line, so the color reset goes before the line's CRLF, not after.
+		// src/utils.c:236-238: send green, the complete CRLF-terminated
+		// message, then reset. The terminal must retain that byte order.
 		green, normal := observationColors(p, "\x1b[32m"), observationColors(p, "\x1b[0m")
-		send(green + "[ " + str + " ]" + normal + "\r\n")
+		send(green + "[ " + str + " ]\r\n" + normal)
 	})
 }
 
