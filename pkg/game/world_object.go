@@ -50,10 +50,11 @@ func (w *World) AddItemToRoomFront(item *ObjectInstance, roomVNum int) {
 // Caller MUST hold w.mu. — handler.c:1006-1025
 func (w *World) extractObjectLocked(obj *ObjectInstance) {
 	// Recursively extract contents first — handler.c:1020-1024
-	for _, child := range obj.Contains {
+	children := obj.Contains
+	obj.Contains = nil
+	for _, child := range children {
 		w.extractObjectLocked(child)
 	}
-	obj.Contains = obj.Contains[:0]
 
 	// Remove from room if applicable
 	if obj.Location.Kind == ObjInRoom {

@@ -237,3 +237,49 @@ func TestZoneResetMobileRemovalReplacesLastMob(t *testing.T) {
 		})
 	}
 }
+
+func TestZoneResetObjectRemovalExtractsAllContents(t *testing.T) {
+	w, s := newZoneResetTestSpawner(t)
+	old, err := s.SpawnObject(204, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newest, err := w.SpawnObject(204, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.MoveObjectToRoomFront(newest, 100); err != nil {
+		t.Fatal(err)
+	}
+	var children []*ObjectInstance
+	for range 3 {
+		child, err := w.SpawnObject(200, -1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := w.putResetObject(child, newest); err != nil {
+			t.Fatal(err)
+		}
+		children = append(children, child)
+	}
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "R", Arg1: 100, Arg2: 1, Arg3: 204},
+		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	if got := w.GetObjNum(204); got != old {
+		t.Fatal("R did not remove first canonical room object")
+	}
+	if w.countObjectInstances(200) != 0 {
+		t.Fatal("R skipped a child while extracting container contents")
+	}
+	for _, child := range children {
+		if child.Location != LocNowhere() {
+			t.Fatal("R retained extracted child ownership")
+		}
+	}
+	if w.countObjectInstances(201) != 1 {
+		t.Fatal("successful R did not enable conditional O")
+	}
+}
