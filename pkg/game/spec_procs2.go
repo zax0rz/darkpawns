@@ -1571,31 +1571,24 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return specFighter(w, nil, me, "", "")
 	}
 
-	// C scans world[].people in order and gives an outlaw the first matching
-	// intervention. hit() then recognizes this special and performs the jail
-	// redirect before ordinary melee damage (src/fight.c:1370-1400).
-	for _, candidate := range cityguardRoomCombatants(w, me.GetRoomVNum()) {
-		pl, ok := candidate.(*Player)
-		if !ok || !canSee(me, pl) || pl.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
-			continue
-		}
-		Act(w, false, me, nil, nil, nil,
-			"$n says 'We don't like OUTLAWS like you in this city!'", "", ToRoom)
-		if err := w.mobHit(me, pl); err != nil {
-			slog.Warn("take_to_jail outlaw attack failed", "guard", me.GetName(), "target", pl.GetName(), "error", err)
-		}
-		return specFighter(w, nil, me, "", "")
-	}
-
-	// The C body calls breed_killer() while walking this same room list. That
-	// shared procedure is separately owned by the queued breed_killer slice;
-	// do not duplicate or invent its currently-unproven nightbreed branches
-	// here (R5b/R5c). With no eligible nightbreed, it is a no-op and the scan
-	// continues to the shared protection selection below.
+	// C interleaves outlaw, breed_killer and protection checks in one
+	// world[].people walk (src/spec_procs2.c:1438-1460). A later outlaw
+	// must not jump ahead of an earlier candidate's breed intervention.
 	var evil cityguardAlignedCombatant
 	var evilTarget cityguardAlignedCombatant
 	maxEvil := 1000
-	for _, candidate := range cityguardRoomCombatants(w, me.GetRoomVNum()) {
+	for _, candidate := range takeToJailRoomCombatants(w, me.GetRoomVNum()) {
+		if pl, ok := candidate.(*Player); ok && canSee(me, pl) && pl.GetFlags()&(1<<uint(PlrOutlaw)) != 0 {
+			Act(w, false, me, nil, nil, nil,
+				"$n says 'We don't like OUTLAWS like you in this city!'", "", ToRoom)
+			if err := w.mobHit(me, pl); err != nil {
+				slog.Warn("take_to_jail outlaw attack failed", "guard", me.GetName(), "target", pl.GetName(), "error", err)
+			}
+			return specFighter(w, nil, me, "", "")
+		}
+		if specBreedKiller(w, nil, me, "", "") {
+			return true
+		}
 		tch, ok := candidate.(cityguardAlignedCombatant)
 		if !ok || !canSee(me, tch) || tch.GetFighting() == "" {
 			continue
@@ -1620,6 +1613,21 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	}
 
 	return false
+}
+
+// takeToJailRoomCombatants uses the existing char_to_room arrival sequences
+// to merge Go's separate player/mobile stores into C's newest-first room list.
+// Keep the change local: cityguard's existing helper is a separate reader.
+func takeToJailRoomCombatants(w *World, room int) []combat.Combatant {
+	actors := cityguardRoomCombatants(w, room)
+	sequence := func(actor combat.Combatant) uint64 {
+		if p, ok := actor.(*Player); ok {
+			return p.GetRoomEntrySequence()
+		}
+		return actor.(*MobInstance).GetRoomEntrySequence()
+	}
+	sort.SliceStable(actors, func(i, j int) bool { return sequence(actors[i]) > sequence(actors[j]) })
+	return actors
 }
 
 // ================================================================

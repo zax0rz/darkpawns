@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -142,5 +143,64 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	}
 	if guard.GetHunting() != "" {
 		t.Fatalf("guard hunting target = %q, want empty", guard.GetHunting())
+	}
+}
+
+func TestTakeToJailBreedCallerAndRoomOrder(t *testing.T) {
+	for _, outlawFirst := range []bool{false, true} {
+		t.Run(fmt.Sprint(outlawFirst), func(t *testing.T) {
+			w, player, output := newSpecProcTestWorld(t)
+			guard := newSpecProcTestMob(t, w, 1001, 20)
+			victim := newSpecProcTestMob(t, w, 1001, 1)
+			proto := *victim.Proto()
+			proto.ShortDesc = "the vampire"
+			victim.SetProto(&proto)
+			victim.SetAffected(affVampire)
+			player.SetPlrFlag(PlrOutlaw, true)
+			if outlawFirst {
+				if err := w.PlayerTransfer(player, 1001); err != nil {
+					t.Fatal(err)
+				}
+			}
+			engine := &cityguardTestCombatEngine{}
+			w.SetCombatEngine(engine)
+			output()
+			handled := specTakeToJail(w, nil, guard, "", "")
+			got := output()
+			want := victim.GetName()
+			if outlawFirst {
+				want = player.GetName()
+				if strings.Contains(got, "nightbreed") || !strings.Contains(got, "OUTLAWS") {
+					t.Fatalf("first outlaw did not keep priority: %q", got)
+				}
+			} else {
+				if !handled || !strings.Contains(got, "Die, nightbreed!!") || strings.Contains(got, "OUTLAWS") {
+					t.Fatalf("earlier breed handoff did not consume before later outlaw: handled=%t output=%q", handled, got)
+				}
+			}
+			if len(engine.starts) != 1 || engine.starts[0][1] != want {
+				t.Fatalf("selected combat starts=%v, want only %s", engine.starts, want)
+			}
+		})
+	}
+}
+
+func TestTakeToJailBreedCallerEntryGates(t *testing.T) {
+	for _, sleeping := range []bool{false, true} {
+		w, _, output := newSpecProcTestWorld(t)
+		guard := newSpecProcTestMob(t, w, 1001, 20)
+		victim := newSpecProcTestMob(t, w, 1001, 1)
+		victim.SetAffected(affVampire)
+		engine := &cityguardTestCombatEngine{}
+		w.SetCombatEngine(engine)
+		cmd := "look"
+		if sleeping {
+			guard.SetPosition(combat.PosSleeping)
+			cmd = ""
+		}
+		output()
+		if specTakeToJail(w, nil, guard, cmd, "") || len(engine.starts) != 0 || output() != "" {
+			t.Fatal("entry gate reached breed helper")
+		}
 	}
 }
