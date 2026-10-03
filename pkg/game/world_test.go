@@ -79,7 +79,6 @@ func TestRealtimeWorldTickersFreezeWhenDPClockIsSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	full := player.GetCondition(CondFull)
-	w.StartPointUpdateTicker(time.Millisecond)
 
 	time.Sleep(20 * time.Millisecond)
 
