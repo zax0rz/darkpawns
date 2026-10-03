@@ -269,12 +269,14 @@ func cmdSysfile(s *Session, args []string) error {
 	// C resolves these names relative to lib/, while WorldPath points at its
 	// lib/world directory in both the server and the differential harness.
 	filePath := filepath.Join(filepath.Dir(s.GetWorld().WorldPath), "misc", fileName)
-	data, err := os.ReadFile(filepath.Clean(filePath))
+	// src/db.c:2896-2932: sysfile uses the same chunked C text loader
+	// as boot text, including its long-line and final-fragment behavior.
+	data, err := readCTextFile(filepath.Clean(filePath))
 	if err != nil {
 		s.Send("File does not exist.\r\n")
 		return nil
 	}
-	PageString(s, string(data))
+	PageString(s, data)
 	return nil
 }
 

@@ -178,3 +178,13 @@ transport.
 
 This mode is a probe, not a gate yet: the expected-divergence ledger and pins
 describe the telnet transport.
+
+## Disposable misc-file fixture
+
+`misc-file bugs 55 Sysfile paging evidence.` in `[fixture]` writes the same
+numbered LF lines to both disposable `lib/misc` trees before boot. Names are
+restricted to `bugs`, `ideas`, `todo`, `typos`; line counts are 1–128 and the
+bounded body must fit C's 8,191-byte file buffer. The run's existing temporary
+root cleanup removes the files. No repository or reference-oracle misc file
+is created. `wizard-sysfile-read-page` proves file reading and pager controls
+with raw text capture.

@@ -291,6 +291,11 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
 		return fmt.Errorf("copy Go world to throwaway directory: %w", err)
 	}
+	for _, root := range []string{oracleData, filepath.Dir(goWorld)} {
+		if err := applyMiscFileFixtures(root, scenario.MiscFiles); err != nil {
+			return fmt.Errorf("apply disposable misc fixtures: %w", err)
+		}
+	}
 	var scriptTwinPath string
 	if scenario.ScriptTwin != nil {
 		sourcePath := filepath.Join(oracleData, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
@@ -2020,4 +2025,28 @@ func needsPlayerStore(s *oraclediff.Scenario) bool {
 		}
 	}
 	return false
+}
+
+// applyMiscFileFixtures writes only under the run's disposable root. execute's
+// existing RemoveAll removes these files alongside the world and player store.
+func applyMiscFileFixtures(root string, fixtures []oraclediff.MiscFileFixture) error {
+	for _, fixture := range fixtures {
+		switch fixture.Name {
+		case "bugs", "ideas", "todo", "typos":
+		default:
+			return fmt.Errorf("invalid misc name %q", fixture.Name)
+		}
+		dir := filepath.Join(root, "misc")
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			return err
+		}
+		var body strings.Builder
+		for i := 1; i <= fixture.Lines; i++ {
+			fmt.Fprintf(&body, "%02d %s\n", i, fixture.Text)
+		}
+		if err := os.WriteFile(filepath.Join(dir, fixture.Name), []byte(body.String()), 0o600); err != nil {
+			return err
+		}
+	}
+	return nil
 }

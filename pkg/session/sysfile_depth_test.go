@@ -1,6 +1,13 @@
 package session
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+)
 
 func TestSysfileNameMirrorsCIsAbbrev(t *testing.T) {
 	t.Parallel()
@@ -27,5 +34,29 @@ func TestSysfileNameMirrorsCIsAbbrev(t *testing.T) {
 				t.Errorf("sysfileName(%q) = (%q, %t), want (%q, %t)", tt.arg, got, ok, tt.want, tt.ok)
 			}
 		})
+	}
+}
+
+// src/db.c:2896-2932: fgets reads 255 bytes, drops the last byte of
+// each chunk and appends CRLF, even when a long line has not reached LF.
+func TestSysfileReadCChunkBoundary(t *testing.T) {
+	s := makeCharSession(t, makeTestManager(t))
+	s.player = game.NewPlayer(1, "Sysfile", 8004)
+	s.player.SetLevel(40)
+	root := t.TempDir()
+	s.GetWorld().WorldPath = filepath.Join(root, "world")
+	if err := os.Mkdir(filepath.Join(root, "misc"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "misc", "bugs"), []byte(strings.Repeat("a", 255)+"Z\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmdSysfile(s, []string{"bugs"}); err != nil {
+		t.Fatal(err)
+	}
+	got := entryMenuText(t, s)
+	want := strings.Repeat("a", 254) + "\r\nZ\r\n"
+	if got != want {
+		t.Fatalf("C file chunk bytes: got %q, want %q", got, want)
 	}
 }

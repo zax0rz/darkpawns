@@ -36,6 +36,7 @@ type Scenario struct {
 	// live-world lifecycle, which exposes C's linkless descriptor branches.
 	PeerDrop          string
 	Peers             map[string]*PeerSetup
+	MiscFiles         []MiscFileFixture
 	Fixtures          []ObjectFixture
 	ObjectSpawns      []ObjectSpawnFixture
 	MobFixtures       []MobFixture
@@ -96,6 +97,13 @@ type Scenario struct {
 type PeerSetup struct {
 	SetupOracle []string
 	SetupPort   []string
+}
+
+// MiscFileFixture is an identical numbered LF text file in disposable lib/misc.
+type MiscFileFixture struct {
+	Name  string
+	Lines int
+	Text  string
 }
 
 // ScriptTwinFixture describes a direct on-disk twin for a live editor save.
@@ -413,6 +421,16 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 		if fixtureSection {
 			fields := strings.Fields(line)
+			if len(fields) >= 4 && fields[0] == "misc-file" {
+				count, err := strconv.Atoi(fields[2])
+				fileName := fields[1]
+				text := strings.Join(fields[3:], " ")
+				if err != nil || count < 1 || count > 128 || count*(len(text)+6+(len(text)+5)/255) > 8191 || (fileName != "bugs" && fileName != "ideas" && fileName != "todo" && fileName != "typos") {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid misc-file fixture", name, lineNo)
+				}
+				sc.MiscFiles = append(sc.MiscFiles, MiscFileFixture{Name: fileName, Lines: count, Text: text})
+				continue
+			}
 			if len(fields) == 3 && strings.EqualFold(fields[0], "replace-room-exits") && strings.EqualFold(fields[2], "none") {
 				roomVNum, roomErr := strconv.Atoi(fields[1])
 				if roomErr == nil && roomVNum > 0 {
