@@ -5,6 +5,7 @@ package game
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -23,6 +24,26 @@ func (w *World) SetRoomFlagBit(vnum int, flagBit int) bool {
 	// world[] mutations, not editor definitions; take the cheap path.
 	return w.mutateRoom(vnum, func(room *parser.Room) bool {
 		setRoomFlagBit(room, flagBit)
+		return true
+	})
+}
+
+// resetDoor applies C reset_zone's D branch in one room publication.
+// A valid exit clears ROOM_SECRET_MARK even for an unknown state (db.c:2246-2274).
+func (w *World) resetDoor(vnum int, direction string, state int) bool {
+	return w.mutateRoom(vnum, func(room *parser.Room) bool {
+		exit, ok := room.Exits[direction]
+		if !ok {
+			return false
+		}
+		if len(room.Flags) > 0 {
+			flags, err := strconv.ParseUint(room.Flags[0], 10, 64)
+			if err == nil {
+				room.Flags[0] = strconv.FormatUint(flags&^RoomSecretMark, 10)
+			}
+		}
+		exit.ExitInfo = parser.ApplyDoorReset(exit.ExitInfo, state)
+		room.Exits[direction] = exit
 		return true
 	})
 }

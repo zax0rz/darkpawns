@@ -402,19 +402,10 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				slog.Warn("Invalid door direction", "dir", cmd.Arg2, "room", cmd.Arg1)
 				continue
 			}
-			room := s.world.GetRoomInWorld(cmd.Arg1)
-			if room == nil {
-				slog.Warn("Door command: room not found", "room", cmd.Arg1)
+			if !s.world.resetDoor(cmd.Arg1, roomDirNames[cmd.Arg2], cmd.Arg3) {
+				slog.Warn("Door command: room or exit not found", "room", cmd.Arg1, "dir", roomDirNames[cmd.Arg2])
 				continue
 			}
-			ext, ok := room.Exits[roomDirNames[cmd.Arg2]]
-			if !ok {
-				slog.Warn("Door command: exit not found", "room", cmd.Arg1, "dir", roomDirNames[cmd.Arg2])
-				continue
-			}
-			// Arg3 is runtime state: 0=open, 1=closed, 2=closed+locked.
-			ext.ExitInfo = parser.ApplyDoorReset(ext.ExitInfo, cmd.Arg3)
-			s.world.SetExitInfo(cmd.Arg1, roomDirNames[cmd.Arg2], ext.ExitInfo)
 			lastCmd = 1
 
 		case "R": // Remove obj/mob from room (db.c:2220-2244)
