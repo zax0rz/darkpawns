@@ -208,6 +208,11 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 	// Do NOT hold s.mu — spawn and global-count helpers lock internally.
 	// Holding s.mu causes a deadlock.
 
+	// Keep this reset's table private: unknown commands become * immediately
+	// in this pass, and World separately publishes the persistent disable.
+	working := CloneZone(*zone)
+	zone = &working
+
 	var lastMob *MobInstance
 	lastCmd := 0 // tracks whether last non-if_flag command succeeded
 	tmpCmd := 0  // saved command index for loop
@@ -361,11 +366,9 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				s.extractSpawnedObject(obj)
 				continue
 			}
-			if lastMob.Equipment == nil {
-				lastMob.Equipment = make(map[int]*ObjectInstance)
+			if err := s.world.equipResetObject(obj, lastMob, cmd.Arg3); err != nil {
+				slog.Error("error equipping reset object", "obj_vnum", cmd.Arg1, "error", err)
 			}
-			lastMob.Equipment[cmd.Arg3] = obj // Arg3 = equip position
-			lastMob.AffectTotal()
 			lastCmd = 1
 
 		case "P": // Put object in container
@@ -421,6 +424,10 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			if removed {
 				lastCmd = 1
 			}
+		default:
+			slog.Warn("unknown cmd in reset table; cmd disabled", "zone", zone.Number, "command", cmdIdx, "cmd", cmd.Command)
+			s.world.disableResetCommand(zone.Number, cmdIdx, cmd)
+			zone.Commands[cmdIdx].Command = "*"
 		}
 	}
 

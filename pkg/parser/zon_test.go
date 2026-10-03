@@ -521,3 +521,22 @@ $`)
 		t.Errorf("R command: got %+v", r)
 	}
 }
+
+func TestParseZonUnknownCommandKeepsConditionalFlag(t *testing.T) {
+	dir := t.TempDir()
+	path := writeZonFile(t, dir, "unknown.zon", "#1\nUnknown~\n199 15 1\nQ 1 30 40\nS\n$\n")
+	zone, err := ParseZonFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(zone.Commands) != 1 || zone.Commands[0] != (ZoneCommand{Command: "Q", IfFlag: 1, Arg1: 30, Arg2: 40}) {
+		t.Fatalf("unknown command fields=%+v, want C three-integer form", zone.Commands)
+	}
+}
+
+func TestParseZonUnknownCommandCIntegerSuffix(t *testing.T) {
+	cmd, err := parseZoneCommand("Q 1 30 40suffix")
+	if err != nil || cmd != (ZoneCommand{Command: "Q", IfFlag: 1, Arg1: 30, Arg2: 40}) {
+		t.Fatalf("C sscanf integer suffix: cmd=%+v err=%v", cmd, err)
+	}
+}

@@ -181,6 +181,15 @@ func parseZoneCommand(line string) (ZoneCommand, error) {
 			cmd.Arg2, _ = strconv.Atoi(fields[3]) // obj or mob vnum
 			cmd.Arg3, _ = strconv.Atoi(fields[4]) // 1=obj, 0=mob
 		}
+	default:
+		// C loads unknown commands in its three-integer form, preserving
+		// if_flag until reset_zone reaches and disables them (db.c:1575-1589).
+		if len(fields) < 4 {
+			return cmd, fmt.Errorf("unknown zone command requires three integers")
+		}
+		if n, err := fmt.Sscanf(strings.Join(fields[1:], " "), "%d %d %d", &cmd.IfFlag, &cmd.Arg1, &cmd.Arg2); n != 3 || err != nil {
+			return cmd, fmt.Errorf("unknown zone command requires three integers: %w", err)
+		}
 	}
 
 	return cmd, nil

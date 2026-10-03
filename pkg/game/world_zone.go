@@ -157,3 +157,33 @@ func (w *World) GetSpawner() *Spawner {
 
 // OnPlayerEnterRoom handles player entering a room (for aggressive mobs).
 // Returns true if combat was initiated.
+
+// disableResetCommand publishes C's runtime unknown-command disable without
+// changing an escaped zone snapshot or overwriting a concurrent editor change.
+func (w *World) disableResetCommand(number, index int, expected parser.ZoneCommand) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	zone := w.zones[number]
+	if zone == nil || index < 0 || index >= len(zone.Commands) || zone.Commands[index] != expected {
+		return
+	}
+	updated := CloneZone(*zone)
+	updated.Commands[index].Command = "*"
+	if w.parsedData != nil {
+		zones := append([]parser.Zone(nil), w.parsedData.Zones...)
+		for i := range zones {
+			if zones[i].Number == number {
+				zones[i] = updated
+			}
+		}
+		parsed := *w.parsedData
+		parsed.Zones = zones
+		w.parsedData = &parsed
+		w.zones = make(map[int]*parser.Zone, len(zones))
+		for i := range zones {
+			w.zones[zones[i].Number] = &zones[i]
+		}
+	} else {
+		w.zones[number] = &updated
+	}
+}

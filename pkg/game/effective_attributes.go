@@ -119,6 +119,11 @@ func (m *MobInstance) CopyBaseAttributes() {
 
 func (m *MobInstance) AffectTotal() {
 	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.affectTotalLocked()
+}
+
+func (m *MobInstance) affectTotalLocked() {
 	stats := CharStats{Str: m.Str, Dex: m.Dex, Int: m.Intel, Wis: m.Wis, Con: m.Con, Cha: m.Cha}
 	if m.Runtime.StrAddOverride != nil {
 		stats.StrAdd = *m.Runtime.StrAddOverride
@@ -140,7 +145,6 @@ func (m *MobInstance) AffectTotal() {
 	alignment := m.alignmentLocked()
 	alignment = max(-1000, min(alignment, 1000))
 	m.Runtime.AlignmentOverride = &alignment
-	m.mu.Unlock()
 }
 
 // RestoreEffectiveAttributes mirrors store_to_char's base copy, unbounded
