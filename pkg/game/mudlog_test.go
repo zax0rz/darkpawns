@@ -1,6 +1,10 @@
 package game
 
-import "testing"
+import (
+	"bytes"
+	"strings"
+	"testing"
+)
 
 type testSessions []*Player
 
@@ -66,5 +70,65 @@ func TestClearImmortalSessionProvider(t *testing.T) {
 	ClearImmortalSessionProvider(newer)
 	if getImmortalSessionProvider() != nil {
 		t.Fatal("clearing the current provider left it registered")
+	}
+}
+
+type mudlogCapture struct {
+	player   *Player
+	messages []string
+}
+
+func (c *mudlogCapture) EachSession(fn func(interface{}, func(string))) {
+	fn(c.player, func(msg string) { c.messages = append(c.messages, msg) })
+}
+
+// src/utils.c:212-238: file logging is independent of descriptor broadcast;
+// type, real level and writing select the audience, and CRLF precedes reset.
+func TestMudLogConsumerFilterAndRawColorMatrix(t *testing.T) {
+	prior := getImmortalSessionProvider()
+	defer SetImmortalSessionProvider(prior)
+	priorWriter := getLogWriter()
+	defer SetLogWriter(priorWriter)
+	var file bytes.Buffer
+	SetLogWriter(&file)
+	p := NewPlayer(1, "Syslogger", 1001)
+	p.SetLevel(34)
+	c := &mudlogCapture{player: p}
+	SetImmortalSessionProvider(c)
+	for logLevel := 0; logLevel <= 3; logLevel++ {
+		p.SetPlrFlag(PrfLog1, logLevel&1 != 0)
+		p.SetPlrFlag(PrfLog2, logLevel&2 != 0)
+		for typ := 0; typ <= 3; typ++ {
+			for _, level := range []int{-1, 31, 34, 35} {
+				for _, writing := range []bool{false, true} {
+					for color := 0; color <= 3; color++ {
+						for _, toFile := range []bool{false, true} {
+							p.SetPlrFlag(PlrWriting, writing)
+							p.SetPlrFlag(PrfColor1, color&1 != 0)
+							p.SetPlrFlag(PrfColor2, color&2 != 0)
+							c.messages = nil
+							file.Reset()
+							MudLog("matrix", typ, level, toFile)
+							wanted := level >= 0 && level <= 34 && !writing && logLevel >= typ
+							if (len(c.messages) > 0) != wanted {
+								t.Fatalf("filter log=%d type=%d level=%d writing=%v color=%d file=%v: %q", logLevel, typ, level, writing, color, toFile, c.messages)
+							}
+							if wanted {
+								want := "[ matrix ]\r\n"
+								if color >= 2 {
+									want = "\x1b[32m[ matrix ]\r\n\x1b[0m"
+								}
+								if len(c.messages) != 1 || c.messages[0] != want {
+									t.Fatalf("raw color %d: %q, want %q", color, c.messages, want)
+								}
+							}
+							if strings.Contains(file.String(), "matrix") != toFile {
+								t.Fatalf("file flag %v: %q", toFile, file.String())
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
