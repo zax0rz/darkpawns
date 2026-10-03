@@ -21,8 +21,10 @@ var _ scripting.Bridge = (*WorldScriptableAdapter)(nil)
 
 func (a *WorldScriptableAdapter) resolveChar(ref scripting.CharRef) (Actor, *Player, *MobInstance) {
 	if ref.NPC {
-		m, ok := a.world.GetMobByID(ref.ID)
-		if !ok || m == nil {
+		a.world.mu.RLock()
+		m := a.world.mobileObjectOwnerLocked(ref.ID)
+		a.world.mu.RUnlock()
+		if m == nil {
 			return nil, nil, nil
 		}
 		return m, nil, m
@@ -857,13 +859,15 @@ func (a *WorldScriptableAdapter) EquipCharObj(ref scripting.CharRef, objRef scri
 		return
 	}
 	a.ObjFrom(objRef, "char")
+	if m != nil {
+		if err := a.world.EquipMobileObject(m, obj, pos); err != nil {
+			slog.Error("lua equip_char failed", "obj_vnum", obj.VNum, "error", err)
+		}
+		return
+	}
 	occupied := false
 	if p != nil {
 		occupied = a.world.IsEquipped(p, pos)
-	} else if m != nil {
-		m.mu.RLock()
-		occupied = m.Equipment[pos] != nil
-		m.mu.RUnlock()
 	}
 	if occupied {
 		// "SYSERR: Char is already equipped": the object, already taken
@@ -895,13 +899,6 @@ func (a *WorldScriptableAdapter) EquipCharObj(ref scripting.CharRef, objRef scri
 		if err := a.world.EquipItem(p, obj, pos); err != nil {
 			slog.Error("lua equip_char failed", "player", p.GetName(), "obj_vnum", obj.VNum, "error", err)
 		}
-	case m != nil:
-		m.mu.Lock()
-		if m.Equipment == nil {
-			m.Equipment = make(map[int]*ObjectInstance)
-		}
-		m.mu.Unlock()
-		m.EquipItem(obj, pos)
 	}
 }
 

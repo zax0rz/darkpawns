@@ -20,7 +20,8 @@ import (
 
 // MobInstance represents a spawned mob in the world.
 type MobInstance struct {
-	mu sync.RWMutex
+	mu    sync.RWMutex
+	world *World // immutable owner, set before the mobile is published
 
 	// Link to prototype. Stored atomically: the pointed-to parser.Mob is
 	// never mutated in place (writers clone+swap), so readers can Load()
@@ -50,7 +51,7 @@ type MobInstance struct {
 
 	// Inventory and equipment
 	Inventory []*ObjectInstance
-	Equipment map[int]*ObjectInstance // key: equip position
+	Equipment map[int]*ObjectInstance // C WEAR_* index, never a player EquipmentSlot
 
 	// Combat state
 	Target         *MobInstance // or Player
@@ -66,8 +67,9 @@ type MobInstance struct {
 	MountRider string
 
 	// Hunting: name of player being hunted — from src/utils.c
-	Hunting   string
-	HuntingID string
+	Hunting      string
+	HuntingID    string
+	HuntingMobID int
 
 	// CustomData stores arbitrary per-instance data (e.g., damroll bonus for brain eater)
 	CustomData map[string]interface{}
@@ -88,7 +90,10 @@ type MobInstance struct {
 	Cha                 int
 
 	// Gold — instance-level with +/-20% variance from prototype (db.c:1766-1775)
-	Gold int
+	Gold           int
+	BirthTime      time.Time
+	Weight, Height int
+	SavingThrows   [5]int
 
 	// RaceHates tracks 5 racial hatred slots (src/structs.h race_hate[5]).
 	// Initialized to -1 for all slots; matching a mob's race triggers aggression.
@@ -196,6 +201,8 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Con:            con,
 		Cha:            cha,
 		Gold:           gold,
+		Weight:         proto.Weight, Height: proto.Height,
+		BirthTime: time.Unix(nowFunc(), 0),
 	}
 	mob.SetProto(proto)
 	strAdd := proto.StrAdd
@@ -267,9 +274,36 @@ func (m *MobInstance) GetRoom() int {
 
 // SetRoom sets the mob's current room.
 func (m *MobInstance) SetRoom(vnum int) {
+	if m.world != nil {
+		m.world.mu.Lock()
+		m.moveRoomLocked(m.world, vnum)
+		m.world.mu.Unlock()
+		return
+	}
+	m.mu.Lock()
+	m.RoomVNum = vnum
+	m.mu.Unlock()
+}
+
+// moveRoomLocked applies char_from_room/char_to_room's one-light adjustment.
+// Caller holds World.mu; Mob.mu follows it, with no callbacks under either.
+func (m *MobInstance) moveRoomLocked(w *World, vnum int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	lit := false
+	for _, obj := range m.Equipment {
+		if isLitLightSource(obj) {
+			lit = true
+			break
+		}
+	}
+	if lit && m.RoomVNum >= 0 {
+		w.adjustRoomLight(m.RoomVNum, -1)
+	}
 	m.RoomVNum = vnum
+	if lit && vnum >= 0 {
+		w.adjustRoomLight(vnum, 1)
+	}
 }
 
 // GetRoomEntrySequence returns the runtime arrival order used by room looks.
@@ -484,12 +518,16 @@ func (m *MobInstance) SetMaxMana(v int) {
 
 // AddToInventory adds an object to the mob's inventory.
 func (m *MobInstance) AddToInventory(obj *ObjectInstance) {
-	obj.Location = LocInventoryMob(m.GetID())
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	obj.Location = LocInventoryMob(m.ID)
 	m.Inventory = append(m.Inventory, obj)
 }
 
 // RemoveFromInventory removes an object from the mob's inventory.
 func (m *MobInstance) RemoveFromInventory(obj *ObjectInstance) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	for i, item := range m.Inventory {
 		if item == obj {
 			m.Inventory = append(m.Inventory[:i], m.Inventory[i+1:]...)
@@ -500,33 +538,46 @@ func (m *MobInstance) RemoveFromInventory(obj *ObjectInstance) bool {
 	return false
 }
 
-// EquipItem equips an object on the mob.
+// EquipItem mirrors do_wear's obj_from_char then equip_char. Positions are C indices.
 func (m *MobInstance) EquipItem(obj *ObjectInstance, position int) bool {
-	// Unequip existing item in this slot first
-	if existing, ok := m.Equipment[position]; ok {
-		existing.Location = LocNowhere()
-		m.AddToInventory(existing)
+	if m.world != nil {
+		return m.world.equipMobileFromInventory(m, obj, position)
 	}
 
-	// Remove from inventory if present
-	m.RemoveFromInventory(obj)
-
-	obj.Location = LocEquippedMob(m.GetID(), EquipmentSlot(position))
-	m.Equipment[position] = obj
-	m.AffectTotal()
-	return true
+	m.mu.Lock()
+	for i, item := range m.Inventory {
+		if item == obj {
+			m.Inventory = append(m.Inventory[:i], m.Inventory[i+1:]...)
+			obj.Location = LocNowhere()
+			break
+		}
+	}
+	_, err := m.equipMobileLocked(nil, obj, position)
+	equipped := m.Equipment[position] == obj
+	m.mu.Unlock()
+	return err == nil && equipped
 }
 
-// UnequipItem removes an equipped object.
+// UnequipItem is the inventory-returning caller of unequip_char used by disarm.
 func (m *MobInstance) UnequipItem(position int) *ObjectInstance {
-	if obj, ok := m.Equipment[position]; ok {
-		delete(m.Equipment, position)
-		obj.Location = LocNowhere()
-		m.AddToInventory(obj)
-		m.AffectTotal()
+	if m.world != nil {
+		obj := m.Equipped(position)
+		if obj == nil {
+			return nil
+		}
+		if err := m.world.MoveObjectToMobInventoryFront(obj, m); err != nil {
+			return nil
+		}
 		return obj
 	}
-	return nil
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	obj := m.unequipMobileLocked(nil, position)
+	if obj != nil {
+		obj.Location = LocInventoryMob(m.ID)
+		m.Inventory = append([]*ObjectInstance{obj}, m.Inventory...)
+	}
+	return obj
 }
 
 // GetAC returns the mob's armor class.
@@ -590,7 +641,9 @@ func (m *MobInstance) ConfigureCreatedMobile(level int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Level = level
+	damroll = mobileSignedPoint(damroll, 8)
 	m.Runtime.DamrollOverride = &damroll
+	m.Runtime.DamrollBonus = 0
 	m.Runtime.DamageNumOverride = &ndd
 	m.Runtime.DamageSidesOverride = &sdd
 	m.Runtime.HitrollOverride = &hitroll
@@ -624,7 +677,9 @@ func (m *MobInstance) SetDamageDice(num, sides int) {
 func (m *MobInstance) AddDamrollBonus(bonus int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.Runtime.DamrollBonus += bonus
+	damroll := mobileSignedPoint(m.damrollPointLocked()+bonus, 8)
+	m.Runtime.DamrollOverride = &damroll
+	m.Runtime.DamrollBonus = 0
 }
 
 // GetDamageRoll returns the damage dice for the mob's attacks.
@@ -999,16 +1054,6 @@ func (m *MobInstance) GetHitroll() int {
 	if m.Proto() != nil {
 		total = 20 - m.Proto().THAC0
 	}
-	for _, item := range m.Equipment {
-		if item == nil || item.Prototype == nil {
-			continue
-		}
-		for _, aff := range item.Prototype.Affects {
-			if aff.Location == 18 {
-				total += aff.Modifier
-			}
-		}
-	}
 	return total
 }
 
@@ -1022,16 +1067,6 @@ func (m *MobInstance) GetDamroll() int {
 		total = *m.Runtime.DamrollOverride
 	}
 	total += m.Runtime.DamrollBonus
-	for _, item := range m.Equipment {
-		if item == nil || item.Prototype == nil {
-			continue
-		}
-		for _, aff := range item.Prototype.Affects {
-			if aff.Location == 19 {
-				total += aff.Modifier
-			}
-		}
-	}
 	return total
 }
 
@@ -1166,6 +1201,7 @@ func (m *MobInstance) ClearHunting() {
 	defer m.mu.Unlock()
 	m.Hunting = ""
 	m.HuntingID = ""
+	m.HuntingMobID = 0
 }
 
 // SetHunting — defined in deferred_fight_fns.go (full implementation with nil guard)
@@ -1428,7 +1464,7 @@ func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
 // Source: fight.c:1793 (ITEM_BLESS weapon bonus). Mobs do not have a drunk condition.
 func (m *MobInstance) HitModifiers() combat.HitModifiers {
 	var blessed bool
-	if weapon, wielded := m.Equipment[int(SlotWield)]; wielded && weapon != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
+	if weapon := m.Equipped(mobWearWield); weapon != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
 		blessed = weapon.HasExtraFlag(0, itemExtraBless)
 	}
 	return combat.HitModifiers{
@@ -1441,4 +1477,33 @@ func (m *MobInstance) SetAlignment(align int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Runtime.AlignmentOverride = &align
+}
+
+// GetSavingThrow exposes C points.saving_throws to the existing spell accessor.
+func (m *MobInstance) GetSavingThrow(kind int) int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if kind < 0 || kind >= len(m.SavingThrows) {
+		return 0
+	}
+	return m.SavingThrows[kind]
+}
+
+// GetDamrollPoint reads C points.damroll, including the mob-file dice plus.
+// Combatant keeps that plus in GetDamageRoll until the first runtime write.
+func (m *MobInstance) GetDamrollPoint() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.damrollPointLocked()
+}
+
+func (m *MobInstance) damrollPointLocked() int {
+	base := 0
+	if proto := m.Proto(); proto != nil {
+		base = proto.Damage.Plus
+	}
+	if m.Runtime.DamrollOverride != nil {
+		base = *m.Runtime.DamrollOverride
+	}
+	return mobileSignedPoint(base+m.Runtime.DamrollBonus, 8)
 }

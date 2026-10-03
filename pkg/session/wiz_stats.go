@@ -127,8 +127,8 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 		mob.GetCon(), mob.GetCon(), mob.GetCha(), mob.GetMove(), mob.GetMaxMove(), game.MoveGainNPC(mob)))
 	s.sendStatMobLine("*************-------------*************-------------*************")
 	s.sendStatMobLine(fmt.Sprintf("Coins: [%9d], Bank: [%9d] (Total: %d)", mob.GetGold(), 0, mob.GetGold()))
-	s.sendStatMobLine(fmt.Sprintf("AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [0/0/0/0/0]",
-		mob.GetAC(), mob.GetHitroll(), proto.Damage.Plus))
+	s.sendStatMobLine(fmt.Sprintf("AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [%d/%d/%d/%d/%d]",
+		mob.GetAC(), mob.GetHitroll(), mob.GetDamrollPoint(), mob.GetSavingThrow(0), mob.GetSavingThrow(1), mob.GetSavingThrow(2), mob.GetSavingThrow(3), mob.GetSavingThrow(4)))
 	s.sendStatMobLine(fmt.Sprintf("Pos: %s, Fighting: %s, Attack type: hit",
 		wizardPositionName(mob.GetPosition()), wizardFightingName(mob.GetFighting())))
 	s.sendStatMobLine(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]",

@@ -350,6 +350,28 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		}
 	}
 
+	world.MobileMessageSink = func(body *game.MobInstance, msg []byte) {
+		m.mu.RLock()
+		var attached *Session
+		for _, s := range m.sessions {
+			if s.isSwitched && s.switchedMob == body && s.hasTransport() && !s.SendClosed() {
+				attached = s
+				break
+			}
+		}
+		m.mu.RUnlock()
+		if attached != nil {
+			attached.notePlayerOutput()
+			attached.forwardSnoopOutput(string(msg))
+			wrapped, err := json.Marshal(ServerMessage{Type: MsgEvent, Data: EventData{Type: "text", Text: string(msg)}})
+			if err != nil {
+				slog.Error("MobileMessageSink marshal error", "error", err)
+				return
+			}
+			attached.sendGuarded(wrapped)
+		}
+	}
+
 	// C's do_simple_move calls look_at_room before follower recursion. Keep the
 	// renderer in session while letting the game transaction own that ordering.
 	world.MovementLook = func(player *game.Player) {

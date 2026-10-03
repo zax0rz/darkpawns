@@ -124,6 +124,7 @@ func (m *MobInstance) AffectTotal() {
 }
 
 func (m *MobInstance) affectTotalLocked() {
+	m.refreshMobileEquipmentFlagsLocked()
 	stats := CharStats{Str: m.Str, Dex: m.Dex, Int: m.Intel, Wis: m.Wis, Con: m.Con, Cha: m.Cha}
 	if m.Runtime.StrAddOverride != nil {
 		stats.StrAdd = *m.Runtime.StrAddOverride
@@ -131,15 +132,29 @@ func (m *MobInstance) affectTotalLocked() {
 	for _, item := range m.Equipment {
 		if item != nil {
 			for _, af := range item.GetAffects() {
-				addAttributeModifier(&stats, af.Location, af.Modifier)
+				addAttributeModifier(&stats, af.Location, mobileSignedPoint(af.Modifier, 8))
 			}
 		}
 	}
 	for _, value := range m.CustomData {
 		if af, ok := value.(*engine.Affect); ok {
 			addAttributeModifier(&stats, af.Location, af.Magnitude)
+			for flag, bit := range EngineFlagToAffBit {
+				if af.Flags&flag != 0 {
+					m.Affects |= 1 << uint(bit)
+				}
+			}
 		}
 	}
+	// C aff_abils stores signed bytes. Equipment/affect additions wrap
+	// before affect_total applies the NPC limits (structs.h:890-899).
+	stats.Str = mobileSignedPoint(stats.Str, 8)
+	stats.Int = mobileSignedPoint(stats.Int, 8)
+	stats.Wis = mobileSignedPoint(stats.Wis, 8)
+	stats.Dex = mobileSignedPoint(stats.Dex, 8)
+	stats.Con = mobileSignedPoint(stats.Con, 8)
+	stats.Cha = mobileSignedPoint(stats.Cha, 8)
+	stats.StrAdd = mobileSignedPoint(stats.StrAdd, 8)
 	stats = boundEffectiveAttributes(stats, true)
 	m.effectiveAttributes = &stats
 	alignment := m.alignmentLocked()

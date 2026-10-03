@@ -116,7 +116,7 @@ func TestSpecPaladin_ChargeNativeArithmetic(t *testing.T) {
 		Values:    [4]int{0, 2, 4, 12},
 	}
 	weapon := NewObjectInstance(weaponProto, -1)
-	mob.EquipItem(weapon, int(SlotWield))
+	mob.EquipItem(weapon, mobWearWield)
 
 	const seed = 17
 	reference := dprng.New(seed)

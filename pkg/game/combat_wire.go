@@ -391,8 +391,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			return 0, 0, 0, false // barehand → "hit"
 		}
 		if m := w.GetMobByName(name); m != nil {
-			if weapon, wielded := m.Equipment[int(SlotWield)]; wielded && weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
-				return weapon.Prototype.Values[3], 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
+			if weapon := m.Equipped(mobWearWield); weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
+				return weapon.GetValue(3), 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
 			}
 			if m.Proto() != nil {
 				return m.Proto().BareHandAttack, 0, 0, false

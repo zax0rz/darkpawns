@@ -39,7 +39,7 @@ func prepareBackstabber(t *testing.T, wield bool) (*World, *Player, *MobInstance
 		mob.SetProto(&p)
 	}
 	if wield {
-		mob.EquipItem(backstabberWeapon(), int(SlotWield))
+		mob.EquipItem(backstabberWeapon(), mobWearWield)
 	}
 	engine := &testCombatEngine{}
 	w.SetCombatEngine(engine)
@@ -120,7 +120,7 @@ func TestSpecBackstabber_EntryGatesAndTargetSelection(t *testing.T) {
 		{
 			name: "fighting target is handled before rolls",
 			call: func(w *World, player *Player, mob *MobInstance) bool {
-				mob.EquipItem(backstabberWeapon(), int(SlotWield))
+				mob.EquipItem(backstabberWeapon(), mobWearWield)
 				player.SetFighting("another attacker")
 				return specBackstabber(w, nil, mob, "", "")
 			},

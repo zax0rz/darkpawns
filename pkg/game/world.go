@@ -91,6 +91,7 @@ type World struct {
 	// pendingPlayerExtractions is the explicit queue used by death paths that
 	// mirror C's extract_char() to next-heartbeat extract_pending_chars() flow.
 	pendingPlayerExtractions map[*Player]struct{}
+	pendingMobileExtractions map[*MobInstance]struct{} // retained C bodies until extract_pending_chars
 
 	// Room items: room VNum -> list of object instances
 	roomItems map[int][]*ObjectInstance
@@ -140,6 +141,10 @@ type World struct {
 	// MessageSink routes player messages through the session layer.
 	// Set by the session manager on initialization. If nil, messages are silently dropped.
 	MessageSink MessageSinkFunc
+
+	// MobileMessageSink delivers to the descriptor of this concrete NPC body.
+	// Ordinary descriptorless mobiles receive no actor output.
+	MobileMessageSink func(*MobInstance, []byte)
 
 	// MovementLook is owned by the session layer because room rendering is a
 	// transport concern, but movement owns its ordering relative to arrivals,
@@ -204,6 +209,7 @@ func NewWorld(parsed *parser.World) (*World, error) {
 		activeMobs:               make(map[int]*MobInstance),
 		nextMobID:                1,
 		pendingPlayerExtractions: make(map[*Player]struct{}),
+		pendingMobileExtractions: make(map[*MobInstance]struct{}),
 		roomItems:                make(map[int][]*ObjectInstance),
 		nextObjID:                1,
 		objectInstances:          make(map[int]*ObjectInstance),
@@ -635,22 +641,21 @@ func (w *World) RoomVNumByIndex(index int) (vnum int, ok bool) {
 }
 
 // isLitLightSource returns true if the object is a working light source.
-// Source: src/handler.c has_light() — TypeFlag==ITEM_LIGHT and Values[1] > 0.
+// Source: src/handler.c:823-839 — ITEM_LIGHT and value[2] != 0.
 func isLitLightSource(obj *ObjectInstance) bool {
-	if obj == nil || obj.Prototype == nil {
+	if obj == nil {
 		return false
 	}
-	return obj.Prototype.TypeFlag == itemLightTypeFlag && obj.Prototype.Values[1] > 0
+	return obj.GetTypeFlag() == itemLightTypeFlag && obj.GetValue(2) != 0
 }
 
 // adjustRoomLight increments or decrements the light counter for a room.
 // Called when light sources enter or leave a room.
 func (w *World) adjustRoomLight(vnum int, delta int) {
 	if room, ok := w.rooms[vnum]; ok {
-		room.Light += delta
-		if room.Light < 0 {
-			room.Light = 0
-		}
+		updated := CloneRoom(*room)
+		updated.Light += delta
+		w.replaceRoomLocked(updated)
 	}
 }
 
@@ -1154,6 +1159,7 @@ func (w *World) spawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	}
 
 	mob := NewMob(proto, roomVNum)
+	mob.world = w
 	mob.ID = w.nextMobID
 	w.nextRoomEntrySequence++
 	mob.RoomEntrySequence = w.nextRoomEntrySequence
@@ -1227,10 +1233,29 @@ func (w *World) ExtractMob(mob *MobInstance) {
 	defer w.mu.Unlock()
 	for id, m := range w.activeMobs {
 		if m == mob {
+			m.mu.Lock()
+			m.Flags |= 1 << uint(MobFlagExtract)
+			m.mu.Unlock()
+			w.pendingMobileExtractions[m] = struct{}{}
 			delete(w.activeMobs, id)
 			break
 		}
 	}
+}
+
+// mobileObjectOwnerLocked retains C's character pointer for object ownership
+// and Lua handles until extract_pending_chars, even after combat retirement.
+// Caller holds World.mu (read or write); ordinary active lookup is unchanged.
+func (w *World) mobileObjectOwnerLocked(id int) *MobInstance {
+	if m := w.activeMobs[id]; m != nil {
+		return m
+	}
+	for m := range w.pendingMobileExtractions {
+		if m.ID == id {
+			return m
+		}
+	}
+	return nil
 }
 
 // SpawnObject spawns an object in the specified room.
@@ -1385,24 +1410,16 @@ func (w *World) GetAllMobs() []*MobInstance {
 // the named character. For mobs, equips at slot determined by prototype wear
 // flags. For players, uses Equipment.equip which determines the correct slot.
 func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
+	if isMob {
+		if m := w.GetMobByName(charName); m != nil {
+			return w.equipMobileInventoryVNum(m, objVNum)
+		}
+		return false
+	}
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	if isMob {
-		for _, m := range w.activeMobs {
-			if m.GetName() == charName {
-				for _, obj := range m.Inventory {
-					if obj.VNum == objVNum {
-						// Equipment slot determination requires object WearFlags mapping —
-						// deferred until equipment system fully wires obj prototype slots.
-						// (parser.Obj.WearFlags exists; equipment system not yet wired)
-						return false
-					}
-				}
-				return false
-			}
-		}
-	} else {
+	{
 		if p, ok := w.players[charName]; ok {
 			if p.Inventory == nil {
 				return false
@@ -1426,48 +1443,29 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 // EquipMobByVNum finds a mob by vnum and room, removes the object from its
 // inventory, and equips it. Used by the scripting engine's equip_char().
 func (w *World) EquipMobByVNum(mobVNum, roomVNum, objVNum int) bool {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	for _, m := range w.activeMobs {
-		if m.VNum == mobVNum && m.GetRoomVNum() == roomVNum {
-			for i, obj := range m.Inventory {
-				if obj.VNum == objVNum {
-					m.Inventory = append(m.Inventory[:i], m.Inventory[i+1:]...)
-					if obj.Prototype != nil && len(m.Equipment) == 0 {
-						m.Equipment = make(map[int]*ObjectInstance)
-					}
-					if obj.Prototype != nil {
-						slot := wearFlagToIntSlot(obj.Prototype.WearFlags)
-						if slot >= 0 {
-							m.Equipment[slot] = obj
-							m.AffectTotal()
-							return true
-						}
-					}
-					return false
-				}
-			}
-			return false
+	for _, m := range w.GetMobsInRoom(roomVNum) {
+		if m.GetVNum() == mobVNum {
+			return w.equipMobileInventoryVNum(m, objVNum)
 		}
 	}
 	return false
 }
 
-// wearFlagToIntSlot maps object wear flags to equipment slot position (int).
-func wearFlagToIntSlot(wf [4]int) int {
-	var flags int
-	for _, w := range wf {
-		flags |= w
+func (w *World) equipMobileInventoryVNum(m *MobInstance, vnum int) bool {
+	m.mu.RLock()
+	var obj *ObjectInstance
+	for _, item := range m.Inventory {
+		if item.GetVNum() == vnum {
+			obj = item
+			break
+		}
 	}
-	switch {
-	case flags&(1<<13) != 0: // ITEM_WEAR_WIELD
-		return 13
-	case flags&(1<<0) != 0: // ITEM_WEAR_TAKE
-		return 0
-	default:
-		return -1
+	m.mu.RUnlock()
+	if obj == nil {
+		return false
 	}
+	pos := findEqPos(obj, "")
+	return pos >= 0 && m.EquipItem(obj, pos)
 }
 
 // SetFollower sets the following target for a character.

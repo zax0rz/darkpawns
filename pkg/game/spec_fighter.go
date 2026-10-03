@@ -190,7 +190,7 @@ func mobHeadbutt(w *World, me *MobInstance, vict combat.Combatant) {
 	}
 
 	recoil := me.GetLevel() / 4
-	if _, wearingHelm := me.Equipment[int(SlotHead)]; wearingHelm {
+	if me.Equipped(mobWearHead) != nil {
 		recoil = me.GetLevel() / 3
 	}
 	me.TakeDamage(recoil)
@@ -235,7 +235,7 @@ func mobParry(w *World, me *MobInstance, vict combat.Combatant) {
 	if vict.GetFighting() != me.GetName() {
 		return
 	}
-	if _, wielded := me.Equipment[int(SlotWield)]; !wielded {
+	if me.Equipped(mobWearWield) == nil {
 		return
 	}
 	percent := dprng.Number(1, 101)

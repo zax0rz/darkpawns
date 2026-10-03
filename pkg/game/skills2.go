@@ -200,7 +200,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 	var weapon *ObjectInstance
 	switch victim := target.(type) {
 	case *MobInstance:
-		weapon = victim.Equipment[int(SlotWield)]
+		weapon = victim.Equipped(mobWearWield)
 	case *Player:
 		weapon, _ = victim.Equipment.GetItemInSlot(SlotWield)
 	}
@@ -232,7 +232,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if percent < prob {
 		// Unequip the target's wielded weapon (C: obj_to_char(unequip_char(vict, WEAR_WIELD), vict))
 		if targetMob, ok := target.(*MobInstance); ok {
-			targetMob.UnequipItem(int(SlotWield))
+			targetMob.UnequipItem(mobWearWield)
 		} else if targetPlayer, ok := target.(*Player); ok {
 			if err := targetPlayer.Equipment.Unequip(SlotWield, targetPlayer.Inventory); err != nil {
 				slog.Error("disarm failed to move weapon to player inventory", "actor", ch.GetName(), "target", target.GetName(), "error", err)

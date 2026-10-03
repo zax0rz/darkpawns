@@ -230,6 +230,7 @@ func (m *MobInstance) SetHunting(target string) {
 	}
 	m.Hunting = ""
 	m.HuntingID = ""
+	m.HuntingMobID = 0
 	if target != "" {
 		m.Hunting = target
 	}

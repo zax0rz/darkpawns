@@ -56,7 +56,7 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 			if where < 0 || where >= len(wearMessages) {
 				continue
 			}
-			if _, occupied := killer.Equipment[where]; occupied {
+			if killer.Equipped(where) != nil {
 				continue
 			}
 			if !killer.EquipItem(item, where) {

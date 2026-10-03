@@ -155,10 +155,11 @@ type MobFixture struct {
 // zone. It is deliberately paired with spawn-mob in focused vehicles so a
 // scenario can populate a known keeper without editing authoritative zones.
 type MobObjectFixture struct {
-	MobVNum     int
-	ObjectVNum  int
-	MaxExisting int
-	ZoneNumber  int
+	WearPosition *int // nil: G; otherwise E at this C WEAR_* position
+	MobVNum      int
+	ObjectVNum   int
+	MaxExisting  int
+	ZoneNumber   int
 }
 
 // MobAffFixture patches a mob prototype's innate affected-by bitmask (the
@@ -268,6 +269,7 @@ type AudienceProbeBlock struct {
 //	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
 //	give-object 12100 12132 1 121 # mob, object, max existing, zone file
+//	equip-object 18301 12120 1 16 80 # mob, object, max, C wear slot, zone
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	strip-mob-script 18306    # force native special dispatch in both copies
@@ -522,6 +524,23 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					sc.MobFixtures = append(sc.MobFixtures, MobFixture{
 						MobVNum: values[0], MaxExisting: values[1], RoomVNum: values[2], ZoneNumber: values[3],
 					})
+					continue
+				}
+			}
+			if len(fields) == 6 && strings.EqualFold(fields[0], "equip-object") {
+				values := make([]int, 5)
+				valid := true
+				for i := range values {
+					parsed, err := strconv.Atoi(fields[i+1])
+					values[i] = parsed
+					if err != nil || i != 3 && parsed <= 0 || i == 3 && (parsed < 0 || parsed >= 22) {
+						valid = false
+						break
+					}
+				}
+				if valid {
+					position := values[3]
+					sc.MobObjectFixtures = append(sc.MobObjectFixtures, MobObjectFixture{MobVNum: values[0], ObjectVNum: values[1], MaxExisting: values[2], WearPosition: &position, ZoneNumber: values[4]})
 					continue
 				}
 			}

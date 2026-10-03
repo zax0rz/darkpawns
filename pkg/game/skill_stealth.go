@@ -374,7 +374,7 @@ func findEquippedItem(ch *Player, target combat.Combatant, itemName string) (*Ob
 	case *MobInstance:
 		target.mu.RLock()
 		defer target.mu.RUnlock()
-		for slot := 0; slot < int(SlotMax); slot++ {
+		for slot := 0; slot < NumWears; slot++ {
 			item := target.Equipment[slot]
 			if item != nil && isName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
 				return item, slot, true

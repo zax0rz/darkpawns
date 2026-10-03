@@ -23,10 +23,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 
 	case ObjInRoom:
 		w.removeItemFromRoomLocked(obj, old.RoomVNum)
-		// If a light source leaves the room floor, decrement room light
-		if isLitLightSource(obj) {
-			w.adjustRoomLight(old.RoomVNum, -1)
-		}
+		// C obj_from_room does not alter room light (src/handler.c).
 		obj.RoomVNum = -1
 
 	case ObjInInventory:
@@ -39,7 +36,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				p.MarkCrashNeeded()
 			}
 		case OwnerMob:
-			if m, ok := w.activeMobs[old.MobID]; ok {
+			if m := w.mobileObjectOwnerLocked(old.MobID); m != nil {
 				m.RemoveFromInventory(obj)
 			}
 		}
@@ -69,9 +66,10 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				// handler.c:1010-1012).
 			}
 		case OwnerMob:
-			if m, ok := w.activeMobs[old.MobID]; ok {
-				delete(m.Equipment, int(old.Slot))
-				m.AffectTotal()
+			if m := w.mobileObjectOwnerLocked(old.MobID); m != nil {
+				m.mu.Lock()
+				m.unequipMobileLocked(w, int(old.Slot))
+				m.mu.Unlock()
 			}
 		}
 
@@ -98,10 +96,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 
 	case ObjInRoom:
 		w.roomItems[dst.RoomVNum] = append(w.roomItems[dst.RoomVNum], obj)
-		// If a light source enters the room floor, increment room light
-		if isLitLightSource(obj) {
-			w.adjustRoomLight(dst.RoomVNum, 1)
-		}
+		// C obj_to_room does not alter room light (src/handler.c:897-913).
 		obj.RoomVNum = dst.RoomVNum
 
 	case ObjInInventory:
@@ -116,7 +111,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 				p.MarkCrashNeeded()
 			}
 		case OwnerMob:
-			if m, ok := w.activeMobs[dst.MobID]; ok {
+			if m := w.mobileObjectOwnerLocked(dst.MobID); m != nil {
 				m.AddToInventory(obj)
 			}
 		}
@@ -136,14 +131,11 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 				}
 			}
 		case OwnerMob:
-			if m, ok := w.activeMobs[dst.MobID]; ok {
-				m.AddToInventory(obj)
-				if m.Equipment != nil {
-					m.Equipment[int(dst.Slot)] = obj
-					// Remove from inventory since it's now equipped
-					m.RemoveFromInventory(obj)
-					m.AffectTotal()
-				}
+			if m := w.mobileObjectOwnerLocked(dst.MobID); m != nil {
+				m.mu.Lock()
+				_, err := m.equipMobileLocked(w, obj, int(dst.Slot))
+				m.mu.Unlock()
+				return err
 			}
 		}
 
@@ -215,6 +207,28 @@ func (w *World) moveObjectLocked(obj *ObjectInstance, dst ObjectLocation) error 
 // This is the centralized movement function. All object location changes
 // should go through this to maintain invariant consistency.
 func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
+	if dst.Kind == ObjEquipped && dst.OwnerKind == OwnerMob {
+		w.mu.Lock()
+		m := w.mobileObjectOwnerLocked(dst.MobID)
+		if m == nil {
+			w.mu.Unlock()
+			return fmt.Errorf("mobile owner not found")
+		}
+		_, err := w.detachObjectLocked(obj)
+		if err != nil {
+			w.mu.Unlock()
+			return err
+		}
+		obj.Location = LocNowhere()
+		m.mu.Lock()
+		effects, err := m.equipMobileLocked(w, obj, int(dst.Slot))
+		m.mu.Unlock()
+		w.mu.Unlock()
+		if err == nil {
+			w.finishMobileEquipment(m, obj, effects)
+		}
+		return err
+	}
 	if err := dst.Validate(); err != nil {
 		return fmt.Errorf("invalid destination: %w", err)
 	}
@@ -342,28 +356,7 @@ func (w *World) putResetObject(obj, target *ObjectInstance) error {
 	return nil
 }
 
-// equipResetObject attaches a newly read E object using C's occupied-slot
-// refusal (handler.c:690-695). Refusal leaves the counted object floating;
-// reset_zone still records success (db.c:2212-2215). Mobile slots are C indices.
+// equipResetObject is the same floating-object boundary used by Lua and wear.
 func (w *World) equipResetObject(obj *ObjectInstance, mob *MobInstance, position int) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if w.objectInstances[obj.ID] != obj || w.activeMobs[mob.ID] != mob {
-		return fmt.Errorf("reset object or mobile is no longer live")
-	}
-	mob.mu.Lock()
-	defer mob.mu.Unlock()
-	if mob.Equipment[position] != nil {
-		return nil
-	}
-	if obj.Location.Kind != ObjNowhere {
-		return fmt.Errorf("reset equipment is not floating")
-	}
-	if mob.Equipment == nil {
-		mob.Equipment = make(map[int]*ObjectInstance)
-	}
-	mob.Equipment[position] = obj
-	obj.Location = LocEquippedMob(mob.ID, EquipmentSlot(position))
-	mob.affectTotalLocked()
-	return nil
+	return w.EquipMobileObject(mob, obj, position)
 }

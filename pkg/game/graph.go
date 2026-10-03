@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -123,8 +124,24 @@ func (w *World) huntVictim(m *MobInstance) {
 		return
 	}
 
-	// Find the hunting target among players
-	target := w.findPlayerByName(m.GetHunting())
+	// Ordinary name-based hunting retains its player lookup. Equipment's
+	// zero-CHA check stores C's exact mobile prey identity (handler.c:669).
+	m.mu.RLock()
+	preyID := m.HuntingMobID
+	m.mu.RUnlock()
+	var target combat.Combatant
+	var evasion int
+	if preyID != 0 {
+		w.mu.RLock()
+		prey := w.activeMobs[preyID]
+		w.mu.RUnlock()
+		if prey != nil {
+			target = prey
+		}
+	} else if player := w.findPlayerByName(m.GetHunting()); player != nil {
+		target = player
+		evasion = player.GetSkill("evasion")
+	}
 	if target == nil || target.GetRoom() < 2 {
 		if m.CanSpeak() {
 			w.mobSayTo(m, "Damn!  My prey is gone!!")
@@ -138,7 +155,7 @@ func (w *World) huntVictim(m *MobInstance) {
 	// C finds the path first and skips evasion only when hunter and target are
 	// already together. Its two speech checks use independent number(0,6) draws.
 	// #nosec G404 — game RNG, not cryptographic
-	if evasion := target.GetSkill("evasion"); evasion > 0 && dir != BFS_ALREADY_THERE && huntNumber(1, 151) < evasion {
+	if evasion > 0 && dir != BFS_ALREADY_THERE && huntNumber(1, 151) < evasion {
 		if m.CanSpeak() && huntNumber(0, 6) == 0 {
 			w.mobSayTo(m, "Where the hell did my prey go?!")
 		} else if m.CanSpeak() && huntNumber(0, 6) == 0 {
@@ -154,7 +171,7 @@ func (w *World) huntVictim(m *MobInstance) {
 
 	if dir < 0 {
 		if dir == BFS_ALREADY_THERE && m.GetRoom() == target.GetRoom() {
-			w.mobAttackPlayer(m, target)
+			w.attackHuntingPrey(m, target)
 		}
 		m.SetHunting("")
 		return
@@ -175,7 +192,7 @@ func (w *World) huntVictim(m *MobInstance) {
 
 	// Check if arrived
 	if m.GetRoom() == target.GetRoom() {
-		w.mobAttackPlayer(m, target)
+		w.attackHuntingPrey(m, target)
 	} else if m.CanSpeak() {
 		w.huntTrashTalk(m, target.GetName())
 	}
@@ -363,4 +380,16 @@ func mobIsIntelligent(m *MobInstance) bool {
 		}
 	}
 	return false
+}
+
+// Mobile prey is selected only by check_for_bad_stats; existing player hunting
+// keeps its original attack path. C hunt_victim calls hit(ch, HUNTING(ch), -1).
+func (w *World) attackHuntingPrey(m *MobInstance, target combat.Combatant) {
+	if player, ok := target.(*Player); ok {
+		w.mobAttackPlayer(m, player)
+		return
+	}
+	if err := w.mobHit(m, target); err != nil {
+		slog.Warn("mobile prey attack failed", "mob", m.GetName(), "target", target.GetName(), "error", err)
+	}
 }
