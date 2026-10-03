@@ -400,17 +400,17 @@ func (s *Session) promptText() string {
 	}
 	// C's make_prompt playing branch renders the vitals fields (HP/mana/move)
 	// only when the infobar is off (comm.c:1064-1105); the VT100 infobar owns
-	// that data otherwise. Colors are transport presentation stripped by the
-	// differential normalizer, so only the numeric fields are emitted.
+	// that data otherwise. src/comm.c:1083-1121 colors each vital at C_CMP.
+	color := flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0
 	if s.infobarMode != InfobarOn {
 		if flags&(1<<uint(game.PrfDisphp)) != 0 {
-			fmt.Fprintf(&prefix, "%dH ", s.player.GetHP())
+			prefix.WriteString(promptVital(s.player.GetHP(), s.player.GetMaxHP(), "H", color))
 		}
 		if flags&(1<<uint(game.PrfDispmmana)) != 0 {
-			fmt.Fprintf(&prefix, "%dM ", s.player.GetMana())
+			prefix.WriteString(promptVital(s.player.GetMana(), s.player.GetMaxMana(), "M", color))
 		}
 		if flags&(1<<uint(game.PrfDispmove)) != 0 {
-			fmt.Fprintf(&prefix, "%dV ", s.player.GetMove())
+			prefix.WriteString(promptVital(s.player.GetMove(), s.player.GetMaxMove(), "V", color))
 		}
 	}
 	return prefix.String() + "> "
@@ -418,3 +418,19 @@ func (s *Session) promptText() string {
 
 // MarkDirty marks a variable as dirty for agent subscriptions.
 // Deprecated: prefer markDirty (unexported) which uses the agent mutex.
+
+// promptVital follows make_prompt's float percentage and C_CMP color gates
+// (src/comm.c:1083-1121), including IEEE division for a zero maximum.
+func promptVital(current, maximum int, label string, color bool) string {
+	if !color {
+		return fmt.Sprintf("%d%s ", current, label)
+	}
+	percent := float32(current) / float32(maximum)
+	shade := "\x1b[31m"
+	if percent >= 0.75 {
+		shade = "\x1b[32m"
+	} else if percent >= 0.33 {
+		shade = "\x1b[33m"
+	}
+	return fmt.Sprintf("%s%d\x1b[0m%s ", shade, current, label)
+}
