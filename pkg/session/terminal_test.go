@@ -54,6 +54,17 @@ func TestRenderTerminalFrame(t *testing.T) {
 	}
 }
 
+// src/act.comm.c:846-864; src/comm.c:1620-1643: reset follows the
+// act line, then exactly one noncompact flush CRLF precedes the prompt.
+func TestTerminalFramePreservesLineEndingBeforeANSIReset(t *testing.T) {
+	msg := []byte(`{"type":"event","data":{"type":"text","text":"\u001b[37mGroup line\r\n\u001b[0m"}}`)
+	got, ok := RenderTerminalFrame(msg)
+	want := "\x1b[37mGroup line\r\n\x1b[0m"
+	if !ok || got.Text != want {
+		t.Fatalf("colored act bytes %q, want %q", got.Text, want)
+	}
+}
+
 // src/comm.c:1083-1121: C_CMP colors are green >=75%, yellow >=33%,
 // red otherwise, independently for hit points, mana and movement.
 func TestPromptVitalsUseCCompleteColors(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -219,8 +220,20 @@ func IsInputMarkFrame(msg []byte) bool {
 // most handler output, and appending another CRLF after it injects a blank line
 // the oracle never wrote whenever one command emits two messages (do_string's
 // WARNING/Ok pair is the first vehicle that exposed it — modify.c:632,765).
+var trailingTerminalCSI = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]$`)
+
 func ensureLineEnded(text string) string {
-	if strings.HasSuffix(text, "\n") || strings.HasSuffix(text, "\r") {
+	// A trailing color reset follows the line ending in C act/mudlog output.
+	// Inspect the visible suffix while preserving every original control byte.
+	visible := text
+	for {
+		loc := trailingTerminalCSI.FindStringIndex(visible)
+		if loc == nil {
+			break
+		}
+		visible = visible[:loc[0]]
+	}
+	if strings.HasSuffix(visible, "\n") || strings.HasSuffix(visible, "\r") {
 		return text
 	}
 	return text + "\r\n"

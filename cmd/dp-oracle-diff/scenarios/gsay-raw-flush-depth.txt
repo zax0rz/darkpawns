@@ -1,0 +1,117 @@
+# depth-case: gsay.act-listener-prompt
+# depth-case: gsay.act-echo-prompt-spacing
+# depth-case: prompt.vitals-complete-color
+# C-first do_gsay audience and substitution scenario.
+# The leader is invisible to the grouped awake and sleeping followers; all
+# three use complete color so the C CCWHT/CCNRM wrappers remain observable.
+
+
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+
+[setup:oracle]
+Gsaygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gsaygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:awake]
+Gsayawake
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:awake]
+Gsayawake
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Gsaysleeper
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:sleeper]
+Gsaysleeper
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Gsayawake 8162
+teleport Gsaysleeper 8162
+force Gsayawake follow Gsaygod
+force Gsaysleeper follow Gsaygod
+group all
+color complete
+force Gsayawake color complete
+force Gsaysleeper color complete
+force Gsaysleeper sleep
+
+[probe]
+gsay visible group
+gtell visible alias
+norepeat
+gsay no repeat
+norepeat
+invis
+gsay invisible group
