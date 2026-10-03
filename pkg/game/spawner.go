@@ -361,11 +361,9 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				s.extractSpawnedObject(obj)
 				continue
 			}
-			if lastMob.Equipment == nil {
-				lastMob.Equipment = make(map[int]*ObjectInstance)
+			if err := s.world.equipResetObject(obj, lastMob, cmd.Arg3); err != nil {
+				slog.Error("error equipping reset object", "obj_vnum", cmd.Arg1, "error", err)
 			}
-			lastMob.Equipment[cmd.Arg3] = obj // Arg3 = equip position
-			lastMob.AffectTotal()
 			lastCmd = 1
 
 		case "P": // Put object in container

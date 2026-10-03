@@ -341,3 +341,29 @@ func (w *World) putResetObject(obj, target *ObjectInstance) error {
 	obj.Location = LocContainer(target.ID)
 	return nil
 }
+
+// equipResetObject attaches a newly read E object using C's occupied-slot
+// refusal (handler.c:690-695). Refusal leaves the counted object floating;
+// reset_zone still records success (db.c:2212-2215). Mobile slots are C indices.
+func (w *World) equipResetObject(obj *ObjectInstance, mob *MobInstance, position int) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.objectInstances[obj.ID] != obj || w.activeMobs[mob.ID] != mob {
+		return fmt.Errorf("reset object or mobile is no longer live")
+	}
+	mob.mu.Lock()
+	defer mob.mu.Unlock()
+	if mob.Equipment[position] != nil {
+		return nil
+	}
+	if obj.Location.Kind != ObjNowhere {
+		return fmt.Errorf("reset equipment is not floating")
+	}
+	if mob.Equipment == nil {
+		mob.Equipment = make(map[int]*ObjectInstance)
+	}
+	mob.Equipment[position] = obj
+	obj.Location = LocEquippedMob(mob.ID, EquipmentSlot(position))
+	mob.affectTotalLocked()
+	return nil
+}
