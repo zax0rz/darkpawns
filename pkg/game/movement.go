@@ -321,3 +321,23 @@ func (w *World) MoveObjectToContainer(obj, container *ObjectInstance) error {
 func (w *World) MoveObjectToNowhere(obj *ObjectInstance) error {
 	return w.MoveObject(obj, LocNowhere())
 }
+
+// putResetObject is reset_zone's obj_to_obj path for a newly read object.
+// Unlike the player put command, C does not require ITEM_CONTAINER here
+// (db.c:2167-2184; handler.c:939-954). Ownership stays in the canonical registry.
+func (w *World) putResetObject(obj, target *ObjectInstance) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if obj == target {
+		return nil
+	} // C logs and leaves the new object floating.
+	if w.objectInstances[obj.ID] != obj || w.objectInstances[target.ID] != target {
+		return fmt.Errorf("reset object or target is no longer live")
+	}
+	if obj.Location.Kind != ObjNowhere {
+		return fmt.Errorf("reset object is not floating")
+	}
+	target.Contains = append([]*ObjectInstance{obj}, target.Contains...)
+	obj.Location = LocContainer(target.ID)
+	return nil
+}

@@ -380,7 +380,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				slog.Error("error spawning object for container", "obj_vnum", cmd.Arg1, "error", err, "context", "container")
 				continue
 			}
-			container := s.findObjectInstance(cmd.Arg3)
+			container := s.world.GetObjNum(cmd.Arg3)
 			if container == nil {
 				// C leaves the newly read object floating and counted when the
 				// target container is missing, without calling percent_load.
@@ -392,7 +392,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				s.extractSpawnedObject(obj)
 				continue
 			}
-			if err := s.world.MoveObjectToContainer(obj, container); err != nil {
+			if err := s.world.putResetObject(obj, container); err != nil {
 				slog.Warn("MoveObjectToContainer failed in spawner", "obj_vnum", obj.GetVNum(), "error", err)
 			}
 			lastCmd = 1
