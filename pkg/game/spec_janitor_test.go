@@ -1,7 +1,10 @@
 package game
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -128,5 +131,40 @@ func TestSpecJanitor_NoEligibleObject(t *testing.T) {
 	}
 	if got := lastMsg(); got != "" {
 		t.Fatalf("no-eligible output = %q, want empty", got)
+	}
+}
+
+// C mobile_activity's assigned native special, not a direct janitor call.
+func TestJanitorAutonomousAssignedDispatch(t *testing.T) {
+	for _, vnum := range []int{8061, 21229} {
+		t.Run(fmt.Sprint(vnum), func(t *testing.T) {
+			w, _, output := newSpecProcTestWorld(t)
+			proto := &parser.Mob{VNum: vnum, Keywords: "janitor", ShortDesc: "the janitor", Level: 1, HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 20}, ActionFlags: []string{"spec", "sentinel"}}
+			w.mobs[vnum] = proto
+			mob, err := w.SpawnMob(vnum, 1001)
+			if err != nil {
+				t.Fatal(err)
+			}
+			mob.SetPosition(combat.PosStanding)
+			trash := &parser.Obj{VNum: 3303, Keywords: "scrap", ShortDesc: "a scrap", WearFlags: [4]int{1}}
+			w.objs[trash.VNum] = trash
+			obj, err := w.SpawnObject(trash.VNum, 1001)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w.AddItemToRoom(obj, 1001)
+			output()
+			dprng.ResetStream(1)
+			w.MobileActivity()
+			if got := output(); got != "The janitor picks up some trash.\r\n" {
+				t.Fatalf("native pulse output = %q", got)
+			}
+			if len(w.GetItemsInRoom(1001)) != 0 || len(mob.Inventory) != 1 || mob.Inventory[0] != obj || obj.Location != LocInventoryMob(mob.GetID()) {
+				t.Fatal("native pulse did not transfer the exact floor object to the assigned janitor")
+			}
+			if got := dprng.Next(); got != dprng.New(1).Next() {
+				t.Fatal("consumed special fell through to wandering/sound RNG")
+			}
+		})
 	}
 }

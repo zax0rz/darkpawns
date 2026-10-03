@@ -1,0 +1,84 @@
+# depth-case: mob.janitor-entry-gates
+# depth-case: mob.janitor-trash-predicate
+# depth-case: mob.janitor-trash-pickup
+# depth-case: mob.janitor-inventory-transfer
+# depth-case: mob.janitor-pulse-dispatch
+# C autonomous janitor dispatch, with authored RANDZON disabled in both
+# disposable prototypes so reset_zone cannot move it away from the fixture.
+# Presence is observed before dropping trash; after the pulse floor removal
+# is observed. The autonomous unit proof checks the exact carried object. C src/db.c:2134-2152;
+# src/mobact.c:68-93; src/spec_procs.c:750-768.
+
+[fixture]
+empty-players
+quiet-mobs
+clear-mob-flag 8061 RANDZON
+spawn-mob 8061 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+SweepGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SweepGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Witness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Witness 8105
+
+[probe]
+look
+load obj 8010
+drop bread
+~dpclock pulse 40
+look
