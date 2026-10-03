@@ -283,3 +283,26 @@ func TestZoneResetObjectRemovalExtractsAllContents(t *testing.T) {
 		t.Fatal("successful R did not enable conditional O")
 	}
 }
+
+func TestZoneResetPSelfTargetStaysFloating(t *testing.T) {
+	w, s := newZoneResetTestSpawner(t)
+	old, err := s.SpawnObject(204, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := installZoneObjectOrderHooks(t, true)
+	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+		{Command: "P", Arg1: 204, Arg2: 2, Arg3: 204},
+		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	newest := w.GetObjNum(204)
+	if newest == old || newest.Location != LocNowhere() || len(old.Contains) != 0 || len(newest.Contains) != 0 {
+		t.Fatal("same-prototype P did not leave its newest self-target floating")
+	}
+	if w.countObjectInstances(204) != 2 || w.countObjectInstances(201) != 1 {
+		t.Fatal("self-target P lost its global count or conditional success")
+	}
+	assertZoneObjectCalls(t, calls, "percent", "percent")
+}
