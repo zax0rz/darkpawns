@@ -1,0 +1,46 @@
+# depth-case: mob.take-to-jail-breed-killer
+# depth-case: mob.take-to-jail-breed-caller
+# C caller at src/spec_procs2.c:1438-1460 invokes the already-proven
+# breed_killer owner (1679-1722) inside its room-list walk. No outlaw is
+# configured; autonomous guard 8001 reaches the nested native helper.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8001 1 8105 80
+spawn-mob 18207 1 8105 80
+set-mob-aff 18207 268435456
+replace-room-exits 8105 none
+
+[setup:oracle]
+JailBreedGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+JailBreedGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+~dpclock pulse 40
