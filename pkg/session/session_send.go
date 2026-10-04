@@ -178,6 +178,9 @@ func (s *Session) SendMessage(message string) error {
 // goroutine. Drops when full (SendMessage's backpressure policy) and no-ops
 // when closed.
 func (s *Session) sendGuarded(message []byte) {
+	if s.stageHeartbeat(message, "", false) {
+		return
+	}
 	s.sendMu.RLock()
 	defer s.sendMu.RUnlock()
 	if s.sendClosed {
@@ -245,6 +248,9 @@ func (s *Session) sendRawEvent(message string) {
 	})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	if s.stageHeartbeat(msg, "", false) {
 		return
 	}
 	s.sendMu.RLock()

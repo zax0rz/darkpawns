@@ -31,6 +31,9 @@ func (s *Session) maybeRefreshToken() {
 		slog.Error("json.Marshal token_refresh error", "error", err)
 		return
 	}
+	if s.stageHeartbeat(msg, "", false) {
+		return
+	}
 	select {
 	case s.send <- msg:
 	default:
@@ -61,7 +64,7 @@ func (m *Manager) CheckIdlePasswords() {
 			Type: MsgError,
 			Data: ErrorData{Message: "\r\nTimed out... goodbye.\r\n"},
 		})
-		if err == nil {
+		if err == nil && !s.stageHeartbeat(timeoutMsg, "", false) {
 			select {
 			case s.send <- timeoutMsg:
 			default:

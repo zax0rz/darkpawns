@@ -2,6 +2,7 @@ package session
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -113,5 +114,42 @@ func TestHeartbeatOutputPromptAfterPointText(t *testing.T) {
 	got := renderedOutput(s)
 	if got != "weather\r\npoint update\r\n\r\n> " {
 		t.Fatalf("prompt order/framing: %q", got)
+	}
+}
+
+func TestHeartbeatOutputRawAndObservationPaths(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "Rawactor", 1001, true)
+	registerTestSession(t, m, s, s.playerName)
+	m.BeginHeartbeatOutput()
+	s.ClearPromptShown()
+	s.MarkAliasedInput()
+	s.sendRawEvent("\x1b[31m")
+	if err := cmdLook(s, nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(s.send) != 0 {
+		t.Fatal("raw/input/observation path bypassed staging")
+	}
+	m.EndHeartbeatOutput()
+	if got := <-s.send; !bytes.Equal(got, inputMarkFrame) {
+		t.Fatalf("input marker=%q", got)
+	}
+	if got := <-s.send; !bytes.Equal(got, inputMarkAliasedFrame) {
+		t.Fatalf("alias marker=%q", got)
+	}
+	if f, ok := RenderTerminalFrame(<-s.send); !ok || f.Text != "\x1b[31m" {
+		t.Fatalf("raw control=%+v", f)
+	}
+	state := false
+	for len(s.send) > 0 {
+		var msg ServerMessage
+		if err := json.Unmarshal(<-s.send, &msg); err != nil {
+			t.Fatal(err)
+		}
+		state = state || msg.Type == MsgState
+	}
+	if !state {
+		t.Fatal("structured observation lost")
 	}
 }
