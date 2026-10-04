@@ -38,6 +38,14 @@ const (
 	// author-level rejection active below this value and lets the boundary
 	// level remove a holier message (src/structs.h:610; src/boards.c:403-405).
 	boardRemoveAuthorityBypassLevel = 39
+
+	// The immortal ladder, from src/structs.h:610-623. pkg/game imports
+	// pkg/boards, so the constants cannot be imported back. C's board_info
+	// table (src/boards.c:93-98) gates the immortal boards on these exact
+	// values; a foreign scale (50/60/61) matches no character.
+	boardImmortalLevel = 31 // LVL_IMMORT (src/structs.h:620)
+	boardGrGodLevel    = 38 // LVL_GRGOD   (src/structs.h:613)
+	boardImplLevel     = 40 // LVL_IMPL    (src/structs.h:610)
 )
 
 // BoardMsgInfo describes one message on a board.
@@ -94,13 +102,16 @@ func (bs *BoardSystem) BoardInfo(boardType int) BoardInfo {
 	return bs.boards[boardType]
 }
 
+// defaultBoardInfo mirrors C's board_info[] (src/boards.c:93-98). The immortal
+// boards read/write at LVL_IMMORT and remove at LVL_GRGOD/LVL_IMPL; the mortal
+// and clan boards stay open. Read/Write/Remove are 0 or the real ladder.
 var defaultBoardInfo = []BoardInfo{
-	{VNum: 8099, ReadLvl: 0, WriteLvl: 0, RemoveLvl: 50, Filename: "etc/board.mort"},
-	{VNum: 8064, ReadLvl: 0, WriteLvl: 0, RemoveLvl: 50, Filename: "etc/board.customs"},
-	{VNum: 8065, ReadLvl: 0, WriteLvl: 0, RemoveLvl: 50, Filename: "etc/board/chosen"},
-	{VNum: 8098, ReadLvl: 50, WriteLvl: 50, RemoveLvl: 61, Filename: "etc/board.immort"},
-	{VNum: 8096, ReadLvl: 50, WriteLvl: 50, RemoveLvl: 61, Filename: "etc/board.social"},
-	{VNum: 8097, ReadLvl: 50, WriteLvl: 50, RemoveLvl: 60, Filename: "etc/board.freeze"},
+	{VNum: 8099, ReadLvl: 0, WriteLvl: 0, RemoveLvl: boardImmortalLevel, Filename: "etc/board.mort"},
+	{VNum: 8064, ReadLvl: 0, WriteLvl: 0, RemoveLvl: boardImmortalLevel, Filename: "etc/board.customs"},
+	{VNum: 8065, ReadLvl: 0, WriteLvl: 0, RemoveLvl: boardImmortalLevel, Filename: "etc/board/chosen"},
+	{VNum: 8098, ReadLvl: boardImmortalLevel, WriteLvl: boardImmortalLevel, RemoveLvl: boardGrGodLevel, Filename: "etc/board.immort"},
+	{VNum: 8096, ReadLvl: boardImmortalLevel, WriteLvl: boardImmortalLevel, RemoveLvl: boardGrGodLevel, Filename: "etc/board.social"},
+	{VNum: 8097, ReadLvl: boardImmortalLevel, WriteLvl: boardImmortalLevel, RemoveLvl: boardImplLevel, Filename: "etc/board.freeze"},
 	{VNum: 19652, ReadLvl: 0, WriteLvl: 0, RemoveLvl: 0, Filename: "etc/board.trinity"},
 	{VNum: 19601, ReadLvl: 0, WriteLvl: 0, RemoveLvl: 0, Filename: "etc/board.neosunz"},
 	{VNum: 19627, ReadLvl: 0, WriteLvl: 0, RemoveLvl: 0, Filename: "etc/board.arithrix"},
