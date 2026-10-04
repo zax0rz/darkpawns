@@ -184,6 +184,9 @@ var inputMarkAliasedFrame = []byte(`{"type":"input_mark","data":{"aliased":true}
 // ClearPromptShown is C's d->has_prompt = 0 when a line is taken from the
 // descriptor's input queue (comm.c:613), placed in the output stream.
 func (s *Session) ClearPromptShown() {
+	if s.stageHeartbeat(inputMarkFrame, "", false) {
+		return
+	}
 	s.sendMu.RLock()
 	defer s.sendMu.RUnlock()
 	if s.sendClosed || s.send == nil {
@@ -198,6 +201,9 @@ func (s *Session) ClearPromptShown() {
 // MarkAliasedInput is ClearPromptShown for a line taken from an alias
 // expansion: C leaves has_prompt set for it (comm.c:621-623).
 func (s *Session) MarkAliasedInput() {
+	if s.stageHeartbeat(inputMarkAliasedFrame, "", false) {
+		return
+	}
 	s.sendMu.RLock()
 	defer s.sendMu.RUnlock()
 	if s.sendClosed || s.send == nil {

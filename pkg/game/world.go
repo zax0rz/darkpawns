@@ -142,6 +142,9 @@ type World struct {
 	// Set by the session manager on initialization. If nil, messages are silently dropped.
 	MessageSink MessageSinkFunc
 
+	// IdleCloseDescriptor runs with world/player locks released at C close_socket.
+	IdleCloseDescriptor func(*Player)
+
 	// MobileMessageSink delivers to the descriptor of this concrete NPC body.
 	// Ordinary descriptorless mobiles receive no actor output.
 	MobileMessageSink func(*MobInstance, []byte)

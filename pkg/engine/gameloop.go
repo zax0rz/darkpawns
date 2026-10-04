@@ -50,6 +50,10 @@ type UptimeSnapshot struct {
 // GameLoopCallbacks groups all optional heartbeat dispatch functions.
 // Each is called on its corresponding pulse cycle from the main ticker.
 type GameLoopCallbacks struct {
+	// Output transaction: one live heartbeat after input, or one whole pump.
+	OnBeginOutputTurn func()
+	OnEndOutputTurn   func()
+
 	// OnDrainInput — called every heartbeat tick (100ms), at the TOP of
 	// heartbeat before any other dispatch. Port of comm.c:603: the game_loop
 	// drains pending player input (one command per session) BEFORE
@@ -201,6 +205,8 @@ func (gl *GameLoop) PumpPulses(n int) error {
 
 	gl.pumpMu.Lock()
 	defer gl.pumpMu.Unlock()
+	gl.safeInvoke("BeginOutputTurn", gl.Pulse.Load(), gl.callbacks.OnBeginOutputTurn)
+	defer gl.safeInvoke("EndOutputTurn", gl.Pulse.Load(), gl.callbacks.OnEndOutputTurn)
 	for range n {
 		pulse := gl.Pulse.Add(1)
 		gl.heartbeat(pulse)
@@ -262,7 +268,7 @@ func (gl *GameLoop) run(ctx context.Context) {
 			return
 		case <-ticker.C:
 			pulse := gl.Pulse.Add(1)
-			gl.heartbeat(pulse)
+			gl.heartbeatTurn(pulse, true)
 			gl.safeInvoke("OnFlushOutput", pulse, gl.callbacks.OnFlushOutput)
 		}
 	}
@@ -301,11 +307,19 @@ func (gl *GameLoop) safeInvoke(name string, pulse int64, fn func()) {
 // Every callback is dispatched through safeInvoke so a panic in one cannot kill
 // the loop goroutine (DP-1019).
 func (gl *GameLoop) heartbeat(pulse int64) {
+	gl.heartbeatTurn(pulse, false)
+}
+
+func (gl *GameLoop) heartbeatTurn(pulse int64, live bool) {
 	cb := gl.callbacks
 
 	// Per-pulse command drain — FIRST, before perform_violence (comm.c:603
 	// drains input before the violence pass within a heartbeat). DP-1201.
 	gl.safeInvoke("DrainInput", pulse, cb.OnDrainInput)
+	if live {
+		gl.safeInvoke("BeginOutputTurn", pulse, cb.OnBeginOutputTurn)
+		defer gl.safeInvoke("EndOutputTurn", pulse, cb.OnEndOutputTurn)
+	}
 
 	// Every tick (100ms)
 	gl.safeInvoke("EventProcess", pulse, cb.OnEventProcess)

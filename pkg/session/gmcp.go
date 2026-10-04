@@ -340,6 +340,9 @@ func (s *Session) sendGMCPRaw(pkg, payload string) {
 		slog.Error("GMCP envelope marshal failed", "package", pkg, "error", err)
 		return
 	}
+	if s.stageHeartbeat(msg, "", false) {
+		return
+	}
 	s.sendMu.RLock()
 	defer s.sendMu.RUnlock()
 	if s.sendClosed {

@@ -105,6 +105,14 @@ func (s *Session) PlayerName() string {
 // CloseSend closes the session's outgoing message channel.
 func (s *Session) CloseSend() {
 	s.releaseEntryName()
+	if s.queueHeartbeatClose() {
+		return
+	}
+	s.closeSendNow()
+}
+
+func (s *Session) closeSendNow() {
+	s.releaseEntryName()
 	if s.send == nil {
 		return
 	}
@@ -140,6 +148,9 @@ func (s *Session) HandleMessage(data []byte) error {
 
 // Close closes the session
 func (s *Session) Close() {
+	if s.orderlyTransportDrain() {
+		return
+	}
 	// Close the connection only; channel close is handled by Unregister()
 	if s.conn != nil {
 		_ = s.conn.Close()

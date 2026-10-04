@@ -140,7 +140,6 @@ func (s *Session) sendCurrentRoomState() {
 }
 
 func (s *Session) SendMessage(message string) error {
-	s.forwardSnoopOutput(message)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
@@ -151,6 +150,10 @@ func (s *Session) SendMessage(message string) error {
 	if err != nil {
 		return fmt.Errorf("marshal error: %w", err)
 	}
+	if s.stageHeartbeat(msg, message, true) {
+		return nil
+	}
+	s.forwardSnoopOutput(message)
 	s.notePlayerOutput()
 	// RLock lets concurrent sends proceed but blocks the exclusive close, so we
 	// never send on a closed channel (which panics even inside a select). If the
@@ -175,6 +178,9 @@ func (s *Session) SendMessage(message string) error {
 // goroutine. Drops when full (SendMessage's backpressure policy) and no-ops
 // when closed.
 func (s *Session) sendGuarded(message []byte) {
+	if s.stageHeartbeat(message, "", false) {
+		return
+	}
 	s.sendMu.RLock()
 	defer s.sendMu.RUnlock()
 	if s.sendClosed {
@@ -244,6 +250,9 @@ func (s *Session) sendRawEvent(message string) {
 		slog.Error("json.Marshal error", "error", err)
 		return
 	}
+	if s.stageHeartbeat(msg, "", false) {
+		return
+	}
 	s.sendMu.RLock()
 	defer s.sendMu.RUnlock()
 	if s.sendClosed {
@@ -274,6 +283,13 @@ func (s *Session) notePlayerOutput() {
 // bare game-loop prompt pass writes the prompt alone.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
+	if s.deferHeartbeatPrompt() {
+		return
+	}
+	s.sendPromptNow()
+}
+
+func (s *Session) sendPromptNow() {
 	if s.IsPaging() {
 		flags := s.player.GetFlags()
 		color := flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0
@@ -350,6 +366,9 @@ func (s *Session) queuePromptText(text string, raw bool) {
 	})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	if s.stageHeartbeat(msg, "", false) {
 		return
 	}
 	s.sendMu.RLock()
