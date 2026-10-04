@@ -549,7 +549,7 @@ func main() {
 	gameWorld.StartEventQueue()
 
 	// Start game loop (heartbeat, mobile activity, combat ticks).
-	// PointUpdate is driven by World's standalone 63s ticker, not this loop.
+	// PointUpdate shares the hourly heartbeat in live and DP_CLOCK modes.
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
 		OnDrainInput: func() {
 			// DP-1201: per-pulse command drain (comm.c:603). Drains one queued
@@ -592,17 +592,9 @@ func main() {
 		OnAffectUpdate: func() {
 			gameWorld.AffectUpdate()
 		},
-		// point_update's production driver is World's standalone 63s ticker
-		// (DP-947); under the frozen DP_CLOCK oracle that ticker never starts,
-		// so the pumped heartbeat must carry point_update (comm.c:825-828) or
-		// pumped silence can never advance the tick-driven idle lifecycle
-		// (check_idling, limits.c:521-526). The Frozen gate keeps production's
-		// single-driver invariant intact.
-		OnPointUpdate: func() {
-			if dpclock.Frozen() {
-				gameWorld.PointUpdate()
-			}
-		},
+		// src/comm.c:825-830: one hourly point_update, after weather and
+		// affects, in both live and deterministic-clock execution.
+		OnPointUpdate: gameWorld.PointUpdate,
 		OnCheckIdlePasswords: func() {
 			manager.CheckIdlePasswords()
 		},

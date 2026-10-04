@@ -142,8 +142,7 @@ func TestGameLoopRepeatedStopDoesNotPanic(t *testing.T) {
 // the lifecycle-idle oracle scenario depends on: a pumped mud hour
 // (SECS_PER_MUD_HOUR * PASSES_PER_SEC pulses, comm.c:825-828) dispatches
 // OnPointUpdate exactly once, in C's heartbeat order after weather and
-// affects. Production's live driver is World's 63s ticker (DP-947); the
-// frozen-clock pump is the only point_update the oracle can see.
+// affects. The same heartbeat callback also drives live play.
 func TestGameLoopPumpPulsesFiresPointUpdateOncePerMudHour(t *testing.T) {
 	t.Setenv("DP_CLOCK", "1")
 	var calls []string

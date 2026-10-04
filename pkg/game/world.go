@@ -309,9 +309,8 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	// separate AI ticker in C (DP-1035).
 	w.StartEventQueue()
 
-	// Start point update ticker (regen + hunger/thirst) — limits.c point_update()
-	// Called every 63 seconds (src/utils.h:135 SECS_PER_MUD_HOUR = 63)
-	w.StartPointUpdateTicker(63 * time.Second)
+	// PointUpdate is driven only by the server heartbeat, in C order after
+	// weather and affects (src/comm.c:825-830), in live and DP_CLOCK modes.
 
 	// Initialize snapshot manager and publish initial snapshot
 	w.snapshots = NewSnapshotManager()

@@ -1,12 +1,9 @@
 package game
 
 import (
-	"context"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -136,18 +133,6 @@ func TestWanderMobMovesWithinConstraints(t *testing.T) {
 			t.Fatalf("mob wandered to invalid room %d", got)
 		}
 	}
-}
-
-// TestPointUpdateSingleDriver verifies the engine.GameLoop accepts a nil
-// OnPointUpdate callback. Production now relies solely on World's 30s ticker
-// for PointUpdate; this guards against accidentally re-adding a second driver.
-func TestPointUpdateSingleDriver(t *testing.T) {
-	// A GameLoop with no OnPointUpdate callback must start and run without panic.
-	loop := engine.NewGameLoop(engine.GameLoopCallbacks{})
-	loop.Start(context.Background())
-	// Let a few pulses fire.
-	time.Sleep(250 * time.Millisecond)
-	loop.Stop()
 }
 
 // TestRunMobAISentinelNeverWanders confirms SENTINEL mobs are skipped before

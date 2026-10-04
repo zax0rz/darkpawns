@@ -240,22 +240,8 @@ func TestInstakillLevelConstants(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// DP-1035: PointUpdate ticker interval is 63s (SECS_PER_MUD_HOUR), not 30s.
-// StartPointUpdateTicker takes an interval arg; the call site (NewWorld)
-// passes 63s. We verify the constant indirectly by checking that PointUpdate
-// does not regress when called directly (it's the same function the ticker
-// invokes). The interval itself is a time.Duration literal at the call site
-// and is asserted by code review (world.go:194).
-// ---------------------------------------------------------------------------
-
-func TestPointUpdateTickIntervalConstant(t *testing.T) {
-	// SECS_PER_MUD_HOUR in C (src/utils.h:135) = 63. The Go call site passes
-	// 63 * time.Second. This test documents the expected value; if someone
-	// changes it, this constant makes the intent grep-able.
-	const expectedMudHourSeconds = 63
-	if expectedMudHourSeconds != 63 {
-		t.Errorf("expected mud hour = 63 seconds")
-	}
+// Direct PointUpdate calls remain usable without starting an automatic driver.
+func TestPointUpdateEmptyWorld(t *testing.T) {
 	// PointUpdate must be callable without panicking on an empty world.
 	parsed := &parser.World{
 		Rooms: []parser.Room{{VNum: 2001, Name: "Empty", Zone: 1}},
