@@ -202,7 +202,7 @@ func TestInflictDamage_WoundedBandNotDead(t *testing.T) {
 // ApplyDamageModifiers zeroes dam, so no damage and no death.
 func TestInflictDamage_ImmortalVictimAbsorbs(t *testing.T) {
 	caster := &spellCombatant{name: "Caster", level: 30, hp: 200, maxHP: 200, pos: combat.PosStanding}
-	victim := &spellCombatant{name: "Immortal", npc: false, level: 100, hp: 50, maxHP: 50, pos: combat.PosStanding}
+	victim := &spellCombatant{name: "Immortal", npc: false, level: lvlImmort, hp: 50, maxHP: 50, pos: combat.PosStanding}
 	world := &spellDeathWorld{}
 
 	inflictDamage(caster, victim, 40, testSpellNum, world)

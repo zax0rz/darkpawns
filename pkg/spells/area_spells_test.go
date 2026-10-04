@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -94,7 +95,7 @@ func TestCastHellfire_DealsAreaDamage_InstakillsLowLevel_SkipsCasterAndGroup(t *
 func TestCastMeteorSwarm_DealsAreaDamage_SkipsImmortalsAndGroup(t *testing.T) {
 	caster := &mockSpellsChar{name: "Caster", level: 30, roomVNum: 100, inGroup: true}
 	victim := &mockSpellsChar{name: "Victim", level: 30, maxHP: 500, hp: 500}
-	immortal := &mockSpellsChar{name: "God", level: 100, maxHP: 5000, hp: 5000}
+	immortal := &mockSpellsChar{name: "God", level: lvlImmort, maxHP: 5000, hp: 5000}
 	ally := &mockSpellsChar{name: "Ally", level: 30, maxHP: 500, hp: 500, inGroup: true, following: "Caster"}
 
 	world := &mockAreaWorld{
@@ -111,7 +112,7 @@ func TestCastMeteorSwarm_DealsAreaDamage_SkipsImmortalsAndGroup(t *testing.T) {
 		t.Errorf("expected victim to take meteor swarm damage, got %d HP left", victim.hp)
 	}
 	if immortal.hp != 5000 {
-		t.Errorf("DP-938: expected non-NPC immortal (level>=100) to be skipped by meteor swarm, got %d HP left", immortal.hp)
+		t.Errorf("DP-938: expected non-NPC immortal (level>=%d) to be skipped by meteor swarm, got %d HP left", lvlImmort, immortal.hp)
 	}
 	if ally.hp != 500 {
 		t.Errorf("expected grouped ally to be skipped by meteor swarm, got %d HP left", ally.hp)
@@ -221,5 +222,54 @@ func TestMagAreas_BreathUsesCImmortalGateAndZeroDamageTail(t *testing.T) {
 	}
 	if mortal.GetHP() != 100 {
 		t.Fatalf("breath must deal zero damage, HP = %d", mortal.GetHP())
+	}
+}
+
+// C spell_hellfire only reaches a target when
+// (GET_LEVEL(tmp_victim) < LEVEL_IMMORT) || IS_NPC(tmp_victim) (src/spells.c:727).
+// A level-31 non-NPC must be skipped; the foreign 100 let hellfire burn gods.
+func TestCastHellfire_SkipsImmortalNonNPC(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 40, roomVNum: 100}
+	god := &mockSpellsChar{name: "God", level: lvlImmort, maxHP: 5000, hp: 5000}
+	world := &mockAreaWorld{room: &parser.Room{}, chars: []interface{}{caster, god}}
+
+	castHellfire(40, caster, world)
+
+	if god.hp != 5000 {
+		t.Fatalf("hellfire damaged an immortal non-NPC: hp = %d, want 5000", god.hp)
+	}
+}
+
+// C mag_masses skips !IS_NPC(tch) && GET_LEVEL(tch) >= LVL_IMMORT
+// (src/magic.c:1537). SpellArmor has no saving throw, so application is
+// deterministic: the immortal must gain no affect while the mortal does.
+func TestMagMasses_SkipsImmortalNonNPC(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 40, roomVNum: 100}
+	god := &mockSpellsChar{name: "God", level: lvlImmort, maxHP: 100, hp: 100}
+	mortal := &mockSpellsChar{name: "Mortal", level: lvlImmort - 1, maxHP: 100, hp: 100}
+	world := &mockAreaWorld{chars: []interface{}{caster, god, mortal}}
+
+	MagMasses(40, caster, SpellArmor, int(SaveSpell), world)
+
+	if len(god.activeAffects) != 0 {
+		t.Fatalf("mag_masses affected an immortal non-NPC: %d affects", len(god.activeAffects))
+	}
+	if len(mortal.activeAffects) == 0 {
+		t.Fatal("mag_masses did not reach the mortal target")
+	}
+}
+
+// C spell_mindsight recoils when the caster is not above an immortal victim:
+// (!IS_NPC(victim) && GET_LEVEL(victim) >= LEVEL_IMMORT && GET_LEVEL(ch) <=
+// GET_LEVEL(victim)) (src/spells.c:922-923). The foreign 100 kept the recoil
+// gate dead, so the spell proceeded to the transfer.
+func TestCastMindsight_ImmortalVictimRecoils(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: lvlImmort, roomVNum: 100}
+	god := &mockSpellsChar{name: "God", level: lvlImmort, roomVNum: 200}
+
+	castMindsight(lvlImmort, caster, god, &mockAreaWorld{})
+
+	if got := strings.Join(caster.messages, ""); !strings.Contains(got, "searing pain") {
+		t.Fatalf("immortal victim did not recoil mindsight: %q", got)
 	}
 }
