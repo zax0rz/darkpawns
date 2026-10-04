@@ -78,7 +78,6 @@ func (s *Session) deferHeartbeatPrompt() bool {
 // SendPrompt (which reads player/editor/GMCP state).
 func (m *Manager) EndHeartbeatOutput() {
 	b := &m.outputBatch
-	promptsDone := false
 	for {
 		b.mu.Lock()
 		if len(b.frames) > 0 {
@@ -96,7 +95,7 @@ func (m *Manager) EndHeartbeatOutput() {
 			}
 			continue
 		}
-		if !promptsDone {
+		{
 			requested := b.prompts
 			b.prompts = make(map[*Session]bool)
 			b.mu.Unlock()
@@ -116,7 +115,13 @@ func (m *Manager) EndHeartbeatOutput() {
 					s.sendPromptNow()
 				}
 			}
-			promptsDone = true
+			if len(requested) > 0 {
+				continue
+			}
+		}
+		b.mu.Lock()
+		if len(b.frames) > 0 || len(b.prompts) > 0 {
+			b.mu.Unlock()
 			continue
 		}
 		b.active = false

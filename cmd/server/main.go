@@ -551,6 +551,8 @@ func main() {
 	// Start game loop (heartbeat, mobile activity, combat ticks).
 	// PointUpdate shares the hourly heartbeat in live and DP_CLOCK modes.
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
+		OnBeginOutputTurn: manager.BeginHeartbeatOutput,
+		OnEndOutputTurn:   manager.EndHeartbeatOutput,
 		OnDrainInput: func() {
 			// DP-1201: per-pulse command drain (comm.c:603). Drains one queued
 			// command per session when its wait reaches 0. Runs every tick, at
