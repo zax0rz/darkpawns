@@ -64,7 +64,8 @@ func (m *Manager) CheckIdlePasswords() {
 			Type: MsgError,
 			Data: ErrorData{Message: "\r\nTimed out... goodbye.\r\n"},
 		})
-		if err == nil && !s.stageHeartbeat(timeoutMsg, "", false) {
+		staged := err == nil && s.stageHeartbeat(timeoutMsg, "", false)
+		if err == nil && !staged {
 			select {
 			case s.send <- timeoutMsg:
 			default:
@@ -72,7 +73,7 @@ func (m *Manager) CheckIdlePasswords() {
 		}
 
 		// Close the connection
-		if s.conn != nil {
+		if s.conn != nil && !staged {
 			_ = s.conn.Close()
 		}
 

@@ -3,7 +3,9 @@ package session
 import (
 	"bytes"
 	"encoding/json"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -272,5 +274,114 @@ func TestHeartbeatOutputIdleSwitchAttachment(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestHeartbeatOutputSnoopAndOrderlyBarrier(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	target := makeTestSession(t, m, "Target", 1001, true)
+	spy := makeTestSession(t, m, "Spy", 1001, true)
+	m.snoopMu.Lock()
+	target.snoopBy = spy
+	spy.snooping = target
+	m.snoopMu.Unlock()
+	m.BeginHeartbeatOutput()
+	target.Send("first\r\n")
+	target.Send("second\r\n")
+	target.CloseSend()
+	target.Send("late\r\n")
+	if len(target.send) != 0 || len(spy.send) != 0 || target.SendClosed() {
+		t.Fatal("orderly barrier bypassed staged flush")
+	}
+	m.EndHeartbeatOutput()
+	if got := renderedOutput(target); got != "first\r\nsecond\r\n" {
+		t.Fatalf("goodbye queue=%q", got)
+	}
+	if !target.SendClosed() {
+		t.Fatal("FIFO close barrier not committed")
+	}
+	if got := renderedOutput(spy); got != "% first\r\nsecond\r\n%%\r\n" {
+		t.Fatalf("snoop flush delimiters/order=%q", got)
+	}
+}
+
+func TestHeartbeatOutputIdleSnoopDiscard(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	target := makeTestSession(t, m, "Target", 1, true)
+	spy := makeTestSession(t, m, "Spy", 1001, true)
+	registerTestSession(t, m, target, target.playerName)
+	registerTestSession(t, m, spy, spy.playerName)
+	target.player.SetLevel(1)
+	target.player.SetIdleTimer(30)
+	target.player.WasInRoom = 1001
+	m.snoopMu.Lock()
+	target.snoopBy = spy
+	spy.snooping = target
+	m.snoopMu.Unlock()
+	m.BeginHeartbeatOutput()
+	target.Send("discarded weather\r\n")
+	m.world.CheckIdling(target.player)
+	m.EndHeartbeatOutput()
+	if got := renderedOutput(target); got != "" {
+		t.Fatalf("closed target=%q", got)
+	}
+	got := renderedOutput(spy)
+	if strings.Contains(got, "discarded weather") || strings.Count(got, "Your victim is no longer among us.") != 1 {
+		t.Fatalf("snoop close=%q", got)
+	}
+	if target.snoopBy != nil || spy.snooping != nil {
+		t.Fatal("idle close left snoop links")
+	}
+}
+
+func TestHeartbeatOutputConcurrentEnqueueCommitClose(t *testing.T) {
+	for _, immediate := range []bool{false, true} {
+		m := &Manager{}
+		s := m.NewSession()
+		m.BeginHeartbeatOutput()
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		got := make(chan [][]byte, 1)
+		go func() {
+			var frames [][]byte
+			for msg := range s.send {
+				frames = append(frames, msg)
+			}
+			got <- frames
+		}()
+		wg.Add(3)
+		go func() {
+			defer wg.Done()
+			<-start
+			for i := 0; i < 100; i++ {
+				s.sendGuarded([]byte(strconv.Itoa(i)))
+			}
+		}()
+		go func() { defer wg.Done(); <-start; m.EndHeartbeatOutput() }()
+		go func() {
+			defer wg.Done()
+			<-start
+			if immediate {
+				s.discardHeartbeatOutput()
+			} else {
+				s.CloseSend()
+			}
+		}()
+		close(start)
+		wg.Wait()
+		previous := -1
+		for _, frame := range <-got {
+			n, err := strconv.Atoi(string(frame))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if n <= previous {
+				t.Fatalf("FIFO overtaken: %d after %d", n, previous)
+			}
+			previous = n
+		}
+		if !s.SendClosed() {
+			t.Fatal("concurrent close lost")
+		}
 	}
 }

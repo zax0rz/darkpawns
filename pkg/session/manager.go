@@ -1243,15 +1243,17 @@ func (m *Manager) register(playerName string, s *Session) error {
 		// causes writePump to exit. Closing the conn causes readPump to exit,
 		// which calls Unregister — but we've already replaced the session map
 		// entry, so the stale Unregister is harmless.
-		oldSess.sendMu.RLock()
-		if !oldSess.sendClosed {
-			select {
-			case oldSess.send <- []byte("\r\nYour connection has been taken over by a new login.\r\n"):
-			default:
-				// send buffer full; skip notification rather than block
+		if !oldSess.stageHeartbeat([]byte("\r\nYour connection has been taken over by a new login.\r\n"), "", false) {
+			oldSess.sendMu.RLock()
+			if !oldSess.sendClosed {
+				select {
+				case oldSess.send <- []byte("\r\nYour connection has been taken over by a new login.\r\n"):
+				default:
+					// send buffer full; skip notification rather than block
+				}
 			}
+			oldSess.sendMu.RUnlock()
 		}
-		oldSess.sendMu.RUnlock()
 		oldSess.CloseSend()
 
 		needsWorldRemove = oldSess.player != nil

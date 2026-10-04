@@ -24,6 +24,7 @@ func (m *Manager) closeIdleDescriptor(p *game.Player) {
 	if s.transportDone != nil {
 		s.DetachTransport()
 	}
+	m.closeIdleSnoop(s)
 	s.cancelTextEdit()
 	s.cancelRoomEdit()
 	s.cancelMedit()
@@ -36,5 +37,24 @@ func (m *Manager) closeIdleDescriptor(p *game.Player) {
 	s.leaveBroadcastHandled = true
 	if s.activePCSwitch() {
 		m.detachPCSwitch(s, false)
+	}
+}
+
+// C close_socket releases snoop links before saving/announcing the character.
+// Never hold snoopMu while enqueueing the notification.
+func (m *Manager) closeIdleSnoop(s *Session) {
+	m.snoopMu.Lock()
+	snooper := s.snoopBy
+	if snooper != nil {
+		snooper.snooping = nil
+	}
+	if s.snooping != nil {
+		s.snooping.snoopBy = nil
+	}
+	s.snoopBy = nil
+	s.snooping = nil
+	m.snoopMu.Unlock()
+	if snooper != nil {
+		snooper.Send("Your victim is no longer among us.\r\n")
 	}
 }

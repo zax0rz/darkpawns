@@ -100,10 +100,16 @@ func (m *Manager) UnregisterAndClose(playerName string) {
 // keep the method for compatibility with the flush_queues() semantics.
 // Ported from comm.c:flush_queues().
 func (s *Session) FlushQueues() {
+	if s.manager != nil && s.manager.heartbeatOutputActive() {
+		s.discardHeartbeatOutput()
+	}
 	// Drain the send channel (pending output)
 	for {
 		select {
-		case <-s.send:
+		case _, open := <-s.send:
+			if !open {
+				return
+			}
 		default:
 			return
 		}

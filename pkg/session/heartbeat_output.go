@@ -1,6 +1,10 @@
 package session
 
-import "sync"
+import (
+	"encoding/json"
+	"strings"
+	"sync"
+)
 
 // heartbeatOutput owns immutable frames only. Never hold mu while calling
 // world/session callbacks, acquiring sendMu, or doing transport/persistence work.
@@ -52,6 +56,21 @@ func (s *Session) stageHeartbeat(message []byte, text string, note bool) bool {
 	if b.closing[s] || s.outputDiscarded.Load() || len(s.send)+b.pending[s] >= cap(s.send) {
 		return true
 	}
+	// Preserve transport envelopes; recognize player text only for commit
+	// bookkeeping/snoop. Raw controls never request an extra prompt.
+	if text == "" {
+		if f, ok := RenderTerminalFrame(message); ok && f.Kind == FrameText {
+			text = f.Text
+			var sm struct {
+				Data struct {
+					Type string `json:"type"`
+				} `json:"data"`
+			}
+			if json.Unmarshal(message, &sm) == nil && sm.Data.Type != "raw" {
+				note = true
+			}
+		}
+	}
 	b.frames = append(b.frames, heartbeatFrame{session: s, message: append([]byte(nil), message...), text: text, note: note})
 	b.pending[s]++
 	return true
@@ -78,6 +97,15 @@ func (s *Session) deferHeartbeatPrompt() bool {
 // SendPrompt (which reads player/editor/GMCP state).
 func (m *Manager) EndHeartbeatOutput() {
 	b := &m.outputBatch
+	snooped := make(map[*Session]*strings.Builder)
+	flushSnoop := func(s *Session) {
+		if text := snooped[s]; text != nil {
+			delete(snooped, s)
+			if !s.outputDiscarded.Load() {
+				s.forwardSnoopOutput(text.String())
+			}
+		}
+	}
 	for {
 		b.mu.Lock()
 		if len(b.frames) > 0 {
@@ -89,9 +117,24 @@ func (m *Manager) EndHeartbeatOutput() {
 			}
 			b.mu.Unlock()
 			if frame.close {
+				flushSnoop(frame.session)
 				frame.session.closeSendNow()
 			} else {
-				frame.deliver()
+				if frame.deliver() && frame.text != "" {
+					text := snooped[frame.session]
+					if text == nil {
+						text = &strings.Builder{}
+						snooped[frame.session] = text
+					}
+					text.WriteString(frame.text)
+				}
+			}
+			continue
+		}
+		if len(snooped) > 0 {
+			b.mu.Unlock()
+			for s := range snooped {
+				flushSnoop(s)
 			}
 			continue
 		}
@@ -133,7 +176,7 @@ func (m *Manager) EndHeartbeatOutput() {
 	}
 }
 
-func (f heartbeatFrame) deliver() {
+func (f heartbeatFrame) deliver() bool {
 	s := f.session
 	delivered := false
 	s.sendMu.RLock()
@@ -141,18 +184,14 @@ func (f heartbeatFrame) deliver() {
 		select {
 		case s.send <- f.message:
 			delivered = true
+			if f.note {
+				s.notePlayerOutput()
+			}
 		default:
 		}
 	}
 	s.sendMu.RUnlock()
-	if delivered {
-		if f.note {
-			s.notePlayerOutput()
-		}
-		if f.text != "" {
-			s.forwardSnoopOutput(f.text)
-		}
-	}
+	return delivered
 }
 
 // queueHeartbeatClose is a FIFO barrier, distinct from immediate discard.
@@ -181,4 +220,23 @@ func (s *Session) discardHeartbeatOutput() {
 	s.sendMu.Unlock()
 	s.outputSincePrompt.Store(0)
 	s.closeSendNow()
+}
+
+// orderlyTransportDrain leaves transport shutdown to its writer after the
+// accepted FIFO barrier closes send. Both live transports already own that
+// drain/close path. Immediate idle discard never enters this branch.
+func (s *Session) orderlyTransportDrain() bool {
+	if s.manager == nil || s.outputDiscarded.Load() {
+		return false
+	}
+	b := &s.manager.outputBatch
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.active && b.closing[s]
+}
+
+func (m *Manager) heartbeatOutputActive() bool {
+	m.outputBatch.mu.Lock()
+	defer m.outputBatch.mu.Unlock()
+	return m.outputBatch.active
 }
