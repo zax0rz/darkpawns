@@ -1,0 +1,96 @@
+# C src/act.item.c:1050-1090; real transform and native kill corpse.
+# depth-case: eat.werewolf-corpse
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/wolf.lua 512
+replace-room-exits 8105 none
+[lua-script mob/oracle/wolf.lua]
+function oncmd()
+if (argument == "say remains") then
+obj_list("flesh", "room")
+say("remains " .. obj.vnum .. " " .. obj.type .. " " .. obj.val[1] .. " " .. obj.val[4] .. " " .. obj.timer)
+return TRUE
+end
+if (argument ~= "say moon") then return FALSE end
+plr_flags(ch, "set", 16)
+return TRUE
+end
+[setup:oracle]
+Wolfactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+~dpclock pulse 4410
+[setup:port]
+Wolfactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+~dpclock pulse 4410
+[setup:oracle:peer]
+Wolfpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:peer]
+Wolfpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[warmup]
+goto 8105
+teleport Wolfpeer 8105
+set Wolfpeer level 39
+say moon
+transform
+load obj 14425
+give vest trainee
+load obj 4104
+give glass trainee
+kill trainee
+set Wolfactor hunger 39
+set Wolfactor level 18
+[probe]
+eat corpse
+look
+eat flesh
+say remains
+send:peer look
