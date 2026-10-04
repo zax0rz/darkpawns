@@ -1631,19 +1631,32 @@ func takeToJailRoomCombatants(w *World, room int) []combat.Combatant {
 }
 
 // ================================================================
-// jail — registered room special; its commandless pulse body is not yet ported
+// jail — src/spec_procs2.c:1470-1493, reached from room_activity.
 // ================================================================
 func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// C's commandless timer body is reached by room_activity (comm.c:691-756),
-	// while the command path still returns FALSE at the `cmd || mini_mud` gate.
-	// The timer body is intentionally left unimplemented until it has a depth
-	// vehicle; inventing a command substitute would violate R1/R2/R5e.
-	_ = w
-	_ = ch
-	_ = me
-	_ = arg
-	_ = cmd
-	return false
+	// Go has no mini_mud runtime mode. Command calls still fall through.
+	if cmd != "" || ch == nil || ch.GetLevel() >= LVL_IMMORT || w.IsHunting(ch.GetName(), false) {
+		return false
+	}
+	ch.mu.RLock()
+	timer := ch.JailTimer
+	ch.mu.RUnlock()
+	if timer != 0 || ch.GetInvisLevel() >= LVL_IMMORT {
+		return false
+	}
+	if ch.GetPosition() <= PosSleeping {
+		ch.SetPosition(PosSitting)
+	}
+	Act(w, true, ch, ch, nil, nil, "The guard says, 'Time's up, scum!'", "", ToRoom)
+	Act(w, true, ch, ch, nil, nil, "The guard says, 'Time's up, scum!'", "", ToVict)
+	Act(w, true, ch, ch, nil, nil, "$N gets thrown out of the cell!", "", ToNotVict)
+	Act(w, true, ch, ch, nil, nil, "The guard throws you out of the cell!\r\n", "", ToVict)
+	if err := w.charTransfer(ch.GetName(), false, 8117, false); err != nil {
+		slog.Error("jail release destination unavailable", "player", ch.GetName(), "error", err)
+		return true
+	}
+	w.lookAtRoom(ch, false)
+	return true
 }
 
 // ================================================================

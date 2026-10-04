@@ -112,3 +112,12 @@ func CharacterDataDeleted(raw []byte) bool {
 	}
 	return migrateFlags(data.SaveVersion, data.Flags)&(1<<uint(PlrDeleted)) != 0
 }
+
+// CharacterDataSiteOK reads the saved C PLR_SITEOK bit before object restoration.
+func CharacterDataSiteOK(raw []byte) bool {
+	var data savePlayerData
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return false
+	}
+	return migrateFlags(data.SaveVersion, data.Flags)&(1<<uint(PlrSiteok)) != 0
+}

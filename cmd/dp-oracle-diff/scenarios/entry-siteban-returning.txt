@@ -1,0 +1,72 @@
+# C src/interpreter.c:1832-1847,1906-1914.
+# depth-case: entry.login-restrictions
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+compare-close
+[setup:oracle]
+Wizhero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Wizhero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:driver]
+Wizdriver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:driver]
+Wizdriver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[probe]
+set player Wizdriver level 39
+set player Wizhero level 1
+quit
+send:driver ban select 127
+<RELOGIN>
+oraclepass
+[relogin:oracle]
+Wizhero
+~dpclock pulse 1
+[relogin:port]
+Wizhero
+~dpclock pulse 1

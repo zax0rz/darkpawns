@@ -236,3 +236,8 @@ func (s *Session) SetRemoteIP(ip string) {
 func (s *Session) SetBanLevel(level int) {
 	s.banLevel = level
 }
+
+// SetBanHosts retains connection-time host identity without repeating DNS at entry.
+func (s *Session) SetBanHosts(hosts []string) {
+	s.banHosts = append([]string(nil), hosts...)
+}

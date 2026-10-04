@@ -260,6 +260,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 			// C bad_pws is ubyte; keep the approved security counter unbounded (src/structs.h:978).
 			failedPasswords = rec.FailedLoginAttempts & 0xff // src/interpreter.c:1890,1929-1937
+			if s.refuseReturningSiteBan(rec.Name, rec.CharacterData) || s.refuseReturningWizlock(rec.Name, rec.Level) {
+				return nil
+			}
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
 				return s.abortEntry(fmt.Errorf("restore character: %w", err))
@@ -287,13 +290,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return s.abortEntry(fmt.Errorf("character is no longer available"))
 			}
 			// Unknown name — start stateful creation flow.
-
-			// Block new char creation from BanNew/BanSelect sites (DP-418)
-			if s.banLevel == game.BanNew || s.banLevel == game.BanSelect {
-				s.sendError("New character creation is not allowed from your site.")
-				s.CloseSend()
-				return nil
-			}
 
 			s.startNewCharFlow(login.PlayerName)
 			return nil
