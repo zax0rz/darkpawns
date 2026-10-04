@@ -1467,6 +1467,14 @@ func (m *Manager) unregisterSession(s *Session, key string) {
 	if s == nil {
 		return
 	}
+	// C close_socket frees the descriptor and the entry name it holds in one
+	// step: REMOVE_FROM_LIST drops it from descriptor_list (comm.c:2148), so
+	// Valid_Name stops seeing it (ban.c:266-268). Release the claim before the
+	// session leaves m.sessions, or a reconnect can observe the descriptor gone
+	// while the name is still held for the whole of cleanupSession.
+	// entryNameMu is a leaf lock and is taken without m.mu, which
+	// reserveOfflineRename acquires in the opposite order.
+	s.releaseEntryName()
 	m.mu.Lock()
 	current, ok := m.sessions[key]
 	if ok && current == s {
@@ -1490,6 +1498,17 @@ func (m *Manager) Unregister(playerName string) {
 
 // unregister requires playerLifecycleMu (also called by duplicate menu close).
 func (m *Manager) unregister(playerName string) {
+	// Free any entry-name hold with the descriptor, exactly as close_socket does
+	// (comm.c:2148; ban.c:266-268). Peek under m.mu's read side so the leaf name
+	// lock is never held together with m.mu (reserveOfflineRename takes the name
+	// lock and then m.mu).
+	m.mu.RLock()
+	held := m.sessions[playerName]
+	m.mu.RUnlock()
+	if held != nil {
+		held.releaseEntryName()
+	}
+
 	m.mu.Lock()
 	s, ok := m.sessions[playerName]
 	if ok {
