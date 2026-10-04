@@ -1,0 +1,79 @@
+# depth-case: boards.immortal-read-god
+# depth-case: boards.immortal-read-mortal-refused
+# C board_info[] gives the immortal board (obj 8098, reset into room 1204)
+# READ_LVL = WRITE_LVL = LVL_IMMORT (src/boards.c:96; src/structs.h:620). The
+# port carried a foreign 50, so the level-40 Implementor was refused.
+# The first empty-player actor is the C Implementor (level 40) and must reach
+# the board; the second actor is a level-1 mortal and must be refused with C's
+# exact bytes (src/boards.c:288-290, 332-334).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8098 1 1204 12
+
+[setup:oracle]
+Boardgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Boardmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Boardmortal
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+teleport Boardmortal 1204
+
+[probe]
+read board
+read 1
+look board
+send:mortal read board

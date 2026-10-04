@@ -353,9 +353,9 @@ func TestSpecThief_Golden(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosStanding)
-	player.SetLevel(60)
+	player.SetLevel(LVL_IMMORT)
 	if got := specThief(w, nil, mob, "", ""); got {
-		t.Error("specThief should return false when all players are level 50+")
+		t.Error("specThief should return false when all players are LVL_IMMORT+")
 	}
 
 	player.SetLevel(10)

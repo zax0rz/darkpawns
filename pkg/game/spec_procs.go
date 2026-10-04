@@ -333,7 +333,8 @@ func specThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 }
 
 func npcSteal(w *World, me *MobInstance, victim *Player) {
-	if victim.IsNPC() || victim.GetLevel() >= 50 {
+	// C src/spec_procs.c:307: GET_LEVEL(victim) >= LVL_IMMORT refuses the steal.
+	if victim.IsNPC() || victim.GetLevel() >= LVL_IMMORT {
 		return
 	}
 	if victim.GetPosition() > combat.PosSleeping && number(0, me.GetLevel()) == 0 {

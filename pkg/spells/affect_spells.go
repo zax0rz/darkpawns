@@ -840,9 +840,10 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 		if c == ch {
 			continue
 		}
-		// Skip immortals
+		// Skip immortals. C mag_masses: !IS_NPC(tch) && GET_LEVEL(tch) >= LVL_IMMORT
+		// (src/magic.c:1537).
 		if nc, ok := c.(npcChecker); ok && !nc.IsNPC() {
-			if l, ok := c.(lever); ok && l.GetLevel() >= 100 {
+			if l, ok := c.(lever); ok && l.GetLevel() >= combat.LVL_IMMORT {
 				continue
 			}
 		}
@@ -2706,8 +2707,10 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 		if cn == nil {
 			continue
 		}
-		// Skip immortals (non-NPCs level >= 100)
-		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= 100 {
+		// Skip immortals (non-NPCs, leveled at LVL_IMMORT or above).
+		// C spell_meteor_swarm: !IS_NPC(tch) && GET_LEVEL(tch) >= LVL_IMMORT
+		// (src/spells.c:1120).
+		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= combat.LVL_IMMORT {
 			continue
 		}
 		// Skip grouped
@@ -2763,8 +2766,10 @@ func castHellfire(level int, ch, world interface{}) {
 		if !ok {
 			continue
 		}
-		// Skip immortals
-		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= 100 {
+		// Skip immortals. C spell_hellfire only reaches a target when
+		// (GET_LEVEL(tmp_victim) < LEVEL_IMMORT) || IS_NPC(tmp_victim)
+		// (src/spells.c:727).
+		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= combat.LVL_IMMORT {
 			continue
 		}
 		// Skip grouped
@@ -3294,8 +3299,10 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
+	// C spell_mindsight: ... || (!IS_NPC(victim) && GET_LEVEL(victim) >= LEVEL_IMMORT
+	// && GET_LEVEL(ch) <= GET_LEVEL(victim)) (src/spells.c:922-923).
 	if (victLevel > casterLevel+4 && dprng.Number(0, 4) == 0) ||
-		(!victIsNPC && victLevel >= 100 && casterLevel <= victLevel) {
+		(!victIsNPC && victLevel >= combat.LVL_IMMORT && casterLevel <= victLevel) {
 		sendToCaster(ch, "With a searing pain, your psionic energy recoils!\r\n")
 		return
 	}

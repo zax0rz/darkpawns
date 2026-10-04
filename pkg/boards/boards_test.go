@@ -132,7 +132,7 @@ func TestBoardSystem_ShowBoard_Empty(t *testing.T) {
 
 func TestBoardSystem_RemoveMsg_LevelCheck(t *testing.T) {
 	bs := InitBoards(t.TempDir())
-	poster := newMockBoardPlayer("Dave", 50, 4001)
+	poster := newMockBoardPlayer("Dave", 40, 4001)
 	remover := newMockBoardPlayer("Eve", 1, 4001)
 
 	magic := bs.WriteMessage(0, poster, "important news")
@@ -291,8 +291,9 @@ func TestBoardSystem_RemoveMsg_PreservesAdjacentMessages(t *testing.T) {
 
 func TestBoardSystem_RemoveMsg_ReadLvl(t *testing.T) {
 	bs := InitBoards(t.TempDir())
-	// Board 3 (immort) has ReadLvl=50, RemoveLvl=61.
-	poster := newMockBoardPlayer("Dave", 60, 4001)
+	// Board 3 (immort) reads/writes at LVL_IMMORT (31) and removes at
+	// LVL_GRGOD (38) (src/boards.c:96).
+	poster := newMockBoardPlayer("Dave", 38, 4001)
 	reader := newMockBoardPlayer("Eve", 1, 4001)
 
 	magic := bs.WriteMessage(3, poster, "secret news")
