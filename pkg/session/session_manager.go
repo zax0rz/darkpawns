@@ -48,6 +48,16 @@ func (m *Manager) Mu() interface{} {
 func (m *Manager) UnregisterAndClose(playerName string) {
 	m.playerLifecycleMu.Lock()
 	defer m.playerLifecycleMu.Unlock()
+	// Release any entry-name hold with the descriptor, as close_socket does
+	// (comm.c:2148; ban.c:266-268). Peek under m.mu's read side so the leaf name
+	// lock is never held together with m.mu (reserveOfflineRename takes the name
+	// lock and then m.mu).
+	m.mu.RLock()
+	held := m.sessions[playerName]
+	m.mu.RUnlock()
+	if held != nil {
+		held.releaseEntryName()
+	}
 	m.mu.Lock()
 	s, ok := m.sessions[playerName]
 	if ok {
