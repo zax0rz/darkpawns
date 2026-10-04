@@ -260,6 +260,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			}
 			// C bad_pws is ubyte; keep the approved security counter unbounded (src/structs.h:978).
 			failedPasswords = rec.FailedLoginAttempts & 0xff // src/interpreter.c:1890,1929-1937
+			if s.refuseReturningWizlock(rec.Name, rec.Level) {
+				return nil
+			}
 			p, err := db.RecordToPlayer(rec, s.manager.world)
 			if err != nil {
 				return s.abortEntry(fmt.Errorf("restore character: %w", err))
