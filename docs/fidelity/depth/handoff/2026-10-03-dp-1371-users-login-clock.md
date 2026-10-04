@@ -17,3 +17,15 @@ The old 36-worker main reproduction is retained at ~/Archives/darkpawns/oracle-r
 ## Other readers
 
 The comparison helper affects only users tables in captured blocks. Common oracle comparison, ANSI-preserving comparison and prompt-preserving comparison all retain their existing policies for every other byte. Raw retained server transcripts remain actual server output. Production users command, saved/login timestamps, GMCP and browser output are unchanged. No locks or goroutines are introduced. Train B follows only after this stop-tier PR is reviewed and merged.
+
+## Validation completed
+
+Source tip `3bb229a52`, based on merged #1771 (`d3d7f59f6`). The old normalizer at that base has the same SHA-256 as the retained 36-worker reproduction's base (`29469d8b5`): `23bb1868be78e9a366a29aba39931d74580020fc374798f261d79329ae03fe46`.
+
+Revert/restore control: replacing only normalize.go with the base version makes the new tests fail on clock equality and exact raw output assertions (exit 1); restoring the fix passes, including 100 repetitions. Evidence: `~/Archives/darkpawns/oracle-runs/2026-10-03/dp-1371-users-clock-proofs/{reverted-tests,restored-tests}.txt`.
+
+The same 36-scenario, 36-worker load selection passes all 36 on the fixed source in 41.184 seconds, without rechecks: `~/Archives/darkpawns/oracle-runs/2026-10-03/dp-1371-users-clock-load-control/`. Attempt logs are retained in the proofs directory's `fixed-loaded-attempts/`.
+
+Combined census: `~/Archives/darkpawns/oracle-runs/2026-10-03/dp-1371-users-login-clock/`, clean source `3bb229a52`, reference oracle SHA verified, 36 workers, 3,194 pairs, 977 duplicates removed, 1,816.907 seconds (30m17s). Full **CLEAN**, claims **CLEAN**, no infrastructure rechecks. Existing expected divergences remain classified by their existing ledger entries; no pins, seeds, or ledger rows changed.
+
+Normal gates passed: make fmt, go build ./..., go vet ./..., go test ./..., golangci-lint (after cache clean), make fidelity-depth, make fidelity-units (1,322 claims), make string-census, and git diff --check.
