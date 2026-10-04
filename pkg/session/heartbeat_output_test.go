@@ -153,3 +153,28 @@ func TestHeartbeatOutputRawAndObservationPaths(t *testing.T) {
 		t.Fatal("structured observation lost")
 	}
 }
+
+func TestHeartbeatOutputGMCPAndVarsPaths(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "Dataactor", 1001, true)
+	s.wantsStructuredData = true
+	s.subscribedVars[VarHealth] = true
+	m.BeginHeartbeatOutput()
+	s.sendGMCPRaw("Char.Vitals", `{"hp":12}`)
+	s.markDirty(VarHealth)
+	s.flushDirtyVars()
+	s.sendFullVarDump()
+	if len(s.send) != 0 {
+		t.Fatal("GMCP/vars path bypassed staging")
+	}
+	m.EndHeartbeatOutput()
+	for _, want := range []string{MsgGMCP, MsgVars, MsgVars} {
+		var msg ServerMessage
+		if err := json.Unmarshal(<-s.send, &msg); err != nil {
+			t.Fatal(err)
+		}
+		if msg.Type != want {
+			t.Fatalf("envelope/order: %s want %s", msg.Type, want)
+		}
+	}
+}

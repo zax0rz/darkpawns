@@ -126,6 +126,9 @@ func (s *Session) flushDirtyVars() {
 		slog.Error("json.Marshal error", "error", err)
 		return
 	}
+	if s.stageHeartbeat(msg, "", false) {
+		return
+	}
 	select {
 	case s.send <- msg:
 	default:
@@ -143,6 +146,9 @@ func (s *Session) sendFullVarDump() {
 	msg, err := json.Marshal(ServerMessage{Type: MsgVars, Data: data})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	if s.stageHeartbeat(msg, "", false) {
 		return
 	}
 	select {
