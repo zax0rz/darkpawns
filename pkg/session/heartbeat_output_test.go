@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func TestHeartbeatOutputHelperFIFOAndBoundary(t *testing.T) {
@@ -176,5 +178,99 @@ func TestHeartbeatOutputGMCPAndVarsPaths(t *testing.T) {
 		if msg.Type != want {
 			t.Fatalf("envelope/order: %s want %s", msg.Type, want)
 		}
+	}
+}
+
+func TestHeartbeatOutputIdleDiscardBeforeWriter(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "Idleactor", 1, true)
+	listener := makeTestSession(t, m, "Listener", 4, true)
+	registerTestSession(t, m, s, s.playerName)
+	registerTestSession(t, m, listener, listener.playerName)
+	s.player.SetLevel(1)
+	s.player.WasInRoom = 1001
+	s.player.SetIdleTimer(30)
+	closes := 0
+	s.SetCloseFunc(func() { closes++ })
+	t.Cleanup(s.closeSendNow)
+	got := make(chan string, 1)
+	ready := make(chan struct{})
+	go func() {
+		close(ready)
+		var text strings.Builder
+		for msg := range s.send {
+			if f, ok := RenderTerminalFrame(msg); ok {
+				text.WriteString(f.Text)
+			}
+		}
+		got <- text.String()
+	}()
+	<-ready
+	m.BeginHeartbeatOutput()
+	// Real outdoor broadcast, not a weather-only special case.
+	for game.TimeSnapshot().Hours != 20 {
+		game.AnotherHour(false, nil)
+	}
+	game.AnotherHour(true, m.SendToOutdoor)
+	s.Send("point update before close\r\n")
+	m.world.CheckIdling(s.player)
+	if !s.SendClosed() || closes != 1 {
+		t.Fatal("idle close deferred past rent/extraction")
+	}
+	m.EndHeartbeatOutput()
+	if text := <-got; text != "" {
+		t.Fatalf("writer received terminal output: %q", text)
+	}
+	if !m.HandleTransportDisconnect(s) {
+		t.Fatal("transport teardown must retain pending rent/extraction owner")
+	}
+	if closes != 1 {
+		t.Fatal("transport repeated idle close")
+	}
+	heard := renderedOutput(listener)
+	if strings.Count(heard, "Idleactor has lost") != 1 || strings.Count(heard, "> ") != 1 {
+		t.Fatalf("room act/prompt duplicated or lost: %q", heard)
+	}
+	m.ExtractPendingChars()
+	if closes != 1 {
+		t.Fatal("extraction repeated transport close")
+	}
+	if _, ok := m.GetSession(s.playerName); ok {
+		t.Fatal("idle owner not retired at extraction")
+	}
+	s.Send("late") // discarded descriptor remains safe across the final boundary
+}
+
+func TestHeartbeatOutputIdleSwitchAttachment(t *testing.T) {
+	for _, which := range []string{"original", "borrowed"} {
+		t.Run(which, func(t *testing.T) {
+			m, s, h, original := switchedPCFixture(t)
+			victim := original
+			if which == "borrowed" {
+				victim = h.player
+			}
+			victim.SetLevel(1)
+			victim.WasInRoom = 1001
+			victim.SetIdleTimer(30)
+			m.BeginHeartbeatOutput()
+			s.Send("queued borrowed output\r\n")
+			m.world.CheckIdling(victim)
+			m.EndHeartbeatOutput()
+			if which == "original" {
+				if s.SendClosed() || !s.isSwitched {
+					t.Fatal("descriptorless original closed borrowed descriptor")
+				}
+				if !strings.Contains(renderedOutput(s), "queued borrowed output") {
+					t.Fatal("borrowed descriptor lost output")
+				}
+			} else {
+				if !s.SendClosed() || s.isSwitched || s.player != original || !original.IsLinkless() || !h.player.IsLinkless() {
+					t.Fatal("borrowed idle close failed to detach both identities")
+				}
+				if got := renderedOutput(s); got != "" {
+					t.Fatalf("closed switched actor received %q", got)
+				}
+			}
+		})
 	}
 }

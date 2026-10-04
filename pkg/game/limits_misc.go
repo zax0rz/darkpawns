@@ -86,10 +86,14 @@ func (w *World) CheckIdling(p *Player) {
 				slog.Error("idle disconnect room index missing", "index", 3, "player", p.Name)
 			}
 
-			// C close_socket emits these after char_to_room(3) and before
-			// Crash_rentsave/extract_char (comm.c:2131-2133).
-			Act(w, true, p, nil, nil, nil, "$n has lost $s link.", "", ToRoom)
-			MudLog(fmt.Sprintf("Closing link to: %s.", p.Name), MudlogNormal, max(LVL_IMMORT, p.GetInvisLevel()), true)
+			// src/limits.c:442-444 closes only the attached descriptor here,
+			// before rent/extraction. The callback enters with no world/player lock.
+			if w.IdleCloseDescriptor != nil {
+				w.IdleCloseDescriptor(p)
+			} else {
+				Act(w, true, p, nil, nil, nil, "$n has lost $s link.", "", ToRoom)
+				MudLog(fmt.Sprintf("Closing link to: %s.", p.Name), MudlogNormal, max(LVL_IMMORT, p.GetInvisLevel()), true)
+			}
 
 			w.RentOut(p)
 			p.RentedOut = true

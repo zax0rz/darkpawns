@@ -406,10 +406,12 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 	if len(s.player.Inventory.Items) != 0 {
 		t.Errorf("idle-disconnected inventory = %d items, want 0 (saved objects leave the world)", len(s.player.Inventory.Items))
 	}
-	if len(database.saved) != 1 {
-		t.Fatalf("SavePlayer called %d times, want 1", len(database.saved))
+	// C saves once at close_socket (comm.c:2130), then writes the rent
+	// objects after Crash_rentsave removes NORENT (limits.c:445-446).
+	if len(database.saved) != 2 {
+		t.Fatalf("SavePlayer called %d times, want close save plus rent save", len(database.saved))
 	}
-	inventory, equipment := savedItemCounts(t, database.saved[0])
+	inventory, equipment := savedItemCounts(t, database.saved[1])
 	if inventory != 1 || equipment != 1 {
 		t.Errorf("saved inventory=%d equipment=%d, want 1/1 (rent keeps rentable, excludes NORENT)", inventory, equipment)
 	}

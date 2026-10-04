@@ -47,7 +47,7 @@ func (s *Session) stageHeartbeat(message []byte, text string, note bool) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !b.active {
-		return false
+		return s.outputDiscarded.Load()
 	}
 	if b.closing[s] || s.outputDiscarded.Load() || len(s.send)+b.pending[s] >= cap(s.send) {
 		return true

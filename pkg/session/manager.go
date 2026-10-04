@@ -313,6 +313,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
 	}
 
+	world.IdleCloseDescriptor = m.closeIdleDescriptor
 	// Wire MessageSink so that Player.SendMessage routes through Session.send
 	world.MessageSink = func(playerName string, msg []byte) {
 		s, switched := m.switchDescriptorByName(playerName)
@@ -689,7 +690,9 @@ func (m *Manager) ExtractPendingChars() {
 			// Crash_extract_objs (src/objsave.c:947-955); detach from this
 			// retired body rather than resolving its now-unregistered name.
 			m.world.DiscardLoadedPlayerObjects(player)
-			victim.Close()
+			if !victim.idleTransportClosed.Load() {
+				victim.Close()
+			}
 			continue
 		}
 		if !victim.hasTransport() {
@@ -1415,6 +1418,12 @@ func (m *Manager) HandleTransportDisconnect(s *Session) bool {
 
 // handleTransportDisconnect requires playerLifecycleMu.
 func (m *Manager) handleTransportDisconnect(s *Session) bool {
+	// Idle close already performed C close_socket. Keep its lifecycle owner
+	// until the existing deferred extraction pass; transport teardown must
+	// neither repeat the act/save nor unregister before RentOut finishes.
+	if s != nil && s.idleTransportClosed.Load() {
+		return true
+	}
 	if s == nil || !s.authenticated || s.player == nil || (s.SendClosed() && !s.activePCSwitch()) || s.superseded.Load() {
 		return false
 	}
@@ -2047,9 +2056,10 @@ type Session struct {
 	// flips sendClosed. This prevents a use-after-close panic when a caller holds
 	// a session reference across a concurrent disconnect (e.g. admin kick).
 	// sendMu is a leaf lock: never acquire another lock while holding it.
-	sendMu          sync.RWMutex
-	sendClosed      bool
-	outputDiscarded atomic.Bool
+	sendMu              sync.RWMutex
+	sendClosed          bool
+	outputDiscarded     atomic.Bool
+	idleTransportClosed atomic.Bool
 
 	// msgSeq is a monotonically incrementing sequence number stamped on every
 	// outbound WebSocket message. Zero is never sent (first message gets seq=1).
