@@ -64,6 +64,8 @@ var allowedWebSocketOrigins = []string{
 
 // Manager handles all active sessions.
 type Manager struct {
+	outputBatch heartbeatOutput
+
 	// mudletMap is the generated Mudlet world map (GMCP Client.Map and the
 	// /darkpawns-map.xml endpoint).
 	mudletMap *mudletmap.Cache
@@ -2036,8 +2038,9 @@ type Session struct {
 	// flips sendClosed. This prevents a use-after-close panic when a caller holds
 	// a session reference across a concurrent disconnect (e.g. admin kick).
 	// sendMu is a leaf lock: never acquire another lock while holding it.
-	sendMu     sync.RWMutex
-	sendClosed bool
+	sendMu          sync.RWMutex
+	sendClosed      bool
+	outputDiscarded atomic.Bool
 
 	// msgSeq is a monotonically incrementing sequence number stamped on every
 	// outbound WebSocket message. Zero is never sent (first message gets seq=1).

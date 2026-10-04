@@ -274,6 +274,10 @@ func (s *Session) notePlayerOutput() {
 // bare game-loop prompt pass writes the prompt alone.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
+	s.sendPromptNow()
+}
+
+func (s *Session) sendPromptNow() {
 	if s.IsPaging() {
 		flags := s.player.GetFlags()
 		color := flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0

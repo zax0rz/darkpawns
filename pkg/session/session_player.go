@@ -104,6 +104,10 @@ func (s *Session) PlayerName() string {
 
 // CloseSend closes the session's outgoing message channel.
 func (s *Session) CloseSend() {
+	s.closeSendNow()
+}
+
+func (s *Session) closeSendNow() {
 	s.releaseEntryName()
 	if s.send == nil {
 		return
