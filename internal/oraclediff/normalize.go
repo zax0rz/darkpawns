@@ -40,11 +40,12 @@ func NormalizeKeepANSI(raw string) string {
 	return normalize(raw, true)
 }
 
-// NormalizeKeepPrompts leaves every captured player-facing byte in place.
+// NormalizeKeepPrompts preserves framing and colors, masking only the users
+// Login@ host-clock field approved for identical comparison in both engines.
 // TCPConn has already removed telnet IAC negotiation. Focused prompt scenarios
 // use this mode because ordinary normalization erases prompt framing.
 func NormalizeKeepPrompts(raw string) string {
-	return raw
+	return normalizeUsersLoginAt(raw)
 }
 
 // TrailingSimplePromptFrame isolates the line breaks and default "> " prompt
@@ -92,6 +93,8 @@ func normalize(raw string, keepANSI bool) string {
 		lines[i] = statusVitals.ReplaceAllString(lines[i], "<VITALS>")
 	}
 
+	lines = strings.Split(normalizeUsersLoginAt(strings.Join(lines, "\n")), "\n")
+
 	// 4. Mask the rolled stat block: adjective values derive from unmatched Tier-1 PRNG streams.
 	maskedStats := false
 	filtered := make([]string, 0, len(lines))
@@ -117,4 +120,42 @@ func normalize(raw string, keepANSI bool) string {
 
 	// Preserve internal blank lines but remove meaningless leading/trailing transcript padding.
 	return strings.Trim(strings.Join(lines, "\n"), "\n") + "\n"
+}
+
+const (
+	usersLoginHeader  = "Num Class   Name         State          Idl Login@   Site"
+	usersLoginDivider = "--- ------- ------------ -------------- --- -------- ------------------------"
+)
+
+// src/act.informative.c:2061-2063 renders descriptor login_time as a host-clock
+// HH:MM:SS, independent of DP_CLOCK. Only a valid clock token in a users table
+// is masked; all other bytes (including malformed clocks) remain comparable.
+var usersLoginRowClock = regexp.MustCompile(`^(?:\r|\x1b\[[0-?]*[ -/]*[@-~])*[ \t]*[0-9]+[ \t]+(?:\[[^\]\r\n]+\]|-)[ \t]+[^\r\n]*[ \t]+((?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9])[ \t]+\[[^\r\n]*\](?:\x1b\[[0-?]*[ -/]*[@-~])*[ \t\r\n]*$`)
+
+func normalizeUsersLoginAt(raw string) string {
+	lines := strings.SplitAfter(raw, "\n")
+	divider, rows := false, false
+	for i, line := range lines {
+		// Inspect control-free headers without changing their captured bytes.
+		heading := strings.Trim(ansiEscape.ReplaceAllString(line, ""), "\r\n")
+		if heading == usersLoginHeader {
+			divider, rows = true, false
+			continue
+		}
+		if divider {
+			divider, rows = false, heading == usersLoginDivider
+			continue
+		}
+		if !rows {
+			continue
+		}
+		match := usersLoginRowClock.FindStringSubmatchIndex(line)
+		if match == nil {
+			rows = false
+			continue
+		}
+		// Same eight-byte width as HH:MM:SS; no adjacent whitespace is erased.
+		lines[i] = line[:match[2]] + "<LOGIN@>" + line[match[3]:]
+	}
+	return strings.Join(lines, "")
 }

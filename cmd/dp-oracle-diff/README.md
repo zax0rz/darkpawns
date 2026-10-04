@@ -133,10 +133,22 @@ creation ANSI question Y/N respectively and keep every probe step inside the
 OLC menus, because the ordinary playing prompt and vitals masking expect
 ANSI-stripped text and are outside what the mode certifies.
 
+## Users login-clock metadata
+
+C's `users` Login@ column is the descriptor's host-clock connection time
+(`src/act.informative.c:2061-2063`), not DP_CLOCK game time. Independently
+accepted connections can straddle a wall-clock second. Every comparison mode
+masks only a valid HH:MM:SS token in that column as the eight-byte `<LOGIN@>`.
+The exact users header and divider must precede the row; masking ends at the
+first non-row. Names, classes, levels, descriptor numbers, state, idle, host,
+footer counts, whitespace and color bytes remain subject to the mode's existing
+comparison rules. Malformed clocks and clocks outside that table are preserved.
+This changes comparison only, not either server's output or timestamps.
+
 ## Raw prompt proof mode (`keep-prompts`)
 
 The ordinary normalizer removes prompt-only lines, trailing spaces, ANSI, and
-line-ending distinctions. A focused scenario with `keep-prompts` compares the
+line-ending distinctions. Except for the users Login@ metadata described above, a focused scenario with `keep-prompts` compares the
 captured text bytes exactly after telnet IAC negotiation is removed. Keep its
 probe blocks limited to prompt states with deterministic output.
 `prompt-pager-depth`, `prompt-pager-color-depth`, and `prompt-playing-depth`
