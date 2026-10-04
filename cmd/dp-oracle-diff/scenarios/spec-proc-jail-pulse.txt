@@ -1,0 +1,75 @@
+# C src/spec_procs2.c:1470-1493; src/limits.c:486-487.
+# depth-case: room.jail-commandless-body
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12220 999 8118 122
+mob-script 12220 oracle/jail.lua 512
+[lua-script mob/oracle/jail.lua]
+function oncmd()
+if (argument ~= "say sentence") then return FALSE end
+ch.jail = 1
+ch.pos = 4
+save_char(ch)
+return TRUE
+end
+[setup:oracle]
+Jailclockgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Jailclockgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:inmate]
+Jailclockinmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:inmate]
+Jailclockinmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[warmup]
+goto 8118
+teleport Jailclockinmate 8118
+[probe:inmate]
+say sentence
+~dpclock pulse 650
+look

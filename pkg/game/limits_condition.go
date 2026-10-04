@@ -124,14 +124,10 @@ func (w *World) PointUpdate() {
 		}
 		p.mu.Unlock()
 
-		// Jail timer — decrement each tick, auto-release when it hits 0
+		// src/limits.c:486-487 only decrements; the jail room pulse owns release.
 		p.mu.Lock()
 		if p.JailTimer > 0 {
 			p.JailTimer--
-			if p.JailTimer == 0 {
-				p.SetRoom(MortalStartRoom)
-				p.SendMessage("\r\nYour jail sentence is served. You are free!\r\n")
-			}
 		}
 		p.mu.Unlock()
 

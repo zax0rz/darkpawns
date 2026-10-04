@@ -18,6 +18,12 @@ func mobHasLight(m *MobInstance) bool {
 }
 
 func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error {
+	return w.charTransfer(charName, isMob, toRoomVNum, true)
+}
+
+// charTransfer permits callers of bare char_from_room/char_to_room to leave
+// mounts behind; command-level transfers retain their existing mount behavior.
+func (w *World) charTransfer(charName string, isMob bool, toRoomVNum int, moveMount bool) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -121,7 +127,7 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 
 			// Move mount with rider (recall/teleport take mounts)
 			// Source: act.wizard.c do_recall moves get_mount(ch) with the player
-			if p.MountName != "" {
+			if moveMount && p.MountName != "" {
 				for _, m := range w.activeMobs {
 					if m.GetName() == p.MountName && m.GetRoom() == fromRoomVNum {
 						m.moveRoomLocked(w, toRoomVNum)
