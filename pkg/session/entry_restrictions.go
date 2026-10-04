@@ -34,3 +34,40 @@ func (s *Session) refuseEntry(message, log string) {
 	game.MudLog(log, game.MudlogNormal, game.LVL_GOD, true)
 	s.CloseSend()
 }
+
+// entryBanLevel evaluates the current list against retained connection identity,
+// as C isbanned(d->host) does at each nanny boundary. Synthetic callers that
+// provide only SetBanLevel retain their explicit admission snapshot.
+func (s *Session) entryBanLevel() int {
+	if len(s.banHosts) == 0 {
+		return s.banLevel
+	}
+	level := game.BanNot
+	if bm := s.manager.GetBanManager(); bm != nil {
+		for _, host := range s.banHosts {
+			level = max(level, bm.IsBanned(host))
+		}
+	}
+	return level
+}
+
+// src/interpreter.c:1825-1831: site ban precedes wizlock at confirmation.
+func (s *Session) refuseNewSiteBan() bool {
+	if s.entryBanLevel() < game.BanNew {
+		return false
+	}
+	s.refuseEntry("Sorry, new characters are not allowed from your site!\r\n",
+		fmt.Sprintf("Request for new char %s denied from [%s] (siteban)", s.charName, s.RemoteIP()))
+	return true
+}
+
+// src/interpreter.c:1896-1905: select needs the saved PLR_SITEOK bit.
+func (s *Session) refuseReturningSiteBan(name string, raw []byte) bool {
+	if s.entryBanLevel() != game.BanSelect || game.CharacterDataSiteOK(raw) {
+		return false
+	}
+	s.sendRawEvent("\r\n")
+	s.refuseEntry("Sorry, this char has not been cleared for login from your site!\r\n",
+		fmt.Sprintf("Connection attempt for %s denied from %s", name, s.RemoteIP()))
+	return true
+}

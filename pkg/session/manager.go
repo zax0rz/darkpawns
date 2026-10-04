@@ -1178,7 +1178,8 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	session := &Session{
-		banLevel:            ipBanLevel, // BanNew/BanSelect enforced at login (DP-418)
+		banLevel:            ipBanLevel, // BanNew/BanSelect enforced at entry
+		banHosts:            []string{ip},
 		conn:                conn,
 		request:             r, // Store the HTTP request for IP extraction
 		manager:             m,
@@ -1876,8 +1877,9 @@ type Session struct {
 	playerName           string
 	authenticated        bool
 	isGuest              bool
-	connCountDecremented bool // C5: prevents double-decrement of IP connection count
-	banLevel             int  // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
+	connCountDecremented bool     // C5: prevents double-decrement of IP connection count
+	banHosts             []string // connection IP and resolved PTR names; checked again at entry
+	banLevel             int      // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
 
 	// outputSincePrompt counts player-bound messages enqueued since the last
 	// prompt. C's process_output appends "\r\n" + make_prompt to every output

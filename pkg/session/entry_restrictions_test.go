@@ -153,3 +153,105 @@ func TestEntryWizlockGuestOverlayUnchanged(t *testing.T) {
 		t.Fatal("DP-1379 guest overlay changed")
 	}
 }
+
+func TestEntrySiteBanNewBoundary(t *testing.T) {
+	for _, ban := range []int{game.BanNot, game.BanNew, game.BanSelect, game.BanAll} {
+		for _, terminal := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%d/%v", ban, terminal), func(t *testing.T) {
+				database := entryDatabase(t)
+				s := entrySession(t, database)
+				s.banLevel = ban
+				if terminal {
+					s.TerminalLine("Freshhero")
+				} else if err := s.handleLogin(loginMsg("Freshhero", "")); err != nil {
+					t.Fatal(err)
+				}
+				if s.SendClosed() || s.charStage != "confirm_name" {
+					t.Fatal("site ban must wait for confirmation")
+				}
+				_ = renderedOutput(s)
+				s.manager.wizlockLevel = 1
+				sendCharInput(t, s, "Y")
+				want := "Sorry, new players can't be created at the moment.\r\n"
+				if ban >= game.BanNew {
+					want = "Sorry, new characters are not allowed from your site!\r\n"
+				}
+				if got := renderedOutput(s); got != want || !s.SendClosed() {
+					t.Fatalf("refusal: %q want %q", got, want)
+				}
+				if n, err := database.CountPlayers(); err != nil || n != 0 {
+					t.Fatal("created banned record")
+				}
+			})
+		}
+	}
+}
+
+func TestEntrySiteBanReturningSelect(t *testing.T) {
+	for _, ban := range []int{game.BanNot, game.BanNew, game.BanSelect} {
+		for _, siteOK := range []bool{false, true} {
+			for _, restricted := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%d/%v/%v", ban, siteOK, restricted), func(t *testing.T) {
+					database := entryDatabase(t)
+					rec := entrySeed(t, database, "Aiko")
+					p := game.NewPlayer(rec.ID, rec.Name, rec.RoomVNum)
+					p.SetPlrFlag(game.PlrSiteok, siteOK)
+					var err error
+					rec.CharacterData, err = game.EncodeCharacterData(p)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if err := database.SavePlayer(rec); err != nil {
+						t.Fatal(err)
+					}
+					s := entrySession(t, database)
+					s.banLevel = ban
+					if restricted {
+						s.manager.wizlockLevel = 40
+					}
+					if err := s.handleLogin(loginMsg("Aiko", "oraclepass")); err != nil {
+						t.Fatal(err)
+					}
+					got := renderedOutput(s)
+					if ban == game.BanSelect && !siteOK {
+						if got != "\r\nSorry, this char has not been cleared for login from your site!\r\n" || !s.SendClosed() || s.player != nil {
+							t.Fatalf("select refusal: %q", got)
+						}
+					} else if restricted {
+						if got != "\r\nThe game is temporarily restricted.. try again later.\r\n" || !s.SendClosed() {
+							t.Fatalf("threshold refusal: %q", got)
+						}
+					} else if !s.authenticated || !s.menuActive || s.SendClosed() {
+						t.Fatalf("permitted login refused: %q", got)
+					}
+				})
+			}
+		}
+	}
+}
+
+func TestEntrySiteBanCurrentHostIdentity(t *testing.T) {
+	for _, host := range []string{"127.0.0.1", "client.example"} {
+		t.Run(host, func(t *testing.T) {
+			s := entrySession(t, entryDatabase(t))
+			s.SetBanHosts([]string{"127.0.0.1", "client.example"})
+			if err := s.handleLogin(loginMsg("Freshhero", "")); err != nil {
+				t.Fatal(err)
+			}
+			_ = renderedOutput(s)
+			if err := s.manager.GetBanManager().AddBan(host, game.BanNew, "God"); err != nil {
+				t.Fatal(err)
+			}
+			sendCharInput(t, s, "Y")
+			if got := renderedOutput(s); got != "Sorry, new characters are not allowed from your site!\r\n" || !s.SendClosed() {
+				t.Fatalf("late ban missed: %q", got)
+			}
+		})
+	}
+	s := entrySession(t, entryDatabase(t))
+	s.SetBanLevel(game.BanNew)
+	s.SetBanHosts([]string{"127.0.0.1"})
+	if s.entryBanLevel() != game.BanNot {
+		t.Fatal("removed ban still enforced from connection snapshot")
+	}
+}

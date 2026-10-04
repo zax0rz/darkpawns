@@ -1075,3 +1075,14 @@ func cGreetingsFixture(t *testing.T) string {
 	}
 	return strings.ReplaceAll(string(raw), "\n", "\r\n")
 }
+
+func TestEffectiveBanHostsRetainsIdentity(t *testing.T) {
+	original := lookupAddr
+	defer func() { lookupAddr = original }()
+	lookupAddr = func(string) ([]string, error) { return []string{"client.example."}, nil }
+	bm := game.NewBanManager()
+	level, hosts := effectiveBanHosts("127.0.0.1", bm)
+	if level != game.BanNot || len(hosts) != 2 || hosts[0] != "127.0.0.1" || hosts[1] != "client.example" {
+		t.Fatalf("entry identity lost: level=%d hosts=%q", level, hosts)
+	}
+}

@@ -1,5 +1,6 @@
 # C src/interpreter.c:1832-1847,1906-1914.
 # depth-case: wizlock.login-threshold
+# depth-case: entry.login-restrictions
 [fixture]
 empty-players
 quiet-mobs

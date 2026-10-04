@@ -1,5 +1,4 @@
 # C src/interpreter.c:1832-1847,1906-1914.
-# depth-case: wizlock.login-threshold
 # depth-case: entry.login-restrictions
 [fixture]
 empty-players
@@ -62,7 +61,7 @@ Y
 set player Wizdriver level 39
 set player Wizhero level 1
 quit
-send:driver wizlock 2
+send:driver ban select 127
 <RELOGIN>
 oraclepass
 [relogin:oracle]

@@ -184,7 +184,7 @@ func serve(ln net.Listener, manager *session.Manager) {
 			}
 
 			go func(ip string) {
-				banLevel := effectiveBanLevel(ip, banManager)
+				banLevel, banHosts := effectiveBanHosts(ip, banManager)
 				reject := banLevel == game.BanAll
 				if reject {
 					slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
@@ -204,7 +204,7 @@ func serve(ln net.Listener, manager *session.Manager) {
 					connMu.Unlock()
 					return
 				}
-				handleConn(conn, manager, banLevel)
+				handleConn(conn, manager, banLevel, banHosts)
 				connMu.Lock()
 				connCount--
 				connPerIP[ip]--
@@ -232,12 +232,18 @@ func ipFromAddr(addr string) string {
 // resolution at dnsLookupTimeout so a slow or unresponsive resolver cannot
 // block the connection accept loop.
 func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
+	level, _ := effectiveBanHosts(remoteIP, banManager)
+	return level
+}
+
+func effectiveBanHosts(remoteIP string, banManager *game.BanManager) (int, []string) {
+	hosts := []string{remoteIP}
 	level := banManager.IsBanned(remoteIP)
 	// BanAll is the most restrictive level. If the in-memory IP check already
 	// matches, no hostname ban can be stricter, so skip the reverse-DNS wait
 	// entirely (banned IPs must be dropped without paying for a slow PTR).
 	if level == game.BanAll {
-		return level
+		return level, hosts
 	}
 
 	type result struct {
@@ -266,12 +272,13 @@ func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
 	for _, hostname := range hostnames {
 		// PTR records commonly end with a trailing dot.
 		hostname = strings.TrimSuffix(hostname, ".")
+		hosts = append(hosts, hostname)
 		hostLevel := banManager.IsBanned(hostname)
 		if hostLevel > level {
 			level = hostLevel
 		}
 	}
-	return level
+	return level, hosts
 }
 
 type telnetConn struct {
@@ -288,7 +295,7 @@ type telnetConn struct {
 	compressWriter *zlib.Writer
 }
 
-func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
+func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHosts ...[]string) {
 	tc := &telnetConn{
 		Conn:    rawConn,
 		br:      bufio.NewReader(rawConn),
@@ -329,6 +336,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int) {
 	s.SetCloseFunc(func() { _ = rawConn.Close() })
 	remoteIP := ipFromAddr(remoteAddr)
 	s.SetRemoteIP(remoteIP)
+	if len(banHosts) > 0 {
+		s.SetBanHosts(banHosts[0])
+	}
 	if banLevel != game.BanNot {
 		s.SetBanLevel(banLevel)
 	}

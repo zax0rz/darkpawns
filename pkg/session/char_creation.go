@@ -178,7 +178,7 @@ func (s *Session) handleCharInput(data json.RawMessage) error {
 	case "confirm_name":
 		switch strings.ToUpper(choice) {
 		case "Y":
-			if s.refuseNewWizlock() {
+			if s.refuseNewSiteBan() || s.refuseNewWizlock() {
 				return nil
 			}
 			s.charStage = "create_password"
