@@ -1,36 +1,14 @@
-# Lifecycle: a still-connected player past IDLE_DISCONNECT (30) is force-rented
-# and disconnected, and the deterministic-clock harness survives the close.
-# depth-case: idle.force-rent-closes-transport
-# depth-case: idle.force-rent-no-menu
-# depth-case: idle.force-rent-post-close-relogin
-# depth-case: idle.force-rent-pump-deferred
-#
-# C (src/limits.c:438-451): at the 31st MUD hour a mortal in the void is moved
-# to room 3, close_socket runs while the character is still CON_PLAYING (the
-# room sees "$n has lost $s link.", comm.c:2131-2133), ch->desc is NULLed,
-# free_rent's Crash_rentsave keeps the objects, and extract_char drops the
-# character. `compare-close` makes the actor's closed transport a compared
-# <CLOSE> line, and the closing <RELOGIN> proves the post-disconnect state.
-#
-# This is also the harness regression for the ~dpclock seam. Two connections
-# are enough: the actor's descriptor is the driver's `next` in the game loop's
-# input iteration, so a pumped heartbeat that closes the actor used to free the
-# descriptor the loop still held (src/comm.c:577-583) and aborted the oracle
-# with "*** bit out of range 0 - FD_SETSIZE on fd_set ***". The seam now only
-# QUEUES pulses and the game loop drains them at its heartbeat phase, after
-# descriptor input/command/output/prompt/CON_CLOSE processing, which is where
-# production C runs them (src/comm.c:679). Before the fix this scenario kills
-# the oracle; after it, the run is byte-identical to the port.
-#
-# This original interior-void fixture is retained for the harness contract.
-# lifecycle-idle-terminal-weather and its burst companion leave the void
-# outdoors and prove C's queued-output discard on the terminal pulse.
-
+# depth-case: idle.force-rent-terminal-weather-byte
+# C src/comm.c:636-679,825-828; src/limits.c:438-451; src/weather.c:58-80.
+# Original 31-hour force-rent vehicle, with outdoor void left unchanged.
+# Each hour is compared separately; hour 31 queues sunset then closes the actor.
+# C discards that queued line. Driver remains outdoors and receives it, proving
+# the producer ran at the exact terminal pulse rather than suppressing weather.
+# compare-close keeps the actor's <CLOSE> byte in the same block.
 [fixture]
 empty-players
 quiet-mobs
 compare-close
-set-room-sector 1 0
 
 [setup:oracle]
 Idleforcerent
@@ -104,6 +82,7 @@ oraclepass
 
 [warmup]
 set player Clockdriver level 31
+send:driver goto 8001
 set player Idleforcerent level 1
 
 # One probe step per MUD hour: 31 hours carry the actor through the ninth-hour

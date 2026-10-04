@@ -1,0 +1,96 @@
+# depth-case: idle.force-rent-terminal-weather-byte
+# C src/comm.c:636-679: no output pass between pumped heartbeats.
+# A 25-hour burst closes the actor in its last hour: output from the burst
+# remains unflushed and must be discarded, while the immortal driver survives.
+# Reverting to per-pulse commits leaks the earlier hour's output.
+[fixture]
+empty-players
+quiet-mobs
+compare-close
+
+[setup:oracle]
+Idleforcerent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Idleforcerent
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:driver]
+Clockdriver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:driver]
+Clockdriver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Idleforcerent
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Idleforcerent
+oraclepass
+<ENTER>
+1
+
+[warmup]
+set player Clockdriver level 31
+send:driver goto 8001
+set player Idleforcerent level 1
+
+# Six warmup hours precede one 25-hour probe burst. The actor enters the
+# void in the burst and closes in its last hour (timer > IDLE_DISCONNECT).
+# The immortal outdoor connection drives the clock and receives weather.
+send:driver ~dpclock pulse 3780
+
+[probe]
+send:driver ~dpclock pulse 15750
+<RELOGIN>
+look
+inventory
+equipment
