@@ -96,3 +96,22 @@ func TestHeartbeatOutputManagerAndTextPaths(t *testing.T) {
 		t.Fatal("ordinary send did not remain immediate")
 	}
 }
+
+func TestHeartbeatOutputPromptAfterPointText(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "Promptactor", 1001, true)
+	registerTestSession(t, m, s, s.playerName)
+	m.BeginHeartbeatOutput()
+	s.Send("weather\r\n")
+	s.SendPrompt()
+	s.Send("point update\r\n")
+	s.SendPrompt()
+	if len(s.send) != 0 {
+		t.Fatal("early prompt escaped active turn")
+	}
+	m.EndHeartbeatOutput()
+	got := renderedOutput(s)
+	if got != "weather\r\npoint update\r\n\r\n> " {
+		t.Fatalf("prompt order/framing: %q", got)
+	}
+}

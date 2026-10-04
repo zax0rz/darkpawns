@@ -277,6 +277,9 @@ func (s *Session) notePlayerOutput() {
 // bare game-loop prompt pass writes the prompt alone.
 // Safe to call when the channel is closed — the send is dropped like SendMessage.
 func (s *Session) SendPrompt() {
+	if s.deferHeartbeatPrompt() {
+		return
+	}
 	s.sendPromptNow()
 }
 
@@ -357,6 +360,9 @@ func (s *Session) queuePromptText(text string, raw bool) {
 	})
 	if err != nil {
 		slog.Error("json.Marshal error", "error", err)
+		return
+	}
+	if s.stageHeartbeat(msg, "", false) {
 		return
 	}
 	s.sendMu.RLock()
