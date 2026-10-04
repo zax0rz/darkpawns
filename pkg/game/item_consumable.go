@@ -165,7 +165,7 @@ func (w *World) DoEat(ch *Player, me *MobInstance, cmd, arg string, subcmd int) 
 	if !found {
 		// Werewolves can eat corpses in the room (low-frequency branch).
 		if ch.IsAffected(affWerewolf) {
-			item = w.findObjectInRoomByName(ch.GetRoomVNum(), arg1)
+			item, _ = w.ResolveObjectInRoom(ch, arg1)
 		}
 		if item == nil {
 			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
@@ -175,18 +175,20 @@ func (w *World) DoEat(ch *Player, me *MobInstance, cmd, arg string, subcmd int) 
 
 	objType := item.GetTypeFlag()
 
-	// Taste on a drink container/fountain delegates to sip.
-	if subcmd == scmdTaste && (objType == ITEM_DRINKCON || objType == ITEM_FOUNTAIN) {
-		w.DoDrink(ch, nil, "sip", arg, scmdSip)
+	// src/act.item.c:1058-1090: only a floor corpse reaches savage eating;
+	// this branch precedes taste/sip dispatch and returns even for SCMD_TASTE.
+	if !found {
+		if objType == ITEM_CONTAINER && item.GetValue(3) != 0 {
+			w.eatWerewolfCorpse(ch, item)
+		} else {
+			ch.SendMessage("Eat what?!?\r\n")
+		}
 		return
 	}
 
-	// Werewolf corpse-rip branch: preserve structure as a TODO follow-up.
-	if !found && ch.IsAffected(affWerewolf) && objType == ITEM_CONTAINER && item.GetValue(3) != 0 {
-		// TODO: implement werewolf savage-eat corpse branch including
-		// mangled-flesh proto 19 spawn. Fidelity follow-up, not DP-1102.
-		Act(nil, false, ch, nil, item, nil, "You savagely rip into $p, feeding your insatiable appetite.", "", ToChar)
-		Act(w, true, ch, nil, item, nil, "$n savagely rips into $p, crunching through flesh and bone alike.", "", ToRoom)
+	// Taste on a carried drink container/fountain delegates to sip.
+	if subcmd == scmdTaste && (objType == ITEM_DRINKCON || objType == ITEM_FOUNTAIN) {
+		w.DoDrink(ch, nil, "sip", arg, scmdSip)
 		return
 	}
 
@@ -239,6 +241,39 @@ func (w *World) DoEat(ch *Player, me *MobInstance, cmd, arg string, subcmd int) 
 			ch.Inventory.RemoveItem(item)
 			w.ExtractObject(item, ch.GetRoomVNum())
 		}
+	}
+}
+
+// eatWerewolfCorpse ports src/act.item.c:1062-1085 without gain_condition's
+// clamp/messages: C adds level/2 directly, then scatters and replaces the corpse.
+func (w *World) eatWerewolfCorpse(ch *Player, corpse *ObjectInstance) {
+	Act(w, false, ch, nil, corpse, nil, "You savagely rip into $p, feeding your insatiable appetite.", "", ToChar)
+	Act(w, true, ch, nil, corpse, nil, "$n savagely rips into $p, crunching through flesh and bone alike.", "", ToRoom)
+	if full := ch.GetCondition(CondFull); full >= 0 && full < 40 {
+		ch.SetCondition(CondFull, full+ch.GetLevel()/2)
+	}
+	w.mu.RLock()
+	contents := append([]*ObjectInstance(nil), corpse.Contains...)
+	w.mu.RUnlock()
+	room := ch.GetRoomVNum()
+	for _, item := range contents {
+		if err := w.MoveObjectToRoomFront(item, room); err != nil {
+			slog.Error("werewolf corpse spill failed", "object", item.ID, "error", err)
+			return
+		}
+	}
+	w.ExtractObject(corpse, room)
+	flesh, err := w.SpawnObject(19, -1)
+	if err != nil {
+		slog.Error("werewolf flesh spawn failed", "error", err)
+		return
+	}
+	flesh.SetValue(0, 0)
+	flesh.SetValue(3, 1)
+	flesh.SetTimer(MaxNPCCorpseTime)
+	if err := w.MoveObjectToRoomFront(flesh, room); err != nil {
+		slog.Error("werewolf flesh placement failed", "error", err)
+		w.ExtractObject(flesh, -1)
 	}
 }
 
