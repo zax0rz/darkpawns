@@ -44,7 +44,7 @@ const (
 	// table (src/boards.c:93-98) gates the immortal boards on these exact
 	// values; a foreign scale (50/60/61) matches no character.
 	boardImmortalLevel = 31 // LVL_IMMORT (src/structs.h:620)
-	boardGrGodLevel    = 38 // LVL_GRGOD   (src/structs.h:613)
+	boardGrGodLevel    = 38 // LVL_GRGOD   (src/structs.h:612)
 	boardImplLevel     = 40 // LVL_IMPL    (src/structs.h:610)
 )
 
