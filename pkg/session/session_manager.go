@@ -158,6 +158,9 @@ func (m *Manager) sendToPlaying(message, eventType, label string, eligible func(
 		if eligible != nil && !eligible(s) {
 			continue
 		}
+		if s.stageHeartbeat(msg, "", false) {
+			continue
+		}
 		select {
 		case s.send <- msg:
 		default:

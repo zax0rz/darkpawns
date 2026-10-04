@@ -140,7 +140,6 @@ func (s *Session) sendCurrentRoomState() {
 }
 
 func (s *Session) SendMessage(message string) error {
-	s.forwardSnoopOutput(message)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
@@ -151,6 +150,10 @@ func (s *Session) SendMessage(message string) error {
 	if err != nil {
 		return fmt.Errorf("marshal error: %w", err)
 	}
+	if s.stageHeartbeat(msg, message, true) {
+		return nil
+	}
+	s.forwardSnoopOutput(message)
 	s.notePlayerOutput()
 	// RLock lets concurrent sends proceed but blocks the exclusive close, so we
 	// never send on a closed channel (which panics even inside a select). If the

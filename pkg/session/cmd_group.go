@@ -310,7 +310,6 @@ func cmdGtellText(s *Session, text string) error {
 
 // sendText sends a simple text message to the player.
 func (s *Session) sendText(text string) {
-	s.forwardSnoopOutput(text)
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgText,
 		Data: TextData{Text: text},
@@ -319,6 +318,10 @@ func (s *Session) sendText(text string) {
 		slog.Error("json.Marshal error", "error", err)
 		return
 	}
+	if s.stageHeartbeat(msg, text, false) {
+		return
+	}
+	s.forwardSnoopOutput(text)
 	select {
 	case s.send <- msg:
 	default:

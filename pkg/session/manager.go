@@ -326,8 +326,6 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		if s == nil {
 			return
 		}
-		s.notePlayerOutput()
-		s.forwardSnoopOutput(string(msg))
 		// Wrap in JSON event envelope for WebSocket clients
 		wrapped, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
@@ -340,6 +338,11 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			slog.Error("MessageSink marshal error", "error", err)
 			return
 		}
+		if s.stageHeartbeat(wrapped, string(msg), true) {
+			return
+		}
+		s.notePlayerOutput()
+		s.forwardSnoopOutput(string(msg))
 		if switched {
 			s.sendGuarded(wrapped)
 			return
@@ -503,11 +506,14 @@ func (m *Manager) SetCombatMessageFunc() {
 		if s == nil {
 			return
 		}
-		s.notePlayerOutput()
 		msg := wrap(message)
 		if msg == nil {
 			return
 		}
+		if s.stageHeartbeat(msg, "", true) {
+			return
+		}
+		s.notePlayerOutput()
 		select {
 		case s.send <- msg:
 		default:
@@ -1831,6 +1837,9 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 			continue
 		}
 		if s.player != nil && s.player.GetRoom() == roomVNum {
+			if s.stageHeartbeat(message, "", false) {
+				continue
+			}
 			select {
 			case s.send <- message:
 			default:
