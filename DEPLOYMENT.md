@@ -276,59 +276,58 @@ default, room for two players sharing a connection at three characters each.
 
 ## Entry-identity migration note
 
-A migration adds a unique index on `lower(players.name)`. If your database predates it,
-resolve any case-folding name collisions first — the migration deliberately fails rather
-than choosing or deleting a character:
+A migration adds a unique index on `lower(players.name)`. C's `find_name`
+compares names case-insensitively, so the store must too, and the index is
+created (if it is missing) on every boot. If your database predates it and holds
+two names that differ only in case, the index cannot be built and the boot fails
+rather than choosing or deleting a character. Resolve the collision — rename one
+of the characters — and restart.
+
+Find the collisions with:
 
 ```sql
-SELECT lower(name) AS identity, array_agg(id ORDER BY id) AS ids
-FROM players GROUP BY lower(name) HAVING count(*) > 1;
+SELECT lower(name) AS identity, group_concat(id) AS ids
+FROM players
+GROUP BY lower(name)
+HAVING count(*) > 1;
 ```
 
 ## Game-store column migration note
 
-The first boot after upgrading also rewrites `players.inventory` and
-`players.equipment` from `jsonb` to `json`. `jsonb` canonicalizes whatever is
-written to it (keys reordered by length, spacing normalized), which made
-byte-identical save→load impossible; `json` stores the input text exactly and
-still validates it as JSON on write. Legacy values already canonicalized by
-`jsonb` come across in that form — the original byte layout of old rows is not
-recoverable — and everything written after the change is preserved verbatim.
-It happens on the same first boot, takes the same one-time table lock, and
-logs the same way (`converted game-store column to json column=players.inventory`).
+The game store's schema is created and extended by the server itself, on every
+boot, from `pkg/db`. The `players` table is created when it is missing, and
+columns added since the original schema are appended to an existing table with
+`ALTER TABLE ... ADD COLUMN` — skipped when a `pragma_table_info` lookup shows
+the column is already present, because SQLite's `ALTER TABLE` has no `IF NOT
+EXISTS`. A fresh database and an old one converge on the same schema, and no
+stored value is rewritten.
 
-The game store's timestamp columns (`players.created_at`, `players.updated_at`,
-`players.locked_until`) are declared `timestamptz`. A
-database created by an earlier build holds them as naive `timestamp`, which
-records a wall clock with no zone attached, so lockout and expiry comparisons
-land hours off on a host that is not UTC. **Restarting is the whole procedure.**
-The first boot after the upgrade rewrites those columns and says so, one line
-per column:
+Those columns are declared `TIMESTAMP` (`created_at`, `updated_at`,
+`locked_until`) and `JSON` (`inventory`, `equipment`, `character_data`). SQLite
+has no zone-aware timestamp type and no JSON canonicalizer, so there is no type
+conversion to perform, and the stored JSON payloads round-trip byte for byte.
 
-```
-INFO converted game-store column to timestamptz column=players.locked_until
-```
+> **Historical: the retired PostgreSQL backend.** It stored JSON as `jsonb` and
+> timestamps as `timestamptz`, and an upgrade used to rewrite those columns on
+> first boot. None of that applies to SQLite. Moving an old PostgreSQL database
+> across is the one-time procedure in
+> [docs/operational/SQLITE-CUTOVER.md](docs/operational/SQLITE-CUTOVER.md).
 
-Values are reinterpreted in the database session's zone (`ALTER COLUMN ... TYPE
-timestamptz USING column AT TIME ZONE current_setting('TimeZone')`), which keeps
-the wall clock that is stored and attaches that zone to it. Rows written before
-the upgrade therefore read back with the same wall clock in that zone, and every
-row written after it is an exact instant. The stored value was a wall clock with
-no zone attached, so the writing zone had to be supplied from somewhere: the
-session's zone is the one the provisioning in this document sets up, and naming
-it instead of assuming UTC is what keeps a lockout that is still in flight in
-force through the restart. A row written while the database ran in a different
-zone is read in the current one — the writing zone is not recorded anywhere, so
-no conversion can recover it.
+## Durable player and rent reports migration note
 
-The rewrite takes an exclusive lock on the table once, at that first boot (a
-few thousand rows in `players`). Every boot after it finds the columns already
-zone-aware and does nothing, and a conversion interrupted part way through
-finishes the remaining columns on the next boot. If the database role lacks
-`ALTER` on the table, boot fails with `migrate naive timestamps: ...` instead
-of starting against a schema it cannot trust — grant `ALTER` and restart.
-SQLite needs none of this: it has no zone-aware type, and the DDL translation
-already folds `TIMESTAMPTZ` back to `TIMESTAMP` there.
+Restoring the player and rent reports added two items to that boot-time schema
+work. Both are automatic on the next boot, additive, and idempotent, and the
+existing save data is not changed.
+
+- **`players.last_logon`**, a nullable column. It is filled once from
+  `players.updated_at` — the best timestamp the existing rows carry — so an
+  existing character reports the time of its most recent save. A row with no
+  `updated_at` stays `NULL` until that character next saves, and the save then
+  writes the current time into it.
+- **`object_saves`**, a table holding the C crash/rent-file identity and object
+  snapshot. Entering the game never creates a row: a snapshot is written only at
+  a real object-save boundary, so a character has no entry until its objects are
+  next saved.
 
 ## Empty password hashes
 
