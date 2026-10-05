@@ -1,0 +1,48 @@
+# src/act.wizard.c:2225-2231,2300-2319; indexed report and native pager.
+# depth-case: show.zones-valid
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+
+[setup:oracle]
+Zonereport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zonereport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show zones .
+show zones 1
+~dpclock pulse 600
+show zones 1
+show zones .
+show zones 0
+show zones
+<ENTER>
+b
+q
+show zones nonsense
+q

@@ -98,20 +98,29 @@ func cmdShow(s *Session, args []string) error {
 
 	switch fields[fieldIndex].name {
 	case "zones":
-		// The valid zone listing still needs a faithful Zone age/reset vehicle.
-		// Keep the confirmed invalid-number gate exact until that branch is
-		// proven; do not substitute the old invented reset report.
-		if value != "" {
-			zoneNumber, err := strconv.Atoi(value)
-			if err == nil {
-				for _, zone := range s.manager.world.GetAllZones() {
-					if zone.Number == zoneNumber {
-						return nil
-					}
-				}
-				s.Send("That is not a valid zone.\r\n")
-			}
+		// src/act.wizard.c:2225-2231, 2300-2319: live ages and C pager.
+		zones := s.manager.world.GetAllZones()
+		ages := s.manager.world.ZoneClockSnapshot().Ages
+		var report strings.Builder
+		selected := -1
+		if value == "." {
+			selected = s.manager.world.GetRoomZone(s.player.GetRoomVNum())
+		} else if value != "" && cIsNumber(value) {
+			selected = cAtoi(value)
 		}
+		matched := false
+		for _, zone := range zones {
+			if selected >= 0 && zone.Number != selected {
+				continue
+			}
+			matched = true
+			fmt.Fprintf(&report, "%3d %-30.30s Age: %3d; Reset: %3d (%1d); Top: %5d\r\n", zone.Number, zone.Name, ages[zone.Number], zone.Lifespan, zone.ResetMode, zone.TopRoom)
+		}
+		if selected >= 0 && !matched {
+			s.Send("That is not a valid zone.\r\n")
+			return nil
+		}
+		PageString(s, report.String())
 	case "player":
 		if value == "" {
 			s.Send("A name would help.\r\n")
