@@ -61,7 +61,7 @@ func cmdKill(s *Session, args []string) error {
 		"$N chops you to pieces!", "", game.ToChar)
 	game.Act(s.manager.world, false, s.player, victim, nil, nil,
 		"$n brutally slays $N!", "", game.ToNotVict)
-	s.manager.world.Instakill(tgt.Combatant, s.player, 0)
+	s.manager.world.Instakill(tgt.Combatant, s.player, combat.TYPE_SLASH)
 	return nil
 }
 

@@ -1057,7 +1057,9 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 	var moveErr error
 
 	w.mu.Lock()
-
+	stopped := false
+	var cleanupSequence uint64
+validateMove:
 	currentRoom, ok := w.rooms[p.GetRoom()]
 	if !ok {
 		w.mu.Unlock()
@@ -1106,17 +1108,42 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 		}
 
 		if moveErr == nil {
-			// Movement point cost — immortals move free (act.movement.c:210:
-			// GET_MOVE is only charged when GET_LEVEL(ch) < LVL_IMMORT).
-			moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
-			if p.Level < LVL_IMMORT && !p.SpendMove(moveCost) {
-				errMsg = "You are too exhausted.\r\n"
-				moveErr = fmt.Errorf("too exhausted")
-			} else {
+			// C char_from_room stops combat before relocating (handler.c:504-529).
+			// Only fighting movement needs the unlocked engine boundary.
+			if !stopped && p.GetFightingBody() != nil {
+				from := p.GetRoom()
+				sequence := combatRoomSequence(p)
+				cleanupSequence = sequence
+				registered := w.players[p.GetName()] == p
 				w.mu.Unlock()
 				w.stopRoomFights(p)
 				w.mu.Lock()
-				p.mu.Lock()
+				p.mu.RLock()
+				interrupted := p.RoomVNum != from || p.RoomEntrySequence != sequence || p.combatRetired || p.Flags&(1<<uint(plrExtractBit)) != 0 || p.fightingBody != nil
+				p.mu.RUnlock()
+				if interrupted || (registered && w.players[p.GetName()] != p) {
+					w.mu.Unlock()
+					return nil, fmt.Errorf("movement interrupted during combat cleanup")
+				}
+				stopped = true
+				// Refresh room/exit, boat/tunnel gates and cost after the lock gap.
+				goto validateMove
+			}
+			moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
+			p.mu.Lock()
+			if p.RoomVNum != currentRoom.VNum || p.combatRetired || p.Flags&(1<<uint(plrExtractBit)) != 0 || (stopped && (p.fightingBody != nil || p.RoomEntrySequence != cleanupSequence)) {
+				p.mu.Unlock()
+				w.mu.Unlock()
+				return nil, fmt.Errorf("movement interrupted during combat cleanup")
+			}
+			if p.Level < LVL_IMMORT && p.Move < moveCost {
+				p.mu.Unlock()
+				errMsg = "You are too exhausted.\r\n"
+				moveErr = fmt.Errorf("too exhausted")
+			} else {
+				if p.Level < LVL_IMMORT {
+					p.Move -= moveCost
+				}
 				p.RoomVNum = newRoom.VNum
 				p.mu.Unlock()
 

@@ -1,0 +1,131 @@
+# depth-case: combat.body-pairs
+# depth-case: combat.body-callbacks
+# depth-case: combat.body-retirement
+# Two real shipped trainee bodies, C room-list ordinal 1 newest/armed,
+# ordinal 2 older/bare. God is independent observer/configurator; first and
+# second are real PC peers. M/M/E arms only the latest duplicate, C slot16.
+# src/fight.c:207-254,1898-2032; src/handler.c:1144-1153.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-mob 16303 2 8105 80
+equip-object 16303 12120 1 16 80
+force-load 12120
+replace-room-exits 8105 none
+
+[setup:oracle]
+Duplicategod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Duplicategod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:first]
+Duplicatefirst
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:first]
+Duplicatefirst
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:second]
+Duplicatesecond
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:second]
+Duplicatesecond
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+transfer Duplicatefirst 8105
+transfer Duplicatesecond 8105
+set Duplicatefirst level 10
+set Duplicatesecond level 10
+set Duplicatefirst maxhit 5000
+set Duplicatefirst hit 5000
+set Duplicatesecond maxhit 5000
+set Duplicatesecond hit 5000
+set mob 1.trainee maxhit 5000
+set mob 1.trainee hit 5000
+set mob 2.trainee maxhit 5000
+set mob 2.trainee hit 5000
+set mob 1.trainee hitroll 100
+set mob 2.trainee hitroll 100
+
+[probe]
+look
+force Duplicatefirst kill 1.trainee
+force Duplicatesecond kill 2.trainee
+~dpclock pulse 20
+stat mob 1.trainee
+stat mob 2.trainee
+kill 1.trainee
+~dpclock pulse 20
+look
+stat mob 1.trainee
+stat Duplicatefirst
+stat Duplicatesecond
+~dpclock pulse 20
