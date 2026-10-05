@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+
 	"github.com/zax0rz/darkpawns/pkg/boards"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/events"
@@ -837,7 +839,11 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 		w.mobPerformMove(mob, dirMap[cmd])
 
 	case "follow":
-		mob.SetFollowing(args)
+		if leader, ok := w.followingActor(args).(combat.Combatant); ok {
+			mob.SetFollowingBody(leader)
+		} else {
+			mob.SetFollowing(args)
+		}
 
 	case "open":
 		openParts := strings.Fields(args)
@@ -1476,16 +1482,35 @@ func (w *World) SetFollower(followerName, leaderName string, followerIsMob bool)
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
+	var leader combat.Combatant
+	if p := w.players[leaderName]; p != nil {
+		leader = p
+	} else {
+		for _, m := range w.activeMobs {
+			if m.GetName() == leaderName {
+				leader = m
+				break
+			}
+		}
+	}
 	if followerIsMob {
 		for _, m := range w.activeMobs {
 			if m.GetName() == followerName {
-				m.SetFollowing(leaderName)
+				if leader != nil {
+					m.SetFollowingBody(leader)
+				} else {
+					m.SetFollowing(leaderName)
+				}
 				return nil
 			}
 		}
 	} else {
 		if p, ok := w.players[followerName]; ok {
-			p.SetFollowing(leaderName)
+			if leader != nil {
+				p.SetFollowingBody(leader)
+			} else {
+				p.SetFollowing(leaderName)
+			}
 			return nil
 		}
 	}

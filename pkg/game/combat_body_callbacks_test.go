@@ -318,3 +318,43 @@ func TestCombatBodyGroupRecipients(t *testing.T) {
 		t.Fatalf("member levels lost: shares=%v", amounts)
 	}
 }
+
+func TestCombatBodyNPCFollowing(t *testing.T) {
+	w, first, second := callbackBodyFixture(t)
+	w.mobs[302] = &parser.Mob{VNum: 302, Keywords: "follower", ShortDesc: "Follower", Level: 10}
+	follower, err := w.SpawnMobQuiet(302, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cb := w.WireCombatCallbacks()
+	for _, leader := range []*MobInstance{first, second} {
+		follower.SetFollowingBody(leader)
+		if got := cb.GetFollowing(follower); got != leader {
+			t.Fatalf("NPC master=%p want %p", got, leader)
+		}
+		ref := NewWorldScriptableAdapter(w).masterRef(follower, follower.GetFollowing())
+		if ref == nil || !ref.NPC || ref.ID != leader.GetID() {
+			t.Fatalf("master handle=%+v", ref)
+		}
+		// These group hooks were player-only before the migration and stay so.
+		if cb.GetMasterInRoom(follower, 1001) || cb.GetFellowFollowersInRoom(follower, 1001) || cb.CountGroupMembers(follower, 1001) != 0 {
+			t.Fatal("expanded unsupported NPC group hooks")
+		}
+		cb.StopFollowerOfMaster(follower, leader)
+		if cb.GetFollowing(follower) != nil || follower.GetFollowing() != "" {
+			t.Fatal("NPC master retained after detach")
+		}
+	}
+	// Live name-taking API captures its selected NPC leader once.
+	if err := w.SetFollower("Follower", "Guard", true); err != nil {
+		t.Fatal(err)
+	}
+	held := cb.GetFollowing(follower)
+	if held != first && held != second {
+		t.Fatal("name-taking follow did not retain an actual NPC")
+	}
+	w.executeMobCommand(302, "follow Guard")
+	if got := cb.GetFollowing(follower); got != first && got != second {
+		t.Fatal("mob follow command did not retain actual NPC")
+	}
+}

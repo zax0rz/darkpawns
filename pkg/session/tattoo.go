@@ -69,7 +69,7 @@ func useTattoo(ch *Session) bool {
 		// Spawn skull mob (vnum 9), charm it, add as follower
 		// Source: src/tattoo.c
 		if mob, err := ch.manager.world.SpawnMob(9, ch.player.RoomVNum); err == nil {
-			mob.SetFollowing(ch.player.Name)
+			mob.SetFollowingBody(ch.player)
 			mob.SetLevel(1)
 			mob.SetAffected(3) // AFF_CHARM bit
 			broadcastToRoom(ch, "$n's tattoo glows brightly for a second, and a skull appears!")

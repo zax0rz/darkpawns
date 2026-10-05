@@ -37,6 +37,7 @@ add('defense-sleep','pkg/combat/engine.go',' || observer.GetPosition() <= PosSle
 add('group-recipient','pkg/combat/fight_core.go','PerformGroupGain(memberName, victim, base)','PerformGroupGain(leader, victim, base)','./pkg/game','TestCombatBodyGroupRecipients')
 add('direct-text','pkg/combat/callbacks.go','callbacks != nil && callbacks.SendText != nil','false','./pkg/combat','TestCombatBodyDirectText')
 add('follower-detach','pkg/game/follow.go','leader := asActor(w.combatFollowingBody(ch))','leader := w.followingActor(ch.GetFollowing())','./pkg/session','TestCombatBodyFollowerDetachMessages')
+add('npc-follow','pkg/game/combat_wire.go','case *MobInstance:\n\t\tbody.mu.RLock()','case *MobInstance:\n return nil;body.mu.RLock()','./pkg/game','TestCombatBodyNPCFollowing')
 (args.output/'HEAD.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True))
 for label,file,before,after,package,test in controls:
  if args.only and label not in args.only.split(','):continue

@@ -74,7 +74,7 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 	if !mountMob.IsAffected(affCharm) {
 		mountMob.SetAffected(affCharm)
 	}
-	mountMob.SetFollowing(ch.Name)
+	mountMob.SetFollowingBody(ch)
 	ch.MountName = mountMob.GetName()
 	ch.SetAffect(affMounted, true)
 	ch.SendMessage("You hop on your mount.\r\n")

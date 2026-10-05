@@ -754,7 +754,13 @@ func (w *World) combatFollowingBody(body combat.Combatant) combat.Combatant {
 			return retained
 		}
 	case *MobInstance:
-		name = body.GetFollowing()
+		body.mu.RLock()
+		retained := body.followingBody
+		name = body.Following
+		body.mu.RUnlock()
+		if retained != nil {
+			return retained
+		}
 	default:
 		return nil
 	}

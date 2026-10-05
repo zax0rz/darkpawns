@@ -127,3 +127,34 @@ go test ./...; go test ./pkg/game/...; golangci-lint run ./...;
 make fidelity-depth; make fidelity-units; make string-census; and the focused
 -race command above. The 21 compiled controls pass. No census was started for
 stack 2. Normal gate logs are step2-gate-*.txt alongside the retained triples.
+
+## Review follow-edge repair before stack 3
+
+NPC-led edges are reachable, so they are retained rather than classified away.
+C `src/utils.c:463-498` attaches the actual `struct char_data *leader` without
+an NPC-leader exclusion. `src/spells.c:406-458` rejects a charmed caster, not an
+NPC caster, and attaches a successful charm victim to that caster. In Go,
+`World.executeMobCommand`'s existing `follow` arm and `World.SetFollower` can
+attach an NPC leader. Both now retain the selected leader body once; known-body
+pet, tattoo and mount attachments do the same. String setters clear the retained
+reference on detach. `cmdUngroup` now uses that setter instead of leaving a stale
+private reference behind.
+
+`combatFollowingBody` feeds `GetFollowing` (charm redirect and master separation
+in engine/fight_core), following/master fields in the Lua bridge, and follower
+stop messages. Its group enumeration consumers feed group awards. The existing
+`GetMasterInRoom`, `GetFellowFollowersInRoom`, group recipient/count and follower
+enumeration hooks remain PC-only: they previously used GetPlayer on their input,
+so this repair does not certify or implement NPC group dispatch/assist. Go's
+quiet spell adapter also retains its existing PC-leader gate. The NPC command
+surface and the broader social/movement follower scans remain their separately
+owned surfaces, audited again in stack 3 where cleanup uses actual bodies.
+
+MobInstance now has a transient followingBody reference, protected by its own
+mutex just like Player. There is no registry or persisted field. Tests use two
+same-description NPC leaders, assert the exact combat callback and kind/ID Lua
+master, exercise both existing name-taking attachment paths, and verify detach
+and PC-only defaults. The `npc-follow` compiled revert triple restores the old
+nil result and fails the actual-leader assertion; logs are in
+`step2-npc-follow-triple/`. Full normal and race gates pass again in
+`step2-npc-follow-gate-*.txt`. The replay now contains 22 controls.

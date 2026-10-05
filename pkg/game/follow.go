@@ -57,21 +57,21 @@ func CircleFollow(w *World, ch *Player, victim *Player) bool {
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:463-475
 func AddFollowerQuiet(ch *Player, leader *Player) {
-	ch.SetFollowing(leader.Name)
+	ch.SetFollowingBody(leader)
 }
 
 // AddFollowerQuietMob adds a mob as a follower of a player (charmed pet, etc.)
 // without sending messages.
 // C: src/utils.c:463-475
 func AddFollowerQuietMob(mob *MobInstance, leader *Player) {
-	mob.SetFollowing(leader.Name)
+	mob.SetFollowingBody(leader)
 }
 
 // AddFollowerMob adds a mob as a follower with C's visible follower notices.
 // C add_follower sends TO_VICT and TO_NOTVICT act() messages; its TO_CHAR
 // message targets the NPC itself and is not player-visible.
 func AddFollowerMob(w *World, mob *MobInstance, leader *Player) {
-	mob.SetFollowing(leader.Name)
+	mob.SetFollowingBody(leader)
 	Act(w, true, mob, leader, nil, nil, "$n starts following you.", "", ToVict)
 	Act(w, true, mob, leader, nil, nil, "$n starts to follow $N.", "", ToNotVict)
 }
@@ -80,7 +80,7 @@ func AddFollowerMob(w *World, mob *MobInstance, leader *Player) {
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:480-498
 func AddFollower(w *World, ch *Player, leader *Player) {
-	ch.SetFollowing(leader.Name)
+	ch.SetFollowingBody(leader)
 
 	Act(w, false, ch, leader, nil, nil,
 		"You now follow $N.", "", ToChar)
