@@ -108,23 +108,34 @@ func paginate(text string) [][]byte {
 //   - Otherwise the pages are stored, pager mode is entered, and page 0 is
 //     sent. The terminal's command flush then calls SendPrompt for C's pager
 //     prompt (comm.c:637-642).
-func PageString(s *Session, text string) {
+func PageString(s *Session, text string) { pageString(s, text, false) }
+
+// pageLiteralString uses C bytes verbatim; ordinary PageString remains unchanged.
+func pageLiteralString(s *Session, text string) { pageString(s, text, true) }
+
+func pageString(s *Session, text string, literal bool) {
+	s.pagerLiteral = literal
+	defer func() {
+		if s.pagerCount == 0 {
+			s.pagerLiteral = false
+		}
+	}()
 	if text == "" {
-		s.Send("")
+		s.sendPageText("")
 		return
 	}
 	// Structured-data / agent clients: whole text, no pager. (C has no analog —
 	// every descriptor is a terminal — but the brief requires gating these
 	// clients out, and they need the full payload.)
 	if s.wantsStructuredData && !s.browserTerminal.Load() {
-		s.Send(text)
+		s.sendPageText(text)
 		return
 	}
 
 	pages := paginate(text)
 	if len(pages) <= 1 {
 		// At most one page: send whole, no prompt, no pager mode.
-		s.Send(text)
+		s.sendPageText(text)
 		return
 	}
 
@@ -193,7 +204,7 @@ func pageItoa(n int) string {
 // page just shown (1-based = the advanced pagerPage).
 func (s *Session) displayPage() {
 	idx := s.pagerPage
-	s.Send(string(s.pagerPages[idx]))
+	s.sendPageText(string(s.pagerPages[idx]))
 	if idx+1 >= s.pagerCount {
 		// Last page: auto-exit the pager (C:506-516).
 		s.exitPager()
@@ -204,6 +215,7 @@ func (s *Session) displayPage() {
 
 // exitPager clears all pager state (C: FREE(showstr_vector); showstr_count = 0).
 func (s *Session) exitPager() {
+	s.pagerLiteral = false
 	s.pagerPages = nil
 	s.pagerCount = 0
 	s.pagerPage = 0
@@ -303,4 +315,12 @@ func parsePageNum(s string) int {
 		n = n*10 + int(c-'0')
 	}
 	return n
+}
+
+func (s *Session) sendPageText(text string) {
+	if s.pagerLiteral {
+		s.sendLiteralText(text)
+	} else {
+		s.Send(text)
+	}
 }

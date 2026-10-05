@@ -53,6 +53,24 @@ func (w *World) SnapshotShops() []Shop {
 	return shops
 }
 
+// SnapshotShopsInIndexOrder preserves boot_the_shops append order and live
+// SEDIT insertion order (src/shop.c:1148-1212). It does not sort by VNUM.
+func (w *World) SnapshotShopsInIndexOrder() []Shop {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	sm, ok := w.shopManager.(*ShopManager)
+	if !ok {
+		return nil
+	}
+	shops := make([]Shop, 0, len(sm.shops))
+	for _, shop := range sm.shops {
+		if shop != nil {
+			shops = append(shops, CloneShop(*shop))
+		}
+	}
+	return shops
+}
+
 // protoToShop maps the parser shape to the live manager shape. The first room
 // is retained in RoomVNum for the existing command-layer lookup adapter; the
 // full list remains available to the editor and writer.

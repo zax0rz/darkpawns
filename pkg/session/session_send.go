@@ -139,21 +139,30 @@ func (s *Session) sendCurrentRoomState() {
 	s.sendRoomObservation(roomVNum, false, "")
 }
 
-func (s *Session) SendMessage(message string) error {
+func (s *Session) SendMessage(message string) error { return s.sendTextMessage(message, false) }
+
+// sendLiteralText preserves C bytes while retaining text bookkeeping and snoop.
+func (s *Session) sendLiteralText(message string) { _ = s.sendTextMessage(message, true) }
+
+func (s *Session) sendTextMessage(message string, literal bool) error {
+	eventType := "text"
+	if literal {
+		eventType = "raw"
+	}
 	msg, err := json.Marshal(ServerMessage{
 		Type: MsgEvent,
 		Data: EventData{
-			Type: "text",
+			Type: eventType,
 			Text: message,
 		},
 	})
 	if err != nil {
 		return fmt.Errorf("marshal error: %w", err)
 	}
-	if s.stageHeartbeat(msg, message, true) {
+	if s.stageHeartbeatText(msg, message, true, literal) {
 		return nil
 	}
-	s.forwardSnoopOutput(message)
+	s.forwardSnoopText(message, literal)
 	s.notePlayerOutput()
 	// RLock lets concurrent sends proceed but blocks the exclusive close, so we
 	// never send on a closed channel (which panics even inside a select). If the
@@ -197,7 +206,9 @@ func (s *Session) sendGuarded(message []byte) {
 // flushed descriptor output to its snooper with a percent delimiter; the
 // session transport has no shared descriptor buffer, so each player-facing
 // message is the smallest faithful flush unit available here.
-func (s *Session) forwardSnoopOutput(message string) {
+func (s *Session) forwardSnoopOutput(message string) { s.forwardSnoopText(message, false) }
+
+func (s *Session) forwardSnoopText(message string, literal bool) {
 	if s == nil || s.manager == nil || message == "" {
 		return
 	}
@@ -205,7 +216,7 @@ func (s *Session) forwardSnoopOutput(message string) {
 	snooper := s.snoopBy
 	s.manager.snoopMu.RUnlock()
 	if snooper != nil && snooper != s {
-		snooper.Send("% " + message + "%%")
+		_ = snooper.sendTextMessage("% "+message+"%%", literal)
 	}
 }
 
