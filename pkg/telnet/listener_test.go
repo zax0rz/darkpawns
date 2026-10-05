@@ -132,14 +132,14 @@ func TestHandleConnQuitFlushesGoodbyeBeforeDisconnect(t *testing.T) {
 		transcript <- output
 	}()
 
-	const playerName = "guest_quit_flush"
+	playerName := "guest"
 	if _, err := client.Write([]byte(playerName + "\r\n")); err != nil {
 		t.Fatal(err)
 	}
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {
-		if _, ok := manager.GetSession(playerName); ok {
+		if _, ok := registeredGuest(manager); ok {
 			break
 		}
 		if time.Now().After(deadline) {
@@ -769,17 +769,19 @@ func TestTelnetQuietSessionNotReaped(t *testing.T) {
 	// Wait for the banner and "By what name" prompt.
 	time.Sleep(100 * time.Millisecond)
 
-	// Use a non-generic guest name so we can look up the session deterministically.
-	playerName := "guest_telnet_quiet"
+	// Guests always get a generated name; find it once the login registers.
+	playerName := "guest"
 	_, _ = client.Write([]byte(playerName + "\r\n"))
 
 	// Wait for guest login to complete and enter the input loop.
 	time.Sleep(300 * time.Millisecond)
 
-	s, ok := manager.GetSession(playerName)
-	if !ok {
+	guestName, found := registeredGuest(manager)
+	s, ok := manager.GetSession(guestName)
+	if !found || !ok {
 		t.Fatal("telnet guest session not registered")
 	}
+	playerName = guestName
 	if !s.IsAuthenticated() {
 		t.Fatal("telnet guest session not authenticated")
 	}
@@ -885,14 +887,14 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 		transcript <- output
 	}()
 
-	const playerName = "guest_prompt_order"
+	playerName := "guest"
 	if _, err := client.Write([]byte(playerName + "\r\n")); err != nil {
 		t.Fatal(err)
 	}
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {
-		if _, ok := manager.GetSession(playerName); ok {
+		if _, ok := registeredGuest(manager); ok {
 			break
 		}
 		if time.Now().After(deadline) {
@@ -1085,4 +1087,15 @@ func TestEffectiveBanHostsRetainsIdentity(t *testing.T) {
 	if level != game.BanNot || len(hosts) != 2 || hosts[0] != "127.0.0.1" || hosts[1] != "client.example" {
 		t.Fatalf("entry identity lost: level=%d hosts=%q", level, hosts)
 	}
+}
+
+// registeredGuest returns the generated name of the single registered guest.
+// Guests never keep a typed name, so tests find them by the Guest_ prefix.
+func registeredGuest(manager *session.Manager) (string, bool) {
+	for _, cs := range manager.Sessions() {
+		if p, ok := cs.GetPlayer().(*game.Player); ok && p != nil && strings.HasPrefix(p.Name, "Guest_") {
+			return p.Name, true
+		}
+	}
+	return "", false
 }

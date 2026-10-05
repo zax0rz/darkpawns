@@ -2,6 +2,7 @@ package session
 
 import (
 	"encoding/json"
+	"strings"
 	"sync"
 	"testing"
 
@@ -50,8 +51,8 @@ func TestGuestLoginAndRestrictions(t *testing.T) {
 	if !s.authenticated {
 		t.Errorf("expected session to be marked as authenticated")
 	}
-	if s.playerName != "guest_test_user" {
-		t.Errorf("expected player name to be guest_test_user, got %s", s.playerName)
+	if !strings.HasPrefix(s.playerName, "Guest_") {
+		t.Errorf("expected a generated Guest_ name, got %s", s.playerName)
 	}
 
 	player := s.player

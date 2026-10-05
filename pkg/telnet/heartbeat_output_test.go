@@ -54,7 +54,7 @@ func TestHeartbeatOutputTelnetIdleBoundary(t *testing.T) {
 		peer.GetPlayer().SetLevel(game.LVL_IMPL)
 		peers = append(peers, peer)
 	}
-	if err := peers[1].HandleMessage([]byte(`{"type":"command","data":{"command":"snoop","args":["guest_pipeidler"]}}`)); err != nil {
+	if err := peers[1].HandleMessage([]byte(`{"type":"command","data":{"command":"snoop","args":["` + p.Name + `"]}}`)); err != nil {
 		t.Fatal(err)
 	}
 	var peerTranscripts []chan []byte
@@ -93,7 +93,7 @@ func TestHeartbeatOutputTelnetIdleBoundary(t *testing.T) {
 	for i, peer := range peers {
 		peer.CloseSend()
 		got := string(<-peerTranscripts[i])
-		if strings.Count(got, "Guest_pipeidler has lost") != 1 || strings.Count(got, "> ") != 1 || strings.Count(got, "suns slowly disappear") != 1 {
+		if strings.Count(got, p.Name+" has lost") != 1 || strings.Count(got, "> ") != 1 || strings.Count(got, "suns slowly disappear") != 1 {
 			t.Fatalf("telnet room listener %d received %q", i, got)
 		}
 		if i == 1 && strings.Count(got, "Your victim is no longer among us.") != 1 {
