@@ -1005,19 +1005,15 @@ func CmdShoot(s SessionInterface, args []string) error {
 		return s.SendMessage("You feel too peaceful to contemplate violence.\r\n")
 	}
 
-	// C falls back to the first person in the destination room when the named
-	// lookup misses. Preserve the explicit no-target branch for now; the
-	// hit/miss state machine remains a separate depth case.
-	targetInfo, found := world.ResolveCharInRoomAt(ch, exit.ToRoom, targetName)
-	if !found {
-		// C do_shoot's no-target branch drops the projectile with
-		// obj_to_room (act.offensive.c:870), which prepends.
+	// get_char_room does not apply CAN_SEE; its named miss falls back to
+	// the actual room-list head (src/handler.c:865-881; act.offensive.c:862-864).
+	target := world.ResolveShootTarget(exit.ToRoom, targetName)
+	if target == nil {
 		if err := world.MoveObjectToRoomFront(projectile, exit.ToRoom); err != nil {
 			return fmt.Errorf("drop projectile in destination room: %w", err)
 		}
 		return s.SendMessage("Twang...\r\n")
 	}
-	target := targetInfo.Combatant
 	if mob, ok := target.(*game.MobInstance); ok && mob.HasFlag(game.MobSentinel) {
 		return s.SendMessage("You cannot see well enough to aim...\r\n")
 	}
