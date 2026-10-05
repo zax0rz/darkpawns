@@ -1,0 +1,83 @@
+# C-first do_gen_comm color vehicle (DP-1384), color normal. Both clients sit at
+# COLOR_LEV C_NRM (2): the speaker's echo is NOT colored (it needs C_CMP, the
+# two color bits), while each listener line IS (it needs only C_NRM). This is
+# the level-gate discriminator for the two different thresholds in C
+# (src/act.comm.c:1264 versus 1290). keep-ansi compares the raw bytes.
+
+# depth-case: channels.color-normal-echo-plain
+# depth-case: channels.color-normal-listener-colored
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Colgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Colgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Colwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Colwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Colwatch 8162
+color normal
+force Colwatch color normal
+
+[probe]
+newbie color probe one
+holler color probe two
+gossip color probe three
+grats color probe four
+auction color probe five
+shout color probe six

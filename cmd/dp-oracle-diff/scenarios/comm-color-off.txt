@@ -1,0 +1,83 @@
+# C-first do_gen_comm color vehicle (DP-1384), color off. Both clients sit at
+# COLOR_LEV C_OFF (0), so neither the speaker echo (C_CMP gate) nor a listener
+# line (C_NRM gate) may carry any color byte, even though com_msgs[subcmd][3]
+# has one for every channel (src/act.comm.c:1257, 1264, 1290-1295). keep-ansi
+# proves the port invents none.
+
+# depth-case: channels.color-off-echo
+# depth-case: channels.color-off-listener
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Colgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Colgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Colwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Colwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Colwatch 8162
+color off
+force Colwatch color off
+
+[probe]
+newbie color probe one
+holler color probe two
+gossip color probe three
+grats color probe four
+auction color probe five
+shout color probe six

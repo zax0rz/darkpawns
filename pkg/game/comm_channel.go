@@ -18,6 +18,18 @@ type gossipEntry struct {
 
 const maxGossipHistory = 25
 
+// C's raw color bytes and the COLOR_LEV thresholds do_gen_comm gates on
+// (src/screen.h:32-46). com_msgs[subcmd][3] carries one per channel.
+const (
+	ansiReset   = "\x1b[0m"  // KNRM
+	ansiYellow  = "\x1b[33m" // KYEL
+	ansiGreen   = "\x1b[32m" // KGRN
+	ansiMagenta = "\x1b[35m" // KMAG
+
+	colorNormal   = 2 // C_NRM
+	colorComplete = 3 // C_CMP
+)
+
 // doShout keeps special-procedure callers on the canonical channel path.
 func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
 	w.DoChannel(ch, arg, "shout")
@@ -28,6 +40,7 @@ type channelSpec struct {
 	verb             string
 	blocked          string
 	offMessage       string
+	color            string
 	senderOffFlag    int
 	recipientOffFlag int
 	minimumLevel     int
@@ -41,6 +54,7 @@ var communicationChannels = map[string]channelSpec{
 		verb:             "shout",
 		blocked:          "You cannot shout!!",
 		offMessage:       "Turn off your noshout flag first!",
+		color:            ansiYellow, // KYEL
 		senderOffFlag:    -1,
 		recipientOffFlag: PrfDeaf,
 		minimumLevel:     levelCanShout,
@@ -51,6 +65,7 @@ var communicationChannels = map[string]channelSpec{
 		verb:             "gossip",
 		blocked:          "You cannot gossip!!",
 		offMessage:       "You aren't even on the channel!",
+		color:            ansiYellow, // KYEL
 		senderOffFlag:    PrfNoGossip,
 		recipientOffFlag: PrfNoGossip,
 		minimumLevel:     levelCanShout,
@@ -59,6 +74,7 @@ var communicationChannels = map[string]channelSpec{
 		verb:             "auction",
 		blocked:          "You cannot auction!!",
 		offMessage:       "You aren't even on the channel!",
+		color:            ansiMagenta, // KMAG
 		senderOffFlag:    PrfNoAuctions,
 		recipientOffFlag: PrfNoAuctions,
 		minimumLevel:     levelCanShout,
@@ -67,6 +83,7 @@ var communicationChannels = map[string]channelSpec{
 		verb:             "congrat",
 		blocked:          "You cannot congratulate!",
 		offMessage:       "You aren't even on the channel!",
+		color:            ansiGreen, // KGRN
 		senderOffFlag:    PrfNoGratz,
 		recipientOffFlag: PrfNoGratz,
 		minimumLevel:     levelCanShout,
@@ -74,6 +91,7 @@ var communicationChannels = map[string]channelSpec{
 	"holler": {
 		verb:          "holler",
 		blocked:       "You cannot holler!!",
+		color:         ansiYellow, // KYEL
 		senderOffFlag: -1,
 		minimumLevel:  levelCanShout,
 		moveCost:      hollerMoveCost,
@@ -82,9 +100,47 @@ var communicationChannels = map[string]channelSpec{
 		verb:             "newbie",
 		blocked:          "You cannot newbie!",
 		offMessage:       "You aren't even on the channel!",
+		color:            ansiYellow, // KYEL
 		senderOffFlag:    PrfNoNewbie,
 		recipientOffFlag: PrfNoNewbie,
 	},
+}
+
+// channelColorLine applies do_gen_comm's listener color sandwich to one
+// already-rendered line: color_on + line + KNRM when the recipient's
+// COLOR_LEV reaches openLevel, else the line untouched
+// (src/act.comm.c:1290-1295).
+func channelColorLine(to Actor, openLevel int, color, line string) string {
+	if color == "" || channelRecipientLevel(to) < openLevel {
+		return line
+	}
+	return color + line + ansiReset
+}
+
+// channelColorWrap is channelColorLine as a channelActWrapped hook. The
+// speaker's own echo sets resetBeforeNewline: C's sprintf folds KNRM into the
+// string, so the reset lands before act appends the line ending, while a
+// listener's KNRM is a separate send_to_char after act's whole line
+// (src/act.comm.c:1262-1295).
+func channelColorWrap(openLevel int, color string, resetBeforeNewline bool) func(Actor, string) string {
+	return func(to Actor, line string) string {
+		if color == "" || channelRecipientLevel(to) < openLevel {
+			return line
+		}
+		if resetBeforeNewline {
+			return color + strings.TrimSuffix(line, "\r\n") + ansiReset + "\r\n"
+		}
+		return color + line + ansiReset
+	}
+}
+
+// channelRecipientLevel is COLOR_LEV(to). A recipient without a descriptor
+// (an NPC) is level 0 and is never colored.
+func channelRecipientLevel(to Actor) int {
+	if player, ok := to.(*Player); ok && player != nil {
+		return colorLevel(player)
+	}
+	return 0
 }
 
 // DoChannel implements C do_gen_comm for player-facing channels. It extends
@@ -134,7 +190,12 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		communicationSend(ch, "Okay.")
 	} else {
-		w.channelSend(channel, ch, fmt.Sprintf("You %s, '%s'", spec.verb, argument))
+		// The speaker's own echo gates on C_CMP and folds KNRM into the
+		// sprintf, so the reset lands before act appends the line ending
+		// (src/act.comm.c:1262-1268).
+		w.channelActWrapped(channel, false, ch, nil,
+			fmt.Sprintf("You %s, '%s'", spec.verb, argument), ToChar|ToSleep,
+			channelColorWrap(colorComplete, spec.color, true))
 	}
 
 	senderRoom := w.GetRoomInWorld(ch.GetRoom())
@@ -152,7 +213,11 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 				continue
 			}
 		}
-		w.channelAct(channel, false, ch, target, fmt.Sprintf("$n %ss, '%s'", spec.verb, argument), ToVict|ToSleep)
+		// A listener's color gates on C_NRM and its KNRM follows act's whole
+		// line (src/act.comm.c:1290-1295).
+		w.channelActWrapped(channel, false, ch, target,
+			fmt.Sprintf("$n %ss, '%s'", spec.verb, argument), ToVict|ToSleep,
+			channelColorWrap(colorNormal, spec.color, false))
 	}
 
 	if spec.verb == "gossip" {
@@ -182,6 +247,7 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 	}
 	argument = deleteANSIControls(argument)
 	// act("$n gossips, '%s'", ..., TO_VICT) capitalizes the line (act.comm.c:1273, 1293).
+	spec := communicationChannels["gossip"]
 	message := capitalize(fmt.Sprintf("%s gossips, '%s'\r\n", mobName(me), argument))
 	for _, player := range w.GetAllPlayers() {
 		if player.GetFlags()&(1<<uint(PrfNoGossip)) != 0 ||
@@ -189,8 +255,12 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 			w.communicationRoomSoundproof(player.GetRoom()) {
 			continue
 		}
-		player.SendMessage(message)
-		w.mirrorChannelLine(player, "gossip", mobName(me), message)
+		// An NPC author's descriptor loop colors each listener exactly as a
+		// player author's does: send_to_char(color_on) / act() / KNRM
+		// (src/act.comm.c:1288-1295).
+		line := channelColorLine(player, colorNormal, spec.color, message)
+		player.SendMessage(line)
+		w.mirrorChannelLine(player, "gossip", mobName(me), line)
 	}
 	w.updateGossipHistory(mobName(me), argument, 0)
 }
