@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -72,4 +73,30 @@ func TestShootFallbackReachesSentinelWithoutConsumingProjectile(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertShootRefusal(t, s, arrow, "nobody", "You cannot see well enough to aim...\r\n")
+}
+
+func TestShootPCLevelWindow(t *testing.T) {
+	for _, level := range []int{9, 10, 30, 31} {
+		t.Run(fmt.Sprint(level), func(t *testing.T) {
+			s, arrow := newShootGateSession(t)
+			target := game.NewPlayer(2, "Victim", 1002)
+			target.SetLevel(level)
+			if err := s.world.AddPlayer(target); err != nil {
+				t.Fatal(err)
+			}
+			if level == 9 || level == 31 {
+				assertShootRefusal(t, s, arrow, "Victim", "Maybe that isn't such a great idea...\r\n")
+			} else {
+				// Only the gate is claimed here; outcomes stay blocked for Train 2.
+				dprng.ResetStream(71)
+				if err := CmdShoot(s, []string{"arrow", "north", "Victim"}); err != nil {
+					t.Fatal(err)
+				}
+				output := strings.Join(s.getMessages(), "")
+				if output == "Maybe that isn't such a great idea...\r\n" || output == "Twang...\r\n" || output == "" {
+					t.Fatalf("allowed boundary %d did not reach the target outcome: %q", level, output)
+				}
+			}
+		})
+	}
 }
