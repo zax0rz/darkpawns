@@ -247,6 +247,7 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 		// char_to_store saves these base combat scalars, regardless of the
 		// set acknowledgement (db.c:2608-2610). The offline object is separate.
 		target.player.AC, target.player.Hitroll, target.player.Damroll = 100, 0, 0
+		target.player.AccountCharacterSave()
 		r, err := db.PlayerToRecord(target.player, nil)
 		if err == nil {
 			r.OlcZone = target.record.OlcZone
@@ -627,6 +628,16 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 	case "name":
 		old := p.Name
 		p.Name = value
+		// R3b: do_set case 33 deletes the old object and alias files in
+		// this order before saving the renamed character (src/act.wizard.c:2888-2895).
+		if s.manager.db != nil {
+			if err := db.DeleteObjectSave(s.manager.db, old); err != nil {
+				slog.Error("set name: delete old object save failed", "name", old, "error", err)
+			}
+		}
+		if err := game.DeleteAliases(old); err != nil {
+			slog.Error("set name: delete old aliases failed", "name", old, "error", err)
+		}
 		if target.session != nil {
 			target.session.playerName = value
 		}

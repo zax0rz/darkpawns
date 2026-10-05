@@ -213,7 +213,7 @@ func cmdScore(s *Session) error {
 	}
 
 	// 9. Play time (from C line 1279)
-	pt := game.PlayingTime(p.ConnectedAt, p.PlayedDuration)
+	pt := p.PlayingTime()
 	fmt.Fprintf(&buf, "You have been playing for %d days and %d hours.\r\n", pt.Day, pt.Hours)
 
 	// 10. Veteran status (from C line 1281)

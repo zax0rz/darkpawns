@@ -100,6 +100,11 @@ func (s *Session) leaveGameToMenu(rent bool) {
 	p := s.player
 	if rent {
 		w.RentOut(p)
+		if w.ObjectSaver != nil {
+			if err := w.ObjectSaver(p, 2); err != nil {
+				slog.Error("rent snapshot failed", "player", p.Name, "error", err)
+			}
+		}
 		p.RentedOut = true
 		// The rent save is also the extraction save (handler.c:1162): the
 		// record carries the in-memory load room DoQuit just updated.

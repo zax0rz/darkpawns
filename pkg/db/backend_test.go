@@ -71,7 +71,7 @@ func catalog(t *testing.T, database *DB) (tables, indexes map[string]bool) {
 	return tables, indexes
 }
 
-var gameStoreTables = []string{"players"}
+var gameStoreTables = []string{"players", "object_saves"}
 
 // gameStoreIndexes is every index the game store creates, counted by name.
 var gameStoreIndexes = []string{

@@ -18,6 +18,7 @@ import (
 // A PLR_LOADROOM-flagged character always carries its chosen room instead —
 // save_char skips the override (db.c:2387).
 func (s *Session) playerRecordForSave(p *game.Player, loadRoom int) (*db.PlayerRecord, error) {
+	p.AccountCharacterSave()
 	record, err := db.PlayerToRecord(p, nil)
 	if err != nil {
 		return nil, err
@@ -75,7 +76,13 @@ func (s *Session) creationRecord(live *game.Player, advanced bool, entering bool
 		p.Hunger, p.Thirst, p.Drunk = 24, 24, 24
 		p.Conditions[game.CondFull], p.Conditions[game.CondThirst], p.Conditions[game.CondDrunk] = 24, 24, 24
 	}
-	r, err = s.playerRecordForSave(p, game.LoadRoomNowhere)
+	// This is a scalar phase projection of the same save, not a second
+	// char_to_store boundary: retain the live accounting timestamp.
+	olcZone := r.OlcZone
+	r, err = db.PlayerToRecord(p, nil)
+	if err == nil {
+		r.OlcZone = olcZone
+	}
 	return r, err
 }
 
@@ -100,12 +107,4 @@ func (s *Session) storedPlayer(name string) (*game.Player, *db.PlayerRecord, err
 	}
 	p, err := db.RecordToPlayer(r, s.manager.world)
 	return p, r, err
-}
-
-func (s *Session) storedPlayerExists(name string) bool {
-	if !s.manager.hasDB {
-		return false
-	}
-	r, err := s.manager.db.GetPlayer(name)
-	return err == nil && r != nil
 }

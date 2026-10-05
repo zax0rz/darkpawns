@@ -1,0 +1,56 @@
+# C src/objsave.c:275-327,673-680,782-823: independent object snapshot.
+# depth-case: show.rent-valid
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+spawn-obj 8032 1 8004 80
+spawn-obj 8010 1 8004 80
+spawn-obj 8019 1 8004 80
+
+[setup:oracle]
+Shopreport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Shopreport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[warmup]
+set file Shopreport gold 0
+get bag
+get bread
+put bread bag
+get tunic
+wear tunic
+
+[probe]
+show rent Shopreport
+save
+show rent Shopreport
+remove tunic
+show rent Shopreport
+save
+show rent Shopreport

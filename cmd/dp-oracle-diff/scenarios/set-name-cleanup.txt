@@ -1,0 +1,78 @@
+# R3b/R5h: src/act.wizard.c:2888-2895 old object-save and alias deletion.
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Archiveactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Archiveactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Archivepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Archivepeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set file Archivepeer gold 0
+send:peer alias oldalias score
+send:peer save
+teleport Archivepeer 8004
+send:peer quit
+send:peer 0
+~dpclock pulse 1
+
+[peer-drop]
+peer
+
+[probe]
+show rent Archivepeer
+set file Archivepeer name Archiveother
+show rent Archivepeer
+show rent Archiveother

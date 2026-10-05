@@ -71,6 +71,7 @@ func (db *DB) execDDL(stmt string) error {
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
 	ID          int
+	LastLogon   int64 // C char_file_u.last_logon: last character save, not connection age
 	Name        string
 	Password    string // hashed
 	Description string
@@ -202,6 +203,7 @@ func (db *DB) Close() error {
 // AddColumnIfNotExists, which looks each column up in pragma_table_info first
 // because SQLite's ALTER TABLE has no IF NOT EXISTS.
 var playersMigrationColumns = []string{
+	"last_logon INTEGER",
 	"strength INTEGER DEFAULT 10",
 	"class INTEGER DEFAULT 3",
 	"race INTEGER DEFAULT 0",
@@ -295,13 +297,18 @@ func (db *DB) createTables() error {
 		}
 	}
 
+	// Approved legacy backfill: retain the best existing timestamp, once.
+	if _, err := db.exec("UPDATE players SET last_logon=CAST(strftime('%s', updated_at) AS INTEGER) WHERE last_logon IS NULL"); err != nil {
+		return err
+	}
+
 	for _, stmt := range stmts[1:] {
 		if err := db.execDDL(stmt); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return db.execDDL(`CREATE TABLE IF NOT EXISTS object_saves(identity TEXT PRIMARY KEY,kind INTEGER NOT NULL,objects JSON NOT NULL)`)
 }
 
 // addColumnIfNotExists applies one migration column to the players table
@@ -318,7 +325,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		       hunger, thirst, drunk, hometown, COALESCE(olc_zone, 0),
 		       inventory, equipment, COALESCE(character_data, '{}'),
-		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COUNT(*) OVER ()
+		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COALESCE(last_logon,0), COUNT(*) OVER ()
 		FROM players WHERE lower(name) = lower(?)
 	`
 	var p PlayerRecord
@@ -330,7 +337,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
 		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown, &p.OlcZone,
 		&p.Inventory, &p.Equipment, &p.CharacterData,
-		&p.FailedLoginAttempts, &lockedUntil, &p.Description, &p.Title, &matches,
+		&p.FailedLoginAttempts, &lockedUntil, &p.Description, &p.Title, &p.LastLogon, &matches,
 	)
 	if lockedUntil.Valid {
 		p.LockedUntil = &lockedUntil.Time
@@ -384,15 +391,15 @@ func playerInsert(p *PlayerRecord) (string, []any) {
 		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		   hunger, thirst, drunk, hometown,
-		   olc_zone, inventory, equipment, description, title, character_data)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+		   olc_zone, inventory, equipment, description, title, character_data, last_logon)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		RETURNING id
 	`
 	return query, []any{
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
-		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData),
+		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.LastLogon,
 	}
 }
 
@@ -496,7 +503,7 @@ func playerUpdate(p *PlayerRecord) (string, []any) {
 		  class=?, race=?,
 		  stat_str=?, stat_str_add=?, stat_int=?, stat_wis=?, stat_dex=?, stat_con=?, stat_cha=?,
 		  hunger=?, thirst=?, drunk=?, hometown=?, olc_zone=?,
-		  inventory=?, equipment=?, description=?, title=?, character_data=?, updated_at=CURRENT_TIMESTAMP
+		  inventory=?, equipment=?, description=?, title=?, character_data=?, last_logon=?, updated_at=CURRENT_TIMESTAMP
 		WHERE id=?
 	`
 	args := []any{
@@ -505,7 +512,7 @@ func playerUpdate(p *PlayerRecord) (string, []any) {
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown, p.OlcZone,
-		p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.ID,
+		p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.LastLogon, p.ID,
 	}
 	return query, args
 }
@@ -533,7 +540,7 @@ func SavePlayerIfCurrent(store GameStore, updated, original *PlayerRecord) error
 	}
 	query += " AND name IS ?"
 	args = append(args, original.Name)
-	columns := []string{"room_vnum", "level", "exp", "health", "max_health", "mana", "max_mana", "move", "max_move", "strength", "class", "race", "stat_str", "stat_str_add", "stat_int", "stat_wis", "stat_dex", "stat_con", "stat_cha", "hunger", "thirst", "drunk", "hometown", "olc_zone", "inventory", "equipment", "description", "title", "character_data"}
+	columns := []string{"room_vnum", "level", "exp", "health", "max_health", "mana", "max_mana", "move", "max_move", "strength", "class", "race", "stat_str", "stat_str_add", "stat_int", "stat_wis", "stat_dex", "stat_con", "stat_cha", "hunger", "thirst", "drunk", "hometown", "olc_zone", "inventory", "equipment", "description", "title", "character_data", "last_logon"}
 	for i, column := range columns {
 		expression := column
 		switch column {

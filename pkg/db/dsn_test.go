@@ -188,6 +188,7 @@ func TestGameStoreSchemaShape(t *testing.T) {
 		"failed_login_attempts": "INTEGER",
 		"stat_str_add":          "INTEGER",
 		"olc_zone":              "INTEGER",
+		"last_logon":            "INTEGER",
 	}
 	rows, err := database.conn.Query(`SELECT name, type FROM pragma_table_info('players')`)
 	if err != nil {
@@ -210,8 +211,8 @@ func TestGameStoreSchemaShape(t *testing.T) {
 			t.Errorf("players.%s is declared %q, want %q", column, got[column], want)
 		}
 	}
-	if len(got) != 37 {
-		t.Errorf("players has %d columns, want 37", len(got))
+	if len(got) != 38 {
+		t.Errorf("players has %d columns, want 38", len(got))
 	}
 
 	// The generated key is an AUTOINCREMENT column, not a bare INTEGER primary

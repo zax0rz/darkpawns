@@ -1687,6 +1687,16 @@ func (m *Manager) SaveCharSite(p *game.Player, why string) {
 // (World.PlayerSaver) to this manager's sessions: the server calls it at
 // boot, and the persistence tests call it to exercise the same wiring.
 func (m *Manager) WirePlayerSaver(w *game.World) {
+	w.ObjectSaver = func(p *game.Player, kind int) error {
+		if !m.hasDB || p == nil || p.ID <= 0 {
+			return nil
+		}
+		r, err := db.PlayerToRecord(p, nil)
+		if err != nil {
+			return err
+		}
+		return db.SaveObjectSnapshot(m.db, p.GetName(), kind, r.Inventory, r.Equipment)
+	}
 	w.PlayerStoreList = func() ([]*game.Player, error) {
 		if !m.hasDB {
 			return nil, nil
@@ -1730,6 +1740,7 @@ func (m *Manager) WirePlayerSaver(w *game.World) {
 			return err
 		}
 		change(p)
+		p.AccountCharacterSave()
 		updated, err := db.PlayerToRecord(p, nil)
 		if err != nil {
 			return err
