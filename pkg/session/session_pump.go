@@ -35,12 +35,21 @@ func init() {
 	}
 }
 
-// readDeadline is the read deadline for the WebSocket pump: 60 s refreshed by
-// pongs once authenticated, the DP-912 login idle timeout (refreshed only by
-// data frames) before that.
+// authReadDeadline is the read deadline for an authenticated (playing)
+// WebSocket session. Unlike the telnet transport, whose playing descriptor
+// carries no transport deadline at all (DP-1385), the browser pump keeps a
+// liveness clock refreshed on every pong: writePump pings every 54 s and a
+// browser answers automatically, so an idle-but-live player is never dropped —
+// only a socket that stops answering pings is. It is a variable so the DP-1385
+// transport test can shorten it and prove an idle player survives.
+var authReadDeadline = 60 * time.Second
+
+// readDeadline is the read deadline for the WebSocket pump: the pong-refreshed
+// liveness clock once authenticated, the DP-912 login idle timeout (refreshed
+// only by data frames) before that.
 func (s *Session) readDeadline() time.Duration {
 	if s.authenticated {
-		return 60 * time.Second
+		return authReadDeadline
 	}
 	return preAuthIdleTimeout
 }
@@ -100,7 +109,7 @@ func (s *Session) readPump() {
 		// authentication they must not extend the deadline, or a parked
 		// client holds a connection slot forever by answering pings.
 		if s.authenticated {
-			_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+			_ = s.conn.SetReadDeadline(time.Now().Add(authReadDeadline))
 		}
 		return nil
 	})

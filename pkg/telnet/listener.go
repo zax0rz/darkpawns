@@ -367,12 +367,17 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHos
 	}
 
 	// The shared terminal owns the name dialogue and every line after it
-	// (session.TerminalLine). Telnet only reads lines: with the pre-login
-	// reader until a name is accepted, then the full one.
+	// (session.TerminalLine). Telnet reads lines with the login reader, which
+	// applies C's check_idle_passwords clock (comm.c:2170-2187), until the
+	// character is in the world; then with the playing reader, which applies
+	// no transport deadline at all. C has none for a playing descriptor —
+	// idling is check_idling's business (limits.c:419-454) — so the
+	// five-minute deadline this loop used to arm once a name was accepted
+	// dropped idle players and immortals alike (DP-1385, R4).
 	for {
 		var line string
 		var ok bool
-		if s.TerminalNamed() {
+		if s.IsPlaying() {
 			line, ok = tc.readLine()
 		} else {
 			line, ok = tc.readLinePreAuth()
@@ -391,11 +396,6 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHos
 				return
 			}
 			break
-		}
-		// Once named, an idle connection is dropped after five minutes
-		// without a line.
-		if s.TerminalNamed() {
-			_ = rawConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 		}
 	}
 
@@ -453,16 +453,28 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 	}
 }
 
-// readLine reads a line, handling IAC negotiation and responding appropriately.
-// The bool return is false on EOF/error and true otherwise. A blank line
-// (the user simply pressing Return) returns ("", true) — distinct from EOF,
-// which returns ("", false). Callers must use the bool to decide whether to
-// disconnect; treating "" alone as EOF drops players who press Enter and
-// breaks the "PRESS RETURN" step of character creation.
-// Input exceeding maxInputLen bytes is truncated and logged.
+// maxInputLen caps a single input line; longer input is truncated and logged.
 const maxInputLen = 1024
 
+// readLine reads a line for a playing descriptor. C attaches no transport read
+// deadline to one — a silent player is check_idling's business
+// (src/limits.c:419-454) — so any deadline the login reader armed is cleared
+// before the read. Dropping an idle player on a five-minute transport clock
+// was invented behaviour (DP-1385, R4).
 func (tc *telnetConn) readLine() (string, bool) {
+	_ = tc.SetReadDeadline(time.Time{})
+	return tc.readLineBody()
+}
+
+// readLineBody performs the actual line read under whatever read deadline the
+// caller has set. It handles IAC negotiation and responds appropriately. The
+// bool return is false on EOF/error and true otherwise. A blank line (the user
+// simply pressing Return) returns ("", true) — distinct from EOF, which returns
+// ("", false). Callers must use the bool to decide whether to disconnect;
+// treating "" alone as EOF drops players who press Enter and breaks the "PRESS
+// RETURN" step of character creation. Input exceeding maxInputLen bytes is
+// truncated and logged.
+func (tc *telnetConn) readLineBody() (string, bool) {
 	var line []byte
 	for {
 		b, err := tc.br.ReadByte()
@@ -666,7 +678,7 @@ func (tc *telnetConn) readLine() (string, bool) {
 func (tc *telnetConn) readLinePreAuth() (string, bool) {
 	//nolint:errcheck // best-effort deadline; a failure here means the conn is dead anyway
 	tc.SetReadDeadline(time.Now().Add(loginIdleTimeout))
-	line, ok := tc.readLine()
+	line, ok := tc.readLineBody()
 	if !ok {
 		// Best-effort goodbye. Write errors on a closed/timed-out conn are
 		// ignored by writeLine; the caller still tears the connection down.

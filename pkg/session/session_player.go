@@ -195,6 +195,14 @@ func (s *Session) hasTransport() bool {
 	}
 }
 
+// IsPlaying reports whether the descriptor is a playing one: authenticated and
+// past every login prompt, menu and character creation included. C attaches no
+// transport idle timeout to these — a silent player is check_idling's business
+// (src/limits.c:419-454), not the transport's (DP-1385).
+func (s *Session) IsPlaying() bool {
+	return s.authenticated && !s.menuActive && !s.charCreating
+}
+
 // IsCharCreating returns whether the session is currently in character creation.
 func (s *Session) IsCharCreating() bool {
 	return s.charCreating

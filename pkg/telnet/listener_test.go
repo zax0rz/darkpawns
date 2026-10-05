@@ -454,6 +454,50 @@ func TestReadLinePreAuthSuccess(t *testing.T) {
 	}
 }
 
+// TestReadLinePlayingClearsPreLoginDeadline proves DP-1385: a playing
+// descriptor carries no transport read deadline, so an idle player is not
+// dropped. The login reader leaves a deadline armed; readLine must clear it.
+// The deadline is the injectable loginIdleTimeout, not the removed five-minute
+// constant, so the test is fast; dropping readLine's clear makes the read time
+// out and the test fail (R5h).
+func TestReadLinePlayingClearsPreLoginDeadline(t *testing.T) {
+	client, server := net.Pipe()
+	defer client.Close()
+	defer server.Close()
+
+	tc := &telnetConn{
+		Conn: server,
+		br:   bufio.NewReader(server),
+		wmu:  make(chan struct{}, 1),
+	}
+
+	prev := loginIdleTimeout
+	loginIdleTimeout = 50 * time.Millisecond
+	t.Cleanup(func() { loginIdleTimeout = prev })
+
+	// Arm a short deadline exactly as the login reader would have left it
+	// armed when the character entered the world.
+	if err := tc.SetReadDeadline(time.Now().Add(loginIdleTimeout)); err != nil {
+		t.Fatal(err)
+	}
+
+	// Deliver a line well past that deadline. readLine must have cleared the
+	// deadline, so it is still waiting and returns the line, not a timeout.
+	go func() {
+		time.Sleep(4 * loginIdleTimeout)
+		_, _ = client.Write([]byte("score\r\n"))
+		go drain(client)
+	}()
+
+	line, ok := tc.readLine()
+	if !ok {
+		t.Fatal("readLine returned false: the playing descriptor kept the pre-login deadline, so an idle player would be dropped")
+	}
+	if line != "score" {
+		t.Errorf("readLine line = %q, want %q", line, "score")
+	}
+}
+
 // TestReadLineCapsIACEscapedBytes verifies that a stream of IAC IAC escape
 // sequences (each appending a literal 0xFF byte) is also capped at
 // maxInputLen (DP-622).
