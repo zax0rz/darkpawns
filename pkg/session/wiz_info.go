@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -217,15 +216,17 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("You must supply a zone number!\r\n")
 			return nil
 		}
-		zoneNumber, err := strconv.Atoi(value)
-		if err == nil {
-			for _, zone := range s.manager.world.GetAllZones() {
-				if zone.Number == zoneNumber {
-					return nil
-				}
-			}
-			s.Send("That is not a valid zone.\r\n")
+		if !cIsNumber(value) {
+			return nil
 		}
+		number := cAtoi(value)
+		for _, zone := range s.manager.world.GetAllZones() {
+			if zone.Number == number {
+				s.Send(showZoneHooks(s.manager.world, number))
+				return nil
+			}
+		}
+		s.Send("That is not a valid zone.\r\n")
 	case "neutral":
 		s.Send(showFlaggedRooms(s.manager.world, "ROOM_NEUTRAL", "Neutral Rooms\r\n-------------\r\n"))
 	}
@@ -679,3 +680,32 @@ func cmdPoofout(s *Session, args []string) error {
 
 // cmdWiznet — send message on wizard net (LVL_IMMORT)
 // Original: act.wizard.c do_wiznet() — supports level-tagged, emote, and @list variants
+
+// showZoneHooks follows src/act.wizard.c:2461-2487: C RNUM then direction order.
+func showZoneHooks(w *game.World, zoneNumber int) string {
+	names := make(map[int]string)
+	for _, zone := range w.GetAllZones() {
+		names[zone.Number] = zone.Name
+	}
+	var report strings.Builder
+	fmt.Fprintf(&report, "Connections in zone %d.\r\n========================\r\n", zoneNumber)
+	rooms := w.Rooms()
+	for i := range rooms {
+		room, ok := w.SnapshotRoom(rooms[i].VNum)
+		if !ok || room.Zone != zoneNumber {
+			continue
+		}
+		for _, direction := range game.DirectionNames {
+			exit, exists := room.Exits[direction]
+			if !exists {
+				continue
+			}
+			destination, exists := w.SnapshotRoom(exit.ToRoom)
+			if !exists || destination.Zone == zoneNumber {
+				continue
+			}
+			fmt.Fprintf(&report, "%5d leads %s to %-5d -- %s\r\n", room.VNum, direction, destination.VNum, names[destination.Zone])
+		}
+	}
+	return report.String()
+}

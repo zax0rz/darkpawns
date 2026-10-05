@@ -1,0 +1,41 @@
+# src/act.wizard.c:2461-2487; paired native indexed exit topology.
+# depth-case: show.hooks-valid
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 1202 all 2501 0
+replace-room-exits 1204 west 3501 0
+
+[setup:oracle]
+Hookreport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hookreport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show hooks 12
+show hooks 25
+show hooks nonsense
+show hooks -12
