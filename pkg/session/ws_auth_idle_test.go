@@ -9,9 +9,8 @@ import (
 
 func setAuthReadDeadline(t *testing.T, d time.Duration) {
 	t.Helper()
-	old := authReadDeadline
-	authReadDeadline = d
-	t.Cleanup(func() { authReadDeadline = old })
+	old := authReadDeadlineNanos.Swap(int64(d))
+	t.Cleanup(func() { authReadDeadlineNanos.Store(old) })
 }
 
 // waitForPlayingSession waits until the manager reports one playing session.
@@ -59,7 +58,7 @@ func TestWebSocket_AuthenticatedIdlePlayerSurvivesLivenessClock(t *testing.T) {
 	}()
 
 	// Answer pings only -- no data frames -- for several deadline periods.
-	watchUntil := time.Now().Add(3 * authReadDeadline)
+	watchUntil := time.Now().Add(3 * authReadDeadline())
 	for time.Now().Before(watchUntil) {
 		if err := c.WriteControl(websocket.PongMessage, nil, time.Now().Add(time.Second)); err != nil {
 			t.Fatalf("pong write failed: %v", err)
