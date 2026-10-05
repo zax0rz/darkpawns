@@ -96,6 +96,12 @@ func (w *World) CheckIdling(p *Player) {
 			}
 
 			w.RentOut(p)
+			// Shipped C free_rent is YES (src/config.c:106; limits.c:445-448).
+			if w.ObjectSaver != nil {
+				if err := w.ObjectSaver(p, 2); err != nil {
+					slog.Error("idle rent snapshot failed", "player", p.Name, "error", err)
+				}
+			}
 			p.RentedOut = true
 
 			MudLog(fmt.Sprintf("%s force-rented and extracted (idle).", p.Name), MudlogComplete, LVL_GOD, true) // limits.c:449-450

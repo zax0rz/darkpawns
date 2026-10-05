@@ -153,9 +153,34 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("A name would help.\r\n")
 			return nil
 		}
-		if !s.storedPlayerExists(value) {
-			s.Send(fmt.Sprintf("%s has no rent file.\r\n", strings.ToLower(value)))
+		var snapshot *db.ObjectSave
+		var err error
+		if reader, ok := s.manager.db.(interface {
+			GetObjectSave(string) (*db.ObjectSave, error)
+		}); s.manager.hasDB && ok {
+			snapshot, err = reader.GetObjectSave(value)
 		}
+		if err != nil {
+			slog.Error("rent report read failed", "name", value, "error", err)
+			return nil
+		}
+		if snapshot == nil {
+			s.Send(fmt.Sprintf("%s has no rent file.\r\n", strings.ToLower(value)))
+			return nil
+		}
+		labels := map[int]string{1: "Crash", 2: "Rent", 3: "Cryo", 4: "TimedOut", 5: "TimedOut"}
+		label, ok := labels[snapshot.Kind]
+		if !ok {
+			label = "Undef"
+		}
+		var report strings.Builder
+		fmt.Fprintf(&report, "%s\r\n%s\r\n", snapshot.Identity, label)
+		for _, item := range snapshot.Objects {
+			if proto, ok := s.manager.world.GetObjPrototype(item.VNum); ok {
+				fmt.Fprintf(&report, " [%5d] (%.2fau) <%2d> %-20s\r\n", item.VNum, float64(float32(proto.LoadPercent)), item.Locate, proto.ShortDesc)
+			}
+		}
+		PageString(s, report.String())
 	case "stats":
 		parsed := s.manager.world.GetParsedWorld()
 		mobPrototypes, objectPrototypes := 0, 0

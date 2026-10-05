@@ -308,7 +308,7 @@ func (db *DB) createTables() error {
 		}
 	}
 
-	return nil
+	return db.execDDL(`CREATE TABLE IF NOT EXISTS object_saves(identity TEXT PRIMARY KEY,kind INTEGER NOT NULL,objects JSON NOT NULL)`)
 }
 
 // addColumnIfNotExists applies one migration column to the players table

@@ -368,6 +368,11 @@ func (s *Session) confirmDelete(choice string) error {
 			s.manager.world.Clans.RemoveDeletedMember(clanID, s.player.GetLevel())
 		}
 	}
+	if s.manager.hasDB {
+		if err := db.DeleteObjectSave(s.manager.db, name); err != nil {
+			slog.Error("delete object-save identity failed", "name", name, "error", err)
+		}
+	}
 	if err := game.DeleteAliases(name); err != nil {
 		slog.ErrorContext(s.sessionCtx, "delete aliases failed", s.logAttrs(slog.Any("error", err))...)
 	}
@@ -406,6 +411,11 @@ func (s *Session) enterReturningPlayer() error {
 		return nil
 	}
 	name := s.player.Name
+	if s.manager.hasDB {
+		if err := db.ObjectSaveLoaded(s.manager.db, name); err != nil {
+			return err
+		}
+	}
 	// C saves the character with load_room NOWHERE at every game entry
 	// (interpreter.c:2186), so a character whose process dies mid-session
 	// restarts at a start room rather than their last legal quit room.

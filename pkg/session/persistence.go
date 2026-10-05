@@ -108,11 +108,3 @@ func (s *Session) storedPlayer(name string) (*game.Player, *db.PlayerRecord, err
 	p, err := db.RecordToPlayer(r, s.manager.world)
 	return p, r, err
 }
-
-func (s *Session) storedPlayerExists(name string) bool {
-	if !s.manager.hasDB {
-		return false
-	}
-	r, err := s.manager.db.GetPlayer(name)
-	return err == nil && r != nil
-}

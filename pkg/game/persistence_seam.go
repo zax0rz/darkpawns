@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 // persistence_seam.go — the store-of-record save seam (DP-1365). Login
 // reads the character from the database (pkg/session/session_login.go →
@@ -58,6 +61,12 @@ func (w *World) SavePlayerRecord(p *Player, why string, loadRoom int, kind SaveK
 	}
 	seq := p.CrashSeq()
 	res := w.PlayerSaver(p, why, loadRoom)
+	if kind == SaveCrash && res == SaveSucceeded && w.ObjectSaver != nil {
+		if err := w.ObjectSaver(p, 1); err != nil {
+			slog.Error("object snapshot save failed", "player", p.GetName(), "error", err)
+			return SaveFailed
+		}
+	}
 	if kind == SaveCrash && res == SaveSucceeded {
 		p.ClearCrashFlagIfUnchanged(seq)
 	}
