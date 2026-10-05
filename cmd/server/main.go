@@ -42,6 +42,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -188,6 +189,17 @@ func dumpAPIRoutes(rootMux *trackedMux, doc *apidoc.Doc) {
 	fmt.Println(dumpRoutesPrefix + string(line))
 }
 
+// listenAddr composes the HTTP listen address: an empty bind is all
+// interfaces (":<port>", the historical behavior); a named bind prefixes it
+// so a same-host proxy deployment can confine /ws, /api and /admin to
+// loopback.
+func listenAddr(bind, port string) string {
+	if bind == "" {
+		return ":" + port
+	}
+	return net.JoinHostPort(bind, port)
+}
+
 func main() {
 	// Every path has a real default so that `./server`, run from a checkout
 	// root, does something. The world tree is lib/world, not lib/: the parser
@@ -203,6 +215,7 @@ func main() {
 		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
 		telnetTLS  = flag.Int("telnet-tls-port", 0, "TLS telnet port (0 to disable); needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
+		httpBind   = flag.String("http-bind", "", "Interface the HTTP/WebSocket server listens on (all interfaces if empty). Behind a same-host reverse proxy, bind 127.0.0.1 so /ws, /api and /admin are reachable only through the proxy")
 	)
 	flag.Usage = usage
 	flag.Parse()
@@ -792,9 +805,9 @@ func main() {
 	}
 
 	// Start server
-	addr := ":" + *port
+	addr := listenAddr(*httpBind, *port)
 	slog.Info("Server listening", "address", addr)
-	slog.Info("WebSocket endpoint", "url", "ws://localhost"+addr+"/ws")
+	slog.Info("WebSocket endpoint", "url", "ws://localhost:"+*port+"/ws")
 
 	// Offer the Mudlet package over GMCP Client.GUI. Off unless configured:
 	// once on, every Mudlet player downloads from this URL, so it must be a

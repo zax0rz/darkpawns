@@ -250,6 +250,10 @@ in the private ops repository. See the [retirement record](docs/maintenance/cont
 
 ## Behind a reverse proxy
 
+Bind the game's HTTP surface to loopback with `-http-bind 127.0.0.1` so
+`/ws`, `/api/*` and `/admin/*` are reachable only through the proxy (empty
+`-http-bind` keeps the historical all-interfaces listen).
+
 Terminate TLS at the proxy and forward the HTTP routes to `:4350`; expose telnet
 (`:7777`) directly since it isn't HTTP. A reference Caddyfile lives under
 [`website/deploy/`](website/deploy/). For a TLS telnet port, terminate TLS in front of
