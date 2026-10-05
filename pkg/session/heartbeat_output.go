@@ -23,6 +23,7 @@ type heartbeatFrame struct {
 	message []byte
 	text    string
 	note    bool
+	literal bool
 	close   bool
 }
 
@@ -44,6 +45,10 @@ func (m *Manager) BeginHeartbeatOutput() {
 // their existing delivery path. The bounded channel's existing drop policy
 // applies to the sum of queued and staged frames, without blocking a callback.
 func (s *Session) stageHeartbeat(message []byte, text string, note bool) bool {
+	return s.stageHeartbeatText(message, text, note, false)
+}
+
+func (s *Session) stageHeartbeatText(message []byte, text string, note, literal bool) bool {
 	if s.manager == nil {
 		return false
 	}
@@ -71,7 +76,7 @@ func (s *Session) stageHeartbeat(message []byte, text string, note bool) bool {
 			}
 		}
 	}
-	b.frames = append(b.frames, heartbeatFrame{session: s, message: append([]byte(nil), message...), text: text, note: note})
+	b.frames = append(b.frames, heartbeatFrame{session: s, message: append([]byte(nil), message...), text: text, note: note, literal: literal})
 	b.pending[s]++
 	return true
 }
@@ -97,12 +102,21 @@ func (s *Session) deferHeartbeatPrompt() bool {
 // SendPrompt (which reads player/editor/GMCP state).
 func (m *Manager) EndHeartbeatOutput() {
 	b := &m.outputBatch
-	snooped := make(map[*Session]*strings.Builder)
+	type snoopText struct {
+		strings.Builder
+		actual  strings.Builder
+		literal bool
+	}
+	snooped := make(map[*Session]*snoopText)
 	flushSnoop := func(s *Session) {
 		if text := snooped[s]; text != nil {
 			delete(snooped, s)
 			if !s.outputDiscarded.Load() {
-				s.forwardSnoopOutput(text.String())
+				if text.literal {
+					s.forwardSnoopText(text.actual.String(), true)
+				} else {
+					s.forwardSnoopOutput(text.String())
+				}
 			}
 		}
 	}
@@ -123,10 +137,14 @@ func (m *Manager) EndHeartbeatOutput() {
 				if frame.deliver() && frame.text != "" {
 					text := snooped[frame.session]
 					if text == nil {
-						text = &strings.Builder{}
+						text = &snoopText{}
 						snooped[frame.session] = text
 					}
 					text.WriteString(frame.text)
+					if f, ok := RenderTerminalFrame(frame.message); ok {
+						text.actual.WriteString(f.Text)
+					}
+					text.literal = text.literal || frame.literal
 				}
 			}
 			continue

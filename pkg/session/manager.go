@@ -1962,9 +1962,10 @@ type Session struct {
 	// (comm.c:617). pagerPages holds the pre-split page byte slices,
 	// pagerPage is the 0-based current page (C's showstr_page). Telnet/plain-text
 	// only; structured-data clients receive whole text and never enter this mode.
-	pagerPages [][]byte
-	pagerPage  int
-	pagerCount int
+	pagerLiteral bool // only byte-preserving C reports opt into literal delivery
+	pagerPages   [][]byte
+	pagerPage    int
+	pagerCount   int
 
 	// Character switch state (wizard commands)
 	isSwitched            bool

@@ -186,9 +186,11 @@ func cmdShow(s *Session, args []string) error {
 	case "godrooms":
 		s.Send(showFlaggedRooms(s.manager.world, "ROOM_GODROOM", "Godrooms\r\n--------------------------\r\n"))
 	case "shops":
-		// C's show_shops() consumes the complete parsed .shp database. The Go
-		// world currently indexes only shopkeepers, so this branch remains
-		// explicitly unproven rather than inventing a partial listing.
+		if value == "" {
+			pageLiteralString(s, showAllShops(s.manager.world))
+		}
+		// The separate detailed report remains unported; this case certifies
+		// list_all_shops only (src/shop.c:1267-1295).
 		return nil
 	case "houses":
 		if len(s.manager.world.HouseControl) == 0 {
@@ -703,6 +705,38 @@ func showZoneHooks(w *game.World, zoneNumber int) string {
 			}
 			fmt.Fprintf(&report, "%5d leads %s to %-5d -- %s\r\n", room.VNum, direction, destination.VNum, names[destination.Zone])
 		}
+	}
+	return report.String()
+}
+
+// showAllShops ports src/shop.c:1267-1295, including its LF/CR discipline.
+func showAllShops(w *game.World) string {
+	var report strings.Builder
+	report.WriteString("\n\r")
+	shops := w.SnapshotShopsInIndexOrder()
+	for i := range shops {
+		shop := &shops[i]
+		if i%19 == 0 {
+			report.WriteString(" ##   Virtual   Where    Keeper    Buy   Sell   Customers\n\r---------------------------------------------------------\n\r")
+		}
+		room := -1
+		if len(shop.Rooms) > 0 {
+			room = shop.Rooms[0]
+		}
+		keeper := "<NONE>"
+		if _, exists := w.GetMobPrototype(shop.KeeperVNum); exists {
+			keeper = fmt.Sprintf("%6d", shop.KeeperVNum)
+		}
+		fmt.Fprintf(&report, "%3d   %6d   %6d    %s   %3.2f   %3.2f    ", i+1, shop.VNum, room, keeper, float64(float32(shop.ProfitSell)), float64(float32(shop.ProfitBuy)))
+		// src/shop.h:160-170, customer_string (src/shop.c:1243-1263).
+		for bit, letter := range "GENMCTW" {
+			if shop.WithWho&(1<<bit) != 0 {
+				report.WriteByte('_')
+			} else {
+				report.WriteRune(letter)
+			}
+		}
+		report.WriteString("\n\r")
 	}
 	return report.String()
 }

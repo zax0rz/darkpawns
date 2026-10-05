@@ -1,0 +1,42 @@
+# C src/shop.c:1243-1294; complete parsed corpus and native pager bytes.
+# depth-case: show.shops-list
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+
+[setup:oracle]
+Shopreport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopreport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show shops
+<ENTER>
+b
+<ENTER>
+<ENTER>
+<ENTER>
