@@ -1019,6 +1019,11 @@ func CmdShoot(s SessionInterface, args []string) error {
 	if !target.IsNPC() && (target.GetLevel() < 10 || target.GetLevel() > 30) {
 		return s.SendMessage("Maybe that isn't such a great idea...\r\n")
 	}
+	// Target combat state is checked before MOB_SENTINEL, after the PC
+	// level window (src/act.offensive.c:881-900).
+	if target.GetFighting() != "" {
+		return s.SendMessage("It looks like they are fighting, you can't aim properly.\r\n")
+	}
 	if mob, ok := target.(*game.MobInstance); ok && mob.HasFlag(game.MobSentinel) {
 		return s.SendMessage("You cannot see well enough to aim...\r\n")
 	}

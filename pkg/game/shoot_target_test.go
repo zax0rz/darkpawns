@@ -1,6 +1,7 @@
 package game
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -54,4 +55,39 @@ func TestShootTargetCMatcherAndRoomOrder(t *testing.T) {
 	if got := w.ResolveShootTarget(1002, "2.gu"); got != last {
 		t.Fatal("ordinal did not merge PCs and NPCs in room order")
 	}
+}
+
+func TestShootTargetConcurrentMovement(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}, {VNum: 1002}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.StopAITicker()
+	p := NewPlayer(1, "Traveler", 1001)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatal(err)
+	}
+	var workers sync.WaitGroup
+	workers.Add(2)
+	go func() {
+		defer workers.Done()
+		for i := 0; i < 1000; i++ {
+			if err := w.PlayerTransfer(p, 1001+i%2); err != nil {
+				t.Error(err)
+				return
+			}
+		}
+	}()
+	go func() {
+		defer workers.Done()
+		for i := 0; i < 1000; i++ {
+			for room := 1001; room <= 1002; room++ {
+				if got := w.ResolveShootTarget(room, "Traveler"); got != nil && got != p {
+					t.Error("unexpected body", got)
+					return
+				}
+			}
+		}
+	}()
+	workers.Wait()
 }

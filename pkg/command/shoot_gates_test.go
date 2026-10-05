@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -96,6 +97,47 @@ func TestShootPCLevelWindow(t *testing.T) {
 				if output == "Maybe that isn't such a great idea...\r\n" || output == "Twang...\r\n" || output == "" {
 					t.Fatalf("allowed boundary %d did not reach the target outcome: %q", level, output)
 				}
+			}
+		})
+	}
+}
+
+func TestShootTargetFightingRefusalAndOrder(t *testing.T) {
+	for _, kind := range []string{"pc", "mob", "sentinel", "level-before-fighting"} {
+		t.Run(kind, func(t *testing.T) {
+			s, arrow := newShootGateSession(t)
+			var target combat.Combatant
+			name := "Victim"
+			if kind == "pc" || kind == "level-before-fighting" {
+				pc := game.NewPlayer(2, name, 1002)
+				pc.SetLevel(10)
+				if kind == "level-before-fighting" {
+					pc.SetLevel(9)
+				}
+				if err := s.world.AddPlayer(pc); err != nil {
+					t.Fatal(err)
+				}
+				target = pc
+			} else {
+				mob, err := s.world.SpawnMobQuiet(3001, 1002)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if kind == "mob" {
+					mob.ClearMobFlag(1)
+				} // C MOB_SENTINEL, src/structs.h:248
+				target = mob
+				name = "guard"
+			}
+			target.SetFighting("Other")
+			want := "It looks like they are fighting, you can't aim properly.\r\n"
+			if kind == "level-before-fighting" {
+				want = "Maybe that isn't such a great idea...\r\n"
+			}
+			hp, room, position := target.GetHP(), target.GetRoom(), target.GetPosition()
+			assertShootRefusal(t, s, arrow, name, want)
+			if target.GetHP() != hp || target.GetRoom() != room || target.GetPosition() != position || target.GetFighting() != "Other" {
+				t.Fatal("refusal changed target state")
 			}
 		})
 	}
