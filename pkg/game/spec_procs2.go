@@ -1629,7 +1629,7 @@ func specJail(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	Act(w, true, ch, ch, nil, nil, "The guard says, 'Time's up, scum!'", "", ToVict)
 	Act(w, true, ch, ch, nil, nil, "$N gets thrown out of the cell!", "", ToNotVict)
 	Act(w, true, ch, ch, nil, nil, "The guard throws you out of the cell!\r\n", "", ToVict)
-	if err := w.charTransfer(ch.GetName(), false, 8117, false); err != nil {
+	if err := w.transferBody(ch, 8117, false); err != nil {
 		slog.Error("jail release destination unavailable", "player", ch.GetName(), "error", err)
 		return true
 	}

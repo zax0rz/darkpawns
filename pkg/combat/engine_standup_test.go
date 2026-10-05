@@ -326,8 +326,8 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		if ce.IsFighting(attacker) {
 			t.Error("sleeping+waited attacker should stop combat (not AWAKE, couldn't stand)")
 		}
-		if attacker.GetPosition() != PosSleeping {
-			t.Errorf("sleeping+waited attacker should stay sleeping: pos %d", attacker.GetPosition())
+		if attacker.GetPosition() != PosStanding {
+			t.Errorf("C stop_fighting resets a healthy stopped attacker to standing: pos %d", attacker.GetPosition())
 		}
 	})
 }

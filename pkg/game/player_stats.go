@@ -15,6 +15,12 @@ func (p *Player) UpdateActivity() {
 
 // SetRoom changes the player's current room.
 func (p *Player) SetRoom(vnum int) {
+	p.mu.RLock()
+	w := p.worldRef
+	p.mu.RUnlock()
+	if w != nil {
+		w.stopRoomFights(p)
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.RoomVNum = vnum

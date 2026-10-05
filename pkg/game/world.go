@@ -541,6 +541,7 @@ func (w *World) AddPlayer(p *Player) error {
 
 	p.mu.Lock()
 	p.worldRef = w
+	p.combatRetired = false
 	w.nextRoomEntrySequence++
 	p.RoomEntrySequence = w.nextRoomEntrySequence
 	p.mu.Unlock()
@@ -551,9 +552,25 @@ func (w *World) AddPlayer(p *Player) error {
 
 // RemovePlayer removes a player from the world.
 func (w *World) RemovePlayer(name string) {
+	if p, ok := w.GetPlayer(name); ok {
+		w.RemovePlayerBody(p)
+	}
+}
+
+// RemovePlayerBody cannot delete a later same-name replacement.
+func (w *World) RemovePlayerBody(p *Player) {
+	if p == nil {
+		return
+	}
 	w.mu.Lock()
-	defer w.mu.Unlock()
-	delete(w.players, name)
+	removed := w.players[p.GetName()] == p
+	if removed {
+		delete(w.players, p.GetName())
+	}
+	w.mu.Unlock()
+	if removed {
+		w.retireCombatBody(p)
+	}
 }
 
 // ForEachPlayer calls fn for each player in the world. Thread-safe.
@@ -1041,7 +1058,7 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 
 	w.mu.Lock()
 
-	currentRoom, ok := w.rooms[p.RoomVNum]
+	currentRoom, ok := w.rooms[p.GetRoom()]
 	if !ok {
 		w.mu.Unlock()
 		return nil, fmt.Errorf("player in invalid room %d", p.RoomVNum)
@@ -1096,7 +1113,12 @@ func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
 				errMsg = "You are too exhausted.\r\n"
 				moveErr = fmt.Errorf("too exhausted")
 			} else {
+				w.mu.Unlock()
+				w.stopRoomFights(p)
+				w.mu.Lock()
+				p.mu.Lock()
 				p.RoomVNum = newRoom.VNum
+				p.mu.Unlock()
 
 				// Adjust room light for equipped light sources
 				// If player has a lit light source, old room loses light, new room gains it
@@ -1239,7 +1261,7 @@ func (w *World) LookAtRoomSimple(roomVNum int, sender interface{}) {
 // extractMob removes a mob instance from the world (extract_char equivalent).
 func (w *World) ExtractMob(mob *MobInstance) {
 	w.mu.Lock()
-	defer w.mu.Unlock()
+	found := false
 	for id, m := range w.activeMobs {
 		if m == mob {
 			m.mu.Lock()
@@ -1247,8 +1269,13 @@ func (w *World) ExtractMob(mob *MobInstance) {
 			m.mu.Unlock()
 			w.pendingMobileExtractions[m] = struct{}{}
 			delete(w.activeMobs, id)
+			found = true
 			break
 		}
+	}
+	w.mu.Unlock()
+	if found {
+		w.retireCombatBody(mob)
 	}
 }
 

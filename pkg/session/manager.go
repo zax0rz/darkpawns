@@ -1222,6 +1222,7 @@ func (m *Manager) register(playerName string, s *Session) error {
 	// we record whether removal is needed under m.mu, release m.mu, then call
 	// RemovePlayer separately so the two locks are never held simultaneously.
 	var needsWorldRemove bool
+	var oldBody *game.Player
 
 	m.mu.Lock()
 	if oldSess, exists := m.sessions[playerName]; exists {
@@ -1248,7 +1249,11 @@ func (m *Manager) register(playerName string, s *Session) error {
 		}
 		oldSess.CloseSend()
 
-		needsWorldRemove = oldSess.player != nil
+		oldBody = oldSess.player
+		if oldSess.switchedOriginal != nil {
+			oldBody = oldSess.switchedOriginal
+		}
+		needsWorldRemove = oldBody != nil
 		slog.Info("session takeover", "player", playerName)
 	}
 
@@ -1262,7 +1267,7 @@ func (m *Manager) register(playerName string, s *Session) error {
 	// after Register returns, so the window where the player is absent from
 	// the world is intentional and bounded.
 	if needsWorldRemove {
-		m.world.RemovePlayer(playerName)
+		m.world.RemovePlayerBody(oldBody)
 	}
 
 	if s.authenticated && !s.isGuest {
@@ -1387,7 +1392,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	}
 
 	// 5. Remove from world
-	m.world.RemovePlayer(playerName)
+	m.world.RemovePlayerBody(s.player)
 
 	// 6. Close send channel (guarded + sync.Once makes this idempotent)
 	s.CloseSend()

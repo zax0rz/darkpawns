@@ -2559,8 +2559,11 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 	type characterTransferer interface {
 		CharTransfer(charName string, isMob bool, toRoomVNum int) error
 	}
-	transferer, ok := world.(characterTransferer)
-	if !ok {
+	transferer, nameTransferOK := world.(characterTransferer)
+	bodyTransfer, bodyOK := world.(interface {
+		TransferCombatant(combat.Combatant, int) error
+	})
+	if !nameTransferOK && !bodyOK {
 		sendToCaster(ch, "Teleport failed: world interface not available.\r\n")
 		return
 	}
@@ -2625,9 +2628,8 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 			sendToVictim(cvict, "The world around you turns black and you suddenly find yourself..\r\n")
 			sendAffectRoom(cvict, nil, "$n slowly fades out of existence and is gone.", world)
 
-			// The game World exposes typed PlayerTransfer/MobTransfer methods.
-			// CharTransfer is the common interface bridge needed here because
-			// spells cannot import pkg/game without creating an import cycle.
+			// Live worlds transfer the supplied concrete combat body. Legacy test
+			// adapters retain their existing name-taking bridge.
 			victName, ok := cvict.(interface{ GetName() string })
 			if !ok {
 				return
@@ -2636,7 +2638,13 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 			if vNPC, ok := cvict.(npcChecker); ok {
 				isMob = vNPC.IsNPC()
 			}
-			if err := transferer.CharTransfer(victName.GetName(), isMob, toRoom); err != nil {
+			var transferErr error
+			if body, valid := cvict.(combat.Combatant); valid && bodyOK {
+				transferErr = bodyTransfer.TransferCombatant(body, toRoom)
+			} else if nameTransferOK {
+				transferErr = transferer.CharTransfer(victName.GetName(), isMob, toRoom)
+			}
+			if err := transferErr; err != nil {
 				slog.Error("CharTransfer failed", "error", err)
 			}
 			sendAffectRoom(cvict, nil, "$n slowly fades into existence.", world)
