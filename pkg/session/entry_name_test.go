@@ -238,7 +238,10 @@ func TestEntryGuestPrefixApproved(t *testing.T) {
 	database := entryDatabase(t)
 	manager := entryTransportManager(t, database)
 	t.Setenv("JWT_SECRET", "entry-guest-approved-secret-at-least-32-characters")
-	for _, name := range []string{"guest", "GuEsT", "guest_test_user", "Guest123!"} {
+	// Typed suffixes are never used: they bypass the C name gate, and alias
+	// files are keyed by name, so a suffix could carry path separators,
+	// control bytes or a lookalike identity.
+	for _, name := range []string{"guest", "GuEsT", "guest_test_user", "Guest123!", "guest/../../../tmp/x", "guest\x1b[31mAiko", "GuestAiko"} {
 		s := makeCharSession(t, manager)
 		if err := s.handleLogin(loginMsg(name, "")); err != nil {
 			t.Fatal(err)
@@ -246,12 +249,13 @@ func TestEntryGuestPrefixApproved(t *testing.T) {
 		if !s.isGuest || !s.authenticated || s.player == nil || s.player.GetRoom() != game.MortalStartRoom || s.charCreating {
 			t.Fatalf("guest path lost for %q", name)
 		}
-		if strings.EqualFold(name, "guest") {
-			if !strings.HasPrefix(s.playerName, "Guest_") {
-				t.Fatalf("generated name=%q", s.playerName)
+		if !strings.HasPrefix(s.playerName, "Guest_") || s.player.Name != s.playerName {
+			t.Fatalf("guest %q kept a typed name: session=%q player=%q", name, s.playerName, s.player.Name)
+		}
+		for i := len("Guest_"); i < len(s.playerName); i++ {
+			if c := s.playerName[i]; c < '0' || c > '9' {
+				t.Fatalf("guest %q name has a non-generated suffix: %q", name, s.playerName)
 			}
-		} else if s.playerName != name {
-			t.Fatalf("guest supplied name changed: %q", s.playerName)
 		}
 		if s.player.Class != game.ClassWarrior || s.player.Health != 100 || s.player.MaxMana != 20 || s.player.MaxMove != 100 {
 			t.Fatal("guest initial state changed")

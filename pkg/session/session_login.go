@@ -71,11 +71,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		// DP-1379 guest entry replaces any character being named on this descriptor.
 		s.releaseEntryName()
 		// Bypasses DB password authentication & character creation completely!
-		guestName := login.PlayerName
-		if strings.EqualFold(guestName, "guest") {
-			// Generate a unique name from a monotonic counter (DP-912).
-			guestName = fmt.Sprintf("Guest_%d", guestSeq.Add(1))
-		}
+		// Every guest gets a generated name; the typed suffix is never used.
+		// It bypassed the C name gate, so it could carry path separators
+		// (alias files are keyed by name), control bytes or a lookalike
+		// identity. Generate a unique name from a monotonic counter (DP-912).
+		guestName := fmt.Sprintf("Guest_%d", guestSeq.Add(1))
 		// Belt-and-suspenders: if the (extremely unlikely, counter-wrap) name
 		// is already live, keep incrementing until free. The counter makes the
 		// common sequential case collision-free without this loop.

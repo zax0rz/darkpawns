@@ -318,7 +318,7 @@ func TestGMCPHarnessWalk(t *testing.T) {
 	if err := json.Unmarshal([]byte(chat[0].payload), &line); err != nil {
 		t.Fatal(err)
 	}
-	if line.Channel != "say" || line.Text != "You say 'hello'" || !strings.EqualFold(line.Talker, "guest_gmcp_walker") {
+	if line.Channel != "say" || line.Text != "You say 'hello'" || !strings.HasPrefix(line.Talker, "Guest_") {
 		t.Fatalf("Comm.Channel.Text = %+v", line)
 	}
 	if !strings.HasPrefix(chat[0].payload, `{"channel":`) {

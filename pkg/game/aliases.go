@@ -36,8 +36,11 @@ const aliasDir = "./data/aliases"
 
 // aliasFilePath returns the path to a player's alias file.
 // Source: utils.c get_filename() case ALIAS_FILE — "plralias/<initial>/<name>.alias"
+//
+// A name that is not a single safe path element yields "": the alias file is
+// keyed by the name, so separators or ".." would escape aliasDir.
 func aliasFilePath(playerName string) string {
-	if len(playerName) == 0 {
+	if !safeAliasOwner(playerName) {
 		return ""
 	}
 	initial := strings.ToLower(string(playerName[0]))
@@ -57,6 +60,21 @@ func DeleteAliases(playerName string) error {
 	return nil
 }
 
+// safeAliasOwner admits only names made of ASCII letters, digits and '_'
+// (C player names are letters only; generated guest names add digits and '_').
+func safeAliasOwner(name string) bool {
+	if name == "" || len(name) > 64 {
+		return false
+	}
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' {
+			return false
+		}
+	}
+	return true
+}
+
 // WriteAliases writes a player's alias list to disk.
 // Source: alias.c write_aliases() lines 41–71
 //
@@ -71,14 +89,16 @@ func DeleteAliases(playerName string) error {
 // The C original strips the leading space from replacement before writing the
 // length, then writes the trimmed string. On read, it prepends a space back.
 func WriteAliases(playerName string, aliases []Alias) error {
+	path := aliasFilePath(playerName)
+	if path == "" {
+		return fmt.Errorf("WriteAliases: unsafe alias owner name %q", playerName)
+	}
 	if len(aliases) == 0 {
 		// No aliases — delete file if it exists (mirrors C unlink())
-		path := aliasFilePath(playerName)
 		_ = os.Remove(path)
 		return nil
 	}
 
-	path := aliasFilePath(playerName)
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return fmt.Errorf("WriteAliases: mkdir %s: %w", filepath.Dir(path), err)
 	}
@@ -115,6 +135,9 @@ func WriteAliases(playerName string, aliases []Alias) error {
 //	strcpy(temp_buf," "); strcat(temp_buf,buf); — alias.c line 97–98
 func ReadAliases(playerName string) ([]Alias, error) {
 	path := aliasFilePath(playerName)
+	if path == "" {
+		return nil, nil // an unsafe name has no alias file
+	}
 	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		if os.IsNotExist(err) {
