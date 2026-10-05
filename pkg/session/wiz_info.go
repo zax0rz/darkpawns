@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -98,20 +97,29 @@ func cmdShow(s *Session, args []string) error {
 
 	switch fields[fieldIndex].name {
 	case "zones":
-		// The valid zone listing still needs a faithful Zone age/reset vehicle.
-		// Keep the confirmed invalid-number gate exact until that branch is
-		// proven; do not substitute the old invented reset report.
-		if value != "" {
-			zoneNumber, err := strconv.Atoi(value)
-			if err == nil {
-				for _, zone := range s.manager.world.GetAllZones() {
-					if zone.Number == zoneNumber {
-						return nil
-					}
-				}
-				s.Send("That is not a valid zone.\r\n")
-			}
+		// src/act.wizard.c:2225-2231, 2300-2319: live ages and C pager.
+		zones := s.manager.world.GetAllZones()
+		ages := s.manager.world.ZoneClockSnapshot().Ages
+		var report strings.Builder
+		selected := -1
+		if value == "." {
+			selected = s.manager.world.GetRoomZone(s.player.GetRoomVNum())
+		} else if value != "" && cIsNumber(value) {
+			selected = cAtoi(value)
 		}
+		matched := false
+		for _, zone := range zones {
+			if selected >= 0 && zone.Number != selected {
+				continue
+			}
+			matched = true
+			fmt.Fprintf(&report, "%3d %-30.30s Age: %3d; Reset: %3d (%1d); Top: %5d\r\n", zone.Number, zone.Name, ages[zone.Number], zone.Lifespan, zone.ResetMode, zone.TopRoom)
+		}
+		if selected >= 0 && !matched {
+			s.Send("That is not a valid zone.\r\n")
+			return nil
+		}
+		PageString(s, report.String())
 	case "player":
 		if value == "" {
 			s.Send("A name would help.\r\n")
@@ -190,12 +198,9 @@ func cmdShow(s *Session, args []string) error {
 		s.Send(showTattooListing())
 	case "aggr":
 		mobs := s.manager.world.GetAllMobs()
-		sort.SliceStable(mobs, func(i, j int) bool {
-			if mobs[i].GetVNum() != mobs[j].GetVNum() {
-				return mobs[i].GetVNum() < mobs[j].GetVNum()
-			}
-			return mobs[i].GetName() < mobs[j].GetName()
-		})
+		// src/db.c:1745-1746 prepends read_mobile to character_list;
+		// src/act.wizard.c:2430-2442 walks it without VNUM/name sorting.
+		sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() > mobs[j].GetID() })
 		for _, mob := range mobs {
 			if mob.HasFlag("AGGR24") {
 				s.Send(fmt.Sprintf("%d %s\r\n", mob.GetVNum(), mob.GetName()))
@@ -208,15 +213,17 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("You must supply a zone number!\r\n")
 			return nil
 		}
-		zoneNumber, err := strconv.Atoi(value)
-		if err == nil {
-			for _, zone := range s.manager.world.GetAllZones() {
-				if zone.Number == zoneNumber {
-					return nil
-				}
-			}
-			s.Send("That is not a valid zone.\r\n")
+		if !cIsNumber(value) {
+			return nil
 		}
+		number := cAtoi(value)
+		for _, zone := range s.manager.world.GetAllZones() {
+			if zone.Number == number {
+				s.Send(showZoneHooks(s.manager.world, number))
+				return nil
+			}
+		}
+		s.Send("That is not a valid zone.\r\n")
 	case "neutral":
 		s.Send(showFlaggedRooms(s.manager.world, "ROOM_NEUTRAL", "Neutral Rooms\r\n-------------\r\n"))
 	}
@@ -670,3 +677,32 @@ func cmdPoofout(s *Session, args []string) error {
 
 // cmdWiznet — send message on wizard net (LVL_IMMORT)
 // Original: act.wizard.c do_wiznet() — supports level-tagged, emote, and @list variants
+
+// showZoneHooks follows src/act.wizard.c:2461-2487: C RNUM then direction order.
+func showZoneHooks(w *game.World, zoneNumber int) string {
+	names := make(map[int]string)
+	for _, zone := range w.GetAllZones() {
+		names[zone.Number] = zone.Name
+	}
+	var report strings.Builder
+	fmt.Fprintf(&report, "Connections in zone %d.\r\n========================\r\n", zoneNumber)
+	rooms := w.Rooms()
+	for i := range rooms {
+		room, ok := w.SnapshotRoom(rooms[i].VNum)
+		if !ok || room.Zone != zoneNumber {
+			continue
+		}
+		for _, direction := range game.DirectionNames {
+			exit, exists := room.Exits[direction]
+			if !exists {
+				continue
+			}
+			destination, exists := w.SnapshotRoom(exit.ToRoom)
+			if !exists || destination.Zone == zoneNumber {
+				continue
+			}
+			fmt.Fprintf(&report, "%5d leads %s to %-5d -- %s\r\n", room.VNum, direction, destination.VNum, names[destination.Zone])
+		}
+	}
+	return report.String()
+}
