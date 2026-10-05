@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -26,6 +27,7 @@ import (
 var preAuthIdleTimeout = 120 * time.Second
 
 func init() {
+	authReadDeadlineNanos.Store(int64(defaultAuthReadDeadline))
 	if v := os.Getenv("LOGIN_IDLE_TIMEOUT"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			preAuthIdleTimeout = time.Duration(n) * time.Second
@@ -35,12 +37,31 @@ func init() {
 	}
 }
 
-// readDeadline is the read deadline for the WebSocket pump: 60 s refreshed by
-// pongs once authenticated, the DP-912 login idle timeout (refreshed only by
-// data frames) before that.
+// defaultAuthReadDeadline is the production liveness clock for an authenticated
+// (playing) WebSocket session.
+const defaultAuthReadDeadline = 60 * time.Second
+
+// authReadDeadlineNanos is the read deadline for an authenticated (playing)
+// WebSocket session, in nanoseconds. Unlike the telnet transport, whose playing
+// descriptor carries no transport deadline at all (DP-1385), the browser pump
+// keeps a liveness clock refreshed on every pong: writePump pings every 54 s
+// and a browser answers automatically, so an idle-but-live player is never
+// dropped — only a socket that stops answering pings is. It is atomic because
+// the session's readPump loads it from its own goroutine while the DP-1385 test
+// stores a shorter value.
+var authReadDeadlineNanos atomic.Int64
+
+// authReadDeadline returns the current authenticated-session read deadline.
+func authReadDeadline() time.Duration {
+	return time.Duration(authReadDeadlineNanos.Load())
+}
+
+// readDeadline is the read deadline for the WebSocket pump: the pong-refreshed
+// liveness clock once authenticated, the DP-912 login idle timeout (refreshed
+// only by data frames) before that.
 func (s *Session) readDeadline() time.Duration {
 	if s.authenticated {
-		return 60 * time.Second
+		return authReadDeadline()
 	}
 	return preAuthIdleTimeout
 }
@@ -100,7 +121,7 @@ func (s *Session) readPump() {
 		// authentication they must not extend the deadline, or a parked
 		// client holds a connection slot forever by answering pings.
 		if s.authenticated {
-			_ = s.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+			_ = s.conn.SetReadDeadline(time.Now().Add(authReadDeadline()))
 		}
 		return nil
 	})
