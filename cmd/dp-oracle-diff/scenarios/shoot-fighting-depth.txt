@@ -1,0 +1,89 @@
+# Real PC/NPC fighting state: src/act.offensive.c:887-900.
+
+# depth-case: shoot.target-fighting
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+spawn-mob 16303 1 8163 163
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootengaged
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootengaged
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Engagedpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Engagedpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Engagedpeer 8163
+skillset Shootengaged 'shoot' 100
+set player Engagedpeer level 10
+set player Engagedpeer maxhit 30000
+set player Engagedpeer hit 30000
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+get hoopak
+get arrow
+wield hoopak
+force Engagedpeer hit trainee
+
+[probe]
+shoot arrow north Engagedpeer
+shoot arrow north trainee
+inventory

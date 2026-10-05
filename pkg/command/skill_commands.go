@@ -1005,19 +1005,25 @@ func CmdShoot(s SessionInterface, args []string) error {
 		return s.SendMessage("You feel too peaceful to contemplate violence.\r\n")
 	}
 
-	// C falls back to the first person in the destination room when the named
-	// lookup misses. Preserve the explicit no-target branch for now; the
-	// hit/miss state machine remains a separate depth case.
-	targetInfo, found := world.ResolveCharInRoomAt(ch, exit.ToRoom, targetName)
-	if !found {
-		// C do_shoot's no-target branch drops the projectile with
-		// obj_to_room (act.offensive.c:870), which prepends.
+	// get_char_room does not apply CAN_SEE; its named miss falls back to
+	// the actual room-list head (src/handler.c:865-881; act.offensive.c:862-864).
+	target := world.ResolveShootTarget(exit.ToRoom, targetName)
+	if target == nil {
 		if err := world.MoveObjectToRoomFront(projectile, exit.ToRoom); err != nil {
 			return fmt.Errorf("drop projectile in destination room: %w", err)
 		}
 		return s.SendMessage("Twang...\r\n")
 	}
-	target := targetInfo.Combatant
+	// C protects PCs outside the inclusive 10..30 window before checking
+	// fighting or sentinel state (src/act.offensive.c:881-900).
+	if !target.IsNPC() && (target.GetLevel() < 10 || target.GetLevel() > 30) {
+		return s.SendMessage("Maybe that isn't such a great idea...\r\n")
+	}
+	// Target combat state is checked before MOB_SENTINEL, after the PC
+	// level window (src/act.offensive.c:881-900).
+	if target.GetFighting() != "" {
+		return s.SendMessage("It looks like they are fighting, you can't aim properly.\r\n")
+	}
 	if mob, ok := target.(*game.MobInstance); ok && mob.HasFlag(game.MobSentinel) {
 		return s.SendMessage("You cannot see well enough to aim...\r\n")
 	}

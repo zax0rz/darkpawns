@@ -1,0 +1,84 @@
+# C PC level refusal: src/act.offensive.c:881-885.
+
+# depth-case: shoot.pc-level-window
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootwindow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootwindow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Shootvictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Shootvictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shootvictim 8163
+skillset Shootwindow 'shoot' 100
+get hoopak
+get arrow
+wield hoopak
+
+[probe]
+set player Shootvictim level 9
+shoot arrow north Shootvictim
+set player Shootvictim level 31
+shoot arrow north Shootvictim
+inventory

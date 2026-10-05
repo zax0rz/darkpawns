@@ -1,0 +1,56 @@
+# R3/R5h: get_char_room + room-head fallback (src/handler.c:865-881; src/act.offensive.c:862-900).
+
+# depth-case: shoot.target-fallback
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+spawn-mob 16303 1 8163 163
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootlookup
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootlookup
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Shootlookup 'shoot' 100
+
+[probe]
+get hoopak
+get arrow
+wield hoopak
+shoot arrow north missing
+shoot arrow north 0.trainee
+shoot arrow north 2.trainee
+shoot arrow north tra
+inventory
