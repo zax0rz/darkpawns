@@ -247,6 +247,7 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 		// char_to_store saves these base combat scalars, regardless of the
 		// set acknowledgement (db.c:2608-2610). The offline object is separate.
 		target.player.AC, target.player.Hitroll, target.player.Damroll = 100, 0, 0
+		target.player.AccountCharacterSave()
 		r, err := db.PlayerToRecord(target.player, nil)
 		if err == nil {
 			r.OlcZone = target.record.OlcZone

@@ -6,15 +6,16 @@ import (
 )
 
 var (
-	ansiEscape   = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
-	wallClock    = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
-	vitalsPrompt = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
-	promptOnly   = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
-	promptPrefix = regexp.MustCompile(`^> ?`)
-	autoExitLine = regexp.MustCompile(`^\s*\[ Exits:`)
-	statusVitals = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
-	statsLine    = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
-	volatileLine = regexp.MustCompile(`(?i)^\s*(?:` +
+	playerSavedDates = regexp.MustCompile(`^(Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
+	ansiEscape       = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
+	wallClock        = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
+	vitalsPrompt     = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
+	promptOnly       = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
+	promptPrefix     = regexp.MustCompile(`^> ?`)
+	autoExitLine     = regexp.MustCompile(`^\s*\[ Exits:`)
+	statusVitals     = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
+	statsLine        = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
+	volatileLine     = regexp.MustCompile(`(?i)^\s*(?:` +
 		`(?:current (?:machine )?(?:time|date)|server (?:time|running since)|uptime)\s*[:=]|` +
 		`(?:players online|players\s*:|gods\s*:)\s*[:=]?\s*\d+|` +
 		`as of \d{1,4}[-/]\d{1,2}[-/]\d{1,4}\b|` +
@@ -88,6 +89,7 @@ func normalize(raw string, keepANSI bool) string {
 		// metadata, not game bytes. The deterministic harness freezes the
 		// game clock but intentionally does not freeze process wall time.
 		lines[i] = wallClock.ReplaceAllString(lines[i], "<WALL_CLOCK>")
+		lines[i] = playerSavedDates.ReplaceAllString(lines[i], "${1}<WALL_CLOCK>${2}<WALL_CLOCK>${3}")
 		lines[i] = vitalsPrompt.ReplaceAllString(lines[i], "<PROMPT>")
 		lines[i] = promptPrefix.ReplaceAllString(lines[i], "")
 		lines[i] = statusVitals.ReplaceAllString(lines[i], "<VITALS>")

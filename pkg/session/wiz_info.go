@@ -6,6 +6,9 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/db"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -125,9 +128,26 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("A name would help.\r\n")
 			return nil
 		}
-		if _, online := s.manager.world.GetPlayer(value); !online && !s.storedPlayerExists(value) {
-			s.Send("There is no such player.\r\n")
+		var r *db.PlayerRecord
+		var err error
+		if s.manager.hasDB {
+			r, err = s.manager.db.GetPlayer(value)
 		}
+		if !s.manager.hasDB || err != nil || r == nil {
+			s.Send("There is no such player.\r\n")
+			return nil
+		}
+		// Scalar-only projection: reports must not restore world-owned objects.
+		metadata := *r
+		metadata.Inventory, metadata.Equipment = nil, nil
+		p, err := db.RecordToPlayer(&metadata, nil)
+		if err != nil {
+			s.Send("There is no such player.\r\n")
+			return nil
+		}
+		birth := time.Unix(p.Birth, 0).Local().Format("Mon Jan _2 15:04")
+		last := time.Unix(r.LastLogon, 0).Local().Format("Mon Jan _2 15:04")
+		s.Send(fmt.Sprintf("Player: %-12s (%s) [%2d %s]\r\nAu: %-8d  Bal: %-8d  Exp: %-8d  Align: %-5d  Lessons: %-3d\r\nStarted: %-20.16s  Last: %-20.16s  Played: %3dh %2dm\r\n", p.Name, []string{"Male", "Female", "Neutral"}[p.Sex], p.Level, game.ClassAbbrevs[p.Class], p.Gold, p.BankGold, p.Exp, p.Alignment, p.Practices, birth, last, p.PlayedDuration/3600, p.PlayedDuration/60%60))
 	case "rent":
 		if value == "" {
 			s.Send("A name would help.\r\n")

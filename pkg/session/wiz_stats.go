@@ -201,7 +201,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	s.Send("L-Des: " + description + "\r\n")
 	s.Send(fmt.Sprintf("Class: %s, Lev: [%2d], XP: [%7d], Align: [%4d]\r\n",
 		wizardClassName(p.GetClass()), p.GetLevel(), p.GetExp(), p.GetAlignment()))
-	pt := game.PlayingTime(p.ConnectedAt, p.PlayedDuration)
+	pt := p.PlayingTime()
 	age := game.Age(p.Birth).Year
 	created := time.Unix(p.Birth, 0).Format("Mon Jan _2 15:04:05 2006")
 	lastLogon := p.ConnectedAt.Format("Mon Jan _2 15:04:05 2006")

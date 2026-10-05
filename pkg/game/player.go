@@ -143,9 +143,11 @@ type Player struct {
 	Birth int64
 
 	// PlayedDuration — total accumulated play time in real seconds (ch->player.time.played).
-	// Updated on disconnect: PlayedDuration += time.Since(ConnectedAt).
+	// Advanced at each char_to_store-equivalent boundary; connection age is separate.
 	// Used by PlayingTime() for formatted play-time display.
-	PlayedDuration int64
+	PlayedDuration   int64
+	LastLogon        int64
+	playAccountingAt time.Time
 
 	Fighting string // Name of character being fought
 
@@ -297,34 +299,35 @@ type Player struct {
 func NewPlayer(id int, name string, roomVNum int) *Player {
 	now := time.Now()
 	player := &Player{
-		ID:           id,
-		Name:         name,
-		RoomVNum:     roomVNum,
-		LoadRoomVNum: -1,
-		Health:       100,
-		MaxHealth:    100,
-		Mana:         100,
-		MaxMana:      100,
-		Level:        1,
-		Exp:          0,
-		Strength:     10,                                         // Default strength
-		THAC0:        20,                                         // Default THAC0
-		AC:           10,                                         // Default AC
-		DamageRoll:   combat.DiceRoll{Num: 1, Sides: 4, Plus: 0}, // 1d4
-		Position:     8,                                          // POS_STANDING
-		ConnectedAt:  now,
-		LastActive:   now,
-		Birth:        now.Unix(), // character creation timestamp
-		Fighting:     "",         // Not fighting anyone
-		AFK:          false,
-		AFKMessage:   "",
-		AutoGold:     false, // Autogold off by default
-		AutoSplit:    false, // Autosplit off by default
-		Alignment:    0,     // Neutral by default
-		SkillManager: engine.NewSkillManager(),
-		AutoExit:     true, // Default to on, like PRF_AUTOEXIT in original
-		WaitState:    0,
-		JailTimer:    0,
+		ID:               id,
+		Name:             name,
+		RoomVNum:         roomVNum,
+		LoadRoomVNum:     -1,
+		Health:           100,
+		MaxHealth:        100,
+		Mana:             100,
+		MaxMana:          100,
+		Level:            1,
+		Exp:              0,
+		Strength:         10,                                         // Default strength
+		THAC0:            20,                                         // Default THAC0
+		AC:               10,                                         // Default AC
+		DamageRoll:       combat.DiceRoll{Num: 1, Sides: 4, Plus: 0}, // 1d4
+		Position:         8,                                          // POS_STANDING
+		ConnectedAt:      now,
+		playAccountingAt: RealNow(),
+		LastActive:       now,
+		Birth:            now.Unix(), // character creation timestamp
+		Fighting:         "",         // Not fighting anyone
+		AFK:              false,
+		AFKMessage:       "",
+		AutoGold:         false, // Autogold off by default
+		AutoSplit:        false, // Autosplit off by default
+		Alignment:        0,     // Neutral by default
+		SkillManager:     engine.NewSkillManager(),
+		AutoExit:         true, // Default to on, like PRF_AUTOEXIT in original
+		WaitState:        0,
+		JailTimer:        0,
 
 		SpellMap: make(map[string]int),
 	}

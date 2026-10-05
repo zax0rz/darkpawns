@@ -1,0 +1,44 @@
+# C src/act.wizard.c:2327-2347, src/db.c:2589-2595: durable player snapshot.
+# depth-case: show.player-valid
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+
+[setup:oracle]
+Shopreport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopreport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set file Shopreport gold 0
+
+[probe]
+show player Shopreport
+set Shopreport gold 123
+show player Shopreport
+save
+show player Shopreport

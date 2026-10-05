@@ -31,6 +31,7 @@ func PlayerToRecord(p *game.Player, worldObjs map[int]*game.ObjectInstance) (*Pl
 
 	return &PlayerRecord{
 		ID:            p.ID,
+		LastLogon:     p.GetLastLogon(),
 		Name:          p.Name,
 		Description:   p.Description,
 		Title:         p.Title,
@@ -161,6 +162,8 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 	if err := game.ApplyCharacterData(p, r.CharacterData); err != nil {
 		return nil, err
 	}
+	p.LastLogon = r.LastLogon
+	p.ResetPlayAccounting()
 	return p, nil
 }
 

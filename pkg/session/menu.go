@@ -290,6 +290,9 @@ func (s *Session) persistChangedPassword() error {
 		if err := s.manager.db.UpdatePassword(s.player.ID, s.menuNewPasswordHash); err != nil {
 			return fmt.Errorf("update password: %w", err)
 		}
+		// C confirms a changed password with save_char (src/interpreter.c:1983).
+		// Preserve the password update response if the additional character save fails.
+		s.saveCharacter("password change", game.LoadRoomNowhere)
 	}
 	s.menuPasswordHash = s.menuNewPasswordHash
 	s.menuNewPasswordHash = ""
@@ -346,6 +349,8 @@ func (s *Session) confirmDelete(choice string) error {
 		if clearClan {
 			s.player.ClanID, s.player.ClanRank = 0, 0
 		}
+		s.player.AccountCharacterSave() // src/interpreter.c:2338 save_char.
+		record.LastLogon = s.player.GetLastLogon()
 		data, err := game.EncodeCharacterData(s.player)
 		if err != nil {
 			s.player.ClanID, s.player.ClanRank = clanID, clanRank

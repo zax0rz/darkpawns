@@ -99,7 +99,7 @@ func isVeteran(p *Player) bool {
 	if p.PlayedDuration <= 0 {
 		return false
 	}
-	pt := PlayingTime(p.ConnectedAt, p.PlayedDuration)
+	pt := p.PlayingTime()
 	return pt.Day >= 30 && p.Kills >= 10000
 }
 

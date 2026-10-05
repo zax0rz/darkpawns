@@ -1730,6 +1730,7 @@ func (m *Manager) WirePlayerSaver(w *game.World) {
 			return err
 		}
 		change(p)
+		p.AccountCharacterSave()
 		updated, err := db.PlayerToRecord(p, nil)
 		if err != nil {
 			return err
