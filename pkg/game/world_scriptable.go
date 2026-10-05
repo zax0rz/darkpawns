@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -526,48 +528,31 @@ func (w *World) GetObjByInstanceID(id int) scripting.ScriptableObject {
 // FireMobFightScript fires the "fight" trigger on a mob after a combat round.
 // Called by the combat engine's ScriptFightFunc after each round.
 // Source: mobact.c — mob_activity() calls Lua fight trigger during violence.
-func (w *World) FireMobFightScript(mobName string, targetName string, roomVNum int) {
-	w.fireMobScript("fight", mobName, targetName, roomVNum)
+func (w *World) FireMobFightScript(mob combat.Combatant, target combat.Combatant, roomVNum int) {
+	w.fireMobScript("fight", mob, target, roomVNum)
 }
 
 // FireMobDeathScript fires the "death" trigger on a mob when it dies.
 // Called by the combat engine's ScriptDeathFunc after death.
 // Source: fight.c — raw_kill() calls Lua death trigger.
-func (w *World) FireMobDeathScript(victimName string, killerName string, roomVNum int) {
-	w.fireMobScript("death", victimName, killerName, roomVNum)
+func (w *World) FireMobDeathScript(victim combat.Combatant, killer combat.Combatant, roomVNum int) {
+	w.fireMobScript("death", victim, killer, roomVNum)
 }
 
-func (w *World) fireMobScript(trigger, mobName, actorName string, roomVNum int) {
+func (w *World) fireMobScript(trigger string, body, actorBody combat.Combatant, roomVNum int) {
 	if ScriptEngine == nil {
 		return
 	}
 
-	w.mu.RLock()
-	var mob *MobInstance
-	for _, m := range w.activeMobs {
-		if m.GetRoom() == roomVNum && m.GetName() == mobName && m.HasScript(trigger) {
-			mob = m
-			break
-		}
-	}
-	var actor scripting.ScriptablePlayer
-	for _, p := range w.players {
-		if p.GetName() == actorName {
-			actor = p
-			break
-		}
-	}
-	w.mu.RUnlock()
-
-	if mob == nil {
+	mob := combatMob(body)
+	if mob == nil || !mob.HasScript(trigger) {
 		return
 	}
+	actor, _ := combatPlayer(actorBody)
 
 	ctx := mob.CreateScriptContext(nil, nil, "")
 	if actor != nil {
-		if p, ok := actor.(*Player); ok {
-			ctx.Ch = p
-		}
+		ctx.Ch = actor
 	}
 	ctx.World = NewWorldScriptableAdapter(w)
 	ctx.RoomVNum = roomVNum

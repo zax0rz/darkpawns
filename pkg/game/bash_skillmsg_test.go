@@ -16,16 +16,18 @@ func wireBashMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, at
 	messages := loadMessagesFile(t)
 	var attMsg, roomOut string
 	c := &combat.GameCallbacks{
-		Broadcast: func(_ int, msg, _ string) { roomOut = msg },
-		SendToChar: func(name, msg string) {
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
 			if name == chName {
 				attMsg = msg
 			}
 		},
-		GetSex:   func(string) int { return 0 },
-		GetHP:    func(string) int { return 10 },
-		GetLevel: func(string) int { return 1 },
-		IsNPC:    func(name string) bool { return false },
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
 	}
 	combat.SetCallbacks(c)
 	combat.InitFightMessages(c, messages)
@@ -156,7 +158,7 @@ func TestDoBash_MissDrawCountAndOrder(t *testing.T) {
 	if result.Success || result.Damage != 0 {
 		t.Skipf("seed %d did not produce a miss (success=%v); draw-order not exercised", seed, result.Success)
 	}
-	handled := cb.SkillMessage(0, ch.Name, mob.GetName(), SkillBashNum, ch.GetRoom())
+	handled := cb.SkillMessage(0, ch, mob, SkillBashNum, ch.GetRoom())
 	if !handled {
 		t.Fatal("SkillMessage(0, ..., 132) did not handle set 132")
 	}
@@ -170,7 +172,7 @@ func TestDoBash_MissDrawCountAndOrder(t *testing.T) {
 	ch.Move = 100
 	mob.SetPosition(combat.PosFighting)
 	DoBash(ch, mob, w)
-	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillBashNum, ch.GetRoom())
+	cb.SkillMessage(0, ch, mob, SkillBashNum, ch.GetRoom())
 	if got := dprng.Number(0, 999); got != wantNext {
 		t.Fatalf("bash miss draw count/order wrong: next=%d want=%d (number(1,101) then dice(1,%d))", got, wantNext, n)
 	}
@@ -193,7 +195,7 @@ func TestDoBash_MissMessageFromSkillMessages(t *testing.T) {
 		mob.SetPosition(combat.PosFighting)
 		result := DoBash(ch, mob, w)
 		if !result.Success && result.Damage == 0 && result.SkillMsgType == SkillBashNum {
-			cb.SkillMessage(0, ch.Name, mob.GetName(), SkillBashNum, ch.GetRoom())
+			cb.SkillMessage(0, ch, mob, SkillBashNum, ch.GetRoom())
 			missed = true
 			break
 		}

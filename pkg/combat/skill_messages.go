@@ -550,7 +550,7 @@ var skillMessageTable = map[int]skillMessageEntry{
 // available. If called before those hooks are set, messages will still work —
 // they just won't be delivered until the hooks are assigned.
 func InitSkillMessages(cb *GameCallbacks) {
-	impl := func(dam int, chName, victimName string, attackType int, roomVNum int) bool {
+	impl := func(dam int, ch, victim Combatant, attackType int, roomVNum int) bool {
 		entry, ok := skillMessageTable[attackType]
 		if !ok {
 			return false // no custom messages for this skill
@@ -572,17 +572,17 @@ func InitSkillMessages(cb *GameCallbacks) {
 		msg := variants[GetRoller().Number(0, len(variants)-1)]
 
 		// We don't have sex info here, so do basic token substitution only.
-		roomMsg := basicTokenReplace(msg.Room, chName, victimName)
-		charMsg := basicTokenReplace(msg.Char, chName, victimName)
-		victimMsg := basicTokenReplace(msg.Victim, chName, victimName)
+		roomMsg := basicTokenReplace(msg.Room, ch, victim)
+		charMsg := basicTokenReplace(msg.Char, ch, victim)
+		victimMsg := basicTokenReplace(msg.Victim, ch, victim)
 
 		if cb != nil {
 			if cb.Broadcast != nil {
-				cb.Broadcast(roomVNum, roomMsg, chName+" "+victimName)
+				cb.Broadcast(roomVNum, roomMsg, []Combatant{ch, victim})
 			}
 			if cb.SendToChar != nil {
-				cb.SendToChar(chName, charMsg)
-				cb.SendToChar(victimName, victimMsg)
+				cb.SendToChar(ch, charMsg)
+				cb.SendToChar(victim, victimMsg)
 			}
 		}
 		return true
@@ -634,7 +634,7 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 		return
 	}
 
-	cb.SkillMessage = func(dam int, chName, victimName string, attackType int, roomVNum int) bool {
+	cb.SkillMessage = func(dam int, ch, victim Combatant, attackType int, roomVNum int) bool {
 		variants, ok := messages.Variants(attackType)
 		if !ok || len(variants) == 0 {
 			return false
@@ -655,30 +655,30 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 		var action FightMessageAction
 		colored := false
 		switch {
-		case !cbIsNPC(victimName) && cbGetLevel(victimName) >= LVL_IMMORT:
+		case !cbIsNPC(victim) && cbGetLevel(victim) >= LVL_IMMORT:
 			action = variant.God
 		case dam != 0:
 			// update_pos sets POS_DEAD at GET_HIT <= -11 (fight.c:193).
-			if cbGetHP(victimName) <= -11 {
+			if cbGetHP(victim) <= -11 {
 				action = variant.Die
 			} else {
 				action = variant.Hit
 			}
 			colored = true
-		case chName != victimName:
+		case ch != victim:
 			action = variant.Miss
 			colored = true
 		default:
 			return true
 		}
 
-		chSex := cbGetSex(chName)
-		victimSex := cbGetSex(victimName)
+		chSex := cbGetSex(ch)
+		victimSex := cbGetSex(victim)
 		render := func(message string) string {
-			rendered := replaceMessageTokens(message, chName, victimName, "", "", chSex, victimSex)
-			return strings.ReplaceAll(rendered, "$p", cbWeaponDescription(chName))
+			rendered := replaceMessageTokens(message, ch.GetName(), victim.GetName(), "", "", chSex, victimSex)
+			return strings.ReplaceAll(rendered, "$p", cbWeaponDescription(ch))
 		}
-		sendColored := func(name, code, message string) {
+		sendColored := func(name Combatant, code, message string) {
 			if message == "" || cb.SendToChar == nil {
 				return
 			}
@@ -695,23 +695,24 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 		}
 
 		if action.Room != "" && cb.Broadcast != nil {
-			cb.Broadcast(roomVNum, render(action.Room), chName+" "+victimName)
+			cb.Broadcast(roomVNum, render(action.Room), []Combatant{ch, victim})
 		}
-		sendColored(chName, skillColorYellow, render(action.Attacker))
-		sendColored(victimName, skillColorRed, render(action.Victim))
+		sendColored(ch, skillColorYellow, render(action.Attacker))
+		sendColored(victim, skillColorRed, render(action.Victim))
 		return true
 	}
 }
 
 // basicTokenReplace handles $n/$N/$s/$e substitution with sex-aware pronouns.
 // Falls back to male pronouns if the GetSex callback is not wired.
-func basicTokenReplace(msg, chName, victimName string) string {
+func basicTokenReplace(msg string, ch, victim Combatant) string {
+	chName, victimName := ch.GetName(), victim.GetName()
 	chSex := 0 // default male
-	if s := cbGetSex(chName); s >= 0 {
+	if s := cbGetSex(ch); s >= 0 {
 		chSex = s
 	}
 	victimSex := 0
-	if s := cbGetSex(victimName); s >= 0 {
+	if s := cbGetSex(victim); s >= 0 {
 		victimSex = s
 	}
 	return replaceMessageTokens(msg, chName, victimName, "", "", chSex, victimSex)

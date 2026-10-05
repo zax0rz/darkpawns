@@ -280,9 +280,9 @@ func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 	if objName2 != "" {
 		obj2, found2 = findItemByName(ch, objName2)
 	}
-	fighting := ch.GetFighting()
-	if !found1 || !found2 || fighting != "" {
-		if fighting != "" {
+	fighting := ch.GetFightingBody()
+	if !found1 || !found2 || fighting != nil {
+		if fighting != nil {
 			return SkillResult{MessageToCh: "You're pretty busy right now!\n\r"}
 		}
 		return SkillResult{MessageToCh: "Looks like you don't have those objects..\n\r"}

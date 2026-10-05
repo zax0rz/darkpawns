@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -1242,7 +1243,7 @@ func (w *World) playerPresenceLine(player, viewer *Player) string {
 			buf += "thin air."
 		}
 	case player.GetPosition() == posFighting:
-		buf += fightingPresence(player.GetFighting(), viewer)
+		buf += fightingPresence(player.GetFightingBody(), viewer)
 	default:
 		buf += positionPresence(player.GetPosition())
 	}
@@ -1273,7 +1274,7 @@ func mobPresenceLine(mob *MobInstance, viewer *Player) string {
 	// The general branch (act.informative.c:546-611): CAP(short_descr).
 	buf := capitalize(mob.GetShortDesc()) + presenceTags(mob)
 	if mob.GetPosition() == posFighting {
-		buf += fightingPresence(mob.GetFighting(), viewer)
+		buf += fightingPresence(mob.GetFightingBody(), viewer)
 	} else {
 		buf += positionPresence(mob.GetPosition())
 	}
@@ -1293,14 +1294,14 @@ func presenceTags(i interface{ IsAffected(int) bool }) string {
 }
 
 // fightingPresence is list_one_char's fighting text.
-func fightingPresence(target string, viewer *Player) string {
-	switch {
-	case target == "":
+func fightingPresence(target combat.Combatant, viewer *Player) string {
+	switch target {
+	case nil:
 		return " is here struggling with thin air."
-	case strings.EqualFold(target, viewer.GetName()):
+	case viewer:
 		return " is here, fighting YOU!"
 	default:
-		return " is here, fighting " + target + "!"
+		return " is here, fighting " + persName(asActor(target), viewer) + "!"
 	}
 }
 

@@ -242,11 +242,11 @@ func resolveCastTargetForCommand(s *Session, info *spells.SpellInfo, targetName 
 		return castTarget{}, ""
 	}
 
-	fighting := s.player.GetFighting()
-	if fighting != "" && info.HasTarget(spells.TarFightSelf) {
+	fighting := s.player.GetFightingBody()
+	if fighting != nil && info.HasTarget(spells.TarFightSelf) {
 		return castTarget{character: s.player, found: true}, ""
 	}
-	if fighting != "" && info.HasTarget(spells.TarFightVict) {
+	if fighting != nil && info.HasTarget(spells.TarFightVict) {
 		if target, ok := s.manager.world.ResolveFightingTarget(s.player); ok {
 			return castTarget{character: target.Combatant, found: true}, ""
 		}

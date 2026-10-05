@@ -206,26 +206,17 @@ func (w *World) ResolveCharWorld(ch *Player, name string) (CharTarget, bool) {
 	return CharTarget{}, false
 }
 
-// ResolveFightingTarget converts Go's name-backed fighting state into the
-// character pointer C stores in FIGHTING(ch). Combat uses GetName(), which is
-// a mob's short description rather than its command keyword list, so routing
-// this through ResolveCharInRoom would lose valid mob opponents.
+// ResolveFightingTarget returns the actual FIGHTING(ch) body. Command text
+// selects a body once; a default target must not select another same-name mob.
 func (w *World) ResolveFightingTarget(ch *Player) (CharTarget, bool) {
-	if ch == nil || ch.GetFightingBody() == nil {
+	if ch == nil {
 		return CharTarget{}, false
 	}
-	fightingName := ch.GetFighting()
-	for _, player := range w.GetPlayersInRoom(ch.GetRoom()) {
-		if player != ch && strings.EqualFold(player.GetName(), fightingName) {
-			return newCharTarget(player), true
-		}
+	body := ch.GetFightingBody()
+	if body == nil {
+		return CharTarget{}, false
 	}
-	for _, mob := range w.GetMobsInRoom(ch.GetRoom()) {
-		if strings.EqualFold(mob.GetName(), fightingName) {
-			return newCharTarget(mob), true
-		}
-	}
-	return CharTarget{}, false
+	return newCharTarget(body), true
 }
 
 func isCompleteName(name, namelist string) bool {

@@ -36,7 +36,7 @@ func (w *World) DamageRefused(ch, victim combat.Combatant) bool {
 		return true
 	}
 
-	self := ch.GetName() == victim.GetName()
+	self := ch == victim
 	victimOutlaw := false
 	if p, ok := victim.(*Player); ok {
 		victimOutlaw = p.GetFlags()&(1<<uint(PlrOutlaw)) != 0

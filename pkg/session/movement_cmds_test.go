@@ -219,7 +219,7 @@ func TestSetFleeHooks_RetreatUsesRetreatHandler(t *testing.T) {
 	if cb := m.combatEngine.Callbacks; cb == nil || cb.DoRetreat == nil {
 		t.Fatal("retreat hook was not installed")
 	} else {
-		cb.DoRetreat(s.player.Name)
+		cb.DoRetreat(s.player)
 	}
 	if s.player.GetRoom() != 1002 {
 		t.Fatalf("room = %d, want 1002", s.player.GetRoom())

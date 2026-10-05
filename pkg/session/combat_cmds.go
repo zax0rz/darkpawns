@@ -104,7 +104,7 @@ func cmdHit(s *Session, args []string) error {
 		return nil
 	}
 	if s.manager.world.IsCharmedI(s.player) &&
-		strings.EqualFold(s.player.GetFollowing(), victim.GetName()) {
+		s.manager.world.FollowingBody(s.player) == victim {
 		game.Act(nil, false, s.player, victim, nil, nil,
 			"$N is just such a good friend, you simply can't hit $M.", "", game.ToChar)
 		return nil
@@ -113,7 +113,7 @@ func cmdHit(s *Session, args []string) error {
 	// C only starts a hit while standing and when the requested victim is not
 	// already FIGHTING(ch). It has no separate "already fighting" message.
 	if s.player.GetPosition() != combat.PosStanding ||
-		strings.EqualFold(s.player.GetFighting(), victim.GetName()) {
+		s.player.GetFightingBody() == victim {
 		s.Send("You do the best you can!\r\n")
 		return nil
 	}

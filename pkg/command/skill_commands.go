@@ -19,7 +19,7 @@ type rescueCombatEngine interface {
 	StopCombat(combat.Combatant)
 	// SkillMessage routes a combat message through the skill_message path
 	// (fight.c:1023-1092), drawing Dice(1,N) and emitting the set's text.
-	SkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool
+	SkillMessage(dam int, ch, vict combat.Combatant, attackType int, roomVNum int) bool
 }
 
 func skillPlayer(s SessionInterface) (*game.Player, error) {
@@ -619,7 +619,7 @@ func CmdBackstab(s SessionInterface, args []string) error {
 	}
 
 	// Can't backstab self
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("How can you sneak up on yourself?\r\n")
 	}
 
@@ -656,7 +656,7 @@ func CmdBash(s SessionInterface, args []string) error {
 			return s.SendMessage("Bash who?\r\n")
 		}
 	} else if ch.GetFightingBody() != nil {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("Bash who?\r\n")
 		}
@@ -664,7 +664,7 @@ func CmdBash(s SessionInterface, args []string) error {
 		return s.SendMessage("Bash who?\r\n")
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
 
@@ -693,12 +693,12 @@ func CmdKick(s SessionInterface, args []string) error {
 			return s.SendMessage("Kick who?\r\n")
 		}
 	} else if ch.GetFightingBody() != nil {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			// C uses FIGHTING(ch) as a direct pointer after an empty
 			// argument; a mob's multi-word short description is not reparsed
 			// through get_char_room_vis (act.offensive.c:601-605).
-			target, found = game.FindFightingTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+			target, found = heldFightingTarget(ch)
 		}
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
@@ -707,7 +707,7 @@ func CmdKick(s SessionInterface, args []string) error {
 		return s.SendMessage("Kick who?\r\n")
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
 
@@ -735,7 +735,7 @@ func CmdTrip(s SessionInterface, args []string) error {
 			return s.SendMessage("Trip who?\r\n")
 		}
 	} else if ch.GetFightingBody() != nil {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("Trip who?\r\n")
 		}
@@ -743,7 +743,7 @@ func CmdTrip(s SessionInterface, args []string) error {
 		return s.SendMessage("Trip who?\r\n")
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("You trip over your shoe laces...\r\n")
 	}
 
@@ -776,7 +776,7 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 			return s.SendMessage("Headbutt who?\r\n")
 		}
 	} else if ch.GetFightingBody() != nil {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("Headbutt who?\r\n")
 		}
@@ -814,7 +814,7 @@ func CmdRescue(s SessionInterface, args []string) error {
 		return s.SendMessage("Whom do you want to rescue?\r\n")
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("What about fleeing instead?\r\n")
 	}
 
@@ -855,7 +855,7 @@ func CmdDisembowel(s SessionInterface, args []string) error {
 	if target == nil {
 		return s.SendMessage("Disembowel who?\r\n")
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("Nah. Hari Kari is for wimps.\r\n")
 	}
 	return sendSkillResult(s, ch, target, game.DoDisembowel(ch, target))
@@ -874,7 +874,7 @@ func CmdDragonKick(s SessionInterface, args []string) error {
 	if !found {
 		return s.SendMessage("Kick who?\r\n") // act.offensive.c:655
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
 	return sendSkillResult(s, ch, target, game.DoDragonKick(ch, target))
@@ -897,7 +897,7 @@ func CmdTigerPunch(s SessionInterface, args []string) error {
 	if !found {
 		return s.SendMessage("Hit who?\r\n") // act.offensive.c:717
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
 	if ch.IsMounted() {
@@ -919,10 +919,7 @@ func martialArtsVictim(s SessionInterface, ch *game.Player, args []string) (comb
 	if ch.GetFightingBody() == nil {
 		return nil, false
 	}
-	if target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch); found {
-		return target, true
-	}
-	return game.FindFightingTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+	return heldFightingTarget(ch)
 }
 
 // CmdShoot handles the shoot command (C-10).
@@ -1061,7 +1058,7 @@ func CmdSubdue(s SessionInterface, args []string) error {
 	if !found {
 		return s.SendMessage("They aren't here.\r\n")
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
 	return sendSkillResult(s, ch, target, game.DoSubdue(ch, target))
@@ -1138,7 +1135,7 @@ func CmdAmbush(s SessionInterface, args []string) error {
 	if ch.GetAmbushAction() != 0 {
 		return s.SendMessage("You are a little busy for that right now!\r\n")
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("Ambush yourself? You idiot!\r\n")
 	}
 	room := world.GetRoomInWorld(ch.GetRoom())
@@ -1289,7 +1286,7 @@ func CmdCutthroat(s SessionInterface, args []string) error {
 		return s.SendMessage("Cut what throat where?\n\r")
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("That would be bad.\n\r")
 	}
 
@@ -1323,9 +1320,9 @@ func CmdStrike(s SessionInterface, args []string) error {
 		if ch.GetFightingBody() == nil {
 			return s.SendMessage("Strike who?\r\n")
 		}
-		target, _, _ = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		target, _ = heldFightingTarget(ch)
 		if target == nil {
-			target, _ = game.FindFightingTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+			target, _ = heldFightingTarget(ch)
 		}
 		if target == nil {
 			return s.SendMessage("They don't seem to be here.\r\n")
@@ -1341,7 +1338,7 @@ func CmdStrike(s SessionInterface, args []string) error {
 		}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		ch.SendMessage("You beat yourself about the face and neck.\r\n")
 		// act("$n slaps $mself around a little.", FALSE, ch, 0, vict, TO_ROOM)
 		for _, p := range world.GetPlayersInRoom(ch.GetRoom()) {
@@ -1546,11 +1543,11 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 
 	if len(args) == 0 {
 		// Try to kick whoever we're fighting
-		fighting := ch.GetFighting()
-		if fighting == "" {
+		fighting := ch.GetFightingBody()
+		if fighting == nil {
 			return s.SendMessage("Kick who?\r\n")
 		}
-		target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
 		}
@@ -1562,11 +1559,11 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 		if !found {
 			// C falls back to FIGHTING(ch) after an unsuccessful named lookup,
 			// not only when the command has no argument (new_cmds2.c:705-713).
-			fighting := ch.GetFighting()
-			if fighting == "" {
+			fighting := ch.GetFightingBody()
+			if fighting == nil {
 				return s.SendMessage("Kick who?\r\n")
 			}
-			target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+			target, found = heldFightingTarget(ch)
 			if !found {
 				return s.SendMessage("Kick who?\r\n")
 			}
@@ -1602,11 +1599,11 @@ func CmdTurn(s SessionInterface, args []string) error {
 	var found bool
 
 	if len(args) == 0 {
-		fighting := ch.GetFighting()
-		if fighting == "" {
+		fighting := ch.GetFightingBody()
+		if fighting == nil {
 			return s.SendMessage("Turn who?\r\n")
 		}
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), fighting, ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("They don't seem to be here.\r\n")
 		}
@@ -1674,7 +1671,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			if eng, ok := s.GetCombatEngine().(rescueCombatEngine); ok && eng != nil {
 				for _, skillTarget := range targets {
 					if skillTarget != nil && !refused(skillTarget) {
-						eng.SkillMessage(result.Damage, ch.GetName(), skillTarget.GetName(), result.SkillMsgType, ch.GetRoom())
+						eng.SkillMessage(result.Damage, ch, skillTarget, result.SkillMsgType, ch.GetRoom())
 					}
 				}
 			}
@@ -2087,7 +2084,7 @@ func CmdBearhug(s SessionInterface, args []string) error {
 		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoomVNum())
 	}
 	if !found && ch.GetFightingBody() != nil {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 	}
 	if !found {
 		return s.SendMessage("Bear hug who?\r\n")
@@ -2118,7 +2115,7 @@ func CmdSlug(s SessionInterface, args []string) error {
 	// list.
 	target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoomVNum())
 	if !found && ch.GetFightingBody() != nil {
-		target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 	}
 	if !found {
 		return s.SendMessage("Slug who?\r\n")
@@ -2170,8 +2167,8 @@ func CmdBite(s SessionInterface, args []string) error {
 	}
 
 	if len(args) == 0 {
-		fighting := ch.GetFighting()
-		if fighting == "" {
+		fighting := ch.GetFightingBody()
+		if fighting == nil {
 			return s.SendMessage("Bite who?!\r\n")
 		}
 		// C assigns FIGHTING(ch) and returns immediately for an empty argument;
@@ -2252,8 +2249,8 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 	world := s.GetWorld()
 
 	if len(args) == 0 {
-		fighting := ch.GetFighting()
-		if fighting == "" {
+		fighting := ch.GetFightingBody()
+		if fighting == nil {
 			return s.SendMessage("Groinrip who?\r\n")
 		}
 		// C falls back to the FIGHTING(ch) pointer when no argument is
@@ -2394,7 +2391,7 @@ func CmdCircle(s SessionInterface, args []string) error {
 		}
 	} else if ch.GetFightingBody() != nil {
 		// Default to current fighting target.
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("Circle who?\r\n")
 		}
@@ -2402,7 +2399,7 @@ func CmdCircle(s SessionInterface, args []string) error {
 		return s.SendMessage("Circle who?\r\n")
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("How can you stab yourself in the back?\r\n")
 	}
 
@@ -2431,7 +2428,7 @@ func CmdCharge(s SessionInterface, args []string) error {
 			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
 		}
 	} else if ch.GetFightingBody() != nil {
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
+		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
 		}
@@ -2439,7 +2436,7 @@ func CmdCharge(s SessionInterface, args []string) error {
 		return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return s.SendMessage("You charge headlong into the ground, impressing everyone..\r\n")
 	}
 
@@ -2456,4 +2453,11 @@ func CmdCharge(s SessionInterface, args []string) error {
 // See pkg/command/registry.go for the migration plan.
 func RegisterSkillCommands() {
 	// Registration placeholder — commands are called directly via Cmd* handlers.
+}
+
+// heldFightingTarget mirrors C FIGHTING(ch): no command matcher or visibility
+// recheck may replace an opponent selected by an earlier command.
+func heldFightingTarget(ch *game.Player) (combat.Combatant, bool) {
+	body := ch.GetFightingBody()
+	return body, body != nil
 }

@@ -5,17 +5,17 @@ import (
 )
 
 func TestBasicTokenReplace(t *testing.T) {
-	got := basicTokenReplace("$n hits $N.", "Alice", "Bob")
+	got := basicTokenReplace("$n hits $N.", testCombatBody("Alice"), testCombatBody("Bob"))
 	if got != "Alice hits Bob." {
 		t.Errorf("basicTokenReplace() = %q, want %q", got, "Alice hits Bob.")
 	}
 
-	got = basicTokenReplace("no tokens here", "Alice", "Bob")
+	got = basicTokenReplace("no tokens here", testCombatBody("Alice"), testCombatBody("Bob"))
 	if got != "No tokens here" {
 		t.Errorf("basicTokenReplace() = %q, want %q", got, "No tokens here")
 	}
 
-	got = basicTokenReplace("$n hits $N, then $n hits $N again.", "A", "B")
+	got = basicTokenReplace("$n hits $N, then $n hits $N again.", testCombatBody("A"), testCombatBody("B"))
 	if got != "A hits B, then A hits B again." {
 		t.Errorf("basicTokenReplace() = %q, want %q", got, "A hits B, then A hits B again.")
 	}
@@ -23,7 +23,7 @@ func TestBasicTokenReplace(t *testing.T) {
 
 func TestBasicTokenReplace_Pronouns(t *testing.T) {
 	// Default (GetSex callback nil) → male pronouns
-	got := basicTokenReplace("$n raises $s blade.", "Warrior", "Enemy")
+	got := basicTokenReplace("$n raises $s blade.", testCombatBody("Warrior"), testCombatBody("Enemy"))
 	if got != "Warrior raises his blade." {
 		t.Errorf("male pronouns: got %q, want %q", got, "Warrior raises his blade.")
 	}
@@ -32,7 +32,9 @@ func TestBasicTokenReplace_Pronouns(t *testing.T) {
 	orig := callbacks
 	defer func() { callbacks = orig }()
 	callbacks = &GameCallbacks{
-		GetSex: func(name string) int {
+		GetSex: func(bodyname Combatant) int {
+			name := bodyname.GetName()
+
 			if name == "Alice" {
 				return 1 // female
 			}
@@ -43,13 +45,13 @@ func TestBasicTokenReplace_Pronouns(t *testing.T) {
 		},
 	}
 
-	got = basicTokenReplace("$n raises $s blade.", "Alice", "Enemy")
+	got = basicTokenReplace("$n raises $s blade.", testCombatBody("Alice"), testCombatBody("Enemy"))
 	if got != "Alice raises her blade." {
 		t.Errorf("female pronouns: got %q, want %q", got, "Alice raises her blade.")
 	}
 
 	// Neuter (sex=2)
-	got = basicTokenReplace("$e attacks $N.", "Golem", "Enemy")
+	got = basicTokenReplace("$e attacks $N.", testCombatBody("Golem"), testCombatBody("Enemy"))
 	if got != "It attacks Enemy." {
 		t.Errorf("neuter pronouns: got %q, want %q", got, "It attacks Enemy.")
 	}
@@ -86,7 +88,7 @@ func TestInitSkillMessages(t *testing.T) {
 	}
 
 	// Unknown attack type → no match
-	result := cb.SkillMessage(10, "Alice", "Bob", 9999, 100)
+	result := cb.SkillMessage(10, testCombatBody("Alice"), testCombatBody("Bob"), 9999, 100)
 	if result != false {
 		t.Errorf("SkillMessage for unknown type = %v, want false", result)
 	}

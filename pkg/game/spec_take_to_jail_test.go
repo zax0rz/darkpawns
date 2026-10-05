@@ -119,7 +119,7 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	guard.SetHunting(victim.GetName())
 
 	callbacks := w.WireCombatCallbacks()
-	if !callbacks.JailGuardSubdue(guard.GetName(), victim.GetName()) {
+	if !callbacks.JailGuardSubdue(guard, victim) {
 		t.Fatal("jail guard callback should subdue the victim")
 	}
 

@@ -104,8 +104,7 @@ func StopFollower(w *World, ch *Player) {
 	}
 
 	// Look up the leader for act messages that need $N.
-	leaderName := ch.GetFollowing()
-	leader := w.followingActor(leaderName)
+	leader := asActor(w.combatFollowingBody(ch))
 
 	// C computes IS_SHADOWING from AFF_DODGE, removes the SKILL_SHADOW
 	// affect/bit before choosing the stop message, and suppresses leader/room
@@ -166,7 +165,7 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 		return
 	}
 
-	leader := w.followingActor(mob.GetFollowing())
+	leader := asActor(w.combatFollowingBody(mob))
 
 	if mob.IsAffected(affCharm) {
 		Act(w, false, mob, leader, nil, nil,
@@ -323,5 +322,23 @@ func removeCharmAffect(ch *Player) {
 			removed = true
 			return
 		}
+	}
+}
+
+// SetFollowingBody retains a command-selected leader, including duplicate NPCs.
+// The string remains the existing social display; combat never resolves an NPC by it.
+func (p *Player) SetFollowingBody(body combat.Combatant) {
+	name := ""
+	if body != nil {
+		name = body.GetName()
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Following = name
+	p.followingBody = body
+	if body == nil {
+		p.followingSequence = 0
+	} else {
+		p.followingSequence = nextFollowerSequence()
 	}
 }

@@ -65,7 +65,9 @@ func TestSkillDeathOrderExactBytes(t *testing.T) {
 				old := combat.GetCallbacks()
 				t.Cleanup(func() { combat.SetCallbacks(old) })
 				cryCount := 0
-				combat.SetCallbacks(&combat.GameCallbacks{GetAdjacentRoom: func(int, int) int { return -1 }, Broadcast: func(room int, msg, exclude string) {
+				combat.SetCallbacks(&combat.GameCallbacks{GetAdjacentRoom: func(int, int) int { return -1 }, Broadcast: func(room int, msg string, excludedBodies []combat.Combatant) {
+					exclude := testBodyNames(excludedBodies)
+
 					if strings.Contains(msg, "death cry") {
 						cryCount++
 						if len(w.GetItemsInRoom(room)) != 0 {

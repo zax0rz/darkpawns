@@ -56,8 +56,8 @@ func TestFireMobScriptsShareDispatchContext(t *testing.T) {
 	ScriptEngine = mobScriptRecorder{calls: &calls}
 	t.Cleanup(func() { ScriptEngine = previousEngine })
 
-	w.FireMobFightScript(mob.GetName(), actor.GetName(), 1001)
-	w.FireMobDeathScript(mob.GetName(), actor.GetName(), 1001)
+	w.FireMobFightScript(mob, actor, 1001)
+	w.FireMobDeathScript(mob, actor, 1001)
 
 	want := []mobScriptCall{
 		{filename: "mob.lua", trigger: "fight", actor: "Target"},

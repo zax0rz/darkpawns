@@ -21,23 +21,32 @@ func newSkillMessageRig(t *testing.T, hp int, victimLevel int, victimIsNPC bool,
 	original := GetCallbacks()
 	rig := &skillMessageRig{}
 	rig.cb = &GameCallbacks{
-		Broadcast: func(_ int, msg, _ string) { rig.events = append(rig.events, "room:"+msg) },
-		SendToChar: func(name, msg string) {
+		Broadcast: func(_ int, msg string, _ []Combatant) { rig.events = append(rig.events, "room:"+msg) },
+		SendToChar: func(bodyname Combatant, msg string) {
+			name := bodyname.GetName()
+
 			rig.events = append(rig.events, "to:"+name+":"+msg)
 		},
-		SendRaw: func(name, msg string) { rig.events = append(rig.events, "raw:"+name+":"+msg) },
-		GetSex:  func(string) int { return 0 },
-		GetHP:   func(string) int { return hp },
-		GetLevel: func(name string) int {
+		SendRaw: func(bodyname Combatant, msg string) {
+			name := bodyname.GetName()
+			rig.events = append(rig.events, "raw:"+name+":"+msg)
+		},
+		GetSex: func(Combatant) int { return 0 },
+		GetHP:  func(Combatant) int { return hp },
+		GetLevel: func(bodyname Combatant) int {
+			name := bodyname.GetName()
+
 			if name == "Victim" {
 				return victimLevel
 			}
 			return 1
 		},
-		IsNPC: func(name string) bool {
+		IsNPC: func(bodyname Combatant) bool {
+			name := bodyname.GetName()
+
 			return name == "Victim" && victimIsNPC
 		},
-		GetColorLevel: func(string) int { return colorLevel },
+		GetColorLevel: func(Combatant) int { return colorLevel },
 	}
 	SetCallbacks(rig.cb)
 	InitFightMessages(rig.cb, FightMessages{
@@ -55,7 +64,7 @@ func newSkillMessageRig(t *testing.T, hp int, victimLevel int, victimIsNPC bool,
 func (r *skillMessageRig) run(t *testing.T, dam int) {
 	t.Helper()
 	WithRoller(NewScriptedRoller([]int{1}), func() {
-		if handled := r.cb.SkillMessage(dam, "Attacker", "Victim", 900, 100); !handled {
+		if handled := r.cb.SkillMessage(dam, testCombatBody("Attacker"), testCombatBody("Victim"), 900, 100); !handled {
 			t.Fatal("set 900 was not handled")
 		}
 	})
@@ -122,7 +131,8 @@ func TestSkillMessageSelfZeroDamageEmitsNothing(t *testing.T) {
 	rig := newSkillMessageRig(t, 10, 1, true, 0)
 	roller := NewScriptedRoller([]int{1, 7})
 	WithRoller(roller, func() {
-		if handled := rig.cb.SkillMessage(0, "Attacker", "Attacker", 900, 100); !handled {
+		attackerBody := testCombatBody("Attacker")
+		if handled := rig.cb.SkillMessage(0, attackerBody, attackerBody, 900, 100); !handled {
 			t.Fatal("set 900 was not handled")
 		}
 	})

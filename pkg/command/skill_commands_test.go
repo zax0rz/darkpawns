@@ -134,12 +134,12 @@ func TestCmdHeadbuttFallsBackToFightingTarget(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosFighting)
 	session.player.SetSkill(game.SkillHeadbutt, 75)
-	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 	// Both players above level 10, so damage()'s level protections
 	// (fight.c:1344-1357) let the headbutt land.
 	session.player.Level = 20
 
 	target := game.NewPlayer(2, "Target", 1001)
+	session.player.SetFightingBody(target)
 	target.Level = 20
 	target.SetPosition(combat.PosSleeping)
 	if err := session.world.AddPlayer(target); err != nil {
@@ -190,7 +190,11 @@ func newBashCommandSession(t *testing.T) *rescueCommandSession {
 
 func TestCmdBash_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
-	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
+	target, ok := session.world.GetPlayer("Target")
+	if !ok {
+		t.Fatal("missing fixture target")
+	}
+	session.player.SetFightingBody(target)
 
 	if err := CmdBash(session, nil); err != nil {
 		t.Fatalf("CmdBash returned error: %v", err)
@@ -205,8 +209,12 @@ func TestCmdBash_FightingTargetFallback(t *testing.T) {
 
 func TestCmdCharge_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
+	target, ok := session.world.GetPlayer("Target")
+	if !ok {
+		t.Fatal("missing fixture target")
+	}
+	session.player.SetFightingBody(target)
 	session.player.SetSkill(game.SkillCharge, 100)
-	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 
 	if err := CmdCharge(session, nil); err != nil {
 		t.Fatalf("CmdCharge returned error: %v", err)
@@ -223,8 +231,12 @@ func TestCmdCharge_FightingTargetFallback(t *testing.T) {
 
 func TestCmdCircle_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
+	target, ok := session.world.GetPlayer("Target")
+	if !ok {
+		t.Fatal("missing fixture target")
+	}
+	session.player.SetFightingBody(target)
 	session.player.SetSkill(game.SkillCircle, 100)
-	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 
 	if err := CmdCircle(session, nil); err != nil {
 		t.Fatalf("CmdCircle returned error: %v", err)
@@ -260,8 +272,12 @@ func TestCmdBash_NoFightingNoArgs(t *testing.T) {
 
 func TestCmdBearhug_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
+	target, ok := session.world.GetPlayer("Target")
+	if !ok {
+		t.Fatal("missing fixture target")
+	}
+	session.player.SetFightingBody(target)
 	session.player.SetSkill(game.SkillBearhug, 100)
-	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 
 	if err := CmdBearhug(session, nil); err != nil {
 		t.Fatalf("CmdBearhug returned error: %v", err)

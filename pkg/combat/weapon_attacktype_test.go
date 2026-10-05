@@ -27,8 +27,8 @@ func TestPerformOneHit_WeaponOffsetReachesMessageSender(t *testing.T) {
 			defer SetCallbacks(orig)
 
 			cb := defaultCombatCallbacks()
-			cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
-				if chName == "Hero" {
+			cb.GetWeaponInfo = func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) {
+				if chName.GetName() == "Hero" {
 					return tc.weaponOffset, 0, 0, false
 				}
 				return 0, 0, 0, false
@@ -43,7 +43,9 @@ func TestPerformOneHit_WeaponOffsetReachesMessageSender(t *testing.T) {
 			// Capture the attackType handed to the message sender AND the text
 			// rendered for the attacker, by routing through the production
 			// SendWeaponMessage (which calls DamMessage → cbSendToChar).
-			cb.SendToChar = func(name, msg string) {
+			cb.SendToChar = func(bodyname Combatant, msg string) {
+				name := bodyname.GetName()
+
 				if name == "Hero" {
 					gotMessages = append(gotMessages, msg)
 				}
@@ -53,7 +55,7 @@ func TestPerformOneHit_WeaponOffsetReachesMessageSender(t *testing.T) {
 				SendWeaponMessage(dam, attacker, defender, attackType)
 				return true
 			}
-			engine.BroadcastFunc = func(int, string, string) {}
+			engine.BroadcastFunc = func(int, string, []Combatant) {}
 
 			attacker := &mockCombatant{
 				name: "Hero", npc: false, room: 100, level: 10,
@@ -98,8 +100,8 @@ func TestPerformOneHit_DamageUnchangedByWeaponOffset(t *testing.T) {
 
 	runOnce := func(t *testing.T, weaponOffset int) int {
 		cb := defaultCombatCallbacks()
-		cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
-			if chName == "Hero" {
+		cb.GetWeaponInfo = func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) {
+			if chName.GetName() == "Hero" {
 				return weaponOffset, 0, 0, false
 			}
 			return 0, 0, 0, false
@@ -109,7 +111,7 @@ func TestPerformOneHit_DamageUnchangedByWeaponOffset(t *testing.T) {
 		engine := NewCombatEngine()
 		defer engine.Stop()
 		engine.MessageFunc = func(Combatant, Combatant, int, int) bool { return true }
-		engine.BroadcastFunc = func(int, string, string) {}
+		engine.BroadcastFunc = func(int, string, []Combatant) {}
 
 		attacker := &mockCombatant{
 			name: "Hero", npc: false, room: 100, level: 10,
@@ -149,8 +151,8 @@ func TestPerformOneHit_MissBranchUsesFreshWeaponOffset(t *testing.T) {
 	defer SetCallbacks(orig)
 
 	cb := defaultCombatCallbacks()
-	cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
-		if chName == "Hero" {
+	cb.GetWeaponInfo = func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) {
+		if chName.GetName() == "Hero" {
 			return 11, 1, 6, false // piercing
 		}
 		return 0, 0, 0, false
@@ -162,7 +164,9 @@ func TestPerformOneHit_MissBranchUsesFreshWeaponOffset(t *testing.T) {
 
 	var missOffset int
 	var missMessages []string
-	cb.SendToChar = func(name, msg string) {
+	cb.SendToChar = func(bodyname Combatant, msg string) {
+		name := bodyname.GetName()
+
 		if name == "Hero" {
 			missMessages = append(missMessages, msg)
 		}
@@ -172,7 +176,7 @@ func TestPerformOneHit_MissBranchUsesFreshWeaponOffset(t *testing.T) {
 		SendWeaponMessage(dam, attacker, defender, attackType)
 		return true
 	}
-	engine.BroadcastFunc = func(int, string, string) {}
+	engine.BroadcastFunc = func(int, string, []Combatant) {}
 
 	attacker := &mockCombatant{
 		name: "Hero", npc: false, room: 100, level: 1,

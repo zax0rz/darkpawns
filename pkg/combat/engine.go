@@ -50,7 +50,7 @@ type CombatEngine struct {
 	tickEvery   time.Duration
 
 	// Message broadcaster function (set by game)
-	BroadcastFunc func(roomVNum int, message string, exclude string)
+	BroadcastFunc func(roomVNum int, message string, exclude []Combatant)
 
 	// MessageFunc routes hit/miss messages through the game-layer message system.
 	// If non-nil, sendHitMessage and sendMissMessage call it and skip the generic
@@ -65,7 +65,7 @@ type CombatEngine struct {
 	// ScriptFightFunc fires the "fight" trigger on a mob after each combat round.
 	// Set by the game layer. Called with (mobName, targetName, roomVNum).
 	// Source: mobact.c — mobs use scripts during combat
-	ScriptFightFunc func(mobName string, targetName string, roomVNum int)
+	ScriptFightFunc func(mob, target Combatant, roomVNum int)
 
 	// MobSpecialFunc fires a MOB_SPEC procedure after an NPC's combat turn.
 	// Set by the game layer. Source: fight.c:2030-2031 — perform_violence()
@@ -75,12 +75,12 @@ type CombatEngine struct {
 	// ScriptDeathFunc fires the "death" trigger on a mob when it dies.
 	// Set by the game layer. Called with (victimName, killerName, roomVNum).
 	// Source: fight.c — raw_kill() calls Lua death trigger.
-	ScriptDeathFunc func(victimName string, killerName string, roomVNum int)
+	ScriptDeathFunc func(victim, killer Combatant, roomVNum int)
 
 	// DamageFunc is called after damage is applied to a combatant each round.
 	// Set by the session manager to propagate health changes to agent sessions.
 	// victimName is the name of the character who took damage.
-	DamageFunc func(victimName string)
+	DamageFunc func(victim Combatant)
 
 	// OnRoundEnd is called after each combat round. Used for wait state decrement.
 	OnRoundEnd func()
@@ -101,7 +101,7 @@ func NewCombatEngine() *CombatEngine {
 }
 
 // SetBroadcastFunc sets the function used to broadcast messages to rooms
-func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, exclude string)) {
+func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, exclude []Combatant)) {
 	ce.BroadcastFunc = fn
 }
 
@@ -122,7 +122,7 @@ func (ce *CombatEngine) SetCallbacks(cb *GameCallbacks) {
 // (R4/R3). attackType is the messages-file key — e.g. 131 for the Backstab set
 // — NOT the Go-internal SKILL_* enum (fight_core.go:60), which is unrelated to
 // the messages file and would miss the lookup.
-func (ce *CombatEngine) SkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool {
+func (ce *CombatEngine) SkillMessage(dam int, ch, vict Combatant, attackType int, roomVNum int) bool {
 	return cbSkillMessage(dam, ch, vict, attackType, roomVNum)
 }
 
@@ -175,7 +175,7 @@ type PositionedMob interface {
 	GetName() string
 	GetStatus() string
 	SetStatus(string)
-	GetFighting() string
+	GetFightingBody() Combatant
 }
 
 // StartMobPositionRecovery starts a goroutine that periodically checks mob positions.
@@ -201,8 +201,8 @@ func (ce *CombatEngine) StartMobPositionRecovery(getMobs func() []PositionedMob)
 				mobs := getMobs()
 				for _, mob := range mobs {
 					status := mob.GetStatus()
-					fighting := mob.GetFighting()
-					if fighting != "" {
+					fighting := mob.GetFightingBody()
+					if fighting != nil {
 						continue
 					}
 					if status != "sleeping" && status != "resting" && status != "sitting" {
@@ -556,8 +556,8 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 	// 1. Attacks-count computation (fight.c:1910-1947). NPC draws Number(0,900);
 	// PC draws Number(1,100)/Number(0,500). These run unconditionally.
-	hasHaste := cbHasAffect(attacker.GetName(), AFF_HASTE)
-	hasSlow := cbHasAffect(attacker.GetName(), AFF_SLOW)
+	hasHaste := cbHasAffect(attacker, AFF_HASTE)
+	hasSlow := cbHasAffect(attacker, AFF_SLOW)
 	numAttacks := GetAttacksPerRound(attacker, hasHaste, hasSlow)
 
 	// 2. Parry/dodge pre-check (fight.c:1949-1973). PC draws Number(0,10000)
@@ -634,7 +634,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 
 	// Fire fight trigger on mob attacker after combat round
 	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetPosition() != PosDead {
-		ce.ScriptFightFunc(attacker.GetName(), defender.GetName(), attacker.GetRoom())
+		ce.ScriptFightFunc(attacker, defender, attacker.GetRoom())
 	}
 }
 
@@ -653,9 +653,9 @@ func (ce *CombatEngine) scrambleBroadcast(c Combatant) {
 		// C act() → CAP uppercases the first byte of the fully-composed string.
 		ce.BroadcastFunc(c.GetRoom(),
 			capitalizeFightMessage(fmt.Sprintf("%s scrambles to %s feet!", c.GetName(), pronoun)),
-			c.GetName())
+			[]Combatant{c})
 	}
-	c.SendMessage("You drag yourself to your feet.\r\n")
+	sendCombatMessage(c, "You drag yourself to your feet.\r\n")
 }
 
 func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
@@ -663,10 +663,10 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 	switch {
 	case CheckParry(fighter, opponent) == ParrySuccess:
 		defenseAction = "parry"
-		fighter.SendMessage("With a dazzling show of swordplay, you move into defensive position...\r\n")
+		sendCombatMessage(fighter, "With a dazzling show of swordplay, you move into defensive position...\r\n")
 		// C act() → CAP uppercases the first byte (comm.c:2477). The fighter's
 		// name may be lowercase (e.g. "a guard trainee").
-		opponent.SendMessage(capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
+		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
 		ce.sendDefenseObserverMessage(
 			fighter,
 			opponent,
@@ -674,8 +674,8 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 		)
 	case CheckDodge(fighter, opponent) == DodgeSuccess:
 		defenseAction = "dodge"
-		fighter.SendMessage("You dodge!\r\n")
-		opponent.SendMessage(capitalizeFightMessage(fmt.Sprintf("%s dodges your attack!\r\n", fighter.GetName())))
+		sendCombatMessage(fighter, "You dodge!\r\n")
+		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s dodges your attack!\r\n", fighter.GetName())))
 		ce.sendDefenseObserverMessage(
 			fighter,
 			opponent,
@@ -690,15 +690,15 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, message string) {
 	observed := false
 	for _, observer := range cbGetRoomCombatants(fighter.GetRoom()) {
-		if observer == nil || observer.GetName() == fighter.GetName() || observer.GetName() == opponent.GetName() {
+		if observer == nil || observer == fighter || observer == opponent || observer.GetPosition() <= PosSleeping {
 			continue
 		}
-		observer.SendMessage(message)
+		sendCombatMessage(observer, message)
 		observed = true
 	}
 	if !observed && ce.BroadcastFunc != nil {
 		// Test and embedding fallback when the game-layer room lookup is absent.
-		ce.BroadcastFunc(fighter.GetRoom(), message, fighter.GetName())
+		ce.BroadcastFunc(fighter.GetRoom(), message, []Combatant{fighter, opponent})
 	}
 }
 
@@ -739,11 +739,11 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// stale pair.LastAttackType. This offset is handed ONLY to the message
 	// senders — CalculateDamage keeps AttackNormal so AC reduction still applies
 	// (R3: damage math is unchanged).
-	msgAttackType := cbWeaponInfo(attacker.GetName())
+	msgAttackType := cbWeaponInfo(attacker)
 
 	hit := CalculateHitChance(attacker, defender, HitModifiers{
-		WeaponBlessed: cbWeaponBlessed(attacker.GetName()),
-		DrunkLevel:    cbDrunk(attacker.GetName()),
+		WeaponBlessed: cbWeaponBlessed(attacker),
+		DrunkLevel:    cbDrunk(attacker),
 	})
 	var damage int
 	if hit {
@@ -764,7 +764,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// loop; the peaceful and level refusals leave FIGHTING set, so C's loop
 	// swings (and refuses) again on the next attack.
 	if cbDamageRefused(attacker, defender) {
-		if cbIsShopkeeper(defender.GetName()) {
+		if cbIsShopkeeper(defender) {
 			ce.StopCombat(attacker)
 			ce.StopCombat(defender)
 			return true
@@ -811,8 +811,8 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// master (fight.c:1457-1458): stop_follower's charm branch announces
 	// "$n hates your guts!" to the master BEFORE the swing's message, on
 	// both the miss (damage 0) and hit paths.
-	if cbGetFollowing(defender.GetName()) == attacker.GetName() {
-		cbStopFollowerOfMaster(defender.GetName(), attacker.GetName())
+	if cbGetFollowing(defender) == attacker {
+		cbStopFollowerOfMaster(defender, attacker)
 	}
 
 	if !hit {
@@ -830,7 +830,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 
 	defender.TakeDamage(damage)
 	if ce.DamageFunc != nil {
-		ce.DamageFunc(defender.GetName())
+		ce.DamageFunc(defender)
 	}
 
 	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
@@ -858,7 +858,7 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 	}
 
 	if damage > defender.GetMaxHP()/4 {
-		defender.SendMessage("That really did HURT!\r\n")
+		sendCombatMessage(defender, "That really did HURT!\r\n")
 		if GetRoller().Number(0, 2) == 0 {
 			ce.sendDefenseObserverMessage(
 				defender,
@@ -869,22 +869,22 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 	}
 
 	if defender.GetHP() < defender.GetMaxHP()/4 {
-		defender.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")
-		if cbHasMobFlag(defender.GetName(), "MOB_WIMPY") && attacker != defender {
-			cbDoFlee(defender.GetName())
+		sendCombatMessage(defender, "You wish that your wounds would stop BLEEDING so much!\r\n")
+		if cbHasMobFlag(defender, "MOB_WIMPY") && attacker != defender {
+			cbDoFlee(defender)
 		}
 	}
 
-	wimpLevel := cbGetWimpyLev(defender.GetName())
+	wimpLevel := cbGetWimpyLev(defender)
 	if !defender.IsNPC() && wimpLevel > 0 &&
 		attacker != defender &&
 		newPos >= PosFighting && defender.GetHP() < wimpLevel {
-		defender.SendMessage("You wimp out, and attempt to flee!\r\n")
-		if cbGetSkill(defender.GetName(), SKILL_RETREAT) > 0 ||
-			cbGetSkill(defender.GetName(), SKILL_ESCAPE) > 0 {
-			cbDoRetreat(defender.GetName())
+		sendCombatMessage(defender, "You wimp out, and attempt to flee!\r\n")
+		if cbGetSkill(defender, SKILL_RETREAT) > 0 ||
+			cbGetSkill(defender, SKILL_ESCAPE) > 0 {
+			cbDoRetreat(defender)
 		} else {
-			cbDoFlee(defender.GetName())
+			cbDoFlee(defender)
 		}
 	}
 
@@ -899,18 +899,15 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 		return false
 	}
 
-	attackerName := attacker.GetName()
-	defenderName := defender.GetName()
-
 	// Jail guard intercept: city jail guards subdue eligible PCs instead of
 	// killing them, then cart them to jail.
 	// TODO(DP-1054): C also gates on CAN_SEE(ch, victim); no CanSee callback exists yet.
 	if !defender.IsNPC() &&
-		cbMobHasJailGuardSpec(attackerName) &&
+		cbMobHasJailGuardSpec(attacker) &&
 		attacker.GetHP() > attacker.GetMaxHP()/2 &&
-		!cbHasAffectStr(defenderName, AFF_STR_VAMPIRE) &&
-		!cbHasAffectStr(defenderName, AFF_STR_WEREWOLF) {
-		if cbJailGuardSubdue(attackerName, defenderName) {
+		!cbHasAffectStr(defender, AFF_STR_VAMPIRE) &&
+		!cbHasAffectStr(defender, AFF_STR_WEREWOLF) {
+		if cbJailGuardSubdue(attacker, defender) {
 			ce.StopCombat(defender)
 			ce.StopCombat(attacker)
 			return true
@@ -920,15 +917,11 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 	// Charmed-pet retarget: an NPC about to damage a charmed NPC follower may
 	// switch to the follower's master if the master is in the same room.
 	if defender.IsNPC() &&
-		cbHasAffect(defenderName, AFF_CHARM) &&
+		cbHasAffect(defender, AFF_CHARM) &&
 		GetRoller().Number(0, 10) == 0 {
-		masterName := cbGetFollowing(defenderName)
-		if masterName != "" {
-			if master := findRoomCombatantByName(attacker.GetRoom(), masterName); master != nil {
-				if ce.redirectAttacker(attacker, master) {
-					return true
-				}
-			}
+		master := cbGetFollowing(defender)
+		if master != nil && master.GetRoom() == attacker.GetRoom() && ce.redirectAttacker(attacker, master) {
+			return true
 		}
 	}
 
@@ -948,15 +941,6 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 	}
 
 	return false
-}
-
-func findRoomCombatantByName(roomVNum int, name string) Combatant {
-	for _, ch := range cbGetRoomCombatants(roomVNum) {
-		if ch != nil && ch.GetName() == name {
-			return ch
-		}
-	}
-	return nil
 }
 
 func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) bool {
@@ -995,16 +979,15 @@ func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage, att
 	roomVNum := attacker.GetRoom()
 
 	// Message to attacker
-	attacker.SendMessage(fmt.Sprintf("You hit %s for %d damage!\r\n", defenderName, damage))
+	sendCombatMessage(attacker, fmt.Sprintf("You hit %s for %d damage!\r\n", defenderName, damage))
 
 	// Message to defender
-	defender.SendMessage(fmt.Sprintf("%s hits you for %d damage!\r\n", attackerName, damage))
+	sendCombatMessage(defender, fmt.Sprintf("%s hits you for %d damage!\r\n", attackerName, damage))
 
 	// Message to room
 	if ce.BroadcastFunc != nil {
 		ce.BroadcastFunc(roomVNum,
-			fmt.Sprintf("%s hits %s!\r\n", attackerName, defenderName),
-			attackerName)
+			fmt.Sprintf("%s hits %s!\r\n", attackerName, defenderName), []Combatant{attacker})
 	}
 }
 
@@ -1020,13 +1003,12 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType
 	defenderName := defender.GetName()
 	roomVNum := attacker.GetRoom()
 
-	attacker.SendMessage(fmt.Sprintf("You miss %s!\r\n", defenderName))
-	defender.SendMessage(fmt.Sprintf("%s misses you!\r\n", attackerName))
+	sendCombatMessage(attacker, fmt.Sprintf("You miss %s!\r\n", defenderName))
+	sendCombatMessage(defender, fmt.Sprintf("%s misses you!\r\n", attackerName))
 
 	if ce.BroadcastFunc != nil {
 		ce.BroadcastFunc(roomVNum,
-			fmt.Sprintf("%s misses %s!\r\n", attackerName, defenderName),
-			attackerName)
+			fmt.Sprintf("%s misses %s!\r\n", attackerName, defenderName), []Combatant{attacker})
 	}
 }
 
@@ -1051,13 +1033,11 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType
 //   - Mob: create corpse, remove from world
 //   - Corpse creation is delegated via DeathFunc callback (set by game layer)
 func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
-	victimName := victim.GetName()
-	killerName := killer.GetName()
 	roomVNum := victim.GetRoom()
 
 	// Fire death script trigger on victim mob (before DeathFunc removes it)
 	if ce.ScriptDeathFunc != nil && victim.IsNPC() {
-		ce.ScriptDeathFunc(victimName, killerName, roomVNum)
+		ce.ScriptDeathFunc(victim, killer, roomVNum)
 	}
 
 	// Delegate to game layer for corpse creation + deferred extraction

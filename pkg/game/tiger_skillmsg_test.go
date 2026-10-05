@@ -138,16 +138,18 @@ func wireTigerPunchMessages(t *testing.T, mob *MobInstance) *tigerPunchMessages 
 	original := combat.GetCallbacks()
 	captured := &tigerPunchMessages{}
 	cb := &combat.GameCallbacks{
-		Broadcast: func(_ int, msg, _ string) { captured.roomMsg = msg },
-		SendToChar: func(name, msg string) {
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { captured.roomMsg = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
 			if name == "TestPlayer" {
 				captured.attMsg = msg
 			}
 		},
-		GetSex:   func(string) int { return 0 },
-		GetHP:    func(string) int { return mob.GetHP() },
-		GetLevel: func(string) int { return 1 },
-		IsNPC:    func(string) bool { return true },
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return mob.GetHP() },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(combat.Combatant) bool { return true },
 	}
 	combat.SetCallbacks(cb)
 	combat.InitFightMessages(cb, loadMessagesFile(t))

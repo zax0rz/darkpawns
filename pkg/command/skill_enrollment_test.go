@@ -76,7 +76,7 @@ func TestSendSkillResult_TripSuccess_EnrollsBothCombatants(t *testing.T) {
 	// decrements to 0 and STANDS UP (C's two-step perform_violence) rather
 	// than being skipped (not enrolled) or stopped (the DP-1213 stand-up bug).
 	var broadcasts []string
-	rig.engine.BroadcastFunc = func(_ int, msg, _ string) { broadcasts = append(broadcasts, msg) }
+	rig.engine.BroadcastFunc = func(_ int, msg string, _ []combat.Combatant) { broadcasts = append(broadcasts, msg) }
 	dprng.ResetStream(7)
 	rig.engine.PerformRound()
 

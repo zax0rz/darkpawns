@@ -434,12 +434,12 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if vict == ch {
 				continue
 			}
-			target := vict.GetFighting()
-			if target == "" {
+			target := vict.GetFightingBody()
+			if target == nil {
 				continue
 			}
 			for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
-				if p.GetName() == target {
+				if p == target {
 					if w.combatEngine != nil {
 						if err := w.combatEngine.StartCombat(ch, p); err != nil {
 							slog.Warn("StartCombat failed in helper mob", "mob", ch.GetName(), "error", err)

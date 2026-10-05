@@ -1,6 +1,7 @@
 package game
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -16,26 +17,26 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Character identity
 	// -------------------------------------------------------------------------
-	cb.GetRace = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetRace = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetRace()
 		}
-		if m := w.GetMobByName(name); m != nil && m.Proto() != nil {
+		if m := combatMob(name); m != nil && m.Proto() != nil {
 			return m.Proto().Race
 		}
 		return 0
 	}
 
-	cb.GetRaceHate = func(name string, index int) int {
+	cb.GetRaceHate = func(name combat.Combatant, index int) int {
 		if index < 0 || index >= 5 {
 			return -1
 		}
-		if p, ok := w.GetPlayer(name); ok {
+		if p, ok := combatPlayer(name); ok {
 			p.mu.RLock()
 			defer p.mu.RUnlock()
 			return p.RaceHates[index]
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			m.mu.RLock()
 			defer m.mu.RUnlock()
 			return m.RaceHates[index]
@@ -43,61 +44,61 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return -1
 	}
 
-	cb.GetAlignment = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetAlignment = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetAlignment()
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			return m.GetAlignment()
 		}
 		return 0
 	}
 
-	cb.SetAlignment = func(name string, val int) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.SetAlignment = func(name combat.Combatant, val int) {
+		if p, ok := combatPlayer(name); ok {
 			p.SetAlignment(val)
 		}
 	}
 
-	cb.GetSex = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetSex = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetSex()
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			return m.GetSex()
 		}
 		return 0
 	}
 
-	cb.GetHP = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetHP = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetHP()
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			return m.GetHP()
 		}
 		return 1
 	}
 
-	cb.GetLevel = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetLevel = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetLevel()
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			return m.GetLevel()
 		}
 		return 0
 	}
 
-	cb.IsNPC = func(name string) bool {
-		if _, ok := w.GetPlayer(name); ok {
+	cb.IsNPC = func(name combat.Combatant) bool {
+		if _, ok := combatPlayer(name); ok {
 			return false
 		}
-		return w.GetMobByName(name) != nil
+		return combatMob(name) != nil
 	}
 
-	cb.GetSkill = func(name string, skillNum int) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetSkill = func(name combat.Combatant, skillNum int) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetSkill(combatSkillName(skillNum))
 		}
 		return 0
@@ -105,8 +106,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	// COLOR_LEV(ch): PRF_COLOR_1 counts 1, PRF_COLOR_2 counts 2. NPCs have no
 	// player_specials prefs, so C's shared dummy_mob reports 0 (db.c:1281).
-	cb.GetColorLevel = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetColorLevel = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return colorLevel(p)
 		}
 		return 0
@@ -115,74 +116,74 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Affects
 	// -------------------------------------------------------------------------
-	cb.HasAffect = func(name string, aff int) bool {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.HasAffect = func(name combat.Combatant, aff int) bool {
+		if p, ok := combatPlayer(name); ok {
 			return p.IsAffected(aff)
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			return m.HasAffect(aff)
 		}
 		return false
 	}
 
-	cb.HasAffectStr = func(name string, aff string) bool {
+	cb.HasAffectStr = func(name combat.Combatant, aff string) bool {
 		bit := affectStringToBit(aff)
 		if bit < 0 {
 			return false
 		}
-		if p, ok := w.GetPlayer(name); ok {
+		if p, ok := combatPlayer(name); ok {
 			return p.IsAffected(bit)
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			return m.HasAffect(bit)
 		}
 		return false
 	}
 
-	cb.RemoveAffect = func(name string, skillNum int) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.RemoveAffect = func(name combat.Combatant, skillNum int) {
+		if p, ok := combatPlayer(name); ok {
 			// fight.c passes AFF_HIDE here and clears the bitmask directly;
 			// RemoveAffectBySpell alone only removes timed spell records.
 			p.RemoveAffectBit(skillNum)
 			p.RemoveAffectBySpell(skillNum)
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m := combatMob(name); m != nil {
 			m.ClearAffect(skillNum)
 			m.RemoveAffectBySpell(skillNum)
 		}
 	}
 
 	// src/fight.c:544-571: remove affects, tattoo, nightbreed, then memories.
-	cb.RemoveAllAffects = func(name string) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.RemoveAllAffects = func(name combat.Combatant) {
+		if p, ok := combatPlayer(name); ok {
 			p.removeRawKillAffects()
 		}
 	}
-	cb.RemoveTattoo = func(name string) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.RemoveTattoo = func(name combat.Combatant) {
+		if p, ok := combatPlayer(name); ok {
 			removeRawKillTattoo(p)
 		}
 	}
-	cb.ClearNightbreed = func(name string) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.ClearNightbreed = func(name combat.Combatant) {
+		if p, ok := combatPlayer(name); ok {
 			clearRawKillNightbreed(p)
 		}
 	}
-	cb.ForgetVictim = w.forgetRawKillVictim
+	cb.ForgetVictim = func(body combat.Combatant) { w.forgetRawKillBody(body) }
 
 	// -------------------------------------------------------------------------
 	// Player/Mob/Room flags
 	// -------------------------------------------------------------------------
-	cb.HasPlrFlag = func(name string, flag string) bool {
-		p, ok := w.GetPlayer(name)
+	cb.HasPlrFlag = func(name combat.Combatant, flag string) bool {
+		p, ok := combatPlayer(name)
 		if !ok {
 			return false
 		}
 		return hasPlrFlag(p, flag)
 	}
 
-	cb.SetPlrFlag = func(name string) bool {
-		p, ok := w.GetPlayer(name)
+	cb.SetPlrFlag = func(name combat.Combatant) bool {
+		p, ok := combatPlayer(name)
 		if !ok {
 			return false
 		}
@@ -190,8 +191,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return true
 	}
 
-	cb.HasPrfFlag = func(name string, flag string) bool {
-		p, ok := w.GetPlayer(name)
+	cb.HasPrfFlag = func(name combat.Combatant, flag string) bool {
+		p, ok := combatPlayer(name)
 		if !ok {
 			return false
 		}
@@ -202,30 +203,30 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return p.GetFlags()&(1<<uint(bit)) != 0
 	}
 
-	cb.HasMobFlag = func(name string, flag string) bool {
-		m := w.GetMobByName(name)
+	cb.HasMobFlag = func(name combat.Combatant, flag string) bool {
+		m := combatMob(name)
 		if m == nil {
 			return false
 		}
 		return m.HasFlag(flag)
 	}
 
-	cb.IsShopkeeper = func(name string) bool {
-		return IsShopkeeperMob(w, w.GetMobByName(name))
+	cb.IsShopkeeper = func(name combat.Combatant) bool {
+		return IsShopkeeperMob(w, combatMob(name))
 	}
 
 	cb.DamageRefused = w.DamageRefused
 
-	cb.HasMobVNum = func(name string, vnum int) bool {
-		m := w.GetMobByName(name)
+	cb.HasMobVNum = func(name combat.Combatant, vnum int) bool {
+		m := combatMob(name)
 		if m == nil || m.Proto() == nil {
 			return false
 		}
 		return m.Proto().VNum == vnum
 	}
 
-	cb.MobHasJailGuardSpec = func(name string) bool {
-		m := w.GetMobByName(name)
+	cb.MobHasJailGuardSpec = func(name combat.Combatant) bool {
+		m := combatMob(name)
 		if m == nil || m.Proto() == nil {
 			return false
 		}
@@ -245,8 +246,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return hasRoomFlag(room, flag)
 	}
 
-	cb.HasScriptFlag = func(name string, flag string) bool {
-		m := w.GetMobByName(name)
+	cb.HasScriptFlag = func(name combat.Combatant, flag string) bool {
+		m := combatMob(name)
 		if m == nil {
 			return false
 		}
@@ -263,33 +264,18 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		for _, m := range mobs {
 			chars = append(chars, m)
 		}
+		sort.SliceStable(chars, func(i, j int) bool { return combatRoomSequence(chars[i]) > combatRoomSequence(chars[j]) })
 		return chars
 	}
 
-	cb.GetFollowing = func(name string) string {
-		if p, ok := w.GetPlayer(name); ok {
-			return p.GetFollowing()
-		}
-		for _, m := range w.GetAllMobs() {
-			if m.GetName() == name {
-				return m.GetFollowing()
-			}
-		}
-		return ""
-	}
+	cb.GetFollowing = w.combatFollowingBody
 
-	cb.JailGuardSubdue = func(guardName, victimName string) bool {
-		victim, ok := w.GetPlayer(victimName)
+	cb.JailGuardSubdue = func(guardName, victimName combat.Combatant) bool {
+		victim, ok := combatPlayer(victimName)
 		if !ok {
 			return false
 		}
-		var guard *MobInstance
-		for _, m := range w.GetMobsInRoom(victim.GetRoom()) {
-			if m.GetName() == guardName {
-				guard = m
-				break
-			}
-		}
+		guard := combatMob(guardName)
 		if guard == nil {
 			return false
 		}
@@ -298,8 +284,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		// opponent reciprocates the target, stop that side as well; the combat
 		// engine also removes its pair after this callback returns.
 		if victim.IsFighting() {
-			fightingName := victim.GetFighting()
-			if opponent := cityguardCombatantByName(w, victim.GetRoom(), fightingName); opponent != nil && opponent.GetFighting() == victimName {
+			if opponent := victim.GetFightingBody(); opponent != nil && opponent.GetFightingBody() == victim {
 				switch opponent := opponent.(type) {
 				case *Player:
 					opponent.StopFighting()
@@ -314,9 +299,9 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			victim.Unmount()
 		}
 		if guard.HasMobFlag(MobFlagMemory) || guard.HasFlag("MOB_MEMORY") {
-			guard.Forget(victimName)
+			guard.Forget(victim.GetName())
 		}
-		if guard.GetHunting() == victimName {
+		if guard.GetHunting() == victim.GetName() {
 			guard.ClearHunting()
 		}
 
@@ -338,31 +323,27 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Equipment & mounts
 	// -------------------------------------------------------------------------
-	cb.IsMounted = func(name string) bool {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.IsMounted = func(name combat.Combatant) bool {
+		if p, ok := combatPlayer(name); ok {
 			return p.IsMounted()
 		}
 		return false
 	}
 
-	cb.Dismount = func(name string) {
-		p, ok := w.GetPlayer(name)
+	cb.Dismount = func(name combat.Combatant) {
+		p, ok := combatPlayer(name)
 		if !ok || !p.IsMounted() {
 			return
 		}
-		roomVNum := p.GetRoom()
-		for _, m := range w.GetMobsInRoom(roomVNum) {
-			if m.GetMountRider() == name {
-				m.SetMountRider("")
-				break
-			}
+		if mount := w.riddenMount(p); mount != nil {
+			mount.SetMountRider("")
 		}
 		p.SetAffect(affMounted, false)
 		p.SetFollowing("")
 	}
 
-	cb.Unmount = func(name string) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.Unmount = func(name combat.Combatant) {
+		if p, ok := combatPlayer(name); ok {
 			mount := w.riddenMount(p)
 			w.clearMountedPair(p, mount)
 			if mount != nil {
@@ -379,8 +360,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// wType and isBlessed are consumed by performOneHit. For mobs, wType is the
 	// parsed BareHandAttack field copied by read_mobile into mob_specials, which
 	// is C's attack_type fallback when no weapon is wielded.
-	cb.GetWeaponInfo = func(name string) (wType, damDice, damSize int, isBlessed bool) {
-		if p, ok := w.GetPlayer(name); ok && p.Equipment != nil {
+	cb.GetWeaponInfo = func(body combat.Combatant) (wType, damDice, damSize int, isBlessed bool) {
+		if p, ok := combatPlayer(body); ok && p.Equipment != nil {
 			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
 				// Values[3] holds the weapon attack type (pierce=11, slash=3,
 				// bludgeon=5, …) — the offset into attack_hit_text, NOT a
@@ -390,7 +371,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			}
 			return 0, 0, 0, false // barehand → "hit"
 		}
-		if m := w.GetMobByName(name); m != nil {
+		if m, ok := body.(*MobInstance); ok && m != nil {
 			if weapon := m.Equipped(mobWearWield); weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
 				return weapon.GetValue(3), 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
 			}
@@ -401,8 +382,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return 0, 0, 0, false // mob / unknown → "hit"
 	}
 
-	cb.GetWeaponDescription = func(name string) string {
-		if p, ok := w.GetPlayer(name); ok && p.Equipment != nil {
+	cb.GetWeaponDescription = func(name combat.Combatant) string {
+		if p, ok := combatPlayer(name); ok && p.Equipment != nil {
 			if weapon, wielded := p.Equipment.GetItemInSlot(SlotWield); wielded && weapon != nil {
 				return weapon.GetShortDesc()
 			}
@@ -410,8 +391,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return ""
 	}
 
-	cb.GetDrunk = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetDrunk = func(body combat.Combatant) int {
+		if p, ok := combatPlayer(body); ok {
 			return p.GetCondition(CondDrunk)
 		}
 		return 0
@@ -439,66 +420,78 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Kill/Death/Stats
 	// -------------------------------------------------------------------------
-	cb.GainExp = func(name string, amount int) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GainExp = func(name combat.Combatant, amount int) {
+		if p, ok := combatPlayer(name); ok {
 			p.AddExp(amount)
 		}
 	}
 
-	cb.GetExp = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetExp = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetExp()
 		}
 		return 0
 	}
 
-	cb.GetKills = func(name string) int64 {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetKills = func(name combat.Combatant) int64 {
+		if p, ok := combatPlayer(name); ok {
+			p.mu.RLock()
+			defer p.mu.RUnlock()
 			return int64(p.Kills)
 		}
 		return 0
 	}
 
-	cb.SetKills = func(name string, kills int64) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.SetKills = func(name combat.Combatant, kills int64) {
+		if p, ok := combatPlayer(name); ok {
+			p.mu.Lock()
 			p.Kills = int(kills)
+			p.mu.Unlock()
 		}
 	}
 
-	cb.GetDeaths = func(name string) int64 {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetDeaths = func(name combat.Combatant) int64 {
+		if p, ok := combatPlayer(name); ok {
+			p.mu.RLock()
+			defer p.mu.RUnlock()
 			return int64(p.Deaths)
 		}
 		return 0
 	}
 
-	cb.SetDeaths = func(name string, deaths int64) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.SetDeaths = func(name combat.Combatant, deaths int64) {
+		if p, ok := combatPlayer(name); ok {
+			p.mu.Lock()
 			p.Deaths = int(deaths)
+			p.mu.Unlock()
 		}
 	}
 
-	cb.SetLastDeath = func(name string, t int64) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.SetLastDeath = func(name combat.Combatant, t int64) {
+		if p, ok := combatPlayer(name); ok {
 			p.SetLastDeath(t)
 		}
 	}
 
-	cb.GetPks = func(name string) int64 {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetPks = func(name combat.Combatant) int64 {
+		if p, ok := combatPlayer(name); ok {
+			p.mu.RLock()
+			defer p.mu.RUnlock()
 			return int64(p.PKs)
 		}
 		return 0
 	}
 
-	cb.SetPks = func(name string, pks int64) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.SetPks = func(name combat.Combatant, pks int64) {
+		if p, ok := combatPlayer(name); ok {
+			p.mu.Lock()
 			p.PKs = int(pks)
+			p.mu.Unlock()
 		}
 	}
 
-	cb.GetConstitution = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetConstitution = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			p.mu.RLock()
 			defer p.mu.RUnlock()
 			return p.Stats.Con
@@ -506,8 +499,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return 0
 	}
 
-	cb.SetConstitution = func(name string, val int) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.SetConstitution = func(name combat.Combatant, val int) {
+		if p, ok := combatPlayer(name); ok {
 			p.mu.Lock()
 			p.Stats.Con = val
 			p.mu.Unlock()
@@ -520,70 +513,63 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// path. The active engine path still uses CombatEngine.DeathFunc.
 	// -------------------------------------------------------------------------
 	cb.RawKillNPC = w.RawKillCombatant
-	cb.MakeCorpse = func(victim string, attackType int) {
-		if p, ok := w.GetPlayer(victim); ok {
+	cb.MakeCorpse = func(victim combat.Combatant, attackType int) {
+		if p, ok := combatPlayer(victim); ok {
 			w.makeRawKillBody(p, attackType, false)
 		}
 	}
 
-	cb.MakeDust = func(name string, attackType int) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.MakeDust = func(name combat.Combatant, attackType int) {
+		if p, ok := combatPlayer(name); ok {
 			w.makeRawKillBody(p, attackType, true)
 		}
 	}
 
-	cb.ExtractChar = func(name string) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.ExtractChar = func(name combat.Combatant) {
+		if p, ok := combatPlayer(name); ok {
 			ExtractChar(p)
 		}
 	}
 
-	cb.RunDeathScript = func(killer, victim string, roomVNum int) {
+	cb.RunDeathScript = func(killer, victim combat.Combatant, roomVNum int) {
 		w.FireMobDeathScript(victim, killer, roomVNum)
 	}
 
 	// -------------------------------------------------------------------------
 	// Group/Party
 	// -------------------------------------------------------------------------
-	cb.GetFollowersInRoom = func(name string, roomVNum int) int {
-		return len(w.GetFollowersInRoom(name, roomVNum))
+	cb.GetFollowersInRoom = func(name combat.Combatant, roomVNum int) int {
+		return len(w.combatFollowersInRoom(name, roomVNum))
 	}
 
-	cb.GetMasterInRoom = func(name string, roomVNum int) bool {
-		p, ok := w.GetPlayer(name)
+	cb.GetMasterInRoom = func(name combat.Combatant, roomVNum int) bool {
+		p, ok := combatPlayer(name)
 		if !ok {
 			return false
 		}
-		masterName := p.GetFollowing()
-		if masterName == "" {
-			return false
-		}
-		master, ok := w.GetPlayer(masterName)
-		if !ok {
-			return false
-		}
-		return master.GetRoom() == roomVNum
+		master, ok := combatPlayer(w.combatFollowingBody(p))
+		return ok && master.GetRoom() == roomVNum
 	}
 
-	cb.GetFellowFollowersInRoom = func(name string, roomVNum int) bool {
-		p, ok := w.GetPlayer(name)
+	cb.GetFellowFollowersInRoom = func(name combat.Combatant, roomVNum int) bool {
+		p, ok := combatPlayer(name)
 		if !ok {
 			return false
 		}
-		leaderName := p.GetFollowing()
-		if leaderName == "" {
+		leader := w.combatFollowingBody(p)
+		if leader == nil {
 			return false
 		}
-		for _, follower := range w.GetFollowers(leaderName) {
-			if follower.GetName() != name && follower.GetRoom() == roomVNum {
+		for _, follower := range w.combatFollowersInRoom(leader, roomVNum) {
+			if follower != p {
 				return true
 			}
 		}
 		return false
 	}
 
-	cb.CountGroupMembers = func(leaderName string, roomVNum int) int {
-		members := w.GetGroupMembers(leaderName)
+	cb.CountGroupMembers = func(leaderName combat.Combatant, roomVNum int) int {
+		members := w.combatGroupMembers(leaderName)
 		count := 0
 		for _, m := range members {
 			if m.GetRoom() == roomVNum {
@@ -593,10 +579,10 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return count
 	}
 
-	cb.ApplyToGroupMembers = func(leaderName string, roomVNum int, fn func(name string)) {
-		for _, m := range w.GetGroupMembers(leaderName) {
+	cb.ApplyToGroupMembers = func(leaderName combat.Combatant, roomVNum int, fn func(name combat.Combatant)) {
+		for _, m := range w.combatGroupMembers(leaderName) {
 			if m.GetRoom() == roomVNum {
-				fn(m.GetName())
+				fn(m)
 			}
 		}
 	}
@@ -604,15 +590,15 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Gold
 	// -------------------------------------------------------------------------
-	cb.GetGold = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetGold = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
 			return p.GetGold()
 		}
 		return 0
 	}
 
-	cb.SetGold = func(name string, gold int) {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.SetGold = func(name combat.Combatant, gold int) {
+		if p, ok := combatPlayer(name); ok {
 			p.SetGold(gold)
 		}
 	}
@@ -620,8 +606,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Items
 	// -------------------------------------------------------------------------
-	cb.JunkInventoryItems = func(chName string) {
-		p, ok := w.GetPlayer(chName)
+	cb.JunkInventoryItems = func(chName combat.Combatant) {
+		p, ok := combatPlayer(chName)
 		if !ok {
 			return
 		}
@@ -631,8 +617,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Commands
 	// -------------------------------------------------------------------------
-	cb.PerformCommand = func(chName, cmd string) {
-		p, ok := w.GetPlayer(chName)
+	cb.PerformCommand = func(chName combat.Combatant, cmd string) {
+		p, ok := combatPlayer(chName)
 		if !ok {
 			return
 		}
@@ -643,16 +629,13 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	// fight.c:1457 stop_follower(victim) when the attacker is the victim's
 	// master — the game layer owns the act audiences of the charm trio.
-	cb.StopFollowerOfMaster = func(victimName, masterName string) {
-		if p, ok := w.GetPlayer(victimName); ok {
+	cb.StopFollowerOfMaster = func(victimName, masterName combat.Combatant) {
+		if p, ok := combatPlayer(victimName); ok {
 			StopFollower(w, p)
 			return
 		}
-		for _, m := range w.GetAllMobs() {
-			if m.GetName() == victimName {
-				StopFollowerMob(w, m)
-				return
-			}
+		if mob := combatMob(victimName); mob != nil {
+			StopFollowerMob(w, mob)
 		}
 	}
 
@@ -661,8 +644,10 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// they need access to player sessions. Leave nil here so SetFleeHooks can
 	// install its callbacks without conflict.
 	// -------------------------------------------------------------------------
-	cb.GetWimpyLev = func(name string) int {
-		if p, ok := w.GetPlayer(name); ok {
+	cb.GetWimpyLev = func(name combat.Combatant) int {
+		if p, ok := combatPlayer(name); ok {
+			p.mu.RLock()
+			defer p.mu.RUnlock()
 			return p.WimpLevel
 		}
 		return 0
@@ -671,8 +656,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// World
 	// -------------------------------------------------------------------------
-	cb.IncreaseMaxStat = func(name string, stat string) {
-		p, ok := w.GetPlayer(name)
+	cb.IncreaseMaxStat = func(name combat.Combatant, stat string) {
+		p, ok := combatPlayer(name)
 		if !ok {
 			return
 		}
@@ -738,4 +723,84 @@ var prfFlagMap = map[string]int{
 	"nonewbie":  PrfNoNewbie,
 	"noctell":   PrfNoCTell,
 	"nobroad":   PrfNoBroad,
+}
+
+// combatPlayer/combatMob type-check a retained body; they never search a registry.
+func combatPlayer(body combat.Combatant) (*Player, bool) {
+	p, ok := body.(*Player)
+	return p, ok && p != nil
+}
+func combatMob(body combat.Combatant) *MobInstance { m, _ := body.(*MobInstance); return m }
+
+func combatRoomSequence(body combat.Combatant) uint64 {
+	switch body := body.(type) {
+	case *Player:
+		return body.GetRoomEntrySequence()
+	case *MobInstance:
+		return body.GetRoomEntrySequence()
+	}
+	return 0
+}
+
+func (w *World) combatFollowingBody(body combat.Combatant) combat.Combatant {
+	var name string
+	switch body := body.(type) {
+	case *Player:
+		body.mu.RLock()
+		retained := body.followingBody
+		name = body.Following
+		body.mu.RUnlock()
+		if retained != nil {
+			return retained
+		}
+	case *MobInstance:
+		name = body.GetFollowing()
+	default:
+		return nil
+	}
+	// Existing name-backed legacy edges designate a uniquely held player only.
+	if p, ok := w.GetPlayer(name); ok {
+		return p
+	}
+	return nil
+}
+
+func (w *World) combatFollowersInRoom(body combat.Combatant, room int) []*Player {
+	var followers []*Player
+	for _, p := range w.GetAllPlayers() {
+		if p.GetRoom() == room && w.combatFollowingBody(p) == body {
+			followers = append(followers, p)
+		}
+	}
+	return followers
+}
+
+func (w *World) combatGroupMembers(body combat.Combatant) []*Player {
+	p, ok := combatPlayer(body)
+	if !ok {
+		return nil
+	}
+	leader := p
+	if master := w.combatFollowingBody(p); master != nil {
+		var ok bool
+		leader, ok = combatPlayer(master)
+		if !ok {
+			return nil
+		}
+	}
+	var members []*Player
+	if leader.IsInGroup() {
+		members = append(members, leader)
+	}
+	for _, follower := range w.GetAllPlayers() {
+		if follower != leader && w.combatFollowingBody(follower) == leader && follower.IsInGroup() {
+			members = append(members, follower)
+		}
+	}
+	return members
+}
+
+// FollowingBody returns the retained master or the unique player-name fallback.
+func (w *World) FollowingBody(body combat.Combatant) combat.Combatant {
+	return w.combatFollowingBody(body)
 }

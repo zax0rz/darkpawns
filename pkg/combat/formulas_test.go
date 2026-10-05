@@ -70,7 +70,9 @@ func (m *mockCombatant) SendMessage(msg string) { m.messages = append(m.messages
 func TestMain(m *testing.M) {
 	// Set up game-layer callbacks for testing parry and dodge.
 	SetCallbacks(&GameCallbacks{
-		GetSkill: func(name string, skillNum int) int {
+		GetSkill: func(bodyname Combatant, skillNum int) int {
+			name := bodyname.GetName()
+
 			if skillNum == SKILL_PARRY && name == "parry_warrior" {
 				return 80
 			}
@@ -79,14 +81,18 @@ func TestMain(m *testing.M) {
 			}
 			return 50
 		},
-		HasAffect: func(name string, aff int) bool {
+		HasAffect: func(bodyname Combatant, aff int) bool {
+			name := bodyname.GetName()
+
 			return name == "dodging_mob" && aff == AFF_DODGE
 		},
-		HasMobFlag: func(name string, flag string) bool {
+		HasMobFlag: func(bodyname Combatant, flag string) bool {
+			name := bodyname.GetName()
+
 			return name == "aware_mob" && flag == "MOB_AWARE"
 		},
-		GetWeaponInfo: func(chName string) (wType, damDice, damSize int, isBlessed bool) {
-			if chName == "unarmed_guy" {
+		GetWeaponInfo: func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) {
+			if chName.GetName() == "unarmed_guy" {
 				return TYPE_HIT, 0, 0, false
 			}
 			return TYPE_SLASH, 1, 8, false

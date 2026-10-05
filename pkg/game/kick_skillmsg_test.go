@@ -18,16 +18,18 @@ func wireKickMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, at
 	messages := loadMessagesFile(t)
 	var attMsg, roomOut string
 	c := &combat.GameCallbacks{
-		Broadcast: func(_ int, msg, _ string) { roomOut = msg },
-		SendToChar: func(name, msg string) {
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
 			if name == chName {
 				attMsg = msg
 			}
 		},
-		GetSex:   func(string) int { return 0 },
-		GetHP:    func(string) int { return 10 },
-		GetLevel: func(string) int { return 1 },
-		IsNPC:    func(name string) bool { return false },
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
 	}
 	combat.SetCallbacks(c)
 	combat.InitFightMessages(c, messages)
@@ -153,7 +155,7 @@ func TestDoKick_MissDrawCountAndOrder(t *testing.T) {
 		t.Fatalf("miss SkillMsgType = %d, want %d (134)", result.SkillMsgType, SkillKickNum)
 	}
 	// DRAW 2 via cb.SkillMessage → production Dice on the shared stream.
-	handled := cb.SkillMessage(0, ch.Name, mob.GetName(), SkillKickNum, ch.GetRoom())
+	handled := cb.SkillMessage(0, ch, mob, SkillKickNum, ch.GetRoom())
 	if !handled {
 		t.Fatal("SkillMessage(0, ..., 134) did not handle set 134")
 	}
@@ -167,7 +169,7 @@ func TestDoKick_MissDrawCountAndOrder(t *testing.T) {
 	// Re-run on the same seed: DoKick (DRAW 1) + SkillMessage (DRAW 2), then the next draw must match.
 	dprng.ResetStream(seed)
 	DoKick(ch, mob)
-	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillKickNum, ch.GetRoom())
+	cb.SkillMessage(0, ch, mob, SkillKickNum, ch.GetRoom())
 	if got := dprng.Number(0, 999); got != wantNext {
 		t.Fatalf("kick miss draw count/order wrong: stream out of sync after DoKick+SkillMessage "+
 			"(next=%d want=%d). Should be number(1,101) then dice(1,%d)", got, wantNext, n)
@@ -197,7 +199,7 @@ func TestDoKick_MissMessageFromSkillMessages(t *testing.T) {
 			if result.Success || result.Damage != 0 || result.SkillMsgType != SkillKickNum {
 				t.Fatalf("kick miss result = %+v", result)
 			}
-			if !cb.SkillMessage(0, ch.Name, mob.GetName(), SkillKickNum, ch.GetRoom()) {
+			if !cb.SkillMessage(0, ch, mob, SkillKickNum, ch.GetRoom()) {
 				t.Fatal("Kick message lookup failed")
 			}
 			if got := *attMsg; got != want {

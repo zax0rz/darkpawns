@@ -64,13 +64,13 @@ func (w *World) roomMessage(roomVNum int, msg string) {
 func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar, toVict, toRoom string) {
 	players := w.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
-		if actor != nil && p.GetName() == actor.GetName() {
+		if actor != nil && p == actor {
 			if toChar != "" {
 				p.SendMessage(toChar + "\r\n")
 			}
 			continue
 		}
-		if victim != nil && p.GetName() == victim.GetName() {
+		if victim != nil && p == victim {
 			if toVict != "" {
 				p.SendMessage(toVict + "\r\n")
 			}
@@ -130,29 +130,13 @@ func mobMeleeTarget(me *MobInstance) *MobInstance {
 	return nil
 }
 
-// mobFightingTarget resolves the name-based FIGHTING reference used by the
-// combat engine. C's fighter special receives the actual FIGHTING pointer;
-// Go's mob instance retains that pointer only for mob-to-mob scripting, so
-// the combat pair is the authoritative source for player opponents.
-func mobFightingTarget(w *World, me *MobInstance) combat.Combatant {
-	if w != nil && w.combatEngine != nil {
-		if target, ok := w.combatEngine.GetCombatTarget(me); ok && target != nil {
-			return target
-		}
+// mobFightingTarget returns the canonical FIGHTING body, independently of
+// the mobile's separate AI/scripting Target relationship.
+func mobFightingTarget(_ *World, me *MobInstance) combat.Combatant {
+	if me == nil {
+		return nil
 	}
-
-	if target := me.GetTarget(); target != nil {
-		return target
-	}
-	if targetName := me.GetFightingTarget(); targetName != "" {
-		if player, ok := w.GetPlayer(targetName); ok {
-			return player
-		}
-		if mob := w.GetMobByName(targetName); mob != nil {
-			return mob
-		}
-	}
-	return nil
+	return me.GetFightingBody()
 }
 
 // ================================================================
@@ -378,11 +362,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 	}
 	if vict == nil {
-		if tName := me.GetFightingTarget(); tName != "" {
-			if p, ok := w.players[tName]; ok {
-				vict = p
-			}
-		}
+		vict, _ = me.GetFightingBody().(*Player)
 	}
 	if vict == nil {
 		return false
@@ -760,7 +740,7 @@ func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			continue
 		}
 		align := tch.GetAlignment()
-		target := cityguardCombatantByName(w, me.RoomVNum, tch.GetFighting())
+		target := tch.GetFightingBody()
 		targetAligned, ok := target.(cityguardAlignedCombatant)
 		if targetAligned == nil || !ok || align >= maxEvil || (!tch.IsNPC() && !target.IsNPC()) {
 			continue
@@ -800,20 +780,6 @@ func cityguardRoomCombatants(w *World, roomVNum int) []combat.Combatant {
 		actors = append(actors, mob)
 	}
 	return actors
-}
-
-func cityguardCombatantByName(w *World, roomVNum int, name string) combat.Combatant {
-	for _, player := range w.GetPlayersInRoom(roomVNum) {
-		if player.GetName() == name {
-			return player
-		}
-	}
-	for _, mob := range w.GetMobsInRoom(roomVNum) {
-		if mob.GetName() == name {
-			return mob
-		}
-	}
-	return nil
 }
 
 // mobHit mirrors C hit(): a mob special calls the synchronous combat entry,
