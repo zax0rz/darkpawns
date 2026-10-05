@@ -198,12 +198,9 @@ func cmdShow(s *Session, args []string) error {
 		s.Send(showTattooListing())
 	case "aggr":
 		mobs := s.manager.world.GetAllMobs()
-		sort.SliceStable(mobs, func(i, j int) bool {
-			if mobs[i].GetVNum() != mobs[j].GetVNum() {
-				return mobs[i].GetVNum() < mobs[j].GetVNum()
-			}
-			return mobs[i].GetName() < mobs[j].GetName()
-		})
+		// src/db.c:1745-1746 prepends read_mobile to character_list;
+		// src/act.wizard.c:2430-2442 walks it without VNUM/name sorting.
+		sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() > mobs[j].GetID() })
 		for _, mob := range mobs {
 			if mob.HasFlag("AGGR24") {
 				s.Send(fmt.Sprintf("%d %s\r\n", mob.GetVNum(), mob.GetName()))

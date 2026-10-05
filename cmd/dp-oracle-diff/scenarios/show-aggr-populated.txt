@@ -1,0 +1,38 @@
+# src/db.c:1745-1746; src/act.wizard.c:2430-2442.
+# depth-case: show.aggr-populated
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 1305 1 8105 80
+spawn-mob 1306 1 8105 80
+
+[setup:oracle]
+Aggrreport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aggrreport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show aggr
