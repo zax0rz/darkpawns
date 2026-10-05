@@ -27,3 +27,22 @@ Lock acquisitions: AccountCharacterSave takes/releases Player.mu before conversi
 Revert triples: report arm, signed depth, equipment order, absent/empty distinction, crash producer, character-only gate, quit producer, idle producer, load header rewrite, returning-entry call, and delete identity each compile and fail assertions, then restored pass. Additional unit coverage pins repeated VNums, every label, float formatting, deleted prototypes, paging, save failure/retry and no world allocations. Raw oracle proves absent/Crash, equipped/nested/inventory records, snapshot persistence after live removal and replacement only on the next save. Five seeds are claimed in the combined census at the train tip.
 
 Retained date-reader follow-up: live stat and stat-file still format ConnectedAt. C live stat reads the runtime save-accounting logon (`src/act.wizard.c:755-758`); stat file substitutes saved last_logon (`src/act.wizard.c:1035`). The new metadata now permits that separate report repair. This train migrates their played-time reader only; it does not claim these pre-existing date fields complete.
+
+## #1791 review: rename cleanup
+
+R3b/R5g: `src/act.wizard.c:2888-2895` changes the name, deletes the old
+object-save file, deletes the old alias file, then saves. The name field now
+performs the same cleanup order, retaining the DP-1381 guard and existing save
+path. Failures are logged internally, as on menu deletion; no new player bytes.
+No new locks: cleanup runs under the existing offline-name reservation.
+
+`TestOfflineRenameDeletesOldRent` checks the old name's `show rent` bytes.
+`TestOfflineRenamePreventsAliasInheritance` creates and logs in a later character
+with the old name and checks its loaded aliases. Both failed on the original
+code, pass with the repair, fail with each cleanup independently disabled, and
+pass again on restore (R5h). Evidence is retained in
+`~/Archives/darkpawns/oracle-runs/2026-10-05/dp-1791-rename-proofs/`.
+Targeted census: `show-rent-stored`, `set-name-cleanup`, `set-depth`,
+`set-extended-depth`, `set-gate-depth`. The new scenario saves the peer's objects
+and aliases, disconnects it, and checks old/new rent identities around rename;
+the unit proof covers later alias inheritance at the storage/login boundary.

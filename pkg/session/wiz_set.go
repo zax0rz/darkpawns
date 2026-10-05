@@ -628,6 +628,16 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 	case "name":
 		old := p.Name
 		p.Name = value
+		// R3b: do_set case 33 deletes the old object and alias files in
+		// this order before saving the renamed character (src/act.wizard.c:2888-2895).
+		if s.manager.db != nil {
+			if err := db.DeleteObjectSave(s.manager.db, old); err != nil {
+				slog.Error("set name: delete old object save failed", "name", old, "error", err)
+			}
+		}
+		if err := game.DeleteAliases(old); err != nil {
+			slog.Error("set name: delete old aliases failed", "name", old, "error", err)
+		}
 		if target.session != nil {
 			target.session.playerName = value
 		}
