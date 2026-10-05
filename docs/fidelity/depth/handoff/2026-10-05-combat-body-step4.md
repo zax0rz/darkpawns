@@ -61,3 +61,52 @@ The first three stack audits retain the callback/cleanup classification.
 Room resolver readers now share actual arrival order; keyword/visibility gates
 are unchanged. World fallback ordering, C1 command expansion, C3 extraction
 ownership and parked shoot outcomes remain separate frontier items.
+
+## Post-review repair and integration
+
+DeepSeek's review identified four residual identity consumers. Breath's engine
+enrollment self-test now compares bodies (`src/fight.c:1367-1445`); NPC post-PC
+kill loot compares actual killer and victim (`src/fight.c:1693-1705`); all three
+literal skill-output phases exclude actor/target bodies (`src/comm.c:2485-2547`).
+The ordinary, post-damage and retaliation audience cases independently preserve
+both observer lines when an NPC target shares that observer's name.
+
+Spell grouping is live-reachable through MagGroups, MagMasses, MagAreas,
+hellfire and meteor swarm. All five pass their World to areGrouped. Live World
+uses existing FollowingBody to test C's root/immediate-follower edges
+(`src/utils.c:655-674`); no new registry or lock is introduced. Real group-heal
+proof uses two PCs following separate actual same-description mobile leaders,
+then joins their held leader edges. NPC group-flag support is not expanded.
+Name fallback exists only for standalone legacy spell adapters without
+FollowingBody; live World exposes that method. Teleport's legacy CharTransfer
+fallback and no-engine cleanup adapters likewise do not run with live World.
+
+Hunting/memory stay on the retained frontier. The jail callback first requires
+a concrete Player victim; its hunting label comparison designates that unique
+PC and does not choose among NPC duplicates. Other noncombat hunting decisions,
+mobile riders and player-name persistence/event consumers remain separately
+retained; this is not certification of every lifetime subsystem. The literal
+PC-only prep audience lookup also designates a unique PC. The broader sweep
+must include pkg/spells, pkg/command, combat_wire.go and death.go explicitly:
+
+```sh
+rg -n '(GetName\(\)|\.Name|casterName).*(==|!=)|(==|!=).*(GetName\(\)|\.Name|casterName)' pkg/spells/damage_spells.go pkg/spells/affect_spells.go pkg/command/skill_commands.go pkg/game/death.go pkg/game/combat_wire.go
+```
+
+The controls script now includes breath-identity, loot-identity, skill-audience
+and group-leaders. Each has compiled green/revert/restore assertions. Existing
+proof HEADs describe their precommit lab base, with changes present in the
+working tree; the final census records the actual committed source tip.
+The stack is rebased onto origin/main 7f9999464, including the reviewed transport,
+channel-color and deployment changes. All checkpoint references will be updated
+consistently; final CI is dispatched explicitly because sibling-base PRs do not
+trigger the main-only pull_request workflow. Merge still requires all four
+stacks together and Zach's complete-tip playtest.
+
+The expanded audit also reproduced incorrect kill credit, PK credit and outlaw
+flags on an unrelated PC matching an NPC killer's description. Live HandleDeath
+now passes its actual killer through recordKill and player-death PK bookkeeping
+(`src/fight.c:1671-1691`). Name remains only for output/log/event labels. Legacy
+direct player-death adapters retain their uniquely named PC fallback; live combat
+always supplies its body, including nil or NPC. NPC counters are not expanded.
+Controls death-credit and pk-credit restore each erroneous lookup independently.

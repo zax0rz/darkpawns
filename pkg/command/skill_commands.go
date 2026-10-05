@@ -1693,10 +1693,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			world := s.GetWorld()
 			players := world.GetPlayersInRoom(roomVNum)
 			for _, p := range players {
-				if p.Name == ch.Name && !result.RoomIncludesActor {
+				if p == ch && !result.RoomIncludesActor {
 					continue
 				}
-				if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
+				if target != nil && !result.RoomIncludesTarget && p == target {
 					continue
 				}
 				p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
@@ -1707,10 +1707,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			world := s.GetWorld()
 			players := world.GetPlayersInRoom(roomVNum)
 			for _, p := range players {
-				if p.Name == ch.Name && !result.RoomIncludesActor {
+				if p == ch && !result.RoomIncludesActor {
 					continue
 				}
-				if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
+				if target != nil && !result.RoomIncludesTarget && p == target {
 					continue
 				}
 				p.SendMessage(game.CapitalizeSentence(result.MessageToRoomSecond) + "\r\n")
@@ -1950,10 +1950,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				return
 			}
 			for _, p := range players {
-				if p.Name == ch.Name && !result.RoomIncludesActor {
+				if p == ch && !result.RoomIncludesActor {
 					continue
 				}
-				if target != nil && !result.RoomIncludesTarget && p.Name == target.GetName() {
+				if target != nil && !result.RoomIncludesTarget && p == target {
 					continue
 				}
 				p.SendMessage(game.CapitalizeSentence(message) + "\r\n")

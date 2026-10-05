@@ -784,7 +784,7 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 
 	// Apply spell to each grouped character (including caster)
 	for _, c := range chars {
-		if !areGrouped(ch, c) && c != ch {
+		if !areGrouped(ch, c, world) && c != ch {
 			continue
 		}
 		switch spellNum {
@@ -857,7 +857,7 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 			}
 		}
 		// Skip grouped
-		if areGrouped(ch, c) {
+		if areGrouped(ch, c, world) {
 			continue
 		}
 		// Apply affect
@@ -923,7 +923,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 			}
 		}
 		// Skip grouped
-		if areGrouped(ch, c) {
+		if areGrouped(ch, c, world) {
 			continue
 		}
 		// C mag_areas deliberately passes SAVING_SPELL (literal 1) to
@@ -2482,9 +2482,10 @@ type (
 )
 
 // areGrouped returns true if two characters are in the same group.
-// C source: utils.c are_grouped() — checks AFF_GROUP, then walks follower chain.
-// Simplified Go: both InGroup + same master or follower relationship.
-func areGrouped(ch, victim interface{}) bool {
+// C src/utils.c:655-674 checks AFF_GROUP and the root/immediate-follower edge.
+// Live World supplies retained master bodies; standalone legacy adapters retain
+// their name-backed relation below.
+func areGrouped(ch, victim interface{}, worlds ...interface{}) bool {
 	cg, ok := ch.(grouper)
 	if !ok {
 		return false
@@ -2496,6 +2497,25 @@ func areGrouped(ch, victim interface{}) bool {
 	if !cg.IsInGroup() || !vg.IsInGroup() {
 		return false
 	}
+	// Live World retains actual master bodies. C src/utils.c:655-674 checks
+	// the caster's master (or caster) and that body's immediate followers.
+	if len(worlds) != 0 {
+		if w, ok := worlds[0].(interface {
+			FollowingBody(combat.Combatant) combat.Combatant
+		}); ok {
+			a, aok := ch.(combat.Combatant)
+			b, bok := victim.(combat.Combatant)
+			if !aok || !bok {
+				return false
+			}
+			leader := w.FollowingBody(a)
+			if leader == nil {
+				leader = a
+			}
+			return b == leader || w.FollowingBody(b) == leader
+		}
+	}
+	// Legacy standalone spell adapters do not expose retained bodies.
 	if cg.GetName() == vg.GetName() {
 		return true
 	}
@@ -2722,7 +2742,7 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 			continue
 		}
 		// Skip grouped
-		if areGrouped(ch, c) {
+		if areGrouped(ch, c, world) {
 			continue
 		}
 		w.DoSpellDamage(ch, c, dam, "meteor swarm")
@@ -2781,7 +2801,7 @@ func castHellfire(level int, ch, world interface{}) {
 			continue
 		}
 		// Skip grouped
-		if areGrouped(ch, c) {
+		if areGrouped(ch, c, world) {
 			continue
 		}
 
